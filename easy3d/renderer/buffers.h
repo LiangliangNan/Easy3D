@@ -26,6 +26,8 @@
 #define EASY3D_RENDERER_BUFFERS_H
 
 
+#include <easy3d/renderer/state.h>
+
 #include <string>
 
 namespace easy3d {
@@ -113,12 +115,9 @@ namespace easy3d {
          * @param drawable  The drawable.
          * @param field The name of the vector field.
          * @param location The location where the vector is defined.
-         *         - 0: on faces;
-         *         - 1: on vertices.
-         *         - 2: one edges
          * @param scale The scale of the vector length w.r.t. the average edge length of the surface mesh.
          */
-        void update(SurfaceMesh *model, LinesDrawable *drawable, const std::string& field, int location, float scale);
+        void update(SurfaceMesh *model, LinesDrawable *drawable, const std::string& field, State::Location location, float scale);
         //@}
 
 

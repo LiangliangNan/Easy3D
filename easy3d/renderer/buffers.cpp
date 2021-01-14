@@ -187,99 +187,6 @@ namespace easy3d {
             }
 
 
-            template<typename Model>
-            inline void
-            update_scalar_on_vertices(Model *model, PointsDrawable *drawable, const std::string &name) {
-                if (model->template get_vertex_property<float>(name)) {
-                    auto prop = model->template get_vertex_property<float>(name);
-                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
-                } else if (model->template get_vertex_property<double>(name)) {
-                    auto prop = model->template get_vertex_property<double>(name);
-                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
-                } else if (model->template get_vertex_property<int>(name)) {
-                    auto prop = model->template get_vertex_property<int>(name);
-                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
-                } else if (model->template get_vertex_property<unsigned int>(name)) {
-                    auto prop = model->template get_vertex_property<unsigned int>(name);
-                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
-                } else if (model->template get_vertex_property<char>(name)) {
-                    auto prop = model->template get_vertex_property<char>(name);
-                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
-                } else if (model->template get_vertex_property<unsigned char>(name)) {
-                    auto prop = model->template get_vertex_property<unsigned char>(name);
-                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
-                } else {
-                    LOG(WARNING) << "scalar field \'" << name
-                                 << "\' not found from vertex properties (use uniform coloring)";
-                    drawable->set_coloring_method(State::UNIFORM_COLOR);
-                    update(model, drawable);
-                    return;
-                }
-            }
-            
-
-            template<typename Model>
-            inline void
-            update_scalar_on_vertices(Model *model, LinesDrawable *drawable, const std::string &name) {
-                if (model->template get_vertex_property<float>(name)) {
-                    auto prop = model->template get_vertex_property<float>(name);
-                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
-                } else if (model->template get_vertex_property<double>(name)) {
-                    auto prop = model->template get_vertex_property<double>(name);
-                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
-                } else if (model->template get_vertex_property<int>(name)) {
-                    auto prop = model->template get_vertex_property<int>(name);
-                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
-                } else if (model->template get_vertex_property<unsigned int>(name)) {
-                    auto prop = model->template get_vertex_property<unsigned int>(name);
-                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
-                } else if (model->template get_vertex_property<char>(name)) {
-                    auto prop = model->template get_vertex_property<char>(name);
-                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
-                } else if (model->template get_vertex_property<unsigned char>(name)) {
-                    auto prop = model->template get_vertex_property<unsigned char>(name);
-                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
-                } else {
-                    LOG(WARNING) << "scalar field \'" << name
-                                 << "\' not found from vertex properties (use uniform coloring)";
-                    drawable->set_coloring_method(State::UNIFORM_COLOR);
-                    update(model, drawable);
-                    return;
-                }
-            }
-
-
-            template<typename Model>
-            inline void
-            update_scalar_on_edges(Model *model, LinesDrawable *drawable, const std::string &name) {
-                if (model->template get_edge_property<float>(name)) {
-                    auto prop = model->template get_edge_property<float>(name);
-                    details::update_scalar_on_edges<Model>(model, drawable, prop);
-                } else if (model->template get_edge_property<double>(name)) {
-                    auto prop = model->template get_edge_property<double>(name);
-                    details::update_scalar_on_edges<Model>(model, drawable, prop);
-                } else if (model->template get_edge_property<int>(name)) {
-                    auto prop = model->template get_edge_property<int>(name);
-                    details::update_scalar_on_edges<Model>(model, drawable, prop);
-                } else if (model->template get_edge_property<unsigned int>(name)) {
-                    auto prop = model->template get_edge_property<unsigned int>(name);
-                    details::update_scalar_on_edges<Model>(model, drawable, prop);
-                } else if (model->template get_edge_property<char>(name)) {
-                    auto prop = model->template get_edge_property<char>(name);
-                    details::update_scalar_on_edges<Model>(model, drawable, prop);
-                } else if (model->template get_edge_property<unsigned char>(name)) {
-                    auto prop = model->template get_edge_property<unsigned char>(name);
-                    details::update_scalar_on_edges<Model>(model, drawable, prop);
-                } else {
-                    LOG(WARNING) << "scalar field \'" << name
-                                 << "\' not found from edge properties (use uniform coloring)";
-                    drawable->set_coloring_method(State::UNIFORM_COLOR);
-                    update(model, drawable);
-                    return;
-                }
-            }
-
-
             template<typename FT>
             inline void
             update(SurfaceMesh *model, TrianglesDrawable *drawable, SurfaceMesh::FaceProperty<FT> prop) {
@@ -547,7 +454,7 @@ namespace easy3d {
 
 
             template<typename Mesh>
-            void update_color(Mesh *model, PointsDrawable *drawable, typename Mesh::template VertexProperty<vec3> prop) {
+            void update_colors_on_vertices(Mesh *model, PointsDrawable *drawable, typename Mesh::template VertexProperty<vec3> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -564,7 +471,7 @@ namespace easy3d {
 
 
             template<typename Model>
-            void update(Model *model, PointsDrawable *drawable, typename Model::template VertexProperty<vec2> prop) {
+            void update_texcoords_on_vertices(Model *model, PointsDrawable *drawable, typename Model::template VertexProperty<vec2> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -1136,7 +1043,7 @@ namespace easy3d {
 
 
             template <typename Model>
-            void update_color(Model *model, LinesDrawable *drawable, typename Model::template EdgeProperty<vec3> prop) {
+            void update_colors_on_edges(Model *model, LinesDrawable *drawable, typename Model::template EdgeProperty<vec3> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -1166,7 +1073,7 @@ namespace easy3d {
 
             template <typename Model>
             void
-            update_color(Model *model, LinesDrawable *drawable, typename Model::template VertexProperty<vec3> prop) {
+            update_colors_on_vertices(Model *model, LinesDrawable *drawable, typename Model::template VertexProperty<vec3> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -1196,7 +1103,7 @@ namespace easy3d {
 
             template <typename Model>
             void
-            update(Model *model, LinesDrawable *drawable, typename Model::template VertexProperty<vec2> prop) {
+            update_texcoords_on_vertices(Model *model, LinesDrawable *drawable, typename Model::template VertexProperty<vec2> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -1225,7 +1132,7 @@ namespace easy3d {
             }
 
             template<typename Model>
-            void update(Model *model, LinesDrawable *drawable, typename Model::template EdgeProperty<vec2> prop) {
+            void update_texcoords_on_edges(Model *model, LinesDrawable *drawable, typename Model::template EdgeProperty<vec2> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -1291,6 +1198,309 @@ namespace easy3d {
                 }
             }
 
+
+            template<typename Model>
+            void update_uniform_colors(Model *model, PointsDrawable *drawable) {
+                auto points = model->template get_vertex_property<vec3>("v:point");
+                drawable->update_vertex_buffer(points.vector());
+                auto normals = model->template get_vertex_property<vec3>("v:normal");
+                if (normals)
+                    drawable->update_normal_buffer(normals.vector());
+            }
+
+
+            template<typename Model>
+            void update_uniform_colors(Model *model, LinesDrawable *drawable) {
+                std::vector<unsigned int> indices;
+                indices.reserve(model->n_edges() * 2);
+                for (auto e : model->edges()) {
+                    auto s = model->vertex(e, 0);
+                    auto t = model->vertex(e, 1);
+                    indices.push_back(s.idx());
+                    indices.push_back(t.idx());
+                }
+                auto points = model->template get_vertex_property<vec3>("v:point");
+                drawable->update_vertex_buffer(points.vector());
+                drawable->update_element_buffer(indices);
+            }
+
+
+            template<typename Model>
+            void update_colors_on_vertices(Model *model, PointsDrawable *drawable, const std::string& name) {
+                auto colors = model->template get_vertex_property<vec3>(name);
+                if (colors)
+                    details::update_colors_on_vertices<Model>(model, drawable, colors);
+                else {
+                    LOG(WARNING) << "color property \'" << name
+                                 << "\' not found on vertices (use uniform coloring)";
+                    drawable->set_coloring_method(State::UNIFORM_COLOR);
+                    buffers::update(model, drawable);
+                }
+            }
+
+
+            template<typename Model>
+            void update_colors_on_vertices(Model *model, LinesDrawable *drawable, const std::string& name) {
+                auto colors = model->template get_vertex_property<vec3>(name);
+                if (colors)
+                    details::update_colors_on_vertices(model, drawable, colors);
+                else {
+                    LOG(WARNING) << "color property \'" << name
+                                 << "\' not found on vertices (use uniform coloring)";
+                    drawable->set_coloring_method(State::UNIFORM_COLOR);
+                    buffers::update(model, drawable);
+                }
+            }
+
+
+            template<typename Model>
+            void update_colors_on_edges(Model *model, LinesDrawable *drawable, const std::string& name) {
+                auto colors = model->template get_edge_property<vec3>(name);
+                if (colors)
+                    details::update_colors_on_edges(model, drawable, colors);
+                else {
+                    LOG(WARNING) << "color property \'" << name
+                                 << "\' not found on edges (use uniform coloring)";
+                    drawable->set_coloring_method(State::UNIFORM_COLOR);
+                    buffers::update(model, drawable);
+                }
+            }
+
+
+            template<typename Model>
+            void update_texcoords_on_vertices(Model *model, PointsDrawable *drawable, const std::string& name) {
+                auto texcoord = model->template get_vertex_property<vec2>(name);
+                if (texcoord)
+                    details::update_texcoords_on_vertices(model, drawable, texcoord);
+                else {
+                    LOG(WARNING) << "texcoord property \'" << name
+                                 << "\' not found on vertices (use uniform coloring)";
+                    drawable->set_coloring_method(State::UNIFORM_COLOR);
+                    buffers::update(model, drawable);
+                }
+            }
+
+
+            template<typename Model>
+            void update_texcoords_on_vertices(Model *model, LinesDrawable *drawable, const std::string& name) {
+                auto texcoord = model->template get_vertex_property<vec2>(name);
+                if (texcoord)
+                    details::update_texcoords_on_vertices(model, drawable, texcoord);
+                else {
+                    LOG(WARNING) << "texcoord property \'" << name
+                                 << "\' not found on vertices (use uniform coloring)";
+                    drawable->set_coloring_method(State::UNIFORM_COLOR);
+                    buffers::update(model, drawable);
+                }
+            }
+
+
+            template<typename Model>
+            void update_texcoords_on_edges(Model *model, LinesDrawable *drawable, const std::string& name) {
+                auto texcoord = model->template get_edge_property<vec2>(name);
+                if (texcoord)
+                    details::update_texcoords_on_edges(model, drawable, texcoord);
+                else {
+                    LOG(WARNING) << "texcoord property \'" << name
+                                 << "\' not found on edges (use uniform coloring)";
+                    drawable->set_coloring_method(State::UNIFORM_COLOR);
+                    buffers::update(model, drawable);
+                }
+            }
+
+
+
+            template<typename Model>
+            inline void
+            update_scalar_on_vertices(Model *model, PointsDrawable *drawable, const std::string &name) {
+                if (model->template get_vertex_property<float>(name)) {
+                    auto prop = model->template get_vertex_property<float>(name);
+                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
+                } else if (model->template get_vertex_property<double>(name)) {
+                    auto prop = model->template get_vertex_property<double>(name);
+                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
+                } else if (model->template get_vertex_property<int>(name)) {
+                    auto prop = model->template get_vertex_property<int>(name);
+                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
+                } else if (model->template get_vertex_property<unsigned int>(name)) {
+                    auto prop = model->template get_vertex_property<unsigned int>(name);
+                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
+                } else if (model->template get_vertex_property<char>(name)) {
+                    auto prop = model->template get_vertex_property<char>(name);
+                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
+                } else if (model->template get_vertex_property<unsigned char>(name)) {
+                    auto prop = model->template get_vertex_property<unsigned char>(name);
+                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
+                } else {
+                    LOG(WARNING) << "scalar field \'" << name
+                                 << "\' not found from vertex properties (use uniform coloring)";
+                    drawable->set_coloring_method(State::UNIFORM_COLOR);
+                    buffers::update(model, drawable);
+                }
+            }
+
+
+            template<typename Model>
+            inline void
+            update_scalar_on_vertices(Model *model, LinesDrawable *drawable, const std::string &name) {
+                if (model->template get_vertex_property<float>(name)) {
+                    auto prop = model->template get_vertex_property<float>(name);
+                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
+                } else if (model->template get_vertex_property<double>(name)) {
+                    auto prop = model->template get_vertex_property<double>(name);
+                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
+                } else if (model->template get_vertex_property<int>(name)) {
+                    auto prop = model->template get_vertex_property<int>(name);
+                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
+                } else if (model->template get_vertex_property<unsigned int>(name)) {
+                    auto prop = model->template get_vertex_property<unsigned int>(name);
+                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
+                } else if (model->template get_vertex_property<char>(name)) {
+                    auto prop = model->template get_vertex_property<char>(name);
+                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
+                } else if (model->template get_vertex_property<unsigned char>(name)) {
+                    auto prop = model->template get_vertex_property<unsigned char>(name);
+                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
+                } else {
+                    LOG(WARNING) << "scalar field \'" << name
+                                 << "\' not found from vertex properties (use uniform coloring)";
+                    drawable->set_coloring_method(State::UNIFORM_COLOR);
+                    buffers::update(model, drawable);
+                }
+            }
+
+
+            template<typename Model>
+            inline void
+            update_scalar_on_edges(Model *model, LinesDrawable *drawable, const std::string &name) {
+                if (model->template get_edge_property<float>(name)) {
+                    auto prop = model->template get_edge_property<float>(name);
+                    details::update_scalar_on_edges<Model>(model, drawable, prop);
+                } else if (model->template get_edge_property<double>(name)) {
+                    auto prop = model->template get_edge_property<double>(name);
+                    details::update_scalar_on_edges<Model>(model, drawable, prop);
+                } else if (model->template get_edge_property<int>(name)) {
+                    auto prop = model->template get_edge_property<int>(name);
+                    details::update_scalar_on_edges<Model>(model, drawable, prop);
+                } else if (model->template get_edge_property<unsigned int>(name)) {
+                    auto prop = model->template get_edge_property<unsigned int>(name);
+                    details::update_scalar_on_edges<Model>(model, drawable, prop);
+                } else if (model->template get_edge_property<char>(name)) {
+                    auto prop = model->template get_edge_property<char>(name);
+                    details::update_scalar_on_edges<Model>(model, drawable, prop);
+                } else if (model->template get_edge_property<unsigned char>(name)) {
+                    auto prop = model->template get_edge_property<unsigned char>(name);
+                    details::update_scalar_on_edges<Model>(model, drawable, prop);
+                } else {
+                    LOG(WARNING) << "scalar field \'" << name
+                                 << "\' not found from edge properties (use uniform coloring)";
+                    drawable->set_coloring_method(State::UNIFORM_COLOR);
+                    buffers::update(model, drawable);
+                }
+            }
+
+
+            template <typename Model>
+            void update(Model *model, LinesDrawable *drawable) {
+                assert(model);
+                assert(drawable);
+
+                if (model->empty()) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
+
+                const std::string &name = drawable->property_name();
+                switch (drawable->coloring_method()) {
+                    case State::TEXTURED: {
+                        switch (drawable->property_location()) {
+                            case State::EDGE:
+                                details::update_texcoords_on_edges<Model>(model, drawable, name);
+                                break;
+                            case State::VERTEX:
+                                details::update_texcoords_on_vertices<Model>(model, drawable, name);
+                                break;
+                            case State::FACE:
+                            case State::HALFEDGE:
+                                LOG(WARNING) << "should not happen" << name;
+                                break;
+                        }
+                        break;
+                    }
+
+                    case State::COLOR_PROPERTY: {
+                        switch (drawable->property_location()) {
+                            case State::EDGE:
+                                details::update_colors_on_edges<Model>(model, drawable, name);
+                                break;
+
+                            case State::VERTEX:
+                                details::update_colors_on_vertices<Model>(model, drawable, name);
+                                break;
+
+                            case State::FACE:
+                            case State::HALFEDGE:
+                                LOG(WARNING) << "should not happen" << name;
+                                break;
+                        }
+                        break;
+                    }
+
+                    case State::SCALAR_FIELD: {
+                        switch (drawable->property_location()) {
+                            case State::EDGE:
+                                details::update_scalar_on_edges<Model>(model, drawable, name);
+                                break;
+                            case State::VERTEX:
+                                details::update_scalar_on_vertices<Model>(model, drawable, name);
+                                break;
+                            case State::FACE:
+                            case State::HALFEDGE:
+                                LOG(WARNING) << "should not happen" << name;
+                                break;
+                        }
+                        break;
+                    }
+
+                    default: // uniform color
+                        // if reached here, we choose a uniform color.
+                        details::update_uniform_colors<Model>(model, drawable);
+                        break;
+                }
+            }
+
+
+            template <typename Model>
+            void update(Model *model, PointsDrawable *drawable) {
+                assert(model);
+                assert(drawable);
+
+                if (model->empty()) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
+
+                const std::string &name = drawable->property_name();
+                switch (drawable->coloring_method()) {
+                    case State::TEXTURED:
+                        details::update_texcoords_on_vertices<Model>(model, drawable, name);
+                        break;
+
+                    case State::COLOR_PROPERTY:
+                        details::update_colors_on_vertices<Model>(model, drawable, name);
+                        break;
+
+                    case State::SCALAR_FIELD:
+                        details::update_scalar_on_vertices<Model>(model, drawable, name);
+                        break;
+
+                    default:  // uniform color
+                        details::update_uniform_colors<Model>(model, drawable);
+                        break;
+                }
+            }
+
+
         }
 
 
@@ -1300,58 +1510,7 @@ namespace easy3d {
 
 
         void update(PointCloud *model, PointsDrawable *drawable) {
-            assert(model);
-            assert(drawable);
-
-            if (model->empty()) {
-                LOG(WARNING) << "model has no valid geometry";
-                return;
-            }
-
-            const std::string &name = drawable->property_name();
-            switch (drawable->coloring_method()) {
-                case State::TEXTURED: {
-                    auto texcoord = model->get_vertex_property<vec2>(name);
-                    if (texcoord)
-                        details::update(model, drawable, texcoord);
-                    else {
-                        LOG(WARNING) << "texcoord property \'" << name
-                                     << "\' not found (use uniform coloring)";
-                        drawable->set_coloring_method(State::UNIFORM_COLOR);
-                        update(model, drawable);
-                        return;
-                    }
-                    break;
-                }
-
-                case State::COLOR_PROPERTY: {
-                    auto colors = model->get_vertex_property<vec3>(name);
-                    if (colors)
-                        details::update_color<PointCloud>(model, drawable, colors);
-                    else {
-                        LOG(WARNING) << "color property \'" << name
-                                     << "\' not found (use uniform coloring)";
-                        drawable->set_coloring_method(State::UNIFORM_COLOR);
-                        update(model, drawable);
-                        return;
-                    }
-                    break;
-                }
-
-                case State::SCALAR_FIELD: {
-                    details::update_scalar_on_vertices<PointCloud>(model, drawable, name);
-                    break;
-                }
-
-                default: {// uniform color
-                    auto points = model->get_vertex_property<vec3>("v:point");
-                    drawable->update_vertex_buffer(points.vector());
-                    auto normals = model->get_vertex_property<vec3>("v:normal");
-                    if (normals)
-                        drawable->update_normal_buffer(normals.vector());
-                    break;
-                }
-            }
+            details::update<PointCloud>(model, drawable);
         }
 
 
@@ -1385,194 +1544,28 @@ namespace easy3d {
 
 
         void update(SurfaceMesh *model, PointsDrawable *drawable) {
-            assert(model);
-            assert(drawable);
-
-            if (model->empty()) {
-                LOG(WARNING) << "model has no valid geometry";
-                return;
-            }
-
             if (drawable->name() == "locks") {
                 details::update_mesh_locked_vertices(model, drawable);
                 return;
             }
-
-            const std::string &name = drawable->property_name();
-            switch (drawable->coloring_method()) {
-                case State::TEXTURED: {
-                    auto texcoord = model->get_vertex_property<vec2>(name);
-                    if (texcoord)
-                        details::update<SurfaceMesh>(model, drawable, texcoord);
-                    else {
-                        LOG(WARNING) << "texcoord property \'" << name
-                                     << "\' not found (use uniform coloring)";
-                        drawable->set_coloring_method(State::UNIFORM_COLOR);
-                        update(model, drawable);
-                        return;
-                    }
-                    break;
-                }
-
-                case State::COLOR_PROPERTY: {
-                    auto colors = model->get_vertex_property<vec3>(name);
-                    if (colors)
-                        details::update_color<SurfaceMesh>(model, drawable, colors);
-                    else {
-                        LOG(WARNING) << "color property \'" << name
-                                     << "\' not found (use uniform coloring)";
-                        drawable->set_coloring_method(State::UNIFORM_COLOR);
-                        update(model, drawable);
-                        return;
-                    }
-                    break;
-                }
-
-                case State::SCALAR_FIELD:
-                    details::update_scalar_on_vertices<SurfaceMesh>(model, drawable, name);
-                    break;
-
-                default: { // uniform color
-                    auto points = model->get_vertex_property<vec3>("v:point");
-                    drawable->update_vertex_buffer(points.vector());
-                    auto normals = model->get_vertex_property<vec3>("v:normal");
-                    if (normals)
-                        drawable->update_normal_buffer(normals.vector());
-                    break;
-                }
-            }
+            details::update<SurfaceMesh>(model, drawable);
         }
-
 
 
         // -------------------------------------------------------------------------------------------------------------
 
 
-
         void update(SurfaceMesh *model, LinesDrawable *drawable) {
-            assert(model);
-            assert(drawable);
-
-            if (model->empty()) {
-                LOG(WARNING) << "model has no valid geometry";
-                return;
-            }
-
             if (drawable->name() == "borders") {
                 details::update_mesh_borders(model, drawable);
                 return;
             }
 
-            const std::string &name = drawable->property_name();
-            switch (drawable->coloring_method()) {
-                case State::TEXTURED: {
-                    switch (drawable->property_location()) {
-                        case State::EDGE: {
-                            auto texcoord = model->get_edge_property<vec2>(name);
-                            if (texcoord)
-                                details::update(model, drawable, texcoord);
-                            else {
-                                LOG(WARNING) << "texcoord property \'" << name
-                                             << "\' not found on edges (use uniform coloring)";
-                                drawable->set_coloring_method(State::UNIFORM_COLOR);
-                                update(model, drawable);
-                                return;
-                            }
-                            break;
-                        }
-                        case State::VERTEX: {
-                            auto texcoord = model->get_vertex_property<vec2>(name);
-                            if (texcoord)
-                                details::update(model, drawable, texcoord);
-                            else {
-                                LOG(WARNING) << "texcoord property \'" << name
-                                             << "\' not found on vertices (use uniform coloring)";
-                                drawable->set_coloring_method(State::UNIFORM_COLOR);
-                                update(model, drawable);
-                                return;
-                            }
-                            break;
-                        }
-                        case State::FACE:
-                        case State::HALFEDGE:
-                            LOG(WARNING) << "should not happen" << name;
-                            break;
-                    }
-                    break;
-                }
-
-                case State::COLOR_PROPERTY: {
-                    switch (drawable->property_location()) {
-                        case State::EDGE: {
-                            auto colors = model->get_edge_property<vec3>(name);
-                            if (colors)
-                                details::update_color<SurfaceMesh>(model, drawable, colors);
-                            else {
-                                LOG(WARNING) << "color property \'" << name
-                                             << "\' not found (use uniform coloring)";
-                                drawable->set_coloring_method(State::UNIFORM_COLOR);
-                                update(model, drawable);
-                                return;
-                            }
-                            break;
-                        }
-                        case State::VERTEX: {
-                            auto colors = model->get_vertex_property<vec3>(name);
-                            if (colors)
-                                details::update_color<SurfaceMesh>(model, drawable, colors);
-                            else {
-                                LOG(WARNING) << "color property \'" << name
-                                             << "\' not found (use uniform coloring)";
-                                drawable->set_coloring_method(State::UNIFORM_COLOR);
-                                update(model, drawable);
-                                return;
-                            }
-                            break;
-                        }
-                        case State::FACE:
-                        case State::HALFEDGE:
-                            LOG(WARNING) << "should not happen" << name;
-                            break;
-                    }
-                    break;
-                }
-
-                case State::SCALAR_FIELD: {
-                    switch (drawable->property_location()) {
-                        case State::EDGE: 
-                            details::update_scalar_on_edges<SurfaceMesh>(model, drawable, name);
-                            break;
-                        case State::VERTEX:
-                            details::update_scalar_on_vertices<SurfaceMesh>(model, drawable, name);
-                            break;
-                        case State::FACE:
-                        case State::HALFEDGE:
-                            LOG(WARNING) << "should not happen" << name;
-                            break;
-                    }
-                    break;
-                }
-
-                default: {// uniform color
-                    // if reached here, we choose a uniform color.
-                    std::vector<unsigned int> indices;
-                    indices.reserve(model->n_edges() * 2);
-                    for (auto e : model->edges()) {
-                        SurfaceMesh::Vertex s = model->vertex(e, 0);
-                        SurfaceMesh::Vertex t = model->vertex(e, 1);
-                        indices.push_back(s.idx());
-                        indices.push_back(t.idx());
-                    }
-                    auto points = model->get_vertex_property<vec3>("v:point");
-                    drawable->update_vertex_buffer(points.vector());
-                    drawable->update_element_buffer(indices);
-                    break;
-                }
-            }
+            details::update<SurfaceMesh>(model, drawable);
         }
 
 
-        void update(SurfaceMesh *model, LinesDrawable *drawable, const std::string &field, int location, float scale) {
+        void update(SurfaceMesh *model, LinesDrawable *drawable, const std::string &field, State::Location location, float scale) {
             if (model->empty()) {
                 LOG(WARNING) << "model has no valid geometry";
                 return;
@@ -1618,7 +1611,7 @@ namespace easy3d {
             std::vector<vec3> d_points;
 
             switch (location) {
-                case 0: {   // on faces
+                case State::FACE: {   // on faces
                     auto prop = model->get_face_property<vec3>(field);
                     d_points.resize(model->n_faces() * 2, vec3(0.0f, 0.0f, 0.0f));
                     int idx = 0;
@@ -1634,7 +1627,7 @@ namespace easy3d {
                     }
                     break;
                 }
-                case 1: {   // on vertices
+                case State::VERTEX: {   // on vertices
                     auto prop = model->get_vertex_property<vec3>(field);
                     d_points.resize(model->n_vertices() * 2, vec3(0.0f, 0.0f, 0.0f));
                     for (auto v: model->vertices()) {
@@ -1643,7 +1636,7 @@ namespace easy3d {
                     }
                     break;
                 }
-                case 2: {   // on edges
+                case State::EDGE: {   // on edges
                     auto prop = model->get_edge_property<vec3>(field);
                     d_points.resize(model->n_edges() * 2, vec3(0.0f, 0.0f, 0.0f));
                     for (auto e : model->edges()) {
@@ -1655,6 +1648,8 @@ namespace easy3d {
                     }
                     break;
                 }
+                case State::HALFEDGE:
+                    break;
             }
             drawable->update_vertex_buffer(d_points);
         };
@@ -1819,177 +1814,13 @@ namespace easy3d {
         // -------------------------------------------------------------------------------------------------------------
 
 
-
         void update(Graph *model, PointsDrawable *drawable) {
-            assert(model);
-            assert(drawable);
-
-            if (model->empty()) {
-                LOG(WARNING) << "model has no valid geometry";
-                return;
-            }
-
-            const std::string &name = drawable->property_name();
-            switch (drawable->coloring_method()) {
-                case State::TEXTURED: {
-                    auto texcoord = model->get_vertex_property<vec2>(name);
-                    if (texcoord)
-                        details::update<Graph>(model, drawable, texcoord);
-                    else {
-                        LOG(WARNING) << "texcoord property \'" << name
-                                     << "\' not found (use uniform coloring)";
-                        drawable->set_coloring_method(State::UNIFORM_COLOR);
-                        update(model, drawable);
-                        return;
-                    }
-                    break;
-                }
-
-                case State::COLOR_PROPERTY: {
-                    auto colors = model->get_vertex_property<vec3>(name);
-                    if (colors)
-                        details::update_color<Graph>(model, drawable, colors);
-                    else {
-                        LOG(WARNING) << "color property \'" << name
-                                     << "\' not found (use uniform coloring)";
-                        drawable->set_coloring_method(State::UNIFORM_COLOR);
-                        update(model, drawable);
-                        return;
-                    }
-                    break;
-                }
-
-                case State::SCALAR_FIELD:
-                    details::update_scalar_on_vertices<Graph>(model, drawable, name);
-                    break;
-
-                default: // uniform color
-                    auto points = model->get_vertex_property<vec3>("v:point");
-                    drawable->update_vertex_buffer(points.vector());
-                    break;
-            }
-
+            details::update<Graph>(model, drawable);
         }
 
 
-
-        // -------------------------------------------------------------------------------------------------------------
-
-
-
         void update(Graph *model, LinesDrawable *drawable) {
-            assert(model);
-            assert(drawable);
-
-            if (model->empty()) {
-                LOG(WARNING) << "model has no valid geometry";
-                return;
-            }
-
-            const std::string &name = drawable->property_name();
-            switch (drawable->coloring_method()) {
-                case State::TEXTURED: {
-                    switch (drawable->property_location()) {
-                        case State::EDGE: {
-                            auto texcoord = model->get_edge_property<vec2>(name);
-                            if (texcoord)
-                                details::update(model, drawable, texcoord);
-                            else {
-                                LOG(WARNING) << "texcoord property \'" << name
-                                             << "\' not found on edges (use uniform coloring)";
-                                drawable->set_coloring_method(State::UNIFORM_COLOR);
-                                update(model, drawable);
-                                return;
-                            }
-                            break;
-                        }
-                        case State::VERTEX: {
-                            auto texcoord = model->get_vertex_property<vec2>(name);
-                            if (texcoord)
-                                details::update(model, drawable, texcoord);
-                            else {
-                                LOG(WARNING) << "texcoord property \'" << name
-                                             << "\' not found on vertices (use uniform coloring)";
-                                drawable->set_coloring_method(State::UNIFORM_COLOR);
-                                update(model, drawable);
-                                return;
-                            }
-                            break;
-                        }
-                        case State::FACE:
-                        case State::HALFEDGE:
-                            LOG(WARNING) << "should not happen" << name;
-                            break;
-                    }
-                    break;
-                }
-
-                case State::COLOR_PROPERTY: {
-                    switch (drawable->property_location()) {
-                        case State::EDGE: {
-                            auto colors = model->get_edge_property<vec3>(name);
-                            if (colors)
-                                details::update_color<Graph>(model, drawable, colors);
-                            else {
-                                LOG(WARNING) << "color property \'" << name
-                                             << "\' not found (use uniform coloring)";
-                                drawable->set_coloring_method(State::UNIFORM_COLOR);
-                                update(model, drawable);
-                                return;
-                            }
-                            break;
-                        }
-                        case State::VERTEX: {
-                            auto colors = model->get_vertex_property<vec3>(name);
-                            if (colors)
-                                details::update_color<Graph>(model, drawable, colors);
-                            else {
-                                LOG(WARNING) << "color property \'" << name
-                                             << "\' not found (use uniform coloring)";
-                                drawable->set_coloring_method(State::UNIFORM_COLOR);
-                                update(model, drawable);
-                                return;
-                            }
-                            break;
-                        }
-                        case State::FACE:
-                        case State::HALFEDGE:
-                            LOG(WARNING) << "should not happen" << name;
-                            break;
-                    }
-                    break;
-                }
-
-                case State::SCALAR_FIELD: {
-                    switch (drawable->property_location()) {
-                        case State::EDGE:
-                            details::update_scalar_on_edges<Graph>(model, drawable, name);
-                            break;
-                        case State::VERTEX:
-                            details::update_scalar_on_vertices<Graph>(model, drawable, name);
-                            break;
-                        case State::FACE:
-                        case State::HALFEDGE:
-                            LOG(WARNING) << "should not happen" << name;
-                            break;
-                    }
-                    break;
-                }
-
-                default: {// uniform color
-                    // if reached here, we choose a uniform color.
-                    std::vector<unsigned int> indices;
-                    indices.reserve(model->n_edges() * 2);
-                    for (auto e : model->edges()) {
-                        indices.push_back(model->vertex(e, 0).idx());
-                        indices.push_back(model->vertex(e, 1).idx());
-                    }
-                    auto points = model->get_vertex_property<vec3>("v:point");
-                    drawable->update_vertex_buffer(points.vector());
-                    drawable->update_element_buffer(indices);
-                    break;
-                }
-            }
+            details::update<Graph>(model, drawable);
         }
 
 
@@ -1997,78 +1828,12 @@ namespace easy3d {
 
 
         void update(PolyMesh* model, PointsDrawable* drawable) {
-            assert(model);
-            assert(drawable);
-
-            if (model->empty()) {
-                LOG(WARNING) << "model has no valid geometry";
-                return;
-            }
-
-            const std::string &name = drawable->property_name();
-            switch (drawable->coloring_method()) {
-                case State::TEXTURED: {
-                    auto texcoord = model->get_vertex_property<vec2>(name);
-                    if (texcoord)
-                        details::update<PolyMesh>(model, drawable, texcoord);
-                    else {
-                        LOG(WARNING) << "texcoord property \'" << name
-                                     << "\' not found (use uniform coloring)";
-                        drawable->set_coloring_method(State::UNIFORM_COLOR);
-                        update(model, drawable);
-                        return;
-                    }
-                    break;
-                }
-
-                case State::COLOR_PROPERTY: {
-                    auto colors = model->get_vertex_property<vec3>(name);
-                    if (colors)
-                        details::update_color<PolyMesh>(model, drawable, colors);
-                    else {
-                        LOG(WARNING) << "color property \'" << name
-                                     << "\' not found (use uniform coloring)";
-                        drawable->set_coloring_method(State::UNIFORM_COLOR);
-                        update(model, drawable);
-                        return;
-                    }
-                    break;
-                }
-
-                case State::SCALAR_FIELD:
-                    details::update_scalar_on_vertices<PolyMesh>(model, drawable, name);
-                    break;
-
-                default: { // uniform color
-                    drawable->update_vertex_buffer(model->points());
-                    auto normals = model->get_vertex_property<vec3>("v:normal");
-                    if (normals)
-                        drawable->update_normal_buffer(normals.vector());
-                    break;
-                }
-            }
+            details::update<PolyMesh>(model, drawable);
         }
 
 
         void update(PolyMesh* model, LinesDrawable* drawable) {
-            assert(model);
-            assert(drawable);
-
-            if (model->empty()) {
-                LOG(WARNING) << "model has no valid geometry";
-                return;
-            }
-
-            std::vector<unsigned int> d_indices(model->n_edges() * 2);
-            int idx = 0;
-            for (auto e : model->edges()) {
-                d_indices[idx * 2 ] = model->vertex(e, 0).idx();
-                d_indices[idx * 2 + 1] = model->vertex(e, 1).idx();
-                ++idx;
-            }
-
-            drawable->update_vertex_buffer(model->points());
-            drawable->update_element_buffer(d_indices);
+            details::update<PolyMesh>(model, drawable);
         }
 
 
