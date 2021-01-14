@@ -218,17 +218,23 @@ std::vector<QString> WidgetPointsDrawable::vectorFields(const easy3d::Model *mod
     if (cloud)
         points_details::vector_fields_on_vertices(cloud, fields);
 
-    auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
-    if (mesh)
-        points_details::vector_fields_on_vertices(mesh, fields);
+    else {
+        auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
+        if (mesh)
+            points_details::vector_fields_on_vertices(mesh, fields);
 
-    auto graph = dynamic_cast<Graph *>(viewer_->currentModel());
-    if (graph)
-        points_details::vector_fields_on_vertices(graph, fields);
+        else {
+            auto graph = dynamic_cast<Graph *>(viewer_->currentModel());
+            if (graph)
+                points_details::vector_fields_on_vertices(graph, fields);
 
-    auto poly = dynamic_cast<PolyMesh *>(viewer_->currentModel());
-    if (poly)
-        points_details::vector_fields_on_vertices(poly, fields);
+            else {
+                auto poly = dynamic_cast<PolyMesh *>(viewer_->currentModel());
+                if (poly)
+                    points_details::vector_fields_on_vertices(poly, fields);
+            }
+        }
+    }
 
     // if no vector fields found, add a "not available" item
     if (fields.empty())
@@ -543,6 +549,12 @@ void WidgetPointsDrawable::updateVectorFieldBuffer(Model *model, const std::stri
                 return;
             }
         }
+        else if (dynamic_cast<PolyMesh *>(model)) {
+            auto poly = dynamic_cast<PolyMesh *>(model);
+            auto normals = poly->get_vertex_property<vec3>(name);
+            if (!normals)
+                poly->update_vertex_normals();
+        }
     }
 
     // a vector field is visualized as a LinesDrawable whose name is the same as the vector field
@@ -555,6 +567,8 @@ void WidgetPointsDrawable::updateVectorFieldBuffer(Model *model, const std::stri
                 buffers::update(dynamic_cast<SurfaceMesh*>(m), dynamic_cast<LinesDrawable*>(d), name, State::VERTEX, scale);
             else if (dynamic_cast<PointCloud *>(m))
                 buffers::update(dynamic_cast<PointCloud*>(m), dynamic_cast<LinesDrawable*>(d), name, scale);
+            else if (dynamic_cast<PolyMesh *>(m))
+                buffers::update(dynamic_cast<PolyMesh*>(m), dynamic_cast<LinesDrawable*>(d), name, State::VERTEX, scale);
         });
     }
 }
