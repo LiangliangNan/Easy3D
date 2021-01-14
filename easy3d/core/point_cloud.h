@@ -305,9 +305,16 @@ namespace easy3d {
         {
             return VertexProperty<T>(vprops_.add<T>(name, t));
         }
-        /** @brief add a model property of type \c T with name \c name and default value \c t.
-        fails if a property named \c name exists already, since the name has to be unique.
-        in this case it returns an invalid property */
+        /**
+         * \brief Adds a model property of type \c T with name \c name and default value \c t.
+         * \details Fails if a property named \c name exists already, since the name has to be unique.
+         *      In this case it returns an invalid property.
+         * Example:
+         *      \code
+         *          auto trans = cloud->add_model_property<mat4>("transformation", mat4::identity());
+         *          trans[0] = mat4::translation(-x0, -y0, -z0);
+         *      \endcode
+         */
         template <class T> ModelProperty<T> add_model_property(const std::string& name, const T t = T())
         {
             return ModelProperty<T>(mprops_.add<T>(name, t));
@@ -319,8 +326,16 @@ namespace easy3d {
         {
             return VertexProperty<T>(vprops_.get<T>(name));
         }
-        /** @brief get the model property named \c name of type \c T. returns an invalid
-        ModelProperty if the property does not exist or if the type does not match. */
+        /**
+         * \brief Gets the model property named \c name of type \c T.
+         * \return The model property. An invalid ModelProperty will be returned if the
+         *      property does not exist or if the type does not match.
+         * Example:
+         *      \code
+         *          auto T = cloud->get_model_property<mat4>("transformation");
+         *          T[0] = mat4::translation(-x0, -y0, -z0);
+         *      \endcode
+         */
         template <class T> ModelProperty<T> get_model_property(const std::string& name) const
         {
             return ModelProperty<T>(mprops_.get<T>(name));
