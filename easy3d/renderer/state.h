@@ -67,7 +67,7 @@ namespace easy3d {
          * The location of a coloring property. It is denoted by the type of the geometric primitives on which the
          * property is defined.
          */
-        enum PropertyLocation {
+        enum Location {
             VERTEX, FACE, EDGE, HALFEDGE
         };
 
@@ -111,7 +111,7 @@ namespace easy3d {
         * @param color_location The location of the color property.
         * @param color_name The name of the color property.
         */
-        void set_property_coloring(PropertyLocation color_location, const std::string &color_name = "");
+        void set_property_coloring(Location color_location, const std::string &color_name = "");
 
         /**
         * Constructs a scheme for textured rendering.
@@ -120,7 +120,7 @@ namespace easy3d {
         * @param repeat The repeat factor of the texture. Default value is 1.0.
         * @param repeat_fraction The fractional repeat factor of the texture. Default value is 0.0.
         */
-        void set_texture_coloring(PropertyLocation texcoord_location, const std::string &texcoord_name,
+        void set_texture_coloring(Location texcoord_location, const std::string &texcoord_name,
                                   const Texture *texture = nullptr, float repeat = 1.0f,
                                   float repeat_fraction = 0.0f);
 
@@ -132,7 +132,7 @@ namespace easy3d {
          * @param clamp_lower The percentage of values to be clamped at the lower side of the range. Default is 5%.
          * @param clamp_upper The percentage of values to be clamped at the upper side of the range. Default is 5%.
          */
-        void set_scalar_coloring(PropertyLocation scalar_location, const std::string &scalar_name,
+        void set_scalar_coloring(Location scalar_location, const std::string &scalar_name,
                                  const Texture *texture = nullptr, float clamp_lower = 0.05f,
                                  float clamp_upper = 0.05f);
 
@@ -143,7 +143,7 @@ namespace easy3d {
          * @param name The name of the coloring property.
          * @param texture The texture for the coloring.
          */
-        void set_coloring(Method method, PropertyLocation location, const std::string &name);
+        void set_coloring(Method method, Location location, const std::string &name);
 
         /**
          * Sets the coloring method.
@@ -163,7 +163,7 @@ namespace easy3d {
         const vec4 &color() const { return color_; }
 
         /** The location of the color property. */
-        PropertyLocation property_location() const { return property_location_; }
+        Location property_location() const { return property_location_; }
 
         /** The name of the color attribute. */
         const std::string &property_name() const { return property_name_; }
@@ -259,7 +259,7 @@ namespace easy3d {
 
         Method coloring_method_;
         vec4 color_; // valid when color method is UNIFORM_COLOR
-        PropertyLocation property_location_;
+        Location property_location_;
         std::string property_name_;
 
         bool lighting_;

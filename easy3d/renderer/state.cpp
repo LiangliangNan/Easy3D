@@ -95,14 +95,14 @@ namespace easy3d {
     }
 
 
-    void State::set_property_coloring(PropertyLocation color_location, const std::string &color_name) {
+    void State::set_property_coloring(Location color_location, const std::string &color_name) {
         coloring_method_ = COLOR_PROPERTY;
         property_location_ = color_location;
         property_name_ = color_name;
     }
 
 
-    void State::set_texture_coloring(PropertyLocation texcoord_location, const std::string &texcoord_name,
+    void State::set_texture_coloring(Location texcoord_location, const std::string &texcoord_name,
                                      const Texture *texture, float repeat, float repeat_fraction) {
         coloring_method_ = TEXTURED;
         property_location_ = texcoord_location;
@@ -113,7 +113,7 @@ namespace easy3d {
     }
 
 
-    void State::set_scalar_coloring(PropertyLocation scalar_location, const std::string &scalar_name,
+    void State::set_scalar_coloring(Location scalar_location, const std::string &scalar_name,
                                     const Texture *texture, float clamp_lower, float clamp_upper) {
         coloring_method_ = SCALAR_FIELD;
         property_location_ = scalar_location;
@@ -126,7 +126,7 @@ namespace easy3d {
     }
 
 
-    void State::set_coloring(Method method, PropertyLocation location, const std::string &name) {
+    void State::set_coloring(Method method, Location location, const std::string &name) {
         coloring_method_ = method;
         property_location_ = location;
         property_name_ = name;
