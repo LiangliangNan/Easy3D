@@ -512,43 +512,43 @@ namespace easy3d {
             }
 
 
-            template<typename FT>
-            void update(Graph *model, LinesDrawable *drawable, Graph::EdgeProperty<FT> prop) {
-                assert(model);
-                assert(drawable);
-                assert(prop);
-
-                if (model->empty()) {
-                    LOG(WARNING) << "model has no valid geometry";
-                    return;
-                }
-
-                const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
-                const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
-                float min_value = std::numeric_limits<float>::max();
-                float max_value = -std::numeric_limits<float>::max();
-                details::clamp_scalar_field(prop.vector(), min_value, max_value, dummy_lower, dummy_upper);
-
-                auto points = model->get_vertex_property<vec3>("v:point");
-                std::vector<vec3> d_points;
-                d_points.reserve(model->n_edges() * 2);
-                std::vector<vec2> d_texcoords;
-                d_texcoords.reserve(model->n_edges() * 2);
-                for (auto e : model->edges()) {
-                    Graph::Vertex s = model->vertex(e, 0);
-                    Graph::Vertex t = model->vertex(e, 1);
-                    d_points.push_back(points[s]);
-                    d_points.push_back(points[t]);
-                    float coord_s = (prop[e] - min_value) / (max_value - min_value);
-                    d_texcoords.emplace_back(vec2(coord_s, 0.5f));
-                    float coord_t = (prop[e] - min_value) / (max_value - min_value);
-                    d_texcoords.emplace_back(vec2(coord_t, 0.5f));
-                }
-                drawable->update_vertex_buffer(d_points);
-                drawable->update_texcoord_buffer(d_texcoords);
-                drawable->release_element_buffer();
-                drawable->set_impostor_type(LinesDrawable::CYLINDER);
-            }
+//            template<typename FT>
+//            void update(Graph *model, LinesDrawable *drawable, Graph::EdgeProperty<FT> prop) {
+//                assert(model);
+//                assert(drawable);
+//                assert(prop);
+//
+//                if (model->empty()) {
+//                    LOG(WARNING) << "model has no valid geometry";
+//                    return;
+//                }
+//
+//                const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
+//                const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
+//                float min_value = std::numeric_limits<float>::max();
+//                float max_value = -std::numeric_limits<float>::max();
+//                details::clamp_scalar_field(prop.vector(), min_value, max_value, dummy_lower, dummy_upper);
+//
+//                auto points = model->get_vertex_property<vec3>("v:point");
+//                std::vector<vec3> d_points;
+//                d_points.reserve(model->n_edges() * 2);
+//                std::vector<vec2> d_texcoords;
+//                d_texcoords.reserve(model->n_edges() * 2);
+//                for (auto e : model->edges()) {
+//                    Graph::Vertex s = model->vertex(e, 0);
+//                    Graph::Vertex t = model->vertex(e, 1);
+//                    d_points.push_back(points[s]);
+//                    d_points.push_back(points[t]);
+//                    float coord_s = (prop[e] - min_value) / (max_value - min_value);
+//                    d_texcoords.emplace_back(vec2(coord_s, 0.5f));
+//                    float coord_t = (prop[e] - min_value) / (max_value - min_value);
+//                    d_texcoords.emplace_back(vec2(coord_t, 0.5f));
+//                }
+//                drawable->update_vertex_buffer(d_points);
+//                drawable->update_texcoord_buffer(d_texcoords);
+//                drawable->release_element_buffer();
+//                drawable->set_impostor_type(LinesDrawable::CYLINDER);
+//            }
 
 
 //            template<typename FT>
@@ -1280,8 +1280,9 @@ namespace easy3d {
             }
 
 
+            template <typename Model>
             void
-            update(SurfaceMesh *model, LinesDrawable *drawable, SurfaceMesh::VertexProperty<vec2> prop) {
+            update(Model *model, LinesDrawable *drawable, typename Model::template VertexProperty<vec2> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -1291,14 +1292,14 @@ namespace easy3d {
                     return;
                 }
 
-                auto points = model->get_vertex_property<vec3>("v:point");
+                auto points = model->template get_vertex_property<vec3>("v:point");
                 std::vector<vec3> d_points;
                 d_points.reserve(model->n_edges() * 2);
                 std::vector<vec2> d_texcoords;
                 d_points.reserve(model->n_edges() * 2);
                 for (auto e : model->edges()) {
-                    SurfaceMesh::Vertex s = model->vertex(e, 0);
-                    SurfaceMesh::Vertex t = model->vertex(e, 1);
+                    auto s = model->vertex(e, 0);
+                    auto t = model->vertex(e, 1);
                     d_points.push_back(points[s]);
                     d_points.push_back(points[t]);
                     d_texcoords.push_back(prop[s]);
@@ -1326,8 +1327,8 @@ namespace easy3d {
                 std::vector<vec2> d_texcoords;
                 d_points.reserve(model->n_edges() * 2);
                 for (auto e : model->edges()) {
-                    SurfaceMesh::Vertex s = model->vertex(e, 0);
-                    SurfaceMesh::Vertex t = model->vertex(e, 1);
+                    auto s = model->vertex(e, 0);
+                    auto t = model->vertex(e, 1);
                     d_points.push_back(points[s]);
                     d_points.push_back(points[t]);
                     d_texcoords.push_back(prop[e]);
@@ -1439,62 +1440,62 @@ namespace easy3d {
 //                drawable->set_impostor_type(LinesDrawable::CYLINDER);
 //            }
 
-            void update(Graph *model, LinesDrawable *drawable, Graph::VertexProperty<vec2> prop) {
-                assert(model);
-                assert(drawable);
-                assert(prop);
+//            void update(Graph *model, LinesDrawable *drawable, Graph::VertexProperty<vec2> prop) {
+//                assert(model);
+//                assert(drawable);
+//                assert(prop);
+//
+//                if (model->empty()) {
+//                    LOG(WARNING) << "model has no valid geometry";
+//                    return;
+//                }
+//
+//                auto points = model->get_vertex_property<vec3>("v:point");
+//                drawable->update_vertex_buffer(points.vector());
+//
+//                drawable->update_texcoord_buffer(prop.vector());
+//
+//                std::vector<unsigned int> indices;
+//                indices.reserve(model->n_edges() * 2);
+//                for (auto e : model->edges()) {
+//                    unsigned int s = model->vertex(e, 0).idx();
+//                    unsigned int t = model->vertex(e, 1).idx();
+//                    indices.push_back(s);
+//                    indices.push_back(t);
+//                }
+//                drawable->update_element_buffer(indices);
+//                drawable->set_impostor_type(LinesDrawable::CYLINDER);
+//            }
 
-                if (model->empty()) {
-                    LOG(WARNING) << "model has no valid geometry";
-                    return;
-                }
-
-                auto points = model->get_vertex_property<vec3>("v:point");
-                drawable->update_vertex_buffer(points.vector());
-
-                drawable->update_texcoord_buffer(prop.vector());
-
-                std::vector<unsigned int> indices;
-                indices.reserve(model->n_edges() * 2);
-                for (auto e : model->edges()) {
-                    unsigned int s = model->vertex(e, 0).idx();
-                    unsigned int t = model->vertex(e, 1).idx();
-                    indices.push_back(s);
-                    indices.push_back(t);
-                }
-                drawable->update_element_buffer(indices);
-                drawable->set_impostor_type(LinesDrawable::CYLINDER);
-            }
-
-
-            void update(Graph *model, LinesDrawable *drawable, Graph::EdgeProperty<vec2> prop) {
-                assert(model);
-                assert(drawable);
-                assert(prop);
-
-                if (model->empty()) {
-                    LOG(WARNING) << "model has no valid geometry";
-                    return;
-                }
-
-                auto points = model->get_vertex_property<vec3>("v:point");
-                std::vector<vec3> d_points;
-                d_points.reserve(model->n_edges() * 2);
-                std::vector<vec2> d_texcoords;
-                d_texcoords.reserve(model->n_edges() * 2);
-                for (auto e : model->edges()) {
-                    Graph::Vertex s = model->vertex(e, 0);
-                    Graph::Vertex t = model->vertex(e, 1);
-                    d_points.push_back(points[s]);
-                    d_points.push_back(points[t]);
-                    d_texcoords.emplace_back(prop[e]);
-                    d_texcoords.emplace_back(prop[e]);
-                }
-                drawable->update_vertex_buffer(d_points);
-                drawable->update_texcoord_buffer(d_texcoords);
-                drawable->release_element_buffer();
-                drawable->set_impostor_type(LinesDrawable::CYLINDER);
-            }
+//
+//            void update(Graph *model, LinesDrawable *drawable, Graph::EdgeProperty<vec2> prop) {
+//                assert(model);
+//                assert(drawable);
+//                assert(prop);
+//
+//                if (model->empty()) {
+//                    LOG(WARNING) << "model has no valid geometry";
+//                    return;
+//                }
+//
+//                auto points = model->get_vertex_property<vec3>("v:point");
+//                std::vector<vec3> d_points;
+//                d_points.reserve(model->n_edges() * 2);
+//                std::vector<vec2> d_texcoords;
+//                d_texcoords.reserve(model->n_edges() * 2);
+//                for (auto e : model->edges()) {
+//                    Graph::Vertex s = model->vertex(e, 0);
+//                    Graph::Vertex t = model->vertex(e, 1);
+//                    d_points.push_back(points[s]);
+//                    d_points.push_back(points[t]);
+//                    d_texcoords.emplace_back(prop[e]);
+//                    d_texcoords.emplace_back(prop[e]);
+//                }
+//                drawable->update_vertex_buffer(d_points);
+//                drawable->update_texcoord_buffer(d_texcoords);
+//                drawable->release_element_buffer();
+//                drawable->set_impostor_type(LinesDrawable::CYLINDER);
+//            }
 
 
 //            void update(Graph *model, LinesDrawable *drawable, Graph::VertexProperty<vec3> prop) {
@@ -2318,16 +2319,22 @@ namespace easy3d {
                         case State::EDGE: {
                             if (model->get_edge_property<float>(name)) {
                                 auto prop = model->get_edge_property<float>(name);
-                                details::update(model, drawable, prop);
+                                details::update<Graph>(model, drawable, prop);
                             } else if (model->get_edge_property<double>(name)) {
                                 auto prop = model->get_edge_property<double>(name);
-                                details::update(model, drawable, prop);
+                                details::update<Graph>(model, drawable, prop);
                             } else if (model->get_edge_property<int>(name)) {
                                 auto prop = model->get_edge_property<int>(name);
-                                details::update(model, drawable, prop);
+                                details::update<Graph>(model, drawable, prop);
                             } else if (model->get_edge_property<unsigned int>(name)) {
                                 auto prop = model->get_edge_property<unsigned int>(name);
-                                details::update(model, drawable, prop);
+                                details::update<Graph>(model, drawable, prop);
+                            } else if (model->get_edge_property<char>(name)) {
+                                auto prop = model->get_edge_property<char>(name);
+                                details::update<Graph>(model, drawable, prop);
+                            } else if (model->get_edge_property<unsigned char>(name)) {
+                                auto prop = model->get_edge_property<unsigned char>(name);
+                                details::update<Graph>(model, drawable, prop);
                             } else {
                                 LOG(WARNING) << "scalar field \'" << drawable->property_name()
                                              << "\' not found on edges (use uniform coloring)";
