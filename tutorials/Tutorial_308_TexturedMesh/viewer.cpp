@@ -279,7 +279,7 @@ namespace easy3d {
 
             if (!drawable->texture()) { // in case texture creation failed
                 if (prop_face_color)
-                    drawable->set_property_coloring(State::PropertyLocation::FACE, "f:color");
+                    drawable->set_property_coloring(State::Location::FACE, "f:color");
                 else
                     drawable->set_uniform_coloring(vec4(group.diffuse, 1.0f));
             }
