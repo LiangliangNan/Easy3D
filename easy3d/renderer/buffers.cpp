@@ -106,9 +106,9 @@ namespace easy3d {
 //            }
 
 
-            template<typename Mesh, typename FT>
+            template<typename Model, typename FT>
             inline void
-            update_scalar(Mesh *model, PointsDrawable *drawable, typename Mesh::template VertexProperty<FT> prop) {
+            update_scalar(Model *model, PointsDrawable *drawable, typename Model::template VertexProperty<FT> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -137,9 +137,9 @@ namespace easy3d {
             }
 
 
-            template<typename Mesh, typename FT>
+            template<typename Model, typename FT>
             inline void
-            update(Mesh *model, LinesDrawable *drawable, typename Mesh::template EdgeProperty<FT> prop) {
+            update_scalar(Model *model, LinesDrawable *drawable, typename Model::template EdgeProperty<FT> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -175,9 +175,9 @@ namespace easy3d {
             }
 
 
-            template<typename Mesh, typename FT>
+            template<typename Model, typename FT>
             inline void
-            update(Mesh *model, LinesDrawable *drawable, typename Mesh::template VertexProperty<FT> prop) {
+            update_scalar(Model *model, LinesDrawable *drawable, typename Model::template VertexProperty<FT> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -380,9 +380,9 @@ namespace easy3d {
             }
 
 
-            template<typename Mesh, typename FT>
+            template<typename FT>
             inline void
-            update(Mesh *model, TrianglesDrawable *drawable, typename Mesh::template VertexProperty<FT> prop) {
+            update(SurfaceMesh *model, TrianglesDrawable *drawable, SurfaceMesh::VertexProperty<FT> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -393,9 +393,9 @@ namespace easy3d {
                 }
 
                 if (model->is_triangle_mesh()) {
-                    auto points = model->template get_vertex_property<vec3>("v:point");
+                    auto points = model->get_vertex_property<vec3>("v:point");
                     model->update_vertex_normals();
-                    auto normals = model->template get_vertex_property<vec3>("v:normal");
+                    auto normals = model->get_vertex_property<vec3>("v:normal");
 
                     const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
                     const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
@@ -422,7 +422,7 @@ namespace easy3d {
                     drawable->update_normal_buffer(normals.vector());
                     drawable->update_texcoord_buffer(d_texcoords);
 
-                    auto triangle_range = model->template face_property<std::pair<int, int> >("f:triangle_range");
+                    auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
                     int idx = 0;
                     for (auto face : model->faces()) {
                         triangle_range[face] = std::make_pair(idx, idx);
@@ -441,7 +441,7 @@ namespace easy3d {
                      * implemented by selecting triangle primitives using shaders. This allows data uploaded to the GPU
                      * for the rendering purpose be shared for selection. Yeah, performance gain!
                      */
-                    auto triangle_range = model->template face_property<std::pair<int, int> >("f:triangle_range");
+                    auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
                     int count_triangles = 0;
 
                     /**
@@ -453,9 +453,9 @@ namespace easy3d {
                      * between flat and smooth shading without transferring different data to the GPU.
                      */
 
-                    auto points = model->template get_vertex_property<vec3>("v:point");
+                    auto points = model->get_vertex_property<vec3>("v:point");
                     model->update_vertex_normals();
-                    auto normals = model->template get_vertex_property<vec3>("v:normal");
+                    auto normals = model->get_vertex_property<vec3>("v:normal");
 
                     const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
                     const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
@@ -649,8 +649,8 @@ namespace easy3d {
             }
 
 
-            template<typename Mesh>
-            void update_texcoord(Mesh *model, PointsDrawable *drawable, typename Mesh::template VertexProperty<vec2> prop) {
+            template<typename Model>
+            void update(Model *model, PointsDrawable *drawable, typename Model::template VertexProperty<vec2> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -1549,7 +1549,7 @@ namespace easy3d {
                 case State::TEXTURED: {
                     auto texcoord = model->get_vertex_property<vec2>(name);
                     if (texcoord)
-                        details::update_texcoord(model, drawable, texcoord);
+                        details::update(model, drawable, texcoord);
                     else {
                         LOG(WARNING) << "texcoord property \'" << drawable->property_name()
                                      << "\' not found (use uniform coloring)";
@@ -1663,7 +1663,7 @@ namespace easy3d {
                 case State::TEXTURED: {
                     auto texcoord = model->get_vertex_property<vec2>(name);
                     if (texcoord)
-                        details::update_texcoord<SurfaceMesh>(model, drawable, texcoord);
+                        details::update<SurfaceMesh>(model, drawable, texcoord);
                     else {
                         LOG(WARNING) << "texcoord property \'" << drawable->property_name()
                                      << "\' not found (use uniform coloring)";
@@ -1827,16 +1827,22 @@ namespace easy3d {
                         case State::EDGE: {
                             if (model->get_edge_property<float>(name)) {
                                 auto prop = model->get_edge_property<float>(name);
-                                details::update<SurfaceMesh>(model, drawable, prop);
+                                details::update_scalar<SurfaceMesh>(model, drawable, prop);
                             } else if (model->get_edge_property<double>(name)) {
                                 auto prop = model->get_edge_property<double>(name);
-                                details::update<SurfaceMesh>(model, drawable, prop);
+                                details::update_scalar<SurfaceMesh>(model, drawable, prop);
                             } else if (model->get_edge_property<int>(name)) {
                                 auto prop = model->get_edge_property<int>(name);
-                                details::update<SurfaceMesh>(model, drawable, prop);
+                                details::update_scalar<SurfaceMesh>(model, drawable, prop);
                             } else if (model->get_edge_property<unsigned int>(name)) {
                                 auto prop = model->get_edge_property<unsigned int>(name);
-                                details::update<SurfaceMesh>(model, drawable, prop);
+                                details::update_scalar<SurfaceMesh>(model, drawable, prop);
+                            } else if (model->get_edge_property<char>(name)) {
+                                auto prop = model->get_edge_property<char>(name);
+                                details::update_scalar<SurfaceMesh>(model, drawable, prop);
+                            } else if (model->get_edge_property<unsigned char>(name)) {
+                                auto prop = model->get_edge_property<unsigned char>(name);
+                                details::update_scalar<SurfaceMesh>(model, drawable, prop);
                             } else {
                                 LOG(WARNING) << "scalar field \'" << drawable->property_name()
                                              << "\' not found on edges (use uniform coloring)";
@@ -1849,22 +1855,22 @@ namespace easy3d {
                         case State::VERTEX: {
                             if (model->get_vertex_property<float>(name)) {
                                 auto prop = model->get_vertex_property<float>(name);
-                                details::update<SurfaceMesh>(model, drawable, prop);
+                                details::update_scalar<SurfaceMesh>(model, drawable, prop);
                             } else if (model->get_vertex_property<double>(name)) {
                                 auto prop = model->get_vertex_property<double>(name);
-                                details::update<SurfaceMesh>(model, drawable, prop);
+                                details::update_scalar<SurfaceMesh>(model, drawable, prop);
                             } else if (model->get_vertex_property<int>(name)) {
                                 auto prop = model->get_vertex_property<int>(name);
-                                details::update<SurfaceMesh>(model, drawable, prop);
+                                details::update_scalar<SurfaceMesh>(model, drawable, prop);
                             } else if (model->get_vertex_property<unsigned int>(name)) {
                                 auto prop = model->get_vertex_property<unsigned int>(name);
-                                details::update<SurfaceMesh>(model, drawable, prop);
+                                details::update_scalar<SurfaceMesh>(model, drawable, prop);
                             } else if (model->get_vertex_property<char>(name)) {
                                 auto prop = model->get_vertex_property<char>(name);
-                                details::update<SurfaceMesh>(model, drawable, prop);
+                                details::update_scalar<SurfaceMesh>(model, drawable, prop);
                             } else if (model->get_vertex_property<unsigned char>(name)) {
                                 auto prop = model->get_vertex_property<unsigned char>(name);
-                                details::update<SurfaceMesh>(model, drawable, prop);
+                                details::update_scalar<SurfaceMesh>(model, drawable, prop);
                             } else {
                                 LOG(WARNING) << "scalar field \'" << drawable->property_name()
                                              << "\' not found on vertices (use uniform coloring)";
@@ -2102,22 +2108,22 @@ namespace easy3d {
                         case State::VERTEX: {
                             if (model->get_vertex_property<float>(name)) {
                                 auto prop = model->get_vertex_property<float>(name);
-                                details::update<SurfaceMesh>(model, drawable, prop);
+                                details::update(model, drawable, prop);
                             } else if (model->get_vertex_property<double>(name)) {
                                 auto prop = model->get_vertex_property<double>(name);
-                                details::update<SurfaceMesh>(model, drawable, prop);
+                                details::update(model, drawable, prop);
                             } else if (model->get_vertex_property<int>(name)) {
                                 auto prop = model->get_vertex_property<int>(name);
-                                details::update<SurfaceMesh>(model, drawable, prop);
+                                details::update(model, drawable, prop);
                             } else if (model->get_vertex_property<unsigned int>(name)) {
                                 auto prop = model->get_vertex_property<unsigned int>(name);
-                                details::update<SurfaceMesh>(model, drawable, prop);
+                                details::update(model, drawable, prop);
                             } else if (model->get_vertex_property<char>(name)) {
                                 auto prop = model->get_vertex_property<char>(name);
-                                details::update<SurfaceMesh>(model, drawable, prop);
+                                details::update(model, drawable, prop);
                             } else if (model->get_vertex_property<unsigned char>(name)) {
                                 auto prop = model->get_vertex_property<unsigned char>(name);
-                                details::update<SurfaceMesh>(model, drawable, prop);
+                                details::update(model, drawable, prop);
                             } else {
                                 LOG(WARNING) << "scalar field \'" << drawable->property_name()
                                              << "\' not found on vertices (use uniform coloring)";
@@ -2163,7 +2169,7 @@ namespace easy3d {
                 case State::TEXTURED: {
                     auto texcoord = model->get_vertex_property<vec2>(name);
                     if (texcoord)
-                        details::update_texcoord<Graph>(model, drawable, texcoord);
+                        details::update<Graph>(model, drawable, texcoord);
                     else {
                         LOG(WARNING) << "texcoord property \'" << drawable->property_name()
                                      << "\' not found (use uniform coloring)";
@@ -2319,22 +2325,22 @@ namespace easy3d {
                         case State::EDGE: {
                             if (model->get_edge_property<float>(name)) {
                                 auto prop = model->get_edge_property<float>(name);
-                                details::update<Graph>(model, drawable, prop);
+                                details::update_scalar<Graph>(model, drawable, prop);
                             } else if (model->get_edge_property<double>(name)) {
                                 auto prop = model->get_edge_property<double>(name);
-                                details::update<Graph>(model, drawable, prop);
+                                details::update_scalar<Graph>(model, drawable, prop);
                             } else if (model->get_edge_property<int>(name)) {
                                 auto prop = model->get_edge_property<int>(name);
-                                details::update<Graph>(model, drawable, prop);
+                                details::update_scalar<Graph>(model, drawable, prop);
                             } else if (model->get_edge_property<unsigned int>(name)) {
                                 auto prop = model->get_edge_property<unsigned int>(name);
-                                details::update<Graph>(model, drawable, prop);
+                                details::update_scalar<Graph>(model, drawable, prop);
                             } else if (model->get_edge_property<char>(name)) {
                                 auto prop = model->get_edge_property<char>(name);
-                                details::update<Graph>(model, drawable, prop);
+                                details::update_scalar<Graph>(model, drawable, prop);
                             } else if (model->get_edge_property<unsigned char>(name)) {
                                 auto prop = model->get_edge_property<unsigned char>(name);
-                                details::update<Graph>(model, drawable, prop);
+                                details::update_scalar<Graph>(model, drawable, prop);
                             } else {
                                 LOG(WARNING) << "scalar field \'" << drawable->property_name()
                                              << "\' not found on edges (use uniform coloring)";
@@ -2347,22 +2353,22 @@ namespace easy3d {
                         case State::VERTEX: {
                             if (model->get_vertex_property<float>(name)) {
                                 auto prop = model->get_vertex_property<float>(name);
-                                details::update<Graph>(model, drawable, prop);
+                                details::update_scalar<Graph>(model, drawable, prop);
                             } else if (model->get_vertex_property<double>(name)) {
                                 auto prop = model->get_vertex_property<double>(name);
-                                details::update<Graph>(model, drawable, prop);
+                                details::update_scalar<Graph>(model, drawable, prop);
                             } else if (model->get_vertex_property<int>(name)) {
                                 auto prop = model->get_vertex_property<int>(name);
-                                details::update<Graph>(model, drawable, prop);
+                                details::update_scalar<Graph>(model, drawable, prop);
                             } else if (model->get_vertex_property<unsigned int>(name)) {
                                 auto prop = model->get_vertex_property<unsigned int>(name);
-                                details::update<Graph>(model, drawable, prop);
+                                details::update_scalar<Graph>(model, drawable, prop);
                             } else if (model->get_vertex_property<char>(name)) {
                                 auto prop = model->get_vertex_property<char>(name);
-                                details::update<Graph>(model, drawable, prop);
+                                details::update_scalar<Graph>(model, drawable, prop);
                             } else if (model->get_vertex_property<unsigned char>(name)) {
                                 auto prop = model->get_vertex_property<unsigned char>(name);
-                                details::update<Graph>(model, drawable, prop);
+                                details::update_scalar<Graph>(model, drawable, prop);
                             } else {
                                 LOG(WARNING) << "scalar field \'" << drawable->property_name()
                                              << "\' not found on vertices (use uniform coloring)";
@@ -2414,7 +2420,7 @@ namespace easy3d {
                 case State::TEXTURED: {
                     auto texcoord = model->get_vertex_property<vec2>(name);
                     if (texcoord)
-                        details::update_texcoord<PolyMesh>(model, drawable, texcoord);
+                        details::update<PolyMesh>(model, drawable, texcoord);
                     else {
                         LOG(WARNING) << "texcoord property \'" << drawable->property_name()
                                      << "\' not found (use uniform coloring)";
