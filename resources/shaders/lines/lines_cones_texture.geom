@@ -20,8 +20,10 @@ uniform vec4 clippingPlane0;
 uniform vec4 clippingPlane1;
 
 in  vec2 vOutTexcoord[];
+in float vOutClipped[];
 
-out vec2 gOutTexcoord;
+out vec2  gOutTexcoord;
+out float gOutClipped;
 
 out Data{
 	vec3 point;	// camera space
@@ -64,6 +66,8 @@ void main()
 			gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
 		}
 		gOutTexcoord = vOutTexcoord[1];
+		gOutClipped = vOutClipped[1];
+		// In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
 		// In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
 		// the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
 		// the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
@@ -80,6 +84,7 @@ void main()
 			gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
 		}
 		gOutTexcoord = vOutTexcoord[0];
+		gOutClipped = vOutClipped[0];
 		// In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
 		// the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
 		// the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
@@ -96,6 +101,7 @@ void main()
 			gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
 		}
 		gOutTexcoord = vOutTexcoord[0];
+		gOutClipped = vOutClipped[0];
 		// In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
 		// the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
 		// the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
@@ -112,6 +118,7 @@ void main()
 			gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
 		}
 		gOutTexcoord = vOutTexcoord[0];
+		gOutClipped = vOutClipped[0];
 		// In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
 		// the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
 		// the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
@@ -128,6 +135,7 @@ void main()
 			gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
 		}
 		gOutTexcoord = vOutTexcoord[0];
+		gOutClipped = vOutClipped[0];
 		// In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
 		// the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
 		// the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
@@ -145,6 +153,7 @@ void main()
 			gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
 		}
 		gOutTexcoord = vOutTexcoord[1];
+		gOutClipped = vOutClipped[1];
 		// In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
 		// the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
 		// the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
@@ -165,6 +174,7 @@ void main()
 			gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
 		}
 		gOutTexcoord = vOutTexcoord[0];
+		gOutClipped = vOutClipped[0];
 		// In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
 		// the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
 		// the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
@@ -181,6 +191,7 @@ void main()
 			gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
 		}
 		gOutTexcoord = vOutTexcoord[0];
+		gOutClipped = vOutClipped[0];
 		// In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
 		// the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
 		// the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
@@ -197,6 +208,7 @@ void main()
 			gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
 		}
 		gOutTexcoord = vOutTexcoord[0];
+		gOutClipped = vOutClipped[0];
 		// In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
 		// the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
 		// the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value
@@ -213,6 +225,7 @@ void main()
 			gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
 		}
 		gOutTexcoord = vOutTexcoord[0];
+		gOutClipped = vOutClipped[0];
 		// In the geometry language, gl_PrimitiveID is an output variable that is passed to the corresponding gl_PrimitiveID input variable in
 		// the fragment shader.If no geomery shader is present then gl_PrimitiveID in the fragment language behaves identically as it would in
 		// the tessellation control and evaluation languages.If a geometry shader is present but does not write to gl_PrimitiveID, the value

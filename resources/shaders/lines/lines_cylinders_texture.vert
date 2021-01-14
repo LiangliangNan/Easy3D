@@ -19,20 +19,22 @@ uniform vec4 clippingPlane1;
 in  vec3 vtx_position;	// point position
 in  vec2 vtx_texcoord;
 
-out vec2 vOutTexcoord;
+out vec2  vOutTexcoord;
+out float vOutClipped;
 
 void main()
 {
 	vec4 new_position = MANIP * vec4(vtx_position, 1.0);
 
+	vOutClipped = 0.0;
 	if (clippingPlaneEnabled) {
 		gl_ClipDistance[0] = dot(new_position, clippingPlane0);
 		if (planeClippingDiscard && gl_ClipDistance[0] < 0)
-		return;
+		vOutClipped = 1.0;
 		if (crossSectionEnabled) {
 			gl_ClipDistance[1] = dot(new_position, clippingPlane1);
 			if (planeClippingDiscard && gl_ClipDistance[1] < 0)
-			return;
+			vOutClipped = 1.0;
 		}
 	}
 

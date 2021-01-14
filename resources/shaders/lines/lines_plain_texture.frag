@@ -4,12 +4,16 @@
 uniform sampler2D	textureID;
 uniform bool selected = false;
 
-in  vec2 vOutTexcoord;
+in vec2  vOutTexcoord;
+in float vOutClipped;
 
 out vec4 outputF;
 
 void main()
 {
+	if (vOutClipped > 0.0)
+		discard;
+
 	outputF = texture(textureID, vOutTexcoord);
 	if (selected)
 		outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.6);

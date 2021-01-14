@@ -12,12 +12,16 @@ uniform bool selected = false;
 
 in  vec3 gPoint;
 in  vec2 gOutTexcoord;
+in float gOutClipped;
 
 out vec4 outputF;
 
 
 void main()
 {
+    if (gOutClipped > 0.0)
+        discard;
+
     outputF = texture(textureID, gOutTexcoord);
     if (selected)
         outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.6);

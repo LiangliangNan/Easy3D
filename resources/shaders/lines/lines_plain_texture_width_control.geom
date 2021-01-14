@@ -21,10 +21,11 @@ uniform vec4 clippingPlane0;
 uniform vec4 clippingPlane1;
 
 in  vec2 vOutTexcoord[];
+in float vOutClipped[];
 
-out vec3 gPoint;
-out vec2 gOutTexcoord;
-
+out vec3  gPoint;
+out vec2  gOutTexcoord;
+out float gOutClipped;
 
 void main()
 {
@@ -42,6 +43,7 @@ void main()
     gPoint = (base - offset);
     gl_Position = PROJ  * vec4(gPoint, 1.0);
     gOutTexcoord = vOutTexcoord[0];
+    gOutClipped = vOutClipped[0];
     if (clippingPlaneEnabled) {
         gl_ClipDistance[0] = dot(invMV * vec4(gPoint, 1.0), clippingPlane0);
         if (crossSectionEnabled)
@@ -58,6 +60,7 @@ void main()
     gPoint = (top - offset);
     gl_Position = PROJ  * vec4(gPoint, 1.0);
     gOutTexcoord = vOutTexcoord[1];
+    gOutClipped = vOutClipped[1];
     if (clippingPlaneEnabled) {
         gl_ClipDistance[0] = dot(invMV * vec4(gPoint, 1.0), clippingPlane0);
         if (crossSectionEnabled)
@@ -74,6 +77,7 @@ void main()
     gPoint = (base + offset);
     gl_Position = PROJ  * vec4(gPoint, 1.0);
     gOutTexcoord = vOutTexcoord[0];
+    gOutClipped = vOutClipped[0];
     if (clippingPlaneEnabled) {
         gl_ClipDistance[0] = dot(invMV * vec4(gPoint, 1.0), clippingPlane0);
         if (crossSectionEnabled)
@@ -90,6 +94,7 @@ void main()
     gPoint = (top + offset);
     gl_Position = PROJ  * vec4(gPoint, 1.0);
     gOutTexcoord = vOutTexcoord[1];
+    gOutClipped = vOutClipped[1];
     if (clippingPlaneEnabled) {
         gl_ClipDistance[0] = dot(invMV * vec4(gPoint, 1.0), clippingPlane0);
         if (crossSectionEnabled)
