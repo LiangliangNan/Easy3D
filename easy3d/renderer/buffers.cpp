@@ -772,7 +772,71 @@ namespace easy3d {
             template<typename FT>
             inline void
             update_scalar_on_faces(PolyMesh *model, TrianglesDrawable *drawable, PolyMesh::FaceProperty<FT> prop, bool border) {
-                LOG(WARNING) << "not implemented yet";
+                assert(model);
+                assert(drawable);
+                assert(prop);
+
+                if (model->empty()) {
+                    LOG(WARNING) << "model has no valid geometry";
+                    return;
+                }
+
+                model->update_vertex_normals();
+                auto normals = model->get_vertex_property<vec3>("v:normal");
+                auto points = model->get_vertex_property<vec3>("v:point");
+
+                const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
+                const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
+                float min_value = std::numeric_limits<float>::max();
+                float max_value = -std::numeric_limits<float>::max();
+                details::clamp_scalar_field(prop.vector(), min_value, max_value, dummy_lower, dummy_upper);
+
+                /**
+                 * We use the Tessellator to eliminate duplicate vertices. This allows us to take advantage of element
+                 * buffer to minimize the number of vertices sent to the GPU.
+                 */
+                Tessellator tessellator;
+
+                for (auto f : model->faces()) {
+                    if (model->is_border(f) == border) {
+                        tessellator.begin_polygon(model->compute_face_normal(model->halfface(f, 0)));
+                        // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
+                        tessellator.begin_contour();
+                        float coord = (prop[f] - min_value) / (max_value - min_value);
+                        for (auto v : model->vertices(f)) {
+                            Tessellator::Vertex vertex(model->position(v), v.idx());
+                            vertex.append(normals[v]);
+                            vertex.append(vec2(coord, 0.5f));
+                            tessellator.add_vertex(vertex);
+                        }
+                        tessellator.end_contour();
+                        tessellator.end_polygon();
+                    }
+                }
+
+                const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
+                std::vector<vec3> d_points;
+                std::vector<vec3> d_normals;
+                std::vector<vec2> d_texcoords;
+                d_points.reserve(vts.size());
+                d_normals.reserve(vts.size());
+                d_texcoords.reserve(vts.size());
+
+                for (auto v :vts) {
+                    d_points.emplace_back(v->data());
+                    d_normals.emplace_back(v->data() + 3);
+                    d_texcoords.emplace_back(v->data() + 6);
+                }
+
+                const auto &d_indices = tessellator.elements();
+
+                drawable->update_vertex_buffer(d_points);
+                drawable->update_normal_buffer(d_normals);
+                drawable->update_texcoord_buffer(d_texcoords);
+                drawable->update_element_buffer(d_indices);
+
+                DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/"
+                           << d_points.size();
             }
 
 
