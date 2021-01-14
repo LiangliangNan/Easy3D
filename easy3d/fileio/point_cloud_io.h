@@ -91,9 +91,18 @@ namespace easy3d {
 		bool save_ply(const std::string& file_name, const PointCloud* cloud, bool binary = true);
 
         /// \brief Reads point cloud from an \c las/laz format file.
-        /// \details Internally it uses the LASlib of martin.isenburg@rapidlasso.com. See http://rapidlasso.com
-		bool load_las(const std::string& file_name, PointCloud* cloud);
-        /// \brief Saves a point cloud to an \c las/laz format file.
+        /// \details LAS format usually represents very large area of urban scenes and the points may have huge
+        ///     coordinates. Due to the limited precision of floating point numbers, some decimals may be lost,
+        ///     causing shaky rendering effects. To properly render points with large coordinates, Easy3D allows
+        ///     to transform the points (i.e., translation all points relative to the first point stored in the
+        ///     file).
+        ///     Internally the method uses the LASlib of martin.isenburg@rapidlasso.com. See http://rapidlasso.com
+        /// \param transform \c true to transform the point cloud w.r.t. the first point.
+        /// \param prop_name The name of the \c ModelProperty<mat4> in which the transformation matrix
+        ///     (if \c transform is true) is saved.
+        bool load_las(const std::string &file_name, PointCloud *cloud,
+                      bool transform = false, const std::string &prop_name = "transformation");
+        /// \brief Saves a point cloud to an \c LAS/LAS format file.
         /// \details Internally it uses the LASlib of martin.isenburg@rapidlasso.com. See http://rapidlasso.com
 		bool save_las(const std::string& file_name, const PointCloud* cloud);
 	};

@@ -55,7 +55,7 @@ namespace easy3d {
 		else if (ext == "bxyz")
 			success = io::load_bxyz(file_name, cloud);
 		else if (ext == "las" || ext == "laz")
-			success = io::load_las(file_name, cloud);
+			success = io::load_las(file_name, cloud, true);
         else if (ext == "vg")
             success = io::PointCloudIO_vg::load_vg(file_name, cloud);
         else if (ext == "bvg")
