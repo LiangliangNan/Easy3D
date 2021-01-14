@@ -576,7 +576,7 @@ void WidgetTrianglesDrawable::updateVectorFieldBuffer(Model *model, const std::s
 
 
 
-namespace triangles_triangles_details {
+namespace triangles_details {
 
     void set_highlight_range(SurfaceMesh* m, Drawable* d, const std::pair<int, int>& range) {
         if (range.second < 0 || range.second < range.first) {
