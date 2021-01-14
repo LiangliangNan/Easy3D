@@ -76,9 +76,39 @@ namespace easy3d {
                               << "]";
             }
 
-            template<typename FT>
+//            template<typename FT>
+//            inline void
+//            update(PointCloud *model, PointsDrawable *drawable, PointCloud::VertexProperty<FT> prop) {
+//                assert(model);
+//                assert(drawable);
+//                assert(prop);
+//
+//                if (model->empty()) {
+//                    LOG(WARNING) << "model has no valid geometry";
+//                    return;
+//                }
+//
+//                const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
+//                const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
+//                float min_value = std::numeric_limits<float>::max();
+//                float max_value = -std::numeric_limits<float>::max();
+//                details::clamp_scalar_field(prop.vector(), min_value, max_value, dummy_lower, dummy_upper);
+//
+//                auto points = model->get_vertex_property<vec3>("v:point");
+//                std::vector<vec2> d_texcoords;
+//                d_texcoords.reserve(model->n_vertices());
+//                for (auto v : model->vertices()) {
+//                    float coord = (prop[v] - min_value) / (max_value - min_value);
+//                    d_texcoords.emplace_back(vec2(coord, 0.5f));
+//                }
+//                drawable->update_vertex_buffer(points.vector());
+//                drawable->update_texcoord_buffer(d_texcoords);
+//            }
+
+
+            template<typename Mesh, typename FT>
             inline void
-            update(PointCloud *model, PointsDrawable *drawable, PointCloud::VertexProperty<FT> prop) {
+            update_scalar(Mesh *model, PointsDrawable *drawable, typename Mesh::template VertexProperty<FT> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -94,7 +124,8 @@ namespace easy3d {
                 float max_value = -std::numeric_limits<float>::max();
                 details::clamp_scalar_field(prop.vector(), min_value, max_value, dummy_lower, dummy_upper);
 
-                auto points = model->get_vertex_property<vec3>("v:point");
+                auto points = model->template get_vertex_property<vec3>("v:point");
+
                 std::vector<vec2> d_texcoords;
                 d_texcoords.reserve(model->n_vertices());
                 for (auto v : model->vertices()) {
@@ -106,9 +137,9 @@ namespace easy3d {
             }
 
 
-            template<typename FT>
+            template<typename Mesh, typename FT>
             inline void
-            update(SurfaceMesh *model, PointsDrawable *drawable, SurfaceMesh::VertexProperty<FT> prop) {
+            update(Mesh *model, LinesDrawable *drawable, typename Mesh::template EdgeProperty<FT> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -124,45 +155,14 @@ namespace easy3d {
                 float max_value = -std::numeric_limits<float>::max();
                 details::clamp_scalar_field(prop.vector(), min_value, max_value, dummy_lower, dummy_upper);
 
-                auto points = model->get_vertex_property<vec3>("v:point");
-
-                std::vector<vec2> d_texcoords;
-                d_texcoords.reserve(model->n_vertices());
-                for (auto v : model->vertices()) {
-                    float coord = (prop[v] - min_value) / (max_value - min_value);
-                    d_texcoords.emplace_back(vec2(coord, 0.5f));
-                }
-                drawable->update_vertex_buffer(points.vector());
-                drawable->update_texcoord_buffer(d_texcoords);
-            }
-
-
-            template<typename FT>
-            inline void
-            update(SurfaceMesh *model, LinesDrawable *drawable, SurfaceMesh::EdgeProperty<FT> prop) {
-                assert(model);
-                assert(drawable);
-                assert(prop);
-
-                if (model->empty()) {
-                    LOG(WARNING) << "model has no valid geometry";
-                    return;
-                }
-
-                const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
-                const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
-                float min_value = std::numeric_limits<float>::max();
-                float max_value = -std::numeric_limits<float>::max();
-                details::clamp_scalar_field(prop.vector(), min_value, max_value, dummy_lower, dummy_upper);
-
-                auto points = model->get_vertex_property<vec3>("v:point");
+                auto points = model->template get_vertex_property<vec3>("v:point");
                 std::vector<vec3> d_points;
                 d_points.reserve(model->n_edges() * 2);
                 std::vector<vec2> d_texcoords;
                 d_texcoords.reserve(model->n_edges() * 2);
                 for (auto e : model->edges()) {
-                    SurfaceMesh::Vertex s = model->vertex(e, 0);
-                    SurfaceMesh::Vertex t = model->vertex(e, 1);
+                    auto s = model->vertex(e, 0);
+                    auto t = model->vertex(e, 1);
                     d_points.push_back(points[s]);
                     d_points.push_back(points[t]);
                     float coord = (prop[e] - min_value) / (max_value - min_value);
@@ -175,9 +175,9 @@ namespace easy3d {
             }
 
 
-            template<typename FT>
+            template<typename Mesh, typename FT>
             inline void
-            update(SurfaceMesh *model, LinesDrawable *drawable, SurfaceMesh::VertexProperty<FT> prop) {
+            update(Mesh *model, LinesDrawable *drawable, typename Mesh::template VertexProperty<FT> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -193,7 +193,7 @@ namespace easy3d {
                 float max_value = -std::numeric_limits<float>::max();
                 details::clamp_scalar_field(prop.vector(), min_value, max_value, dummy_lower, dummy_upper);
 
-                auto points = model->get_vertex_property<vec3>("v:point");
+                auto points = model->template get_vertex_property<vec3>("v:point");
                 drawable->update_vertex_buffer(points.vector());
 
                 std::vector<vec2> d_texcoords;
@@ -216,35 +216,35 @@ namespace easy3d {
             }
 
 
-            template<typename FT>
-            inline void
-            update(Graph *model, PointsDrawable *drawable, Graph::VertexProperty<FT> prop) {
-                assert(model);
-                assert(drawable);
-                assert(prop);
-
-                if (model->empty()) {
-                    LOG(WARNING) << "model has no valid geometry";
-                    return;
-                }
-
-                const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
-                const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
-                float min_value = std::numeric_limits<float>::max();
-                float max_value = -std::numeric_limits<float>::max();
-                details::clamp_scalar_field(prop.vector(), min_value, max_value, dummy_lower, dummy_upper);
-
-                auto points = model->get_vertex_property<vec3>("v:point");
-                std::vector<vec2> d_texcoords;
-                d_texcoords.reserve(model->n_vertices());
-                for (auto v : model->vertices()) {
-                    float coord = (prop[v] - min_value) / (max_value - min_value);
-                    d_texcoords.emplace_back(vec2(coord, 0.5f));
-                }
-                drawable->update_vertex_buffer(points.vector());
-                drawable->update_texcoord_buffer(d_texcoords);
-            }
-
+//            template<typename FT>
+//            inline void
+//            update(Graph *model, PointsDrawable *drawable, Graph::VertexProperty<FT> prop) {
+//                assert(model);
+//                assert(drawable);
+//                assert(prop);
+//
+//                if (model->empty()) {
+//                    LOG(WARNING) << "model has no valid geometry";
+//                    return;
+//                }
+//
+//                const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
+//                const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
+//                float min_value = std::numeric_limits<float>::max();
+//                float max_value = -std::numeric_limits<float>::max();
+//                details::clamp_scalar_field(prop.vector(), min_value, max_value, dummy_lower, dummy_upper);
+//
+//                auto points = model->get_vertex_property<vec3>("v:point");
+//                std::vector<vec2> d_texcoords;
+//                d_texcoords.reserve(model->n_vertices());
+//                for (auto v : model->vertices()) {
+//                    float coord = (prop[v] - min_value) / (max_value - min_value);
+//                    d_texcoords.emplace_back(vec2(coord, 0.5f));
+//                }
+//                drawable->update_vertex_buffer(points.vector());
+//                drawable->update_texcoord_buffer(d_texcoords);
+//            }
+//
 
             template<typename FT>
             inline void
@@ -380,9 +380,9 @@ namespace easy3d {
             }
 
 
-            template<typename FT>
+            template<typename Mesh, typename FT>
             inline void
-            update(SurfaceMesh *model, TrianglesDrawable *drawable, SurfaceMesh::VertexProperty<FT> prop) {
+            update(Mesh *model, TrianglesDrawable *drawable, typename Mesh::template VertexProperty<FT> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -393,9 +393,9 @@ namespace easy3d {
                 }
 
                 if (model->is_triangle_mesh()) {
-                    auto points = model->get_vertex_property<vec3>("v:point");
+                    auto points = model->template get_vertex_property<vec3>("v:point");
                     model->update_vertex_normals();
-                    auto normals = model->get_vertex_property<vec3>("v:normal");
+                    auto normals = model->template get_vertex_property<vec3>("v:normal");
 
                     const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
                     const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
@@ -422,7 +422,7 @@ namespace easy3d {
                     drawable->update_normal_buffer(normals.vector());
                     drawable->update_texcoord_buffer(d_texcoords);
 
-                    auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
+                    auto triangle_range = model->template face_property<std::pair<int, int> >("f:triangle_range");
                     int idx = 0;
                     for (auto face : model->faces()) {
                         triangle_range[face] = std::make_pair(idx, idx);
@@ -441,7 +441,7 @@ namespace easy3d {
                      * implemented by selecting triangle primitives using shaders. This allows data uploaded to the GPU
                      * for the rendering purpose be shared for selection. Yeah, performance gain!
                      */
-                    auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
+                    auto triangle_range = model->template face_property<std::pair<int, int> >("f:triangle_range");
                     int count_triangles = 0;
 
                     /**
@@ -453,9 +453,9 @@ namespace easy3d {
                      * between flat and smooth shading without transferring different data to the GPU.
                      */
 
-                    auto points = model->get_vertex_property<vec3>("v:point");
+                    auto points = model->template get_vertex_property<vec3>("v:point");
                     model->update_vertex_normals();
-                    auto normals = model->get_vertex_property<vec3>("v:normal");
+                    auto normals = model->template get_vertex_property<vec3>("v:normal");
 
                     const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
                     const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
@@ -551,8 +551,89 @@ namespace easy3d {
             }
 
 
-            template<typename FT>
-            void update(Graph *model, LinesDrawable *drawable, Graph::VertexProperty<FT> prop) {
+//            template<typename FT>
+//            void update(Graph *model, LinesDrawable *drawable, Graph::VertexProperty<FT> prop) {
+//                assert(model);
+//                assert(drawable);
+//                assert(prop);
+//
+//                if (model->empty()) {
+//                    LOG(WARNING) << "model has no valid geometry";
+//                    return;
+//                }
+//
+//                const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
+//                const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
+//                float min_value = std::numeric_limits<float>::max();
+//                float max_value = -std::numeric_limits<float>::max();
+//                details::clamp_scalar_field(prop.vector(), min_value, max_value, dummy_lower, dummy_upper);
+//
+//                auto points = model->get_vertex_property<vec3>("v:point");
+//                drawable->update_vertex_buffer(points.vector());
+//
+//                std::vector<vec2> d_texcoords;
+//                d_texcoords.reserve(model->n_vertices());
+//                for (auto v : model->vertices()) {
+//                    float coord = (prop[v] - min_value) / (max_value - min_value);
+//                    d_texcoords.emplace_back(vec2(coord, 0.5f));
+//                }
+//                drawable->update_texcoord_buffer(d_texcoords);
+//
+//                std::vector<unsigned int> indices;
+//                indices.reserve(model->n_edges() * 2);
+//                for (auto e : model->edges()) {
+//                    Graph::Vertex s = model->vertex(e, 0);
+//                    Graph::Vertex t = model->vertex(e, 1);
+//                    indices.push_back(s.idx());
+//                    indices.push_back(t.idx());
+//                }
+//                drawable->update_element_buffer(indices);
+//                drawable->set_impostor_type(LinesDrawable::CYLINDER);
+//            }
+
+
+//            void update(PointCloud *model, PointsDrawable *drawable, PointCloud::VertexProperty<vec2> prop) {
+//                assert(model);
+//                assert(drawable);
+//                assert(prop);
+//
+//                if (model->empty()) {
+//                    LOG(WARNING) << "model has no valid geometry";
+//                    return;
+//                }
+//
+//                auto points = model->get_vertex_property<vec3>("v:point");
+//                drawable->update_vertex_buffer(points.vector());
+//                auto normals = model->get_vertex_property<vec3>("v:normal");
+//                if (normals)
+//                    drawable->update_normal_buffer(normals.vector());
+//
+//                drawable->update_texcoord_buffer(prop.vector());
+//            }
+
+
+//            void update(PointCloud *model, PointsDrawable *drawable, PointCloud::VertexProperty<vec3> prop) {
+//                assert(model);
+//                assert(drawable);
+//                assert(prop);
+//
+//                if (model->empty()) {
+//                    LOG(WARNING) << "model has no valid geometry";
+//                    return;
+//                }
+//
+//                auto points = model->get_vertex_property<vec3>("v:point");
+//                drawable->update_vertex_buffer(points.vector());
+//                auto normals = model->get_vertex_property<vec3>("v:normal");
+//                if (normals)
+//                    drawable->update_normal_buffer(normals.vector());
+//
+//                drawable->update_color_buffer(prop.vector());
+//            }
+
+
+            template<typename Mesh>
+            void update_color(Mesh *model, PointsDrawable *drawable, typename Mesh::template VertexProperty<vec3> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -562,77 +643,14 @@ namespace easy3d {
                     return;
                 }
 
-                const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
-                const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
-                float min_value = std::numeric_limits<float>::max();
-                float max_value = -std::numeric_limits<float>::max();
-                details::clamp_scalar_field(prop.vector(), min_value, max_value, dummy_lower, dummy_upper);
-
-                auto points = model->get_vertex_property<vec3>("v:point");
+                auto points = model->template get_vertex_property<vec3>("v:point");
                 drawable->update_vertex_buffer(points.vector());
-
-                std::vector<vec2> d_texcoords;
-                d_texcoords.reserve(model->n_vertices());
-                for (auto v : model->vertices()) {
-                    float coord = (prop[v] - min_value) / (max_value - min_value);
-                    d_texcoords.emplace_back(vec2(coord, 0.5f));
-                }
-                drawable->update_texcoord_buffer(d_texcoords);
-
-                std::vector<unsigned int> indices;
-                indices.reserve(model->n_edges() * 2);
-                for (auto e : model->edges()) {
-                    Graph::Vertex s = model->vertex(e, 0);
-                    Graph::Vertex t = model->vertex(e, 1);
-                    indices.push_back(s.idx());
-                    indices.push_back(t.idx());
-                }
-                drawable->update_element_buffer(indices);
-                drawable->set_impostor_type(LinesDrawable::CYLINDER);
-            }
-
-
-            void update(PointCloud *model, PointsDrawable *drawable, PointCloud::VertexProperty<vec2> prop) {
-                assert(model);
-                assert(drawable);
-                assert(prop);
-
-                if (model->empty()) {
-                    LOG(WARNING) << "model has no valid geometry";
-                    return;
-                }
-
-                auto points = model->get_vertex_property<vec3>("v:point");
-                drawable->update_vertex_buffer(points.vector());
-                auto normals = model->get_vertex_property<vec3>("v:normal");
-                if (normals)
-                    drawable->update_normal_buffer(normals.vector());
-
-                drawable->update_texcoord_buffer(prop.vector());
-            }
-
-
-            void update(PointCloud *model, PointsDrawable *drawable, PointCloud::VertexProperty<vec3> prop) {
-                assert(model);
-                assert(drawable);
-                assert(prop);
-
-                if (model->empty()) {
-                    LOG(WARNING) << "model has no valid geometry";
-                    return;
-                }
-
-                auto points = model->get_vertex_property<vec3>("v:point");
-                drawable->update_vertex_buffer(points.vector());
-                auto normals = model->get_vertex_property<vec3>("v:normal");
-                if (normals)
-                    drawable->update_normal_buffer(normals.vector());
-
                 drawable->update_color_buffer(prop.vector());
             }
 
 
-            void update(SurfaceMesh *model, PointsDrawable *drawable, SurfaceMesh::VertexProperty<vec3> prop) {
+            template<typename Mesh>
+            void update_texcoord(Mesh *model, PointsDrawable *drawable, typename Mesh::template VertexProperty<vec2> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -642,23 +660,7 @@ namespace easy3d {
                     return;
                 }
 
-                auto points = model->get_vertex_property<vec3>("v:point");
-                drawable->update_vertex_buffer(points.vector());
-                drawable->update_color_buffer(prop.vector());
-            }
-
-
-            void update(SurfaceMesh *model, PointsDrawable *drawable, SurfaceMesh::VertexProperty<vec2> prop) {
-                assert(model);
-                assert(drawable);
-                assert(prop);
-
-                if (model->empty()) {
-                    LOG(WARNING) << "model has no valid geometry";
-                    return;
-                }
-
-                auto points = model->get_vertex_property<vec3>("v:point");
+                auto points = model->template get_vertex_property<vec3>("v:point");
                 drawable->update_vertex_buffer(points.vector());
                 drawable->update_texcoord_buffer(prop.vector());
             }
@@ -882,8 +884,7 @@ namespace easy3d {
             }
 
 
-            void update(SurfaceMesh *model, TrianglesDrawable *drawable,
-                        SurfaceMesh::VertexProperty<vec3> vcolor) {
+            void update(SurfaceMesh *model, TrianglesDrawable *drawable, SurfaceMesh::VertexProperty<vec3> vcolor) {
                 assert(model);
                 assert(drawable);
                 assert(vcolor);
@@ -1220,7 +1221,8 @@ namespace easy3d {
             }
 
 
-            void update(SurfaceMesh *model, LinesDrawable *drawable, SurfaceMesh::EdgeProperty<vec3> prop) {
+            template <typename Model>
+            void update_color(Model *model, LinesDrawable *drawable, typename Model::template EdgeProperty<vec3> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -1230,13 +1232,13 @@ namespace easy3d {
                     return;
                 }
 
-                auto points = model->get_vertex_property<vec3>("v:point");
+                auto points = model->template get_vertex_property<vec3>("v:point");
                 std::vector<vec3> d_points, d_colors;
                 d_points.reserve(model->n_edges() * 2);
                 d_colors.reserve(model->n_edges() * 2);
                 for (auto e : model->edges()) {
-                    SurfaceMesh::Vertex s = model->vertex(e, 0);
-                    SurfaceMesh::Vertex t = model->vertex(e, 1);
+                    auto s = model->vertex(e, 0);
+                    auto t = model->vertex(e, 1);
                     d_points.push_back(points[s]);
                     d_points.push_back(points[t]);
                     d_colors.push_back(prop[e]);
@@ -1248,8 +1250,9 @@ namespace easy3d {
             }
 
 
+            template <typename Model>
             void
-            update(SurfaceMesh *model, LinesDrawable *drawable, SurfaceMesh::VertexProperty<vec3> prop) {
+            update_color(Model *model, LinesDrawable *drawable, typename Model::template VertexProperty<vec3> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -1259,13 +1262,13 @@ namespace easy3d {
                     return;
                 }
 
-                auto points = model->get_vertex_property<vec3>("v:point");
+                auto points = model->template get_vertex_property<vec3>("v:point");
                 std::vector<vec3> d_points, d_colors;
                 d_points.reserve(model->n_edges() * 2);
                 d_colors.reserve(model->n_edges() * 2);
                 for (auto e : model->edges()) {
-                    SurfaceMesh::Vertex s = model->vertex(e, 0);
-                    SurfaceMesh::Vertex t = model->vertex(e, 1);
+                    auto s = model->vertex(e, 0);
+                    auto t = model->vertex(e, 1);
                     d_points.push_back(points[s]);
                     d_points.push_back(points[t]);
                     d_colors.push_back(prop[s]);
@@ -1306,8 +1309,8 @@ namespace easy3d {
                 drawable->release_element_buffer();
             }
 
-
-            void update(SurfaceMesh *model, LinesDrawable *drawable, SurfaceMesh::EdgeProperty<vec2> prop) {
+            template<typename Model>
+            void update(Model *model, LinesDrawable *drawable, typename Model::template EdgeProperty<vec2> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -1317,7 +1320,7 @@ namespace easy3d {
                     return;
                 }
 
-                auto points = model->get_vertex_property<vec3>("v:point");
+                auto points = model->template get_vertex_property<vec3>("v:point");
                 std::vector<vec3> d_points;
                 d_points.reserve(model->n_edges() * 2);
                 std::vector<vec2> d_texcoords;
@@ -1374,67 +1377,67 @@ namespace easy3d {
             }
 
 
-            void update(Graph *model, PointsDrawable *drawable, Graph::VertexProperty<vec3> prop) {
-                assert(model);
-                assert(drawable);
-                assert(prop);
-
-                if (model->empty()) {
-                    LOG(WARNING) << "model has no valid geometry";
-                    return;
-                }
-
-                auto points = model->get_vertex_property<vec3>("v:point");
-                drawable->update_vertex_buffer(points.vector());
-                drawable->update_color_buffer(prop.vector());
-                drawable->set_impostor_type(PointsDrawable::SPHERE);
-            }
-
-
-            void update(Graph *model, PointsDrawable *drawable, Graph::VertexProperty<vec2> prop) {
-                assert(model);
-                assert(drawable);
-                assert(prop);
-
-                if (model->empty()) {
-                    LOG(WARNING) << "model has no valid geometry";
-                    return;
-                }
-
-                auto points = model->get_vertex_property<vec3>("v:point");
-                drawable->update_vertex_buffer(points.vector());
-                drawable->update_texcoord_buffer(prop.vector());
-                drawable->set_impostor_type(PointsDrawable::SPHERE);
-            }
+//            void update(Graph *model, PointsDrawable *drawable, Graph::VertexProperty<vec3> prop) {
+//                assert(model);
+//                assert(drawable);
+//                assert(prop);
+//
+//                if (model->empty()) {
+//                    LOG(WARNING) << "model has no valid geometry";
+//                    return;
+//                }
+//
+//                auto points = model->get_vertex_property<vec3>("v:point");
+//                drawable->update_vertex_buffer(points.vector());
+//                drawable->update_color_buffer(prop.vector());
+//                drawable->set_impostor_type(PointsDrawable::SPHERE);
+//            }
 
 
-            void update(Graph *model, LinesDrawable *drawable, Graph::EdgeProperty<vec3> prop) {
-                assert(model);
-                assert(drawable);
-                assert(prop);
+//            void update(Graph *model, PointsDrawable *drawable, Graph::VertexProperty<vec2> prop) {
+//                assert(model);
+//                assert(drawable);
+//                assert(prop);
+//
+//                if (model->empty()) {
+//                    LOG(WARNING) << "model has no valid geometry";
+//                    return;
+//                }
+//
+//                auto points = model->get_vertex_property<vec3>("v:point");
+//                drawable->update_vertex_buffer(points.vector());
+//                drawable->update_texcoord_buffer(prop.vector());
+//                drawable->set_impostor_type(PointsDrawable::SPHERE);
+//            }
 
-                if (model->empty()) {
-                    LOG(WARNING) << "model has no valid geometry";
-                    return;
-                }
 
-                auto points = model->get_vertex_property<vec3>("v:point");
-                std::vector<vec3> d_points, d_colors;
-                d_points.reserve(model->n_edges() * 2);
-                d_colors.reserve(model->n_edges() * 2);
-                for (auto e : model->edges()) {
-                    Graph::Vertex s = model->vertex(e, 0);
-                    Graph::Vertex t = model->vertex(e, 1);
-                    d_points.push_back(points[s]);
-                    d_points.push_back(points[t]);
-                    d_colors.emplace_back(prop[e]);
-                    d_colors.emplace_back(prop[e]);
-                }
-                drawable->update_vertex_buffer(d_points);
-                drawable->update_color_buffer(d_colors);
-                drawable->release_element_buffer();
-                drawable->set_impostor_type(LinesDrawable::CYLINDER);
-            }
+//            void update(Graph *model, LinesDrawable *drawable, Graph::EdgeProperty<vec3> prop) {
+//                assert(model);
+//                assert(drawable);
+//                assert(prop);
+//
+//                if (model->empty()) {
+//                    LOG(WARNING) << "model has no valid geometry";
+//                    return;
+//                }
+//
+//                auto points = model->get_vertex_property<vec3>("v:point");
+//                std::vector<vec3> d_points, d_colors;
+//                d_points.reserve(model->n_edges() * 2);
+//                d_colors.reserve(model->n_edges() * 2);
+//                for (auto e : model->edges()) {
+//                    Graph::Vertex s = model->vertex(e, 0);
+//                    Graph::Vertex t = model->vertex(e, 1);
+//                    d_points.push_back(points[s]);
+//                    d_points.push_back(points[t]);
+//                    d_colors.emplace_back(prop[e]);
+//                    d_colors.emplace_back(prop[e]);
+//                }
+//                drawable->update_vertex_buffer(d_points);
+//                drawable->update_color_buffer(d_colors);
+//                drawable->release_element_buffer();
+//                drawable->set_impostor_type(LinesDrawable::CYLINDER);
+//            }
 
             void update(Graph *model, LinesDrawable *drawable, Graph::VertexProperty<vec2> prop) {
                 assert(model);
@@ -1494,32 +1497,34 @@ namespace easy3d {
             }
 
 
-            void update(Graph *model, LinesDrawable *drawable, Graph::VertexProperty<vec3> prop) {
-                assert(model);
-                assert(drawable);
-                assert(prop);
+//            void update(Graph *model, LinesDrawable *drawable, Graph::VertexProperty<vec3> prop) {
+//                assert(model);
+//                assert(drawable);
+//                assert(prop);
+//
+//                if (model->empty()) {
+//                    LOG(WARNING) << "model has no valid geometry";
+//                    return;
+//                }
+//
+//                auto points = model->get_vertex_property<vec3>("v:point");
+//                drawable->update_vertex_buffer(points.vector());
+//
+//                drawable->update_color_buffer(prop.vector());
+//
+//                std::vector<unsigned int> indices;
+//                indices.reserve(model->n_edges() * 2);
+//                for (auto e : model->edges()) {
+//                    unsigned int s = model->vertex(e, 0).idx();
+//                    unsigned int t = model->vertex(e, 1).idx();
+//                    indices.push_back(s);
+//                    indices.push_back(t);
+//                }
+//                drawable->update_element_buffer(indices);
+//                drawable->set_impostor_type(LinesDrawable::CYLINDER);
+//            }
 
-                if (model->empty()) {
-                    LOG(WARNING) << "model has no valid geometry";
-                    return;
-                }
 
-                auto points = model->get_vertex_property<vec3>("v:point");
-                drawable->update_vertex_buffer(points.vector());
-
-                drawable->update_color_buffer(prop.vector());
-
-                std::vector<unsigned int> indices;
-                indices.reserve(model->n_edges() * 2);
-                for (auto e : model->edges()) {
-                    unsigned int s = model->vertex(e, 0).idx();
-                    unsigned int t = model->vertex(e, 1).idx();
-                    indices.push_back(s);
-                    indices.push_back(t);
-                }
-                drawable->update_element_buffer(indices);
-                drawable->set_impostor_type(LinesDrawable::CYLINDER);
-            }
 
         }
 
@@ -1543,7 +1548,7 @@ namespace easy3d {
                 case State::TEXTURED: {
                     auto texcoord = model->get_vertex_property<vec2>(name);
                     if (texcoord)
-                        details::update(model, drawable, texcoord);
+                        details::update_texcoord(model, drawable, texcoord);
                     else {
                         LOG(WARNING) << "texcoord property \'" << drawable->property_name()
                                      << "\' not found (use uniform coloring)";
@@ -1557,7 +1562,7 @@ namespace easy3d {
                 case State::COLOR_PROPERTY: {
                     auto colors = model->get_vertex_property<vec3>(name);
                     if (colors)
-                        details::update(model, drawable, colors);
+                        details::update_color<PointCloud>(model, drawable, colors);
                     else {
                         LOG(WARNING) << "color property \'" << drawable->property_name()
                                      << "\' not found (use uniform coloring)";
@@ -1571,22 +1576,22 @@ namespace easy3d {
                 case State::SCALAR_FIELD: {
                     if (model->get_vertex_property<float>(name)) {
                         auto prop = model->get_vertex_property<float>(name);
-                        details::update(model, drawable, prop);
+                        details::update_scalar<PointCloud>(model, drawable, prop);
                     } else if (model->get_vertex_property<double>(name)) {
                         auto prop = model->get_vertex_property<double>(name);
-                        details::update(model, drawable, prop);
+                        details::update_scalar<PointCloud>(model, drawable, prop);
                     } else if (model->get_vertex_property<int>(name)) {
                         auto prop = model->get_vertex_property<int>(name);
-                        details::update(model, drawable, prop);
+                        details::update_scalar<PointCloud>(model, drawable, prop);
                     } else if (model->get_vertex_property<unsigned int>(name)) {
                         auto prop = model->get_vertex_property<unsigned int>(name);
-                        details::update(model, drawable, prop);
+                        details::update_scalar<PointCloud>(model, drawable, prop);
                     } else if (model->get_vertex_property<char>(name)) {
                         auto prop = model->get_vertex_property<char>(name);
-                        details::update(model, drawable, prop);
+                        details::update_scalar<PointCloud>(model, drawable, prop);
                     } else if (model->get_vertex_property<unsigned char>(name)) {
                         auto prop = model->get_vertex_property<unsigned char>(name);
-                        details::update(model, drawable, prop);
+                        details::update_scalar<PointCloud>(model, drawable, prop);
                     } else {
                         LOG(WARNING) << "scalar field \'" << drawable->property_name()
                                      << "\' not found (use uniform coloring)";
@@ -1657,7 +1662,7 @@ namespace easy3d {
                 case State::TEXTURED: {
                     auto texcoord = model->get_vertex_property<vec2>(name);
                     if (texcoord)
-                        details::update(model, drawable, texcoord);
+                        details::update_texcoord<SurfaceMesh>(model, drawable, texcoord);
                     else {
                         LOG(WARNING) << "texcoord property \'" << drawable->property_name()
                                      << "\' not found (use uniform coloring)";
@@ -1671,7 +1676,7 @@ namespace easy3d {
                 case State::COLOR_PROPERTY: {
                     auto colors = model->get_vertex_property<vec3>(name);
                     if (colors)
-                        details::update(model, drawable, colors);
+                        details::update_color<SurfaceMesh>(model, drawable, colors);
                     else {
                         LOG(WARNING) << "color property \'" << drawable->property_name()
                                      << "\' not found (use uniform coloring)";
@@ -1685,22 +1690,22 @@ namespace easy3d {
                 case State::SCALAR_FIELD: {
                     if (model->get_vertex_property<float>(name)) {
                         auto prop = model->get_vertex_property<float>(name);
-                        details::update(model, drawable, prop);
+                        details::update_scalar<SurfaceMesh>(model, drawable, prop);
                     } else if (model->get_vertex_property<double>(name)) {
                         auto prop = model->get_vertex_property<double>(name);
-                        details::update(model, drawable, prop);
+                        details::update_scalar<SurfaceMesh>(model, drawable, prop);
                     } else if (model->get_vertex_property<int>(name)) {
                         auto prop = model->get_vertex_property<int>(name);
-                        details::update(model, drawable, prop);
+                        details::update_scalar<SurfaceMesh>(model, drawable, prop);
                     } else if (model->get_vertex_property<unsigned int>(name)) {
                         auto prop = model->get_vertex_property<unsigned int>(name);
-                        details::update(model, drawable, prop);
+                        details::update_scalar<SurfaceMesh>(model, drawable, prop);
                     } else if (model->get_vertex_property<char>(name)) {
                         auto prop = model->get_vertex_property<char>(name);
-                        details::update(model, drawable, prop);
+                        details::update_scalar<SurfaceMesh>(model, drawable, prop);
                     } else if (model->get_vertex_property<unsigned char>(name)) {
                         auto prop = model->get_vertex_property<unsigned char>(name);
-                        details::update(model, drawable, prop);
+                        details::update_scalar<SurfaceMesh>(model, drawable, prop);
                     } else {
                         LOG(WARNING) << "scalar field \'" << drawable->property_name()
                                      << "\' not found (use uniform coloring)";
@@ -1785,7 +1790,7 @@ namespace easy3d {
                         case State::EDGE: {
                             auto colors = model->get_edge_property<vec3>(name);
                             if (colors)
-                                details::update(model, drawable, colors);
+                                details::update_color<SurfaceMesh>(model, drawable, colors);
                             else {
                                 LOG(WARNING) << "color property \'" << drawable->property_name()
                                              << "\' not found (use uniform coloring)";
@@ -1798,7 +1803,7 @@ namespace easy3d {
                         case State::VERTEX: {
                             auto colors = model->get_vertex_property<vec3>(name);
                             if (colors)
-                                details::update(model, drawable, colors);
+                                details::update_color<SurfaceMesh>(model, drawable, colors);
                             else {
                                 LOG(WARNING) << "color property \'" << drawable->property_name()
                                              << "\' not found (use uniform coloring)";
@@ -1821,16 +1826,16 @@ namespace easy3d {
                         case State::EDGE: {
                             if (model->get_edge_property<float>(name)) {
                                 auto prop = model->get_edge_property<float>(name);
-                                details::update(model, drawable, prop);
+                                details::update<SurfaceMesh>(model, drawable, prop);
                             } else if (model->get_edge_property<double>(name)) {
                                 auto prop = model->get_edge_property<double>(name);
-                                details::update(model, drawable, prop);
+                                details::update<SurfaceMesh>(model, drawable, prop);
                             } else if (model->get_edge_property<int>(name)) {
                                 auto prop = model->get_edge_property<int>(name);
-                                details::update(model, drawable, prop);
+                                details::update<SurfaceMesh>(model, drawable, prop);
                             } else if (model->get_edge_property<unsigned int>(name)) {
                                 auto prop = model->get_edge_property<unsigned int>(name);
-                                details::update(model, drawable, prop);
+                                details::update<SurfaceMesh>(model, drawable, prop);
                             } else {
                                 LOG(WARNING) << "scalar field \'" << drawable->property_name()
                                              << "\' not found on edges (use uniform coloring)";
@@ -1843,22 +1848,22 @@ namespace easy3d {
                         case State::VERTEX: {
                             if (model->get_vertex_property<float>(name)) {
                                 auto prop = model->get_vertex_property<float>(name);
-                                details::update(model, drawable, prop);
+                                details::update<SurfaceMesh>(model, drawable, prop);
                             } else if (model->get_vertex_property<double>(name)) {
                                 auto prop = model->get_vertex_property<double>(name);
-                                details::update(model, drawable, prop);
+                                details::update<SurfaceMesh>(model, drawable, prop);
                             } else if (model->get_vertex_property<int>(name)) {
                                 auto prop = model->get_vertex_property<int>(name);
-                                details::update(model, drawable, prop);
+                                details::update<SurfaceMesh>(model, drawable, prop);
                             } else if (model->get_vertex_property<unsigned int>(name)) {
                                 auto prop = model->get_vertex_property<unsigned int>(name);
-                                details::update(model, drawable, prop);
+                                details::update<SurfaceMesh>(model, drawable, prop);
                             } else if (model->get_vertex_property<char>(name)) {
                                 auto prop = model->get_vertex_property<char>(name);
-                                details::update(model, drawable, prop);
+                                details::update<SurfaceMesh>(model, drawable, prop);
                             } else if (model->get_vertex_property<unsigned char>(name)) {
                                 auto prop = model->get_vertex_property<unsigned char>(name);
-                                details::update(model, drawable, prop);
+                                details::update<SurfaceMesh>(model, drawable, prop);
                             } else {
                                 LOG(WARNING) << "scalar field \'" << drawable->property_name()
                                              << "\' not found on vertices (use uniform coloring)";
@@ -2096,22 +2101,22 @@ namespace easy3d {
                         case State::VERTEX: {
                             if (model->get_vertex_property<float>(name)) {
                                 auto prop = model->get_vertex_property<float>(name);
-                                details::update(model, drawable, prop);
+                                details::update<SurfaceMesh>(model, drawable, prop);
                             } else if (model->get_vertex_property<double>(name)) {
                                 auto prop = model->get_vertex_property<double>(name);
-                                details::update(model, drawable, prop);
+                                details::update<SurfaceMesh>(model, drawable, prop);
                             } else if (model->get_vertex_property<int>(name)) {
                                 auto prop = model->get_vertex_property<int>(name);
-                                details::update(model, drawable, prop);
+                                details::update<SurfaceMesh>(model, drawable, prop);
                             } else if (model->get_vertex_property<unsigned int>(name)) {
                                 auto prop = model->get_vertex_property<unsigned int>(name);
-                                details::update(model, drawable, prop);
+                                details::update<SurfaceMesh>(model, drawable, prop);
                             } else if (model->get_vertex_property<char>(name)) {
                                 auto prop = model->get_vertex_property<char>(name);
-                                details::update(model, drawable, prop);
+                                details::update<SurfaceMesh>(model, drawable, prop);
                             } else if (model->get_vertex_property<unsigned char>(name)) {
                                 auto prop = model->get_vertex_property<unsigned char>(name);
-                                details::update(model, drawable, prop);
+                                details::update<SurfaceMesh>(model, drawable, prop);
                             } else {
                                 LOG(WARNING) << "scalar field \'" << drawable->property_name()
                                              << "\' not found on vertices (use uniform coloring)";
@@ -2157,7 +2162,7 @@ namespace easy3d {
                 case State::TEXTURED: {
                     auto texcoord = model->get_vertex_property<vec2>(name);
                     if (texcoord)
-                        details::update(model, drawable, texcoord);
+                        details::update_texcoord<Graph>(model, drawable, texcoord);
                     else {
                         LOG(WARNING) << "texcoord property \'" << drawable->property_name()
                                      << "\' not found (use uniform coloring)";
@@ -2171,7 +2176,7 @@ namespace easy3d {
                 case State::COLOR_PROPERTY: {
                     auto colors = model->get_vertex_property<vec3>(name);
                     if (colors)
-                        details::update(model, drawable, colors);
+                        details::update_color<Graph>(model, drawable, colors);
                     else {
                         LOG(WARNING) << "color property \'" << drawable->property_name()
                                      << "\' not found (use uniform coloring)";
@@ -2185,22 +2190,22 @@ namespace easy3d {
                 case State::SCALAR_FIELD: {
                     if (model->get_vertex_property<float>(name)) {
                         auto prop = model->get_vertex_property<float>(name);
-                        details::update(model, drawable, prop);
+                        details::update_scalar<Graph>(model, drawable, prop);
                     } else if (model->get_vertex_property<double>(name)) {
                         auto prop = model->get_vertex_property<double>(name);
-                        details::update(model, drawable, prop);
+                        details::update_scalar<Graph>(model, drawable, prop);
                     } else if (model->get_vertex_property<int>(name)) {
                         auto prop = model->get_vertex_property<int>(name);
-                        details::update(model, drawable, prop);
+                        details::update_scalar<Graph>(model, drawable, prop);
                     } else if (model->get_vertex_property<unsigned int>(name)) {
                         auto prop = model->get_vertex_property<unsigned int>(name);
-                        details::update(model, drawable, prop);
+                        details::update_scalar<Graph>(model, drawable, prop);
                     } else if (model->get_vertex_property<char>(name)) {
                         auto prop = model->get_vertex_property<char>(name);
-                        details::update(model, drawable, prop);
+                        details::update_scalar<Graph>(model, drawable, prop);
                     } else if (model->get_vertex_property<unsigned char>(name)) {
                         auto prop = model->get_vertex_property<unsigned char>(name);
-                        details::update(model, drawable, prop);
+                        details::update_scalar<Graph>(model, drawable, prop);
                     } else {
                         LOG(WARNING) << "scalar field \'" << drawable->property_name()
                                      << "\' not found (use uniform coloring)";
@@ -2277,7 +2282,7 @@ namespace easy3d {
                         case State::EDGE: {
                             auto colors = model->get_edge_property<vec3>(name);
                             if (colors)
-                                details::update(model, drawable, colors);
+                                details::update_color<Graph>(model, drawable, colors);
                             else {
                                 LOG(WARNING) << "color property \'" << drawable->property_name()
                                              << "\' not found (use uniform coloring)";
@@ -2290,7 +2295,7 @@ namespace easy3d {
                         case State::VERTEX: {
                             auto colors = model->get_vertex_property<vec3>(name);
                             if (colors)
-                                details::update(model, drawable, colors);
+                                details::update_color<Graph>(model, drawable, colors);
                             else {
                                 LOG(WARNING) << "color property \'" << drawable->property_name()
                                              << "\' not found (use uniform coloring)";
@@ -2335,22 +2340,22 @@ namespace easy3d {
                         case State::VERTEX: {
                             if (model->get_vertex_property<float>(name)) {
                                 auto prop = model->get_vertex_property<float>(name);
-                                details::update(model, drawable, prop);
+                                details::update<Graph>(model, drawable, prop);
                             } else if (model->get_vertex_property<double>(name)) {
                                 auto prop = model->get_vertex_property<double>(name);
-                                details::update(model, drawable, prop);
+                                details::update<Graph>(model, drawable, prop);
                             } else if (model->get_vertex_property<int>(name)) {
                                 auto prop = model->get_vertex_property<int>(name);
-                                details::update(model, drawable, prop);
+                                details::update<Graph>(model, drawable, prop);
                             } else if (model->get_vertex_property<unsigned int>(name)) {
                                 auto prop = model->get_vertex_property<unsigned int>(name);
-                                details::update(model, drawable, prop);
+                                details::update<Graph>(model, drawable, prop);
                             } else if (model->get_vertex_property<char>(name)) {
                                 auto prop = model->get_vertex_property<char>(name);
-                                details::update(model, drawable, prop);
+                                details::update<Graph>(model, drawable, prop);
                             } else if (model->get_vertex_property<unsigned char>(name)) {
                                 auto prop = model->get_vertex_property<unsigned char>(name);
-                                details::update(model, drawable, prop);
+                                details::update<Graph>(model, drawable, prop);
                             } else {
                                 LOG(WARNING) << "scalar field \'" << drawable->property_name()
                                              << "\' not found on vertices (use uniform coloring)";
@@ -2397,7 +2402,73 @@ namespace easy3d {
                 return;
             }
 
-            drawable->update_vertex_buffer(model->points());
+            const std::string &name = drawable->property_name();
+            switch (drawable->coloring_method()) {
+                case State::TEXTURED: {
+                    auto texcoord = model->get_vertex_property<vec2>(name);
+                    if (texcoord)
+                        details::update_texcoord<PolyMesh>(model, drawable, texcoord);
+                    else {
+                        LOG(WARNING) << "texcoord property \'" << drawable->property_name()
+                                     << "\' not found (use uniform coloring)";
+                        drawable->set_coloring_method(State::UNIFORM_COLOR);
+                        update(model, drawable);
+                        return;
+                    }
+                    break;
+                }
+
+                case State::COLOR_PROPERTY: {
+                    auto colors = model->get_vertex_property<vec3>(name);
+                    if (colors)
+                        details::update_color<PolyMesh>(model, drawable, colors);
+                    else {
+                        LOG(WARNING) << "color property \'" << drawable->property_name()
+                                     << "\' not found (use uniform coloring)";
+                        drawable->set_coloring_method(State::UNIFORM_COLOR);
+                        update(model, drawable);
+                        return;
+                    }
+                    break;
+                }
+
+                case State::SCALAR_FIELD: {
+                    if (model->get_vertex_property<float>(name)) {
+                        auto prop = model->get_vertex_property<float>(name);
+                        details::update_scalar<PolyMesh>(model, drawable, prop);
+                    } else if (model->get_vertex_property<double>(name)) {
+                        auto prop = model->get_vertex_property<double>(name);
+                        details::update_scalar<PolyMesh>(model, drawable, prop);
+                    } else if (model->get_vertex_property<int>(name)) {
+                        auto prop = model->get_vertex_property<int>(name);
+                        details::update_scalar<PolyMesh>(model, drawable, prop);
+                    } else if (model->get_vertex_property<unsigned int>(name)) {
+                        auto prop = model->get_vertex_property<unsigned int>(name);
+                        details::update_scalar<PolyMesh>(model, drawable, prop);
+                    } else if (model->get_vertex_property<char>(name)) {
+                        auto prop = model->get_vertex_property<char>(name);
+                        details::update_scalar<PolyMesh>(model, drawable, prop);
+                    } else if (model->get_vertex_property<unsigned char>(name)) {
+                        auto prop = model->get_vertex_property<unsigned char>(name);
+                        details::update_scalar<PolyMesh>(model, drawable, prop);
+                    } else {
+                        LOG(WARNING) << "scalar field \'" << drawable->property_name()
+                                     << "\' not found (use uniform coloring)";
+                        drawable->set_coloring_method(State::UNIFORM_COLOR);
+                        update(model, drawable);
+                        return;
+                    }
+                    break;
+                }
+
+                default: { // uniform color
+                    drawable->update_vertex_buffer(model->points());
+                    auto normals = model->get_vertex_property<vec3>("v:normal");
+                    if (normals)
+                        drawable->update_normal_buffer(normals.vector());
+                    break;
+                }
+            }
         }
 
 
