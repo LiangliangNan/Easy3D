@@ -33,6 +33,7 @@ in Data{
     vec2 texcoord;
     vec3 normal;
     vec3 position;
+    float clipped;
 } DataIn;
 
 uniform sampler2D textureID;
@@ -47,6 +48,9 @@ out vec4 outputF;// Ouput data
 //#define ENABLE_ALPHA
 
 void main() {
+    if (DataIn.clipped > 0.0)
+        discard;
+
     float repeat = texture_repeat + fractional_repeat / 100.0f;
 
 #ifndef ENABLE_ALPHA
