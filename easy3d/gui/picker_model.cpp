@@ -121,17 +121,14 @@ namespace easy3d {
             rgb::encode(static_cast<int>(i), r, g, b, a);
             const vec4 color(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f);
 
-            if (dynamic_cast<SurfaceMesh *>(model))
-                draw(model->renderer()->get_triangles_drawable("faces"), color);
-            else if (dynamic_cast<PointCloud *>(model))
-                draw(model->renderer()->get_points_drawable("vertices"), color);
-            else if (dynamic_cast<Graph *>(model)) {
-                draw(model->renderer()->get_points_drawable("vertices"), color);
-                draw(model->renderer()->get_lines_drawable("edges"), color);
+            for (auto d : model->renderer()->triangles_drawables()) {
+                if (d->is_visible())    draw(d, color);
             }
-            else if (dynamic_cast<PolyMesh *>(model)) {
-                draw(model->renderer()->get_triangles_drawable("faces:border"), color);
-                draw(model->renderer()->get_triangles_drawable("faces:interior"), color);
+            for (auto d : model->renderer()->lines_drawables()) {
+                if (d->is_visible())    draw(d, color);
+            }
+            for (auto d : model->renderer()->points_drawables()) {
+                if (d->is_visible())    draw(d, color);
             }
         }
     }
