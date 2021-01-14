@@ -367,6 +367,7 @@ void PaintCanvas::mouseReleaseEvent(QMouseEvent *e) {
                 }
             }
             mesh->collect_garbage();
+            mesh->manipulator()->reset();
             mesh->renderer()->update(false);   // do not recompute the bounding box
             LOG(INFO) << count << " faces deleted";
         } else if (dynamic_cast<PointCloud*>(currentModel())) {
@@ -380,6 +381,7 @@ void PaintCanvas::mouseReleaseEvent(QMouseEvent *e) {
                 }
             }
             cloud->collect_garbage();
+            cloud->manipulator()->reset();
             cloud->renderer()->update(false);   // do not recompute the bounding box
             LOG(INFO) << count << " points deleted";
         }
