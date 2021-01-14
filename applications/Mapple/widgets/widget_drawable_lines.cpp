@@ -326,7 +326,7 @@ void WidgetLinesDrawable::setDefaultColor() {
 }
 
 
-namespace details {
+namespace lines_details {
 
     // color schemes from scalar fields
     // scalar fields defined on edges
@@ -353,6 +353,10 @@ namespace details {
                 schemes.push_back(scalar_prefix + QString::fromStdString(name));
             else if (model->template get_edge_property<int>(name))
                 schemes.push_back(scalar_prefix + QString::fromStdString(name));
+            else if (model->template get_edge_property<unsigned char>(name))
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
+            else if (model->template get_edge_property<char>(name))
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
         }
         // scalar fields defined on vertices
         for (const auto &name : model->vertex_properties()) {
@@ -363,6 +367,10 @@ namespace details {
             else if (model->template get_vertex_property<unsigned int>(name))
                 schemes.push_back(scalar_prefix + QString::fromStdString(name));
             else if (model->template get_vertex_property<int>(name))
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
+            else if (model->template get_vertex_property<unsigned char>(name))
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
+            else if (model->template get_vertex_property<char>(name))
                 schemes.push_back(scalar_prefix + QString::fromStdString(name));
         }
     }
@@ -387,15 +395,15 @@ std::vector<QString> WidgetLinesDrawable::colorSchemes(const easy3d::Model *mode
 
     auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
     if (mesh)
-        details::color_schemes_for_scalar_fields(mesh, scalar_prefix_, schemes);
+        lines_details::color_schemes_for_scalar_fields(mesh, scalar_prefix_, schemes);
 
     auto graph = dynamic_cast<Graph *>(viewer_->currentModel());
     if (graph)
-        details::color_schemes_for_scalar_fields(graph, scalar_prefix_, schemes);
+        lines_details::color_schemes_for_scalar_fields(graph, scalar_prefix_, schemes);
 
     auto poly = dynamic_cast<PolyMesh *>(viewer_->currentModel());
     if (poly)
-        details::color_schemes_for_scalar_fields(poly, scalar_prefix_, schemes);
+        lines_details::color_schemes_for_scalar_fields(poly, scalar_prefix_, schemes);
 
     return schemes;
 }
@@ -406,15 +414,15 @@ std::vector<QString> WidgetLinesDrawable::vectorFields(const easy3d::Model *mode
 
     auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
     if (mesh)
-        details::vector_fields_on_edges(mesh, fields);
+        lines_details::vector_fields_on_edges(mesh, fields);
 
     auto graph = dynamic_cast<Graph *>(viewer_->currentModel());
     if (graph)
-        details::vector_fields_on_edges(graph, fields);
+        lines_details::vector_fields_on_edges(graph, fields);
 
     auto poly = dynamic_cast<PolyMesh *>(viewer_->currentModel());
     if (poly)
-        details::vector_fields_on_edges(poly, fields);
+        lines_details::vector_fields_on_edges(poly, fields);
 
     // if no vector fields found, add a "not available" item
     if (fields.empty())
@@ -463,7 +471,7 @@ void WidgetLinesDrawable::updateVectorFieldBuffer(Model *model, const std::strin
         drawable->set_update_func([&, name](Model *m, Drawable *d) -> void {
             const float scale = ui->doubleSpinBoxVectorFieldScale->value();
             if (dynamic_cast<SurfaceMesh *>(m))
-                buffers::update(dynamic_cast<SurfaceMesh*>(m), dynamic_cast<LinesDrawable*>(d), name, 2, scale);
+                buffers::update(dynamic_cast<SurfaceMesh*>(m), dynamic_cast<LinesDrawable*>(d), name, State::EDGE, scale);
         });
     }
 }

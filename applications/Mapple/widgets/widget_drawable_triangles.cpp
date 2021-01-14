@@ -266,7 +266,7 @@ void WidgetTrianglesDrawable::updatePanel() {
 
 
 
-namespace details {
+namespace triangles_details {
 
     template <typename MODEL>
     void collect_color_schemes(MODEL* model, const QString& scalar_prefix, std::vector<QString>& schemes) {
@@ -340,12 +340,12 @@ std::vector<QString> WidgetTrianglesDrawable::colorSchemes(const easy3d::Model *
                 schemes.push_back(QString::fromStdString(name));
         }
 
-        details::collect_color_schemes(mesh, scalar_prefix_, schemes);
+        triangles_details::collect_color_schemes(mesh, scalar_prefix_, schemes);
     }
 
     auto poly = dynamic_cast<PolyMesh *>(viewer_->currentModel());
     if (poly)
-        details::collect_color_schemes(poly, scalar_prefix_, schemes);
+        triangles_details::collect_color_schemes(poly, scalar_prefix_, schemes);
 
     return schemes;
 }
@@ -356,11 +356,11 @@ std::vector<QString> WidgetTrianglesDrawable::vectorFields(const easy3d::Model *
 
     auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
     if (mesh)
-        details::vector_fields_on_faces(mesh, fields);
+        triangles_details::vector_fields_on_faces(mesh, fields);
 
     auto poly = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
     if (poly)
-        details::vector_fields_on_faces(poly, fields);
+        triangles_details::vector_fields_on_faces(poly, fields);
 
     // if no vector fields found, add a "not available" item
     if (fields.empty())
@@ -568,7 +568,7 @@ void WidgetTrianglesDrawable::updateVectorFieldBuffer(Model *model, const std::s
             drawable = mesh->renderer()->add_lines_drawable("vector - " + name);
             drawable->set_update_func([&, name](Model *m, Drawable *d) -> void {
                 const float scale = ui->doubleSpinBoxVectorFieldScale->value();
-                buffers::update(dynamic_cast<SurfaceMesh*>(m), dynamic_cast<LinesDrawable*>(d), name, 0, scale);
+                buffers::update(dynamic_cast<SurfaceMesh*>(m), dynamic_cast<LinesDrawable*>(d), name, State::FACE, scale);
             });
         }
     }
@@ -576,7 +576,8 @@ void WidgetTrianglesDrawable::updateVectorFieldBuffer(Model *model, const std::s
 
 
 
-namespace details {
+namespace triangles_triangles_details {
+
     void set_highlight_range(SurfaceMesh* m, Drawable* d, const std::pair<int, int>& range) {
         if (range.second < 0 || range.second < range.first) {
             d->set_highlight_range(std::make_pair(-1, -1));
@@ -624,7 +625,7 @@ void WidgetTrianglesDrawable::setHighlightMin(int v) {
     auto& face_range = states_[d].highlight_range;
     face_range.first = v;
 
-    details::set_highlight_range(mesh, d, face_range);
+    triangles_details::set_highlight_range(mesh, d, face_range);
     viewer_->update();
 }
 
@@ -642,7 +643,7 @@ void WidgetTrianglesDrawable::setHighlightMax(int v) {
     auto& face_range = states_[d].highlight_range;
     face_range.second = v;
 
-    details::set_highlight_range(mesh, d, face_range);
+    triangles_details::set_highlight_range(mesh, d, face_range);
     viewer_->update();
 }
 

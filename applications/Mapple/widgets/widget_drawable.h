@@ -89,7 +89,7 @@ protected:
     easy3d::State::Method color_method(const std::string& name, const std::string& scalar_prefix) const ;
 
     // get the color location from the color scheme name
-    easy3d::State::PropertyLocation color_location(const std::string& name) const;
+    easy3d::State::Location color_location(const std::string& name) const;
 
 protected:
     MainWindow*     window_;

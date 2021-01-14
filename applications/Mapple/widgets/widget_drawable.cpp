@@ -230,7 +230,7 @@ State::Method WidgetDrawable::color_method(const std::string& name, const std::s
 
 
 // get the color location from the color scheme name
-State::PropertyLocation WidgetDrawable::color_location(const std::string& name) const {
+State::Location WidgetDrawable::color_location(const std::string& name) const {
     if (name.find("e:") != std::string::npos)
         return State::EDGE;
     else if (name.find("h:") != std::string::npos)

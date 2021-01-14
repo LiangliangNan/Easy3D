@@ -140,7 +140,7 @@ WidgetPointsDrawable::~WidgetPointsDrawable() {
 }
 
 
-namespace details {
+namespace points_details {
 
     // color schemes from scalar fields
     // scalar fields defined on vertices
@@ -187,19 +187,19 @@ std::vector<QString> WidgetPointsDrawable::colorSchemes(const easy3d::Model *mod
 
     auto cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
     if (cloud)
-        details::color_schemes_for_scalar_fields(cloud, scalar_prefix_, schemes);
+        points_details::color_schemes_for_scalar_fields(cloud, scalar_prefix_, schemes);
 
     auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
     if (mesh)
-        details::color_schemes_for_scalar_fields(mesh, scalar_prefix_, schemes);
+        points_details::color_schemes_for_scalar_fields(mesh, scalar_prefix_, schemes);
 
     auto graph = dynamic_cast<Graph *>(viewer_->currentModel());
     if (graph)
-        details::color_schemes_for_scalar_fields(graph, scalar_prefix_, schemes);
+        points_details::color_schemes_for_scalar_fields(graph, scalar_prefix_, schemes);
 
     auto poly = dynamic_cast<PolyMesh *>(viewer_->currentModel());
     if (poly)
-        details::color_schemes_for_scalar_fields(poly, scalar_prefix_, schemes);
+        points_details::color_schemes_for_scalar_fields(poly, scalar_prefix_, schemes);
 
     return schemes;
 }
@@ -210,19 +210,19 @@ std::vector<QString> WidgetPointsDrawable::vectorFields(const easy3d::Model *mod
 
     auto cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
     if (cloud)
-        details::vector_fields_on_vertices(cloud, fields);
+        points_details::vector_fields_on_vertices(cloud, fields);
 
     auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
     if (mesh)
-        details::vector_fields_on_vertices(mesh, fields);
+        points_details::vector_fields_on_vertices(mesh, fields);
 
     auto graph = dynamic_cast<Graph *>(viewer_->currentModel());
     if (graph)
-        details::vector_fields_on_vertices(graph, fields);
+        points_details::vector_fields_on_vertices(graph, fields);
 
     auto poly = dynamic_cast<PolyMesh *>(viewer_->currentModel());
     if (poly)
-        details::vector_fields_on_vertices(poly, fields);
+        points_details::vector_fields_on_vertices(poly, fields);
 
     // if no vector fields found, add a "not available" item
     if (fields.empty())
@@ -546,7 +546,7 @@ void WidgetPointsDrawable::updateVectorFieldBuffer(Model *model, const std::stri
         drawable->set_update_func([&, name](Model *m, Drawable *d) -> void {
             const float scale = ui->doubleSpinBoxVectorFieldScale->value();
             if (dynamic_cast<SurfaceMesh *>(m))
-                buffers::update(dynamic_cast<SurfaceMesh*>(m), dynamic_cast<LinesDrawable*>(d), name, 1, scale);
+                buffers::update(dynamic_cast<SurfaceMesh*>(m), dynamic_cast<LinesDrawable*>(d), name, State::VERTEX, scale);
             else if (dynamic_cast<PointCloud *>(m))
                 buffers::update(dynamic_cast<PointCloud*>(m), dynamic_cast<LinesDrawable*>(d), name, scale);
         });
