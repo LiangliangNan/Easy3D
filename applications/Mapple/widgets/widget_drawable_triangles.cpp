@@ -164,8 +164,8 @@ void WidgetTrianglesDrawable::updatePanel() {
 
     ui->comboBoxDrawables->clear();
     const auto &drawables = model->renderer()->triangles_drawables();
-    for (auto d : drawables)
-        ui->comboBoxDrawables->addItem(QString::fromStdString(d->name()));
+    for (auto drawable : drawables)
+        ui->comboBoxDrawables->addItem(QString::fromStdString(drawable->name()));
     ui->comboBoxDrawables->setCurrentText(QString::fromStdString(d->name()));
 
     // visible
