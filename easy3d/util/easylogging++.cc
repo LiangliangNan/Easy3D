@@ -2502,13 +2502,6 @@ void LogDispatcher::dispatch(void) {
       callback->handle(&data);
     }
   }
-
-  // [Liangliang]: directly use the pointer of a logger
-  if (ELPP->Liangliang_logger && ELPP->Liangliang_logger->enabled()) {
-      data.setLogMessage(m_logMessage);
-      data.setDispatchAction(m_dispatchAction);
-      ELPP->Liangliang_logger->handle(&data);
-  }
 }
 
 // MessageBuilder

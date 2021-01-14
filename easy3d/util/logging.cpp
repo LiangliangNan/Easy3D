@@ -166,8 +166,24 @@ namespace easy3d
         }
 
 
+        static Logger* logger = nullptr;
+
+        class Dispatcher : public el::LogDispatchCallback {
+        protected:
+            void handle(const el::LogDispatchData* data) noexcept override {
+                // remove all trailing ending line breaks
+                std::string msg = data->logMessage()->message();
+                while (msg.back() == '\n' && !msg.empty()) {
+                    msg.erase(msg.end() - 1);
+                }
+                if (logger)
+                    logger->send(data->logMessage()->level(), msg);
+            }
+        };
+
         Logger::Logger() {
-            el::base::elStorage->installLogDispatchCallback(this);
+            logger = this;
+            el::base::elStorage->installLogDispatchCallback<Dispatcher>("Easy3D-Logger");
         }
 
     }

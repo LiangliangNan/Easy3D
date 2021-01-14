@@ -29,6 +29,17 @@
 #include <easy3d/util/easylogging++.h>
 
 
+// to have the same syntax as glog
+#define LOG_FIRST_N LOG_N_TIMES
+
+// to have LOG_IF_EVERY_N
+#define LOG_IF_EVERY_N(n, condition, LEVEL)  if (condition) \
+    CLOG_EVERY_N(n, LEVEL, ELPP_CURR_FILE_LOGGER_ID)
+
+// for logging the counter number
+#define COUNTER     ELPP_COUNTER->hitCounts()
+
+
 namespace easy3d {
 
     /// \brief The logging mechanism.
@@ -49,40 +60,17 @@ namespace easy3d {
         void initialize(bool verbose = false, const std::string &log_file = "default");
 
 
-        /// Base class for a logger, i.e., to log messages to whatever
+        /// Base class for a logger (that can log messages to whatever)
         /// Users should subclass Logger and override send() to do whatever they want.
         /// \class Logger easy3d/util/logging.h
-        class Logger : public el::LogDispatchCallback {
+        class Logger {
         public:
             Logger();
-
             /// writes the log message \p msg (and may also other given information).
             virtual void send(el::Level level, const std::string& msg) = 0;
-
-        protected:
-            void handle(const el::LogDispatchData* data) noexcept override {
-                // remove all trailing ending line breaks
-                std::string msg = data->logMessage()->message();
-                while (msg.back() == '\n' && !msg.empty()) {
-                    msg.erase(msg.end() - 1);
-                }
-                send(data->logMessage()->level(), msg);
-            }
         };
 
     };
-
-
-
-// to have the same syntax as glog
-#define LOG_FIRST_N LOG_N_TIMES
-
-// to have LOG_IF_EVERY_N
-#define LOG_IF_EVERY_N(n, condition, LEVEL)  if (condition) \
-    CLOG_EVERY_N(n, LEVEL, ELPP_CURR_FILE_LOGGER_ID)
-
-// for logging the counter number
-#define COUNTER     ELPP_COUNTER->hitCounts()
 
 }
 

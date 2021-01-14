@@ -2644,13 +2644,6 @@ class Storage : base::NoCopy, public base::threading::ThreadSafe {
     m_loggingLevel = level;
   }
 
-
-    // [Liangliang]: directly add the pointer of a logger
-    LogDispatchCallback* Liangliang_logger{nullptr};
-    inline void installLogDispatchCallback(LogDispatchCallback* callback) {
-      Liangliang_logger = callback;
-    }
-
   template <typename T>
   inline bool installLogDispatchCallback(const std::string& id) {
     return base::utils::Utils::installCallback<T, base::type::LogDispatchCallbackPtr>(id, &m_logDispatchCallbacks);
