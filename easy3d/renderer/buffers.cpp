@@ -473,7 +473,7 @@ namespace easy3d {
 
                 for (auto f : model->faces()) {
                     if (model->is_border(f) == border) {
-                        tessellator.begin_polygon(model->compute_face_normal(model->halfface(f, 0)));
+                        tessellator.begin_polygon(model->compute_face_normal(f));
                         // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                         tessellator.begin_contour();
                         for (auto v : model->vertices(f)) {
@@ -531,7 +531,7 @@ namespace easy3d {
 
                 for (auto f : model->faces()) {
                     if (model->is_border(f) == border) {
-                        tessellator.begin_polygon(model->compute_face_normal(model->halfface(f, 0)));
+                        tessellator.begin_polygon(model->compute_face_normal(f));
                         // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                         tessellator.begin_contour();
                         for (auto v : model->vertices(f)) {
@@ -594,7 +594,7 @@ namespace easy3d {
 
                 for (auto f : model->faces()) {
                     if (model->is_border(f) == border) {
-                        tessellator.begin_polygon(model->compute_face_normal(model->halfface(f, 0)));
+                        tessellator.begin_polygon(model->compute_face_normal(f));
                         // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                         tessellator.begin_contour();
                         const vec3 &color = colors[f];
@@ -658,7 +658,7 @@ namespace easy3d {
 
                 for (auto f : model->faces()) {
                     if (model->is_border(f) == border) {
-                        tessellator.begin_polygon(model->compute_face_normal(model->halfface(f, 0)));
+                        tessellator.begin_polygon(model->compute_face_normal(f));
                         // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                         tessellator.begin_contour();
                         for (auto v : model->vertices(f)) {
@@ -728,7 +728,7 @@ namespace easy3d {
 
                 for (auto f : model->faces()) {
                     if (model->is_border(f) == border) {
-                        tessellator.begin_polygon(model->compute_face_normal(model->halfface(f, 0)));
+                        tessellator.begin_polygon(model->compute_face_normal(f));
                         // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                         tessellator.begin_contour();
                         for (auto v : model->vertices(f)) {
@@ -799,7 +799,7 @@ namespace easy3d {
 
                 for (auto f : model->faces()) {
                     if (model->is_border(f) == border) {
-                        tessellator.begin_polygon(model->compute_face_normal(model->halfface(f, 0)));
+                        tessellator.begin_polygon(model->compute_face_normal(f));
                         // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                         tessellator.begin_contour();
                         float coord = (prop[f] - min_value) / (max_value - min_value);
@@ -2379,6 +2379,104 @@ namespace easy3d {
                 }
             }
         }
+
+
+        void update(PolyMesh *model, LinesDrawable *drawable, const std::string &field, State::Location location, float scale) {
+            if (model->empty()) {
+                LOG(WARNING) << "model has no valid geometry";
+                return;
+            }
+
+            if (drawable->name() == "faces:interior")
+
+            switch (location) {
+                case State::FACE:
+                    if (!model->get_face_property<vec3>(field)) {
+                        LOG(ERROR) << "vector field '" << field << "' not found on the mesh faces (wrong name?)";
+                        return;
+                    }
+                    break;
+                case State::VERTEX:
+                    if (!model->get_vertex_property<vec3>(field)) {
+                        LOG(ERROR) << "vector field '" << field << "' not found on the mesh vertices (wrong name?)";
+                        return;
+                    }
+                    break;
+                case State::EDGE:
+                    if (!model->get_edge_property<vec3>(field)) {
+                        LOG(ERROR) << "vector field '" << field << "' not found on the mesh edges (wrong name?)";
+                        return;
+                    }
+                    break;
+                default:
+                    LOG(ERROR) << "vector field '" << field << "' not found (wrong name?)";
+                    return;
+            }
+
+            auto points = model->get_vertex_property<vec3>("v:point");
+
+            // use a limited number of edge to compute the length of the vectors.
+            float avg_edge_length = 0.0f;
+            const unsigned int num = std::min(static_cast<unsigned int>(500), model->n_edges());
+            for (unsigned int i = 0; i < num; ++i) {
+                PolyMesh::Edge edge(i);
+                auto vs = model->vertex(edge, 0);
+                auto vt = model->vertex(edge, 1);
+                avg_edge_length += distance(points[vs], points[vt]);
+            }
+            avg_edge_length /= num;
+
+            std::vector<vec3> d_points;
+
+            switch (location) {
+                case State::FACE: {   // on faces
+                    auto prop = model->get_face_property<vec3>(field);
+                    d_points.resize(model->n_faces() * 2, vec3(0.0f, 0.0f, 0.0f));
+                    int idx = 0;
+                    for (auto f: model->faces()) {
+                        if (!model->is_border(f))
+                            continue;
+                        int size = 0;
+                        for (auto v: model->vertices(f)) {
+                            d_points[idx] += points[v];
+                            ++size;
+                        }
+                        d_points[idx] /= size;
+                        d_points[idx + 1] = d_points[idx] + prop[f] * avg_edge_length * scale;
+                        idx += 2;
+                    }
+                    break;
+                }
+                case State::VERTEX: {   // on vertices
+                    auto prop = model->get_vertex_property<vec3>(field);
+                    d_points.resize(model->n_vertices() * 2, vec3(0.0f, 0.0f, 0.0f));
+                    for (auto v: model->vertices()) {
+                        if (model->is_border(v)) {
+                            d_points[v.idx() * 2] = points[v];
+                            d_points[v.idx() * 2 + 1] = points[v] + prop[v] * avg_edge_length * scale;
+                        }
+                    }
+                    break;
+                }
+                case State::EDGE: {   // on edges
+                    auto prop = model->get_edge_property<vec3>(field);
+                    d_points.resize(model->n_edges() * 2, vec3(0.0f, 0.0f, 0.0f));
+                    for (auto e : model->edges()) {
+                        if (!model->is_border(e))
+                            continue;
+                        auto v0 = model->vertex(e, 0);
+                        auto v1 = model->vertex(e, 1);
+                        const auto p = (points[v0] + points[v1]) * 0.5f;
+                        d_points[e.idx() * 2] = p;
+                        d_points[e.idx() * 2 + 1] = p + prop[e] * avg_edge_length * scale;
+                    }
+                    break;
+                }
+                case State::HALFEDGE:
+                    break;
+            }
+            drawable->update_vertex_buffer(d_points);
+        };
 
 
         // -------------------------------------------------------------------------------------------------------------

@@ -189,17 +189,23 @@ std::vector<QString> WidgetPointsDrawable::colorSchemes(const easy3d::Model *mod
     if (cloud)
         points_details::color_schemes_for_scalar_fields(cloud, scalar_prefix_, schemes);
 
-    auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
-    if (mesh)
-        points_details::color_schemes_for_scalar_fields(mesh, scalar_prefix_, schemes);
+    else {
+        auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
+        if (mesh)
+            points_details::color_schemes_for_scalar_fields(mesh, scalar_prefix_, schemes);
 
-    auto graph = dynamic_cast<Graph *>(viewer_->currentModel());
-    if (graph)
-        points_details::color_schemes_for_scalar_fields(graph, scalar_prefix_, schemes);
+        else {
+            auto graph = dynamic_cast<Graph *>(viewer_->currentModel());
+            if (graph)
+                points_details::color_schemes_for_scalar_fields(graph, scalar_prefix_, schemes);
 
-    auto poly = dynamic_cast<PolyMesh *>(viewer_->currentModel());
-    if (poly)
-        points_details::color_schemes_for_scalar_fields(poly, scalar_prefix_, schemes);
+            else {
+                auto poly = dynamic_cast<PolyMesh *>(viewer_->currentModel());
+                if (poly)
+                    points_details::color_schemes_for_scalar_fields(poly, scalar_prefix_, schemes);
+            }
+        }
+    }
 
     return schemes;
 }

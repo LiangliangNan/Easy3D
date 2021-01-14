@@ -357,10 +357,11 @@ std::vector<QString> WidgetTrianglesDrawable::vectorFields(const easy3d::Model *
     auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
     if (mesh)
         triangles_details::vector_fields_on_faces(mesh, fields);
-
-    auto poly = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
-    if (poly)
-        triangles_details::vector_fields_on_faces(poly, fields);
+    else {
+        auto poly = dynamic_cast<PolyMesh *>(viewer_->currentModel());
+        if (poly)
+            triangles_details::vector_fields_on_faces(poly, fields);
+    }
 
     // if no vector fields found, add a "not available" item
     if (fields.empty())
@@ -514,9 +515,7 @@ void WidgetTrianglesDrawable::setBackColor() {
 
 
 void WidgetTrianglesDrawable::setVectorField(const QString &text) {
-    SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
-    if (!mesh)
-        return;
+    auto mesh = viewer_->currentModel();
 
     if (text == "disabled") {
         const auto &drawables = mesh->renderer()->lines_drawables();
@@ -547,33 +546,50 @@ void WidgetTrianglesDrawable::setScalarFieldStyle(int idx) {
 }
 
 
-void WidgetTrianglesDrawable::updateVectorFieldBuffer(Model *model, const std::string &name) {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
-    if (mesh) {
-        if (name == "f:normal") {
-            auto normals = mesh->get_face_property<vec3>(name);
-            if (!normals)
-                mesh->update_face_normals();
-        }
+namespace triangles_details {
 
-        auto prop = mesh->get_face_property<vec3>(name);
-        if (!prop && name != "disabled") {
-            LOG(ERROR) << "vector field '" << name << "' doesn't exist";
+    template<typename MODEL>
+    // spinbox must appear as a parameter because its value maybe changed and its is used later in a lambda function
+    void updateVectorFieldBuffer(MODEL *model, const std::string &name, QDoubleSpinBox* spinBox) {
+        if (!model)
             return;
+
+        if (name == "f:normal") {
+            auto normals = model->template get_face_property<vec3>(name);
+            if (!normals)
+                model->update_face_normals();
+        } else {
+            auto prop = model->template get_face_property<vec3>(name);
+            if (!prop && name != "disabled") {
+                LOG(ERROR) << "vector field '" << name << "' doesn't exist";
+                return;
+            }
         }
 
         // a vector field is visualized as a LinesDrawable whose name is the same as the vector field
-        auto drawable = mesh->renderer()->get_lines_drawable("vector - " + name);
+        auto drawable = model->renderer()->get_lines_drawable("vector - " + name);
         if (!drawable) {
-            drawable = mesh->renderer()->add_lines_drawable("vector - " + name);
-            drawable->set_update_func([&, name](Model *m, Drawable *d) -> void {
-                const float scale = ui->doubleSpinBoxVectorFieldScale->value();
-                buffers::update(dynamic_cast<SurfaceMesh*>(m), dynamic_cast<LinesDrawable*>(d), name, State::FACE, scale);
-            });
+            drawable = model->renderer()->add_lines_drawable("vector - " + name);
+            drawable->set_update_func(
+                    [model, drawable, name, spinBox](Model *m, Drawable *d) -> void {
+                        buffers::update(model, dynamic_cast<LinesDrawable *>(drawable), name, State::FACE, spinBox->value());
+                    }
+            );
         }
     }
+
 }
 
+
+void WidgetTrianglesDrawable::updateVectorFieldBuffer(Model *model, const std::string &name) {
+    if (dynamic_cast<SurfaceMesh *>(model)) {
+        auto mesh = dynamic_cast<SurfaceMesh *>(model);
+        triangles_details::updateVectorFieldBuffer(mesh, name, ui->doubleSpinBoxVectorFieldScale);
+    } else if (dynamic_cast<PolyMesh *>(model)) {
+        auto mesh = dynamic_cast<PolyMesh *>(model);
+        triangles_details::updateVectorFieldBuffer(mesh, name, ui->doubleSpinBoxVectorFieldScale);
+    }
+}
 
 
 namespace triangles_details {

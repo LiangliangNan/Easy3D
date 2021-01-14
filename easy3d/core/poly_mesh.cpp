@@ -172,9 +172,6 @@ namespace easy3d {
             cconn_    = cell_property<CellConnectivity>("c:connectivity");
 
             vpoint_   = vertex_property<vec3>("v:point");
-
-            // normals might be there, therefore use get_property
-            fnormal_  = get_halfface_property<vec3>("f:normal");
         }
 
         return *this;
@@ -203,9 +200,6 @@ namespace easy3d {
             cconn_    = add_cell_property<CellConnectivity>("c:connectivity");
             
             vpoint_   = add_vertex_property<vec3>("v:point");
-            
-            // normals might be there, therefore use get_property
-            fnormal_  = get_halfface_property<vec3>("f:normal");
 
             // copy properties from other mesh
             vconn_.array()     = rhs.vconn_.array();
@@ -344,9 +338,6 @@ namespace easy3d {
         hprops_.resize_property_array(1);   // "h:connectivity"
         cprops_.resize_property_array(2);   // "c:connectivity", "t:indices"
         mprops_.clear();
-
-        // update/invalidate the normal properties
-        fnormal_  = HalfFaceProperty<vec3>();
     }
 
 
@@ -526,18 +517,17 @@ namespace easy3d {
 
     void PolyMesh::update_face_normals()
     {
-        if (!fnormal_)
-            fnormal_ = halfface_property<vec3>("f:normal");
+        auto fnormal = face_property<vec3>("f:normal");
 
-        HalfFaceIterator fit, fend=halffaces_end();
+        FaceIterator fit, fend=faces_end();
 
         int num_degenerate = 0;
-        for (fit=halffaces_begin(); fit!=fend; ++fit) {
+        for (fit=faces_begin(); fit!=fend; ++fit) {
             if (is_degenerate(*fit)) {
                 ++num_degenerate;
-                fnormal_[*fit] = vec3(0, 0, 1);
+                fnormal[*fit] = vec3(0, 0, 1);
             } else
-                fnormal_[*fit] = compute_face_normal(*fit);
+                fnormal[*fit] = compute_face_normal(*fit);
         }
 
         if (num_degenerate > 0)
@@ -548,9 +538,9 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    vec3 PolyMesh::compute_face_normal(HalfFace h) const
+    vec3 PolyMesh::compute_face_normal(Face f) const
     {
-        const auto& vts = vertices(h);
+        const auto& vts = vertices(f);
 
         const vec3& p0 = vpoint_[vts[0]];
         const vec3& p1 = vpoint_[vts[1]];
@@ -566,6 +556,7 @@ namespace easy3d {
         auto vnormal = vertex_property<vec3>("v:normal");
 
         update_face_normals();
+        auto fnormal = get_face_property<vec3>("f:normal");
 
         VertexIterator vit, vend=vertices_end();
 
@@ -574,15 +565,16 @@ namespace easy3d {
             if (is_border(v)) { // compute the average of its incident border faces' normals
                 vec3 n(0,0,0);
                 for (auto f : halffaces(v)) {
-                    if (is_border(f))
-                        n += fnormal_[f];
+                    if (is_border(f)) {
+                        n += fnormal[face(f)];
+                    }
                 }
                 vnormal[v] = normalize(n);
             }
             else { // interior vertex, normal not defined. We assign one of its incident face's normal
                 if (!halffaces(v).empty()) {
                     auto hf = *halffaces(v).begin();
-                    vnormal[v] = fnormal_[hf];
+                    vnormal[v] = fnormal[face(hf)];
                 }
             }
         }
@@ -601,7 +593,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    bool PolyMesh::is_degenerate(HalfFace h) const {
+    bool PolyMesh::is_degenerate(Face h) const {
         const auto& vts = vertices(h);
 
         const vec3& p0 = vpoint_[vts[0]];

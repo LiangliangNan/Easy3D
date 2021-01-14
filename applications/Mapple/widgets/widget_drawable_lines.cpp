@@ -416,13 +416,17 @@ std::vector<QString> WidgetLinesDrawable::vectorFields(const easy3d::Model *mode
     if (mesh)
         lines_details::vector_fields_on_edges(mesh, fields);
 
-    auto graph = dynamic_cast<Graph *>(viewer_->currentModel());
-    if (graph)
-        lines_details::vector_fields_on_edges(graph, fields);
+    else {
+        auto graph = dynamic_cast<Graph *>(viewer_->currentModel());
+        if (graph)
+            lines_details::vector_fields_on_edges(graph, fields);
 
-    auto poly = dynamic_cast<PolyMesh *>(viewer_->currentModel());
-    if (poly)
-        lines_details::vector_fields_on_edges(poly, fields);
+        else {
+            auto poly = dynamic_cast<PolyMesh *>(viewer_->currentModel());
+            if (poly)
+                lines_details::vector_fields_on_edges(poly, fields);
+        }
+    }
 
     // if no vector fields found, add a "not available" item
     if (fields.empty())
