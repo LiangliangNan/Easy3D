@@ -465,46 +465,63 @@ namespace easy3d {
                 model->update_vertex_normals();
                 auto normals = model->get_vertex_property<vec3>("v:normal");
 
-                /**
-                 * We use the Tessellator to eliminate duplicate vertices. This allows us to take advantage of element
-                 * buffer to minimize the number of vertices sent to the GPU.
-                 */
-                Tessellator tessellator;
-
-                for (auto f : model->faces()) {
-                    if (model->is_border(f) == border) {
-                        tessellator.begin_polygon(model->compute_face_normal(f));
-                        // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
-                        tessellator.begin_contour();
-                        for (auto v : model->vertices(f)) {
-                            Tessellator::Vertex vertex(model->position(v), v.idx());
-                            vertex.append(normals[v]);
-                            tessellator.add_vertex(vertex);
+                /*
+                if (model->is_tetraheral_mesh()) {
+                    std::vector<unsigned int> d_indices;
+                    for (auto f : model->faces()) {
+                        if (model->is_border(f) == border) {
+                            for (auto v : model->vertices(f))
+                                d_indices.push_back(v.idx());
                         }
-                        tessellator.end_contour();
-                        tessellator.end_polygon();
                     }
+
+                    drawable->update_vertex_buffer(model->points());
+                    drawable->update_normal_buffer(normals.vector());
+                    drawable->update_element_buffer(d_indices);
                 }
+                else */
+                {
+                    /**
+                     * We use the Tessellator to eliminate duplicate vertices. This allows us to take advantage of element
+                     * buffer to minimize the number of vertices sent to the GPU.
+                     */
+                    Tessellator tessellator;
 
-                const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
-                std::vector<vec3> d_points;
-                std::vector<vec3> d_normals;
-                d_points.reserve(vts.size());
-                d_normals.reserve(vts.size());
+                    for (auto f : model->faces()) {
+                        if (model->is_border(f) == border) {
+                            tessellator.begin_polygon(model->compute_face_normal(f));
+                            // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
+                            tessellator.begin_contour();
+                            for (auto v : model->vertices(f)) {
+                                Tessellator::Vertex vertex(model->position(v), v.idx());
+                                vertex.append(normals[v]);
+                                tessellator.add_vertex(vertex);
+                            }
+                            tessellator.end_contour();
+                            tessellator.end_polygon();
+                        }
+                    }
 
-                for (auto v :vts) {
-                    d_points.emplace_back(v->data());
-                    d_normals.emplace_back(v->data() + 3);
+                    const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
+                    std::vector<vec3> d_points;
+                    std::vector<vec3> d_normals;
+                    d_points.reserve(vts.size());
+                    d_normals.reserve(vts.size());
+
+                    for (auto v :vts) {
+                        d_points.emplace_back(v->data());
+                        d_normals.emplace_back(v->data() + 3);
+                    }
+
+                    const auto &d_indices = tessellator.elements();
+
+                    drawable->update_vertex_buffer(d_points);
+                    drawable->update_normal_buffer(d_normals);
+                    drawable->update_element_buffer(d_indices);
+
+                    DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/"
+                               << d_points.size();
                 }
-
-                const auto &d_indices = tessellator.elements();
-
-                drawable->update_vertex_buffer(d_points);
-                drawable->update_normal_buffer(d_normals);
-                drawable->update_element_buffer(d_indices);
-
-                DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/"
-                           << d_points.size();
             }
 
 
