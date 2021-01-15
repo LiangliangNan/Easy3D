@@ -153,7 +153,9 @@ public slots:
     void showFrameRate(bool);
     void showAxes(bool);
 
-    void enableSelectModel(bool);
+    void enableSelectModel(bool b) { allow_select_model_ = b; }
+    bool isSelectModelEnabled() const { return allow_select_model_; }
+
     void invertSelection();
     void deleteSelectedPrimitives();
 

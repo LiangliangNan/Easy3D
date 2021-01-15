@@ -487,7 +487,7 @@ void WidgetModelList::modelItemSelectionChanged() {
         item->setStatus(item->model() == active_model);
 
         // don't allow changing selection for camera path creation
-        if (viewer()->walkThrough()->status() == easy3d::WalkThrough::STOPPED)
+        if (viewer()->walkThrough()->status() == easy3d::WalkThrough::STOPPED && viewer()->isSelectModelEnabled())
             item->model()->renderer()->set_selected(item->isSelected());
     }
 

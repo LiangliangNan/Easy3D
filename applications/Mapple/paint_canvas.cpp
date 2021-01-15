@@ -1292,11 +1292,6 @@ void PaintCanvas::enableEyeDomeLighting(bool b) {
 }
 
 
-void PaintCanvas::enableSelectModel(bool b) {
-    allow_select_model_ = b;
-}
-
-
 void PaintCanvas::invertSelection() {
     LOG(WARNING) << "planned to be implemented in a future release";
 }
