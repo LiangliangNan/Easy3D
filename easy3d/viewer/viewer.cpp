@@ -220,11 +220,11 @@ namespace easy3d {
         opengl::setup_gl_debug_callback();
 #endif
 
-        LOG(INFO) << "OpenGL vendor: " << glGetString(GL_VENDOR);
-        LOG(INFO) << "OpenGL renderer: " << glGetString(GL_RENDERER);
-        LOG(INFO) << "OpenGL version requested: " << gl_major << "." << gl_minor;
-        LOG(INFO) << "OpenGL version received: " << glGetString(GL_VERSION);
-        LOG(INFO) << "GLSL version received: " << glGetString(GL_SHADING_LANGUAGE_VERSION);
+        VLOG(1) << "OpenGL vendor: " << glGetString(GL_VENDOR);
+        VLOG(1) << "OpenGL renderer: " << glGetString(GL_RENDERER);
+        VLOG(1) << "OpenGL version requested: " << gl_major << "." << gl_minor;
+        VLOG(1) << "OpenGL version received: " << glGetString(GL_VERSION);
+        VLOG(1) << "GLSL version received: " << glGetString(GL_SHADING_LANGUAGE_VERSION);
 
         glGetIntegerv(GL_SAMPLES, &samples_);
         int max_num = 0;
@@ -238,13 +238,13 @@ namespace easy3d {
                 LOG(WARNING) << "MSAA is available with " << samples_ << " samples (" << samples
                              << " requested but max support is " << max_num << ")";
         } else
-            LOG(INFO) << "samples received: " << samples_ << " (" << samples << " requested, max support is "
+            VLOG(1) << "samples received: " << samples_ << " (" << samples << " requested, max support is "
                       << max_num << ")";
 
         float xscale(0), yscale(0);
         glfwGetWindowContentScale(window, &xscale, &yscale);
         dpi_scaling_ = static_cast<float>(xscale + yscale) * 0.5f;
-        LOG(INFO) << "DPI scaling: " << dpi_scaling();
+        VLOG(1) << "DPI scaling: " << dpi_scaling();
 
         return window;
     }

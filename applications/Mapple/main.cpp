@@ -66,7 +66,7 @@ public:
 
 int main(int argc, char *argv[])
 {
-    logging::initialize(true, "default");
+    logging::initialize(true, 9, "default");
 
     //Locale management
     {

@@ -98,7 +98,7 @@ namespace easy3d
 
 
 
-        void initialize(bool verbose, const std::string &log_file)
+        void initialize(bool info_to_stderr, int verbose_level, const std::string &log_file)
         {
             std::string full_path = log_file;
             if (log_file == "default") {
@@ -144,13 +144,13 @@ namespace easy3d
             else
                 defaultConf.setGlobally(el::ConfigurationType::ToFile, std::string("false"));
 
-            defaultConf.set(el::Level::Info, el::ConfigurationType::ToStandardOutput, verbose ? "true" : "false");
+            defaultConf.set(el::Level::Info, el::ConfigurationType::ToStandardOutput, info_to_stderr ? "true" : "false");
 
             // If you wish to have a configuration for existing and future loggers, you can use the following.
             // This is useful when you are working on fairly large scale, or using a third-party library that is
             // already using Easylogging++. Any newly created logger will use default configurations. If you wish
             // to configure existing loggers as well, you can set second argument to true (it defaults to false).
-            el::Loggers::setDefaultConfigurations(defaultConf, false);
+            el::Loggers::setDefaultConfigurations(defaultConf, true);
 
             el::Loggers::addFlag(el::LoggingFlag::ColoredTerminalOutput);
             el::Loggers::addFlag(el::LoggingFlag::LogDetailedCrashReason);
@@ -160,8 +160,10 @@ namespace easy3d
 
             el::Helpers::setCrashHandler(crash_sandler);
 
-            LOG(INFO) << "executable path: " << file_system::executable_directory();
-            LOG(INFO) << "current working dir: " << file_system::current_working_directory();
+            // allow all levels of verbose messages to be logged into the log file (but not shown on UI).
+            el::Loggers::setVerboseLevel(verbose_level);
+            VLOG(1) << "executable path: " << file_system::executable_directory();
+            VLOG(8) << "current working dir: " << file_system::current_working_directory();
         }
 
 
