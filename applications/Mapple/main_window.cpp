@@ -1034,8 +1034,8 @@ void MainWindow::surfaceMeshReportTopologyStatistics() {
             type = "unknown closed";
 
         stream << "        " << i << ": " << type
-                  << ", #face = " << comp.n_faces() << ", #vertex = " << comp.n_vertices() << ", #edge = " << comp.n_edges()
-                  << ", #border = " << topo.number_of_borders();
+                  << ", F = " << comp.n_faces() << ", V = " << comp.n_vertices() << ", E = " << comp.n_edges()
+                  << ", B = " << topo.number_of_borders();
         if (topo.number_of_borders() == 1)
             stream << ", border size = " << topo.largest_border_size();
         else if (topo.number_of_borders() > 1)
