@@ -67,9 +67,11 @@
     std::string StackTracer::to_string(const std::vector<StackEntry> &record) {
         std::stringstream stream;
         for (std::size_t i = 0; i < record.size(); ++i) {
-            stream << "\t" << std::setw(3) << std::left << std::setfill(' ') << i
-                   << "\t" << std::setw(20) << std::setfill(' ') << record[i].object_name
-                   << "\t" << record[i].function_name << "\n";
+            if (!record[i].function_name.empty()) {  // skip the record with unknown function_name
+                stream << "\t" << std::setw(3) << std::left << std::setfill(' ') << i
+                       << "\t" << std::setw(20) << std::setfill(' ') << record[i].object_name
+                       << "\t" << record[i].function_name << "\n";
+            }
         }
         return stream.str();
     }
