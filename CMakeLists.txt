@@ -94,7 +94,13 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY  ${CMAKE_BINARY_DIR}/lib)
 ################################################################################
 
 # EasyLogging++: request all features
-add_definitions(-DELPP_FEATURE_ALL -DELPP_STL_LOGGING -DELPP_THREAD_SAFE -DELPP_NO_DEFAULT_LOG_FILE)
+add_definitions(
+        -DELPP_FEATURE_ALL
+        -DELPP_STL_LOGGING
+        -DELPP_THREAD_SAFE
+        -DELPP_NO_DEFAULT_LOG_FILE
+        -DELPP_DISABLE_DEFAULT_CRASH_HANDLING
+)
 # EasyLogging++: for stack trace
 include(CheckIncludeFileCXX)
 check_include_file_cxx("execinfo.h" HAVE_EXECINFO)
