@@ -114,12 +114,13 @@ namespace easy3d {
         void set_property_coloring(Location color_location, const std::string &color_name = "");
 
         /**
-        * Constructs a scheme for textured rendering.
-        * @param texcoord_location The location of texture coordinate.
-        * @param texcoord_name The name of the texture coordinate property.
-        * @param repeat The repeat factor of the texture. Default value is 1.0.
-        * @param repeat_fraction The fractional repeat factor of the texture. Default value is 0.0.
-        */
+         * Constructs a scheme for textured rendering.
+         * @param texcoord_location The location of texture coordinate.
+         * @param texcoord_name The name of the texture coordinate property.
+         * @param texture The pointer to the texture.
+         * @param repeat The repeat factor of the texture. Default value is 1.0.
+         * @param repeat_fraction The fractional repeat factor of the texture. Default value is 0.0.
+         */
         void set_texture_coloring(Location texcoord_location, const std::string &texcoord_name,
                                   const Texture *texture = nullptr, float repeat = 1.0f,
                                   float repeat_fraction = 0.0f);
@@ -128,7 +129,7 @@ namespace easy3d {
          * Constructs a scheme for rendering scalar fields.
          * @param scalar_location The location of the scalar field.
          * @param scalar_name The name of the scalar field.
-         * @param texture The texture for the coloring.
+         * @param texture The pointer to the texture.
          * @param clamp_lower The percentage of values to be clamped at the lower side of the range. Default is 5%.
          * @param clamp_upper The percentage of values to be clamped at the upper side of the range. Default is 5%.
          */
