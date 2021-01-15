@@ -61,14 +61,16 @@ namespace easy3d {
                 if (program)
                     return pick_vertices_gpu(model, rect, deselect, program);
                 else {
+                    use_gpu_if_supported_ = false;
                     LOG_FIRST_N(1, ERROR)
-                        << "shader program not available, default to CPU implementation. " << COUNTER;
+                        << "shader program not available, fall back to CPU implementation. " << COUNTER;
                 }
             }
             else {
+                use_gpu_if_supported_ = false;
                 LOG_FIRST_N(1, WARNING)
                     << "GPU implementation requires OpenGL 4.3 or higher (available is "
-                    << OpenglInfo::gl_version_number() << "), default to CPU implementation. " << COUNTER;
+                    << OpenglInfo::gl_version_number() << "), fall back to CPU implementation. " << COUNTER;
             }
         }
 

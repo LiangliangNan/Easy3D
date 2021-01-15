@@ -159,7 +159,7 @@ namespace easy3d {
 
     private:
         // selection implemented in GPU (using shader program)
-        SurfaceMesh::Face pick_face_gpu(SurfaceMesh *model, int x, int y);
+        SurfaceMesh::Face pick_face_gpu(SurfaceMesh *model, int x, int y, ShaderProgram* program);
 
         // selection implemented in CPU (with OpenMP if supported)
         SurfaceMesh::Face pick_face_cpu(SurfaceMesh *model, int x, int y);
@@ -187,7 +187,6 @@ namespace easy3d {
         }
 
     private:
-        ShaderProgram *program_;
         unsigned int hit_resolution_;     // in pixels
         SurfaceMesh::Face picked_face_;
     };

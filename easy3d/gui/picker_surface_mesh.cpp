@@ -38,7 +38,6 @@ namespace easy3d {
 
     SurfaceMeshPicker::SurfaceMeshPicker(const Camera *cam)
             : Picker(cam)
-            , program_(nullptr)
             , hit_resolution_(15)
     {
         use_gpu_if_supported_ = true;
@@ -53,21 +52,22 @@ namespace easy3d {
         if (!model)
             return SurfaceMesh::Face();
 
+        ShaderProgram* program = nullptr;
         if (use_gpu_if_supported_) {
-            program_ = ShaderManager::get_program("selection/selection_single_primitive");
-            if (!program_) {
+            program = ShaderManager::get_program("selection/selection_single_primitive");
+            if (!program) {
                 std::vector<ShaderProgram::Attribute> attributes;
                 attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-                program_ = ShaderManager::create_program_from_files("selection/selection_single_primitive", attributes);
+                program = ShaderManager::create_program_from_files("selection/selection_single_primitive", attributes);
             }
-            if (!program_) {
+            if (!program) {
                 use_gpu_if_supported_ = false;
-                LOG_FIRST_N(1, ERROR) << "shader program not available, default to CPU implementation. " << COUNTER;
+                LOG_FIRST_N(1, ERROR) << "shader program not available, fall back to CPU implementation. " << COUNTER;
             }
         }
 
-        if (use_gpu_if_supported_)
-            return pick_face_gpu(model, x, y);
+        if (use_gpu_if_supported_ && program)
+            return pick_face_gpu(model, x, y, program);
         else // CPU with OpenMP (if supported)
             return pick_face_cpu(model, x, y);
     }
@@ -240,7 +240,7 @@ namespace easy3d {
     }
 
 
-    SurfaceMesh::Face SurfaceMeshPicker::pick_face_gpu(SurfaceMesh *model, int x, int y) {
+    SurfaceMesh::Face SurfaceMeshPicker::pick_face_gpu(SurfaceMesh *model, int x, int y, ShaderProgram* program) {
         auto drawable = model->renderer()->get_triangles_drawable("faces");
         if (!drawable) {
             LOG_FIRST_N(1, WARNING) << "drawable 'faces' does not exist. " << COUNTER;
@@ -270,11 +270,11 @@ namespace easy3d {
         easy3d_debug_log_gl_error;
         easy3d_debug_log_frame_buffer_error;
 
-        program_->bind();
-        program_->set_uniform("MVP", camera()->modelViewProjectionMatrix())
+        program->bind();
+        program->set_uniform("MVP", camera()->modelViewProjectionMatrix())
                 ->set_uniform("MANIP", model->manipulator()->matrix());
         drawable->gl_draw(false);
-        program_->release();
+        program->release();
 
         // --- Maybe this is not necessary ---------
         glFlush();
