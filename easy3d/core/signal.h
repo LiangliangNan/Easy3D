@@ -82,7 +82,6 @@ namespace easy3d {
             return *this;
         }
 
-
         /**
          * Connects a function to this signal.
          * The returned value can be used to disconnect the function from this signal.
@@ -233,7 +232,7 @@ namespace easy3d {
      * won't be able to pick the right symbol. One way of resolving the right symbol is to explicitly cast
      * the function pointer to the right function type, e.g., static_cast<void (*)(const std::string&, int)>(func),
      * which is a bit heavy syntax. This helper function does just that for a lighter syntax.
-     * \example
+     * Example usage:
      *     \code
      *         void foo() {}       // function #1
      *         void foo(int) {}    // function #2
@@ -254,7 +253,7 @@ namespace easy3d {
      * the function pointer to the right function type, e.g.,
      * static_cast<void (Viewer::*)(const std::string&, int)>(Viewer::print), which is a bit heave syntax.
      * This helper function does just that for a lighter syntax.
-     * \example
+     * Example usage:
      *     \code
      *         struct foo {
      *             void bar() {}       // function #1
