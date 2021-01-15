@@ -62,7 +62,7 @@ namespace easy3d
         }
 
 
-        static std::string crashReason(int sig) {
+        std::string crash_reason(int sig) {
             std::stringstream ss;
             bool foundReason = false;
             for (int i = 0; i < el::base::consts::kCrashSignalsCount; ++i) {
@@ -82,18 +82,16 @@ namespace easy3d
             return ss.str();
         }
 
-        void myCrashHandler(int sig) {
-#if 0
-            el::Helpers::logCrashReason(sig, true);
-#else
+
+        void crash_sandler(int sig) {
             std::stringstream ss;
-            ss << crashReason(sig) << "\n"
+            ss << crash_reason(sig) << "\n"
                << stacktrace_failure_header() << "\n"
 //               << el::base::debug::StackTrace();
-                << StackTracer::back_trace_string(32, 5); // more reliable and readable than el
+                << StackTracer::back_trace_string(32, 4); // more reliable and readable than el
 
             LOG(FATAL) << ss.str();
-#endif
+
             // FOLLOWING LINE IS ABSOLUTELY NEEDED AT THE END IN ORDER TO ABORT APPLICATION
             el::Helpers::crashAbort(sig);
         }
@@ -160,7 +158,7 @@ namespace easy3d
             // default logger uses default configurations
             el::Loggers::reconfigureLogger("default", defaultConf);
 
-            el::Helpers::setCrashHandler(myCrashHandler);
+            el::Helpers::setCrashHandler(crash_sandler);
 
             LOG(INFO) << "executable path: " << file_system::executable_directory();
             LOG(INFO) << "current working dir: " << file_system::current_working_directory();
