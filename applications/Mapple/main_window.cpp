@@ -734,7 +734,7 @@ void MainWindow::onAbout()
 
 
 void MainWindow::showManual() {
-    std::cout << viewer()->usage() << std::endl;
+    LOG(INFO) << viewer()->usage();
 }
 
 
@@ -999,14 +999,10 @@ void MainWindow::surfaceMeshReportTopologyStatistics() {
     if (!mesh)
         return;
 
-    const std::string simple_name = file_system::simple_name(mesh->name());
-    if (simple_name.empty())
-        std::cout << "#elements in model (with unknown name): ";
-    else
-        std::cout << "#elements in model '" << file_system::simple_name(mesh->name()) << "': ";
+    std::stringstream stream;
 
-    std::cout << "#face = " << mesh->n_faces() << ", #vertex = " << mesh->n_vertices() << ", #edge = "
-              << mesh->n_edges() << std::endl;
+    const auto &components = SurfaceMeshComponent::extract(mesh);
+    stream << "model has " << components.size() << " connected components";
 
     // count isolated vertices
     std::size_t count = 0;
@@ -1015,14 +1011,12 @@ void MainWindow::surfaceMeshReportTopologyStatistics() {
             ++count;
     }
     if (count > 0)
-        std::cout << "#isolated vertices: " << count << std::endl;
-
-    const auto &components = SurfaceMeshComponent::extract(mesh);
-    std::cout << "#connected component: " << components.size() << std::endl;
+        stream << "and " << count << " isolated vertices";
+    stream << std::endl;
 
     const std::size_t num = 10;
     if (components.size() > num)
-        std::cout << "\ttopology of the first " << num << " components:" << std::endl;
+        stream << "    topology of the first " << num << " components:" << std::endl;
 
     for (std::size_t i = 0; i < std::min(components.size(), num); ++i) {
         const SurfaceMeshComponent& comp = components[i];
@@ -1039,16 +1033,17 @@ void MainWindow::surfaceMeshReportTopologyStatistics() {
         else if (topo.is_closed())
             type = "unknown closed";
 
-        std::cout << "\t\t" << i << ": "
-                  << type
+        stream << "        " << i << ": " << type
                   << ", #face = " << comp.n_faces() << ", #vertex = " << comp.n_vertices() << ", #edge = " << comp.n_edges()
                   << ", #border = " << topo.number_of_borders();
         if (topo.number_of_borders() == 1)
-            std::cout << ", border size = " << topo.largest_border_size();
+            stream << ", border size = " << topo.largest_border_size();
         else if (topo.number_of_borders() > 1)
-            std::cout << ", largest border size = " << topo.largest_border_size();
-        std::cout << std::endl;
+            stream << ", largest border size = " << topo.largest_border_size();
+        stream << std::endl;
     }
+
+    LOG(INFO) << stream.str();
 }
 
 
@@ -1699,7 +1694,7 @@ void MainWindow::surfaceMeshExtractConnectedComponents() {
         return;
 
     const auto& components = SurfaceMeshComponent::extract(mesh);
-    std::cout << "model has " << components.size() << " connected components" << std::endl;
+    LOG(INFO) << "model has " << components.size() << " connected components";
 
     const std::string color_name = "f:color_components";
     auto face_color = mesh->face_property<vec3>(color_name, vec3(0.5f, 0.5f, 0.5f));

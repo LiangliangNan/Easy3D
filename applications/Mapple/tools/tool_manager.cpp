@@ -98,8 +98,6 @@ namespace easy3d {
 
             if (current_tool_)
                 std::cout << current_tool_->instruction() << std::endl;
-
-
         }
 
 

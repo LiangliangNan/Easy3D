@@ -534,10 +534,7 @@ void PaintCanvas::setCurrentModel(easy3d::Model *m) {
 
 
 void PaintCanvas::keyPressEvent(QKeyEvent *e) {
-    if (e->key() == Qt::Key_F1) {
-        std::cout << usage() << std::endl;
-    }
-    else if (e->key() == Qt::Key_Left && e->modifiers() == Qt::KeypadModifier) {
+    if (e->key() == Qt::Key_Left && e->modifiers() == Qt::KeypadModifier) {
         float angle = static_cast<float>(1 * M_PI / 180.0); // turn left, 1 degrees each step
         camera_->frame()->action_turn(angle, camera_);
     } else if (e->key() == Qt::Key_Right && e->modifiers() == Qt::KeypadModifier) {
@@ -773,10 +770,8 @@ void PaintCanvas::closeEvent(QCloseEvent *e) {
 
 std::string PaintCanvas::usage() const {
     return std::string(
-            " ------------------------------------------------------------------\n"
-            " Mapple usage:                                              \n"
-            " ------------------------------------------------------------------\n"
-            "  F1:                  Help                                        \n"
+            " ----------------------------------------------------------------\n"
+            " Mapple usage:                                                     \n"
             " ------------------------------------------------------------------\n"
             "  Fn + Delete:         Delete current model                        \n"
             "  '<' or '>':          Switch between models                       \n"
@@ -809,7 +804,7 @@ std::string PaintCanvas::usage() const {
             "  'e':                 Toggle edges							    \n"
             "  'v':                 Toggle vertices                             \n"
             "  'm':                 Toggle smooth shading (for SurfaceMesh)     \n"
-            "  'd':                 Print model info (drawables, properties)    \n"
+            "  'd':                 Print info about drawables and properties   \n"
             " ------------------------------------------------------------------\n"
     );
 }
@@ -856,8 +851,7 @@ void PaintCanvas::deleteModel(Model *model) {
         models_.erase(pos);
         delete model;
         model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
-
-        std::cout << "model deleted: " << name << std::endl;
+        LOG(INFO) << "model deleted: " << name;
     } else
         LOG(WARNING) << "no such model: " << model->name();
 }
