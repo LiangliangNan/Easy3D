@@ -722,7 +722,7 @@ namespace easy3d {
     The framebuffer can become invalid if the initialization process
     fails, the user attaches an invalid buffer to the framebuffer
     object, or a non-power of two width/height is specified as the
-    texture size if the texture target is \c{GL_TEXTURE_2D}.
+    texture size if the texture target is \c {GL_TEXTURE_2D}.
     The non-power of two limitation does not apply if the OpenGL version
     is 2.0 or higher, or if the GL_ARB_texture_non_power_of_two extension
     is present.

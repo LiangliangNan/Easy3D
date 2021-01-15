@@ -33,6 +33,7 @@ INITIALIZE_EASYLOGGINGPP
 namespace easy3d
 {
 
+    // cond
     namespace logging
     {
 
@@ -187,5 +188,5 @@ namespace easy3d
         }
 
     }
-
+    // \endcond
 }

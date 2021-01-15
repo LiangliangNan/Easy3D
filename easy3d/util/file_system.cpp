@@ -39,13 +39,11 @@
 #include <sys/stat.h> // for _stat64
 #include <ShlObj.h>   // for SHGetFolderPathA
 #else
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <pwd.h>
-#include <libgen.h>
 #endif
 
 #ifdef __APPLE__
@@ -60,6 +58,7 @@
 
 namespace easy3d {
 
+    // \cond
     namespace file_system {
 
         const char UNIX_PATH_SEPARATOR = '/';
@@ -687,6 +686,7 @@ namespace easy3d {
         }
 
     }
+    // \endcond
 
 
 } // namespace easy3

@@ -33,6 +33,7 @@
 
 namespace easy3d {
 
+    // \cond
     namespace string {
 
         void split(const std::string &in, char separator, std::vector<std::string> &out, bool skip_empty_fields) {
@@ -277,5 +278,5 @@ namespace easy3d {
         }
 
     }
-
+    // \endcond
 }

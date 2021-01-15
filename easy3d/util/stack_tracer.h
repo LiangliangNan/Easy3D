@@ -40,15 +40,13 @@ namespace easy3d {
      */
     class StackTracer {
     public:
-        class StackEntry {
-        public:
+
+        /// A record of a stack frame
+        struct StackEntry {
             StackEntry(const std::string &object, const std::string &function)
                     : object_name(object), function_name(function) {}
-
             std::string object_name;
             std::string function_name;
-        private:
-            StackEntry(void);
         };
 
         /// This function produces a stack backtrace with demangled function & method names.

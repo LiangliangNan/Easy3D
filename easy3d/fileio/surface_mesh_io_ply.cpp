@@ -31,6 +31,7 @@
 
 namespace easy3d {
 
+    // \cond
 	namespace io {
 
 
@@ -356,5 +357,6 @@ namespace easy3d {
 
 
 	} // namespace io
+    // \endcond
 
 } // namespace easy3

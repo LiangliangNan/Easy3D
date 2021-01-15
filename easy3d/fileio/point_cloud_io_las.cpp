@@ -36,6 +36,7 @@
 namespace easy3d {
 
 
+    // \cond
     namespace io {
 
 
@@ -241,5 +242,5 @@ namespace easy3d {
         }
 
     }
-
+    // \endcond
 }

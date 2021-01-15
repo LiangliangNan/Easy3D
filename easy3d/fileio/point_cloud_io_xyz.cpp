@@ -34,6 +34,7 @@
 
 namespace easy3d {
 
+    // \cond
 	namespace io {
 
 		bool load_xyz(const std::string& file_name, PointCloud* cloud) {
@@ -157,5 +158,6 @@ namespace easy3d {
 		}
 
 	} // namespace io
+	// \endcond
 
 } // namespace easy3d

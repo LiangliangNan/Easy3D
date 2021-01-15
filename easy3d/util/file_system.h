@@ -323,7 +323,7 @@ namespace easy3d {
         /**
          * @brief Reads the contents of a file into a string.
          * @param filename The string of the file name.
-         * @param data The destination string.
+         * @param str The destination string.
          */
         void read_file_to_string(const std::string& filename, std::string& str);
 
