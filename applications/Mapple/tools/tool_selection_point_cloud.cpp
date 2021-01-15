@@ -55,7 +55,7 @@ namespace easy3d {
         }
 
 
-        void ToolPointCloudSelectionRect::drag(int x, int y) {
+        void ToolPointCloudSelectionRect::move(int x, int y) {
         }
 
 
@@ -119,7 +119,7 @@ namespace easy3d {
         }
 
 
-        void ToolPointCloudSelectionLasso::drag(int x, int y) {
+        void ToolPointCloudSelectionLasso::move(int x, int y) {
             lasso_.push_back(vec2(float(x), float(y)));
         }
 

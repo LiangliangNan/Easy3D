@@ -49,10 +49,13 @@ namespace easy3d {
             }
         }
 
-        void MultiTool::drag(ToolButton button, int x, int y) {
+        void MultiTool::move(ToolButton button, int x, int y) {
             auto pos = tools_.find(button);
             if (pos != tools_.end()) {
-                pos->second->drag(x, y);
+                if (button == NO_BUTTON)
+                    pos->second->move(x, y);
+                else
+                    pos->second->drag(x, y);
             }
         }
 

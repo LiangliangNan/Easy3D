@@ -64,7 +64,7 @@ namespace easy3d {
             ToolName current_tool_name() const { return current_tool_name_; }
 
             void press(ToolButton button, int x, int y);
-            void drag(ToolButton button, int x, int y);
+            void move(ToolButton button, int x, int y);
             void release(ToolButton button, int x, int y);
 
             // witch between tool function and scene manipulation

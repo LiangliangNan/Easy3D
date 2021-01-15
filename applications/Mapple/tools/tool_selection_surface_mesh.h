@@ -69,9 +69,9 @@ namespace easy3d {
         public:
             ToolSurfaceMeshFaceSelectionRect(ToolManager *mgr, SurfaceMeshPicker *picker, SelectMode mode = SM_SELECT);
 
-            virtual void press(int x, int y);
-            virtual void drag(int x, int y);
-            virtual void release(int x, int y);
+            virtual void press(int x, int y) override;
+            virtual void move(int x, int y) override;
+            virtual void release(int x, int y) override;
 
         protected:
             SurfaceMeshPicker *picker_;
@@ -85,9 +85,9 @@ namespace easy3d {
         public:
             ToolSurfaceMeshFaceSelectionLasso(ToolManager *mgr, SurfaceMeshPicker *picker, SelectMode mode = SM_SELECT);
 
-            virtual void press(int x, int y);
-            virtual void drag(int x, int y);
-            virtual void release(int x, int y);
+            virtual void press(int x, int y) override;
+            virtual void move(int x, int y) override;
+            virtual void release(int x, int y) override;
 
         protected:
             SurfaceMeshPicker *picker_;
@@ -104,13 +104,11 @@ namespace easy3d {
             MultitoolSurfaceMeshFaceSelectionClick(ToolManager *mgr);
             ~MultitoolSurfaceMeshFaceSelectionClick();
 
-            virtual void set_hint() {} // point is the only thing to show
+            void prepare_hint(ToolButton button, int x, int y) override;
+            void clear_hint() override;
+            void draw_hint() const override {} //I will draw the highlighted face using shader
 
-            void prepare_hint(ToolButton button, int x, int y);
-            void clear_hint();
-            void draw_hint() const {} //I will draw the highlighted face using shader
-
-            std::string instruction() const {
+            std::string instruction() const override {
                 return "Left: select; Right: deselect";
             }
 
@@ -125,14 +123,13 @@ namespace easy3d {
             MultitoolSurfaceMeshFaceSelectionRect(ToolManager *mgr);
             ~MultitoolSurfaceMeshFaceSelectionRect();
 
-            virtual void set_hint() {} // point is the only thing to show
+            void press(ToolButton button, int x, int y) override;
+            void release(ToolButton button, int x, int y) override;
+            void prepare_hint(ToolButton button, int x, int y) override;
+            void clear_hint() override;
+            void draw_hint() const override;
 
-            void press(ToolButton button, int x, int y);
-            void prepare_hint(ToolButton button, int x, int y);
-            void clear_hint();
-            void draw_hint() const;
-
-            std::string instruction() const {
+            std::string instruction() const override{
                 return "Left: select; Right: deselect";
             }
 
@@ -148,14 +145,12 @@ namespace easy3d {
             MultitoolSurfaceMeshFaceSelectionLasso(ToolManager *mgr);
             ~MultitoolSurfaceMeshFaceSelectionLasso();
 
-            virtual void set_hint() {} // point is the only thing to show
+            void press(ToolButton button, int x, int y) override;
+            void prepare_hint(ToolButton button, int x, int y) override;
+            void clear_hint() override;
+            void draw_hint() const override;
 
-            void press(ToolButton button, int x, int y);
-            void prepare_hint(ToolButton button, int x, int y);
-            void clear_hint();
-            void draw_hint() const;
-
-            std::string instruction() const {
+            std::string instruction() const override {
                 return "Left: select; Right: deselect";
             }
 

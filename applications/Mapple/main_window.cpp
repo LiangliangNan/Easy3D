@@ -990,6 +990,9 @@ void MainWindow::operationModeChanged(QAction* act) {
         else if (dynamic_cast<PointCloud*>(viewer()->currentModel()))
             viewer()->tool_manager()->set_tool(tools::ToolManager::SELECT_POINT_CLOUD_LASSO_TOOL);
     }
+
+    if (viewer()->tool_manager()->current_tool())
+        setStatusTip(QString::fromStdString(viewer()->tool_manager()->current_tool()->instruction()));
     viewer()->update();
 }
 

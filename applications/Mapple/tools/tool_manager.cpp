@@ -86,8 +86,6 @@ namespace easy3d {
                 current_tool_name_ = last_tool_name_;
                 last_tool_ = nullptr;
                 last_tool_name_ = EMPTY_TOOL;
-                if (current_tool_)
-                    current_tool_->set_hint();
             } else if (current_tool_ != nullptr) {
                 last_tool_ = current_tool_;
                 last_tool_name_ = current_tool_name_;
@@ -120,8 +118,6 @@ namespace easy3d {
                 last_tool_name_ = current_tool_name_;
                 current_tool_ = it->second;
                 current_tool_name_ = it->first;
-                current_tool_->set_hint();
-                std::cout << current_tool_->instruction() << std::endl;
             }
 
             if (last_tool_)
@@ -145,9 +141,9 @@ namespace easy3d {
         }
 
 
-        void ToolManager::drag(ToolButton button, int x, int y) {
+        void ToolManager::move(ToolButton button, int x, int y) {
             if (current_tool_ != nullptr) {
-                current_tool_->drag(button, x, y);
+                current_tool_->move(button, x, y);
                 current_tool_->prepare_hint(button, x, y);
             }
         }

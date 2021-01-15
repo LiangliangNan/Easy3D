@@ -151,7 +151,7 @@ namespace easy3d {
         }
 
 
-        void ToolSurfaceMeshFaceSelectionRect::drag(int x, int y) {
+        void ToolSurfaceMeshFaceSelectionRect::move(int x, int y) {
         }
 
 
@@ -205,18 +205,22 @@ namespace easy3d {
             delete picker_;
         }
 
-
         void MultitoolSurfaceMeshFaceSelectionRect::press(ToolButton button, int x, int y) {
             MultiTool::press(button, x, y);
             start_ = vec2(x, y);
             end_ = vec2(x, y);
         }
 
+        void MultitoolSurfaceMeshFaceSelectionRect::release(ToolButton button, int x, int y) {
+            MultiTool::release(button, x, y);
+            clear_hint();
+        }
 
         void MultitoolSurfaceMeshFaceSelectionRect::prepare_hint(ToolButton button, int x, int y) {
-            if (button != NO_BUTTON && picker_) {
+            if (button != NO_BUTTON && picker_)
                 end_ = vec2(x, y);
-            }
+            else
+                clear_hint();
         }
 
         void MultitoolSurfaceMeshFaceSelectionRect::clear_hint() {
@@ -241,7 +245,7 @@ namespace easy3d {
         }
 
 
-        void ToolSurfaceMeshFaceSelectionLasso::drag(int x, int y) {
+        void ToolSurfaceMeshFaceSelectionLasso::move(int x, int y) {
             lasso_.push_back(vec2(float(x), float(y)));
         }
 

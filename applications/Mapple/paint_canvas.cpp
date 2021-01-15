@@ -268,11 +268,11 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
 
     if (tool_manager()->current_tool()) {
         tools::ToolButton bt = tools::NO_BUTTON;
-        if (pressed_button_ == Qt::LeftButton)
+        if (e->button() == Qt::LeftButton)
             bt = tools::LEFT_BUTTON;
-        else if (pressed_button_ == Qt::LeftButton)
+        else if (e->button() == Qt::RightButton)
             bt = tools::RIGHT_BUTTON;
-        else if (pressed_button_ == Qt::MidButton)
+        else if (e->button() == Qt::MidButton)
             bt = tools::MIDDLE_BUTTON;
         if (bt != tools::NO_BUTTON) {
             makeCurrent();
@@ -343,11 +343,11 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
 void PaintCanvas::mouseReleaseEvent(QMouseEvent *e) {
     if (tool_manager()->current_tool()) {
         tools::ToolButton bt = tools::NO_BUTTON;
-        if (pressed_button_ == Qt::LeftButton)
+        if (e->button() == Qt::LeftButton)
             bt = tools::LEFT_BUTTON;
-        else if (pressed_button_ == Qt::LeftButton)
+        else if (e->button() == Qt::RightButton)
             bt = tools::RIGHT_BUTTON;
-        else if (pressed_button_ == Qt::MidButton)
+        else if (e->button() == Qt::MidButton)
             bt = tools::MIDDLE_BUTTON;
         if (bt != tools::NO_BUTTON) {
             makeCurrent();
@@ -415,16 +415,23 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
     }
 
     if (tool_manager()->current_tool()) {
+        pressed_button_ = Qt::NoButton;
         tools::ToolButton bt = tools::NO_BUTTON;
-        if (pressed_button_ == Qt::LeftButton)
+        if (e->buttons() == Qt::LeftButton) {
+            pressed_button_ = Qt::LeftButton;
             bt = tools::LEFT_BUTTON;
-        else if (pressed_button_ == Qt::LeftButton)
+        }
+        else if (e->buttons() == Qt::RightButton) {
+            pressed_button_ = Qt::RightButton;
             bt = tools::RIGHT_BUTTON;
-        else if (pressed_button_ == Qt::MidButton)
+        }
+        else if (e->buttons() == Qt::MidButton) {
+            pressed_button_ = Qt::MidButton;
             bt = tools::MIDDLE_BUTTON;
+        }
 
         makeCurrent();
-        tool_manager()->drag(bt, e->pos().x(), e->pos().y());
+        tool_manager()->move(bt, e->pos().x(), e->pos().y());
         doneCurrent();
         update();
     }

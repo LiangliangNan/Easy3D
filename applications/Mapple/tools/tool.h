@@ -34,8 +34,6 @@
 
 namespace easy3d {
 
-    class ShaderProgram;
-
     namespace tools {
 
         enum ToolButton {
@@ -60,7 +58,8 @@ namespace easy3d {
             ToolManager *tool_manager() const { return tool_manager_; }
 
             virtual void press(int x, int y) {}
-            virtual void drag(int x, int y) {}
+            virtual void move(int x, int y) {}  // for dragging
+            virtual void drag(int x, int y) {}  // for free moving
             virtual void release(int x, int y) {}
             virtual void reset() {}
 
@@ -75,21 +74,20 @@ namespace easy3d {
 
         class MultiTool {
         public:
-            MultiTool(ToolManager *mgr) : tool_manager_(mgr), wire_program_(nullptr), face_program_(nullptr) {}
+            MultiTool(ToolManager *mgr) : tool_manager_(mgr) {}
             virtual ~MultiTool();
 
             ToolManager *tool_manager() const { return tool_manager_; }
 
             virtual void press(ToolButton button, int x, int y);
-            virtual void drag(ToolButton button, int x, int y);
+            virtual void move(ToolButton button, int x, int y);
             virtual void release(ToolButton button, int x, int y);
             virtual void reset();
 
             virtual std::string instruction() const = 0;
 
             // ------------- visual hint -----------
-            // these are only for visual hint during user interaction
-            virtual void set_hint() = 0;
+            // for visual hint during user interaction
             virtual void prepare_hint(ToolButton button, int x, int y) = 0;
             virtual void clear_hint() = 0;
             virtual void draw_hint() const = 0;
@@ -108,9 +106,6 @@ namespace easy3d {
 
             typedef std::map<ToolButton, Tool *> ToolMap;
             ToolMap tools_;
-
-            ShaderProgram* wire_program_;
-            ShaderProgram* face_program_;
 
             friend class ToolManager;
 

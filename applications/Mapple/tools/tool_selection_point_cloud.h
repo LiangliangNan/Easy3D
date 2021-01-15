@@ -51,9 +51,9 @@ namespace easy3d {
         class ToolPointCloudSelectionRect : public ToolPointCloudSelection {
         public:
             ToolPointCloudSelectionRect(ToolManager *mgr, PointCloudPicker *picker, SelectMode mode = SM_SELECT);
-            virtual void press(int x, int y);
-            virtual void drag(int x, int y);
-            virtual void release(int x, int y);
+            virtual void press(int x, int y) override;
+            virtual void move(int x, int y) override;
+            virtual void release(int x, int y) override;
 
         protected:
             PointCloudPicker *picker_;
@@ -66,9 +66,9 @@ namespace easy3d {
         class ToolPointCloudSelectionLasso : public ToolPointCloudSelection {
         public:
             ToolPointCloudSelectionLasso(ToolManager *mgr, PointCloudPicker *picker, SelectMode mode = SM_SELECT);
-            virtual void press(int x, int y);
-            virtual void drag(int x, int y);
-            virtual void release(int x, int y);
+            virtual void press(int x, int y) override;
+            virtual void move(int x, int y) override;
+            virtual void release(int x, int y) override;
 
         protected:
             PointCloudPicker *picker_;
@@ -85,13 +85,12 @@ namespace easy3d {
             MultitoolPointCloudSelectionRect(ToolManager *mgr);
             ~MultitoolPointCloudSelectionRect();
 
-            virtual void set_hint() {} // point is the only thing to show
-            void press(ToolButton button, int x, int y);
-            void prepare_hint(ToolButton button, int x, int y);
-            void clear_hint();
-            void draw_hint() const;
+            void press(ToolButton button, int x, int y) override;
+            void prepare_hint(ToolButton button, int x, int y) override;
+            void clear_hint() override;
+            void draw_hint() const override;
 
-            std::string instruction() const {
+            std::string instruction() const override {
                 return "Left: select; Right: deselect";
             }
 
@@ -107,14 +106,12 @@ namespace easy3d {
             MultitoolPointCloudSelectionLasso(ToolManager *mgr);
             ~MultitoolPointCloudSelectionLasso();
 
-            virtual void set_hint() {} // point is the only thing to show
+            void press(ToolButton button, int x, int y) override;
+            void prepare_hint(ToolButton button, int x, int y) override;
+            void clear_hint() override;
+            void draw_hint() const override;
 
-            void press(ToolButton button, int x, int y);
-            void prepare_hint(ToolButton button, int x, int y);
-            void clear_hint();
-            void draw_hint() const;
-
-            std::string instruction() const {
+            std::string instruction() const override {
                 return "Left: select; Right: deselect";
             }
 
