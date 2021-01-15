@@ -52,7 +52,7 @@ namespace easy3d {
         public:
             ToolPointCloudSelectionRect(ToolManager *mgr, PointCloudPicker *picker, SelectMode mode = SM_SELECT);
             virtual void press(int x, int y) override;
-            virtual void move(int x, int y) override;
+            virtual void drag(int x, int y) override;
             virtual void release(int x, int y) override;
 
         protected:
@@ -67,7 +67,7 @@ namespace easy3d {
         public:
             ToolPointCloudSelectionLasso(ToolManager *mgr, PointCloudPicker *picker, SelectMode mode = SM_SELECT);
             virtual void press(int x, int y) override;
-            virtual void move(int x, int y) override;
+            virtual void drag(int x, int y) override;
             virtual void release(int x, int y) override;
 
         protected:

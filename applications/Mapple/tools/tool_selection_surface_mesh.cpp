@@ -151,7 +151,7 @@ namespace easy3d {
         }
 
 
-        void ToolSurfaceMeshFaceSelectionRect::move(int x, int y) {
+        void ToolSurfaceMeshFaceSelectionRect::drag(int x, int y) {
         }
 
 
@@ -245,7 +245,7 @@ namespace easy3d {
         }
 
 
-        void ToolSurfaceMeshFaceSelectionLasso::move(int x, int y) {
+        void ToolSurfaceMeshFaceSelectionLasso::drag(int x, int y) {
             lasso_.push_back(vec2(float(x), float(y)));
         }
 
