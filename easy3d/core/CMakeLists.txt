@@ -13,7 +13,7 @@ set(${PROJECT_NAME}_HEADERS
         hash.h
         heap.h
         line.h
-        manifold_builder.h
+        surface_mesh_builder.h
         mat.h
         matrix.h
         model.h
@@ -38,7 +38,7 @@ set(${PROJECT_NAME}_HEADERS
 
 set(${PROJECT_NAME}_SOURCES
         graph.cpp
-        manifold_builder.cpp
+        surface_mesh_builder.cpp
         model.cpp
         point_cloud.cpp
         surface_mesh.cpp

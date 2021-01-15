@@ -25,7 +25,7 @@
 #include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/core/types.h>
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/core/manifold_builder.h>
+#include <easy3d/core/surface_mesh_builder.h>
 #include <easy3d/util/line_stream.h>
 #include <easy3d/util/logging.h>
 
@@ -70,7 +70,7 @@ namespace easy3d {
             mesh->clear();
 
 #if RESOLVE_NONMANIFOLDNESS
-            ManifoldBuilder builder(mesh);
+            SurfaceMeshBuilder builder(mesh);
             builder.begin_surface();
 #endif
 

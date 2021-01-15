@@ -6,7 +6,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/poly_mesh.h>
-#include <easy3d/core/manifold_builder.h>
+#include <easy3d/core/surface_mesh_builder.h>
 #include <easy3d/algo/surface_mesh_components.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/walk_through.h>

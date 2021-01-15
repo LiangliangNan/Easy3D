@@ -23,7 +23,7 @@
  */
 
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/core/manifold_builder.h>
+#include <easy3d/core/surface_mesh_builder.h>
 #include <easy3d/util/logging.h>
 
 
@@ -41,8 +41,8 @@ int main(int argc, char** argv) {
 	// Easy3D provides two options to construct a surface mesh.
     //  - Option 1: use the add_vertex() and add_[face/triangle/quad]() functions of SurfaceMesh. You can only choose
     //              this option if you are sure that the mesh is manifold.
-    //  - Option 2: use the ManifoldBuilder that can resolve non-manifoldness during the construction of a mesh. This
-    //              is the default option in Easy3D and client code is highly recommended to use ManifoldBuilder.
+    //  - Option 2: use the SurfaceMeshBuilder that can resolve non-manifoldness during the construction of a mesh. This
+    //              is the default option in Easy3D and client code is highly recommended to use SurfaceMeshBuilder.
 
     // You can easily change an option.
     const int option = 2;
@@ -82,9 +82,9 @@ int main(int argc, char** argv) {
         mesh.add_triangle(v0, v2, v1);
     }
 
-    else if (option == 2) { // Option 2: use ManifoldBuilder.
+    else if (option == 2) { // Option 2: use SurfaceMeshBuilder.
         // Add vertices
-        ManifoldBuilder builder(&mesh);
+        SurfaceMeshBuilder builder(&mesh);
         builder.begin_surface();
         SurfaceMesh::Vertex v0 = builder.add_vertex(vec3(0, 0, 0));
         SurfaceMesh::Vertex v1 = builder.add_vertex(vec3(1, 0, 0));

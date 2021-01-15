@@ -24,7 +24,7 @@
 
 #include <easy3d/algo_ext/self_intersection.h>
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/core/manifold_builder.h>
+#include <easy3d/core/surface_mesh_builder.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/algo_ext/surfacer.h>
 
@@ -787,7 +787,7 @@ namespace easy3d {
         // Output resolved mesh
         /// Attention: converting from Epeck to float loses too much accuracy.
         input_mesh->clear();
-        ManifoldBuilder builder(input_mesh);
+        SurfaceMeshBuilder builder(input_mesh);
         builder.begin_surface();
 
         std::vector<SurfaceMesh::Vertex> vertices;

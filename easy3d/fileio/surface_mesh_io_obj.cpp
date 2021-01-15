@@ -27,7 +27,7 @@
 #include <unordered_map>
 
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/core/manifold_builder.h>
+#include <easy3d/core/surface_mesh_builder.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
 
@@ -76,7 +76,7 @@ namespace easy3d {
             // clear the mesh in case of existing data
             mesh->clear();
 
-            ManifoldBuilder builder(mesh);
+            SurfaceMeshBuilder builder(mesh);
             builder.begin_surface();
 
 #ifdef  TRANSLATE_RELATIVE_TO_FIRST_POINT
@@ -250,7 +250,7 @@ namespace easy3d {
             // clear the mesh in case of existing data
             mesh->clear();
 
-            ManifoldBuilder builder(mesh);
+            SurfaceMeshBuilder builder(mesh);
             builder.begin_surface();
 
             // add vertices

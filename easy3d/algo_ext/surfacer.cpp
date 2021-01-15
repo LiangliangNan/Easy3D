@@ -25,7 +25,7 @@
 #include <easy3d/algo_ext/overlapping_faces.h>
 #include <easy3d/algo_ext/self_intersection.h>
 #include <easy3d/util/logging.h>
-#include <easy3d/core/manifold_builder.h>
+#include <easy3d/core/surface_mesh_builder.h>
 
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 
@@ -212,7 +212,7 @@ namespace easy3d {
                              SurfaceMesh *mesh) {
             mesh->clear();
 
-            ManifoldBuilder builder(mesh);
+            SurfaceMeshBuilder builder(mesh);
             builder.begin_surface();
 
             for (auto p : points)

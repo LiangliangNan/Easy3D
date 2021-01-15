@@ -22,7 +22,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <easy3d/core/manifold_builder.h>
+#include <easy3d/core/surface_mesh_builder.h>
 
 #include <set>
 
@@ -33,23 +33,23 @@
 namespace easy3d {
 
 
-    static const std::string name_known_nm_vertex("v:ManifoldBuilder:known_nm_vertex");
-    static const std::string name_visited_vertex("v:ManifoldBuilder:visited_vertex");
-    static const std::string name_visited_halfedge("h:ManifoldBuilder:visited_halfedge");
-    static const std::string name_original_vertex("h:ManifoldBuilder:original_vertex");
+    static const std::string name_known_nm_vertex("v:SurfaceMeshBuilder:known_nm_vertex");
+    static const std::string name_visited_vertex("v:SurfaceMeshBuilder:visited_vertex");
+    static const std::string name_visited_halfedge("h:SurfaceMeshBuilder:visited_halfedge");
+    static const std::string name_original_vertex("h:SurfaceMeshBuilder:original_vertex");
 
 
-    ManifoldBuilder::ManifoldBuilder(SurfaceMesh *mesh)
+    SurfaceMeshBuilder::SurfaceMeshBuilder(SurfaceMesh *mesh)
             : mesh_(mesh) {
     }
 
 
-    ManifoldBuilder::~ManifoldBuilder() {
+    SurfaceMeshBuilder::~SurfaceMeshBuilder() {
         LOG_IF(original_vertex_, ERROR) << "missing call to end_surface(), which must be in pair with begin_surface()";
     }
 
 
-    void ManifoldBuilder::begin_surface() {
+    void SurfaceMeshBuilder::begin_surface() {
         num_faces_less_three_vertices_ = 0;
         num_faces_duplicate_vertices = 0;
         num_faces_out_of_range_vertices_ = 0;
@@ -60,11 +60,11 @@ namespace easy3d {
         copied_vertices_for_linking_.clear();
         outgoing_halfedges_.clear();
 
-        original_vertex_ = mesh_->add_vertex_property<SurfaceMesh::Vertex>(name_original_vertex);
+        original_vertex_ = mesh_->add_vertex_property<Vertex>(name_original_vertex);
     }
 
 
-    void ManifoldBuilder::end_surface(bool log_issues) {
+    void SurfaceMeshBuilder::end_surface(bool log_issues) {
         // ----------------------------------------------------------------------------------
 
         // Step 1: Resolve non-manifold vertices (also collect data for the report).
@@ -223,15 +223,15 @@ namespace easy3d {
     }
 
 
-    SurfaceMesh::Vertex ManifoldBuilder::add_vertex(const vec3 &p) {
+    SurfaceMesh::Vertex SurfaceMeshBuilder::add_vertex(const vec3 &p) {
         DLOG_IF(!original_vertex_, ERROR) << "you must call begin_surface() before the constructing a surface mesh";
-        SurfaceMesh::Vertex v = mesh_->add_vertex(p);
+        Vertex v = mesh_->add_vertex(p);
         original_vertex_[v] = v;
         return v;
     }
 
 
-    bool ManifoldBuilder::vertices_valid(const std::vector<SurfaceMesh::Vertex> &vertices) {
+    bool SurfaceMeshBuilder::vertices_valid(const std::vector<Vertex> &vertices) {
         const std::size_t n = vertices.size();
 
         // Check #1: a face has less than 3 vertices
@@ -268,9 +268,9 @@ namespace easy3d {
     }
 
 
-    SurfaceMesh::Face ManifoldBuilder::add_face(const std::vector<SurfaceMesh::Vertex> &vertices) {
+    SurfaceMesh::Face SurfaceMeshBuilder::add_face(const std::vector<Vertex> &vertices) {
         if (!vertices_valid(vertices))
-            return SurfaceMesh::Face();
+            return Face();
 
         std::size_t n = vertices.size();
         face_vertices_.resize(n);
@@ -281,7 +281,7 @@ namespace easy3d {
 
         // ---------------------------------------------------------------------------------------------------------
 
-        std::vector<SurfaceMesh::Halfedge> halfedges(n);
+        std::vector<Halfedge> halfedges(n);
         std::vector<char> halfedge_esists(n);
 
         // Check and resolve duplicate edges.
@@ -304,7 +304,7 @@ namespace easy3d {
         // Check and resolve linking issue.
 
         // Let's check if the face can be linked to the mesh
-        SurfaceMesh::Halfedge inner_next, inner_prev, outer_prev, boundary_next, boundary_prev;
+        Halfedge inner_next, inner_prev, outer_prev, boundary_next, boundary_prev;
         for (std::size_t s = 0, t = 1; s < n; ++s, ++t, t %= n) {
             if (halfedge_esists[s] && halfedge_esists[t]) {
                 inner_prev = halfedges[s];
@@ -350,19 +350,18 @@ namespace easy3d {
     }
 
 
-    SurfaceMesh::Face
-    ManifoldBuilder::add_triangle(SurfaceMesh::Vertex v1, SurfaceMesh::Vertex v2, SurfaceMesh::Vertex v3) {
+    SurfaceMesh::Face SurfaceMeshBuilder::add_triangle(Vertex v1, Vertex v2, Vertex v3) {
         return add_face({v1, v2, v3});
     }
 
 
-    SurfaceMesh::Face ManifoldBuilder::add_quad(SurfaceMesh::Vertex v1, SurfaceMesh::Vertex v2, SurfaceMesh::Vertex v3,
-                                                SurfaceMesh::Vertex v4) {
+    SurfaceMesh::Face SurfaceMeshBuilder::add_quad(Vertex v1, Vertex v2, Vertex v3,
+                                                Vertex v4) {
         return add_face({v1, v2, v3, v4});
     }
 
 
-    SurfaceMesh::Vertex ManifoldBuilder::get(SurfaceMesh::Vertex v) {
+    SurfaceMesh::Vertex SurfaceMeshBuilder::get(Vertex v) {
         auto pos = copied_vertices_.find(v);
         if (pos == copied_vertices_.end()) { // no copies
             if (mesh_->is_border(v))
@@ -380,7 +379,7 @@ namespace easy3d {
     }
 
 
-    SurfaceMesh::Vertex ManifoldBuilder::copy_vertex(SurfaceMesh::Vertex v) {
+    SurfaceMesh::Vertex SurfaceMeshBuilder::copy_vertex(Vertex v) {
         const vec3 p = mesh_->position(v); // [Liangliang]: 'const vec3&' won't work because the vector is growing.
         auto new_v = mesh_->add_vertex(p);
         original_vertex_[new_v] = v;
@@ -402,17 +401,17 @@ namespace easy3d {
     }
 
 
-    std::size_t ManifoldBuilder::resolve_non_manifold_vertices(SurfaceMesh *mesh) {
+    std::size_t SurfaceMeshBuilder::resolve_non_manifold_vertices(SurfaceMesh *mesh) {
         // We have two types of non-manifold vertices:
         //  - type 1: Vertices touching closed disks.
         //
         //  - type 2: Vertices shared by multiple umbrellas. This type of non-manifold vertices have not been resolved
         //            yet. We will have to resolve them by calling to resolve_non_manifold_vertices().
 
-        auto null_h = SurfaceMesh::Halfedge();
+        auto null_h = Halfedge();
 
         auto known_nm_vertex = mesh->add_vertex_property<bool>(name_known_nm_vertex, false);
-        auto visited_vertex = mesh->add_vertex_property<SurfaceMesh::Halfedge>(name_visited_vertex, null_h);
+        auto visited_vertex = mesh->add_vertex_property<Halfedge>(name_visited_vertex, null_h);
         auto visited_halfedge = mesh->add_halfedge_property<bool>(name_visited_halfedge, false);
 
         // keep a record that the vertex copies are occurred in the 'resolve_non_manifold_vertices()' phase.
@@ -420,7 +419,7 @@ namespace easy3d {
         //       might have already been copied in the previous phase (i.e., in add_face()).
         CopyRecord copy_record;
 
-        std::vector<SurfaceMesh::Halfedge> non_manifold_cones;
+        std::vector<Halfedge> non_manifold_cones;
         for (auto h : mesh->halfedges()) {
             // If 'h' is not visited yet, we walk around the target of 'h' and mark these
             // halfedges as visited. Thus, if we are here and the target is already marked as visited,
@@ -487,11 +486,10 @@ namespace easy3d {
     }
 
 
-    std::size_t
-    ManifoldBuilder::resolve_non_manifold_vertex(SurfaceMesh::Halfedge h, SurfaceMesh *mesh, CopyRecord &copy_record) {
-        auto create_new_vertex_for_sector = [this](SurfaceMesh::Halfedge sector_begin_h,
-                                                   SurfaceMesh::Halfedge sector_last_h,
-                                                   SurfaceMesh *mesh) -> SurfaceMesh::Vertex {
+    std::size_t SurfaceMeshBuilder::resolve_non_manifold_vertex(Halfedge h, SurfaceMesh *mesh, CopyRecord &copy_record) {
+        auto create_new_vertex_for_sector = [this](Halfedge sector_begin_h,
+                                                   Halfedge sector_last_h,
+                                                   SurfaceMesh *mesh) -> Vertex {
             auto old_v = mesh->target(sector_begin_h);
 
             auto old_v_original = original_vertex_[old_v];

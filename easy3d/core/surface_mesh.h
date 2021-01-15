@@ -50,17 +50,17 @@ namespace easy3d {
      * @brief A halfedge data structure for polygonal meshes of 2-manifold.
      *
      * @details A surface mesh is a consistent and orientable polygonal mesh that may have one or more boundaries.
-     *          The faces are simple polygons and the edges are line segments. Each edge connects two vertices, and is
-     *          shared by two faces (including the null face for boundary edges). A surface mesh can have any number
-     *          of connected components and also some self-intersections.
+     *      The faces are simple polygons and the edges are line segments. Each edge connects two vertices, and is
+     *      shared by two faces (including the null face for boundary edges). A surface mesh can have any number
+     *      of connected components and also some self-intersections.
      *
-     * @note    The construction of a manifold surface mesh can be done by iteratively calling add_vertex() and
-     *          add_face(). These two methods can ONLY be used when you're sure that the mesh is manifold. Otherwise,
-     *          ManifoldBuilder should be used for the construction, which guarantees you end up with a polygonal mesh
-     *          of a 2-manifold topology. In any case, client code is highly recommended to use ManifoldBuilder.
+     * @note The construction of a manifold surface mesh can be done by iteratively calling add_vertex() and
+     *      add_face(). These two methods can ONLY be used when you're sure that the mesh is manifold. Otherwise,
+     *      SurfaceMeshBuilder should be used for the construction, which guarantees you end up with a polygonal
+     *      mesh of a 2-manifold topology. In any case, client code is highly recommended to use SurfaceMeshBuilder.
      *
      * \class SurfaceMesh easy3d/core/surface_mesh.h
-     * \sa ManifoldBuilder.
+     * \sa SurfaceMeshBuilder.
      */
 
     class SurfaceMesh : public virtual Model
@@ -1992,7 +1992,7 @@ namespace easy3d {
         std::vector<bool>        add_face_needs_adjust_;
         NextCache                add_face_next_cache_;
 
-		friend class ManifoldBuilder;
+		friend class SurfaceMeshBuilder;
     };
 
 

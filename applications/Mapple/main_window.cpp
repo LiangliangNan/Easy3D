@@ -45,7 +45,7 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/poly_mesh.h>
 #include <easy3d/core/random.h>
-#include <easy3d/core/manifold_builder.h>
+#include <easy3d/core/surface_mesh_builder.h>
 #include <easy3d/renderer/setting.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/renderer.h>
@@ -1492,7 +1492,7 @@ void MainWindow::polymeshExtractBoundary() {
     const std::string &name = file_system::name_less_extension(poly->name()) + "_boundary.ply";
     mesh->set_name(name);
 
-    ManifoldBuilder builder(mesh);
+    SurfaceMeshBuilder builder(mesh);
     builder.begin_surface();
     for (auto f : faces) {
         std::vector<SurfaceMesh::Vertex> vts;

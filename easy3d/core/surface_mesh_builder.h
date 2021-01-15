@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_CORE_MANIFOLD_BUILDER_H
-#define EASY3D_CORE_MANIFOLD_BUILDER_H
+#ifndef EASY3D_CORE_SURFACE_MESH_BUILDER_H
+#define EASY3D_CORE_SURFACE_MESH_BUILDER_H
 
 
 #include <unordered_map>
@@ -34,31 +34,33 @@ namespace easy3d {
 
     /**
      * \brief A helper class for constructing manifold surface mesh models.
-     * \details ManifoldBuilder is a helper class that resolves non-manifoldness while building a surface mesh.
-     *
-     * \class ManifoldBuilder easy3d/core/manifold_builder.h
-     *
-     * It is typically used to load a model from a file (because you don't know if the mesh is manifold or not).
-     * For meshes guaranteed to be manifold, you can also use the built-in add_vertex() and add_[face/triangle/quad]()
-     * functions of SurfaceMesh for their construction.
-     *
+     * \class SurfaceMeshBuilder easy3d/core/surface_mesh_builder.h
+     * \details SurfaceMeshBuilder resolves non-manifoldness while building a surface mesh.
+     *      It is typically used to load a model from a file (because you don't know if the mesh is manifold or not).
+     *      For meshes guaranteed to be manifold, you can also use the built-in add_vertex() and
+     *      add_[face/triangle/quad]() functions of SurfaceMesh for their construction.
      * Example use:
      * \code
-     *      ManifoldBuilder builder(mesh);
+     *      SurfaceMeshBuilder builder(mesh);
      *      builder.begin_surface();
      *      for_each_vertex:
      *          builder.add_vertex(p);
      *      for_each_face:
-     *          builder.add_face(ids);
+     *          builder.add_face(ids); // ids: the vertices of the face
      *      builder.end_surface();
      * \endcode
      */
 
-    class ManifoldBuilder {
+    class SurfaceMeshBuilder {
     public:
-        ManifoldBuilder(SurfaceMesh *mesh);
+        typedef SurfaceMesh::Vertex         Vertex;
+        typedef SurfaceMesh::Halfedge       Halfedge;
+        typedef SurfaceMesh::Face           Face;
+        
+    public:
+        SurfaceMeshBuilder(SurfaceMesh *mesh);
 
-        ~ManifoldBuilder();
+        ~SurfaceMeshBuilder();
 
         // -------------------------------------------------------------------------------------------------------------
 
@@ -74,7 +76,7 @@ namespace easy3d {
          * @param p The 3D coordinates of the vertex.
          * @return The added vertex on success.
          */
-        SurfaceMesh::Vertex add_vertex(const vec3 &p);
+        Vertex add_vertex(const vec3 &p);
 
         /**
          * @brief Add a face to the mesh.
@@ -82,22 +84,22 @@ namespace easy3d {
          * @return The added face on success.
          * @related add_triangle(), add_quad().
          */
-        SurfaceMesh::Face add_face(const std::vector<SurfaceMesh::Vertex> &vertices);
+        Face add_face(const std::vector<Vertex> &vertices);
 
         /**
          * @brief Add a new triangle face connecting vertices v1, v2, and v3.
          * @return The added face on success.
          * @related add_face(), add_quad().
          */
-        SurfaceMesh::Face add_triangle(SurfaceMesh::Vertex v1, SurfaceMesh::Vertex v2, SurfaceMesh::Vertex v3);
+        Face add_triangle(Vertex v1, Vertex v2, Vertex v3);
 
         /**
          * @brief Add a new quad face connecting vertices v1, v2, v3, and v4.
          * @return The added face on success.
          * @related add_face(), add_triangle().
          */
-        SurfaceMesh::Face
-        add_quad(SurfaceMesh::Vertex v1, SurfaceMesh::Vertex v2, SurfaceMesh::Vertex v3, SurfaceMesh::Vertex v4);
+        Face
+        add_quad(Vertex v1, Vertex v2, Vertex v3, Vertex v4);
 
         /**
          * @brief Finalize surface construction. Must be called at the end of the surface construction and used in
@@ -115,7 +117,7 @@ namespace easy3d {
          * @attention The result is valid if the face was successfully added, and it will remain valid until the next
          *            call to add_[face/triangle/quad]() and end_surface().
          */
-        const std::vector<SurfaceMesh::Vertex> &face_vertices() const { return face_vertices_; }
+        const std::vector<Vertex> &face_vertices() const { return face_vertices_; }
 
     private:
 
@@ -123,17 +125,17 @@ namespace easy3d {
         //  - it has less than 3 vertices, or
         //  - it has self duplicated vertices, or
         //  - one of the vertex is out-of-range.
-        bool vertices_valid(const std::vector<SurfaceMesh::Vertex> &vertices);
+        bool vertices_valid(const std::vector<Vertex> &vertices);
 
         // Copy a vertex v and its attributes.
         // Return the new vertex.
-        SurfaceMesh::Vertex copy_vertex(SurfaceMesh::Vertex v);
+        Vertex copy_vertex(Vertex v);
 
         // A vertex might have been copied a few times. If copies occurred before, the original vertex will never work.
         // To avoid unnecessary duplication, we reuse one of its copy that is not on a closed disk. We test each copy in
         // the order the copies were made. If no valid copy can be found, we make a new copy.
         // If no copy exists and v is on a closed disk, we simply copy it.
-        SurfaceMesh::Vertex get(SurfaceMesh::Vertex v);
+        Vertex get(Vertex v);
 
         // Resolve all non-manifold vertices of a mesh.
         // Return the number of non-manifold vertices.
@@ -146,12 +148,12 @@ namespace easy3d {
         //
         // The copied vertices: vertices in 'second' were copied from 'first'.
         // Usually only a small number of vertices will be copied, so no need to use vertex property.
-        typedef std::unordered_map<SurfaceMesh::Vertex, std::vector<SurfaceMesh::Vertex>, SurfaceMesh::Vertex::Hash> CopyRecord;
+        typedef std::unordered_map<Vertex, std::vector<Vertex>, Vertex::Hash> CopyRecord;
 
         // Resolve the non-manifoldness of a vertex that is denoted by an incoming halfedge.
         // @param h The halfedge pointing to the non-manifold vertex.
         // Return the number of vertex copies.
-        std::size_t resolve_non_manifold_vertex(SurfaceMesh::Halfedge h, SurfaceMesh *mesh, CopyRecord &copy_record);
+        std::size_t resolve_non_manifold_vertex(Halfedge h, SurfaceMesh *mesh, CopyRecord &copy_record);
 
     private:
         SurfaceMesh *mesh_;
@@ -174,10 +176,10 @@ namespace easy3d {
         CopyRecord copied_vertices_;
 
         // The actual vertices after the face was successfully added to the mesh.
-        std::vector<SurfaceMesh::Vertex> face_vertices_;
+        std::vector<Vertex> face_vertices_;
 
         // A vertex property to record the original vertex of each vertex.
-        SurfaceMesh::VertexProperty <SurfaceMesh::Vertex> original_vertex_;
+        SurfaceMesh::VertexProperty <Vertex> original_vertex_;
 
         // The record of all halfedges (each associated with a valid face) originating from a vertex.
         // This is used for fast query of duplicate edges. All vertices are their original indices.
