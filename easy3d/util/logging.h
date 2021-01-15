@@ -58,7 +58,7 @@ namespace easy3d {
          *          directory "logs" next to the executable file.
          * @note This initialization is optional. If not called, log messages will be written to stderr only.
          */
-        void initialize(bool info_to_stderr = false, int verbose_level = 0, const std::string &log_file = "default");
+        void initialize(bool info_to_stderr = false, int verbose_level = 0, const std::string &log_file = "");
 
 
         /// Base class for a logger (that can log messages to whatever)
