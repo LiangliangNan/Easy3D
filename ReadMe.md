@@ -3,8 +3,7 @@
     <b> <img src="https://img.shields.io/badge/license-GPL-blue" title="license-GPL"/> </b> <br>
 </p>
 
-![](resources/images/logo.jpg)
-(This 3D model of the Easy3D logo was generated and rendered by Easy3D).
+![3D model generated and rendered by Easy3D](resources/images/logo.jpg)
 
 #### Easy3D is an open-source library for 3D modeling, geometry processing, and rendering. It is implemented in C++ and designed with an emphasis on simplicity and efficiency. 
 #### Easy3D is intended for research and educational purposes, but it is also a good starting point for developing sophisticated 3D applications.

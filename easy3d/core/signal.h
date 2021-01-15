@@ -292,6 +292,8 @@ namespace easy3d {
      *                  [=]( auto && ...a) { (func)(std::forward<decltype(a)>(a)...); }
      *          Signal<int &> signal;           // a signal with one argument
      *          signal.connect(ADAPT(foo));     // this will work for >= C++14
+     *      \endcode
+     *
      * But with C++11, \c auto is not allowed in lambda parameters.
      */
 
