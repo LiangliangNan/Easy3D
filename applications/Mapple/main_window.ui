@@ -237,6 +237,9 @@
    <addaction name="separator"/>
    <addaction name="actionCameraManipulation"/>
    <addaction name="separator"/>
+   <addaction name="actionSelectClick"/>
+   <addaction name="actionSelectRect"/>
+   <addaction name="actionSelectLasso"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <widget class="QDockWidget" name="dockWidgetRendering">

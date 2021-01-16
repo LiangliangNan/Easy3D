@@ -263,6 +263,7 @@ void WidgetDrawable::setColorScheme(const QString &text) {
     d->update();
 
     viewer_->update();
+    window_->enableCameraManipulation();
 
     updatePanel();
 }

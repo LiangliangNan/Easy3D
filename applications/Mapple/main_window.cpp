@@ -979,6 +979,7 @@ void MainWindow::operationModeChanged(QAction* act) {
                 mesh->add_face_property<vec3>("f:color", d->color());
             d->set_coloring(State::COLOR_PROPERTY, State::FACE, "f:color");
             d->update();
+            viewer()->update();
             updateUi();
         }
     };
@@ -991,6 +992,7 @@ void MainWindow::operationModeChanged(QAction* act) {
                 cloud->add_vertex_property<vec3>("v:color", d->color());
             d->set_coloring(State::COLOR_PROPERTY, State::VERTEX, "v:color");
             d->update();
+            viewer()->update();
             updateUi();
         }
     };
