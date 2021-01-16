@@ -40,7 +40,7 @@
 
 
 static std::vector<std::string> key_words = {
-        "v:point", "v:connectivity", "v:deleted", "v:normal", "f:normal",
+        "v:point", "v:connectivity", "v:deleted",
         "f:connectivity", "f:deleted", "f:triangle_range",
         "e:deleted", "h:connectivity"
 };
@@ -213,7 +213,7 @@ void DialogProperties::locationChanged(const QString &text) {
         if (location == "Vertex") {
             lineEditNewPropertyName->setText("v:");
             for (const auto &name : cloud->vertex_properties())
-                if (std::find(key_words.begin(), key_words.end(), name) != key_words.end())
+                if (std::find(key_words.begin(), key_words.end(), name) == key_words.end())
                     comboBoxPropertyName->addItem(QString::fromStdString(name));
         }
     } else if (dynamic_cast<Graph *>(model)) {
@@ -221,12 +221,12 @@ void DialogProperties::locationChanged(const QString &text) {
         if (location == "Vertex") {
             lineEditNewPropertyName->setText("v:");
             for (const auto &name : graph->vertex_properties())
-                if (std::find(key_words.begin(), key_words.end(), name) != key_words.end())
+                if (std::find(key_words.begin(), key_words.end(), name) == key_words.end())
                     comboBoxPropertyName->addItem(QString::fromStdString(name));
         } else if (location == "Edge") {
             lineEditNewPropertyName->setText("e:");
             for (const auto &name : graph->edge_properties())
-                if (std::find(key_words.begin(), key_words.end(), name) != key_words.end())
+                if (std::find(key_words.begin(), key_words.end(), name) == key_words.end())
                     comboBoxPropertyName->addItem(QString::fromStdString(name));
         }
     } else if (dynamic_cast<SurfaceMesh *>(model)) {
@@ -234,22 +234,22 @@ void DialogProperties::locationChanged(const QString &text) {
         if (location == "Vertex") {
             lineEditNewPropertyName->setText("v:");
             for (const auto &name : mesh->vertex_properties())
-                if (std::find(key_words.begin(), key_words.end(), name) != key_words.end())
+                if (std::find(key_words.begin(), key_words.end(), name) == key_words.end())
                     comboBoxPropertyName->addItem(QString::fromStdString(name));
         } else if (location == "Edge") {
             lineEditNewPropertyName->setText("e:");
             for (const auto &name : mesh->edge_properties())
-                if (std::find(key_words.begin(), key_words.end(), name) != key_words.end())
+                if (std::find(key_words.begin(), key_words.end(), name) == key_words.end())
                     comboBoxPropertyName->addItem(QString::fromStdString(name));
         } else if (location == "Face") {
             lineEditNewPropertyName->setText("f:");
             for (const auto &name : mesh->face_properties())
-                if (std::find(key_words.begin(), key_words.end(), name) != key_words.end())
+                if (std::find(key_words.begin(), key_words.end(), name) == key_words.end())
                     comboBoxPropertyName->addItem(QString::fromStdString(name));
         } else if (location == "Halfedge") {
             lineEditNewPropertyName->setText("h:");
             for (const auto &name : mesh->halfedge_properties())
-                if (std::find(key_words.begin(), key_words.end(), name) != key_words.end())
+                if (std::find(key_words.begin(), key_words.end(), name) == key_words.end())
                     comboBoxPropertyName->addItem(QString::fromStdString(name));
         }
     }
@@ -272,7 +272,7 @@ namespace details {
         else if (info == typeid(vec2)) return "vec2";
         else if (info == typeid(vec3)) return "vec3";
         else
-            return "void";
+            return info.name();
     }
 
     template<typename MODEL, typename SourceType, typename TargetType>
@@ -970,7 +970,7 @@ void DialogProperties::propertyChanged(const QString &name) {
     if (!model)
         return;
 
-    QString type = "";
+    QString type = "void";
     if (dynamic_cast<PointCloud *>(model)) {
         auto cloud = dynamic_cast<PointCloud *>(model);
         if (location == "Vertex") {
@@ -1005,8 +1005,9 @@ void DialogProperties::propertyChanged(const QString &name) {
 
     if (type != "void")
         comboBoxSourceType->addItem(type);
-    else if (!type.isEmpty())
-        LOG(WARNING) << "unrecognized data type for property '" << property_name << "' defined on '" << location << "'";
+    else
+        LOG(WARNING) << "unrecognized data type (" << type.toStdString() << ") for property '"
+                     << property_name << "' defined on '" << location << "'";
 }
 
 
