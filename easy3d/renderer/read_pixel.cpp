@@ -401,6 +401,8 @@ namespace easy3d {
 		// read the depth data of the framebuffer into a specified buffer.
 		void read_depth(std::vector<float>& buffer, bool flip_vertically /* = true */)
 		{
+            glFinish();
+
 			int viewport[4];
 			glGetIntegerv(GL_VIEWPORT, viewport);
 			const int w = viewport[2];
