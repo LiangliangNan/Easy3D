@@ -970,7 +970,7 @@ void DialogProperties::propertyChanged(const QString &name) {
     if (!model)
         return;
 
-    QString type = "void";
+    QString type = "";
     if (dynamic_cast<PointCloud *>(model)) {
         auto cloud = dynamic_cast<PointCloud *>(model);
         if (location == "Vertex") {
@@ -1005,7 +1005,7 @@ void DialogProperties::propertyChanged(const QString &name) {
 
     if (type != "void")
         comboBoxSourceType->addItem(type);
-    else
+    else if (!type.isEmpty())
         LOG(WARNING) << "unrecognized data type for property '" << property_name << "' defined on '" << location << "'";
 }
 
