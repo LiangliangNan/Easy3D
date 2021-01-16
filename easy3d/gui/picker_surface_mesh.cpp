@@ -273,7 +273,7 @@ namespace easy3d {
         program->bind();
         program->set_uniform("MVP", camera()->modelViewProjectionMatrix())
                 ->set_uniform("MANIP", model->manipulator()->matrix());
-        drawable->gl_draw(false);
+        drawable->gl_draw();
         program->release();
 
         // --- Maybe this is not necessary ---------
@@ -337,9 +337,9 @@ namespace easy3d {
     }
 
 
-    int	SurfaceMeshPicker::pick_faces(SurfaceMesh *model, const Rect& rect, bool deselect) {
+    void SurfaceMeshPicker::pick_faces(SurfaceMesh *model, const Rect& rect, bool deselect) {
         if (!model)
-            return 0;
+            return;
 
         int win_width = camera()->screenWidth();
         int win_height = camera()->screenHeight();
@@ -351,17 +351,15 @@ namespace easy3d {
         if (xmin > xmax) std::swap(xmin, xmax);
         if (ymin > ymax) std::swap(ymin, ymax);
 
-        // Get combined model-view and projection matrix
-        const mat4& m = camera()->modelViewProjectionMatrix() * model->manipulator()->matrix();
-        const auto& points = model->get_vertex_property<vec3>("v:point").vector();
-        int num = model->n_vertices();
+        const auto &points = model->get_vertex_property<vec3>("v:point").vector();
+        int num = static_cast<int>(points.size());
+        const mat4 &m = camera()->modelViewProjectionMatrix() * model->manipulator()->matrix();
 
-        // because in rendering vertices maybe duplicated, so I first test for each vertex.
-        std::vector<bool> status(num);
+        std::vector<bool> status(num, false);
 
 #pragma omp parallel for
         for (int i = 0; i < num; ++i) {
-            const vec3& p = points[i];
+            const vec3 &p = points[i];
             float x = m[0] * p.x + m[4] * p.y + m[8] * p.z + m[12];
             float y = m[1] * p.x + m[5] * p.y + m[9] * p.z + m[13];
             //float z = m[2] * p.x + m[6] * p.y + m[10] * p.z + m[14]; // I don't need z
@@ -371,14 +369,12 @@ namespace easy3d {
             x = 0.5f * x + 0.5f;
             y = 0.5f * y + 0.5f;
 
-            if (x >= xmin && x <= xmax && y >= ymin && y <= ymax) {
+            if (x >= xmin && x <= xmax && y >= ymin && y <= ymax)
                 status[i] = true;
-            }
         }
 
         auto select = model->face_property<bool>("f:select");
         // a face is selected if all its vertices are selected
-        int count(0);
         for (auto f : model->faces()) {
             bool selected = true;
             for (auto v : model->vertices(f)) {
@@ -388,19 +384,15 @@ namespace easy3d {
                 }
             }
 
-            if (selected) {
+            if (selected)
                 select[f] = !deselect;
-                ++count;
-            }
         }
-
-        return count;
     }
 
 
-    int SurfaceMeshPicker::pick_faces(SurfaceMesh *model, const Polygon2 &plg, bool deselect) {
+    void SurfaceMeshPicker::pick_faces(SurfaceMesh *model, const Polygon2 &plg, bool deselect) {
         if (!model)
-            return 0;
+            return;
 
         int win_width = camera()->screenWidth();
         int win_height = camera()->screenHeight();
@@ -421,13 +413,11 @@ namespace easy3d {
         if (xmin > xmax) std::swap(xmin, xmax);
         if (ymin > ymax) std::swap(ymin, ymax);
 
-        // Get combined model-view and projection matrix
-        const mat4& m = camera()->modelViewProjectionMatrix() * model->manipulator()->matrix();
-        const auto& points = model->get_vertex_property<vec3>("v:point").vector();
-        int num = model->n_vertices();
+        const auto &points = model->get_vertex_property<vec3>("v:point").vector();
+        int num = static_cast<int>(points.size());
+        const mat4 &m = camera()->modelViewProjectionMatrix() * model->manipulator()->matrix();
 
-        // because in rendering vertices maybe duplicated, so I first test for each vertex.
-        std::vector<bool> status(num);
+        std::vector<bool> select_vertices(num, false);
 
 #pragma omp parallel for
         for (int i = 0; i < num; ++i) {
@@ -443,29 +433,24 @@ namespace easy3d {
 
             if (x >= xmin && x <= xmax && y >= ymin && y <= ymax) {
                 if (geom::point_in_polygon(vec2(x, y), region))
-                    status[i] = true;
+                    select_vertices[i] = true;
             }
         }
 
-        auto select = model->face_property<bool>("f:select");
+        auto select_faces = model->face_property<bool>("f:select");
         // a face is selected if all its vertices are selected
-        int count(0);
         for (auto f : model->faces()) {
             bool selected = true;
             for (auto v : model->vertices(f)) {
-                if (!status[v.idx()]) {
+                if (!select_vertices[v.idx()]) {
                     selected = false;
                     break;
                 }
             }
 
-            if (selected) {
-                select[f] = !deselect;
-                ++count;
-            }
+            if (selected)
+                select_faces[f] = !deselect;
         }
-
-        return count;
     }
 
 

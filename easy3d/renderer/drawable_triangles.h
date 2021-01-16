@@ -63,14 +63,14 @@ namespace easy3d {
         void set_opacity(float opacity) { opacity_ = opacity; }
 
         // Rendering.
-        virtual void draw(const Camera* camera, bool with_storage_buffer = false) const override;
+        virtual void draw(const Camera* camera) const override;
 
     protected:
         // without texture
-        void _draw_triangles(const Camera* camera, bool with_storage_buffer) const;
+        void _draw_triangles(const Camera* camera) const;
 
         // textured
-        void _draw_triangles_with_texture(const Camera* camera, bool with_storage_buffer) const;
+        void _draw_triangles_with_texture(const Camera* camera) const;
 
 	private:
         bool    smooth_shading_;

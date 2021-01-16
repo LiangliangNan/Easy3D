@@ -63,7 +63,7 @@ void CompositeView::draw() const {
     auto edges = current_model()->renderer()->get_lines_drawable("edges");
     if (!edges)
         edges = current_model()->renderer()->add_lines_drawable("edges");
-    edges->draw(camera(), false);
+    edges->draw(camera());
     draw_grid();
 
     // ------------------------------------------------------------
@@ -76,8 +76,8 @@ void CompositeView::draw() const {
         vertices = current_model()->renderer()->add_points_drawable("vertices");
     vertices->set_point_size(15.0f);
     vertices->set_impostor_type(PointsDrawable::SPHERE);
-    vertices->draw(camera(), false);
-    edges->draw(camera(), false);
+    vertices->draw(camera());
+    edges->draw(camera());
     draw_grid();
 
     // ------------------------------------------------------------
@@ -88,7 +88,7 @@ void CompositeView::draw() const {
     auto faces = current_model()->renderer()->get_triangles_drawable("faces");
     if (!faces)
         faces = current_model()->renderer()->add_triangles_drawable("faces");
-    faces->draw(camera(), false);
+    faces->draw(camera());
     draw_grid();
 
     // ------------------------------------------------------------
@@ -96,8 +96,8 @@ void CompositeView::draw() const {
     // Upper right view (wireframe + faces)
     glViewport(w / 2, h / 2, w / 2, h / 2);
     glScissor(w / 2, h / 2, w / 2, h / 2);
-    faces->draw(camera(), false);
-    edges->draw(camera(), false);
+    faces->draw(camera());
+    edges->draw(camera());
     draw_grid();
 
     // ------------------------------------------------------------
@@ -131,7 +131,7 @@ void CompositeView::draw_grid() const {
     program->set_uniform("MVP", proj * mat4::translation(w * 0.5f, h * 0.5f, 0.0f));
     program->set_uniform("per_vertex_color", false);
     program->set_uniform("default_color", vec4(0.0f, 0.0f, 1.0f, 1.0f));
-    grid_->gl_draw(false);
+    grid_->gl_draw();
     program->release();
 
     glDepthRangef(0.0f, 1.0f);

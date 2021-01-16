@@ -54,18 +54,18 @@ namespace easy3d {
         void set_line_width(float w) { line_width_ = w; }
 
         // Rendering.
-        virtual void draw(const Camera* camera, bool with_storage_buffer = false) const override;
+        virtual void draw(const Camera* camera) const override;
 
     protected:
         // without texture
-        void _draw_plain_lines(const Camera* camera, bool with_storage_buffer) const;
-        void _draw_cylinders(const Camera* camera, bool with_storage_buffer) const;
-        void _draw_cones(const Camera* camera, bool with_storage_buffer) const;
+        void _draw_plain_lines(const Camera* camera) const;
+        void _draw_cylinders(const Camera* camera) const;
+        void _draw_cones(const Camera* camera) const;
 
         // textured
-        void _draw_plain_lines_with_texture(const Camera* camera, bool with_storage_buffer) const;
-        void _draw_cylinders_with_texture(const Camera* camera, bool with_storage_buffer) const;
-        void _draw_cones_with_texture(const Camera* camera, bool with_storage_buffer) const;
+        void _draw_plain_lines_with_texture(const Camera* camera) const;
+        void _draw_cylinders_with_texture(const Camera* camera) const;
+        void _draw_cones_with_texture(const Camera* camera) const;
 
     private:
         float           line_width_;

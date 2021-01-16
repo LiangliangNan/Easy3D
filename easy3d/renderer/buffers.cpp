@@ -142,7 +142,7 @@ namespace easy3d {
                 }
                 drawable->update_vertex_buffer(d_points);
                 drawable->update_texcoord_buffer(d_texcoords);
-                drawable->release_element_buffer();
+                drawable->disable_element_buffer();
             }
 
 
@@ -228,7 +228,7 @@ namespace easy3d {
                     drawable->update_vertex_buffer(d_points);
                     drawable->update_normal_buffer(d_normals);
                     drawable->update_texcoord_buffer(d_texcoords);
-                    drawable->release_element_buffer();
+                    drawable->disable_element_buffer();
 
                     auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
                     int idx = 0;
@@ -1013,8 +1013,7 @@ namespace easy3d {
 
                     for (auto f : model->faces()) {
                         const vec3 &color = fcolor[f];
-                        for (auto h : model->halfedges(f)) {
-                            auto v = model->target(h);
+                        for (auto v : model->vertices(f)) {
                             d_points.push_back(points[v]);
                             d_normals.push_back(normals[v]);
                             d_colors.push_back(color);
@@ -1024,7 +1023,7 @@ namespace easy3d {
                     drawable->update_vertex_buffer(d_points);
                     drawable->update_normal_buffer(d_normals);
                     drawable->update_color_buffer(d_colors);
-                    drawable->release_element_buffer();
+                    drawable->disable_element_buffer();
 
                     auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
                     int idx = 0;
@@ -1361,7 +1360,7 @@ namespace easy3d {
                     drawable->update_vertex_buffer(d_points);
                     drawable->update_normal_buffer(d_normals);
                     drawable->update_texcoord_buffer(d_texcoords);
-                    drawable->release_element_buffer();
+                    drawable->disable_element_buffer();
 
                     auto triangle_range = model->face_property<std::pair<int, int> >("f:triangle_range");
                     int idx = 0;
@@ -1471,7 +1470,7 @@ namespace easy3d {
                 }
                 drawable->update_vertex_buffer(d_points);
                 drawable->update_color_buffer(d_colors);
-                drawable->release_element_buffer();
+                drawable->disable_element_buffer();
             }
 
 
@@ -1501,7 +1500,7 @@ namespace easy3d {
                 }
                 drawable->update_vertex_buffer(d_points);
                 drawable->update_color_buffer(d_colors);
-                drawable->release_element_buffer();
+                drawable->disable_element_buffer();
             }
 
 
@@ -1532,7 +1531,7 @@ namespace easy3d {
                 }
                 drawable->update_vertex_buffer(d_points);
                 drawable->update_texcoord_buffer(d_texcoords);
-                drawable->release_element_buffer();
+                drawable->disable_element_buffer();
             }
 
             template<typename Model>
@@ -1561,7 +1560,7 @@ namespace easy3d {
                 }
                 drawable->update_vertex_buffer(d_points);
                 drawable->update_texcoord_buffer(d_texcoords);
-                drawable->release_element_buffer();
+                drawable->disable_element_buffer();
             }
 
 

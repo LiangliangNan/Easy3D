@@ -28,6 +28,9 @@
 #include <tools/canvas.h>
 
 #include <easy3d/gui/picker_point_cloud.h>
+#include <easy3d/renderer/renderer.h>
+#include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/setting.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/util/logging.h>
 
@@ -41,6 +44,22 @@ namespace easy3d {
 
         ToolPointCloudSelection::ToolPointCloudSelection(ToolManager *mgr)
                 : Tool(mgr) {
+        }
+
+        void ToolPointCloudSelection::update_render_buffer(PointCloud* cloud) const {
+            auto vseleced = cloud->vertex_property<bool>("v:select");
+            auto d = cloud->renderer()->get_points_drawable("vertices");
+
+            // update vertex color attributes
+            auto vcolors = cloud->get_vertex_property<vec3>("v:color");
+            if (!vcolors)
+                vcolors = cloud->add_vertex_property<vec3>("v:color", d->color());
+            for (auto v : cloud->vertices())
+                vcolors[v] = vseleced[v] ? setting::selected_color : d->color();
+
+            // update the drawable's color buffer
+            d->set_coloring(State::COLOR_PROPERTY, State::VERTEX, "v:color");
+            d->update_color_buffer(vcolors.vector());
         }
 
         // -------------------- Rect Select ----------------------
@@ -60,12 +79,13 @@ namespace easy3d {
 
 
         void ToolPointCloudSelectionRect::release(int x, int y) {
-            int num(0);
             for (auto model : tool_manager()->viewer()->models()) {
                 auto cloud = dynamic_cast<PointCloud*>(model);
-                num += picker_->pick_vertices(cloud, Rect(start_, vec2(x, y)), select_mode_ != SM_SELECT);
+                if (cloud) {
+                    picker_->pick_vertices(cloud, Rect(start_, vec2(x, y)), select_mode_ != SM_SELECT);
+                    update_render_buffer(cloud);
+                }
             }
-            LOG(INFO) << num << " points " << (select_mode_ == SM_SELECT ? "selected." : "deselected.");
         }
 
 
@@ -128,13 +148,13 @@ namespace easy3d {
             if (lasso_.size() < 3)
                 return;
 
-            int num = 0;
             for (auto model : tool_manager()->viewer()->models()) {
                 auto cloud = dynamic_cast<PointCloud*>(model);
-                num += picker_->pick_vertices(cloud, lasso_, select_mode_ != SM_SELECT);
+                if (cloud) {
+                    picker_->pick_vertices(cloud, lasso_, select_mode_ != SM_SELECT);
+                    update_render_buffer(cloud);
+                }
             }
-            LOG(INFO) << num << " points " << (select_mode_ == SM_SELECT ? "selected." : "deselected.");
-
             lasso_.clear();
         }
 
@@ -172,59 +192,6 @@ namespace easy3d {
 
         void MultitoolPointCloudSelectionLasso::draw_hint() const {
             draw_lasso(lasso_);
-
-
-//            tool_manager()->canvas()->startScreenCoordinatesSystem();
-//            glDisable(GL_LIGHTING);
-//
-//            glLineWidth(hint_line_width);
-//            glColor4fv(hint_line_color);
-//
-//            // draw the strokes that have been finished.
-//            if (lasso_.size() > 1) {
-//                glBegin(GL_LINE_STRIP);
-//                for (std::size_t i = 0; i < lasso_.size(); ++i) {
-//                    const vec2 &p = lasso_[i];
-//                    glVertex2fv(p);
-//                }
-//                glEnd();
-//            }
-//
-//            // make the polygon closed
-//            if (lasso_.size() >= 3) {
-//                const vec2 &p = lasso_.front();
-//                const vec2 &q = lasso_.back();
-//                glBegin(GL_LINES);
-//                glVertex2fv(p);
-//                glVertex2fv(q);
-//                glEnd();
-//            }
-//
-//            //////////////////////////////////////////////////////////////////////////
-//
-//            // draw the transparent lasso region.
-//            glDepthMask(GL_FALSE);
-//            glEnable(GL_BLEND);
-//            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  //GL_ONE_MINUS_DST_ALPHA
-//
-//            glColor4fv(hint_area_color);
-//
-//            Tessellator tess;
-//            tess.begin_polygon();
-//            tess.begin_contour();
-//            // Liangliang: the region could be non-convex, so I use my tessellator.
-//            for (std::size_t i = 0; i < lasso_.size(); ++i) {
-//                const vec2 &p = lasso_[i];
-//                tess.add_vertex(vec3(p.x, p.y, 0));
-//            }
-//            tess.end_contour();
-//            tess.end_polygon();
-//
-//            glDepthMask(GL_TRUE);
-//            glDisable(GL_BLEND);
-//
-//            glEnable(GL_LIGHTING);
-//            tool_manager()->canvas()->stopScreenCoordinatesSystem();
         }
 
     }

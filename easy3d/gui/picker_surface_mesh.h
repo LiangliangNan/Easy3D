@@ -146,16 +146,15 @@ namespace easy3d {
          * @param deselect True to perform an inverse operation.
          * @return The number of faces selected during this operation (despite their previous status).
          */
-        int pick_faces(SurfaceMesh *model, const Rect &rect, bool deselect);
+        void pick_faces(SurfaceMesh *model, const Rect &rect, bool deselect);
 
         /**
          * @brief Pick faces of a surface mesh by a polygon/lasso. The selected faces will be marked in face property
          * "f:select".
          * @param plg The polygon region.
          * @param deselect True to perform an inverse operation.
-         * @return The number of faces selected during this operation (despite their previous status).
          */
-        int pick_faces(SurfaceMesh *model, const Polygon2 &plg, bool deselect);
+        void pick_faces(SurfaceMesh *model, const Polygon2 &plg, bool deselect);
 
     private:
         // selection implemented in GPU (using shader program)

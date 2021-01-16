@@ -45,7 +45,7 @@ void main(void) {
 
     if (highlight) {
         if (gl_PrimitiveID >= hightlight_id_min && gl_PrimitiveID <= hightlight_id_max)
-        color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
+            color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
     }
 
     vec3 view_dir = normalize(wCamPos - DataIn.position);// compute view direction and normalize it

@@ -191,7 +191,7 @@ namespace easy3d {
             if (d->is_visible()) {
                 if (setting::clipping_plane)
                     setting::clipping_plane->set_program(program, d->plane_clip_discard_primitive());
-                d->gl_draw(false);
+                d->gl_draw();
             }
         }
 
@@ -246,7 +246,7 @@ namespace easy3d {
                         ->set_uniform("selected", d->is_selected());
                 if (setting::clipping_plane)
                     setting::clipping_plane->set_program(program, d->plane_clip_discard_primitive());
-                d->gl_draw(false);
+                d->gl_draw();
             }
         }
 
@@ -254,7 +254,7 @@ namespace easy3d {
         program->set_uniform("default_color", virtual_background_color_);				easy3d_debug_log_gl_error;
         program->set_uniform("per_vertex_color", false);
         program->set_uniform("is_background", true);
-        virtual_background_drawable_->gl_draw(false);
+        virtual_background_drawable_->gl_draw();
 
         program->release_texture();
         program->release();
@@ -431,7 +431,7 @@ namespace easy3d {
         frustum.update_vertex_buffer(points);
         frustum.update_element_buffer(indices);
         frustum.set_uniform_coloring(vec4(0.0, 0.0, 1.0, 1.0));
-        frustum.draw(camera_, false);
+        frustum.draw(camera_);
     }
 
 }

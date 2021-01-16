@@ -39,6 +39,10 @@ namespace easy3d {
         // ui
         extern vec4 background_color;
 
+        // selection
+        // color for selected primitives
+        extern vec4 selected_color;
+
         // lighting
         extern vec4 light_position;  // light position defined in camera coordinate system
         // drawable lighting

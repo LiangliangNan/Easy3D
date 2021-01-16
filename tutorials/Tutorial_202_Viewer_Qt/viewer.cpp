@@ -895,7 +895,7 @@ void ViewerQt::drawCornerAxes() {
     program->set_uniform("per_vertex_color", true);
     program->set_uniform("two_sides_lighting", false);
     program->set_uniform("distinct_back_color", false);
-    drawable_axes_->gl_draw(false);
+    drawable_axes_->gl_draw();
     program->release();
 
     // restore
@@ -954,7 +954,7 @@ void ViewerQt::postDraw() {
         program->set_uniform("MVP", proj);
         program->set_uniform("per_vertex_color", false);
         program->set_uniform("default_color", vec4(0.0f, 0.0f, 1.0f, 1.0f));
-        drawable.gl_draw(false);
+        drawable.gl_draw();
         program->release();
         glEnable(GL_DEPTH_TEST);   // restore
     }
@@ -974,7 +974,7 @@ void ViewerQt::draw() {
         glDepthRange(0.001, 1.0);
         for (auto d : m->renderer()->triangles_drawables()) {
             if (d->is_visible())
-                d->draw(camera(), false);
+                d->draw(camera());
             easy3d_debug_log_gl_error;
         }
 
@@ -982,14 +982,14 @@ void ViewerQt::draw() {
         glDepthFunc(GL_LEQUAL);
         for (auto d : m->renderer()->lines_drawables()) {
             if (d->is_visible())
-                d->draw(camera(), false);
+                d->draw(camera());
             easy3d_debug_log_gl_error;
         }
         glDepthFunc(GL_LESS);
 
         for (auto d : m->renderer()->points_drawables()) {
             if (d->is_visible())
-                d->draw(camera(), false);
+                d->draw(camera());
             easy3d_debug_log_gl_error;
         }
     }

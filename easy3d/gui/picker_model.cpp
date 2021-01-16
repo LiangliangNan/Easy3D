@@ -147,7 +147,7 @@ namespace easy3d {
         drawable->set_uniform_coloring(color);
 
         // render
-        drawable->draw(camera(), false);
+        drawable->draw(camera());
 
         // restore
         drawable->set_state(states_[drawable]);

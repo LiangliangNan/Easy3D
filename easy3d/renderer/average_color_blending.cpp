@@ -119,7 +119,7 @@ namespace easy3d {
                 program->set_uniform("selected", d->is_selected());
                 if (setting::clipping_plane)
                     setting::clipping_plane->set_program(program, d->plane_clip_discard_primitive());
-                d->gl_draw(false);
+                d->gl_draw();
             }
         }
 

@@ -44,8 +44,7 @@ namespace easy3d {
     Drawable::Drawable(const std::string &name, Model *model)
             : name_(name), model_(model), vao_(nullptr), num_vertices_(0), num_indices_(0),
               update_needed_(false), update_func_(nullptr), vertex_buffer_(0), color_buffer_(0), normal_buffer_(0),
-              texcoord_buffer_(0), element_buffer_(0), storage_buffer_(0), current_storage_buffer_size_(0),
-              selection_buffer_(0), current_selection_buffer_size_(0), manipulator_(nullptr) {
+              texcoord_buffer_(0), element_buffer_(0), manipulator_(nullptr) {
         vao_ = new VertexArrayObject;
         material_ = Material(setting::material_ambient, setting::material_specular, setting::material_shininess);
     }
@@ -103,8 +102,6 @@ namespace easy3d {
         VertexArrayObject::release_buffer(normal_buffer_);
         VertexArrayObject::release_buffer(texcoord_buffer_);
         VertexArrayObject::release_buffer(element_buffer_);
-        VertexArrayObject::release_buffer(storage_buffer_);
-        VertexArrayObject::release_buffer(selection_buffer_);
 
         num_vertices_ = 0;
         num_indices_ = 0;
@@ -112,48 +109,9 @@ namespace easy3d {
     }
 
 
-    void Drawable::release_element_buffer() {
+    void Drawable::disable_element_buffer() {
         VertexArrayObject::release_buffer(element_buffer_);
-    }
-
-
-    void Drawable::update_storage_buffer(const void *data, std::size_t datasize, unsigned int index /* = 1*/) {
-        assert(vao_);
-
-        if (storage_buffer_ == 0 || datasize != current_storage_buffer_size_) {
-            bool success = vao_->create_storage_buffer(storage_buffer_, index, data, datasize);
-            LOG_IF(!success, ERROR) << "failed creating storage buffer";
-        } else {
-            bool success = vao_->update_storage_buffer(storage_buffer_, 0, datasize, data);
-            LOG_IF(!success, ERROR) << "failed updating storage buffer";
-        }
-    }
-
-
-    void Drawable::update_selection_buffer(unsigned int index/* = 1*/) {
-        assert(vao_);
-
-        //if (selection_buffer_ == 0 || selections_.size() != current_selection_buffer_size_) {
-        //       bool status = vao_->create_storage_buffer(selection_buffer_, index, selections_.data(), selections_.size() * sizeof(int));
-        //	if (!status)
-        //		LOG(ERROR) << "failed creating selection buffer";
-        //	else {
-        //		current_selection_buffer_size_ = selections_.size();
-        //		if (t.elapsed_seconds() > 0.1) {
-        //			LOG(INFO) << "selection buffer updated. " << t.time_string();
-        //		}
-        //	}
-        //}
-        //else {
-        //       bool status = vao_->update_storage_buffer(selection_buffer_, 0, selections_.size() * sizeof(int), selections_.data());
-        //	if (!status)
-        //		LOG(ERROR) << "failed updating selection buffer";
-        //	else {
-        //		if (t.elapsed_seconds() > 0.1) {
-        //			LOG(INFO) << "selection buffer updated. " << t.time_string();
-        //		}
-        //	}
-        //}
+        num_indices_ = 0;
     }
 
 
@@ -261,33 +219,11 @@ namespace easy3d {
     }
 
 
-    void Drawable::fetch_selection_buffer() {
-        //    vao_->get_buffer_data(GL_SHADER_STORAGE_BUFFER, selection_buffer_, 0, selections_.size() * sizeof(uint32_t), selections_.data());
-
-        //starting from OpenGL 4.5, you can use the simpler version
-        //vao_->get_named_buffer_data(selection_buffer_, 0, selections_.size() * sizeof(uint32_t), selections_.data());
-    }
-
-
-    void Drawable::gl_draw(bool with_storage_buffer /* = false */) const {
+    void Drawable::gl_draw() const {
         if (update_needed_ || vertex_buffer_ == 0)
             const_cast<Drawable*>(this)->internal_update_buffers();
 
         vao_->bind();
-
-        if (with_storage_buffer) {
-            // Liangliang: I made stupid mistake here (confused by glBindBuffer() and glBindBufferBase())
-            //glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssb);
-            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, selection_buffer_);
-            easy3d_debug_log_gl_error;
-
-            GLbitfield barriers = GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT;
-            if (element_buffer_ != 0)
-                barriers |= GL_ELEMENT_ARRAY_BARRIER_BIT;
-
-            glMemoryBarrier(barriers);
-            easy3d_debug_log_gl_error;
-        }
 
         if (element_buffer_) {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer_);	easy3d_debug_log_gl_error;
@@ -298,13 +234,6 @@ namespace easy3d {
         } else
             glDrawArrays(type(), 0, GLsizei(num_vertices_));
         easy3d_debug_log_gl_error;
-
-        if (with_storage_buffer) {
-            // Liangliang: I made stupid mistake here (confused by glBindBuffer() and glBindBufferBase())
-            //glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
-            easy3d_debug_log_gl_error;
-        }
 
         vao_->release();
         easy3d_debug_log_gl_error;

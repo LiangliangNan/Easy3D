@@ -104,7 +104,7 @@ void TutorialEyeDomeLighting::draw() const {
 		program->set_uniform("lighting", drawable->normal_buffer());
 		program->set_uniform("per_vertex_color", drawable->coloring_method() != State::UNIFORM_COLOR && drawable->color_buffer());
 		program->set_uniform("default_color", drawable->color());
-        drawable->gl_draw(false);
+        drawable->gl_draw();
 
 		program->release();
 		edl_->end();

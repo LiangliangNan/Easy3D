@@ -971,28 +971,66 @@ void MainWindow::createActionsForPolyMeshMenu() {
 
 
 void MainWindow::operationModeChanged(QAction* act) {
+    auto uniform_color_to_per_face_color = [this](SurfaceMesh* mesh) -> void {
+        auto d = mesh->renderer()->get_triangles_drawable("faces");
+        if (d->coloring_method() != easy3d::State::COLOR_PROPERTY) {
+            auto fcolors = mesh->get_face_property<vec3>("f:color");
+            if (!fcolors)
+                mesh->add_face_property<vec3>("f:color", d->color());
+            d->set_coloring(State::COLOR_PROPERTY, State::FACE, "f:color");
+            d->update();
+            updateUi();
+        }
+    };
+
+    auto uniform_color_to_per_vertex_color = [this](PointCloud* cloud) -> void {
+        auto d = cloud->renderer()->get_points_drawable("vertices");
+        if (d->coloring_method() != easy3d::State::COLOR_PROPERTY) {
+            auto vcolors = cloud->get_vertex_property<vec3>("v:color");
+            if (!vcolors)
+                cloud->add_vertex_property<vec3>("v:color", d->color());
+            d->set_coloring(State::COLOR_PROPERTY, State::VERTEX, "v:color");
+            d->update();
+            updateUi();
+        }
+    };
+
     if (act == ui->actionCameraManipulation) {
         viewer()->tool_manager()->set_tool(tools::ToolManager::EMPTY_TOOL);
     }
     else if (act == ui->actionSelectClick) {
-        if (dynamic_cast<SurfaceMesh*>(viewer()->currentModel()))
+        if (dynamic_cast<SurfaceMesh*>(viewer()->currentModel())) {
             viewer()->tool_manager()->set_tool(tools::ToolManager::SELECT_SURFACE_MESH_FACE_CLICK_TOOL);
+            uniform_color_to_per_face_color(dynamic_cast<SurfaceMesh *>(viewer()->currentModel()));
+        }
+        else if (dynamic_cast<PointCloud*>(viewer()->currentModel())) {
+            uniform_color_to_per_vertex_color(dynamic_cast<PointCloud *>(viewer()->currentModel()));
+        }
     }
     else if (act == ui->actionSelectRect) {
-        if (dynamic_cast<SurfaceMesh*>(viewer()->currentModel()))
+        if (dynamic_cast<SurfaceMesh*>(viewer()->currentModel())) {
             viewer()->tool_manager()->set_tool(tools::ToolManager::SELECT_SURFACE_MESH_FACE_RECT_TOOL);
-        else if (dynamic_cast<PointCloud*>(viewer()->currentModel()))
+            uniform_color_to_per_face_color(dynamic_cast<SurfaceMesh *>(viewer()->currentModel()));
+        }
+        else if (dynamic_cast<PointCloud*>(viewer()->currentModel())) {
             viewer()->tool_manager()->set_tool(tools::ToolManager::SELECT_POINT_CLOUD_RECT_TOOL);
+            uniform_color_to_per_vertex_color(dynamic_cast<PointCloud*>(viewer()->currentModel()));
+        }
     }
     else if (act == ui->actionSelectLasso) {
-        if (dynamic_cast<SurfaceMesh*>(viewer()->currentModel()))
+        if (dynamic_cast<SurfaceMesh*>(viewer()->currentModel())) {
             viewer()->tool_manager()->set_tool(tools::ToolManager::SELECT_SURFACE_MESH_FACE_LASSO_TOOL);
-        else if (dynamic_cast<PointCloud*>(viewer()->currentModel()))
+            uniform_color_to_per_face_color(dynamic_cast<SurfaceMesh *>(viewer()->currentModel()));
+        }
+        else if (dynamic_cast<PointCloud*>(viewer()->currentModel())) {
             viewer()->tool_manager()->set_tool(tools::ToolManager::SELECT_POINT_CLOUD_LASSO_TOOL);
+            uniform_color_to_per_vertex_color(dynamic_cast<PointCloud *>(viewer()->currentModel()));
+        }
     }
 
     if (viewer()->tool_manager()->current_tool())
-        setStatusTip(QString::fromStdString(viewer()->tool_manager()->current_tool()->instruction()));
+        statusBar()->showMessage(QString::fromStdString(viewer()->tool_manager()->current_tool()->instruction()), 2000);
+
     viewer()->update();
 }
 

@@ -86,12 +86,12 @@ void DepthImage::generate_depth() {
             for (auto d : m->renderer()->points_drawables()) {
                 if (d->is_visible()) {
                     glPointSize(d->point_size());
-                    d->gl_draw(false);
+                    d->gl_draw();
                 }
             }
             for (auto d : m->renderer()->triangles_drawables()) {
                 if (d->is_visible())
-                    d->gl_draw(false);
+                    d->gl_draw();
             }
         }
         program->release();

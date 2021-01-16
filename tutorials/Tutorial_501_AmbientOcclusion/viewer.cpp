@@ -139,7 +139,7 @@ void TutorialAmbientOcclusion::draw() const {
 		program->set_uniform("hightlight_id_min", range.first)
 			->set_uniform("hightlight_id_max", range.second);
 
-        faces->gl_draw(false);
+        faces->gl_draw();
 
 		program->release_texture();
 		program->release();

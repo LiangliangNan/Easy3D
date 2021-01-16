@@ -1424,7 +1424,7 @@ namespace easy3d {
                 ->set_block_uniform("Material", "shininess", &setting::material_shininess)
                 ->set_uniform("hightlight_id_min", -1)
                 ->set_uniform("hightlight_id_max", -1);
-        drawable_axes_->gl_draw(false);
+        drawable_axes_->gl_draw();
         program->release();
 
         // restore
@@ -1487,7 +1487,7 @@ namespace easy3d {
             program->set_uniform("MVP", proj);
             program->set_uniform("per_vertex_color", false);
             program->set_uniform("default_color", vec4(0.0f, 0.0f, 1.0f, 1.0f));
-            drawable.gl_draw(false);
+            drawable.gl_draw();
             program->release();
             glEnable(GL_DEPTH_TEST);   // restore
         }
@@ -1567,14 +1567,14 @@ namespace easy3d {
             std::size_t count = 0;
             for (auto d : m->renderer()->lines_drawables()) {
                 if (d->is_visible()) {
-                    d->draw(camera(), false); easy3d_debug_log_gl_error;
+                    d->draw(camera()); easy3d_debug_log_gl_error;
                     ++count;
                 }
             }
 
             for (auto d : m->renderer()->points_drawables()) {
                 if (d->is_visible())
-                    d->draw(camera(), false); easy3d_debug_log_gl_error;
+                    d->draw(camera()); easy3d_debug_log_gl_error;
             }
 
             if (count > 0) {
@@ -1583,7 +1583,7 @@ namespace easy3d {
             }
             for (auto d : m->renderer()->triangles_drawables()) {
                 if (d->is_visible())
-                    d->draw(camera(), false); easy3d_debug_log_gl_error;
+                    d->draw(camera()); easy3d_debug_log_gl_error;
             }
             if (count > 0)
                 glDisable(GL_POLYGON_OFFSET_FILL);
@@ -1591,7 +1591,7 @@ namespace easy3d {
 
         for (auto d : drawables_) {
             if (d->is_visible())
-                d->draw(camera(), false);
+                d->draw(camera());
         }
 
 #if 0 // draw face labels and vertex labels

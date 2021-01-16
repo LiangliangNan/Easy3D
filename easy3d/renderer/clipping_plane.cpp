@@ -149,7 +149,7 @@ namespace easy3d {
         wireframe.update_element_buffer(wire_indices);
         wireframe.set_line_width(1.0f);
         wireframe.set_uniform_coloring(color_);
-        wireframe.draw(cam, false);
+        wireframe.draw(cam);
         easy3d_debug_log_gl_error;
 
         // draw the face of the clipping plane
@@ -159,7 +159,7 @@ namespace easy3d {
         face.update_vertex_buffer(points);
         face.update_element_buffer(face_indices);
         face.set_uniform_coloring(color_);
-        face.draw(cam, false);
+        face.draw(cam);
         glDisable(GL_BLEND);
         easy3d_debug_log_gl_error;
 

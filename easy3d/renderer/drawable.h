@@ -90,8 +90,6 @@ namespace easy3d {
         unsigned int normal_buffer() const { return normal_buffer_; }
         unsigned int texcoord_buffer() const { return texcoord_buffer_; }
         unsigned int element_buffer() const { return element_buffer_; }
-        unsigned int storage_buffer() const { return storage_buffer_; }
-        unsigned int selection_buffer() const { return selection_buffer_; }
 
         /**
          * \brief Creates/Updates a single buffer.
@@ -106,34 +104,18 @@ namespace easy3d {
         void update_normal_buffer(const std::vector<vec3> &normals);
         void update_texcoord_buffer(const std::vector<vec2> &texcoords);
         void update_element_buffer(const std::vector<unsigned int> &elements);
-
         /**
          * \brief Updates the element buffer.
+         * \details This is an overload of the above update_element_buffer() method.
          * \note Each entry must have 2 (for LinesDrawable) or 3 elements (for TrianglesDrawable).
          */
         void update_element_buffer(const std::vector< std::vector<unsigned int> > &elements);
 
-        /**
-         * \brief Updates the selection buffer (internally based on a shader storage buffer)
-         * \param index: the index of the binding point.
-         * \note The buffers should also be bound to this point in all shader code
-         */
-        void update_selection_buffer(unsigned int index = 1);
-
-        /**
-         * Updates a generic storage buffer
-         * \param data The pointer to the data.
-         * \param datasize The size of the data in bytes.
-         * \param index: the index of the binding point.
-         * \note The buffers should also be bound to this point in all shader code
-         */
-        void update_storage_buffer(const void *data, std::size_t datasize, unsigned int index = 0);
-
-        /// Releases the element buffer if existing vertex data is sufficient (may require duplicating vertex data).
-        void release_element_buffer();
-
-        /// Accesses data from the selection buffers
-        void fetch_selection_buffer();
+        /// \brief Disables the use of the element buffer.
+        /// \details This method should be used if existing vertex data is sufficient for rendering (may require
+        ///         duplicating vertex data).
+        /// \note This method also releases the element buffer.
+        void disable_element_buffer();
 
         ///@}
 
@@ -141,12 +123,12 @@ namespace easy3d {
         ///@{
 
         /// The draw method.
-        virtual void draw(const Camera *camera, bool with_storage_buffer) const = 0;
+        virtual void draw(const Camera *camera) const = 0;
 
         /// The internal draw method of this drawable.
         /// NOTE: this functions should be called when your shader program is in use,
         ///		 i.e., between glUseProgram(id) and glUseProgram(0);
-        void gl_draw(bool with_storage_buffer = false) const;
+        void gl_draw() const;
 
         /**
          * @brief Requests an update of the OpenGL buffers.
@@ -223,12 +205,6 @@ namespace easy3d {
         unsigned int normal_buffer_;
         unsigned int texcoord_buffer_;
         unsigned int element_buffer_;
-
-        unsigned int storage_buffer_;
-        std::size_t current_storage_buffer_size_;
-
-        unsigned int selection_buffer_;  // used for selection.
-        std::size_t current_selection_buffer_size_; // in case the object is modified
 
         // drawables not attached to a model can also be manipulated
         Manipulator* manipulator_;   // for manipulation

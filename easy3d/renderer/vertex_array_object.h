@@ -74,7 +74,7 @@ namespace easy3d {
         bool create_array_buffer(GLuint& buffer, GLuint index, const void* data, std::size_t size, std::size_t dim, bool dynamic = false);
         bool create_element_buffer(GLuint& buffer, const void* data, std::size_t size, bool dynamic = false);
 
-		// @param index: the index of the binding point.
+        // @param index: the index of the binding point.
         bool create_storage_buffer(GLuint& buffer, GLuint index, const void* data, std::size_t size);
         bool update_storage_buffer(GLuint& buffer, GLintptr offset, GLsizeiptr size, const void* data);
 

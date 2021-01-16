@@ -54,18 +54,18 @@ namespace easy3d {
     }
 
 
-    void TrianglesDrawable::draw(const Camera *camera, bool with_storage_buffer /* = false */) const {
+    void TrianglesDrawable::draw(const Camera *camera /* = false */) const {
         if (update_needed_ || vertex_buffer_ == 0)
             const_cast<TrianglesDrawable*>(this)->internal_update_buffers();
 
         if (texture() && (coloring_method() == State::SCALAR_FIELD || coloring_method() == State::TEXTURED))
-            _draw_triangles_with_texture(camera, with_storage_buffer);
+            _draw_triangles_with_texture(camera);
         else
-            _draw_triangles(camera, with_storage_buffer);
+            _draw_triangles(camera);
     }
 
 
-    void TrianglesDrawable::_draw_triangles(const Camera *camera, bool with_storage_buffer) const {
+    void TrianglesDrawable::_draw_triangles(const Camera *camera) const {
         if (vertex_buffer() == 0) {
             LOG_FIRST_N(1, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
             return;
@@ -123,7 +123,7 @@ namespace easy3d {
 
         if (is_ssao_enabled())
             program->bind_texture("ssaoTexture", ssao_texture_, 0);
-        gl_draw(with_storage_buffer);
+        gl_draw();
         if (is_ssao_enabled())
             program->release_texture();
 
@@ -131,7 +131,7 @@ namespace easy3d {
     }
 
 
-    void TrianglesDrawable::_draw_triangles_with_texture(const Camera *camera, bool with_storage_buffer) const {
+    void TrianglesDrawable::_draw_triangles_with_texture(const Camera *camera) const {
         if (vertex_buffer() == 0) {
             LOG_FIRST_N(1, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
             return;
@@ -194,7 +194,7 @@ namespace easy3d {
 
         if (is_ssao_enabled())
             program->bind_texture("ssaoTexture", ssao_texture_, 1);
-        gl_draw(with_storage_buffer);
+        gl_draw();
         if (is_ssao_enabled())
             program->release_texture();
 

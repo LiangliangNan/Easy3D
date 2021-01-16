@@ -59,20 +59,20 @@ namespace easy3d {
         void set_point_size(float s) { point_size_ = s; }
 
         // Rendering.
-        virtual void draw(const Camera* camera, bool with_storage_buffer = false) const override;
+        virtual void draw(const Camera* camera) const override;
 
     protected:
         // without texture
-        void _draw_plain_points(const Camera* camera, bool with_storage_buffer) const;
-        void _draw_spheres_sprite(const Camera* camera, bool with_storage_buffer) const;
-        void _draw_spheres_geometry(const Camera* camera, bool with_storage_buffer) const;
-        void _draw_surfels(const Camera* camera, bool with_storage_buffer) const;
+        void _draw_plain_points(const Camera* camera) const;
+        void _draw_spheres_sprite(const Camera* camera) const;
+        void _draw_spheres_geometry(const Camera* camera) const;
+        void _draw_surfels(const Camera* camera) const;
 
         // textured
-        void _draw_plain_points_with_texture(const Camera* camera, bool with_storage_buffer) const;
-        void _draw_spheres_with_texture_sprite(const Camera* camera, bool with_storage_buffer) const;
-        void _draw_spheres_with_texture_geometry(const Camera* camera, bool with_storage_buffer) const;
-        void _draw_surfels_with_texture(const Camera* camera, bool with_storage_buffer) const;
+        void _draw_plain_points_with_texture(const Camera* camera) const;
+        void _draw_spheres_with_texture_sprite(const Camera* camera) const;
+        void _draw_spheres_with_texture_geometry(const Camera* camera) const;
+        void _draw_surfels_with_texture(const Camera* camera) const;
 
 	private:
         float           point_size_;

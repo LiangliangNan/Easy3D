@@ -31,6 +31,7 @@
 #include <easy3d/gui/picker_surface_mesh.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/renderer.h>
+#include <easy3d/renderer/setting.h>
 #include <easy3d/util/logging.h>
 
 
@@ -44,6 +45,27 @@ namespace easy3d {
                 : Tool(mgr) {
         }
 
+        void ToolSurfaceMeshFaceSelection::update_render_buffer(SurfaceMesh* mesh) const {
+            auto fseleced = mesh->face_property<bool>("f:select");
+            auto d = mesh->renderer()->get_triangles_drawable("faces");
+
+            // update face color attributes
+            auto fcolors = mesh->get_face_property<vec3>("f:color");
+            if (!fcolors)
+                fcolors = mesh->add_face_property<vec3>("f:color", d->color());
+            for (auto f : mesh->faces())
+                fcolors[f] = fseleced[f] ? setting::selected_color : d->color();
+
+            // update the drawable's color buffer
+            std::vector<vec3> colors(mesh->n_faces() * 3);
+            int idx = 0;
+            for (auto f : mesh->faces()) {
+                colors[idx] = colors[idx + 1] = colors[idx + 2] = fcolors[f];
+                idx += 3;
+            }
+            d->set_coloring(State::COLOR_PROPERTY, State::FACE, "f:color");
+            d->update_color_buffer(colors);
+        }
 
         // -------------------- Click Select ----------------------
 
@@ -67,21 +89,9 @@ namespace easy3d {
 
             SurfaceMesh *mesh = multiple_pick(picked_face, x, y);
             if (mesh && picked_face.is_valid()) {
-                std::cout << "face selected: " << picked_face << std::endl;
-//                MeshFacetAttribute<bool> status(mesh, select_attr_name);
-//                status[picked_facet] = (select_mode_ == SM_SELECT);
-//
-//                if (select_mode_ == SM_SELECT)
-//                    Logger::out(title()) << "1 facet selected" << std::endl;
-//                else
-//                    Logger::out(title()) << "1 facet deselected" << std::endl;
-//
-//                int id = picker_->picked_facet_id();
-//                dynamic_cast<FacesDrawable *>(mesh->drawable(DT_FACES, "surface"))->set_selected(id,
-//                                                                                                 select_mode_ ==
-//                                                                                                 SM_SELECT);
-//
-//                mesh->notify_selection_change();
+                auto selected = mesh->face_property<bool>("f:select");
+                selected[picked_face] = true;
+                update_render_buffer(mesh);
             }
         }
 
@@ -156,38 +166,13 @@ namespace easy3d {
 
 
         void ToolSurfaceMeshFaceSelectionRect::release(int x, int y) {
-            int count = 0;
             for (auto model : tool_manager()->viewer()->models()) {
                 SurfaceMesh *mesh = dynamic_cast<SurfaceMesh*>(model);
-                int num = picker_->pick_faces(mesh, Rect(start_, vec2(x, y)), select_mode_ == SM_DESELECT);
-                std::cout << num << " faces marked" << std::endl;
-
-                count += num;
-
-//                MeshFacetAttribute<bool> status(mesh, select_attr_name);
-//                for (std::size_t i = 0; i < facets.size(); ++i) {
-//                    MeshTypes::Facet *f = facets[i];
-//                    if (status[f] != (select_mode_ == SM_SELECT)) {
-//                        status[f] = (select_mode_ == SM_SELECT);
-//                        ++count;
-//                    }
-//                }
-//
-//                // mark in shader storage buffer
-//                MeshFacetAttribute<int> faceID(mesh, "faceID");
-//                //#pragma omp parallel for // this will NOT work due to the bitwise operations
-//                for (int i = 0; i < (int) facets.size(); ++i) {
-//                    unsigned int id = faceID[facets[i]];
-//                    dynamic_cast<FacesDrawable *>(mesh->drawable(DT_FACES, "surface"))->set_selected(id, select_mode_ ==
-//                                                                                                         SM_SELECT);
-//                }
-//                mesh->notify_selection_change();
+                if (mesh) {
+                    picker_->pick_faces(mesh, Rect(start_, vec2(x, y)), select_mode_ == SM_DESELECT);
+                    update_render_buffer(mesh);
+                }
             }
-
-            if (select_mode_ == SM_SELECT)
-                LOG(INFO) << count << " facet selected.";
-            else
-                LOG(INFO) << count << " facet deselected.";
         }
 
 
@@ -254,38 +239,13 @@ namespace easy3d {
             if (lasso_.size() < 3)
                 return;
 
-            int count = 0;
             for (auto model : tool_manager()->viewer()->models()) {
                 SurfaceMesh *mesh = dynamic_cast<SurfaceMesh*>(model);
-                int num = picker_->pick_faces(mesh, lasso_, select_mode_ == SM_DESELECT);
-                std::cout << num << " faces marked" << std::endl;
-
-                count += num;
-
-//                MeshFacetAttribute<bool> status(mesh, select_attr_name);
-//                for (std::size_t i = 0; i < facets.size(); ++i) {
-//                    MeshTypes::Facet *f = facets[i];
-//                    if (status[f] != (select_mode_ == SM_SELECT)) {
-//                        status[f] = (select_mode_ == SM_SELECT);
-//                        ++count;
-//                    }
-//                }
-//
-//                // mark in shader storage buffer
-//                MeshFacetAttribute<int> faceID(mesh, "faceID");
-//                //#pragma omp parallel for // this will NOT work due to the bitwise operations
-//                for (int i = 0; i < (int) facets.size(); ++i) {
-//                    unsigned int id = faceID[facets[i]];
-//                    dynamic_cast<FacesDrawable *>(mesh->drawable(DT_FACES, "surface"))->set_selected(id, select_mode_ ==
-//                                                                                                         SM_SELECT);
-//                }
-//                mesh->notify_selection_change();
+                if (mesh) {
+                    picker_->pick_faces(mesh, lasso_, select_mode_ == SM_DESELECT);
+                    update_render_buffer(mesh);
+                }
             }
-
-            if (select_mode_ == SM_SELECT)
-                LOG(INFO) << count << " facet selected.";
-            else
-                LOG(INFO) << count << " facet deselected.";
 
             lasso_.clear();
         }

@@ -52,43 +52,43 @@ namespace easy3d {
     }
 
 
-    void PointsDrawable::draw(const Camera *camera, bool with_storage_buffer /* = false */) const {
+    void PointsDrawable::draw(const Camera *camera /* = false */) const {
         if (update_needed_ || vertex_buffer_ == 0)
             const_cast<PointsDrawable*>(this)->internal_update_buffers();
 
         switch (impostor_type_) {
             case PLAIN:
                 if (texture() && (coloring_method() == State::SCALAR_FIELD || coloring_method() == State::TEXTURED))
-                    _draw_plain_points_with_texture(camera, with_storage_buffer);
+                    _draw_plain_points_with_texture(camera);
                 else
-                    _draw_plain_points(camera, with_storage_buffer);
+                    _draw_plain_points(camera);
                 break;
 
             case SPHERE:
 #if 0
                 if (texture() && (coloring_method() == State::SCALAR_FIELD || coloring_method() == State::TEXTURED))
-                    _draw_spheres_with_texture_sprite(camera, with_storage_buffer);
+                    _draw_spheres_with_texture_sprite(camera);
                 else
-                    _draw_spheres_sprite(camera, with_storage_buffer);
+                    _draw_spheres_sprite(camera);
 #else
                 if (texture() && (coloring_method() == State::SCALAR_FIELD || coloring_method() == State::TEXTURED))
-                    _draw_spheres_with_texture_geometry(camera, with_storage_buffer);
+                    _draw_spheres_with_texture_geometry(camera);
                 else
-                    _draw_spheres_geometry(camera, with_storage_buffer);
+                    _draw_spheres_geometry(camera);
 #endif
                 break;
 
             case SURFEL:
                 if (texture() && (coloring_method() == State::SCALAR_FIELD || coloring_method() == State::TEXTURED))
-                    _draw_surfels_with_texture(camera, with_storage_buffer);
+                    _draw_surfels_with_texture(camera);
                 else
-                    _draw_surfels(camera, with_storage_buffer);
+                    _draw_surfels(camera);
                 break;
         }
     }
 
 
-    void PointsDrawable::_draw_plain_points(const Camera *camera, bool with_storage_buffer) const {
+    void PointsDrawable::_draw_plain_points(const Camera *camera) const {
         if (vertex_buffer() == 0) {
             LOG_FIRST_N(1, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
             return;
@@ -146,12 +146,12 @@ namespace easy3d {
         if (setting::clipping_plane)
             setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
 
-        gl_draw(with_storage_buffer);
+        gl_draw();
         program->release();
     }
 
 
-    void PointsDrawable::_draw_spheres_sprite(const Camera *camera, bool with_storage_buffer) const {
+    void PointsDrawable::_draw_spheres_sprite(const Camera *camera) const {
         if (vertex_buffer() == 0) {
             LOG_FIRST_N(1, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
             return;
@@ -199,14 +199,14 @@ namespace easy3d {
         if (setting::clipping_plane)
             setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
 
-        gl_draw(with_storage_buffer);
+        gl_draw();
         program->release();
 
         glDisable(GL_VERTEX_PROGRAM_POINT_SIZE); // starting from GL3.2, using GL_PROGRAM_POINT_SIZE
     }
 
 
-    void PointsDrawable::_draw_spheres_geometry(const Camera *camera, bool with_storage_buffer) const {
+    void PointsDrawable::_draw_spheres_geometry(const Camera *camera) const {
         if (vertex_buffer() == 0) {
             LOG_FIRST_N(1, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
             return;
@@ -251,12 +251,12 @@ namespace easy3d {
         if (setting::clipping_plane)
             setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
 
-        gl_draw(with_storage_buffer);
+        gl_draw();
         program->release();
     }
 
 
-    void PointsDrawable::_draw_plain_points_with_texture(const Camera *camera, bool with_storage_buffer) const {
+    void PointsDrawable::_draw_plain_points_with_texture(const Camera *camera) const {
         if (vertex_buffer() == 0) {
             LOG_FIRST_N(1, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
             return;
@@ -318,14 +318,14 @@ namespace easy3d {
         if (setting::clipping_plane)
             setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
 
-        gl_draw(with_storage_buffer);
+        gl_draw();
         program->release_texture();
 
         program->release();
     }
 
 
-    void PointsDrawable::_draw_spheres_with_texture_sprite(const Camera *camera, bool with_storage_buffer) const {
+    void PointsDrawable::_draw_spheres_with_texture_sprite(const Camera *camera) const {
         if (vertex_buffer() == 0) {
             LOG_FIRST_N(1, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
             return;
@@ -338,7 +338,7 @@ namespace easy3d {
     }
 
 
-    void PointsDrawable::_draw_spheres_with_texture_geometry(const Camera *camera, bool with_storage_buffer) const {
+    void PointsDrawable::_draw_spheres_with_texture_geometry(const Camera *camera) const {
         if (vertex_buffer() == 0) {
             LOG_FIRST_N(1, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
             return;
@@ -386,14 +386,14 @@ namespace easy3d {
             setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
 
         program->bind_texture("textureID",texture()->id(), 0);
-        gl_draw(with_storage_buffer);
+        gl_draw();
         program->release_texture();
 
         program->release();
     }
 
 
-    void PointsDrawable::_draw_surfels(const Camera *camera, bool with_storage_buffer) const {
+    void PointsDrawable::_draw_surfels(const Camera *camera) const {
         if (vertex_buffer() == 0) {
             LOG_FIRST_N(1, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
             return;
@@ -456,12 +456,12 @@ namespace easy3d {
         if (setting::clipping_plane)
             setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
 
-        gl_draw(with_storage_buffer);
+        gl_draw();
         program->release();
     }
 
 
-    void PointsDrawable::_draw_surfels_with_texture(const Camera *camera, bool with_storage_buffer) const {
+    void PointsDrawable::_draw_surfels_with_texture(const Camera *camera) const {
         if (vertex_buffer() == 0) {
             LOG_FIRST_N(1, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
             return;
@@ -523,7 +523,7 @@ namespace easy3d {
             setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
 
         program->bind_texture("textureID",texture()->id(), 0);
-        gl_draw(with_storage_buffer);
+        gl_draw();
         program->release_texture();
 
         program->release();

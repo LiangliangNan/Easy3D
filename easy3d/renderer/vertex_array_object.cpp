@@ -111,7 +111,7 @@ namespace easy3d {
         glBindBuffer(GL_ARRAY_BUFFER, 0);               easy3d_debug_log_gl_error;
         release();
         return (glGetError() == GL_NO_ERROR);
-	}
+    }
 
 
     bool VertexArrayObject::create_element_buffer(GLuint &buffer, const void *data, std::size_t size, bool dynamic) {

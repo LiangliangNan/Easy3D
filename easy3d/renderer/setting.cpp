@@ -33,6 +33,10 @@ namespace easy3d {
         // ui
         vec4 background_color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
+        // selection
+        // color for selected primitives
+        vec4 selected_color = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+
         // lighting
         vec4 light_position = vec4(0.27f, 0.27f, 0.92f, 0.0f);
 

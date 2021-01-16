@@ -25,14 +25,7 @@
 
 #include <easy3d/gui/picker_point_cloud.h>
 #include <easy3d/core/point_cloud.h>
-#include <easy3d/renderer/renderer.h>
-#include <easy3d/renderer/shader_program.h>
-#include <easy3d/renderer/shader_manager.h>
-#include <easy3d/renderer/framebuffer_object.h>
-#include <easy3d/renderer/opengl_error.h>
-#include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/manipulator.h>
-#include <easy3d/renderer/opengl_info.h>
 #include <easy3d/util/logging.h>
 
 
@@ -45,75 +38,9 @@ namespace easy3d {
     }
 
 
-    int PointCloudPicker::pick_vertices(PointCloud *model, const Rect& rect, bool deselect) {
+    void PointCloudPicker::pick_vertices(PointCloud *model, const Rect& rect, bool deselect) {
         if (!model)
-            return 0;
-
-        if (use_gpu_if_supported_) {
-            if (OpenglInfo::gl_version_number() >= 4.3) {
-                auto program = ShaderManager::get_program("selection/selection_pointcloud_rect");
-                if (!program) {
-                    std::vector<ShaderProgram::Attribute> attributes;
-                    attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-                    program = ShaderManager::create_program_from_files("selection/selection_pointcloud_rect",
-                                                                       attributes);
-                }
-                if (program)
-                    return pick_vertices_gpu(model, rect, deselect, program);
-                else {
-                    use_gpu_if_supported_ = false;
-                    LOG_FIRST_N(1, ERROR)
-                        << "shader program not available, fall back to CPU implementation. " << COUNTER;
-                }
-            }
-            else {
-                use_gpu_if_supported_ = false;
-                LOG_FIRST_N(1, WARNING)
-                    << "GPU implementation requires OpenGL 4.3 or higher (available is "
-                    << OpenglInfo::gl_version_number() << "), fall back to CPU implementation. " << COUNTER;
-            }
-        }
-
-        // CPU with OpenMP (if supported)
-        return pick_vertices_cpu(model, rect, deselect);
-    }
-
-
-    int PointCloudPicker::pick_vertices(PointCloud *model, const Polygon2 &plg, bool deselect) {
-        if (!model)
-            return 0;
-
-        if (use_gpu_if_supported_) {
-            if (OpenglInfo::gl_version_number() >= 4.3) {
-                auto program = ShaderManager::get_program("selection/selection_pointcloud_lasso");
-                if (!program) {
-                    std::vector<ShaderProgram::Attribute> attributes;
-                    attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-                    program = ShaderManager::create_program_from_files("selection/selection_pointcloud_lasso",
-                                                                       attributes);
-                }
-                if (program)
-                    return pick_vertices_gpu(model, plg, deselect, program);
-                else {
-                    LOG_FIRST_N(1, ERROR)
-                        << "shader program not available, default to CPU implementation. " << COUNTER;
-                }
-            } else {
-                LOG_FIRST_N(1, WARNING)
-                    << "GPU implementation requires OpenGL 4.3 or higher (available is "
-                    << OpenglInfo::gl_version_number() << "), default to CPU implementation. " << COUNTER;
-            }
-        }
-
-        // CPU with OpenMP (if supported)
-        return pick_vertices_cpu(model, plg, deselect);
-    }
-
-
-    int PointCloudPicker::pick_vertices_cpu(PointCloud *model, const Rect& rect, bool deselect) {
-        if (!model)
-            return 0;
-
+            return;
         int win_width = camera()->screenWidth();
         int win_height = camera()->screenHeight();
 
@@ -142,62 +69,18 @@ namespace easy3d {
             x = 0.5f * x + 0.5f;
             y = 0.5f * y + 0.5f;
 
-            if (x >= xmin && x <= xmax && y >= ymin && y <= ymax) {
-                select[i] = true;
-            }
+            if (x >= xmin && x <= xmax && y >= ymin && y <= ymax)
+                select[i] = !deselect;
         }
 
-        return 0;
+        auto count = std::count(select.begin(), select.end(), 1);
+        LOG(INFO) << "current selection: " << count << " points";
     }
 
 
-    int PointCloudPicker::pick_vertices_gpu(PointCloud *model, const Rect& rect, bool deselect, ShaderProgram *program) {
+    void PointCloudPicker::pick_vertices(PointCloud *model, const Polygon2 &plg, bool deselect) {
         if (!model)
-            return 0;
-
-        auto drawable = model->renderer()->get_points_drawable("vertices");
-        if (!drawable) {
-            LOG_FIRST_N(1, WARNING) << "drawable 'vertices' does not exist. " << COUNTER;
-            return 0;
-        }
-
-//        int num_before = drawable->num_selected();
-
-        int viewport[4];
-        glGetIntegerv(GL_VIEWPORT, viewport);
-
-        vec4 rectangle(rect.x_min(), rect.x_max(), rect.y_min(), rect.y_max());
-        const mat4 &MVP = camera()->modelViewProjectionMatrix() * model->manipulator()->matrix();
-
-        program->bind();
-        program->set_uniform("viewport", viewport);
-        program->set_uniform("MVP", MVP);
-        program->set_uniform("rect", rectangle);
-        program->set_uniform("deselect", deselect);
-        drawable->gl_draw(true);
-        program->release();
-
-        //-----------------------------------------------------------------
-        // Liangliang: this is not needed for rendering purpose, but just to keep the CPU data up to date. A better
-        //             choice could be retrieving the data only if needed.
-        drawable->fetch_selection_buffer();
-        easy3d_debug_log_gl_error;
-        easy3d_debug_log_frame_buffer_error;
-        //-----------------------------------------------------------------
-
-//        int num_changed = std::abs(drawable->num_selected() - num_before);
-//        if (num_changed > 0) {
-//            // the data in the GPU memory has already been updated by my shader
-//            //model->notify_selection_change();
-//        }
-//        return num_changed;
-        return 0;
-    }
-
-
-    int PointCloudPicker::pick_vertices_cpu(PointCloud *model, const Polygon2 &plg, bool deselect) {
-        if (!model)
-            return 0;
+            return;
 
         int win_width = camera()->screenWidth();
         int win_height = camera()->screenHeight();
@@ -222,7 +105,7 @@ namespace easy3d {
         int num = static_cast<int>(points.size());
         const mat4 &m = camera()->modelViewProjectionMatrix() * model->manipulator()->matrix();
 
-        auto &select = model->vertex_property<bool>("v:select").vector();
+        auto& select = model->vertex_property<bool>("v:select").vector();
 
 #pragma omp parallel for
         for (int i = 0; i < num; ++i) {
@@ -238,64 +121,12 @@ namespace easy3d {
 
             if (x >= xmin && x <= xmax && y >= ymin && y <= ymax) {
                 if (geom::point_in_polygon(vec2(x, y), region))
-                    select[i] = true;
+                    select[i] = !deselect;
             }
         }
 
-//        int num_changed = std::abs(drawable->num_selected() - num_before);
-//        if (num_changed > 0)
-//            model->notify_selection_change();
-//        return num_changed;
-
-        return 0;
-    }
-
-
-    int PointCloudPicker::pick_vertices_gpu(PointCloud *model, const Polygon2 &plg, bool deselect, ShaderProgram *program) {
-        if (!model)
-            return 0;
-
-        auto drawable = model->renderer()->get_points_drawable("vertices");
-        if (!drawable) {
-            LOG_FIRST_N(1, WARNING) << "drawable 'vertices' does not exist. " << COUNTER;
-            return 0;
-        }
-
-//        int num_before = drawable->num_selected();
-
-//        // make sure the vertex buffer holds the right data.
-//        if (drawable->num_primitives() != model->n_vertices()) {
-//            model->notify_vertex_change();
-//            model->active_renderer()->ensure_buffers(drawable);
-//        }
-//        drawable->update_storage_buffer(plg.data(), plg.size() * sizeof(vec2));
-
-        int viewport[4];
-        glGetIntegerv(GL_VIEWPORT, viewport);
-
-        program->bind();
-        program->set_uniform("viewport", viewport);
-        program->set_uniform("MVP", camera()->modelViewProjectionMatrix())
-                ->set_uniform("MANIP", model->manipulator()->matrix());
-        program->set_uniform("deselect", deselect);
-        drawable->gl_draw(true);
-        program->release();
-
-        //-----------------------------------------------------------------
-        // Liangliang: this is not needed for rendering purpose, but just to keep the CPU data up to date. A better
-        //             choice could be retrieving the data only if needed.
-        drawable->fetch_selection_buffer();
-        easy3d_debug_log_gl_error;
-        easy3d_debug_log_frame_buffer_error;
-        //-----------------------------------------------------------------
-
-//        int num_changed = std::abs(drawable->num_selected() - num_before);
-//        if (num_changed > 0) {
-//            // the data in the GPU memory has already been updated by my shader
-//            //model->notify_selection_change();
-//        }
-//        return num_changed;
-        return 0;
+        auto count = std::count(select.begin(), select.end(), 1);
+        LOG(INFO) << "current selection: " << count << " points";
     }
 
 }

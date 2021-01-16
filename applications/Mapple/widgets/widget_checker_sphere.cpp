@@ -217,10 +217,10 @@ void WidgetCheckerSphere::paintGL() {
             ->set_uniform("selected", false);
 
     program->set_uniform("MANIP", mat4::translation(lightPos_));
-    lightSphere_->gl_draw(false);
+    lightSphere_->gl_draw();
 
     program->set_uniform("MANIP", mat4::identity());
-    checkerSphere_->gl_draw(false);
+    checkerSphere_->gl_draw();
 
     program->release();
 }

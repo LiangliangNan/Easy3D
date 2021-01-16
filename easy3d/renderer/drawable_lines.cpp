@@ -50,36 +50,36 @@ namespace easy3d {
     }
 
 
-    void LinesDrawable::draw(const Camera *camera, bool with_storage_buffer /* = false */) const {
+    void LinesDrawable::draw(const Camera *camera /* = false */) const {
         if (update_needed_ || vertex_buffer_ == 0)
             const_cast<LinesDrawable*>(this)->internal_update_buffers();
 
         switch (impostor_type_) {
             case PLAIN:
                 if (texture() && (coloring_method() == State::SCALAR_FIELD || coloring_method() == State::TEXTURED))
-                    _draw_plain_lines_with_texture(camera, with_storage_buffer);
+                    _draw_plain_lines_with_texture(camera);
                 else
-                    _draw_plain_lines(camera, with_storage_buffer);
+                    _draw_plain_lines(camera);
                 break;
 
             case CYLINDER:
                 if (texture() && (coloring_method() == State::SCALAR_FIELD || coloring_method() == State::TEXTURED))
-                    _draw_cylinders_with_texture(camera, with_storage_buffer);
+                    _draw_cylinders_with_texture(camera);
                 else
-                    _draw_cylinders(camera, with_storage_buffer);
+                    _draw_cylinders(camera);
                 break;
 
             case CONE:
                 if (texture() && (coloring_method() == State::SCALAR_FIELD || coloring_method() == State::TEXTURED))
-                    _draw_cones_with_texture(camera, with_storage_buffer);
+                    _draw_cones_with_texture(camera);
                 else
-                    _draw_cones(camera, with_storage_buffer);
+                    _draw_cones(camera);
                 break;
         }
     }
 
 
-    void LinesDrawable::_draw_plain_lines(const Camera *camera, bool with_storage_buffer) const {
+    void LinesDrawable::_draw_plain_lines(const Camera *camera) const {
         if (vertex_buffer() == 0) {
             LOG_FIRST_N(1, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
             return;
@@ -111,7 +111,7 @@ namespace easy3d {
             if (setting::clipping_plane)
                 setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
 
-            gl_draw(with_storage_buffer);
+            gl_draw();
             program->release();
         } else {  // use geometry shader to be able to control the line width
             ShaderProgram *program = ShaderManager::get_program("lines/lines_plain_color_width_control");
@@ -142,13 +142,13 @@ namespace easy3d {
             if (setting::clipping_plane)
                 setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
 
-            gl_draw(with_storage_buffer);
+            gl_draw();
             program->release();
         }
     }
 
 
-    void LinesDrawable::_draw_cylinders(const Camera *camera, bool with_storage_buffer) const {
+    void LinesDrawable::_draw_cylinders(const Camera *camera) const {
         if (vertex_buffer() == 0) {
             LOG_FIRST_N(1, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
             return;
@@ -188,12 +188,12 @@ namespace easy3d {
         if (setting::clipping_plane)
             setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
 
-        gl_draw(with_storage_buffer);
+        gl_draw();
         program->release();
     }
 
 
-    void LinesDrawable::_draw_cones(const Camera *camera, bool with_storage_buffer) const {
+    void LinesDrawable::_draw_cones(const Camera *camera) const {
         if (vertex_buffer() == 0) {
             LOG_FIRST_N(1, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
             return;
@@ -232,12 +232,12 @@ namespace easy3d {
         if (setting::clipping_plane)
             setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
 
-        gl_draw(with_storage_buffer);
+        gl_draw();
         program->release();
     }
 
 
-    void LinesDrawable::_draw_plain_lines_with_texture(const Camera *camera, bool with_storage_buffer) const {
+    void LinesDrawable::_draw_plain_lines_with_texture(const Camera *camera) const {
         if (vertex_buffer() == 0) {
             LOG_FIRST_N(1, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
             return;
@@ -275,7 +275,7 @@ namespace easy3d {
                 setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
 
             program->bind_texture("textureID",texture()->id(), 0);
-            gl_draw(with_storage_buffer);
+            gl_draw();
             program->release_texture();
 
             program->release();
@@ -308,7 +308,7 @@ namespace easy3d {
                 setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
 
             program->bind_texture("textureID",texture()->id(), 0);
-            gl_draw(with_storage_buffer);
+            gl_draw();
             program->release_texture();
 
             program->release();
@@ -316,7 +316,7 @@ namespace easy3d {
     }
 
 
-    void LinesDrawable::_draw_cylinders_with_texture(const Camera *camera, bool with_storage_buffer) const {
+    void LinesDrawable::_draw_cylinders_with_texture(const Camera *camera) const {
         if (vertex_buffer() == 0) {
             LOG_FIRST_N(1, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
             return;
@@ -362,14 +362,14 @@ namespace easy3d {
             setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
 
         program->bind_texture("textureID",texture()->id(), 0);
-        gl_draw(with_storage_buffer);
+        gl_draw();
         program->release_texture();
 
         program->release();
     }
 
 
-    void LinesDrawable::_draw_cones_with_texture(const Camera *camera, bool with_storage_buffer) const {
+    void LinesDrawable::_draw_cones_with_texture(const Camera *camera) const {
         if (vertex_buffer() == 0) {
             LOG_FIRST_N(1, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
             return;
@@ -416,7 +416,7 @@ namespace easy3d {
 //                ->set_uniform("hightlight_id_min",highlight_range().first)
 //                ->set_uniform("hightlight_id_max",highlight_range().second);
 
-        gl_draw(with_storage_buffer);
+        gl_draw();
         program->release_texture();
 
         program->release();
