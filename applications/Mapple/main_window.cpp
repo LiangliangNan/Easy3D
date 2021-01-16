@@ -233,15 +233,15 @@ void MainWindow::send(el::Level level, const std::string &msg) {
             break;
         case el::Level::Warning:
             ui->listWidgetLog->addItem(QString::fromStdString("[WARNING] " + msg));
-            ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::darkBlue);
+            ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::blue);
             break;
         case el::Level::Error:
             ui->listWidgetLog->addItem(QString::fromStdString("[ERROR] " + msg));
-            ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::darkMagenta);
+            ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::red);
             break;
         case el::Level::Fatal:
             ui->listWidgetLog->addItem(QString::fromStdString("[FATAL] " + msg));
-            ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::red);
+            ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::darkRed);
             break;
         default: break;
     }
@@ -972,6 +972,8 @@ void MainWindow::createActionsForPolyMeshMenu() {
 
 void MainWindow::operationModeChanged(QAction* act) {
     auto uniform_color_to_per_face_color = [this](SurfaceMesh* mesh) -> void {
+        LOG_IF(!mesh->is_triangle_mesh(), WARNING) << "current implementation only supports primitive selection for triangle meshes";
+
         auto d = mesh->renderer()->get_triangles_drawable("faces");
         if (d->coloring_method() != easy3d::State::COLOR_PROPERTY) {
             auto fcolors = mesh->get_face_property<vec3>("f:color");
