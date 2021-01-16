@@ -213,7 +213,7 @@ void DialogProperties::locationChanged(const QString &text) {
         if (location == "Vertex") {
             lineEditNewPropertyName->setText("v:");
             for (const auto &name : cloud->vertex_properties())
-                if (std::find(key_words.begin(), key_words.end(), name) == key_words.end())
+                if (std::find(key_words.begin(), key_words.end(), name) != key_words.end())
                     comboBoxPropertyName->addItem(QString::fromStdString(name));
         }
     } else if (dynamic_cast<Graph *>(model)) {
@@ -221,12 +221,12 @@ void DialogProperties::locationChanged(const QString &text) {
         if (location == "Vertex") {
             lineEditNewPropertyName->setText("v:");
             for (const auto &name : graph->vertex_properties())
-                if (std::find(key_words.begin(), key_words.end(), name) == key_words.end())
+                if (std::find(key_words.begin(), key_words.end(), name) != key_words.end())
                     comboBoxPropertyName->addItem(QString::fromStdString(name));
         } else if (location == "Edge") {
             lineEditNewPropertyName->setText("e:");
             for (const auto &name : graph->edge_properties())
-                if (std::find(key_words.begin(), key_words.end(), name) == key_words.end())
+                if (std::find(key_words.begin(), key_words.end(), name) != key_words.end())
                     comboBoxPropertyName->addItem(QString::fromStdString(name));
         }
     } else if (dynamic_cast<SurfaceMesh *>(model)) {
@@ -234,22 +234,22 @@ void DialogProperties::locationChanged(const QString &text) {
         if (location == "Vertex") {
             lineEditNewPropertyName->setText("v:");
             for (const auto &name : mesh->vertex_properties())
-                if (std::find(key_words.begin(), key_words.end(), name) == key_words.end())
+                if (std::find(key_words.begin(), key_words.end(), name) != key_words.end())
                     comboBoxPropertyName->addItem(QString::fromStdString(name));
         } else if (location == "Edge") {
             lineEditNewPropertyName->setText("e:");
             for (const auto &name : mesh->edge_properties())
-                if (std::find(key_words.begin(), key_words.end(), name) == key_words.end())
+                if (std::find(key_words.begin(), key_words.end(), name) != key_words.end())
                     comboBoxPropertyName->addItem(QString::fromStdString(name));
         } else if (location == "Face") {
             lineEditNewPropertyName->setText("f:");
             for (const auto &name : mesh->face_properties())
-                if (std::find(key_words.begin(), key_words.end(), name) == key_words.end())
+                if (std::find(key_words.begin(), key_words.end(), name) != key_words.end())
                     comboBoxPropertyName->addItem(QString::fromStdString(name));
         } else if (location == "Halfedge") {
             lineEditNewPropertyName->setText("h:");
             for (const auto &name : mesh->halfedge_properties())
-                if (std::find(key_words.begin(), key_words.end(), name) == key_words.end())
+                if (std::find(key_words.begin(), key_words.end(), name) != key_words.end())
                     comboBoxPropertyName->addItem(QString::fromStdString(name));
         }
     }
