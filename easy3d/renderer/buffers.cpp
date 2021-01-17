@@ -65,14 +65,6 @@ namespace easy3d {
                 const std::size_t index_lower = n * dummy_lower_percent;
                 const std::size_t index_upper = n - n * dummy_upper_percent;
 
-                const int lower = static_cast<int>(dummy_lower_percent * 100);
-                const int upper = static_cast<int>(dummy_upper_percent * 100);
-                if ((lower > 0 || upper > 0) && values.front() < values.back())
-                    LOG(INFO) << "scalar field range ["
-                              << static_cast<float>(values.front()) << ", " << static_cast<float>(values.back()) << "]"
-                              << " clamped (" << lower << "%, " << upper << "%) to [" << min_value << ", " << max_value
-                              << "]";
-
                 min_value = values[index_lower];
                 max_value = values[index_upper];
                 if (min_value == max_value) { // if so, we cannot clamp
@@ -85,6 +77,14 @@ namespace easy3d {
                     min_value = 0.0f;
                     max_value = 1.0f;
                 }
+
+                const int lower = static_cast<int>(dummy_lower_percent * 100);
+                const int upper = static_cast<int>(dummy_upper_percent * 100);
+                if ((lower > 0 || upper > 0) && values.front() < values.back())
+                    LOG(INFO) << "scalar field range ["
+                              << static_cast<float>(values.front()) << ", " << static_cast<float>(values.back()) << "]"
+                              << " clamped (" << lower << "%, " << upper << "%) to [" << min_value << ", " << max_value
+                              << "]";
             }
 
 
