@@ -55,19 +55,21 @@ namespace easy3d {
                 d->set_coloring(State::SCALAR_FIELD, State::FACE, "f:select");
                 buffers::update(mesh, d);
             }
+            else {
+                auto select = mesh->face_property<bool>("f:select");
+                auto triangle_range = mesh->face_property<std::pair<int, int> >("f:triangle_range");
 
-            auto select = mesh->face_property<bool>("f:select");
-            auto triangle_range = mesh->face_property<std::pair<int, int> >("f:triangle_range");
-
-            // update the drawable's texcoord buffer
-            std::vector<vec2> texcoords(d->num_vertices());
-            for (auto f : mesh->faces()) {
-                int start = triangle_range[f].first;
-                int end = triangle_range[f].second;
-                for (int idx = start; idx <= end; ++idx)
-                    texcoords[idx * 3] = texcoords[idx * 3 + 1] = texcoords[idx * 3 + 2] = vec2(select[f], 0.5f);
+                // update the drawable's texcoord buffer
+                std::vector<vec2> texcoords(d->num_vertices());
+                for (auto f : mesh->faces()) {
+                    int start = triangle_range[f].first;
+                    int end = triangle_range[f].second;
+                    for (int idx = start; idx <= end; ++idx)
+                        texcoords[idx * 3] = texcoords[idx * 3 + 1] = texcoords[idx * 3 + 2] = vec2(select[f], 0.5f);
+                }
+                d->update_texcoord_buffer(texcoords);
+                d->set_coloring(State::SCALAR_FIELD, State::FACE, "f:select");
             }
-            d->update_texcoord_buffer(texcoords);
             tool_manager_->viewer()->update_ui();
         }
 

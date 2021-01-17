@@ -57,13 +57,15 @@ namespace easy3d {
                 d->set_coloring(State::SCALAR_FIELD, State::VERTEX, "v:select");
                 buffers::update(cloud, d);
             }
-
-            auto select = cloud->vertex_property<bool>("v:select");
-            // update the drawable's texcoord buffer
-            std::vector<vec2> texcoords(d->num_vertices());
-            for (auto v : cloud->vertices())
-                texcoords[v.idx()] = vec2(select[v], 0.5f);
-            d->update_texcoord_buffer(texcoords);
+            else {
+                auto select = cloud->vertex_property<bool>("v:select");
+                // update the drawable's texcoord buffer
+                std::vector<vec2> texcoords(d->num_vertices());
+                for (auto v : cloud->vertices())
+                    texcoords[v.idx()] = vec2(select[v], 0.5f);
+                d->update_texcoord_buffer(texcoords);
+                d->set_coloring(State::SCALAR_FIELD, State::VERTEX, "v:select");
+            }
             tool_manager_->viewer()->update_ui();
         }
 

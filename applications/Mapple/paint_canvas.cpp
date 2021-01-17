@@ -1275,49 +1275,54 @@ void PaintCanvas::invertSelection() {
         if (d->coloring_method() != easy3d::State::SCALAR_FIELD || d->property_name() != "f:select") {
             auto select = mesh->get_face_property<bool>("f:select");
             if (!select)
-                mesh->add_face_property<bool>("f:select", false);
+                select = mesh->add_face_property<bool>("f:select", false);
+            for (auto f : mesh->faces())
+                select[f] = !select[f];
             d->set_coloring(State::SCALAR_FIELD, State::FACE, "f:select");
             buffers::update(mesh, d);
         }
+        else {
+            auto select = mesh->face_property<bool>("f:select");
+            for (auto f : mesh->faces())
+                select[f] = !select[f];
 
-        auto seleced = mesh->face_property<bool>("f:select");
-        for (auto f : mesh->faces())
-            seleced[f] = !seleced[f];
+            auto triangle_range = mesh->face_property<std::pair<int, int> >("f:triangle_range");
 
-        auto triangle_range = mesh->face_property<std::pair<int, int> >("f:triangle_range");
-
-        // update the drawable's texcoord buffer
-        std::vector<vec2> texcoords(d->num_vertices());
-        for (auto f : mesh->faces()) {
-            int start = triangle_range[f].first;
-            int end = triangle_range[f].second;
-            for (int idx = start; idx <= end; ++idx)
-                texcoords[idx * 3] = texcoords[idx * 3 + 1] = texcoords[idx * 3 + 2] = vec2(seleced[f],
-                                                                                            0.5f);
+            // update the drawable's texcoord buffer
+            std::vector<vec2> texcoords(d->num_vertices());
+            for (auto f : mesh->faces()) {
+                int start = triangle_range[f].first;
+                int end = triangle_range[f].second;
+                for (int idx = start; idx <= end; ++idx)
+                    texcoords[idx * 3] = texcoords[idx * 3 + 1] = texcoords[idx * 3 + 2] = vec2(select[f],0.5f);
+            }
+            d->update_texcoord_buffer(texcoords);
+            d->set_coloring(State::SCALAR_FIELD, State::FACE, "f:select");
         }
-        d->update_texcoord_buffer(texcoords);
-        d->set_coloring(State::SCALAR_FIELD, State::FACE, "f:select");
     } else if (dynamic_cast<PointCloud*>(currentModel())) {
         auto cloud = dynamic_cast<PointCloud*>(currentModel());
         auto d = cloud->renderer()->get_points_drawable("vertices");
         if (d->coloring_method() != easy3d::State::SCALAR_FIELD || d->property_name() != "v:select") {
             auto select = cloud->get_vertex_property<bool>("v:select");
             if (!select)
-                cloud->add_vertex_property<bool>("v:select", false);
+                select = cloud->add_vertex_property<bool>("v:select", false);
+            for(auto v : cloud->vertices())
+                select[v] = !select[v];
             d->set_coloring(State::SCALAR_FIELD, State::VERTEX, "v:select");
             buffers::update(cloud, d);
         }
+        else {
+            auto select = cloud->vertex_property<bool>("v:select");
+            for (auto v : cloud->vertices())
+                select[v] = !select[v];
 
-        auto selected = cloud->vertex_property<bool>("v:select");
-        for(auto v : cloud->vertices())
-            selected[v] = !selected[v];
-
-        // update the drawable's texcoord buffer
-        std::vector<vec2> texcoords(d->num_vertices());
-        for (auto v : cloud->vertices())
-            texcoords[v.idx()] = vec2(selected[v], 0.5f);
-        d->update_texcoord_buffer(texcoords);
-        d->set_coloring(State::SCALAR_FIELD, State::VERTEX, "v:select");
+            // update the drawable's texcoord buffer
+            std::vector<vec2> texcoords(d->num_vertices());
+            for (auto v : cloud->vertices())
+                texcoords[v.idx()] = vec2(select[v], 0.5f);
+            d->update_texcoord_buffer(texcoords);
+            d->set_coloring(State::SCALAR_FIELD, State::VERTEX, "v:select");
+        }
     }
     doneCurrent();
 
