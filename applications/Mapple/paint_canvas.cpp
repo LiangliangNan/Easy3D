@@ -1292,7 +1292,7 @@ void PaintCanvas::invertSelection() {
             int start = triangle_range[f].first;
             int end = triangle_range[f].second;
             for (int idx = start; idx <= end; ++idx)
-                texcoords[idx * 3] = texcoords[idx * 3 + 1] = texcoords[idx * 3 + 2] = vec2(seleced[f] ? 1.0f : 0.4f,
+                texcoords[idx * 3] = texcoords[idx * 3 + 1] = texcoords[idx * 3 + 2] = vec2(seleced[f],
                                                                                             0.5f);
         }
         d->update_texcoord_buffer(texcoords);
@@ -1315,7 +1315,7 @@ void PaintCanvas::invertSelection() {
         // update the drawable's texcoord buffer
         std::vector<vec2> texcoords(d->num_vertices());
         for (auto v : cloud->vertices())
-            texcoords[v.idx()] = vec2(selected[v] ? 1.0f : 0.4f, 0.5f);
+            texcoords[v.idx()] = vec2(selected[v], 0.5f);
         d->update_texcoord_buffer(texcoords);
         d->set_coloring(State::SCALAR_FIELD, State::VERTEX, "v:select");
     }

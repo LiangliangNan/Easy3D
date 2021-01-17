@@ -62,7 +62,7 @@ namespace easy3d {
             // update the drawable's texcoord buffer
             std::vector<vec2> texcoords(d->num_vertices());
             for (auto v : cloud->vertices())
-                texcoords[v.idx()] = vec2(select[v] ? 1.0f : 0.4f, 0.5f);
+                texcoords[v.idx()] = vec2(select[v], 0.5f);
             d->update_texcoord_buffer(texcoords);
             tool_manager_->viewer()->update_ui();
         }

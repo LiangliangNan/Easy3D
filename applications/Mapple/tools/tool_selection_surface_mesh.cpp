@@ -65,7 +65,7 @@ namespace easy3d {
                 int start = triangle_range[f].first;
                 int end = triangle_range[f].second;
                 for (int idx = start; idx <= end; ++idx)
-                    texcoords[idx * 3] = texcoords[idx * 3 + 1] = texcoords[idx * 3 + 2] = vec2(select[f] ? 1.0f : 0.4f, 0.5f);
+                    texcoords[idx * 3] = texcoords[idx * 3 + 1] = texcoords[idx * 3 + 2] = vec2(select[f], 0.5f);
             }
             d->update_texcoord_buffer(texcoords);
             tool_manager_->viewer()->update_ui();
