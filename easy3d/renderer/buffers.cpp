@@ -77,9 +77,9 @@ namespace easy3d {
             }
 
 
-            template<typename Model, typename FT>
+            template<typename MODEL, typename FT>
             inline void
-            update_scalar_on_vertices(Model *model, PointsDrawable *drawable, typename Model::template VertexProperty<FT> prop) {
+            update_scalar_on_vertices(MODEL *model, PointsDrawable *drawable, typename MODEL::template VertexProperty<FT> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -108,9 +108,9 @@ namespace easy3d {
             }
 
 
-            template<typename Model, typename FT>
+            template<typename MODEL, typename FT>
             inline void
-            update_scalar_on_edges(Model *model, LinesDrawable *drawable, typename Model::template EdgeProperty<FT> prop) {
+            update_scalar_on_edges(MODEL *model, LinesDrawable *drawable, typename MODEL::template EdgeProperty<FT> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -146,9 +146,9 @@ namespace easy3d {
             }
 
 
-            template<typename Model, typename FT>
+            template<typename MODEL, typename FT>
             inline void
-            update_scalar_on_vertices(Model *model, LinesDrawable *drawable, typename Model::template VertexProperty<FT> prop) {
+            update_scalar_on_vertices(MODEL *model, LinesDrawable *drawable, typename MODEL::template VertexProperty<FT> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -465,6 +465,8 @@ namespace easy3d {
                 model->update_vertex_normals();
                 auto normals = model->get_vertex_property<vec3>("v:normal");
 
+                // since we have two parts, no need to transfer all vertices and normals
+                // I just use the tessellator
                 /*
                 if (model->is_tetraheral_mesh()) {
                     std::vector<unsigned int> d_indices;
@@ -874,8 +876,8 @@ namespace easy3d {
             }
 
 
-            template<typename Model>
-            void update_texcoords_on_vertices(Model *model, PointsDrawable *drawable, typename Model::template VertexProperty<vec2> prop) {
+            template<typename MODEL>
+            void update_texcoords_on_vertices(MODEL *model, PointsDrawable *drawable, typename MODEL::template VertexProperty<vec2> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -1445,8 +1447,8 @@ namespace easy3d {
             }
 
 
-            template <typename Model>
-            void update_colors_on_edges(Model *model, LinesDrawable *drawable, typename Model::template EdgeProperty<vec3> prop) {
+            template <typename MODEL>
+            void update_colors_on_edges(MODEL *model, LinesDrawable *drawable, typename MODEL::template EdgeProperty<vec3> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -1474,9 +1476,9 @@ namespace easy3d {
             }
 
 
-            template <typename Model>
+            template <typename MODEL>
             void
-            update_colors_on_vertices(Model *model, LinesDrawable *drawable, typename Model::template VertexProperty<vec3> prop) {
+            update_colors_on_vertices(MODEL *model, LinesDrawable *drawable, typename MODEL::template VertexProperty<vec3> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -1504,9 +1506,9 @@ namespace easy3d {
             }
 
 
-            template <typename Model>
+            template <typename MODEL>
             void
-            update_texcoords_on_vertices(Model *model, LinesDrawable *drawable, typename Model::template VertexProperty<vec2> prop) {
+            update_texcoords_on_vertices(MODEL *model, LinesDrawable *drawable, typename MODEL::template VertexProperty<vec2> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -1534,8 +1536,8 @@ namespace easy3d {
                 drawable->disable_element_buffer();
             }
 
-            template<typename Model>
-            void update_texcoords_on_edges(Model *model, LinesDrawable *drawable, typename Model::template EdgeProperty<vec2> prop) {
+            template<typename MODEL>
+            void update_texcoords_on_edges(MODEL *model, LinesDrawable *drawable, typename MODEL::template EdgeProperty<vec2> prop) {
                 assert(model);
                 assert(drawable);
                 assert(prop);
@@ -1602,8 +1604,8 @@ namespace easy3d {
             }
 
 
-            template<typename Model>
-            void update_uniform_colors(Model *model, PointsDrawable *drawable) {
+            template<typename MODEL>
+            void update_uniform_colors(MODEL *model, PointsDrawable *drawable) {
                 auto points = model->template get_vertex_property<vec3>("v:point");
                 drawable->update_vertex_buffer(points.vector());
                 auto normals = model->template get_vertex_property<vec3>("v:normal");
@@ -1612,8 +1614,8 @@ namespace easy3d {
             }
 
 
-            template<typename Model>
-            void update_uniform_colors(Model *model, LinesDrawable *drawable) {
+            template<typename MODEL>
+            void update_uniform_colors(MODEL *model, LinesDrawable *drawable) {
                 std::vector<unsigned int> indices;
                 indices.reserve(model->n_edges() * 2);
                 for (auto e : model->edges()) {
@@ -1628,11 +1630,11 @@ namespace easy3d {
             }
 
 
-            template<typename Model>
-            void update_colors_on_vertices(Model *model, PointsDrawable *drawable, const std::string& name) {
+            template<typename MODEL>
+            void update_colors_on_vertices(MODEL *model, PointsDrawable *drawable, const std::string& name) {
                 auto colors = model->template get_vertex_property<vec3>(name);
                 if (colors)
-                    details::update_colors_on_vertices<Model>(model, drawable, colors);
+                    details::update_colors_on_vertices<MODEL>(model, drawable, colors);
                 else {
                     LOG(WARNING) << "color property \'" << name
                                  << "\' not found on vertices (use uniform coloring)";
@@ -1642,8 +1644,8 @@ namespace easy3d {
             }
 
 
-            template<typename Model>
-            void update_colors_on_vertices(Model *model, LinesDrawable *drawable, const std::string& name) {
+            template<typename MODEL>
+            void update_colors_on_vertices(MODEL *model, LinesDrawable *drawable, const std::string& name) {
                 auto colors = model->template get_vertex_property<vec3>(name);
                 if (colors)
                     details::update_colors_on_vertices(model, drawable, colors);
@@ -1656,8 +1658,8 @@ namespace easy3d {
             }
 
 
-            template<typename Model>
-            void update_colors_on_edges(Model *model, LinesDrawable *drawable, const std::string& name) {
+            template<typename MODEL>
+            void update_colors_on_edges(MODEL *model, LinesDrawable *drawable, const std::string& name) {
                 auto colors = model->template get_edge_property<vec3>(name);
                 if (colors)
                     details::update_colors_on_edges(model, drawable, colors);
@@ -1670,8 +1672,8 @@ namespace easy3d {
             }
 
 
-            template<typename Model>
-            void update_texcoords_on_vertices(Model *model, PointsDrawable *drawable, const std::string& name) {
+            template<typename MODEL>
+            void update_texcoords_on_vertices(MODEL *model, PointsDrawable *drawable, const std::string& name) {
                 auto texcoord = model->template get_vertex_property<vec2>(name);
                 if (texcoord)
                     details::update_texcoords_on_vertices(model, drawable, texcoord);
@@ -1684,8 +1686,8 @@ namespace easy3d {
             }
 
 
-            template<typename Model>
-            void update_texcoords_on_vertices(Model *model, LinesDrawable *drawable, const std::string& name) {
+            template<typename MODEL>
+            void update_texcoords_on_vertices(MODEL *model, LinesDrawable *drawable, const std::string& name) {
                 auto texcoord = model->template get_vertex_property<vec2>(name);
                 if (texcoord)
                     details::update_texcoords_on_vertices(model, drawable, texcoord);
@@ -1698,8 +1700,8 @@ namespace easy3d {
             }
 
 
-            template<typename Model>
-            void update_texcoords_on_edges(Model *model, LinesDrawable *drawable, const std::string& name) {
+            template<typename MODEL>
+            void update_texcoords_on_edges(MODEL *model, LinesDrawable *drawable, const std::string& name) {
                 auto texcoord = model->template get_edge_property<vec2>(name);
                 if (texcoord)
                     details::update_texcoords_on_edges(model, drawable, texcoord);
@@ -1712,28 +1714,30 @@ namespace easy3d {
             }
 
 
-
-            template<typename Model>
+            template<typename MODEL, typename DRAWABLE>
             inline void
-            update_scalar_on_vertices(Model *model, PointsDrawable *drawable, const std::string &name) {
+            update_scalar_on_vertices(MODEL *model, DRAWABLE *drawable, const std::string &name) {
                 if (model->template get_vertex_property<float>(name)) {
                     auto prop = model->template get_vertex_property<float>(name);
-                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
+                    details::update_scalar_on_vertices<MODEL>(model, drawable, prop);
                 } else if (model->template get_vertex_property<double>(name)) {
                     auto prop = model->template get_vertex_property<double>(name);
-                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
+                    details::update_scalar_on_vertices<MODEL>(model, drawable, prop);
                 } else if (model->template get_vertex_property<int>(name)) {
                     auto prop = model->template get_vertex_property<int>(name);
-                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
+                    details::update_scalar_on_vertices<MODEL>(model, drawable, prop);
                 } else if (model->template get_vertex_property<unsigned int>(name)) {
                     auto prop = model->template get_vertex_property<unsigned int>(name);
-                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
+                    details::update_scalar_on_vertices<MODEL>(model, drawable, prop);
                 } else if (model->template get_vertex_property<char>(name)) {
                     auto prop = model->template get_vertex_property<char>(name);
-                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
+                    details::update_scalar_on_vertices<MODEL>(model, drawable, prop);
                 } else if (model->template get_vertex_property<unsigned char>(name)) {
                     auto prop = model->template get_vertex_property<unsigned char>(name);
-                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
+                    details::update_scalar_on_vertices<MODEL>(model, drawable, prop);
+                } else if (model->template get_vertex_property<bool>(name)) {
+                    auto prop = model->template get_vertex_property<bool>(name);
+                    details::update_scalar_on_vertices<MODEL>(model, drawable, prop);
                 } else {
                     LOG(WARNING) << "scalar field \'" << name
                                  << "\' not found from vertex properties (use uniform coloring)";
@@ -1743,57 +1747,30 @@ namespace easy3d {
             }
 
 
-            template<typename Model>
+            template<typename MODEL>
             inline void
-            update_scalar_on_vertices(Model *model, LinesDrawable *drawable, const std::string &name) {
-                if (model->template get_vertex_property<float>(name)) {
-                    auto prop = model->template get_vertex_property<float>(name);
-                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
-                } else if (model->template get_vertex_property<double>(name)) {
-                    auto prop = model->template get_vertex_property<double>(name);
-                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
-                } else if (model->template get_vertex_property<int>(name)) {
-                    auto prop = model->template get_vertex_property<int>(name);
-                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
-                } else if (model->template get_vertex_property<unsigned int>(name)) {
-                    auto prop = model->template get_vertex_property<unsigned int>(name);
-                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
-                } else if (model->template get_vertex_property<char>(name)) {
-                    auto prop = model->template get_vertex_property<char>(name);
-                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
-                } else if (model->template get_vertex_property<unsigned char>(name)) {
-                    auto prop = model->template get_vertex_property<unsigned char>(name);
-                    details::update_scalar_on_vertices<Model>(model, drawable, prop);
-                } else {
-                    LOG(WARNING) << "scalar field \'" << name
-                                 << "\' not found from vertex properties (use uniform coloring)";
-                    drawable->set_coloring_method(State::UNIFORM_COLOR);
-                    buffers::update(model, drawable);
-                }
-            }
-
-
-            template<typename Model>
-            inline void
-            update_scalar_on_edges(Model *model, LinesDrawable *drawable, const std::string &name) {
+            update_scalar_on_edges(MODEL *model, LinesDrawable *drawable, const std::string &name) {
                 if (model->template get_edge_property<float>(name)) {
                     auto prop = model->template get_edge_property<float>(name);
-                    details::update_scalar_on_edges<Model>(model, drawable, prop);
+                    details::update_scalar_on_edges<MODEL>(model, drawable, prop);
                 } else if (model->template get_edge_property<double>(name)) {
                     auto prop = model->template get_edge_property<double>(name);
-                    details::update_scalar_on_edges<Model>(model, drawable, prop);
+                    details::update_scalar_on_edges<MODEL>(model, drawable, prop);
                 } else if (model->template get_edge_property<int>(name)) {
                     auto prop = model->template get_edge_property<int>(name);
-                    details::update_scalar_on_edges<Model>(model, drawable, prop);
+                    details::update_scalar_on_edges<MODEL>(model, drawable, prop);
                 } else if (model->template get_edge_property<unsigned int>(name)) {
                     auto prop = model->template get_edge_property<unsigned int>(name);
-                    details::update_scalar_on_edges<Model>(model, drawable, prop);
+                    details::update_scalar_on_edges<MODEL>(model, drawable, prop);
                 } else if (model->template get_edge_property<char>(name)) {
                     auto prop = model->template get_edge_property<char>(name);
-                    details::update_scalar_on_edges<Model>(model, drawable, prop);
+                    details::update_scalar_on_edges<MODEL>(model, drawable, prop);
                 } else if (model->template get_edge_property<unsigned char>(name)) {
                     auto prop = model->template get_edge_property<unsigned char>(name);
-                    details::update_scalar_on_edges<Model>(model, drawable, prop);
+                    details::update_scalar_on_edges<MODEL>(model, drawable, prop);
+                } else if (model->template get_edge_property<bool>(name)) {
+                    auto prop = model->template get_edge_property<bool>(name);
+                    details::update_scalar_on_edges<MODEL>(model, drawable, prop);
                 } else {
                     LOG(WARNING) << "scalar field \'" << name
                                  << "\' not found from edge properties (use uniform coloring)";
@@ -1803,8 +1780,8 @@ namespace easy3d {
             }
 
 
-            template <typename Model>
-            void update(Model *model, LinesDrawable *drawable) {
+            template <typename MODEL>
+            void update(MODEL *model, LinesDrawable *drawable) {
                 assert(model);
                 assert(drawable);
 
@@ -1818,10 +1795,10 @@ namespace easy3d {
                     case State::TEXTURED: {
                         switch (drawable->property_location()) {
                             case State::EDGE:
-                                details::update_texcoords_on_edges<Model>(model, drawable, name);
+                                details::update_texcoords_on_edges<MODEL>(model, drawable, name);
                                 break;
                             case State::VERTEX:
-                                details::update_texcoords_on_vertices<Model>(model, drawable, name);
+                                details::update_texcoords_on_vertices<MODEL>(model, drawable, name);
                                 break;
                             case State::FACE:
                             case State::HALFEDGE:
@@ -1834,11 +1811,11 @@ namespace easy3d {
                     case State::COLOR_PROPERTY: {
                         switch (drawable->property_location()) {
                             case State::EDGE:
-                                details::update_colors_on_edges<Model>(model, drawable, name);
+                                details::update_colors_on_edges<MODEL>(model, drawable, name);
                                 break;
 
                             case State::VERTEX:
-                                details::update_colors_on_vertices<Model>(model, drawable, name);
+                                details::update_colors_on_vertices<MODEL>(model, drawable, name);
                                 break;
 
                             case State::FACE:
@@ -1852,10 +1829,10 @@ namespace easy3d {
                     case State::SCALAR_FIELD: {
                         switch (drawable->property_location()) {
                             case State::EDGE:
-                                details::update_scalar_on_edges<Model>(model, drawable, name);
+                                details::update_scalar_on_edges<MODEL>(model, drawable, name);
                                 break;
                             case State::VERTEX:
-                                details::update_scalar_on_vertices<Model>(model, drawable, name);
+                                details::update_scalar_on_vertices<MODEL>(model, drawable, name);
                                 break;
                             case State::FACE:
                             case State::HALFEDGE:
@@ -1868,14 +1845,14 @@ namespace easy3d {
                     case State::UNIFORM_COLOR:
                     default: // uniform color
                         // if reached here, we choose a uniform color.
-                        details::update_uniform_colors<Model>(model, drawable);
+                        details::update_uniform_colors<MODEL>(model, drawable);
                         break;
                 }
             }
 
 
-            template <typename Model>
-            void update(Model *model, PointsDrawable *drawable) {
+            template <typename MODEL>
+            void update(MODEL *model, PointsDrawable *drawable) {
                 assert(model);
                 assert(drawable);
 
@@ -1887,19 +1864,19 @@ namespace easy3d {
                 const std::string &name = drawable->property_name();
                 switch (drawable->coloring_method()) {
                     case State::TEXTURED:
-                        details::update_texcoords_on_vertices<Model>(model, drawable, name);
+                        details::update_texcoords_on_vertices<MODEL>(model, drawable, name);
                         break;
 
                     case State::COLOR_PROPERTY:
-                        details::update_colors_on_vertices<Model>(model, drawable, name);
+                        details::update_colors_on_vertices<MODEL>(model, drawable, name);
                         break;
 
                     case State::SCALAR_FIELD:
-                        details::update_scalar_on_vertices<Model>(model, drawable, name);
+                        details::update_scalar_on_vertices<MODEL>(model, drawable, name);
                         break;
 
                     default:  // uniform color
-                        details::update_uniform_colors<Model>(model, drawable);
+                        details::update_uniform_colors<MODEL>(model, drawable);
                         break;
                 }
             }
@@ -2166,6 +2143,9 @@ namespace easy3d {
                             } else if (model->get_face_property<unsigned char>(name)) {
                                 auto prop = model->get_face_property<unsigned char>(name);
                                 details::update_scalar_on_faces(model, drawable, prop);
+                            } else if (model->get_face_property<bool>(name)) {
+                                auto prop = model->get_face_property<bool>(name);
+                                details::update_scalar_on_faces(model, drawable, prop);
                             } else {
                                 LOG(WARNING) << "scalar field \'" << name
                                              << "\' not found on faces (use uniform coloring)";
@@ -2193,6 +2173,9 @@ namespace easy3d {
                                 details::update_scalar_on_vertices(model, drawable, prop);
                             } else if (model->get_vertex_property<unsigned char>(name)) {
                                 auto prop = model->get_vertex_property<unsigned char>(name);
+                                details::update_scalar_on_vertices(model, drawable, prop);
+                            } else if (model->get_vertex_property<bool>(name)) {
+                                auto prop = model->get_vertex_property<bool>(name);
                                 details::update_scalar_on_vertices(model, drawable, prop);
                             } else {
                                 LOG(WARNING) << "scalar field \'" << name
@@ -2341,6 +2324,9 @@ namespace easy3d {
                             } else if (model->get_face_property<unsigned char>(name)) {
                                 auto prop = model->get_face_property<unsigned char>(name);
                                 details::update_scalar_on_faces(model, drawable, prop, border);
+                            } else if (model->template get_face_property<bool>(name)) {
+                                auto prop = model->template get_face_property<bool>(name);
+                                details::update_scalar_on_faces(model, drawable, prop, border);
                             } else {
                                 LOG(WARNING) << "scalar field \'" << name
                                              << "\' not found on faces (use uniform coloring)";
@@ -2368,6 +2354,9 @@ namespace easy3d {
                                 details::update_scalar_on_vertices(model, drawable, prop, border);
                             } else if (model->get_vertex_property<unsigned char>(name)) {
                                 auto prop = model->get_vertex_property<unsigned char>(name);
+                                details::update_scalar_on_vertices(model, drawable, prop, border);
+                            } else if (model->template get_vertex_property<bool>(name)) {
+                                auto prop = model->template get_vertex_property<bool>(name);
                                 details::update_scalar_on_vertices(model, drawable, prop, border);
                             } else {
                                 LOG(WARNING) << "scalar field \'" << name
