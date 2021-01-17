@@ -64,8 +64,10 @@ namespace easy3d {
             return nullptr;
 
         Texture *texture = create(data, width, height, comp, wrap_mode, filter_mode);
-        if (texture)
+        if (texture) {
             texture->name_ = file_name;
+            LOG(INFO) << "a texture (id " << texture->id() << ") generated from image \'" << file_system::simple_name(file_name) << "\'";
+        }
 
         return texture;
     }
@@ -84,13 +86,10 @@ namespace easy3d {
 
         GLuint tex = 0;
         glGenTextures(1, &tex); easy3d_debug_log_gl_error;
-        if (tex)
-            LOG(INFO) << "a texture generated from an image file, with id: " << tex;
-        else {
-            LOG(ERROR) << "failed to generate an OpenGL texture";
+        if (!tex) {
+            LOG(ERROR) << "failed to generate the requested texture";
             return nullptr;
         }
-
 
         GLenum wrap, filter;
         switch (wrap_mode) {
