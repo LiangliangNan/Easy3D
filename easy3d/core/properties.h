@@ -443,7 +443,7 @@ namespace easy3d {
             {
                 if (parrays_[i]->name() == name)
                 {
-                    LOG(ERROR) << "[PropertyContainer] A property with name \""
+                    LOG(ERROR) << "A property with name \""
                               << name << "\" already exists. Returning invalid property.";
                     return Property<T>();
                 }
