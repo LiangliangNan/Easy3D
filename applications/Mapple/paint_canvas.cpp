@@ -54,6 +54,7 @@
 #include <easy3d/renderer/text_renderer.h>
 #include <easy3d/renderer/walk_through.h>
 #include <easy3d/renderer/manipulator.h>
+#include <easy3d/renderer/buffers.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/gui/picker_surface_mesh.h>
 #include <easy3d/gui/picker_model.h>
@@ -856,6 +857,12 @@ void PaintCanvas::fitScreen() {
 }
 
 
+
+void PaintCanvas::update_ui() {
+    window_->updateUi();
+}
+
+
 vec3 PaintCanvas::pointUnderPixel(const QPoint &p, bool &found) const {
     // Qt (same as GLFW) uses upper corner for its origin while GL uses the lower corner.
     int glx = p.x();
@@ -1261,29 +1268,60 @@ void PaintCanvas::enableEyeDomeLighting(bool b) {
 
 
 void PaintCanvas::invertSelection() {
+    makeCurrent();
     if (dynamic_cast<SurfaceMesh*>(currentModel())) {
-        auto mesh = dynamic_cast<SurfaceMesh*>(currentModel());
-        auto seleced = mesh->face_property<bool>("f:select");
-        for(auto f : mesh->faces())
-            seleced[f] = !seleced[f];
-        auto fcolor = mesh->face_property<vec3>("f:color");
+        auto mesh = dynamic_cast<SurfaceMesh *>(currentModel());
         auto d = mesh->renderer()->get_triangles_drawable("faces");
+        if (d->coloring_method() != easy3d::State::SCALAR_FIELD || d->property_name() != "f:select") {
+            auto select = mesh->get_face_property<bool>("f:select");
+            if (!select)
+                mesh->add_face_property<bool>("f:select", false);
+            d->set_coloring(State::SCALAR_FIELD, State::FACE, "f:select");
+            buffers::update(mesh, d);
+        }
+
+        auto seleced = mesh->face_property<bool>("f:select");
         for (auto f : mesh->faces())
-            fcolor[f] = seleced[f] ? setting::selected_color : d->color();
-        d->set_coloring(State::COLOR_PROPERTY, State::FACE, "f:color");
-        d->update();
+            seleced[f] = !seleced[f];
+
+        auto triangle_range = mesh->face_property<std::pair<int, int> >("f:triangle_range");
+
+        // update the drawable's texcoord buffer
+        std::vector<vec2> texcoords(d->num_vertices());
+        for (auto f : mesh->faces()) {
+            int start = triangle_range[f].first;
+            int end = triangle_range[f].second;
+            for (int idx = start; idx <= end; ++idx)
+                texcoords[idx * 3] = texcoords[idx * 3 + 1] = texcoords[idx * 3 + 2] = vec2(seleced[f] ? 1.0f : 0.4f,
+                                                                                            0.5f);
+        }
+        d->update_texcoord_buffer(texcoords);
+        d->set_coloring(State::COLOR_PROPERTY, State::FACE, "f:select");
     } else if (dynamic_cast<PointCloud*>(currentModel())) {
         auto cloud = dynamic_cast<PointCloud*>(currentModel());
+        auto d = cloud->renderer()->get_points_drawable("vertices");
+        if (d->coloring_method() != easy3d::State::SCALAR_FIELD || d->property_name() != "v:select") {
+            auto select = cloud->get_vertex_property<bool>("v:select");
+            if (!select)
+                cloud->add_vertex_property<bool>("v:select", false);
+            d->set_coloring(State::SCALAR_FIELD, State::VERTEX, "v:select");
+            buffers::update(cloud, d);
+        }
+
         auto selected = cloud->vertex_property<bool>("v:select");
         for(auto v : cloud->vertices())
             selected[v] = !selected[v];
-        auto vcolor = cloud->vertex_property<vec3>("v:color");
-        auto d = cloud->renderer()->get_points_drawable("vertices");
+
+        // update the drawable's texcoord buffer
+        std::vector<vec2> texcoords(d->num_vertices());
         for (auto v : cloud->vertices())
-            vcolor[v] = selected[v] ? setting::selected_color : d->color();
-        d->set_coloring(State::COLOR_PROPERTY, State::VERTEX, "v:color");
-        d->update();
+            texcoords[v.idx()] = vec2(selected[v] ? 1.0f : 0.4f, 0.5f);
+        d->update_texcoord_buffer(texcoords);
+        d->set_coloring(State::COLOR_PROPERTY, State::VERTEX, "v:select");
     }
+    doneCurrent();
+    
+    window_->updateUi();
     update();
 }
 

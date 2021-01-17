@@ -128,6 +128,9 @@ public:
     /// \param bk_white \c true to use a white background color, or use the current background color.
 	void recordAnimation(const QString& file_name, int fps = 25, int bitrate = 10, bool bk_white = true);
 
+	/// update the user interface (used when rendering parameters have been changed)
+    void update_ui() override;
+
 public:
 
     easy3d::AmbientOcclusion *ssao() { return ssao_; }

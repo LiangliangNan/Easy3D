@@ -31,6 +31,7 @@
 #include <easy3d/gui/picker_surface_mesh.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/renderer.h>
+#include <easy3d/renderer/buffers.h>
 #include <easy3d/renderer/setting.h>
 #include <easy3d/util/logging.h>
 
@@ -45,6 +46,30 @@ namespace easy3d {
                 : Tool(mgr) {
         }
 
+        void ToolSurfaceMeshFaceSelection::update_render_buffer(SurfaceMesh* mesh) const {
+            auto d = mesh->renderer()->get_triangles_drawable("faces");
+            if (d->coloring_method() != easy3d::State::SCALAR_FIELD || d->property_name() != "f:select") {
+                auto select = mesh->get_face_property<bool>("f:select");
+                if (!select)
+                    mesh->add_face_property<bool>("f:select", false);
+                d->set_coloring(State::SCALAR_FIELD, State::FACE, "f:select");
+                buffers::update(mesh, d);
+            }
+
+            auto select = mesh->face_property<bool>("f:select");
+            auto triangle_range = mesh->face_property<std::pair<int, int> >("f:triangle_range");
+
+            // update the drawable's texcoord buffer
+            std::vector<vec2> texcoords(d->num_vertices());
+            for (auto f : mesh->faces()) {
+                int start = triangle_range[f].first;
+                int end = triangle_range[f].second;
+                for (int idx = start; idx <= end; ++idx)
+                    texcoords[idx * 3] = texcoords[idx * 3 + 1] = texcoords[idx * 3 + 2] = vec2(select[f] ? 1.0f : 0.4f, 0.5f);
+            }
+            d->update_texcoord_buffer(texcoords);
+            tool_manager_->viewer()->update_ui();
+        }
 
         // -------------------- Click Select ----------------------
 
@@ -70,11 +95,7 @@ namespace easy3d {
             if (mesh && picked_face.is_valid()) {
                 auto selected = mesh->face_property<bool>("f:select");
                 selected[picked_face] = true;
-                auto d = mesh->renderer()->get_triangles_drawable("faces");
-                if (d)
-                    d->update();
-                else
-                    LOG(WARNING) << "drawable 'faces' doesn't exist for visualization";
+                update_render_buffer(mesh);
             }
         }
 
@@ -153,11 +174,7 @@ namespace easy3d {
                 SurfaceMesh *mesh = dynamic_cast<SurfaceMesh*>(model);
                 if (mesh) {
                     picker_->pick_faces(mesh, Rect(start_, vec2(x, y)), select_mode_ == SM_DESELECT);
-                    auto d = mesh->renderer()->get_triangles_drawable("faces");
-                    if (d)
-                        d->update();
-                    else
-                        LOG(WARNING) << "drawable 'faces' doesn't exist for visualization";
+                    update_render_buffer(mesh);
                 }
             }
         }
@@ -230,11 +247,7 @@ namespace easy3d {
                 SurfaceMesh *mesh = dynamic_cast<SurfaceMesh*>(model);
                 if (mesh) {
                     picker_->pick_faces(mesh, lasso_, select_mode_ == SM_DESELECT);
-                    auto d = mesh->renderer()->get_triangles_drawable("faces");
-                    if (d)
-                        d->update();
-                    else
-                        LOG(WARNING) << "drawable 'faces' doesn't exist for visualization";
+                    update_render_buffer(mesh);
                 }
             }
 

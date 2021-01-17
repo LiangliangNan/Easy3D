@@ -971,70 +971,31 @@ void MainWindow::createActionsForPolyMeshMenu() {
 
 
 void MainWindow::operationModeChanged(QAction* act) {
-    auto prepare_selection = [this](Model *model) -> void {
-        if (dynamic_cast<PointCloud *>(model)) {
-            PointCloud *cloud = dynamic_cast<PointCloud *>(model);
-            auto d = cloud->renderer()->get_points_drawable("vertices");
-            if (d->coloring_method() != easy3d::State::SCALAR_FIELD || d->property_name() != "v:select") {
-                auto select = cloud->get_vertex_property<bool>("v:select");
-                if (!select)
-                    cloud->add_vertex_property<bool>("v:select", false);
-                d->set_coloring(State::SCALAR_FIELD, State::VERTEX, "v:select");
-                d->update();
-            }
-        } else if (dynamic_cast<SurfaceMesh *>(model)) {
-            SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
-            LOG_IF(!mesh->is_triangle_mesh(), WARNING)
-                << "current implementation only supports primitive selection for triangle meshes";
-
-            auto d = mesh->renderer()->get_triangles_drawable("faces");
-            if (d->coloring_method() != easy3d::State::SCALAR_FIELD || d->property_name() != "f:select") {
-                auto select = mesh->get_face_property<bool>("f:select");
-                if (!select)
-                    mesh->add_face_property<bool>("f:select", false);
-                d->set_coloring(State::SCALAR_FIELD, State::FACE, "f:select");
-                d->update();
-            }
-        }
-        viewer()->update();
-        updateUi();
-    };
-
-
     if (act == ui->actionCameraManipulation) {
         viewer()->tool_manager()->set_tool(tools::ToolManager::EMPTY_TOOL);
         return;
     }
 
+    auto tool_manager = viewer()->tool_manager();
     if (act == ui->actionSelectClick) {
-        if (dynamic_cast<SurfaceMesh *>(viewer()->currentModel())) {
-            viewer()->tool_manager()->set_tool(tools::ToolManager::SELECT_SURFACE_MESH_FACE_CLICK_TOOL);
-            prepare_selection(viewer()->currentModel());
-        }
+        if (dynamic_cast<SurfaceMesh *>(viewer()->currentModel()))
+            tool_manager->set_tool(tools::ToolManager::SELECT_SURFACE_MESH_FACE_CLICK_TOOL);
     }
     else if (act == ui->actionSelectRect) {
-        if (dynamic_cast<SurfaceMesh *>(viewer()->currentModel())) {
-            viewer()->tool_manager()->set_tool(tools::ToolManager::SELECT_SURFACE_MESH_FACE_RECT_TOOL);
-            prepare_selection(viewer()->currentModel());
-        }
-        else if (dynamic_cast<PointCloud *>(viewer()->currentModel())) {
-            viewer()->tool_manager()->set_tool(tools::ToolManager::SELECT_POINT_CLOUD_RECT_TOOL);
-            prepare_selection(viewer()->currentModel());
-        }
+        if (dynamic_cast<SurfaceMesh *>(viewer()->currentModel()))
+            tool_manager->set_tool(tools::ToolManager::SELECT_SURFACE_MESH_FACE_RECT_TOOL);
+        else if (dynamic_cast<PointCloud *>(viewer()->currentModel()))
+            tool_manager->set_tool(tools::ToolManager::SELECT_POINT_CLOUD_RECT_TOOL);
     }
     else if (act == ui->actionSelectLasso) {
-        if (dynamic_cast<SurfaceMesh *>(viewer()->currentModel())) {
-            viewer()->tool_manager()->set_tool(tools::ToolManager::SELECT_SURFACE_MESH_FACE_LASSO_TOOL);
-            prepare_selection(viewer()->currentModel());
-        }
-        else if (dynamic_cast<PointCloud *>(viewer()->currentModel())) {
-            viewer()->tool_manager()->set_tool(tools::ToolManager::SELECT_POINT_CLOUD_LASSO_TOOL);
-            prepare_selection(viewer()->currentModel());
-        }
+        if (dynamic_cast<SurfaceMesh *>(viewer()->currentModel()))
+            tool_manager->set_tool(tools::ToolManager::SELECT_SURFACE_MESH_FACE_LASSO_TOOL);
+        else if (dynamic_cast<PointCloud *>(viewer()->currentModel()))
+            tool_manager->set_tool(tools::ToolManager::SELECT_POINT_CLOUD_LASSO_TOOL);
     }
 
     if (viewer()->tool_manager()->current_tool())
-        statusBar()->showMessage(QString::fromStdString(viewer()->tool_manager()->current_tool()->instruction()), 2000);
+        statusBar()->showMessage(QString::fromStdString(tool_manager->current_tool()->instruction()), 2000);
 }
 
 

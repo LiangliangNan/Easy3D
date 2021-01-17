@@ -249,12 +249,6 @@ namespace easy3d {
                 } else {
 
                     /**
-                     * We use the Tessellator to eliminate duplicate vertices. This allows us to take advantage of element
-                     * buffer to minimize the number of vertices sent to the GPU.
-                     */
-                    Tessellator tessellator;
-
-                    /**
                      * For non-triangular surface meshes, all polygonal faces are internally triangulated to allow a unified
                      * rendering APIs. Thus for performance reasons, the selection of polygonal faces is also internally
                      * implemented by selecting triangle primitives using shaders. This allows data uploaded to the GPU
@@ -282,7 +276,18 @@ namespace easy3d {
                     float max_value = -std::numeric_limits<float>::max();
                     details::clamp_scalar_field(prop.vector(), min_value, max_value, dummy_lower, dummy_upper);
 
+                    std::vector<vec3> d_points, d_normals;
+                    std::vector<vec2> d_texcoords;
+
+                    /**
+                     * Tessellator can actually eliminate duplicate vertices, but I want to updated only the texcoord
+                     * buffer outside (using the "f:triangle_range"). This will be easier if each triangle has
+                     * exact 3 txcoords, that is why the "tessellator.reset()"
+                     */
+                    Tessellator tessellator;
                     for (auto face : model->faces()) {
+                        tessellator.reset();
+
                         tessellator.begin_polygon(model->compute_face_normal(face));
                         tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                         tessellator.begin_contour();
@@ -301,29 +306,23 @@ namespace easy3d {
                         std::size_t num = tessellator.num_elements_in_polygon();
                         triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
                         count_triangles += num;
-                    }
 
-                    const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
-                    std::vector<vec3> d_points, d_normals;
-                    std::vector<vec2> d_texcoords;
-                    d_points.reserve(vts.size());
-                    d_normals.reserve(vts.size());
-                    d_texcoords.reserve(vts.size());
-                    for (auto v :vts) {
-                        std::size_t offset = 0;
-                        d_points.emplace_back(v->data() + offset);
-                        offset += 3;
-                        d_normals.emplace_back(v->data() + offset);
-                        offset += 3;
-                        d_texcoords.emplace_back(v->data() + offset);
+                        const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
+                        const auto& indices = tessellator.elements();
+                        for (const auto& tri : indices) {
+                            for (unsigned char i=0; i<3; ++i) {
+                                Tessellator::Vertex *v = vts[tri[i]];
+                                d_points.emplace_back(v->data());
+                                d_normals.emplace_back(v->data() + 3);
+                                d_texcoords.emplace_back(v->data() + 6);
+                            }
+                        }
                     }
-
-                    const auto &d_indices = tessellator.elements();
 
                     drawable->update_vertex_buffer(d_points);
-                    drawable->update_element_buffer(d_indices);
                     drawable->update_normal_buffer(d_normals);
                     drawable->update_texcoord_buffer(d_texcoords);
+                    drawable->disable_element_buffer();
 
                     DLOG(INFO) << "num of vertices in model/sent to GPU: " << model->n_vertices() << "/"
                                << d_points.size();
