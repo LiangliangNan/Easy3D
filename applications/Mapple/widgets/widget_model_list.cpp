@@ -10,6 +10,9 @@
 #include <easy3d/algo/surface_mesh_components.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/walk_through.h>
+#include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/drawable_lines.h>
+#include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/util/file_system.h>
 
 #include <QMenu>
@@ -19,13 +22,11 @@
 #include <QMouseEvent>
 
 
-
 using namespace easy3d;
-
 
 class ModelItem : public QTreeWidgetItem {
 public:
-    ModelItem(QTreeWidget *parent) : QTreeWidgetItem(parent) {
+    ModelItem(QTreeWidget *parent, Model *m) : QTreeWidgetItem(parent), model_(m) {
         for (int i = 0; i < parent->columnCount(); ++i)
             QTreeWidgetItem::setTextAlignment(i, Qt::AlignLeft);
     }
@@ -33,8 +34,6 @@ public:
     ~ModelItem() {}
 
     Model *model() { return model_; }
-
-    void setModel(Model *model) { model_ = model; }
 
     void setIcon(int column) {
         if (dynamic_cast<SurfaceMesh *>(model())) {
@@ -56,7 +55,6 @@ public:
     void setVisibilityIcon(int column, bool visible) {
         static QIcon iconShow(QString::fromUtf8(":/resources/icons/show.png"));
         static QIcon iconHide(QString::fromUtf8(":/resources/icons/hide.png"));
-
         if (visible)
             QTreeWidgetItem::setIcon(column, iconShow);
         else {
@@ -76,6 +74,33 @@ public:
 private:
     Model *model_;
 };
+
+
+class DrawableItem : public QTreeWidgetItem {
+public:
+    DrawableItem(ModelItem *parent, Drawable* d) : QTreeWidgetItem(parent), drawable_(d) {
+        for (int i = 0; i < parent->columnCount(); ++i)
+            QTreeWidgetItem::setTextAlignment(i, Qt::AlignLeft);
+    }
+
+    ~DrawableItem() {}
+
+    Drawable *drawable() { return drawable_; }
+
+    void setVisibilityIcon(int column, bool visible) {
+        static QIcon iconShow(QString::fromUtf8(":/resources/icons/show.png"));
+        static QIcon iconHide(QString::fromUtf8(":/resources/icons/hide.png"));
+        if (visible)
+            QTreeWidgetItem::setIcon(column, iconShow);
+        else {
+            QTreeWidgetItem::setIcon(column, iconHide);
+        }
+    }
+
+private:
+    Drawable *drawable_;
+};
+
 
 
 WidgetModelList::WidgetModelList(QWidget *parent)
@@ -230,10 +255,9 @@ void WidgetModelList::updateModelList() {
         const std::string &name = file_system::base_name(model->name());
         ModelItem *item = dynamic_cast<ModelItem *>(this->topLevelItem(i));
         if (!item) {
-            item = new ModelItem(this);
+            item = new ModelItem(this, model);
             addTopLevelItem(item);
         }
-        item->setModel(model);
 
         item->setData(0, Qt::DisplayRole, i + 1);
         item->setIcon(1);
@@ -244,6 +268,32 @@ void WidgetModelList::updateModelList() {
 
         if (model == active_model)
             setCurrentItem(item);
+#if 1
+        const auto& children = item->takeChildren();
+        for (auto c : children)
+            delete c;
+
+        for (auto d : model->renderer()->points_drawables()) {
+            auto d_item = new DrawableItem(item, d);
+            d_item->setVisibilityIcon(2, d->is_visible());
+            d_item->setData(3, Qt::DisplayRole, QString::fromStdString(d->name()));
+            item->addChild(d_item);
+        }
+
+        for (auto d : model->renderer()->lines_drawables()) {
+            auto d_item = new DrawableItem(item, d);
+            d_item->setVisibilityIcon(2, d->is_visible());
+            d_item->setData(3, Qt::DisplayRole, QString::fromStdString(d->name()));
+            item->addChild(d_item);
+        }
+
+        for (auto d : model->renderer()->triangles_drawables()) {
+            auto d_item = new DrawableItem(item, d);
+            d_item->setVisibilityIcon(2, d->is_visible());
+            d_item->setData(3, Qt::DisplayRole, QString::fromStdString(d->name()));
+            item->addChild(d_item);
+        }
+#endif
     }
 
     // remove redundant items
@@ -497,27 +547,35 @@ void WidgetModelList::modelItemSelectionChanged() {
 
 
 void WidgetModelList::modelItemPressed(QTreeWidgetItem *current, int column) {
-    ModelItem *current_item = dynamic_cast<ModelItem *>(current);
-    if (!current_item)
-        return;
+    if (dynamic_cast<ModelItem *>(current)) {
+        ModelItem *current_item = dynamic_cast<ModelItem *>(current);
+        int num = topLevelItemCount();
+        for (int i = 0; i < num; ++i) {
+            ModelItem *item = dynamic_cast<ModelItem *>(topLevelItem(i));
+            item->setStatus(item == current_item);
+            item->setSelected(item->model()->renderer()->is_selected());
+        }
+        viewer()->setCurrentModel(current_item->model());
 
-    int num = topLevelItemCount();
-    for (int i = 0; i < num; ++i) {
-        ModelItem *item = dynamic_cast<ModelItem *>(topLevelItem(i));
-        item->setStatus(item == current_item);
-        item->setSelected(item->model()->renderer()->is_selected());
+        if (column == 2 && !selected_only_) {
+            Model *model = current_item->model();
+            bool visible = !model->renderer()->is_visible();
+            current_item->setVisibilityIcon(2, visible);
+            model->renderer()->set_visible(visible);
+        }
+
+        if (auto_focus_)
+            viewer()->fitScreen(current_item->model());
     }
-    viewer()->setCurrentModel(current_item->model());
-
-    if (column == 2 && !selected_only_) {
-        Model *model = current_item->model();
-        bool visible = !model->renderer()->is_visible();
-        current_item->setVisibilityIcon(2, visible);
-        model->renderer()->set_visible(visible);
+    else if (dynamic_cast<DrawableItem *>(current)) {
+        DrawableItem *drawable_item = dynamic_cast<DrawableItem *>(current);
+        if (column == 2) {
+            Drawable *d = drawable_item->drawable();
+            bool visible = !d->is_visible();
+            d->set_visible(visible);
+            drawable_item->setVisibilityIcon(2, visible);
+        }
     }
-
-    if (auto_focus_)
-        viewer()->fitScreen(current_item->model());
 
     viewer()->update();
     mainWindow_->updateUi();
