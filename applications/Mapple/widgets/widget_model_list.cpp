@@ -146,6 +146,22 @@ PaintCanvas *WidgetModelList::viewer() {
 }
 
 
+void WidgetModelList::updateDrawableVisibility(easy3d::Drawable *d) {
+    int num = topLevelItemCount();
+    for (int i=0; i<num; ++i) {
+        auto item = dynamic_cast<ModelItem *>(topLevelItem(i));
+        if (item->model() == d->model()) {
+            int num_children = item->childCount();
+            for (int j=0; j<num_children; ++j) {
+                auto d_item = dynamic_cast<DrawableItem *>(item->child(j));
+                if (d_item->drawable() == d)
+                    d_item->setVisibilityIcon(2, d->is_visible());
+            }
+        }
+    }
+}
+
+
 void WidgetModelList::prepareContextMenu(QMenu *menu) {
     menu->clear();  // I want to customize the menu list
 
@@ -575,6 +591,7 @@ void WidgetModelList::modelItemPressed(QTreeWidgetItem *current, int column) {
             d->set_visible(visible);
             drawable_item->setVisibilityIcon(2, visible);
         }
+        mainWindow_->activeDrawableChanged(drawable_item->drawable());
     }
 
     viewer()->update();

@@ -9,6 +9,7 @@
 namespace easy3d {
     class Model;
     class Texture;
+    class Drawable;
 }
 
 class PaintCanvas;
@@ -24,6 +25,8 @@ public:
 
     // update the panel to be consistent with the drawable's rendering parameters
     virtual void updatePanel() = 0;
+
+    void setActiveDrawable(easy3d::Drawable* d);
 
 public slots:
 

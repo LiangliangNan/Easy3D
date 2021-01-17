@@ -9,6 +9,7 @@
 
 #include "main_window.h"
 #include "paint_canvas.h"
+#include "widget_model_list.h"
 
 
 using namespace easy3d;
@@ -54,6 +55,16 @@ WidgetDrawable::~WidgetDrawable() {
 }
 
 
+void WidgetDrawable::setActiveDrawable(easy3d::Drawable* d) {
+    if (!d || !d->model()) {
+        LOG(ERROR) << "drawable (or model) is null";
+        return;
+    }
+
+    active_drawable_[d->model()] = d->name();
+}
+
+
 Texture *WidgetDrawable::colormapTexture(int idx, bool discrete, int num_stripes) const {
     if (idx >= colormaps_.size())
         return nullptr;
@@ -72,7 +83,9 @@ Texture *WidgetDrawable::colormapTexture(int idx, bool discrete, int num_stripes
 
 
 void WidgetDrawable::setDrawableVisible(bool b) {
-    drawable()->set_visible(b);
+    auto d = drawable();
+    d->set_visible(b);
+    window_->widgetModelList()->updateDrawableVisibility(d);
     viewer_->update();
     disableUnavailableOptions();
 }

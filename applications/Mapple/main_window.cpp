@@ -561,6 +561,27 @@ void MainWindow::updateRenderingPanel() {
 }
 
 
+void MainWindow::activeDrawableChanged(Drawable* d) {
+    if (!d)
+        return;
+
+    switch (d->type()) {
+        case Drawable::DT_POINTS:
+            ui->toolBox->setCurrentWidget(ui->toolBoxPointsDrawable);
+            dynamic_cast<WidgetDrawable*>(widgetPointsDrawable_)->setActiveDrawable(d);
+            break;
+        case Drawable::DT_LINES:
+            ui->toolBox->setCurrentWidget(ui->toolBoxLinesDrawable);
+            dynamic_cast<WidgetDrawable*>(widgetLinesDrawable_)->setActiveDrawable(d);
+            break;
+        case Drawable::DT_TRIANGLES:
+            ui->toolBox->setCurrentWidget(ui->toolBoxTrianglesDrawable);
+            dynamic_cast<WidgetDrawable*>(widgetTrianglesDrawable_)->setActiveDrawable(d);
+            break;
+    }
+}
+
+
 void MainWindow::setCurrentFile(const QString &fileName)
 {
     QString dir = fileName.left(fileName.lastIndexOf("/"));
@@ -592,6 +613,11 @@ void MainWindow::setShowSelectedOnly(bool b) {
 void MainWindow::setPointUnderMouse(const QString &text) {
 	labelPointUnderMouse_->setText(text);
     labelPointUnderMouse_->update();
+}
+
+
+WidgetModelList* MainWindow::widgetModelList() const {
+    return ui->treeWidgetModels;
 }
 
 
