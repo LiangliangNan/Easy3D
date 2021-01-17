@@ -58,6 +58,7 @@ Texture *WidgetDrawable::colormapTexture(int idx, bool discrete, int num_stripes
     if (idx >= colormaps_.size())
         return nullptr;
 
+    viewer_->makeCurrent();
     if (colormaps_[idx].name.find("random") != std::string::npos)
         return TextureManager::request(num_stripes, 256/num_stripes, Texture::CLAMP_TO_EDGE, Texture::LINEAR);
     else {
@@ -66,6 +67,7 @@ Texture *WidgetDrawable::colormapTexture(int idx, bool discrete, int num_stripes
         else
             return TextureManager::request(colormaps_[idx].file, Texture::CLAMP_TO_EDGE, Texture::LINEAR);
     }
+    viewer_->doneCurrent();
 }
 
 

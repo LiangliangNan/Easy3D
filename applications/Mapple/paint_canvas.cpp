@@ -1296,7 +1296,7 @@ void PaintCanvas::invertSelection() {
                                                                                             0.5f);
         }
         d->update_texcoord_buffer(texcoords);
-        d->set_coloring(State::COLOR_PROPERTY, State::FACE, "f:select");
+        d->set_coloring(State::SCALAR_FIELD, State::FACE, "f:select");
     } else if (dynamic_cast<PointCloud*>(currentModel())) {
         auto cloud = dynamic_cast<PointCloud*>(currentModel());
         auto d = cloud->renderer()->get_points_drawable("vertices");
@@ -1317,10 +1317,10 @@ void PaintCanvas::invertSelection() {
         for (auto v : cloud->vertices())
             texcoords[v.idx()] = vec2(selected[v] ? 1.0f : 0.4f, 0.5f);
         d->update_texcoord_buffer(texcoords);
-        d->set_coloring(State::COLOR_PROPERTY, State::VERTEX, "v:select");
+        d->set_coloring(State::SCALAR_FIELD, State::VERTEX, "v:select");
     }
     doneCurrent();
-    
+
     window_->updateUi();
     update();
 }
