@@ -102,7 +102,7 @@ namespace easy3d {
          */
         static void release(const Texture *texture);
 
-        // destroy all textures.
+        /// destroy all textures.
         static void terminate();
 
     private:
