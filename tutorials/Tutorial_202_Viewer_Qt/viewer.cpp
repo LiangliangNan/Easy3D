@@ -707,6 +707,8 @@ void ViewerQt::deleteModel(Model *model) {
     if (pos != models_.end()) {
         const std::string name = model->name();
         models_.erase(pos);
+        delete model->renderer();
+        delete model->manipulator();
         delete model;
         model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
 
