@@ -112,8 +112,8 @@ bool MainWindow::onOpen() {
                 this,
                 "Open file(s)",
                 curDataDirectory_,
-                "Supported formats (*.ply *.obj *.off *.stl *.smesh *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx *.plm *.pm *.mesh)\n"
-                "Surface Mesh (*.ply *.obj *.off *.stl *.smesh)\n"
+                "Supported formats (*.ply *.obj *.off *.stl *.sm *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx *.plm *.pm *.mesh)\n"
+                "Surface Mesh (*.ply *.obj *.off *.stl *.sm)\n"
                 "Point Cloud (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx)\n"
                 "Polyhedral Mesh (*.plm *.pm *.mesh)\n"
                 "All formats (*.*)"
@@ -158,8 +158,8 @@ bool MainWindow::onSave() {
                 this,
                 "Open file(s)",
                 QString::fromStdString(default_file_name),
-                "Supported formats (*.ply *.obj *.off *.stl *.smesh *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.plm *.pm *.mesh)\n"
-                "Surface Mesh (*.ply *.obj *.off *.stl *.smesh)\n"
+                "Supported formats (*.ply *.obj *.off *.stl *.sm *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.plm *.pm *.mesh)\n"
+                "Surface Mesh (*.ply *.obj *.off *.stl *.sm)\n"
                 "Point Cloud (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz *.vg *.bvg)\n"
                 "Polyhedral Mesh (*.plm *.pm *.mesh)\n"
                 "All formats (*.*)"
@@ -207,7 +207,7 @@ Model* MainWindow::open(const std::string& file_name) {
         is_ply_mesh = (io::PlyReader::num_instances(file_name, "face") > 0);
 
     Model* model = nullptr;
-    if ((ext == "ply" && is_ply_mesh) || ext == "obj" || ext == "off" || ext == "stl" || ext == "smesh" || ext == "plg") { // mesh
+    if ((ext == "ply" && is_ply_mesh) || ext == "obj" || ext == "off" || ext == "stl" || ext == "sm" || ext == "plg") { // mesh
         model = SurfaceMeshIO::load(file_name);
     }
     else if (ext == "ply" && io::PlyReader::num_instances(file_name, "edge") > 0) {
