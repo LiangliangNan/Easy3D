@@ -357,6 +357,8 @@ namespace lines_details {
                 schemes.push_back(scalar_prefix + QString::fromStdString(name));
             else if (model->template get_edge_property<char>(name))
                 schemes.push_back(scalar_prefix + QString::fromStdString(name));
+            else if (model->template get_edge_property<bool>(name) && name == "e:select")
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
         }
         // scalar fields defined on vertices
         for (const auto &name : model->vertex_properties()) {

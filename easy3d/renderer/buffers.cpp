@@ -66,6 +66,16 @@ namespace easy3d {
                 const std::size_t index_upper = n - n * dummy_upper_percent;
                 min_value = values[index_lower];
                 max_value = values[index_upper];
+                if (min_value == max_value) { // if so, we cannot clamp
+                    min_value = values.front();
+                    max_value = values.back();
+                }
+
+                // special treatment for boolean scalar fields if the values are the same
+                if (min_value == max_value && typeid(FT) == typeid(bool)) {
+                    min_value = 0.0f;
+                    max_value = 1.0f;
+                }
 
                 const int lower = static_cast<int>(dummy_lower_percent * 100);
                 const int upper = static_cast<int>(dummy_upper_percent * 100);

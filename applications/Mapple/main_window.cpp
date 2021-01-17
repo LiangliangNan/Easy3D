@@ -445,8 +445,8 @@ bool MainWindow::onSave() {
                 this,
                 "Open file(s)",
                 QString::fromStdString(default_file_name),
-                "Supported formats (*.ply *.obj *.off *.stl *.smesh *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.plm *.pm *.mesh)\n"
-                "Surface Mesh (*.ply *.obj *.off *.stl *.smesh)\n"
+                "Supported formats (*.ply *.obj *.off *.stl *.sm *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.plm *.pm *.mesh)\n"
+                "Surface Mesh (*.ply *.obj *.off *.stl *.sm)\n"
                 "Point Cloud (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz *.vg *.bvg)\n"
                 "Polyhedral Mesh (*.plm *.pm *.mesh)\n"
                 "All formats (*.*)"
@@ -498,7 +498,7 @@ Model* MainWindow::open(const std::string& file_name) {
         is_ply_mesh = (io::PlyReader::num_instances(file_name, "face") > 0);
 
     Model* model = nullptr;
-    if ((ext == "ply" && is_ply_mesh) || ext == "obj" || ext == "off" || ext == "stl" || ext == "smesh" || ext == "plg" || ext == "trilist") { // mesh
+    if ((ext == "ply" && is_ply_mesh) || ext == "obj" || ext == "off" || ext == "stl" || ext == "sm" || ext == "plg" || ext == "trilist") { // mesh
         model = SurfaceMeshIO::load(file_name);
     }
     else if (ext == "ply" && io::PlyReader::num_instances(file_name, "edge") > 0) {
@@ -971,71 +971,70 @@ void MainWindow::createActionsForPolyMeshMenu() {
 
 
 void MainWindow::operationModeChanged(QAction* act) {
-    auto uniform_color_to_per_face_color = [this](SurfaceMesh* mesh) -> void {
-        LOG_IF(!mesh->is_triangle_mesh(), WARNING) << "current implementation only supports primitive selection for triangle meshes";
+    auto prepare_selection = [this](Model *model) -> void {
+        if (dynamic_cast<PointCloud *>(model)) {
+            PointCloud *cloud = dynamic_cast<PointCloud *>(model);
+            auto d = cloud->renderer()->get_points_drawable("vertices");
+            if (d->coloring_method() != easy3d::State::SCALAR_FIELD || d->property_name() != "v:select") {
+                auto select = cloud->get_vertex_property<bool>("v:select");
+                if (!select)
+                    cloud->add_vertex_property<bool>("v:select", false);
+                d->set_coloring(State::SCALAR_FIELD, State::VERTEX, "v:select");
+                d->update();
+            }
+        } else if (dynamic_cast<SurfaceMesh *>(model)) {
+            SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
+            LOG_IF(!mesh->is_triangle_mesh(), WARNING)
+                << "current implementation only supports primitive selection for triangle meshes";
 
-        auto d = mesh->renderer()->get_triangles_drawable("faces");
-        if (d->coloring_method() != easy3d::State::COLOR_PROPERTY) {
-            auto fcolors = mesh->get_face_property<vec3>("f:color");
-            if (!fcolors)
-                mesh->add_face_property<vec3>("f:color", d->color());
-            d->set_coloring(State::COLOR_PROPERTY, State::FACE, "f:color");
-            d->update();
-            viewer()->update();
-            updateUi();
+            auto d = mesh->renderer()->get_triangles_drawable("faces");
+            if (d->coloring_method() != easy3d::State::SCALAR_FIELD || d->property_name() != "f:select") {
+                auto select = mesh->get_face_property<bool>("f:select");
+                if (!select)
+                    mesh->add_face_property<bool>("f:select", false);
+                d->set_coloring(State::SCALAR_FIELD, State::FACE, "f:select");
+                d->update();
+            }
         }
+        viewer()->update();
+        updateUi();
     };
 
-    auto uniform_color_to_per_vertex_color = [this](PointCloud* cloud) -> void {
-        auto d = cloud->renderer()->get_points_drawable("vertices");
-        if (d->coloring_method() != easy3d::State::COLOR_PROPERTY) {
-            auto vcolors = cloud->get_vertex_property<vec3>("v:color");
-            if (!vcolors)
-                cloud->add_vertex_property<vec3>("v:color", d->color());
-            d->set_coloring(State::COLOR_PROPERTY, State::VERTEX, "v:color");
-            d->update();
-            viewer()->update();
-            updateUi();
-        }
-    };
 
     if (act == ui->actionCameraManipulation) {
         viewer()->tool_manager()->set_tool(tools::ToolManager::EMPTY_TOOL);
+        return;
     }
-    else if (act == ui->actionSelectClick) {
-        if (dynamic_cast<SurfaceMesh*>(viewer()->currentModel())) {
+
+    if (act == ui->actionSelectClick) {
+        if (dynamic_cast<SurfaceMesh *>(viewer()->currentModel())) {
             viewer()->tool_manager()->set_tool(tools::ToolManager::SELECT_SURFACE_MESH_FACE_CLICK_TOOL);
-            uniform_color_to_per_face_color(dynamic_cast<SurfaceMesh *>(viewer()->currentModel()));
-        }
-        else if (dynamic_cast<PointCloud*>(viewer()->currentModel())) {
-            uniform_color_to_per_vertex_color(dynamic_cast<PointCloud *>(viewer()->currentModel()));
+            prepare_selection(viewer()->currentModel());
         }
     }
     else if (act == ui->actionSelectRect) {
-        if (dynamic_cast<SurfaceMesh*>(viewer()->currentModel())) {
+        if (dynamic_cast<SurfaceMesh *>(viewer()->currentModel())) {
             viewer()->tool_manager()->set_tool(tools::ToolManager::SELECT_SURFACE_MESH_FACE_RECT_TOOL);
-            uniform_color_to_per_face_color(dynamic_cast<SurfaceMesh *>(viewer()->currentModel()));
+            prepare_selection(viewer()->currentModel());
         }
-        else if (dynamic_cast<PointCloud*>(viewer()->currentModel())) {
+        else if (dynamic_cast<PointCloud *>(viewer()->currentModel())) {
             viewer()->tool_manager()->set_tool(tools::ToolManager::SELECT_POINT_CLOUD_RECT_TOOL);
-            uniform_color_to_per_vertex_color(dynamic_cast<PointCloud*>(viewer()->currentModel()));
+            prepare_selection(viewer()->currentModel());
         }
     }
     else if (act == ui->actionSelectLasso) {
-        if (dynamic_cast<SurfaceMesh*>(viewer()->currentModel())) {
+        if (dynamic_cast<SurfaceMesh *>(viewer()->currentModel())) {
             viewer()->tool_manager()->set_tool(tools::ToolManager::SELECT_SURFACE_MESH_FACE_LASSO_TOOL);
-            uniform_color_to_per_face_color(dynamic_cast<SurfaceMesh *>(viewer()->currentModel()));
+            prepare_selection(viewer()->currentModel());
         }
-        else if (dynamic_cast<PointCloud*>(viewer()->currentModel())) {
+        else if (dynamic_cast<PointCloud *>(viewer()->currentModel())) {
             viewer()->tool_manager()->set_tool(tools::ToolManager::SELECT_POINT_CLOUD_LASSO_TOOL);
-            uniform_color_to_per_vertex_color(dynamic_cast<PointCloud *>(viewer()->currentModel()));
+            prepare_selection(viewer()->currentModel());
         }
     }
 
     if (viewer()->tool_manager()->current_tool())
         statusBar()->showMessage(QString::fromStdString(viewer()->tool_manager()->current_tool()->instruction()), 2000);
-
-    viewer()->update();
 }
 
 

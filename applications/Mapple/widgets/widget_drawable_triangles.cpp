@@ -294,6 +294,8 @@ namespace triangles_details {
                 schemes.push_back(scalar_prefix + QString::fromStdString(name));
             else if (model->template get_face_property<unsigned char>(name))
                 schemes.push_back(scalar_prefix + QString::fromStdString(name));
+            else if (model->template get_face_property<bool>(name) && name == "f:select")
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
         }
 
         // scalar fields defined on vertices

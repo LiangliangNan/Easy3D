@@ -164,6 +164,8 @@ namespace points_details {
                 schemes.push_back(scalar_prefix + QString::fromStdString(name));
             else if (model->template get_vertex_property<unsigned char>(name))
                 schemes.push_back(scalar_prefix + QString::fromStdString(name));
+            else if (model->template get_vertex_property<bool>(name) && name == "v:select")
+                schemes.push_back(scalar_prefix + QString::fromStdString(name));
         }
     }
 

@@ -44,8 +44,6 @@ namespace easy3d {
         public:
             ToolSurfaceMeshFaceSelection(ToolManager *mgr);
             virtual ~ToolSurfaceMeshFaceSelection() {}
-
-            void update_render_buffer(SurfaceMesh* mesh) const;
         };
 
         // -------------------- Click Select ----------------------

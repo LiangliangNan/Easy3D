@@ -46,22 +46,6 @@ namespace easy3d {
                 : Tool(mgr) {
         }
 
-        void ToolPointCloudSelection::update_render_buffer(PointCloud* cloud) const {
-            auto vseleced = cloud->vertex_property<bool>("v:select");
-            auto d = cloud->renderer()->get_points_drawable("vertices");
-
-            // update vertex color attributes
-            auto vcolors = cloud->get_vertex_property<vec3>("v:color");
-            if (!vcolors)
-                vcolors = cloud->add_vertex_property<vec3>("v:color", d->color());
-            for (auto v : cloud->vertices())
-                vcolors[v] = vseleced[v] ? setting::selected_color : d->color();
-
-            // update the drawable's color buffer
-            d->set_coloring(State::COLOR_PROPERTY, State::VERTEX, "v:color");
-            d->update_color_buffer(vcolors.vector());
-        }
-
         // -------------------- Rect Select ----------------------
 
         ToolPointCloudSelectionRect::ToolPointCloudSelectionRect(ToolManager *mgr, PointCloudPicker *picker, SelectMode mode)
@@ -83,7 +67,11 @@ namespace easy3d {
                 auto cloud = dynamic_cast<PointCloud*>(model);
                 if (cloud) {
                     picker_->pick_vertices(cloud, Rect(start_, vec2(x, y)), select_mode_ != SM_SELECT);
-                    update_render_buffer(cloud);
+                    auto d = cloud->renderer()->get_points_drawable("vertices");
+                    if (d)
+                        d->update();
+                    else
+                        LOG(WARNING) << "drawable 'vertices' doesn't exist for visualization";
                 }
             }
         }
@@ -152,7 +140,11 @@ namespace easy3d {
                 auto cloud = dynamic_cast<PointCloud*>(model);
                 if (cloud) {
                     picker_->pick_vertices(cloud, lasso_, select_mode_ != SM_SELECT);
-                    update_render_buffer(cloud);
+                    auto d = cloud->renderer()->get_points_drawable("vertices");
+                    if (d)
+                        d->update();
+                    else
+                        LOG(WARNING) << "drawable 'vertices' doesn't exist for visualization";
                 }
             }
             lasso_.clear();

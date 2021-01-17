@@ -43,8 +43,6 @@ namespace easy3d {
             ToolPointCloudSelection(ToolManager *mgr);
             virtual ~ToolPointCloudSelection() {}
             std::string name() const { return "PointCloudSelect"; }
-
-            void update_render_buffer(PointCloud* cloud) const;
         };
 
         // -------------------- Rect Select ----------------------
