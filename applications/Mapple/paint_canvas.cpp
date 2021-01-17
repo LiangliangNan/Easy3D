@@ -824,7 +824,11 @@ void PaintCanvas::deleteModel(Model *model) {
     if (pos != models_.end()) {
         const std::string name = model->name();
         models_.erase(pos);
+        makeCurrent();
+        delete model->renderer();
+        delete model->manipulator();
         delete model;
+        doneCurrent();
         model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
         LOG(INFO) << "model deleted: " << name;
     } else

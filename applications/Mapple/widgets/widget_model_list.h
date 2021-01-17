@@ -23,8 +23,6 @@ public:
     // single model
     void addModel(easy3d::Model *obj, bool make_current);
 
-    void deleteModel(easy3d::Model *obj, bool fit);
-
     void mergeModels(const std::vector<easy3d::Model *> &objs);
 
     void decomposeModel(easy3d::Model *obj);

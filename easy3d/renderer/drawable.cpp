@@ -249,11 +249,15 @@ namespace easy3d {
             return nullptr;
     }
 
-    /**
-     * \brief Gets the manipulator attached to this drawable.
-     * \details If the drawable is part of a model, it returns the model's manipulator.
-     */
-    const Manipulator* Drawable::manipulator() const { return manipulator_; }
+
+    const Manipulator* Drawable::manipulator() const {
+        if (manipulator_)
+            return manipulator_;
+        else if (model_)
+            return model_->manipulator();
+        else
+            return nullptr;
+    }
 
 
     mat4 Drawable::manipulated_matrix() const {

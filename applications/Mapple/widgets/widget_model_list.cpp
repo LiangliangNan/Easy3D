@@ -62,15 +62,6 @@ public:
         }
     }
 
-    void setStatus(bool is_active) {
-        for (int i = 0; i < columnCount(); ++i) {
-            if (is_active)
-                QTreeWidgetItem::setBackground(i, QColor(255, 177, 255));
-            else
-                QTreeWidgetItem::setBackground(i, QBrush());
-        }
-    }
-
 private:
     Model *model_;
 };
@@ -263,6 +254,9 @@ void WidgetModelList::updateModelList() {
     disconnect(this, SIGNAL(itemPressed(QTreeWidgetItem * , int)), this, SLOT(modelItemPressed(QTreeWidgetItem * , int)));
     disconnect(this, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
 
+    // clear everything and creat the list from scratch
+    clear();
+
     Model *active_model = viewer()->currentModel();
 
     const std::vector<Model *> &models = viewer()->models();
@@ -280,15 +274,11 @@ void WidgetModelList::updateModelList() {
         item->setVisibilityIcon(2, model->renderer()->is_visible());
 
         item->setData(3, Qt::DisplayRole, QString::fromStdString(name));
-		item->setStatus(model == active_model);
 
         if (model == active_model)
             setCurrentItem(item);
-#if 1
-        const auto& children = item->takeChildren();
-        for (auto c : children)
-            delete c;
 
+#if 1   // add the drawables as children
         for (auto d : model->renderer()->points_drawables()) {
             auto d_item = new DrawableItem(item, d);
             d_item->setVisibilityIcon(2, d->is_visible());
@@ -311,21 +301,6 @@ void WidgetModelList::updateModelList() {
         }
 #endif
     }
-
-    // remove redundant items
-    if (topLevelItemCount() > models.size()) {
-        int delta = int(topLevelItemCount() - models.size());
-        for (int i = 0; i < delta; ++i) {
-            int idx = topLevelItemCount() - 1;
-            if (idx >= 0) {
-                QTreeWidgetItem *item = takeTopLevelItem(idx);
-                delete item;
-            } else
-                LOG(FATAL) << "should not have reached here";
-        }
-    }
-
-    assert(topLevelItemCount() == models.size());
 
     if (viewer()->currentModel()) {
         const std::string &name = viewer()->currentModel()->name();
@@ -505,9 +480,8 @@ void WidgetModelList::deleteSelected() {
 	if (selected_only_)
 		hideOtherModels(current_model);
 
-    //	viewer()->configureManipulation();
-
-    mainWindow_->updateUi();
+    updateModelList();
+    mainWindow_->updateRenderingPanel();
 
 	if (auto_focus_)
 		viewer()->fitScreen();
@@ -525,17 +499,13 @@ void WidgetModelList::currentModelItemChanged(QTreeWidgetItem *current, QTreeWid
 	if (!current_item)
 		return;
 
-    current_item->setStatus(true);
-    if (previous_item)
-        previous_item->setStatus(false);
-
 	Model* model = current_item->model();
 	viewer()->setCurrentModel(model);
 
 	if (selected_only_)
 		hideOtherModels(model);
 
-    mainWindow_->updateUi();
+    mainWindow_->updateRenderingPanel();
 
     if (auto_focus_)
         viewer()->fitScreen(model);
@@ -550,7 +520,6 @@ void WidgetModelList::modelItemSelectionChanged() {
     int num = topLevelItemCount();
     for (int i = 0; i < num; ++i) {
         ModelItem *item = dynamic_cast<ModelItem *>(topLevelItem(i));
-        item->setStatus(item->model() == active_model);
 
         // don't allow changing selection for camera path creation
         if (viewer()->walkThrough()->status() == easy3d::WalkThrough::STOPPED && viewer()->isSelectModelEnabled())
@@ -568,7 +537,6 @@ void WidgetModelList::modelItemPressed(QTreeWidgetItem *current, int column) {
         int num = topLevelItemCount();
         for (int i = 0; i < num; ++i) {
             ModelItem *item = dynamic_cast<ModelItem *>(topLevelItem(i));
-            item->setStatus(item == current_item);
             item->setSelected(item->model()->renderer()->is_selected());
         }
         viewer()->setCurrentModel(current_item->model());
@@ -592,10 +560,20 @@ void WidgetModelList::modelItemPressed(QTreeWidgetItem *current, int column) {
             drawable_item->setVisibilityIcon(2, visible);
         }
         mainWindow_->activeDrawableChanged(drawable_item->drawable());
+
+        disconnect(this, SIGNAL(itemSelectionChanged()), this, SLOT(modelItemSelectionChanged()));
+        disconnect(this, SIGNAL(currentItemChanged(QTreeWidgetItem * , QTreeWidgetItem * )), this,
+                SLOT(currentModelItemChanged(QTreeWidgetItem * , QTreeWidgetItem * )));
+        ModelItem *model_item = dynamic_cast<ModelItem *>(drawable_item->parent());
+        viewer()->setCurrentModel(model_item->model());
+        model_item->setSelected(true);
+        connect(this, SIGNAL(itemSelectionChanged()), this, SLOT(modelItemSelectionChanged()));
+        connect(this, SIGNAL(currentItemChanged(QTreeWidgetItem * , QTreeWidgetItem * )), this,
+                SLOT(currentModelItemChanged(QTreeWidgetItem * , QTreeWidgetItem * )));
     }
 
     viewer()->update();
-    mainWindow_->updateUi();
+    mainWindow_->updateRenderingPanel();
 }
 
 
@@ -669,28 +647,10 @@ void WidgetModelList::addModel(Model *model, bool make_current) {
     if (selected_only_)
         hideOtherModels(current_model);
 
-    mainWindow_->updateUi();
+    updateModelList();
+    mainWindow_->updateRenderingPanel();
 
     viewer()->update();
-}
-
-
-void WidgetModelList::deleteModel(Model *model, bool fit) {
-    viewer()->deleteModel(model);
-    Model *active_model = viewer()->currentModel();
-    if (!active_model)  // no model exists
-        return;
-
-    if (selected_only_)
-        hideOtherModels(active_model);
-
-    mainWindow_->updateUi();
-    //viewer()->configureManipulation();
-
-    if (fit)
-        viewer()->fitScreen();
-    else
-        viewer()->update();
 }
 
 
@@ -758,9 +718,8 @@ void WidgetModelList::mergeModels(const std::vector<Model *> &models) {
 
 	// update display and ui
 	if (meshes.size() > 1 || clouds.size() > 1) {
-//		viewer()->configureManipulation();
 		updateModelList();
-		mainWindow_->updateUi();
+		mainWindow_->updateRenderingPanel();
         viewer()->update();
 	}
 }
@@ -795,8 +754,8 @@ void WidgetModelList::decomposeModel(Model *model) {
     // delete the original model
     viewer()->deleteModel(mesh);
     updateModelList();
-    mainWindow_->updateUi();
+    mainWindow_->updateRenderingPanel();
     viewer()->update();
 
-	LOG(INFO) << "model decomposed into " << components.size() << " parts" << std::endl;
+	LOG(INFO) << "model decomposed into " << components.size() << " parts";
 }
