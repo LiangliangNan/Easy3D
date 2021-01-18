@@ -842,11 +842,13 @@ void PaintCanvas::fitScreen(const easy3d::Model *model) {
         return;
 
     Box3 box;
-    if (model)
+    if (model && model->renderer()->is_visible())
         box = model->bounding_box(true);
     else {
-        for (auto m : models_)
+        for (auto m : models_) {
+            if (m->renderer()->is_visible())
             box.add_box(m->bounding_box(true));
+        }
     }
 
     if (box.is_valid()) {

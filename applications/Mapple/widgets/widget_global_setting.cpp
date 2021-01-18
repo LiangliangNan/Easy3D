@@ -2,6 +2,8 @@
 
 #include <QColorDialog>
 
+#include <easy3d/core/model.h>
+#include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/setting.h>
 #include <easy3d/renderer/soft_shadow.h>
 #include <easy3d/renderer/ambient_occlusion.h>
@@ -63,6 +65,7 @@ WidgetGlobalSetting::WidgetGlobalSetting(QWidget *parent)
 
     connect(ui->checkBoxClippingPlaneEnable, SIGNAL(toggled(bool)), this, SLOT(setEnableClippingPlane(bool)));
     connect(ui->checkBoxClippingPlaneVisible, SIGNAL(toggled(bool)), this, SLOT(setClippingPlaneVisible(bool)));
+    connect(ui->toolButtonRecenterClippingPlane, SIGNAL(clicked()), this, SLOT(recenterClippingPlane()));
     connect(ui->toolButtonClippingPlaneColor, SIGNAL(clicked()), this, SLOT(setClippingPlaneColor()));
     connect(ui->checkBoxCrossSectionEnable, SIGNAL(toggled(bool)), this, SLOT(setEnableCrossSection(bool)));
     connect(ui->doubleSpinBoxCrossSectionThickness, SIGNAL(valueChanged(double)), this, SLOT(setCrossSectionThickness(double)));
@@ -116,7 +119,7 @@ void WidgetGlobalSetting::setEnableClippingPlane(bool b) {
     if (b) {
         static bool init_size = false;
         if (!init_size) {
-            clippingPlane()->fit_scene(viewer_->camera()->sceneCenter(), viewer_->camera()->sceneRadius());
+            recenterClippingPlane();
             init_size = true;
         }
     }
@@ -134,6 +137,21 @@ void WidgetGlobalSetting::setClippingPlaneVisible(bool b) {
     clippingPlane()->set_visible(b);
     viewer_->update();
     disableUnavailableOptions();
+}
+
+
+void WidgetGlobalSetting::recenterClippingPlane() {
+    Box3 box;
+    for (auto m : viewer_->models()) {
+        if (m->renderer()->is_visible())
+            box.add_box(m->bounding_box(true));
+    }
+
+    if (box.is_valid()) {
+        clippingPlane()->fit_scene(box.center(), box.radius());
+        viewer_->camera()->setSceneBoundingBox(box.min_point(), box.max_point());
+        viewer_->update();
+    }
 }
 
 
@@ -179,7 +197,7 @@ void WidgetGlobalSetting::setSSAOAlgorithm(int algo) {
 //    viewer_->update();
 //
     viewer_->enableSsao(algo != 0);
-    if (algo != 0 && ui->checkBoxTransparency->isChecked()) // ssao and tranparency cannot co-exist
+    if (algo != 0 && ui->checkBoxTransparency->isChecked()) // ssao and transparency cannot co-exist
         ui->checkBoxTransparency->setChecked(false);
 
     std::cout << "TODO: shadow + SSAO" << std::endl;
@@ -223,6 +241,12 @@ void WidgetGlobalSetting::setSSAOSharpness(int v) {
 
 
 void WidgetGlobalSetting::setEyeDomeLighting(bool b) {
+    if (b && ui->checkBoxShadow->isChecked())
+        ui->checkBoxShadow->setChecked(false);  // shadow and EDL cannot co-exist
+
+    if (b && ui->checkBoxTransparency->isChecked())
+        ui->checkBoxTransparency->setChecked(false);  // transparency and EDL cannot co-exist
+        
     viewer_->enableEyeDomeLighting(b);
     viewer_->update();
 }
@@ -230,10 +254,13 @@ void WidgetGlobalSetting::setEyeDomeLighting(bool b) {
 
 void WidgetGlobalSetting::setTransparency(bool b) {
     if (b && ui->checkBoxShadow->isChecked())
-        ui->checkBoxShadow->setChecked(false);  // shadow and tranparency cannot co-exist
+        ui->checkBoxShadow->setChecked(false);  // shadow and transparency cannot co-exist
+
+    if (b && ui->checkBoxEyeDomeLighting->isChecked())
+        ui->checkBoxEyeDomeLighting->setChecked(false);  // transparency and EDL cannot co-exist
 
 //    if (b && (ui->comboBoxSSAOAlgorithm->currentIndex() != 0 || viewer_->ssao()->algorithm() != AmbientOcclusion_HBAO::SSAO_NONE))
-//        ui->comboBoxSSAOAlgorithm->setCurrentIndex(0);  // ssao and tranparency cannot co-exist
+//        ui->comboBoxSSAOAlgorithm->setCurrentIndex(0);  // ssao and transparency cannot co-exist
     if (b && ui->comboBoxSSAOAlgorithm->currentIndex() != 0)
         ui->comboBoxSSAOAlgorithm->setCurrentIndex(0);
 
@@ -245,7 +272,9 @@ void WidgetGlobalSetting::setTransparency(bool b) {
 
 void WidgetGlobalSetting::setShadow(bool b) {
     if (b && ui->checkBoxTransparency->isChecked())
-        ui->checkBoxTransparency->setChecked(false);  // shadow and tranparency cannot co-exist
+        ui->checkBoxTransparency->setChecked(false);   // shadow and transparency cannot co-exist
+    if (b && ui->checkBoxEyeDomeLighting->isChecked())
+        ui->checkBoxEyeDomeLighting->setChecked(false);  // shadow and EDL cannot co-exist
 
     std::cout << "TODO: shadow + SSAO" << std::endl;
     if (b && ui->comboBoxSSAOAlgorithm->currentIndex() != 0)
@@ -302,6 +331,7 @@ void WidgetGlobalSetting::disableUnavailableOptions() {
 
     // clipping plane
     visible = ui->checkBoxClippingPlaneEnable->isChecked();
+    ui->toolButtonRecenterClippingPlane->setEnabled(visible);
     ui->labelClippingPlaneVisible->setEnabled(visible);
     ui->checkBoxClippingPlaneVisible->setEnabled(visible);
     bool can_change_clipping_plane_color = visible && (ui->checkBoxClippingPlaneVisible->isChecked());

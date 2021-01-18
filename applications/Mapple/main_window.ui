@@ -383,7 +383,7 @@
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="toolBoxPageGlobalSetting">
+       <widget class="QWidget" name="toolBoxPageGlobal">
         <property name="geometry">
          <rect>
           <x>0</x>
@@ -397,7 +397,7 @@
           <normaloff>:/resources/icons/light.png</normaloff>:/resources/icons/light.png</iconset>
         </attribute>
         <attribute name="label">
-         <string>Global Setting</string>
+         <string>Global</string>
         </attribute>
         <layout class="QVBoxLayout" name="verticalLayout_7">
          <property name="leftMargin">

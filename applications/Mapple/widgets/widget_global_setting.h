@@ -27,6 +27,8 @@ private slots:
 
     void setClippingPlaneVisible(bool);
 
+    void recenterClippingPlane();
+
     void setClippingPlaneColor();
 
     void setEnableCrossSection(bool);

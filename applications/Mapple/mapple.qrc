@@ -51,6 +51,7 @@
         <file>resources/icons/drawable_lines.png</file>
         <file>resources/icons/tree.png</file>
         <file>resources/icons/walkthrough.png</file>
+        <file>resources/icons/recenter.png</file>
         <file>resources/icons/Mapple.ico</file>
         <file>resources/icons/Mapple.icns</file>
     </qresource>

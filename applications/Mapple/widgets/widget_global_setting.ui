@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>278</width>
-    <height>879</height>
+    <height>880</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -251,6 +251,38 @@
          </property>
          <property name="text">
           <string/>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="toolButtonRecenterClippingPlane">
+         <property name="minimumSize">
+          <size>
+           <width>20</width>
+           <height>20</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>20</width>
+           <height>20</height>
+          </size>
+         </property>
+         <property name="toolTip">
+          <string>Re-center the clipping plane</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="icon">
+          <iconset resource="../mapple.qrc">
+           <normaloff>:/resources/icons/recenter.png</normaloff>:/resources/icons/recenter.png</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>20</width>
+           <height>20</height>
+          </size>
          </property>
         </widget>
        </item>
@@ -865,6 +897,17 @@
   </customwidget>
  </customwidgets>
  <tabstops>
+  <tabstop>checkBoxGroundPlane</tabstop>
+  <tabstop>spinBoxGroundPlaneSize</tabstop>
+  <tabstop>checkBoxGroundPlaneTexture</tabstop>
+  <tabstop>toolButtonGroundPlaneTexture</tabstop>
+  <tabstop>checkBoxGroundPlaneConstraint</tabstop>
+  <tabstop>checkBoxClippingPlaneEnable</tabstop>
+  <tabstop>toolButtonRecenterClippingPlane</tabstop>
+  <tabstop>checkBoxClippingPlaneVisible</tabstop>
+  <tabstop>toolButtonClippingPlaneColor</tabstop>
+  <tabstop>checkBoxCrossSectionEnable</tabstop>
+  <tabstop>doubleSpinBoxCrossSectionThickness</tabstop>
   <tabstop>comboBoxSSAOAlgorithm</tabstop>
   <tabstop>horizontalSliderSSAORadius</tabstop>
   <tabstop>horizontalSliderSSAOIntensity</tabstop>
@@ -878,6 +921,8 @@
   <tabstop>horizontalSliderShadowSoftness</tabstop>
   <tabstop>horizontalSliderShadowDarkness</tabstop>
  </tabstops>
- <resources/>
+ <resources>
+  <include location="../mapple.qrc"/>
+ </resources>
  <connections/>
 </ui>
