@@ -116,6 +116,10 @@ namespace easy3d {
                 }
                 drawable->update_vertex_buffer(points.vector());
                 drawable->update_texcoord_buffer(d_texcoords);
+
+                auto normals = model->template get_vertex_property<vec3>("v:normal");
+                if (normals)
+                    drawable->update_normal_buffer(normals.vector());
             }
 
 
@@ -883,6 +887,10 @@ namespace easy3d {
                 auto points = model->template get_vertex_property<vec3>("v:point");
                 drawable->update_vertex_buffer(points.vector());
                 drawable->update_color_buffer(prop.vector());
+
+                auto normals = model->template get_vertex_property<vec3>("v:normal");
+                if (normals)
+                    drawable->update_normal_buffer(normals.vector());
             }
 
 
@@ -900,6 +908,10 @@ namespace easy3d {
                 auto points = model->template get_vertex_property<vec3>("v:point");
                 drawable->update_vertex_buffer(points.vector());
                 drawable->update_texcoord_buffer(prop.vector());
+
+                auto normals = model->template get_vertex_property<vec3>("v:normal");
+                if (normals)
+                    drawable->update_normal_buffer(normals.vector());
             }
 
 
@@ -1603,13 +1615,18 @@ namespace easy3d {
 
                 auto locked = model->get_vertex_property<bool>("v:locked");
                 if (locked) {
-                    auto prop = model->get_vertex_property<vec3>("v:point");
-                    std::vector<vec3> points;
+                    auto points = model->get_vertex_property<vec3>("v:point");
+                    auto normals = model->get_vertex_property<vec3>("v:normal");
+                    std::vector<vec3> d_points, d_normals;
                     for (auto v : model->vertices()) {
-                        if (locked[v])
-                            points.push_back(prop[v]);
+                        if (locked[v]) {
+                            d_points.push_back(points[v]);
+                            if (normals)
+                                d_normals.push_back(normals[v]);
+                        }
                     }
-                    drawable->update_vertex_buffer(points);
+                    drawable->update_vertex_buffer(d_points);
+                    drawable->update_vertex_buffer(d_normals);
                 }
             }
 
