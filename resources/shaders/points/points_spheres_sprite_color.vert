@@ -16,7 +16,6 @@ uniform float sphere_radius;
 uniform vec4 default_color;
 uniform bool per_vertex_color;
 
-uniform bool planeClippingDiscard = false;
 uniform bool clippingPlaneEnabled = false;
 uniform bool crossSectionEnabled = false;
 uniform vec4 clippingPlane0;
