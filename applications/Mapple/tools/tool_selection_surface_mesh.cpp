@@ -48,15 +48,14 @@ namespace easy3d {
 
         void ToolSurfaceMeshFaceSelection::update_render_buffer(SurfaceMesh* mesh) const {
             auto d = mesh->renderer()->get_triangles_drawable("faces");
-            if (d->coloring_method() != easy3d::State::SCALAR_FIELD || d->property_name() != "f:select") {
-                auto select = mesh->get_face_property<bool>("f:select");
-                if (!select)
+            if (d->coloring_method() != easy3d::State::SCALAR_FIELD || d->property_location() != State::FACE || d->property_name() != "f:select") {
+                if (!mesh->get_face_property<bool>("f:select"))
                     mesh->add_face_property<bool>("f:select", false);
                 d->set_coloring(State::SCALAR_FIELD, State::FACE, "f:select");
                 buffers::update(mesh, d);
             }
             else {
-                auto select = mesh->face_property<bool>("f:select");
+                auto select = mesh->face_property<bool>("f:select", false);
                 auto triangle_range = mesh->face_property<std::pair<int, int> >("f:triangle_range");
 
                 // update the drawable's texcoord buffer
