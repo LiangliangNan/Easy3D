@@ -306,7 +306,9 @@ void WidgetModelList::updateModelList() {
     connect(this, SIGNAL(itemPressed(QTreeWidgetItem * , int)), this, SLOT(modelItemPressed(QTreeWidgetItem * , int)));
     connect(this, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
 
+    mainWindow_->updateRenderingPanel();
     mainWindow_->updateWindowTitle();
+    mainWindow_->updateStatusBar();
 }
 
 
@@ -476,17 +478,20 @@ void WidgetModelList::deleteSelected() {
             viewer()->deleteModel(item->model());
 	}
 
+    updateModelList();
+
 	Model* current_model = viewer()->currentModel();
 	if (selected_only_)
 		hideOtherModels(current_model);
-
-    updateModelList();
-    mainWindow_->updateRenderingPanel();
 
 	if (auto_focus_)
 		viewer()->fitScreen();
 	else
 		viewer()->update();
+
+    mainWindow_->updateRenderingPanel();
+    mainWindow_->updateWindowTitle();
+    mainWindow_->updateStatusBar();
 }
 
 
@@ -505,12 +510,14 @@ void WidgetModelList::currentModelItemChanged(QTreeWidgetItem *current, QTreeWid
 	if (selected_only_)
 		hideOtherModels(model);
 
-    mainWindow_->updateRenderingPanel();
-
     if (auto_focus_)
         viewer()->fitScreen(model);
     else
         viewer()->update();
+
+    mainWindow_->updateRenderingPanel();
+    mainWindow_->updateWindowTitle();
+    mainWindow_->updateStatusBar();
 }
 
 
@@ -573,6 +580,7 @@ void WidgetModelList::modelItemPressed(QTreeWidgetItem *current, int column) {
 
     mainWindow_->updateRenderingPanel();
     mainWindow_->updateWindowTitle();
+    mainWindow_->updateStatusBar();
 }
 
 
