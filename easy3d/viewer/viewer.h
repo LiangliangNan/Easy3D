@@ -347,7 +347,8 @@ namespace easy3d {
 		// This function will be called before the main draw procedure.
         virtual void pre_draw();
 
-		// This function will be called after the main draw procedure.
+        // This function draws axes of the coordinate system, Easy3D logo, frame rate, etc. overlaid on the scene.
+		// It will be called after the main draw procedure.
 		virtual void post_draw();
 
 		// External resize due to user interaction.
