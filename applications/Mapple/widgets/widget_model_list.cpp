@@ -62,6 +62,11 @@ public:
         }
     }
 
+    void highlight(bool b) {
+        for (int i = 0; i < columnCount(); ++i)
+            QTreeWidgetItem::setBackground(i, b ? QColor(255, 177, 255) : QBrush());
+    }
+
 private:
     Model *model_;
 };
@@ -257,8 +262,6 @@ void WidgetModelList::updateModelList() {
     // clear everything and creat the list from scratch
     clear();
 
-    Model *active_model = viewer()->currentModel();
-
     const std::vector<Model *> &models = viewer()->models();
     for (unsigned int i = 0; i < models.size(); ++i) {
         Model *model = models[i];
@@ -272,8 +275,8 @@ void WidgetModelList::updateModelList() {
         item->setData(0, Qt::DisplayRole, i + 1);
         item->setIcon(1);
         item->setVisibilityIcon(2, model->renderer()->is_visible());
-
         item->setData(3, Qt::DisplayRole, QString::fromStdString(name));
+        item->highlight(model == viewer()->currentModel());
 
 #if 1   // add the drawables as children
         for (auto d : model->renderer()->points_drawables()) {
@@ -299,17 +302,11 @@ void WidgetModelList::updateModelList() {
 #endif
     }
 
-    if (viewer()->currentModel()) {
-        const std::string &name = viewer()->currentModel()->name();
-        if (!name.empty()) {
-            mainWindow_->setCurrentFile(QString::fromStdString(name));
-        }
-    } else
-        mainWindow_->setCurrentFile(QString());
-
     connect(this, SIGNAL(itemSelectionChanged()), this, SLOT(modelItemSelectionChanged()));
     connect(this, SIGNAL(itemPressed(QTreeWidgetItem * , int)), this, SLOT(modelItemPressed(QTreeWidgetItem * , int)));
     connect(this, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
+
+    mainWindow_->updateWindowTitle();
 }
 
 
@@ -355,6 +352,7 @@ void WidgetModelList::hideOtherModels(Model *cur) {
             model->renderer()->set_visible(true);
             item->setVisibilityIcon(2, true);
         }
+        item->highlight(model == viewer()->currentModel());
     }
 }
 
@@ -535,9 +533,11 @@ void WidgetModelList::modelItemSelectionChanged() {
 
 
 void WidgetModelList::modelItemPressed(QTreeWidgetItem *current, int column) {
+    Model* active_model = nullptr;
     if (dynamic_cast<ModelItem *>(current)) {
         ModelItem *current_item = dynamic_cast<ModelItem *>(current);
         viewer()->setCurrentModel(current_item->model());
+        active_model = current_item->model();
 
         if (column == 2 && !selected_only_) {
             Model *model = current_item->model();
@@ -545,12 +545,10 @@ void WidgetModelList::modelItemPressed(QTreeWidgetItem *current, int column) {
             current_item->setVisibilityIcon(2, visible);
             model->renderer()->set_visible(visible);
         }
-
-        if (auto_focus_)
-            viewer()->fitScreen(current_item->model());
     }
     else if (dynamic_cast<DrawableItem *>(current)) {
         DrawableItem *drawable_item = dynamic_cast<DrawableItem *>(current);
+        active_model = drawable_item->drawable()->model();
         if (column == 2) {
             Drawable *d = drawable_item->drawable();
             bool visible = !d->is_visible();
@@ -558,14 +556,26 @@ void WidgetModelList::modelItemPressed(QTreeWidgetItem *current, int column) {
             drawable_item->setVisibilityIcon(2, visible);
         }
         mainWindow_->activeDrawableChanged(drawable_item->drawable());
-
-        ModelItem *model_item = dynamic_cast<ModelItem *>(drawable_item->parent());
-        if (currentItem() != model_item)
-            viewer()->setCurrentModel(model_item->model());
     }
 
-    viewer()->update();
+    viewer()->setCurrentModel(active_model);
+    if (selected_only_)
+        hideOtherModels(active_model);
+    else {
+        int num = topLevelItemCount();
+        for (int i = 0; i < num; ++i) {
+            ModelItem *item = dynamic_cast<ModelItem *>(topLevelItem(i));
+            item->highlight(item->model() == viewer()->currentModel());
+        }
+    }
+
+    if (auto_focus_)
+        viewer()->fitScreen(active_model);
+    else
+        viewer()->update();
+    
     mainWindow_->updateRenderingPanel();
+    mainWindow_->updateWindowTitle();
 }
 
 

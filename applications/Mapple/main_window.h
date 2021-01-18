@@ -78,6 +78,7 @@ public:
     // ui stuff
     WidgetModelList* widgetModelList() const;
     void activeDrawableChanged(easy3d::Drawable*);
+    void updateWindowTitle();
 
 public slots:
     void enableCameraManipulation();
@@ -192,7 +193,6 @@ private:
     bool okToContinue();
     void readSettings();
     void writeSettings();
-    void updateWindowTitle();
 
     void updateRecentFileActions();
     QString strippedName(const QString &fullFileName);
