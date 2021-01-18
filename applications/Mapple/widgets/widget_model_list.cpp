@@ -573,7 +573,7 @@ void WidgetModelList::modelItemPressed(QTreeWidgetItem *current, int column) {
         viewer()->fitScreen(active_model);
     else
         viewer()->update();
-    
+
     mainWindow_->updateRenderingPanel();
     mainWindow_->updateWindowTitle();
 }
