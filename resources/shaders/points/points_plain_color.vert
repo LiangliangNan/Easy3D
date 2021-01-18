@@ -11,7 +11,6 @@ uniform mat4 MVP;
 uniform mat4 MANIP = mat4(1.0);
 uniform mat3 NORMAL = mat3(1.0);
 
-uniform bool planeClippingDiscard = false;
 uniform bool clippingPlaneEnabled = false;
 uniform bool crossSectionEnabled = false;
 uniform vec4 clippingPlane0;
