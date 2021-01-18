@@ -178,7 +178,7 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
             const QImage subImage = fbo->toImage();
 #else
             QImage subImage(sub_w, sub_h, QImage::Format_RGBA8888);
-            fbo->read_color(0, subImage.bits(), GL_RGBA);
+            fbo->read_color(0, const_cast<unsigned char*>(subImage.constBits()), GL_RGBA);
 #endif
 
             // Copy subImage in image
@@ -327,7 +327,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
         }
 #else
         QImage image(fw, fh, QImage::Format_RGBA8888);
-        fbo->read_color(0, image.bits(), GL_RGBA);
+        fbo->read_color(0, const_cast<unsigned char*>(image.constBits()), GL_RGBA);
 
         // QVideoEncoder only accepted Format_RGB32, Format_ARGB32, or Format_ARGB32_Premultiplied
         image.convertTo(QImage::Format_ARGB32);
@@ -464,7 +464,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, int, int, bool bk_wh
         }
 #else
         QImage image(fw, fh, QImage::Format_RGBA8888);
-        fbo->read_color(0, image.bits(), GL_RGBA);
+        fbo->read_color(0, const_cast<unsigned char*>(image.constBits()), GL_RGBA);
 #endif
 
         const QString full_name = ext_less_name + QString("-%1.png").arg(frame_index, 4, 10, QChar('0'));
