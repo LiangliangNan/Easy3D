@@ -28,12 +28,16 @@
 #include <easy3d/viewer/viewer.h>
 
 
+namespace easy3d {
+    class PointCloud;
+}
+
 class PointSelection : public easy3d::Viewer
 {
 public:
-    PointSelection(const std::string& title = "");
+    PointSelection(const std::string& title = "PointSelection");
 
-protected:
+private:
     /// Mouse button press event handler
     bool mouse_press_event(int x, int y, int button, int modifiers) override;
     /// Mouse button release event handler
@@ -42,7 +46,11 @@ protected:
     bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;
 
     // This function will be called after the main draw procedure.
+    // It draws the axes of the coordinate system, the sketching rectangle/lasso, etc. overlaid on the scene.
     void post_draw() override;
+
+    // highlight the selection
+    void mark_selection(easy3d::PointCloud* cloud);
 
     std::string usage() const override;
 

@@ -25,7 +25,6 @@
 #include "viewer.h"
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/gui/picker_point_cloud.h>
-#include <easy3d/renderer/text_renderer.h>
 #include <easy3d/renderer/primitives.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/renderer.h>
@@ -33,7 +32,8 @@
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>    // for the mouse buttons
 
-#define  TEST_LASSO     1
+
+#define  USE_LASSO     1
 
 using namespace easy3d;
 
@@ -43,7 +43,7 @@ PointSelection::PointSelection(const std::string &title) : Viewer(title) {
 
 std::string PointSelection::usage() const {
     return ("-------------- Point Selection usage -------------- \n"
-            "Press the ALT key, then drag the mouse to select point (selected points will be deleted) \n"
+            "Press ALT key, then drag the mouse to select (left button) or deselect (right button) points\n"
             "---------------------------------------------------------- \n");
 }
 
@@ -63,28 +63,16 @@ bool PointSelection::mouse_press_event(int x, int y, int button, int modifiers) 
 bool PointSelection::mouse_release_event(int x, int y, int button, int modifiers) {
     if (modifiers == GLFW_MOD_ALT) {
         if (polygon_.size() >= 3) {
-            auto model = dynamic_cast<PointCloud *>(current_model());
-            if (model) {
+            auto cloud = dynamic_cast<PointCloud *>(current_model());
+            if (cloud) {
                 PointCloudPicker picker(camera());
-#if TEST_LASSO
-                picker.pick_vertices(model, polygon_, false);
+#if USE_LASSO
+                picker.pick_vertices(cloud, polygon_, button == GLFW_MOUSE_BUTTON_RIGHT);
 #else
                 picker.pick_vertices(model, Rect(polygon_[0], polygon_[2]), false);
 #endif
+                mark_selection(cloud);
 
-                auto select = model->vertex_property<bool>("v:select");
-                std::size_t count(0);
-                for(auto v : model->vertices()) {
-                    if (select[v]) {
-                        model->delete_vertex(v);
-                        ++count;
-                    }
-                }
-                model->collect_garbage();
-                LOG(INFO) << count << " points deleted";
-
-                auto drawable = model->renderer()->get_points_drawable("vertices");
-                drawable->update();
                 polygon_.clear();
             }
         }
@@ -97,7 +85,7 @@ bool PointSelection::mouse_release_event(int x, int y, int button, int modifiers
 /// Mouse drag (i.e., a mouse button was pressed) event handler
 bool PointSelection::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
     if (modifiers == GLFW_MOD_ALT) {
-#if TEST_LASSO
+#if USE_LASSO
         polygon_.push_back(vec2(x, y));
 #else   // rectangle
         const vec2 first_point = polygon_[0];
@@ -113,28 +101,28 @@ bool PointSelection::mouse_drag_event(int x, int y, int dx, int dy, int button, 
 }
 
 
-// This function will be called after the main draw procedure.
 void PointSelection::post_draw() {
-    Viewer::draw_corner_axes();
-
-    // draw the Easy3D logo and GPU time
-    if (texter_ && texter_->num_fonts() >=2) {
-        const float font_size = 15.0f;
-        const float offset = 20.0f * dpi_scaling();
-        texter_->draw("Easy3D", offset, offset, font_size, 0);
-
-        // the rendering time
-        texter_->draw(gpu_time_, offset, 50.0f * dpi_scaling(), 16, 1);
-    }
+    Viewer::post_draw();
 
     if (polygon_.size() >= 3) {
-        // draw the boundary of the rect
+        // draw the boundary of the rect/lasso
         opengl::draw_polygon_wire(polygon_, vec4(1.0f, 0.0f, 0.0f, 1.0f), width(), height(), -1.0f);
 
-        // draw the transparent face
+        // draw its transparent face
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         opengl::draw_polygon_filled(polygon_, vec4(1.0f, 0.0f, 0.0f, 0.2f), width(), height(), -0.9f);
         glDisable(GL_BLEND);
     }
+}
+
+
+void PointSelection::mark_selection(PointCloud *cloud) {
+    auto drawable = cloud->renderer()->get_points_drawable("vertices");
+    auto select = cloud->vertex_property<bool>("v:select");
+    auto colors = cloud->vertex_property<vec3>("v:color");
+    for(auto v : cloud->vertices())
+        colors[v] = select[v] ? vec3(1,0,0) : drawable->color();    // mark selected points red
+    drawable->set_coloring(easy3d::State::COLOR_PROPERTY, easy3d::State::VERTEX, "v:color");
+    drawable->update();
 }
