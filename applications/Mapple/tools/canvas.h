@@ -51,8 +51,6 @@ namespace easy3d {
 
         virtual const std::vector<Model*>& models() const = 0;
 
-        virtual void update_ui() = 0;
-
         tools::ToolManager* tool_manager() const { return tool_manager_; }
 
     private:

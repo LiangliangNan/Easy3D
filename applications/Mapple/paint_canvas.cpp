@@ -354,6 +354,7 @@ void PaintCanvas::mouseReleaseEvent(QMouseEvent *e) {
             makeCurrent();
             tool_manager()->release(bt, e->pos().x(), e->pos().y());
             doneCurrent();
+            window_->updateRenderingPanel();
         }
         update();
     }
@@ -858,12 +859,6 @@ void PaintCanvas::fitScreen(const easy3d::Model *model) {
 
 void PaintCanvas::fitScreen() {
     fitScreen(nullptr);
-}
-
-
-
-void PaintCanvas::update_ui() {
-    window_->updateUi();
 }
 
 
