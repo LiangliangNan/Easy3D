@@ -336,7 +336,6 @@ void WidgetModelList::duplicateCurrent() {
 
 void WidgetModelList::hideOtherModels(Model *cur) {
     int num = topLevelItemCount();
-    const std::vector<Model *> &models = viewer()->models();
     for (int i=0; i<num; ++i) {
         auto item = dynamic_cast<ModelItem*>(topLevelItem(i));
         if (!item)
@@ -496,7 +495,7 @@ void WidgetModelList::currentModelItemChanged(QTreeWidgetItem *current, QTreeWid
         return;
 
 	ModelItem* current_item = dynamic_cast<ModelItem*>(current);
-	ModelItem* previous_item = dynamic_cast<ModelItem*>(previous);
+    (void)previous;
 	if (!current_item)
 		return;
 
@@ -516,8 +515,6 @@ void WidgetModelList::currentModelItemChanged(QTreeWidgetItem *current, QTreeWid
 
 
 void WidgetModelList::modelItemSelectionChanged() {
-    Model *active_model = viewer()->currentModel();
-
     int num = topLevelItemCount();
     for (int i = 0; i < num; ++i) {
         ModelItem *item = dynamic_cast<ModelItem *>(topLevelItem(i));

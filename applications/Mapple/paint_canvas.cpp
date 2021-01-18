@@ -93,10 +93,10 @@ PaintCanvas::PaintCanvas(MainWindow* window)
         , pressed_key_(-1)
         , show_pivot_point_(false)
         , drawable_axes_(nullptr)
-        , show_labels_under_mouse_(false)
         , model_picker_(nullptr)
         , allow_select_model_(false)
         , surface_mesh_picker_(nullptr)
+        , show_labels_under_mouse_(false)
         , picked_face_index_(-1)
         , show_coordinates_under_mouse_(false)
         , model_idx_(-1)
@@ -547,7 +547,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
         if (walkThrough()->status() == easy3d::WalkThrough::FREE_MODE) {
             const vec3 pos = camera()->position();
             const quat q = camera()->orientation();
-            walkThrough()->add_keyframe(Frame(camera()->position(), q));
+            walkThrough()->add_keyframe(Frame(pos, q));
         }
         else if (walkThrough()->status() == easy3d::WalkThrough::WALKING_MODE)
             LOG(WARNING) << "'K' is for the free mode only. Use Alt + Left click to add a keyframe in the walking mode";

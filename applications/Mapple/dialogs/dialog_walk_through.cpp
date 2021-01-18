@@ -399,7 +399,7 @@ void DialogWalkThrough::record() {
     LOG(INFO) << "recording started...";
     StopWatch w;
     viewer_->recordAnimation(file, fps, bitrate, true);
-    LOG(INFO) << "recording finished. " << w.time_string() << std::endl;
+    LOG(INFO) << "recording finished. " << w.time_string();
 
     // restore
     if (visible)

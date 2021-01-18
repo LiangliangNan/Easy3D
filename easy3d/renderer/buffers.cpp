@@ -568,7 +568,7 @@ namespace easy3d {
                         // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                         tessellator.begin_contour();
                         for (auto v : model->vertices(f)) {
-                            Tessellator::Vertex vertex(model->position(v), v.idx());
+                            Tessellator::Vertex vertex(points[v], v.idx());
                             vertex.append(normals[v]);
                             vertex.append(colors[v]);
                             tessellator.add_vertex(vertex);
@@ -632,7 +632,7 @@ namespace easy3d {
                         tessellator.begin_contour();
                         const vec3 &color = colors[f];
                         for (auto v : model->vertices(f)) {
-                            Tessellator::Vertex vertex(model->position(v), v.idx());
+                            Tessellator::Vertex vertex(points[v], v.idx());
                             vertex.append(normals[v]);
                             vertex.append(color);
                             tessellator.add_vertex(vertex);
@@ -695,7 +695,7 @@ namespace easy3d {
                         // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                         tessellator.begin_contour();
                         for (auto v : model->vertices(f)) {
-                            Tessellator::Vertex vertex(model->position(v), v.idx());
+                            Tessellator::Vertex vertex(points[v], v.idx());
                             vertex.append(normals[v]);
                             vertex.append(vtexcoords[v]);
                             tessellator.add_vertex(vertex);
@@ -765,7 +765,7 @@ namespace easy3d {
                         // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                         tessellator.begin_contour();
                         for (auto v : model->vertices(f)) {
-                            Tessellator::Vertex vertex(model->position(v), v.idx());
+                            Tessellator::Vertex vertex(points[v], v.idx());
                             vertex.append(normals[v]);
                             float coord = (prop[v] - min_value) / (max_value - min_value);
                             vertex.append(vec2(coord, 0.5f));
@@ -837,7 +837,7 @@ namespace easy3d {
                         tessellator.begin_contour();
                         float coord = (prop[f] - min_value) / (max_value - min_value);
                         for (auto v : model->vertices(f)) {
-                            Tessellator::Vertex vertex(model->position(v), v.idx());
+                            Tessellator::Vertex vertex(points[v], v.idx());
                             vertex.append(normals[v]);
                             vertex.append(vec2(coord, 0.5f));
                             tessellator.add_vertex(vertex);

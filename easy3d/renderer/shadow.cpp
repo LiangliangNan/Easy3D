@@ -53,8 +53,8 @@ namespace easy3d {
         , light_frustum_(nullptr)
         , shadow_map_size_(1024)
         , virtual_background_(true)
-        , virtual_background_drawable_(nullptr)
         , virtual_background_color_(1.0f, 1.0f, 1.0f)
+        , virtual_background_drawable_(nullptr)
         , light_distance_(50.0f)
         , darkness_(0.6f)
     {

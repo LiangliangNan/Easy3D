@@ -360,10 +360,7 @@ void MainWindow::updateStatusBar()
 
 
 void MainWindow::cancelTask() {
-    int value = progress_bar_->value() ;
-
     cancel();
-
     cancelTaskButton_->setVisible(false);
     progress_bar_->reset();
     progress_bar_->setTextVisible(false);
@@ -1708,7 +1705,6 @@ void MainWindow::computeHeightField() {
 
         // add a vector field to the faces
         mesh->update_face_normals();
-        auto fnormals = mesh->get_face_property<vec3>("f:normal");
         progress.next();
     }
 

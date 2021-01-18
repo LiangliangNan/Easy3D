@@ -178,8 +178,7 @@ namespace easy3d {
 
 	void ManipulatedCameraFrame::action_zoom(int wheel_dy, Camera *const camera)
 	{
-		float delta = wheelDelta(wheel_dy);
-		const float sceneRadius = camera->sceneRadius();
+		const float delta = wheelDelta(wheel_dy);
 		if (zoomsOnPivotPoint_) {
 			const vec3& direction = camera->pivotPoint() - position();	
 
@@ -199,6 +198,7 @@ namespace easy3d {
                 return;
 
 #if 0 //  we allow to zoom out (to avoid lock)
+            const float sceneRadius = camera->sceneRadius();
             // don't get too close to and don't get too far away from the pivot point.
             if ( (offset.norm() <= 0.01f * sceneRadius) || (offset.norm() >= 100.0f * sceneRadius))
                 return;
@@ -226,10 +226,10 @@ namespace easy3d {
             // compute the target point if we do move the camera
             ManipulatedCameraFrame frame = *camera->frame();
             frame.translate(offset);
-            const vec3& new_target = frame.coordinatesOf(camera->sceneCenter());
-
 
 #if 0 //  we allow to zoom out (to avoid lock)
+            const float sceneRadius = camera->sceneRadius();
+            const vec3& new_target = frame.coordinatesOf(camera->sceneCenter());
             // don't get too close to and don't get too far away from the pivot point.
             if ( new_target.z >= -0.01f * sceneRadius || new_target.z <= -100.0f * sceneRadius)
                 return;

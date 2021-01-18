@@ -38,7 +38,7 @@ set(${PROJECT_NAME}_SOURCES
 
 add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_HEADERS})
 
-set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "Mapple")
+set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "applications/Mapple")
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE  ${FFMPEG_DEFINITIONS})
 
