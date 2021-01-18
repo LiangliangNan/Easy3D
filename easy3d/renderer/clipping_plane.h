@@ -86,10 +86,13 @@ namespace easy3d {
 
         /// sets up the shader program for rendering.
         /// \param program The shader program.
+        void set_program(ShaderProgram *program);
+        /// sets up whether a primitive should be completely discarded if one of its vertices is clipped.
+        /// \param program The shader program.
         /// \param plane_clipping_discard Controls clipping plane behavior.
-        ///     - true: completely discard a vertex in vertex shader
+        ///     - true: completely discard a primitive if one of its vertices is clipped by this clipping plane.
         ///     - false: standard plane clipping
-        void set_program(ShaderProgram *program, bool plane_clipping_discard = false);
+        void set_discard_primitives(ShaderProgram *program, bool plane_clipping_discard);
 
         /// draws the clipping plane itself.
         void draw(Camera* cam) const;

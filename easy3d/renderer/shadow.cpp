@@ -189,8 +189,10 @@ namespace easy3d {
         program->set_uniform("MVP", light_projection_matrix_ * light_view_matrix_);	easy3d_debug_log_gl_error;
         for (auto d : surfaces) {
             if (d->is_visible()) {
-                if (setting::clipping_plane)
-                    setting::clipping_plane->set_program(program, d->plane_clip_discard_primitive());
+                if (setting::clipping_plane) {
+                    setting::clipping_plane->set_program(program);
+                    setting::clipping_plane->set_discard_primitives(program, d->plane_clip_discard_primitive());
+                }
                 d->gl_draw();
             }
         }
@@ -244,8 +246,10 @@ namespace easy3d {
                 program->set_uniform("per_vertex_color", d->coloring_method() != State::UNIFORM_COLOR && d->color_buffer());
                 program->set_uniform("is_background", false)
                         ->set_uniform("selected", d->is_selected());
-                if (setting::clipping_plane)
-                    setting::clipping_plane->set_program(program, d->plane_clip_discard_primitive());
+                if (setting::clipping_plane) {
+                    setting::clipping_plane->set_program(program);
+                    setting::clipping_plane->set_discard_primitives(program, d->plane_clip_discard_primitive());
+                }
                 d->gl_draw();
             }
         }

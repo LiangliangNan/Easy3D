@@ -193,8 +193,10 @@ namespace easy3d {
             for (auto d : surfaces) {
                 if (d->is_visible()) {
                     program->set_uniform("MANIP", d->manipulated_matrix());
-                    if (setting::clipping_plane)
-                        setting::clipping_plane->set_program(program, d->plane_clip_discard_primitive());
+                    if (setting::clipping_plane) {
+                        setting::clipping_plane->set_program(program);
+                        setting::clipping_plane->set_discard_primitives(program, d->plane_clip_discard_primitive());
+                    }
                     d->gl_draw();
                 }
             }
@@ -248,8 +250,10 @@ namespace easy3d {
                     program->set_uniform("per_vertex_color", d->coloring_method() != State::UNIFORM_COLOR && d->color_buffer());
                     program->set_uniform("default_color", d->color());
                     program->set_uniform("selected", d->is_selected());
-                    if (setting::clipping_plane)
-                        setting::clipping_plane->set_program(program, d->plane_clip_discard_primitive());
+                    if (setting::clipping_plane) {
+                        setting::clipping_plane->set_program(program);
+                        setting::clipping_plane->set_discard_primitives(program, d->plane_clip_discard_primitive());
+                    }
                     d->gl_draw();
                 }
             }

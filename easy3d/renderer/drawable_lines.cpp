@@ -108,8 +108,10 @@ namespace easy3d {
 
             program->set_uniform("selected", is_selected());
 
-            if (setting::clipping_plane)
-                setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
+            if (setting::clipping_plane) {
+                setting::clipping_plane->set_program(program);
+                setting::clipping_plane->set_discard_primitives(program, plane_clip_discard_primitive());
+            }
 
             gl_draw();
             program->release();
@@ -139,8 +141,10 @@ namespace easy3d {
 
             program->set_uniform("selected", is_selected());
 
-            if (setting::clipping_plane)
-                setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
+            if (setting::clipping_plane) {
+                setting::clipping_plane->set_program(program);
+                setting::clipping_plane->set_discard_primitives(program, plane_clip_discard_primitive());
+            }
 
             gl_draw();
             program->release();
@@ -185,8 +189,10 @@ namespace easy3d {
 
         program->set_uniform("selected", is_selected());
 
-        if (setting::clipping_plane)
-            setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
+        if (setting::clipping_plane) {
+            setting::clipping_plane->set_program(program);
+            setting::clipping_plane->set_discard_primitives(program, plane_clip_discard_primitive());
+        }
 
         gl_draw();
         program->release();
@@ -229,8 +235,10 @@ namespace easy3d {
 
         program->set_uniform("selected", is_selected());
 
-        if (setting::clipping_plane)
-            setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
+        if (setting::clipping_plane) {
+            setting::clipping_plane->set_program(program);
+            setting::clipping_plane->set_discard_primitives(program, plane_clip_discard_primitive());
+        }
 
         gl_draw();
         program->release();
@@ -268,11 +276,10 @@ namespace easy3d {
 
             program->set_uniform("selected", is_selected());
 
-//      program->set_uniform("highlight",highlight())
-//                ->set_uniform("hightlight_id_min",highlight_range().first)
-//                ->set_uniform("hightlight_id_max",highlight_range().second);
-            if (setting::clipping_plane)
-                setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
+            if (setting::clipping_plane) {
+                setting::clipping_plane->set_program(program);
+                setting::clipping_plane->set_discard_primitives(program, plane_clip_discard_primitive());
+            }
 
             program->bind_texture("textureID",texture()->id(), 0);
             gl_draw();
@@ -301,11 +308,10 @@ namespace easy3d {
 
             program->set_uniform("selected", is_selected());
 
-            //      program->set_uniform("highlight",highlight())
-            //                ->set_uniform("hightlight_id_min",highlight_range().first)
-            //                ->set_uniform("hightlight_id_max",highlight_range().second);
-            if (setting::clipping_plane)
-                setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
+            if (setting::clipping_plane) {
+                setting::clipping_plane->set_program(program);
+                setting::clipping_plane->set_discard_primitives(program, plane_clip_discard_primitive());
+            }
 
             program->bind_texture("textureID",texture()->id(), 0);
             gl_draw();
@@ -355,11 +361,10 @@ namespace easy3d {
 
         program->set_uniform("selected", is_selected());
 
-//      program->set_uniform("highlight",highlight())
-//                ->set_uniform("hightlight_id_min",highlight_range().first)
-//                ->set_uniform("hightlight_id_max",highlight_range().second);
-        if (setting::clipping_plane)
-            setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
+        if (setting::clipping_plane) {
+            setting::clipping_plane->set_program(program);
+            setting::clipping_plane->set_discard_primitives(program, plane_clip_discard_primitive());
+        }
 
         program->bind_texture("textureID",texture()->id(), 0);
         gl_draw();
@@ -408,13 +413,12 @@ namespace easy3d {
 
         program->set_uniform("selected", is_selected());
 
-        if (setting::clipping_plane)
-            setting::clipping_plane->set_program(program, plane_clip_discard_primitive());
+        if (setting::clipping_plane) {
+            setting::clipping_plane->set_program(program);
+            setting::clipping_plane->set_discard_primitives(program, plane_clip_discard_primitive());
+        }
 
         program->bind_texture("textureID",texture()->id(), 0);
-//      program->set_uniform("highlight",highlight())
-//                ->set_uniform("hightlight_id_min",highlight_range().first)
-//                ->set_uniform("hightlight_id_max",highlight_range().second);
 
         gl_draw();
         program->release_texture();
