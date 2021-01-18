@@ -1626,7 +1626,7 @@ namespace easy3d {
                         }
                     }
                     drawable->update_vertex_buffer(d_points);
-                    drawable->update_vertex_buffer(d_normals);
+                    drawable->update_normal_buffer(d_normals);
                 }
             }
 
