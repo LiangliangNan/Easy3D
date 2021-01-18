@@ -112,7 +112,7 @@ namespace easy3d {
                 if (mesh->target(h) == v)
                     return h;
             }
-            LOG_FIRST_N(1, ERROR) << "could not find a halfedge pointing to " << v << " in face " << face
+            LOG_FIRST_N(3, ERROR) << "could not find a halfedge pointing to " << v << " in face " << face
                                   << ". " << COUNTER;
             return SurfaceMesh::Halfedge();
         };

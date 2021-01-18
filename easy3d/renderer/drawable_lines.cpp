@@ -81,7 +81,7 @@ namespace easy3d {
 
     void LinesDrawable::_draw_plain_lines(const Camera *camera) const {
         if (vertex_buffer() == 0) {
-            LOG_FIRST_N(1, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
+            LOG_FIRST_N(3, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
             return;
         }
 
@@ -150,7 +150,7 @@ namespace easy3d {
 
     void LinesDrawable::_draw_cylinders(const Camera *camera) const {
         if (vertex_buffer() == 0) {
-            LOG_FIRST_N(1, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
+            LOG_FIRST_N(3, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
             return;
         }
 
@@ -195,7 +195,7 @@ namespace easy3d {
 
     void LinesDrawable::_draw_cones(const Camera *camera) const {
         if (vertex_buffer() == 0) {
-            LOG_FIRST_N(1, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
+            LOG_FIRST_N(3, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
             return;
         }
 
@@ -239,11 +239,11 @@ namespace easy3d {
 
     void LinesDrawable::_draw_plain_lines_with_texture(const Camera *camera) const {
         if (vertex_buffer() == 0) {
-            LOG_FIRST_N(1, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
+            LOG_FIRST_N(3, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
             return;
         }
         if (texcoord_buffer() == 0) {
-            LOG_FIRST_N(1, ERROR) << "texcoord buffer not created. " << COUNTER;
+            LOG_FIRST_N(3, ERROR) << "texcoord buffer not created. " << COUNTER;
             return;
         }
 
@@ -318,11 +318,11 @@ namespace easy3d {
 
     void LinesDrawable::_draw_cylinders_with_texture(const Camera *camera) const {
         if (vertex_buffer() == 0) {
-            LOG_FIRST_N(1, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
+            LOG_FIRST_N(3, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
             return;
         }
         if (texcoord_buffer() == 0) {
-            LOG_FIRST_N(1, ERROR) << "texcoord buffer not created. " << COUNTER;
+            LOG_FIRST_N(3, ERROR) << "texcoord buffer not created. " << COUNTER;
             return;
         }
 
@@ -371,11 +371,11 @@ namespace easy3d {
 
     void LinesDrawable::_draw_cones_with_texture(const Camera *camera) const {
         if (vertex_buffer() == 0) {
-            LOG_FIRST_N(1, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
+            LOG_FIRST_N(3, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
             return;
         }
         if (texcoord_buffer() == 0) {
-            LOG_FIRST_N(1, ERROR) << "texcoord buffer not created. " << COUNTER;
+            LOG_FIRST_N(3, ERROR) << "texcoord buffer not created. " << COUNTER;
             return;
         }
 

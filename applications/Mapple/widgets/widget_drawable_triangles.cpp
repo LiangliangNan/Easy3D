@@ -624,7 +624,7 @@ namespace triangles_details {
             else
                 LOG(INFO) << "highlighting faces [" << f_min << ", " << f_max << "]";
         } else {
-            LOG_FIRST_N(1, ERROR) << "face property \'f:triangle_range\' not defined. " << COUNTER;
+            LOG_FIRST_N(3, ERROR) << "face property \'f:triangle_range\' not defined. " << COUNTER;
         }
     }
 }

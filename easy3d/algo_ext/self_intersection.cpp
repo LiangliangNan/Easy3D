@@ -378,7 +378,7 @@ namespace easy3d {
                 t.vertices = vertices;
                 triangle_faces_.push_back(t);
             } else {
-                LOG_FIRST_N(1, WARNING) << "only triangular meshes can be processed. " << COUNTER;
+                LOG_FIRST_N(3, WARNING) << "only triangular meshes can be processed. " << COUNTER;
             }
         }
     }

@@ -61,7 +61,7 @@ namespace easy3d {
                 } else {
 #ifndef NDEBUG
                     if (distance2(vec3(unique_vertices_[pos->second]->data()), vec3(v.data())) > 1e-6) {
-                        LOG_FIRST_N(1, ERROR) << "bad: two distinct points have the same hash key\n"
+                        LOG_FIRST_N(3, ERROR) << "bad: two distinct points have the same hash key\n"
                                               << "\t\tpoint: " << vec3(unique_vertices_[pos->second]->data()) << " <-> "
                                               << vec3(v.data()) << "\n" << "\t\thash key: " << key << ". " << COUNTER;
                     }
@@ -320,7 +320,7 @@ namespace easy3d {
             }
 
             default: {
-                LOG_FIRST_N(1, WARNING) << "unknown primitive type: " << tessellator->primitive_type_ << ". " << COUNTER;
+                LOG_FIRST_N(3, WARNING) << "unknown primitive type: " << tessellator->primitive_type_ << ". " << COUNTER;
                 break;
             }
         }

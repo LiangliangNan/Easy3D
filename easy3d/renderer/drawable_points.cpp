@@ -90,7 +90,7 @@ namespace easy3d {
 
     void PointsDrawable::_draw_plain_points(const Camera *camera) const {
         if (vertex_buffer() == 0) {
-            LOG_FIRST_N(1, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
+            LOG_FIRST_N(3, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
             return;
         }
 
@@ -153,7 +153,7 @@ namespace easy3d {
 
     void PointsDrawable::_draw_spheres_sprite(const Camera *camera) const {
         if (vertex_buffer() == 0) {
-            LOG_FIRST_N(1, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
+            LOG_FIRST_N(3, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
             return;
         }
 
@@ -208,7 +208,7 @@ namespace easy3d {
 
     void PointsDrawable::_draw_spheres_geometry(const Camera *camera) const {
         if (vertex_buffer() == 0) {
-            LOG_FIRST_N(1, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
+            LOG_FIRST_N(3, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
             return;
         }
 
@@ -258,11 +258,11 @@ namespace easy3d {
 
     void PointsDrawable::_draw_plain_points_with_texture(const Camera *camera) const {
         if (vertex_buffer() == 0) {
-            LOG_FIRST_N(1, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
+            LOG_FIRST_N(3, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
             return;
         }
         if (texcoord_buffer() == 0) {
-            LOG_FIRST_N(1, ERROR) << "texcoord buffer not created. " << COUNTER;
+            LOG_FIRST_N(3, ERROR) << "texcoord buffer not created. " << COUNTER;
             return;
         }
 
@@ -327,11 +327,11 @@ namespace easy3d {
 
     void PointsDrawable::_draw_spheres_with_texture_sprite(const Camera *camera) const {
         if (vertex_buffer() == 0) {
-            LOG_FIRST_N(1, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
+            LOG_FIRST_N(3, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
             return;
         }
         if (texcoord_buffer() == 0) {
-            LOG_FIRST_N(1, ERROR) << "texcoord buffer not created. " << COUNTER;
+            LOG_FIRST_N(3, ERROR) << "texcoord buffer not created. " << COUNTER;
             return;
         }
 
@@ -340,11 +340,11 @@ namespace easy3d {
 
     void PointsDrawable::_draw_spheres_with_texture_geometry(const Camera *camera) const {
         if (vertex_buffer() == 0) {
-            LOG_FIRST_N(1, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
+            LOG_FIRST_N(3, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
             return;
         }
         if (texcoord_buffer() == 0) {
-            LOG_FIRST_N(1, ERROR) << "texcoord buffer not created. " << COUNTER;
+            LOG_FIRST_N(3, ERROR) << "texcoord buffer not created. " << COUNTER;
             return;
         }
 
@@ -395,11 +395,11 @@ namespace easy3d {
 
     void PointsDrawable::_draw_surfels(const Camera *camera) const {
         if (vertex_buffer() == 0) {
-            LOG_FIRST_N(1, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
+            LOG_FIRST_N(3, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
             return;
         }
         if (normal_buffer() == 0) {
-            LOG_FIRST_N(1, ERROR) << "normal buffer not created. " << COUNTER;
+            LOG_FIRST_N(3, ERROR) << "normal buffer not created. " << COUNTER;
             return;
         }
 
@@ -463,15 +463,15 @@ namespace easy3d {
 
     void PointsDrawable::_draw_surfels_with_texture(const Camera *camera) const {
         if (vertex_buffer() == 0) {
-            LOG_FIRST_N(1, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
+            LOG_FIRST_N(3, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
             return;
         }
         if (normal_buffer() == 0) {
-            LOG_FIRST_N(1, ERROR) << "normal buffer not created. " << COUNTER;
+            LOG_FIRST_N(3, ERROR) << "normal buffer not created. " << COUNTER;
             return;
         }
         if (texcoord_buffer() == 0) {
-            LOG_FIRST_N(1, ERROR) << "texcoord buffer not created. " << COUNTER;
+            LOG_FIRST_N(3, ERROR) << "texcoord buffer not created. " << COUNTER;
             return;
         }
 

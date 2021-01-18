@@ -283,7 +283,7 @@ namespace easy3d {
             int type;
             input >> dummy >> type;
             if (input.fail()) {
-                LOG_FIRST_N(1, ERROR) << "failed reading vertex group type. " << COUNTER;
+                LOG_FIRST_N(3, ERROR) << "failed reading vertex group type. " << COUNTER;
             }
 
             std::size_t num;
@@ -295,7 +295,7 @@ namespace easy3d {
             for (std::size_t i = 0; i < num; ++i) {
                 input >> v;
                 if (input.fail()) {
-                    LOG_FIRST_N(1, ERROR) << "failed reading vertex group parameters. " << COUNTER;
+                    LOG_FIRST_N(3, ERROR) << "failed reading vertex group parameters. " << COUNTER;
                 } else
                     para[i] = v;
             }
@@ -303,7 +303,7 @@ namespace easy3d {
             std::string label;
             input >> dummy >> label;
             if (input.fail()) {
-                LOG_FIRST_N(1, ERROR) << "failed reading vertex group label. " << COUNTER;
+                LOG_FIRST_N(3, ERROR) << "failed reading vertex group label. " << COUNTER;
             }
 
             vec3 color;

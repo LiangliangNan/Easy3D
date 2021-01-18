@@ -62,7 +62,7 @@ namespace easy3d {
             }
             if (!program) {
                 use_gpu_if_supported_ = false;
-                LOG_FIRST_N(1, ERROR) << "shader program not available, fall back to CPU implementation. " << COUNTER;
+                LOG_FIRST_N(3, ERROR) << "shader program not available, fall back to CPU implementation. " << COUNTER;
             }
         }
 
@@ -243,7 +243,7 @@ namespace easy3d {
     SurfaceMesh::Face SurfaceMeshPicker::pick_face_gpu(SurfaceMesh *model, int x, int y, ShaderProgram* program) {
         auto drawable = model->renderer()->get_triangles_drawable("faces");
         if (!drawable) {
-            LOG_FIRST_N(1, WARNING) << "drawable 'faces' does not exist. " << COUNTER;
+            LOG_FIRST_N(3, WARNING) << "drawable 'faces' does not exist. " << COUNTER;
             return SurfaceMesh::Face();
         }
 

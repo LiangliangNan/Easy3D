@@ -301,7 +301,7 @@ namespace easy3d {
 
 	ShaderProgram* ShaderProgram::set_block(const std::string& name, const void *value) {
 		if (spBlocks.count(name) == 0) {
-			LOG_FIRST_N(1, WARNING) << "block \'" << name << "\' does not exist or is not active. " << COUNTER;
+			LOG_FIRST_N(3, WARNING) << "block \'" << name << "\' does not exist or is not active. " << COUNTER;
 			return this;
 		}
 
@@ -315,13 +315,13 @@ namespace easy3d {
 	ShaderProgram* ShaderProgram::set_block_uniform(const std::string& blockName, const std::string& uniformName, const void *value) {
 		//assert(spBlocks.count(blockName) && spBlocks[blockName].uniformOffsets.count(uniformName));
 		if (spBlocks.count(blockName) == 0) {
-			LOG_FIRST_N(1, WARNING) << "block " << blockName << " does not exist or is not active. " << COUNTER;
+			LOG_FIRST_N(3, WARNING) << "block " << blockName << " does not exist or is not active. " << COUNTER;
 			return this;
 		}
 
 		UniformBlock b = spBlocks[blockName];
 		if (b.uniformOffsets.count(uniformName) == 0) {
-			LOG_FIRST_N(1, WARNING) << "block/uniform " << blockName << "/" << uniformName << " does not exist or is not active. " << COUNTER;
+			LOG_FIRST_N(3, WARNING) << "block/uniform " << blockName << "/" << uniformName << " does not exist or is not active. " << COUNTER;
 			return this;
 		}
 
@@ -336,13 +336,13 @@ namespace easy3d {
 	ShaderProgram* ShaderProgram::set_block_uniform_array_element(const std::string& blockName, const std::string& uniformName, int arrayIndex, const void * value) {
 		//assert(spBlocks.count(blockName) && spBlocks[blockName].uniformOffsets.count(uniformName));
 		if (spBlocks.count(blockName) == 0) {
-			LOG_FIRST_N(1, WARNING) << "block " << blockName << " does not exist or is not active. " << COUNTER;
+			LOG_FIRST_N(3, WARNING) << "block " << blockName << " does not exist or is not active. " << COUNTER;
 			return this;
 		}
 
 		UniformBlock b = spBlocks[blockName];
 		if (b.uniformOffsets.count(uniformName) == 0) {
-			LOG_FIRST_N(1, WARNING) << "block/uniform " << blockName << "/" << uniformName << " does not exist or is not active. " << COUNTER;
+			LOG_FIRST_N(3, WARNING) << "block/uniform " << blockName << "/" << uniformName << " does not exist or is not active. " << COUNTER;
 			return this;
 		}
 
@@ -357,7 +357,7 @@ namespace easy3d {
 	ShaderProgram* ShaderProgram::set_uniform(const std::string& name, int value) {
 		//	assert(pUniforms.count(name) != 0);
 		if (pUniforms.count(name) == 0) {
-			LOG_FIRST_N(1, WARNING) << "uniform \'" << name << "\' does not exist or is not active. " << COUNTER;
+			LOG_FIRST_N(3, WARNING) << "uniform \'" << name << "\' does not exist or is not active. " << COUNTER;
 			return this;
 		}
 
@@ -370,7 +370,7 @@ namespace easy3d {
 	ShaderProgram* ShaderProgram::set_uniform(const std::string& name, unsigned int value) {
 		//	assert(pUniforms.count(name) != 0);
 		if (pUniforms.count(name) == 0) {
-            LOG_FIRST_N(1, WARNING) << "uniform \'" << name << "\' does not exist or is not active. " << COUNTER;
+            LOG_FIRST_N(3, WARNING) << "uniform \'" << name << "\' does not exist or is not active. " << COUNTER;
 			return this;
 		}
 
@@ -383,7 +383,7 @@ namespace easy3d {
 	ShaderProgram* ShaderProgram::set_uniform(const std::string& name, float value) {
 		//	assert(pUniforms.count(name) != 0);
 		if (pUniforms.count(name) == 0) {
-			LOG_FIRST_N(1, WARNING) << "uniform \'" << name << "\' does not exist or is not active. " << COUNTER;
+			LOG_FIRST_N(3, WARNING) << "uniform \'" << name << "\' does not exist or is not active. " << COUNTER;
 			return this;
 		}
 
@@ -396,7 +396,7 @@ namespace easy3d {
 	ShaderProgram* ShaderProgram::set_uniform(const std::string& name, const void *value) {
 		//	assert(pUniforms.count(name) != 0);
 		if (pUniforms.count(name) == 0) {
-			LOG_FIRST_N(1, WARNING) << "uniform \'" << name << "\' does not exist or is not active. " << COUNTER;
+			LOG_FIRST_N(3, WARNING) << "uniform \'" << name << "\' does not exist or is not active. " << COUNTER;
 			return this;
 		}
 

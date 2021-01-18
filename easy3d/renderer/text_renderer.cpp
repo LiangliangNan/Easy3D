@@ -785,7 +785,7 @@ namespace easy3d {
 
     float TextRenderer::font_height(float font_size) const {
         if (font_ids_.empty()) {
-            LOG_FIRST_N(1, ERROR) << "no font exists. To add a font, please call add_font(). " << COUNTER;
+            LOG_FIRST_N(3, ERROR) << "no font exists. To add a font, please call add_font(). " << COUNTER;
             return 0.0f;
         }
         float asc, desc, lineh;
@@ -816,14 +816,14 @@ namespace easy3d {
                      bool upper_left) const {
         float end_x = 0.0f;
         if (!stash_) {
-            LOG_FIRST_N(1, ERROR) << "couldn't draw() due to the failure in initialization. " << COUNTER;
+            LOG_FIRST_N(3, ERROR) << "couldn't draw() due to the failure in initialization. " << COUNTER;
             return end_x;
         }
         if (font_id >= font_ids_.size()) {
             if (font_ids_.empty()) {
-                LOG_FIRST_N(1, ERROR) << "no font exists. To add a font, please call add_font()";
+                LOG_FIRST_N(3, ERROR) << "no font exists. To add a font, please call add_font()";
             } else {
-                LOG_FIRST_N(1, ERROR) << "font (ID: " << font_id << ") does not exist. " << COUNTER;
+                LOG_FIRST_N(3, ERROR) << "font (ID: " << font_id << ") does not exist. " << COUNTER;
             }
             return end_x;
         }
@@ -857,7 +857,7 @@ namespace easy3d {
             program = ShaderManager::create_program_from_files(name, attributes);
         }
         if (!program) {
-            LOG_FIRST_N(1, ERROR) << "shader doesn't exist: " << name << ". " << COUNTER;
+            LOG_FIRST_N(3, ERROR) << "shader doesn't exist: " << name << ". " << COUNTER;
             return;
         }
 
@@ -931,15 +931,15 @@ namespace easy3d {
                           int font_id, const vec3 &font_color, float line_spacing, bool upper_left) const {
         Rect rect(0.0f, 0.0f, 0.0f, 0.0f);
         if (!stash_) {
-            LOG_FIRST_N(1, ERROR) << "couldn't draw() due to the failure in initialization. " << COUNTER;
+            LOG_FIRST_N(3, ERROR) << "couldn't draw() due to the failure in initialization. " << COUNTER;
             return rect;
         }
 
         if (font_id >= font_ids_.size()) {
             if (font_ids_.empty()) {
-                LOG_FIRST_N(1, ERROR) << "no font exists. To add a font, please call add_font()";
+                LOG_FIRST_N(3, ERROR) << "no font exists. To add a font, please call add_font()";
             } else {
-                LOG_FIRST_N(1, ERROR) << "font (ID: " << font_id << ") does not exist. " << COUNTER;
+                LOG_FIRST_N(3, ERROR) << "font (ID: " << font_id << ") does not exist. " << COUNTER;
             }
             return rect;
         }

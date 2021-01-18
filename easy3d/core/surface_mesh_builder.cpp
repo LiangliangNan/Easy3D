@@ -143,7 +143,7 @@ namespace easy3d {
         std::size_t count(0);
         for (auto v : mesh_->vertices()) {
             if (!mesh_->is_manifold(v)) {
-                LOG_FIRST_N(1, ERROR) << "vertex " << v << " is not manifold. " << COUNTER;
+                LOG_FIRST_N(3, ERROR) << "vertex " << v << " is not manifold. " << COUNTER;
                 ++count;
             }
         }
@@ -236,7 +236,7 @@ namespace easy3d {
 
         // Check #1: a face has less than 3 vertices
         if (n < 3) {
-            LOG_FIRST_N(1, ERROR) << "face has less than 3 vertices. " << COUNTER;
+            LOG_FIRST_N(3, ERROR) << "face has less than 3 vertices. " << COUNTER;
             ++num_faces_less_three_vertices_;
             return false;
         }
@@ -244,7 +244,7 @@ namespace easy3d {
         // Check #2; a face has duplicate vertices
         for (std::size_t s = 0, t = 1; s < n; ++s, ++t, t %= n) {
             if (vertices[s] == vertices[t]) {
-                LOG_FIRST_N(1, ERROR) << "face has duplicate vertices. " << COUNTER;
+                LOG_FIRST_N(3, ERROR) << "face has duplicate vertices. " << COUNTER;
                 ++num_faces_duplicate_vertices;
                 return false;
             }
@@ -253,7 +253,7 @@ namespace easy3d {
         // Check #3; a face has out-of-range vertices
         for (auto v : vertices) {
             if (v.idx() < 0 || v.idx() >= static_cast<int>(mesh_->n_vertices())) {
-                LOG_FIRST_N(1, ERROR) << "face has out-of-range vertices (number of vertices is "
+                LOG_FIRST_N(3, ERROR) << "face has out-of-range vertices (number of vertices is "
                                       << mesh_->n_vertices() << "). " << COUNTER;
                 ++num_faces_out_of_range_vertices_;
                 return false;
@@ -343,7 +343,7 @@ namespace easy3d {
             }
         } else {
             ++num_faces_unknown_topology_;
-            LOG_FIRST_N(1, ERROR) << "failed adding face. " << COUNTER;
+            LOG_FIRST_N(3, ERROR) << "failed adding face. " << COUNTER;
         }
 
         return face;
