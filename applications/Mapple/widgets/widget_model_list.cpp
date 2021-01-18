@@ -275,9 +275,6 @@ void WidgetModelList::updateModelList() {
 
         item->setData(3, Qt::DisplayRole, QString::fromStdString(name));
 
-        if (model == active_model)
-            setCurrentItem(item);
-
 #if 1   // add the drawables as children
         for (auto d : model->renderer()->points_drawables()) {
             auto d_item = new DrawableItem(item, d);
@@ -321,18 +318,14 @@ void WidgetModelList::duplicateCurrent() {
         Model* model = viewer()->currentModel();
 
         Model* copy = nullptr;
-        if (dynamic_cast<SurfaceMesh*>(model)) {
+        if (dynamic_cast<SurfaceMesh*>(model))
             copy = new SurfaceMesh(*dynamic_cast<SurfaceMesh*>(model));
-        }
-        else if (dynamic_cast<PointCloud*>(model)) {
+        else if (dynamic_cast<PointCloud*>(model))
             copy = new PointCloud(*dynamic_cast<PointCloud*>(model));
-        }
-        else if (dynamic_cast<Graph*>(model)) {
+        else if (dynamic_cast<Graph*>(model))
             copy = new Graph(*dynamic_cast<Graph*>(model));
-        }
-        else if (dynamic_cast<PolyMesh*>(model)) {
+        else if (dynamic_cast<PolyMesh*>(model))
             copy = new PolyMesh(*dynamic_cast<PolyMesh*>(model));
-        }
 
         if (copy) {
             const std::string &name = file_system::name_less_extension(model->name()) + "_copy";
@@ -345,13 +338,23 @@ void WidgetModelList::duplicateCurrent() {
 
 
 void WidgetModelList::hideOtherModels(Model *cur) {
+    int num = topLevelItemCount();
     const std::vector<Model *> &models = viewer()->models();
-    for (int i = 0; i < models.size(); ++i) {
-        Model *model = models[i];
-        if (selected_only_ && model != cur)
+    for (int i=0; i<num; ++i) {
+        auto item = dynamic_cast<ModelItem*>(topLevelItem(i));
+        if (!item)
+            continue;
+        Model *model = item->model();
+        if (!model)
+            continue;
+        if (selected_only_ && model != cur) {
             model->renderer()->set_visible(false);
-        else
+            item->setVisibilityIcon(2, false);
+        }
+        else {
             model->renderer()->set_visible(true);
+            item->setVisibilityIcon(2, true);
+        }
     }
 }
 
@@ -534,11 +537,6 @@ void WidgetModelList::modelItemSelectionChanged() {
 void WidgetModelList::modelItemPressed(QTreeWidgetItem *current, int column) {
     if (dynamic_cast<ModelItem *>(current)) {
         ModelItem *current_item = dynamic_cast<ModelItem *>(current);
-        int num = topLevelItemCount();
-        for (int i = 0; i < num; ++i) {
-            ModelItem *item = dynamic_cast<ModelItem *>(topLevelItem(i));
-            item->setSelected(item->model()->renderer()->is_selected());
-        }
         viewer()->setCurrentModel(current_item->model());
 
         if (column == 2 && !selected_only_) {
@@ -561,15 +559,9 @@ void WidgetModelList::modelItemPressed(QTreeWidgetItem *current, int column) {
         }
         mainWindow_->activeDrawableChanged(drawable_item->drawable());
 
-        disconnect(this, SIGNAL(itemSelectionChanged()), this, SLOT(modelItemSelectionChanged()));
-        disconnect(this, SIGNAL(currentItemChanged(QTreeWidgetItem * , QTreeWidgetItem * )), this,
-                SLOT(currentModelItemChanged(QTreeWidgetItem * , QTreeWidgetItem * )));
         ModelItem *model_item = dynamic_cast<ModelItem *>(drawable_item->parent());
-        viewer()->setCurrentModel(model_item->model());
-        model_item->setSelected(true);
-        connect(this, SIGNAL(itemSelectionChanged()), this, SLOT(modelItemSelectionChanged()));
-        connect(this, SIGNAL(currentItemChanged(QTreeWidgetItem * , QTreeWidgetItem * )), this,
-                SLOT(currentModelItemChanged(QTreeWidgetItem * , QTreeWidgetItem * )));
+        if (currentItem() != model_item)
+            viewer()->setCurrentModel(model_item->model());
     }
 
     viewer()->update();
@@ -577,18 +569,12 @@ void WidgetModelList::modelItemPressed(QTreeWidgetItem *current, int column) {
 }
 
 
-void WidgetModelList::mousePressEvent(QMouseEvent* e) {
-    if (e->button() == Qt::LeftButton) {
-        QTreeWidget::mousePressEvent(e);
-
-        if (!selected_only_ && itemAt(e->pos()))
-            itemAt(e->pos())->setSelected(true);
-    }
+void WidgetModelList::mousePressEvent(QMouseEvent *e) {
+    QTreeWidget::mousePressEvent(e);
 }
 
 
 void WidgetModelList::mouseReleaseEvent(QMouseEvent* e) {
-    //if (e->button() == Qt::LeftButton)
     QTreeWidget::mouseReleaseEvent(e);
 }
 
