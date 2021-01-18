@@ -48,7 +48,7 @@ namespace easy3d {
 
         void ToolSurfaceMeshFaceSelection::update_render_buffer(SurfaceMesh* mesh) const {
             auto d = mesh->renderer()->get_triangles_drawable("faces");
-            if (d->coloring_method() != easy3d::State::SCALAR_FIELD || d->property_location() != State::FACE || d->property_name() != "f:select") {
+            if ((d->coloring_method() != easy3d::State::SCALAR_FIELD) || (d->property_location() != State::FACE) || (d->property_name() != "f:select")) {
                 if (!mesh->get_face_property<bool>("f:select"))
                     mesh->add_face_property<bool>("f:select", false);
                 d->set_coloring(State::SCALAR_FIELD, State::FACE, "f:select");
@@ -69,7 +69,6 @@ namespace easy3d {
                 d->update_texcoord_buffer(texcoords);
                 d->set_coloring(State::SCALAR_FIELD, State::FACE, "f:select");
             }
-            tool_manager_->viewer()->update_ui();
         }
 
         // -------------------- Click Select ----------------------
@@ -173,7 +172,7 @@ namespace easy3d {
         void ToolSurfaceMeshFaceSelectionRect::release(int x, int y) {
             for (auto model : tool_manager()->viewer()->models()) {
                 SurfaceMesh *mesh = dynamic_cast<SurfaceMesh*>(model);
-                if (mesh) {
+                if (mesh && mesh->renderer()->is_visible()) {
                     picker_->pick_faces(mesh, Rect(start_, vec2(x, y)), select_mode_ == SM_DESELECT);
                     update_render_buffer(mesh);
                 }
@@ -246,7 +245,7 @@ namespace easy3d {
 
             for (auto model : tool_manager()->viewer()->models()) {
                 SurfaceMesh *mesh = dynamic_cast<SurfaceMesh*>(model);
-                if (mesh) {
+                if (mesh && mesh->renderer()->is_visible()) {
                     picker_->pick_faces(mesh, lasso_, select_mode_ == SM_DESELECT);
                     update_render_buffer(mesh);
                 }
