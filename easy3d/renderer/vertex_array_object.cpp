@@ -71,7 +71,7 @@ namespace easy3d {
 		if (id_ == 0) {
 			glGenVertexArrays(1, &id_);	easy3d_debug_log_gl_error;
 			if (id_ == 0) {
-				LOG(ERROR) << "generating VertexArrayObject failed";
+				LOG(ERROR) << "failed generating VertexArrayObject";
 				return;
 			}
 		}
@@ -99,6 +99,7 @@ namespace easy3d {
         release_buffer(buffer);
 		bind();
         glGenBuffers(1, &buffer);                       easy3d_debug_log_gl_error;
+        LOG_IF(buffer == 0, ERROR) << "failed creating array buffer";
         glBindBuffer(GL_ARRAY_BUFFER, buffer);			easy3d_debug_log_gl_error;
         glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(size), data, dynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);		easy3d_debug_log_gl_error;
         glEnableVertexAttribArray(index);               easy3d_debug_log_gl_error;
@@ -107,10 +108,11 @@ namespace easy3d {
             glBindBuffer(GL_ARRAY_BUFFER, 0);           easy3d_debug_log_gl_error;
             glDeleteBuffers(1, &buffer);                easy3d_debug_log_gl_error;
             buffer = 0;
+            LOG(ERROR) << "failed creating array buffer";
 		}
         glBindBuffer(GL_ARRAY_BUFFER, 0);               easy3d_debug_log_gl_error;
         release();
-        return (glGetError() == GL_NO_ERROR);
+        return (glGetError() == GL_NO_ERROR && buffer != 0);
     }
 
 
@@ -118,16 +120,18 @@ namespace easy3d {
         release_buffer(buffer);
 		bind();
         glGenBuffers(1, &buffer);                                           easy3d_debug_log_gl_error;
+        LOG_IF(buffer == 0, ERROR) << "failed creating element array buffer";
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);                      easy3d_debug_log_gl_error;
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(size), data, dynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);		easy3d_debug_log_gl_error;
         if (glGetError() != GL_NO_ERROR) {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);                       easy3d_debug_log_gl_error;
             glDeleteBuffers(1, &buffer);                                    easy3d_debug_log_gl_error;
             buffer = 0;
+            LOG(ERROR) << "failed creating element array buffer";
 		}
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);	easy3d_debug_log_gl_error;
         release();
-        return (glGetError() == GL_NO_ERROR);
+        return (glGetError() == GL_NO_ERROR && buffer != 0);
 	}
 
 
@@ -139,6 +143,7 @@ namespace easy3d {
         release_buffer(buffer);
 		bind();
         glGenBuffers(1, &buffer);                                                   easy3d_debug_log_gl_error;
+        LOG_IF(buffer == 0, ERROR) << "failed creating shader storage buffer";
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);                             easy3d_debug_log_gl_error;
         glBufferData(GL_SHADER_STORAGE_BUFFER, static_cast<GLsizeiptr>(size), data, GL_DYNAMIC_DRAW);		easy3d_debug_log_gl_error;
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, index, buffer);                   easy3d_debug_log_gl_error;
@@ -146,10 +151,11 @@ namespace easy3d {
             glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);                              easy3d_debug_log_gl_error;
             glDeleteBuffers(1, &buffer);                                            easy3d_debug_log_gl_error;
             buffer = 0;
+            LOG(ERROR) << "failed creating shader storage buffer";
 		}
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);                                  easy3d_debug_log_gl_error;
         release();                                                                  easy3d_debug_log_gl_error;
-        return (glGetError() == GL_NO_ERROR);
+        return (glGetError() == GL_NO_ERROR && buffer != 0);
 	}
 
 
