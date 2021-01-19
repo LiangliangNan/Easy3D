@@ -484,7 +484,7 @@ Model* MainWindow::open(const std::string& file_name) {
     auto models = viewer_->models();
     for (auto m : models) {
         if (m->name() == file_name) {
-            LOG(WARNING) << "model alreaded loaded: " << file_name;
+            LOG(WARNING) << "model already loaded: " << file_name;
             return nullptr;
         }
     }
@@ -522,6 +522,7 @@ Model* MainWindow::open(const std::string& file_name) {
         viewer_->addModel(model);
         viewer_->fitScreen(model);
         ui->treeWidgetModels->addModel(model, true);
+        setCurrentFile(QString::fromStdString(file_name));
 
         const auto keyframe_file = file_system::replace_extension(model->name(), "kf");
         if (file_system::is_file(keyframe_file)) {
