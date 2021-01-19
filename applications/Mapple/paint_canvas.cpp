@@ -140,7 +140,7 @@ void PaintCanvas::cleanup() {
     }
 
     delete camera_;
-    delete walk_through_;
+    delete walkThrough();
     delete drawable_axes_;
     delete ssao_;
     delete shadow_;
@@ -314,6 +314,7 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
                 (!walkThrough()->interpolator()->is_interpolation_started()))
             {
                 walkThrough()->walk_to(p);
+                update();
             }
             else if (walkThrough()->status() == easy3d::WalkThrough::FREE_MODE) {
                 LOG(WARNING) << "Alt + Left click is for the walking mode only. Press 'K' to add a keyframe in the free mode";
@@ -1124,8 +1125,8 @@ void PaintCanvas::postDraw() {
     }
 
     // shown only when it is not animating
-    if (walk_through_ && !walk_through_->interpolator()->is_interpolation_started())
-        walk_through_->draw();
+    if (walkThrough() && !walkThrough()->interpolator()->is_interpolation_started())
+        walkThrough()->draw();
     easy3d_debug_log_gl_error;
 
     if (show_pivot_point_ || pressed_button_ != Qt::NoButton) {

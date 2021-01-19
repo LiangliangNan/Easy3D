@@ -48,6 +48,7 @@ namespace easy3d {
     class Frame;
     class Camera;
     class LinesDrawable;
+    class TrianglesDrawable;
 
     /**
      * \brief A keyframe interpolator for animation generation.
@@ -401,7 +402,7 @@ namespace easy3d {
         bool pathIsValid_;
 
         LinesDrawable* path_drawable_;
-        LinesDrawable* cameras_drawable_;
+        TrianglesDrawable* cameras_drawable_;
 
     public:
         Signal<> frame_interpolated;

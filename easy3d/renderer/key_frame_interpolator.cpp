@@ -39,6 +39,7 @@
 
 #include <easy3d/renderer/frame.h>
 #include <easy3d/renderer/drawable_lines.h>
+#include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/primitives.h>
 #include <easy3d/renderer/camera.h>   // for drawing the camera path drawables
 #include <easy3d/util/string.h>  // for formating time string
@@ -246,8 +247,6 @@ namespace easy3d {
 
         if (!path_drawable_) {
             std::vector<vec3> points;
-
-            // the path
             for (std::size_t i = 0; i < interpolated_path_.size() - 1; ++i) {
                 points.push_back(interpolated_path_[i].position());
                 points.push_back(interpolated_path_[i + 1].position());
@@ -263,23 +262,27 @@ namespace easy3d {
 
         if (!cameras_drawable_) {
             std::vector<vec3> points;
+            std::vector<unsigned int> indices;
 
             // camera representation
             for (std::size_t i = 0; i < keyframes_.size(); ++i) {
                 std::vector<vec3> cam_points;
-                opengl::prepare_camera(cam_points, camera_width,
+                std::vector<unsigned int> cam_indices;
+                opengl::prepare_camera(cam_points, cam_indices, camera_width,
                                        static_cast<float>(cam->screenHeight()) / cam->screenWidth());
+                unsigned int offset = points.size();
+                for (auto id : cam_indices)
+                    indices.push_back(offset + id);
                 const mat4 &m = Frame(keyframes_[i].position(), keyframes_[i].orientation()).matrix();
-                for (auto &p : cam_points) {
+                for (auto &p : cam_points)
                     points.push_back(m * p);
-                }
             }
 
             if (points.size() > 1) {
-                cameras_drawable_ = new LinesDrawable;
+                cameras_drawable_ = new TrianglesDrawable;
                 cameras_drawable_->update_vertex_buffer(points);
-                cameras_drawable_->set_uniform_coloring(vec4(0.0f, 0.0f, 1.0f, 1.0f));
-                cameras_drawable_->set_line_width(2);
+                cameras_drawable_->update_element_buffer(indices);
+                cameras_drawable_->set_uniform_coloring(vec4(0.2f, 0.7f, 0.3f, 1.0f));
             }
         }
 

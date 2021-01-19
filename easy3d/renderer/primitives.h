@@ -197,6 +197,13 @@ namespace easy3d {
          * \param hw_ratio The aspect ratio of the base quad defined as height/width (default 0.6).
          */
         void prepare_camera(std::vector<vec3>& points, float width, float hw_ratio = 0.6f);
+        /**
+         * \brief Prepares data (points) for representing a camera in the 3D world as a set of triangles.
+         * \param width The width of the camera. A good value can be 5% of the scene radius, or 10% of the
+         *      character height (in walking mode).
+         * \param hw_ratio The aspect ratio of the base quad defined as height/width (default 0.6).
+         */
+        void prepare_camera(std::vector<vec3>& points, std::vector<unsigned int>& indices, float width, float hw_ratio = 0.6f);
     }
 
 }

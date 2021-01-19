@@ -793,36 +793,19 @@ namespace easy3d {
             //--------------
             // Frustum outline
             //--------------
-
-            // LINE_STRIP
-            const vec3 p0(-halfWidth, halfHeight, -dist);
-            const vec3 p1(-halfWidth, -halfHeight, -dist);
-            points.push_back(p0);
-            points.push_back(p1);
-            const vec3 p2(0.0f, 0.0f, 0.0f);
-            points.push_back(p1);
-            points.push_back(p2);
-            const vec3 p3(halfWidth, -halfHeight, -dist);
-            points.push_back(p2);
-            points.push_back(p3);
-            const vec3 p4(-halfWidth, -halfHeight, -dist);
-            points.push_back(p3);
-            points.push_back(p4);
-
-            // LINE_STRIP
-            const vec3 q0(halfWidth, -halfHeight, -dist);
-            const vec3 q1(halfWidth, halfHeight, -dist);
-            const vec3 q2(0.0f, 0.0f, 0.0f);
-            const vec3 q3(-halfWidth, halfHeight, -dist);
-            const vec3 q4(halfWidth, halfHeight, -dist);
-            points.push_back(q0);
-            points.push_back(q1);
-            points.push_back(q1);
-            points.push_back(q2);
-            points.push_back(q2);
-            points.push_back(q3);
-            points.push_back(q3);
-            points.push_back(q4);
+            const vec3 c(0.0f, 0.0f, 0.0f);
+            const vec3 p0(-halfWidth, -halfHeight, -dist);
+            const vec3 p1(halfWidth, -halfHeight, -dist);
+            const vec3 p2(halfWidth, halfHeight, -dist);
+            const vec3 p3(-halfWidth, halfHeight, -dist);
+            points.push_back(p0);   points.push_back(p1);
+            points.push_back(p1);   points.push_back(p2);
+            points.push_back(p2);   points.push_back(p3);
+            points.push_back(p3);   points.push_back(p0);
+            points.push_back(c);   points.push_back(p0);
+            points.push_back(c);   points.push_back(p1);
+            points.push_back(c);   points.push_back(p2);
+            points.push_back(c);   points.push_back(p3);
 
             //------------------
             // Up arrow
@@ -833,28 +816,80 @@ namespace easy3d {
             const vec3 r1(baseHalfWidth, halfHeight, -dist);
             const vec3 r2(baseHalfWidth, baseHeight, -dist);
             const vec3 r3(-baseHalfWidth, baseHeight, -dist);
-            points.push_back(r0);
-            points.push_back(r1);
-            points.push_back(r1);
-            points.push_back(r2);
-            points.push_back(r2);
-            points.push_back(r3);
-            points.push_back(r3);
-            points.push_back(r0);
+            points.push_back(r0);   points.push_back(r1);
+            points.push_back(r1);   points.push_back(r2);
+            points.push_back(r2);   points.push_back(r3);
+            points.push_back(r3);   points.push_back(r0);
 
             // Arrow - TRIANGLE
             const vec3 a0(0.0f, arrowHeight, -dist);
             const vec3 a1(-arrowHalfWidth, baseHeight, -dist);
             const vec3 a2(arrowHalfWidth, baseHeight, -dist);
-            points.push_back(a0);
-            points.push_back(a1);
-            points.push_back(a1);
-            points.push_back(a2);
-            points.push_back(a2);
-            points.push_back(a0);
+            points.push_back(a0);   points.push_back(a1);
+            points.push_back(a1);   points.push_back(a2);
+            points.push_back(a2);   points.push_back(a0);
         }
 
 
+        void prepare_camera(std::vector<vec3>& points, std::vector<unsigned int>& indices, float width, float hw_ratio) {
+            const float halfWidth = width * 0.5f;
+            const float halfHeight = halfWidth * hw_ratio;
+            const float dist = halfHeight / tan(float(M_PI) / 8.0f);
+
+            const float arrowHeight = 2.0f * halfHeight;
+            const float baseHeight = 1.2f * halfHeight;
+            const float arrowHalfWidth = 0.5f * halfWidth;
+            const float baseHalfWidth = 0.3f * halfWidth;
+
+            //--------------
+            // Frustum outline
+            //--------------
+            const vec3 c(0.0f, 0.0f, 0.0f);
+            const vec3 p0(-halfWidth, -halfHeight, -dist);
+            const vec3 p1(halfWidth, -halfHeight, -dist);
+            const vec3 p2(halfWidth, halfHeight, -dist);
+            const vec3 p3(-halfWidth, halfHeight, -dist);
+
+            points.push_back(c);
+            points.push_back(p0);
+            points.push_back(p1);
+            points.push_back(p2);
+            points.push_back(p3);
+
+            //------------------
+            // Up arrow
+            //------------------
+
+            // Base - QUAD
+            const vec3 r0(-baseHalfWidth, halfHeight, -dist);
+            const vec3 r1(baseHalfWidth, halfHeight, -dist);
+            const vec3 r2(baseHalfWidth, baseHeight, -dist);
+            const vec3 r3(-baseHalfWidth, baseHeight, -dist);
+
+            points.push_back(r0);
+            points.push_back(r1);
+            points.push_back(r2);
+            points.push_back(r3);
+
+            // Arrow - TRIANGLE
+            const vec3 a0(0.0f, arrowHeight, -dist);
+            const vec3 a1(-arrowHalfWidth, baseHeight, -dist);
+            const vec3 a2(arrowHalfWidth, baseHeight, -dist);
+
+            points.push_back(a0);
+            points.push_back(a1);
+            points.push_back(a2);
+
+            indices.insert(indices.end(), {0, 1, 2});
+            indices.insert(indices.end(), {0, 2, 3});
+            indices.insert(indices.end(), {0, 3, 4});
+            indices.insert(indices.end(), {0, 4, 1});
+
+            indices.insert(indices.end(), {5, 6, 7});
+            indices.insert(indices.end(), {5, 7, 8});
+
+            indices.insert(indices.end(), {9, 10, 11});
+        }
     }
 
 } // namespace easy3d
