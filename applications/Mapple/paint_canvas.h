@@ -44,7 +44,6 @@ namespace easy3d {
     class Transparency;
     class EyeDomeLighting;
     class TextRenderer;
-    class WalkThrough;
     class ModelPicker;
     class SurfaceMeshPicker;
 }
@@ -52,7 +51,7 @@ namespace easy3d {
 class QWidget;
 class QOpenGLFunctions;
 class MainWindow;
-
+class WalkThrough;
 
 class PaintCanvas : public QOpenGLWidget, public easy3d::Canvas
 {
@@ -83,8 +82,8 @@ public:
     easy3d::Camera* camera() override { return camera_; }
     const easy3d::Camera* camera() const override { return camera_; }
     // the walkthrough
-    easy3d::WalkThrough* walkThrough() { return walk_through_; }
-    const easy3d::WalkThrough* walkThrough() const { return walk_through_; }
+    WalkThrough* walkThrough() { return walk_through_; }
+    const WalkThrough* walkThrough() const { return walk_through_; }
 
 	// moves the camera so that the 'model' is centered on the screen.
 	// if 'model' is NULL, it centers the entire scene (all models).
@@ -275,7 +274,7 @@ protected:
 
 protected:
     MainWindow* window_;
-    easy3d::WalkThrough* walk_through_;
+    WalkThrough* walk_through_;
 
 	// Actually I can inherit the viewer from QOpenGLFunctions (thus no such a member
 	// variable). Having it as a member can eliminate including the header file.

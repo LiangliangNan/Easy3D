@@ -1,6 +1,7 @@
 #include "widget_model_list.h"
 #include "main_window.h"
 #include "paint_canvas.h"
+#include "walk_through.h"
 
 #include <easy3d/core/graph.h>
 #include <easy3d/core/surface_mesh.h>
@@ -9,7 +10,6 @@
 #include <easy3d/core/surface_mesh_builder.h>
 #include <easy3d/algo/surface_mesh_components.h>
 #include <easy3d/renderer/renderer.h>
-#include <easy3d/renderer/walk_through.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
@@ -542,7 +542,7 @@ void WidgetModelList::modelItemSelectionChanged() {
         ModelItem *item = dynamic_cast<ModelItem *>(topLevelItem(i));
 
         // don't allow changing selection for camera path creation
-        if (viewer()->walkThrough()->status() == easy3d::WalkThrough::STOPPED && viewer()->isSelectModelEnabled())
+        if (viewer()->walkThrough()->status() == WalkThrough::STOPPED && viewer()->isSelectModelEnabled())
             item->model()->renderer()->set_selected(item->isSelected());
     }
 

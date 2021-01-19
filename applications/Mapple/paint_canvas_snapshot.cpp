@@ -38,10 +38,10 @@
 
 #include "paint_canvas.h"
 #include "main_window.h"
+#include "walk_through.h"
 
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/transform.h>
-#include <easy3d/renderer/walk_through.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
 #include <easy3d/core//model.h>
 #include <easy3d/util/logging.h>

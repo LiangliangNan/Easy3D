@@ -25,6 +25,7 @@
 
 #include "paint_canvas.h"
 #include "main_window.h"
+#include "walk_through.h"
 
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/point_cloud.h>
@@ -52,7 +53,6 @@
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/text_renderer.h>
-#include <easy3d/renderer/walk_through.h>
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/buffers.h>
 #include <easy3d/fileio/resources.h>
@@ -310,17 +310,17 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
         } else if (e->modifiers() == Qt::AltModifier) {
             bool found = false;
             const vec3 p = pointUnderPixel(e->pos(), found);
-            if (found && (walkThrough()->status() == easy3d::WalkThrough::WALKING_MODE) &&
+            if (found && (walkThrough()->status() == WalkThrough::WALKING_MODE) &&
                 (!walkThrough()->interpolator()->is_interpolation_started()))
             {
                 walkThrough()->walk_to(p);
                 update();
             }
-            else if (walkThrough()->status() == easy3d::WalkThrough::FREE_MODE) {
+            else if (walkThrough()->status() == WalkThrough::FREE_MODE) {
                 LOG(WARNING) << "Alt + Left click is for the walking mode only. Press 'K' to add a keyframe in the free mode";
             }
         } else if (e->modifiers() == Qt::NoModifier && e->button() == Qt::LeftButton &&
-                   walkThrough()->status() == easy3d::WalkThrough::STOPPED && allow_select_model_)
+                   walkThrough()->status() == WalkThrough::STOPPED && allow_select_model_)
         {
             if (!model_picker_)
                 model_picker_ = new ModelPicker(camera());
@@ -545,12 +545,12 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
     }
 
     else if (e->key() == Qt::Key_K && e->modifiers() == Qt::NoModifier) {
-        if (walkThrough()->status() == easy3d::WalkThrough::FREE_MODE) {
+        if (walkThrough()->status() == WalkThrough::FREE_MODE) {
             const vec3 pos = camera()->position();
             const quat q = camera()->orientation();
             walkThrough()->add_keyframe(Frame(pos, q));
         }
-        else if (walkThrough()->status() == easy3d::WalkThrough::WALKING_MODE)
+        else if (walkThrough()->status() == WalkThrough::WALKING_MODE)
             LOG(WARNING) << "'K' is for the free mode only. Use Alt + Left click to add a keyframe in the walking mode";
     }
     else if (e->key() == Qt::Key_Space && e->modifiers() == Qt::NoModifier) {
@@ -1393,7 +1393,7 @@ void PaintCanvas::copyCamera() {
 
 
 void PaintCanvas::pasteCamera() {
-    if (walkThrough()->interpolator()->is_interpolation_started() || walkThrough()->status() != easy3d::WalkThrough::STOPPED )
+    if (walkThrough()->interpolator()->is_interpolation_started() || walkThrough()->status() != WalkThrough::STOPPED )
         return;
 
     // get the camera parameters from clipboard string

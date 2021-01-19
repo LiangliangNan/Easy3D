@@ -30,10 +30,10 @@
 
 
 namespace easy3d {
-    class WalkThrough;
     class KeyFrameInterpolator;
 }
 
+class WalkThrough;
 
 class DialogWalkThrough : public Dialog, public Ui::DialogWalkThroughClass
 {
@@ -44,7 +44,7 @@ public:
 	~DialogWalkThrough();
 
     easy3d::KeyFrameInterpolator* interpolator();
-    easy3d::WalkThrough* walkThrough();
+    WalkThrough* walkThrough();
 
 public Q_SLOTS :
     void importCameraPathFromFile();

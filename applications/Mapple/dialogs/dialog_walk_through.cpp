@@ -25,9 +25,9 @@
 #include "dialog_walk_through.h"
 #include "paint_canvas.h"
 #include "main_window.h"
+#include "walk_through.h"
 
 #include <easy3d/core/model.h>
-#include <easy3d/renderer/walk_through.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/camera.h>
@@ -107,7 +107,7 @@ void DialogWalkThrough::numKeyramesChanged() {
 }
 
 
-easy3d::WalkThrough* DialogWalkThrough::walkThrough() {
+WalkThrough* DialogWalkThrough::walkThrough() {
     return viewer_->walkThrough();
 }
 
@@ -122,9 +122,9 @@ void DialogWalkThrough::showEvent(QShowEvent* e) {
     viewer_->camera()->setZNearCoefficient(0.0001);
 
     if (radioButtonWalkingMode->isChecked())
-        walkThrough()->set_status(easy3d::WalkThrough::WALKING_MODE);
+        walkThrough()->set_status(WalkThrough::WALKING_MODE);
     else
-        walkThrough()->set_status(easy3d::WalkThrough::FREE_MODE);
+        walkThrough()->set_status(WalkThrough::FREE_MODE);
 
     checkBoxFollowUp->setChecked(walkThrough()->follow_up());
 	doubleSpinBoxCharacterHeightFactor->setValue(walkThrough()->height_factor());
@@ -151,7 +151,7 @@ void DialogWalkThrough::closeEvent(QCloseEvent* e) {
     viewer_->camera()->setZClippingCoefficient(std::sqrt(3.0f));
     viewer_->camera()->setZNearCoefficient(0.005);
 
-    walkThrough()->set_status(easy3d::WalkThrough::STOPPED);
+    walkThrough()->set_status(WalkThrough::STOPPED);
     QDialog::closeEvent(e);
 	viewer_->update();
 }
@@ -196,9 +196,9 @@ void DialogWalkThrough::setWalkingMode(bool b) {
     doubleSpinBoxCharacterDistanceFactor->setEnabled(b);
 
     if (b)
-        walkThrough()->set_status(easy3d::WalkThrough::WALKING_MODE);
+        walkThrough()->set_status(WalkThrough::WALKING_MODE);
     else
-        walkThrough()->set_status(easy3d::WalkThrough::FREE_MODE);
+        walkThrough()->set_status(WalkThrough::FREE_MODE);
 }
 
 

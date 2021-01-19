@@ -39,6 +39,7 @@ include(../../cmake/UseOpenMP.cmake)
 set(${PROJECT_NAME}_HEADERS
         main_window.h
         paint_canvas.h
+        walk_through.h
 
         dialogs/dialog.h
         dialogs/dialog_surface_mesh_curvature.h
@@ -72,6 +73,7 @@ set(${PROJECT_NAME}_SOURCES
         main_window.cpp
         paint_canvas.cpp
         paint_canvas_snapshot.cpp
+        walk_through.cpp
 
         dialogs/dialog.cpp
         dialogs/dialog_surface_mesh_curvature.cpp

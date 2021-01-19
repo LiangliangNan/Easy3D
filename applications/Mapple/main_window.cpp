@@ -52,7 +52,6 @@
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_points.h>
-#include <easy3d/renderer/walk_through.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/manipulator.h>
@@ -82,6 +81,7 @@
 #include <easy3d/util/stop_watch.h>
 
 #include "paint_canvas.h"
+#include "walk_through.h"
 
 #include "dialogs/dialog_snapshot.h"
 #include "dialogs/dialog_properties.h"
