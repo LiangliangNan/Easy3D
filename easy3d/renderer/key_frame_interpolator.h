@@ -208,13 +208,14 @@ namespace easy3d {
          * \details The \p index has to be in the range [0, number_of_keyframes()-1].
          * \sa set_keyframe_position()
          */
-        const vec3& keyframe_position(std::size_t index);
+        const vec3& keyframe_position(std::size_t index) const;
+
         /**
          * \brief Returns the orientation of the \p index-th keyframe.
          * \details The \p index has to be in the range [0, number_of_keyframes()-1].
          * \sa set_keyframe_orientation()
          */
-        const quat& keyframe_orientation(std::size_t index);
+        const quat& keyframe_orientation(std::size_t index) const;
 
         /**
          * \brief Returns the duration of the KeyFrameInterpolator path, expressed in seconds.
@@ -321,12 +322,18 @@ namespace easy3d {
     public:
 
         /**
-         * \brief Draws the interpolated camera path along with virtual 3D cameras for the keyframes.
+         * \brief Draws the virtual 3D cameras for the keyframes.
          * \param camera The current camera used by the viewer.
          * \param camera_width Controls the size of the cameras. A good value can be 5% of the scene radius, or
          *      10% of the character height (in walking mode), for instance.
-         * The rendering state can be changes by calling the path/cameras drawable's related methods. */
-        virtual void draw_path(const Camera* camera, float camera_width);
+         */
+        virtual void draw_cameras(const Camera* camera, float camera_width, const vec4& color = vec4(0.5f, 0.8f, 0.5f, 1.0f));
+
+        /**
+         * \brief Draws the interpolated camera path.
+         * \param camera The current camera used by the viewer.
+         */
+        virtual void draw_path(const Camera* camera, float thickness = 2.0f, const vec4& color = vec4(1.0f, 0.2f, 0.2f, 1.0f));
 
         //@}
 

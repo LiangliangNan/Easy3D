@@ -146,12 +146,12 @@ namespace easy3d {
     }
 
 
-    const vec3& KeyFrameInterpolator::keyframe_position(std::size_t index) {
+    const vec3& KeyFrameInterpolator::keyframe_position(std::size_t index) const {
         return keyframes_.at(index).position();
     }
 
 
-    const quat& KeyFrameInterpolator::keyframe_orientation(std::size_t index) {
+    const quat& KeyFrameInterpolator::keyframe_orientation(std::size_t index) const {
         return keyframes_.at(index).orientation();
     }
 
@@ -227,7 +227,56 @@ namespace easy3d {
     }
 
 
-    void KeyFrameInterpolator::draw_path(const Camera *cam, float camera_width) {
+    void KeyFrameInterpolator::draw_cameras(const Camera *camera, float camera_width, const vec4 &color) {
+        if (keyframes_.empty())
+            return;
+        if (!pathIsValid_) {
+            if (path_drawable_) {
+                delete path_drawable_;
+                path_drawable_ = nullptr;
+            }
+            if (cameras_drawable_) {
+                delete cameras_drawable_;
+                cameras_drawable_ = nullptr;
+            }
+            interpolated_path_ = interpolate();
+            pathIsValid_ = true;
+        }
+        if (interpolated_path_.empty()) // interpolation may have failed.
+            return;
+
+        if (!cameras_drawable_) {
+            std::vector<vec3> points;
+            std::vector<unsigned int> indices;
+
+            // camera representation
+            for (std::size_t i = 0; i < keyframes_.size(); ++i) {
+                std::vector<vec3> cam_points;
+                std::vector<unsigned int> cam_indices;
+                opengl::prepare_camera(cam_points, cam_indices, camera_width,
+                                       static_cast<float>(camera->screenHeight()) / camera->screenWidth());
+                unsigned int offset = points.size();
+                for (auto id : cam_indices)
+                    indices.push_back(offset + id);
+                const mat4 &m = Frame(keyframes_[i].position(), keyframes_[i].orientation()).matrix();
+                for (auto &p : cam_points)
+                    points.push_back(m * p);
+            }
+
+            if (points.size() > 1) {
+                cameras_drawable_ = new TrianglesDrawable;
+                cameras_drawable_->update_vertex_buffer(points);
+                cameras_drawable_->update_element_buffer(indices);
+                cameras_drawable_->set_uniform_coloring(vec4(0.2f, 0.7f, 0.3f, 1.0f));
+            }
+        }
+
+        if (cameras_drawable_)
+            cameras_drawable_->draw(camera);
+    }
+
+
+    void KeyFrameInterpolator::draw_path(const Camera *camera, float thickness, const vec4 &color) {
         if (keyframes_.empty())
             return;
         if (!pathIsValid_) {
@@ -254,42 +303,14 @@ namespace easy3d {
             if (points.size() > 1) {
                 path_drawable_ = new LinesDrawable;
                 path_drawable_->update_vertex_buffer(points);
-                path_drawable_->set_uniform_coloring(vec4(1.0f, 0.2f, 0.2f, 1.0f));
-                path_drawable_->set_line_width(2);
+                path_drawable_->set_uniform_coloring(color);
+                path_drawable_->set_line_width(thickness);
                 path_drawable_->set_impostor_type(LinesDrawable::CYLINDER);
             }
         }
 
-        if (!cameras_drawable_) {
-            std::vector<vec3> points;
-            std::vector<unsigned int> indices;
-
-            // camera representation
-            for (std::size_t i = 0; i < keyframes_.size(); ++i) {
-                std::vector<vec3> cam_points;
-                std::vector<unsigned int> cam_indices;
-                opengl::prepare_camera(cam_points, cam_indices, camera_width,
-                                       static_cast<float>(cam->screenHeight()) / cam->screenWidth());
-                unsigned int offset = points.size();
-                for (auto id : cam_indices)
-                    indices.push_back(offset + id);
-                const mat4 &m = Frame(keyframes_[i].position(), keyframes_[i].orientation()).matrix();
-                for (auto &p : cam_points)
-                    points.push_back(m * p);
-            }
-
-            if (points.size() > 1) {
-                cameras_drawable_ = new TrianglesDrawable;
-                cameras_drawable_->update_vertex_buffer(points);
-                cameras_drawable_->update_element_buffer(indices);
-                cameras_drawable_->set_uniform_coloring(vec4(0.2f, 0.7f, 0.3f, 1.0f));
-            }
-        }
-
         if (path_drawable_)
-            path_drawable_->draw(cam);
-        if (cameras_drawable_)
-            cameras_drawable_->draw(cam);
+            path_drawable_->draw(camera);
     }
 
 
