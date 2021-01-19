@@ -50,6 +50,7 @@ DialogWalkThrough::DialogWalkThrough(MainWindow *window)
 	spinBoxFPS->setValue(interpolator()->frame_rate());
 	doubleSpinBoxInterpolationSpeed->setValue(interpolator()->interpolation_speed());
 
+    connect(checkBoxFollowUp, SIGNAL(toggled(bool)), this, SLOT(setFollowUp(bool)));
 	connect(doubleSpinBoxCharacterHeightFactor, SIGNAL(valueChanged(double)), this, SLOT(setCharacterHeightFactor(double)));
 	connect(doubleSpinBoxCharacterDistanceFactor, SIGNAL(valueChanged(double)), this, SLOT(setCharacterDistanceFactor(double)));
 
@@ -59,7 +60,8 @@ DialogWalkThrough::DialogWalkThrough(MainWindow *window)
     connect(importCameraPathButton, SIGNAL(clicked()), this, SLOT(importCameraPathFromFile()));
     connect(exportCameraPathButton, SIGNAL(clicked()), this, SLOT(exportCameraPathToFile()));
 
-    connect(checkBoxShowCameraPath, SIGNAL(toggled(bool)), this, SLOT(showCameraPath(bool)));
+    connect(checkBoxShowCameras, SIGNAL(toggled(bool)), this, SLOT(showCameras(bool)));
+    connect(checkBoxShowPath, SIGNAL(toggled(bool)), this, SLOT(showPath(bool)));
 
     connect(radioButtonWalkingMode, SIGNAL(toggled(bool)), this, SLOT(setWalkingMode(bool)));
 
@@ -124,8 +126,11 @@ void DialogWalkThrough::showEvent(QShowEvent* e) {
     else
         walkThrough()->set_status(easy3d::WalkThrough::FREE_MODE);
 
+    checkBoxFollowUp->setChecked(walkThrough()->follow_up());
 	doubleSpinBoxCharacterHeightFactor->setValue(walkThrough()->height_factor());
 	doubleSpinBoxCharacterDistanceFactor->setValue(walkThrough()->third_person_forward_factor());
+    checkBoxShowCameras->setChecked(walkThrough()->cameras_visible());
+    checkBoxShowPath->setChecked(walkThrough()->path_visible());
 
 #ifdef HAS_FFMPEG
     std::string name = "./video.mp4";
@@ -152,16 +157,20 @@ void DialogWalkThrough::closeEvent(QCloseEvent* e) {
 }
 
 
+void DialogWalkThrough::setFollowUp(bool b) {
+    walkThrough()->set_follow_up(b);
+    viewer_->update();
+}
+
+
 void DialogWalkThrough::setCharacterHeightFactor(double h) {
     walkThrough()->set_height_factor(h);
-    DLOG(WARNING) << "TODO: allow to modify the last keyframe (camera position and orientation) here" << std::endl;
     viewer_->update();
 }
 
 
 void DialogWalkThrough::setCharacterDistanceFactor(double d) {
     walkThrough()->set_third_person_forward_factor(d);
-    DLOG(WARNING) << "TODO: allow to modify the last keyframe (camera position and orientation) here";
     viewer_->update();
 }
 
@@ -179,6 +188,8 @@ void DialogWalkThrough::setFrameRate(int fps) {
 
 
 void DialogWalkThrough::setWalkingMode(bool b) {
+    labelFollowUp->setEnabled(b);
+    checkBoxFollowUp->setEnabled(b);
     labelCharacterHeight->setEnabled(b);
     labelCharacterDistanceToEye->setEnabled(b);
     doubleSpinBoxCharacterHeightFactor->setEnabled(b);
@@ -206,7 +217,7 @@ void DialogWalkThrough::goToPreviousKeyframe()
 void DialogWalkThrough::goToNextKeyframe()
 {
     int pos = walkThrough()->current_keyframe_index();
-    if (pos >= interpolator()->number_of_keyframes() - 1)  // if already at the end, move to the last view point
+    if (pos >= 0 && pos >= interpolator()->number_of_keyframes() - 1)  // if already at the end, move to the last view point
         walkThrough()->move_to(interpolator()->number_of_keyframes() - 1);
     else
         walkThrough()->move_to(pos + 1);
@@ -404,6 +415,8 @@ void DialogWalkThrough::record() {
     // restore
     if (visible)
         walkThrough()->set_path_visible(true);
+
+    show();
 }
 
 
@@ -412,20 +425,27 @@ void DialogWalkThrough::onPreviewStopped() {
 }
 
 
-void DialogWalkThrough::showCameraPath(bool b) {
+void DialogWalkThrough::showCameras(bool b) {
+    walkThrough()->set_cameras_visible(b);
+    adjustSceneRadius();
+}
+
+
+void DialogWalkThrough::showPath(bool b) {
     walkThrough()->set_path_visible(b);
-    if (b) {
+    adjustSceneRadius();
+}
+
+
+void DialogWalkThrough::adjustSceneRadius() {
+    if (walkThrough()->path_visible() || walkThrough()->cameras_visible()) {
         const int count = interpolator()->number_of_keyframes();
         float radius = viewer_->camera()->sceneRadius();
-        for (int i=0; i<count; ++i) {
-            radius = std::max( radius,
-                               distance(viewer_->camera()->sceneCenter(), interpolator()->keyframe(i).position())
-            );
-        }
+        for (int i = 0; i < count; ++i)
+            radius = std::max(radius, distance(viewer_->camera()->sceneCenter(), interpolator()->keyframe(i).position()));
         if (radius > viewer_->camera()->sceneRadius())
             viewer_->camera()->setSceneRadius(radius);
-    }
-    else {
+    } else {
         Box3 box;
         for (auto m : viewer_->models())
             box.add_box(m->bounding_box());
@@ -482,8 +502,7 @@ void DialogWalkThrough::importCameraPathFromFile() {
     std::ifstream input(fileName.toStdString().c_str());
     if (interpolator()->read_keyframes(input)) {
         LOG(INFO) << interpolator()->number_of_keyframes() << " keyframes loaded";
-        if (walkThrough()->path_visible())
-            showCameraPath(true);   // change the scene bbox
+        adjustSceneRadius();
         numKeyramesChanged();
     }
 

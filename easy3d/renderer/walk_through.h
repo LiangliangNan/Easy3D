@@ -74,8 +74,13 @@ namespace easy3d {
         //@}
 
 
-        /// \name Character parameters for the walking mode
+        /// \name Parameters for the walking mode
         //@{
+
+        /// Sets follow up the keyframes.
+        void set_follow_up(bool b) { follow_up_ = b; }
+        /// Returns whether follow up the keyframes.
+        bool follow_up() const { return follow_up_; }
 
         /// Sets the character's height factor.
         /// \details The height factor specifies the character's relative height with respect to the scene height.
@@ -117,6 +122,11 @@ namespace easy3d {
         /// Returns the index of current keyframe, which is equal to the return value of move_to (if called).
         int current_keyframe_index() const { return current_frame_idx_; }
 
+        /// Shows/Hides the cameras.
+        void set_cameras_visible(bool b)  { cameras_visible_ = b; }
+        /// Returns whether the cameras are visible.
+        bool cameras_visible() const { return cameras_visible_; }
+
         /// Shows/Hides the path.
         void set_path_visible(bool b)  { path_visible_ = b; }
         /// Returns whether the path is visible.
@@ -141,8 +151,8 @@ namespace easy3d {
 
         vec3 character_head(const vec3 &foot) const;
 
-        // convert camera pos and view direction into to a key frame
-        Frame to_frame(const vec3 &pos, const vec3 &view_dir) const;
+        // convert view direction to orientation
+        quat to_orientation(const vec3 &view_dir) const;
 
     protected:
         Camera* camera_;
@@ -156,6 +166,8 @@ namespace easy3d {
         // \todo Allow to modify it to handle arbitrarily oriented scenes/objects
         vec3 ground_plane_normal_;
 
+        bool follow_up_;
+
         // character's height factor.
         // It specifies the character's relative height with respect to the scene height.
         float height_factor_;
@@ -164,6 +176,7 @@ namespace easy3d {
         // It specifies how far the character is in front of the observer (i.e., camera), relative to its height.
         float third_person_forward_factor_;
 
+        bool cameras_visible_;
         bool path_visible_;
         int current_frame_idx_;
 

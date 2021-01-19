@@ -49,7 +49,10 @@ public:
 public Q_SLOTS :
     void importCameraPathFromFile();
     void exportCameraPathToFile();
-    void showCameraPath(bool);
+
+    void showCameras(bool);
+    void showPath(bool);
+
     void clearPath();
 
     void setWalkingMode(bool);
@@ -63,8 +66,10 @@ public Q_SLOTS :
 	void preview(bool);
     void record();
 
+    void setFollowUp(bool);
 	void setCharacterHeightFactor(double);
 	void setCharacterDistanceFactor(double);
+
 	void setInterpolationSpeed(double);
 	void setFrameRate(int);
 
@@ -78,6 +83,7 @@ protected:
 	virtual void closeEvent(QCloseEvent* e);
 
     void numKeyramesChanged();
+    void adjustSceneRadius();
 };
 
 #endif // DIALOG_WALK_THROUGH_H

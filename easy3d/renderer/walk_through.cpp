@@ -38,8 +38,10 @@ namespace easy3d {
             : camera_(camera)
             , status_(STOPPED)
             , ground_plane_normal_(0, 0, 1)
+            , follow_up_(true)
             , height_factor_(0.2f)
             , third_person_forward_factor_(1.8f)
+            , cameras_visible_(false)
             , path_visible_(false)
             , current_frame_idx_(-1)
     {
@@ -84,26 +86,43 @@ namespace easy3d {
         }
 
         const vec3 head = character_head(ground_point);
-        vec3 view_dir = head - camera_->position();
+        vec3 view_dir = head - camera_->position(); // approximate (when no previous keyframes exist)
+        if (interpolator()->number_of_keyframes() > 0) {
+            int prev_idx = interpolator()->number_of_keyframes() - 1;
+            view_dir = head - interpolator()->keyframe_position(prev_idx);
+        }
         view_dir.z = 0;
         view_dir.normalize();
-        const vec3 &cam_pos = head - view_dir * third_person_forward_distance();
+
+        vec3 cam_pos = head;    // if not follow up, we want to get what we see
+        if (follow_up_)
+            cam_pos = cam_pos - view_dir * third_person_forward_distance(); // move back
+
+        // adjust the previous view direction to be pointing to the new one
+        if (interpolator()->number_of_keyframes() > 0) {
+            int last_idx = interpolator()->number_of_keyframes() - 1;
+            vec3 dir = cam_pos - interpolator()->keyframe_position(last_idx);
+            interpolator()->set_keyframe_orientation(last_idx, to_orientation(dir));
+        }
+
         add_keyframe(cam_pos, view_dir);
 
         // set the pivot point ahead of the character.
-        camera_->setPivotPoint(ground_point + view_dir * third_person_forward_distance());
+        camera_->setPivotPoint(ground_point + view_dir * third_person_forward_distance() * 2.0f);
     }
 
 
     void WalkThrough::set_height_factor(float f) {
         height_factor_ = f;
-        move_to(current_frame_idx_);
+        if (follow_up_)
+            move_to(current_frame_idx_);
     }
 
 
     void WalkThrough::set_third_person_forward_factor(float f) {
         third_person_forward_factor_ = f;
-        move_to(current_frame_idx_);
+        if (follow_up_)
+            move_to(current_frame_idx_);
     }
 
 
@@ -114,7 +133,9 @@ namespace easy3d {
         }
 
         kfi_->delete_last_keyframe();
-        move_to(kfi_->number_of_keyframes() -1);
+
+        if (follow_up_)
+            move_to(kfi_->number_of_keyframes() -1);
     }
 
 
@@ -145,9 +166,11 @@ namespace easy3d {
         current_frame_idx_ = idx;
         path_modified.send();
 
-        vec3 view_dir = camera_->viewDirection();
+        vec3 view_dir = frame.inverseTransformOf(vec3(0.0, 0.0, -1.0));
+        view_dir.z = 0;
         view_dir.normalize();
-        const vec3 foot = frame.position() + view_dir * third_person_forward_distance() * 2 - vec3(0, 0, 1) * character_height();
+
+        vec3 foot = frame.position() + view_dir * third_person_forward_distance() * 2.0f - vec3(0, 0, 1) * character_height();
         camera_->setPivotPoint(foot);
 
         return current_frame_idx_;
@@ -155,8 +178,10 @@ namespace easy3d {
 
 
     void WalkThrough::draw() const {
+        if (cameras_visible())
+            kfi_->draw_cameras(camera_, character_height() * 0.2f);
         if (path_visible())
-            kfi_->draw_path(camera_, character_height() * 0.1f);
+            kfi_->draw_path(camera_, 2.0f);
     }
 
 
@@ -165,8 +190,10 @@ namespace easy3d {
         dir.z = 0; // force looking at horizontal direction
         dir.normalize();
 
-        add_keyframe(to_frame(cam_pos, dir));
-        move_to(kfi_->number_of_keyframes() - 1); // move to the new view point.
+        add_keyframe(Frame(cam_pos, to_orientation(dir)));
+
+        if (follow_up_)
+            move_to(kfi_->number_of_keyframes() - 1); // move to the new view point.
     }
 
 
@@ -188,7 +215,7 @@ namespace easy3d {
     }
 
 
-    Frame WalkThrough::to_frame(const vec3 &pos, const vec3 &view_dir) const {
+    quat WalkThrough::to_orientation(const vec3 &view_dir) const {
         const vec3 &up_dir = ground_plane_normal_;
         vec3 xAxis = cross(view_dir, up_dir);
         if (xAxis.length2() < epsilon_sqr<float>()) {    // target is aligned with upVector, this means a rotation around X axis
@@ -199,8 +226,7 @@ namespace easy3d {
 
         quat orient;
         orient.set_from_rotated_basis(xAxis, up_dir, -view_dir);
-
-        return Frame(pos, orient);
+        return orient;
     }
 
 }
