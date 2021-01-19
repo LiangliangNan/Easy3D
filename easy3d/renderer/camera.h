@@ -93,7 +93,7 @@ namespace easy3d {
      *      camera_->setType(Camera::PERSPECTIVE);
      *      camera_->setUpVector(vec3(0, 0, 1));        // Z pointing up
      *      camera_->setViewDirection(vec3(-1, 0, 0));  // X pointing out
-     *      camera_->showEntireScene();                 // osition and orient the camera
+     *      camera_->showEntireScene();                 // position and orient the camera
      *      camera_->connect(this, &Viewer::update);    // connect the viewer's update function
      *      \endcode
      *  - Call <code> camera_->setScreenWidthAndHeight() </code> at both
