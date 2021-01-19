@@ -34,7 +34,6 @@
 
 #include <easy3d/renderer/key_frame_interpolator.h>
 
-#include <fstream>
 #include <chrono>
 #include <thread>
 
