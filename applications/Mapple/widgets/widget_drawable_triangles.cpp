@@ -17,6 +17,7 @@
 
 #include "paint_canvas.h"
 #include "main_window.h"
+#include "widget_model_list.h"
 
 #include "ui_widget_drawable_triangles.h"
 
@@ -170,6 +171,7 @@ void WidgetTrianglesDrawable::updatePanel() {
 
     // visible
     ui->checkBoxVisible->setChecked(d->is_visible());
+    window_->widgetModelList()->updateDrawableVisibilities();
 
     // phong shading
     ui->checkBoxPhongShading->setChecked(d->smooth_shading());

@@ -160,6 +160,19 @@ void WidgetModelList::updateDrawableVisibility(easy3d::Drawable *d) {
 }
 
 
+void WidgetModelList::updateDrawableVisibilities() {
+    int num = topLevelItemCount();
+    for (int i = 0; i < num; ++i) {
+        auto item = dynamic_cast<ModelItem *>(topLevelItem(i));
+        int num_children = item->childCount();
+        for (int j = 0; j < num_children; ++j) {
+            auto d_item = dynamic_cast<DrawableItem *>(item->child(j));
+            d_item->setVisible(2, d_item->drawable()->is_visible());
+        }
+    }
+}
+
+
 void WidgetModelList::prepareContextMenu(QMenu *menu) {
     menu->clear();  // I want to customize the menu list
 

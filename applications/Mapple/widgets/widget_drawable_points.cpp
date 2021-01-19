@@ -15,6 +15,7 @@
 
 #include "paint_canvas.h"
 #include "main_window.h"
+#include "widget_model_list.h"
 
 #include "ui_widget_drawable_points.h"
 
@@ -275,6 +276,7 @@ void WidgetPointsDrawable::updatePanel() {
 
     // visible
     ui->checkBoxVisible->setChecked(d->is_visible());
+    window_->widgetModelList()->updateDrawableVisibilities();
 
     // thickness
     ui->doubleSpinBoxPointSize->setValue(d->point_size());

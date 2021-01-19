@@ -13,6 +13,7 @@
 
 #include "paint_canvas.h"
 #include "main_window.h"
+#include "widget_model_list.h"
 
 #include "ui_widget_drawable_lines.h"
 
@@ -149,6 +150,7 @@ void WidgetLinesDrawable::updatePanel() {
 
     // visible
     ui->checkBoxVisible->setChecked(d->is_visible());
+    window_->widgetModelList()->updateDrawableVisibilities();
 
     // thickness
     ui->doubleSpinBoxLineWidth->setValue(d->line_width());

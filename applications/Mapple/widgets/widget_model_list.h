@@ -31,7 +31,8 @@ public:
 
     void prepareContextMenu(QMenu *menu);
 
-    void updateDrawableVisibility(easy3d::Drawable* d);
+    void updateDrawableVisibility(easy3d::Drawable* d); // the given drawable
+    void updateDrawableVisibilities();  // all drawables
 
 private Q_SLOTS :
 
