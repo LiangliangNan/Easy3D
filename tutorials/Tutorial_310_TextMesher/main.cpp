@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
     viewer.add_drawable(d);
 #endif
 
-    // We always want to look the front of the meshed text.
+    // We always want to look at the front of the meshed text.
     viewer.camera()->setViewDirection(vec3(0, 0, -1));
     viewer.camera()->setUpVector(vec3(0, 1, 0));
 
