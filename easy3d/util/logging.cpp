@@ -138,9 +138,6 @@ namespace easy3d
             // Values are always std::string
             defaultConf.setGlobally(el::ConfigurationType::Format, "%levshort %datetime{%d/%M/%Y %h:%m:%s.%g} %fbase:%line] %msg");
 
-            el::Loggers::configureFromGlobal("global.conf");.
-
-
             if (!log_file_name.empty()) {
                 defaultConf.setGlobally(el::ConfigurationType::Filename, log_file_name);
                 defaultConf.setGlobally(el::ConfigurationType::MaxLogFileSize, std::string("1048576")); // 1024 * 1024 = 1M
