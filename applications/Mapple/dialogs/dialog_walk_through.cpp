@@ -143,7 +143,7 @@ void DialogWalkThrough::showEvent(QShowEvent* e) {
 #endif
 
     lineEditOutputFile->setText(QString::fromStdString(name));
-	QDialog::showEvent(e);
+//	QDialog::showEvent(e);
 }
 
 
@@ -403,9 +403,12 @@ void DialogWalkThrough::record() {
     if (previewButton->isChecked())
         previewButton->setChecked(false);
 
-    // make sure the path is not visible in recording
-    const bool visible = walkThrough()->path_visible();
-    if (visible)
+    // make sure the cameras and path are not visible in recording
+    const bool cameras_visible = walkThrough()->cameras_visible();
+    if (cameras_visible)
+        walkThrough()->set_cameras_visible(false);
+    const bool path_visible = walkThrough()->path_visible();
+    if (path_visible)
         walkThrough()->set_path_visible(false);
 
     const QString file = lineEditOutputFile->text();
@@ -420,7 +423,9 @@ void DialogWalkThrough::record() {
     LOG(INFO) << "recording finished. " << w.time_string();
 
     // restore
-    if (visible)
+    if (cameras_visible)
+        walkThrough()->set_cameras_visible(true);
+    if (path_visible)
         walkThrough()->set_path_visible(true);
 
     show();
