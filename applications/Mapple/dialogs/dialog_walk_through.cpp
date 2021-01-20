@@ -269,10 +269,17 @@ void DialogWalkThrough::clearPath() {
 void DialogWalkThrough::browse() {
     std::string suggested_name;
     if (viewer_->currentModel())
+#ifdef HAS_FFMPEG
         suggested_name = file_system::replace_extension(viewer_->currentModel()->name(), "mp4");
     const QString fileName = QFileDialog::getSaveFileName(this,
                                                           tr("Choose a file name"), QString::fromStdString(suggested_name),
-                                                          tr("Supported formats (*.png *.mp4)")
+                                                          tr("Supported formats (*.mp4)")
+#else
+    suggested_name = file_system::replace_extension(viewer_->currentModel()->name(), "png");
+    const QString fileName = QFileDialog::getSaveFileName(this,
+                                                          tr("Choose a file name"), QString::fromStdString(suggested_name),
+                                                          tr("Supported formats (*.png)")
+#endif
     );
     if (!fileName.isEmpty())
         lineEditOutputFile->setText(fileName);
