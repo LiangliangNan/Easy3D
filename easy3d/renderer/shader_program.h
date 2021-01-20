@@ -125,7 +125,7 @@ namespace easy3d {
 		  * \param st one of the enum values of ShaderType
 		  *	\param filename the file where the source is to be found
 		*/
-		bool load_shader_from_file(ShaderType st, const std::string& file);
+		bool load_shader_from_file(ShaderType st, const std::string& filename);
 
 		/** Loads the code to the source of the specified shader
 		*

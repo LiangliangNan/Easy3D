@@ -53,6 +53,7 @@ namespace easy3d {
           * \details Two triangle faces are said duplicate if they have the same geometry (vertices within a distance
           *         threshold). Two triangle faces are said folding if they are coplanar, share one edge (i.e., have
           *         the same edge geometry), and partially overlap.
+          * \param mesh The input surface mesh.
           * \param duplicate_faces Returns the duplicate face pairs found.
           * \param folding_faces Returns the folding face pairs found.
           * \param dist_threshold Two vertices are considered coincident if there distance is smaller than it.
@@ -70,10 +71,11 @@ namespace easy3d {
           * \details Two triangle faces are said duplicate if they have the same geometry (vertices within a distance
           *         threshold). Two triangle faces are said folding if they are coplanar, share one edge (i.e., have
           *         the same edge geometry), and partially overlap.
-         * \param folding_faces \c true also to remove folding faces.
-         * \return The number of faces that have been deleted.
-         * \pre mesh.is_triangle_mesh().
-         */
+          * \param mesh The input surface mesh.
+          * \param folding_faces \c true also to remove folding faces.
+          * \return The number of faces that have been deleted.
+          * \pre mesh.is_triangle_mesh().
+          */
         unsigned int remove(
                 SurfaceMesh *mesh,
                 bool folding_faces = false,

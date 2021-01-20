@@ -189,11 +189,11 @@ namespace easy3d {
 		/*! @name Frame manipulation */
 		//@{
 	public:
-		// Initiates the ManipulatedFrame mouse manipulation.
-		// This function should be called when an action (e.g., drag) starts, e.g., mouse pressed
+		/// Initiates the ManipulatedFrame mouse manipulation.
+		/// \note This function should be called when an action (e.g., drag) starts, e.g., mouse pressed.
 		virtual void action_start(); 
-		// Stops the ManipulatedFrame mouse manipulation.
-		// This function should be called when an action (e.g., drag) ends, e.g., mouse released
+		/// Stops the ManipulatedFrame mouse manipulation.
+        /// \note This function should be called when an action (e.g., drag) ends, e.g., mouse released.
 		virtual void action_end();
 
 		enum ScreenAxis { NONE, HORIZONTAL, VERTICAL, ORTHOGONAL };

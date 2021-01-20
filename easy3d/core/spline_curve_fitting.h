@@ -35,10 +35,10 @@ namespace easy3d {
 
     /**
      * @brief Spline curve fitting for arbitrary dimensions.
-     * \details It allow to set the order of the spline and the end points behavior (passing or not).
+     * \details This class uses the efficient blossom algorithm to compute a position on the curve.
+     *      It allow to set the order of the spline and the end points behavior (passing or not).
      *      The class can be instantiated with any point type (1D (float), 2D, 3D etc.) as long as the
      *      necessary operator overloads are implemented.
-     * @note This class use the efficient blossom algorithm to compute a position on the curve.
      * @tparam Point_t: type of a point operators such as '+' '*' must be correctly overloaded. The default
      *      constructor must be defined to return the null vector (0, 0 ,0 ...)
      * @tparam Real_t: floating point representation of the points (float, double etc.)

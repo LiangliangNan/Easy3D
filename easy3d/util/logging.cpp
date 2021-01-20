@@ -37,6 +37,7 @@ namespace easy3d
     namespace logging
     {
 
+        // \cond
         std::string log_file_name = "";
 
 
@@ -96,7 +97,7 @@ namespace easy3d
             el::Helpers::crashAbort(sig);
         }
 
-
+        // \endcond
 
         void initialize(bool info_to_stderr, int verbose_level, const std::string &log_file)
         {
@@ -136,6 +137,9 @@ namespace easy3d
             defaultConf.setToDefault();
             // Values are always std::string
             defaultConf.setGlobally(el::ConfigurationType::Format, "%levshort %datetime{%d/%M/%Y %h:%m:%s.%g} %fbase:%line] %msg");
+
+            el::Loggers::configureFromGlobal("global.conf");.
+
 
             if (!log_file_name.empty()) {
                 defaultConf.setGlobally(el::ConfigurationType::Filename, log_file_name);

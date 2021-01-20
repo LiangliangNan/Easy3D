@@ -74,6 +74,7 @@ namespace easy3d {
 
         /** \brief The vertices of the model. */
         virtual std::vector<vec3>& points() = 0;
+        /** \brief The vertices of the model. */
         virtual const std::vector<vec3>& points() const = 0;
 
         /** \brief Tests if the model is empty. */
