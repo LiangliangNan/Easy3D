@@ -45,31 +45,52 @@
 			<string>Editor</string>
 			<key>CFBundleTypeExtensions</key>
 			<array>
+				<string>bin</string>
+				<string>las</string>
+				<string>laz</string>
 				<string>xyz</string>
 				<string>bxyz</string>
+				<string>vg</string>
+				<string>bvg</string>
+				<string>ptx</string>
 				<string>ply</string>
 			</array>
 			<key>CFBundleTypeName</key>
-			<string>Point cloud files</string>
+			<string>PointCloudFiles</string>
 			<key>LSHandlerRank</key>
 			<string>Default</string>
 		</dict>
-
-                <dict>
-                        <key>CFBundleTypeRole</key>
-                        <string>Editor</string>
-                        <key>CFBundleTypeExtensions</key>
-                        <array>
-                                <string>obj</string>
-                                <string>off</string>
-                                <string>stl</string>
-                                <string>ply</string>
-                        </array>
-                        <key>CFBundleTypeName</key>
-                        <string>Surface mesh files</string>
-                        <key>LSHandlerRank</key>
-                        <string>Default</string>
-                </dict>
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>CFBundleTypeExtensions</key>
+            <array>
+                    <string>obj</string>
+                    <string>off</string>
+                    <string>stl</string>
+                    <string>ply</string>
+                    <string>sm</string>
+                    <string>trilist</string>
+            </array>
+            <key>CFBundleTypeName</key>
+            <string>SurfaceMeshFiles</string>
+            <key>LSHandlerRank</key>
+            <string>Default</string>
+        </dict>
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>CFBundleTypeExtensions</key>
+            <array>
+                    <string>plm</string>
+                    <string>pm</string>
+                    <string>mesh</string>
+            </array>
+            <key>CFBundleTypeName</key>
+            <string>PolyhedralMeshFiles</string>
+            <key>LSHandlerRank</key>
+            <string>Default</string>
+        </dict>
 	</array>
 </dict>
 </plist>
