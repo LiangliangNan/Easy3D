@@ -52,6 +52,7 @@ namespace easy3d {
                 if (!mesh->get_face_property<bool>("f:select"))
                     mesh->add_face_property<bool>("f:select", false);
                 d->set_coloring(State::SCALAR_FIELD, State::FACE, "f:select");
+                d->set_distinct_back_color(false); // the backside also highlighted
                 buffers::update(mesh, d);
             }
             else {
@@ -68,6 +69,7 @@ namespace easy3d {
                 }
                 d->update_texcoord_buffer(texcoords);
                 d->set_coloring(State::SCALAR_FIELD, State::FACE, "f:select");
+                d->set_distinct_back_color(false); // the backside also highlighted
             }
         }
 
@@ -94,8 +96,11 @@ namespace easy3d {
             SurfaceMesh *mesh = multiple_pick(picked_face, x, y);
             if (mesh && picked_face.is_valid()) {
                 auto selected = mesh->face_property<bool>("f:select");
-                selected[picked_face] = true;
-                update_render_buffer(mesh);
+                // finer check to avoid unnecessary buffer update
+                if (selected[picked_face] != (select_mode_ != SM_DESELECT)) {
+                    selected[picked_face] = (select_mode_ != SM_DESELECT);
+                    update_render_buffer(mesh);
+                }
             }
         }
 
@@ -173,8 +178,13 @@ namespace easy3d {
             for (auto model : tool_manager()->viewer()->models()) {
                 SurfaceMesh *mesh = dynamic_cast<SurfaceMesh*>(model);
                 if (mesh && mesh->renderer()->is_visible()) {
-                    picker_->pick_faces(mesh, Rect(start_, vec2(x, y)), select_mode_ == SM_DESELECT);
-                    update_render_buffer(mesh);
+                    const auto& faces = picker_->pick_faces(mesh, Rect(start_, vec2(x, y)));
+                    auto select = mesh->face_property<bool>("f:select");
+                    if (!faces.empty()) {
+                        for (auto f : faces)
+                            select[f] = (select_mode_ != SM_DESELECT);
+                        update_render_buffer(mesh);
+                    }
                 }
             }
         }
@@ -246,8 +256,13 @@ namespace easy3d {
             for (auto model : tool_manager()->viewer()->models()) {
                 SurfaceMesh *mesh = dynamic_cast<SurfaceMesh*>(model);
                 if (mesh && mesh->renderer()->is_visible()) {
-                    picker_->pick_faces(mesh, lasso_, select_mode_ == SM_DESELECT);
-                    update_render_buffer(mesh);
+                    const auto& faces = picker_->pick_faces(mesh, lasso_);
+                    auto select = mesh->face_property<bool>("f:select");
+                    if (!faces.empty()) {
+                        for (auto f : faces)
+                            select[f] = (select_mode_ != SM_DESELECT);
+                        update_render_buffer(mesh);
+                    }
                 }
             }
 
