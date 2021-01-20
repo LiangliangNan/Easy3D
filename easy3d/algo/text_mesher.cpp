@@ -185,7 +185,7 @@ namespace easy3d {
             std::vector<Polygon2> all_contours;
             for (int i = 0; i < text.size(); ++i) {
                 const int codepoint = static_cast<int>(text[i]);
-//                std::cout << i << ": " << string::to_string(text[i]) << ", codepoint: " << codepoint << std::endl;
+//                std::cout << i << ": " << string::from_wstring({text[i]}) << ", codepoint: " << codepoint << std::endl;
                 std::vector<Polygon2> contours;
                 if (_generate_contours(codepoint, x, y, font_size, contours)) {
                     if (collision_free) {
@@ -201,7 +201,7 @@ namespace easy3d {
         } else {
             for (int i = 0; i < text.size(); ++i) {
                 const int codepoint = static_cast<int>(text[i]);
-//                std::cout << i << ": " << string::to_string(text[i]) << ", codepoint: " << codepoint << std::endl;
+//                std::cout << i << ": " << string::from_wstring({text[i]}) << ", codepoint: " << codepoint << std::endl;
                 std::vector<Polygon2> contours;
                 if (_generate_contours(codepoint, x, y, font_size, contours)) {
                     // resolve intersections and determine interior/exterior for each char.
