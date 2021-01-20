@@ -28,6 +28,7 @@ set(${PROJECT_NAME}_HEADERS
         segment.h
         signal.h
         spline_curve_fitting.h
+        spline_curve_interpolation.h
         spline_interpolation.h
         surface_mesh.h
         poly_mesh.h
