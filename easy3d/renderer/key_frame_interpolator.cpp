@@ -314,9 +314,12 @@ namespace easy3d {
     }
 
 
-    bool KeyFrameInterpolator::save_keyframes(std::ostream& output) const {
-        if (output.fail())
+    bool KeyFrameInterpolator::save_keyframes(const std::string& file_name) const {
+        std::ofstream output(file_name.c_str());
+        if (output.fail()) {
+            LOG(ERROR) << "could not open file: " << file_name;
             return false;
+        }
 
         output << "\tnum_key_frames: " << keyframes_.size() << std::endl;
 
@@ -331,9 +334,12 @@ namespace easy3d {
     }
 
 
-    bool KeyFrameInterpolator::read_keyframes(std::istream& input) {
-        if (input.fail())
+    bool KeyFrameInterpolator::read_keyframes(const std::string& file_name) {
+        std::ifstream input(file_name.c_str());
+        if (input.fail()) {
+            LOG(ERROR) << "could not open file: " << file_name;
             return false;
+        }
 
         // clean
         delete_path();

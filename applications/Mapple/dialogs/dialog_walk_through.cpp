@@ -477,8 +477,7 @@ void DialogWalkThrough::exportCameraPathToFile() {
     if (fileName.isEmpty())
         return;
 
-    std::ofstream output(fileName.toStdString().c_str());
-    if (interpolator()->save_keyframes(output))
+    if (interpolator()->save_keyframes(fileName.toStdString()))
         LOG(INFO) << "keyframes saved to file";
 }
 
@@ -499,8 +498,7 @@ void DialogWalkThrough::importCameraPathFromFile() {
     if (fileName.isEmpty())
         return;
 
-    std::ifstream input(fileName.toStdString().c_str());
-    if (interpolator()->read_keyframes(input)) {
+    if (interpolator()->read_keyframes(fileName.toStdString())) {
         LOG(INFO) << interpolator()->number_of_keyframes() << " keyframes loaded";
         adjustSceneRadius();
         numKeyramesChanged();

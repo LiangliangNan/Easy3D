@@ -341,9 +341,9 @@ namespace easy3d {
         //@{
     public:
         /// saves the camera path to a file
-        bool save_keyframes(std::ostream& os) const;
+        bool save_keyframes(const std::string& file_name) const;
         /// reads camera path from a file
-        bool read_keyframes(std::istream& is);
+        bool read_keyframes(const std::string& file_name);
         //@}
 
     private:

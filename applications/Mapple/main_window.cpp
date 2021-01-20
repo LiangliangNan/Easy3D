@@ -526,8 +526,7 @@ Model* MainWindow::open(const std::string& file_name) {
 
         const auto keyframe_file = file_system::replace_extension(model->name(), "kf");
         if (file_system::is_file(keyframe_file)) {
-            std::ifstream input(keyframe_file.c_str());
-            if (viewer_->walkThrough()->interpolator()->read_keyframes(input))
+            if (viewer_->walkThrough()->interpolator()->read_keyframes(keyframe_file))
                 LOG(INFO) << "model has an accompanying animation file \'"
                           << file_system::simple_name(keyframe_file)
                           << "\' (also loaded)";
