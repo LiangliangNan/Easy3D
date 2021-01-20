@@ -140,21 +140,18 @@ namespace easy3d {
         //------------------ multiple selection of faces ------------------
 
         /**
-         * @brief Pick faces of a surface mesh by a rectangle. The selected faces will be marked in face property
-         * "f:select".
+         * @brief Pick faces of a surface mesh by a rectangle.
          * @param rect The rectangle region.
-         * @param deselect True to perform an inverse operation.
-         * @return The number of faces selected during this operation (despite their previous status).
+         * @return The faces selected during this operation (regardless of their previous status).
          */
-        void pick_faces(SurfaceMesh *model, const Rect &rect, bool deselect);
+        std::vector<SurfaceMesh::Face> pick_faces(SurfaceMesh *model, const Rect &rect);
 
         /**
-         * @brief Pick faces of a surface mesh by a polygon/lasso. The selected faces will be marked in face property
-         * "f:select".
+         * @brief Pick faces of a surface mesh by a polygon/lasso.
          * @param plg The polygon region.
-         * @param deselect True to perform an inverse operation.
+         * @return The faces selected during this operation (regardless of their previous status).
          */
-        void pick_faces(SurfaceMesh *model, const Polygon2 &plg, bool deselect);
+        std::vector<SurfaceMesh::Face> pick_faces(SurfaceMesh *model, const Polygon2 &plg);
 
     private:
         // selection implemented in GPU (using shader program)

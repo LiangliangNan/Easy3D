@@ -312,10 +312,10 @@ namespace easy3d {
                 return SurfaceMesh::Face();
             }
 
-            // Triangle meshes are more common... So treat is as a triangle mesh and check if the id is with the range.
+            // Triangle meshes are more common... So treat is as a triangle mesh and check if the id is within the range.
             if (static_cast<unsigned int>(id) < model->n_faces()) {
                 auto face = SurfaceMesh::Face(id);
-                const auto &range = triangle_range[SurfaceMesh::Face(face)];
+                const auto &range = triangle_range[face];
                 if (id >= range.first && id <= range.second) {
                     picked_face_ = face;
                     return picked_face_;
@@ -337,12 +337,13 @@ namespace easy3d {
     }
 
 
-    void SurfaceMeshPicker::pick_faces(SurfaceMesh *model, const Rect& rect, bool deselect) {
+    std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_faces(SurfaceMesh *model, const Rect& rect) {
+        std::vector<SurfaceMesh::Face> faces;
         if (!model)
-            return;
+            return faces;
 
-        int win_width = camera()->screenWidth();
-        int win_height = camera()->screenHeight();
+        const int win_width = camera()->screenWidth();
+        const int win_height = camera()->screenHeight();
 
         float xmin = rect.left() / (win_width - 1.0f);
         float ymin = 1.0f - rect.top() / (win_height - 1.0f);
@@ -352,7 +353,7 @@ namespace easy3d {
         if (ymin > ymax) std::swap(ymin, ymax);
 
         const auto &points = model->get_vertex_property<vec3>("v:point").vector();
-        int num = static_cast<int>(points.size());
+        const int num = static_cast<int>(points.size());
         const mat4 &m = camera()->modelViewProjectionMatrix() * model->manipulator()->matrix();
 
         std::vector<bool> status(num, false);
@@ -373,7 +374,6 @@ namespace easy3d {
                 status[i] = true;
         }
 
-        auto select = model->face_property<bool>("f:select");
         // a face is selected if all its vertices are selected
         for (auto f : model->faces()) {
             bool selected = true;
@@ -385,23 +385,26 @@ namespace easy3d {
             }
 
             if (selected)
-                select[f] = !deselect;
+                faces.push_back(f);
         }
+
+        return faces;
     }
 
 
-    void SurfaceMeshPicker::pick_faces(SurfaceMesh *model, const Polygon2 &plg, bool deselect) {
+    std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_faces(SurfaceMesh *model, const Polygon2 &plg) {
+        std::vector<SurfaceMesh::Face> faces;
         if (!model)
-            return;
+            return faces;
 
-        int win_width = camera()->screenWidth();
-        int win_height = camera()->screenHeight();
+        const int win_width = camera()->screenWidth();
+        const int win_height = camera()->screenHeight();
 
         std::vector<vec2> region; // the transformed selection region
         for (std::size_t i = 0; i < plg.size(); ++i) {
             const vec2 &p = plg[i];
-            float x = p.x / float(win_width - 1);
-            float y = 1.0f - p.y / float(win_height - 1);
+            const float x = p.x / float(win_width - 1);
+            const float y = 1.0f - p.y / float(win_height - 1);
             region.push_back(vec2(x, y));
         }
 
@@ -414,7 +417,7 @@ namespace easy3d {
         if (ymin > ymax) std::swap(ymin, ymax);
 
         const auto &points = model->get_vertex_property<vec3>("v:point").vector();
-        int num = static_cast<int>(points.size());
+        const int num = static_cast<int>(points.size());
         const mat4 &m = camera()->modelViewProjectionMatrix() * model->manipulator()->matrix();
 
         std::vector<bool> select_vertices(num, false);
@@ -437,7 +440,6 @@ namespace easy3d {
             }
         }
 
-        auto select_faces = model->face_property<bool>("f:select");
         // a face is selected if all its vertices are selected
         for (auto f : model->faces()) {
             bool selected = true;
@@ -449,8 +451,10 @@ namespace easy3d {
             }
 
             if (selected)
-                select_faces[f] = !deselect;
+                faces.push_back(f);
         }
+
+        return faces;
     }
 
 
