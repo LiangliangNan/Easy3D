@@ -469,7 +469,9 @@ namespace easy3d {
             adjust_keyframe_times(keyframes_, true);
 
         LOG_IF(keyframes_.size() > 2, INFO) << "interpolating " << keyframes_.size() << " keyframes";
-        do_interpolate(interpolated_path_, keyframes_);
+        const float interval = interpolation_speed() * interpolation_period() / 1000.0f;
+#if 1
+        do_interpolate(interpolated_path_, keyframes_, interval);
         LOG_IF(keyframes_.size() > 2, INFO)
                         << "keyframe interpolation done: "
                         << interpolated_path_.size() << " frames, "
@@ -484,9 +486,24 @@ namespace easy3d {
             as_key_frames.back().set_time(lastTime());
 
             adjust_keyframe_times(as_key_frames, false);
-            do_interpolate(interpolated_path_, as_key_frames);
+            do_interpolate(interpolated_path_, as_key_frames, interval);
         }
+#else   // sample the interpolated path to have new keyframes with equal intervals (every second)
+        if (smoothing && keyframes_.size() > 2) { // more iterations do not provide further improvement
+            std::vector<Frame> samples;
+            do_interpolate(samples, keyframes_, 1.0f);
 
+            float first_time = firstTime();
+            float last_time = lastTime();
+            keyframes_.clear();
+            for (std::size_t i = 0; i < samples.size(); ++i)
+                keyframes_.emplace_back(Keyframe(samples[i], i));
+            keyframes_.front().set_time(first_time);
+            keyframes_.back().set_time(last_time);
+            adjust_keyframe_times(keyframes_, false);
+        }
+        do_interpolate(interpolated_path_, keyframes_, interval);
+#endif
         pathIsValid_ = true;
         last_stopped_index_ = 0; // not valid any more
         return interpolated_path_;
@@ -545,14 +562,13 @@ namespace easy3d {
 
 #else
 
-    void KeyFrameInterpolator::do_interpolate(std::vector<Frame>& frames, const std::vector<Keyframe>& keyframes) const {
+    void KeyFrameInterpolator::do_interpolate(std::vector<Frame>& frames, const std::vector<Keyframe>& keyframes, float interval) const {
         frames.clear();
 
         const_cast<KeyFrameInterpolator *>(this)->update_keyframe_values(
                 const_cast<std::vector<Keyframe> & >(keyframes)
         );
 
-        const float interval = interpolation_speed() * interpolation_period() / 1000.0f;
         for (float time = firstTime(); time < lastTime() + interval; time += interval) {
             std::vector<Keyframe>::const_iterator related[4];
             get_keyframes_at_time(time, keyframes, related);

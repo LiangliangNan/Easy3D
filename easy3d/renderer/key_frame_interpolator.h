@@ -333,7 +333,7 @@ namespace easy3d {
          * \brief Draws the interpolated camera path.
          * \param camera The current camera used by the viewer.
          */
-        virtual void draw_path(const Camera* camera, float thickness = 2.0f, const vec4& color = vec4(1.0f, 0.2f, 0.2f, 1.0f));
+        virtual void draw_path(const Camera* camera, float thickness = 2.0f, const vec4& color = vec4(1.0f, 1.0f, 0.5f, 1.0f));
 
         //@}
 
@@ -382,7 +382,7 @@ namespace easy3d {
         void update_keyframe_values(std::vector<Keyframe>& keyframes);
         void get_keyframes_at_time(float time, const std::vector<Keyframe>& keyframes, std::vector<Keyframe>::const_iterator* related) const;
         void compute_spline(const std::vector<Keyframe>::const_iterator* related, vec3& v1, vec3& v2) const;
-        void do_interpolate(std::vector<Frame>& frames, const std::vector<Keyframe>& keyframes) const;
+        void do_interpolate(std::vector<Frame>& frames, const std::vector<Keyframe>& keyframes, float interval) const;
 
         // stride-length weighted keyframe timing.
         // both keyframes.front().time() and keyframes.back().time() are preserved.
