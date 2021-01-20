@@ -34,7 +34,7 @@ using namespace easy3d;
 int main(int argc, char *argv[]) {
     logging::initialize();
 
-#if 0
+#if 1
     // these are actually a set of camera positions around the bunny.ply model
     std::vector<vec3> points = {
             {-4.93228e-05, -2.15228, -0.000414636},
@@ -80,7 +80,8 @@ int main(int argc, char *argv[]) {
     }
 
 #else
-    std::string file = "/Users/lnan/Projects/Easy3D/resources/data/bunny.kf";
+    std::string file = "/Users/lnan/Dropbox/Students/2020-PhD-Zexin/data/Lille-3D/test.kf";
+//    std::string file = "/Users/lnan/Projects/Easy3D/resources/data/bunny.kf";
     KeyFrameInterpolator kfi;
     kfi.read_keyframes(file);
     int num = kfi.number_of_keyframes();
@@ -101,7 +102,7 @@ int main(int argc, char *argv[]) {
     const int resolution = 100;    // Number of line subdivisions to display the spline
 
     // spine fitting
-    std::string fitting_file = "cameras_spine_fitting_for_bunny.kf";
+    std::string fitting_file = "keyframes_spine_fitting.kf";
     kfi.delete_path();
     const int order = 3;            // Smoothness of the spline (min 2)
     SplineCurveFitting<KeyFrame> fitter(order, SplineCurveFitting<KeyFrame>::eOPEN_UNIFORM);
@@ -118,7 +119,7 @@ int main(int argc, char *argv[]) {
     kfi.save_keyframes(fitting_file);
 
     // spine interpolation
-    std::string interpolation_file = "cameras_spine_interpolation_for_bunny.kf";
+    std::string interpolation_file = "keyframes_spine_interpolation.kf";
     kfi.delete_path();
     SplineCurveInterpolation<KeyFrame> interpolator;
     interpolator.set_boundary(easy3d::SplineCurveInterpolation<KeyFrame>::second_deriv, 0, easy3d::SplineCurveInterpolation<KeyFrame>::second_deriv, 0,false);
