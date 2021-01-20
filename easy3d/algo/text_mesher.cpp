@@ -117,7 +117,6 @@ namespace easy3d {
 
         // a scale factor to produce a font whose "height" is 'pixels' tall
         float scale = stbtt_ScaleForPixelHeight(get_font(font_), font_size);
-//        float scale = stbtt_ScaleForMappingEmToPixels(get_font(font_), font_size);
 
         std::size_t old_num = contours.size();
 
@@ -186,7 +185,7 @@ namespace easy3d {
             std::vector<Polygon2> all_contours;
             for (int i = 0; i < text.size(); ++i) {
                 const int codepoint = static_cast<int>(text[i]);
-                //std::cout << i << ": " << string::to_string({text[i]}) << ", codepoint: " << codepoint << std::endl;
+//                std::cout << i << ": " << string::to_string(text[i]) << ", codepoint: " << codepoint << std::endl;
                 std::vector<Polygon2> contours;
                 if (_generate_contours(codepoint, x, y, font_size, contours)) {
                     if (collision_free) {
@@ -202,7 +201,7 @@ namespace easy3d {
         } else {
             for (int i = 0; i < text.size(); ++i) {
                 const int codepoint = static_cast<int>(text[i]);
-                //std::cout << i << ": " << string::to_string({text[i]}) << ", codepoint: " << codepoint << std::endl;
+//                std::cout << i << ": " << string::to_string(text[i]) << ", codepoint: " << codepoint << std::endl;
                 std::vector<Polygon2> contours;
                 if (_generate_contours(codepoint, x, y, font_size, contours)) {
                     // resolve intersections and determine interior/exterior for each char.
@@ -244,7 +243,7 @@ namespace easy3d {
         // The std::string class handles bytes independently of the encoding used. If used to handle sequences of
         // multi-byte or variable-length characters (such as UTF-8), all members of this class (such as length or size),
         // as well as its iterators, will still operate in terms of bytes (not actual encoded characters).
-        // So I convert it to a muilti-byte character string
+        // So let's convert it to a multi-byte character string
         const std::wstring the_text = string::to_wstring(text);
         return _generate(mesh, the_text, x, y, font_size, height, collision_free);
     }
