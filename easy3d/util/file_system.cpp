@@ -628,6 +628,7 @@ namespace easy3d {
         }
 
         bool copy_file(const std::string& original, const std::string& copy) {
+            // TODO: use read() and write() functions. See read_file_to_string() and write_string_to_file()
             std::ifstream in(original.c_str());
             if (in.fail()) {
                 LOG(WARNING) << "could not open file: " << original;
@@ -635,7 +636,7 @@ namespace easy3d {
             }
             std::ofstream out(copy.c_str());
             if (in.fail()) {
-				LOG(WARNING) << "could not open file: " << copy;
+                LOG(WARNING) << "could not open file: " << copy;
                 return false;
             }
 
