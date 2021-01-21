@@ -42,7 +42,8 @@
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/primitives.h>
 #include <easy3d/renderer/camera.h>   // for drawing the camera path drawables
-#include <easy3d/util/string.h>  // for formating time string
+#include <easy3d/core/spline_curve_interpolation.h>
+#include <easy3d/util/string.h>  // for formatting time string
 
 
 namespace easy3d {
@@ -361,27 +362,89 @@ namespace easy3d {
     }
 
 
-    void KeyFrameInterpolator::update_keyframe_values(std::vector<Keyframe> &keyframes) {
-        LOG_IF(keyframes.size() < 2, WARNING) << "computing frame values for only 2 keyframes";
+    const std::vector<Frame>& KeyFrameInterpolator::interpolate() {
+        if (pathIsValid_ || keyframes_.empty()) // already fitted or no keyframe
+            return interpolated_path_;
+        else if (keyframes_.size() == 1) {   // only one keyframe
+            interpolated_path_.emplace_back(Frame(keyframes_[0].position(), keyframes_[0].orientation()));
+            return interpolated_path_;
+        }
+        else if (keyframes_.size() == 2) {   // only two keyframe: linear interpolation
+            interpolated_path_.clear();
+            const float interval = interpolation_speed() * interpolation_period() / 1000.0f;
+            const std::size_t num_frames = duration() / interval + 1;
+            for (std::size_t i=0; i<num_frames; ++i) {
+                const float w = static_cast<float>(i) / static_cast<float>(num_frames - 1);
+                const vec3 pos = (1.0f - w) * keyframes_[0].position() + w * keyframes_[1].position();
+                quat orient = quat::slerp(keyframes_[0].orientation(), keyframes_[1].orientation(), w);
+                interpolated_path_.emplace_back(Frame(pos, orient.normalized()));
+            }
+            pathIsValid_ = true;
+            last_stopped_index_ = 0; // not valid any more
+            return interpolated_path_;
+        }
 
-        quat prevQ = keyframes.front().orientation();
-        for (std::size_t i = 0; i < keyframes.size(); ++i) {
-            Keyframe& kf = keyframes.at(i);
+        quat prevQ = keyframes_.front().orientation();
+        for (std::size_t i = 0; i < keyframes_.size(); ++i) {
+            Keyframe& kf = keyframes_[i];
             kf.flip_if_needed(prevQ);
             prevQ = kf.orientation();
         }
 
-        // the first keyframe
-        keyframes[0].compute_tangent(keyframes[0], keyframes[1]);
-        // the last keyframe
-        keyframes.back().compute_tangent(keyframes[keyframes.size()-1], keyframes.back());
-        // the other keyframes
-        for (std::size_t i=1; i<keyframes.size()-1; ++i)
-            keyframes[i].compute_tangent(keyframes[i-1], keyframes[i+1]);
+        LOG_IF(keyframes_.size() > 2, INFO) << "interpolating " << keyframes_.size() << " keyframes";
+
+        typedef Vec<7, float>  FramePoint;
+        std::vector< FramePoint > frame_points(keyframes_.size());
+        for (int i=0; i<keyframes_.size(); ++i) {
+            const auto& frame = keyframes_[i];
+            const auto& p = frame.position();
+            for (unsigned char j=0; j<3; ++j)
+                frame_points[i][j] = p[j];
+            const auto& q = frame.orientation();
+            for (unsigned char j=0; j<4; ++j)
+                frame_points[i][j+3] = q[j];
+        }
+
+        // spine interpolation
+        typedef SplineCurveInterpolation<FramePoint> Interpolator;
+        Interpolator interpolator;
+        interpolator.set_boundary(Interpolator::second_deriv, 0, Interpolator::second_deriv, 0, false);
+#if 1   // we choose the distance as parameter to have equal intervals.
+        interpolator.set_points(frame_points);
+#else // use accumulated time as parameter
+        std::vector<float> t(num, 0.0f);
+        for (std::size_t i = 0; i < num; ++i)
+            t[i] = i;
+        interpolator.set_points(t, frame_points);
+#endif
+
+        interpolated_path_.clear();
+        const float interval = interpolation_speed() * interpolation_period() / 1000.0f;
+        const std::size_t num_frames = duration() / interval + 1;
+        for (int i = 0; i < num_frames; ++i) {
+            const FramePoint frame = interpolator.eval_f(static_cast<float>(i) / static_cast<float>(num_frames - 1));
+            vec3 pos(frame.data());
+            quat orient;
+            for (int j=0; j<4; ++j)
+                orient[j] = frame[j+3];
+            orient.normalize();
+            interpolated_path_.emplace_back(Frame(pos, orient));
+        }
+
+        LOG_IF(keyframes_.size() > 2, INFO)
+                        << "keyframe interpolation done: "
+                        << interpolated_path_.size() << " frames, "
+                        << string::time(duration() / interpolation_speed() * 1000)
+                        << " (at speed " << interpolation_speed() << "x)";
+
+        pathIsValid_ = true;
+        last_stopped_index_ = 0; // not valid any more
+        return interpolated_path_;
     }
 
 
-#ifndef DOXYGEN
+
+    // \cond
 
     //////////// Keyframe private class implementation /////////
     KeyFrameInterpolator::Keyframe::Keyframe(const Frame &fr, float t)
@@ -391,274 +454,11 @@ namespace easy3d {
     }
 
 
-    void KeyFrameInterpolator::Keyframe::compute_tangent(const Keyframe& prev, const Keyframe& next) {
-#if 1
-        // distance(prev, cur) and distance(cur, next) can have a big difference.
-        // we compensate this
-        const float sd_prev = distance2(prev.position(), position());
-        const float sd_next = distance2(next.position(), position());
-        if (sd_prev < sd_next) {
-            const vec3 new_next = position() + (next.position() - position()).normalize() * std::sqrt(sd_prev);
-            tgP_ = 0.5f * (new_next - prev.position());
-        }
-        else {
-            const vec3 new_prev = position() +(prev.position() - position()).normalize() * std::sqrt(sd_next);
-            tgP_ = 0.5f * (next.position() - new_prev);
-        }
-#else   // standard CatmullRom fitting
-        tgP_ = 0.5f * (next.position() - prev.position());
-#endif
-        tgQ_ = quat::squad_tangent(prev.orientation(), q_, next.orientation());
-    }
-
-
     void KeyFrameInterpolator::Keyframe::flip_if_needed(const quat &prev) {
         if (quat::dot(prev, q_) < 0.0f)
             q_.negate();
     }
 
-
-    void KeyFrameInterpolator::get_keyframes_at_time(float time, const std::vector<Keyframe> &keyframes,
-                                                     std::vector<Keyframe>::const_iterator *related) const {
-        // Assertion: times are sorted in monotone order.
-        // Assertion: keyframes_ is not empty
-
-        // TODO: Special case for loops when closed path is implemented !!
-        // Recompute everything from scratch
-        related[1] = keyframes.begin(); // points to the first one
-
-        while (related[1]->time() > time) {
-            if (related[1] == keyframes.begin()) // already the first one
-                break;
-            --related[1]; // points to the previous one
-        }
-
-        related[2] = related[1];
-        while (related[2]->time() < time) {
-            if (related[2] == keyframes.end() - 1) // already the last one
-                break;
-            ++related[2];// points to the next one
-        }
-
-        related[1] = related[2];
-        if ((related[1] != keyframes.begin()) && (time < related[2]->time()))
-            --related[1];
-
-        related[0] = related[1];
-        if (related[0] != keyframes.begin())
-            --related[0];
-
-        related[3] = related[2];
-
-        if ((related[3]) != keyframes.end() - 1) // has next
-            ++related[3];
-    }
-
-
-    void KeyFrameInterpolator::compute_spline(const std::vector<Keyframe>::const_iterator *related, vec3 &v1,
-                                              vec3 &v2) const {
-        const vec3 &delta = related[2]->position() - related[1]->position();
-        v1 = 3.0f * delta - 2.0f * related[1]->tgP() - related[2]->tgP();
-        v2 = -2.0f * delta + related[1]->tgP() + related[2]->tgP();
-    }
-
-
-    const std::vector<Frame>& KeyFrameInterpolator::interpolate(bool smoothing) {
-        if (keyframes_.size() == 1) {   // only one keyframe
-            interpolated_path_.emplace_back(Frame(keyframes_[0].position(), keyframes_[0].orientation()));
-            return interpolated_path_;
-        }
-        else if (pathIsValid_ || keyframes_.empty()) // already fitted or no keyframe
-            return interpolated_path_;
-
-        if (smoothing && keyframes_.size() > 2)
-            adjust_keyframe_times(keyframes_, true);
-
-        LOG_IF(keyframes_.size() > 2, INFO) << "interpolating " << keyframes_.size() << " keyframes";
-        const float interval = interpolation_speed() * interpolation_period() / 1000.0f;
-#if 1
-        do_interpolate(interpolated_path_, keyframes_, interval);
-        LOG_IF(keyframes_.size() > 2, INFO)
-                        << "keyframe interpolation done: "
-                        << interpolated_path_.size() << " frames, "
-                        << string::time(duration() / interpolation_speed() * 1000)
-                        << " (at speed " << interpolation_speed() << "x)";
-
-        if (smoothing && interpolated_path_.size() > 2) { // more iterations do not provide further improvement
-            std::vector<Keyframe> as_key_frames;
-            for (std::size_t i = 0; i < interpolated_path_.size(); ++i)
-                as_key_frames.emplace_back(Keyframe(interpolated_path_[i], i));
-            as_key_frames.front().set_time(firstTime());
-            as_key_frames.back().set_time(lastTime());
-
-            adjust_keyframe_times(as_key_frames, false);
-            do_interpolate(interpolated_path_, as_key_frames, interval);
-        }
-#else   // sample the interpolated path to have new keyframes with equal intervals (every second)
-        if (smoothing && keyframes_.size() > 2) { // more iterations do not provide further improvement
-            std::vector<Frame> samples;
-            do_interpolate(samples, keyframes_, 1.0f);
-
-            float first_time = firstTime();
-            float last_time = lastTime();
-            keyframes_.clear();
-            for (std::size_t i = 0; i < samples.size(); ++i)
-                keyframes_.emplace_back(Keyframe(samples[i], i));
-            keyframes_.front().set_time(first_time);
-            keyframes_.back().set_time(last_time);
-            adjust_keyframe_times(keyframes_, false);
-        }
-        do_interpolate(interpolated_path_, keyframes_, interval);
-#endif
-        pathIsValid_ = true;
-        last_stopped_index_ = 0; // not valid any more
-        return interpolated_path_;
-    }
-
-#if 0  // allow to use two different methods: CatmullRom (interpolation) and BSpline (fitting)
-
-    auto interpolate_CatmullRom = [](float u, const vec3 &P0, const vec3 &P1, const vec3 &P2, const vec3 &P3) -> vec3 {
-        vec3 point(0, 0, 0);
-        point = u * u * u * ((-1) * P0 + 3 * P1 - 3 * P2 + P3) / 2;
-        point += u * u * (2 * P0 - 5 * P1 + 4 * P2 - P3) / 2;
-        point += u * ((-1) * P0 + P2) / 2;
-        point += P1;
-        return point;
-    };
-
-    auto interpolate_BSpline = [](float u, const vec3 &P0, const vec3 &P1, const vec3 &P2, const vec3 &P3) -> vec3 {
-        vec3 point(0, 0, 0);
-        point = u * u * u * ((-1) * P0 + 3 * P1 - 3 * P2 + P3) / 6;
-        point += u * u * (3 * P0 - 6 * P1 + 3 * P2) / 6;
-        point += u * ((-3) * P0 + 3 * P2) / 6;
-        point += (P0 + 4 * P1 + P2) / 6;
-        return point;
-    };
-
-    void KeyFrameInterpolator::do_interpolate(std::vector<Frame>& frames, const std::vector<Keyframe>& keyframes) const {
-        frames.clear();
-        if (keyframes.size() < 2)
-            return;
-
-        const float interval = interpolation_speed() * interpolation_period() / 1000.0f;
-        for (float time = firstTime(); time < lastTime() + interval; time += interval) {
-            std::vector<Keyframe>::const_iterator related[4];
-            get_keyframes_at_time(time, keyframes, related);
-
-            float alpha = 0.0f;
-            const float dt = related[2]->time() - related[1]->time();
-            if (std::abs(dt) < epsilon<float>())
-                alpha = 0.0f;
-            else
-                alpha = (time - related[1]->time()) / dt;
-
-            // spline interpolation
-            const vec3 pos = interpolate_BSpline(alpha, related[0]->position(), related[1]->position(), related[2]->position(), related[3]->position());
-            const quat q = quat::squad(
-                    related[1]->orientation(),
-                    quat::squad_tangent(related[0]->orientation(), related[1]->orientation(),related[2]->orientation()),
-                    quat::squad_tangent(related[1]->orientation(), related[2]->orientation(),related[3]->orientation()),
-                    related[2]->orientation(),
-                    alpha
-            );
-
-            frames.emplace_back(Frame(pos, q));
-        }
-    }
-
-#else
-
-    void KeyFrameInterpolator::do_interpolate(std::vector<Frame>& frames, const std::vector<Keyframe>& keyframes, float interval) const {
-        frames.clear();
-
-        const_cast<KeyFrameInterpolator *>(this)->update_keyframe_values(
-                const_cast<std::vector<Keyframe> & >(keyframes)
-        );
-
-        for (float time = firstTime(); time < lastTime() + interval; time += interval) {
-            std::vector<Keyframe>::const_iterator related[4];
-            get_keyframes_at_time(time, keyframes, related);
-
-            vec3 v1, v2;
-            compute_spline(related, v1, v2);
-
-            float alpha = 0.0f;
-            const float dt = related[2]->time() - related[1]->time();
-            if (std::abs(dt) < epsilon<float>())
-                alpha = 0.0f;
-            else
-                alpha = (time - related[1]->time()) / dt;
-
-            // spline interpolation
-            const vec3 pos =
-                    related[1]->position() + alpha * (related[1]->tgP() + alpha * (v1 + alpha * v2));
-            const quat q = quat::squad(related[1]->orientation(), related[1]->tgQ(),
-                                       related[2]->tgQ(), related[2]->orientation(), alpha);
-
-            frames.emplace_back(Frame(pos, q));
-        }
-    }
-
-#endif
-
-    void KeyFrameInterpolator::adjust_keyframe_times(std::vector<Keyframe>& keyframes, bool slower_turning) {
-        if (keyframes.size() < 2)
-            return;
-
-        const float duration = keyframes.back().time() - keyframes.front().time();
-
-        if (slower_turning) {   // make turning slower
-            // use step-distance-weighted keyframe timing + turning times.
-            // the time needed for turning from current orientation to the orientation of the next frame.
-            //  - 0 degree: 0 second
-            //  - 90 degrees: 1.0 second
-            // so we use 1 - acos(angle) to approximate this time
-            auto turning_time = [](const Keyframe &frame, const Keyframe &prev) -> float {
-                const float cos_angle = std::abs(quat::dot(frame.orientation(), prev.orientation()));
-                return (1.0f - cos_angle) * 10;
-            };
-
-            float path_length = 0.0f;
-            for (std::size_t i = 1; i < keyframes.size(); ++i)
-                path_length += distance(keyframes[i - 1].position(), keyframes[i].position());
-
-            const float t0 = keyframes[0].time();
-            double time = t0;
-            for (std::size_t i = 1; i < keyframes.size(); ++i) {
-                const float time_distance =
-                        distance(keyframes[i].position(), keyframes[i - 1].position()) / path_length * duration;
-                const float time_turning = turning_time(keyframes[i], keyframes[i - 1]);
-                time += (time_distance + time_turning);
-                keyframes[i].set_time(time);
-            }
-
-            // then normalize so the duration is preserved
-            const float scale = duration / (keyframes.back().time() - keyframes.front().time());
-            for (std::size_t i = 0; i < keyframes.size(); ++i) {
-                float t = keyframes[i].time() * scale;
-                keyframes[i].set_time(t);
-            }
-        }
-        else {  // use stride-length weighted keyframe timing
-            std::vector<float> sub_lengths(keyframes.size(), 0.0f);
-            float path_length = 0.0f;
-            for (std::size_t i = 1; i < keyframes.size(); ++i) {
-                path_length += distance(keyframes[i - 1].position(), keyframes[i].position());
-                sub_lengths[i] = path_length;
-            }
-            if (path_length < epsilon_sqr<float>())
-                path_length = 1.0f;
-
-            const float t0 = keyframes[0].time();
-            const float scale = duration / path_length;
-            for (std::size_t i = 1; i < keyframes.size() - 1; ++i) { // don't modify the first and the last keyframes
-                const float t = t0 + sub_lengths[i] * scale;
-                keyframes[i].set_time(t);
-            }
-        }
-    }
-
+    // \endcond
 }
 
-
-#endif //DOXYGEN

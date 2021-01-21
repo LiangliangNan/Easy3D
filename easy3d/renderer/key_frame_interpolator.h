@@ -72,7 +72,7 @@ namespace easy3d {
      *
      *      During the interpolation, the KeyFrameInterpolator emits an \c frame_interpolated Signal which will usually
      *      be connected to the viewer's update() method. The interpolation is stopped when duration has reached.
-     *      Another Signal interpolation_stopped will be emited when the interpolation reaches its end or the when the
+     *      Another Signal interpolation_stopped will be emitted when the interpolation reaches its end or the when the
      *      stop_interpolation() method was triggered.
      *
      *      Note that a Camera has a keyframe_interpolator() method, that can be used to drive the Camera along a
@@ -314,7 +314,7 @@ namespace easy3d {
 
     public:
         /// Computes and returns all the interpolated frames.
-        const std::vector<Frame>& interpolate(bool smoothing = true);
+        const std::vector<Frame>& interpolate();
         //@}
 
         /*! @name Path drawing */
@@ -352,43 +352,23 @@ namespace easy3d {
         KeyFrameInterpolator(const KeyFrameInterpolator& kfi);
         KeyFrameInterpolator& operator=(const KeyFrameInterpolator& kfi);
 
-#ifndef DOXYGEN
         // Internal private Keyframe representation
         class Keyframe
         {
         public:
             Keyframe(const Frame& fr, float t);
-
             const vec3& position() const { return p_; }
             const quat& orientation() const { return q_; }
-            const vec3& tgP() const { return tgP_; }
-            const quat& tgQ() const { return tgQ_; }
             float time() const { return time_; }
             void set_time(float t) { time_ = t; }
             void set_position(const vec3& p) { p_ = p; }
             void set_orientation(const quat& q) { q_ = q; }
             void flip_if_needed(const quat& prev); // flip its orientation if needed
-            void compute_tangent(const Keyframe& prev, const Keyframe& next);
         private:
-            vec3 p_, tgP_;
-            quat q_, tgQ_;
+            vec3 p_;
+            quat q_;
             float time_;
         };
-
-        // The algorithm for Catmull-Rom is described here:
-        //      https://en.wikipedia.org/wiki/Centripetal_Catmull%E2%80%93Rom_spline
-        // Here is an implementation of the algorithm:
-        //      https://github.com/chen0040/cpp-spline
-        void update_keyframe_values(std::vector<Keyframe>& keyframes);
-        void get_keyframes_at_time(float time, const std::vector<Keyframe>& keyframes, std::vector<Keyframe>::const_iterator* related) const;
-        void compute_spline(const std::vector<Keyframe>::const_iterator* related, vec3& v1, vec3& v2) const;
-        void do_interpolate(std::vector<Frame>& frames, const std::vector<Keyframe>& keyframes, float interval) const;
-
-        // stride-length weighted keyframe timing.
-        // both keyframes.front().time() and keyframes.back().time() are preserved.
-        // slower_turning: true to make turning slower
-        void adjust_keyframe_times(std::vector<Keyframe>& keyframes, bool slower_turning);
-#endif
 
     private:
         // Associated frame
