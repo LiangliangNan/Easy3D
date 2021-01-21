@@ -1663,6 +1663,10 @@ void PaintCanvas::draw() {
         }
         if (count > 0)
             glDisable(GL_POLYGON_OFFSET_FILL);
+
+
+        if (m->renderer()->is_selected())
+            m->manipulator()->draw_frame(camera_);
     }
 
     if (edl())

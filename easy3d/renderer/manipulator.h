@@ -30,8 +30,10 @@
 
 namespace easy3d {
 
+    class Camera;
     class Model;
     class ManipulatedFrame;
+    class LinesDrawable;
 
     /**
      * \brief A manipulator is for manipulation of an object.
@@ -61,11 +63,13 @@ namespace easy3d {
         virtual mat4 matrix() const;
 
         /// Draws the manipulated frame.
-        virtual void draw_frame() const;
+        virtual void draw_frame(Camera* cam) const;
 
     protected:
         Model *model_; // the model to be manipulated
         ManipulatedFrame *frame_;
+
+        LinesDrawable* indicator_;
     };
 
 }
