@@ -393,40 +393,43 @@ namespace easy3d {
 
         LOG_IF(keyframes_.size() > 2, INFO) << "interpolating " << keyframes_.size() << " keyframes";
 
-        typedef Vec<7, float>  FramePoint;
-        std::vector< FramePoint > frame_points(keyframes_.size());
+        // we choose the accumulated path length as parameter, so to have equal intervals.
+        std::vector<float> parameters(keyframes_.size());
+
+        std::vector<vec3> positions(keyframes_.size());
+        std::vector<vec4> orientations(keyframes_.size());
+        float dist(0.0f);
         for (int i=0; i<keyframes_.size(); ++i) {
-            const auto& frame = keyframes_[i];
-            const auto& p = frame.position();
-            for (unsigned char j=0; j<3; ++j)
-                frame_points[i][j] = p[j];
-            const auto& q = frame.orientation();
+            positions[i] = keyframes_[i].position();
+            const quat& orient = keyframes_[i].orientation();
             for (unsigned char j=0; j<4; ++j)
-                frame_points[i][j+3] = q[j];
+                orientations[i][j] = orient[j];
+            if (i > 0)
+                dist += distance(positions[i-1], positions[i]);
+            parameters[i] = dist;
         }
 
         // spine interpolation
-        typedef SplineCurveInterpolation<FramePoint> Interpolator;
-        Interpolator interpolator;
-        interpolator.set_boundary(Interpolator::second_deriv, 0, Interpolator::second_deriv, 0, false);
-#if 1   // we choose the distance as parameter to have equal intervals.
-        interpolator.set_points(frame_points);
-#else // use accumulated time as parameter
-        std::vector<float> t(num, 0.0f);
-        for (std::size_t i = 0; i < num; ++i)
-            t[i] = i;
-        interpolator.set_points(t, frame_points);
-#endif
+        typedef SplineCurveInterpolation<vec3> PosInterpolator;
+        PosInterpolator pos_inter;
+        pos_inter.set_boundary(PosInterpolator::second_deriv, 0, PosInterpolator::second_deriv, 0, false);
+        pos_inter.set_points(parameters, positions);
+
+        typedef SplineCurveInterpolation<vec4> OrientInterpolator;
+        OrientInterpolator orient_inter;
+        orient_inter.set_boundary(OrientInterpolator::second_deriv, 0, OrientInterpolator::second_deriv, 0, false);
+        orient_inter.set_points(parameters, orientations);
 
         interpolated_path_.clear();
         const float interval = interpolation_speed() * interpolation_period() / 1000.0f;
         const std::size_t num_frames = duration() / interval + 1;
         for (int i = 0; i < num_frames; ++i) {
-            const FramePoint frame = interpolator.eval_f(static_cast<float>(i) / static_cast<float>(num_frames - 1));
-            vec3 pos(frame.data());
+            const float u = static_cast<float>(i) / static_cast<float>(num_frames - 1);
+            const vec3 pos = pos_inter.eval_f(u);
+            const vec4 q = orient_inter.eval_f(u);
             quat orient;
-            for (int j=0; j<4; ++j)
-                orient[j] = frame[j+3];
+            for (unsigned char j=0; j<4; ++j)
+                orient[j] = q[j];
             orient.normalize();
             interpolated_path_.emplace_back(Frame(pos, orient));
         }
