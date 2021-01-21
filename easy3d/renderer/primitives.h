@@ -126,7 +126,7 @@ namespace easy3d {
 		//------  The following functions prepare data (points, normals, and colors) for rendering -----
 
 		/**
-		 * @brief Prepares data for a representing a grid as a set of line segments.
+		 * @brief Generates data for a grid as a set of line segments.
 		 * \details The grid is centered at vec3(0, 0, 0) and lies on the XOY plane.
 		 * @param x_steps The number of subdivisions along X direction.
 		 * @param y_steps The number of subdivisions along Y direction.
@@ -136,7 +136,15 @@ namespace easy3d {
         void prepare_grid(int x_steps, int y_steps, std::vector<vec3>& points, float depth = 0.0f, float scale = 0.5f);
 
         /**
-         * @brief Prepares data (points, normals, and colors) for a 3D sphere.
+         * @brief Generates data for a circle as a set of line segments.
+		 * \details The circle is centered at vec3(0, 0, 0) and lies on the XOY plane.
+         * \param radius: the radius of the circle.
+         * \param slices: the number of subdivisions.
+         */
+        void prepare_circle(double radius, int slices, std::vector<vec3>& points, std::vector<unsigned int>& indices);
+
+        /**
+         * @brief Generates data (points, normals, and colors) for a 3D sphere.
          * \param radius: the radius of the sphere.
          * \param slices: the number of subdivisions around the z axis (similar to lines of longitude).
          * \param stacks: the number of subdivisions along the z axis(similar to lines of latitude).
@@ -147,7 +155,7 @@ namespace easy3d {
         );
 
         /**
-         * @brief Prepares data (points, normals, and colors) for a 3D checker sphere.
+         * @brief Generates data (points, normals, and colors) for a 3D checker sphere.
          * \param radius: the radius of the sphere.
          * \param slices: the number of subdivisions around the z axis (similar to lines of longitude).
          * \param stacks: the number of subdivisions along the z axis(similar to lines of latitude).
@@ -191,7 +199,7 @@ namespace easy3d {
         );
 
         /**
-         * \brief Prepares data (points) for representing a camera in the 3D world as a set of lines.
+         * \brief Generates data (points) for representing a camera in the 3D world as a set of lines.
          * \param width The width of the camera. A good value can be 5% of the scene radius, or 10% of the
          *      character height (in walking mode).
          * \param hw_ratio The aspect ratio of the base quad defined as height/width (default 0.6).

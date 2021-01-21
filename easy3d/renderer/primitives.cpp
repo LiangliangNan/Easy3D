@@ -562,6 +562,24 @@ namespace easy3d {
             }
         }
 
+
+        void prepare_circle(double radius, int slices, std::vector<vec3>& points, std::vector<unsigned int>& indices) {
+            points.clear();
+            indices.clear();
+
+            // Compute vertex position of the body
+            const float step_teta = 2.f * M_PI / slices;
+            for(int i = 0; i < slices; ++i){
+                const float x = cosf(i*step_teta);
+                const float y = sinf(i*step_teta);
+                points.emplace_back(vec3(radius * x, radius * y, 0.f));
+
+                indices.push_back(i);
+                indices.push_back((i + 1)%slices);
+            }
+        }
+
+
         void prepare_sphere(
                 const vec3 &center, double radius, int slices, int stacks, const vec3 &color,
                 std::vector<vec3> &points, std::vector<vec3> &normals, std::vector<vec3> &colors) {
