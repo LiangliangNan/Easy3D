@@ -65,26 +65,49 @@ namespace easy3d {
 
     public:
 
-        /// Constructor.
-        /// Sets default boundary condition to be zero curvature at both ends
+        /**
+         * Constructor.
+         * \details Sets default boundary conditions to be zero curvature at both ends.
+         */
         SplineCurveInterpolation() : left_(second_deriv), right_(second_deriv),
                                 left_value_(0.0), right_value_(0.0),
-                                linear_extrapolation_(false), dim_(0), total_length_(0.0) {
+                                linear_extrapolation_(false), dim_(0), largest_t_(0.0) {
         }
 
-        /// Sets the boundary condition (optional).
-        /// \attention If called, it has to come before set_points().
+        /**
+         * Sets the boundary condition (optional).
+         * \attention If called, it has to come before set_points().
+         */
         void set_boundary(BoundaryType left, FT left_value,
                           BoundaryType right, FT right_value,
                           bool linear_extrapolation = false);
 
-        /// Set the position of the point samples on the curve.
-        /// \c cubic_spline true for cubic spline interpolation; \c false for linear interpolation.
-        /// \attention The \c points have to be ordered along the curve.
+        /**
+         * Sets the parameters and position of the point samples on the curve.
+         * \param parameters The parameters (e.g., accumulated time or distance) of the points, each corresponding
+         *      to a point in \c points.
+         * \param points The points. Each point corresponds to a parameter in \c parameters.
+         * \param cubic_spline \c true for cubic spline interpolation; \c false for linear interpolation.
+         * \note The \c parameters have to be monotonously increasing along the curve.
+         */
+        void set_points(const std::vector<FT> &parameters, const std::vector<Point_t> &points, bool cubic_spline = true);
+
+        /**
+         * Sets the position of the point samples on the curve.
+         * \brief This is an overload of the set_points() function. Here the parameters are the accumulated distances
+         *      to the first point along the curve.
+         * \param points The data points. The parameter of each point is its accumulated polyline distance to the
+         *      first point.
+         * \param cubic_spline \c true for cubic spline interpolation; \c false for linear interpolation.
+         * \note The \c points have to be ordered along the curve.
+         */
         void set_points(const std::vector<Point_t> &points, bool cubic_spline = true);
 
-        /// Evaluate position of the spline
-        /// @param u : curve parameter ranging from [0; 1]
+        /**
+         * Evaluates the position of the spline curve at a given parameter.
+         * \param u Curve parameter in the range [0, 1]. The actual meaning of the parameter is given by
+         *      the \p parameters provided in set_points().
+         */
         Point_t eval_f(FT u) const;
 
     private:
@@ -97,7 +120,7 @@ namespace easy3d {
 
         std::size_t dim_;
         std::vector< SplineInterpolation<FT> > interpolators_;
-        FT total_length_;
+        FT largest_t_;
     };
 
 
@@ -121,26 +144,25 @@ namespace easy3d {
 
 
     template<typename Point_t>
-    void SplineCurveInterpolation<Point_t>::set_points(const std::vector<Point_t> &points, bool cubic_spline) {
-        if (points.empty())
+    void SplineCurveInterpolation<Point_t>::set_points(const std::vector<FT> &parameters,
+                                                       const std::vector<Point_t> &points, bool cubic_spline) {
+        if (parameters.empty() || parameters.size() != points.size())
             return;
 
         dim_ = points[0].dimension();
+        largest_t_ = parameters.back();
 
         // an ND curve is represented in the parametric form: x1(t), x2(t), x3(t)...
-        std::vector<FT> T(points.size());
         std::vector< std::vector<FT> > coords(dim_, std::vector<FT>(points.size()));
 
-        FT t = 0.0;
+        FT t(0);
         for (std::size_t i = 0; i < points.size(); ++i) {
             const auto &p = points[i];
             if (i > 0)
                 t += distance(points[i-1], p);
-            T[i] = t;
             for (std::size_t j = 0; j<dim_; ++j)
                 coords[j][i] = p[j];
         }
-        total_length_ = t;
 
         // class instantiation
         interpolators_.resize(dim_);
@@ -152,10 +174,29 @@ namespace easy3d {
                     right_ == first_deriv ? SplineInterpolation<FT>::first_deriv : SplineInterpolation<FT>::second_deriv,
                     right_value_,
                     cubic_spline
-                    );
+            );
             // set data
-            interpolators_[i].set_data(T, coords[i]);
+            interpolators_[i].set_data(parameters, coords[i]);
         }
+    }
+
+
+    template<typename Point_t>
+    void SplineCurveInterpolation<Point_t>::set_points(const std::vector<Point_t> &points, bool cubic_spline) {
+        if (points.size() < 2)
+            return;
+
+        // we use the accumulated curve distance as the parameters
+        std::vector<FT> parameters(points.size(), FT(0));
+
+        FT t(0);
+        for (std::size_t i = 1; i < points.size(); ++i) {
+            const auto &p = points[i];
+            t += distance(points[i-1], p);
+            parameters[i] = t;
+        }
+
+        set_points(parameters, points, cubic_spline);
     }
 
 
@@ -163,7 +204,7 @@ namespace easy3d {
     Point_t SplineCurveInterpolation<Point_t>::eval_f(FT u) const {
         Point_t p;
         for (std::size_t i=0; i<dim_; ++i)
-            p[i] = interpolators_[i](u * total_length_);
+            p[i] = interpolators_[i](u * largest_t_);
         return p;
     }
 
