@@ -144,6 +144,8 @@ namespace easy3d {
 
         // temporally change the rendering
         drawable->set_lighting(false);
+        drawable->set_selected(false);
+        drawable->set_highlight_range({-1, -1});
         drawable->set_uniform_coloring(color);
 
         // render
