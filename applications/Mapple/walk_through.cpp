@@ -26,6 +26,7 @@
 #include "walk_through.h"
 #include <easy3d/core//model.h>
 #include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/util/logging.h>
@@ -64,10 +65,13 @@ void WalkThrough::start_walking(const std::vector<Model *> &scene) {
     if (scene.empty())
         return;
     Box3 box;
-    for (const auto &m : scene)
+    for (const auto &m : scene) {
+        if (m->renderer()->is_visible())
         box += m->bounding_box();
+    }
     scene_box_ = box;
     camera_->setSceneRadius(box.radius() * 1.1f);
+    interpolator()->interpolate();
 }
 
 
@@ -94,6 +98,8 @@ void WalkThrough::walk_to(const vec3 &ground_point) {
     if (interpolator()->number_of_keyframes() > 0) {
         int last_idx = interpolator()->number_of_keyframes() - 1;
         vec3 dir = cam_pos - interpolator()->keyframe_position(last_idx);
+        dir.z = 0;
+        dir.normalize();
         interpolator()->set_keyframe_orientation(last_idx, to_orientation(dir));
     }
 
