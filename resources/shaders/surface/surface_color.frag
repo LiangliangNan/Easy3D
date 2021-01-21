@@ -44,6 +44,8 @@ void main(void) {
 
     if (!lighting) {
         outputF = DataIn.color;
+        if (selected)
+            outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
         return;
     }
 

@@ -66,6 +66,8 @@ void main() {
 
 	if (!lighting) {
 		outputF = vec4(color, alpha);
+        if (selected)
+            outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
 		return;
 	}
 
