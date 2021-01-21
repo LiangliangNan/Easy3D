@@ -94,9 +94,8 @@ namespace easy3d {
 
         /**
          * Sets the position of the point samples on the curve.
-         * \brief This is an overload of the set_points() function. Here the parameters are the accumulated distances
-         *      to the first point along the curve.
-         * \param points The data points. The parameter of each point is its accumulated polyline distance to the
+         * \brief This is an overload of the set_points() function. The parameters are the accumulated curve length.
+         * \param points The data points. The parameter of each point is its accumulated curve length from the
          *      first point.
          * \param cubic_spline \c true for cubic spline interpolation; \c false for linear interpolation.
          * \note The \c points have to be ordered along the curve.

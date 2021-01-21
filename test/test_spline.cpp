@@ -34,7 +34,7 @@ using namespace easy3d;
 int main(int argc, char *argv[]) {
     logging::initialize();
 
-#if 1
+#if 0
     // these are actually a set of camera positions around the bunny.ply model
     std::vector<vec3> points = {
             {-4.93228e-05, -2.15228, -0.000414636},
@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
     const int resolution = 1000;    // Number of line subdivisions to display the spline
 
     // spine fitting
-    std::ofstream output_fitting("cameras_spine_fitting_for_bunny.xyz");
+    std::ofstream output_fitting("/Users/lnan/Projects/Easy3D/resources/data/cameras_spine_fitting_for_bunny.xyz");
     const int order = 3;            // Smoothness of the spline (min 2)
     SplineCurveFitting<vec3> fitter(order, SplineCurveFitting<vec3>::eOPEN_UNIFORM);
     fitter.set_ctrl_points(points);
@@ -70,10 +70,17 @@ int main(int argc, char *argv[]) {
     }
 
     // spine interpolation
-    std::ofstream output_interpolation("cameras_spine_interpolation_for_bunny.xyz");
+    std::ofstream output_interpolation("/Users/lnan/Projects/Easy3D/resources/data/cameras_spine_interpolation_for_bunny.xyz");
     SplineCurveInterpolation<vec3> interpolator;
     interpolator.set_boundary(easy3d::SplineCurveInterpolation<vec3>::second_deriv, 0, easy3d::SplineCurveInterpolation<Vec<3, float>>::second_deriv, 0,false);
+#if 1 // use accumulated curve length as parameter
     interpolator.set_points(points);
+#else // use accumulated time as parameter
+    std::vector<float> t(points.size(), 0.0f);
+    for (std::size_t i=0; i<points.size(); ++i)
+        t[i] = i;
+    interpolator.set_points(t, points);
+#endif
     for (int i = 0; i < resolution; ++i) {
         const vec3 p = interpolator.eval_f(float(i) / float(resolution - 1));
         output_interpolation << p << std::endl;
@@ -123,7 +130,14 @@ int main(int argc, char *argv[]) {
     kfi.delete_path();
     SplineCurveInterpolation<KeyFrame> interpolator;
     interpolator.set_boundary(easy3d::SplineCurveInterpolation<KeyFrame>::second_deriv, 0, easy3d::SplineCurveInterpolation<KeyFrame>::second_deriv, 0,false);
+#if 1
     interpolator.set_points(keyframes);
+#else // use accumulated time as parameter
+    std::vector<float> t(num, 0.0f);
+    for (std::size_t i=0; i<num; ++i)
+        t[i] = i;
+    interpolator.set_points(t, keyframes);
+#endif
     for (int i = 0; i < resolution; ++i) {
         const KeyFrame frame = interpolator.eval_f(float(i) / float(resolution - 1));
         vec3 pos(frame.data());
