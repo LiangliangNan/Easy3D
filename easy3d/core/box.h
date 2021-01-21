@@ -124,6 +124,12 @@ namespace easy3d {
                 return FT(0.0);
         }
 
+        /** Return the max of range(0), range(1), and range(2).*/
+        inline FT max_range() const { return std::max(range(0), std::max(range(1), range(2))); }
+
+        /** Return the max of range(0), range(1), and range(2).*/
+        inline FT min_range() const { return std::min(range(0), std::min(range(1), range(2))); }
+
         /** Return the center of the box. */
         inline Point center() const {
             if (is_valid())
