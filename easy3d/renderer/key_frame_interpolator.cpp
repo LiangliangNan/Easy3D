@@ -391,7 +391,7 @@ namespace easy3d {
             prevQ = kf.orientation();
         }
 
-        LOG_IF(keyframes_.size() > 2, INFO) << "interpolating " << keyframes_.size() << " keyframes";
+        LOG_IF(keyframes_.size() > 2, INFO) << "interpolating " << keyframes_.size() << " keyframes...";
 
         // we choose the accumulated path length as parameter, so to have equal intervals.
         std::vector<float> parameters(keyframes_.size());

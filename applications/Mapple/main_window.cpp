@@ -528,9 +528,8 @@ Model* MainWindow::open(const std::string& file_name) {
         if (file_system::is_file(keyframe_file)) {
             if (viewer_->walkThrough()->interpolator()->read_keyframes(keyframe_file)) {
                 LOG(INFO) << "model has an accompanying animation file \'"
-                          << file_system::simple_name(keyframe_file) << "\' (also loaded)";
-                if (viewer_->walkThrough()->status() != WalkThrough::STOPPED)
-                    viewer_->walkThrough()->start_walking({model});
+                          << file_system::simple_name(keyframe_file) << "\' (loaded)";
+                viewer_->walkThrough()->start_walking({model});
             }
         }
     }
@@ -1979,7 +1978,7 @@ void MainWindow::animation() {
     if (!dialog)
         dialog = new DialogWalkThrough(this);
 
-    dialog->walkThrough()->start_walking(viewer_->models());
+    viewer_->walkThrough()->start_walking(viewer_->models());
 
     // don't allow model picking when creating camera paths.
     ui->actionSelectModel->setChecked(false);

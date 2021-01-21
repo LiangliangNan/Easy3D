@@ -47,6 +47,11 @@ DialogWalkThrough::DialogWalkThrough(MainWindow *window)
 {
 	setupUi(this);
 
+    QButtonGroup* group = new QButtonGroup(this);
+    group->addButton(radioButtonFreeMode);
+    group->addButton(radioButtonWalkingMode);
+    radioButtonWalkingMode->setChecked(true);
+
 	spinBoxFPS->setValue(interpolator()->frame_rate());
 	doubleSpinBoxInterpolationSpeed->setValue(interpolator()->interpolation_speed());
 
@@ -78,11 +83,6 @@ DialogWalkThrough::DialogWalkThrough(MainWindow *window)
     connect(browseButton, SIGNAL(clicked()), this, SLOT(browse()));
 
     easy3d::connect(&walkThrough()->path_modified, this, &DialogWalkThrough::numKeyramesChanged);
-
-    QButtonGroup* group = new QButtonGroup(this);
-    group->addButton(radioButtonFreeMode);
-    group->addButton(radioButtonWalkingMode);
-    radioButtonWalkingMode->setChecked(true);
 }
 
 

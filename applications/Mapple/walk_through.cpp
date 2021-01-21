@@ -71,7 +71,9 @@ void WalkThrough::start_walking(const std::vector<Model *> &scene) {
     }
     scene_box_ = box;
     camera_->setSceneRadius(box.radius() * 1.1f);
-    interpolator()->interpolate();
+
+    if (status_ != STOPPED)
+        interpolator()->interpolate();
 }
 
 
