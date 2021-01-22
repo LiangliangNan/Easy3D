@@ -38,6 +38,7 @@
 namespace easy3d {
     class Camera;
     class Model;
+    class LinesDrawable;
     class TrianglesDrawable;
     class AmbientOcclusion;
     class Shadow;
@@ -304,6 +305,8 @@ protected:
 
     // corner axes
     easy3d::TrianglesDrawable* drawable_axes_;
+    // anchor sphere and manipulated frame
+    easy3d::LinesDrawable* sphere_outline_;
 
     easy3d::ModelPicker* model_picker_;
     bool    allow_select_model_;
