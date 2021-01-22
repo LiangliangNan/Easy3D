@@ -268,9 +268,9 @@ namespace easy3d {
 	static float projectOnBall(float x, float y) {
 		// If you change the size value, change angle computation in
 		// deformedBallQuaternion().
-		const float size = 1.0;
+		const float size = 1.0f;
 		const float size2 = size * size;
-		const float size_limit = size2 * 0.5;
+		const float size_limit = size2 * 0.5f;
 
 		const float d = x * x + y * y;
 		return d < size_limit ? sqrt(size2 - d) : size_limit / sqrt(d);

@@ -81,7 +81,7 @@ namespace easy3d {
 	}
 
 
-    Frame::~Frame() {}
+    Frame::~Frame() = default;
 
 	/////////////////////////////// MATRICES //////////////////////////////////////
 
