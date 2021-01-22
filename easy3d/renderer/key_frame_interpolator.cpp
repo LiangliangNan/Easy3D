@@ -405,22 +405,22 @@ namespace easy3d {
         const float interval = interpolation_speed() * interpolation_period() / 1000.0f;
         const std::size_t num_frames = duration() / interval + 1;
 
-        // we choose the accumulated path length as parameter, so to have equal intervals.
-        std::vector<float> parameters(keyframes_.size());
-        std::vector<vec3> positions(keyframes_.size());
-        std::vector<vec4> orientations(keyframes_.size());
-        float dist(0.0f);
-        for (int i=0; i<keyframes_.size(); ++i) {
-            positions[i] = keyframes_[i].position();
-            const quat& orient = keyframes_[i].orientation();
-            for (unsigned char j=0; j<4; ++j)
-                orientations[i][j] = orient[j];
-            if (i > 0)
-                dist += distance(positions[i-1], positions[i]);
-            parameters[i] = dist;
-        }
-
         if (interpolation_method_ == INTERPOLATION) {
+            // we choose the accumulated path length as parameter, so to have equal intervals.
+            std::vector<float> parameters(keyframes_.size());
+            std::vector<vec3> positions(keyframes_.size());
+            std::vector<vec4> orientations(keyframes_.size());
+            float dist(0.0f);
+            for (int i=0; i<keyframes_.size(); ++i) {
+                positions[i] = keyframes_[i].position();
+                const quat& orient = keyframes_[i].orientation();
+                for (unsigned char j=0; j<4; ++j)
+                    orientations[i][j] = orient[j];
+                if (i > 0)
+                    dist += distance(positions[i-1], positions[i]);
+                parameters[i] = dist;
+            }
+
             // spine interpolation
             typedef SplineCurveInterpolation<vec3> PosFitter;
             PosFitter pos_fitter;
@@ -444,6 +444,15 @@ namespace easy3d {
             }
         }
         else {
+            std::vector<vec3> positions(keyframes_.size());
+            std::vector<vec4> orientations(keyframes_.size());
+            for (int i=0; i<keyframes_.size(); ++i) {
+                positions[i] = keyframes_[i].position();
+                const quat& orient = keyframes_[i].orientation();
+                for (unsigned char j=0; j<4; ++j)
+                    orientations[i][j] = orient[j];
+            }
+
             // spine fitting
             const int order = 3;  // Smoothness of the spline (min 2)
             typedef SplineCurveFitting <vec3> PosFitter;
