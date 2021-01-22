@@ -130,8 +130,9 @@ namespace easy3d {
          *      main axes.
          * @param mvp The model view projection matrix.
          * @param m The transformation matrix defining the spheres is location, radius, and orientation.
+         * \param axes \c true will also draw the three main axes.
          */
-        void draw_sphere_outline(LinesDrawable* outline, const mat4& mvp, const mat4& m);
+        void draw_sphere_outline(LinesDrawable* outline, const mat4& mvp, const mat4& m, bool axes = true);
 
 		//------  The following functions prepare data (points, normals, and colors) for rendering -----
 
@@ -146,12 +147,12 @@ namespace easy3d {
         void prepare_grid(int x_steps, int y_steps, std::vector<vec3>& points, float depth = 0.0f, float scale = 0.5f);
 
         /**
-         * @brief Generates data for a circle as a set of line segments.
+         * @brief Generates data for a unit circle as a set of line segments.
 		 * \details The circle is centered at vec3(0, 0, 0) and lies on the XOY plane.
-         * \param radius: the radius of the circle.
-         * \param slices: the number of subdivisions.
+         * \param radius. The radius of the circle.
+         * \param slices. The number of subdivisions.
          */
-        void prepare_circle(double radius, int slices, std::vector<vec3>& points, std::vector<unsigned int>& indices);
+        void prepare_circle(int slices, std::vector<vec3>& points, std::vector<unsigned int>& indices);
 
         /**
          * @brief Generates data (points, normals, and colors) for a 3D sphere.

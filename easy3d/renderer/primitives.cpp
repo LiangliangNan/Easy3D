@@ -541,7 +541,7 @@ namespace easy3d {
         }
 
 
-        void draw_sphere_outline(LinesDrawable* outline, const mat4& mvp, const mat4& m) {
+        void draw_sphere_outline(LinesDrawable* outline, const mat4& mvp, const mat4& m, bool axes) {
             if (!outline)
                 return;
 
@@ -556,13 +556,11 @@ namespace easy3d {
                 return;
 
             if (outline->vertex_buffer() == 0) {
-                const float radius = 1.0f;
-
                 std::vector<vec3> points, colors;
                 std::vector<unsigned int> indices;
 
                 std::vector<vec3> points_xoy;   // xoy
-                opengl::prepare_circle(radius, 50, points_xoy, indices);
+                opengl::prepare_circle(50, points_xoy, indices);
 
                 for (auto &p : points_xoy) {
                     points.push_back(p);
@@ -584,6 +582,32 @@ namespace easy3d {
                     colors.emplace_back(vec3(1, 0, 0));
                     indices.push_back(points_xoy.size() * 2 + i);
                     indices.push_back(points_xoy.size() * 2 + (i + 1) % points_xoy.size());
+                }
+
+                if (axes) {
+                    // x axis
+                    points.emplace_back(vec3(-1, 0, 0));
+                    points.emplace_back(vec3(1, 0, 0));
+                    colors.emplace_back(vec3(1, 0, 0));
+                    colors.emplace_back(vec3(1, 0, 0));
+                    indices.push_back(points.size() - 2);
+                    indices.push_back(points.size() - 1);
+
+                    // y axis
+                    points.emplace_back(vec3(0, -1, 0));
+                    points.emplace_back(vec3(0, 1, 0));
+                    colors.emplace_back(vec3(0, 1, 0));
+                    colors.emplace_back(vec3(0, 1, 0));
+                    indices.push_back(points.size() - 2);
+                    indices.push_back(points.size() - 1);
+
+                    // z axis
+                    points.emplace_back(vec3(0, 0, -1));
+                    points.emplace_back(vec3(0, 0, 1));
+                    colors.emplace_back(vec3(0, 0, 1));
+                    colors.emplace_back(vec3(0, 0, 1));
+                    indices.push_back(points.size() - 2);
+                    indices.push_back(points.size() - 1);
                 }
 
                 outline->update_vertex_buffer(points);
@@ -627,7 +651,7 @@ namespace easy3d {
         }
 
 
-        void prepare_circle(double radius, int slices, std::vector<vec3>& points, std::vector<unsigned int>& indices) {
+        void prepare_circle(int slices, std::vector<vec3>& points, std::vector<unsigned int>& indices) {
             points.clear();
             indices.clear();
 
@@ -636,7 +660,7 @@ namespace easy3d {
             for(int i = 0; i < slices; ++i){
                 const float x = cosf(i*step_teta);
                 const float y = sinf(i*step_teta);
-                points.emplace_back(vec3(radius * x, radius * y, 0.f));
+                points.emplace_back(vec3(x, y, 0.f));
 
                 indices.push_back(i);
                 indices.push_back((i + 1)%slices);
