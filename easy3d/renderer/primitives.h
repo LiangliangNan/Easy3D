@@ -32,6 +32,8 @@
 
 namespace easy3d {
 
+    class LinesDrawable;
+
     namespace opengl
     {
         /**
@@ -122,6 +124,14 @@ namespace easy3d {
          *      glDisable(GL_BLEND);
          */
         void draw_polygon_filled(const Polygon2& polygon, const vec4& color, int width, int height, float depth);
+
+        /**
+         * \brief Draws the outline (the 3 big circles) of a unit sphere centered at the origin and aligned with the
+         *      main axes.
+         * @param mvp The model view projection matrix.
+         * @param m The transformation matrix defining the spheres is location, radius, and orientation.
+         */
+        void draw_sphere_outline(LinesDrawable* outline, const mat4& mvp, const mat4& m);
 
 		//------  The following functions prepare data (points, normals, and colors) for rendering -----
 

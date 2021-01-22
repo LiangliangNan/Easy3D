@@ -27,6 +27,7 @@
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/vertex_array_object.h>
+#include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/opengl.h>
 #include <easy3d/algo/tessellator.h>
 
@@ -537,6 +538,69 @@ namespace easy3d {
 
             VertexArrayObject::release_buffer(vertex_buffer);
             VertexArrayObject::release_buffer(element_buffer);
+        }
+
+
+        void draw_sphere_outline(LinesDrawable* outline, const mat4& mvp, const mat4& m) {
+            if (!outline)
+                return;
+
+            ShaderProgram *program = ShaderManager::get_program("lines/lines_plain_color");
+            if (!program) {
+                std::vector<ShaderProgram::Attribute> attributes;
+                attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+                attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
+                program = ShaderManager::create_program_from_files("lines/lines_plain_color", attributes);
+            }
+            if (!program)
+                return;
+
+            if (outline->vertex_buffer() == 0) {
+                const float radius = 1.0f;
+
+                std::vector<vec3> points, colors;
+                std::vector<unsigned int> indices;
+
+                std::vector<vec3> points_xoy;   // xoy
+                opengl::prepare_circle(radius, 50, points_xoy, indices);
+
+                for (auto &p : points_xoy) {
+                    points.push_back(p);
+                    colors.emplace_back(vec3(0, 0, 1));
+                }
+                colors.resize(points_xoy.size(), vec3(0, 0, 1));
+
+                auto rot_x = mat4::rotation(vec3(1, 0, 0), M_PI * 0.5f);
+                for (std::size_t i = 0; i < points_xoy.size(); ++i) {
+                    points.push_back(rot_x * points_xoy[i]);
+                    colors.emplace_back(vec3(0, 1, 0));
+                    indices.push_back(points_xoy.size() + i);
+                    indices.push_back(points_xoy.size() + (i + 1) % points_xoy.size());
+                }
+
+                auto rot_y = mat4::rotation(vec3(0, 1, 0), M_PI * 0.5f);
+                for (std::size_t i = 0; i < points_xoy.size(); ++i) {
+                    points.push_back(rot_y * points_xoy[i]);
+                    colors.emplace_back(vec3(1, 0, 0));
+                    indices.push_back(points_xoy.size() * 2 + i);
+                    indices.push_back(points_xoy.size() * 2 + (i + 1) % points_xoy.size());
+                }
+
+                outline->update_vertex_buffer(points);
+                outline->update_color_buffer(colors);
+                outline->update_element_buffer(indices);
+                outline->set_property_coloring(State::VERTEX);
+            }
+
+            program->bind();
+            program->set_uniform("MVP", mvp)
+                    ->set_uniform("MANIP", m)
+                    ->set_uniform("per_vertex_color", true)
+                    ->set_uniform("clippingPlaneEnabled", false)
+                    ->set_uniform("selected", false);
+
+            outline->gl_draw();
+            program->release();
         }
 
 

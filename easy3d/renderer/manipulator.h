@@ -63,13 +63,11 @@ namespace easy3d {
         virtual mat4 matrix() const;
 
         /// Draws the manipulated frame.
-        virtual void draw_frame(Camera* cam) const;
+        virtual void draw_frame(LinesDrawable* frame, Camera* cam) const;
 
     protected:
         Model *model_; // the model to be manipulated
         ManipulatedFrame *frame_;
-
-        LinesDrawable* indicator_;
     };
 
 }
