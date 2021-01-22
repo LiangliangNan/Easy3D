@@ -79,7 +79,7 @@ namespace easy3d {
         const Box3 box = model_->bounding_box(false);
         float radius = box.max_range() * 0.7f;
         const vec3 &center = box.center();
-        auto manip = matrix() * mat4::scale(radius) * mat4::translation(center);
+        auto manip = matrix() * mat4::translation(center) * mat4::scale(radius);
         opengl::draw_sphere_outline(frame, cam->modelViewProjectionMatrix(), manip);
     }
 
