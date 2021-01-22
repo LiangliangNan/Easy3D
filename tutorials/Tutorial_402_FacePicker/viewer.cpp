@@ -63,6 +63,7 @@ bool PickerViewer::mouse_press_event(int x, int y, int button, int modifiers) {
             const auto& range = triangle_range[face];
             drawable->set_highlight_range(range);
             drawable->set_highlight(true);
+            std::cout << "picked face " << face << std::endl;
         }
         else {
             drawable->set_highlight_range(std::make_pair(-1, -1));
