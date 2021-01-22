@@ -24,7 +24,7 @@
 
 /** ----------------------------------------------------------
  *
- * The code in this file is adapted from Surface_mesh with significant
+ * The code in this file is adapted from libQGLViewer with significant
  * modifications and enhancement.
  *		- libQGLViewer (version Version 2.7.1, Nov 17th, 2017)
  * The original code is available at
@@ -42,6 +42,7 @@
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/primitives.h>
 #include <easy3d/renderer/camera.h>   // for drawing the camera path drawables
+//#include <easy3d/core/spline_curve_fitting.h>
 #include <easy3d/core/spline_curve_interpolation.h>
 #include <easy3d/util/string.h>  // for formatting time string
 
@@ -408,25 +409,35 @@ namespace easy3d {
                 dist += distance(positions[i-1], positions[i]);
             parameters[i] = dist;
         }
-
+#if 1
         // spine interpolation
-        typedef SplineCurveInterpolation<vec3> PosInterpolator;
-        PosInterpolator pos_inter;
-        pos_inter.set_boundary(PosInterpolator::second_deriv, 0, PosInterpolator::second_deriv, 0, false);
-        pos_inter.set_points(parameters, positions);
+        typedef SplineCurveInterpolation<vec3> PosFitter;
+        PosFitter pos_fitter;
+        pos_fitter.set_boundary(PosFitter::second_deriv, 0, PosFitter::second_deriv, 0, false);
+        pos_fitter.set_points(parameters, positions);
 
-        typedef SplineCurveInterpolation<vec4> OrientInterpolator;
-        OrientInterpolator orient_inter;
-        orient_inter.set_boundary(OrientInterpolator::second_deriv, 0, OrientInterpolator::second_deriv, 0, false);
-        orient_inter.set_points(parameters, orientations);
+        typedef SplineCurveInterpolation<vec4> OrientFitter;
+        OrientFitter orient_fitter;
+        orient_fitter.set_boundary(OrientFitter::second_deriv, 0, OrientFitter::second_deriv, 0, false);
+        orient_fitter.set_points(parameters, orientations);
+#else
+        // spine fitting
+        const int order = 3;  // Smoothness of the spline (min 2)
+        typedef SplineCurveFitting<vec3> PosFitter;
+        PosFitter pos_fitter(order, PosFitter::eOPEN_UNIFORM);
+        pos_fitter.set_ctrl_points(positions);
 
+        typedef SplineCurveFitting<vec4> OrientFitter;
+        OrientFitter orient_fitter(order, OrientFitter::eOPEN_UNIFORM);
+        orient_fitter.set_ctrl_points(orientations);
+#endif
         interpolated_path_.clear();
         const float interval = interpolation_speed() * interpolation_period() / 1000.0f;
         const std::size_t num_frames = duration() / interval + 1;
         for (int i = 0; i < num_frames; ++i) {
             const float u = static_cast<float>(i) / static_cast<float>(num_frames - 1);
-            const vec3 pos = pos_inter.eval_f(u);
-            const vec4 q = orient_inter.eval_f(u);
+            const vec3 pos = pos_fitter.eval_f(u);
+            const vec4 q = orient_fitter.eval_f(u);
             quat orient;
             for (unsigned char j=0; j<4; ++j)
                 orient[j] = q[j];

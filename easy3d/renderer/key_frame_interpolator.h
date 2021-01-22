@@ -24,7 +24,7 @@
 
 /** ----------------------------------------------------------
  *
- * The code in this file is adapted from Surface_mesh with significant
+ * The code in this file is adapted from libQGLViewer with significant
  * modifications and enhancement.
  *		- libQGLViewer (version Version 2.7.1, Nov 17th, 2017)
  * The original code is available at
