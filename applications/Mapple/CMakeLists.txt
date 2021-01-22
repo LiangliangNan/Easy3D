@@ -140,7 +140,22 @@ if (MSVC)
     #	add_executable( ${PROJECT_NAME} WIN32 ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} ${${PROJECT_NAME}_RESOURCES} )
     #       target_link_libraries( ${PROJECT_NAME} Qt5::WinMain )
 elseif (APPLE)
-    add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} ${${PROJECT_NAME}_RESOURCES})
+#    # NOTE: Don't include the path in MACOSX_BUNDLE_ICON_FILE -- this is
+#    # the property added to Info.plist
+#    set(MACOSX_BUNDLE_ICON_FILE Mapple.icns)
+#    # And this part tells CMake where to find and install the file itself
+#    set(${PROJECT_NAME}_ICON ${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/Mapple.icns)
+#    set_source_files_properties(${${PROJECT_NAME}_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+
+    add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${${PROJECT_NAME}_ICON} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} ${${PROJECT_NAME}_RESOURCES})
+
+    ## Note: On macOS, high-DPI support is enabled by settings in the Info.plist file. Make sure they are present.
+    ## For more information, see: http://doc.qt.io/qt-5/highdpi.html
+    ## Enable high DPI support by using my Info.plist file in which I added NSHighResolutionCapable to be true.
+    set_target_properties(${PROJECT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/resources/Mac/Mapple.plist)
+
+    ## Resources
+    #... not implemented yet
 else ()
     add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} ${${PROJECT_NAME}_RESOURCES})
 endif ()
@@ -168,12 +183,4 @@ endif ()
 
 if (EASY3D_HAS_CGAL)
     target_link_libraries(${PROJECT_NAME} algo_ext)
-endif ()
-
-
-## Note: On macOS, high-DPI support is enabled by settings in the Info.plist file. Make sure they are present.
-## For more information, see: http://doc.qt.io/qt-5/highdpi.html
-## Enable high DPI support by using my Info.plist file in which I added NSHighResolutionCapable to be true.
-if (APPLE)
-    set_target_properties(${PROJECT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/resources/Mac/Mapple.plist)
 endif ()
