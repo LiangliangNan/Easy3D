@@ -47,12 +47,8 @@ public:
     WalkThrough* walkThrough();
 
 public Q_SLOTS :
-    void importCameraPathFromFile();
-    void exportCameraPathToFile();
 
-    void showCameras(bool);
-    void showPath(bool);
-
+    void setInterpolationMethod(int);
     void clearPath();
 
     void setWalkingMode(bool);
@@ -83,7 +79,6 @@ protected:
 	virtual void closeEvent(QCloseEvent* e);
 
     void numKeyramesChanged();
-    void adjustSceneRadius();
 };
 
 #endif // DIALOG_WALK_THROUGH_H

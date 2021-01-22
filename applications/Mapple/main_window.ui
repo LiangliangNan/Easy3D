@@ -210,6 +210,12 @@
     <addaction name="actionSaveCameraStateToFile"/>
     <addaction name="actionRestoreCameraStateFromFile"/>
     <addaction name="separator"/>
+    <addaction name="actionImportCameraPath"/>
+    <addaction name="actionExportCameraPath"/>
+    <addaction name="separator"/>
+    <addaction name="actionShowCameras"/>
+    <addaction name="actionShowCameraPath"/>
+    <addaction name="separator"/>
     <addaction name="actionAnimation"/>
    </widget>
    <addaction name="menuFile"/>
@@ -630,12 +636,12 @@
   </action>
   <action name="actionSaveCameraStateToFile">
    <property name="text">
-    <string>Save camera state to file</string>
+    <string>Save camera state</string>
    </property>
   </action>
   <action name="actionRestoreCameraStateFromFile">
    <property name="text">
-    <string>Restore camera state from file</string>
+    <string>Restore camera state</string>
    </property>
   </action>
   <action name="actionExit">
@@ -1129,6 +1135,32 @@
    </property>
    <property name="text">
     <string>Select model</string>
+   </property>
+  </action>
+  <action name="actionImportCameraPath">
+   <property name="text">
+    <string>Import camera path</string>
+   </property>
+  </action>
+  <action name="actionExportCameraPath">
+   <property name="text">
+    <string>Export camera path</string>
+   </property>
+  </action>
+  <action name="actionShowCameras">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show cameras</string>
+   </property>
+  </action>
+  <action name="actionShowCameraPath">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show path</string>
    </property>
   </action>
  </widget>

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>427</width>
-    <height>504</height>
+    <height>459</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -19,7 +19,7 @@
   <property name="maximumSize">
    <size>
     <width>16777215</width>
-    <height>504</height>
+    <height>459</height>
    </size>
   </property>
   <property name="contextMenuPolicy">
@@ -28,7 +28,7 @@
   <property name="windowTitle">
    <string>Walk through</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_4">
+  <layout class="QVBoxLayout" name="verticalLayout_5">
    <item>
     <widget class="QGroupBox" name="groupBox">
      <property name="sizePolicy">
@@ -40,120 +40,7 @@
      <property name="title">
       <string>Camera path</string>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout_3">
-      <item>
-       <widget class="QLabel" name="labelCharacterHeightFactor_4">
-        <property name="text">
-         <string>Load/Save camera path</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_5">
-        <item>
-         <spacer name="horizontalSpacer_9">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeType">
-           <enum>QSizePolicy::Fixed</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>13</width>
-            <height>15</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayoutCameraPathButtons_2">
-          <item>
-           <widget class="QPushButton" name="importCameraPathButton">
-            <property name="text">
-             <string>Import</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="exportCameraPathButton">
-            <property name="text">
-             <string>Export</string>
-            </property>
-            <property name="default">
-             <bool>false</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer_12">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeType">
-             <enum>QSizePolicy::Fixed</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>10</width>
-              <height>15</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="checkBoxShowCameras">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string>Cameras</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer_10">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeType">
-             <enum>QSizePolicy::Fixed</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>10</width>
-              <height>15</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="checkBoxShowPath">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string>Path</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <widget class="QLabel" name="labelCharacterHeightFactor_3">
-        <property name="text">
-         <string>Add key frames to the path</string>
-        </property>
-       </widget>
-      </item>
+     <layout class="QVBoxLayout" name="verticalLayout_4">
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_4">
         <item>
@@ -173,20 +60,54 @@
          </spacer>
         </item>
         <item>
-         <layout class="QVBoxLayout" name="verticalLayout_2">
+         <layout class="QVBoxLayout" name="verticalLayout_3">
           <item>
-           <widget class="QRadioButton" name="radioButtonFreeMode">
-            <property name="text">
-             <string>Free mode (press 'K') </string>
-            </property>
-           </widget>
+           <layout class="QHBoxLayout" name="horizontalLayout_5">
+            <item>
+             <widget class="QLabel" name="label_3">
+              <property name="text">
+               <string>Keyframe interpolation</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="comboBoxInterpolationMethod"/>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_9">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeType">
+               <enum>QSizePolicy::Preferred</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>13</width>
+                <height>15</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
           </item>
           <item>
-           <widget class="QRadioButton" name="radioButtonWalkingMode">
-            <property name="text">
-             <string>Walking mode (Alt + Left click on the ground)</string>
-            </property>
-           </widget>
+           <layout class="QVBoxLayout" name="verticalLayout_2">
+            <item>
+             <widget class="QRadioButton" name="radioButtonFreeMode">
+              <property name="text">
+               <string>Free mode (press 'K') </string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="radioButtonWalkingMode">
+              <property name="text">
+               <string>Walking mode (Alt + Left click on the ground)</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -545,10 +466,7 @@ The higher the better the quality (but the larger file size of the video)</strin
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <tabstops>
-  <tabstop>importCameraPathButton</tabstop>
-  <tabstop>exportCameraPathButton</tabstop>
-  <tabstop>checkBoxShowCameras</tabstop>
-  <tabstop>checkBoxShowPath</tabstop>
+  <tabstop>comboBoxInterpolationMethod</tabstop>
   <tabstop>radioButtonFreeMode</tabstop>
   <tabstop>radioButtonWalkingMode</tabstop>
   <tabstop>checkBoxFollowUp</tabstop>

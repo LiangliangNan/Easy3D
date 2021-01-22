@@ -820,6 +820,7 @@ void PaintCanvas::addModel(Model *model) {
 
     models_.push_back(model);
     model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
+    adjustSceneRadius();
 }
 
 
@@ -869,6 +870,18 @@ void PaintCanvas::fitScreen(const easy3d::Model *model) {
 
 void PaintCanvas::fitScreen() {
     fitScreen(nullptr);
+}
+
+
+void PaintCanvas::adjustSceneRadius() {
+    Box3 box;
+    for (auto m : models_)
+        box.add_box(m->bounding_box(false));
+
+    const int count = walkThrough()->interpolator()->number_of_keyframes();
+    for (int i = 0; i < count; ++i)
+        box.add_point(walkThrough()->interpolator()->keyframe(i).position());
+   camera()->setSceneRadius(box.radius());
 }
 
 

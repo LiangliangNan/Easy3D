@@ -90,6 +90,9 @@ public:
 	// if 'model' is NULL, it centers the entire scene (all models).
 	void fitScreen(const easy3d::Model* model);
 
+    // adjusts the scene radius so all models, cameras (and camera path) are within the view frustum.
+    void adjustSceneRadius();
+
     // Returns the coordinates of the 3D point located at pixel (x,y) on screen.
     // x, y: screen point expressed in pixel units with an origin in the upper left corner.
     // found: indicates whether a point was found or not.

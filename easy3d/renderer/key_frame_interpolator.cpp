@@ -42,7 +42,7 @@
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/primitives.h>
 #include <easy3d/renderer/camera.h>   // for drawing the camera path drawables
-//#include <easy3d/core/spline_curve_fitting.h>
+#include <easy3d/core/spline_curve_fitting.h>
 #include <easy3d/core/spline_curve_interpolation.h>
 #include <easy3d/util/string.h>  // for formatting time string
 
@@ -53,6 +53,7 @@ namespace easy3d {
     KeyFrameInterpolator::KeyFrameInterpolator(Frame *frame)
             : frame_(frame)
             , fps_(30)
+            , interpolation_method_(INTERPOLATION)
             , interpolation_speed_(1.0f)
             , interpolation_started_(false)
             , last_stopped_index_(0)
@@ -176,6 +177,12 @@ namespace easy3d {
             return 0.0f;
         else
             return keyframes_.back().time();
+    }
+
+
+    void  KeyFrameInterpolator::set_interpolation_method(Method m) {
+        interpolation_method_ = m;
+        pathIsValid_ = false;
     }
 
 
@@ -394,9 +401,12 @@ namespace easy3d {
 
         LOG_IF(keyframes_.size() > 2, INFO) << "interpolating " << keyframes_.size() << " keyframes...";
 
+        interpolated_path_.clear();
+        const float interval = interpolation_speed() * interpolation_period() / 1000.0f;
+        const std::size_t num_frames = duration() / interval + 1;
+
         // we choose the accumulated path length as parameter, so to have equal intervals.
         std::vector<float> parameters(keyframes_.size());
-
         std::vector<vec3> positions(keyframes_.size());
         std::vector<vec4> orientations(keyframes_.size());
         float dist(0.0f);
@@ -409,40 +419,51 @@ namespace easy3d {
                 dist += distance(positions[i-1], positions[i]);
             parameters[i] = dist;
         }
-#if 1
-        // spine interpolation
-        typedef SplineCurveInterpolation<vec3> PosFitter;
-        PosFitter pos_fitter;
-        pos_fitter.set_boundary(PosFitter::second_deriv, 0, PosFitter::second_deriv, 0, false);
-        pos_fitter.set_points(parameters, positions);
 
-        typedef SplineCurveInterpolation<vec4> OrientFitter;
-        OrientFitter orient_fitter;
-        orient_fitter.set_boundary(OrientFitter::second_deriv, 0, OrientFitter::second_deriv, 0, false);
-        orient_fitter.set_points(parameters, orientations);
-#else
-        // spine fitting
-        const int order = 3;  // Smoothness of the spline (min 2)
-        typedef SplineCurveFitting<vec3> PosFitter;
-        PosFitter pos_fitter(order, PosFitter::eOPEN_UNIFORM);
-        pos_fitter.set_ctrl_points(positions);
+        if (interpolation_method_ == INTERPOLATION) {
+            // spine interpolation
+            typedef SplineCurveInterpolation<vec3> PosFitter;
+            PosFitter pos_fitter;
+            pos_fitter.set_boundary(PosFitter::second_deriv, 0, PosFitter::second_deriv, 0, false);
+            pos_fitter.set_points(parameters, positions);
 
-        typedef SplineCurveFitting<vec4> OrientFitter;
-        OrientFitter orient_fitter(order, OrientFitter::eOPEN_UNIFORM);
-        orient_fitter.set_ctrl_points(orientations);
-#endif
-        interpolated_path_.clear();
-        const float interval = interpolation_speed() * interpolation_period() / 1000.0f;
-        const std::size_t num_frames = duration() / interval + 1;
-        for (int i = 0; i < num_frames; ++i) {
-            const float u = static_cast<float>(i) / static_cast<float>(num_frames - 1);
-            const vec3 pos = pos_fitter.eval_f(u);
-            const vec4 q = orient_fitter.eval_f(u);
-            quat orient;
-            for (unsigned char j=0; j<4; ++j)
-                orient[j] = q[j];
-            orient.normalize();
-            interpolated_path_.emplace_back(Frame(pos, orient));
+            typedef SplineCurveInterpolation<vec4> OrientFitter;
+            OrientFitter orient_fitter;
+            orient_fitter.set_boundary(OrientFitter::second_deriv, 0, OrientFitter::second_deriv, 0, false);
+            orient_fitter.set_points(parameters, orientations);
+
+            for (int i = 0; i < num_frames; ++i) {
+                const float u = static_cast<float>(i) / static_cast<float>(num_frames - 1);
+                const vec3 pos = pos_fitter.eval_f(u);
+                const vec4 q = orient_fitter.eval_f(u);
+                quat orient;
+                for (unsigned char j=0; j<4; ++j)
+                    orient[j] = q[j];
+                orient.normalize();
+                interpolated_path_.emplace_back(Frame(pos, orient));
+            }
+        }
+        else {
+            // spine fitting
+            const int order = 3;  // Smoothness of the spline (min 2)
+            typedef SplineCurveFitting <vec3> PosFitter;
+            PosFitter pos_fitter(order, PosFitter::eOPEN_UNIFORM);
+            pos_fitter.set_ctrl_points(positions);
+
+            typedef SplineCurveFitting <vec4> OrientFitter;
+            OrientFitter orient_fitter(order, OrientFitter::eOPEN_UNIFORM);
+            orient_fitter.set_ctrl_points(orientations);
+
+            for (int i = 0; i < num_frames; ++i) {
+                const float u = static_cast<float>(i) / static_cast<float>(num_frames - 1);
+                const vec3 pos = pos_fitter.eval_f(u);
+                const vec4 q = orient_fitter.eval_f(u);
+                quat orient;
+                for (unsigned char j=0; j<4; ++j)
+                    orient[j] = q[j];
+                orient.normalize();
+                interpolated_path_.emplace_back(Frame(pos, orient));
+            }
         }
 
         LOG_IF(keyframes_.size() > 2, INFO)

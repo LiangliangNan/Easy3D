@@ -99,6 +99,10 @@ public slots:
     void saveCameraStateToFile();
     void restoreCameraStateFromFile();
 
+    void importCameraPath();
+    void exportCameraPath();
+    void setShowCameraPath(bool);
+    void setShowCameras(bool);
     void animation();
 
     // property

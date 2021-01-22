@@ -243,6 +243,14 @@ namespace easy3d {
         /*! @name Interpolation parameters */
         //@{
     public:
+
+        enum Method { FITTING, INTERPOLATION };
+        /**
+         * \brief Returns the interpolation method.
+         * \details Default value is \c Interpolation (cubic spline interpolation).
+         */
+        Method interpolation_method() const { return interpolation_method_; }
+
         /**
          * \brief Returns the current interpolation speed.
          * \details Default value is 1.0, which means keyframe_time() will be matched during the interpolation
@@ -266,6 +274,12 @@ namespace easy3d {
         int frame_rate() const { return fps_; }
 
     public:
+
+        /**
+         * \brief Sets the interpolation_method().
+         */
+        void set_interpolation_method(Method m);
+
         /**
          * \brief Sets the interpolation_speed().
          */
@@ -381,6 +395,7 @@ namespace easy3d {
         // Rhythm
         Timer<> timer_;
         int fps_;
+        Method interpolation_method_;
         float interpolation_speed_;
         bool interpolation_started_;
         int last_stopped_index_;

@@ -896,6 +896,10 @@ void MainWindow::createActionsForCameraMenu() {
     connect(ui->actionSaveCameraStateToFile, SIGNAL(triggered()), this, SLOT(saveCameraStateToFile()));
     connect(ui->actionRestoreCameraStateFromFile, SIGNAL(triggered()), this, SLOT(restoreCameraStateFromFile()));
 
+    connect(ui->actionImportCameraPath, SIGNAL(triggered()), this, SLOT(importCameraPath()));
+    connect(ui->actionExportCameraPath, SIGNAL(triggered()), this, SLOT(exportCameraPath()));
+    connect(ui->actionShowCameraPath, SIGNAL(toggled(bool)), this, SLOT(setShowCameraPath(bool)));
+    connect(ui->actionShowCameras, SIGNAL(toggled(bool)), this, SLOT(setShowCameras(bool)));
     connect(ui->actionAnimation, SIGNAL(triggered()), this, SLOT(animation()));
 }
 
@@ -1986,6 +1990,72 @@ void MainWindow::animation() {
         m->renderer()->set_selected(false);
 
     dialog->show();
+}
+
+
+void MainWindow::importCameraPath() {
+    std::string dir = "./";
+    if (viewer_->currentModel())
+        dir = file_system::parent_directory(viewer_->currentModel()->name());
+    QString suggested_dir = QString::fromStdString(dir);
+    const QString fileName = QFileDialog::getOpenFileName(
+            this,
+            "Import keyframes from file",
+            suggested_dir,
+            "Keyframe file (*.kf)\n"
+            "All formats (*.*)"
+    );
+
+    if (fileName.isEmpty())
+        return;
+
+    if (viewer_->walkThrough()->interpolator()->read_keyframes(fileName.toStdString())) {
+        LOG(INFO) << viewer_->walkThrough()->interpolator()->number_of_keyframes() << " keyframes loaded";
+        viewer_->adjustSceneRadius();
+    }
+
+    viewer_->update();
+}
+
+
+void MainWindow::exportCameraPath() {
+    if (viewer_->walkThrough()->interpolator()->number_of_keyframes() == 0) {
+        LOG(INFO) << "nothing can be exported (path is empty)";
+        return;
+    }
+
+    std::string name = "./keyframes.kf";
+    if (viewer_->currentModel())
+        name = file_system::replace_extension(viewer_->currentModel()->name(), "kf");
+
+    QString suggested_name = QString::fromStdString(name);
+    const QString fileName = QFileDialog::getSaveFileName(
+            this,
+            "Export keyframes to file",
+            suggested_name,
+            "Keyframe file (*.kf)\n"
+            "All formats (*.*)"
+    );
+
+    if (fileName.isEmpty())
+        return;
+
+    if (viewer_->walkThrough()->interpolator()->save_keyframes(fileName.toStdString()))
+        LOG(INFO) << "keyframes saved to file";
+}
+
+
+void MainWindow::setShowCameraPath(bool b) {
+    viewer_->walkThrough()->set_path_visible(b);
+    viewer_->adjustSceneRadius();
+    viewer_->update();
+}
+
+
+void MainWindow::setShowCameras(bool b) {
+    viewer_->walkThrough()->set_cameras_visible(b);
+    viewer_->adjustSceneRadius();
+    viewer_->update();
 }
 
 

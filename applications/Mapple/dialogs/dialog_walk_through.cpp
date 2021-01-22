@@ -47,6 +47,10 @@ DialogWalkThrough::DialogWalkThrough(MainWindow *window)
 {
 	setupUi(this);
 
+	comboBoxInterpolationMethod->addItem("Spline Interpolation");
+    comboBoxInterpolationMethod->addItem("Spline Fitting");
+    comboBoxInterpolationMethod->setCurrentIndex(0);
+
     QButtonGroup* group = new QButtonGroup(this);
     group->addButton(radioButtonFreeMode);
     group->addButton(radioButtonWalkingMode);
@@ -55,18 +59,14 @@ DialogWalkThrough::DialogWalkThrough(MainWindow *window)
 	spinBoxFPS->setValue(interpolator()->frame_rate());
 	doubleSpinBoxInterpolationSpeed->setValue(interpolator()->interpolation_speed());
 
+    connect(comboBoxInterpolationMethod, SIGNAL(currentIndexChanged(int)), this, SLOT(setInterpolationMethod(int)));
+
     connect(checkBoxFollowUp, SIGNAL(toggled(bool)), this, SLOT(setFollowUp(bool)));
 	connect(doubleSpinBoxCharacterHeightFactor, SIGNAL(valueChanged(double)), this, SLOT(setCharacterHeightFactor(double)));
 	connect(doubleSpinBoxCharacterDistanceFactor, SIGNAL(valueChanged(double)), this, SLOT(setCharacterDistanceFactor(double)));
 
     connect(spinBoxFPS, SIGNAL(valueChanged(int)), this, SLOT(setFrameRate(int)));
     connect(doubleSpinBoxInterpolationSpeed, SIGNAL(valueChanged(double)), this, SLOT(setInterpolationSpeed(double)));
-
-    connect(importCameraPathButton, SIGNAL(clicked()), this, SLOT(importCameraPathFromFile()));
-    connect(exportCameraPathButton, SIGNAL(clicked()), this, SLOT(exportCameraPathToFile()));
-
-    connect(checkBoxShowCameras, SIGNAL(toggled(bool)), this, SLOT(showCameras(bool)));
-    connect(checkBoxShowPath, SIGNAL(toggled(bool)), this, SLOT(showPath(bool)));
 
     connect(radioButtonWalkingMode, SIGNAL(toggled(bool)), this, SLOT(setWalkingMode(bool)));
 
@@ -129,8 +129,6 @@ void DialogWalkThrough::showEvent(QShowEvent* e) {
     checkBoxFollowUp->setChecked(walkThrough()->follow_up());
 	doubleSpinBoxCharacterHeightFactor->setValue(walkThrough()->height_factor());
 	doubleSpinBoxCharacterDistanceFactor->setValue(walkThrough()->third_person_forward_factor());
-    checkBoxShowCameras->setChecked(walkThrough()->cameras_visible());
-    checkBoxShowPath->setChecked(walkThrough()->path_visible());
 
 #ifdef HAS_FFMPEG
     std::string name = "./video.mp4";
@@ -248,6 +246,15 @@ void DialogWalkThrough::goToKeyframe(int p) {
 }
 
 
+void DialogWalkThrough::setInterpolationMethod(int idx) {
+    if (idx == 0)
+        interpolator()->set_interpolation_method(easy3d::KeyFrameInterpolator::INTERPOLATION);
+    else
+        interpolator()->set_interpolation_method(easy3d::KeyFrameInterpolator::FITTING);
+    viewer_->update();
+}
+
+
 void DialogWalkThrough::clearPath() {
     if (interpolator()->number_of_keyframes() == 0 && interpolator()->number_of_keyframes() == 0) {
         LOG(WARNING) << "nothing to clear (empty path)";
@@ -355,6 +362,7 @@ void DialogWalkThrough::preview(bool b) {
         id_interpolationStopped = easy3d::connect(&interpolator()->interpolation_stopped, interpolationStopped);
         QObject::connect(this, &DialogWalkThrough::previewStopped, this, &DialogWalkThrough::onPreviewStopped);
 
+        for (auto w : findChildren<QComboBox*>()) w->setEnabled(false);
         for (auto w : findChildren<QLabel*>()) w->setEnabled(false);
         for (auto w : findChildren<QPushButton*>()) w->setEnabled(w == previewButton);
         for (auto w : findChildren<QCheckBox*>()) w->setEnabled(false);
@@ -375,6 +383,7 @@ void DialogWalkThrough::preview(bool b) {
         interpolator()->stop_interpolation();
         LOG(INFO) << "preview finished. " << w.time_string();
 
+        for (auto w : findChildren<QComboBox*>()) w->setEnabled(true);
         for (auto w : findChildren<QLabel*>()) w->setEnabled(true);
         for (auto w : findChildren<QPushButton*>()) w->setEnabled(true);
         for (auto w : findChildren<QCheckBox*>()) w->setEnabled(true);
@@ -434,87 +443,4 @@ void DialogWalkThrough::record() {
 
 void DialogWalkThrough::onPreviewStopped() {
     previewButton->setChecked(false);
-}
-
-
-void DialogWalkThrough::showCameras(bool b) {
-    walkThrough()->set_cameras_visible(b);
-    adjustSceneRadius();
-}
-
-
-void DialogWalkThrough::showPath(bool b) {
-    walkThrough()->set_path_visible(b);
-    adjustSceneRadius();
-}
-
-
-void DialogWalkThrough::adjustSceneRadius() {
-    if (walkThrough()->path_visible() || walkThrough()->cameras_visible()) {
-        const int count = interpolator()->number_of_keyframes();
-        float radius = viewer_->camera()->sceneRadius();
-        for (int i = 0; i < count; ++i)
-            radius = std::max(radius, distance(viewer_->camera()->sceneCenter(), interpolator()->keyframe(i).position()));
-        if (radius > viewer_->camera()->sceneRadius())
-            viewer_->camera()->setSceneRadius(radius);
-    } else {
-        Box3 box;
-        for (auto m : viewer_->models())
-            box.add_box(m->bounding_box());
-        viewer_->camera()->setSceneBoundingBox(box.min_point(), box.max_point());
-    }
-    viewer_->update();
-}
-
-
-void DialogWalkThrough::exportCameraPathToFile() {
-    if (interpolator()->number_of_keyframes() == 0 && interpolator()->number_of_keyframes() == 0) {
-        LOG(INFO) << "nothing can be exported (path is empty)";
-        return;
-    }
-
-    std::string name = "./keyframes.kf";
-    if (viewer_->currentModel())
-        name = file_system::replace_extension(viewer_->currentModel()->name(), "kf");
-
-    QString suggested_name = QString::fromStdString(name);
-    const QString fileName = QFileDialog::getSaveFileName(
-            this,
-            "Export keyframes to file",
-            suggested_name,
-            "Keyframe file (*.kf)\n"
-            "All formats (*.*)"
-    );
-
-    if (fileName.isEmpty())
-        return;
-
-    if (interpolator()->save_keyframes(fileName.toStdString()))
-        LOG(INFO) << "keyframes saved to file";
-}
-
-
-void DialogWalkThrough::importCameraPathFromFile() {
-    std::string dir = "./";
-    if (viewer_->currentModel())
-        dir = file_system::parent_directory(viewer_->currentModel()->name());
-    QString suggested_dir = QString::fromStdString(dir);
-    const QString fileName = QFileDialog::getOpenFileName(
-            this,
-            "Import keyframes from file",
-            suggested_dir,
-            "Keyframe file (*.kf)\n"
-            "All formats (*.*)"
-    );
-
-    if (fileName.isEmpty())
-        return;
-
-    if (interpolator()->read_keyframes(fileName.toStdString())) {
-        LOG(INFO) << interpolator()->number_of_keyframes() << " keyframes loaded";
-        adjustSceneRadius();
-        numKeyramesChanged();
-    }
-
-    update();
 }
