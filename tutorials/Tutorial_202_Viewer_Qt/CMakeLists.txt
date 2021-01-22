@@ -72,7 +72,3 @@ set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "tutorials")
 if (APPLE)
     set_target_properties(${PROJECT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/resources/Mac/ViewerQt.plist)
 endif ()
-
-## Resources
-# Copy resources dirs into our shadow build directory
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/resources DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
