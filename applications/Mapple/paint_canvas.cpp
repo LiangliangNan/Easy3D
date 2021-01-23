@@ -863,6 +863,7 @@ void PaintCanvas::fitScreen(const easy3d::Model *model) {
     if (box.is_valid()) {
         camera_->setSceneBoundingBox(box.min_point(), box.max_point());
         camera_->showEntireScene();
+        adjustSceneRadius();
         update();
     }
 }
