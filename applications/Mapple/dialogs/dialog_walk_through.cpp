@@ -121,6 +121,12 @@ void DialogWalkThrough::showEvent(QShowEvent* e) {
     viewer_->camera()->setZClippingCoefficient(5.0f);
     viewer_->camera()->setZNearCoefficient(0.0001);
 
+    auto method = interpolator()->interpolation_method();
+    if (method == easy3d::KeyFrameInterpolator::INTERPOLATION)
+        comboBoxInterpolationMethod->setCurrentIndex(0);
+    else
+        comboBoxInterpolationMethod->setCurrentIndex(1);
+
     if (radioButtonWalkingMode->isChecked())
         walkThrough()->set_status(WalkThrough::WALKING_MODE);
     else

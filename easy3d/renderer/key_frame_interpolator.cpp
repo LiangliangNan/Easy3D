@@ -458,13 +458,14 @@ namespace easy3d {
             typedef SplineCurveFitting <vec3> PosFitter;
             PosFitter pos_fitter(order, PosFitter::eOPEN_UNIFORM);
             pos_fitter.set_ctrl_points(positions);
+            const std::vector<float> parameters = pos_fitter.get_equally_spaced_parameters(num_frames);
 
             typedef SplineCurveFitting <vec4> OrientFitter;
             OrientFitter orient_fitter(order, OrientFitter::eOPEN_UNIFORM);
             orient_fitter.set_ctrl_points(orientations);
 
             for (int i = 0; i < num_frames; ++i) {
-                const float u = static_cast<float>(i) / static_cast<float>(num_frames - 1);
+                const float u = parameters[i];
                 const vec3 pos = pos_fitter.eval_f(u);
                 const vec4 q = orient_fitter.eval_f(u);
                 quat orient;
