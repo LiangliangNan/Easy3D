@@ -1052,8 +1052,10 @@ void DialogProperties::applyCommand() {
         succeed = removeProperty();
         if (succeed) {
             Model *model = getModel();
-            if (model)
+            if (model) {
                 model->renderer()->update();
+                viewer_->update();
+            }
         }
     } else if (command == "Rename")
         succeed = renameProperty();
