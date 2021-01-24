@@ -31,6 +31,7 @@ in Data{
 	vec3 color;
 	vec3 normal;
 	vec3 position;
+	float clipped;
 } DataIn;
 
 
@@ -76,6 +77,9 @@ vec4 ShadeFragment()
 
 void main(void)
 {
+	if (DataIn.clipped > 0.0)
+		discard;
+
 	// Set gl_FragDepth here (gl_FragCoord.z by default)
 	// window-space depth interpolated linearly in screen space
 	gl_FragDepth = gl_FragCoord.z;

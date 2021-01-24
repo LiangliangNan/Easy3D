@@ -29,11 +29,9 @@ void main()
     vec4 new_position = MANIP * vec4(vtx_position, 1.0);
 
     if (clippingPlaneEnabled) {
-        if (planeClippingDiscard && dot(new_position, clippingPlane0) < 0)
-        return;
+        gl_ClipDistance[0] = dot(new_position, clippingPlane0);
         if (crossSectionEnabled) {
-            if (planeClippingDiscard && dot(new_position, clippingPlane1) < 0)
-            return;
+            gl_ClipDistance[1] = dot(new_position, clippingPlane1);
         }
     }
 

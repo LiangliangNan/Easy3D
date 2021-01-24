@@ -23,6 +23,7 @@ in Data{
 	vec3 normal;
 	vec3 position;
 	vec4 shadowCoord;
+    float clipped;
 } DataIn;
 
 
@@ -31,6 +32,9 @@ out vec4 FragColor;	// Ouput data
 
 vec3 shade(vec3 worldPos)
 {
+    if (DataIn.clipped > 0.0)
+        discard;
+
     if (is_background)
         return DataIn.color;
 

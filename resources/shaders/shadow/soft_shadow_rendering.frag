@@ -2,10 +2,11 @@
 
 
 in Data{
-        vec3 color;
-        vec3 normal;
-        vec3 position;
-        vec4 shadowCoord;
+	vec3 color;
+	vec3 normal;
+	vec3 position;
+	vec4 shadowCoord;
+	float clipped;
 } DataIn;
 
 
@@ -727,6 +728,9 @@ vec3 shade(vec3 worldPos)
 
 
 void main(void) {
+	if (DataIn.clipped > 0.0)
+		discard;
+
     vec3 color = shade(DataIn.position);
 
 	if (selected && !is_background)

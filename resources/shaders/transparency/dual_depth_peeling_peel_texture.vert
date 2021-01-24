@@ -23,7 +23,8 @@ layout(std140) uniform Matrices {
 out Data{
 	vec2 texcoord;
 	vec3 normal;
-	vec3 position; 
+	vec3 position;
+	float clipped;
 } DataOut;
 
 
@@ -31,15 +32,21 @@ void main(void)
 {
 	vec4 new_position = MANIP * vec4(vtx_position, 1.0);
 
+	DataOut.clipped = 0.0;
+	if (clippingPlaneEnabled) {
+		gl_ClipDistance[0] = dot(new_position, clippingPlane0);
+		if (planeClippingDiscard && gl_ClipDistance[0] < 0)
+		DataOut.clipped = 1.0;
+		if (crossSectionEnabled) {
+			gl_ClipDistance[1] = dot(new_position, clippingPlane1);
+			if (planeClippingDiscard && gl_ClipDistance[1] < 0)
+			DataOut.clipped = 1.0;
+		}
+	}
+
 	DataOut.texcoord = vtx_texcoord;
 	DataOut.normal = NORMAL * vtx_normal;
 	DataOut.position = new_position.xyz;
 
 	gl_Position = MVP * new_position;
-
-	if (clippingPlaneEnabled) {
-		gl_ClipDistance[0] = dot(new_position, clippingPlane0);
-		if (crossSectionEnabled)
-			gl_ClipDistance[1] = dot(new_position, clippingPlane1);
-	}
 }

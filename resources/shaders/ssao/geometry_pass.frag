@@ -3,6 +3,7 @@
 in Data{
     vec3 position;
     vec3 normal;
+    float clipped;
 } DataIn;
 
 // smooth shading
@@ -12,7 +13,10 @@ out vec3 gPosition;
 out vec3 gNormal;
 
 void main()
-{    
+{
+    if (DataIn.clipped > 0.0)
+        discard;
+
     // store the fragment position vector in the first gbuffer texture
     gPosition = DataIn.position;
 

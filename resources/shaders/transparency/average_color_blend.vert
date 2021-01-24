@@ -11,20 +11,22 @@ uniform bool crossSectionEnabled = false;
 uniform vec4 clippingPlane0;
 uniform vec4 clippingPlane1;
 
-out vec2 texCoord;
+out vec2  texCoord;
+out float clipped;
 
 void main()
 {
 	vec4 new_position = MANIP * vtx_position;
 
+	clipped = 0.0;
 	if (clippingPlaneEnabled) {
 		gl_ClipDistance[0] = dot(new_position, clippingPlane0);
 		if (planeClippingDiscard && gl_ClipDistance[0] < 0)
-			return;
+		clipped = 1.0;
 		if (crossSectionEnabled) {
 			gl_ClipDistance[1] = dot(new_position, clippingPlane1);
 			if (planeClippingDiscard && gl_ClipDistance[1] < 0)
-				return;
+			clipped = 1.0;
 		}
 	}
 

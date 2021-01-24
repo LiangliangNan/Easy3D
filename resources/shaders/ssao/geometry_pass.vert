@@ -18,6 +18,7 @@ uniform vec4 clippingPlane1;
 out Data{
     vec3 position;
     vec3 normal;
+    float clipped;
 } DataOut;
 
 
@@ -25,14 +26,15 @@ void main()
 {
     vec4 new_position = MANIP * vec4(vtx_position, 1.0);
 
+    DataOut.clipped = 0.0;
     if (clippingPlaneEnabled) {
         gl_ClipDistance[0] = dot(new_position, clippingPlane0);
         if (planeClippingDiscard && gl_ClipDistance[0] < 0)
-        return;
+        DataOut.clipped = 1.0;
         if (crossSectionEnabled) {
             gl_ClipDistance[1] = dot(new_position, clippingPlane1);
             if (planeClippingDiscard && gl_ClipDistance[1] < 0)
-            return;
+            DataOut.clipped = 1.0;
         }
     }
 

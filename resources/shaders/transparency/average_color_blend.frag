@@ -1,6 +1,7 @@
 #version 150
 
-in vec2 texCoord;
+in vec2  texCoord;
+in float clipped;
 
 uniform sampler2D ColorTex0;
 uniform sampler2D ColorTex1;
@@ -10,6 +11,9 @@ out vec4 fragOutput;
 
 void main(void)
 {
+	if (clipped > 0.0)
+		discard;
+
 	vec4 SumColor = texture(ColorTex0, texCoord);
 	float n = texture(ColorTex1, texCoord).r;
 

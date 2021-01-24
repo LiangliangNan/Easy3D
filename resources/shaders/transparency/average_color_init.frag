@@ -26,6 +26,7 @@ in Data{
 	vec3 color;
 	vec3 normal;
 	vec3 position;
+    float clipped;
 } DataIn;
 
 
@@ -56,6 +57,9 @@ vec4 ShadeFragment()
 
 void main(void)
 {
+    if (DataIn.clipped > 0.0)
+        discard;
+
 	vec4 color = ShadeFragment();
     if (selected)
         color = mix(color, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
