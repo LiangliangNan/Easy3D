@@ -1,27 +1,28 @@
 #version 150
 precision highp float;
 
-in vec3 vtx_position;
-in vec2 vtx_texcoord;
-in vec3 vtx_normal;
+in  vec3 vtx_position;	// vertex position
+in  vec3 vtx_normal;	// vertex normal
+in  vec3 vtx_color;	// vertex color
+in  vec2 vtx_texcoord;
 
-layout(std140) uniform Matrices {
-	mat4 MV;
-	mat4 invMV;
-	mat4 PROJ;
-	mat4 MVP;
-	mat4 MANIP;
-	mat3 NORMAL;
-	mat4 SHADOW;
-	bool clippingPlaneEnabled;
-	bool crossSectionEnabled;
-	vec4 clippingPlane0;
-	vec4 clippingPlane1;
-};
+uniform vec3 default_color;
+uniform bool per_vertex_color;
+
+uniform mat4 MVP;
+uniform mat4 MANIP = mat4(1.0);
+uniform mat3 NORMAL = mat3(1.0);
+
+uniform bool planeClippingDiscard = false;
+uniform bool clippingPlaneEnabled = false;
+uniform bool crossSectionEnabled = false;
+uniform vec4 clippingPlane0;
+uniform vec4 clippingPlane1;
 
 // the data to be sent to the fragment shader
 out Data{
 	vec2 texcoord;
+	vec3 color;
 	vec3 normal;
 	vec3 position;
 	float clipped;
@@ -44,9 +45,14 @@ void main(void)
 		}
 	}
 
-	DataOut.texcoord = vtx_texcoord;
+	if (per_vertex_color)
+		DataOut.color = vtx_color;
+	else
+		DataOut.color = default_color;
+
 	DataOut.normal = NORMAL * vtx_normal;
 	DataOut.position = new_position.xyz;
+	DataOut.texcoord = vtx_texcoord;
 
 	gl_Position = MVP * new_position;
 }

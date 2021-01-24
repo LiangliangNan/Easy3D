@@ -36,6 +36,7 @@
 #include <easy3d/renderer/setting.h>
 #include <easy3d/renderer/transform.h>
 #include <easy3d/renderer/clipping_plane.h>
+#include <easy3d/renderer/texture.h>
 #include <easy3d/util/file_system.h>
 
 //#define SAVE_ITERMEDIATE_FBO
@@ -203,13 +204,14 @@ namespace easy3d {
             program->release();
         }
         else if (stage_ == DDP_Peel) {
-            static const std::string name = "transparency/dual_depth_peeling_peel_color";
+            static const std::string name = "transparency/dual_depth_peeling_peel_rendering";
             ShaderProgram* program = ShaderManager::get_program(name);
             if (!program) {
                 std::vector<ShaderProgram::Attribute> attributes = {
-                    ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"),
-                    ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"),
-                    ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal")
+                        ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"),
+                        ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "vtx_texcoord"),
+                        ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"),
+                        ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal")
                 };
                 std::vector<std::string> outputs;
                 outputs.push_back("fragOutput0");
@@ -241,20 +243,32 @@ namespace easy3d {
                     // needs be padded when using uniform blocks
                     const mat3 NORMAL = transform::normal_matrix(MANIP);
                     program->set_uniform("MANIP", MANIP)
-                            ->set_uniform( "NORMAL", NORMAL);
-                    program->set_uniform("smooth_shading", d->smooth_shading());
-                    program->set_block_uniform("Material", "ambient", d->material().ambient);
-                    program->set_block_uniform("Material", "specular", d->material().specular);
-                    program->set_block_uniform("Material", "shininess", &d->material().shininess);
-                    program->set_uniform("Alpha", d->opacity());
-                    program->set_uniform("per_vertex_color", d->coloring_method() != State::UNIFORM_COLOR && d->color_buffer());
-                    program->set_uniform("default_color", d->color());
-                    program->set_uniform("selected", d->is_selected());
+                            ->set_uniform( "NORMAL", NORMAL)
+                            ->set_uniform("lightingEnabled", d->lighting())
+                            ->set_uniform("smooth_shading", d->smooth_shading())
+                            ->set_uniform("distinct_back_color", d->distinct_back_color())
+                            ->set_uniform("backside_color", d->back_color())
+                            ->set_block_uniform("Material", "ambient", d->material().ambient)
+                            ->set_block_uniform("Material", "specular", d->material().specular)
+                            ->set_block_uniform("Material", "shininess", &d->material().shininess)
+                            ->set_uniform("Alpha", d->opacity())
+                            ->set_uniform("per_vertex_color", d->coloring_method() != State::UNIFORM_COLOR && d->color_buffer())
+                            ->set_uniform("default_color", d->color())
+                            ->set_uniform("selected", d->is_selected());
                     if (setting::clipping_plane) {
                         setting::clipping_plane->set_program(program);
                         setting::clipping_plane->set_discard_primitives(program, d->plane_clip_discard_primitive());
                     }
+
+                    bool use_texture = (d->texture() && (d->coloring_method() == State::SCALAR_FIELD || d->coloring_method() == State::TEXTURED));
+                    program->set_uniform("use_texture", use_texture);
+                    if (use_texture)
+                        program->bind_texture("textureID", d->texture()->id(), 2)
+                                ->set_uniform("texture_repeat", d->texture_repeat())
+                                ->set_uniform("fractional_repeat", d->texture_fractional_repeat());
                     d->gl_draw();
+                    if (use_texture)
+                        program->release_texture();
                 }
             }
             program->release_texture();
