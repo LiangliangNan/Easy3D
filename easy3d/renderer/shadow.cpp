@@ -211,10 +211,11 @@ namespace easy3d {
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes = {
                 ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"),
+                ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "vtx_texcoord"),
                 ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"),
                 ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal")
             };
-            program = ShaderManager::create_program_from_files(name, attributes, std::vector<std::string>(), false);
+            program = ShaderManager::create_program_from_files(name, attributes);
         }
         if (!program)
             return;
@@ -237,19 +238,21 @@ namespace easy3d {
                 // needs be padded when using uniform blocks
                 const mat3 NORMAL = transform::normal_matrix(MANIP);
                 program->set_uniform("MANIP", MANIP)
-                        ->set_uniform( "NORMAL", NORMAL);
-                program->set_uniform("smooth_shading", d->smooth_shading());
-                program->set_block_uniform("Material", "ambient", d->material().ambient);
-                program->set_block_uniform("Material", "specular", d->material().specular);
-                program->set_block_uniform("Material", "shininess", &d->material().shininess);
-                program->set_uniform("default_color", d->color());				easy3d_debug_log_gl_error;
-                program->set_uniform("per_vertex_color", d->coloring_method() != State::UNIFORM_COLOR && d->color_buffer());
-                program->set_uniform("is_background", false)
+                        ->set_uniform( "NORMAL", NORMAL)
+                        ->set_uniform("smooth_shading", d->smooth_shading())
+                        ->set_block_uniform("Material", "ambient", d->material().ambient)
+                        ->set_block_uniform("Material", "specular", d->material().specular)
+                        ->set_block_uniform("Material", "shininess", &d->material().shininess)
+                        ->set_uniform("default_color", d->color())
+                        ->set_uniform("per_vertex_color", d->coloring_method() != State::UNIFORM_COLOR && d->color_buffer())
+                        ->set_uniform("is_background", false)
                         ->set_uniform("selected", d->is_selected());
+
                 if (setting::clipping_plane) {
                     setting::clipping_plane->set_program(program);
                     setting::clipping_plane->set_discard_primitives(program, d->plane_clip_discard_primitive());
                 }
+
                 d->gl_draw();
             }
         }
