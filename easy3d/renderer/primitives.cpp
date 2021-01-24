@@ -628,7 +628,7 @@ namespace easy3d {
         }
 
 
-        void draw_box_wire(LinesDrawable* drawable, const mat4& mvp, const mat4& m, bool axes) {
+        void draw_box_wire(LinesDrawable* drawable, const mat4& mvp, const mat4& m, bool abstracted) {
             if (!drawable)
                 return;
 
@@ -636,24 +636,23 @@ namespace easy3d {
             if (!program) {
                 std::vector<ShaderProgram::Attribute> attributes;
                 attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+                attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
                 program = ShaderManager::create_program_from_files("lines/lines_plain_color", attributes);
             }
             if (!program)
                 return;
 
             if (drawable->vertex_buffer() == 0) {
-                std::vector<vec3> points;
-                std::vector<unsigned int> indices;
-                prepare_box(points, indices);
+                std::vector<vec3> points, colors;
+                prepare_box(points, colors, abstracted);
                 drawable->update_vertex_buffer(points);
-                drawable->update_element_buffer(indices);
+                drawable->update_color_buffer(colors);
             }
 
             program->bind();
             program->set_uniform("MVP", mvp)
                     ->set_uniform("MANIP", m)
-                    ->set_uniform("per_vertex_color", false)
-                    ->set_uniform("default_color", vec3(1, 0, 0))
+                    ->set_uniform("per_vertex_color", true)
                     ->set_uniform("clippingPlaneEnabled", false)
                     ->set_uniform("selected", false);
 
@@ -685,24 +684,55 @@ namespace easy3d {
         }
 
 
-        void prepare_box(std::vector<vec3>& points, std::vector<unsigned int>& indices, bool abstracted) {
+        void prepare_box(std::vector<vec3>& points, std::vector<vec3>& colors, bool abstracted) {
             points.clear();
-            indices.clear();
+            colors.clear();
 
             float min_coord = -0.5f;
             float max_coord = 0.5f;
+            vec3 red(1, 0, 0), green(0, 1, 0), blue(0, 0, 1);
 
-            points.emplace_back(vec3(min_coord, min_coord, min_coord)); // 0
-            points.emplace_back(vec3(min_coord, max_coord, min_coord)); // 1
-            points.emplace_back(vec3(max_coord, max_coord, min_coord)); // 2
-            points.emplace_back(vec3(max_coord, min_coord, min_coord)); // 3
-
-            points.emplace_back(vec3(min_coord, min_coord, max_coord)); // 4
-            points.emplace_back(vec3(min_coord, max_coord, max_coord)); // 5
-            points.emplace_back(vec3(max_coord, max_coord, max_coord)); // 6
-            points.emplace_back(vec3(max_coord, min_coord, max_coord)); // 7
-
-            indices = {0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7};
+            std::vector<vec3> vts = {
+                    vec3(min_coord, min_coord, min_coord), // 0
+                    vec3(max_coord, min_coord, min_coord), // 1
+                    vec3(max_coord, max_coord, min_coord), // 2
+                    vec3(min_coord, max_coord, min_coord), // 3
+                    vec3(min_coord, min_coord, max_coord), // 4
+                    vec3(max_coord, min_coord, max_coord), // 5
+                    vec3(max_coord, max_coord, max_coord), // 6
+                    vec3(min_coord, max_coord, max_coord)  // 7
+            };
+            
+            if (abstracted) {
+                float ratio = 0.2;
+                points = {
+                        vts[0], vts[0] + red * ratio, vts[1], vts[1] - red * ratio, vts[1], vts[1] + green * ratio,
+                        vts[2], vts[2] - green * ratio, vts[2], vts[2] - red * ratio, vts[3], vts[3] + red * ratio,
+                        vts[3], vts[3] - green * ratio, vts[0], vts[0] + green * ratio, vts[4], vts[4] + red * ratio,
+                        vts[5], vts[5] - red * ratio, vts[5], vts[5] + green * ratio, vts[6], vts[6] - green * ratio,
+                        vts[6], vts[6] - red * ratio, vts[7], vts[7] + red * ratio, vts[7], vts[7] - green * ratio,
+                        vts[4], vts[4] + green * ratio, vts[0], vts[0] + blue * ratio, vts[1], vts[1] + blue * ratio,
+                        vts[2], vts[2] + blue * ratio, vts[3], vts[3] + blue * ratio, vts[4], vts[4] - blue * ratio,
+                        vts[5], vts[5] - blue * ratio, vts[6], vts[6] - blue * ratio, vts[7], vts[7] - blue * ratio
+                };
+                colors = {
+                        red, red, red, red, green, green, green, green, red, red, red, red, green, green, green, green,
+                        red, red, red, red, green, green, green, green, red, red, red, red, green, green, green, green,
+                        blue, blue, blue, blue, blue, blue, blue, blue, blue, blue, blue, blue, blue, blue, blue, blue
+                };
+            }
+            else {
+                points = {
+                        vts[0], vts[1], vts[1], vts[2], vts[2], vts[3], vts[3], vts[0],
+                        vts[4], vts[5], vts[5], vts[6], vts[6], vts[7], vts[7], vts[4],
+                        vts[0], vts[4], vts[1], vts[5], vts[2], vts[6], vts[3], vts[7]
+                };
+                colors = {
+                        red, red, green, green, red, red, green, green,
+                        red, red, green, green, red, red, green, green,
+                        blue, blue, blue, blue, blue, blue, blue, blue
+                };
+            }
         }
 
 

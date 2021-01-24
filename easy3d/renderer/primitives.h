@@ -166,7 +166,7 @@ namespace easy3d {
          * \param size. The size of the box (width = height = depth).
          * \param abstracted \c true to draw an abstracted version (only part of its corners).
          */
-        void prepare_box(std::vector<vec3>& points, std::vector<unsigned int>& indices, bool abstracted = false);
+        void prepare_box(std::vector<vec3>& points, std::vector<vec3>& colors, bool abstracted = false);
 
 
         /**

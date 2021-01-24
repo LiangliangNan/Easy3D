@@ -85,7 +85,7 @@ namespace easy3d {
         const Box3 box = model_->bounding_box(false);
         const vec3 &center = box.center();
         auto manip = matrix() * mat4::translation(center) * mat4::scale(box.range(0), box.range(1), box.range(2), 1.0f);
-        opengl::draw_box_wire(drawable_model_bbox_, cam->modelViewProjectionMatrix(), manip);
+        opengl::draw_box_wire(drawable_model_bbox_, cam->modelViewProjectionMatrix(), manip, true);
     }
 
 }
