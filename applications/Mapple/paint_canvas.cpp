@@ -1046,8 +1046,6 @@ void PaintCanvas::drawCornerAxes() {
             ->set_block_uniform("Material", "specular", setting::material_specular)
             ->set_block_uniform("Material", "shininess", &setting::material_shininess)
             ->set_uniform("highlight", false)
-            ->set_uniform("highlight_id_min", -1)
-            ->set_uniform("highlight_id_max", -1)
             ->set_uniform("clippingPlaneEnabled", false)
             ->set_uniform("selected", false);  easy3d_debug_log_gl_error;
 
