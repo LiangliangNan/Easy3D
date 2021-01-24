@@ -162,6 +162,7 @@ namespace easy3d {
         face.update_vertex_buffer(points);
         face.update_element_buffer(face_indices);
         face.set_uniform_coloring(color_);
+        face.set_distinct_back_color(false);
         face.draw(cam);
         glDisable(GL_BLEND);
         easy3d_debug_log_gl_error;

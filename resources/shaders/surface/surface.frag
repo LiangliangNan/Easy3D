@@ -53,11 +53,11 @@ void main(void) {
     vec4 color;
     if (use_texture) {
         float repeat = texture_repeat + fractional_repeat / 100.0f;
-#ifndef ENABLE_ALPHA
         color = texture(textureID, DataIn.texcoord * repeat);
+
+#ifndef ENABLE_ALPHA
         color.a = 1.0f;
 #else
-        color = texture(textureID, DataIn.texcoord * repeat);
         if (color.a <= 0)
             discard;
 #endif
@@ -74,7 +74,7 @@ void main(void) {
     }
 
     if (!gl_FrontFacing && distinct_back_color)
-        color = vec4(backside_color, 1.0);
+        color = vec4(backside_color, color.a);
 
     if (highlight) {
         if (gl_PrimitiveID >= hightlight_id_min && gl_PrimitiveID <= hightlight_id_max)
