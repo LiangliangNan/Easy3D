@@ -131,10 +131,8 @@ set(${PROJECT_NAME}_SHADERS
         ../../resources/shaders/lines/lines_cones_texture.geom
         ../../resources/shaders/lines/lines_cones_texture.frag
        # surface
-        ../../resources/shaders/surface/surface_color.vert
-        ../../resources/shaders/surface/surface_color.frag
-        ../../resources/shaders/surface/surface_texture.vert
-        ../../resources/shaders/surface/surface_texture.frag
+        ../../resources/shaders/surface/surface.vert
+        ../../resources/shaders/surface/surface.frag
         # EDL
         ../../resources/shaders/edl/edl_bilateral_filter.vert
         ../../resources/shaders/edl/edl_bilateral_filter.frag

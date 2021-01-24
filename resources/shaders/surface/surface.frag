@@ -27,9 +27,17 @@ uniform bool highlight;
 uniform int  hightlight_id_min;
 uniform int  hightlight_id_max;
 
+uniform bool use_texture = false;
+uniform sampler2D textureID;
+uniform float texture_repeat = 1.0f;
+uniform float fractional_repeat = 0.0f;
+
+//#define ENABLE_ALPHA
+
 uniform bool selected = false;
 
 in Data{
+    vec2 texcoord;
     vec4 color;
     vec3 position;
     vec3 normal;
@@ -42,24 +50,39 @@ void main(void) {
     if (DataIn.clipped > 0.0)
         discard;
 
+    vec4 color;
+    if (use_texture) {
+        float repeat = texture_repeat + fractional_repeat / 100.0f;
+#ifndef ENABLE_ALPHA
+        color = texture(textureID, DataIn.texcoord * repeat);
+        color.a = 1.0f;
+#else
+        color = texture(textureID, DataIn.texcoord * repeat);
+        if (color.a <= 0)
+            discard;
+#endif
+    }
+    else {
+        color = DataIn.color;
+    }
+
     if (!lighting) {
-        outputF = DataIn.color;
+        outputF = color;
         if (selected)
             outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
         return;
     }
 
-    vec3 color = DataIn.color.xyz;
     if (!gl_FrontFacing && distinct_back_color)
-        color = backside_color;
+        color = vec4(backside_color, 1.0);
 
     if (highlight) {
         if (gl_PrimitiveID >= hightlight_id_min && gl_PrimitiveID <= hightlight_id_max)
-            color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
+            color = mix(color, vec4(1.0, 0.0, 0.0, 1.0), 0.8);
     }
 
     if (selected)
-        color = mix(color, vec3(1.0, 0.0, 0.0), 0.6);
+        color = mix(color, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
 
     vec3 normal;
     if (smooth_shading)
@@ -94,8 +117,8 @@ void main(void) {
     if (ssaoEnabled) {
         vec2 texCoord = gl_FragCoord.xy / textureSize(ssaoTexture, 0);
         float coeff = texture(ssaoTexture, texCoord).r;
-        outputF = vec4((color * df + specular * sf + ambient) * coeff, DataIn.color.a);
+        outputF = vec4((color.xyz * df + specular * sf + ambient) * coeff, color.a);
     }
     else
-         outputF = vec4(color * df + specular * sf + ambient, DataIn.color.a);
+         outputF = vec4(color.xyz * df + specular * sf + ambient, color.a);
 }

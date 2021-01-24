@@ -831,13 +831,14 @@ void ViewerQt::paintGL() {
 
 
 void ViewerQt::drawCornerAxes() {
-    ShaderProgram *program = ShaderManager::get_program("surface/surface_color");
+    ShaderProgram *program = ShaderManager::get_program("surface/surface");
     if (!program) {
         std::vector<ShaderProgram::Attribute> attributes;
         attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+        attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "vtx_texcoord"));
         attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
         attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal"));
-        program = ShaderManager::create_program_from_files("surface/surface_color", attributes);
+        program = ShaderManager::create_program_from_files("surface/surface", attributes);
     }
     if (!program)
         return;

@@ -178,13 +178,14 @@ void WidgetCheckerSphere::paintGL() {
     if (!checkerSphere_)
         createSpheres();
 
-    ShaderProgram* program = ShaderManager::get_program("surface/surface_color");
+    ShaderProgram* program = ShaderManager::get_program("surface/surface");
     if (!program) {
         std::vector<ShaderProgram::Attribute> attributes;
         attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-        attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal"));
+        attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "vtx_texcoord"));
         attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
-        program = ShaderManager::create_program_from_files("surface/surface_color", attributes);
+        attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal"));
+        program = ShaderManager::create_program_from_files("surface/surface", attributes);
     }
     if (!program)
         return;
@@ -214,7 +215,8 @@ void WidgetCheckerSphere::paintGL() {
             ->set_uniform("highlight", false)
             ->set_uniform("hightlight_id_min", -1)
             ->set_uniform("hightlight_id_max", -1)
-            ->set_uniform("selected", false);
+            ->set_uniform("selected", false)
+            ->set_uniform("use_texture", false);
 
     program->set_uniform("MANIP", mat4::translation(lightPos_));
     lightSphere_->gl_draw();
