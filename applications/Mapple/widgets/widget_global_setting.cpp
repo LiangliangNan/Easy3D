@@ -191,16 +191,10 @@ void WidgetGlobalSetting::setCrossSectionThickness(double w) {
 
 
 void WidgetGlobalSetting::setSSAOAlgorithm(int algo) {
-//    if (algo != AmbientOcclusion_HBAO::SSAO_NONE && ui->checkBoxTransparency->isChecked())
-//        ui->checkBoxTransparency->setChecked(false);
-//    viewer_->ssao()->set_algorithm(AmbientOcclusion_HBAO::Algorithm(algo));
-//    viewer_->update();
-//
     viewer_->enableSsao(algo != 0);
     if (algo != 0 && ui->checkBoxTransparency->isChecked()) // ssao and transparency cannot co-exist
         ui->checkBoxTransparency->setChecked(false);
 
-    std::cout << "TODO: shadow + SSAO" << std::endl;
     if (algo != 0 && ui->checkBoxShadow->isChecked())
         ui->checkBoxShadow->setChecked(false);
 
@@ -259,8 +253,6 @@ void WidgetGlobalSetting::setTransparency(bool b) {
     if (b && ui->checkBoxEyeDomeLighting->isChecked())
         ui->checkBoxEyeDomeLighting->setChecked(false);  // transparency and EDL cannot co-exist
 
-//    if (b && (ui->comboBoxSSAOAlgorithm->currentIndex() != 0 || viewer_->ssao()->algorithm() != AmbientOcclusion_HBAO::SSAO_NONE))
-//        ui->comboBoxSSAOAlgorithm->setCurrentIndex(0);  // ssao and transparency cannot co-exist
     if (b && ui->comboBoxSSAOAlgorithm->currentIndex() != 0)
         ui->comboBoxSSAOAlgorithm->setCurrentIndex(0);
 
@@ -276,7 +268,6 @@ void WidgetGlobalSetting::setShadow(bool b) {
     if (b && ui->checkBoxEyeDomeLighting->isChecked())
         ui->checkBoxEyeDomeLighting->setChecked(false);  // shadow and EDL cannot co-exist
 
-    std::cout << "TODO: shadow + SSAO" << std::endl;
     if (b && ui->comboBoxSSAOAlgorithm->currentIndex() != 0)
         ui->comboBoxSSAOAlgorithm->setCurrentIndex(0);
 
