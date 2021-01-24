@@ -15,13 +15,12 @@ uniform bool        ssaoEnabled = false;
 uniform bool        lighting = true;
 // two sides
 uniform bool        two_sides_lighting = true;
-
-// smooth shading
-uniform bool        smooth_shading = true;
-
 // backside color
 uniform bool        distinct_back_color = true;
 uniform vec3        backside_color = vec3(0.8f, 0.4f, 0.4f);
+
+// smooth shading
+uniform bool        smooth_shading = true;
 
 uniform bool highlight;
 uniform int  hightlight_id_min;

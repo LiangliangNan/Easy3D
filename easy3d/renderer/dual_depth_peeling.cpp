@@ -244,8 +244,9 @@ namespace easy3d {
                     const mat3 NORMAL = transform::normal_matrix(MANIP);
                     program->set_uniform("MANIP", MANIP)
                             ->set_uniform( "NORMAL", NORMAL)
-                            ->set_uniform("lightingEnabled", d->lighting())
+                            ->set_uniform("lighting", d->lighting())
                             ->set_uniform("smooth_shading", d->smooth_shading())
+                            ->set_uniform("two_sides_lighting", d->lighting_two_sides())
                             ->set_uniform("distinct_back_color", d->distinct_back_color())
                             ->set_uniform("backside_color", d->back_color())
                             ->set_block_uniform("Material", "ambient", d->material().ambient)
