@@ -88,7 +88,8 @@
 #include "dialogs/dialog_poisson_reconstruction.h"
 #include "dialogs/dialog_surface_mesh_curvature.h"
 #include "dialogs/dialog_surface_mesh_sampling.h"
-#include "dialogs/dialog_ransac_primitive_extraction.h"
+#include "dialogs/dialog_point_cloud_normal_estimation.h"
+#include "dialogs/dialog_point_cloud_ransac_primitive_extraction.h"
 #include "dialogs/dialog_point_cloud_simplification.h"
 #include "dialogs/dialog_gaussian_noise.h"
 #include "dialogs/dialog_surface_mesh_fairing.h"
@@ -1467,12 +1468,14 @@ void MainWindow::pointCloudEstimateNormals() {
     if (!cloud)
         return;
 
-    PointCloudNormals pcn;
-    LOG(WARNING) << "TODO: add a dialog for parameter tuning" << std::endl;
-    pcn.estimate(cloud);
-
-    cloud->renderer()->update();
-    viewer()->update();
+    DialogPointCloudNormalEstimation dlg(this);
+    if (dlg.exec()) {
+        unsigned int k = dlg.lineEditNeighborSize->text().toUInt();
+        PointCloudNormals pcn;
+        pcn.estimate(cloud, k);
+        cloud->renderer()->update();
+        viewer()->update();
+    }
 }
 
 
@@ -1481,12 +1484,14 @@ void MainWindow::pointCloudReorientNormals() {
     if (!cloud)
         return;
 
-    PointCloudNormals pcn;
-    LOG(WARNING) << "TODO: add a dialog for parameter tuning" << std::endl;
-    pcn.reorient(cloud);
-
-    cloud->renderer()->update();
-    viewer()->update();
+    DialogPointCloudNormalEstimation dlg(this);
+    if (dlg.exec()) {
+        unsigned int k = dlg.lineEditNeighborSize->text().toUInt();
+        PointCloudNormals pcn;
+        pcn.reorient(cloud, k);
+        cloud->renderer()->update();
+        viewer()->update();
+    }
 }
 
 
@@ -1849,9 +1854,9 @@ void MainWindow::pointCloudPoissonSurfaceReconstruction() {
 
 
 void MainWindow::pointCloudRansacPrimitiveExtraction() {
-    static DialogRansacPrimitiveExtraction* dialog = nullptr;
+    static DialogPointCloudRansacPrimitiveExtraction* dialog = nullptr;
     if (!dialog)
-        dialog = new DialogRansacPrimitiveExtraction(this);
+        dialog = new DialogPointCloudRansacPrimitiveExtraction(this);
     dialog->show();
 }
 

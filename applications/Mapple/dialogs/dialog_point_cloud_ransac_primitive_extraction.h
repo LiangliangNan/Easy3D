@@ -23,21 +23,21 @@
  */
 
 
-#ifndef DIALOG_RANSAC_PRIMITIVE_EXTRACTION_H
-#define DIALOG_RANSAC_PRIMITIVE_EXTRACTION_H
+#ifndef DIALOG_POINT_CLOUD_RANSAC_PRIMITIVE_EXTRACTION_H
+#define DIALOG_POINT_CLOUD_RANSAC_PRIMITIVE_EXTRACTION_H
 
 
 #include "dialog.h"
-#include "ui_dialog_ransac_primitive_extraction.h"
+#include "ui_dialog_point_cloud_ransac_primitive_extraction.h"
 
 
-class DialogRansacPrimitiveExtraction : public Dialog, public Ui::DialogRansacPrimitiveExtraction
+class DialogPointCloudRansacPrimitiveExtraction : public Dialog, public Ui::DialogPointCloudRansacPrimitiveExtraction
 {
     Q_OBJECT
 
 public:
-    explicit DialogRansacPrimitiveExtraction(MainWindow *window);
-    ~DialogRansacPrimitiveExtraction();
+    explicit DialogPointCloudRansacPrimitiveExtraction(MainWindow *window);
+    ~DialogPointCloudRansacPrimitiveExtraction();
 
     void setWorkOnSelectedPoints(bool b) { selected_only_ = b; }
 

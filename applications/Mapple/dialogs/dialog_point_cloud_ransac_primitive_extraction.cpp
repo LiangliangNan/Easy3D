@@ -23,7 +23,7 @@
  */
 
 
-#include "dialog_ransac_primitive_extraction.h"
+#include "dialog_point_cloud_ransac_primitive_extraction.h"
 
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/algo/point_cloud_ransac.h>
@@ -38,7 +38,7 @@
 
 using namespace easy3d;
 
-DialogRansacPrimitiveExtraction::DialogRansacPrimitiveExtraction(MainWindow *window)
+DialogPointCloudRansacPrimitiveExtraction::DialogPointCloudRansacPrimitiveExtraction(MainWindow *window)
         : Dialog(window) {
     setupUi(this);
     layout()->setSizeConstraint(QLayout::SetFixedSize);
@@ -58,10 +58,10 @@ DialogRansacPrimitiveExtraction::DialogRansacPrimitiveExtraction(MainWindow *win
     connect(pushButtonExtract, SIGNAL(clicked()), this, SLOT(extract()));
 }
 
-DialogRansacPrimitiveExtraction::~DialogRansacPrimitiveExtraction() {
+DialogPointCloudRansacPrimitiveExtraction::~DialogPointCloudRansacPrimitiveExtraction() {
 }
 
-void DialogRansacPrimitiveExtraction::reset() {
+void DialogPointCloudRansacPrimitiveExtraction::reset() {
     spinBoxMinimumSupport->setValue(default_min_support_);
     doubleSpinBoxDistanceThreshold->setValue(default_distance_threshold_);
     doubleSpinBoxBitmapResolution->setValue(default_bitmap_resolution_);
@@ -70,7 +70,7 @@ void DialogRansacPrimitiveExtraction::reset() {
 }
 
 
-void DialogRansacPrimitiveExtraction::extract() {
+void DialogPointCloudRansacPrimitiveExtraction::extract() {
     PointCloud *cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
     if (!cloud)
         return;

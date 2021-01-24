@@ -53,7 +53,8 @@ set(${PROJECT_NAME}_HEADERS
         dialogs/dialog_gaussian_noise.h
         dialogs/dialog_poisson_reconstruction.h
         dialogs/dialog_properties.h
-        dialogs/dialog_ransac_primitive_extraction.h
+        dialogs/dialog_point_cloud_normal_estimation.h
+        dialogs/dialog_point_cloud_ransac_primitive_extraction.h
         dialogs/dialog_surface_mesh_sampling.h
         dialogs/dialog_snapshot.h
         dialogs/dialog_point_cloud_simplification.h
@@ -87,7 +88,8 @@ set(${PROJECT_NAME}_SOURCES
         dialogs/dialog_gaussian_noise.cpp
         dialogs/dialog_poisson_reconstruction.cpp
         dialogs/dialog_properties.cpp
-        dialogs/dialog_ransac_primitive_extraction.cpp
+        dialogs/dialog_point_cloud_normal_estimation.cpp
+        dialogs/dialog_point_cloud_ransac_primitive_extraction.cpp
         dialogs/dialog_surface_mesh_sampling.cpp
         dialogs/dialog_snapshot.cpp
         dialogs/dialog_point_cloud_simplification.cpp
@@ -117,7 +119,8 @@ set(${PROJECT_NAME}_FORMS
         dialogs/dialog_gaussian_noise.ui
         dialogs/dialog_poisson_reconstruction.ui
         dialogs/dialog_properties.ui
-        dialogs/dialog_ransac_primitive_extraction.ui
+        dialogs/dialog_point_cloud_normal_estimation.ui
+        dialogs/dialog_point_cloud_ransac_primitive_extraction.ui
         dialogs/dialog_surface_mesh_sampling.ui
         dialogs/dialog_snapshot.ui
         dialogs/dialog_point_cloud_simplification.ui
