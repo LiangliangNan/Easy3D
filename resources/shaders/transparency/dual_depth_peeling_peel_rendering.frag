@@ -171,8 +171,8 @@ void main(void)
 	// minimal z seperation between pixels. This value was determined
 	// through trial-and-error -- it may need to be increased at
 	// some point. See also the comment in vtkDepthPeelingPass's shader.
-	//float epsilon = 0.000001; // VTK uses this value
-	float epsilon = 0.0000001;
+//	float epsilon = 0.000001; // VTK uses this value
+	float epsilon = 0.00001;
 
 	// Is this fragment outside the current peels?
 	if (gl_FragDepth < nearestDepth - epsilon || gl_FragDepth > farthestDepth + epsilon) {
