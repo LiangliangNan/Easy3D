@@ -25,8 +25,8 @@ layout(std140) uniform Material {
 	float	shininess;
 };
 
-uniform int  hightlight_id_min;
-uniform int  hightlight_id_max;
+uniform int  highlight_id_min;
+uniform int  highlight_id_max;
 
 uniform bool use_texture = false;
 uniform sampler2D textureID;

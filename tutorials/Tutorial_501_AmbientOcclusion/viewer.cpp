@@ -138,8 +138,8 @@ void TutorialAmbientOcclusion::draw() const {
             ->set_uniform("default_color", faces->color());
 
         const auto& range = faces->highlight_range();
-		program->set_uniform("hightlight_id_min", range.first)
-			->set_uniform("hightlight_id_max", range.second);
+		program->set_uniform("highlight_id_min", range.first)
+			->set_uniform("highlight_id_max", range.second);
 
         faces->gl_draw();
 

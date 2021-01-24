@@ -16,8 +16,8 @@ layout(std140) uniform Material {
 uniform float	sphere_radius;
 
 uniform bool highlight;
-uniform int  hightlight_id_min;
-uniform int  hightlight_id_max;
+uniform int  highlight_id_min;
+uniform int  highlight_id_max;
 
 uniform bool selected = false;
 
@@ -83,7 +83,7 @@ void main()
 
 		vec3 color = DataIn.sphere_color.xyz;
 		if (highlight) {
-			if (gl_PrimitiveID >= hightlight_id_min && gl_PrimitiveID <= hightlight_id_max)
+			if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
 				color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
 		}
 
@@ -133,7 +133,7 @@ void main()
 
 		vec3 color = DataIn.sphere_color.xyz;
 		if (highlight) {
-			if (gl_PrimitiveID >= hightlight_id_min && gl_PrimitiveID <= hightlight_id_max)
+			if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
 			color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
 		}
 

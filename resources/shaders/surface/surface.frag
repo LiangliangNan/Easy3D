@@ -23,8 +23,8 @@ uniform vec3        backside_color = vec3(0.8f, 0.4f, 0.4f);
 uniform bool        smooth_shading = true;
 
 uniform bool highlight;
-uniform int  hightlight_id_min;
-uniform int  hightlight_id_max;
+uniform int  highlight_id_min;
+uniform int  highlight_id_max;
 
 uniform bool use_texture = false;
 uniform sampler2D textureID;
@@ -76,7 +76,7 @@ void main(void) {
         color = vec4(backside_color, color.a);
 
     if (highlight) {
-        if (gl_PrimitiveID >= hightlight_id_min && gl_PrimitiveID <= hightlight_id_max)
+        if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
             color = mix(color, vec4(1.0, 0.0, 0.0, 1.0), 0.8);
     }
 

@@ -1426,8 +1426,8 @@ namespace easy3d {
                 ->set_block_uniform("Material", "ambient", setting::material_ambient)
                 ->set_block_uniform("Material", "specular", setting::material_specular)
                 ->set_block_uniform("Material", "shininess", &setting::material_shininess)
-                ->set_uniform("hightlight_id_min", -1)
-                ->set_uniform("hightlight_id_max", -1);
+                ->set_uniform("highlight_id_min", -1)
+                ->set_uniform("highlight_id_max", -1);
         drawable_axes_->gl_draw();
         program->release();
 

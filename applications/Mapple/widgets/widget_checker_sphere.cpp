@@ -213,8 +213,8 @@ void WidgetCheckerSphere::paintGL() {
             ->set_block_uniform("Material", "specular", setting::material_specular)
             ->set_block_uniform("Material", "shininess", &setting::material_shininess)
             ->set_uniform("highlight", false)
-            ->set_uniform("hightlight_id_min", -1)
-            ->set_uniform("hightlight_id_max", -1)
+            ->set_uniform("highlight_id_min", -1)
+            ->set_uniform("highlight_id_max", -1)
             ->set_uniform("selected", false)
             ->set_uniform("use_texture", false);
 

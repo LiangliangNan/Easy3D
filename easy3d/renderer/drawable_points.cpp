@@ -138,8 +138,8 @@ namespace easy3d {
                 ->set_block_uniform("Material", "shininess", &material().shininess);
 
         program->set_uniform("highlight",highlight())
-                ->set_uniform("hightlight_id_min",highlight_range().first)
-                ->set_uniform("hightlight_id_max",highlight_range().second);
+                ->set_uniform("highlight_id_min",highlight_range().first)
+                ->set_uniform("highlight_id_max",highlight_range().second);
 
         program->set_uniform("selected", is_selected());
 
@@ -191,8 +191,8 @@ namespace easy3d {
                 ->set_block_uniform("Material", "shininess", &material().shininess);
 
         program->set_uniform("highlight",highlight())
-                ->set_uniform("hightlight_id_min",highlight_range().first)
-                ->set_uniform("hightlight_id_max",highlight_range().second);
+                ->set_uniform("highlight_id_min",highlight_range().first)
+                ->set_uniform("highlight_id_max",highlight_range().second);
 
         program->set_uniform("selected", is_selected());
 
@@ -243,8 +243,8 @@ namespace easy3d {
                 ->set_block_uniform("Material", "shininess", &material().shininess);
 
         program->set_uniform("highlight",highlight())
-                ->set_uniform("hightlight_id_min",highlight_range().first)
-                ->set_uniform("hightlight_id_max",highlight_range().second);
+                ->set_uniform("highlight_id_min",highlight_range().first)
+                ->set_uniform("highlight_id_max",highlight_range().second);
 
         program->set_uniform("selected", is_selected());
 
@@ -312,8 +312,8 @@ namespace easy3d {
 
 
         program->set_uniform("highlight",highlight())
-                ->set_uniform("hightlight_id_min",highlight_range().first)
-                ->set_uniform("hightlight_id_max",highlight_range().second);
+                ->set_uniform("highlight_id_min",highlight_range().first)
+                ->set_uniform("highlight_id_max",highlight_range().second);
 
         if (setting::clipping_plane)
             setting::clipping_plane->set_program(program);
@@ -377,8 +377,8 @@ namespace easy3d {
                 ->set_block_uniform("Material", "shininess", &material().shininess);
 
         program->set_uniform("highlight",highlight())
-                ->set_uniform("hightlight_id_min",highlight_range().first)
-                ->set_uniform("hightlight_id_max",highlight_range().second);
+                ->set_uniform("highlight_id_min",highlight_range().first)
+                ->set_uniform("highlight_id_max",highlight_range().second);
 
         program->set_uniform("selected", is_selected());
 
@@ -444,8 +444,8 @@ namespace easy3d {
                 ->set_uniform("backside_color",back_color());
 
         program->set_uniform("highlight",highlight())
-                ->set_uniform("hightlight_id_min",highlight_range().first)
-                ->set_uniform("hightlight_id_max",highlight_range().second);
+                ->set_uniform("highlight_id_min",highlight_range().first)
+                ->set_uniform("highlight_id_max",highlight_range().second);
 
         program->set_block_uniform("Material", "ambient",material().ambient)
                 ->set_block_uniform("Material", "specular",material().specular)
@@ -514,8 +514,8 @@ namespace easy3d {
                 ->set_uniform("backside_color",back_color());
 
         program->set_uniform("highlight",highlight())
-                ->set_uniform("hightlight_id_min",highlight_range().first)
-                ->set_uniform("hightlight_id_max",highlight_range().second);
+                ->set_uniform("highlight_id_min",highlight_range().first)
+                ->set_uniform("highlight_id_max",highlight_range().second);
 
         program->set_uniform("selected", is_selected());
 

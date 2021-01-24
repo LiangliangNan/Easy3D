@@ -17,8 +17,8 @@ uniform bool        distinct_back_color = true;
 uniform vec3        backside_color = vec3(0.8f, 0.4f, 0.4f);
 
 uniform bool highlight;
-uniform int  hightlight_id_min;
-uniform int  hightlight_id_max;
+uniform int  highlight_id_min;
+uniform int  highlight_id_max;
 
 uniform bool selected = false;
 
@@ -44,7 +44,7 @@ void main(void) {
         color = backside_color;
 
     if (highlight) {
-        if (gl_PrimitiveID >= hightlight_id_min && gl_PrimitiveID <= hightlight_id_max)
+        if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
             color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
     }
 
