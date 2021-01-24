@@ -214,6 +214,7 @@ void WidgetCheckerSphere::paintGL() {
             ->set_block_uniform("Material", "shininess", &setting::material_shininess)
             ->set_uniform("highlight", false)
             ->set_uniform("selected", false)
+            ->set_uniform("clippingPlaneEnabled", false)
             ->set_uniform("use_texture", false);
 
     program->set_uniform("MANIP", mat4::translation(lightPos_));

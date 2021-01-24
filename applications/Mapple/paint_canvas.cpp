@@ -1047,7 +1047,8 @@ void PaintCanvas::drawCornerAxes() {
             ->set_block_uniform("Material", "shininess", &setting::material_shininess)
             ->set_uniform("highlight", false)
             ->set_uniform("clippingPlaneEnabled", false)
-            ->set_uniform("selected", false);  easy3d_debug_log_gl_error;
+            ->set_uniform("selected", false)
+            ->set_uniform("use_texture", false);  easy3d_debug_log_gl_error;
 
     drawable_axes_->gl_draw(); easy3d_debug_log_gl_error;
     program->release();
