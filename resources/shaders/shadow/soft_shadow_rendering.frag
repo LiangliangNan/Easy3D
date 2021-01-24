@@ -2,6 +2,7 @@
 
 
 in Data{
+	vec2 texcoord;
 	vec3 color;
 	vec3 normal;
 	vec3 position;
@@ -19,10 +20,11 @@ layout(std140) uniform Material {
 };
 
 // smooth shading
-uniform bool    smooth_shading = true;
+uniform bool  smooth_shading = true;
 
-uniform bool    distinct_back_color = false;
-uniform vec3    back_color = vec3(1.0f, 0.0f, 0.0f);
+// backside color
+uniform bool  distinct_back_color = true;
+uniform vec3  backside_color = vec3(0.8f, 0.4f, 0.4f);
 
 uniform int  samplePattern;
 
@@ -39,8 +41,13 @@ uniform bool two_sides_lighting;
 
 uniform bool is_background = false;
 
-uniform bool selected = false;
+uniform bool use_texture = false;
+uniform sampler2D textureID;
+uniform float texture_repeat = 1.0f;
+uniform float fractional_repeat = 0.0f;
+//#define ENABLE_ALPHA
 
+uniform bool selected = false;
 
 out vec4 FragColor;	// Ouput data
 
@@ -678,10 +685,10 @@ float pcssShadow(vec2 uv, float z, vec2 dz_duv, float zEye)
 }
 
 
-vec3 shade(vec3 worldPos)
+vec4 shade(vec3 worldPos)
 {
     if (is_background)
-        return DataIn.color;
+        return vec4(DataIn.color, 1.0f);
 
     else {
         vec3 normal;
@@ -713,15 +720,26 @@ vec3 shade(vec3 worldPos)
                 sf = pow(sf, shininess);
         }
 
-        vec3 color;
+		vec4 color;
+		if (use_texture) {
+			float repeat = texture_repeat + fractional_repeat / 100.0f;
+			color = texture(textureID, DataIn.texcoord * repeat);
+
+#ifndef ENABLE_ALPHA
+			color.a = 1.0f;
+#else
+			if (color.a <= 0)
+				discard;
+#endif
+		}
+		else {
+			color = vec4(DataIn.color, 1.0f);
+		}
+
         if (!gl_FrontFacing && distinct_back_color)
-                color = back_color;
-        else {
-                color = DataIn.color;
-        }
+			color = vec4(backside_color, color.a);
 
-        color = color * df + specular * sf;
-
+        color = color * df + vec4(specular, 1.0) * sf;
         return color;
     }
 }
@@ -731,10 +749,10 @@ void main(void) {
 	if (DataIn.clipped > 0.0)
 		discard;
 
-    vec3 color = shade(DataIn.position);
+    vec4 color = shade(DataIn.position);
 
 	if (selected && !is_background)
-		color = mix(color, vec3(1.0, 0.0, 0.0), 0.6);
+		color = mix(color, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
 
     // transforming from clip space to NDC space
     vec3 ProjCoords = DataIn.shadowCoord.xyz / DataIn.shadowCoord.w;
@@ -745,9 +763,9 @@ void main(void) {
             (ProjCoords.z <= 0 || ProjCoords.z >= 1))
     {
         if (is_background)
-            FragColor = vec4(color, 1.0);
+            FragColor = color;
         else
-            FragColor = vec4(color + ambient, 1.0);
+            FragColor = color + vec4(ambient, 1.0f);
     }
     else {
             vec2 uv = ProjCoords.xy;
@@ -764,8 +782,8 @@ void main(void) {
             shadow = (1.0 - darkness) + shadow * darkness;
 
             if (is_background)
-                FragColor = vec4(color * shadow, 1.0);
+                FragColor = color * shadow;
             else
-                FragColor = vec4(color * shadow + ambient, 1.0);
+                FragColor = color * shadow + vec4(ambient, 1.0f);
     }
 }

@@ -9,16 +9,27 @@ layout(std140) uniform Material {
 };
 
 // smooth shading
-uniform bool    smooth_shading = true;
+uniform bool  smooth_shading = true;
 
-uniform bool    is_background = false;
+// backside color
+uniform bool  distinct_back_color = true;
+uniform vec3  backside_color = vec3(0.8f, 0.4f, 0.4f);
+
+uniform bool  is_background = false;
 
 uniform sampler2DShadow  shadowMap;
 uniform float darkness;
 
+uniform bool use_texture = false;
+uniform sampler2D textureID;
+uniform float texture_repeat = 1.0f;
+uniform float fractional_repeat = 0.0f;
+//#define ENABLE_ALPHA
+
 uniform bool selected = false;
 
 in Data{
+    vec2 texcoord;
 	vec3 color;
 	vec3 normal;
 	vec3 position;
@@ -34,6 +45,22 @@ vec3 shade(vec3 worldPos)
 {
     if (DataIn.clipped > 0.0)
         discard;
+
+    vec4 color;
+    if (use_texture) {
+        float repeat = texture_repeat + fractional_repeat / 100.0f;
+        color = texture(textureID, DataIn.texcoord * repeat);
+
+        #ifndef ENABLE_ALPHA
+        color.a = 1.0f;
+        #else
+        if (color.a <= 0)
+        discard;
+        #endif
+    }
+    else {
+        color = DataIn.color;
+    }
 
     if (is_background)
         return DataIn.color;
