@@ -1469,7 +1469,7 @@ void MainWindow::pointCloudEstimateNormals() {
         return;
 
     DialogPointCloudNormalEstimation dlg(this);
-    if (dlg.exec()) {
+    if (dlg.exec() == QDialog::Accepted) {
         unsigned int k = dlg.lineEditNeighborSize->text().toUInt();
         PointCloudNormals pcn;
         pcn.estimate(cloud, k);
@@ -1480,12 +1480,12 @@ void MainWindow::pointCloudEstimateNormals() {
 
 
 void MainWindow::pointCloudReorientNormals() {
-    PointCloud* cloud = dynamic_cast<PointCloud*>(viewer()->currentModel());
+    PointCloud *cloud = dynamic_cast<PointCloud *>(viewer()->currentModel());
     if (!cloud)
         return;
 
     DialogPointCloudNormalEstimation dlg(this);
-    if (dlg.exec()) {
+    if (dlg.exec() == QDialog::Accepted) {
         unsigned int k = dlg.lineEditNeighborSize->text().toUInt();
         PointCloudNormals pcn;
         pcn.reorient(cloud, k);

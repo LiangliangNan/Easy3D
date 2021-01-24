@@ -58,33 +58,33 @@
  <connections>
   <connection>
    <sender>buttonBox</sender>
-   <signal>clicked(QAbstractButton*)</signal>
+   <signal>accepted()</signal>
    <receiver>DialogPointCloudNormalEstimation</receiver>
-   <slot>reject()</slot>
+   <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>95</x>
-     <y>66</y>
+     <x>93</x>
+     <y>67</y>
     </hint>
     <hint type="destinationlabel">
-     <x>96</x>
-     <y>88</y>
+     <x>5</x>
+     <y>3</y>
     </hint>
    </hints>
   </connection>
   <connection>
    <sender>buttonBox</sender>
-   <signal>clicked(QAbstractButton*)</signal>
+   <signal>rejected()</signal>
    <receiver>DialogPointCloudNormalEstimation</receiver>
-   <slot>exec()</slot>
+   <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>191</x>
-     <y>72</y>
+     <x>188</x>
+     <y>62</y>
     </hint>
     <hint type="destinationlabel">
-     <x>194</x>
-     <y>87</y>
+     <x>216</x>
+     <y>-1</y>
     </hint>
    </hints>
   </connection>
