@@ -137,18 +137,23 @@ set(${PROJECT_NAME}_RESOURCES
         mapple.qrc
         )
 
+#Get a list of all of the files in the resources
+file(GLOB_RECURSE OTHER_RESOURCES "${EASY3D_ROOT}/resources/*")
+
+list (APPEND ${PROJECT_NAME}_RESOURCES ${OTHER_RESOURCES})
+
 if (MSVC)
     add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} ${${PROJECT_NAME}_RESOURCES})
     # if you want to get rid of the (system) console, use
     #	add_executable( ${PROJECT_NAME} WIN32 ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} ${${PROJECT_NAME}_RESOURCES} )
     #       target_link_libraries( ${PROJECT_NAME} Qt5::WinMain )
 elseif (APPLE)
-#    # NOTE: Don't include the path in MACOSX_BUNDLE_ICON_FILE -- this is
-#    # the property added to Info.plist
-#    set(MACOSX_BUNDLE_ICON_FILE Mapple.icns)
-#    # And this part tells CMake where to find and install the file itself
-#    set(${PROJECT_NAME}_ICON ${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/Mapple.icns)
-#    set_source_files_properties(${${PROJECT_NAME}_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+    # NOTE: Don't include the path in MACOSX_BUNDLE_ICON_FILE -- this is
+    # the property added to Info.plist
+    set(MACOSX_BUNDLE_ICON_FILE Mapple.icns)
+    # And this part tells CMake where to find and install the file itself
+    set(${PROJECT_NAME}_ICON ${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/Mapple.icns)
+    set_source_files_properties(${${PROJECT_NAME}_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 
     add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${${PROJECT_NAME}_ICON} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} ${${PROJECT_NAME}_RESOURCES})
 
@@ -156,6 +161,27 @@ elseif (APPLE)
     ## For more information, see: http://doc.qt.io/qt-5/highdpi.html
     ## Enable high DPI support by using my Info.plist file in which I added NSHighResolutionCapable to be true.
     set_target_properties(${PROJECT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/resources/Mac/Mapple.plist)
+
+    function(resource VAR SOURCE_PATH DESTINATION PATTERN)
+        file(GLOB_RECURSE _LIST CONFIGURE_DEPENDS ${SOURCE_PATH}/${PATTERN})
+        foreach (RESOURCE ${_LIST})
+            get_filename_component(_PARENT ${RESOURCE} DIRECTORY)
+            if (${_PARENT} STREQUAL ${SOURCE_PATH})
+                set(_DESTINATION ${DESTINATION})
+            else ()
+                file(RELATIVE_PATH _DESTINATION ${SOURCE_PATH} ${_PARENT})
+                set(_DESTINATION ${DESTINATION}/${_DESTINATION})
+            endif ()
+            set_property(SOURCE ${RESOURCE} PROPERTY MACOSX_PACKAGE_LOCATION ${_DESTINATION})
+        endforeach (RESOURCE)
+        set(${VAR} ${_LIST} PARENT_SCOPE)
+    endfunction()
+
+    resource(Shaders ${EASY3D_ROOT}/resources/shaders Resources/shaders *.*) # *.vert
+    resource(Shaders ${EASY3D_ROOT}/resources/colormaps Resources/colormaps *.*)  # *.png
+    resource(Shaders ${EASY3D_ROOT}/resources/fonts Resources/fonts *.*)
+    resource(Shaders ${EASY3D_ROOT}/resources/images Resources/images *.*)
+    resource(Shaders ${EASY3D_ROOT}/resources/textures Resources/textures *.*)
 
     ## Resources
     #... not implemented yet
