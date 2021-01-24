@@ -91,9 +91,9 @@ PaintCanvas::PaintCanvas(MainWindow* window)
         , mouse_current_pos_(0, 0)
         , mouse_pressed_pos_(0, 0)
         , pressed_key_(-1)
-        , show_pivot_point_(false)
+        , show_manip_sphere_(false)
         , drawable_axes_(nullptr)
-        , sphere_outline_(nullptr)
+        , drawable_manip_sphere_(nullptr)
         , model_picker_(nullptr)
         , allow_select_model_(false)
         , surface_mesh_picker_(nullptr)
@@ -143,7 +143,7 @@ void PaintCanvas::cleanup() {
     delete camera_;
     delete walkThrough();
     delete drawable_axes_;
-    delete sphere_outline_;
+    delete drawable_manip_sphere_;
     delete ssao_;
     delete shadow_;
     delete transparency_;
@@ -298,7 +298,7 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
             }
         } else {
             if (e->button() == Qt::LeftButton)
-                show_pivot_point_ = true;
+                show_manip_sphere_ = true;
 
             if (e->modifiers() == Qt::NoModifier && e->button() == Qt::LeftButton &&
                 walkThrough()->status() == WalkThrough::STOPPED && allow_select_model_) {
@@ -371,7 +371,7 @@ void PaintCanvas::mouseReleaseEvent(QMouseEvent *e) {
     }
     else {
         if (e->button() == Qt::LeftButton)
-            show_pivot_point_ = false;
+            show_manip_sphere_ = false;
         camera_->frame()->action_end();
         update();
     }
@@ -1190,18 +1190,16 @@ void PaintCanvas::postDraw() {
 
     Model* m = currentModel();
     if (m && m->renderer()->is_visible() && m->renderer()->is_selected()) {
-        if (!sphere_outline_)
-            sphere_outline_ = new LinesDrawable;
-        m->manipulator()->draw_frame(sphere_outline_, camera_);
+        m->manipulator()->draw_frame(camera_);
     }
-    else if (show_pivot_point_) {
-        if (!sphere_outline_)
-            sphere_outline_ = new LinesDrawable;
+    else if (show_manip_sphere_) {
+        if (!drawable_manip_sphere_)
+            drawable_manip_sphere_ = new LinesDrawable;
 
         const int radius = 150; // pixels
         float ratio = camera_->pixelGLRatio(camera_->pivotPoint());
         auto manip = mat4::translation(camera_->pivotPoint()) * mat4::scale(radius * ratio) ;
-        opengl::draw_sphere_outline(sphere_outline_, camera_->modelViewProjectionMatrix(), manip);
+        opengl::draw_sphere_big_circles(drawable_manip_sphere_, camera_->modelViewProjectionMatrix(), manip);
     }
 }
 

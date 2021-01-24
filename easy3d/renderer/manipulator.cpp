@@ -28,12 +28,13 @@
 #include <easy3d/renderer/manipulated_frame.h>
 #include <easy3d/renderer/primitives.h>
 #include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/drawable_lines.h>
 
 
 namespace easy3d {
 
     Manipulator::Manipulator(Model *model)
-            : model_(model) {
+            : model_(model), drawable_model_bbox_(nullptr) {
         frame_ = new ManipulatedFrame;
         if (model_) {
             model_->set_manipulator(this);
@@ -44,6 +45,7 @@ namespace easy3d {
 
     Manipulator::~Manipulator() {
         delete frame_;
+        delete drawable_model_bbox_;
     }
 
 
@@ -72,15 +74,18 @@ namespace easy3d {
     }
 
 
-    void Manipulator::draw_frame(LinesDrawable* frame, Camera *cam) const {
-        if (!model_ || !frame || !cam)
+    void Manipulator::draw_frame( Camera *cam) const {
+        if (!model_ || !cam)
             return;
 
+        if (!drawable_model_bbox_) {
+            const_cast<Manipulator*>(this)->drawable_model_bbox_ = new LinesDrawable;
+        }
+
         const Box3 box = model_->bounding_box(false);
-        float radius = box.max_range() * 0.7f;
         const vec3 &center = box.center();
-        auto manip = matrix() * mat4::translation(center) * mat4::scale(radius);
-        opengl::draw_sphere_outline(frame, cam->modelViewProjectionMatrix(), manip);
+        auto manip = matrix() * mat4::translation(center) * mat4::scale(box.range(0), box.range(1), box.range(2), 1.0f);
+        opengl::draw_box_wire(drawable_model_bbox_, cam->modelViewProjectionMatrix(), manip);
     }
 
 }

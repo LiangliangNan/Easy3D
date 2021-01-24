@@ -47,27 +47,28 @@ namespace easy3d {
         /// Constructor. A manipulator can be attached to a \p model.
         Manipulator(Model *model = nullptr);
 
-        virtual ~Manipulator();
+        ~Manipulator();
 
         /// Resets the manipulated frame, i.e., no transformation.
-        virtual void reset();
+        void reset();
 
         /// Returns the manipulated frame.
-        virtual ManipulatedFrame *frame() { return frame_; }
+        ManipulatedFrame *frame() { return frame_; }
 
         /// Returns the manipulated frame.
-        virtual const ManipulatedFrame *frame() const { return frame_; }
+        const ManipulatedFrame *frame() const { return frame_; }
 
         /// Returns the transformation introduced by this manipulator.
         /// \note Rotation is performed around the 'center' of the object.
-        virtual mat4 matrix() const;
+        mat4 matrix() const;
 
         /// Draws the manipulated frame.
-        virtual void draw_frame(LinesDrawable* frame, Camera* cam) const;
+        void draw_frame(Camera* cam) const;
 
     protected:
         Model *model_; // the model to be manipulated
         ManipulatedFrame *frame_;
+        LinesDrawable* drawable_model_bbox_;
     };
 
 }

@@ -541,8 +541,8 @@ namespace easy3d {
         }
 
 
-        void draw_sphere_outline(LinesDrawable* outline, const mat4& mvp, const mat4& m, bool axes) {
-            if (!outline)
+        void draw_sphere_big_circles(LinesDrawable* drawable, const mat4& mvp, const mat4& m, bool axes) {
+            if (!drawable)
                 return;
 
             ShaderProgram *program = ShaderManager::get_program("lines/lines_plain_color");
@@ -555,7 +555,7 @@ namespace easy3d {
             if (!program)
                 return;
 
-            if (outline->vertex_buffer() == 0) {
+            if (drawable->vertex_buffer() == 0) {
                 std::vector<vec3> points, colors;
                 std::vector<unsigned int> indices;
 
@@ -610,10 +610,10 @@ namespace easy3d {
                     indices.push_back(points.size() - 1);
                 }
 
-                outline->update_vertex_buffer(points);
-                outline->update_color_buffer(colors);
-                outline->update_element_buffer(indices);
-                outline->set_property_coloring(State::VERTEX);
+                drawable->update_vertex_buffer(points);
+                drawable->update_color_buffer(colors);
+                drawable->update_element_buffer(indices);
+                drawable->set_property_coloring(State::VERTEX);
             }
 
             program->bind();
@@ -623,7 +623,41 @@ namespace easy3d {
                     ->set_uniform("clippingPlaneEnabled", false)
                     ->set_uniform("selected", false);
 
-            outline->gl_draw();
+            drawable->gl_draw();
+            program->release();
+        }
+
+
+        void draw_box_wire(LinesDrawable* drawable, const mat4& mvp, const mat4& m, bool axes) {
+            if (!drawable)
+                return;
+
+            ShaderProgram *program = ShaderManager::get_program("lines/lines_plain_color");
+            if (!program) {
+                std::vector<ShaderProgram::Attribute> attributes;
+                attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+                program = ShaderManager::create_program_from_files("lines/lines_plain_color", attributes);
+            }
+            if (!program)
+                return;
+
+            if (drawable->vertex_buffer() == 0) {
+                std::vector<vec3> points;
+                std::vector<unsigned int> indices;
+                prepare_box(points, indices);
+                drawable->update_vertex_buffer(points);
+                drawable->update_element_buffer(indices);
+            }
+
+            program->bind();
+            program->set_uniform("MVP", mvp)
+                    ->set_uniform("MANIP", m)
+                    ->set_uniform("per_vertex_color", false)
+                    ->set_uniform("default_color", vec3(1, 0, 0))
+                    ->set_uniform("clippingPlaneEnabled", false)
+                    ->set_uniform("selected", false);
+
+            drawable->gl_draw();
             program->release();
         }
 
@@ -648,6 +682,27 @@ namespace easy3d {
                 points.push_back(vec3(x, y, depth));
                 x += scale;
             }
+        }
+
+
+        void prepare_box(std::vector<vec3>& points, std::vector<unsigned int>& indices, bool abstracted) {
+            points.clear();
+            indices.clear();
+
+            float min_coord = -0.5f;
+            float max_coord = 0.5f;
+
+            points.emplace_back(vec3(min_coord, min_coord, min_coord)); // 0
+            points.emplace_back(vec3(min_coord, max_coord, min_coord)); // 1
+            points.emplace_back(vec3(max_coord, max_coord, min_coord)); // 2
+            points.emplace_back(vec3(max_coord, min_coord, min_coord)); // 3
+
+            points.emplace_back(vec3(min_coord, min_coord, max_coord)); // 4
+            points.emplace_back(vec3(min_coord, max_coord, max_coord)); // 5
+            points.emplace_back(vec3(max_coord, max_coord, max_coord)); // 6
+            points.emplace_back(vec3(max_coord, min_coord, max_coord)); // 7
+
+            indices = {0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7};
         }
 
 

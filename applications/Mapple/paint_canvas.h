@@ -302,14 +302,14 @@ protected:
     QPoint  mouse_pressed_pos_;     // mouse pos when pressed
     int pressed_key_;
 
-    bool show_pivot_point_;
+    bool show_manip_sphere_;
 
     //----------------- viewer data -------------------
 
     // corner axes
     easy3d::TrianglesDrawable* drawable_axes_;
     // anchor sphere and manipulated frame
-    easy3d::LinesDrawable* sphere_outline_;
+    easy3d::LinesDrawable* drawable_manip_sphere_;
 
     easy3d::ModelPicker* model_picker_;
     bool    allow_select_model_;
