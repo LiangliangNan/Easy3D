@@ -34,6 +34,8 @@ public:
     void updateDrawableVisibility(easy3d::Drawable* d); // the given drawable
     void updateDrawableVisibilities();  // all drawables
 
+    void updateVisibilities();  // all models and drawables
+
 private Q_SLOTS :
 
     void setAutoFocus(bool b);
@@ -65,8 +67,6 @@ protected:
     void mouseReleaseEvent(QMouseEvent* e);
 
 private:
-    void hideOtherModels(easy3d::Model *model);
-
     PaintCanvas *viewer();
 
 private:
