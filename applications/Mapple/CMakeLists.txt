@@ -188,10 +188,6 @@ elseif (APPLE)
             MACOSX_BUNDLE_LONG_VERSION_STRING "${PROJECT_VERSION}"
             MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
             )
-
-    # this will install all the Qt libs and the necessary plugins
-    install( CODE "execute_process( COMMAND \"${MACDEPLOYQT}\" \"${CCVIEWER_MAC_BASE_DIR}\" -verbose=1 )" COMPONENT Runtime )
-
 else ()
     add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} ${${PROJECT_NAME}_RESOURCES})
 endif ()
@@ -220,3 +216,10 @@ endif ()
 if (EASY3D_HAS_CGAL)
     target_link_libraries(${PROJECT_NAME} algo_ext)
 endif ()
+
+
+# Depoly Mapple
+if (FALSE)
+    include(../../cmake/DeployQt.cmake)
+    DeployQt(TARGET ${PROJECT_NAME} DEPLOY_PATH ${PROJECT_NAME})
+endif()
