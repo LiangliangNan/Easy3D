@@ -166,21 +166,32 @@ elseif (APPLE)
     resource(IMAGES ${EASY3D_ROOT}/resources/images Resources/images *.jpg)
     resource(TEXTURES ${EASY3D_ROOT}/resources/textures Resources/textures *.png)
 
-    #Append the new files to the resources file list
-    list(APPEND ${PROJECT_NAME}_RESOURCES ${VERTEX_SHADERS} ${GEOMETRY_SHADERS} ${FRAGMENT_SHADERS} ${COLORMAPS} ${FONTS} ${IMAGES} ${TEXTURES})
-
-    # NOTE: Don't include the path in MACOSX_BUNDLE_ICON_FILE -- this is the property added to Info.plist
-    set(MACOSX_BUNDLE_ICON_FILE Mapple.icns)
-    # And this part tells CMake where to find and install the file itself
+    # This tells CMake where to find and install the ICON file
     set(${PROJECT_NAME}_ICON ${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/Mapple.icns)
-    set_source_files_properties(${${PROJECT_NAME}_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+
+    #Append the new files to the resources file list
+    list(APPEND ${PROJECT_NAME}_RESOURCES ${${PROJECT_NAME}_ICON} ${VERTEX_SHADERS} ${GEOMETRY_SHADERS} ${FRAGMENT_SHADERS} ${COLORMAPS} ${FONTS} ${IMAGES} ${TEXTURES})
 
     add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${${PROJECT_NAME}_ICON} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} ${${PROJECT_NAME}_RESOURCES})
+
+    set_source_files_properties(${${PROJECT_NAME}_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 
     ## Note: On macOS, high-DPI support is enabled by settings in the Info.plist file. Make sure they are present.
     ## For more information, see: http://doc.qt.io/qt-5/highdpi.html
     ## Enable high DPI support by using my Info.plist file in which I added NSHighResolutionCapable to be true.
-    set_target_properties(${PROJECT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/resources/Mac/Mapple.plist)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+            INSTALL_RPATH "@executable_path/../Frameworks"
+            MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME}
+            MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/resources/Mac/Mapple.plist"
+            MACOSX_BUNDLE_ICON_FILE Mapple.icns
+            MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
+            MACOSX_BUNDLE_LONG_VERSION_STRING "${PROJECT_VERSION}"
+            MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
+            )
+
+    # this will install all the Qt libs and the necessary plugins
+    install( CODE "execute_process( COMMAND \"${MACDEPLOYQT}\" \"${CCVIEWER_MAC_BASE_DIR}\" -verbose=1 )" COMPONENT Runtime )
+
 else ()
     add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} ${${PROJECT_NAME}_RESOURCES})
 endif ()

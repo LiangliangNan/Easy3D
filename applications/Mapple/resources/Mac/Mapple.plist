@@ -46,17 +46,105 @@
 			<key>CFBundleTypeExtensions</key>
 			<array>
 				<string>bin</string>
+			</array>
+			<key>CFBundleTypeName</key>
+			<string>Point Cloud</string>
+			<key>LSHandlerRank</key>
+			<string>Default</string>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleTypeExtensions</key>
+			<array>
 				<string>las</string>
+			</array>
+			<key>CFBundleTypeName</key>
+			<string>Point Cloud</string>
+			<key>LSHandlerRank</key>
+			<string>Default</string>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleTypeExtensions</key>
+			<array>
 				<string>laz</string>
+			</array>
+			<key>CFBundleTypeName</key>
+			<string>Point Cloud</string>
+			<key>LSHandlerRank</key>
+			<string>Default</string>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleTypeExtensions</key>
+			<array>
 				<string>xyz</string>
+			</array>
+			<key>CFBundleTypeName</key>
+			<string>Point Cloud</string>
+			<key>LSHandlerRank</key>
+			<string>Default</string>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleTypeExtensions</key>
+			<array>
 				<string>bxyz</string>
+			</array>
+			<key>CFBundleTypeName</key>
+			<string>Point Cloud</string>
+			<key>LSHandlerRank</key>
+			<string>Default</string>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleTypeExtensions</key>
+			<array>
 				<string>vg</string>
+			</array>
+			<key>CFBundleTypeName</key>
+			<string>Point Cloud</string>
+			<key>LSHandlerRank</key>
+			<string>Default</string>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleTypeExtensions</key>
+			<array>
 				<string>bvg</string>
+			</array>
+			<key>CFBundleTypeName</key>
+			<string>Point Cloud</string>
+			<key>LSHandlerRank</key>
+			<string>Default</string>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleTypeExtensions</key>
+			<array>
 				<string>ptx</string>
+			</array>
+			<key>CFBundleTypeName</key>
+			<string>Point Cloud</string>
+			<key>LSHandlerRank</key>
+			<string>Default</string>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleTypeExtensions</key>
+			<array>
 				<string>ply</string>
 			</array>
 			<key>CFBundleTypeName</key>
-			<string>PointCloudFiles</string>
+			<string>Point Cloud</string>
 			<key>LSHandlerRank</key>
 			<string>Default</string>
 		</dict>
@@ -66,14 +154,69 @@
             <key>CFBundleTypeExtensions</key>
             <array>
                     <string>obj</string>
+            </array>
+            <key>CFBundleTypeName</key>
+            <string>Surface Mesh</string>
+            <key>LSHandlerRank</key>
+            <string>Default</string>
+        </dict>
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>CFBundleTypeExtensions</key>
+            <array>
                     <string>off</string>
+            </array>
+            <key>CFBundleTypeName</key>
+            <string>Surface Mesh</string>
+            <key>LSHandlerRank</key>
+            <string>Default</string>
+        </dict>
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>CFBundleTypeExtensions</key>
+            <array>
                     <string>stl</string>
+            </array>
+            <key>CFBundleTypeName</key>
+            <string>Surface Mesh</string>
+            <key>LSHandlerRank</key>
+            <string>Default</string>
+        </dict>
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>CFBundleTypeExtensions</key>
+            <array>
                     <string>ply</string>
+            </array>
+            <key>CFBundleTypeName</key>
+            <string>Surface Mesh</string>
+            <key>LSHandlerRank</key>
+            <string>Default</string>
+        </dict>
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>CFBundleTypeExtensions</key>
+            <array>
                     <string>sm</string>
+            </array>
+            <key>CFBundleTypeName</key>
+            <string>Surface Mesh</string>
+            <key>LSHandlerRank</key>
+            <string>Default</string>
+        </dict>
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>CFBundleTypeExtensions</key>
+            <array>
                     <string>trilist</string>
             </array>
             <key>CFBundleTypeName</key>
-            <string>SurfaceMeshFiles</string>
+            <string>Surface Mesh</string>
             <key>LSHandlerRank</key>
             <string>Default</string>
         </dict>
@@ -83,11 +226,33 @@
             <key>CFBundleTypeExtensions</key>
             <array>
                     <string>plm</string>
+            </array>
+            <key>CFBundleTypeName</key>
+            <string>Polyhedral Mesh</string>
+            <key>LSHandlerRank</key>
+            <string>Default</string>
+        </dict>
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>CFBundleTypeExtensions</key>
+            <array>
                     <string>pm</string>
+            </array>
+            <key>CFBundleTypeName</key>
+            <string>Polyhedral Mesh</string>
+            <key>LSHandlerRank</key>
+            <string>Default</string>
+        </dict>
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>CFBundleTypeExtensions</key>
+            <array>
                     <string>mesh</string>
             </array>
             <key>CFBundleTypeName</key>
-            <string>PolyhedralMeshFiles</string>
+            <string>Polyhedral Mesh</string>
             <key>LSHandlerRank</key>
             <string>Default</string>
         </dict>
