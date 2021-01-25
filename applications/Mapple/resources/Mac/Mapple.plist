@@ -48,7 +48,7 @@
 				<string>bin</string>
 			</array>
 			<key>CFBundleTypeName</key>
-			<string>Point Cloud</string>
+			<string>Point Cloud File</string>
 			<key>LSHandlerRank</key>
 			<string>Default</string>
 		</dict>
@@ -60,7 +60,7 @@
 				<string>las</string>
 			</array>
 			<key>CFBundleTypeName</key>
-			<string>Point Cloud</string>
+			<string>Point Cloud File</string>
 			<key>LSHandlerRank</key>
 			<string>Default</string>
 		</dict>
@@ -72,7 +72,7 @@
 				<string>laz</string>
 			</array>
 			<key>CFBundleTypeName</key>
-			<string>Point Cloud</string>
+			<string>Point Cloud File</string>
 			<key>LSHandlerRank</key>
 			<string>Default</string>
 		</dict>
@@ -84,7 +84,7 @@
 				<string>xyz</string>
 			</array>
 			<key>CFBundleTypeName</key>
-			<string>Point Cloud</string>
+			<string>Point Cloud File</string>
 			<key>LSHandlerRank</key>
 			<string>Default</string>
 		</dict>
@@ -96,7 +96,7 @@
 				<string>bxyz</string>
 			</array>
 			<key>CFBundleTypeName</key>
-			<string>Point Cloud</string>
+			<string>Point Cloud File</string>
 			<key>LSHandlerRank</key>
 			<string>Default</string>
 		</dict>
@@ -108,7 +108,7 @@
 				<string>vg</string>
 			</array>
 			<key>CFBundleTypeName</key>
-			<string>Point Cloud</string>
+			<string>Point Cloud File</string>
 			<key>LSHandlerRank</key>
 			<string>Default</string>
 		</dict>
@@ -120,7 +120,7 @@
 				<string>bvg</string>
 			</array>
 			<key>CFBundleTypeName</key>
-			<string>Point Cloud</string>
+			<string>Point Cloud File</string>
 			<key>LSHandlerRank</key>
 			<string>Default</string>
 		</dict>
@@ -132,7 +132,7 @@
 				<string>ptx</string>
 			</array>
 			<key>CFBundleTypeName</key>
-			<string>Point Cloud</string>
+			<string>Point Cloud File</string>
 			<key>LSHandlerRank</key>
 			<string>Default</string>
 		</dict>
@@ -144,7 +144,7 @@
 				<string>ply</string>
 			</array>
 			<key>CFBundleTypeName</key>
-			<string>Point Cloud</string>
+			<string>Point Cloud File</string>
 			<key>LSHandlerRank</key>
 			<string>Default</string>
 		</dict>
@@ -156,7 +156,7 @@
                     <string>obj</string>
             </array>
             <key>CFBundleTypeName</key>
-            <string>Surface Mesh</string>
+            <string>Surface Mesh File</string>
             <key>LSHandlerRank</key>
             <string>Default</string>
         </dict>
@@ -168,7 +168,7 @@
                     <string>off</string>
             </array>
             <key>CFBundleTypeName</key>
-            <string>Surface Mesh</string>
+            <string>Surface Mesh File</string>
             <key>LSHandlerRank</key>
             <string>Default</string>
         </dict>
@@ -180,7 +180,7 @@
                     <string>stl</string>
             </array>
             <key>CFBundleTypeName</key>
-            <string>Surface Mesh</string>
+            <string>Surface Mesh File</string>
             <key>LSHandlerRank</key>
             <string>Default</string>
         </dict>
@@ -192,7 +192,7 @@
                     <string>ply</string>
             </array>
             <key>CFBundleTypeName</key>
-            <string>Surface Mesh</string>
+            <string>Surface Mesh File</string>
             <key>LSHandlerRank</key>
             <string>Default</string>
         </dict>
@@ -204,7 +204,7 @@
                     <string>sm</string>
             </array>
             <key>CFBundleTypeName</key>
-            <string>Surface Mesh</string>
+            <string>Surface Mesh File</string>
             <key>LSHandlerRank</key>
             <string>Default</string>
         </dict>
@@ -216,7 +216,7 @@
                     <string>trilist</string>
             </array>
             <key>CFBundleTypeName</key>
-            <string>Surface Mesh</string>
+            <string>Surface Mesh File</string>
             <key>LSHandlerRank</key>
             <string>Default</string>
         </dict>
@@ -228,7 +228,7 @@
                     <string>plm</string>
             </array>
             <key>CFBundleTypeName</key>
-            <string>Polyhedral Mesh</string>
+            <string>Polyhedral Mesh File</string>
             <key>LSHandlerRank</key>
             <string>Default</string>
         </dict>
@@ -240,7 +240,7 @@
                     <string>pm</string>
             </array>
             <key>CFBundleTypeName</key>
-            <string>Polyhedral Mesh</string>
+            <string>Polyhedral Mesh File</string>
             <key>LSHandlerRank</key>
             <string>Default</string>
         </dict>
@@ -252,7 +252,7 @@
                     <string>mesh</string>
             </array>
             <key>CFBundleTypeName</key>
-            <string>Polyhedral Mesh</string>
+            <string>Polyhedral Mesh File</string>
             <key>LSHandlerRank</key>
             <string>Default</string>
         </dict>

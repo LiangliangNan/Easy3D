@@ -33,6 +33,8 @@
 #include <QTime>
 #include <QApplication>
 #include <QSplashScreen>
+#include <QFileOpenEvent>
+
 #ifdef _WIN32
 #include <QStyleFactory>
 #endif
@@ -46,22 +48,39 @@
 
 using namespace easy3d;
 
-
 // reimplemented from QApplication so we can throw exceptions in slots/event handler
 class Mapple : public QApplication
 {
 public:
-    Mapple(int& argc, char ** argv) : QApplication(argc, argv) { }
+    Mapple(int &argc, char **argv) : QApplication(argc, argv) { }
+
     virtual ~Mapple() { }
-    virtual bool notify(QObject * receiver, QEvent * event) {
+
+    bool notify(QObject * receiver, QEvent * event) override {
         try {
             return QApplication::notify(receiver, event);
         } catch(QException& e) {
             LOG(ERROR) << "an exception was thrown: " << e.what();
         }
+        catch(...) {
+            LOG(ERROR) << "an unknown exception was thrown";
+        }
         return false;
     }
+
+    bool event(QEvent *e) override {
+        switch (e->type()) {
+            case QEvent::FileOpen:
+                filesToOpen.push_back(static_cast<QFileOpenEvent *>(e)->file());
+                return true;
+            default:
+                return QApplication::event(e);
+        }
+    }
+
+    QStringList filesToOpen;
 };
+
 
 
 int main(int argc, char *argv[])
@@ -113,6 +132,7 @@ int main(int argc, char *argv[])
 #endif
 
     Mapple app(argc, argv);
+
 #ifdef _WIN32   // to have similar style as on macOS.
     app.setStyle(QStyleFactory::create("Fusion"));
 #endif
@@ -149,38 +169,41 @@ int main(int argc, char *argv[])
 #endif
 
     try {
+
         MainWindow win;
         win.show();
 
 #ifdef NDEBUG
         splash.finish(&win);
-        QApplication::processEvents();
 #endif
 
-        // assume all the arguments are file names
+        // process the application QEvent::FileOpen events
+        QApplication::processEvents();
+        QStringList fileNames = app.filesToOpen;
+        // open files requested by the arguments
         if (argc > 1) {
-            QStringList fileNames;
-            for (int i=1; i<argc; ++i) {
+            for (int i = 1; i < argc; ++i) {
                 QString name(argv[i]);
                 QFileInfo info(name);
                 if (info.isFile())
                     fileNames.push_back(name);
             }
-            if (!fileNames.empty())
-                win.openFiles(fileNames);
         }
 
-        // process all events (e.g., load any files on the command line)
-        QCoreApplication::processEvents();
+        if (!fileNames.empty()) {
+            win.openFiles(fileNames);
+            QCoreApplication::processEvents();
+        }
 
         return app.exec();
     }
-    catch (const std::exception& e) {
-        const std::string msg =
-                std::string("Oh sorry, Mapple crashed.\n") +
-                "Error message: " + e.what() + ".\n"
-                "Please contact me (liangliang.nan@gmail.com) for more information.";
-        LOG(ERROR) << msg;
+    catch (const std::exception &e) {
+        LOG(ERROR) << "Oh sorry, Mapple crashed.\nError message: " << e.what() << ".\n"
+                   << "Please contact Liangliang (liangliang.nan@gmail.com) for more information.";
+    }
+    catch (...) {
+        LOG(ERROR) << "Oh sorry, Mapple crashed.\n"
+                   << "Please contact Liangliang (liangliang.nan@gmail.com) for more information.";
     }
 
     return EXIT_FAILURE;
