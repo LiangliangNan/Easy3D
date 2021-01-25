@@ -218,7 +218,7 @@ if (EASY3D_HAS_CGAL)
 endif ()
 
 
-# Depoly Mapple
+# Deploy (needs to change FALSE to TRUE)
 if (FALSE)
     include(../../cmake/DeployQt.cmake)
     DeployQt(TARGET ${PROJECT_NAME} DEPLOY_PATH ${PROJECT_NAME})
