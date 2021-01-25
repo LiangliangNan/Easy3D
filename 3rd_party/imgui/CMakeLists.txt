@@ -27,7 +27,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "3rd_party")
 set(IMGUI_INCLUDE_DIR  ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(${PROJECT_NAME} PUBLIC ${IMGUI_INCLUDE_DIR})
 
-target_link_libraries(${PROJECT_NAME} glew glfw)
+target_link_libraries(${PROJECT_NAME} PUBLIC glew glfw)
 
 
 if (MSVC)

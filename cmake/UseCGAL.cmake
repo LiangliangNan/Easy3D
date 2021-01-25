@@ -54,7 +54,7 @@ if(CGAL_FOUND)
 #   The recommended way to specify libraries and headers with CMake is to use the
 #   target_link_libraries command. This command automatically adds appropriate
 #   include directories, compile definitions, the position-independent-code lags.
-    target_link_libraries(${PROJECT_NAME} ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARIES})
+    target_link_libraries(${PROJECT_NAME} PUBLIC ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARIES})
 
 else()
     message(FATAL_ERROR "CGAL was not found.")
@@ -75,7 +75,7 @@ if(GMP_FOUND)
 #   The recommended way to specify libraries and headers with CMake is to use the
 #   target_link_libraries command. This command automatically adds appropriate
 #   include directories, compile definitions, the position-independent-code lags.
-    target_link_libraries(${PROJECT_NAME} ${GMP_LIBRARIES})
+    target_link_libraries(${PROJECT_NAME} PUBLIC ${GMP_LIBRARIES})
 else()
     message(FATAL_ERROR "GMP was not found.")
 endif()
@@ -95,7 +95,7 @@ if(MPFR_FOUND)
 #   The recommended way to specify libraries and headers with CMake is to use the
 #   target_link_libraries command. This command automatically adds appropriate
 #   include directories, compile definitions, the position-independent-code flags.
-    target_link_libraries(${PROJECT_NAME} ${MPFR_LIBRARIES})
+    target_link_libraries(${PROJECT_NAME} PUBLIC ${MPFR_LIBRARIES})
 else()
     message(FATAL_ERROR "MPFR was not found.")
 endif()

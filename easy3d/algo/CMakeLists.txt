@@ -80,7 +80,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "easy3d")
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_THIRD_PARTY}/RANSAC-1.1)
 
-target_link_libraries(${PROJECT_NAME} core util kdtree poisson_recon-9.0.1 RANSAC-1.1 triangle tetgen libtess)
+target_link_libraries(${PROJECT_NAME} PUBLIC core util kdtree poisson_recon-9.0.1 RANSAC-1.1 triangle tetgen libtess)
 
 set(EIGEN_SOURCE_DIR ${EASY3D_THIRD_PARTY}/eigen)
 target_include_directories(${PROJECT_NAME} PRIVATE ${EIGEN_SOURCE_DIR})

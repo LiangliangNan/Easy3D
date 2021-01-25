@@ -33,7 +33,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
 set(MAPPLE_DIR ${EASY3D_ROOT}/applications/Mapple)
 target_include_directories(${PROJECT_NAME} PRIVATE ${MAPPLE_DIR})
 
-target_link_libraries(${PROJECT_NAME} core util renderer gui)
+target_link_libraries(${PROJECT_NAME} PUBLIC core util renderer gui)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE GLEW_STATIC)
 

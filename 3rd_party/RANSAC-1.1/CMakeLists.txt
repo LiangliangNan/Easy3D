@@ -232,7 +232,7 @@ endif()
 #    # define DOPARALLEL to enable OpenMP
 #    target_compile_definitions(${PROJECT_NAME} PRIVATE DOPARALLEL)
 #    target_include_directories(${PROJECT_NAME} PRIVATE ${OpenMP_CXX_INCLUDE_DIRS})
-#    target_link_libraries(${PROJECT_NAME} PRIVATE ${OpenMP_CXX_LIBRARIES})
+#    target_link_libraries(${PROJECT_NAME} PUBLIC ${OpenMP_CXX_LIBRARIES})
 #    message(STATUS "OpenMP support enabled for RANSAC on ${CMAKE_SYSTEM_NAME}")
 #endif ()
 

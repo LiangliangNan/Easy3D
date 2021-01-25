@@ -98,7 +98,7 @@ target_include_directories(glfw PRIVATE
                            "${GLFW_SOURCE_DIR}/src"
                            "${GLFW_BINARY_DIR}/src"
                            ${glfw_INCLUDE_DIRS})
-target_link_libraries(glfw PRIVATE Threads::Threads ${glfw_LIBRARIES})
+target_link_libraries(glfw PUBLIC Threads::Threads ${glfw_LIBRARIES})
 
 if (APPLE)
     # For some reason CMake didn't know about .m until version 3.16
@@ -141,7 +141,7 @@ if (BUILD_SHARED_LIBS)
         if (MINGW)
             # Remove the dependency on the shared version of libgcc
             # NOTE: MinGW-w64 has the correct default but MinGW needs this
-            target_link_libraries(glfw PRIVATE "-static-libgcc")
+            target_link_libraries(PUBLIC PRIVATE "-static-libgcc")
 
             # Remove the lib prefix on the DLL (but not the import library)
             set_target_properties(glfw PROPERTIES PREFIX "")
