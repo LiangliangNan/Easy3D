@@ -392,6 +392,25 @@ void MainWindow::dropEvent(QDropEvent *e) {
 }
 
 
+int MainWindow::openFiles(const QStringList &fileNames) {
+    int count = 0;
+    ProgressLogger progress(fileNames.size(), true, false);
+    for (const auto& name : fileNames) {
+        if (progress.is_canceled()) {
+            LOG(WARNING) << "opening files cancelled";
+            break;
+        }
+        if (open(name.toStdString()))
+            ++count;
+        progress.next();
+    }
+    if (count > 0)
+        viewer()->fitScreen();
+
+    return count > 0;
+}
+
+
 bool MainWindow::onOpen() {
     const QStringList& fileNames = QFileDialog::getOpenFileNames(
                 this,
@@ -410,21 +429,7 @@ bool MainWindow::onOpen() {
     if (fileNames.empty())
         return false;
 
-    int count = 0;
-	ProgressLogger progress(fileNames.size(), true, false);
-    for (const auto& name : fileNames) {
-        if (progress.is_canceled()) {
-            LOG(WARNING) << "opening files cancelled";
-            break;
-        }
-        if (open(name.toStdString()))
-            ++count;
-        progress.next();
-    }
-    if (count > 0)
-        viewer()->fitScreen();
-
-    return count > 0;
+    return openFiles(fileNames);
 }
 
 

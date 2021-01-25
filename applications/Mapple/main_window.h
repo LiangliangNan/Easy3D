@@ -64,6 +64,8 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow() override;
 
+    int openFiles(const QStringList &fileNames);
+
     PaintCanvas* viewer() { return viewer_; }
 
     void setCurrentFile(const QString &fileName);
