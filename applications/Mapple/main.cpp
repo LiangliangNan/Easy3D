@@ -66,8 +66,6 @@ public:
 
 int main(int argc, char *argv[])
 {
-    logging::initialize(true, 9, "default");
-
     //Locale management
     {
         //Force 'English' locale so as to get a consistent behavior everywhere
@@ -130,6 +128,8 @@ int main(int argc, char *argv[])
 #endif
     QDir::setCurrent(workingDir.absolutePath());
 
+    logging::initialize(true, 9, "default");
+
 #ifdef NDEBUG
     // splash screen
     const std::string file = resource::directory() + "/images/overview.jpg";
@@ -156,6 +156,22 @@ int main(int argc, char *argv[])
         splash.finish(&win);
         QApplication::processEvents();
 #endif
+
+        // assume all the arguments are file names
+        if (argc > 1) {
+            QStringList fileNames;
+            for (int i=1; i<argc; ++i) {
+                QString name(argv[i]);
+                QFileInfo info(name);
+                if (info.isFile())
+                    fileNames.push_back(name);
+            }
+            if (!fileNames.empty())
+                win.openFiles(fileNames);
+        }
+
+        // process all events (e.g., load any files on the command line)
+        QCoreApplication::processEvents();
 
         return app.exec();
     }
