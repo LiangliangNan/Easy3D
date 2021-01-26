@@ -298,7 +298,7 @@ namespace easy3d {
 		 * sceneCenter() and zClippingCoefficient() * sceneRadius().
 		 * \details In that case, the zNear() value is set to zNearCoefficient() * zClippingCoefficient() * sceneRadius().
 		 * See the zNear() documentation for details.
-		 * Default value is 0.005, which is appropriate for most applications. In case you need a high dynamic ZBuffer
+		 * Default value is 0.001, which is appropriate for most applications. In case you need a high dynamic ZBuffer
 		 * precision, you can increase this value (~0.1).
 		 * A lower value will prevent clipping of very close objects at the expense of a worst Z precision.
 		 * Only meaningful when Camera type is Camera::PERSPECTIVE.

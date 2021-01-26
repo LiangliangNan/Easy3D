@@ -77,7 +77,7 @@ namespace easy3d {
 		setViewDirection(vec3(0.0, 1.0, 0.0));
 
 		// #CONNECTION# initFromDOMElement default values
-		setZNearCoefficient(0.005f);
+		setZNearCoefficient(0.001f);
 		setZClippingCoefficient(sqrt(3.0f));
 
 		// Dummy values

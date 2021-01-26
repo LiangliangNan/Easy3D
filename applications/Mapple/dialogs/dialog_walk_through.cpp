@@ -118,9 +118,6 @@ easy3d::KeyFrameInterpolator* DialogWalkThrough::interpolator() {
 
 
 void DialogWalkThrough::showEvent(QShowEvent* e) {
-    viewer_->camera()->setZClippingCoefficient(5.0f);
-    viewer_->camera()->setZNearCoefficient(0.0001);
-
     auto method = interpolator()->interpolation_method();
     if (method == easy3d::KeyFrameInterpolator::INTERPOLATION)
         comboBoxInterpolationMethod->setCurrentIndex(0);
@@ -152,9 +149,6 @@ void DialogWalkThrough::showEvent(QShowEvent* e) {
 
 
 void DialogWalkThrough::closeEvent(QCloseEvent* e) {
-    viewer_->camera()->setZClippingCoefficient(std::sqrt(3.0f));
-    viewer_->camera()->setZNearCoefficient(0.005);
-
     walkThrough()->set_status(WalkThrough::STOPPED);
     QDialog::closeEvent(e);
 	viewer_->update();
