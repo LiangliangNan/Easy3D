@@ -59,7 +59,7 @@ function( DeployQt )
 			COMMAND ${CMAKE_COMMAND} -E copy_directory ${app_path} ${temp_app_path}
 			COMMAND "${mac_deploy_qt}"
 				${temp_app_path}
-				-verbose=1
+				-verbose=1 # 0: no output, 1: error/warning (default), 2: normal, 3: debug
 			VERBATIM
 		)
 
@@ -70,11 +70,11 @@ function( DeployQt )
 	elseif( WIN32 )	
 		set( app_name "${name}.exe" )
 		if( CMAKE_CONFIGURATION_TYPES )
-			set( app_path "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/${app_name}" )
-			set( temp_dir "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/deployqt" )
+			set( app_path "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIG>/${app_name}" )
+			set( temp_dir "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$<CONFIG>/deployqt" )
 		else()
-			set( app_path "${CMAKE_CURRENT_BINARY_DIR}/${app_name}" )
-			set( temp_dir "${CMAKE_CURRENT_BINARY_DIR}/deployqt" )
+			set( app_path "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${app_name}" )
+			set( temp_dir "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/deployqt" )
 		endif()
 		set( temp_app_path "${temp_dir}/${app_name}" )
 
