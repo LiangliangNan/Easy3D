@@ -219,7 +219,7 @@ endif ()
 
 
 # Deploy (needs to change FALSE to TRUE)
-if (FALSE)
+if (FALSE) # default is FALSE
     include(../../cmake/DeployQt.cmake)
     DeployQt(TARGET ${PROJECT_NAME} DEPLOY_PATH ${PROJECT_NAME})
 endif()

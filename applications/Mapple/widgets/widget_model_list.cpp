@@ -502,8 +502,8 @@ void WidgetModelList::deleteSelected() {
 
 	if (auto_focus_)
 		viewer()->fitScreen();
-	else
-		viewer()->update();
+
+	viewer()->update();
 
     mainWindow_->updateRenderingPanel();
     mainWindow_->updateWindowTitle();
@@ -529,10 +529,11 @@ void WidgetModelList::currentModelItemChanged(QTreeWidgetItem *current, QTreeWid
     }
     updateVisibilities();
 
+
     if (auto_focus_)
         viewer()->fitScreen(model);
-    else
-        viewer()->update();
+
+    viewer()->update();
 
     mainWindow_->updateRenderingPanel();
     mainWindow_->updateWindowTitle();
@@ -556,12 +557,13 @@ void WidgetModelList::modelItemSelectionChanged() {
 
 
 void WidgetModelList::modelItemPressed(QTreeWidgetItem *current, int column) {
+    Model* prev_active_model = viewer()->currentModel();
+
     Model* active_model = nullptr;
     if (dynamic_cast<ModelItem *>(current)) {
         ModelItem *current_item = dynamic_cast<ModelItem *>(current);
-        viewer()->setCurrentModel(current_item->model());
         active_model = current_item->model();
-
+        viewer()->setCurrentModel(active_model);
         if (column == 2 && !selected_only_) {
             Model *model = current_item->model();
             bool visible = !model->renderer()->is_visible();
@@ -589,10 +591,10 @@ void WidgetModelList::modelItemPressed(QTreeWidgetItem *current, int column) {
     }
     updateVisibilities();
 
-    if (auto_focus_)
+    if (auto_focus_ && active_model != prev_active_model)
         viewer()->fitScreen(active_model);
-    else
-        viewer()->update();
+
+    viewer()->update();
 
     mainWindow_->updateRenderingPanel();
     mainWindow_->updateWindowTitle();
@@ -614,8 +616,8 @@ void WidgetModelList::setAutoFocus(bool b) {
     auto_focus_ = b;
     if (auto_focus_)
         viewer()->fitScreen(viewer()->currentModel());
-    else
-        viewer()->update();
+
+    viewer()->update();
 }
 
 
@@ -633,11 +635,7 @@ void WidgetModelList::setSelectedOnly(bool b) {
                 SLOT(currentModelItemChanged(QTreeWidgetItem * , QTreeWidgetItem * )));
     }
 
-	ModelItem* item = dynamic_cast<ModelItem*>(currentItem());
-	if (!item)
-		return;
-
-	Model* active_model = item->model();
+	Model* active_model = viewer()->currentModel();
     if (selected_only_) {
         for (auto m : viewer()->models()) {
             m->renderer()->set_visible(m == active_model);
