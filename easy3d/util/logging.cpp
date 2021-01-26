@@ -185,7 +185,7 @@ namespace easy3d
 
         Logger::Logger() {
             logger = this;
-            el::base::elStorage->installLogDispatchCallback<Dispatcher>("Easy3D-Logger");
+            ELPP->installLogDispatchCallback<Dispatcher>("Easy3D-Logger");
         }
 
     }
