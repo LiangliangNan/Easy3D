@@ -163,8 +163,8 @@ namespace easy3d
 
             // allow all levels of verbose messages to be logged into the log file (but not shown on UI).
             el::Loggers::setVerboseLevel(verbose_level);
-            VLOG(1) << "executable path: " << file_system::executable_directory();
-            VLOG(8) << "current working dir: " << file_system::current_working_directory();
+            VLOG(0) << "executable path: " << file_system::executable_directory();
+            VLOG(0) << "current working dir: " << file_system::current_working_directory();
         }
 
 
