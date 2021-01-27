@@ -16,8 +16,14 @@ if (NOT Qt5Core_FOUND)
 endif ()
 
 
+if(WIN32 OR MSVC)
+    add_executable(${PROJECT_NAME} main.cpp windeployqt/main.cpp)
+elseif(APPLE)
+    add_executable(${PROJECT_NAME} main.cpp macdeployqt/main.cpp macdeployqt/shared.h macdeployqt/shared.cpp)
+else()
+    add_executable(${PROJECT_NAME} main.cpp linuxdeployqt/main.cpp linuxdeployqt/shared.h linuxdeployqt/shared.cpp linuxdeployqt/excludelist.h)
+endif()
 
-add_executable(${PROJECT_NAME} main.cpp)
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which has been marked as deprecated (the exact warnings
@@ -25,14 +31,3 @@ add_executable(${PROJECT_NAME} main.cpp)
 # deprecated API in order to know how to port your code away from it.
 target_compile_definitions(${PROJECT_NAME} PRIVATE QT_DEPRECATED_WARNINGS)
 target_link_libraries(${PROJECT_NAME} Qt5::Core)
-
-if(WIN32 OR MSVC)
-    add_subdirectory(windeployqt)
-    target_link_libraries(${PROJECT_NAME} windeployqt)
-elseif(APPLE)
-    add_subdirectory(macdeployqt)
-    target_link_libraries(${PROJECT_NAME} macdeployqt)
-else()
-    add_subdirectory(linuxdeployqt)
-    target_link_libraries(${PROJECT_NAME} linuxdeployqt)
-endif()

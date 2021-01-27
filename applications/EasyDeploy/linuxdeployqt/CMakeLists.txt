@@ -1,84 +1,30 @@
-# CMake configuration for linuxdeployqt
-# Not meant to replace the qmake build system, but for use with CMake based IDEs.
+set(CMAKE_AUTOMOC ON)
 
-cmake_minimum_required(VERSION 3.2)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-project(linuxdeployqt)
+# expose version data as compiler definition
+add_definitions("-DLINUXDEPLOYQT_VERSION=\"${GIT_TAG_NAME}\"")
+add_definitions("-DLINUXDEPLOYQT_GIT_COMMIT=\"${GIT_COMMIT}\"")
+add_definitions("-DBUILD_DATE=\"${DATE}\"")
+add_definitions("-DBUILD_NUMBER=\"${BUILD_NUMBER}\"")
 
-find_program(GIT git)
+find_package(Qt5 REQUIRED COMPONENTS Core)
 
-if("${GIT}" STREQUAL "GIT-NOTFOUND")
-    message(WARNING "Could not find git, commit and tag info cannot be updated")
-
-    if(NOT GIT_COMMIT)
-        message(FATAL_ERROR "Commit ID not set, please call with -DGIT_COMMIT=...")
-    endif()
-
-    if(NOT GIT_TAG_NAME)
-        message(FATAL_ERROR "Tag name not set, please call with -DGIT_TAG_NAME=...")
-    endif()
-else()
-    # make sure Git revision ID and latest tag is not stored in the CMake cache
-    # otherwise, one would have to reset the CMake cache on every new commit to make sure the Git commit ID is up to date
-    unset(GIT_COMMIT CACHE)
-    unset(GIT_LATEST_TAG CACHE)
-
-    # read Git revision ID and latest tag number
-    execute_process(
-        COMMAND "${GIT}" rev-parse --short HEAD
-        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-        OUTPUT_VARIABLE GIT_COMMIT
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        RESULT_VARIABLE GIT_COMMIT_RESULT
-    )
-    if(NOT GIT_COMMIT_RESULT EQUAL 0)
-        message(FATAL_ERROR "Failed to determine git commit ID")
-    endif()
-    mark_as_advanced(GIT_COMMIT GIT_COMMIT_RESULT)
-
-    execute_process(
-        COMMAND "${GIT}" rev-list --tags --skip=1 --max-count=1
-        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-        OUTPUT_VARIABLE GIT_TAG_ID
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        RESULT_VARIABLE GIT_TAG_ID_RESULT
-    )
-    if(NOT GIT_TAG_ID_RESULT EQUAL 0)
-        message(FATAL_ERROR "Failed to determine git tag ID")
-    endif()
-    mark_as_advanced(GIT_TAG_ID GIT_TAG_ID_RESULT)
-
-    execute_process(
-        COMMAND "${GIT}" describe --tags ${GIT_TAG_ID} --abbrev=0
-        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-        OUTPUT_VARIABLE GIT_TAG_NAME
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        RESULT_VARIABLE GIT_TAG_NAME_RESULT
-    )
-    if(NOT GIT_TAG_NAME_RESULT EQUAL 0)
-        message(FATAL_ERROR "Failed to determine git tag name")
-    endif()
-    mark_as_advanced(GIT_TAG_NAME GIT_TAG_NAME_RESULT)
-endif()
-
-# set version and build number
-set(VERSION 1-alpha)
-if("$ENV{TRAVIS_BUILD_NUMBER}" STREQUAL "")
-    set(BUILD_NUMBER "<local dev build>")
-else()
-    set(BUILD_NUMBER "$ENV{TRAVIS_BUILD_NUMBER}")
-endif()
-
-# get current date
+# update excludelist
+message(STATUS "Updating excludelist...")
 execute_process(
-    COMMAND env LC_ALL=C date -u "+%Y-%m-%d %H:%M:%S %Z"
-    OUTPUT_VARIABLE DATE
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    RESULT_VARIABLE DATE_RESULT
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/../generate-excludelist.sh
+    OUTPUT_VARIABLE EXCLUDELIST
+    TIMEOUT 10
+    RESULT_VARIABLE EXCLUDELIST_RESULT
 )
-if(NOT DATE_RESULT EQUAL 0)
-    message(FATAL_ERROR "Failed to determine date string")
+if(NOT EXCLUDELIST_RESULT EQUAL 0)
+    message(WARNING "Updating excludelist failed, using outdated copy")
 endif()
-mark_as_advanced(DATE DATE_RESULT)
+mark_as_advanced(EXCLUDELIST EXCLUDELIST_RESULT)
 
-add_subdirectory(tools/linuxdeployqt)
+add_library(linuxdeployqt SHARED main.cpp shared.cpp)
+target_include_directories(linuxdeployqt PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(linuxdeployqt Qt5::Core)
+target_compile_definitions(linuxdeployqt PRIVATE -DEXCLUDELIST="${EXCLUDELIST}")

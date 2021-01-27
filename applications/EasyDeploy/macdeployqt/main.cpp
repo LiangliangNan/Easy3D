@@ -28,7 +28,7 @@
 #include <QCoreApplication>
 #include <QDir>
 
-#include "../shared/shared.h"
+#include "shared.h"
 
 int main(int argc, char **argv)
 {
