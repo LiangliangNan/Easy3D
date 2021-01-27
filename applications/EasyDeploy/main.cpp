@@ -5,7 +5,7 @@
 
 
 
-int deploy_main(int argc, char **argv);
+int deploy(int argc, char **argv);
 
 int main(int argc, char **argv)
 {
@@ -55,7 +55,7 @@ int main(int argc, char **argv)
     qDebug() << "deploying" << deployed_app_name;
 
     argv[1] = (char*)deployed_app_name.toStdString().c_str();
-    return deploy_main(argc, argv);
+    return deploy(argc, argv);
 }
 
 

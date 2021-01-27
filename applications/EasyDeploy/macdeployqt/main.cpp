@@ -30,7 +30,7 @@
 
 #include "shared.h"
 
-int deploy_main(int argc, char **argv)
+int deploy(int argc, char **argv)
 {
     QCoreApplication app(argc, argv);
 
