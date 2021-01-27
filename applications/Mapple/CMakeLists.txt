@@ -216,10 +216,3 @@ endif ()
 if (EASY3D_HAS_CGAL)
     target_link_libraries(${PROJECT_NAME} algo_ext)
 endif ()
-
-
-# Deploy (needs to change FALSE to TRUE)
-if (FALSE) # default is FALSE
-    include(../../cmake/DeployQt.cmake)
-    DeployQt(TARGET ${PROJECT_NAME} DEPLOY_PATH ${PROJECT_NAME})
-endif()
