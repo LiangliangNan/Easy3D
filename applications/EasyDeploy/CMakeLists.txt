@@ -1,0 +1,7 @@
+if(WIN32 OR MSVC)
+    add_subdirectory(windeployqt)
+elseif(APPLE)
+    add_subdirectory(macdeployqt)
+else()
+    add_subdirectory(linuxdeployqt)
+endif()

@@ -54,6 +54,8 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Build Qt-based examples/applications
 option(EASY3D_ENABLE_QT             "Build Qt-based examples/applications"  OFF)
+# Build application EasyDeploy (EASY3D_ENABLE_QT must be enabled first)
+option(EASY3D_BUILD_EASYDEPLOY      "Build application EasyDeploy"          OFF)
 # Build tutorials
 option(EASY3D_BUILD_TUTORIALS       "Build Easy3D Tutorials"                ON)
 # Build documentation
@@ -112,6 +114,9 @@ endif()
 # get a clean windows
 if (WIN32 OR MSVC)
     add_definitions(-DNOMINMAX)
+    if(MSVC)
+        add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
+    endif()
 endif()
 
 ################################################################################
