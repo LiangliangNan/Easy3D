@@ -30,15 +30,13 @@
 
 #include "shared.h"
 
-int deploy(int argc, char **argv)
+int deploy(const std::vector<QString>& argv)
 {
-    QCoreApplication app(argc, argv);
-
     QString appBundlePath;
-    if (argc > 1)
-        appBundlePath = QString::fromLocal8Bit(argv[1]);
+    if (argv.size() > 1)
+        appBundlePath = argv[1];
 
-    if (argc < 2 || appBundlePath.startsWith("-")) {
+    if (argv.size() < 2 || appBundlePath.startsWith("-")) {
         qDebug() << "Usage: macdeployqt app-bundle [options]";
         qDebug() << "";
         qDebug() << "Options:";
@@ -107,8 +105,8 @@ int deploy(int argc, char **argv)
     extern bool deployFramework;
     extern bool secureTimestamp;
 
-    for (int i = 2; i < argc; ++i) {
-        QByteArray argument = QByteArray(argv[i]);
+    for (int i = 2; i < argv.size(); ++i) {
+        QByteArray argument = argv[i].toLocal8Bit();
         if (argument == QByteArray("-no-plugins")) {
             LogDebug() << "Argument found:" << argument;
             plugins = false;

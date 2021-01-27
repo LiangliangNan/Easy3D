@@ -4,18 +4,22 @@
 #include <QCoreApplication>
 
 
-int deploy(int argc, char **argv);
+int deploy(const std::vector<QString>& argv);
 
 int main(int argc, char **argv)
 {
     // QCoreApplication is necessary for using QString
     QCoreApplication app(argc, argv);
 
-#if 0
+#if 1
     argc = 3;
     argv[1] = "/Users/lnan/Projects/Easy3D/cmake-build-release/bin/Mapple.app";
     argv[2] = "-verbose=1";
 #endif
+
+    std::vector<QString> arguments(argc);
+    for (int i=0; i<argc; ++i)
+        arguments[i] =  QString::fromLocal8Bit(argv[i]);
 
     if (argc < 2) {
         qInfo() << "Usage: \n\tEasyDeploy <executable or bundle file> [options]";
@@ -62,9 +66,9 @@ int main(int argc, char **argv)
     qInfo() << "copying" << app_info.fileName() << "into" << deploy_dir;
     QFile::copy(app_info.absoluteFilePath(), deployed_app_name);
 
-    argv[1] = (char*)deployed_app_name.toStdString().c_str();
+    arguments[1] = deployed_app_name;
     qInfo() << "deploying" << deployed_app_name;
-    return deploy(argc, argv);
+    return deploy(arguments);
 #elif (defined(__linux) || defined(__linux__))
     dir.cd(deploy_dir);
     const QString usr_dir = deploy_dir + "/usr";
@@ -109,8 +113,8 @@ int main(int argc, char **argv)
     iconfile.write("Please replace this file with your app icon file");
     iconfile.close();
 
-    argv[1] = (char*)desktopfile.fileName().toStdString().c_str();
-    int result = deploy(argc, argv);
+    arguments[1] = desktopfile.fileName();
+    int result = deploy(arguments);
     if (result == 0) {
         qInfo() << "Please replace the following files with with your actual icon image:\n"
                 << "\t" << deploy_dir + "/" + app_info.baseName() + ".png" << "\n"
