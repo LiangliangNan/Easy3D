@@ -37,14 +37,12 @@
 #include "excludelist.h"
 //# include <gnu/libc-version.h>
 
-int deploy(int argc, char **argv)
+int deploy(const std::vector<QString>& argv)
 {
-    QCoreApplication app(argc, argv);
-
     extern QString appBinaryPath;
     appBinaryPath = ""; // Cannot do it in one go due to "extern"
 
-    QString firstArgument = QString::fromLocal8Bit(argv[1]);
+    QString firstArgument = argv[1];
 
     // print version statement
     std::stringstream version;
@@ -79,7 +77,7 @@ int deploy(int argc, char **argv)
     // Due to the structure of the argument parser, we have to check all arguments at first to check whether the user
     // wants to get the version only
     // TODO: replace argument parser with position independent, less error prone version
-    for (int i = 0; i < argc; i++ ) {
+    for (int i = 0; i < argv.size(); i++ ) {
         QString argument = argv[i];
         if (argument == "-version" || argument == "-V" || argument == "--version") {
             // can just exit normally, version has been printed above
@@ -90,8 +88,8 @@ int deploy(int argc, char **argv)
             return 0;
         }
     }
-    for (int i = 2; i < argc; ++i) {
-        QByteArray argument = QByteArray(argv[i]);
+    for (int i = 2; i < argv.size(); ++i) {
+        QByteArray argument = argv[i].toLocal8Bit();
 
         if (argument == QByteArray("-no-plugins")) {
             LogDebug() << "Argument found:" << argument;
@@ -206,7 +204,7 @@ int deploy(int argc, char **argv)
     }
 #endif
 
-    if (argc < 2 || (firstArgument.startsWith("-"))) {
+    if (argv.size() < 2 || (firstArgument.startsWith("-"))) {
         qInfo() << "";
         qInfo() << "Usage: linuxdeployqt <app-binary|desktop file> [options]";
         qInfo() << "";
@@ -259,7 +257,7 @@ int deploy(int argc, char **argv)
     QString desktopExecEntry = "";
     QString desktopIconEntry = "";
 
-    if (argc > 2) {
+    if (argv.size() > 2) {
         /* If we got a desktop file as the argument, try to figure out the application binary from it.
          * This has the advantage that we can also figure out the icon file this way, and have less work
          * to do when using linuxdeployqt. */
