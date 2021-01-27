@@ -35,7 +35,7 @@
 #include <QDirIterator>
 #include <sstream>
 #include "excludelist.h"
-# include <gnu/libc-version.h>
+//# include <gnu/libc-version.h>
 
 int deploy(int argc, char **argv)
 {
@@ -181,7 +181,8 @@ int deploy(int argc, char **argv)
             return 1;
         }
     }
-    
+
+#if 0
     // We need to catch those errors at the source of the problem
     // https://github.com/AppImage/appimage.github.io/search?q=GLIBC&unscoped_q=GLIBC&type=Issues
     const char *glcv = gnu_get_libc_version ();
@@ -203,6 +204,7 @@ int deploy(int argc, char **argv)
             return 1;
         }
     }
+#endif
 
     if (argc < 2 || (firstArgument.startsWith("-"))) {
         qInfo() << "";

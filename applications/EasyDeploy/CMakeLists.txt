@@ -4,6 +4,10 @@ get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 project(${PROJECT_NAME})
 
 
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+
 # find Qt5Core
 find_package(Qt5 COMPONENTS Core)
 
@@ -23,8 +27,30 @@ elseif(APPLE)
     add_executable(${PROJECT_NAME} main.cpp macdeployqt/main.cpp macdeployqt/shared.h macdeployqt/shared.cpp)
     target_link_libraries(${PROJECT_NAME} Qt5::Core "-framework CoreFoundation")
 else()
+    set(CMAKE_AUTOMOC ON)
+
+    # expose version data as compiler definition
+    add_definitions("-DLINUXDEPLOYQT_VERSION=\"${GIT_TAG_NAME}\"")
+    add_definitions("-DLINUXDEPLOYQT_GIT_COMMIT=\"${GIT_COMMIT}\"")
+    add_definitions("-DBUILD_DATE=\"${DATE}\"")
+    add_definitions("-DBUILD_NUMBER=\"${BUILD_NUMBER}\"")
+
+    # update excludelist
+    message(STATUS "Updating excludelist...")
+    execute_process(
+            COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/../generate-excludelist.sh
+            OUTPUT_VARIABLE EXCLUDELIST
+            TIMEOUT 10
+            RESULT_VARIABLE EXCLUDELIST_RESULT
+    )
+    if(NOT EXCLUDELIST_RESULT EQUAL 0)
+        message(WARNING "Updating excludelist failed, using outdated copy")
+    endif()
+    mark_as_advanced(EXCLUDELIST EXCLUDELIST_RESULT)
+
     add_executable(${PROJECT_NAME} main.cpp linuxdeployqt/main.cpp linuxdeployqt/shared.h linuxdeployqt/shared.cpp linuxdeployqt/excludelist.h)
     target_link_libraries(${PROJECT_NAME} Qt5::Core)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE -DEXCLUDELIST="${EXCLUDELIST}")
 endif()
 
 

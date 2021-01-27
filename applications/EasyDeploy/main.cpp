@@ -16,10 +16,11 @@ int main(int argc, char **argv)
 #endif
 
     if (argc < 2) {
-        qDebug() << "Usage: \n\tEasyDeploy <executable or app-bundle> [options]";
-        qDebug() << "Options:";
-        qDebug() << "   -verbose=<0-3>   : 0 = no output, 1 = error/warning (default), 2 = normal, 3 = debug";
-        qDebug() << "   -dmg             : Create a .dmg disk image [macOS only]";
+        qInfo() << "Usage: \n\tEasyDeploy <executable or app-bundle> [options]";
+        qInfo() << "Options:";
+        qInfo() << "   -verbose=<0-3> :  0 = no output, 1 = error/warning (default), 2 = normal, 3 = debug";
+        qInfo() << "   -dmg           :  Create a .dmg disk image [macOS only]";
+        qInfo() << "   -appimage      :  Create an .AppImage (implies -bundle-non-qt-libs) [Linux only]";
         return EXIT_SUCCESS;
     }
 
