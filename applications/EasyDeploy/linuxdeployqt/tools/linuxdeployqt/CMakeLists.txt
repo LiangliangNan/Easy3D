@@ -24,7 +24,7 @@ if(NOT EXCLUDELIST_RESULT EQUAL 0)
 endif()
 mark_as_advanced(EXCLUDELIST EXCLUDELIST_RESULT)
 
-add_executable(linuxdeployqt main.cpp shared.cpp)
+add_library(linuxdeployqt SHARED main.cpp shared.cpp)
 target_include_directories(linuxdeployqt PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(linuxdeployqt Qt5::Core)
 target_compile_definitions(linuxdeployqt PRIVATE -DEXCLUDELIST="${EXCLUDELIST}")

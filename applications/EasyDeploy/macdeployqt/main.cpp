@@ -42,10 +42,8 @@
 #include <qdir.h>
 #include <QDebug>
 
-int main(int argc, char **argv)
+int deploy_main(int argc, char **argv)
 {
-    qDebug() << "For Linux, see 'https://github.com/probonopd/linuxdeployqt' and 'https://github.com/ddurham2/linuxdeployqt'\n";
-
     QString appBundlePath;
     if (argc > 1)
         appBundlePath = QString::fromLocal8Bit(argv[1]);
@@ -160,5 +158,7 @@ int main(int argc, char **argv)
         LogNormal();
         createDiskImage(appBundlePath);
     }
+
+    return EXIT_SUCCESS;
 }
 

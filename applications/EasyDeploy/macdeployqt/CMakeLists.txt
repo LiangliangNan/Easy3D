@@ -16,23 +16,20 @@ if (NOT Qt5Core_FOUND)
 endif ()
 
 set(${PROJECT_NAME}_HEADERS
-        src/shared.h
+        shared.h
         )
 
 set(${PROJECT_NAME}_SOURCES
-        src/shared.cpp
-        src/main.cpp
+        shared.cpp
+        main.cpp
         )
 
-if (APPLE)
-    add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES})
+add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES})
 
-    # The following define makes your compiler emit warnings if you use
-    # any feature of Qt which has been marked as deprecated (the exact warnings
-    # depend on your compiler). Please consult the documentation of the
-    # deprecated API in order to know how to port your code away from it.
-#    target_compile_definitions(${PROJECT_NAME} PRIVATE QT_DEPRECATED_WARNINGS)
+# The following define makes your compiler emit warnings if you use
+# any feature of Qt which has been marked as deprecated (the exact warnings
+# depend on your compiler). Please consult the documentation of the
+# deprecated API in order to know how to port your code away from it.
+target_compile_definitions(${PROJECT_NAME} PRIVATE QT_DEPRECATED_WARNINGS)
 
-    target_link_libraries(${PROJECT_NAME} Qt5::Core)
-
-endif ()
+target_link_libraries(${PROJECT_NAME} Qt5::Core)

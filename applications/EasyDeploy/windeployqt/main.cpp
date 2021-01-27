@@ -1686,7 +1686,7 @@ static bool deployWebEngineCore(const QMap<QString, QString> &qmakeVariables,
                       options.updateFileFlags, options.json, errorMessage);
 }
 
-int main(int argc, char **argv)
+int deploy_main(int argc, char **argv)
 {
     QCoreApplication a(argc, argv);
     QCoreApplication::setApplicationVersion(QLatin1String(QT_VERSION_STR));
