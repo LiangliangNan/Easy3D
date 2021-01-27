@@ -9,9 +9,19 @@ int deploy_main(int argc, char **argv);
 
 int main(int argc, char **argv)
 {
+#if 0
     argc = 3;
     argv[1] = "/Users/lnan/Projects/Easy3D/cmake-build-release/bin/Mapple.app";
-    argv[2] = "-verbose=3";
+    argv[2] = "-verbose=1";
+#endif
+
+    if (argc < 2) {
+        qDebug() << "Usage: \n\tEasyDeploy <executable or app-bundle> [options]";
+        qDebug() << "Options:";
+        qDebug() << "   -verbose=<0-3>   : 0 = no output, 1 = error/warning (default), 2 = normal, 3 = debug";
+        qDebug() << "   -dmg             : Create a .dmg disk image [macOS only]";
+        return EXIT_SUCCESS;
+    }
 
     //---------------------------------------------------------------------------
 

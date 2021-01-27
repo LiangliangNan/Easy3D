@@ -87,6 +87,7 @@ int deploy_main(int argc, char **argv)
 //        return 1;
 //    }
     appBundlePath = QFileInfo(appBundlePath).absoluteFilePath();
+    qDebug() << "app bundle path:" << appBundlePath;
 
     bool plugins = true;
     bool dmg = false;
