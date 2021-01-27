@@ -18,10 +18,13 @@ endif ()
 
 if(WIN32 OR MSVC)
     add_executable(${PROJECT_NAME} main.cpp windeployqt/main.cpp)
+    target_link_libraries(${PROJECT_NAME} Qt5::Core)
 elseif(APPLE)
     add_executable(${PROJECT_NAME} main.cpp macdeployqt/main.cpp macdeployqt/shared.h macdeployqt/shared.cpp)
+    target_link_libraries(${PROJECT_NAME} Qt5::Core "-framework CoreFoundation")
 else()
     add_executable(${PROJECT_NAME} main.cpp linuxdeployqt/main.cpp linuxdeployqt/shared.h linuxdeployqt/shared.cpp linuxdeployqt/excludelist.h)
+    target_link_libraries(${PROJECT_NAME} Qt5::Core)
 endif()
 
 
@@ -30,4 +33,3 @@ endif()
 # depend on your compiler). Please consult the documentation of the
 # deprecated API in order to know how to port your code away from it.
 target_compile_definitions(${PROJECT_NAME} PRIVATE QT_DEPRECATED_WARNINGS)
-target_link_libraries(${PROJECT_NAME} Qt5::Core)

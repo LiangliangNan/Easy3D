@@ -30,14 +30,8 @@
 
 #include "shared.h"
 
-int main(int argc, char **argv)
+int deploy_main(int argc, char **argv)
 {
-    qDebug() << "For Linux, see 'https://github.com/probonopd/linuxdeployqt' and 'https://github.com/ddurham2/linuxdeployqt'\n";
-
-    argc = 3;
-    argv[1] = "/Users/lnan/Projects/macdeployqt/cmake-build-debug/deploy/Mapple.app";
-    argv[2] = "-verbose=3";
-
     QCoreApplication app(argc, argv);
 
     QString appBundlePath;
