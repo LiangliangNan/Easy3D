@@ -79,12 +79,14 @@ int deploy_main(int argc, char **argv)
         return 1;
     }
 
-    appBundlePath = QDir::cleanPath(appBundlePath);
-
-    if (QDir().exists(appBundlePath) == false) {
-        qDebug() << "Error: Could not find app bundle" << appBundlePath;
-        return 1;
-    }
+    // Liangliang: QDir::cleanPath() sometimes gives an nonsense path!!!
+    //             So I simply assume the provided path is valid.
+//    appBundlePath = QDir::cleanPath(appBundlePath);
+//    if (QDir().exists(appBundlePath) == false) {
+//        qDebug() << "Error: Could not find app bundle" << appBundlePath;
+//        return 1;
+//    }
+    appBundlePath = QFileInfo(appBundlePath).absoluteFilePath();
 
     bool plugins = true;
     bool dmg = false;
