@@ -27,7 +27,7 @@
 	<key>CFBundleShortVersionString</key>
 	<string>${MACOSX_BUNDLE_SHORT_VERSION_STRING}</string>
 	<key>CFBundleSignature</key>
-	<string>????</string>
+	<string>Mapple</string>
 	<key>CFBundleVersion</key>
 	<string>${MACOSX_BUNDLE_BUNDLE_VERSION}</string>
 	<key>CSResourcesFileMapped</key>
@@ -46,89 +46,13 @@
 			<key>CFBundleTypeExtensions</key>
 			<array>
 				<string>bin</string>
-			</array>
-			<key>CFBundleTypeName</key>
-			<string>Point Cloud File</string>
-			<key>LSHandlerRank</key>
-			<string>Default</string>
-		</dict>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleTypeExtensions</key>
-			<array>
-				<string>las</string>
-			</array>
-			<key>CFBundleTypeName</key>
-			<string>Point Cloud File</string>
-			<key>LSHandlerRank</key>
-			<string>Default</string>
-		</dict>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleTypeExtensions</key>
-			<array>
-				<string>laz</string>
-			</array>
-			<key>CFBundleTypeName</key>
-			<string>Point Cloud File</string>
-			<key>LSHandlerRank</key>
-			<string>Default</string>
-		</dict>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleTypeExtensions</key>
-			<array>
 				<string>xyz</string>
-			</array>
-			<key>CFBundleTypeName</key>
-			<string>Point Cloud File</string>
-			<key>LSHandlerRank</key>
-			<string>Default</string>
-		</dict>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleTypeExtensions</key>
-			<array>
 				<string>bxyz</string>
-			</array>
-			<key>CFBundleTypeName</key>
-			<string>Point Cloud File</string>
-			<key>LSHandlerRank</key>
-			<string>Default</string>
-		</dict>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleTypeExtensions</key>
-			<array>
 				<string>vg</string>
-			</array>
-			<key>CFBundleTypeName</key>
-			<string>Point Cloud File</string>
-			<key>LSHandlerRank</key>
-			<string>Default</string>
-		</dict>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleTypeExtensions</key>
-			<array>
 				<string>bvg</string>
-			</array>
-			<key>CFBundleTypeName</key>
-			<string>Point Cloud File</string>
-			<key>LSHandlerRank</key>
-			<string>Default</string>
-		</dict>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleTypeExtensions</key>
-			<array>
+				<string>ply</string>
+				<string>laz</string>
+				<string>las</string>
 				<string>ptx</string>
 			</array>
 			<key>CFBundleTypeName</key>
@@ -141,121 +65,32 @@
 			<string>Editor</string>
 			<key>CFBundleTypeExtensions</key>
 			<array>
+				<string>obj</string>
 				<string>ply</string>
+				<string>sm</string>
+				<string>off</string>
+				<string>stl</string>
+				<string>trilist</string>
 			</array>
 			<key>CFBundleTypeName</key>
-			<string>Point Cloud File</string>
+			<string>Surface Mesh File</string>
 			<key>LSHandlerRank</key>
 			<string>Default</string>
 		</dict>
-        <dict>
-            <key>CFBundleTypeRole</key>
-            <string>Editor</string>
-            <key>CFBundleTypeExtensions</key>
-            <array>
-                    <string>obj</string>
-            </array>
-            <key>CFBundleTypeName</key>
-            <string>Surface Mesh File</string>
-            <key>LSHandlerRank</key>
-            <string>Default</string>
-        </dict>
-        <dict>
-            <key>CFBundleTypeRole</key>
-            <string>Editor</string>
-            <key>CFBundleTypeExtensions</key>
-            <array>
-                    <string>off</string>
-            </array>
-            <key>CFBundleTypeName</key>
-            <string>Surface Mesh File</string>
-            <key>LSHandlerRank</key>
-            <string>Default</string>
-        </dict>
-        <dict>
-            <key>CFBundleTypeRole</key>
-            <string>Editor</string>
-            <key>CFBundleTypeExtensions</key>
-            <array>
-                    <string>stl</string>
-            </array>
-            <key>CFBundleTypeName</key>
-            <string>Surface Mesh File</string>
-            <key>LSHandlerRank</key>
-            <string>Default</string>
-        </dict>
-        <dict>
-            <key>CFBundleTypeRole</key>
-            <string>Editor</string>
-            <key>CFBundleTypeExtensions</key>
-            <array>
-                    <string>ply</string>
-            </array>
-            <key>CFBundleTypeName</key>
-            <string>Surface Mesh File</string>
-            <key>LSHandlerRank</key>
-            <string>Default</string>
-        </dict>
-        <dict>
-            <key>CFBundleTypeRole</key>
-            <string>Editor</string>
-            <key>CFBundleTypeExtensions</key>
-            <array>
-                    <string>sm</string>
-            </array>
-            <key>CFBundleTypeName</key>
-            <string>Surface Mesh File</string>
-            <key>LSHandlerRank</key>
-            <string>Default</string>
-        </dict>
-        <dict>
-            <key>CFBundleTypeRole</key>
-            <string>Editor</string>
-            <key>CFBundleTypeExtensions</key>
-            <array>
-                    <string>trilist</string>
-            </array>
-            <key>CFBundleTypeName</key>
-            <string>Surface Mesh File</string>
-            <key>LSHandlerRank</key>
-            <string>Default</string>
-        </dict>
-        <dict>
-            <key>CFBundleTypeRole</key>
-            <string>Editor</string>
-            <key>CFBundleTypeExtensions</key>
-            <array>
-                    <string>plm</string>
-            </array>
-            <key>CFBundleTypeName</key>
-            <string>Polyhedral Mesh File</string>
-            <key>LSHandlerRank</key>
-            <string>Default</string>
-        </dict>
-        <dict>
-            <key>CFBundleTypeRole</key>
-            <string>Editor</string>
-            <key>CFBundleTypeExtensions</key>
-            <array>
-                    <string>pm</string>
-            </array>
-            <key>CFBundleTypeName</key>
-            <string>Polyhedral Mesh File</string>
-            <key>LSHandlerRank</key>
-            <string>Default</string>
-        </dict>
-        <dict>
-            <key>CFBundleTypeRole</key>
-            <string>Editor</string>
-            <key>CFBundleTypeExtensions</key>
-            <array>
-                    <string>mesh</string>
-            </array>
-            <key>CFBundleTypeName</key>
-            <string>Polyhedral Mesh File</string>
-            <key>LSHandlerRank</key>
-            <string>Default</string>
-        </dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>plm</string>
+				<string>pm</string>
+				<string>mesh</string>
+			</array>
+			<key>CFBundleTypeName</key>
+			<string>Polyhedral Mesh File</string>
+			<key>LSHandlerRank</key>
+			<string>Default</string>
+		</dict>
 	</array>
 </dict>
 </plist>
