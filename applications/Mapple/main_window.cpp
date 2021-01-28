@@ -740,23 +740,27 @@ void MainWindow::onAbout()
 
 #if defined (ENV_32_BIT)
     title += QMessageBox::tr("<h3>Mapple (32-bit)</h3>");
-#elif defined (ENV_64_BIT)
-    title += QMessageBox::tr("<h3>Mapple (64-bit)</h3>");
 #else
-    title += QMessageBox::tr("<h3>Mapple</h3>");
+    title += QMessageBox::tr("<h3>Mapple (64-bit)</h3>");
 #endif
 
 #ifndef NDEBUG
-    title += QMessageBox::tr(" (Debug Version)");
+    title += QMessageBox::tr(" - Debug Version");
+#endif
+
+#if defined (ENV_32_BIT)
+    title += QMessageBox::tr("<h4>Version %1</h4>").arg(PROJECT_VERSION);
+#else
+    title += QMessageBox::tr("<h4>Version %1</h4>").arg(PROJECT_VERSION);
 #endif
 
     QString text = QMessageBox::tr(
-        "<p><h4> Build %1</h4></p>"
-        "<p>Mapple is software for processing and rendering point clouds, graphs, surface meshes, and polyhedral meshes.</p>"
-        "<p>Liangliang Nan<br>"
-        "<a href=\"mailto:liangliang.nan@gmail.com\">liangliang.nan@gmail.com</a><br>"
-        "<a href=\"https://3d.bk.tudelft.nl/liangliang/\">https://3d.bk.tudelft.nl/liangliang/</a></p>"
-        ).arg("20201226");
+            "<p>Mapple is software for processing and rendering 3D data (e.g., point clouds, graphs, surface meshes, "
+            "and polyhedral meshes.</p>"
+            "<p>Liangliang Nan<br>"
+            "<a href=\"mailto:liangliang.nan@gmail.com\">liangliang.nan@gmail.com</a><br>"
+            "<a href=\"https://3d.bk.tudelft.nl/liangliang/\">https://3d.bk.tudelft.nl/liangliang/</a></p>"
+    );
 
     //QMessageBox::about(this, title, text);
     QMessageBox::about(this, "About Mapple", title + text);

@@ -9,7 +9,7 @@ set (PROJECT_MAJOR 2)
 set (PROJECT_MINOR 4)
 set (PROJECT_PATCH 2)
 set (PROJECT_VERSION "${PROJECT_MAJOR}.${PROJECT_MINOR}.${PROJECT_PATCH}")
-
+add_definitions("-DPROJECT_VERSION=\"${PROJECT_VERSION}\"")
 
 ################################################################################
 
@@ -29,8 +29,10 @@ endif()
 #message(STATUS "Easy3d: I'am woking on ${EASY3D_OS_BITS}-bit ${CMAKE_SYSTEM_NAME}")
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     message(STATUS "Easy3D: I'am working on a 64-bit ${CMAKE_SYSTEM_NAME}")
+    add_definitions(-DENV_64_BIT)
 else()
     message(STATUS "Easy3D: I'am working on a 32-bit ${CMAKE_SYSTEM_NAME}")
+    add_definitions(-DENV_32_BIT)
 endif()
 
 ################################################################################
