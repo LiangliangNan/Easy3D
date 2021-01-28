@@ -11,9 +11,9 @@ if [ "$blacklisted" == "" ]; then
 fi
 
 # If the linuxdeployqt source is not available locally, generate the file anyway
-filename=$(readlink -f $(dirname "$0"))/linuxdeployqt/excludelist.h
+filename=$(readlink -f $(dirname "$0"))/excludelist.h
 if [ ! -e "$filename" ] ; then
-    filename=$(readlink -f $(dirname "$0"))/linuxdeployqt/excludelist.h
+    filename=$(readlink -f $(dirname "$0"))/excludelist.h
 fi
 
 # Overwrite existing source file
