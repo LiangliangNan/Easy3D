@@ -17,7 +17,7 @@ elseif(APPLE)
     set(FFMPEG_LIBRARIES "-L${FFMPEG_LIBDIR} -lavcodec -lavformat -lpostproc -lavdevice -lavresample -lswresample -lavfilter -lavutil")
     string(STRIP "${FFMPEG_LIBRARIES}" FFMPEG_LIBRARIES)
 
-elseif()  # Linux
+else()  # Linux
 
 #    sudo apt-get install libavcodec-dev
 #    sudo apt-get install libavformat-dev
