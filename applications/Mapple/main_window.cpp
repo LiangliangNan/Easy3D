@@ -738,25 +738,22 @@ void MainWindow::onAbout()
         "<p align=\"center\"><span style=\"font-style:italic;\">I'm good software, though I have defects.</span></p>"
         );
 
+    int bits = 64;
 #if defined (ENV_32_BIT)
-    title += QMessageBox::tr("<h3>Mapple (32-bit)</h3>");
-#else
-    title += QMessageBox::tr("<h3>Mapple (64-bit)</h3>");
+    bits = 32;
 #endif
 
 #ifndef NDEBUG
-    title += QMessageBox::tr(" - Debug Version");
+    title += QMessageBox::tr("<h3>Mapple (%1 bit) - Debug Version</h3>").arg(bits);
+#else
+    title += QMessageBox::tr("<h3>Mapple (%1 bit)</h3>").arg(bits);
 #endif
 
-#if defined (ENV_32_BIT)
     title += QMessageBox::tr("<h4>Version %1</h4>").arg(PROJECT_VERSION);
-#else
-    title += QMessageBox::tr("<h4>Version %1</h4>").arg(PROJECT_VERSION);
-#endif
 
     QString text = QMessageBox::tr(
             "<p>Mapple is software for processing and rendering 3D data (e.g., point clouds, graphs, surface meshes, "
-            "and polyhedral meshes.</p>"
+            "and polyhedral meshes), and more.</p>"
             "<p>Liangliang Nan<br>"
             "<a href=\"mailto:liangliang.nan@gmail.com\">liangliang.nan@gmail.com</a><br>"
             "<a href=\"https://3d.bk.tudelft.nl/liangliang/\">https://3d.bk.tudelft.nl/liangliang/</a></p>"
