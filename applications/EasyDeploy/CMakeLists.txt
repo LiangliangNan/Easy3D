@@ -30,10 +30,10 @@ else()
     set(CMAKE_AUTOMOC ON)
 
     # expose version data as compiler definition
-    add_definitions("-DLINUXDEPLOYQT_VERSION=\"${GIT_TAG_NAME}\"")
-    add_definitions("-DLINUXDEPLOYQT_GIT_COMMIT=\"${GIT_COMMIT}\"")
-    add_definitions("-DBUILD_DATE=\"${DATE}\"")
-    add_definitions("-DBUILD_NUMBER=\"${BUILD_NUMBER}\"")
+    add_definitions("-DLINUXDEPLOYQT_VERSION=\"2021-01-27\"")
+    add_definitions("-DLINUXDEPLOYQT_GIT_COMMIT=\"2021-01-27\"")
+    add_definitions("-DBUILD_DATE=\"2021-01-27\"")
+    add_definitions("-DBUILD_NUMBER=\"2021-01-27\"")
 
     # update excludelist
     message(STATUS "Updating excludelist...")
