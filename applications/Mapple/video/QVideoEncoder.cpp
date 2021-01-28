@@ -405,7 +405,7 @@ bool QVideoEncoder::convertImage_sws(const QImage &image, QString* errorString/*
 	}
 
 	int num_bytes = av_image_get_buffer_size(AV_PIX_FMT_BGRA, m_width, m_height, 1);
-	if (num_bytes != image.sizeInBytes())
+	if (num_bytes != image.byteCount())
 	{
 		if (errorString)
 			*errorString = "[SWS] Number of bytes mismatch";
