@@ -11,7 +11,7 @@ int main(int argc, char **argv)
     // QCoreApplication is necessary for using QString
     QCoreApplication app(argc, argv);
 
-#if 1
+#if 0
     argc = 3;
     argv[1] = "/Users/lnan/Projects/Easy3D/cmake-build-release/bin/Mapple.app";
     argv[2] = "-verbose=1";
