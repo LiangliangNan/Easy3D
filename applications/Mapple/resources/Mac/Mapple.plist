@@ -37,7 +37,7 @@
 	<key>LSRequiresCarbon</key>
 	<true/>
 	<key>NSHumanReadableCopyright</key>
-	<string>© Liangliang Nan (liangliang.nan@gmail.com)</string>
+	<string>Liangliang Nan (liangliang.nan@gmail.com)</string>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>

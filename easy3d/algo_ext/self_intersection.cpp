@@ -42,7 +42,7 @@ namespace easy3d {
 
 
     SelfIntersection::SelfIntersection()
-            : construct_intersection_(false), mesh_(nullptr) {}
+            : mesh_(nullptr), construct_intersection_(false) {}
 
 
     SelfIntersection::~SelfIntersection() {
