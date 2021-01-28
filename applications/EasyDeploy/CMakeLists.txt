@@ -38,7 +38,7 @@ else()
     # update excludelist
     message(STATUS "Updating excludelist...")
     execute_process(
-            COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/../generate-excludelist.sh
+            COMMAND bash ${CMAKE_CURRENT_LIST_DIR}/linuxdeployqt/generate-excludelist.sh
             OUTPUT_VARIABLE EXCLUDELIST
             TIMEOUT 10
             RESULT_VARIABLE EXCLUDELIST_RESULT
