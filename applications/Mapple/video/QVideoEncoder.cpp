@@ -120,8 +120,9 @@ bool QVideoEncoder::open(QString* errorString/*=0*/)
 	}
 
 	// find the output format
-	avformat_alloc_output_context2(&m_ff->formatContext, NULL, NULL, qPrintable(m_filename));
-	if (!m_ff->formatContext)
+    AVOutputFormat *format = av_guess_format("mp4", qPrintable(m_filename), NULL);
+    avformat_alloc_output_context2(&m_ff->formatContext, format, NULL, qPrintable(m_filename));
+    if (!m_ff->formatContext)
 	{
 		if (errorString)
 			*errorString = "Could not deduce output format from file extension: using MPEG";
