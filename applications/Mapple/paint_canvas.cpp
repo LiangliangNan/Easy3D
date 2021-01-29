@@ -1157,12 +1157,13 @@ void PaintCanvas::postDraw() {
         }
 
 #if 0   // draw frame rate text using Easy3D's built-in TextRenderer
-        texter_->draw(fpsString.toStdString(), offset, 50.0f * dpi_scaling(), 16, 1);
+        texter_->draw(fpsString.toStdString(), 20.0f * dpi_scaling(), 50.0f * dpi_scaling(), 16, 1);
 #else   // draw frame rate text using Qt.
         QPainter painter; easy3d_debug_log_gl_error;
         painter.begin(this);
         painter.setRenderHint(QPainter::HighQualityAntialiasing);
         painter.setRenderHint(QPainter::TextAntialiasing);
+        painter.setPen(Qt::black);
         painter.beginNativePainting(); easy3d_debug_log_gl_error;
         painter.drawText(20, 50, fpsString);
         painter.endNativePainting();
