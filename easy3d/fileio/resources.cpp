@@ -40,7 +40,7 @@ namespace easy3d {
                 // For macOS, if reached here, we may need to move "up" three times, because
                 // macOS puts the executable file in an application bundle, e.g.,
                 // "PolyFit.app/Contents/MacOS/PolyFit". Some IDEs may also put the 'exe' in
-                // Debug/Release subfolder, so we may to try four times up at most.
+                // Debug/Release subfolder, so we may try four times up at most.
                 parent = file_system::parent_directory(parent);
                 std::string dir = parent + "/resources";
                 if (file_system::is_directory(dir))
