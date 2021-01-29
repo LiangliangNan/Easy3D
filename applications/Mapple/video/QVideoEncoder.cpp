@@ -301,7 +301,7 @@ bool QVideoEncoder::close()
 	avio_close(m_ff->formatContext->pb);
 
 	// free the stream
-	av_free(m_ff->formatContext);
+	avformat_free_context(m_ff->formatContext);
 
 	m_isOpen = false;
 
