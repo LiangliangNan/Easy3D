@@ -14,17 +14,14 @@ if (NOT QT5_FOUND)
 endif ()
 
 
-find_package(FFMPEG QUIET)
+include(../../../cmake/FindFFMPEG.cmake)
 if (NOT FFMPEG_FOUND)
-    message(WARNING "${PROJECT_NAME} requires FFMPEG to generate video files for animations but FFMPEG was not found. "
+    message(WARNING "${PROJECT_NAME} requires FFMPEG to generate video files but FFMPEG was not found. "
             "Without FFMPEG, animations can only be recorded as a sequence of images. "
-            "To use FFMPEG, first set 'FFMPEG_DIR' to 'cmake/ffmpeg-config.cmake'. Then modify the 'ffmpeg_path' "
-            "variable in 'cmake/ffmpeg-config.cmake' to point to the folder in which FFMPEG was installed."
+            "To use FFMPEG, make sure FFMPEG exists on your system (install/build FFMPEG if necessary). "
+            "Then modify the search paths in 'FindFFMPEG.cmake' for 'include' and 'lib' directories."
             )
-else ()
-    add_definitions(-DHAS_FFMPEG)
-    message(STATUS "   FFMPEG_INCLUDE_DIRS ${FFMPEG_INCLUDE_DIRS}")
-    message(STATUS "   FFMPEG_LIBRARIES ${FFMPEG_LIBRARIES}")
+    return()
 endif ()
 
 
@@ -60,5 +57,4 @@ target_link_libraries(${PROJECT_NAME}
         PUBLIC
         Qt5::Gui
         ${FFMPEG_LIBRARIES}
-		swscale
         )

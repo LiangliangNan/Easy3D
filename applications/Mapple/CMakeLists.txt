@@ -15,27 +15,6 @@ if (NOT QT5_FOUND)
 endif ()
 
 
-find_package(FFMPEG QUIET)
-if (NOT FFMPEG_FOUND)
-    message(WARNING "${PROJECT_NAME} requires FFMPEG to generate video files for animations but FFMPEG was not found. "
-            "Without FFMPEG, animations can only be recorded as a sequence of images. "
-            "To use FFMPEG, first set 'FFMPEG_DIR' to 'cmake/ffmpeg-config.cmake'. Then modify the 'ffmpeg_path' "
-            "variable in 'cmake/ffmpeg-config.cmake' to point to the folder in which FFMPEG was installed."
-            )
-else ()
-    add_subdirectory(video)
-    add_definitions(-DHAS_FFMPEG)
-    message(STATUS "   FFMPEG_INCLUDE_DIRS ${FFMPEG_INCLUDE_DIRS}")
-    message(STATUS "   FFMPEG_LIBRARIES ${FFMPEG_LIBRARIES}")
-endif ()
-
-
-add_subdirectory(tools)
-
-
-# some algorithms may use OpenMP
-include(../../cmake/UseOpenMP.cmake)
-
 set(${PROJECT_NAME}_HEADERS
         main_window.h
         paint_canvas.h
@@ -137,7 +116,7 @@ set(${PROJECT_NAME}_RESOURCES
         mapple.qrc
         )
 
-if (MSVC)
+if (WIN32 OR MSVC)
     add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} ${${PROJECT_NAME}_RESOURCES})
     # if you want to get rid of the (system) console, use
     #	add_executable( ${PROJECT_NAME} WIN32 ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} ${${PROJECT_NAME}_RESOURCES} )
@@ -209,12 +188,23 @@ if (MSVC)
 endif ()
 
 target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL)
-target_link_libraries(${PROJECT_NAME} renderer algo tools)
 
-if (FFMPEG_FOUND)
-    target_link_libraries(${PROJECT_NAME} video)
-endif ()
+add_subdirectory(tools)
+target_link_libraries(${PROJECT_NAME} renderer algo tools)
 
 if (EASY3D_HAS_CGAL)
     target_link_libraries(${PROJECT_NAME} algo_ext)
+endif ()
+
+include(../../cmake/FindFFMPEG.cmake)
+if (FFMPEG_FOUND)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC HAS_FFMPEG)
+    add_subdirectory(video)
+    target_link_libraries(${PROJECT_NAME} video)
+else ()
+    message(WARNING "${PROJECT_NAME} requires FFMPEG to generate video files but FFMPEG was not found. "
+            "Without FFMPEG, animations can only be recorded as a sequence of images. "
+            "To use FFMPEG, make sure FFMPEG exists on your system (install/build FFMPEG if necessary). "
+            "Then modify the search paths in 'FindFFMPEG.cmake' for 'include' and 'lib' directories."
+            )
 endif ()
