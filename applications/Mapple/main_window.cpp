@@ -230,20 +230,18 @@ void MainWindow::send(el::Level level, const std::string &msg) {
 	switch (level) {
         case el::Level::Info:
             ui->listWidgetLog->addItem(QString::fromStdString("[INFO] " + msg));
-            ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::black);
+            // set to black will not work if it is dark mode
+//            ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::black);
             break;
         case el::Level::Warning:
             ui->listWidgetLog->addItem(QString::fromStdString("[WARNING] " + msg));
-            ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::blue);
+            ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::darkRed);
             break;
         case el::Level::Error:
             ui->listWidgetLog->addItem(QString::fromStdString("[ERROR] " + msg));
             ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::red);
             break;
-        case el::Level::Fatal:
-            ui->listWidgetLog->addItem(QString::fromStdString("[FATAL] " + msg));
-            ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::darkRed);
-            break;
+        case el::Level::Fatal:  // no need to handle (app will crash)
         default: break;
     }
 
