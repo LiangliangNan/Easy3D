@@ -21,7 +21,7 @@ public:
 		\param gop keyframe interval
 		\param fps frame rate
 	**/
-	QVideoEncoder(	QString filename,
+	QVideoEncoder(const QString& filename,
 					int width,
 					int height,
 					unsigned bitrate,

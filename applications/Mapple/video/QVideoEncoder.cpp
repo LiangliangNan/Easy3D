@@ -38,7 +38,7 @@ struct FFmpegStuffEnc
 	{}
 };
 
-QVideoEncoder::QVideoEncoder(QString filename, int width, int height, unsigned bitrate, int gop, int fps)
+QVideoEncoder::QVideoEncoder(const QString& filename, int width, int height, unsigned bitrate, int gop, int fps)
 	: m_filename(filename)
 	, m_width(width)
 	, m_height(height)
