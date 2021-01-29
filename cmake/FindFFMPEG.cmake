@@ -66,21 +66,17 @@ if (NOT FFMPEG_FOUND)
     # setup header file directories
     set(FFMPEG_INCLUDE_DIRS ${FFMPEG_INCLUDE_DIR})
 
-    find_path(FFMPEG_LIBRARY_DIR
-            avcodec avdevice avfilter avformat avresample swscale swresample avutil postproc
-            PATHS ${SEARCH_PATHS_FOR_HEADERS})
-
-    # setup libraries files
     # the libs may be installed in different places?
     find_library(FFMPEG_LIBRARY_avcodec NAMES avcodec PATHS ${SEARCH_PATHS_FOR_LIBRARIES})
-    find_library(FFMPEG_LIBRARY_avdevice NAMES avdevice PATHS ${SEARCH_PATHS_FOR_LIBRARIES})
-    find_library(FFMPEG_LIBRARY_avfilter NAMES avfilter PATHS ${SEARCH_PATHS_FOR_LIBRARIES})
+    find_library(FFMPEG_LIBRARY_avdevice NAMES avdevice libavdevice.so.57 PATHS ${SEARCH_PATHS_FOR_LIBRARIES})
+    find_library(FFMPEG_LIBRARY_avfilter NAMES avfilter libavfilter.so.6 PATHS ${SEARCH_PATHS_FOR_LIBRARIES})
     find_library(FFMPEG_LIBRARY_avformat NAMES avformat PATHS ${SEARCH_PATHS_FOR_LIBRARIES})
-    find_library(FFMPEG_LIBRARY_avresample NAMES avresample PATHS ${SEARCH_PATHS_FOR_LIBRARIES})
+    find_library(FFMPEG_LIBRARY_avresample NAMES avresample libavresample.so.3 PATHS ${SEARCH_PATHS_FOR_LIBRARIES})
     find_library(FFMPEG_LIBRARY_swscale NAMES swscale PATHS ${SEARCH_PATHS_FOR_LIBRARIES})
     find_library(FFMPEG_LIBRARY_swresample NAMES swresample PATHS ${SEARCH_PATHS_FOR_LIBRARIES})
     find_library(FFMPEG_LIBRARY_avutil NAMES avutil PATHS ${SEARCH_PATHS_FOR_LIBRARIES})
-    find_library(FFMPEG_LIBRARY_postproc NAMES postproc PATHS ${SEARCH_PATHS_FOR_LIBRARIES})
+    find_library(FFMPEG_LIBRARY_postproc NAMES postproc libpostproc.so.54 PATHS ${SEARCH_PATHS_FOR_LIBRARIES})
+
     # setup libraries files
     set(FFMPEG_LIBRARIES
             ${FFMPEG_LIBRARY_avcodec} ${FFMPEG_LIBRARY_avdevice} ${FFMPEG_LIBRARY_avfilter} ${FFMPEG_LIBRARY_avformat}
