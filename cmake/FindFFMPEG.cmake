@@ -41,10 +41,12 @@
 #           target_link_libraries(${PROJECT_NAME} PRIVATE ${FFMPEG_LIBRARIES})
 #       endif()
 #
-#   # On Linux, use the following command to install FFMPEG:
-#    sudo apt-get install libavcodec-dev
-#    sudo apt-get install libavformat-dev
-#    sudo apt-get install libswscale-dev
+#   # On macOS, use the following command to install FFMPEG:
+#       brew install ffmpeg
+#   # On Linux, use:
+#       sudo apt-get install libavcodec-dev
+#       sudo apt-get install libavformat-dev
+#       sudo apt-get install libswscale-dev
 # ------------------------------------------------------------------------------
 
 
