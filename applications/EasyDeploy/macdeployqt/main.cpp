@@ -77,15 +77,12 @@ int deploy(const std::vector<QString>& argv)
         return 1;
     }
 
-    // Liangliang: QDir::cleanPath() sometimes gives an nonsense path!!!
-    //             So I simply assume the provided path is valid.
-//    appBundlePath = QDir::cleanPath(appBundlePath);
-//    if (QDir().exists(appBundlePath) == false) {
-//        qDebug() << "Error: Could not find app bundle" << appBundlePath;
-//        return 1;
-//    }
-    appBundlePath = QFileInfo(appBundlePath).absoluteFilePath();
-    qDebug() << "app bundle path:" << appBundlePath;
+    appBundlePath = QDir::cleanPath(appBundlePath);
+
+    if (QDir().exists(appBundlePath) == false) {
+        qDebug() << "Error: Could not find app bundle" << appBundlePath;
+        return 1;
+    }
 
     bool plugins = true;
     bool dmg = false;
@@ -233,7 +230,9 @@ int deploy(const std::vector<QString>& argv)
         // Update deploymentInfo.deployedFrameworks - the QML imports
         // may have brought in extra frameworks as dependencies.
         deploymentInfo.deployedFrameworks += findAppFrameworkNames(appBundlePath);
-        deploymentInfo.deployedFrameworks = deploymentInfo.deployedFrameworks.toSet().toList();
+        deploymentInfo.deployedFrameworks =
+            QSet<QString>(deploymentInfo.deployedFrameworks.begin(),
+                          deploymentInfo.deployedFrameworks.end()).values();
     }
 
     if (plugins && !deploymentInfo.qtPath.isEmpty()) {

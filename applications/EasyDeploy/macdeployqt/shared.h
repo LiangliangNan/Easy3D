@@ -111,9 +111,6 @@ public:
 
 inline QDebug operator<<(QDebug debug, const ApplicationBundleInfo &info);
 
-void changeQtFrameworks(const QString appPath, const QString &qtPath, bool useDebugLibs);
-void changeQtFrameworks(const QList<FrameworkInfo> frameworks, const QStringList &binaryPaths, const QString &qtPath);
-
 OtoolInfo findDependencyInfo(const QString &binaryPath);
 FrameworkInfo parseOtoolLibraryLine(const QString &line, const QString &appBundlePath, const QSet<QString> &rpaths, bool useDebugLibs);
 QString findAppBinary(const QString &appBundlePath);

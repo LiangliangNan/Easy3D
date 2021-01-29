@@ -6,12 +6,13 @@
 
 int deploy(const std::vector<QString>& argv);
 
+
 int main(int argc, char **argv)
 {
     // QCoreApplication is necessary for using QString
     QCoreApplication app(argc, argv);
 
-#if 0
+#if 1
     argc = 3;
     argv[1] = "/Users/lnan/Projects/Easy3D/cmake-build-release/bin/Mapple.app";
     argv[2] = "-verbose=1";
@@ -22,11 +23,11 @@ int main(int argc, char **argv)
         arguments[i] =  QString::fromLocal8Bit(argv[i]);
 
     if (argc < 2) {
-        qInfo() << "Usage: \n\tEasyDeploy <executable or bundle file> [options]";
-        qInfo() << "Options:";
-        qInfo() << "   -verbose=<0-3> :  0 = no output, 1 = error/warning (default), 2 = normal, 3 = debug";
-        qInfo() << "   -dmg           :  Create a .dmg disk image [macOS only]";
-        qInfo() << "   -appimage      :  Create an .AppImage (implies -bundle-non-qt-libs) [Linux only]";
+        qDebug() << "Usage: \n\tEasyDeploy <executable or bundle file> [options]";
+        qDebug() << "Options:";
+        qDebug() << "   -verbose=<0-3> :  0 = no output, 1 = error/warning (default), 2 = normal, 3 = debug";
+        qDebug() << "   -dmg           :  Create a .dmg disk image [macOS only]";
+        qDebug() << "   -appimage      :  Create an .AppImage (implies -bundle-non-qt-libs) [Linux only]";
         return EXIT_SUCCESS;
     }
 
@@ -35,7 +36,7 @@ int main(int argc, char **argv)
     QFileInfo app_info(argv[1]);
     QString app_name = app_info.absoluteFilePath();
     QString app_dir = app_info.absolutePath();
-    qInfo() << "application name:" << app_name;
+    qDebug() << "Application name:" << app_name;
 #ifdef __APPLE__
     if (!app_info.isBundle()) {
         qWarning() << "argv[1] is not a valid application bundle file\n\targv[1] =" << argv[1];
@@ -47,28 +48,33 @@ int main(int argc, char **argv)
     QFileInfo deploy_info(deploy_dir);
     QDir dir(app_dir);
     if (deploy_info.isFile()) {
-        qInfo() << deploy_info.baseName() << "is a file, deleting it...";
+        qDebug() << deploy_dir << "is a file, deleting it...";
         dir.remove(deploy_dir);
     }
     else if (deploy_info.isDir()) {
-        qInfo() << deploy_info.baseName() << "directory already exists, deleting it...";
+        qDebug() << "Directory" << deploy_dir << "already exists, deleting it...";
         dir.cd(deploy_dir);
         dir.removeRecursively();
         dir.cdUp();
         dir.remove(deploy_dir);
     }
 
-    qInfo() << "creating directory:" << deploy_dir;
+    qDebug() << "Creating directory:" << deploy_dir;
     dir.mkdir(deploy_dir);
 
 #if (defined(_WIN32) || defined(_WIN64) || defined(__APPLE__))
     QString deployed_app_name = deploy_dir + "/" + app_info.fileName();
-    qInfo() << "copying" << app_info.fileName() << "into" << deploy_dir;
+    qDebug() << "Copying" << app_info.fileName() << "into" << deploy_dir;
     QFile::copy(app_info.absoluteFilePath(), deployed_app_name);
 
     arguments[1] = deployed_app_name;
-    qInfo() << "deploying" << deployed_app_name;
-    return deploy(arguments);
+    qDebug() << "Deploying" << deployed_app_name << "...";
+    int result = deploy(arguments);
+    if (result == 0)
+        qDebug() << "Done!!!";
+    else
+        qDebug() << "Error(s) occurred with code " << result;
+    return result;
 #elif (defined(__linux) || defined(__linux__))
     dir.cd(deploy_dir);
     const QString usr_dir = deploy_dir + "/usr";
@@ -116,10 +122,12 @@ int main(int argc, char **argv)
     arguments[1] = desktopfile.fileName();
     int result = deploy(arguments);
     if (result == 0) {
-        qInfo() << "Please replace the following files with with your actual icon image:\n"
+        qDebug() << "Please replace the following files with with your actual icon image:\n"
                 << "\t" << deploy_dir + "/" + app_info.baseName() + ".png" << "\n"
                 << "\t" << iconfile.fileName();
     }
+    else
+        qDebug() << "Error(s) occurred with code " << result;
     return result;
 #endif
 }
