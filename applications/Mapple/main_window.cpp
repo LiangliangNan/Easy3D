@@ -235,7 +235,7 @@ void MainWindow::send(el::Level level, const std::string &msg) {
             break;
         case el::Level::Warning:
             ui->listWidgetLog->addItem(QString::fromStdString("[WARNING] " + msg));
-            ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::darkRed);
+            ui->listWidgetLog->item(ui->listWidgetLog->count() - 1)->setForeground(Qt::magenta);
             break;
         case el::Level::Error:
             ui->listWidgetLog->addItem(QString::fromStdString("[ERROR] " + msg));
