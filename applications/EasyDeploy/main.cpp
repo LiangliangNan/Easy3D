@@ -80,8 +80,18 @@ int main(int argc, char **argv)
 
     arguments[1] = deployed_app_name;
 #elif (defined(__linux) || defined(__linux__))
+    bool appimage = false;
+    for (int i = 2; i < argc; ++i) {
+        if (std::string(argv[i]) == "-appimage") {
+            appimage = true;
+            qDebug() << "The goal is to create an AppImage file for" << app_info.fileName();
+        }
+    }
+
     dir.setCurrent(deploy_dir); // the AppImage (if requested) will be generated here
-    deploy_dir += "/" + app_info.baseName();
+    if (appimage)
+        deploy_dir += "/" + app_info.baseName();
+
     dir.mkdir(deploy_dir);
     dir.cd(deploy_dir);
     const QString usr_dir = deploy_dir + "/usr";
@@ -146,7 +156,8 @@ int main(int argc, char **argv)
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
 
-    arguments[1] = desktopfile.fileName();
+    if (appimage)
+        arguments[1] = desktopfile.fileName();
 #endif
 
     qDebug() << "Deploying" << app_info.fileName() << "...";
@@ -157,7 +168,6 @@ int main(int argc, char **argv)
         qDebug() << "Error(s) occurred with code " << result;
     return result;
 }
-
 
 
 void usage() {
@@ -199,50 +209,49 @@ void usage() {
     qDebug() << "See the \"Deploying Applications on OS X\" topic in the";
     qDebug() << "documentation for more information about deployment on OS X.";
 #elif (defined(__linux) || defined(__linux__))
+    qDebug() << "Usage: EasyDeploy <app-binary> [options]";
     qDebug() << "";
-        qDebug() << "Usage: EasyDeploy <app-binary> [options]";
-        qDebug() << "";
-        qDebug() << "Options:";
-        qDebug() << "   -always-overwrite        : Copy files even if the target file exists.";
-        qDebug() << "   -appimage                : Create an AppImage (implies -bundle-non-qt-libs).";
-        qDebug() << "   -bundle-non-qt-libs      : Also bundle non-core, non-Qt libraries.";
-        qDebug() << "   -exclude-libs=<list>     : List of libraries which should be excluded,";
-        qDebug() << "                              separated by comma.";
-        qDebug() << "   -ignore-glob=<glob>      : Glob pattern relative to appdir to ignore when";
-        qDebug() << "                              searching for libraries.";
-        qDebug() << "   -executable=<path>       : Let the given executable use the deployed libraries";
-        qDebug() << "                              too";
-        qDebug() << "   -extra-plugins=<list>    : List of extra plugins which should be deployed,";
-        qDebug() << "                              separated by comma.";
-        qDebug() << "   -no-copy-copyright-files : Skip deployment of copyright files.";
-        qDebug() << "   -no-plugins              : Skip plugin deployment.";
-        qDebug() << "   -no-strip                : Don't run 'strip' on the binaries.";
-        qDebug() << "   -no-translations         : Skip deployment of translations.";
-        qDebug() << "   -qmake=<path>            : The qmake executable to use.";
-        qDebug() << "   -qmldir=<path>           : Scan for QML imports in the given path.";
-        qDebug() << "   -qmlimport=<path>        : Add the given path to QML module search locations.";
-        qDebug() << "   -show-exclude-libs       : Print exclude libraries list.";
-        qDebug() << "   -verbose=<0-3>           : 0 = no output, 1 = error/warning (default),";
-        qDebug() << "                              2 = normal, 3 = debug.";
-        qDebug() << "   -updateinformation=<update string>        : Embed update information STRING; if zsyncmake is installed, generate zsync file";
-        qDebug() << "   -version                 : Print version statement and exit.";
-        qDebug() << "";
-        qDebug() << "EasyDeploy takes an application as input and makes it";
-        qDebug() << "self-contained by copying in the Qt libraries and plugins that";
-        qDebug() << "the application uses.";
-        qDebug() << "";
-        qDebug() << "By default it deploys the Qt instance that qmake on the $PATH points to.";
-        qDebug() << "The '-qmake' option can be used to point to the qmake executable";
-        qDebug() << "to be used instead.";
-        qDebug() << "";
-        qDebug() << "Plugins related to a Qt library are copied in with the library.";
-        /* TODO: To be implemented
-        qDebug() << "The accessibility, image formats, and text codec";
-        qDebug() << "plugins are always copied, unless \"-no-plugins\" is specified.";
-        */
-        qDebug() << "";
-        qDebug() << "See the \"Deploying Applications on Linux\" topic in the";
-        qDebug() << "documentation for more information about deployment on Linux.";
+    qDebug() << "Options:";
+    qDebug() << "   -always-overwrite        : Copy files even if the target file exists.";
+    qDebug() << "   -appimage                : Create an AppImage (implies -bundle-non-qt-libs).";
+    qDebug() << "   -bundle-non-qt-libs      : Also bundle non-core, non-Qt libraries.";
+    qDebug() << "   -exclude-libs=<list>     : List of libraries which should be excluded,";
+    qDebug() << "                              separated by comma.";
+    qDebug() << "   -ignore-glob=<glob>      : Glob pattern relative to appdir to ignore when";
+    qDebug() << "                              searching for libraries.";
+    qDebug() << "   -executable=<path>       : Let the given executable use the deployed libraries";
+    qDebug() << "                              too";
+    qDebug() << "   -extra-plugins=<list>    : List of extra plugins which should be deployed,";
+    qDebug() << "                              separated by comma.";
+    qDebug() << "   -no-copy-copyright-files : Skip deployment of copyright files.";
+    qDebug() << "   -no-plugins              : Skip plugin deployment.";
+    qDebug() << "   -no-strip                : Don't run 'strip' on the binaries.";
+    qDebug() << "   -no-translations         : Skip deployment of translations.";
+    qDebug() << "   -qmake=<path>            : The qmake executable to use.";
+    qDebug() << "   -qmldir=<path>           : Scan for QML imports in the given path.";
+    qDebug() << "   -qmlimport=<path>        : Add the given path to QML module search locations.";
+    qDebug() << "   -show-exclude-libs       : Print exclude libraries list.";
+    qDebug() << "   -verbose=<0-3>           : 0 = no output, 1 = error/warning (default),";
+    qDebug() << "                              2 = normal, 3 = debug.";
+    qDebug() << "   -updateinformation=<update string>        : Embed update information STRING; if zsyncmake is installed, generate zsync file";
+    qDebug() << "   -version                 : Print version statement and exit.";
+    qDebug() << "";
+    qDebug() << "EasyDeploy takes an application as input and makes it";
+    qDebug() << "self-contained by copying in the Qt libraries and plugins that";
+    qDebug() << "the application uses.";
+    qDebug() << "";
+    qDebug() << "By default it deploys the Qt instance that qmake on the $PATH points to.";
+    qDebug() << "The '-qmake' option can be used to point to the qmake executable";
+    qDebug() << "to be used instead.";
+    qDebug() << "";
+    qDebug() << "Plugins related to a Qt library are copied in with the library.";
+    /* TODO: To be implemented
+    qDebug() << "The accessibility, image formats, and text codec";
+    qDebug() << "plugins are always copied, unless \"-no-plugins\" is specified.";
+    */
+    qDebug() << "";
+    qDebug() << "See the \"Deploying Applications on Linux\" topic in the";
+    qDebug() << "documentation for more information about deployment on Linux.";
 #endif
 }
 
