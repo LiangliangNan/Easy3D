@@ -45,6 +45,7 @@ int main(int argc, char **argv)
 #endif
 
     QString deploy_dir = app_dir + "/deploy";
+    const QString output_dir = deploy_dir;
     QFileInfo deploy_info(deploy_dir);
     QDir dir(app_dir);
     if (deploy_info.isFile()) {
@@ -139,7 +140,7 @@ int main(int argc, char **argv)
     qDebug() << "Deploying" << app_info.fileName() << "...";
     int result = deploy(arguments);
     if (result == 0)
-        qDebug() << "Done! The deployed application is located at" << deploy_dir;
+        qDebug() << "Done! The deployed application is located at" << output_dir;
     else
         qDebug() << "Error(s) occurred with code " << result;
     return result;
