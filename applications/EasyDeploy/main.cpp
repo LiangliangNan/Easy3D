@@ -105,7 +105,7 @@ int main(int argc, char **argv)
     contents += "Comment=The best Qt Application Ever\n";
     contents += "Exec=" +  app_info.baseName() + "\n";
     contents += "Icon=" +  app_info.baseName() + "\n";
-    contents += "Categories=Office";
+    contents += "Categories=Development;Office;";
     desktopfile.write(contents.toStdString().c_str());
     desktopfile.close();
     dir.cdUp();
