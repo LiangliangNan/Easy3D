@@ -112,12 +112,14 @@ int main(int argc, char **argv)
     dir.mkdir(apps_dir);
     dir.cd(apps_dir);
 
-    const QString icon_file = apps_dir + "/" + app_info.baseName() + ".png";
-    QFileInfo icon_info(icon_file);
-    while (!icon_info.isFile()) {
-        qWarning() << "IMPORTANT: An icon image with a file name" << icon_info.fileName()
-                   << "is necessary for your application."
-                   << "\n  Put your icon image as" << "\n\t" << icon_file
+    /* Check if there is already an acceptable icon file */
+    const QString icon_base = apps_dir + "/" + app_info.baseName();
+    while (!QFileInfo(icon_base + ".png").exists() &&
+           !QFileInfo(icon_base + ".svg").exists() &&
+           !QFileInfo(icon_base + ".xpm").exists())
+    {
+        qWarning() << "IMPORTANT: An icon image with a file name" << app_info.baseName() + ".<png|svg|xpm> is required."
+                   << "\n  Put your icon image in the following directory" << "\n\t" << apps_dir
                    << "\n  and then press 'Enter' to continue";
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
