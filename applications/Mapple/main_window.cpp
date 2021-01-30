@@ -252,7 +252,7 @@ void MainWindow::send(el::Level level, const std::string &msg) {
 void MainWindow::createStatusBar()
 {
     labelStatusInfo_ = new QLabel("Ready", this);
-    labelStatusInfo_->setFixedWidth(ui->dockWidgetRendering->width());
+    labelStatusInfo_->setFixedWidth(static_cast<int>(ui->dockWidgetRendering->width() * 0.7f));
     labelStatusInfo_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     statusBar()->addWidget(labelStatusInfo_);
 
