@@ -58,6 +58,9 @@
     <addaction name="actionShowFrameRate"/>
     <addaction name="actionShowAxes"/>
     <addaction name="separator"/>
+    <addaction name="actionShowCameraPath"/>
+    <addaction name="actionShowKeyframeCameras"/>
+    <addaction name="separator"/>
     <addaction name="actionSetBackgroundColor"/>
     <addaction name="separator"/>
     <addaction name="actionSettings"/>
@@ -213,10 +216,8 @@
     <addaction name="actionImportCameraPath"/>
     <addaction name="actionExportCameraPath"/>
     <addaction name="separator"/>
-    <addaction name="actionShowCameras"/>
-    <addaction name="actionShowCameraPath"/>
-    <addaction name="separator"/>
     <addaction name="actionAnimation"/>
+    <addaction name="separator"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
@@ -1147,12 +1148,12 @@
     <string>Export camera path</string>
    </property>
   </action>
-  <action name="actionShowCameras">
+  <action name="actionShowKeyframeCameras">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Show cameras</string>
+    <string>Show keyframe cameras</string>
    </property>
   </action>
   <action name="actionShowCameraPath">
@@ -1160,7 +1161,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Show path</string>
+    <string>Show camera path</string>
    </property>
   </action>
  </widget>

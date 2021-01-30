@@ -104,7 +104,7 @@ public slots:
     void importCameraPath();
     void exportCameraPath();
     void setShowCameraPath(bool);
-    void setShowCameras(bool);
+    void setShowKeyframeCameras(bool);
     void animation();
 
     // property

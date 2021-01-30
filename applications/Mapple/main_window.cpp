@@ -258,7 +258,7 @@ void MainWindow::createStatusBar()
     statusBar()->addWidget(labelStatusInfo_);
 
     labelPointUnderMouse_ = new QLabel(this);
-    labelPointUnderMouse_->setFixedWidth(400);
+    labelPointUnderMouse_->setFixedWidth(300);
     labelPointUnderMouse_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     statusBar()->addWidget(labelPointUnderMouse_);
 
@@ -874,6 +874,9 @@ void MainWindow::createActionsForViewMenu() {
     connect(ui->actionShowFrameRate, SIGNAL(toggled(bool)), viewer_, SLOT(showFrameRate(bool)));
     connect(ui->actionShowAxes, SIGNAL(toggled(bool)), viewer_, SLOT(showAxes(bool)));
 
+    connect(ui->actionShowCameraPath, SIGNAL(toggled(bool)), this, SLOT(setShowCameraPath(bool)));
+    connect(ui->actionShowKeyframeCameras, SIGNAL(toggled(bool)), this, SLOT(setShowKeyframeCameras(bool)));
+
     QAction* actionToggleDockWidgetRendering = ui->dockWidgetRendering->toggleViewAction();
     actionToggleDockWidgetRendering->setText("Rendering Panel");
     ui->menuView->addAction(actionToggleDockWidgetRendering);
@@ -903,8 +906,6 @@ void MainWindow::createActionsForCameraMenu() {
 
     connect(ui->actionImportCameraPath, SIGNAL(triggered()), this, SLOT(importCameraPath()));
     connect(ui->actionExportCameraPath, SIGNAL(triggered()), this, SLOT(exportCameraPath()));
-    connect(ui->actionShowCameraPath, SIGNAL(toggled(bool)), this, SLOT(setShowCameraPath(bool)));
-    connect(ui->actionShowCameras, SIGNAL(toggled(bool)), this, SLOT(setShowCameras(bool)));
     connect(ui->actionAnimation, SIGNAL(triggered()), this, SLOT(animation()));
 }
 
@@ -2061,7 +2062,7 @@ void MainWindow::setShowCameraPath(bool b) {
 }
 
 
-void MainWindow::setShowCameras(bool b) {
+void MainWindow::setShowKeyframeCameras(bool b) {
     viewer_->walkThrough()->set_cameras_visible(b);
     viewer_->adjustSceneRadius();
     viewer_->update();
