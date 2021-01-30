@@ -112,7 +112,7 @@ int main(int argc, char **argv)
     const QString icons_dir = share_dir + "/icons";
     dir.mkdir(icons_dir);
     dir.cd(icons_dir);
-    const QString theme_dir = icons_dir + "/highcolor";
+    const QString theme_dir = icons_dir + "/hicolor";
     dir.mkdir(theme_dir);
     dir.cd(theme_dir);
     const QString resolution_dir = theme_dir + "/256x256";
