@@ -121,7 +121,7 @@ int main(int argc, char **argv)
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
 
-    const QString resources_dir = share_dir + "/resources";
+    const QString resources_dir = usr_dir + "/resources";
     qWarning() << "IMPORTANT: Do you have any resources necessary for your application [Y/n]?";
     char yes_no;
     std::cin >> yes_no;
