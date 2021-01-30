@@ -46,6 +46,8 @@ int main(int argc, char **argv)
 
     QString deploy_dir = app_dir + "/deploy";
     const QString output_dir = deploy_dir;
+    qDebug() << "Deploy directory:" << output_dir;
+
     QFileInfo deploy_info(deploy_dir);
     QDir dir(app_dir);
     if (deploy_info.isFile()) {
@@ -58,10 +60,18 @@ int main(int argc, char **argv)
         dir.removeRecursively();
         dir.cdUp();
         dir.remove(deploy_dir);
+        if (deploy_info.exists()) {
+            qWarning() << "Failed deleting the existing deploy directory";
+            return EXIT_FAILURE;
+        }
     }
 
     qDebug() << "Creating directory:" << deploy_dir;
     dir.mkdir(deploy_dir);
+    if (!deploy_info.exists()) {
+        qWarning() << "Failed creating deploy directory";
+        return EXIT_FAILURE;
+    }
 
 #if (defined(_WIN32) || defined(_WIN64) || defined(__APPLE__))
     QString deployed_app_name = deploy_dir + "/" + app_info.fileName();
@@ -118,7 +128,7 @@ int main(int argc, char **argv)
            !QFileInfo(icon_base + ".svg").exists() &&
            !QFileInfo(icon_base + ".xpm").exists())
     {
-        qWarning() << "IMPORTANT: An icon image with a file name" << app_info.baseName() + ".<png|svg|xpm> is required."
+        qWarning() << "IMPORTANT: An icon image with a file name" << app_info.baseName() + ".<png|svg|xpm>" << "is required"
                    << "\n  Put your icon image in the following directory" << "\n\t" << apps_dir
                    << "\n  and then press 'Enter' to continue";
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
