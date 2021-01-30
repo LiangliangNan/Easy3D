@@ -83,14 +83,19 @@ int main(int argc, char **argv)
         }
     }
 
+    dir.setCurrent(deploy_dir); // the AppImage (if requested) will be generated here
     if (appimage) {
-        dir.setCurrent(deploy_dir); // the AppImage (if requested) will be generated here
         deploy_dir += "/" + app_info.baseName();
         dir.mkdir(deploy_dir);
         if (!QFileInfo(deploy_dir).isDir()) {
             qWarning() << "Failed creating directory" << deploy_dir;
             return EXIT_FAILURE;
         }
+    }
+    else {
+        QString deployed_app_name = deploy_dir + "/" + app_info.fileName();
+        qDebug() << "Copying" << app_info.fileName() << "into" << deploy_dir;
+        QFile::copy(app_info.absoluteFilePath(), deployed_app_name);
     }
 
     dir.cd(deploy_dir);
