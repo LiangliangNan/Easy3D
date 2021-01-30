@@ -23,8 +23,8 @@ int main(int argc, char **argv)
 #endif
 
     std::vector<QString> arguments(argc);
-    for (int i=0; i<argc; ++i)
-        arguments[i] =  QString::fromLocal8Bit(argv[i]);
+    for (int i = 0; i < argc; ++i)
+        arguments[i] = QString::fromLocal8Bit(argv[i]);
 
     if (argc < 2) {
         usage();
@@ -53,12 +53,8 @@ int main(int argc, char **argv)
     if (deploy_info.isFile()) {
         qDebug() << deploy_dir << "is a file, deleting it...";
         dir.remove(deploy_dir);
-    }
-    else if (deploy_info.isDir()) {
-        dir.cd(deploy_dir);
-        dir.removeRecursively();
-        dir.cdUp();
-        dir.remove(deploy_dir);
+    } else if (deploy_info.isDir()) {
+        QDir(deploy_dir).removeRecursively();
         if (QFileInfo(deploy_dir).isDir()) {
             qDebug() << "Deploy directory" << deploy_dir << "already exists, but EasyDeploy failed to delete it";
             return EXIT_FAILURE;
@@ -69,8 +65,7 @@ int main(int argc, char **argv)
     if (!QFileInfo(deploy_dir).isDir()) {
         qWarning() << "Failed creating deploy directory";
         return EXIT_FAILURE;
-    }
-    else
+    } else
         qDebug() << "Successfully created deploy directory" << deploy_dir;
 
 #if (defined(_WIN32) || defined(_WIN64) || defined(__APPLE__))
@@ -89,10 +84,19 @@ int main(int argc, char **argv)
     }
 
     dir.setCurrent(deploy_dir); // the AppImage (if requested) will be generated here
-    if (appimage)
+    if (appimage) {
         deploy_dir += "/" + app_info.baseName();
+        dir.mkdir(deploy_dir);
+        if (!QFileInfo(deploy_dir).isDir()) {
+            qWarning() << "Failed creating directory" << deploy_dir;
+            return EXIT_FAILURE;
+        }
+    }
+    else {
+        qDebug() << "Copying" << app_info.fileName() << "into" << deploy_dir;
+        QFile::copy(app_info.absoluteFilePath(), deployed_app_name);
+    }
 
-    dir.mkdir(deploy_dir);
     dir.cd(deploy_dir);
     const QString usr_dir = deploy_dir + "/usr";
     dir.mkdir(usr_dir);
