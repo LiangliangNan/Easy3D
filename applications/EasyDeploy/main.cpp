@@ -103,7 +103,7 @@ int main(int argc, char **argv)
     contents += "Version=1.0\n";
     contents += "Type=Application\n";
     contents += "Name=" + app_info.baseName() + "\n";
-    contents += "Comment=The best Qt Application Ever\n";
+    contents += "Comment=Deployed by EasyDeploy (liangliang.nan@gmail.com)\n";
     contents += "Exec=" +  app_info.baseName() + "\n";
     contents += "Icon=" +  app_info.baseName() + "\n";
     contents += "Categories=Development;";
