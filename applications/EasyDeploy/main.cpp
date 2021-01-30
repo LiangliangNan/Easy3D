@@ -68,6 +68,7 @@ int main(int argc, char **argv)
 
     arguments[1] = deployed_app_name;
 #elif (defined(__linux) || defined(__linux__))
+    dir.setCurrent(deploy_dir); // the AppImage (if requested) will be generated here
     deploy_dir += "/" + app_info.baseName();
     dir.mkdir(deploy_dir);
     dir.cd(deploy_dir);
@@ -125,14 +126,12 @@ int main(int argc, char **argv)
     std::cin >> yes_no;
     if (yes_no == 'Y' || yes_no == 'y') {
         dir.mkdir(resources_dir);
-        qWarning() << "  Put all your resources in:" << "\n\t" << resources_dir
-                   << "\n  and then press 'Enter' to continue";
+        qWarning() << "  Put all your resources in:" << "\n\t" << resources_dir << "\n"
+                   << "  and then press 'Enter' to continue";
         std::cin.ignore();
     }
 
     arguments[1] = desktopfile.fileName();
-    dir.setCurrent(deploy_dir);
-    
 #endif
 
     qDebug() << "Deploying" << app_info.fileName() << "...";
