@@ -86,8 +86,6 @@ int main(int argc, char **argv)
     dir.cd(deploy_dir);
     const QString usr_dir = deploy_dir + "/usr";
     dir.mkdir(usr_dir);
-    if (!appimage)
-        dir.setCurrent(usr_dir);
     dir.cd(usr_dir);
     const QString bin_dir = usr_dir + "/bin";
     dir.mkdir(bin_dir);
