@@ -62,7 +62,6 @@
 #include <easy3d/fileio/poly_mesh_io.h>
 #include <easy3d/fileio/ply_reader_writer.h>
 #include <easy3d/fileio/point_cloud_io_ptx.h>
-#include <easy3d/fileio/resources.h>
 #include <easy3d/algo/point_cloud_normals.h>
 #include <easy3d/algo/surface_mesh_components.h>
 #include <easy3d/algo/surface_mesh_topology.h>
@@ -298,7 +297,7 @@ void MainWindow::createStatusBar()
     progress_bar_ = new QProgressBar(this);
     progress_bar_->setVisible(false);
     progress_bar_->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-    progress_bar_->setMinimumWidth(ui->dockWidgetModels->sizeHint().width());
+    progress_bar_->setFixedWidth(ui->dockWidgetModels->width());
     statusBar()->addPermanentWidget(progress_bar_);
 
     //////////////////////////////////////////////////////////////////////////
