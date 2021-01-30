@@ -147,6 +147,11 @@ int main(int argc, char **argv)
     }
 
     arguments[1] = desktopfile.fileName();
+
+    // Adding icon and icon theme support
+    // To enable icon and icon theme support you must add iconengines as an extra Qt plugin. In order for your
+    // application to locate the system theme icons, the libqgtk3.so platform theme must also be added:
+    arguments.push_back(QString("-extra-plugins=iconengines,platformthemes/libqgtk3.so"));
 #endif
 
     qDebug() << "Deploying" << app_info.fileName() << "...";
