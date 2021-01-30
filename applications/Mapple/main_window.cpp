@@ -263,7 +263,7 @@ void MainWindow::createStatusBar()
 
     //////////////////////////////////////////////////////////////////////////
 
-    const int length = 120;
+    const int length = 100;
     labelNumFaces_ = new QLabel(this);
     labelNumFaces_->setMinimumWidth(length);
     labelNumFaces_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
@@ -313,9 +313,9 @@ void MainWindow::updateStatusBar()
     Model* model = viewer_->currentModel();
     if (dynamic_cast<SurfaceMesh*>(model)) {
         auto mesh = dynamic_cast<SurfaceMesh*>(model);
-        faces = QString("#faces: %1").arg(mesh->n_faces());
-        vertices = QString("#vertices: %1").arg(mesh->n_vertices());
-        edges = QString("#edges: %1").arg(mesh->n_edges());
+        faces = QString("#faces: %1  ").arg(mesh->n_faces());
+        vertices = QString("#vertices: %1  ").arg(mesh->n_vertices());
+        edges = QString("#edges: %1  ").arg(mesh->n_edges());
         labelNumFaces_->setVisible(true);
         labelNumEdges_->setVisible(true);
         labelNumCells_->setVisible(false);
@@ -323,7 +323,7 @@ void MainWindow::updateStatusBar()
 
     else if (dynamic_cast<PointCloud*>(model)) {
         auto cloud = dynamic_cast<PointCloud*>(model);
-        vertices = QString("#vertices: %1").arg(cloud->n_vertices());
+        vertices = QString("#vertices: %1  ").arg(cloud->n_vertices());
         labelNumFaces_->setVisible(false);
         labelNumEdges_->setVisible(false);
         labelNumCells_->setVisible(false);
@@ -331,8 +331,8 @@ void MainWindow::updateStatusBar()
 
     else if (dynamic_cast<Graph*>(model)) {
         auto graph = dynamic_cast<Graph*>(model);
-        vertices = QString("#vertices: %1").arg(graph->n_vertices());
-        edges = QString("#edges: %1").arg(graph->n_edges());
+        vertices = QString("#vertices: %1  ").arg(graph->n_vertices());
+        edges = QString("#edges: %1  ").arg(graph->n_edges());
         labelNumFaces_->setVisible(false);
         labelNumEdges_->setVisible(true);
         labelNumCells_->setVisible(false);
@@ -340,10 +340,10 @@ void MainWindow::updateStatusBar()
 
     else if (dynamic_cast<PolyMesh*>(model)) {
         auto mesh = dynamic_cast<PolyMesh*>(model);
-        faces = QString("#faces: %1").arg(mesh->n_faces());
-        vertices = QString("#vertices: %1").arg(mesh->n_vertices());
-        edges = QString("#edges: %1").arg(mesh->n_edges());
-        cells = QString("#cells: %1").arg(mesh->n_cells());
+        faces = QString("#faces: %1  ").arg(mesh->n_faces());
+        vertices = QString("#vertices: %1  ").arg(mesh->n_vertices());
+        edges = QString("#edges: %1  ").arg(mesh->n_edges());
+        cells = QString("#cells: %1  ").arg(mesh->n_cells());
         labelNumFaces_->setVisible(true);
         labelNumEdges_->setVisible(true);
         labelNumCells_->setVisible(true);
