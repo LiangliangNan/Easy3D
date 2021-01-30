@@ -55,23 +55,23 @@ int main(int argc, char **argv)
         dir.remove(deploy_dir);
     }
     else if (deploy_info.isDir()) {
-        qDebug() << "Directory" << deploy_dir << "already exists, deleting it...";
         dir.cd(deploy_dir);
         dir.removeRecursively();
         dir.cdUp();
         dir.remove(deploy_dir);
         if (QFileInfo(deploy_dir).isDir()) {
-            qWarning() << "Failed deleting the existing deploy directory";
+            qDebug() << "Deploy directory" << deploy_dir << "already exists, but EasyDeploy failed to delete it";
             return EXIT_FAILURE;
         }
     }
 
-    qDebug() << "Creating directory:" << deploy_dir;
     dir.mkdir(deploy_dir);
     if (!QFileInfo(deploy_dir).isDir()) {
         qWarning() << "Failed creating deploy directory";
         return EXIT_FAILURE;
     }
+    else
+        qDebug() << "Successfully created deploy directory" << deploy_dir;
 
 #if (defined(_WIN32) || defined(_WIN64) || defined(__APPLE__))
     QString deployed_app_name = deploy_dir + "/" + app_info.fileName();
