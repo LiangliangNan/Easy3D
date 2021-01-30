@@ -126,10 +126,11 @@ int main(int argc, char **argv)
     char yes_no;
     std::cin >> yes_no;
     if (yes_no == 'Y' || yes_no == 'y') {
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // ignore the previous user "Enter"
         dir.mkdir(resources_dir);
         qWarning() << "  Put all your resources in:" << "\n\t" << resources_dir << "\n"
                    << "  and then press 'Enter' to continue";
-        std::cin >> yes_no;
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
 
     arguments[1] = desktopfile.fileName();
