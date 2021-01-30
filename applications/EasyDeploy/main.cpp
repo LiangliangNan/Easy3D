@@ -69,6 +69,7 @@ int main(int argc, char **argv)
     arguments[1] = deployed_app_name;
 #elif (defined(__linux) || defined(__linux__))
     deploy_dir += "/" + app_info.baseName();
+    dir.mkdir(deploy_dir);
     dir.cd(deploy_dir);
     const QString usr_dir = deploy_dir + "/usr";
     dir.mkdir(usr_dir);
