@@ -118,7 +118,7 @@ int main(int argc, char **argv)
                    << "is necessary for your application."
                    << "\n  Put your icon image as" << "\n\t" << icon_file
                    << "\n  and then press 'Enter' to continue";
-        std::cin.ignore(std::numeric_limits<streamsize>::max(), '\n');
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
 
     const QString resources_dir = share_dir + "/resources";
@@ -129,7 +129,7 @@ int main(int argc, char **argv)
         dir.mkdir(resources_dir);
         qWarning() << "  Put all your resources in:" << "\n\t" << resources_dir << "\n"
                    << "  and then press 'Enter' to continue";
-        std::cin.ignore(std::numeric_limits<streamsize>::max(), '\n');
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
 
     arguments[1] = desktopfile.fileName();
