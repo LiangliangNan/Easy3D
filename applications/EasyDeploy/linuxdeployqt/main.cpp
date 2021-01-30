@@ -205,7 +205,6 @@ int deploy(const std::vector<QString>& argv)
 #endif
 
     if (argv.size() < 2 || (firstArgument.startsWith("-"))) {
-        qInfo() << "";
         qInfo() << "Usage: linuxdeployqt <app-binary|desktop file> [options]";
         qInfo() << "";
         qInfo() << "Options:";

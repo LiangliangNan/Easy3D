@@ -3,6 +3,8 @@
 #include <QDebug>
 #include <QCoreApplication>
 
+#include <iostream>
+
 
 int deploy(const std::vector<QString>& argv);
 
@@ -89,7 +91,7 @@ int main(int argc, char **argv)
         qDebug() << "   -updateinformation=<update string>        : Embed update information STRING; if zsyncmake is installed, generate zsync file";
         qDebug() << "   -version                 : Print version statement and exit.";
         qDebug() << "";
-        qDebug() << "linuxdeployqt takes an application as input and makes it";
+        qDebug() << "EasyDeploy takes an application as input and makes it";
         qDebug() << "self-contained by copying in the Qt libraries and plugins that";
         qDebug() << "the application uses.";
         qDebug() << "";
@@ -146,13 +148,6 @@ int main(int argc, char **argv)
     QFile::copy(app_info.absoluteFilePath(), deployed_app_name);
 
     arguments[1] = deployed_app_name;
-    qDebug() << "Deploying" << deployed_app_name << "...";
-    int result = deploy(arguments);
-    if (result == 0)
-        qDebug() << "Done! The deployed application is located at" << deploy_dir;
-    else
-        qDebug() << "Error(s) occurred with code " << result;
-    return result;
 #elif (defined(__linux) || defined(__linux__))
     dir.cd(deploy_dir);
     const QString usr_dir = deploy_dir + "/usr";
@@ -192,22 +187,27 @@ int main(int argc, char **argv)
     const QString apps_dir = resolution_dir + "/apps";
     dir.mkdir(apps_dir);
     dir.cd(apps_dir);
-    QFile iconfile(apps_dir + "/" + app_info.baseName() + ".png");
-    iconfile.open(QFile::WriteOnly);
-    iconfile.write("Please replace this file with your app icon file");
-    iconfile.close();
+
+    const QString icon_file = apps_dir + "/" + app_info.baseName() + ".png";
+    QFileInfo icon_info(icon_file);
+    while (!icon_info.isFile()) {
+        qWarning() << "IMPORTANT: An icon image with a file name" << icon_info.fileName()
+                   << "is necessary for your application."
+                   << "\n  Put your icon image as" << "\n\t" << icon_file
+                   << "\n  and then press 'Enter' to continue";
+        std::cin.ignore();
+    }
 
     arguments[1] = desktopfile.fileName();
+#endif
+
+    qDebug() << "Deploying" << deployed_app_name << "...";
     int result = deploy(arguments);
-    if (result == 0) {
-        qDebug() << "Please replace the following files with with your actual icon image:\n"
-                << "\t" << deploy_dir + "/" + app_info.baseName() + ".png" << "\n"
-                << "\t" << iconfile.fileName();
-    }
+    if (result == 0)
+        qDebug() << "Done! The deployed application is located at" << deploy_dir;
     else
         qDebug() << "Error(s) occurred with code " << result;
     return result;
-#endif
 }
 
 
