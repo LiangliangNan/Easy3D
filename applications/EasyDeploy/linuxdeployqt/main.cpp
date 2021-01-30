@@ -553,9 +553,10 @@ int deploy(const std::vector<QString>& argv)
     }
 
     if (appimage) {
+        LogDebug() << "creating AppImage file" << appDirPath;
         int result = createAppImage(appDirPath);
         LogDebug() << "result:" << result;
-        exit(result);
+        return result;
     }
-    exit(0);
+    return 0;
 }
