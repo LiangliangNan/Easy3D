@@ -100,7 +100,7 @@ int main(int argc, char **argv)
     QFile desktopfile(applications_dir + "/" + app_info.baseName() + ".desktop");
     desktopfile.open(QFile::WriteOnly);
     QString contents = "[Desktop Entry]\n";
-    contents += QString("Version=%1\n").arg(PROJECT_VERSION);
+    contents += "Version=1.0\n";
     contents += "Type=Application\n";
     contents += "Name=" + app_info.baseName() + "\n";
     contents += "Comment=The best Qt Application Ever\n";
