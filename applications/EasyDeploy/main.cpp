@@ -124,13 +124,12 @@ int main(int argc, char **argv)
     const QString resources_dir = share_dir + "/resources";
     qWarning() << "IMPORTANT: Do you have any resources necessary for your application [Y/n]?";
     char yes_no;
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // clear buffer before accepting new input
     std::cin >> yes_no;
     if (yes_no == 'Y' || yes_no == 'y') {
         dir.mkdir(resources_dir);
         qWarning() << "  Put all your resources in:" << "\n\t" << resources_dir << "\n"
                    << "  and then press 'Enter' to continue";
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::cin >> yes_no;
     }
 
     arguments[1] = desktopfile.fileName();
