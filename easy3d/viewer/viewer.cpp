@@ -978,7 +978,7 @@ namespace easy3d {
                 double current_time = glfwGetTime();
                 ++frame_counter;
                 if(current_time - last_time >= 2.0f) {
-                    sprintf(gpu_time_, "fps: %2.0f (%4.1f ms/frame)\n", double(frame_counter) / (current_time - last_time), 1000.0 / double(frame_counter));
+                    sprintf(gpu_time_, "fps: %2.0f (%4.1f ms/frame)", double(frame_counter) / (current_time - last_time), 1000.0 / double(frame_counter));
                     frame_counter = 0;
                     last_time += 2.0f;
                 }
