@@ -93,6 +93,7 @@ int main(int argc, char **argv)
         }
     }
     else {
+        QString deployed_app_name = deploy_dir + "/" + app_info.fileName();
         qDebug() << "Copying" << app_info.fileName() << "into" << deploy_dir;
         QFile::copy(app_info.absoluteFilePath(), deployed_app_name);
     }
