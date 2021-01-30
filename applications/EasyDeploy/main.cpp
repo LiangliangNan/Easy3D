@@ -201,7 +201,7 @@ int main(int argc, char **argv)
     arguments[1] = desktopfile.fileName();
 #endif
 
-    qDebug() << "Deploying" << deployed_app_name << "...";
+    qDebug() << "Deploying" << app_info.fileName() << "...";
     int result = deploy(arguments);
     if (result == 0)
         qDebug() << "Done! The deployed application is located at" << deploy_dir;
