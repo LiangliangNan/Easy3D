@@ -36,6 +36,10 @@
 #define LOG_IF_EVERY_N(n, condition, LEVEL)  if (condition) \
     CLOG_EVERY_N(n, LEVEL, ELPP_CURR_FILE_LOGGER_ID)
 
+// to have LOG_IF_FIRST_N
+#define LOG_IF_FIRST_N(n, condition, LEVEL)  if (condition) \
+CLOG_N_TIMES(n, LEVEL, ELPP_CURR_FILE_LOGGER_ID)
+
 // for logging the counter number
 #define COUNTER     ELPP_COUNTER->hitCounts()
 
