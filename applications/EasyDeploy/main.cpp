@@ -75,34 +75,19 @@ int main(int argc, char **argv)
 
     arguments[1] = deployed_app_name;
 #elif (defined(__linux) || defined(__linux__))
-    bool appimage = false;
-    for (int i = 2; i < argc; ++i) {
-        if (std::string(argv[i]) == "-appimage") {
-            appimage = true;
-            qDebug() << "The goal is to create an AppImage file for" << app_info.fileName();
-        }
-    }
-
-    if (appimage) {
-        dir.setCurrent(deploy_dir); // the AppImage (if requested) will be generated here
-        deploy_dir += "/" + app_info.baseName();
-        dir.mkdir(deploy_dir);
-        if (!QFileInfo(deploy_dir).isDir()) {
-            qWarning() << "Failed creating directory" << deploy_dir;
-            return EXIT_FAILURE;
-        }
-    }
-    else {
-//        QString deployed_app_name = deploy_dir + "/" + app_info.fileName();
-//        qDebug() << "Copying" << app_info.fileName() << "into" << deploy_dir;
-//        QFile::copy(app_info.absoluteFilePath(), deployed_app_name);
+    dir.setCurrent(deploy_dir); // the AppImage (if requested) will be generated here
+    deploy_dir += "/" + app_info.baseName();
+    dir.mkdir(deploy_dir);
+    if (!QFileInfo(deploy_dir).isDir()) {
+        qWarning() << "Failed creating directory" << deploy_dir;
+        return EXIT_FAILURE;
     }
 
     dir.cd(deploy_dir);
     const QString usr_dir = deploy_dir + "/usr";
     dir.mkdir(usr_dir);
     if (!appimage)
-        dir.setCurrent(usr_dir); 
+        dir.setCurrent(usr_dir);
     dir.cd(usr_dir);
     const QString bin_dir = usr_dir + "/bin";
     dir.mkdir(bin_dir);
@@ -163,8 +148,7 @@ int main(int argc, char **argv)
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
 
-    if (appimage)
-        arguments[1] = desktopfile.fileName();
+    arguments[1] = desktopfile.fileName();
 #endif
 
     qDebug() << "Deploying" << app_info.fileName() << "...";
