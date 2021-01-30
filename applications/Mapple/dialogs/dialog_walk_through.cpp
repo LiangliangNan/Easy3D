@@ -371,6 +371,7 @@ void DialogWalkThrough::preview(bool b) {
         for (auto w : findChildren<QDoubleSpinBox*>()) w->setEnabled(false);
         for (auto w : findChildren<QLineEdit*>()) w->setEnabled(false);
         for (auto w : findChildren<QToolButton*>()) w->setEnabled(false);
+        for (auto w : findChildren<QSlider*>()) w->setEnabled(false);
 
         LOG(INFO) << "preview started...";
         w.start();
@@ -392,6 +393,7 @@ void DialogWalkThrough::preview(bool b) {
         for (auto w : findChildren<QDoubleSpinBox*>()) w->setEnabled(true);
         for (auto w : findChildren<QLineEdit*>()) w->setEnabled(true);
         for (auto w : findChildren<QToolButton*>()) w->setEnabled(true);
+        for (auto w : findChildren<QSlider*>()) w->setEnabled(true);
 
         setWalkingMode(radioButtonWalkingMode->isChecked());
 
