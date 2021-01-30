@@ -60,7 +60,7 @@ int main(int argc, char **argv)
         dir.removeRecursively();
         dir.cdUp();
         dir.remove(deploy_dir);
-        if (deploy_info.exists()) {
+        if (QFileInfo(deploy_dir).isDir()) {
             qWarning() << "Failed deleting the existing deploy directory";
             return EXIT_FAILURE;
         }
@@ -68,7 +68,7 @@ int main(int argc, char **argv)
 
     qDebug() << "Creating directory:" << deploy_dir;
     dir.mkdir(deploy_dir);
-    if (!deploy_info.exists()) {
+    if (!QFileInfo(deploy_dir).isDir()) {
         qWarning() << "Failed creating deploy directory";
         return EXIT_FAILURE;
     }
