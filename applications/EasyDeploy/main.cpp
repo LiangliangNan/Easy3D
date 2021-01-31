@@ -134,7 +134,7 @@ int main(int argc, char **argv)
     }
 
     const QImage image(icon_image);
-    const std::vector<int> sizes = {256, 128, 64, 32, 16};
+    const std::vector<int> sizes = {1024, 512, 256, 128, 64, 32, 16};
     for (auto size : sizes) {
         const auto size_str = std::to_string(size);
         const QString resolution_dir = theme_dir + "/" + QString::fromStdString(size_str + 'x' + size_str);
