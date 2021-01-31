@@ -81,7 +81,8 @@ to build Easy3D on almost all platforms.
 
 There are many options to build Easy3D. Choose one of the following (or whatever you are familiar with):
 
-- Option 1: Use CMake commands, e.g., (on Linux or macOS):
+- Option 1: Use CMake to generate Makefiles and then `make` (on Linux/macOS) or `nmake`(on Windows with Microsoft 
+  Visual Studio). For example, on Linux or macOS, you can simply
     ```
     $ cd Easy3D
     $ cmake .
@@ -91,8 +92,6 @@ There are many options to build Easy3D. Choose one of the following (or whatever
   Easy3D. Then you should have obtained a usable project and just build it. I recommend using 
 [CLion](https://www.jetbrains.com/clion/) or [QtCreator](https://www.qt.io/product).
 - Option 3: Use CMake to generate project files for your IDE. Then load the project to your IDE and build.
-- Option 4: Use CMake to generate Makefiles and then `make` (on Linux/macOS) or `nmake`(on Windows with Microsoft 
-  Visual Studio).
 
 Don't have any experience with C/C++ programming? 
 Have a look at <a href="https://github.com/LiangliangNan/Easy3D/blob/master/HowToBuild.md">How to build Easy3D step by 
