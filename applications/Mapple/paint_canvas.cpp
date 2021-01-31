@@ -297,7 +297,7 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
                 LOG(WARNING) << "Alt + Left click is for the walking mode only. Press 'K' to add a keyframe in the free mode";
             }
         } else {
-            if (e->button() == Qt::LeftButton)
+            if (e->button() == Qt::LeftButton && e->modifiers() != Qt::AltModifier && e->modifiers() != Qt::ControlModifier)
                 show_manip_sphere_ = true;
 
             if (e->modifiers() == Qt::NoModifier && e->button() == Qt::LeftButton &&
@@ -468,6 +468,9 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
 
     mouse_current_pos_ = e->pos();
     QOpenGLWidget::mouseMoveEvent(e);
+
+    if (pressed_button_ == Qt::LeftButton && modifiers_ == Qt::ControlModifier) // zoom on region
+        update();
 }
 
 
