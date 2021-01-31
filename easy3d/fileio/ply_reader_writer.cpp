@@ -50,34 +50,34 @@ namespace easy3d {
         std::string Element::property_statistics() const {
             std::string str;
             if (!vec3_properties.empty()) {
-                str += "\n\tvec3_properties";
+                str += "\n    [type]: vec3_properties";
                 for (const auto &prop : vec3_properties)
-                    str += ("\n\t\t" + prop.name);
+                    str += ("\n         - [property name]: " + prop.name);
             }
             if (!vec2_properties.empty()) {
-                str += "\n\tvec2_properties";
+                str += "\n    [type]: vec2_properties";
                 for (const auto &prop : vec2_properties)
-                    str += ("\n\t\t" + prop.name);
+                    str += ("\n         - [property name]: " + prop.name);
             }
             if (!float_properties.empty()) {
-                str += "\n\tfloat_properties";
+                str += "\n    [type]: float_properties";
                 for (const auto &prop : float_properties)
-                    str += ("\n\t\t" + prop.name);
+                    str += ("\n         - [property name]: " + prop.name);
             }
             if (!int_properties.empty()) {
-                str += "\n\tint_properties";
+                str += "\n    [type]: int_properties";
                 for (const auto &prop : int_properties)
-                    str += ("\n\t\t" + prop.name);
+                    str += ("\n         - [property name]: " + prop.name);
             }
             if (!float_list_properties.empty()) {
-                str += "\n\tfloat_list_properties";
+                str += "\n    [type]: float_list_properties";
                 for (const auto &prop : float_list_properties)
-                    str += ("\n\t\t" + prop.name);
+                    str += ("\n         - [property name]: " + prop.name);
             }
             if (!int_list_properties.empty()) {
-                str += "\n\tint_list_properties";
+                str += "\n    [type]: int_list_properties";
                 for (const auto &prop : int_list_properties)
-                    str += ("\n\t\t" + prop.name);
+                    str += ("\n         - [property name]: " + prop.name);
             }
             return str;
         }
