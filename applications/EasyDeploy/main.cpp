@@ -1,6 +1,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QDebug>
+#include <QImage>
 #include <QCoreApplication>
 
 #include <iostream>
@@ -75,7 +76,6 @@ int main(int argc, char **argv)
 
     arguments[1] = deployed_app_name;
 #elif (defined(__linux) || defined(__linux__))
-    dir.setCurrent(deploy_dir); // the AppImage (if requested) will be generated here
     deploy_dir += "/" + app_info.baseName();
     dir.mkdir(deploy_dir);
     if (!QFileInfo(deploy_dir).isDir()) {
@@ -116,23 +116,35 @@ int main(int argc, char **argv)
     const QString theme_dir = icons_dir + "/hicolor";
     dir.mkdir(theme_dir);
     dir.cd(theme_dir);
-    const QString resolution_dir = theme_dir + "/256x256";
-    dir.mkdir(resolution_dir);
-    dir.cd(resolution_dir);
-    const QString apps_dir = resolution_dir + "/apps";
-    dir.mkdir(apps_dir);
-    dir.cd(apps_dir);
 
-    /* Check if there is already an acceptable icon file */
-    const QString icon_base = apps_dir + "/" + app_info.baseName();
-    while (!QFileInfo(icon_base + ".png").exists() &&
-           !QFileInfo(icon_base + ".svg").exists() &&
-           !QFileInfo(icon_base + ".xpm").exists())
-    {
-        qWarning() << "IMPORTANT: An icon image with a file name" << app_info.baseName() + ".<png|svg|xpm>" << "is required"
-                   << "\n  Put your icon image in the following directory" << "\n\t" << apps_dir
-                   << "\n  and then press 'Enter' to continue";
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    // icon file
+    QString icon_image;
+    while (!QFileInfo(icon_image).isFile() || !(icon_image.endsWith(".png"))) {
+        qWarning() << "IMPORTANT: An icon image (in '.png' format) is needed for your application. Please provide the"
+                   << "\n  full path (including file name and extension) to the icon image (resolution >= 256x256)";
+        qWarning() << "Current working directory:" << dir.currentPath();
+        qWarning() << "Icon image:";
+        std::string file;
+        std::getline(std::cin, file);
+
+        // assume relative path
+        icon_image = dir.currentPath() + "/" + QString::fromStdString(file);
+        if (!QFileInfo(icon_image).isFile()) // now try absolute path
+            icon_image = QString::fromStdString(file);
+    }
+
+    const QImage image(icon_image);
+    const std::vector<int> sizes = {256, 128, 64, 32, 16};
+    for (auto size : sizes) {
+        const auto size_str = std::to_string(size);
+        const QString resolution_dir = theme_dir + "/" + QString::fromStdString(size_str + 'x' + size_str);
+        dir.mkdir(resolution_dir);
+        dir.cd(resolution_dir);
+        const QString apps_dir = resolution_dir + "/apps";
+        dir.mkdir(apps_dir);
+        dir.cd(apps_dir);
+        const QString scaled_image = apps_dir + "/" + app_info.baseName() + ".png";
+        image.scaled(size, size).save(scaled_image);
     }
 
     const QString resources_dir = usr_dir + "/resources";
@@ -148,6 +160,7 @@ int main(int argc, char **argv)
     }
 
     arguments[1] = desktopfile.fileName();
+    dir.setCurrent(output_dir); // the AppImage (if requested) will be generated here
 
     // Adding icon and icon theme support
     // To enable icon and icon theme support you must add iconengines as an extra Qt plugin. In order for your

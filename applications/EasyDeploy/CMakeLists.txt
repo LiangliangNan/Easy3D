@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
 # find Qt5Core
-find_package(Qt5 COMPONENTS Core)
+find_package(Qt5 COMPONENTS Core Gui)
 
 if (NOT Qt5Core_FOUND)
     message(WARNING "${PROJECT_NAME} requires Qt but Qt was not found. You can set 'Qt5_DIR' to the "
@@ -22,10 +22,9 @@ endif ()
 
 if(WIN32 OR MSVC)
     add_executable(${PROJECT_NAME} main.cpp windeployqt/main.cpp)
-    target_link_libraries(${PROJECT_NAME} Qt5::Core)
 elseif(APPLE)
     add_executable(${PROJECT_NAME} main.cpp macdeployqt/main.cpp macdeployqt/shared.h macdeployqt/shared.cpp)
-    target_link_libraries(${PROJECT_NAME} Qt5::Core "-framework CoreFoundation")
+    target_link_libraries(${PROJECT_NAME} "-framework CoreFoundation")
 else()
     set(CMAKE_AUTOMOC ON)
 
@@ -49,10 +48,10 @@ else()
     mark_as_advanced(EXCLUDELIST EXCLUDELIST_RESULT)
 
     add_executable(${PROJECT_NAME} main.cpp linuxdeployqt/main.cpp linuxdeployqt/shared.h linuxdeployqt/shared.cpp linuxdeployqt/excludelist.h)
-    target_link_libraries(${PROJECT_NAME} Qt5::Core)
     target_compile_definitions(${PROJECT_NAME} PRIVATE -DEXCLUDELIST="${EXCLUDELIST}")
 endif()
 
+target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Gui)
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which has been marked as deprecated (the exact warnings
