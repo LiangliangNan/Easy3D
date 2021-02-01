@@ -477,6 +477,17 @@ inline settings::settings(bool resync)
         else if (desktop_name && desktop_name == std::string("KDE"))
             flags(flag::has_zenity) = false;
     }
+
+    // Liangliang: show warning and give advice if file dialog is not available
+    if (!flags(flag::has_zenity) && !flags(flag::has_matedialog) &&
+        !flags(flag::has_qarma) && !flags(flag::has_kdialog))
+    {
+        std::cerr << "WARNING: The file dialogs require one of 'zenity', 'matedialog', 'qarma', or 'kdialog'," << "\n"
+                  << "  but none of them exists on your system. Suggestion: run the following commands to" << "\n"
+                  << "  install 'zenity' frist and then try to use the file dialogs." << std::endl;
+        std::cerr << "\tStep 1: sudo apt-get update -y" << std::endl;
+        std::cerr << "\tStep 2: sudo apt-get install -y zenity" << std::endl;
+    }
 #endif
 
     flags(flag::is_scanned) = true;
