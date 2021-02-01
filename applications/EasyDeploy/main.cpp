@@ -160,7 +160,7 @@ int main(int argc, char **argv)
     }
 
     arguments[1] = desktopfile.fileName();
-    dir.setCurrent(output_dir); // the AppImage (if requested) will be generated here
+//    dir.setCurrent(output_dir); // the AppImage (if requested) will be generated here
 
     // Adding icon and icon theme support
     // To enable icon and icon theme support you must add iconengines as an extra Qt plugin. In order for your
