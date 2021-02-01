@@ -485,7 +485,7 @@ inline settings::settings(bool resync)
         std::cerr << "WARNING: The file dialogs require one of 'zenity', 'matedialog', 'qarma',\n"
                   << "  or 'kdialog', but none of them exists on your system.\n"
                   << "Suggestion: run the following commands to install 'zenity' frist and then\n"
-                  <<    try to use the file dialogs." << std::endl;
+                  << "   try to use the file dialogs." << std::endl;
         std::cerr << "\tStep 1: sudo apt-get update -y" << std::endl;
         std::cerr << "\tStep 2: sudo apt-get install -y zenity" << std::endl;
     }
