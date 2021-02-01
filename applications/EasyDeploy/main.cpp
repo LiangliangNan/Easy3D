@@ -134,8 +134,13 @@ int main(int argc, char **argv)
     }
 
     const QImage image(icon_image);
+    const int original_width = image.width();
+    const int original_height = image.height();
+    qDebug() << "Input icon image size" << original_width << "x" << original_height;
     const std::vector<int> sizes = {1024, 512, 256, 128, 64, 32, 16};
     for (auto size : sizes) {
+        if (size > original_width || size > original_height) // we allow only downscaling
+            continue;
         const auto size_str = std::to_string(size);
         const QString resolution_dir = theme_dir + "/" + QString::fromStdString(size_str + 'x' + size_str);
         dir.mkdir(resolution_dir);
@@ -160,7 +165,7 @@ int main(int argc, char **argv)
     }
 
     arguments[1] = desktopfile.fileName();
-//    dir.setCurrent(output_dir); // the AppImage (if requested) will be generated here
+    dir.setCurrent(output_dir); // the AppImage (if requested) will be generated here
 
     // Adding icon and icon theme support
     // To enable icon and icon theme support you must add iconengines as an extra Qt plugin. In order for your
