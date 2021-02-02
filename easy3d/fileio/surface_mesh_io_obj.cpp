@@ -66,6 +66,7 @@ namespace easy3d {
                 LOG(ERROR) << "failed reading file: " + file_name;
                 return false;
             }
+            LOG_IF(fom->error_msg, ERROR) << fom->error_msg;
 
             // Attention: Valid indices in the fastObjMesh::indices array start from 1.
             // A dummy position, normal and texture coordinate are added to the corresponding fastObjMesh arrays at

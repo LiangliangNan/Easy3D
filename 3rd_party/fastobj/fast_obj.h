@@ -34,6 +34,8 @@
 #define FAST_OBJ_VERSION_MINOR  0
 #define FAST_OBJ_VERSION        ((FAST_OBJ_VERSION_MAJOR << 8) | FAST_OBJ_VERSION_MINOR)
 
+// Liangliang: count the NaN coordinates
+int count_NaN = 0;
 
 typedef struct
 {
@@ -137,6 +139,8 @@ typedef struct
     unsigned int                group_count;
     fastObjGroup*               groups;
 
+    // Liangliang: to record all errors occurred during file loading
+    char* error_msg;
 } fastObjMesh;
 
 #ifdef __cplusplus
@@ -543,10 +547,12 @@ const char* parse_float(const char* ptr, float* val)
     fra = 0.0;
     div = 1.0;
 
+    bool has_value = false;
     while (is_digit(*ptr))
     {
         fra  = 10.0 * fra + (double)(*ptr++ - '0');
         div *= 10.0;
+        has_value = true;
     }
 
     num += fra / div;
@@ -573,13 +579,18 @@ const char* parse_float(const char* ptr, float* val)
         }
 
         eval = 0;
-        while (is_digit(*ptr))
+        while (is_digit(*ptr)) {
             eval = 10 * eval + (*ptr++ - '0');
+            has_value = true;
+        }
 
         num *= (eval >= MAX_POWER) ? 0.0 : powers[eval];
     }
 
     *val = (float)(sign * num);
+
+    if (!has_value)
+        ++count_NaN;
 
     return ptr;
 }
@@ -1260,6 +1271,8 @@ void fast_obj_destroy(fastObjMesh* m)
 
 fastObjMesh* fast_obj_read(const char* path)
 {
+    count_NaN = 0;
+
     fastObjData  data;
     fastObjMesh* m;
     void*        file;
@@ -1397,6 +1410,13 @@ fastObjMesh* fast_obj_read(const char* path)
     memory_dealloc(data.base);
 
     file_close(file);
+
+    if (count_NaN > 0) {
+        std::string error = "file contains " + std::to_string(count_NaN) + " NaN coordinates (changed to zeros)";
+        m->error_msg = (char *) error.c_str();
+    }
+    else
+        m->error_msg = nullptr;
 
     return m;
 }
