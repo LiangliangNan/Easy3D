@@ -99,9 +99,9 @@ namespace easy3d
 
         // \endcond
 
-        void initialize(bool info_to_stderr, int verbose_level, const std::string &log_file)
+        void initialize(bool info_to_stderr, const std::string &log_file, int verbosity_threshold)
         {
-            std::string full_path = log_file;
+            std::string full_path_log_file = log_file;
             if (log_file == "default") {
                 const std::string app_path = file_system::executable();
                 std::string log_path = app_path;
@@ -111,23 +111,23 @@ namespace easy3d
                 if (pos != std::string::npos)
                     log_path = log_path.substr(0, pos);
 #endif
-                log_path = file_system::parent_directory(log_path) + "/logs";
-
-                if (!file_system::is_directory(log_path))
-                    file_system::create_directory(log_path);
-                full_path = log_path + "/" + file_system::base_name(app_path) + ".log";
+                log_path = file_system::parent_directory(log_path);
+                full_path_log_file = log_path + "/" + file_system::base_name(app_path) + ".log";
             }
 
-            if (!full_path.empty()) {
-                std::ofstream output(full_path.c_str(), std::ios::app);
+            bool log_file_failure = false;
+            if (!full_path_log_file.empty()) {
+                std::ofstream output(full_path_log_file.c_str(), std::ios::app);
                 if (output.is_open()) {
                     auto size_bytes = static_cast<std::size_t>(output.tellp());
                     if (size_bytes > 0)
                         output << "\n\n";
                     output << "================================================================= program started ...\n";
                     output.close();
-                    log_file_name = full_path;
+                    log_file_name = full_path_log_file;
                 }
+                else
+                    log_file_failure = true;
             }
 
 //            // configures existing logger - everything in global.conf
@@ -162,9 +162,12 @@ namespace easy3d
             el::Helpers::setCrashHandler(crash_sandler);
 
             // allow all levels of verbose messages to be logged into the log file (but not shown on UI).
-            el::Loggers::setVerboseLevel(verbose_level);
-            VLOG(0) << "executable path: " << file_system::executable_directory();
-            VLOG(0) << "current working dir: " << file_system::current_working_directory();
+            el::Loggers::setVerboseLevel(verbosity_threshold);
+            VLOG(1) << "executable path: " << file_system::executable_directory();
+            VLOG(1) << "current working dir: " << file_system::current_working_directory();
+
+            if (log_file_failure)
+                LOG(ERROR) << "failed to create log file: " << full_path_log_file;
         }
 
 

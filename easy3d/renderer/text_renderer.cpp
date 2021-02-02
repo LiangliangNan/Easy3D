@@ -387,7 +387,7 @@ namespace easy3d {
                                     tex = tex->next;
                                 }
 
-                                VLOG(0) << "allocating a new texture of " << stash->tw << " x " << stash->th << " ("
+                                VLOG(1) << "allocating a new texture of " << stash->tw << " x " << stash->th << " ("
                                         << numTex << " used so far)";
                                 glGenTextures(1, &texture->id);
                                 if (!texture->id) goto error;
@@ -753,7 +753,7 @@ namespace easy3d {
         font_ids_.push_back(id);
         const std::string simple_name = file_system::simple_name(font_file);
         font_names_.push_back(simple_name);
-        VLOG(0) << "loaded font '" << simple_name << "' in texture (" << texture_size_ << " x " << texture_size_ << ")";
+        VLOG(1) << "loaded font '" << simple_name << "' in texture (" << texture_size_ << " x " << texture_size_ << ")";
         return true;
     }
 
