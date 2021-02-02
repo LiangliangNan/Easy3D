@@ -119,7 +119,8 @@ namespace easy3d
             if (!full_path_log_file.empty()) {
                 std::ofstream output(full_path_log_file.c_str(), std::ios::app);
                 if (!output.is_open()) {
-                    log_file_failure_msg = "failed to create log file: " + full_path_log_file;
+                    if (log_file != "default" && log_file != "") // error only if requested
+                        log_file_failure_msg = "failed to create log file: " + full_path_log_file;
 
                     // now let's try the current working directory
                     full_path_log_file = file_system::current_working_directory() + "/" + file_system::simple_name(full_path_log_file);
@@ -128,8 +129,6 @@ namespace easy3d
                         full_path_log_file = file_system::home_directory() + "/" + file_system::simple_name(full_path_log_file);
                         output.open(full_path_log_file);
                     }
-                    if (output.is_open())
-                        log_file_failure_msg += ". Instead, log file created as: " + full_path_log_file;
                 }
                 if (output.is_open()) {
                     auto size_bytes = static_cast<std::size_t>(output.tellp());
@@ -178,7 +177,12 @@ namespace easy3d
             VLOG(1) << "current working dir: " << file_system::current_working_directory();
 
             if (!log_file_failure_msg.empty())
-                LOG(ERROR) <<  log_file_failure_msg;
+                VLOG(1) << log_file_failure_msg;
+        }
+
+
+        std::string log_file() {
+            return log_file_name;
         }
 
 

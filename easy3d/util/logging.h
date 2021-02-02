@@ -65,6 +65,8 @@ namespace easy3d {
          */
         void initialize(bool info_to_stderr = false, const std::string &log_file = "", int verbosity_threshold = 0);
 
+        /// Returns the full path of the log file (empty if no log file has been created).
+        std::string log_file();
 
         /// Base class for a logger (that can log messages to whatever)
         /// Users should subclass Logger and override send() to do whatever they want.
