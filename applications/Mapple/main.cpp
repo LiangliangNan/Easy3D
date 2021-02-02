@@ -85,6 +85,8 @@ public:
 
 int main(int argc, char *argv[])
 {
+    logging::initialize(true, "default",9);
+
     //Locale management
     {
         //Force 'English' locale so as to get a consistent behavior everywhere
@@ -147,8 +149,6 @@ int main(int argc, char *argv[])
     }
 #endif
     QDir::setCurrent(workingDir.absolutePath());
-
-    logging::initialize(true, "default",9);
 
 #ifdef NDEBUG
     // splash screen
