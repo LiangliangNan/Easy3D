@@ -178,7 +178,7 @@ namespace easy3d
             VLOG(1) << "current working dir: " << file_system::current_working_directory();
 
             if (!log_file_failure_msg.empty())
-                LOG(ERROR) << "failed to create log file: " << full_path_log_file;
+                LOG(ERROR) <<  log_file_failure_msg;
         }
 
 
