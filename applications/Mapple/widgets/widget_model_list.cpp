@@ -10,6 +10,7 @@
 #include <easy3d/core/surface_mesh_builder.h>
 #include <easy3d/algo/surface_mesh_components.h>
 #include <easy3d/renderer/renderer.h>
+#include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
@@ -710,6 +711,7 @@ void WidgetModelList::mergeModels(const std::vector<Model *> &models) {
 
 		to->set_name("merged_mesh");
 		to->renderer()->update();
+		to->manipulator()->reset();
 	}
 
 	if (clouds.size() > 1) {
