@@ -540,8 +540,11 @@ const char* parse_float(const char* ptr, float* val)
 
 
     num = 0.0;
-    while (is_digit(*ptr))
-        num = 10.0 * num + (double)(*ptr++ - '0');
+    bool has_value = false;
+    while (is_digit(*ptr)) {
+        num = 10.0 * num + (double) (*ptr++ - '0');
+        has_value = true;
+    }
 
     if (*ptr == '.')
         ptr++;
@@ -549,7 +552,6 @@ const char* parse_float(const char* ptr, float* val)
     fra = 0.0;
     div = 1.0;
 
-    bool has_value = false;
     while (is_digit(*ptr))
     {
         fra  = 10.0 * fra + (double)(*ptr++ - '0');
