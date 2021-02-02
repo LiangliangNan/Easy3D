@@ -121,11 +121,11 @@ namespace easy3d
                 if (!output.is_open()) {
                     log_file_failure_msg = "failed to create log file: " + full_path_log_file;
 
-                    // now let try the current working directory
-                    full_path_log_file = file_system::current_working_directory() + file_system::simple_name(full_path_log_file);
+                    // now let's try the current working directory
+                    full_path_log_file = file_system::current_working_directory() + "/" + file_system::simple_name(full_path_log_file);
                     output.open(full_path_log_file);
                     if (!output.is_open()) { // if still failed, try the home directory
-                        full_path_log_file = file_system::home_directory() + file_system::simple_name(full_path_log_file);
+                        full_path_log_file = file_system::home_directory() + "/" + file_system::simple_name(full_path_log_file);
                         output.open(full_path_log_file);
                     }
                     if (output.is_open())
