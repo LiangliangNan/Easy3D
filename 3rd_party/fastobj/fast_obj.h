@@ -34,8 +34,6 @@
 #define FAST_OBJ_VERSION_MINOR  0
 #define FAST_OBJ_VERSION        ((FAST_OBJ_VERSION_MAJOR << 8) | FAST_OBJ_VERSION_MINOR)
 
-// Liangliang: count the NaN coordinates
-int count_NaN = 0;
 
 typedef struct
 {
@@ -204,6 +202,10 @@ typedef struct
     char*                       base;
 
 } fastObjData;
+
+
+// Liangliang: count the NaN coordinates
+int count_NaN = 0;
 
 
 static const
