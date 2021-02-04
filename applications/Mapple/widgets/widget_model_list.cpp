@@ -68,7 +68,7 @@ public:
 
     void highlight(bool b) {
         for (int i = 0; i < columnCount(); ++i)
-            QTreeWidgetItem::setBackground(i, b ? QColor(255, 177, 255) : QBrush());
+            QTreeWidgetItem::setBackground(i, b ? QColor(80, 208, 255) : QBrush());
     }
 
 private:
