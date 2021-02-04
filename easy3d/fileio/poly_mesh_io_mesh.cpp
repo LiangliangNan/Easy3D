@@ -245,6 +245,12 @@ namespace easy3d {
                 return false;
             }
 
+            if (!mesh->is_tetraheral_mesh()) {
+                LOG(ERROR) << "polyhedral mesh is not a tetrahedra (only tetrahedra can be saved in mesh format for the"
+                              "the current implementation)";
+                return false;
+            }
+
             FILE *mesh_file = fopen(file_name.c_str(), "w");
             if (NULL == mesh_file) {
                 LOG(ERROR) << "could not open file: " << file_name;
