@@ -97,6 +97,12 @@ namespace easy3d {
             {1, 2, 0, 5}
     };
 
+    // tet facet vertex is such that the tetrahedron formed with:
+    //  vertex lv
+    //  facet_vertex_[lv][0]
+    //  facet_vertex_[lv][1]
+    //  facet_vertex_[lv][2]
+    // has the same orientation as the original tetrahedron for any vertex lv.
     unsigned int Delaunay3::facet_vertex_[4][3] = {
             {1, 2, 3},
             {0, 3, 2},
