@@ -453,7 +453,7 @@ namespace easy3d {
 
             for (int i=0; i<vertices.size(); ++i) {
                 auto s = vertices[i];
-                auto t = vertices[(i+1)%3];
+                auto t = vertices[(i+1)%vertices.size()];
                 auto e = find_edge(s, t);
                 if (!e.is_valid())
                     e = new_edge(s, t);
