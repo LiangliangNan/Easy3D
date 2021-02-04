@@ -1155,7 +1155,7 @@ void PaintCanvas::postDraw() {
         static QString fpsString("Rendering (Hz): --");
         if (++fpsCounter == maxCounter) {
             fps = 1000.0 * maxCounter / timer_.restart();
-            fpsString = tr("Rendering (Hz): %1").arg(fps, 0, 'f', ((fps < 10.0) ? 1 : 0));
+            fpsString = tr("Rendering (Hz): %1 ").arg(fps, 0, 'f', ((fps < 10.0) ? 1 : 0));
             fpsCounter = 0;
         }
 
