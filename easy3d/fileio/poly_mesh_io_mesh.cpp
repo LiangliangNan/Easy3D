@@ -56,7 +56,8 @@ namespace easy3d {
                 bool has_line = false;
                 while (still_comments && !feof(file)) {
                     has_line = fgets(a_line, LINE_MAX, file) != NULL;
-                    still_comments = (a_line[0] == '#' || a_line[0] == '\n');
+                    // needs to check for both line feed (LF: '\n') or Carriage return (CR: '\r')
+                    still_comments = (a_line[0] == '#' || a_line[0] == '\n' || a_line[0] == '\r');
                 }
                 return has_line;
             };
@@ -100,11 +101,15 @@ namespace easy3d {
                     }
                 } else if (0 == strcmp(str, "Vertices")) {
                     int number_of_vertices(0);
-                    if (1 != fscanf(mesh_file, " %d", &number_of_vertices) || number_of_vertices > 1000000000) {
-                        LOG(ERROR) << "expecting number of vertices should be less than 10^9...";
-                        fclose(mesh_file);
-                        return false;
+                    if (2 != sscanf(line, "%s %d", str, &number_of_vertices)) {
+                        // number_of_vertices appears on next line?
+                        if (1 != fscanf(mesh_file, " %d", &number_of_vertices) || number_of_vertices > 1000000000) {
+                            LOG(ERROR) << "expecting number of vertices should be less than 10^9...";
+                            fclose(mesh_file);
+                            return false;
+                        }
                     }
+
                     // allocate space for vertices
                     vertices.resize(number_of_vertices);
                     for (int i = 0; i < number_of_vertices; i++) {
@@ -118,10 +123,13 @@ namespace easy3d {
                     }
                 } else if (0 == strcmp(str, "Triangles")) {
                     int number_of_triangles(0);
-                    if (1 != fscanf(mesh_file, " %d", &number_of_triangles)) {
-                        LOG(ERROR) << "expecting number of triangles...";
-                        fclose(mesh_file);
-                        return false;
+                    if (2 != sscanf(line, "%s %d", str, &number_of_triangles)) {
+                        // number_of_triangles appears on next line?
+                        if (1 != fscanf(mesh_file, " %d", &number_of_triangles) || number_of_triangles > 1000000000) {
+                            LOG(ERROR) << "expecting number of triangles should be less than 10^9...";
+                            fclose(mesh_file);
+                            return false;
+                        }
                     }
 
 //                    faces.resize(number_of_triangles);
@@ -139,10 +147,13 @@ namespace easy3d {
                     }
                 } else if (0 == strcmp(str, "Tetrahedra")) {
                     int number_of_tetrahedra(0);
-                    if (1 != fscanf(mesh_file, " %d", &number_of_tetrahedra)) {
-                        LOG(ERROR) << "expecting number of tetrahedra...";
-                        fclose(mesh_file);
-                        return false;
+                    if (2 != sscanf(line, "%s %d", str, &number_of_tetrahedra)) {
+                        // number_of_tetrahedra appears on next line?
+                        if (1 != fscanf(mesh_file, " %d", &number_of_tetrahedra) || number_of_tetrahedra > 1000000000) {
+                            LOG(ERROR) << "expecting number of tetrahedra should be less than 10^9...";
+                            fclose(mesh_file);
+                            return false;
+                        }
                     }
 
                     // tet indices
@@ -155,13 +166,44 @@ namespace easy3d {
                         }
                         mesh->add_tetra(vertices[a - 1], vertices[b - 1], vertices[c - 1], vertices[d - 1]);
                     }
-                } else if (0 == strcmp(str, "Edges")) {
-                    int number_of_edges;
-                    if (1 != fscanf(mesh_file, " %d", &number_of_edges)) {
-                        LOG(ERROR) << "expecting number of edges...";
-                        fclose(mesh_file);
-                        return false;
+                } else if (0 == strcmp(str, "Hexahedra")) {
+                    int number_of_hexahedra(0);
+                    if (2 != sscanf(line, "%s %d", str, &number_of_hexahedra)) {
+                        // number_of_hexahedra appears on next line?
+                        if (1 != fscanf(mesh_file, " %d", &number_of_hexahedra) || number_of_hexahedra > 1000000000) {
+                            LOG(ERROR) << "expecting number of hexahedra should be less than 10^9...";
+                            fclose(mesh_file);
+                            return false;
+                        }
                     }
+
+                    // hex indices
+                    int indices[8];
+                    for (int i = 0; i < number_of_hexahedra; i++) {
+                        if (9 != fscanf(mesh_file, " %d %d %d %d %d %d %d %d %d",
+                                        &indices[0], &indices[1], &indices[2], &indices[3],
+                                        &indices[4], &indices[5], &indices[6], &indices[7], &extra))
+                        {
+                            LOG(ERROR) << "expecting hexahedra indices...";
+                            fclose(mesh_file);
+                            return false;
+                        }
+                        /// todo: implement add_hexa()
+//                        mesh->add_hexa(indices[0] - 1, indices[1] - 1, indices[2] - 1, indices[3] - 1,
+//                                       indices[4] - 1, indices[5] - 1, indices[6] - 1, indices[7] - 1);
+                    }
+                    LOG_IF(number_of_hexahedra > 0, WARNING) << "loading hexahedra not implemented yet: " << number_of_hexahedra << " hexahedra ignored";
+                } else if (0 == strcmp(str, "Edges")) {
+                    int number_of_edges(0);
+                    if (2 != sscanf(line, "%s %d", str, &number_of_edges)) {
+                        // number_of_edges appears on next line?
+                        if (1 != fscanf(mesh_file, " %d", &number_of_edges) || number_of_edges > 1000000000) {
+                            LOG(ERROR) << "expecting number of edges should be less than 10^9...";
+                            fclose(mesh_file);
+                            return false;
+                        }
+                    }
+
                     // allocate space for edges
                     std::vector<std::pair<int, int> > edges(number_of_edges);
                     // tet indices
