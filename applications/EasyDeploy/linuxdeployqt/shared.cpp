@@ -1198,6 +1198,7 @@ DeploymentInfo deployQtLibraries(const QString &appDirPath, const QStringList &a
       LogWarning() << "Or ldd does not find the external Qt libraries but sees the system ones.";
       LogWarning() << "If so, you will need to set LD_LIBRARY_PATH to the directory containing the external Qt libraries before trying again.";
       LogWarning() << "FIXME: https://github.com/probonopd/linuxdeployqt/issues/2";
+      LogWarning() << "It also might be that your application does not have any dependency and it is ready to be distributed.";
    } else {
       depInfo = deployQtLibraries(libraries, applicationBundle.path, allBinaryPaths, !additionalExecutables.isEmpty());
    }

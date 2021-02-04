@@ -1041,7 +1041,8 @@ DeploymentInfo deployQtFrameworks(const QString &appBundlePath, const QStringLis
         LogWarning() << "Could not find any external Qt frameworks to deploy in" << appBundlePath;
         LogWarning() << "Perhaps macdeployqt was already used on" << appBundlePath << "?";
         LogWarning() << "If so, you will need to rebuild" << appBundlePath << "before trying again.";
-        return DeploymentInfo();
+        LogWarning() << "It also might be that your application does not have any dependency and it is ready to be distributed.";
+       return DeploymentInfo();
    } else {
        return deployQtFrameworks(frameworks, applicationBundle.path, allBinaryPaths, useDebugLibs, !additionalExecutables.isEmpty());
    }
