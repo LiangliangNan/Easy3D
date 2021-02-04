@@ -87,7 +87,7 @@ There are many options to build Easy3D. Choose one of the following (or whatever
     $ cd Easy3D
     $ mkdir Release
     $ cd Release
-    $ cmake -DCMAKE_BULID_TYPE=Release ..
+    $ cmake -DCMAKE_BUILD_TYPE=Release ..
     $ make
     ```
 - Option 2: Use any IDE that can directly handle CMakeLists files to open the `CMakeLists.txt` in the root directory of 
