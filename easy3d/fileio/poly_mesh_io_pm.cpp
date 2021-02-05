@@ -29,6 +29,7 @@
 #include <set>
 
 #include <easy3d/core/poly_mesh.h>
+#include <easy3d/util/progress.h>
 
 
 namespace easy3d {
@@ -67,12 +68,31 @@ namespace easy3d {
             auto& cconn = mesh->cell_property<PolyMesh::CellConnectivity>("c:connectivity").vector();
             auto point = mesh->vertex_property<vec3>("v:point");
 
+            ProgressLogger progress(nv + ne + nh + nc + nv, true, false);
+
             // read properties from file
-            for (unsigned int i=0; i<nv; ++i)   vconn[i].read(input);
-            for (unsigned int i=0; i<ne; ++i)   econn[i].read(input);
-            for (unsigned int i=0; i<nh; ++i)   hconn[i].read(input);
-            for (unsigned int i=0; i<nc; ++i)   cconn[i].read(input);
+            for (unsigned int i=0; i<nv; ++i) {
+                vconn[i].read(input);
+                progress.next();
+            }
+
+            for (unsigned int i=0; i<ne; ++i) {
+                econn[i].read(input);
+                progress.next();
+            }
+
+            for (unsigned int i=0; i<nh; ++i) {
+                hconn[i].read(input);
+                progress.next();
+            }
+
+            for (unsigned int i=0; i<nc; ++i) {
+                cconn[i].read(input);
+                progress.next();
+            }
+
             input.read((char*)point.data(), nv * sizeof(vec3));
+            progress.next();
 
             return (mesh->n_vertices() > 0 && mesh->n_faces() > 0 && mesh->n_cells() > 0);
         }
@@ -120,12 +140,32 @@ namespace easy3d {
             const auto& cconn = mesh->get_cell_property<PolyMesh::CellConnectivity>("c:connectivity").vector();
             auto point = mesh->get_vertex_property<vec3>("v:point");
 
+            ProgressLogger progress(nv + ne + nh + nc + nv, true, false);
+
             // write properties to file
-            for (unsigned int i=0; i<nv; ++i)   vconn[i].write(output);
-            for (unsigned int i=0; i<ne; ++i)   econn[i].write(output);
-            for (unsigned int i=0; i<nh; ++i)   hconn[i].write(output);
-            for (unsigned int i=0; i<nc; ++i)   cconn[i].write(output);
+            for (unsigned int i=0; i<nv; ++i) {
+                vconn[i].write(output);
+                progress.next();
+            }
+
+            for (unsigned int i=0; i<ne; ++i)  {
+                econn[i].write(output);
+                progress.next();
+            }
+
+            for (unsigned int i=0; i<nh; ++i)  {
+                hconn[i].write(output);
+                progress.next();
+            }
+
+            for (unsigned int i=0; i<nc; ++i)  {
+                cconn[i].write(output);
+                progress.next();
+            }
+
             output.write((char*)point.data(), nv * sizeof(vec3));
+            progress.next();
+
             return true;
         }
 

@@ -28,6 +28,7 @@
 #include <cstring> //for strcmp
 
 #include <easy3d/core/poly_mesh.h>
+#include <easy3d/util/progress.h>
 
 
 namespace easy3d {
@@ -45,6 +46,13 @@ namespace easy3d {
                 LOG(ERROR) << "could not open file: " << file_name;
                 return false;
             }
+
+            // get length of file
+            fseek(mesh_file, 0L, SEEK_END); // seek to end of file
+            long size = ftell(mesh_file);
+            fseek(mesh_file, 0L, SEEK_SET); // seek back to beginning of file
+
+            ProgressLogger progress(size, true, false);
 
 #ifndef LINE_MAX
 #  define LINE_MAX 2048
@@ -111,6 +119,8 @@ namespace easy3d {
                         }
                     }
 
+                    LOG(INFO) << "reading " << number_of_vertices << " vertices...";
+
                     // allocate space for vertices
                     vertices.resize(number_of_vertices);
                     for (int i = 0; i < number_of_vertices; i++) {
@@ -121,6 +131,7 @@ namespace easy3d {
                             return false;
                         }
                         vertices[i] = mesh->add_vertex(vec3(x, y, z));
+                        progress.notify(ftell(mesh_file));
                     }
                 } else if (0 == strcmp(str, "Tetrahedra")) {
                     int number_of_tetrahedra(0);
@@ -132,6 +143,8 @@ namespace easy3d {
                             return false;
                         }
                     }
+
+                    LOG(INFO) << "reading " << number_of_tetrahedra << " tetrahedra...";
 
                     // tet indices
                     int indices[4];
@@ -149,6 +162,7 @@ namespace easy3d {
                                 vertices[indices[2] - 1],
                                 vertices[indices[3] - 1]
                         );
+                        progress.notify(ftell(mesh_file));
                     }
                 } else if (0 == strcmp(str, "Hexahedra")) {
                     int number_of_hexahedra(0);
@@ -160,6 +174,8 @@ namespace easy3d {
                             return false;
                         }
                     }
+
+                    LOG(INFO) << "reading " << number_of_hexahedra << " hexahedra...";
 
                     // hex indices
                     int indices[8];
@@ -182,6 +198,7 @@ namespace easy3d {
                                 vertices[indices[6] - 1],
                                 vertices[indices[7] - 1]
                         );
+                        progress.notify(ftell(mesh_file));
                     };
                 } else if (0 == strcmp(str, "End")) {
                     break;
@@ -213,6 +230,7 @@ namespace easy3d {
                             fclose(mesh_file);
                             return false;
                         }
+                        progress.notify(ftell(mesh_file));
                     }
                 }
             }
@@ -261,11 +279,15 @@ namespace easy3d {
             // print number of tet vertices
             int number_of_tet_vertices = mesh->n_vertices();
             fprintf(mesh_file, "%d\n", number_of_tet_vertices);
+
+            ProgressLogger progress(mesh->n_vertices() + mesh->n_faces() + mesh->n_cells(), true, false);
+
             // loop over tet vertices
             for (auto v : mesh->vertices()) {
                 // print position of ith tet vertex
                 const auto& p = mesh->position(v);
                 fprintf(mesh_file, "%.17lg %.17lg %.17lg 1\n", p.x, p.y, p.z);
+                progress.next();
             }
 
             // print faces
@@ -279,6 +301,7 @@ namespace easy3d {
                 const auto& vts = mesh->vertices(f);
                 // mesh standard uses 1-based indexing
                 fprintf(mesh_file, "%d %d %d 1\n", vts[0].idx() + 1, vts[1].idx() + 1, vts[2].idx() + 1);
+                progress.next();
             }
 
             // print tetrahedra
@@ -307,7 +330,9 @@ namespace easy3d {
                         vts[1].idx() + 1,
                         vts[2].idx() + 1
                 );
+                progress.next();
             }
+
             fclose(mesh_file);
             return true;
         }

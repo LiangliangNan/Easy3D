@@ -24,10 +24,10 @@
 
 #include <easy3d/fileio/poly_mesh_io.h>
 
-#include <iostream>
 #include <fstream>
 
 #include <easy3d/core/poly_mesh.h>
+#include <easy3d/util/progress.h>
 
 
 namespace easy3d {
@@ -51,10 +51,13 @@ namespace easy3d {
             int num_vertices(0), num_cells(0);
             input >> dummy >> num_vertices >> dummy >> num_cells;
 
+            ProgressLogger progress(num_vertices + num_cells, true, false);
+
             vec3 p;
             for (std::size_t v = 0; v < num_vertices; ++v) {
                 input >> p;
                 mesh->add_vertex(p);
+                progress.next();
             }
 
             int num_halffaces(0), num_valence(0), idx(0);
@@ -71,6 +74,7 @@ namespace easy3d {
                     halffaces[hf] = mesh->add_face(vts);
                 }
                 mesh->add_cell(halffaces);
+                progress.next();
             }
 
             return (mesh->n_vertices() > 0 && mesh->n_faces() > 0 && mesh->n_cells() > 0);
@@ -101,8 +105,12 @@ namespace easy3d {
             output << "#vertices " << mesh->n_vertices() << std::endl
                    << "#cells    " << mesh->n_cells() << std::endl;
 
-            for (auto v : mesh->vertices())
+            ProgressLogger progress(mesh->n_vertices() + mesh->n_cells(), true, false);
+
+            for (auto v : mesh->vertices()) {
                 output << mesh->position(v) << std::endl;
+                progress.next();
+            }
 
             for (auto c : mesh->cells()) {
                 int num_halffaces = mesh->halffaces(c).size();
@@ -113,6 +121,7 @@ namespace easy3d {
                         output << v.idx() << " ";
                     output << std::endl;
                 }
+                progress.next();
             }
 
             return true;
