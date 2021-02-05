@@ -126,6 +126,8 @@ namespace easy3d {
             return;
         }
 
+        LOG(INFO) << "updating rendering buffers...";
+
         StopWatch w;
         if (update_func_)
             update_func_(model_, this);
