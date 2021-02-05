@@ -16,9 +16,9 @@ NOTE: There are usually many options to set up a development environment on each
        
      - If you are using Debian, Ubuntu, and their variants, run the following `apt-get` commands one by one:
      
-     `sudo apt-get update`
+       `sudo apt-get update`
      
-     `sudo apt-get install build-essential manpages-dev`
+       `sudo apt-get install build-essential manpages-dev`
 
 **Step #2. Build the software.** Choose **ONE** of the following (or whatever you are familiar with):
 
