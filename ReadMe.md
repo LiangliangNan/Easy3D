@@ -60,10 +60,9 @@ By abstracting geometric elements as one of the above drawables, more general vi
 scalar fields) can be done very conveniently.
 
 ### Build
-Easy3D depends on some third-party libraries. All dependencies necessary for the core functionality and the basic
-viewer are included in the distribution. So you don't need to do anything about third-party libraries. Easy3D 
-also supports the use of Qt. You can switch on the following CMake option to include the related examples and 
-applications (e.g., 
+Easy3D depends on some third-party libraries. For the core functionalities and the basic viewer, all dependencies have
+already been included in the distribution. Easy3D also optionally supports the use of Qt for GUI development. 
+You can switch on the following CMake option to include the examples and applications that use Qt (e.g., 
             [`Tutorial_202_Viewer_Qt`](https://github.com/LiangliangNan/Easy3D/tree/master/tutorials/Tutorial_202_Viewer_Qt) 
             and [`Mapple`](https://github.com/LiangliangNan/Easy3D/tree/master/applications/Mapple)) 
 in your build:
