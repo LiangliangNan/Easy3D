@@ -1,4 +1,5 @@
 * easy3d (on going):
+    - Use https://github.com/onqtam/doctest for tests
     - Add contents and brief info for each model in WidgetModelList.
     - Add tutorials for algorithms:
         - Delaunay2D,
