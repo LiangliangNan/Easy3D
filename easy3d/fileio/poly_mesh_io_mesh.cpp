@@ -83,7 +83,7 @@ namespace easy3d {
             }
 
             std::vector<PolyMesh::Vertex> vertices;
-//            std::vector<PolyMesh::HalfFace> faces; // PolyMesh adds the faces when adding the tetrahedra
+//            std::vector<PolyMesh::HalfFace> faces; // PolyMesh will create the faces when adding cells
             while (eat_comments(mesh_file, line)) {
                 sscanf(line, " %s", str);
                 int extra;
@@ -132,13 +132,14 @@ namespace easy3d {
                         }
                     }
 
-//                    faces.resize(number_of_triangles);
+//                    faces.resize(number_of_triangles);    // PolyMesh will create the faces when adding cells
                     int tri[3]; // triangle indices
                     for (int i = 0; i < number_of_triangles; i++) {
                         if (4 != fscanf(mesh_file, " %d %d %d %d", &tri[0], &tri[1], &tri[2], &extra)) {
                             LOG(ERROR) << "expecting triangle indices...";
                             return false;
                         }
+                        // PolyMesh will create the faces when adding cells
 //                        faces[i] = mesh->add_triangle(
 //                                PolyMesh::Vertex(tri[0] - 1),
 //                                PolyMesh::Vertex(tri[1] - 1),
@@ -157,14 +158,21 @@ namespace easy3d {
                     }
 
                     // tet indices
-                    int a, b, c, d;
+                    int indices[4];
                     for (int i = 0; i < number_of_tetrahedra; i++) {
-                        if (5 != fscanf(mesh_file, " %d %d %d %d %d", &a, &b, &c, &d, &extra)) {
+                        if (5 != fscanf(mesh_file, " %d %d %d %d %d",
+                                        &indices[0], &indices[1], &indices[2], &indices[3], &extra))
+                        {
                             LOG(ERROR) << "expecting tetrahedra indices...";
                             fclose(mesh_file);
                             return false;
                         }
-                        mesh->add_tetra(vertices[a - 1], vertices[b - 1], vertices[c - 1], vertices[d - 1]);
+                        mesh->add_tetra(
+                                vertices[indices[0] - 1],
+                                vertices[indices[1] - 1],
+                                vertices[indices[2] - 1],
+                                vertices[indices[3] - 1]
+                        );
                     }
                 } else if (0 == strcmp(str, "Hexahedra")) {
                     int number_of_hexahedra(0);
@@ -188,11 +196,17 @@ namespace easy3d {
                             fclose(mesh_file);
                             return false;
                         }
-                        /// todo: implement add_hexa()
-//                        mesh->add_hexa(indices[0] - 1, indices[1] - 1, indices[2] - 1, indices[3] - 1,
-//                                       indices[4] - 1, indices[5] - 1, indices[6] - 1, indices[7] - 1);
-                    }
-                    LOG_IF(number_of_hexahedra > 0, WARNING) << "loading hexahedra not implemented yet: " << number_of_hexahedra << " hexahedra ignored";
+                        mesh->add_hexa(
+                                vertices[indices[0] - 1],
+                                vertices[indices[1] - 1],
+                                vertices[indices[2] - 1],
+                                vertices[indices[3] - 1],
+                                vertices[indices[4] - 1],
+                                vertices[indices[5] - 1],
+                                vertices[indices[6] - 1],
+                                vertices[indices[7] - 1]
+                        );
+                    };
                 } else if (0 == strcmp(str, "Edges")) {
                     int number_of_edges(0);
                     if (2 != sscanf(line, "%s %d", str, &number_of_edges)) {

@@ -708,34 +708,52 @@ namespace easy3d {
 
         /// add a new cell defined by \c faces.
         /// \param faces The input faces created by add_face(), add_triangle(), or add_quad().
-        /// \sa add_tetra(), add_face(), add_triangle(), add_quad().
+        /// \sa add_face(), add_triangle(), add_quad(), add_tetra(), add_hexa()
         Cell add_cell(const std::vector<HalfFace>& faces);
 
         /// add a new tetrahedron defined by its faces.
-        /// \param {f1, f2, f3, f4} The input faces created by add_face(), add_face(), or add_triangle().
+        /// \param {f0, f1, f2, f3} The input faces created by add_face() or add_triangle().
         /// \sa add_cell(), add_tetra(), add_face(), add_triangle().
-        Cell add_tetra(HalfFace f1, HalfFace f2, HalfFace f3, HalfFace f4) { return add_cell({f1, f2, f3, f4}); }
+        Cell add_tetra(HalfFace f0, HalfFace f1, HalfFace f2, HalfFace f3) { return add_cell({f0, f1, f2, f3}); }
 
-        /// add a new tetrahedron connecting vertices \c v1, \c v2, \c v3, \c v4.
-        /// \param {v1, v2, v3, v4} The input vertices created by add_vertex().
-        /// \details It creates all the faces and the cells, and adds them to the mesh.
-        /// \sa add_cell()
-        Cell add_tetra(Vertex v1, Vertex v2, Vertex v3, Vertex v4);
+        /// add a new tetrahedron connecting vertices \c v0, \c v1, \c v2, \c v3.
+        /// \param {v0, v1, v2, v3} The input vertices created by add_vertex().
+        /// \details It creates all the faces and the cell, and adds them to the mesh.
+        /// \sa add_vertex()
+        Cell add_tetra(Vertex v0, Vertex v1, Vertex v2, Vertex v3);
+
+        /// add a new hexahedron connecting vertices \c v0, \c v1, \c v2, \c v3, \c v4, \c v5, \c v6, \c v7.
+        /// \param {v0, v1, v2, v3, v4, v5, v6, v7} The input vertices created by add_vertex().
+        ///     The vertices must be ordered as bellow:
+        ///             3--------------------2
+        ///             |\                   |\
+        ///             | \                  | \
+        ///             |  \                 |  \
+        ///             |   7----------------+---6
+        ///             |   |                |   |
+        ///             0---+----------------1   |
+        ///              \  |                 \  |
+        ///               \ |                  \ |
+        ///                \|                   \|
+        ///                 4--------------------5
+        /// \details It creates all the faces and the cell, and adds them to the mesh.
+        /// \sa add_vertex()
+        Cell add_hexa(Vertex v0, Vertex v1, Vertex v2, Vertex v3, Vertex v4, Vertex v5, Vertex v6, Vertex v7);
 
         /// add a new face connecting \c vertices
         /// \param vertices The input vertices created by add_vertex().
         /// \sa add_triangle(), add_quad()
         HalfFace add_face(const std::vector<Vertex>& vertices);
 
-        /// add a new triangle face connecting vertices \c v1, \c v2, \c v3
-        /// \param {v1, v2, v3} The input vertices created by add_vertex().
+        /// add a new triangle face connecting vertices \c v0, \c v1, \c v2.
+        /// \param {v0, v1, v2} The input vertices created by add_vertex().
         /// \sa add_face(), add_quad()
-        HalfFace add_triangle(Vertex v1, Vertex v2, Vertex v3) { return add_face({ v1, v2, v3 }); }
+        HalfFace add_triangle(Vertex v0, Vertex v1, Vertex v2) { return add_face({ v0, v1, v2 }); }
 
-        /// add a new quad face connecting vertices \c v1, \c v2, \c v3, \c v4
-        /// \param {v1, v2, v3, v4} The input vertices created by add_vertex().
+        /// add a new quad face connecting vertices \c v0, \c v1, \c v2, \c v3.
+        /// \param {v0, v1, v2, v3} The input vertices created by add_vertex().
         /// \sa add_face(), add_triangle()
-        HalfFace add_quad(Vertex v1, Vertex v2, Vertex v3, Vertex v4) { return add_face({ v1, v2, v3, v4 }); }
+        HalfFace add_quad(Vertex v0, Vertex v1, Vertex v2, Vertex v3) { return add_face({ v0, v1, v2, v3}); }
 
         //@}
 

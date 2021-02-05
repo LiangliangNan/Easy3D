@@ -512,6 +512,33 @@ namespace easy3d {
     }
 
 
+    PolyMesh::Cell PolyMesh::add_hexa(Vertex v0, Vertex v1, Vertex v2, Vertex v3,
+                                      Vertex v4, Vertex v5, Vertex v6, Vertex v7) {
+        // for each face, its normal points outside the cell.
+        // 3--------------------2
+        // |\                   |\
+        // | \                  | \
+        // |  \                 |  \
+        // |   7----------------+---6
+        // |   |                |   |
+        // 0---+----------------1   |
+        //  \  |                 \  |
+        //   \ |                  \ |
+        //    \|                   \|
+        //     4--------------------5
+        std::vector<HalfFace> faces = {
+                add_quad(v0, v3, v2, v1),   // back
+                add_quad(v0, v4, v7, v3),   // left
+                add_quad(v4, v5, v6, v7),   // front
+                add_quad(v1, v2, v6, v5),   // right
+                add_quad(v2, v3, v7, v6),   // top
+                add_quad(v0, v1, v5, v4)    // bottom
+        };
+
+        return add_cell(faces);
+    }
+
+
     //-----------------------------------------------------------------------------
 
 
