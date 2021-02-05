@@ -1155,12 +1155,13 @@ void PaintCanvas::postDraw() {
         static QString fpsString("Rendering (Hz): --");
         if (++fpsCounter == maxCounter) {
             fps = 1000.0 * maxCounter / timer_.restart();
-            fpsString = tr("Rendering (Hz): %1 ").arg(fps, 0, 'f', ((fps < 10.0) ? 1 : 0));
+            fpsString = tr("Rendering (Hz): %1").arg(fps, 0, 'f', ((fps < 10.0) ? 1 : 0));
             fpsCounter = 0;
         }
 
 #if 0   // draw frame rate text using Easy3D's built-in TextRenderer
-        texter_->draw(fpsString.toStdString(), 20.0f * dpi_scaling(), 50.0f * dpi_scaling(), 16, 1);
+        if (texter_ && texter_->num_fonts() >=2)
+            texter_->draw(fpsString.toStdString(), 20.0f * dpi_scaling(), 50.0f * dpi_scaling(), 16, 1);
 #else   // draw frame rate text using Qt.
         QPainter painter; easy3d_debug_log_gl_error;
         painter.begin(this);
