@@ -46,30 +46,6 @@ CLOG_N_TIMES(n, LEVEL, ELPP_CURR_FILE_LOGGER_ID)
 
 namespace easy3d {
 
-
-    namespace color {
-        enum Enum {
-            None = 0,
-            White,
-            Red,
-            Green,
-            Blue,
-            Cyan,
-            Yellow,
-            Grey,
-            Bright = 0x10,
-            BrightRed   = Bright | Red,
-            BrightGreen = Bright | Green,
-            LightGrey   = Bright | Grey,
-            BrightWhite = Bright | White
-        };
-    } // namespace Color
-
-
-    std::ostream& operator<<(std::ostream& s, color::Enum code);
-
-
-
     /// \brief The logging mechanism.
     /// \namespace easy3d::logging
     namespace logging {
