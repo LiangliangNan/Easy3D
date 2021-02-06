@@ -14,6 +14,10 @@ set (PROJECT_MAJOR 2)
 set (PROJECT_MINOR 4)
 set (PROJECT_PATCH 2)
 set (PROJECT_VERSION "${PROJECT_MAJOR}.${PROJECT_MINOR}.${PROJECT_PATCH}")
+
+add_definitions("-DPROJECT_MAJOR=${PROJECT_MAJOR}")
+add_definitions("-DPROJECT_MINOR=${PROJECT_MINOR}")
+add_definitions("-DPROJECT_PATCH=${PROJECT_PATCH}")
 add_definitions("-DPROJECT_VERSION=\"${PROJECT_VERSION}\"")
 
 ################################################################################
