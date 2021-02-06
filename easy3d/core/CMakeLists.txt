@@ -35,6 +35,7 @@ set(${PROJECT_NAME}_HEADERS
         polygon.h
         types.h
         vec.h
+        version.h
         )
 
 set(${PROJECT_NAME}_SOURCES
