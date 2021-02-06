@@ -33,6 +33,41 @@ INITIALIZE_EASYLOGGINGPP
 namespace easy3d
 {
 
+    namespace color {
+
+        std::ostream& color_to_stream(std::ostream& s, color::Enum code) {
+            static bool color_suported = true;
+            static bool use_color = true;
+            if (!color_suported && use_color)
+                return s;
+
+            auto col = "";
+            switch(code) {
+                case color::Red:         col = "[0;31m"; break;
+                case color::Green:       col = "[0;32m"; break;
+                case color::Blue:        col = "[0;34m"; break;
+                case color::Cyan:        col = "[0;36m"; break;
+                case color::Yellow:      col = "[0;33m"; break;
+                case color::Grey:        col = "[1;30m"; break;
+                case color::LightGrey:   col = "[0;37m"; break;
+                case color::BrightRed:   col = "[1;31m"; break;
+                case color::BrightGreen: col = "[1;32m"; break;
+                case color::BrightWhite: col = "[1;37m"; break;
+                case color::Bright: // invalid
+                case color::None:
+                case color::White:
+                default: col = "[0m";
+            }
+            s << "\033" << col;
+            return s;
+        }
+    }
+
+    std::ostream& operator<<(std::ostream& s, color::Enum code) {
+        return color::color_to_stream(s, code);
+    }
+
+
     // cond
     namespace logging
     {
