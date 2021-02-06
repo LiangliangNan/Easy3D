@@ -65,7 +65,7 @@ namespace easy3d
 
         std::string crash_reason(int sig) {
             std::stringstream ss;
-            bool foundReason = false;
+            bool found_reason = false;
             for (int i = 0; i < el::base::consts::kCrashSignalsCount; ++i) {
                 if (el::base::consts::kCrashSignals[i].numb == sig) {
                     ss << "Application has crashed due to [" << el::base::consts::kCrashSignals[i].name << "] signal";
@@ -74,10 +74,10 @@ namespace easy3d
                            "    " << el::base::consts::kCrashSignals[i].brief << std::endl <<
                            "    " << el::base::consts::kCrashSignals[i].detail;
                     }
-                    foundReason = true;
+                    found_reason = true;
                 }
             }
-            if (!foundReason) {
+            if (!found_reason) {
                 ss << "Application has crashed due to unknown signal [" << sig << "]";
             }
             return ss.str();
