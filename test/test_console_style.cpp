@@ -69,5 +69,9 @@ int main(int argc, char *argv[]) {
     std::cout << console::Style::On_IPurple << "Easy3D version: " << version() << std::endl;
     std::cout << console::Style::None << "Easy3D version: " << version() << std::endl;
 
+    if (!console::terminal_supports_styles())
+        std::cerr << "WARNING: console styles not supported on your system.\n\t"
+                     "Maybe you didn't run the application from the console?" << std::endl;
+
     return EXIT_SUCCESS;
 }
