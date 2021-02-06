@@ -6,6 +6,7 @@ project(${PROJECT_NAME})
 
 set(${PROJECT_NAME}_HEADERS
         chrono_watch.h
+        console_style.h
         dialogs.h
         easylogging++.h
         file_system.h
@@ -21,6 +22,7 @@ set(${PROJECT_NAME}_HEADERS
 
 set(${PROJECT_NAME}_SOURCES
         chrono_watch.cpp
+        console_style.cpp
         dialogs.cpp
         easylogging++.cc
         file_system.cpp
