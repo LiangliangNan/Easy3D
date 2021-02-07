@@ -30,7 +30,7 @@
 #include <easy3d/core/hash.h>
 #include <easy3d/util/logging.h>
 
-#include <3rd_party/libtess/glutess.h>
+#include <3rd_party/glutess/glutess.h>
 
 
 namespace easy3d {

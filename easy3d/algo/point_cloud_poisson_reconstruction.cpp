@@ -31,12 +31,12 @@
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/stop_watch.h>
 
-#include <3rd_party/poisson_recon-9.0.1/MyTime.h>
-#include <3rd_party/poisson_recon-9.0.1/MemoryUsage.h>
-#include <3rd_party/poisson_recon-9.0.1/MarchingCubes.h>
-#include <3rd_party/poisson_recon-9.0.1/Octree.h>
-#include <3rd_party/poisson_recon-9.0.1/MultiGridOctreeData.h>
-#include <3rd_party/poisson_recon-9.0.1/SurfaceTrimmer.h>
+#include <3rd_party/poisson/MyTime.h>
+#include <3rd_party/poisson/MemoryUsage.h>
+#include <3rd_party/poisson/MarchingCubes.h>
+#include <3rd_party/poisson/Octree.h>
+#include <3rd_party/poisson/MultiGridOctreeData.h>
+#include <3rd_party/poisson/SurfaceTrimmer.h>
 
 
 namespace easy3d {

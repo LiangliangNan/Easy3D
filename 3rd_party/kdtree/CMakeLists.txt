@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.1)
 
-get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-project(${PROJECT_NAME})
-
+project(3rd_kdtree)
 
 set(kdtree_HEADERS
     ANN/ANN.h
@@ -76,12 +74,12 @@ set(kdtree_SOURCES
     )
 
 
-add_library(${PROJECT_NAME} STATIC ${kdtree_SOURCES} ${kdtree_HEADERS})
+add_library(3rd_kdtree STATIC ${kdtree_SOURCES} ${kdtree_HEADERS})
 
-set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "3rd_party")
+set_target_properties(3rd_kdtree PROPERTIES FOLDER "3rd_party")
 
 if (MSVC)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE
+    target_compile_definitions(3rd_kdtree PRIVATE
         _CRT_SECURE_NO_WARNINGS
         _CRT_SECURE_NO_DEPRECATE
         )

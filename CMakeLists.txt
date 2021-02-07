@@ -7,8 +7,7 @@ endif ()
 
 ################################################################################
 
-get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-project(${PROJECT_NAME})
+project(easy3d)
 
 set (PROJECT_MAJOR 2)
 set (PROJECT_MINOR 4)

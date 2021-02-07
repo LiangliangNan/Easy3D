@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.1)
 
-get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+get_filename_component(MODULE_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+set(PROJECT_NAME "easy3d_${MODULE_NAME}")
 project(${PROJECT_NAME})
 
 
@@ -27,4 +28,4 @@ set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "easy3d")
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
 
-target_link_libraries(${PROJECT_NAME} PUBLIC core kd_tree)
+target_link_libraries(${PROJECT_NAME} PUBLIC easy3d_core 3rd_kdtree)

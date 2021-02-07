@@ -28,7 +28,7 @@
 #include <easy3d/algo/surface_mesh_stitching.h>
 #include <easy3d/core/surface_mesh.h>
 
-#include <3rd_party/kd_tree/ANN/ANN.h>
+#include <3rd_party/kdtree/ANN/ANN.h>
 
 
 using namespace ANN;

@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 cmake_minimum_required(VERSION 3.0)
-project(backward CXX)
+project(3rd_backward CXX)
 
 # Introduce variables:
 # * CMAKE_INSTALL_LIBDIR
@@ -83,60 +83,8 @@ option(BACKWARD_SHARED "Build dynamic backward-cpp shared lib" OFF)
 if(BACKWARD_SHARED)
     set(libtype SHARED)
 endif()
-add_library(backward ${libtype} backward.cpp)
-target_compile_definitions(backward PUBLIC ${BACKWARD_DEFINITIONS})
-target_include_directories(backward PUBLIC ${BACKWARD_INCLUDE_DIRS})
+add_library(3rd_backward ${libtype} backward.cpp)
+target_compile_definitions(3rd_backward PUBLIC ${BACKWARD_DEFINITIONS})
+target_include_directories(3rd_backward PUBLIC ${BACKWARD_INCLUDE_DIRS})
 
-set_target_properties(backward PROPERTIES FOLDER "3rd_party")
-
-
-###############################################################################
-# TESTS
-###############################################################################
-
-if(BACKWARD_TESTS)
-	enable_testing()
-
-	add_library(test_main OBJECT test/_test_main.cpp)
-
-	macro(backward_add_test src)
-		get_filename_component(name ${src} NAME_WE)
-		set(test_name "test_${name}")
-
-		add_executable(${test_name} ${src} ${ARGN} $<TARGET_OBJECTS:test_main>)
-
-		target_link_libraries(${test_name} PRIVATE Backward::Backward)
-
-		add_test(NAME ${name} COMMAND ${test_name})
-	endmacro()
-
-	# Tests without backward.cpp
-	set(TESTS
-		test
-		stacktrace
-		rectrace
-		select_signals
-		)
-
-	foreach(test ${TESTS})
-		backward_add_test(test/${test}.cpp)
-	endforeach()
-
-	# Tests with backward.cpp
-	set(TESTS
-		suicide
-		)
-
-	foreach(test ${TESTS})
-		backward_add_test(test/${test}.cpp ${BACKWARD_ENABLE})
-	endforeach()
-endif()
-
-install(
-    FILES "backward.hpp"
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-)
-install(
-    FILES "BackwardConfig.cmake"
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/backward
-)
+set_target_properties(3rd_backward PROPERTIES FOLDER "3rd_party")

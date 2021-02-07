@@ -4,6 +4,8 @@ get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 project(${PROJECT_NAME})
 
 
+add_subdirectory(tools)
+
 
 include(../../cmake/UseQt5.cmake)
 if (NOT QT5_FOUND)
@@ -189,11 +191,9 @@ endif ()
 
 target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL)
 
-add_subdirectory(tools)
-target_link_libraries(${PROJECT_NAME} renderer algo tools)
-
+target_link_libraries(${PROJECT_NAME} easy3d_renderer easy3d_algo tools)
 if (EASY3D_HAS_CGAL)
-    target_link_libraries(${PROJECT_NAME} algo_ext)
+    target_link_libraries(${PROJECT_NAME} easy3d_algo_ext)
 endif ()
 
 include(../../cmake/FindFFMPEG.cmake)

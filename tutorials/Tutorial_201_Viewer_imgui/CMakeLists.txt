@@ -13,4 +13,4 @@ set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "tutorials")
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
 
-target_link_libraries(${PROJECT_NAME} imgui core renderer viewer util)
+target_link_libraries(${PROJECT_NAME} 3rd_imgui easy3d_core easy3d_renderer easy3d_viewer easy3d_util)

@@ -1,8 +1,8 @@
-get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-project(${PROJECT_NAME})
+cmake_minimum_required(VERSION 3.1)
 
+project(3rd_glutess)
 
-add_library(${PROJECT_NAME} STATIC
+add_library(3rd_glutess STATIC
         glutess.h
         source/dict-list.h
         source/dict.c
@@ -30,6 +30,6 @@ add_library(${PROJECT_NAME} STATIC
         source/tessmono.h
         )
 
-set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "3rd_party")
+set_target_properties(3rd_glutess PROPERTIES FOLDER "3rd_party")
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(3rd_glutess PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

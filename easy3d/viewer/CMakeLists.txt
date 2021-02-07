@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.1)
 
-get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+get_filename_component(MODULE_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+set(PROJECT_NAME "easy3d_${MODULE_NAME}")
 project(${PROJECT_NAME})
 
 
@@ -20,7 +21,7 @@ add_library(${PROJECT_NAME} STATIC
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "easy3d")
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
-target_link_libraries(${PROJECT_NAME} PUBLIC glew glfw core renderer util fileio algo)
+target_link_libraries(${PROJECT_NAME} PUBLIC 3rd_glew 3rd_glfw easy3d_core easy3d_renderer easy3d_util easy3d_fileio easy3d_algo)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE GLEW_STATIC)
 

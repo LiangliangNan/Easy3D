@@ -1,16 +1,13 @@
 cmake_minimum_required(VERSION 3.1)
 
-get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-project(${PROJECT_NAME})
+project(3rd_rply)
 
+add_library(3rd_rply STATIC rply.c rply.h)
 
-
-add_library(${PROJECT_NAME} STATIC rply.c rply.h)
-
-set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "3rd_party")
+set_target_properties(3rd_rply PROPERTIES FOLDER "3rd_party")
 
 if (MSVC)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE
+    target_compile_definitions(3rd_rply PRIVATE
         _CRT_SECURE_NO_WARNINGS
         _CRT_SECURE_NO_DEPRECATE
         )

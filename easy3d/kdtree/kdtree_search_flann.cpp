@@ -25,7 +25,7 @@
 #include <easy3d/kdtree/kdtree_search_flann.h>
 #include <easy3d/core/point_cloud.h>
 
-#include <3rd_party/kd_tree/FLANN/flann.hpp>
+#include <3rd_party/kdtree/FLANN/flann.hpp>
 
 
 #define get_tree(x) (reinterpret_cast<const flann::Index< flann::L2<float> > *>(x))

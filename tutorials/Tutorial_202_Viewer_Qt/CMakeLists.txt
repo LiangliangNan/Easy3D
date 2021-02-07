@@ -62,7 +62,7 @@ endif ()
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
 
 target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL)
-target_link_libraries(${PROJECT_NAME} renderer)
+target_link_libraries(${PROJECT_NAME} easy3d_renderer)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "tutorials")
 

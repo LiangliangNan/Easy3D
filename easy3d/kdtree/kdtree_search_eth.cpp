@@ -25,7 +25,7 @@
 #include <easy3d/kdtree/kdtree_search_eth.h>
 #include <easy3d/core/point_cloud.h>
 
-#include <3rd_party/kd_tree/ETH_Kd_Tree/kdTree.h>
+#include <3rd_party/kdtree/ETH_Kd_Tree/kdTree.h>
 
 
 

@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.1)
 
-get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-project(${PROJECT_NAME})
-
+project(3rd_ransac)
 
 set(ransac_HEADERS
            BasePrimitiveShape.h
@@ -206,12 +204,12 @@ set(ransac_SOURCES
     )
 
 
-add_library(${PROJECT_NAME} STATIC ${ransac_SOURCES} ${ransac_HEADERS})
+add_library(3rd_ransac STATIC ${ransac_SOURCES} ${ransac_HEADERS})
 
-set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "3rd_party")
+set_target_properties(3rd_ransac PROPERTIES FOLDER "3rd_party")
 
 set(RANSAC_INCLUDE_DIR   ${CMAKE_CURRENT_LIST_DIR})
-target_include_directories(${PROJECT_NAME} PRIVATE ${RANSAC_INCLUDE_DIR})
+target_include_directories(3rd_ransac PRIVATE ${RANSAC_INCLUDE_DIR})
 
 
 # Liangliang: Otherwise there will be many related errors
@@ -230,15 +228,15 @@ endif()
 #include(../../cmake/UseOpenMP.cmake)
 #if (OpenMP_FOUND)
 #    # define DOPARALLEL to enable OpenMP
-#    target_compile_definitions(${PROJECT_NAME} PRIVATE DOPARALLEL)
-#    target_include_directories(${PROJECT_NAME} PRIVATE ${OpenMP_CXX_INCLUDE_DIRS})
-#    target_link_libraries(${PROJECT_NAME} PUBLIC ${OpenMP_CXX_LIBRARIES})
+#    target_compile_definitions(3rd_ransac PRIVATE DOPARALLEL)
+#    target_include_directories(3rd_ransac PRIVATE ${OpenMP_CXX_INCLUDE_DIRS})
+#    target_link_libraries(3rd_ransac PUBLIC ${OpenMP_CXX_LIBRARIES})
 #    message(STATUS "OpenMP support enabled for RANSAC on ${CMAKE_SYSTEM_NAME}")
 #endif ()
 
 
 if (MSVC)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE
+    target_compile_definitions(3rd_ransac PRIVATE
         _CRT_SECURE_NO_WARNINGS
         _CRT_SECURE_NO_DEPRECATE
         )

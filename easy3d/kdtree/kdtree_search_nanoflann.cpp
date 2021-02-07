@@ -25,7 +25,7 @@
 #include <easy3d/kdtree/kdtree_search_nanoflann.h>
 #include <easy3d/core/point_cloud.h>
 
-#include <3rd_party/kd_tree/nanoflann/nanoflann.hpp>
+#include <3rd_party/kdtree/nanoflann/nanoflann.hpp>
 
 
 using namespace nanoflann;

@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.1)
 
-get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+get_filename_component(MODULE_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+set(PROJECT_NAME "easy3d_${MODULE_NAME}")
 project(${PROJECT_NAME})
 
 
@@ -78,9 +79,9 @@ add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "easy3d")
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
-target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_THIRD_PARTY}/RANSAC-1.1)
+target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_THIRD_PARTY}/ransac)
 
-target_link_libraries(${PROJECT_NAME} PUBLIC core util kdtree poisson_recon-9.0.1 RANSAC-1.1 triangle tetgen libtess)
+target_link_libraries(${PROJECT_NAME} PUBLIC easy3d_core easy3d_util easy3d_kdtree 3rd_poisson 3rd_ransac 3rd_triangle 3rd_tetgen 3rd_glutess)
 
 set(EIGEN_SOURCE_DIR ${EASY3D_THIRD_PARTY}/eigen)
 target_include_directories(${PROJECT_NAME} PRIVATE ${EIGEN_SOURCE_DIR})

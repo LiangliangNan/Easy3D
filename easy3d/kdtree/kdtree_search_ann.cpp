@@ -27,7 +27,7 @@
 #include <easy3d/kdtree/kdtree_search_ann.h>
 #include <easy3d/core/point_cloud.h>
 
-#include <3rd_party/kd_tree/ANN/ANN.h>
+#include <3rd_party/kdtree/ANN/ANN.h>
 
 
 using namespace ANN;
