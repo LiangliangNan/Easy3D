@@ -980,7 +980,7 @@ namespace easy3d {
                 if(current_time - last_time >= 2.0f) {
                     sprintf(gpu_time_, "fps: %2.0f (%4.1f ms/frame)", double(frame_counter) / (current_time - last_time), 1000.0 / double(frame_counter));
                     frame_counter = 0;
-                    last_time += 2.0f;
+                    last_time = current_time;
                 }
 
                 pre_draw();
