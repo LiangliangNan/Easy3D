@@ -37,7 +37,7 @@ elseif (_GLFW_OSMESA)
 endif()
 
 if (_GLFW_X11 OR _GLFW_WAYLAND)
-    if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+    if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
         target_sources(glfw PRIVATE linux_joystick.h linux_joystick.c)
     else()
         target_sources(glfw PRIVATE null_joystick.h null_joystick.c)
@@ -45,31 +45,42 @@ if (_GLFW_X11 OR _GLFW_WAYLAND)
 endif()
 
 if (_GLFW_WAYLAND)
-    ecm_add_wayland_client_protocol(GLFW_WAYLAND_PROTOCOL_SOURCES
-        PROTOCOL
-        "${WAYLAND_PROTOCOLS_PKGDATADIR}/stable/xdg-shell/xdg-shell.xml"
-        BASENAME xdg-shell)
-    ecm_add_wayland_client_protocol(GLFW_WAYLAND_PROTOCOL_SOURCES
-        PROTOCOL
-        "${WAYLAND_PROTOCOLS_PKGDATADIR}/unstable/xdg-decoration/xdg-decoration-unstable-v1.xml"
-        BASENAME xdg-decoration)
-    ecm_add_wayland_client_protocol(GLFW_WAYLAND_PROTOCOL_SOURCES
-        PROTOCOL
-        "${WAYLAND_PROTOCOLS_PKGDATADIR}/stable/viewporter/viewporter.xml"
-        BASENAME viewporter)
-    ecm_add_wayland_client_protocol(GLFW_WAYLAND_PROTOCOL_SOURCES
-        PROTOCOL
-        "${WAYLAND_PROTOCOLS_PKGDATADIR}/unstable/relative-pointer/relative-pointer-unstable-v1.xml"
-        BASENAME relative-pointer-unstable-v1)
-    ecm_add_wayland_client_protocol(GLFW_WAYLAND_PROTOCOL_SOURCES
-        PROTOCOL
-        "${WAYLAND_PROTOCOLS_PKGDATADIR}/unstable/pointer-constraints/pointer-constraints-unstable-v1.xml"
-        BASENAME pointer-constraints-unstable-v1)
-    ecm_add_wayland_client_protocol(GLFW_WAYLAND_PROTOCOL_SOURCES
-        PROTOCOL
-        "${WAYLAND_PROTOCOLS_PKGDATADIR}/unstable/idle-inhibit/idle-inhibit-unstable-v1.xml"
-        BASENAME idle-inhibit-unstable-v1)
-    target_sources(glfw PRIVATE ${GLFW_WAYLAND_PROTOCOL_SOURCES})
+    find_program(WAYLAND_SCANNER_EXECUTABLE NAMES wayland-scanner)
+    pkg_check_modules(WAYLAND_PROTOCOLS REQUIRED wayland-protocols>=1.15)
+    pkg_get_variable(WAYLAND_PROTOCOLS_BASE wayland-protocols pkgdatadir)
+
+    macro(wayland_generate protocol_file output_file)
+        add_custom_command(OUTPUT "${output_file}.h"
+            COMMAND "${WAYLAND_SCANNER_EXECUTABLE}" client-header "${protocol_file}" "${output_file}.h"
+            DEPENDS "${protocol_file}"
+            VERBATIM)
+
+        add_custom_command(OUTPUT "${output_file}.c"
+            COMMAND "${WAYLAND_SCANNER_EXECUTABLE}" private-code "${protocol_file}" "${output_file}.c"
+            DEPENDS "${protocol_file}"
+            VERBATIM)
+
+        target_sources(glfw PRIVATE "${output_file}.h" "${output_file}.c")
+    endmacro()
+
+    wayland_generate(
+        "${WAYLAND_PROTOCOLS_BASE}/stable/xdg-shell/xdg-shell.xml"
+        "${GLFW_BINARY_DIR}/src/wayland-xdg-shell-client-protocol")
+    wayland_generate(
+        "${WAYLAND_PROTOCOLS_BASE}/unstable/xdg-decoration/xdg-decoration-unstable-v1.xml"
+        "${GLFW_BINARY_DIR}/src/wayland-xdg-decoration-client-protocol")
+    wayland_generate(
+        "${WAYLAND_PROTOCOLS_BASE}/stable/viewporter/viewporter.xml"
+        "${GLFW_BINARY_DIR}/src/wayland-viewporter-client-protocol")
+    wayland_generate(
+        "${WAYLAND_PROTOCOLS_BASE}/unstable/relative-pointer/relative-pointer-unstable-v1.xml"
+        "${GLFW_BINARY_DIR}/src/wayland-relative-pointer-unstable-v1-client-protocol")
+    wayland_generate(
+        "${WAYLAND_PROTOCOLS_BASE}/unstable/pointer-constraints/pointer-constraints-unstable-v1.xml"
+        "${GLFW_BINARY_DIR}/src/wayland-pointer-constraints-unstable-v1-client-protocol")
+    wayland_generate(
+        "${WAYLAND_PROTOCOLS_BASE}/unstable/idle-inhibit/idle-inhibit-unstable-v1.xml"
+        "${GLFW_BINARY_DIR}/src/wayland-idle-inhibit-unstable-v1-client-protocol")
 endif()
 
 if (WIN32 AND BUILD_SHARED_LIBS)
@@ -98,30 +109,39 @@ target_include_directories(glfw PRIVATE
                            "${GLFW_SOURCE_DIR}/src"
                            "${GLFW_BINARY_DIR}/src"
                            ${glfw_INCLUDE_DIRS})
-target_link_libraries(glfw PUBLIC Threads::Threads ${glfw_LIBRARIES})
+target_link_libraries(glfw PRIVATE Threads::Threads ${glfw_LIBRARIES})
 
-if (APPLE)
-    # For some reason CMake didn't know about .m until version 3.16
+# Workaround for CMake not knowing about .m files before version 3.16
+if ("${CMAKE_VERSION}" VERSION_LESS "3.16" AND APPLE)
     set_source_files_properties(cocoa_init.m cocoa_joystick.m cocoa_monitor.m
                                 cocoa_window.m nsgl_context.m PROPERTIES
                                 LANGUAGE C)
 endif()
 
-if ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR
-    "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR
-    "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
-
-    # Make GCC and Clang warn about declarations that VS 2010 and 2012 won't
-    # accept for all source files that VS will build
+# Make GCC warn about declarations that VS 2010 and 2012 won't accept for all
+# source files that VS will build (Clang ignores this because we set -std=c99)
+if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
     set_source_files_properties(context.c init.c input.c monitor.c vulkan.c
                                 window.c win32_init.c win32_joystick.c
                                 win32_monitor.c win32_time.c win32_thread.c
                                 win32_window.c wgl_context.c egl_context.c
                                 osmesa_context.c PROPERTIES
                                 COMPILE_FLAGS -Wdeclaration-after-statement)
+endif()
 
-    # Enable a reasonable set of warnings (no, -Wextra is not reasonable)
-    target_compile_options(glfw PRIVATE "-Wall")
+# Enable a reasonable set of warnings
+if (CMAKE_C_COMPILER_ID STREQUAL "GNU" OR
+    CMAKE_C_COMPILER_ID STREQUAL "Clang" OR
+    CMAKE_C_COMPILER_ID STREQUAL "AppleClang")
+
+    if (CMAKE_C_SIMULATE_ID STREQUAL "MSVC")
+        # Tell Clang-CL that this is a Clang flag
+        target_compile_options(glfw PRIVATE "/clang:-Wall")
+    else()
+        target_compile_options(glfw PRIVATE "-Wall")
+    endif()
+elseif (MSVC)
+    target_compile_options(glfw PRIVATE "/W3")
 endif()
 
 if (WIN32)
@@ -136,12 +156,41 @@ if (MINGW)
     target_compile_definitions(glfw PRIVATE UNICODE WINVER=0x0501)
 endif()
 
+# Workaround for legacy MinGW not providing XInput and DirectInput
+if (MINGW)
+    include(CheckIncludeFile)
+    check_include_file(dinput.h DINPUT_H_FOUND)
+    check_include_file(xinput.h XINPUT_H_FOUND)
+    if (NOT DINPUT_H_FOUND OR NOT XINPUT_H_FOUND)
+        target_include_directories(glfw PRIVATE "${GLFW_SOURCE_DIR}/deps/mingw")
+    endif()
+endif()
+
+# Workaround for VS deprecating parts of the standard library
+if (MSVC)
+    target_compile_definitions(glfw PRIVATE _CRT_SECURE_NO_WARNINGS)
+endif()
+
+# Workaround for VS 2008 not shipping with stdint.h
+if (MSVC90)
+    target_include_directories(glfw PUBLIC "${GLFW_SOURCE_DIR}/deps/vs2008")
+endif()
+
+# Check for the DirectX 9 SDK as it is not included with VS 2008
+if (MSVC90)
+    include(CheckIncludeFile)
+    check_include_file(dinput.h DINPUT_H_FOUND)
+    if (NOT DINPUT_H_FOUND)
+        message(FATAL_ERROR "DirectX 9 headers not found; install DirectX 9 SDK")
+    endif()
+endif()
+
 if (BUILD_SHARED_LIBS)
     if (WIN32)
         if (MINGW)
             # Remove the dependency on the shared version of libgcc
             # NOTE: MinGW-w64 has the correct default but MinGW needs this
-            target_link_libraries(PUBLIC PRIVATE "-static-libgcc")
+            target_link_libraries(glfw PRIVATE "-static-libgcc")
 
             # Remove the lib prefix on the DLL (but not the import library)
             set_target_properties(glfw PROPERTIES PREFIX "")
@@ -154,19 +203,41 @@ if (BUILD_SHARED_LIBS)
         endif()
 
         target_compile_definitions(glfw INTERFACE GLFW_DLL)
-    elseif (APPLE)
-        set_target_properties(glfw PROPERTIES
-                              INSTALL_NAME_DIR "${CMAKE_INSTALL_LIBDIR}")
+    endif()
+
+    if (MINGW)
+        # Enable link-time exploit mitigation features enabled by default on MSVC
+        include(CheckCCompilerFlag)
+
+        # Compatibility with data execution prevention (DEP)
+        set(CMAKE_REQUIRED_FLAGS "-Wl,--nxcompat")
+        check_c_compiler_flag("" _GLFW_HAS_DEP)
+        if (_GLFW_HAS_DEP)
+            target_link_libraries(glfw PRIVATE "-Wl,--nxcompat")
+        endif()
+
+        # Compatibility with address space layout randomization (ASLR)
+        set(CMAKE_REQUIRED_FLAGS "-Wl,--dynamicbase")
+        check_c_compiler_flag("" _GLFW_HAS_ASLR)
+        if (_GLFW_HAS_ASLR)
+            target_link_libraries(glfw PRIVATE "-Wl,--dynamicbase")
+        endif()
+
+        # Compatibility with 64-bit address space layout randomization (ASLR)
+        set(CMAKE_REQUIRED_FLAGS "-Wl,--high-entropy-va")
+        check_c_compiler_flag("" _GLFW_HAS_64ASLR)
+        if (_GLFW_HAS_64ASLR)
+            target_link_libraries(glfw PRIVATE "-Wl,--high-entropy-va")
+        endif()
+
+        # Clear flags again to avoid breaking later tests
+        set(CMAKE_REQUIRED_FLAGS)
     endif()
 
     if (UNIX)
         # Hide symbols not explicitly tagged for export from the shared library
         target_compile_options(glfw PRIVATE "-fvisibility=hidden")
     endif()
-endif()
-
-if (MSVC)
-    target_compile_definitions(glfw PRIVATE _CRT_SECURE_NO_WARNINGS)
 endif()
 
 if (GLFW_INSTALL)
