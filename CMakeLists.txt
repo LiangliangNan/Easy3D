@@ -7,7 +7,7 @@ endif ()
 
 ################################################################################
 
-project(easy3d)
+project(Easy3D)
 
 set (PROJECT_MAJOR 2)
 set (PROJECT_MINOR 4)
