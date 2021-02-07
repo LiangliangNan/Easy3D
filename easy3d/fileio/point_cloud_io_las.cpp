@@ -29,8 +29,8 @@
 #include <climits>  // for USHRT_MAX
 
 #include <easy3d/core/point_cloud.h>
-#include <3rd_party/LAStools/LASlib/inc/lasreader.hpp>
-#include <3rd_party/LAStools/LASlib/inc/laswriter.hpp>
+#include <3rd_party/lastools/LASlib/inc/lasreader.hpp>
+#include <3rd_party/lastools/LASlib/inc/laswriter.hpp>
 
 
 namespace easy3d {
