@@ -4,9 +4,6 @@ get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 project(${PROJECT_NAME})
 
 
-add_subdirectory(tools)
-
-
 include(../../cmake/UseQt5.cmake)
 if (NOT QT5_FOUND)
     message(WARNING "${PROJECT_NAME} requires Qt but Qt was not found. You can set 'Qt5_DIR' to the "
@@ -48,6 +45,12 @@ set(${PROJECT_NAME}_HEADERS
         widgets/widget_drawable_triangles.h
         widgets/widget_global_setting.h
         widgets/widget_log.h
+
+        tools/tool.h
+        tools/tool_manager.h
+        tools/tool_segmentation_surface_mesh.h
+        tools/tool_selection_point_cloud.h
+        tools/tool_selection_surface_mesh.h
         )
 
 set(${PROJECT_NAME}_SOURCES
@@ -84,6 +87,12 @@ set(${PROJECT_NAME}_SOURCES
         widgets/widget_global_setting.cpp
         widgets/widget_model_list.cpp
         widgets/widget_log.cpp
+
+        tools/tool.cpp
+        tools/tool_manager.cpp
+        tools/tool_segmentation_surface_mesh.cpp
+        tools/tool_selection_point_cloud.cpp
+        tools/tool_selection_surface_mesh.cpp
         )
 
 set(${PROJECT_NAME}_FORMS
@@ -117,6 +126,20 @@ set(${PROJECT_NAME}_FORMS
 set(${PROJECT_NAME}_RESOURCES
         mapple.qrc
         )
+
+include(../../cmake/FindFFMPEG.cmake)
+if (FFMPEG_FOUND)
+    #Append the files of the video encoder to the source file list
+    list(APPEND ${PROJECT_NAME}_HEADERS video/QVideoEncoder.h)
+    list(APPEND ${PROJECT_NAME}_SOURCES video/QVideoEncoder.cpp)
+else ()
+    message(WARNING "${PROJECT_NAME} requires FFMPEG to generate video files but FFMPEG was not found. "
+            "Without FFMPEG, animations can only be recorded as a sequence of images. "
+            "To use FFMPEG, make sure FFMPEG exists on your system (install/build FFMPEG if necessary). "
+            "Modify the search paths in 'FindFFMPEG.cmake' for 'include' and 'lib' directories, and then run CMake."
+            )
+endif ()
+
 
 if (WIN32 OR MSVC)
     add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} ${${PROJECT_NAME}_RESOURCES})
@@ -191,20 +214,12 @@ endif ()
 
 target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL)
 
-target_link_libraries(${PROJECT_NAME} easy3d_renderer easy3d_algo tools)
+target_link_libraries(${PROJECT_NAME} easy3d_renderer easy3d_algo easy3d_gui)
 if (EASY3D_HAS_CGAL)
     target_link_libraries(${PROJECT_NAME} easy3d_algo_ext)
 endif ()
 
-include(../../cmake/FindFFMPEG.cmake)
 if (FFMPEG_FOUND)
     target_compile_definitions(${PROJECT_NAME} PUBLIC HAS_FFMPEG)
-    add_subdirectory(video)
-    target_link_libraries(${PROJECT_NAME} video)
-else ()
-    message(WARNING "${PROJECT_NAME} requires FFMPEG to generate video files but FFMPEG was not found. "
-            "Without FFMPEG, animations can only be recorded as a sequence of images. "
-            "To use FFMPEG, make sure FFMPEG exists on your system (install/build FFMPEG if necessary). "
-            "Modify the search paths in 'FindFFMPEG.cmake' for 'include' and 'lib' directories, and then run CMake."
-            )
+    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES})
 endif ()
