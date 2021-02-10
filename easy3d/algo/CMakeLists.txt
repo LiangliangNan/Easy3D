@@ -92,3 +92,13 @@ if (Boost_FOUND)
     target_include_directories(${PROJECT_NAME} PRIVATE ${Boost_INCLUDE_DIRS})
     target_compile_definitions(${PROJECT_NAME} PRIVATE HAS_BOOST)
 endif ()
+
+
+
+install(TARGETS ${PROJECT_NAME}
+        # IMPORTANT: Add the library to the "export-set"
+        EXPORT Easy3DTargets
+        RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin
+        LIBRARY DESTINATION "${INSTALL_LIB_DIR}" COMPONENT shlib
+        PUBLIC_HEADER DESTINATION "${INSTALL_INCLUDE_DIR}/${PROJECT_NAME}"
+        COMPONENT dev)

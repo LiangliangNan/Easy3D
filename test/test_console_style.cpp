@@ -69,6 +69,10 @@ int main(int argc, char *argv[]) {
     std::cout << console::Style::On_IPurple << "Easy3D version: " << version() << std::endl;
     std::cout << console::Style::None << "Easy3D version: " << version() << std::endl;
 
+    std::cout << console::Style::Red   << "Easy3D major: " << version_major() << std::endl;
+    std::cout << console::Style::Green << "Easy3D minor: " << version_minor() << std::endl;
+    std::cout << console::Style::Blue  << "Easy3D patch: " << version_patch() << std::endl;
+
     if (!console::terminal_supports_styles())
         std::cerr << "WARNING: console styles not supported on your system.\n\t"
                      "Maybe you didn't run the application from the console?" << std::endl;

@@ -746,7 +746,7 @@ void MainWindow::onAbout()
     title += QMessageBox::tr("<h3>Mapple (%1 bit)</h3>").arg(bits);
 #endif
 
-    title += QMessageBox::tr("<h4>Version %1</h4>").arg(PROJECT_VERSION);
+    title += QMessageBox::tr("<h4>Version %1</h4>").arg(EASY3D_VERSION);
 
     QString text = QMessageBox::tr(
             "<p>Mapple is software for processing and rendering 3D data (e.g., point clouds, graphs, surface meshes, "

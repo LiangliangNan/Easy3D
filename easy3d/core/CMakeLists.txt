@@ -58,3 +58,14 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
 target_link_libraries(${PROJECT_NAME} PUBLIC easy3d_util)
 
 
+
+
+
+
+install(TARGETS ${PROJECT_NAME}
+        # IMPORTANT: Add the library to the "export-set"
+        EXPORT Easy3DTargets
+        RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin
+        LIBRARY DESTINATION "${INSTALL_LIB_DIR}" COMPONENT shlib
+        PUBLIC_HEADER DESTINATION "${INSTALL_INCLUDE_DIR}/${PROJECT_NAME}"
+        COMPONENT dev)

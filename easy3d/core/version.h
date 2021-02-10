@@ -32,13 +32,13 @@
 namespace easy3d {
 
     /// returns the major version number of Easy3D
-    inline int version_major() { return PROJECT_MAJOR; }
+    inline int version_major() { return EASY3D_MAJOR; }
     /// returns the major version number of Easy3D
-    inline int version_minor() { return PROJECT_MINOR; }
+    inline int version_minor() { return EASY3D_MINOR; }
     /// returns the minor version number of Easy3D
-    inline int version_patch() { return PROJECT_PATCH; }
+    inline int version_patch() { return EASY3D_PATCH; }
     /// returns the version string of Easy3D
-    inline std::string version() { return PROJECT_VERSION; }
+    inline std::string version() { return EASY3D_VERSION; }
 
 }
 

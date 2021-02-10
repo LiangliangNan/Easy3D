@@ -34,3 +34,14 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE GLEW_STATIC)
 if (MSVC)
     target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_DEPRECATE)
 endif ()
+
+
+
+
+install(TARGETS ${PROJECT_NAME}
+        # IMPORTANT: Add the library to the "export-set"
+        EXPORT Easy3DTargets
+        RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin
+        LIBRARY DESTINATION "${INSTALL_LIB_DIR}" COMPONENT shlib
+        PUBLIC_HEADER DESTINATION "${INSTALL_INCLUDE_DIR}/${PROJECT_NAME}"
+        COMPONENT dev)

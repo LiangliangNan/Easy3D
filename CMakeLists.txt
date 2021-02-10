@@ -9,15 +9,15 @@ endif ()
 
 project(Easy3D)
 
-set (PROJECT_MAJOR 2)
-set (PROJECT_MINOR 4)
-set (PROJECT_PATCH 3)
-set (PROJECT_VERSION "${PROJECT_MAJOR}.${PROJECT_MINOR}.${PROJECT_PATCH}")
+set (EASY3D_MAJOR 2)
+set (EASY3D_MINOR 4)
+set (EASY3D_PATCH 3)
+set (EASY3D_VERSION "${EASY3D_MAJOR}.${EASY3D_MINOR}.${EASY3D_PATCH}")
 
-add_definitions("-DPROJECT_MAJOR=${PROJECT_MAJOR}")
-add_definitions("-DPROJECT_MINOR=${PROJECT_MINOR}")
-add_definitions("-DPROJECT_PATCH=${PROJECT_PATCH}")
-add_definitions("-DPROJECT_VERSION=\"${PROJECT_VERSION}\"")
+add_definitions("-DEASY3D_MAJOR=${EASY3D_MAJOR}")
+add_definitions("-DEASY3D_MINOR=${EASY3D_MINOR}")
+add_definitions("-DEASY3D_PATCH=${EASY3D_PATCH}")
+add_definitions("-DEASY3D_VERSION=\"${EASY3D_VERSION}\"")
 
 ################################################################################
 
