@@ -99,7 +99,7 @@ Have a look at <a href="https://github.com/LiangliangNan/Easy3D/blob/master/HowT
 step</a>.
 
 ### Using Easy3D in Your Projects
-This is quite easy, maybe easier than many other open-source libraries. You only need to add the following lines to your
+This is quite easy, maybe easier than many other open-source libraries :). You only need to add the following lines to your
 CMakeList file (don't forget to replace `YOUR_APP_NAME` with the actual name of your application) and point `Easy3D_DIR`
 to the `build` directory of Easy3D when doing CMake. 
 ```
