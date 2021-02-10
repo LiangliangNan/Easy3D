@@ -27,8 +27,9 @@ endif()
 # Allow to install the lib and the public headers
 install(TARGETS 3rd_glew
         # IMPORTANT: Add the library to the "export-set"
-        # IMPORTANT: Add the library to the "export-set"
-        EXPORT Easy3DTargets)
+        EXPORT Easy3DTargets
+        PUBLIC_HEADER DESTINATION "${INSTALL_INCLUDE_DIR}/3rd_party/glew/include/GL"
+        )
 
 # The header files to be installed
 file(GLOB MODULE_HEADER_FILES ${CMAKE_CURRENT_LIST_DIR}/include/GL/*.h)
