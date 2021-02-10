@@ -59,6 +59,24 @@ configure_file(../cmake/Easy3DConfig.cmake.in
 # ... for both
 configure_file(../cmake/Easy3DConfigVersion.cmake.in
         "${PROJECT_BINARY_DIR}/Easy3DConfigVersion.cmake" @ONLY)
+
+
+#################################################################################################################
+# The code below setups installation of Easy3D (to allow installing Easy3D and using Easy3D from its install tree)
+# https://gitlab.kitware.com/cmake/community/-/wikis/doc/tutorials/How-to-create-a-ProjectConfig.cmake-file
+#################################################################################################################
+
+## Offer the user the choice of overriding the installation directories
+#set(INSTALL_LIB_DIR lib CACHE PATH "Installation directory for libraries")
+#set(INSTALL_INCLUDE_DIR include CACHE PATH
+#        "Installation directory for header files")
+#if(WIN32 AND NOT CYGWIN)
+#    set(DEF_INSTALL_CMAKE_DIR CMake)
+#else()
+#    set(DEF_INSTALL_CMAKE_DIR lib/CMake/FooBar)
+#endif()
+#set(INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH
+#        "Installation directory for CMake files")
 #
 ## Install the Easy3DConfig.cmake and Easy3DConfigVersion.cmake
 #install(FILES
