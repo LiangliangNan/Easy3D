@@ -25,6 +25,6 @@ set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "easy3d")
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_THIRD_PARTY})
 
-target_link_libraries(${PROJECT_NAME} PUBLIC easy3d_core)
+target_link_libraries(${PROJECT_NAME} PRIVATE easy3d_core)
 
 include(../../cmake/UseCGAL.cmake)

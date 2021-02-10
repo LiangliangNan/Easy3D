@@ -14,7 +14,7 @@ target_compile_definitions(3rd_glew INTERFACE GLEW_STATIC GLEW_NO_GLU)
 set (OpenGL_GL_PREFERENCE GLVND)
 find_package(OpenGL REQUIRED)
 message(STATUS "OpenGL libraries: ${OPENGL_LIBRARIES}")
-target_link_libraries(3rd_glew PUBLIC ${OPENGL_LIBRARIES})
+target_link_libraries(3rd_glew INTERFACE ${OPENGL_LIBRARIES})
 
 if (MSVC)
     target_compile_definitions(3rd_glew PRIVATE
