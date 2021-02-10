@@ -29,20 +29,3 @@ set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "easy3d")
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
 
 target_link_libraries(${PROJECT_NAME} PUBLIC easy3d_core 3rd_kdtree)
-
-
-# The header files to be installed
-file(GLOB MODULE_HEADER_FILES ${CMAKE_CURRENT_LIST_DIR}/*.h)
-# Allow to install the lib and the public headers
-install(TARGETS ${PROJECT_NAME}
-        # IMPORTANT: Add the library to the "export-set"
-        EXPORT Easy3DTargets
-        PUBLIC_HEADER DESTINATION "${INSTALL_INCLUDE_DIR}/easy3d/${MODULE_NAME}"
-        LIBRARY DESTINATION "${INSTALL_LIB_DIR}/${PROJECT_NAME}"
-        RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin)
-# Install the header files
-install(
-        FILES ${MODULE_HEADER_FILES}
-        DESTINATION "${INSTALL_INCLUDE_DIR}/easy3d/${MODULE_NAME}"
-        COMPONENT dev
-)

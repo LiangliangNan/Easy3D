@@ -35,6 +35,7 @@ export(TARGETS
         easy3d_core
         easy3d_kdtree
         easy3d_algo
+        easy3d_algo_ext
         easy3d_fileio
         easy3d_renderer
         easy3d_gui
@@ -47,7 +48,8 @@ export(PACKAGE Easy3D)
 
 ## Create the Easy3DConfig.cmake and Easy3DConfigVersion files
 # ... for the build tree
-set(CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}")
+#set(CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}")  # also include the build directory
+set(CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}")
 configure_file(../cmake/Easy3DConfig.cmake.in
         "${PROJECT_BINARY_DIR}/Easy3DConfig.cmake" @ONLY)
 # ... for the install tree
@@ -60,28 +62,6 @@ configure_file(../cmake/Easy3DConfigVersion.cmake.in
 
 
 #################################################################################################################
-# The code below setups installation of Easy3D (to allow installing Easy3D and using Easy3D from its install tree)
+# Install Easy3D and use Easy3D from its install tree?
 # https://gitlab.kitware.com/cmake/community/-/wikis/doc/tutorials/How-to-create-a-ProjectConfig.cmake-file
 #################################################################################################################
-
-# Offer the user the choice of overriding the installation directories
-set(INSTALL_LIB_DIR lib CACHE PATH "Installation directory for libraries")
-set(INSTALL_INCLUDE_DIR include CACHE PATH
-        "Installation directory for header files")
-if(WIN32 AND NOT CYGWIN)
-    set(DEF_INSTALL_CMAKE_DIR CMake)
-else()
-    set(DEF_INSTALL_CMAKE_DIR lib/CMake/Easy3D)
-endif()
-set(INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH
-        "Installation directory for CMake files")
-
-# Install the Easy3DConfig.cmake and Easy3DConfigVersion.cmake
-install(FILES
-        "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/Easy3DConfig.cmake"
-        "${PROJECT_BINARY_DIR}/Easy3DConfigVersion.cmake"
-        DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)
-
-# Install the export set for use with the install-tree
-install(EXPORT Easy3DTargets DESTINATION
-        "${INSTALL_CMAKE_DIR}" COMPONENT dev)

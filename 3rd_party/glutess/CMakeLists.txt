@@ -33,8 +33,3 @@ add_library(3rd_glutess STATIC
 set_target_properties(3rd_glutess PROPERTIES FOLDER "3rd_party")
 
 target_include_directories(3rd_glutess PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-
-
-install(TARGETS 3rd_glutess
-        # IMPORTANT: Add the library to the "export-set"
-        EXPORT Easy3DTargets)

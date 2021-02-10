@@ -88,8 +88,3 @@ target_compile_definitions(3rd_backward INTERFACE ${BACKWARD_DEFINITIONS})
 target_include_directories(3rd_backward PRIVATE ${BACKWARD_INCLUDE_DIRS})
 
 set_target_properties(3rd_backward PROPERTIES FOLDER "3rd_party")
-
-# Allow to use the lib from the install tree
-install(TARGETS 3rd_backward
-        # IMPORTANT: Add the library to the "export-set"
-        EXPORT Easy3DTargets)
