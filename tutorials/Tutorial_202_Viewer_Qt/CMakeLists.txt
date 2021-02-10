@@ -52,21 +52,14 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE HAS_QT5)
 # deprecated API in order to know how to port your code away from it.
 target_compile_definitions(${PROJECT_NAME} PRIVATE QT_DEPRECATED_WARNINGS)
 
-# GLEW will not use GLU 
-target_compile_definitions(${PROJECT_NAME} PRIVATE GLEW_NO_GLU)
-
 if (MSVC)
     target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_DEPRECATE)
 endif ()
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
-
 target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL)
-target_link_libraries(${PROJECT_NAME} easy3d_renderer)
+target_link_libraries(${PROJECT_NAME} easy3d::renderer)
 
-set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "tutorials")
-
-## Note: On macOS, high-DPI support is enabled by settings in the Info.plist file. Make sure they are present.
+set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "tutorials")## Note: On macOS, high-DPI support is enabled by settings in the Info.plist file. Make sure they are present.
 ## For more information, see: http://doc.qt.io/qt-5/highdpi.html
 ## Enable high DPI support by using my Info.plist file in which I added NSHighResolutionCapable to be true.
 if (APPLE)

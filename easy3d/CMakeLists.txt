@@ -19,7 +19,7 @@ endif ()
 #################################################################################################################
 
 # Add all targets to the build-tree export set
-export(TARGETS
+set(export_set
         3rd_backward
         3rd_glew
         3rd_glfw
@@ -35,11 +35,17 @@ export(TARGETS
         easy3d_core
         easy3d_kdtree
         easy3d_algo
-        easy3d_algo_ext
         easy3d_fileio
         easy3d_renderer
         easy3d_gui
         easy3d_viewer
+        )
+if (EASY3D_HAS_CGAL)
+    list(APPEND ${export_set} algo_ext)
+endif ()
+
+export(TARGETS
+        ${export_set}
         FILE "${PROJECT_BINARY_DIR}/Easy3DTargets.cmake")
 
 # Export the package for use from the build-tree

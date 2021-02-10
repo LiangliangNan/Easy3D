@@ -47,7 +47,7 @@ add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "easy3d")
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
+target_include_directories(${PROJECT_NAME} PUBLIC ${EASY3D_INCLUDE_DIR})
 
 set(LASTOOLS_INCLUDE_DIR ${EASY3D_THIRD_PARTY}/lastools/LASzip/src ${EASY3D_THIRD_PARTY}/lastools/LASlib/inc)
 target_include_directories(${PROJECT_NAME} PRIVATE ${LASTOOLS_INCLUDE_DIR})
@@ -57,3 +57,10 @@ target_link_libraries(${PROJECT_NAME} PUBLIC easy3d_core easy3d_util 3rd_lastool
 if (MSVC)
     target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_DEPRECATE)
 endif ()
+
+
+# Alias target (recommended by policy CMP0028) and it looks nicer
+message(STATUS "Adding target: easy3d::${MODULE_NAME} (${PROJECT_NAME})")
+add_library(easy3d::${MODULE_NAME} ALIAS ${PROJECT_NAME})
+# Export as easy3d::${MODULE_NAME}
+set_property(TARGET ${PROJECT_NAME} PROPERTY EXPORT_NAME easy3d::${MODULE_NAME})
