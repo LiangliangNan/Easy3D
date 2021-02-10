@@ -98,6 +98,15 @@ Don't have any experience with C/C++ programming?
 Have a look at <a href="https://github.com/LiangliangNan/Easy3D/blob/master/HowToBuild.md">How to build Easy3D step by 
 step</a>.
 
+### Using Easy3D in Your Projects
+This is quite easy, just like most open-source libraries. You only need to add the following lines to your cmakelist file
+(don't forget to replace `YOUR_APP_NAME` with the actual name of your application) and point `Easy3D_DIR` to the `build` 
+directory of Easy3D when doing cmake. 
+```
+find_package(Easy3D REQUIRED)
+target_include_directories(YOUR_APP_NAME PRIVATE ${EASY3D_INCLUDE_DIRS})
+target_link_libraries(YOUR_APP_NAME ${EASY3D_LIBRARIES})
+```
 
 ### Documentation
 The documentation for Easy3D-v2.4.2 is available [here](https://3d.bk.tudelft.nl/liangliang/software/easy3d_doc/html/index.html).
