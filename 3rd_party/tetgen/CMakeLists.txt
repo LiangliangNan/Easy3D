@@ -10,3 +10,8 @@ add_library(3rd_tetgen STATIC tetgen.cxx predicates.cxx)
 set_target_properties(3rd_tetgen PROPERTIES COMPILE_DEFINITIONS TETLIBRARY)
 
 set_target_properties(3rd_tetgen PROPERTIES FOLDER "3rd_party")
+
+
+install(TARGETS 3rd_tetgen
+        # IMPORTANT: Add the library to the "export-set"
+        EXPORT Easy3DTargets)

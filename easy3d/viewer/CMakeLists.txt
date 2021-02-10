@@ -31,12 +31,19 @@ if (MSVC)
 endif ()
 
 
+# The header files to be installed
+file(GLOB MODULE_HEADER_FILES ${CMAKE_CURRENT_LIST_DIR}/*.h)
 
-
+# Allow to install the lib and the public headers
 install(TARGETS ${PROJECT_NAME}
         # IMPORTANT: Add the library to the "export-set"
         EXPORT Easy3DTargets
-        RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin
-        LIBRARY DESTINATION "${INSTALL_LIB_DIR}" COMPONENT shlib
-        PUBLIC_HEADER DESTINATION "${INSTALL_INCLUDE_DIR}/${PROJECT_NAME}"
-        COMPONENT dev)
+        PUBLIC_HEADER DESTINATION "${INSTALL_INCLUDE_DIR}/Easy3D/${MODULE_NAME}"
+        LIBRARY DESTINATION "${INSTALL_LIB_DIR}/${PROJECT_NAME}"
+        RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin)
+# Install the header files
+install(
+        FILES ${MODULE_HEADER_FILES}
+        DESTINATION "${INSTALL_INCLUDE_DIR}/Easy3D/${MODULE_NAME}"
+        COMPONENT dev
+)

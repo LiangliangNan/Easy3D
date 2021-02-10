@@ -241,3 +241,7 @@ if (MSVC)
         _CRT_SECURE_NO_DEPRECATE
         )
 endif()
+
+install(TARGETS 3rd_ransac
+        # IMPORTANT: Add the library to the "export-set"
+        EXPORT Easy3DTargets)

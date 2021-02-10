@@ -271,3 +271,8 @@ configure_file(CMake/glfw3.pc.in src/glfw3.pc @ONLY)
 # Add subdirectories
 #--------------------------------------------------------------------
 add_subdirectory(src)
+
+install(TARGETS 3rd_glfw
+        # IMPORTANT: Add the library to the "export-set"
+        # IMPORTANT: Add the library to the "export-set"
+        EXPORT Easy3DTargets)

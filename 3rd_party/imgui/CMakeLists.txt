@@ -22,8 +22,8 @@ add_library(3rd_imgui STATIC ${imgui_SOURCES} ${imgui_HEADERS})
 
 set_target_properties(3rd_imgui PROPERTIES FOLDER "3rd_party")
 
-set(IMGUI_INCLUDE_DIR  ${CMAKE_CURRENT_LIST_DIR})
-target_include_directories(3rd_imgui PUBLIC ${IMGUI_INCLUDE_DIR})
+set(IMGUI_INCLUDE_DIR  ${CMAKE_CURRENT_LIST_DIR}  ${EASY3D_THIRD_PARTY}/glew/include)
+target_include_directories(3rd_imgui PRIVATE ${IMGUI_INCLUDE_DIR})
 
 target_link_libraries(3rd_imgui PUBLIC 3rd_glew 3rd_glfw)
 
@@ -35,3 +35,6 @@ if (MSVC)
         )
 endif()
 
+install(TARGETS 3rd_imgui
+        # IMPORTANT: Add the library to the "export-set"
+        EXPORT Easy3DTargets)
