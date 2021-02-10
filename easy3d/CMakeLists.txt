@@ -46,14 +46,12 @@ export(TARGETS
 export(PACKAGE Easy3D)
 
 ## Create the Easy3DConfig.cmake and Easy3DConfigVersion files
-#file(RELATIVE_PATH REL_INCLUDE_DIR "${INSTALL_CMAKE_DIR}"
-#        "${INSTALL_INCLUDE_DIR}")
 # ... for the build tree
 set(CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}")
 configure_file(../cmake/Easy3DConfig.cmake.in
         "${PROJECT_BINARY_DIR}/Easy3DConfig.cmake" @ONLY)
 # ... for the install tree
-set(CONF_INCLUDE_DIRS "\${EASY3D_CMAKE_DIR}/${REL_INCLUDE_DIR}")
+set(CONF_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/include")
 configure_file(../cmake/Easy3DConfig.cmake.in
         "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/Easy3DConfig.cmake" @ONLY)
 # ... for both
