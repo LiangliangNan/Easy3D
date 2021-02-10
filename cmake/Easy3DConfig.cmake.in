@@ -1,7 +1,11 @@
 # - Config file for the EASY3D package
-# It defines the following variables
-#  EASY3D_INCLUDE_DIRS - include directories for EASY3D
-#  EASY3D_LIBRARIES    - libraries to link against
+#
+# It defines the following variables:
+#       EASY3D_INCLUDE_DIRS - include directories for EASY3D
+# NOTE: The recommended way to specify libraries and headers with CMake is to use the
+#       target_link_libraries command. This command automatically adds appropriate include
+#       directories, compile definitions, the position-independent-code flag, and links to
+#       requested libraries.
 
 include(CMakeFindDependencyMacro)
 find_dependency(Threads)
@@ -11,19 +15,15 @@ get_filename_component(EASY3D_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 set(EASY3D_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
 
 # Our library dependencies (contains definitions for IMPORTED targets)
-if(NOT TARGET foo AND NOT EASY3D_BINARY_DIR)
+if(NOT TARGET easy3d_util AND
+   NOT TARGET easy3d_core AND
+   NOT TARGET easy3d_kdtree AND
+   NOT TARGET easy3d_algo AND
+   NOT TARGET easy3d_algo_ext AND
+   NOT TARGET easy3d_fileio AND
+   NOT TARGET easy3d_renderer AND
+   NOT TARGET easy3d_gui AND
+   NOT TARGET easy3d_viewer AND
+   NOT EASY3D_BINARY_DIR)
   include("${EASY3D_CMAKE_DIR}/Easy3DTargets.cmake")
 endif()
-
-# These are IMPORTED targets created by Easy3DTargets.cmake
-set(EASY3D_LIBRARIES
-        easy3d_util
-        easy3d_core
-        easy3d_kdtree
-        easy3d_algo
-        easy3d_fileio
-        easy3d_renderer
-        easy3d_gui
-        easy3d_viewer
-    )
-

@@ -4,7 +4,7 @@ get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 project(${PROJECT_NAME})
 
 # may use OpenMP
-include( ../../cmake/UseOpenMP.cmake )
+include(../../cmake/UseOpenMP.cmake)
 
 add_executable(${PROJECT_NAME}
         main.cpp
@@ -14,8 +14,4 @@ add_executable(${PROJECT_NAME}
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "tutorials")
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
-
-target_compile_definitions(${PROJECT_NAME} PRIVATE GLEW_STATIC)
-
-target_link_libraries(${PROJECT_NAME} easy3d_core easy3d_renderer easy3d_viewer easy3d_algo)
+target_link_libraries(${PROJECT_NAME} easy3d::core easy3d::renderer easy3d::viewer easy3d::algo)
