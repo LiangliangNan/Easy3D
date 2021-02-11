@@ -69,10 +69,10 @@ endif ()
 ################################################################################
 # get a clean windows
 if (WIN32 OR MSVC)
-    add_definitions(-DNOMINMAX)
-    if(MSVC)
-        add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
-    endif()
+    target_compile_definitions(${PROJECT_NAME} PUBLIC NOMINMAX)
+    if (MSVC)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_DEPRECATE)
+    endif ()
 endif()
 
 

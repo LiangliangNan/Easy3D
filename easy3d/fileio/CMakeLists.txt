@@ -47,6 +47,13 @@ add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "easy3d")
 
+# The resources directory
+target_compile_definitions(
+        ${PROJECT_NAME}
+        PRIVATE
+        "EASY3D_RESOURCES_DIR=\"${EASY3D_ROOT}/resources\""
+)
+
 target_include_directories(${PROJECT_NAME} PUBLIC ${EASY3D_INCLUDE_DIR})
 
 set(LASTOOLS_INCLUDE_DIR ${EASY3D_THIRD_PARTY}/lastools/LASzip/src ${EASY3D_THIRD_PARTY}/lastools/LASlib/inc)
