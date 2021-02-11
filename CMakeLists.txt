@@ -89,8 +89,9 @@ endif ()
 set(EASY3D_ROOT         ${CMAKE_CURRENT_LIST_DIR})
 set(EASY3D_THIRD_PARTY  ${EASY3D_ROOT}/3rd_party)
 
-set(EASY3D_INCLUDE_DIR  ${EASY3D_ROOT} ${CMAKE_CURRENT_BINARY_DIR})
+set(EASY3D_INCLUDE_DIR  ${EASY3D_ROOT})
 set(EASY3D_SOURCE_DIR   ${EASY3D_ROOT})
+set(EASY3D_BINARY_DIR   ${CMAKE_BINARY_DIR})
 
 ### conditionally compile certain modules depending on libraries found on the system
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
