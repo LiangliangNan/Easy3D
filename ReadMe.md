@@ -30,7 +30,7 @@
 * Step-by-step tutorials demonstrating various uses of the API, to get acquainted with the data structures, rendering techniques, and algorithms 
   for 3D modeling and geometry processing. 
   
-* Very easy to use as a callable library (usually only a few line of code).
+* Very easy to use as a callable library (usually only a few lines of code).
   
 * A viewer that can be used directly to visualize 3D scenes in various formats, which can also be easily extended.
 
@@ -101,9 +101,10 @@ Have a look at <a href="https://github.com/LiangliangNan/Easy3D/blob/master/HowT
 step</a>.
 
 ### Using Easy3D in Your Projects
-This is quite easy, just like most open-source libraries. You only need to add the following two lines to your 
-CMakeList file (don't forget to replace `YOUR_APP_NAME` with the actual name of your application) and point `Easy3D_DIR`
-to the `build` directory of Easy3D when doing cmake. 
+This is quite easy, maybe easier than many other open-source libraries :-) You only need to add the following two lines 
+to your CMakeList file (don't forget to replace `YOUR_APP_NAME` with the actual name of your application) and point 
+`Easy3D_DIR` to your `build` directory of Easy3D when doing cmake. Then the requested easy3d libraries, include 
+directories, and relevant compile definitions of the easy3d libraries are visible and accessible to your project.
 ```
 find_package(Easy3D REQUIRED)
 target_link_libraries(YOUR_APP_NAME easy3d::core) # you may request more modules (e.g., viewer, algo)
