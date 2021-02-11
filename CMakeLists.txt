@@ -9,15 +9,10 @@ endif ()
 
 project(Easy3D)
 
-set (EASY3D_MAJOR 2)
-set (EASY3D_MINOR 4)
-set (EASY3D_PATCH 3)
-set (EASY3D_VERSION "${EASY3D_MAJOR}.${EASY3D_MINOR}.${EASY3D_PATCH}")
-
-add_definitions("-DEASY3D_MAJOR=${EASY3D_MAJOR}")
-add_definitions("-DEASY3D_MINOR=${EASY3D_MINOR}")
-add_definitions("-DEASY3D_PATCH=${EASY3D_PATCH}")
-add_definitions("-DEASY3D_VERSION=\"${EASY3D_VERSION}\"")
+set (EASY3D_MAJOR_VERSION 2)
+set (EASY3D_MINOR_VERSION 4)
+set (EASY3D_PATCH_VERSION 3)
+set (EASY3D_VERSION "${EASY3D_MAJOR_VERSION}.${EASY3D_MINOR_VERSION}.${EASY3D_PATCH_VERSION}")
 
 ################################################################################
 
@@ -101,32 +96,6 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY  ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY  ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY  ${CMAKE_BINARY_DIR}/lib)
-
-################################################################################
-
-# EasyLogging++: request all features
-add_definitions(
-        -DELPP_FEATURE_ALL
-        -DELPP_STL_LOGGING
-        -DELPP_THREAD_SAFE
-        -DELPP_NO_DEFAULT_LOG_FILE
-        -DELPP_DISABLE_DEFAULT_CRASH_HANDLING
-)
-# EasyLogging++: for stack trace
-include(CheckIncludeFileCXX)
-check_include_file_cxx("execinfo.h" HAVE_EXECINFO)
-if (HAVE_EXECINFO)
-    add_definitions(-DHAVE_EXECINFO)
-endif()
-
-################################################################################
-# get a clean windows
-if (WIN32 OR MSVC)
-    add_definitions(-DNOMINMAX)
-    if(MSVC)
-        add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
-    endif()
-endif()
 
 ################################################################################
 
