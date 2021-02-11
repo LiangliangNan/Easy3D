@@ -9,7 +9,6 @@ set(${PROJECT_NAME}_HEADERS
         chrono_watch.h
         console_style.h
         dialogs.h
-        easylogging++.h
         file_system.h
         line_stream.h
         logging.h
@@ -25,7 +24,6 @@ set(${PROJECT_NAME}_SOURCES
         chrono_watch.cpp
         console_style.cpp
         dialogs.cpp
-        easylogging++.cc
         file_system.cpp
         logging.cpp
         progress.cpp
@@ -42,7 +40,8 @@ set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "easy3d")
 target_include_directories(${PROJECT_NAME} PUBLIC ${EASY3D_INCLUDE_DIR})
 
 find_package(Threads REQUIRED)
-target_link_libraries(${PROJECT_NAME} PUBLIC Threads::Threads 3rd_backward)
+target_link_libraries(${PROJECT_NAME} PUBLIC Threads::Threads 3rd_backward 3rd_easyloggingpp)
+
 
 if (MSVC)
     target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)

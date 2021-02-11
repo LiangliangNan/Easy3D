@@ -7,7 +7,7 @@ add_library(3rd_glew STATIC src/glew.c)
 set_target_properties(3rd_glew PROPERTIES FOLDER "3rd_party")
 
 set(GLEW_INCLUDE_DIR  ${CMAKE_CURRENT_LIST_DIR}/include)
-target_include_directories(3rd_glew PRIVATE ${GLEW_INCLUDE_DIR})
+target_include_directories(3rd_glew PUBLIC ${GLEW_INCLUDE_DIR})
 
 target_compile_definitions(3rd_glew INTERFACE GLEW_STATIC GLEW_NO_GLU)
 

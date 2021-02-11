@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
     try {
         MainWindow win;
         if (!logging::log_file().empty())
-            LOG(INFO) << "use log file: " << logging::log_file();
+            LOG(INFO) << "log file: " << logging::log_file();
 
         win.show();
 

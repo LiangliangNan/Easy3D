@@ -32,28 +32,42 @@ namespace easy3d {
 
         // resource directory (containing color maps, shaders, textures, etc.)
         std::string directory() {
-            std::string parent = file_system::executable_directory();
-            std::string dir = parent + "/resources";
-            if (file_system::is_directory(dir))
+            // first check if the resources has been defined in the
+            std::string dir = EASY3D_RESOURCES_DIR;
+            if (file_system::is_directory(dir)) {
+                VLOG_N_TIMES(1, 1) << "resources directory: " << dir;
                 return dir;
+            }
+
+            std::string parent = file_system::executable_directory();
+            dir = parent + "/resources";
+            if (file_system::is_directory(dir)) {
+                VLOG_N_TIMES(1, 1) << "resources directory: " << dir;
+                return dir;
+            }
             else {
                 // For macOS, if reached here, we may need to move "up" three times, because
                 // macOS puts the executable file in an application bundle, e.g.,
                 // "PolyFit.app/Contents/MacOS/PolyFit". Some IDEs may also put the 'exe' in
                 // Debug/Release subfolder, so we may try four times up at most.
                 parent = file_system::parent_directory(parent);
-                std::string dir = parent + "/resources";
-                if (file_system::is_directory(dir))
+                dir = parent + "/resources";
+                if (file_system::is_directory(dir)) {
+                    VLOG_N_TIMES(1, 1) << "resources directory: " << dir;
                     return dir;
+                }
                 else {
                     for (int i = 0; i < 4; ++i) {
                         parent = file_system::parent_directory(parent);
-                        std::string dir = parent + "/resources";
-                        if (file_system::is_directory(dir))
+                        dir = parent + "/resources";
+                        if (file_system::is_directory(dir)) {
+                            VLOG_N_TIMES(1, 1) << "resources directory: " << dir;
                             return dir;
+                        }
                     }
                 }
-                // if still could not find it, return the current working directory
+                // if still could not find it, show an error and return the current working directory
+                LOG_N_TIMES(1, ERROR) << "could not find the resources directory";
                 return file_system::current_working_directory();
             }
         }

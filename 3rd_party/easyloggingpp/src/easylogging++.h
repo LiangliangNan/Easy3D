@@ -13,7 +13,7 @@
 //  https://amrayn.com
 //  http://muflihun.com
 //
-//  \cond
+
 #ifndef EASYLOGGINGPP_H
 #define EASYLOGGINGPP_H
 // Compilers and C++0x/C++11 Evaluation
@@ -4574,4 +4574,3 @@ el::base::debug::CrashHandler elCrashHandler(ELPP_USE_DEF_CRASH_HANDLER);\
 #  define START_EASYLOGGINGPP(argc, argv) el::Helpers::setArgs(argc, argv)
 #endif  // defined(ELPP_UNICODE)
 #endif // EASYLOGGINGPP_H
-// \endcond

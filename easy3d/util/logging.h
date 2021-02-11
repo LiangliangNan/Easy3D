@@ -26,11 +26,8 @@
 #define EASY3D_UTIL_LOGGING_H
 
 
-#include <easy3d/util/easylogging++.h>
+#include <3rd_party/easyloggingpp/src/easylogging++.h>
 
-
-// to have the same syntax as glog
-#define LOG_FIRST_N LOG_N_TIMES
 
 // to have LOG_IF_EVERY_N
 #define LOG_IF_EVERY_N(n, condition, LEVEL)  if (condition) \

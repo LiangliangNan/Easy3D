@@ -59,7 +59,7 @@ namespace easy3d {
             const_cast<TrianglesDrawable*>(this)->internal_update_buffers();
 
         if (vertex_buffer() == 0) {
-            LOG_FIRST_N(3, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
+            LOG_N_TIMES(3, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
             return;
         }
 

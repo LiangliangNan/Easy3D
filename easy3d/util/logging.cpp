@@ -39,6 +39,7 @@ namespace easy3d
 
         // \cond
         std::string log_file_name = "";
+        bool logging_initialized = false;
 
 
         std::string stacktrace_failure_header() {
@@ -101,6 +102,11 @@ namespace easy3d
 
         void initialize(bool info_to_stderr, const std::string &log_file, int verbosity_threshold)
         {
+            if (logging_initialized) {
+                LOG(WARNING) << "logging has already been initialized";
+                return;
+            }
+
             std::string full_path_log_file = log_file;
             if (log_file == "default") {
                 const std::string app_path = file_system::executable();
@@ -178,6 +184,8 @@ namespace easy3d
 
             if (!log_file_failure_msg.empty())
                 VLOG(1) << log_file_failure_msg;
+
+            logging_initialized = true;
         }
 
 

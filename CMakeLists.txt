@@ -9,15 +9,10 @@ endif ()
 
 project(Easy3D)
 
-set (EASY3D_MAJOR 2)
-set (EASY3D_MINOR 4)
-set (EASY3D_PATCH 3)
-set (EASY3D_VERSION "${EASY3D_MAJOR}.${EASY3D_MINOR}.${EASY3D_PATCH}")
-
-add_definitions("-DEASY3D_MAJOR=${EASY3D_MAJOR}")
-add_definitions("-DEASY3D_MINOR=${EASY3D_MINOR}")
-add_definitions("-DEASY3D_PATCH=${EASY3D_PATCH}")
-add_definitions("-DEASY3D_VERSION=\"${EASY3D_VERSION}\"")
+set (EASY3D_MAJOR_VERSION 2)
+set (EASY3D_MINOR_VERSION 4)
+set (EASY3D_PATCH_VERSION 3)
+set (EASY3D_VERSION "${EASY3D_MAJOR_VERSION}.${EASY3D_MINOR_VERSION}.${EASY3D_PATCH_VERSION}")
 
 ################################################################################
 
@@ -89,8 +84,9 @@ endif ()
 set(EASY3D_ROOT         ${CMAKE_CURRENT_LIST_DIR})
 set(EASY3D_THIRD_PARTY  ${EASY3D_ROOT}/3rd_party)
 
-set(EASY3D_INCLUDE_DIR  ${EASY3D_ROOT} ${CMAKE_CURRENT_BINARY_DIR})
+set(EASY3D_INCLUDE_DIR  ${EASY3D_ROOT})
 set(EASY3D_SOURCE_DIR   ${EASY3D_ROOT})
+set(EASY3D_BINARY_DIR   ${CMAKE_BINARY_DIR})
 
 ### conditionally compile certain modules depending on libraries found on the system
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
@@ -100,32 +96,6 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY  ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY  ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY  ${CMAKE_BINARY_DIR}/lib)
-
-################################################################################
-
-# EasyLogging++: request all features
-add_definitions(
-        -DELPP_FEATURE_ALL
-        -DELPP_STL_LOGGING
-        -DELPP_THREAD_SAFE
-        -DELPP_NO_DEFAULT_LOG_FILE
-        -DELPP_DISABLE_DEFAULT_CRASH_HANDLING
-)
-# EasyLogging++: for stack trace
-include(CheckIncludeFileCXX)
-check_include_file_cxx("execinfo.h" HAVE_EXECINFO)
-if (HAVE_EXECINFO)
-    add_definitions(-DHAVE_EXECINFO)
-endif()
-
-################################################################################
-# get a clean windows
-if (WIN32 OR MSVC)
-    add_definitions(-DNOMINMAX)
-    if(MSVC)
-        add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
-    endif()
-endif()
 
 ################################################################################
 
@@ -169,7 +139,3 @@ mark_as_advanced(FORCE BUILD_SHARED_LIBS)
 mark_as_advanced(FORCE BUILD_TESTING)
 
 ################################################################################
-
-## Resources
-# Copy resources dirs into our shadow build directory
-file( COPY ${CMAKE_CURRENT_SOURCE_DIR}/resources DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} )

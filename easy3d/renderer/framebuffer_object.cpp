@@ -47,7 +47,7 @@ namespace easy3d {
     FramebufferObject::FramebufferObject(int w, int h, int samples /* = 0 */)
     {
         if (!is_supported()) {
-            LOG_FIRST_N(3, WARNING) << "frame buffer object not supported on this platform. " << COUNTER;
+            LOG_N_TIMES(3, WARNING) << "frame buffer object not supported on this platform. " << COUNTER;
             return;
         }
 

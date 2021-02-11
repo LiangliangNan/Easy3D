@@ -64,8 +64,8 @@ void DoNothingFunc() {
 
 void test_conditional_ccasional_logging() {
     for (int i = 0; i < 20; ++i) {
-        LOG_FIRST_N(4, INFO) << "Log first 4 INFO, iteration " << i << ", " << COUNTER;
-        LOG_FIRST_N(5, ERROR) << "Log first 5 ERROR, iteration " << i << ", " << COUNTER;
+        LOG_N_TIMES(4, INFO) << "Log first 4 INFO, iteration " << i << ", " << COUNTER;
+        LOG_N_TIMES(5, ERROR) << "Log first 5 ERROR, iteration " << i << ", " << COUNTER;
     }
 
     LOG(INFO) << " \n ------------------------ \n";

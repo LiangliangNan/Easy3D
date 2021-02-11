@@ -2,6 +2,7 @@
 #
 # It defines the following variables:
 #       EASY3D_INCLUDE_DIRS - include directories for EASY3D
+#       EASY3D_LIBRARIES    - available Easy3D libraries
 # NOTE: The recommended way to specify libraries and headers with CMake is to use the
 #       target_link_libraries command. This command automatically adds appropriate include
 #       directories, compile definitions, the position-independent-code flag, and links to
@@ -12,7 +13,12 @@ find_dependency(Threads)
 
 # Compute paths
 get_filename_component(EASY3D_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+
 set(EASY3D_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
+message(STATUS "EASY3D_INCLUDE_DIRS: ${EASY3D_INCLUDE_DIRS}")
+
+set(EASY3D_LIBRARIES "@CONF_EASY3D_LIBRARIES@")
+message(STATUS "EASY3D_LIBRARIES: ${EASY3D_LIBRARIES}")
 
 # Our library dependencies (contains definitions for IMPORTED targets)
 if(NOT TARGET easy3d_util AND
