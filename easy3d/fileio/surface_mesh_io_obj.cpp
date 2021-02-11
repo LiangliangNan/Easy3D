@@ -57,7 +57,7 @@ namespace easy3d {
             }
 
             if (!file_system::is_file(file_name)) {
-                LOG(ERROR) << "file does not exist: " << file_system::simple_name(file_name);
+                LOG(ERROR) << "file does not exist: " << file_name;
                 return false;
             }
 

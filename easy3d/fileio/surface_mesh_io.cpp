@@ -73,7 +73,6 @@ namespace easy3d {
 		}
 
 		if (!success || mesh->n_vertices() == 0 || mesh->n_faces() == 0) {
-            LOG(WARNING) << "no valid data in file: " << file_name;
 			delete mesh;
 			return nullptr;
 		}
