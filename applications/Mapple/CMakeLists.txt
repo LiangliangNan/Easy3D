@@ -167,7 +167,7 @@ elseif (APPLE)
     resource(FRAGMENT_SHADERS ${EASY3D_ROOT}/resources/shaders Resources/shaders *.frag)
     resource(COLORMAPS ${EASY3D_ROOT}/resources/colormaps Resources/colormaps *.png)
     resource(FONTS ${EASY3D_ROOT}/resources/fonts Resources/fonts *.ttf)
-    resource(IMAGES ${EASY3D_ROOT}/resources/images Resources/images *.jpg)
+    resource(IMAGES ${EASY3D_ROOT}/resources/images Resources/images overview.jpg)  # overview.jpg is for splash screen
     resource(TEXTURES ${EASY3D_ROOT}/resources/textures Resources/textures *.png)
 
     # This tells CMake where to find and install the ICON file
