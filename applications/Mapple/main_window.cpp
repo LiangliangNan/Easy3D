@@ -40,6 +40,7 @@
 #include <QPushButton>
 #include <QProgressBar>
 
+#include <easy3d/core/version.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/graph.h>
 #include <easy3d/core/point_cloud.h>
@@ -746,7 +747,7 @@ void MainWindow::onAbout()
     title += QMessageBox::tr("<h3>Mapple (%1 bit)</h3>").arg(bits);
 #endif
 
-    title += QMessageBox::tr("<h4>Version %1</h4>").arg(EASY3D_VERSION);
+    title += QMessageBox::tr("<h4>Version %1</h4>").arg(version().c_str());
 
     QString text = QMessageBox::tr(
             "<p>Mapple is software for processing and rendering 3D data (e.g., point clouds, graphs, surface meshes, "

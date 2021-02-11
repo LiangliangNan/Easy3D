@@ -46,6 +46,7 @@ set(${PROJECT_NAME}_SOURCES
         point_cloud.cpp
         surface_mesh.cpp
         poly_mesh.cpp
+        version.cpp
         )
 
 
@@ -55,7 +56,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "easy3d")
 
 target_compile_definitions(
         ${PROJECT_NAME}
-        PUBLIC
+        PRIVATE
         "EASY3D_MAJOR_VERSION=${EASY3D_MAJOR_VERSION}"
         "EASY3D_MINOR_VERSION=${EASY3D_MINOR_VERSION}"
         "EASY3D_PATCH_VERSION=${EASY3D_PATCH_VERSION}"

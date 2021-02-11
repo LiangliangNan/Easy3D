@@ -22,28 +22,30 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_CORE_VERSION_H
-#define EASY3D_CORE_VERSION_H
 
-
-#include <string>
+#include <easy3d/core/version.h>
 
 
 namespace easy3d {
 
     /// returns the major version number of Easy3D
-    int version_major();
+    int version_major() {
+        return EASY3D_MAJOR_VERSION;
+    }
 
     /// returns the major version number of Easy3D
-    int version_minor();
+    int version_minor() {
+        return EASY3D_MINOR_VERSION;
+    }
 
     /// returns the minor version number of Easy3D
-    int version_patch();
+    int version_patch() {
+        return EASY3D_PATCH_VERSION;
+    }
 
     /// returns the version string of Easy3D
-    std::string version();
+    std::string version() {
+        return EASY3D_VERSION;
+    }
 
 }
-
-
-#endif  // EASY3D_CORE_VERSION_H
