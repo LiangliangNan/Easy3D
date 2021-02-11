@@ -55,7 +55,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "easy3d")
 
 target_compile_definitions(
         ${PROJECT_NAME}
-        PRIVATE
+        PUBLIC
         "EASY3D_MAJOR_VERSION=${EASY3D_MAJOR_VERSION}"
         "EASY3D_MINOR_VERSION=${EASY3D_MINOR_VERSION}"
         "EASY3D_PATCH_VERSION=${EASY3D_PATCH_VERSION}"
