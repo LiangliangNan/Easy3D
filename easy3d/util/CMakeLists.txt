@@ -9,7 +9,6 @@ set(${PROJECT_NAME}_HEADERS
         chrono_watch.h
         console_style.h
         dialogs.h
-        easylogging++.h
         file_system.h
         line_stream.h
         logging.h
@@ -25,7 +24,6 @@ set(${PROJECT_NAME}_SOURCES
         chrono_watch.cpp
         console_style.cpp
         dialogs.cpp
-        easylogging++.cc
         file_system.cpp
         logging.cpp
         progress.cpp
@@ -42,38 +40,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "easy3d")
 target_include_directories(${PROJECT_NAME} PUBLIC ${EASY3D_INCLUDE_DIR})
 
 find_package(Threads REQUIRED)
-target_link_libraries(${PROJECT_NAME} PUBLIC Threads::Threads 3rd_backward)
-
-
-# EasyLogging++: request all features
-target_compile_definitions(
-        ${PROJECT_NAME}
-        PUBLIC
-        ELPP_FEATURE_ALL
-        ELPP_STL_LOGGING
-        ELPP_THREAD_SAFE
-        ELPP_NO_DEFAULT_LOG_FILE
-        ELPP_DISABLE_DEFAULT_CRASH_HANDLING
-)
-# EasyLogging++: for stack trace
-include(CheckIncludeFileCXX)
-check_include_file_cxx("execinfo.h" HAVE_EXECINFO)
-if (HAVE_EXECINFO)
-    target_compile_definitions(
-            ${PROJECT_NAME}
-            PUBLIC
-            HAVE_EXECINFO
-    )
-endif ()
-
-################################################################################
-# get a clean windows
-if (WIN32 OR MSVC)
-    target_compile_definitions(${PROJECT_NAME} PUBLIC NOMINMAX)
-    if (MSVC)
-        target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_DEPRECATE)
-    endif ()
-endif()
+target_link_libraries(${PROJECT_NAME} PUBLIC Threads::Threads 3rd_backward 3rd_easyloggingpp)
 
 
 if (MSVC)

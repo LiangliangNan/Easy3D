@@ -67,7 +67,7 @@ namespace easy3d {
                     }
                 }
                 // if still could not find it, show an error and return the current working directory
-                LOG_FIRST_N(1, ERROR) << "could not find the resources directory";
+                LOG_N_TIMES(1, ERROR) << "could not find the resources directory";
                 return file_system::current_working_directory();
             }
         }

@@ -336,9 +336,9 @@ namespace easy3d {
             g = stbtt_FindGlyphIndex(&fnt->font, codepoint);
             if (!g) {
 //                if (codepoint != '\n')
-//                    LOG_FIRST_N(3, WARNING) << "given font does not support character '" << string::from_wstring({wchar_t(codepoint)}) << "'. " << COUNTER;
+//                    LOG_N_TIMES(3, WARNING) << "given font does not support character '" << string::from_wstring({wchar_t(codepoint)}) << "'. " << COUNTER;
 //                else
-//                    LOG_FIRST_N(3, WARNING) << "current implementation ignores new line character '\\n'. " << COUNTER;
+//                    LOG_N_TIMES(3, WARNING) << "current implementation ignores new line character '\\n'. " << COUNTER;
                 return 0;
             }
             stbtt_GetGlyphHMetrics(&fnt->font, g, &advance, &lsb);
@@ -788,7 +788,7 @@ namespace easy3d {
 
     float TextRenderer::font_height(float font_size) const {
         if (font_ids_.empty()) {
-            LOG_FIRST_N(3, ERROR) << "no font exists. To add a font, please call add_font(). " << COUNTER;
+            LOG_N_TIMES(3, ERROR) << "no font exists. To add a font, please call add_font(). " << COUNTER;
             return 0.0f;
         }
         float asc, desc, lineh;
@@ -819,14 +819,14 @@ namespace easy3d {
                      bool upper_left) const {
         float end_x = 0.0f;
         if (!stash_) {
-            LOG_FIRST_N(3, ERROR) << "couldn't draw() due to the failure in initialization. " << COUNTER;
+            LOG_N_TIMES(3, ERROR) << "couldn't draw() due to the failure in initialization. " << COUNTER;
             return end_x;
         }
         if (font_id >= font_ids_.size()) {
             if (font_ids_.empty()) {
-                LOG_FIRST_N(3, ERROR) << "no font exists. To add a font, please call add_font()";
+                LOG_N_TIMES(3, ERROR) << "no font exists. To add a font, please call add_font()";
             } else {
-                LOG_FIRST_N(3, ERROR) << "font (ID: " << font_id << ") does not exist. " << COUNTER;
+                LOG_N_TIMES(3, ERROR) << "font (ID: " << font_id << ") does not exist. " << COUNTER;
             }
             return end_x;
         }
@@ -860,7 +860,7 @@ namespace easy3d {
             program = ShaderManager::create_program_from_files(name, attributes);
         }
         if (!program) {
-            LOG_FIRST_N(3, ERROR) << "shader doesn't exist: " << name << ". " << COUNTER;
+            LOG_N_TIMES(3, ERROR) << "shader doesn't exist: " << name << ". " << COUNTER;
             return;
         }
 
@@ -934,15 +934,15 @@ namespace easy3d {
                           int font_id, const vec3 &font_color, float line_spacing, bool upper_left) const {
         Rect rect(0.0f, 0.0f, 0.0f, 0.0f);
         if (!stash_) {
-            LOG_FIRST_N(3, ERROR) << "couldn't draw() due to the failure in initialization. " << COUNTER;
+            LOG_N_TIMES(3, ERROR) << "couldn't draw() due to the failure in initialization. " << COUNTER;
             return rect;
         }
 
         if (font_id >= font_ids_.size()) {
             if (font_ids_.empty()) {
-                LOG_FIRST_N(3, ERROR) << "no font exists. To add a font, please call add_font()";
+                LOG_N_TIMES(3, ERROR) << "no font exists. To add a font, please call add_font()";
             } else {
-                LOG_FIRST_N(3, ERROR) << "font (ID: " << font_id << ") does not exist. " << COUNTER;
+                LOG_N_TIMES(3, ERROR) << "font (ID: " << font_id << ") does not exist. " << COUNTER;
             }
             return rect;
         }

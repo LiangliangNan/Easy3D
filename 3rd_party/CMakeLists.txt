@@ -17,6 +17,7 @@ add_subdirectory(tetgen)
 add_subdirectory(glutess)
 
 add_subdirectory(backward)
+add_subdirectory(easyloggingpp)
 
 
 

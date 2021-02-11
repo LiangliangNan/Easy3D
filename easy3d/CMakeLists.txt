@@ -6,7 +6,7 @@ set(EXPORT_TARGET_SET)
 
 add_subdirectory(util)
 list(APPEND CONF_EASY3D_LIBRARIES "easy3d::util")
-list(APPEND EXPORT_TARGET_SET "easy3d_util" "3rd_backward")
+list(APPEND EXPORT_TARGET_SET "easy3d_util" "3rd_backward" "3rd_easyloggingpp")
 
 add_subdirectory(core)
 list(APPEND CONF_EASY3D_LIBRARIES "easy3d::core")
