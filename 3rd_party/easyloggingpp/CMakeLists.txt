@@ -59,3 +59,5 @@ endif ()
 if (WIN32 OR MSVC)
     target_compile_definitions(3rd_easyloggingpp PUBLIC NOMINMAX)
 endif()
+
+set_target_properties(3rd_easyloggingpp PROPERTIES FOLDER "3rd_party")
