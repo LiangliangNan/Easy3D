@@ -40,7 +40,7 @@ void main(void) {
     }
 
     vec3 color = DataIn.color.xyz;
-    if (!gl_FrontFacing && distinct_back_color)
+    if ((gl_FrontFacing == false) && distinct_back_color)
         color = backside_color;
 
     if (highlight) {

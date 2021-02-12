@@ -736,7 +736,7 @@ vec4 shade(vec3 worldPos)
 			color = vec4(DataIn.color, 1.0f);
 		}
 
-        if (!gl_FrontFacing && distinct_back_color)
+        if ((gl_FrontFacing == false) && distinct_back_color)
 			color = vec4(backside_color, color.a);
 
         color = color * df + vec4(specular, 1.0) * sf;
