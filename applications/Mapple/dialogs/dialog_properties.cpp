@@ -56,6 +56,7 @@ DialogProperties::DialogProperties(MainWindow *window)
     comboBoxCommand->addItem("Remove");
     comboBoxCommand->addItem("Rename");
     comboBoxCommand->addItem("Convert Data Type");
+    comboBoxCommand->addItem("Generate Color Property");
     comboBoxCommand->setCurrentIndex(0);
 
     comboBoxSourceType->setEditable(false);
@@ -123,24 +124,32 @@ void DialogProperties::commandChanged(const QString &) {
         comboBoxSourceType->setVisible(true);
         labelPropertyTo->setVisible(true);
         comboBoxTargetType->setVisible(true);
-    } else if (command == "Split (Vector -> Scalars)") {
+    } else if (command == "Generate Color Property") {
         labelPropertyName->setText("Property");
-        labelNewPropertyName->setText("New property");
-        labelNewPropertyName->setVisible(true);
-        lineEditNewPropertyName->setVisible(true);
+        labelNewPropertyName->setVisible(false);
+        lineEditNewPropertyName->setVisible(false);
         labelDataType->setVisible(false);
         comboBoxSourceType->setVisible(false);
         labelPropertyTo->setVisible(false);
         comboBoxTargetType->setVisible(false);
+    } else if (command == "Split (Vector -> Scalars)") {
+//        labelPropertyName->setText("Property");
+//        labelNewPropertyName->setText("New property");
+//        labelNewPropertyName->setVisible(true);
+//        lineEditNewPropertyName->setVisible(true);
+//        labelDataType->setVisible(false);
+//        comboBoxSourceType->setVisible(false);
+//        labelPropertyTo->setVisible(false);
+//        comboBoxTargetType->setVisible(false);
     } else if (command == "Merge (Scalars -> Vector)") {
-        labelPropertyName->setText("Property 1");
-        labelNewPropertyName->setText("New property");
-        labelNewPropertyName->setVisible(true);
-        lineEditNewPropertyName->setVisible(true);
-        labelDataType->setVisible(false);
-        comboBoxSourceType->setVisible(false);
-        labelPropertyTo->setVisible(false);
-        comboBoxTargetType->setVisible(false);
+//        labelPropertyName->setText("Property 1");
+//        labelNewPropertyName->setText("New property");
+//        labelNewPropertyName->setVisible(true);
+//        lineEditNewPropertyName->setVisible(true);
+//        labelDataType->setVisible(false);
+//        comboBoxSourceType->setVisible(false);
+//        labelPropertyTo->setVisible(false);
+//        comboBoxTargetType->setVisible(false);
     }
     updateProperties();
 }
@@ -1061,6 +1070,8 @@ void DialogProperties::applyCommand() {
         succeed = renameProperty();
     else if (command == "Convert Data Type")
         succeed = convertPropertyDataType();
+    else if (command == "Generate Color Property")
+        succeed = generateColorProperty();
 
     if (succeed) {
         updateProperties();
@@ -1263,5 +1274,69 @@ bool DialogProperties::convertPropertyDataType() {
                   << source_type << "' to '" << target_type << "'";
         return true;
     }
+    return false;
+}
+
+
+bool DialogProperties::generateColorProperty() {
+    Model *model = getModel();
+    if (!model)
+        return false;
+
+    const std::string &location = comboBoxPropertyLocation->currentText().toStdString();
+    const std::string &name = comboBoxPropertyName->currentText().toStdString();
+    if (location.empty() || name.empty())
+        return false;
+
+    if (dynamic_cast<PointCloud *>(model)) {
+        if (location != "Vertex") {
+            LOG(WARNING) << "color property can only be generated from a vertex property";
+            return false;
+        }
+        auto cloud = dynamic_cast<PointCloud *>(model);
+        const auto& id = cloud->get_vertex_property_type(name);
+        if (id != typeid(int)) {
+            LOG(WARNING) << "color property can only be generated from an <int> type vertex property";
+            return false;
+        }
+
+        auto segments = cloud->vertex_property<int>(name);
+        std::string color_name = "v:color-";
+        if (name.find("v:") == std::string::npos)
+            color_name += name;
+        else
+            color_name += name.substr(2);
+
+        auto coloring = cloud->vertex_property<vec3>(color_name, vec3(0, 0, 0));
+        Renderer::color_from_segmentation(cloud, segments, coloring);
+        LOG(INFO) << "vertex property '" << color_name << "' add to model";
+        window_->updateRenderingPanel();
+        return true;
+    } else if (dynamic_cast<SurfaceMesh *>(model)) {
+        if (location != "Face") {
+            LOG(WARNING) << "color property can only be generated from a face property";
+            return false;
+        }
+        auto mesh = dynamic_cast<SurfaceMesh *>(model);
+        const auto& id = mesh->get_face_property_type(name);
+        if (id != typeid(int)) {
+            LOG(WARNING) << "color property can only be generated from an <int> type face property";
+            return false;
+        }
+
+        auto segments = mesh->face_property<int>(name);
+        std::string color_name = "f:color-";
+        if (name.find("f:") == std::string::npos)
+            color_name += name;
+        else
+            color_name += name.substr(2);
+
+        auto coloring = mesh->face_property<vec3>(color_name, vec3(0, 0, 0));
+        Renderer::color_from_segmentation(mesh, segments, coloring);
+        LOG(INFO) << "face property '" << color_name << "' add to model";
+        window_->updateRenderingPanel();
+        return true;
+    }
+
     return false;
 }

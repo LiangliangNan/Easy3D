@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>325</width>
+    <width>359</width>
     <height>303</height>
    </rect>
   </property>
@@ -120,9 +120,15 @@
      </item>
      <item row="6" column="1">
       <widget class="QComboBox" name="comboBoxSourceType">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="minimumSize">
         <size>
-         <width>80</width>
+         <width>120</width>
          <height>0</height>
         </size>
        </property>
@@ -137,9 +143,15 @@
      </item>
      <item row="6" column="3">
       <widget class="QComboBox" name="comboBoxTargetType">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="minimumSize">
         <size>
-         <width>80</width>
+         <width>120</width>
          <height>0</height>
         </size>
        </property>

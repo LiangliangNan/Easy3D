@@ -57,6 +57,7 @@ private:
     bool removeProperty();
     bool renameProperty();
     bool convertPropertyDataType();
+    bool generateColorProperty();
 };
 
 #endif
