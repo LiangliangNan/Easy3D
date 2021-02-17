@@ -56,6 +56,7 @@ private Q_SLOTS :
     void modelItemPressed(QTreeWidgetItem *current, int column);
     void currentModelItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
     void modelItemSelectionChanged();
+    void modelItemChanged(QTreeWidgetItem *current, int column);
 
     void showContextMenu(const QPoint &p);
 
@@ -76,6 +77,8 @@ private:
 
     bool auto_focus_;
     bool selected_only_;
+
+    int name_column_;
 };
 
 #endif

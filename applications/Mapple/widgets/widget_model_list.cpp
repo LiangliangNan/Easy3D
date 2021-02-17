@@ -21,6 +21,8 @@
 #include <QTreeWidgetItem>
 #include <QHeaderView>
 #include <QMouseEvent>
+#include <QMessageBox>
+#include <QStyledItemDelegate>
 
 
 using namespace easy3d;
@@ -30,6 +32,9 @@ public:
     ModelItem(QTreeWidget *parent, Model *m) : QTreeWidgetItem(parent), model_(m) {
         for (int i = 0; i < parent->columnCount(); ++i)
             QTreeWidgetItem::setTextAlignment(i, Qt::AlignLeft);
+
+        // allow to edit model names
+        setFlags(flags() | Qt::ItemIsEditable);
     }
 
     ~ModelItem() {}
@@ -46,8 +51,7 @@ public:
         } else if (dynamic_cast<Graph *>(model())) {
             static QIcon iconGraph(QString::fromUtf8(":/resources/icons/graph.png"));
             QTreeWidgetItem::setIcon(column, iconGraph);
-        }
-        else if (dynamic_cast<PolyMesh*>(model())) {
+        } else if (dynamic_cast<PolyMesh *>(model())) {
             static QIcon iconTetrahedra(QString::fromUtf8(":/resources/icons/tetrahedra.png"));
             QTreeWidgetItem::setIcon(column, iconTetrahedra);
         }
@@ -62,7 +66,7 @@ public:
             QTreeWidgetItem::setIcon(column, iconHide);
 
         int num = childCount();
-        for (int i=0; i<num; ++i)
+        for (int i = 0; i < num; ++i)
             this->child(i)->setDisabled(!visible);
     }
 
@@ -78,7 +82,7 @@ private:
 
 class DrawableItem : public QTreeWidgetItem {
 public:
-    DrawableItem(ModelItem *parent, Drawable* d) : QTreeWidgetItem(parent), drawable_(d) {
+    DrawableItem(ModelItem *parent, Drawable *d) : QTreeWidgetItem(parent), drawable_(d) {
         for (int i = 0; i < parent->columnCount(); ++i)
             QTreeWidgetItem::setTextAlignment(i, Qt::AlignLeft);
     }
@@ -101,15 +105,26 @@ private:
 };
 
 
+class NoEditDelegate : public QStyledItemDelegate {
+public:
+    NoEditDelegate(QObject *parent = 0) : QStyledItemDelegate(parent) {}
+
+    virtual QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const {
+        return nullptr;
+    }
+};
+
 
 WidgetModelList::WidgetModelList(QWidget *parent)
-        : QTreeWidget(parent), mainWindow_(nullptr), popupMenu_(nullptr), auto_focus_(false), selected_only_(false)
-{
+        : QTreeWidget(parent), mainWindow_(nullptr), popupMenu_(nullptr), auto_focus_(false), selected_only_(false) {
     setContextMenuPolicy(Qt::CustomContextMenu);
 
     connect(this, SIGNAL(itemSelectionChanged()), this, SLOT(modelItemSelectionChanged()));
-    connect(this, SIGNAL(itemPressed(QTreeWidgetItem * , int)), this, SLOT(modelItemPressed(QTreeWidgetItem * , int)));
+    connect(this, SIGNAL(itemPressed(QTreeWidgetItem *, int)), this, SLOT(modelItemPressed(QTreeWidgetItem *, int)));
     connect(this, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
+
+    // model name has been changed
+    connect(this, SIGNAL(itemChanged(QTreeWidgetItem *, int)), this, SLOT(modelItemChanged(QTreeWidgetItem *, int)));
 
     if (selected_only_)
         setSelectionMode(QAbstractItemView::SingleSelection);
@@ -127,15 +142,20 @@ void WidgetModelList::init(MainWindow *w) {
 
     QStringList headerLabels;
     headerLabels << "Index" << "Type" << "Show" << "Name";
+    name_column_ = 3;
+
     setHeaderLabels(headerLabels);
-    for (int i = 0; i < columnCount(); ++i)
+    for (int i = 0; i < columnCount(); ++i) {
         headerItem()->setTextAlignment(i, Qt::AlignLeft);
+
+        // allow to edit model names
+        if (i != name_column_)
+            setItemDelegateForColumn(i, new NoEditDelegate(this));
+    }
 
     header()->setDefaultSectionSize(60);
 
-//    setColumnWidth(0, 50);
     setIndentation(10);
-
     setSelectionMode(QAbstractItemView::ExtendedSelection);
 }
 
@@ -147,11 +167,11 @@ PaintCanvas *WidgetModelList::viewer() {
 
 void WidgetModelList::updateDrawableVisibility(easy3d::Drawable *d) {
     int num = topLevelItemCount();
-    for (int i=0; i<num; ++i) {
+    for (int i = 0; i < num; ++i) {
         auto item = dynamic_cast<ModelItem *>(topLevelItem(i));
         if (item->model() == d->model()) {
             int num_children = item->childCount();
-            for (int j=0; j<num_children; ++j) {
+            for (int j = 0; j < num_children; ++j) {
                 auto d_item = dynamic_cast<DrawableItem *>(item->child(j));
                 if (d_item->drawable() == d)
                     d_item->setVisible(2, d->is_visible());
@@ -288,8 +308,11 @@ void WidgetModelList::showContextMenu(const QPoint &pos) {
 
 void WidgetModelList::updateModelList() {
     disconnect(this, SIGNAL(itemSelectionChanged()), this, SLOT(modelItemSelectionChanged()));
-    disconnect(this, SIGNAL(itemPressed(QTreeWidgetItem * , int)), this, SLOT(modelItemPressed(QTreeWidgetItem * , int)));
+    disconnect(this, SIGNAL(itemPressed(QTreeWidgetItem * , int)), this,
+               SLOT(modelItemPressed(QTreeWidgetItem * , int)));
     disconnect(this, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
+
+    disconnect(this, SIGNAL(itemChanged(QTreeWidgetItem *, int)), this, SLOT(modelItemChanged(QTreeWidgetItem *, int)));
 
     // clear everything and creat the list from scratch
     clear();
@@ -342,6 +365,7 @@ void WidgetModelList::updateModelList() {
     connect(this, SIGNAL(itemSelectionChanged()), this, SLOT(modelItemSelectionChanged()));
     connect(this, SIGNAL(itemPressed(QTreeWidgetItem * , int)), this, SLOT(modelItemPressed(QTreeWidgetItem * , int)));
     connect(this, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
+    connect(this, SIGNAL(itemChanged(QTreeWidgetItem *, int)), this, SLOT(modelItemChanged(QTreeWidgetItem *, int)));
 
     mainWindow_->updateRenderingPanel();
     mainWindow_->updateWindowTitle();
@@ -351,17 +375,17 @@ void WidgetModelList::updateModelList() {
 
 void WidgetModelList::duplicateCurrent() {
     if (viewer()->currentModel()) {
-        Model* model = viewer()->currentModel();
+        Model *model = viewer()->currentModel();
 
-        Model* copy = nullptr;
-        if (dynamic_cast<SurfaceMesh*>(model))
-            copy = new SurfaceMesh(*dynamic_cast<SurfaceMesh*>(model));
-        else if (dynamic_cast<PointCloud*>(model))
-            copy = new PointCloud(*dynamic_cast<PointCloud*>(model));
-        else if (dynamic_cast<Graph*>(model))
-            copy = new Graph(*dynamic_cast<Graph*>(model));
-        else if (dynamic_cast<PolyMesh*>(model))
-            copy = new PolyMesh(*dynamic_cast<PolyMesh*>(model));
+        Model *copy = nullptr;
+        if (dynamic_cast<SurfaceMesh *>(model))
+            copy = new SurfaceMesh(*dynamic_cast<SurfaceMesh *>(model));
+        else if (dynamic_cast<PointCloud *>(model))
+            copy = new PointCloud(*dynamic_cast<PointCloud *>(model));
+        else if (dynamic_cast<Graph *>(model))
+            copy = new Graph(*dynamic_cast<Graph *>(model));
+        else if (dynamic_cast<PolyMesh *>(model))
+            copy = new PolyMesh(*dynamic_cast<PolyMesh *>(model));
 
         if (copy) {
             const std::string &name = file_system::name_less_extension(model->name()) + "_copy";
@@ -377,14 +401,14 @@ void WidgetModelList::showSelected() {
     if (selectedItems().empty())
         return;
 
-	const QList<QTreeWidgetItem*>& items = selectedItems();
-	for (int i = 0; i < items.size(); ++i) {
-		ModelItem* item = dynamic_cast<ModelItem*>(items[i]);
-		Model* model = item->model();
-		model->renderer()->set_visible(true);
-	}
+    const QList<QTreeWidgetItem *> &items = selectedItems();
+    for (int i = 0; i < items.size(); ++i) {
+        ModelItem *item = dynamic_cast<ModelItem *>(items[i]);
+        Model *model = item->model();
+        model->renderer()->set_visible(true);
+    }
 
-	updateModelList();
+    updateModelList();
     viewer()->update();
 }
 
@@ -393,12 +417,12 @@ void WidgetModelList::hideSelected() {
     if (selectedItems().empty())
         return;
 
-	const QList<QTreeWidgetItem*>& items = selectedItems();
-	for (int i = 0; i < items.size(); ++i) {
-		ModelItem* item = dynamic_cast<ModelItem*>(items[i]);
-		Model* model = item->model();
-		model->renderer()->set_visible(false);
-	}
+    const QList<QTreeWidgetItem *> &items = selectedItems();
+    for (int i = 0; i < items.size(); ++i) {
+        ModelItem *item = dynamic_cast<ModelItem *>(items[i]);
+        Model *model = item->model();
+        model->renderer()->set_visible(false);
+    }
 
     updateModelList();
     viewer()->update();
@@ -406,32 +430,31 @@ void WidgetModelList::hideSelected() {
 
 
 void WidgetModelList::invertShowHide() {
-	int num = topLevelItemCount();
+    int num = topLevelItemCount();
 
-	if (selected_only_) {
-		std::vector<unsigned char> visible(num);
-		for (int i = 0; i < num; ++i) {
-			QTreeWidgetItem* item = topLevelItem(i);
-			ModelItem* modelItem = dynamic_cast<ModelItem*>(item);
-			visible[i] = (!modelItem->model()->renderer()->is_visible());
-		}
-		mainWindow_->setShowSelectedOnly(false);
-		for (int i = 0; i < num; ++i) {
-			QTreeWidgetItem* item = topLevelItem(i);
-			ModelItem* modelItem = dynamic_cast<ModelItem*>(item);
-			modelItem->model()->renderer()->set_visible(visible[i]);
-		}
-	}
-	else {
-		for (int i = 0; i < num; ++i) {
-			QTreeWidgetItem* item = topLevelItem(i);
-			ModelItem* modelItem = dynamic_cast<ModelItem*>(item);
-			Model* model = modelItem->model();
-			model->renderer()->set_visible(!model->renderer()->is_visible());;
-		}
-	}
+    if (selected_only_) {
+        std::vector<unsigned char> visible(num);
+        for (int i = 0; i < num; ++i) {
+            QTreeWidgetItem *item = topLevelItem(i);
+            ModelItem *modelItem = dynamic_cast<ModelItem *>(item);
+            visible[i] = (!modelItem->model()->renderer()->is_visible());
+        }
+        mainWindow_->setShowSelectedOnly(false);
+        for (int i = 0; i < num; ++i) {
+            QTreeWidgetItem *item = topLevelItem(i);
+            ModelItem *modelItem = dynamic_cast<ModelItem *>(item);
+            modelItem->model()->renderer()->set_visible(visible[i]);
+        }
+    } else {
+        for (int i = 0; i < num; ++i) {
+            QTreeWidgetItem *item = topLevelItem(i);
+            ModelItem *modelItem = dynamic_cast<ModelItem *>(item);
+            Model *model = modelItem->model();
+            model->renderer()->set_visible(!model->renderer()->is_visible());;
+        }
+    }
 
-	updateModelList();
+    updateModelList();
     viewer()->update();
 }
 
@@ -474,37 +497,37 @@ void WidgetModelList::invertSelection() {
 
 
 void WidgetModelList::mergeSelected() {
-	std::vector<Model*>	models;
-	const QList<QTreeWidgetItem*>& items = selectedItems();
-	for (int i = 0; i < items.size(); ++i) {
-		ModelItem* item = dynamic_cast<ModelItem*>(items[i]);
-		models.push_back(item->model());
-	}
+    std::vector<Model *> models;
+    const QList<QTreeWidgetItem *> &items = selectedItems();
+    for (int i = 0; i < items.size(); ++i) {
+        ModelItem *item = dynamic_cast<ModelItem *>(items[i]);
+        models.push_back(item->model());
+    }
 
-	mergeModels(models);
+    mergeModels(models);
 }
 
 
 void WidgetModelList::deleteSelected() {
-	const QList<QTreeWidgetItem*>& items = selectedItems();
-	for (int i = 0; i < items.size(); ++i) {
-		ModelItem* item = dynamic_cast<ModelItem*>(items[i]);
-		if (item)
+    const QList<QTreeWidgetItem *> &items = selectedItems();
+    for (int i = 0; i < items.size(); ++i) {
+        ModelItem *item = dynamic_cast<ModelItem *>(items[i]);
+        if (item)
             viewer()->deleteModel(item->model());
-	}
+    }
 
-	Model* current_model = viewer()->currentModel();
-	if (selected_only_) {
-	    for (auto m : viewer()->models())
-	        m->renderer()->set_visible(m == current_model);
-	}
+    Model *current_model = viewer()->currentModel();
+    if (selected_only_) {
+        for (auto m : viewer()->models())
+            m->renderer()->set_visible(m == current_model);
+    }
 
     updateModelList();
 
-	if (auto_focus_)
-		viewer()->fitScreen();
+    if (auto_focus_)
+        viewer()->fitScreen();
 
-	viewer()->update();
+    viewer()->update();
 
     mainWindow_->updateRenderingPanel();
     mainWindow_->updateWindowTitle();
@@ -516,13 +539,13 @@ void WidgetModelList::currentModelItemChanged(QTreeWidgetItem *current, QTreeWid
     if (current == previous)
         return;
 
-	ModelItem* current_item = dynamic_cast<ModelItem*>(current);
-    (void)previous;
-	if (!current_item)
-		return;
+    ModelItem *current_item = dynamic_cast<ModelItem *>(current);
+    (void) previous;
+    if (!current_item)
+        return;
 
-	Model* model = current_item->model();
-	viewer()->setCurrentModel(model);
+    Model *model = current_item->model();
+    viewer()->setCurrentModel(model);
 
     if (selected_only_) {
         for (auto m : viewer()->models())
@@ -557,10 +580,44 @@ void WidgetModelList::modelItemSelectionChanged() {
 }
 
 
-void WidgetModelList::modelItemPressed(QTreeWidgetItem *current, int column) {
-    Model* prev_active_model = viewer()->currentModel();
+void WidgetModelList::modelItemChanged(QTreeWidgetItem *current, int column) {
+    if (dynamic_cast<ModelItem *>(current) == nullptr)
+        return; // this is not a model item (might be a drawable item
 
-    Model* active_model = nullptr;
+    const std::string text = current->text(name_column_).toStdString();
+    if (text.empty()) {
+        QMessageBox::warning(this, "Model name error", "Model name cannot be empty", QMessageBox::Ok,
+                             QMessageBox::NoButton);
+        return;
+    }
+
+    Model* model = dynamic_cast<ModelItem *>(current)->model();
+    if (!model) {
+        QMessageBox::warning(this, "Model error", "No model is associated with the QTreeWidgetItem", QMessageBox::Ok,
+                             QMessageBox::NoButton);
+        return;
+    }
+
+    if (current && column == name_column_) {
+        const std::string prev_name = model->name();
+        const std::string path = file_system::parent_directory(prev_name);
+        const std::string ext = file_system::extension(prev_name);
+        if (path.empty() || ext.empty())
+            model->set_name(text);
+        else
+            model->set_name(path + "/" + text + "." + ext);
+
+        mainWindow_->updateWindowTitle();
+
+        LOG(INFO) << "model name '" << prev_name << "' changed to '" << model->name() << "'";
+    }
+}
+
+
+void WidgetModelList::modelItemPressed(QTreeWidgetItem *current, int column) {
+    Model *prev_active_model = viewer()->currentModel();
+
+    Model *active_model = nullptr;
     if (dynamic_cast<ModelItem *>(current)) {
         ModelItem *current_item = dynamic_cast<ModelItem *>(current);
         active_model = current_item->model();
@@ -571,8 +628,7 @@ void WidgetModelList::modelItemPressed(QTreeWidgetItem *current, int column) {
             current_item->setVisible(2, visible);
             model->renderer()->set_visible(visible);
         }
-    }
-    else if (dynamic_cast<DrawableItem *>(current)) {
+    } else if (dynamic_cast<DrawableItem *>(current)) {
         DrawableItem *drawable_item = dynamic_cast<DrawableItem *>(current);
         active_model = drawable_item->drawable()->model();
         if (column == 2) {
@@ -608,7 +664,7 @@ void WidgetModelList::mousePressEvent(QMouseEvent *e) {
 }
 
 
-void WidgetModelList::mouseReleaseEvent(QMouseEvent* e) {
+void WidgetModelList::mouseReleaseEvent(QMouseEvent *e) {
     QTreeWidget::mouseReleaseEvent(e);
 }
 
@@ -623,31 +679,29 @@ void WidgetModelList::setAutoFocus(bool b) {
 
 
 void WidgetModelList::setSelectedOnly(bool b) {
-	selected_only_ = b;
+    selected_only_ = b;
 
-	if (selected_only_) {
+    if (selected_only_) {
         setSelectionMode(QAbstractItemView::SingleSelection);
         connect(this, SIGNAL(currentItemChanged(QTreeWidgetItem * , QTreeWidgetItem * )), this,
                 SLOT(currentModelItemChanged(QTreeWidgetItem * , QTreeWidgetItem * )));
-    }
-	else {
+    } else {
         setSelectionMode(QAbstractItemView::ExtendedSelection);
         disconnect(this, SIGNAL(currentItemChanged(QTreeWidgetItem * , QTreeWidgetItem * )), this,
-                SLOT(currentModelItemChanged(QTreeWidgetItem * , QTreeWidgetItem * )));
+                   SLOT(currentModelItemChanged(QTreeWidgetItem * , QTreeWidgetItem * )));
     }
 
-	Model* active_model = viewer()->currentModel();
+    Model *active_model = viewer()->currentModel();
     if (selected_only_) {
         for (auto m : viewer()->models()) {
             m->renderer()->set_visible(m == active_model);
         }
+    } else {
+        const std::vector<Model *> &models = viewer()->models();
+        for (int i = 0; i < models.size(); ++i) {
+            models[i]->renderer()->set_visible(true);
+        }
     }
-	else {
-		const std::vector<Model*>& models = viewer()->models();
-		for (int i = 0; i < models.size(); ++i) {
-			models[i]->renderer()->set_visible(true);
-		}
-	}
     updateVisibilities();
 
     viewer()->update();
@@ -695,57 +749,57 @@ void WidgetModelList::mergeModels(const std::vector<Model *> &models) {
 
     std::vector<Model *> to_delete;
 
-	if (meshes.size() > 1) {
-		SurfaceMesh* to = meshes[0];
-		ProgressLogger logger(meshes.size() - 1, false, false);
-		for (std::size_t i = 1; i < meshes.size(); ++i) {
-		    logger.notify(i);
-			if (logger.is_canceled())
-				break;
-
-            SurfaceMesh* from = meshes[i];
-            to->join(*from);
-
-			to_delete.push_back(from);
-		}
-
-		to->set_name("merged_mesh");
-		to->renderer()->update();
-		to->manipulator()->reset();
-	}
-
-	if (clouds.size() > 1) {
-		PointCloud* to = clouds[0];
-		ProgressLogger logger(clouds.size() - 1, false, false);
-		for (int i = 1; i < clouds.size(); ++i) {
+    if (meshes.size() > 1) {
+        SurfaceMesh *to = meshes[0];
+        ProgressLogger logger(meshes.size() - 1, false, false);
+        for (std::size_t i = 1; i < meshes.size(); ++i) {
             logger.notify(i);
             if (logger.is_canceled())
                 break;
 
-			PointCloud* from = clouds[i];
+            SurfaceMesh *from = meshes[i];
+            to->join(*from);
+
+            to_delete.push_back(from);
+        }
+
+        to->set_name("merged_mesh");
+        to->renderer()->update();
+        to->manipulator()->reset();
+    }
+
+    if (clouds.size() > 1) {
+        PointCloud *to = clouds[0];
+        ProgressLogger logger(clouds.size() - 1, false, false);
+        for (int i = 1; i < clouds.size(); ++i) {
+            logger.notify(i);
+            if (logger.is_canceled())
+                break;
+
+            PointCloud *from = clouds[i];
             auto points = from->get_vertex_property<vec3>("v:point");
             for (auto v : from->vertices()) {
                 to->add_vertex(points[v]);
             }
 
-			to_delete.push_back(from);
-		}
+            to_delete.push_back(from);
+        }
 
-		to->set_name("merged_point_set");
+        to->set_name("merged_point_set");
         to->renderer()->update();
-	}
+    }
 
-	for (unsigned int i = 0; i < to_delete.size(); ++i) {
-		Model* model = to_delete[i];
-		viewer()->deleteModel(model);
-	}
+    for (unsigned int i = 0; i < to_delete.size(); ++i) {
+        Model *model = to_delete[i];
+        viewer()->deleteModel(model);
+    }
 
-	// update display and ui
-	if (meshes.size() > 1 || clouds.size() > 1) {
-		updateModelList();
-		mainWindow_->updateRenderingPanel();
+    // update display and ui
+    if (meshes.size() > 1 || clouds.size() > 1) {
+        updateModelList();
+        mainWindow_->updateRenderingPanel();
         viewer()->update();
-	}
+    }
 }
 
 
@@ -754,26 +808,27 @@ void WidgetModelList::decomposeModel(Model *model) {
     if (!mesh)
         return;
 
-	const auto& components = SurfaceMeshComponent::extract(mesh);
-	if (components.size() == 1) {
-		LOG(WARNING) << "model has only one component";
-		return;
-	}
+    const auto &components = SurfaceMeshComponent::extract(mesh);
+    if (components.size() == 1) {
+        LOG(WARNING) << "model has only one component";
+        return;
+    }
 
-	const std::string base_name = file_system::parent_directory(mesh->name()) + "/" + file_system::base_name(mesh->name()) + "_part_";
+    const std::string base_name =
+            file_system::parent_directory(mesh->name()) + "/" + file_system::base_name(mesh->name()) + "_part_";
 
-	ProgressLogger progress(components.size(), false, false);
-	for (unsigned int i = 0; i < components.size(); i++) {
+    ProgressLogger progress(components.size(), false, false);
+    for (unsigned int i = 0; i < components.size(); i++) {
         if (progress.is_canceled()) {
             LOG(WARNING) << "decomposing model cancelled";
             return;
         }
 
-		SurfaceMesh* new_mesh = components[i].to_mesh();
-		new_mesh->set_name(base_name + std::to_string(i + 1));
-		viewer()->addModel(new_mesh);
-		progress.next();
-	}
+        SurfaceMesh *new_mesh = components[i].to_mesh();
+        new_mesh->set_name(base_name + std::to_string(i + 1));
+        viewer()->addModel(new_mesh);
+        progress.next();
+    }
 
     // delete the original model
     viewer()->deleteModel(mesh);
@@ -781,5 +836,5 @@ void WidgetModelList::decomposeModel(Model *model) {
     mainWindow_->updateRenderingPanel();
     viewer()->update();
 
-	LOG(INFO) << "model decomposed into " << components.size() << " parts";
+    LOG(INFO) << "model decomposed into " << components.size() << " parts";
 }
