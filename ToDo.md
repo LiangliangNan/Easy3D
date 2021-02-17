@@ -1,4 +1,5 @@
 * easy3d (on going):
+    - Add a measuring tool
     - Use https://github.com/onqtam/doctest for tests
     - Add contents and brief info for each model in WidgetModelList.
     - Add tutorials for algorithms:
@@ -27,3 +28,4 @@
 	    
 Long term:
     - switch to Vulkan.
+    - add Python bindings.
