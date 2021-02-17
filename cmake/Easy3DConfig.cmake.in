@@ -3,6 +3,7 @@
 # It defines the following variables:
 #       EASY3D_INCLUDE_DIRS - include directories for EASY3D
 #       EASY3D_LIBRARIES    - available Easy3D libraries
+#       EASY3D_CGAL_SUPPORT - whether CGAL support is enabled
 # NOTE: The recommended way to specify libraries and headers with CMake is to use the
 #       target_link_libraries command. This command automatically adds appropriate include
 #       directories, compile definitions, the position-independent-code flag, and links to
@@ -19,6 +20,19 @@ message(STATUS "EASY3D_INCLUDE_DIRS: ${EASY3D_INCLUDE_DIRS}")
 
 set(EASY3D_LIBRARIES "@CONF_EASY3D_LIBRARIES@")
 message(STATUS "EASY3D_LIBRARIES: ${EASY3D_LIBRARIES}")
+
+# Resolve dependencies for CGAL
+if(POLICY CMP0057)
+  cmake_policy(SET CMP0057 NEW)
+endif()
+if ("easy3d::algo_ext" IN_LIST EASY3D_LIBRARIES) # second arg is the CMake variable name (instead of value)
+    message(STATUS "EASY3D was built with CGAL support")
+    set (EASY3D_CGAL_SUPPORT TRUE)
+    find_dependency(CGAL)
+else()
+    message(STATUS "EASY3D was built without CGAL support")
+    set (EASY3D_CGAL_SUPPORT FALSE)
+endif()
 
 # Our library dependencies (contains definitions for IMPORTED targets)
 if(NOT TARGET easy3d_util AND
