@@ -133,7 +133,7 @@ If you use Easy3D in a scientific work, I kindly ask you to cite it:
 ```bibtex
 @misc{easy3d2018nan,
   title = {Easy3D: a lightweight, easy-to-use, and efficient C++ library for processing and rendering 3D data},
-  author = {Liangliang, Nan},
+  author = {Nan, Liangliang},
   note = {\url{https://github.com/LiangliangNan/Easy3D}},
   year = {2018},
 }
