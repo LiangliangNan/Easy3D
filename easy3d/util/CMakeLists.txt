@@ -39,8 +39,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "easy3d")
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${EASY3D_INCLUDE_DIR})
 
-find_package(Threads REQUIRED)
-target_link_libraries(${PROJECT_NAME} PUBLIC Threads::Threads 3rd_backward 3rd_easyloggingpp)
+target_link_libraries(${PROJECT_NAME} PUBLIC 3rd_backward 3rd_easyloggingpp)
 
 
 if (MSVC)
