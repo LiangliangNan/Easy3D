@@ -1130,7 +1130,7 @@ void MainWindow::surfaceMeshRepairPolygonSoup() {
     viewer_->update();
     updateUi();
 #else
-    LOG(WARNING) << "This function requires CGAL but CGAL was not found.";
+    LOG(WARNING) << "This function requires CGAL but CGAL was not found when Easy3D was built.";
 #endif
 }
 
@@ -1205,7 +1205,7 @@ void MainWindow::surfaceMeshOrientClosedTriangleMesh() {
     viewer_->update();
     updateUi();
 #else
-    LOG(WARNING) << "This function requires CGAL but CGAL was not found.";
+    LOG(WARNING) << "This function requires CGAL but CGAL was not found when Easy3D was built.";
 #endif
 }
 
@@ -1266,7 +1266,7 @@ void MainWindow::surfaceMeshRemoveDuplicateAndFoldingFaces() {
     LOG(INFO) << "done. " << num_degenerate + num_overlapping << " faces deleted (" << num_degenerate
               << " degenerate, " << num_overlapping << " overlapping). " << w.time_string();
 #else
-    LOG(WARNING) << "This function requires CGAL but CGAL was not found.";
+    LOG(WARNING) << "This function requires CGAL but CGAL was not found when Easy3D was built.";
 #endif
 }
 
@@ -1282,12 +1282,25 @@ void MainWindow::surfaceMeshDetectSelfIntersections() {
 	LOG(INFO) << "detecting intersecting faces...";
 
     const auto& pairs = Surfacer::detect_self_intersections(mesh);
-    if (!pairs.empty())
-		LOG(INFO) << "done. " << pairs.size() << " pairs of faces intersect. " << w.time_string();
-    else
-		LOG(INFO) << "done. No intersecting faces detected. " << w.time_string();
+    if (pairs.empty())
+        LOG(INFO) << "done. No intersecting faces detected. " << w.time_string();
+    else {
+        auto select = mesh->get_face_property<bool>("f:select");
+        if (select)
+            select.vector().resize(mesh->n_faces(), false);
+        else
+            select = mesh->add_face_property<bool>("f:select", false);
+
+        for (const auto& pair : pairs) {
+            select[pair.first] = true;
+            select[pair.second] = true;
+        }
+
+        LOG(INFO) << "done. " << pairs.size() << " pairs of faces intersect (marked in face property 'f:select'). " << w.time_string();
+        updateRenderingPanel();
+    }
 #else
-    LOG(WARNING) << "This function requires CGAL but CGAL was not found.";
+    LOG(WARNING) << "This function requires CGAL but CGAL was not found when Easy3D was built.";
 #endif
  }
 
@@ -1312,7 +1325,7 @@ void MainWindow::surfaceMeshRemeshSelfIntersections() {
     else
 		LOG(INFO) << "done. No intersecting faces detected. " << w.time_string();
 #else
-    LOG(WARNING) << "This function requires CGAL but CGAL was not found.";
+    LOG(WARNING) << "This function requires CGAL but CGAL was not found when Easy3D was built.";
 #endif
 }
 
@@ -1335,7 +1348,7 @@ void MainWindow::surfaceMeshClip() {
     viewer_->update();
     updateUi();
 #else
-    LOG(WARNING) << "This function requires CGAL but CGAL was not found.";
+    LOG(WARNING) << "This function requires CGAL but CGAL was not found when Easy3D was built.";
 #endif
 }
 
@@ -1358,7 +1371,7 @@ void MainWindow::surfaceMeshSplit() {
     viewer_->update();
     updateUi();
 #else
-    LOG(WARNING) << "This function requires CGAL but CGAL was not found.";
+    LOG(WARNING) << "This function requires CGAL but CGAL was not found when Easy3D was built.";
 #endif
 }
 
@@ -1455,7 +1468,7 @@ void MainWindow::surfaceMeshSlice() {
 #endif
 
 #else
-    LOG(WARNING) << "This function requires CGAL but CGAL was not found.";
+    LOG(WARNING) << "This function requires CGAL but CGAL was not found when Easy3D was built.";
 #endif
 }
 
