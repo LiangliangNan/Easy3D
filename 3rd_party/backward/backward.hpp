@@ -3431,7 +3431,6 @@ public:
   }
 
   ResolvedTrace resolve(ResolvedTrace trace) {
-#if 0
     // parse:
     // <n>  <file>  <addr>  <mangled-name> + <offset>
     char *filename = _symbols[trace.idx];
@@ -3488,74 +3487,6 @@ public:
       trace.source.function = trace.object_function; // we cannot do better.
     }
     return trace;
-#else
-      // parse:
-      // <n>  <file>  <addr>  <mangled-name> + <offset>
-      char *filename = _symbols[trace.idx];
-
-      std::string id, obj_name;
-      std::istringstream stream(filename);
-      stream >> id >> obj_name;
-
-      trace.object_filename = obj_name;
-
-      // skip "<n>  "
-      while (*filename && *filename != ' ')
-          filename++;
-      while (*filename == ' ')
-          filename++;
-
-      // find start of <mangled-name> from end (<file> may contain a space)
-      char *p = filename + strlen(filename) - 1;
-      // skip to start of " + <offset>"
-      while (p > filename && *p != ' ')
-          p--;
-      while (p > filename && *p == ' ')
-          p--;
-      while (p > filename && *p != ' ')
-          p--;
-      while (p > filename && *p == ' ')
-          p--;
-      char *funcname_end = p + 1;
-
-      // skip to start of "<manged-name>"
-      while (p > filename && *p != ' ')
-          p--;
-      char *funcname = p + 1;
-
-      // skip to start of "  <addr>  "
-      while (p > filename && *p == ' ')
-          p--;
-      while (p > filename && *p != ' ')
-          p--;
-      while (p > filename && *p == ' ')
-          p--;
-
-      // skip "<file>", handling the case where it contains a
-      char *filename_end = p + 1;
-      if (p == filename) {
-          // something went wrong, give up
-          filename_end = filename + strlen(filename);
-          funcname = filename_end;
-      }
-
-      if (*funcname) { // if it's not end of string
-          *funcname_end = '\0';
-
-          std::string str(filename);
-          auto start = str.find('[');
-          auto end = str.find(']');
-          if (start != std::string::npos && end != std::string::npos)
-              trace.object_function = str.substr(start, end);
-          else
-              trace.object_function = this->demangle(funcname);
-
-          trace.object_function += " ";
-          trace.object_function += (funcname_end + 1);
-          trace.source.function = trace.object_function; // we cannot do better.
-      }
-      return trace;
-#endif
   }
 
 private:
@@ -4228,7 +4159,7 @@ public:
 #elif defined(__aarch64__)
     #if defined(__APPLE__)
       error_addr = reinterpret_cast<void *>(uctx->uc_mcontext->__ss.__pc);
-    #elif
+    #else
       error_addr = reinterpret_cast<void *>(uctx->uc_mcontext.pc);
     #endif
 #elif defined(__mips__)
