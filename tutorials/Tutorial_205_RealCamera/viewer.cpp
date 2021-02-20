@@ -148,19 +148,12 @@ bool RealCamera::KRT_to_camera(int view_index, int method, Camera* c) {
     float fy = cam.fy;
     float cx = cam.cx;
     float cy = cam.cy;
-    
+
+    // TODO: check why there is a small difference between these two methods?
     if (method == 1) {
-        const mat3 K(
-                fx, 0.0, cx,
-                0,  fy,   cy,
-                0,  0,    1);
-        const mat4 R = mat4::rotation(cam.rx, cam.ry, cam.rz);
-        const mat4 T = mat4::translation(cam.tx, cam.ty, cam.tz);
-        mat34 M(1.0);
-        M(1, 1) = -1;// invert the y axis
-        M(2, 2) = -1;// invert the z axis
-        const mat34& proj = K * M * T * R;
-        c->set_from_projection_matrix(proj);
+        vec3 r(cam.rx, cam.ry, cam.rz);
+        vec3 t(cam.tx, cam.ty, cam.tz);
+        c->set_from_calibration(fx, fy, 0.0f, cx, cy, r, t, true);
     }
     else if (method == 2) {
         const vec3 rot_vec(-cam.rx, -cam.ry, -cam.rz);
