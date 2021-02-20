@@ -996,9 +996,9 @@ namespace easy3d {
          * It took me quite a while to figure out this.
          * The OpengGL projection and modelview matrices can be computed as follows.
          * Particle Filtering with Rendered Models: A Two Pass Approach to Multi-object 3D Tracking with the GPU)
-         * http://cvrr.ucsd.edu/publications/2008/MurphyChutorian_Trivedi_CVGPU08.pdf
+         *      http://cvrr.ucsd.edu/publications/2008/MurphyChutorian_Trivedi_CVGPU08.pdf
          * More detailed explanation can be found here:
-         * http://ksimek.github.io/2013/06/03/calibrated_cameras_in_opengl/
+         *      http://ksimek.github.io/2013/06/03/calibrated_cameras_in_opengl/
          *-------------------------------------------------------------------*/
         //const mat4 proj(
         //                2.0 * fx / w,  -2.0 * skew / w,  1.0 - 2.0 * cx/w,          0.0,
