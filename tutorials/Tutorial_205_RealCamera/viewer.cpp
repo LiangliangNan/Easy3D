@@ -57,7 +57,7 @@ RealCamera::RealCamera(const std::string& title,
 
         // Read the camera parameters from the bundler file.
         if (read_bundler_file(bundler_file))
-            create_cameras_drawable();
+            update_cameras_drawable(2);
         else
             std::cerr << "Error: failed load bundler file." << std::endl;
 
@@ -83,9 +83,10 @@ bool RealCamera::key_press_event(int key, int modifiers) {
         if (!views_.empty()) {
             current_view_ = (current_view_ + 1) % views_.size();
             if (KRT_to_camera(current_view_, 2, camera())) {
+                update_cameras_drawable(2);
                 std::cout << "----- view " << current_view_ << " ------" << std::endl;
                 set_title("RealCamera: View_" + std::to_string(current_view_));
-                const CameraPara& c = views_[current_view_];
+                const CameraPara &c = views_[current_view_];
                 // make sure the aspect ratio (actual size does not matter)
                 resize(c.w * 0.3, c.h * 0.3);
             }
@@ -95,11 +96,11 @@ bool RealCamera::key_press_event(int key, int modifiers) {
     else if (key == GLFW_KEY_1) {
         if (!views_.empty()) {
             if (KRT_to_camera(current_view_, 1, camera())) {
+                update_cameras_drawable(1);
                 std::cout << "----- view " << current_view_ << " ------" << std::endl;
-                const CameraPara& c = views_[current_view_];
+                const CameraPara &c = views_[current_view_];
                 // make sure the aspect ratio (actual size does not matter)
                 resize(c.w * 0.3, c.h * 0.3);
-                update();
             }
         }
         return true;
@@ -107,11 +108,11 @@ bool RealCamera::key_press_event(int key, int modifiers) {
     else if (key == GLFW_KEY_2) {
         if (!views_.empty()) {
             if (KRT_to_camera(current_view_, 2, camera())) {
+                update_cameras_drawable(2);
                 std::cout << "----- view " << current_view_ << " ------" << std::endl;
-                const CameraPara& c = views_[current_view_];
+                const CameraPara &c = views_[current_view_];
                 // make sure the aspect ratio (actual size does not matter)
                 resize(c.w * 0.3, c.h * 0.3);
-                update();
             }
         }
         return true;
@@ -174,12 +175,15 @@ bool RealCamera::KRT_to_camera(int view_index, int method, Camera* c) {
 }
 
 
-void RealCamera::create_cameras_drawable()
-{    
+void RealCamera::update_cameras_drawable(int method)
+{
+    if (cameras_drwable_)
+        delete_drawable(cameras_drwable_);
+
     std::vector<vec3> vertices;
     for (std::size_t i = 0; i < views_.size(); ++i) {
         Camera c;
-        KRT_to_camera(i, 1, &c);
+        KRT_to_camera(i, method, &c);
         std::vector<vec3> points;
         opengl::prepare_camera(points, camera()->sceneRadius() * 0.03f, static_cast<float>(views_[i].h)/views_[i].w);
         const mat4& m = c.frame()->worldMatrix();
@@ -187,6 +191,7 @@ void RealCamera::create_cameras_drawable()
             vertices.push_back(m * p);
         }
     }
+
     cameras_drwable_ = new LinesDrawable("cameras");
     cameras_drwable_->update_vertex_buffer(vertices);
     cameras_drwable_->set_uniform_coloring(vec4(0, 0, 1, 1.0f));
