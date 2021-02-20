@@ -164,8 +164,8 @@ bool RealCamera::KRT_to_camera(int view_index, int method, Camera* c) {
         const vec3 pos(cam.tx, cam.ty, cam.tz);
         c->setPosition(-q.rotate(pos));
 
-        const float proj_5th = 2.0f * fy / cam.h;
-        c->setFieldOfView(2.0f * atan(1.0f / proj_5th));
+        const float proj11 = 2.0f * fy / cam.h; // proj[1][1]. http://ksimek.github.io/2013/06/18/calibrated-cameras-and-gluperspective/
+        c->setFieldOfView(2.0f * atan(1.0f / proj11));
     }
 
     load_image();
