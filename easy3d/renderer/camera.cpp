@@ -1062,7 +1062,7 @@ namespace easy3d {
 		// divide the first 3 coordinates by the 4th one.
 
 		// We derive the 4 dimensional vectorial product formula from the
-		// computation of a 4x4 determinant that is developped according to
+		// computation of a 4x4 determinant that is developed according to
 		// its 4th column. This implies some 3x3 determinants.
         const mat3 m1(
 			proj(0, 1), proj(0, 2), proj(0, 3),
