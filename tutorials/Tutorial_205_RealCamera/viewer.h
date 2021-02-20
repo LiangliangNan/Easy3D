@@ -35,6 +35,7 @@
 namespace easy3d {
     class Camera;
     class Texture;
+    class LinesDrawable;
 }
 
 class RealCamera : public easy3d::Viewer
@@ -75,6 +76,7 @@ private:
 
 private:
     easy3d::Texture* texture_;
+    easy3d::LinesDrawable* cameras_drwable_;
 };
 
 

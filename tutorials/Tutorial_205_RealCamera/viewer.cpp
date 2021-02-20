@@ -48,6 +48,7 @@ RealCamera::RealCamera(const std::string& title,
     : Viewer(title, 4, 3, 2, false, false)
     , current_view_(0)
     , texture_(nullptr)
+    , cameras_drwable_(nullptr)
 {
     // Read the point cloud
     if (add_model(cloud_file)) {
@@ -116,9 +117,8 @@ bool RealCamera::key_press_event(int key, int modifiers) {
         return true;
     }
     else if (key == GLFW_KEY_H) {
-        auto d = current_model()->renderer()->get_lines_drawable("cameras");
-        if (d) {
-            d->set_visible(!d->is_visible());
+        if (cameras_drwable_) {
+            cameras_drwable_->set_visible(!cameras_drwable_->is_visible());
             update();
         }
         return true;
@@ -187,11 +187,11 @@ void RealCamera::create_cameras_drawable()
             vertices.push_back(m * p);
         }
     }
-    LinesDrawable* cameras = new LinesDrawable("cameras");
-    cameras->update_vertex_buffer(vertices);
-    cameras->set_uniform_coloring(vec4(0, 0, 1, 1.0f));
-    cameras->set_line_width(2.0f);
-    add_drawable(cameras); // add the camera drawables to the viewer
+    cameras_drwable_ = new LinesDrawable("cameras");
+    cameras_drwable_->update_vertex_buffer(vertices);
+    cameras_drwable_->set_uniform_coloring(vec4(0, 0, 1, 1.0f));
+    cameras_drwable_->set_line_width(2.0f);
+    add_drawable(cameras_drwable_); // add the camera drawables to the viewer
 }
 
 
