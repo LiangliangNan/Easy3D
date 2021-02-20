@@ -155,27 +155,34 @@ namespace easy3d {
          *  \param rot: the rotation in angle-axis format, i.e., direction is the axis and length
          *              is the angle (in radian)
          *  \param t: the camera translation
+         *  \param convert: \c true to convert from vision convention to OpenGL convention (i.e., invert Y and Z axes).
          *
-         *  @attention This function assumes the camera parameters were obtained by standard camera calibration, in
+         *  \attention This function assumes the camera parameters were obtained by standard camera calibration, in
          *      which image coordinates are denoted in pixels, with the origin point (0, 0) corresponding to the
          *      top-left corner of the image. The X axis starts at the left edge of an image and goes towards the right
          *      edge. The Y axis starts at the top of the image towards image bottom. All image pixels have non-negative
          *      coordinates.
          */
-        void set_from_calibration(float fx, float fy, float skew, float cx, float cy, const vec3& rot, const vec3& t);
+        void set_from_calibration(float fx, float fy, float skew, float cx, float cy, const vec3& rot, const vec3& t,
+                                  bool convert = false);
         
         /** \brief Does the same thing as set_from_calibration().
-         *  \param proj The projection matrix computed as P = K * M * [R : T], where R is a
+         *  \param proj The projection matrix that can be computed as P = K * M * [R : T], where R is a
          *              3x3 matrix representing the camera rotation and T is a 3-vector
          *              describing the camera translation. Rotation first then translation!
-         *  \attention: M is a 3 by 4 matrix [1, 0, 0, 0; 0, -1, 0, 0; 0, 0, -1, 0] converting
-         *              from vision convention to OpenGL convention, i.e., inverting Y and Z axes.
          *
-         *  @attention This function assumes the camera parameters were obtained by standard camera calibration, in
+         *  \attention: M is a 3 by 4 identity matrix. In case you need to convert from the vision convention to
+         *          OpenGL convention (i.e., invert Y and Z axes), M(1, 1) and M(2, 2) must be set to -1, i.e.,
+         *              M(1, 1) = -1;   // invert the y axis
+         *              M(2, 2) = -1;   // invert the z axis
+         *
+         *  \attention This function assumes the camera parameters were obtained by standard camera calibration, in
          *      which image coordinates are denoted in pixels, with the origin point (0, 0) corresponding to the
          *      top-left corner of the image. The X axis starts at the left edge of an image and goes towards the right
          *      edge. The Y axis starts at the top of the image towards image bottom. All image pixels have non-negative
          *      coordinates.
+         *
+         *  \sa set_from_calibration.
          */
         void set_from_projection_matrix(const mat34& proj);
 

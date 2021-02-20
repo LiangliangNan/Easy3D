@@ -990,7 +990,7 @@ namespace easy3d {
 
 
     void Camera::set_from_calibration(float fx, float fy, float skew, float cx, float cy,
-                                      const vec3 &rot, const vec3 &t)
+                                      const vec3 &rot, const vec3 &t, bool convert)
     {
         /**-------------------------------------------------------------------
          * It took me quite a while to figure out this.
@@ -1015,7 +1015,13 @@ namespace easy3d {
         const mat4 R = mat4::rotation(rot);
         const mat4 T = mat4::translation(t);
 
-        const mat34& proj = K * mat34(1.0) * T * R;
+        mat34 M(1.0);
+        if (convert) {
+            M(1, 1) = -1;   // invert the y axis
+            M(2, 2) = -1;   // invert the z axis
+        }
+
+        const mat34& proj = K * M * T * R;
         set_from_projection_matrix(proj);
     }
 
@@ -1031,10 +1037,6 @@ namespace easy3d {
 
 	 Its three lines correspond to the homogeneous coordinates of the normals to the
 	 planes x=0, y=0 and z=0, defined in the Camera coordinate system.
-
-	 The elements of the matrix are ordered in line major order: you can call \c
-	 setFromProjectionMatrix(&(matrix[0][0])) if you defined your matrix as a \c
-	 double \c matrix[3][4].
 
 	 \attention Passing the result of getProjectionMatrix() or getModelViewMatrix()
 	 to this method is not possible (purposefully incompatible matrix dimensions).
