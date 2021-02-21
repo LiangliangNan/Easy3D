@@ -1003,12 +1003,16 @@ namespace easy3d {
         setPosition(-q.rotate(pos));
 
         // http://ksimek.github.io/2013/06/18/calibrated-cameras-and-gluperspective/
-        // https://github.com/opencv/opencv/blob/82f8176b0634c5d744d1a45246244291d895b2d1/modules/c
+        // https://github.com/opencv/opencv/blob/82f8176b0634c5d744d1a45246244291d895b2d1/modules/calib3d/src/calibration.cpp#L1820
         const float proj11 = 2.0f * fy / img_height; // proj[1][1]
-        setFieldOfView(2.0f * atan(1.0f / proj11));
+        const float fov = 2.0f * std::atan(1.0f / proj11);
+        setFieldOfView(fov);
+
+        // The following gives an fov value very close to the above. Is this also correct? I don't know.
+        // const float fov2 = atan((img_height - cy) / fy) + atan(cy / fy);
 
 #else   // This is not accurate.
-        // It assumes image_height = (2.0 * cy). However in practice, cy may not be exactly at the image center.
+        // Because it assumes image_height = (2.0 * cy). However in practice, cy may not be exactly at the image center.
 
         /**-------------------------------------------------------------------
          * It took me quite a while to figure out this.
