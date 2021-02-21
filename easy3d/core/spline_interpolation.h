@@ -196,7 +196,7 @@ namespace easy3d {
         // TODO: maybe sort x and y, rather than returning an error
         for (int i = 0; i < n - 1; i++) {
             if (x_[i] >= x_[i + 1]) {
-                LOG_N_TIMES(3, ERROR) << "x has to be monotonously increasing. " << COUNTER;;
+                LOG_N_TIMES(3, ERROR) << "x has to be monotonously increasing (x[" << i << "]=" << x_[i] << ", x[" << i + 1 << "]=" << x_[i + 1] << "). " << COUNTER;;
                 return;
             }
         }
