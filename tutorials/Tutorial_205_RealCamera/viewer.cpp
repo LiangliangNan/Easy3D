@@ -57,7 +57,7 @@ RealCamera::RealCamera(const std::string& title,
 
         // Read the camera parameters from the bundler file.
         if (read_bundler_file(bundler_file))
-            update_cameras_drawable(2);
+            update_cameras_drawable();
         else
             std::cerr << "Error: failed load bundler file." << std::endl;
 
@@ -82,33 +82,10 @@ bool RealCamera::key_press_event(int key, int modifiers) {
     if (key == GLFW_KEY_SPACE) {
         if (!views_.empty()) {
             current_view_ = (current_view_ + 1) % views_.size();
-            if (KRT_to_camera(current_view_, 2, camera())) {
-                update_cameras_drawable(2);
+            if (KRT_to_camera(current_view_, camera())) {
+                update_cameras_drawable();
                 std::cout << "----- view " << current_view_ << " ------" << std::endl;
                 set_title("RealCamera: View_" + std::to_string(current_view_));
-                const CameraPara &c = views_[current_view_];
-                // make sure the aspect ratio (actual size does not matter)
-                resize(c.w * 0.3, c.h * 0.3);
-            }
-        }
-        return true;
-    }
-    else if (key == GLFW_KEY_1) {
-        if (!views_.empty()) {
-            if (KRT_to_camera(current_view_, 1, camera())) {
-                update_cameras_drawable(1);
-                std::cout << "----- view " << current_view_ << " ------" << std::endl;
-                const CameraPara &c = views_[current_view_];
-                // make sure the aspect ratio (actual size does not matter)
-                resize(c.w * 0.3, c.h * 0.3);
-            }
-        }
-        return true;
-    } else if (key == GLFW_KEY_2) {
-        if (!views_.empty()) {
-            if (KRT_to_camera(current_view_, 2, camera())) {
-                update_cameras_drawable(2);
-                std::cout << "----- view " << current_view_ << " ------" << std::endl;
                 const CameraPara &c = views_[current_view_];
                 // make sure the aspect ratio (actual size does not matter)
                 resize(c.w * 0.3, c.h * 0.3);
@@ -137,38 +114,19 @@ void RealCamera::load_image() {
 }
 
 
-bool RealCamera::KRT_to_camera(int view_index, int method, Camera* c) {
+bool RealCamera::KRT_to_camera(int view_index, Camera* c) {
     if (view_index < 0 || view_index >= views_.size()) {
         std::cerr << "Error: invalid view index (" << view_index << ")" << std::endl;
         return false;
     }
     
     const CameraPara& cam = views_[view_index];
-    float fx = cam.fx;
-    float fy = cam.fy;
-    float cx = cam.cx;
-    float cy = cam.cy;
-
-    // TODO: check why there is a small difference between these two methods?
-    if (method == 1) {
-        vec3 r(cam.rx, cam.ry, cam.rz);
-        vec3 t(cam.tx, cam.ty, cam.tz);
-        c->set_from_calibration(fx, fy, 0.0f, cx, cy, r, t, true);
-    }
-    else if (method == 2) {
-        const vec3 rot_vec(-cam.rx, -cam.ry, -cam.rz);
-        const float angle = rot_vec.length();
-        const quat q(rot_vec / angle, angle);
-        c->setOrientation(q);
-
-        const vec3 pos(cam.tx, cam.ty, cam.tz);
-        c->setPosition(-q.rotate(pos));
-
-        // http://ksimek.github.io/2013/06/18/calibrated-cameras-and-gluperspective/
-        // https://github.com/opencv/opencv/blob/82f8176b0634c5d744d1a45246244291d895b2d1/modules/c
-        const float proj11 = 2.0f * fy / cam.h; // proj[1][1]
-        c->setFieldOfView(2.0f * atan(1.0f / proj11));
-    }
+    c->set_from_calibration(
+            cam.fx, cam.fy, 0.0f,
+            cam.cx, cam.cy,
+            vec3(cam.rx, cam.ry, cam.rz),
+            vec3(cam.tx, cam.ty, cam.tz),
+            cam.w, cam.h, true);
 
     load_image();
 
@@ -176,7 +134,7 @@ bool RealCamera::KRT_to_camera(int view_index, int method, Camera* c) {
 }
 
 
-void RealCamera::update_cameras_drawable(int method)
+void RealCamera::update_cameras_drawable()
 {
     if (!cameras_drwable_) {
         cameras_drwable_ = new LinesDrawable("cameras");
@@ -188,7 +146,7 @@ void RealCamera::update_cameras_drawable(int method)
     std::vector<vec3> vertices;
     for (std::size_t i = 0; i < views_.size(); ++i) {
         Camera c;
-        KRT_to_camera(i, method, &c);
+        KRT_to_camera(i, &c);
         std::vector<vec3> points;
         opengl::prepare_camera(points, c.sceneRadius() * 0.03f, c.fieldOfView(), static_cast<float>(views_[i].h)/views_[i].w);
         const mat4& m = c.frame()->worldMatrix();

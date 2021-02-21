@@ -66,9 +66,9 @@ private:
     bool read_bundler_file(const std::string& file_name);
     
     // K [R T] -> easy3d camera representation
-    bool KRT_to_camera(int view_index, int method, easy3d::Camera* c);
+    bool KRT_to_camera(int view_index, easy3d::Camera* c);
     
-    void update_cameras_drawable(int method);
+    void update_cameras_drawable();
 
     void draw_image() const;
 
