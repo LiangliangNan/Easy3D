@@ -104,8 +104,7 @@ bool RealCamera::key_press_event(int key, int modifiers) {
             }
         }
         return true;
-    }
-    else if (key == GLFW_KEY_2) {
+    } else if (key == GLFW_KEY_2) {
         if (!views_.empty()) {
             if (KRT_to_camera(current_view_, 2, camera())) {
                 update_cameras_drawable(2);
@@ -177,26 +176,24 @@ bool RealCamera::KRT_to_camera(int view_index, int method, Camera* c) {
 
 void RealCamera::update_cameras_drawable(int method)
 {
-    if (cameras_drwable_)
-        delete_drawable(cameras_drwable_);
+    if (!cameras_drwable_) {
+        cameras_drwable_ = new LinesDrawable("cameras");
+        add_drawable(cameras_drwable_); // add the camera drawables to the viewer
+        cameras_drwable_->set_uniform_coloring(vec4(0, 0, 1, 1.0f));
+        cameras_drwable_->set_line_width(2.0f);
+    }
 
     std::vector<vec3> vertices;
     for (std::size_t i = 0; i < views_.size(); ++i) {
         Camera c;
         KRT_to_camera(i, method, &c);
         std::vector<vec3> points;
-        opengl::prepare_camera(points, camera()->sceneRadius() * 0.03f, static_cast<float>(views_[i].h)/views_[i].w);
+        opengl::prepare_camera(points, c.sceneRadius() * 0.03f, c.fieldOfView(), static_cast<float>(views_[i].h)/views_[i].w);
         const mat4& m = c.frame()->worldMatrix();
-        for (auto& p : points) {
+        for (auto& p : points)
             vertices.push_back(m * p);
-        }
     }
-
-    cameras_drwable_ = new LinesDrawable("cameras");
     cameras_drwable_->update_vertex_buffer(vertices);
-    cameras_drwable_->set_uniform_coloring(vec4(0, 0, 1, 1.0f));
-    cameras_drwable_->set_line_width(2.0f);
-    add_drawable(cameras_drwable_); // add the camera drawables to the viewer
 }
 
 
