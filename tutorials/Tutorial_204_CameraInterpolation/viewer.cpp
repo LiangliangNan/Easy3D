@@ -60,12 +60,15 @@ bool CameraIntrepolation::key_press_event(int key, int modifiers)
 {
     if (key == GLFW_KEY_K && modifiers == 0) {
         easy3d::Frame *frame = camera()->frame();
-        interpolator_->add_keyframe(*frame);
-        float dist = distance(camera_->sceneCenter(), frame->position());
-        if (dist > camera_->sceneRadius())
-            camera_->setSceneRadius(dist);
-        std::cout << "Key frame added" << std::endl;
-        return true;
+        if (interpolator_->add_keyframe(*frame)) {
+            float dist = distance(camera_->sceneCenter(), frame->position());
+            if (dist > camera_->sceneRadius())
+                camera_->setSceneRadius(dist);
+            std::cout << "Key frame added" << std::endl;
+            return true;
+        }
+        else
+            return false;
     }
     else if (key == GLFW_KEY_SPACE && modifiers == 0) {
         if (interpolator_->is_interpolation_started()) {

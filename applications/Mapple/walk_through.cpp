@@ -49,15 +49,15 @@ WalkThrough::~WalkThrough() {
 
 
 void WalkThrough::add_keyframe(const Frame &frame) {
-    kfi_->add_keyframe(frame);
+    if (kfi_->add_keyframe(frame)) {
+        // update scene radius to make sure the path is within the view frustum
+        float dist = distance(camera_->sceneCenter(), frame.position());
+        if (dist > camera_->sceneRadius())
+            camera_->setSceneRadius(dist);
 
-    // update scene radius to make sure the path is within the view frustum
-    float dist = distance(camera_->sceneCenter(), frame.position());
-    if (dist > camera_->sceneRadius())
-        camera_->setSceneRadius(dist);
-
-    LOG(INFO) << "a key frame added to camera path";
-    path_modified.send();
+        LOG(INFO) << "a key frame added to camera path";
+        path_modified.send();
+    }
 }
 
 

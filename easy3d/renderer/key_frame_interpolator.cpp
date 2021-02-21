@@ -69,7 +69,7 @@ namespace easy3d {
     }
 
 
-    void KeyFrameInterpolator::add_keyframe(const Frame &frame) {
+    bool KeyFrameInterpolator::add_keyframe(const Frame &frame) {
         // interval of each consecutive keyframes is 1.0 sec.
         float time = 0.0f;
         if (keyframes_.empty())
@@ -77,20 +77,32 @@ namespace easy3d {
         else
             time = keyframes_.back().time() + 1.0f;
 
-        add_keyframe(frame, time);
+        return add_keyframe(frame, time);
     }
 
 
-    void KeyFrameInterpolator::add_keyframe(const Frame &frame, float time) {
-        if ((!keyframes_.empty()) && (keyframes_.back().time() >= time))
+    bool KeyFrameInterpolator::add_keyframe(const Frame &frame, float time) {
+        if ((!keyframes_.empty()) && (keyframes_.back().time() >= time)) {
             LOG(ERROR) << "time is not monotone";
-        else {
-            keyframes_.emplace_back(Keyframe(frame, time));
+            return false;
         }
+        else {
+            // detect and eliminate duplicated camera positions
+            if (!keyframes_.empty()) {
+                const float sd = distance2(keyframes_.back().position(), frame.position());
+                if (sd < epsilon_sqr<float>()) {
+                    LOG(WARNING) << "could not add keyframe: camera position too close to the previous one (distance: "
+                                 << std::sqrt(sd) << ")";
+                    return false;
+                }
+            }
 
-        pathIsValid_ = false;
-        last_stopped_index_ = 0; // may not be valid any more
-        stop_interpolation();
+            keyframes_.emplace_back(Keyframe(frame, time));
+            pathIsValid_ = false;
+            last_stopped_index_ = 0; // may not be valid any more
+            stop_interpolation();
+            return true;
+        }
     }
 
 

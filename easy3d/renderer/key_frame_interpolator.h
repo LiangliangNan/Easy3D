@@ -118,15 +118,17 @@ namespace easy3d {
          * \brief Appends a new keyframe to the path.
          * \details Same as add_keyframe(const Frame&, float), except that the keyframe_time() is automatically set
          *      to previous keyframe_time() plus one second (or 0.0 if there is no previous keyframe).
+         * \return \c true if the keyframe has been successfully added.
          */
-        void add_keyframe(const Frame& frame);
+        bool add_keyframe(const Frame& frame);
 
         /**
          * \brief Appends a new keyframe to the path, with its associated \p time (in seconds).
          * \details The path will use the current \p frame state.
+         * \return \c true if the keyframe has been successfully added.
          * \attention The keyframe_time() have to be monotonously increasing over keyframes.
          */
-        void add_keyframe(const Frame& frame, float time);
+        bool add_keyframe(const Frame& frame, float time);
 
         /**
          * \brief Removes the lastly added keyframe from the path.
