@@ -143,10 +143,23 @@ namespace easy3d {
 
 
     template<typename Point_t>
-    void SplineCurveInterpolation<Point_t>::set_points(const std::vector<FT> &parameters,
-                                                       const std::vector<Point_t> &points, bool cubic_spline) {
-        if (parameters.empty() || parameters.size() != points.size())
+    void SplineCurveInterpolation<Point_t>::set_points(const std::vector<FT> &input_parameters,
+                                                       const std::vector<Point_t> &input_points, bool cubic_spline) {
+        if (input_parameters.empty() || input_parameters.size() != input_points.size())
             return;
+
+        // filter out non-monotone data
+        std::vector<FT> parameters;
+        std::vector<Point_t> points;
+        for (std::size_t i=0; i<input_parameters.size(); ++i) {
+            const FT para = input_parameters[i];
+            if (i == 0 || para > parameters.back()) {
+                parameters.push_back(para);
+                points.push_back(input_points[i]);
+            }
+        }
+        const int diff = input_points.size() - points.size();
+        LOG_IF(diff > 0, WARNING) << diff << " data points discarded because the input has to be monotonously increasing";
 
         dim_ = points[0].dimension();
         largest_t_ = parameters.back();
