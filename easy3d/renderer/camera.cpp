@@ -990,8 +990,26 @@ namespace easy3d {
 
 
     void Camera::set_from_calibration(float fx, float fy, float skew, float cx, float cy,
-                                      const vec3 &rot, const vec3 &t, bool convert)
+                                      const vec3 &rot, const vec3 &t, int img_width, int img_height, bool convert)
     {
+#if 1 // this is more accurate (it uses the image size).
+
+        const vec3 rot_vec = -rot;
+        const float angle = rot_vec.length();
+        const quat q(rot_vec / angle, angle);
+        setOrientation(q);
+
+        const vec3 pos = t;
+        setPosition(-q.rotate(pos));
+
+        // http://ksimek.github.io/2013/06/18/calibrated-cameras-and-gluperspective/
+        // https://github.com/opencv/opencv/blob/82f8176b0634c5d744d1a45246244291d895b2d1/modules/c
+        const float proj11 = 2.0f * fy / img_height; // proj[1][1]
+        setFieldOfView(2.0f * atan(1.0f / proj11));
+
+#else   // This is not accurate.
+        // It assumes image_height = (2.0 * cy). However in practice, cy may not be exactly at the image center.
+
         /**-------------------------------------------------------------------
          * It took me quite a while to figure out this.
          * The OpengGL projection and modelview matrices can be computed as follows.
@@ -1023,6 +1041,7 @@ namespace easy3d {
 
         const mat34& proj = K * M * T * R;
         set_from_projection_matrix(proj);
+#endif
     }
 
 
@@ -1098,26 +1117,29 @@ namespace easy3d {
 
 		// X-axis is almost like line_0 but should be orthogonal to the Z axis.
 		vec3 column_0 = cross(cross(column_2, line_0), column_2);
-		column_0 = normalize(column_0);
+		column_0.normalize();
 
 		// Y-axis is almost like line_1 but should be orthogonal to the Z axis.
 		// Moreover line_1 is downward oriented as the screen CS.
 		vec3 column_1 = -cross(cross(column_2, line_1), column_2);
-		column_1 = normalize(column_1);
+		column_1.normalize();
 
         const mat3 rot(column_0, column_1, column_2);
 
-		// We compute the field of view
+		// We compute the field of view.
+        // The fov computation in this function assumes that image_height = (2.0 * cy). So it is equivalent to
+        //      const float proj11 = 2.0f * fy / (2.0f * cy);
+        //      const float fov = 2.0f * atan(1.0f / proj11);
+        // However in practice, cy may not be exactly at the image center. To get an accurate fov, the actual image
+        // height should be used.
+        // TODO: add image size as argument to this function
 
-		// line_1^column_0 -> vector of intersection line between
-		// y_screen=0 and x_camera=0 plane.
-		// column_2*(...)  -> cos of the angle between Z vector et y_screen=0 plane
+		// cross(line_1, column_0) -> vector of intersection line between y_screen=0 and x_camera=0 plane.
+		// column_2 * (...)  -> cos of the angle between Z vector and y_screen=0 plane
 		// * 2 -> field of view = 2 * half angle
-
-		// We need some intermediate values.
-        vec3 dummy = cross(line_1, column_0);
-		dummy = normalize(dummy);
-		const float fov = std::acos(dot(column_2, dummy)) * 2.0f;
+        vec3 intersection = cross(line_1, column_0); // vector of intersection line between y_screen=0 and x_camera=0 plane.
+        intersection.normalize();
+		const float fov = std::acos(dot(column_2, intersection)) * 2.0f;
 
 		// We set the camera.
 		quat q;

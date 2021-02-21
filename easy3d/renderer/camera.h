@@ -164,7 +164,7 @@ namespace easy3d {
          *      coordinates.
          */
         void set_from_calibration(float fx, float fy, float skew, float cx, float cy, const vec3& rot, const vec3& t,
-                                  bool convert = false);
+                                  int img_width, int img_height, bool convert = false);
         
         /** \brief Does the same thing as set_from_calibration().
          *  \param proj The projection matrix that can be computed as P = K * M * [R : T], where R is a
