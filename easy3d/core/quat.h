@@ -120,6 +120,12 @@ namespace easy3d {
             set_axis_angle(axis, angle);
         }
 
+        /** \brief Constructor from rotation matrix. See also set_from_rotation_matrix(). */
+        Quat(const Mat3<FT>& m)
+        {
+            set_from_rotation_matrix(m);
+        }
+
         /**
          * \brief Constructs a quaternion that will rotate from the \p from direction to the \p to direction.
          * \note This rotation is not uniquely defined. The selected axis is usually orthogonal to \p from and \p to,
