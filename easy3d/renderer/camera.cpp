@@ -994,13 +994,13 @@ namespace easy3d {
     {
 #if 1 // this is more accurate (it uses the image size).
 
-        const vec3 rot_vec = -rot;
+        const vec3 rot_vec = -rot; // the inverse rotation
         const float angle = rot_vec.length();
         const quat q(rot_vec / angle, angle);
         setOrientation(q);
 
         const vec3 pos = t;
-        setPosition(-q.rotate(pos));
+        setPosition(-q.rotate(pos));    // camera position: -inverse(rot) * t
 
         // http://ksimek.github.io/2013/06/18/calibrated-cameras-and-gluperspective/
         // https://github.com/opencv/opencv/blob/82f8176b0634c5d744d1a45246244291d895b2d1/modules/calib3d/src/calibration.cpp#L1820

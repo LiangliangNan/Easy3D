@@ -152,9 +152,12 @@ namespace easy3d {
          *  \param fx and fy: the focal length
          *  \param cx and cy: the principal point
          *  \param skew: distortion
-         *  \param rot: the rotation in angle-axis format, i.e., direction is the axis and length
-         *              is the angle (in radian)
-         *  \param t: the camera translation
+         *  \param rot: the rotation in angle-axis format (i.e., direction is axis and length is angle in radian).
+         *      It denotes the coordinate system transformation from 3D world coordinates to 3D camera coordinates.
+         *  \param t: the camera translation. It is the position of the origin of the world coordinate system expressed
+         *      in the camera coordinate system. \note t is often mistakenly considered the position of the camera. The
+         *      position C of the camera expressed in world coordinates is C = -inverse(rot) * t = -transpose(rot) * t.
+         *
          *  \param convert: \c true to convert from vision convention to OpenGL convention (i.e., invert Y and Z axes).
          *
          *  \attention This function assumes the camera parameters were obtained by standard camera calibration, in
