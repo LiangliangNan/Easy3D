@@ -602,14 +602,17 @@ void WidgetModelList::modelItemChanged(QTreeWidgetItem *current, int column) {
         const std::string prev_name = model->name();
         const std::string path = file_system::parent_directory(prev_name);
         const std::string ext = file_system::extension(prev_name);
+        std::string new_name;
         if (path.empty() || ext.empty())
-            model->set_name(text);
+            new_name = text;
         else
-            model->set_name(path + "/" + text + "." + ext);
+            new_name = path + "/" + text + "." + ext;
 
-        mainWindow_->updateWindowTitle();
-
-        LOG(INFO) << "model name '" << prev_name << "' changed to '" << model->name() << "'";
+        if (new_name != prev_name) {
+            model->set_name(new_name);
+            LOG(INFO) << "model name '" << prev_name << "' changed to '" << model->name() << "'";
+            mainWindow_->updateWindowTitle();
+        }
     }
 }
 
