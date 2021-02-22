@@ -596,6 +596,7 @@ namespace easy3d {
     {
         auto vnormal = vertex_property<vec3>("v:normal");
 
+        // always re-compute face normals
         update_face_normals();
         auto fnormal = get_face_property<vec3>("f:normal");
 
