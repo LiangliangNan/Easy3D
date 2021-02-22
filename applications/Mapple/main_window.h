@@ -111,6 +111,7 @@ public slots:
     void manipulateProperties();
     void computeHeightField();
     void computeSurfaceMeshCurvatures();
+    void reportTopologyStatistics();
 
     // edit
     void addGaussianNoise();
@@ -128,7 +129,6 @@ public slots:
     void pointCloudDelaunayTriangulation3D();
 
     // surface mesh
-    void surfaceMeshReportTopologyStatistics();
     void surfaceMeshExtractConnectedComponents();
     void surfaceMeshPlanarPartition();
     void surfaceMeshPolygonization();

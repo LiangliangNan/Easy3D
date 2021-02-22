@@ -914,6 +914,7 @@ void MainWindow::createActionsForPropertyMenu() {
     connect(ui->actionManipulateProperties, SIGNAL(triggered()), this, SLOT(manipulateProperties()));
     connect(ui->actionComputeHeightField, SIGNAL(triggered()), this, SLOT(computeHeightField()));
     connect(ui->actionComputeSurfaceMeshCurvatures, SIGNAL(triggered()), this, SLOT(computeSurfaceMeshCurvatures()));
+    connect(ui->actionTopologyStatistics, SIGNAL(triggered()), this, SLOT(reportTopologyStatistics()));
 }
 
 
@@ -958,7 +959,6 @@ void MainWindow::createActionsForPointCloudMenu() {
 
 
 void MainWindow::createActionsForSurfaceMeshMenu() {
-    connect(ui->actionTopologyStatistics, SIGNAL(triggered()), this, SLOT(surfaceMeshReportTopologyStatistics()));
     connect(ui->actionExtractConnectedComponents, SIGNAL(triggered()), this, SLOT(surfaceMeshExtractConnectedComponents()));
     connect(ui->actionPlanarPartition, SIGNAL(triggered()), this, SLOT(surfaceMeshPlanarPartition()));
     connect(ui->actionPolygonization, SIGNAL(triggered()), this, SLOT(surfaceMeshPolygonization()));
@@ -1033,56 +1033,70 @@ void MainWindow::operationModeChanged(QAction* act) {
 }
 
 
-void MainWindow::surfaceMeshReportTopologyStatistics() {
+void MainWindow::reportTopologyStatistics() {
     SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer()->currentModel());
-    if (!mesh)
-        return;
+    if (mesh) {
+        std::stringstream stream;
 
-    std::stringstream stream;
+        const auto &components = SurfaceMeshComponent::extract(mesh);
+        stream << "model has " << components.size() << " connected components";
 
-    const auto &components = SurfaceMeshComponent::extract(mesh);
-    stream << "model has " << components.size() << " connected components";
-
-    // count isolated vertices
-    std::size_t count = 0;
-    for (auto v : mesh->vertices()) {
-        if (mesh->is_isolated(v))
-            ++count;
-    }
-    if (count > 0)
-        stream << "and " << count << " isolated vertices";
-    stream << std::endl;
-
-    const std::size_t num = 10;
-    if (components.size() > num)
-        stream << "    topology of the first " << num << " components:" << std::endl;
-
-    for (std::size_t i = 0; i < std::min(components.size(), num); ++i) {
-        const SurfaceMeshComponent& comp = components[i];
-        SurfaceMeshTopology topo(&comp);
-        std::string type = "unknown";
-        if (topo.is_sphere())
-            type = "sphere";
-        else if (topo.is_disc())
-            type = "disc";
-        else if (topo.is_cylinder())
-            type = "cylinder";
-        else if (topo.is_torus())
-            type = "torus";
-        else if (topo.is_closed())
-            type = "unknown closed";
-
-        stream << "        " << i << ": " << type
-                  << ", F = " << comp.n_faces() << ", V = " << comp.n_vertices() << ", E = " << comp.n_edges()
-                  << ", B = " << topo.number_of_borders();
-        if (topo.number_of_borders() == 1)
-            stream << ", border size = " << topo.largest_border_size();
-        else if (topo.number_of_borders() > 1)
-            stream << ", largest border size = " << topo.largest_border_size();
+        // count isolated vertices
+        std::size_t count = 0;
+        for (auto v : mesh->vertices()) {
+            if (mesh->is_isolated(v))
+                ++count;
+        }
+        if (count > 0)
+            stream << "and " << count << " isolated vertices";
         stream << std::endl;
+
+        const std::size_t num = 10;
+        if (components.size() > num)
+            stream << "    topology of the first " << num << " components:" << std::endl;
+
+        for (std::size_t i = 0; i < std::min(components.size(), num); ++i) {
+            const SurfaceMeshComponent &comp = components[i];
+            SurfaceMeshTopology topo(&comp);
+            std::string type = "unknown";
+            if (topo.is_sphere())
+                type = "sphere";
+            else if (topo.is_disc())
+                type = "disc";
+            else if (topo.is_cylinder())
+                type = "cylinder";
+            else if (topo.is_torus())
+                type = "torus";
+            else if (topo.is_closed())
+                type = "unknown closed";
+
+            stream << "        " << i << ": " << type
+                   << ", F = " << comp.n_faces() << ", V = " << comp.n_vertices() << ", E = " << comp.n_edges()
+                   << ", B = " << topo.number_of_borders();
+            if (topo.number_of_borders() == 1)
+                stream << ", border size = " << topo.largest_border_size();
+            else if (topo.number_of_borders() > 1)
+                stream << ", largest border size = " << topo.largest_border_size();
+            stream << std::endl;
+        }
+
+        LOG(INFO) << stream.str();
     }
 
-    LOG(INFO) << stream.str();
+    Graph *graph = dynamic_cast<Graph *>(viewer()->currentModel());
+    if (graph) {
+        std::stringstream stream;
+        stream << "graph has " << graph->n_vertices() << " vertices and " << graph->n_edges() << " edges" << std::endl;
+
+        std::map<int, int> count; // key (i.e., first element) is the valence
+        for (auto v : graph->vertices())
+            ++count[graph->valence(v)];
+
+        for (const auto& elem : count)
+            stream << "    number of degree " << elem.first << " vertices: " << elem.second << std::endl;
+
+        LOG(INFO) << stream.str();
+    }
 }
 
 

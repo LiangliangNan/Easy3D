@@ -111,6 +111,8 @@
     <addaction name="separator"/>
     <addaction name="actionComputeHeightField"/>
     <addaction name="actionComputeSurfaceMeshCurvatures"/>
+    <addaction name="separator"/>
+    <addaction name="actionTopologyStatistics"/>
    </widget>
    <widget class="QMenu" name="menuSurfaceMesh">
     <property name="title">
@@ -142,8 +144,6 @@
      <addaction name="actionSurfaceMeshSplit"/>
      <addaction name="actionSurfaceMeshSlice"/>
     </widget>
-    <addaction name="actionTopologyStatistics"/>
-    <addaction name="separator"/>
     <addaction name="actionExtractConnectedComponents"/>
     <addaction name="separator"/>
     <addaction name="actionPlanarPartition"/>
