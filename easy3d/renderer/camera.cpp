@@ -997,7 +997,14 @@ namespace easy3d {
         const vec3 rot_vec = -rot; // the inverse rotation
         const float angle = rot_vec.length();
         const quat q(rot_vec / angle, angle);
-        setOrientation(q);
+        if (convert)
+            setOrientation(q);  // this already includes the conversion
+        else {
+            mat3 flip(1.0f);
+            flip(1, 1) = -1;   // invert the y axis
+            flip(2, 2) = -1;   // invert the z axis
+            setOrientation(q * quat(flip));
+        }
 
         const vec3 pos = t;
         setPosition(-q.rotate(pos));    // camera position: -inverse(rot) * t
