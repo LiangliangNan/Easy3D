@@ -1184,8 +1184,9 @@ namespace easy3d {
             return nn;
         };
 
-        if (!fnormal_)
-            update_face_normals();
+        // always re-compute face normals
+        update_face_normals();
+
         for (vit=vertices_begin(); vit!=vend; ++vit)
             vnormal_[*vit] = angle_weighted_face_normals(*vit);
 #endif
