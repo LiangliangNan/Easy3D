@@ -990,13 +990,11 @@ namespace easy3d {
 
 
     void Camera::set_from_calibration(float fx, float fy, float skew, float cx, float cy,
-                                      const vec3 &rot, const vec3 &t, int img_width, int img_height, bool convert)
+                                      const mat3 &rot, const vec3 &t, int img_width, int img_height, bool convert)
     {
 #if 1 // this is more accurate (it uses the image size).
 
-        const vec3 rot_vec = -rot; // the inverse rotation
-        const float angle = rot_vec.length();
-        const quat q(rot_vec / angle, angle);
+        const quat q(inverse(rot));  // the inverse rotation represented by a quaternion
         if (convert)
             setOrientation(q);  // this already includes the conversion
         else {
@@ -1041,7 +1039,7 @@ namespace easy3d {
                     fx, skew, cx,
                     0,  fy,   cy,
                     0,  0,    1);
-        const mat4 R = mat4::rotation(rot);
+        const mat4 R(rot);
         const mat4 T = mat4::translation(t);
 
         mat34 M(1.0);

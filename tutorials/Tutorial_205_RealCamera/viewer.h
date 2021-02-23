@@ -57,8 +57,8 @@ private:
         int w, h;           // image size
         float fx, fy;       // focal length
         float cx, cy;       // principal point
-        float rx, ry, rz;   // rotation in angle-axis format
-        float tx, ty, tz;   // the translation
+        easy3d::mat3 R;     // rotation
+        easy3d::vec3 t;     // the translation
     };
     std::vector<CameraPara> views_;
     int current_view_;

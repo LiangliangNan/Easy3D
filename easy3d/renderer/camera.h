@@ -146,45 +146,42 @@ namespace easy3d {
          * Only the orientation() and position() of the Camera are modified.
          */
 		void set_from_model_view_matrix(const mat4& mv);
-        
-        /** \brief Defines the position(), orientation() and fieldOfView() of the camera from calibrated
-         *  camera intrinsic and extrinsic parameters.
+
+        /** \brief Defines the position(), orientation() and fieldOfView() of the camera from calibrated camera
+         *      intrinsic and extrinsic parameters. This is an overload of set_from_calibration().
          *  \param fx and fy: the focal length
          *  \param cx and cy: the principal point
          *  \param skew: distortion
-         *  \param rot: the rotation in angle-axis format (i.e., direction is axis and length is angle in radian).
-         *      It denotes the coordinate system transformation from 3D world coordinates to 3D camera coordinates.
+         *  \param rot: the rotation matrix. It denotes the coordinate system transformation from 3D world coordinates
+         *      to 3D camera coordinates.
          *  \param t: the camera translation. It is the position of the origin of the world coordinate system expressed
          *      in the camera coordinate system. \note t is often mistakenly considered the position of the camera. The
          *      position C of the camera expressed in world coordinates is C = -inverse(rot) * t = -transpose(rot) * t.
-         *
          *  \param convert: \c true to convert from vision convention to OpenGL convention (i.e., invert Y and Z axes).
-         *
          *  \attention This function assumes the camera parameters were obtained by standard camera calibration, in
          *      which image coordinates are denoted in pixels, with the origin point (0, 0) corresponding to the
          *      top-left corner of the image. The X axis starts at the left edge of an image and goes towards the right
          *      edge. The Y axis starts at the top of the image towards image bottom. All image pixels have non-negative
          *      coordinates.
+         *  \sa set_from_calibration.
          */
-        void set_from_calibration(float fx, float fy, float skew, float cx, float cy, const vec3& rot, const vec3& t,
+        void set_from_calibration(float fx, float fy, float skew, float cx, float cy, const mat3& rot, const vec3& t,
                                   int img_width, int img_height, bool convert = false);
-        
-        /** \brief Overload of set_from_calibration().
+
+        /** \brief Defines the position(), orientation() and fieldOfView() of the camera from calibrated camera
+         *      intrinsic and extrinsic parameters. This is an overload of set_from_calibration().
          *  \param proj The projection matrix that can be computed as P = K * M * [R : T], where R is a
          *              3x3 matrix representing the camera rotation and T is a 3-vector
          *              describing the camera translation. Rotation first then translation!
-         *
          *  \attention: M is a 3 by 4 identity matrix. In case you need to convert from the vision convention to
          *          OpenGL convention (i.e., invert Y and Z axes), M(1, 1) and M(2, 2) must be set to -1, i.e.,
          *              M(1, 1) = -1;   // invert the y axis
          *              M(2, 2) = -1;   // invert the z axis
-         *
          *  \attention This function assumes the camera parameters were obtained by standard camera calibration, in
          *      which image coordinates are denoted in pixels, with the origin point (0, 0) corresponding to the
          *      top-left corner of the image. The X axis starts at the left edge of an image and goes towards the right
          *      edge. The Y axis starts at the top of the image towards image bottom. All image pixels have non-negative
          *      coordinates.
-         *
          *  \sa set_from_calibration.
          */
         void set_from_calibration(const mat34& proj);

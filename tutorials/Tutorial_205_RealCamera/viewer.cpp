@@ -124,8 +124,7 @@ bool RealCamera::KRT_to_camera(int view_index, Camera* c) {
     c->set_from_calibration(
             cam.fx, cam.fy, 0.0f,
             cam.cx, cam.cy,
-            vec3(cam.rx, cam.ry, cam.rz),
-            vec3(cam.tx, cam.ty, cam.tz),
+            cam.R, cam.t,
             cam.w, cam.h, true);
 
     load_image();
