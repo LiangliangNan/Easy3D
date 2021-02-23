@@ -1051,7 +1051,7 @@ namespace easy3d {
         }
 
         const mat34& proj = K * M * T * R;
-        set_from_projection_matrix(proj);
+        set_from_calibration(proj);
 #endif
     }
 
@@ -1077,8 +1077,9 @@ namespace easy3d {
 	 GL_MODELVIEW matrix. fieldOfView() can also be retrieved from a \e perspective
 	 \c GL_PROJECTION matrix using 2.0 * atan(1.0/projectionMatrix[5]).
 
-	 This code was written by Sylvain Paris. */
-    void Camera::set_from_projection_matrix(const mat34 &proj) {
+	 This code was written by Sylvain Paris. Modified and bug fixed by Liangliang Nan.
+	 */
+    void Camera::set_from_calibration(const mat34 &proj) {
 		// The 3 lines of the matrix are the normals to the planes x=0, y=0, z=0
 		// in the camera CS. As we normalize them, we do not need the 4th coordinate.
         vec3 line_0 = proj.row(0);	line_0.normalize();
@@ -1159,6 +1160,7 @@ namespace easy3d {
 		setPosition(cam_pos);
 		setFieldOfView(fov);
 	}
+
 
 	///////////////////////// Camera to world transform ///////////////////////
 

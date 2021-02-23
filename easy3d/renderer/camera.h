@@ -169,7 +169,7 @@ namespace easy3d {
         void set_from_calibration(float fx, float fy, float skew, float cx, float cy, const vec3& rot, const vec3& t,
                                   int img_width, int img_height, bool convert = false);
         
-        /** \brief Does the same thing as set_from_calibration().
+        /** \brief Overload of set_from_calibration().
          *  \param proj The projection matrix that can be computed as P = K * M * [R : T], where R is a
          *              3x3 matrix representing the camera rotation and T is a 3-vector
          *              describing the camera translation. Rotation first then translation!
@@ -187,7 +187,7 @@ namespace easy3d {
          *
          *  \sa set_from_calibration.
          */
-        void set_from_projection_matrix(const mat34& proj);
+        void set_from_calibration(const mat34& proj);
 
         // -----------------------------------------------------------------
 
