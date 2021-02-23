@@ -114,16 +114,16 @@ namespace easy3d {
             _q[0] = _q[1] = _q[2] = FT(0);  _q[3] = FT(1);
         }
 
+        /** \brief Constructor from rotation matrix. See also set_from_rotation_matrix(). */
+        explicit Quat(const Mat3<FT>& m)
+        {
+            set_from_rotation_matrix(m);
+        }
+
         /** \brief Constructor from rotation axis (non null) and angle (in radians). See also set_axis_angle(). */
         Quat(const Vec3& axis, FT angle)
         {
             set_axis_angle(axis, angle);
-        }
-
-        /** \brief Constructor from rotation matrix. See also set_from_rotation_matrix(). */
-        Quat(const Mat3<FT>& m)
-        {
-            set_from_rotation_matrix(m);
         }
 
         /**
