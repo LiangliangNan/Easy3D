@@ -63,6 +63,7 @@ namespace easy3d {
          *      - Quat extract_rotation(const mat4& M);
          *      - vec3 extract_scale(const mat4& M);
          *      - vec3 extract_translation(const mat4& M);
+         * \todo Not tested yet.
          */
         void decompose(const mat4& M, vec3& scaling, mat3& rotation, vec3& translation);
         void decompose(const mat4& M, vec3& scaling, quat& rotation, vec3& translation);
@@ -75,13 +76,15 @@ namespace easy3d {
          * \todo Add functions that extract single components, i.e.,
          *      - Quat  extract_rotation(const mat4& M);
          *      - vec3  extract_translation(const mat4& M);
+         * \todo Not tested yet.
          */
         void decompose_no_scaling(const mat4& M, mat3& rotation, vec3& translation);
         void decompose_no_scaling(const mat4& M, quat& rotation, vec3& translation);
 
         /**
          * \brief Decomposes a transformation matrix into to its original components (i.e., scaling, rotation,
-         * translation, skew and perspective).
+         *      translation, skew and perspective).
+         * \todo Not tested yet.
          */
         bool decompose(const mat4& M, vec3& scaling, quat& rotation, vec3& translation, vec3& skew, vec4& persp);
 
