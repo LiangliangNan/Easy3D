@@ -47,6 +47,7 @@ namespace easy3d {
     class TextRenderer;
     class ModelPicker;
     class SurfaceMeshPicker;
+    class PointCloudPicker;
 }
 
 class QWidget;
@@ -149,8 +150,9 @@ public slots:
     // centers the entire scene to fit the screen region.
     void fitScreen();
 
-    void showFaceVertexLabelsUnderMouse(bool);
-    void showCordinatesUnderMouse(bool);
+    void showPrimitiveIDUnderMouse(bool);
+    void showPrimitivePropertyUnderMouse(bool);
+    void showCoordinatesUnderMouse(bool);
 
     void showEasy3DLogo(bool);
     void showFrameRate(bool);
@@ -314,9 +316,10 @@ protected:
     easy3d::ModelPicker* model_picker_;
     bool    allow_select_model_;
     easy3d::SurfaceMeshPicker* surface_mesh_picker_;
-    bool    show_labels_under_mouse_;
     int     picked_face_index_;
-
+    easy3d::PointCloudPicker*  point_cloud_picker_;
+    bool    show_labels_under_mouse_;
+    bool    show_property_under_mouse_;
     bool    show_coordinates_under_mouse_;
 
     std::vector<easy3d::Model*> models_;

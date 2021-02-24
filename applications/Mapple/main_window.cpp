@@ -867,8 +867,9 @@ void MainWindow::createActionsForFileMenu() {
 
 
 void MainWindow::createActionsForViewMenu() {
-    connect(ui->actionShowFaceVertexLabelsUnderMouse, SIGNAL(toggled(bool)), viewer_, SLOT(showFaceVertexLabelsUnderMouse(bool)));
-    connect(ui->actionShowCordinatesUnderMouse, SIGNAL(toggled(bool)), viewer_, SLOT(showCordinatesUnderMouse(bool)));
+    connect(ui->actionShowPrimitiveIDUnderMouse, SIGNAL(toggled(bool)), viewer_, SLOT(showPrimitiveIDUnderMouse(bool)));
+    connect(ui->actionShowPrimitivePropertyUnderMouse, SIGNAL(toggled(bool)), viewer_, SLOT(showPrimitivePropertyUnderMouse(bool)));
+    connect(ui->actionShowCordinatesUnderMouse, SIGNAL(toggled(bool)), viewer_, SLOT(showCoordinatesUnderMouse(bool)));
 
     connect(ui->actionShowEasy3DLogo, SIGNAL(toggled(bool)), viewer_, SLOT(showEasy3DLogo(bool)));
     connect(ui->actionShowFrameRate, SIGNAL(toggled(bool)), viewer_, SLOT(showFrameRate(bool)));

@@ -51,7 +51,8 @@
     <property name="title">
      <string>View</string>
     </property>
-    <addaction name="actionShowFaceVertexLabelsUnderMouse"/>
+    <addaction name="actionShowPrimitiveIDUnderMouse"/>
+    <addaction name="actionShowPrimitivePropertyUnderMouse"/>
     <addaction name="actionShowCordinatesUnderMouse"/>
     <addaction name="separator"/>
     <addaction name="actionShowEasy3DLogo"/>
@@ -1032,12 +1033,12 @@
     <string>Tetrahedralization</string>
    </property>
   </action>
-  <action name="actionShowFaceVertexLabelsUnderMouse">
+  <action name="actionShowPrimitiveIDUnderMouse">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Show IDs of face and its vertices under mouse</string>
+    <string>Show primitive ID under mouse</string>
    </property>
    <property name="statusTip">
     <string>Show the IDs of face and its vertices under mouse</string>
@@ -1164,6 +1165,14 @@
    </property>
    <property name="text">
     <string>Show camera path</string>
+   </property>
+  </action>
+  <action name="actionShowPrimitivePropertyUnderMouse">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show primitive property under mouse</string>
    </property>
   </action>
  </widget>

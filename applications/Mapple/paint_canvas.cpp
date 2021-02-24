@@ -56,6 +56,7 @@
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/buffers.h>
 #include <easy3d/fileio/resources.h>
+#include <easy3d/gui/picker_point_cloud.h>
 #include <easy3d/gui/picker_surface_mesh.h>
 #include <easy3d/gui/picker_model.h>
 #include <easy3d/util/file_system.h>
@@ -70,7 +71,7 @@
 #include <QClipboard>
 #include <QTime>
 #include <QMessageBox>
-
+#include <QStatusBar>
 
 using namespace easy3d;
 
@@ -98,7 +99,9 @@ PaintCanvas::PaintCanvas(MainWindow* window)
         , allow_select_model_(false)
         , surface_mesh_picker_(nullptr)
         , show_labels_under_mouse_(false)
+        , show_property_under_mouse_(false)
         , picked_face_index_(-1)
+        , point_cloud_picker_(nullptr)
         , show_coordinates_under_mouse_(false)
         , model_idx_(-1)
         , ssao_(nullptr)
@@ -151,6 +154,7 @@ void PaintCanvas::cleanup() {
     delete texter_;
     delete model_picker_;
     delete surface_mesh_picker_;
+    delete point_cloud_picker_;
 
     ShaderManager::terminate();
     TextureManager::terminate();
@@ -443,17 +447,67 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
         }
     }
 
-    if (show_labels_under_mouse_) {
-        auto mesh = dynamic_cast<SurfaceMesh*>(currentModel());
+    if (show_labels_under_mouse_ || show_property_under_mouse_) { // then need to pick primitives
+        picked_face_index_ = -1;
+        auto mesh = dynamic_cast<SurfaceMesh *>(currentModel());
         if (mesh) {
             if (!surface_mesh_picker_)
                 surface_mesh_picker_ = new SurfaceMeshPicker(camera());
             makeCurrent();
             picked_face_index_ = surface_mesh_picker_->pick_face(mesh, e->pos().x(), e->pos().y()).idx();
             doneCurrent();
+
+            if (!show_labels_under_mouse_ && picked_face_index_ >= 0) { // highlight the face
+                auto drawable = mesh->renderer()->get_triangles_drawable("faces");
+                drawable->set_highlight(true);
+                drawable->set_highlight_range({picked_face_index_, picked_face_index_});
+            }
         }
-        else
-            picked_face_index_ = -1;
+
+        PointCloud::Vertex picked_vertex(-1);
+        auto cloud = dynamic_cast<PointCloud *>(currentModel());
+        if (cloud) {
+            if (!point_cloud_picker_)
+                point_cloud_picker_ = new PointCloudPicker(camera());
+            makeCurrent();
+            picked_vertex = point_cloud_picker_->pick_vertex(cloud, e->pos().x(), e->pos().y());
+            doneCurrent();
+
+            auto drawable = cloud->renderer()->get_points_drawable("vertices");
+            drawable->set_highlight(true);
+            drawable->set_highlight_range({picked_vertex.idx(), picked_vertex.idx()});
+        }
+
+        if (show_property_under_mouse_) {
+            if (picked_vertex.is_valid()) { // point cloud vertex
+                auto drawable = currentModel()->renderer()->get_points_drawable("vertices");
+                if (drawable->coloring_method() == easy3d::State::SCALAR_FIELD) {
+                    const std::string& name = drawable->property_name();
+                    auto prop = cloud->get_vertex_property<float>(name);
+                    if (prop) {
+                        std::stringstream stream;
+                        stream << "'" << name << "' on " << picked_vertex << ": " << prop[picked_vertex];
+                        window_->statusBar()->showMessage(QString::fromStdString(stream.str()), 2000);
+                    }
+                }
+            }
+            else if (picked_face_index_ >= 0) { // surface mesh face
+                auto drawable = currentModel()->renderer()->get_triangles_drawable("faces");
+                if (drawable->coloring_method() == easy3d::State::SCALAR_FIELD && drawable->property_location() == easy3d::State::FACE) {
+                    const std::string& name = drawable->property_name();
+                    auto prop = mesh->get_face_property<float>(name);
+                    if (prop) {
+                        auto face = SurfaceMesh::Face(picked_face_index_);
+                        std::stringstream stream;
+                        stream << "'" << name << "' on " << face << ": " << prop[face];
+                        window_->statusBar()->showMessage(QString::fromStdString(stream.str()), 2000);
+                    }
+                }
+            }
+            else
+                window_->statusBar()->showMessage("no primitive found under mouse", 2000);
+        }
+
         update();
     }
 
@@ -1611,13 +1665,19 @@ void PaintCanvas::restoreState(std::istream& input) {
 }
 
 
-void PaintCanvas::showFaceVertexLabelsUnderMouse(bool b) {
+void PaintCanvas::showPrimitiveIDUnderMouse(bool b) {
     show_labels_under_mouse_ = b;
     update();
 }
 
 
-void PaintCanvas::showCordinatesUnderMouse(bool b) {
+void PaintCanvas::showPrimitivePropertyUnderMouse(bool b) {
+    show_property_under_mouse_ = b;
+    update();
+}
+
+
+void PaintCanvas::showCoordinatesUnderMouse(bool b) {
     show_coordinates_under_mouse_ = b;
 
     QString coords("");
