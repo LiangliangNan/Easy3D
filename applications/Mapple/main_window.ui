@@ -86,7 +86,7 @@
     <addaction name="actionRansacPrimitiveExtraction"/>
     <addaction name="actionPoissonSurfaceReconstruction"/>
     <addaction name="separator"/>
-    <addaction name="actionDelaynayTriangulation3D"/>
+    <addaction name="actionDelaunayTriangulation3D"/>
     <addaction name="actionDelaunayTriangulation2D"/>
    </widget>
    <widget class="QMenu" name="menuSelect">
@@ -957,9 +957,9 @@
     <string>Delaunay triangulation 2D (XY only)</string>
    </property>
   </action>
-  <action name="actionDelaynayTriangulation3D">
+  <action name="actionDelaunayTriangulation3D">
    <property name="text">
-    <string>Delaynay triangulation 3D</string>
+    <string>Delaunay triangulation 3D</string>
    </property>
   </action>
   <action name="actionCreateSurfaceMeshFromText">
@@ -1048,10 +1048,10 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Show cordinates under mouse</string>
+    <string>Show coordinates under mouse</string>
    </property>
    <property name="statusTip">
-    <string>Show the XYZ cordinates under mouse</string>
+    <string>Show the XYZ coordinates under mouse</string>
    </property>
   </action>
   <action name="actionAnimation">
