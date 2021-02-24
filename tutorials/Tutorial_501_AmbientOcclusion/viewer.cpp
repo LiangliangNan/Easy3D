@@ -29,7 +29,7 @@
 #include <easy3d/renderer/ambient_occlusion.h>
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/shader_program.h>
-#include <easy3d/renderer/primitives.h>
+#include <easy3d/renderer/shapes.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/setting.h>
 
@@ -151,8 +151,8 @@ void TutorialAmbientOcclusion::draw() const {
         const int w = width() / 4 * dpi_scaling();
         const int h = height() / 4 * dpi_scaling();
         const Rect quad(x, x+w, y, y+h);
-        opengl::draw_depth_texture(quad, ao_->ssao_texture(), width() * dpi_scaling(), height() * dpi_scaling(), -0.9f);
-        opengl::draw_quad_wire(quad, vec4(1, 0,0, 1), width() * dpi_scaling(), height() * dpi_scaling(), -0.99f);
+        shapes::draw_depth_texture(quad, ao_->ssao_texture(), width() * dpi_scaling(), height() * dpi_scaling(), -0.9f);
+        shapes::draw_quad_wire(quad, vec4(1, 0,0, 1), width() * dpi_scaling(), height() * dpi_scaling(), -0.99f);
     }
 	else
 		Viewer::draw();

@@ -29,7 +29,7 @@
 #include <easy3d/renderer/opengl_error.h>
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/shader_program.h>
-#include <easy3d/renderer/primitives.h>
+#include <easy3d/renderer/shapes.h>
 #include <easy3d/renderer/setting.h>
 #include <easy3d/renderer/transform.h>
 #include <easy3d/renderer/clipping_plane.h>
@@ -178,7 +178,7 @@ namespace easy3d {
         program->set_uniform("BackgroundColor", bkg_color_);
         program->bind_texture("ColorTex0", fbo_->color_texture(0), 0);
         program->bind_texture("ColorTex1", fbo_->color_texture(1), 1);
-        opengl::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);
+        shapes::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);
         program->release_texture();
         program->release();
 

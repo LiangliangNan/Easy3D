@@ -155,48 +155,46 @@ namespace easy3d {
 
         // Decomposes a transformation matrix into to its original components(i.e., scaling, rotation, translation, skew and perspective)
         // Code taken from glm/gtx/matrix_decompose.inl (GLM 0.9.8.0 - 2016-09-11)
-        // The glm code was original adapted from
-        // http://www.opensource.apple.com/source/WebCore/WebCore-514/platform/graphics/transforms/TransformationMatrix.cpp
-
-        namespace detail
-        {
-            // Make a linear combination of two vectors and return the result.
-            // result = (a * ascl) + (b * bscl)
-            vec3 combine(const vec3& a, const vec3& b, float ascl, float bscl) {
-                return (a * ascl) + (b * bscl);
-            }
-
-            vec3 scale(const vec3& v, float desiredLength) {
-                return v * desiredLength / length(v);
-            }
-        }//namespace detail
-
+        //      https://github.com/g-truc/glm/blob/master/glm/gtx/matrix_decompose.inl
+        // The glm code was originally adapted from
+        //      http://www.opensource.apple.com/source/WebCore/WebCore-514/platform/graphics/transforms/TransformationMatrix.cpp
         bool decompose(const mat4& ModelMatrix, vec3& Scale, quat& Orientation, vec3& Translation, vec3& Skew, vec4& Perspective)
         {
+            typedef float T;
+            
+            // Make a linear combination of two vectors and return the result.
+            // result = (a * ascl) + (b * bscl)
+            auto combine = [](const vec3& a, const vec3& b, float wa, float wb) ->vec3 {
+                return (a * wa) + (b * wb);
+            };
+
             mat4 LocalMatrix(ModelMatrix);
 
             // Normalize the matrix.
-            if (LocalMatrix(3, 3) == 0)
+            if(epsilon_equal(LocalMatrix(3, 3), static_cast<T>(0), epsilon<T>()))
                 return false;
 
-            for (int i = 0; i < 4; ++i)
-                for (int j = 0; j < 4; ++j)
+            for(int i = 0; i < 4; ++i)
+                for(int j = 0; j < 4; ++j)
                     LocalMatrix(j, i) /= LocalMatrix(3, 3);
 
             // perspectiveMatrix is used to solve for perspective, but it also provides
             // an easy way to test for singularity of the upper 3x3 component.
             mat4 PerspectiveMatrix(LocalMatrix);
 
-            for (int i = 0; i < 3; i++)
-                PerspectiveMatrix(3, i) = 0;
-            PerspectiveMatrix(3, 3) = 1;
+            for(int i = 0; i < 3; i++)
+                PerspectiveMatrix(3, i) = static_cast<T>(0);
+            PerspectiveMatrix(3, 3) = static_cast<T>(1);
 
             /// TODO: Fixme!
-            if (determinant(PerspectiveMatrix) == 0)
+            if(epsilon_equal(determinant(PerspectiveMatrix), static_cast<T>(0), epsilon<T>()))
                 return false;
 
             // First, isolate perspective.  This is the messiest.
-            if (LocalMatrix(3, 0) != 0 || LocalMatrix(3, 1) != 0 || LocalMatrix(3, 2) != 0)
+            if(
+                    epsilon_not_equal(LocalMatrix(3, 0), static_cast<T>(0), epsilon<T>()) ||
+                    epsilon_not_equal(LocalMatrix(3, 1), static_cast<T>(0), epsilon<T>()) ||
+                    epsilon_not_equal(LocalMatrix(3, 2), static_cast<T>(0), epsilon<T>()))
             {
                 // rightHandSide is the right hand side of the equation.
                 vec4 RightHandSide;
@@ -205,16 +203,18 @@ namespace easy3d {
                 RightHandSide[2] = LocalMatrix(3, 2);
                 RightHandSide[3] = LocalMatrix(3, 3);
 
-                // Solve the equation by inverting PerspectiveMatrix and multiplying rightHandSide by the inverse.
-                // (This is the easiest way, not necessarily the best.)
-                mat4 InversePerspectiveMatrix = inverse(PerspectiveMatrix);
-                mat4 TransposedInversePerspectiveMatrix = transpose(InversePerspectiveMatrix);
+                // Solve the equation by inverting PerspectiveMatrix and multiplying
+                // rightHandSide by the inverse.  (This is the easiest way, not
+                // necessarily the best.)
+                mat4 InversePerspectiveMatrix = inverse(PerspectiveMatrix);//   inverse(PerspectiveMatrix, inversePerspectiveMatrix);
+                mat4 TransposedInversePerspectiveMatrix = transpose(InversePerspectiveMatrix);//   transposeMatrix4(inversePerspectiveMatrix, transposedInversePerspectiveMatrix);
 
                 Perspective = TransposedInversePerspectiveMatrix * RightHandSide;
+                //  v4MulPointByMatrix(rightHandSide, transposedInversePerspectiveMatrix, perspectivePoint);
 
                 // Clear the perspective partition
-                LocalMatrix(3, 0) = LocalMatrix(3, 1) = LocalMatrix(3, 2) = 0;
-                LocalMatrix(3, 3) = 1;
+                LocalMatrix(3, 0) = LocalMatrix(3, 1) = LocalMatrix(3, 2) = static_cast<T>(0);
+                LocalMatrix(3, 3) = static_cast<T>(1);
             }
             else
             {
@@ -232,33 +232,33 @@ namespace easy3d {
             vec3 Row[3], Pdum3;
 
             // Now get scale and shear.
-            for (int i = 0; i < 3; ++i)
-                for (int j = 0; j < 3; ++j)
+            for(int i = 0; i < 3; ++i)
+                for(int j = 0; j < 3; ++j)
                     Row[i][j] = LocalMatrix(i, j);
 
             // Compute X scale factor and normalize first row.
             Scale.x = length(Row[0]);// v3Length(Row[0]);
 
-            Row[0] = detail::scale(Row[0], 1);
+            Row[0].normalize();
 
             // Compute XY shear factor and make 2nd row orthogonal to 1st.
             Skew.z = dot(Row[0], Row[1]);
-            Row[1] = detail::combine(Row[1], Row[0], 1, -Skew.z);
+            Row[1] = combine(Row[1], Row[0], static_cast<T>(1), -Skew.z);
 
             // Now, compute Y scale and normalize 2nd row.
             Scale.y = length(Row[1]);
-            Row[1] = detail::scale(Row[1], 1);
+            Row[1].normalize();
             Skew.z /= Scale.y;
 
             // Compute XZ and YZ shears, orthogonalize 3rd row.
             Skew.y = dot(Row[0], Row[2]);
-            Row[2] = detail::combine(Row[2], Row[0], 1, -Skew.y);
+            Row[2] = combine(Row[2], Row[0], static_cast<T>(1), -Skew.y);
             Skew.x = dot(Row[1], Row[2]);
-            Row[2] = detail::combine(Row[2], Row[1], 1, -Skew.x);
+            Row[2] = combine(Row[2], Row[1], static_cast<T>(1), -Skew.x);
 
             // Next, get Z scale and normalize 3rd row.
             Scale.z = length(Row[2]);
-            Row[2] = detail::scale(Row[2], 1);
+            Row[2].normalize();
             Skew.y /= Scale.z;
             Skew.x /= Scale.z;
 
@@ -266,11 +266,12 @@ namespace easy3d {
             // Check for a coordinate system flip.  If the determinant
             // is -1, then negate the matrix and the scaling factors.
             Pdum3 = cross(Row[1], Row[2]); // v3Cross(row[1], row[2], Pdum3);
-            if (dot(Row[0], Pdum3) < 0)
+            if(dot(Row[0], Pdum3) < 0)
             {
-                for (int i = 0; i < 3; i++) {
-                    Scale.x *= -1;
-                    Row[i] *= -1;
+                for(int i = 0; i < 3; i++)
+                {
+                    Scale[i] *= static_cast<T>(-1);
+                    Row[i] *= static_cast<T>(-1);
                 }
             }
 
@@ -291,44 +292,34 @@ namespace easy3d {
             //     ret.rotateZ = 0;
             // }
 
-            float s, t, x, y, z, w;
-
-            t = Row[0][0] + Row[1][1] + Row[2][2] + 1;
-
-            if (t > 1e-4)
+            int i, j, k = 0;
+            T root, trace = Row[0].x + Row[1].y + Row[2].z;
+            if(trace > static_cast<T>(0))
             {
-                s = 0.5f / std::sqrt(t);
-                w = 0.25f / s;
-                x = (Row[2][1] - Row[1][2]) * s;
-                y = (Row[0][2] - Row[2][0]) * s;
-                z = (Row[1][0] - Row[0][1]) * s;
-            }
-            else if (Row[0][0] > Row[1][1] && Row[0][0] > Row[2][2])
-            {
-                s = std::sqrt(1 + Row[0][0] - Row[1][1] - Row[2][2]) * 2; // S=4*qx
-                x = 0.25f * s;
-                y = (Row[0][1] + Row[1][0]) / s;
-                z = (Row[0][2] + Row[2][0]) / s;
-                w = (Row[2][1] - Row[1][2]) / s;
-            }
-            else if (Row[1][1] > Row[2][2])
-            {
-                s = std::sqrt(1 + Row[1][1] - Row[0][0] - Row[2][2]) * 2; // S=4*qy
-                x = (Row[0][1] + Row[1][0]) / s;
-                y = 0.25f * s;
-                z = (Row[1][2] + Row[2][1]) / s;
-                w = (Row[0][2] - Row[2][0]) / s;
-            }
+                root = sqrt(trace + static_cast<T>(1.0));
+                Orientation[3] = static_cast<T>(0.5) * root;    // w
+                root = static_cast<T>(0.5) / root;
+                Orientation[0] = root * (Row[2].y - Row[1].z);  // x
+                Orientation[1] = root * (Row[0].z - Row[2].x);  // y
+                Orientation[2] = root * (Row[1].x - Row[0].y);  // z
+            } // End if > 0
             else
             {
-                s = std::sqrt(1 + Row[2][2] - Row[0][0] - Row[1][1]) * 2; // S=4*qz
-                x = (Row[0][2] + Row[2][0]) / s;
-                y = (Row[1][2] + Row[2][1]) / s;
-                z = 0.25f * s;
-                w = (Row[1][0] - Row[0][1]) / s;
-            }
+                static int Next[3] = {1, 2, 0};
+                i = 0;
+                if(Row[1].y > Row[0].x) i = 1;
+                if(Row[2].z > Row[i][i]) i = 2;
+                j = Next[i];
+                k = Next[j];
 
-            Orientation.set_value(x, y, z, w);
+                root = sqrt(Row[i][i] - Row[j][j] - Row[k][k] + static_cast<T>(1.0));
+
+                Orientation[i] = static_cast<T>(0.5) * root;
+                root = static_cast<T>(0.5) / root;
+                Orientation[j] = root * (Row[i][j] + Row[j][i]);
+                Orientation[k] = root * (Row[i][k] + Row[k][i]);
+                Orientation[3] = root * (Row[j][k] - Row[k][j]);    // w
+            } // End if <= 0
 
             return true;
         }

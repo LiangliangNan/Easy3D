@@ -25,7 +25,7 @@
 #include "viewer.h"
 
 #include <easy3d/renderer/texture.h>
-#include <easy3d/renderer/primitives.h>
+#include <easy3d/renderer/shapes.h>
 #include <easy3d/util/dialogs.h>
 #include <easy3d/fileio/resources.h>
 
@@ -148,5 +148,5 @@ void ImageViewer::draw() const {
     compute_image_region(x, y, w, h);
 
     const Rect quad(x, x + w, y, y + h);
-    opengl::draw_quad_filled(quad, texture_->id(), width(), height(), -0.9f);
+    shapes::draw_quad_filled(quad, texture_->id(), width(), height(), -0.9f);
 }

@@ -582,21 +582,6 @@ namespace triangles_details {
         }
     }
 
-}
-
-
-void WidgetTrianglesDrawable::updateVectorFieldBuffer(Model *model, const std::string &name) {
-    if (dynamic_cast<SurfaceMesh *>(model)) {
-        auto mesh = dynamic_cast<SurfaceMesh *>(model);
-        triangles_details::updateVectorFieldBuffer(mesh, name, ui->doubleSpinBoxVectorFieldScale);
-    } else if (dynamic_cast<PolyMesh *>(model)) {
-        auto mesh = dynamic_cast<PolyMesh *>(model);
-        triangles_details::updateVectorFieldBuffer(mesh, name, ui->doubleSpinBoxVectorFieldScale);
-    }
-}
-
-
-namespace triangles_details {
 
     void set_highlight_range(SurfaceMesh* m, Drawable* d, const std::pair<int, int>& range) {
         if (range.second < 0 || range.second < range.first) {
@@ -628,6 +613,18 @@ namespace triangles_details {
         } else {
             LOG_N_TIMES(3, ERROR) << "face property \'f:triangle_range\' not defined. " << COUNTER;
         }
+    }
+
+}
+
+
+void WidgetTrianglesDrawable::updateVectorFieldBuffer(Model *model, const std::string &name) {
+    if (dynamic_cast<SurfaceMesh *>(model)) {
+        auto mesh = dynamic_cast<SurfaceMesh *>(model);
+        triangles_details::updateVectorFieldBuffer(mesh, name, ui->doubleSpinBoxVectorFieldScale);
+    } else if (dynamic_cast<PolyMesh *>(model)) {
+        auto mesh = dynamic_cast<PolyMesh *>(model);
+        triangles_details::updateVectorFieldBuffer(mesh, name, ui->doubleSpinBoxVectorFieldScale);
     }
 }
 

@@ -31,7 +31,7 @@
 #include <easy3d/renderer/framebuffer_object.h>
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/shader_program.h>
-#include <easy3d/renderer/primitives.h>
+#include <easy3d/renderer/shapes.h>
 #include <easy3d/renderer/renderer.h>
 
 
@@ -115,6 +115,6 @@ void DepthImage::draw_depth() const {
     viewer->generate_depth();
 
     const Rect quad(20 * dpi_scaling(), 20 * dpi_scaling() + w/4, 40 * dpi_scaling(), 40 * dpi_scaling() + h/4);
-    opengl::draw_depth_texture(quad, fbo_->depth_texture(), w, h, -0.9f);
-    opengl::draw_quad_wire(quad, vec4(1.0f, 0.0f, 0.0f, 1.0f), w, h, -0.99f);
+    shapes::draw_depth_texture(quad, fbo_->depth_texture(), w, h, -0.9f);
+    shapes::draw_quad_wire(quad, vec4(1.0f, 0.0f, 0.0f, 1.0f), w, h, -0.99f);
 }

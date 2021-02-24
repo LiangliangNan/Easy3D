@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EASY3D_RENDERER_PRIMITIVES_H
-#define EASY3D_RENDERER_PRIMITIVES_H
+#ifndef EASY3D_RENDERER_SHAPES_H
+#define EASY3D_RENDERER_SHAPES_H
 
 #include <vector>
 
@@ -34,32 +34,52 @@ namespace easy3d {
 
     class LinesDrawable;
 
-    namespace opengl {
+    /**
+     * \brief A collection of functions for rendering basic shapes
+     * \namespace easy3d::shapes
+     */
+    namespace shapes {
 
         /// \name Functions for drawing
-        //@{
+        // @{
 
         /**
-         * \brief Draws a quad defined in the screen space.
-         * @param rect The quad.
-         * @param color The color.
-         * @param texture The texture.
-         * @param width The width of the viewer.
-         * @param height The height of the viewer.
-         * @param depth The depth at which the quad will be drawn. The depth value is the Normalized Device Coordinates
+         * \brief Draws a wire quad defined in the screen space.
+         * \param rect The quad.
+         * \param color The color.
+         * \param width The width of the viewer.
+         * \param height The height of the viewer.
+         * \param depth The depth at which the quad will be drawn. The depth value is the Normalized Device Coordinates
          *              within the range [-1.0, 1.0], corresponding to the near and far clipping planes, respectively.
          */
         void draw_quad_wire(const Rect &rect, const vec4 &color, int width, int height, float depth);
 
+        /**
+         * \brief Draws a solid quad defined in the screen space.
+         * \param rect The quad.
+         * \param color The color.
+         * \param width The width of the viewer.
+         * \param height The height of the viewer.
+         * \param depth The depth at which the quad will be drawn. The depth value is the Normalized Device Coordinates
+         *              within the range [-1.0, 1.0], corresponding to the near and far clipping planes, respectively.
+         */
         void draw_quad_filled(const Rect &rect, const vec4 &color, int width, int height, float depth);
 
+        /**
+         * \brief Draws a solid quad defined in the screen space.
+         * \param rect The quad.
+         * \param texture The texture.
+         * \param width The width of the viewer.
+         * \param height The height of the viewer.
+         * \param depth The depth at which the quad will be drawn. The depth value is the Normalized Device Coordinates
+         *              within the range [-1.0, 1.0], corresponding to the near and far clipping planes, respectively.
+         */
         void draw_quad_filled(const Rect &rect, unsigned int texture, int width, int height, float depth);
 
         /**
          * \brief Draws a full screen textured quad.
-         * @param rect The quad.
-         * @param texture The texture.
-         * @param depth The depth at which the quad will be drawn. The depth value is the Normalized Device Coordinates
+         * \param texture The texture.
+         * \param depth The depth at which the quad will be drawn. The depth value is the Normalized Device Coordinates
          *              within the range [-1.0, 1.0], corresponding to the near and far clipping planes, respectively.
          */
         void draw_full_screen_quad(unsigned int texture, float depth);
@@ -69,12 +89,11 @@ namespace easy3d {
          * \details This is function is similar to draw_quad_filled(... int texture...). The only difference is that
          * a depth texture is rendered as a gray scale image. For depth textures from off-screen rendering (usually
          * from an FBO), the depth values are stored in the R component of the texture.
-         * @param rect The quad.
-         * @param color The color.
-         * @param texture The texture.
-         * @param width The width of the viewer.
-         * @param height The height of the viewer.
-         * @param depth The depth at which the quad will be drawn. The depth value is the Normalized Device Coordinates
+         * \param rect The quad.
+         * \param texture The texture.
+         * \param width The width of the viewer.
+         * \param height The height of the viewer.
+         * \param depth The depth at which the quad will be drawn. The depth value is the Normalized Device Coordinates
          *              within the range [-1.0, 1.0], corresponding to the near and far clipping planes, respectively.
          */
         void draw_depth_texture(const Rect &rect, unsigned int texture, int width, int height, float depth);
@@ -82,12 +101,12 @@ namespace easy3d {
         /**
          * \brief Draws a quad defined in the screen space using a bound shader.
          * \details It binds the vertex position and UVs arrays to the given attribute array indices and draws the quad.
-         * @param position_attrib The vertex attribute array index that represents position in the current shader.
-         * @param texcoord_attrib The vertex attribute array index that represents 2D UVs in the current shader.
-         * @param (x, y) The position (i.e., min corner) of the quad.
-         * @param (w, h) The size (i.e., width and height) of the quad.
-         * @param (vpw, vph) The size (i.e., width and height) of the viewport (of the viewer).
-         * @param depth The depth at which the quad will be drawn. The depth value is the Normalized Device Coordinates
+         * \param position_attrib The vertex attribute array index that represents position in the current shader.
+         * \param texcoord_attrib The vertex attribute array index that represents 2D UVs in the current shader.
+         * \param (x, y) The position (i.e., min corner) of the quad.
+         * \param (w, h) The size (i.e., width and height) of the quad.
+         * \param (vpw, vph) The size (i.e., width and height) of the viewport (of the viewer).
+         * \param depth The depth at which the quad will be drawn. The depth value is the Normalized Device Coordinates
          *              within the range [-1.0, 1.0], corresponding to the near and far clipping planes, respectively.
          */
         void draw_quad(unsigned int position_attrib, unsigned int texcoord_attrib, int x, int y, int w, int h, int vpw,
@@ -96,93 +115,94 @@ namespace easy3d {
         /**
          * \brief Draws a full screen quad using the bound shader.
          * \details It binds the vertex position and UVs arrays to the given attribute array indices and draws the quad.
-         * @param position_attrib The vertex attribute array index that represents position in the current shader.
-         * @param texcoord_attrib The vertex attribute array index that represents 2D UVs in the current shader.
-         * @param depth The depth at which the quad will be drawn. The depth value is the Normalized Device Coordinates
+         * \param position_attrib The vertex attribute array index that represents position in the current shader.
+         * \param texcoord_attrib The vertex attribute array index that represents 2D UVs in the current shader.
+         * \param depth The depth at which the quad will be drawn. The depth value is the Normalized Device Coordinates
          *              within the range [-1.0, 1.0], corresponding to the near and far clipping planes, respectively.
          */
         void draw_full_screen_quad(unsigned int position_attrib, unsigned int texcoord_attrib, float depth);
 
         /**
          * \brief Draws a polygon (line loop) in the screen space.
-         * @param polygon The polygon.
-         * @param color The color.
-         * @param width The width of the viewer.
-         * @param height The height of the viewer.
-         * @param depth The depth at which the polygon will be drawn. The depth value is the Normalized Device Coordinates
+         * \param polygon The polygon.
+         * \param color The color.
+         * \param width The width of the viewer.
+         * \param height The height of the viewer.
+         * \param depth The depth at which the polygon will be drawn. The depth value is the Normalized Device Coordinates
          *              within the range [-1.0, 1.0], corresponding to the near and far clipping planes, respectively.
          */
         void draw_polygon_wire(const Polygon2 &polygon, const vec4 &color, int width, int height, float depth);
 
         /**
          * \brief Draws a filled polygon in the screen space.
-         * @param polygon The polygon.
-         * @param color The color.
-         * @param width The width of the viewer.
-         * @param height The height of the viewer.
-         * @param depth The depth at which the polygon will be drawn. The depth value is the Normalized Device Coordinates
+         * \param polygon The polygon.
+         * \param color The color.
+         * \param width The width of the viewer.
+         * \param height The height of the viewer.
+         * \param depth The depth at which the polygon will be drawn. The depth value is the Normalized Device Coordinates
          *              within the range [-1.0, 1.0], corresponding to the near and far clipping planes, respectively.
          *
          * To make the polygon transparent, do the following
+         *  \code
          *      glEnable(GL_BLEND);
          *      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
          *      draw_polygon_filled(...);
          *      glDisable(GL_BLEND);
+         *  \endcode
          */
         void draw_polygon_filled(const Polygon2 &polygon, const vec4 &color, int width, int height, float depth);
 
         /**
          * \brief Draws the outline (the 3 big circles) of a sphere.
-         * @param mvp The model view projection matrix.
-         * @param m The transformation matrix defining the sphere's location, radius, and orientation.
+         * \param drawable The drawable.
+         * \param mvp The model view projection matrix.
+         * \param m The transformation matrix defining the sphere's location, radius, and orientation.
          * \param axes \c true will also draw the three main axes.
          */
         void draw_sphere_big_circles(LinesDrawable *drawable, const mat4 &mvp, const mat4 &m, bool axes = true);
 
         /**
          * \brief Draws a box.
-         * @param mvp The model view projection matrix.
-         * @param m The transformation matrix defining the box's location, sizes, and orientation.
+         * \param drawable The drawable.
+         * \param mvp The model view projection matrix.
+         * \param m The transformation matrix defining the box's location, sizes, and orientation.
          * \param abstracted \c true to draw an abstracted version (only part of its corners).
          */
         void draw_box_wire(LinesDrawable *drawable, const mat4 &mvp, const mat4 &m, bool abstracted = false);
+        // @}
 
-        //@}
 
 
-        //------  The following functions create primitives (i.e., prepare data) for rendering -----
-
-        /// \name Functions for creation (data preparation)
-        //@{
+        /// \name Functions for creating basic shapes (data preparation)
+        // @{
 
         /**
-         * @brief Generates data for a grid as a set of line segments.
+         * \brief Generates data for a grid as a set of line segments.
          * \details The grid is centered at vec3(0, 0, 0) and lies on the XOY plane.
-         * @param x_steps The number of subdivisions along X direction.
-         * @param y_steps The number of subdivisions along Y direction.
-         * @param scale The scaling factor
-         * @param points The points to be returned.
+         * \param x_steps The number of subdivisions along X direction.
+         * \param y_steps The number of subdivisions along Y direction.
+         * \param scale The scaling factor
+         * \param points The points to be returned.
          */
         void create_grid(int x_steps, int y_steps, std::vector<vec3> &points, float depth = 0.0f, float scale = 0.5f);
 
         /**
-         * @brief Generates data for a unit circle as a set of line segments.
+         * \brief Generates data for a unit circle as a set of line segments.
 		 * \details The circle is centered at vec3(0, 0, 0) and lies on the XOY plane.
          * \param slices. The number of subdivisions.
          */
         void create_circle(int slices, std::vector<vec3> &points, std::vector<unsigned int> &indices);
 
         /**
-         * @brief Generates data for a unit box as a set of line segments.
+         * \brief Generates data for a unit box as a set of line segments.
          * \details The box is centered at vec3(0, 0, 0) and is aligned with the main axes.
-         * \param size. The size of the box (width = height = depth).
          * \param abstracted \c true to draw an abstracted version (only part of its corners).
          */
         void create_box(std::vector<vec3> &points, std::vector<vec3> &colors, bool abstracted = false);
 
 
         /**
-         * @brief Generates data (points, normals, and colors) for a 3D sphere.
+         * \brief Generates data (points, normals, and colors) for a 3D sphere.
          * \param radius: the radius of the sphere.
          * \param slices: the number of subdivisions around the z axis (similar to lines of longitude).
          * \param stacks: the number of subdivisions along the z axis(similar to lines of latitude).
@@ -193,7 +213,7 @@ namespace easy3d {
         );
 
         /**
-         * @brief Generates data (points, normals, and colors) for a 3D checker sphere.
+         * \brief Generates data (points, normals, and colors) for a 3D checker sphere.
          * \param radius: the radius of the sphere.
          * \param slices: the number of subdivisions around the z axis (similar to lines of longitude).
          * \param stacks: the number of subdivisions along the z axis(similar to lines of latitude).
@@ -207,7 +227,7 @@ namespace easy3d {
         );
 
         /**
-         * @brief Prepares data (points, normals, and colors) for a 3D cylinder defined by two 3D points s and t.
+         * \brief Prepares data (points, normals, and colors) for a 3D cylinder defined by two 3D points s and t.
          */
         void create_cylinder(
                 double radius, int slices, const vec3 &s, const vec3 &t, const vec3 &color,
@@ -215,7 +235,7 @@ namespace easy3d {
         );
 
         /**
-         * @brief Prepares data (points, normals, and colors) for a 3D cone defined by two 3D points b and t.
+         * \brief Prepares data (points, normals, and colors) for a 3D cone defined by two 3D points b and t.
          * s is the base center and t is the tip.
          */
         void create_cone(
@@ -224,13 +244,13 @@ namespace easy3d {
         );
 
         /**
-         * @brief Prepares data for representing a torus.
-         * @param major_radius The radius of major circle.
-         * @param minor_radius The radius of minor circle.
-         * @param major_slices The number of subdivisions along the major circle (suggested value 50).
-         * @param minor_slices The number of subdivisions along the minor circle (suggested value 20).
-         * @param points Returns the points.
-         * @param normals Returns the normals.
+         * \brief Prepares data for representing a torus.
+         * \param major_radius The radius of major circle.
+         * \param minor_radius The radius of minor circle.
+         * \param major_slices The number of subdivisions along the major circle (suggested value 50).
+         * \param minor_slices The number of subdivisions along the minor circle (suggested value 20).
+         * \param points Returns the points.
+         * \param normals Returns the normals.
          */
         void create_torus(double major_radius, double minor_radius, int major_slices, int minor_slices,
                           std::vector<vec3> &points, std::vector<vec3> &normals
@@ -254,11 +274,10 @@ namespace easy3d {
          */
         void create_camera(std::vector<vec3> &points, std::vector<unsigned int> &indices, float width, float fov,
                            float hw_ratio = 0.6f);
-
-        //@}
+        // @}
     }
 
 }
 
 
-#endif  // EASY3D_RENDERER_PRIMITIVES_H
+#endif  // EASY3D_RENDERER_SHAPES_H

@@ -22,7 +22,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <easy3d/renderer/primitives.h>
+#include <easy3d/renderer/shapes.h>
 #include <easy3d/renderer/opengl_error.h>
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/shader_program.h>
@@ -34,8 +34,7 @@
 
 namespace easy3d {
 
-    namespace opengl {
-
+    namespace shapes {
 
         void draw_quad_wire(const Rect &rect, const vec4 &color, int width, int height, float depth) {
             const std::string name = "screen_space/screen_space_color";
@@ -331,7 +330,7 @@ namespace easy3d {
         }
 
 
-        void draw_quad(GLuint positionAttrib, GLuint texcoordAttrib, int x, int y, int w, int h, int vpw, int vph,
+        void draw_quad(unsigned int positionAttrib, unsigned int texcoordAttrib, int x, int y, int w, int h, int vpw, int vph,
                        float depth) {
             static GLuint vao_handle = 0;
             static int last_x = x;
@@ -404,7 +403,7 @@ namespace easy3d {
         }
 
 
-        void draw_full_screen_quad(GLuint positionAttrib, GLuint texcoordAttrib, float depth) {
+        void draw_full_screen_quad(unsigned int positionAttrib, unsigned int texcoordAttrib, float depth) {
             static GLuint vao_handle = 0;
             static float last_depth = depth;
             if (vao_handle == 0 || depth != last_depth) {
@@ -575,7 +574,7 @@ namespace easy3d {
                 std::vector<unsigned int> indices;
 
                 std::vector<vec3> points_xoy;   // xoy
-                opengl::create_circle(50, points_xoy, indices);
+                create_circle(50, points_xoy, indices);
 
                 for (auto &p : points_xoy) {
                     points.push_back(p);

@@ -33,7 +33,10 @@ namespace easy3d {
 
     class ClippingPlane;
 
-    // the default parameters used for initialization of both ui and rendering
+    /**
+     * \brief Default parameters used for initializing rendering and UI
+     * \namespace easy3d::setting
+     */
     namespace setting {
 
         // ui

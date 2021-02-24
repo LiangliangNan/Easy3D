@@ -28,7 +28,7 @@ set(${PROJECT_NAME}_HEADERS
         opengl_error.h
         opengl_info.h
         opengl_timer.h
-        primitives.h
+        shapes.h
         read_pixel.h
         buffers.h
         renderer.h
@@ -69,7 +69,7 @@ set(${PROJECT_NAME}_SOURCES
         opengl_error.cpp
         opengl_info.cpp
         opengl_timer.cpp
-        primitives.cpp
+        shapes.cpp
         read_pixel.cpp
         buffers.cpp
         renderer.cpp

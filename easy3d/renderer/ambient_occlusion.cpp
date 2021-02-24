@@ -31,7 +31,7 @@
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/framebuffer_object.h>
 #include <easy3d/renderer/opengl_error.h>
-#include <easy3d/renderer/primitives.h>
+#include <easy3d/renderer/shapes.h>
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/transform.h>
 #include <easy3d/renderer/drawable_points.h>
@@ -272,7 +272,7 @@ namespace easy3d {
         program->bind_texture("gNormal", geom_fbo_->color_texture(1), 1);		// normal
         program->bind_texture("texNoise", noise_texture_, 2); easy3d_debug_log_gl_error
 
-        opengl::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);
+        shapes::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);
         easy3d_debug_log_gl_error;
 
         program->release_texture(); easy3d_debug_log_gl_error
@@ -304,7 +304,7 @@ namespace easy3d {
 
         program->bind(); easy3d_debug_log_gl_error
         program->bind_texture("ssaoInput", ssao_fbo_->color_texture(0), 0);
-        opengl::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);
+        shapes::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);
         program->release_texture(); easy3d_debug_log_gl_error
         program->release(); easy3d_debug_log_gl_error
         ssao_fbo_->release();

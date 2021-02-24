@@ -42,7 +42,7 @@ namespace easy3d {
     class LinesDrawable;
     class TrianglesDrawable;
 
-    /// \brief Functionalities for the management of render buffers of drawables.
+    /// \brief Functions for updating render buffers.
     /// \namespace easy3d::buffers
     namespace buffers {
 
