@@ -75,6 +75,15 @@ namespace easy3d {
     template <> inline double epsilon<double>() { return 1.0e-12; }
     /// \brief Function returning \c squared epsilon for double type numbers.
     template <> inline double epsilon_sqr<double>() { return 1.0e-24; }
+
+
+    /// \brief Tests if two values are Epsilon equal
+    template<typename FT>
+    bool epsilon_equal(FT const& x, FT const& y, FT const& eps) { return std::abs(x - y) < eps; }
+
+    /// \brief Tests if two values are not Epsilon equal
+    template<typename FT>
+    bool epsilon_not_equal(FT const& x, FT const& y, FT const& eps) { return std::abs(x - y) >= eps; }
 }
 
 
