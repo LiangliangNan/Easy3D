@@ -77,53 +77,15 @@ namespace easy3d {
                 );
         }
 
-        // Code taken from assimp/matrix4x4.inl
+
         void decompose(const mat4& M, vec3& scaling, quat& rotation, vec3& translation) {
-            const mat4& _this = M;
-
-            // extract translation
-            translation.x = _this(0, 3);
-            translation.y = _this(1, 3);
-            translation.z = _this(2, 3);
-
-            // extract the rows of the matrix
-            vec3 vRows[3] = {
-                vec3(_this(0, 0), _this(1, 0), _this(2, 0)),
-                vec3(_this(0, 1), _this(1, 1), _this(2, 1)),
-                vec3(_this(0, 2), _this(1, 2), _this(2, 2))
-            };
-
-            // extract the scaling factors
-            scaling.x = vRows[0].length();
-            scaling.y = vRows[1].length();
-            scaling.z = vRows[2].length();
-
-            // and the sign of the scaling
-            if (determinant(M) < 0) {
-                scaling.x = -scaling.x;
-                scaling.y = -scaling.y;
-                scaling.z = -scaling.z;
-            }
-
-            // and remove all scaling from the matrix
-            if (scaling.x)
-                vRows[0] /= scaling.x;
-
-            if (scaling.y)
-                vRows[1] /= scaling.y;
-
-            if (scaling.z)
-                vRows[2] /= scaling.z;
-
-            // build the 3x3 rotation matrix
-            mat3 m(
-                vRows[0].x, vRows[1].x, vRows[2].x,
-                vRows[0].y, vRows[1].y, vRows[2].y,
-                vRows[0].z, vRows[1].z, vRows[2].z);
+            mat3 R;
+            decompose(M, scaling, R, translation);
 
             // and generate the rotation quaternion from it
-            rotation.set_from_rotation_matrix(m);
+            rotation.set_from_rotation_matrix(R);
         }
+
 
         // Code taken from assimp/matrix4x4.inl
         void decompose_no_scaling(const mat4& M, mat3& rotation, vec3& translation) {
@@ -138,18 +100,15 @@ namespace easy3d {
             rotation = mat3(_this);
         }
 
-        // Code taken from assimp/matrix4x4.inl
+
         void decompose_no_scaling(const mat4& M, quat& rotation, vec3& translation) {
-            const mat4& _this = M;
+            mat3 R;
+            decompose_no_scaling(M, R, translation);
 
-            // extract translation
-            translation.x = _this(0, 3);
-            translation.y = _this(1, 3);
-            translation.z = _this(2, 3);
-
-            // extract rotation
-            rotation.set_from_rotation_matrix(mat3(_this));
+            // and generate the rotation quaternion from it
+            rotation.set_from_rotation_matrix(R);
         }
+
 
         //----------------------- a more general version of decompose() -----------------------------
 
