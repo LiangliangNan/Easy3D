@@ -26,6 +26,11 @@
 #include <easy3d/gui/picker_point_cloud.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/renderer/manipulator.h>
+#include <easy3d/renderer/renderer.h>
+#include <easy3d/renderer/shader_manager.h>
+#include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/framebuffer_object.h>
+#include <easy3d/renderer/opengl_error.h>
 #include <easy3d/util/logging.h>
 
 
@@ -33,10 +38,224 @@ namespace easy3d {
 
 
     PointCloudPicker::PointCloudPicker(const Camera *cam)
-            : Picker(cam) {
-        use_gpu_if_supported_ = false;
+            : Picker(cam)
+            , program_(nullptr)
+    {
+        use_gpu_if_supported_ = true;
     }
 
+
+    PointCloud::Vertex PointCloudPicker::pick_vertex(PointCloud* model, int x, int y) {
+        auto drawable = model->renderer()->get_points_drawable("vertices");
+        if (!model || !drawable)
+            return PointCloud::Vertex();
+
+        if (use_gpu_if_supported_) {
+            std::string shader_name = "selection/selection_single_primitive";
+            if (drawable->impostor_type() == PointsDrawable::SPHERE)
+                shader_name = "selection/selection_pointcloud_single_point_as_sphere_sprite";
+
+            program_ = ShaderManager::get_program(shader_name);
+            if (!program_) {
+                std::vector<ShaderProgram::Attribute> attributes;
+                attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+                program_ = ShaderManager::create_program_from_files(shader_name, attributes);
+            }
+            if (!program_) {
+                use_gpu_if_supported_ = false;
+                LOG_N_TIMES(3, ERROR) << "shader program not available, fall back to CPU implementation. " << COUNTER;
+            }
+        }
+
+        if (use_gpu_if_supported_ && program_) {
+            switch (drawable->impostor_type()) {
+                case PointsDrawable::PLAIN:
+                    return pick_vertex_gpu_plain(model, x, y);
+                case PointsDrawable::SPHERE:
+                    return pick_vertex_gpu_sphere(model, x, y);
+                case PointsDrawable::SURFEL:
+                    LOG_N_TIMES(3, WARNING) << "picking points rendered as surfels is not implemented yet";
+                    return pick_vertex_gpu_sphere(model, x, y);
+            }
+        }
+        else // CPU with OpenMP (if supported)
+            return pick_vertex_cpu(model, x, y);
+    }
+
+
+    PointCloud::Vertex PointCloudPicker::pick_vertex_cpu(PointCloud* model, int px, int py) {
+        const std::vector<vec3>& points = model->points();
+        std::size_t num = points.size();
+
+        std::vector<char> status(num, 0);
+        std::vector<float> sqr_dist_to_near(num, FLT_MAX);
+
+        const Line3& line = picking_line(px, py);
+        const vec3& p_near = line.point();
+
+        float sqr_dist_thresh = static_cast<float>(hit_resolution_ * hit_resolution_);
+        // Get combined model-view and projection matrix
+        const mat4& MVP = camera()->modelViewProjectionMatrix();
+        // transformation introduced by manipulation
+        const mat4& MANIP = model->manipulator()->matrix();
+        const mat4& m = MVP * MANIP;
+
+#pragma omp parallel for
+        for (int i = 0; i < num; ++i) {
+            const vec3& p = points[i];
+            float x = m[0] * p.x + m[4] * p.y + m[8] * p.z + m[12];
+            float y = m[1] * p.x + m[5] * p.y + m[9] * p.z + m[13];
+            //float z = m[2] * p.x + m[6] * p.y + m[10] * p.z + m[14]; // I don't need z
+            float w = m[3] * p.x + m[7] * p.y + m[11] * p.z + m[15];
+            x /= w;
+            y /= w;
+            x = 0.5f * x + 0.5f;
+            y = 0.5f * y + 0.5f;
+            if (distance2(vec2(x, y), vec2(px, py)) < sqr_dist_thresh) {
+                status[i] = 1;
+                sqr_dist_to_near[i] = distance2(p, p_near);
+            }
+        }
+
+        int idx = -1;
+        float min_s_dist = FLT_MAX;
+        for (int i = 0; i < num; ++i) {
+            if (status[i] == 1 && sqr_dist_to_near[i] < min_s_dist) {
+                min_s_dist = sqr_dist_to_near[i];
+                idx = i;
+            }
+        }
+
+        return PointCloud::Vertex(idx);
+    }
+
+
+    PointCloud::Vertex PointCloudPicker::pick_vertex_gpu_plain(PointCloud *model, int x, int y) {
+        auto drawable = model->renderer()->get_points_drawable("vertices");
+        if (!drawable) {
+            LOG_N_TIMES(3, WARNING) << "drawable 'vertices' does not exist. " << COUNTER;
+            return PointCloud::Vertex();
+        }
+
+        int viewport[4];
+        glGetIntegerv(GL_VIEWPORT, viewport);
+        int width = viewport[2];
+        int height = viewport[3];
+        setup_framebuffer(width, height);
+
+        //--------------------------------------------------------------------------
+        // render the 'scene' to the new FBO.
+
+        // TODO: the performance can be improved. Since the 'scene' is static, we need to render it to the fbo only
+        //       once. Then just query. Re-rendering is needed only when the scene is changed/manipulated, or the size
+        //       of the viewer changed.
+
+        // Bind the offscreen fbo for drawing
+        fbo_->bind(); easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
+
+        float color[4];
+        glGetFloatv(GL_COLOR_CLEAR_VALUE, color);
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);	easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
+
+        program_->bind();
+        program_->set_uniform("MVP", camera()->modelViewProjectionMatrix())
+                ->set_uniform("MANIP", model->manipulator()->matrix());
+        drawable->gl_draw();
+        program_->release();
+
+        // --- Maybe this is not necessary ---------
+        glFlush();
+        glFinish();
+        // -----------------------------------------
+
+        int gl_x, gl_y;
+        screen_to_opengl(x, y, gl_x, gl_y, width, height);
+
+        unsigned char c[4];
+        fbo_->read_color(c, gl_x, gl_y);
+
+        // switch back to the previous fbo
+        fbo_->release(); easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
+
+        // restore the clear color
+        glClearColor(color[0], color[1], color[2], color[3]);
+
+        //--------------------------------------------------------------------------
+
+        // Convert the color back to an integer ID
+        int id = rgb::rgba(c[0], c[1], c[2], c[3]);
+        return PointCloud::Vertex(id);
+    }
+
+
+    PointCloud::Vertex PointCloudPicker::pick_vertex_gpu_sphere(PointCloud *model, int x, int y) {
+        auto drawable = model->renderer()->get_points_drawable("vertices");
+        if (!drawable) {
+            LOG_N_TIMES(3, WARNING) << "drawable 'vertices' does not exist. " << COUNTER;
+            return PointCloud::Vertex();
+        }
+
+        int viewport[4];
+        glGetIntegerv(GL_VIEWPORT, viewport);
+        int width = viewport[2];
+        int height = viewport[3];
+        setup_framebuffer(width, height);
+
+        //--------------------------------------------------------------------------
+        // render the 'scene' to the new FBO.
+
+        // TODO: the performance can be improved. Since the 'scene' is static, we need to render it to the fbo only
+        //       once. Then just query. Re-rendering is needed only when the scene is changed/manipulated, or the size
+        //       of the viewer changed.
+
+        glEnable(GL_PROGRAM_POINT_SIZE); // before OpenGL3.2, use GL_VERTEX_PROGRAM_POINT_SIZE
+
+        // Bind the offscreen fbo for drawing
+        fbo_->bind(); easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
+
+        float color[4];
+        glGetFloatv(GL_COLOR_CLEAR_VALUE, color);
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);	easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
+
+        program_->bind();
+        program_->set_uniform("perspective", camera()->type() == Camera::PERSPECTIVE);
+        program_->set_uniform("MV", camera_->modelViewMatrix());easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
+        program_->set_uniform("PROJ", camera_->projectionMatrix());
+        program_->set_uniform("MANIP", model->manipulator()->matrix());
+        float ratio = camera_->pixelGLRatio(camera_->pivotPoint());
+        program_->set_uniform("sphere_radius", drawable->point_size() * ratio * 0.5f);  // 0.5f from size -> radius
+        program_->set_uniform("screen_width", width);easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
+        drawable->gl_draw();easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
+        program_->release();easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
+
+        // --- Maybe this is not necessary ---------
+        glFlush();
+        glFinish();
+        // -----------------------------------------
+
+        int gl_x, gl_y;
+        screen_to_opengl(x, y, gl_x, gl_y, width, height);
+
+        unsigned char c[4];
+        fbo_->read_color(c, gl_x, gl_y);easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
+
+        // switch back to the previous fbo
+        fbo_->release(); easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
+
+        glEnable(GL_PROGRAM_POINT_SIZE); // before OpenGL3.2, use GL_VERTEX_PROGRAM_POINT_SIZE
+
+        // restore the clear color
+        glClearColor(color[0], color[1], color[2], color[3]);
+
+        //--------------------------------------------------------------------------
+
+        // Convert the color back to an integer ID
+        int id = rgb::rgba(c[0], c[1], c[2], c[3]);
+        return PointCloud::Vertex(id);
+    }
+    
 
     void PointCloudPicker::pick_vertices(PointCloud *model, const Rect& rect, bool deselect) {
         if (!model)

@@ -27,11 +27,12 @@
 
 
 #include <easy3d/gui/picker.h>
+#include <easy3d/core/point_cloud.h>
 
 
 namespace easy3d {
 
-    class PointCloud;
+    class ShaderProgram;
 
     /**
      * \brief Implementation of picking points from a point cloud.
@@ -41,6 +42,19 @@ namespace easy3d {
     class PointCloudPicker : public Picker {
     public:
         PointCloudPicker(const Camera *cam);
+
+        //------------------ sensitivity (only for CPU implementation of picking a single point)
+
+        int resolution() const { return hit_resolution_; }
+        void set_resolution(int r) { hit_resolution_ = r; }
+
+        /**
+         * @brief Pick vertex at a given screen location. The selected vertex will be marked in vertex property
+         * "v:select".
+         * @param (x, y) The screen point.
+         * @param deselect True to perform an inverse operation.
+         */
+        PointCloud::Vertex pick_vertex(PointCloud *model, int x, int y);
 
         /**
          * @brief Pick vertices of a point cloud by a rectangle. The selected vertices will be marked in vertex property
@@ -57,6 +71,20 @@ namespace easy3d {
          * @param deselect True to perform an inverse operation.
          */
         void pick_vertices(PointCloud *model, const Polygon2 &plg, bool deselect);
+
+    private:
+        // pick implemented in CPU (with OpenMP if supported)
+        PointCloud::Vertex pick_vertex_cpu(PointCloud *model, int x, int y);
+
+        // pick plain points implemented in GPU (using shader program)
+        PointCloud::Vertex pick_vertex_gpu_plain(PointCloud *model, int x, int y);
+
+        // pick sphere points implemented in GPU (using shader program)
+        PointCloud::Vertex pick_vertex_gpu_sphere(PointCloud *model, int x, int y);
+
+    private:
+        unsigned int hit_resolution_;     // in pixels
+        ShaderProgram*	 program_;
     };
 
 }
