@@ -364,7 +364,7 @@ namespace easy3d {
         static thisclass random_quat();
 
         //data intentionally left public to allow q.x ...
-    private:
+    public:
         /* The internal data representation is private, use operator[] to access values. */
         union {
             struct { FT x; FT y; FT z; FT w; };
