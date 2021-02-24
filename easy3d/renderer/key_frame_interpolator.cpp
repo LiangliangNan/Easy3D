@@ -274,8 +274,8 @@ namespace easy3d {
             for (std::size_t i = 0; i < keyframes_.size(); ++i) {
                 std::vector<vec3> cam_points;
                 std::vector<unsigned int> cam_indices;
-                opengl::prepare_camera(cam_points, cam_indices, camera_width, camera->fieldOfView(),
-                                       static_cast<float>(camera->screenHeight()) / camera->screenWidth());
+                opengl::create_camera(cam_points, cam_indices, camera_width, camera->fieldOfView(),
+                                      static_cast<float>(camera->screenHeight()) / camera->screenWidth());
                 unsigned int offset = points.size();
                 for (auto id : cam_indices)
                     indices.push_back(offset + id);

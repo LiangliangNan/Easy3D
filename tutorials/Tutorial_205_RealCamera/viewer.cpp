@@ -147,7 +147,7 @@ void RealCamera::update_cameras_drawable()
         Camera c;
         KRT_to_camera(i, &c);
         std::vector<vec3> points;
-        opengl::prepare_camera(points, c.sceneRadius() * 0.03f, c.fieldOfView(), static_cast<float>(views_[i].h)/views_[i].w);
+        opengl::create_camera(points, c.sceneRadius() * 0.03f, c.fieldOfView(), static_cast<float>(views_[i].h)/views_[i].w);
         const mat4& m = c.frame()->worldMatrix();
         for (auto& p : points)
             vertices.push_back(m * p);

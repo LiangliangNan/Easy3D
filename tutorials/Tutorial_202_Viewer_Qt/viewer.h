@@ -28,13 +28,12 @@
 #include <easy3d/core/types.h>
 
 #include <QOpenGLWidget>
-
+#include <QElapsedTimer>
 
 namespace easy3d {
     class Camera;
     class Model;
     class TrianglesDrawable;
-    class OpenGLTimer;
     class TextRenderer;
 }
 
@@ -186,8 +185,7 @@ protected:
     double  dpi_scaling_;
     int     samples_;
 
-    easy3d::OpenGLTimer* gpu_timer_;
-    double gpu_time_;
+    QElapsedTimer timer_;
     easy3d::TextRenderer* texter_;
 
     easy3d::Camera*	camera_;

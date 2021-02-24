@@ -153,6 +153,6 @@ void CompositeView::update_grid() {
     int x_steps = width() * 0.5f / grid_size_;
     int y_steps = height() * 0.5f / grid_size_;
     std::vector<vec3> points;
-    opengl::prepare_grid(x_steps, y_steps, points, 0.99f, grid_size_ * dpi_scaling());
+    opengl::create_grid(x_steps, y_steps, points, 0.99f, grid_size_ * dpi_scaling());
     grid_->update_vertex_buffer(points);
 }

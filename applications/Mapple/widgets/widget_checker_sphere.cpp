@@ -155,7 +155,7 @@ void WidgetCheckerSphere::createSpheres() {
     const vec3 color2(1, 1, 1);
 
     std::vector<vec3> vertices, normals, colors;
-	opengl::prepare_checker_sphere(center, radius, slices, stacks, checker_size, color1, color2, vertices, normals, colors);
+	opengl::create_checker_sphere(center, radius, slices, stacks, checker_size, color1, color2, vertices, normals, colors);
 
     checkerSphere_ = new TrianglesDrawable("checker_sphere");
     checkerSphere_->update_vertex_buffer(vertices);
@@ -166,7 +166,7 @@ void WidgetCheckerSphere::createSpheres() {
     vertices.clear();
     normals.clear();
     colors.clear();
-    opengl::prepare_sphere(vec3(0, 0, 0), 0.1, 10, 10, vec3(1, 0, 0), vertices, normals, colors);
+    opengl::create_sphere(vec3(0, 0, 0), 0.1, 10, 10, vec3(1, 0, 0), vertices, normals, colors);
     lightSphere_ = new TrianglesDrawable("light");
     lightSphere_->update_vertex_buffer(vertices);
     lightSphere_->update_normal_buffer(normals);

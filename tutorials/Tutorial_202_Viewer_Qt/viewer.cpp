@@ -66,7 +66,7 @@ using namespace easy3d;
 
 
 ViewerQt::ViewerQt(QWidget *parent /* = nullptr*/)
-        : QOpenGLWidget(parent), func_(nullptr), gpu_timer_(nullptr), texter_(nullptr), pressed_button_(Qt::NoButton),
+        : QOpenGLWidget(parent), func_(nullptr), texter_(nullptr), pressed_button_(Qt::NoButton),
           mouse_pressed_pos_(0, 0), mouse_previous_pos_(0, 0), show_pivot_point_(false), drawable_axes_(nullptr),
           model_idx_(-1) {
     // like Qt::StrongFocus plus the widget accepts focus by using the mouse wheel.
@@ -97,7 +97,6 @@ ViewerQt::~ViewerQt() {
 void ViewerQt::cleanup() {
     delete camera_;
     delete drawable_axes_;
-    delete gpu_timer_;
     delete texter_;
 
     for (auto m : models_) {
@@ -167,6 +166,7 @@ void ViewerQt::initializeGL() {
 #else
     dpi_scaling_ = devicePixelRatio();
 #endif
+    VLOG(1) << "DPI scaling: " << dpi_scaling();
 
     // This won't work because QOpenGLWidget draws everything in framebuffer and
     // the framebuffer has not been created in the initializeGL() method. We
@@ -179,14 +179,13 @@ void ViewerQt::initializeGL() {
     texter_->add_font(resource::directory() + "/fonts/en_Earth-Normal.ttf");
     texter_->add_font(resource::directory() + "/fonts/en_Roboto-Medium.ttf");
 
-    // create a GPU timer
-    gpu_timer_ = new OpenGLTimer(false);
-
     // Calls user defined method.
     init();
 
     // print usage
     std::cout << usage() << std::endl;
+
+    timer_.start();
 }
 
 
@@ -820,10 +819,7 @@ void ViewerQt::paintGL() {
 
     preDraw();
 
-    gpu_timer_->start();
     draw();
-    gpu_timer_->stop();
-    gpu_time_ = gpu_timer_->time();
 
     // Add visual hints: axis, camera, grid...
     postDraw();
@@ -847,16 +843,16 @@ void ViewerQt::drawCornerAxes() {
         const float base = 0.5f;   // the cylinder length, relative to the allowed region
         const float head = 0.2f;   // the cone length, relative to the allowed region
         std::vector<vec3> points, normals, colors;
-        opengl::prepare_cylinder(0.03, 10, vec3(0, 0, 0), vec3(base, 0, 0), vec3(1, 0, 0), points, normals, colors);
-        opengl::prepare_cylinder(0.03, 10, vec3(0, 0, 0), vec3(0, base, 0), vec3(0, 1, 0), points, normals, colors);
-        opengl::prepare_cylinder(0.03, 10, vec3(0, 0, 0), vec3(0, 0, base), vec3(0, 0, 1), points, normals, colors);
-        opengl::prepare_cone(0.06, 20, vec3(base, 0, 0), vec3(base + head, 0, 0), vec3(1, 0, 0), points, normals,
+        opengl::create_cylinder(0.03, 10, vec3(0, 0, 0), vec3(base, 0, 0), vec3(1, 0, 0), points, normals, colors);
+        opengl::create_cylinder(0.03, 10, vec3(0, 0, 0), vec3(0, base, 0), vec3(0, 1, 0), points, normals, colors);
+        opengl::create_cylinder(0.03, 10, vec3(0, 0, 0), vec3(0, 0, base), vec3(0, 0, 1), points, normals, colors);
+        opengl::create_cone(0.06, 20, vec3(base, 0, 0), vec3(base + head, 0, 0), vec3(1, 0, 0), points, normals,
                              colors);
-        opengl::prepare_cone(0.06, 20, vec3(0, base, 0), vec3(0, base + head, 0), vec3(0, 1, 0), points, normals,
+        opengl::create_cone(0.06, 20, vec3(0, base, 0), vec3(0, base + head, 0), vec3(0, 1, 0), points, normals,
                              colors);
-        opengl::prepare_cone(0.06, 20, vec3(0, 0, base), vec3(0, 0, base + head), vec3(0, 0, 1), points, normals,
+        opengl::create_cone(0.06, 20, vec3(0, 0, base), vec3(0, 0, base + head), vec3(0, 0, 1), points, normals,
                              colors);
-        opengl::prepare_sphere(vec3(0, 0, 0), 0.06, 20, 20, vec3(0, 1, 1), points, normals, colors);
+        opengl::create_sphere(vec3(0, 0, 0), 0.06, 20, 20, vec3(0, 1, 1), points, normals, colors);
         drawable_axes_ = new TrianglesDrawable("corner_axes");
         drawable_axes_->update_vertex_buffer(points);
         drawable_axes_->update_normal_buffer(normals);
@@ -924,10 +920,17 @@ void ViewerQt::postDraw() {
         const float offset = 20.0f * dpi_scaling();
         texter_->draw("Easy3D", offset, offset, font_size, 0);
 
-        // the rendering time
-        char buffer[48];
-        sprintf(buffer, "Rendering (ms/frame): %4.1f", gpu_time_);
-        texter_->draw(buffer, offset, 50.0f * dpi_scaling(), 16, 1);
+        // FPS computation
+        static unsigned int fps_count = 0;
+        static double fps = 0.0;
+        static const unsigned int max_count = 40;
+        static QString fps_string("fps: ??");
+        if (++fps_count == max_count) {
+            fps = 1000.0 * max_count / timer_.restart();
+            fps_string = tr("fps: %1").arg(fps, 0, 'f', ((fps < 10.0) ? 1 : 0));
+            fps_count = 0;
+        }
+        texter_->draw(fps_string.toStdString(), offset, 50.0f * dpi_scaling(), 16, 1);
     }
 
     if (show_pivot_point_) {
