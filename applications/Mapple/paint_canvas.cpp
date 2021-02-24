@@ -388,6 +388,48 @@ void PaintCanvas::mouseReleaseEvent(QMouseEvent *e) {
 }
 
 
+namespace details {
+    template<typename MODEL>
+    std::string get_vertex_scalar_property(MODEL *model, typename MODEL::Vertex v, const std::string &name) {
+        auto prop_float = model->template get_vertex_property<float>(name);
+        if (prop_float) return std::to_string(prop_float[v]);
+        auto prop_double = model->template get_vertex_property<double>(name);
+        if (prop_double) return std::to_string(prop_double[v]);
+        auto prop_int = model->template get_vertex_property<int>(name);
+        if (prop_int) return std::to_string(prop_int[v]);
+        auto prop_uint = model->template get_vertex_property<unsigned int>(name);
+        if (prop_uint) return std::to_string(prop_uint[v]);
+        auto prop_char = model->template get_vertex_property<char>(name);
+        if (prop_char) return std::to_string(prop_char[v]);
+        auto prop_uchar = model->template get_vertex_property<unsigned char>(name);
+        if (prop_uchar) return std::to_string(prop_uchar[v]);
+        auto prop_bool = model->template get_vertex_property<bool>(name);
+        if (prop_bool) return std::to_string(prop_bool[v]);
+        return "";
+    }
+
+
+    template<typename MODEL>
+    std::string get_face_scalar_property(MODEL *model, typename MODEL::Face f, const std::string &name) {
+        auto prop_float = model->template get_face_property<float>(name);
+        if (prop_float) return std::to_string(prop_float[f]);
+        auto prop_double = model->template get_face_property<double>(name);
+        if (prop_double) return std::to_string(prop_double[f]);
+        auto prop_int = model->template get_face_property<int>(name);
+        if (prop_int) return std::to_string(prop_int[f]);
+        auto prop_uint = model->template get_face_property<unsigned int>(name);
+        if (prop_uint) return std::to_string(prop_uint[f]);
+        auto prop_char = model->template get_face_property<char>(name);
+        if (prop_char) return std::to_string(prop_char[f]);
+        auto prop_uchar = model->template get_face_property<unsigned char>(name);
+        if (prop_uchar) return std::to_string(prop_uchar[f]);
+        auto prop_bool = model->template get_face_property<bool>(name);
+        if (prop_bool) return std::to_string(prop_bool[f]);
+        return "";
+    }
+}
+
+
 void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
     int x = e->pos().x(), y = e->pos().y();
     if (x < 0 || x > width() || y < 0 || y > height() || walkThrough()->interpolator()->is_interpolation_started()) {
@@ -457,10 +499,14 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
             picked_face_index_ = surface_mesh_picker_->pick_face(mesh, e->pos().x(), e->pos().y()).idx();
             doneCurrent();
 
+            auto drawable = mesh->renderer()->get_triangles_drawable("faces");
             if (!show_labels_under_mouse_ && picked_face_index_ >= 0) { // highlight the face
-                auto drawable = mesh->renderer()->get_triangles_drawable("faces");
                 drawable->set_highlight(true);
                 drawable->set_highlight_range({picked_face_index_, picked_face_index_});
+            }
+            else {
+                drawable->set_highlight(false);
+                drawable->set_highlight_range({-1, -1});
             }
         }
 
@@ -474,19 +520,26 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
             doneCurrent();
 
             auto drawable = cloud->renderer()->get_points_drawable("vertices");
-            drawable->set_highlight(true);
-            drawable->set_highlight_range({picked_vertex.idx(), picked_vertex.idx()});
+            if (picked_vertex.is_valid()) {
+                drawable->set_highlight(true);
+                drawable->set_highlight_range({picked_vertex.idx(), picked_vertex.idx()});
+            }
+            else {
+                drawable->set_highlight(false);
+                drawable->set_highlight_range({-1, -1});
+            }
         }
+
 
         if (show_property_under_mouse_) {
             if (picked_vertex.is_valid()) { // point cloud vertex
                 auto drawable = currentModel()->renderer()->get_points_drawable("vertices");
                 if (drawable->coloring_method() == easy3d::State::SCALAR_FIELD) {
                     const std::string& name = drawable->property_name();
-                    auto prop = cloud->get_vertex_property<float>(name);
-                    if (prop) {
+                    const std::string value_str = details::get_vertex_scalar_property(cloud, picked_vertex, name);
+                    if (!value_str.empty()) {
                         std::stringstream stream;
-                        stream << "'" << name << "' on " << picked_vertex << ": " << prop[picked_vertex];
+                        stream << "'" << name << "' on " << picked_vertex << ": " << value_str;
                         window_->statusBar()->showMessage(QString::fromStdString(stream.str()), 2000);
                     }
                 }
@@ -495,11 +548,11 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
                 auto drawable = currentModel()->renderer()->get_triangles_drawable("faces");
                 if (drawable->coloring_method() == easy3d::State::SCALAR_FIELD && drawable->property_location() == easy3d::State::FACE) {
                     const std::string& name = drawable->property_name();
-                    auto prop = mesh->get_face_property<float>(name);
-                    if (prop) {
-                        auto face = SurfaceMesh::Face(picked_face_index_);
+                    auto face = SurfaceMesh::Face(picked_face_index_);
+                    const std::string value_str = details::get_face_scalar_property(mesh, face, name);
+                    if (!value_str.empty()) {
                         std::stringstream stream;
-                        stream << "'" << name << "' on " << face << ": " << prop[face];
+                        stream << "'" << name << "' on " << face << ": " << value_str;
                         window_->statusBar()->showMessage(QString::fromStdString(stream.str()), 2000);
                     }
                 }
@@ -1667,12 +1720,46 @@ void PaintCanvas::restoreState(std::istream& input) {
 
 void PaintCanvas::showPrimitiveIDUnderMouse(bool b) {
     show_labels_under_mouse_ = b;
+
+    picked_face_index_ = -1;
+
+    auto mesh = dynamic_cast<SurfaceMesh *>(currentModel());
+    if (mesh) {
+        auto drawable = mesh->renderer()->get_triangles_drawable("faces");
+        drawable->set_highlight(b);
+        drawable->set_highlight_range({-1, -1});
+    }
+
+    auto cloud = dynamic_cast<PointCloud *>(currentModel());
+    if (cloud) {
+        auto drawable = cloud->renderer()->get_points_drawable("vertices");
+        drawable->set_highlight(b);
+        drawable->set_highlight_range({-1, -1});
+    }
+
     update();
 }
 
 
 void PaintCanvas::showPrimitivePropertyUnderMouse(bool b) {
     show_property_under_mouse_ = b;
+
+    picked_face_index_ = -1;
+
+    auto mesh = dynamic_cast<SurfaceMesh *>(currentModel());
+    if (mesh) {
+        auto drawable = mesh->renderer()->get_triangles_drawable("faces");
+        drawable->set_highlight(b);
+        drawable->set_highlight_range({-1, -1});
+    }
+
+    auto cloud = dynamic_cast<PointCloud *>(currentModel());
+    if (cloud) {
+        auto drawable = cloud->renderer()->get_points_drawable("vertices");
+        drawable->set_highlight(b);
+        drawable->set_highlight_range({-1, -1});
+    }
+
     update();
 }
 
