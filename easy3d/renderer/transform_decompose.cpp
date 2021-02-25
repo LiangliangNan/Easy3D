@@ -150,10 +150,9 @@ namespace easy3d {
                 return false;
 
             // First, isolate perspective.  This is the messiest.
-            if(
-                    epsilon_not_equal(LocalMatrix(3, 0), static_cast<T>(0), epsilon<T>()) ||
-                    epsilon_not_equal(LocalMatrix(3, 1), static_cast<T>(0), epsilon<T>()) ||
-                    epsilon_not_equal(LocalMatrix(3, 2), static_cast<T>(0), epsilon<T>()))
+            if (epsilon_not_equal(LocalMatrix(3, 0), static_cast<T>(0), epsilon<T>()) ||
+                epsilon_not_equal(LocalMatrix(3, 1), static_cast<T>(0), epsilon<T>()) ||
+                epsilon_not_equal(LocalMatrix(3, 2), static_cast<T>(0), epsilon<T>()))
             {
                 // rightHandSide is the right hand side of the equation.
                 vec4 RightHandSide;
@@ -235,13 +234,11 @@ namespace easy3d {
             }
 
             // Now, get the rotations out, as described in the gem.
-
             // FIXME - Add the ability to return either quaternions (which are
             // easier to recompose with) or Euler angles (rx, ry, rz), which
             // are easier for authors to deal with. The latter will only be useful
             // when we fix https://bugs.webkit.org/show_bug.cgi?id=23799, so I
             // will leave the Euler angle code here for now.
-
             // ret.rotateY = asin(-Row[0][2]);
             // if (cos(ret.rotateY) != 0) {
             //     ret.rotateX = atan2(Row[1][2], Row[2][2]);
@@ -250,6 +247,14 @@ namespace easy3d {
             //     ret.rotateX = atan2(-Row[2][0], Row[1][1]);
             //     ret.rotateZ = 0;
             // }
+#if 0
+            // build the 3x3 rotation matrix
+            mat3 R(Row[0].x, Row[0].y, Row[0].z,
+                   Row[1].x, Row[1].y, Row[1].z,
+                   Row[2].x, Row[2].y, Row[2].z);
+            Orientation.set_from_rotation_matrix(R);
+
+#else       // the result is the same as above
 
             int i, j, k = 0;
             T root, trace = Row[0].x + Row[1].y + Row[2].z;
@@ -279,7 +284,7 @@ namespace easy3d {
                 Orientation[k] = root * (Row[i][k] + Row[k][i]);
                 Orientation[3] = root * (Row[j][k] - Row[k][j]);    // w
             } // End if <= 0
-
+#endif
             return true;
         }
 
