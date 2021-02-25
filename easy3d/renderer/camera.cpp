@@ -1010,6 +1010,10 @@ namespace easy3d {
         // http://ksimek.github.io/2013/06/18/calibrated-cameras-and-gluperspective/
         // https://github.com/opencv/opencv/blob/82f8176b0634c5d744d1a45246244291d895b2d1/modules/calib3d/src/calibration.cpp#L1820
         const float proj11 = 2.0f * fy / img_height; // proj[1][1]
+
+        // Liangliang: if replacing (2.0f * cy) by image height, the result is the same as in the method below.
+        // const float proj11 = 2.0f * fy / (2.0f * cy); // proj[1][1]
+
         const float fov = 2.0f * std::atan(1.0f / proj11);
         setFieldOfView(fov);
 
