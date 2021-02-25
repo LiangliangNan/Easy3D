@@ -2100,10 +2100,10 @@ namespace easy3d {
     template <typename T>
     inline Mat4<T> Mat4<T>::scale(const Vec<4, T>& s) {
         return Mat4<T>(
-            s(0), T(0), T(0), T(0),
-            T(0), s(1), T(0), T(0),
-            T(0), T(0), s(2), T(0),
-            T(0), T(0), T(0), s(3)
+            s.x,  T(0), T(0), T(0),
+            T(0), s.y,  T(0), T(0),
+            T(0), T(0), s.z,  T(0),
+            T(0), T(0), T(0), s.w
             );
     }
 
