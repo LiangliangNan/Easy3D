@@ -1248,6 +1248,11 @@ namespace easy3d {
 			tmp = frame->inverseCoordinatesOf(src);
 
 		const mat4& mvp = modelViewProjectionMatrix();
+
+		// todo: dpi_scaling is not handled.
+		//       should use the actual viewpoint size; or multiply the dpi scaling factor
+		// int viewport[4];
+		// glGetIntegerv(GL_VIEWPORT, viewport);
 		const int viewport[] = { 0, 0, screenWidth_, screenHeight_ };
 		vec3 vs = mvp * tmp * 0.5f + vec3(0.5f);
 		vs.x = vs.x * viewport[2] + viewport[0];
