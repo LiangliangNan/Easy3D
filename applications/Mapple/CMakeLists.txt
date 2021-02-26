@@ -124,7 +124,8 @@ set(${PROJECT_NAME}_FORMS
         )
 
 set(${PROJECT_NAME}_RESOURCES
-        mapple.qrc
+        resources/Mapple.qrc
+        resources/Mapple.rc
         )
 
 include(../../cmake/FindFFMPEG.cmake)
