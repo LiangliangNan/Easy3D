@@ -18,7 +18,7 @@ NOTE: There are usually many options to set up a development environment on each
      
        `sudo apt-get update`
      
-       `sudo apt-get install build-essential manpages-dev`
+       `sudo apt-get install build-essential cmake-gui xorg-dev libglu1-mesa-dev mesa-utils`
 
 **Step #2. Build the software.** Choose **ONE** of the following (or whatever you are familiar with):
 
