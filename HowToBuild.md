@@ -10,16 +10,19 @@ NOTE: There are usually many options to set up a development environment on each
  - For Mac users, install XCode from the Apple's App Store.
 
  - For Linux users, install C/C++ compiler and related tools through a few commands
-     - If you are using Fedora, Red Hat, CentOS, or Scientific Linux, etc., use the following yum command:
+     - If you are using Fedora, RedHat, CentOS, or Scientific Linux, etc., use the following yum command:
      
-       `yum groupinstall 'Development Tools'`
+       `sudo yum groupinstall 'Development Tools'`
        
-     - If you are using Debian, Ubuntu, and their variants, run the following `apt-get` commands one by one:
+     - If you are using Debian, Ubuntu, and their variants such as Mint, run the following `apt-get` commands one by one:
      
        `sudo apt-get update`
      
-       `sudo apt-get install build-essential cmake-gui xorg-dev libglu1-mesa-dev mesa-utils`
-
+       `sudo apt-get install build-essential cmake-gui libxmu-dev libxi-dev libgl-dev`
+       
+     - If you are using FreeBSD, run the following `pkg install` command:
+        `pkg install xorg lang/gcc git cmake gmake bash python perl5`
+       
 **Step #2. Build the software.** Choose **ONE** of the following (or whatever you are familiar with):
 
  - Option 1: Use any IDE that can directly handle CMakeLists files to open the `CMakeLists.txt` in the root directory of the software. Then you should have obtained a usable project and just build. I recommend using [CLion](https://www.jetbrains.com/clion/) or [QtCreator](https://www.qt.io/product).
