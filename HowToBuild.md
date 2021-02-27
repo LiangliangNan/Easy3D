@@ -11,17 +11,14 @@ NOTE: There are usually many options to set up a development environment on each
 
  - For Linux users, install C/C++ compiler and related tools through a few commands
      - If you are using Fedora, RedHat, CentOS, or Scientific Linux, etc., use the following yum command:
-     
-       `sudo yum groupinstall 'Development Tools'`
+       - `sudo yum groupinstall 'Development Tools'`
        
      - If you are using Debian, Ubuntu, and their variants such as Mint, run the following `apt-get` commands one by one:
-     
-       `sudo apt-get update`
-     
-       `sudo apt-get install build-essential cmake-gui libxmu-dev libxi-dev libgl-dev`
+       - `sudo apt-get update`
+       - `sudo apt-get install build-essential cmake-gui libxmu-dev libxi-dev libgl-dev`
        
      - If you are using FreeBSD, run the following `pkg install` command:
-        `pkg install xorg lang/gcc git cmake gmake bash python perl5`
+       - `pkg install xorg lang/gcc git cmake gmake bash python perl5`
        
 **Step #2. Build the software.** Choose **ONE** of the following (or whatever you are familiar with):
 
