@@ -46,7 +46,7 @@ namespace easy3d {
 
         int current_faces = mesh->n_faces();
         if (current_faces < orig_faces)
-            LOG(INFO) << orig_faces << " faces merged into " << current_faces << std::endl;
+            LOG(INFO) << orig_faces << " faces merged into " << current_faces;
     }
 
 
