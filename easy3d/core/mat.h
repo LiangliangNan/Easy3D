@@ -1319,6 +1319,22 @@ namespace easy3d {
 
     /*----------------------------------------------------------------------------*/
 
+    /** \brief Convert a N-dimensional vector into a N by 1 matrix. */
+    template<size_t N, typename FT>
+    Mat<N, 1, FT> to_matrix(const Vec<N, FT>& v) {
+        return Mat<N, 1, FT>(v.data());
+    }
+
+
+    /**	\brief Construct a 1 by N matrix from a N-dimensional vector. */
+    template<size_t N, typename FT>
+    Mat<1, N, FT> transpose(const Vec<N, FT>& v) {
+        return Mat<1, N, FT>(v.data());
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    /**	\brief Test if a matrix has NaN entry. */
     template <size_t N, size_t M, typename T>
     inline bool has_nan(const Mat<N, M, T>& m) {
         for (int i = 0; i < N; i++) {
