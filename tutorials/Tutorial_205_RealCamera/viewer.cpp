@@ -156,13 +156,9 @@ void RealCamera::update_cameras_drawable()
 }
 
 
-void RealCamera::draw() const {
-    Viewer::draw();
-    draw_image();
-}
+void RealCamera::post_draw() {
+    Viewer::post_draw();
 
-
-void RealCamera::draw_image() const {
     if (texture_ == nullptr)
         return;
 

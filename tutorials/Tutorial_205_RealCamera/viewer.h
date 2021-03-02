@@ -48,8 +48,6 @@ public:
 protected:
     bool key_press_event(int key, int modifiers) override;
 
-    void draw() const override;
-
     std::string usage() const override ;
     
 private:
@@ -70,9 +68,9 @@ private:
     
     void update_cameras_drawable();
 
-    void draw_image() const;
-
     void load_image();
+
+    void post_draw() override;
 
 private:
     easy3d::Texture* texture_;
