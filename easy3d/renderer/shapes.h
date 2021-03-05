@@ -275,6 +275,53 @@ namespace easy3d {
         void create_camera(std::vector<vec3> &points, std::vector<unsigned int> &indices, float width, float fov,
                            float hw_ratio = 0.6f);
         // @}
+
+
+        // create an image plane (useful for rendering images in 3D using camera extrinsic parameters)
+        //void create_image_plane(const easy3d::mat3 &R, const easy3d::vec3 &t) {
+        //    const float camera_width = camera()->sceneRadius() * 0.2;
+        //    const float fov = camera()->fieldOfView();
+        //    const float hw_ratio = static_cast<float>(height()) / width();
+        //    const float halfWidth = camera_width * 0.5f;
+        //    const float halfHeight = halfWidth * hw_ratio;
+        //    const float dist = halfHeight / tan(fov * 0.5);
+        //
+        //    const vec3 c(0.0f, 0.0f, 0.0f);  // camera center
+        //    const vec3 p0(-halfWidth, -halfHeight, -dist);
+        //    const vec3 p1(halfWidth, -halfHeight, -dist);
+        //    const vec3 p2(halfWidth, halfHeight, -dist);
+        //    const vec3 p3(-halfWidth, halfHeight, -dist);
+        //
+        //    std::vector<vec3> cam_points;
+        //    std::vector<vec2> tex_coords;
+        //    cam_points.push_back(p0);   tex_coords.emplace_back(vec2(0, 0));
+        //    cam_points.push_back(p1);   tex_coords.emplace_back(vec2(1, 0));
+        //    cam_points.push_back(p2);   tex_coords.emplace_back(vec2(1, 1));
+        //    cam_points.push_back(p3);   tex_coords.emplace_back(vec2(0, 1));
+        //
+        //    Box3 box = current_model()->bounding_box();
+        //    for (auto &p : cam_points) {
+        //        p = camera()->worldCoordinatesOf(p);
+        //        box.add_point(p);
+        //    }
+        //    box.add_point(camera()->position());
+        //    camera()->setSceneBoundingBox(box);
+        //
+        //    TrianglesDrawable *image_plane = new TrianglesDrawable("image_plane");
+        //    image_plane->update_vertex_buffer(cam_points);
+        //    image_plane->update_texcoord_buffer(tex_coords);
+        //    image_plane->update_index_buffer({0, 2, 1, 0, 3, 2});
+        //
+        //    if (!texture_1_)
+        //        texture_1_ = Texture::create(resource::directory() + "/data/image_1.png");
+        //
+        //    if (texture_1_) {
+        //        image_plane->set_texture(texture_1_);
+        //        image_plane->set_use_texture(true);
+        //    }
+        //
+        //    add_drawable(image_plane);
+        //}
     }
 
 }
