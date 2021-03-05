@@ -1019,7 +1019,7 @@ namespace easy3d {
         setFieldOfView(fov);
 
 #else
-        
+
         /**-------------------------------------------------------------------
          * It took me quite a while to figure out this.
          * The OpengGL projection and modelview matrices can be computed as follows.
