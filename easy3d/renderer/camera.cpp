@@ -992,8 +992,12 @@ namespace easy3d {
     void Camera::set_from_calibration(float fx, float fy, float skew, float cx, float cy,
                                       const mat3 &R, const vec3 &t, bool convert)
     {
-#if 0   // The two methods give the same results, both assuming that image_height = (2.0 * cy).
-	    // It might be more accurate to use the known image height.
+        // The two methods give the same results, both assuming that image_height equals to (2.0 * cy).
+        // This is not accurate and the error seems mainly due to the inaccuracy in cy (because from calibration, cy
+        // may not be exactly at the image center).
+        // Suggestion: use the image height (usually known in practice) to compute the field of view.
+
+#if 0
 
         const quat q(inverse(R));  // the inverse rotation represented by a quaternion
         if (convert)
