@@ -166,8 +166,8 @@ namespace easy3d {
          *  \sa set_from_calibration.
          */
         // Some useful transformations
-        //     - camera position: -transpose(R) * t. Because when transforming from world to camera, R * camera_pos + t = 0
-        //     - view direction: transpose(R) * vec3(0, 0, -1)
+        //     - camera position: -transpose(R) * t. Because when transforming from world to camera, R * camera_pos + t = 0.
+        //     - view direction: transpose(R) * vec3(0, 0, -1), which is actually the negative Z axis of the frame.
         void set_from_calibration(float fx, float fy, float skew, float cx, float cy,
                                   const mat3& R, const vec3& t, bool convert = false);
 
