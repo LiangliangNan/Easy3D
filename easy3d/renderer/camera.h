@@ -165,8 +165,9 @@ namespace easy3d {
          *      coordinates.
          *  \sa set_from_calibration.
          */
-        // view direction can also be computed as: transpose(R) * vec3(0, 0, -1)
-        //camera position can also be computed as: -transpose(R) * t
+        // Some useful transformations
+        //     - camera position: -transpose(R) * t. Because when transforming from world to camera, R * camera_pos + t = 0
+        //     - view direction: transpose(R) * vec3(0, 0, -1)
         void set_from_calibration(float fx, float fy, float skew, float cx, float cy,
                                   const mat3& R, const vec3& t, bool convert = false);
 
