@@ -334,5 +334,6 @@ namespace easy3d {
 
     }
 
+}
 
 #endif  // EASY3D_RENDERER_SHAPES_H
