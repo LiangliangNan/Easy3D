@@ -8,7 +8,8 @@ add_executable(${PROJECT_NAME}
 #        test_timer.cpp
 #        test_spline.cpp
 #        test_hrbf.cpp
-        test_console_style.cpp
+#        test_console_style.cpp
+        test_lu.cpp
         )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "test")
