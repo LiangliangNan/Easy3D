@@ -32,6 +32,8 @@ using namespace easy3d;
 int main(int argc, char *argv[]) {
     logging::initialize();
 
+
+#if 0 // non-symmetric
     std::vector<double> rows = {
             10, 0, 0, -2, -1, -1,
             0, 10, 0, 0, -2, 0,
@@ -40,13 +42,23 @@ int main(int argc, char *argv[]) {
             -1, -2, 0, -1, 1, 0,
             -1, 0, 0, 0, 0, 6
     };
+#else // symmetric
+    std::vector<double> rows = {
+            10, 0, 0, -2, -1, -1,
+            0, 10, 0, 0, -2, 0,
+            0, 0, 15, 0, 0, 0,
+            -2, 0, 0, 10, -1, 0,
+            -1, -2, 0, -1, 1, 0,
+            -1, 0, 0, 0, 0, 6
+    };
+#endif
 
     const int m = 6;
 
     Mat<m, m, double> M;
     for (int i=0; i<m; ++i)
         M.set_row(i, Vec<m, double>(rows.data() + i * 6));
-    std::cout << "M: " << M;
+//    std::cout << "M: " << M;
 
     std::vector<double> rhs = {-9, 10, 45, 33, -4, 35};
     Vec<m, double> b(rhs.data());
@@ -61,9 +73,9 @@ int main(int argc, char *argv[]) {
     lu_decomposition(M, &alu, &rowp, &d);	// get lu decomposition
     lu_back_substitution(alu, rowp, b, &x);	// get solution set
 
-    std::cout << "alu \n" << alu;
+//    std::cout << "alu \n" << alu;
 
-    std::cout << "rowp \n" << rowp << std::endl;
+//    std::cout << "rowp \n" << rowp << std::endl;
 
     std::cout << "x \n" << x << std::endl;
 
