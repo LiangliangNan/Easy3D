@@ -325,8 +325,8 @@ namespace easy3d {
 
     /**
      * \brief Perform LU decomposition on a. The outputs from this method should be
-     *	used with lu_back_substitution() to solve a set of linear equations or
-     *   compute the matrix inverse or determinant.
+     *	    used with lu_back_substitution() to solve a set of linear equations or
+     *      compute the matrix inverse or determinant.
      *	a: N x N input matrix.
      *	alu: Output N x N matrix, the LU decomposition of a row-wise permutation
      *		 of a. This may safely be the same location as a (a will be overwritten).
@@ -337,7 +337,7 @@ namespace easy3d {
     bool lu_decomposition(
         const Mat<N, N, T> &a,
         Mat<N, N, T> *alu,
-        Vec<N, T> * rowp,
+        Vec<N, T> *rowp,
         T *d
         );
 
@@ -345,53 +345,53 @@ namespace easy3d {
      * \brief Solve a set of linear equations. Use outputs from lu_decomposition() as inputs.
      *	Solve a linear system:
      *	@code
-     *	//	inputs:
-     *	Mat<N, N, T> a; // input rhs matrix
-     *	Vec<N, T> b;	// input lhs vector
-     *	//	outputs:
-     *	Mat<N, N, T> alu;		// result of LU decomposition
-     *	Vec<N, size_t> rowp;	// result row permutation data for alu
-     *	T d;	// sign of determinant
-     *	Vec<N, size_t> x;		// result solution set
-     *	...
-     *	lu_decomposition(a, &alu, &rowp, &d);	// get lu decomposition
-     *	lu_back_substitution(alu, rowp, b, &x);	// get solution set
+     *	    //	inputs:
+     *	    Mat<N, N, T> a; // input rhs matrix
+     *	    Vec<N, T> b;	// input lhs vector
+     *	    //	outputs:
+     *	    Mat<N, N, T> alu;		// result of LU decomposition
+     *	    Vec<N, size_t> rowp;	// result row permutation data for alu
+     *	    T d;	// sign of determinant
+     *	    Vec<N, size_t> x;		// result solution set
+     *	    ...
+     *	    lu_decomposition(a, &alu, &rowp, &d);	// get lu decomposition
+     *	    lu_back_substitution(alu, rowp, b, &x);	// get solution set
      *	@endcode
      *	The last line may be repeated for any number of b vectors using the
      *	same alu and rowp inputs.
      *
      *	Find the inverse of a matrix:
      *	@code
-     *	//	inputs:
-     *	Mat<N, N, T> a;		// input matrix
-     *	//	outputs:
-     *	Mat<N, N, T> alu;	// result of LU decomposition
-     *	Mat<N, N, T> ainv;	// result of inversion
-     *	Vec<N, size_t> rowp; // result row permutation data for alu
-     *	T d;	// sign of determinant
-     *	...
-     *	lu_decomposition(a, &alu, &rowp, &d); // get lu decomposition once
-     *	for (size_t i = 0; i < N; ++i) {	// find inverse by columns
-     *	Vec<N, T> b;
-     *	for (size_t j = 0; j < N; ++j)
-     *	b[j] = T(0);
-     *	b[i] = T(1);
-     *	lu_back_substitution(alu, rowp, b, &b);
-     *	ainv.set_col(i, b); // set ainv column
-     *	}
+     *	    //	inputs:
+     *	    Mat<N, N, T> a;		// input matrix
+     *	    //	outputs:
+     *	    Mat<N, N, T> alu;	// result of LU decomposition
+     *	    Mat<N, N, T> ainv;	// result of inversion
+     *	    Vec<N, size_t> rowp; // result row permutation data for alu
+     *	    T d;	// sign of determinant
+     *	    ...
+     *	    lu_decomposition(a, &alu, &rowp, &d); // get lu decomposition once
+     *	    for (size_t i = 0; i < N; ++i) {	// find inverse by columns
+     *	        Vec<N, T> b;
+     *	        for (size_t j = 0; j < N; ++j)
+     *	            b[j] = T(0);
+     *	        b[i] = T(1);
+     *	        lu_back_substitution(alu, rowp, b, &b);
+     *	        ainv.set_col(i, b); // set ainv column
+     *	    }
      *	@endcode
      *
      *	Find the determinant of a matrix:
      *	@code
-     *	//	inputs:
-     *	Mat<N, N, T> a; // input matrix
-     *	//	outpus:
-     *	Mat<N, N, T> alu; // result of LU decomposition
-     *	Vec<N, size_t> rowp; // result row permutation data for alu
-     *	T d; // output determinant
-     *	lu_decomposition(a, &alu, &rowp, &d);
-     *	for (size_t i = 0; i < N; ++i)
-     *		d *= alu(i, i);
+     *	    //	inputs:
+     *	    Mat<N, N, T> a; // input matrix
+     *	    //	outpus:
+     *	    Mat<N, N, T> alu; // result of LU decomposition
+     *	    Vec<N, size_t> rowp; // result row permutation data for alu
+     *	    T d; // output determinant
+     *	    lu_decomposition(a, &alu, &rowp, &d);
+     *	    for (size_t i = 0; i < N; ++i)
+     *	    	d *= alu(i, i);
      *	@endcode
      *	alu: N x N matrix, the result of a call to lu_decomposition()
      *	rowp: Row permutation data for alu.
