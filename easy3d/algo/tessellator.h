@@ -184,13 +184,19 @@ namespace easy3d {
          *            the original vertex. Any new vertex generated in the tessellation will have a negative index -1.
          */
         void add_vertex(const Vertex &data);
-
+        /** @overload **/
         void add_vertex(const float *data, unsigned int size, int idx = 0);
+        /** @overload **/
         void add_vertex(const vec3 &xyz, int idx = 0);
+        /** @overload **/
         void add_vertex(const vec3 &xyz, const vec2 &t, int idx = 0);
+        /** @overload **/
         void add_vertex(const vec3 &xyz, const vec3 &v1, int idx = 0);
+        /** @overload **/
         void add_vertex(const vec3 &xyz, const vec3 &v1, const vec2 &t, int idx = 0);
+        /** @overload **/
         void add_vertex(const vec3 &xyz, const vec3 &v1, const vec3 &v2, int idx = 0);
+        /** @overload **/
         void add_vertex(const vec3 &xyz, const vec3 &v1, const vec3 &v2, const vec2 &t, int idx = 0);
 
         /**

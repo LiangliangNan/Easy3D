@@ -48,8 +48,6 @@ public:
 protected:
     bool key_press_event(int key, int modifiers) override;
 
-    void draw() const override;
-
     std::string usage() const override ;
     
 private:
@@ -66,13 +64,13 @@ private:
     bool read_bundler_file(const std::string& file_name);
     
     // K [R T] -> easy3d camera representation
-    bool KRT_to_camera(int view_index, easy3d::Camera* c);
+    bool KRT_to_camera(int view_index, easy3d::Camera* c, bool ground_truth);
     
-    void update_cameras_drawable();
-
-    void draw_image() const;
+    void update_cameras_drawable(bool ground_truth);
 
     void load_image();
+
+    void post_draw() override;
 
 private:
     easy3d::Texture* texture_;

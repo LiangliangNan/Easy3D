@@ -275,9 +275,65 @@ namespace easy3d {
         void create_camera(std::vector<vec3> &points, std::vector<unsigned int> &indices, float width, float fov,
                            float hw_ratio = 0.6f);
         // @}
+
+
+        // create an image plane (useful for rendering images in 3D using camera extrinsic parameters)
+//        void create_image_plane(const easy3d::mat3 &R, const easy3d::vec3 &t) {
+//            if (!image_plane_) {
+//                image_plane_ = new TrianglesDrawable("image_plane");
+//                image_plane_->set_visible(show_images_);
+//                image_plane_->update_texcoord_buffer({vec2(0, 0), vec2(1, 0), vec2(1, 1), vec2(0, 1)});
+//                image_plane_->update_index_buffer({0, 2, 1, 0, 3, 2});
+//                add_drawable(image_plane_);
+//
+//                if (!texture_1_)
+//                    texture_1_ = Texture::create(resource::directory() + "/data/image_1.png");
+//
+//                if (texture_1_) {
+//                    image_plane_->set_texture(texture_1_);
+//                    image_plane_->set_use_texture(true);
+//                }
+//            }
+//
+//            if (!view_frustum_) {
+//                view_frustum_ = new LinesDrawable("view_frustum");
+//                view_frustum_->set_visible(show_images_);
+//                add_drawable(view_frustum_);
+//            }
+//
+//            const float fov = camera()->fieldOfView();
+//            const float hw_ratio = static_cast<float>(height()) / width();
+//            const float halfWidth = camera()->sceneRadius() * 2;  // large enough to put the image plane behind the object
+//            const float halfHeight = halfWidth * hw_ratio;
+//            const float dist = halfHeight / tan(fov * 0.5);
+//
+//            // coordinates in camera frame
+//            const vec3 c(0.0f, 0.0f, 0.0f);  // camera center
+//            std::vector<vec3> corners = {
+//                    vec3(-halfWidth, -halfHeight, -dist),
+//                    vec3(halfWidth, -halfHeight, -dist),
+//                    vec3(halfWidth, halfHeight, -dist),
+//                    vec3(-halfWidth, halfHeight, -dist)
+//            };
+//
+//            Box3 box = current_model()->bounding_box();
+//            // convert to world coordinate system
+//            for (auto &p : corners) {
+//                p = camera()->worldCoordinatesOf(p);
+//                box.add_point(p);
+//            }
+//            box.add_point(camera()->position());
+//            camera()->setSceneBoundingBox(box);
+//
+//            image_plane_->update_vertex_buffer(corners);
+//
+//            corners.push_back(camera()->position());
+//            view_frustum_->update_vertex_buffer(corners);
+//            view_frustum_->update_index_buffer({0, 4, 1, 4, 2, 4, 3, 4});
+//        }
+
     }
 
 }
-
 
 #endif  // EASY3D_RENDERER_SHAPES_H

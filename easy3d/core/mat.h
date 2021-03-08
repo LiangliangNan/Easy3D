@@ -56,8 +56,8 @@ namespace easy3d {
      * \todo Add a transform() method or overload operator* so as to allow matrices to transform vectors that are
      *	    M-1 in size, as vectors in	homogeneous space.
      *
-     *	\class Mat easy3d/core/mat.h
-     *	\see Mat2, Mat3, and Mat4
+     * \class Mat easy3d/core/mat.h
+     * \see Mat2, Mat3, and Mat4
      */
     template <size_t N, size_t M, typename T>
     class Mat
@@ -65,7 +65,8 @@ namespace easy3d {
     public:
         //	----------------- constructor and destructor -------------------
 
-        /**	\brief Default constructor.
+        /**
+         * \brief Default constructor.
          * \note The matrix elements are intentionally not initialized. This is efficient
          *       if the user assigns their values from subsequent computations. Use Mat(T s)
          *       to initialize the elements during construction. */
@@ -74,17 +75,18 @@ namespace easy3d {
         /**	\brief Initialized with diagonal as s and others zeros. */
         explicit Mat(T s);
 
-        /**	\brief Copy constructor for rN >= N, rM >= M.
-        *	For smaller incoming matrices (i.e, rN < N, rM < M ) specialization
-        *	is required in order to fill the remaining elements with appropriate
-        *	values (usually 0 or 1).
-        *	rN: Number of rows in rhs.
-        *	rM: Number of columns in rhs.
-        *	rhs: rN by rM matrix of type T to copy.
-        *	NOTE: This is explicit to prevent 'accidental' assignment of
-        *		  differently-sized matrices.
-        *	TODO: Can this ever actually get called? A templated constructor for a
-        *		templated class seems dodgy! */
+        /**
+         * \brief Copy constructor for rN >= N, rM >= M.
+         *	For smaller incoming matrices (i.e, rN < N, rM < M ) specialization
+         *	is required in order to fill the remaining elements with appropriate
+         *	values (usually 0 or 1).
+         *	rN: Number of rows in rhs.
+         *	rM: Number of columns in rhs.
+         *	rhs: rN by rM matrix of type T to copy.
+         *	NOTE: This is explicit to prevent 'accidental' assignment of
+         *		  differently-sized matrices.
+         *	TODO: Can this ever actually get called? A templated constructor for a
+         *		templated class seems dodgy! */
         template <size_t rN, size_t rM>
         explicit Mat(const Mat<rN, rM, T> &rhs);
 
@@ -1317,6 +1319,22 @@ namespace easy3d {
 
     /*----------------------------------------------------------------------------*/
 
+    /** \brief Convert a N-dimensional vector into a N by 1 matrix. */
+    template<size_t N, typename FT>
+    Mat<N, 1, FT> to_matrix(const Vec<N, FT>& v) {
+        return Mat<N, 1, FT>(v.data());
+    }
+
+
+    /**	\brief Construct a 1 by N matrix from a N-dimensional vector. */
+    template<size_t N, typename FT>
+    Mat<1, N, FT> transpose(const Vec<N, FT>& v) {
+        return Mat<1, N, FT>(v.data());
+    }
+
+    /*----------------------------------------------------------------------------*/
+
+    /**	\brief Test if a matrix has NaN entry. */
     template <size_t N, size_t M, typename T>
     inline bool has_nan(const Mat<N, M, T>& m) {
         for (int i = 0; i < N; i++) {
@@ -1388,7 +1406,7 @@ namespace easy3d {
 
         /**
          * \brief Static constructor return a 2D rotation matrix.
-         *	@param angle Angle of rotation in radians.
+         * \param angle Angle of rotation in radians.
          *	\note Positive values of angle rotate counter-clockwise as per the right-hand rule.
          */
         static Mat2<T> rotation(T angle);
@@ -1573,7 +1591,7 @@ namespace easy3d {
 
         /**
          * \brief Static constructor returning a 3D uniform scale matrix.
-         *	@param s x, y, z scale (uniform).
+         * \param s x, y, z scale (uniform).
          */
         static Mat3<T> scale(T s);
 
@@ -1889,35 +1907,35 @@ namespace easy3d {
 
         /**
          * \brief Static constructor returning a 4D uniform scale matrix.
-         *	@param s x, y, z, w scale (uniform).
+         * \param s x, y, z, w scale (uniform).
          */
         static Mat4<T> scale(T s);
 
         /**
          * \brief Static constructor returning a 4D non-uniform scale matrix,
-         *  @param x x scale.
-         *  @param y y scale.
-         *  @param z z scale.
-         *  @param w w scale.
+         * \param x x scale.
+         * \param y y scale.
+         * \param z z scale.
+         * \param w w scale.
          */
         static Mat4<T> scale(const Vec<4, T>& s);  // set w to 1 for 3D scaling
         static Mat4<T> scale(T x, T y, T z, T w);  // set w to 1 for 3D scaling
         
         /**
          * \brief Static constructor returning a 3D rotation matrix defined by its axis and angle.
-         *	    @param axis: Axis of rotation. This MUST be normalized.
-         *	    @param angle: Angle of rotation in radians. Positive values of angle
+         * \param axis: Axis of rotation. This MUST be normalized.
+         * \param angle: Angle of rotation in radians. Positive values of angle
          *             rotate counter-clockwise about axis as per the right-hand rule.
-         *  \note The axis defines only the direction of the rotation axis, i.e., the
+         * \note The axis defines only the direction of the rotation axis, i.e., the
          *        rotation is about the axis passing through the origin.
          */
         static Mat4<T> rotation(const Vec<3, T> &axis, T angle);
         
         /**
          * \brief Static constructor returning a 3D rotation matrix defined by the axis–angle
-         * representation. Both the axis and the angle are represented by a vector
-         * codirectional with the rotation axis whose length is the rotation angle.
-         *      @param axis_angle: direction is the axis and length is the angle (in radian)
+         *      representation. Both the axis and the angle are represented by a vector
+         *      codirectional with the rotation axis whose length is the rotation angle.
+         * \param axis_angle: direction is the axis and length is the angle (in radian)
          * \note The axis defines only the direction of the rotation axis, i.e., the
          *        rotation is about the axis passing through the origin.
          */
@@ -1931,9 +1949,9 @@ namespace easy3d {
 
         /**
          * \brief Static constructor returning a 3D rotation matrix defined by Euler angles.
-         * The three rotations are applied successively.
-         *	    @param x, y, z: the rotation angles (in radians) around X, Y, and Z axes respectively.
-         *      @param order: the order of the rotations to be applied. 1 first and 3 for last.
+         *      The three rotations are applied successively.
+         * \param x, y, z: the rotation angles (in radians) around X, Y, and Z axes respectively.
+         * \param order: the order of the rotations to be applied. 1 first and 3 for last.
          * \note Using a different order yields different results. The default order is first Y, then Z, then X.
          *         See http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-17-quaternions/
          */
@@ -2112,7 +2130,7 @@ namespace easy3d {
     template <typename T>
     inline Mat4<T> Mat4<T>::rotation(const Vec<3, T> &axis, T angle) {
         assert(std::abs(axis.length() - 1) < epsilon<T>());
-        return Mat4<T>(Mat3<T>::rotation(axis, angle)); // gen 3x3 rotation matrix as arg to Mat4 constructo
+        return Mat4<T>(Mat3<T>::rotation(axis, angle)); // gen 3x3 rotation matrix as arg to Mat4 constructor
     }
     
     /*----------------------------------------------------------------------------*/

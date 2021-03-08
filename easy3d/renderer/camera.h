@@ -152,7 +152,7 @@ namespace easy3d {
          *  \param fx and fy: the focal length
          *  \param cx and cy: the principal point
          *  \param skew: distortion
-         *  \param rot: the rotation matrix. It denotes the coordinate system transformation from 3D world coordinates
+         *  \param R: the rotation matrix. It denotes the coordinate system transformation from 3D world coordinates
          *      to 3D camera coordinates.
          *  \param t: the camera translation. It is the position of the origin of the world coordinate system expressed
          *      in the camera coordinate system. \note t is often mistakenly considered the position of the camera. The
@@ -165,8 +165,11 @@ namespace easy3d {
          *      coordinates.
          *  \sa set_from_calibration.
          */
-        void set_from_calibration(float fx, float fy, float skew, float cx, float cy, const mat3& rot, const vec3& t,
-                                  int img_width, int img_height, bool convert = false);
+        // Some useful transformations
+        //     - camera position: -transpose(R) * t. Because when transforming from world to camera, R * camera_pos + t = 0.
+        //     - view direction: transpose(R) * vec3(0, 0, -1), which is actually the negative Z axis of the frame.
+        void set_from_calibration(float fx, float fy, float skew, float cx, float cy,
+                                  const mat3& R, const vec3& t, bool convert = false);
 
         /** \brief Defines the position(), orientation() and fieldOfView() of the camera from calibrated camera
          *      intrinsic and extrinsic parameters. This is an overload of set_from_calibration().

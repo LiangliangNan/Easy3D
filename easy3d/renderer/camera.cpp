@@ -990,11 +990,16 @@ namespace easy3d {
 
 
     void Camera::set_from_calibration(float fx, float fy, float skew, float cx, float cy,
-                                      const mat3 &rot, const vec3 &t, int img_width, int img_height, bool convert)
+                                      const mat3 &R, const vec3 &t, bool convert)
     {
-#if 1 // this is more accurate (it uses the image size).
+        // The two methods give the same results, both assuming that image_height equals to (2.0 * cy).
+        // This is not accurate and the error seems mainly due to the inaccuracy in cy (because from calibration, cy
+        // may not be exactly at the image center).
+        // Suggestion: use the image height (usually known in practice) to compute the field of view.
 
-        const quat q(inverse(rot));  // the inverse rotation represented by a quaternion
+#if 0
+
+        const quat q(inverse(R));  // the inverse rotation represented by a quaternion
         if (convert)
             setOrientation(q);  // this already includes the conversion
         else {
@@ -1009,17 +1014,15 @@ namespace easy3d {
 
         // http://ksimek.github.io/2013/06/18/calibrated-cameras-and-gluperspective/
         // https://github.com/opencv/opencv/blob/82f8176b0634c5d744d1a45246244291d895b2d1/modules/calib3d/src/calibration.cpp#L1820
-        // Liangliang: if replacing img_height by (2.0f * cy), the result will be the same as in the method below.
-        const float proj11 = 2.0f * fy / img_height; // proj[1][1]
+        // We assume image_height = (2.0 * cy). However, cy may not be exactly at the image center.
+        const float proj11 = 2.0f * fy / (2.0 * cy); // proj[1][1]
+        // Liangliang: if we replace (2.0f * cy) by image_height, the result can be more accurate, i.e.,
+        //const float proj11 = 2.0f * fy / image_height; // this will be more accurate
         
         const float fov = 2.0f * std::atan(1.0f / proj11);
         setFieldOfView(fov);
 
-        // The following gives an fov value very close to the above. Is this also correct? I don't know.
-        // const float fov2 = atan((img_height - cy) / fy) + atan(cy / fy);
-
-#else   // This is not accurate.
-        // Because it assumes image_height = (2.0 * cy). However in practice, cy may not be exactly at the image center.
+#else
 
         /**-------------------------------------------------------------------
          * It took me quite a while to figure out this.
@@ -1036,12 +1039,11 @@ namespace easy3d {
         //                0.0,            0.0,            -1.0,                       0.0
         //                );
         //
-        // I doubt the implementation of this function.
         const mat3 K(
                     fx, skew, cx,
                     0,  fy,   cy,
                     0,  0,    1);
-        const mat4 R(rot);
+        const mat4 Rot(R);
         const mat4 T = mat4::translation(t);
 
         mat34 M(1.0);
@@ -1050,7 +1052,7 @@ namespace easy3d {
             M(2, 2) = -1;   // invert the z axis
         }
 
-        const mat34& proj = K * M * T * R;
+        const mat34& proj = K * M * T * Rot;
         set_from_calibration(proj);
 #endif
     }
@@ -1248,6 +1250,11 @@ namespace easy3d {
 			tmp = frame->inverseCoordinatesOf(src);
 
 		const mat4& mvp = modelViewProjectionMatrix();
+
+		// todo: dpi_scaling is not handled.
+		//       should use the actual viewpoint size; or multiply the dpi scaling factor
+		// int viewport[4];
+		// glGetIntegerv(GL_VIEWPORT, viewport);
 		const int viewport[] = { 0, 0, screenWidth_, screenHeight_ };
 		vec3 vs = mvp * tmp * 0.5f + vec3(0.5f);
 		vs.x = vs.x * viewport[2] + viewport[0];
