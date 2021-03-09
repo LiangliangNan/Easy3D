@@ -291,7 +291,7 @@ namespace easy3d {
     /**
      * \brief Return the inverse of N x N (square) matrix m.
      * \note This is specialized for matrices up to 4x4 in order to achieve better performance. The general case uses
-     * Gauss-Jordan elimination.
+     *      Gauss-Jordan elimination (which uses less memory than the LU decomposition).
      */
     template <size_t N, typename T>
     Mat<N, N, T> inverse(const Mat<N, N, T> &m);
@@ -305,44 +305,38 @@ namespace easy3d {
 
     /**
      * \brief Perform Gauss-Jordan elimination to solve a set of linear equations and additionally compute the inverse
-     * of a.
-     *	a: N x N input matrix.
-     *	b: N x M input matrix containing right-hand vectors.
-     *	ainv: Output inverse of a. This may safely be the same location as a (a
-     *		  will be overwritten).
-     *	x: Output solution set. This may safely be the same location as b (b will
-     *	   be overwritten).
-     *	return true on success, false if a is a singular matrix.
+     *      of the input coefficient matrix.
+     * \param a: N x N input matrix.
+     * \param b: N x M input matrix containing right-hand vectors.
+     * \param ainv: Output inverse of a. This may safely be the same location as a (a will be overwritten).
+     * \param x: Output solution set. This may safely be the same location as b (b will be overwritten).
+     * \return \c true on success, false if a is a singular matrix.
      */
-    template <size_t N, size_t M, typename T>
-    bool gauss_jordan_elimination(
-        const Mat<N, N, T> &a,
-        const Mat<N, M, T> &b,
-        Mat<N, N, T> *ainv,
-        Mat<N, M, T> *x
-        );
-
+    template<size_t N, size_t M, typename T>
+    bool gauss_jordan_elimination(const Mat<N, N, T> &a, const Mat<N, M, T> &b, Mat<N, N, T> *ainv, Mat<N, M, T> *x);
 
     /**
-     * \brief Perform LU decomposition on a. The outputs from this method should be
-     *	    used with lu_back_substitution() to solve a set of linear equations or
-     *      compute the matrix inverse or determinant.
-     *	a: N x N input matrix.
-     *	alu: Output N x N matrix, the LU decomposition of a row-wise permutation
-     *		 of a. This may safely be the same location as a (a will be overwritten).
-     *	rowp: Output row permutation data for alu.
-     *	return true on success, false if a is a singular matrix.
+     * \brief Perform LU decomposition of a square matrix.
+     * \details The outputs from this method can further be used for multiple purposes:
+     *      - with lu_back_substitution() to solve a set of linear equations;
+     *      - compute the inverse of the input matrix matrix;
+     *      - compute the determinant of the input matrix matrix.
+     * \param a: N x N input matrix.
+     * \param alu: Output N x N matrix, containing the LU decomposition of a row-wise permutation of a. This may safely
+     *      be the same location as a (a will be overwritten).
+     * \param rowp: Output row permutation data for alu.
+     * \return \c true on success, false if a is a singular matrix.
      */
-    template <size_t N, typename T>
-    bool lu_decomposition(
-        const Mat<N, N, T> &a,
-        Mat<N, N, T> *alu,
-        Vec<N, T> *rowp,
-        T *d
-        );
+    template<size_t N, typename T>
+    bool lu_decomposition(const Mat<N, N, T> &a, Mat<N, N, T> *alu, Vec<N, T> *rowp, T *d);
 
     /**
-     * \brief Solve a set of linear equations. Use outputs from lu_decomposition() as inputs.
+     * \brief Solve a set of linear equations using outputs from lu_decomposition() as inputs.
+     * \param alu: N x N matrix, which is the result of a call to lu_decomposition().
+     * \param rowp: Row permutation data for alu, which is the result of a call to lu_decomposition().
+     * \param b: N-dimensional input right-hand vector.
+     * \param x: Output N-dimensional solution set.
+     *
      *	Solve a linear system:
      *	@code
      *	    //	inputs:
@@ -357,8 +351,7 @@ namespace easy3d {
      *	    lu_decomposition(a, &alu, &rowp, &d);	// get lu decomposition
      *	    lu_back_substitution(alu, rowp, b, &x);	// get solution set
      *	@endcode
-     *	The last line may be repeated for any number of b vectors using the
-     *	same alu and rowp inputs.
+     *	The last line may be repeated for any number of b vectors using the same alu and rowp inputs.
      *
      *	Find the inverse of a matrix:
      *	@code
@@ -393,19 +386,9 @@ namespace easy3d {
      *	    for (size_t i = 0; i < N; ++i)
      *	    	d *= alu(i, i);
      *	@endcode
-     *	alu: N x N matrix, the result of a call to lu_decomposition()
-     *	rowp: Row permutation data for alu.
-     *	b: N -dimensional input right-hand vector.
-     *	x: Output N -dimensional solution set.
      */
     template <size_t N, typename T>
-    void lu_back_substitution(
-        const Mat<N, N, T> &alu,
-        const Vec<N, T> &rowp,
-        const Vec<N, T> &b,
-        Vec<N, T> *x
-        );
-
+    void lu_back_substitution(const Mat<N, N, T> &alu, const Vec<N, T> &rowp, const Vec<N, T> &b, Vec<N, T> *x);
 
 
     template <size_t N, size_t M, typename T>
@@ -952,8 +935,8 @@ namespace easy3d {
     /*----------------------------------------------------------------------------*/
     template <size_t N, typename T>
     inline Mat<N, N, T> inverse(const Mat<N, N, T> &m) {
-        /*	Use Gauss-Jordan elimination to find inverse. This uses less memory than
-        the LU decomposition method. */
+        // Use Gauss-Jordan elimination to find inverse. This uses less memory than the LU decomposition method.
+        // See lu_back_substitution() for an example of computing inverse using LU decomposition.
         size_t indxc[N], indxr[N], ipiv[N];
 
         Mat<N, N, T> result = m;

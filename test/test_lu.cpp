@@ -54,18 +54,16 @@ int main(int argc, char *argv[]) {
 #endif
 
     const int m = 6;
-
     Mat<m, m, double> M;
     for (int i=0; i<m; ++i)
         M.set_row(i, Vec<m, double>(rows.data() + i * 6));
-//    std::cout << "M: " << M;
 
     std::vector<double> rhs = {-9, 10, 45, 33, -4, 35};
     Vec<m, double> b(rhs.data());
-
     std::cout << "b: " << b << std::endl;
 
-    //	outputs:
+    // ----------------------------------------------------------------------------
+    // use LU to solve the linear system
     Mat<m, m, double> alu;		// result of LU decomposition
     Vec<m, double> rowp;	// result row permutation data for alu
     double d;	// sign of determinant
@@ -73,17 +71,36 @@ int main(int argc, char *argv[]) {
     lu_decomposition(M, &alu, &rowp, &d);	// get lu decomposition
     lu_back_substitution(alu, rowp, b, &x);	// get solution set
 
-//    std::cout << "alu \n" << alu;
-
-//    std::cout << "rowp \n" << rowp << std::endl;
-
-    std::cout << "x \n" << x << std::endl;
-
+    std::cout << "x: " << x << std::endl;
     std::cout << "d: " << d << std::endl;
-
     std::cout << "M*x: " << M * x << std::endl;
-
     std::cout << "inverse(M)*b: " << inverse(M) * b << std::endl;
+
+    // ----------------------------------------------------------------------------
+    // use LU decomposition to compute the inverse
+    Mat<m, m, double> ainv;	// result of inversion
+    lu_decomposition(M, &alu, &rowp, &d); // get lu decomposition once
+    for (size_t i = 0; i < m; ++i) {    // find inverse by columns
+        Vec<m, double> b;
+        for (size_t j = 0; j < m; ++j)
+            b[j] = double(0);
+        b[i] = double(1);
+        lu_back_substitution(alu, rowp, b, &b);
+        ainv.set_col(i, b); // set ainv column
+    }
+    std::cout << "using LU decomposition, inverse(M)*b: " << ainv * b << std::endl;
+
+    // ----------------------------------------------------------------------------
+    // use Gauss-Jordan elimination to solve the linear system
+    {
+        Mat<m, 1, double> b(rhs.data());
+        Mat<m, m, double> ainv;    // result of inversion
+        Mat<m, 1, double> x;
+        gauss_jordan_elimination(M, b, &ainv, &x);
+        std::cout << "b: \n" << b << std::endl;
+        std::cout << "x: \n" << x << std::endl;
+        std::cout << "using Gauss-Jordan elimination, inverse(M)*b: \n" << ainv * b << std::endl;
+    }
 
     return EXIT_SUCCESS;
 }
