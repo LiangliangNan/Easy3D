@@ -1017,7 +1017,12 @@ void PaintCanvas::adjustSceneRadius() {
     const int count = walkThrough()->interpolator()->number_of_keyframes();
     for (int i = 0; i < count; ++i)
         box.add_point(walkThrough()->interpolator()->keyframe(i).position());
-   camera()->setSceneRadius(box.radius());
+
+    // attention: the scene center is not changed.
+    camera()->setSceneRadius(
+            std::max(distance(camera()->sceneCenter(), box.min_point()),
+                     distance(camera()->sceneCenter(), box.max_point()))
+            );
 }
 
 

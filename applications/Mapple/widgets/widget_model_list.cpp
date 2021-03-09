@@ -553,7 +553,6 @@ void WidgetModelList::currentModelItemChanged(QTreeWidgetItem *current, QTreeWid
     }
     updateVisibilities();
 
-
     if (auto_focus_)
         viewer()->fitScreen(model);
 
@@ -706,7 +705,7 @@ void WidgetModelList::setSelectedOnly(bool b) {
         }
     }
     updateVisibilities();
-
+    viewer()->adjustSceneRadius();
     viewer()->update();
 }
 
