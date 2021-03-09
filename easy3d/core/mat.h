@@ -390,6 +390,35 @@ namespace easy3d {
     template <size_t N, typename T>
     void lu_back_substitution(const Mat<N, N, T> &alu, const Vec<N, T> &rowp, const Vec<N, T> &b, Vec<N, T> *x);
 
+    /**
+     * \brief Cholesky decomposition of a symmetric, positive definite matrix.
+     * \details For a symmetric, positive definite matrix A, this function computes the Cholesky factorization,
+     *      i.e. it computes a lower triangular matrix L such that A = L*L'. If the matrix is not symmetric or
+     *      positive definite, the function computes only a partial decomposition.
+     * \return \true if the input matrix is symmetric, positive definite (and then the factorization was successful).
+     */
+    template<size_t N, typename FT>
+    bool cholesky_decompose(const Mat<N, N, FT> &A, Mat<N, N, FT> &L);
+
+    /**
+     * Solve a linear system A*x = b, using the previously computed Cholesky factorization of A: L*L'.
+     * \param L: N x N matrix, which is the result of a call to cholesky_decompose().
+     * \param b: N-dimensional input right-hand vector.
+     * \param x: Output N-dimensional solution set.
+     */
+    template <size_t N, typename FT>
+    void cholesky_solve(const Mat<N, N, FT> &L, const Vec<N, FT> &b, Vec<N, FT>& x);
+
+    /**
+     * Solve a set (i.e, M) of linear systems A*X = B, using the previously computed Cholesky factorization of A: L*L'.
+     * (this function can be used to solve for the inverse of a symmetric, positive definite matrix, by using B = I).
+     * \param L: N x N matrix, which is the result of a call to cholesky_decompose().
+     * \param B: N x M right-hand matrix.
+     * \param X: Output N x M solution matrix.
+     */
+    template<size_t N, size_t M, typename T>
+    void cholesky_solve(const Mat<N, N, T> &L, const Mat<N, M, T> &B, Mat<N, M, T>& X);
+
 
     template <size_t N, size_t M, typename T>
     std::ostream& operator<< (std::ostream& output, const Mat<N, M, T>& m);
@@ -1271,6 +1300,77 @@ namespace easy3d {
         } while (i != 0);
     }
 
+
+    /*----------------------------------------------------------------------------*/
+    // Adapted from Template Numerical Toolkit.
+    template<size_t N, typename FT>
+    bool cholesky_decompose(const Mat<N, N, FT> &A, Mat<N, N, FT> &L) {
+        bool spd = true;
+        for (size_t j = 0; j < N; ++j) {
+            FT d = 0;
+            for (size_t k = 0; k < j; ++k) {
+                FT s = 0;
+                for (size_t i = 0; i < k; ++i)
+                    s += L(k, i) * L(j, i);
+
+                L(j, k) = s = (A(j, k) - s) / L(k, k);
+                d = d + s * s;
+                spd = spd && (A(k, j) == A(j, k));
+            }
+
+            d = A(j, j) - d;
+            spd = spd && (d > 0);
+
+            L(j, j) = std::sqrt(d > 0 ? d : 0);
+            for (size_t k = j + 1; k < N; ++k)
+                L(j, k) = 0;
+        }
+        return spd;
+    }
+
+    /*----------------------------------------------------------------------------*/
+    // Adapted from Template Numerical Toolkit.
+    template <size_t N, typename FT>
+    void cholesky_solve(const Mat<N, N, FT> &L, const Vec<N, FT> &b, Vec<N, FT>& x) {
+        x = b;
+        // solve L*y = b
+        for (size_t k = 0; k < N; ++k) {
+            for (size_t i = 0; i < k; ++i)
+                x[k] -= x[i] * L(k, i);
+            x[k] /= L(k, k);
+        }
+
+        // solve L'*x = y
+        for (int k = N - 1; k >= 0; --k) {  // attention: size_t will not work
+            for (size_t i = k + 1; i < N; ++i)
+                x[k] -= x[i] * L(i, k);
+            x[k] /= L(k, k);
+        }
+    }
+
+    template<size_t N, size_t M, typename T>
+    void cholesky_solve(const Mat<N, N, T> &L, const Mat<N, M, T> &B, Mat<N, M, T> &X) {
+        X = B;
+        // solve L_*Y = B
+        for (size_t j = 0; j < M; ++j) {
+            for (size_t k = 0; k < N; ++k) {
+                for (size_t i = 0; i < k; ++i)
+                    X(k, j) -= X(i, j) * L(k, i);
+
+                X(k, j) /= L(k, k);
+            }
+        }
+
+        // solve L'*X = Y
+        for (size_t j = 0; j < M; ++j) {
+            for (int k = N - 1; k >= 0; --k) {  // attention: size_t will not work
+                for (size_t i = k + 1; i < N; ++i)
+                    X(k, j) -= X(i, j) * L(i, k);
+
+                X(k, j) /= L(k, k);
+            }
+        }
+    }
 
     /*----------------------------------------------------------------------------*/
 
