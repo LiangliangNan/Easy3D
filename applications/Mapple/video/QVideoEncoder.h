@@ -1,4 +1,6 @@
 //Inspired from QTFFmpegWrapper (Daniel Roggen) and the 'muxing.c' example in FFmpeg doc/examples
+// check the example in VTK: https://gitlab.kitware.com/vtk/vtk/-/blob/master/IO/FFMPEG/vtkFFMPEGWriter.cxx
+
 #ifndef Q_VIDEO_ENCODE_HEADER
 #define Q_VIDEO_ENCODE_HEADER
 
