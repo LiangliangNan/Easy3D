@@ -252,6 +252,7 @@ namespace easy3d {
     };
 
 
+    /// Computes the dot product of two vectors
     template <size_t N, class T> inline T dot(const Vec<N, T>& v1, const Vec<N, T>& v2) {
         T result = 0;
         for (size_t i = 0; i < N; i++) {
@@ -260,6 +261,7 @@ namespace easy3d {
         return result;
     }
 
+    /// Computes the 'negative' vector
     template <size_t N, class T> inline Vec<N, T> operator-(const Vec<N, T>& v1) {
         Vec<N, T> result;
         for (size_t i = 0; i < N; i++) {
@@ -268,6 +270,7 @@ namespace easy3d {
         return result;
     }
 
+    /// Computes the scalar-vector product
     template <class T2, size_t N, class T> inline Vec<N, T> operator*(T2 s, const Vec<N, T>& v) {
         Vec<N, T> result;
         for (size_t i = 0; i < N; i++) {
@@ -276,6 +279,7 @@ namespace easy3d {
         return result;
     }
 
+    /// Computes the addition of two vectors
     template <size_t N, class T> inline Vec<N, T> operator+(const Vec<N, T>& v1, const Vec<N, T>& v2) {
         Vec<N, T> result;
         for (size_t i = 0; i < N; i++) {
@@ -284,6 +288,7 @@ namespace easy3d {
         return result;
     }
 
+    /// Computes the subtraction of two vectors
     template <size_t N, class T> inline Vec<N, T> operator-(const Vec<N, T>& v1, const Vec<N, T>& v2) {
         Vec<N, T> result;
         for (size_t i = 0; i < N; i++) {
@@ -292,20 +297,27 @@ namespace easy3d {
         return result;
     }
 
-    // Compatibility with GLSL
+    // Global functions for vectors (compatible with GLSL)
+
+    /// Computes the length/magnitude of a vector
     template <size_t N, class T> inline T length(const Vec<N, T>& v) { return v.length(); }
+    /// Computes the length/magnitude of a vector
     template <size_t N, class T> inline T norm(const Vec<N, T>& v) { return v.length(); }
+    /// Computes the squared length/magnitude of a vector
     template <size_t N, class T> inline T length2(const Vec<N, T>& v) { return v.length2(); }
+    /// Computes the distance between two vectors/points
     template <size_t N, class T> inline T distance(const Vec<N, T>& v1, const Vec<N, T>& v2)	{ return length(v2 - v1); }
+    /// Computes the squared distance between two vectors/points
     template <size_t N, class T> inline T distance2(const Vec<N, T>& v1, const Vec<N, T>& v2)	{ return v2.distance2(v1); }
+    /// Computes and returns the normalized vector (Note: the input vector is not modified).
     template <size_t N, class T> inline Vec<N, T> normalize(const Vec<N, T>& v) {
         T s = v.length();
         s = (s > std::numeric_limits<T>::min()) ? T(1.0) / s : T(0.0);
         return v * s;
     }
 
-    // linear interpolation between x and y using a to weight between them.
-    // The return value is computed as (1 − w) * v1 + w * v2.
+    /// linear interpolation between between two vectors (x and y).
+    /// The return value is computed as (1 − w) * v1 + w * v2.
     template <size_t N, class T> inline Vec<N, T> mix(const Vec<N, T>& v1, const Vec<N, T>& v2, T w) {
         return (T(1) - w) * v1 + w * v2;
     }
