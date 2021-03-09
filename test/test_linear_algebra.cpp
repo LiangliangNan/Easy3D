@@ -35,13 +35,14 @@ int main(int argc, char *argv[]) {
 
 #if 0 // non-symmetric
     std::vector<double> rows = {
-            10, 0, 0, -2, -1, -1,
-            0, 10, 0, 0, -2, 0,
+            10, 0, 0, 0, 0, 0,
+            0, 10, -3, -1, 0, 0,
             0, 0, 15, 0, 0, 0,
             -2, 0, 0, 10, -1, 0,
-            -1, -2, 0, -1, 1, 0,
+            -1, -2, 0, -5, 1, -3,
             -1, 0, 0, 0, 0, 6
     };
+    std::vector<double> rhs = {10, 7, 45, 33, -38, 35};
 #else // symmetric
     std::vector<double> rows = {
             10, 0, 0, -2, -1, -1,
@@ -51,6 +52,7 @@ int main(int argc, char *argv[]) {
             -1, -2, 0, -1, 1, 0,
             -1, 0, 0, 0, 0, 6
     };
+    std::vector<double> rhs = {-9, 10, 45, 33, -4, 35};
 #endif
 
     const int m = 6;
@@ -58,11 +60,11 @@ int main(int argc, char *argv[]) {
     for (int i=0; i<m; ++i)
         M.set_row(i, Vec<m, double>(rows.data() + i * 6));
 
-    std::vector<double> rhs = {-9, 10, 45, 33, -4, 35};
     Vec<m, double> b(rhs.data());
     std::cout << "b: " << b << std::endl;
 
     // ----------------------------------------------------------------------------
+    std::cout << "------------ using LU decomposition ------------ " << std::endl;
     // use LU to solve the linear system
     Mat<m, m, double> alu;		// result of LU decomposition
     Vec<m, double> rowp;	// result row permutation data for alu
@@ -72,7 +74,6 @@ int main(int argc, char *argv[]) {
     lu_back_substitution(alu, rowp, b, &x);	// get solution set
 
     std::cout << "x: " << x << std::endl;
-    std::cout << "d: " << d << std::endl;
     std::cout << "M*x: " << M * x << std::endl;
     std::cout << "inverse(M)*b: " << inverse(M) * b << std::endl;
 
@@ -88,18 +89,41 @@ int main(int argc, char *argv[]) {
         lu_back_substitution(alu, rowp, b, &b);
         ainv.set_col(i, b); // set ainv column
     }
-    std::cout << "using LU decomposition, inverse(M)*b: " << ainv * b << std::endl;
+    std::cout << "ainv*b: " << ainv * b << std::endl;
 
     // ----------------------------------------------------------------------------
     // use Gauss-Jordan elimination to solve the linear system
     {
+        std::cout << "------------ using Gauss-Jordan elimination ------------ " << std::endl;
         Mat<m, 1, double> b(rhs.data());
         Mat<m, m, double> ainv;    // result of inversion
         Mat<m, 1, double> x;
         gauss_jordan_elimination(M, b, &ainv, &x);
         std::cout << "b: \n" << b << std::endl;
         std::cout << "x: \n" << x << std::endl;
-        std::cout << "using Gauss-Jordan elimination, inverse(M)*b: \n" << ainv * b << std::endl;
+        std::cout << "inverse(M)*b: " << ainv * b << std::endl;
+    }
+
+    // ----------------------------------------------------------------------------
+    // use Cholesky decomposition to solve the linear system
+    {
+        std::cout << "------------ using Cholesky decomposition ------------ " << std::endl;
+        Mat<m, m, double> L;
+        if (cholesky_decompose(M,L)) {
+            cholesky_solve(L, b, x);
+            std::cout << "b: " << b << std::endl;
+            std::cout << "x: " << x << std::endl;
+
+            // now let's also compute the inverse of M
+            Mat<m, m, double> I(1.0);
+            Mat<m, m, double> inv;
+            cholesky_solve(L, I, inv);
+            std::cout << "inv * b: " << inv * b << std::endl;
+
+        }
+        else {
+            std::cout << "input matrix is not symmetric, positive definite" << std::endl;
+        }
     }
 
     return EXIT_SUCCESS;
