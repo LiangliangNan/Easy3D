@@ -1914,8 +1914,8 @@ namespace easy3d {
             case 123:   return rz * ry * rx;
             case 132:   return ry * rz * rx;
             case 213:   return rz * rx * ry;
-            case 312:   return rx * rz * ry;
-            case 231:   return ry * rx * rz;
+            case 231:   return rx * rz * ry;
+            case 312:   return ry * rx * rz;
             case 321:   return rx * ry * rz;
             default:
                 LOG(ERROR) << "invalid rotation order";
@@ -2269,8 +2269,8 @@ namespace easy3d {
             case 123:   return rz * ry * rx;
             case 132:   return ry * rz * rx;
             case 213:   return rz * rx * ry;
-            case 312:   return rx * rz * ry;
-            case 231:   return ry * rx * rz;
+            case 231:   return rx * rz * ry;
+            case 312:   return ry * rx * rz;
             case 321:   return rx * ry * rz;
             default:
                 LOG(ERROR) << "invalid rotation order";
