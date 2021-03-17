@@ -1490,7 +1490,7 @@ namespace easy3d {
         /**
          * \brief Static constructor return a 2D rotation matrix.
          * \param angle Angle of rotation in radians.
-         *	\note Positive values of angle rotate counter-clockwise as per the right-hand rule.
+         * \note Positive values of angle rotate counter-clockwise as per the right-hand rule.
          */
         static Mat2<T> rotation(T angle);
 
@@ -1688,21 +1688,21 @@ namespace easy3d {
 
         /**
          * \brief Static constructor returning a 3D rotation matrix defined by its axis and angle.
-         *        @param axis: Axis of rotation. This MUST be normalized.
-         *        @param angle: Angle of rotation in radians. Positive values of angle
-         *             rotate counter-clockwise about axis as per the right-hand rule.
-         *  \note The axis defines only the direction of the rotation axis, i.e., the
-         *        rotation is about the axis passing through the origin.
+         * @param axis: Axis of rotation. This MUST be normalized.
+         * @param angle: Angle of rotation in radians. Positive values of angle
+         *      rotate counter-clockwise about axis as per the right-hand rule.
+         * \note The axis defines only the direction of the rotation axis, i.e., the
+         *      rotation is about the axis passing through the origin.
          */
         static Mat3<T> rotation(const Vec<3, T> &axis, T angle);
         
         /**
          * \brief Static constructor returning a 3D rotation matrix defined by the axis–angle
-         *  representation. Both the axis and the angle are represented by a vector
-         *  codirectional with the rotation axis whose length is the rotation angle.
-         *      @param axis_angle: direction is the axis and length is the angle (in radian)
-         *  \note The axis defines only the direction of the rotation axis, i.e., the
-         *        rotation is about the axis passing through the origin.
+         *      representation. Both the axis and the angle are represented by a vector
+         *      codirectional with the rotation axis whose length is the rotation angle.
+         * @param axis_angle: direction is the axis and length is the angle (in radian)
+         * \note The axis defines only the direction of the rotation axis, i.e., the
+         *      rotation is about the axis passing through the origin.
          */
         static Mat3<T> rotation(const Vec<3, T> &axis_angle);
         
@@ -1713,9 +1713,9 @@ namespace easy3d {
         
         /**
          * \brief Static constructor returning a 3D rotation matrix defined by Euler angles.
-         * The three rotations are applied successively.
-         *        @param x, y, z: the rotation angles (in radians) around X, Y, and Z axes respectively.
-         *        @param order: the order of the rotations to be applied. 1 first and 3 for last.
+         *      The three rotations are applied successively.
+         * @param x, y, z: the rotation angles (in radians) around X, Y, and Z axes respectively.
+         * @param order: the order of the rotations to be applied. 1 first and 3 for last.
          * \note Using a different order yields different results. The default order is first Y, then Z, then X.
          */
         static Mat3<T> rotation(T x, T y, T z, int order = 312);
@@ -2008,9 +2008,9 @@ namespace easy3d {
          * \brief Static constructor returning a 3D rotation matrix defined by its axis and angle.
          * \param axis: Axis of rotation. This MUST be normalized.
          * \param angle: Angle of rotation in radians. Positive values of angle
-         *             rotate counter-clockwise about axis as per the right-hand rule.
+         *      rotate counter-clockwise about axis as per the right-hand rule.
          * \note The axis defines only the direction of the rotation axis, i.e., the
-         *        rotation is about the axis passing through the origin.
+         *      rotation is about the axis passing through the origin.
          */
         static Mat4<T> rotation(const Vec<3, T> &axis, T angle);
         
@@ -2020,7 +2020,7 @@ namespace easy3d {
          *      codirectional with the rotation axis whose length is the rotation angle.
          * \param axis_angle: direction is the axis and length is the angle (in radian)
          * \note The axis defines only the direction of the rotation axis, i.e., the
-         *        rotation is about the axis passing through the origin.
+         *      rotation is about the axis passing through the origin.
          */
         static Mat4<T> rotation(const Vec<3, T> &axis_angle);
 
@@ -2036,7 +2036,7 @@ namespace easy3d {
          * \param x, y, z: the rotation angles (in radians) around X, Y, and Z axes respectively.
          * \param order: the order of the rotations to be applied. 1 first and 3 for last.
          * \note Using a different order yields different results. The default order is first Y, then Z, then X.
-         *         See http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-17-quaternions/
+         *      See http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-17-quaternions/
          */
         static Mat4<T> rotation(T x, T y, T z, int order = 312);
 
