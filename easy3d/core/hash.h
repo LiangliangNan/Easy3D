@@ -32,6 +32,8 @@
 
 namespace easy3d
 {
+    // The hash function in Google Optimization Tools
+    // https://github.com/google/or-tools/blob/stable/ortools/base/hash.h
 
 #if 0
     /**
