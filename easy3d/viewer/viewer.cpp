@@ -1415,6 +1415,8 @@ namespace easy3d {
 
         program->bind();
         program->set_uniform("MVP", MVP)
+                ->set_uniform("MANIP", mat4::identity())
+                ->set_uniform("NORMAL", mat3::identity())   // needs be padded when using uniform blocks
                 ->set_uniform("lighting", true)
                 ->set_uniform("two_sides_lighting", false)
                 ->set_uniform("smooth_shading", true)
@@ -1426,8 +1428,10 @@ namespace easy3d {
                 ->set_block_uniform("Material", "ambient", setting::material_ambient)
                 ->set_block_uniform("Material", "specular", setting::material_specular)
                 ->set_block_uniform("Material", "shininess", &setting::material_shininess)
-                ->set_uniform("highlight_id_min", -1)
-                ->set_uniform("highlight_id_max", -1);
+                ->set_uniform("highlight", false)
+                ->set_uniform("clippingPlaneEnabled", false)
+                ->set_uniform("selected", false)
+                ->set_uniform("use_texture", false);
         drawable_axes_->gl_draw();
         program->release();
 
