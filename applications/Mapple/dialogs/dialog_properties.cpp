@@ -960,6 +960,49 @@ namespace details {
                          << "'";
         return false;
     }
+
+
+    template <typename FT>
+    bool color_by_face_segmentation(SurfaceMesh* mesh, const std::string& name) {
+        auto segments = mesh->face_property<FT>(name);
+        if (!segments) {
+            LOG(INFO) << "face property '" << name << "' does not exist";
+            return false;
+        }
+
+        std::string color_name = "f:color-";
+        if (name.find("f:") == std::string::npos)
+            color_name += name;
+        else
+            color_name += name.substr(2);
+
+        auto coloring = mesh->face_property<vec3>(color_name, vec3(0, 0, 0));
+        Renderer::color_from_segmentation(mesh, segments, coloring);
+        LOG(INFO) << "face property '" << color_name << "' added to model";
+        return true;
+    }
+
+
+    template <typename MODEL, typename FT>
+    bool color_by_vertex_segmentation(MODEL* model, const std::string& name) {
+        auto segments = model->template vertex_property<FT>(name);
+        if (!segments) {
+            LOG(INFO) << "vertex property '" << name << "' does not exist";
+            return false;
+        }
+
+        std::string color_name = "v:color-";
+        if (name.find("v:") == std::string::npos)
+            color_name += name;
+        else
+            color_name += name.substr(2);
+
+        auto coloring = model->template vertex_property<vec3>(color_name, vec3(0, 0, 0));
+        Renderer::color_from_segmentation(model, segments, coloring);
+        LOG(INFO) << "vertex property '" << color_name << "' added to model";
+        return true;
+    }
+
 }
 
 
@@ -1293,49 +1336,73 @@ bool DialogProperties::generateColorProperty() {
             LOG(WARNING) << "color property can only be generated from a vertex property";
             return false;
         }
+
         auto cloud = dynamic_cast<PointCloud *>(model);
         const auto& id = cloud->get_vertex_property_type(name);
-        if (id != typeid(int)) {
-            LOG(WARNING) << "color property can only be generated from an <int> type vertex property";
-            return false;
-        }
 
-        auto segments = cloud->vertex_property<int>(name);
-        std::string color_name = "v:color-";
-        if (name.find("v:") == std::string::npos)
-            color_name += name;
+        bool status = false;
+        if (id == typeid(int))
+            status = details::color_by_vertex_segmentation<PointCloud, int>(cloud, name);
+        else if (id == typeid(unsigned int))
+            status = details::color_by_vertex_segmentation<PointCloud, unsigned int>(cloud, name);
+        else if (id == typeid(std::size_t))
+            status = details::color_by_vertex_segmentation<PointCloud, std::size_t>(cloud, name);
+        else if (id == typeid(bool))
+            status = details::color_by_vertex_segmentation<PointCloud, bool>(cloud, name);
+        else if (id == typeid(unsigned char))
+            status = details::color_by_vertex_segmentation<PointCloud, unsigned char>(cloud, name);
         else
-            color_name += name.substr(2);
+            LOG(WARNING) << "input property must be a type of int, unsigned int, std::size_t, bool, or unsigned char";
 
-        auto coloring = cloud->vertex_property<vec3>(color_name, vec3(0, 0, 0));
-        Renderer::color_from_segmentation(cloud, segments, coloring);
-        LOG(INFO) << "vertex property '" << color_name << "' add to model";
-        window_->updateRenderingPanel();
-        return true;
+        if (status)
+            window_->updateRenderingPanel();
+
+        return status;
     } else if (dynamic_cast<SurfaceMesh *>(model)) {
-        if (location != "Face") {
-            LOG(WARNING) << "color property can only be generated from a face property";
-            return false;
-        }
         auto mesh = dynamic_cast<SurfaceMesh *>(model);
-        const auto& id = mesh->get_face_property_type(name);
-        if (id != typeid(int)) {
-            LOG(WARNING) << "color property can only be generated from an <int> type face property";
-            return false;
+        bool status = false;
+        if (location == "Face") {
+            const auto& id = mesh->get_face_property_type(name);
+            if (id == typeid(int))
+                status = details::color_by_face_segmentation<int>(mesh, name);
+            else if (id == typeid(unsigned int))
+                status = details::color_by_face_segmentation<unsigned int>(mesh, name);
+            else if (id == typeid(std::size_t))
+                status = details::color_by_face_segmentation<std::size_t>(mesh, name);
+            else if (id == typeid(bool))
+                status = details::color_by_face_segmentation<bool>(mesh, name);
+            else if (id == typeid(unsigned char))
+                status = details::color_by_face_segmentation<unsigned char>(mesh, name);
+            else
+                LOG(WARNING) << "input property must be a type of int, unsigned int, std::size_t, bool, or unsigned char";
+
+            if (status)
+                window_->updateRenderingPanel();
+
+            return status;
         }
+        else if (location == "Vertex") {
+            const auto& id = mesh->get_vertex_property_type(name);
+            if (id == typeid(int))
+                status = details::color_by_vertex_segmentation<SurfaceMesh, int>(mesh, name);
+            else if (id == typeid(unsigned int))
+                status = details::color_by_vertex_segmentation<SurfaceMesh, unsigned int>(mesh, name);
+            else if (id == typeid(std::size_t))
+                status = details::color_by_vertex_segmentation<SurfaceMesh, std::size_t>(mesh, name);
+            else if (id == typeid(bool))
+                status = details::color_by_vertex_segmentation<SurfaceMesh, bool>(mesh, name);
+            else if (id == typeid(unsigned char))
+                status = details::color_by_vertex_segmentation<SurfaceMesh, unsigned char>(mesh, name);
+            else
+                LOG(WARNING) << "input property must be a type of int, unsigned int, std::size_t, bool, or unsigned char";
 
-        auto segments = mesh->face_property<int>(name);
-        std::string color_name = "f:color-";
-        if (name.find("f:") == std::string::npos)
-            color_name += name;
+            if (status)
+                window_->updateRenderingPanel();
+
+            return status;
+        }
         else
-            color_name += name.substr(2);
-
-        auto coloring = mesh->face_property<vec3>(color_name, vec3(0, 0, 0));
-        Renderer::color_from_segmentation(mesh, segments, coloring);
-        LOG(INFO) << "face property '" << color_name << "' add to model";
-        window_->updateRenderingPanel();
-        return true;
+            LOG(WARNING) << "color property can only be generated from either a vertex or a face property";
     }
 
     return false;
