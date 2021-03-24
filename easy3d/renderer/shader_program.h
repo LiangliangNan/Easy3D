@@ -340,6 +340,9 @@ namespace easy3d {
 		//copying disabled
 		ShaderProgram(const ShaderProgram&);
         ShaderProgram& operator=(const ShaderProgram&);
+
+    private:
+	    friend class ShaderManager;
 	};
 
 }

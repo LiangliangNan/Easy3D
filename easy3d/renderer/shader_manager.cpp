@@ -220,6 +220,9 @@ namespace easy3d {
 			delete p.second;
         programs_.clear();
         attempt_load_program_.clear();
+
+        // 'spBlocks' is a static member and the uniform blocks are shared by multiple shader programs
+        ShaderProgram::spBlocks.clear();
     }
 
 
