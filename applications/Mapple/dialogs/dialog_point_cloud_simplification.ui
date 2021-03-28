@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>423</width>
+    <width>421</width>
     <height>192</height>
    </rect>
   </property>
@@ -65,9 +65,9 @@
     </widget>
    </item>
    <item row="6" column="0" colspan="4">
-    <layout class="QHBoxLayout">
+    <layout class="QHBoxLayout" name="layoutButtons">
      <item>
-      <widget class="QPushButton" name="qureyButton">
+      <widget class="QPushButton" name="queryButton">
        <property name="minimumSize">
         <size>
          <width>60</width>
@@ -84,7 +84,7 @@
         <string>Query the points that can be deleted</string>
        </property>
        <property name="text">
-        <string>Qurey</string>
+        <string>Query</string>
        </property>
       </widget>
      </item>
@@ -214,7 +214,7 @@
   <tabstop>lineEditAverageSpacing</tabstop>
   <tabstop>buttonComputeAvgSpacing</tabstop>
   <tabstop>checkBoxUniform</tabstop>
-  <tabstop>qureyButton</tabstop>
+  <tabstop>queryButton</tabstop>
   <tabstop>applyButton</tabstop>
  </tabstops>
  <resources/>

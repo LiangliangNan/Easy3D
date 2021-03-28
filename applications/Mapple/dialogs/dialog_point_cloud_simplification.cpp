@@ -59,7 +59,7 @@ DialogPointCloudSimplification::DialogPointCloudSimplification(MainWindow *windo
 
     connect(buttonComputeAvgSpacing, SIGNAL(clicked()), this, SLOT(computeAvgSpacing()));
     connect(applyButton, SIGNAL(clicked()), this, SLOT(apply()));
-    connect(qureyButton, SIGNAL(clicked()), this, SLOT(query()));
+    connect(queryButton, SIGNAL(clicked()), this, SLOT(query()));
 }
 
 
