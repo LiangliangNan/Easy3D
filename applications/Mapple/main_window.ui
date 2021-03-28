@@ -260,7 +260,7 @@
     </size>
    </property>
    <property name="windowIcon">
-    <iconset resource="mapple.qrc">
+    <iconset resource="resources/Mapple.qrc">
      <normaloff>:/resources/icons/options.png</normaloff>:/resources/icons/options.png</iconset>
    </property>
    <property name="features">
@@ -301,7 +301,7 @@
          </rect>
         </property>
         <attribute name="icon">
-         <iconset resource="mapple.qrc">
+         <iconset resource="resources/Mapple.qrc">
           <normaloff>:/resources/icons/drawable_triangles.png</normaloff>:/resources/icons/drawable_triangles.png</iconset>
         </attribute>
         <attribute name="label">
@@ -335,7 +335,7 @@
          </rect>
         </property>
         <attribute name="icon">
-         <iconset resource="mapple.qrc">
+         <iconset resource="resources/Mapple.qrc">
           <normaloff>:/resources/icons/drawable_lines.png</normaloff>:/resources/icons/drawable_lines.png</iconset>
         </attribute>
         <attribute name="label">
@@ -369,7 +369,7 @@
          </rect>
         </property>
         <attribute name="icon">
-         <iconset resource="mapple.qrc">
+         <iconset resource="resources/Mapple.qrc">
           <normaloff>:/resources/icons/drawable_points.png</normaloff>:/resources/icons/drawable_points.png</iconset>
         </attribute>
         <attribute name="label">
@@ -403,7 +403,7 @@
          </rect>
         </property>
         <attribute name="icon">
-         <iconset resource="mapple.qrc">
+         <iconset resource="resources/Mapple.qrc">
           <normaloff>:/resources/icons/light.png</normaloff>:/resources/icons/light.png</iconset>
         </attribute>
         <attribute name="label">
@@ -699,7 +699,7 @@
   </action>
   <action name="actionSetBackgroundColor">
    <property name="icon">
-    <iconset resource="mapple.qrc">
+    <iconset resource="resources/Mapple.qrc">
      <normaloff>:/resources/icons/color.png</normaloff>:/resources/icons/color.png</iconset>
    </property>
    <property name="text">
@@ -746,7 +746,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="mapple.qrc">
+    <iconset resource="resources/Mapple.qrc">
      <normaloff>:/resources/icons/select_lasso.png</normaloff>:/resources/icons/select_lasso.png</iconset>
    </property>
    <property name="text">
@@ -777,7 +777,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="mapple.qrc">
+    <iconset resource="resources/Mapple.qrc">
      <normaloff>:/resources/icons/select_rect.png</normaloff>:/resources/icons/select_rect.png</iconset>
    </property>
    <property name="text">
@@ -792,7 +792,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="mapple.qrc">
+    <iconset resource="resources/Mapple.qrc">
      <normaloff>:/resources/icons/manipulation.png</normaloff>:/resources/icons/manipulation.png</iconset>
    </property>
    <property name="text">
@@ -807,7 +807,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="mapple.qrc">
+    <iconset resource="resources/Mapple.qrc">
      <normaloff>:/resources/icons/select_click.png</normaloff>:/resources/icons/select_click.png</iconset>
    </property>
    <property name="text">
@@ -824,7 +824,7 @@
   </action>
   <action name="actionDownSampling">
    <property name="icon">
-    <iconset resource="mapple.qrc">
+    <iconset resource="resources/Mapple.qrc">
      <normaloff>:/resources/icons/down_sample.png</normaloff>:/resources/icons/down_sample.png</iconset>
    </property>
    <property name="text">
@@ -833,7 +833,7 @@
   </action>
   <action name="actionAddGaussianNoise">
    <property name="icon">
-    <iconset resource="mapple.qrc">
+    <iconset resource="resources/Mapple.qrc">
      <normaloff>:/resources/icons/noise.png</normaloff>:/resources/icons/noise.png</iconset>
    </property>
    <property name="text">
@@ -842,7 +842,7 @@
   </action>
   <action name="actionSettings">
    <property name="icon">
-    <iconset resource="mapple.qrc">
+    <iconset resource="resources/Mapple.qrc">
      <normaloff>:/resources/icons/options.png</normaloff>:/resources/icons/options.png</iconset>
    </property>
    <property name="text">
@@ -1057,7 +1057,7 @@
   </action>
   <action name="actionAnimation">
    <property name="icon">
-    <iconset resource="mapple.qrc">
+    <iconset resource="resources/Mapple.qrc">
      <normaloff>:/resources/icons/record.png</normaloff>:/resources/icons/record.png</iconset>
    </property>
    <property name="text">
@@ -1080,9 +1080,6 @@
   </action>
   <action name="actionShowFrameRate">
    <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
     <bool>true</bool>
    </property>
    <property name="text">
@@ -1113,7 +1110,7 @@
   </action>
   <action name="actionFitScreen">
    <property name="icon">
-    <iconset resource="mapple.qrc">
+    <iconset resource="resources/Mapple.qrc">
      <normaloff>:/resources/icons/home.png</normaloff>:/resources/icons/home.png</iconset>
    </property>
    <property name="text">
@@ -1191,7 +1188,7 @@
  </customwidgets>
  <resources>
   <include location="../../tutorials/Tutorial_202_Viewer_Qt/viewer_qt.qrc"/>
-  <include location="mapple.qrc"/>
+  <include location="resources/Mapple.qrc"/>
  </resources>
  <connections/>
 </ui>
