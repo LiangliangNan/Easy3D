@@ -65,8 +65,8 @@ scalar fields) can be done very conveniently.
 Easy3D depends on some third-party libraries. For the core functionalities and the basic viewer, all dependencies have
 already been included in the distribution. Easy3D also optionally supports the use of Qt for GUI development. 
 You can switch on the following CMake option to include the examples and applications that use Qt (e.g., 
-            [`Tutorial_202_Viewer_Qt`](https://github.com/LiangliangNan/Easy3D/tree/master/tutorials/Tutorial_202_Viewer_Qt) 
-            and [`Mapple`](https://github.com/LiangliangNan/Easy3D/tree/master/applications/Mapple)) 
+            [`Tutorial_202_Viewer_Qt`](https://github.com/LiangliangNan/Easy3D/tree/main/tutorials/Tutorial_202_Viewer_Qt) 
+            and [`Mapple`](https://github.com/LiangliangNan/Easy3D/tree/main/applications/Mapple)) 
 in your build:
 
 - `EASY3D_ENABLE_QT`
@@ -97,7 +97,7 @@ There are many options to build Easy3D. Choose one of the following (or whatever
 - Option 3: Use CMake to generate project files for your IDE. Then load the project to your IDE and build.
 
 Don't have any experience with C/C++ programming? 
-Have a look at <a href="https://github.com/LiangliangNan/Easy3D/blob/master/HowToBuild.md">How to build Easy3D step by 
+Have a look at <a href="https://github.com/LiangliangNan/Easy3D/blob/main/HowToBuild.md">How to build Easy3D step by 
 step</a>.
 
 ### Using Easy3D in Your Projects
