@@ -11,3 +11,6 @@ cmake-build-release
 cmake-build-minsizerel
 cmake-build-relwithdebinfo
 .gradle
+.clangd
+.vscode
+compile_commands.json
