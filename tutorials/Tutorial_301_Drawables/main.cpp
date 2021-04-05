@@ -42,7 +42,7 @@ using namespace easy3d;
 
 // This example shows how to
 //      - visualize 3D data without explicitly defining a model (i.e., rendering drawables directly);
-//          * a set of trianges;
+//          * a set of triangles;
 //          * a set of points;
 //          * a set of lines.
 //		- create a drawable for a specific rendering purpose;
