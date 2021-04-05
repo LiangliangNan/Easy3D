@@ -1070,7 +1070,8 @@ namespace easy3d {
     }
 
 
-    Model *Viewer::add_model(const std::string &file_name, bool create_default_drawables) {
+    Model *Viewer::add_model(const std::string &file_path, bool create_default_drawables) {
+        const std::string file_name = file_system::convert_to_native_style(file_path);
         for (auto m : models_) {
             if (m->name() == file_name) {
                 LOG(WARNING) << "model has already been added to the viewer: " << file_name;
