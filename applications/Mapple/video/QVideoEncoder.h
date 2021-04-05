@@ -1,4 +1,5 @@
 //Inspired from QTFFmpegWrapper (Daniel Roggen) and the 'muxing.c' example in FFmpeg doc/examples
+// check the ffmpeg-libav-tutorial: https://github.com/leandromoreira/ffmpeg-libav-tutorial/blob/master/2_remuxing.c
 // check the example in VTK: https://gitlab.kitware.com/vtk/vtk/-/blob/master/IO/FFMPEG/vtkFFMPEGWriter.cxx
 
 #ifndef Q_VIDEO_ENCODE_HEADER
