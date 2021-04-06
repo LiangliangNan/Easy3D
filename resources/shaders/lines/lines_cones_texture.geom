@@ -63,7 +63,7 @@ void main()
 		if (clippingPlaneEnabled) {
 			gl_ClipDistance[0] = dot(invMV * vec4(DataOut.point, 1.0), clippingPlane0);
 			if (crossSectionEnabled)
-			gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
+				gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
 		}
 		gOutTexcoord = vOutTexcoord[1];
 		gOutClipped = vOutClipped[1];
@@ -81,7 +81,7 @@ void main()
 		if (clippingPlaneEnabled) {
 			gl_ClipDistance[0] = dot(invMV * vec4(DataOut.point, 1.0), clippingPlane0);
 			if (crossSectionEnabled)
-			gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
+				gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
 		}
 		gOutTexcoord = vOutTexcoord[0];
 		gOutClipped = vOutClipped[0];
@@ -98,7 +98,7 @@ void main()
 		if (clippingPlaneEnabled) {
 			gl_ClipDistance[0] = dot(invMV * vec4(DataOut.point, 1.0), clippingPlane0);
 			if (crossSectionEnabled)
-			gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
+				gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
 		}
 		gOutTexcoord = vOutTexcoord[0];
 		gOutClipped = vOutClipped[0];
@@ -115,7 +115,7 @@ void main()
 		if (clippingPlaneEnabled) {
 			gl_ClipDistance[0] = dot(invMV * vec4(DataOut.point, 1.0), clippingPlane0);
 			if (crossSectionEnabled)
-			gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
+				gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
 		}
 		gOutTexcoord = vOutTexcoord[0];
 		gOutClipped = vOutClipped[0];
@@ -132,7 +132,7 @@ void main()
 		if (clippingPlaneEnabled) {
 			gl_ClipDistance[0] = dot(invMV * vec4(DataOut.point, 1.0), clippingPlane0);
 			if (crossSectionEnabled)
-			gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
+				gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
 		}
 		gOutTexcoord = vOutTexcoord[0];
 		gOutClipped = vOutClipped[0];
@@ -150,7 +150,7 @@ void main()
 		if (clippingPlaneEnabled) {
 			gl_ClipDistance[0] = dot(invMV * vec4(DataOut.point, 1.0), clippingPlane0);
 			if (crossSectionEnabled)
-			gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
+				gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
 		}
 		gOutTexcoord = vOutTexcoord[1];
 		gOutClipped = vOutClipped[1];
@@ -171,7 +171,7 @@ void main()
 		if (clippingPlaneEnabled) {
 			gl_ClipDistance[0] = dot(invMV * vec4(DataOut.point, 1.0), clippingPlane0);
 			if (crossSectionEnabled)
-			gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
+				gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
 		}
 		gOutTexcoord = vOutTexcoord[0];
 		gOutClipped = vOutClipped[0];
@@ -188,7 +188,7 @@ void main()
 		if (clippingPlaneEnabled) {
 			gl_ClipDistance[0] = dot(invMV * vec4(DataOut.point, 1.0), clippingPlane0);
 			if (crossSectionEnabled)
-			gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
+				gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
 		}
 		gOutTexcoord = vOutTexcoord[0];
 		gOutClipped = vOutClipped[0];
@@ -205,7 +205,7 @@ void main()
 		if (clippingPlaneEnabled) {
 			gl_ClipDistance[0] = dot(invMV * vec4(DataOut.point, 1.0), clippingPlane0);
 			if (crossSectionEnabled)
-			gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
+				gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
 		}
 		gOutTexcoord = vOutTexcoord[0];
 		gOutClipped = vOutClipped[0];
@@ -222,7 +222,7 @@ void main()
 		if (clippingPlaneEnabled) {
 			gl_ClipDistance[0] = dot(invMV * vec4(DataOut.point, 1.0), clippingPlane0);
 			if (crossSectionEnabled)
-			gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
+				gl_ClipDistance[1] = dot(invMV *vec4(DataOut.point, 1.0), clippingPlane1);
 		}
 		gOutTexcoord = vOutTexcoord[0];
 		gOutClipped = vOutClipped[0];

@@ -16,11 +16,6 @@ uniform float sphere_radius;
 uniform vec4 default_color;
 uniform bool per_vertex_color;
 
-uniform bool clippingPlaneEnabled = false;
-uniform bool crossSectionEnabled = false;
-uniform vec4 clippingPlane0;
-uniform vec4 clippingPlane1;
-
 out Data {
     vec4    position;// in eye space
     vec4    sphere_color;

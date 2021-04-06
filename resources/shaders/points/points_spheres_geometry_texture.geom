@@ -15,14 +15,12 @@ uniform bool crossSectionEnabled = false;
 uniform vec4 clippingPlane0;
 uniform vec4 clippingPlane1;
 
-in		vec2	texcoord[];
-//in float	sphere_radius_in;
+in vec2 texcoord[];
 
 out Data{
 	flat	vec2	texcoord;
 	smooth	vec2	tex;
 	flat	vec4	position;
-	//flat	float	sphere_radius;
 } DataOut;
 
 
@@ -31,7 +29,6 @@ void main()
 	// Output vertex position
 	DataOut.position = MV * gl_in[0].gl_Position;
 	DataOut.texcoord = texcoord[0];
-	//sphere_radius = sphere_radius_in;
 
 	// Vertex 1
 	DataOut.tex = vec2(-1.0, -1.0);

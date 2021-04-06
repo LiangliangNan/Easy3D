@@ -28,11 +28,11 @@ void main()
     if (clippingPlaneEnabled) {
         gl_ClipDistance[0] = dot(new_position, clippingPlane0);
         if (planeClippingDiscard && gl_ClipDistance[0] < 0)
-        DataOut.clipped = 1.0;
+            DataOut.clipped = 1.0;
         if (crossSectionEnabled) {
             gl_ClipDistance[1] = dot(new_position, clippingPlane1);
             if (planeClippingDiscard && gl_ClipDistance[1] < 0)
-            DataOut.clipped = 1.0;
+                DataOut.clipped = 1.0;
         }
     }
 
