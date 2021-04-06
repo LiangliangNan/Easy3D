@@ -198,10 +198,10 @@ namespace easy3d {
 
         if (!window) {
             glfwTerminate();
-            LOG(ERROR) << "could not create an OpenGL " << std::to_string(gl_major)
-                       << "." << std::to_string(gl_minor) << " context!";
-            throw std::runtime_error("could not create an OpenGL " +
-                                     std::to_string(gl_major) + "." + std::to_string(gl_minor) + " context!");
+            std::string error_message = "could not create an OpenGL "
+                                        + std::to_string(gl_major) + "." + std::to_string(gl_minor) + " context!";
+            LOG(ERROR) << error_message;
+            throw std::runtime_error(error_message);
         }
         glfwSetWindowUserPointer(window, this);
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
