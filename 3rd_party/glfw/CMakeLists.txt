@@ -43,9 +43,9 @@ endif()
 
 if (BUILD_SHARED_LIBS AND UNIX)
     # On Unix-like systems, shared libraries can use the soname system.
-    set(GLFW_LIB_NAME glfw)
+    set(GLFW_LIB_NAME 3rd_glfw)
 else()
-    set(GLFW_LIB_NAME glfw3)
+    set(GLFW_LIB_NAME 3rd_glfw)
 endif()
 
 if (GLFW_VULKAN_STATIC)
