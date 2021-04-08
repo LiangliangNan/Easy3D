@@ -105,9 +105,9 @@ namespace easy3d {
 
             auto trans = cloud->add_model_property<mat4>("transformation", mat4::identity());
             trans[0] = mat4::translation(-x0, -y0, -z0);
-            LOG_IF(transform, INFO) << "model transformed w.r.t. its first point ("
-                                    << x0 << " " << y0 << " " << z0
-                                    << "), stored as ModelProperty<mat4>(\"transformation\")";
+            LOG_IF(transform, WARNING) << "model transformed w.r.t. its first point ("
+                                       << x0 << " " << y0 << " " << z0
+                                       << "), stored as ModelProperty<mat4>(\"transformation\")";
 
             lasreader->close();
             delete lasreader;
