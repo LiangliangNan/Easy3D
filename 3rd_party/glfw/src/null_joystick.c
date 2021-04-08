@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.4 - www.glfw.org
+// GLFW 3.3 - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2016-2017 Camilla Löwy <elmindreda@glfw.org>
 //
@@ -32,15 +32,6 @@
 //////////////////////////////////////////////////////////////////////////
 //////                       GLFW platform API                      //////
 //////////////////////////////////////////////////////////////////////////
-
-GLFWbool _glfwPlatformInitJoysticks(void)
-{
-    return GLFW_TRUE;
-}
-
-void _glfwPlatformTerminateJoysticks(void)
-{
-}
 
 int _glfwPlatformPollJoystick(_GLFWjoystick* js, int mode)
 {

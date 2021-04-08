@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.4 POSIX - www.glfw.org
+// GLFW 3.3 POSIX - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2002-2006 Marcus Geelnard
 // Copyright (c) 2006-2017 Camilla Löwy <elmindreda@glfw.org>
@@ -27,11 +27,8 @@
 // It is fine to use C99 in this file because it will not be built with VS
 //========================================================================
 
-#define _POSIX_C_SOURCE 199309L
-
 #include "internal.h"
 
-#include <unistd.h>
 #include <sys/time.h>
 #include <time.h>
 
@@ -44,7 +41,7 @@
 //
 void _glfwInitTimerPOSIX(void)
 {
-#if defined(_POSIX_TIMERS) && defined(_POSIX_MONOTONIC_CLOCK)
+#if defined(CLOCK_MONOTONIC)
     struct timespec ts;
 
     if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0)
@@ -67,7 +64,7 @@ void _glfwInitTimerPOSIX(void)
 
 uint64_t _glfwPlatformGetTimerValue(void)
 {
-#if defined(_POSIX_TIMERS) && defined(_POSIX_MONOTONIC_CLOCK)
+#if defined(CLOCK_MONOTONIC)
     if (_glfw.timer.posix.monotonic)
     {
         struct timespec ts;

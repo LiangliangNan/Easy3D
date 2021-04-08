@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.4 Win32 - www.glfw.org
+// GLFW 3.3 Win32 - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2002-2006 Marcus Geelnard
 // Copyright (c) 2006-2019 Camilla Löwy <elmindreda@glfw.org>
@@ -491,6 +491,39 @@ static BOOL CALLBACK deviceCallback(const DIDEVICEINSTANCE* di, void* user)
 //////                       GLFW internal API                      //////
 //////////////////////////////////////////////////////////////////////////
 
+// Initialize joystick interface
+//
+void _glfwInitJoysticksWin32(void)
+{
+    if (_glfw.win32.dinput8.instance)
+    {
+        if (FAILED(DirectInput8Create(GetModuleHandle(NULL),
+                                      DIRECTINPUT_VERSION,
+                                      &IID_IDirectInput8W,
+                                      (void**) &_glfw.win32.dinput8.api,
+                                      NULL)))
+        {
+            _glfwInputError(GLFW_PLATFORM_ERROR,
+                            "Win32: Failed to create interface");
+        }
+    }
+
+    _glfwDetectJoystickConnectionWin32();
+}
+
+// Close all opened joystick handles
+//
+void _glfwTerminateJoysticksWin32(void)
+{
+    int jid;
+
+    for (jid = GLFW_JOYSTICK_1;  jid <= GLFW_JOYSTICK_LAST;  jid++)
+        closeJoystick(_glfw.joysticks + jid);
+
+    if (_glfw.win32.dinput8.api)
+        IDirectInput8_Release(_glfw.win32.dinput8.api);
+}
+
 // Checks for new joysticks after DBT_DEVICEARRIVAL
 //
 void _glfwDetectJoystickConnectionWin32(void)
@@ -569,37 +602,6 @@ void _glfwDetectJoystickDisconnectionWin32(void)
 //////////////////////////////////////////////////////////////////////////
 //////                       GLFW platform API                      //////
 //////////////////////////////////////////////////////////////////////////
-
-GLFWbool _glfwPlatformInitJoysticks(void)
-{
-    if (_glfw.win32.dinput8.instance)
-    {
-        if (FAILED(DirectInput8Create(GetModuleHandle(NULL),
-                                      DIRECTINPUT_VERSION,
-                                      &IID_IDirectInput8W,
-                                      (void**) &_glfw.win32.dinput8.api,
-                                      NULL)))
-        {
-            _glfwInputError(GLFW_PLATFORM_ERROR,
-                            "Win32: Failed to create interface");
-            return GLFW_FALSE;
-        }
-    }
-
-    _glfwDetectJoystickConnectionWin32();
-    return GLFW_TRUE;
-}
-
-void _glfwPlatformTerminateJoysticks(void)
-{
-    int jid;
-
-    for (jid = GLFW_JOYSTICK_1;  jid <= GLFW_JOYSTICK_LAST;  jid++)
-        closeJoystick(_glfw.joysticks + jid);
-
-    if (_glfw.win32.dinput8.api)
-        IDirectInput8_Release(_glfw.win32.dinput8.api);
-}
 
 int _glfwPlatformPollJoystick(_GLFWjoystick* js, int mode)
 {

@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.4 macOS - www.glfw.org
+// GLFW 3.3 macOS - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2009-2019 Camilla Löwy <elmindreda@glfw.org>
 //
@@ -902,6 +902,9 @@ int _glfwPlatformCreateWindow(_GLFWwindow* window,
 {
     @autoreleasepool {
 
+    if (!_glfw.ns.finishedLaunching)
+        [NSApp run];
+
     if (!createNativeWindow(window, wndconfig, fbconfig))
         return GLFW_FALSE;
 
@@ -992,8 +995,7 @@ void _glfwPlatformSetWindowTitle(_GLFWwindow* window, const char* title)
 void _glfwPlatformSetWindowIcon(_GLFWwindow* window,
                                 int count, const GLFWimage* images)
 {
-    _glfwInputError(GLFW_FEATURE_UNAVAILABLE,
-                    "Cocoa: Regular windows do not have icons on macOS");
+    // Regular windows do not have icons
 }
 
 void _glfwPlatformGetWindowPos(_GLFWwindow* window, int* xpos, int* ypos)
@@ -1371,13 +1373,6 @@ void _glfwPlatformSetWindowFloating(_GLFWwindow* window, GLFWbool enabled)
     } // autoreleasepool
 }
 
-void _glfwPlatformSetWindowMousePassthrough(_GLFWwindow* window, GLFWbool enabled)
-{
-    @autoreleasepool {
-    [window->ns.object setIgnoresMouseEvents:enabled];
-    }
-}
-
 float _glfwPlatformGetWindowOpacity(_GLFWwindow* window)
 {
     @autoreleasepool {
@@ -1394,8 +1389,6 @@ void _glfwPlatformSetWindowOpacity(_GLFWwindow* window, float opacity)
 
 void _glfwPlatformSetRawMouseMotion(_GLFWwindow *window, GLFWbool enabled)
 {
-    _glfwInputError(GLFW_FEATURE_UNIMPLEMENTED,
-                    "Cocoa: Raw mouse motion not yet implemented");
 }
 
 GLFWbool _glfwPlatformRawMouseMotionSupported(void)
@@ -1406,6 +1399,9 @@ GLFWbool _glfwPlatformRawMouseMotionSupported(void)
 void _glfwPlatformPollEvents(void)
 {
     @autoreleasepool {
+
+    if (!_glfw.ns.finishedLaunching)
+        [NSApp run];
 
     for (;;)
     {
@@ -1426,6 +1422,9 @@ void _glfwPlatformWaitEvents(void)
 {
     @autoreleasepool {
 
+    if (!_glfw.ns.finishedLaunching)
+        [NSApp run];
+
     // I wanted to pass NO to dequeue:, and rely on PollEvents to
     // dequeue and send.  For reasons not at all clear to me, passing
     // NO to dequeue: causes this method never to return.
@@ -1444,6 +1443,9 @@ void _glfwPlatformWaitEventsTimeout(double timeout)
 {
     @autoreleasepool {
 
+    if (!_glfw.ns.finishedLaunching)
+        [NSApp run];
+
     NSDate* date = [NSDate dateWithTimeIntervalSinceNow:timeout];
     NSEvent* event = [NSApp nextEventMatchingMask:NSEventMaskAny
                                         untilDate:date
@@ -1460,6 +1462,9 @@ void _glfwPlatformWaitEventsTimeout(double timeout)
 void _glfwPlatformPostEmptyEvent(void)
 {
     @autoreleasepool {
+
+    if (!_glfw.ns.finishedLaunching)
+        [NSApp run];
 
     NSEvent* event = [NSEvent otherEventWithType:NSEventTypeApplicationDefined
                                         location:NSMakePoint(0, 0)
@@ -1632,67 +1637,23 @@ int _glfwPlatformCreateStandardCursor(_GLFWcursor* cursor, int shape)
 {
     @autoreleasepool {
 
-    SEL cursorSelector = NULL;
-
-    // HACK: Try to use a private message
-    switch (shape)
-    {
-        case GLFW_RESIZE_EW_CURSOR:
-            cursorSelector = NSSelectorFromString(@"_windowResizeEastWestCursor");
-            break;
-        case GLFW_RESIZE_NS_CURSOR:
-            cursorSelector = NSSelectorFromString(@"_windowResizeNorthSouthCursor");
-            break;
-        case GLFW_RESIZE_NWSE_CURSOR:
-            cursorSelector = NSSelectorFromString(@"_windowResizeNorthWestSouthEastCursor");
-            break;
-        case GLFW_RESIZE_NESW_CURSOR:
-            cursorSelector = NSSelectorFromString(@"_windowResizeNorthEastSouthWestCursor");
-            break;
-    }
-
-    if (cursorSelector && [NSCursor respondsToSelector:cursorSelector])
-    {
-        id object = [NSCursor performSelector:cursorSelector];
-        if ([object isKindOfClass:[NSCursor class]])
-            cursor->ns.object = object;
-    }
+    if (shape == GLFW_ARROW_CURSOR)
+        cursor->ns.object = [NSCursor arrowCursor];
+    else if (shape == GLFW_IBEAM_CURSOR)
+        cursor->ns.object = [NSCursor IBeamCursor];
+    else if (shape == GLFW_CROSSHAIR_CURSOR)
+        cursor->ns.object = [NSCursor crosshairCursor];
+    else if (shape == GLFW_HAND_CURSOR)
+        cursor->ns.object = [NSCursor pointingHandCursor];
+    else if (shape == GLFW_HRESIZE_CURSOR)
+        cursor->ns.object = [NSCursor resizeLeftRightCursor];
+    else if (shape == GLFW_VRESIZE_CURSOR)
+        cursor->ns.object = [NSCursor resizeUpDownCursor];
 
     if (!cursor->ns.object)
     {
-        switch (shape)
-        {
-            case GLFW_ARROW_CURSOR:
-                cursor->ns.object = [NSCursor arrowCursor];
-                break;
-            case GLFW_IBEAM_CURSOR:
-                cursor->ns.object = [NSCursor IBeamCursor];
-                break;
-            case GLFW_CROSSHAIR_CURSOR:
-                cursor->ns.object = [NSCursor crosshairCursor];
-                break;
-            case GLFW_POINTING_HAND_CURSOR:
-                cursor->ns.object = [NSCursor pointingHandCursor];
-                break;
-            case GLFW_RESIZE_EW_CURSOR:
-                cursor->ns.object = [NSCursor resizeLeftRightCursor];
-                break;
-            case GLFW_RESIZE_NS_CURSOR:
-                cursor->ns.object = [NSCursor resizeUpDownCursor];
-                break;
-            case GLFW_RESIZE_ALL_CURSOR:
-                cursor->ns.object = [NSCursor closedHandCursor];
-                break;
-            case GLFW_NOT_ALLOWED_CURSOR:
-                cursor->ns.object = [NSCursor operationNotAllowedCursor];
-                break;
-        }
-    }
-
-    if (!cursor->ns.object)
-    {
-        _glfwInputError(GLFW_CURSOR_UNAVAILABLE,
-                        "Cocoa: Standard cursor shape unavailable");
+        _glfwInputError(GLFW_PLATFORM_ERROR,
+                        "Cocoa: Failed to retrieve standard cursor");
         return GLFW_FALSE;
     }
 
@@ -1754,47 +1715,6 @@ const char* _glfwPlatformGetClipboardString(void)
     return _glfw.ns.clipboardString;
 
     } // autoreleasepool
-}
-
-EGLenum _glfwPlatformGetEGLPlatform(EGLint** attribs)
-{
-    if (_glfw.egl.ANGLE_platform_angle)
-    {
-        int type = 0;
-
-        if (_glfw.egl.ANGLE_platform_angle_opengl)
-        {
-            if (_glfw.hints.init.angleType == GLFW_ANGLE_PLATFORM_TYPE_OPENGL)
-                type = EGL_PLATFORM_ANGLE_TYPE_OPENGL_ANGLE;
-        }
-
-        if (_glfw.egl.ANGLE_platform_angle_metal)
-        {
-            if (_glfw.hints.init.angleType == GLFW_ANGLE_PLATFORM_TYPE_METAL)
-                type = EGL_PLATFORM_ANGLE_TYPE_METAL_ANGLE;
-        }
-
-        if (type)
-        {
-            *attribs = calloc(3, sizeof(EGLint));
-            (*attribs)[0] = EGL_PLATFORM_ANGLE_TYPE_ANGLE;
-            (*attribs)[1] = type;
-            (*attribs)[2] = EGL_NONE;
-            return EGL_PLATFORM_ANGLE_ANGLE;
-        }
-    }
-
-    return 0;
-}
-
-EGLNativeDisplayType _glfwPlatformGetEGLNativeDisplay(void)
-{
-    return EGL_DEFAULT_DISPLAY;
-}
-
-EGLNativeWindowType _glfwPlatformGetEGLNativeWindow(_GLFWwindow* window)
-{
-    return window->ns.layer;
 }
 
 void _glfwPlatformGetRequiredInstanceExtensions(char** extensions)
