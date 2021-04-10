@@ -75,6 +75,7 @@ if (QT5_FOUND)
     # Starting with the QtCore lib, find the bin and root directories
     get_target_property(QT5_LIB_LOCATION Qt5::Core LOCATION_${CMAKE_BUILD_TYPE})
     get_filename_component(QT_BINARY_DIR ${QT5_LIB_LOCATION} DIRECTORY)
+    set(WINDEPLOYQT ${QT_BINARY_DIR}/windeployqt.exe)
 
     # Apple uses frameworks - move up until we get to the base directory to set the bin directory properly
     if (APPLE)
