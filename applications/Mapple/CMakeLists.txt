@@ -147,6 +147,13 @@ if (WIN32 OR MSVC)
     # if you want to get rid of the (system) console, use
     #	add_executable( ${PROJECT_NAME} WIN32 ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} ${${PROJECT_NAME}_RESOURCES} )
     #       target_link_libraries( ${PROJECT_NAME} Qt5::WinMain )
+
+#    add_custom_command(
+#            TARGET ${PROJECT_NAME}
+#            POST_BUILD
+#            COMMAND ${WINDEPLOYQT} --no-translations --verbose 0 $<TARGET_FILE:${PROJECT_NAME}>
+#    )
+
 elseif (APPLE)
     function(resource VAR SOURCE_PATH DESTINATION PATTERN)
         file(GLOB_RECURSE _LIST CONFIGURE_DEPENDS ${SOURCE_PATH}/${PATTERN})

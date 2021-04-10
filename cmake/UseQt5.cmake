@@ -76,12 +76,16 @@ if (QT5_FOUND)
     get_target_property(QT5_LIB_LOCATION Qt5::Core LOCATION_${CMAKE_BUILD_TYPE})
     get_filename_component(QT_BINARY_DIR ${QT5_LIB_LOCATION} DIRECTORY)
 
-    # Apple uses frameworks - move up until we get to the base directory to set the bin directory properly
     if (APPLE)
+        # Apple uses frameworks - move up until we get to the base directory to set the bin directory properly
         get_filename_component(QT_BINARY_DIR ${QT_BINARY_DIR} DIRECTORY)
-        set(QT_BINARY_DIR "${QT_BINARY_DIR}/bin")
-
-        set(MACDEPLOYQT "${QT_BINARY_DIR}/macdeployqt")
+        get_filename_component(QT_BINARY_DIR ${QT_BINARY_DIR} DIRECTORY)
+        set(QT_BINARY_DIR ${QT_BINARY_DIR}/bin)
+        set(MACDEPLOYQT ${QT_BINARY_DIR}/macdeployqt)
+        message(STATUS "macdeployqt: ${MACDEPLOYQT}")
+    elseif(WIN32)
+        set(WINDEPLOYQT ${QT_BINARY_DIR}/windeployqt.exe)
+        message(STATUS "windeployqt: ${WINDEPLOYQT}")
     endif ()
 
     # set QT5_ROOT_PATH if it wasn't set by the user
