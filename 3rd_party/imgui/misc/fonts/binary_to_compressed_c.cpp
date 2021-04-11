@@ -1,15 +1,17 @@
-// ImGui - binary_to_compressed_c.cpp
+// dear imgui
+// (binary_to_compressed_c.cpp)
 // Helper tool to turn a file into a C array, if you want to embed font data in your source code.
 
 // The data is first compressed with stb_compress() to reduce source code size,
 // then encoded in Base85 to fit in a string so we can fit roughly 4 bytes of compressed data into 5 bytes of source code (suggested by @mmalex)
-// (If we used 32-bits constants it would require take 11 bytes of source code to encode 4 bytes, and be endianness dependent)
+// (If we used 32-bit constants it would require take 11 bytes of source code to encode 4 bytes, and be endianness dependent)
 // Note that even with compression, the output array is likely to be bigger than the binary file..
 // Load compressed TTF fonts with ImGui::GetIO().Fonts->AddFontFromMemoryCompressedTTF()
 
 // Build with, e.g:
 //   # cl.exe binary_to_compressed_c.cpp
-//   # gcc binary_to_compressed_c.cpp
+//   # g++ binary_to_compressed_c.cpp
+//   # clang++ binary_to_compressed_c.cpp
 // You can also find a precompiled Windows binary in the binary/demo package available from https://github.com/ocornut/imgui
 
 // Usage:
@@ -27,7 +29,7 @@
 // stb_compress* from stb.h - declaration
 typedef unsigned int stb_uint;
 typedef unsigned char stb_uchar;
-stb_uint stb_compress(stb_uchar *out,stb_uchar *in,stb_uint len);
+stb_uint stb_compress(stb_uchar* out, stb_uchar* in, stb_uint len);
 
 static bool binary_to_compressed_c(const char* filename, const char* symbol, bool use_base85_encoding, bool use_compression);
 
@@ -48,18 +50,21 @@ int main(int argc, char** argv)
         else if (strcmp(argv[argn], "-nocompress") == 0) { use_compression = false; argn++; }
         else
         {
-            printf("Unknown argument: '%s'\n", argv[argn]);
+            fprintf(stderr, "Unknown argument: '%s'\n", argv[argn]);
             return 1;
         }
     }
 
-    return binary_to_compressed_c(argv[argn], argv[argn+1], use_base85_encoding, use_compression) ? 0 : 1;
+    bool ret = binary_to_compressed_c(argv[argn], argv[argn + 1], use_base85_encoding, use_compression);
+    if (!ret)
+        fprintf(stderr, "Error opening or reading file: '%s'\n", argv[argn]);
+    return ret ? 0 : 1;
 }
 
-char Encode85Byte(unsigned int x) 
+char Encode85Byte(unsigned int x)
 {
     x = (x % 85) + 35;
-    return (x>='\\') ? x+1 : x;
+    return (x >= '\\') ? x + 1 : x;
 }
 
 bool binary_to_compressed_c(const char* filename, const char* symbol, bool use_base85_encoding, bool use_compression)
@@ -69,7 +74,7 @@ bool binary_to_compressed_c(const char* filename, const char* symbol, bool use_b
     if (!f) return false;
     int data_sz;
     if (fseek(f, 0, SEEK_END) || (data_sz = (int)ftell(f)) == -1 || fseek(f, 0, SEEK_SET)) { fclose(f); return false; }
-    char* data = new char[data_sz+4];
+    char* data = new char[data_sz + 4];
     if (fread(data, 1, data_sz, f) != (size_t)data_sz) { fclose(f); delete[] data; return false; }
     memset((void*)(((char*)data) + data_sz), 0, 4);
     fclose(f);
@@ -79,16 +84,16 @@ bool binary_to_compressed_c(const char* filename, const char* symbol, bool use_b
     char* compressed = use_compression ? new char[maxlen] : data;
     int compressed_sz = use_compression ? stb_compress((stb_uchar*)compressed, (stb_uchar*)data, data_sz) : data_sz;
     if (use_compression)
-		memset(compressed + compressed_sz, 0, maxlen - compressed_sz);
+        memset(compressed + compressed_sz, 0, maxlen - compressed_sz);
 
     // Output as Base85 encoded
     FILE* out = stdout;
     fprintf(out, "// File: '%s' (%d bytes)\n", filename, (int)data_sz);
     fprintf(out, "// Exported using binary_to_compressed_c.cpp\n");
-	const char* compressed_str = use_compression ? "compressed_" : "";
+    const char* compressed_str = use_compression ? "compressed_" : "";
     if (use_base85_encoding)
     {
-        fprintf(out, "static const char %s_%sdata_base85[%d+1] =\n    \"", symbol, compressed_str, (int)((compressed_sz+3)/4)*5);
+        fprintf(out, "static const char %s_%sdata_base85[%d+1] =\n    \"", symbol, compressed_str, (int)((compressed_sz + 3) / 4)*5);
         char prev_c = 0;
         for (int src_i = 0; src_i < compressed_sz; src_i += 4)
         {
@@ -100,7 +105,7 @@ bool binary_to_compressed_c(const char* filename, const char* symbol, bool use_b
                 fprintf(out, (c == '?' && prev_c == '?') ? "\\%c" : "%c", c);
                 prev_c = c;
             }
-            if ((src_i % 112) == 112-4)
+            if ((src_i % 112) == 112 - 4)
                 fprintf(out, "\"\n    \"");
         }
         fprintf(out, "\";\n\n");
@@ -108,7 +113,7 @@ bool binary_to_compressed_c(const char* filename, const char* symbol, bool use_b
     else
     {
         fprintf(out, "static const unsigned int %s_%ssize = %d;\n", symbol, compressed_str, (int)compressed_sz);
-        fprintf(out, "static const unsigned int %s_%sdata[%d/4] =\n{", symbol, compressed_str, (int)((compressed_sz+3)/4)*4);
+        fprintf(out, "static const unsigned int %s_%sdata[%d/4] =\n{", symbol, compressed_str, (int)((compressed_sz + 3) / 4)*4);
         int column = 0;
         for (int i = 0; i < compressed_sz; i += 4)
         {
@@ -124,7 +129,7 @@ bool binary_to_compressed_c(const char* filename, const char* symbol, bool use_b
     // Cleanup
     delete[] data;
     if (use_compression)
-	    delete[] compressed;
+        delete[] compressed;
     return true;
 }
 
@@ -214,7 +219,7 @@ static int stb__window = 0x40000; // 256K
 
 static int stb_not_crap(int best, int dist)
 {
-    return   ((best > 2  &&  dist <= 0x00100)     
+    return   ((best > 2  &&  dist <= 0x00100)
         || (best > 5  &&  dist <= 0x04000)
         || (best > 7  &&  dist <= 0x80000));
 }
@@ -296,15 +301,15 @@ static int stb_compress_chunk(stb_uchar *history,
             stb_out(dist-1);
         } else if (best > 5  &&  best <= 0x100   &&  dist <= 0x4000) {
             outliterals(lit_start, q-lit_start); lit_start = (q += best);
-            stb_out2(0x4000 + dist-1);       
+            stb_out2(0x4000 + dist-1);
             stb_out(best-1);
         } else if (best > 7  &&  best <= 0x100   &&  dist <= 0x80000) {
             outliterals(lit_start, q-lit_start); lit_start = (q += best);
-            stb_out3(0x180000 + dist-1);     
+            stb_out3(0x180000 + dist-1);
             stb_out(best-1);
         } else if (best > 8  &&  best <= 0x10000 &&  dist <= 0x80000) {
             outliterals(lit_start, q-lit_start); lit_start = (q += best);
-            stb_out3(0x100000 + dist-1);     
+            stb_out3(0x100000 + dist-1);
             stb_out2(best-1);
         } else if (best > 9                      &&  dist <= 0x1000000) {
             if (best > 65536) best = 65536;
