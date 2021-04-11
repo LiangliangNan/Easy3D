@@ -4,8 +4,8 @@ project(3rd_imgui)
 
 set(imgui_HEADERS
     imgui.h
-    impl/imgui_impl_glfw.h
-    impl/imgui_impl_opengl3.h
+    backends/imgui_impl_glfw.h
+    backends/imgui_impl_opengl3.h
     )
 
 set(imgui_SOURCES
@@ -13,8 +13,9 @@ set(imgui_SOURCES
     imgui_demo.cpp
     imgui_draw.cpp
     imgui_widgets.cpp
-    impl/imgui_impl_glfw.cpp
-    impl/imgui_impl_opengl3.cpp
+    imgui_tables.cpp
+    backends/imgui_impl_glfw.cpp
+    backends/imgui_impl_opengl3.cpp
     )
 
 
