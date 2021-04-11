@@ -11,6 +11,4 @@ add_executable(${PROJECT_NAME}
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "tutorials")
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_THIRD_PARTY}/imgui)
-
 target_link_libraries(${PROJECT_NAME} 3rd_imgui easy3d::core easy3d::renderer easy3d::viewer easy3d::util)
