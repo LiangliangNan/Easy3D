@@ -35,47 +35,45 @@
 namespace easy3d {
 
 
-	SurfaceMesh* SurfaceMeshIO::load(const std::string& file_name)
-	{
-		std::setlocale(LC_NUMERIC, "C");
+    SurfaceMesh *SurfaceMeshIO::load(const std::string &file_name) {
+        std::setlocale(LC_NUMERIC, "C");
 
-		SurfaceMesh* mesh = new SurfaceMesh;
-		mesh->set_name(file_name);
+        SurfaceMesh *mesh = new SurfaceMesh;
+        mesh->set_name(file_name);
 
-		StopWatch w;
-		bool success = false;
+        StopWatch w;
+        bool success = false;
 
-        const std::string& ext = file_system::extension(file_name, true);
+        const std::string &ext = file_system::extension(file_name, true);
         if (ext == "ply")
             success = io::load_ply(file_name, mesh);
         else if (ext == "sm")
             success = io::load_sm(file_name, mesh);
         else if (ext == "obj")
-			success = io::load_obj(file_name, mesh);
-		else if (ext == "off")
-			success = io::load_off(file_name, mesh);
-		else if (ext == "stl")
-			success = io::load_stl(file_name, mesh);
+            success = io::load_obj(file_name, mesh);
+        else if (ext == "off")
+            success = io::load_off(file_name, mesh);
+        else if (ext == "stl")
+            success = io::load_stl(file_name, mesh);
         else if (ext == "trilist")
             success = io::load_trilist(file_name, mesh);
 
-		//	else if (ext == "plg")
-		//        serializer = new MeshSerializer_plg();
-		//	else if (ext == "geojson")
-		//        serializer = new MeshSerializer_json();
-        else if (ext.empty()){
+            //	else if (ext == "plg")
+            //        serializer = new MeshSerializer_plg();
+            //	else if (ext == "geojson")
+            //        serializer = new MeshSerializer_json();
+        else if (ext.empty()) {
             LOG(ERROR) << "unknown file format: no extension" << ext;
             success = false;
+        } else {
+            LOG(ERROR) << "unknown file format: " << ext;
+            success = false;
         }
-		else {
-			LOG(ERROR) << "unknown file format: " << ext;
-			success = false;
-		}
 
-		if (!success || mesh->n_vertices() == 0 || mesh->n_faces() == 0) {
-			delete mesh;
-			return nullptr;
-		}
+        if (!success || mesh->n_vertices() == 0 || mesh->n_faces() == 0) {
+            delete mesh;
+            return nullptr;
+        }
 
         if (success)
             LOG(INFO) << "surface mesh loaded ("
@@ -86,22 +84,21 @@ namespace easy3d {
         else
             LOG(INFO) << "load surface mesh failed";
 
-		return mesh;
-	}
+        return mesh;
+    }
 
 
-	bool SurfaceMeshIO::save(const std::string& file_name, const SurfaceMesh* mesh)
-	{
+    bool SurfaceMeshIO::save(const std::string &file_name, const SurfaceMesh *mesh) {
         if (!mesh || mesh->n_faces() == 0) {
-			LOG(ERROR) << "surface mesh is null";
-			return false;
-		}
+            LOG(ERROR) << "surface mesh is null";
+            return false;
+        }
 
-		StopWatch w;
-		bool success = false;
+        StopWatch w;
+        bool success = false;
 
         std::string final_name = file_name;
-        const std::string& ext = file_system::extension(file_name, true);
+        const std::string &ext = file_system::extension(file_name, true);
 
         if (ext == "ply" || ext.empty()) {
             if (ext.empty()) {
@@ -109,37 +106,35 @@ namespace easy3d {
                 final_name = final_name + ".ply";
             }
             success = io::save_ply(final_name, mesh, true);
-        }
-        else if (ext == "sm")
+        } else if (ext == "sm")
             success = io::save_sm(final_name, mesh);
         else if (ext == "obj")
             success = io::save_obj(final_name, mesh);
         else if (ext == "off")
             success = io::save_off(final_name, mesh);
-		else if (ext == "stl")
+        else if (ext == "stl")
             success = io::save_stl(final_name, mesh);
 
-		//	else if (ext == "plg")
-		//        serializer = new MeshSerializer_plg();
-		//	else if (ext == "geojson")
-		//        serializer = new MeshSerializer_json();
-		else {
-			LOG(ERROR) << "unknown file format: " << ext;
-			success = false;
-		}
+            //	else if (ext == "plg")
+            //        serializer = new MeshSerializer_plg();
+            //	else if (ext == "geojson")
+            //        serializer = new MeshSerializer_json();
+        else {
+            LOG(ERROR) << "unknown file format: " << ext;
+            success = false;
+        }
 
         if (success) {
             LOG(INFO) << "save model done. " << w.time_string();
             return true;
-        }
-        else {
+        } else {
             LOG(INFO) << "save model failed";
             return false;
         }
-	}
+    }
 
 
-    bool io::load_trilist(const std::string& file_name, SurfaceMesh* mesh) {
+    bool io::load_trilist(const std::string &file_name, SurfaceMesh *mesh) {
         std::ifstream input(file_name.c_str());
         if (input.fail()) {
             LOG(ERROR) << "could not open file: " << file_name;
@@ -154,6 +149,6 @@ namespace easy3d {
         }
 
         return mesh->n_faces() > 0;
-	}
+    }
 
 } // namespace easy3d
