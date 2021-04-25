@@ -70,7 +70,7 @@ int main(int argc, char **argv) {
     // Create a TrianglesDrawable to visualize the surface of the "bunny".
 
     // We need to send the point positions and the vertex indices of the faces to the GPU.
-    TrianglesDrawable *surface = new TrianglesDrawable("faces");
+    auto surface = new TrianglesDrawable("faces");
     // Upload the vertex positions of the surface to the GPU.
     surface->update_vertex_buffer(points);
     // Upload the vertex indices of the surface to the GPU. The indices represent how the vertices are connected to
@@ -83,7 +83,7 @@ int main(int argc, char **argv) {
     // Create a PointsDrawable to visualize the vertices of the "bunny".
 
     // We need to send the point positions and the vertex indices of the faces to the GPU.
-    PointsDrawable *vertices = new PointsDrawable("faces");
+    auto vertices = new PointsDrawable("faces");
     // Upload the vertex positions of the surface to the GPU.
     vertices->update_vertex_buffer(points);
     // Draw the vertices in red.
@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
     // Create a LinesDrawable to visualize the bounding box of the "bunny".
 
     // Compute the bounding box.
-    LinesDrawable *bbox_drawable = new LinesDrawable("bbox");
+    auto bbox_drawable = new LinesDrawable("bbox");
     const Box3 &box = geom::bounding_box<Box3, std::vector<vec3> >(points);
     float xmin = box.min_coord(0);
     float xmax = box.max_coord(0);
