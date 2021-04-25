@@ -2525,39 +2525,47 @@ namespace easy3d {
                 switch (drawable->type()) {
                     case Drawable::DT_TRIANGLES:
                         update(mesh, dynamic_cast<TrianglesDrawable *>(drawable));
-                        break;
+                        return;
                     case Drawable::DT_LINES:
                         update(mesh, dynamic_cast<LinesDrawable *>(drawable));
-                        break;
+                        return;
                     case Drawable::DT_POINTS:
                         update(mesh, dynamic_cast<PointsDrawable *>(drawable));
-                        break;
+                        return;
                 }
             } else if (dynamic_cast<PointCloud *>(model)) {
                 PointCloud *cloud = dynamic_cast<PointCloud *>(model);
                 switch (drawable->type()) {
                     case Drawable::DT_POINTS:
                         update(cloud, dynamic_cast<PointsDrawable *>(drawable));
-                        break;
+                        return;
                     case Drawable::DT_LINES:
-                        update(cloud, dynamic_cast<LinesDrawable *>(drawable));
-                        break;
+                        LOG_N_TIMES(1, WARNING) << "Lines drawable '" << drawable->name()
+                                                << "' is not a standard drawable for point clouds. To update its "
+                                                   "rendering buffer, you must call its 'set_update_func()' to provide "
+                                                   "an update function";
+                        return;
                     case Drawable::DT_TRIANGLES:
-                        update(cloud, dynamic_cast<TrianglesDrawable *>(drawable));
-                        break;
+                        LOG_N_TIMES(1, WARNING) << "Triangles drawable '" << drawable->name()
+                                                << "' is not a standard drawable for point clouds. To update its "
+                                                   "rendering buffer, you must call its 'set_update_func()' to provide "
+                                                   "an update function";
+                        return;
                 }
             } else if (dynamic_cast<Graph *>(model)) {
                 Graph *graph = dynamic_cast<Graph *>(model);
                 switch (drawable->type()) {
                     case Drawable::DT_POINTS:
                         update(graph, dynamic_cast<PointsDrawable *>(drawable));
-                        break;
+                        return;
                     case Drawable::DT_LINES:
                         update(graph, dynamic_cast<LinesDrawable *>(drawable));
-                        break;
+                        return;
                     case Drawable::DT_TRIANGLES:
-                        update(graph, dynamic_cast<TrianglesDrawable *>(drawable));
-                        break;
+                        LOG_N_TIMES(1, WARNING) << "Triangles drawable '" << drawable->name()
+                                                << "' is not a standard drawable for graphs. To update its rendering "
+                                                   "buffer, you must call its 'set_update_func()' to provide an update function";
+                        return;
                 }
             }
             else if (dynamic_cast<PolyMesh *>(model)) {
@@ -2565,13 +2573,13 @@ namespace easy3d {
                 switch (drawable->type()) {
                     case Drawable::DT_TRIANGLES:
                         update(mesh, dynamic_cast<TrianglesDrawable *>(drawable), drawable->name() == "faces:border");
-                        break;
+                        return;
                     case Drawable::DT_LINES:
                         update(mesh, dynamic_cast<LinesDrawable *>(drawable));
-                        break;
+                        return;
                     case Drawable::DT_POINTS:
                         update(mesh, dynamic_cast<PointsDrawable *>(drawable));
-                        break;
+                        return;
                 }
             }
         }
