@@ -46,6 +46,7 @@ set(${PROJECT_NAME}_HEADERS
         widgets/widget_global_setting.h
         widgets/widget_log.h
 
+        tools/canvas.h
         tools/tool.h
         tools/tool_manager.h
         tools/tool_segmentation_surface_mesh.h
