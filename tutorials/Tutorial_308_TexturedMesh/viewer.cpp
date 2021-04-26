@@ -256,7 +256,7 @@ namespace easy3d {
 
             const auto &d_indices = tessellator.elements();
 
-            TrianglesDrawable *drawable = mesh->renderer()->add_triangles_drawable("faces_" + std::to_string(i));
+            auto drawable = mesh->renderer()->add_triangles_drawable("faces_" + std::to_string(i));
 
             drawable->update_element_buffer(d_indices);
             drawable->update_vertex_buffer(d_points);
@@ -272,6 +272,7 @@ namespace easy3d {
                     Texture *tex = TextureManager::request(group.tex_file, Texture::REPEAT);
                     if (tex) {
                         drawable->set_texture_coloring(State::HALFEDGE, "h:texcoord", tex);
+                        drawable->set_distinct_back_color(false);
                         LOG(INFO) << "texture created from " << group.tex_file;
                     }
                 }
