@@ -29,7 +29,8 @@
 using namespace easy3d;
 
 
-// This example shows how to access the adjacency information of a polyhedral mesh, i.e.,
+// This example shows how to access the adjacency information of a polyhedral mesh (consisting of a single tetrahedron),
+// i.e.,
 //		- the incident vertices of each vertex
 //		- the incident edges of each vertex
 //		- the incident halffaces of each vertex
@@ -52,73 +53,14 @@ PolyMesh *old_mesh_from_previous_example() {
     // Create a polyhedral mesh
     PolyMesh *mesh = new PolyMesh;
 
-    // Add eight vertices
-    PolyMesh::Vertex v0 = mesh->add_vertex(vec3(-1.0, 0.0, 0.0));
-    PolyMesh::Vertex v1 = mesh->add_vertex(vec3(0.0, 0.0, 1.0));
-    PolyMesh::Vertex v2 = mesh->add_vertex(vec3(1.0, 0.0, 0.0));
-    PolyMesh::Vertex v3 = mesh->add_vertex(vec3(0.0, 0.0, -1.0));
-    PolyMesh::Vertex v4 = mesh->add_vertex(vec3(0.0, 1.0, 0.0));
+    // Add four vertices
+    auto v0 = mesh->add_vertex(vec3(-1.0, 0.0, 0.0));
+    auto v1 = mesh->add_vertex(vec3(0.0, 0.0, 1.0));
+    auto v2 = mesh->add_vertex(vec3(1.0, 0.0, 0.0));
+    auto v3 = mesh->add_vertex(vec3(0.0, 0.0, -1.0));
 
-    std::vector<PolyMesh::Vertex> vertices;
-
-    // Add faces
-    vertices.push_back(v0);
-    vertices.push_back(v1);
-    vertices.push_back(v4);
-    PolyMesh::HalfFace h0 = mesh->add_face(vertices);
-
-    vertices.clear();
-    vertices.push_back(v1);
-    vertices.push_back(v2);
-    vertices.push_back(v4);
-    PolyMesh::HalfFace h1 = mesh->add_face(vertices);
-
-    vertices.clear();
-    vertices.push_back(v0);
-    vertices.push_back(v1);
-    vertices.push_back(v2);
-    PolyMesh::HalfFace h2 = mesh->add_face(vertices);
-
-    vertices.clear();
-    vertices.push_back(v0);
-    vertices.push_back(v4);
-    vertices.push_back(v2);
-    PolyMesh::HalfFace h3 = mesh->add_face(vertices);
-
-    vertices.clear();
-    vertices.push_back(v0);
-    vertices.push_back(v4);
-    vertices.push_back(v3);
-    PolyMesh::HalfFace h4 = mesh->add_face(vertices);
-
-    vertices.clear();
-    vertices.push_back(v2);
-    vertices.push_back(v3);
-    vertices.push_back(v4);
-    PolyMesh::HalfFace h5 = mesh->add_face(vertices);
-
-    vertices.clear();
-    vertices.push_back(v0);
-    vertices.push_back(v2);
-    vertices.push_back(v3);
-    PolyMesh::HalfFace h6 = mesh->add_face(vertices);
-
-    std::vector<PolyMesh::HalfFace> halffaces;
-
-    // Add first tetrahedron
-    halffaces.push_back(mesh->opposite(h0));
-    halffaces.push_back(mesh->opposite(h1));
-    halffaces.push_back(h2);
-    halffaces.push_back(mesh->opposite(h3));
-    mesh->add_cell(halffaces);
-
-    // Add second tetrahedron
-    halffaces.clear();
-    halffaces.push_back(mesh->opposite(h4));
-    halffaces.push_back(mesh->opposite(h5));
-    halffaces.push_back(h3);
-    halffaces.push_back(h6);
-    mesh->add_cell(halffaces);
+    // Add the only tetrahedron
+    mesh->add_tetra(v0, v1, v2, v3);
 
     return mesh;
 }
