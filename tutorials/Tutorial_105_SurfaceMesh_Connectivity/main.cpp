@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
     for (auto v : mesh->vertices()) {
         std::cout << "incident outgoing/ingoing edges of vertex " << v << ": ";
 #ifdef USE_FOR_LOOP
-        // loop over all incident outgoing/ingoing edges
+        // loop over all incident outgoing edges
         for (auto h : mesh->halfedges(v))
             std::cout << h << "/" << mesh->opposite(h) << " ";
 #else   // use circulator
