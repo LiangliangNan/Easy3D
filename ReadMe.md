@@ -109,6 +109,15 @@ directories, and relevant compile definitions of the easy3d libraries are visibl
 find_package(Easy3D REQUIRED)
 target_link_libraries(YOUR_APP_NAME easy3d::core) # you may request more modules (e.g., viewer, algo)
 ```
+The minimum code to have a 3D viewer:
+```c++
+#include <easy3d/viewer/viewer.h>
+
+int main(int argc, char** argv) {
+    easy3d::Viewer viewer("Test");
+    return viewer.run();
+}
+```
 
 ### Documentation
 The documentation for Easy3D-v2.4.2 is available [here](https://3d.bk.tudelft.nl/liangliang/software/easy3d_doc/html/index.html).
