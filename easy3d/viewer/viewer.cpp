@@ -988,7 +988,14 @@ namespace easy3d {
                 post_draw();
                 glfwSwapBuffers(window_);
 
-                glfwWaitEvents();
+                if (animation_func_) {
+                    // Liangliang: this is not accurate
+                    const double min_duration = 1000000.0/60;
+                    std::this_thread::sleep_for(std::chrono::microseconds((int)(min_duration)));
+                    animation_func_(*this);
+                }
+                else
+                    glfwWaitEvents();
             }
 
             /* Process events once more */

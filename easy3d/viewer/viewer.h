@@ -405,6 +405,10 @@ namespace easy3d {
         void draw_face_labels(Model* model, TextRenderer* texter, int font_id, const vec3& color) const;
         void draw_vertex_labels(Model* model, TextRenderer* texter, int font_id, const vec3& color) const;
 
+    public:
+        // Function called at an equal interval for animation
+        std::function<bool(Viewer& viewer)> animation_func_;
+
 	protected:
 		GLFWwindow*	window_;
         float       dpi_scaling_;
