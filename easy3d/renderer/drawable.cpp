@@ -138,11 +138,11 @@ namespace easy3d {
     }
 
 
-    void Drawable::update_vertex_buffer(const std::vector<vec3> &vertices) {
+    void Drawable::update_vertex_buffer(const std::vector<vec3> &vertices, bool dynamic) {
         assert(vao_);
 
         bool success = vao_->create_array_buffer(vertex_buffer_, ShaderProgram::POSITION, vertices.data(),
-                                                 vertices.size() * sizeof(vec3), 3);
+                                                 vertices.size() * sizeof(vec3), 3, dynamic);
 
         LOG_IF(!success, ERROR) << "failed creating vertex buffer";
 
@@ -163,28 +163,28 @@ namespace easy3d {
     }
 
 
-    void Drawable::update_color_buffer(const std::vector<vec3> &colors) {
+    void Drawable::update_color_buffer(const std::vector<vec3> &colors, bool dynamic) {
         assert(vao_);
 
         bool success = vao_->create_array_buffer(color_buffer_, ShaderProgram::COLOR, colors.data(),
-                                                 colors.size() * sizeof(vec3), 3);
+                                                 colors.size() * sizeof(vec3), 3, dynamic);
         LOG_IF(!success, ERROR) << "failed updating color buffer";
     }
 
 
-    void Drawable::update_normal_buffer(const std::vector<vec3> &normals) {
+    void Drawable::update_normal_buffer(const std::vector<vec3> &normals, bool dynamic) {
         assert(vao_);
         bool success = vao_->create_array_buffer(normal_buffer_, ShaderProgram::NORMAL, normals.data(),
-                                                 normals.size() * sizeof(vec3), 3);
+                                                 normals.size() * sizeof(vec3), 3, dynamic);
         LOG_IF(!success, ERROR) << "failed updating normal buffer";
     }
 
 
-    void Drawable::update_texcoord_buffer(const std::vector<vec2> &texcoords) {
+    void Drawable::update_texcoord_buffer(const std::vector<vec2> &texcoords, bool dynamic) {
         assert(vao_);
 
         bool success = vao_->create_array_buffer(texcoord_buffer_, ShaderProgram::TEXCOORD, texcoords.data(),
-                                                 texcoords.size() * sizeof(vec2), 2);
+                                                 texcoords.size() * sizeof(vec2), 2, dynamic);
         LOG_IF(!success, ERROR) << "failed updating texcoord buffer";
     }
 

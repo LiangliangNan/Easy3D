@@ -99,10 +99,10 @@ namespace easy3d {
          *    be in a correct order, like f1_v1, f1_v2, f1_v3, f2_v1, f2_v2, f2_v3... This requires the shared vertices
          *    be duplicated in the vertex buffer.
          */
-        void update_vertex_buffer(const std::vector<vec3> &vertices);
-        void update_color_buffer(const std::vector<vec3> &colors);
-        void update_normal_buffer(const std::vector<vec3> &normals);
-        void update_texcoord_buffer(const std::vector<vec2> &texcoords);
+        void update_vertex_buffer(const std::vector<vec3> &vertices, bool dynamic = false);
+        void update_color_buffer(const std::vector<vec3> &colors, bool dynamic = false);
+        void update_normal_buffer(const std::vector<vec3> &normals, bool dynamic = false);
+        void update_texcoord_buffer(const std::vector<vec2> &texcoords, bool dynamic = false);
         void update_element_buffer(const std::vector<unsigned int> &elements);
         /**
          * \brief Updates the element buffer.
@@ -181,9 +181,10 @@ namespace easy3d {
         mat4 manipulated_matrix() const;
         ///@}
 
-    protected:
-        VertexArrayObject *vao() const { return vao_; }
+        VertexArrayObject *vao() { return vao_; }
+        const VertexArrayObject *vao() const { return vao_; }
 
+    protected:
         void internal_update_buffers();
 
         void clear();
