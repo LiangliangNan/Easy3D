@@ -47,7 +47,6 @@ void create_spheres(SurfaceMesh *mesh) {
     drawable->set_uniform_coloring(vec4(1.0f, 0.0f, 0.0f, 1.0f));
     drawable->set_point_size(24.0f);
     drawable->set_impostor_type(PointsDrawable::SPHERE);
-
 }
 
 
