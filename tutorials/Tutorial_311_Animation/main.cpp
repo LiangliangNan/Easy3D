@@ -67,8 +67,8 @@ int main(int argc, char **argv) {
 
     viewer.fit_screen();
 
-    // Create an animation function to define how the vertex positions are updated.
-    // This is a trivial example that stretches the model along the Z-axis.
+    // Define an animation function to specify how vertex positions are updated.
+    // In this trivial example, we stretch the model along the Z-axis.
     viewer.animation_func_ = [&](easy3d::Viewer& v) -> bool {
         static vec3* vertices = nullptr;
         if (!vertices)
