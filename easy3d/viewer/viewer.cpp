@@ -966,7 +966,8 @@ namespace easy3d {
 
         try {   // main loop
             static int frame_counter = 0;
-            double last_time = glfwGetTime();
+            double last_time = glfwGetTime();   // for frame rate counter
+            double ms_per_frame = 0.;    // for animation
 
             while (!glfwWindowShouldClose(window_)) {
                 if (!glfwGetWindowAttrib(window_, GLFW_VISIBLE)) // not visible
@@ -977,8 +978,9 @@ namespace easy3d {
                 // Calculate ms/frame
                 double current_time = glfwGetTime();
                 ++frame_counter;
-                if(current_time - last_time >= 2.0f) {
-                    sprintf(gpu_time_, "fps: %2.0f (%4.1f ms/frame)", double(frame_counter) / (current_time - last_time), 1000.0 / double(frame_counter));
+                if(current_time - last_time >= 1.0f) {
+                    ms_per_frame = 1000.0 / double(frame_counter);
+                    sprintf(gpu_time_, "fps: %2.0f (%4.1f ms/frame)", double(frame_counter) / (current_time - last_time), ms_per_frame);
                     frame_counter = 0;
                     last_time = current_time;
                 }
@@ -989,9 +991,9 @@ namespace easy3d {
                 glfwSwapBuffers(window_);
 
                 if (animation_func_) {
-                    // Liangliang: this is not accurate
-                    const double min_duration = 1000000.0/60;
-                    std::this_thread::sleep_for(std::chrono::microseconds((int)(min_duration)));
+                    static const int animation_max_fps = 30;
+                    static const double interval = 1000.0 / (animation_max_fps + 5) - ms_per_frame; // the extra 5 for adjusting
+                    std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(interval)));
                     animation_func_(*this);
                 }
                 else
