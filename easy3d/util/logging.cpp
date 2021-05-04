@@ -189,6 +189,11 @@ namespace easy3d
         }
 
 
+        bool is_initialized() {
+            return logging_initialized;
+        }
+
+
         std::string log_file() {
             return log_file_name;
         }

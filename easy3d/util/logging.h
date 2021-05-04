@@ -62,6 +62,9 @@ namespace easy3d {
          */
         void initialize(bool info_to_stderr = false, const std::string &log_file = "", int verbosity_threshold = 0);
 
+        /// Returns whether the logging has been initialized.
+        bool is_initialized();
+
         /// Returns the full path of the log file (empty if no log file has been created).
         std::string log_file();
 
