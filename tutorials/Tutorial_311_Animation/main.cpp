@@ -67,19 +67,22 @@ int main(int argc, char **argv) {
 
     viewer.fit_screen();
 
+    // map the vertex buffer into the client's address space
+    void* pointer = VertexArrayObject::map_buffer(GL_ARRAY_BUFFER, surface->vertex_buffer(), GL_WRITE_ONLY);
+
     // Define an animation function to specify how vertex positions are updated.
     // In this trivial example, we stretch the model along the Z-axis.
     viewer.animation_func_ = [&](easy3d::Viewer& v) -> bool {
         (void)v;
-        static vec3* vertices = nullptr;
+        vec3* vertices = reinterpret_cast<vec3*>(pointer);
         if (!vertices)
-            vertices = (vec3*)VertexArrayObject::map_buffer(GL_ARRAY_BUFFER, surface->vertex_buffer(), GL_WRITE_ONLY);
+            return false;
 
         static float total_scale = 1.0f;
         float scale = 1.01f;
-        if (total_scale > 2) {
+        if (total_scale > 1.5f) {
             scale = 1.0f / total_scale;
-            total_scale = 1.0;
+            total_scale = 1.0f;
         }
         else
             total_scale *= scale;
