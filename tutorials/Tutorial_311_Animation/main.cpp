@@ -70,20 +70,21 @@ int main(int argc, char **argv) {
     // Define an animation function to specify how vertex positions are updated.
     // In this trivial example, we stretch the model along the Z-axis.
     viewer.animation_func_ = [&](easy3d::Viewer& v) -> bool {
+        (void)v;
         static vec3* vertices = nullptr;
         if (!vertices)
             vertices = (vec3*)VertexArrayObject::map_buffer(GL_ARRAY_BUFFER, surface->vertex_buffer(), GL_WRITE_ONLY);
 
-        static double total_scale = 1.0;
+        static float total_scale = 1.0f;
         float scale = 1.01f;
         if (total_scale > 2) {
-            scale = static_cast<float>(1.0 / total_scale);
+            scale = 1.0f / total_scale;
             total_scale = 1.0;
         }
         else
             total_scale *= scale;
 
-        for (int i=0; i<points.size(); ++i)
+        for (std::size_t i=0; i<points.size(); ++i)
             vertices[i].z *= scale;
 
         viewer.update();
