@@ -253,14 +253,9 @@ void MainWindow::send(el::Level level, const std::string &msg) {
 void MainWindow::createStatusBar()
 {
     labelStatusInfo_ = new QLabel("Ready", this);
-    labelStatusInfo_->setFixedWidth(static_cast<int>(ui->dockWidgetRendering->width() * 0.7f));
+    labelStatusInfo_->setFixedWidth(static_cast<int>(ui->dockWidgetRendering->width() * 2.0f));
     labelStatusInfo_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     statusBar()->addWidget(labelStatusInfo_);
-
-    labelPointUnderMouse_ = new QLabel(this);
-    labelPointUnderMouse_->setFixedWidth(300);
-    labelPointUnderMouse_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-    statusBar()->addWidget(labelPointUnderMouse_);
 
     //////////////////////////////////////////////////////////////////////////
 
@@ -612,12 +607,6 @@ void MainWindow::setShowSelectedOnly(bool b) {
 }
 
 
-void MainWindow::setPointUnderMouse(const QString &text) {
-	labelPointUnderMouse_->setText(text);
-    labelPointUnderMouse_->update();
-}
-
-
 WidgetModelList* MainWindow::widgetModelList() const {
     return ui->treeWidgetModels;
 }
@@ -868,8 +857,8 @@ void MainWindow::createActionsForFileMenu() {
 
 void MainWindow::createActionsForViewMenu() {
     connect(ui->actionShowPrimitiveIDUnderMouse, SIGNAL(toggled(bool)), viewer_, SLOT(showPrimitiveIDUnderMouse(bool)));
-    connect(ui->actionShowPrimitivePropertyUnderMouse, SIGNAL(toggled(bool)), viewer_, SLOT(showPrimitivePropertyUnderMouse(bool)));
-    connect(ui->actionShowCordinatesUnderMouse, SIGNAL(toggled(bool)), viewer_, SLOT(showCoordinatesUnderMouse(bool)));
+    connect(ui->actionShowPrimitivePropertyUnderMouse, SIGNAL(toggled(bool)), this, SLOT(showPrimitivePropertyUnderMouse(bool)));
+    connect(ui->actionShowCordinatesUnderMouse, SIGNAL(toggled(bool)), this, SLOT(showCoordinatesUnderMouse(bool)));
 
     connect(ui->actionShowEasy3DLogo, SIGNAL(toggled(bool)), viewer_, SLOT(showEasy3DLogo(bool)));
     connect(ui->actionShowFrameRate, SIGNAL(toggled(bool)), viewer_, SLOT(showFrameRate(bool)));
@@ -2028,6 +2017,20 @@ void MainWindow::animation() {
         m->renderer()->set_selected(false);
 
     dialog->show();
+}
+
+
+void MainWindow::showPrimitivePropertyUnderMouse(bool b) {
+    if (b)
+        ui->actionShowCordinatesUnderMouse->setChecked(false);
+    viewer_->showPrimitivePropertyUnderMouse(b);
+}
+
+
+void MainWindow::showCoordinatesUnderMouse(bool b) {
+    if (b)
+        ui->actionShowPrimitivePropertyUnderMouse->setChecked(false);
+    viewer_->showCoordinatesUnderMouse(b);
 }
 
 
