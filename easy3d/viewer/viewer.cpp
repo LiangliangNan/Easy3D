@@ -972,8 +972,6 @@ namespace easy3d {
                 if (!glfwGetWindowAttrib(window_, GLFW_VISIBLE)) // not visible
                     continue;
 
-                glfwPollEvents();
-
                 // Calculate ms/frame
                 double current_time = glfwGetTime();
                 ++frame_counter;
@@ -987,6 +985,7 @@ namespace easy3d {
                 draw();
                 post_draw();
                 glfwSwapBuffers(window_);
+                glfwPollEvents();
 
                 if (animation_func_) {
                     static const int animation_fps = 30;
