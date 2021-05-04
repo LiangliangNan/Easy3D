@@ -96,7 +96,8 @@ namespace easy3d {
               full_screen_(full_screen), background_color_(0.9f, 0.9f, 1.0f, 1.0f),
               process_events_(true), texter_(nullptr), pressed_button_(-1), modifiers_(-1), drag_active_(false),
               mouse_current_x_(0), mouse_current_y_(0), mouse_pressed_x_(0), mouse_pressed_y_(0), pressed_key_(-1),
-              show_pivot_point_(false), drawable_axes_(nullptr), show_camera_path_(false), model_idx_(-1) {
+              show_pivot_point_(false), show_frame_rate_(false), drawable_axes_(nullptr), show_camera_path_(false),
+              model_idx_(-1) {
 
         // Initialize logging (if it has not been initialized yet)
         if (!logging::is_initialized())
@@ -676,7 +677,10 @@ namespace easy3d {
         } else if (key == GLFW_KEY_A && modifiers == 0) {
             if (drawable_axes_)
                 drawable_axes_->set_visible(!drawable_axes_->is_visible());
-        } else if (key == GLFW_KEY_C && modifiers == 0) {
+        }
+        else if (key == GLFW_KEY_F && modifiers == EASY3D_MOD_CONTROL)
+            show_frame_rate_ = !show_frame_rate_;
+        else if (key == GLFW_KEY_C && modifiers == 0) {
             if (current_model())
                 fit_screen(current_model());
         } else if (key == GLFW_KEY_F && modifiers == 0) {
@@ -977,13 +981,16 @@ namespace easy3d {
                 if (!glfwGetWindowAttrib(window_, GLFW_VISIBLE)) // not visible
                     continue;
 
-                // Calculate ms/frame
-                double current_time = glfwGetTime();
-                ++frame_counter;
-                if(current_time - last_time >= 1.0f) {
-                    sprintf(gpu_time_, "fps: %2.0f (%4.1f ms/frame)", double(frame_counter) / (current_time - last_time), 1000.0 / double(frame_counter));
-                    frame_counter = 0;
-                    last_time = current_time;
+                if (show_frame_rate_) {
+                    // Calculate ms/frame
+                    double current_time = glfwGetTime();
+                    ++frame_counter;
+                    if (current_time - last_time >= 1.0f) {
+                        sprintf(gpu_time_, "fps: %2.0f (%4.1f ms/frame)",
+                                double(frame_counter) / (current_time - last_time), 1000.0 / double(frame_counter));
+                        frame_counter = 0;
+                        last_time = current_time;
+                    }
                 }
 
                 pre_draw();
@@ -995,11 +1002,15 @@ namespace easy3d {
                     glfwPollEvents();
 
                     // TODO: make framerate a parameter
-                    static const int animation_fps = 30;
-                    static const double interval = 1000.0 / (animation_fps + 5); // the extra 5 for adjusting
-                    std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(interval)));
+                    if (!show_frame_rate_) {
+                        static const int animation_fps = 30;
+                        static const double interval = 1000.0 / (animation_fps + 5); // the extra 5 for adjusting
+                        std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(interval)));
+                    }
                     animation_func_(*this);
                 }
+                else if (show_frame_rate_)
+                    glfwPollEvents();
                 else
                     glfwWaitEvents();
             }
@@ -1048,6 +1059,8 @@ namespace easy3d {
                 "  's':                 Snapshot                                    \n"
                 " ------------------------------------------------------------------\n"
                 "  'p':                 Toggle perspective/orthographic projection) \n"
+                "  'a':                 Toggle axes									\n"
+                "  Ctrl + 'f':          Toggle frame rate                           \n"
                 "  Left drag:           Rotate the camera                           \n"
                 "  Right drag:          Move the camera                             \n"
                 "  'x' + Left drag:     Rotate the camera around horizontal axis    \n"
@@ -1072,7 +1085,6 @@ namespace easy3d {
                 " ------------------------------------------------------------------\n"
                 "  '-'/'=':             Decrease/Increase point size                \n"
                 "  '{'/'}':             Decrease/Increase line width                \n"
-                "  'a':                 Toggle axes									\n"
                 "  'b':                 Toggle borders								\n"
                 "  'e':                 Toggle edges							    \n"
                 "  'v':                 Toggle vertices                             \n"
@@ -1471,7 +1483,8 @@ namespace easy3d {
             const float offset = 20.0f * dpi_scaling();
             texter_->draw("Easy3D", offset, offset, font_size, 0);
 
-            texter_->draw(gpu_time_, offset, 50.0f * dpi_scaling(), 16, 1);
+            if (show_frame_rate_)
+                texter_->draw(gpu_time_, offset, 50.0f * dpi_scaling(), 16, 1);
         }
 
         // shown only when it is not animating

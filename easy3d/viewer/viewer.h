@@ -440,6 +440,7 @@ namespace easy3d {
 		int     pressed_key_;
 
 		bool    show_pivot_point_;
+		bool    show_frame_rate_;
 
 		//----------------- viewer data -------------------
 
