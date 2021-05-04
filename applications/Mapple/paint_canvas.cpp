@@ -98,10 +98,11 @@ PaintCanvas::PaintCanvas(MainWindow* window)
         , model_picker_(nullptr)
         , allow_select_model_(false)
         , surface_mesh_picker_(nullptr)
-        , show_labels_under_mouse_(false)
-        , show_property_under_mouse_(false)
+        , show_primitive_id_under_mouse_(false)
+        , show_primitive_property_under_mouse_(false)
         , picked_face_index_(-1)
         , point_cloud_picker_(nullptr)
+        , picked_vertex_index_(-1)
         , show_coordinates_under_mouse_(false)
         , model_idx_(-1)
         , ssao_(nullptr)
@@ -405,7 +406,7 @@ namespace details {
         if (prop_uchar) return std::to_string(prop_uchar[v]);
         auto prop_bool = model->template get_vertex_property<bool>(name);
         if (prop_bool) return std::to_string(prop_bool[v]);
-        return "";
+        return "no scalar property is being visualized";
     }
 
 
@@ -425,7 +426,7 @@ namespace details {
         if (prop_uchar) return std::to_string(prop_uchar[f]);
         auto prop_bool = model->template get_face_property<bool>(name);
         if (prop_bool) return std::to_string(prop_bool[f]);
-        return "";
+        return "no scalar property is being visualized";
     }
 }
 
@@ -489,10 +490,11 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
         }
     }
 
-    if (show_labels_under_mouse_ || show_property_under_mouse_) { // then need to pick primitives
+    if (show_primitive_id_under_mouse_ || show_primitive_property_under_mouse_) { // then need to pick primitives
         picked_face_index_ = -1;
-        auto mesh = dynamic_cast<SurfaceMesh *>(currentModel());
-        if (mesh) {
+        picked_vertex_index_ = -1;
+        if (dynamic_cast<SurfaceMesh *>(currentModel())) {
+            auto mesh = dynamic_cast<SurfaceMesh *>(currentModel());
             if (!surface_mesh_picker_)
                 surface_mesh_picker_ = new SurfaceMeshPicker(camera());
             makeCurrent();
@@ -500,7 +502,7 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
             doneCurrent();
 
             auto drawable = mesh->renderer()->get_triangles_drawable("faces");
-            if (!show_labels_under_mouse_ && picked_face_index_ >= 0) { // highlight the face
+            if (picked_face_index_ >= 0) { // highlight the picked face
                 drawable->set_highlight(true);
                 drawable->set_highlight_range({picked_face_index_, picked_face_index_});
             }
@@ -508,60 +510,60 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
                 drawable->set_highlight(false);
                 drawable->set_highlight_range({-1, -1});
             }
+            update();
         }
-
-        PointCloud::Vertex picked_vertex(-1);
-        auto cloud = dynamic_cast<PointCloud *>(currentModel());
-        if (cloud) {
+        else if (dynamic_cast<PointCloud *>(currentModel())) {
+            auto cloud = dynamic_cast<PointCloud *>(currentModel());
             if (!point_cloud_picker_)
                 point_cloud_picker_ = new PointCloudPicker(camera());
             makeCurrent();
-            picked_vertex = point_cloud_picker_->pick_vertex(cloud, e->pos().x(), e->pos().y());
+            picked_vertex_index_ = point_cloud_picker_->pick_vertex(cloud, e->pos().x(), e->pos().y()).idx();
             doneCurrent();
 
             auto drawable = cloud->renderer()->get_points_drawable("vertices");
-            if (picked_vertex.is_valid()) {
+            if (picked_vertex_index_ >= 0) { // highlight the picked vertex
                 drawable->set_highlight(true);
-                drawable->set_highlight_range({picked_vertex.idx(), picked_vertex.idx()});
+                drawable->set_highlight_range({picked_vertex_index_, picked_vertex_index_});
             }
             else {
                 drawable->set_highlight(false);
                 drawable->set_highlight_range({-1, -1});
             }
+            update();
         }
 
-
-        if (show_property_under_mouse_) {
-            if (picked_vertex.is_valid()) { // point cloud vertex
+        if (show_primitive_property_under_mouse_) {
+            if (picked_vertex_index_ >= 0) { // picked point cloud vertex
                 auto drawable = currentModel()->renderer()->get_points_drawable("vertices");
                 if (drawable->coloring_method() == easy3d::State::SCALAR_FIELD) {
                     const std::string& name = drawable->property_name();
-                    const std::string value_str = details::get_vertex_scalar_property(cloud, picked_vertex, name);
-                    if (!value_str.empty()) {
-                        std::stringstream stream;
-                        stream << "'" << name << "' on " << picked_vertex << ": " << value_str;
-                        window_->statusBar()->showMessage(QString::fromStdString(stream.str()), 2000);
-                    }
+                    auto vertex = PointCloud::Vertex(picked_vertex_index_);
+                    auto cloud = dynamic_cast<PointCloud *>(currentModel());
+                    const std::string value_str = details::get_vertex_scalar_property(cloud, vertex, name);
+                    std::stringstream stream;
+                    stream << "'" << name << "' on " << vertex << ": " << value_str;
+                    window_->statusBar()->showMessage(QString::fromStdString(stream.str()), 2000);
                 }
+                else
+                    window_->statusBar()->showMessage("no scalar property is being visualized", 2000);
             }
-            else if (picked_face_index_ >= 0) { // surface mesh face
+            else if (picked_face_index_ >= 0) { // picked surface mesh face
                 auto drawable = currentModel()->renderer()->get_triangles_drawable("faces");
                 if (drawable->coloring_method() == easy3d::State::SCALAR_FIELD && drawable->property_location() == easy3d::State::FACE) {
                     const std::string& name = drawable->property_name();
                     auto face = SurfaceMesh::Face(picked_face_index_);
+                    auto mesh = dynamic_cast<SurfaceMesh *>(currentModel());
                     const std::string value_str = details::get_face_scalar_property(mesh, face, name);
-                    if (!value_str.empty()) {
-                        std::stringstream stream;
-                        stream << "'" << name << "' on " << face << ": " << value_str;
-                        window_->statusBar()->showMessage(QString::fromStdString(stream.str()), 2000);
-                    }
+                    std::stringstream stream;
+                    stream << "'" << name << "' on " << face << ": " << value_str;
+                    window_->statusBar()->showMessage(QString::fromStdString(stream.str()), 2000);
                 }
+                else
+                    window_->statusBar()->showMessage("no scalar property is being visualized", 2000);
             }
             else
                 window_->statusBar()->showMessage("no primitive found under mouse", 2000);
         }
-
-        update();
     }
 
     if (show_coordinates_under_mouse_) {
@@ -570,14 +572,14 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
         QString coords= "XYZ = [-, -, -]";
         if (found)
             coords = QString("XYZ = [%1, %2, %3]").arg(p.x).arg(p.y).arg(p.z);
-        window_->setPointUnderMouse(coords);
+        window_->statusBar()->showMessage(coords, 2000);
     }
 
     mouse_current_pos_ = e->pos();
     QOpenGLWidget::mouseMoveEvent(e);
 
-    if (pressed_button_ == Qt::LeftButton && modifiers_ == Qt::ControlModifier) // zoom on region
-        update();
+//    if (pressed_button_ == Qt::LeftButton && modifiers_ == Qt::ControlModifier) // zoom on region
+//        update();
 }
 
 
@@ -1200,7 +1202,7 @@ void PaintCanvas::drawCornerAxes() {
 }
 
 
-void PaintCanvas::drawFaceAndVertexLabels(const QColor& face_color, const QColor& vertex_color) {
+void PaintCanvas::drawPickedFaceAndItsVerticesIDs(const QColor& face_color, const QColor& vertex_color) {
     SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(currentModel());
     if (!mesh || picked_face_index_ < 0 || picked_face_index_ >= mesh->n_faces())
         return;
@@ -1230,6 +1232,36 @@ void PaintCanvas::drawFaceAndVertexLabels(const QColor& face_color, const QColor
     const vec3 proj = camera()->projectedCoordinatesOf(manip * (face_center/valence));
     painter.setPen(face_color);
     painter.drawText(proj.x, proj.y, QString::fromStdString("f" + std::to_string(picked_face_index_)));
+    easy3d_debug_log_gl_error;
+
+    // finish
+    painter.endNativePainting();
+    painter.end();
+    // Liangliang: it seems QPainter disables depth test?
+    func_->glEnable(GL_DEPTH_TEST);
+}
+
+
+void PaintCanvas::drawPickedVertexID(const QColor &vertex_color) {
+    PointCloud* cloud = dynamic_cast<PointCloud*>(currentModel());
+    if (!cloud || picked_vertex_index_ < 0 || picked_vertex_index_ >= cloud->n_vertices())
+        return;
+
+    // using QPainter
+    QPainter painter;
+    painter.begin(this);
+    painter.setRenderHint(QPainter::HighQualityAntialiasing);
+    painter.setRenderHint(QPainter::TextAntialiasing);
+    painter.beginNativePainting();
+
+    mat4 manip = cloud->manipulator()->matrix();
+
+    // draw the ID of the picked vertex
+    auto vertex = PointCloud::Vertex(picked_vertex_index_);
+    vec3 pos = cloud->position(vertex);
+    pos = camera()->projectedCoordinatesOf(manip * pos);
+    painter.setPen(vertex_color);
+    painter.drawText(pos.x, pos.y, QString::fromStdString("v" + std::to_string(picked_vertex_index_)));
     easy3d_debug_log_gl_error;
 
     // finish
@@ -1293,11 +1325,9 @@ void PaintCanvas::postDraw() {
         walkThrough()->draw();
     easy3d_debug_log_gl_error;
 
-    if (show_labels_under_mouse_) {
-        auto mesh = dynamic_cast<SurfaceMesh*>(currentModel());
-        if (mesh && picked_face_index_ >= 0 && picked_face_index_ < mesh->n_faces()) {
-            drawFaceAndVertexLabels(Qt::darkBlue, Qt::darkMagenta);
-        }
+    if (show_primitive_id_under_mouse_) {
+        drawPickedFaceAndItsVerticesIDs(Qt::darkBlue, Qt::darkMagenta);
+        drawPickedVertexID(Qt::darkMagenta);
     }
 
     // ------------- draw the picking region with transparency  ---------------
@@ -1724,7 +1754,7 @@ void PaintCanvas::restoreState(std::istream& input) {
 
 
 void PaintCanvas::showPrimitiveIDUnderMouse(bool b) {
-    show_labels_under_mouse_ = b;
+    show_primitive_id_under_mouse_ = b;
 
     picked_face_index_ = -1;
 
@@ -1747,7 +1777,9 @@ void PaintCanvas::showPrimitiveIDUnderMouse(bool b) {
 
 
 void PaintCanvas::showPrimitivePropertyUnderMouse(bool b) {
-    show_property_under_mouse_ = b;
+    show_primitive_property_under_mouse_ = b;
+    if (show_primitive_property_under_mouse_ && show_coordinates_under_mouse_)
+        show_coordinates_under_mouse_ = false;
 
     picked_face_index_ = -1;
 
@@ -1771,11 +1803,13 @@ void PaintCanvas::showPrimitivePropertyUnderMouse(bool b) {
 
 void PaintCanvas::showCoordinatesUnderMouse(bool b) {
     show_coordinates_under_mouse_ = b;
+    if (show_primitive_property_under_mouse_ && show_coordinates_under_mouse_)
+        show_primitive_property_under_mouse_ = false;
 
     QString coords("");
     if (show_coordinates_under_mouse_)
         coords = "XYZ = [-, -, -]";
-    window_->setPointUnderMouse(coords);
+    window_->statusBar()->showMessage(coords, 0);
 }
 
 

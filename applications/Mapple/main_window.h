@@ -75,8 +75,6 @@ public:
 
     void setShowSelectedOnly(bool b);
 
-    void setPointUnderMouse(const QString& text);
-
     // ui stuff
     WidgetModelList* widgetModelList() const;
     void activeDrawableChanged(easy3d::Drawable*);
@@ -101,6 +99,8 @@ public slots:
     void saveCameraStateToFile();
     void restoreCameraStateFromFile();
 
+    void showPrimitivePropertyUnderMouse(bool);
+    void showCoordinatesUnderMouse(bool);
     void importCameraPath();
     void exportCameraPath();
     void setShowCameraPath(bool);
@@ -220,7 +220,6 @@ private:
     QPushButton*    cancelTaskButton_;
     QProgressBar*	progress_bar_;
     QLabel *labelStatusInfo_,
-            *labelPointUnderMouse_,
             *labelNumFaces_,
             *labelNumVertices_,
             *labelNumEdges_,

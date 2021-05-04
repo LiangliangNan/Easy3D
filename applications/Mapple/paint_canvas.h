@@ -276,7 +276,8 @@ protected:
 
 protected:
     void drawCornerAxes();
-    void drawFaceAndVertexLabels(const QColor& face_color, const QColor& vertex_color);
+    void drawPickedFaceAndItsVerticesIDs(const QColor& face_color, const QColor& vertex_color);
+    void drawPickedVertexID(const QColor& vertex_color);
 
 protected:
     MainWindow* window_;
@@ -318,8 +319,9 @@ protected:
     easy3d::SurfaceMeshPicker* surface_mesh_picker_;
     int     picked_face_index_;
     easy3d::PointCloudPicker*  point_cloud_picker_;
-    bool    show_labels_under_mouse_;
-    bool    show_property_under_mouse_;
+    int     picked_vertex_index_;
+    bool    show_primitive_id_under_mouse_;
+    bool    show_primitive_property_under_mouse_;
     bool    show_coordinates_under_mouse_;
 
     std::vector<easy3d::Model*> models_;
