@@ -97,6 +97,11 @@ namespace easy3d {
               process_events_(true), texter_(nullptr), pressed_button_(-1), modifiers_(-1), drag_active_(false),
               mouse_current_x_(0), mouse_current_y_(0), mouse_pressed_x_(0), mouse_pressed_y_(0), pressed_key_(-1),
               show_pivot_point_(false), drawable_axes_(nullptr), show_camera_path_(false), model_idx_(-1) {
+
+        // Initialize logging (if it has not been initialized yet)
+        if (!logging::is_initialized())
+            logging::initialize();
+
         // Avoid locale-related number parsing issues.
         setlocale(LC_NUMERIC, "C");
 
