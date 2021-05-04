@@ -212,8 +212,8 @@ namespace easy3d {
 
     void KeyFrameInterpolator::start_interpolation() {
         auto animation = [this]() {
-            // interval in ms. (0.9 to approximately compensate the overhead the timer thread and viewer update)
-            const int interval = 1000.0f / frame_rate() * 0.9f;
+            // interval in ms (0.9 to approximately compensate the overhead the timer thread and viewer update)
+            const int interval = static_cast<int>(1000.0f / frame_rate() * 0.9f);
             for (int id = last_stopped_index_; id < interpolated_path_.size(); ++id) {
                 if (timer_.is_stopped()) {
                     last_stopped_index_ = id;
