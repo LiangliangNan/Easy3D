@@ -990,9 +990,11 @@ namespace easy3d {
                 draw();
                 post_draw();
                 glfwSwapBuffers(window_);
-                glfwPollEvents();
 
                 if (animation_func_) {
+                    glfwPollEvents();
+
+                    // TODO: make framerate a parameter
                     static const int animation_fps = 30;
                     static const double interval = 1000.0 / (animation_fps + 5); // the extra 5 for adjusting
                     std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(interval)));
