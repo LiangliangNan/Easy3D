@@ -265,13 +265,13 @@ void ViewerQt::mouseReleaseEvent(QMouseEvent *e) {
 
 void ViewerQt::mouseMoveEvent(QMouseEvent *e) {
     int x = e->pos().x(), y = e->pos().y();
+    // Restrict the cursor to be within the client area during dragging
     if (x < 0 || x > width() || y < 0 || y > height()) {
         e->ignore();
         return;
     }
 
     if (pressed_button_ != Qt::NoButton) { // button pressed
-        // Restrict the cursor to be within the client area during dragging
         if (e->modifiers() == Qt::ControlModifier) {
             // zoom on region
         } else {
@@ -292,7 +292,6 @@ void ViewerQt::mouseMoveEvent(QMouseEvent *e) {
 
     mouse_previous_pos_ = e->pos();
     QOpenGLWidget::mouseMoveEvent(e);
-    update();
 }
 
 
