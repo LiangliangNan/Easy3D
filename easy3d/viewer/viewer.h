@@ -147,10 +147,9 @@ namespace easy3d {
          */
         const easy3d::vec4& background_color() const { return background_color_; }
 
-        /**
-         * @brief Returns the camera used by the viewer. See camera.h.
-         */
+        /// @brief Returns the camera used by the viewer. See \C Camera.
         Camera* camera() { return camera_; }
+        /// @brief Returns the camera used by the viewer. See \C Camera.
         const Camera* camera() const { return camera_; }
         //@}
 
