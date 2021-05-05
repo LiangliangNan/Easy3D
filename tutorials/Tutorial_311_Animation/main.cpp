@@ -63,9 +63,10 @@ int main(int argc, char **argv) {
     // Add the drawable to the viewer
     viewer.add_drawable(surface);
 
-    //-------------------------------------------------------------
-
     viewer.fit_screen();
+
+    // allow animation
+    viewer.set_animation(true);
 
     // map the vertex buffer into the client's address space
     void* pointer = VertexArrayObject::map_buffer(GL_ARRAY_BUFFER, surface->vertex_buffer(), GL_WRITE_ONLY);
