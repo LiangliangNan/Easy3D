@@ -49,10 +49,10 @@ namespace easy3d {
         void set_resolution(int r) { hit_resolution_ = r; }
 
         /**
-         * @brief Pick vertex at a given screen location. The selected vertex will be marked in vertex property
-         * "v:select".
+         * @brief Pick vertex at a given screen location.
          * @param (x, y) The screen point.
          * @param deselect True to perform an inverse operation.
+         * @return The picked vertex.
          */
         PointCloud::Vertex pick_vertex(PointCloud *model, int x, int y);
 
