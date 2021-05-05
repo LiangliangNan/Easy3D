@@ -885,6 +885,8 @@ std::string PaintCanvas::usage() const {
             "  Ctrl + Left/Right:   Move camera left/right                      \n"
             "  Up/Down:             Move camera forward/backward                \n"
             "  Ctrl + Up/Down:      Move camera up/down                         \n"
+            "  Ctrl + 'c':          Copy current view status to clipboard       \n"
+            "  Ctrl + 'v':          Restore view status from clipboard          \n"
             " ------------------------------------------------------------------\n"
             "  'f':                 Fit screen (all models)                     \n"
             "  'c':                 Fit screen (current model only)             \n"
