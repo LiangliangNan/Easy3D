@@ -117,11 +117,9 @@ namespace easy3d {
          */
         void resize(int w, int h);
 
-        /**
-         * @brief Query the size of the viewer.
-         * @return The width/height of the viewer.
-         */
+        /// @brief Returns the width of the viewer.
         int width() const;
+        /// @brief Returns the height of the viewer.
         int height() const;
 
         /**
