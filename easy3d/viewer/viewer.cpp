@@ -90,7 +90,9 @@ namespace easy3d {
             bool full_screen /* = false */,
             bool resizable /* = true */,
             int depth_bits /* = 24 */,
-            int stencil_bits /* = 8 */
+            int stencil_bits /* = 8 */,
+            int width /* = 960 */,
+            int height /* = 800 */
     )
             : window_(nullptr), dpi_scaling_(1.0), title_(title), camera_(nullptr), samples_(0),
               full_screen_(full_screen), background_color_(0.9f, 0.9f, 1.0f, 1.0f),
@@ -142,7 +144,9 @@ namespace easy3d {
             bool full_screen,
             bool resizable,
             int depth_bits,
-            int stencil_bits) {
+            int stencil_bits,
+            int width,
+            int height) {
         glfwSetErrorCallback(
                 [](int error, const char *desc) {
                     if (error == GLFW_NOT_INITIALIZED)
@@ -189,17 +193,15 @@ namespace easy3d {
         glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
         glfwWindowHint(GLFW_RESIZABLE, resizable ? GL_TRUE : GL_FALSE);
 
-        int w = 960;
-        int h = 800;
         GLFWwindow *window = nullptr;
         if (full_screen) {
             GLFWmonitor *monitor = glfwGetPrimaryMonitor();
             const GLFWvidmode *mode = glfwGetVideoMode(monitor);
-            w = mode->width;
-            h = mode->height;
-            window = glfwCreateWindow(w, h, title.c_str(), monitor, nullptr);
+            width = mode->width;
+            height = mode->height;
+            window = glfwCreateWindow(width, height, title.c_str(), monitor, nullptr);
         } else {
-            window = glfwCreateWindow(w, h, title.c_str(), nullptr, nullptr);
+            window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
         }
 
         if (!window) {

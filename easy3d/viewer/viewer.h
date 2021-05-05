@@ -45,14 +45,13 @@ namespace easy3d {
 
     /**
      * @brief The built-in Easy3D Viewer.
-     * \class Viewer easy3d/viewer/viewer.h
+     * @class Viewer easy3d/viewer/viewer.h
      * @details Easy3D is really easy to use. That's why it has such a name.
-     *
      * To use the viewer, simply create an instance of Viewer, and call the run() method, i.e.,
-     * \code
-     * MyViewer viewer("Example");
-     * viewer.run();
-     * \endcode
+     *      \code
+     *          MyViewer viewer("Example");
+     *          viewer.run();
+     *      \endcode
      * The default Easy3D viewer can be easily extended by deriving your enhanced viewer from it
      * by re-implementing some of its unctions (see the documentation of Viewer).
      */
@@ -61,7 +60,7 @@ namespace easy3d {
 	public:
         /**
          * @brief Creating the Viewer
-         * @param title The window title of the viewer.
+         * @param title The window title of the viewer, which can be changed by calling set_title() after construction.
          * @param samples The number of samples for multisample antialiasing
          * @param gl_major/gl_minor The OpenGL version to request. The created context will be
          *        compatible with the requested version (if the context creation succeeded).
@@ -71,6 +70,8 @@ namespace easy3d {
          *        framebuffer.
          * @param stencil_bits The desired bit depths of the stencil component of the default
          *        framebuffer.
+         * @param width The width of the viewer, which can be changed by calling resize() after construction.
+         * @param height The height of the viewer, which can be changed by calling resize() after construction.
          */
 		Viewer(
 			const std::string& title = "Easy3dViewer",
@@ -80,7 +81,9 @@ namespace easy3d {
             bool full_screen = false,
 			bool resizable = true,
 			int depth_bits = 24,
-			int stencil_bits = 8
+			int stencil_bits = 8,
+			int width = 960,
+			int height = 800
 		);
 
         /**
@@ -381,14 +384,17 @@ namespace easy3d {
 		virtual bool focus_event(bool focused);
 
 	protected:
-        GLFWwindow*	create_window(const std::string& title,
+        GLFWwindow *create_window(const std::string &title,
                                   int samples,
                                   int gl_major,   // must >= 3
                                   int gl_minor,   // must >= 2
                                   bool full_screen,
                                   bool resizable,
                                   int depth_bits = 24,
-                                  int stencil_bits = 8);
+                                  int stencil_bits = 8,
+                                  int width = 960,
+                                  int height = 800);
+
         void setup_callbacks(GLFWwindow*);
 
 		/* Event handlers. Client code should not touch these */
