@@ -97,6 +97,9 @@ namespace easy3d {
         /**
          * Connects a member function of an object to this signal.
          * The returned value can be used to disconnect the function from this signal.
+         *    \code
+         *       signal.connect(viewer, &Viewer::update);
+         *    \endcode
          * \note When a member function has overloads, explicitly cast the function to the right function type using
          *     e.g., <tt> static_cast<void (Viewer::*)(const std::string&, int)>(Viewer::print). </tt>
          *     Or use the helper function \fn overload for a lighter syntax.
@@ -111,6 +114,9 @@ namespace easy3d {
         /**
          * Connects a const member function of an object to this Signal.
          * The returned value can be used to disconnect the function from this signal.
+         *    \code
+         *       signal.connect(viewer, &Viewer::update);
+         *    \endcode 
          * \note When a member function has overloads, explicitly cast the function to the right function type using
          *     e.g., <tt> static_cast<void (Viewer::*)(const std::string&, int)>(Viewer::print). </tt>
          *     Or use the helper function \fn overload for a lighter syntax.
@@ -189,6 +195,9 @@ namespace easy3d {
     /**
      * Connects a member function of an object to this Signal.
      * The returned value can be used to disconnect the function from this signal.
+     *    \code
+     *       easy3d::connect(&kfi_->interpolation_stopped, this, &Viewer::update);
+     *    \endcode
      * \note When a member function has overloads, explicitly cast the function to the right function type using
      *     e.g., <tt> static_cast<void (Viewer::*)(const std::string&, int)>(Viewer::print). </tt>
      *     Or use the helper function \fn overload for a lighter syntax.
