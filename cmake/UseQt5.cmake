@@ -79,7 +79,6 @@ if (QT5_FOUND)
     if (APPLE)
         # Apple uses frameworks - move up until we get to the base directory to set the bin directory properly
         get_filename_component(QT_BINARY_DIR ${QT_BINARY_DIR} DIRECTORY)
-        get_filename_component(QT_BINARY_DIR ${QT_BINARY_DIR} DIRECTORY)
         set(QT_BINARY_DIR ${QT_BINARY_DIR}/bin)
         set(MACDEPLOYQT ${QT_BINARY_DIR}/macdeployqt)
         message(STATUS "macdeployqt: ${MACDEPLOYQT}")
