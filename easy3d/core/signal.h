@@ -105,7 +105,7 @@ namespace easy3d {
          *    \endcode
          * \note When a member function has overloads, explicitly cast the function to the right function type, e.g.,
          *      \code
-         *          static_cast<void (Viewer::*)(const std::string&, int)>(Viewer::print)
+         *          static_cast<void (Viewer::*)(const std::string&, int)>(&Viewer::print)
          *      \endcode
          *     Or use the helper function \c overload for a lighter syntax.
          */
@@ -124,7 +124,7 @@ namespace easy3d {
          *    \endcode
          * \note When a member function has overloads, explicitly cast the function to the right function type, e.g.,
          *      \code
-         *          static_cast<void (Viewer::*)(const std::string&, int)>(Viewer::print)
+         *          static_cast<void (Viewer::*)(const std::string&, int)>(&Viewer::print)
          *      \endcode
          *     Or use the helper function \c overload for a lighter syntax.
          */
@@ -209,7 +209,7 @@ namespace easy3d {
      *    \endcode
      * \note When a member function has overloads, explicitly cast the function to the right function type, e.g.,
      *      \code
-     *          static_cast<void (Viewer::*)(const std::string&, int)>(Viewer::print)
+     *          static_cast<void (Viewer::*)(const std::string&, int)>(&Viewer::print)
      *      \endcode
      *     Or use the helper function \c overload for a lighter syntax.
      */
@@ -268,7 +268,7 @@ namespace easy3d {
      * \details In case of overloading, the pointer to a member function does not map to a unique symbol, so the compiler
      * won't be able to pick the right symbol. One way of resolving the right symbol is to explicitly cast
      * the function pointer to the right function type, e.g.,
-     * static_cast<void (Viewer::*)(const std::string&, int)>(Viewer::print), which is a bit heave syntax.
+     * static_cast<void (Viewer::*)(const std::string&, int)>(&Viewer::print), which is a bit heave syntax.
      * This helper function does just that for a lighter syntax.
      * Example usage:
      *     \code
