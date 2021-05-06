@@ -153,8 +153,6 @@ If you use Easy3D in a scientific work, I kindly ask you to cite it:
 
 Should you have any questions, comments, or suggestions, please contact me at <i>liangliang.nan@gmail.com</i>
 
-<b><i>Liangliang Nan</i></b>
-
-https://3d.bk.tudelft.nl/liangliang/
+[<b><i>Liangliang Nan</i></b>](https://3d.bk.tudelft.nl/liangliang/)
 
 Dec. 8, 2018
