@@ -38,6 +38,8 @@ CameraIntrepolation::CameraIntrepolation(const std::string& title)
     : Viewer(title)
 {
     interpolator_ = new KeyFrameInterpolator(camera_->frame());
+    // update the viewer when the interpolation finishes
+    easy3d::connect(&interpolator_->interpolation_stopped, (Viewer*)this, &Viewer::update);
 }
 
 
@@ -77,7 +79,8 @@ bool CameraIntrepolation::key_press_event(int key, int modifiers)
         }
         else {
             interpolator_->start_interpolation();
-            std::cout << "Animation started." << std::endl;
+            if (interpolator_->is_interpolation_started())
+                std::cout << "Animation started." << std::endl;
         }
         return true;
     }
