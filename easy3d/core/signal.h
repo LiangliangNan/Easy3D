@@ -33,7 +33,7 @@
 namespace easy3d {
 
     /**
-     * \brief Implementation of a simple signal-slot mechanism.
+     * \brief A light-weight implementation of the simple signal-slot mechanism.
      * \class Signal easy3d/core/signal.h
      * \details Signal supports any types of functions (functions, lambda functions, and member functions) with any
      *      number of arguments. Connected functions will be called when the send() method of the signal object is
@@ -55,12 +55,27 @@ namespace easy3d {
 
     public:
         Signal() = default;
-
         ~Signal() = default;
 
-        /// Copy constructor and assignment create a new signal.
+        /// \brief Copy constructor and assignment create a new signal.
         Signal(Signal const & /*unused*/) {}
 
+        /// \brief Move constructor.
+        Signal(Signal &&other) noexcept:
+                slots_(std::move(other.slots_)),
+                current_id_(other.current_id_) {
+        }
+
+        /// \brief The assignment operator
+        Signal &operator=(Signal &&other) noexcept {
+            if (this != &other) {
+                slots_ = std::move(other.slots_);
+                current_id_ = other.current_id_;
+            }
+            return *this;
+        }
+
+        /// \brief The assignment operator
         Signal &operator=(Signal const &other) {
             if (this != &other) {
                 disconnect_all();
@@ -68,41 +83,31 @@ namespace easy3d {
             return *this;
         }
 
-        /// Move constructor and assignment operator.
-        Signal(Signal &&other) noexcept:
-                slots_(std::move(other.slots_)),
-                current_id_(other.current_id_) {}
-
-        Signal &operator=(Signal &&other) noexcept {
-            if (this != &other) {
-                slots_ = std::move(other.slots_);
-                current_id_ = other.current_id_;
-            }
-
-            return *this;
-        }
-
         /**
-         * Connects a function to this signal.
-         * The returned value can be used to disconnect the function from this signal.
-         * \note When a function has overloads, explicitly cast the function to the right function type using
-         *     e.g., <tt> static_cast<void (*)(const std::string&, int)>(&print). </tt> Or use the helper function
-         *     \fn overload for a lighter syntax.
+         * \brief Connects a function to this signal.
+         * \details The returned value can be used to disconnect the function from this signal.
+         * \note When a function has overloads, explicitly cast the function to the right function type, e.g.,
+         *      \code
+         *          static_cast<void (*)(const std::string&, int)>(&print)
+         *      \endcode
+         *     Or use the helper function \c overload for a lighter syntax.
          */
-        int connect(std::function<void(Args...)> const &slot) const {
+        int connect(std::function<void(Args...)> const &slot) {
             slots_.insert(std::make_pair(++current_id_, slot));
             return current_id_;
         }
 
         /**
-         * Connects a member function of an object to this signal.
-         * The returned value can be used to disconnect the function from this signal.
+         * \brief Connects a member function of an object to this signal.
+         * \details The returned value can be used to disconnect the function from this signal, e.g.,
          *    \code
          *       signal.connect(viewer, &Viewer::update);
          *    \endcode
-         * \note When a member function has overloads, explicitly cast the function to the right function type using
-         *     e.g., <tt> static_cast<void (Viewer::*)(const std::string&, int)>(Viewer::print). </tt>
-         *     Or use the helper function \fn overload for a lighter syntax.
+         * \note When a member function has overloads, explicitly cast the function to the right function type, e.g.,
+         *      \code
+         *          static_cast<void (Viewer::*)(const std::string&, int)>(Viewer::print)
+         *      \endcode
+         *     Or use the helper function \c overload for a lighter syntax.
          */
         template<typename Class>
         int connect(Class *inst, void (Class::*func)(Args...)) {
@@ -112,14 +117,16 @@ namespace easy3d {
         }
 
         /**
-         * Connects a const member function of an object to this Signal.
-         * The returned value can be used to disconnect the function from this signal.
+         * \brief Connects a const member function of an object to this signal.
+         * \details The returned value can be used to disconnect the function from this signal, e.g.,
          *    \code
          *       signal.connect(viewer, &Viewer::update);
-         *    \endcode 
-         * \note When a member function has overloads, explicitly cast the function to the right function type using
-         *     e.g., <tt> static_cast<void (Viewer::*)(const std::string&, int)>(Viewer::print). </tt>
-         *     Or use the helper function \fn overload for a lighter syntax.
+         *    \endcode
+         * \note When a member function has overloads, explicitly cast the function to the right function type, e.g.,
+         *      \code
+         *          static_cast<void (Viewer::*)(const std::string&, int)>(Viewer::print)
+         *      \endcode
+         *     Or use the helper function \c overload for a lighter syntax.
          */
         template<typename Class>
         int connect(Class *inst, void (Class::*func)(Args...) const) {
@@ -129,32 +136,32 @@ namespace easy3d {
         }
 
         /**
-         * Connects this signal to another signal \p receiver.
-         * Upon return, the emission of this signal will trigger \p receiver to emit.
+         * \brief Connects this signal to another signal \p receiver.
+         * \details Upon return, the emission of this signal will trigger \p receiver to emit.
          * The returned value can be used to disconnect the connected signal.
          */
         int connect(Signal<Args...> *receiver) {
             return connect(receiver, &Signal<Args...>::send);
         }
 
-        /// Disconnects a previously connected function.
-        void disconnect(int id) const {
+        /// \brief Disconnects a previously connected function.
+        void disconnect(int id) {
             slots_.erase(id);
         }
 
-        /// Disconnects all previously connected functions.
-        void disconnect_all() const {
+        /// \brief Disconnects all previously connected functions.
+        void disconnect_all() {
             slots_.clear();
         }
 
-        /// Calls all connected functions.
+        /// \brief Calls all connected functions.
         void send(Args... p) {
             for (auto const &it : slots_) {
                 it.second(p...);
             }
         }
 
-        /// Calls all connected functions except for one.
+        /// \brief Calls all connected functions except for one.
         void send_for_all_but_one(int excludedConnectionID, Args... p) {
             for (auto const &it : slots_) {
                 if (it.first != excludedConnectionID) {
@@ -163,7 +170,7 @@ namespace easy3d {
             }
         }
 
-        /// Calls only one connected function.
+        /// \brief Calls only one connected function.
         void emit_for(int connectionID, Args... p) {
             auto const &it = slots_.find(connectionID);
             if (it != slots_.end()) {
@@ -172,20 +179,22 @@ namespace easy3d {
         }
 
     private:
-        mutable std::unordered_map<int, std::function<void(Args...)>> slots_;
-        mutable int current_id_{0};
+        std::unordered_map<int, std::function<void(Args...)>> slots_;
+        int current_id_{0};
     };
 
 
     /// \name  Global methods for connection and disconnection.
-    //\{
+    //@{
 
     /**
-     * Connects a function to the signal.
-     * The returned value can be used to disconnect the function from this signal.
-     * \note When a function has overloads, explicitly cast the function to the right function type using
-     *     e.g., <tt> static_cast<void (*)(const std::string&, int)>(&print). </tt> Or use the helper function
-     *     \fn overload for a lighter syntax.
+     * \brief Connects a function to the signal.
+     * \details The returned value can be used to disconnect the function from this signal.
+     * \note When a function has overloads, explicitly cast the function to the right function type, e.g.,
+     *      \code
+     *          static_cast<void (*)(const std::string&, int)>(&print)
+     *      \endcode
+     *     Or use the helper function \c overload for a lighter syntax.
      */
     template<typename SIGNAL, typename FUNCTION>
     inline int connect(SIGNAL *signal, FUNCTION const &slot) {
@@ -193,14 +202,16 @@ namespace easy3d {
     }
 
     /**
-     * Connects a member function of an object to this Signal.
-     * The returned value can be used to disconnect the function from this signal.
+     * \brief Connects a member function of an object to this Signal.
+     * \details The returned value can be used to disconnect the function from this signal.
      *    \code
-     *       easy3d::connect(&kfi_->interpolation_stopped, this, &Viewer::update);
+     *       easy3d::connect(&kfi_->interpolation_stopped, viewer, &Viewer::update);
      *    \endcode
-     * \note When a member function has overloads, explicitly cast the function to the right function type using
-     *     e.g., <tt> static_cast<void (Viewer::*)(const std::string&, int)>(Viewer::print). </tt>
-     *     Or use the helper function \fn overload for a lighter syntax.
+     * \note When a member function has overloads, explicitly cast the function to the right function type, e.g.,
+     *      \code
+     *          static_cast<void (Viewer::*)(const std::string&, int)>(Viewer::print)
+     *      \endcode
+     *     Or use the helper function \c overload for a lighter syntax.
      */
     template<typename SIGNAL, typename CLASS, typename FUNCTION>
     inline int connect(SIGNAL *signal, CLASS *inst, FUNCTION const &slot) {
@@ -208,8 +219,8 @@ namespace easy3d {
     }
 
     /**
-     * Connects this signal to \p another signal.
-     * Upon return, the emission of this signal will trigger \p another to be emitted.
+     * \brief Connects this signal to \p another signal.
+     * \details Upon return, the emission of this signal will trigger \p another to be emitted.
      * The returned value can be used to disconnect the connected signal.
      */
     template<typename... Args>
@@ -217,27 +228,24 @@ namespace easy3d {
         return sender->connect(receiver);
     }
 
-    /// Disconnects a previously connected function.
+    /// \brief Disconnects a previously connected function.
     template<typename SIGNAL>
     inline void disconnect(SIGNAL *signal, int id) {
         signal->disconnect(id);
     }
 
-    /// Disconnects all previously connected functions.
+    /// \brief Disconnects all previously connected functions.
     template<typename SIGNAL>
     inline void disconnect_all(SIGNAL *signal) {
         signal->disconnect_all();
     }
-
-    //\}
-
+    //@}
 
     /// \name  Helper functions for resolving overloaded functions.
-    //\{
-
+    //@{
     /**
-     * Helper function for resolving overloaded non-member functions.
-     * In case of overloading, the pointer to a function does not map to a unique symbol, so the compiler
+     * \brief Helper function for resolving overloaded non-member functions.
+     * \details In case of overloading, the pointer to a function does not map to a unique symbol, so the compiler
      * won't be able to pick the right symbol. One way of resolving the right symbol is to explicitly cast
      * the function pointer to the right function type, e.g., static_cast<void (*)(const std::string&, int)>(func),
      * which is a bit heavy syntax. This helper function does just that for a lighter syntax.
@@ -256,8 +264,8 @@ namespace easy3d {
     }
 
     /**
-     * Helper function for resolving overloaded member functions.
-     * In case of overloading, the pointer to a member function does not map to a unique symbol, so the compiler
+     * \brief Helper function for resolving overloaded member functions.
+     * \details In case of overloading, the pointer to a member function does not map to a unique symbol, so the compiler
      * won't be able to pick the right symbol. One way of resolving the right symbol is to explicitly cast
      * the function pointer to the right function type, e.g.,
      * static_cast<void (Viewer::*)(const std::string&, int)>(Viewer::print), which is a bit heave syntax.
@@ -277,9 +285,12 @@ namespace easy3d {
     inline constexpr auto overload(void (C::*func)(Args...)) -> void (C::*)(Args...) {
         return func;
     }
+    //@}
 
+
+    /// \name About default arguments
+    //@{
     /**
-     * About default arguments.
      * Default arguments are not part of the function type signature, and can be redefined, so they are really
      * difficult to deal with. When connecting a slot to a signal, the \c Signal determines if the supplied callable
      * can be invoked with the signal argument types, but at this point the existence of default arguments is unknown,
@@ -301,11 +312,9 @@ namespace easy3d {
      *          Signal<int &> signal;           // a signal with one argument
      *          signal.connect(ADAPT(foo));     // this will work for >= C++14
      *      \endcode
-     *
      * But with C++11, \c auto is not allowed in lambda parameters.
      */
-
-    //\}
+    //@}
 }
 
 
