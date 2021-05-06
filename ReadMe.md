@@ -47,15 +47,15 @@ vector fields) can be rendered by writing a few lines of code with Easy3D. For e
 point cloud as a set of spheres
 
 ```c++
-    // assume your point cloud has been loaded to the viewer
-    PointsDrawable* drawable = cloud->renderer()->get_points_drawable("vertices");
-    drawable->set_impostor_type(PointsDrawable::SPHERE); // draw points as spheres.
-    drawable->set_point_size(3.0f);    // set point size
+// assume your point cloud has been loaded to the viewer
+PointsDrawable* drawable = cloud->renderer()->get_points_drawable("vertices");
+drawable->set_impostor_type(PointsDrawable::SPHERE); // draw points as spheres.
+drawable->set_point_size(3.0f);    // set point size
 ```
 or as a set of surfels (i.e., 3D discs)
 
 ```c++ 
-    drawable->set_impostor_type(PointsDrawable::SURFEL);
+drawable->set_impostor_type(PointsDrawable::SURFEL);
 ``` 
 
 By abstracting geometric elements as one of the above drawables, more general visualization (e.g., vector fields, 
@@ -74,6 +74,7 @@ in your build:
 To build Easy3D, you need [CMake](https://cmake.org/download/) and, of course, a compiler:
 
 - CMake `>= 3.1`
+  
 - a compiler that supports `>= C++11`
 
 Easy3D has been tested on macOS (Xcode >= 8), Windows (MSVC >=2015), and Linux (GCC >= 4.8, Clang >= 3.3). Machines 
@@ -84,16 +85,18 @@ There are many options to build Easy3D. Choose one of the following (or whatever
 
 - Option 1: Use CMake to generate Makefiles and then `make` (on Linux/macOS) or `nmake`(on Windows with Microsoft 
   Visual Studio). For example, on Linux or macOS, you can simply
-    ```
-    $ cd Easy3D
-    $ mkdir Release
-    $ cd Release
-    $ cmake -DCMAKE_BUILD_TYPE=Release ..
-    $ make
-    ```
+```
+$ cd Easy3D
+$ mkdir Release
+$ cd Release
+$ cmake -DCMAKE_BUILD_TYPE=Release ..
+$ make
+```
+  
 - Option 2: Use any IDE that can directly handle CMakeLists files to open the `CMakeLists.txt` in the root directory of 
   Easy3D. Then you should have obtained a usable project and just build it. I recommend using 
 [CLion](https://www.jetbrains.com/clion/) or [QtCreator](https://www.qt.io/product).
+  
 - Option 3: Use CMake to generate project files for your IDE. Then load the project to your IDE and build.
 
 Don't have any experience with C/C++ programming? 
@@ -112,12 +115,12 @@ target_link_libraries(YOUR_APP_NAME easy3d::core) # you may request more modules
 The minimum code to have a 3D viewer:
 
 ```c++
-    #include <easy3d/viewer/viewer.h>
-    
-    int main(int argc, char** argv) {
-        easy3d::Viewer viewer("Test");
-        return viewer.run();
-    }
+#include <easy3d/viewer/viewer.h>
+
+int main(int argc, char** argv) {
+    easy3d::Viewer viewer("Test");
+    return viewer.run();
+}
 ```
 
 ### Documentation
@@ -141,12 +144,12 @@ found in the accompanying 'License' file.
 If you use Easy3D in a scientific work, I kindly ask you to cite it:
 
 ```bibtex
-    @misc{easy3d2018nan,
-      title={Easy3D: a lightweight, easy-to-use, and efficient C++ library for processing and rendering 3D data},
-      author={Nan, Liangliang},
-      note={\url{https://github.com/LiangliangNan/Easy3D}},
-      year={2018}
-    }
+@misc{easy3d2018nan,
+  title={Easy3D: a lightweight, easy-to-use, and efficient C++ library for processing and rendering 3D data},
+  author={Nan, Liangliang},
+  note={\url{https://github.com/LiangliangNan/Easy3D}},
+  year={2018}
+}
 ```
 
 ---------

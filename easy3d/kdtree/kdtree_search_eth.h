@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2015 by Liangliang Nan (liangliang.nan@gmail.com)
+/********************************************************************
+ * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
  * https://3d.bk.tudelft.nl/liangliang/
  *
  * This file is part of Easy3D. If it is useful in your research/work,
@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
- */
+ ********************************************************************/
 
 #ifndef EASY3D_KD_TREE_SEARCH_ETH_H
 #define EASY3D_KD_TREE_SEARCH_ETH_H
@@ -216,7 +216,7 @@ namespace easy3d {
          * \param angle_range The maximal angle in radian allowed between \p p1 - \p p and \p p1 - \p p2, where \p p
          * is a candidate point.
          * \param neighbors The indices of the neighbors found.
-         * \param bToLine Specifies how the points found are ordered. If \bToLine=true, the points found are ordered
+         * \param bToLine Specifies how the points found are ordered. If \p bToLine=true, the points found are ordered
          * by their distances to the line. Otherwise, they are ordered by their distances to the view point \p eye.
          * \note The angle is specified in \b radian and \b squared distances are returned.
          */
