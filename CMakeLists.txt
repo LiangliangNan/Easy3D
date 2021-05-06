@@ -114,7 +114,7 @@ if(EASY3D_BUILD_TUTORIALS)
 endif()
 
 if(EASY3D_BUILD_TESTS)
-    add_subdirectory(test)
+    add_subdirectory(tests)
 endif()
 
 add_subdirectory(applications)
@@ -142,6 +142,5 @@ endif ()
 
 # hide some variables that might be set in 3rd_party libraries
 mark_as_advanced(FORCE BUILD_SHARED_LIBS)
-mark_as_advanced(FORCE BUILD_TESTING)
 
 ################################################################################
