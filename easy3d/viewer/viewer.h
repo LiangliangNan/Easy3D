@@ -47,7 +47,7 @@ namespace easy3d {
      * @brief The built-in Easy3D Viewer.
      * @class Viewer easy3d/viewer/viewer.h
      * @details Easy3D is really easy to use. That's why it has such a name.
-     * To use the viewer, simply create an instance of Viewer, and call the run() method, i.e.,
+     * To use the viewer, simply create an instance of Viewer, and call the run() method, e.g.,
      *      \code
      *          MyViewer viewer("Example");
      *          viewer.run();
@@ -147,9 +147,9 @@ namespace easy3d {
          */
         const easy3d::vec4& background_color() const { return background_color_; }
 
-        /// @brief Returns the camera used by the viewer. See \C Camera.
+        /// @brief Returns the camera used by the viewer. See \c Camera.
         Camera* camera() { return camera_; }
-        /// @brief Returns the camera used by the viewer. See \C Camera.
+        /// @brief Returns the camera used by the viewer. See \c Camera.
         const Camera* camera() const { return camera_; }
         //@}
 

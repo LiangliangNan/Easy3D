@@ -96,7 +96,7 @@ namespace easy3d {
          *      this renderer is attached. The effect is equivalent to calling Drawable::update() functions for all
          *      the drawables of this model.
          * @param update_bbox \c true to recompute the bounding box of the model.
-         * @Note: To achieve better performance, it is wiser to update only the affected drawables and buffers.
+         * @note: To achieve better performance, it is wiser to update only the affected drawables and buffers.
          * \sa  Drawable::update()
          */
         void update(bool update_bbox = true);
