@@ -110,13 +110,14 @@ find_package(Easy3D REQUIRED)
 target_link_libraries(YOUR_APP_NAME easy3d::core) # you may request more modules (e.g., viewer, algo)
 ```
 The minimum code to have a 3D viewer:
-```c++
-#include <easy3d/viewer/viewer.h>
 
-int main(int argc, char** argv) {
-    easy3d::Viewer viewer("Test");
-    return viewer.run();
-}
+```c++
+    #include <easy3d/viewer/viewer.h>
+    
+    int main(int argc, char** argv) {
+        easy3d::Viewer viewer("Test");
+        return viewer.run();
+    }
 ```
 
 ### Documentation
@@ -140,21 +141,20 @@ found in the accompanying 'License' file.
 If you use Easy3D in a scientific work, I kindly ask you to cite it:
 
 ```bibtex
-@misc{easy3d2018nan,
-  title = {Easy3D: a lightweight, easy-to-use, and efficient C++ library for processing and rendering 3D data},
-  author = {Nan, Liangliang},
-  note = {\url{https://github.com/LiangliangNan/Easy3D}},
-  year = {2018},
-}
+    @misc{easy3d2018nan,
+      title={Easy3D: a lightweight, easy-to-use, and efficient C++ library for processing and rendering 3D data},
+      author={Nan, Liangliang},
+      note={\url{https://github.com/LiangliangNan/Easy3D}},
+      year={2018}
+    }
 ```
+
 ---------
 
-Should you have any questions, comments, or suggestions, please contact me at liangliang.nan@gmail.com
+Should you have any questions, comments, or suggestions, please contact me at <i>liangliang.nan@gmail.com</i>
 
 <b><i>Liangliang Nan</i></b>
 
 https://3d.bk.tudelft.nl/liangliang/
 
 Dec. 8, 2018
-
-Copyright (C) 2018
