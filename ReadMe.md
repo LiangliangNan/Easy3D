@@ -104,13 +104,14 @@ Have a look at <a href="https://github.com/LiangliangNan/Easy3D/blob/main/HowToB
 step</a>.
 
 ### Using Easy3D in Your Projects
-This is quite easy, maybe easier than many other open-source libraries :-) You only need to add the following two lines 
-to your CMakeList file (don't forget to replace `YOUR_APP_NAME` with the actual name of your application) and point 
+This is quite easy, maybe easier than many other open-source libraries :-) You only need to add the following lines 
+to your CMakeLists file (don't forget to replace `YOUR_APP_NAME` with the actual name of your application) and point 
 `Easy3D_DIR` to your `build` directory of Easy3D when doing cmake. Then the requested easy3d libraries, include 
-directories, and relevant compile definitions of the easy3d libraries are visible and accessible to your project.
+directories, and relevant compile definitions of easy3d are visible and accessible to your project.
 ```
-find_package(Easy3D REQUIRED)
-target_link_libraries(YOUR_APP_NAME easy3d::core) # you may request more modules (e.g., viewer, algo)
+set(CMAKE_CXX_STANDARD 11)                        # specify C++ standard
+find_package(Easy3D REQUIRED)                     # request Easy3D 
+target_link_libraries(YOUR_APP_NAME easy3d::core) # request necessary Easy3D modules (add more if needed, e.g., viewer, algo)
 ```
 The minimum code to have a 3D viewer:
 
