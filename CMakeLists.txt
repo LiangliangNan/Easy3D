@@ -16,12 +16,10 @@ set (EASY3D_VERSION "${EASY3D_MAJOR_VERSION}.${EASY3D_MINOR_VERSION}.${EASY3D_PA
 
 ################################################################################
 
-# One shouldn't generate the BUILD project directly in the SOURCES folder!
+# Discourage users to BUILD Easy3D directly in the SOURCES directory
 if ( ${CMAKE_CURRENT_BINARY_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR} )
         if ( NOT SAME_BUILD_AND_SOURCE_FOLDER_WARNING_ALREADY_ISSUED )
-                message(FATAL_ERROR
-                    "It is not advised to BUILD the binaries directly in the SOURCE folder!\n If
-                    you want to proceed with this option, just CONFIGURE the project once again" )
+                message(WARNING "It is NOT advised to build Easy3D directly in its root directory!" )
                 set( SAME_BUILD_AND_SOURCE_FOLDER_WARNING_ALREADY_ISSUED TRUE )
         endif()
 endif()
