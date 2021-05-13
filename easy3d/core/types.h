@@ -480,16 +480,13 @@ namespace easy3d {
             vec3 v0v1 = v1 - v0;
             vec3 v0v2 = v2 - v0;
             vec3 n = cross(v0v1, v0v2); // not normalized !
-            float d = length2(n);
+            float len2 = length2(n);
 
             // Check if the triangle is degenerated -> measure dist to line segments
-            if (fabs(d) < FLT_MIN) {
+            if (fabs(len2) < FLT_MIN) {
                 vec3 q, qq;
-                float d, dd(FLT_MAX);
-
-                dd = dist_point_line_segment(p, v0, v1, qq);
-
-                d = dist_point_line_segment(p, v1, v2, q);
+                float dd = dist_point_line_segment(p, v0, v1, qq);
+                float d = dist_point_line_segment(p, v1, v2, q);
                 if (d < dd) {
                     dd = d;
                     qq = q;
@@ -505,7 +502,7 @@ namespace easy3d {
                 return dd;
             }
 
-            float inv_d = 1.0f / d;
+            float inv_d = 1.0f / len2;
             vec3 v1v2 = v2;
             v1v2 -= v1;
             vec3 v0p = p;
@@ -541,7 +538,7 @@ namespace easy3d {
                 }
             }
 
-                // Calculate the distance to an edge or a corner vertex
+            // Calculate the distance to an edge or a corner vertex
             else if (b < 0.0) {
                 s01 = dot(v0v1, v0p) / length2(v0v1);
                 if (s01 < 0.0) {
