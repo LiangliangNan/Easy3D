@@ -9,7 +9,6 @@
     - [Reporting a compile or link bug](#reporting-a-compile-or-link-bug)
     - [Reporting a context creation bug](#reporting-a-context-creation-bug)
     - [Reporting a documentation bug](#reporting-a-documentation-bug)
-    - [Reporting a website bug](#reporting-a-website-bug)
 - [Contributing to Easy3D development](#contributing-to-easy3d-development)
     - [Contributing a bug fix](#contributing-a-bug-fix)
     - [Contributing a feature](#contributing-a-feature)
