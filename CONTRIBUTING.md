@@ -45,7 +45,7 @@ case unless it is already mentioned.  If it is, give it a :+1:.
 
 ## Reporting a runtime bug
 
-If Easy3D crashes, triggering asserts or behaves unexpectedly at run-time, please enable the verbose logging (which is disabled by default) by replacing
+If Easy3D crashes, triggering asserts, or behaves unexpectedly at run-time, please enable the verbose logging (which is disabled by default) by replacing
 the line of logger initialization (in your main function), e.g., 
 
 ```c++
