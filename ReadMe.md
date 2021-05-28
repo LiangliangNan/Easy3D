@@ -68,21 +68,19 @@ few optional (for a few additional features that are typically not needed by mos
 
 The optional third-party libraries are:
 - **CGAL** (optional): Easy3D has implemented a few algorithms for advanced surface mesh processing, such as surface 
-  (re)orientation, detecting and resolving duplicate vertices/faces and self-intersection, and clipping/splitting/slicing 
-  surface meshes. To enable these features, CGAL must be installed and is visible to CMake. Without CGAL, these features 
-  are disabled by default and you can still use all other features.
+  reorientation, detecting and resolving duplicate vertices/faces and self-intersection, and clipping/splitting/slicing 
+  surface meshes. These features are disabled by default (because most users don't need them). To enable these features, 
+  you can switch on the CMake option `EASY3D_ENABLE_CGAL` and make sure CGAL (v5.1 or later) is installed and visible to
+  CMake.
 
-- **Qt** (optional): Easy3D supports Qt for UI creation, which can help develop sophisticated applications for 3D data 
-  processing and visualization. You can switch on the CMake option `EASY3D_ENABLE_QT` to include the examples and 
-  applications that depend on Qt (e.g., 
+- **Qt** (optional): Easy3D supports Qt (v5.6 or later) for UI creation, which can help develop sophisticated 
+  applications for 3D data processing and visualization. The Qt support is disabled by default (because most users 
+  don't need it). You can switch on the CMake option `EASY3D_ENABLE_QT` to include the examples and applications that 
+  depend on Qt (e.g., 
             [`Tutorial_202_Viewer_Qt`](https://github.com/LiangliangNan/Easy3D/tree/main/tutorials/Tutorial_202_Viewer_Qt) 
             and [`Mapple`](https://github.com/LiangliangNan/Easy3D/tree/main/applications/Mapple))
   
-To build Easy3D, you need [CMake](https://cmake.org/download/) and, of course, a compiler:
-
-- CMake `>= 3.1`
-  
-- a compiler that supports `>= C++11`
+To build Easy3D, you need [CMake](https://cmake.org/download/) (`>= 3.1`) and, of course, a compiler that supports `>= C++11`.
 
 Easy3D has been tested on macOS (Xcode >= 8), Windows (MSVC >=2015), and Linux (GCC >= 4.8, Clang >= 3.3). Machines 
 nowadays typically provide higher [supports](https://en.cppreference.com/w/cpp/compiler_support), so you should be able 
