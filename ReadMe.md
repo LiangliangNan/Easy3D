@@ -62,15 +62,22 @@ By abstracting geometric elements as one of the above drawables, more general vi
 scalar fields) can be done very conveniently.
 
 ### Build
-Easy3D depends on some third-party libraries. For the core functionalities and the basic viewer, all dependencies have
-already been included in the distribution. Easy3D also optionally supports the use of Qt for GUI development. 
-You can switch on the following CMake option to include the examples and applications that use Qt (e.g., 
+Like most software, Easy3D depends on some third-party libraries. Easy3D has made this easier for the users by including
+the source code of most third-party libraries (for the core functionalities and the basic viewer), and it leaves very 
+few optional (for a few additional features that are typically not needed by most users). 
+
+The optional third-party libraries are:
+- **CGAL** (optional): Easy3D has implemented a few algorithms for advanced surface mesh processing, such as surface 
+  (re)orientation, detecting and resolving duplicate vertices/faces and self-intersection, and clipping/splitting/slicing 
+  surface meshes. To enable these features, CGAL must be installed and is visible to CMake. Without CGAL, these features 
+  are disabled by default and you can still use all other features.
+
+- **Qt** (optional): Easy3D supports Qt for UI creation, which can help develop sophisticated applications for 3D data 
+  processing and visualization. You can switch on the CMake option `EASY3D_ENABLE_QT` to include the examples and 
+  applications that depend on Qt (e.g., 
             [`Tutorial_202_Viewer_Qt`](https://github.com/LiangliangNan/Easy3D/tree/main/tutorials/Tutorial_202_Viewer_Qt) 
-            and [`Mapple`](https://github.com/LiangliangNan/Easy3D/tree/main/applications/Mapple)) 
-in your build:
-
-- `EASY3D_ENABLE_QT`
-
+            and [`Mapple`](https://github.com/LiangliangNan/Easy3D/tree/main/applications/Mapple))
+  
 To build Easy3D, you need [CMake](https://cmake.org/download/) and, of course, a compiler:
 
 - CMake `>= 3.1`
@@ -85,13 +92,13 @@ There are many options to build Easy3D. Choose one of the following (or whatever
 
 - Option 1: Use CMake to generate Makefiles and then `make` (on Linux/macOS) or `nmake`(on Windows with Microsoft 
   Visual Studio). For example, on Linux or macOS, you can simply
-```
-$ cd Easy3D
-$ mkdir Release
-$ cd Release
-$ cmake -DCMAKE_BUILD_TYPE=Release ..
-$ make
-```
+  ```
+  $ cd Easy3D
+  $ mkdir Release
+  $ cd Release
+  $ cmake -DCMAKE_BUILD_TYPE=Release ..
+  $ make
+  ```
   
 - Option 2: Use any IDE that can directly handle CMakeLists files to open the `CMakeLists.txt` in the root directory of 
   Easy3D. Then you should have obtained a usable project and just build it. I recommend using 
@@ -103,7 +110,7 @@ Don't have any experience with C/C++ programming?
 Have a look at <a href="https://github.com/LiangliangNan/Easy3D/blob/main/HowToBuild.md">How to build Easy3D step by 
 step</a>.
 
-### Using Easy3D in Your Projects
+### Use Easy3D in your project
 This is quite easy, maybe easier than many other open-source libraries :-) You only need to add the following lines 
 to your CMakeLists file (don't forget to replace `YOUR_APP_NAME` with the actual name of your application) and point 
 `Easy3D_DIR` to your `build` directory of Easy3D when doing cmake. Then the requested easy3d libraries, include 
