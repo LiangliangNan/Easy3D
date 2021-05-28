@@ -18,9 +18,9 @@
 # Asking a question
 
 Please have a look at the [Easy3D documentation](https://3d.bk.tudelft.nl/liangliang/software/easy3d_doc/html/index.html) and 
-quickly go throught the closed issues to see if the same question has already been answered before you ask a question.
+quickly go through the issues to see if the same question has already been answered before you ask a question.
 
-Questions about how to use Easy3D, the design or implementation of Easy3D, or about future plans should be asked by openning 
+Questions about how to use Easy3D, the design or implementation of Easy3D, or about plans should be asked by opening 
 an issue with a title starting with "[Question]". For example 
 ```
   [Question] Does Easy3D support incremental Delaunay triangulation?
@@ -46,7 +46,7 @@ case unless it is already mentioned.  If it is, give it a :+1:.
 
 ## Reporting a runtime bug
 
-If Easy3D crashes, triggering asserts, or is behaving unexpectedly at run-time, please enable the verbose logging (which is disabled by default) by replacing
+If Easy3D crashes, triggering asserts or behaves unexpectedly at run-time, please enable the verbose logging (which is disabled by default) by replacing
 the line of logger initialization (in your main function), e.g., 
 
 ```c++
@@ -68,9 +68,9 @@ the bug by creating an issue and provide the following:
  `06d1dfe55a5eec2d4b650041cb529f5efdeadd31`) from Git;
  - any error/warning message you have observed;
  - snapshot(s) of the unexpected result (if available);
- - are you running Easy3D from remote desktop? If so, does the issue occur when running it natively?
+ - are you running Easy3D from a remote desktop? If so, does the issue occur when running it natively?
  - does the issue occur for both Debug and Release modes or only one of them?
- - does the issue occur for other test data or for particular data only? Provide a small data that can trigger the issue;
+ - does the issue occur for other test data or particular data only? Provide a small data that can trigger the issue;
  - if you made changes to the source code of Easy3D, a short and self-contained code example that can produce the issue. 
  Just put it inline in the body text. If the bug is reproducible with one of the test programs or examples that come with Easy3D, simply mention that instead;
  - the full log file. By default it is located next to the executable program (unless you have modified the default path);
@@ -84,7 +84,7 @@ the bug by creating an issue and provide the following:
 __Please provide as much information as possible__.  Unimportant information can be abbreviated or removed, but missing information can stall bug fixing,
 especially when your schedule doesn't align with that of the maintainer.
 
-__Please provide text as text, not as images__.  This includes code, error messages and any other text.  Text in images cannot be found by other users
+__Please provide text as text, not as images__.  This includes code, error messages, and any other text.  Text in images cannot be found by other users
 searching for the same problem and may have to be re-typed by maintainers when debugging.
 
 You don't need to manually indent your code or other text to quote it with GitHub Markdown; just surround it with triple backticks:
@@ -150,11 +150,11 @@ just link to that web page or mention that source file. Then, simply quote the c
 
 ## Contributing a bug fix
 
-Bug fixes are highly appreciated. It is recommened to creat a pull request for a bug fix. __There is no preferred patch size__.  A one-character fix is just as welcome as a thousand line one, if that is the appropriate size for the fix.
+Bug fixes are highly appreciated. It is recommended to create a pull request for a bug fix. __There is no preferred patch size__.  A one-character fix is just as welcome as a thousand line one if that is the appropriate size for the fix.
 
 A complete bug fix includes:
 
-- description the incorrect behavior;
+- description of the incorrect behavior;
 - change of the code;
 - credits entries for all authors of the bug fix.
 
@@ -162,7 +162,7 @@ A complete bug fix includes:
 ## Contributing a feature
 
 __Note:__ If you haven't already implemented the feature, check first if there
-already is an open issue for it and if it's already being developed in an
+already is an open issue for it and if it's already being developed in a
 [development branch](https://github.com/LiangliangNan/Easy3D/branches/all). 
 
 __Note:__ You must have all necessary rights to any code you contribute.  If you
@@ -175,7 +175,7 @@ In addition to the code, a complete feature includes:
 - a change log including a description of the new feature;
 - reference documentation (like other existing features);
 - a minimal example;
-- cross-references and mentions in appropriate places (if needed);
+- cross-references and mentions in relevant places (if needed);
 - credits entries for all authors of the new feature.
 
 If the feature requires platform-specific code, at minimum stubs must be added
