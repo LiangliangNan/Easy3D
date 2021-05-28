@@ -9,7 +9,7 @@
     - [Reporting a compile or link bug](#reporting-a-compile-or-link-bug)
     - [Reporting a context creation bug](#reporting-a-context-creation-bug)
     - [Reporting a documentation bug](#reporting-a-documentation-bug)
-- [Contributing to Easy3D development](#contributing-to-easy3d-development)
+- [Contributing to Easy3D](#contributing-to-easy3d)
     - [Contributing a bug fix](#contributing-a-bug-fix)
     - [Contributing a feature](#contributing-a-feature)
 
@@ -46,7 +46,7 @@ case unless it is already mentioned.  If it is, give it a :+1:.
 ## Reporting a runtime bug
 
 If Easy3D crashes, triggering asserts, or behaves unexpectedly at run-time, please enable the verbose logging (which is disabled by default) by replacing
-the line of logger initialization (in your main function), e.g., 
+the line of logger initialization (in your `main()` function), e.g., 
 
 ```c++
     logging::initialize();
@@ -128,7 +128,7 @@ If it doesn't help, please report it by creating an issue and provide the follow
 
  - a brief description of the issue;
  - operating system name and version (e.g. `Windows 10 64-bit` or `Ubuntu 18.10`);
- - GPU and driver;
+ - GPU and driver version;
  - Easy3D release version (e.g., `2.4.3`) if you are using an official release of Easy3D, Otherwise, the Easy3D commit ID (e.g.  
  `06d1dfe55a5eec2d4b650041cb529f5efdeadd31`) from Git;
  - a short and self-contained code example that can produce the issue. Just put it inline in the body text. If the bug is
@@ -140,18 +140,18 @@ reproducible with one of the test programs or examples that come with Easy3D, si
 
 ## Reporting a documentation bug
 
-If you found a bug in the documentation (including this file and the ReadMe file of the repository), then it's fine to
+If you found a bug in the documentation (including this file and the ReadMe file of the repository), it's fine to
 just link to that web page or mention that source file. Then, simply quote the concerned text and point out what is wrong.
 
 
 
-# Contributing to Easy3D development
+# Contributing to Easy3D
 
 ## Contributing a bug fix
 
-Bug fixes are highly appreciated. It is recommended to create a pull request for a bug fix. __There is no preferred patch size__.  A one-character fix is just as welcome as a thousand line one if that is the appropriate size for the fix.
+Bug fixes are highly appreciated. __There is no preferred patch size__.  A one-character fix is just as welcome as a thousand line one if that is the appropriate size for the fix.
 
-A complete bug fix includes:
+It is recommended to create a pull request for a bug fix. A complete bug fix includes:
 
 - description of the incorrect behavior;
 - change of the code;
@@ -169,8 +169,9 @@ did not write the code yourself, you must explain where it came from and under
 what license.  Even code using the same license as Easy3D may not be copied
 without attribution.
 
-In addition to the code, a complete feature includes:
+A complete feature includes:
 
+- the code (i.e., implementation of the new feature);
 - a change log including a description of the new feature;
 - reference documentation (like other existing features);
 - a minimal example;
