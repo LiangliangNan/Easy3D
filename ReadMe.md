@@ -141,6 +141,8 @@ To build it from the source code, [install Doxygen](https://www.doxygen.nl/manua
 Then, switch on the CMake option `EASY3D_BUILD_DOCUMENTATION` in the main `CMakeList.txt`. Finally, build the `doc` 
 target to generate the documentation. 
 
+### Questions, new features, bugs, or you want to contribute
+Please click [here](https://github.com/LiangliangNan/Easy3D/blob/main/CONTRIBUTING.md).
 
 ### License
 Easy3D is free software; you can redistribute it and/or modify it under the terms of the 
