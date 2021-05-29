@@ -112,8 +112,8 @@ step</a>.
 ### Use Easy3D in your project
 This is quite easy, maybe easier than many other open-source libraries :-) You only need to add the following lines 
 to your CMakeLists file (don't forget to replace `YOUR_APP_NAME` with the actual name of your application) and point 
-`Easy3D_DIR` to your `build` directory of Easy3D when doing cmake. Then the requested easy3d libraries, include 
-directories, and relevant compile definitions of easy3d are visible and accessible to your project.
+`Easy3D_DIR` to your `build` directory of Easy3D when doing cmake. Then the requested Easy3D libraries, include 
+directories, and relevant compile definitions of Easy3D are visible and accessible to your project.
 ```
 set(CMAKE_CXX_STANDARD 11)                        # specify C++ standard
 find_package(Easy3D REQUIRED)                     # request Easy3D 
@@ -131,7 +131,7 @@ int main(int argc, char** argv) {
 ```
 
 ### Documentation
-The documentation for Easy3D-v2.4.2 is available [here](https://3d.bk.tudelft.nl/liangliang/software/easy3d_doc/html/index.html).
+The documentation for Easy3D-v2.4.4 is available [here](https://3d.bk.tudelft.nl/liangliang/software/easy3d_doc/html/index.html).
 
 The Easy3D Documentation is an on-going effort with more and more details being added. You can build the latest Easy3D 
 documentation from the source code.
