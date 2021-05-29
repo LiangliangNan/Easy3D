@@ -69,7 +69,7 @@ option(EASY3D_ENABLE_CGAL           "Build advanced features that require CGAL (
 ################################################################################
 
 if (EASY3D_ENABLE_CGAL)
-    find_package(CGAL REQUIRED)
+    find_package(CGAL QUIET)
     if (CGAL_FOUND)
         if (CGAL_VERSION VERSION_GREATER_EQUAL "5.1")
             set(EASY3D_HAS_CGAL TRUE)
@@ -77,12 +77,30 @@ if (EASY3D_ENABLE_CGAL)
             message(STATUS "Found CGAL v${CGAL_VERSION}")
         else ()
             set(EASY3D_HAS_CGAL FALSE)
-            message(ERROR "CGAL v${CGAL_VERSION} is found but Easy3D requires at least version 5.1. Please install CGAL v5.1 or later.")
+            message(FATAL_ERROR "You have requested CGAL support and CGAL v${CGAL_VERSION} is found. However, Easy3D"
+                    " requires at least v5.1. Please install CGAL v5.1 or later. In case you have multiple versions"
+                    " of CGAL on your platform, provide the path of a suitable one to the CMake variable `CGAL_DIR`.\n"
+                    " Please note that only the following surface mesh algorithms require CGAL (v5.1 or later): \n"
+                    "   - reorientation; \n"
+                    "   - detecting/resolving duplicate vertices/faces; \n"
+                    "   - detecting/resolving self-intersection; \n"
+                    "   - clipping/splitting/slicing. \n"
+                    " If you don't need these algorithms, disable CGAL support by setting `EASY3D_ENABLE_CGAL` to `OFF`.\n"
+                    " You will still be able to use all other features provided by Easy3D without CGAL.")
+            return()
         endif ()
     else ()
         set(EASY3D_HAS_CGAL FALSE)
-        message(ERROR "Some advanced features require CGAL (v5.1 or later) but CGAL was not found. Easy3D will be built without these features. "
-                "You can set 'CGAL_DIR' to the directory containing 'CGALConfig.cmake' or 'cgal-config.cmake' to help find CGAL.")
+        message(FATAL_ERROR "You have requested CGAL support but CGAL (v5.1 or later required) was not found. You can"
+                " set 'CGAL_DIR' to the directory containing `CGALConfig.cmake` or `cgal-config.cmake` to help CMake find CGAL.\n"
+                " Please note that only the following surface mesh algorithms require CGAL (v5.1 or later): \n"
+                "   - reorientation; \n"
+                "   - detecting/resolving duplicate vertices/faces; \n"
+                "   - detecting/resolving self-intersection; \n"
+                "   - clipping/splitting/slicing. \n"
+                " If you don't need these algorithms, disable CGAL support by setting `EASY3D_ENABLE_CGAL` to `OFF`.\n"
+                " You will still be able to use all other features provided by Easy3D without CGAL.")
+        return()
     endif ()
 endif ()
 
