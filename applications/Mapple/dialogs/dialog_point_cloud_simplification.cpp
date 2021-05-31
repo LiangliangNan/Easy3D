@@ -153,7 +153,7 @@ void DialogPointCloudSimplification::apply() {
     PointCloud *cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
     if (cloud) {
         if (points_to_remove_.size() == 0) {
-            LOG(INFO) << "please query points that can be removed";
+            LOG(WARNING) << "no points have been marked. Please first query points that can be removed";
             return;
         }
 
