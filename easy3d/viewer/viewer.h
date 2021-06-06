@@ -96,6 +96,11 @@ namespace easy3d {
          */
         int run();
 
+        /**
+         * Terminate the viewer.
+         */
+        void exit();
+
         /// @name Viewer properties
         //@{
 
@@ -327,6 +332,9 @@ namespace easy3d {
          *        viewer. User can override the usage.
          */
 	    virtual std::string usage() const;
+
+        /// @brief Print usage information to stdout.
+        std::function<std::string()> usage_func_;
 	    //@}
 
 	    /// @name Animation
@@ -436,6 +444,7 @@ namespace easy3d {
 
     protected:
 		GLFWwindow*	window_;
+		bool        should_exit_;
         float       dpi_scaling_;
 
 		std::string	title_;

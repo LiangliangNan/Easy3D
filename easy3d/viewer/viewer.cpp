@@ -95,13 +95,14 @@ namespace easy3d {
             int width /* = 960 */,
             int height /* = 800 */
     )
-            : window_(nullptr), dpi_scaling_(1.0), title_(title), camera_(nullptr), is_animating_(false), samples_(0),
-              full_screen_(full_screen), background_color_(0.9f, 0.9f, 1.0f, 1.0f),
+            : window_(nullptr), should_exit_(false), dpi_scaling_(1.0), title_(title), camera_(nullptr),
+              is_animating_(false), samples_(0), full_screen_(full_screen), background_color_(0.9f, 0.9f, 1.0f, 1.0f),
               process_events_(true), texter_(nullptr), pressed_button_(-1), modifiers_(-1), drag_active_(false),
               mouse_current_x_(0), mouse_current_y_(0), mouse_pressed_x_(0), mouse_pressed_y_(0), pressed_key_(-1),
               show_pivot_point_(false), show_frame_rate_(false), drawable_axes_(nullptr), show_camera_path_(false),
               model_idx_(-1)
-  {
+    {
+        usage_func_ = nullptr;
         animation_func_ = nullptr;
 
         // Initialize logging (if it has not been initialized yet)
@@ -654,7 +655,7 @@ namespace easy3d {
 
     bool Viewer::key_press_event(int key, int modifiers) {
         if (key == GLFW_KEY_F1 && modifiers == 0)
-            std::cout << usage() << std::endl;
+            std::cout << (usage_func_ ? usage_func_() : usage()) << std::endl;
         else if (key == GLFW_KEY_F2 && modifiers == 0) {
             is_animating_ = !is_animating_;
             if (is_animating_ && !animation_func_)
@@ -992,7 +993,7 @@ namespace easy3d {
             static int frame_counter = 0;
             double last_time = glfwGetTime();   // for frame rate counter
 
-            while (!glfwWindowShouldClose(window_)) {
+            while (!glfwWindowShouldClose(window_) && !should_exit_) {
                 if (!glfwGetWindowAttrib(window_, GLFW_VISIBLE)) // not visible
                     continue;
 
@@ -1043,6 +1044,12 @@ namespace easy3d {
     }
 
 
+    void Viewer::exit() {
+        should_exit_ = true;
+        update();
+    }
+
+
     void Viewer::init() {
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
@@ -1056,7 +1063,7 @@ namespace easy3d {
         texter_->add_font(resource::directory() + "/fonts/en_Roboto-Medium.ttf");
 
         // print usage
-        std::cout << usage() << std::endl;
+        std::cout << (usage_func_ ? usage_func_() : usage()) << std::endl;
     }
 
 
