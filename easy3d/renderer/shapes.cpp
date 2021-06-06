@@ -339,7 +339,7 @@ namespace easy3d {
             static int last_h = h;
             static int last_vpw = vpw;
             static int last_vph = vph;
-            static float last_depth = depth;
+            static float last_depth = 0.0f;
             if (vao_handle == 0 || depth != last_depth || last_x != x || last_y != y || last_w != w || last_h != h ||
                 last_vpw != vpw || last_vph != vph) {
                 // vertex positions in NDC (Normalized Device Coordinates)
@@ -405,7 +405,8 @@ namespace easy3d {
 
         void draw_full_screen_quad(unsigned int positionAttrib, unsigned int texcoordAttrib, float depth) {
             static GLuint vao_handle = 0;
-            static float last_depth = depth;
+            static float last_depth = 0.0f;
+
             if (vao_handle == 0 || depth != last_depth) {
                 // vertex positions in NDC (Normalized Device Coordinates)
                 const float positions[] = {
