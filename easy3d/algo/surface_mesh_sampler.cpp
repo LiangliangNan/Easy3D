@@ -35,7 +35,7 @@ namespace easy3d {
 
 
     PointCloud *SurfaceMeshSampler::apply(const SurfaceMesh *input_mesh, int expected_num /* = 1000000 */) {
-        auto func = [](const SurfaceMesh *mesh, int num) -> PointCloud* {
+        auto func = [](const SurfaceMesh *mesh, int num) -> PointCloud * {
             PointCloud *cloud = new PointCloud;
             const std::string &name = file_system::name_less_extension(mesh->name()) + "_sampled.ply";
             cloud->set_name(name);
@@ -47,8 +47,8 @@ namespace easy3d {
             auto mesh_points = mesh->get_vertex_property<vec3>("v:point");
 
             // we need the vertex normals and face normals.
-            const_cast<SurfaceMesh*>(mesh)->update_vertex_normals();
-            const_cast<SurfaceMesh*>(mesh)->update_face_normals();
+            const_cast<SurfaceMesh *>(mesh)->update_vertex_normals();
+            const_cast<SurfaceMesh *>(mesh)->update_face_normals();
 
             // add all mesh vertices (even the requested number is smaller than the
             // number of vertices in the mesh.
@@ -161,7 +161,8 @@ namespace easy3d {
         if (input_mesh->is_triangle_mesh())
             return func(input_mesh, expected_num);
         else {
-            LOG(WARNING) << "this is not a triangle mesh (creating a temporary triangle mesh by triangulating the input...)";
+            LOG(WARNING)
+                    << "this is not a triangle mesh (creating a temporary triangle mesh by triangulating the input...)";
             SurfaceMesh mesh = *input_mesh;
             SurfaceMeshTriangulation triangulator(&mesh);
             triangulator.triangulate(SurfaceMeshTriangulation::MIN_AREA);
