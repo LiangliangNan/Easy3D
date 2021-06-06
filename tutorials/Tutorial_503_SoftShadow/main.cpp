@@ -57,7 +57,5 @@ int main(int argc, char **argv) {
     drawable->set_smooth_shading(true);
 
     // Run the viewer
-    viewer.run();
-
-    return EXIT_SUCCESS;
+    return viewer.run();
 }

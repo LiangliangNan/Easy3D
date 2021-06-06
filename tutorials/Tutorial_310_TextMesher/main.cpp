@@ -23,14 +23,12 @@
  ********************************************************************/
 
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/fileio/resources.h>
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/renderer/camera.h>
-#include <easy3d/util/logging.h>
-
-#include <easy3d/util/file_system.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/algo/text_mesher.h>
+#include <easy3d/fileio/resources.h>
+#include <easy3d/util/logging.h>
 
 
 using namespace easy3d;
