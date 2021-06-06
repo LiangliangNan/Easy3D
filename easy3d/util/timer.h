@@ -48,6 +48,8 @@ namespace easy3d {
     public:
         Timer() : stopped_(false) {}
 
+        ~Timer() { stopped_ = true; }
+
         /**
          * \brief Executes function \p func after \p delay milliseconds.
          * \param func The pointer to the function.
