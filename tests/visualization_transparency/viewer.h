@@ -28,17 +28,17 @@
 #include <easy3d/viewer/viewer.h>
 
 
-// This class renders a surface mesh with transparency effect using the 
-// Average Color Blending technique.
-
 namespace easy3d {
 	class Transparency;
 }
 
-class TutorialTransparency : public easy3d::Viewer
+
+// This class renders a surface mesh with transparency effect using the
+// Average Color Blending technique.
+class TransparencyViewer : public easy3d::Viewer
 {
 public:
-	TutorialTransparency(const std::string& title = "");
+    TransparencyViewer(const std::string& title = "");
 
 protected:
     bool key_press_event(int key, int modifiers) override;

@@ -35,8 +35,7 @@ using namespace easy3d;
 int test_transparency() {
     const std::string file_name = resource::directory() + "/data/torusknot.obj";
 
-    // Create the viewer.
-    TutorialTransparency viewer("Transparency");
+    TransparencyViewer viewer("Transparency");
 
     // Load a mesh model and create a drawable for the faces.
     if (!viewer.add_model(file_name, true)) {

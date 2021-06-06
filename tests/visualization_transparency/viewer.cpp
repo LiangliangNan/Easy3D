@@ -35,14 +35,13 @@
 
 using namespace easy3d;
 
-TutorialTransparency::TutorialTransparency(const std::string& title) : Viewer(title) {
+TransparencyViewer::TransparencyViewer(const std::string& title) : Viewer(title) {
 	transparency_ = new DualDepthPeeling(camera());
-	std::cout << "method: Dual Depth Peeling" << std::endl;
 	method_ = 2;
 }
 
 
-std::string TutorialTransparency::usage() const {
+std::string TransparencyViewer::usage() const {
     return ("------------------------ Transparency usage ------------------------ \n"
             "Press key 'space' to turn on/off or switch between different transparency techniques\n"
             "Press 'up/down' to increase/decrease the transparency of the current model\n"
@@ -50,7 +49,7 @@ std::string TutorialTransparency::usage() const {
 }
 
 
-bool TutorialTransparency::key_press_event(int key, int modifiers) {
+bool TransparencyViewer::key_press_event(int key, int modifiers) {
     if (key == GLFW_KEY_SPACE) {
 		if (transparency_) {
 			delete transparency_;
@@ -108,7 +107,7 @@ bool TutorialTransparency::key_press_event(int key, int modifiers) {
 }
 
 
-void TutorialTransparency::draw() const {
+void TransparencyViewer::draw() const {
     if (!current_model()) {
         return;
     }
@@ -128,7 +127,7 @@ void TutorialTransparency::draw() const {
 }
 
 
-void TutorialTransparency::cleanup() {
+void TransparencyViewer::cleanup() {
 	if (transparency_)
 		delete transparency_;
 
