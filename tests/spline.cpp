@@ -22,19 +22,16 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include <easy3d/util/logging.h>
+
 #include <easy3d/core/types.h>
 #include <easy3d/core/spline_curve_fitting.h>
 #include <easy3d/core/spline_curve_interpolation.h>
-#include <easy3d/renderer/key_frame_interpolator.h>
 
 
 using namespace easy3d;
 
-int main(int argc, char *argv[]) {
-    logging::initialize();
+int test_spline() {
 
-#if 0
     // these are actually a set of camera positions around the bunny.ply model
     std::vector<vec3> points = {
             {-4.93228e-05, -2.15228, -0.000414636},
@@ -60,17 +57,14 @@ int main(int argc, char *argv[]) {
     const int resolution = 1000;    // Number of line subdivisions to display the spline
 
     // spine fitting
-    std::ofstream output_fitting("/Users/lnan/Projects/Easy3D/resources/data/cameras_spine_fitting_for_bunny.xyz");
     const int order = 3;            // Smoothness of the spline (min 2)
     SplineCurveFitting<vec3> fitter(order, SplineCurveFitting<vec3>::eOPEN_UNIFORM);
     fitter.set_ctrl_points(points);
     for (int i = 0; i < resolution; ++i) {
         const vec3 p = fitter.eval_f(float(i) / float(resolution - 1));
-        output_fitting << p << std::endl;
     }
 
     // spine interpolation
-    std::ofstream output_interpolation("/Users/lnan/Projects/Easy3D/resources/data/cameras_spine_interpolation_for_bunny.xyz");
     SplineCurveInterpolation<vec3> interpolator;
     interpolator.set_boundary(easy3d::SplineCurveInterpolation<vec3>::second_deriv, 0, easy3d::SplineCurveInterpolation<Vec<3, float>>::second_deriv, 0,false);
 #if 1 // use accumulated curve length as parameter
@@ -83,73 +77,7 @@ int main(int argc, char *argv[]) {
 #endif
     for (int i = 0; i < resolution; ++i) {
         const vec3 p = interpolator.eval_f(float(i) / float(resolution - 1));
-        output_interpolation << p << std::endl;
     }
-
-#else
-    std::string file = "/Users/lnan/Dropbox/Students/2020-PhD-Zexin/data/Lille-3D/test.kf";
-//    std::string file = "/Users/lnan/Projects/Easy3D/resources/data/bunny.kf";
-    KeyFrameInterpolator kfi;
-    kfi.read_keyframes(file);
-    int num = kfi.number_of_keyframes();
-
-    typedef Vec<7, float>  KeyFrame;
-    std::vector< KeyFrame > keyframes(num);
-    for (int i=0; i<num; ++i) {
-        auto frame = kfi.keyframe(i);
-        auto p = frame.position();
-        for (int j=0; j<3; ++j)
-            keyframes[i][j] = p[j];
-        auto q = frame.orientation();
-        for (int j=0; j<4; ++j)
-            keyframes[i][j+3] = q[j];
-    }
-
-
-    const int resolution = 100;    // Number of line subdivisions to display the spline
-
-    // spine fitting
-    std::string fitting_file = "keyframes_spine_fitting.kf";
-    kfi.delete_path();
-    const int order = 3;            // Smoothness of the spline (min 2)
-    SplineCurveFitting<KeyFrame> fitter(order, SplineCurveFitting<KeyFrame>::eOPEN_UNIFORM);
-    fitter.set_ctrl_points(keyframes);
-    for (int i = 0; i < resolution; ++i) {
-        const KeyFrame frame = fitter.eval_f(float(i) / float(resolution - 1));
-        vec3 pos(frame.data());
-        quat orient;
-        for (int j=0; j<4; ++j)
-            orient[j] = frame[j+3];
-        orient.normalize();
-        kfi.add_keyframe(Frame(pos, orient));
-    }
-    kfi.save_keyframes(fitting_file);
-
-    // spine interpolation
-    std::string interpolation_file = "keyframes_spine_interpolation.kf";
-    kfi.delete_path();
-    SplineCurveInterpolation<KeyFrame> interpolator;
-    interpolator.set_boundary(easy3d::SplineCurveInterpolation<KeyFrame>::second_deriv, 0, easy3d::SplineCurveInterpolation<KeyFrame>::second_deriv, 0,false);
-#if 1
-    interpolator.set_points(keyframes);
-#else // use accumulated time as parameter
-    std::vector<float> t(num, 0.0f);
-    for (std::size_t i=0; i<num; ++i)
-        t[i] = i;
-    interpolator.set_points(t, keyframes);
-#endif
-    for (int i = 0; i < resolution; ++i) {
-        const KeyFrame frame = interpolator.eval_f(float(i) / float(resolution - 1));
-        vec3 pos(frame.data());
-        quat orient;
-        for (int j=0; j<4; ++j)
-            orient[j] = frame[j+3];
-        orient.normalize();
-        kfi.add_keyframe(Frame(pos, orient));
-    }
-    kfi.save_keyframes(interpolation_file);
-
-#endif
 
     return EXIT_SUCCESS;
 }

@@ -22,16 +22,14 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include <easy3d/util/logging.h>
+
 #include <easy3d/core/types.h>
 #include <vector>
 
 using namespace easy3d;
 
 
-int main(int argc, char *argv[]) {
-    logging::initialize();
-
+int test_linear_solvers() {
 
 #if 0 // non-symmetric
     std::vector<double> rows = {
