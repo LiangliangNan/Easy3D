@@ -96,8 +96,6 @@ bool RealCamera::read_bundler_file(const std::string& file_name) {
 		input >> num_images >> num_points;
 	}
 
-    std::cout << "[ReadBundleFile] Reading " << num_images << " images and " << num_points << " points..." << std::endl;
-
 	/* Read cameras */
 	for (int i = 0; i < num_images; i++) {
 		double focal_length, k0, k1;
