@@ -100,7 +100,7 @@ namespace easy3d
 
         // \endcond
 
-        void initialize(bool info_to_stderr, const std::string &log_file, int verbosity_threshold)
+        void initialize(bool info_to_stdout, bool warning_to_stdout, bool error_to_stdout, const std::string &log_file, int verbosity_threshold)
         {
             if (logging_initialized) {
                 LOG(WARNING) << "logging has already been initialized";
@@ -161,7 +161,10 @@ namespace easy3d
             else
                 defaultConf.setGlobally(el::ConfigurationType::ToFile, std::string("false"));
 
-            defaultConf.set(el::Level::Info, el::ConfigurationType::ToStandardOutput, info_to_stderr ? "true" : "false");
+            defaultConf.set(el::Level::Info, el::ConfigurationType::ToStandardOutput, info_to_stdout ? "true" : "false");
+            defaultConf.set(el::Level::Warning, el::ConfigurationType::ToStandardOutput, warning_to_stdout ? "true" : "false");
+            defaultConf.set(el::Level::Error, el::ConfigurationType::ToStandardOutput, error_to_stdout ? "true" : "false");
+            defaultConf.set(el::Level::Fatal, el::ConfigurationType::ToStandardOutput, error_to_stdout ? "true" : "false");
 
             // If you wish to have a configuration for existing and future loggers, you can use the following.
             // This is useful when you are working on fairly large scale, or using a third-party library that is

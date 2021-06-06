@@ -55,7 +55,7 @@ the line of logger initialization (in your `main()` function), e.g.,
 with 
 
 ```c++
-    logging::initialize(true, "default", 9);
+    logging::initialize(true, true, true, "default", 9);
 ```
 
 This makes sure that most events will be logged into a log file.

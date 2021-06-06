@@ -64,7 +64,7 @@ int test_depth_maps();
         
 
 int main(int argc, char* argv[]) {
-    easy3d::logging::initialize();
+    easy3d::logging::initialize(false, false, true);
 
     // Initialize random number generator.
     srand(0);

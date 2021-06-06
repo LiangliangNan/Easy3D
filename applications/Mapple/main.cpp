@@ -86,7 +86,7 @@ public:
 int main(int argc, char *argv[])
 {
     // initialize logging at the very beginning to make sure everything will be logged into the log file.
-    logging::initialize(true, "default", 9);
+    logging::initialize(true, true, true, "default", 9);
 
     //Locale management
     {
