@@ -216,11 +216,11 @@ namespace easy3d {
         bool clamp_range() const { return clamp_range_; }
         void set_clamp_range(bool b) { clamp_range_ = b; }
 
-        /** Clamp the lower side of the value range of a scalar field. */
+        /** Clamp the lower side of the value range of a scalar field. Value is in [0, 1] (i.e., 0% to 100%).*/
         float clamp_lower() const { return clamp_lower_; }
         void set_clamp_lower(float v) { clamp_lower_ = v; }
 
-        /** Clamp the upper side of the value range of a scalar field. */
+        /** Clamp the upper side of the value range of a scalar field. Value is in [0, 1] (i.e., 0% to 100%).*/
         float clamp_upper() const { return clamp_upper_; }
         void set_clamp_upper(float v) { clamp_upper_ = v; }
 
