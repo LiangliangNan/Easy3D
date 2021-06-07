@@ -73,6 +73,8 @@ bool test_algo_surface_mesh_components() {
                   << "\t\tarea: " << comp.area() << "\n"
                   << "\t\tborder_length: " << comp.border_length() << "\n";
     }
+
+    delete mesh;
     return true;
 }
 
@@ -104,6 +106,7 @@ bool test_algo_surface_mesh_curvature() {
     analyzer.compute_max_abs_curvature();
     std::cout << " success" << std::endl;
 
+    delete mesh;
     return true;
 }
 
@@ -127,6 +130,7 @@ bool test_algo_surface_mesh_enumerator() {
     SurfaceMeshEnumerator::enumerate_planar_components(mesh, planar_segments, 1.0f);
     std::cout << " success" << std::endl;
 
+    delete mesh;
     return true;
 }
 
@@ -161,6 +165,7 @@ bool test_algo_surface_mesh_fairing() {
         std::cout << " success" << std::endl;
     }
 
+    delete mesh;
     return true;
 }
 
@@ -182,6 +187,7 @@ bool test_algo_surface_mesh_geodesic() {
     geodist.compute(seeds);
     std::cout << " success" << std::endl;
 
+    delete mesh;
     return true;
 }
 
@@ -232,6 +238,7 @@ bool test_algo_surface_mesh_fill_holes() {
     }
     std::cout << num_closed << " (out of " << holes.size() << ") holes filled" << std::endl;
 
+    delete mesh;
     return true;
 }
 
@@ -255,6 +262,7 @@ bool test_algo_surface_mesh_parameterization() {
     para.harmonic();
     std::cout << " success" << std::endl;
 
+    delete mesh;
     return true;
 }
 
@@ -287,6 +295,7 @@ bool test_algo_surface_mesh_polygonization() {
     Surfacer::merge_reversible_connected_components(mesh);
 #endif
 
+    delete mesh;
     return true;
 }
 
@@ -328,6 +337,7 @@ bool test_algo_surface_mesh_remeshing() {
         std::cout << " success" << std::endl;
     }
 
+    delete mesh;
     return true;
 }
 
@@ -344,6 +354,8 @@ bool test_algo_surface_mesh_sampler() {
     std::cout << "sampling surface mesh...";
     SurfaceMeshSampler sampler;
     PointCloud *cloud = sampler.apply(mesh, 100000);
+    delete mesh;
+
     if (cloud) {
         std::cout << " success" << std::endl;
         delete cloud;
@@ -372,6 +384,7 @@ bool test_algo_surface_mesh_simplification() {
     ss.simplify(expected_vertex_number);
     std::cout << " success" << std::endl;
 
+    delete mesh;
     return true;
 }
 
@@ -410,6 +423,7 @@ bool test_algo_surface_mesh_smoothing() {
         std::cout << " success" << std::endl;
     }
 
+    delete mesh;
     return true;
 }
 
@@ -435,6 +449,7 @@ bool test_algo_surface_mesh_stitching() {
     std::cout << " success" << std::endl;
 #endif
 
+    delete mesh;
     return true;
 }
 
@@ -449,20 +464,27 @@ bool test_algo_surface_mesh_subdivision() {
     }
 
     std::cout << "Loop subdivision...";
-    if (!SurfaceMeshSubdivision::loop(mesh))
+    if (!SurfaceMeshSubdivision::loop(mesh)) {
+        delete mesh;
         return false;
+    }
     std::cout << " success" << std::endl;
 
     std::cout << "Sqrt3 subdivision...";
-    if (!SurfaceMeshSubdivision::catmull_clark(mesh))
+    if (!SurfaceMeshSubdivision::catmull_clark(mesh)) {
+        delete mesh;
         return false;
+    }
     std::cout << " success" << std::endl;
 
     std::cout << "CatmullClark subdivision...";
-    if (!SurfaceMeshSubdivision::catmull_clark(mesh))
+    if (!SurfaceMeshSubdivision::catmull_clark(mesh)) {
+        delete mesh;
         return false;
+    }
     std::cout << " success" << std::endl;
 
+    delete mesh;
     return true;
 }
 
@@ -479,6 +501,8 @@ bool test_algo_surface_mesh_tetrahedralization() {
     std::cout << "tetrehedralization...";
     SurfaceMeshTetrehedralization tetra;
     PolyMesh* result = tetra.apply(mesh);
+    delete mesh;
+
     if (result) {
         std::cout << " success" << std::endl;
         delete result;
@@ -533,6 +557,7 @@ bool test_algo_surface_mesh_topology() {
         std::cout << std::endl;
     }
 
+    delete mesh;
     return true;
 }
 
@@ -552,8 +577,135 @@ bool test_algo_surface_mesh_triangulation() {
     triangulator.triangulate(SurfaceMeshTriangulation::MIN_AREA);
     std::cout << " success" << std::endl;
 
+    delete mesh;
     return true;
 }
+
+
+#ifdef HAS_CGAL
+
+int test_surface_mesh_remesh_self_intersections() {
+    const std::string file = resource::directory() + "/data/repair/self_intersection/two_spheres.obj";
+    SurfaceMesh *mesh = SurfaceMeshIO::load(file);
+    if (!mesh) {
+        std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct."
+                  << std::endl;
+        return false;
+    }
+    std::cout << "remeshing self intersections..." << std::endl;
+
+    auto size = mesh->n_faces();
+    if (Surfacer::remesh_self_intersections(mesh, true)) {
+        std::cout << "done. #faces " << size << " -> " << mesh->n_faces() << ". " << std::endl;
+        delete mesh;
+        return true;
+    }
+
+    delete mesh;
+    return false;
+}
+
+int test_surface_mesh_remove_overlapping_faces() {
+    const std::string file = resource::directory() + "/data/house/house.obj";
+    SurfaceMesh *mesh = SurfaceMeshIO::load(file);
+    if (!mesh) {
+        std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct."
+                  << std::endl;
+        return false;
+    }
+
+    std::cout << "removing overlapping faces..." << std::endl;
+    unsigned int num_degenerate = Surfacer::remove_degenerate_faces(mesh, 1e-5);
+    unsigned int num_overlapping = Surfacer::remove_overlapping_faces(mesh, true);
+    if (num_degenerate + num_overlapping > 0) {
+        std::cout << "done. " << num_degenerate + num_overlapping << " faces removed (" << num_degenerate
+                  << " degenerate, " << num_overlapping << " overlapping). " << std::endl;
+        delete mesh;
+        return true;
+    }
+
+    delete mesh;
+    return false;
+}
+
+
+int test_surface_mesh_clip() {
+    const std::string file = resource::directory() + "/data/bunny.ply";
+    SurfaceMesh *mesh = SurfaceMeshIO::load(file);
+    if (!mesh) {
+        std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct."
+                  << std::endl;
+        return false;
+    }
+
+    Plane3 plane(mesh->bounding_box().center(), vec3(0, 0, 1));
+
+    std::cout << "clipping surface mesh...";
+    if (Surfacer::clip(mesh, plane, false)) {
+        std::cout << " success" << std::endl;
+        delete mesh;
+        return true;
+    }
+
+    delete mesh;
+    return false;
+}
+
+
+int test_surface_mesh_split() {
+    const std::string file = resource::directory() + "/data/bunny.ply";
+    SurfaceMesh *mesh = SurfaceMeshIO::load(file);
+    if (!mesh) {
+        std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct."
+                  << std::endl;
+        return false;
+    }
+
+    Plane3 plane(mesh->bounding_box().center(), vec3(0, 0, 1));
+
+    std::cout << "splitting surface mesh...";
+    Surfacer::split(mesh, plane);
+    std::cout << " success" << std::endl;
+
+    delete mesh;
+    return true;
+}
+
+
+int test_surface_mesh_slice() {
+    const std::string file = resource::directory() + "/data/bunny.ply";
+    SurfaceMesh *mesh = SurfaceMeshIO::load(file);
+    if (!mesh) {
+        std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct."
+                  << std::endl;
+        return false;
+    }
+
+    std::cout << "slicing surface mesh (by 10 horizontal planes)...";
+
+    float minz = mesh->bounding_box().min_point().z;
+    float maxz = mesh->bounding_box().max_point().z;
+
+    int num = 10;
+    float step = (maxz - minz) / num;
+
+    std::vector<Plane3> planes(num);
+    for (int i=0; i<num; ++i)
+        planes[i] = Plane3(vec3(0, 0, minz + i * step), vec3(0, 0, 1));
+
+    const std::vector< std::vector<Surfacer::Polyline> >& all_polylines = Surfacer::slice(mesh, planes);
+    if (!all_polylines.empty()) {
+        std::cout << " success" << std::endl;
+        delete mesh;
+        return true;
+    }
+
+    std::cout << std::endl;
+    delete mesh;
+    return false;
+}
+
+#endif
 
 
 int test_surface_mesh_algorithms() {
@@ -607,6 +759,23 @@ int test_surface_mesh_algorithms() {
 
     if (!test_algo_surface_mesh_triangulation())
         return EXIT_FAILURE;
+
+#ifdef HAS_CGAL
+    if (!test_surface_mesh_remesh_self_intersections())
+        return EXIT_FAILURE;
+
+    if (!test_surface_mesh_remove_overlapping_faces())
+        return EXIT_FAILURE;
+
+    if (!test_surface_mesh_clip())
+        return EXIT_FAILURE;
+
+    if (!test_surface_mesh_split())
+        return EXIT_FAILURE;
+
+    if (!test_surface_mesh_slice())
+        return EXIT_FAILURE;
+#endif
 
     return EXIT_SUCCESS;
 }
