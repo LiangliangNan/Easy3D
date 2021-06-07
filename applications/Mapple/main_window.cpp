@@ -1267,7 +1267,7 @@ void MainWindow::surfaceMeshRemoveDuplicateAndFoldingFaces() {
         viewer_->update();
         updateUi();
     }
-    LOG(INFO) << "done. " << num_degenerate + num_overlapping << " faces deleted (" << num_degenerate
+    LOG(INFO) << "done. " << num_degenerate + num_overlapping << " faces removed (" << num_degenerate
               << " degenerate, " << num_overlapping << " overlapping). " << w.time_string();
 #else
     LOG(WARNING) << "This function requires CGAL but CGAL was not found when Easy3D was built.";
@@ -1317,7 +1317,7 @@ void MainWindow::surfaceMeshRemeshSelfIntersections() {
 #if HAS_CGAL
     StopWatch w;
     w.start();
-	LOG(INFO) << "remeshing intersecting faces...";
+	LOG(INFO) << "remeshing self intersections...";
 
     auto size = mesh->n_faces();
     if (Surfacer::remesh_self_intersections(mesh, true)) {

@@ -70,7 +70,7 @@ int main(int argc, char** argv) {
 		// We assign each vertex a color that is equal to his position (you should
 		// assign a more meaningful color in practice).
 		colors[v] = points[v];
-		std::cout << "vertex: " << v << ", position: " << points[v] << ", color: " << ": " << colors[v] << std::endl;
+		std::cout << "vertex: " << v << ", position: " << points[v] << ", color: " << colors[v] << std::endl;
 	}
 
     // We add a per-edge property "e:length" to store the edge lengths

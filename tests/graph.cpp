@@ -117,7 +117,7 @@ int test_graph() {
             // We assign each vertex a color that is equal to his position (you should
             // assign a more meaningful color in practice).
             colors[v] = points[v];
-            std::cout << "vertex: " << v << ", position: " << points[v] << ", color: " << ": " << colors[v]
+            std::cout << "vertex: " << v << ", position: " << points[v] << ", color: " << colors[v]
                       << std::endl;
         }
 
