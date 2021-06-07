@@ -173,17 +173,25 @@ void WidgetDrawable::setScalarFieldClamp(bool b) {
 
 void WidgetDrawable::setScalarFieldClampLower(double v) {
     auto d = drawable();
-    d->set_clamp_lower(v / 100.0f);
-    d->update();
-    viewer_->update();
+    if (d->clamp_upper() * 100 + v < 100) {
+        d->set_clamp_lower(v / 100.0f);
+        d->update();
+        viewer_->update();
+    }
+    else
+        LOG(WARNING) << "invalid clamp range (the sum of lower and upper must be smaller than 100)";
 }
 
 
 void WidgetDrawable::setScalarFieldClampUpper(double v) {
     auto d = drawable();
-    d->set_clamp_upper(v / 100.0f);
-    d->update();
-    viewer_->update();
+    if (d->clamp_lower() * 100 + v < 100) {
+        d->set_clamp_upper(v / 100.0f);
+        d->update();
+        viewer_->update();
+    }
+    else
+        LOG(WARNING) << "invalid clamp range (the sum of lower and upper must be smaller than 100)";
 }
 
 
