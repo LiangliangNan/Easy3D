@@ -38,9 +38,6 @@ namespace easy3d {
         normal_deviation_ = 0;
         hausdorff_error_ = 0;
 
-        // add properties
-        vquadric_ = mesh_->add_vertex_property<Quadric>("v:quadric");
-
         // get properties
         vpoint_ = mesh_->get_vertex_property<vec3>("v:point");
 
@@ -52,10 +49,6 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
     SurfaceMeshSimplification::~SurfaceMeshSimplification() {
-        // remove added properties
-        mesh_->remove_vertex_property(vquadric_);
-        mesh_->remove_face_property(normal_cone_);
-        mesh_->remove_face_property(face_points_);
     }
 
     //-----------------------------------------------------------------------------
@@ -83,6 +76,9 @@ namespace easy3d {
             face_points_ = mesh_->face_property<Points>("f:points");
         else
             mesh_->remove_face_property(face_points_);
+
+        // add quadric property
+        vquadric_ = mesh_->add_vertex_property<Quadric>("v:quadric");
 
         // vertex selection
         has_selection_ = false;
@@ -207,6 +203,11 @@ namespace easy3d {
         mesh_->remove_vertex_property(vpriority_);
         mesh_->remove_vertex_property(heap_pos_);
         mesh_->remove_vertex_property(vtarget_);
+
+        // remove added properties
+        mesh_->remove_vertex_property(vquadric_);
+        mesh_->remove_face_property(normal_cone_);
+        mesh_->remove_face_property(face_points_);
     }
 
     //-----------------------------------------------------------------------------
