@@ -45,6 +45,8 @@ protected:
     bool mouse_press_event(int x, int y, int button, int modifiers) override;
 
     std::string usage() const override;
+
+    void post_draw() override;
 };
 
 

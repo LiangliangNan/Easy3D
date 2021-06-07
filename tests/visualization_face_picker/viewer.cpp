@@ -28,8 +28,7 @@
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/renderer.h>
-
-
+#include <easy3d/renderer/text_renderer.h>
 
 using namespace easy3d;
 
@@ -84,4 +83,19 @@ Model* PickerViewer::add_model(const std::string& file_name, bool create_default
     model->renderer()->get_lines_drawable("edges")->set_visible(true);
 
     return model;
+}
+
+
+void PickerViewer::post_draw() {
+    Viewer::post_draw();
+
+    // draw usage hint
+    if (texter_ && texter_->num_fonts() >=2) {
+        const float font_size = 20.0f;
+        const float offset = 20.0f * dpi_scaling();
+        float y_pos = 50.0f;
+        texter_->draw("Left-click the mouse on the model to pick a face.", offset, y_pos * dpi_scaling(), font_size, 1);
+        y_pos += font_size;
+        texter_->draw("Close the application when you finish the test.", offset, y_pos * dpi_scaling(), font_size, 1);
+    }
 }

@@ -48,6 +48,8 @@ protected:
 
     std::string usage() const override ;
 
+    void post_draw() override;
+
 private:
     easy3d::KeyFrameInterpolator* interpolator_;
 };

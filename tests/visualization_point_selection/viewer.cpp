@@ -28,7 +28,7 @@
 #include <easy3d/renderer/shapes.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/renderer.h>
-
+#include <easy3d/renderer/text_renderer.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>    // for the mouse buttons
 
@@ -113,6 +113,16 @@ void PointSelection::post_draw() {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         shapes::draw_polygon_filled(polygon_, vec4(1.0f, 0.0f, 0.0f, 0.2f), width(), height(), -0.9f);
         glDisable(GL_BLEND);
+    }
+
+    // draw usage hint
+    if (texter_ && texter_->num_fonts() >=2) {
+        const float font_size = 20.0f;
+        const float offset = 20.0f * dpi_scaling();
+        float y_pos = 50.0f;
+        texter_->draw("Press ALT key, then drag the mouse to select (left button) or deselect (right button) points.", offset, y_pos * dpi_scaling(), font_size, 1);
+        y_pos += font_size;
+        texter_->draw("Close the application when you finish the test", offset, y_pos * dpi_scaling(), font_size, 1);
     }
 }
 

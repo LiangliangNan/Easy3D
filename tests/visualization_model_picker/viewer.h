@@ -44,6 +44,8 @@ protected:
 
     std::string usage() const override;
 
+    void post_draw() override;
+
 private:
     void mark(easy3d::Model *model);
 

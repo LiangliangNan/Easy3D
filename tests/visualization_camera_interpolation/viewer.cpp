@@ -26,6 +26,7 @@
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
+#include <easy3d/renderer/text_renderer.h>
 #include <easy3d/core/model.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
@@ -106,5 +107,24 @@ void CameraIntrepolation::draw() const {
     if (!interpolator_->is_interpolation_started()) {
         interpolator_->draw_cameras(camera(), camera()->sceneRadius() * 0.05f);
         interpolator_->draw_path(camera());
+    }
+}
+
+
+void CameraIntrepolation::post_draw() {
+    Viewer::post_draw();
+
+    // draw usage hint
+    if (texter_ && texter_->num_fonts() >=2) {
+        const float font_size = 20.0f;
+        const float offset = 20.0f * dpi_scaling();
+        float y_pos = 50.0f;
+        texter_->draw("Press 'K' to add key frames.", offset, y_pos * dpi_scaling(), font_size, 1);
+        y_pos += font_size;
+        texter_->draw("Press 'Space' to start/stop the animation.", offset, y_pos * dpi_scaling(), font_size, 1);
+        y_pos += font_size;
+        texter_->draw("Press 'D' to delete the camera path.", offset, y_pos * dpi_scaling(), font_size, 1);
+        y_pos += font_size;
+        texter_->draw("Close the application when you finish the test.", offset, y_pos * dpi_scaling(), font_size, 1);
     }
 }
