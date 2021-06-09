@@ -91,7 +91,7 @@ void create_surfels(SurfaceMesh *mesh) {
 }
 
 
-int test_imposters() {
+int test_imposters(int duration) {
     Viewer viewer("Imposters");
 
     // Load point cloud data from a file
@@ -131,7 +131,7 @@ int test_imposters() {
         return "testing imposters...";
     };
 
-    Timer<>::single_shot(1000, (Viewer*)&viewer, &Viewer::exit);
+    Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();
 }
 

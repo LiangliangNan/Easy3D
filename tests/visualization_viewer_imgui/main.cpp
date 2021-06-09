@@ -31,7 +31,7 @@
 using namespace easy3d;
 
 
-int test_viewer_imgui() {
+int test_viewer_imgui(int duration) {
 
     const std::string file_name = resource::directory() + "/data/easy3d.ply";
     ViewerImGui viewer("Viewer_imgui");
@@ -47,6 +47,6 @@ int test_viewer_imgui() {
 
     viewer.resize(800, 600);
 
-    Timer<>::single_shot(1000, (Viewer*)&viewer, &Viewer::exit);
+    Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();
 }

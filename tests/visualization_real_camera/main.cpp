@@ -38,12 +38,12 @@ int test_real_camera() {
     };
 
     Timer<> timer;
-    timer.set_interval(300, &viewer, &RealCamera::change_view);
+    timer.set_interval(500, &viewer, &RealCamera::change_view);
 
     // stop the timer before exit
-    Timer<>::single_shot(2900, [&]() -> void { timer.stop(); });
+    Timer<>::single_shot(4900, [&]() -> void { timer.stop(); });
     // exit
-    Timer<>::single_shot(3000, (Viewer*)&viewer, &Viewer::exit);
+    Timer<>::single_shot(5000, (Viewer*)&viewer, &Viewer::exit);
 
     return viewer.run();
 }

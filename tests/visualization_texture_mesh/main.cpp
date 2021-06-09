@@ -29,7 +29,7 @@
 using namespace easy3d;
 
 
-int test_texture_mesh() {
+int test_texture_mesh(int duration) {
     TexturedViewer viewer("TexturedMesh");
 
     const std::string &file_name = resource::directory() + "/data/domik/domik.obj";
@@ -42,6 +42,6 @@ int test_texture_mesh() {
         return "testing texture mesh...";
     };
 
-    Timer<>::single_shot(1000, (Viewer*)&viewer, &Viewer::exit);
+    Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();
 }

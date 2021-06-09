@@ -29,7 +29,7 @@
 using namespace easy3d;
 
 
-int test_text_rendering() {
+int test_text_rendering(int duration) {
     const std::string file_name = resource::directory() + "/data/sphere.obj";
 
     TextRendering viewer("TextRendering");
@@ -39,7 +39,7 @@ int test_text_rendering() {
         return "testing text rendering...";
     };
 
-    Timer<>::single_shot(1000, (Viewer*)&viewer, &Viewer::exit);
+    Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();
 }
 

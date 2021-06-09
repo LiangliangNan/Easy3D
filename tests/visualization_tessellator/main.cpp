@@ -89,7 +89,7 @@ void triangulate(SurfaceMesh *mesh) {
     }
 }
 
-int test_tessellator() {
+int test_tessellator(int duration) {
     Viewer viewer("Tessellator");
     viewer.camera()->setUpVector(vec3(0, 1, 0));
     viewer.camera()->setViewDirection(vec3(0, 0, -1));
@@ -175,7 +175,7 @@ int test_tessellator() {
         return "testing tessellator...";
     };
 
-    Timer<>::single_shot(1000, (Viewer*)&viewer, &Viewer::exit);
+    Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();
 }
 

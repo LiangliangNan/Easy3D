@@ -32,7 +32,7 @@
 using namespace easy3d;
 
 
-int test_vector_field() {
+int test_vector_field(int duration) {
     Viewer viewer("VectorField");
 
     // Load point cloud data from a file
@@ -86,7 +86,7 @@ int test_vector_field() {
         return "testing vector field...";
     };
 
-    Timer<>::single_shot(1000, (Viewer*)&viewer, &Viewer::exit);
+    Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();
 }
 

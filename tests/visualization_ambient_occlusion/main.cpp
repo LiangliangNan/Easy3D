@@ -32,7 +32,7 @@
 using namespace easy3d;
 
 
-int test_ambient_occlusion() {
+int test_ambient_occlusion(int duration) {
     const std::string file = resource::directory() + "/data/general_open.obj";
 
     TutorialAmbientOcclusion viewer("AmbientOcclusion");
@@ -50,6 +50,6 @@ int test_ambient_occlusion() {
         return "testing ambient occlusion...";
     };
 
-    Timer<>::single_shot(1000, (Viewer*)&viewer, &Viewer::exit);
+    Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();
 }

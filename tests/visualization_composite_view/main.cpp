@@ -29,7 +29,7 @@
 using namespace easy3d;
 
 
-int test_composite_view() {
+int test_composite_view(int duration) {
     CompositeView viewer("CompositeView");
 
     // Load model from a file
@@ -43,7 +43,7 @@ int test_composite_view() {
         return "testing composite view...";
     };
 
-    Timer<>::single_shot(1000, (Viewer*)&viewer, &Viewer::exit);
+    Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();
 }
 

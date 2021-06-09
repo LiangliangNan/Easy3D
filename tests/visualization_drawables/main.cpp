@@ -34,7 +34,7 @@
 using namespace easy3d;
 
 
-int test_drawables() {
+int test_drawables(int duration) {
     Viewer viewer("Drawables");
 
     const std::vector<vec3> &points = resource::bunny_vertices;
@@ -106,7 +106,7 @@ int test_drawables() {
         return "testing drawables...";
     };
 
-    Timer<>::single_shot(1000, (Viewer*)&viewer, &Viewer::exit);
+    Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();
 }
 

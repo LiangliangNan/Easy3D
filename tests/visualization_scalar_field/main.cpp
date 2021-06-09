@@ -34,7 +34,7 @@
 using namespace easy3d;
 
 
-int test_scalar_field() {
+int test_scalar_field(int duration) {
     const std::string file_name = resource::directory() + "/data/building.off";
 
     Viewer viewer("ScalarField");
@@ -73,7 +73,7 @@ int test_scalar_field() {
         return "testing scalar field...";
     };
 
-    Timer<>::single_shot(1000, (Viewer*)&viewer, &Viewer::exit);
+    Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();
 }
 

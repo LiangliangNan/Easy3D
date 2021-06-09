@@ -35,7 +35,7 @@
 using namespace easy3d;
 
 
-int test_texture() {
+int test_texture(int duration) {
     Viewer viewer("Texture");
     viewer.camera()->setUpVector(vec3(0, 1, 0));
     viewer.camera()->setViewDirection(vec3(0, 0, -1));
@@ -79,7 +79,7 @@ int test_texture() {
         return "testing texture...";
     };
 
-    Timer<>::single_shot(1000, (Viewer*)&viewer, &Viewer::exit);
+    Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();
 }
 

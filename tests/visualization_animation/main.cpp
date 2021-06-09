@@ -30,7 +30,7 @@
 
 using namespace easy3d;
 
-int test_animation() {
+int test_animation(int duration) {
 
     Viewer viewer("Animation");
 
@@ -77,7 +77,7 @@ int test_animation() {
         return "testing animation...";
     };
 
-    Timer<>::single_shot(1000, (Viewer*)&viewer, &Viewer::exit);
+    Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();
 }
 

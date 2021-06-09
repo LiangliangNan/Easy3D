@@ -33,7 +33,7 @@
 
 using namespace easy3d;
 
-int test_text_mesher() {
+int test_text_mesher(int duration) {
     Viewer viewer("TextMesher");
 
     const std::string font_file = resource::directory() + "/fonts/en_Earth-Normal.ttf";
@@ -88,6 +88,6 @@ int test_text_mesher() {
         return "testing text mesher...";
     };
 
-    Timer<>::single_shot(1000, (Viewer*)&viewer, &Viewer::exit);
+    Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();
 }

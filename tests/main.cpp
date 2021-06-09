@@ -37,31 +37,32 @@ int test_graph();
 int test_point_cloud_algorithms();
 int test_surface_mesh_algorithms();
 
-int test_viewer_imgui();
-int test_composite_view();
-int test_camera_interpolation();
+int test_viewer_imgui(int duration);
+int test_composite_view(int duration);
 int test_real_camera();
-int test_drawables();
-int test_imposters();
-int test_scalar_field();
-int test_vector_field();
-int test_texture();
-int test_image();
-int test_tessellator();
-int test_texture_mesh();
-int test_text_rendering();
-int test_text_mesher();
-int test_animation();
+int test_drawables(int duration);
+int test_imposters(int duration);
+int test_scalar_field(int duration);
+int test_vector_field(int duration);
+int test_texture(int duration);
+int test_image(int duration);
+int test_tessellator(int duration);
+int test_texture_mesh(int duration);
+int test_text_rendering(int duration);
+int test_text_mesher(int duration);
+int test_animation(int duration);
+int test_ambient_occlusion(int duration);
+int test_hard_shadow(int duration);
+int test_soft_shadow(int duration);
+int test_transparency(int duration);
+int test_eye_dome_lighting(int duration);
+int test_depth_maps(int duration);
+
+int test_camera_interpolation();
 int test_model_picker();
 int test_face_picker();
 int test_point_selection();
-int test_ambient_occlusion();
-int test_hard_shadow();
-int test_soft_shadow();
-int test_transparency();
-int test_eye_dome_lighting();
-int test_depth_maps();
-        
+
 
 int main(int argc, char* argv[]) {
     easy3d::logging::initialize(false, false, true);
@@ -82,26 +83,27 @@ int main(int argc, char* argv[]) {
     result += test_point_cloud_algorithms();
     result += test_surface_mesh_algorithms();
 
-    result += test_viewer_imgui();
-    result += test_composite_view();
+    const int duration = 1500; // in millisecond
+    result += test_viewer_imgui(duration);
+    result += test_composite_view(duration);
     result += test_real_camera();
-    result += test_drawables();
-    result += test_imposters();
-    result += test_scalar_field();
-    result += test_vector_field();
-    result += test_texture();
-    result += test_image();
-    result += test_tessellator();
-    result += test_texture_mesh();
-    result += test_text_rendering();
-    result += test_text_mesher();
-    result += test_animation();
-    result += test_ambient_occlusion();
-    result += test_hard_shadow();
-    result += test_soft_shadow();
-    result += test_transparency();
-    result += test_eye_dome_lighting();
-    result += test_depth_maps();
+    result += test_drawables(duration);
+    result += test_imposters(duration);
+    result += test_scalar_field(duration);
+    result += test_vector_field(duration);
+    result += test_texture(duration);
+    result += test_image(duration);
+    result += test_tessellator(duration);
+    result += test_texture_mesh(duration);
+    result += test_text_rendering(duration);
+    result += test_text_mesher(duration);
+    result += test_animation(duration);
+//    result += test_ambient_occlusion(duration); // This one does not support multi-threads (required in this test), but it can run alone.
+    result += test_hard_shadow(duration);
+    result += test_soft_shadow(duration);
+    result += test_transparency(duration);
+    result += test_eye_dome_lighting(duration);
+    result += test_depth_maps(duration);
 
     std::cout << "-------------------------------------------------------------------------\n"
                  "The following tests require user interaction. Please follow the usage of each application.\n"

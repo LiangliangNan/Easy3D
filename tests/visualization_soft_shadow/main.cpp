@@ -32,7 +32,7 @@
 using namespace easy3d;
 
 
-int test_soft_shadow() {
+int test_soft_shadow(int duration) {
     const std::string file = resource::directory() + "/data/room.obj";
 
     TutorialSoftShadow viewer("SoftShadow");
@@ -51,6 +51,6 @@ int test_soft_shadow() {
         return "testing soft shadow...";
     };
 
-    Timer<>::single_shot(1000, (Viewer*)&viewer, &Viewer::exit);
+    Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();
 }

@@ -119,9 +119,11 @@ void CameraIntrepolation::post_draw() {
         const float font_size = 20.0f;
         const float offset = 20.0f * dpi_scaling();
         float y_pos = 50.0f;
-        texter_->draw("Press 'K' to add key frames.", offset, y_pos * dpi_scaling(), font_size, 1);
+        texter_->draw("Press 'K' to add current view as a keyframe.", offset, y_pos * dpi_scaling(), font_size, 1);
         y_pos += font_size;
-        texter_->draw("Press 'Space' to start/stop the animation.", offset, y_pos * dpi_scaling(), font_size, 1);
+        texter_->draw("Drag the left cursor to change the view and then add another keyframe.", offset, y_pos * dpi_scaling(), font_size, 1);
+        y_pos += font_size;
+        texter_->draw("After creating at least 3 keyframes, press 'Space' to start/stop the animation.", offset, y_pos * dpi_scaling(), font_size, 1);
         y_pos += font_size;
         texter_->draw("Press 'D' to delete the camera path.", offset, y_pos * dpi_scaling(), font_size, 1);
         y_pos += font_size;

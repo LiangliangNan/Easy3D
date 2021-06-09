@@ -32,7 +32,7 @@
 using namespace easy3d;
 
 
-int test_eye_dome_lighting() {
+int test_eye_dome_lighting(int duration) {
     const std::string file = resource::directory() + "/data/bunny.bin";
 
     // Create the viewer.
@@ -53,7 +53,7 @@ int test_eye_dome_lighting() {
         return "testing eye dome lighting...";
     };
 
-    Timer<>::single_shot(1000, (Viewer*)&viewer, &Viewer::exit);
+    Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();
 }
 

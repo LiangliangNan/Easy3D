@@ -32,7 +32,7 @@
 using namespace easy3d;
 
 
-int test_depth_maps() {
+int test_depth_maps(int duration) {
     DepthImage viewer("DepthMaps");
 
     const std::string file_name = resource::directory() + "/data/fountain/pointcloud.ply";
@@ -49,7 +49,7 @@ int test_depth_maps() {
         return "testing depth map...";
     };
 
-    Timer<>::single_shot(1000, (Viewer*)&viewer, &Viewer::exit);
+    Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();
 }
 

@@ -29,7 +29,7 @@
 using namespace easy3d;
 
 
-int test_image() {
+int test_image(int duration) {
     const std::string image_file = resource::directory() + "/data/fountain/images/0000.jpg";
 
     ImageViewer viewer("Image", image_file);
@@ -38,7 +38,7 @@ int test_image() {
         return "testing image viewer...";
     };
 
-    Timer<>::single_shot(1000, (Viewer*)&viewer, &Viewer::exit);
+    Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();
 }
 

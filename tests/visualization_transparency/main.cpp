@@ -32,7 +32,7 @@
 using namespace easy3d;
 
 
-int test_transparency() {
+int test_transparency(int duration) {
     const std::string file_name = resource::directory() + "/data/torusknot.obj";
 
     TransparencyViewer viewer("Transparency");
@@ -51,7 +51,7 @@ int test_transparency() {
         return "testing transparency...";
     };
 
-    Timer<>::single_shot(1000, (Viewer*)&viewer, &Viewer::exit);
+    Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();
 }
 
