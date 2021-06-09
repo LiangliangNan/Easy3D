@@ -71,6 +71,7 @@ and a set of subfolders:
 * `easy3d` - source code of Easy3D
 * `resources` - test data, images, shaders, and textures, etc.
 * `tests` - a collection of test cases
+* `tutorials` - a collection of examples (with detailed explanations in code)
 
 ### Build
 Like most software, Easy3D depends on some third-party libraries. Easy3D has made this easier for the users by including
