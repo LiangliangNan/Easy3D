@@ -62,8 +62,8 @@ By abstracting geometric elements as one of the above drawables, more general vi
 scalar fields) can be done very conveniently.
 
 ### Repository layout
-The repository contains a `CMakeLists.txt` file that serves as anchor for configuring and building programs,
-and a set of subfolders:
+The repository contains a `CMakeLists.txt` file (in the root directory of the repository) that serves as anchor for 
+configuring and building programs, and a set of subfolders:
 * `3rd_party` - source code of third party libraries
 * `applications` - applications built on top of Easy3D
 * `cmake` - CMake-related configuration files
@@ -124,8 +124,11 @@ step</a>.
 ### Test
 A test-suite is provided in the `tests` subfolder, which contains a collection of automated test cases (for data 
 structures, IO, algorithms, visualization, etc.) and some semi-automated test cases (for GUI-related functionalities 
-that require interactive user input). You can build and run the `tests` executable file to quickly test Easy3D on your 
-machine.
+that require interactive user input). All cases are integrated into a single executable file named `tests`.
+
+To build and run the test suite, download the entire source tree, use `CMakeLists.txt` in the root directory of the 
+repository, switch on the CMake option `EASY3D_BUILD_TESTS`, and run CMake. After CMake, you can build all or only the
+`tests` executable. Finally, you can run the `tests` executable for the test.
 
 ### Use Easy3D in your project
 This is quite easy, maybe easier than many other open-source libraries :-) You only need to add the following lines 
