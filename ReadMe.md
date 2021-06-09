@@ -61,6 +61,17 @@ drawable->set_impostor_type(PointsDrawable::SURFEL);
 By abstracting geometric elements as one of the above drawables, more general visualization (e.g., vector fields, 
 scalar fields) can be done very conveniently.
 
+### Repository layout
+The repository contains a `CMakeLists.txt` file that serves as anchor for configuring and building programs,
+and a set of subfolders:
+* `3rd_party` - source code of third party libraries
+* `applications` - applications built on top of Easy3D
+* `cmake` - CMake-related configuration files
+* `docs` - documentation configuration file (Doxygen)
+* `easy3d` - source code of Easy3D
+* `resources` - test data, images, shaders, and textures, etc.
+* `tests` - a collection of test cases
+
 ### Build
 Like most software, Easy3D depends on some third-party libraries. Easy3D has made this easier for the users by including
 the source code of most third-party libraries (for the core functionalities and the basic viewer), and it leaves very 
@@ -109,6 +120,12 @@ Don't have any experience with C/C++ programming?
 Have a look at <a href="https://github.com/LiangliangNan/Easy3D/blob/main/HowToBuild.md">How to build Easy3D step by 
 step</a>.
 
+### Test
+A test-suite is provided in the `tests` subfolder, which contains a collection of automated test cases (for data 
+structures, IO, algorithms, visualization, etc.) and some semi-automated test cases (for GUI-related functionalities 
+that require interactive user input). You can build and run the `tests` executable file to quickly test Easy3D on your 
+machine.
+
 ### Use Easy3D in your project
 This is quite easy, maybe easier than many other open-source libraries :-) You only need to add the following lines 
 to your CMakeLists file (don't forget to replace `YOUR_APP_NAME` with the actual name of your application) and point 
@@ -133,15 +150,15 @@ int main(int argc, char** argv) {
 ### Documentation
 The documentation for Easy3D-v2.4.4 is available [here](https://3d.bk.tudelft.nl/liangliang/software/easy3d_doc/html/index.html).
 
-The Easy3D Documentation is an on-going effort with more and more details being added. You can build the latest Easy3D 
+The Easy3D Documentation is an ongoing effort with more and more details being added. You can build the latest Easy3D 
 documentation from the source code.
 Easy3D uses [Doxygen](https://www.doxygen.nl/index.html) (`>= 1.8.3`) to generate documentation from source code. 
 To build it from the source code, [install Doxygen](https://www.doxygen.nl/manual/install.html) first. 
 Then, switch on the CMake option `EASY3D_BUILD_DOCUMENTATION` in the main `CMakeList.txt`. Finally, build the `doc` 
 target to generate the documentation. 
 
-### Questions, new features, bugs, or you want to contribute
-Please click [here](https://github.com/LiangliangNan/Easy3D/blob/main/CONTRIBUTING.md).
+### Questions, new features, bugs, or contributing to Easy3D
+See the [Contribution Guide](https://github.com/LiangliangNan/Easy3D/blob/main/CONTRIBUTING.md) for more information.
 
 ### License
 Easy3D is free software; you can redistribute it and/or modify it under the terms of the 
