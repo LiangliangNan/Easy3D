@@ -114,5 +114,7 @@ int main(int argc, char* argv[]) {
     result += test_face_picker();
     result += test_point_selection();
 
+    std::cout << "\n-------------------------------------------------------------------------\n";
+    std::cout << "If you didn't see any error message and all visualization were correct, then all tests have passed." << std::endl;
     return result;
 }
