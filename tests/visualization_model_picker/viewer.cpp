@@ -45,13 +45,6 @@ ModelPickerViewer::ModelPickerViewer(const std::string &title)
 }
 
 
-std::string ModelPickerViewer::usage() const {
-    return ("------------ Picker Viewer usage ---------- \n"
-            "Press the left button to pick/unpick a model\n"
-            "------------------------------------------ \n");
-}
-
-
 bool ModelPickerViewer::mouse_press_event(int x, int y, int button, int modifiers) {
     ModelPicker picker(camera());
     auto model = picker.pick(models(), x, y);

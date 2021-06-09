@@ -42,6 +42,10 @@ int test_model_picker() {
         return EXIT_FAILURE;
     }
 
+    viewer.usage_func_ = []() -> std::string {
+        return "testing model picker...";
+    };
+
     return viewer.run();
 }
 

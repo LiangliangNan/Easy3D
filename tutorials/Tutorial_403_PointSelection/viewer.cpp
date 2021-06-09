@@ -32,6 +32,12 @@
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>    // for the mouse buttons
 
+// To have the same shortcut behavior on macOS and other platforms (i.e., Windows, Linux)
+#ifdef __APPLE__
+#define EASY3D_MOD_CONTROL GLFW_MOD_SUPER
+#else
+#define EASY3D_MOD_CONTROL GLFW_MOD_CONTROL
+#endif
 
 #define  USE_LASSO     1
 
@@ -43,14 +49,14 @@ PointSelection::PointSelection(const std::string &title) : Viewer(title) {
 
 std::string PointSelection::usage() const {
     return ("-------------- Point Selection usage -------------- \n"
-            "Press ALT key, then drag the mouse to select (left button) or deselect (right button) points\n"
+            "Press Ctrl key, then drag the mouse to select (left button) or deselect (right button) points\n"
             "---------------------------------------------------------- \n");
 }
 
 
 /// Mouse button press event handler
 bool PointSelection::mouse_press_event(int x, int y, int button, int modifiers) {
-    if (modifiers == GLFW_MOD_ALT) {
+    if (modifiers == EASY3D_MOD_CONTROL) {
         polygon_.clear();
         polygon_.push_back(vec2(x, y));
         return false;
@@ -61,7 +67,7 @@ bool PointSelection::mouse_press_event(int x, int y, int button, int modifiers) 
 
 /// Mouse button release event handler
 bool PointSelection::mouse_release_event(int x, int y, int button, int modifiers) {
-    if (modifiers == GLFW_MOD_ALT) {
+    if (modifiers == EASY3D_MOD_CONTROL) {
         if (polygon_.size() >= 3) {
             auto cloud = dynamic_cast<PointCloud *>(current_model());
             if (cloud) {
@@ -84,7 +90,7 @@ bool PointSelection::mouse_release_event(int x, int y, int button, int modifiers
 
 /// Mouse drag (i.e., a mouse button was pressed) event handler
 bool PointSelection::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
-    if (modifiers == GLFW_MOD_ALT) {
+    if (modifiers == EASY3D_MOD_CONTROL) {
 #if USE_LASSO
         polygon_.push_back(vec2(x, y));
 #else   // rectangle
@@ -102,8 +108,6 @@ bool PointSelection::mouse_drag_event(int x, int y, int dx, int dy, int button, 
 
 
 void PointSelection::post_draw() {
-    Viewer::post_draw();
-
     if (polygon_.size() >= 3) {
         // draw the boundary of the rect/lasso
         shapes::draw_polygon_wire(polygon_, vec4(1.0f, 0.0f, 0.0f, 1.0f), width(), height(), -1.0f);

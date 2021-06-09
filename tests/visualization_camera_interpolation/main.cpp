@@ -37,5 +37,9 @@ int test_camera_interpolation() {
         return EXIT_FAILURE;
     }
 
+    viewer.usage_func_ = []() -> std::string {
+        return "testing camera interpolation...";
+    };
+
     return viewer.run();
 }

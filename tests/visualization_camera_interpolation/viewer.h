@@ -46,8 +46,6 @@ protected:
 
     void draw() const override;
 
-    std::string usage() const override ;
-
     void post_draw() override;
 
 private:

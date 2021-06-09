@@ -50,15 +50,6 @@ CameraIntrepolation::~CameraIntrepolation()
 }
 
 
-std::string CameraIntrepolation::usage() const {
-    return ("------------ Camera Interpolation usage ---------- \n"
-            "Press 'K' to add key frames\n"
-            "Press 'Space' to start/stop the animation\n"
-            "Press 'D' to delete the camera path\n"
-            "-------------------------------------------------- \n");
-}
-
-
 bool CameraIntrepolation::key_press_event(int key, int modifiers)
 {
     if (key == GLFW_KEY_K && modifiers == 0) {

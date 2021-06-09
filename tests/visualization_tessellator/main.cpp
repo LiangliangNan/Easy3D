@@ -154,10 +154,7 @@ int test_tessellator(int duration) {
 
     //-------- Triangulate the mesh using the tessellator ---------
 
-    StopWatch w;
-    std::cout << "tessellating ..."<< std::endl;
     triangulate(mesh);
-    std::cout << "done. time: " << w.time_string() << std::endl;
 
     // ------------------------------------------------------------
 

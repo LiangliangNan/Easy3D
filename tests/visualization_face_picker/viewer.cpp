@@ -44,13 +44,6 @@ PickerViewer::~PickerViewer() {
 }
 
 
-std::string PickerViewer::usage() const {
-    return ("------------ Picker Viewer usage ---------- \n"
-            "Press the mouse to pick a face\n"
-            "------------------------------------------ \n");
-}
-
-
 bool PickerViewer::mouse_press_event(int x, int y, int button, int modifiers) {
     auto model = dynamic_cast<SurfaceMesh *>(current_model());
     if (model) {
