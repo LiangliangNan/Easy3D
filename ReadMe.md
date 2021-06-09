@@ -124,11 +124,11 @@ step</a>.
 ### Test
 A test-suite is provided in the `tests` subfolder, which contains a collection of automated test cases (for data 
 structures, IO, algorithms, visualization, etc.) and some semi-automated test cases (for GUI-related functionalities 
-that require interactive user input). All cases are integrated into a single executable file named `tests`.
+that require interactive user input). All cases are integrated into a single target `tests`.
 
 To build and run the test suite, download the entire source tree, use `CMakeLists.txt` in the root directory of the 
 repository, switch on the CMake option `EASY3D_BUILD_TESTS` (which is disabled by default), and run CMake. After CMake, 
-you can build All or only the `tests` project. Finally, you can run the `tests` executable (i.e., `YOUR_BUILD_DIRECTORY/bin/tests`) for the test.
+you can build ALL or only the `tests` target. Finally, run the `tests` executable (i.e., `YOUR_BUILD_DIRECTORY/bin/tests`) for the test.
 
 ### Use Easy3D in your project
 This is quite easy, maybe easier than many other open-source libraries :-) You only need to add the following lines 
