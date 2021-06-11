@@ -62,7 +62,7 @@ void DoNothingFunc() {
     LOG(WARNING) << "function " << __FUNCTION__ << "() executed";
 }
 
-void test_conditional_ccasional_logging() {
+void run_conditional_ccasional_logging() {
     for (int i = 0; i < 20; ++i) {
         LOG_N_TIMES(4, INFO) << "Log first 4 INFO, iteration " << i << ", " << COUNTER;
         LOG_N_TIMES(5, ERROR) << "Log first 5 ERROR, iteration " << i << ", " << COUNTER;
@@ -84,11 +84,7 @@ void test_conditional_ccasional_logging() {
 }
 
 
-int main(int argc, char *argv[]) {
-    logging::initialize();
-
-    //------------------------------------------------
-
+bool test_logging() {
     // CHECK Operation
     CHECK_NE(1, 2) << ": The world must be ending!";
     // Check if it is euqual
@@ -147,12 +143,12 @@ int main(int argc, char *argv[]) {
 
     //------------------------------------------------
 
-    test_conditional_ccasional_logging();
+    run_conditional_ccasional_logging();
 
     //------------------------------------------------
 
     LOG(INFO) << "---------- TEST has succeeded!!!!!!!!!!!!!!!!! ----------";
     LOG(FATAL) << "You should have seen the program crashed - just a test :-)";
 
-    return EXIT_SUCCESS;
+    return true;
 }

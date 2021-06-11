@@ -60,7 +60,7 @@ private:
 };
 
 
-void test_for_members(Car *car) {
+void run_for_members(Car *car) {
     Signal<> start_signal;
     Signal<const std::string&> start_signal_1arg;
     Signal<int> report_signal;
@@ -119,7 +119,7 @@ void func_stop(const Car *car, int hours, const std::string &msg) {
 }
 
 
-void test_for_functions(Car *car) {
+void run_for_functions(Car *car) {
     Signal<> func_start_signal;
     Signal<const std::string &> func_start_signal_1arg;
     Signal<int, const Car *> func_report_signal;
@@ -164,7 +164,7 @@ void test_for_functions(Car *car) {
 }
 
 
-void test_for_lambda_functions(Car *car) {
+void run_for_lambda_functions(Car *car) {
     auto lambda_start = []() -> void {
         std::cout << "started\n";
     };
@@ -210,7 +210,7 @@ void test_for_lambda_functions(Car *car) {
 }
 
 
-void test_connect_signal_to_signal() {
+void run_connect_signal_to_signal() {
     Signal<const std::string &> A;
     Signal<const std::string &> B;
     Signal<const std::string &> C;
@@ -225,21 +225,20 @@ void test_connect_signal_to_signal() {
 }
 
 
-int main() {
+bool test_signal() {
     Car car(100);
 
     std::cout << "connect to a class member ------------------------------------------------------------------\n\n";
-    test_for_members(&car);
+    run_for_members(&car);
 
     std::cout << "\n\nconnect to a function ------------------------------------------------------------------\n\n";
-    test_for_functions(&car);
+    run_for_functions(&car);
 
     std::cout << "\n\nconnect to a lambda function -----------------------------------------------------------\n\n";
-    test_for_lambda_functions(&car);
+    run_for_lambda_functions(&car);
 
     std::cout << "\n\nconnect a signal to another signal -----------------------------------------------------\n\n";
-    test_connect_signal_to_signal();
+    run_connect_signal_to_signal();
 
-
-    return EXIT_SUCCESS;
+    return true;
 }

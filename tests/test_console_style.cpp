@@ -25,14 +25,11 @@
 
 #include <easy3d/core/version.h>
 #include <easy3d/util/console_style.h>
-#include <easy3d/util/logging.h>
-
 
 using namespace easy3d;
 
-int main(int argc, char *argv[]) {
-    logging::initialize();
 
+bool test_console_style() {
     std::cout << console::Style::Red << "Easy3D version: " << version() << std::endl;
     std::cout << console::Style::BRed << "Easy3D version: " << version() << std::endl;
     std::cout << console::Style::URed << "Easy3D version: " << version() << std::endl;
@@ -77,5 +74,5 @@ int main(int argc, char *argv[]) {
         std::cerr << "WARNING: console styles not supported on your system.\n\t"
                      "Maybe you didn't run the application from the console?" << std::endl;
 
-    return EXIT_SUCCESS;
+    return true;
 }

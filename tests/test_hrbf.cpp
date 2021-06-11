@@ -22,19 +22,15 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include <easy3d/util/logging.h>
-#include "hrbf.h"
-
 #include <vector>
+#include "hrbf.h"
 
 using namespace easy3d;
 
 
 #if 0
 
-int main(int argc, char *argv[]) {
-    logging::initialize();
-
+bool test_hrbf() {
     typedef HRBF<float, 3, Rbf_pow3<float> > HRBF;
     HRBF fit;
 
@@ -57,7 +53,7 @@ int main(int argc, char *argv[]) {
     std::cout << "alphas: " << fit.alphas() << std::endl;
     std::cout << "betas: " << fit.betas() << std::endl;
 
-    return EXIT_SUCCESS;
+    return true;
 }
 #else
 
@@ -65,16 +61,14 @@ int main(int argc, char *argv[]) {
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/kdtree/kdtree_search_nanoflann.h>
 
-int main(int argc, char *argv[]) {
-    logging::initialize();
-
+bool test_hrbf() {
     std::string file = "/Users/lnan/Projects/Data/PolyFit_data/sphere-100K.vg";
     PointCloud* cloud = PointCloudIO::load(file);
     if (!cloud)
-        return 1;
+        return false;
     auto vnormal = cloud->get_vertex_property<vec3>("v:normal");
     if (!vnormal)
-        return 1;
+        return false;
 
     KdTreeSearch_NanoFLANN kdtree;
     kdtree.begin();
@@ -115,9 +109,7 @@ int main(int argc, char *argv[]) {
         std::cout << std::endl << std::endl;
     }
 
-    return EXIT_SUCCESS;
+    return true;
 }
-
-
 
 #endif
