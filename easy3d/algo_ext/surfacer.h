@@ -162,7 +162,7 @@ namespace easy3d {
           * \param length_threshold The edge length threshold.
           * \return The number of faces removed.
           */
-        static int remove_degenerate_faces(SurfaceMesh *mesh, double length_threshold = 1e-5);
+        static unsigned int remove_degenerate_faces(SurfaceMesh *mesh, float length_threshold = 1e-5);
 
         /**
           * \brief Detects duplicate faces and folding faces.

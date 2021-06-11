@@ -479,8 +479,8 @@ namespace easy3d {
     }
 
 
-    int Surfacer::remove_degenerate_faces(SurfaceMesh *mesh, double length_threshold) {
-        int num = mesh->n_faces();
+    unsigned int Surfacer::remove_degenerate_faces(SurfaceMesh *mesh, float length_threshold) {
+        unsigned int num = mesh->n_faces();
 
         for (auto e : mesh->edges()) {
             if (mesh->edge_length(e) < length_threshold) {
@@ -503,7 +503,7 @@ namespace easy3d {
 
         auto prop = mesh->get_vertex_property<vec3>("v:point");
 
-        auto has_tiny_edge = [](SurfaceMesh* m, SurfaceMesh::Face f, double thresh) -> bool {
+        auto has_tiny_edge = [](SurfaceMesh* m, SurfaceMesh::Face f, float thresh) -> bool {
             for (auto h : m->halfedges(f)) {
                 if (m->edge_length(m->edge(h)) < thresh)
                     return true;
@@ -538,7 +538,7 @@ namespace easy3d {
 
         mesh->collect_garbage();
 
-        int diff = num - mesh->n_faces();
+        unsigned int diff = num - mesh->n_faces();
         if (diff > 0)
             LOG(INFO) << diff << " degenerate faces deleted";
 
