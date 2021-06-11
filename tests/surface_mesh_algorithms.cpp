@@ -64,14 +64,14 @@ bool test_algo_surface_mesh_components() {
 
     const std::vector<SurfaceMeshComponent> &components = SurfaceMeshComponent::extract(mesh);
     std::cout << "mesh has " << components.size() << " components." << std::endl;
-    for (std::size_t i = 0; i < std::min(std::size_t(10), components.size()); ++i) {
+
+    const std::size_t num = 5;
+    if (components.size() > num)
+        std::cout << "    information about the first " << num << " components:" << std::endl;
+
+    for (std::size_t i = 0; i < std::min(std::size_t(num), components.size()); ++i) {
         const auto &comp = components[i];
-        std::cout << "\tcomponent " << i << ": \n"
-                  << "\t\t#faces: " << comp.n_faces() << "\n"
-                  << "\t\t#vertices: " << comp.n_vertices() << "\n"
-                  << "\t\t#edges: " << comp.n_edges() << "\n"
-                  << "\t\tarea: " << comp.area() << "\n"
-                  << "\t\tborder_length: " << comp.border_length() << "\n";
+        std::cout << "        " << i << ": " << comp.n_faces() << " faces, " << comp.n_vertices() << " vertices, " << comp.n_edges() << " edges, surface area " << comp.area() << ", border_length " << comp.border_length() << "\n";
     }
 
     delete mesh;
@@ -92,7 +92,6 @@ bool test_algo_surface_mesh_topology() {
 
     const auto &components = SurfaceMeshComponent::extract(mesh);
     std::cout << "model has " << components.size() << " connected components" << std::endl;
-
 
     const std::size_t num = 5;
     if (components.size() > num)
