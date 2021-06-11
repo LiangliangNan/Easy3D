@@ -61,7 +61,7 @@ drawable->set_impostor_type(PointsDrawable::SURFEL);
 By abstracting geometric elements as one of the above drawables, more general visualization (e.g., vector fields, 
 scalar fields) can be done very conveniently.
 
-### Repository layout
+### Easy3D repository layout
 The repository contains a `CMakeLists.txt` file (in the root directory of the repository) that serves as anchor for 
 configuring and building programs, and a set of subfolders:
 * `3rd_party` - source code of third party libraries
@@ -73,7 +73,7 @@ configuring and building programs, and a set of subfolders:
 * `tests` - a collection of test cases
 * `tutorials` - a collection of examples (with detailed explanations in code)
 
-### Build
+### Build Easy3D
 Like most software, Easy3D depends on some third-party libraries. Easy3D has made this easier for the users by including
 the source code of most third-party libraries (for the core functionalities and the basic viewer), and it leaves very 
 few optional (for a few additional features that are typically not needed by most users). 
@@ -121,12 +121,12 @@ Don't have any experience with C/C++ programming?
 Have a look at <a href="https://github.com/LiangliangNan/Easy3D/blob/main/HowToBuild.md">How to build Easy3D step by 
 step</a>.
 
-### Test
-A test-suite is provided in the `tests` subfolder, which contains a collection of automated test cases (for data 
+### Test Easy3D
+A test suite is provided in the `tests` subfolder, which contains a collection of automated test cases (for data 
 structures, IO, algorithms, visualization, etc.) and some semi-automated test cases (for GUI-related functionalities 
 that require interactive user input). All cases are integrated into a single target `tests`.
 
-To build and run the test suite, download the entire source tree, use `CMakeLists.txt` in the root directory of the 
+To build and run the test suite, download the entire source, use the `CMakeLists.txt` in the root directory of the 
 repository, switch on the CMake option `EASY3D_BUILD_TESTS` (which is disabled by default), and run CMake. After CMake, 
 you can build ALL or only the `tests` target. Finally, run the `tests` executable (i.e., `YOUR_BUILD_DIRECTORY/bin/tests`) for the test.
 
