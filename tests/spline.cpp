@@ -54,14 +54,15 @@ int test_spline() {
             {1.02282, -1.88401, 0.0158519}
     };
 
-    const int resolution = 1000;    // Number of line subdivisions to display the spline
+    const unsigned int resolution = 1000;    // Number of line subdivisions to display the spline
 
     // spine fitting
     const int order = 3;            // Smoothness of the spline (min 2)
     SplineCurveFitting<vec3> fitter(order, SplineCurveFitting<vec3>::eOPEN_UNIFORM);
     fitter.set_ctrl_points(points);
-    for (int i = 0; i < resolution; ++i) {
+    for (unsigned int i = 0; i < resolution; ++i) {
         const vec3 p = fitter.eval_f(float(i) / float(resolution - 1));
+        std::cout << "curve point: " << p << std::endl;
     }
 
     // spine interpolation
@@ -75,8 +76,9 @@ int test_spline() {
         t[i] = i;
     interpolator.set_points(t, points);
 #endif
-    for (int i = 0; i < resolution; ++i) {
+    for (unsigned int i = 0; i < resolution; ++i) {
         const vec3 p = interpolator.eval_f(float(i) / float(resolution - 1));
+        std::cout << "curve point: " << p << std::endl;
     }
 
     return EXIT_SUCCESS;

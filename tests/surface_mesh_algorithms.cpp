@@ -322,7 +322,7 @@ bool test_algo_surface_mesh_remeshing() {
         for (auto eit : mesh->edges())
             len += distance(mesh->position(mesh->vertex(eit, 0)),
                             mesh->position(mesh->vertex(eit, 1)));
-        len /= (float) mesh->n_edges();
+        len /= static_cast<float>(mesh->n_edges());
         SurfaceMeshRemeshing(mesh).uniform_remeshing(len);
         std::cout << " success" << std::endl;
     }
@@ -331,9 +331,9 @@ bool test_algo_surface_mesh_remeshing() {
     {
         auto bb = mesh->bounding_box().diagonal();
         SurfaceMeshRemeshing(mesh).adaptive_remeshing(
-                0.001 * bb,  // min length
-                0.100 * bb,  // max length
-                0.001 * bb); // approx. error
+                0.001f * bb,  // min length
+                0.100f * bb,  // max length
+                0.001f * bb); // approx. error
         std::cout << " success" << std::endl;
     }
 
@@ -378,7 +378,7 @@ bool test_algo_surface_mesh_simplification() {
     const int normal_deviation = 180;
     const int aspect_ratio = 10;
 
-    const int expected_vertex_number = mesh->n_vertices() * 0.5f;
+    const unsigned int expected_vertex_number = static_cast<unsigned int>(mesh->n_vertices() * 0.5f);
     SurfaceMeshSimplification ss(mesh);
     ss.initialize(aspect_ratio, 0.0, 0.0, normal_deviation, 0.0);
     ss.simplify(expected_vertex_number);
@@ -615,7 +615,7 @@ int test_surface_mesh_remove_overlapping_faces() {
     }
 
     std::cout << "removing overlapping faces..." << std::endl;
-    unsigned int num_degenerate = Surfacer::remove_degenerate_faces(mesh, 1e-5);
+    unsigned int num_degenerate = Surfacer::remove_degenerate_faces(mesh, 1e-5f);
     unsigned int num_overlapping = Surfacer::remove_overlapping_faces(mesh, true);
     if (num_degenerate + num_overlapping > 0) {
         std::cout << "done. " << num_degenerate + num_overlapping << " faces removed (" << num_degenerate
@@ -686,11 +686,11 @@ int test_surface_mesh_slice() {
     float minz = mesh->bounding_box().min_point().z;
     float maxz = mesh->bounding_box().max_point().z;
 
-    int num = 10;
+    unsigned int num = 10;
     float step = (maxz - minz) / num;
 
     std::vector<Plane3> planes(num);
-    for (int i=0; i<num; ++i)
+    for (unsigned int i=0; i<num; ++i)
         planes[i] = Plane3(vec3(0, 0, minz + i * step), vec3(0, 0, 1));
 
     const std::vector< std::vector<Surfacer::Polyline> >& all_polylines = Surfacer::slice(mesh, planes);
