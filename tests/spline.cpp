@@ -56,29 +56,41 @@ int test_spline() {
 
     const unsigned int resolution = 1000;    // Number of line subdivisions to display the spline
 
-    // spine fitting
-    const int order = 3;            // Smoothness of the spline (min 2)
-    SplineCurveFitting<vec3> fitter(order, SplineCurveFitting<vec3>::eOPEN_UNIFORM);
-    fitter.set_ctrl_points(points);
-    for (unsigned int i = 0; i < resolution; ++i) {
-        const vec3 p = fitter.eval_f(float(i) / float(resolution - 1));
-        std::cout << "curve point: " << p << std::endl;
+    std::cout << "spine fitting (partially printed)" << std::endl;
+    {
+        const int order = 3;            // Smoothness of the spline (min 2)
+        SplineCurveFitting<vec3> fitter(order, SplineCurveFitting<vec3>::eOPEN_UNIFORM);
+        fitter.set_ctrl_points(points);
+        for (unsigned int i = 0; i < resolution; i += 100) {
+            const vec3 p = fitter.eval_f(float(i) / float(resolution - 1));
+            std::cout << "\tcurve point " << i << ": " << p << std::endl;
+        }
     }
 
     // spine interpolation
     SplineCurveInterpolation<vec3> interpolator;
     interpolator.set_boundary(easy3d::SplineCurveInterpolation<vec3>::second_deriv, 0, easy3d::SplineCurveInterpolation<Vec<3, float>>::second_deriv, 0,false);
-#if 1 // use accumulated curve length as parameter
-    interpolator.set_points(points);
-#else // use accumulated time as parameter
-    std::vector<float> t(points.size(), 0.0f);
-    for (std::size_t i=0; i<points.size(); ++i)
-        t[i] = i;
-    interpolator.set_points(t, points);
-#endif
-    for (unsigned int i = 0; i < resolution; ++i) {
-        const vec3 p = interpolator.eval_f(float(i) / float(resolution - 1));
-        std::cout << "curve point: " << p << std::endl;
+
+    std::cout << "spine interpolation use accumulated curve length as parameter (partially printed)" << std::endl;
+    {
+        interpolator.set_points(points);
+        for (unsigned int i = 0; i < resolution; i+=100) {
+            const vec3 p = interpolator.eval_f(float(i) / float(resolution - 1));
+            std::cout << "\tcurve point " << i << ": " << p << std::endl;
+        }
+    }
+
+    std::cout << "spine interpolation use accumulated time as parameter (partially printed)" << std::endl;
+    {
+        std::vector<float> t(points.size(), 0.0f);
+        for (std::size_t i = 0; i < points.size(); ++i)
+            t[i] = i;
+        interpolator.set_points(t, points);
+
+        for (unsigned int i = 0; i < resolution; i+=100) {
+            const vec3 p = interpolator.eval_f(float(i) / float(resolution - 1));
+            std::cout << "\tcurve point " << i << ": " << p << std::endl;
+        }
     }
 
     return EXIT_SUCCESS;

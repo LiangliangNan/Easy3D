@@ -79,6 +79,55 @@ bool test_algo_surface_mesh_components() {
 }
 
 
+bool test_algo_surface_mesh_topology() {
+    const std::string file = resource::directory() + "/data/house/house.obj";
+    SurfaceMesh *mesh = SurfaceMeshIO::load(file);
+    if (!mesh) {
+        std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct."
+                  << std::endl;
+        return false;
+    }
+
+    std::cout << "computing surface mesh topology..." << std::endl;
+
+    const auto &components = SurfaceMeshComponent::extract(mesh);
+    std::cout << "model has " << components.size() << " connected components" << std::endl;
+
+
+    const std::size_t num = 5;
+    if (components.size() > num)
+        std::cout << "    topology of the first " << num << " components:" << std::endl;
+
+    for (std::size_t i = 0; i < std::min(components.size(), num); ++i) {
+        const SurfaceMeshComponent &comp = components[i];
+        SurfaceMeshTopology topo(&comp);
+        std::string type = "unknown";
+        if (topo.is_sphere())
+            type = "sphere";
+        else if (topo.is_disc())
+            type = "disc";
+        else if (topo.is_cylinder())
+            type = "cylinder";
+        else if (topo.is_torus())
+            type = "torus";
+        else if (topo.is_closed())
+            type = "unknown closed";
+
+        std::cout << "        " << i << ": " << type
+                  << ", F = " << comp.n_faces() << ", V = " << comp.n_vertices() << ", E = " << comp.n_edges()
+                  << ", B = " << topo.number_of_borders();
+        if (topo.number_of_borders() == 1)
+            std::cout << ", border size = " << topo.largest_border_size();
+        else if (topo.number_of_borders() > 1)
+            std::cout << ", largest border size = " << topo.largest_border_size();
+        std::cout << std::endl;
+    }
+
+    delete mesh;
+    return true;
+}
+
+
 bool test_algo_surface_mesh_curvature() {
     const std::string file = resource::directory() + "/data/mannequin.ply";
     SurfaceMesh *mesh = SurfaceMeshIO::load(file);
@@ -90,21 +139,17 @@ bool test_algo_surface_mesh_curvature() {
 
     SurfaceMeshCurvature analyzer(mesh);
 
-    std::cout << "computing surface mesh principle curvatures...";
+    std::cout << "computing surface mesh principle curvatures..." << std::endl;
     analyzer.analyze_tensor(2, true);
-    std::cout << " success" << std::endl;
 
-    std::cout << "computing surface mesh mean curvatures...";
+    std::cout << "computing surface mesh mean curvatures..." << std::endl;
     analyzer.compute_mean_curvature();
-    std::cout << " success" << std::endl;
 
-    std::cout << "computing surface mesh Gauss curvatures...";
+    std::cout << "computing surface mesh Gauss curvatures..." << std::endl;
     analyzer.compute_gauss_curvature();
-    std::cout << " success" << std::endl;
 
-    std::cout << "computing surface mesh max absolute curvatures...";
+    std::cout << "computing surface mesh max absolute curvatures..." << std::endl;
     analyzer.compute_max_abs_curvature();
-    std::cout << " success" << std::endl;
 
     delete mesh;
     return true;
@@ -120,15 +165,13 @@ bool test_algo_surface_mesh_enumerator() {
         return false;
     }
 
-    std::cout << "enumerating connected components...";
+    std::cout << "enumerating connected components..." << std::endl;
     auto connected_components = mesh->face_property<int>("f:connected_component", -1);
     SurfaceMeshEnumerator::enumerate_connected_components(mesh, connected_components);
-    std::cout << " success" << std::endl;
 
-    std::cout << "enumerating planar components...";
+    std::cout << "enumerating planar components..." << std::endl;
     auto planar_segments = mesh->face_property<int>("f:planar_partition", -1);
     SurfaceMeshEnumerator::enumerate_planar_components(mesh, planar_segments, 1.0f);
-    std::cout << " success" << std::endl;
 
     delete mesh;
     return true;
@@ -144,25 +187,22 @@ bool test_algo_surface_mesh_fairing() {
         return false;
     }
 
-    std::cout << "fairing by minimizing area ...";
+    std::cout << "fairing by minimizing area ..." << std::endl;
     {
         SurfaceMeshFairing fair(mesh);
         fair.minimize_area(); // Minimize Area
-        std::cout << " success" << std::endl;
     }
 
-    std::cout << "fairing by minimizing curvature ...";
+    std::cout << "fairing by minimizing curvature ..." << std::endl;
     {
         SurfaceMeshFairing fair(mesh);
         fair.minimize_curvature();
-        std::cout << " success" << std::endl;
     }
 
-    std::cout << "fairing by minimizing curvature variation...";
+    std::cout << "fairing by minimizing curvature variation..." << std::endl;
     {
         SurfaceMeshFairing fair(mesh);
         fair.fair(3);
-        std::cout << " success" << std::endl;
     }
 
     delete mesh;
@@ -179,13 +219,12 @@ bool test_algo_surface_mesh_geodesic() {
         return false;
     }
 
-    std::cout << "computing geodesic distance from the first vertex...";
+    std::cout << "computing geodesic distance from the first vertex..." << std::endl;
     std::vector<SurfaceMesh::Vertex> seeds(1, SurfaceMesh::Vertex(0));
 
     // compute geodesic distance
     SurfaceMeshGeodesic geodist(mesh);
     geodist.compute(seeds);
-    std::cout << " success" << std::endl;
 
     delete mesh;
     return true;
@@ -254,13 +293,11 @@ bool test_algo_surface_mesh_parameterization() {
 
     SurfaceMeshParameterization para(mesh);
 
-    std::cout << "parameterization (Least Squares Conformal Map) ...";
+    std::cout << "parameterization (least squares conformal map) ..." << std::endl;
     para.lscm();
-    std::cout << " success" << std::endl;
 
-    std::cout << "parameterization (Discrete Harmonic) ...";
+    std::cout << "parameterization (discrete harmonic) ..." << std::endl;
     para.harmonic();
-    std::cout << " success" << std::endl;
 
     delete mesh;
     return true;
@@ -276,7 +313,7 @@ bool test_algo_surface_mesh_polygonization() {
         return false;
     }
 
-    std::cout << "polygonization...";
+    std::cout << "polygonization..." << std::endl;
 
 #if HAS_CGAL
     // stitch first: to encourage large polyons
@@ -287,7 +324,6 @@ bool test_algo_surface_mesh_polygonization() {
     // polygonization
     SurfaceMeshPolygonization polygonizer;
     polygonizer.apply(mesh);
-    std::cout << " success" << std::endl;
 
 #if HAS_CGAL
     // stitch again (the "merge-edge" edge operation in polygonization may result in some borders)
@@ -316,7 +352,7 @@ bool test_algo_surface_mesh_remeshing() {
         sf.detect_boundary();
     }
 
-    std::cout << "uniform remeshing...";
+    std::cout << "uniform remeshing..." << std::endl;
     {
         float len(0.0f);
         for (auto eit : mesh->edges())
@@ -324,17 +360,15 @@ bool test_algo_surface_mesh_remeshing() {
                             mesh->position(mesh->vertex(eit, 1)));
         len /= static_cast<float>(mesh->n_edges());
         SurfaceMeshRemeshing(mesh).uniform_remeshing(len);
-        std::cout << " success" << std::endl;
     }
 
-    std::cout << "adaptive remeshing...";
+    std::cout << "adaptive remeshing..." << std::endl;
     {
         auto bb = mesh->bounding_box().diagonal();
         SurfaceMeshRemeshing(mesh).adaptive_remeshing(
                 0.001f * bb,  // min length
                 0.100f * bb,  // max length
                 0.001f * bb); // approx. error
-        std::cout << " success" << std::endl;
     }
 
     delete mesh;
@@ -351,13 +385,12 @@ bool test_algo_surface_mesh_sampler() {
         return false;
     }
 
-    std::cout << "sampling surface mesh...";
+    std::cout << "sampling surface mesh..." << std::endl;
     SurfaceMeshSampler sampler;
     PointCloud *cloud = sampler.apply(mesh, 100000);
     delete mesh;
 
     if (cloud) {
-        std::cout << " success" << std::endl;
         delete cloud;
         return true;
     }
@@ -374,7 +407,7 @@ bool test_algo_surface_mesh_simplification() {
         return false;
     }
 
-    std::cout << "simplification of surface mesh...";
+    std::cout << "simplification of surface mesh..." << std::endl;
     const int normal_deviation = 180;
     const int aspect_ratio = 10;
 
@@ -382,7 +415,6 @@ bool test_algo_surface_mesh_simplification() {
     SurfaceMeshSimplification ss(mesh);
     ss.initialize(aspect_ratio, 0.0, 0.0, normal_deviation, 0.0);
     ss.simplify(expected_vertex_number);
-    std::cout << " success" << std::endl;
 
     delete mesh;
     return true;
@@ -398,14 +430,13 @@ bool test_algo_surface_mesh_smoothing() {
         return false;
     }
 
-    std::cout << "explicit smoothing...";
+    std::cout << "explicit smoothing..." << std::endl;
     {
         SurfaceMeshSmoothing smoother(mesh);
         smoother.explicit_smoothing(2, true);
-        std::cout << " success" << std::endl;
     }
 
-    std::cout << "implicit smoothing...";
+    std::cout << "implicit smoothing..." << std::endl;
     {
         const float timestep = 0.001f;
 
@@ -420,7 +451,6 @@ bool test_algo_surface_mesh_smoothing() {
 
         SurfaceMeshSmoothing smoother(mesh);
         smoother.implicit_smoothing(timestep, true, rescale);
-        std::cout << " success" << std::endl;
     }
 
     delete mesh;
@@ -437,16 +467,14 @@ bool test_algo_surface_mesh_stitching() {
         return false;
     }
 
-    std::cout << "stitching surface mesh...";
+    std::cout << "stitching surface mesh..." << std::endl;
 
 #if HAS_CGAL
     Surfacer::stitch_borders(mesh);
     Surfacer::merge_reversible_connected_components(mesh);
-    std::cout << " success" << std::endl;
 #else
     SurfaceMeshStitching stitch(mesh);
     stitch.apply();
-    std::cout << " success" << std::endl;
 #endif
 
     delete mesh;
@@ -463,26 +491,23 @@ bool test_algo_surface_mesh_subdivision() {
         return false;
     }
 
-    std::cout << "Loop subdivision...";
+    std::cout << "Loop subdivision..." << std::endl;
     if (!SurfaceMeshSubdivision::loop(mesh)) {
         delete mesh;
         return false;
     }
-    std::cout << " success" << std::endl;
 
-    std::cout << "Sqrt3 subdivision...";
+    std::cout << "Sqrt3 subdivision..." << std::endl;
     if (!SurfaceMeshSubdivision::catmull_clark(mesh)) {
         delete mesh;
         return false;
     }
-    std::cout << " success" << std::endl;
 
-    std::cout << "CatmullClark subdivision...";
+    std::cout << "CatmullClark subdivision..." << std::endl;
     if (!SurfaceMeshSubdivision::catmull_clark(mesh)) {
         delete mesh;
         return false;
     }
-    std::cout << " success" << std::endl;
 
     delete mesh;
     return true;
@@ -498,67 +523,17 @@ bool test_algo_surface_mesh_tetrahedralization() {
         return false;
     }
 
-    std::cout << "tetrehedralization...";
+    std::cout << "tetrehedralization..." << std::endl;
     SurfaceMeshTetrehedralization tetra;
     PolyMesh* result = tetra.apply(mesh);
     delete mesh;
 
     if (result) {
-        std::cout << " success" << std::endl;
         delete result;
         return true;
     }
 
     return false;
-}
-
-
-bool test_algo_surface_mesh_topology() {
-    const std::string file = resource::directory() + "/data/house/house.obj";
-    SurfaceMesh *mesh = SurfaceMeshIO::load(file);
-    if (!mesh) {
-        std::cerr << "Error: failed to load model. Please make sure the file exists and format is correct."
-                  << std::endl;
-        return false;
-    }
-
-    std::cout << "computing surface mesh topology..." << std::endl;
-
-    const auto &components = SurfaceMeshComponent::extract(mesh);
-    std::cout << "model has " << components.size() << " connected components" << std::endl;
-
-
-    const std::size_t num = 10;
-    if (components.size() > num)
-        std::cout << "    topology of the first " << num << " components:" << std::endl;
-
-    for (std::size_t i = 0; i < std::min(components.size(), num); ++i) {
-        const SurfaceMeshComponent &comp = components[i];
-        SurfaceMeshTopology topo(&comp);
-        std::string type = "unknown";
-        if (topo.is_sphere())
-            type = "sphere";
-        else if (topo.is_disc())
-            type = "disc";
-        else if (topo.is_cylinder())
-            type = "cylinder";
-        else if (topo.is_torus())
-            type = "torus";
-        else if (topo.is_closed())
-            type = "unknown closed";
-
-        std::cout << "        " << i << ": " << type
-               << ", F = " << comp.n_faces() << ", V = " << comp.n_vertices() << ", E = " << comp.n_edges()
-               << ", B = " << topo.number_of_borders();
-        if (topo.number_of_borders() == 1)
-            std::cout << ", border size = " << topo.largest_border_size();
-        else if (topo.number_of_borders() > 1)
-            std::cout << ", largest border size = " << topo.largest_border_size();
-        std::cout << std::endl;
-    }
-
-    delete mesh;
-    return true;
 }
 
 
@@ -571,11 +546,10 @@ bool test_algo_surface_mesh_triangulation() {
         return false;
     }
 
-    std::cout << "triangulating surface mesh...";
+    std::cout << "triangulating surface mesh..." << std::endl;
 
     SurfaceMeshTriangulation triangulator(mesh);
     triangulator.triangulate(SurfaceMeshTriangulation::MIN_AREA);
-    std::cout << " success" << std::endl;
 
     delete mesh;
     return true;
@@ -640,9 +614,8 @@ int test_surface_mesh_clip() {
 
     Plane3 plane(mesh->bounding_box().center(), vec3(0, 0, 1));
 
-    std::cout << "clipping surface mesh...";
+    std::cout << "clipping surface mesh..." << std::endl;
     if (Surfacer::clip(mesh, plane, false)) {
-        std::cout << " success" << std::endl;
         delete mesh;
         return true;
     }
@@ -663,9 +636,8 @@ int test_surface_mesh_split() {
 
     Plane3 plane(mesh->bounding_box().center(), vec3(0, 0, 1));
 
-    std::cout << "splitting surface mesh...";
+    std::cout << "splitting surface mesh..." << std::endl;
     Surfacer::split(mesh, plane);
-    std::cout << " success" << std::endl;
 
     delete mesh;
     return true;
@@ -681,7 +653,7 @@ int test_surface_mesh_slice() {
         return false;
     }
 
-    std::cout << "slicing surface mesh (by 10 horizontal planes)...";
+    std::cout << "slicing surface mesh (by 10 horizontal planes)..." << std::endl;
 
     float minz = mesh->bounding_box().min_point().z;
     float maxz = mesh->bounding_box().max_point().z;
@@ -695,12 +667,10 @@ int test_surface_mesh_slice() {
 
     const std::vector< std::vector<Surfacer::Polyline> >& all_polylines = Surfacer::slice(mesh, planes);
     if (!all_polylines.empty()) {
-        std::cout << " success" << std::endl;
         delete mesh;
         return true;
     }
 
-    std::cout << std::endl;
     delete mesh;
     return false;
 }
@@ -710,6 +680,9 @@ int test_surface_mesh_slice() {
 
 int test_surface_mesh_algorithms() {
     if (!test_algo_surface_mesh_components())
+        return EXIT_FAILURE;
+
+    if (!test_algo_surface_mesh_topology())
         return EXIT_FAILURE;
 
     if (!test_algo_surface_mesh_curvature())
@@ -752,9 +725,6 @@ int test_surface_mesh_algorithms() {
         return EXIT_FAILURE;
 
     if (!test_algo_surface_mesh_tetrahedralization())
-        return EXIT_FAILURE;
-
-    if (!test_algo_surface_mesh_topology())
         return EXIT_FAILURE;
 
     if (!test_algo_surface_mesh_triangulation())

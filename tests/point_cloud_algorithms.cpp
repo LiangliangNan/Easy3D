@@ -110,7 +110,7 @@ bool test_algo_point_cloud_poisson_reconstruction() {
     const int depth = 6;
     PoissonReconstruction algo;
     algo.set_depth(depth);
-    std::cout << "Poisson surface reconstruction... Depth: " << depth << std::endl;
+    std::cout << "Poisson surface reconstruction (depth = " << depth << ")..." << std::endl;
     Model *surface = algo.apply(cloud);
     delete cloud;
 
@@ -136,10 +136,9 @@ bool test_algo_point_cloud_delaunay_triangulation_2D() {
         points.push_back(vec2(pts[i]));
     }
 
-    std::cout << "Delaunay triangulation 2D...";
+    std::cout << "Delaunay triangulation 2D..." << std::endl;
     Delaunay2 delaunay;
     delaunay.set_vertices(points);
-    std::cout << " success" << std::endl;
 
     delete cloud;
     return true;
@@ -156,10 +155,9 @@ bool test_algo_point_cloud_delaunay_triangulation_3D() {
 
     const std::vector<vec3>& points = cloud->points();
 
-    std::cout << "Delaunay triangulation 3D...";
+    std::cout << "Delaunay triangulation 3D..." << std::endl;
     Delaunay3 delaunay;
     delaunay.set_vertices(points);
-    std::cout << " success" << std::endl;
 
     delete cloud;
     return true;
@@ -184,7 +182,7 @@ bool test_algo_point_cloud_downsampling() {
         for (auto id : points_to_remove)
             pcd.delete_vertex(PointCloud::Vertex(id));
         pcd.collect_garbage();
-        std::cout << " success. " << total_num << " -> " << pcd.n_vertices() << std::endl;
+        std::cout << " " << total_num << " -> " << pcd.n_vertices() << std::endl;
     }
 
     std::cout << "uniform downsampling using distance threshold " << threshold << "...";
@@ -194,7 +192,7 @@ bool test_algo_point_cloud_downsampling() {
         for (auto id : points_to_remove)
             pcd.delete_vertex(PointCloud::Vertex(id));
         pcd.collect_garbage();
-        std::cout << " success. " << total_num << " -> " << pcd.n_vertices() << std::endl;
+        std::cout << " " << total_num << " -> " << pcd.n_vertices() << std::endl;
     }
 
     auto expected_number = static_cast<unsigned int>(total_num * 0.5f);
@@ -205,7 +203,7 @@ bool test_algo_point_cloud_downsampling() {
         for (auto id : points_to_remove)
             pcd.delete_vertex(PointCloud::Vertex(id));
         pcd.collect_garbage();
-        std::cout << " success. " << total_num << " -> " << pcd.n_vertices() << std::endl;
+        std::cout << " " << total_num << " -> " << pcd.n_vertices() << std::endl;
     }
 
     delete cloud;
