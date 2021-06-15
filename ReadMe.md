@@ -17,7 +17,8 @@
   loading models from files ...
   
 * A set of widely used algorithms, e.g., point cloud normal estimation/re-orientation, Poisson surface reconstruction, 
-  RANSAC, mesh simplification, subdivision, smoothing, parameterization, remeshing, and more.
+  RANSAC, mesh simplification, subdivision, smoothing, parameterization, remeshing, and more (the implementation of
+  several surface mesh processing algorithms were taken from [PMP](http://www.pmp-library.org/)).
    
 * A bunch of rendering techniques, e.g., point/line imposters, ambient occlusion (SSAO), hard shadow (shadow maps), 
   soft shadow (PCSS), eye-dome lighting (for rendering point clouds without normal information), transparency (average 
