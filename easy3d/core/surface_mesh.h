@@ -1,41 +1,26 @@
 /********************************************************************
- * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
- * https://3d.bk.tudelft.nl/liangliang/
+ * Copyright (C) 2015-2021 by Liangliang Nan <liangliang.nan@gmail.com>
+ * Copyright (C) 2001-2005 by Computer Graphics Group, RWTH Aachen
+ * Copyright (C) 2011-2013 by Graphics & Geometry Group, Bielefeld University
  *
- * This file is part of Easy3D. If it is useful in your research/work,
- * I would be grateful if you show your appreciation by citing it:
- * ------------------------------------------------------------------
- *      Liangliang Nan.
- *      Easy3D: a lightweight, easy-to-use, and efficient C++
- *      library for processing and rendering 3D data. 2018.
- * ------------------------------------------------------------------
- * Easy3D is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License Version 3
- * as published by the Free Software Foundation.
+ * The code in this file is partly from Surface_mesh (v1.1) with
+ * modifications and enhancement:
+ *      https://opensource.cit-ec.de/projects/surface_mesh
+ * The original code was distributed under the GNU GPL License.
  *
- * Easy3D is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Library General Public License
+ * as published by the Free Software Foundation, version 2.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Library General Public License for more details.
+ *
+ * You should have received a copy of the GNU Library General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  ********************************************************************/
-
-/** ----------------------------------------------------------
- *
- * The code in this file is adapted from Surface_mesh with significant
- * modifications and enhancement.
- *		- Surface_mesh (version 1.1)
- * The original code is available at
- * https://opensource.cit-ec.de/projects/surface_mesh
- *
- * Surface_mesh is a halfedge-based mesh data structure for
- * representing and processing 2-manifold polygonal surface
- * meshes. It is implemented in C++ and designed with an
- * emphasis on simplicity and efficiency.
- *
- *----------------------------------------------------------*/
 
 #ifndef EASY3D_CORE_SURFACE_MESH_H
 #define EASY3D_CORE_SURFACE_MESH_H
