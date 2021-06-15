@@ -8,7 +8,6 @@
  * The original code was distributed under the GNU GPL license.
  ********************************************************************/
 
-
 #ifndef EASY3D_CORE_VEC_H
 #define EASY3D_CORE_VEC_H
 
