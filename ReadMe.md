@@ -170,6 +170,15 @@ GNU General Public License as published by the Free Software Foundation; either 
 of the License or (at your option) any later version. The full text of the license can be
 found in the accompanying 'License' file.
 
+### Acknowledgment
+The implementation of Easy3D greatly benefited from and was inspired by exiting great open-source libraries, such as
+[PMP](http://www.pmp-library.org/), [libQGLViewer](http://libqglviewer.com/), [Surface mesh](https://opensource.cit-ec.de/projects/surface_mesh),
+and [Graphite](http://graphite.gforge.inria.fr/). In particular, the implementation of several surface mesh 
+algorithms was taken (with modifications) from PMP, i.e., simplification, subdivision, smoothing, 
+parameterization, remeshing, hole filling, geodesic distances, fairing, curvatures, and triangulation. 
+We would like to thank the original authors of these projects for their permissive license terms. 
+We also thank the users and contributors for reporting/fixing bugs, testing, and providing valuable feedback and suggestions.
+
 ### Citation
 If you use Easy3D in a scientific work, I kindly ask you to cite it:
 
@@ -181,7 +190,6 @@ If you use Easy3D in a scientific work, I kindly ask you to cite it:
   year={2018}
 }
 ```
-
 ---------
 
 Should you have any questions, comments, or suggestions, please contact me at <i>liangliang.nan@gmail.com</i>
