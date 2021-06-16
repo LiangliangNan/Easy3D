@@ -134,18 +134,23 @@ namespace easy3d {
 					}
 				}
                 else if (e.name == "face") {
-					if (details::extract_named_property(e.int_list_properties, face_vertex_indices, "vertex_indices"))
+                    if (details::extract_named_property(e.int_list_properties, face_vertex_indices, "vertex_indices") ||
+                        details::extract_named_property(e.int_list_properties, face_vertex_indices, "vertex_index"))
 						continue;
 					else {
-						LOG(ERROR) << "\'vertex_indices\' does not defined on faces";
+                        LOG(ERROR) << "edge properties might not be parsed correctly because both 'vertex_indices' and 'vertex_index' not defined on faces";
 						return false;
 					}
 				}
                 else if (e.name == "edge") {
-					if (details::extract_named_property(e.int_list_properties, edge_vertex_indices, "vertex_indices"))
+                    if (details::extract_named_property(e.int_list_properties, edge_vertex_indices, "vertex_indices") ||
+                        details::extract_named_property(e.int_list_properties, edge_vertex_indices, "vertex_index"))
 						continue;
-					else
-						LOG(ERROR) << "edge properties might not be parsed correctly because \'vertex_indices\' does not defined on edges";
+					else {
+                        LOG(ERROR)
+                                << "edge properties might not be parsed correctly because both 'vertex_indices' and 'vertex_index' not defined on edges";
+                        // return false; // no return because the model can still be visualized
+                    }
 				}
 			}
 

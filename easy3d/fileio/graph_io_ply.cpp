@@ -111,10 +111,12 @@ namespace easy3d {
 					}
 				}
                 else if (e.name == "edge") {
-					if (details::extract_named_property(e.int_list_properties, edge_vertex_indices, "vertex_indices"))
-						continue;
+                    if (details::extract_named_property(e.int_list_properties, edge_vertex_indices, "vertex_indices") ||
+                        details::extract_named_property(e.int_list_properties, edge_vertex_indices, "vertex_index"))
+                        continue;
                     else {
-						LOG(ERROR) << "edge properties might not be parsed correctly because \'vertex_indices\' does not defined on edges";
+                        LOG(ERROR)
+                                << "edge properties might not be parsed correctly because both 'vertex_indices' and 'vertex_index' not defined on edges";
                         return false;
                     }
                 }
