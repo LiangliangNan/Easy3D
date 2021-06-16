@@ -1,7 +1,7 @@
 /********************************************************************
  * Copyright (C) 2015-2021 by Liangliang Nan <liangliang.nan@gmail.com>
- * Copyright (C) 2001-2005 by Computer Graphics Group, RWTH Aachen
  * Copyright (C) 2011-2013 by Graphics & Geometry Group, Bielefeld University
+ * Copyright (C) 2001-2005 by Computer Graphics Group, RWTH Aachen
  *
  * The code in this file is partly from Surface_mesh (v1.1) with
  * modifications and enhancement:

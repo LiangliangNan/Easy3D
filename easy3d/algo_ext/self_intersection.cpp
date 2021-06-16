@@ -1,5 +1,5 @@
 /********************************************************************
- * Copyright (C) 2015-2021 by Liangliang Nan <liangliang.nan@gmail.com>
+ * Copyright (C) 2018-2021 by Liangliang Nan <liangliang.nan@gmail.com>
  * Copyright (C) 2015 Alec Jacobson <alecjacobson@gmail.com>
  *
  * The code in this file is partly from libigl (version 3 Mar 2016) with

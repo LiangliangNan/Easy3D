@@ -1,5 +1,5 @@
 /********************************************************************
- * Copyright (C) 2015-2021 by Liangliang Nan <liangliang.nan@gmail.com>
+ * Copyright (C) 2020-2021 by Liangliang Nan <liangliang.nan@gmail.com>
  * Copyright (C) 2000-2005 INRIA - Project ALICE
  *
  * The code in this file is partly from OGF/Graphite (2.0 alpha-4) with

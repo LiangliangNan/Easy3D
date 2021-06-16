@@ -1,5 +1,5 @@
 /********************************************************************
- * Copyright (C) 2015-2021 by Liangliang Nan <liangliang.nan@gmail.com>
+ * Copyright (C) 2020-2021 by Liangliang Nan <liangliang.nan@gmail.com>
  * Copyright (C) 2011-2020 the Polygon Mesh Processing Library developers.
  *
  * The code in this file is adapted from the PMP (Polygon Mesh Processing
