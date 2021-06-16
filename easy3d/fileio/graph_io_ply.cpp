@@ -115,9 +115,21 @@ namespace easy3d {
                         details::extract_named_property(e.int_list_properties, edge_vertex_indices, "vertex_index"))
                         continue;
                     else {
-                        LOG(ERROR)
-                                << "edge properties might not be parsed correctly because both 'vertex_indices' and 'vertex_index' not defined on edges";
-                        return false;
+                        // make it compatible with MeshLab (which used two int properties "vertex1" and "vertex2" to
+                        // store the vertex indices of the edges.
+                        IntProperty vertex_1_indices, vertex_2_indices;
+                        if (details::extract_named_property(e.int_properties, vertex_1_indices, "vertex1") &&
+                            details::extract_named_property(e.int_properties, vertex_2_indices, "vertex2")) {
+                            edge_vertex_indices.resize(vertex_1_indices.size());
+                            for (std::size_t i = 0; i < edge_vertex_indices.size(); ++i)
+                                edge_vertex_indices[i] = {vertex_1_indices[i], vertex_2_indices[i]};
+                            continue;
+                        }
+                        else {
+                            LOG(ERROR)
+                                    << "edge properties might not be parsed correctly because both 'vertex_indices' and 'vertex_index' not defined on edges";
+                            return false;
+                        }
                     }
                 }
 			}
