@@ -22,14 +22,14 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef EASY3D_TUTORIAL_PICKER_VIEWER_H
-#define EASY3D_TUTORIAL_PICKER_VIEWER_H
+#ifndef EASY3D_TESTS_PICKER_VIEWER_H
+#define EASY3D_TESTS_PICKER_VIEWER_H
 
 #include <easy3d/viewer/viewer.h>
 
 #include <unordered_map>
 
-// This class demonstrate how to pick a model using the mouse
+// This class demonstrates how to pick a model using the mouse
 
 namespace easy3d {
     class Model;
@@ -52,4 +52,4 @@ private:
 };
 
 
-#endif // EASY3D_TUTORIAL_PICKER_VIEWER_H
+#endif // EASY3D_TESTS_PICKER_VIEWER_H

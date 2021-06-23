@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef EASY3D_TUTORIAL_CAMERA_INTERPOLATION_H
-#define EASY3D_TUTORIAL_CAMERA_INTERPOLATION_H
+#ifndef EASY3D_TESTS_CAMERA_INTERPOLATION_H
+#define EASY3D_TESTS_CAMERA_INTERPOLATION_H
 
 #include <easy3d/viewer/viewer.h>
 
@@ -32,8 +32,7 @@ namespace easy3d {
     class KeyFrameInterpolator;
 }
 
-// This tutorial shows how to interpolate camera frames to
-// animate model exploration.
+// This class shows how to interpolate camera frames to animate model exploration.
 
 class CameraIntrepolation : public easy3d::Viewer
 {
@@ -53,4 +52,4 @@ private:
 };
 
 
-#endif // EASY3D_TUTORIAL_CAMERA_INTERPOLATION_H
+#endif // EASY3D_TESTS_CAMERA_INTERPOLATION_H

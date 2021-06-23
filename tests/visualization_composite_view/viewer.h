@@ -22,16 +22,15 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef EASY3D_TUTORIAL_COMPOSITE_VIEW_H
-#define EASY3D_TUTORIAL_COMPOSITE_VIEW_H
+#ifndef EASY3D_TESTS_COMPOSITE_VIEW_H
+#define EASY3D_TESTS_COMPOSITE_VIEW_H
 
 #include <easy3d/viewer/viewer.h>
 
 
-// This example uses a "split window" view, rendering four views of the
-// same scene in one window (e.g. uesful for 3D modelling software). This
-// demo uses scissors to separate the four different rendering areas from
-// each other.
+// This class uses a "split window" view, rendering four views of the
+// same scene in one window (e.g. useful for 3D modelling software).
+// It uses scissors to separate the four different rendering areas from each other.
 
 namespace easy3d {
     class LinesDrawable;
@@ -61,4 +60,4 @@ private:
 };
 
 
-#endif // EASY3D_TUTORIAL_COMPOSITE_VIEW_H
+#endif // EASY3D_TESTS_COMPOSITE_VIEW_H

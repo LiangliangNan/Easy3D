@@ -22,13 +22,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef EASY3D_TUTORIAL_DEPTH_IMAGE_H
-#define EASY3D_TUTORIAL_DEPTH_IMAGE_H
+#ifndef EASY3D_TESTS_DEPTH_IMAGE_H
+#define EASY3D_TESTS_DEPTH_IMAGE_H
 
 #include <easy3d/viewer/viewer.h>
 
 
-// This DepthImage class visualizes 3D models as depth images.
+// This class visualizes 3D models as depth images.
 
 namespace easy3d {
     class FramebufferObject;
@@ -52,4 +52,4 @@ private:
 };
 
 
-#endif // EASY3D_TUTORIAL_DEPTH_IMAGE_H
+#endif // EASY3D_TESTS_DEPTH_IMAGE_H

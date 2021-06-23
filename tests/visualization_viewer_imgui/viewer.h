@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef EASY3D_IMGUI_VIEWER_H
-#define EASY3D_IMGUI_VIEWER_H
+#ifndef EASY3D_TESTS_IMGUI_VIEWER_H
+#define EASY3D_TESTS_IMGUI_VIEWER_H
 
 
 #include <easy3d/viewer/viewer.h>
@@ -106,4 +106,4 @@ namespace easy3d {
 
 }
 
-#endif	// _EASY3D_VIEWER_H_
+#endif	// EASY3D_TESTS_IMGUI_VIEWER_H

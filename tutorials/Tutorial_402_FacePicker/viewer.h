@@ -28,7 +28,7 @@
 #include <easy3d/viewer/viewer.h>
 
 
-// This class demonstrate how to pick faces in a surface mesh using the mouse
+// This class demonstrates how to pick faces in a surface mesh using the mouse
 
 namespace easy3d {
     class Model;

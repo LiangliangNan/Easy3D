@@ -29,7 +29,7 @@
 
 #include <unordered_map>
 
-// This class demonstrate how to pick a model using the mouse
+// This class demonstrates how to pick a model using the mouse
 
 namespace easy3d {
     class Model;

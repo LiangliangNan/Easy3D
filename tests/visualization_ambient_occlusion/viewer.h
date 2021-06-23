@@ -22,8 +22,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef EASY3D_TUTORIAL_AMBIENT_OCCLUSION_H
-#define EASY3D_TUTORIAL_AMBIENT_OCCLUSION_H
+#ifndef EASY3D_TESTS_AMBIENT_OCCLUSION_H
+#define EASY3D_TESTS_AMBIENT_OCCLUSION_H
 
 #include <easy3d/viewer/viewer.h>
 
@@ -55,4 +55,4 @@ private:
 };
 
 
-#endif // EASY3D_TUTORIAL_AMBIENT_OCCLUSION_H
+#endif // EASY3D_TESTS_AMBIENT_OCCLUSION_H

@@ -22,15 +22,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef EASY3D_TUTORIAL_REAL_CAMERA_H
-#define EASY3D_TUTORIAL_REAL_CAMERA_H
+#ifndef EASY3D_TESTS_REAL_CAMERA_H
+#define EASY3D_TESTS_REAL_CAMERA_H
 
 #include <easy3d/viewer/viewer.h>
 
-// This RealCamera class visualizes a model from the view point
-// given the camera's intrinsic and extrinsic parameters. These
-// camera parameters can (usually) be recovered using camera
-// calibration or structure from motion techniques.
+// This class visualizes a model from the view point given the camera's intrinsic and extrinsic parameters.
+// These camera parameters can (usually) be recovered using camera calibration or structure from motion techniques.
 
 namespace easy3d {
     class Camera;
@@ -79,4 +77,4 @@ private:
 };
 
 
-#endif // EASY3D_TUTORIAL_REAL_CAMERA_H
+#endif // EASY3D_TESTS_REAL_CAMERA_H
