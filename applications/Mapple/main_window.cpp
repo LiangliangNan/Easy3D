@@ -684,6 +684,7 @@ void MainWindow::restoreCameraStateFromFile() {
             "Restore viewer state from file",
             curDataDirectory_,
             "Viewer state (*.view)\n"
+            "Viewer state - old deprecated version (*.state)\n"
             "All formats (*.*)"
     );
 

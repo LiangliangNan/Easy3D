@@ -62,6 +62,7 @@
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/string.h>
+#include <easy3d/util/line_stream.h>
 
 #include <QKeyEvent>
 #include <QPainter>
@@ -1679,74 +1680,105 @@ void PaintCanvas::restoreState(std::istream& input) {
     if (input.fail())
         return;
 
-    // first line is just a comment
-    char line[500];
-    input.getline(line, 500);	// just skip this line
-
-    //-----------------------------------------------------
-
-    // write foreground and background colors
-    std::string dummy;
-    input >> dummy;	// this skips the keyword
-    vec4 bc;
-    input >> dummy >> bc; setBackgroundColor(bc);
-    input >> dummy;	// this skips the keyword
-
-    //-----------------------------------------------------
-
-    input >> dummy;	// this skips the keyword
-    int state = -1;
-    input >> dummy >> state;
-    window()->setWindowState(Qt::WindowState(state));
-    if (Qt::WindowState(state) == Qt::WindowNoState) {
-        int w, h, x, y;
-        input >> dummy >> w >> h;	window()->resize(w, h);
-        input >> dummy >> x >> y;	window()->move(QPoint(x, y));
-        camera()->setScreenWidthAndHeight(this->width(), this->height());
-    }
-    input >> dummy;	// this skips the keyword
-
-    //-----------------------------------------------------
-
-    input >> dummy;	// this skips the keyword
-
     // temporarily don't allow updating rendering when the camera parameters are changing.
     easy3d::disconnect_all(&camera_->frame_modified);
 
-    std::string t;
-    input >> dummy >> t;
-    if (t == "PERSPECTIVE")
-        camera()->setType(Camera::PERSPECTIVE);
-    else if (t == "ORTHOGRAPHIC")
-        camera()->setType(Camera::ORTHOGRAPHIC);
-
-    float v(0);
-    vec3 p;
-    quat q;
-    input >> dummy >> v;	camera()->setZClippingCoefficient(v);
-    input >> dummy >> v;	camera()->setZNearCoefficient(v);
-    input >> dummy >> v;	camera()->setSceneRadius(v);
-    input >> dummy >> v;	camera()->setFieldOfView(v);
-    input >> dummy >> p;	camera()->setSceneCenter(p);
-
-    // ManipulatedCameraFrame
-    input >> dummy >> p;	camera()->frame()->setPosition(p);
-    input >> dummy >> q;	camera()->frame()->setOrientation(q);
-    input >> dummy >> v;	camera()->frame()->setWheelSensitivity(v);
-    input >> dummy >> v;	camera()->frame()->setRotationSensitivity(v);
-    input >> dummy >> v;	camera()->frame()->setZoomSensitivity(v);
-    input >> dummy >> v;	camera()->frame()->setTranslationSensitivity(v);
-    bool status = false;
-    input >> dummy >> status;	camera()->frame()->setZoomsOnPivotPoint(status);
-    input >> dummy >> p;	camera()->frame()->setPivotPoint(p);
-    input >> dummy;	// this skips the keyword
-
-    //-----------------------------------------------------
-
-    // last line is a comment
-    input.getline(line, 500);	// just skip this line
-
-    //-----------------------------------------------------
+    std::string dummy;
+    io::LineInputStream in(input);
+    while (!input.eof()) {
+        in.get_line();;
+        if (in.current_line()[0] != '<') {
+            std::string keyword;
+            in >> keyword;
+            if (!in.fail()) {
+                if (keyword.find("backGroundColor") != std::string::npos ||
+                    keyword.find("background") != std::string::npos) {
+                    vec3 bc;
+                    in >> bc;
+                    if (bc.x > 1.0f || bc.y > 1.0f || bc.z > 1.0f)
+                        bc /= 255.0f;
+                    setBackgroundColor(vec4(bc, 1.0f));
+                } else if (keyword.find("state") != std::string::npos) {
+                    int state = 0; // this is Qt::WindowNoState
+                    in >> state;
+                    window()->setWindowState(Qt::WindowState(state));
+                    if (Qt::WindowState(state) == Qt::WindowNoState) {
+                        int w, h, x, y;
+                        in.get_line();
+                        in >> dummy >> w >> h;
+                        window()->resize(w, h);
+                        in.get_line();
+                        in >> dummy >> x >> y;
+                        window()->move(QPoint(x, y));
+                        camera()->setScreenWidthAndHeight(this->width(), this->height());
+                    }
+                } else if (keyword.find("type") != std::string::npos) {
+                    std::string t;
+                    in >> t;
+                    if (t == "PERSPECTIVE")
+                        camera()->setType(Camera::PERSPECTIVE);
+                    else if (t == "ORTHOGRAPHIC")
+                        camera()->setType(Camera::ORTHOGRAPHIC);
+                } else if (keyword.find("zClippingCoefficient") != std::string::npos) {
+                    float v(0);
+                    in >> v;
+                    camera()->setZClippingCoefficient(v);
+                } else if (keyword.find("zNearCoefficient") != std::string::npos) {
+                    float v(0);
+                    in >> v;
+                    camera()->setZNearCoefficient(v);
+                } else if (keyword.find("sceneRadius") != std::string::npos) {
+                    float v(0);
+                    in >> v;
+                    camera()->setSceneRadius(v);
+                } else if (keyword.find("fieldOfView") != std::string::npos) {
+                    float v(0);
+                    in >> v;
+                    camera()->setFieldOfView(v);
+                } else if (keyword.find("sceneCenter") != std::string::npos) {
+                    vec3 p;
+                    in >> p;
+                    camera()->setSceneCenter(p);
+                } else if (keyword.find("position") != std::string::npos) {
+                    vec3 p;
+                    in >> p;
+                    camera()->setPosition(p);
+                } else if (keyword.find("orientation") != std::string::npos) {
+                    quat q;
+                    in >> q;
+                    camera()->setOrientation(q);
+                } else if (keyword.find("wheelSens") != std::string::npos) {
+                    float v(0);
+                    in >> v;
+                    camera()->frame()->setWheelSensitivity(v);
+                } else if (keyword.find("rotSens") != std::string::npos) {
+                    float v(0);
+                    in >> v;
+                    camera()->frame()->setRotationSensitivity(v);
+                } else if (keyword.find("zoomSens") != std::string::npos) {
+                    float v(0);
+                    in >> v;
+                    camera()->frame()->setZoomSensitivity(v);
+                } else if (keyword.find("transSens") != std::string::npos) {
+                    float v(0);
+                    in >> v;
+                    camera()->frame()->setTranslationSensitivity(v);
+                } else if (keyword.find("zoomsOnPivotPoint") != std::string::npos) {
+                    float v(0);
+                    in >> v;
+                    camera()->frame()->setZoomsOnPivotPoint(v);
+                } else if (keyword.find("pivotPoint") != std::string::npos) {
+                    vec3 p;
+                    in >> p;
+                    camera()->setPivotPoint(p);
+                } else {
+                    dummy = keyword.substr(0, keyword.find(':'));
+                    LOG(WARNING) << "view property '" << dummy
+                                 << "' is ignored (not recognized by this version of Mapple)";
+                }
+            }
+        }
+    }
 
     // now camera parameters are all up-to-date, enable updating the rendering
     easy3d::connect(&camera_->frame_modified, this, static_cast<void (PaintCanvas::*)(void)>(&PaintCanvas::update));
