@@ -79,7 +79,7 @@ void ModelPickerViewer::post_draw() {
         const float font_size = 20.0f;
         const float offset = 20.0f * dpi_scaling();
         float y_pos = 50.0f;
-        texter_->draw("Left-click the mouse on a model to pick/unpick it.", offset, y_pos * dpi_scaling(), font_size, 1);
+        texter_->draw("Click (using the mouse) on a model to pick/unpick it.", offset, y_pos * dpi_scaling(), font_size, 1);
         y_pos += font_size;
         texter_->draw("Close the application when you finish the test.", offset, y_pos * dpi_scaling(), font_size, 1);
     }
