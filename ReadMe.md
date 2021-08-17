@@ -172,7 +172,7 @@ of the License or (at your option) any later version. The full text of the licen
 found in the accompanying 'License' file.
 
 ### Acknowledgments
-The implementation of Easy3D greatly benefited from and was inspired by exiting great open-source libraries, such as
+The implementation of Easy3D greatly benefited from and was inspired by existing great open-source libraries, such as
 [PMP](http://www.pmp-library.org/), [libQGLViewer](http://libqglviewer.com/), [Surface mesh](https://opensource.cit-ec.de/projects/surface_mesh),
 and [Graphite](http://graphite.gforge.inria.fr/). In particular, the implementation of several surface mesh 
 algorithms was taken (with modifications) from PMP, i.e., simplification, subdivision, smoothing, 
