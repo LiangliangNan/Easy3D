@@ -4,11 +4,12 @@
 #
 #      This file is part of Easy3D. If it is useful in your research/work,
 #      I would be grateful if you show your appreciation by citing it:
-#       ------------------------------------------------------------------
+#      ------------------------------------------------------------------
 #           Liangliang Nan.
-#           Easy3D: a lightweight, easy-to-use, and efficient C++
-#           library for processing and rendering 3D data. 2018.
-#       ------------------------------------------------------------------
+#           Easy3D: a lightweight, easy-to-use, and efficient C++ library
+#           for processing and rendering 3D data.
+#           Journal of Open Source Software, 6(64), 3255, 2021.
+#      ------------------------------------------------------------------
 #
 #      Easy3D is free software; you can redistribute it and/or modify
 #      it under the terms of the GNU General Public License Version 3
