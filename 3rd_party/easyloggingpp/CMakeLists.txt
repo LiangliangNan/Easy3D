@@ -29,7 +29,7 @@ set(ELPP_VERSION_STRING "${ELPP_MAJOR_VERSION}.${ELPP_MINOR_VERSION}.${ELPP_PATC
 
 
 require_cpp11()
-add_library(3rd_easyloggingpp STATIC src/easylogging++.cc)
+add_library(3rd_easyloggingpp SHARED src/easylogging++.cc)
 set_property(TARGET 3rd_easyloggingpp PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 

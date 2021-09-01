@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 
 project(3rd_glutess)
 
-add_library(3rd_glutess STATIC
+add_library(3rd_glutess SHARED
         glutess.h
         source/dict-list.h
         source/dict.c

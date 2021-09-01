@@ -19,7 +19,7 @@ set(imgui_SOURCES
     )
 
 
-add_library(3rd_imgui STATIC ${imgui_SOURCES} ${imgui_HEADERS})
+add_library(3rd_imgui SHARED ${imgui_SOURCES} ${imgui_HEADERS})
 
 set_target_properties(3rd_imgui PROPERTIES FOLDER "3rd_party")
 

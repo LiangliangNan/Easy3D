@@ -3,6 +3,7 @@ x64
 *.user
 *.log
 build
+Release
 .DS_Store
 resources/images/img.pptx
 .idea

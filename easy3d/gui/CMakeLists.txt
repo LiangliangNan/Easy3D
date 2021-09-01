@@ -19,7 +19,7 @@ set(${PROJECT_NAME}_SOURCES
         picker_surface_mesh.cpp
         )
 
-add_library(${PROJECT_NAME} STATIC
+add_library(${PROJECT_NAME} SHARED
         ${${PROJECT_NAME}_SOURCES}
         ${${PROJECT_NAME}_HEADERS}
         )

@@ -55,7 +55,7 @@ set(poisson_SOURCES
     )
 
 
-add_library(3rd_poisson STATIC ${poisson_SOURCES} ${poisson_HEADERS})
+add_library(3rd_poisson SHARED ${poisson_SOURCES} ${poisson_HEADERS})
 
 set_target_properties(3rd_poisson PROPERTIES FOLDER "3rd_party")
 

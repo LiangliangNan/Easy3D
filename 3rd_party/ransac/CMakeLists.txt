@@ -204,7 +204,7 @@ set(ransac_SOURCES
     )
 
 
-add_library(3rd_ransac STATIC ${ransac_SOURCES} ${ransac_HEADERS})
+add_library(3rd_ransac SHARED ${ransac_SOURCES} ${ransac_HEADERS})
 
 set_target_properties(3rd_ransac PROPERTIES FOLDER "3rd_party")
 

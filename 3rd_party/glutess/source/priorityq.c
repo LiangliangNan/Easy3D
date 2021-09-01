@@ -39,7 +39,24 @@
 
 /* Include all the code for the regular heap-based queue here. */
 
-#include "priorityq-heap.c"
+// #include "priorityq-heap.c"
+
+#define INIT_SIZE	32
+
+#ifndef TRUE
+#define TRUE 1
+#endif
+#ifndef FALSE
+#define FALSE 0
+#endif
+
+#ifdef FOR_TRITE_TEST_PROGRAM
+#define LEQ(x,y)	(*pq->leq)(x,y)
+#else
+/* Violates modularity, but a little faster */
+#include "geom.h"
+#define LEQ(x,y)	VertLeq((GLUvertex *)x, (GLUvertex *)y)
+#endif
 
 /* Now redefine all the function names to map to their "Sort" versions. */
 

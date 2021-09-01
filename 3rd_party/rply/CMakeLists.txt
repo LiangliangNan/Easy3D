@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 
 project(3rd_rply)
 
-add_library(3rd_rply STATIC rply.c rply.h)
+add_library(3rd_rply SHARED rply.c rply.h)
 
 set_target_properties(3rd_rply PROPERTIES FOLDER "3rd_party")
 

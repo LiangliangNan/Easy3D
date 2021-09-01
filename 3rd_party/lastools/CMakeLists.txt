@@ -122,7 +122,7 @@ set(lastools_SOURCES
     )
 
 
-add_library(3rd_lastools STATIC ${lastools_SOURCES} ${lastools_HEADERS})
+add_library(3rd_lastools SHARED ${lastools_SOURCES} ${lastools_HEADERS})
 
 set_target_properties(3rd_lastools PROPERTIES FOLDER "3rd_party")
 

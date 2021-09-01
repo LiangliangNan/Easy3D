@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 
 project(3rd_triangle)
 
-add_library(3rd_triangle STATIC triangle.h triangle.c)
+add_library(3rd_triangle SHARED triangle.h triangle.c)
 
 set_target_properties(3rd_triangle PROPERTIES FOLDER "3rd_party")
 

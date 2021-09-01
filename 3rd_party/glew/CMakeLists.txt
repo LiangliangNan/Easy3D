@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 
 project(3rd_glew)
 
-add_library(3rd_glew STATIC src/glew.c)
+add_library(3rd_glew SHARED src/glew.c)
 
 set_target_properties(3rd_glew PROPERTIES FOLDER "3rd_party")
 
