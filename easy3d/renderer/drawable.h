@@ -121,7 +121,7 @@ namespace easy3d {
 
         ///@}
 
-        unsigned int num_vertices() const { return num_vertices_; }
+        std::size_t num_vertices() const { return num_vertices_; }
 
         /// \name Rendering
         ///@{

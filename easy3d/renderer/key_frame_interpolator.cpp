@@ -394,7 +394,7 @@ namespace easy3d {
         else if (keyframes_.size() == 2) {   // only two keyframe: linear interpolation
             interpolated_path_.clear();
             const float interval = interpolation_speed() * interpolation_period() / 1000.0f;
-            const std::size_t num_frames = duration() / interval + 1;
+            const std::size_t num_frames = static_cast<float>(duration() / interval + 1);
             for (std::size_t i=0; i<num_frames; ++i) {
                 const float w = static_cast<float>(i) / static_cast<float>(num_frames - 1);
                 const vec3 pos = (1.0f - w) * keyframes_[0].position() + w * keyframes_[1].position();

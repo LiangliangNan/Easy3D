@@ -73,7 +73,7 @@ namespace easy3d {
         /**
          * The number of available fonts.
          */
-        int num_fonts() const { return font_ids_.size(); }
+        std::size_t num_fonts() const { return font_ids_.size(); }
 
         /**
          * The names of available fonts.
