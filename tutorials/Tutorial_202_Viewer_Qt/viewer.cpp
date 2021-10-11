@@ -679,10 +679,12 @@ void ViewerQt::addModel(Model *model) {
         return;
     }
 
+    makeCurrent();
     auto renderer = new Renderer(model);
     model->set_renderer(renderer);
     auto manipulator = new Manipulator(model);
     model->set_manipulator(manipulator);
+    doneCurrent();
 
     int pre_idx = model_idx_;
     models_.push_back(model);
@@ -707,9 +709,11 @@ void ViewerQt::deleteModel(Model *model) {
     if (pos != models_.end()) {
         const std::string name = model->name();
         models_.erase(pos);
+        makeCurrent();
         delete model->renderer();
         delete model->manipulator();
         delete model;
+        doneCurrent();
         model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
 
         std::cout << "model deleted: " << name << std::endl;

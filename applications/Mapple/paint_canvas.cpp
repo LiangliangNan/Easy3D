@@ -928,10 +928,13 @@ void PaintCanvas::addModel(Model *model) {
         return;
     }
 
+    makeCurrent();
     auto renderer = new Renderer(model);
     model->set_renderer(renderer);
     auto manipulator = new Manipulator(model);
     model->set_manipulator(manipulator);
+    doneCurrent();
+
     // connect the manipulator's signal to the viewer's update function to automatically update rendering.
     model->manipulator()->frame()->modified.connect(this, static_cast<void (PaintCanvas::*)(void)>(&PaintCanvas::update));
 
