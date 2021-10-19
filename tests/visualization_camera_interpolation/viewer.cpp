@@ -85,7 +85,7 @@ bool CameraIntrepolation::key_press_event(int key, int modifiers)
         for (auto m : models_)
             box.add_box(m->bounding_box());
         camera_->setSceneBoundingBox(box.min_point(), box.max_point());
-        std::cout << "path deleted"<< std::endl;
+        std::cout << "Path deleted"<< std::endl;
         return true;
     }
     else

@@ -42,27 +42,26 @@ int test_drawables(int duration) {
     const std::vector<vec3> &points = resource::bunny_vertices;
     const std::vector<unsigned int> &indices = resource::bunny_indices;
 
-    // We need to send the point positions and the vertex indices of the faces to the GPU.
+    // Create a TrianglesDrawable to visualize the surface of the "bunny".
+    // For visualization, the point positions and the vertex indices of the faces have to be sent to the GPU.
     auto surface = new TrianglesDrawable("faces");
     // Upload the vertex positions of the surface to the GPU.
     surface->update_vertex_buffer(points);
-    // Upload the vertex indices of the surface to the GPU. The indices represent how the vertices are connected to
-    // form triangles.
+    // Upload the vertex indices of the surface to the GPU.
     surface->update_element_buffer(indices);
     // Add the drawable to the viewer
     viewer.add_drawable(surface);
 
     // Create a PointsDrawable to visualize the vertices of the "bunny".
-
-    // We need to send the point positions and the vertex indices of the faces to the GPU.
-    auto vertices = new PointsDrawable("faces");
-    // Upload the vertex positions of the surface to the GPU.
+    // Only the vertex positions have to be sent to the GPU for visualization.
+    auto vertices = new PointsDrawable("vertices");
+    // Upload the vertex positions to the GPU.
     vertices->update_vertex_buffer(points);
-    // Draw the vertices in red.
+    // Set a color for the vertices (here we want a red color).
     vertices->set_uniform_coloring(vec4(1.0f, 0.0f, 0.0f, 1.0f));  // r, g, b, a
-    // Draw the vertices as spheres.
+    // Let's render the vertices as spheres.
     vertices->set_impostor_type(PointsDrawable::SPHERE);
-    // Set the vertices size to 10 pixels.
+    // Set the vertices size (here 10 pixels).
     vertices->set_point_size(10);
     // Add the drawable to the viewer
     viewer.add_drawable(vertices);
@@ -95,13 +94,14 @@ int test_drawables(int duration) {
     bbox_drawable->update_vertex_buffer(bbox_points);
     // Upload the vertex indices of the bounding box to the GPU.
     bbox_drawable->update_element_buffer(bbox_indices);
-    // Draw the lines of the bounding box in blue.
+    // Set a color for the edges of the bounding box (here we want a blue color).
     bbox_drawable->set_uniform_coloring(vec4(0.0f, 0.0f, 1.0f, 1.0f));    // r, g, b, a
-    // Draw the lines with a width of 5 pixels.
+    // Set the width of the edges (here 5 pixels).
     bbox_drawable->set_line_width(5.0f);
     // Add the drawable to the viewer
     viewer.add_drawable(bbox_drawable);
 
+    // Make sure everything is within the visible region of the viewer.
     viewer.fit_screen();
 
     viewer.usage_func_ = []() -> std::string {
