@@ -59,11 +59,9 @@ namespace easy3d {
             success = io::load_stl(file_name, mesh);
         else if (ext == "trilist")
             success = io::load_trilist(file_name, mesh);
+        else if (ext == "geojson")
+            success = io::load_geojson(file_name, mesh, true);
 
-            //	else if (ext == "plg")
-            //        serializer = new MeshSerializer_plg();
-            //	else if (ext == "geojson")
-            //        serializer = new MeshSerializer_json();
         else if (ext.empty()) {
             LOG(ERROR) << "unknown file format: no extension" << ext;
             success = false;
@@ -117,10 +115,6 @@ namespace easy3d {
         else if (ext == "stl")
             success = io::save_stl(final_name, mesh);
 
-            //	else if (ext == "plg")
-            //        serializer = new MeshSerializer_plg();
-            //	else if (ext == "geojson")
-            //        serializer = new MeshSerializer_json();
         else {
             LOG(ERROR) << "unknown file format: " << ext;
             success = false;

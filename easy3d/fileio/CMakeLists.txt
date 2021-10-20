@@ -30,6 +30,7 @@ set(${PROJECT_NAME}_SOURCES
         point_cloud_io_vg.cpp
         point_cloud_io_xyz.cpp
         surface_mesh_io.cpp
+        surface_mesh_io_geojson.cpp
         surface_mesh_io_obj.cpp
         surface_mesh_io_off.cpp
         surface_mesh_io_ply.cpp

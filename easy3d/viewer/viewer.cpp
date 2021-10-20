@@ -1148,8 +1148,7 @@ namespace easy3d {
             is_ply_mesh = (io::PlyReader::num_instances(file_name, "face") > 0);
 
         Model *model = nullptr;
-        if ((ext == "ply" && is_ply_mesh) || ext == "obj" || ext == "off" || ext == "stl" || ext == "sm" ||
-            ext == "plg") { // mesh
+        if ((ext == "ply" && is_ply_mesh) || ext == "obj" || ext == "off" || ext == "stl" || ext == "sm" || ext == "geojson" || ext == "trilist") { // mesh
             model = SurfaceMeshIO::load(file_name);
         } else if (ext == "ply" && io::PlyReader::num_instances(file_name, "edge") > 0) {
             model = GraphIO::load(file_name);
@@ -1306,9 +1305,8 @@ namespace easy3d {
         const std::string title("Please choose a file");
         const std::string &default_path = resource::directory() + "/data/";
         const std::vector<std::string> &filters = {
-                "Surface Mesh (*.obj *.ply *.off *.stl *.sm)", "*.obj *.ply *.off *.stl *.sm",
-                "Point Cloud (*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg *.ptx)",
-                "*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg *.ptx",
+                "Surface Mesh (*.obj *.ply *.off *.stl *.sm *.geojson *.trilist)", "*.obj *.ply *.off *.stl *.sm *.geojson *.trilist",
+                "Point Cloud (*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg *.ptx)", "*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg *.ptx",
                 "Polytope Mesh (*.plm *.pm *.mesh)", "*.plm *.pm *.mesh",
                 "All Files (*.*)", "*"
         };

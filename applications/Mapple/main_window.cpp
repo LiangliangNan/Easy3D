@@ -130,7 +130,7 @@ MainWindow::MainWindow(QWidget *parent)
     const int width = 270; //static_cast<int>(size.width() * 1.5f);
     ui->dockWidgetRendering->setFixedWidth(width);
 
-    // ----- rendering panel ------
+    // ------ rendering panel ------
 
     widgetTrianglesDrawable_ = new WidgetTrianglesDrawable(this);
     ui->verticalLayoutTrianglesDrawable->addWidget(widgetTrianglesDrawable_);
@@ -411,8 +411,8 @@ bool MainWindow::onOpen() {
                 this,
                 "Open file(s)",
                 curDataDirectory_,
-                "Supported formats (*.ply *.obj *.off *.stl *.sm *.trilist *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx *.plm *.pm *.mesh)\n"
-                "Surface Mesh (*.ply *.obj *.off *.stl *.sm *.trilist)\n"
+                "Supported formats (*.ply *.obj *.off *.stl *.sm *.geojson *.trilist *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx *.plm *.pm *.mesh)\n"
+                "Surface Mesh (*.ply *.obj *.off *.stl *.sm *.geojson *.trilist)\n"
                 "Point Cloud (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx)\n"
                 "Polyhedral Mesh (*.plm *.pm *.mesh)\n"
                 "All formats (*.*)"
@@ -496,7 +496,7 @@ Model* MainWindow::open(const std::string& file_name) {
         is_ply_mesh = (io::PlyReader::num_instances(file_name, "face") > 0);
 
     Model* model = nullptr;
-    if ((ext == "ply" && is_ply_mesh) || ext == "obj" || ext == "off" || ext == "stl" || ext == "sm" || ext == "plg" || ext == "trilist") { // mesh
+    if ((ext == "ply" && is_ply_mesh) || ext == "obj" || ext == "off" || ext == "stl" || ext == "sm" || ext == "geojson" || ext == "trilist") { // mesh
         model = SurfaceMeshIO::load(file_name);
     }
     else if (ext == "ply" && io::PlyReader::num_instances(file_name, "edge") > 0) {
