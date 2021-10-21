@@ -94,7 +94,7 @@ The optional third-party libraries are:
             [`Tutorial_202_Viewer_Qt`](https://github.com/LiangliangNan/Easy3D/tree/main/tutorials/Tutorial_202_Viewer_Qt) 
             and [`Mapple`](https://github.com/LiangliangNan/Easy3D/tree/main/applications/Mapple)).
   
-To build Easy3D, you need [CMake](https://cmake.org/download/) (`>= 3.1`) and, of course, a compiler that supports `>= C++11`.
+To build Easy3D, you need [CMake](https://cmake.org/download/) (`>= 3.12`) and, of course, a compiler that supports `>= C++11`.
 
 Easy3D has been tested on macOS (Xcode >= 8), Windows (MSVC >=2015), and Linux (GCC >= 4.8, Clang >= 3.3). Machines 
 nowadays typically provide higher [supports](https://en.cppreference.com/w/cpp/compiler_support), so you should be able 
