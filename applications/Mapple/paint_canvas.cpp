@@ -1029,9 +1029,13 @@ void PaintCanvas::adjustSceneRadius() {
         box.add_point(walkThrough()->interpolator()->keyframe(i).position());
 
     // attention: the scene center is not changed.
+    // Note: This is not accurate and just an estimate. If you see problem in rendering, use the max distance
+    //       from the scene center to the eight vertices of the box.
     camera()->setSceneRadius(
-            std::max(distance(camera()->sceneCenter(), box.min_point()),
-                     distance(camera()->sceneCenter(), box.max_point()))
+            std::max(
+                    distance(camera()->sceneCenter(), box.min_point()),
+                    distance(camera()->sceneCenter(), box.max_point())
+                    )
             );
 }
 
