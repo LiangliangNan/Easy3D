@@ -226,6 +226,11 @@ void WidgetGlobalSetting::setSSAOAlgorithm(int algo) {
         ui->checkBoxShadow->setChecked(false);
 
     viewer_->update();
+    disableUnavailableOptions();
+    if (algo != 0)
+        LOG(INFO) << "SSAO enabled";
+    else
+        LOG(INFO) << "SSAO disabled";
 }
 
 
@@ -300,6 +305,12 @@ void WidgetGlobalSetting::setShadow(bool b) {
 
     viewer_->enableShadow(b);
     viewer_->update();
+
+    disableUnavailableOptions();
+    if (b)
+        LOG(INFO) << "shadow enabled";
+    else
+        LOG(INFO) << "shadow disabled";
 }
 
 
@@ -358,6 +369,28 @@ void WidgetGlobalSetting::disableUnavailableOptions() {
     ui->checkBoxCrossSectionEnable->setEnabled(visible);
     bool can_change_crosssection_thickness = visible && (ui->checkBoxCrossSectionEnable->isChecked());
     ui->doubleSpinBoxCrossSectionThickness->setEnabled(can_change_crosssection_thickness);
+
+    // SSAO
+    visible = (ui->comboBoxSSAOAlgorithm->currentIndex() != 0);
+    ui->labelSSAORadius->setEnabled(visible);
+    ui->horizontalSliderSSAORadius->setEnabled(visible);
+    ui->labelSSAOIntensity->setEnabled(visible);
+    ui->horizontalSliderSSAOIntensity->setEnabled(visible);
+    ui->labelSSAOBias->setEnabled(visible);
+    ui->horizontalSliderSSAOBias->setEnabled(visible);
+    ui->labelSSAOSharpness->setEnabled(visible);
+    ui->horizontalSliderSSAOSharpness->setEnabled(visible);
+
+    // shadow
+    visible = ui->checkBoxShadow->isChecked();
+    ui->labelShadowSmoothPattern->setEnabled(visible);
+    ui->comboBoxShadowSmoothPattern->setEnabled(visible);
+    ui->labelShadowLightDistance->setEnabled(visible);
+    ui->horizontalSliderShadowLightDistance->setEnabled(visible);
+    ui->labelShadowSoftness->setEnabled(visible);
+    ui->horizontalSliderShadowSoftness->setEnabled(visible);
+    ui->labelShadowDarkness->setEnabled(visible);
+    ui->horizontalSliderShadowDarkness->setEnabled(visible);
 
     update();
     qApp->processEvents();
