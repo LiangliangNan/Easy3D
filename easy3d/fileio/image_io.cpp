@@ -26,8 +26,6 @@
 
 #include <easy3d/fileio/image_io.h>
 
-#include <iostream>
-
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
 

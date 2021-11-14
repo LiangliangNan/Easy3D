@@ -31,8 +31,6 @@
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
 
-#include <iostream>
-
 
 namespace easy3d {
 
