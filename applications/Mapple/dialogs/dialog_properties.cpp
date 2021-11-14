@@ -33,6 +33,8 @@
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/string.h>
 #include <easy3d/renderer/renderer.h>
+#include <easy3d/fileio/image_io.h>
+#include <easy3d/fileio/resources.h>
 
 #include "paint_canvas.h"
 #include "main_window.h"
@@ -1005,6 +1007,67 @@ namespace details {
         return true;
     }
 
+
+    template <typename MODEL, typename FT>
+    bool color_by_vertex_scalar_field(MODEL* model, const std::string& name) {
+        auto values = model->template vertex_property<FT>(name);
+        if (!values) {
+            LOG(INFO) << "scalar field '" << name << "' does not exist";
+            return false;
+        }
+
+        // use image color
+        const std::string image_file = resource::directory() + "/colormaps/rainbow.png";
+        if (!file_system::is_file(image_file)) {
+            LOG(ERROR) << "colormap image file not found: " << image_file;
+            return false;
+        }
+
+        int width = 0, height = 0, comp = 0;
+        std::vector<unsigned char> data;
+        // flip the image vertically, so the first pixel in the output array is the bottom left
+        bool success = ImageIO::load(image_file, data, width, height, comp, 0, true);
+        if (!success || data.empty()) {
+            LOG(ERROR) << "failed reading colormap image file:" << image_file;
+            return false;
+        }
+
+        std::string color_name = "v:color-";
+        if (name.find("v:") == std::string::npos)
+            color_name += name;
+        else
+            color_name += name.substr(2);
+
+        FT min_value = max<FT>();
+        FT max_value = -max<FT>();
+        for (auto v : model->vertices()) {
+            auto value = values[v];
+            min_value = std::min(min_value, value);
+            max_value = std::max(max_value, value);
+        }
+
+        if (epsilon_equal(min_value, max_value, epsilon<FT>())) {
+            LOG(ERROR) << "scalar field has an invalid range: [" << min_value << ", " << max_value << "]";
+            return false;
+        }
+
+        auto coloring = model->template vertex_property<vec3>(color_name, vec3(0, 0, 0));
+        const FT range = max_value - min_value;
+        for (auto v : model->vertices()) {
+            auto value = values[v];
+            // Note: the colormap is horizontal
+            std::size_t column_index = (value - min_value) / range * width;
+            std::size_t pixel_index = (static_cast<std::size_t>(height * 0.5f) * width + column_index) * comp;
+            coloring[v] = vec3(
+                    data[pixel_index] / 255.0f,
+                    data[pixel_index + 1] / 255.0f,
+                    data[pixel_index + 2] / 255.0f
+            );
+        }
+
+        LOG(INFO) << "vertex property '" << color_name << "' added to model";
+        return true;
+    }
 }
 
 
@@ -1353,8 +1416,10 @@ bool DialogProperties::generateColorProperty() {
             status = details::color_by_vertex_segmentation<PointCloud, bool>(cloud, name);
         else if (id == typeid(unsigned char))
             status = details::color_by_vertex_segmentation<PointCloud, unsigned char>(cloud, name);
+        else if (id == typeid(float))
+            status = details::color_by_vertex_scalar_field<PointCloud, float>(cloud, name);
         else
-            LOG(WARNING) << "input property must be a type of int, unsigned int, std::size_t, bool, or unsigned char";
+            LOG(WARNING) << "input property must be a type of int, unsigned int, std::size_t, bool, unsigned char, or float";
 
         if (status)
             window_->updateRenderingPanel();
@@ -1375,8 +1440,10 @@ bool DialogProperties::generateColorProperty() {
                 status = details::color_by_face_segmentation<bool>(mesh, name);
             else if (id == typeid(unsigned char))
                 status = details::color_by_face_segmentation<unsigned char>(mesh, name);
+//            else if (id == typeid(float))
+//                status = details::color_by_face_scalar_field<SurfaceMesh, float>(mesh, name);
             else
-                LOG(WARNING) << "input property must be a type of int, unsigned int, std::size_t, bool, or unsigned char";
+                LOG(WARNING) << "input property must be a type of int, unsigned int, std::size_t, bool, unsigned char, or float";
 
             if (status)
                 window_->updateRenderingPanel();
@@ -1395,8 +1462,10 @@ bool DialogProperties::generateColorProperty() {
                 status = details::color_by_vertex_segmentation<SurfaceMesh, bool>(mesh, name);
             else if (id == typeid(unsigned char))
                 status = details::color_by_vertex_segmentation<SurfaceMesh, unsigned char>(mesh, name);
+            else if (id == typeid(float))
+                status = details::color_by_vertex_scalar_field<SurfaceMesh, float>(mesh, name);
             else
-                LOG(WARNING) << "input property must be a type of int, unsigned int, std::size_t, bool, or unsigned char";
+                LOG(WARNING) << "input property must be a type of int, unsigned int, std::size_t, bool, unsigned char, or float";
 
             if (status)
                 window_->updateRenderingPanel();
