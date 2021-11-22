@@ -38,8 +38,11 @@ using namespace easy3d;
 
 
 WalkThrough::WalkThrough(Camera *camera)
-        : camera_(camera), status_(STOPPED), ground_plane_normal_(0, 0, 1), follow_up_(true), height_factor_(0.2f),
-          third_person_forward_factor_(1.8f), cameras_visible_(false), path_visible_(false), current_frame_idx_(-1) {
+        : camera_(camera), status_(STOPPED), ground_plane_normal_(0, 0, 1), follow_up_(true),
+          height_factor_(0.2f), third_person_forward_factor_(1.8f), rotate_zoom_out_factor_(0.0f),
+          rotate_vertical_offset_factor_(0.0f), rotate_pitch_angle_(0.0f), rotate_keyframe_samples_(10),
+          rotate_num_loops_(2), cameras_visible_(false), path_visible_(false), current_frame_idx_(-1)
+{
     kfi_ = new KeyFrameInterpolator(camera_->frame());
 }
 
@@ -50,20 +53,20 @@ WalkThrough::~WalkThrough() {
 }
 
 
-void WalkThrough::add_keyframe(const Frame &frame) {
+void WalkThrough::add_keyframe(const Frame &frame, bool quiet) {
     if (kfi_->add_keyframe(frame)) {
         // update scene radius to make sure the path is within the view frustum
         float dist = distance(camera_->sceneCenter(), frame.position());
         if (dist > camera_->sceneRadius())
             camera_->setSceneRadius(dist);
 
-        LOG(INFO) << "a key frame added to camera path";
+        LOG_IF(!quiet, INFO) << "a key frame added to camera path";
         path_modified.send();
     }
 }
 
 
-void WalkThrough::start_walking(const std::vector<Model *> &scene) {
+void WalkThrough::set_scene(const std::vector<Model *> &scene) {
     if (scene.empty())
         return;
     Box3 box;
@@ -128,31 +131,72 @@ void WalkThrough::set_third_person_forward_factor(float f) {
 }
 
 
-void WalkThrough::set_rotate_axis(const easy3d::Line3 &axis, const std::vector<easy3d::Model *> &scene) {
-    if (scene.empty())
-        return;
+void WalkThrough::generate_camera_path(const easy3d::Line3 &axis) {
+    camera_->setSceneRadius(scene_box_.radius() * 1.1f);
+    rotate_axis_ = axis;
 
-    Box3 box;
-    for (const auto &m : scene) {
-        if (m->renderer()->is_visible())
-            box += m->bounding_box();
-    }
-    scene_box_ = box;
-    camera_->setSceneRadius(box.radius() * 1.1f);
+    const float object_height = scene_box_.max_coord(2);
 
-    const auto up = -axis.direction(); // picking line points inside screen
-    const auto at = axis.projection(camera_->sceneCenter());
-    const auto relative_eye = geom::orthogonal(up).normalize() * box.diagonal();
+    const auto up = -rotate_axis_.direction(); // picking line points inside screen
+    const auto vertical_offset = rotate_vertical_offset_factor_ * object_height * up;
+    const auto at = rotate_axis_.projection(camera_->sceneCenter() + vertical_offset);
+    const auto relative_eye = geom::orthogonal(up).normalize() * (scene_box_.diagonal() + rotate_zoom_out_factor_ * object_height);
 
-    const int num_frames = 10;
-    float angle_step = static_cast<float>(2.0 * M_PI / num_frames);
-    for (int i=0; i<num_frames + 2; ++i) {
+    const float angle_step = static_cast<float>(2.0 * M_PI / rotate_keyframe_samples_);
+    for (int i=0; i<rotate_keyframe_samples_ * rotate_num_loops_; ++i) {
         easy3d::quat q(up, -angle_step * i); // "-" for counterclockwise rotation
         Camera cam;
         cam.setPosition(at + q.rotate(relative_eye));
         cam.lookAt(at);
         cam.setUpVector(up);
-        add_keyframe(*cam.frame());
+        add_keyframe(*cam.frame(), true);
+    }
+
+    LOG(INFO) << interpolator()->number_of_keyframes() << " key frames added to camera path";
+}
+
+
+void WalkThrough::set_zoom_out_factor(float v, bool re_generate) {
+    rotate_zoom_out_factor_ = v;
+    if (re_generate && status_ == ROTATE_AROUND_AXIS && interpolator()->number_of_keyframes() > 0) {
+        interpolator()->delete_path();
+        generate_camera_path(rotate_axis_);
+    }
+}
+
+
+void WalkThrough::set_vertical_offset_factor(float v, bool re_generate) {
+    rotate_vertical_offset_factor_ = v;
+    if (re_generate && status_ == ROTATE_AROUND_AXIS && interpolator()->number_of_keyframes() > 0) {
+        interpolator()->delete_path();
+        generate_camera_path(rotate_axis_);
+    }
+}
+
+
+void WalkThrough::set_pitch_angle(float v, bool re_generate) {
+    rotate_pitch_angle_ = v;
+    if (re_generate && status_ == ROTATE_AROUND_AXIS && interpolator()->number_of_keyframes() > 0) {
+        interpolator()->delete_path();
+        generate_camera_path(rotate_axis_);
+    }
+}
+
+
+void WalkThrough::set_keyframe_samples(int v, bool re_generate) {
+    rotate_keyframe_samples_ = v;
+    if (re_generate && status_ == ROTATE_AROUND_AXIS && interpolator()->number_of_keyframes() > 0) {
+        interpolator()->delete_path();
+        generate_camera_path(rotate_axis_);
+    }
+}
+
+
+void WalkThrough::set_num_loops(int v, bool re_generate) {
+    rotate_num_loops_ = v;
+    if (re_generate && status_ == ROTATE_AROUND_AXIS && interpolator()->number_of_keyframes() > 0) {
+        interpolator()->delete_path();
+        generate_camera_path(rotate_axis_);
     }
 }
 

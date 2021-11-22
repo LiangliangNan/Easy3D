@@ -63,7 +63,7 @@ public:
     /// \name Keyframe creation for the free mode
     //@{
     /// adds a key frame to the camera path (for free mode only)
-    void add_keyframe(const easy3d::Frame &frame);
+    void add_keyframe(const easy3d::Frame &frame, bool quiet = false);
     //@}
 
 
@@ -71,7 +71,7 @@ public:
     //@{
     /// \brief Starts the walking mode.
     /// \param scene All the models in the scene.
-    void start_walking(const std::vector<easy3d::Model *> &scene);
+    void set_scene(const std::vector<easy3d::Model *> &scene);
 
     /// \brief Walks the character to the \c ground_point position.
     /// \details Upon return, the character will be standing at the \p ground_point position looking in a direction
@@ -112,9 +112,41 @@ public:
     //@{
     /// \brief Sets the rotational axis (for rotate-around-axis mode only).
     /// \param axis A line denoting the rotation axis.
-    /// \param scene All the models in the scene.
-    void set_rotate_axis(const easy3d::Line3 &axis, const std::vector<easy3d::Model *> &scene);
+    void generate_camera_path(const easy3d::Line3 &axis);
     //@}
+
+    /// \name Parameters for the rotate-around-axis mode
+    //@{
+
+    /// Sets the zoom out factor. It controls the zoom out of the camera (i.e., distance to the axis), relative to the
+    /// Z-height of the object. Default value is 0.0 (i.e., no zoom out). Positive values for zooming out.
+    void set_zoom_out_factor(float v, bool re_generate = false);
+    /// Returns the zoom out factor.
+    float zoom_out_factor() const { return rotate_zoom_out_factor_; }
+
+    /// Sets the vertical offset factor. It controls the vertical position of the camera, relative to the Z-height of
+    /// the object. Default value is 0.0 (i.e., no vertical offset).
+    void set_vertical_offset_factor(float v, bool re_generate = false);
+    /// Returns the vertical offset factor.
+    float vertical_offset_factor() const { return rotate_vertical_offset_factor_; }
+
+    /// Sets the pitch angle (in degrees). Default value is 0.0 (no pitch). Positive values for raising head.
+    void set_pitch_angle(float v, bool re_generate = false);
+    /// Returns the pitch angle.
+    float pitch_angle() const { return rotate_pitch_angle_; }
+
+    /// Sets the keyframe samples (i.e., the number of key frames per loop). Default value is 10.
+    void set_keyframe_samples(int v, bool re_generate = false);
+    /// Returns the keyframe samples.
+    int keyframe_samples() const { return rotate_keyframe_samples_; }
+
+    /// Sets the number of loops. Default value is 2.
+    void set_num_loops(int v, bool re_generate = false);
+    /// Returns the number of loops.
+    int num_loops() const { return rotate_num_loops_; }
+
+    //@}
+
 
     /// \name Path modification and property query for the walking mode
     //@{
@@ -124,6 +156,7 @@ public:
 
     /// Clears the entire walking path, i.e., all positions added by walk_to().
     void delete_path();
+    //@}
 
     /// \name Walking through, animation, and visualization.
     //@{
@@ -178,21 +211,29 @@ protected:
 
     Status status_;
 
+    // ------------------- parameters for the walking mode ----------------------
     easy3d::Box3 scene_box_;
-
     // the orientation of the ground plane (currently is vec3(0,0,1)).
     // \todo Allow to modify it to handle arbitrarily oriented scenes/objects
     easy3d::vec3 ground_plane_normal_;
-
     bool follow_up_;
-
     // character's height factor.
     // It specifies the character's relative height with respect to the scene height.
     float height_factor_;
-
     // the forward factor for visualizing the character from the 3rd person's perspective.
     // It specifies how far the character is in front of the observer (i.e., camera), relative to its height.
     float third_person_forward_factor_;
+
+    // -------------- parameters for rotate-around-axis mode -------------------
+    easy3d::Line3 rotate_axis_;
+    // controls the zoom out of the camera (distance to the axis), relative to the Z-height of the object
+    float rotate_zoom_out_factor_;              // default value is 0.0 (no zoom out)
+    // controls the vertical position of the camera, relative to the Z-height of the object
+    float rotate_vertical_offset_factor_;       // default value is 0.0 (no vertical offset)
+    float rotate_pitch_angle_;                  // in degrees. Default value is 0.0 (no pitch)
+    int rotate_keyframe_samples_;   // how many keyframes per loop?
+    int rotate_num_loops_;          // how many loops?
+    // --------------------------------------------------------------------------
 
     bool cameras_visible_;
     bool path_visible_;

@@ -315,7 +315,7 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
 
                 Picker picker(camera_);
                 const Line3 line = picker.picking_line(e->pos().x(), e->pos().y());
-                walkThrough()->set_rotate_axis(line, models_);
+                walkThrough()->generate_camera_path(line);
                 update();
             }
             else if (walkThrough()->status() == WalkThrough::FREE_MODE) {

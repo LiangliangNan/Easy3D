@@ -68,6 +68,12 @@ public Q_SLOTS :
 	void setCharacterHeightFactor(double);
 	void setCharacterDistanceFactor(double);
 
+    void setZoomOutFactor(double);
+    void setVerticalOffsetFactor(double);
+    void setPitchAngle(double);
+    void setNumberKeyframesPerLoop(int);
+    void setNumberLoops(int);
+
 	void setInterpolationSpeed(double);
 	void setFrameRate(int);
 

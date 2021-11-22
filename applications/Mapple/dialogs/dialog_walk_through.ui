@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>433</width>
-    <height>709</height>
+    <width>446</width>
+    <height>802</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -249,7 +249,7 @@
             <number>0</number>
            </property>
            <item>
-            <widget class="QLabel" name="label_2">
+            <widget class="QLabel" name="labelUsageRotateAroundAxis">
              <property name="text">
               <string>Usage:
   (1) manipulate scene to top view;
@@ -259,7 +259,7 @@
             </widget>
            </item>
            <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_6">
+            <layout class="QHBoxLayout" name="horizontalLayoutRotateAroundAxis">
              <item>
               <spacer name="horizontalSpacer_2">
                <property name="orientation">
@@ -277,32 +277,113 @@
               </spacer>
              </item>
              <item>
-              <layout class="QGridLayout" name="gridLayout_2">
-               <item row="0" column="0">
-                <widget class="QLabel" name="labelCharacterHeight_2">
+              <layout class="QGridLayout" name="gridLayoutRotateAroundAxis">
+               <item row="1" column="0">
+                <widget class="QLabel" name="labelVerticalOffsetFactor">
                  <property name="text">
-                  <string>Number of keyframes</string>
+                  <string>Vertical offset factor (w.r.t. object height)</string>
                  </property>
                 </widget>
                </item>
-               <item row="0" column="1">
-                <widget class="QSpinBox" name="spinBox">
+               <item row="1" column="1">
+                <widget class="QDoubleSpinBox" name="doubleSpinBoxVerticalOffsetFactor">
+                 <property name="decimals">
+                  <number>1</number>
+                 </property>
+                 <property name="minimum">
+                  <double>-100.000000000000000</double>
+                 </property>
+                 <property name="maximum">
+                  <double>100.000000000000000</double>
+                 </property>
+                 <property name="singleStep">
+                  <double>0.100000000000000</double>
+                 </property>
+                 <property name="value">
+                  <double>0.000000000000000</double>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="0">
+                <widget class="QLabel" name="labelNumberKeyframesPerLoop">
+                 <property name="text">
+                  <string>Number of keyframes per loop</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="1">
+                <widget class="QSpinBox" name="spinBoxNumberKeyframesPerLoop">
+                 <property name="maximum">
+                  <number>99</number>
+                 </property>
                  <property name="value">
                   <number>10</number>
                  </property>
                 </widget>
                </item>
-               <item row="1" column="1">
-                <widget class="QSpinBox" name="spinBox_2">
+               <item row="0" column="1">
+                <widget class="QDoubleSpinBox" name="doubleSpinBoxZoomOutFactor">
+                 <property name="decimals">
+                  <number>1</number>
+                 </property>
+                 <property name="minimum">
+                  <double>-100.000000000000000</double>
+                 </property>
+                 <property name="maximum">
+                  <double>100.000000000000000</double>
+                 </property>
+                 <property name="singleStep">
+                  <double>0.100000000000000</double>
+                 </property>
                  <property name="value">
-                  <number>0</number>
+                  <double>0.000000000000000</double>
                  </property>
                 </widget>
                </item>
-               <item row="1" column="0">
-                <widget class="QLabel" name="labelCharacterHeight_3">
+               <item row="0" column="0">
+                <widget class="QLabel" name="labelZoomOutFactor">
                  <property name="text">
-                  <string>Start from keyframe</string>
+                  <string>Zoom out factor (w.r.t. object height)</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="4" column="1">
+                <widget class="QSpinBox" name="spinBoxNumberLoops">
+                 <property name="value">
+                  <number>2</number>
+                 </property>
+                </widget>
+               </item>
+               <item row="4" column="0">
+                <widget class="QLabel" name="labelNumberLoops">
+                 <property name="text">
+                  <string>Number of loops</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="0">
+                <widget class="QLabel" name="labelPitchAngle">
+                 <property name="text">
+                  <string>Pitch angle (in degrees)</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="1">
+                <widget class="QDoubleSpinBox" name="doubleSpinBoxPitchAngle">
+                 <property name="decimals">
+                  <number>1</number>
+                 </property>
+                 <property name="minimum">
+                  <double>-89.000000000000000</double>
+                 </property>
+                 <property name="maximum">
+                  <double>89.000000000000000</double>
+                 </property>
+                 <property name="singleStep">
+                  <double>1.000000000000000</double>
+                 </property>
+                 <property name="value">
+                  <double>0.000000000000000</double>
                  </property>
                 </widget>
                </item>
@@ -588,8 +669,11 @@ The higher the better the quality (but the larger file size of the video)</strin
   <tabstop>checkBoxFollowUp</tabstop>
   <tabstop>doubleSpinBoxCharacterHeightFactor</tabstop>
   <tabstop>doubleSpinBoxCharacterDistanceFactor</tabstop>
-  <tabstop>spinBox</tabstop>
-  <tabstop>spinBox_2</tabstop>
+  <tabstop>doubleSpinBoxZoomOutFactor</tabstop>
+  <tabstop>doubleSpinBoxVerticalOffsetFactor</tabstop>
+  <tabstop>doubleSpinBoxPitchAngle</tabstop>
+  <tabstop>spinBoxNumberKeyframesPerLoop</tabstop>
+  <tabstop>spinBoxNumberLoops</tabstop>
   <tabstop>previousKeyframeButton</tabstop>
   <tabstop>nextKeyframeButton</tabstop>
   <tabstop>removeLastKeyframeButton</tabstop>

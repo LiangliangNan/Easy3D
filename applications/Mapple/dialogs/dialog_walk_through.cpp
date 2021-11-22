@@ -70,6 +70,12 @@ DialogWalkThrough::DialogWalkThrough(MainWindow *window)
 	connect(doubleSpinBoxCharacterHeightFactor, SIGNAL(valueChanged(double)), this, SLOT(setCharacterHeightFactor(double)));
 	connect(doubleSpinBoxCharacterDistanceFactor, SIGNAL(valueChanged(double)), this, SLOT(setCharacterDistanceFactor(double)));
 
+    connect(doubleSpinBoxZoomOutFactor, SIGNAL(valueChanged(double)), this, SLOT(setZoomOutFactor(double)));
+    connect(doubleSpinBoxVerticalOffsetFactor, SIGNAL(valueChanged(double)), this, SLOT(setVerticalOffsetFactor(double)));
+    connect(doubleSpinBoxPitchAngle, SIGNAL(valueChanged(double)), this, SLOT(setPitchAngle(double)));
+    connect(spinBoxNumberKeyframesPerLoop, SIGNAL(valueChanged(int)), this, SLOT(setNumberKeyframesPerLoop(int)));
+    connect(spinBoxNumberLoops, SIGNAL(valueChanged(int)), this, SLOT(setNumberLoops(int)));
+
     connect(spinBoxFPS, SIGNAL(valueChanged(int)), this, SLOT(setFrameRate(int)));
     connect(doubleSpinBoxInterpolationSpeed, SIGNAL(valueChanged(double)), this, SLOT(setInterpolationSpeed(double)));
 
@@ -172,6 +178,36 @@ void DialogWalkThrough::setCharacterHeightFactor(double h) {
 
 void DialogWalkThrough::setCharacterDistanceFactor(double d) {
     walkThrough()->set_third_person_forward_factor(d);
+    viewer_->update();
+}
+
+
+void DialogWalkThrough::setZoomOutFactor(double v) {
+    walkThrough()->set_zoom_out_factor(v, true);
+    viewer_->update();
+}
+
+
+void DialogWalkThrough::setVerticalOffsetFactor(double v) {
+    walkThrough()->set_vertical_offset_factor(v, true);
+    viewer_->update();
+}
+
+
+void DialogWalkThrough::setPitchAngle(double v) {
+    walkThrough()->set_pitch_angle(v, true);
+    viewer_->update();
+}
+
+
+void DialogWalkThrough::setNumberKeyframesPerLoop(int v) {
+    walkThrough()->set_keyframe_samples(v, true);
+    viewer_->update();
+}
+
+
+void DialogWalkThrough::setNumberLoops(int v) {
+    walkThrough()->set_num_loops(v, true);
     viewer_->update();
 }
 
