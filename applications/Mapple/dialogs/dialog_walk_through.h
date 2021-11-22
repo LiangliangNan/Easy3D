@@ -53,7 +53,7 @@ public Q_SLOTS :
     void setInterpolationMethod(int);
     void clearPath();
 
-    void setWalkingMode(bool);
+    void setMode(QAbstractButton *);
 
     void goToKeyframe(int);
     void goToPreviousKeyframe();

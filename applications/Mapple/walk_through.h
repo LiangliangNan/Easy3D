@@ -53,7 +53,7 @@ public:
     virtual ~WalkThrough();
 
     enum Status {
-        STOPPED, WALKING_MODE, FREE_MODE
+        STOPPED, FREE_MODE, WALKING_MODE, ROTATE_AROUND_AXIS
     };
 
     Status status() const { return status_; }
@@ -70,7 +70,7 @@ public:
     /// \name Keyframe creation for the walking mode
     //@{
     /// \brief Starts the walking mode.
-    /// \param box The bounding box of the scene, which is used to initialize parameters of the character.
+    /// \param scene All the models in the scene.
     void start_walking(const std::vector<easy3d::Model *> &scene);
 
     /// \brief Walks the character to the \c ground_point position.
@@ -108,6 +108,13 @@ public:
     float third_person_forward_factor() const { return third_person_forward_factor_; }
     //@}
 
+    /// \name Keyframe creation for the rotate-around-axis mode
+    //@{
+    /// \brief Sets the rotational axis (for rotate-around-axis mode only).
+    /// \param axis A line denoting the rotation axis.
+    /// \param scene All the models in the scene.
+    void set_rotate_axis(const easy3d::Line3 &axis, const std::vector<easy3d::Model *> &scene);
+    //@}
 
     /// \name Path modification and property query for the walking mode
     //@{

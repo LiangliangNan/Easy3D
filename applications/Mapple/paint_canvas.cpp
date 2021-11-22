@@ -61,10 +61,12 @@
 #include <easy3d/gui/picker_point_cloud.h>
 #include <easy3d/gui/picker_surface_mesh.h>
 #include <easy3d/gui/picker_model.h>
+#include <easy3d/gui/picker.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/string.h>
 #include <easy3d/util/line_stream.h>
+#include <easy3d/util/dialogs.h>
 
 #include <QKeyEvent>
 #include <QPainter>
@@ -301,8 +303,23 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
                 walkThrough()->walk_to(p);
                 update();
             }
+            else if (walkThrough()->status() == WalkThrough::ROTATE_AROUND_AXIS)
+            {
+                if (walkThrough()->interpolator()->number_of_keyframes() > 0) {
+                    auto answer = dialog::message("Rotate camera around axis", "Overwrite the existing camera path?", dialog::Choice::ok_cancel, dialog::Type::warning);
+                    if (answer == dialog::Response::cancel)
+                        return;
+                    else if (answer == dialog::Response::ok)
+                        walkThrough()->interpolator()->delete_path();
+                }
+
+                Picker picker(camera_);
+                const Line3 line = picker.picking_line(e->pos().x(), e->pos().y());
+                walkThrough()->set_rotate_axis(line, models_);
+                update();
+            }
             else if (walkThrough()->status() == WalkThrough::FREE_MODE) {
-                LOG(WARNING) << "Alt + Left click is for the walking mode only. Press 'K' to add a keyframe in the free mode";
+                LOG(WARNING) << "press 'K' to add a keyframe in the free mode";
             }
         } else {
             if (e->button() == Qt::LeftButton && e->modifiers() != Qt::AltModifier && e->modifiers() != Qt::ControlModifier)
@@ -1046,7 +1063,7 @@ vec3 PaintCanvas::pointUnderPixel(const QPoint &p, bool &found) const {
     int gly = height() - 1 - p.y();
 
     // NOTE: when dealing with OpenGL, all positions are relative to the viewer port.
-    //       So we have to handle highdpi desplays.
+    //       So we have to handle highdpi displays.
     glx = static_cast<int>(glx * dpi_scaling());
     gly = static_cast<int>(gly * dpi_scaling());
 

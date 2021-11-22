@@ -128,6 +128,35 @@ void WalkThrough::set_third_person_forward_factor(float f) {
 }
 
 
+void WalkThrough::set_rotate_axis(const easy3d::Line3 &axis, const std::vector<easy3d::Model *> &scene) {
+    if (scene.empty())
+        return;
+
+    Box3 box;
+    for (const auto &m : scene) {
+        if (m->renderer()->is_visible())
+            box += m->bounding_box();
+    }
+    scene_box_ = box;
+    camera_->setSceneRadius(box.radius() * 1.1f);
+
+    const auto up = -axis.direction(); // picking line points inside screen
+    const auto at = axis.projection(camera_->sceneCenter());
+    const auto relative_eye = geom::orthogonal(up).normalize() * box.diagonal();
+
+    const int num_frames = 10;
+    float angle_step = static_cast<float>(2.0 * M_PI / num_frames);
+    for (int i=0; i<num_frames + 2; ++i) {
+        easy3d::quat q(up, -angle_step * i); // "-" for counterclockwise rotation
+        Camera cam;
+        cam.setPosition(at + q.rotate(relative_eye));
+        cam.lookAt(at);
+        cam.setUpVector(up);
+        add_keyframe(*cam.frame());
+    }
+}
+
+
 void WalkThrough::delete_last_keyframe() {
     if (kfi_->number_of_keyframes() == 0) {
         current_frame_idx_ = -1;

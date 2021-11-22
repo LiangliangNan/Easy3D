@@ -48,6 +48,7 @@ DialogWalkThrough::DialogWalkThrough(MainWindow *window)
 	: Dialog(window)
 {
 	setupUi(this);
+    layout()->setSizeConstraint(QLayout::SetFixedSize);
 
 	comboBoxInterpolationMethod->addItem("Spline Interpolation");
     comboBoxInterpolationMethod->addItem("Spline Fitting");
@@ -56,7 +57,9 @@ DialogWalkThrough::DialogWalkThrough(MainWindow *window)
     QButtonGroup* group = new QButtonGroup(this);
     group->addButton(radioButtonFreeMode);
     group->addButton(radioButtonWalkingMode);
-    radioButtonWalkingMode->setChecked(true);
+    group->addButton(radioButtonRotateAroundAxis);
+    connect(group, SIGNAL(buttonClicked(QAbstractButton *)), this, SLOT(setMode(QAbstractButton *)));
+    group->buttonClicked(radioButtonFreeMode);
 
 	spinBoxFPS->setValue(interpolator()->frame_rate());
 	doubleSpinBoxInterpolationSpeed->setValue(interpolator()->interpolation_speed());
@@ -69,8 +72,6 @@ DialogWalkThrough::DialogWalkThrough(MainWindow *window)
 
     connect(spinBoxFPS, SIGNAL(valueChanged(int)), this, SLOT(setFrameRate(int)));
     connect(doubleSpinBoxInterpolationSpeed, SIGNAL(valueChanged(double)), this, SLOT(setInterpolationSpeed(double)));
-
-    connect(radioButtonWalkingMode, SIGNAL(toggled(bool)), this, SLOT(setWalkingMode(bool)));
 
 	connect(previousKeyframeButton, SIGNAL(clicked()), this, SLOT(goToPreviousKeyframe()));
 	connect(nextKeyframeButton, SIGNAL(clicked()), this, SLOT(goToNextKeyframe()));
@@ -187,18 +188,31 @@ void DialogWalkThrough::setFrameRate(int fps) {
 }
 
 
-void DialogWalkThrough::setWalkingMode(bool b) {
-    labelFollowUp->setEnabled(b);
-    checkBoxFollowUp->setEnabled(b);
-    labelCharacterHeight->setEnabled(b);
-    labelCharacterDistanceToEye->setEnabled(b);
-    doubleSpinBoxCharacterHeightFactor->setEnabled(b);
-    doubleSpinBoxCharacterDistanceFactor->setEnabled(b);
+void DialogWalkThrough::setMode(QAbstractButton *button) {
+    if (!walkThrough())
+        return;
 
-    if (b)
-        walkThrough()->set_status(WalkThrough::WALKING_MODE);
-    else
+    if (button == radioButtonFreeMode && walkThrough()->status() != WalkThrough::FREE_MODE) {
+        widgetFreeMode->setVisible(true);
+        widgetWalkingMode->setVisible(false);
+        widgetRotateAroundAxis->setVisible(false);
         walkThrough()->set_status(WalkThrough::FREE_MODE);
+        LOG(INFO) << "camera path creation set to 'free' mode";
+    }
+    else if (button == radioButtonWalkingMode && walkThrough()->status() != WalkThrough::WALKING_MODE) {
+        widgetFreeMode->setVisible(false);
+        widgetWalkingMode->setVisible(true);
+        widgetRotateAroundAxis->setVisible(false);
+        walkThrough()->set_status(WalkThrough::WALKING_MODE);
+        LOG(INFO) << "camera path creation set to 'walking' mode";
+    }
+    else if (button == radioButtonRotateAroundAxis && walkThrough()->status() != WalkThrough::ROTATE_AROUND_AXIS) {
+        widgetFreeMode->setVisible(false);
+        widgetWalkingMode->setVisible(false);
+        widgetRotateAroundAxis->setVisible(true);
+        walkThrough()->set_status(WalkThrough::ROTATE_AROUND_AXIS);
+        LOG(INFO) << "camera path creation set to 'rotate around axis' mode";
+    }
 }
 
 
@@ -396,8 +410,6 @@ void DialogWalkThrough::preview(bool b) {
         for (auto w : findChildren<QLineEdit*>()) w->setEnabled(true);
         for (auto w : findChildren<QToolButton*>()) w->setEnabled(true);
         for (auto w : findChildren<QSlider*>()) w->setEnabled(true);
-
-        setWalkingMode(radioButtonWalkingMode->isChecked());
 
         viewer_->update();
     }
