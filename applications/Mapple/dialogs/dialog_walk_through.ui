@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>446</width>
-    <height>802</height>
+    <width>433</width>
+    <height>850</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -114,8 +114,9 @@
             <widget class="QLabel" name="labelFreeMode">
              <property name="text">
               <string>Usage: 
-  (1) manipulate scene to a good view;  
-  (2) press 'K' to add current view as keyframe. </string>
+  (1) manipulate the scene to a good view;  
+  (2) press 'K' to add the current view as a keyframe. 
+  (3) repeat (1) and (2).</string>
              </property>
             </widget>
            </item>
@@ -135,7 +136,8 @@
             <widget class="QLabel" name="label">
              <property name="text">
               <string>Usage:
-  Alt + Left click on the ground to move forward</string>
+  (1) Alt + Left click on the ground to move forward;
+  (2) repeat (1).</string>
              </property>
             </widget>
            </item>
@@ -252,9 +254,10 @@
             <widget class="QLabel" name="labelUsageRotateAroundAxis">
              <property name="text">
               <string>Usage:
-  (1) manipulate scene to top view;
-  (2) Alt + Left click on the ground to define axis;
-  (3) adjust the parameters to generate keyframes.</string>
+  (1) manipulate the scene to the top view;
+  (2) Alt + Left click on the screen to define a rotation axis.
+        An initial camera path will be generated;
+  (3) tune the parameters to adjust keyframes (if needed).</string>
              </property>
             </widget>
            </item>
@@ -388,19 +391,6 @@
                 </widget>
                </item>
               </layout>
-             </item>
-             <item>
-              <spacer name="horizontalSpacer_13">
-               <property name="orientation">
-                <enum>Qt::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>13</width>
-                 <height>15</height>
-                </size>
-               </property>
-              </spacer>
              </item>
             </layout>
            </item>

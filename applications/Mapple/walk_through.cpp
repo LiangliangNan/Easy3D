@@ -140,15 +140,27 @@ void WalkThrough::generate_camera_path(const easy3d::Line3 &axis) {
     const auto up = -rotate_axis_.direction(); // picking line points inside screen
     const auto vertical_offset = rotate_vertical_offset_factor_ * object_height * up;
     const auto at = rotate_axis_.projection(camera_->sceneCenter() + vertical_offset);
-    const auto relative_eye = geom::orthogonal(up).normalize() * (scene_box_.diagonal() + rotate_zoom_out_factor_ * object_height);
+    const auto dist_to_axis = scene_box_.diagonal() + rotate_zoom_out_factor_ * object_height;
+    const auto relative_cam0 = geom::orthogonal(up).normalize() * dist_to_axis;
+
+    const auto pitch_angle = deg2rad(rotate_pitch_angle_);
+    const auto pitch_offset = dist_to_axis * std::tan(pitch_angle);
 
     const float angle_step = static_cast<float>(2.0 * M_PI / rotate_keyframe_samples_);
     for (int i=0; i<rotate_keyframe_samples_ * rotate_num_loops_; ++i) {
         easy3d::quat q(up, -angle_step * i); // "-" for counterclockwise rotation
+        const auto relative_cam = q.rotate(relative_cam0);
         Camera cam;
-        cam.setPosition(at + q.rotate(relative_eye));
-        cam.lookAt(at);
-        cam.setUpVector(up);
+        cam.setPosition(at + relative_cam);
+        cam.lookAt(at + up * pitch_offset);
+
+//        cam.setUpVector(up); // if no pitch
+
+        // the up vector changes w.r.t. pitch angle
+        const auto ortho = cross(relative_cam, up).normalize(); // the rotation axis for camera pitch
+        q.set_axis_angle(ortho, -pitch_angle);
+        cam.setUpVector(q.rotate(up));
+
         add_keyframe(*cam.frame(), true);
     }
 
