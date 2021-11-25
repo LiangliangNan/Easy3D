@@ -290,9 +290,6 @@
                </item>
                <item row="1" column="1">
                 <widget class="QDoubleSpinBox" name="doubleSpinBoxVerticalOffsetFactor">
-                 <property name="decimals">
-                  <number>1</number>
-                 </property>
                  <property name="minimum">
                   <double>-100.000000000000000</double>
                  </property>
@@ -326,9 +323,6 @@
                </item>
                <item row="0" column="1">
                 <widget class="QDoubleSpinBox" name="doubleSpinBoxZoomOutFactor">
-                 <property name="decimals">
-                  <number>1</number>
-                 </property>
                  <property name="minimum">
                   <double>-100.000000000000000</double>
                  </property>
