@@ -107,7 +107,7 @@ Please report the bug by creating an issue and provide the following:
  - a brief description of the issue;
  - operating system name and version (e.g. `Windows 10 64-bit` or `Ubuntu 18.10`);
  - compiler name and version (e.g., `Visual C++ 2015 Update 2`);
- - Easy3D release version (e.g., `2.4.3`) if you are using an official release of Easy3D, Otherwise, the Easy3D commit ID (e.g.  
+ - Easy3D release version (e.g., `2.4.3`) if you are using an official release of Easy3D. Otherwise, the Easy3D commit ID (e.g.  
  `06d1dfe55a5eec2d4b650041cb529f5efdeadd31`) from Git;
  - a short and self-contained code example that can produce the issue. Just put it inline in the body text. If the bug is
 reproducible with one of the test programs or examples that come with Easy3D, simply mention that instead;
