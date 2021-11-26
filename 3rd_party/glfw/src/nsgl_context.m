@@ -1,5 +1,5 @@
 //========================================================================
-// GLFW 3.3 macOS - www.glfw.org
+// GLFW 3.4 macOS - www.glfw.org
 //------------------------------------------------------------------------
 // Copyright (c) 2009-2019 Camilla Löwy <elmindreda@glfw.org>
 //
@@ -172,13 +172,6 @@ GLFWbool _glfwCreateContextNSGL(_GLFWwindow* window,
         {
             _glfwInputError(GLFW_VERSION_UNAVAILABLE,
                             "NSGL: The targeted version of macOS does not support OpenGL 3.0 or 3.1 but may support 3.2 and above");
-            return GLFW_FALSE;
-        }
-
-        if (!ctxconfig->forward || ctxconfig->profile != GLFW_OPENGL_CORE_PROFILE)
-        {
-            _glfwInputError(GLFW_VERSION_UNAVAILABLE,
-                            "NSGL: The targeted version of macOS only supports forward-compatible core profile contexts for OpenGL 3.2 and above");
             return GLFW_FALSE;
         }
     }
@@ -365,7 +358,14 @@ GLFWAPI id glfwGetNSGLContext(GLFWwindow* handle)
     _GLFWwindow* window = (_GLFWwindow*) handle;
     _GLFW_REQUIRE_INIT_OR_RETURN(nil);
 
-    if (window->context.client == GLFW_NO_API)
+    if (_glfw.platform.platformID != GLFW_PLATFORM_COCOA)
+    {
+        _glfwInputError(GLFW_PLATFORM_UNAVAILABLE,
+                        "NSGL: Platform not initialized");
+        return nil;
+    }
+
+    if (window->context.source != GLFW_NATIVE_CONTEXT_API)
     {
         _glfwInputError(GLFW_NO_WINDOW_CONTEXT, NULL);
         return nil;
