@@ -44,10 +44,9 @@ public:
     explicit WidgetTrianglesDrawable(QWidget *parent);
     ~WidgetTrianglesDrawable() override;
 
+public slots:
     // update the panel to be consistent with the drawable's rendering parameters
     void updatePanel() override;
-
-public slots:
 
     void setActiveDrawable(const QString &);
     void setPhongShading(bool);
@@ -77,7 +76,7 @@ private:
     std::vector<QString> vectorFields(const easy3d::Model *model);
 
 private:
-    Ui::WidgetTrianglesDrawable *ui;
+    Ui::WidgetTrianglesDrawable *ui_;
 };
 
 #endif // WIDGET_DRAWABLE_TRIANGLES_H

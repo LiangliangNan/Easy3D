@@ -53,14 +53,15 @@ using namespace easy3d;
 
 
 WidgetTrianglesDrawable::WidgetTrianglesDrawable(QWidget *parent)
-        : WidgetDrawable(parent), ui(new Ui::WidgetTrianglesDrawable) {
-    ui->setupUi(this);
+        : WidgetDrawable(parent), ui_(new Ui::WidgetTrianglesDrawable) 
+{
+    ui_->setupUi(this);
 
     if (colormaps_.empty())
-        ui->comboBoxScalarFieldStyle->addItem("not available");
+        ui_->comboBoxScalarFieldStyle->addItem("not available");
     else {
         for (const auto &colormap : colormaps_)
-            ui->comboBoxScalarFieldStyle->addItem(QIcon(QString::fromStdString(colormap.file)),
+            ui_->comboBoxScalarFieldStyle->addItem(QIcon(QString::fromStdString(colormap.file)),
                                                   QString::fromStdString("  " + colormap.name));
     }
 }
@@ -68,106 +69,106 @@ WidgetTrianglesDrawable::WidgetTrianglesDrawable(QWidget *parent)
 
 void WidgetTrianglesDrawable::connectAll() {
     // which drawable
-    connect(ui->comboBoxDrawables, SIGNAL(currentIndexChanged(const QString &)),this, SLOT(setActiveDrawable(const QString &)));
+    connect(ui_->comboBoxDrawables, SIGNAL(currentIndexChanged(const QString &)),this, SLOT(setActiveDrawable(const QString &)));
 
     // visible
-    connect(ui->checkBoxVisible, SIGNAL(toggled(bool)), this, SLOT(setDrawableVisible(bool)));
+    connect(ui_->checkBoxVisible, SIGNAL(toggled(bool)), this, SLOT(setDrawableVisible(bool)));
 
     // phong shading
-    connect(ui->checkBoxPhongShading, SIGNAL(toggled(bool)), this, SLOT(setPhongShading(bool)));
+    connect(ui_->checkBoxPhongShading, SIGNAL(toggled(bool)), this, SLOT(setPhongShading(bool)));
 
     // lighting
-    connect(ui->comboBoxLightingOptions, SIGNAL(currentIndexChanged(const QString &)),this, SLOT(setLighting(const QString &)));
+    connect(ui_->comboBoxLightingOptions, SIGNAL(currentIndexChanged(const QString &)),this, SLOT(setLighting(const QString &)));
 
     // color scheme
-    connect(ui->comboBoxColorScheme, SIGNAL(currentIndexChanged(const QString &)),this, SLOT(setColorScheme(const QString &)));
+    connect(ui_->comboBoxColorScheme, SIGNAL(currentIndexChanged(const QString &)),this, SLOT(setColorScheme(const QString &)));
 
     // default color
-    connect(ui->toolButtonDefaultColor, SIGNAL(clicked()), this, SLOT(setDefaultColor()));
+    connect(ui_->toolButtonDefaultColor, SIGNAL(clicked()), this, SLOT(setDefaultColor()));
 
     // back color
-    connect(ui->checkBoxBackColor, SIGNAL(toggled(bool)), this, SLOT(setDistinctBackColor(bool)));
-    connect(ui->toolButtonBackColor, SIGNAL(clicked()), this, SLOT(setBackColor()));
+    connect(ui_->checkBoxBackColor, SIGNAL(toggled(bool)), this, SLOT(setDistinctBackColor(bool)));
+    connect(ui_->toolButtonBackColor, SIGNAL(clicked()), this, SLOT(setBackColor()));
 
     // texture
-    connect(ui->toolButtonTextureFile, SIGNAL(clicked()), this, SLOT(setTextureFile()));
-    connect(ui->spinBoxTextureRepeat, SIGNAL(valueChanged(int)), this, SLOT(setTextureRepeat(int)));
-    connect(ui->spinBoxTextureFractionalRepeat, SIGNAL(valueChanged(int)),this, SLOT(setTextureFractionalRepeat(int)));
+    connect(ui_->toolButtonTextureFile, SIGNAL(clicked()), this, SLOT(setTextureFile()));
+    connect(ui_->spinBoxTextureRepeat, SIGNAL(valueChanged(int)), this, SLOT(setTextureRepeat(int)));
+    connect(ui_->spinBoxTextureFractionalRepeat, SIGNAL(valueChanged(int)),this, SLOT(setTextureFractionalRepeat(int)));
 
     // highlight
-    connect(ui->checkBoxHighlight, SIGNAL(toggled(bool)), this, SLOT(setHighlight(bool)));
-    connect(ui->spinBoxHighlightMin, SIGNAL(valueChanged(int)), this, SLOT(setHighlightMin(int)));
-    connect(ui->spinBoxHighlightMax, SIGNAL(valueChanged(int)), this, SLOT(setHighlightMax(int)));
+    connect(ui_->checkBoxHighlight, SIGNAL(toggled(bool)), this, SLOT(setHighlight(bool)));
+    connect(ui_->spinBoxHighlightMin, SIGNAL(valueChanged(int)), this, SLOT(setHighlightMin(int)));
+    connect(ui_->spinBoxHighlightMax, SIGNAL(valueChanged(int)), this, SLOT(setHighlightMax(int)));
 
     // transparency
-    connect(ui->horizontalSliderOpacity, SIGNAL(valueChanged(int)), this, SLOT(setOpacity(int)));
+    connect(ui_->horizontalSliderOpacity, SIGNAL(valueChanged(int)), this, SLOT(setOpacity(int)));
 
     // scalar field
-    connect(ui->comboBoxScalarFieldStyle, SIGNAL(currentIndexChanged(int)), this, SLOT(setScalarFieldStyle(int)));
-    connect(ui->checkBoxScalarFieldDiscrete, SIGNAL(toggled(bool)), this, SLOT(setScalarFieldDiscreteColors(bool)));
-    connect(ui->spinBoxScalarFieldNumStrips, SIGNAL(valueChanged(int)), this, SLOT(setScalarFieldNumOfStripes(int)));
-    connect(ui->checkBoxScalarFieldClamp, SIGNAL(toggled(bool)), this, SLOT(setScalarFieldClamp(bool)));
-    connect(ui->doubleSpinBoxScalarFieldClampLower, SIGNAL(valueChanged(double)), this, SLOT(setScalarFieldClampLower(double)));
-    connect(ui->doubleSpinBoxScalarFieldClampUpper, SIGNAL(valueChanged(double)), this, SLOT(setScalarFieldClampUpper(double)));
+    connect(ui_->comboBoxScalarFieldStyle, SIGNAL(currentIndexChanged(int)), this, SLOT(setScalarFieldStyle(int)));
+    connect(ui_->checkBoxScalarFieldDiscrete, SIGNAL(toggled(bool)), this, SLOT(setScalarFieldDiscreteColors(bool)));
+    connect(ui_->spinBoxScalarFieldNumStrips, SIGNAL(valueChanged(int)), this, SLOT(setScalarFieldNumOfStripes(int)));
+    connect(ui_->checkBoxScalarFieldClamp, SIGNAL(toggled(bool)), this, SLOT(setScalarFieldClamp(bool)));
+    connect(ui_->doubleSpinBoxScalarFieldClampLower, SIGNAL(valueChanged(double)), this, SLOT(setScalarFieldClampLower(double)));
+    connect(ui_->doubleSpinBoxScalarFieldClampUpper, SIGNAL(valueChanged(double)), this, SLOT(setScalarFieldClampUpper(double)));
 
     // vector field
-    connect(ui->comboBoxVectorField, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(setVectorField(const QString&)));
-    connect(ui->doubleSpinBoxVectorFieldScale, SIGNAL(valueChanged(double)), this, SLOT(setVectorFieldScale(double)));
+    connect(ui_->comboBoxVectorField, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(setVectorField(const QString&)));
+    connect(ui_->doubleSpinBoxVectorFieldScale, SIGNAL(valueChanged(double)), this, SLOT(setVectorFieldScale(double)));
 }
 
 
 void WidgetTrianglesDrawable::disconnectAll() {
     // which drawable
-    disconnect(ui->comboBoxDrawables, SIGNAL(currentIndexChanged(const QString &)),this, SLOT(setActiveDrawable(const QString &)));
+    disconnect(ui_->comboBoxDrawables, SIGNAL(currentIndexChanged(const QString &)),this, SLOT(setActiveDrawable(const QString &)));
 
     // visible
-    disconnect(ui->checkBoxVisible, SIGNAL(toggled(bool)), this, SLOT(setDrawableVisible(bool)));
+    disconnect(ui_->checkBoxVisible, SIGNAL(toggled(bool)), this, SLOT(setDrawableVisible(bool)));
 
     // phong shading
-    disconnect(ui->checkBoxPhongShading, SIGNAL(toggled(bool)), this, SLOT(setPhongShading(bool)));
+    disconnect(ui_->checkBoxPhongShading, SIGNAL(toggled(bool)), this, SLOT(setPhongShading(bool)));
 
     // lighting
-    disconnect(ui->comboBoxLightingOptions, SIGNAL(currentIndexChanged(const QString &)),this, SLOT(setLighting(const QString &)));
+    disconnect(ui_->comboBoxLightingOptions, SIGNAL(currentIndexChanged(const QString &)),this, SLOT(setLighting(const QString &)));
 
     // color scheme
-    disconnect(ui->comboBoxColorScheme, SIGNAL(currentIndexChanged(const QString &)),this, SLOT(setColorScheme(const QString &)));
+    disconnect(ui_->comboBoxColorScheme, SIGNAL(currentIndexChanged(const QString &)),this, SLOT(setColorScheme(const QString &)));
 
     // default color
-    disconnect(ui->toolButtonDefaultColor, SIGNAL(clicked()), this, SLOT(setDefaultColor()));
+    disconnect(ui_->toolButtonDefaultColor, SIGNAL(clicked()), this, SLOT(setDefaultColor()));
 
     // back color
-    disconnect(ui->checkBoxBackColor, SIGNAL(toggled(bool)), this, SLOT(setDistinctBackColor(bool)));
-    disconnect(ui->toolButtonBackColor, SIGNAL(clicked()), this, SLOT(setBackColor()));
+    disconnect(ui_->checkBoxBackColor, SIGNAL(toggled(bool)), this, SLOT(setDistinctBackColor(bool)));
+    disconnect(ui_->toolButtonBackColor, SIGNAL(clicked()), this, SLOT(setBackColor()));
 
     // texture
-    disconnect(ui->toolButtonTextureFile, SIGNAL(clicked()), this, SLOT(setTextureFile()));
-    disconnect(ui->spinBoxTextureRepeat, SIGNAL(valueChanged(int)), this, SLOT(setTextureRepeat(int)));
-    disconnect(ui->spinBoxTextureFractionalRepeat, SIGNAL(valueChanged(int)),this, SLOT(setTextureFractionalRepeat(int)));
+    disconnect(ui_->toolButtonTextureFile, SIGNAL(clicked()), this, SLOT(setTextureFile()));
+    disconnect(ui_->spinBoxTextureRepeat, SIGNAL(valueChanged(int)), this, SLOT(setTextureRepeat(int)));
+    disconnect(ui_->spinBoxTextureFractionalRepeat, SIGNAL(valueChanged(int)),this, SLOT(setTextureFractionalRepeat(int)));
 
     // highlight
-    disconnect(ui->checkBoxHighlight, SIGNAL(toggled(bool)), this, SLOT(setHighlight(bool)));
-    disconnect(ui->spinBoxHighlightMin, SIGNAL(valueChanged(int)), this, SLOT(setHighlightMin(int)));
-    disconnect(ui->spinBoxHighlightMax, SIGNAL(valueChanged(int)), this, SLOT(setHighlightMax(int)));
+    disconnect(ui_->checkBoxHighlight, SIGNAL(toggled(bool)), this, SLOT(setHighlight(bool)));
+    disconnect(ui_->spinBoxHighlightMin, SIGNAL(valueChanged(int)), this, SLOT(setHighlightMin(int)));
+    disconnect(ui_->spinBoxHighlightMax, SIGNAL(valueChanged(int)), this, SLOT(setHighlightMax(int)));
 
     // transparency
-    disconnect(ui->horizontalSliderOpacity, SIGNAL(valueChanged(int)), this, SLOT(setOpacity(int)));
+    disconnect(ui_->horizontalSliderOpacity, SIGNAL(valueChanged(int)), this, SLOT(setOpacity(int)));
 
     // scalar field
-    disconnect(ui->comboBoxScalarFieldStyle, SIGNAL(currentIndexChanged(int)), this, SLOT(setScalarFieldStyle(int)));
-    disconnect(ui->checkBoxScalarFieldDiscrete, SIGNAL(toggled(bool)), this, SLOT(setScalarFieldDiscreteColors(bool)));
-    disconnect(ui->spinBoxScalarFieldNumStrips, SIGNAL(valueChanged(int)), this, SLOT(setScalarFieldNumOfStripes(int)));
-    disconnect(ui->checkBoxScalarFieldClamp, SIGNAL(toggled(bool)), this, SLOT(setScalarFieldClamp(bool)));
-    disconnect(ui->doubleSpinBoxScalarFieldClampLower, SIGNAL(valueChanged(double)), this, SLOT(setScalarFieldClampLower(double)));
-    disconnect(ui->doubleSpinBoxScalarFieldClampUpper, SIGNAL(valueChanged(double)), this, SLOT(setScalarFieldClampUpper(double)));
+    disconnect(ui_->comboBoxScalarFieldStyle, SIGNAL(currentIndexChanged(int)), this, SLOT(setScalarFieldStyle(int)));
+    disconnect(ui_->checkBoxScalarFieldDiscrete, SIGNAL(toggled(bool)), this, SLOT(setScalarFieldDiscreteColors(bool)));
+    disconnect(ui_->spinBoxScalarFieldNumStrips, SIGNAL(valueChanged(int)), this, SLOT(setScalarFieldNumOfStripes(int)));
+    disconnect(ui_->checkBoxScalarFieldClamp, SIGNAL(toggled(bool)), this, SLOT(setScalarFieldClamp(bool)));
+    disconnect(ui_->doubleSpinBoxScalarFieldClampLower, SIGNAL(valueChanged(double)), this, SLOT(setScalarFieldClampLower(double)));
+    disconnect(ui_->doubleSpinBoxScalarFieldClampUpper, SIGNAL(valueChanged(double)), this, SLOT(setScalarFieldClampUpper(double)));
 
     // vector field
-    disconnect(ui->comboBoxVectorField, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(setVectorField(const QString&)));
-    disconnect(ui->doubleSpinBoxVectorFieldScale, SIGNAL(valueChanged(double)), this, SLOT(setVectorFieldScale(double)));
+    disconnect(ui_->comboBoxVectorField, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(setVectorField(const QString&)));
+    disconnect(ui_->doubleSpinBoxVectorFieldScale, SIGNAL(valueChanged(double)), this, SLOT(setVectorFieldScale(double)));
 }
 
 
 WidgetTrianglesDrawable::~WidgetTrianglesDrawable() {
-    delete ui;
+    delete ui_;
 }
 
 
@@ -190,101 +191,101 @@ void WidgetTrianglesDrawable::updatePanel() {
     auto& state = states_[d];
     auto& scheme = d->state();
 
-    ui->comboBoxDrawables->clear();
+    ui_->comboBoxDrawables->clear();
     const auto &drawables = model->renderer()->triangles_drawables();
     for (auto drawable : drawables)
-        ui->comboBoxDrawables->addItem(QString::fromStdString(drawable->name()));
-    ui->comboBoxDrawables->setCurrentText(QString::fromStdString(d->name()));
+        ui_->comboBoxDrawables->addItem(QString::fromStdString(drawable->name()));
+    ui_->comboBoxDrawables->setCurrentText(QString::fromStdString(d->name()));
 
     // visible
-    ui->checkBoxVisible->setChecked(d->is_visible());
+    ui_->checkBoxVisible->setChecked(d->is_visible());
     window_->widgetModelList()->updateDrawableVisibilities();
 
     // phong shading
-    ui->checkBoxPhongShading->setChecked(d->smooth_shading());
+    ui_->checkBoxPhongShading->setChecked(d->smooth_shading());
 
     {   // lighting
         if (d->lighting()) {
             if (d->lighting_two_sides())
-                ui->comboBoxLightingOptions->setCurrentText("front and back");
+                ui_->comboBoxLightingOptions->setCurrentText("front and back");
             else
-                ui->comboBoxLightingOptions->setCurrentText("front only");
+                ui_->comboBoxLightingOptions->setCurrentText("front only");
         } else
-            ui->comboBoxLightingOptions->setCurrentText("disabled");
+            ui_->comboBoxLightingOptions->setCurrentText("disabled");
     }
 
     {   // color scheme
-        ui->comboBoxColorScheme->clear();
+        ui_->comboBoxColorScheme->clear();
         const std::vector<QString> &schemes = colorSchemes(viewer_->currentModel());
         for (const auto &scheme : schemes)
-            ui->comboBoxColorScheme->addItem(scheme);
+            ui_->comboBoxColorScheme->addItem(scheme);
 
         for (const auto& name : schemes) {
             if (name.contains(QString::fromStdString(scheme.property_name()))) {
-                ui->comboBoxColorScheme->setCurrentText(name);
+                ui_->comboBoxColorScheme->setCurrentText(name);
                 break;
             }
         }
 
         // default color
         vec3 c = d->color();
-        QPixmap pixmap(ui->toolButtonDefaultColor->size());
+        QPixmap pixmap(ui_->toolButtonDefaultColor->size());
         pixmap.fill(
                 QColor(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255)));
-        ui->toolButtonDefaultColor->setIcon(QIcon(pixmap));
+        ui_->toolButtonDefaultColor->setIcon(QIcon(pixmap));
 
         // back side color
-        ui->checkBoxBackColor->setChecked(d->distinct_back_color());
+        ui_->checkBoxBackColor->setChecked(d->distinct_back_color());
         c = d->back_color();
         pixmap.fill(
                 QColor(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255)));
-        ui->toolButtonBackColor->setIcon(QIcon(pixmap));
+        ui_->toolButtonBackColor->setIcon(QIcon(pixmap));
 
         // texture
         auto tex = d->texture();
         if (tex) {
             const std::string &tex_name = file_system::simple_name(tex->name());
-            ui->lineEditTextureFile->setText(QString::fromStdString(tex_name));
+            ui_->lineEditTextureFile->setText(QString::fromStdString(tex_name));
         }
         else
-            ui->lineEditTextureFile->setText("not available");
+            ui_->lineEditTextureFile->setText("not available");
 
-        ui->spinBoxTextureRepeat->setValue(d->texture_repeat());
-        ui->spinBoxTextureFractionalRepeat->setValue(d->texture_fractional_repeat());
+        ui_->spinBoxTextureRepeat->setValue(d->texture_repeat());
+        ui_->spinBoxTextureFractionalRepeat->setValue(d->texture_fractional_repeat());
     }
 
     {   // highlight
         bool highlight = d->highlight();
-        ui->checkBoxHighlight->setChecked(highlight);
+        ui_->checkBoxHighlight->setChecked(highlight);
 
         const auto& range = states_[d].highlight_range;
-        ui->spinBoxHighlightMin->setValue(range.first);
-        ui->spinBoxHighlightMax->setValue(range.second);
+        ui_->spinBoxHighlightMin->setValue(range.first);
+        ui_->spinBoxHighlightMax->setValue(range.second);
     }
 
     {   // scalar field
-        ui->comboBoxScalarFieldStyle->setCurrentIndex(state.scalar_style);
-        ui->checkBoxScalarFieldDiscrete->setChecked(states_[d].discrete_color);
-        ui->spinBoxScalarFieldNumStrips->setValue(states_[d].num_stripes);
-        const auto& coloring = ui->comboBoxColorScheme->currentText().toStdString();
+        ui_->comboBoxScalarFieldStyle->setCurrentIndex(state.scalar_style);
+        ui_->checkBoxScalarFieldDiscrete->setChecked(states_[d].discrete_color);
+        ui_->spinBoxScalarFieldNumStrips->setValue(states_[d].num_stripes);
+        const auto& coloring = ui_->comboBoxColorScheme->currentText().toStdString();
         if (coloring.find("scalar - ") != std::string::npos && coloring.find(scheme.property_name()) != std::string::npos) {
             auto tex = colormapTexture(states_[d].scalar_style, states_[d].discrete_color, states_[d].num_stripes);
             if (tex)
                 d->set_texture(tex);
         }
-        ui->checkBoxScalarFieldClamp->setChecked(scheme.clamp_range());
-        ui->doubleSpinBoxScalarFieldClampLower->setValue(scheme.clamp_lower() * 100);
-        ui->doubleSpinBoxScalarFieldClampUpper->setValue(scheme.clamp_upper() * 100);
+        ui_->checkBoxScalarFieldClamp->setChecked(scheme.clamp_range());
+        ui_->doubleSpinBoxScalarFieldClampLower->setValue(scheme.clamp_lower() * 100);
+        ui_->doubleSpinBoxScalarFieldClampUpper->setValue(scheme.clamp_upper() * 100);
     }
 
     {   // vector field
-        ui->comboBoxVectorField->clear();
+        ui_->comboBoxVectorField->clear();
         const std::vector<QString> &fields = vectorFields(viewer_->currentModel());
         for (auto name : fields)
-            ui->comboBoxVectorField->addItem(name);
+            ui_->comboBoxVectorField->addItem(name);
 
-        ui->comboBoxVectorField->setCurrentText(state.vector_field);
-        ui->doubleSpinBoxVectorFieldScale->setValue(state.vector_field_scale);
+        ui_->comboBoxVectorField->setCurrentText(state.vector_field);
+        ui_->doubleSpinBoxVectorFieldScale->setValue(state.vector_field_scale);
     }
 
     disableUnavailableOptions();
@@ -463,14 +464,14 @@ void WidgetTrianglesDrawable::setColorScheme(const QString &text) {
     auto tex = d->texture();
     if (tex) {
         const std::string &tex_name = file_system::simple_name(tex->name());
-        ui->lineEditTextureFile->setText(QString::fromStdString(tex_name));
+        ui_->lineEditTextureFile->setText(QString::fromStdString(tex_name));
     }
 
     auto& scheme = d->state();
-    scheme.set_clamp_range(ui->checkBoxScalarFieldClamp->isChecked());
-    scheme.set_clamp_lower(ui->doubleSpinBoxScalarFieldClampLower->value() / 100.0);
-    scheme.set_clamp_upper(ui->doubleSpinBoxScalarFieldClampUpper->value() / 100.0);
-    states_[d].scalar_style = ui->comboBoxScalarFieldStyle->currentIndex();
+    scheme.set_clamp_range(ui_->checkBoxScalarFieldClamp->isChecked());
+    scheme.set_clamp_lower(ui_->doubleSpinBoxScalarFieldClampLower->value() / 100.0);
+    scheme.set_clamp_upper(ui_->doubleSpinBoxScalarFieldClampUpper->value() / 100.0);
+    states_[d].scalar_style = ui_->comboBoxScalarFieldStyle->currentIndex();
 
     WidgetDrawable::setColorScheme(text);
 }
@@ -496,7 +497,7 @@ void WidgetTrianglesDrawable::setTextureFile() {
         d->set_texture(tex);
         viewer_->update();
         const std::string& simple_name = file_system::simple_name(file_name);
-        ui->lineEditTextureFile->setText(QString::fromStdString(simple_name));
+        ui_->lineEditTextureFile->setText(QString::fromStdString(simple_name));
     } else
         LOG(WARNING) << "failed creating texture from file: " << file_name;
 
@@ -521,9 +522,9 @@ void WidgetTrianglesDrawable::setDefaultColor() {
         d->set_uniform_coloring(new_color);
         viewer_->update();
 
-        QPixmap pixmap(ui->toolButtonDefaultColor->size());
+        QPixmap pixmap(ui_->toolButtonDefaultColor->size());
         pixmap.fill(color);
-        ui->toolButtonDefaultColor->setIcon(QIcon(pixmap));
+        ui_->toolButtonDefaultColor->setIcon(QIcon(pixmap));
     }
 }
 
@@ -538,9 +539,9 @@ void WidgetTrianglesDrawable::setBackColor() {
         d->set_back_color(new_color);
         viewer_->update();
 
-        QPixmap pixmap(ui->toolButtonBackColor->size());
+        QPixmap pixmap(ui_->toolButtonBackColor->size());
         pixmap.fill(color);
-        ui->toolButtonBackColor->setIcon(QIcon(pixmap));
+        ui_->toolButtonBackColor->setIcon(QIcon(pixmap));
     }
 }
 
@@ -573,7 +574,7 @@ void WidgetTrianglesDrawable::setVectorField(const QString &text) {
 
 void WidgetTrianglesDrawable::setScalarFieldStyle(int idx) {
     WidgetDrawable::setScalarFieldStyle(idx);
-    ui->lineEditTextureFile->setText(QString::fromStdString(colormaps_[idx].name));
+    ui_->lineEditTextureFile->setText(QString::fromStdString(colormaps_[idx].name));
 }
 
 
@@ -648,10 +649,10 @@ namespace triangles_details {
 void WidgetTrianglesDrawable::updateVectorFieldBuffer(Model *model, const std::string &name) {
     if (dynamic_cast<SurfaceMesh *>(model)) {
         auto mesh = dynamic_cast<SurfaceMesh *>(model);
-        triangles_details::updateVectorFieldBuffer(mesh, name, ui->doubleSpinBoxVectorFieldScale);
+        triangles_details::updateVectorFieldBuffer(mesh, name, ui_->doubleSpinBoxVectorFieldScale);
     } else if (dynamic_cast<PolyMesh *>(model)) {
         auto mesh = dynamic_cast<PolyMesh *>(model);
-        triangles_details::updateVectorFieldBuffer(mesh, name, ui->doubleSpinBoxVectorFieldScale);
+        triangles_details::updateVectorFieldBuffer(mesh, name, ui_->doubleSpinBoxVectorFieldScale);
     }
 }
 
@@ -695,75 +696,75 @@ void WidgetTrianglesDrawable::setHighlightMax(int v) {
 void WidgetTrianglesDrawable::disableUnavailableOptions() {
     auto d = drawable();
 
-    bool visible = ui->checkBoxVisible->isChecked();
-    ui->labelPhongShading->setEnabled(visible);
-    ui->checkBoxPhongShading->setEnabled(visible);
-    ui->labelLighting->setEnabled(visible);
-    ui->comboBoxLightingOptions->setEnabled(visible);
-    ui->labelColorScheme->setEnabled(visible);
-    ui->comboBoxColorScheme->setEnabled(visible);
+    bool visible = ui_->checkBoxVisible->isChecked();
+    ui_->labelPhongShading->setEnabled(visible);
+    ui_->checkBoxPhongShading->setEnabled(visible);
+    ui_->labelLighting->setEnabled(visible);
+    ui_->comboBoxLightingOptions->setEnabled(visible);
+    ui_->labelColorScheme->setEnabled(visible);
+    ui_->comboBoxColorScheme->setEnabled(visible);
 
-    bool can_modify_default_color = visible && (ui->comboBoxColorScheme->currentText() == "uniform color");
-    ui->labelDefaultColor->setEnabled(can_modify_default_color);
-    ui->toolButtonDefaultColor->setEnabled(can_modify_default_color);
+    bool can_modify_default_color = visible && (ui_->comboBoxColorScheme->currentText() == "uniform color");
+    ui_->labelDefaultColor->setEnabled(can_modify_default_color);
+    ui_->toolButtonDefaultColor->setEnabled(can_modify_default_color);
 
-    const auto &lighting_option = ui->comboBoxLightingOptions->currentText();
+    const auto &lighting_option = ui_->comboBoxLightingOptions->currentText();
     bool can_modify_back_color = visible && (lighting_option != "disabled");
-    ui->labelBackColor->setEnabled(can_modify_back_color);
-    ui->checkBoxBackColor->setEnabled(can_modify_back_color);
-    ui->toolButtonBackColor->setEnabled(can_modify_back_color && d->distinct_back_color());
+    ui_->labelBackColor->setEnabled(can_modify_back_color);
+    ui_->checkBoxBackColor->setEnabled(can_modify_back_color);
+    ui_->toolButtonBackColor->setEnabled(can_modify_back_color && d->distinct_back_color());
 
-    bool can_create_texture = visible && ui->comboBoxColorScheme->currentText().contains(":texcoord");
-    ui->labelTexture->setEnabled(can_create_texture);
-    ui->lineEditTextureFile->setEnabled(can_create_texture);
-    ui->toolButtonTextureFile->setEnabled(can_create_texture);
+    bool can_create_texture = visible && ui_->comboBoxColorScheme->currentText().contains(":texcoord");
+    ui_->labelTexture->setEnabled(can_create_texture);
+    ui_->lineEditTextureFile->setEnabled(can_create_texture);
+    ui_->toolButtonTextureFile->setEnabled(can_create_texture);
 
     bool can_modify_texture = can_create_texture && d->texture();
-    ui->labelTextureRepeat->setEnabled(can_modify_texture);
-    ui->spinBoxTextureRepeat->setEnabled(can_modify_texture);
-    ui->spinBoxTextureFractionalRepeat->setEnabled(can_modify_texture);
+    ui_->labelTextureRepeat->setEnabled(can_modify_texture);
+    ui_->spinBoxTextureRepeat->setEnabled(can_modify_texture);
+    ui_->spinBoxTextureFractionalRepeat->setEnabled(can_modify_texture);
 
     bool can_modify_highlight = visible && lighting_option != "disabled";
-    ui->labelHighlight->setEnabled(can_modify_highlight);
-    ui->checkBoxHighlight->setEnabled(can_modify_highlight);
-    bool can_modify_highlight_range = can_modify_highlight && ui->checkBoxHighlight->isChecked();
-    ui->spinBoxHighlightMin->setEnabled(can_modify_highlight_range);
-    ui->spinBoxHighlightMax->setEnabled(can_modify_highlight_range);
+    ui_->labelHighlight->setEnabled(can_modify_highlight);
+    ui_->checkBoxHighlight->setEnabled(can_modify_highlight);
+    bool can_modify_highlight_range = can_modify_highlight && ui_->checkBoxHighlight->isChecked();
+    ui_->spinBoxHighlightMin->setEnabled(can_modify_highlight_range);
+    ui_->spinBoxHighlightMax->setEnabled(can_modify_highlight_range);
 
-    bool can_modify_opacity = visible && false;
-    ui->labelOpacity->setEnabled(can_modify_opacity);
-    ui->horizontalSliderOpacity->setEnabled(can_modify_opacity);
+    bool can_modify_opacity = visible && viewer_->transparency();
+    ui_->labelOpacity->setEnabled(can_modify_opacity);
+    ui_->horizontalSliderOpacity->setEnabled(can_modify_opacity);
 
     // scalar field
-    bool can_show_scalar = visible && ui->comboBoxColorScheme->currentText().contains(scalar_prefix_);
-    ui->labelScalarFieldStyle->setEnabled(can_show_scalar);
-    ui->comboBoxScalarFieldStyle->setEnabled(can_show_scalar);
-    if (ui->comboBoxScalarFieldStyle->currentText().contains("random")) {
-        ui->labelScalarFieldDiscrete->setEnabled(false);
-        ui->checkBoxScalarFieldDiscrete->setEnabled(false);
-        ui->labelScalarFieldStripes->setEnabled(false);
-        ui->spinBoxScalarFieldNumStrips->setEnabled(true);
+    bool can_show_scalar = visible && ui_->comboBoxColorScheme->currentText().contains(scalar_prefix_);
+    ui_->labelScalarFieldStyle->setEnabled(can_show_scalar);
+    ui_->comboBoxScalarFieldStyle->setEnabled(can_show_scalar);
+    if (ui_->comboBoxScalarFieldStyle->currentText().contains("random")) {
+        ui_->labelScalarFieldDiscrete->setEnabled(false);
+        ui_->checkBoxScalarFieldDiscrete->setEnabled(false);
+        ui_->labelScalarFieldStripes->setEnabled(false);
+        ui_->spinBoxScalarFieldNumStrips->setEnabled(true);
     }
     else {
-        ui->labelScalarFieldDiscrete->setEnabled(can_show_scalar);
-        ui->checkBoxScalarFieldDiscrete->setEnabled(can_show_scalar);
-        bool can_change_num_strips = can_show_scalar && ui->checkBoxScalarFieldDiscrete->isChecked();
-        ui->labelScalarFieldStripes->setEnabled(can_change_num_strips);
-        ui->spinBoxScalarFieldNumStrips->setEnabled(can_change_num_strips);
+        ui_->labelScalarFieldDiscrete->setEnabled(can_show_scalar);
+        ui_->checkBoxScalarFieldDiscrete->setEnabled(can_show_scalar);
+        bool can_change_num_strips = can_show_scalar && ui_->checkBoxScalarFieldDiscrete->isChecked();
+        ui_->labelScalarFieldStripes->setEnabled(can_change_num_strips);
+        ui_->spinBoxScalarFieldNumStrips->setEnabled(can_change_num_strips);
     }
-    ui->labelScalarFieldClamp->setEnabled(can_show_scalar);
-    ui->checkBoxScalarFieldClamp->setEnabled(can_show_scalar);
+    ui_->labelScalarFieldClamp->setEnabled(can_show_scalar);
+    ui_->checkBoxScalarFieldClamp->setEnabled(can_show_scalar);
     bool can_edit_clamp = can_show_scalar && d->clamp_range();
-    ui->doubleSpinBoxScalarFieldClampLower->setEnabled(can_edit_clamp && ui->checkBoxScalarFieldClamp->isChecked());
-    ui->doubleSpinBoxScalarFieldClampUpper->setEnabled(can_edit_clamp && ui->checkBoxScalarFieldClamp->isChecked());
+    ui_->doubleSpinBoxScalarFieldClampLower->setEnabled(can_edit_clamp && ui_->checkBoxScalarFieldClamp->isChecked());
+    ui_->doubleSpinBoxScalarFieldClampUpper->setEnabled(can_edit_clamp && ui_->checkBoxScalarFieldClamp->isChecked());
 
     // vector field
-    bool can_show_vector = visible && ui->comboBoxVectorField->currentText() != "not available";
-    ui->labelVectorField->setEnabled(can_show_vector);
-    ui->comboBoxVectorField->setEnabled(can_show_vector);
-    bool can_modify_vector_style = can_show_vector && ui->comboBoxVectorField->currentText() != "disabled";
-    ui->labelVectorFieldScale->setEnabled(can_modify_vector_style);
-    ui->doubleSpinBoxVectorFieldScale->setEnabled(can_modify_vector_style);
+    bool can_show_vector = visible && ui_->comboBoxVectorField->currentText() != "not available";
+    ui_->labelVectorField->setEnabled(can_show_vector);
+    ui_->comboBoxVectorField->setEnabled(can_show_vector);
+    bool can_modify_vector_style = can_show_vector && ui_->comboBoxVectorField->currentText() != "disabled";
+    ui_->labelVectorFieldScale->setEnabled(can_modify_vector_style);
+    ui_->doubleSpinBoxVectorFieldScale->setEnabled(can_modify_vector_style);
 
     update();
     qApp->processEvents();

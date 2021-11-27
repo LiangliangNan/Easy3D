@@ -40,6 +40,7 @@ namespace easy3d {
 }
 
 class PaintCanvas;
+class WidgetTrianglesDrawable;
 
 class WidgetGlobalSetting : public QWidget {
 Q_OBJECT
@@ -49,54 +50,37 @@ public:
     ~WidgetGlobalSetting();
 
 private slots:
-
     void setEnableClippingPlane(bool);
-
     void setClippingPlaneVisible(bool);
-
     void recenterClippingPlane();
-
     void setClippingPlaneColor();
-
     void setEnableCrossSection(bool);
-
     void setCrossSectionThickness(double);
-
     void setSSAOAlgorithm(int);
-
     void setSSAORadius(int);
-
     void setSSAOIntensity(int);
-
     void setSSAOBias(int);
-
     void setSSAOSharpness(int);
-
     void setEyeDomeLighting(bool);
-
     void setTransparency(bool);
-
     void setShadow(bool);
-
     void setLightDistance(int);
-
     void setShadowSmoothPattern(int);
-
     void setShadowSoftness(int);
-
     void setShadowDarkness(int);
-
     void setImposterShadows(bool);
 
 private:
     void disableUnavailableOptions();
-
     easy3d::ClippingPlane* clippingPlane() const;
 
 private:
-    Ui::WidgetGlobalSetting *ui;
-
+    Ui::WidgetGlobalSetting *ui_;
     PaintCanvas *viewer_;
+
+    // for communication between widgets (i.e., keep ui updated)
+    friend class MainWindow;
+    WidgetTrianglesDrawable *widgetTrianglesDrawable_;
 };
 
 

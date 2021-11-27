@@ -75,7 +75,7 @@ private:
     void updateVectorFieldBuffer(easy3d::Model *model, const std::string &name) override ;
 
 private:
-    Ui::WidgetLinesDrawable *ui;
+    Ui::WidgetLinesDrawable *ui_;
 };
 
 #endif // WIDGET_DRAWABLE_LINES_H

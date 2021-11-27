@@ -76,7 +76,7 @@ private:
     std::vector<QString> vectorFields(const easy3d::Model *model);
 
 private:
-    Ui::WidgetPointsDrawable *ui;
+    Ui::WidgetPointsDrawable *ui_;
 };
 
 #endif // WIDGET_DRAWABLE_POINTS_H

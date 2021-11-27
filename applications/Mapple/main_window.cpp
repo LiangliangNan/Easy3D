@@ -144,7 +144,11 @@ MainWindow::MainWindow(QWidget *parent)
     ui->verticalLayoutPointsDrawable->addWidget(widgetPointsDrawable_);
     widgetPointsDrawable_->setEnabled(false);
 
-    ui->verticalLayoutGlobalSetting->addWidget(new WidgetGlobalSetting(this));
+    auto widgetGlobalSetting = new WidgetGlobalSetting(this);
+    ui->verticalLayoutGlobalSetting->addWidget(widgetGlobalSetting);
+
+    // communication between widgets
+    widgetGlobalSetting->widgetTrianglesDrawable_ = widgetTrianglesDrawable_;
 
     // ---------------------------
 

@@ -41,6 +41,7 @@
 
 #include "main_window.h"
 #include "paint_canvas.h"
+#include "widgets/widget_drawable_triangles.h"
 
 #include <ui_widget_global_setting.h>
 
@@ -49,82 +50,83 @@ using namespace easy3d;
 
 WidgetGlobalSetting::WidgetGlobalSetting(QWidget *parent)
     : QWidget(parent)
-    , ui(new Ui::WidgetGlobalSetting)
+    , ui_(new Ui::WidgetGlobalSetting)
+    , widgetTrianglesDrawable_(nullptr)
 {
-    ui->setupUi(this);
+    ui_->setupUi(this);
     viewer_ = dynamic_cast<MainWindow*>(parent)->viewer();
 
     // SSAO
-    ui->comboBoxSSAOAlgorithm->addItem("None");
-    ui->comboBoxSSAOAlgorithm->addItem("Classic");
-    ui->comboBoxSSAOAlgorithm->addItem("HBO");
-    ui->comboBoxSSAOAlgorithm->addItem("HBO+");
-    ui->comboBoxSSAOAlgorithm->setCurrentIndex(0);
-    ui->horizontalSliderSSAORadius->setValue(setting::effect_ssao_radius * 100);
-    ui->horizontalSliderSSAOIntensity->setValue(setting::effect_ssao_intensity * 100);
-    ui->horizontalSliderSSAOBias->setValue(setting::effect_ssao_bias * 100);
-    ui->horizontalSliderSSAOSharpness->setValue(setting::effect_ssao_sharpness * 100);
+    ui_->comboBoxSSAOAlgorithm->addItem("None");
+    ui_->comboBoxSSAOAlgorithm->addItem("Classic");
+    ui_->comboBoxSSAOAlgorithm->addItem("HBO");
+    ui_->comboBoxSSAOAlgorithm->addItem("HBO+");
+    ui_->comboBoxSSAOAlgorithm->setCurrentIndex(0);
+    ui_->horizontalSliderSSAORadius->setValue(setting::effect_ssao_radius * 100);
+    ui_->horizontalSliderSSAOIntensity->setValue(setting::effect_ssao_intensity * 100);
+    ui_->horizontalSliderSSAOBias->setValue(setting::effect_ssao_bias * 100);
+    ui_->horizontalSliderSSAOSharpness->setValue(setting::effect_ssao_sharpness * 100);
 
     // EDL
-    ui->checkBoxEyeDomeLighting->setChecked(setting::effect_edl_enabled);
-    ui->checkBoxTransparency->setChecked(setting::effect_transparency_enabled);
-    ui->checkBoxShadow->setChecked(setting::effect_shadow_enabled);
+    ui_->checkBoxEyeDomeLighting->setChecked(setting::effect_edl_enabled);
+    ui_->checkBoxTransparency->setChecked(setting::effect_transparency_enabled);
+    ui_->checkBoxShadow->setChecked(setting::effect_shadow_enabled);
 
     // shadow
-    ui->comboBoxShadowSmoothPattern->addItem("Poisson  25 x 25 ");
-    ui->comboBoxShadowSmoothPattern->addItem("Poisson  32 x 64 ");
-    ui->comboBoxShadowSmoothPattern->addItem("Poisson  64 x 128");
-    ui->comboBoxShadowSmoothPattern->addItem("Poisson 100 x 100");
-    ui->comboBoxShadowSmoothPattern->addItem("Regular  49 x 225");
-    ui->comboBoxShadowSmoothPattern->setCurrentIndex(2);
-    connect(ui->comboBoxShadowSmoothPattern, SIGNAL(currentIndexChanged(int)), this, SLOT(setShadowSmoothPattern(int)));
+    ui_->comboBoxShadowSmoothPattern->addItem("Poisson  25 x 25 ");
+    ui_->comboBoxShadowSmoothPattern->addItem("Poisson  32 x 64 ");
+    ui_->comboBoxShadowSmoothPattern->addItem("Poisson  64 x 128");
+    ui_->comboBoxShadowSmoothPattern->addItem("Poisson 100 x 100");
+    ui_->comboBoxShadowSmoothPattern->addItem("Regular  49 x 225");
+    ui_->comboBoxShadowSmoothPattern->setCurrentIndex(2);
+    connect(ui_->comboBoxShadowSmoothPattern, SIGNAL(currentIndexChanged(int)), this, SLOT(setShadowSmoothPattern(int)));
 
-    ui->horizontalSliderShadowLightDistance->setValue(setting::shadow_light_distance);
-    ui->horizontalSliderShadowSoftness->setValue(setting::shadow_softness * 100);
-    ui->horizontalSliderShadowDarkness->setValue(setting::shadow_darkness * 100);
+    ui_->horizontalSliderShadowLightDistance->setValue(setting::shadow_light_distance);
+    ui_->horizontalSliderShadowSoftness->setValue(setting::shadow_softness * 100);
+    ui_->horizontalSliderShadowDarkness->setValue(setting::shadow_darkness * 100);
 
     //----------------------------------------------
 
     QPalette::ColorRole role = parent->backgroundRole();
     const QColor& bc = parent->palette().color(role);
-    ui->checkerSphere->setBackgroundColor(bc);
-    connect(ui->checkerSphere, SIGNAL(lightPositionChanged()), viewer_, SLOT(update()));
+    ui_->checkerSphere->setBackgroundColor(bc);
+    connect(ui_->checkerSphere, SIGNAL(lightPositionChanged()), viewer_, SLOT(update()));
 
-    connect(ui->checkBoxClippingPlaneEnable, SIGNAL(toggled(bool)), this, SLOT(setEnableClippingPlane(bool)));
-    connect(ui->checkBoxClippingPlaneVisible, SIGNAL(toggled(bool)), this, SLOT(setClippingPlaneVisible(bool)));
-    connect(ui->toolButtonRecenterClippingPlane, SIGNAL(clicked()), this, SLOT(recenterClippingPlane()));
-    connect(ui->toolButtonClippingPlaneColor, SIGNAL(clicked()), this, SLOT(setClippingPlaneColor()));
-    connect(ui->checkBoxCrossSectionEnable, SIGNAL(toggled(bool)), this, SLOT(setEnableCrossSection(bool)));
-    connect(ui->doubleSpinBoxCrossSectionThickness, SIGNAL(valueChanged(double)), this, SLOT(setCrossSectionThickness(double)));
+    connect(ui_->checkBoxClippingPlaneEnable, SIGNAL(toggled(bool)), this, SLOT(setEnableClippingPlane(bool)));
+    connect(ui_->checkBoxClippingPlaneVisible, SIGNAL(toggled(bool)), this, SLOT(setClippingPlaneVisible(bool)));
+    connect(ui_->toolButtonRecenterClippingPlane, SIGNAL(clicked()), this, SLOT(recenterClippingPlane()));
+    connect(ui_->toolButtonClippingPlaneColor, SIGNAL(clicked()), this, SLOT(setClippingPlaneColor()));
+    connect(ui_->checkBoxCrossSectionEnable, SIGNAL(toggled(bool)), this, SLOT(setEnableCrossSection(bool)));
+    connect(ui_->doubleSpinBoxCrossSectionThickness, SIGNAL(valueChanged(double)), this, SLOT(setCrossSectionThickness(double)));
 
     // visible
-    ui->checkBoxClippingPlaneVisible->setChecked(true);
+    ui_->checkBoxClippingPlaneVisible->setChecked(true);
     // default color
     const vec3& c = clippingPlane()->color();
-    QPixmap pixmap(ui->toolButtonClippingPlaneColor->size());
+    QPixmap pixmap(ui_->toolButtonClippingPlaneColor->size());
     pixmap.fill(
             QColor(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255)));
-    ui->toolButtonClippingPlaneColor->setIcon(QIcon(pixmap));
+    ui_->toolButtonClippingPlaneColor->setIcon(QIcon(pixmap));
 
-    connect(ui->comboBoxSSAOAlgorithm, SIGNAL(currentIndexChanged(int)), this, SLOT(setSSAOAlgorithm(int)));
-    connect(ui->horizontalSliderSSAORadius, SIGNAL(valueChanged(int)), this, SLOT(setSSAORadius(int)));
-    connect(ui->horizontalSliderSSAOIntensity, SIGNAL(valueChanged(int)), this, SLOT(setSSAOIntensity(int)));
-    connect(ui->horizontalSliderSSAOBias, SIGNAL(valueChanged(int)), this, SLOT(setSSAOBias(int)));
-    connect(ui->horizontalSliderSSAOSharpness, SIGNAL(valueChanged(int)), this, SLOT(setSSAOSharpness(int)));
+    connect(ui_->comboBoxSSAOAlgorithm, SIGNAL(currentIndexChanged(int)), this, SLOT(setSSAOAlgorithm(int)));
+    connect(ui_->horizontalSliderSSAORadius, SIGNAL(valueChanged(int)), this, SLOT(setSSAORadius(int)));
+    connect(ui_->horizontalSliderSSAOIntensity, SIGNAL(valueChanged(int)), this, SLOT(setSSAOIntensity(int)));
+    connect(ui_->horizontalSliderSSAOBias, SIGNAL(valueChanged(int)), this, SLOT(setSSAOBias(int)));
+    connect(ui_->horizontalSliderSSAOSharpness, SIGNAL(valueChanged(int)), this, SLOT(setSSAOSharpness(int)));
 
-    connect(ui->checkBoxEyeDomeLighting, SIGNAL(toggled(bool)), this, SLOT(setEyeDomeLighting(bool)));
-    connect(ui->checkBoxTransparency, SIGNAL(toggled(bool)), this, SLOT(setTransparency(bool)));
-    connect(ui->checkBoxShadow, SIGNAL(toggled(bool)), this, SLOT(setShadow(bool)));
+    connect(ui_->checkBoxEyeDomeLighting, SIGNAL(toggled(bool)), this, SLOT(setEyeDomeLighting(bool)));
+    connect(ui_->checkBoxTransparency, SIGNAL(toggled(bool)), this, SLOT(setTransparency(bool)));
+    connect(ui_->checkBoxShadow, SIGNAL(toggled(bool)), this, SLOT(setShadow(bool)));
 
-    connect(ui->horizontalSliderShadowLightDistance, SIGNAL(valueChanged(int)), this, SLOT(setLightDistance(int)));
-    connect(ui->horizontalSliderShadowSoftness, SIGNAL(valueChanged(int)), this, SLOT(setShadowSoftness(int)));
-    connect(ui->horizontalSliderShadowDarkness, SIGNAL(valueChanged(int)), this, SLOT(setShadowDarkness(int)));
+    connect(ui_->horizontalSliderShadowLightDistance, SIGNAL(valueChanged(int)), this, SLOT(setLightDistance(int)));
+    connect(ui_->horizontalSliderShadowSoftness, SIGNAL(valueChanged(int)), this, SLOT(setShadowSoftness(int)));
+    connect(ui_->horizontalSliderShadowDarkness, SIGNAL(valueChanged(int)), this, SLOT(setShadowDarkness(int)));
 }
 
 
 WidgetGlobalSetting::~WidgetGlobalSetting()
 {
-    delete ui;
+    delete ui_;
     if (clippingPlane())
         delete clippingPlane();
 }
@@ -191,9 +193,9 @@ void WidgetGlobalSetting::setClippingPlaneColor() {
         clippingPlane()->set_color(new_color);
         viewer_->update();
 
-        QPixmap pixmap(ui->toolButtonClippingPlaneColor->size());
+        QPixmap pixmap(ui_->toolButtonClippingPlaneColor->size());
         pixmap.fill(color);
-        ui->toolButtonClippingPlaneColor->setIcon(QIcon(pixmap));
+        ui_->toolButtonClippingPlaneColor->setIcon(QIcon(pixmap));
     }
 }
 
@@ -219,11 +221,11 @@ void WidgetGlobalSetting::setCrossSectionThickness(double w) {
 
 void WidgetGlobalSetting::setSSAOAlgorithm(int algo) {
     viewer_->enableSsao(algo != 0);
-    if (algo != 0 && ui->checkBoxTransparency->isChecked()) // ssao and transparency cannot co-exist
-        ui->checkBoxTransparency->setChecked(false);
+    if (algo != 0 && ui_->checkBoxTransparency->isChecked()) // ssao and transparency cannot co-exist
+        ui_->checkBoxTransparency->setChecked(false);
 
-    if (algo != 0 && ui->checkBoxShadow->isChecked())
-        ui->checkBoxShadow->setChecked(false);
+    if (algo != 0 && ui_->checkBoxShadow->isChecked())
+        ui_->checkBoxShadow->setChecked(false);
 
     viewer_->update();
     disableUnavailableOptions();
@@ -267,11 +269,11 @@ void WidgetGlobalSetting::setSSAOSharpness(int v) {
 
 
 void WidgetGlobalSetting::setEyeDomeLighting(bool b) {
-    if (b && ui->checkBoxShadow->isChecked())
-        ui->checkBoxShadow->setChecked(false);  // shadow and EDL cannot co-exist
+    if (b && ui_->checkBoxShadow->isChecked())
+        ui_->checkBoxShadow->setChecked(false);  // shadow and EDL cannot co-exist
 
-    if (b && ui->checkBoxTransparency->isChecked())
-        ui->checkBoxTransparency->setChecked(false);  // transparency and EDL cannot co-exist
+    if (b && ui_->checkBoxTransparency->isChecked())
+        ui_->checkBoxTransparency->setChecked(false);  // transparency and EDL cannot co-exist
         
     viewer_->enableEyeDomeLighting(b);
     viewer_->update();
@@ -279,29 +281,31 @@ void WidgetGlobalSetting::setEyeDomeLighting(bool b) {
 
 
 void WidgetGlobalSetting::setTransparency(bool b) {
-    if (b && ui->checkBoxShadow->isChecked())
-        ui->checkBoxShadow->setChecked(false);  // shadow and transparency cannot co-exist
+    if (b && ui_->checkBoxShadow->isChecked())
+        ui_->checkBoxShadow->setChecked(false);  // shadow and transparency cannot co-exist
 
-    if (b && ui->checkBoxEyeDomeLighting->isChecked())
-        ui->checkBoxEyeDomeLighting->setChecked(false);  // transparency and EDL cannot co-exist
+    if (b && ui_->checkBoxEyeDomeLighting->isChecked())
+        ui_->checkBoxEyeDomeLighting->setChecked(false);  // transparency and EDL cannot co-exist
 
-    if (b && ui->comboBoxSSAOAlgorithm->currentIndex() != 0)
-        ui->comboBoxSSAOAlgorithm->setCurrentIndex(0);
+    if (b && ui_->comboBoxSSAOAlgorithm->currentIndex() != 0)
+        ui_->comboBoxSSAOAlgorithm->setCurrentIndex(0);
 
     viewer_->enableTransparency(b);
     viewer_->update();
 
+    // updates the triangles drawable panel
+    widgetTrianglesDrawable_->updatePanel();
 }
 
 
 void WidgetGlobalSetting::setShadow(bool b) {
-    if (b && ui->checkBoxTransparency->isChecked())
-        ui->checkBoxTransparency->setChecked(false);   // shadow and transparency cannot co-exist
-    if (b && ui->checkBoxEyeDomeLighting->isChecked())
-        ui->checkBoxEyeDomeLighting->setChecked(false);  // shadow and EDL cannot co-exist
+    if (b && ui_->checkBoxTransparency->isChecked())
+        ui_->checkBoxTransparency->setChecked(false);   // shadow and transparency cannot co-exist
+    if (b && ui_->checkBoxEyeDomeLighting->isChecked())
+        ui_->checkBoxEyeDomeLighting->setChecked(false);  // shadow and EDL cannot co-exist
 
-    if (b && ui->comboBoxSSAOAlgorithm->currentIndex() != 0)
-        ui->comboBoxSSAOAlgorithm->setCurrentIndex(0);
+    if (b && ui_->comboBoxSSAOAlgorithm->currentIndex() != 0)
+        ui_->comboBoxSSAOAlgorithm->setCurrentIndex(0);
 
     viewer_->enableShadow(b);
     viewer_->update();
@@ -351,46 +355,46 @@ void WidgetGlobalSetting::setImposterShadows(bool) {
 
 void WidgetGlobalSetting::disableUnavailableOptions() {
     // ground plane
-    bool visible = ui->checkBoxGroundPlane->isChecked();
-    ui->spinBoxGroundPlaneSize->setEnabled(visible);
-    ui->labelGroundPlaneTexture->setEnabled(visible);
-    ui->checkBoxGroundPlaneTexture->setEnabled(visible);
-    bool can_change_ground_plane_texture = visible && (ui->checkBoxGroundPlaneTexture->isChecked());
-    ui->toolButtonGroundPlaneTexture->setEnabled(can_change_ground_plane_texture);
+    bool visible = ui_->checkBoxGroundPlane->isChecked();
+    ui_->spinBoxGroundPlaneSize->setEnabled(visible);
+    ui_->labelGroundPlaneTexture->setEnabled(visible);
+    ui_->checkBoxGroundPlaneTexture->setEnabled(visible);
+    bool can_change_ground_plane_texture = visible && (ui_->checkBoxGroundPlaneTexture->isChecked());
+    ui_->toolButtonGroundPlaneTexture->setEnabled(can_change_ground_plane_texture);
 
     // clipping plane
-    visible = ui->checkBoxClippingPlaneEnable->isChecked();
-    ui->toolButtonRecenterClippingPlane->setEnabled(visible);
-    ui->labelClippingPlaneVisible->setEnabled(visible);
-    ui->checkBoxClippingPlaneVisible->setEnabled(visible);
-    bool can_change_clipping_plane_color = visible && (ui->checkBoxClippingPlaneVisible->isChecked());
-    ui->toolButtonClippingPlaneColor->setEnabled(can_change_clipping_plane_color);
-    ui->labelCrossSectionEnable->setEnabled(visible);
-    ui->checkBoxCrossSectionEnable->setEnabled(visible);
-    bool can_change_crosssection_thickness = visible && (ui->checkBoxCrossSectionEnable->isChecked());
-    ui->doubleSpinBoxCrossSectionThickness->setEnabled(can_change_crosssection_thickness);
+    visible = ui_->checkBoxClippingPlaneEnable->isChecked();
+    ui_->toolButtonRecenterClippingPlane->setEnabled(visible);
+    ui_->labelClippingPlaneVisible->setEnabled(visible);
+    ui_->checkBoxClippingPlaneVisible->setEnabled(visible);
+    bool can_change_clipping_plane_color = visible && (ui_->checkBoxClippingPlaneVisible->isChecked());
+    ui_->toolButtonClippingPlaneColor->setEnabled(can_change_clipping_plane_color);
+    ui_->labelCrossSectionEnable->setEnabled(visible);
+    ui_->checkBoxCrossSectionEnable->setEnabled(visible);
+    bool can_change_crosssection_thickness = visible && (ui_->checkBoxCrossSectionEnable->isChecked());
+    ui_->doubleSpinBoxCrossSectionThickness->setEnabled(can_change_crosssection_thickness);
 
     // SSAO
-    visible = (ui->comboBoxSSAOAlgorithm->currentIndex() != 0);
-    ui->labelSSAORadius->setEnabled(visible);
-    ui->horizontalSliderSSAORadius->setEnabled(visible);
-    ui->labelSSAOIntensity->setEnabled(visible);
-    ui->horizontalSliderSSAOIntensity->setEnabled(visible);
-    ui->labelSSAOBias->setEnabled(visible);
-    ui->horizontalSliderSSAOBias->setEnabled(visible);
-    ui->labelSSAOSharpness->setEnabled(visible);
-    ui->horizontalSliderSSAOSharpness->setEnabled(visible);
+    visible = (ui_->comboBoxSSAOAlgorithm->currentIndex() != 0);
+    ui_->labelSSAORadius->setEnabled(visible);
+    ui_->horizontalSliderSSAORadius->setEnabled(visible);
+    ui_->labelSSAOIntensity->setEnabled(visible);
+    ui_->horizontalSliderSSAOIntensity->setEnabled(visible);
+    ui_->labelSSAOBias->setEnabled(visible);
+    ui_->horizontalSliderSSAOBias->setEnabled(visible);
+    ui_->labelSSAOSharpness->setEnabled(visible);
+    ui_->horizontalSliderSSAOSharpness->setEnabled(visible);
 
     // shadow
-    visible = ui->checkBoxShadow->isChecked();
-    ui->labelShadowSmoothPattern->setEnabled(visible);
-    ui->comboBoxShadowSmoothPattern->setEnabled(visible);
-    ui->labelShadowLightDistance->setEnabled(visible);
-    ui->horizontalSliderShadowLightDistance->setEnabled(visible);
-    ui->labelShadowSoftness->setEnabled(visible);
-    ui->horizontalSliderShadowSoftness->setEnabled(visible);
-    ui->labelShadowDarkness->setEnabled(visible);
-    ui->horizontalSliderShadowDarkness->setEnabled(visible);
+    visible = ui_->checkBoxShadow->isChecked();
+    ui_->labelShadowSmoothPattern->setEnabled(visible);
+    ui_->comboBoxShadowSmoothPattern->setEnabled(visible);
+    ui_->labelShadowLightDistance->setEnabled(visible);
+    ui_->horizontalSliderShadowLightDistance->setEnabled(visible);
+    ui_->labelShadowSoftness->setEnabled(visible);
+    ui_->horizontalSliderShadowSoftness->setEnabled(visible);
+    ui_->labelShadowDarkness->setEnabled(visible);
+    ui_->horizontalSliderShadowDarkness->setEnabled(visible);
 
     update();
     qApp->processEvents();
