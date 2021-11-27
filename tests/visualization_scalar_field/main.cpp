@@ -58,7 +58,7 @@ int test_scalar_field(int duration) {
     for (auto v : model->vertices())
         elevation[v] = model->position(v).z;
 
-    drawable->set_scalar_coloring(State::VERTEX, "v:elevation");
+    drawable->set_scalar_coloring(State::VERTEX, "v:elevation", nullptr, 0.0f, 0.0f);
 
     // Create texture for coloring the scalar field.
     const std::string texture_file = resource::directory() + "/colormaps/rainbow.png";
