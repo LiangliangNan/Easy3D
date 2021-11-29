@@ -95,8 +95,10 @@ namespace easy3d {
 
         /**
          * Run the viewer.
+         * @param see_all See all contents within the screen? If true, the entire scene (i.e., all models) will be
+         *      centered on the screen at a proper scale.
          */
-        int run();
+        int run(bool see_all = true);
 
         /**
          * Terminate the viewer.

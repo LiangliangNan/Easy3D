@@ -981,12 +981,13 @@ namespace easy3d {
     }
 
 
-    int Viewer::run() {
+    int Viewer::run(bool see_all) {
         // initialize before showing the window because it can be slow
         init();
 
         // make sure scene fits the screen when the window appears
-        fit_screen();
+        if (see_all)
+            fit_screen();
 
         // show the window
         glfwShowWindow(window_);
