@@ -403,8 +403,6 @@ int MainWindow::openFiles(const QStringList &fileNames) {
             ++count;
         progress.next();
     }
-    if (count > 0)
-        viewer()->fitScreen();
 
     return count > 0;
 }
@@ -516,7 +514,6 @@ Model* MainWindow::open(const std::string& file_name) {
                 viewer_->addModel(cloud);
                 ui->treeWidgetModels->addModel(cloud, true);
             }
-            viewer_->fitScreen();
         }
         else
             model = PointCloudIO::load(file_name);
@@ -525,7 +522,6 @@ Model* MainWindow::open(const std::string& file_name) {
     if (model) {
         model->set_name(file_name);
         viewer_->addModel(model);
-        viewer_->fitScreen(model);
         ui->treeWidgetModels->addModel(model, true);
         setCurrentFile(QString::fromStdString(file_name));
 

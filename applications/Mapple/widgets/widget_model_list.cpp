@@ -746,15 +746,19 @@ void WidgetModelList::addModel(Model *model, bool make_current) {
         viewer()->setCurrentModel(model);
     }
 
-    Model *current_model = viewer()->currentModel();
+    updateModelList();
+    mainWindow_->updateRenderingPanel();
+
     if (selected_only_) {
         for (auto m : viewer()->models()) {
-            m->renderer()->set_visible(m == current_model);
+            m->renderer()->set_visible(m == model);
         }
     }
 
-    updateModelList();
-    mainWindow_->updateRenderingPanel();
+    if (auto_focus_)
+        viewer()->fitScreen(model);
+    else
+        viewer()->fitScreen();
 
     viewer()->update();
 }
