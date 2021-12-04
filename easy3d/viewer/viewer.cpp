@@ -1308,7 +1308,8 @@ namespace easy3d {
         const std::vector<std::string> &filters = {
                 "Surface Mesh (*.obj *.ply *.off *.stl *.sm *.geojson *.trilist)", "*.obj *.ply *.off *.stl *.sm *.geojson *.trilist",
                 "Point Cloud (*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg *.ptx)", "*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg *.ptx",
-                "Polytope Mesh (*.plm *.pm *.mesh)", "*.plm *.pm *.mesh",
+                "Polyhedral Mesh (*.plm *.pm *.mesh)", "*.plm *.pm *.mesh",
+                "Graph (*.ply)", "*.ply",
                 "All Files (*.*)", "*"
         };
         const std::vector<std::string> &file_names = dialog::open(title, default_path, filters, true);
@@ -1339,7 +1340,8 @@ namespace easy3d {
                 "Surface Mesh (*.obj *.ply *.off *.stl *.sm)", "*.obj *.ply *.off *.stl *.sm",
                 "Point Cloud (*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg)",
                 "*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg",
-                "Polytope Mesh (*.plm *.pm *.mesh)", "*.plm *.pm *.mesh",
+                "Polyhedral Mesh (*.plm *.pm *.mesh)", "*.plm *.pm *.mesh",
+                "Graph (*.ply)", "*.ply",
                 "All Files (*.*)", "*"
         };
 

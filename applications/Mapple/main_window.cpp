@@ -417,6 +417,7 @@ bool MainWindow::onOpen() {
                 "Surface Mesh (*.ply *.obj *.off *.stl *.sm *.geojson *.trilist)\n"
                 "Point Cloud (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx)\n"
                 "Polyhedral Mesh (*.plm *.pm *.mesh)\n"
+                "Graph (*.ply)\n"
                 "All formats (*.*)"
             );
 
@@ -449,6 +450,7 @@ bool MainWindow::onSave() {
                 "Surface Mesh (*.ply *.obj *.off *.stl *.sm)\n"
                 "Point Cloud (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz *.vg *.bvg)\n"
                 "Polyhedral Mesh (*.plm *.pm *.mesh)\n"
+                "Graph (*.ply)\n"
                 "All formats (*.*)"
     );
 

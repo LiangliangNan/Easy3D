@@ -114,10 +114,11 @@ bool MainWindow::onOpen() {
                 this,
                 "Open file(s)",
                 curDataDirectory_,
-                "Supported formats (*.ply *.obj *.off *.stl *.sm *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx *.plm *.pm *.mesh)\n"
-                "Surface Mesh (*.ply *.obj *.off *.stl *.sm)\n"
+                "Supported formats (*.ply *.obj *.off *.stl *.sm *.geojson *.trilist *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx *.plm *.pm *.mesh)\n"
+                "Surface Mesh (*.ply *.obj *.off *.stl *.sm *.geojson *.trilist)\n"
                 "Point Cloud (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz *.vg *.bvg *.ptx)\n"
                 "Polyhedral Mesh (*.plm *.pm *.mesh)\n"
+                "Graph (*.ply)\n"
                 "All formats (*.*)"
             );
 
@@ -164,6 +165,7 @@ bool MainWindow::onSave() {
                 "Surface Mesh (*.ply *.obj *.off *.stl *.sm)\n"
                 "Point Cloud (*.ply *.bin *.ptx *.las *.laz *.xyz *.bxyz *.vg *.bvg)\n"
                 "Polyhedral Mesh (*.plm *.pm *.mesh)\n"
+                "Graph (*.ply)\n"
                 "All formats (*.*)"
     );
 
