@@ -266,10 +266,7 @@ namespace easy3d {
     }
 
 
-    void Renderer::update(bool update_bbox) {
-        if (update_bbox)
-            model_->invalidate_bounding_box();
-
+    void Renderer::update() {
         for (auto d : points_drawables_)
             d->update();
         for (auto d : lines_drawables_)
