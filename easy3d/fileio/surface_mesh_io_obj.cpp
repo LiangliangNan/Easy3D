@@ -150,7 +150,7 @@ namespace easy3d {
 
                     // a face must have at least three vertices
                     if (vertices.size() < 3) {
-                        LOG(ERROR) << "face has less than 3 vertices (" << vertices << "), face ignored";
+                        LOG_N_TIMES(3, ERROR) << "face has less than 3 vertices " << vertices << " (face ignored). " << COUNTER;
                         continue;
                     }
 
@@ -161,11 +161,11 @@ namespace easy3d {
                     tmp.erase(last, tmp.end());
                     if(tmp.size() != vertices.size()) {
                         if (tmp.size() < 3) {
-                            LOG(ERROR) << "face has duplicated vertices (" << vertices << "), face ignored";
+                            LOG_N_TIMES(3, ERROR) << "face has duplicated vertices " << vertices << " (face ignored). " << COUNTER;
                             continue;
                         }
                         else {
-                            LOG(ERROR) << "face has duplicated vertices (" << vertices << "), duplication removed";
+                            LOG_N_TIMES(3, ERROR) << "face has duplicated vertices " << vertices << " (duplication removed). " << COUNTER;
                             vertices = tmp;
                         }
                     }
