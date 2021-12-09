@@ -1,11 +1,11 @@
 /*
  * fast_obj
  *
- * Version 1.0
+ * Version 1.2
  *
  * MIT License
  *
- * Copyright (c) 2018-2020 Richard Knight
+ * Copyright (c) 2018-2021 Richard Knight
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,8 +31,10 @@
 #define FAST_OBJ_HDR
 
 #define FAST_OBJ_VERSION_MAJOR  1
-#define FAST_OBJ_VERSION_MINOR  0
+#define FAST_OBJ_VERSION_MINOR  2
 #define FAST_OBJ_VERSION        ((FAST_OBJ_VERSION_MAJOR << 8) | FAST_OBJ_VERSION_MINOR)
+
+#include <stdlib.h>
 
 
 typedef struct
@@ -133,7 +135,11 @@ typedef struct
     unsigned int                material_count;
     fastObjMaterial*            materials;
 
-    /* Mesh groups */
+    /* Mesh objects ('o' tag in .obj file) */
+    unsigned int                object_count;
+    fastObjGroup*               objects;
+
+    /* Mesh groups ('g' tag in .obj file) */
     unsigned int                group_count;
     fastObjGroup*               groups;
 
@@ -141,11 +147,20 @@ typedef struct
     char* error_msg;
 } fastObjMesh;
 
+typedef struct
+{
+    void*                       (*file_open)(const char* path, void* user_data);
+    void                        (*file_close)(void* file, void* user_data);
+    size_t                      (*file_read)(void* file, void* dst, size_t bytes, void* user_data);
+    unsigned long               (*file_size)(void* file, void* user_data);
+} fastObjCallbacks;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 fastObjMesh*                    fast_obj_read(const char* path);
+fastObjMesh*                    fast_obj_read_with_callbacks(const char* path, const fastObjCallbacks* callbacks, void* user_data);
 void                            fast_obj_destroy(fastObjMesh* mesh);
 
 #ifdef __cplusplus
@@ -158,7 +173,6 @@ void                            fast_obj_destroy(fastObjMesh* mesh);
 #ifdef FAST_OBJ_IMPLEMENTATION
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #ifndef FAST_OBJ_REALLOC
@@ -189,7 +203,8 @@ typedef struct
     /* Final mesh */
     fastObjMesh*                mesh;
 
-    /* Current group */
+    /* Current object/group */
+    fastObjGroup                object;
     fastObjGroup                group;
 
     /* Current material index */
@@ -275,16 +290,18 @@ static void* array_realloc(void* ptr, fastObjUInt n, fastObjUInt b)
 
 
 static
-void* file_open(const char* path)
+void* file_open(const char* path, void* user_data)
 {
+    (void)(user_data);
     return fopen(path, "rb");
 }
 
 
 static
-void file_close(void* file)
+void file_close(void* file, void* user_data)
 {
-    FILE* f;
+	FILE* f;
+    (void)(user_data);
     
     f = (FILE*)(file);
     fclose(f);
@@ -292,9 +309,10 @@ void file_close(void* file)
 
 
 static
-size_t file_read(void* file, void* dst, size_t bytes)
+size_t file_read(void* file, void* dst, size_t bytes, void* user_data)
 {
-    FILE* f;
+	FILE* f;
+    (void)(user_data);
     
     f = (FILE*)(file);
     return fread(dst, 1, bytes, f);
@@ -302,12 +320,13 @@ size_t file_read(void* file, void* dst, size_t bytes)
 
 
 static
-unsigned long file_size(void* file)
+unsigned long file_size(void* file, void* user_data)
 {
     FILE* f;
     long p;
     long n;
-    
+    (void)(user_data);
+	
     f = (FILE*)(file);
 
     p = ftell(f);
@@ -445,6 +464,44 @@ const char* skip_line(const char* ptr)
 
 
 static
+fastObjGroup object_default(void)
+{
+    fastObjGroup object;
+
+    object.name         = 0;
+    object.face_count   = 0;
+    object.face_offset  = 0;
+    object.index_offset = 0;
+
+    return object;
+}
+
+
+static
+void object_clean(fastObjGroup* object)
+{
+    memory_dealloc(object->name);
+}
+
+
+static
+void flush_object(fastObjData* data)
+{
+    /* Add object if not empty */
+    if (data->object.face_count > 0)
+        array_push(data->mesh->objects, data->object);
+    else
+        object_clean(&data->object);
+
+    /* Reset for more data */
+    data->object = object_default();
+    data->object.face_offset  = array_size(data->mesh->face_vertices);
+    data->object.index_offset = array_size(data->mesh->indices);
+}
+
+
+
+static
 fastObjGroup group_default(void)
 {
     fastObjGroup group;
@@ -466,7 +523,7 @@ void group_clean(fastObjGroup* group)
 
 
 static
-void flush_output(fastObjData* data)
+void flush_group(fastObjData* data)
 {
     /* Add group if not empty */
     if (data->group.face_count > 0)
@@ -476,7 +533,7 @@ void flush_output(fastObjData* data)
 
     /* Reset for more data */
     data->group = group_default();
-    data->group.face_offset = array_size(data->mesh->face_vertices);
+    data->group.face_offset  = array_size(data->mesh->face_vertices);
     data->group.index_offset = array_size(data->mesh->indices);
 }
 
@@ -515,7 +572,7 @@ const char* parse_float(const char* ptr, float* val)
     double        num;
     double        fra;
     double        div;
-    int           eval;
+    unsigned int  eval;
     const double* powers;
 
 
@@ -713,6 +770,29 @@ const char* parse_face(fastObjData* data, const char* ptr)
     array_push(data->mesh->face_materials, data->material);
 
     data->group.face_count++;
+    data->object.face_count++;
+
+    return ptr;
+}
+
+
+static
+const char* parse_object(fastObjData* data, const char* ptr)
+{
+    const char* s;
+    const char* e;
+
+
+    ptr = skip_whitespace(ptr);
+
+    s = ptr;
+    while (!is_end_of_name(*ptr))
+        ptr++;
+
+    e = ptr;
+
+    flush_object(data);
+    data->object.name = string_copy(s, e);
 
     return ptr;
 }
@@ -733,7 +813,7 @@ const char* parse_group(fastObjData* data, const char* ptr)
 
     e = ptr;
 
-    flush_output(data);
+    flush_group(data);
     data->group.name = string_copy(s, e);
 
     return ptr;
@@ -925,7 +1005,7 @@ const char* read_map(fastObjData* data, const char* ptr, fastObjTexture* map)
 
 
 static
-int read_mtllib(fastObjData* data, void* file)
+int read_mtllib(fastObjData* data, void* file, const fastObjCallbacks* callbacks, void* user_data)
 {
     unsigned long   n;
     const char*     s;
@@ -938,13 +1018,13 @@ int read_mtllib(fastObjData* data, void* file)
 
 
     /* Read entire file */
-    n = file_size(file);
+    n = callbacks->file_size(file, user_data);
 
     contents = (char*)(memory_realloc(0, n + 1));
     if (!contents)
         return 0;
 
-    l = file_read(file, contents, n);
+    l = callbacks->file_read(file, contents, n, user_data);
     contents[l] = '\n';
 
     mtl = mtl_default();
@@ -1086,7 +1166,7 @@ int read_mtllib(fastObjData* data, void* file)
                     if (is_whitespace(*p))
                         p = read_map(data, p, &mtl.map_d);
                 }
-                else if (p[0] == 'b' &&
+                else if ((p[0] == 'b' || p[0] == 'B') &&
                          p[1] == 'u' &&
                          p[2] == 'm' &&
                          p[3] == 'p' &&
@@ -1115,7 +1195,7 @@ int read_mtllib(fastObjData* data, void* file)
 
 
 static
-const char* parse_mtllib(fastObjData* data, const char* ptr)
+const char* parse_mtllib(fastObjData* data, const char* ptr, const fastObjCallbacks* callbacks, void* user_data)
 {
     const char* s;
     const char* e;
@@ -1136,11 +1216,11 @@ const char* parse_mtllib(fastObjData* data, const char* ptr)
     {
         string_fix_separators(lib);
 
-        file = file_open(lib);
+        file = callbacks->file_open(lib, user_data);
         if (file)
         {
-            read_mtllib(data, file);
-            file_close(file);
+            read_mtllib(data, file, callbacks, user_data);
+            callbacks->file_close(file, user_data);
         }
 
         memory_dealloc(lib);
@@ -1151,7 +1231,7 @@ const char* parse_mtllib(fastObjData* data, const char* ptr)
 
 
 static
-void parse_buffer(fastObjData* data, const char* ptr, const char* end)
+void parse_buffer(fastObjData* data, const char* ptr, const char* end, const fastObjCallbacks* callbacks, void* user_data)
 {
     const char* p;
     
@@ -1201,6 +1281,21 @@ void parse_buffer(fastObjData* data, const char* ptr, const char* end)
             }
             break;
 
+        case 'o':
+            p++;
+
+            switch (*p++)
+            {
+            case ' ':
+            case '\t':
+                p = parse_object(data, p);
+                break;
+
+            default:
+                p--; /* roll p++ back in case *p was a newline */
+            }
+            break;
+
         case 'g':
             p++;
 
@@ -1224,7 +1319,7 @@ void parse_buffer(fastObjData* data, const char* ptr, const char* end)
                 p[3] == 'i' &&
                 p[4] == 'b' &&
                 is_whitespace(p[5]))
-                p = parse_mtllib(data, p + 5);
+                p = parse_mtllib(data, p + 5, callbacks, user_data);
             break;
 
         case 'u':
@@ -1254,6 +1349,9 @@ void fast_obj_destroy(fastObjMesh* m)
     unsigned int ii;
 
 
+    for (ii = 0; ii < array_size(m->objects); ii++)
+        object_clean(&m->objects[ii]);
+
     for (ii = 0; ii < array_size(m->groups); ii++)
         group_clean(&m->groups[ii]);
 
@@ -1266,6 +1364,7 @@ void fast_obj_destroy(fastObjMesh* m)
     array_clean(m->face_vertices);
     array_clean(m->face_materials);
     array_clean(m->indices);
+    array_clean(m->objects);
     array_clean(m->groups);
     array_clean(m->materials);
 
@@ -1275,8 +1374,18 @@ void fast_obj_destroy(fastObjMesh* m)
 
 fastObjMesh* fast_obj_read(const char* path)
 {
-    count_NaN = 0;
+    fastObjCallbacks callbacks;
+    callbacks.file_open = file_open;
+    callbacks.file_close = file_close;
+    callbacks.file_read = file_read;
+    callbacks.file_size = file_size;
 
+    return fast_obj_read_with_callbacks(path, &callbacks, 0);
+}
+
+
+fastObjMesh* fast_obj_read_with_callbacks(const char* path, const fastObjCallbacks* callbacks, void* user_data)
+{
     fastObjData  data;
     fastObjMesh* m;
     void*        file;
@@ -1287,9 +1396,13 @@ fastObjMesh* fast_obj_read(const char* path)
     fastObjUInt  read;
     fastObjUInt  bytes;
 
+    /* Check if callbacks are valid */
+    if(!callbacks)
+        return 0;
+
 
     /* Open file */
-    file = file_open(path);
+    file = callbacks->file_open(path, user_data);
     if (!file)
         return 0;
 
@@ -1306,6 +1419,7 @@ fastObjMesh* fast_obj_read(const char* path)
     m->face_materials = 0;
     m->indices        = 0;
     m->materials      = 0;
+    m->objects        = 0;
     m->groups         = 0;
 
 
@@ -1324,6 +1438,7 @@ fastObjMesh* fast_obj_read(const char* path)
 
     /* Data needed during parsing */
     data.mesh     = m;
+    data.object   = object_default();
     data.group    = group_default();
     data.material = 0;
     data.line     = 1;
@@ -1352,7 +1467,7 @@ fastObjMesh* fast_obj_read(const char* path)
     for (;;)
     {
         /* Read another buffer's worth from file */
-        read = (fastObjUInt)(file_read(file, start, BUFFER_SIZE));
+        read = (fastObjUInt)(callbacks->file_read(file, start, BUFFER_SIZE, user_data));
         if (read == 0 && start == buffer)
             break;
 
@@ -1387,7 +1502,7 @@ fastObjMesh* fast_obj_read(const char* path)
 
 
         /* Process buffer */
-        parse_buffer(&data, buffer, last);
+        parse_buffer(&data, buffer, last, callbacks, user_data);
 
 
         /* Copy overflow for next buffer */
@@ -1397,8 +1512,11 @@ fastObjMesh* fast_obj_read(const char* path)
     }
 
 
-    /* Flush final group */
-    flush_output(&data);
+    /* Flush final object/group */
+    flush_object(&data);
+    object_clean(&data.object);
+
+    flush_group(&data);
     group_clean(&data.group);
 
     m->position_count = array_size(m->positions) / 3;
@@ -1406,6 +1524,7 @@ fastObjMesh* fast_obj_read(const char* path)
     m->normal_count   = array_size(m->normals) / 3;
     m->face_count     = array_size(m->face_vertices);
     m->material_count = array_size(m->materials);
+    m->object_count   = array_size(m->objects);
     m->group_count    = array_size(m->groups);
 
 
@@ -1413,7 +1532,7 @@ fastObjMesh* fast_obj_read(const char* path)
     memory_dealloc(buffer);
     memory_dealloc(data.base);
 
-    file_close(file);
+    callbacks->file_close(file, user_data);
 
     if (count_NaN > 0) {
         std::string error = "file contains " + std::to_string(count_NaN) + " NaN coordinates (changed to zeros)";
