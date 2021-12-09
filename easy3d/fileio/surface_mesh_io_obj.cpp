@@ -146,14 +146,15 @@ namespace easy3d {
                         ++idx;
                     }
 
-#if 1 // check if face has less than 3 vertices and duplicated vertices
+#if 1 // verify validity of vertex indices of the face
 
+                    // a face must have at least three vertices
                     if (vertices.size() < 3) {
                         LOG(ERROR) << "face has less than 3 vertices (" << vertices << "), face ignored";
                         continue;
                     }
 
-                    // verifying validity of vertex indices
+                    // a face cannot have duplicated vertices
                     std::vector<SurfaceMesh::Vertex> tmp = vertices;
                     std::sort(tmp.begin(),tmp.end());
                     auto last = std::unique(tmp.begin(),tmp.end());
