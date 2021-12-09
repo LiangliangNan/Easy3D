@@ -161,7 +161,7 @@ namespace easy3d {
                 l = norm(ev);
                 if (l != 0) {   // avoid overflow in case of 0-length edges
                     ev /= l;
-                    l *= 0.5; // only consider half of the edge (matchig Voronoi area)
+                    l *= 0.5; // only consider half of the edge (matching Voronoi area)
                     angle[e] = atan2(dot(cross(n0, n1), ev), dot(n0, n1));
                     evec[e] = sqrt(l) * ev;
                 }

@@ -12,6 +12,8 @@
 
 #include <easy3d/algo/surface_mesh_triangulation.h>
 
+#include <climits>
+
 
 namespace easy3d {
 
@@ -56,7 +58,7 @@ namespace easy3d {
 
         // compute minimal triangulation by dynamic programming
         weight_.clear();
-        weight_.resize(n, std::vector<float>(n, FLT_MAX));
+        weight_.resize(n, std::vector<float>(n, std::numeric_limits<float>::max()));
         index_.clear();
         index_.resize(n, std::vector<int>(n, 0));
 
@@ -74,7 +76,7 @@ namespace easy3d {
             // for all n-gons [i,i+j]
             for (i = 0; i < n - j; ++i) {
                 k = i + j;
-                wmin = FLT_MAX;
+                wmin = std::numeric_limits<float>::max();
                 imin = -1;
 
                 // find best split i < m < i+j
@@ -138,22 +140,17 @@ namespace easy3d {
         const SurfaceMesh::Vertex b = vertices_[j];
         const SurfaceMesh::Vertex c = vertices_[k];
 
-        // if one of the potential edges already exists as NON-boundary edge
-        // this would result in an invalid triangulation
-        // -> prevent by giving infinite weight
-        // (this happens for suzanne.obj!)
-        //if (is_interior_edge(a, b) ||
-        //is_interior_edge(b, c) ||
-        //is_interior_edge(c, a))
-        //return FLT_MAX;
+        // If one of the potential edges already exists this would result in an
+        // invalid triangulation. This happens for suzanne.obj. Prevent this by
+        // giving infinite weight.
         if (is_edge(a, b) && is_edge(b, c) && is_edge(c, a))
-            return FLT_MAX;
+            return std::numeric_limits<float>::max();
 
         const vec3 &pa = points_[a];
         const vec3 &pb = points_[b];
         const vec3 &pc = points_[c];
 
-        float w = FLT_MAX;
+        float w = std::numeric_limits<float>::max();
         switch (objective_) {
             // compute squared triangle area
             case MIN_AREA:
@@ -178,16 +175,6 @@ namespace easy3d {
 
     bool SurfaceMeshTriangulation::is_edge(SurfaceMesh::Vertex a, SurfaceMesh::Vertex b) const {
         return mesh_->find_halfedge(a, b).is_valid();
-    }
-
-    //-----------------------------------------------------------------------------
-
-    bool SurfaceMeshTriangulation::is_interior_edge(SurfaceMesh::Vertex a, SurfaceMesh::Vertex b) const {
-        SurfaceMesh::Halfedge h = mesh_->find_halfedge(a, b);
-        if (!h.is_valid())
-            return false; // edge does not exist
-        return (!mesh_->is_border(h) &&
-                !mesh_->is_border(mesh_->opposite(h)));
     }
 
     //-----------------------------------------------------------------------------

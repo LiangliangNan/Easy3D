@@ -11,11 +11,12 @@
 
 
 #include <easy3d/algo/surface_mesh_fairing.h>
-#include <easy3d/algo/surface_mesh_geometry.h>
-#include <easy3d/util/logging.h>
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
+
+#include <easy3d/algo/surface_mesh_geometry.h>
+#include <easy3d/util/logging.h>
 
 
 namespace easy3d {

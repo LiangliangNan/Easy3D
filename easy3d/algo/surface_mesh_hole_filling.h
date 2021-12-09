@@ -12,9 +12,11 @@
 #ifndef EASY3D_ALGO_SURFACE_MESH_HOLE_FILLING_H
 #define EASY3D_ALGO_SURFACE_MESH_HOLE_FILLING_H
 
-#include <easy3d/core/surface_mesh.h>
 #include <vector>
-#include <float.h>
+#include <cfloat>
+
+#include <easy3d/core/surface_mesh.h>
+
 
 namespace easy3d {
 

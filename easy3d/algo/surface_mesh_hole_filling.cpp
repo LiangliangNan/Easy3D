@@ -10,14 +10,16 @@
  ********************************************************************/
 
 #include <easy3d/algo/surface_mesh_hole_filling.h>
-#include <easy3d/algo/surface_mesh_fairing.h>
-#include <easy3d/util/logging.h>
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 
+#include <easy3d/algo/surface_mesh_fairing.h>
+#include <easy3d/util/logging.h>
+
 using SparseMatrix = Eigen::SparseMatrix<double>;
 using Triplet = Eigen::Triplet<double>;
+
 
 namespace easy3d {
 
@@ -382,24 +384,11 @@ namespace easy3d {
         }
         const int n = vertices.size();
 
-        // collect constraints
-        std::vector<SurfaceMesh::Vertex> constraints;
-        constraints.reserve(mesh_->n_vertices());
-        for (auto v : mesh_->vertices()) {
-            if (!vlocked_[v]) {
-                constraints.push_back(v);
-            }
-        }
-        for (auto h : hole_) {
-            constraints.push_back(mesh_->target(h));
-        }
-        const int m = constraints.size();
-
         // setup matrix & rhs
-        Eigen::MatrixXd B(m, 3);
+        Eigen::MatrixXd B(n, 3);
         std::vector<Triplet> triplets;
-        for (int i = 0; i < m; ++i) {
-            SurfaceMesh::Vertex v = constraints[i];
+        for (int i = 0; i < n; ++i) {
+            SurfaceMesh::Vertex v = vertices[i];
             vec3 b(0, 0, 0);
             float c(0);
 
@@ -420,12 +409,10 @@ namespace easy3d {
         }
 
         // solve least squares system
-        SparseMatrix A(m, n);
+        SparseMatrix A(n, n);
         A.setFromTriplets(triplets.begin(), triplets.end());
-        SparseMatrix AtA = A.transpose() * A;
-        Eigen::MatrixXd AtB = A.transpose() * B;
-        Eigen::SimplicialLDLT<SparseMatrix> solver(AtA);
-        Eigen::MatrixXd X = solver.solve(AtB);
+        Eigen::SimplicialLDLT<SparseMatrix> solver(A);
+        Eigen::MatrixXd X = solver.solve(B);
         if (solver.info() != Eigen::Success) {
             LOG(ERROR) << "SurfaceMeshHoleFilling failed to solve the linear system";
             return;

@@ -10,39 +10,33 @@
  ********************************************************************/
 
 #include <easy3d/algo/surface_mesh_remeshing.h>
-#include <easy3d/algo/surface_mesh_curvature.h>
-#include <easy3d/algo/surface_mesh_geometry.h>
-#include <easy3d/algo/triangle_mesh_kdtree.h>
-#include <easy3d/util/progress.h>
 
 #include <cmath>
 #include <algorithm>
 
+#include <easy3d/algo/triangle_mesh_kdtree.h>
+#include <easy3d/algo/surface_mesh_curvature.h>
+#include <easy3d/algo/surface_mesh_geometry.h>
+#include <easy3d/util/progress.h>
 
 namespace easy3d {
 
     SurfaceMeshRemeshing::SurfaceMeshRemeshing(SurfaceMesh *mesh)
             : mesh_(mesh), refmesh_(nullptr), kd_tree_(nullptr) {
-        points_ = mesh_->get_vertex_property<vec3>("v:point");
+        if (!mesh_->is_triangle_mesh())
+            LOG(ERROR) << "input is not a pure triangle mesh!";
+
+        points_ = mesh_->vertex_property<vec3>("v:point");
 
         mesh_->update_vertex_normals();
-        vnormal_ = mesh_->get_vertex_property<vec3>("v:normal");
+        vnormal_ = mesh_->vertex_property<vec3>("v:normal");
     }
 
-    //-----------------------------------------------------------------------------
-
     SurfaceMeshRemeshing::~SurfaceMeshRemeshing() = default;
-
-    //-----------------------------------------------------------------------------
 
     void SurfaceMeshRemeshing::uniform_remeshing(float edge_length,
                                                  unsigned int iterations,
                                                  bool use_projection) {
-        if (!mesh_->is_triangle_mesh()) {
-            std::cerr << "Not a triangle mesh!" << std::endl;
-            return;
-        }
-
         uniform_ = true;
         use_projection_ = use_projection;
         target_edge_length_ = edge_length;
@@ -73,18 +67,11 @@ namespace easy3d {
         postprocessing();
     }
 
-    //-----------------------------------------------------------------------------
-
     void SurfaceMeshRemeshing::adaptive_remeshing(float min_edge_length,
                                                   float max_edge_length,
                                                   float approx_error,
                                                   unsigned int iterations,
                                                   bool use_projection) {
-        if (!mesh_->is_triangle_mesh()) {
-            std::cerr << "Not a triangle mesh!" << std::endl;
-            return;
-        }
-
         uniform_ = false;
         min_edge_length_ = min_edge_length;
         max_edge_length_ = max_edge_length;
@@ -116,8 +103,6 @@ namespace easy3d {
         postprocessing();
     }
 
-    //-----------------------------------------------------------------------------
-
     void SurfaceMeshRemeshing::preprocessing() {
         // properties
         vfeature_ = mesh_->vertex_property<bool>("v:feature", false);
@@ -128,7 +113,6 @@ namespace easy3d {
 
         // lock unselected vertices if some vertices are selected
         auto vselected = mesh_->get_vertex_property<bool>("v:selected");
-
         if (vselected) {
             bool has_selection = false;
             for (auto v : mesh_->vertices()) {
@@ -171,32 +155,52 @@ namespace easy3d {
             }
         } else {
             // compute curvature for all mesh vertices, using cotan or Cohen-Steiner
-            // do 2 post-smoothing steps to get a smoother sizing field
+            // don't use two-ring neighborhood, since we otherwise compute
+            // curvature over sharp features edges, leading to high curvatures.
+            // prefer tensor analysis over cotan-Laplace, since the former is more
+            // robust and gives better results on the boundary.
             SurfaceMeshCurvature curv(mesh_);
-            //curv.analyze(1);
             curv.analyze_tensor(1, true);
 
-            for (auto v : mesh_->vertices()) {
-                // maximum absolute curvature
-                float c = curv.max_abs_curvature(v);
+            // use vsizing_ to store/smooth curvatures to avoid another vertex property
 
-                // curvature of feature vertices: average of non-feature neighbors
-                if (vfeature_[v]) {
-                    SurfaceMesh::Vertex vv;
+            // curvature values for feature vertices and boundary vertices
+            // are not meaningful. mark them as negative values.
+            for (auto v : mesh_->vertices()) {
+                if (mesh_->is_border(v) || (vfeature_ && vfeature_[v]))
+                    vsizing_[v] = -1.0;
+                else
+                    vsizing_[v] = curv.max_abs_curvature(v);
+            }
+
+            // curvature values might be noisy. smooth them.
+            // don't consider feature vertices' curvatures.
+            // don't consider boundary vertices' curvatures.
+            // do this for two iterations, to propagate curvatures
+            // from non-feature regions to feature vertices.
+            for (int iters = 0; iters < 2; ++iters) {
+                for (auto v: mesh_->vertices()) {
                     float w, ww = 0.0;
-                    c = 0.0;
+                    float c, cc = 0.0;
 
                     for (auto h : mesh_->halfedges(v)) {
-                        vv = mesh_->target(h);
-                        if (!vfeature_[vv]) {
+                        c = vsizing_[mesh_->target(h)];
+                        if (c > 0.0) {
                             w = std::max(0.0, geom::cotan_weight(mesh_, mesh_->edge(h)));
                             ww += w;
-                            c += w * curv.max_abs_curvature(vv);
+                            cc += w * c;
                         }
                     }
 
-                    c /= ww;
+                    if (ww)
+                        cc /= ww;
+                    vsizing_[v] = cc;
                 }
+            }
+
+            // now convert per-vertex curvature into target edge length
+            for (auto v: mesh_->vertices()) {
+                float c = vsizing_[v];
 
                 // get edge length from curvature
                 const float r = 1.0 / c;
@@ -227,8 +231,8 @@ namespace easy3d {
             refmesh_ = new SurfaceMesh();
             refmesh_->assign(*mesh_);
             refmesh_->update_vertex_normals();
-            refpoints_ = refmesh_->get_vertex_property<vec3>("v:point");
-            refnormals_ = refmesh_->get_vertex_property<vec3>("v:normal");
+            refpoints_ = refmesh_->vertex_property<vec3>("v:point");
+            refnormals_ = refmesh_->vertex_property<vec3>("v:normal");
 
             // copy sizing field from mesh_
             refsizing_ = refmesh_->add_vertex_property<float>("v:sizing");
@@ -240,8 +244,6 @@ namespace easy3d {
             kd_tree_ = new TriangleMeshKdTree(refmesh_, 0);
         }
     }
-
-    //-----------------------------------------------------------------------------
 
     void SurfaceMeshRemeshing::postprocessing() {
         // delete kd-tree and reference mesh
@@ -256,8 +258,6 @@ namespace easy3d {
         mesh_->remove_vertex_property(vsizing_);
     }
 
-    //-----------------------------------------------------------------------------
-
     void SurfaceMeshRemeshing::project_to_reference(SurfaceMesh::Vertex v) {
         if (!use_projection_) {
             return;
@@ -265,13 +265,12 @@ namespace easy3d {
 
         // find closest triangle of reference mesh
         TriangleMeshKdTree::NearestNeighbor nn = kd_tree_->nearest(points_[v]);
+        const vec3 p = nn.nearest;
         const SurfaceMesh::Face f = nn.face;
         if (!f.is_valid()) {
             LOG(WARNING) << "could not find the nearest face for " << v << " (" << points_[v] << ")";
             return;
         }
-
-        const vec3 &p = nn.nearest;
 
         // get face data
         SurfaceMesh::VertexAroundFaceCirculator fvIt = refmesh_->vertices(f);
@@ -288,7 +287,7 @@ namespace easy3d {
         const float s2 = refsizing_[*fvIt];
 
         // get barycentric coordinates
-        const vec3 &b = geom::barycentric_coordinates(p, p0, p1, p2);
+        const vec3 b = geom::barycentric_coordinates(p, p0, p1, p2);
 
         // interpolate normal
         vec3 n;
@@ -309,8 +308,6 @@ namespace easy3d {
         vnormal_[v] = n;
         vsizing_[v] = s;
     }
-
-    //-----------------------------------------------------------------------------
 
     void SurfaceMeshRemeshing::split_long_edges() {
         SurfaceMesh::Vertex vnew, v0, v1;
@@ -354,8 +351,6 @@ namespace easy3d {
             }
         }
     }
-
-    //-----------------------------------------------------------------------------
 
     void SurfaceMeshRemeshing::collapse_short_edges() {
         SurfaceMesh::Vertex v0, v1;
@@ -479,8 +474,6 @@ namespace easy3d {
         mesh_->collect_garbage();
     }
 
-    //-----------------------------------------------------------------------------
-
     void SurfaceMeshRemeshing::flip_edges() {
         SurfaceMesh::Vertex v0, v1, v2, v3;
         SurfaceMesh::Halfedge h;
@@ -565,16 +558,14 @@ namespace easy3d {
         mesh_->remove_vertex_property(valence);
     }
 
-    //-----------------------------------------------------------------------------
-
     void SurfaceMeshRemeshing::tangential_smoothing(unsigned int iterations) {
         SurfaceMesh::Vertex v1, v2, v3, vv;
         SurfaceMesh::Edge e;
-        float w, ww, area;
+        float w, ww;
         vec3 u, n, t, b;
 
         // add property
-        SurfaceMesh::VertexProperty<vec3> update = mesh_->add_vertex_property<vec3>("v:update", vec3(0, 0, 0));
+        SurfaceMesh::VertexProperty <vec3> update = mesh_->add_vertex_property<vec3>("v:update");
 
         // project at the beginning to get valid sizing values and normal vectors
         // for vertices introduced by splitting
@@ -620,46 +611,26 @@ namespace easy3d {
 
                         assert(c == 2);
 
-                        if (ww > 0) {// to avoid overflow (i.e., ww == 0)
-                            u /= ww;
-                            u -= points_[v];
-                            t = normalize(t);
-                            u = t * dot(u, t);
-                            update[v] = u;
-                        }
+                        u *= (1.0 / ww);
+                        u -= points_[v];
+                        t = normalize(t);
+                        u = t * dot(u, t);
+
+                        update[v] = u;
                     } else {
-                        u = vec3(0.0);
-                        t = vec3(0.0);
-                        ww = 0;
-
-                        for (auto h : mesh_->halfedges(v)) {
-                            v1 = v;
-                            v2 = mesh_->target(h);
-                            v3 = mesh_->target(mesh_->next(h));
-
-                            b = points_[v1];
-                            b += points_[v2];
-                            b += points_[v3];
-                            b *= (1.0 / 3.0);
-
-                            area = norm(cross(points_[v2] - points_[v1],
-                                              points_[v3] - points_[v1]));
-                            w = area /
-                                pow((vsizing_[v1] + vsizing_[v2] + vsizing_[v3]) /
-                                    3.0,
-                                    2.0);
-
-                            u += w * b;
-                            ww += w;
+                        vec3 p(0);
+                        try {
+                            p = minimize_squared_areas(v);
                         }
-
-                        if (ww > 0) { // to avoid overflow (i.e., ww == 0)
-                            u /= ww;
-                            u -= points_[v];
-                            n = vnormal_[v];
-                            u -= n * dot(u, n);
-                            update[v] = u;
+                        catch (std::exception &e) {
+                            p = weighted_centroid(v);
                         }
+                        u = p - mesh_->position(v);
+
+                        n = vnormal_[v];
+                        u -= n * dot(u, n);
+
+                        update[v] = u;
                     }
                 }
             }
@@ -688,13 +659,11 @@ namespace easy3d {
         mesh_->remove_vertex_property(update);
     }
 
-    //-----------------------------------------------------------------------------
-
     void SurfaceMeshRemeshing::remove_caps() {
         SurfaceMesh::Halfedge h;
         SurfaceMesh::Vertex v, vb, vd;
         SurfaceMesh::Face fb, fd;
-        float a0, a1, amin, aa(::cos(170.0 * M_PI / 180.0));
+        float a0, a1, amin, aa(std::cos(170.0 * M_PI / 180.0));
         vec3 a, b, c, d;
 
         for (auto e : mesh_->edges()) {
@@ -739,5 +708,79 @@ namespace easy3d {
         }
     }
 
-//=============================================================================
+    vec3 SurfaceMeshRemeshing::minimize_squared_areas(SurfaceMesh::Vertex v) {
+        dmat3 A(0.0), D;
+        dvec3 b(0), d, p, q, x;
+        double w;
+
+        for (auto h : mesh_->halfedges(v)) {
+            assert(!mesh_->is_border(h));
+
+            // get edge opposite to vertex v
+            SurfaceMesh::Vertex v0 = mesh_->target(h);
+            SurfaceMesh::Vertex v1 = mesh_->target(mesh_->next(h));
+            p = (dvec3) points_[v0];
+            q = (dvec3) points_[v1];
+            d = q - p;
+            w = 1.0 / norm(d);
+
+            // build squared cross-product-with-d matrix
+            D(0, 0) = d[1] * d[1] + d[2] * d[2];
+            D(1, 1) = d[0] * d[0] + d[2] * d[2];
+            D(2, 2) = d[0] * d[0] + d[1] * d[1];
+            D(1, 0) = D(0, 1) = -d[0] * d[1];
+            D(2, 0) = D(0, 2) = -d[0] * d[2];
+            D(1, 2) = D(2, 1) = -d[1] * d[2];
+            A += w * D;
+
+            // build right-hand side
+            b += w * D * p;
+        }
+
+        // compute minimizer
+        try {
+            x = inverse(A) * b;
+        }
+        catch (...) {
+            std::string what = "SurfaceMeshRemeshing: matrix not invertible.";
+            throw std::runtime_error(what);
+        }
+
+        return vec3(x);
+    }
+
+    vec3 SurfaceMeshRemeshing::weighted_centroid(SurfaceMesh::Vertex v) {
+        auto p = vec3(0);
+        double ww = 0;
+
+        for (auto h : mesh_->halfedges(v)) {
+            auto v1 = v;
+            auto v2 = mesh_->target(h);
+            auto v3 = mesh_->target(mesh_->next(h));
+
+            auto b = points_[v1];
+            b += points_[v2];
+            b += points_[v3];
+            b *= (1.0 / 3.0);
+
+            double area =
+                    norm(cross(points_[v2] - points_[v1], points_[v3] - points_[v1]));
+
+            // take care of degenerate faces to avoid all zero weights and division
+            // by zero later on
+            if (area == 0)
+                area = 1.0;
+
+            double w =
+                    area / pow((vsizing_[v1] + vsizing_[v2] + vsizing_[v3]) / 3.0, 2.0);
+
+            p += w * b;
+            ww += w;
+        }
+
+        p /= ww;
+
+        return p;
+    }
+
 } // namespace easy3d

@@ -132,16 +132,16 @@ namespace easy3d {
                 angle_ = 2 * M_PI;
             } else {
                 // new angle
-                float center_angle = acos(dp);
+                float center_angle = std::acos(dp);
                 float min_angle = std::min(-angle_, center_angle - nc.angle_);
                 float max_angle = std::max(angle_, center_angle + nc.angle_);
                 angle_ = 0.5 * (max_angle - min_angle);
 
                 // axis by SLERP
                 float axis_angle = 0.5 * (min_angle + max_angle);
-                center_normal_ = ((center_normal_ * sin(center_angle - axis_angle) +
-                                   nc.center_normal_ * sin(axis_angle)) /
-                                  sin(center_angle));
+                center_normal_ = ((center_normal_ * std::sin(center_angle - axis_angle) +
+                                   nc.center_normal_ * std::sin(axis_angle)) /
+                                  std::sin(center_angle));
             }
 
             return *this;
