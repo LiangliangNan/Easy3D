@@ -11,6 +11,7 @@
 
 #include <easy3d/algo/surface_mesh_hole_filling.h>
 #include <easy3d/algo/surface_mesh_fairing.h>
+#include <easy3d/util/logging.h>
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
@@ -101,7 +102,7 @@ namespace easy3d {
         do {
             // check for manifoldness
             if (!mesh_->is_manifold(mesh_->target(h))) {
-                std::cerr << "[SurfaceMeshHoleFilling] Non-manifold hole\n";
+                LOG(ERROR) << "model has a non-manifold hole that cannot be filled";
                 return false;
             }
 
@@ -426,7 +427,7 @@ namespace easy3d {
         Eigen::SimplicialLDLT<SparseMatrix> solver(AtA);
         Eigen::MatrixXd X = solver.solve(AtB);
         if (solver.info() != Eigen::Success) {
-            std::cerr << "[SurfaceMeshHoleFilling] Solver failed\n";
+            LOG(ERROR) << "SurfaceMeshHoleFilling failed to solve the linear system";
             return;
         }
 
@@ -456,7 +457,7 @@ namespace easy3d {
             return;
 
         // convert non-locked into selection
-        auto vsel = mesh_->add_vertex_property<bool>("v:selected");
+        auto vsel = mesh_->vertex_property<bool>("v:selected");
         for (auto v : mesh_->vertices())
             vsel[v] = !vlocked_[v];
 
