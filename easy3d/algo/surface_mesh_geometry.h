@@ -27,12 +27,22 @@ namespace easy3d {
         /** \brief surface area of the mesh (assumes triangular faces)    */
         float surface_area(const SurfaceMesh *mesh);
 
+        //! \brief Compute the volume of a mesh
+        //! \details See \cite zhang_2002_efficient for details.
+        //! \pre Input mesh needs to be a pure triangle mesh.
+        //! \throw InvalidInputException if the input precondition is violated.
+        float volume(const SurfaceMesh *mesh);
+
         /** \brief barycenter/centroid of a face    */
         vec3 centroid(const SurfaceMesh *mesh, SurfaceMesh::Face f);
 
         /** \brief barycenter/centroid of mesh, computed as area-weighted mean of vertices.    */
         /** \note assumes triangular faces.    */
         vec3 centroid(const SurfaceMesh *mesh);
+
+        //! \brief Compute dual of a mesh.
+        //! \warning Changes the mesh in place. All properties are cleared.
+        void dual(SurfaceMesh *mesh);
 
         /** \brief compute the cotangent weight for edge e    */
         double cotan_weight(const SurfaceMesh *mesh, SurfaceMesh::Edge e);

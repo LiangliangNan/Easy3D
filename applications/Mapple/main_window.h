@@ -132,6 +132,7 @@ public slots:
 
     // surface mesh
     void surfaceMeshExtractConnectedComponents();
+    void  surfaceMeshDual();
     void surfaceMeshPlanarPartition();
     void surfaceMeshPolygonization();
     void surfaceMeshTriangulation();

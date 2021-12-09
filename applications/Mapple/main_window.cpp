@@ -75,6 +75,7 @@
 #include <easy3d/algo/surface_mesh_stitching.h>
 #include <easy3d/algo/surface_mesh_enumerator.h>
 #include <easy3d/algo/surface_mesh_polygonization.h>
+#include <easy3d/algo/surface_mesh_geometry.h>
 #include <easy3d/algo_ext/surfacer.h>
 #include <easy3d/algo/delaunay_2d.h>
 #include <easy3d/algo/delaunay_3d.h>
@@ -955,6 +956,7 @@ void MainWindow::createActionsForPointCloudMenu() {
 
 void MainWindow::createActionsForSurfaceMeshMenu() {
     connect(ui->actionExtractConnectedComponents, SIGNAL(triggered()), this, SLOT(surfaceMeshExtractConnectedComponents()));
+    connect(ui->actionDualMesh, SIGNAL(triggered()), this, SLOT(surfaceMeshDual()));
     connect(ui->actionPlanarPartition, SIGNAL(triggered()), this, SLOT(surfaceMeshPlanarPartition()));
     connect(ui->actionPolygonization, SIGNAL(triggered()), this, SLOT(surfaceMeshPolygonization()));
     connect(ui->actionSurfaceMeshTriangulation, SIGNAL(triggered()), this, SLOT(surfaceMeshTriangulation()));
@@ -1798,18 +1800,31 @@ void MainWindow::surfaceMeshPlanarPartition() {
 }
 
 
+void MainWindow::surfaceMeshDual() {
+    auto mesh = dynamic_cast<SurfaceMesh*>(viewer_->currentModel());
+    if (!mesh)
+        return;
+
+    geom::dual(mesh);
+
+    mesh->renderer()->update();
+    viewer()->update();
+    updateUi();
+}
+
+
 void MainWindow::surfaceMeshPolygonization() {
     auto mesh = dynamic_cast<SurfaceMesh*>(viewer_->currentModel());
     if (!mesh)
         return;
 
 #if HAS_CGAL
-    // stitch first: to encourage large polyons
+    // stitch first: to encourage large polygons
     Surfacer::stitch_borders(mesh);
     Surfacer::merge_reversible_connected_components(mesh);
 #endif
 
-    // polygonaization
+    // polygonization
     SurfaceMeshPolygonization polygonizer;
     polygonizer.apply(mesh);
 
