@@ -86,7 +86,7 @@ namespace easy3d {
         /// Set the name of the property
         void set_name(const std::string& n) { name_ = n; }
 
-        bool is_same (const BasePropertyArray& other)
+        bool is_same (const BasePropertyArray& other) const
         {
             return (name() == other.name() && type() == other.type());
         }
