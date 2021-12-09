@@ -146,6 +146,30 @@ namespace easy3d {
                         ++idx;
                     }
 
+#if 1 // check if face has less than 3 vertices and duplicated vertices
+
+                    if (vertices.size() < 3) {
+                        LOG(ERROR) << "face has less than 3 vertices (" << vertices << "), face ignored";
+                        continue;
+                    }
+
+                    // verifying validity of vertex indices
+                    std::vector<SurfaceMesh::Vertex> tmp = vertices;
+                    std::sort(tmp.begin(),tmp.end());
+                    auto last = std::unique(tmp.begin(),tmp.end());
+                    tmp.erase(last, tmp.end());
+                    if(tmp.size() != vertices.size()) {
+                        if (tmp.size() < 3) {
+                            LOG(ERROR) << "face has duplicated vertices (" << vertices << "), face ignored";
+                            continue;
+                        }
+                        else {
+                            LOG(ERROR) << "face has duplicated vertices (" << vertices << "), duplication removed";
+                            vertices = tmp;
+                        }
+                    }
+#endif
+
                     SurfaceMesh::Face face = builder.add_face(vertices);
                     if (face.is_valid()) {
                         // texture coordinates
