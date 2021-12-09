@@ -446,9 +446,12 @@ namespace easy3d {
         // did the refinement insert new vertices?
         // if yes, then trigger fairing; otherwise don't.
         bool new_vertices = false;
-        for (auto v : mesh_->vertices())
-            if (!vlocked_[v])
+        for (auto v : mesh_->vertices()) {
+            if (!vlocked_[v]) {
                 new_vertices = true;
+                break;
+            }
+        }
         if (!new_vertices)
             return;
 
