@@ -19,6 +19,7 @@ set(${PROJECT_NAME}_HEADERS
         surface_mesh_components.h
         surface_mesh_curvature.h
         surface_mesh_enumerator.h
+        surface_mesh_factory.h
         surface_mesh_fairing.h
         surface_mesh_features.h
         surface_mesh_geodesic.h
@@ -53,6 +54,7 @@ set(${PROJECT_NAME}_SOURCES
         surface_mesh_components.cpp
         surface_mesh_curvature.cpp
         surface_mesh_enumerator.cpp
+        surface_mesh_factory.cpp
         surface_mesh_fairing.cpp
         surface_mesh_features.cpp
         surface_mesh_geodesic.cpp
