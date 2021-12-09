@@ -43,6 +43,28 @@ namespace easy3d {
 
         //-----------------------------------------------------------------------------
 
+        float volume(const SurfaceMesh& mesh)
+        {
+            if (!mesh.is_triangle_mesh()) {
+                LOG(ERROR) << "input is not a pure triangle mesh!";
+                return 0;
+            }
+
+            float volume(0);
+            for (const auto f : mesh.faces()) {
+                auto fv = mesh.vertices(f);
+                const auto& p0 = mesh.position(*fv);
+                const auto& p1 = mesh.position(*(++fv));
+                const auto& p2 = mesh.position(*(++fv));
+
+                volume += float(1.0) / float(6.0) * dot(cross(p0, p1), p2);
+            }
+
+            return std::abs(volume);
+        }
+
+        //-----------------------------------------------------------------------------
+
         vec3 centroid(const SurfaceMesh *mesh, SurfaceMesh::Face f) {
             vec3 c(0, 0, 0);
             float n(0);
@@ -67,6 +89,34 @@ namespace easy3d {
             }
             center /= area;
             return center;
+        }
+
+        //-----------------------------------------------------------------------------
+
+        void dual(SurfaceMesh* mesh)
+        {
+            // the new dualized mesh
+            SurfaceMesh tmp;
+
+            // remember new vertices per face
+            auto fvertex = mesh->add_face_property<SurfaceMesh::Vertex>("f:vertex");
+
+            // add centroid for each face
+            for (auto f : mesh->faces())
+                fvertex[f] = tmp.add_vertex(centroid(mesh, f));
+
+            // add new face for each vertex
+            for (auto v : mesh->vertices())
+            {
+                std::vector<SurfaceMesh::Vertex> vertices;
+                for (auto f : mesh->faces(v))
+                    vertices.push_back(fvertex[f]);
+
+                tmp.add_face(vertices);
+            }
+
+            // swap old and new meshes, don't copy properties
+            mesh->assign(tmp);
         }
 
         //-----------------------------------------------------------------------------

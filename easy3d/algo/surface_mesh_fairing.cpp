@@ -11,11 +11,12 @@
 
 
 #include <easy3d/algo/surface_mesh_fairing.h>
-#include <easy3d/algo/surface_mesh_geometry.h>
-#include <easy3d/util/logging.h>
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
+
+#include <easy3d/algo/surface_mesh_geometry.h>
+#include <easy3d/util/logging.h>
 
 
 namespace easy3d {
@@ -153,7 +154,7 @@ namespace easy3d {
         Eigen::MatrixXd X = solver.solve(B);
 
         if (solver.info() != Eigen::Success) {
-            std::cerr << "SurfaceMeshFairing: Could not solve linear system\n";
+            LOG(ERROR) << "SurfaceMeshFairing failed to solve the linear system";
         } else {
             for (unsigned int i = 0; i < n; ++i) {
                 const auto &tmp = X.row(i);

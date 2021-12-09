@@ -1553,7 +1553,7 @@ void PaintCanvas::deleteSelectedPrimitives() {
         }
         mesh->collect_garbage();
         mesh->manipulator()->reset();
-        mesh->renderer()->update(false);   // do not recompute the bounding box
+        mesh->renderer()->update();
         LOG(INFO) << count << " faces deleted";
     } else if (dynamic_cast<PointCloud*>(currentModel())) {
         auto cloud = dynamic_cast<PointCloud*>(currentModel());
@@ -1567,7 +1567,7 @@ void PaintCanvas::deleteSelectedPrimitives() {
         }
         cloud->collect_garbage();
         cloud->manipulator()->reset();
-        cloud->renderer()->update(false);   // do not recompute the bounding box
+        cloud->renderer()->update();
         LOG(INFO) << count << " points deleted";
     }
     window_->updateUi();

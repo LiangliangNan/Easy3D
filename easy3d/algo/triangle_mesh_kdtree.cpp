@@ -11,9 +11,10 @@
 
 
 #include <easy3d/algo/triangle_mesh_kdtree.h>
-#include <easy3d/algo/surface_mesh_geometry.h>
 
-#include <cfloat>
+#include <limits>
+
+#include <easy3d/algo/surface_mesh_geometry.h>
 
 
 namespace easy3d {
@@ -159,7 +160,7 @@ namespace easy3d {
 
     TriangleMeshKdTree::NearestNeighbor TriangleMeshKdTree::nearest(const vec3 &p) const {
         NearestNeighbor data;
-        data.dist = FLT_MAX;
+        data.dist = std::numeric_limits<float>::max();
         data.tests = 0;
         nearest_recurse(root_, p, data);
         return data;

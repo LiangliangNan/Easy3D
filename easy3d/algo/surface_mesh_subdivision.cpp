@@ -12,6 +12,7 @@
 
 #include <easy3d/algo/surface_mesh_subdivision.h>
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/algo/surface_mesh_geometry.h>
 
 
 namespace easy3d {
@@ -36,16 +37,8 @@ namespace easy3d {
         auto fpoint = mesh->add_face_property<vec3>("catmull:fpoint");
 
         // compute face vertices
-        for (auto f : mesh->faces()) {
-            vec3 p(0, 0, 0);
-            float c(0);
-            for (auto v : mesh->vertices(f)) {
-                p += points[v];
-                ++c;
-            }
-            p /= c;
-            fpoint[f] = p;
-        }
+        for (auto f : mesh->faces())
+            fpoint[f] = geom::centroid(mesh, f);
 
         // compute edge vertices
         for (auto e : mesh->edges()) {
@@ -261,7 +254,7 @@ namespace easy3d {
                 p /= k;
 
                 float beta =
-                        (0.625 - pow(0.375 + 0.25 * cos(2.0 * M_PI / k), 2.0));
+                        (0.625 - pow(0.375 + 0.25 * std::cos(2.0 * M_PI / k), 2.0));
 
                 vpoint[v] = points[v] * (float) (1.0 - beta) + beta * p;
             }
@@ -355,7 +348,7 @@ namespace easy3d {
         for (auto v : mesh->vertices()) {
             if (!mesh->is_border(v)) {
                 float n = mesh->valence(v);
-                float alpha = (4.0 - 2.0 * cos(2.0 * M_PI / n)) / 9.0;
+                float alpha = (4.0 - 2.0 * std::cos(2.0 * M_PI / n)) / 9.0;
                 vec3 p(0, 0, 0);
 
                 for (auto vv : mesh->vertices(v))

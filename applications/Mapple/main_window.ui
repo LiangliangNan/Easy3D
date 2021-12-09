@@ -147,6 +147,7 @@
     </widget>
     <addaction name="actionExtractConnectedComponents"/>
     <addaction name="separator"/>
+    <addaction name="actionDualMesh"/>
     <addaction name="actionPlanarPartition"/>
     <addaction name="actionPolygonization"/>
     <addaction name="actionSurfaceMeshTetrahedralization"/>
@@ -1170,6 +1171,11 @@
    </property>
    <property name="text">
     <string>Show primitive property under mouse</string>
+   </property>
+  </action>
+  <action name="actionDualMesh">
+   <property name="text">
+    <string>Dual</string>
    </property>
   </action>
  </widget>

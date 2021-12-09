@@ -10,13 +10,16 @@
  ********************************************************************/
 
 #include <easy3d/algo/surface_mesh_hole_filling.h>
-#include <easy3d/algo/surface_mesh_fairing.h>
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 
+#include <easy3d/algo/surface_mesh_fairing.h>
+#include <easy3d/util/logging.h>
+
 using SparseMatrix = Eigen::SparseMatrix<double>;
 using Triplet = Eigen::Triplet<double>;
+
 
 namespace easy3d {
 
@@ -101,7 +104,7 @@ namespace easy3d {
         do {
             // check for manifoldness
             if (!mesh_->is_manifold(mesh_->target(h))) {
-                std::cerr << "[SurfaceMeshHoleFilling] Non-manifold hole\n";
+                LOG(ERROR) << "model has a non-manifold hole that cannot be filled";
                 return false;
             }
 
@@ -381,24 +384,11 @@ namespace easy3d {
         }
         const int n = vertices.size();
 
-        // collect constraints
-        std::vector<SurfaceMesh::Vertex> constraints;
-        constraints.reserve(mesh_->n_vertices());
-        for (auto v : mesh_->vertices()) {
-            if (!vlocked_[v]) {
-                constraints.push_back(v);
-            }
-        }
-        for (auto h : hole_) {
-            constraints.push_back(mesh_->target(h));
-        }
-        const int m = constraints.size();
-
         // setup matrix & rhs
-        Eigen::MatrixXd B(m, 3);
+        Eigen::MatrixXd B(n, 3);
         std::vector<Triplet> triplets;
-        for (int i = 0; i < m; ++i) {
-            SurfaceMesh::Vertex v = constraints[i];
+        for (int i = 0; i < n; ++i) {
+            SurfaceMesh::Vertex v = vertices[i];
             vec3 b(0, 0, 0);
             float c(0);
 
@@ -419,14 +409,12 @@ namespace easy3d {
         }
 
         // solve least squares system
-        SparseMatrix A(m, n);
+        SparseMatrix A(n, n);
         A.setFromTriplets(triplets.begin(), triplets.end());
-        SparseMatrix AtA = A.transpose() * A;
-        Eigen::MatrixXd AtB = A.transpose() * B;
-        Eigen::SimplicialLDLT<SparseMatrix> solver(AtA);
-        Eigen::MatrixXd X = solver.solve(AtB);
+        Eigen::SimplicialLDLT<SparseMatrix> solver(A);
+        Eigen::MatrixXd X = solver.solve(B);
         if (solver.info() != Eigen::Success) {
-            std::cerr << "[SurfaceMeshHoleFilling] Solver failed\n";
+            LOG(ERROR) << "SurfaceMeshHoleFilling failed to solve the linear system";
             return;
         }
 
@@ -446,14 +434,17 @@ namespace easy3d {
         // did the refinement insert new vertices?
         // if yes, then trigger fairing; otherwise don't.
         bool new_vertices = false;
-        for (auto v : mesh_->vertices())
-            if (!vlocked_[v])
+        for (auto v : mesh_->vertices()) {
+            if (!vlocked_[v]) {
                 new_vertices = true;
+                break;
+            }
+        }
         if (!new_vertices)
             return;
 
         // convert non-locked into selection
-        auto vsel = mesh_->add_vertex_property<bool>("v:selected");
+        auto vsel = mesh_->vertex_property<bool>("v:selected");
         for (auto v : mesh_->vertices())
             vsel[v] = !vlocked_[v];
 

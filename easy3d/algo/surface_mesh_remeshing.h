@@ -34,11 +34,19 @@ namespace easy3d {
 
         ~SurfaceMeshRemeshing();
 
-        //! \brief uniform remeshing with target edge length
+        //! \brief Perform uniform remeshing.
+        //! \param edge_length the target edge length.
+        //! \param iterations the number of iterations
+        //! \param use_projection use back-projection to the input surface
         void uniform_remeshing(float edge_length, unsigned int iterations = 10,
                                bool use_projection = true);
 
-        //! \brief adaptive remeshing with min/max edge length and approximation error
+        //! \brief Perform adaptive remeshing.
+        //! \param min_edge_length the minimum edge length.
+        //! \param max_edge_length the maximum edge length.
+        //! \param approx_error the maximum approximation error
+        //! \param iterations the number of iterations
+        //! \param use_projection use back-projection to the input surface
         void adaptive_remeshing(float min_edge_length, float max_edge_length,
                                 float approx_error, unsigned int iterations = 10,
                                 bool use_projection = true);
@@ -46,16 +54,14 @@ namespace easy3d {
     private:
         void preprocessing();
         void postprocessing();
-
         void split_long_edges();
         void collapse_short_edges();
         void flip_edges();
         void tangential_smoothing(unsigned int iterations);
-
         void remove_caps();
-
+        vec3 minimize_squared_areas(SurfaceMesh::Vertex v);
+        vec3 weighted_centroid(SurfaceMesh::Vertex v);
         void project_to_reference(SurfaceMesh::Vertex v);
-
         bool is_too_long(SurfaceMesh::Vertex v0, SurfaceMesh::Vertex v1) const {
             return distance(points_[v0], points_[v1]) >
                    4.0 / 3.0 * std::min(vsizing_[v0], vsizing_[v1]);

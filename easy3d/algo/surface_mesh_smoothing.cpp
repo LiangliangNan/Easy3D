@@ -11,10 +11,11 @@
 
 
 #include <easy3d/algo/surface_mesh_smoothing.h>
-#include <easy3d/algo/surface_mesh_geometry.h>
 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
+
+#include <easy3d/algo/surface_mesh_geometry.h>
 
 
 namespace easy3d {
@@ -143,8 +144,12 @@ namespace easy3d {
         compute_vertex_weights(use_uniform_laplace);
 
         // store center and area
-        vec3 center_before = geom::centroid(mesh_);
-        float area_before = geom::surface_area(mesh_);
+        vec3 center_before;
+        float area_before;
+        if (rescale) {
+            center_before = geom::centroid(mesh_);
+            area_before = geom::surface_area(mesh_);
+        }
 
         // properties
         auto points = mesh_->get_vertex_property<vec3>("v:point");
