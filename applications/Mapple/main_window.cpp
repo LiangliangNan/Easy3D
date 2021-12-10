@@ -1584,6 +1584,8 @@ void MainWindow::polymeshExtractBoundary() {
 
 void MainWindow::computeHeightField() {
     auto model = viewer_->currentModel();
+    if (!model)
+        return;
 
     // add 3 scalar fields defined on vertices, edges, and faces respectively.
     if (dynamic_cast<SurfaceMesh*>(model)) {
