@@ -29,7 +29,6 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/progress.h>
-
 #include <easy3d/algo/surface_mesh_triangulation.h>
 
 

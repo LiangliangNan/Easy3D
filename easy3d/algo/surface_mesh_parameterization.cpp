@@ -9,14 +9,14 @@
  *      https://github.com/pmp-library/pmp-library/blob/master/LICENSE.txt
  ********************************************************************/
 
-
 #include <easy3d/algo/surface_mesh_parameterization.h>
-#include <easy3d/algo/surface_mesh_geometry.h>
-#include <easy3d/util/logging.h>
 
 #include <cmath>
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
+
+#include <easy3d/algo/surface_mesh_geometry.h>
+#include <easy3d/util/logging.h>
 
 
 namespace easy3d {

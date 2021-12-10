@@ -11,11 +11,13 @@
 
 
 #include <easy3d/algo/surface_mesh_factory.h>
-#include <easy3d/algo/surface_mesh_subdivision.h>
-#include <easy3d/algo/surface_mesh_geometry.h>
 
 #include <cmath>
 #include <algorithm>
+
+#include <easy3d/algo/surface_mesh_subdivision.h>
+#include <easy3d/algo/surface_mesh_geometry.h>
+
 
 namespace easy3d {
 

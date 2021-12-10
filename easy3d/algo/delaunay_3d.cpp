@@ -14,7 +14,6 @@
 #include <3rd_party/tetgen/tetgen.h>
 
 
-
 namespace easy3d {
 
 

@@ -9,10 +9,10 @@
  *      https://github.com/pmp-library/pmp-library/blob/master/LICENSE.txt
  ********************************************************************/
 
-
 #include <easy3d/algo/surface_mesh_curvature.h>
 #include <easy3d/algo/surface_mesh_geometry.h>
 #include <easy3d/core/eigen_solver.h>
+
 
 namespace easy3d {
 

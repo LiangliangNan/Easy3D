@@ -9,7 +9,6 @@
  *      https://github.com/pmp-library/pmp-library/blob/master/LICENSE.txt
  ********************************************************************/
 
-
 #include <easy3d/algo/triangle_mesh_kdtree.h>
 
 #include <limits>

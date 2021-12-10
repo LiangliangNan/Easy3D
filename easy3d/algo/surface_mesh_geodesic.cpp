@@ -9,7 +9,6 @@
  *      https://github.com/pmp-library/pmp-library/blob/master/LICENSE.txt
  ********************************************************************/
 
-
 #include <easy3d/algo/surface_mesh_geodesic.h>
 
 

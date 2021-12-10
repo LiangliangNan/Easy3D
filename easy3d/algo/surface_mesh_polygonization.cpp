@@ -30,10 +30,6 @@
 #include <easy3d/util/logging.h>
 
 
-
-
-#include <easy3d/fileio/surface_mesh_io.h>
-
 namespace easy3d {
 
 

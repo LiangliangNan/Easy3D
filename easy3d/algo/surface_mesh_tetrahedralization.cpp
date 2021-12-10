@@ -8,7 +8,6 @@
  * The original code was distributed under the GNU GPL license.
  ********************************************************************/
 
-
 #include <easy3d/algo/surface_mesh_tetrahedralization.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/poly_mesh.h>

@@ -24,10 +24,11 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
+#include <easy3d/algo/surface_mesh_stitching.h>
+
 #include <algorithm>
 #include <cassert>
 
-#include <easy3d/algo/surface_mesh_stitching.h>
 #include <easy3d/core/surface_mesh.h>
 
 #include <3rd_party/kdtree/ANN/ANN.h>

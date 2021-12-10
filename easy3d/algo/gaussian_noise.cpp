@@ -26,13 +26,14 @@
 
 
 #include <easy3d/algo/gaussian_noise.h>
+
+#include <chrono>
+#include <random>
+
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/random.h>
 #include <easy3d/util/logging.h>
-
-#include <chrono>
-#include <random>
 
 
 namespace easy3d {
