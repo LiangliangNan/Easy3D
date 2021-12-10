@@ -24,10 +24,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-
 #include <easy3d/core/point_cloud.h>
 
 #include <cmath>
+
 
 namespace easy3d {
 

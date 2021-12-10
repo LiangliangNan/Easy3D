@@ -24,12 +24,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-
 #include <easy3d/core/poly_mesh.h>
-#include <easy3d/util/logging.h>
 
 #include <cmath>
 #include <fstream>
+
+#include <easy3d/util/logging.h>
+
 
 namespace easy3d {
 

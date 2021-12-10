@@ -24,8 +24,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-
 #include <easy3d/renderer/buffers.h>
+
+#include <algorithm>
+
 #include <easy3d/core/graph.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
@@ -36,8 +38,6 @@
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/algo/tessellator.h>
-
-#include <algorithm>
 
 
 namespace easy3d {
