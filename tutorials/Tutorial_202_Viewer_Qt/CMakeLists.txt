@@ -59,7 +59,9 @@ endif ()
 target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL)
 target_link_libraries(${PROJECT_NAME} easy3d::renderer)
 
-set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "tutorials")## Note: On macOS, high-DPI support is enabled by settings in the Info.plist file. Make sure they are present.
+set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "tutorials")
+
+## Note: On macOS, high-DPI support is enabled by settings in the Info.plist file. Make sure they are present.
 ## For more information, see: http://doc.qt.io/qt-5/highdpi.html
 ## Enable high DPI support by using my Info.plist file in which I added NSHighResolutionCapable to be true.
 if (APPLE)
