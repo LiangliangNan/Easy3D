@@ -116,6 +116,7 @@ public slots:
     void reportTopologyStatistics();
 
     // edit
+    void translationalRecenter();
     void addGaussianNoise();
     void applyManipulatedTransformation();
     void giveUpManipulatedTransformation();

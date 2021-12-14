@@ -26,7 +26,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>22</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -190,6 +190,8 @@
     </property>
     <addaction name="actionAddGaussianNoise"/>
     <addaction name="separator"/>
+    <addaction name="actionTranslationalRecenter"/>
+    <addaction name="separator"/>
     <addaction name="actionApplyManipulatedTransformation"/>
     <addaction name="actionGiveUpManipulatedTransformation"/>
    </widget>
@@ -298,7 +300,7 @@
           <x>0</x>
           <y>0</y>
           <width>200</width>
-          <height>333</height>
+          <height>331</height>
          </rect>
         </property>
         <attribute name="icon">
@@ -332,7 +334,7 @@
           <x>0</x>
           <y>0</y>
           <width>200</width>
-          <height>333</height>
+          <height>331</height>
          </rect>
         </property>
         <attribute name="icon">
@@ -366,7 +368,7 @@
           <x>0</x>
           <y>0</y>
           <width>200</width>
-          <height>333</height>
+          <height>331</height>
          </rect>
         </property>
         <attribute name="icon">
@@ -400,7 +402,7 @@
           <x>0</x>
           <y>0</y>
           <width>200</width>
-          <height>333</height>
+          <height>331</height>
          </rect>
         </property>
         <attribute name="icon">
@@ -1176,6 +1178,14 @@
   <action name="actionDualMesh">
    <property name="text">
     <string>Dual</string>
+   </property>
+  </action>
+  <action name="actionTranslationalRecenter">
+   <property name="text">
+    <string>Translational recenter</string>
+   </property>
+   <property name="whatsThis">
+    <string>Translate the models such that the origin is at the first object's center</string>
    </property>
   </action>
  </widget>

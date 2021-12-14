@@ -915,6 +915,7 @@ void MainWindow::createActionsForPropertyMenu() {
 
 
 void MainWindow::createActionsForEditMenu() {
+    connect(ui->actionTranslationalRecenter, SIGNAL(triggered()), this, SLOT(translationalRecenter()));
     connect(ui->actionAddGaussianNoise, SIGNAL(triggered()), this, SLOT(addGaussianNoise()));
     connect(ui->actionApplyManipulatedTransformation, SIGNAL(triggered()), this, SLOT(applyManipulatedTransformation()));
     connect(ui->actionGiveUpManipulatedTransformation, SIGNAL(triggered()), this, SLOT(giveUpManipulatedTransformation()));
@@ -1918,6 +1919,37 @@ void MainWindow::pointCloudDownsampling() {
     if (!dialog)
         dialog = new DialogPointCloudSimplification(this);
     dialog->show();
+}
+
+namespace details {
+    template<typename MODEL>
+    void translate(MODEL* model, const vec3& p) {
+        auto points = model->template get_vertex_property<vec3>("v:point");
+        for (auto v : model->vertices())
+            points[v] -= p;
+    }
+}
+
+void MainWindow::translationalRecenter() {
+    Model* first_model = viewer_->models()[0];
+
+    const vec3 origin = first_model->bounding_box().center();
+    for (auto model : viewer_->models()) {
+        if (dynamic_cast<SurfaceMesh*>(model))
+            details::translate(dynamic_cast<SurfaceMesh*>(model), origin);
+        else if (dynamic_cast<PointCloud*>(model))
+            details::translate(dynamic_cast<PointCloud*>(model), origin);
+        else if (dynamic_cast<Graph*>(model))
+            details::translate(dynamic_cast<Graph*>(model), origin);
+        else if (dynamic_cast<PolyMesh*>(model))
+            details::translate(dynamic_cast<PolyMesh*>(model), origin);
+
+        model->manipulator()->reset();
+        model->renderer()->update();
+    }
+    
+    // since translated, recenter to screen
+    viewer_->fitScreen();
 }
 
 
