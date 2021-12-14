@@ -269,6 +269,8 @@ namespace easy3d {
                      * Easy3d always transfer vertex normals to GPU and the normals for flat shading are computed on the fly in
                      * the fragment shader:
                      *          normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
+                     *          if ((gl_FrontFacing == false) && (two_sides_lighting == false))
+                     *              normal = -normal;
                      * Then, by adding a boolean uniform 'smooth_shading' to the fragment shader, client code can easily switch
                      * between flat and smooth shading without transferring different data to the GPU.
                      */
@@ -406,6 +408,8 @@ namespace easy3d {
                      * Easy3d always transfer vertex normals to GPU and the normals for flat shading are computed on the fly in
                      * the fragment shader:
                      *          normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
+                     *          if ((gl_FrontFacing == false) && (two_sides_lighting == false))
+                     *              normal = -normal;
                      * Then, by adding a boolean uniform 'smooth_shading' to the fragment shader, client code can easily switch
                      * between flat and smooth shading without transferring different data to the GPU.
                      */
@@ -967,6 +971,8 @@ namespace easy3d {
                      * Easy3d always transfer vertex normals to GPU and the normals for flat shading are computed on the fly in
                      * the fragment shader:
                      *          normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
+                     *          if ((gl_FrontFacing == false) && (two_sides_lighting == false))
+                     *              normal = -normal;
                      * Then, by adding a boolean uniform 'smooth_shading' to the fragment shader, client code can easily switch
                      * between flat and smooth shading without transferring different data to the GPU.
                      */
@@ -1078,6 +1084,8 @@ namespace easy3d {
                      * Easy3d always transfer vertex normals to GPU and the normals for flat shading are computed on the fly in
                      * the fragment shader:
                      *          normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
+                     *          if ((gl_FrontFacing == false) && (two_sides_lighting == false))
+                     *              normal = -normal;
                      * Then, by adding a boolean uniform 'smooth_shading' to the fragment shader, client code can easily switch
                      * between flat and smooth shading without transferring different data to the GPU.
                      */
@@ -1188,6 +1196,8 @@ namespace easy3d {
                      * Easy3d always transfer vertex normals to GPU and the normals for flat shading are computed on the fly in
                      * the fragment shader:
                      *          normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
+                     *          if ((gl_FrontFacing == false) && (two_sides_lighting == false))
+                     *              normal = -normal;
                      * Then, by adding a boolean uniform 'smooth_shading' to the fragment shader, client code can easily switch
                      * between flat and smooth shading without transferring different data to the GPU.
                      */
@@ -1297,6 +1307,8 @@ namespace easy3d {
                      * Easy3d always transfer vertex normals to GPU and the normals for flat shading are computed on the fly in
                      * the fragment shader:
                      *          normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
+                     *          if ((gl_FrontFacing == false) && (two_sides_lighting == false))
+                     *              normal = -normal;
                      * Then, by adding a boolean uniform 'smooth_shading' to the fragment shader, client code can easily switch
                      * between flat and smooth shading without transferring different data to the GPU.
                      */
@@ -1415,6 +1427,8 @@ namespace easy3d {
                      * Easy3d always transfer vertex normals to GPU and the normals for flat shading are computed on the fly in
                      * the fragment shader:
                      *          normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
+                     *          if ((gl_FrontFacing == false) && (two_sides_lighting == false))
+                     *              normal = -normal;
                      * Then, by adding a boolean uniform 'smooth_shading' to the fragment shader, client code can easily switch
                      * between flat and smooth shading without transferring different data to the GPU.
                      */

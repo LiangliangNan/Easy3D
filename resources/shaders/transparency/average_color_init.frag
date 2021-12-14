@@ -63,7 +63,9 @@ vec4 ShadeFragment()
         normal = normalize(DataIn.normal);
     else {
         normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
-        if (dot(normal, DataIn.normal) < 0)
+//      // Instead of using the vertex normal to verify the normal direction, we can use gl_FrontFacing.
+//      if (dot(normal, DataIn.normal) < 0)
+        if ((gl_FrontFacing == false) /*&& (two_sides_lighting == false)*/)
             normal = -normal;
     }
 

@@ -46,12 +46,13 @@ void main()
     // store the fragment position vector in the first gbuffer texture
     gPosition = DataIn.position;
 
-    vec3 normal;
     if (smooth_shading)
         gNormal = normalize(DataIn.normal);
     else {
         gNormal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
-        if (dot(gNormal, DataIn.normal) < 0)
+//      // Instead of using the vertex normal to verify the normal direction, we can use gl_FrontFacing
+//      if (dot(gNormal, DataIn.normal) < 0)
+        if ((gl_FrontFacing == false) /*&& (two_sides_lighting == false)*/)
             gNormal = -gNormal;
     }
 

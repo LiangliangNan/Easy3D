@@ -113,13 +113,12 @@ void main(void) {
     if (smooth_shading)
         normal = normalize(DataIn.normal);
     else {
-//        // Workaround for Adreno GPUs not able to do dFdx( vViewPosition )
-//        vec3 fdx = vec3( dFdx( vViewPosition.x ), dFdx( vViewPosition.y ), dFdx( vViewPosition.z ) );
-//        vec3 fdy = vec3( dFdy( vViewPosition.x ), dFdy( vViewPosition.y ), dFdy( vViewPosition.z ) );
-
+//      // Workaround for Adreno GPUs not able to do dFdx( vViewPosition )
+//      vec3 fdx = vec3( dFdx( vViewPosition.x ), dFdx( vViewPosition.y ), dFdx( vViewPosition.z ) );
+//      vec3 fdy = vec3( dFdy( vViewPosition.x ), dFdy( vViewPosition.y ), dFdy( vViewPosition.z ) );
         normal = normalize(cross(dFdx(DataIn.position), dFdy(DataIn.position)));
-        // Instead of using the vertex normal to verify the normal direction, we can use gl_FrontFacing.
-//        if (dot(normal, DataIn.normal) < 0)
+//      // Instead of using the vertex normal to verify the normal direction, we can use gl_FrontFacing.
+//      if (dot(normal, DataIn.normal) < 0)
         if ((gl_FrontFacing == false) && (two_sides_lighting == false))
             normal = -normal;
     }
