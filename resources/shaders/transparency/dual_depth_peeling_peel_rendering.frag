@@ -120,8 +120,7 @@ vec4 ShadeFragment()
 	if (smooth_shading)
 		normal = normalize(DataIn.normal);
 	else {
-#if 0
-		// Workaround for Adreno GPUs not able to do dFdx( vViewPosition )
+#if 0	// Workaround for Adreno GPUs not able to do dFdx( vViewPosition )
 		vec3 fdx = vec3( dFdx( DataIn.position.x ), dFdx( DataIn.position.y ), dFdx( DataIn.position.z ) );
 		vec3 fdy = vec3( dFdy( DataIn.position.x ), dFdy( DataIn.position.y ), dFdy( DataIn.position.z ) );
 		normal = normalize(cross(fdx, fdy));
