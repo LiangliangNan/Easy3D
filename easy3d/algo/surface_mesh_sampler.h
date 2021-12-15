@@ -37,7 +37,7 @@ namespace easy3d {
     /// \class SurfaceMeshSampler easy3d/algo/surface_mesh_sampler.h
     class SurfaceMeshSampler {
     public:
-        /// @param num The expected point number, much be greater than the number of vertices of the surface mesh.
+        /// @param num The expected point number, must be greater than the number of vertices of the surface mesh.
         PointCloud *apply(const SurfaceMesh *mesh, int num = 1000000);
     };
 
