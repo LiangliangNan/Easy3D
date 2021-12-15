@@ -70,12 +70,12 @@ int main(int argc, char **argv) {
     // allow animation
     viewer.set_animation(true);
 
-    // map the vertex buffer into the client's address space
-    void* pointer = VertexArrayObject::map_buffer(GL_ARRAY_BUFFER, surface->vertex_buffer(), GL_WRITE_ONLY);
-
     // Define an animation function to specify how vertex positions are updated.
     // In this trivial example, we stretch the model along the Z-axis.
     viewer.animation_func_ = [&](easy3d::Viewer& v) -> bool {
+        // map the vertex buffer into the client's address space
+        void* pointer = VertexArrayObject::map_buffer(GL_ARRAY_BUFFER, surface->vertex_buffer(), GL_WRITE_ONLY);
+
         (void)v;
         vec3* vertices = reinterpret_cast<vec3*>(pointer);
         if (!vertices)
@@ -92,6 +92,8 @@ int main(int argc, char **argv) {
 
         for (std::size_t i=0; i<points.size(); ++i)
             vertices[i].z *= scale;
+
+        VertexArrayObject::unmap_buffer(GL_ARRAY_BUFFER, surface->vertex_buffer());
 
         viewer.update();
         return true;
