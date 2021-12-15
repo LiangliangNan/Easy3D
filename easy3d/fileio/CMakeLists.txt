@@ -15,6 +15,7 @@ set(${PROJECT_NAME}_HEADERS
         surface_mesh_io.h
         poly_mesh_io.h
         resources.h
+        translater.h
         )
 
 set(${PROJECT_NAME}_SOURCES
@@ -41,6 +42,7 @@ set(${PROJECT_NAME}_SOURCES
         poly_mesh_io_plm.cpp
         poly_mesh_io_pm.cpp
         resources.cpp
+        translater.cpp
         )
 
 
