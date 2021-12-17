@@ -54,15 +54,15 @@ typedef struct
     char*                       name;
 
     /* Parameters */
-    float                       Ka[3];  /* Ambient */
-    float                       Kd[3];  /* Diffuse */
-    float                       Ks[3];  /* Specular */
-    float                       Ke[3];  /* Emission */
-    float                       Kt[3];  /* Transmittance */
-    float                       Ns;     /* Shininess */
-    float                       Ni;     /* Index of refraction */
-    float                       Tf[3];  /* Transmission filter */
-    float                       d;      /* Disolve (alpha) */
+    double                       Ka[3];  /* Ambient */
+    double                       Kd[3];  /* Diffuse */
+    double                       Ks[3];  /* Specular */
+    double                       Ke[3];  /* Emission */
+    double                       Kt[3];  /* Transmittance */
+    double                       Ns;     /* Shininess */
+    double                       Ni;     /* Index of refraction */
+    double                       Tf[3];  /* Transmission filter */
+    double                       d;      /* Disolve (alpha) */
     int                         illum;  /* Illumination model */
 
     /* Texture maps */
@@ -115,13 +115,13 @@ typedef struct
 {
     /* Vertex data */
     unsigned int                position_count;
-    float*                      positions;
+    double*                      positions;
 
     unsigned int                texcoord_count;
-    float*                      texcoords;
+    double*                      texcoords;
 
     unsigned int                normal_count;
-    float*                      normals;
+    double*                      normals;
 
     /* Face data: one element for each face */
     unsigned int                face_count;
@@ -195,7 +195,7 @@ void                            fast_obj_destroy(fastObjMesh* mesh);
 /* Size of buffer to read into */
 #define BUFFER_SIZE             65536
 
-/* Max supported power when parsing float */
+/* Max supported power when parsing double */
 #define MAX_POWER               20
 
 typedef struct
@@ -566,7 +566,7 @@ const char* parse_int(const char* ptr, int* val)
 
 
 static
-const char* parse_float(const char* ptr, float* val)
+const char* parse_double(const char* ptr, double* val)
 {
     double        sign;
     double        num;
@@ -648,7 +648,7 @@ const char* parse_float(const char* ptr, float* val)
         num *= (eval >= MAX_POWER) ? 0.0 : powers[eval];
     }
 
-    *val = (float)(sign * num);
+    *val = (double)(sign * num);
 
     if (!has_value)
         ++count_NaN;
@@ -661,12 +661,12 @@ static
 const char* parse_vertex(fastObjData* data, const char* ptr)
 {
     unsigned int ii;
-    float        v;
+    double        v;
 
 
     for (ii = 0; ii < 3; ii++)
     {
-        ptr = parse_float(ptr, &v);
+        ptr = parse_double(ptr, &v);
         array_push(data->mesh->positions, v);
     }
 
@@ -678,12 +678,12 @@ static
 const char* parse_texcoord(fastObjData* data, const char* ptr)
 {
     unsigned int ii;
-    float        v;
+    double        v;
 
 
     for (ii = 0; ii < 2; ii++)
     {
-        ptr = parse_float(ptr, &v);
+        ptr = parse_double(ptr, &v);
         array_push(data->mesh->texcoords, v);
     }
 
@@ -695,12 +695,12 @@ static
 const char* parse_normal(fastObjData* data, const char* ptr)
 {
     unsigned int ii;
-    float        v;
+    double        v;
 
 
     for (ii = 0; ii < 3; ii++)
     {
-        ptr = parse_float(ptr, &v);
+        ptr = parse_double(ptr, &v);
         array_push(data->mesh->normals, v);
     }
 
@@ -953,14 +953,14 @@ const char* read_mtl_int(const char* p, int* v)
 
 
 static
-const char* read_mtl_single(const char* p, float* v)
+const char* read_mtl_single(const char* p, double* v)
 {
-    return parse_float(p, v);
+    return parse_double(p, v);
 }
 
 
 static
-const char* read_mtl_triple(const char* p, float v[3])
+const char* read_mtl_triple(const char* p, double v[3])
 {
     p = read_mtl_single(p, &v[0]);
     p = read_mtl_single(p, &v[1]);
@@ -1093,7 +1093,7 @@ int read_mtllib(fastObjData* data, void* file, const fastObjCallbacks* callbacks
         case 'T':
             if (p[1] == 'r')
             {
-                float Tr;
+                double Tr;
                 p = read_mtl_single(p + 2, &Tr);
                 if (!found_d)
                 {
