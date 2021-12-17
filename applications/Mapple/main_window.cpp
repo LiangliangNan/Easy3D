@@ -65,7 +65,7 @@
 #include <easy3d/fileio/poly_mesh_io.h>
 #include <easy3d/fileio/ply_reader_writer.h>
 #include <easy3d/fileio/point_cloud_io_ptx.h>
-#include <easy3d/fileio/translater.h>
+#include <easy3d/fileio/translator.h>
 #include <easy3d/algo/point_cloud_normals.h>
 #include <easy3d/algo/surface_mesh_components.h>
 #include <easy3d/algo/surface_mesh_topology.h>
@@ -412,14 +412,14 @@ int MainWindow::openFiles(const QStringList &fileNames) {
 
 void MainWindow::loadModelTranslateChanged(QAction* act) {
     if (act == ui->actionTranslateDisabled) {
-        Translater::instance()->set_status(Translater::DISABLED);
+        Translator::instance()->set_status(Translator::DISABLED);
         LOG(INFO) << "translation in file IO has been disabled";
     } else if (act == ui->actionTranslateUseFirstVertex) {
-        Translater::instance()->set_status(Translater::TRANSLATE_USE_FIRST_POINT);
+        Translator::instance()->set_status(Translator::TRANSLATE_USE_FIRST_POINT);
         LOG(INFO) << "translation with respect to first vertex in file IO";
     }
     else if (act == ui->actionTranslateUseLastKnownVertex) {
-        Translater::instance()->set_status(Translater::TRANSLATE_USE_LAST_KNOWN_OFFSET);
+        Translator::instance()->set_status(Translator::TRANSLATE_USE_LAST_KNOWN_OFFSET);
         LOG(INFO) << "translation with respect to last know vertex in file IO";
     }
 }

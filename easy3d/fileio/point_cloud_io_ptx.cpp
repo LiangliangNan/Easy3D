@@ -40,7 +40,7 @@ namespace easy3d {
 
 	namespace io {
 
-        /// TODO: Translater not implemented
+        /// TODO: Translator not implemented
 
 		PointCloudIO_ptx::PointCloudIO_ptx(const std::string& file_name)
 			: input_(nullptr)

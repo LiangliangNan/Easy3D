@@ -25,7 +25,7 @@
  ********************************************************************/
 
 #include <easy3d/fileio/point_cloud_io.h>
-#include <easy3d/fileio/translater.h>
+#include <easy3d/fileio/translator.h>
 #include <easy3d/fileio/ply_reader_writer.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/types.h>
@@ -36,7 +36,7 @@ namespace easy3d {
 
 	namespace io {
 
-        /// TODO: Translater implemented using "float", but "double" might be necessary for models with large coordinates
+        /// TODO: Translator implemented using "float", but "double" might be necessary for models with large coordinates
 
         namespace details {
 
@@ -88,13 +88,13 @@ namespace easy3d {
                 }
 			}
 
-            if (Translater::instance()->status() == Translater::TRANSLATE_USE_FIRST_POINT) {
+            if (Translator::instance()->status() == Translator::TRANSLATE_USE_FIRST_POINT) {
                 auto& points = cloud->get_vertex_property<vec3>("v:point").vector();
 
                 // the first point
                 const vec3 p0 = points[0];
                 const dvec3 origin(p0.data());
-                Translater::instance()->set_translation(origin);
+                Translator::instance()->set_translation(origin);
 
                 for (auto& p: points)
                     p -= p0;
@@ -103,8 +103,8 @@ namespace easy3d {
                 trans[0] = origin;
                 LOG(INFO) << "model translated w.r.t. the first vertex (" << origin
                           << "), stored as ModelProperty<dvec3>(\"translation\")";
-            } else if (Translater::instance()->status() == Translater::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
-                const dvec3 &origin = Translater::instance()->translation();
+            } else if (Translator::instance()->status() == Translator::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
+                const dvec3 &origin = Translator::instance()->translation();
                 auto& points = cloud->get_vertex_property<vec3>("v:point").vector();
                 for (auto& p: points) {
                     p.x -= origin.x;

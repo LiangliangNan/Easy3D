@@ -34,16 +34,16 @@ namespace easy3d {
 
     /**
      * \brief Manages the translation of all the models during the file IO.
-     * \class Translater easy3d/fileio/translater.h
+     * \class Translator easy3d/fileio/translater.h
     */
-	class Translater
+	class Translator
 	{
 	public:
 
         /**
          * \brief Returns the instance of the translater
          */
-       static Translater* instance();
+       static Translator* instance();
 
        enum Status {
            DISABLED, // default behavior: no translation will be recorded and applied to the model.
@@ -76,7 +76,7 @@ namespace easy3d {
         const dvec3& translation() const { return translation_; }
 
     private:
-        Translater() : status_(DISABLED) {}
+        Translator() : status_(DISABLED) {}
 
     private:
         Status status_;

@@ -39,7 +39,7 @@
 
 namespace easy3d {
 
-    /// TODO: Translater not implemented
+    /// TODO: Translator not implemented
 
     // \cond
 	namespace io {

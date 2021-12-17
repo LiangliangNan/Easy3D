@@ -28,7 +28,7 @@
 
 #include <fstream>
 
-#include <easy3d/fileio/translater.h>
+#include <easy3d/fileio/translator.h>
 #include <easy3d/core/poly_mesh.h>
 #include <easy3d/util/progress.h>
 
@@ -56,20 +56,20 @@ namespace easy3d {
 
             ProgressLogger progress(num_vertices + num_cells, true, false);
 
-            if (Translater::instance()->status() == Translater::DISABLED) {
+            if (Translator::instance()->status() == Translator::DISABLED) {
                 vec3 p;
                 for (std::size_t v = 0; v < num_vertices; ++v) {
                     input >> p;
                     mesh->add_vertex(p);
                     progress.next();
                 }
-            } else if (Translater::instance()->status() == Translater::TRANSLATE_USE_FIRST_POINT) {
+            } else if (Translator::instance()->status() == Translator::TRANSLATE_USE_FIRST_POINT) {
                 dvec3 p, origin;
                 for (std::size_t v = 0; v < num_vertices; ++v) {
                     input >> p;
                     if (v == 0) { // the first point
                         origin = p;
-                        Translater::instance()->set_translation(origin);
+                        Translator::instance()->set_translation(origin);
                     }
                     mesh->add_vertex(vec3(p.x - origin.x, p.y - origin.y, p.z - origin.z));
                     progress.next();
@@ -78,8 +78,8 @@ namespace easy3d {
                 auto trans = mesh->add_model_property<dvec3>("translation", dvec3(0,0,0));
                 trans[0] = origin;
                 LOG(INFO) << "model translated w.r.t. the first vertex (" << trans[0] << "), stored as ModelProperty<dvec3>(\"translation\")";
-            } else if (Translater::instance()->status() == Translater::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
-                const dvec3 &origin = Translater::instance()->translation();
+            } else if (Translator::instance()->status() == Translator::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
+                const dvec3 &origin = Translator::instance()->translation();
                 dvec3 p;
                 for (std::size_t v = 0; v < num_vertices; ++v) {
                     input >> p;

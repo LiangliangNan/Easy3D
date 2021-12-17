@@ -28,7 +28,7 @@
 
 #include <fstream>
 
-#include <easy3d/fileio/translater.h>
+#include <easy3d/fileio/translator.h>
 #include <easy3d/core/point_cloud.h>
 
 
@@ -37,7 +37,7 @@ namespace easy3d {
 
 	namespace io {
 
-        /// TODO: Translater implemented using "float", but "double" might be necessary for models with large coordinates
+        /// TODO: Translator implemented using "float", but "double" might be necessary for models with large coordinates
 
 		// three blocks storing points, colors (optional), and normals (optional)
 		bool load_bin(const std::string& file_name, PointCloud* cloud) {
@@ -59,13 +59,13 @@ namespace easy3d {
 			PointCloud::VertexProperty<vec3> points = cloud->vertex_property<vec3>("v:point");
             input.read((char*)points.data(), num * sizeof(vec3));
 
-            if (Translater::instance()->status() == Translater::TRANSLATE_USE_FIRST_POINT) {
+            if (Translator::instance()->status() == Translator::TRANSLATE_USE_FIRST_POINT) {
                 auto& positions = points.vector();
 
                 // the first point
                 const vec3 p0 = positions[0];
                 const dvec3 origin(p0.data());
-                Translater::instance()->set_translation(origin);
+                Translator::instance()->set_translation(origin);
 
                 for (auto& p : positions)
                     p -= p0;
@@ -74,8 +74,8 @@ namespace easy3d {
                 trans[0] = origin;
                 LOG(INFO) << "model translated w.r.t. the first vertex (" << origin
                           << "), stored as ModelProperty<dvec3>(\"translation\")";
-            } else if (Translater::instance()->status() == Translater::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
-                const dvec3 &origin = Translater::instance()->translation();
+            } else if (Translator::instance()->status() == Translator::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
+                const dvec3 &origin = Translator::instance()->translation();
                 auto& points = cloud->get_vertex_property<vec3>("v:point").vector();
                 for (auto& p: points) {
                     p.x -= origin.x;

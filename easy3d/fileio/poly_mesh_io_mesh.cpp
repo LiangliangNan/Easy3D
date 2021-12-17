@@ -28,7 +28,7 @@
 
 #include <cstring> //for strcmp
 
-#include <easy3d/fileio/translater.h>
+#include <easy3d/fileio/translator.h>
 #include <easy3d/core/poly_mesh.h>
 #include <easy3d/util/progress.h>
 
@@ -134,7 +134,7 @@ namespace easy3d {
 
                     // allocate space for vertices
                     vertices.resize(number_of_vertices);
-                    if (Translater::instance()->status() == Translater::DISABLED) {
+                    if (Translator::instance()->status() == Translator::DISABLED) {
                         double x, y, z;
                         for (int i = 0; i < number_of_vertices; i++) {
                             if (4 != fscanf(mesh_file, " %lg %lg %lg %d", &x, &y, &z, &extra)) {
@@ -145,7 +145,7 @@ namespace easy3d {
                             vertices[i] = mesh->add_vertex(vec3(x, y, z));
                             progress.notify(ftell(mesh_file));
                         }
-                    } else if (Translater::instance()->status() == Translater::TRANSLATE_USE_FIRST_POINT) {
+                    } else if (Translator::instance()->status() == Translator::TRANSLATE_USE_FIRST_POINT) {
                         double x, y, z, x0, y0, z0;
                         for (int i = 0; i < number_of_vertices; i++) {
                             if (4 != fscanf(mesh_file, " %lg %lg %lg %d", &x, &y, &z, &extra)) {
@@ -158,7 +158,7 @@ namespace easy3d {
                                 x0 = x;
                                 y0 = y;
                                 z0 = z;;
-                                Translater::instance()->set_translation(dvec3(x0, y0, z0));
+                                Translator::instance()->set_translation(dvec3(x0, y0, z0));
                             }
                             vertices[i] = mesh->add_vertex(vec3(x - x0, y - y0, z - z0));
                             progress.notify(ftell(mesh_file));
@@ -167,8 +167,8 @@ namespace easy3d {
                         auto trans = mesh->add_model_property<dvec3>("translation", dvec3(0,0,0));
                         trans[0] = dvec3(x0, y0, z0);
                         LOG(INFO) << "model translated w.r.t. the first vertex (" << trans[0] << "), stored as ModelProperty<dvec3>(\"translation\")";
-                    } else if (Translater::instance()->status() == Translater::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
-                        const dvec3 &origin = Translater::instance()->translation();
+                    } else if (Translator::instance()->status() == Translator::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
+                        const dvec3 &origin = Translator::instance()->translation();
                         double x, y, z;
                         for (int i = 0; i < number_of_vertices; i++) {
                             if (4 != fscanf(mesh_file, " %lg %lg %lg %d", &x, &y, &z, &extra)) {

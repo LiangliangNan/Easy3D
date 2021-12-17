@@ -25,7 +25,7 @@
  ********************************************************************/
 
 #include <easy3d/fileio/surface_mesh_io.h>
-#include <easy3d/fileio/translater.h>
+#include <easy3d/fileio/translator.h>
 #include <easy3d/fileio/ply_reader_writer.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/surface_mesh_builder.h>
@@ -220,13 +220,13 @@ namespace easy3d {
 
 			builder.end_surface();
 
-            if (Translater::instance()->status() == Translater::TRANSLATE_USE_FIRST_POINT) {
+            if (Translator::instance()->status() == Translator::TRANSLATE_USE_FIRST_POINT) {
                 auto& points = mesh->get_vertex_property<vec3>("v:point").vector();
 
                 // the first point
                 const vec3 p0 = points[0];
                 const dvec3 origin(p0.data());
-                Translater::instance()->set_translation(origin);
+                Translator::instance()->set_translation(origin);
 
                 for (auto& p: points)
                     p -= p0;
@@ -235,8 +235,8 @@ namespace easy3d {
                 trans[0] = origin;
                 LOG(INFO) << "model translated w.r.t. the first vertex (" << origin
                           << "), stored as ModelProperty<dvec3>(\"translation\")";
-            } else if (Translater::instance()->status() == Translater::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
-                const dvec3 &origin = Translater::instance()->translation();
+            } else if (Translator::instance()->status() == Translator::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
+                const dvec3 &origin = Translator::instance()->translation();
                 auto& points = mesh->get_vertex_property<vec3>("v:point").vector();
                 for (auto& p: points) {
                     p.x -= origin.x;

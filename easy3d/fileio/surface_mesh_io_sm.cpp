@@ -52,7 +52,7 @@ namespace easy3d {
 
     namespace io {
 
-        /// TODO: Translater not implemented
+        /// TODO: Translator not implemented
 
         bool load_sm(const std::string& file_name, SurfaceMesh* mesh)
         {

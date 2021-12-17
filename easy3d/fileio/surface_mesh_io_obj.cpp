@@ -29,7 +29,7 @@
 #include <fstream>
 #include <unordered_map>
 
-#include <easy3d/fileio/translater.h>
+#include <easy3d/fileio/translator.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/surface_mesh_builder.h>
 #include <easy3d/util/file_system.h>
@@ -79,13 +79,13 @@ namespace easy3d {
             SurfaceMeshBuilder builder(mesh);
             builder.begin_surface();
 
-            if (Translater::instance()->status() == Translater::DISABLED) {
+            if (Translator::instance()->status() == Translator::DISABLED) {
                 for (std::size_t v = 1; v < fom->position_count; ++v)
                     builder.add_vertex(vec3(fom->positions + v * 3));
-            } else if (Translater::instance()->status() == Translater::TRANSLATE_USE_FIRST_POINT) {
+            } else if (Translator::instance()->status() == Translator::TRANSLATE_USE_FIRST_POINT) {
                 // the first point
                 const dvec3 origin(fom->positions + 3); // index starts from 1 and the first element is dummy
-                Translater::instance()->set_translation(origin);
+                Translator::instance()->set_translation(origin);
                 // remaining points
                 for (std::size_t v = 1; v < fom->position_count; ++v) {
                     const double *data = fom->positions + v * 3;
@@ -95,8 +95,8 @@ namespace easy3d {
                 auto trans = mesh->add_model_property<dvec3>("translation", dvec3(0,0,0));
                 trans[0] = origin;
                 LOG(INFO) << "model translated w.r.t. the first vertex (" << origin << "), stored as ModelProperty<dvec3>(\"translation\")";
-            } else if (Translater::instance()->status() == Translater::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
-                const dvec3 &origin = Translater::instance()->translation();
+            } else if (Translator::instance()->status() == Translator::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
+                const dvec3 &origin = Translator::instance()->translation();
                 for (std::size_t v = 1; v < fom->position_count; ++v) {
                     const double *data = fom->positions + v * 3;
                     builder.add_vertex(vec3(data[0] - origin.x, data[1] - origin.y, data[2] - origin.z));

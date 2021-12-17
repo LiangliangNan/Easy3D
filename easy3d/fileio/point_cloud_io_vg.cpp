@@ -29,7 +29,7 @@
 #include <fstream>
 #include <unordered_map>
 
-#include <easy3d/fileio/translater.h>
+#include <easy3d/fileio/translator.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/random.h>
 #include <easy3d/util/logging.h>
@@ -200,7 +200,7 @@ namespace easy3d {
             cloud->resize(num);
             std::vector<vec3>& points = cloud->points();
 
-            if (Translater::instance()->status() == Translater::DISABLED) {
+            if (Translator::instance()->status() == Translator::DISABLED) {
                 for (std::size_t i = 0; i < num; ++i) {
                     input >> points[i];
                     if (input.fail()) {
@@ -209,14 +209,14 @@ namespace easy3d {
                     }
                 }
             }
-            else if (Translater::instance()->status() == Translater::TRANSLATE_USE_FIRST_POINT) {
+            else if (Translator::instance()->status() == Translator::TRANSLATE_USE_FIRST_POINT) {
                 // the first point
                 double x0, y0, z0;
                 input >> x0 >> y0 >> z0;
                 points[0] = vec3(0, 0, 0);
 
                 const dvec3 origin(x0, y0, z0);
-                Translater::instance()->set_translation(origin);
+                Translator::instance()->set_translation(origin);
 
                 double x, y, z;
                 for (std::size_t i = 1; i < num; ++i) {
@@ -232,8 +232,8 @@ namespace easy3d {
                 LOG(INFO) << "model translated w.r.t. the first vertex (" << origin
                           << "), stored as ModelProperty<dvec3>(\"translation\")";
 
-            } else if (Translater::instance()->status() == Translater::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
-                const dvec3 &origin = Translater::instance()->translation();
+            } else if (Translator::instance()->status() == Translator::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
+                const dvec3 &origin = Translator::instance()->translation();
                 double x, y, z;
                 for (std::size_t i = 0; i < num; ++i) {
                     input >> x >> y >> z;
@@ -377,7 +377,7 @@ namespace easy3d {
             group.color_ = color;
         }
 
-        /// TODO: Translater implemented using "float", but "double" might be necessary for models with large coordinates
+        /// TODO: Translator implemented using "float", but "double" might be necessary for models with large coordinates
 
         bool PointCloudIO_vg::load_bvg(const std::string& file_name, PointCloud* cloud) {
             std::ifstream input(file_name.c_str(), std::fstream::binary);
@@ -399,13 +399,13 @@ namespace easy3d {
             auto points = cloud->get_vertex_property<vec3>("v:point");
             input.read((char*)points.data(), num * sizeof(vec3));
 
-            if (Translater::instance()->status() == Translater::TRANSLATE_USE_FIRST_POINT) {
+            if (Translator::instance()->status() == Translator::TRANSLATE_USE_FIRST_POINT) {
                 auto& positions = points.vector();
 
                 // the first point
                 const vec3 p0 = positions[0];
                 const dvec3 origin(p0.data());
-                Translater::instance()->set_translation(origin);
+                Translator::instance()->set_translation(origin);
 
                 for (auto& p : positions)
                     p -= p0;
@@ -414,8 +414,8 @@ namespace easy3d {
                 trans[0] = origin;
                 LOG(INFO) << "model translated w.r.t. the first vertex (" << origin
                           << "), stored as ModelProperty<dvec3>(\"translation\")";
-            } else if (Translater::instance()->status() == Translater::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
-                const dvec3 &origin = Translater::instance()->translation();
+            } else if (Translator::instance()->status() == Translator::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
+                const dvec3 &origin = Translator::instance()->translation();
                 auto& points = cloud->get_vertex_property<vec3>("v:point").vector();
                 for (auto& p: points) {
                     p.x -= origin.x;

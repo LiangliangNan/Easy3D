@@ -28,7 +28,7 @@
 
 #include <fstream>
 
-#include <easy3d/fileio/translater.h>
+#include <easy3d/fileio/translator.h>
 #include <easy3d/core/types.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/surface_mesh_builder.h>
@@ -103,7 +103,7 @@ namespace easy3d {
 
             ProgressLogger progress(nb_vertices + nb_facets, true, false);
 
-            if (Translater::instance()->status() == Translater::DISABLED) {
+            if (Translator::instance()->status() == Translator::DISABLED) {
                 vec3 p;
                 for (int i = 0; i < nb_vertices; i++) {
                     details::get_line(input);
@@ -114,7 +114,7 @@ namespace easy3d {
                         LOG_N_TIMES(3, ERROR) << "failed reading the " << i << "_th vertex from file. " << COUNTER;
                     progress.next();
                 }
-            } else if (Translater::instance()->status() == Translater::TRANSLATE_USE_FIRST_POINT) {
+            } else if (Translator::instance()->status() == Translator::TRANSLATE_USE_FIRST_POINT) {
                 dvec3 p, origin;
                 for (int i = 0; i < nb_vertices; i++) {
                     details::get_line(input);
@@ -122,7 +122,7 @@ namespace easy3d {
                     if (!input.fail()) {
                         if (i == 0) { // the first point
                             origin = p;
-                            Translater::instance()->set_translation(origin);
+                            Translator::instance()->set_translation(origin);
                         }
                         builder.add_vertex(vec3(p.x - origin.x, p.y - origin.y, p.z - origin.z));
                     }
@@ -133,8 +133,8 @@ namespace easy3d {
                 auto trans = mesh->add_model_property<dvec3>("translation", dvec3(0,0,0));
                 trans[0] = origin;
                 LOG(INFO) << "model translated w.r.t. the first vertex (" << trans[0] << "), stored as ModelProperty<dvec3>(\"translation\")";
-            } else if (Translater::instance()->status() == Translater::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
-                const dvec3 &origin = Translater::instance()->translation();
+            } else if (Translator::instance()->status() == Translator::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
+                const dvec3 &origin = Translator::instance()->translation();
                 dvec3 p;
                 for (int i = 0; i < nb_vertices; i++) {
                     details::get_line(input);

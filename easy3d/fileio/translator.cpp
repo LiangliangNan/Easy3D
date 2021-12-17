@@ -24,12 +24,12 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include <easy3d/fileio/translater.h>
+#include <easy3d/fileio/translator.h>
 
 namespace easy3d {
 
-    Translater *Translater::instance() {
-        static Translater translater;
+    Translator *Translator::instance() {
+        static Translator translater;
         return &translater;
     }
 

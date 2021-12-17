@@ -29,7 +29,7 @@
 #include <algorithm>
 #include <climits>  // for USHRT_MAX
 
-#include <easy3d/fileio/translater.h>
+#include <easy3d/fileio/translator.h>
 #include <easy3d/core/point_cloud.h>
 #include <3rd_party/lastools/LASlib/inc/lasreader.hpp>
 #include <3rd_party/lastools/LASlib/inc/laswriter.hpp>
@@ -74,21 +74,21 @@ namespace easy3d {
 
             bool translate = false;
             double origin_x(0), origin_y(0), origin_z(0);
-            if (Translater::instance()->status() == Translater::DISABLED) {
+            if (Translator::instance()->status() == Translator::DISABLED) {
                 if ((!translate) && (x0 > 1e4 || y0 > 1e4 || z0 > 1e4))
                     LOG(WARNING) << "model has large coordinates (first point: "
                                  << x0 << " " << y0 << " " << z0
                                  << ") and some decimals may be lost. Hint: transform the model w.r.t. its first point";
             }
-            else if (Translater::instance()->status() == Translater::TRANSLATE_USE_FIRST_POINT) {
-                Translater::instance()->set_translation(dvec3(x0, y0, z0));
+            else if (Translator::instance()->status() == Translator::TRANSLATE_USE_FIRST_POINT) {
+                Translator::instance()->set_translation(dvec3(x0, y0, z0));
                 origin_x = x0;
                 origin_y = y0;
                 origin_z = z0;
                 translate = true;
             }
-            else if (Translater::instance()->status() == Translater::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
-                const dvec3 &origin = Translater::instance()->translation();
+            else if (Translator::instance()->status() == Translator::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
+                const dvec3 &origin = Translator::instance()->translation();
                 origin_x = origin.x;
                 origin_y = origin.y;
                 origin_z = origin.z;
@@ -128,10 +128,10 @@ namespace easy3d {
                 auto trans = cloud->add_model_property<dvec3>("translation", dvec3(0, 0, 0));
                 trans[0] = dvec3(x0, y0, z0);
 
-                if (Translater::instance()->status() == Translater::TRANSLATE_USE_FIRST_POINT)
+                if (Translator::instance()->status() == Translator::TRANSLATE_USE_FIRST_POINT)
                     LOG(INFO) << "model translated w.r.t. the first vertex (" << trans[0]
                               << "), stored as ModelProperty<dvec3>(\"translation\")";
-                else if (Translater::instance()->status() == Translater::TRANSLATE_USE_LAST_KNOWN_OFFSET)
+                else if (Translator::instance()->status() == Translator::TRANSLATE_USE_LAST_KNOWN_OFFSET)
                     LOG(INFO) << "model translated w.r.t. last known reference point (" << trans[0]
                               << "), stored as ModelProperty<dvec3>(\"translation\")";
             }
