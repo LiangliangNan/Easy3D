@@ -39,9 +39,10 @@
 
 namespace easy3d {
 
+    /// TODO: Translater not implemented
+
     // \cond
 	namespace io {
-
 
 		// helper function
 		template <typename T> void read(FILE* in, T& t)

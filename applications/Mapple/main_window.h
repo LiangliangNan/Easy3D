@@ -88,6 +88,7 @@ public slots:
 public slots:
 
     // file
+    void loadModelTranslateChanged(QAction*);
     bool onOpen();
     bool onSave();
     void onOpenRecentFile();
@@ -133,7 +134,7 @@ public slots:
 
     // surface mesh
     void surfaceMeshExtractConnectedComponents();
-    void  surfaceMeshDual();
+    void surfaceMeshDual();
     void surfaceMeshPlanarPartition();
     void surfaceMeshPolygonization();
     void surfaceMeshTriangulation();
@@ -168,7 +169,7 @@ public slots:
     void polymeshExtractBoundary();
 
     // user interaction
-    void operationModeChanged(QAction* act);
+    void operationModeChanged(QAction*);
 
     // status bar
     void updateStatusBar();

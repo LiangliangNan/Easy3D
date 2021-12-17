@@ -26,9 +26,9 @@
 
 #include <easy3d/fileio/poly_mesh_io.h>
 
-#include <iostream>
 #include <cstring> //for strcmp
 
+#include <easy3d/fileio/translater.h>
 #include <easy3d/core/poly_mesh.h>
 #include <easy3d/util/progress.h>
 
@@ -134,15 +134,55 @@ namespace easy3d {
 
                     // allocate space for vertices
                     vertices.resize(number_of_vertices);
-                    for (int i = 0; i < number_of_vertices; i++) {
+                    if (Translater::instance()->status() == Translater::DISABLED) {
                         double x, y, z;
-                        if (4 != fscanf(mesh_file, " %lg %lg %lg %d", &x, &y, &z, &extra)) {
-                            LOG(ERROR) << "expecting vertex position...";
-                            fclose(mesh_file);
-                            return false;
+                        for (int i = 0; i < number_of_vertices; i++) {
+                            if (4 != fscanf(mesh_file, " %lg %lg %lg %d", &x, &y, &z, &extra)) {
+                                LOG(ERROR) << "expecting vertex position...";
+                                fclose(mesh_file);
+                                return false;
+                            }
+                            vertices[i] = mesh->add_vertex(vec3(x, y, z));
+                            progress.notify(ftell(mesh_file));
                         }
-                        vertices[i] = mesh->add_vertex(vec3(x, y, z));
-                        progress.notify(ftell(mesh_file));
+                    } else if (Translater::instance()->status() == Translater::TRANSLATE_USE_FIRST_POINT) {
+                        double x, y, z, x0, y0, z0;
+                        for (int i = 0; i < number_of_vertices; i++) {
+                            if (4 != fscanf(mesh_file, " %lg %lg %lg %d", &x, &y, &z, &extra)) {
+                                LOG(ERROR) << "expecting vertex position...";
+                                fclose(mesh_file);
+                                return false;
+                            }
+
+                            if (i == 0) { // the first point
+                                x0 = x;
+                                y0 = y;
+                                z0 = z;;
+                                Translater::instance()->set_translation(dvec3(x0, y0, z0));
+                            }
+                            vertices[i] = mesh->add_vertex(vec3(x - x0, y - y0, z - z0));
+                            progress.notify(ftell(mesh_file));
+                        }
+
+                        auto trans = mesh->add_model_property<dvec3>("translation", dvec3(0,0,0));
+                        trans[0] = dvec3(x0, y0, z0);
+                        LOG(INFO) << "model translated w.r.t. the first vertex (" << trans[0] << "), stored as ModelProperty<dvec3>(\"translation\")";
+                    } else if (Translater::instance()->status() == Translater::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
+                        const dvec3 &origin = Translater::instance()->translation();
+                        double x, y, z;
+                        for (int i = 0; i < number_of_vertices; i++) {
+                            if (4 != fscanf(mesh_file, " %lg %lg %lg %d", &x, &y, &z, &extra)) {
+                                LOG(ERROR) << "expecting vertex position...";
+                                fclose(mesh_file);
+                                return false;
+                            }
+                            vertices[i] = mesh->add_vertex(vec3(x - origin.x, y - origin.y, z - origin.z));
+                            progress.notify(ftell(mesh_file));
+                        }
+
+                        auto trans = mesh->add_model_property<dvec3>("translation", dvec3(0,0,0));
+                        trans[0] = origin;
+                        LOG(INFO) << "model translated w.r.t. last known reference point (" << origin << "), stored as ModelProperty<dvec3>(\"translation\")";
                     }
                 } else if (0 == strcmp(str, "Tetrahedra")) {
                     int number_of_tetrahedra(0);
@@ -293,11 +333,16 @@ namespace easy3d {
 
             ProgressLogger progress(mesh->n_vertices() + mesh->n_faces() + mesh->n_cells(), true, false);
 
+            auto trans = mesh->get_model_property<dvec3>("translation");
+            dvec3 origin(0, 0, 0);
+            if (trans)  // has translation
+                origin = trans[0];
+
             // loop over tet vertices
             for (auto v : mesh->vertices()) {
                 // print position of ith tet vertex
                 const auto& p = mesh->position(v);
-                fprintf(mesh_file, "%.17lg %.17lg %.17lg 1\n", p.x, p.y, p.z);
+                fprintf(mesh_file, "%.17lg %.17lg %.17lg 1\n", p.x + origin.x, p.y + origin.y, p.z + origin.z);
                 progress.next();
             }
 

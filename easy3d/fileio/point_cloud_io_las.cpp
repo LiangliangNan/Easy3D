@@ -26,10 +26,10 @@
 
 #include <easy3d/fileio/point_cloud_io.h>
 
-#include <cassert>
 #include <algorithm>
 #include <climits>  // for USHRT_MAX
 
+#include <easy3d/fileio/translater.h>
 #include <easy3d/core/point_cloud.h>
 #include <3rd_party/lastools/LASlib/inc/lasreader.hpp>
 #include <3rd_party/lastools/LASlib/inc/laswriter.hpp>
@@ -42,7 +42,7 @@ namespace easy3d {
     namespace io {
 
 
-        bool load_las(const std::string &file_name, PointCloud *cloud, bool transform, const std::string &prop_name) {
+        bool load_las(const std::string &file_name, PointCloud *cloud) {
             LASreadOpener lasreadopener;
             lasreadopener.set_file_name(file_name.c_str(), true);
 
@@ -71,10 +71,29 @@ namespace easy3d {
             double x0 = p0.coordinates[0];
             double y0 = p0.coordinates[1];
             double z0 = p0.coordinates[2];
-            LOG_IF((!transform) && (x0 > 1e4 || y0 > 1e4 || z0 > 1e4), WARNING)
-                << "model has large coordinates (first point: "
-                << x0 << " " << y0 << " " << z0
-                << ") and some decimals may be lost. Hint: transform the model w.r.t. its first point";
+
+            bool translate = false;
+            double origin_x(0), origin_y(0), origin_z(0);
+            if (Translater::instance()->status() == Translater::DISABLED) {
+                if ((!translate) && (x0 > 1e4 || y0 > 1e4 || z0 > 1e4))
+                    LOG(WARNING) << "model has large coordinates (first point: "
+                                 << x0 << " " << y0 << " " << z0
+                                 << ") and some decimals may be lost. Hint: transform the model w.r.t. its first point";
+            }
+            else if (Translater::instance()->status() == Translater::TRANSLATE_USE_FIRST_POINT) {
+                Translater::instance()->set_translation(dvec3(x0, y0, z0));
+                origin_x = x0;
+                origin_y = y0;
+                origin_z = z0;
+                translate = true;
+            }
+            else if (Translater::instance()->status() == Translater::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
+                const dvec3 &origin = Translater::instance()->translation();
+                origin_x = origin.x;
+                origin_y = origin.y;
+                origin_z = origin.z;
+                translate = true;
+            }
 
             float r = p0.have_rgb ? float(p0.get_R()) / USHRT_MAX : p0.intensity % 255 / 255.0f;
             float g = p0.have_rgb ? float(p0.get_G()) / USHRT_MAX : p0.intensity % 255 / 255.0f;
@@ -82,7 +101,7 @@ namespace easy3d {
 
             auto colors = cloud->add_vertex_property<vec3>("v:color");
             auto classification = cloud->add_vertex_property<int>("v:classification");
-            auto v = cloud->add_vertex(transform ? vec3(0, 0, 0) : vec3(float(x0), float(y0), float(z0)));
+            auto v = cloud->add_vertex(vec3(float(x0 - origin_x), float(y0 - origin_y), float(z0 - origin_z)));
             colors[v] = vec3(r, g, b);
             classification[v] = p0.classification;
 
@@ -92,9 +111,9 @@ namespace easy3d {
 
                 // compute the actual coordinates as double floating point values
                 p.compute_coordinates();
-                double x = transform ? p.coordinates[0] - x0 : p.coordinates[0];
-                double y = transform ? p.coordinates[1] - y0 : p.coordinates[1];
-                double z = transform ? p.coordinates[2] - z0 : p.coordinates[2];
+                double x = p.coordinates[0] - origin_x;
+                double y = p.coordinates[1] - origin_y;
+                double z = p.coordinates[2] - origin_z;
                 v = cloud->add_vertex(vec3(float(x), float(y), float(z)));
 
                 r = p.have_rgb ? float(p.get_R()) / USHRT_MAX : p.intensity % 255 / 255.0f;
@@ -105,11 +124,17 @@ namespace easy3d {
                 classification[v] = p.classification;
             }
 
-            auto trans = cloud->add_model_property<mat4>("transformation", mat4::identity());
-            trans[0] = mat4::translation(-x0, -y0, -z0);
-            LOG_IF(transform, WARNING) << "model transformed w.r.t. its first point ("
-                                       << x0 << " " << y0 << " " << z0
-                                       << "), stored as ModelProperty<mat4>(\"transformation\")";
+            if (translate) {
+                auto trans = cloud->add_model_property<dvec3>("translation", dvec3(0, 0, 0));
+                trans[0] = dvec3(x0, y0, z0);
+
+                if (Translater::instance()->status() == Translater::TRANSLATE_USE_FIRST_POINT)
+                    LOG(INFO) << "model translated w.r.t. the first vertex (" << trans[0]
+                              << "), stored as ModelProperty<dvec3>(\"translation\")";
+                else if (Translater::instance()->status() == Translater::TRANSLATE_USE_LAST_KNOWN_OFFSET)
+                    LOG(INFO) << "model translated w.r.t. last known reference point (" << trans[0]
+                              << "), stored as ModelProperty<dvec3>(\"translation\")";
+            }
 
             lasreader->close();
             delete lasreader;
@@ -123,7 +148,7 @@ namespace easy3d {
                 return false;
             }
 
-            PointCloud::VertexProperty<vec3> normals = cloud->get_vertex_property<vec3>("v:normal");
+            auto normals = cloud->get_vertex_property<vec3>("v:normal");
             if (normals)
                 LOG(ERROR) << "normals discarded when saving to LAS or LAZ format (future release may support).";
 
@@ -138,7 +163,8 @@ namespace easy3d {
 
             auto points = cloud->get_vertex_property<vec3>("v:point");
             const Box3 &box = cloud->bounding_box();
-            const vec3 &center = box.center();
+            const vec3 center = box.center();
+            auto trans = cloud->get_model_property<dvec3>("translation");
             LOG(INFO) << "saving " << cloud->n_vertices() << " points...";
 
             // init header
@@ -151,9 +177,9 @@ namespace easy3d {
             lasheader.x_scale_factor = 1.0e-9 * std::max<double>(box.range(0), DBL_EPSILON);
             lasheader.y_scale_factor = 1.0e-9 * std::max<double>(box.range(1), DBL_EPSILON);
             lasheader.z_scale_factor = 1.0e-9 * std::max<double>(box.range(2), DBL_EPSILON);
-            lasheader.x_offset = center.x;    // box.x_min(); should also work
-            lasheader.y_offset = center.y;    // box.y_min(); should also work
-            lasheader.z_offset = center.z;    // box.z_min(); should also work
+            lasheader.x_offset = trans ? center.x + trans[0].x : center.x;    // box.x_min(); should also work
+            lasheader.y_offset = trans ? center.y + trans[0].y : center.y;    // box.y_min(); should also work
+            lasheader.z_offset = trans ? center.z + trans[0].z : center.z;    // box.z_min(); should also work
 
             LOG(INFO) << "scale factor: "
                       << lasheader.x_scale_factor << " "
@@ -185,13 +211,20 @@ namespace easy3d {
                 return false;
             }
 
+            double x0(0), y0(0), z0(0);
+            if (trans) {    // has translation
+                x0 = trans[0].x;
+                y0 = trans[0].y;
+                z0 = trans[0].z;
+            }
+
             // write points
             if (colors) {
                 for (auto v : cloud->vertices()) {
                     const vec3 &p = points[v];
-                    laspoint.coordinates[0] = p[0];
-                    laspoint.coordinates[1] = p[1];
-                    laspoint.coordinates[2] = p[2];
+                    laspoint.coordinates[0] = p[0] + x0;
+                    laspoint.coordinates[1] = p[1] + y0;
+                    laspoint.coordinates[2] = p[2] + z0;
 
                     // populate the point
                     laspoint.compute_XYZ();
@@ -215,9 +248,9 @@ namespace easy3d {
                 const float ht = box.range(2);
                 for (auto v : cloud->vertices()) {
                     const vec3 &p = points[v];
-                    laspoint.coordinates[0] = p[0];
-                    laspoint.coordinates[1] = p[1];
-                    laspoint.coordinates[2] = p[2];
+                    laspoint.coordinates[0] = p[0] + x0;
+                    laspoint.coordinates[1] = p[1] + y0;
+                    laspoint.coordinates[2] = p[2] + z0;
 
                     // populate the point
                     laspoint.compute_XYZ();

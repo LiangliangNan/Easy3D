@@ -25,17 +25,19 @@
  ********************************************************************/
 
 #include <easy3d/fileio/surface_mesh_io.h>
+
+#include <fstream>
+
+#include <easy3d/fileio/translater.h>
 #include <easy3d/core/types.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/surface_mesh_builder.h>
 #include <easy3d/util/line_stream.h>
 #include <easy3d/util/logging.h>
+#include <easy3d/util/progress.h>
 
-#include <fstream>
 #include <cstring> // for strlen()
 
-
-#define RESOLVE_NONMANIFOLDNESS    1
 
 namespace easy3d {
 
@@ -71,10 +73,8 @@ namespace easy3d {
 
             mesh->clear();
 
-#if RESOLVE_NONMANIFOLDNESS
             SurfaceMeshBuilder builder(mesh);
             builder.begin_surface();
-#endif
 
             // Vertex index starts by 0 in off format.
 
@@ -101,20 +101,53 @@ namespace easy3d {
                 return false;
             }
 
-            for (int i = 0; i < nb_vertices; i++) {
+            ProgressLogger progress(nb_vertices + nb_facets, true, false);
+
+            if (Translater::instance()->status() == Translater::DISABLED) {
                 vec3 p;
-                details::get_line(input);
-                input >> p;
-                if (!input.fail()) {
-#if RESOLVE_NONMANIFOLDNESS
-                    builder.add_vertex(p);
-#else
-                    mesh->add_vertex(p);
-#endif
+                for (int i = 0; i < nb_vertices; i++) {
+                    details::get_line(input);
+                    input >> p;
+                    if (!input.fail())
+                        builder.add_vertex(p);
+                    else
+                        LOG_N_TIMES(3, ERROR) << "failed reading the " << i << "_th vertex from file. " << COUNTER;
+                    progress.next();
                 }
-                else {
-                    LOG_N_TIMES(3, ERROR) << "failed reading the " << i << "_th vertex from file. " << COUNTER;
+            } else if (Translater::instance()->status() == Translater::TRANSLATE_USE_FIRST_POINT) {
+                dvec3 p, origin;
+                for (int i = 0; i < nb_vertices; i++) {
+                    details::get_line(input);
+                    input >> p;
+                    if (!input.fail()) {
+                        if (i == 0) { // the first point
+                            origin = p;
+                            Translater::instance()->set_translation(origin);
+                        }
+                        builder.add_vertex(vec3(p.x - origin.x, p.y - origin.y, p.z - origin.z));
+                    }
+                    else
+                        LOG_N_TIMES(3, ERROR) << "failed reading the " << i << "_th vertex from file. " << COUNTER;
+                    progress.next();
                 }
+                auto trans = mesh->add_model_property<dvec3>("translation", dvec3(0,0,0));
+                trans[0] = origin;
+                LOG(INFO) << "model translated w.r.t. the first vertex (" << trans[0] << "), stored as ModelProperty<dvec3>(\"translation\")";
+            } else if (Translater::instance()->status() == Translater::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
+                const dvec3 &origin = Translater::instance()->translation();
+                dvec3 p;
+                for (int i = 0; i < nb_vertices; i++) {
+                    details::get_line(input);
+                    input >> p;
+                    if (!input.fail())
+                        builder.add_vertex(vec3(p.x - origin.x, p.y - origin.y, p.z - origin.z));
+                    else
+                        LOG_N_TIMES(3, ERROR) << "failed reading the " << i << "_th vertex from file. " << COUNTER;
+                    progress.next();
+                }
+                auto trans = mesh->add_model_property<dvec3>("translation", dvec3(0,0,0));
+                trans[0] = origin;
+                LOG(INFO) << "model translated w.r.t. last known reference point (" << origin << "), stored as ModelProperty<dvec3>(\"translation\")";
             }
 
             for (int i = 0; i < nb_facets; i++) {
@@ -134,15 +167,12 @@ namespace easy3d {
                             LOG_N_TIMES(3, ERROR) << "failed reading the " << j << "_th vertex of the " << i << "_th face from file. " << COUNTER;
                         }
 					}
-#if RESOLVE_NONMANIFOLDNESS
 					builder.add_face(vertices);
-#else
-                    mesh->add_face(vertices);
-#endif
 				}
                 else {
                     LOG_N_TIMES(3, ERROR) << "failed reading the " << i << "_th face from file. " << COUNTER;
                 }
+                progress.next();
             }
 
             // for mesh models, we can simply ignore the edges.
@@ -150,9 +180,8 @@ namespace easy3d {
 //                // read the edges
 //            }
 
-#if RESOLVE_NONMANIFOLDNESS
             builder.end_surface();
-#endif
+
             return mesh->n_faces() > 0;
 		}
 
@@ -177,15 +206,27 @@ namespace easy3d {
             out << "OFF" << std::endl;
             out << mesh->n_vertices() << " " << mesh->n_faces() << " 0" << std::endl;
 
+            ProgressLogger progress(mesh->n_vertices() + mesh->n_faces(), true, false);
+
             // Output Vertices
+
+            auto trans = mesh->get_model_property<dvec3>("translation");
+            dvec3 origin(0, 0, 0);
+            if (trans)  // has translation
+                origin = trans[0];
+
             // Off files numbering starts with 0
-            SurfaceMesh::VertexProperty<vec3> points = mesh->get_vertex_property<vec3>("v:point");
-            for (auto v : mesh->vertices())
-                out << points[v] << std::endl;
+            auto points = mesh->get_vertex_property<vec3>("v:point");
+            for (auto v : mesh->vertices()) {
+                const auto& p = points[v];
+                out << p.x + origin.x << " "
+                    << p.y + origin.y << " "
+                    << p.z + origin.z << " " << std::endl;
+                progress.next();
+            }
 
             // Output facets
-            for (auto f : mesh->faces())
-            {
+            for (auto f : mesh->faces()) {
                 out << mesh->valence(f);
 
                 SurfaceMesh::VertexAroundFaceCirculator fvit = mesh->vertices(f), fvend = fvit;
@@ -195,6 +236,7 @@ namespace easy3d {
                     ++fvit;
                 } while (fvit != fvend);
                 out << std::endl;
+                progress.next();
             }
 
             return true;

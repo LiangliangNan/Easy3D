@@ -36,6 +36,8 @@
 
 namespace easy3d {
 
+    /// TODO: Translater not implemented
+
     namespace io {
 
         bool load_pm(const std::string& file_name, PolyMesh* mesh)

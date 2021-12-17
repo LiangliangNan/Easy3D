@@ -46,9 +46,9 @@ namespace easy3d {
        static Translater* instance();
 
        enum Status {
-           DISABLED, // no translation will be recorded and applied to the model. This is the default behavior.
-           DETERMINE_AND_TRANSLATE, // determines the new origin and translates the current model
-           TRANSLATE_ONLY           // translates the current model using the known translation
+           DISABLED, // default behavior: no translation will be recorded and applied to the model.
+           TRANSLATE_USE_FIRST_POINT,  // translates the current model w.r.t. its first vertex (also recorded).
+           TRANSLATE_USE_LAST_KNOWN_OFFSET  // translates the current model using the last known translation
        };
 
        /**
@@ -61,7 +61,7 @@ namespace easy3d {
          * \brief Checks the status of the translater.
          * \return The status of the translater.
          */
-        bool status() const { return status_; }
+        Status status() const { return status_; }
 
         /**
          * \brief Sets the translation vector. If enabled, this translation will be applied to models loaded later on.

@@ -25,6 +25,7 @@
  ********************************************************************/
 
 #include <easy3d/fileio/point_cloud_io.h>
+#include <easy3d/fileio/translater.h>
 #include <easy3d/fileio/ply_reader_writer.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/types.h>
@@ -35,7 +36,9 @@ namespace easy3d {
 
 	namespace io {
 
-		namespace details {
+        /// TODO: Translater implemented using "float", but "double" might be necessary for models with large coordinates
+
+        namespace details {
 
 			template <typename T, typename PropertyT>
 			inline void add_properties(PointCloud* cloud, const std::vector<PropertyT>& properties)
@@ -85,7 +88,37 @@ namespace easy3d {
                 }
 			}
 
-			return true;
+            if (Translater::instance()->status() == Translater::TRANSLATE_USE_FIRST_POINT) {
+                auto& points = cloud->get_vertex_property<vec3>("v:point").vector();
+
+                // the first point
+                const vec3 p0 = points[0];
+                const dvec3 origin(p0.data());
+                Translater::instance()->set_translation(origin);
+
+                for (auto& p: points)
+                    p -= p0;
+
+                auto trans = cloud->add_model_property<dvec3>("translation", dvec3(0, 0, 0));
+                trans[0] = origin;
+                LOG(INFO) << "model translated w.r.t. the first vertex (" << origin
+                          << "), stored as ModelProperty<dvec3>(\"translation\")";
+            } else if (Translater::instance()->status() == Translater::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
+                const dvec3 &origin = Translater::instance()->translation();
+                auto& points = cloud->get_vertex_property<vec3>("v:point").vector();
+                for (auto& p: points) {
+                    p.x -= origin.x;
+                    p.y -= origin.y;
+                    p.z -= origin.z;
+                }
+
+                auto trans = cloud->add_model_property<dvec3>("translation", dvec3(0, 0, 0));
+                trans[0] = origin;
+                LOG(INFO) << "model translated w.r.t. last known reference point (" << origin
+                          << "), stored as ModelProperty<dvec3>(\"translation\")";
+            }
+
+			return cloud->n_vertices() > 0;
 		}
 
 
@@ -113,17 +146,31 @@ namespace easy3d {
 			}
 
 			std::size_t num = cloud->n_vertices();
-			Element e("vertex", num);
+			Element element_vertex("vertex", num);
 
-			details::collect_properties(cloud, e.vec3_properties);
-            details::collect_properties(cloud, e.vec2_properties);
-			details::collect_properties(cloud, e.float_properties);
-			details::collect_properties(cloud, e.int_properties);
-			details::collect_properties(cloud, e.int_list_properties);
-			details::collect_properties(cloud, e.float_list_properties);
+			details::collect_properties(cloud, element_vertex.vec3_properties);
+            details::collect_properties(cloud, element_vertex.vec2_properties);
+			details::collect_properties(cloud, element_vertex.float_properties);
+			details::collect_properties(cloud, element_vertex.int_properties);
+			details::collect_properties(cloud, element_vertex.int_list_properties);
+			details::collect_properties(cloud, element_vertex.float_list_properties);
+
+            auto trans = cloud->get_model_property<dvec3>("translation");
+            if (trans) { // has translation
+                const dvec3& origin = trans[0];
+                for (auto& prop : element_vertex.vec3_properties) {
+                    if (prop.name == "point") {
+                        for (auto& v : prop) {
+                            v.x += origin.x;
+                            v.y += origin.y;
+                            v.z += origin.z;
+                        }
+                    }
+                }
+            }
 
 			std::vector<Element> elements;
-            elements.emplace_back(e);
+            elements.emplace_back(element_vertex);
 
             binary = binary && (file_name.find("ascii") == std::string::npos);
             LOG_IF(!binary, WARNING) << "you're writing an ASCII ply file. Use binary format for better performance";

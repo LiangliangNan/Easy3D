@@ -40,6 +40,16 @@
      <addaction name="separator"/>
      <addaction name="actionClearRecentFiles"/>
     </widget>
+    <widget class="QMenu" name="menuOption">
+     <property name="title">
+      <string>Loading option</string>
+     </property>
+     <addaction name="actionTranslateDisabled"/>
+     <addaction name="actionTranslateUseFirstVertex"/>
+     <addaction name="actionTranslateUseLastKnownVertex"/>
+    </widget>
+    <addaction name="menuOption"/>
+    <addaction name="separator"/>
     <addaction name="actionOpen"/>
     <addaction name="actionSave"/>
     <addaction name="separator"/>
@@ -1186,6 +1196,33 @@
    </property>
    <property name="whatsThis">
     <string>Translate the models such that the origin is at the first object's center</string>
+   </property>
+  </action>
+  <action name="actionTranslateUseFirstVertex">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Translate relative to first vertex</string>
+   </property>
+  </action>
+  <action name="actionTranslateUseLastKnownVertex">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Translate relative to last known vertex</string>
+   </property>
+  </action>
+  <action name="actionTranslateDisabled">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>No translation</string>
    </property>
   </action>
  </widget>

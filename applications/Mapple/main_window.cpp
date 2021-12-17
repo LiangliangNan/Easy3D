@@ -65,6 +65,7 @@
 #include <easy3d/fileio/poly_mesh_io.h>
 #include <easy3d/fileio/ply_reader_writer.h>
 #include <easy3d/fileio/point_cloud_io_ptx.h>
+#include <easy3d/fileio/translater.h>
 #include <easy3d/algo/point_cloud_normals.h>
 #include <easy3d/algo/surface_mesh_components.h>
 #include <easy3d/algo/surface_mesh_topology.h>
@@ -409,6 +410,21 @@ int MainWindow::openFiles(const QStringList &fileNames) {
 }
 
 
+void MainWindow::loadModelTranslateChanged(QAction* act) {
+    if (act == ui->actionTranslateDisabled) {
+        Translater::instance()->set_status(Translater::DISABLED);
+        LOG(INFO) << "translation in file IO has been disabled";
+    } else if (act == ui->actionTranslateUseFirstVertex) {
+        Translater::instance()->set_status(Translater::TRANSLATE_USE_FIRST_POINT);
+        LOG(INFO) << "translation with respect to first vertex in file IO";
+    }
+    else if (act == ui->actionTranslateUseLastKnownVertex) {
+        Translater::instance()->set_status(Translater::TRANSLATE_USE_LAST_KNOWN_OFFSET);
+        LOG(INFO) << "translation with respect to last know vertex in file IO";
+    }
+}
+
+
 bool MainWindow::onOpen() {
     const QStringList& fileNames = QFileDialog::getOpenFileNames(
                 this,
@@ -445,7 +461,7 @@ bool MainWindow::onSave() {
 
     const QString& fileName = QFileDialog::getSaveFileName(
                 this,
-                "Open file(s)",
+                "Save file",
                 QString::fromStdString(default_file_name),
                 "Supported formats (*.ply *.obj *.off *.stl *.sm *.bin *.las *.laz *.xyz *.bxyz *.vg *.bvg *.plm *.pm *.mesh)\n"
                 "Surface Mesh (*.ply *.obj *.off *.stl *.sm)\n"
@@ -839,6 +855,12 @@ QString MainWindow::strippedName(const QString &fullFileName)
 
 
 void MainWindow::createActionsForFileMenu() {
+    QActionGroup* actionGroup = new QActionGroup(this);
+    actionGroup->addAction(ui->actionTranslateDisabled);
+    actionGroup->addAction(ui->actionTranslateUseFirstVertex);
+    actionGroup->addAction(ui->actionTranslateUseLastKnownVertex);
+    connect(actionGroup, SIGNAL(triggered(QAction*)), this, SLOT(loadModelTranslateChanged(QAction*)));
+
     connect(ui->actionOpen, SIGNAL(triggered()), this, SLOT(onOpen()));
     connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(onSave()));
 

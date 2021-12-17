@@ -25,6 +25,7 @@
  ********************************************************************/
 
 #include <easy3d/fileio/graph_io.h>
+#include <easy3d/fileio/translater.h>
 #include <easy3d/fileio/ply_reader_writer.h>
 #include <easy3d/core/graph.h>
 
@@ -33,8 +34,9 @@ namespace easy3d {
 
 	namespace io {
 
+        /// TODO: Translater implemented using "float", but "double" might be necessary for models with large coordinates
 
-		namespace details {
+        namespace details {
 
 			template <typename PropertyT>
 			inline bool extract_named_property(std::vector<PropertyT>& properties, PropertyT& wanted, const std::string& name) {
@@ -136,8 +138,33 @@ namespace easy3d {
                 }
 			}
 
-            for (auto p : coordinates)
-                graph->add_vertex(p);
+            if (Translater::instance()->status() == Translater::DISABLED) {
+                for (auto p: coordinates)
+                    graph->add_vertex(p);
+            } else if (Translater::instance()->status() == Translater::TRANSLATE_USE_FIRST_POINT) {
+                // the first point
+                const vec3 &p0 = coordinates[0];
+                const dvec3 origin(p0.data());
+                Translater::instance()->set_translation(origin);
+
+                for (auto p: coordinates)
+                    graph->add_vertex(p - p0);
+
+                auto trans = graph->add_model_property<dvec3>("translation", dvec3(0, 0, 0));
+                trans[0] = origin;
+                LOG(INFO) << "model translated w.r.t. the first vertex (" << origin
+                          << "), stored as ModelProperty<dvec3>(\"translation\")";
+            } else if (Translater::instance()->status() == Translater::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
+                const dvec3 &origin = Translater::instance()->translation();
+
+                for (auto p: coordinates)
+                    graph->add_vertex(vec3(p.x - origin.x, p.y - origin.y, p.z + origin.z));
+
+                auto trans = graph->add_model_property<dvec3>("translation", dvec3(0, 0, 0));
+                trans[0] = origin;
+                LOG(INFO) << "model translated w.r.t. last known reference point (" << origin
+                          << "), stored as ModelProperty<dvec3>(\"translation\")";
+            }
 
             for (auto e : edge_vertex_indices) {
                 if (e.size() == 2)
@@ -236,6 +263,20 @@ namespace easy3d {
             details::collect_vertex_properties(graph, element_vertex.int_properties);
             details::collect_vertex_properties(graph, element_vertex.int_list_properties);
             details::collect_vertex_properties(graph, element_vertex.float_list_properties);
+
+            auto trans = graph->get_model_property<dvec3>("translation");
+            if (trans) { // has translation
+                const dvec3& origin = trans[0];
+                for (auto& prop : element_vertex.vec3_properties) {
+                    if (prop.name == "point") {
+                        for (auto& v : prop) {
+                            v.x += origin.x;
+                            v.y += origin.y;
+                            v.z += origin.z;
+                        }
+                    }
+                }
+            }
 
 			elements.emplace_back(element_vertex);
 

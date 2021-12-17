@@ -28,6 +28,7 @@
 
 #include <fstream>
 
+#include <easy3d/fileio/translater.h>
 #include <easy3d/core/poly_mesh.h>
 #include <easy3d/util/progress.h>
 
@@ -55,11 +56,40 @@ namespace easy3d {
 
             ProgressLogger progress(num_vertices + num_cells, true, false);
 
-            vec3 p;
-            for (std::size_t v = 0; v < num_vertices; ++v) {
-                input >> p;
-                mesh->add_vertex(p);
-                progress.next();
+            if (Translater::instance()->status() == Translater::DISABLED) {
+                vec3 p;
+                for (std::size_t v = 0; v < num_vertices; ++v) {
+                    input >> p;
+                    mesh->add_vertex(p);
+                    progress.next();
+                }
+            } else if (Translater::instance()->status() == Translater::TRANSLATE_USE_FIRST_POINT) {
+                dvec3 p, origin;
+                for (std::size_t v = 0; v < num_vertices; ++v) {
+                    input >> p;
+                    if (v == 0) { // the first point
+                        origin = p;
+                        Translater::instance()->set_translation(origin);
+                    }
+                    mesh->add_vertex(vec3(p.x - origin.x, p.y - origin.y, p.z - origin.z));
+                    progress.next();
+                }
+
+                auto trans = mesh->add_model_property<dvec3>("translation", dvec3(0,0,0));
+                trans[0] = origin;
+                LOG(INFO) << "model translated w.r.t. the first vertex (" << trans[0] << "), stored as ModelProperty<dvec3>(\"translation\")";
+            } else if (Translater::instance()->status() == Translater::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
+                const dvec3 &origin = Translater::instance()->translation();
+                dvec3 p;
+                for (std::size_t v = 0; v < num_vertices; ++v) {
+                    input >> p;
+                    mesh->add_vertex(vec3(p.x - origin.x, p.y - origin.y, p.z - origin.z));
+                    progress.next();
+                }
+
+                auto trans = mesh->add_model_property<dvec3>("translation", dvec3(0,0,0));
+                trans[0] = origin;
+                LOG(INFO) << "model translated w.r.t. last known reference point (" << origin << "), stored as ModelProperty<dvec3>(\"translation\")";
             }
 
             int num_halffaces(0), num_valence(0), idx(0);
@@ -107,10 +137,17 @@ namespace easy3d {
             output << "#vertices " << mesh->n_vertices() << std::endl
                    << "#cells    " << mesh->n_cells() << std::endl;
 
-            ProgressLogger progress(mesh->n_vertices() + mesh->n_cells(), true, false);
+            auto trans = mesh->get_model_property<dvec3>("translation");
+            dvec3 origin(0, 0, 0);
+            if (trans)  // has translation
+                origin = trans[0];
 
+            ProgressLogger progress(mesh->n_vertices() + mesh->n_cells(), true, false);
             for (auto v : mesh->vertices()) {
-                output << mesh->position(v) << std::endl;
+                const auto& p = mesh->position(v);
+                output << p.x + origin.x << " "
+                       << p.y + origin.y << " "
+                       << p.z + origin.z << " " << std::endl;
                 progress.next();
             }
 

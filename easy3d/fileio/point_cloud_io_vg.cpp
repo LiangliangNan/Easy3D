@@ -25,12 +25,14 @@
  ********************************************************************/
 
 #include <easy3d/fileio/point_cloud_io_vg.h>
-#include <easy3d/core/point_cloud.h>
-#include <easy3d/core/random.h>
-#include <easy3d/util/logging.h>
 
 #include <fstream>
 #include <unordered_map>
+
+#include <easy3d/fileio/translater.h>
+#include <easy3d/core/point_cloud.h>
+#include <easy3d/core/random.h>
+#include <easy3d/util/logging.h>
 
 /*
 // file format definition
@@ -89,18 +91,25 @@ namespace easy3d {
             }
             output.precision(16);
 
-            //////////////////////////////////////////////////////////////////////////
-
             const std::vector<vec3>& points = cloud->points();
             auto cls = cloud->get_vertex_property<vec3>("v:color");
             auto nms = cloud->get_vertex_property<vec3>("v:normal");
 
-
             std::vector<VertexGroup> groups;
             collect_groups(cloud, groups);
             output << "num_points: " << points.size() << std::endl;
-            for (std::size_t i = 0; i < points.size(); ++i)
-                output << points[i] << " ";
+
+            auto trans = cloud->get_model_property<dvec3>("translation");
+            if (trans) { // has translation
+                for (std::size_t i = 0; i < points.size(); ++i) {
+                    const vec3& p = points[i];
+                    output << p.x + trans[0].x << " " << p.y + trans[0].y << " " << p.z + trans[0].z << " ";
+                }
+            }
+            else { // no translation
+                for (std::size_t i = 0; i < points.size(); ++i)
+                    output << points[i] << " ";
+            }
             output << std::endl;
 
             output << "num_colors: " << (cls ? points.size() : 0) << std::endl;
@@ -191,29 +200,54 @@ namespace easy3d {
             cloud->resize(num);
             std::vector<vec3>& points = cloud->points();
 
-#ifdef TRANSLATE_RELATIVE_TO_FIRST_POINT
-            double x0, y0, z0;
-            input >> x0 >> y0 >> z0;
-            points[0] = vec3(0, 0, 0);
+            if (Translater::instance()->status() == Translater::DISABLED) {
+                for (std::size_t i = 0; i < num; ++i) {
+                    input >> points[i];
+                    if (input.fail()) {
+                        LOG(ERROR) << "failed reading the " << i << "_th point";
+                        return false;
+                    }
+                }
+            }
+            else if (Translater::instance()->status() == Translater::TRANSLATE_USE_FIRST_POINT) {
+                // the first point
+                double x0, y0, z0;
+                input >> x0 >> y0 >> z0;
+                points[0] = vec3(0, 0, 0);
 
-            double x, y, z;
-            for (std::size_t i = 1; i < num; ++i) {
-                input >> x >> y >> z;
-                points[i] = vec3(x - x0, y - y0, z - z0);
-                if (input.fail()) {
-                    LOG(ERROR) << "failed reading the " << i << "_th point";
-                    return false;
+                const dvec3 origin(x0, y0, z0);
+                Translater::instance()->set_translation(origin);
+
+                double x, y, z;
+                for (std::size_t i = 1; i < num; ++i) {
+                    input >> x >> y >> z;
+                    points[i] = vec3(x - x0, y - y0, z - z0);
+                    if (input.fail()) {
+                        LOG(ERROR) << "failed reading the " << i << "_th point";
+                        return false;
+                    }
                 }
-            }
-#else
-            for (std::size_t i = 0; i < num; ++i) {
-                input >> points[i];
-                if (input.fail()) {
-                    LOG(ERROR) << "failed reading the " << i << "_th point";
-                    return false;
+                auto trans = cloud->add_model_property<dvec3>("translation", dvec3(0, 0, 0));
+                trans[0] = origin;
+                LOG(INFO) << "model translated w.r.t. the first vertex (" << origin
+                          << "), stored as ModelProperty<dvec3>(\"translation\")";
+
+            } else if (Translater::instance()->status() == Translater::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
+                const dvec3 &origin = Translater::instance()->translation();
+                double x, y, z;
+                for (std::size_t i = 0; i < num; ++i) {
+                    input >> x >> y >> z;
+                    points[i] = vec3(x - origin.x, y - origin.y, z - origin.z);
+                    if (input.fail()) {
+                        LOG(ERROR) << "failed reading the " << i << "_th point";
+                        return false;
+                    }
                 }
+                auto trans = cloud->add_model_property<dvec3>("translation", dvec3(0, 0, 0));
+                trans[0] = origin;
+                LOG(INFO) << "model translated w.r.t. last known reference point (" << origin
+                          << "), stored as ModelProperty<dvec3>(\"translation\")";
             }
-#endif
 
             input >> dummy >> num;
             if (input.fail()) {
@@ -343,6 +377,7 @@ namespace easy3d {
             group.color_ = color;
         }
 
+        /// TODO: Translater implemented using "float", but "double" might be necessary for models with large coordinates
 
         bool PointCloudIO_vg::load_bvg(const std::string& file_name, PointCloud* cloud) {
             std::ifstream input(file_name.c_str(), std::fstream::binary);
@@ -363,6 +398,36 @@ namespace easy3d {
             // read the points block
             auto points = cloud->get_vertex_property<vec3>("v:point");
             input.read((char*)points.data(), num * sizeof(vec3));
+
+            if (Translater::instance()->status() == Translater::TRANSLATE_USE_FIRST_POINT) {
+                auto& positions = points.vector();
+
+                // the first point
+                const vec3 p0 = positions[0];
+                const dvec3 origin(p0.data());
+                Translater::instance()->set_translation(origin);
+
+                for (auto& p : positions)
+                    p -= p0;
+
+                auto trans = cloud->add_model_property<dvec3>("translation", dvec3(0, 0, 0));
+                trans[0] = origin;
+                LOG(INFO) << "model translated w.r.t. the first vertex (" << origin
+                          << "), stored as ModelProperty<dvec3>(\"translation\")";
+            } else if (Translater::instance()->status() == Translater::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
+                const dvec3 &origin = Translater::instance()->translation();
+                auto& points = cloud->get_vertex_property<vec3>("v:point").vector();
+                for (auto& p: points) {
+                    p.x -= origin.x;
+                    p.y -= origin.y;
+                    p.z -= origin.z;
+                }
+
+                auto trans = cloud->add_model_property<dvec3>("translation", dvec3(0, 0, 0));
+                trans[0] = origin;
+                LOG(INFO) << "model translated w.r.t. last known reference point (" << origin
+                          << "), stored as ModelProperty<dvec3>(\"translation\")";
+            }
 
             // read the colors block if exists
             input.read((char*)(&num), sizeof(int));
@@ -426,7 +491,19 @@ namespace easy3d {
             // write the points block
             std::size_t num = points.size();
             output.write((char*)&num, sizeof(int));
-            output.write((char*)points.data(), num * sizeof(vec3));
+
+            auto trans = cloud->get_model_property<dvec3>("translation");
+            if (trans) { // has translation
+                const dvec3& origin = trans[0];
+                for (const auto& p : points) {
+                    for (unsigned short i=0; i<3; ++i) {
+                        float value = static_cast<float>(p[i] + origin[i]);
+                        output.write((char *)&value, sizeof(float));
+                    }
+                }
+            }
+            else
+                output.write((char*)points.data(), num * sizeof(vec3));
 
             if (cls) {
                 const std::vector<vec3>& colors = cls.vector();

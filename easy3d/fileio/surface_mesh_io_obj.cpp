@@ -26,15 +26,14 @@
 
 #include <easy3d/fileio/surface_mesh_io.h>
 
+#include <fstream>
 #include <unordered_map>
 
+#include <easy3d/fileio/translater.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/surface_mesh_builder.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
-
-
-//#define TRANSLATE_RELATIVE_TO_FIRST_POINT
 
 
 #define USE_FAST_OBJ
@@ -44,8 +43,6 @@
 
 #define FAST_OBJ_IMPLEMENTATION
 #include <3rd_party/fastobj/fast_obj.h>
-
-
 
 
 namespace easy3d {
@@ -82,25 +79,33 @@ namespace easy3d {
             SurfaceMeshBuilder builder(mesh);
             builder.begin_surface();
 
-#ifdef  TRANSLATE_RELATIVE_TO_FIRST_POINT
-            // add vertices
-            // the first point
-            auto p0 = vec3(fom->positions + 3); // index starts from 1 and the first element is dummy
-            builder.add_vertex(vec3(0, 0, 0));
+            if (Translater::instance()->status() == Translater::DISABLED) {
+                for (std::size_t v = 1; v < fom->position_count; ++v)
+                    builder.add_vertex(vec3(fom->positions + v * 3));
+            } else if (Translater::instance()->status() == Translater::TRANSLATE_USE_FIRST_POINT) {
+                // the first point
+                const dvec3 origin(fom->positions + 3); // index starts from 1 and the first element is dummy
+                Translater::instance()->set_translation(origin);
+                // remaining points
+                for (std::size_t v = 1; v < fom->position_count; ++v) {
+                    const double *data = fom->positions + v * 3;
+                    builder.add_vertex(vec3(data[0] - origin.x, data[1] - origin.y, data[2] - origin.z));
+                }
 
-            // remaining points
-            for (std::size_t v = 2; v < fom->position_count; ++v) {
-                // Should I create vertices later, to get rid of isolated vertices?
-                builder.add_vertex(vec3(fom->positions + v * 3) - p0);
+                auto trans = mesh->add_model_property<dvec3>("translation", dvec3(0,0,0));
+                trans[0] = origin;
+                LOG(INFO) << "model translated w.r.t. the first vertex (" << origin << "), stored as ModelProperty<dvec3>(\"translation\")";
+            } else if (Translater::instance()->status() == Translater::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
+                const dvec3 &origin = Translater::instance()->translation();
+                for (std::size_t v = 1; v < fom->position_count; ++v) {
+                    const double *data = fom->positions + v * 3;
+                    builder.add_vertex(vec3(data[0] - origin.x, data[1] - origin.y, data[2] - origin.z));
+                }
+                auto trans = mesh->add_model_property<dvec3>("translation", dvec3(0,0,0));
+                trans[0] = origin;
+                LOG(INFO) << "model translated w.r.t. last known reference point (" << origin
+                          << "), stored as ModelProperty<dvec3>(\"translation\")";
             }
-#else
-            // add vertices
-            // skip the first point
-            for (std::size_t v = 1; v < fom->position_count; ++v) {
-                // Should I create vertices later, to get rid of isolated vertices?
-                builder.add_vertex(vec3(fom->positions + v * 3));
-            }
-#endif
 
             // create texture coordinate property if texture coordinates present
             SurfaceMesh::HalfedgeProperty<vec2> prop_texcoords;
@@ -840,28 +845,36 @@ namespace easy3d {
                 return false;
             }
 
-            FILE *out = fopen(file_name.c_str(), "w");
-            if (!out) {
+            std::ofstream out(file_name.c_str());
+            if (out.fail()) {
                 LOG(ERROR) << "could not open file: " << file_name;
                 return false;
             }
 
             // comment
-            fprintf(out, "# OBJ exported from Easy3D\n");
+            out << "# OBJ exported from Easy3D (liangliang.nan@gmail.com)\n";
 
             //vertices
-            SurfaceMesh::VertexProperty<vec3> points = mesh->get_vertex_property<vec3>("v:point");
-            for (SurfaceMesh::VertexIterator vit = mesh->vertices_begin(); vit != mesh->vertices_end(); ++vit) {
-                const vec3 &p = points[*vit];
-                fprintf(out, "v %.10f %.10f %.10f\n", p[0], p[1], p[2]);
+            auto trans = mesh->get_model_property<dvec3>("translation");
+            if (trans) { // has translation
+                const dvec3& origin = trans[0];
+                SurfaceMesh::VertexProperty<vec3> points = mesh->get_vertex_property<vec3>("v:point");
+                for (SurfaceMesh::VertexIterator vit = mesh->vertices_begin(); vit != mesh->vertices_end(); ++vit) {
+                    const vec3 &p = points[*vit];
+                    out << "v " << p.x + origin.x << " " << p.y + origin.y << " " << p.z + origin.z << "\n";
+                }
+            } else { // no translation
+                SurfaceMesh::VertexProperty<vec3> points = mesh->get_vertex_property<vec3>("v:point");
+                for (SurfaceMesh::VertexIterator vit = mesh->vertices_begin(); vit != mesh->vertices_end(); ++vit)
+                    out << "v " << points[*vit] << "\n";
             }
 
             //normals
             SurfaceMesh::VertexProperty<vec3> normals = mesh->get_vertex_property<vec3>("v:normal");
             if (normals) {
                 for (SurfaceMesh::VertexIterator vit = mesh->vertices_begin(); vit != mesh->vertices_end(); ++vit) {
-                    const vec3 &p = normals[*vit];
-                    fprintf(out, "vn %.10f %.10f %.10f\n", p[0], p[1], p[2]);
+                    const vec3 &n = normals[*vit];
+                    out << "vn " << n << "\n";
                 }
             }
 
@@ -881,32 +894,30 @@ namespace easy3d {
             //if so then add
             if (with_tex_coord) {
                 SurfaceMesh::HalfedgeProperty<vec2> tex_coord = mesh->get_halfedge_property<vec2>("h:texcoord");
-                for (SurfaceMesh::HalfedgeIterator hit = mesh->halfedges_begin();
-                     hit != mesh->halfedges_end(); ++hit) {
-                    const vec2 &pt = tex_coord[*hit];
-                    fprintf(out, "vt %.10f %.10f\n", pt[0], pt[1]);
+                for (SurfaceMesh::HalfedgeIterator hit = mesh->halfedges_begin(); hit != mesh->halfedges_end(); ++hit) {
+                    const vec2 &tex = tex_coord[*hit];
+                    out << "vt " << tex << "\n";
                 }
             }
 
             //faces
             for (SurfaceMesh::FaceIterator fit = mesh->faces_begin(); fit != mesh->faces_end(); ++fit) {
-                fprintf(out, "f");
+                out << "f ";
                 SurfaceMesh::VertexAroundFaceCirculator fvit = mesh->vertices(*fit), fvend = fvit;
                 SurfaceMesh::HalfedgeAroundFaceCirculator fhit = mesh->halfedges(*fit);
                 do {
                     if (with_tex_coord) {
                         // write vertex index, tex_coord index and normal index
-                        fprintf(out, " %d/%d/%d", (*fvit).idx() + 1, (*fhit).idx() + 1, (*fvit).idx() + 1);
+                        out << (*fvit).idx() + 1 << "/" << (*fhit).idx() + 1 << "/" << (*fvit).idx() + 1 << " ";
                         ++fhit;
                     } else {
                         // write vertex index and normal index
-                        fprintf(out, " %d//%d", (*fvit).idx() + 1, (*fvit).idx() + 1);
+                        out << (*fvit).idx() + 1 << "/" << (*fvit).idx() + 1 << " ";
                     }
                 } while (++fvit != fvend);
-                fprintf(out, "\n");
+                out << "\n";
             }
 
-            fclose(out);
             return true;
         }
 
