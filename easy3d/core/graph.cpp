@@ -149,7 +149,9 @@ namespace easy3d {
 
         vprops_.resize_property_array(3);   // "v:connectivity", "v:point", "v:deleted"
         eprops_.resize_property_array(2);   // "e:connectivity", "e:deleted"
+
         mprops_.clear();
+        mprops_.resize(1);
     }
 
 
@@ -170,6 +172,14 @@ namespace easy3d {
     void Graph::property_stats(std::ostream& output) const
     {
         std::vector<std::string> props;
+
+        props = model_properties();
+        if (!props.empty())
+        {
+            output << "model properties:\n";
+            for (const auto& p : props)
+                output << "\t" << p << std::endl;
+        }
 
 		props = vertex_properties();
 		if (!props.empty())

@@ -689,15 +689,15 @@ namespace easy3d {
         //! \name File IO
         //!@{
 
-        //! \brief Read mesh from a PMESH file \p filename.
-        //! Mainly for quite debug purposes. Client code should use PolyMeshIO.
+        //! \brief Read mesh from a PM file \p filename.
+        //! Mainly for quick debug purposes. Client code should use PolyMeshIO.
         //! \sa PolyMeshIO.
-        bool read_pmesh(const std::string& filename);
+        bool read(const std::string& filename);
 
-        //! \brief Write mesh to a PMESH file \p filename.
-        //! Mainly for quite debug purposes. Client code should use PolyMeshIO.
+        //! \brief Write mesh to a PM file \p filename.
+        //! Mainly for quick debug purposes. Client code should use PolyMeshIO.
         //! \sa PolyMeshIO.
-        bool write_pmesh(const std::string& filename) const;
+        bool write(const std::string& filename) const;
         //@}
 
     public: //----------------------------------------------- add new vertex / face / cell

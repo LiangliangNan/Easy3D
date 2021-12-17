@@ -376,6 +376,7 @@ namespace easy3d {
         eprops_.resize_property_array(1);   // "e:deleted"
         fprops_.resize_property_array(2);   // "f:connectivity", "f:deleted"
         mprops_.clear();
+        mprops_.resize(1);
 
         // update/invalidate the normal properties
         vnormal_  = VertexProperty<vec3>();
@@ -404,6 +405,14 @@ namespace easy3d {
     void SurfaceMesh::property_stats(std::ostream& output) const
     {
         std::vector<std::string> props;
+
+        props = model_properties();
+        if (!props.empty())
+        {
+            output << "model properties:\n";
+            for (const auto& p : props)
+                output << "\t" << p << std::endl;
+        }
 
 		props = vertex_properties();
 		if (!props.empty())

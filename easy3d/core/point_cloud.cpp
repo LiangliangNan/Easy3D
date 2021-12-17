@@ -127,6 +127,7 @@ namespace easy3d {
 
         vprops_.resize_property_array(2);   // "v:point", "v:deleted"
         mprops_.clear();
+        mprops_.resize(1);
     }
 
 
@@ -135,8 +136,17 @@ namespace easy3d {
 
     void PointCloud::property_stats(std::ostream& output) const
     {
-        std::vector<std::string> props = vertex_properties();
+        std::vector<std::string> props;
 
+        props = model_properties();
+        if (!props.empty())
+        {
+            output << "model properties:\n";
+            for (const auto& p : props)
+                output << "\t" << p << std::endl;
+        }
+
+        props = vertex_properties();
 		if (!props.empty())
 		{
 			std::cout << "vertex properties:\n";

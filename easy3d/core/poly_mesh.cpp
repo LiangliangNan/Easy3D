@@ -76,7 +76,7 @@ namespace easy3d {
         details::read(input, halffaces_);
         details::read(input, cells_);
     }
-    
+
 
     void PolyMesh::VertexConnectivity::write(std::ostream &output) const {
         details::write(output, vertices_);
@@ -225,7 +225,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    bool PolyMesh::read_pmesh(const std::string &file_name)
+    bool PolyMesh::read(const std::string &file_name)
     {
         clear();
 
@@ -268,7 +268,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    bool PolyMesh::write_pmesh(const std::string& file_name) const
+    bool PolyMesh::write(const std::string& file_name) const
     {
         if (n_vertices() == 0 || n_faces() == 0 || n_cells() == 0) {
             LOG(ERROR) << "empty polyhedral mesh";
@@ -341,6 +341,7 @@ namespace easy3d {
         hprops_.resize_property_array(1);   // "h:connectivity"
         cprops_.resize_property_array(2);   // "c:connectivity", "t:indices"
         mprops_.clear();
+        mprops_.resize(1);
     }
 
 
@@ -350,6 +351,14 @@ namespace easy3d {
     void PolyMesh::property_stats(std::ostream& output) const
     {
         std::vector<std::string> props;
+
+        props = model_properties();
+        if (!props.empty())
+        {
+            output << "model properties:\n";
+            for (const auto& p : props)
+                output << "\t" << p << std::endl;
+        }
 
         props = vertex_properties();
         if (!props.empty())
