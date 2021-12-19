@@ -949,15 +949,15 @@ namespace easy3d {
         //! \name File IO
         //!@{
 
-        //! \brief Read mesh from a SMESH file \p filename.
-        //! Mainly for quite debug purposes. Client code should use SurfaceMeshIO.
+        //! \brief Read mesh from a SM file \p filename.
+        //! Mainly for quick debug purposes. Client code should use SurfaceMeshIO.
         //! \sa SurfaceMeshIO.
-        bool read_smesh(const std::string& filename);
+        bool read(const std::string& filename);
 
-        //! \brief Write mesh to a SMESH file \p filename.
-        //! Mainly for quite debug purposes. Client code should use SurfaceMeshIO.
+        //! \brief Write mesh to a SM file \p filename.
+        //! Mainly for quick debug purposes. Client code should use SurfaceMeshIO.
         //! \sa SurfaceMeshIO.
-        bool write_smesh(const std::string& filename) const;
+        bool write(const std::string& filename) const;
         //@}
 
     public: //----------------------------------------------- add new vertex / face
