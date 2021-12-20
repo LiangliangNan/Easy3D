@@ -846,15 +846,8 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
             }
             if (!currentModel()->renderer()->triangles_drawables().empty()) {
                 output << "triangles drawables:\n";
-                for (auto d: currentModel()->renderer()->triangles_drawables()) {
-                    if (d->children().empty())
-                        d->buffer_stats(output);
-                    else {
-                        output << "\t" << d->name() << ", which has the following " << d->children().size() << " child drawables" << std::endl;
-                        for (auto child : d->children())
-                            child->buffer_stats(output);
-                    }
-                }
+                for (auto d : currentModel()->renderer()->triangles_drawables())
+                    d->buffer_stats(output);
             }
 
 			currentModel()->property_stats(output);

@@ -213,8 +213,6 @@ namespace easy3d {
         auto normals = mesh->get_vertex_property<vec3>("v:normal");
         auto points = mesh->get_vertex_property<vec3>("v:point");
 
-        auto surface = mesh->renderer()->add_triangles_drawable("faces");
-
         Tessellator tessellator;
         for (std::size_t i = 0; i < groups.size(); ++i) {
             const auto &group = groups[i];
@@ -260,7 +258,7 @@ namespace easy3d {
 
             const auto &d_indices = tessellator.elements();
 
-            auto drawable = surface->add_child(Drawable::DT_TRIANGLES, "faces_" + std::to_string(i));
+            auto drawable = mesh->renderer()->add_triangles_drawable("faces_" + std::to_string(i));
 
             drawable->update_element_buffer(d_indices);
             drawable->update_vertex_buffer(d_points);
@@ -270,7 +268,7 @@ namespace easy3d {
             if (!d_texcoords.empty())
                 drawable->update_texcoord_buffer(d_texcoords);
 
-            dynamic_cast<TrianglesDrawable*>(drawable)->set_smooth_shading(false);
+            drawable->set_smooth_shading(false);
             if (prop_texcoords) {
                 if (!group.tex_file.empty()) {
                     Texture *tex = TextureManager::request(group.tex_file, Texture::REPEAT);

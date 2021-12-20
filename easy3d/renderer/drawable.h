@@ -186,36 +186,6 @@ namespace easy3d {
         VertexArrayObject *vao() { return vao_; }
         const VertexArrayObject *vao() const { return vao_; }
 
-        /// \brief Queries the children of this drawable.
-        /// \details A drawable can be split into parts (i.e., children) and each part can have different rendering
-        ///     states. This is convenient in a few cases, such as segmentation or surface meshes with multiple
-        ///     textures.
-        /// \note If a drawable has children, is serves only as a container of the actual drawables, i.e., no buffers
-        ///     will be created and changing a rendering state simply modifies the state of its children.
-        /// \return The children of this drawable.
-        std::vector<Drawable*>& children() { return children_; }
-
-        /// \brief Queries the children of this drawable.
-        /// \details A drawable can be split into parts (i.e., children) and each part can have different rendering
-        ///     states. This is convenient in a few cases, such as segmentation or surface meshes with multiple
-        ///     textures.
-        /// \note If a drawable has children, is serves only as a container of the actual drawables, i.e., no buffers
-        ///     will be created and changing a rendering state simply modifies the state of its children.
-        /// \return The children of this drawable.
-        const std::vector<Drawable*>& children() const { return children_; }
-
-        /// \brief Adds a child drawable to this drawable.
-        /// \param type The type of the child drawable to be created, which must be one of DT_POINTS, DT_LINES, and
-        ///     DT_TRIANGLES.
-        /// \param name The name of the child drawable to be created.
-        /// \return The newly created child drawable (null if the child with the same name already exists).
-        Drawable* add_child(Type type, const std::string& name);
-
-        /// \brief Removes a child drawable from this drawable (and it also claims the memory).
-        /// \param name The name of the child to be deleted.
-        /// \return True if the child has been successfully removed, false otherwise (e.g., the child doesn't exist).
-        bool delete_child(const std::string& name);
-
     protected:
         void internal_update_buffers();
 
@@ -243,8 +213,6 @@ namespace easy3d {
 
         // drawables not attached to a model can also be manipulated
         Manipulator* manipulator_;   // for manipulation
-
-        std::vector<Drawable*> children_;
     };
 
 }
