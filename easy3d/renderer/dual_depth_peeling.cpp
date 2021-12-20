@@ -476,7 +476,7 @@ namespace easy3d {
         program->bind();
         program->bind_texture("FrontBlenderTex", fbo_->color_texture(front_source_), 0);
         program->bind_texture("BackBlenderTex", fbo_->color_texture(Back), 1);
-        shapes::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.9f);
+        shapes::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);
         program->release_texture();
         program->release();
     }
