@@ -100,7 +100,7 @@ int main(int argc, char* argv[]) {
     result += test_text_rendering(duration);
     result += test_text_mesher(duration);
     result += test_animation(duration);
-//    result += test_ambient_occlusion(duration); // This one does not support multi-threads (required in this test), but it can run alone.
+    result += test_ambient_occlusion(duration);
     result += test_hard_shadow(duration);
     result += test_soft_shadow(duration);
     result += test_transparency(duration);
