@@ -122,6 +122,7 @@ namespace easy3d {
 
 			Vec3Property       coordinates;
 			IntListProperty    face_vertex_indices;
+            FloatListProperty  face_halfedge_texcoords;
 			IntListProperty    edge_vertex_indices;
 
 			const Element* element_vertex = nullptr;
@@ -138,8 +139,10 @@ namespace easy3d {
 				}
                 else if (e.name == "face") {
                     if (details::extract_named_property(e.int_list_properties, face_vertex_indices, "vertex_indices") ||
-                        details::extract_named_property(e.int_list_properties, face_vertex_indices, "vertex_index"))
-						continue;
+                        details::extract_named_property(e.int_list_properties, face_vertex_indices, "vertex_index")) {
+                        details::extract_named_property(e.float_list_properties, face_halfedge_texcoords, "texcoord");
+                        continue;
+                    }
 					else {
                         LOG(ERROR) << "edge properties might not be parsed correctly because both 'vertex_indices' and 'vertex_index' not defined on faces";
 						return false;
@@ -179,11 +182,44 @@ namespace easy3d {
             }
 
             // add faces
-			for (auto indices : face_vertex_indices) {
+
+            // create texture coordinate property if texture coordinates present
+            SurfaceMesh::HalfedgeProperty<vec2> prop_texcoords;
+            if (face_halfedge_texcoords.size() == face_vertex_indices.size())
+                prop_texcoords = prop_texcoords = mesh->add_halfedge_property<vec2>("h:texcoord");
+
+            // find the face's halfedge that points to v.
+            auto find_face_halfedge = [](SurfaceMesh *mesh, SurfaceMesh::Face face,
+                                         SurfaceMesh::Vertex v) -> SurfaceMesh::Halfedge {
+                for (auto h : mesh->halfedges(face)) {
+                    if (mesh->target(h) == v)
+                        return h;
+                }
+                LOG_N_TIMES(3, ERROR) << "could not find a halfedge pointing to " << v << " in face " << face
+                                      << ". " << COUNTER;
+                return SurfaceMesh::Halfedge();
+            };
+
+            for (std::size_t i=0; i<face_vertex_indices.size(); ++i) {
+                const auto& indices = face_vertex_indices[i];
 				std::vector<SurfaceMesh::Vertex> vts;
 				for (auto id : indices)
                     vts.emplace_back(SurfaceMesh::Vertex(id));
-				builder.add_face(vts);
+                auto face = builder.add_face(vts);
+
+                // now let's add the texcoords (defined on halfedges)
+                if (face.is_valid() && prop_texcoords) {
+                    const auto& face_texcoords = face_halfedge_texcoords[i];
+                    if (face_texcoords.size() == vts.size() * 2) { // 2 coordinates per face
+                        auto begin = find_face_halfedge(mesh, face, builder.face_vertices()[0]);
+                        auto cur = begin;
+                        unsigned int vid = 0;
+                        do {
+                            prop_texcoords[cur] = vec2(face_texcoords[vid++], face_texcoords[vid++]);
+                            cur = mesh->next(cur);
+                        } while (cur != begin);
+                    }
+                }
 			}
 
 			// now let's add the remained properties
@@ -349,11 +385,29 @@ namespace easy3d {
 			face_vertex_indices.reserve(mesh->n_faces());
 			for (auto f : mesh->faces()) {
 				std::vector<int> indices;
-				for (auto v : mesh->vertices(f))
-					indices.push_back(v.idx());
-				face_vertex_indices.emplace_back(indices);
+				for (auto h : mesh->halfedges(f)) {
+                    indices.push_back(mesh->target(h).idx());
+                }
+				face_vertex_indices.push_back(indices);
 			}
 			element_face.int_list_properties.emplace_back(face_vertex_indices);
+
+            // texture coordinates (defined on halfedges)
+            auto texcoord = mesh->get_halfedge_property<vec2>("h:texcoord");
+            if (texcoord) {
+                FloatListProperty face_halfedge_texcoords;
+                face_halfedge_texcoords.name = "texcoord";
+                for (auto f: mesh->faces()) {
+                    std::vector<float> texcoords;
+                    for (auto h: mesh->halfedges(f)) {
+                        const auto& tex = texcoord[h];
+                        texcoords.push_back(tex.x);
+                        texcoords.push_back(tex.y);
+                    }
+                    face_halfedge_texcoords.push_back(texcoords);
+                }
+                element_face.float_list_properties.push_back(face_halfedge_texcoords);
+            }
 
 			// attributes defined on element "face"
 			details::collect_face_properties(mesh, element_face.vec3_properties);
