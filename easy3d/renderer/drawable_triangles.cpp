@@ -57,6 +57,12 @@ namespace easy3d {
 
 
     void TrianglesDrawable::draw(const Camera *camera) const {
+        if (!children_.empty()) {
+            for (auto d : children_)
+                d->draw(camera);
+            return;
+        }
+
         if (update_needed_ || vertex_buffer_ == 0)
             const_cast<TrianglesDrawable*>(this)->internal_update_buffers();
 

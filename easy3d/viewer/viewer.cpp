@@ -868,7 +868,7 @@ namespace easy3d {
             if (current_model()) {
                 auto &output = std::cout;
 
-                std::cout << "----------- " << file_system::simple_name(current_model()->name()) << " -----------\n";
+                output << "----------- " << file_system::simple_name(current_model()->name()) << " -----------\n";
                 if (dynamic_cast<SurfaceMesh *>(current_model())) {
                     auto model = dynamic_cast<SurfaceMesh *>(current_model());
                     output << "model is a surface mesh. #face: " << std::to_string(model->n_faces())
@@ -889,14 +889,21 @@ namespace easy3d {
                         d->buffer_stats(output);
                 }
                 if (!current_model()->renderer()->lines_drawables().empty()) {
-                    std::cout << "lines drawables:\n";
+                    output << "lines drawables:\n";
                     for (auto d : current_model()->renderer()->lines_drawables())
                         d->buffer_stats(output);
                 }
                 if (!current_model()->renderer()->triangles_drawables().empty()) {
-                    std::cout << "triangles drawables:\n";
-                    for (auto d : current_model()->renderer()->triangles_drawables())
-                        d->buffer_stats(output);
+                    output << "triangles drawables:\n";
+                    for (auto d: current_model()->renderer()->triangles_drawables()) {
+                        if (d->children().empty())
+                            d->buffer_stats(output);
+                        else {
+                            output << "\t" << d->name() << ", which has the following " << d->children().size() << " child drawables" << std::endl;
+                            for (auto child : d->children())
+                                child->buffer_stats(output);
+                        }
+                    }
                 }
 
                 current_model()->property_stats(output);

@@ -37,6 +37,10 @@
 #include <easy3d/renderer/buffers.h>
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/setting.h>
+#include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/drawable_lines.h>
+#include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/core/poly_mesh.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/stop_watch.h>
 
@@ -52,10 +56,18 @@ namespace easy3d {
     }
 
 
+
     Drawable::~Drawable() {
-        clear();
-        delete vao_;
-        delete manipulator_;
+        if (children_.empty()) {
+            clear();
+            delete vao_;
+            delete manipulator_;
+        }
+        else {
+            for (auto d: children_)
+                delete d;
+            children_.clear();
+        }
     }
 
 
@@ -69,7 +81,7 @@ namespace easy3d {
 
     void Drawable::buffer_stats(std::ostream &output) const {
         if (vertex_buffer()) {
-            std::cout << "\t" << name() << std::endl;
+            output << "\t" << name() << std::endl;
             output << "\t\tvertex buffer:     " << num_vertices_ << " vertices, "
                    << num_vertices_ * sizeof(vec3) << " bytes" << std::endl;
         }
@@ -270,6 +282,58 @@ namespace easy3d {
             return model_->manipulator()->matrix();
         else
             return mat4::identity();
+    }
+
+
+    Drawable* Drawable::add_child(Type type, const std::string& child_name) {
+        for (auto pos = children_.begin(); pos != children_.end(); ++pos) {
+            auto d = *pos;
+            if (d->name() == child_name) {
+                LOG(ERROR) << "child drawable '" << child_name << "' of TrianglesDrawable '" << name() << "' already exists";
+                return nullptr;
+            }
+        }
+
+        switch (type) {
+            case DT_POINTS: {
+                PointsDrawable *d = new PointsDrawable(child_name);
+                d->set_model(model());
+                children_.push_back(d);
+                return d;
+            }
+            case DT_LINES: {
+                LinesDrawable *d = new LinesDrawable(child_name);
+                d->set_model(model());
+                children_.push_back(d);
+                return d;
+            }
+            case DT_TRIANGLES: {
+                TrianglesDrawable *d = new TrianglesDrawable(child_name);
+                d->set_model(model());
+                children_.push_back(d);
+
+                // for PolyMesh, we want to completely discard vertices in the vertex buffer.
+                if (dynamic_cast<PolyMesh*>(model_))
+                    d->set_plane_clip_discard_primitive(true);
+                return d;
+            }
+        }
+
+        return nullptr;
+    }
+
+
+    bool Drawable::delete_child(const std::string& child_name) {
+        for (auto pos = children_.begin(); pos != children_.end(); ++pos) {
+            auto d = *pos;
+            if (d->name() == child_name) {
+                delete d;
+                children_.erase(pos);
+                LOG(ERROR) << "child drawable '" << child_name << "' of TrianglesDrawable '" << name() << "' has been deleted";
+                return true;
+            }
+        }
+        return false;
     }
 
 }
