@@ -332,18 +332,9 @@ namespace easy3d {
         }
 
 
-        void draw_quad(unsigned int positionAttrib, unsigned int texcoordAttrib, int x, int y, int w, int h, int vpw, int vph,
-                       float depth) {
-            static GLuint vao_handle = 0;
-            static int last_x = x;
-            static int last_y = y;
-            static int last_w = w;
-            static int last_h = h;
-            static int last_vpw = vpw;
-            static int last_vph = vph;
-            static float last_depth = 0.0f;
-            if (vao_handle == 0 || depth != last_depth || last_x != x || last_y != y || last_w != w || last_h != h ||
-                last_vpw != vpw || last_vph != vph) {
+        void draw_quad(unsigned int positionAttrib, unsigned int texcoordAttrib, int x, int y, int w, int h,
+                       int vpw, int vph, float depth)
+       {
                 // vertex positions in NDC (Normalized Device Coordinates)
                 // I assume viewportX = 0 and viewportY = 0.  Otherwise use the following equation to
                 // convert from screen coordinates to NDC.
@@ -369,90 +360,90 @@ namespace easy3d {
                         1.0, max_yTexCoord
                 };
 
-                glGenVertexArrays(1, &vao_handle);
-                glBindVertexArray(vao_handle);
+           // create vao and buffers, prepare data
 
-                GLuint vbo_positions = 0;
-                glGenBuffers(1, &vbo_positions);
-                glBindBuffer(GL_ARRAY_BUFFER, vbo_positions);
-                glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 12, positions, GL_STATIC_DRAW);
-                glEnableVertexAttribArray(positionAttrib);
-                glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-                GLuint vbo_texcoords = 0;
-                glGenBuffers(1, &vbo_texcoords);
-                glBindBuffer(GL_ARRAY_BUFFER, vbo_texcoords);
-                glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 8, texcoords, GL_STATIC_DRAW);
-                glEnableVertexAttribArray(texcoordAttrib);
-                glVertexAttribPointer(texcoordAttrib, 2, GL_FLOAT, GL_FALSE, 0, 0);
-
-                glBindBuffer(GL_ARRAY_BUFFER, 0);
-                glBindVertexArray(0);
-
-                last_x = x;
-                last_y = y;
-                last_w = w;
-                last_h = h;
-                last_vpw = vpw;
-                last_vph = vph;
-                last_depth = depth;
-            }
+            GLuint vao_handle = 0;
+            glGenVertexArrays(1, &vao_handle);
             glBindVertexArray(vao_handle);
-            easy3d_debug_log_gl_error;
-            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-            easy3d_debug_log_gl_error;
+
+            GLuint vbo_positions = 0;
+            glGenBuffers(1, &vbo_positions);
+            glBindBuffer(GL_ARRAY_BUFFER, vbo_positions);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 12, positions, GL_STATIC_DRAW);
+            glEnableVertexAttribArray(positionAttrib);
+            glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+            GLuint vbo_texcoords = 0;
+            glGenBuffers(1, &vbo_texcoords);
+            glBindBuffer(GL_ARRAY_BUFFER, vbo_texcoords);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 8, texcoords, GL_STATIC_DRAW);
+            glEnableVertexAttribArray(texcoordAttrib);
+            glVertexAttribPointer(texcoordAttrib, 2, GL_FLOAT, GL_FALSE, 0, 0);
+
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
             glBindVertexArray(0);
+
+           // draw
+
+            glBindVertexArray(vao_handle);  easy3d_debug_log_gl_error;
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);  easy3d_debug_log_gl_error;
+            glBindVertexArray(0);
+
+           glDeleteBuffers(1, &vbo_positions);     easy3d_debug_log_gl_error;
+           glDeleteBuffers(1, &vbo_texcoords);     easy3d_debug_log_gl_error;
+           glDeleteVertexArrays(1, &vao_handle);   easy3d_debug_log_gl_error;
         }
 
 
         void draw_full_screen_quad(unsigned int positionAttrib, unsigned int texcoordAttrib, float depth) {
-            static GLuint vao_handle = 0;
-            static float last_depth = 0.0f;
+            // vertex positions in NDC (Normalized Device Coordinates)
+            const float positions[] = {
+                    -1.0f, -1.0f, depth,
+                    1.0f, -1.0f, depth,
+                    -1.0f, 1.0f, depth,
+                    1.0f, 1.0f, depth
+            };
 
-            if (vao_handle == 0 || depth != last_depth) {
-                // vertex positions in NDC (Normalized Device Coordinates)
-                const float positions[] = {
-                        -1.0f, -1.0f, depth,
-                        1.0f, -1.0f, depth,
-                        -1.0f, 1.0f, depth,
-                        1.0f, 1.0f, depth
-                };
+            // texture coordinates
+            const float texcoords[] = {
+                    0.0f, 0.0f,
+                    1.0f, 0.0f,
+                    0.0f, 1.0f,
+                    1.0f, 1.0f
+            };
 
-                // texture coordinates
-                const float texcoords[] = {
-                        0.0f, 0.0f,
-                        1.0f, 0.0f,
-                        0.0f, 1.0f,
-                        1.0f, 1.0f
-                };
+            // create vao and buffers, prepare data
 
-                glGenVertexArrays(1, &vao_handle);
-                glBindVertexArray(vao_handle);
-
-                GLuint vbo_positions = 0;
-                glGenBuffers(1, &vbo_positions);
-                glBindBuffer(GL_ARRAY_BUFFER, vbo_positions);
-                glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 12, positions, GL_STATIC_DRAW);
-                glEnableVertexAttribArray(positionAttrib);
-                glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-                GLuint vbo_texcoords = 0;
-                glGenBuffers(1, &vbo_texcoords);
-                glBindBuffer(GL_ARRAY_BUFFER, vbo_texcoords);
-                glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 8, texcoords, GL_STATIC_DRAW);
-                glEnableVertexAttribArray(texcoordAttrib);
-                glVertexAttribPointer(texcoordAttrib, 2, GL_FLOAT, GL_FALSE, 0, 0);
-
-                glBindBuffer(GL_ARRAY_BUFFER, 0);
-                glBindVertexArray(0);
-                last_depth = depth;
-            }
-
+            GLuint vao_handle = 0;
+            glGenVertexArrays(1, &vao_handle);
             glBindVertexArray(vao_handle);
-            easy3d_debug_log_gl_error;
-            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-            easy3d_debug_log_gl_error;
+
+            GLuint vbo_positions = 0;
+            glGenBuffers(1, &vbo_positions);
+            glBindBuffer(GL_ARRAY_BUFFER, vbo_positions);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 12, positions, GL_STATIC_DRAW);
+            glEnableVertexAttribArray(positionAttrib);
+            glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+            GLuint vbo_texcoords = 0;
+            glGenBuffers(1, &vbo_texcoords);
+            glBindBuffer(GL_ARRAY_BUFFER, vbo_texcoords);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 8, texcoords, GL_STATIC_DRAW);
+            glEnableVertexAttribArray(texcoordAttrib);
+            glVertexAttribPointer(texcoordAttrib, 2, GL_FLOAT, GL_FALSE, 0, 0);
+
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
             glBindVertexArray(0);
+
+            // draw
+
+            glBindVertexArray(vao_handle);  easy3d_debug_log_gl_error;
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);  easy3d_debug_log_gl_error;
+            glBindVertexArray(0);
+
+            glDeleteBuffers(1, &vbo_positions);     easy3d_debug_log_gl_error;
+            glDeleteBuffers(1, &vbo_texcoords);     easy3d_debug_log_gl_error;
+            glDeleteVertexArrays(1, &vao_handle);   easy3d_debug_log_gl_error;
         }
 
 
