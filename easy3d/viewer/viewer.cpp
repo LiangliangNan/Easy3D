@@ -448,14 +448,13 @@ namespace easy3d {
 
 
     void Viewer::callback_event_resize(int w, int h) {
-        if (w == 0 && h == 0)
-            return;
+        width_ = w;
+        height_ = h;
 
         try {
             // camera is manipulated by the mouse, working in the screen coordinate system
             // (different from the viewport or framebuffer size, which are in pixel coordinates)
-            camera_->setScreenWidthAndHeight(w, h);
-
+            camera_->setScreenWidthAndHeight(width_, height_);
 #if 0
             // https://www.glfw.org/docs/3.3/window_guide.html#window_size
             // Do not pass the window size to glViewport or other pixel-based OpenGL calls. The window size is in
@@ -466,9 +465,8 @@ namespace easy3d {
             glfwGetFramebufferSize(window_, &fw, &fh);
             glViewport(0, 0, fw, fh);
 #endif
-
             // process user changes
-            post_resize(w, h);
+            post_resize(width_, height_);
         }
         catch (const std::exception &e) {
             LOG(ERROR) << "Caught exception in event handler: " << e.what();
