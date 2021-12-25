@@ -84,8 +84,8 @@ namespace easy3d {
 			bool resizable = true,
 			int depth_bits = 24,
 			int stencil_bits = 8,
-			int width = 960,
-			int height = 800
+			int width = 800,
+			int height = 600
 		);
 
         /**
@@ -127,9 +127,9 @@ namespace easy3d {
         void resize(int w, int h);
 
         /// @brief Returns the width of the viewer.
-        int width() const;
+        int width() const { return width_; }
         /// @brief Returns the height of the viewer.
-        int height() const;
+        int height() const { return height_; }
 
         /**
          * @brief Query the actual samples of the viewer.
@@ -388,6 +388,7 @@ namespace easy3d {
 
 		// External resize due to user interaction.
 		// This function will be called after the window size being changed.
+        // w/h: the new width and height of the viewer (not framebuffer, not viewport)
         virtual void post_resize(int w, int h) { (void)w, (void)h; }
 
 		// Mouse button press event handler
@@ -422,10 +423,10 @@ namespace easy3d {
                                   int gl_minor,   // must >= 2
                                   bool full_screen,
                                   bool resizable,
-                                  int depth_bits = 24,
-                                  int stencil_bits = 8,
-                                  int width = 960,
-                                  int height = 800);
+                                  int depth_bits,
+                                  int stencil_bits,
+                                  int width,
+                                  int height);
 
         void setup_callbacks(GLFWwindow*);
 
@@ -450,6 +451,8 @@ namespace easy3d {
 		GLFWwindow*	window_;
 		bool        should_exit_;
         float       dpi_scaling_;
+        int         width_;
+        int         height_;
 
 		std::string	title_;
 		Camera*		camera_;

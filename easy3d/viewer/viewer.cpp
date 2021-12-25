@@ -116,7 +116,7 @@ namespace easy3d {
 
         // create and setup window
         window_ = create_window(title, samples, gl_major, gl_minor, full_screen, resizable,
-                                depth_bits, stencil_bits);
+                                depth_bits, stencil_bits, width, height);
         setup_callbacks(window_);
 
         // create and setup the camera
@@ -132,11 +132,6 @@ namespace easy3d {
         easy3d::connect(&kfi_->interpolation_stopped, this, &Viewer::update);
 
         sprintf(gpu_time_, "fps: ?? (?? ms/frame)");
-
-        int fw, fh;
-        glfwGetFramebufferSize(window_, &fw, &fh);
-        // needs to be executed once to ensure the viewer is initialized with correct viewer size
-        callback_event_resize(fw, fh);
 
         /* Poll for events once before starting a potentially lengthy loading process.*/
         glfwPollEvents();
@@ -256,6 +251,10 @@ namespace easy3d {
             VLOG(1) << "samples received: " << samples_ << " (" << samples << " requested, max support is "
                       << max_num << ")";
 
+        // the request viewer size might not be satisfied, thus we query the actual size
+        glfwGetWindowSize(window, &width_, &height_);
+        VLOG(1) << "viewer size (width/height): " << width_ << "/" << height_;
+
         float xscale(0), yscale(0);
         glfwGetWindowContentScale(window, &xscale, &yscale);
         dpi_scaling_ = static_cast<float>(xscale + yscale) * 0.5f;
@@ -271,8 +270,8 @@ namespace easy3d {
             if (!viewer->process_events_)
                 return;
 
-            int w(0), h(0);
-            glfwGetWindowSize(win, &w, &h);
+            int w = viewer->width();
+            int h = viewer->height();
             if (x >= 0 && x <= w && y >= 0 && y <= h)
                 viewer->callback_event_cursor_pos(x, y);
             else if (viewer->drag_active_) {
@@ -321,6 +320,7 @@ namespace easy3d {
             viewer->callback_event_scroll(dx, dy);
         });
 
+#if 0
         /* React to framebuffer size events -- includes window size events and also
          * catches things like dragging a window from a Retina-capable screen to a
          * normal screen on Mac OS X */
@@ -330,6 +330,14 @@ namespace easy3d {
                 return;
             viewer->callback_event_resize(width, height);
         });
+#else
+        glfwSetWindowSizeCallback(window, [](GLFWwindow *win, int width, int height) {
+            auto viewer = reinterpret_cast<Viewer *>(glfwGetWindowUserPointer(win));
+            if (!viewer->process_events_)
+                return;
+            viewer->callback_event_resize(width, height);
+        });
+#endif
 
         // notify when the screen has lost focus (e.g. application switch)
         glfwSetWindowFocusCallback(window, [](GLFWwindow *win, int focused) {
@@ -445,10 +453,21 @@ namespace easy3d {
 
         try {
             // camera is manipulated by the mouse, working in the screen coordinate system
-            int win_w, win_h;
-            glfwGetWindowSize(window_, &win_w, &win_h);
-            camera_->setScreenWidthAndHeight(win_w, win_h);
+            // (different from the viewport or framebuffer size, which are in pixel coordinates)
+            camera_->setScreenWidthAndHeight(w, h);
+
+#if 0
+            // https://www.glfw.org/docs/3.3/window_guide.html#window_size
+            // Do not pass the window size to glViewport or other pixel-based OpenGL calls. The window size is in
+            // screen coordinates, not pixels. Use the framebuffer size, which is in pixels, for pixel-based calls.
             glViewport(0, 0, w, h);
+#else
+            int fw, fh;
+            glfwGetFramebufferSize(window_, &fw, &fh);
+            glViewport(0, 0, fw, fh);
+#endif
+
+            // process user changes
             post_resize(w, h);
         }
         catch (const std::exception &e) {
@@ -517,20 +536,6 @@ namespace easy3d {
         h = static_cast<int>(h * dpi_scaling());
 #endif
         glfwSetWindowSize(window_, w, h);
-    }
-
-
-    int Viewer::width() const {
-        int w, h;
-        glfwGetWindowSize(window_, &w, &h);
-        return w;
-    }
-
-
-    int Viewer::height() const {
-        int w, h;
-        glfwGetWindowSize(window_, &w, &h);
-        return h;
     }
 
 
@@ -984,6 +989,9 @@ namespace easy3d {
     int Viewer::run(bool see_all) {
         // initialize before showing the window because it can be slow
         init();
+
+        // needs to be executed once to ensure the viewer is initialized with correct viewer size
+        callback_event_resize(width_, height_);
 
         // make sure scene fits the screen when the window appears
         if (see_all)
