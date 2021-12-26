@@ -70,6 +70,15 @@ namespace easy3d {
 			const std::vector<std::string>& outputs = std::vector<std::string>()
 		);
 
+        // create a shader program from completed shader source codes
+        static ShaderProgram* create_program_from_codes(
+                const std::string& vert_code,
+                const std::string& frag_code,
+                const std::string& geom_code = "",
+                const std::vector<ShaderProgram::Attribute>& attributes = std::vector<ShaderProgram::Attribute>(),
+                const std::vector<std::string>& outputs = std::vector<std::string>()
+        );
+
         static std::vector<ShaderProgram*> all_programs();
 
         // destroy all shader programs.

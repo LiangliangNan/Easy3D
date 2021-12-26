@@ -207,6 +207,60 @@ namespace easy3d {
 
 	}
 
+
+    // create a shader program from completed shader source codes
+    ShaderProgram* ShaderManager::create_program_from_codes(
+            const std::string& vert_code,
+            const std::string& frag_code,
+            const std::string& geom_code,
+            const std::vector<ShaderProgram::Attribute>& attributes,
+            const std::vector<std::string>& outputs)
+    {
+        if (vert_code.empty()) {
+            LOG_N_TIMES(3, ERROR) << "vertex code is empty. " << COUNTER;
+            return nullptr;
+        }
+        if (frag_code.empty()) {
+            LOG_N_TIMES(3, ERROR) << "fragment code is empty. " << COUNTER;
+            return nullptr;
+        }
+
+        ShaderProgram* program = new ShaderProgram;
+
+        bool success = program->load_shader_from_code(ShaderProgram::VERTEX, vert_code);
+        if (!success) {
+            delete program;
+            return nullptr;
+        }
+        success = program->load_shader_from_code(ShaderProgram::FRAGMENT, frag_code);
+        if (!success) {
+            delete program;
+            return nullptr;
+        }
+
+        if (!geom_code.empty()) {
+            std::string geom_code;
+            success = program->load_shader_from_code(ShaderProgram::GEOMETRY, geom_code);
+            if (!success) {
+                delete program;
+                return nullptr;
+            }
+        }
+
+        program->set_attrib_names(attributes);	easy3d_debug_log_gl_error;
+        for (std::size_t i = 0; i < outputs.size(); ++i)
+            program->set_program_output(static_cast<int>(i), outputs[i]);
+
+        success = program->link_program();	easy3d_debug_log_gl_error;
+        if (!success) {
+            delete program;
+            return nullptr;
+        }
+
+        return program;
+    }
+
+
     std::vector<ShaderProgram*> ShaderManager::all_programs() {
         std::vector<ShaderProgram*> result;
 

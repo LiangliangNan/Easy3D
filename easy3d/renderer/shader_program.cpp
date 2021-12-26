@@ -120,45 +120,83 @@ namespace easy3d {
 	}
 
 
-	std::string ShaderProgram::_read_file(const std::string& file_name) {
+	std::string ShaderProgram::load_shader_source(const std::string &file_name, const std::string& include_identifier) {
+        // get the path without file name
+        auto get_path = [](const std::string& full_path) -> std::string {
+            // Remove the file name and store the path to this folder
+            auto pos = full_path.find_last_of("/\\");
+            return full_path.substr(0, pos + 1);
+        };
+
 		std::string code;
-
-#if 0 // line by line
 		std::ifstream in(file_name.c_str());
-		if (in.fail()) {
-			LOG(ERROR) << "could not open file: " << file_name;
-			return false;
-		}
-
-		std::string line;
-		while (in.good()) {
-			getline(in, line);
-			code += line + "\n";
-		}
-#else 
-		//must read files as binary to prevent problems from newline translation
-		std::ifstream in(file_name.c_str(), std::ios::binary);
 		if (in.fail()) {
 			LOG(ERROR) << "could not open file: " << file_name;
 			return code;
 		}
 
-		in.seekg(0, std::ios::end);
-        std::fstream::pos_type length = in.tellg();
-		code.resize(length);
-		in.seekg(0, std::ios::beg);
+        std::string inc_id = include_identifier + ' ';;
+        static bool is_recursive_call = false;
 
-		in.read(&(code[0]), length);
-#endif
+		std::string line;
+		while (in.good() && std::getline(in, line)) {
+            // Look for the new shader include identifier
+            if (line.find(inc_id) != line.npos)
+            {
+                // Remove the include identifier, this will cause the path to remain
+                line.erase(0, inc_id.size());
 
-		in.close();
+                // The include path is relative to the current shader in path
+                std::string path = get_path(file_name);
+                line.insert(0, path);
+
+                // By using recursion, the new include in can be extracted
+                // and inserted at this location in the shader source code
+                is_recursive_call = true;
+                code += load_shader_source(line, include_identifier);
+
+                // Do not add this line to the shader source code, as the include
+                // path would generate a compilation issue in the final source code
+                continue;
+            }
+
+            code += line + '\n';
+        }
+
+        // Only add the null terminator at the end of the complete in,
+        // essentially skipping recursive function calls this way
+        if (!is_recursive_call)
+            code += '\0';
+
+        in.close();
 
 		return code;
 	}
 
 
-	bool ShaderProgram::load_shader_from_file(ShaderType type, const std::string& file_name) {
-		std::string code = _read_file(file_name);
+    std::string ShaderProgram::_read_linked_program(const std::string& file_name) {
+        std::string code;
+
+        //must read files as binary to prevent problems from newline translation
+        std::ifstream in(file_name.c_str(), std::ios::binary);
+        if (in.fail()) {
+            LOG(ERROR) << "could not open file: " << file_name;
+            return code;
+        }
+
+        in.seekg(0, std::ios::end);
+        std::fstream::pos_type length = in.tellg();
+        code.resize(length);
+        in.seekg(0, std::ios::beg);
+
+        in.read(&(code[0]), length);
+
+        return code;
+    }
+
+
+	bool ShaderProgram::load_shader_from_file(ShaderType type, const std::string& file_name, const std::string& inc_id) {
+		std::string code = load_shader_source(file_name, inc_id);
 		if (code.empty()) {
 			LOG(ERROR) << "failed reading shader file \'" << file_name << "\'";
 			return false;
@@ -1361,7 +1399,7 @@ namespace easy3d {
             return false;
         }
 
-		std::string code = _read_file(file_name);
+		std::string code = _read_linked_program(file_name);
 		if (code.empty()) {
 			LOG(ERROR) << "empty program in file: " << file_name;
 			return false;

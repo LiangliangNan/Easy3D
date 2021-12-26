@@ -104,8 +104,8 @@ namespace easy3d {
 
         static bool is_supported();
 
-		// An unique 'name' of a shader will be convenient for determining if the 
-		// shader is the required one (e.g, provide the shader source file name.
+		// A unique 'name' of a program, convenient to distinguish multiple programs
+        // (suggested to use the source file name).
 		ShaderProgram(const std::string& name = "unknown");
 		~ShaderProgram();
 
@@ -122,12 +122,13 @@ namespace easy3d {
 
 		//---------------------- Creation ---------------------------
 
-		/** Loads the text in the file to the source of the specified shader
-		  *
-		  * \param st one of the enum values of ShaderType
-		  *	\param filename the file where the source is to be found
-		*/
-		bool load_shader_from_file(ShaderType st, const std::string& filename);
+		/**
+		 * Loads the text in the file to the source of the specified shader
+		 * \param st one of the enum values of ShaderType
+         * \param file_name the full path of the file where the source is to be found
+		 * \param inc_id the include identifier string (e.g., "#include")
+		 */
+		bool load_shader_from_file(ShaderType st, const std::string& file_name, const std::string& inc_id = "#include");
 
 		/** Loads the code to the source of the specified shader
 		*
@@ -254,6 +255,14 @@ namespace easy3d {
 		bool load_binary(const std::string& file_name);
         bool save_binary(const std::string& file_name);
 
+        /**
+         * Auxiliary function that loads the shader source code from a file.
+         * \param file_name the full path of the file where the source is to be found
+         * \param inc_id the include identifier string (e.g., "#include")
+         */
+        // aux function to read the shader's source code from a file
+        static std::string load_shader_source(const std::string& file_name, const std::string& inc_id = "#include");
+
 	protected:
 
 		// AUX STRUCTURES
@@ -333,8 +342,8 @@ namespace easy3d {
 
         std::string _type_string(unsigned int type) const;
 
-		// aux function to read the shader's source code from a file
-		std::string _read_file(const std::string& file);
+        // aux function to read a previously compiled and linked program code from a file
+        std::string _read_linked_program(const std::string& file);
 
 	private:
 		std::string name_;
