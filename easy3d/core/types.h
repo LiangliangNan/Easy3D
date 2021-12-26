@@ -228,15 +228,13 @@ namespace easy3d {
         }
 
         /** \brief Converts an angle from degrees to radians. */
-        template<typename T>
-        inline T to_radians(T degrees) {
-            return degrees * static_cast<T>(0.01745329251994329576923690768489);
+        inline float to_radians(float degrees) {
+            return degrees * static_cast<float>(0.01745329251994329576923690768489);
         }
 
         /** \brief Converts an angle from radians to degrees. */
-        template<typename T>
-        inline T to_degrees(T radians) {
-            return radians * static_cast<T>(57.295779513082320876798154814105);
+        inline float to_degrees(float radians) {
+            return radians * static_cast<float>(57.295779513082320876798154814105);
         }
 
         /** \brief Computes area of a triangle given by three points. */
