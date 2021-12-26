@@ -990,13 +990,13 @@ void PaintCanvas::fitScreen(const easy3d::Model *model) {
     Box3 box_models;   // everything within box_models should be visible
     for (auto m : models_) {
         if (m->renderer()->is_visible())
-            box_models.add_box(m->bounding_box(false));
+            box_models.grow(m->bounding_box(false));
     }
 
     Box3 box_scene = box_models;   // everything within box_scene should be visible
     const int count = walkThrough()->interpolator()->number_of_keyframes();
     for (int i = 0; i < count; ++i)
-        box_scene.add_point(walkThrough()->interpolator()->keyframe(i).position());
+        box_scene.grow(walkThrough()->interpolator()->keyframe(i).position());
 
     Box3 box;// this box will be fitted to the screen
     if (model && model->renderer()->is_visible())
@@ -1039,11 +1039,11 @@ void PaintCanvas::fitScreen() {
 void PaintCanvas::adjustSceneRadius() {
     Box3 box;
     for (auto m : models_)
-        box.add_box(m->bounding_box(false));
+        box.grow(m->bounding_box(false));
 
     const int count = walkThrough()->interpolator()->number_of_keyframes();
     for (int i = 0; i < count; ++i)
-        box.add_point(walkThrough()->interpolator()->keyframe(i).position());
+        box.grow(walkThrough()->interpolator()->keyframe(i).position());
 
     // attention: the scene center is not changed.
     // Note: This is not accurate and just an estimate. If you see problem in rendering, use the max distance

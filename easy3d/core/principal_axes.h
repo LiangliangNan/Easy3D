@@ -32,13 +32,13 @@ namespace easy3d {
         /// \brief Begins adding points.
         void begin();
         /// \brief Adds a point \p p with a \p weight.
-        void add_point(const Vec<DIM, FT>& p, FT weight = FT(1.0));
+        void add(const Vec<DIM, FT>& p, FT weight = FT(1.0));
         /// \brief Ends adding points.
         void end();
 
-        /// \brief Adds a set of points (internally it iteratively calls add_point())
+        /// \brief Adds a set of points (internally it iteratively calls add())
         template <typename InputIterator>
-        void add_points(InputIterator first, InputIterator last);
+        void add(InputIterator first, InputIterator last);
 
         /// \brief The weighted average of the points.
         Vec<DIM, FT> center() const;
@@ -170,7 +170,7 @@ namespace easy3d {
     // If A and B have components a_i and b_j respectively, then
     // the covariance matrix C has a_i*b_j as its ij-th entry.
     template <int DIM, typename FT>
-    inline void PrincipalAxes<DIM, FT>::add_point(const Vec<DIM, FT>& p, FT weight) {
+    inline void PrincipalAxes<DIM, FT>::add(const Vec<DIM, FT>& p, FT weight) {
         for (unsigned short i = 0; i < DIM; ++i) {
             center_[i] += p[i] * weight ;
             for (unsigned short j = i; j < DIM; ++j)
@@ -181,14 +181,14 @@ namespace easy3d {
     }
 
 
-    // add a set of point (it internally calls add_point())
+    // add a set of point (it internally calls add())
     template <int DIM, typename FT>
     template <typename InputIterator >
-    inline void PrincipalAxes<DIM, FT>::add_points(InputIterator first, InputIterator last) {
+    inline void PrincipalAxes<DIM, FT>::add(InputIterator first, InputIterator last) {
         assert(first != last);
         begin();
         for (InputIterator it = first; it != last; ++it) {
-            add_point(*it);
+            add(*it);
         }
         end();
     }

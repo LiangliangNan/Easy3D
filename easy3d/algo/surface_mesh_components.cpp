@@ -101,7 +101,7 @@ namespace easy3d {
         auto points = mesh_->get_vertex_property<vec3>("v:point");
         Box3 result;
         for (auto v : vertices_)
-            result.add_point(points[v]);
+            result.grow(points[v]);
         return result;
     }
 

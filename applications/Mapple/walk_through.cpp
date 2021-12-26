@@ -140,7 +140,7 @@ void WalkThrough::generate_camera_path(const easy3d::Line3 &axis) {
     const auto up = -rotate_axis_.direction(); // picking line points inside screen
     const auto vertical_offset = rotate_vertical_offset_factor_ * object_height * up;
     const auto at = rotate_axis_.projection(camera_->sceneCenter() + vertical_offset);
-    const auto dist_to_axis = scene_box_.diagonal() + rotate_zoom_out_factor_ * object_height;
+    const auto dist_to_axis = scene_box_.diagonal_length() + rotate_zoom_out_factor_ * object_height;
     const auto relative_cam0 = geom::orthogonal(up).normalize() * dist_to_axis;
 
     const auto pitch_angle = geom::to_radians(rotate_pitch_angle_);

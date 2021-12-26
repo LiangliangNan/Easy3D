@@ -89,7 +89,7 @@ void DialogSurfaceMeshRemeshing::apply() {
         len /= (float) mesh->n_edges();
         SurfaceMeshRemeshing(mesh).uniform_remeshing(len * doubleSpinBoxEdgeLength->value());
     } else { // Adaptive remeshing
-        auto bb = mesh->bounding_box().diagonal();
+        auto bb = mesh->bounding_box().diagonal_length();
         SurfaceMeshRemeshing(mesh).adaptive_remeshing(
                 0.001 * bb,  // min length
                 0.100 * bb,  // max length

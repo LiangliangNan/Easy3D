@@ -170,7 +170,7 @@ namespace easy3d {
     inline GenericBox<2, FT> GenericPolygon<FT>::bbox() const {
         GenericBox<2, FT> box;
         for (auto p : *this)
-            box.add_point(p);
+            box.grow(p);
         return box;
     }
 

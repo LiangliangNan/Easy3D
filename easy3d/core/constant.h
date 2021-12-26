@@ -31,8 +31,6 @@
 #include <climits>
 #include <cmath>
 
-#include <easy3d/util/logging.h>
-
 
 namespace easy3d {
 
@@ -40,16 +38,6 @@ namespace easy3d {
 #define M_PI			3.14159265358979323846264338327950288
 #endif
 
-    /// \brief Conversion from radians to degrees
-    double inline rad2deg(double rad) {
-        LOG_N_TIMES(3, WARNING) << "function '" << __FUNCTION__  << "(double)' is deprecated and will be removed in a future release. Use 'geom::to_degrees(double)' instead";
-        return rad * 180.0 / M_PI;
-    }
-    /// \brief Conversion from degrees to radians
-    double inline deg2rad(double deg) {
-        LOG_N_TIMES(3, WARNING) << "function '" << __FUNCTION__  << "(double)' is deprecated and will be removed in a future release. Use 'geom::to_radians(double)' instead";
-        return deg * M_PI / 180.0;
-    }
 
     /// Function returning minimum representable value for a given type
     template <typename FT> inline FT min();

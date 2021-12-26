@@ -145,7 +145,7 @@ namespace easy3d {
         inline Box bounding_box(const Container& points) {
             Box result;
             for (const auto& p : points) {
-                result.add_point(p);
+                result.grow(p);
             }
             return result;
         }
@@ -268,41 +268,38 @@ namespace easy3d {
     } // namespace geom
 
 
-    namespace num {
+    /**
+     * @brief Clamps a num to be within a given range.
+     */
+    template<class T>
+    inline T clamp(T x, T lower, T upper) {
+        return std::min(upper, std::max(x, lower));
+    };
 
-        /**
-         * @brief Clamps a num to be within a given range.
-         */
-        template<class T>
-        inline T clamp(T x, T lower, T upper) {
-            return std::min(upper, std::max(x, lower));
-        };
+    /**
+     * @brief Calculates the next larger power of 2. If the input is already a power of 2, it will return itself.
+     * @param a The starting point for finding the next power of 2.
+     * @return value^2.
+     * Example:
+     *      next_pow2(50);  // returns 64
+     *      next_pow2(64);  // returns 64
+     *      next_pow2(401); // returns 512
+     */
+    inline int next_pow2(int a) {
+        int rval = 1;
+        while (rval < a) rval <<= 1;
+        return rval;
+    }
 
-        /**
-         * @brief Calculates the next larger power of 2. If the input is already a power of 2, it will return itself.
-         * @param a The starting point for finding the next power of 2.
-         * @return value^2.
-         * Example:
-         *      next_pow2(50);  // returns 64
-         *      next_pow2(64);  // returns 64
-         *      next_pow2(401); // returns 512
-         */
-        inline int next_pow2(int a) {
-            int rval = 1;
-            while (rval < a) rval <<= 1;
-            return rval;
-        }
+    /** \brief Rounds the given floating point number \p v to have \p num digits.*/
+    template<class T>
+    inline T truncate_digits(const T &v, int num) {
+        T tmp = std::pow(10.0, num);
+        long long des = static_cast<long long>((v < 0) ? (v * tmp - 0.5) : (v * tmp + 0.5));
+        T result = T(des) / tmp;
+        return result;
+    }
 
-        /** \brief Rounds the given floating point number \p v to have \p num digits.*/
-        template<class T>
-        inline T truncate_digits(const T &v, int num) {
-            T tmp = std::pow(10.0, num);
-            long long des = static_cast<long long>((v < 0) ? (v * tmp - 0.5) : (v * tmp + 0.5));
-            T result = T(des) / tmp;
-            return result;
-        }
-
-    } // namespace num
 
 
     namespace rgb {

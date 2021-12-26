@@ -322,9 +322,9 @@ namespace easy3d {
 //            // convert to world coordinate system
 //            for (auto &p : corners) {
 //                p = camera()->worldCoordinatesOf(p);
-//                box.add_point(p);
+//                box.grow(p);
 //            }
-//            box.add_point(camera()->position());
+//            box.grow(camera()->position());
 //            camera()->setSceneBoundingBox(box);
 //
 //            image_plane_->update_vertex_buffer(corners);

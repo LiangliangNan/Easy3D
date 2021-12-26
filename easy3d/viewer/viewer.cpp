@@ -761,7 +761,7 @@ namespace easy3d {
             // update scene bounding box
             Box3 box;
             for (auto m : models_)
-                box.add_box(m->bounding_box());
+                box.grow(m->bounding_box());
             camera_->setSceneBoundingBox(box.min_point(), box.max_point());
             LOG(INFO) << "camera path deleted";
         } else if (key == GLFW_KEY_K && modifiers == EASY3D_MOD_CONTROL) { // play the path
@@ -784,7 +784,7 @@ namespace easy3d {
             else {
                 Box3 box;
                 for (auto m : models_)
-                    box.add_box(m->bounding_box());
+                    box.grow(m->bounding_box());
                 camera_->setSceneBoundingBox(box.min_point(), box.max_point());
             }
         } else if (key == GLFW_KEY_LEFT_BRACKET && modifiers == 0) {
@@ -1284,9 +1284,9 @@ namespace easy3d {
 
         auto visual_box = [](const Model *m) -> Box3 {
             Box3 box = m->bounding_box();
-            for (auto d : m->renderer()->points_drawables()) box.add_box(d->bounding_box());
-            for (auto d : m->renderer()->lines_drawables()) box.add_box(d->bounding_box());
-            for (auto d : m->renderer()->triangles_drawables()) box.add_box(d->bounding_box());
+            for (auto d : m->renderer()->points_drawables()) box.grow(d->bounding_box());
+            for (auto d : m->renderer()->lines_drawables()) box.grow(d->bounding_box());
+            for (auto d : m->renderer()->triangles_drawables()) box.grow(d->bounding_box());
             return box;
         };
 
@@ -1295,9 +1295,9 @@ namespace easy3d {
             box = visual_box(model);
         else {
             for (auto m : models_)
-                box.add_box(visual_box(m));
+                box.grow(visual_box(m));
             for (auto d : drawables_)
-                box.add_box(d->bounding_box());
+                box.grow(d->bounding_box());
         }
 
         if (box.is_valid()) {

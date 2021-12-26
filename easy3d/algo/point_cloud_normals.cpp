@@ -87,7 +87,7 @@ namespace easy3d {
             pca.begin();
             for (unsigned int j = 0; j < neighbors.size(); ++j) {
                 int idx = neighbors[j];
-                pca.add_point(points[idx]);
+                pca.add(points[idx]);
             }
             pca.end();
 

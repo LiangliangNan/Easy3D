@@ -159,7 +159,7 @@ namespace easy3d {
                 // update bounding box
                 bbox_.clear();
                 for (const auto &p : vertices)
-                    bbox_.add_point(p);
+                    bbox_.grow(p);
             }
         }
     }

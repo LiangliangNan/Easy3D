@@ -365,7 +365,7 @@ bool test_algo_surface_mesh_remeshing() {
 
     std::cout << "adaptive remeshing..." << std::endl;
     {
-        auto bb = mesh->bounding_box().diagonal();
+        auto bb = mesh->bounding_box().diagonal_length();
         SurfaceMeshRemeshing(mesh).adaptive_remeshing(
                 0.001f * bb,  // min length
                 0.100f * bb,  // max length

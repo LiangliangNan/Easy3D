@@ -47,7 +47,7 @@ namespace easy3d {
             Box3& box = const_cast<Model*>(this)->bbox_;
             box.clear();
             for (const auto& p : points())
-                box.add_point(p);
+                box.grow(p);
 
             if (box.is_valid())
                 const_cast<Model*>(this)->bbox_known_ = true;

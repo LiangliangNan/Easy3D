@@ -46,8 +46,8 @@ namespace easy3d {
     template<int DIM, typename FT>
     class GenericBox {
     public:
-        typedef Vec <DIM, FT> Point;
-        typedef Vec <DIM, FT> Vector;
+        typedef Vec<DIM, FT> Point;
+        typedef Vec<DIM, FT> Vector;
         typedef GenericBox<DIM, FT> thisclass;
 
     public:
@@ -62,8 +62,8 @@ namespace easy3d {
             // the user might provide wrong order
             // min_ = pmin;
             // max_ = pmax;
-            add_point(pmin);
-            add_point(pmax);
+            grow(pmin);
+            grow(pmax);
         }
 
         /** Construct a box from its center and radius. */
@@ -90,14 +90,12 @@ namespace easy3d {
         }
 
         /** Return the coordinates of the min corner. */
-        inline const Point& min_point() const {
-            return min_;
-        }
+        inline const Point& min_point() const { return min_; }
+        inline Point& min_point() { return min_; }
 
         /** Return the coordinates of the max corner. */
-        inline const Point& max_point() const {
-            return max_;
-        }
+        inline const Point& max_point() const { return max_; }
+        inline Point& max_point() { return max_; }
 
         /** Return a component of the coordinates of the min corner. \c axis must be in [0, DIM). */
         inline FT min_coord(unsigned int axis) const {
@@ -126,11 +124,49 @@ namespace easy3d {
                 return FT(0.0);
         }
 
-        /** Return the max of range(0), range(1), and range(2).*/
-        inline FT max_range() const { return std::max(range(0), std::max(range(1), range(2))); }
+        /** Return the max range.*/
+        inline FT max_range() const {
+            FT max_value = max_[0] - min_[0];
+            for (int i = 1; i < DIM; ++i)
+                max_value = std::max(max_value, max_[i] - min_[i]);
+            return max_value;
+        }
 
-        /** Return the max of range(0), range(1), and range(2).*/
-        inline FT min_range() const { return std::min(range(0), std::min(range(1), range(2))); }
+        /** Return the min range.*/
+        inline FT min_range() const {
+            FT min_value = max_[0] - min_[0];
+            for (int i = 1; i < DIM; ++i)
+                min_value = std::min(min_value, max_[i] - min_[i]);
+            return min_value;
+        }
+
+        /** Return the axis index of the max range of the box.*/
+        inline unsigned int max_range_axis() const {
+            unsigned int axis = 0;
+            FT max_value = max_[0] - min_[0];
+            for (int i = 1; i < DIM; ++i) {
+                FT range = max_[i] - min_[i];
+                if (range > max_value) {
+                    axis = i;
+                    max_value = range;
+                }
+            }
+            return axis;
+        }
+
+        /** Return the axis index of the min range of the box.*/
+        inline unsigned int min_range_axis() const {
+            unsigned int axis = 0;
+            FT min_value = max_[0] - min_[0];
+            for (int i = 1; i < DIM; ++i) {
+                FT range = max_[i] - min_[i];
+                if (range < min_value) {
+                    axis = i;
+                    min_value = range;
+                }
+            }
+            return axis;
+        }
 
         /** Return the center of the box. */
         inline Point center() const {
@@ -140,8 +176,11 @@ namespace easy3d {
                 return Point(0.0);
         }
 
+        /** Return the diagonal vector of the box. */
+        inline Vector diagonal_vector() const { return max_ - min_; }
+
         /** Return the length of the diagonal of the box. */
-        inline FT diagonal() const {
+        inline FT diagonal_length() const {
             if (is_valid()) {
                 FT sqr_len(0.0);
                 for (int i = 0; i < DIM; ++i) {
@@ -153,13 +192,26 @@ namespace easy3d {
                 return FT(0.0);
         }
 
-        /** Return the radius of the box (i.e., half of its diagonal). */
+        /** Return the radius of the box (i.e., half of its diagonal length). */
         inline FT radius() const {
-            return diagonal() * FT(0.5);
+            return diagonal_length() * FT(0.5);
         }
 
-        /** Add a point to this box. This will compute its new extend. */
-        inline void add_point(const Point &p) {
+        /** Return the surface area of the box. */
+        inline FT surface_area() const {
+            Vector ext = max_ - min_;
+            if (DIM == 3)
+                return FT(2.0) * (ext[0] * ext[1] + ext[0] * ext[2] + ext[1] * ext[2]);
+            else if (DIM == 2)
+                return ext[0] * ext[1];
+            else {
+                std::cerr << "surface_area() is for 2D and 3D boxes" << std::endl;
+                return FT(0);
+            }
+        }
+
+        /** Add a point to this box. This will compute its new extent. */
+        inline void grow(const Point &p) {
             if (is_valid()) {
                 for (int i = 0; i < DIM; ++i) {
                     min_[i] = std::min(min_[i], p[i]);
@@ -171,11 +223,11 @@ namespace easy3d {
             }
         }
 
-        /** Add a box to this box. This will compute its new extend. */
-        inline void add_box(const thisclass &b) {
+        /** Add a box to this box. This will compute its new extent. */
+        inline void grow(const thisclass &b) {
             if (b.is_valid()) {
-                add_point(b.min_point());
-                add_point(b.max_point());
+                grow(b.min_point());
+                grow(b.max_point());
             }
         }
 
@@ -190,10 +242,33 @@ namespace easy3d {
         /** Modify this box by adding another box \c b. */
         inline thisclass &operator+=(const thisclass &b) {
             if (b.is_valid()) {
-                add_point(b.min_point());
-                add_point(b.max_point());
+                grow(b.min_point());
+                grow(b.max_point());
             }
             return *this;
+        }
+
+        /** Does this box contain a point \c p. */
+        inline bool contains(Point const& p) const {
+            for (int i = 0; i < DIM; ++i) {
+                if (p[i] <= min_[i] || p[i] >= max_[i])
+                    return false;
+            }
+            return true;
+        }
+
+        /** Does this box contain another box \c b. */
+        inline bool contains(thisclass const& b) const {
+            return contains(b.min_point()) && contains(b.max_point());
+        }
+
+        /** Does this box intersect another box \c b. */
+        inline bool intersects(thisclass const& b) const {
+            for (int i = 0; i < DIM; ++i) {
+                if (b.min_coord(i) > max_[i] || b.max_coord(i) < min_[i])
+                    return false;
+            }
+            return true;
         }
 
     private:
@@ -205,6 +280,21 @@ namespace easy3d {
     template<int DIM, typename FT>
     inline bool has_nan(const GenericBox<DIM, FT> &box) {
         return has_nan(box.min_point()) || has_nan(box.max_point());
+    }
+
+
+    namespace geom {
+
+        template<int DIM, typename FT>
+        GenericBox<DIM, FT> box_union(GenericBox<DIM, FT> const& a, GenericBox<DIM, FT> const& b) { return a + b; }
+
+        template<int DIM, typename FT>
+        GenericBox<DIM, FT> box_intersection(GenericBox<DIM, FT> const& a, GenericBox<DIM, FT> const& b) {
+            if (a.intersects(b))
+                return GenericBox<DIM, FT>(comp_max(a.min_point(), b.min_point()), comp_min(a.max_point(), b.max_point()));
+            else
+                return GenericBox<DIM, FT>();
+        }
     }
 
 } // namespace easy3d

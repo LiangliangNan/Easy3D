@@ -718,28 +718,9 @@ namespace easy3d {
         return false;
     }
 
-    //! return component-wise minimum
-    template <size_t N, class T>
-    inline Vec<N, T> comp_min(const Vec<N, T> &v1, const Vec<N, T> &v2) {
-        Vec<N, T> result;
-        for (int i = 0; i < N; ++i)
-            result[i] = std::min(v1[i], v2[i]);
-        return result;
-    }
-
-    //! return component-wise minimum
-    template <size_t N, class T>
-    inline Vec<N, T> comp_max(const Vec<N, T> &v1, const Vec<N, T> &v2) {
-        Vec<N, T> result;
-        for (int i = 0; i < N; ++i)
-            result[i] = std::max(v1[i], v2[i]);
-        return result;
-    }
-
 
     template <size_t N, class T>
-    inline bool operator==(const Vec<N,T> &a, const Vec<N,T> &b)
-    {
+    inline bool operator==(const Vec<N,T> &a, const Vec<N,T> &b) {
         bool t = (a[0] == b[0]);
         unsigned int i=1;
         while(i<N && t) {
@@ -750,8 +731,7 @@ namespace easy3d {
     }
 
     template <size_t N, class T>
-    inline bool operator!=(const Vec<N,T> &a, const Vec<N,T> &b)
-    {
+    inline bool operator!=(const Vec<N,T> &a, const Vec<N,T> &b) {
         bool t = (a[0] != b[0]);
         unsigned int i=1;
         while(i<N && !t) {
@@ -763,8 +743,7 @@ namespace easy3d {
 
     // lexicographic comparison
     template <size_t N, class T>
-    inline bool operator<(const Vec<N,T> &a, const Vec<N,T> &b)
-    {
+    inline bool operator<(const Vec<N,T> &a, const Vec<N,T> &b) {
         for(unsigned int i=0; i<N; ++i){
             if(a[i]<b[i]) return true;
             if(a[i]>b[i]) return false;
@@ -772,22 +751,55 @@ namespace easy3d {
         return false;
     }
 
-
+    //! return component-wise product
     template <size_t N, class T>
-    inline T min(const Vec<N,T> &a)
-    {
-        T m=a[0];
-        for(unsigned int i=1; i<N; ++i) if(a[i]<m) m=a[i];
-        return m;
+    inline Vec<N, T> comp_product(const Vec<N, T> &v1, const Vec<N, T> &v2) {
+        Vec<N, T> result;
+        for (int i = 0; i < N; ++i)
+            result[i] = v1[i] * v2[i];
+        return result;
     }
 
-
+    //! return component-wise minimum
     template <size_t N, class T>
-    inline T max(const Vec<N,T> &a)
-    {
-        T m=a[0];
-        for(unsigned int i=1; i<N; ++i) if(a[i]>m) m=a[i];
-        return m;
+    inline Vec<N, T> comp_min(const Vec<N, T> &v1, const Vec<N, T> &v2) {
+        Vec<N, T> result;
+        for (int i = 0; i < N; ++i)
+            result[i] = std::min(v1[i], v2[i]);
+        return result;
+    }
+
+    //! return component-wise maximum
+    template <size_t N, class T>
+    inline Vec<N, T> comp_max(const Vec<N, T> &v1, const Vec<N, T> &v2) {
+        Vec<N, T> result;
+        for (int i = 0; i < N; ++i)
+            result[i] = std::max(v1[i], v2[i]);
+        return result;
+    }
+
+    //! return the minimum coordinate of all vector elements
+    template<size_t N, class T>
+    inline T min_coord(const Vec<N, T> &a) {
+        T result = a[0];
+        for (unsigned int i = 1; i < N; ++i) if (a[i] < result) result = a[i];
+        return result;
+    }
+
+    //! return the maximum coordinate of all vector elements
+    template<size_t N, class T>
+    inline T max_coord(const Vec<N, T> &a) {
+        T result = a[0];
+        for (unsigned int i = 1; i < N; ++i) if (a[i] > result) result = a[i];
+        return result;
+    }
+
+    //! component-wise clamp
+    template<size_t N, class T>
+    inline Vec<N, T> clamp(const Vec<N, T> &a, const Vec<N, T> &lower, const Vec<N, T> &upper) {
+        Vec<N, T> result;
+        for (unsigned int i = 0; i < N; ++i) result[i] = std::min(upper[i], std::max(a[i], lower[i]));
+        return result;
     }
 
 #else

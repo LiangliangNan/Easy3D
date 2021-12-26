@@ -1951,7 +1951,7 @@ namespace easy3d {
             }
 
             auto points = model->get_vertex_property<vec3>("v:point");
-            float length = model->bounding_box().diagonal() * 0.5f * 0.01f * scale;
+            float length = model->bounding_box().diagonal_length() * 0.5f * 0.01f * scale;
 
             std::vector<vec3> vertices(model->n_vertices() * 2, vec3(0.0f, 0.0f, 0.0f));
             int idx = 0;

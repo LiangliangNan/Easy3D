@@ -173,7 +173,7 @@ void WidgetGlobalSetting::recenterClippingPlane() {
     Box3 box;
     for (auto m : viewer_->models()) {
         if (m->renderer()->is_visible())
-            box.add_box(m->bounding_box(true));
+            box.grow(m->bounding_box(true));
     }
 
     if (box.is_valid()) {

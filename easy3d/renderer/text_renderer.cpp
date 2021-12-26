@@ -723,7 +723,7 @@ namespace easy3d {
 
 
     TextRenderer::TextRenderer(float dpi_scale, int texture_size, bool mipmaps) {
-        texture_size_ = num::next_pow2(texture_size);
+        texture_size_ = next_pow2(texture_size);
         stash_ = details::sth_create(texture_size_, texture_size_, mipmaps, 0, dpi_scale);
         easy3d_log_gl_error;
         if (stash_ == nullptr) {

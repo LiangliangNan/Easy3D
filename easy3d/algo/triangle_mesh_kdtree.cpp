@@ -59,7 +59,7 @@ namespace easy3d {
         Box3 bbox;
         for (fit = node->faces->begin(); fit != fend; ++fit) {
             for (i = 0; i < 3; ++i) {
-                bbox.add_point(fit->x[i]);
+                bbox.grow(fit->x[i]);
             }
         }
 

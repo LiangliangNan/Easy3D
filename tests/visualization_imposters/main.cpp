@@ -62,7 +62,7 @@ void create_cones(SurfaceMesh *mesh) {
 
     // Get the bounding box of the model. Then we defined the length of the
     // normal vectors to be 15% of the bounding box diagonal.
-    float length = mesh->bounding_box().diagonal() * 0.15f;
+    float length = mesh->bounding_box().diagonal_length() * 0.15f;
 
     // Now let collects the two end points of each normal vector. So from
     // these points we can create a drawable to visualize the normal vectors.
@@ -121,7 +121,7 @@ int test_imposters(int duration) {
     // make a copy of the mesh
     SurfaceMesh *copy = new SurfaceMesh(*model);
     // translate the mesh a bit so we can see both
-    const vec3 trans = vec3(0, 1, 0) * model->bounding_box().diagonal() * 0.7f;
+    const vec3 trans = vec3(0, 1, 0) * model->bounding_box().diagonal_length() * 0.7f;
     auto points = copy->get_vertex_property<vec3>("v:point");
     for (auto v : copy->vertices())
         points[v] += trans;
