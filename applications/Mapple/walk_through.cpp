@@ -143,7 +143,7 @@ void WalkThrough::generate_camera_path(const easy3d::Line3 &axis) {
     const auto dist_to_axis = scene_box_.diagonal() + rotate_zoom_out_factor_ * object_height;
     const auto relative_cam0 = geom::orthogonal(up).normalize() * dist_to_axis;
 
-    const auto pitch_angle = deg2rad(rotate_pitch_angle_);
+    const auto pitch_angle = geom::to_radians(rotate_pitch_angle_);
     const auto pitch_offset = dist_to_axis * std::tan(pitch_angle);
 
     const float angle_step = static_cast<float>(2.0 * M_PI / rotate_keyframe_samples_);

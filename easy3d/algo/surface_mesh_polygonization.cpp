@@ -170,7 +170,7 @@ namespace easy3d {
             vec3 v2 = to_vector(mesh, h2);
             v2.normalize();
             auto angle = geom::angle(v1, v2); // in [-pi, pi]
-            angle = rad2deg(std::abs(angle));
+            angle = geom::to_degrees(std::abs(angle));
             if (std::abs(angle) < angle_threshold)
                 vertices.push_back(v);
         }

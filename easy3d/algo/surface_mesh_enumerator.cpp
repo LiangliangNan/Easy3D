@@ -112,7 +112,7 @@ namespace easy3d {
                     if (cur.is_valid() && id[cur] == -1 && !is_degenerate[cur]) {
                         const vec3 &n_cur = fnormals[cur];
                         auto angle = geom::angle(n_top, n_cur); // in [-pi, pi]
-                        angle = rad2deg(std::abs(angle));
+                        angle = geom::to_degrees(std::abs(angle));
                         if (std::abs(angle) < angle_threshold)
                             stack.push(cur);
                     }

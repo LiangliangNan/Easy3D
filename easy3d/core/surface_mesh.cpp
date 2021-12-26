@@ -2305,7 +2305,7 @@ namespace easy3d {
                 return true;
 
             auto angle = geom::angle(d1, d2);
-            angle = rad2deg(std::abs(angle));
+            angle = geom::to_degrees(std::abs(angle));
             if (std::abs(angle) < std::numeric_limits<float>::min())
                 return true;
 
@@ -2330,7 +2330,7 @@ namespace easy3d {
                 }
 
                 auto angle = geom::angle(d1, d2);
-                angle = rad2deg(std::abs(angle));
+                angle = geom::to_degrees(std::abs(angle));
                 if (std::abs(angle) < std::numeric_limits<float>::min()) {
                     h  = next(h);
                     continue;

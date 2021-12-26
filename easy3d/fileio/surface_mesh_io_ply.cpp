@@ -210,12 +210,13 @@ namespace easy3d {
                 // now let's add the texcoords (defined on halfedges)
                 if (face.is_valid() && prop_texcoords) {
                     const auto& face_texcoords = face_halfedge_texcoords[i];
-                    if (face_texcoords.size() == vts.size() * 2) { // 2 coordinates per face
+                    if (face_texcoords.size() == vts.size() * 2) { // 2 coordinates per vertex
                         auto begin = find_face_halfedge(mesh, face, builder.face_vertices()[0]);
                         auto cur = begin;
-                        unsigned int vid = 0;
+                        unsigned int texcord_idx = 0;
                         do {
-                            prop_texcoords[cur] = vec2(face_texcoords[vid++], face_texcoords[vid++]);
+                            prop_texcoords[cur] = vec2(face_texcoords[texcord_idx], face_texcoords[texcord_idx + 1]);
+                            texcord_idx += 2;
                             cur = mesh->next(cur);
                         } while (cur != begin);
                     }

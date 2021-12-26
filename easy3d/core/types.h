@@ -28,10 +28,10 @@
 
 
 /**
-* Gathers different basic types for geometric operations.
-* Types defined here are points/vectors, lines, segments,
-* planes, boxes and matrices in 2D and 3D.
-*/
+ * Gathers different basic types for geometric operations.
+ * Types defined here are points/vectors, lines, segments,
+ * planes, boxes and matrices in 2D and 3D.
+ */
 
 namespace easy3d {
 
@@ -239,21 +239,6 @@ namespace easy3d {
             return radians * static_cast<T>(57.295779513082320876798154814105);
         }
 
-        /**
-         * @brief Calculates the next larger power of 2. If the input is already a power of 2, it will return itself.
-         * @param a The starting point for finding the next power of 2.
-         * @return value^2.
-         * Example:
-         *      next_pow2(50);  // returns 64
-         *      next_pow2(64);  // returns 64
-         *      next_pow2(401); // returns 512
-         */
-        inline int next_pow2(int a) {
-            int rval = 1;
-            while (rval < a) rval <<= 1;
-            return rval;
-        }
-
         /** \brief Computes area of a triangle given by three points. */
         inline float triangle_area(const vec3 &p1, const vec3 &p2, const vec3 &p3) {
             return 0.5f * length(cross(p2 - p1, p3 - p1));
@@ -280,17 +265,44 @@ namespace easy3d {
         /** \brief Computes the circum center of a tetrahedron. */
         inline vec3 tetra_circum_center(const vec3& p1, const vec3& p2, const vec3& p3, const vec3& p4);
 
-        /** \brief Rounds the given floating point number \p v to have \p num digits.
-        \todo This function should not be in this file. */
+    } // namespace geom
+
+
+    namespace num {
+
+        /**
+         * @brief Clamps a num to be within a given range.
+         */
+        template<class T>
+        inline T clamp(T x, T lower, T upper) {
+            return std::min(upper, std::max(x, lower));
+        };
+
+        /**
+         * @brief Calculates the next larger power of 2. If the input is already a power of 2, it will return itself.
+         * @param a The starting point for finding the next power of 2.
+         * @return value^2.
+         * Example:
+         *      next_pow2(50);  // returns 64
+         *      next_pow2(64);  // returns 64
+         *      next_pow2(401); // returns 512
+         */
+        inline int next_pow2(int a) {
+            int rval = 1;
+            while (rval < a) rval <<= 1;
+            return rval;
+        }
+
+        /** \brief Rounds the given floating point number \p v to have \p num digits.*/
         template<class T>
         inline T truncate_digits(const T &v, int num) {
-            T tmp = std::pow(10.0f, num);
-            long long des = static_cast<long long>((v < 0) ? (v * tmp - 0.5f) : (v * tmp + 0.5f));
+            T tmp = std::pow(10.0, num);
+            long long des = static_cast<long long>((v < 0) ? (v * tmp - 0.5) : (v * tmp + 0.5));
             T result = T(des) / tmp;
             return result;
         }
 
-    } // namespace Geom
+    } // namespace num
 
 
     namespace rgb {

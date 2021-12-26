@@ -81,7 +81,7 @@ namespace easy3d {
 
 
     double StopWatch::elapsed_seconds(int num_digits /* = 1*/) const {
-        return geom::truncate_digits(seconds(), num_digits);
+        return num::truncate_digits(seconds(), num_digits);
     }
 
 
