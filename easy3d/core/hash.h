@@ -49,7 +49,7 @@ namespace easy3d
      */
     template<typename T>
     inline void hash_combine(uint64_t &seed, T const& value) {
-        std::hash<T> hasher;
+        static std::hash<T> hasher;
         seed ^= hasher(value) + 0x9e3779b9 + (seed<<6) + (seed>>2);
     }
 
@@ -62,7 +62,7 @@ namespace easy3d
      */
     template<typename T>
     inline void hash_combine(uint64_t &seed, T const& value) {
-        std::hash<T> hasher;
+        static std::hash<T> hasher;
         uint64_t a = (hasher(value) ^ seed) * 0x9ddfea08eb382d69ULL;
         a ^= (a >> 47);
         uint64_t b = (seed ^ a) * 0x9ddfea08eb382d69ULL;
