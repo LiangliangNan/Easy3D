@@ -285,6 +285,18 @@ namespace easy3d {
 
     namespace geom {
 
+#if 1
+        template<int DIM, typename FT>
+        GenericBox<DIM, FT> box_union(GenericBox<DIM, FT> const& a, GenericBox<DIM, FT> const& b) {
+            return GenericBox<DIM, FT>(comp_min(a.min_point(), b.min_point()), comp_max(a.max_point(), b.max_point()));
+        }
+
+        template<int DIM, typename FT>
+        GenericBox<DIM, FT> box_intersection(GenericBox<DIM, FT> const& a, GenericBox<DIM, FT> const& b)
+        {
+            return GenericBox<DIM, FT>(comp_max(a.min_point(), b.min_point()), comp_min(a.max_point(), b.max_point()));
+        }
+#else
         template<int DIM, typename FT>
         GenericBox<DIM, FT> box_union(GenericBox<DIM, FT> const& a, GenericBox<DIM, FT> const& b) { return a + b; }
 
@@ -295,6 +307,8 @@ namespace easy3d {
             else
                 return GenericBox<DIM, FT>();
         }
+#endif
+
     }
 
 } // namespace easy3d
