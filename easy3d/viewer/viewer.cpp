@@ -988,9 +988,6 @@ namespace easy3d {
         // initialize before showing the window because it can be slow
         init();
 
-        // needs to be executed once to ensure the viewer is initialized with correct viewer size
-        callback_event_resize(width_, height_);
-
         // make sure scene fits the screen when the window appears
         if (see_all)
             fit_screen();
@@ -1065,6 +1062,13 @@ namespace easy3d {
 
         glClearDepthf(1.0f);
         glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
+
+        // camera is manipulated by the mouse, working in the screen coordinate system
+        // (different from the viewport or framebuffer size, which are in pixel coordinates)
+        camera_->setScreenWidthAndHeight(width_, height_);
+        int fw, fh;
+        glfwGetFramebufferSize(window_, &fw, &fh);
+        glViewport(0, 0, fw, fh);
 
         // create TextRenderer renderer and load default fonts
         texter_ = new TextRenderer(dpi_scaling());
