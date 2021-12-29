@@ -454,6 +454,9 @@ namespace easy3d {
         int         width_;
         int         height_;
 
+        // keep refreshing?
+        bool        aggressive_update_;
+
 		std::string	title_;
 		Camera*		camera_;
 
