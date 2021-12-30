@@ -104,13 +104,18 @@ namespace easy3d {
 
         static bool is_supported();
 
-		// A unique 'name' of a program, convenient to distinguish multiple programs
-        // (suggested to use the source file name).
+		/**
+		 * \param name A unique name for a program, convenient to distinguish multiple programs. This is quite helpful
+		 *      in identifying issues when multiple programs are used. It is suggested to use the source file name.
+		 */
 		ShaderProgram(const std::string& name = "unknown");
 		~ShaderProgram();
 
 		void set_name(const std::string& name) { name_ = name; }
 		const std::string& name() const { return name_; }
+
+        /// Set true to log any issues found.
+        void set_verbose(bool v) { verbose_ = v; }
 
 		// ---------------------------------------------------------------
 
@@ -347,6 +352,7 @@ namespace easy3d {
 
 	private:
 		std::string name_;
+        bool verbose_; // log any issues found
 
 		//copying disabled
 		ShaderProgram(const ShaderProgram&);
