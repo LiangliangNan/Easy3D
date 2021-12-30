@@ -69,7 +69,7 @@ namespace easy3d {
 
     void Drawable::buffer_stats(std::ostream &output) const {
         if (vertex_buffer()) {
-            std::cout << "\t" << name() << std::endl;
+            output << "\t" << name() << std::endl;
             output << "\t\tvertex buffer:     " << num_vertices_ << " vertices, "
                    << num_vertices_ * sizeof(vec3) << " bytes" << std::endl;
         }
