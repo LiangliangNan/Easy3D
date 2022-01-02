@@ -152,8 +152,7 @@ namespace easy3d {
             int height) {
         glfwSetErrorCallback(
                 [](int error, const char *desc) {
-                    if (error == GLFW_NOT_INITIALIZED)
-                        LOG(ERROR) << "GLFW error " << error << ": " << desc;
+                    LOG(ERROR) << "GLFW error " << error << ": " << desc;
                 });
 
         if (!glfwInit()) {
@@ -1001,8 +1000,10 @@ namespace easy3d {
             double last_time = glfwGetTime();   // for frame rate counter
 
             while (!glfwWindowShouldClose(window_) && !should_exit_) {
-                if (!glfwGetWindowAttrib(window_, GLFW_VISIBLE)) // not visible
+                if (!glfwGetWindowAttrib(window_, GLFW_VISIBLE)) { // not visible
+                    glfwWaitEvents();
                     continue;
+                }
 
                 if (show_frame_rate_) {
                     // Calculate ms/frame
