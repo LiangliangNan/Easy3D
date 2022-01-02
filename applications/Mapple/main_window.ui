@@ -629,7 +629,7 @@
   </widget>
   <action name="actionOpen">
    <property name="icon">
-    <iconset resource="../../tutorials/Tutorial_202_Viewer_Qt/viewer_qt.qrc">
+    <iconset resource="resources/Mapple.qrc">
      <normaloff>:/resources/icons/fileopen.png</normaloff>:/resources/icons/fileopen.png</iconset>
    </property>
    <property name="text">
@@ -641,7 +641,7 @@
   </action>
   <action name="actionSave">
    <property name="icon">
-    <iconset resource="../../tutorials/Tutorial_202_Viewer_Qt/viewer_qt.qrc">
+    <iconset resource="resources/Mapple.qrc">
      <normaloff>:/resources/icons/filesave.png</normaloff>:/resources/icons/filesave.png</iconset>
    </property>
    <property name="text">
@@ -663,7 +663,7 @@
   </action>
   <action name="actionExit">
    <property name="icon">
-    <iconset resource="../../tutorials/Tutorial_202_Viewer_Qt/viewer_qt.qrc">
+    <iconset resource="resources/Mapple.qrc">
      <normaloff>:/resources/icons/exit.png</normaloff>:/resources/icons/exit.png</iconset>
    </property>
    <property name="text">
@@ -675,7 +675,7 @@
   </action>
   <action name="actionAbout">
    <property name="icon">
-    <iconset resource="../../tutorials/Tutorial_202_Viewer_Qt/viewer_qt.qrc">
+    <iconset resource="resources/Mapple.qrc">
      <normaloff>:/resources/icons/help.png</normaloff>:/resources/icons/help.png</iconset>
    </property>
    <property name="text">
@@ -684,7 +684,7 @@
   </action>
   <action name="actionClearRecentFiles">
    <property name="icon">
-    <iconset resource="../../tutorials/Tutorial_202_Viewer_Qt/viewer_qt.qrc">
+    <iconset resource="resources/Mapple.qrc">
      <normaloff>:/resources/icons/clear.png</normaloff>:/resources/icons/clear.png</iconset>
    </property>
    <property name="text">
@@ -703,7 +703,7 @@
   </action>
   <action name="actionSnapshot">
    <property name="icon">
-    <iconset resource="../../tutorials/Tutorial_202_Viewer_Qt/viewer_qt.qrc">
+    <iconset resource="resources/Mapple.qrc">
      <normaloff>:/resources/icons/snap_shot.png</normaloff>:/resources/icons/snap_shot.png</iconset>
    </property>
    <property name="text">
@@ -1240,7 +1240,7 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../../tutorials/Tutorial_202_Viewer_Qt/viewer_qt.qrc"/>
+  <include location="resources/Mapple.qrc"/>
   <include location="resources/Mapple.qrc"/>
  </resources>
  <connections/>
