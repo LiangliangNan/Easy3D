@@ -605,7 +605,6 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
 
 void PaintCanvas::mouseDoubleClickEvent(QMouseEvent *e) {
     mouse_current_pos_ = e->pos();
-    mouse_pressed_pos_ = e->pos();
     QOpenGLWidget::mouseDoubleClickEvent(e);
     update();
 }
