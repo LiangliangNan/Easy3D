@@ -97,13 +97,30 @@ namespace easy3d {
             int width /* = 960 */,
             int height /* = 800 */
     )
-            : window_(nullptr), should_exit_(false), dpi_scaling_(1.0), aggressive_update_(false), title_(title),
-              camera_(nullptr), is_animating_(false), samples_(0), full_screen_(full_screen),
-              background_color_(0.9f, 0.9f, 1.0f, 1.0f),
-              process_events_(true), texter_(nullptr), pressed_button_(-1), modifiers_(-1), drag_active_(false),
-              mouse_current_x_(0), mouse_current_y_(0), mouse_pressed_x_(0), mouse_pressed_y_(0), pressed_key_(-1),
-              show_pivot_point_(false), show_frame_rate_(false), drawable_axes_(nullptr), show_camera_path_(false),
-              model_idx_(-1)
+        : window_(nullptr)
+        , should_exit_(false)
+        , dpi_scaling_(1.0)
+        , title_(title)
+        , camera_(nullptr)
+        , is_animating_(false)
+        , samples_(0)
+        , full_screen_(full_screen)
+        , background_color_(0.9f, 0.9f, 1.0f, 1.0f)
+        , process_events_(true)
+        , texter_(nullptr)
+        , pressed_button_(-1)
+        , modifiers_(-1)
+        , drag_active_(false)
+        , mouse_current_x_(0)
+        , mouse_current_y_(0)
+        , mouse_pressed_x_(0)
+        , mouse_pressed_y_(0)
+        , pressed_key_(-1)
+        , show_pivot_point_(false)
+        , show_frame_rate_(false)
+        , drawable_axes_(nullptr)
+        , show_camera_path_(false)
+        , model_idx_(-1)
     {
         usage_func_ = nullptr;
         animation_func_ = nullptr;
@@ -1033,7 +1050,7 @@ namespace easy3d {
                     }
                     animation_func_(*this);
                 }
-                else if (show_frame_rate_ || aggressive_update_)
+                else if (show_frame_rate_)
                     glfwPollEvents();
                 else
                     glfwWaitEvents();
