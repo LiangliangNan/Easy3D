@@ -1241,7 +1241,6 @@
  </customwidgets>
  <resources>
   <include location="resources/Mapple.qrc"/>
-  <include location="resources/Mapple.qrc"/>
  </resources>
  <connections/>
 </ui>
