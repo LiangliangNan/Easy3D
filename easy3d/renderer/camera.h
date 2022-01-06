@@ -278,7 +278,7 @@ namespace easy3d {
 		 *      \endcode
 		 */
 		float horizontalFieldOfView() const {
-			return 2.0f * atan(tan(fieldOfView() / 2.0f) * aspectRatio());
+			return 2.0f * std::atan(std::tan(fieldOfView() / 2.0f) * aspectRatio());
 		}
 
 		/**
@@ -350,7 +350,7 @@ namespace easy3d {
 		 * This method actually calls setFieldOfView(( 2.0 * atan (tan(hfov / 2.0) / aspectRatio()) )) so that a call
 		 * to horizontalFieldOfView() returns the expected value. */
 		void setHorizontalFieldOfView(float hfov) {
-			setFieldOfView(2.0f * atan(tan(hfov / 2.0f) / aspectRatio()));
+			setFieldOfView(2.0f * std::atan(std::tan(hfov / 2.0f) / aspectRatio()));
 		}
 
 		void setFOVToFitScene();
