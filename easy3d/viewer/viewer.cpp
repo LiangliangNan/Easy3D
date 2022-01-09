@@ -282,6 +282,14 @@ namespace easy3d {
 
 
     void Viewer::setup_callbacks(GLFWwindow *window) {
+        glfwSetWindowRefreshCallback(window, [](GLFWwindow *win) {
+            auto viewer = reinterpret_cast<Viewer *>(glfwGetWindowUserPointer(win));
+            viewer->pre_draw();
+            viewer->draw();
+            viewer->post_draw();
+            glfwSwapBuffers(win);
+        });
+
         glfwSetCursorPosCallback(window, [](GLFWwindow *win, double x, double y) {
             auto viewer = reinterpret_cast<Viewer *>(glfwGetWindowUserPointer(win));
             if (!viewer->process_events_)
