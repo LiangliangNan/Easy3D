@@ -1753,7 +1753,7 @@ namespace easy3d {
 
         /** Subdivide the edge \c e = (v0,v1) by splitting it into the two edge
          (v0,v) and (v,v1). Note that this function does not introduce any other
-         edge or faces. It simply splits the edge. Returns halfedge that points to \c p.
+         edge or faces. It simply splits the edge. Returns halfedge that points to \c v.
          \sa insert_vertex(Edge, vec3)
          \sa insert_vertex(Halfedge, Vertex)
          \related join_edges(Vertex)
@@ -1765,7 +1765,7 @@ namespace easy3d {
 
         /** Subdivide the edge \c e = (v0,v1) by splitting it into the two edge
          (v0,v) and (v,v1). Note that this function does not introduce any other
-         edge or faces. It simply splits the edge. Returns halfedge that points to \c p.
+         edge or faces. It simply splits the edge. Returns halfedge that points to \c v.
          \sa insert_vertex(Edge, vec3)
          \sa insert_vertex(Edge, Vertex)
          \related join_edges(Vertex)
