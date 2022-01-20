@@ -24,15 +24,16 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
+
+#if 0
+
 #include "viewer.h"
 #include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 
-
 using namespace easy3d;
 
 // This example shows how to render a scene into multiple views within a single window.
-
 
 int main(int argc, char** argv) {
     // Initialize logging.
@@ -50,4 +51,67 @@ int main(int argc, char** argv) {
     // Run the viewer
     return viewer.run();
 }
+#else
+
+#include <easy3d/viewer/comp_viewer.h>
+#include <easy3d/fileio/resources.h>
+#include <easy3d/util/logging.h>
+#include <easy3d/core/model.h>
+#include <easy3d/renderer/renderer.h>
+#include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/drawable_lines.h>
+#include <easy3d/renderer/drawable_triangles.h>
+
+using namespace easy3d;
+
+// This example shows how to use the built-in composite viewer.
+
+int main(int argc, char** argv) {
+    // Initialize logging.
+    logging::initialize();
+
+    /// create a 2 by 2 composite viewer
+    CompViewer viewer("Tutorial_203_CompositeView", 2, 2);
+
+    // ---------------------------------------------------------------------------
+    /// setup content for view(0, 0): we show the graph model (vertices and edges)
+    const std::string file_graph = resource::directory() + "/data/graph.ply";
+    auto graph = viewer.add_model(file_graph, true);
+    if (graph)
+        viewer.view(0, 0).models.push_back(graph);
+    else
+        LOG(ERROR) << "failed to load model from file: " << file_graph;
+
+    // ---------------------------------------------------------------------------
+    /// setup content for view(0, 1): we show the surface of the sphere model
+    const std::string file_sphere = resource::directory() + "/data/sphere.obj";
+    auto sphere = viewer.add_model(file_sphere, true);
+    if (sphere) {
+        auto sphere_faces = sphere->renderer()->get_triangles_drawable("faces");
+        viewer.view(0, 1).drawables.push_back(sphere_faces);
+    }
+    else
+        LOG(ERROR) << "failed to load model from file: " << file_sphere;
+
+    // ---------------------------------------------------------------------------
+    /// setup content for view(1, 0): we show the wireframe of the sphere model
+    auto sphere_wireframe = sphere->renderer()->get_lines_drawable("edges");
+    sphere_wireframe->set_impostor_type(LinesDrawable::CYLINDER);
+    sphere_wireframe->set_line_width(5);
+    sphere_wireframe->set_uniform_coloring(vec4(0.7f, 0.7f, 1.0f, 1.0f));
+    sphere_wireframe->set_visible(true); // by default wireframe is hidden
+    viewer.view(1, 0).drawables.push_back(sphere_wireframe);
+
+    // ---------------------------------------------------------------------------
+    /// setup content for view(1, 1): we show the vertices of the sphere model
+    auto sphere_vertices = sphere->renderer()->get_points_drawable("vertices");
+    sphere_vertices->set_impostor_type(PointsDrawable::SPHERE);
+    sphere_vertices->set_point_size(15);
+    sphere_vertices->set_visible(true); // by default vertices are hidden
+    viewer.view(1, 1).drawables.push_back(sphere_vertices);
+
+    // Run the viewer
+    return viewer.run();
+}
+#endif
 
