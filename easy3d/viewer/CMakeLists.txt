@@ -7,10 +7,12 @@ project(${PROJECT_NAME})
 
 set(${PROJECT_NAME}_HEADERS
         viewer.h
+        comp_viewer.h
         )
 
 set(${PROJECT_NAME}_SOURCES
         viewer.cpp
+        comp_viewer.cpp
         )
 
 add_library(${PROJECT_NAME} STATIC

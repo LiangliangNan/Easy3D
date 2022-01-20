@@ -76,7 +76,7 @@ namespace easy3d {
          * @param height The height of the viewer, which can be changed by calling resize() after construction.
          */
 		Viewer(
-			const std::string& title = "Easy3dViewer",
+			const std::string& title = "Easy3D Viewer",
 			int samples = 4,
             int gl_major = 3,   // must >= 3
             int gl_minor = 2,   // must >= 2

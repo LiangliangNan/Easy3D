@@ -100,8 +100,7 @@ namespace easy3d {
          * @return The added face on success.
          * @related add_face(), add_triangle().
          */
-        Face
-        add_quad(Vertex v1, Vertex v2, Vertex v3, Vertex v4);
+        Face add_quad(Vertex v1, Vertex v2, Vertex v3, Vertex v4);
 
         /**
          * @brief Finalize surface construction. Must be called at the end of the surface construction and used in

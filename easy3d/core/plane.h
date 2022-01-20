@@ -125,6 +125,14 @@ namespace easy3d {
         /// end points of the line segment lie on the same side of the the plane).
         bool intersect(const Point3& s, const Point3& t) const;
 
+        /// \brief Tests if this plane intersects with \p another plane.
+        /// Returns true if they do intersect. In this case, \p line stores the intersecting line.
+        /// Otherwise, it returns false (i.e., they don't intersect, meaning the two planes are parallel).
+        bool intersect(const thisclass& another, Line3& line) const;
+        /// \brief Tests if this plane intersects with \p another plane.
+        /// Returns true if they do intersect and false if they don't intersect (i.e.,the two planes are parallel).
+        bool intersect(const thisclass& another) const;
+
         /// \brief Determines the relative orientation of a point with respect to this plane.
         /// The return value is one of the following:
         ///   - 1: p is on the positive side
@@ -253,7 +261,7 @@ namespace easy3d {
     // return values:
     //   1: p is on the positive side
     //  -1: p is on the negative side
-    //   0: the point p is and 0 if the point is belonging the plane.
+    //   0: the point p is on the plane.
     template <typename FT> inline
     int GenericPlane<FT>::orient(const Point3& p) const {
         FT v = value(p);
@@ -359,6 +367,67 @@ namespace easy3d {
 
 
     template <typename FT> inline
+    bool GenericPlane<FT>::intersect(const thisclass& another) const {
+        const FT &a = coeff_[0];
+        const FT &b = coeff_[1];
+        const FT &c = coeff_[2];
+        const FT &d = coeff_[3];
+        const FT &p = another.coeff_[0];
+        const FT &q = another.coeff_[1];
+        const FT &r = another.coeff_[2];
+        const FT &s = another.coeff_[3];
+
+        FT det = a*q-p*b;
+        if (det != 0)
+            return true;
+        det = a*r-p*c;
+        if (det != 0)
+            return true;
+        det = b*r-c*q;
+        if (det != 0)
+            return true;
+
+        // degenerate case
+        return false;
+    }
+
+
+    template <typename FT> inline
+    bool GenericPlane<FT>::intersect(const thisclass& another, Line3& line) const {
+        const FT &a = coeff_[0];
+        const FT &b = coeff_[1];
+        const FT &c = coeff_[2];
+        const FT &d = coeff_[3];
+        const FT &p = another.coeff_[0];
+        const FT &q = another.coeff_[1];
+        const FT &r = another.coeff_[2];
+        const FT &s = another.coeff_[3];
+
+        FT det = a*q-p*b;
+        if (det != 0) {
+            const Point3 pt(b*s-d*q/det, p*d-a*s/det, 0);
+            const Vector3 dir(b*r-c*q, p*c-a*r, det);
+            return Line3::from_point_and_direction(pt, dir);
+        }
+        det = a*r-p*c;
+        if (det != 0) {
+            const Point3 pt(c*s-d*r/det, 0, p*d-a*s/det);
+            const Vector3 dir(c*q-b*r, det, p*b-a*q);
+            return Line3::from_point_and_direction(pt, dir);
+        }
+        det = b*r-c*q;
+        if (det != 0) {
+            const Point3 pt(0, c*s-d*r/det, d*q-b*s/det);
+            const Vector3 dir(det, c*p-a*r, a*q-b*p);
+            return Line3::from_point_and_direction(pt, dir);
+        }
+
+        // degenerate case
+        return false; // coplanar
+    }
+
+
+    template <typename FT> inline
     std::ostream& operator<<(std::ostream& os, const GenericPlane<FT>& plane) {
         return os << plane[0] << ' ' << plane[1] << ' ' << plane[2] << ' ' << plane[3];
     }
@@ -366,6 +435,14 @@ namespace easy3d {
     template <typename FT> inline
     std::istream& operator>>(std::istream& is, GenericPlane<FT>& plane) {
         return is >> plane[0] >> plane[1] >> plane[2] >> plane[3];
+    }
+
+    template <typename FT> inline
+    bool intersection(const GenericPlane<FT>& plane1, const GenericPlane<FT>& plane2, const GenericPlane<FT>& plane3, typename GenericPlane<FT>::Point3& point) {
+        typename GenericPlane<FT>::Line3 line;
+        if (plane1.intersect(plane2, line))
+            return plane3.intersect(line, point);
+        return false;
     }
 
 }
