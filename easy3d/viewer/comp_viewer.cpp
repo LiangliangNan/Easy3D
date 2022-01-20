@@ -40,9 +40,14 @@
 using namespace easy3d;
 
 
-CompViewer::CompViewer(const std::string &title, int num_rows, int num_cols)
-        : Viewer(title), num_rows_(num_rows), num_cols_(num_cols), borders_(nullptr), borders_vertex_buffer_(0) {
-    // the views are created in constructed in the constructor to ensure they are accessible immediately
+CompViewer::CompViewer(int rows, int cols, const std::string& title)
+        : Viewer(title)
+        , num_rows_(rows)
+        , num_cols_(cols)
+        , borders_vao_(nullptr)
+        , borders_vertex_buffer_(0)
+{
+    // the views are created in the constructor to ensure they are accessible immediately
     views_.resize(num_rows_);
     for (auto &row: views_)
         row.resize(num_cols_);
@@ -51,7 +56,7 @@ CompViewer::CompViewer(const std::string &title, int num_rows, int num_cols)
 
 void CompViewer::init() {
     Viewer::init();
-    update_view_borders();
+    update_borders();
 }
 
 
@@ -116,11 +121,11 @@ void CompViewer::draw() const {
     glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 
     // draw the view borders
-    draw_view_borders();
+    draw_borders();
 }
 
 
-void CompViewer::draw_view_borders() const {
+void CompViewer::draw_borders() const {
     const std::string name = "screen_space/screen_space_color";
     auto program = ShaderManager::get_program(name);
     if (!program) {
@@ -138,33 +143,33 @@ void CompViewer::draw_view_borders() const {
     program->bind();
     program->set_uniform("screen_color", vec4(0, 0, 0, 1.0f));
     program->set_uniform("depth", depth);
-    borders_->bind();
+    borders_vao_->bind();
     const unsigned int vertex_count = (num_rows_ - 1) * 2 + (num_cols_ - 1) * 2;
     glDrawArrays(GL_LINES, 0, vertex_count);
-    borders_->release();
+    borders_vao_->release();
     program->release();
     easy3d_debug_log_gl_error;
 }
 
 
 void CompViewer::post_resize(int w, int h) {
-    update_view_borders();
+    update_borders();
 }
 
 
 void CompViewer::cleanup() {
-    borders_->release_buffer(borders_vertex_buffer_);
-    delete borders_;
+    borders_vao_->release_buffer(borders_vertex_buffer_);
+    delete borders_vao_;
     Viewer::cleanup();
 }
 
 
-void CompViewer::update_view_borders() {
+void CompViewer::update_borders() {
     if (views_.empty() || views_[0].empty())
         return;
 
-    if (!borders_)
-        borders_ = new VertexArrayObject;
+    if (!borders_vao_)
+        borders_vao_ = new VertexArrayObject;
 
     ivec4 viewport;
     glGetIntegerv(GL_VIEWPORT, viewport);
@@ -183,6 +188,7 @@ void CompViewer::update_view_borders() {
 
     // ------------------------------------------------------------
 
+    // Note: we need NDC
     std::vector<vec2> points;
     for (std::size_t i = 1; i < num_rows_; ++i) {
         const float y = 2.0f * i * size_y / h - 1.0f;
@@ -194,7 +200,7 @@ void CompViewer::update_view_borders() {
         points.emplace_back(vec2(x, -1.0f));
         points.emplace_back(vec2(x, 1.0f));
     }
-    borders_->create_array_buffer(borders_vertex_buffer_, ShaderProgram::POSITION, points.data(),
+    borders_vao_->create_array_buffer(borders_vertex_buffer_, ShaderProgram::POSITION, points.data(),
                                   points.size() * sizeof(vec2), 2, true);
     easy3d_debug_log_gl_error;
 }

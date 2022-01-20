@@ -71,7 +71,7 @@ int main(int argc, char** argv) {
     logging::initialize();
 
     /// create a 2 by 2 composite viewer
-    CompViewer viewer("Tutorial_203_CompositeView", 2, 2);
+    CompViewer viewer(2, 2, "Tutorial_203_CompositeView");
 
     // ---------------------------------------------------------------------------
     /// setup content for view(0, 0): we show the graph model (vertices and edges)

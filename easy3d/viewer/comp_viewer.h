@@ -45,30 +45,25 @@ public:
     };
 
 public:
-    CompViewer(const std::string& title, int num_rows = 1, int num_cols = 2);
+    CompViewer(int rows, int cols, const std::string& title = "untitled");
 
-    View& view(int row, int column) { return views_[row][column]; };
-    const View& view(int row, int column) const { return views_[row][column]; };
+    View& view(int row, int col) { return views_[row][col]; };
+    const View& view(int row, int col) const { return views_[row][col]; };
 
 protected:
+    void init() override;
+    void post_resize(int w, int h) override;
+    void cleanup() override ;
     void draw() const override;
 
-    void init() override;
-
-    // This function will be called after the window size being changed.
-    void post_resize(int w, int h) override;
-
-    void cleanup() override ;
-
-    void draw_view_borders() const;
-
-    void update_view_borders();
+    void draw_borders() const;
+    void update_borders();
 
 private:
     unsigned int num_rows_;
     unsigned int num_cols_;
     std::vector< std::vector<View> > views_;
-    easy3d::VertexArrayObject* borders_;
+    easy3d::VertexArrayObject* borders_vao_;
     unsigned int borders_vertex_buffer_;
 };
 
