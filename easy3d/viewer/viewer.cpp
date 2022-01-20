@@ -86,7 +86,7 @@ namespace easy3d {
 
 
     Viewer::Viewer(
-            const std::string &title /* = "easy3d Viewer" */,
+            const std::string &title /* = "Easy3D Viewer" */,
             int samples /* = 4 */,
             int gl_major /* = 3 */,
             int gl_minor /* = 2 */,
@@ -212,15 +212,21 @@ namespace easy3d {
         glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
         glfwWindowHint(GLFW_RESIZABLE, resizable ? GL_TRUE : GL_FALSE);
 
+#ifndef NDEBUG
+        const std::string title_str = title + " - Debug Version";
+#else
+        const std::string title_str = title;
+#endif
+
         GLFWwindow *window = nullptr;
         if (full_screen) {
             GLFWmonitor *monitor = glfwGetPrimaryMonitor();
             const GLFWvidmode *mode = glfwGetVideoMode(monitor);
             width = mode->width;
             height = mode->height;
-            window = glfwCreateWindow(width, height, title.c_str(), monitor, nullptr);
+            window = glfwCreateWindow(width, height, title_str.c_str(), monitor, nullptr);
         } else {
-            window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
+            window = glfwCreateWindow(width, height, title_str.c_str(), nullptr, nullptr);
         }
 
         if (!window) {
