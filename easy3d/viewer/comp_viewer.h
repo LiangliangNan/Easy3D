@@ -34,23 +34,25 @@ namespace easy3d {
 
     class Model;
     class Drawable;
+    class ShaderProgram;
     class VertexArrayObject;
 
     /// A composite viewer
     class CompViewer : public Viewer {
     public:
+        /// A sub-view of the composite viewer.
         class View {
         public:
-            /// Assigns the model \p m to this view. After that, this view will visualize the model (regardless of
-            /// other views visualizing the same model).
-            void assign(const Model *m);
+            /// Adds the model \p m to this view. After that, the model will be visualized in this view (regardless
+            /// of other views visualizing the same model).
+            void add(const Model *m);
 
-            /// Assigns the drawable \p d to this view. After that, this view will visualize the drawable (regardless
-            /// of other views visualizing the same drawable).
-            void assign(const Drawable *d);
+            /// Adds the drawable \p d to this view. After that, the drawable will be visualized in this view
+            /// (regardless of other views visualizing the same drawable).
+            void add(const Drawable *d);
 
         private:
-            std::vector<const Model *> models_;     // the models to show in this view
+            std::vector<const Model *> models_;        // the models to show in this view
             std::vector<const Drawable *> drawables_;  // the drawables to show in this view
             ivec4 viewport_;
             friend class CompViewer;
@@ -61,9 +63,14 @@ namespace easy3d {
         CompViewer(unsigned int rows, unsigned int cols, const std::string &title = "untitled");
 
         /// Returns a reference to the view at position (\p row, \p col).
-        View& operator()(unsigned int row, unsigned int col) { return views_[row][col]; };
+        View& operator()(unsigned int row, unsigned int col);
         /// Returns a constant reference to the view at position (\p row, \p col).
-        const View& operator()(unsigned int row, unsigned int col) const { return views_[row][col]; };
+        const View& operator()(unsigned int row, unsigned int col) const;
+
+        /// Sets the visibility of the splitting lines of the views (visible by default).
+        void set_division_visible(bool b) { division_visible_ = b; }
+        /// Returns if the splitting lines of the views are visible (visible by default).
+        bool division_visible() const { return division_visible_; }
 
     protected:
         void init() override;
@@ -71,15 +78,17 @@ namespace easy3d {
         void cleanup() override;
         void draw() const override;
 
-        void draw_borders() const;
-        void update_borders();
+        void draw_division() const;
+        void update_division();
 
     private:
         unsigned int num_rows_;
         unsigned int num_cols_;
         std::vector<std::vector<View> > views_;
-        VertexArrayObject *borders_vao_;
-        unsigned int borders_vertex_buffer_;
+        VertexArrayObject *division_vao_;
+        ShaderProgram* lines_program_;
+        unsigned int division_vertex_buffer_;
+        bool division_visible_;
     };
 
 }

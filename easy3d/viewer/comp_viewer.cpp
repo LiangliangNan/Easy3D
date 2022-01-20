@@ -40,7 +40,7 @@
 using namespace easy3d;
 
 
-void CompViewer::View::assign(const Model *m) {
+void CompViewer::View::add(const Model *m) {
     if (m)
         models_.push_back(m);
     else
@@ -48,7 +48,7 @@ void CompViewer::View::assign(const Model *m) {
 }
 
 
-void CompViewer::View::assign(const Drawable *d) {
+void CompViewer::View::add(const Drawable *d) {
     if (d) {
         const_cast<Drawable*>(d)->set_visible(true);
         drawables_.push_back(d);
@@ -62,8 +62,10 @@ CompViewer::CompViewer(unsigned int rows, unsigned int cols, const std::string& 
         : Viewer(title)
         , num_rows_(rows)
         , num_cols_(cols)
-        , borders_vao_(nullptr)
-        , borders_vertex_buffer_(0)
+        , division_vao_(nullptr)
+        , lines_program_(nullptr)
+        , division_vertex_buffer_(0)
+        , division_visible_(true)
 {
     // the views are created in the constructor to ensure they are accessible immediately
     views_.resize(num_rows_);
@@ -72,9 +74,47 @@ CompViewer::CompViewer(unsigned int rows, unsigned int cols, const std::string& 
 }
 
 
+CompViewer::View& CompViewer::operator()(unsigned int row, unsigned int col) {
+    if (row >= 0 && row < num_rows_ && col >= 0 && col < num_cols_)
+        return views_[row][col];
+    else {
+        LOG(ERROR) << "invalid view position (" << row << ", " << col
+                   << "). #rows: " << num_rows_ << ", #cols: " << num_cols_;
+        return views_[0][0];
+    }
+}
+
+
+const CompViewer::View& CompViewer::operator()(unsigned int row, unsigned int col) const {
+    if (row >= 0 && row < num_rows_ && col >= 0 && col < num_cols_)
+        return views_[row][col];
+    else {
+        LOG(ERROR) << "invalid view position (" << row << ", " << col
+                   << "). #rows: " << num_rows_ << ", #cols: " << num_cols_;
+        return views_[0][0];
+    }
+};
+
+
 void CompViewer::init() {
     Viewer::init();
-    update_borders();
+
+    // compute the division
+    update_division();
+
+    // create the shader program for visualizing the division lines
+    const std::string name = "screen_space/screen_space_color";
+    lines_program_ = ShaderManager::get_program(name);
+    if (!lines_program_) {
+        std::vector<ShaderProgram::Attribute> attributes = {
+                ShaderProgram::Attribute(ShaderProgram::POSITION, "ndc_position")
+        };
+        lines_program_ = ShaderManager::create_program_from_files(name, attributes);
+    }
+    if (!lines_program_) {
+        LOG(ERROR) << "shader doesn't exist: " << name;
+        return;
+    }
 }
 
 
@@ -138,56 +178,47 @@ void CompViewer::draw() const {
     glScissor(scissor[0], scissor[1], scissor[2], scissor[3]);
     glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 
-    // draw the view borders
-    draw_borders();
+    // draw the division of views
+    if (division_visible_)
+        draw_division();
 }
 
 
-void CompViewer::draw_borders() const {
-    const std::string name = "screen_space/screen_space_color";
-    auto program = ShaderManager::get_program(name);
-    if (!program) {
-        std::vector<ShaderProgram::Attribute> attributes = {
-                ShaderProgram::Attribute(ShaderProgram::POSITION, "ndc_position")
-        };
-        program = ShaderManager::create_program_from_files(name, attributes);
-    }
-    if (!program) {
-        LOG_N_TIMES(3, ERROR) << "shader doesn't exist: " << name << ". " << COUNTER;
+void CompViewer::draw_division() const {
+    if (!lines_program_)
         return;
-    }
 
     const float depth = -1.0f;
-    program->bind();
-    program->set_uniform("screen_color", vec4(0, 0, 0, 1.0f));
-    program->set_uniform("depth", depth);
-    borders_vao_->bind();
+    lines_program_->bind();
+    lines_program_->set_uniform("screen_color", vec4(0, 0, 0, 1.0f));
+    lines_program_->set_uniform("depth", depth);
+    division_vao_->bind();
     const unsigned int vertex_count = (num_rows_ - 1) * 2 + (num_cols_ - 1) * 2;
     glDrawArrays(GL_LINES, 0, vertex_count);
-    borders_vao_->release();
-    program->release();
+    division_vao_->release();
+    lines_program_->release();
     easy3d_debug_log_gl_error;
 }
 
 
 void CompViewer::post_resize(int w, int h) {
-    update_borders();
+    update_division();
 }
 
 
 void CompViewer::cleanup() {
-    borders_vao_->release_buffer(borders_vertex_buffer_);
-    delete borders_vao_;
+    division_vao_->release_buffer(division_vertex_buffer_);
+    delete division_vao_;
     Viewer::cleanup();
 }
 
 
-void CompViewer::update_borders() {
+void CompViewer::update_division() {
     if (views_.empty() || views_[0].empty())
         return;
 
-    if (!borders_vao_)
-        borders_vao_ = new VertexArrayObject;
+    if (!division_vao_)
+        division_vao_ = new VertexArrayObject;
 
     ivec4 viewport;
     glGetIntegerv(GL_VIEWPORT, viewport);
@@ -195,6 +226,7 @@ void CompViewer::update_borders() {
     const int h = viewport[3];
     const int size_x = int(w / float(num_cols_));
     const int size_y = int(h / float(num_rows_));
+    // This is required to ensure a correct aspect ratio (thus the correct projection matrix)
     camera()->setScreenWidthAndHeight(size_x, size_y);
 
     for (std::size_t i = 0; i < num_rows_; ++i) {
@@ -218,7 +250,7 @@ void CompViewer::update_borders() {
         points.emplace_back(vec2(x, -1.0f));
         points.emplace_back(vec2(x, 1.0f));
     }
-    borders_vao_->create_array_buffer(borders_vertex_buffer_, ShaderProgram::POSITION, points.data(),
+    division_vao_->create_array_buffer(division_vertex_buffer_, ShaderProgram::POSITION, points.data(),
                                   points.size() * sizeof(vec2), 2, true);
     easy3d_debug_log_gl_error;
 }
