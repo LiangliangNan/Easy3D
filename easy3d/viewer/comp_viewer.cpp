@@ -40,7 +40,25 @@
 using namespace easy3d;
 
 
-CompViewer::CompViewer(int rows, int cols, const std::string& title)
+void CompViewer::View::assign(const Model *m) {
+    if (m)
+        models_.push_back(m);
+    else
+        LOG(ERROR) << "null model cannot be assigned to a view";
+}
+
+
+void CompViewer::View::assign(const Drawable *d) {
+    if (d) {
+        const_cast<Drawable*>(d)->set_visible(true);
+        drawables_.push_back(d);
+    }
+    else
+        LOG(ERROR) << "null drawable cannot be assigned to a view";
+}
+
+
+CompViewer::CompViewer(unsigned int rows, unsigned int cols, const std::string& title)
         : Viewer(title)
         , num_rows_(rows)
         , num_cols_(cols)
@@ -72,10 +90,10 @@ void CompViewer::draw() const {
         const auto &row = views_[i];
         for (std::size_t j = 0; j < row.size(); ++j) {
             const auto &view = row[j];
-            const auto &viewport = view.viewport;
+            const auto &viewport = view.viewport_;
             glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
             glScissor(viewport[0], viewport[1], viewport[2], viewport[3]);
-            for (const auto m: view.models) {
+            for (const auto m: view.models_) {
                 if (!m->renderer()->is_visible())
                     continue;
 
@@ -107,7 +125,7 @@ void CompViewer::draw() const {
                     glDisable(GL_POLYGON_OFFSET_FILL);
             }
 
-            for (const auto d: view.drawables) {
+            for (const auto d: view.drawables_) {
                 if (d->is_visible())
                     d->draw(camera());
             }
@@ -183,7 +201,7 @@ void CompViewer::update_borders() {
         auto &row = views_[i];
         const float y = h - (i + 1) * size_y;
         for (std::size_t j = 0; j < num_cols_; ++j)
-            row[j].viewport = ivec4(j * size_x, y, size_x, size_y);
+            row[j].viewport_ = ivec4(j * size_x, y, size_x, size_y);
     }
 
     // ------------------------------------------------------------
