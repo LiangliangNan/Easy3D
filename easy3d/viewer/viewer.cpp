@@ -1433,6 +1433,11 @@ namespace easy3d {
             return false;
         }
 
+        return snapshot(file_name, bk_white);
+    }
+
+
+    bool Viewer::snapshot(const std::string& file_name, bool bk_white) const {
         int w, h;
         glfwGetFramebufferSize(window_, &w, &h);
         FramebufferObject fbo(w, h, samples_);

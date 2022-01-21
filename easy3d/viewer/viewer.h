@@ -308,9 +308,18 @@ namespace easy3d {
          * @brief Take a snapshot of the screen and save it to a file.
          * @details This method takes a snapshot of the screen and saves the snapshot into a file
          *          Internally, it will pop up a file dialog for specifying the file name.
+         * @param bk_white true to have a white background.
          * @return true on success and false otherwise.
          */
 	    bool snapshot(bool bk_white = true) const;
+
+        /**
+         * @brief Take a snapshot of the screen and save it to an image file.
+         * @param image_file the full path to the image file.
+         * @param bk_white true to have a white background.
+         * @return true on success and false otherwise.
+         */
+        bool snapshot(const std::string& image_file, bool bk_white = true) const;
 
         /**
          * @brief Query the XYZ coordinates of the surface point under the cursor.
