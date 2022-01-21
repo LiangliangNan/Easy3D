@@ -34,7 +34,7 @@ namespace easy3d {
 
     /**
      * \brief Manages the translation of all the models during the file IO.
-     * \class Translator easy3d/fileio/translater.h
+     * \class Translator easy3d/fileio/translator.h
     */
 	class Translator
 	{

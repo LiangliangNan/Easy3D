@@ -35,11 +35,10 @@ INITIALIZE_EASYLOGGINGPP
 namespace easy3d
 {
 
-    // cond
+    // \cond
     namespace logging
     {
 
-        // \cond
         std::string log_file_name = "";
         bool logging_initialized = false;
 
@@ -100,7 +99,6 @@ namespace easy3d
             el::Helpers::crashAbort(sig);
         }
 
-        // \endcond
 
         void initialize(bool info_to_stdout, bool warning_to_stdout, bool error_to_stdout, const std::string &log_file, int verbosity_threshold)
         {
