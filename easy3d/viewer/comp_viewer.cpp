@@ -39,26 +39,16 @@
 
 namespace easy3d {
 
-    void CompViewer::View::add(const Model *m) {
-        if (m)
-            models_.push_back(m);
-        else
-            LOG(ERROR) << "null model cannot be assigned to a view";
-    }
-
-
-    void CompViewer::View::add(const Drawable *d) {
-        if (d) {
-            const_cast<Drawable *>(d)->set_visible(true);
-            drawables_.push_back(d);
-        } else
-            LOG(ERROR) << "null drawable cannot be assigned to a view";
-    }
-
 
     CompViewer::CompViewer(unsigned int rows, unsigned int cols, const std::string &title)
-            : Viewer(title), num_rows_(rows), num_cols_(cols), division_vao_(nullptr), lines_program_(nullptr),
-              division_vertex_buffer_(0), division_visible_(true) {
+            : Viewer(title)
+            , num_rows_(rows)
+            , num_cols_(cols)
+            , division_vao_(nullptr)
+            , lines_program_(nullptr)
+            , division_vertex_buffer_(0)
+            , division_visible_(true)
+    {
         // the views are created in the constructor to ensure they are accessible immediately
         views_.resize(num_rows_);
         for (auto &row: views_)
@@ -66,26 +56,36 @@ namespace easy3d {
     }
 
 
-    CompViewer::View &CompViewer::operator()(unsigned int row, unsigned int col) {
+    void CompViewer::assign(unsigned int row, unsigned int col, const Model *m) {
+        if (!m) {
+            LOG(ERROR) << "null model cannot be assigned to a view";
+            return;
+        }
+
         if (row >= 0 && row < num_rows_ && col >= 0 && col < num_cols_)
-            return views_[row][col];
+            views_[row][col].models.push_back(m);
         else {
-            LOG(ERROR) << "invalid view position (" << row << ", " << col
-                       << "). #rows: " << num_rows_ << ", #cols: " << num_cols_;
-            return views_[0][0];
+            LOG(ERROR) << "view position (" << row << ", " << col
+                       << ") is out of range. #rows: " << num_rows_ << ", #cols: " << num_cols_;
         }
     }
 
 
-    const CompViewer::View &CompViewer::operator()(unsigned int row, unsigned int col) const {
-        if (row >= 0 && row < num_rows_ && col >= 0 && col < num_cols_)
-            return views_[row][col];
-        else {
-            LOG(ERROR) << "invalid view position (" << row << ", " << col
-                       << "). #rows: " << num_rows_ << ", #cols: " << num_cols_;
-            return views_[0][0];
+    void CompViewer::assign(unsigned int row, unsigned int col, const Drawable *d) {
+        if (!d) {
+            LOG(ERROR) << "null drawable cannot be assigned to a view";
+            return;
         }
-    };
+
+        if (row >= 0 && row < num_rows_ && col >= 0 && col < num_cols_) {
+            const_cast<Drawable *>(d)->set_visible(true);
+            views_[row][col].drawables.push_back(d);
+        }
+        else {
+            LOG(ERROR) << "view position (" << row << ", " << col
+                       << ") is out of range. #rows: " << num_rows_ << ", #cols: " << num_cols_;
+        }
+    }
 
 
     void CompViewer::init() {
@@ -122,10 +122,10 @@ namespace easy3d {
             const auto &row = views_[i];
             for (std::size_t j = 0; j < row.size(); ++j) {
                 const auto &view = row[j];
-                const auto &viewport = view.viewport_;
+                const auto &viewport = view.viewport;
                 glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
                 glScissor(viewport[0], viewport[1], viewport[2], viewport[3]);
-                for (const auto m: view.models_) {
+                for (const auto m: view.models) {
                     if (!m->renderer()->is_visible())
                         continue;
 
@@ -157,7 +157,7 @@ namespace easy3d {
                         glDisable(GL_POLYGON_OFFSET_FILL);
                 }
 
-                for (const auto d: view.drawables_) {
+                for (const auto d: view.drawables) {
                     if (d->is_visible())
                         d->draw(camera());
                 }
@@ -225,7 +225,7 @@ namespace easy3d {
             auto &row = views_[i];
             const float y = h - (i + 1) * size_y;
             for (std::size_t j = 0; j < num_cols_; ++j)
-                row[j].viewport_ = ivec4(j * size_x, y, size_x, size_y);
+                row[j].viewport = ivec4(j * size_x, y, size_x, size_y);
         }
 
         // ------------------------------------------------------------

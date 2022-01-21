@@ -37,39 +37,40 @@ namespace easy3d {
     class ShaderProgram;
     class VertexArrayObject;
 
-    /// A composite viewer
+    /**
+     * @brief A composite viewer, which supports multiple views (arranged in a grid layout) in the same viewer.
+     * @class CompViewer easy3d/viewer/comp_viewer.h
+     */
     class CompViewer : public Viewer {
     public:
-        /// A sub-view of the composite viewer.
-        class View {
-        public:
-            /// Adds the model \p m to this view. After that, the model will be visualized in this view (regardless
-            /// of other views visualizing the same model).
-            void add(const Model *m);
-
-            /// Adds the drawable \p d to this view. After that, the drawable will be visualized in this view
-            /// (regardless of other views visualizing the same drawable).
-            void add(const Drawable *d);
-
-        private:
-            std::vector<const Model *> models_;        // the models to show in this view
-            std::vector<const Drawable *> drawables_;  // the drawables to show in this view
-            ivec4 viewport_;
-            friend class CompViewer;
-        };
-
-    public:
-        /// Constructor. \p rows and \cols together define the layout of the composite viewer.
+        /**
+         * @brief Constructor. \p rows and \p cols together define the layout of the composite viewer.
+         */
         CompViewer(unsigned int rows, unsigned int cols, const std::string &title = "untitled");
 
-        /// Returns a reference to the view at position (\p row, \p col).
-        View& operator()(unsigned int row, unsigned int col);
-        /// Returns a constant reference to the view at position (\p row, \p col).
-        const View& operator()(unsigned int row, unsigned int col) const;
+        /**
+         * @brief Assigns the model \p m to the view at position (\p row, \p col).
+         * @details This function assigns the model \p m to the view at position (\p row, \p col). After that, the
+         *     model will be visualized in this view (regardless of other views visualizing the same model).
+         * @note The model added to the viewer through add_model() is not assigned to or visualized in any view by
+         *     default. However, by calling add_model(), the viewer takes ownership of the model, and thus memory
+         *     management and drawable creation for the model are handled by the viewer.
+         */
+        void assign(unsigned int row, unsigned int col, const Model *m);
+
+        /** @brief Assigns the drawable \p d to the view at position (\p row, \p col).
+         *  @details This function assigns the drawable \p d to the view at position (\p row, \p col). After that, the
+         *      drawable will be visualized in this view (regardless of other views visualizing the same drawable).
+         *  @note The drawable added to the viewer through add_drawable() is not assigned to or visualized in any view
+         *      by default. However, by calling add_drawable(), the viewer takes ownership of the drawable, and thus
+         *      memory management for the drawable is handled by the viewer.
+         */
+        void assign(unsigned int row, unsigned int col, const Drawable *d);
 
         /// Sets the visibility of the splitting lines of the views (visible by default).
         void set_division_visible(bool b) { division_visible_ = b; }
-        /// Returns if the splitting lines of the views are visible (visible by default).
+
+        /// Returns if the splitting lines of the views are visible.
         bool division_visible() const { return division_visible_; }
 
     protected:
@@ -84,9 +85,15 @@ namespace easy3d {
     private:
         unsigned int num_rows_;
         unsigned int num_cols_;
+        // A sub-view of the composite viewer.
+        struct View {
+            std::vector<const Model *> models;        // the models to show in this view
+            std::vector<const Drawable *> drawables;  // the drawables to show in this view
+            ivec4 viewport;
+        };
         std::vector<std::vector<View> > views_;
         VertexArrayObject *division_vao_;
-        ShaderProgram* lines_program_;
+        ShaderProgram *lines_program_;
         unsigned int division_vertex_buffer_;
         bool division_visible_;
     };
