@@ -1442,7 +1442,7 @@ namespace easy3d {
             return false;
         }
 
-        // I can acutally alway ask for RGBA format and use my ImageIO for saving.
+        // I can actually always ask for RGBA format and use my ImageIO for saving.
         // But for ppm, bmp and tga formats, this causes extra internal
         // formatting (in stb_image_write).
 
@@ -1461,7 +1461,7 @@ namespace easy3d {
             return io::save_ppm(file_name, bits, width_, height_);
         }
         else if (ext == "bmp") {
-            if (!read_color(index, bits, GL_BGRA, false))   // bmp is alway flipped?
+            if (!read_color(index, bits, GL_BGRA, false))   // bmp is always flipped?
                 return false;
             return io::save_bmp(file_name, bits, width_, height_);
         }
@@ -1471,7 +1471,7 @@ namespace easy3d {
             return io::save_tga(file_name, bits, width_, height_);
         }
         else {
-            LOG(ERROR) << "unknown file format: " << ext;
+            LOG(ERROR) << "unsupported image format: " << ext;
             return false;
         }
     }

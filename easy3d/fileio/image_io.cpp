@@ -110,7 +110,7 @@ namespace easy3d {
 
     namespace io {
 
-        // NOTE: assumes that each pixel has 3 chanels in RGB order
+        // NOTE: assumes that each pixel has 3 channels in RGB order
         bool save_ppm(
                 const std::string& file_name,
                 const std::vector<unsigned char>& bits,
@@ -133,7 +133,7 @@ namespace easy3d {
         }
 
 
-        // NOTE: assumes that each pixel has 4 chanels in BGRA order
+        // NOTE: assumes that each pixel has 4 channels in BGRA order
         bool save_bmp(
                 const std::string& file_name,
                 const std::vector<unsigned char>& bits,
@@ -186,7 +186,7 @@ namespace easy3d {
         }
 
 
-        // NOTE: assumes that each pixel has 4 chanels in BGRA order
+        // NOTE: assumes that each pixel has 4 channels in BGRA order
         bool save_tga(
                 const std::string& file_name,
                 const std::vector<unsigned char>& bits,

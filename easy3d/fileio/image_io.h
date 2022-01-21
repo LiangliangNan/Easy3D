@@ -73,7 +73,7 @@ namespace easy3d {
          *                        is convenient for OpenGL applications where the first pixel in the
          *                        output array is expected to be the bottom left corner of the image.
          *
-         * \return Return true on success or false if failed.
+         * \return true on success or false if failed.
          *
          * Example usage:
          *      \code
@@ -108,7 +108,7 @@ namespace easy3d {
          * \param width The width of the image, in pixels.
          * \param height The height of the image, in pixels.
          * \param channels The number of 8-bit image channels per pixel.
-         * \param flip_vertically Flip the image data vertically before writting.
+         * \param flip_vertically Flip the image data vertically before writing.
          *
          * \return Return true on success or false if failed.
          */
