@@ -30,10 +30,7 @@
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/algo/tessellator.h>
-#include <easy3d/fileio/surface_mesh_io.h>
-#include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
-#include <easy3d/util/stop_watch.h>
 
 
 using namespace easy3d;
@@ -44,11 +41,11 @@ using namespace easy3d;
 // tessellator of Easy3D.
 //
 // Note: For general rendering purposes, you can use the tessellator to create a
-//       TrianglesDrawable without modifying the mesh.
+//       TrianglesDrawable for the model without explicitly triangulating the mesh.
 
 typedef std::vector<vec3> Hole;
 
-// convert the mesh into triangular mesh using the tessellator
+// convert the mesh into a triangular mesh using the tessellator
 void triangulate(SurfaceMesh *mesh) {
     if (!mesh)
         return;
@@ -100,23 +97,20 @@ void triangulate(SurfaceMesh *mesh) {
 
 
 int main(int argc, char **argv) {
-    // Initialize logging.
+    // initialize logging.
     logging::initialize();
 
-    // Create the default Easy3D viewer.
-    // Note: a viewer must be created before creating any drawables.
+    // create the default Easy3D viewer.
+    // (a viewer must be created before creating any drawables).
     Viewer viewer("Tutorial_307_Tessellator");
     viewer.camera()->setUpVector(vec3(0, 1, 0));
     viewer.camera()->setViewDirection(vec3(0, 0, -1));
 
-    //---------------------- create model -----------------------
+    //-------- create a simple mesh with 3 complex faces ---------
 
-#if 1
     SurfaceMesh *mesh = new SurfaceMesh;
 
-    // Face 1: a concave quad
-    if (1)
-    {
+    { // face 1: a concave quad
         SurfaceMesh::Vertex v0 = mesh->add_vertex(vec3(0, 0, 0));
         SurfaceMesh::Vertex v1 = mesh->add_vertex(vec3(800, 0, 0));
         SurfaceMesh::Vertex v2 = mesh->add_vertex(vec3(800, 800, 0));
@@ -124,9 +118,7 @@ int main(int argc, char **argv) {
         mesh->add_quad(v0, v1, v2, v3);
     }
 
-    // Face 2: a self-intersecting face (a star)
-    if (1)
-    {
+    { // face 2: a self-intersecting face representing a star
         std::vector<SurfaceMesh::Vertex> vertices = {
                 mesh->add_vertex(vec3(1500, 0, 0)),
                 mesh->add_vertex(vec3(1300, 800, 0)),
@@ -137,9 +129,7 @@ int main(int argc, char **argv) {
         mesh->add_face(vertices);
     }
 
-    // Face 3: a quad face with a hole
-    if (1)
-    {
+    { // face 3: a quad face with a hole
         std::vector<SurfaceMesh::Vertex> vertices = {
                 mesh->add_vertex(vec3(1800, 0, 0)),
                 mesh->add_vertex(vec3(2200, 0, 0)),
@@ -148,6 +138,7 @@ int main(int argc, char **argv) {
         };
         SurfaceMesh::Face f = mesh->add_face(vertices);
 
+        // let's create a hole (also a quad shape) in this face
         auto holes = mesh->add_face_property<Hole>("f:holes");
         holes[f] = {
                 vec3(1900, 100, 0),
@@ -157,24 +148,9 @@ int main(int argc, char **argv) {
         };
     }
 
-#else
-    // Read a mesh and then tessellate it into a triangular mesh.
-    const std::string file_name = resource::directory() + "/data/quad_mesh/P.off";
-    SurfaceMesh* mesh = SurfaceMeshIO::load(file_name);
-    if (!mesh) {
-        LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
-        return EXIT_FAILURE;
-    }
-#endif
+    //-------- triangulate the mesh using the tessellator ---------
 
-    //-------- Triangulate the mesh using the tessellator ---------
-
-    StopWatch w;
-    std::cout << "tessellating ..."<< std::endl;
     triangulate(mesh);
-    std::cout << "done. time: " << w.time_string() << std::endl;
-
-    // ------------------------------------------------------------
 
     // ------------------------------------------------------------
 
@@ -186,7 +162,7 @@ int main(int argc, char **argv) {
     // also show the borders
     mesh->renderer()->get_lines_drawable("borders")->set_visible(true);
 
-    // Run the viewer
+    // run the viewer
     return viewer.run();
 }
 
