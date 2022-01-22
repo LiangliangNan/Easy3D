@@ -96,14 +96,11 @@ int test_tessellator(int duration) {
     viewer.camera()->setUpVector(vec3(0, 1, 0));
     viewer.camera()->setViewDirection(vec3(0, 0, -1));
 
-    //---------------------- create model -----------------------
+    //-------- create a simple mesh with 3 complex faces ---------
 
-#if 1
     SurfaceMesh *mesh = new SurfaceMesh;
 
-    // Face 1: a concave quad
-    if (1)
-    {
+    { // face 1: a concave quad
         SurfaceMesh::Vertex v0 = mesh->add_vertex(vec3(0, 0, 0));
         SurfaceMesh::Vertex v1 = mesh->add_vertex(vec3(800, 0, 0));
         SurfaceMesh::Vertex v2 = mesh->add_vertex(vec3(800, 800, 0));
@@ -111,9 +108,7 @@ int test_tessellator(int duration) {
         mesh->add_quad(v0, v1, v2, v3);
     }
 
-    // Face 2: a self-intersecting face (a star)
-    if (1)
-    {
+    { // face 2: a self-intersecting face representing a star
         std::vector<SurfaceMesh::Vertex> vertices = {
                 mesh->add_vertex(vec3(1500, 0, 0)),
                 mesh->add_vertex(vec3(1300, 800, 0)),
@@ -124,9 +119,7 @@ int test_tessellator(int duration) {
         mesh->add_face(vertices);
     }
 
-    // Face 3: a quad face with a hole
-    if (1)
-    {
+    { // face 3: a quad face with a hole
         std::vector<SurfaceMesh::Vertex> vertices = {
                 mesh->add_vertex(vec3(1800, 0, 0)),
                 mesh->add_vertex(vec3(2200, 0, 0)),
@@ -135,6 +128,7 @@ int test_tessellator(int duration) {
         };
         SurfaceMesh::Face f = mesh->add_face(vertices);
 
+        // let's create a hole (also a quad shape) in this face
         auto holes = mesh->add_face_property<Hole>("f:holes");
         holes[f] = {
                 vec3(1900, 100, 0),
@@ -144,21 +138,9 @@ int test_tessellator(int duration) {
         };
     }
 
-#else
-    // Read a mesh and then tessellate it into a triangular mesh.
-    const std::string file_name = resource::directory() + "/data/quad_mesh/P.off";
-    SurfaceMesh* mesh = SurfaceMeshIO::load(file_name);
-    if (!mesh) {
-        LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
-        return EXIT_FAILURE;
-    }
-#endif
-
-    //-------- Triangulate the mesh using the tessellator ---------
+    //-------- triangulate the mesh using the tessellator ---------
 
     triangulate(mesh);
-
-    // ------------------------------------------------------------
 
     // ------------------------------------------------------------
 
