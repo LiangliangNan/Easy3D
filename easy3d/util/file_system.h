@@ -94,7 +94,7 @@ namespace easy3d {
          * @brief Queries the entries of a directory (including subdirectories and files).
          * @param path The full path of a directory.
          * @param entries Return the entries of the directory. Result strings are simple names (i.e.,
-         *        without the \p path part).
+         *        without the \p path part, e.g., cat.png).
          * @param recursive Performs the query recursively if true.
          * @sa get_files(), get_sub_directories().
          */
