@@ -108,7 +108,10 @@ namespace easy3d {
                     ->set_uniform("per_vertex_color",coloring_method() != State::UNIFORM_COLOR && color_buffer())
                     ->set_uniform("default_color",color());
 
-            program->set_uniform("selected", is_selected());
+            program->set_uniform("highlight", highlight())
+                    ->set_uniform("highlight_id_min", highlight_range().first)
+                    ->set_uniform("highlight_id_max", highlight_range().second)
+                    ->set_uniform("selected", is_selected());
 
             if (setting::clipping_plane) {
                 setting::clipping_plane->set_program(program);
@@ -276,7 +279,10 @@ namespace easy3d {
             program->set_uniform("MVP", MVP)
                     ->set_uniform("MANIP", MANIP);
 
-            program->set_uniform("selected", is_selected());
+            program->set_uniform("highlight", highlight())
+                    ->set_uniform("highlight_id_min", highlight_range().first)
+                    ->set_uniform("highlight_id_max", highlight_range().second)
+                    ->set_uniform("selected", is_selected());
 
             if (setting::clipping_plane) {
                 setting::clipping_plane->set_program(program);

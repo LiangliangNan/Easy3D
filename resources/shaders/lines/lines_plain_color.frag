@@ -31,9 +31,13 @@ in Data {
     float clipped;
 } DataIn;
 
-out vec4 outputF;
+uniform bool highlight;
+uniform int  highlight_id_min;
+uniform int  highlight_id_max;
 
 uniform bool selected = false;
+
+out vec4 outputF;
 
 void main()
 {
@@ -41,6 +45,12 @@ void main()
         discard;
 
     outputF = DataIn.color;
+
+    if (highlight) {
+        if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
+        outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.8);
+    }
+
     if (selected)
         outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
 }
