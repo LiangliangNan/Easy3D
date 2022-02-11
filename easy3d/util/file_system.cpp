@@ -613,7 +613,7 @@ namespace easy3d {
             for (unsigned int i = 0; i < entries.size(); i++) {
                 const std::string name = dir + "/" + entries[i];
                 if (is_file(name)) {
-                    result.push_back(name);
+                    result.push_back(entries[i]);
                 }
             }
         }
