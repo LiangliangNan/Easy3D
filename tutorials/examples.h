@@ -42,15 +42,7 @@
  * \include Tutorial_202_Viewer_Qt/viewer.cpp
  */
 
-/**
- * \example Tutorial_203_CompositeView
- * The source file containing the main() function:
- * \include Tutorial_203_CompositeView/main.cpp
- * The header file of the class:
- * \include Tutorial_203_CompositeView/viewer.h
- * The source file of the class:
- * \include Tutorial_203_CompositeView/viewer.cpp
- */
+/// @example Tutorial_203_CompositeView \include Tutorial_203_CompositeView/main.cpp
 
 /**
  * \example Tutorial_204_CameraInterpolation
@@ -72,8 +64,8 @@
  * \include Tutorial_205_RealCamera/viewer.cpp
  */
 
-/// @example Tutorial_301_Drawables \include Tutorial_301_Drawables/main.cpp
-/// @example Tutorial_302_Imposters \include Tutorial_302_Imposters/main.cpp
+/// @example Tutorial_301_Drawables     \include Tutorial_301_Drawables/main.cpp
+/// @example Tutorial_302_Imposters     \include Tutorial_302_Imposters/main.cpp
 /// @example Tutorial_303_ScalarField   \include Tutorial_303_ScalarField/main.cpp
 /// @example Tutorial_304_VectorField   \include Tutorial_304_VectorField/main.cpp
 /// @example Tutorial_305_Texture       \include Tutorial_305_Texture/main.cpp
@@ -111,6 +103,8 @@
  */
 
 /// @example Tutorial_310_TextMesher    \include Tutorial_310_TextMesher/main.cpp
+/// @example Tutorial_311_Animation     \include Tutorial_311_Animation/main.cpp
+/// @example Tutorial_312_MultiThread   \include Tutorial_312_MultiThread/main.cpp
 
 /**
  * \example Tutorial_401_ModelPicker

@@ -44,6 +44,7 @@ add_subdirectory(Tutorial_308_TexturedMesh)
 add_subdirectory(Tutorial_309_TextRendering)
 add_subdirectory(Tutorial_310_TextMesher)
 add_subdirectory(Tutorial_311_Animation)
+add_subdirectory(Tutorial_312_MultiThread)
 
 # user interaction
 add_subdirectory(Tutorial_401_ModelPicker)
