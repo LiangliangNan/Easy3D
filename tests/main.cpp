@@ -53,6 +53,7 @@ int test_texture_mesh(int duration);
 int test_text_rendering(int duration);
 int test_text_mesher(int duration);
 int test_animation(int duration);
+int test_multithread();
 int test_ambient_occlusion(int duration);
 int test_hard_shadow(int duration);
 int test_soft_shadow(int duration);
@@ -100,6 +101,7 @@ int main(int argc, char* argv[]) {
     result += test_text_rendering(duration);
     result += test_text_mesher(duration);
     result += test_animation(duration);
+    result += test_multithread();
     result += test_ambient_occlusion(duration);
     result += test_hard_shadow(duration);
     result += test_soft_shadow(duration);

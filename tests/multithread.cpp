@@ -34,15 +34,9 @@
 #include <easy3d/util/logging.h>
 #include <easy3d/util/timer.h>
 
-
 using namespace easy3d;
 
-// This example shows how to use another thread for
-//      - repeatedly modifying a model, and
-//      - notifying the viewer thread
 
-
-// a function that modifies the model
 void edit_model(PointCloud *cloud, Viewer *viewer) {
     // in this simple example, we add more points (with per point colors) to the point cloud.
     auto colors = cloud->vertex_property<vec3>("v:color");
@@ -57,8 +51,7 @@ void edit_model(PointCloud *cloud, Viewer *viewer) {
     viewer->update();
 }
 
-
-int main(int argc, char **argv) {
+int test_multithread() {
     // initialize logging.
     logging::initialize();
 
@@ -85,15 +78,15 @@ int main(int argc, char **argv) {
     drawable->set_coloring(Drawable::COLOR_PROPERTY, Drawable::VERTEX, "v:color");
 
     // run the process in another thread
-    Timer<>::single_shot(0, [&]() {
-        // in this example, we modify the point cloud 50 times
-        for (int i = 0; i < 50; ++i) {
-            // allow sufficient time for each edit to complete (each edit runs in a separate thread)
-            std::this_thread::sleep_for(std::chrono::milliseconds(300));
-            std::thread t(edit_model, cloud, &viewer);
-            t.detach();
-        }
-    });
+    Timer<PointCloud*, Viewer*> timer;
+    // call the edit_model() function every 300 milliseconds
+    timer.set_interval(300, edit_model, cloud, &viewer);
+
+    // stop the timer before exit
+    Timer<>::single_shot(4900, &timer, &Timer<PointCloud*, Viewer*>::stop); // or Timer<>::single_shot(4900, [&]() -> void { timer.stop(); });
+
+    // exit the viewer after 5 seconds
+    Timer<>::single_shot(5000, (Viewer*)&viewer, &Viewer::exit);
 
     // run the viewer
     return viewer.run();

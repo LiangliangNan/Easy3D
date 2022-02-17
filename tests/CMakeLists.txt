@@ -7,6 +7,7 @@ add_executable(${PROJECT_NAME}
         graph.cpp
         linear_solvers.cpp
         main.cpp
+        multithread.cpp
         point_cloud.cpp
         point_cloud_algorithms.cpp
         polyhedral_mesh.cpp
