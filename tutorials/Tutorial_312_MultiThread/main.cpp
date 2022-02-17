@@ -42,9 +42,12 @@ using namespace easy3d;
 //      - notifying the viewer thread
 
 
-// a function that modifies the model
+// a function that modifies the model.
+// in this simple example, we add more points (with per point colors) to a point cloud.
 void edit_model(PointCloud *cloud, Viewer *viewer) {
-    // in this simple example, we add more points (with per point colors) to the point cloud.
+    if (cloud->n_vertices() >= 1000000) // stop growing when the model is too big
+        return;
+
     auto colors = cloud->vertex_property<vec3>("v:color");
     for (int i = 0; i < 100; ++i) {
         auto v = cloud->add_vertex(vec3(random_float(), random_float(), random_float()));
@@ -55,6 +58,8 @@ void edit_model(PointCloud *cloud, Viewer *viewer) {
     cloud->renderer()->update();
     // notify the viewer to update the display
     viewer->update();
+
+    std::cout << "#points: " << cloud->n_vertices() << std::endl;
 }
 
 
@@ -69,7 +74,7 @@ int main(int argc, char **argv) {
     auto cloud = new PointCloud;
     // add a per point color property
     auto colors = cloud->add_vertex_property<vec3>("v:color");
-    for (int i = 0; i < 50; ++i) {
+    for (int i = 0; i < 100; ++i) {
         auto v = cloud->add_vertex(easy3d::vec3(random_float(), random_float(), random_float()));
         // assign a color to each point (here simply a red color)
         colors[v] = vec3(1.0f, 0.0f, 0.0f);
@@ -84,7 +89,14 @@ int main(int argc, char **argv) {
     // set coloring method: we want to visualize the point cloud using the per point color property
     drawable->set_coloring(Drawable::COLOR_PROPERTY, Drawable::VERTEX, "v:color");
 
-    // run the process in another thread
+    // run the process in another thread.
+#if 1   //  we use a timer to repeatedly edit the point cloud every 300 milliseconds
+    Timer<PointCloud *, Viewer *> timer;
+    timer.set_interval(300, edit_model, cloud, &viewer);
+
+    // stop editing the model after 20 seconds
+    Timer<>::single_shot(20000, &timer, &Timer<PointCloud*, Viewer*>::stop); // or Timer<>::single_shot(4900, [&]() -> void { timer.stop(); });
+#else   // use a simple for loop to repeat the editing a fix number of iterations
     Timer<>::single_shot(0, [&]() {
         // in this example, we modify the point cloud 50 times
         for (int i = 0; i < 50; ++i) {
@@ -94,6 +106,7 @@ int main(int argc, char **argv) {
             t.detach();
         }
     });
+#endif
 
     // run the viewer
     return viewer.run();
