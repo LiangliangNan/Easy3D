@@ -50,17 +50,18 @@ namespace easy3d {
     }
 
 
-    State::State(const State &s) : visible_(s.is_visible()), selected_(false), coloring_method_(s.coloring_method()),
-                                   color_(s.color()), property_location_(s.property_location()),
-                                   property_name_(s.property_name()), lighting_(s.lighting()),
-                                   lighting_two_sides_(s.lighting_two_sides()),
-                                   distinct_back_color_(s.distinct_back_color()), back_color_(s.back_color()),
-                                   texture_(s.texture()), texture_repeat_(s.texture_repeat()),
-                                   texture_fractional_repeat_(s.texture_fractional_repeat()),
-                                   ssao_enabled_(s.is_ssao_enabled()), clamp_range_(s.clamp_range()),
-                                   clamp_lower_(s.clamp_lower()), clamp_upper_(s.clamp_upper()),
-                                   material_(s.material()), plane_clip_discard_primitive_(false),
-                                   highlight_(s.highlight()), highlight_range_(s.highlight_range()) {
+    State::State(const State &s)
+            : visible_(s.is_visible()), selected_(s.is_selected()), coloring_method_(s.coloring_method()),
+              color_(s.color()), property_location_(s.property_location()),
+              property_name_(s.property_name()), lighting_(s.lighting()),
+              lighting_two_sides_(s.lighting_two_sides()),
+              distinct_back_color_(s.distinct_back_color()), back_color_(s.back_color()),
+              texture_(s.texture()), texture_repeat_(s.texture_repeat()),
+              texture_fractional_repeat_(s.texture_fractional_repeat()),
+              ssao_enabled_(s.is_ssao_enabled()), clamp_range_(s.clamp_range()),
+              clamp_lower_(s.clamp_lower()), clamp_upper_(s.clamp_upper()),
+              material_(s.material()), plane_clip_discard_primitive_(s.plane_clip_discard_primitive()),
+              highlight_(s.highlight()), highlight_range_(s.highlight_range()) {
     }
 
 
@@ -75,9 +76,6 @@ namespace easy3d {
         lighting_two_sides_ = s.lighting_two_sides();
         distinct_back_color_ = s.distinct_back_color();
         back_color_ = s.back_color();
-        plane_clip_discard_primitive_ = s.plane_clip_discard_primitive();
-        highlight_ = s.highlight();
-        highlight_range_ = s.highlight_range();
         texture_ = s.texture();
         texture_repeat_ = s.texture_repeat();
         texture_fractional_repeat_ = s.texture_fractional_repeat();
@@ -86,6 +84,9 @@ namespace easy3d {
         clamp_lower_ = s.clamp_lower();
         clamp_upper_ = s.clamp_upper();
         material_ = s.material();
+        plane_clip_discard_primitive_ = s.plane_clip_discard_primitive();
+        highlight_ = s.highlight();
+        highlight_range_ = s.highlight_range();
         return *this;
     }
 
