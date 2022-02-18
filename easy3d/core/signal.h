@@ -57,7 +57,7 @@ namespace easy3d {
 
     public:
         Signal() = default;
-        ~Signal() = default;
+        ~Signal() { disconnect_all(); }
 
         /// \brief Copy constructor and assignment create a new signal.
         Signal(Signal const & /*unused*/) {}
