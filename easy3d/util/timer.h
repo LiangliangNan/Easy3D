@@ -81,7 +81,7 @@ namespace easy3d {
          *     e.g., <tt> static_cast<void (Viewer::*)(const std::string&, int)>(&Viewer::print). </tt>
          */
         template<class Class>
-        static void single_shot(int delay, Class *inst, void (Class::*func)(Args...) const, Args... args);
+        static void single_shot(int delay, Class const *inst, void (Class::*func)(Args...) const, Args... args);
 
         /**
          * \brief Executes function \p func after \p delay milliseconds. 
@@ -98,7 +98,7 @@ namespace easy3d {
          * \details This is the same as single_shot() except that it is not static.
          * \param delay The time to be delayed, in milliseconds.
          * \param inst The pointer to \c Class instance, e.g., '&a' for 'Class a' or 'this' within Class.
-         * \param func The pointer to the member function of \c inst, e.g., '&Class::foo'.    
+         * \param func The pointer to the member function of \c inst, e.g., '&Class::foo'.
          * \note When a member function has overloads, explicitly cast the function to the right function type using
          *     e.g., <tt> static_cast<void (Viewer::*)(const std::string&, int)>(&Viewer::print). </tt>
          */
@@ -115,7 +115,7 @@ namespace easy3d {
          *     e.g., <tt> static_cast<void (Viewer::*)(const std::string&, int)>(&Viewer::print). </tt>
          */
         template<class Class>
-        void set_timeout(int delay, Class *inst, void (Class::*func)(Args...) const, Args... args) const;
+        void set_timeout(int delay, Class const *inst, void (Class::*func)(Args...) const, Args... args) const;
 
         /**
          * \brief Executes function \p func for every \p interval milliseconds.
@@ -146,7 +146,7 @@ namespace easy3d {
          *     e.g., <tt> static_cast<void (Viewer::*)(const std::string&, int)>(&Viewer::print). </tt>
          */
         template<class Class>
-        void set_interval(int interval, Class *inst, void (Class::*func)(Args...) const, Args... args);
+        void set_interval(int interval, Class const *inst, void (Class::*func)(Args...) const, Args... args);
 
         /** \brief Stops the timer. */
         void stop() { stopped_ = true; }
@@ -186,7 +186,7 @@ namespace easy3d {
 
     template<class... Args>
     template<class Class>
-    void Timer<Args...>::single_shot(int delay, Class *inst, void (Class::*func)(Args...) const, Args... args) {
+    void Timer<Args...>::single_shot(int delay, Class const *inst, void (Class::*func)(Args...) const, Args... args) {
         std::thread t([=]() {
             std::this_thread::sleep_for(std::chrono::milliseconds(delay));
             (inst->*func)(args...);
@@ -224,7 +224,7 @@ namespace easy3d {
 
     template<class... Args>
     template<class Class>
-    void Timer<Args...>::set_timeout(int delay, Class *inst, void (Class::*func)(Args...) const, Args... args) const {
+    void Timer<Args...>::set_timeout(int delay, Class const *inst, void (Class::*func)(Args...) const, Args... args) const {
         stopped_ = false;
         std::thread t([=]() {
             if (stopped_) return;
@@ -268,7 +268,7 @@ namespace easy3d {
 
     template<class... Args>
     template<class Class>
-    void Timer<Args...>::set_interval(int interval, Class *inst, void (Class::*func)(Args...) const, Args... args) {
+    void Timer<Args...>::set_interval(int interval, Class const *inst, void (Class::*func)(Args...) const, Args... args) {
         stopped_ = false;
         std::thread t([=]() {
             while (true) {
