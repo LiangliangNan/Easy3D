@@ -24,6 +24,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
+#include <iostream>
 
 #include <easy3d/core/version.h>
 #include <easy3d/util/console_style.h>
@@ -31,7 +32,13 @@
 using namespace easy3d;
 
 
-bool test_console_style() {
+int test_console_style() {
+    if (!console::terminal_supports_styles()) {
+        std::cerr << "WARNING: console styles not supported on your system.\n\t"
+                     "Maybe you didn't run the application from the console?" << std::endl;
+        return EXIT_FAILURE;
+    }
+
     std::cout << console::Style::Red << "Easy3D version: " << version() << std::endl;
     std::cout << console::Style::BRed << "Easy3D version: " << version() << std::endl;
     std::cout << console::Style::URed << "Easy3D version: " << version() << std::endl;
@@ -72,9 +79,8 @@ bool test_console_style() {
     std::cout << console::Style::Green << "Easy3D minor: " << version_minor() << std::endl;
     std::cout << console::Style::Blue  << "Easy3D patch: " << version_patch() << std::endl;
 
-    if (!console::terminal_supports_styles())
-        std::cerr << "WARNING: console styles not supported on your system.\n\t"
-                     "Maybe you didn't run the application from the console?" << std::endl;
+    // restore the default
+    std::cout << console::Style::None;
 
-    return true;
+    return EXIT_SUCCESS;
 }

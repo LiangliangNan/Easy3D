@@ -4,6 +4,9 @@ get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 project(${PROJECT_NAME})
 
 add_executable(${PROJECT_NAME}
+        test_timer.cpp
+        test_signal.cpp
+        test_console_style.cpp
         graph.cpp
         linear_solvers.cpp
         main.cpp

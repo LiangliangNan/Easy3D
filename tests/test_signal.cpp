@@ -62,7 +62,7 @@ private:
 };
 
 
-void run_for_members(Car *car) {
+static void run_for_members(Car *car) {
     Signal<> start_signal;
     Signal<const std::string&> start_signal_1arg;
     Signal<int> report_signal;
@@ -101,27 +101,33 @@ void run_for_members(Car *car) {
     start_signal.send();
     report_signal.send(80);
     stop_signal.send(6, "I have to stop");
+
+    // ---- disconnect all signals
+
+    start_signal.disconnect_all();
+    report_signal.disconnect_all();
+    stop_signal.disconnect_all();
 }
 
 
-void func_start() {
+static void func_start() {
     std::cout << "started\n";
 }
 
-void func_start(const std::string& msg) {
+static void func_start(const std::string& msg) {
     std::cout << "car started: " << msg << "\n";
 }
 
-void func_report_speed(int max_allow_speed, const Car *car) {
+static void func_report_speed(int max_allow_speed, const Car *car) {
     std::cout << "max allowed is " << max_allow_speed << ". I am at " << car->speed() << "\n";
 }
 
-void func_stop(const Car *car, int hours, const std::string &msg) {
+static void func_stop(const Car *car, int hours, const std::string &msg) {
     std::cout << msg << " after driving for " << hours << " hours. My speed was " << car->speed() << "\n";
 }
 
 
-void run_for_functions(Car *car) {
+static void run_for_functions(Car *car) {
     Signal<> func_start_signal;
     Signal<const std::string &> func_start_signal_1arg;
     Signal<int, const Car *> func_report_signal;
@@ -163,10 +169,15 @@ void run_for_functions(Car *car) {
     func_start_signal_1arg.send("blabla...");
     func_report_signal.send(80, car);
     another_stop_signal.send(car, 6, "I have to stop");
+
+    func_start_signal.disconnect_all();
+    func_start_signal_1arg.disconnect_all();
+    func_report_signal.disconnect_all();
+    another_stop_signal.disconnect_all();
 }
 
 
-void run_for_lambda_functions(Car *car) {
+static void run_for_lambda_functions(Car *car) {
     auto lambda_start = []() -> void {
         std::cout << "started\n";
     };
@@ -209,25 +220,32 @@ void run_for_lambda_functions(Car *car) {
     lambda_start_signal_1arg.send(car);
     lambda_report_signal.send(80, car);
     lambda_stop_signal.send(car, 6, "I have to stop");
+
+    lambda_start_signal.disconnect_all();
+    lambda_start_signal_1arg.disconnect_all();
+    lambda_report_signal.disconnect_all();
+    lambda_stop_signal.disconnect_all();
 }
 
 
-void run_connect_signal_to_signal() {
+static void run_connect_signal_to_signal() {
     Signal<const std::string &> A;
     Signal<const std::string &> B;
     Signal<const std::string &> C;
 
     easy3d::connect(&A, &B);    // or A.connect(&B);
     easy3d::connect(&B, &C);    // or B.connect(&C);
-    C.connect([](const std::string &msg) -> void {
+    int id = C.connect([](const std::string &msg) -> void {
         std::cout << "C: " << msg << std::endl;
     });
 
     A.send("abc");
+
+    A.disconnect(id);
 }
 
 
-bool test_signal() {
+int test_signal() {
     Car car(100);
 
     std::cout << "connect to a class member ------------------------------------------------------------------\n\n";
@@ -242,5 +260,5 @@ bool test_signal() {
     std::cout << "\n\nconnect a signal to another signal -----------------------------------------------------\n\n";
     run_connect_signal_to_signal();
 
-    return true;
+    return EXIT_SUCCESS;
 }
