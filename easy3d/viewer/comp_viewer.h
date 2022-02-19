@@ -52,18 +52,18 @@ namespace easy3d {
          * @brief Assigns the model \p m to the view at position (\p row, \p col).
          * @details This function assigns the model \p m to the view at position (\p row, \p col). After that, the
          *     model will be visualized in this view (regardless of other views visualizing the same model).
-         * @note The model added to the viewer through add_model() is not assigned to or visualized in any view by
-         *     default. However, by calling add_model(), the viewer takes ownership of the model, and thus memory
-         *     management and drawable creation for the model are handled by the viewer.
+         * @note By default, a model added to the viewer through add_model() is not assigned to any view for
+         *      visualization. However, add_model() allows the viewer to take ownership of the model, so memory
+         *      management and drawable creation for the model are handled by the viewer.
          */
         void assign(unsigned int row, unsigned int col, const Model *m);
 
         /** @brief Assigns the drawable \p d to the view at position (\p row, \p col).
          *  @details This function assigns the drawable \p d to the view at position (\p row, \p col). After that, the
          *      drawable will be visualized in this view (regardless of other views visualizing the same drawable).
-         *  @note The drawable added to the viewer through add_drawable() is not assigned to or visualized in any view
-         *      by default. However, by calling add_drawable(), the viewer takes ownership of the drawable, and thus
-         *      memory management for the drawable is handled by the viewer.
+         * @note By default, a drawable added to the viewer through add_drawable() is not assigned to any view for
+         *      visualization. However, add_drawable() allows the viewer to take ownership of the drawable, so its
+         *      memory management is handled by the viewer.
          */
         void assign(unsigned int row, unsigned int col, const Drawable *d);
 
