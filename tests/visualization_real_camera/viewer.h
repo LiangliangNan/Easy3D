@@ -65,8 +65,6 @@ private:
     
     // K [R T] -> easy3d camera representation
     bool KRT_to_camera(int view_index, easy3d::Camera* c, bool ground_truth);
-    
-    void update_cameras_drawable(bool ground_truth);
 
     void load_image();
 
@@ -74,7 +72,6 @@ private:
 
 private:
     easy3d::Texture* texture_;
-    easy3d::LinesDrawable* cameras_drwable_;
     bool need_update_;
 };
 

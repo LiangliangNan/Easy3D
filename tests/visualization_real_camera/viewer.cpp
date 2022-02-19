@@ -50,7 +50,6 @@ RealCamera::RealCamera(const std::string& title,
     : Viewer(title, 4, 3, 2, false, false)
     , current_view_(0)
     , texture_(nullptr)
-    , cameras_drwable_(nullptr)
     , need_update_(false)
 {
     // Read the point cloud
@@ -59,9 +58,7 @@ RealCamera::RealCamera(const std::string& title,
         drawable->set_point_size(5.0f);
 
         // Read the camera parameters from the bundler file.
-        if (read_bundler_file(bundler_file))
-            update_cameras_drawable(true);
-        else
+        if (!read_bundler_file(bundler_file))
             std::cerr << "Error: failed load bundler file." << std::endl;
 
         camera()->setUpVector(vec3(0, 1, 0));
@@ -78,7 +75,6 @@ void RealCamera::show_next_view() {
         current_view_ = (current_view_ + 1) % views_.size();
         const bool ground_truth = true;
         if (KRT_to_camera(current_view_, camera(), ground_truth)) {
-            update_cameras_drawable(ground_truth);
             std::cout << "----- view " << current_view_ << ": "
                       << (ground_truth ? "ground truth view" : "calibration view") << std::endl;
             set_title("RealCamera: View_" + std::to_string(current_view_));
@@ -125,29 +121,6 @@ bool RealCamera::KRT_to_camera(int view_index, Camera* c, bool ground_truth) {
     load_image();
 
 	return true;
-}
-
-
-void RealCamera::update_cameras_drawable(bool ground_truth)
-{
-    if (!cameras_drwable_) {
-        cameras_drwable_ = new LinesDrawable("cameras");
-        add_drawable(cameras_drwable_); // add the camera drawables to the viewer
-        cameras_drwable_->set_uniform_coloring(vec4(0, 0, 1, 1.0f));
-        cameras_drwable_->set_line_width(2.0f);
-    }
-
-    std::vector<vec3> vertices;
-    for (std::size_t i = 0; i < views_.size(); ++i) {
-        Camera c;
-        KRT_to_camera(i, &c, ground_truth);
-        std::vector<vec3> points;
-        shapes::create_camera(points, c.sceneRadius() * 0.03f, c.fieldOfView(), static_cast<float>(views_[i].h)/views_[i].w);
-        const mat4& m = c.frame()->worldMatrix();
-        for (auto& p : points)
-            vertices.push_back(m * p);
-    }
-    cameras_drwable_->update_vertex_buffer(vertices);
 }
 
 
