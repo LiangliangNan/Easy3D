@@ -77,12 +77,12 @@ bool CameraIntrepolation::key_press_event(int key, int modifiers)
     else if (key == GLFW_KEY_SPACE && modifiers == 0) {
         if (interpolator_->is_interpolation_started()) {
             interpolator_->stop_interpolation();
-            std::cout << "Animation stopped." << std::endl;
+            std::cout << "Animation stopped" << std::endl;
         }
         else {
             interpolator_->start_interpolation();
             if (interpolator_->is_interpolation_started())
-                std::cout << "Animation started." << std::endl;
+                std::cout << "Animation started" << std::endl;
         }
         return true;
     }
