@@ -57,14 +57,6 @@ namespace easy3d {
 
 
     void TrianglesDrawable::draw(const Camera *camera) const {
-        if (update_needed_ || vertex_buffer_ == 0)
-            const_cast<TrianglesDrawable*>(this)->internal_update_buffers();
-
-        if (vertex_buffer() == 0) {
-            LOG_N_TIMES(3, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
-            return;
-        }
-
         ShaderProgram *program = ShaderManager::get_program("surface/surface");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes = {

@@ -52,6 +52,8 @@ using namespace easy3d;
 //		- create a drawable for a specific rendering purpose;
 //		- use the viewer to visualize drawables.
 
+#if 1   // use the built-in drawables of Easy3D.
+
 int main(int argc, char **argv) {
     // Initialize logging.
     logging::initialize();
@@ -147,3 +149,242 @@ int main(int argc, char **argv) {
     return viewer.run();
 }
 
+#elif 0 //  use the built-in drawables of Easy3D, but we provide customized update functions
+
+int main(int argc, char **argv) {
+    // Initialize logging.
+    logging::initialize();
+
+    //-------------------------------------------------------------
+
+    // Create the default Easy3D viewer.
+    // Note: a viewer must be created before creating any drawables.
+    Viewer viewer("Tutorial_301_Drawables");
+
+    //-------------------------------------------------------------
+
+    // We visualize the "bunny".
+
+    // The coordinates of the vertices.
+    const std::vector<vec3> &points = resource::bunny_vertices;
+    // The indices represent how the vertices are connected to form triangles. The "bunny" is a triangle mesh, and thus
+    // each consecutive three indices represent a triangle.
+    const std::vector<unsigned int> &indices = resource::bunny_indices;
+
+    //-------------------------------------------------------------
+    // Create a TrianglesDrawable to visualize the surface of the "bunny".
+    // For visualization, the point positions and the vertex indices of the faces have to be sent to the GPU.
+    auto surface = new TrianglesDrawable("faces");
+    surface->set_update_func([&points, &indices](Model* m, Drawable* d) {
+        // Upload the vertex positions of the surface to the GPU.
+        d->update_vertex_buffer(points);
+        // Upload the vertex indices of the surface to the GPU.
+        d->update_element_buffer(indices);
+    });
+
+    // Add the drawable to the viewer
+    viewer.add_drawable(surface);
+
+    //-------------------------------------------------------------
+    // Create a PointsDrawable to visualize the vertices of the "bunny".
+    // Only the vertex positions have to be sent to the GPU for visualization.
+    auto vertices = new PointsDrawable("vertices");
+    vertices->set_update_func([&points](Model* m, Drawable* d) {
+        // Upload the vertex positions to the GPU.
+        d->update_vertex_buffer(points);
+    });
+
+    // Set a color for the vertices (here we want a red color).
+    vertices->set_uniform_coloring(vec4(1.0f, 0.0f, 0.0f, 1.0f));  // r, g, b, a
+    // Three options are available for visualizing points:
+    //      - PLAIN: plain points (i.e., each point is a square on the screen);
+    //      - SPHERE: each point is visualized a sphere;
+    //      - SURFEL: each point is visualized an oriented disk.
+    // In this example, let's render the vertices as spheres.
+    vertices->set_impostor_type(PointsDrawable::SPHERE);
+    // Set the vertices size (here 10 pixels).
+    vertices->set_point_size(10);
+    // Add the drawable to the viewer
+    viewer.add_drawable(vertices);
+
+    //-------------------------------------------------------------
+    // Create a LinesDrawable to visualize the bounding box of the "bunny".
+
+    // Compute the bounding box.
+    auto bbox_drawable = new LinesDrawable("bbox");
+    bbox_drawable->set_update_func([&points](Model* m, Drawable* d) {
+        const Box3 &box = geom::bounding_box<Box3, std::vector<vec3> >(points);
+        float xmin = box.min_coord(0);
+        float xmax = box.max_coord(0);
+        float ymin = box.min_coord(1);
+        float ymax = box.max_coord(1);
+        float zmin = box.min_coord(2);
+        float zmax = box.max_coord(2);
+        // The eight vertices of the bounding box.
+        const std::vector<vec3> bbox_points = {
+                vec3(xmin, ymin, zmax), vec3(xmax, ymin, zmax),
+                vec3(xmin, ymax, zmax), vec3(xmax, ymax, zmax),
+                vec3(xmin, ymin, zmin), vec3(xmax, ymin, zmin),
+                vec3(xmin, ymax, zmin), vec3(xmax, ymax, zmin)
+        };
+        // The vertex indices of the twelve edges of the bounding box (each consecutive two numbers represent an edge).
+        const std::vector<unsigned int> bbox_indices = {
+                0, 1, 2, 3, 4, 5, 6, 7,
+                0, 2, 4, 6, 1, 3, 5, 7,
+                0, 4, 2, 6, 1, 5, 3, 7
+        };
+
+        // Upload the vertex positions of the bounding box to the GPU.
+        d->update_vertex_buffer(bbox_points);
+        // Upload the vertex indices of the bounding box to the GPU.
+        d->update_element_buffer(bbox_indices);
+    });
+
+    // Set a color for the edges of the bounding box (here we want a blue color).
+    bbox_drawable->set_uniform_coloring(vec4(0.0f, 0.0f, 1.0f, 1.0f));    // r, g, b, a
+    // Set the width of the edges (here 5 pixels).
+    bbox_drawable->set_line_width(5.0f);
+    // Add the drawable to the viewer
+    viewer.add_drawable(bbox_drawable);
+
+    //-------------------------------------------------------------
+
+    // Make sure everything is within the visible region of the viewer.
+    viewer.fit_screen();
+
+    // Run the viewer
+    return viewer.run();
+}
+
+#else  // inherit customized drawables from Easy3D drawables, and we reimplement "void update_buffers_internal()"
+
+class MyTrianglesDrawable : public TrianglesDrawable {
+public:
+    MyTrianglesDrawable(const std::string& name = "") : TrianglesDrawable(name) {}
+
+protected:
+    void update_buffers_internal() {
+        // The coordinates of the vertices.
+        const std::vector<vec3> &points = resource::bunny_vertices;
+        // The indices represent how the vertices are connected to form triangles. The "bunny" is a triangle mesh, and thus
+        // each consecutive three indices represent a triangle.
+        const std::vector<unsigned int> &indices = resource::bunny_indices;
+
+        // Upload the vertex positions of the surface to the GPU.
+        update_vertex_buffer(points);
+        // Upload the vertex indices of the surface to the GPU.
+        update_element_buffer(indices);
+    }
+};
+
+
+class MyLinesDrawable : public LinesDrawable {
+public:
+    MyLinesDrawable(const std::string& name = "") : LinesDrawable(name) {}
+
+protected:
+    void update_buffers_internal() {
+        // The coordinates of the vertices.
+        const std::vector<vec3> &points = resource::bunny_vertices;
+        const Box3 &box = geom::bounding_box<Box3, std::vector<vec3> >(points);
+        float xmin = box.min_coord(0);
+        float xmax = box.max_coord(0);
+        float ymin = box.min_coord(1);
+        float ymax = box.max_coord(1);
+        float zmin = box.min_coord(2);
+        float zmax = box.max_coord(2);
+        // The eight vertices of the bounding box.
+        const std::vector<vec3> bbox_points = {
+                vec3(xmin, ymin, zmax), vec3(xmax, ymin, zmax),
+                vec3(xmin, ymax, zmax), vec3(xmax, ymax, zmax),
+                vec3(xmin, ymin, zmin), vec3(xmax, ymin, zmin),
+                vec3(xmin, ymax, zmin), vec3(xmax, ymax, zmin)
+        };
+        // The vertex indices of the twelve edges of the bounding box (each consecutive two numbers represent an edge).
+        const std::vector<unsigned int> bbox_indices = {
+                0, 1, 2, 3, 4, 5, 6, 7,
+                0, 2, 4, 6, 1, 3, 5, 7,
+                0, 4, 2, 6, 1, 5, 3, 7
+        };
+        // Upload the vertex positions of the bounding box to the GPU.
+        update_vertex_buffer(bbox_points);
+        // Upload the vertex indices of the bounding box to the GPU.
+        update_element_buffer(bbox_indices);
+        // Set a color for the edges of the bounding box (here we want a blue color).
+        set_uniform_coloring(vec4(0.0f, 0.0f, 1.0f, 1.0f));    // r, g, b, a
+        // Set the width of the edges (here 5 pixels).
+        set_line_width(5.0f);
+    }
+};
+
+
+class MyPointsDrawable : public PointsDrawable {
+public:
+    MyPointsDrawable(const std::string& name = "") : PointsDrawable(name) {}
+
+protected:
+    void update_buffers_internal() {
+        // The coordinates of the vertices.
+        const std::vector<vec3> &points = resource::bunny_vertices;
+        // Upload the vertex positions to the GPU.
+        update_vertex_buffer(points);
+        // Set a color for the vertices (here we want a red color).
+        set_uniform_coloring(vec4(1.0f, 0.0f, 0.0f, 1.0f));  // r, g, b, a
+        // Three options are available for visualizing points:
+        //      - PLAIN: plain points (i.e., each point is a square on the screen);
+        //      - SPHERE: each point is visualized a sphere;
+        //      - SURFEL: each point is visualized an oriented disk.
+        // In this example, let's render the vertices as spheres.
+        set_impostor_type(PointsDrawable::SPHERE);
+        // Set the vertices size (here 10 pixels).
+        set_point_size(10);
+    }
+};
+
+
+int main(int argc, char **argv) {
+    // Initialize logging.
+    logging::initialize();
+
+    //-------------------------------------------------------------
+
+    // Create the default Easy3D viewer.
+    // Note: a viewer must be created before creating any drawables.
+    Viewer viewer("Tutorial_301_Drawables");
+
+    //-------------------------------------------------------------
+
+    // We visualize the "bunny".
+
+    //-------------------------------------------------------------
+    // Create a TrianglesDrawable to visualize the surface of the "bunny".
+    // For visualization, the point positions and the vertex indices of the faces have to be sent to the GPU.
+    auto surface = new MyTrianglesDrawable("faces");
+    // Add the drawable to the viewer
+    viewer.add_drawable(surface);
+
+    //-------------------------------------------------------------
+    // Create a PointsDrawable to visualize the vertices of the "bunny".
+    // Only the vertex positions have to be sent to the GPU for visualization.
+    auto vertices = new MyPointsDrawable("vertices");
+    // Add the drawable to the viewer
+    viewer.add_drawable(vertices);
+
+    //-------------------------------------------------------------
+    // Create a LinesDrawable to visualize the bounding box of the "bunny".
+
+    // Compute the bounding box.
+    auto bbox_drawable = new MyLinesDrawable("bbox");
+    // Add the drawable to the viewer
+    viewer.add_drawable(bbox_drawable);
+
+    //-------------------------------------------------------------
+
+    // Make sure everything is within the visible region of the viewer.
+    viewer.fit_screen();
+
+    // Run the viewer
+    return viewer.run();
+}
+
+#endif

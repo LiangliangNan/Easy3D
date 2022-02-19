@@ -117,10 +117,10 @@ namespace easy3d {
     }
 
 
-    void Drawable::internal_update_buffers() {
+    void Drawable::update_buffers_internal() {
         if (!model_ && !update_func_) {
             LOG_N_TIMES(3, ERROR)
-                << "updating rendering buffers failed: drawable not associated with a model and no update function specified. " << COUNTER;
+                << "do not know how to update rendering buffers: drawable not associated with a model and no update function specified. " << COUNTER;
             return;
         } else if (model_ && model_->points().empty()) {
             clear();
@@ -136,7 +136,6 @@ namespace easy3d {
 
         LOG_IF(w.elapsed_seconds() > 0.5, INFO) << "updating rendering buffers for drawable '" << name()
                                                 << "' took " << w.time_string();
-        update_needed_ = false;
     }
 
 
@@ -223,8 +222,10 @@ namespace easy3d {
 
 
     void Drawable::gl_draw() const {
-        if (update_needed_ || vertex_buffer_ == 0)
-            const_cast<Drawable*>(this)->internal_update_buffers();
+        if (update_needed_ || vertex_buffer_ == 0) {
+            const_cast<Drawable *>(this)->update_buffers_internal();
+            const_cast<Drawable *>(this)->update_needed_ = false;
+        }
 
         vao_->bind();
 

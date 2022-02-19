@@ -149,10 +149,13 @@ namespace easy3d {
         void update();
 
         /**
-         * @brief Setups how a drwable can update its OpenGL buffers. This function is required by only non-standard
-         *        drawables for a special visualization purpose. Standard drawables can be automatically updated and
-         *        do not require this function.
+         * @brief Setups how a drawable updates its rendering buffers.
+         * @details This function is required by only non-standard drawables for a special visualization purpose.
+         *      Rendering buffers of standard drawables attached to a model can be automatically updated and do not
+         *      require this function.
+         *      The drawable is considered standalone if \c Model is \c null.
          * @sa update(), Renderer::update().
+         * @note For a subclassed drawable, you can also reimplement update_buffers_internal() for the same purpose.
          */
         void set_update_func(const std::function<void(Model*, Drawable*)>& func) { update_func_ = func; }
 
@@ -187,7 +190,8 @@ namespace easy3d {
         const VertexArrayObject *vao() const { return vao_; }
 
     protected:
-        void internal_update_buffers();
+        // actual update of the rendering buffers are here
+        virtual void update_buffers_internal();
 
         void clear();
 

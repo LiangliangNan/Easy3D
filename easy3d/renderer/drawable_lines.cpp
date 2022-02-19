@@ -53,9 +53,6 @@ namespace easy3d {
 
 
     void LinesDrawable::draw(const Camera *camera /* = false */) const {
-        if (update_needed_ || vertex_buffer_ == 0)
-            const_cast<LinesDrawable*>(this)->internal_update_buffers();
-
         switch (impostor_type_) {
             case PLAIN:
                 if (texture() && (coloring_method() == State::SCALAR_FIELD || coloring_method() == State::TEXTURED))
@@ -82,11 +79,6 @@ namespace easy3d {
 
 
     void LinesDrawable::_draw_plain_lines(const Camera *camera) const {
-        if (vertex_buffer() == 0) {
-            LOG_N_TIMES(3, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
-            return;
-        }
-
         if (line_width() <= 1) {
             ShaderProgram *program = ShaderManager::get_program("lines/lines_plain_color");
             if (!program) {
@@ -158,11 +150,6 @@ namespace easy3d {
 
 
     void LinesDrawable::_draw_cylinders(const Camera *camera) const {
-        if (vertex_buffer() == 0) {
-            LOG_N_TIMES(3, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
-            return;
-        }
-
         ShaderProgram *program = ShaderManager::get_program("lines/lines_cylinders_color");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes;
@@ -205,11 +192,6 @@ namespace easy3d {
 
 
     void LinesDrawable::_draw_cones(const Camera *camera) const {
-        if (vertex_buffer() == 0) {
-            LOG_N_TIMES(3, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
-            return;
-        }
-
         ShaderProgram *program = ShaderManager::get_program("lines/lines_cones_color");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes;
@@ -251,15 +233,6 @@ namespace easy3d {
 
 
     void LinesDrawable::_draw_plain_lines_with_texture(const Camera *camera) const {
-        if (vertex_buffer() == 0) {
-            LOG_N_TIMES(3, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
-            return;
-        }
-        if (texcoord_buffer() == 0) {
-            LOG_N_TIMES(3, ERROR) << "texcoord buffer not created. " << COUNTER;
-            return;
-        }
-
         if (line_width() <= 1) {
             ShaderProgram *program = ShaderManager::get_program("lines/lines_plain_texture");
             if (!program) {
@@ -331,15 +304,6 @@ namespace easy3d {
 
 
     void LinesDrawable::_draw_cylinders_with_texture(const Camera *camera) const {
-        if (vertex_buffer() == 0) {
-            LOG_N_TIMES(3, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
-            return;
-        }
-        if (texcoord_buffer() == 0) {
-            LOG_N_TIMES(3, ERROR) << "texcoord buffer not created. " << COUNTER;
-            return;
-        }
-
         ShaderProgram *program = ShaderManager::get_program("lines/lines_cylinders_texture");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes;
@@ -383,15 +347,6 @@ namespace easy3d {
 
 
     void LinesDrawable::_draw_cones_with_texture(const Camera *camera) const {
-        if (vertex_buffer() == 0) {
-            LOG_N_TIMES(3, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
-            return;
-        }
-        if (texcoord_buffer() == 0) {
-            LOG_N_TIMES(3, ERROR) << "texcoord buffer not created. " << COUNTER;
-            return;
-        }
-
         ShaderProgram *program = ShaderManager::get_program("lines/lines_cones_texture");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes;

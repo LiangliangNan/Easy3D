@@ -55,9 +55,6 @@ namespace easy3d {
 
 
     void PointsDrawable::draw(const Camera *camera /* = false */) const {
-        if (update_needed_ || vertex_buffer_ == 0)
-            const_cast<PointsDrawable*>(this)->internal_update_buffers();
-
         switch (impostor_type_) {
             case PLAIN:
                 if (texture() && (coloring_method() == State::SCALAR_FIELD || coloring_method() == State::TEXTURED))
@@ -91,11 +88,6 @@ namespace easy3d {
 
 
     void PointsDrawable::_draw_plain_points(const Camera *camera) const {
-        if (vertex_buffer() == 0) {
-            LOG_N_TIMES(3, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
-            return;
-        }
-
         ShaderProgram *program = ShaderManager::get_program("points/points_plain_color");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes;
@@ -154,11 +146,6 @@ namespace easy3d {
 
 
     void PointsDrawable::_draw_spheres_sprite(const Camera *camera) const {
-        if (vertex_buffer() == 0) {
-            LOG_N_TIMES(3, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
-            return;
-        }
-
         ShaderProgram *program = ShaderManager::get_program("points/points_spheres_sprite_color");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes;
@@ -209,11 +196,6 @@ namespace easy3d {
 
 
     void PointsDrawable::_draw_spheres_geometry(const Camera *camera) const {
-        if (vertex_buffer() == 0) {
-            LOG_N_TIMES(3, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
-            return;
-        }
-
         ShaderProgram *program = ShaderManager::get_program("points/points_spheres_geometry_color");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes;
@@ -259,15 +241,6 @@ namespace easy3d {
 
 
     void PointsDrawable::_draw_plain_points_with_texture(const Camera *camera) const {
-        if (vertex_buffer() == 0) {
-            LOG_N_TIMES(3, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
-            return;
-        }
-        if (texcoord_buffer() == 0) {
-            LOG_N_TIMES(3, ERROR) << "texcoord buffer not created. " << COUNTER;
-            return;
-        }
-
         ShaderProgram *program = ShaderManager::get_program("points/points_plain_texture");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes;
@@ -328,28 +301,12 @@ namespace easy3d {
 
 
     void PointsDrawable::_draw_spheres_with_texture_sprite(const Camera *camera) const {
-        if (vertex_buffer() == 0) {
-            LOG_N_TIMES(3, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
-            return;
-        }
-        if (texcoord_buffer() == 0) {
-            LOG_N_TIMES(3, ERROR) << "texcoord buffer not created. " << COUNTER;
-            return;
-        }
-
+        // not implemented (deprecated actually)
+        // please use the implementation based on geometry shader
     }
 
 
     void PointsDrawable::_draw_spheres_with_texture_geometry(const Camera *camera) const {
-        if (vertex_buffer() == 0) {
-            LOG_N_TIMES(3, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
-            return;
-        }
-        if (texcoord_buffer() == 0) {
-            LOG_N_TIMES(3, ERROR) << "texcoord buffer not created. " << COUNTER;
-            return;
-        }
-
         ShaderProgram *program = ShaderManager::get_program("points/points_spheres_geometry_texture");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes;
@@ -396,15 +353,6 @@ namespace easy3d {
 
 
     void PointsDrawable::_draw_surfels(const Camera *camera) const {
-        if (vertex_buffer() == 0) {
-            LOG_N_TIMES(3, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
-            return;
-        }
-        if (normal_buffer() == 0) {
-            LOG_N_TIMES(3, ERROR) << "normal buffer not created. " << COUNTER;
-            return;
-        }
-
         ShaderProgram *program = ShaderManager::get_program("points/points_surfel_color");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes;
@@ -464,19 +412,6 @@ namespace easy3d {
 
 
     void PointsDrawable::_draw_surfels_with_texture(const Camera *camera) const {
-        if (vertex_buffer() == 0) {
-            LOG_N_TIMES(3, ERROR) << "drawable \'" << name() << "\': vertex buffer not created. " << COUNTER;
-            return;
-        }
-        if (normal_buffer() == 0) {
-            LOG_N_TIMES(3, ERROR) << "normal buffer not created. " << COUNTER;
-            return;
-        }
-        if (texcoord_buffer() == 0) {
-            LOG_N_TIMES(3, ERROR) << "texcoord buffer not created. " << COUNTER;
-            return;
-        }
-
         ShaderProgram *program = ShaderManager::get_program("points/points_surfel_texture");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes;
