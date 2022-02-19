@@ -47,7 +47,7 @@ public:
 
 class Car : public Vehicle {
 public:
-    Car(int spd) : speed_(spd) {}
+    Car(int speed) : speed_(speed) {}
 
 public:
     int speed() const { return speed_; }
@@ -73,7 +73,7 @@ private:
 };
 
 
-void test_for_members(Car *car) {
+void test_timer_for_members(Car *car) {
     // ---- a non-const class member, no argument
     Timer<>::single_shot(33, car, &Car::start);
 
@@ -130,7 +130,7 @@ void timer_func_stop(const Car *car, int hours, const std::string &msg) {
 }
 
 
-void test_for_functions(Car *car) {
+void test_timer_for_functions(Car *car) {
     // ---- no argument
 
     Timer<>::single_shot(33, static_cast<void (*)(void)> (timer_func_start));
@@ -193,7 +193,7 @@ void test_for_functions(Car *car) {
 }
 
 
-void test_for_lambda_functions(Car *car) {
+void test_timer_for_lambda_functions(Car *car) {
     auto lambda_start = []() -> void {
         std::lock_guard<std::mutex> guard(mutex);
         std::cout << "started\n";
@@ -264,15 +264,15 @@ int test_timer() {
     Car car(100);
 
     std::cout << "triggers a class member ------------------------------------------------------------------\n";
-    test_for_members(&car);
+    test_timer_for_members(&car);
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
     std::cout << "\ntriggers a function ------------------------------------------------------------------\n";
-    test_for_functions(&car);
+    test_timer_for_functions(&car);
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
     std::cout << "\ntriggers a lambda function -----------------------------------------------------------\n";
-    test_for_lambda_functions(&car);
+    test_timer_for_lambda_functions(&car);
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
     return EXIT_SUCCESS;
