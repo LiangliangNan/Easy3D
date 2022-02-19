@@ -302,7 +302,7 @@ namespace easy3d {
 
     public: //------------------------------------------------------ iterator types
 
-        /// this class iterates linearly over all vertices
+        /// This class iterates linearly over all vertices
         /// \sa vertices_begin(), vertices_end()
         /// \sa HalfedgeIterator, EdgeIterator, FaceIterator
         class VertexIterator
@@ -354,7 +354,7 @@ namespace easy3d {
         };
 
 
-        /// this class iterates linearly over all halfedges
+        /// This class iterates linearly over all halfedges
         /// \sa halfedges_begin(), halfedges_end()
         /// \sa VertexIterator, EdgeIterator, FaceIterator
         class HalfedgeIterator
@@ -406,7 +406,7 @@ namespace easy3d {
         };
 
 
-        /// this class iterates linearly over all edges
+        /// This class iterates linearly over all edges
         /// \sa edges_begin(), edges_end()
         /// \sa VertexIterator, HalfedgeIterator, FaceIterator
         class EdgeIterator
@@ -458,7 +458,7 @@ namespace easy3d {
         };
 
 
-        /// this class iterates linearly over all faces
+        /// This class iterates linearly over all faces
         /// \sa faces_begin(), faces_end()
         /// \sa VertexIterator, HalfedgeIterator, EdgeIterator
         class FaceIterator
@@ -513,7 +513,7 @@ namespace easy3d {
 
     public: //-------------------------- containers for C++11 range-based for loops
 
-        /// this helper class is a container for iterating through all
+        /// This helper class is a container for iterating through all
         /// vertices using C++11 range-based for-loops.
         /// \sa vertices()
         class VertexContainer
@@ -528,7 +528,7 @@ namespace easy3d {
 
 
 
-        /// this helper class is a container for iterating through all
+        /// This helper class is a container for iterating through all
         /// halfedge using C++11 range-based for-loops.
         /// \sa halfedges()
         class HalfedgeContainer
@@ -543,7 +543,7 @@ namespace easy3d {
 
 
 
-        /// this helper class is a container for iterating through all
+        /// This helper class is a container for iterating through all
         /// edges using C++11 range-based for-loops.
         /// \sa edges()
         class EdgeContainer
@@ -558,7 +558,7 @@ namespace easy3d {
 
 
 
-        /// this helper class is a container for iterating through all
+        /// This helper class is a container for iterating through all
         /// faces using C++11 range-based for-loops.
         /// \sa faces()
         class FaceContainer
@@ -575,9 +575,22 @@ namespace easy3d {
 
     public: //---------------------------------------------------- circulator types
 
-        /// this class circulates through all one-ring neighbors of a vertex.
-        /// it also acts as a container-concept for C++11 range-based for loops.
-        /// \sa HalfedgeAroundVertexCirculator, FaceAroundVertexCirculator, vertices(Vertex)
+        /**
+         * This class circulates through all one-ring neighbors of a vertex.
+         * It also acts as a container-concept for C++11 range-based for loops.
+         *
+         * The follow code shows how to use VertexAroundVertexCirculator:
+         * \code
+         *      SurfaceMesh::VertexAroundVertexCirculator cir(mesh, v);
+         *      SurfaceMesh::VertexAroundVertexCirculator end = cir;
+         *      do {
+         *          SurfaceMesh::Vertex v = *cir;
+         *          // do something with v
+         *          ++cir;
+         *      } while (cir != end);
+         * \endcode
+         * \sa HalfedgeAroundVertexCirculator, FaceAroundVertexCirculator, vertices()
+         */
         class VertexAroundVertexCirculator
         {
         public:
@@ -645,9 +658,22 @@ namespace easy3d {
         };
 
 
-        /// this class circulates through all outgoing halfedges of a vertex.
-        /// it also acts as a container-concept for C++11 range-based for loops.
-        /// \sa VertexAroundVertexCirculator, FaceAroundVertexCirculator, halfedges(Vertex)
+        /**
+         * This class circulates through all outgoing halfedges of a vertex.
+         * It also acts as a container-concept for C++11 range-based for loops.
+         *
+         * The follow code shows how to use HalfedgeAroundVertexCirculator:
+         * \code
+         *      SurfaceMesh::HalfedgeAroundVertexCirculator cir(mesh, v);
+         *      SurfaceMesh::HalfedgeAroundVertexCirculator end = cir;
+         *      do {
+         *          SurfaceMesh::Halfedge h = *cir;
+         *          // do something with h
+         *          ++cir;
+         *      } while (cir != end);
+         * \endcode
+         * \sa VertexAroundVertexCirculator, FaceAroundVertexCirculator, halfedges()
+         */
         class HalfedgeAroundVertexCirculator
         {
         public:
@@ -708,9 +734,22 @@ namespace easy3d {
         };
 
 
-        /// this class circulates through all incident faces of a vertex.
-        /// it also acts as a container-concept for C++11 range-based for loops.
-        /// \sa VertexAroundVertexCirculator, HalfedgeAroundVertexCirculator, faces(Vertex)
+        /**
+         * This class circulates through all incident faces of a vertex.
+         * It also acts as a container-concept for C++11 range-based for loops.
+         *
+         * The follow code shows how to use FaceAroundVertexCirculator:
+         * \code
+         *      SurfaceMesh::FaceAroundVertexCirculator cir(mesh, v);
+         *      SurfaceMesh::FaceAroundVertexCirculator end = cir;
+         *      do {
+         *          SurfaceMesh::Face f = *cir;
+         *          // do something with f
+         *          ++cir;
+         *      } while (cir != end);
+         * \endcode
+         * \sa VertexAroundVertexCirculator, HalfedgeAroundVertexCirculator, faces()
+         */
         class FaceAroundVertexCirculator
         {
         public:
@@ -784,9 +823,22 @@ namespace easy3d {
         };
 
 
-        /// this class circulates through the vertices of a face.
-        /// it also acts as a container-concept for C++11 range-based for loops.
-        /// \sa HalfedgeAroundFaceCirculator, vertices(Face)
+        /**
+         * This class circulates through the vertices of a face.
+         * It also acts as a container-concept for C++11 range-based for loops.
+         *
+         * The follow code shows how to use VertexAroundFaceCirculator:
+         * \code
+         *      SurfaceMesh::VertexAroundFaceCirculator cir = mesh->vertices(f);
+         *      SurfaceMesh::VertexAroundFaceCirculator end = cir;
+         *      do {
+         *          SurfaceMesh::Vertex v = *cir;
+         *          // do something with v
+         *          ++cir;
+         *      } while (cir != end);
+         * \endcode
+         * \sa HalfedgeAroundFaceCirculator, vertices()
+         */
         class VertexAroundFaceCirculator
         {
         public:
@@ -848,9 +900,22 @@ namespace easy3d {
         };
 
 
-        /// this class circulates through all halfedges of a face.
-        /// it also acts as a container-concept for C++11 range-based for loops.
-        /// \sa VertexAroundFaceCirculator, halfedges(Face)
+        /**
+         * This class circulates through all halfedges of a face.
+         * It also acts as a container-concept for C++11 range-based for loops.
+         *
+         * The following code shows how to use HalfedgeAroundFaceCirculator:
+         * \code
+         *      SurfaceMesh::HalfedgeAroundFaceCirculator cir(mesh, f);
+         *      SurfaceMesh::HalfedgeAroundFaceCirculator end = cir;
+         *      do {
+         *          SurfaceMesh::Halfedge h = *cir;
+         *          // do something with h
+         *          ++cir;
+         *      } while (cir != end);
+         * \endcode
+         * \sa VertexAroundFaceCirculator, halfedges()
+         */
         class HalfedgeAroundFaceCirculator
         {
         public:
