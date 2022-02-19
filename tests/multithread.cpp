@@ -37,6 +37,7 @@
 using namespace easy3d;
 
 
+
 void edit_model(PointCloud *cloud, Viewer *viewer) {
     // in this simple example, we add more points (with per point colors) to the point cloud.
     auto colors = cloud->vertex_property<vec3>("v:color");
@@ -83,7 +84,11 @@ int test_multithread() {
     timer.set_interval(300, edit_model, cloud, &viewer);
 
     // stop the timer before exit
-    Timer<>::single_shot(4900, &timer, &Timer<PointCloud*, Viewer*>::stop); // or Timer<>::single_shot(4900, [&]() -> void { timer.stop(); });
+    Timer<>::single_shot(4000, &timer, &Timer<PointCloud*, Viewer*>::stop); // or Timer<>::single_shot(4000, [&]() -> void { timer.stop(); });
+
+    viewer.usage_func_ = []() -> std::string {
+        return "testing multithreading...";
+    };
 
     // exit the viewer after 5 seconds
     Timer<>::single_shot(5000, (Viewer*)&viewer, &Viewer::exit);
