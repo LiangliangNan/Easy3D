@@ -81,7 +81,7 @@ int main(int argc, char* argv[]) {
 
     result += test_console_style();
     result += test_timer();
-//    result += test_signal();
+    result += test_signal();
 
     result += test_linear_solvers();
     result += test_spline();
