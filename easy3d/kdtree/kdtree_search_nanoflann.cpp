@@ -45,9 +45,7 @@ namespace easy3d {
         // Since this is inlined and the "dim" argument is typically an immediate value, the
         //  "if/else's" are actually solved at compile time.
         inline float kdtree_get_pt(const size_t idx, const size_t dim) const {
-            if (dim == 0) return pts->at(idx).x;
-            else if (dim == 1) return pts->at(idx).y;
-            else return pts->at(idx).z;
+            return pts->at(idx)[dim];
         }
 
         // Optional bounding-box computation: return false to default to a standard bbox computation loop.
@@ -58,8 +56,8 @@ namespace easy3d {
     };
 
 
-    struct KdTree : public KDTreeSingleIndexAdaptor< L2_Simple_Adaptor<float, PointSet>, PointSet, 3 > {
-        KdTree(PointSet* pset) : KDTreeSingleIndexAdaptor< L2_Simple_Adaptor<float, PointSet>, PointSet, 3 >(3, *pset, KDTreeSingleIndexAdaptorParams(10)){
+    struct KdTree : public KDTreeSingleIndexAdaptor< L2_Simple_Adaptor<float, PointSet>, PointSet, 3, int> {
+        KdTree(PointSet* pset) : KDTreeSingleIndexAdaptor< L2_Simple_Adaptor<float, PointSet>, PointSet, 3, int >(3, *pset, KDTreeSingleIndexAdaptorParams(10)){
             pset_ = pset;
         }
         ~KdTree() { delete pset_; }
@@ -122,10 +120,10 @@ namespace easy3d {
         const vec3& p, int k, std::vector<int>& neighbors, std::vector<float>& squared_distances
     )  const
     {
-        std::vector<size_t> indices(k);
+        std::vector<int> indices(k);
         std::vector<float>	sqr_distances(k);
 
-        nanoflann::KNNResultSet<float> result_set(k);
+        nanoflann::KNNResultSet<float, int> result_set(k);
         result_set.init(&indices[0], &sqr_distances[0]);
         get_tree(tree_)->findNeighbors(result_set, p, nanoflann::SearchParams(10));
 
@@ -146,7 +144,7 @@ namespace easy3d {
     void KdTreeSearch_NanoFLANN::find_points_in_range(
         const vec3& p, float squared_radius, std::vector<int>& neighbors, std::vector<float>& squared_distances
     )  const {
-        std::vector<std::pair<std::size_t, float> >   matches;
+        std::vector<std::pair<int , float> >   matches;
         nanoflann::SearchParams params;
         params.sorted = false;
         const std::size_t num = get_tree(tree_)->radiusSearch(p, squared_radius, matches, params);
