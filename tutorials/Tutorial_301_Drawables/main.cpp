@@ -149,7 +149,7 @@ int main(int argc, char **argv) {
     return viewer.run();
 }
 
-#elif 0 //  use the built-in drawables of Easy3D, but we provide customized update functions
+#elif 1 //  use the built-in drawables of Easy3D, but we provide customized update functions
 
 int main(int argc, char **argv) {
     // Initialize logging.
@@ -310,10 +310,6 @@ protected:
         update_vertex_buffer(bbox_points);
         // Upload the vertex indices of the bounding box to the GPU.
         update_element_buffer(bbox_indices);
-        // Set a color for the edges of the bounding box (here we want a blue color).
-        set_uniform_coloring(vec4(0.0f, 0.0f, 1.0f, 1.0f));    // r, g, b, a
-        // Set the width of the edges (here 5 pixels).
-        set_line_width(5.0f);
     }
 };
 
@@ -328,16 +324,6 @@ protected:
         const std::vector<vec3> &points = resource::bunny_vertices;
         // Upload the vertex positions to the GPU.
         update_vertex_buffer(points);
-        // Set a color for the vertices (here we want a red color).
-        set_uniform_coloring(vec4(1.0f, 0.0f, 0.0f, 1.0f));  // r, g, b, a
-        // Three options are available for visualizing points:
-        //      - PLAIN: plain points (i.e., each point is a square on the screen);
-        //      - SPHERE: each point is visualized a sphere;
-        //      - SURFEL: each point is visualized an oriented disk.
-        // In this example, let's render the vertices as spheres.
-        set_impostor_type(PointsDrawable::SPHERE);
-        // Set the vertices size (here 10 pixels).
-        set_point_size(10);
     }
 };
 
@@ -369,6 +355,16 @@ int main(int argc, char **argv) {
     auto vertices = new MyPointsDrawable("vertices");
     // Add the drawable to the viewer
     viewer.add_drawable(vertices);
+    // Set a color for the vertices (here we want a red color).
+    vertices->set_uniform_coloring(vec4(1.0f, 0.0f, 0.0f, 1.0f));  // r, g, b, a
+    // Three options are available for visualizing points:
+    //      - PLAIN: plain points (i.e., each point is a square on the screen);
+    //      - SPHERE: each point is visualized a sphere;
+    //      - SURFEL: each point is visualized an oriented disk.
+    // In this example, let's render the vertices as spheres.
+    vertices->set_impostor_type(PointsDrawable::SPHERE);
+    // Set the vertices size (here 10 pixels).
+    vertices->set_point_size(10);
 
     //-------------------------------------------------------------
     // Create a LinesDrawable to visualize the bounding box of the "bunny".
@@ -377,6 +373,10 @@ int main(int argc, char **argv) {
     auto bbox_drawable = new MyLinesDrawable("bbox");
     // Add the drawable to the viewer
     viewer.add_drawable(bbox_drawable);
+    // Set a color for the edges of the bounding box (here we want a blue color).
+    bbox_drawable->set_uniform_coloring(vec4(0.0f, 0.0f, 1.0f, 1.0f));    // r, g, b, a
+    // Set the width of the edges (here 5 pixels).
+    bbox_drawable->set_line_width(5.0f);
 
     //-------------------------------------------------------------
 
