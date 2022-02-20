@@ -47,9 +47,7 @@ int test_depth_maps(int duration) {
     auto drawable = model->renderer()->get_points_drawable("vertices");
     drawable->set_point_size(5);
 
-    viewer.usage_func_ = []() -> std::string {
-        return "testing depth map...";
-    };
+    viewer.usage_string_ = "testing depth map...";
 
     Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();

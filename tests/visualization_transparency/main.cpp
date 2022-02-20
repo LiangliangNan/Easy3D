@@ -49,9 +49,7 @@ int test_transparency(int duration) {
     drawable->set_smooth_shading(true);
     drawable->set_distinct_back_color(false);
 
-    viewer.usage_func_ = []() -> std::string {
-        return "testing transparency...";
-    };
+    viewer.usage_string_ = "testing transparency...";
 
     Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();

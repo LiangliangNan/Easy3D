@@ -35,9 +35,7 @@ int test_real_camera() {
     const std::string bundler_file = resource::directory() + "/data/fountain/bundle.out";
     const std::string cloud_file = resource::directory() + "/data/fountain/pointcloud.ply";
     RealCamera viewer("RealCamera", bundler_file, cloud_file);
-    viewer.usage_func_ = []() -> std::string {
-        return "testing real camera...";
-    };
+    viewer.usage_string_ = "testing real camera...";
 
     Timer<> timer;
     timer.set_interval(500, &viewer, &RealCamera::change_view);

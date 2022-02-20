@@ -104,9 +104,7 @@ int test_drawables(int duration) {
     // Make sure everything is within the visible region of the viewer.
     viewer.fit_screen();
 
-    viewer.usage_func_ = []() -> std::string {
-        return "testing drawables...";
-    };
+    viewer.usage_string_ = "testing drawables...";
 
     Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();

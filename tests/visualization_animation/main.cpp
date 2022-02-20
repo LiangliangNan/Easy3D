@@ -48,9 +48,11 @@ int test_animation(int duration) {
 
     viewer.set_animation(true);
 
+    viewer.usage_string_ = "testing animation...";
+
     // Define an animation function to specify how vertex positions are updated.
     // In this trivial example, we stretch the model along the Z-axis.
-    viewer.animation_func_ = [&](easy3d::Viewer& v) -> bool {
+    viewer.animation_func_ = [&](easy3d::Viewer* v) -> bool {
         (void)v;
 
         // map the vertex buffer into the client's address space
@@ -77,10 +79,6 @@ int test_animation(int duration) {
 
         viewer.update();
         return true;
-    };
-
-    viewer.usage_func_ = []() -> std::string {
-        return "testing animation...";
     };
 
     Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);

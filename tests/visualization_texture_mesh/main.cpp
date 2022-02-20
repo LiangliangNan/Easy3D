@@ -40,9 +40,7 @@ int test_texture_mesh(int duration) {
         return EXIT_FAILURE;
     }
 
-    viewer.usage_func_ = []() -> std::string {
-        return "testing texture mesh...";
-    };
+    viewer.usage_string_ = "testing texture mesh...";
 
     Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();

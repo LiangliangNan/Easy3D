@@ -8,8 +8,6 @@ include(../../cmake/UseOpenMP.cmake)
 
 add_executable(${PROJECT_NAME}
         main.cpp
-        viewer.h
-        viewer.cpp
         )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "tutorials")

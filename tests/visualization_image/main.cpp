@@ -36,9 +36,7 @@ int test_image(int duration) {
 
     ImageViewer viewer("Image", image_file);
 
-    viewer.usage_func_ = []() -> std::string {
-        return "testing image viewer...";
-    };
+    viewer.usage_string_ = "testing image viewer...";
 
     Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();

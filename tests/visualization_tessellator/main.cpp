@@ -152,9 +152,7 @@ int test_tessellator(int duration) {
     // also show the borders
     mesh->renderer()->get_lines_drawable("borders")->set_visible(true);
 
-    viewer.usage_func_ = []() -> std::string {
-        return "testing tessellator...";
-    };
+    viewer.usage_string_ = "testing tessellator...";
 
     Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();

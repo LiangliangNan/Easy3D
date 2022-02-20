@@ -84,9 +84,7 @@ int test_vector_field(int duration) {
     // Also show the standard "edges"
     model->renderer()->get_lines_drawable("edges")->set_visible(true);
 
-    viewer.usage_func_ = []() -> std::string {
-        return "testing vector field...";
-    };
+    viewer.usage_string_ = "testing vector field...";
 
     Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();

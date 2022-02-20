@@ -51,9 +51,7 @@ int test_eye_dome_lighting(int duration) {
     drawable->set_uniform_coloring(vec4(0.6f, 0.6f, 1.0f, 1.0f));
     drawable->set_point_size(5.0f);
 
-    viewer.usage_func_ = []() -> std::string {
-        return "testing eye dome lighting...";
-    };
+    viewer.usage_string_ = "testing eye dome lighting...";
 
     Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();

@@ -39,9 +39,7 @@ int test_face_picker() {
         return EXIT_FAILURE;
     }
 
-    viewer.usage_func_ = []() -> std::string {
-        return "testing face picker...";
-    };
+    viewer.usage_string_ = "testing face picker...";
 
     return viewer.run();
 }

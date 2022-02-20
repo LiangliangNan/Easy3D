@@ -346,14 +346,20 @@ namespace easy3d {
          */
 	    virtual std::string usage() const;
 
-        /// @brief Print usage information to stdout.
-        std::function<std::string()> usage_func_;
+        /// @brief The usage string.
+        std::string usage_string_;
 	    //@}
+
+        /// @name Algorithm execution
+        /// @brief A function that will be triggered by the shortcut 'Ctrl + E'.
+        ///     This function is typically used for applying an algorithm on a model.
+        std::function<bool(Viewer* viewer, Model* model)> execute_func_;
+        //@}
 
 	    /// @name Animation
 	    //@{
-        /// @brief Function called at an equal interval for animation
-        std::function<bool(Viewer& viewer)> animation_func_;
+        /// @brief Function called at an equal interval for animation.
+        std::function<bool(Viewer* viewer)> animation_func_;
 
         /// @brief Enable/Disable animation.
         /// @attention To have animation, \c animation_func_ must be provided to specify how scene geometry is modified.

@@ -24,19 +24,66 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include "viewer.h"
+#include <easy3d/viewer/viewer.h>
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/renderer.h>
+#include <easy3d/renderer/camera.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 
+#include <easy3d/algo/point_cloud_normals.h>
 
 using namespace easy3d;
 
 // This example shows how to
-//		- estimation normal information of a point cloud.
-//      - re-orientation the normals.
+//		- estimate normal information of a point cloud.
+//      - re-orient the normals.
+
+bool reorient(Viewer* viewer, Model* model) {
+    if (!viewer || !model)
+        return false;
+
+    PointCloud *cloud = dynamic_cast<PointCloud *>(model);
+    if (!cloud)
+        return false;
+
+    PointCloudNormals algo;
+    if (algo.reorient(cloud)) {
+        auto normals = cloud->get_vertex_property<vec3>("v:normal");
+        auto drawable = cloud->renderer()->get_points_drawable("vertices");
+        // Upload the vertex normals to the GPU.
+        drawable->update_normal_buffer(normals.vector());
+        viewer->update();
+        return true;
+    }
+    else
+        return false;
+}
+
+bool estimate(Viewer* viewer, Model* model) {
+    if (!viewer || !model)
+        return false;
+
+    PointCloud *cloud = dynamic_cast<PointCloud *>(model);
+    if (!cloud)
+        return false;
+
+    PointCloudNormals algo;
+    if (algo.estimate(cloud)) {
+        auto normals = cloud->get_vertex_property<vec3>("v:normal");
+        auto drawable = cloud->renderer()->get_points_drawable("vertices");
+        // Upload the vertex normals to the GPU.
+        drawable->update_normal_buffer(normals.vector());
+        viewer->update();
+
+        // change the function (to allow using the same shortcut)
+        viewer->execute_func_ = reorient;
+        return true;
+    }
+    else
+        return false;
+}
 
 
 int main(int argc, char **argv) {
@@ -46,18 +93,28 @@ int main(int argc, char **argv) {
     const std::string file = resource::directory() + "/data/bunny.bin";
 
     // Create the viewer.
-    TutorialNormalEstimation viewer("Tutorial_601_Cloud_NormalEstimation");
+    Viewer viewer("Tutorial_601_Cloud_NormalEstimation");
 
     Model *model = viewer.add_model(file, true);
     if (!model) {
         LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
         return EXIT_FAILURE;
     }
+    // to view the bunny from its front
+    viewer.camera()->setUpVector(vec3(0, 1, 0));
+    viewer.camera()->setViewDirection(vec3(1, 0, 0));
 
+    // setup rendering parameters
     auto drawable = model->renderer()->get_points_drawable("vertices");
     drawable->set_uniform_coloring(vec4(0.6f, 0.6f, 1.0f, 1.0f));
-    drawable->set_point_size(5.0f);
+    drawable->set_point_size(3.0f);
     drawable->set_lighting_two_sides(false);
+
+    // usage hint
+    viewer.usage_string_ = "press 'Ctrl + e' to estimate normals (on Mac 'Command + e')\n"
+                           "press it again to re-orient the normals";
+    // set up the function to be executed
+    viewer.execute_func_ = estimate;
 
     // Run the viewer
     return viewer.run();

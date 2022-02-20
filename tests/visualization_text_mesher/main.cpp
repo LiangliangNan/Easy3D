@@ -86,9 +86,7 @@ int test_text_mesher(int duration) {
     viewer.camera()->setViewDirection(vec3(0, 0, -1));
     viewer.camera()->setUpVector(vec3(0, 1, 0));
 
-    viewer.usage_func_ = []() -> std::string {
-        return "testing text mesher...";
-    };
+    viewer.usage_string_ = "testing text mesher...";
 
     Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();

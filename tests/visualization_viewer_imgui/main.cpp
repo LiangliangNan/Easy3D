@@ -43,9 +43,7 @@ int test_viewer_imgui(int duration) {
         return EXIT_FAILURE;
     }
 
-    viewer.usage_func_ = []() -> std::string {
-        return "testing imgui viewer...";
-    };
+    viewer.usage_string_ = "testing imgui viewer...";
 
     viewer.resize(800, 600);
 

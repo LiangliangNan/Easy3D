@@ -104,9 +104,7 @@ int test_composite_view(int duration) {
     sphere_vertices->set_point_size(15);
     viewer.assign(1, 1, sphere_vertices);
 
-    viewer.usage_func_ = []() -> std::string {
-        return "testing composite view...";
-    };
+    viewer.usage_string_ = "testing composite view...";
 
     Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
 
