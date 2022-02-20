@@ -79,6 +79,9 @@ namespace easy3d {
         void cleanup() override;
         void draw() const override;
 
+        // overloaded, so mouse positions are relative to the current view
+        bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;
+
         void draw_division() const;
         void update_division();
 
@@ -96,6 +99,9 @@ namespace easy3d {
         ShaderProgram *lines_program_;
         unsigned int division_vertex_buffer_;
         bool division_visible_;
+
+        int view_width_;    // the width of the views
+        int view_height_;   // the height of the views
     };
 
 }

@@ -36,6 +36,17 @@
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/manipulated_camera_frame.h>
+
+#include <3rd_party/glfw/include/GLFW/glfw3.h>    // Include glfw3.h after our OpenGL definitions
+
+// To have the same shortcut behavior on macOS and other platforms (i.e., Windows, Linux)
+#ifdef __APPLE__
+#define EASY3D_MOD_CONTROL GLFW_MOD_SUPER
+#else
+#define EASY3D_MOD_CONTROL GLFW_MOD_CONTROL
+#endif
+
 
 namespace easy3d {
 
@@ -53,6 +64,10 @@ namespace easy3d {
         views_.resize(num_rows_);
         for (auto &row: views_)
             row.resize(num_cols_);
+
+        // initialized to window size
+        view_width_ = width_;
+        view_height_ = height_;
     }
 
 
@@ -216,16 +231,16 @@ namespace easy3d {
         glGetIntegerv(GL_VIEWPORT, viewport);
         const int w = viewport[2];
         const int h = viewport[3];
-        const int size_x = int(w / float(num_cols_));
-        const int size_y = int(h / float(num_rows_));
+        view_width_ = int(w / float(num_cols_));
+        view_height_ = int(h / float(num_rows_));
         // This is required to ensure a correct aspect ratio (thus the correct projection matrix)
-        camera()->setScreenWidthAndHeight(size_x, size_y);
+        camera()->setScreenWidthAndHeight(view_width_, view_height_);
 
         for (std::size_t i = 0; i < num_rows_; ++i) {
             auto &row = views_[i];
-            const float y = h - (i + 1) * size_y;
+            const float y = h - (i + 1) * view_height_;
             for (std::size_t j = 0; j < num_cols_; ++j)
-                row[j].viewport = ivec4(j * size_x, y, size_x, size_y);
+                row[j].viewport = ivec4(j * view_width_, y, view_width_, view_height_);
         }
 
         // ------------------------------------------------------------
@@ -233,18 +248,47 @@ namespace easy3d {
         // Note: we need NDC
         std::vector<vec2> points;
         for (std::size_t i = 1; i < num_rows_; ++i) {
-            const float y = 2.0f * i * size_y / h - 1.0f;
+            const float y = 2.0f * i * view_height_ / h - 1.0f;
             points.emplace_back(vec2(-1.0f, y));
             points.emplace_back(vec2(1.0f, y));
         }
         for (std::size_t i = 1; i < num_cols_; ++i) {
-            const float x = 2.0f * i * size_x / w - 1.0f;
+            const float x = 2.0f * i * view_width_ / w - 1.0f;
             points.emplace_back(vec2(x, -1.0f));
             points.emplace_back(vec2(x, 1.0f));
         }
         division_vao_->create_array_buffer(division_vertex_buffer_, ShaderProgram::POSITION, points.data(),
                                            points.size() * sizeof(vec2), 2, true);
         easy3d_debug_log_gl_error;
+    }
+
+
+    bool CompViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
+        // make the mouse position relative to the current view
+        x %= view_width_;
+        y %= view_height_;
+
+        // control modifier is reserved for zooming on region
+        if (modifiers != EASY3D_MOD_CONTROL) {
+            auto axis = ManipulatedFrame::NONE;
+            if (pressed_key_ == GLFW_KEY_X) axis = ManipulatedFrame::HORIZONTAL;
+            else if (pressed_key_ == GLFW_KEY_Y) axis = ManipulatedFrame::VERTICAL;
+            else if (pressed_key_ == GLFW_KEY_O) axis = ManipulatedFrame::ORTHOGONAL;
+            switch (button) {
+                case GLFW_MOUSE_BUTTON_LEFT:
+                    camera_->frame()->action_rotate(x, y, dx, dy, camera_, axis);
+                    break;
+                case GLFW_MOUSE_BUTTON_RIGHT:
+                    camera_->frame()->action_translate(x, y, dx, dy, camera_, axis);
+                    break;
+                case GLFW_MOUSE_BUTTON_MIDDLE:
+                    if (std::abs(dy) >= 1)
+                        camera_->frame()->action_zoom(dy > 0 ? 1 : -1, camera_);
+                    break;
+            }
+        }
+
+        return false;
     }
 
 }
