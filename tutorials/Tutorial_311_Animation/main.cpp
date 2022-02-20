@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
 
     // Define an animation function to specify how vertex positions are updated.
     // In this trivial example, we stretch the model along the Z-axis.
-    viewer.animation_func_ = [&](easy3d::Viewer& v) -> bool {
+    viewer.animation_func_ = [&](easy3d::Viewer* v) -> bool {
         (void)v;
 
         // map the vertex buffer into the client's address space
