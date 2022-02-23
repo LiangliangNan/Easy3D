@@ -160,8 +160,8 @@ void DialogPointCloudSimplification::apply() {
         }
 
         int old_num = cloud->n_vertices();
-        for (auto id : points_to_remove_)
-            cloud->delete_vertex(PointCloud::Vertex(id));
+        for (auto v : points_to_remove_)
+            cloud->delete_vertex(v);
 
         cloud->collect_garbage();
 
