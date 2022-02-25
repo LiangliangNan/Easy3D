@@ -75,7 +75,7 @@ namespace easy3d {
 			context_ = ImGui::CreateContext();
 
 			const char* glsl_version = "#version 150";
-			ImGui_ImplGlfw_InitForOpenGL(window_, false);
+			ImGui_ImplGlfw_InitForOpenGL(window_, true);
 			ImGui_ImplOpenGL3_Init(glsl_version);
 			ImGuiIO& io = ImGui::GetIO();
             io.WantCaptureKeyboard = true;
