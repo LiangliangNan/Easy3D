@@ -57,6 +57,11 @@ namespace easy3d {
 
 
     void TrianglesDrawable::draw(const Camera *camera) const {
+        if (update_needed_ || vertex_buffer_ == 0) {
+            const_cast<TrianglesDrawable *>(this)->update_buffers_internal();
+            const_cast<TrianglesDrawable *>(this)->update_needed_ = false;
+        }
+
         ShaderProgram *program = ShaderManager::get_program("surface/surface");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes = {

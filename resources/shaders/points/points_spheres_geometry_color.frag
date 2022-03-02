@@ -89,8 +89,12 @@ void main()
 
 		if (!lighting) {
 			outputF = DataIn.sphere_color;
+			if (highlight) {
+				if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
+					outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.8);
+			}
 			if (selected)
-			outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
+				outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
 			return;
 		}
 
@@ -137,8 +141,12 @@ void main()
 
 		if (!lighting) {
 			outputF = DataIn.sphere_color;
+			if (highlight) {
+				if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
+					outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.8);
+			}
 			if (selected)
-			outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
+				outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
 			return;
 		}
 
@@ -159,7 +167,7 @@ void main()
 		vec3 color = DataIn.sphere_color.xyz;
 		if (highlight) {
 			if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
-			color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
+				color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
 		}
 
 		outputF = vec4(color * df + specular * sf + ambient, DataIn.sphere_color.a);

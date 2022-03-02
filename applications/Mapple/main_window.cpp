@@ -1034,6 +1034,8 @@ void MainWindow::operationModeChanged(QAction* act) {
     if (act == ui->actionSelectClick) {
         if (dynamic_cast<SurfaceMesh *>(viewer()->currentModel()))
             tool_manager->set_tool(tools::ToolManager::SELECT_SURFACE_MESH_FACE_CLICK_TOOL);
+        else if (dynamic_cast<PointCloud *>(viewer()->currentModel()))
+            tool_manager->set_tool(tools::ToolManager::SELECT_POINT_CLOUD_CLICK_TOOL);
     }
     else if (act == ui->actionSelectRect) {
         if (dynamic_cast<SurfaceMesh *>(viewer()->currentModel()))

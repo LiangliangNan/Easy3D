@@ -28,12 +28,13 @@
 #define EASY3D_GUI_TOOL_SELECTION_POINT_CLOUD_H
 
 #include <tools/tool.h>
-#include <easy3d/core/types.h>
+#include <easy3d/core/point_cloud.h>
 
 
 namespace easy3d {
 
     class PointCloud;
+    class ModelPicker;
     class PointCloudPicker;
     
     namespace tools {
@@ -44,9 +45,25 @@ namespace easy3d {
         public:
             ToolPointCloudSelection(ToolManager *mgr);
             virtual ~ToolPointCloudSelection() {}
-            std::string name() const { return "PointCloudSelect"; }
 
             void update_render_buffer(PointCloud* cloud) const;
+        };
+
+        // -------------------- Click Select ----------------------
+
+        class ToolPointCloudSelectionClick : public ToolPointCloudSelection {
+        public:
+            ToolPointCloudSelectionClick(ToolManager *mgr, PointCloudPicker *picker, SelectMode mode = SM_SELECT);
+            virtual ~ToolPointCloudSelectionClick();
+
+            virtual void press(int x, int y);
+
+            PointCloud* multiple_pick(PointCloud::Vertex& v, int x, int y);
+
+        protected:
+            ModelPicker *model_picker_;
+            PointCloudPicker *picker_;
+            SelectMode select_mode_;
         };
 
         // -------------------- Rect Select ----------------------
@@ -81,6 +98,25 @@ namespace easy3d {
 
 
         //_____________________________________________________
+
+        // (message, "btn1: select point; btn3: deselect point");
+        class MultitoolPointCloudSelectionClick : public MultiTool {
+        public:
+            MultitoolPointCloudSelectionClick(ToolManager *mgr);
+            ~MultitoolPointCloudSelectionClick();
+
+            void prepare_hint(ToolButton button, int x, int y) override;
+            void clear_hint() override;
+            void draw_hint() const override {} //I will draw the highlighted vertex using shader
+
+            std::string instruction() const override {
+                return "Left: select; Right: deselect";
+            }
+
+        protected:
+            PointCloudPicker *picker_;
+        };
+
 
         // (message, "btn1: select point; btn3: deselect point");
         class MultitoolPointCloudSelectionRect : public MultiTool {

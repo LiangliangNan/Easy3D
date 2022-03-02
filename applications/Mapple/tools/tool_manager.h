@@ -49,6 +49,7 @@ namespace easy3d {
                 SELECT_SURFACE_MESH_FACE_LASSO_TOOL,
 
                 //------------------- Point Cloud Vertices Select Tools ---------------------
+                SELECT_POINT_CLOUD_CLICK_TOOL,
                 SELECT_POINT_CLOUD_LASSO_TOOL,
                 SELECT_POINT_CLOUD_RECT_TOOL,
 

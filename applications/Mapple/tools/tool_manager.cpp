@@ -66,7 +66,9 @@ namespace easy3d {
                     break;
 
                     //------------------- Point Cloud Vertices Select Tools ---------------------
-
+                case SELECT_POINT_CLOUD_CLICK_TOOL:
+                    tool = new MultitoolPointCloudSelectionClick(this);
+                    break;
                 case SELECT_POINT_CLOUD_RECT_TOOL:
                     tool = new MultitoolPointCloudSelectionRect(this);
                     break;
@@ -102,7 +104,7 @@ namespace easy3d {
 
 
         void ToolManager::set_tool(ToolName name) {
-            ToolMap::iterator it = tools_.find(name);
+            auto it = tools_.find(name);
             if (it == tools_.end() && name != EMPTY_TOOL) {
                 MultiTool *tool = create_new_tool(name);
                 if (tool)

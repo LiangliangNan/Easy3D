@@ -71,8 +71,12 @@ void main()
 
     if (!lighting) {
         fragmentColor = FragmentIn.color;
+        if (highlight) {
+            if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
+                fragmentColor = mix(fragmentColor, vec4(1.0, 0.0, 0.0, 1.0), 0.8);
+        }
         if (selected)
-        fragmentColor = mix(fragmentColor, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
+            fragmentColor = mix(fragmentColor, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
         return;
     }
 

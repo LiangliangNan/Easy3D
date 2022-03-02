@@ -64,7 +64,7 @@ void main(void) {
             outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
         if (highlight) {
             if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
-            outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.8);
+                outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.8);
         }
         return;
     }

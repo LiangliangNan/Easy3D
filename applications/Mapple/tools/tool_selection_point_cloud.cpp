@@ -29,6 +29,7 @@
 #include <tools/tool_manager.h>
 #include <tools/canvas.h>
 
+#include <easy3d/gui/picker_model.h>
 #include <easy3d/gui/picker_point_cloud.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_points.h>
@@ -69,6 +70,51 @@ namespace easy3d {
             }
         }
 
+
+        // -------------------- Click Select ----------------------
+
+        ToolPointCloudSelectionClick::ToolPointCloudSelectionClick(ToolManager *mgr, PointCloudPicker *picker, SelectMode mode)
+                : ToolPointCloudSelection(mgr)
+                , picker_(picker)
+                , select_mode_(mode)
+        {
+            model_picker_ = new ModelPicker(mgr->viewer()->camera());
+        }
+
+
+        ToolPointCloudSelectionClick::~ToolPointCloudSelectionClick() {
+            if (model_picker_)
+                delete model_picker_;
+        }
+
+
+        void ToolPointCloudSelectionClick::press(int x, int y) {
+            PointCloud::Vertex picked_vertex = PointCloud::Vertex();
+
+            PointCloud *cloud = multiple_pick(picked_vertex, x, y);
+            if (cloud && picked_vertex.is_valid()) {
+                auto selected = cloud->vertex_property<bool>("v:select");
+                // finer check to avoid unnecessary buffer update
+                if (selected[picked_vertex] != (select_mode_ != SM_DESELECT)) {
+                    selected[picked_vertex] = (select_mode_ != SM_DESELECT);
+                    update_render_buffer(cloud);
+                }
+            }
+        }
+
+
+        PointCloud *ToolPointCloudSelectionClick::multiple_pick(PointCloud::Vertex& vertex, int x, int y) {
+            vertex = PointCloud::Vertex();
+
+            Model *model = model_picker_->pick(tool_manager()->viewer()->models(), x, y);
+            PointCloud *picked_cloud = dynamic_cast<PointCloud *>(model);
+            if (!picked_cloud)
+                return nullptr;
+
+            vertex = picker_->pick_vertex(picked_cloud, x, y);
+            return picked_cloud;
+        }
+
         // -------------------- Rect Select ----------------------
 
         ToolPointCloudSelectionRect::ToolPointCloudSelectionRect(ToolManager *mgr, PointCloudPicker *picker, SelectMode mode)
@@ -91,6 +137,45 @@ namespace easy3d {
                 if (cloud && cloud->renderer()->is_visible()) {
                     picker_->pick_vertices(cloud, Rect(start_, vec2(x, y)), select_mode_ != SM_SELECT);
                     update_render_buffer(cloud);
+                }
+            }
+        }
+
+
+
+        MultitoolPointCloudSelectionClick::MultitoolPointCloudSelectionClick(ToolManager *mgr)
+                : MultiTool(mgr) {
+            picker_ = new PointCloudPicker(mgr->viewer()->camera());
+            set_tool(LEFT_BUTTON, new ToolPointCloudSelectionClick(mgr, picker_, SM_SELECT));
+            set_tool(RIGHT_BUTTON, new ToolPointCloudSelectionClick(mgr, picker_, SM_DESELECT));
+        }
+
+
+        MultitoolPointCloudSelectionClick::~MultitoolPointCloudSelectionClick() {
+            delete picker_;
+        }
+
+
+        void MultitoolPointCloudSelectionClick::prepare_hint(ToolButton button, int x, int y) {
+            clear_hint();
+            if (button == NO_BUTTON && picker_) {
+                PointCloud::Vertex vertex;
+                auto cloud = dynamic_cast<ToolPointCloudSelectionClick *>(get_tool(LEFT_BUTTON))->multiple_pick(vertex, x, y);
+                if (cloud && vertex.is_valid()) {
+                    auto drawable = cloud->renderer()->get_points_drawable("vertices");
+                    drawable->set_highlight(true);
+                    drawable->set_highlight_range({vertex.idx(), vertex.idx()});
+                }
+            }
+        }
+
+        void MultitoolPointCloudSelectionClick::clear_hint() {
+            for (auto model : tool_manager()->viewer()->models()) {
+                auto cloud = dynamic_cast<PointCloud *>(model);
+                if (cloud) {
+                    auto drawable = cloud->renderer()->get_points_drawable("vertices");
+                    drawable->set_highlight(false);
+                    drawable->set_highlight_range({-1, -1});
                 }
             }
         }

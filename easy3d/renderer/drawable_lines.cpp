@@ -53,6 +53,11 @@ namespace easy3d {
 
 
     void LinesDrawable::draw(const Camera *camera /* = false */) const {
+        if (update_needed_ || vertex_buffer_ == 0) {
+            const_cast<LinesDrawable *>(this)->update_buffers_internal();
+            const_cast<LinesDrawable *>(this)->update_needed_ = false;
+        }
+
         switch (impostor_type_) {
             case PLAIN:
                 if (texture() && (coloring_method() == State::SCALAR_FIELD || coloring_method() == State::TEXTURED))
