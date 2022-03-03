@@ -175,30 +175,41 @@ namespace easy3d {
                     const std::string &name = vec3_properties[j].name;
 
                     std::string names[3];
-                    if (name == "point") {
-                        names[0] = "x";
-                        names[1] = "y";
-                        names[2] = "z";
-                    } else if (name == "normal") {
-                        names[0] = "nx";
-                        names[1] = "ny";
-                        names[2] = "nz";
-                    } else if (name == "color") {
-                        names[0] = "r";
-                        names[1] = "g";
-                        names[2] = "b";
+                    if (name == "color") {
+                        // save colors in unsigned char format (use "r", "g", "b" in case of float values in [0, 1])
+                        names[0] = "red";
+                        names[1] = "green";
+                        names[2] = "blue";
+                        for (std::size_t k = 0; k < 3; ++k) {
+                            if (!ply_add_property(ply, names[k].data(), PLY_UCHAR, length_type, PLY_UINT8)) {
+                                LOG(ERROR) << "failed to add float property '" << names[k] << "' for element '"
+                                           << element_name << "'";
+                                ply_close(ply);
+                                return false;
+                            }
+                        }
                     } else {
-                        names[0] = name + "_x";
-                        names[1] = name + "_y";
-                        names[2] = name + "_z";
-                    }
+                        if (name == "point") {
+                            names[0] = "x";
+                            names[1] = "y";
+                            names[2] = "z";
+                        } else if (name == "normal") {
+                            names[0] = "nx";
+                            names[1] = "ny";
+                            names[2] = "nz";
+                        } else {
+                            names[0] = name + "_x";
+                            names[1] = name + "_y";
+                            names[2] = name + "_z";
+                        }
 
-                    for (std::size_t k = 0; k < 3; ++k) {
-                        if (!ply_add_property(ply, names[k].data(), PLY_FLOAT, length_type, PLY_FLOAT)) {
-                            LOG(ERROR) << "failed to add float property '" << names[k] << "' for element '"
-                                       << element_name << "'";
-                            ply_close(ply);
-                            return false;
+                        for (std::size_t k = 0; k < 3; ++k) {
+                            if (!ply_add_property(ply, names[k].data(), PLY_FLOAT, length_type, PLY_FLOAT)) {
+                                LOG(ERROR) << "failed to add float property '" << names[k] << "' for element '"
+                                           << element_name << "'";
+                                ply_close(ply);
+                                return false;
+                            }
                         }
                     }
                 }
@@ -278,9 +289,19 @@ namespace easy3d {
                     for (std::size_t k = 0; k < vec3_properties.size(); ++k) {
                         const std::vector<vec3> &values = vec3_properties[k];
                         const vec3 &v = values[j];
-                        ply_write(ply, static_cast<double>(v.x));
-                        ply_write(ply, static_cast<double>(v.y));
-                        ply_write(ply, static_cast<double>(v.z));
+
+                        const std::string &name = vec3_properties[k].name;
+                        if (name == "color") {
+                            // save colors in unsigned char format
+                            ply_write(ply, static_cast<unsigned char>(v.x * 255));
+                            ply_write(ply, static_cast<unsigned char>(v.y * 255));
+                            ply_write(ply, static_cast<unsigned char>(v.z * 255));
+                        }
+                        else {
+                            ply_write(ply, static_cast<double>(v.x));
+                            ply_write(ply, static_cast<double>(v.y));
+                            ply_write(ply, static_cast<double>(v.z));
+                        }
                     }
 
                     const std::vector<Vec2Property> &vec2_properties = elements[i].vec2_properties;
