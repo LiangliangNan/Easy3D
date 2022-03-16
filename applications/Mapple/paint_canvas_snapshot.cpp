@@ -133,7 +133,7 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
 
     int count = 0;
 #ifdef SHOW_PROGRESS
-    ProgressLogger progress(nbX * nbY * 1.1f, false, false); // the extra 0.1 is for saving the "big" image (time consuming)
+    ProgressLogger progress(nbX * nbY * 1.1f, false, false); // the extra 0.1 is for saving the "big" image (time-consuming)
 #endif
     for (int i = 0; i < nbX; i++) {
         for (int j = 0; j < nbY; j++) {

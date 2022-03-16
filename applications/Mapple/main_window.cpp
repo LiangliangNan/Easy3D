@@ -220,11 +220,11 @@ void MainWindow::notify(std::size_t percent, bool update_viewer) {
     if (update_viewer)
         viewer_->update();
 
-    // Force to update UI.
+    // Force updating UI.
     // This approach has significant drawbacks. For example, imagine you wanted to perform two such loops
     // in parallel-calling one of them would effectively halt the other until the first one is finished
     // (so you can't distribute computing power among different tasks). It also makes the application react
-    // with delays to events. Furthermore the code is difficult to read and analyze, therefore this solution
+    // with delays to events. Furthermore, the code is difficult to read and analyze, therefore this solution
     // is only suited for short and simple problems that are to be processed in a single thread, such as
     // splash screens and the monitoring of short operations.
     QApplication::processEvents();
