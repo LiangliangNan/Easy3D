@@ -34,8 +34,6 @@ namespace easy3d {
 
 	namespace io {
 
-        /// TODO: Translator implemented using "float", but "double" might be necessary for models with large coordinates
-
         namespace details {
 
 			template <typename PropertyT>
@@ -158,7 +156,7 @@ namespace easy3d {
                 const dvec3 &origin = Translator::instance()->translation();
 
                 for (auto p: coordinates)
-                    graph->add_vertex(vec3(p.x - origin.x, p.y - origin.y, p.z + origin.z));
+                    graph->add_vertex(vec3(p.x - origin.x, p.y - origin.y, p.z - origin.z));
 
                 auto trans = graph->add_model_property<dvec3>("translation", dvec3(0, 0, 0));
                 trans[0] = origin;
