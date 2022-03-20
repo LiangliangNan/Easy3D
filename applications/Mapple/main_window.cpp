@@ -420,7 +420,8 @@ void MainWindow::loadModelTranslateChanged(QAction* act) {
     }
     else if (act == ui->actionTranslateUseLastKnownVertex) {
         Translator::instance()->set_status(Translator::TRANSLATE_USE_LAST_KNOWN_OFFSET);
-        LOG(INFO) << "translation with respect to last know vertex in file IO";
+        const dvec3 &origin = Translator::instance()->translation();
+        LOG(INFO) << "translation with respect to last know vertex (" << origin << ") in file IO";
     }
 }
 
