@@ -377,7 +377,6 @@ namespace easy3d {
             group.color_ = color;
         }
 
-        /// TODO: Translator implemented using "float", but "double" might be necessary for models with large coordinates
 
         bool PointCloudIO_vg::load_bvg(const std::string& file_name, PointCloud* cloud) {
             std::ifstream input(file_name.c_str(), std::fstream::binary);

@@ -37,7 +37,6 @@ namespace easy3d {
 
 	namespace io {
 
-        /// TODO: Translator implemented using "float", but "double" might be necessary for models with large coordinates
 
 		// three blocks storing points, colors (optional), and normals (optional)
 		bool load_bin(const std::string& file_name, PointCloud* cloud) {

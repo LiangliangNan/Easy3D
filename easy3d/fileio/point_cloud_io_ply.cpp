@@ -36,8 +36,6 @@ namespace easy3d {
 
 	namespace io {
 
-        /// TODO: Translator implemented using "float", but "double" might be necessary for models with large coordinates
-
         namespace details {
 
 			template <typename T, typename PropertyT>
