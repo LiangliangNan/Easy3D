@@ -559,6 +559,11 @@ namespace easy3d {
     }
 
 
+    void Viewer::set_position(int xpos, int ypos) {
+        glfwSetWindowPos(window_, xpos, ypos);
+    }
+
+
     void Viewer::resize(int w, int h) {
 #ifndef __APPLE__
         w = static_cast<int>(w * dpi_scaling());

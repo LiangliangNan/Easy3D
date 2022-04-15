@@ -132,6 +132,16 @@ namespace easy3d {
         int height() const { return height_; }
 
         /**
+         * @brief Sets the position of the content area of the viewer.
+         * @details This function sets the position, in screen coordinates, of the upper-left corner of the content
+         *      area of the viewer. If the viewer is a full screen window, this function does nothing.
+         *  @param xpos The x-coordinate of the upper-left corner of the content area.
+         *  @param ypos The y-coordinate of the upper-left corner of the content area.
+         *  @note This function must only be called from the main thread.
+         */
+        void set_position(int xpos, int ypos);
+
+        /**
          * @brief Query the actual samples of the viewer.
          * @note The requested sample may not be supported by the context or graphics driver. This
          *       method returns the actual samples that the viewer supports.
