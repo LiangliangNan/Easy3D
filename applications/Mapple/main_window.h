@@ -115,6 +115,7 @@ public slots:
     void computeHeightField();
     void computeSurfaceMeshCurvatures();
     void reportTopologyStatistics();
+    void generateColorPropertyFromIndexedColors();
 
     // edit
     void translationalRecenter();

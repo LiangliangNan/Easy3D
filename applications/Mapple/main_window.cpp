@@ -83,6 +83,7 @@
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/stop_watch.h>
+#include <easy3d/util/line_stream.h>
 
 #include "paint_canvas.h"
 #include "walk_through.h"
@@ -559,6 +560,90 @@ Model* MainWindow::open(const std::string& file_name) {
 }
 
 
+void MainWindow::generateColorPropertyFromIndexedColors() {
+    const QString& fileName = QFileDialog::getOpenFileName(
+            this,
+            "Open file",
+            curDataDirectory_,
+            "Indexed colors (*.ic)\n"
+            "All formats (*.*)"
+    );
+    if (fileName.isEmpty())
+        return;
+    // Hide closed dialog
+    QApplication::processEvents();
+
+    std::ifstream input(fileName.toStdString().c_str());
+    if (input.fail())
+        return;
+
+    // I want to handle skip lines and comments starting with '#'
+    auto get_line = [](io::LineInputStream &in) -> void {
+        in.get_line();
+        const char *p = in.current_line().c_str();
+        while (!in.eof() && (
+                (strlen(p) == 0 || !isprint(*p)) || // empty line
+                (strlen(p) > 0 && p[0] == '#')
+        )) {
+            in.get_line();
+            p = in.current_line().c_str();
+        }
+    };
+
+    std::unordered_map<int, vec3> indexed_colors;
+    io::LineInputStream line_input(input);
+    int location = -1; // 0: vertex, 1: face
+    std::string attribute_name;
+    while (!line_input.eof()) {
+        get_line(line_input);
+        const std::string current_line = line_input.current_line();
+        if (current_line.empty())
+            continue;
+        if (current_line[0] == 'v' || current_line[1] == ':') {
+            location = 0;
+            line_input >> attribute_name;
+        }
+        else if (current_line[0] == 'f' || current_line[1] == ':') {
+            location = 1;
+            line_input >> attribute_name;
+        }
+        else {
+            int index;
+            vec3 color;
+            line_input >> index >> color;
+            if (!line_input.fail())
+                indexed_colors[index] = color / 255.0f;
+        }
+    }
+
+    if (location == 0) {
+        if (dynamic_cast<PointCloud*>(viewer_->currentModel())) {
+            PointCloud* cloud = dynamic_cast<PointCloud*>(viewer_->currentModel());
+            auto indices = cloud->get_vertex_property<int>(attribute_name);
+            if (indices) {
+                const std::string color_name = "v:color_indexed";
+                auto colors = cloud->vertex_property<vec3>(color_name);
+                for (auto v : cloud->vertices()) {
+                    colors[v] = indexed_colors[indices[v]];
+                }
+                updateUi();
+                LOG(INFO) << "color property '" << color_name << "' has been generated";
+            }
+        }
+        else if (dynamic_cast<SurfaceMesh*>(viewer_->currentModel())) {
+            LOG(INFO) << "applying indexed colors on vertices";
+            LOG(WARNING) << "not implemented yet... Please remind Liangliang to implement it";
+        }
+    }
+    else if (location == 1) {
+        LOG(INFO) << "applying indexed colors on faces";
+        LOG(WARNING) << "not implemented yet... Please remind Liangliang to implement it";
+    }
+    else
+        LOG(WARNING) << "unknown location of the indexed colors";
+}
+
+
 void MainWindow::updateUi() {
     const Model* model = viewer_->currentModel();
     if (model) {
@@ -864,7 +949,6 @@ void MainWindow::createActionsForFileMenu() {
 
     connect(ui->actionOpen, SIGNAL(triggered()), this, SLOT(onOpen()));
     connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(onSave()));
-
     actionSeparator = ui->menuFile->addSeparator();
 
     QList<QAction*> actions;
@@ -942,6 +1026,8 @@ void MainWindow::createActionsForEditMenu() {
     connect(ui->actionAddGaussianNoise, SIGNAL(triggered()), this, SLOT(addGaussianNoise()));
     connect(ui->actionApplyManipulatedTransformation, SIGNAL(triggered()), this, SLOT(applyManipulatedTransformation()));
     connect(ui->actionGiveUpManipulatedTransformation, SIGNAL(triggered()), this, SLOT(giveUpManipulatedTransformation()));
+
+    connect(ui->actionGenerateColorPropertyFromIndexedColors, SIGNAL(triggered()), this, SLOT(generateColorPropertyFromIndexedColors()));
 }
 
 

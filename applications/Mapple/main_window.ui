@@ -123,6 +123,8 @@
     <addaction name="actionComputeHeightField"/>
     <addaction name="actionComputeSurfaceMeshCurvatures"/>
     <addaction name="separator"/>
+    <addaction name="actionGenerateColorPropertyFromIndexedColors"/>
+    <addaction name="separator"/>
     <addaction name="actionTopologyStatistics"/>
    </widget>
    <widget class="QMenu" name="menuSurfaceMesh">
@@ -1223,6 +1225,11 @@
    </property>
    <property name="text">
     <string>No translation</string>
+   </property>
+  </action>
+  <action name="actionGenerateColorPropertyFromIndexedColors">
+   <property name="text">
+    <string>Generate color property from indexed colors</string>
    </property>
   </action>
  </widget>
