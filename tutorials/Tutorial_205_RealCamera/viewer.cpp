@@ -154,6 +154,7 @@ bool RealCamera::KRT_to_camera(int view_index, Camera* c, bool ground_truth) {
     const CameraPara& cam = views_[view_index];
 
     if (ground_truth) {
+        // R: rotation matrix of world frame in camera frame
         const quat q(inverse(cam.R));  // the inverse rotation represented by a quaternion
         c->setOrientation(q);
         c->setPosition(-q.rotate(cam.t));    // camera position: -inverse(rot) * t
@@ -193,6 +194,17 @@ void RealCamera::update_cameras_drawable(bool ground_truth)
         for (auto& p : points)
             vertices.push_back(m * p);
     }
+
+#if 0 // add a ray originating from the camera center and pointing to the image center
+    const CameraPara& cam = views_[current_view_];
+    const float image_x = cam.w * 0.5f;
+    const float image_y = cam.h * 0.5f;
+    const vec3 pos = camera_pos(cam.R, cam.t);
+    const vec3 dir = pixel_to_ray(image_x, image_y, cam.fx, cam.fy, 0, cam.cx, cam.cy, cam.R, cam.t, true);
+    vertices.push_back(pos);
+    vertices.push_back(pos + dir);
+#endif
+
     cameras_drwable_->update_vertex_buffer(vertices);
 }
 
@@ -222,4 +234,35 @@ void RealCamera::post_draw() {
     const Rect quad(20 * dpi_scaling(), (20 + tex_w) * dpi_scaling(), 40 * dpi_scaling(), (40 + tex_h) * dpi_scaling());
     shapes::draw_quad_filled(quad, texture_->id(), w, h, -0.9f);
     shapes::draw_quad_wire(quad, vec4(1.0f, 0.0f, 0.0f, 1.0f), w, h, -0.99f);
+}
+
+
+vec3 RealCamera::camera_pos(const mat3 &R, const vec3 &t) {
+    return -inverse(R) * t; // inverse(R) * (vec3(0, 0, 0) - cam.t);
+}
+
+
+vec3 RealCamera::pixel_to_ray(int image_x, int image_y, float fx, float fy, float skew, float cx, float cy,
+                          const mat3& R, const vec3& t, bool convert) {
+    // Note: the camera coordinates in computer vision goes X right, Y down, Z forward,
+    //          while the camera coordinates of OpenGL goes X right, Y up, Z inward.
+    //          Thus we multiply K by a matrix converting the convention.
+    mat3 K(fx, 0, cx,
+           0, fy, cy,
+           0, 0, 1);
+    if (convert) {
+        /// @attention The camera coordinates of computer vision goes X right, Y down, Z forward,
+        ///               while the camera coordinates of OpenGL goes X right, Y up, Z inward.
+        mat3 M(1.0);
+        M(1, 1) = -1;   // invert the y axis
+        M(2, 2) = -1;   // invert the z axis
+        K = K * M;
+    }
+
+    // image point in the camera coordinate system
+    vec3 P = inverse(K) * vec3(image_x, image_y, 1);
+    // in the world coordinate system
+    P = inverse(R) * (P - t);
+
+    return P - camera_pos(R, t);
 }
