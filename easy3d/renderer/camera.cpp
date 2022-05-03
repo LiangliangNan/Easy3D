@@ -1005,14 +1005,15 @@ namespace easy3d {
         if (convert)
             setOrientation(q);  // this already includes the conversion
         else {
+            /// @attention The camera coordinates of computer vision goes X right, Y down, Z forward,
+            ///               while the camera coordinates of OpenGL goes X right, Y up, Z inward.
             mat3 flip(1.0f);
             flip(1, 1) = -1;   // invert the y axis
             flip(2, 2) = -1;   // invert the z axis
             setOrientation(q * quat(flip));
         }
 
-        const vec3 pos = t;
-        setPosition(-q.rotate(pos));    // camera position: -inverse(rot) * t
+        setPosition(-q.rotate(t));    // camera position: -inverse(rot) * t
 
         // http://ksimek.github.io/2013/06/18/calibrated-cameras-and-gluperspective/
         // https://github.com/opencv/opencv/blob/82f8176b0634c5d744d1a45246244291d895b2d1/modules/calib3d/src/calibration.cpp#L1820
@@ -1050,6 +1051,8 @@ namespace easy3d {
 
         mat34 M(1.0);
         if (convert) {
+            /// @attention The camera coordinates of computer vision goes X right, Y down, Z forward,
+            ///               while the camera coordinates of OpenGL goes X right, Y up, Z inward.
             M(1, 1) = -1;   // invert the y axis
             M(2, 2) = -1;   // invert the z axis
         }
