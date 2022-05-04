@@ -44,6 +44,8 @@
 using namespace easy3d;
 
 
+const float scale = 0.3f;
+
 RealCamera::RealCamera(const std::string& title,
                        const std::string& bundler_file,
                        const std::string& cloud_file)
@@ -91,7 +93,7 @@ bool RealCamera::key_press_event(int key, int modifiers) {
                 set_title("RealCamera: View_" + std::to_string(current_view_));
                 const CameraPara &c = views_[current_view_];
                 // make sure the aspect ratio (actual size does not matter)
-                resize(c.w * 0.3, c.h * 0.3);
+                resize(c.w * scale, c.h * scale);
             }
         }
         return true;
@@ -105,7 +107,7 @@ bool RealCamera::key_press_event(int key, int modifiers) {
                 set_title("RealCamera: View_" + std::to_string(current_view_));
                 const CameraPara &c = views_[current_view_];
                 // make sure the aspect ratio (actual size does not matter)
-                resize(c.w * 0.3, c.h * 0.3);
+                resize(c.w * scale, c.h * scale);
             }
         }
         return true;
@@ -119,7 +121,7 @@ bool RealCamera::key_press_event(int key, int modifiers) {
                 set_title("RealCamera: View_" + std::to_string(current_view_));
                 const CameraPara &c = views_[current_view_];
                 // make sure the aspect ratio (actual size does not matter)
-                resize(c.w * 0.3, c.h * 0.3);
+                resize(c.w * scale, c.h * scale);
             }
         }
         return true;
@@ -223,11 +225,11 @@ void RealCamera::post_draw() {
     float image_as = tex_w / static_cast<float>(tex_h);
     float viewer_as = width() / static_cast<float>(height());
     if (image_as < viewer_as) {// thin
-        tex_h = static_cast<int>(height() * 0.3f);
+        tex_h = static_cast<int>(height() * scale);
         tex_w = static_cast<int>(tex_h * image_as);
     }
     else {
-        tex_w = static_cast<int>(width() * 0.3f);
+        tex_w = static_cast<int>(width() * scale);
         tex_h = static_cast<int>(tex_w / image_as);
     }
 
