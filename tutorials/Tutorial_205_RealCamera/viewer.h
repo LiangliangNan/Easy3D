@@ -87,8 +87,11 @@ public:
     
 protected:
     bool key_press_event(int key, int modifiers) override;
+    bool mouse_free_move_event(int x, int y, int dx, int dy, int modifiers) override;
 
     std::string usage() const override ;
+
+    easy3d::Rect calculate_image_rect() const;
     
 private:
     struct CameraPara {
@@ -114,7 +117,8 @@ private:
 
 private:
     easy3d::Texture* texture_;
-    easy3d::LinesDrawable* cameras_drwable_;
+    easy3d::LinesDrawable* cameras_drawable_;
+    easy3d::LinesDrawable* pointer_drawable_;
 };
 
 

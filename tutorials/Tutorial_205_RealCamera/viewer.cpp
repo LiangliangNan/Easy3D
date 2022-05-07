@@ -52,7 +52,8 @@ RealCamera::RealCamera(const std::string& title,
     : Viewer(title, 4, 3, 2, false, false)
     , current_view_(0)
     , texture_(nullptr)
-    , cameras_drwable_(nullptr)
+    , cameras_drawable_(nullptr)
+    , pointer_drawable_(nullptr)
 {
     // Read the point cloud
     if (add_model(cloud_file)) {
@@ -78,11 +79,15 @@ std::string RealCamera::usage() const {
     return ("------------ Real Camera usage ---------- \n"
             "Press 'Space' to switch views\n"
             "Press 'H' to show/hide the cameras\n"
+            "Move cursor on image to show corresponding 3D pointer\n"
             "----------------------------------------- \n");
 }
 
 
 bool RealCamera::key_press_event(int key, int modifiers) {
+    if (pointer_drawable_)
+        pointer_drawable_->set_visible(false);
+
     if (key == GLFW_KEY_SPACE) {
         if (!views_.empty()) {
             current_view_ = (current_view_ + 1) % views_.size();
@@ -127,8 +132,8 @@ bool RealCamera::key_press_event(int key, int modifiers) {
         return true;
     }
     else if (key == GLFW_KEY_H) {
-        if (cameras_drwable_) {
-            cameras_drwable_->set_visible(!cameras_drwable_->is_visible());
+        if (cameras_drawable_) {
+            cameras_drawable_->set_visible(!cameras_drawable_->is_visible());
             update();
         }
         return true;
@@ -179,11 +184,11 @@ bool RealCamera::KRT_to_camera(int view_index, Camera* c, bool ground_truth) {
 
 void RealCamera::update_cameras_drawable(bool ground_truth)
 {
-    if (!cameras_drwable_) {
-        cameras_drwable_ = new LinesDrawable("cameras");
-        add_drawable(cameras_drwable_); // add the camera drawables to the viewer
-        cameras_drwable_->set_uniform_coloring(vec4(0, 0, 1, 1.0f));
-        cameras_drwable_->set_line_width(2.0f);
+    if (!cameras_drawable_) {
+        cameras_drawable_ = new LinesDrawable("cameras");
+        add_drawable(cameras_drawable_); // add the camera drawable to the viewer
+        cameras_drawable_->set_uniform_coloring(vec4(0, 0, 1, 1.0f));
+        cameras_drawable_->set_line_width(2.0f);
     }
 
     std::vector<vec3> vertices;
@@ -197,33 +202,20 @@ void RealCamera::update_cameras_drawable(bool ground_truth)
             vertices.push_back(m * p);
     }
 
-#if 0 // add a ray originating from the camera center and pointing to the image center
-    const CameraPara& cam = views_[current_view_];
-    const float image_x = cam.w * 0.5f;
-    const float image_y = cam.h * 0.5f;
-    const vec3 pos = camera_pos(cam.R, cam.t);
-    const vec3 dir = pixel_to_ray(image_x, image_y, cam.fx, cam.fy, 0, cam.cx, cam.cy, cam.R, cam.t, true);
-    vertices.push_back(pos);
-    vertices.push_back(pos + dir);
-#endif
-
-    cameras_drwable_->update_vertex_buffer(vertices);
+    cameras_drawable_->update_vertex_buffer(vertices);
 }
 
 
-void RealCamera::post_draw() {
-    Viewer::post_draw();
-
-    if (texture_ == nullptr)
-        return;
-
-    int w = width() * dpi_scaling();
-    int h = height() * dpi_scaling();
+Rect RealCamera::calculate_image_rect() const {
+    if (texture_ == nullptr) {
+        LOG_N_TIMES(3, ERROR) << "image not shown";
+        return Rect(0, 0, 0, 0);
+    }
 
     int tex_w = texture_->width();
     int tex_h = texture_->height();
-    float image_as = tex_w / static_cast<float>(tex_h);
-    float viewer_as = width() / static_cast<float>(height());
+    const float image_as = tex_w / static_cast<float>(tex_h);
+    const float viewer_as = width() / static_cast<float>(height());
     if (image_as < viewer_as) {// thin
         tex_h = static_cast<int>(height() * scale);
         tex_w = static_cast<int>(tex_h * image_as);
@@ -233,9 +225,63 @@ void RealCamera::post_draw() {
         tex_h = static_cast<int>(tex_w / image_as);
     }
 
-    const Rect quad(20 * dpi_scaling(), (20 + tex_w) * dpi_scaling(), 40 * dpi_scaling(), (40 + tex_h) * dpi_scaling());
+    return Rect(20, (20 + tex_w), 40, (40 + tex_h));
+}
+
+
+void RealCamera::post_draw() {
+    Viewer::post_draw();
+
+    if (texture_ == nullptr)
+        return;
+
+    const Rect image_rect = calculate_image_rect();
+    const Rect quad(image_rect.x_min() * dpi_scaling(), image_rect.x_max() * dpi_scaling(),
+                    image_rect.y_min() * dpi_scaling(), image_rect.y_max() * dpi_scaling());
+
+    const int w = width() * dpi_scaling();
+    const int h = height() * dpi_scaling();
     shapes::draw_quad_filled(quad, texture_->id(), w, h, -0.9f);
     shapes::draw_quad_wire(quad, vec4(1.0f, 0.0f, 0.0f, 1.0f), w, h, -0.99f);
+}
+
+
+bool RealCamera::mouse_free_move_event(int x, int y, int dx, int dy, int modifiers) {
+    (void) dx;
+    (void) dy;
+    (void) modifiers;
+
+    if (current_view_ < 0 || current_view_ >= views_.size()) {
+        std::cerr << "Error: invalid view index (" << current_view_ << ")" << std::endl;
+        return false;
+    }
+
+    const Rect image_rect = calculate_image_rect();
+    // cursor is inside the image rectangle
+    if (x >= image_rect.x_min() && x <= image_rect.x_max() && y >= image_rect.y_min() && y <= image_rect.y_max()) {
+        const CameraPara& cam = views_[current_view_];
+        const float image_x = (x - image_rect.x_min()) / image_rect.width() * cam.w;
+        const float image_y = (y - image_rect.y_min()) / image_rect.height() * cam.h;
+        if (!pointer_drawable_) {
+            pointer_drawable_ = new LinesDrawable("pointer");
+            add_drawable(pointer_drawable_); // add the pointer drawable to the viewer
+            pointer_drawable_->set_uniform_coloring(vec4(0, 1, 0, 1.0f));
+            pointer_drawable_->set_line_width(3.0f);
+            pointer_drawable_->set_impostor_type(easy3d::LinesDrawable::CYLINDER);
+        }
+        const vec3 pos = camera_pos(cam.R, cam.t);
+        const vec3 dir = pixel_to_ray(image_x, image_y, cam.fx, cam.fy, 0, cam.cx, cam.cy, cam.R, cam.t, true);
+        const std::vector<vec3> points = {pos, pos + dir};
+        pointer_drawable_->update_vertex_buffer(points);
+        pointer_drawable_->set_visible(true);
+        update();
+    }
+    else if (pointer_drawable_) {
+        pointer_drawable_->set_visible(false);
+        update();
+    }
+
+    return false;
 }
 
 
