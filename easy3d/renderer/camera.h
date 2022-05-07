@@ -177,15 +177,15 @@ namespace easy3d {
 
         /** \brief Defines the position(), orientation() and fieldOfView() of the camera from calibrated camera
          *      intrinsic and extrinsic parameters. This is an overload of set_from_calibration().
-         *  \param proj The projection matrix that can be computed as P = K * M * [R : T], where R is a
-         *              3x3 matrix representing the camera rotation and T is a 3-vector
-         *              describing the camera translation. Rotation first then translation!
-         *  \attention: M is a 3 by 4 identity matrix. In case you need to convert from the vision convention to
+         *  \param proj The projection matrix, which can be computed as P = K * M * [R|t], where R is a
+         *              3x3 matrix representing the camera rotation and T is a 3-vector describing the camera
+         *              translation (rotation first then translation).
+         *  \attention: M is a 3 by 3 matrix. In case you need to convert from the vision convention to the
          *              OpenGL convention (i.e., invert Y and Z axes), M(1, 1) and M(2, 2) must be set to -1, i.e.,
-         *              M(1, 1) = -1;   // invert the y axis
-         *              M(2, 2) = -1;   // invert the z axis
-         *              This is because the camera coordinates of computer vision goes X right, Y down, Z forward,
-         *              while the camera coordinates of OpenGL goes X right, Y up, Z inward.
+         *              M(1, 1) = -1;   // invert the Y axis
+         *              M(2, 2) = -1;   // invert the Z axis
+         *              This is because the camera coordinates in computer vision goes X right, Y down, Z forward,
+         *              while the camera coordinates in OpenGL goes X right, Y up, Z inward.
          *  \attention This function assumes the camera parameters were obtained by standard camera calibration, in
          *      which image coordinates are denoted in pixels, with the origin point (0, 0) corresponding to the
          *      top-left corner of the image. The X axis starts at the left edge of an image and goes towards the right

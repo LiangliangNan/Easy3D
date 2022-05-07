@@ -998,19 +998,18 @@ namespace easy3d {
         // This is not accurate and the error seems mainly due to the inaccuracy in cy (because from calibration, cy
         // may not be exactly at the image center).
         // Suggestion: use the image height (usually known in practice) to compute the field of view.
-
 #if 0
-
         const quat q(inverse(R));  // the inverse rotation represented by a quaternion
         if (convert)
             setOrientation(q);  // this already includes the conversion
         else {
             /// @attention The camera coordinates of computer vision goes X right, Y down, Z forward,
             ///               while the camera coordinates of OpenGL goes X right, Y up, Z inward.
-            mat3 flip(1.0f);
-            flip(1, 1) = -1;   // invert the y axis
-            flip(2, 2) = -1;   // invert the z axis
-            setOrientation(q * quat(flip));
+            ///               So we need to invert both Y and Z axes.
+            mat3 flip(1.0);
+            flip(1, 1) = -1;   // invert the Y axis
+            flip(2, 2) = -1;   // invert the Z axis
+            setOrientation(quat(flip) * q);
         }
 
         setPosition(-q.rotate(t));    // camera position: -inverse(rot) * t
@@ -1042,23 +1041,26 @@ namespace easy3d {
         //                0.0,            0.0,            -1.0,                       0.0
         //                );
         //
-        const mat3 K(
-                    fx, skew, cx,
-                    0,  fy,   cy,
-                    0,  0,    1);
-        const mat4 Rot(R);
-        const mat4 T = mat4::translation(t);
-
-        mat34 M(1.0);
+        const mat3 K(fx, skew, cx,
+                     0, fy, cy,
+                     0, 0, 1);
+        mat34 Rt = mat34(1.0f) * mat4::translation(t) * mat4(R); // rotation first, then translation
         if (convert) {
-            /// @attention The camera coordinates of computer vision goes X right, Y down, Z forward,
-            ///               while the camera coordinates of OpenGL goes X right, Y up, Z inward.
-            M(1, 1) = -1;   // invert the y axis
-            M(2, 2) = -1;   // invert the z axis
+            /// @attention The camera coordinates in computer vision goes X right, Y down, Z forward,
+            ///               while the camera coordinates in OpenGL goes X right, Y up, Z inward.
+            ///               So we need to invert both Y and Z axes.
+#if 1
+            mat3 flip(1.0);
+            flip(1, 1) = -1;   // invert the Y axis
+            flip(2, 2) = -1;   // invert the Z axis
+            Rt = flip * Rt;
+#else
+            /// This can also be achieved by directly change the sign of the 2nd and 3rd rows.
+            Rt.set_row(1, -Rt.row(1));
+            Rt.set_row(2, -Rt.row(2));
+#endif
         }
-
-        const mat34& proj = K * M * T * Rot;
-        set_from_calibration(proj);
+        set_from_calibration(K * Rt);
 #endif
     }
 

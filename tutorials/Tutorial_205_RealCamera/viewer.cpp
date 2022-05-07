@@ -246,25 +246,21 @@ vec3 RealCamera::camera_pos(const mat3 &R, const vec3 &t) {
 
 vec3 RealCamera::pixel_to_ray(int image_x, int image_y, float fx, float fy, float skew, float cx, float cy,
                           const mat3& R, const vec3& t, bool convert) {
-    // Note: the camera coordinates in computer vision goes X right, Y down, Z forward,
-    //          while the camera coordinates of OpenGL goes X right, Y up, Z inward.
-    //          Thus we multiply K by a matrix converting the convention.
-    mat3 K(fx, 0, cx,
+    mat3 K(fx, skew, cx,
            0, fy, cy,
            0, 0, 1);
+
+    // image point in the camera coordinate system (because p_image = K * p_cam).
+    vec3 P = inverse(K) * vec3(image_x, image_y, 1);
     if (convert) {
-        /// @attention The camera coordinates of computer vision goes X right, Y down, Z forward,
-        ///               while the camera coordinates of OpenGL goes X right, Y up, Z inward.
-        mat3 M(1.0);
-        M(1, 1) = -1;   // invert the y axis
-        M(2, 2) = -1;   // invert the z axis
-        K = K * M;
+        /// @attention The camera coordinates in computer vision goes X right, Y down, Z forward,
+        ///               while the camera coordinates in OpenGL goes X right, Y up, Z inward.
+        P.y *= -1;
+        P.z *= -1;
     }
 
-    // image point in the camera coordinate system
-    vec3 P = inverse(K) * vec3(image_x, image_y, 1);
-    // in the world coordinate system
-    P = inverse(R) * (P - t);
+    // in the world coordinate system (because p_cam = R * p_world + t)
+    P = transpose(R) * (P - t);
 
     return P - camera_pos(R, t);
 }

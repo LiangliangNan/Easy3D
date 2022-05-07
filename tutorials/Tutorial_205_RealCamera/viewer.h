@@ -50,7 +50,7 @@ public:
     /// two useful functions
 
     /** \brief Computes the camera position in the world coordinate system using the camera extrinsic parameters.
-     *  \param R: the rotation matrix. It denotes the coordinate system transformation from 3D world coordinates
+     *  \param R: the camera rotation. It denotes the coordinate system transformation from 3D world coordinates
      *      to 3D camera coordinates.
      *  \param t: the camera translation. It is the position of the origin of the world coordinate system expressed
      *      in the camera coordinate system. \note t is often mistakenly considered the position of the camera. The
@@ -65,14 +65,14 @@ public:
      *  \param fx and fy: the focal length
      *  \param cx and cy: the principal point
      *  \param skew: distortion
-     *  \param R: the rotation matrix. It denotes the coordinate system transformation from 3D world coordinates
+     *  \param R: the camera rotation. It denotes the coordinate system transformation from 3D world coordinates
      *      to 3D camera coordinates.
      *  \param t: the camera translation. It is the position of the origin of the world coordinate system expressed
      *      in the camera coordinate system. \note t is often mistakenly considered the position of the camera. The
      *      position C of the camera expressed in world coordinates is C = -inverse(rot) * t = -transpose(rot) * t.
      *  \param convert: \c true to convert from vision convention to OpenGL convention (i.e., invert Y and Z axes).
-     *                  This is because the camera coordinates of computer vision goes X right, Y down, Z forward,
-     *                  while the camera coordinates of OpenGL goes X right, Y up, Z inward.
+     *                  This is because the camera coordinates in computer vision goes X right, Y down, Z forward,
+     *                  while the camera coordinates in OpenGL goes X right, Y up, Z inward.
      *  \return the ray in the world coordinate system.
      *  \attention This function assumes the camera parameters were obtained by standard camera calibration, in
      *      which image coordinates are denoted in pixels, with the origin point (0, 0) corresponding to the
