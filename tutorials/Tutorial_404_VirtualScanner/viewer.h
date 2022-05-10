@@ -30,10 +30,6 @@
 #include <easy3d/viewer/viewer.h>
 
 
-namespace easy3d {
-    class PointCloud;
-}
-
 class VirtualScanner : public easy3d::Viewer
 {
 public:
