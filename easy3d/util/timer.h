@@ -42,7 +42,7 @@ namespace easy3d {
      *      With Timer, tasks (i.e., calling to functions) can be easily scheduled at either constant intervals
      *      or after a specified period. Timer supports any types of functions with any number of arguments.
      *
-     * \example Test_Timer  \include test/test_timer.cpp
+     * \example Test_Timer  \include test_timer.cpp
      */
 
     template<class... Args>
