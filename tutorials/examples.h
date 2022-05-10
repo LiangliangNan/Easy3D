@@ -137,6 +137,16 @@
  */
 
 /**
+ * \example Tutorial_404_VirtualScanner
+ * The source file containing the main() function:
+ * \include Tutorial_404_VirtualScanner/main.cpp
+ * The header file of the class:
+ * \include Tutorial_404_VirtualScanner/viewer.h
+ * The source file of the class:
+ * \include Tutorial_404_VirtualScanner/viewer.cpp
+ */
+
+/**
  * \example Tutorial_501_AmbientOcclusion
  * The source file containing the main() function:
  * \include Tutorial_501_AmbientOcclusion/main.cpp
