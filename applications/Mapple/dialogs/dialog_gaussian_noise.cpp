@@ -85,9 +85,7 @@ void DialogGaussianNoise::computeBBox() {
     if (!model)
         return;
 
-    const Box3 &box = model->bounding_box();
-    float radius = box.diagonal_length() * 0.5f;
-
+    const float radius = model->bounding_box().radius();
     const std::string &str = std::to_string(radius * suggested_ratio_);
     lineEditGaussianNoiseRadiusBBox->setText(QString::fromStdString(str));
 }
