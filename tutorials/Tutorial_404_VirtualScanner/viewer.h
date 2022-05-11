@@ -40,6 +40,9 @@ protected:
 
 private:
     std::string usage() const override;
+
+private:
+    bool add_noise_;
 };
 
 

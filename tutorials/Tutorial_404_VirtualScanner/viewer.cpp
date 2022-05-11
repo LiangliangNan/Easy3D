@@ -29,21 +29,27 @@
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/read_pixel.h>
 #include <easy3d/renderer/framebuffer_object.h>
+#include <easy3d/algo/gaussian_noise.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>    // for the mouse buttons
 
 
 using namespace easy3d;
 
-VirtualScanner::VirtualScanner(const std::string &title) : Viewer(title) {
+VirtualScanner::VirtualScanner(const std::string &title)
+    : Viewer(title)
+    , add_noise_(false)
+{
     camera()->setUpVector(vec3(0, 1, 0));
 }
 
 
 std::string VirtualScanner::usage() const {
     return ("-------------- Virtual Scanner usage -------------- \n"
-            "Change the view using the mouse and press the Space key to perform scanning.\n"
-            "Everything (and only those) visible will be captured in a point cloud.\n"
+            "- change the view using the mouse.\n"
+            "- press the 'Space' key to perform scanning. Everything (and only those) visible\n"
+            "  will be captured in a point cloud.\n"
+            "- press 'n' to toggle Gaussian noise.\n"
             "---------------------------------------------------------- \n");
 }
 
@@ -92,10 +98,25 @@ bool VirtualScanner::key_press_event(int key, int modifiers) {
             PointCloud* cloud = new PointCloud;
             for (const auto& p : points)
                 cloud->add_vertex(p);
+
+            if (add_noise_) {
+                const float ratio = 0.0001f;
+                const float sigma = current_model()->bounding_box().radius() * ratio;
+                GaussianNoise::apply(cloud, sigma);
+                std::cout << "Gaussian noise added (sigma = " << ratio << " * model radius)" << std::endl;
+            }
             add_model(cloud);
             update();
         }
 
+        return false;
+    }
+    else if (key == GLFW_KEY_N && modifiers == 0) {
+        add_noise_ = !add_noise_;
+        if (add_noise_)
+            std::cout << "add_noise = ON" << std::endl;
+        else
+            std::cout << "add_noise = OFF" << std::endl;
         return false;
     }
     else
