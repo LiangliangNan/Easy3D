@@ -1041,9 +1041,6 @@ namespace easy3d {
         //                0.0,            0.0,            -1.0,                       0.0
         //                );
         //
-        const mat3 K(fx, skew, cx,
-                     0, fy, cy,
-                     0, 0, 1);
         mat34 Rt = mat34(1.0f) * mat4::translation(t) * mat4(R); // rotation first, then translation
         if (convert) {
             /// @attention The camera coordinates in computer vision goes X right, Y down, Z forward,
@@ -1060,6 +1057,9 @@ namespace easy3d {
             Rt.set_row(2, -Rt.row(2));
 #endif
         }
+        const mat3 K(fx, skew, cx,
+                     0, fy, cy,
+                     0, 0, 1);
         set_from_calibration(K * Rt);
 #endif
     }
