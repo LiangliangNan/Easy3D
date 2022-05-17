@@ -84,7 +84,30 @@ public:
                               float fx, float fy, float skew, float cx, float cy,
                               const easy3d::mat3 &R, const easy3d::vec3 &t, bool convert = true);
 
-    
+    /** \brief Computes the 2D projection of a 3D point using the camera intrinsic and extrinsic parameters.
+     *  \param p the 3D point
+     *  \param fx and fy: the focal length
+     *  \param cx and cy: the principal point
+     *  \param skew: distortion
+     *  \param R: the camera rotation. It denotes the coordinate system transformation from 3D world coordinates
+     *      to 3D camera coordinates.
+     *  \param t: the camera translation. It is the position of the origin of the world coordinate system expressed
+     *      in the camera coordinate system. \note t is often mistakenly considered the position of the camera. The
+     *      position C of the camera expressed in world coordinates is C = -inverse(rot) * t = -transpose(rot) * t.
+     *  \param convert: \c true to convert from vision convention to OpenGL convention (i.e., invert Y and Z axes).
+     *                  This is because the camera coordinates in computer vision goes X right, Y down, Z forward,
+     *                  while the camera coordinates in OpenGL goes X right, Y up, Z inward.
+     *  \return the image point of the projected 3D point (the image origin corresponds to the top-left corner).
+     *  \attention This function assumes the camera parameters were obtained by standard camera calibration, in
+     *      which image coordinates are denoted in pixels, with the origin point (0, 0) corresponding to the
+     *      top-left corner of the image. The X axis starts at the left edge of an image and goes towards the right
+     *      edge. The Y axis starts at the top of the image towards image bottom. All image pixels have non-negative
+     *      coordinates.
+     */
+    easy3d::vec2 point_to_pixel(const easy3d::vec3 &p,
+                                float fx, float fy, float skew, float cx, float cy,
+                                const easy3d::mat3 &R, const easy3d::vec3 &t, bool convert = true);
+
 protected:
     bool key_press_event(int key, int modifiers) override;
     bool mouse_free_move_event(int x, int y, int dx, int dy, int modifiers) override;
@@ -118,7 +141,8 @@ private:
 private:
     easy3d::Texture* texture_;
     easy3d::LinesDrawable* cameras_drawable_;
-    easy3d::LinesDrawable* pointer_drawable_;
+    easy3d::LinesDrawable* ray_drawable_;   // in 3D
+    easy3d::LinesDrawable* cross_drawable_; // in image
 };
 
 

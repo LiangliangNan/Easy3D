@@ -1611,7 +1611,7 @@ namespace easy3d {
 #endif
             LinesDrawable drawable("pivot_point");
             const vec3 &pivot = camera()->projectedCoordinatesOf(camera()->pivotPoint());
-            std::vector<vec3> points = {
+            const std::vector<vec3> points = {
                     vec3(pivot.x - size, pivot.y, 0.5f), vec3(pivot.x + size, pivot.y, 0.5f),
                     vec3(pivot.x, pivot.y - size, 0.5f), vec3(pivot.x, pivot.y + size, 0.5f)
             };

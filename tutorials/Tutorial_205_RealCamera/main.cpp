@@ -29,10 +29,12 @@
 #include <easy3d/util/logging.h>
 
 
-// This example shows how to
-//        - render a model from the view point given the camera's intrinsic and
-//        extrinsic parameters. The camera parameters were recovered using
-//        commonly used computer vision techniques (i.e., calibration, or SfM).
+/// This example shows how to
+///     - render a model from the view given the camera's intrinsic and
+///       extrinsic parameters. The camera parameters were recovered using
+///       commonly used computer vision techniques (i.e., calibration, or SfM).
+///     - how an image point is projected into a ray in the 3D space.
+///     - how a 3D point is projected onto the image.
 
 using namespace easy3d;
 

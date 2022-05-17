@@ -34,6 +34,9 @@
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/shapes.h>
 #include <easy3d/renderer/renderer.h>
+#include <easy3d/renderer/shader_program.h>
+#include <easy3d/renderer/shader_manager.h>
+#include <easy3d/renderer/transform.h>
 #include <easy3d/util/string.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/fileio/resources.h>
@@ -53,7 +56,8 @@ RealCamera::RealCamera(const std::string& title,
     , current_view_(0)
     , texture_(nullptr)
     , cameras_drawable_(nullptr)
-    , pointer_drawable_(nullptr)
+    , ray_drawable_(nullptr)
+    , cross_drawable_(nullptr)
 {
     // Read the point cloud
     if (add_model(cloud_file)) {
@@ -79,14 +83,17 @@ std::string RealCamera::usage() const {
     return ("------------ Real Camera usage ---------- \n"
             "Press 'Space' to switch views\n"
             "Press 'H' to show/hide the cameras\n"
-            "Move cursor on image to show corresponding 3D pointer\n"
+            "Move cursor on image to show corresponding 3D ray\n"
+            "Move cursor on scene to show corresponding image point\n"
             "----------------------------------------- \n");
 }
 
 
 bool RealCamera::key_press_event(int key, int modifiers) {
-    if (pointer_drawable_)
-        pointer_drawable_->set_visible(false);
+    if (ray_drawable_)
+        ray_drawable_->set_visible(false);
+    if (cross_drawable_)
+        cross_drawable_->set_visible(false);
 
     if (key == GLFW_KEY_SPACE) {
         if (!views_.empty()) {
@@ -243,6 +250,31 @@ void RealCamera::post_draw() {
     const int h = height() * dpi_scaling();
     shapes::draw_quad_filled(quad, texture_->id(), w, h, -0.9f);
     shapes::draw_quad_wire(quad, vec4(1.0f, 0.0f, 0.0f, 1.0f), w, h, -0.99f);
+
+
+
+    if (cross_drawable_ && cross_drawable_->is_visible()) {
+        ShaderProgram *program = ShaderManager::get_program("lines/lines_plain_color");
+        if (!program) {
+            std::vector<ShaderProgram::Attribute> attributes;
+            attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+            attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
+            program = ShaderManager::create_program_from_files("lines/lines_plain_color", attributes);
+        }
+        if (!program)
+            return;
+
+        const mat4 &proj = transform::ortho(0.0f, static_cast<float>(width()), static_cast<float>(height()), 0.0f,
+                                            0.0f, -1.0f);
+        glDisable(GL_DEPTH_TEST);   // always on top
+        program->bind();
+        program->set_uniform("MVP", proj);
+        program->set_uniform("per_vertex_color", false);
+        program->set_uniform("default_color", vec4(0.0f, 1.0f, 0.0f, 1.0f));
+        cross_drawable_->gl_draw();
+        program->release();
+        glEnable(GL_DEPTH_TEST);   // restore
+    }
 }
 
 
@@ -256,28 +288,61 @@ bool RealCamera::mouse_free_move_event(int x, int y, int dx, int dy, int modifie
         return false;
     }
 
+    const CameraPara &cam = views_[current_view_];
     const Rect image_rect = calculate_image_rect();
     // cursor is inside the image rectangle
     if (x >= image_rect.x_min() && x <= image_rect.x_max() && y >= image_rect.y_min() && y <= image_rect.y_max()) {
-        const CameraPara& cam = views_[current_view_];
         const float image_x = (x - image_rect.x_min()) / image_rect.width() * cam.w;
         const float image_y = (y - image_rect.y_min()) / image_rect.height() * cam.h;
-        if (!pointer_drawable_) {
-            pointer_drawable_ = new LinesDrawable("pointer");
-            add_drawable(pointer_drawable_); // add the pointer drawable to the viewer
-            pointer_drawable_->set_uniform_coloring(vec4(0, 1, 0, 1.0f));
-            pointer_drawable_->set_line_width(3.0f);
-            pointer_drawable_->set_impostor_type(easy3d::LinesDrawable::CYLINDER);
+        if (!ray_drawable_) {
+            ray_drawable_ = new LinesDrawable("ray");
+            add_drawable(ray_drawable_); // add the ray drawable to the viewer
+            ray_drawable_->set_uniform_coloring(vec4(0, 1, 0, 1.0f));
+            ray_drawable_->set_line_width(3.0f);
+            ray_drawable_->set_impostor_type(easy3d::LinesDrawable::CYLINDER);
         }
         const vec3 pos = camera_pos(cam.R, cam.t);
         const vec3 dir = pixel_to_ray(image_x, image_y, cam.fx, cam.fy, 0, cam.cx, cam.cy, cam.R, cam.t, true);
         const std::vector<vec3> points = {pos, pos + dir};
-        pointer_drawable_->update_vertex_buffer(points);
-        pointer_drawable_->set_visible(true);
+        ray_drawable_->update_vertex_buffer(points);
+        ray_drawable_->set_visible(true);
         update();
-    }
-    else if (pointer_drawable_) {
-        pointer_drawable_->set_visible(false);
+    } else {
+        if (ray_drawable_)
+            ray_drawable_->set_visible(false);
+
+        bool found(false);
+        const vec3 p = point_under_pixel(x, y, found);
+        if (found) {
+            const vec2 q = point_to_pixel(p, cam.fx, cam.fy, 0, cam.cx, cam.cy, cam.R, cam.t);
+
+            // visualize the image point (that must be within the image)
+            if (q.x >= 0 && q.x <= cam.w && q.y >= 0 && q.y <= cam.h) {
+                const float screen_x = q.x / cam.w * image_rect.width() + image_rect.x_min();
+                const float screen_y = q.y / cam.h * image_rect.height() + image_rect.y_min();
+                if (!cross_drawable_) {
+                    cross_drawable_ = new LinesDrawable("cross");
+                    add_drawable(cross_drawable_); // add the cross drawable to the viewer
+                    cross_drawable_->set_line_width(3.0f);
+                }
+
+#if defined(__APPLE__)
+                const float size = 10;
+#else
+                const float size = static_cast<float>(10 * dpi_scaling());
+#endif
+                const std::vector<vec3> points = {
+                        vec3(screen_x - size, screen_y, 0.5f), vec3(screen_x + size, screen_y, 0.5f),
+                        vec3(screen_x, screen_y - size, 0.5f), vec3(screen_x, screen_y + size, 0.5f)
+                };
+                cross_drawable_->update_vertex_buffer(points);
+                cross_drawable_->set_visible(true);
+            }
+        } else {
+            if (cross_drawable_)
+                cross_drawable_->set_visible(false);
+        }
+
         update();
     }
 
@@ -309,4 +374,32 @@ vec3 RealCamera::pixel_to_ray(int image_x, int image_y, float fx, float fy, floa
     P = transpose(R) * (P - t);
 
     return P - camera_pos(R, t);
+}
+
+
+vec2 RealCamera::point_to_pixel(const easy3d::vec3 &p,
+                                float fx, float fy, float skew, float cx, float cy,
+                                const easy3d::mat3 &R, const easy3d::vec3 &t, bool convert) {
+    mat3 K(fx, skew, cx,
+           0, fy, cy,
+           0, 0, 1);
+    mat34 Rt;
+    Rt.set_col(0, R.col(0));
+    Rt.set_col(1, R.col(1));
+    Rt.set_col(2, R.col(2));
+    Rt.set_col(3, t);
+
+    if (convert) {
+        /// @attention The camera coordinates in computer vision goes X right, Y down, Z forward,
+        ///               while the camera coordinates in OpenGL goes X right, Y up, Z inward.
+        mat3 flip(1.0);
+        flip(1, 1) = -1;   // invert the Y axis
+        flip(2, 2) = -1;   // invert the Z axis
+        Rt = flip * Rt;
+    }
+
+    vec3 q = K * (Rt * vec4(p, 1.0));
+    q /= q.z;
+
+    return vec2(q.x, q.y);
 }
