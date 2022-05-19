@@ -1898,16 +1898,22 @@ namespace easy3d {
         /// find the halfedge from start to end
         Halfedge find_halfedge(Vertex start, Vertex end) const;
 
-        /// find the edge (a,b)
+        /// find the edge (a, b)
         Edge find_edge(Vertex a, Vertex b) const;
 
-        /// deletes the vertex \c v from the mesh
+        /// deletes the vertex \c v from the mesh. Its incident edges and faces will also be deleted.
+        /// \attention This function only marks the vertex and its incident edges and faces as deleted, and you have
+        ///     to call collect_garbage() to finally remove them.
         void delete_vertex(Vertex v);
 
-        /// deletes the edge \c e from the mesh
+        /// deletes the edge \c e from the mesh. Its incident faces will also be deleted.
+        /// \attention This function only marks the edge and its incident faces as deleted, and you have to call
+        ///     collect_garbage() to finally remove them.
         void delete_edge(Edge e);
 
-        /// deletes the face \c f from the mesh
+        /// deletes the face \c f from the mesh. Its incident edges (if on boundary) will also be deleted.
+        /// \attention This function only marks the face and its incident edges (if on boundary) as deleted, and
+        ///     you have to call collect_garbage() to finally remove them.
         void delete_face(Face f);
 
         //@}
