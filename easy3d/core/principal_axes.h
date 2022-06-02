@@ -54,11 +54,11 @@ namespace easy3d {
         Vec<DIM, FT> center() const;
 
         /// \brief The \p i_th axis
-        /// \note The eigenvectors are sorted in accordance with eigenvalues stored in the descending order.
         /// This function supports different types of vectors, e.g. vec3, dvec3, ivec3. To call this function, use
         /// \code
         ///     normal = pca.axis<float>(2);
         /// \endcode
+        /// \note The eigenvectors are sorted in accordance with eigenvalues stored in the descending order.
         template<typename FT>
         Vec<DIM, FT> axis(int i) const;
 
