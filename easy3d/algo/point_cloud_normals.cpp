@@ -83,7 +83,7 @@ namespace easy3d {
             std::vector<int> neighbors;
             kdtree.find_closest_k_points(p, k, neighbors);
 
-            PrincipalAxes<3, float> pca;
+            PrincipalAxes<3> pca;
             pca.begin();
             for (unsigned int j = 0; j < neighbors.size(); ++j) {
                 int idx = neighbors[j];
@@ -92,7 +92,7 @@ namespace easy3d {
             pca.end();
 
             // the eigen vector corresponding to the smallest eigen value
-            normals[i] = pca.axis(2);
+            normals[i] = pca.axis<float>(2);
             if (normals[i].z < 0) // almost have positive Z
                 normals[i] = -normals[i];
 
