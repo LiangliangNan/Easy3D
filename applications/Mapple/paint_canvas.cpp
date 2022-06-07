@@ -322,7 +322,7 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
                 LOG(WARNING) << "press 'K' to add a keyframe in the free mode";
             }
         } else {
-            if (e->button() == Qt::LeftButton && e->modifiers() != Qt::AltModifier && e->modifiers() != Qt::ControlModifier)
+            if ((e->button() == Qt::LeftButton || e->button() == Qt::RightButton) && e->modifiers() != Qt::AltModifier && e->modifiers() != Qt::ControlModifier)
                 show_manip_sphere_ = true;
 
             if (e->modifiers() == Qt::NoModifier && e->button() == Qt::LeftButton &&
@@ -395,7 +395,7 @@ void PaintCanvas::mouseReleaseEvent(QMouseEvent *e) {
         camera_->fitScreenRegion(xmin, ymin, xmax, ymax);
     }
     else {
-        if (e->button() == Qt::LeftButton)
+        if (e->button() == Qt::LeftButton || e->button() == Qt::RightButton)
             show_manip_sphere_ = false;
         camera_->frame()->action_end();
         update();
