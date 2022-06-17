@@ -138,13 +138,11 @@ namespace easy3d {
 
     template <int DIM>
     inline void PrincipalAxes<DIM>::end() {
-        for (unsigned short i = 0; i < DIM; ++i) {
+        for (unsigned short i = 0; i < DIM; ++i)
             center_[i] /= sum_weights_;
-            std::cout << "center_[" << i << "]: " << center_[i] << std::endl;
-        }
 
         // If the system is under-determined, return the trivial basis.
-        if(nb_points_ < DIM + 1) {
+        if (nb_points_ < DIM + 1) {
             for (unsigned short i = 0; i < DIM; ++i) {
                 eigen_value_[i] = 1.0;
                 for (unsigned short j = 0; j < DIM; ++j)
@@ -207,11 +205,9 @@ namespace easy3d {
     template <typename InputIterator >
     inline void PrincipalAxes<DIM>::add(InputIterator first, InputIterator last) {
         assert(first != last);
-        begin();
         for (InputIterator it = first; it != last; ++it) {
             add(*it);
         }
-        end();
     }
 
 } // namespace easy3d
