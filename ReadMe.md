@@ -132,10 +132,10 @@ repository, switch on the CMake option `EASY3D_BUILD_TESTS` (which is disabled b
 you can build ALL or only the `tests` target. Finally, run the `tests` executable (i.e., `YOUR_BUILD_DIRECTORY/bin/tests`) for the test.
 
 ### Use Easy3D in your project
-This is quite easy, maybe easier than many other open-source libraries :-) You only need to add the following lines 
-to your CMakeLists file (don't forget to replace `YOUR_APP_NAME` with the actual name of your application) and point 
-`Easy3D_DIR` to your `build` directory of Easy3D when doing cmake. Then the requested Easy3D libraries, include 
-directories, and relevant compile definitions of Easy3D are visible and accessible to your project.
+This is quite easy, maybe easier than many other open-source libraries :-) 
+After you have built Easy3D, you only need to add the following lines to your CMakeLists file (don't forget to replace `YOUR_APP_NAME` 
+with the actual name of your application) and point `Easy3D_DIR` to your `build` directory of Easy3D when doing cmake. Then the requested
+Easy3D libraries, include directories, and relevant compile definitions of Easy3D are visible and accessible to your project.
 ```
 set(CMAKE_CXX_STANDARD 11)                        # specify C++ standard
 find_package(Easy3D REQUIRED)                     # request Easy3D 
