@@ -137,9 +137,9 @@ After you have built Easy3D, you only need to add the following lines to your CM
 with the actual name of your application) and point `Easy3D_DIR` to your `build` directory of Easy3D when doing cmake. Then the requested
 Easy3D libraries, include directories, and relevant compile definitions of Easy3D are visible and accessible to your project.
 ```
-set(CMAKE_CXX_STANDARD 11)                        # specify C++ standard
-find_package(Easy3D REQUIRED)                     # request Easy3D 
-target_link_libraries(YOUR_APP_NAME easy3d::core) # request necessary Easy3D modules (add more if needed, e.g., viewer, algo)
+set(CMAKE_CXX_STANDARD 11)                          # specify C++ standard
+find_package(Easy3D REQUIRED)                       # request Easy3D 
+target_link_libraries(YOUR_APP_NAME easy3d::viewer) # request necessary Easy3D modules (add more if needed, e.g., algo)
 ```
 The minimum code to have a 3D viewer:
 
