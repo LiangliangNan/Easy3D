@@ -37,10 +37,10 @@
 namespace easy3d {
 
     /**
-     * \brief A matrix representation.
-     * \details The matrix classes in #include <easy3d/core/mat.h> has their dimensions templated. So their dimensions
-     *      must be constant and known at the compile time. In contrast, this matrix can have dynamic dimensions.
+     * \brief A matrix representation, which supports dynamic sizes.
      * \attention Matrix has a row-major storage.
+     * \note The matrix classes in #include <easy3d/core/mat.h> has their dimensions templated. So their dimensions
+     *      must be constant and known at the compile time. In contrast, this matrix can have dynamic dimensions.
      * \class Matrix easy3d/core/matrix.h
      */
     template<typename FT>
@@ -120,13 +120,13 @@ namespace easy3d {
          * Return the data of the matrix as a 1D array.
          * Attention: Matrices are stored internally as row-major (i.e., the rows are concatenated in the returned array).
          */
-        operator FT *();
+        FT* data() { return data_; }
 
         /**
          * Return the data of the matrix as a 1D array (const version).
          * Attention: Matrices are stored internally as row-major (i.e., the rows are concatenated in the returned array).
          */
-        operator const FT *() const;
+        const FT* data() const { return data_; }
 
         /// Return the number of rows.
         int rows() const;
@@ -158,6 +158,12 @@ namespace easy3d {
 
         /// Return the transposed matrix.
         Matrix<FT> transpose() const;
+
+        /// Return the inverse of the matrix (for positive square matrices only)
+        Matrix<FT> inverse() const;
+
+        /// Return the determinant of the matrix (for square matrices only)
+        FT determinant() const;
 
         /// Return the trace of this matrix, i.e. the sum of the coefficients on the main diagonal.
         /// @note: the matrix can be of any dimension, not necessarily square.
@@ -197,6 +203,8 @@ namespace easy3d {
         void copy_from_array(const FT *v); // copy matrix from normal array
         void set_by_scalar(const FT &x); // set matrix by a scalar
         void destroy();    // destroy the matrix
+
+        Matrix<FT> cofactor(int i, int j) const;
 
     }; // class Matrix
 
@@ -468,6 +476,32 @@ namespace easy3d {
     }
 
 
+    template<typename FT>
+    Matrix<FT> Matrix<FT>::cofactor(int _i, int _j) const {
+        assert(0 <= _i && _i < nRow_ && 0 <= _j && _j < nColumn_);
+        Matrix<FT> mat(nRow_ - 1, nColumn_ - 1);
+        for(int i = 0; i < mat.rows(); i++) {
+            for(int j = 0; j < mat.cols(); j++){
+                if(i < _i){
+                    if(j < _j){
+                        mat.data()[i * mat.cols() + j] = data_[i * nColumn_ + j];
+                    } else {
+                        mat.data()[i * mat.cols() + j] = data_[i * nColumn_ + (j + 1)];
+                    }
+                } else {
+                    if(j < _j){
+                        mat.data()[i * mat.cols() + j] = data_[(i + 1) * nColumn_ + j];
+                    } else {
+                        mat.data()[i * mat.cols() + j] = data_[(i + 1) * nColumn_ + (j + 1)];
+                    }
+                }
+            }
+        }
+        return mat;
+    }
+
+
+
     /**
     * constructors and destructor
     */
@@ -624,20 +658,6 @@ namespace easy3d {
     }
 
 
-    /**
-    * type conversion functions
-    */
-    template<typename FT>
-    inline Matrix<FT>::operator FT *() {
-        return data_;
-    }
-
-    template<typename FT>
-    inline Matrix<FT>::operator const FT *() const {
-        return data_;
-    }
-
-
     template<typename FT>
     inline int Matrix<FT>::rows() const {
         return nRow_;
@@ -729,6 +749,44 @@ namespace easy3d {
             }
         }
         return t;
+    }
+
+
+    template<typename FT>
+    FT Matrix<FT>::determinant() const {
+        assert(nRow_ == nColumn_ && nRow_ != 0);
+        if(nRow_ == 1) {
+            return data_[0];
+        } else if(nRow_ == 2) {
+            return data_[0]*data_[3] - data_[1]*data_[2];
+        } else if(nRow_ == 3) {
+            return - data_[8]*data_[1]*data_[3] - data_[7]*data_[5]*data_[0] - data_[2]*data_[4]*data_[6]
+                   + data_[6]*data_[1]*data_[5] + data_[7]*data_[3]*data_[2] + data_[0]*data_[4]*data_[8];
+        } else {
+            FT value = FT();
+            for(int i = 0; i < nRow_; i++){
+                value += std::pow(-1.0, i) * data_[i * nColumn_] * cofactor(i, 0).determinant();
+            }
+            return value;
+        }
+    }
+
+
+    template<typename FT>
+    Matrix<FT> Matrix<FT>::inverse() const {
+        assert(nRow_ == nColumn_);
+        Matrix<FT> mat = Matrix<FT>(nRow_, nColumn_);
+        if(nRow_ == 1){
+            mat.data()[0] = 1.0 / data_[0];
+            return mat;
+        } else {
+            for(int i = 0; i < nRow_; i++){
+                for(int j = 0; j < nColumn_; j++){
+                    mat.data()[i * mat.cols() + j] = std::pow(-1.0, i + j) * cofactor(j, i).determinant();
+                }
+            }
+            return mat / determinant();
+        }
     }
 
 
