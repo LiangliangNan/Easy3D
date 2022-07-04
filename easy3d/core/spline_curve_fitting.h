@@ -222,7 +222,7 @@ namespace easy3d {
         for (std::size_t i = 0; i < steps; ++i) {
             const FT u = static_cast<FT>(i) / static_cast<FT>(steps - 1);
             parameters[i] = u;
-            const vec3 pos = eval_f(u);
+            const Point_t pos = eval_f(u);
             if (i > 0)
                 lengths[i] = lengths[i - 1] + distance(pos, prev_point);
             prev_point = pos;
