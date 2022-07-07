@@ -69,24 +69,11 @@ namespace easy3d {
 
 
 
-    KdTreeSearch_NanoFLANN::KdTreeSearch_NanoFLANN() {
-        points_ = nullptr;
-        tree_ = nullptr;
-    }
+    KdTreeSearch_NanoFLANN::KdTreeSearch_NanoFLANN(const PointCloud *cloud) : KdTreeSearch(cloud) {
+        // prepare data
+        points_ = const_cast< std::vector<vec3>* >(&cloud->points());
 
-
-    KdTreeSearch_NanoFLANN::~KdTreeSearch_NanoFLANN() {
-        delete get_tree(tree_);
-    }
-
-
-    void KdTreeSearch_NanoFLANN::begin() {
-        delete get_tree(tree_);
-        tree_ = nullptr;
-    }
-
-
-    void KdTreeSearch_NanoFLANN::end() {
+        // create tree
         PointSet* pset = new PointSet(points_);
         KdTree* tree = new KdTree(pset);
         tree->buildIndex();
@@ -94,8 +81,8 @@ namespace easy3d {
     }
 
 
-    void KdTreeSearch_NanoFLANN::add_point_cloud(PointCloud* cloud) {
-        points_ = &cloud->points();
+    KdTreeSearch_NanoFLANN::~KdTreeSearch_NanoFLANN() {
+        delete get_tree(tree_);
     }
 
 

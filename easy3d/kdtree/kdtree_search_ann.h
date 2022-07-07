@@ -41,28 +41,13 @@ namespace easy3d {
      */
     class KdTreeSearch_ANN : public KdTreeSearch {
     public:
-        KdTreeSearch_ANN();
+        /**
+         * \brief Constructor.
+         * \param cloud The point cloud for which a KdTree will be constructed.
+         */
+        KdTreeSearch_ANN(const PointCloud *cloud);
 
         ~KdTreeSearch_ANN() override;
-
-
-        /// \name Tree construction
-        /// @{
-        /**
-         * \brief Begins the construction of a KdTree.
-         */
-        void begin() override;
-
-        /**
-         * \brief Sets the point cloud for which a KdTree will be constructed.
-         */
-        void add_point_cloud(PointCloud *cloud) override;
-
-        /**
-         * \brief Finalizes the construction of a KdTree.
-         */
-        void end() override;
-        /// @}
 
         /// \name Closest point query
         /// @{

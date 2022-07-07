@@ -39,6 +39,7 @@ int test_point_cloud();
 int test_surface_mesh();
 int test_polyhedral_mesh();
 int test_graph();
+int test_kdtree();
 
 int test_point_cloud_algorithms();
 int test_surface_mesh_algorithms();
@@ -90,6 +91,7 @@ int main(int argc, char* argv[]) {
     result += test_surface_mesh();
     result += test_polyhedral_mesh();
     result += test_graph();
+    result += test_kdtree();
 
     result += test_point_cloud_algorithms();
     result += test_surface_mesh_algorithms();

@@ -40,27 +40,13 @@ namespace easy3d {
      */
     class KdTreeSearch_NanoFLANN : public KdTreeSearch {
     public:
-        KdTreeSearch_NanoFLANN();
+        /**
+         * \brief Constructor.
+         * \param cloud The point cloud for which a KdTree will be constructed.
+         */
+        KdTreeSearch_NanoFLANN(const PointCloud *cloud);
 
         virtual ~KdTreeSearch_NanoFLANN();
-
-        /// \name Tree construction
-        /// @{
-        /**
-         * \brief Begins the construction of a KdTree.
-         */
-        virtual void begin();
-
-        /**
-         * \brief Sets the point cloud for which a KdTree will be constructed.
-         */
-        virtual void add_point_cloud(PointCloud *cloud);
-
-        /**
-         * \brief Finalizes the construction of a KdTree.
-         */
-        virtual void end();
-        /// @}
 
         /// \name Closest point query
         /// @{

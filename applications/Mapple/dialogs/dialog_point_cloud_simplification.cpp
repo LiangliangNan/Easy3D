@@ -109,10 +109,7 @@ void DialogPointCloudSimplification::constructKdTree() {
     if (cloud) {
         if (kdtree_)
             delete kdtree_;
-        kdtree_ = new KdTreeSearch_ETH;
-        kdtree_->begin();
-        kdtree_->add_point_cloud(cloud);
-        kdtree_->end();
+        kdtree_ = new KdTreeSearch_ETH(cloud);
     }
 }
 

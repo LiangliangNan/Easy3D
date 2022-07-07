@@ -34,13 +34,21 @@
 
 namespace easy3d {
 
-    KdTreeSearch_FLANN::KdTreeSearch_FLANN()  {
-        points_ = nullptr;
-        points_num_ = 0;
-        tree_ = nullptr;
-
+    KdTreeSearch_FLANN::KdTreeSearch_FLANN(const PointCloud *cloud) : KdTreeSearch(cloud) {
         //checks_ = 32;
         checks_ = flann::FLANN_CHECKS_AUTOTUNED;
+
+        // prepare data
+        points_num_ = int(cloud->n_vertices());
+        const std::vector<vec3>& points = cloud->points();
+        points_ = const_cast<float *>(points[0].data());
+
+        // create tree
+        flann::Matrix<float> dataset(points_, points_num_, 3);
+        // construct a single kd-tree optimized for searching lower dimensionality data
+        flann::Index< flann::L2<float> >* tree = new flann::Index< flann::L2<float> >(dataset, flann::KDTreeSingleIndexParams());
+        tree->buildIndex();
+        tree_ = tree;
     }
 
 
@@ -51,29 +59,6 @@ namespace easy3d {
 
     void KdTreeSearch_FLANN::set_checks(int chk) {
         checks_ = chk;
-    }
-
-    void KdTreeSearch_FLANN::begin()  {
-        delete get_tree(tree_);
-        tree_ = nullptr;
-    }
-
-
-    void KdTreeSearch_FLANN::end()  {
-        flann::Matrix<float> dataset(points_, points_num_, 3);
-
-        // construct a single kd-tree optimized for searching lower dimensionality data
-        flann::Index< flann::L2<float> >* tree = new flann::Index< flann::L2<float> >(dataset, flann::KDTreeSingleIndexParams());
-        tree->buildIndex();
-
-        tree_ = tree;
-    }
-
-
-    void KdTreeSearch_FLANN::add_point_cloud(PointCloud* cloud)  {
-        points_num_ = int(cloud->n_vertices());
-        std::vector<vec3>& points = cloud->points();
-        points_ = points[0];
     }
 
 

@@ -41,7 +41,11 @@ namespace easy3d {
      */
     class KdTreeSearch_FLANN : public KdTreeSearch {
     public:
-        KdTreeSearch_FLANN();
+        /**
+         * \brief Constructor.
+         * \param cloud The point cloud for which a KdTree will be constructed.
+         */
+        KdTreeSearch_FLANN(const PointCloud *cloud);
 
         virtual ~KdTreeSearch_FLANN();
 
@@ -55,24 +59,6 @@ namespace easy3d {
          * (Liangliang: 32 is also a good value).
          */
         void set_checks(int chk);
-
-        /// \name Tree construction
-        /// @{
-        /**
-         * \brief Begins the construction of a KdTree.
-         */
-        virtual void begin();
-
-        /**
-         * \brief Sets the point cloud for which a KdTree will be constructed.
-         */
-        virtual void add_point_cloud(PointCloud *cloud);
-
-        /**
-         * \brief Finalizes the construction of a KdTree.
-         */
-        virtual void end();
-        /// @}
 
         /// \name Closest point query
         /// @{

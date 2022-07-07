@@ -79,27 +79,13 @@ namespace easy3d {
 
     class KdTreeSearch {
     public:
-        KdTreeSearch();
+        /**
+         * \brief Constructor.
+         * \param cloud The point cloud for which a KdTree will be constructed.
+         */
+        KdTreeSearch(const PointCloud *cloud);
 
         virtual ~KdTreeSearch();
-
-        /// \name Tree construction
-        /// @{
-        /**
-         * \brief Begins the construction of a KdTree.
-         */
-        virtual void begin() = 0;
-
-        /**
-         * \brief Sets the point cloud for which a KdTree will be constructed.
-         */
-        virtual void add_point_cloud(PointCloud *cloud) = 0;
-
-        /**
-         * \brief Finalizes the construction of a KdTree.
-         */
-        virtual void end() = 0;
-        /// @}
 
         /// \name Closest point query
         /// @{

@@ -86,7 +86,7 @@ void run_conditional_ccasional_logging() {
 }
 
 
-bool test_logging() {
+int test_logging() {
     // CHECK Operation
     CHECK_NE(1, 2) << ": The world must be ending!";
     // Check if it is euqual
@@ -152,5 +152,5 @@ bool test_logging() {
     LOG(INFO) << "---------- TEST has succeeded!!!!!!!!!!!!!!!!! ----------";
     LOG(FATAL) << "You should have seen the program crashed - just a test :-)";
 
-    return true;
+    return EXIT_SUCCESS;
 }

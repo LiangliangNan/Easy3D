@@ -35,38 +35,21 @@
 
 namespace easy3d {
 
-    KdTreeSearch_ETH::KdTreeSearch_ETH()  {
-        points_num_ = 0;
-        points_ = nullptr;
-        tree_ = nullptr;
+    KdTreeSearch_ETH::KdTreeSearch_ETH(const PointCloud *cloud) : KdTreeSearch(cloud) {
+        // prepare data
+        points_num_ = int(cloud->n_vertices());
+        const std::vector<vec3>& points = cloud->points();
+        points_ = const_cast<float *>(points[0].data());
+
+        // create tree
+        const int maxBucketSize = 16 ;	// number of points per bucket
+        tree_ = new kdtree::KdTree(reinterpret_cast<kdtree::Vector3D*>(points_), points_num_, maxBucketSize);
     }
 
 
     KdTreeSearch_ETH::~KdTreeSearch_ETH() {
         delete get_tree(tree_);
         points_ = nullptr;
-    }
-
-
-    void KdTreeSearch_ETH::begin()  {
-        delete get_tree(tree_);
-        tree_ = nullptr;
-
-        points_num_ = 0;
-        points_ = nullptr;
-    }
-
-
-    void KdTreeSearch_ETH::end()  {
-        int maxBucketSize = 16 ;	// number of points per bucket
-        tree_ = new kdtree::KdTree(reinterpret_cast<kdtree::Vector3D*>(points_), points_num_, maxBucketSize);
-    }
-
-
-    void KdTreeSearch_ETH::add_point_cloud(PointCloud* cloud)  {
-        points_num_ = int(cloud->n_vertices());
-        std::vector<vec3>& points = cloud->points();
-        points_ = points[0];
     }
 
 

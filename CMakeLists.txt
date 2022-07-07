@@ -11,7 +11,7 @@ project(Easy3D)
 
 set(EASY3D_MAJOR_VERSION 2)
 set(EASY3D_MINOR_VERSION 4)
-set(EASY3D_PATCH_VERSION 8)
+set(EASY3D_PATCH_VERSION 9)
 set(EASY3D_VERSION "${EASY3D_MAJOR_VERSION}.${EASY3D_MINOR_VERSION}.${EASY3D_PATCH_VERSION}")
 
 ################################################################################

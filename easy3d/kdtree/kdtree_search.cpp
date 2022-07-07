@@ -30,7 +30,7 @@
 namespace easy3d {
 
 
-    KdTreeSearch::KdTreeSearch()
+    KdTreeSearch::KdTreeSearch(const PointCloud *cloud)
     {
     }
 

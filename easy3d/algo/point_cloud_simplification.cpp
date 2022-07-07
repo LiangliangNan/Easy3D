@@ -41,10 +41,7 @@ namespace easy3d {
         KdTreeSearch *kdtree = tree;
         bool need_delete(false);
         if (!kdtree) {
-            kdtree = new KdTreeSearch_ETH;
-            kdtree->begin();
-            kdtree->add_point_cloud(cloud);
-            kdtree->end();
+            kdtree = new KdTreeSearch_ETH(cloud);
             need_delete = true;
         }
 
@@ -164,10 +161,7 @@ namespace easy3d {
         KdTreeSearch *kdtree = tree;
         bool need_delete(false);
         if (!kdtree) {
-            kdtree = new KdTreeSearch_ETH;
-            kdtree->begin();
-            kdtree->add_point_cloud(cloud);
-            kdtree->end();
+            kdtree = new KdTreeSearch_ETH(cloud);
             need_delete = true;
         }
 
@@ -244,10 +238,7 @@ namespace easy3d {
             if (expected_num >= num)
                 return points_to_delete;    // expected num is greater than / equal to given number.
 
-            KdTreeSearch_ETH kdtree;
-            kdtree.begin();
-            kdtree.add_point_cloud(cloud);
-            kdtree.end();
+            KdTreeSearch_ETH kdtree(cloud);
 
             // the average squared distance to its nearest neighbor; smaller value means highter density
             std::vector<float> sqr_distance(cloud->n_vertices());

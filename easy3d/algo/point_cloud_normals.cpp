@@ -60,10 +60,7 @@ namespace easy3d {
         w.start();
 
         LOG(INFO) << "building kd_tree...";
-        KdTreeSearch_NanoFLANN kdtree;
-        kdtree.begin();
-        kdtree.add_point_cloud(cloud);
-        kdtree.end();
+        KdTreeSearch_NanoFLANN kdtree(cloud);
         LOG(INFO) << "done. " << w.time_string();
 
         int num = cloud->n_vertices();
@@ -388,10 +385,7 @@ namespace easy3d {
         w.start();
 
         LOG(INFO) << "building kd_tree...";
-        KdTreeSearch_NanoFLANN kdtree;
-        kdtree.begin();
-        kdtree.add_point_cloud(cloud);
-        kdtree.end();
+        KdTreeSearch_NanoFLANN kdtree(cloud);
         LOG(INFO) << "done. " << w.time_string();
 
         w.restart();

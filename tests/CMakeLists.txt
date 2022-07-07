@@ -7,6 +7,7 @@ add_executable(${PROJECT_NAME}
         test_timer.cpp
         test_signal.cpp
         test_console_style.cpp
+        test_kdtree.cpp
         graph.cpp
         linear_solvers.cpp
         main.cpp

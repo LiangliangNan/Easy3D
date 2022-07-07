@@ -43,12 +43,29 @@ using namespace ANN;
 
 namespace easy3d {
 
-    KdTreeSearch_ANN::KdTreeSearch_ANN()  {
-        points_ = nullptr;
-        points_num_ = 0;
-        tree_ = nullptr;
+    KdTreeSearch_ANN::KdTreeSearch_ANN(const PointCloud *cloud) : KdTreeSearch(cloud) {
         k_for_radius_search_ = 32;
         LOG(INFO) << "KdTreeSearch_ANN: k = 32 for radius search";
+
+        // prepare data
+        points_num_ = int(cloud->n_vertices());
+#if COPY_POINT_CLOUD // make a copy of the point cloud when constructing the kd-tree
+        points_ = annAllocPts(points_num_, 3);
+        const std::vector<vec3>& pts = cloud->points();
+        for (int i = 0; i < points_num_; ++i) {
+            const vec3& p = pts[i];
+            points_[i][0] = p[0];
+            points_[i][1] = p[1];
+            points_[i][2] = p[2];
+        }
+#else
+        points_ = new float*[points_num_];
+        const std::vector<vec3>& pts = cloud->points();
+        for (int i = 0; i < points_num_; ++i)
+            points_[i] = const_cast<float *>(pts[i].data());
+#endif
+        // create tree
+        tree_ = new ANNkd_tree(const_cast<float **>(points_), points_num_, 3);
     }
 
 
@@ -63,48 +80,6 @@ namespace easy3d {
 
         delete get_tree(tree_);
         annClose();
-    }
-
-
-    void KdTreeSearch_ANN::begin()  {
-        points_num_ = 0;
-
-#if COPY_POINT_CLOUD // make a copy of the point cloud when constructing the kd-tree
-        if (points_)
-            annDeallocPts(points_);
-#else
-        if (points_)
-            delete[] points_;
-#endif
-
-        delete get_tree(tree_);
-        tree_ = nullptr;
-    }
-
-
-    void KdTreeSearch_ANN::end()  {
-        tree_ = new ANNkd_tree(points_, points_num_, 3);
-    }
-
-
-    void KdTreeSearch_ANN::add_point_cloud(PointCloud* cloud)  {
-        points_num_ = int(cloud->n_vertices());
-
-#if COPY_POINT_CLOUD // make a copy of the point cloud when constructing the kd-tree
-        points_ = annAllocPts(points_num_, 3);
-        const std::vector<vec3>& pts = cloud->points();
-        for (int i = 0; i < points_num_; ++i) {
-            const vec3& p = pts[i];
-            points_[i][0] = p[0];
-            points_[i][1] = p[1];
-            points_[i][2] = p[2];
-        }
-#else
-        points_ = new float*[points_num_];
-        std::vector<vec3>& pts = cloud->points();
-        for (int i = 0; i < points_num_; ++i)
-            points_[i] = pts[i];
-#endif
     }
 
 
