@@ -1,5 +1,5 @@
 /* Quickhull algorithm implementation
- *
+ * https://github.com/tomilov/quickhull
  * Copyright (c) 2014-2015, Anatoliy V. Tomilov
  * All rights reserved.
  *
@@ -969,7 +969,6 @@ public :
             }
             for (size_type i = 0; i < dimension_; ++i) { // Gaussian elimination
                 vrow & gi_ = g_[i];
-                std::cout << "gi_[i]: " << gi_[i] << std::endl;
                 value_type max_ = abs(gi_[i]);
                 size_type pivot = i;
                 {
@@ -982,8 +981,7 @@ public :
                         }
                     }
                 }
-                std::cout << "max_: " << max_ << std::endl;
-//                assert(eps < max_); // vertex must not match the origin after above transformations
+                assert(eps < max_); // vertex must not match the origin after above transformations
                 if (pivot != i) {
                     std::swap(gi_, g_[pivot]);
                 }
@@ -1009,8 +1007,7 @@ public :
                         xi_ -= gi_[j] * g_[j][dimension_];
                     }
                     value_type const & gii_ = gi_[i];
-                    std::cout << "gii_: " << gii_ << std::endl;
-//                    assert(eps < abs(gii_)); // vertex must not match the origin
+                    assert(eps < abs(gii_)); // vertex must not match the origin
                     xi_ /= gii_;
                     if ((xi_ < zero) || (one < xi_)) {
                         in_range_ = false; // barycentric coordinate does not lie in [0;1] interval => miss
