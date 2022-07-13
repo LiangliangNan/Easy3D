@@ -1,10 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
 
-if (APPLE)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.12" CACHE STRING "Minimum OS X deployment version" FORCE)
-    message(STATUS "Minimum OS X deployment version: ${CMAKE_OSX_DEPLOYMENT_TARGET}")
-endif ()
-
 ################################################################################
 
 project(Easy3D)
@@ -13,6 +8,23 @@ set(EASY3D_MAJOR_VERSION 2)
 set(EASY3D_MINOR_VERSION 4)
 set(EASY3D_PATCH_VERSION 9)
 set(EASY3D_VERSION "${EASY3D_MAJOR_VERSION}.${EASY3D_MINOR_VERSION}.${EASY3D_PATCH_VERSION}")
+
+message(STATUS "************************************************************")
+message(STATUS "    Package : Easy3D")
+message(STATUS "    Version : ${EASY3D_VERSION}")
+message(STATUS "    Type    : ${CMAKE_BUILD_TYPE}")
+if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+    add_definitions(-DENV_64_BIT)
+    message(STATUS "    System  : 64-bit ${CMAKE_SYSTEM_NAME}")
+else ()
+    add_definitions(-DENV_32_BIT)
+    message(STATUS "    System  : 32-bit ${CMAKE_SYSTEM_NAME}")
+endif ()
+if (APPLE)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.12" CACHE STRING "Minimum OS X deployment version" FORCE)
+    message(STATUS "    Min OSX deployment version : ${CMAKE_OSX_DEPLOYMENT_TARGET}")
+endif ()
+message(STATUS "************************************************************")
 
 ################################################################################
 
@@ -26,25 +38,13 @@ endif ()
 
 ################################################################################
 
-#math(EXPR EASY3D_OS_BITS "8 * ${CMAKE_SIZEOF_VOID_P}")
-#message(STATUS "Easy3d: I'am woking on ${EASY3D_OS_BITS}-bit ${CMAKE_SYSTEM_NAME}")
-if (CMAKE_SIZEOF_VOID_P EQUAL 8)
-    message(STATUS "Easy3D: I am working on a 64-bit ${CMAKE_SYSTEM_NAME}")
-    add_definitions(-DENV_64_BIT)
-else ()
-    message(STATUS "Easy3D: I am working on a 32-bit ${CMAKE_SYSTEM_NAME}")
-    add_definitions(-DENV_32_BIT)
-endif ()
-
-################################################################################
-
 # specify the C++ standard
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 ################################################################################
 
-# Detects whether this is a top-level project
+# Detect whether this is a top-level project
 if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     set(EASY3D_TOPLEVEL_PROJECT ON)
 else ()
