@@ -38,10 +38,11 @@
 #include <boost/graph/connected_components.hpp>
 #include <boost/graph/prim_minimum_spanning_tree.hpp>
 
-#ifdef VISUALIZATION_FOR_DEBUGGING
+#ifdef VISUALIZE_MST_FOR_DEBUGGING
 #include <easy3d/core/constant.h>
 #include <easy3d/core/random.h>
 #include <easy3d/renderer/drawable_lines.h>
+#include <easy3d/renderer/renderer.h>
 #endif
 
 #endif
@@ -421,31 +422,36 @@ namespace easy3d {
         }
         LOG(INFO) << "done. " << w.time_string();
 
-#ifdef VISUALIZATION_FOR_DEBUGGING
+#ifdef VISUALIZE_MST_FOR_DEBUGGING
         // for debugging: create a drawable to visualize the MST_Graph
-        LinesDrawable* mst_graph = cloud->drawable("mst_graph");
-        if (!mst_graph)
-            mst_graph = cloud->add_drawable("mst_graph");
+        if (cloud->renderer()) {
+            LinesDrawable *mst_graph = cloud->renderer()->get_lines_drawable("mst_graph");
+            if (!mst_graph)
+                mst_graph = cloud->renderer()->add_lines_drawable("mst_graph");
 
-        auto point_prop = cloud->get_vertex_property<vec3>("v:point");
-        std::vector<vec3> points, colors;
-        for (const auto& mst : ms_trees) {
-            const vec3& c = random_color(); // give each mst a unique color
-            auto ei = boost::edges(mst);
-            for (auto eit = ei.first; eit != ei.second; ++eit) {
-               auto sd = boost::source(*eit, mst);
-               auto td = boost::target(*eit, mst);
-               PointCloud::Vertex sv = mst[sd].vertex;
-               PointCloud::Vertex tv = mst[td].vertex;
-               points.push_back(point_prop[sv]);    colors.push_back(c);
-               points.push_back(point_prop[tv]);    colors.push_back(c);
+            auto point_prop = cloud->get_vertex_property<vec3>("v:point");
+            std::vector<vec3> points, colors;
+            std::cout << "num MST: " << ms_trees.size() << std::endl;
+            for (const auto &mst: ms_trees) {
+                const vec3 &c = random_color(); // give each mst a unique color
+                auto ei = boost::edges(mst);
+                for (auto eit = ei.first; eit != ei.second; ++eit) {
+                    auto sd = boost::source(*eit, mst);
+                    auto td = boost::target(*eit, mst);
+                    PointCloud::Vertex sv = mst[sd].vertex;
+                    PointCloud::Vertex tv = mst[td].vertex;
+                    points.push_back(point_prop[sv]);
+                    colors.push_back(c);
+                    points.push_back(point_prop[tv]);
+                    colors.push_back(c);
+                }
             }
-        }
 
-        mst_graph->update_vertex_buffer(points);
-        mst_graph->update_color_buffer(colors);
-        mst_graph->set_per_vertex_color(true);
-        mst_graph->set_visible(true);
+            mst_graph->update_vertex_buffer(points);
+            mst_graph->update_color_buffer(colors);
+            mst_graph->set_coloring_method(State::COLOR_PROPERTY);
+            mst_graph->set_visible(true);
+        }
 #endif
 
         return true;
