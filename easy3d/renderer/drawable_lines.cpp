@@ -38,8 +38,7 @@ namespace easy3d {
 
 
     LinesDrawable::LinesDrawable(const std::string &name, Model *model)
-            : Drawable(name, model), line_width_(1.0f), impostor_type_(PLAIN)
-    {
+            : Drawable(name, model), line_width_(1.0f), impostor_type_(PLAIN) {
         lighting_two_sides_ = setting::lines_drawable_two_side_lighting;
         distinct_back_color_ = setting::lines_drawable_distinct_backside_color;
         back_color_ = setting::lines_drawable_backside_color;
@@ -102,8 +101,8 @@ namespace easy3d {
             program->bind();
             program->set_uniform("MVP", MVP)
                     ->set_uniform("MANIP", MANIP)
-                    ->set_uniform("per_vertex_color",coloring_method() != State::UNIFORM_COLOR && color_buffer())
-                    ->set_uniform("default_color",color());
+                    ->set_uniform("per_vertex_color", coloring_method() != State::UNIFORM_COLOR && color_buffer())
+                    ->set_uniform("default_color", color());
 
             program->set_uniform("highlight", highlight())
                     ->set_uniform("highlight_id_min", highlight_range().first)
@@ -138,8 +137,8 @@ namespace easy3d {
 
             float ratio = camera->pixelGLRatio(camera->pivotPoint());
             program->set_uniform("radius", line_width_ * ratio * 0.5f)  // 0.5f from width -> radius
-                    ->set_uniform("default_color",color())
-                    ->set_uniform("per_vertex_color",coloring_method() != State::UNIFORM_COLOR && color_buffer());
+                    ->set_uniform("default_color", color())
+                    ->set_uniform("per_vertex_color", coloring_method() != State::UNIFORM_COLOR && color_buffer());
 
             program->set_uniform("selected", is_selected());
 
@@ -175,13 +174,13 @@ namespace easy3d {
 
         float ratio = camera->pixelGLRatio(camera->pivotPoint());
         program->set_uniform("radius", line_width_ * ratio * 0.5f)  // 0.5f from width -> radius
-                ->set_uniform("default_color",color())
+                ->set_uniform("default_color", color())
                 ->set_uniform("per_vertex_color", coloring_method() != State::UNIFORM_COLOR && color_buffer())
                 ->set_uniform("eLightPos", setting::light_position)
-                ->set_uniform("lighting",lighting());
+                ->set_uniform("lighting", lighting());
 
-        program->set_block_uniform("Material", "ambient",material().ambient)
-                ->set_block_uniform("Material", "specular",material().specular)
+        program->set_block_uniform("Material", "ambient", material().ambient)
+                ->set_block_uniform("Material", "specular", material().specular)
                 ->set_block_uniform("Material", "shininess", &material().shininess);
 
         program->set_uniform("selected", is_selected());
@@ -217,10 +216,10 @@ namespace easy3d {
 
         float ratio = camera->pixelGLRatio(camera->pivotPoint());
         program->set_uniform("radius", line_width() * ratio * 0.5f)  // 0.5f from width -> radius
-                ->set_uniform("default_color",color())
-                ->set_uniform("per_vertex_color",coloring_method() != State::UNIFORM_COLOR && color_buffer())
+                ->set_uniform("default_color", color())
+                ->set_uniform("per_vertex_color", coloring_method() != State::UNIFORM_COLOR && color_buffer())
                 ->set_uniform("eLightPos", setting::light_position)
-                ->set_uniform("lighting",lighting())
+                ->set_uniform("lighting", lighting())
                 ->set_block_uniform("Material", "ambient", material().ambient)
                 ->set_block_uniform("Material", "specular", material().specular)
                 ->set_block_uniform("Material", "shininess", &material().shininess);
@@ -267,7 +266,7 @@ namespace easy3d {
                 setting::clipping_plane->set_discard_primitives(program, plane_clip_discard_primitive());
             }
 
-            program->bind_texture("textureID",texture()->id(), 0);
+            program->bind_texture("textureID", texture()->id(), 0);
             gl_draw();
             program->release_texture();
 
@@ -299,7 +298,7 @@ namespace easy3d {
                 setting::clipping_plane->set_discard_primitives(program, plane_clip_discard_primitive());
             }
 
-            program->bind_texture("textureID",texture()->id(), 0);
+            program->bind_texture("textureID", texture()->id(), 0);
             gl_draw();
             program->release_texture();
 
@@ -330,10 +329,10 @@ namespace easy3d {
         float ratio = camera->pixelGLRatio(camera->pivotPoint());
         program->set_uniform("radius", line_width_ * ratio * 0.5f)  // 0.5f from width -> radius
                 ->set_uniform("eLightPos", setting::light_position)
-                ->set_uniform("lighting",lighting());
+                ->set_uniform("lighting", lighting());
 
-        program->set_block_uniform("Material", "ambient",material().ambient)
-                ->set_block_uniform("Material", "specular",material().specular)
+        program->set_block_uniform("Material", "ambient", material().ambient)
+                ->set_block_uniform("Material", "specular", material().specular)
                 ->set_block_uniform("Material", "shininess", &material().shininess);
 
         program->set_uniform("selected", is_selected());
@@ -343,7 +342,7 @@ namespace easy3d {
             setting::clipping_plane->set_discard_primitives(program, plane_clip_discard_primitive());
         }
 
-        program->bind_texture("textureID",texture()->id(), 0);
+        program->bind_texture("textureID", texture()->id(), 0);
         gl_draw();
         program->release_texture();
 
@@ -373,10 +372,10 @@ namespace easy3d {
         float ratio = camera->pixelGLRatio(camera->pivotPoint());
         program->set_uniform("radius", line_width_ * ratio * 0.5f)  // 0.5f from width -> radius
                 ->set_uniform("eLightPos", setting::light_position)
-                ->set_uniform("lighting",lighting());
+                ->set_uniform("lighting", lighting());
 
-        program->set_block_uniform("Material", "ambient",material().ambient)
-                ->set_block_uniform("Material", "specular",material().specular)
+        program->set_block_uniform("Material", "ambient", material().ambient)
+                ->set_block_uniform("Material", "specular", material().specular)
                 ->set_block_uniform("Material", "shininess", &material().shininess);
 
         program->set_uniform("selected", is_selected());
@@ -386,7 +385,7 @@ namespace easy3d {
             setting::clipping_plane->set_discard_primitives(program, plane_clip_discard_primitive());
         }
 
-        program->bind_texture("textureID",texture()->id(), 0);
+        program->bind_texture("textureID", texture()->id(), 0);
 
         gl_draw();
         program->release_texture();
