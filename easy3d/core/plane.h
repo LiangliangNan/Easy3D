@@ -430,7 +430,14 @@ namespace easy3d {
             return true;
 
         // degenerate case
-        return false;
+        if (a != 0 || p != 0)
+            return (a * s == p * d);
+        if (b != 0 || q != 0)
+            return (b * s == q * d);
+        if (c != 0 || r != 0)
+            return (c * s == r * d);
+
+        return true;
     }
 
 
@@ -448,21 +455,24 @@ namespace easy3d {
 
         FT det = a * q - p * b;
         if (det != 0) {
-            const Point3 pt(b * s - d * q / det, p * d - a * s / det, 0);
-            const Vector3 dir(b * r - c * q, p * c - a * r, det);
-            return Line3::from_point_and_direction(pt, dir);
+            const Point3 pt((b * s - d * q) / det, (p * d - a * s) / det, 0);
+            const Vector3 dir((b * r - c * q), (p * c - a * r), det);
+            line = Line3::from_point_and_direction(pt, dir);
+            return true;
         }
         det = a * r - p * c;
         if (det != 0) {
-            const Point3 pt(c * s - d * r / det, 0, p * d - a * s / det);
-            const Vector3 dir(c * q - b * r, det, p * b - a * q);
-            return Line3::from_point_and_direction(pt, dir);
+            const Point3 pt((c * s - d * r) / det, 0, (p * d - a * s) / det);
+            const Vector3 dir((c * q - b * r), det, (p * b - a * q));
+            line = Line3::from_point_and_direction(pt, dir);
+            return true;
         }
         det = b * r - c * q;
         if (det != 0) {
-            const Point3 pt(0, c * s - d * r / det, d * q - b * s / det);
-            const Vector3 dir(det, c * p - a * r, a * q - b * p);
-            return Line3::from_point_and_direction(pt, dir);
+            const Point3 pt(0, (c * s - d * r) / det, (d * q - b * s) / det);
+            const Vector3 dir(det, (c * p - a * r), (a * q - b * p));
+            line = Line3::from_point_and_direction(pt, dir);
+            return true;
         }
 
         // degenerate case
