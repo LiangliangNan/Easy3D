@@ -193,6 +193,23 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->checkBoxAutoFocus, SIGNAL(toggled(bool)), ui->treeWidgetModels, SLOT(setAutoFocus(bool)));
     connect(ui->checkBoxSelectedOnly, SIGNAL(toggled(bool)), ui->treeWidgetModels, SLOT(setSelectedOnly(bool)));
 
+#if 0
+    auto actionTest = ui->mainToolBar->addAction("Test");
+    connect(actionTest, &QAction::triggered, [this]() -> void {
+        Model* m = viewer_->currentModel();
+        if (!m)
+            return;
+
+        // process the model
+
+        viewer_->makeCurrent();
+        // update the opengl buffers if needed.
+        viewer_->doneCurrent();
+        viewer_->update();
+        updateUi();
+    });
+#endif
+
     setWindowIcon(QIcon(QString::fromStdString(":/resources/icons/Mapple.png")));
     setContextMenuPolicy(Qt::CustomContextMenu);
     setAcceptDrops(true);
