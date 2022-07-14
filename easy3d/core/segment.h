@@ -78,7 +78,7 @@ namespace easy3d {
         ///     - the squared distance between \p p and the supporting_line() of this segment;
         ///     - the squared distance between \p p and the source() of this segment;
         ///     - the squared distance between \p p and the target() of this segment;
-        FT squared_ditance(const Point &p) const;
+        FT squared_distance(const Point &p) const;
 
     private:
         Point s_;
@@ -109,7 +109,7 @@ namespace easy3d {
 
 
     template<int DIM, typename FT> inline
-    FT GenericSegment<DIM, FT>::squared_ditance(const Point &p) const {
+    FT GenericSegment<DIM, FT>::squared_distance(const Point &p) const {
         if (projected_inside(p))
             return distance2(projection(p), p);
         else {

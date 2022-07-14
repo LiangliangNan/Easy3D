@@ -135,7 +135,7 @@ namespace easy3d {
             const vec3 &t = model->position(model->target(h));
             if (distance2(s, t) > threshold) {
                 Segment3 seg(s, t);
-                double d = seg.squared_ditance(point);
+                double d = seg.squared_distance(point);
                 if (d < squared_distance/* && seg.projected_inside(point)*/) {
                     squared_distance = d;
                     closest_edge = h;
@@ -152,7 +152,7 @@ namespace easy3d {
         const vec3 &s = model->position(model->source(closest_edge));
         const vec3 &t = model->position(model->target(closest_edge));
         const Segment2 seg(project(s), project(t));
-        float s_dist = seg.squared_ditance(vec2(static_cast<float>(x), static_cast<float>(y)));
+        float s_dist = seg.squared_distance(vec2(static_cast<float>(x), static_cast<float>(y)));
         float dist = std::sqrt(s_dist);
 
         if (dist < hit_resolution_)
