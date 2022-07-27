@@ -1917,7 +1917,8 @@ void MainWindow::surfaceMeshPlanarPartition() {
 
     const std::string partition_name = "f:planar_partition";
     auto planar_segments = mesh->face_property<int>(partition_name, -1);
-    SurfaceMeshEnumerator::enumerate_planar_components(mesh, planar_segments, 1.0f);
+    int num = SurfaceMeshEnumerator::enumerate_planar_components(mesh, planar_segments, 1.0f);
+    LOG(INFO) << "model has " << num << " planar segments";
 
     const std::string color_name = "f:color_planar_partition";
     auto coloring = mesh->face_property<vec3>(color_name, vec3(0, 0, 0));
