@@ -127,7 +127,7 @@ namespace easy3d {
             }
 
             // Liangliang: For most scenarios, the num of vertices in a face is small (i.e., in [0, 255]), and PLY_UCHAR
-            // is enough. In case you want to store faces that have more than 256 vertices, you should choose PLY_UINT32.
+            // is enough. In case you want to store faces that have more than 256 vertices, you should choose PLY_UINT/PLY_UINT32.
             e_ply_type length_type = PLY_UCHAR;
 
             for (std::size_t i = 0; i < elements.size(); ++i) {
