@@ -126,10 +126,9 @@ namespace easy3d {
                 return false;
             }
 
-            // For most scenarios (e.g., num of vertices in a face), PLY_UCHAR is enough: [0, 255].
-            // But I want to store segmentation information (e.g., the vertex indices), which
-            // requires a large integers, so I choose unsigned int.
-            e_ply_type length_type = PLY_UINT32;
+            // Liangliang: For most scenarios, the num of vertices in a face is small (i.e., in [0, 255]), and PLY_UCHAR
+            // is enough. In case you want to store faces that have more than 256 vertices, you should choose PLY_UINT32.
+            e_ply_type length_type = PLY_UCHAR;
 
             for (std::size_t i = 0; i < elements.size(); ++i) {
                 const std::string &element_name = elements[i].name;
