@@ -127,8 +127,31 @@ namespace easy3d {
             }
 
             // Liangliang: For most scenarios, the num of vertices in a face is small (i.e., in [0, 255]), and PLY_UCHAR
-            // is enough. In case you want to store faces that have more than 256 vertices, you should choose PLY_UINT/PLY_UINT32.
+            // is enough. In case you want to store faces that have more than 256 vertices, you should choose PLY_UINT.
             e_ply_type length_type = PLY_UCHAR;
+#ifndef NDEBUG
+            // warn the user if the number of vertices in a face is greater than 255
+            for (std::size_t i = 0; i < elements.size(); ++i) {
+                if (elements[i].name == FACE) {
+                    const std::vector<IntListProperty> &int_list_properties = elements[i].int_list_properties;
+                    for (std::size_t j = 0; j < int_list_properties.size(); ++j) {
+                        if (int_list_properties[j].name == "vertex_indices") {
+                            const IntListProperty &property = int_list_properties[j];
+                            for (std::size_t k = 0; k < property.size(); ++k) {
+                                if (property[k].size() > 255) {
+                                    length_type = PLY_UINT;
+                                    LOG(WARNING) << "face has " << property[k].size()
+                                                 << " vertices, thus the length field of the list property 'vertex_indices'"
+                                                    " is set to PLY_UINT (this might not be recognized by other software)";
+                                }
+                            }
+                            break;
+                        }
+                    }
+                    break;
+                }
+            }
+#endif
 
             for (std::size_t i = 0; i < elements.size(); ++i) {
                 const std::string &element_name = elements[i].name;
