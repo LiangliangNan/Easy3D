@@ -1,6 +1,7 @@
 ##############################################################################
 # GitHub Actions Workflow for Easy3D to build tests with GCC
 #
+# Copyright (C) 2022 Liangliang Nan <liangliang.nan@gmail.com>
 # Copyright (c) 2021 Vissarion Fisikopoulos
 #
 # Licensed under GNU LGPL.3, see LICENCE file
@@ -15,8 +16,8 @@ jobs:
     strategy:
           fail-fast: false
           matrix:
-            compilers: [g++-5, g++-6, g++-7, g++-8, g++-9, g++-10]
-    runs-on: ubuntu-18.04
+            compilers: [g++-7, g++-8, g++-9, g++-10, g++-11]
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v1
       - run: sudo apt-get update || true;
