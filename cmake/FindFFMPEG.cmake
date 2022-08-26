@@ -80,7 +80,6 @@ if (NOT FFMPEG_FOUND)
     find_library(FFMPEG_LIBRARY_avfilter NAMES avfilter libavfilter.so.6 PATHS ${SEARCH_PATHS_FOR_LIBRARIES})
     find_library(FFMPEG_LIBRARY_avformat NAMES avformat PATHS ${SEARCH_PATHS_FOR_LIBRARIES})
     find_library(FFMPEG_LIBRARY_avutil NAMES avutil PATHS ${SEARCH_PATHS_FOR_LIBRARIES})
-    find_library(FFMPEG_LIBRARY_postproc NAMES postproc libpostproc.so.54 PATHS ${SEARCH_PATHS_FOR_LIBRARIES})
     find_library(FFMPEG_LIBRARY_swresample NAMES swresample PATHS ${SEARCH_PATHS_FOR_LIBRARIES})
     find_library(FFMPEG_LIBRARY_swscale NAMES swscale PATHS ${SEARCH_PATHS_FOR_LIBRARIES})
 
@@ -91,7 +90,6 @@ if (NOT FFMPEG_FOUND)
             ${FFMPEG_LIBRARY_avfilter}
             ${FFMPEG_LIBRARY_avformat}
             ${FFMPEG_LIBRARY_avutil}
-            ${FFMPEG_LIBRARY_postproc}
             ${FFMPEG_LIBRARY_swresample}
             ${FFMPEG_LIBRARY_swscale}
             )
