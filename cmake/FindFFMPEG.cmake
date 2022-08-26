@@ -79,17 +79,21 @@ if (NOT FFMPEG_FOUND)
     find_library(FFMPEG_LIBRARY_avdevice NAMES avdevice libavdevice.so.57 PATHS ${SEARCH_PATHS_FOR_LIBRARIES})
     find_library(FFMPEG_LIBRARY_avfilter NAMES avfilter libavfilter.so.6 PATHS ${SEARCH_PATHS_FOR_LIBRARIES})
     find_library(FFMPEG_LIBRARY_avformat NAMES avformat PATHS ${SEARCH_PATHS_FOR_LIBRARIES})
-    find_library(FFMPEG_LIBRARY_avresample NAMES avresample libavresample.so.3 PATHS ${SEARCH_PATHS_FOR_LIBRARIES})
-    find_library(FFMPEG_LIBRARY_swscale NAMES swscale PATHS ${SEARCH_PATHS_FOR_LIBRARIES})
-    find_library(FFMPEG_LIBRARY_swresample NAMES swresample PATHS ${SEARCH_PATHS_FOR_LIBRARIES})
     find_library(FFMPEG_LIBRARY_avutil NAMES avutil PATHS ${SEARCH_PATHS_FOR_LIBRARIES})
     find_library(FFMPEG_LIBRARY_postproc NAMES postproc libpostproc.so.54 PATHS ${SEARCH_PATHS_FOR_LIBRARIES})
+    find_library(FFMPEG_LIBRARY_swresample NAMES swresample PATHS ${SEARCH_PATHS_FOR_LIBRARIES})
+    find_library(FFMPEG_LIBRARY_swscale NAMES swscale PATHS ${SEARCH_PATHS_FOR_LIBRARIES})
 
     # setup libraries files
     set(FFMPEG_LIBRARIES
-            ${FFMPEG_LIBRARY_avcodec} ${FFMPEG_LIBRARY_avdevice} ${FFMPEG_LIBRARY_avfilter} ${FFMPEG_LIBRARY_avformat}
-            ${FFMPEG_LIBRARY_avresample} ${FFMPEG_LIBRARY_swscale} ${FFMPEG_LIBRARY_swresample} ${FFMPEG_LIBRARY_avutil}
+            ${FFMPEG_LIBRARY_avcodec}
+            ${FFMPEG_LIBRARY_avdevice}
+            ${FFMPEG_LIBRARY_avfilter}
+            ${FFMPEG_LIBRARY_avformat}
+            ${FFMPEG_LIBRARY_avutil}
             ${FFMPEG_LIBRARY_postproc}
+            ${FFMPEG_LIBRARY_swresample}
+            ${FFMPEG_LIBRARY_swscale}
             )
     string(STRIP "${FFMPEG_LIBRARIES}" FFMPEG_LIBRARIES)
 endif ()
