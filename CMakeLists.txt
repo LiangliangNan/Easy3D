@@ -78,7 +78,7 @@ if (EASY3D_ENABLE_CGAL)
         else ()
             set(EASY3D_HAS_CGAL FALSE)
             message(FATAL_ERROR "You have requested CGAL support and CGAL v${CGAL_VERSION} is found. However, Easy3D"
-                    " requires at least v5.1. Please install CGAL v5.1 or later. In case you have multiple versions"
+                    " requires at least v5.1. Please install CGAL v5.1 or above. In case you have multiple versions"
                     " of CGAL on your platform, provide the path of a suitable one to the CMake variable `CGAL_DIR`.\n"
                     " Please note that only the following surface mesh algorithms require CGAL (v5.1 or later): \n"
                     "   - reorientation; \n"
