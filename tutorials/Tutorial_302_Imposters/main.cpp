@@ -38,7 +38,7 @@ using namespace easy3d;
 
 
 // This example shows how to render imposters, e.g.,
-//		- points as spheres, sufels
+//		- points as spheres, surfels
 //		- lines as cylinders;
 //      - lines as cones.
 
