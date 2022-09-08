@@ -29,6 +29,7 @@
 #include <easy3d/core/signal.h>
 
 #include <iostream>
+#include <string>
 #include <mutex>
 
 std::mutex mutex;

@@ -27,6 +27,7 @@
 
 #include <easy3d/core/signal.h>
 #include <iostream>
+#include <string>
 
 
 using namespace easy3d;
