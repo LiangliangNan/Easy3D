@@ -410,6 +410,7 @@ void DialogWalkThrough::preview(bool b) {
             connect(previewButton, SIGNAL(toggled(bool)), this, SLOT(preview(bool)));
             return;
         }
+        previewButton->setText("Stop");
 
         id_interpolationStopped = easy3d::connect(&interpolator()->interpolation_stopped, interpolationStopped);
         QObject::connect(this, &DialogWalkThrough::previewStopped, this, &DialogWalkThrough::onPreviewStopped);
@@ -435,6 +436,7 @@ void DialogWalkThrough::preview(bool b) {
 
         interpolator()->stop_interpolation();
         LOG(INFO) << "preview finished. " << w.time_string();
+        previewButton->setText("Preview");
 
         for (auto w : findChildren<QComboBox*>()) w->setEnabled(true);
         for (auto w : findChildren<QLabel*>()) w->setEnabled(true);
