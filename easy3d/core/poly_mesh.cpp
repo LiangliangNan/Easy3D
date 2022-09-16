@@ -463,7 +463,7 @@ namespace easy3d {
             hconn_[h].vertices_ = vertices;
             hconn_[oh].vertices_ = std::vector<Vertex>(vertices.rbegin(), vertices.rend());
 
-            for (int i=0; i<vertices.size(); ++i) {
+            for (std::size_t i=0; i<vertices.size(); ++i) {
                 auto s = vertices[i];
                 auto t = vertices[(i+1)%vertices.size()];
                 auto e = find_edge(s, t);
