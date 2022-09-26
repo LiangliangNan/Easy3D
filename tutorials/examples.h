@@ -22,46 +22,56 @@
 /// @example Tutorial_114_PolyMesh_Property         \include Tutorial_114_PolyMesh_Property/main.cpp
 /// @example Tutorial_115_PolyMesh_IO               \include Tutorial_115_PolyMesh_IO/main.cpp
 
+/// @example Tutorial_201_Viewer_default \include Tutorial_201_Viewer_default/main.cpp
+
 /**
- * \example Tutorial_201_Viewer_imgui
+ * \example Tutorial_202_Viewer_imgui
  * The source file containing the main() function:
- * \include Tutorial_201_Viewer_imgui/main.cpp
+ * \include Tutorial_202_Viewer_imgui/main.cpp
  * The header file of the class:
- * \include Tutorial_201_Viewer_imgui/viewer.h
+ * \include Tutorial_202_Viewer_imgui/viewer.h
  * The source file of the class:
- * \include Tutorial_201_Viewer_imgui/viewer.cpp
+ * \include Tutorial_202_Viewer_imgui/viewer.cpp
  */
 
 /**
- * \example Tutorial_202_Viewer_Qt
- * The source file containing the main() function:
- * \include Tutorial_202_Viewer_Qt/main.cpp
+ * \example Tutorial_203_Viewer_wxWidgets
  * The header file of the class:
- * \include Tutorial_202_Viewer_Qt/viewer.h
+ * \include Tutorial_203_Viewer_wxWidgets/viewer.h Tutorial_203_Viewer_wxWidgets/application.h  Tutorial_203_Viewer_wxWidgets/main_window.h
  * The source file of the class:
- * \include Tutorial_202_Viewer_Qt/viewer.cpp
- */
-
-/// @example Tutorial_203_CompositeView \include Tutorial_203_CompositeView/main.cpp
-
-/**
- * \example Tutorial_204_CameraInterpolation
- * The source file containing the main() function:
- * \include Tutorial_204_CameraInterpolation/main.cpp
- * The header file of the class:
- * \include Tutorial_204_CameraInterpolation/viewer.h
- * The source file of the class:
- * \include Tutorial_204_CameraInterpolation/viewer.cpp
+ * \include Tutorial_203_Viewer_wxWidgets/viewer.cpp Tutorial_203_Viewer_wxWidgets/application.cpp  Tutorial_203_Viewer_wxWidgets/main_window.cpp
  */
 
 /**
- * \example Tutorial_205_RealCamera
+ * \example Tutorial_204_Viewer_Qt
  * The source file containing the main() function:
- * \include Tutorial_205_RealCamera/main.cpp
+ * \include Tutorial_204_Viewer_Qt/main.cpp
  * The header file of the class:
- * \include Tutorial_205_RealCamera/viewer.h
+ * \include Tutorial_204_Viewer_Qt/viewer.h Tutorial_204_Viewer_Qt/main_window.h
  * The source file of the class:
- * \include Tutorial_205_RealCamera/viewer.cpp
+ * \include Tutorial_204_Viewer_Qt/viewer.cpp Tutorial_204_Viewer_Qt/main_window.cpp
+ */
+
+/// @example Tutorial_205_CompositeView \include Tutorial_205_CompositeView/main.cpp
+
+/**
+ * \example Tutorial_206_CameraInterpolation
+ * The source file containing the main() function:
+ * \include Tutorial_206_CameraInterpolation/main.cpp
+ * The header file of the class:
+ * \include Tutorial_206_CameraInterpolation/viewer.h
+ * The source file of the class:
+ * \include Tutorial_206_CameraInterpolation/viewer.cpp
+ */
+
+/**
+ * \example Tutorial_207_RealCamera
+ * The source file containing the main() function:
+ * \include Tutorial_207_RealCamera/main.cpp
+ * The header file of the class:
+ * \include Tutorial_207_RealCamera/viewer.h
+ * The source file of the class:
+ * \include Tutorial_207_RealCamera/viewer.cpp
  */
 
 /// @example Tutorial_301_Drawables     \include Tutorial_301_Drawables/main.cpp
