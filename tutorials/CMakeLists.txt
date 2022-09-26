@@ -24,13 +24,15 @@ add_subdirectory(Tutorial_114_PolyMesh_Property)
 add_subdirectory(Tutorial_115_PolyMesh_IO)
 
 # ui, viewer, and camera
-add_subdirectory(Tutorial_201_Viewer_imgui)
+add_subdirectory(Tutorial_201_Viewer_default)
+add_subdirectory(Tutorial_202_Viewer_imgui)
+add_subdirectory(Tutorial_203_Viewer_wxWidgets)
 if (EASY3D_ENABLE_QT)
-    add_subdirectory(Tutorial_202_Viewer_Qt)
+    add_subdirectory(Tutorial_204_Viewer_Qt)
 endif ()
-add_subdirectory(Tutorial_203_CompositeView)
-add_subdirectory(Tutorial_204_CameraInterpolation)
-add_subdirectory(Tutorial_205_RealCamera)
+add_subdirectory(Tutorial_205_CompositeView)
+add_subdirectory(Tutorial_206_CameraInterpolation)
+add_subdirectory(Tutorial_207_RealCamera)
 
 # drawable objects and basic rendering
 add_subdirectory(Tutorial_301_Drawables)

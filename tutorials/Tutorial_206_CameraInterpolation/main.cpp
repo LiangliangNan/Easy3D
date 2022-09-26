@@ -29,26 +29,23 @@
 #include <easy3d/util/logging.h>
 
 
-/// This example shows how to
-///     - render a model from the view given the camera's intrinsic and
-///       extrinsic parameters. The camera parameters were recovered using
-///       commonly used computer vision techniques (i.e., calibration, or SfM).
-///     - how an image point is projected into a ray in the 3D space.
-///     - how a 3D point is projected onto the image.
+// This example shows how to
+//        - creat an exploration path using the key frame interpolator,
+//        - play the path as an animation.
 
 using namespace easy3d;
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
     // Initialize logging.
     logging::initialize();
 
-    // the bundler file (We use only the camera intrinsic and extrinsic parameters).
-    const std::string bundler_file = resource::directory() + "/data/fountain/bundle.out";
-    // the point cloud file.
-    const std::string cloud_file = resource::directory() + "/data/fountain/pointcloud.ply";
+    const std::string& file_name = resource::directory() + "/data/building.off";
 
-    RealCamera viewer("Tutorial_205_RealCamera", bundler_file, cloud_file);
+    CameraIntrepolation viewer("Tutorial_206_CameraInterpolation");
+    if (!viewer.add_model(file_name, true)) {
+        LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
+        return EXIT_FAILURE;
+    }
 
-    // Run the viewer
     return viewer.run();
 }

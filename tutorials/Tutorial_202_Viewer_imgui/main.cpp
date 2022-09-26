@@ -24,14 +24,14 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include "viewer.h"
+#include <iostream>
+#include <algorithm>
+
 #include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
 
+#include "viewer.h"
 
-// This example shows how to
-//        - creat an exploration path using the key frame interpolator,
-//        - play the path as an animation.
 
 using namespace easy3d;
 
@@ -39,13 +39,14 @@ int main(int argc, char** argv) {
     // Initialize logging.
     logging::initialize();
 
-    const std::string& file_name = resource::directory() + "/data/building.off";
+    const std::string file_name = resource::directory() + "/data/easy3d.ply";
+    ViewerImGui viewer("Tutorial_202_Viewer_imgui");
 
-    CameraIntrepolation viewer("Tutorial_204_CameraInterpolation");
-    if (!viewer.add_model(file_name, true)) {
+    if (!viewer.add_model(file_name)) {
         LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
         return EXIT_FAILURE;
     }
 
+    viewer.resize(800, 600);
     return viewer.run();
 }

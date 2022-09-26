@@ -390,7 +390,7 @@ void MainWindow::updateWindowTitle() {
     Model* model = viewer_->currentModel();
 
 #ifndef NDEBUG
-    QString title = "ViewerQt (Debug Version)";
+    QString title = "Tutorial_204_Viewer_Qt (Debug Version)";
 #else
     QString title = "Tutorial_202_Viewer_Qt";
 #endif // _DEBUG

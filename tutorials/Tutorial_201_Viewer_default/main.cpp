@@ -24,13 +24,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include <iostream>
-#include <algorithm>
-
 #include <easy3d/fileio/resources.h>
 #include <easy3d/util/logging.h>
-
-#include "viewer.h"
+#include <easy3d/renderer/camera.h>
+#include <easy3d/viewer/viewer.h>
 
 
 using namespace easy3d;
@@ -40,13 +37,14 @@ int main(int argc, char** argv) {
     logging::initialize();
 
     const std::string file_name = resource::directory() + "/data/easy3d.ply";
-    ViewerImGui viewer("Tutorial_201_viewer_imgui");
+    Viewer viewer("Tutorial_201_Viewer_default");
+    viewer.camera()->setViewDirection(vec3(0, 0, -1));
+    viewer.camera()->setUpVector(vec3(0, 1, 0));
 
     if (!viewer.add_model(file_name)) {
         LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
         return EXIT_FAILURE;
     }
 
-    viewer.resize(800, 600);
     return viewer.run();
 }
