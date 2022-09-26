@@ -57,7 +57,7 @@ int test_multithread() {
     logging::initialize();
 
     // create the viewer
-    Viewer viewer("Tutorial_312_MultiThread");
+    Viewer viewer("MultiThread");
 
     // create a point cloud (with a per point color property) from a set of random points
     auto cloud = new PointCloud;
