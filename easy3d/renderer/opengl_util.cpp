@@ -24,7 +24,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include <easy3d/renderer/opengl_info.h>
+#include <easy3d/renderer/opengl_util.h>
 
 #include <iostream>
 #include <cstdio>	// for vsprintf()
@@ -42,11 +42,11 @@ namespace easy3d {
     static const std::string err_msg = "error (null_string)";
 
 
-    bool			OpenglInfo::_glew_initialized = false;
-    std::ostream*	OpenglInfo::_output_stream = (std::iostream*)&(std::cout);
+    bool			OpenglUtil::_glew_initialized = false;
+    std::ostream*	OpenglUtil::_output_stream = (std::iostream*)&(std::cout);
 
 
-    bool OpenglInfo::init() {
+    bool OpenglUtil::init() {
         if (_glew_initialized)
             return true;
 
@@ -63,19 +63,19 @@ namespace easy3d {
     }
 
 
-    bool OpenglInfo::is_initialized() {
+    bool OpenglUtil::is_initialized() {
         return _glew_initialized;
     }
 
 
-    bool OpenglInfo::is_supported(const std::string& name) {
+    bool OpenglUtil::is_supported(const std::string& name) {
         if (!_glew_initialized)
             init();
         return (glewIsSupported(name.c_str()) != 0);
     }
 
 
-    bool OpenglInfo::has_entension(const std::string &ext) {
+    bool OpenglUtil::has_entension(const std::string &ext) {
         if (!_glew_initialized)
             init();
         int num = 0;
@@ -88,7 +88,7 @@ namespace easy3d {
         return false;
     }
 
-    int OpenglInfo::gl_profile() {
+    int OpenglUtil::gl_profile() {
         if (!_glew_initialized)
             init();
 
@@ -105,7 +105,7 @@ namespace easy3d {
     }
 
 
-    std::string OpenglInfo::gl_vendor() {
+    std::string OpenglUtil::gl_vendor() {
         const GLubyte* str = glGetString(GL_VENDOR);
         if (str)
             return std::string(reinterpret_cast<const char*>(str));
@@ -114,7 +114,7 @@ namespace easy3d {
     }
 
 
-    std::string OpenglInfo::gl_renderer() {
+    std::string OpenglUtil::gl_renderer() {
         const GLubyte* str = glGetString(GL_RENDERER);
         if (str)
             return std::string(reinterpret_cast<const char*>(str));
@@ -123,7 +123,7 @@ namespace easy3d {
     }
 
 
-    std::string OpenglInfo::gl_version() {
+    std::string OpenglUtil::gl_version() {
         const GLubyte* str = glGetString(GL_VERSION);
         if (str)
             return std::string(reinterpret_cast<const char*>(str));
@@ -131,7 +131,7 @@ namespace easy3d {
             return err_msg;
     }
 
-    std::string OpenglInfo::gl_extensions() {
+    std::string OpenglUtil::gl_extensions() {
         const GLubyte* str = glGetString(GL_EXTENSIONS);
         if (str)
             return std::string(reinterpret_cast<const char*>(str));
@@ -139,7 +139,7 @@ namespace easy3d {
             return err_msg;
     }
 
-    std::string OpenglInfo::glew_version() {
+    std::string OpenglUtil::glew_version() {
         if (!_glew_initialized)
             init();
 
@@ -150,7 +150,7 @@ namespace easy3d {
             return err_msg;
     }
 
-    std::string OpenglInfo::glsl_version() {
+    std::string OpenglUtil::glsl_version() {
         const GLubyte* str = glGetString(GL_SHADING_LANGUAGE_VERSION);
         if (str)
             return std::string(reinterpret_cast<const char*>(str));
@@ -159,21 +159,21 @@ namespace easy3d {
     }
 
 
-    int OpenglInfo::gl_major_version() {
+    int OpenglUtil::gl_major_version() {
         int v;
         glGetIntegerv(GL_MAJOR_VERSION, &v);
         return v;
     }
 
 
-    int OpenglInfo::gl_minor_version() {
+    int OpenglUtil::gl_minor_version() {
         int v;
         glGetIntegerv(GL_MINOR_VERSION, &v);
         return v;
     }
 
 
-    float OpenglInfo::glew_version_number() {
+    float OpenglUtil::glew_version_number() {
         if (!_glew_initialized)
             init();
 
@@ -187,7 +187,7 @@ namespace easy3d {
     }
 
 
-    float OpenglInfo::gl_version_number() {
+    float OpenglUtil::gl_version_number() {
         const GLubyte* str = glGetString(GL_VERSION);
         if (str) {
             float version = std::stof(reinterpret_cast<const char*>(str), 0);
@@ -205,7 +205,7 @@ namespace easy3d {
     }
 
 
-    float OpenglInfo::glsl_version_number() {
+    float OpenglUtil::glsl_version_number() {
         const GLubyte* str = glGetString(GL_SHADING_LANGUAGE_VERSION);
         float version = std::stof(reinterpret_cast<const char*>(str), 0);
         return version;
@@ -214,7 +214,7 @@ namespace easy3d {
 
     // sets the output stream for the messages.
     // if null, cout is used
-    void OpenglInfo::set_output(std::ostream *out) {
+    void OpenglUtil::set_output(std::ostream *out) {
         if (!out)
             // if null use cout
             _output_stream = (std::iostream*)&std::cout;
@@ -225,24 +225,24 @@ namespace easy3d {
 
     // ---------------------------------------------------------------------------------
 
-    std::unordered_map<int, std::string>	OpenglInfo::spBufferAccess;
-    std::unordered_map<int, std::string>	OpenglInfo::spBufferUsage;
-    std::unordered_map<int, std::string>	OpenglInfo::spBufferBinding;
-    std::unordered_map<int, int>			OpenglInfo::spBoundBuffer;
-    std::unordered_map<int, int>			OpenglInfo::spBufferBound;
-    std::unordered_map<int, std::string>	OpenglInfo::spDataF;
-    std::unordered_map<int, std::string>	OpenglInfo::spGLSLType;
-    std::unordered_map<int, int> 			OpenglInfo::spGLSLTypeSize;
-    std::unordered_map<int, std::string>	OpenglInfo::spShaderType;
-    std::unordered_map<int, std::string>	OpenglInfo::spTransFeedBufferMode;
-    std::unordered_map<int, std::string>	OpenglInfo::spGLSLPrimitives;
-    std::unordered_map<int, std::string>	OpenglInfo::spTessGenSpacing;
-    std::unordered_map<int, std::string>	OpenglInfo::spVertexOrder;
+    std::unordered_map<int, std::string>	OpenglUtil::spBufferAccess;
+    std::unordered_map<int, std::string>	OpenglUtil::spBufferUsage;
+    std::unordered_map<int, std::string>	OpenglUtil::spBufferBinding;
+    std::unordered_map<int, int>			OpenglUtil::spBoundBuffer;
+    std::unordered_map<int, int>			OpenglUtil::spBufferBound;
+    std::unordered_map<int, std::string>	OpenglUtil::spDataF;
+    std::unordered_map<int, std::string>	OpenglUtil::spGLSLType;
+    std::unordered_map<int, int> 			OpenglUtil::spGLSLTypeSize;
+    std::unordered_map<int, std::string>	OpenglUtil::spShaderType;
+    std::unordered_map<int, std::string>	OpenglUtil::spTransFeedBufferMode;
+    std::unordered_map<int, std::string>	OpenglUtil::spGLSLPrimitives;
+    std::unordered_map<int, std::string>	OpenglUtil::spTessGenSpacing;
+    std::unordered_map<int, std::string>	OpenglUtil::spVertexOrder;
 
-    bool OpenglInfo::_spInit = OpenglInfo::_init();
+    bool OpenglUtil::_spInit = OpenglUtil::_init();
 
     /// display current binded buffer info
-    void OpenglInfo::getCurrentBufferInfo() {
+    void OpenglUtil::getCurrentBufferInfo() {
 
         int info;
 
@@ -277,7 +277,7 @@ namespace easy3d {
 
 
     /// display the buffer information
-    void OpenglInfo::getBufferInfo(GLenum target, int bufferName) {
+    void OpenglUtil::getBufferInfo(GLenum target, int bufferName) {
         int info, prevBuffer;
 
         *_output_stream << std::endl;
@@ -306,7 +306,7 @@ namespace easy3d {
 
 
     /// display detailed VAO info
-    void OpenglInfo::getVAOInfo(unsigned int buffer) {
+    void OpenglUtil::getVAOInfo(unsigned int buffer) {
         int count, info, prevBuffer;
 
         *_output_stream << std::endl;
@@ -369,7 +369,7 @@ namespace easy3d {
 
 
     // display info for all active uniforms in a program
-    void OpenglInfo::getUniformsInfo(unsigned int program) {
+    void OpenglUtil::getUniformsInfo(unsigned int program) {
         *_output_stream << std::endl;
 
         // is it a program ?
@@ -495,7 +495,7 @@ namespace easy3d {
 
 
     /// display a uniform's value(s)
-    void OpenglInfo::getUniformInfo(unsigned int program, const std::string& uniName) {
+    void OpenglUtil::getUniformInfo(unsigned int program, const std::string& uniName) {
 
         *_output_stream << std::endl;
 
@@ -542,7 +542,7 @@ namespace easy3d {
 
 
     /// display the values for a uniform in a named block
-    void OpenglInfo::getUniformInBlockInfo(unsigned int program, const std::string&blockName, const std::string& uniName) {
+    void OpenglUtil::getUniformInBlockInfo(unsigned int program, const std::string&blockName, const std::string& uniName) {
         *_output_stream << std::endl;
 
         // is it a program ?
@@ -612,7 +612,7 @@ namespace easy3d {
 
 
     /// display detailed info for attributes in a program
-    void OpenglInfo::getAttributesInfo(unsigned int program) {
+    void OpenglUtil::getAttributesInfo(unsigned int program) {
 
         int activeAttr, size, loc;
         GLsizei length;
@@ -641,7 +641,7 @@ namespace easy3d {
 
 
     /// display detailed info for a program
-    void OpenglInfo::getProgramInfo(unsigned int program) {
+    void OpenglUtil::getProgramInfo(unsigned int program) {
         *_output_stream << std::endl;
 
         // check if name is really a program
@@ -743,7 +743,7 @@ namespace easy3d {
 
 
     // Printf style! plus a newline at the end
-    void OpenglInfo::_add_message(std::string format, ...) {
+    void OpenglUtil::_add_message(std::string format, ...) {
         char spAux[256];
         va_list args;
         va_start(args, format);
@@ -761,7 +761,7 @@ namespace easy3d {
 
     // aux function to get the size in bytes of a uniform
     // it takes the strides into account
-    int OpenglInfo::_get_uniform_byte_size(int uniSize, int uniType, int uniArrayStride, int uniMatStride) {
+    int OpenglUtil::_get_uniform_byte_size(int uniSize, int uniType, int uniArrayStride, int uniMatStride) {
 
         int auxSize;
         if (uniArrayStride > 0)
@@ -805,7 +805,7 @@ namespace easy3d {
 
 
     // aux function to display float based uniforms
-    void OpenglInfo::_display_uniformf(float *f, int rows, int columns) {
+    void OpenglUtil::_display_uniformf(float *f, int rows, int columns) {
 
         for (int i = 0; i < rows; ++i) {
             if (columns == 1)
@@ -821,7 +821,7 @@ namespace easy3d {
 
 
     // aux function to display int based uniforms
-    void OpenglInfo::_display_uniformi(int *f, int rows, int columns) {
+    void OpenglUtil::_display_uniformi(int *f, int rows, int columns) {
 
         for (int i = 0; i < rows; ++i) {
             if (columns == 1)
@@ -837,7 +837,7 @@ namespace easy3d {
 
 
     // aux function to display unsigned int based uniforms
-    void OpenglInfo::_display_uniformui(unsigned int *f, int rows, int columns) {
+    void OpenglUtil::_display_uniformui(unsigned int *f, int rows, int columns) {
 
         for (int i = 0; i < rows; ++i) {
             if (columns == 1)
@@ -853,7 +853,7 @@ namespace easy3d {
 
 
     // aux function to display double based uniforms
-    void OpenglInfo::_display_uniformd(double *f, int rows, int columns) {
+    void OpenglUtil::_display_uniformd(double *f, int rows, int columns) {
 
         for (int i = 0; i < rows; ++i) {
             if (columns == 1)
@@ -870,7 +870,7 @@ namespace easy3d {
 
 
     // gets the atomic data type
-    OpenglInfo::Types OpenglInfo::_get_type(GLenum type) {
+    OpenglUtil::Types OpenglUtil::_get_type(GLenum type) {
         switch (type) {
         case GL_DOUBLE:
         case GL_DOUBLE_MAT2:
@@ -885,7 +885,7 @@ namespace easy3d {
         case GL_DOUBLE_VEC2:
         case GL_DOUBLE_VEC3:
         case GL_DOUBLE_VEC4:
-            return OpenglInfo::DOUBLE;
+            return OpenglUtil::DOUBLE;
         case GL_FLOAT:
         case GL_FLOAT_MAT2:
         case GL_FLOAT_MAT2x3:
@@ -899,7 +899,7 @@ namespace easy3d {
         case GL_FLOAT_VEC2:
         case GL_FLOAT_VEC3:
         case GL_FLOAT_VEC4:
-            return OpenglInfo::FLOAT;
+            return OpenglUtil::FLOAT;
         case GL_BOOL:
         case GL_BOOL_VEC2:
         case GL_BOOL_VEC3:
@@ -934,7 +934,7 @@ namespace easy3d {
         case GL_SAMPLER_BUFFER:
         case GL_SAMPLER_CUBE:
         case GL_SAMPLER_CUBE_SHADOW:
-            return OpenglInfo::INT;
+            return OpenglUtil::INT;
         case GL_UNSIGNED_INT:
         case GL_UNSIGNED_INT_SAMPLER_1D:
         case GL_UNSIGNED_INT_SAMPLER_1D_ARRAY:
@@ -949,10 +949,10 @@ namespace easy3d {
         case GL_UNSIGNED_INT_VEC2:
         case GL_UNSIGNED_INT_VEC3:
         case GL_UNSIGNED_INT_VEC4:
-            return OpenglInfo::UNSIGNED_INT;
+            return OpenglUtil::UNSIGNED_INT;
 
         default:
-            return OpenglInfo::DONT_KNOW;
+            return OpenglUtil::DONT_KNOW;
 
         }
     }
@@ -960,7 +960,7 @@ namespace easy3d {
 
 
     // gets the number of rows for a GLSL type
-    int OpenglInfo::_get_rows(GLenum type) {
+    int OpenglUtil::_get_rows(GLenum type) {
 
         switch (type) {
         case GL_DOUBLE_MAT2:
@@ -993,7 +993,7 @@ namespace easy3d {
 
 
     // gets the number of columns for a GLSL type
-    int OpenglInfo::_get_columns(GLenum type) {
+    int OpenglUtil::_get_columns(GLenum type) {
 
         switch (type) {
         case GL_DOUBLE_MAT2:
@@ -1040,7 +1040,7 @@ namespace easy3d {
     }
 
 
-    bool OpenglInfo::_init() {
+    bool OpenglUtil::_init() {
         spTessGenSpacing[GL_EQUAL] = "GL_EQUAL";
         spTessGenSpacing[GL_FRACTIONAL_EVEN] = "GL_FRACTIONAL_EVEN";
         spTessGenSpacing[GL_FRACTIONAL_ODD] = "GL_FRACTIONAL_ODD";

@@ -29,7 +29,7 @@
 #include <cassert>
 
 #include <easy3d/renderer/opengl_error.h>
-#include <easy3d/renderer/opengl_info.h>
+#include <easy3d/renderer/opengl_util.h>
 #include <easy3d/util/logging.h>
 
 
@@ -37,9 +37,9 @@ namespace easy3d {
 
 
     bool VertexArrayObject::is_supported() {
-        return OpenglInfo::is_supported("GL_VERSION_2_1") ||
-            OpenglInfo::is_supported("GL_ARB_vertex_array_object") ||
-            OpenglInfo::has_entension("GL_EXT_vertex_array_object");
+        return OpenglUtil::is_supported("GL_VERSION_2_1") ||
+            OpenglUtil::is_supported("GL_ARB_vertex_array_object") ||
+            OpenglUtil::has_entension("GL_EXT_vertex_array_object");
     }
 
 
@@ -138,7 +138,7 @@ namespace easy3d {
 
 
     bool VertexArrayObject::create_storage_buffer(GLuint& buffer, GLuint index, const void* data, std::size_t size) {
-        if (!OpenglInfo::is_supported("GL_ARB_shader_storage_buffer_object")) {
+        if (!OpenglUtil::is_supported("GL_ARB_shader_storage_buffer_object")) {
             LOG(ERROR) << "shader storage buffer object not supported on this platform";
             return false;
         }

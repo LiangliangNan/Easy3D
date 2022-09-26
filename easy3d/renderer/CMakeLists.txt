@@ -26,7 +26,7 @@ set(${PROJECT_NAME}_HEADERS
         manipulated_frame.h
         opengl.h
         opengl_error.h
-        opengl_info.h
+        opengl_util.h
         opengl_timer.h
         shapes.h
         read_pixel.h
@@ -67,7 +67,7 @@ set(${PROJECT_NAME}_SOURCES
         manipulated_camera_frame.cpp
         manipulated_frame.cpp
         opengl_error.cpp
-        opengl_info.cpp
+        opengl_util.cpp
         opengl_timer.cpp
         shapes.cpp
         read_pixel.cpp

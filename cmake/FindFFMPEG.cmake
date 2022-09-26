@@ -57,7 +57,7 @@ if (NOT FFMPEG_FOUND)
     # Hardcoded search paths for include directories
     set(SEARCH_PATHS_FOR_HEADERS
             "$ENV{FFMPEG_HOME}/include"
-            "/usr/local/Cellar/ffmpeg/4.3.1_4/include"
+            "/usr/local/Cellar/ffmpeg@4/4.4.2_4/include"
             "/usr/include/x86_64-linux-gnu"
             "C:\\Program Files\\ffmpeg\\include"
             "D:\\dev\\ffmpeg-4.3.1\\include"
@@ -66,7 +66,7 @@ if (NOT FFMPEG_FOUND)
     # Hardcoded search paths for libraries
     set(SEARCH_PATHS_FOR_LIBRARIES
             "$ENV{FFMPEG_HOME}/lib"
-            "/usr/local/Cellar/ffmpeg/4.3.1_4/lib"
+            "/usr/local/Cellar/ffmpeg@4/4.4.2_4/lib"
             "/usr/lib/x86_64-linux-gnu"
             "C:\\Program Files\\ffmpeg\\lib"
             "D:\\dev\\ffmpeg-4.3.1\\lib"

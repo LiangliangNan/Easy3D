@@ -34,7 +34,7 @@
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/shader_manager.h>
-#include <easy3d/renderer/opengl_info.h>
+#include <easy3d/renderer/opengl_util.h>
 #include <easy3d/renderer/shapes.h>
 #include <easy3d/renderer/setting.h>
 
@@ -75,7 +75,7 @@ void WidgetCheckerSphere::initializeGL()
 
     QOpenGLFunctions* func = context()->functions();
     func->initializeOpenGLFunctions();
-    OpenglInfo::init();
+    OpenglUtil::init();
 
     func->glEnable(GL_DEPTH_TEST);
     func->glClearDepthf(1.0f);

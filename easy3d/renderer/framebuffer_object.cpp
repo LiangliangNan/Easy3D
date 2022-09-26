@@ -30,7 +30,7 @@
 #include <cstring>
 
 #include <easy3d/renderer/opengl_error.h>
-#include <easy3d/renderer/opengl_info.h>
+#include <easy3d/renderer/opengl_util.h>
 #include <easy3d/fileio/image_io.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
@@ -40,9 +40,9 @@ namespace easy3d {
 
 
     bool FramebufferObject::is_supported() {
-        return OpenglInfo::is_supported("GL_VERSION_3_2") ||
-                OpenglInfo::is_supported("GL_ARB_framebuffer_object") ||
-                OpenglInfo::has_entension("GL_EXT_framebuffer_object");
+        return OpenglUtil::is_supported("GL_VERSION_3_2") ||
+                OpenglUtil::is_supported("GL_ARB_framebuffer_object") ||
+                OpenglUtil::has_entension("GL_EXT_framebuffer_object");
     }
 
 

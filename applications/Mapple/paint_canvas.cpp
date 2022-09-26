@@ -49,7 +49,7 @@
 #include <easy3d/renderer/dual_depth_peeling.h>
 #include <easy3d/renderer/eye_dome_lighting.h>
 #include <easy3d/renderer/read_pixel.h>
-#include <easy3d/renderer/opengl_info.h>
+#include <easy3d/renderer/opengl_util.h>
 #include <easy3d/renderer/opengl_error.h>
 #include <easy3d/renderer/setting.h>
 #include <easy3d/renderer/clipping_plane.h>
@@ -176,7 +176,7 @@ void PaintCanvas::initializeGL() {
     func_ = context()->functions();
     func_->initializeOpenGLFunctions();
 
-    OpenglInfo::init();
+    OpenglUtil::init();
 #ifndef NDEBUG
     opengl::setup_gl_debug_callback();
 #endif

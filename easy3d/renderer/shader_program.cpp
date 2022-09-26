@@ -46,7 +46,7 @@
 #include <fstream>
 
 #include <easy3d/renderer/opengl.h>
-#include <easy3d/renderer/opengl_info.h>
+#include <easy3d/renderer/opengl_util.h>
 #include <easy3d/renderer/opengl_error.h>
 #include <easy3d/util/logging.h>
 
@@ -76,15 +76,15 @@ namespace easy3d {
 
 
     bool ShaderProgram::is_supported() {
-        return OpenglInfo::is_supported("GL_VERSION_2_0") || (
-            OpenglInfo::is_supported("GL_ARB_shader_objects") &&
-            OpenglInfo::is_supported("GL_ARB_shading_language_100") &&
-            OpenglInfo::is_supported("GL_ARB_vertex_shader") &&
-            OpenglInfo::is_supported("GL_ARB_fragment_shader")) || (
-            OpenglInfo::has_entension("GL_EXT_shader_objects") &&
-            OpenglInfo::has_entension("GL_EXT_shading_language_100") &&
-            OpenglInfo::has_entension("GL_EXT_vertex_shader") &&
-            OpenglInfo::has_entension("GL_EXT_fragment_shader"));
+        return OpenglUtil::is_supported("GL_VERSION_2_0") || (
+            OpenglUtil::is_supported("GL_ARB_shader_objects") &&
+            OpenglUtil::is_supported("GL_ARB_shading_language_100") &&
+            OpenglUtil::is_supported("GL_ARB_vertex_shader") &&
+            OpenglUtil::is_supported("GL_ARB_fragment_shader")) || (
+            OpenglUtil::has_entension("GL_EXT_shader_objects") &&
+            OpenglUtil::has_entension("GL_EXT_shading_language_100") &&
+            OpenglUtil::has_entension("GL_EXT_vertex_shader") &&
+            OpenglUtil::has_entension("GL_EXT_fragment_shader"));
     }
 
 
@@ -261,7 +261,7 @@ namespace easy3d {
 
 #if 0
 		// print some hints for user
-		if (OpenglInfo::is_supported("GL_ARB_program_interface_query")) {
+		if (OpenglUtil::is_supported("GL_ARB_program_interface_query")) {
 			LOG(INFO) << "--------------- shader program: " << name() << " ---------------";
 			print_active_attributes();
 			print_active_uniforms();
@@ -746,7 +746,7 @@ namespace easy3d {
 			return;
 		}
 
-        if (!OpenglInfo::is_supported("GL_ARB_program_interface_query")) {
+        if (!OpenglUtil::is_supported("GL_ARB_program_interface_query")) {
             LOG(ERROR) << "querying active attributes requires OpenGL >= 4.3. " << (name_.empty() ? "" : " - \'" +  name_ + "\'");
             return;
         }
@@ -776,7 +776,7 @@ namespace easy3d {
 			return;
 		}
 
-        if (!OpenglInfo::is_supported("GL_ARB_program_interface_query")) {
+        if (!OpenglUtil::is_supported("GL_ARB_program_interface_query")) {
             LOG(ERROR) << "querying active uniforms requires OpenGL >= 4.3. " << (name_.empty() ? "" : " - \'" +  name_ + "\'");
             return;
         }
@@ -807,7 +807,7 @@ namespace easy3d {
 			return;
 		}
 
-        if (!OpenglInfo::is_supported("GL_ARB_program_interface_query")) {
+        if (!OpenglUtil::is_supported("GL_ARB_program_interface_query")) {
             LOG(ERROR) << "querying active uniform blocks requires OpenGL >= 4.3. " << (name_.empty() ? "" : " - \'" +  name_ + "\'");
             return;
         }
@@ -1395,7 +1395,7 @@ namespace easy3d {
 
 
 	bool ShaderProgram::load_binary(const std::string& file_name) {
-        if (!OpenglInfo::is_supported("GL_ARB_get_program_binary")) {
+        if (!OpenglUtil::is_supported("GL_ARB_get_program_binary")) {
             LOG(ERROR) << "load binary program requires OpenGL >= 4.1. " << (name_.empty() ? "" : " - \'" +  name_ + "\'");
             return false;
         }
@@ -1425,7 +1425,7 @@ namespace easy3d {
 
 #ifndef NDEBUG
             // print some hints for user
-            if (OpenglInfo::is_supported("GL_ARB_program_interface_query")) {
+            if (OpenglUtil::is_supported("GL_ARB_program_interface_query")) {
                 LOG(INFO) << "--------------- shader program: " << name() << " ---------------";
                 print_active_attributes();
                 print_active_uniforms();
@@ -1443,7 +1443,7 @@ namespace easy3d {
 
 
     bool ShaderProgram::save_binary(const std::string& file_name) {
-        if (!OpenglInfo::is_supported("GL_ARB_get_program_binary")) {
+        if (!OpenglUtil::is_supported("GL_ARB_get_program_binary")) {
             LOG(ERROR) << "save binary program requires OpenGL >= 4.1. " << (name_.empty() ? "" : " - \'" +  name_ + "\'");
             return false;
         }

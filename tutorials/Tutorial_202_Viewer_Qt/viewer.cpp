@@ -39,17 +39,15 @@
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
-#include <easy3d/renderer/ambient_occlusion.h>
 #include <easy3d/renderer/dual_depth_peeling.h>
 #include <easy3d/renderer/read_pixel.h>
-#include <easy3d/renderer/opengl_info.h>
+#include <easy3d/renderer/opengl_util.h>
 #include <easy3d/renderer/opengl_error.h>
 #include <easy3d/renderer/setting.h>
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/text_renderer.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/manipulator.h>
-#include <easy3d/renderer/opengl_timer.h>
 #include <easy3d/fileio/resources.h>
 #include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/util/logging.h>
@@ -130,7 +128,7 @@ void ViewerQt::initializeGL() {
     func_ = context()->functions();
     func_->initializeOpenGLFunctions();
 
-    OpenglInfo::init();
+    OpenglUtil::init();
 #ifndef NDEBUG
     opengl::setup_gl_debug_callback();
 #endif

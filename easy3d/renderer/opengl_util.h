@@ -24,8 +24,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef EASY3D_RENDERER_OPENGL_INFO_H
-#define EASY3D_RENDERER_OPENGL_INFO_H
+#ifndef EASY3D_RENDERER_OPENGL_UTIL_H
+#define EASY3D_RENDERER_OPENGL_UTIL_H
 
 #include <string>
 #include <iostream>
@@ -35,11 +35,10 @@
 namespace easy3d {
 
     /**
-     * \brief Utilities for querying OpenGL states.
-     *
-     * \class OpenglInfo easy3d/renderer/opengl_info.h
+     * \brief Utilities for OpenGL initialization and states query.
+     * \class OpenglUtil easy3d/renderer/opengl_util.h
      */
-    class OpenglInfo {
+    class OpenglUtil {
     public:
         static bool init();
 
@@ -47,7 +46,7 @@ namespace easy3d {
 
         // -------------- general information --------------
 
-        // returns either GL_CONTEXT_CORE_PROFILE_BIT or GL_CONTEXT_COMPATIBILITY_PROFILE_BIT
+        /// returns either GL_CONTEXT_CORE_PROFILE_BIT or GL_CONTEXT_COMPATIBILITY_PROFILE_BIT
         static int gl_profile();
 
         static bool is_supported(const std::string &name);  // e.g., "GL_VERSION_3_2", "GL_ARB_vertex_array_object"
@@ -75,53 +74,53 @@ namespace easy3d {
 
         static float glsl_version_number();
 
-// ----------------- GPU memory  -------------------
+        // ----------------- GPU memory  -------------------
 
-// in MB.
-// returns 0 if the query fails.
-// NOTE: (1) OpenGL >= 2.0 is required.
-//		 (2) currently only NVidia GPU is supported
+        /// in MB.
+        /// returns 0 if the query fails.
+        /// NOTE: (1) OpenGL >= 2.0 is required.
+        ///		 (2) currently only NVidia GPU is supported
         static int total_gpu_memory();
 
         static int available_gpu_memory();
 
-// ----------------- print information  -------------------
+        // ----------------- print information  -------------------
 
-// sets the output stream for the messages.
-// if null, LOG(INFO) is the default output stream
+        /// sets the output stream for the messages.
+        /// if null, LOG(INFO) is the default output stream
         static void set_output(std::ostream *out);
 
-// --------------- buffer information ----------------
+        // --------------- buffer information ----------------
 
-/// display current binded buffer info
+        /// display current binded buffer info
         static void getCurrentBufferInfo();
 
-/// display the buffer information
+        /// display the buffer information
         static void getBufferInfo(unsigned int target, int bufferName);
 
-// --------------- GLSL information (GLSL version 4.2 is supported )----------------
+        // --------------- GLSL information (GLSL version 4.2 is supported )----------------
 
-// display VAO information, including its attributes
+        /// display VAO information, including its attributes
         static void getVAOInfo(unsigned int buffer);
 
-/// display detailed info for a program
+        /// display detailed info for a program
         static void getProgramInfo(unsigned int program);
 
-// display detailed info for attributes in a program
+        /// display detailed info for attributes in a program
         static void getAttributesInfo(unsigned int program);
 
-// display info for all active uniforms in a program
+        /// display info for all active uniforms in a program
         static void getUniformsInfo(unsigned int program);
 
-// display a uniform's value(s)
+        /// display a uniform's value(s)
         static void getUniformInfo(unsigned int program, const std::string &uniName);
 
-// display the values for a uniform in a named block
+        /// display the values for a uniform in a named block
         static void
         getUniformInBlockInfo(unsigned int program, const std::string &blockName, const std::string &uniName);
 
     private:
-// printf() style + plus a newline at the end
+        /// printf() style + plus a newline at the end
         static void _add_message(std::string format, ...);
 
         static bool _init();
@@ -171,6 +170,6 @@ namespace easy3d {
 
 }
 
-#endif  // EASY3D_RENDERER_OPENGL_INFO_H
+#endif  // EASY3D_RENDERER_OPENGL_UTIL_H
 
 

@@ -27,7 +27,7 @@
 #include <easy3d/renderer/opengl_error.h>
 
 #include <easy3d/renderer/opengl.h>
-#include <easy3d/renderer/opengl_info.h>
+#include <easy3d/renderer/opengl_util.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
 
