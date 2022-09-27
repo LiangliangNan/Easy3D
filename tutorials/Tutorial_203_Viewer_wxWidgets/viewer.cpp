@@ -155,6 +155,10 @@ namespace easy3d {
             delete m;
         }
         models_.clear();
+
+        for (auto d : drawables_)
+            delete d;
+        drawables_.clear();
     }
 
 
@@ -436,7 +440,7 @@ namespace easy3d {
         texter_->add_font(resource::directory() + "/fonts/en_Earth-Normal.ttf");
         texter_->add_font(resource::directory() + "/fonts/en_Roboto-Medium.ttf");
 
-#if 1
+#if 0
         const std::string file_name = resource::directory() + "/data/easy3d.ply";
         auto model = add_model(file_name);
         if (model) {
@@ -444,12 +448,33 @@ namespace easy3d {
             camera()->setViewDirection(vec3(0, 0, -1));
             camera()->setUpVector(vec3(0, 1, 0));
             fit_screen(model);
+            LOG(INFO) << "program initialized by loading model from: " << file_name;
         }
+#else
+        // The coordinates of the vertices.
+        const std::vector<vec3> &points = resource::bunny_vertices;
+        // The indices represent how the vertices are connected to form triangles. The "bunny" is a triangle mesh, and thus
+        // each consecutive three indices represent a triangle.
+        const std::vector<unsigned int> &indices = resource::bunny_indices;
+
+        //-------------------------------------------------------------
+        // Create a TrianglesDrawable to visualize the surface of the "bunny".
+        // For visualization, the point positions and the vertex indices of the faces have to be sent to the GPU.
+        auto surface = new TrianglesDrawable("faces");
+        // Upload the vertex positions of the surface to the GPU.
+        surface->update_vertex_buffer(points);
+        // Upload the vertex indices of the surface to the GPU.
+        surface->update_element_buffer(indices);
+        // Add the drawable to the viewer
+        add_drawable(surface);
+
+        LOG(INFO) << "program initialized by creating a TrianglesDrawable for the bunny model";
 #endif
     }
 
+
     void Viewer::fit_screen(const easy3d::Model *model) {
-        if (!model && models_.empty()) {
+        if (!model && models_.empty() && drawables_.empty()) {
             camera_->showEntireScene();
             return;
         }
@@ -468,6 +493,8 @@ namespace easy3d {
         else {
             for (auto m : models_)
                 box.grow(visual_box(m));
+            for (auto d : drawables_)
+                box.grow(d->bounding_box());
         }
 
         if (box.is_valid()) {
@@ -590,6 +617,42 @@ namespace easy3d {
         if (model_idx_ < models_.size())
             return models_[model_idx_];
         return nullptr;
+    }
+
+
+
+    bool Viewer::add_drawable(Drawable *drawable) {
+        if (!drawable) {
+            LOG(WARNING) << "drawable is NULL.";
+            return false;
+        }
+        for (auto d : drawables_) {
+            if (drawable == d) {
+                LOG(WARNING) << "drawable has already been added to the viewer.";
+                return false;
+            }
+        }
+
+        drawables_.push_back(drawable);
+        return true;
+    }
+
+
+    bool Viewer::delete_drawable(Drawable *drawable) {
+        if (!drawable) {
+            LOG(WARNING) << "drawable is NULL";
+            return false;
+        }
+
+        auto pos = std::find(drawables_.begin(), drawables_.end(), drawable);
+        if (pos != drawables_.end()) {
+            drawables_.erase(pos);
+            delete drawable;
+            return true;
+        } else {
+            LOG(WARNING) << "no such drawable: " << drawable->name();
+            return false;
+        }
     }
 
 
@@ -734,6 +797,11 @@ namespace easy3d {
             }
             if (count > 0)
                 glDisable(GL_POLYGON_OFFSET_FILL);
+        }
+
+        for (auto d : drawables_) {
+            if (d->is_visible())
+                d->draw(camera());
         }
     }
 }
