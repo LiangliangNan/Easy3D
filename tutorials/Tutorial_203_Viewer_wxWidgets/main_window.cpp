@@ -8,6 +8,7 @@
 
 
 namespace easy3d {
+
     wxBEGIN_EVENT_TABLE(MainWindow, wxFrame)
                     EVT_MENU(wxID_OPEN, MainWindow::OnMenuFileOpen)
                     EVT_MENU(wxID_EXIT, MainWindow::OnMenuFileExit)

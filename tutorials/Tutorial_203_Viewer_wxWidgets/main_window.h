@@ -1,7 +1,7 @@
 #ifndef EASY3D_WXWIDGETS_MAIN_WINDOW_H
 #define EASY3D_WXWIDGETS_MAIN_WINDOW_H
 
-#include "wx/frame.h"
+#include <wx/frame.h>
 
 
 namespace easy3d {

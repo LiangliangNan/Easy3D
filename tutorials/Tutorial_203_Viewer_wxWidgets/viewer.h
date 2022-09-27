@@ -90,7 +90,7 @@ namespace easy3d {
     private:
         Camera*	camera_;
 
-        wxGLContext *m_glRC;
+        wxGLContext *gl_contex_;
         bool initialized_;
 
         vec4	background_color_;

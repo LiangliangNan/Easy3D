@@ -76,30 +76,25 @@ namespace easy3d {
         wxGLContextAttrs ctxAttrs;
 #ifndef __WXMAC__
         // An impossible context, just to test IsOk()
-    ctxAttrs.PlatformDefaults().OGLVersion(99, 2).EndList();
-    m_oglContext = new wxGLContext(this, NULL, &ctxAttrs);
+        ctxAttrs.PlatformDefaults().OGLVersion(99, 2).EndList();
+        gl_contex_ = new wxGLContext(this, NULL, &ctxAttrs);
 
-    if ( !m_oglContext->IsOK() )
-    {
-#if wxUSE_LOGWINDOW
-        wxLogMessage("Trying to set OpenGL 99.2 failed, as expected.");
-#endif // wxUSE_LOGWINDOW
-        delete m_oglContext;
-        ctxAttrs.Reset();
+        if (!gl_contex_->IsOK()) {
+            delete gl_contex_;  // Trying to set OpenGL 99.2 failed, as expected.
+            ctxAttrs.Reset();
 #endif //__WXMAC__
-        ctxAttrs.PlatformDefaults().CoreProfile().OGLVersion(gl_major, gl_minor).EndList();
-        m_glRC = new wxGLContext(this, NULL, &ctxAttrs);
+            ctxAttrs.PlatformDefaults().CoreProfile().OGLVersion(gl_major, gl_minor).EndList();
+            gl_contex_ = new wxGLContext(this, NULL, &ctxAttrs);
 #ifndef __WXMAC__
         }
 #endif //__WXMAC__
 
-        if (!m_glRC->IsOK()) {
-            std::cerr << "OpenGL version error: This sample needs an OpenGL 3.2 capable driver. The app will end now." << std::endl;
-            delete m_glRC;
-            m_glRC = NULL;
-        }
-        else {
-//            std::cout << "OpenGL Core Profile 3.2 successfully set." << std::endl;
+        if (!gl_contex_->IsOK()) {
+            LOG(ERROR) << "OpenGL version error. This app needs an OpenGL 3.2 capable driver.";
+            delete gl_contex_;
+            gl_contex_ = NULL;
+        } else {
+            LOG(INFO) << "OpenGL Core Profile successfully set.";
         }
 
         // create and setup the camera
@@ -123,7 +118,7 @@ namespace easy3d {
         ShaderManager::terminate();
         TextureManager::terminate();
 
-        delete m_glRC;
+        delete gl_contex_;
     }
 
 
@@ -145,7 +140,7 @@ namespace easy3d {
         // must always be here
         wxPaintDC dc(this);
 
-        SetCurrent(*m_glRC);
+        SetCurrent(*gl_contex_);
 
         // Initialize OpenGL
         if (!initialized_) {

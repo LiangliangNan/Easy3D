@@ -1,7 +1,8 @@
 #ifndef EASY3D_WXWIDGETS_APPLICATION_H
 #define EASY3D_WXWIDGETS_APPLICATION_H
 
-#include "wx/app.h"
+#include <wx/app.h>
+
 
 class Easy3DApp : public wxApp
 {
