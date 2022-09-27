@@ -71,6 +71,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     createActions();
 
+    setWindowIcon(QIcon(QString::fromStdString(":/resources/icons/ViewerQt.png")));
     setFocusPolicy(Qt::StrongFocus);
     setContextMenuPolicy(Qt::CustomContextMenu);
     setAcceptDrops(true);

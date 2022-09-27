@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/resources">
+        <file>icons/clear.png</file>
+        <file>icons/exit.png</file>
+        <file>icons/fileopen.png</file>
+        <file>icons/filesave.png</file>
+        <file>icons/help.png</file>
+        <file>icons/snap_shot.png</file>
+        <file>icons/ViewerQt.png</file>
+        <file>icons/ViewerQt.icns</file>
+    </qresource>
+</RCC>

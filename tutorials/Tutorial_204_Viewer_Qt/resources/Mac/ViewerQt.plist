@@ -27,7 +27,7 @@
 	<key>CFBundleShortVersionString</key>
 	<string>${MACOSX_BUNDLE_SHORT_VERSION_STRING}</string>
 	<key>CFBundleSignature</key>
-	<string>????</string>
+	<string>lnan</string>
 	<key>CFBundleVersion</key>
 	<string>${MACOSX_BUNDLE_BUNDLE_VERSION}</string>
 	<key>CSResourcesFileMapped</key>
@@ -37,7 +37,7 @@
 	<key>LSRequiresCarbon</key>
 	<true/>
 	<key>NSHumanReadableCopyright</key>
-	<string>© Liangliang Nan (liangliang.nan@gmail.com)</string>
+	<string>Liangliang Nan (liangliang.nan@gmail.com)</string>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
@@ -45,31 +45,52 @@
 			<string>Editor</string>
 			<key>CFBundleTypeExtensions</key>
 			<array>
+				<string>bin</string>
 				<string>xyz</string>
 				<string>bxyz</string>
+				<string>vg</string>
+				<string>bvg</string>
 				<string>ply</string>
+				<string>laz</string>
+				<string>las</string>
+				<string>ptx</string>
 			</array>
 			<key>CFBundleTypeName</key>
-			<string>Point cloud files</string>
+			<string>Point Cloud File</string>
 			<key>LSHandlerRank</key>
 			<string>Default</string>
 		</dict>
-
-                <dict>
-                        <key>CFBundleTypeRole</key>
-                        <string>Editor</string>
-                        <key>CFBundleTypeExtensions</key>
-                        <array>
-                                <string>obj</string>
-                                <string>off</string>
-                                <string>stl</string>
-                                <string>ply</string>
-                        </array>
-                        <key>CFBundleTypeName</key>
-                        <string>Surface mesh files</string>
-                        <key>LSHandlerRank</key>
-                        <string>Default</string>
-                </dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>obj</string>
+				<string>ply</string>
+				<string>sm</string>
+				<string>off</string>
+				<string>stl</string>
+				<string>trilist</string>
+			</array>
+			<key>CFBundleTypeName</key>
+			<string>Surface Mesh File</string>
+			<key>LSHandlerRank</key>
+			<string>Default</string>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>plm</string>
+				<string>pm</string>
+				<string>mesh</string>
+			</array>
+			<key>CFBundleTypeName</key>
+			<string>Polyhedral Mesh File</string>
+			<key>LSHandlerRank</key>
+			<string>Default</string>
+		</dict>
 	</array>
 </dict>
 </plist>
