@@ -5,8 +5,8 @@ cmake_minimum_required(VERSION 3.12)
 project(Easy3D)
 
 set(EASY3D_MAJOR_VERSION 2)
-set(EASY3D_MINOR_VERSION 4)
-set(EASY3D_PATCH_VERSION 9)
+set(EASY3D_MINOR_VERSION 5)
+set(EASY3D_PATCH_VERSION 0)
 set(EASY3D_VERSION "${EASY3D_MAJOR_VERSION}.${EASY3D_MINOR_VERSION}.${EASY3D_PATCH_VERSION}")
 
 message(STATUS "************************************************************")

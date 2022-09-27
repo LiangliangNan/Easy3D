@@ -155,7 +155,7 @@ int main(int argc, char** argv) {
 ```
 
 ### Documentation
-The documentation for Easy3D-v2.4.8 is available [here](https://3d.bk.tudelft.nl/liangliang/software/easy3d_doc/html/index.html).
+The documentation for Easy3D is available [here](https://3d.bk.tudelft.nl/liangliang/software/easy3d_doc/html/index.html).
 
 The Easy3D Documentation is an ongoing effort with more and more details being added. You can build the latest Easy3D 
 documentation from the source code.
