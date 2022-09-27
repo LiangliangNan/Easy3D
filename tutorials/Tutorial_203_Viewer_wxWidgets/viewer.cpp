@@ -1,3 +1,29 @@
+/********************************************************************
+ * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
+ * https://3d.bk.tudelft.nl/liangliang/
+ *
+ * This file is part of Easy3D. If it is useful in your research/work,
+ * I would be grateful if you show your appreciation by citing it:
+ * ------------------------------------------------------------------
+ *      Liangliang Nan.
+ *      Easy3D: a lightweight, easy-to-use, and efficient C++ library
+ *      for processing and rendering 3D data.
+ *      Journal of Open Source Software, 6(64), 3255, 2021.
+ * ------------------------------------------------------------------
+ *
+ * Easy3D is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 3
+ * as published by the Free Software Foundation.
+ *
+ * Easy3D is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ ********************************************************************/
+
 #include <easy3d/core/model.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/graph.h>
@@ -50,6 +76,7 @@ namespace easy3d {
                     EVT_SIZE(Viewer::OnSize)
                     EVT_PAINT(Viewer::OnPaint)
                     EVT_MOUSE_EVENTS(Viewer::OnMouse)
+                    EVT_KEY_DOWN(Viewer::OnKeyDown)
     wxEND_EVENT_TABLE()
 
     Viewer::Viewer(wxWindow *parent,
@@ -205,6 +232,175 @@ namespace easy3d {
     }
 
 
+    void Viewer::OnKeyDown(wxKeyEvent &event) {
+        if (event. GetUnicodeKey() == wxKeyCode('A') && event.GetModifiers() == wxMOD_NONE) {
+            if (drawable_axes_)
+                drawable_axes_->set_visible(!drawable_axes_->is_visible());
+        }
+        else if (event. GetUnicodeKey() == wxKeyCode('C') && event.GetModifiers() == wxMOD_NONE) {
+            if (current_model())
+                fit_screen(current_model());
+        } else if (event. GetUnicodeKey() == wxKeyCode('F') && event.GetModifiers() == wxMOD_NONE) {
+            fit_screen();
+        } else if (event. GetUnicodeKey() == wxKeyCode('M') && event.GetModifiers() == wxMOD_NONE) {
+            if (dynamic_cast<SurfaceMesh *>(current_model())) {
+                auto drawables = current_model()->renderer()->triangles_drawables();
+                for (auto d: drawables)
+                    d->set_smooth_shading(!d->smooth_shading());
+            }
+        } else if (event. GetUnicodeKey() == wxKeyCode('P') && event.GetModifiers() == wxMOD_NONE) {
+            if (camera_->type() == Camera::PERSPECTIVE)
+                camera_->setType(Camera::ORTHOGRAPHIC);
+            else
+                camera_->setType(Camera::PERSPECTIVE);
+        } else if (event. GetUnicodeKey() == WXK_SPACE && event.GetModifiers() == wxMOD_NONE) {
+            // Aligns camera
+            Frame frame;
+            frame.setTranslation(camera_->pivotPoint());
+            camera_->frame()->alignWithFrame(&frame, true);
+
+            // Aligns frame
+            //if (manipulatedFrame())
+            //	manipulatedFrame()->alignWithFrame(camera_->frame());
+        }
+        else if (event. GetUnicodeKey() == wxKeyCode('[') && event.GetModifiers() == wxMOD_NONE) {
+            for (auto m: models_) {
+                for (auto d: m->renderer()->lines_drawables()) {
+                    float size = d->line_width() - 1.0f;
+                    if (size < 1)
+                        size = 1;
+                    d->set_line_width(size);
+                }
+            }
+        }
+        else if (event. GetUnicodeKey() == wxKeyCode(']') && event.GetModifiers() == wxMOD_NONE) {
+            for (auto m: models_) {
+                for (auto d: m->renderer()->lines_drawables()) {
+                    float size = d->line_width() + 1.0f;
+                    d->set_line_width(size);
+                }
+            }
+        }
+        else if (event. GetUnicodeKey() == wxKeyCode('-') && event.GetModifiers() == wxMOD_NONE) {
+            for (auto m: models_) {
+                for (auto d: m->renderer()->points_drawables()) {
+                    float size = d->point_size() - 1.0f;
+                    if (size < 1)
+                        size = 1;
+                    d->set_point_size(size);
+                }
+            }
+        }
+        else if (event. GetUnicodeKey() == wxKeyCode('=') && event.GetModifiers() == wxMOD_NONE) {
+            for (auto m: models_) {
+                for (auto d: m->renderer()->points_drawables()) {
+                    float size = d->point_size() + 1.0f;
+                    d->set_point_size(size);
+                }
+            }
+        }
+        else if (event. GetUnicodeKey() == wxKeyCode(',') && event.GetModifiers() == wxMOD_NONE) {
+            if (models_.empty())
+                model_idx_ = -1;
+            else
+                model_idx_ = int((model_idx_ - 1 + models_.size()) % models_.size());
+            if (model_idx_ >= 0) {
+                fit_screen(models_[model_idx_]);
+                std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
+            }
+        }
+        else if (event. GetUnicodeKey() == wxKeyCode('.') && event.GetModifiers() == wxMOD_NONE) {
+            if (models_.empty())
+                model_idx_ = -1;
+            else
+                model_idx_ = int((model_idx_ + 1) % models_.size());
+            if (model_idx_ >= 0) {
+                fit_screen(models_[model_idx_]);
+                std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
+            }
+        }
+        else if (event. GetUnicodeKey() == WXK_DELETE && event.GetModifiers() == wxMOD_NONE) {
+            if (current_model())
+                delete_model(current_model());
+        }
+        else if (event. GetUnicodeKey() == wxKeyCode('E') && event.GetModifiers() == wxMOD_NONE) {
+            if (current_model()) {
+                auto *edges = current_model()->renderer()->get_lines_drawable("edges");
+                if (edges)
+                    edges->set_visible(!edges->is_visible());
+            }
+        }
+        else if (event. GetUnicodeKey() == wxKeyCode('V') && event.GetModifiers() == wxMOD_NONE) {
+            if (current_model()) {
+                auto vertices = current_model()->renderer()->get_points_drawable("vertices");
+                if (vertices)
+                    vertices->set_visible(!vertices->is_visible());
+            }
+        }
+        else if (event. GetUnicodeKey() == wxKeyCode('B') && event.GetModifiers() == wxMOD_NONE) {
+            SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(current_model());
+            if (mesh) {
+                auto drawable = mesh->renderer()->get_lines_drawable("borders");
+                if (drawable)
+                    drawable->set_visible(!drawable->is_visible());
+            }
+        }
+        else if (event. GetUnicodeKey() == wxKeyCode('L') && event.GetModifiers() == wxMOD_NONE) { // locked vertices
+            SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(current_model());
+            if (mesh) {
+                auto drawable = mesh->renderer()->get_points_drawable("locks");
+                if (drawable)
+                    drawable->set_visible(!drawable->is_visible());
+            }
+        }
+        else if (event. GetUnicodeKey() == wxKeyCode('D') && event.GetModifiers() == wxMOD_NONE) {
+            if (current_model()) {
+                auto &output = std::cout;
+
+                output << "----------- " << file_system::simple_name(current_model()->name()) << " -----------\n";
+                if (dynamic_cast<SurfaceMesh *>(current_model())) {
+                    auto model = dynamic_cast<SurfaceMesh *>(current_model());
+                    output << "model is a surface mesh. #face: " << std::to_string(model->n_faces())
+                           << ", #vertex: " + std::to_string(model->n_vertices())
+                           << ", #edge: " + std::to_string(model->n_edges()) << std::endl;
+                } else if (dynamic_cast<PointCloud *>(current_model())) {
+                    auto model = dynamic_cast<PointCloud *>(current_model());
+                    output << "model is a point cloud. #vertex: " + std::to_string(model->n_vertices()) << std::endl;
+                } else if (dynamic_cast<Graph *>(current_model())) {
+                    auto model = dynamic_cast<Graph *>(current_model());
+                    output << "model is a graph. #vertex: " + std::to_string(model->n_vertices())
+                           << ", #edge: " + std::to_string(model->n_edges()) << std::endl;
+                }
+
+                if (!current_model()->renderer()->points_drawables().empty()) {
+                    output << "points drawables:\n";
+                    for (auto d: current_model()->renderer()->points_drawables())
+                        d->buffer_stats(output);
+                }
+                if (!current_model()->renderer()->lines_drawables().empty()) {
+                    output << "lines drawables:\n";
+                    for (auto d: current_model()->renderer()->lines_drawables())
+                        d->buffer_stats(output);
+                }
+                if (!current_model()->renderer()->triangles_drawables().empty()) {
+                    output << "triangles drawables:\n";
+                    for (auto d: current_model()->renderer()->triangles_drawables())
+                        d->buffer_stats(output);
+                }
+
+                current_model()->property_stats(output);
+            }
+        }
+
+        else if (event. GetUnicodeKey() == wxKeyCode('R') && event.GetModifiers() == wxMOD_NONE) {
+            // Reload the shader(s) - useful for writing/debugging shader code.
+            ShaderManager::reload();
+        }
+
+        update();
+    }
+    
+    
     void Viewer::init() {
         // Load OpenGL and its extensions
         if (!OpenglUtil::init()) {
@@ -224,6 +420,7 @@ namespace easy3d {
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
 
+        glDepthRangef(0.0f, 1.0f);
         glClearDepthf(1.0f);
         glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
 
@@ -358,6 +555,43 @@ namespace easy3d {
     }
 
 
+    bool Viewer::delete_model(Model *model) {
+        if (!model) {
+            LOG(WARNING) << "model is NULL.";
+            return false;
+        }
+
+        auto pos = std::find(models_.begin(), models_.end(), model);
+        if (pos != models_.end()) {
+            int pre_idx = model_idx_;
+            const std::string name = model->name();
+            models_.erase(pos);
+            delete model->renderer();
+            delete model->manipulator();
+            delete model;
+            model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
+            LOG(INFO) << "model deleted: " << name;
+
+            if (model_idx_ != pre_idx) {
+                if (model_idx_ >= 0)
+                    LOG(INFO) << "current model: " << model_idx_ << ", " << models_[model_idx_]->name();
+            }
+            return true;
+        } else {
+            LOG(WARNING) << "no such model: " << model->name();
+            return false;
+        }
+    }
+
+
+    Model *Viewer::current_model() const {
+        if (models_.empty())
+            return nullptr;
+        if (model_idx_ < models_.size())
+            return models_[model_idx_];
+        return nullptr;
+    }
+
 
     void Viewer::draw_corner_axes() const {
         ShaderProgram *program = ShaderManager::get_program("surface/surface");
@@ -457,7 +691,7 @@ namespace easy3d {
 
 
     void Viewer::post_draw() {
-        // draw the Easy3D logo and GPU time
+        // draw the Easy3D logo
         if (texter_ && texter_->num_fonts() >=2) {
             const float font_size = 15.0f;
             const float offset = 20.0f * dpi_scaling();

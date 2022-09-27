@@ -39,23 +39,23 @@ set(SRC_FILES
         viewer.cpp
         )
 
-if (WIN32)
+if (WIN32 OR MSVC)
     list(APPEND SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/Resources/sample.rc)    # Include a RC file for windows
+    add_executable(${PROJECT_NAME} WIN32 ${SRC_FILES})
 elseif (APPLE)
-    list(APPEND SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/Resources/sample.icns)  # Add an icon for the apple .app file
-endif ()
-
-add_executable(${PROJECT_NAME} WIN32 MACOSX_BUNDLE ${SRC_FILES})
-target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES} easy3d::core easy3d::renderer)
-
-if (APPLE)
+    set(${PROJECT_NAME}_ICON ${CMAKE_CURRENT_SOURCE_DIR}/Resources/sample.icns)
+    list(APPEND SRC_FILES ${${PROJECT_NAME}_ICON})  # Add an icon for the apple .app file
+    add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${SRC_FILES})
+    set_source_files_properties(${${PROJECT_NAME}_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
     set_target_properties(${PROJECT_NAME} PROPERTIES
+            INSTALL_RPATH "@executable_path/../Frameworks"
             MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME}
             MACOSX_BUNDLE TRUE
-            RESOURCE "${CMAKE_CURRENT_SOURCE_DIR}/Resources/sample.icns"
-            MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Info_cocoa.plist"
-            MACOSX_BUNDLE_ICON_FILE "${CMAKE_CURRENT_SOURCE_DIR}/Resources/sample.icns"
+            MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Info.plist"
+            MACOSX_BUNDLE_ICON_FILE "sample.icns"
             MACOSX_BUNDLE_COPYRIGHT "Copyright liangliang.nan@gmail.com"
             MACOSX_BUNDLE_GUI_IDENTIFIER "Easy3D.Viewer.wxWidgets"
             )
 endif ()
+
+target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES} easy3d::core easy3d::renderer)

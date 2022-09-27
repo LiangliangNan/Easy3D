@@ -1,3 +1,29 @@
+/********************************************************************
+ * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
+ * https://3d.bk.tudelft.nl/liangliang/
+ *
+ * This file is part of Easy3D. If it is useful in your research/work,
+ * I would be grateful if you show your appreciation by citing it:
+ * ------------------------------------------------------------------
+ *      Liangliang Nan.
+ *      Easy3D: a lightweight, easy-to-use, and efficient C++ library
+ *      for processing and rendering 3D data.
+ *      Journal of Open Source Software, 6(64), 3255, 2021.
+ * ------------------------------------------------------------------
+ *
+ * Easy3D is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 3
+ * as published by the Free Software Foundation.
+ *
+ * Easy3D is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ ********************************************************************/
+
 #ifndef EASY3D_WXWIDGETS_VIEWER_H
 #define EASY3D_WXWIDGETS_VIEWER_H
 
@@ -21,8 +47,68 @@ namespace easy3d {
 
         virtual ~Viewer();
 
-        virtual Model *add_model(const std::string &file_name, bool create_default_drawables = true);
-        virtual Model *add_model(Model *model, bool create = true);
+        /**
+         * @brief Add a model from a file to the viewer to be visualized. On success, the viewer
+         *        will be in charge of the memory management of the model. The loaded model can be
+         *        accessed by the 'current_model()' method.
+         * @details This method loads a model into the viewer. It allows the user to control if
+         *          default drawables will be created. The default drawables are
+         *          - for point clouds: "vertices".
+         *          - for surface meshes: "faces", "vertices", "edges", "borders".
+         *          - for graphs: "vertices", "edges".
+         *          These drawables are usually sufficient for basic rendering of the model. In case
+         *          the default drawables don't meet the particular visualization purpose, you can
+         *          override create_drawables() or set 'create_default_drawables' to false and create
+         *          the drawables by calling Model::add_[type]_drawable()..
+         * @param file_name The string of the file name.
+         * @param create_default_drawables If ture, the default drawables will be created.
+         * @return The pointer to the model added to the viewer (nullptr if failed).
+         * @related create_drawables(Model* model).
+         */
+        virtual Model* add_model(const std::string& file_name, bool create_default_drawables = true);
+
+        /**
+         * @brief Add an existing model to the viewer to be visualized. After a model being added
+         *        to the viewer, the viewer will be incharge of its memory menagement.
+         * @details This method adds a model into the viewer. It allows the user to control if
+         *          default drawables will be created. The default drawables are
+         *          - for point clouds: "vertices".
+         *          - for surface meshes: "faces", "vertices", "edges", "borders".
+         *          - for graphs: "vertices", "edges".
+         *          These drawables are usually sufficient for basic rendering of the model. In case
+         *          the default drawables don't meet the particular visualization purpose, you can
+         *          override create_drawables() or set 'create_default_drawables' to false and create
+         *          the drawables by calling Model::add_[type]_drawable()..
+         * @param model The pointer to the model.
+         * @param create_default_drawables If ture, the default drawables will be created.
+         * @return The pointer to the model added to the viewer (nullptr if failed).
+         * @related add_model(const std::string&, bool).
+         */
+        virtual Model* add_model(Model* model, bool create_default_drawables = true);
+
+        /**
+         * @brief Delete a model. The memory of the model will be released and its existing drawables
+         *        also be deleted.
+         * @param model The pointer to the model.
+         * @return True if the model has been deleted.
+         */
+        bool delete_model(Model* model);
+
+        /**
+         * @brief Query the models managed by this viewer.
+         * @return The models managed by this viewer.
+         */
+        const std::vector<Model*>& models() const { return models_; }
+
+        /**
+         * @brief Query the active model.
+         * @details The viewer can manage/visiulize/process multiple models. The default behavior
+         *          of the Easy3D viewer is, when a command is triggerred (e.g., the Save menu was
+         *          clicked), only the active mdoel is processed. This method is used to identify
+         *          the active model.
+         * @return The active model.
+         */
+        Model* current_model() const;
 
         /**
          * @brief Update the display (i.e., repaint).
@@ -71,6 +157,7 @@ namespace easy3d {
         void OnPaint(wxPaintEvent &event);
         void OnSize(wxSizeEvent &event);
         void OnMouse(wxMouseEvent &event);
+        void OnKeyDown(wxKeyEvent &event);
 
         // rendering. Users can put their additional rendering function here by reimplementing it.
         virtual void draw() const;
@@ -102,7 +189,6 @@ namespace easy3d {
         int model_idx_;
 
         wxDECLARE_NO_COPY_CLASS(Viewer);
-
         wxDECLARE_EVENT_TABLE();
     };
 

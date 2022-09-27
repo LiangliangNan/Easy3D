@@ -793,7 +793,7 @@ namespace easy3d {
         else if (key == GLFW_KEY_EQUAL && modifiers == EASY3D_MOD_CONTROL)
             camera_->frame()->action_zoom(1, camera_);
 
-        if (key == GLFW_KEY_K && modifiers == GLFW_MOD_ALT) { // add key frame
+        else if (key == GLFW_KEY_K && modifiers == GLFW_MOD_ALT) { // add key frame
             easy3d::Frame *frame = camera()->frame();
             kfi_->add_keyframe(*frame);
             LOG(INFO) << "key frame added to camera path";
@@ -838,7 +838,7 @@ namespace easy3d {
                 }
             }
         }
-        if (key == GLFW_KEY_RIGHT_BRACKET && modifiers == 0) {
+        else if (key == GLFW_KEY_RIGHT_BRACKET && modifiers == 0) {
             for (auto m : models_) {
                 for (auto d : m->renderer()->lines_drawables()) {
                     float size = d->line_width() + 1.0f;
