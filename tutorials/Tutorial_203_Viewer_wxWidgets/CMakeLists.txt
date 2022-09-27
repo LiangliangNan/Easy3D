@@ -12,6 +12,7 @@ if (NOT wxWidgets_FOUND)
 else ()
     message(STATUS "Found wxWidgets v${wxWidgets_VERSION_STRING}")
     message(STATUS "wxWidgets include directory: ${wxWidgets_INCLUDE_DIRS}")
+    message(STATUS "wxWidgets libraries: ${wxWidgets_LIBRARIES}")
     if (wxWidgets_VERSION_STRING VERSION_LESS "3.1.0")
         message(FATAL_ERROR
                 "Found wxWidgets v${wxWidgets_VERSION_STRING}. However, the minimum version of wxWidgets required is "
@@ -21,13 +22,10 @@ else ()
     endif ()
 endif ()
 
-#message(STATUS "------- wxWidgets_INCLUDE_DIR: ${wxWidgets_INCLUDE_DIRS}")
-#message(STATUS "------- wxWidgets_LIBRARIES: ${wxWidgets_LIBRARIES}")
-
 # Include the wxWidgets use file to initialize various settings
 if (wxWidgets_USE_FILE)
     include(${wxWidgets_USE_FILE})
-#    message(STATUS "------- wxWidgets_USE_FILE: ${wxWidgets_USE_FILE}")
+    message(STATUS "wxWidgets_USE_FILE: ${wxWidgets_USE_FILE}")
 endif ()
 
 set(SRC_FILES
