@@ -36,8 +36,9 @@ Compared to existing geometry processing libraries (such as [PMP](http://www.pmp
 * Very easy to use as a callable library (usually only a few lines of code).
   
 * A viewer that can be used directly to visualize 3D scenes in various formats, which can also be easily extended. 
-  For window/GUI creation, Easy3D currently supports [GLFW](https://www.glfw.org/) (e.g., [the default viewer](easy3d/viewer)), 
-  [Qt](https://www.qt.io/) (see [the Qt viewer](tutorials/Tutorial_204_Viewer_Qt), and [wxWidgets](https://www.wxwidgets.org/) (see [the wxWidgets viewer](tutorials/Tutorial_203_Viewer_wxWidgets)).
+  For window/GUI creation, Easy3D currently supports [GLFW](https://www.glfw.org/) (e.g., [the default viewer](https://github.com/LiangliangNan/Easy3D/blob/main/easy3d/viewer)), 
+  [Qt](https://www.qt.io/) (see [the Qt viewer](https://github.com/LiangliangNan/Easy3D/tree/main/tutorials/Tutorial_204_Viewer_Qt), 
+  and [wxWidgets](https://www.wxwidgets.org/) (see [the wxWidgets viewer](https://github.com/LiangliangNan/Easy3D/tree/main/tutorials/Tutorial_203_Viewer_wxWidgets)).
 
 * A handy tool <b>Mapple</b> created out of the Easy3D library for rendering and processing 3D data.
 
@@ -83,7 +84,7 @@ Like most software, Easy3D depends on some third-party libraries. Easy3D has mad
 the source code of most third-party libraries (for the core functionalities and the basic viewer), and it leaves very 
 few optional (for a few additional features that are typically not needed by most users). 
 
-The optional third-party libraries are:
+The **optional** third-party libraries are:
 - **[CGAL](https://www.cgal.org/)** (optional): Easy3D has implemented a few algorithms for advanced surface mesh 
   processing, such as surface reorientation, detecting/resolving duplicate vertices/faces and self-intersection, 
   and clipping/splitting/slicing surface meshes. These features are disabled by default (because most users don't 
@@ -95,7 +96,7 @@ The optional third-party libraries are:
   UI creation, which can help develop sophisticated applications for 3D data processing and visualization. The Qt 
   support is disabled by default (because most users don't need it). You can switch on the CMake option `EASY3D_ENABLE_QT` 
   to include the examples and applications that depend on Qt (e.g., 
-            [`Tutorial_202_Viewer_Qt`](https://github.com/LiangliangNan/Easy3D/tree/main/tutorials/Tutorial_202_Viewer_Qt) 
+            [`Tutorial_202_Viewer_Qt`](https://github.com/LiangliangNan/Easy3D/tree/main/tutorials/Tutorial_204_Viewer_Qt) 
             and [`Mapple`](https://github.com/LiangliangNan/Easy3D/tree/main/applications/Mapple)).
   
 To build Easy3D, you need [CMake](https://cmake.org/download/) (`>= 3.12`) and, of course, a compiler that supports `>= C++11`.
