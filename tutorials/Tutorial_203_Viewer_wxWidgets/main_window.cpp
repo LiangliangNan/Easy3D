@@ -76,7 +76,7 @@ namespace easy3d {
         Show(true);
 
         wxGLAttributes glAttrib;
-        glAttrib.PlatformDefaults().RGBA().DoubleBuffer().Depth(24).Stencil(8).Samplers(4).EndList();
+        glAttrib.PlatformDefaults().RGBA().DoubleBuffer().Depth(24).Stencil(8).SampleBuffers(1).Samplers(4).EndList();
         viewer_ = new Viewer(this, glAttrib, wxID_ANY, wxDefaultPosition, GetClientSize(), wxDEFAULT_FRAME_STYLE, title);
     }
 
