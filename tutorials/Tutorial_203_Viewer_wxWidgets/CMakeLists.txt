@@ -48,6 +48,7 @@ if (WIN32 OR MSVC)
 elseif (APPLE)
     set(${PROJECT_NAME}_ICON ${CMAKE_CURRENT_SOURCE_DIR}/Resources/sample.icns)
     list(APPEND SRC_FILES ${${PROJECT_NAME}_ICON})  # Add an icon for the apple .app file
+
     add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${SRC_FILES})
     set_source_files_properties(${${PROJECT_NAME}_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
     set_target_properties(${PROJECT_NAME} PROPERTIES

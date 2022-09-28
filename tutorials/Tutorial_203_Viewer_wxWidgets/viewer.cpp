@@ -79,13 +79,15 @@ namespace easy3d {
                     EVT_KEY_DOWN(Viewer::OnKeyDown)
     wxEND_EVENT_TABLE()
 
+
     Viewer::Viewer(wxWindow *parent,
+                   const wxGLAttributes& glAttrs,
                    wxWindowID id,
                    const wxPoint &pos,
                    const wxSize &size,
                    long style,
-                   const wxString &name)
-            : wxGLCanvas(parent, id, NULL, pos, size, style | wxFULL_REPAINT_ON_RESIZE, name)
+                   const wxString &title)
+            : wxGLCanvas(parent, glAttrs, id, pos, size, style | wxFULL_REPAINT_ON_RESIZE, title)
             , initialized_(false)
             , background_color_(0.9f, 0.9f, 1.0f, 1.0f)
             , texter_(nullptr)

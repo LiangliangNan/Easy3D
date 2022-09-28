@@ -51,8 +51,11 @@ namespace easy3d {
     // MainWindow constructor
     MainWindow::MainWindow(wxFrame *frame, const wxString &title, const wxPoint &pos, const wxSize &size, long style)
             : wxFrame(frame, wxID_ANY, title, pos, size, style) {
-        //SetIcon(wxIcon("Resources/sample.xpm"));
-		SetIcon(wxICON(sample));
+#ifdef WIN32
+        SetIcon(wxICON(sample));
+#else
+        SetIcon(wxIcon("Resources/sample.xpm"));
+#endif
 
         // Make the "File" menu
         wxMenu *fileMenu = new wxMenu;
@@ -72,7 +75,9 @@ namespace easy3d {
         SetMenuBar(menuBar);
         Show(true);
 
-        viewer_ = new Viewer(this, wxID_ANY, wxDefaultPosition, GetClientSize(), wxDEFAULT_FRAME_STYLE);
+        wxGLAttributes glAttrib;
+        glAttrib.Defaults().RGBA().DoubleBuffer().Depth(24).Stencil(8).Samplers(4).EndList();
+        viewer_ = new Viewer(this, glAttrib, wxID_ANY, wxDefaultPosition, GetClientSize(), wxDEFAULT_FRAME_STYLE, title);
     }
 
     // File|Open... command

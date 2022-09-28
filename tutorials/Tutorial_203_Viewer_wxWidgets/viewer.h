@@ -41,10 +41,12 @@ namespace easy3d {
 
     class Viewer : public wxGLCanvas {
     public:
-        Viewer(wxWindow *parent, wxWindowID id = wxID_ANY,
+        Viewer(wxWindow *parent,
+               const wxGLAttributes& glAttrs,
+               wxWindowID id = wxID_ANY,
                const wxPoint &pos = wxDefaultPosition,
                const wxSize &size = wxDefaultSize, long style = 0,
-               const wxString &name = "Easy3D-Viewer-wxWidgets");
+               const wxString &title = "Easy3D-Viewer-wxWidgets");
 
         virtual ~Viewer();
 
