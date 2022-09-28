@@ -151,6 +151,74 @@ namespace easy3d {
     }
 
 
+	void Viewer::init() {
+		// Load OpenGL and its extensions
+		if (!OpenglUtil::init()) {
+			glGetError(); // pull and ignore unhandled errors like GL_INVALID_ENUM
+			throw std::runtime_error("failed to load OpenGL and its extensions!");
+		}
+
+#ifndef NDEBUG
+		opengl::setup_gl_debug_callback();
+#endif
+		VLOG(1) << "OpenGL vendor: " << glGetString(GL_VENDOR);
+		VLOG(1) << "OpenGL renderer: " << glGetString(GL_RENDERER);
+		//        VLOG(1) << "OpenGL version requested: " << gl_major << "." << gl_minor;
+		VLOG(1) << "OpenGL version received: " << glGetString(GL_VERSION);
+		VLOG(1) << "GLSL version received: " << glGetString(GL_SHADING_LANGUAGE_VERSION);
+
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LESS);
+
+		glDepthRangef(0.0f, 1.0f);
+		glClearDepthf(1.0f);
+		glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
+
+		// camera is manipulated by the mouse, working in the screen coordinate system
+		// (different from the viewport or framebuffer size, which are in pixel coordinates)
+		int w, h;
+		GetClientSize(&w, &h);
+		camera_->setScreenWidthAndHeight(w, h);
+		glViewport(0, 0, w * dpi_scaling(), h * dpi_scaling());
+
+		// create TextRenderer renderer and load default fonts
+		texter_ = new TextRenderer(dpi_scaling());
+		texter_->add_font(resource::directory() + "/fonts/en_Earth-Normal.ttf");
+		texter_->add_font(resource::directory() + "/fonts/en_Roboto-Medium.ttf");
+
+#if 1
+		const std::string file_name = resource::directory() + "/data/easy3d.ply";
+		auto model = add_model(file_name);
+		if (model) {
+			// We always want to look at the front of the easy3d logo.
+			camera()->setViewDirection(vec3(0, 0, -1));
+			camera()->setUpVector(vec3(0, 1, 0));
+			fit_screen(model);
+			LOG(INFO) << "program initialized by loading model from: " << file_name;
+		}
+#else
+		// The coordinates of the vertices.
+		const std::vector<vec3> &points = resource::bunny_vertices;
+		// The indices represent how the vertices are connected to form triangles. The "bunny" is a triangle mesh, and thus
+		// each consecutive three indices represent a triangle.
+		const std::vector<unsigned int> &indices = resource::bunny_indices;
+
+		//-------------------------------------------------------------
+		// Create a TrianglesDrawable to visualize the surface of the "bunny".
+		// For visualization, the point positions and the vertex indices of the faces have to be sent to the GPU.
+		auto surface = new TrianglesDrawable("faces");
+		// Upload the vertex positions of the surface to the GPU.
+		surface->update_vertex_buffer(points);
+		// Upload the vertex indices of the surface to the GPU.
+		surface->update_element_buffer(indices);
+		// Add the drawable to the viewer
+		add_drawable(surface);
+
+		LOG(INFO) << "program initialized by creating a TrianglesDrawable for the bunny model";
+#endif
+	}
+
+
     void Viewer::clear_scene() {
         for (auto m : models_) {
             delete m->renderer();
@@ -406,74 +474,6 @@ namespace easy3d {
         update();
     }
     
-    
-    void Viewer::init() {
-        // Load OpenGL and its extensions
-        if (!OpenglUtil::init()) {
-            glGetError(); // pull and ignore unhandled errors like GL_INVALID_ENUM
-            throw std::runtime_error("failed to load OpenGL and its extensions!");
-        }
-
-#ifndef NDEBUG
-        opengl::setup_gl_debug_callback();
-#endif
-        VLOG(1) << "OpenGL vendor: " << glGetString(GL_VENDOR);
-        VLOG(1) << "OpenGL renderer: " << glGetString(GL_RENDERER);
-//        VLOG(1) << "OpenGL version requested: " << gl_major << "." << gl_minor;
-        VLOG(1) << "OpenGL version received: " << glGetString(GL_VERSION);
-        VLOG(1) << "GLSL version received: " << glGetString(GL_SHADING_LANGUAGE_VERSION);
-
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LESS);
-
-        glDepthRangef(0.0f, 1.0f);
-        glClearDepthf(1.0f);
-        glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
-
-        // camera is manipulated by the mouse, working in the screen coordinate system
-        // (different from the viewport or framebuffer size, which are in pixel coordinates)
-        int w, h;
-        GetClientSize(&w, &h);
-        camera_->setScreenWidthAndHeight(w, h);
-        glViewport(0, 0, w * dpi_scaling(), h * dpi_scaling());
-
-        // create TextRenderer renderer and load default fonts
-        texter_ = new TextRenderer(dpi_scaling());
-        texter_->add_font(resource::directory() + "/fonts/en_Earth-Normal.ttf");
-        texter_->add_font(resource::directory() + "/fonts/en_Roboto-Medium.ttf");
-
-#if 0
-        const std::string file_name = resource::directory() + "/data/easy3d.ply";
-        auto model = add_model(file_name);
-        if (model) {
-            // We always want to look at the front of the easy3d logo.
-            camera()->setViewDirection(vec3(0, 0, -1));
-            camera()->setUpVector(vec3(0, 1, 0));
-            fit_screen(model);
-            LOG(INFO) << "program initialized by loading model from: " << file_name;
-        }
-#else
-        // The coordinates of the vertices.
-        const std::vector<vec3> &points = resource::bunny_vertices;
-        // The indices represent how the vertices are connected to form triangles. The "bunny" is a triangle mesh, and thus
-        // each consecutive three indices represent a triangle.
-        const std::vector<unsigned int> &indices = resource::bunny_indices;
-
-        //-------------------------------------------------------------
-        // Create a TrianglesDrawable to visualize the surface of the "bunny".
-        // For visualization, the point positions and the vertex indices of the faces have to be sent to the GPU.
-        auto surface = new TrianglesDrawable("faces");
-        // Upload the vertex positions of the surface to the GPU.
-        surface->update_vertex_buffer(points);
-        // Upload the vertex indices of the surface to the GPU.
-        surface->update_element_buffer(indices);
-        // Add the drawable to the viewer
-        add_drawable(surface);
-
-        LOG(INFO) << "program initialized by creating a TrianglesDrawable for the bunny model";
-#endif
-    }
-
 
     void Viewer::fit_screen(const easy3d::Model *model) {
         if (!model && models_.empty() && drawables_.empty()) {
