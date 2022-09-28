@@ -103,20 +103,8 @@ namespace easy3d {
         const int gl_minor = 2;
         // Explicitly create a new rendering context instance for this canvas.
         wxGLContextAttrs ctxAttrs;
-#ifndef __WXMAC__
-        // An impossible context, just to test IsOk()
-        ctxAttrs.PlatformDefaults().OGLVersion(99, 2).EndList();
+        ctxAttrs.PlatformDefaults().CoreProfile().OGLVersion(gl_major, gl_minor).EndList();
         gl_contex_ = new wxGLContext(this, NULL, &ctxAttrs);
-
-        if (!gl_contex_->IsOK()) {
-            delete gl_contex_;  // Trying to set OpenGL 99.2 failed, as expected.
-            ctxAttrs.Reset();
-#endif //__WXMAC__
-            ctxAttrs.PlatformDefaults().CoreProfile().OGLVersion(gl_major, gl_minor).EndList();
-            gl_contex_ = new wxGLContext(this, NULL, &ctxAttrs);
-#ifndef __WXMAC__
-        }
-#endif //__WXMAC__
 
         if (!gl_contex_->IsOK()) {
             LOG(ERROR) << "OpenGL version error. This app needs an OpenGL 3.2 capable driver.";
