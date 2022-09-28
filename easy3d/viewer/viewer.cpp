@@ -56,6 +56,7 @@
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
 #include <easy3d/renderer/framebuffer_object.h>
+#include <easy3d/renderer/opengl_util.h>
 #include <easy3d/renderer/opengl_error.h>
 #include <easy3d/renderer/setting.h>
 #include <easy3d/renderer/text_renderer.h>
@@ -244,8 +245,8 @@ namespace easy3d {
         glfwSwapInterval(1);
 
         // Load OpenGL and its extensions
-        if (glewInit() != GLEW_OK) {
-            glGetError(); // pull and ignore unhandled errors like GL_INVALID_ENUM
+        if (!OpenglUtil::init()) {
+            LOG(ERROR) << "failed to load OpenGL and its extensions!";
             throw std::runtime_error("failed to load OpenGL and its extensions!");
         }
 
