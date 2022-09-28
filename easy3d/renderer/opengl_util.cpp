@@ -212,6 +212,23 @@ namespace easy3d {
     }
 
 
+    int OpenglUtil::samples() {
+        int samples = 0;
+        glGetIntegerv(GL_SAMPLES, &samples);
+        return samples;
+    }
+
+
+    void OpenglUtil::viewport(int &x, int &y, int &width, int &height) {
+        int viewport[4];
+        glGetIntegerv(GL_VIEWPORT, viewport);
+        x = viewport[0];
+        y = viewport[1];
+        width = viewport[2];
+        height = viewport[3];
+    }
+
+
     // sets the output stream for the messages.
     // if null, cout is used
     void OpenglUtil::set_output(std::ostream *out) {

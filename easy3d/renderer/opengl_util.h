@@ -74,6 +74,13 @@ namespace easy3d {
 
         static float glsl_version_number();
 
+        static int samples();
+
+        /// Query the OpenGL viewport. The parameters are the same as in glViewport(x, y, width, height).
+        /// x, y: the lower left corner of the viewport rectangle, in pixels.
+        /// width, height: the width and height of the viewport.
+        static void viewport(int &x, int &y, int &width, int &height);
+
         // ----------------- GPU memory  -------------------
 
         /// in MB.
