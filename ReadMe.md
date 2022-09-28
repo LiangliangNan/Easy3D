@@ -70,14 +70,14 @@ scalar fields) can be done very conveniently.
 ### Easy3D repository layout
 The repository contains a `CMakeLists.txt` file (in the root directory of the repository) that serves as anchor for 
 configuring and building programs, and a set of subfolders:
-* `3rd_party` - source code of third party libraries
-* `applications` - applications built on top of Easy3D
-* `cmake` - CMake-related configuration files
-* `docs` - documentation configuration file (Doxygen)
-* `easy3d` - source code of Easy3D
-* `resources` - test data, images, shaders, and textures, etc.
-* `tests` - a collection of test cases
-* `tutorials` - a collection of examples (with detailed explanations in code)
+* [`3rd_party`](https://github.com/LiangliangNan/Easy3D/tree/main/3rd_party) - source code of third party libraries
+* [`applications`](https://github.com/LiangliangNan/Easy3D/tree/main/applications) - applications built on top of Easy3D
+* [`cmake`](https://github.com/LiangliangNan/Easy3D/tree/main/cmake) - CMake-related configuration files
+* [`docs`](https://github.com/LiangliangNan/Easy3D/tree/main/docs) - documentation configuration file (Doxygen)
+* [`easy3d`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d) - source code of Easy3D
+* [`resources`](https://github.com/LiangliangNan/Easy3D/tree/main/resources) - test data, images, shaders, and textures, etc.
+* [`tests`](https://github.com/LiangliangNan/Easy3D/tree/main/tests) - a collection of test cases
+* [`tutorials`](https://github.com/LiangliangNan/Easy3D/tree/main/tutorials) - a collection of examples (with detailed explanations in code)
 
 ### Build Easy3D
 Like most software, Easy3D depends on some third-party libraries. Easy3D has made this easier for the users by including
