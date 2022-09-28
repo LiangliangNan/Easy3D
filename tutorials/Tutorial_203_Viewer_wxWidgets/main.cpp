@@ -47,17 +47,28 @@ public:
 };
 
 
-#if 1
 
+#if 0
+
+#ifdef VIEWER_WITH_CONSOLE_WINDOW
+wxIMPLEMENT_APP_CONSOLE(Easy3DApp);
+#else
 wxIMPLEMENT_APP(Easy3DApp);
+#endif
 
 #else
 
+#ifdef VIEWER_WITH_CONSOLE_WINDOW
 int main(int argc, char **argv) {
-    wxDisableAsserts();
-    wxLog::SetLogLevel(wxLOG_Debug);
-    return wxEntry(argc, argv);
+	wxDisableAsserts();
+	return wxEntry(argc, argv);
 }
+#else
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, wxCmdLineArgType lpCmdLine, int nCmdShow) {
+	wxDisableAsserts(); 
+	return wxEntry(hInstance, hPrevInstance, lpCmdLine, nCmdShow);
+}
+#endif
 
 wxAppInitializer wxTheAppInitializer([]() -> wxAppConsole * { return new Easy3DApp; });
 

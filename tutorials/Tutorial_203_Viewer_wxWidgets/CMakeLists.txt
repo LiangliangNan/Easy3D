@@ -42,8 +42,17 @@ set(SRC_FILES
         )
 
 if (WIN32 OR MSVC)
+	option(EASY3D_wxWidget_Viewer_with_console "Build the wxWidget viewer with a console window" ON)
+
     list(APPEND SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/Resources/sample.rc)    # Include a RC file for windows
-    add_executable(${PROJECT_NAME} WIN32 ${SRC_FILES})
+	if (EASY3D_wxWidget_Viewer_with_console)
+		add_executable(${PROJECT_NAME} ${SRC_FILES})
+		target_compile_definitions(${PROJECT_NAME} PRIVATE VIEWER_WITH_CONSOLE_WINDOW)
+		message(STATUS "Creating the wxWidgets viewer with a console window")
+	else ()
+		add_executable(${PROJECT_NAME} WIN32 ${SRC_FILES})
+	    message(STATUS "Creating the wxWidgets viewer without a console window")
+	endif ()
 elseif (APPLE)
     set(${PROJECT_NAME}_ICON ${CMAKE_CURRENT_SOURCE_DIR}/Resources/sample.icns)
     list(APPEND SRC_FILES ${${PROJECT_NAME}_ICON})  # Add an icon for the apple .app file
