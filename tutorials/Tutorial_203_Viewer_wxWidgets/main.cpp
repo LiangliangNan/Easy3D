@@ -48,28 +48,29 @@ public:
 
 
 
-#if 0
+#if 1
 
-#ifdef VIEWER_WITH_CONSOLE_WINDOW
-wxIMPLEMENT_APP_CONSOLE(Easy3DApp);
+#ifdef WIN32_VIEWER_WITHOUT_CONSOLE
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, wxCmdLineArgType lpCmdLine, int nCmdShow) {
+	wxDisableAsserts();
+	return wxEntry(hInstance, hPrevInstance, lpCmdLine, nCmdShow);
+}
 #else
-wxIMPLEMENT_APP(Easy3DApp);
-#endif
-
-#else
-
-#ifdef VIEWER_WITH_CONSOLE_WINDOW
 int main(int argc, char **argv) {
 	wxDisableAsserts();
 	return wxEntry(argc, argv);
 }
-#else
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, wxCmdLineArgType lpCmdLine, int nCmdShow) {
-	wxDisableAsserts(); 
-	return wxEntry(hInstance, hPrevInstance, lpCmdLine, nCmdShow);
-}
 #endif
 
 wxAppInitializer wxTheAppInitializer([]() -> wxAppConsole * { return new Easy3DApp; });
+
+#else   // WIN32_VIEWER_WITHOUT_CONSOLE
+
+#ifdef WIN32_VIEWER_WITHOUT_CONSOLE
+wxIMPLEMENT_APP(Easy3DApp);
+#else
+wxIMPLEMENT_APP_CONSOLE(Easy3DApp);
+
+#endif  // WIN32_VIEWER_WITHOUT_CONSOLE
 
 #endif
