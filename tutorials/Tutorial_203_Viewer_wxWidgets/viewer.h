@@ -112,6 +112,13 @@ namespace easy3d {
         Model* current_model() const;
 
         /**
+         * @brief Save the active model (if exists) to a file.
+         * @details This method saves the active model to a file.
+         * @return true on success and false otherwise.
+         */
+        bool save_current_model(const std::string& file_name) const;
+
+        /**
          * @brief Add a drawable to the viewer to be visualized. After a drawable being added to the
          *        viewer, the viewer will be in charge of its memory management.
          * @details The use of drawables for visualization is quite flexible. Drawables are
@@ -178,6 +185,14 @@ namespace easy3d {
         Camera* camera() { return camera_; }
         /// @brief Returns the camera used by the viewer. See \c Camera.
         const Camera* camera() const { return camera_; }
+
+        /**
+         * @brief Take a snapshot of the screen and save it to an image file.
+         * @param image_file the full path to the image file.
+         * @param bk_white true to have a white background.
+         * @return true on success and false otherwise.
+         */
+        bool snapshot(const std::string& image_file, bool bk_white = true) const;
 
     protected:
         void OnPaint(wxPaintEvent &event);

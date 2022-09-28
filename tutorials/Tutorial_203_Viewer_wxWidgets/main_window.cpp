@@ -32,11 +32,18 @@
 #include <wx/wx.h>
 #endif
 
+#include <easy3d/core/model.h>
+#include <easy3d/util/file_system.h>
+
 
 namespace easy3d {
 
+    wxDEFINE_EVENT(SAVE_SNAPSHOT, wxCommandEvent);
+
     wxBEGIN_EVENT_TABLE(MainWindow, wxFrame)
                     EVT_MENU(wxID_OPEN, MainWindow::OnMenuFileOpen)
+                    EVT_MENU(wxID_SAVE, MainWindow::OnMenuFileSave)
+                    EVT_MENU(SAVE_SNAPSHOT, MainWindow::OnMenuFileSnapshot)
                     EVT_MENU(wxID_EXIT, MainWindow::OnMenuFileExit)
                     EVT_MENU(wxID_HELP, MainWindow::OnMenuHelpAbout)
     wxEND_EVENT_TABLE()
@@ -49,6 +56,9 @@ namespace easy3d {
         // Make the "File" menu
         wxMenu *fileMenu = new wxMenu;
         fileMenu->Append(wxID_OPEN, "&Open...\tCTRL-O");
+        fileMenu->Append(wxID_SAVE, "&Save...\tCTRL-S");
+        fileMenu->AppendSeparator();
+        fileMenu->Append(SAVE_SNAPSHOT, "&Snapshot...\tS");
         fileMenu->AppendSeparator();
         fileMenu->Append(wxID_EXIT, "E&xit\tALT-X");
         // Make the "Help" menu
@@ -66,7 +76,8 @@ namespace easy3d {
 
     // File|Open... command
     void MainWindow::OnMenuFileOpen(wxCommandEvent & WXUNUSED(event)) {
-        wxString filename = wxFileSelector("Choose a file", "", "", "",
+        const std::string &title = "Choose a file";
+        wxString filename = wxFileSelector(title, "", "", "",
                                            "Surface Mesh (*.ply;*.obj;*.off;*.stl;*.sm;*.geojson;*.trilist)|"
                                            "*.ply;*.obj;*.off;*.stl;*.sm;*.geojson;*.trilist|"
                                            "Point Cloud (*.ply;*.bin;*.ptx;*.las;*.laz;*.xyz;*.bxyz;*.vg;*.bvg;*.ptx)|"
@@ -75,12 +86,60 @@ namespace easy3d {
                                            "*.plm;*.pm;*.mesh|"
                                            "Graph (*.ply)|*.ply",
                                            wxFD_OPEN);
-        if (!filename.IsEmpty()) {
-            auto model = viewer_->add_model(filename.ToStdString(), true);
-            if (model) {
-                viewer_->fit_screen(model);
-            }
+
+        auto model = viewer_->add_model(filename.ToStdString(), true);
+        if (model) {
+            viewer_->fit_screen(model);
         }
+    }
+
+    // File|Save... command
+    void MainWindow::OnMenuFileSave(wxCommandEvent & WXUNUSED(event)) {
+        const Model *m = viewer_->current_model();
+        if (!m) {
+            LOG(ERROR) << "no model exists";
+            return;
+        }
+
+        std::string name = m->name();
+        if (file_system::extension(name).empty()) // no extension?
+            name += ".ply"; // default to ply
+
+        const std::string default_path = file_system::parent_directory(name);
+        const std::string default_name = file_system::base_name(name);
+        const std::string default_ext = file_system::extension(name);
+
+        const std::string &title = "Please specify a file name";
+        wxString filename = wxFileSelector(title, default_path, default_name, default_ext,
+                                           "Surface Mesh (*.ply;*.obj;*.off;*.stl;*.sm)|"
+                                           "*.ply;*.obj;*.off;*.stl;*.sm|"
+                                           "Point Cloud (*.ply;*.bin;*.las;*.laz;*.xyz;*.bxyz;*.vg;*.bvg)|"
+                                           "*.ply;*.bin;*.las;*.laz;*.xyz;*.bxyz;*.vg;*.bvg|"
+                                           "Polyhedral Mesh (*.plm;*.pm;*.mesh)|"
+                                           "*.plm;*.pm;*.mesh|"
+                                           "Graph (*.ply)|*.ply",
+                                           wxFD_SAVE);
+        viewer_->save_current_model(filename.ToStdString());
+    }
+
+    // File|Snapshot... command
+    void MainWindow::OnMenuFileSnapshot(wxCommandEvent &event) {
+        const std::string &title = "Please specify an image file name";
+        std::string name("untitled.png");
+
+        if (viewer_->current_model())
+            name = file_system::replace_extension(viewer_->current_model()->name(), "png");
+
+        const std::string default_path = file_system::parent_directory(name);
+        const std::string default_name = file_system::base_name(name);
+        const std::string default_ext = file_system::extension(name);
+
+        wxString filename = wxFileSelector(title, default_path, default_name, default_ext,
+                                           "Image Files (*.png;*.jpg;*.bmp;*.ppm;*.tga)|"
+                                           "*.png;*.jpg;*.bmp;*.ppm;*.tga",
+                                           wxFD_SAVE);
+
+        viewer_->snapshot(filename.ToStdString(), true);
     }
 
     // File|Exit command

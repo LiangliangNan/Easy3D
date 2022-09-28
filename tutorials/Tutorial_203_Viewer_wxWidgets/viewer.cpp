@@ -45,6 +45,7 @@
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/text_renderer.h>
 #include <easy3d/renderer/texture_manager.h>
+#include <easy3d/renderer/framebuffer_object.h>
 #include <easy3d/renderer/setting.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
@@ -619,6 +620,58 @@ namespace easy3d {
         return nullptr;
     }
 
+
+    bool Viewer::save_current_model(const std::string &file_name) const {
+        const Model *m = current_model();
+        if (!m) {
+            LOG(ERROR) << "no model exists";
+            return false;
+        }
+
+        bool saved = false;
+        if (dynamic_cast<const PointCloud *>(m))
+            saved = PointCloudIO::save(file_name, dynamic_cast<const PointCloud *>(m));
+        else if (dynamic_cast<const SurfaceMesh *>(m))
+            saved = SurfaceMeshIO::save(file_name, dynamic_cast<const SurfaceMesh *>(m));
+        else if (dynamic_cast<const Graph *>(m))
+            saved = GraphIO::save(file_name, dynamic_cast<const Graph *>(m));
+
+        if (saved)
+            LOG(INFO) << "file successfully saved";
+
+        return saved;
+    }
+
+
+    bool Viewer::snapshot(const std::string& file_name, bool bk_white) const {
+        gl_contex_->SetCurrent(*this);
+
+        int x, y, w, h;
+        OpenglUtil::viewport(x, y, w, h);
+
+        FramebufferObject fbo(w, h, OpenglUtil::samples());
+        fbo.add_color_buffer();
+        fbo.add_depth_buffer();
+
+        fbo.bind();
+
+        if (bk_white)
+            glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        else
+            glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+        const_cast<Viewer *>(this)->draw();
+
+        fbo.release();
+
+#if 1   // color render buffer
+        return fbo.snapshot_color(0, file_name);
+#else
+        // depth buffer
+        return fbo.snapshot_depth(file_name);
+#endif
+    }
 
 
     bool Viewer::add_drawable(Drawable *drawable) {
