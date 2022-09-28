@@ -24,6 +24,16 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
+#include <wx/wxprec.h>
+#ifndef WX_PRECOMP
+#include <wx/wx.h>
+#endif
+
+#if !wxUSE_GLCANVAS
+#error "OpenGL required: set wxUSE_GLCANVAS to 1 and rebuild the library"
+#endif
+
+
 #include <easy3d/core/model.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/graph.h>
@@ -57,17 +67,6 @@
 #include <easy3d/util/file_system.h>
 
 #include "viewer.h" // ensure "gl.h" is included after "glew.h"
-
-using namespace easy3d;
-
-#include <wx/wxprec.h>
-#ifndef WX_PRECOMP
-#include <wx/wx.h>
-#endif
-
-#if !wxUSE_GLCANVAS
-#error "OpenGL required: set wxUSE_GLCANVAS to 1 and rebuild the library"
-#endif
 
 
 namespace easy3d {
@@ -238,27 +237,27 @@ namespace easy3d {
 
 
     void Viewer::OnKeyDown(wxKeyEvent &event) {
-        if (event. GetUnicodeKey() == wxKeyCode('A') && event.GetModifiers() == wxMOD_NONE) {
+        if (event.GetUnicodeKey() == wxKeyCode('A') && event.GetModifiers() == wxMOD_NONE) {
             if (drawable_axes_)
                 drawable_axes_->set_visible(!drawable_axes_->is_visible());
         }
-        else if (event. GetUnicodeKey() == wxKeyCode('C') && event.GetModifiers() == wxMOD_NONE) {
+        else if (event.GetUnicodeKey() == wxKeyCode('C') && event.GetModifiers() == wxMOD_NONE) {
             if (current_model())
                 fit_screen(current_model());
-        } else if (event. GetUnicodeKey() == wxKeyCode('F') && event.GetModifiers() == wxMOD_NONE) {
+        } else if (event.GetUnicodeKey() == wxKeyCode('F') && event.GetModifiers() == wxMOD_NONE) {
             fit_screen();
-        } else if (event. GetUnicodeKey() == wxKeyCode('M') && event.GetModifiers() == wxMOD_NONE) {
+        } else if (event.GetUnicodeKey() == wxKeyCode('M') && event.GetModifiers() == wxMOD_NONE) {
             if (dynamic_cast<SurfaceMesh *>(current_model())) {
                 auto drawables = current_model()->renderer()->triangles_drawables();
                 for (auto d: drawables)
                     d->set_smooth_shading(!d->smooth_shading());
             }
-        } else if (event. GetUnicodeKey() == wxKeyCode('P') && event.GetModifiers() == wxMOD_NONE) {
+        } else if (event.GetUnicodeKey() == wxKeyCode('P') && event.GetModifiers() == wxMOD_NONE) {
             if (camera_->type() == Camera::PERSPECTIVE)
                 camera_->setType(Camera::ORTHOGRAPHIC);
             else
                 camera_->setType(Camera::PERSPECTIVE);
-        } else if (event. GetUnicodeKey() == WXK_SPACE && event.GetModifiers() == wxMOD_NONE) {
+        } else if (event.GetUnicodeKey() == WXK_SPACE && event.GetModifiers() == wxMOD_NONE) {
             // Aligns camera
             Frame frame;
             frame.setTranslation(camera_->pivotPoint());
@@ -268,7 +267,7 @@ namespace easy3d {
             //if (manipulatedFrame())
             //	manipulatedFrame()->alignWithFrame(camera_->frame());
         }
-        else if (event. GetUnicodeKey() == wxKeyCode('[') && event.GetModifiers() == wxMOD_NONE) {
+        else if (event.GetUnicodeKey() == wxKeyCode('[') && event.GetModifiers() == wxMOD_NONE) {
             for (auto m: models_) {
                 for (auto d: m->renderer()->lines_drawables()) {
                     float size = d->line_width() - 1.0f;
@@ -278,7 +277,7 @@ namespace easy3d {
                 }
             }
         }
-        else if (event. GetUnicodeKey() == wxKeyCode(']') && event.GetModifiers() == wxMOD_NONE) {
+        else if (event.GetUnicodeKey() == wxKeyCode(']') && event.GetModifiers() == wxMOD_NONE) {
             for (auto m: models_) {
                 for (auto d: m->renderer()->lines_drawables()) {
                     float size = d->line_width() + 1.0f;
@@ -286,7 +285,7 @@ namespace easy3d {
                 }
             }
         }
-        else if (event. GetUnicodeKey() == wxKeyCode('-') && event.GetModifiers() == wxMOD_NONE) {
+        else if (event.GetUnicodeKey() == wxKeyCode('-') && event.GetModifiers() == wxMOD_NONE) {
             for (auto m: models_) {
                 for (auto d: m->renderer()->points_drawables()) {
                     float size = d->point_size() - 1.0f;
@@ -296,7 +295,7 @@ namespace easy3d {
                 }
             }
         }
-        else if (event. GetUnicodeKey() == wxKeyCode('=') && event.GetModifiers() == wxMOD_NONE) {
+        else if (event.GetUnicodeKey() == wxKeyCode('=') && event.GetModifiers() == wxMOD_NONE) {
             for (auto m: models_) {
                 for (auto d: m->renderer()->points_drawables()) {
                     float size = d->point_size() + 1.0f;
@@ -304,7 +303,7 @@ namespace easy3d {
                 }
             }
         }
-        else if (event. GetUnicodeKey() == wxKeyCode(',') && event.GetModifiers() == wxMOD_NONE) {
+        else if (event.GetUnicodeKey() == wxKeyCode(',') && event.GetModifiers() == wxMOD_NONE) {
             if (models_.empty())
                 model_idx_ = -1;
             else
@@ -314,7 +313,7 @@ namespace easy3d {
                 std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
             }
         }
-        else if (event. GetUnicodeKey() == wxKeyCode('.') && event.GetModifiers() == wxMOD_NONE) {
+        else if (event.GetUnicodeKey() == wxKeyCode('.') && event.GetModifiers() == wxMOD_NONE) {
             if (models_.empty())
                 model_idx_ = -1;
             else
@@ -324,25 +323,25 @@ namespace easy3d {
                 std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
             }
         }
-        else if (event. GetUnicodeKey() == WXK_DELETE && event.GetModifiers() == wxMOD_NONE) {
+        else if (event.GetUnicodeKey() == WXK_DELETE && event.GetModifiers() == wxMOD_NONE) {
             if (current_model())
                 delete_model(current_model());
         }
-        else if (event. GetUnicodeKey() == wxKeyCode('E') && event.GetModifiers() == wxMOD_NONE) {
+        else if (event.GetUnicodeKey() == wxKeyCode('E') && event.GetModifiers() == wxMOD_NONE) {
             if (current_model()) {
                 auto *edges = current_model()->renderer()->get_lines_drawable("edges");
                 if (edges)
                     edges->set_visible(!edges->is_visible());
             }
         }
-        else if (event. GetUnicodeKey() == wxKeyCode('V') && event.GetModifiers() == wxMOD_NONE) {
+        else if (event.GetUnicodeKey() == wxKeyCode('V') && event.GetModifiers() == wxMOD_NONE) {
             if (current_model()) {
                 auto vertices = current_model()->renderer()->get_points_drawable("vertices");
                 if (vertices)
                     vertices->set_visible(!vertices->is_visible());
             }
         }
-        else if (event. GetUnicodeKey() == wxKeyCode('B') && event.GetModifiers() == wxMOD_NONE) {
+        else if (event.GetUnicodeKey() == wxKeyCode('B') && event.GetModifiers() == wxMOD_NONE) {
             SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(current_model());
             if (mesh) {
                 auto drawable = mesh->renderer()->get_lines_drawable("borders");
@@ -350,7 +349,7 @@ namespace easy3d {
                     drawable->set_visible(!drawable->is_visible());
             }
         }
-        else if (event. GetUnicodeKey() == wxKeyCode('L') && event.GetModifiers() == wxMOD_NONE) { // locked vertices
+        else if (event.GetUnicodeKey() == wxKeyCode('L') && event.GetModifiers() == wxMOD_NONE) { // locked vertices
             SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(current_model());
             if (mesh) {
                 auto drawable = mesh->renderer()->get_points_drawable("locks");
@@ -358,7 +357,7 @@ namespace easy3d {
                     drawable->set_visible(!drawable->is_visible());
             }
         }
-        else if (event. GetUnicodeKey() == wxKeyCode('D') && event.GetModifiers() == wxMOD_NONE) {
+        else if (event.GetUnicodeKey() == wxKeyCode('D') && event.GetModifiers() == wxMOD_NONE) {
             if (current_model()) {
                 auto &output = std::cout;
 
@@ -397,7 +396,7 @@ namespace easy3d {
             }
         }
 
-        else if (event. GetUnicodeKey() == wxKeyCode('R') && event.GetModifiers() == wxMOD_NONE) {
+        else if (event.GetUnicodeKey() == wxKeyCode('R') && event.GetModifiers() == wxMOD_NONE) {
             // Reload the shader(s) - useful for writing/debugging shader code.
             ShaderManager::reload();
         }
@@ -644,7 +643,7 @@ namespace easy3d {
 
 
     bool Viewer::snapshot(const std::string& file_name, bool bk_white) const {
-        gl_contex_->SetCurrent(*this);
+		SetCurrent(*gl_contex_);
 
         int x, y, w, h;
         OpenglUtil::viewport(x, y, w, h);

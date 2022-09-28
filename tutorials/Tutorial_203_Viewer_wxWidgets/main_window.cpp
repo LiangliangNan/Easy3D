@@ -24,13 +24,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include "main_window.h"
-#include "viewer.h"
-
 #include <wx/wxprec.h>
 #ifndef WX_PRECOMP
 #include <wx/wx.h>
 #endif
+
+#include "main_window.h"
+#include "viewer.h"
 
 #include <easy3d/core/model.h>
 #include <easy3d/util/file_system.h>
@@ -51,7 +51,8 @@ namespace easy3d {
     // MainWindow constructor
     MainWindow::MainWindow(wxFrame *frame, const wxString &title, const wxPoint &pos, const wxSize &size, long style)
             : wxFrame(frame, wxID_ANY, title, pos, size, style) {
-        SetIcon(wxIcon("Resources/sample.xpm"));
+        //SetIcon(wxIcon("Resources/sample.xpm"));
+		SetIcon(wxICON(sample));
 
         // Make the "File" menu
         wxMenu *fileMenu = new wxMenu;

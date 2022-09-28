@@ -6,8 +6,13 @@ project(${PROJECT_NAME})
 # Request wxWidgets support
 find_package(wxWidgets QUIET COMPONENTS core base gl)
 if (NOT wxWidgets_FOUND)
-    message(WARNING "${PROJECT_NAME} requires wxWidgets but wxWidgets was not found. You can set 'wxWidgets_DIR' to the "
-            "directory containing 'wxWidgetsConfig.cmake' or 'wxWidgets-config.cmake'.")
+    message(WARNING "${PROJECT_NAME} requires wxWidgets but wxWidgets was not found. "
+					"NOTE: CMake findwxWidgets module may not detect wxWidgets in versions of CMake older than 3.24. "
+					"You can update your CMake to a version greater or equal to 3.24, or copy the latest version of "
+					"FindwxWidgets.cmake from the following link to your system to fix this: "
+					"https://gitlab.kitware.com/cmake/cmake/-/blob/master/Modules/FindwxWidgets.cmake"
+					"If you build wxWidgets itself using CMake, you can also use the CONFIG mode of find_package() "
+					"which works even with older CMake versions.")
     return()
 else ()
     message(STATUS "Found wxWidgets v${wxWidgets_VERSION_STRING}")
@@ -57,3 +62,5 @@ elseif (APPLE)
 endif ()
 
 target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES} easy3d::core easy3d::renderer)
+
+set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "tutorials")

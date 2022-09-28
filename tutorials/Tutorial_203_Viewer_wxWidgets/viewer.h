@@ -62,7 +62,7 @@ namespace easy3d {
          *          override create_drawables() or set 'create_default_drawables' to false and create
          *          the drawables by calling Model::add_[type]_drawable()..
          * @param file_name The string of the file name.
-         * @param create_default_drawables If ture, the default drawables will be created.
+         * @param create_default_drawables If true, the default drawables will be created.
          * @return The pointer to the model added to the viewer (nullptr if failed).
          * @related create_drawables(Model* model).
          */
