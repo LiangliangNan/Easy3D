@@ -166,6 +166,7 @@ namespace easy3d {
 		//        VLOG(1) << "OpenGL version requested: " << gl_major << "." << gl_minor;
 		VLOG(1) << "OpenGL version received: " << glGetString(GL_VERSION);
 		VLOG(1) << "GLSL version received: " << glGetString(GL_SHADING_LANGUAGE_VERSION);
+		VLOG(1) << "Number of samplers per pixel: " << OpenglUtil::samples();
 
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LESS);
