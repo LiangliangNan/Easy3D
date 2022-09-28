@@ -35,7 +35,9 @@ Compared to existing geometry processing libraries (such as [PMP](http://www.pmp
   
 * Very easy to use as a callable library (usually only a few lines of code).
   
-* A viewer that can be used directly to visualize 3D scenes in various formats, which can also be easily extended.
+* A viewer that can be used directly to visualize 3D scenes in various formats, which can also be easily extended. 
+  For window/GUI creation, Easy3D currently supports [GLFW](https://www.glfw.org/) (e.g., [the default viewer](easy3d/viewer)), 
+  [Qt](https://www.qt.io/) (see [the Qt viewer](tutorials/Tutorial_204_Viewer_Qt), and [wxWidgets](https://www.wxwidgets.org/) (see [the wxWidgets viewer](tutorials/Tutorial_203_Viewer_wxWidgets)).
 
 * A handy tool <b>Mapple</b> created out of the Easy3D library for rendering and processing 3D data.
 

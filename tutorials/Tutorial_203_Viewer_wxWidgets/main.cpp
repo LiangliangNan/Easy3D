@@ -1,4 +1,3 @@
-#include "application.h"
 /********************************************************************
  * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
  * https://3d.bk.tudelft.nl/liangliang/
@@ -25,29 +24,41 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include "main_window.h"
-
 #include <wx/wxprec.h>
 #ifndef WX_PRECOMP
 #include <wx/wx.h>
 #endif
 
+#include <wx/app.h>
+#include "main_window.h"
+
 
 using namespace easy3d;
 
+class Easy3DApp : public wxApp {
+public:
+    virtual bool OnInit() wxOVERRIDE {
+        if (!wxApp::OnInit())
+            return false;
+        MainWindow *window = new MainWindow(NULL, "Tutorial_203_Viewer_wxWidgets", wxDefaultPosition, wxSize(800, 600));
+        window->Show(true);
+        return true;
+    }
+};
 
-// `Main program' equivalent, creating windows and returning main app frame
-bool Easy3DApp::OnInit() {
-    if (!wxApp::OnInit())
-        return false;
 
-    // Create the main frame window
-    MainWindow *window = new MainWindow(NULL, "Tutorial_203_Viewer_wxWidgets", wxDefaultPosition, wxSize(800, 600));
-
-    /* Show the frame */
-    window->Show(true);
-
-    return true;
-}
+#if 1
 
 wxIMPLEMENT_APP(Easy3DApp);
+
+#else
+
+int main(int argc, char **argv) {
+    wxDisableAsserts();
+    wxLog::SetLogLevel(wxLOG_Debug);
+    return wxEntry(argc, argv);
+}
+
+wxAppInitializer wxTheAppInitializer([]() -> wxAppConsole * { return new Easy3DApp; });
+
+#endif

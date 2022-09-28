@@ -34,8 +34,7 @@ if (wxWidgets_USE_FILE)
 endif ()
 
 set(SRC_FILES
-        application.h
-        application.cpp
+        main.cpp
         main_window.h
         main_window.cpp
         viewer.h
