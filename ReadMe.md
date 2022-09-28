@@ -96,7 +96,7 @@ The **optional** third-party libraries are:
   UI creation, which can help develop sophisticated applications for 3D data processing and visualization. The Qt 
   support is disabled by default (because most users don't need it). You can switch on the CMake option `EASY3D_ENABLE_QT` 
   to include the examples and applications that depend on Qt (e.g., 
-            [`Tutorial_202_Viewer_Qt`](https://github.com/LiangliangNan/Easy3D/tree/main/tutorials/Tutorial_204_Viewer_Qt) 
+            [`Tutorial_204_Viewer_Qt`](https://github.com/LiangliangNan/Easy3D/tree/main/tutorials/Tutorial_204_Viewer_Qt) 
             and [`Mapple`](https://github.com/LiangliangNan/Easy3D/tree/main/applications/Mapple)).
   
 To build Easy3D, you need [CMake](https://cmake.org/download/) (`>= 3.12`) and, of course, a compiler that supports `>= C++11`.
