@@ -186,7 +186,7 @@ namespace easy3d {
 		texter_->add_font(resource::directory() + "/fonts/en_Earth-Normal.ttf");
 		texter_->add_font(resource::directory() + "/fonts/en_Roboto-Medium.ttf");
 
-#if 1
+#if 0
 		const std::string file_name = resource::directory() + "/data/easy3d.ply";
 		auto model = add_model(file_name);
 		if (model) {
@@ -197,23 +197,13 @@ namespace easy3d {
 			LOG(INFO) << "program initialized by loading model from: " << file_name;
 		}
 #else
-		// The coordinates of the vertices.
+		// Add a drawable of the bunny model
 		const std::vector<vec3> &points = resource::bunny_vertices;
-		// The indices represent how the vertices are connected to form triangles. The "bunny" is a triangle mesh, and thus
-		// each consecutive three indices represent a triangle.
 		const std::vector<unsigned int> &indices = resource::bunny_indices;
-
-		//-------------------------------------------------------------
-		// Create a TrianglesDrawable to visualize the surface of the "bunny".
-		// For visualization, the point positions and the vertex indices of the faces have to be sent to the GPU.
 		auto surface = new TrianglesDrawable("faces");
-		// Upload the vertex positions of the surface to the GPU.
 		surface->update_vertex_buffer(points);
-		// Upload the vertex indices of the surface to the GPU.
 		surface->update_element_buffer(indices);
-		// Add the drawable to the viewer
 		add_drawable(surface);
-
 		LOG(INFO) << "program initialized by creating a TrianglesDrawable for the bunny model";
 #endif
 	}
