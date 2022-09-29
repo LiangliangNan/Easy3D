@@ -39,7 +39,7 @@
  * The header file of the class:
  * \include Tutorial_203_Viewer_wxWidgets/viewer.h Tutorial_203_Viewer_wxWidgets/application.h  Tutorial_203_Viewer_wxWidgets/main_window.h
  * The source file of the class:
- * \include Tutorial_203_Viewer_wxWidgets/viewer.cpp Tutorial_203_Viewer_wxWidgets/application.cpp  Tutorial_203_Viewer_wxWidgets/main_window.cpp
+ * \include Tutorial_203_Viewer_wxWidgets/viewer.cpp Tutorial_203_Viewer_wxWidgets/application.cpp  Tutorial_203_Viewer_wxWidgets/main_window.cpp   Tutorial_203_Viewer_wxWidgets/main.cpp
  */
 
 /**

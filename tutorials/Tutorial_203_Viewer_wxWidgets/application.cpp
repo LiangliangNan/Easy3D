@@ -54,17 +54,15 @@ namespace easy3d {
         int height_;
     };
 
+
     Application::Application(const std::string &title, int width, int height) {
         wxDisableAsserts();
         wxApp::SetInstance(new AppImpl(title, width, height));
     }
 
+
     int Application::run(int argc, char **argv) {
-#ifdef WIN32_VIEWER_WITHOUT_CONSOLE
-        return wxEntry(hInstance, hPrevInstance, lpCmdLine, nCmdShow);
-#else
         return wxEntry(argc, argv);
-#endif
     }
 
 }
