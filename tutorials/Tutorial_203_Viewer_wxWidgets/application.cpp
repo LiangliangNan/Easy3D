@@ -24,66 +24,47 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#if 1
-
-#include "application.h"
-
-using namespace easy3d;
-
-int main(int argc, char **argv) {
-    Application app("Tutorial_203_Viewer_wxWidgets");
-    return app.run(argc, argv);
-}
-
-#else // The code below is just for backup purpose.
-// It just works the same as the above code, but the structure is less clear and it also requires to
-// expose the wxWidgets headers to the client code.
-
 #include <wx/wxprec.h>
 #ifndef WX_PRECOMP
 #include <wx/wx.h>
 #endif
 
 #include <wx/app.h>
+
+#include "application.h"
 #include "main_window.h"
 
-class Easy3DApp : public wxApp {
-public:
-    virtual bool OnInit() wxOVERRIDE {
-        if (!wxApp::OnInit())
-            return false;
-        auto window = new easy3d::MainWindow(NULL, "Tutorial_203_Viewer_wxWidgets", wxDefaultPosition, wxSize(800, 600));
-        window->Show(true);
-        return true;
+
+namespace easy3d {
+
+    class AppImpl : public wxApp {
+    public:
+        AppImpl(const std::string &title, int w, int h) : title_(title), width_(w), height_(h) {}
+
+        virtual bool OnInit() wxOVERRIDE {
+            if (!wxApp::OnInit())
+                return false;
+            auto window = new MainWindow(NULL, title_, wxDefaultPosition, wxSize(width_, height_));
+            window->Show(true);
+            return true;
+        }
+    private:
+        std::string title_;
+        int width_;
+        int height_;
+    };
+
+    Application::Application(const std::string &title, int width, int height) {
+        wxDisableAsserts();
+        wxApp::SetInstance(new AppImpl(title, width, height));
     }
-};
 
-
-
-#if 1
-
+    int Application::run(int argc, char **argv) {
 #ifdef WIN32_VIEWER_WITHOUT_CONSOLE
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, wxCmdLineArgType lpCmdLine, int nCmdShow) {
-	wxDisableAsserts();
-	wxApp::SetInstance(new Easy3DApp);
-	return wxEntry(hInstance, hPrevInstance, lpCmdLine, nCmdShow);
-}
-#else  // WIN32_VIEWER_WITHOUT_CONSOLE
-int main(int argc, char **argv) {
-	wxDisableAsserts();
-	wxApp::SetInstance(new Easy3DApp);
-	return wxEntry(argc, argv);
-}
-#endif // WIN32_VIEWER_WITHOUT_CONSOLE
-
+        return wxEntry(hInstance, hPrevInstance, lpCmdLine, nCmdShow);
 #else
-
-#ifdef WIN32_VIEWER_WITHOUT_CONSOLE
-wxIMPLEMENT_APP(Easy3DApp);
-#else  // WIN32_VIEWER_WITHOUT_CONSOLE
-wxIMPLEMENT_APP_CONSOLE(Easy3DApp);
-#endif // WIN32_VIEWER_WITHOUT_CONSOLE
-
+        return wxEntry(argc, argv);
 #endif
+    }
 
-#endif
+}
