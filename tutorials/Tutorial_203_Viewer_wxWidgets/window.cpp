@@ -93,9 +93,11 @@ namespace easy3d {
                                            "Graph (*.ply)|*.ply",
                                            wxFD_OPEN);
 
-        auto model = viewer_->add_model(filename.ToStdString(), true);
-        if (model)
-            viewer_->fit_screen(model);
+		if (!filename.IsEmpty()) {
+			auto model = viewer_->add_model(filename.ToStdString(), true);
+			if (model)
+				viewer_->fit_screen(model);
+		}
     }
 
     // File|Save... command
@@ -124,7 +126,9 @@ namespace easy3d {
                                            "*.plm;*.pm;*.mesh|"
                                            "Graph (*.ply)|*.ply",
                                            wxFD_SAVE);
-        viewer_->save_current_model(filename.ToStdString());
+
+		if (!filename.IsEmpty())
+			viewer_->save_current_model(filename.ToStdString());
     }
 
     // File|Snapshot... command
@@ -144,7 +148,8 @@ namespace easy3d {
                                            "*.png;*.jpg;*.bmp;*.ppm;*.tga",
                                            wxFD_SAVE);
 
-        viewer_->snapshot(filename.ToStdString(), true);
+		if (!filename.IsEmpty())
+			viewer_->snapshot(filename.ToStdString(), true);
     }
 
     // File|Exit command

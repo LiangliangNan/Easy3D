@@ -28,6 +28,8 @@
 #include <QTime>
 #include <QApplication>
 #include <QSurfaceFormat>
+#include <QStyleFactory>
+
 #include <easy3d/util/logging.h>
 
 #include "main_window.h"
