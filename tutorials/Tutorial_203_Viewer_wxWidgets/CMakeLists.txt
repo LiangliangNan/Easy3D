@@ -42,7 +42,7 @@ set(SRC_FILES
         )
 
 if (WIN32 OR MSVC)
-	option(WIN32_wxWidget_Viewer_No_Console "Build the wxWidget viewer without a console window" ON)
+	option(WIN32_wxWidget_Viewer_No_Console "Build the wxWidget viewer without a console window" OFF)
 
     list(APPEND SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/Resources/sample.rc)    # Include a RC file for windows
 	if (WIN32_wxWidget_Viewer_No_Console)
