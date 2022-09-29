@@ -49,7 +49,6 @@ std::ostream& operator<<(std::ostream& os, const vec3& v) {
 };
 
 void run_many_threads() {
-
     for (int i=0; i<8; ++i) {
         std::thread t([=]() {
             std::lock_guard<std::mutex> guard(mutex);

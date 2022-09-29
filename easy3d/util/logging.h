@@ -31,15 +31,17 @@
 #include <3rd_party/easyloggingpp/src/easylogging++.h>
 
 
-// to have LOG_IF_EVERY_N
+/// To have LOG_IF_EVERY_N
+/// Example: LOG_IF_EVERY_N(5, i < 20, WARNING) << "Log if (i < 10) for every 5, i = " << i << ", " << COUNTER;
 #define LOG_IF_EVERY_N(n, condition, LEVEL)  if (condition) \
     CLOG_EVERY_N(n, LEVEL, ELPP_CURR_FILE_LOGGER_ID)
 
-// to have LOG_IF_FIRST_N
+/// To have LOG_IF_FIRST_N
+/// Example: LOG_IF_FIRST_N(5, i < 20, WARNING) << "Log if (i < 10) for first 5, i = " << i << ", " << COUNTER;
 #define LOG_IF_FIRST_N(n, condition, LEVEL)  if (condition) \
 CLOG_N_TIMES(n, LEVEL, ELPP_CURR_FILE_LOGGER_ID)
 
-// for logging the counter number
+/// For logging the counter number
 #define COUNTER     ELPP_COUNTER->hitCounts()
 
 
@@ -51,9 +53,9 @@ namespace easy3d {
 
         /**
          * @brief Initializes the logging module.
-         * @param info_to_stdout \c ture to log messages at a the INFO level to standard output.
-         * @param warning_to_stdcout \c ture to log messages at a the WARNING level to standard output.
-         * @param error_to_stdcout \c ture to log messages at a the ERROR (including FATAL) level to standard output.
+         * @param info_to_stdout \c ture to log messages at a the \c INFO level to standard output.
+         * @param warning_to_stdcout \c ture to log messages at a the \c WARNING level to standard output.
+         * @param error_to_stdcout \c ture to log messages at a the \c ERROR (including \c FATAL) level to standard output.
          * @param log_file A string specifying the full path to the log file.
          *      If \p log_file is a valid path: log messages will be written to this file in addition to stderr.
          *      If \p log_file is empty: no log file will be created.
