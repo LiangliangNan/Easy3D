@@ -24,8 +24,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef EASY3D_WXWIDGETS_MAIN_WINDOW_H
-#define EASY3D_WXWIDGETS_MAIN_WINDOW_H
+#ifndef EASY3D_WXWIDGETS_VIEWER_WINDOW_H
+#define EASY3D_WXWIDGETS_VIEWER_WINDOW_H
 
 #include <wx/frame.h>
 
@@ -34,19 +34,19 @@ namespace easy3d {
 
     class Viewer;
 
-    class MainWindow : public wxFrame {
+    class Window : public wxFrame {
     public:
-        MainWindow(wxFrame *frame, const wxString &title, const wxPoint &pos,
-                   const wxSize &size, long style = wxDEFAULT_FRAME_STYLE);
+        Window(wxFrame *parent, const wxString &title, const wxPoint &pos,
+               const wxSize &size, long style = wxDEFAULT_FRAME_STYLE);
 
         Viewer *viewer() { return viewer_; }
 
     private:
-        void OnMenuFileOpen(wxCommandEvent &event);
-        void OnMenuFileSave(wxCommandEvent &event);
-        void OnMenuFileSnapshot(wxCommandEvent &event);
-        void OnMenuFileExit(wxCommandEvent &event);
-        void OnMenuHelpAbout(wxCommandEvent &event);
+        void menuFileOpen(wxCommandEvent &event);
+        void menuFileSave(wxCommandEvent &event);
+        void menuFileSnapshot(wxCommandEvent &event);
+        void menuFileExit(wxCommandEvent &event);
+        void menuHelpAbout(wxCommandEvent &event);
 
     private:
         Viewer *viewer_;
@@ -56,4 +56,4 @@ namespace easy3d {
 
 }
 
-#endif // #ifndef EASY3D_VIEWER_WXWIDGETS_MAIN_WINDOW_H
+#endif // #ifndef EASY3D_WXWIDGETS_VIEWER_WINDOW_H

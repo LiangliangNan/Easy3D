@@ -29,7 +29,7 @@
 #include <wx/wx.h>
 #endif
 
-#include "main_window.h"
+#include "window.h"
 #include "viewer.h"
 
 #include <easy3d/core/model.h>
@@ -40,17 +40,17 @@ namespace easy3d {
 
     wxDEFINE_EVENT(SAVE_SNAPSHOT, wxCommandEvent);
 
-    wxBEGIN_EVENT_TABLE(MainWindow, wxFrame)
-                    EVT_MENU(wxID_OPEN, MainWindow::OnMenuFileOpen)
-                    EVT_MENU(wxID_SAVE, MainWindow::OnMenuFileSave)
-                    EVT_MENU(SAVE_SNAPSHOT, MainWindow::OnMenuFileSnapshot)
-                    EVT_MENU(wxID_EXIT, MainWindow::OnMenuFileExit)
-                    EVT_MENU(wxID_HELP, MainWindow::OnMenuHelpAbout)
+    wxBEGIN_EVENT_TABLE(Window, wxFrame)
+                    EVT_MENU(wxID_OPEN, Window::menuFileOpen)
+                    EVT_MENU(wxID_SAVE, Window::menuFileSave)
+                    EVT_MENU(SAVE_SNAPSHOT, Window::menuFileSnapshot)
+                    EVT_MENU(wxID_EXIT, Window::menuFileExit)
+                    EVT_MENU(wxID_HELP, Window::menuHelpAbout)
     wxEND_EVENT_TABLE()
 
-    // MainWindow constructor
-    MainWindow::MainWindow(wxFrame *frame, const wxString &title, const wxPoint &pos, const wxSize &size, long style)
-            : wxFrame(frame, wxID_ANY, title, pos, size, style) {
+    // Window constructor
+    Window::Window(wxFrame *parent, const wxString &title, const wxPoint &pos, const wxSize &size, long style)
+            : wxFrame(parent, wxID_ANY, title, pos, size, style) {
 #ifdef WIN32
         SetIcon(wxICON(sample));
 #else
@@ -81,7 +81,7 @@ namespace easy3d {
     }
 
     // File|Open... command
-    void MainWindow::OnMenuFileOpen(wxCommandEvent & WXUNUSED(event)) {
+    void Window::menuFileOpen(wxCommandEvent & WXUNUSED(event)) {
         const std::string &title = "Choose a file";
         wxString filename = wxFileSelector(title, "", "", "",
                                            "Surface Mesh (*.ply;*.obj;*.off;*.stl;*.sm;*.geojson;*.trilist)|"
@@ -94,13 +94,12 @@ namespace easy3d {
                                            wxFD_OPEN);
 
         auto model = viewer_->add_model(filename.ToStdString(), true);
-        if (model) {
+        if (model)
             viewer_->fit_screen(model);
-        }
     }
 
     // File|Save... command
-    void MainWindow::OnMenuFileSave(wxCommandEvent & WXUNUSED(event)) {
+    void Window::menuFileSave(wxCommandEvent & WXUNUSED(event)) {
         const Model *m = viewer_->current_model();
         if (!m) {
             LOG(ERROR) << "no model exists";
@@ -129,7 +128,7 @@ namespace easy3d {
     }
 
     // File|Snapshot... command
-    void MainWindow::OnMenuFileSnapshot(wxCommandEvent &event) {
+    void Window::menuFileSnapshot(wxCommandEvent &event) {
         const std::string &title = "Please specify an image file name";
         std::string name("untitled.png");
 
@@ -149,13 +148,13 @@ namespace easy3d {
     }
 
     // File|Exit command
-    void MainWindow::OnMenuFileExit(wxCommandEvent & WXUNUSED(event)) {
+    void Window::menuFileExit(wxCommandEvent & WXUNUSED(event)) {
         // true is to force the frame to close
         Close(true);
     }
 
     // Help|About command
-    void MainWindow::OnMenuHelpAbout(wxCommandEvent & WXUNUSED(event)) {
+    void Window::menuHelpAbout(wxCommandEvent & WXUNUSED(event)) {
         wxMessageBox("Easy3D viewer based on wxWidgets");
     }
 

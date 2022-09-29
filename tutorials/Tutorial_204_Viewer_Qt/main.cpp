@@ -24,18 +24,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include <string>
-#include <iostream>
-#include <stdexcept>
-
 #include <QDir>
 #include <QTime>
 #include <QApplication>
-#include <QSplashScreen>
 #include <QSurfaceFormat>
-#include <QStyleFactory>
-
-#include <easy3d/renderer/setting.h>
 #include <easy3d/util/logging.h>
 
 #include "main_window.h"

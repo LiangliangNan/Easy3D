@@ -32,7 +32,7 @@
 #include <wx/app.h>
 
 #include "application.h"
-#include "main_window.h"
+#include "window.h"
 
 
 namespace easy3d {
@@ -44,7 +44,7 @@ namespace easy3d {
         virtual bool OnInit() wxOVERRIDE {
             if (!wxApp::OnInit())
                 return false;
-            auto window = new MainWindow(NULL, title_, wxDefaultPosition, wxSize(width_, height_));
+            auto window = new Window(NULL, title_, wxDefaultPosition, wxSize(width_, height_));
             window->Show(true);
             return true;
         }

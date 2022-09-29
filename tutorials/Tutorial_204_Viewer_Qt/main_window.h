@@ -24,11 +24,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef MAIN_WINDOW_H
-#define MAIN_WINDOW_H
+#ifndef EASY3D_QT_VIEWER_MAIN_WINDOW_H
+#define EASY3D_QT_VIEWER_MAIN_WINDOW_H
 
 #include <string>
-
 #include <QMainWindow>
 
 
@@ -37,83 +36,78 @@ namespace Ui {
 }
 
 namespace easy3d {
+
     class Model;
+    class ViewerQt;
+
+    class MainWindow : public QMainWindow {
+    Q_OBJECT
+    public:
+        explicit MainWindow(QWidget *parent = nullptr);
+        ~MainWindow() override;
+        ViewerQt *viewer() { return viewer_; }
+
+    public slots:
+
+        // file
+        bool onOpen();
+        bool onSave();
+        void onOpenRecentFile();
+        void onClearRecentFiles();
+        void onCurrentModelChanged();
+
+        // view
+        void saveSnapshot();
+        void setBackgroundColor();
+
+        // topology
+        void reportTopologyStatistics();
+
+        // about
+        void onAbout();
+
+    protected:
+        void dragEnterEvent(QDragEnterEvent *) override;
+        void dropEvent(QDropEvent *) override;
+        void closeEvent(QCloseEvent *) override;
+
+    private:
+
+        // open a file (given the file name) and add the model to the viewer
+        // for visualization. It will also create the default drawables for
+        // visualizing the model.
+        easy3d::Model *open(const std::string &file_name);
+
+    private:
+        void createActions();
+        void createActionsForFileMenu();
+        void createActionsForViewMenu();
+        void createActionsForTopologyMenu();
+        bool okToContinue();
+        void readSettings();
+        void writeSettings();
+        void updateWindowTitle();
+        void setCurrentFile(const QString &fileName);
+        void updateRecentFileActions();
+        QString strippedName(const QString &fullFileName);
+
+    private:
+        ViewerQt *viewer_;
+
+        QStringList recentFiles_;
+        QString curDataDirectory_;
+
+        enum {
+            MaxRecentFiles = 5
+        };
+        QAction *actionsRecentFile[MaxRecentFiles],
+                *actionSeparator;
+
+    private:
+        Ui::MainWindow *ui;
+
+    };
+
 }
 
-class ViewerQt;
-
-class MainWindow : public QMainWindow
-{
-    Q_OBJECT
-
-public:
-    explicit MainWindow(QWidget *parent = nullptr);
-    ~MainWindow() override;
-
-    ViewerQt* viewer() { return viewer_; }
-
-public slots:
-
-    // file
-    bool onOpen();
-    bool onSave();
-    void onOpenRecentFile();
-    void onClearRecentFiles();
-    void onCurrentModelChanged();
-
-    // view
-    void saveSnapshot();
-    void setBackgroundColor();
-
-    // topology
-    void reportTopologyStatistics();
-
-    // about
-    void onAbout();
-
-protected:
-    void dragEnterEvent(QDragEnterEvent *) override;
-    void dropEvent(QDropEvent *) override;
-    void closeEvent(QCloseEvent *) override;
-
-private:
-
-    // open a file (given the file name) and add the model to the viewer
-    // for visualization. It will also create the default drawables for
-    // visualizing the model.
-    easy3d::Model* open(const std::string& file_name);
-
-private:
-    void createActions();
-
-    void createActionsForFileMenu();
-    void createActionsForViewMenu();
-    void createActionsForTopologyMenu();
-
-    bool okToContinue();
-    void readSettings();
-    void writeSettings();
-    void updateWindowTitle();
-
-    void setCurrentFile(const QString &fileName);
-
-    void updateRecentFileActions();
-    QString strippedName(const QString &fullFileName);
-
-private:
-    ViewerQt*   viewer_;
-
-    QStringList recentFiles_;
-    QString		curDataDirectory_;
-
-    enum { MaxRecentFiles = 5 };
-    QAction *actionsRecentFile[MaxRecentFiles],
-        *actionSeparator;
-
-private:
-    Ui::MainWindow* ui;
-
-};
-
-
-#endif // MAIN_WINDOW_H
+#endif // EASY3D_QT_VIEWER_MAIN_WINDOW_H

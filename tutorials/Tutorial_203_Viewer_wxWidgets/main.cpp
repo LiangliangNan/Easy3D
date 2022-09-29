@@ -26,11 +26,15 @@
 
 #if 1
 
+#include <easy3d/util/logging.h>
 #include "application.h"
 
 using namespace easy3d;
 
 int main(int argc, char **argv) {
+    // Initialize logging.
+    logging::initialize();
+
     Application app("Tutorial_203_Viewer_wxWidgets");
     return app.run(argc, argv);
 }

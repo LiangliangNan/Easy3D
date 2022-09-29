@@ -36,8 +36,8 @@ set(SRC_FILES
         main.cpp
         application.h
         application.cpp
-        main_window.h
-        main_window.cpp
+        window.h
+        window.cpp
         viewer.h
         viewer.cpp
         )

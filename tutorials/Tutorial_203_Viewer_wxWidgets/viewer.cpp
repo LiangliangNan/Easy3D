@@ -101,6 +101,7 @@ namespace easy3d {
 
         const int gl_major = 3;
         const int gl_minor = 2;
+        VLOG(1) << "OpenGL version requested: " << gl_major << "." << gl_minor;
         // Explicitly create a new rendering context instance for this canvas.
         wxGLContextAttrs ctxAttrs;
         ctxAttrs.PlatformDefaults().CoreProfile().OGLVersion(gl_major, gl_minor).EndList();
@@ -110,8 +111,6 @@ namespace easy3d {
             LOG(ERROR) << "OpenGL version error. This app needs an OpenGL 3.2 capable driver.";
             delete gl_contex_;
             gl_contex_ = NULL;
-        } else {
-            LOG(INFO) << "OpenGL Core Profile successfully set.";
         }
 
         // create and setup the camera
@@ -151,7 +150,6 @@ namespace easy3d {
 #endif
 		VLOG(1) << "OpenGL vendor: " << glGetString(GL_VENDOR);
 		VLOG(1) << "OpenGL renderer: " << glGetString(GL_RENDERER);
-		//        VLOG(1) << "OpenGL version requested: " << gl_major << "." << gl_minor;
 		VLOG(1) << "OpenGL version received: " << glGetString(GL_VERSION);
 		VLOG(1) << "GLSL version received: " << glGetString(GL_SHADING_LANGUAGE_VERSION);
 		VLOG(1) << "Number of samplers per pixel: " << OpenglUtil::samples();
