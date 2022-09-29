@@ -175,25 +175,17 @@ namespace easy3d {
 		texter_->add_font(resource::directory() + "/fonts/en_Earth-Normal.ttf");
 		texter_->add_font(resource::directory() + "/fonts/en_Roboto-Medium.ttf");
 
-#if 0
-		const std::string file_name = resource::directory() + "/data/easy3d.ply";
-		auto model = add_model(file_name);
-		if (model) {
-			// We always want to look at the front of the easy3d logo.
-			camera()->setViewDirection(vec3(0, 0, -1));
-			camera()->setUpVector(vec3(0, 1, 0));
-			fit_screen(model);
-			LOG(INFO) << "program initialized by loading model from: " << file_name;
-		}
-#else
-		// Add a drawable of the bunny model
+#if 1   // Add a surface mesh of the bunny model
 		const std::vector<vec3> &points = resource::bunny_vertices;
 		const std::vector<unsigned int> &indices = resource::bunny_indices;
-		auto surface = new TrianglesDrawable("faces");
-		surface->update_vertex_buffer(points);
-		surface->update_element_buffer(indices);
-		add_drawable(surface);
-		LOG(INFO) << "program initialized by creating a TrianglesDrawable for the bunny model";
+        SurfaceMesh* mesh = new SurfaceMesh;
+        mesh->set_name("bunny");
+        for (const auto& p : points)
+            mesh->add_vertex(p);
+        for (std::size_t i=0; i<indices.size(); i+=3)
+            mesh->add_triangle(SurfaceMesh::Vertex(indices[i]), SurfaceMesh::Vertex(indices[i+1]), SurfaceMesh::Vertex(indices[i+2]));
+        add_model(mesh);
+		LOG(INFO) << "program initialized by creating a SurfaceMesh of the bunny model";
 #endif
 	}
 
