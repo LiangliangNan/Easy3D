@@ -28,28 +28,42 @@
  * \example Tutorial_202_Viewer_imgui
  * The source file containing the main() function:
  * \include Tutorial_202_Viewer_imgui/main.cpp
- * The header file of the class:
+ * The header file of the viewer class:
  * \include Tutorial_202_Viewer_imgui/viewer.h
- * The source file of the class:
+ * The source file of viewer class class:
  * \include Tutorial_202_Viewer_imgui/viewer.cpp
  */
 
 /**
  * \example Tutorial_203_Viewer_wxWidgets
- * The header file of the class:
- * \include Tutorial_203_Viewer_wxWidgets/viewer.h Tutorial_203_Viewer_wxWidgets/application.h  Tutorial_203_Viewer_wxWidgets/main_window.h
- * The source file of the class:
- * \include Tutorial_203_Viewer_wxWidgets/viewer.cpp Tutorial_203_Viewer_wxWidgets/application.cpp  Tutorial_203_Viewer_wxWidgets/main_window.cpp   Tutorial_203_Viewer_wxWidgets/main.cpp
+ * The header file of the viewer class:
+ * \include Tutorial_203_Viewer_wxWidgets/viewer.h
+ * The source file of the viewer class:
+ * \include Tutorial_203_Viewer_wxWidgets/viewer.cpp
+ * The header file of the window class:
+ * \include Tutorial_203_Viewer_wxWidgets/window.h
+ * The source file of the window class:
+ * \include Tutorial_203_Viewer_wxWidgets/window.cpp
+ * The header file of the application class:
+ * \include Tutorial_203_Viewer_wxWidgets/application.h
+ * The source file of the application class:
+ * \include Tutorial_203_Viewer_wxWidgets/application.cpp
+ * The source file containing the main() function:
+ * \include Tutorial_203_Viewer_wxWidgets/main.cpp
  */
 
 /**
  * \example Tutorial_204_Viewer_Qt
  * The source file containing the main() function:
  * \include Tutorial_204_Viewer_Qt/main.cpp
- * The header file of the class:
- * \include Tutorial_204_Viewer_Qt/viewer.h Tutorial_204_Viewer_Qt/main_window.h
- * The source file of the class:
- * \include Tutorial_204_Viewer_Qt/viewer.cpp Tutorial_204_Viewer_Qt/main_window.cpp
+ * The header file of the viewer class:
+ * \include Tutorial_204_Viewer_Qt/viewer.h
+ * The source file of the viewer class:
+ * \include Tutorial_204_Viewer_Qt/viewer.cpp
+ * The header file of the window class:
+ * \include Tutorial_204_Viewer_Qt/window.h
+ * The source file of the window class:
+ * \include Tutorial_204_Viewer_Qt/window.cpp
  */
 
 /// @example Tutorial_205_CompositeView \include Tutorial_205_CompositeView/main.cpp
@@ -68,9 +82,9 @@
  * \example Tutorial_207_RealCamera
  * The source file containing the main() function:
  * \include Tutorial_207_RealCamera/main.cpp
- * The header file of the class:
+ * The header file of the viewer class:
  * \include Tutorial_207_RealCamera/viewer.h
- * The source file of the class:
+ * The source file of the viewer class:
  * \include Tutorial_207_RealCamera/viewer.cpp
  */
 
@@ -84,9 +98,9 @@
  * \example Tutorial_306_Image
  * The source file containing the main() function:
  * \include Tutorial_306_Image/main.cpp
- * The header file of the class:
+ * The header file of the viewer class:
  * \include Tutorial_306_Image/viewer.h
- * The source file of the class:
+ * The source file of the viewer class:
  * \include Tutorial_306_Image/viewer.cpp
  */
 
@@ -96,9 +110,9 @@
  * \example Tutorial_308_TexturedMesh
  * The source file containing the main() function:
  * \include Tutorial_308_TexturedMesh/main.cpp
- * The header file of the class:
+ * The header file of the viewer class:
  * \include Tutorial_308_TexturedMesh/viewer.h
- * The source file of the class:
+ * The source file of the viewer class:
  * \include Tutorial_308_TexturedMesh/viewer.cpp
  */
 
@@ -106,9 +120,9 @@
  * \example Tutorial_309_TextRendering
  * The source file containing the main() function:
  * \include Tutorial_309_TextRendering/main.cpp
- * The header file of the class:
+ * The header file of the viewer class:
  * \include Tutorial_309_TextRendering/viewer.h
- * The source file of the class:
+ * The source file of the viewer class:
  * \include Tutorial_309_TextRendering/viewer.cpp
  */
 
@@ -120,9 +134,9 @@
  * \example Tutorial_401_ModelPicker
  * The source file containing the main() function:
  * \include Tutorial_401_ModelPicker/main.cpp
- * The header file of the class:
+ * The header file of the viewer class:
  * \include Tutorial_401_ModelPicker/viewer.h
- * The source file of the class:
+ * The source file of the viewer class:
  * \include Tutorial_401_ModelPicker/viewer.cpp
  */
 
@@ -130,9 +144,9 @@
  * \example Tutorial_402_FacePicker
  * The source file containing the main() function:
  * \include Tutorial_402_FacePicker/main.cpp
- * The header file of the class:
+ * The header file of the viewer class:
  * \include Tutorial_402_FacePicker/viewer.h
- * The source file of the class:
+ * The source file of the viewer class:
  * \include Tutorial_402_FacePicker/viewer.cpp
  */
 
@@ -140,9 +154,9 @@
  * \example Tutorial_403_PointSelection
  * The source file containing the main() function:
  * \include Tutorial_403_PointSelection/main.cpp
- * The header file of the class:
+ * The header file of the viewer class:
  * \include Tutorial_403_PointSelection/viewer.h
- * The source file of the class:
+ * The source file of the viewer class:
  * \include Tutorial_403_PointSelection/viewer.cpp
  */
 
@@ -150,9 +164,9 @@
  * \example Tutorial_404_VirtualScanner
  * The source file containing the main() function:
  * \include Tutorial_404_VirtualScanner/main.cpp
- * The header file of the class:
+ * The header file of the viewer class:
  * \include Tutorial_404_VirtualScanner/viewer.h
- * The source file of the class:
+ * The source file of the viewer class:
  * \include Tutorial_404_VirtualScanner/viewer.cpp
  */
 
@@ -160,9 +174,9 @@
  * \example Tutorial_501_AmbientOcclusion
  * The source file containing the main() function:
  * \include Tutorial_501_AmbientOcclusion/main.cpp
- * The header file of the class:
+ * The header file of the viewer class:
  * \include Tutorial_501_AmbientOcclusion/viewer.h
- * The source file of the class:
+ * The source file of the viewer class:
  * \include Tutorial_501_AmbientOcclusion/viewer.cpp
  */
 
@@ -170,9 +184,9 @@
 * \example Tutorial_502_HardShadow
 * The source file containing the main() function:
 * \include Tutorial_502_HardShadow/main.cpp
-* The header file of the class:
+* The header file of the viewer class:
 * \include Tutorial_502_HardShadow/viewer.h
-* The source file of the class:
+* The source file of the viewer class:
 * \include Tutorial_502_HardShadow/viewer.cpp
 */
 
@@ -180,9 +194,9 @@
  * \example Tutorial_503_SoftShadow
  * The source file containing the main() function:
  * \include Tutorial_503_SoftShadow/main.cpp
- * The header file of the class:
+ * The header file of the viewer class:
  * \include Tutorial_503_SoftShadow/viewer.h
- * The source file of the class:
+ * The source file of the viewer class:
  * \include Tutorial_503_SoftShadow/viewer.cpp
  */
 
@@ -190,9 +204,9 @@
  * \example Tutorial_504_Transparency
  * The source file containing the main() function:
  * \include Tutorial_504_Transparency/main.cpp
- * The header file of the class:
+ * The header file of the viewer class:
  * \include Tutorial_504_Transparency/viewer.h
- * The source file of the class:
+ * The source file of the viewer class:
  * \include Tutorial_504_Transparency/viewer.cpp
  */
 
@@ -200,9 +214,9 @@
  * \example Tutorial_505_EyeDomeLighting
  * The source file containing the main() function:
  * \include Tutorial_505_EyeDomeLighting/main.cpp
- * The header file of the class:
+ * The header file of the viewer class:
  * \include Tutorial_505_EyeDomeLighting/viewer.h
- * The source file of the class:
+ * The source file of the viewer class:
  * \include Tutorial_505_EyeDomeLighting/viewer.cpp
  */
 
@@ -210,9 +224,9 @@
  * \example Tutorial_506_DepthMaps
  * The source file containing the main() function:
  * \include Tutorial_506_DepthMaps/main.cpp
- * The header file of the class:
+ * The header file of the viewer class:
  * \include Tutorial_506_DepthMaps/viewer.h
- * The source file of the class:
+ * The source file of the viewer class:
  * \include Tutorial_506_DepthMaps/viewer.cpp
  */
 
@@ -220,9 +234,9 @@
  * \example Tutorial_601_Cloud_NormalEstimation
  * The source file containing the main() function:
  * \include Tutorial_601_Cloud_NormalEstimation/main.cpp
- * The header file of the class:
+ * The header file of the viewer class:
  * \include Tutorial_601_Cloud_NormalEstimation/viewer.h
- * The source file of the class:
+ * The source file of the viewer class:
  * \include Tutorial_601_Cloud_NormalEstimation/viewer.cpp
  */
 
@@ -230,9 +244,9 @@
  * \example Tutorial_602_Cloud_SurfaceReconstruction
  * The source file containing the main() function:
  * \include Tutorial_602_Cloud_SurfaceReconstruction/main.cpp
- * The header file of the class:
+ * The header file of the viewer class:
  * \include Tutorial_602_Cloud_SurfaceReconstruction/viewer.h
- * The source file of the class:
+ * The source file of the viewer class:
  * \include Tutorial_602_Cloud_SurfaceReconstruction/viewer.cpp
  */
 
@@ -240,9 +254,9 @@
  * \example Tutorial_603_Cloud_PlaneExtraction
  * The source file containing the main() function:
  * \include Tutorial_603_Cloud_PlaneExtraction/main.cpp
- * The header file of the class:
+ * The header file of the viewer class:
  * \include Tutorial_603_Cloud_PlaneExtraction/viewer.h
- * The source file of the class:
+ * The source file of the viewer class:
  * \include Tutorial_603_Cloud_PlaneExtraction/viewer.cpp
  */
 
