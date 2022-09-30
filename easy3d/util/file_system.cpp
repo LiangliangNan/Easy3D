@@ -29,13 +29,11 @@
 #include <easy3d/util/logging.h>
 
 #include <fstream>
-#include <cassert>
 #include <algorithm>
 #include <cstring>
 #include <ctime>	    // for get_time_string()
 
 #ifdef WIN32
-#include <Windows.h>
 #include <io.h>
 #include <direct.h>   // for _mkdir
 #include <sys/stat.h> // for _stat64
