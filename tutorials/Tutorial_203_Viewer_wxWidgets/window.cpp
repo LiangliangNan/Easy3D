@@ -112,12 +112,11 @@ namespace easy3d {
         if (file_system::extension(name).empty()) // no extension?
             name += ".ply"; // default to ply
 
-        const std::string default_path = file_system::parent_directory(name);
-        const std::string default_name = file_system::base_name(name);
-        const std::string default_ext = file_system::extension(name);
-
         const std::string &title = "Please specify a file name";
-        wxString filename = wxFileSelector(title, default_path, default_name, default_ext,
+		const std::string default_path = file_system::parent_directory(name);
+		const std::string simple_name = file_system::simple_name(name);
+		const std::string extension = file_system::extension(name);
+		wxString filename = wxFileSelector(title, default_path, simple_name, extension,
                                            "Surface Mesh (*.ply;*.obj;*.off;*.stl;*.sm)|"
                                            "*.ply;*.obj;*.off;*.stl;*.sm|"
                                            "Point Cloud (*.ply;*.bin;*.las;*.laz;*.xyz;*.bxyz;*.vg;*.bvg)|"
@@ -139,11 +138,10 @@ namespace easy3d {
         if (viewer_->current_model())
             name = file_system::replace_extension(viewer_->current_model()->name(), "png");
 
-        const std::string default_path = file_system::parent_directory(name);
-        const std::string default_name = file_system::base_name(name);
-        const std::string default_ext = file_system::extension(name);
-
-        wxString filename = wxFileSelector(title, default_path, default_name, default_ext,
+		const std::string default_path = file_system::parent_directory(name);
+		const std::string simple_name = file_system::simple_name(name);
+		const std::string extension = file_system::extension(name);
+        wxString filename = wxFileSelector(title, default_path, simple_name, extension,
                                            "Image Files (*.png;*.jpg;*.bmp;*.ppm;*.tga)|"
                                            "*.png;*.jpg;*.bmp;*.ppm;*.tga",
                                            wxFD_SAVE);
