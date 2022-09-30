@@ -57,7 +57,7 @@ elseif (APPLE)
     #Append the new files to the resources file list
     list(APPEND ${PROJECT_NAME}_RESOURCES ${${PROJECT_NAME}_ICON})
     add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_RESOURCES})
-    set_source_files_properties(${${PROJECT_NAME}_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "resources")
+    set_source_files_properties(${${PROJECT_NAME}_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
     set_target_properties(${PROJECT_NAME} PROPERTIES
             INSTALL_RPATH "@executable_path/../Frameworks"
             MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME}
