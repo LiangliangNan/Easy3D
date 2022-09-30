@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.12)
 
 ################################################################################
 
+if (WIN32 OR MSVC)
+    set(CMAKE_GENERATOR_PLATFORM x64)
+endif()
+
 project(Easy3D)
 
 set(EASY3D_MAJOR_VERSION 2)
@@ -16,9 +20,10 @@ message(STATUS "    Type    : ${CMAKE_BUILD_TYPE}")
 if (CMAKE_SIZEOF_VOID_P EQUAL 8)
     add_definitions(-DENV_64_BIT)
     message(STATUS "    System  : 64-bit ${CMAKE_SYSTEM_NAME}")
-else ()
+elseif (CMAKE_SIZEOF_VOID_P EQUAL 4)
     add_definitions(-DENV_32_BIT)
-	message(FATAL_ERROR "CMake generator uses 'Win32'. You should choose 'x64' for generator")
+    message(STATUS "    System  : 32-bit ${CMAKE_SYSTEM_NAME}")
+	message(FATAL_ERROR "32-bit not supported! You should specify CMake option '-DCMAKE_GENERATOR_PLATFORM=x64'")
 endif ()
 if (APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "10.12" CACHE STRING "Minimum OS X deployment version" FORCE)
