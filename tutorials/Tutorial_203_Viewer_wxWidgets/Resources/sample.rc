@@ -1,9 +1,9 @@
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_ICON_MAIN ICON "sample.ico"
+IDI_ICON_MAIN ICON "icons/sample.ico"
 
 // this icon is used with wxFrame::SetIcon()
-sample ICON "sample.ico"
+sample ICON "icons/sample.ico"
 
 // set this to 1 if you don't want to use manifest resource (manifest resource
 // is needed to enable visual styles on Windows XP - see docs/msw/winxp.txt

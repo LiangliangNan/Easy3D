@@ -32,32 +32,41 @@ if (wxWidgets_USE_FILE)
     message(STATUS "wxWidgets_USE_FILE: ${wxWidgets_USE_FILE}")
 endif ()
 
-set(SRC_FILES
-        main.cpp
+set(${PROJECT_NAME}_HEADERS
         application.h
-        application.cpp
-        window.h
-        window.cpp
         viewer.h
+		window.h
+        )
+
+set(${PROJECT_NAME}_SOURCES
+        main.cpp
+        application.cpp
         viewer.cpp
+		window.cpp
+        )
+
+set(${PROJECT_NAME}_RESOURCES
+		resources/sample.rc
         )
 
 if (WIN32 OR MSVC)
-    list(APPEND SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/Resources/sample.rc)    # Include a RC file for windows
-    add_executable(${PROJECT_NAME} ${SRC_FILES}) # you can add "WIN32" to disable the console window
+    add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_RESOURCES}) # you can add "WIN32" to disable the console window
     message(STATUS "Creating the wxWidgets viewer with a console window")
 elseif (APPLE)
-    set(${PROJECT_NAME}_ICON ${CMAKE_CURRENT_SOURCE_DIR}/Resources/sample.icns)
-    list(APPEND SRC_FILES ${${PROJECT_NAME}_ICON})  # Add an icon for the apple .app file
-
-    add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${SRC_FILES})
-    set_source_files_properties(${${PROJECT_NAME}_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+    set(${PROJECT_NAME}_ICON ${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/sample.icns)
+    #Append the new files to the resources file list
+    list(APPEND ${PROJECT_NAME}_RESOURCES ${${PROJECT_NAME}_ICON})
+    add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_RESOURCES})
+    set_source_files_properties(${${PROJECT_NAME}_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "resources")
     set_target_properties(${PROJECT_NAME} PROPERTIES
             INSTALL_RPATH "@executable_path/../Frameworks"
             MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME}
             MACOSX_BUNDLE TRUE
-            MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Info.plist"
+            MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/resources/Mac/Info.plist"
             MACOSX_BUNDLE_ICON_FILE "sample.icns"
+			MACOSX_BUNDLE_SHORT_VERSION_STRING "${EASY3D_MAJOR_VERSION}.${EASY3D_MINOR_VERSION}.${EASY3D_PATCH_VERSION}"
+            MACOSX_BUNDLE_LONG_VERSION_STRING "${EASY3D_MAJOR_VERSION}.${EASY3D_MINOR_VERSION}.${EASY3D_PATCH_VERSION}"
+            MACOSX_BUNDLE_BUNDLE_VERSION "${EASY3D_MAJOR_VERSION}.${EASY3D_MINOR_VERSION}.${EASY3D_PATCH_VERSION}"
             MACOSX_BUNDLE_COPYRIGHT "Copyright liangliang.nan@gmail.com"
             MACOSX_BUNDLE_GUI_IDENTIFIER "Easy3D.Viewer.wxWidgets"
             )
