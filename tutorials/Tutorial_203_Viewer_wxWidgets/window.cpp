@@ -91,11 +91,11 @@ namespace easy3d {
         menuBar->Append(helpMenu, "&Help");
         SetMenuBar(menuBar);
 
-        Show(true);
-
         wxGLAttributes glAttrib;
         glAttrib.PlatformDefaults().RGBA().DoubleBuffer().Depth(24).Stencil(8).SampleBuffers(1).Samplers(4).EndList();
         viewer_ = new Viewer(this, glAttrib, wxID_ANY, wxDefaultPosition, GetClientSize(), wxDEFAULT_FRAME_STYLE, title);
+
+        Show(true);
     }
 
     // File|Open... command
