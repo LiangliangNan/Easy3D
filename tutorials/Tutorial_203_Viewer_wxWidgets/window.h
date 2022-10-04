@@ -44,8 +44,10 @@ namespace easy3d {
     private:
         void menuFileOpen(wxCommandEvent &event);
         void menuFileSave(wxCommandEvent &event);
-        void menuFileSnapshot(wxCommandEvent &event);
         void menuFileExit(wxCommandEvent &event);
+        void menuViewFitScreen(wxCommandEvent &event);
+        void menuViewSnapshot(wxCommandEvent &event);
+        void menuEditSubdivision(wxCommandEvent &event);
         void menuHelpAbout(wxCommandEvent &event);
 
     private:

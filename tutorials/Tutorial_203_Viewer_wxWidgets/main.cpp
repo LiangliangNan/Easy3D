@@ -39,9 +39,9 @@ int main(int argc, char **argv) {
     return app.run(argc, argv);
 }
 
-#else // The code below is just for backup purpose.
-// It just works the same as the above code, but the structure is less clear and it also requires to
-// expose the wxWidgets headers to the client code.
+#else // The code below is for backup purpose.
+// It just works the same as the above code, but it is structured and also requires to expose the wxWidgets
+// headers to the client code.
 
 #include <wx/wxprec.h>
 #ifndef WX_PRECOMP

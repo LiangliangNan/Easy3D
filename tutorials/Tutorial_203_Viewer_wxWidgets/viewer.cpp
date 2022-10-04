@@ -183,6 +183,7 @@ namespace easy3d {
         for (std::size_t i=0; i<indices.size(); i+=3)
             mesh->add_triangle(SurfaceMesh::Vertex(indices[i]), SurfaceMesh::Vertex(indices[i+1]), SurfaceMesh::Vertex(indices[i+2]));
         add_model(mesh);
+        fit_screen();
 		LOG(INFO) << "program initialized by creating a SurfaceMesh of the bunny model";
 #endif
 	}

@@ -33,18 +33,25 @@
 #include "viewer.h"
 
 #include <easy3d/core/model.h>
+#include <easy3d/core/surface_mesh.h>
+#include <easy3d/algo/surface_mesh_subdivision.h>
+#include <easy3d/renderer/renderer.h>
 #include <easy3d/util/file_system.h>
 
 
 namespace easy3d {
 
-    wxDEFINE_EVENT(SAVE_SNAPSHOT, wxCommandEvent);
+    wxDEFINE_EVENT(VIEW_FIT_SCREEN, wxCommandEvent);
+    wxDEFINE_EVENT(VIEW_SNAPSHOT, wxCommandEvent);
+    wxDEFINE_EVENT(EDIT_SUBDIVISION, wxCommandEvent);
 
     wxBEGIN_EVENT_TABLE(Window, wxFrame)
                     EVT_MENU(wxID_OPEN, Window::menuFileOpen)
                     EVT_MENU(wxID_SAVE, Window::menuFileSave)
-                    EVT_MENU(SAVE_SNAPSHOT, Window::menuFileSnapshot)
                     EVT_MENU(wxID_EXIT, Window::menuFileExit)
+                    EVT_MENU(VIEW_FIT_SCREEN, Window::menuViewFitScreen)
+                    EVT_MENU(VIEW_SNAPSHOT, Window::menuViewSnapshot)
+                    EVT_MENU(EDIT_SUBDIVISION, Window::menuEditSubdivision)
                     EVT_MENU(wxID_HELP, Window::menuHelpAbout)
     wxEND_EVENT_TABLE()
 
@@ -54,7 +61,7 @@ namespace easy3d {
 #ifdef WIN32
         SetIcon(wxICON(sample));
 #else
-        SetIcon(wxIcon("Resources/sample.xpm"));
+        SetIcon(wxIcon("resources/sample.xpm"));
 #endif
 
         // Make the "File" menu
@@ -62,17 +69,28 @@ namespace easy3d {
         fileMenu->Append(wxID_OPEN, "&Open...\tCTRL-O");
         fileMenu->Append(wxID_SAVE, "&Save...\tCTRL-S");
         fileMenu->AppendSeparator();
-        fileMenu->Append(SAVE_SNAPSHOT, "&Snapshot...\tS");
-        fileMenu->AppendSeparator();
         fileMenu->Append(wxID_EXIT, "E&xit\tALT-X");
+
+        // Make the "View" menu
+        wxMenu *viewMenu = new wxMenu;
+        viewMenu->Append(VIEW_FIT_SCREEN, "&Fit screen\tF");
+        viewMenu->Append(VIEW_SNAPSHOT, "&Snapshot...\tS");
+
+        // Make the "Edit" menu
+        wxMenu *editMenu = new wxMenu;
+        editMenu->Append(EDIT_SUBDIVISION, "&Subdivision");
+
         // Make the "Help" menu
         wxMenu *helpMenu = new wxMenu;
         helpMenu->Append(wxID_HELP, "&About");
 
         wxMenuBar *menuBar = new wxMenuBar;
         menuBar->Append(fileMenu, "&File");
+        menuBar->Append(viewMenu, "&View");
+        menuBar->Append(editMenu, "&Edit");
         menuBar->Append(helpMenu, "&Help");
         SetMenuBar(menuBar);
+
         Show(true);
 
         wxGLAttributes glAttrib;
@@ -104,7 +122,7 @@ namespace easy3d {
     void Window::menuFileSave(wxCommandEvent & WXUNUSED(event)) {
         const Model *m = viewer_->current_model();
         if (!m) {
-            LOG(ERROR) << "no model exists";
+            LOG(WARNING) << "no model exists";
             return;
         }
 
@@ -130,8 +148,8 @@ namespace easy3d {
 			viewer_->save_current_model(filename.ToStdString());
     }
 
-    // File|Snapshot... command
-    void Window::menuFileSnapshot(wxCommandEvent &event) {
+    // View|Snapshot... command
+    void Window::menuViewSnapshot(wxCommandEvent &event) {
         const std::string &title = "Please specify an image file name";
         std::string name("untitled.png");
 
@@ -154,6 +172,24 @@ namespace easy3d {
     void Window::menuFileExit(wxCommandEvent & WXUNUSED(event)) {
         // true is to force the frame to close
         Close(true);
+    }
+
+    // View|FitScreen... command
+    void Window::menuViewFitScreen(wxCommandEvent &) {
+        viewer_->fit_screen();
+    }
+
+    // Edit|Subdivision... command
+    void Window::menuEditSubdivision(wxCommandEvent &) {
+        auto mesh = dynamic_cast<SurfaceMesh*>(viewer_->current_model());
+        if (!mesh) {
+            LOG(WARNING) << "current model is not a SurfaceMesh (or model does not exist)";
+            return;
+        }
+
+        SurfaceMeshSubdivision::loop(mesh);
+        mesh->renderer()->update();
+        viewer_->update();
     }
 
     // Help|About command
