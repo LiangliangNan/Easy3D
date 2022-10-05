@@ -40,8 +40,7 @@ int main(int argc, char **argv) {
 }
 
 #else // The code below is for backup purpose.
-// It just works the same as the above code, but it is structured and also requires to expose the wxWidgets
-// headers to the client code.
+// It just works the same as the above code, but it is less structured and requires to expose the wxWidgets headers to client code.
 
 #include <wx/wxprec.h>
 #ifndef WX_PRECOMP
