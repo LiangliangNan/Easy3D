@@ -77,6 +77,42 @@ namespace easy3d {
     }
 
 
+	//-----------------------------------------------------------------------------
+
+
+	PointCloud &PointCloud::join(const PointCloud &other) {
+		// increase capacity
+		const unsigned int nv = vertices_size();
+		resize(vertices_size() + other.vertices_size());
+
+		// append properties in the free space created by resize
+		vprops_.transfer(other.vprops_);
+
+				//        unsigned int inf_value = (std::numeric_limits<unsigned int>::max)();
+		//
+		//        // merge vertex free list
+		//        if(other.vertices_freelist_ != inf_value){
+		//            Vertex vi(nv+other.vertices_freelist_);
+		//            Halfedge inf((std::numeric_limits<unsigned int>::max)());
+		//            // correct the indices in the linked list of free vertices copied (due to vconn_ translation)
+		//            while(vconn_[vi].halfedge_ != inf){
+		//                Vertex corrected_vi = Vertex(unsigned int(vconn_[vi].halfedge_)+nv-nh);
+		//                vconn_[vi].halfedge_ = Halfedge(corrected_vi);
+		//                vi = corrected_vi;
+		//            }
+		//            // append the vertex free linked list of `this` to the copy of `other`
+		//            vconn_[vi].halfedge_ = Halfedge(vertices_freelist_);
+		//            // update the begin of the vertex free linked list
+		//            vertices_freelist_ = nv + other.vertices_freelist_;
+		//        }
+
+				// update garbage infos
+		garbage_ = garbage_ || other.garbage_;
+		deleted_vertices_ += other.deleted_vertices_;
+		return *this;
+	}
+
+
     //-----------------------------------------------------------------------------
 
 

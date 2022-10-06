@@ -237,6 +237,20 @@ namespace easy3d {
         /// @brief assign \c rhs to \c *this. performs a deep copy of all properties.
         PointCloud& operator=(const PointCloud& rhs);
 
+		/// \brief Merges another point cloud into the current one.
+		/// Shifts the indices of vertices of the other point cloud by `number_of_vertices() + number_of_removed_vertices()`.
+		/// Copies entries of all property maps which have the same name in both point clouds. That is, property maps which
+		/// are only in `other` are ignored.
+		/// Also copies elements which are marked as removed, and concatenates the freelists of both point clouds.
+		PointCloud& operator+=(const PointCloud& other) { join(other); return *this; }
+
+		/// \brief Merges another point cloud into the current one.
+		/// Shifts the indices of vertices of the other point cloud by `number_of_vertices() + number_of_removed_vertices()`.
+		/// Copies entries of all property maps which have the same name in both point cloud. That is, property maps which
+		/// are only in `other` are ignored.
+		/// Also copies elements which are marked as removed, and concatenates the freelists of both point cloud.
+		PointCloud& join(const PointCloud& other);
+
         /// @brief assign \c rhs to \c *this. does not copy custom properties.
         PointCloud& assign(const PointCloud& rhs);
 

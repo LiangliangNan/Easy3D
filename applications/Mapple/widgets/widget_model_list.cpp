@@ -784,14 +784,20 @@ void WidgetModelList::mergeModels(const std::vector<Model *> &models) {
 
     if (meshes.size() > 1) {
         SurfaceMesh *to = meshes[0];
+		auto index = to->add_face_property<int>("f:index", 0);
         ProgressLogger logger(meshes.size() - 1, false, false);
         for (std::size_t i = 1; i < meshes.size(); ++i) {
             logger.notify(i);
             if (logger.is_canceled())
                 break;
 
+			unsigned int id_start = to->n_faces();
             SurfaceMesh *from = meshes[i];
             to->join(*from);
+
+			unsigned int count = from->n_faces();
+			for (unsigned int id = id_start; id < id_start + count; ++id)
+				index[SurfaceMesh::Face(id)] = static_cast<int>(i);
 
             to_delete.push_back(from);
         }
@@ -803,19 +809,22 @@ void WidgetModelList::mergeModels(const std::vector<Model *> &models) {
 
     if (clouds.size() > 1) {
         PointCloud *to = clouds[0];
+		auto index = to->add_vertex_property<int>("v:index", 0);
         ProgressLogger logger(clouds.size() - 1, false, false);
         for (int i = 1; i < clouds.size(); ++i) {
             logger.notify(i);
             if (logger.is_canceled())
                 break;
 
+			unsigned int id_start = to->n_vertices();
             PointCloud *from = clouds[i];
-            auto points = from->get_vertex_property<vec3>("v:point");
-            for (auto v : from->vertices()) {
-                to->add_vertex(points[v]);
-            }
+			to->join(*from);
 
-            to_delete.push_back(from);
+			unsigned int count = from->n_vertices();
+			for (unsigned int id = id_start; id < id_start + count; ++id)
+				index[PointCloud::Vertex(id)] = static_cast<int>(i);
+
+			to_delete.push_back(from);
         }
 
         to->set_name("merged_point_set");
