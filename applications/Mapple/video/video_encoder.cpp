@@ -40,12 +40,9 @@ namespace internal {
 	typedef struct OutputStream {
 		AVStream *st;
 		AVCodecContext *enc;
-
-		/* pts of the next frame that will be generated */
-		int64_t next_pts;
+		int64_t next_pts;   // pts of the next frame that will be generated
 		AVFrame *frame;
 		AVPacket *tmp_pkt;
-
 		struct SwsContext *sws_ctx;
 	} OutputStream;
 
@@ -60,32 +57,33 @@ namespace internal {
 	static void add_stream(OutputStream *ost, AVFormatContext *oc,
 		const AVCodec **codec, enum AVCodecID codec_id, int width, int height, int framerate, int bitrate)
 	{
-		AVCodecContext *c;
-
-		/* find the encoder */
+        /* find the encoder */
 		*codec = avcodec_find_encoder(codec_id);
 		if (!(*codec)) {
-			fprintf(stderr, "Could not find encoder for '%s'\n",
-				avcodec_get_name(codec_id));
-			exit(1);
+            std::string error_msg = "could not find encoder for " + std::string(avcodec_get_name(codec_id));
+            LOG(ERROR) << error_msg;
+            throw std::runtime_error(error_msg);
 		}
 
 		ost->tmp_pkt = av_packet_alloc();
 		if (!ost->tmp_pkt) {
-			fprintf(stderr, "Could not allocate AVPacket\n");
-			exit(1);
+            std::string error_msg = "could not allocate AVPacket";
+            LOG(ERROR) << error_msg;
+            throw std::runtime_error(error_msg);
 		}
 
-		ost->st = avformat_new_stream(oc, NULL);
+		ost->st = avformat_new_stream(oc, nullptr);
 		if (!ost->st) {
-			fprintf(stderr, "Could not allocate stream\n");
-			exit(1);
+            std::string error_msg = "could not allocate stream";
+            LOG(ERROR) << error_msg;
+            throw std::runtime_error(error_msg);
 		}
 		ost->st->id = oc->nb_streams - 1;
-		c = avcodec_alloc_context3(*codec);
+        AVCodecContext *c = avcodec_alloc_context3(*codec);
 		if (!c) {
-			fprintf(stderr, "Could not alloc an encoding context\n");
-			exit(1);
+            std::string error_msg = "could not allocate an encoding context";
+            LOG(ERROR) << error_msg;
+            throw std::runtime_error(error_msg);
 		}
 		ost->enc = c;
 
@@ -135,22 +133,20 @@ namespace internal {
 
 	static AVFrame *alloc_picture(enum AVPixelFormat pix_fmt, int width, int height)
 	{
-		AVFrame *picture;
-		int ret;
-
-		picture = av_frame_alloc();
+		AVFrame *picture = av_frame_alloc();
 		if (!picture)
-			return NULL;
+			return nullptr;
 
 		picture->format = pix_fmt;
 		picture->width = width;
 		picture->height = height;
 
 		/* allocate the buffers for the frame data */
-		ret = av_frame_get_buffer(picture, 0);
+		int ret = av_frame_get_buffer(picture, 0);
 		if (ret < 0) {
-			fprintf(stderr, "Could not allocate frame data.\n");
-			exit(1);
+            std::string error_msg = "could not allocate frame data";
+            LOG(ERROR) << error_msg;
+            throw std::runtime_error(error_msg);
 		}
 
 		return picture;
@@ -161,7 +157,7 @@ namespace internal {
 	{
 		int ret;
 		AVCodecContext *c = ost->enc;
-		AVDictionary *opt = NULL;
+		AVDictionary *opt = nullptr;
 
 		av_dict_copy(&opt, opt_arg, 0);
 
@@ -169,22 +165,25 @@ namespace internal {
 		ret = avcodec_open2(c, codec, &opt);
 		av_dict_free(&opt);
 		if (ret < 0) {
-			//		fprintf(stderr, "Could not open video codec: %s\n", av_err2str(ret));
-			exit(1);
+            std::string error_msg = "could not open video codec: " + av_error_string(ret);
+            LOG(ERROR) << error_msg;
+            throw std::runtime_error(error_msg);
 		}
 
 		/* allocate and init a re-usable frame */
 		ost->frame = alloc_picture(c->pix_fmt, c->width, c->height);
 		if (!ost->frame) {
-			fprintf(stderr, "Could not allocate video frame\n");
-			exit(1);
+            std::string error_msg = "could not allocate video frame";
+            LOG(ERROR) << error_msg;
+            throw std::runtime_error(error_msg);
 		}
 
 		/* copy the stream parameters to the muxer */
 		ret = avcodec_parameters_from_context(ost->st->codecpar, c);
 		if (ret < 0) {
-			fprintf(stderr, "Could not copy the stream parameters\n");
-			exit(1);
+            std::string error_msg = "could not copy the stream parameters";
+            LOG(ERROR) << error_msg;
+            throw std::runtime_error(error_msg);
 		}
 	}
 
@@ -196,22 +195,25 @@ namespace internal {
 		// 	/* check if we want to generate more frames */
 		// 	if (av_compare_ts(ost->next_pts, c->time_base,
 		// 		STREAM_DURATION, AVRational{ 1, 1 }) > 0)
-		// 		return NULL;
+		// 		return nullptr;
 
-			/* when we pass a frame to the encoder, it may keep a reference to it
-			 * internally; make sure we do not overwrite it here */
-		if (av_frame_make_writable(ost->frame) < 0)
-			exit(1);
+        /* when we pass a frame to the encoder, it may keep a reference to it
+        * internally; make sure we do not overwrite it here */
+		if (av_frame_make_writable(ost->frame) < 0) {
+            std::string error_msg = "could not make the frame writable";
+            LOG(ERROR) << error_msg;
+            throw std::runtime_error(error_msg);
+        }
 
 		/* as we only generate a YUV420P picture, we must convert it
 		 * to the codec pixel format if needed */
 
 		if (!ost->sws_ctx) {
-			ost->sws_ctx = sws_getContext(width, height, AV_PIX_FMT_BGRA, width, height, c->pix_fmt, SWS_BICUBIC, NULL, NULL, NULL);
+			ost->sws_ctx = sws_getContext(width, height, AV_PIX_FMT_BGRA, width, height, c->pix_fmt, SWS_BICUBIC, nullptr, nullptr, nullptr);
 			if (!ost->sws_ctx) {
-				fprintf(stderr,
-					"could not initialize the conversion context\n");
-				exit(1);
+                std::string error_msg = "could not initialize the conversion context";
+                LOG(ERROR) << error_msg;
+                throw std::runtime_error(error_msg);
 			}
 		}
 
@@ -276,10 +278,10 @@ namespace internal {
         bitrate_ = bitrate;
 
 		/* allocate the output media context */
-		avformat_alloc_output_context2(&fmt_ctx, NULL, NULL, filename_.c_str());
+		avformat_alloc_output_context2(&fmt_ctx, nullptr, nullptr, filename_.c_str());
 		if (!fmt_ctx) {
-			printf("Could not deduce output format from file extension: using MPEG.\n");
-			avformat_alloc_output_context2(&fmt_ctx, NULL, "mpeg", filename_.c_str());
+            LOG(WARNING) << "could not deduce output format from file extension: using MPEG";
+			avformat_alloc_output_context2(&fmt_ctx, nullptr, "mpeg", filename_.c_str());
 		}
 		if (!fmt_ctx)
 			return false;

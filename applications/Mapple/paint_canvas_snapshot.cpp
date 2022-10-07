@@ -332,7 +332,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
         image.convertTo(QImage::Format_ARGB32);
 #endif
 
-        if (!encoder.encode_frame(image.bits(), image.width(), image.height(), image.hasAlphaChannel() ? 4 : 3)) {
+        if (!encoder.encode_frame(image.constBits(), image.width(), image.height(), image.hasAlphaChannel() ? 4 : 3)) {
             success = false;
             break;
         }

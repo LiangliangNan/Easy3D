@@ -55,9 +55,10 @@ namespace easy3d {
 		 *		The pixel data consists of 'height' scanlines of 'width' pixels, with each pixel consisting of 'channels'
 		 *		interleaved 8-bit components. The first pixel pointed to its top-left-most in the image.
 		 * \return true on successful.
-		 * \note Current implementation only supports BGRA format image data, i.e., channels must be 4.
-		 * \todo Support RGB, RGBA format images
-		 */
+		 * todo  When using QImage, I am confused when choosing the proper pixel format. The following seems to work, but why?
+         *   AV_PIX_FMT_RGBA works for QImage::Format_RGBA8888 and  QImage::Format_RGBA8888_Premultiplied.
+         *   AV_PIX_FMT_BGRA workd for QImage::Format_RGB32, QImage::Format_ARGB32, and QImage::Format_ARGB32_Premultiplied.
+		 **/
 		bool encode_frame(const unsigned char* data, int width, int height, int channels);
 
 		bool end();
