@@ -229,7 +229,7 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
 
 #ifdef HAS_FFMPEG
 
-#include "video/QVideoEncoder.h"
+#include "video/video_encoder.h"
 
 void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rate, bool bk_white) {
     auto kfi = walkThrough()->interpolator();
@@ -257,15 +257,12 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
     easy3d::disconnect_all(&camera_->frame_modified);
 
     const int bitrate = bit_rate * 1024 * 1024;
-    const int gop = fps;
     bool success = true;
 
     const int fw = w * dpi_scaling();
     const int fh = h * dpi_scaling();
-    QVideoEncoder encoder(file_name, fw, fh, bitrate, gop, fps);
-    QString errorString;
-    if (!encoder.open(&errorString)) {
-        QMessageBox::critical(this, "Error", QString("Failed to open file for output: %1").arg(errorString));
+    VideoEncoder encoder;
+    if (!encoder.start(file_name.toStdString(), fps, bitrate)) {
         setEnabled(true);
         return;
     }
@@ -335,10 +332,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
         image.convertTo(QImage::Format_ARGB32);
 #endif
 
-        QString errorString;
-        if (!encoder.encodeImage(image, frame_index, &errorString)) {
-            QMessageBox::critical(this, "Error",
-                                  QString("Failed to encode frame #%1: %2").arg(frame_index + 1).arg(errorString));
+        if (!encoder.encode_frame(image.bits(), image.width(), image.height(), image.hasAlphaChannel() ? 4 : 3)) {
             success = false;
             break;
         }
@@ -356,7 +350,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
     func_->glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
     doneCurrent();
 
-    encoder.close();
+    encoder.end();
 
     // enable updating the rendering
     easy3d::connect(&camera_->frame_modified, this, static_cast<void (PaintCanvas::*)(void)>(&PaintCanvas::update));  // this works

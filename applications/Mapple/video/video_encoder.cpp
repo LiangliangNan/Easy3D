@@ -58,7 +58,7 @@ namespace internal {
 
 	/* Add an output stream. */
 	static void add_stream(OutputStream *ost, AVFormatContext *oc,
-		const AVCodec **codec, enum AVCodecID codec_id, int width, int height, int framerate)
+		const AVCodec **codec, enum AVCodecID codec_id, int width, int height, int framerate, int bitrate)
 	{
 		AVCodecContext *c;
 
@@ -95,7 +95,7 @@ namespace internal {
 		case AVMEDIA_TYPE_VIDEO:
 			c->codec_id = codec_id;
 
-			c->bit_rate = 4000000;
+			c->bit_rate = bitrate;
 			/* Resolution must be a multiple of two. */
 			c->width = width;
 			c->height = height;
@@ -207,7 +207,7 @@ namespace internal {
 		 * to the codec pixel format if needed */
 
 		if (!ost->sws_ctx) {
-			ost->sws_ctx = sws_getContext(width, height, AV_PIX_FMT_RGBA, width, height, c->pix_fmt, SWS_BICUBIC, NULL, NULL, NULL);
+			ost->sws_ctx = sws_getContext(width, height, AV_PIX_FMT_BGRA, width, height, c->pix_fmt, SWS_BICUBIC, NULL, NULL, NULL);
 			if (!ost->sws_ctx) {
 				fprintf(stderr,
 					"could not initialize the conversion context\n");
@@ -220,7 +220,6 @@ namespace internal {
 			std::string error_msg = "number of bytes mismatch";
 			LOG(ERROR) << error_msg;
 			throw std::runtime_error(error_msg);
-			return nullptr;
 		}
 
 		const uint8_t *srcSlice[3] = { image_data, 0, 0 };
@@ -247,7 +246,7 @@ namespace internal {
 	public:
 		VideoEncoderImpl() : width_(0), height_(0), channels_(0) {}
 
-		bool start(const std::string& filename, int framerate);
+		bool start(const std::string& filename, int framerate, int bitrate);
 		bool write_frame(const unsigned char* data, int width, int height, int channels);
 		void end();
 
@@ -258,6 +257,7 @@ namespace internal {
 		const AVCodec *video_codec = nullptr;
 		AVDictionary *opt = nullptr;
 		int framerate_;
+        int bitrate_;
 		int width_;
 		int height_;
 		int channels_;
@@ -265,16 +265,15 @@ namespace internal {
 	};
 
 
-	bool VideoEncoderImpl::start(const std::string& filename, int framerate)
+	bool VideoEncoderImpl::start(const std::string& filename, int framerate, int bitrate)
 	{
 		if (filename.empty()) {
-			std::string error_msg = "file name of the output video is empty";
-			LOG(ERROR) << error_msg;
-			throw std::runtime_error(error_msg);
-			return false;
+			LOG(ERROR) << "file name of the output video is empty";
+            return false;
 		}
 		filename_ = filename;
 		framerate_ = framerate;
+        bitrate_ = bitrate;
 
 		/* allocate the output media context */
 		avformat_alloc_output_context2(&fmt_ctx, NULL, NULL, filename_.c_str());
@@ -295,7 +294,6 @@ namespace internal {
 			std::string error_msg = "frame size not accepted: width=" + std::to_string(width) + ", height=" + std::to_string(height) + ", channels=" + std::to_string(channels);
 			LOG(ERROR) << error_msg;
 			throw std::runtime_error(error_msg);
-			return false;
 		}
 
 		// not initialized
@@ -307,7 +305,7 @@ namespace internal {
 			/* Add the video stream using the default format codecs
 			 * and initialize the codecs. */
 			if (fmt->video_codec != AV_CODEC_ID_NONE) {
-				add_stream(&video_st, fmt_ctx, &video_codec, fmt->video_codec, width_, height_, framerate_);
+				add_stream(&video_st, fmt_ctx, &video_codec, fmt->video_codec, width_, height_, framerate_, bitrate_);
 			}
 
 			/* Now that all the parameters are set, we can open the video codec
@@ -323,7 +321,6 @@ namespace internal {
 					std::string error_msg = "could not open " + filename_ + ". " + av_error_string(ret);
 					LOG(ERROR) << error_msg;
 					throw std::runtime_error(error_msg);
-					return false;
 				}
 			}
 
@@ -333,7 +330,6 @@ namespace internal {
 				std::string error_msg = "error occurred when opening output file: " + av_error_string(ret);
 				LOG(ERROR) << error_msg;
 				throw std::runtime_error(error_msg);
-				return false;
 			}
 		}
 
@@ -373,7 +369,7 @@ namespace internal {
 			}
 		}
 
-		return ret == AVERROR_EOF ? 1 : 0;
+		return (ret == AVERROR_EOF) ? false : true;
 	}
 
 
@@ -412,17 +408,17 @@ namespace easy3d {
 	}
 
 
-	bool VideoEncoder::start(const std::string& filename, int framerate)
+	bool VideoEncoder::start(const std::string& filename, int framerate, int bitrate)
 	{
 		if (!encoder_)
 			encoder_ = new VideoEncoderImpl;
 
-		return encoder_->start(filename, framerate);
+		return encoder_->start(filename, framerate, bitrate);
 	}
 
 
 
-	bool VideoEncoder::write_frame(const unsigned char* data, int width, int height, int channels) {
+	bool VideoEncoder::encode_frame(const unsigned char* data, int width, int height, int channels) {
 		if (!encoder_) {
 			std::string error_msg = "the video encoder has not started yet";
 			LOG(ERROR) << error_msg;
@@ -434,7 +430,6 @@ namespace easy3d {
 				std::string error_msg = "image size differs from the size of the previously created video stream";
 				LOG(ERROR) << error_msg;
 				throw std::runtime_error(error_msg);
-				return false;
 			}
 		}
 
@@ -447,7 +442,6 @@ namespace easy3d {
 			std::string error_msg = "the video encoder has not started yet";
 			LOG(ERROR) << error_msg;
 			throw std::runtime_error(error_msg);
-			return false;
 		}
 
 		encoder_->end();

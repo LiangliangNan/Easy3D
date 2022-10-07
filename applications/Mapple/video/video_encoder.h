@@ -47,22 +47,18 @@ namespace easy3d {
 		 * \param file_name The name of the output video file, e.g., "C:/result.mp4".
 		 *		  The output format is automatically guessed according to the file extension.
 		 */
-		bool start(const std::string& file_name, int framerate);
+		bool start(const std::string& file_name, int framerate, int bitrate);
 
-		/*
+		/**
 		 * Encode one frame and write it to the video stream.
 		 * \param data The input image data. It is a 1D array of 'unsigned char' which points to the pixel data.
 		 *		The pixel data consists of 'height' scanlines of 'width' pixels, with each pixel consisting of 'channels'
 		 *		interleaved 8-bit components. The first pixel pointed to its top-left-most in the image.
-		 *		There is no padding between image scanlines or between pixels, regardless of format.
-		 *      An image with N channels has the following components interleaved in the following order in each pixel:
-		 *                  N (#channels)   components
-		 *                  3               red, green, blue
-		 *                  4               red, green, blue, alpha
 		 * \return true on successful.
-		 * \note Current implementation only support RGBA format image data, i.e., channels must be 4.
+		 * \note Current implementation only supports BGRA format image data, i.e., channels must be 4.
+		 * \todo Support RGB, RGBA format images
 		 */
-		bool write_frame(const unsigned char* data, int width, int height, int channels);
+		bool encode_frame(const unsigned char* data, int width, int height, int channels);
 
 		bool end();
 

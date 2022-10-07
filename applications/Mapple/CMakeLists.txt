@@ -132,8 +132,8 @@ set(${PROJECT_NAME}_RESOURCES
 include(../../cmake/FindFFMPEG.cmake)
 if (FFMPEG_FOUND)
     #Append the files of the video encoder to the source file list
-    list(APPEND ${PROJECT_NAME}_HEADERS video/QVideoEncoder.h)
-    list(APPEND ${PROJECT_NAME}_SOURCES video/QVideoEncoder.cpp)
+    list(APPEND ${PROJECT_NAME}_HEADERS video/video_encoder.h)
+    list(APPEND ${PROJECT_NAME}_SOURCES video/video_encoder.cpp)
 else ()
     message(WARNING "${PROJECT_NAME} requires FFMPEG to generate video files but FFMPEG was not found. "
             "Without FFMPEG, animations can only be recorded as a sequence of images. "
