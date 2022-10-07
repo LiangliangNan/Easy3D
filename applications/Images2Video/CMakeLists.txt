@@ -5,7 +5,7 @@ project(${PROJECT_NAME})
 
 include(../../cmake/FindFFMPEG.cmake)
 if (NOT FFMPEG_FOUND)
-    message(FATAL_ERROR "${PROJECT_NAME} requires FFMPEG to generate video files but FFMPEG was not found. "
+    message(WARNING "${PROJECT_NAME} requires FFMPEG to generate video files but FFMPEG was not found. "
             "Without FFMPEG, animations can only be recorded as a sequence of images. "
             "To use FFMPEG, make sure FFMPEG exists on your system (install/build FFMPEG if necessary). "
             "Modify the search paths in 'FindFFMPEG.cmake' for 'include' and 'lib' directories, and then run CMake."
