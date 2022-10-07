@@ -91,7 +91,7 @@ void WalkThrough::walk_to(const vec3 &ground_point) {
     const vec3 head = character_head(ground_point);
     vec3 view_dir = head - camera_->position(); // approximate (when no previous keyframes exist)
     if (interpolator()->number_of_keyframes() > 0) {
-        int prev_idx = interpolator()->number_of_keyframes() - 1;
+        std::size_t prev_idx = interpolator()->number_of_keyframes() - 1;
         view_dir = head - interpolator()->keyframe_position(prev_idx);
     }
     view_dir.z = 0;
@@ -103,7 +103,7 @@ void WalkThrough::walk_to(const vec3 &ground_point) {
 
     // adjust the previous view direction to be pointing to the new one
     if (interpolator()->number_of_keyframes() > 0) {
-        int last_idx = interpolator()->number_of_keyframes() - 1;
+		std::size_t last_idx = interpolator()->number_of_keyframes() - 1;
         vec3 dir = cam_pos - interpolator()->keyframe_position(last_idx);
         dir.z = 0;
         dir.normalize();

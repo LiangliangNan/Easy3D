@@ -993,8 +993,8 @@ void PaintCanvas::fitScreen(const easy3d::Model *model) {
     }
 
     Box3 box_scene = box_models;   // everything within box_scene should be visible
-    const int count = walkThrough()->interpolator()->number_of_keyframes();
-    for (int i = 0; i < count; ++i)
+    const std::size_t count = walkThrough()->interpolator()->number_of_keyframes();
+    for (std::size_t i = 0; i < count; ++i)
         box_scene.grow(walkThrough()->interpolator()->keyframe(i).position());
 
     Box3 box;// this box will be fitted to the screen
@@ -1040,8 +1040,8 @@ void PaintCanvas::adjustSceneRadius() {
     for (auto m : models_)
         box.grow(m->bounding_box(false));
 
-    const int count = walkThrough()->interpolator()->number_of_keyframes();
-    for (int i = 0; i < count; ++i)
+    const std::size_t count = walkThrough()->interpolator()->number_of_keyframes();
+    for (std::size_t i = 0; i < count; ++i)
         box.grow(walkThrough()->interpolator()->keyframe(i).position());
 
     // attention: the scene center is not changed.
@@ -1187,7 +1187,7 @@ void PaintCanvas::drawCornerAxes() {
 
     // To make the axis appear over other objects: reserve a tiny bit of the
     // front depth range. NOTE: do remember to restore it later.
-    func_->glDepthRangef(0, 0.01);
+    func_->glDepthRangef(0, 0.01f);
 
     const mat4 &proj = transform::ortho(-1, 1, -1, 1, -1, 1);
     const mat4 &view = camera_->orientation().inverse().matrix();
