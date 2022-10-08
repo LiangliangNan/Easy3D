@@ -47,7 +47,6 @@
 #include <easy3d/renderer/key_frame_interpolator.h>
 #include <easy3d/core//model.h>
 #include <easy3d/util/logging.h>
-#include <easy3d/util/file_system.h>
 
 #ifdef SHOW_PROGRESS
 #include <easy3d/util/progress.h>
@@ -275,7 +274,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
     format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
     format.setSamples(samples());
     QOpenGLFramebufferObject *fbo = new QOpenGLFramebufferObject(fw, fh, format);
-    fbo->addColorAttachment(fw, fh);
+    fbo->addColorAttachment(fw, fh, GL_RGBA);
 #else
     FramebufferObject* fbo = new FramebufferObject(fw, fh, samples());
     fbo->add_color_buffer();
@@ -318,24 +317,26 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
         //---------------------------------------------------------------------------
 
 #ifdef USE_QT_FBO
-        const QImage image = fbo->toImage();
+        QImage image = fbo->toImage();
         if (image.isNull()) {
-            QMessageBox::critical(this, "Error", "Failed to grab the framebuffer!");
+            LOG(ERROR) << "failed to grab the framebuffer";
+            success = false;
+            break;
+        }
+        if (image.format() != QImage::Format_RGBA8888)
+            image = image.convertToFormat(QImage::Format_RGBA8888);
+        if (!encoder.encode(image.constBits(), image.width(), image.height(), VideoEncoder::PIX_FMT_RGBA_8888)) {
             success = false;
             break;
         }
 #else
-        QImage image(fw, fh, QImage::Format_RGBA8888);
-        fbo->read_color(0, const_cast<unsigned char*>(image.constBits()), GL_RGBA);
-
-        // QVideoEncoder only accepted Format_RGB32, Format_ARGB32, or Format_ARGB32_Premultiplied
-        image.convertTo(QImage::Format_ARGB32);
-#endif
-
-        if (!encoder.encode_frame(image.constBits(), image.width(), image.height(), image.hasAlphaChannel() ? 4 : 3)) {
+        std::vector<unsigned char> data;
+        fbo->read_color(0, data, GL_RGBA);
+        if (!encoder.encode(data.data(), fw, fh, VideoEncoder::PIX_FMT_RGBA_8888)) {
             success = false;
             break;
         }
+#endif
 
 #ifdef SHOW_PROGRESS
         progress.next();

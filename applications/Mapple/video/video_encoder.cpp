@@ -188,7 +188,7 @@ namespace internal {
 	}
 
 
-	static AVFrame *get_video_frame(OutputStream *ost, const unsigned char* image_data, int width, int height, int channels)
+	static AVFrame *get_video_frame(OutputStream *ost, const unsigned char* image_data, int width, int height, int channels, AVPixelFormat pix_fmt)
 	{
 		AVCodecContext *c = ost->enc;
 
@@ -209,7 +209,7 @@ namespace internal {
 		 * to the codec pixel format if needed */
 
 		if (!ost->sws_ctx) {
-			ost->sws_ctx = sws_getContext(width, height, AV_PIX_FMT_BGRA, width, height, c->pix_fmt, SWS_BICUBIC, nullptr, nullptr, nullptr);
+			ost->sws_ctx = sws_getContext(width, height, pix_fmt, width, height, c->pix_fmt, SWS_BICUBIC, nullptr, nullptr, nullptr);
 			if (!ost->sws_ctx) {
                 std::string error_msg = "could not initialize the conversion context";
                 LOG(ERROR) << error_msg;
@@ -217,7 +217,7 @@ namespace internal {
 			}
 		}
 
-		int num_bytes = av_image_get_buffer_size(AV_PIX_FMT_BGRA, width, height, 1);
+		int num_bytes = av_image_get_buffer_size(pix_fmt, width, height, 1);
 		if (num_bytes != width * height * channels) {
 			std::string error_msg = "number of bytes mismatch";
 			LOG(ERROR) << error_msg;
@@ -249,7 +249,7 @@ namespace internal {
 		VideoEncoderImpl() : width_(0), height_(0), channels_(0) {}
 
 		bool start(const std::string& filename, int framerate, int bitrate);
-		bool write_frame(const unsigned char* data, int width, int height, int channels);
+		bool write_frame(const unsigned char* data, int width, int height, int channels, AVPixelFormat pix_fmt);
 		void end();
 
 	public:
@@ -291,15 +291,8 @@ namespace internal {
 	}
 
 
-	bool VideoEncoderImpl::write_frame(const unsigned char* data, int width, int height, int channels) {
-		if (width <= 0 || height <= 0 || channels < 3 || channels > 4) {
-			std::string error_msg = "frame size not accepted: width=" + std::to_string(width) + ", height=" + std::to_string(height) + ", channels=" + std::to_string(channels);
-			LOG(ERROR) << error_msg;
-			throw std::runtime_error(error_msg);
-		}
-
-		// not initialized
-		if (width_ == 0 || height_ == 0 || channels_ == 0) {
+	bool VideoEncoderImpl::write_frame(const unsigned char* data, int width, int height, int channels, AVPixelFormat pix_fmt) {
+		if (width_ == 0 || height_ == 0 || channels_ == 0) {    // not initialized
 			width_ = width;
 			height_ = height;
 			channels_ = channels;
@@ -335,7 +328,7 @@ namespace internal {
 			}
 		}
 
-		AVFrame* frame = get_video_frame(&video_st, data, width, height, channels);
+		AVFrame* frame = get_video_frame(&video_st, data, width, height, channels, pix_fmt);
 
 		// send the frame to the encoder
 		int ret = avcodec_send_frame(video_st.enc, frame);
@@ -419,31 +412,52 @@ namespace easy3d {
 	}
 
 
+	bool VideoEncoder::encode(const unsigned char* data, int width, int height, PixelFormat pixel_format) {
+        if (!is_size_acceptable(width, height)) {
+            LOG(ERROR) << "video frame resolution (" << width << ", " << height << ") is not a multiple of 8";
+            return false;
+        }
 
-	bool VideoEncoder::encode_frame(const unsigned char* data, int width, int height, int channels) {
 		if (!encoder_) {
-			std::string error_msg = "the video encoder has not started yet";
-			LOG(ERROR) << error_msg;
-			throw std::runtime_error(error_msg);
+			LOG(ERROR) << "the video encoder has not started yet";
+            return false;
 		}
 
 		if (encoder_->width_ != 0 && encoder_->height_ != 0 && encoder_->channels_ != 0) { // already initialized with the image dimension data
-			if (width != encoder_->width_ || height != encoder_->height_ || channels != encoder_->channels_) {
-				std::string error_msg = "image size differs from the size of the previously created video stream";
-				LOG(ERROR) << error_msg;
-				throw std::runtime_error(error_msg);
+			if (width != encoder_->width_ || height != encoder_->height_) {
+				LOG(ERROR) << "image size differs from the size of the previously created video stream";
+                return false;
 			}
 		}
 
-		return encoder_->write_frame(data, width, height, channels);
+        int channels = 3;
+        AVPixelFormat pix_fmt = AV_PIX_FMT_RGB24;
+        switch (pixel_format) {
+            case PIX_FMT_RGB_888:
+                channels = 3;
+                pix_fmt = AV_PIX_FMT_RGB24;
+                break;
+            case PIX_FMT_BGR_888:
+                channels = 3;
+                pix_fmt = AV_PIX_FMT_BGR24;
+                break;
+            case PIX_FMT_RGBA_8888:
+                channels = 4;
+                pix_fmt = AV_PIX_FMT_RGBA;
+                break;
+            case PIX_FMT_BGRA_8888:
+                channels = 4;
+                pix_fmt = AV_PIX_FMT_BGRA;
+                break;
+        }
+		return encoder_->write_frame(data, width, height, channels, pix_fmt);
 	}
 
 
 	bool VideoEncoder::end() {
 		if (!encoder_) {
-			std::string error_msg = "the video encoder has not started yet";
-			LOG(ERROR) << error_msg;
-			throw std::runtime_error(error_msg);
+			LOG(ERROR) << "the video encoder has not started yet";
+            return false;
 		}
 
 		encoder_->end();

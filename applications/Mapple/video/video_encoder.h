@@ -43,6 +43,13 @@ namespace easy3d {
 		VideoEncoder();
 		~VideoEncoder();
 
+        enum PixelFormat {
+            PIX_FMT_RGB_888,    /// packed RGB 8:8:8, 24bpp, RGBRGB...
+            PIX_FMT_BGR_888,    /// packed BGR 8:8:8, 24bpp, BGRBGR...
+            PIX_FMT_RGBA_8888,  /// packed RGBA 8:8:8:8, 32bpp, RGBARGBA...
+            PIX_FMT_BGRA_8888   /// packed BGRA 8:8:8:8, 32bpp, BGRABGRA...
+        };
+
 		/**
 		 * \param file_name The name of the output video file, e.g., "C:/result.mp4".
 		 *		  The output format is automatically guessed according to the file extension.
@@ -50,18 +57,25 @@ namespace easy3d {
 		bool start(const std::string& file_name, int framerate, int bitrate);
 
 		/**
-		 * Encode one frame and write it to the video stream.
+		 * Encode one frame to the video stream.
 		 * \param data The input image data. It is a 1D array of 'unsigned char' which points to the pixel data.
-		 *		The pixel data consists of 'height' scanlines of 'width' pixels, with each pixel consisting of 'channels'
-		 *		interleaved 8-bit components. The first pixel pointed to its top-left-most in the image.
+		 *		The pixel data consists of 'height' rows of 'width' pixels, with each pixel has one of the
+		 *		following structures. The correspondences between these structures and pixel/OpenGL formats are:
+		 *		    RGB 8:8:8, 24bpp     <--->  PIX_FMT_RGB_888    <--->  GL_RGB
+         *          BGR 8:8:8, 24bpp     <--->  PIX_FMT_BGR_888    <--->  GL_BGR
+         *          RGBA 8:8:8:8, 32bpp  <--->  PIX_FMT_RGBA_8888  <--->  GL_RGBA
+         *          BGRA 8:8:8:8, 32bpp  <--->  PIX_FMT_BGRA_8888  <--->  GL_BGRA
 		 * \return true on successful.
 		 * todo  When using QImage, I am confused when choosing the proper pixel format. The following seems to work, but why?
          *   AV_PIX_FMT_RGBA works for QImage::Format_RGBA8888 and  QImage::Format_RGBA8888_Premultiplied.
          *   AV_PIX_FMT_BGRA workd for QImage::Format_RGB32, QImage::Format_ARGB32, and QImage::Format_ARGB32_Premultiplied.
 		 **/
-		bool encode_frame(const unsigned char* data, int width, int height, int channels);
+		bool encode(const unsigned char* data, int width, int height, PixelFormat pixel_format);
 
 		bool end();
+
+        /// Returns whether the image size (width, height) is acceptable.
+        static bool is_size_acceptable(int width, int height) { return (width % 8) == 0 && (height % 8) == 0; }
 
 	private:
 		internal::VideoEncoderImpl* encoder_;
