@@ -403,7 +403,10 @@ namespace easy3d {
 
 
 	VideoEncoder::~VideoEncoder() {
-		delete encoder_;
+        if (encoder_) {
+            LOG(WARNING) << "VideoEncoder::end() must be called after encoding all frames";
+            delete encoder_;
+        }
 	}
 
 

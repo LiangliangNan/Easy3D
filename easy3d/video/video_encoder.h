@@ -66,12 +66,13 @@ namespace easy3d {
          *          RGBA 8:8:8:8, 32bpp  <--->  PIX_FMT_RGBA_8888  <--->  GL_RGBA
          *          BGRA 8:8:8:8, 32bpp  <--->  PIX_FMT_BGRA_8888  <--->  GL_BGRA
 		 * \return true on successful.
-		 * todo  When using QImage, I am confused when choosing the proper pixel format. The following seems to work, but why?
-         *   AV_PIX_FMT_RGBA works for QImage::Format_RGBA8888 and  QImage::Format_RGBA8888_Premultiplied.
-         *   AV_PIX_FMT_BGRA workd for QImage::Format_RGB32, QImage::Format_ARGB32, and QImage::Format_ARGB32_Premultiplied.
 		 **/
 		bool encode(const unsigned char* data, int width, int height, PixelFormat pixel_format);
 
+        /**
+         * Finish encoding all the frames.
+         * \note It must be called after encoding all frames.
+         */
 		bool end();
 
         /// Returns whether the image size (width, height) is acceptable.
