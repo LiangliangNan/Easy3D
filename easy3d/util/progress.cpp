@@ -137,4 +137,14 @@ namespace easy3d {
         }
     }
 
+
+    void print_progress(float percentage) {
+        static const char PBSTR[] = "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||";
+        static const int PBWIDTH = 60;
+        const int val = static_cast<int>(percentage * 100);
+        const int lpad = static_cast<int>(percentage * PBWIDTH);
+        const int rpad = PBWIDTH - lpad;
+        printf("\r%3d%% [%.*s%*s]", val, lpad, PBSTR, rpad, "");
+        fflush(stdout);
+    }
 }

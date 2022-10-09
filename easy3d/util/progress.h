@@ -65,6 +65,9 @@ namespace easy3d {
         bool update_viewer_;
     };
 
+    /// A simple progress indicator for console applications
+    void print_progress(float percentage);
+
 }   // namespace easy3d
 
 
