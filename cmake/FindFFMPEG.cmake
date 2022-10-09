@@ -44,10 +44,12 @@
 #
 #   # On macOS, use the following command to install FFMPEG:
 #       brew install ffmpeg
-#   # On Linux, use:
+#   # On Linux, one has to install the libraries use:
 #       sudo apt-get install libavcodec-dev
 #       sudo apt-get install libavformat-dev
 #       sudo apt-get install libswscale-dev
+#       sudo apt-get install libavutil-dev
+#       ...
 # ------------------------------------------------------------------------------
 
 

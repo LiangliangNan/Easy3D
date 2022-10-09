@@ -9,6 +9,7 @@
  ********************************************************************/
 
 #include <easy3d/util/progress.h>
+#include <cassert>
 
 
 namespace easy3d {
