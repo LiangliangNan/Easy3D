@@ -59,19 +59,21 @@ if (NOT FFMPEG_FOUND)
     # Hardcoded search paths for include directories
     set(SEARCH_PATHS_FOR_HEADERS
             "$ENV{FFMPEG_HOME}/include"
-            "/usr/local/Cellar/ffmpeg@4/4.4.2_4/include"
-            "/usr/include/x86_64-linux-gnu"
-            "C:\\Program Files\\ffmpeg\\include"
-            "D:\\dev\\ffmpeg-4.3.1\\include"
+            "/usr/local/include"                            #just an example, modify when necessary
+            "/usr/local/Cellar/ffmpeg@4/4.4.2_4/include"    #just an example, modify when necessary
+            "/usr/include/x86_64-linux-gnu"                 #just an example, modify when necessary
+            "C:\\Program Files\\ffmpeg\\include"            #just an example, modify when necessary
+            "D:\\dev\\ffmpeg-4.3.1\\include"                #just an example, modify when necessary
             )
 
     # Hardcoded search paths for libraries
     set(SEARCH_PATHS_FOR_LIBRARIES
             "$ENV{FFMPEG_HOME}/lib"
-            "/usr/local/Cellar/ffmpeg@4/4.4.2_4/lib"
-            "/usr/lib/x86_64-linux-gnu"
-            "C:\\Program Files\\ffmpeg\\lib"
-            "D:\\dev\\ffmpeg-4.3.1\\lib"
+            "/usr/local/lib"                                #just an example, modify when necessary
+            "/usr/local/Cellar/ffmpeg@4/4.4.2_4/lib"        #just an example, modify when necessary
+            "/usr/lib/x86_64-linux-gnu"                     #just an example, modify when necessary
+            "C:\\Program Files\\ffmpeg\\lib"                #just an example, modify when necessary
+            "D:\\dev\\ffmpeg-4.3.1\\lib"                    #just an example, modify when necessary
             )
 
     find_path(FFMPEG_INCLUDE_DIR libavcodec/avcodec.h PATHS ${SEARCH_PATHS_FOR_HEADERS})
