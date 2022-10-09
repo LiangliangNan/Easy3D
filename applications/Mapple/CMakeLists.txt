@@ -129,20 +129,6 @@ set(${PROJECT_NAME}_RESOURCES
         resources/Mapple.rc
         )
 
-include(../../cmake/FindFFMPEG.cmake)
-if (FFMPEG_FOUND)
-    #Append the files of the video encoder to the source file list
-    list(APPEND ${PROJECT_NAME}_HEADERS video/video_encoder.h)
-    list(APPEND ${PROJECT_NAME}_SOURCES video/video_encoder.cpp)
-else ()
-    message(WARNING "${PROJECT_NAME} requires FFMPEG to generate video files but FFMPEG was not found. "
-            "Without FFMPEG, animations can only be recorded as a sequence of images. "
-            "To use FFMPEG, make sure FFMPEG exists on your system (install/build FFMPEG if necessary). "
-            "Modify the search paths in 'FindFFMPEG.cmake' for 'include' and 'lib' directories, and then run CMake."
-            )
-endif ()
-
-
 if (WIN32 OR MSVC)
     add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} ${${PROJECT_NAME}_RESOURCES})
     # if you want to get rid of the (system) console, use
@@ -227,9 +213,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE easy3d_renderer easy3d_algo easy3d
 if (EASY3D_HAS_CGAL)
     target_link_libraries(${PROJECT_NAME} PRIVATE easy3d_algo_ext)
 endif ()
-
-if (FFMPEG_FOUND)
-    target_include_directories(${PROJECT_NAME} PRIVATE ${FFMPEG_INCLUDE_DIRS})
-    target_compile_definitions(${PROJECT_NAME} PRIVATE HAS_FFMPEG)
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${FFMPEG_LIBRARIES})
+if (EASY3D_HAS_FFMPEG)
+    target_link_libraries(${PROJECT_NAME} PRIVATE easy3d_video)
 endif ()

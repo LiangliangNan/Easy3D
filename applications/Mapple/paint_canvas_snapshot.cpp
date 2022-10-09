@@ -228,7 +228,7 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
 
 #ifdef HAS_FFMPEG
 
-#include "video/video_encoder.h"
+#include <easy3d/video/video_encoder.h>
 
 void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rate, bool bk_white) {
     auto kfi = walkThrough()->interpolator();

@@ -276,8 +276,11 @@ namespace internal {
 		filename_ = filename;
 		framerate_ = framerate;
         bitrate_ = bitrate;
+        LOG(INFO) << "output file name: " << filename_;
+        LOG(INFO) << "video framerate: " << framerate_;
+        LOG(INFO) << "video bitrate: " << bitrate_ / (1024 * 1024) << " Mbit/s";
 
-		/* allocate the output media context */
+        /* allocate the output media context */
 		avformat_alloc_output_context2(&fmt_ctx, nullptr, nullptr, filename_.c_str());
 		if (!fmt_ctx) {
             LOG(WARNING) << "could not deduce output format from file extension: using MPEG";

@@ -60,12 +60,21 @@ else()
     message(STATUS "EASY3D_CGAL_SUPPORT: ${EASY3D_CGAL_SUPPORT} (EASY3D was built without CGAL support)")
 endif()
 
+if ("easy3d::video" IN_LIST EASY3D_LIBRARIES) # second arg is the CMake variable name (instead of value)
+    set (EASY3D_FFMPEG_SUPPORT TRUE)
+    message(STATUS "EASY3D_FFMPEG_SUPPORT: ${EASY3D_FFMPEG_SUPPORT} (EASY3D was built with FFMPEG support)")
+else()
+    set (EASY3D_FFMPEG_SUPPORT FALSE)
+    message(STATUS "EASY3D_FFMPEG_SUPPORT: ${EASY3D_FFMPEG_SUPPORT} (EASY3D was built without FFMPEG support)")
+endif()
+
 # Our library dependencies (contains definitions for IMPORTED targets)
 if(NOT TARGET easy3d_util AND
    NOT TARGET easy3d_core AND
    NOT TARGET easy3d_kdtree AND
    NOT TARGET easy3d_algo AND
    NOT TARGET easy3d_algo_ext AND
+   NOT TARGET easy3d_video AND
    NOT TARGET easy3d_fileio AND
    NOT TARGET easy3d_renderer AND
    NOT TARGET easy3d_gui AND

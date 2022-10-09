@@ -30,6 +30,12 @@ if (EASY3D_HAS_CGAL)
     list(APPEND EXPORT_TARGET_SET "easy3d_algo_ext")
 endif ()
 
+if (EASY3D_HAS_FFMPEG)
+    add_subdirectory(video)  # experimental
+    list(APPEND CONF_EASY3D_LIBRARIES "easy3d::video")
+    list(APPEND EXPORT_TARGET_SET "easy3d_video")
+endif ()
+
 add_subdirectory(renderer)
 list(APPEND CONF_EASY3D_LIBRARIES "easy3d::renderer")
 list(APPEND EXPORT_TARGET_SET "easy3d_renderer" "3rd_glew")
