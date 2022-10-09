@@ -113,7 +113,6 @@ include(./cmake/FindFFMPEG.cmake)
 if (FFMPEG_FOUND)
     set(EASY3D_HAS_FFMPEG TRUE)
     add_definitions(-DHAS_FFMPEG)
-    message(STATUS "Found FFMPEG v${FFMPEG_VERSION}")
 else ()
     set(EASY3D_HAS_FFMPEG FALSE)
 #    message(FATAL_ERROR "You have requested FFMPEG support but FFMPEG was not found. "
