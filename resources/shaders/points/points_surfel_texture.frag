@@ -60,6 +60,7 @@ layout(std140) uniform Material {
 uniform sampler2D	textureID;
 
 uniform bool selected = false;
+uniform vec4 	highlight_color;
 
 out vec4 fragmentColor;
 
@@ -75,20 +76,20 @@ void main()
         fragmentColor = vec4(color, 1.0);
         if (highlight) {
             if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
-                fragmentColor = mix(fragmentColor, vec4(1.0, 0.0, 0.0, 1.0), 0.8);
+                fragmentColor = mix(fragmentColor, highlight_color, 0.8);
         }
         if (selected)
-            fragmentColor = mix(fragmentColor, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
+            fragmentColor = mix(fragmentColor, highlight_color, 0.6);
         return;
     }
 
     if (highlight) {
         if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
-            color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
+            color = mix(color, highlight_color.xyz, 0.8);
     }
 
     if (selected)
-        color = mix(color, vec3(1.0, 0.0, 0.0), 0.6);
+        color = mix(color, highlight_color.xyz, 0.6);
 
     vec3 view_dir = normalize(wCamPos - FragmentIn.point);// compute view direction and normalize it
     vec3 normal = FragmentIn.normal;

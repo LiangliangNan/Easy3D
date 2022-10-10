@@ -74,6 +74,7 @@ uniform float fractional_repeat = 0.0f;
 //#define ENABLE_ALPHA
 
 uniform bool selected = false;
+uniform vec4 	highlight_color;
 
 out vec4 FragColor;	// Ouput data
 
@@ -786,7 +787,7 @@ void main(void) {
     vec4 color = shade(DataIn.position);
 
 	if (selected && !is_background)
-		color = mix(color, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
+		color = mix(color, highlight_color, 0.6);
 
     // transforming from clip space to NDC space
     vec3 ProjCoords = DataIn.shadowCoord.xyz / DataIn.shadowCoord.w;

@@ -91,6 +91,9 @@ namespace easy3d {
         cleanup();
 
         doneCurrent();
+
+        setting::save();
+        LOG(INFO) << "viewer terminated. Bye!";
     }
 
 
@@ -139,7 +142,7 @@ namespace easy3d {
             throw std::runtime_error(
                     "Framebuffer Object is not supported on this machine!!! ViewerQt may not run properly");
 
-        background_color_ = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+        background_color_ = setting::background_color;
 
         func_->glEnable(GL_DEPTH_TEST);
         func_->glClearDepthf(1.0f);
@@ -906,6 +909,7 @@ namespace easy3d {
                 ->set_uniform("highlight", false)
                 ->set_uniform("clippingPlaneEnabled", false)
                 ->set_uniform("selected", false)
+                ->set_uniform("highlight_color", setting::highlight_color)
                 ->set_uniform("use_texture", false);
         drawable_axes_->gl_draw();
         program->release();

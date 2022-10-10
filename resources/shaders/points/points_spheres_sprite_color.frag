@@ -49,6 +49,7 @@ uniform int  highlight_id_min;
 uniform int  highlight_id_max;
 
 uniform bool selected = false;
+uniform vec4 	highlight_color;
 
 in Data{
     vec4    position;// in eye space
@@ -101,10 +102,10 @@ void main()
             outputF = DataIn.sphere_color;
             if (highlight) {
                 if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
-                    outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.8);
+                    outputF = mix(outputF, highlight_color, 0.8);
             }
             if (selected)
-                outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
+                outputF = mix(outputF, highlight_color, 0.6);
             return;
         }
 
@@ -123,7 +124,7 @@ void main()
         vec3 color = DataIn.sphere_color.xyz;
         if (highlight) {
             if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
-                color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
+                color = mix(color, highlight_color.xyz, 0.8);
         }
 
         outputF = vec4(color * df + specular * sf + ambient, DataIn.sphere_color.a);
@@ -154,10 +155,10 @@ void main()
             outputF = DataIn.sphere_color;
             if (highlight) {
                 if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
-                    outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.8);
+                    outputF = mix(outputF, highlight_color, 0.8);
             }
             if (selected)
-                outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
+                outputF = mix(outputF, highlight_color, 0.6);
             return;
         }
 
@@ -178,12 +179,12 @@ void main()
         vec3 color = DataIn.sphere_color.xyz;
         if (highlight) {
             if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
-            color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
+            color = mix(color, highlight_color.xyz, 0.8);
         }
 
         outputF = vec4(color * df + specular * sf + ambient, DataIn.sphere_color.a);
     }
 
     if (selected)
-        outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
+        outputF = mix(outputF, highlight_color, 0.6);
 }

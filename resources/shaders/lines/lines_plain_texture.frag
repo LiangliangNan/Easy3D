@@ -34,6 +34,7 @@ uniform int  highlight_id_min;
 uniform int  highlight_id_max;
 
 uniform bool selected = false;
+uniform vec4 	highlight_color;
 
 in vec2  vOutTexcoord;
 in float vOutClipped;
@@ -49,11 +50,11 @@ void main()
 
 	if (highlight) {
 		if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
-		outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.8);
+		outputF = mix(outputF, highlight_color, 0.8);
 	}
 
 	if (selected)
-		outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
+		outputF = mix(outputF, highlight_color, 0.6);
 
 	// the following line is required for fxaa (will not work with blending!)
 	//outputF.a = dot(outputF.rgb, vec3(0.299, 0.587, 0.114));

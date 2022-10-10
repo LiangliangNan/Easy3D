@@ -107,7 +107,8 @@ namespace easy3d {
             program->set_uniform("highlight", highlight())
                     ->set_uniform("highlight_id_min", highlight_range().first)
                     ->set_uniform("highlight_id_max", highlight_range().second)
-                    ->set_uniform("selected", is_selected());
+                    ->set_uniform("selected", is_selected())
+                    ->set_uniform("highlight_color", setting::highlight_color);
 
             if (setting::clipping_plane) {
                 setting::clipping_plane->set_program(program);
@@ -141,6 +142,7 @@ namespace easy3d {
                     ->set_uniform("per_vertex_color", coloring_method() != State::UNIFORM_COLOR && color_buffer());
 
             program->set_uniform("selected", is_selected());
+            program->set_uniform("highlight_color", setting::highlight_color);
 
             if (setting::clipping_plane) {
                 setting::clipping_plane->set_program(program);
@@ -184,6 +186,7 @@ namespace easy3d {
                 ->set_block_uniform("Material", "shininess", &material().shininess);
 
         program->set_uniform("selected", is_selected());
+        program->set_uniform("highlight_color", setting::highlight_color);
 
         if (setting::clipping_plane) {
             setting::clipping_plane->set_program(program);
@@ -225,6 +228,7 @@ namespace easy3d {
                 ->set_block_uniform("Material", "shininess", &material().shininess);
 
         program->set_uniform("selected", is_selected());
+        program->set_uniform("highlight_color", setting::highlight_color);
 
         if (setting::clipping_plane) {
             setting::clipping_plane->set_program(program);
@@ -259,7 +263,8 @@ namespace easy3d {
             program->set_uniform("highlight", highlight())
                     ->set_uniform("highlight_id_min", highlight_range().first)
                     ->set_uniform("highlight_id_max", highlight_range().second)
-                    ->set_uniform("selected", is_selected());
+                    ->set_uniform("selected", is_selected())
+                    ->set_uniform("highlight_color", setting::highlight_color);
 
             if (setting::clipping_plane) {
                 setting::clipping_plane->set_program(program);
@@ -292,6 +297,7 @@ namespace easy3d {
             program->set_uniform("radius", line_width() * ratio * 0.5f);  // 0.5f from width -> radius
 
             program->set_uniform("selected", is_selected());
+            program->set_uniform("highlight_color", setting::highlight_color);
 
             if (setting::clipping_plane) {
                 setting::clipping_plane->set_program(program);
@@ -336,6 +342,7 @@ namespace easy3d {
                 ->set_block_uniform("Material", "shininess", &material().shininess);
 
         program->set_uniform("selected", is_selected());
+        program->set_uniform("highlight_color", setting::highlight_color);
 
         if (setting::clipping_plane) {
             setting::clipping_plane->set_program(program);
@@ -379,6 +386,7 @@ namespace easy3d {
                 ->set_block_uniform("Material", "shininess", &material().shininess);
 
         program->set_uniform("selected", is_selected());
+        program->set_uniform("highlight_color", setting::highlight_color);
 
         if (setting::clipping_plane) {
             setting::clipping_plane->set_program(program);

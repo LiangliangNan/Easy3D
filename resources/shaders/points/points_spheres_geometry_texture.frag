@@ -48,6 +48,7 @@ uniform int  highlight_id_min;
 uniform int  highlight_id_max;
 
 uniform bool selected = false;
+uniform vec4 	highlight_color;
 
 in Data{
 	flat	vec2	texcoord;
@@ -106,16 +107,16 @@ void main()
 			outputF = vec4(color, 1.0);
 			if (highlight) {
 				if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
-					outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.8);
+					outputF = mix(outputF, highlight_color, 0.8);
 			}
 			if (selected)
-				outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
+				outputF = mix(outputF, highlight_color, 0.6);
 			return;
 		}
 
 		if (highlight) {
 			if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
-			color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
+			color = mix(color, highlight_color.xyz, 0.8);
 		}
 
 //		//uint addr = gl_PrimitiveID / 32;
@@ -123,12 +124,12 @@ void main()
 //		uint addr = gl_PrimitiveID >> 5;
 //		uint offs = gl_PrimitiveID & 31;
 //		if ((selection.data[addr] & (1 << offs)) != 0)
-//			color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
+//			color = mix(color, highlight_color.xyz, 0.8);
 //		else if (gl_PrimitiveID == hightlight_id)
-//			color = vec3(1.0, 0.0, 0.0);
+//			color = highlight_color.xyz;
 //
 //		if (selected)
-//			color = vec3(1.0, 0.0, 0.0);
+//			color = highlight_color.xyz;
 
 		outputF = vec4(color * df + specular * sf + ambient, 1.0);
 	}
@@ -168,16 +169,16 @@ void main()
 			outputF = vec4(color, 1.0);
 			if (highlight) {
 				if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
-					outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.8);
+					outputF = mix(outputF, highlight_color, 0.8);
 			}
 			if (selected)
-				outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
+				outputF = mix(outputF, highlight_color, 0.6);
 			return;
 		}
 
 		if (highlight) {
 			if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
-				color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
+				color = mix(color, highlight_color.xyz, 0.8);
 		}
 
 //		//uint addr = gl_PrimitiveID / 32;
@@ -185,16 +186,16 @@ void main()
 //		uint addr = gl_PrimitiveID >> 5;
 //		uint offs = gl_PrimitiveID & 31;
 //		if ((selection.data[addr] & (1 << offs)) != 0)
-//			color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
+//			color = mix(color, highlight_color.xyz, 0.8);
 //		else if (gl_PrimitiveID == hightlight_id)
-//			color = vec3(1.0, 0.0, 0.0);
+//			color = highlight_color.xyz;
 //
 //		if (selected)
-//			color = vec3(1.0, 0.0, 0.0);
+//			color = highlight_color.xyz;
 
 		outputF = vec4(color * df + specular * sf + ambient, 1.0);
 	}
 
 	if (selected)
-		outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
+		outputF = mix(outputF, highlight_color, 0.6);
 }

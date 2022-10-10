@@ -41,7 +41,7 @@ namespace easy3d {
 
     TrianglesDrawable::TrianglesDrawable(const std::string& name, Model* model)
             : Drawable(name, model)
-            , smooth_shading_(setting::surface_mesh_phong_shading)
+            , smooth_shading_(false)
             , opacity_(0.6f)
     {
         lighting_two_sides_ = setting::triangles_drawable_two_side_lighting;
@@ -109,7 +109,8 @@ namespace easy3d {
                 ->set_uniform("highlight", highlight())
                 ->set_uniform("highlight_id_min", highlight_range().first)
                 ->set_uniform("highlight_id_max", highlight_range().second)
-                ->set_uniform("selected", is_selected());
+                ->set_uniform("selected", is_selected())
+                ->set_uniform("highlight_color", setting::highlight_color);
 
         bool use_texture = (texture() && (coloring_method() == State::SCALAR_FIELD || coloring_method() == State::TEXTURED));
         program->set_uniform("use_texture", use_texture);

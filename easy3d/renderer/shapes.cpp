@@ -31,6 +31,7 @@
 #include <easy3d/renderer/vertex_array_object.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/opengl.h>
+#include <easy3d/renderer/setting.h>
 #include <easy3d/algo/tessellator.h>
 
 
@@ -629,7 +630,8 @@ namespace easy3d {
                     ->set_uniform("MANIP", m)
                     ->set_uniform("per_vertex_color", true)
                     ->set_uniform("clippingPlaneEnabled", false)
-                    ->set_uniform("selected", false);
+                    ->set_uniform("selected", false)
+                    ->set_uniform("highlight_color", setting::highlight_color);
 
             drawable->gl_draw();
             program->release();
@@ -662,7 +664,8 @@ namespace easy3d {
                     ->set_uniform("MANIP", m)
                     ->set_uniform("per_vertex_color", true)
                     ->set_uniform("clippingPlaneEnabled", false)
-                    ->set_uniform("selected", false);
+                    ->set_uniform("selected", false)
+                    ->set_uniform("highlight_color", setting::highlight_color);
 
             drawable->gl_draw();
             program->release();

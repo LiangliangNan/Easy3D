@@ -47,6 +47,7 @@ uniform sampler2DShadow  shadowMap;
 uniform float darkness;
 
 uniform bool selected = false;
+uniform vec4 	highlight_color;
 
 in Data{
 	vec3 color;
@@ -105,7 +106,7 @@ vec4 shade(vec3 worldPos)
 void main(void) {
         vec4 color = shade(DataIn.position);
         if (selected && !is_background)
-            color = mix(color, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
+            color = mix(color, highlight_color, 0.6);
 
         vec3 coords = DataIn.shadowCoord.xyz / DataIn.shadowCoord.w;
         // to avoid shadow acne: See: http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-16-shadow-mapping/

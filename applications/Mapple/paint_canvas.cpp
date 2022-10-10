@@ -91,7 +91,7 @@ PaintCanvas::PaintCanvas(MainWindow* window)
         , dpi_scaling_(1.0)
         , samples_(0)
         , camera_(nullptr)
-        , background_color_(1.0f, 1.0f, 1.0f, 1.0f)
+        , background_color_(setting::background_color)
         , pressed_button_(Qt::NoButton)
         , modifiers_(Qt::NoModifier)
         , mouse_current_pos_(0, 0)
@@ -111,9 +111,6 @@ PaintCanvas::PaintCanvas(MainWindow* window)
         , show_coordinates_under_mouse_(false)
         , model_idx_(-1)
         , ssao_(nullptr)
-        , transparency_(nullptr)
-        , shadow_(nullptr)
-        , edl_(nullptr)
 {
     // like Qt::StrongFocus plus the widget accepts focus by using the mouse wheel.
     setFocusPolicy(Qt::StrongFocus);
@@ -128,7 +125,10 @@ PaintCanvas::PaintCanvas(MainWindow* window)
     easy3d::connect(&camera_->frame_modified, this, static_cast<void (PaintCanvas::*)(void)>(&PaintCanvas::update));
 
     walk_through_ = new WalkThrough(camera_);
-}
+    transparency_ = setting::effect_transparency_enabled ? (new DualDepthPeeling(camera_)) : nullptr;
+    shadow_ = setting::effect_shadow_enabled ? (new SoftShadow(camera_)) : nullptr;
+    edl_ = setting::effect_edl_enabled ? (new EyeDomeLighting(camera_)) : nullptr;
+ }
 
 
 PaintCanvas::~PaintCanvas() {
@@ -1218,6 +1218,7 @@ void PaintCanvas::drawCornerAxes() {
             ->set_uniform("highlight", false)
             ->set_uniform("clippingPlaneEnabled", false)
             ->set_uniform("selected", false)
+            ->set_uniform("highlight_color", setting::highlight_color)
             ->set_uniform("use_texture", false);  easy3d_debug_log_gl_error;
 
     drawable_axes_->gl_draw(); easy3d_debug_log_gl_error;

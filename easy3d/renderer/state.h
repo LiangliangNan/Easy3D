@@ -164,6 +164,7 @@ namespace easy3d {
          * Call set_uniform_coloring() to change this color.
          */
         const vec4 &color() const { return color_; }
+        void set_color(const vec4& c) { color_ = c; }
 
         /** The location of the color property. */
         Location property_location() const { return property_location_; }

@@ -55,6 +55,7 @@ in Data{
 } DataIn;
 
 uniform bool selected = false;
+uniform vec4 	highlight_color;
 
 in  vec2 gOutTexcoord;
 in float gOutClipped;
@@ -74,7 +75,7 @@ vec3 ComputeLight(vec3 N, vec3 L, vec3 V, vec3 amb, vec3 spec, float sh, vec3 co
 
 	color = color * df + spec * sf + amb;
 	if (selected)
-		color = mix(color, vec3(1.0, 0.0, 0.0), 0.6);
+		color = mix(color, highlight_color.xyz, 0.6);
 	return color;
 }
 

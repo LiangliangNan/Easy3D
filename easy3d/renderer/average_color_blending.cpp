@@ -119,6 +119,7 @@ namespace easy3d {
                 program->set_uniform("per_vertex_color", d->coloring_method() != State::UNIFORM_COLOR && d->color_buffer());
                 program->set_uniform("default_color", d->color());
                 program->set_uniform("selected", d->is_selected());
+                program->set_uniform("highlight_color", setting::highlight_color);
                 if (setting::clipping_plane) {
                     setting::clipping_plane->set_program(program);
                     setting::clipping_plane->set_discard_primitives(program, d->plane_clip_discard_primitive());

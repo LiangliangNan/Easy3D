@@ -47,6 +47,7 @@ layout(std140) uniform Material {
 uniform bool    smooth_shading = true;
 
 uniform bool 	selected = false;
+uniform vec4 	highlight_color;
 
 in Data{
 	vec3 color;
@@ -96,7 +97,7 @@ void main(void)
 
 	vec4 color = ShadeFragment();
     if (selected)
-        color = mix(color, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
+        color = mix(color, highlight_color, 0.6);
 
 	fragOutput0 = vec4(color.rgb * color.a, color.a);
 	fragOutput1 = vec4(1.0);

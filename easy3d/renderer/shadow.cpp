@@ -55,10 +55,10 @@ namespace easy3d {
         , light_frustum_(nullptr)
         , shadow_map_size_(1024)
         , virtual_background_(true)
-        , virtual_background_color_(1.0f, 1.0f, 1.0f)
+        , virtual_background_color_(setting::background_color)
         , virtual_background_drawable_(nullptr)
-        , light_distance_(50.0f)
-        , darkness_(0.6f)
+        , light_distance_(setting::shadow_light_distance)
+        , darkness_(setting::shadow_darkness)
     {
     }
 
@@ -248,7 +248,8 @@ namespace easy3d {
                         ->set_uniform("default_color", d->color())
                         ->set_uniform("per_vertex_color", d->coloring_method() != State::UNIFORM_COLOR && d->color_buffer())
                         ->set_uniform("is_background", false)
-                        ->set_uniform("selected", d->is_selected());
+                        ->set_uniform("selected", d->is_selected())
+                        ->set_uniform("highlight_color", setting::highlight_color);
 
                 if (setting::clipping_plane) {
                     setting::clipping_plane->set_program(program);

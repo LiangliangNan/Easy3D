@@ -68,6 +68,7 @@ uniform bool        distinct_back_color = true;
 uniform vec3        backside_color = vec3(0.8f, 0.4f, 0.4f);
 
 uniform bool selected = false;
+uniform vec4 	highlight_color;
 
 in Data{
 	vec2 texcoord;
@@ -110,7 +111,7 @@ vec4 ShadeFragment()
 		color = vec4(backside_color, color.a);
 
 	if (selected)
-		color = mix(color, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
+		color = mix(color, highlight_color, 0.6);
 
 	if (!lighting) {
 		return vec4(color.xyz, Alpha);

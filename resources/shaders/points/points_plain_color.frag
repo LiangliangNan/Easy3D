@@ -47,6 +47,7 @@ uniform int  highlight_id_min;
 uniform int  highlight_id_max;
 
 uniform bool selected = false;
+uniform vec4 	highlight_color;
 
 
 in Data{
@@ -61,10 +62,10 @@ void main(void) {
     if (!lighting) {
         outputF = DataIn.color;
         if (selected)
-            outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
+            outputF = mix(outputF, highlight_color, 0.6);
         if (highlight) {
             if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
-                outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.8);
+                outputF = mix(outputF, highlight_color, 0.8);
         }
         return;
     }
@@ -75,7 +76,7 @@ void main(void) {
 
     if (highlight) {
         if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
-            color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
+            color = mix(color, highlight_color.xyz, 0.8);
     }
 
     vec3 view_dir = normalize(wCamPos - DataIn.position);// compute view direction and normalize it
@@ -87,7 +88,7 @@ void main(void) {
     }
 
     if (selected)
-        color = mix(color, vec3(1.0, 0.0, 0.0), 0.6);
+        color = mix(color, highlight_color.xyz, 0.6);
 
     float df = 0.0;	// diffuse factor
     if (two_sides_lighting)

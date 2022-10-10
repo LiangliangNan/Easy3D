@@ -89,7 +89,7 @@ namespace easy3d {
                    const wxString &title)
             : wxGLCanvas(parent, glAttrs, id, pos, size, style | wxFULL_REPAINT_ON_RESIZE, title)
             , initialized_(false)
-            , background_color_(0.9f, 0.9f, 1.0f, 1.0f)
+            , background_color_(setting::background_color)
             , texter_(nullptr)
             , drawable_axes_(nullptr)
             , model_idx_(-1)
@@ -135,6 +135,9 @@ namespace easy3d {
         TextureManager::terminate();
 
         delete gl_contex_;
+
+        setting::save();
+        LOG(INFO) << "viewer terminated. Bye!";
     }
 
 
@@ -759,6 +762,7 @@ namespace easy3d {
                 ->set_uniform("highlight", false)
                 ->set_uniform("clippingPlaneEnabled", false)
                 ->set_uniform("selected", false)
+                ->set_uniform("highlight_color", setting::highlight_color)
                 ->set_uniform("use_texture", false);
         drawable_axes_->gl_draw();
         program->release();

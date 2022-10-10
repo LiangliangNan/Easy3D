@@ -35,6 +35,7 @@ uniform mat4 PROJ;
 uniform sampler2D	textureID;
 
 uniform bool selected = false;
+uniform vec4 	highlight_color;
 
 in  vec3 gPoint;
 in  vec2 gOutTexcoord;
@@ -50,7 +51,7 @@ void main()
 
     outputF = texture(textureID, gOutTexcoord);
     if (selected)
-        outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
+        outputF = mix(outputF, highlight_color, 0.6);
 
     // compute the depth
     vec4 pos = PROJ * vec4(gPoint, 1.0);

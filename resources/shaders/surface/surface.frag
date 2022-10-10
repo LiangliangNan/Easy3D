@@ -60,6 +60,7 @@ uniform float fractional_repeat = 0.0f;
 //#define ENABLE_ALPHA
 
 uniform bool selected = false;
+uniform vec4 	highlight_color;
 
 in Data{
     vec2 texcoord;
@@ -94,7 +95,7 @@ void main(void) {
     if (!lighting) {
         outputF = color;
         if (selected)
-            outputF = mix(outputF, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
+            outputF = mix(outputF, highlight_color, 0.6);
         return;
     }
 
@@ -103,11 +104,11 @@ void main(void) {
 
     if (highlight) {
         if (gl_PrimitiveID >= highlight_id_min && gl_PrimitiveID <= highlight_id_max)
-            color = mix(color, vec4(1.0, 0.0, 0.0, 1.0), 0.8);
+            color = mix(color, highlight_color, 0.8);
     }
 
     if (selected)
-        color = mix(color, vec4(1.0, 0.0, 0.0, 1.0), 0.6);
+        color = mix(color, highlight_color, 0.6);
 
     vec3 normal;
     if (smooth_shading)

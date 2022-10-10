@@ -46,10 +46,10 @@ namespace easy3d {
               cross_section_width_(0.001f), scene_radius_(1.0f)
     {
         manipulator_ = new Manipulator;
-        static LocalConstraint constaint;
-        //constaint.setTranslationConstraintType(AxisPlaneConstraint::AXIS);
-        constaint.setTranslationConstraint(AxisPlaneConstraint::AXIS, vec3(0, 0, 1));
-        manipulator_->frame()->setConstraint(&constaint);
+        static LocalConstraint constraint;
+        //constraint.setTranslationConstraintType(AxisPlaneConstraint::AXIS);
+        constraint.setTranslationConstraint(AxisPlaneConstraint::AXIS, vec3(0, 0, 1));
+        manipulator_->frame()->setConstraint(&constraint);
     }
 
 

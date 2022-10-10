@@ -62,36 +62,41 @@ namespace easy3d {
         if (dynamic_cast<PointCloud *>(model)) {
             PointCloud *cloud = dynamic_cast<PointCloud *>(model);
             auto vertices = cloud->renderer()->add_points_drawable("vertices");
+            vertices->set_impostor_type(setting::point_cloud_impostors ? PointsDrawable::SPHERE : PointsDrawable::PLAIN);
             vertices->set_point_size(setting::point_cloud_point_size);
-            vertices->set_visible(true);
+            vertices->set_visible(setting::point_cloud_show_vertices);
             set_default_rendering_state(cloud, vertices);
         } else if (dynamic_cast<SurfaceMesh *>(model)) {
             SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
 
             // faces
             auto faces = mesh->renderer()->add_triangles_drawable("faces");
-            faces->set_visible(true);
+            faces->set_smooth_shading(setting::surface_mesh_phong_shading);
+            faces->set_visible(setting::surface_mesh_show_faces);
+            faces->set_color(setting::surface_mesh_faces_color);
+            faces->set_opacity(setting::surface_mesh_opacity);
             set_default_rendering_state(mesh, faces);
 
             // edges
             auto edges = mesh->renderer()->add_lines_drawable("edges");
-            edges->set_uniform_coloring(setting::surface_mesh_edges_color);
-            edges->set_line_width(setting::surface_mesh_edges_line_width);
             edges->set_visible(setting::surface_mesh_show_edges);
+            edges->set_uniform_coloring(setting::surface_mesh_edges_color);
+            edges->set_impostor_type(setting::surface_mesh_edges_imposters ? LinesDrawable::CYLINDER : LinesDrawable::PLAIN);
+            edges->set_line_width(setting::surface_mesh_edges_line_width);
 
             // vertices
             auto vertices = mesh->renderer()->add_points_drawable("vertices");
-            vertices->set_uniform_coloring(setting::surface_mesh_vertices_color);
-            vertices->set_impostor_type(PointsDrawable::SPHERE);
-            vertices->set_point_size(setting::surface_mesh_vertices_point_size);
             vertices->set_visible(setting::surface_mesh_show_vertices);
+            vertices->set_uniform_coloring(setting::surface_mesh_vertices_color);
+            vertices->set_impostor_type(setting::surface_mesh_vertices_imposters ? PointsDrawable::SPHERE : PointsDrawable::PLAIN);
+            vertices->set_point_size(setting::surface_mesh_vertices_point_size);
 
             // borders
             auto borders = mesh->renderer()->add_lines_drawable("borders");
-            borders->set_uniform_coloring(setting::surface_mesh_borders_color);
-            borders->set_impostor_type(LinesDrawable::CYLINDER);
-            borders->set_line_width(setting::surface_mesh_borders_line_width);
             borders->set_visible(setting::surface_mesh_show_borders);
+            borders->set_uniform_coloring(setting::surface_mesh_borders_color);
+            borders->set_impostor_type(setting::surface_mesh_borders_imposters ? LinesDrawable::CYLINDER : LinesDrawable::PLAIN);
+            borders->set_line_width(setting::surface_mesh_borders_line_width);
 
             auto locks_prop = mesh->get_vertex_property<bool>("v:locked");
             if (locks_prop) {
@@ -104,17 +109,17 @@ namespace easy3d {
             Graph *graph = dynamic_cast<Graph *>(model);
             // create points drawable for the edges
             auto vertices = graph->renderer()->add_points_drawable("vertices");
+            vertices->set_visible(setting::graph_show_vertices);
             vertices->set_uniform_coloring(setting::graph_vertices_color);
             vertices->set_point_size(setting::graph_vertices_point_size);
-            vertices->set_impostor_type(PointsDrawable::SPHERE);
-            vertices->set_visible(true);
+            vertices->set_impostor_type(setting::graph_vertices_imposters ? PointsDrawable::SPHERE : PointsDrawable::PLAIN);
 
             // create liens drawable for the edges
             auto edges = graph->renderer()->add_lines_drawable("edges");
+            edges->set_visible(setting::graph_show_edges);
             edges->set_uniform_coloring(setting::graph_edges_color);
             edges->set_line_width(setting::graph_edges_line_width);
-            edges->set_impostor_type(LinesDrawable::CYLINDER);
-            edges->set_visible(true);
+            edges->set_impostor_type(setting::graph_edges_imposters ? LinesDrawable::CYLINDER : LinesDrawable::PLAIN);
         } else if (dynamic_cast<PolyMesh *>(model)) {
             PolyMesh *mesh = dynamic_cast<PolyMesh *>(model);
 
@@ -137,12 +142,13 @@ namespace easy3d {
             auto edges = mesh->renderer()->add_lines_drawable("edges");
             edges->set_uniform_coloring(setting::surface_mesh_edges_color);
             edges->set_line_width(setting::surface_mesh_edges_line_width);
+            edges->set_impostor_type(setting::surface_mesh_edges_imposters ? LinesDrawable::CYLINDER : LinesDrawable::PLAIN);
             edges->set_visible(setting::surface_mesh_show_edges);
 
             // vertices
             auto vertices = mesh->renderer()->add_points_drawable("vertices");
             vertices->set_uniform_coloring(setting::surface_mesh_vertices_color);
-            vertices->set_impostor_type(PointsDrawable::SPHERE);
+            vertices->set_impostor_type(setting::surface_mesh_vertices_imposters ? PointsDrawable::SPHERE : PointsDrawable::PLAIN);
             vertices->set_point_size(setting::surface_mesh_vertices_point_size);
             vertices->set_visible(setting::surface_mesh_show_vertices);
         }

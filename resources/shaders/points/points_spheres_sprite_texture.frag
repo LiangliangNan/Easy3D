@@ -58,6 +58,7 @@ uniform float	sphere_radius;
 
 uniform int	 hightlight_id;
 uniform bool selected;
+uniform vec4 	highlight_color;
 
 layout(std430, binding = 1) buffer selection_t {
 	uint data[];
@@ -129,12 +130,12 @@ void main()
 		uint addr = gl_PrimitiveID >> 5;
 		uint offs = gl_PrimitiveID & 31;
 		if ((selection.data[addr] & (1 << offs)) != 0)
-			color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
+			color = mix(color, highlight_color.xyz, 0.8);
 		else if (gl_PrimitiveID == hightlight_id)
-			color = vec3(1.0, 0.0, 0.0);
+			color = highlight_color.xyz;
 
 		if (selected)
-			color = vec3(1.0, 0.0, 0.0);
+			color = highlight_color.xyz;
 
 		outputF = vec4(color * df + specular * sf + ambient, 1.0);
 	}
@@ -182,12 +183,12 @@ void main()
 		uint addr = gl_PrimitiveID >> 5;
 		uint offs = gl_PrimitiveID & 31;
 		if ((selection.data[addr] & (1 << offs)) != 0)
-			color = mix(color, vec3(1.0, 0.0, 0.0), 0.8);
+			color = mix(color, highlight_color.xyz, 0.8);
 		else if (gl_PrimitiveID == hightlight_id)
-			color = vec3(1.0, 0.0, 0.0);
+			color = highlight_color.xyz;
 
 		if (selected)
-			color = vec3(1.0, 0.0, 0.0);
+			color = highlight_color.xyz;
 
 		outputF = vec4(color * df + specular * sf + ambient, 1.0);
 	}

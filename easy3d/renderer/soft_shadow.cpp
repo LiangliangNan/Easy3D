@@ -42,7 +42,7 @@ namespace easy3d {
 
     SoftShadow::SoftShadow(Camera* cam)
         : Shadow(cam)
-        , softness_(0.8f)
+        , softness_(setting::shadow_softness)
         , sample_pattern_(SP_Poisson_64_128)
     {
     }
@@ -172,7 +172,8 @@ namespace easy3d {
                         ->set_uniform("default_color", d->color())
                         ->set_uniform("per_vertex_color", d->coloring_method() != State::UNIFORM_COLOR && d->color_buffer())
                         ->set_uniform("is_background", false)
-                        ->set_uniform("selected", d->is_selected());
+                        ->set_uniform("selected", d->is_selected())
+                        ->set_uniform("highlight_color", setting::highlight_color);
 
                 if (setting::clipping_plane) {
                     setting::clipping_plane->set_program(program);
