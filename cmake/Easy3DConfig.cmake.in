@@ -27,9 +27,10 @@
 # - Config file for the EASY3D package
 #
 # It defines the following variables:
-#       EASY3D_INCLUDE_DIRS - include directories for EASY3D
-#       EASY3D_LIBRARIES    - available Easy3D libraries
-#       EASY3D_CGAL_SUPPORT - whether CGAL support is enabled
+#       EASY3D_INCLUDE_DIRS   - include directories for EASY3D
+#       EASY3D_LIBRARIES      - available Easy3D libraries
+#       EASY3D_CGAL_SUPPORT   - whether CGAL support is enabled
+#       EASY3D_FFMPEG_SUPPORT - whether FFMPEG support is enabled
 # NOTE: The recommended way to specify libraries and headers with CMake is to use the
 #       target_link_libraries command. This command automatically adds appropriate include
 #       directories, compile definitions, the position-independent-code flag, and links to
