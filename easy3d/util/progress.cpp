@@ -9,7 +9,9 @@
  ********************************************************************/
 
 #include <easy3d/util/progress.h>
+
 #include <cassert>
+#include <algorithm>	// for std::min and std::max
 
 
 namespace easy3d {
