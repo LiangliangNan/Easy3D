@@ -226,6 +226,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 
 MainWindow::~MainWindow() {
+	setting::terminate();
     LOG(INFO) << "Mapple terminated. Bye!";
 }
 

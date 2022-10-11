@@ -84,11 +84,13 @@ public:
 };
 
 
+#include <easy3d/renderer/setting.h>
 
 int main(int argc, char *argv[])
 {
     // initialize logging at the very beginning to make sure everything will be logged into the log file.
     logging::initialize(true, true, true, "default", 9);
+	setting::initialize("default");
 
     //Locale management
     {

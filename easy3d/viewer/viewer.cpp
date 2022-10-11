@@ -516,7 +516,7 @@ namespace easy3d {
 
     Viewer::~Viewer() {
         cleanup();
-        setting::save();
+        setting::terminate();
         LOG(INFO) << "viewer terminated. Bye!";
     }
 

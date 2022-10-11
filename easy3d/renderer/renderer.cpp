@@ -62,96 +62,96 @@ namespace easy3d {
         if (dynamic_cast<PointCloud *>(model)) {
             PointCloud *cloud = dynamic_cast<PointCloud *>(model);
             auto vertices = cloud->renderer()->add_points_drawable("vertices");
-			vertices->set_visible(setting::point_cloud_show_vertices);
-			vertices->set_color(setting::point_cloud_points_color);
-            vertices->set_impostor_type(setting::point_cloud_impostors ? PointsDrawable::SPHERE : PointsDrawable::PLAIN);
-            vertices->set_point_size(setting::point_cloud_points_size);
+			vertices->set_visible(setting::point_cloud_vertices_visible);
+			vertices->set_color(setting::point_cloud_vertices_color);
+            vertices->set_impostor_type(setting::point_cloud_vertices_impostors ? PointsDrawable::SPHERE : PointsDrawable::PLAIN);
+            vertices->set_point_size(setting::point_cloud_vertices_size);
             set_default_rendering_state(cloud, vertices);
         } else if (dynamic_cast<SurfaceMesh *>(model)) {
             SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
 
             // faces
             auto faces = mesh->renderer()->add_triangles_drawable("faces");
-            faces->set_smooth_shading(setting::surface_mesh_phong_shading);
-            faces->set_visible(setting::surface_mesh_show_faces);
+            faces->set_smooth_shading(setting::surface_mesh_faces_phong_shading);
+            faces->set_visible(setting::surface_mesh_faces_visible);
             faces->set_color(setting::surface_mesh_faces_color);
-            faces->set_opacity(setting::surface_mesh_opacity);
+            faces->set_opacity(setting::surface_mesh_faces_opacity);
             set_default_rendering_state(mesh, faces);
 
 			// vertices
 			auto vertices = mesh->renderer()->add_points_drawable("vertices");
-			vertices->set_visible(setting::surface_mesh_show_vertices);
+			vertices->set_visible(setting::surface_mesh_vertices_visible);
 			vertices->set_uniform_coloring(setting::surface_mesh_vertices_color);
 			vertices->set_impostor_type(setting::surface_mesh_vertices_imposters ? PointsDrawable::SPHERE : PointsDrawable::PLAIN);
-			vertices->set_point_size(setting::surface_mesh_vertices_point_size);
+			vertices->set_point_size(setting::surface_mesh_vertices_size);
 
             // edges
             auto edges = mesh->renderer()->add_lines_drawable("edges");
-            edges->set_visible(setting::surface_mesh_show_edges);
+            edges->set_visible(setting::surface_mesh_edges_visible);
             edges->set_uniform_coloring(setting::surface_mesh_edges_color);
             edges->set_impostor_type(setting::surface_mesh_edges_imposters ? LinesDrawable::CYLINDER : LinesDrawable::PLAIN);
-            edges->set_line_width(setting::surface_mesh_edges_line_width);
+            edges->set_line_width(setting::surface_mesh_edges_size);
 
             // borders
             auto borders = mesh->renderer()->add_lines_drawable("borders");
-            borders->set_visible(setting::surface_mesh_show_borders);
+            borders->set_visible(setting::surface_mesh_borders_visible);
             borders->set_uniform_coloring(setting::surface_mesh_borders_color);
             borders->set_impostor_type(setting::surface_mesh_borders_imposters ? LinesDrawable::CYLINDER : LinesDrawable::PLAIN);
-            borders->set_line_width(setting::surface_mesh_borders_line_width);
+            borders->set_line_width(setting::surface_mesh_borders_size);
 
             auto locks_prop = mesh->get_vertex_property<bool>("v:locked");
             if (locks_prop) {
                 auto locks = mesh->renderer()->add_points_drawable("locks");
                 locks->set_uniform_coloring(vec4(1, 1, 0, 1.0f));
                 locks->set_impostor_type(PointsDrawable::SPHERE);
-                locks->set_point_size(setting::surface_mesh_vertices_point_size + 5);
+                locks->set_point_size(setting::surface_mesh_vertices_size + 5);
             }
         } else if (dynamic_cast<Graph *>(model)) {
             Graph *graph = dynamic_cast<Graph *>(model);
             // create points drawable for the edges
             auto vertices = graph->renderer()->add_points_drawable("vertices");
-            vertices->set_visible(setting::graph_show_vertices);
+            vertices->set_visible(setting::graph_vertices_visible);
             vertices->set_uniform_coloring(setting::graph_vertices_color);
             vertices->set_impostor_type(setting::graph_vertices_imposters ? PointsDrawable::SPHERE : PointsDrawable::PLAIN);
-			vertices->set_point_size(setting::graph_vertices_point_size);
+			vertices->set_point_size(setting::graph_vertices_size);
 
             // create lines drawable for the edges
             auto edges = graph->renderer()->add_lines_drawable("edges");
-            edges->set_visible(setting::graph_show_edges);
+            edges->set_visible(setting::graph_edges_visible);
             edges->set_uniform_coloring(setting::graph_edges_color);
             edges->set_impostor_type(setting::graph_edges_imposters ? LinesDrawable::CYLINDER : LinesDrawable::PLAIN);
-			edges->set_line_width(setting::graph_edges_line_width);
+			edges->set_line_width(setting::graph_edges_size);
 		} else if (dynamic_cast<PolyMesh *>(model)) {
             PolyMesh *mesh = dynamic_cast<PolyMesh *>(model);
 
             // we have two faces drawables for polyhedral meshes
             // border faces
             auto border_faces = mesh->renderer()->add_triangles_drawable("faces:border");
-			border_faces->set_visible(setting::poly_mesh_show_faces);
+			border_faces->set_visible(setting::poly_mesh_faces_visible);
             border_faces->set_uniform_coloring(setting::poly_mesh_faces_color);
             border_faces->set_distinct_back_color(true);
             border_faces->set_lighting_two_sides(true);
 
             // interior faces
             auto interior_faces = mesh->renderer()->add_triangles_drawable("faces:interior");
-			interior_faces->set_visible(setting::poly_mesh_show_faces);
+			interior_faces->set_visible(setting::poly_mesh_faces_visible);
             interior_faces->set_uniform_coloring(setting::triangles_drawable_backside_color);
             interior_faces->set_distinct_back_color(true);
             interior_faces->set_lighting_two_sides(true);
 
 			// vertices
 			auto vertices = mesh->renderer()->add_points_drawable("vertices");
-			vertices->set_visible(setting::poly_mesh_show_vertices);
+			vertices->set_visible(setting::poly_mesh_vertices_visible);
 			vertices->set_uniform_coloring(setting::poly_mesh_vertices_color);
 			vertices->set_impostor_type(setting::poly_mesh_vertices_imposters ? PointsDrawable::SPHERE : PointsDrawable::PLAIN);
-			vertices->set_point_size(setting::poly_mesh_vertices_point_size);
+			vertices->set_point_size(setting::poly_mesh_vertices_size);
 
             // edges
             auto edges = mesh->renderer()->add_lines_drawable("edges");
-			edges->set_visible(setting::poly_mesh_show_edges);
+			edges->set_visible(setting::poly_mesh_edges_visible);
             edges->set_uniform_coloring(setting::poly_mesh_edges_color);
             edges->set_impostor_type(setting::poly_mesh_edges_imposters ? LinesDrawable::CYLINDER : LinesDrawable::PLAIN);
-			edges->set_line_width(setting::poly_mesh_edges_line_width);
+			edges->set_line_width(setting::poly_mesh_edges_size);
         }
     }
 
@@ -189,7 +189,7 @@ namespace easy3d {
             }
         }
 
-        drawable->set_uniform_coloring(setting::point_cloud_points_color);
+        drawable->set_uniform_coloring(setting::point_cloud_vertices_color);
     }
 
 

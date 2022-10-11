@@ -92,7 +92,6 @@ namespace easy3d {
 
         doneCurrent();
 
-        setting::save();
         LOG(INFO) << "viewer terminated. Bye!";
     }
 

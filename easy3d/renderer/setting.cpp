@@ -29,122 +29,138 @@
 
 #include <fstream>
 
+#include <3rd_party/json/json.hpp>
+
 
 namespace easy3d {
 
     // the default parameters used for initialization of both ui and rendering
     namespace setting {
 
-        std::string setting_file_name = "";
-
-        void initialize(const std::string& file_name) {
-            setting_file_name = file_name;
-            if (file_system::is_file(setting_file_name))
-                if (load(setting_file_name))
-                    return;
-            save(setting_file_name);
-        }
-
-        void save() {
-            if (!setting_file_name.empty())
-                save(setting_file_name);
-        }
-
         // ui: background color of the viewer
         vec4 background_color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-
         // highlight: color for highlighted/selected primitives
         vec4 highlight_color = vec4(1.0f, 0.0f, 0.0f, 1.0f);
-
         // lighting
         vec4 light_position = vec4(0.27f, 0.27f, 0.92f, 0.0f);
 
-        // drawable lighting
+		// material
+		vec4 material_ambient = vec4(0.05f, 0.05f, 0.05f, 1.0f);
+		vec4 material_specular = vec4(0.4f, 0.4f, 0.4f, 1.0f);
+		float material_shininess = 64.0f;
+
+		// effect
+		float effect_ssao_radius = 2.0f;
+		float effect_ssao_intensity = 1.5f;
+		float effect_ssao_bias = 0.1f;
+		float effect_ssao_sharpness = 40.0f;
+		bool effect_edl_enabled = false;
+		bool effect_transparency_enabled = false;
+		bool effect_shadow_enabled = false;
+		float shadow_light_distance = 50.0f;
+		float shadow_softness = 0.5f;
+		float shadow_darkness = 0.6f;
+
+		// points drawable
+		bool points_drawable_two_side_lighting = true;
+		bool points_drawable_distinct_backside_color = false;
+		vec4 points_drawable_backside_color = vec4(0.8f, 0.4f, 0.4f, 1.0f);
+		// lines drawable
+		bool lines_drawable_two_side_lighting = false;
+		bool lines_drawable_distinct_backside_color = false;
+		vec4 lines_drawable_backside_color = vec4(0.8f, 0.4f, 0.4f, 1.0f);
+		// triangles drawable
         bool triangles_drawable_two_side_lighting = true;
-        bool points_drawable_two_side_lighting = true;
-        bool lines_drawable_two_side_lighting = false;
-        // drawable distinct backside color
-        bool triangles_drawable_distinct_backside_color = true;
-        bool points_drawable_distinct_backside_color = false;
-        bool lines_drawable_distinct_backside_color = false;
-        // drawable backside color
-        vec4 triangles_drawable_backside_color = vec4(0.8f, 0.4f, 0.4f, 1.0f);
-        vec4 points_drawable_backside_color = vec4(0.8f, 0.4f, 0.4f, 1.0f);
-        vec4 lines_drawable_backside_color = vec4(0.8f, 0.4f, 0.4f, 1.0f);
-
-        // material
-        vec4 material_ambient = vec4(0.05f, 0.05f, 0.05f, 1.0f);
-        vec4 material_specular = vec4(0.4f, 0.4f, 0.4f, 1.0f);
-        float material_shininess = 64.0f;
-
-        // effect
-        float effect_ssao_radius = 2.0f;
-        float effect_ssao_intensity = 1.5f;
-        float effect_ssao_bias = 0.1f;
-        float effect_ssao_sharpness = 40.0f;
-        bool effect_edl_enabled = false;
-        bool effect_transparency_enabled = false;
-        bool effect_shadow_enabled = false;
-        float shadow_light_distance = 50.0f;
-        float shadow_softness = 0.5f;
-        float shadow_darkness = 0.6f;
+		bool triangles_drawable_distinct_backside_color = true;
+		vec4 triangles_drawable_backside_color = vec4(0.8f, 0.4f, 0.4f, 1.0f);
 
         // point cloud
-        bool point_cloud_show_vertices = true;
-        vec4 point_cloud_points_color = vec4(0.33f, 0.67f, 1.0f, 1.0f);
-        float point_cloud_points_size = 3.0f;
-        bool point_cloud_impostors = false;
+        bool point_cloud_vertices_visible = true;
+        vec4 point_cloud_vertices_color = vec4(0.33f, 0.67f, 1.0f, 1.0f);
+		bool point_cloud_vertices_impostors = false;
+        float point_cloud_vertices_size = 3.0f;
 
         // surface mesh - surface
-        bool surface_mesh_phong_shading = false;
-        bool surface_mesh_show_faces = true;
+        bool surface_mesh_faces_phong_shading = false;
+        bool surface_mesh_faces_visible = true;
         vec4 surface_mesh_faces_color = vec4(1.0f, 0.8f, 0.4f, 1.0f);
-        float surface_mesh_opacity = 0.6f;
-
+        float surface_mesh_faces_opacity = 0.6f;
         // surface mesh - vertices
-        bool surface_mesh_show_vertices = false;
+        bool surface_mesh_vertices_visible = false;
         vec4 surface_mesh_vertices_color = vec4(0.0f, 1.0f, 0.0f, 1.0f);
         bool surface_mesh_vertices_imposters = true;
-        float surface_mesh_vertices_point_size = 5.0f;
-		// graph - vertices
-		bool graph_show_vertices = true;
-		vec4 graph_vertices_color = vec4(0.8f, 0.0f, 0.5f, 1.0f);
-		bool graph_vertices_imposters = true;
-		float graph_vertices_point_size = 15;
+        float surface_mesh_vertices_size = 5.0f;
         // surface mesh - edges
-        bool surface_mesh_show_edges = false;
+        bool surface_mesh_edges_visible = false;
         vec4 surface_mesh_edges_color = vec4(0.0f, 0.0f, 0.0f, 1.0f);
         bool surface_mesh_edges_imposters = false;
-        float surface_mesh_edges_line_width = 1.0f;
+        float surface_mesh_edges_size = 1.0f;
         // surface mesh - borders
-        bool surface_mesh_show_borders = false;
+        bool surface_mesh_borders_visible = false;
         vec4 surface_mesh_borders_color = vec4(1.0f, 0.0f, 0.0f, 1.0f);
         bool surface_mesh_borders_imposters = true;
-        float surface_mesh_borders_line_width = 2.0f;
+        float surface_mesh_borders_size = 2.0f;
 
-        // surface mesh - edges
-        bool graph_show_edges = true;
+		// graph - vertices
+		bool graph_vertices_visible = true;
+		vec4 graph_vertices_color = vec4(0.8f, 0.0f, 0.5f, 1.0f);
+		bool graph_vertices_imposters = true;
+		float graph_vertices_size = 15;
+		// graph: edges
+        bool graph_edges_visible = true;
         vec4 graph_edges_color = vec4(1.0f, 0.67f, 0.5f, 1.0f);
         bool graph_edges_imposters = true;
-        float graph_edges_line_width = 3.0f;
+        float graph_edges_size = 3.0f;
 
 		// polyhedral mesh - surface
-		bool poly_mesh_show_faces = true;
+		bool poly_mesh_faces_visible = true;
 		vec4 poly_mesh_faces_color = vec4(1.0f, 0.8f, 0.4f, 1.0f);
 		// polyhedral mesh - vertices
-		bool poly_mesh_show_vertices = false;
+		bool poly_mesh_vertices_visible = false;
 		vec4 poly_mesh_vertices_color = vec4(0.0f, 1.0f, 0.0f, 1.0f);
 		bool poly_mesh_vertices_imposters = true;
-		float poly_mesh_vertices_point_size = 5.0f;
+		float poly_mesh_vertices_size = 5.0f;
 		// polyhedral mesh - edges
-		bool poly_mesh_show_edges = false;
+		bool poly_mesh_edges_visible = false;
 		vec4 poly_mesh_edges_color = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		bool poly_mesh_edges_imposters = false;
-		float poly_mesh_edges_line_width = 1.0f;
+		float poly_mesh_edges_size = 1.0f;
 
         // clipping plane
         ClippingPlane* clipping_plane = nullptr;
         vec4 clipping_plane_color = vec4(1.0f, 0.0f, 0.0f, 0.2f);
+
+
+
+		std::string setting_file_name = "";
+
+		void initialize(const std::string& setting_file) {
+			setting_file_name = setting_file;
+			if (setting_file_name == "default") {
+				const std::string app_path = file_system::executable();
+				std::string file_path = app_path;
+#ifdef __APPLE__
+				// macOS may put the executable file in an application bundle, e.g., "PolyFit.app/Contents/MacOS/PolyFit"
+				std::string::size_type pos = file_path.find(".app");
+				if (pos != std::string::npos)
+					file_path = file_path.substr(0, pos);
+#endif
+				file_path = file_system::parent_directory(file_path);
+				setting_file_name = file_path + "/" + file_system::base_name(app_path) + ".ini";
+			}
+
+			if (!setting_file_name.empty()) {
+				if (file_system::is_file(setting_file_name))
+					if (load(setting_file_name))
+						return;
+				save(setting_file_name);
+			}
+		}
+
+		void terminate() {
+			if (!setting_file_name.empty())
+				save(setting_file_name);
+		}
 
 
         // Save the rendering parameters to a file.
@@ -155,109 +171,101 @@ namespace easy3d {
                 return false;
             }
 
-#define SAVE(var)                                \
-    output << #var << ": " << var << std::endl;  \
-    if (output.fail())                           \
-        return false;
+#define SAVE_VAR(group, var)   settings[group][#var] = var;                        
+#define SAVE_VEC(group, var)   settings[group][#var] = {var[0], var[1], var[2], var[3]}; 
+
+			using json = nlohmann::json;
+			json settings;
 
 			// background color of the viewer
-			SAVE(background_color)
+			SAVE_VEC("global", background_color)
 			// highlight: color for highlighted/selected primitives
-			SAVE(highlight_color)
-
+			SAVE_VEC("global", highlight_color)
 			// lighting
-			SAVE(light_position)  // light position defined in camera coordinate system
+			SAVE_VEC("global", light_position)  // light position defined in camera coordinate system
 			// material
-			SAVE(material_ambient)
-			SAVE(material_specular)
-			SAVE(material_shininess)    // specular power
-			output << std::endl;
-
-			// drawable lighting
-			SAVE(triangles_drawable_two_side_lighting)
-			SAVE(points_drawable_two_side_lighting)
-			SAVE(lines_drawable_two_side_lighting)
-			// enable/disable drawable distinct backside color
-			SAVE(triangles_drawable_distinct_backside_color)
-			SAVE(points_drawable_distinct_backside_color)
-			SAVE(lines_drawable_distinct_backside_color)
-			// drawable backside color
-			SAVE(triangles_drawable_backside_color)
-			SAVE(points_drawable_backside_color)
-			SAVE(lines_drawable_backside_color)
-			output << std::endl;
+			SAVE_VEC("global", material_ambient)
+			SAVE_VEC("global", material_specular)
+			SAVE_VAR("global", material_shininess)    // specular power
 
 			// effect
-			SAVE(effect_ssao_radius)
-			SAVE(effect_ssao_intensity)
-			SAVE(effect_ssao_bias)
-			SAVE(effect_ssao_sharpness)
-			SAVE(effect_edl_enabled)
-			SAVE(effect_transparency_enabled)
-			SAVE(effect_shadow_enabled)
-			SAVE(shadow_light_distance)
-			SAVE(shadow_softness)
-			SAVE(shadow_darkness)
-			output << std::endl;
+			SAVE_VAR("effect", effect_ssao_radius)
+			SAVE_VAR("effect", effect_ssao_intensity)
+			SAVE_VAR("effect", effect_ssao_bias)
+			SAVE_VAR("effect", effect_ssao_sharpness)
+			SAVE_VAR("effect", shadow_light_distance)
+			SAVE_VAR("effect", shadow_softness)
+			SAVE_VAR("effect", shadow_darkness)
+				
+			// points drawable
+			SAVE_VAR("points drawable", points_drawable_two_side_lighting)
+			SAVE_VAR("points drawable", points_drawable_distinct_backside_color)
+			SAVE_VEC("points drawable", points_drawable_backside_color)
+			// lines drawable
+			SAVE_VAR("lines drawable", lines_drawable_two_side_lighting)
+			SAVE_VAR("lines drawable", lines_drawable_distinct_backside_color)
+			SAVE_VEC("lines drawable", lines_drawable_backside_color)
+			// triangles drawable
+			SAVE_VAR("triangles drawable", triangles_drawable_two_side_lighting)
+			SAVE_VAR("triangles drawable", triangles_drawable_distinct_backside_color)
+			SAVE_VEC("triangles drawable", triangles_drawable_backside_color)
 
 			// point cloud
-			SAVE(point_cloud_show_vertices)
-			SAVE(point_cloud_points_color)
-			SAVE(point_cloud_impostors)
-			SAVE(point_cloud_points_size)
-			output << std::endl;
+			SAVE_VAR("point cloud", point_cloud_vertices_visible)
+			SAVE_VEC("point cloud", point_cloud_vertices_color)
+			SAVE_VAR("point cloud", point_cloud_vertices_impostors)
+			SAVE_VAR("point cloud", point_cloud_vertices_size)
 
 			// surface mesh - surface
-			SAVE(surface_mesh_phong_shading)
-			SAVE(surface_mesh_show_faces)
-			SAVE(surface_mesh_faces_color)
-			SAVE(surface_mesh_opacity)
+			SAVE_VAR("surface mesh", surface_mesh_faces_phong_shading)
+			SAVE_VAR("surface mesh", surface_mesh_faces_visible)
+			SAVE_VEC("surface mesh", surface_mesh_faces_color)
+			SAVE_VAR("surface mesh", surface_mesh_faces_opacity)
 			// surface mesh - vertices
-			SAVE(surface_mesh_show_vertices)
-			SAVE(surface_mesh_vertices_color)
-			SAVE(surface_mesh_vertices_imposters)
-			SAVE(surface_mesh_vertices_point_size)
+			SAVE_VAR("surface mesh", surface_mesh_vertices_visible)
+			SAVE_VEC("surface mesh", surface_mesh_vertices_color)
+			SAVE_VAR("surface mesh", surface_mesh_vertices_imposters)
+			SAVE_VAR("surface mesh", surface_mesh_vertices_size)
 			// surface mesh - edges
-			SAVE(surface_mesh_show_edges)
-			SAVE(surface_mesh_edges_color)
-			SAVE(surface_mesh_edges_imposters)
-			SAVE(surface_mesh_edges_line_width)
+			SAVE_VAR("surface mesh", surface_mesh_edges_visible)
+			SAVE_VEC("surface mesh", surface_mesh_edges_color)
+			SAVE_VAR("surface mesh", surface_mesh_edges_imposters)
+			SAVE_VAR("surface mesh", surface_mesh_edges_size)
 			// surface mesh - borders
-			SAVE(surface_mesh_show_borders)
-			SAVE(surface_mesh_borders_color)
-			SAVE(surface_mesh_borders_imposters)
-			SAVE(surface_mesh_borders_line_width)
-			output << std::endl;
+			SAVE_VAR("surface mesh", surface_mesh_borders_visible)
+			SAVE_VEC("surface mesh", surface_mesh_borders_color)
+			SAVE_VAR("surface mesh", surface_mesh_borders_imposters)
+			SAVE_VAR("surface mesh", surface_mesh_borders_size)
 
 			// graph: vertices
-			SAVE(graph_show_vertices)
-			SAVE(graph_vertices_color)
-			SAVE(graph_vertices_imposters)
-			SAVE(graph_vertices_point_size)
+			SAVE_VAR("graph", graph_vertices_visible)
+			SAVE_VEC("graph", graph_vertices_color)
+			SAVE_VAR("graph", graph_vertices_imposters)
+			SAVE_VAR("graph", graph_vertices_size)
 			// graph: edges
-			SAVE(graph_show_edges)
-			SAVE(graph_edges_color)
-			SAVE(graph_edges_imposters)
-			SAVE(graph_edges_line_width)				
-			output << std::endl;
+			SAVE_VAR("graph", graph_edges_visible)
+			SAVE_VEC("graph", graph_edges_color)
+			SAVE_VAR("graph", graph_edges_imposters)
+			SAVE_VAR("graph", graph_edges_size)				
 
 			// polyhedral mesh - surface
-			SAVE(poly_mesh_show_faces)
-			SAVE(poly_mesh_faces_color)
+			SAVE_VAR("polyhedral mesh", poly_mesh_faces_visible)
+			SAVE_VEC("polyhedral mesh", poly_mesh_faces_color)
 			// polyhedral mesh - vertices
-			SAVE(poly_mesh_show_vertices)
-			SAVE(poly_mesh_vertices_color)
-			SAVE(poly_mesh_vertices_imposters)
-			SAVE(poly_mesh_vertices_point_size)
+			SAVE_VAR("polyhedral mesh", poly_mesh_vertices_visible)
+			SAVE_VEC("polyhedral mesh", poly_mesh_vertices_color)
+			SAVE_VAR("polyhedral mesh", poly_mesh_vertices_imposters)
+			SAVE_VAR("polyhedral mesh", poly_mesh_vertices_size)
 			// polyhedral mesh - edges
-			SAVE(poly_mesh_show_edges)
-			SAVE(poly_mesh_edges_color)
-			SAVE(poly_mesh_edges_imposters)
-			SAVE(poly_mesh_edges_line_width)
-			output << std::endl;
+			SAVE_VAR("polyhedral mesh", poly_mesh_edges_visible)
+			SAVE_VEC("polyhedral mesh", poly_mesh_edges_color)
+			SAVE_VAR("polyhedral mesh", poly_mesh_edges_imposters)
+			SAVE_VAR("polyhedral mesh", poly_mesh_edges_size)
 
 			// clipping plane
-			SAVE(clipping_plane_color)
+			SAVE_VEC("clipping plane", clipping_plane_color)
+
+			output << std::setw(4) << settings;
 
             return true;
         }
@@ -270,111 +278,131 @@ namespace easy3d {
                 return false;
             }
 
-#define LOAD(var)                                                                           \
-    input >> dummy >> var;                                                                  \
-    if (input.fail()) {                                                                     \
-         LOG(WARNING) << "failed to read value for variable: " << #var;                     \
-         return false;                                                                      \
-    }                                                                                       \
-    if (dummy.find(#var) == std::string::npos) {                                            \
-         LOG(WARNING) << "key does not match variable name: " << dummy << " vs. " << #var;  \
-         return false;                                                                      \
-    }
+			// read a JSON file
+			using json = nlohmann::json;
+			json settings;
+			input >> settings;
+
+#define LOAD_VAR(key, var)	{														\
+			auto pos = settings.find(key);											\
+			if (pos != settings.end()) {											\
+				auto val_pos = pos->find(#var);										\
+				if (val_pos != pos->end()) {										\
+					if (val_pos->is_array())										\
+						LOG(WARNING) << "variable type mismatch: vector vs value";	\
+					else															\
+						var = *val_pos;												\
+				}																	\
+			}																		\
+			else																	\
+				LOG(WARNING) << "value does not exist for key: " << #var;			\
+		}
+
+#define LOAD_VEC(key, var)	{														\
+			auto pos = settings.find(key);											\
+			if (pos != settings.end()) {											\
+				auto val_pos = pos->find(#var);										\
+				if (val_pos != pos->end()) {										\
+					if (val_pos->is_array()) {										\
+						for (int i = 0; i < val_pos->size(); ++i)					\
+							var[i] = val_pos->at(i);								\
+					}																\
+					else															\
+						LOG(ERROR) << "variable type mismatch: vector vs value";	\
+				}																	\
+				else																\
+					LOG(ERROR) << "value does not exist for key: " << #var;			\
+			}}
 
             std::string dummy;
 
-
 			// background color of the viewer
-			LOAD(background_color)
+			LOAD_VEC("global", background_color)
 			// highlight: color for highlighted/selected primitives
-			LOAD(highlight_color)
-
+			LOAD_VEC("global", highlight_color)
 			// lighting
-			LOAD(light_position)  // light position defined in camera coordinate system
+			LOAD_VEC("global", light_position)  // light position defined in camera coordinate system
 			// material
-			LOAD(material_ambient)
-			LOAD(material_specular)
-			LOAD(material_shininess)    // specular power
-
-			// drawable lighting
-			LOAD(triangles_drawable_two_side_lighting)
-			LOAD(points_drawable_two_side_lighting)
-			LOAD(lines_drawable_two_side_lighting)
-			// enable/disable drawable distinct backside color
-			LOAD(triangles_drawable_distinct_backside_color)
-			LOAD(points_drawable_distinct_backside_color)
-			LOAD(lines_drawable_distinct_backside_color)
-			// drawable backside color
-			LOAD(triangles_drawable_backside_color)
-			LOAD(points_drawable_backside_color)
-			LOAD(lines_drawable_backside_color)
+			LOAD_VEC("global", material_ambient)
+			LOAD_VEC("global", material_specular)
+			LOAD_VAR("global", material_shininess)    // specular power
 
 			// effect
-			LOAD(effect_ssao_radius)
-			LOAD(effect_ssao_intensity)
-			LOAD(effect_ssao_bias)
-			LOAD(effect_ssao_sharpness)
-			LOAD(effect_edl_enabled)
-			LOAD(effect_transparency_enabled)
-			LOAD(effect_shadow_enabled)
-			LOAD(shadow_light_distance)
-			LOAD(shadow_softness)
-			LOAD(shadow_darkness)
+			LOAD_VAR("effect", effect_ssao_radius)
+			LOAD_VAR("effect", effect_ssao_intensity)
+			LOAD_VAR("effect", effect_ssao_bias)
+			LOAD_VAR("effect", effect_ssao_sharpness)
+			LOAD_VAR("effect", shadow_light_distance)
+			LOAD_VAR("effect", shadow_softness)
+			LOAD_VAR("effect", shadow_darkness)
+
+			// points drawable
+			LOAD_VAR("points drawable", points_drawable_two_side_lighting)
+			LOAD_VAR("points drawable", points_drawable_distinct_backside_color)
+			LOAD_VEC("points drawable", points_drawable_backside_color)
+			// lines drawable
+			LOAD_VAR("lines drawable", lines_drawable_two_side_lighting)
+			LOAD_VAR("lines drawable", lines_drawable_distinct_backside_color)
+			LOAD_VEC("lines drawable", lines_drawable_backside_color)
+			// triangles drawable
+			LOAD_VAR("triangles drawable", triangles_drawable_two_side_lighting)
+			LOAD_VAR("triangles drawable", triangles_drawable_distinct_backside_color)
+			LOAD_VEC("triangles drawable", triangles_drawable_backside_color)
 
 			// point cloud
-			LOAD(point_cloud_show_vertices)
-			LOAD(point_cloud_points_color)
-			LOAD(point_cloud_impostors)
-			LOAD(point_cloud_points_size)
+			LOAD_VAR("point cloud", point_cloud_vertices_visible)
+			LOAD_VEC("point cloud", point_cloud_vertices_color)
+			LOAD_VAR("point cloud", point_cloud_vertices_impostors)
+			LOAD_VAR("point cloud", point_cloud_vertices_size)
 
 			// surface mesh - surface
-			LOAD(surface_mesh_phong_shading)
-			LOAD(surface_mesh_show_faces)
-			LOAD(surface_mesh_faces_color)
-			LOAD(surface_mesh_opacity)
+			LOAD_VAR("surface mesh", surface_mesh_faces_phong_shading)
+			LOAD_VAR("surface mesh", surface_mesh_faces_visible)
+			LOAD_VEC("surface mesh", surface_mesh_faces_color)
+			LOAD_VAR("surface mesh", surface_mesh_faces_opacity)
 			// surface mesh - vertices
-			LOAD(surface_mesh_show_vertices)
-			LOAD(surface_mesh_vertices_color)
-			LOAD(surface_mesh_vertices_imposters)
-			LOAD(surface_mesh_vertices_point_size)
+			LOAD_VAR("surface mesh", surface_mesh_vertices_visible)
+			LOAD_VEC("surface mesh", surface_mesh_vertices_color)
+			LOAD_VAR("surface mesh", surface_mesh_vertices_imposters)
+			LOAD_VAR("surface mesh", surface_mesh_vertices_size)
 			// surface mesh - edges
-			LOAD(surface_mesh_show_edges)
-			LOAD(surface_mesh_edges_color)
-			LOAD(surface_mesh_edges_imposters)
-			LOAD(surface_mesh_edges_line_width)
+			LOAD_VAR("surface mesh", surface_mesh_edges_visible)
+			LOAD_VEC("surface mesh", surface_mesh_edges_color)
+			LOAD_VAR("surface mesh", surface_mesh_edges_imposters)
+			LOAD_VAR("surface mesh", surface_mesh_edges_size)
 			// surface mesh - borders
-			LOAD(surface_mesh_show_borders)
-			LOAD(surface_mesh_borders_color)
-			LOAD(surface_mesh_borders_imposters)
-			LOAD(surface_mesh_borders_line_width)
+			LOAD_VAR("surface mesh", surface_mesh_borders_visible)
+			LOAD_VEC("surface mesh", surface_mesh_borders_color)
+			LOAD_VAR("surface mesh", surface_mesh_borders_imposters)
+			LOAD_VAR("surface mesh", surface_mesh_borders_size)
 
 			// graph: vertices
-			LOAD(graph_show_vertices)
-			LOAD(graph_vertices_color)
-			LOAD(graph_vertices_imposters)
-			LOAD(graph_vertices_point_size)
+			LOAD_VAR("graph", graph_vertices_visible)
+			LOAD_VEC("graph", graph_vertices_color)
+			LOAD_VAR("graph", graph_vertices_imposters)
+			LOAD_VAR("graph", graph_vertices_size)
 			// graph: edges
-			LOAD(graph_show_edges)
-			LOAD(graph_edges_color)
-			LOAD(graph_edges_imposters)
-			LOAD(graph_edges_line_width)
+			LOAD_VAR("graph", graph_edges_visible)
+			LOAD_VEC("graph", graph_edges_color)
+			LOAD_VAR("graph", graph_edges_imposters)
+			LOAD_VAR("graph", graph_edges_size)
 
 			// polyhedral mesh - surface
-			LOAD(poly_mesh_show_faces)
-			LOAD(poly_mesh_faces_color)
+			LOAD_VAR("polyhedral mesh", poly_mesh_faces_visible)
+			LOAD_VEC("polyhedral mesh", poly_mesh_faces_color)
 			// polyhedral mesh - vertices
-			LOAD(poly_mesh_show_vertices)
-			LOAD(poly_mesh_vertices_color)
-			LOAD(poly_mesh_vertices_imposters)
-			LOAD(poly_mesh_vertices_point_size)
+			LOAD_VAR("polyhedral mesh", poly_mesh_vertices_visible)
+			LOAD_VEC("polyhedral mesh", poly_mesh_vertices_color)
+			LOAD_VAR("polyhedral mesh", poly_mesh_vertices_imposters)
+			LOAD_VAR("polyhedral mesh", poly_mesh_vertices_size)
 			// polyhedral mesh - edges
-			LOAD(poly_mesh_show_edges)
-			LOAD(poly_mesh_edges_color)
-			LOAD(poly_mesh_edges_imposters)
-			LOAD(poly_mesh_edges_line_width)
+			LOAD_VAR("polyhedral mesh", poly_mesh_edges_visible)
+			LOAD_VEC("polyhedral mesh", poly_mesh_edges_color)
+			LOAD_VAR("polyhedral mesh", poly_mesh_edges_imposters)
+			LOAD_VAR("polyhedral mesh", poly_mesh_edges_size)
 
 			// clipping plane
-			LOAD(clipping_plane_color)
+			LOAD_VEC("clipping plane", clipping_plane_color)
 
             return true;
         }

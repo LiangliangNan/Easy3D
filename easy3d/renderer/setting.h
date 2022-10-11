@@ -45,17 +45,19 @@ namespace easy3d {
          * Enable storing and initializing setting of the easy3D viewer. This feature is disabled by default.
          * By calling this function with a valid file name, the rendering parameters will be loaded from the
          * setting file on program startup and will be stored to the same file on exit.
-         * \param filename The name of the setting file.
-         * \sa file_name()
+		 * @param setting_file A string specifying the full path to the setting file.
+		 *      If \p setting_file is a valid path: setting parameters will be written to this file.
+		 *      If \p setting_file is "default": create a setting file with a title in the form "AppName.ini" next to
+		 *      the executable file.
          */
-        void initialize(const std::string& filename);
+        void initialize(const std::string& setting_file = "default");
 
         /**
          * Save the setting into a file previously set by initialize(const std::string& filename).
          * The action will be ignored if the setting has not been initialized.
          * \sa initialize(const std::string& filename)
          */
-        void save();
+        void terminate();
 
         /// Save the setting (i.e., rendering parameters) to a file.
         bool save(const std::string& filename);
@@ -67,7 +69,6 @@ namespace easy3d {
         extern vec4 background_color;
         /// highlight: color for highlighted/selected primitives
         extern vec4 highlight_color;
-
         /// lighting
         extern vec4 light_position;  // light position defined in camera coordinate system
 		/// material
@@ -75,82 +76,82 @@ namespace easy3d {
 		extern vec4 material_specular;
 		extern float material_shininess;    // specular power
 
-        /// drawable lighting
-        extern bool triangles_drawable_two_side_lighting;
-        extern bool points_drawable_two_side_lighting;
-        extern bool lines_drawable_two_side_lighting;
-        /// enable/disable drawable distinct backside color
-        extern bool triangles_drawable_distinct_backside_color;
-        extern bool points_drawable_distinct_backside_color;
-        extern bool lines_drawable_distinct_backside_color;
-        /// drawable backside color
-        extern vec4 triangles_drawable_backside_color;
-        extern vec4 points_drawable_backside_color;
-        extern vec4 lines_drawable_backside_color;
+		/// effect
+		extern float effect_ssao_radius;
+		extern float effect_ssao_intensity;
+		extern float effect_ssao_bias;
+		extern float effect_ssao_sharpness;
+		extern bool effect_edl_enabled;
+		extern bool effect_transparency_enabled;
+		extern bool effect_shadow_enabled;
+		extern float shadow_light_distance;
+		extern float shadow_softness;
+		extern float shadow_darkness;
 
-        /// effect
-        extern float effect_ssao_radius;
-        extern float effect_ssao_intensity;
-        extern float effect_ssao_bias;
-        extern float effect_ssao_sharpness;
-        extern bool effect_edl_enabled;
-        extern bool effect_transparency_enabled;
-        extern bool effect_shadow_enabled;
-        extern float shadow_light_distance;
-        extern float shadow_softness;
-        extern float shadow_darkness;
+        /// points drawable
+		extern bool points_drawable_two_side_lighting;
+        extern bool points_drawable_distinct_backside_color;  
+        extern vec4 points_drawable_backside_color;
+		// lines drawable
+        extern bool lines_drawable_two_side_lighting;
+        extern bool lines_drawable_distinct_backside_color;		
+        extern vec4 lines_drawable_backside_color;		
+		// triangles drawable
+		extern bool triangles_drawable_two_side_lighting;
+        extern bool triangles_drawable_distinct_backside_color;
+        extern vec4 triangles_drawable_backside_color;
 
         /// point cloud
-        extern bool point_cloud_show_vertices;
-        extern vec4 point_cloud_points_color;
-        extern bool point_cloud_impostors;
-		extern float point_cloud_points_size;
+        extern bool point_cloud_vertices_visible;
+        extern vec4 point_cloud_vertices_color;
+        extern bool point_cloud_vertices_impostors;
+		extern float point_cloud_vertices_size;
 
         /// surface mesh - surface
-        extern bool surface_mesh_phong_shading;
-        extern bool surface_mesh_show_faces;
+        extern bool surface_mesh_faces_phong_shading;
+        extern bool surface_mesh_faces_visible;
         extern vec4 surface_mesh_faces_color;
-        extern float surface_mesh_opacity;
+        extern float surface_mesh_faces_opacity;
         /// surface mesh - vertices
-        extern bool surface_mesh_show_vertices;
+        extern bool surface_mesh_vertices_visible;
         extern vec4 surface_mesh_vertices_color;
         extern bool surface_mesh_vertices_imposters;
-        extern float surface_mesh_vertices_point_size;
+        extern float surface_mesh_vertices_size;
         /// surface mesh - edges
-        extern bool surface_mesh_show_edges;
+        extern bool surface_mesh_edges_visible;
         extern vec4 surface_mesh_edges_color;
         extern bool surface_mesh_edges_imposters;
-        extern float surface_mesh_edges_line_width;
+        extern float surface_mesh_edges_size;
         /// surface mesh - borders
-        extern bool surface_mesh_show_borders;
+        extern bool surface_mesh_borders_visible;
         extern vec4 surface_mesh_borders_color;
         extern bool surface_mesh_borders_imposters;
-        extern float surface_mesh_borders_line_width;
+        extern float surface_mesh_borders_size;
 
         /// graph: vertices
-        extern bool graph_show_vertices;
+        extern bool graph_vertices_visible;
         extern vec4 graph_vertices_color;
         extern bool graph_vertices_imposters;
-        extern float graph_vertices_point_size;
+        extern float graph_vertices_size;
         /// graph: edges
-        extern bool graph_show_edges;
+        extern bool graph_edges_visible;
         extern vec4 graph_edges_color;
         extern bool graph_edges_imposters;
-        extern float graph_edges_line_width;
+        extern float graph_edges_size;
 
 		/// polyhedral mesh - surface
-		extern bool poly_mesh_show_faces;
+		extern bool poly_mesh_faces_visible;
 		extern vec4 poly_mesh_faces_color;
 		/// polyhedral mesh - vertices
-		extern bool poly_mesh_show_vertices;
+		extern bool poly_mesh_vertices_visible;
 		extern vec4 poly_mesh_vertices_color;
 		extern bool poly_mesh_vertices_imposters;
-		extern float poly_mesh_vertices_point_size;
+		extern float poly_mesh_vertices_size;
 		/// polyhedral mesh - edges
-		extern bool poly_mesh_show_edges;
+		extern bool poly_mesh_edges_visible;
 		extern vec4 poly_mesh_edges_color;
 		extern bool poly_mesh_edges_imposters;
-		extern float poly_mesh_edges_line_width;
+		extern float poly_mesh_edges_size;
 
         /// clipping plane
         extern ClippingPlane* clipping_plane;

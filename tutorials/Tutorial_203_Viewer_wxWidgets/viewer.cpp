@@ -133,10 +133,9 @@ namespace easy3d {
 
         ShaderManager::terminate();
         TextureManager::terminate();
-
         delete gl_contex_;
 
-        setting::save();
+		setting::terminate();
         LOG(INFO) << "viewer terminated. Bye!";
     }
 
