@@ -886,15 +886,15 @@ namespace easy3d {
                 delete_model(current_model());
         } else if (key == GLFW_KEY_E && modifiers == 0) {
             if (current_model()) {
-                auto *edges = current_model()->renderer()->get_lines_drawable("edges");
-                if (edges)
-                    edges->set_visible(!edges->is_visible());
+                auto *drawable = current_model()->renderer()->get_lines_drawable("edges");
+                if (drawable)
+					drawable->set_visible(!drawable->is_visible());
             }
         } else if (key == GLFW_KEY_V && modifiers == 0) {
             if (current_model()) {
-                auto vertices = current_model()->renderer()->get_points_drawable("vertices");
-                if (vertices)
-                    vertices->set_visible(!vertices->is_visible());
+                auto drawable = current_model()->renderer()->get_points_drawable("vertices");
+                if (drawable)
+					drawable->set_visible(!drawable->is_visible());
             }
         } else if (key == GLFW_KEY_B && modifiers == 0) {
             SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(current_model());

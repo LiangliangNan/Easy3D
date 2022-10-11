@@ -62,19 +62,24 @@ namespace easy3d {
         /// Load the setting (i.e., rendering parameters) from a file.
         bool load(const std::string& filename);
 
-        /// ui: background color of the viewer
-        extern vec4 background_color;
 
-        // highlight: color for highlighted/selected primitives
+        /// background color of the viewer
+        extern vec4 background_color;
+        /// highlight: color for highlighted/selected primitives
         extern vec4 highlight_color;
 
         /// lighting
         extern vec4 light_position;  // light position defined in camera coordinate system
+		/// material
+		extern vec4 material_ambient;
+		extern vec4 material_specular;
+		extern float material_shininess;    // specular power
+
         /// drawable lighting
         extern bool triangles_drawable_two_side_lighting;
         extern bool points_drawable_two_side_lighting;
         extern bool lines_drawable_two_side_lighting;
-        /// drawable distinct backside color
+        /// enable/disable drawable distinct backside color
         extern bool triangles_drawable_distinct_backside_color;
         extern bool points_drawable_distinct_backside_color;
         extern bool lines_drawable_distinct_backside_color;
@@ -82,11 +87,6 @@ namespace easy3d {
         extern vec4 triangles_drawable_backside_color;
         extern vec4 points_drawable_backside_color;
         extern vec4 lines_drawable_backside_color;
-
-        /// material
-        extern vec4 material_ambient;
-        extern vec4 material_specular;
-        extern float material_shininess;    // specular power
 
         /// effect
         extern float effect_ssao_radius;
@@ -103,8 +103,8 @@ namespace easy3d {
         /// point cloud
         extern bool point_cloud_show_vertices;
         extern vec4 point_cloud_points_color;
-        extern float point_cloud_point_size;
         extern bool point_cloud_impostors;
+		extern float point_cloud_points_size;
 
         /// surface mesh - surface
         extern bool surface_mesh_phong_shading;
@@ -132,12 +132,25 @@ namespace easy3d {
         extern vec4 graph_vertices_color;
         extern bool graph_vertices_imposters;
         extern float graph_vertices_point_size;
-
         /// graph: edges
         extern bool graph_show_edges;
         extern vec4 graph_edges_color;
         extern bool graph_edges_imposters;
         extern float graph_edges_line_width;
+
+		/// polyhedral mesh - surface
+		extern bool poly_mesh_show_faces;
+		extern vec4 poly_mesh_faces_color;
+		/// polyhedral mesh - vertices
+		extern bool poly_mesh_show_vertices;
+		extern vec4 poly_mesh_vertices_color;
+		extern bool poly_mesh_vertices_imposters;
+		extern float poly_mesh_vertices_point_size;
+		/// polyhedral mesh - edges
+		extern bool poly_mesh_show_edges;
+		extern vec4 poly_mesh_edges_color;
+		extern bool poly_mesh_edges_imposters;
+		extern float poly_mesh_edges_line_width;
 
         /// clipping plane
         extern ClippingPlane* clipping_plane;
