@@ -516,7 +516,6 @@ namespace easy3d {
 
     Viewer::~Viewer() {
         cleanup();
-        setting::terminate();
         LOG(INFO) << "viewer terminated. Bye!";
     }
 
@@ -815,9 +814,9 @@ namespace easy3d {
         } else if (key == GLFW_KEY_T && modifiers == EASY3D_MOD_CONTROL) {
             show_camera_path_ = !show_camera_path_;
             if (show_camera_path_) {
-                const int count = kfi_->number_of_keyframes();
+                const std::size_t count = kfi_->number_of_keyframes();
                 float radius = camera_->sceneRadius();
-                for (int i=0; i<count; ++i) {
+                for (std::size_t i=0; i<count; ++i) {
                     radius = std::max( radius,
                             distance(camera_->sceneCenter(), kfi_->keyframe(i).position())
                     );
@@ -1671,7 +1670,7 @@ namespace easy3d {
 
             float depth = 1.0f;
             glPixelStorei(GL_PACK_ALIGNMENT, 1);    easy3d_debug_log_gl_error;
-            glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth); easy3d_debug_log_gl_error;
+            glReadPixels(static_cast<int>(x), static_cast<int>(y), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth); easy3d_debug_log_gl_error;
             if (depth < 1.0 && p.z < 1.0 && std::abs(depth - p.z) < 0.001)
                 texter->draw(std::to_string(f.idx()), x, p.y * dpi_scaling_, 16, font_id, color);
         }
@@ -1689,7 +1688,7 @@ namespace easy3d {
 
             float depth = 1.0f;
             glPixelStorei(GL_PACK_ALIGNMENT, 1);    easy3d_debug_log_gl_error;
-            glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth); easy3d_debug_log_gl_error;
+            glReadPixels(static_cast<int>(x), static_cast<int>(y), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth); easy3d_debug_log_gl_error;
             if (depth < 1.0 && p.z < 1.0 && std::abs(depth - p.z) < 0.001)
                 texter->draw(std::to_string(id), x, p.y * dpi_scaling_, 16, font_id, color);
         }

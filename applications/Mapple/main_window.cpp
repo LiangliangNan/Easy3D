@@ -226,7 +226,6 @@ MainWindow::MainWindow(QWidget *parent)
 
 
 MainWindow::~MainWindow() {
-	setting::terminate();
     LOG(INFO) << "Mapple terminated. Bye!";
 }
 
@@ -1397,7 +1396,7 @@ void MainWindow::surfaceMeshRemoveDuplicateAndFoldingFaces() {
     w.start();
 	LOG(INFO) << "removing overlapping faces...";
 
-    unsigned int num_degenerate = Surfacer::remove_degenerate_faces(mesh, 1e-5);
+    unsigned int num_degenerate = Surfacer::remove_degenerate_faces(mesh, 1e-5f);
     unsigned int num_overlapping = Surfacer::remove_overlapping_faces(mesh, true);
     if (num_degenerate + num_overlapping > 0) {
         mesh->renderer()->update();

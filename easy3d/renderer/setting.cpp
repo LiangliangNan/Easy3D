@@ -132,10 +132,8 @@ namespace easy3d {
 
 
 
-		std::string setting_file_name = "";
-
 		void initialize(const std::string& setting_file) {
-			setting_file_name = setting_file;
+			std::string setting_file_name = setting_file;
 			if (setting_file_name == "default") {
 				const std::string app_path = file_system::executable();
 				std::string file_path = app_path;
@@ -156,12 +154,6 @@ namespace easy3d {
 				save(setting_file_name);
 			}
 		}
-
-		void terminate() {
-			if (!setting_file_name.empty())
-				save(setting_file_name);
-		}
-
 
         // Save the rendering parameters to a file.
         bool save(const std::string& file_name) {

@@ -83,7 +83,6 @@ namespace easy3d {
     }
 
     MainWindow::~MainWindow() {
-		setting::terminate();
     }
 
 

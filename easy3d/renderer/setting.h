@@ -42,28 +42,21 @@ namespace easy3d {
     namespace setting {
 
         /**
-         * Enable storing and initializing setting of the easy3D viewer. This feature is disabled by default.
+         * Enable initializing settings for Easy3D on program start up. This feature is disabled by default.
          * By calling this function with a valid file name, the rendering parameters will be loaded from the
-         * setting file on program startup and will be stored to the same file on exit.
-		 * @param setting_file A string specifying the full path to the setting file.
-		 *      If \p setting_file is a valid path: setting parameters will be written to this file.
-		 *      If \p setting_file is "default": create a setting file with a title in the form "AppName.ini" next to
-		 *      the executable file.
+         * setting file on program startup.
+		 * @param setting_file A string specifying the name of setting file.
+		 *		- If \p setting_file is "default": create a setting file with a title in the form "AppName.ini" next to
+		 *        the executable file.
+		 *      - If \p setting_file is another non-empty string: a setting file with the same name will be created and 
+		 *		  setting parameters will be written to this file.
          */
         void initialize(const std::string& setting_file = "default");
-
-        /**
-         * Save the setting into a file previously set by initialize(const std::string& filename).
-         * The action will be ignored if the setting has not been initialized.
-         * \sa initialize(const std::string& filename)
-         */
-        void terminate();
 
         /// Save the setting (i.e., rendering parameters) to a file.
         bool save(const std::string& filename);
         /// Load the setting (i.e., rendering parameters) from a file.
         bool load(const std::string& filename);
-
 
         /// background color of the viewer
         extern vec4 background_color;
