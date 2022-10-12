@@ -14,18 +14,18 @@ endif ()
 
 
 set(${PROJECT_NAME}_HEADERS
-        main_window.h
+        window.h
         viewer.h
         )
 
 set(${PROJECT_NAME}_SOURCES
         main.cpp
-        main_window.cpp
+        window.cpp
         viewer.cpp
         )
 
 set(${PROJECT_NAME}_FORMS
-        main_window.ui
+        window.ui
         )
 
 set(${PROJECT_NAME}_RESOURCES

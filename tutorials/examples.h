@@ -230,35 +230,8 @@
  * \include Tutorial_506_DepthMaps/viewer.cpp
  */
 
-/**
- * \example Tutorial_601_Cloud_NormalEstimation
- * The source file containing the main() function:
- * \include Tutorial_601_Cloud_NormalEstimation/main.cpp
- * The header file of the viewer class:
- * \include Tutorial_601_Cloud_NormalEstimation/viewer.h
- * The source file of the viewer class:
- * \include Tutorial_601_Cloud_NormalEstimation/viewer.cpp
- */
-
-/**
- * \example Tutorial_602_Cloud_SurfaceReconstruction
- * The source file containing the main() function:
- * \include Tutorial_602_Cloud_SurfaceReconstruction/main.cpp
- * The header file of the viewer class:
- * \include Tutorial_602_Cloud_SurfaceReconstruction/viewer.h
- * The source file of the viewer class:
- * \include Tutorial_602_Cloud_SurfaceReconstruction/viewer.cpp
- */
-
-/**
- * \example Tutorial_603_Cloud_PlaneExtraction
- * The source file containing the main() function:
- * \include Tutorial_603_Cloud_PlaneExtraction/main.cpp
- * The header file of the viewer class:
- * \include Tutorial_603_Cloud_PlaneExtraction/viewer.h
- * The source file of the viewer class:
- * \include Tutorial_603_Cloud_PlaneExtraction/viewer.cpp
- */
-
+/// \example Tutorial_601_Cloud_NormalEstimation        \include Tutorial_601_Cloud_NormalEstimation/main.cpp
+/// \example Tutorial_602_Cloud_SurfaceReconstruction   \include Tutorial_602_Cloud_SurfaceReconstruction/main.cpp
+/// \example Tutorial_603_Cloud_PlaneExtraction         \include Tutorial_603_Cloud_PlaneExtraction/main.cpp
 
 #endif //EASY3D_EXAMPLES_H

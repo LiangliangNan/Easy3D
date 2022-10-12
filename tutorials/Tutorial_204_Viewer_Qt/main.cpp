@@ -32,7 +32,7 @@
 
 #include <easy3d/util/logging.h>
 
-#include "main_window.h"
+#include "window.h"
 
 
 using namespace easy3d;
@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
     // Initialize logging.
     logging::initialize();
 
-    MainWindow win;
+    Window win;
     win.show();
     return app.exec();
 }

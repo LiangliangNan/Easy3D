@@ -65,7 +65,7 @@
 namespace easy3d {
 
 
-    ViewerQt::ViewerQt(QWidget *parent /* = nullptr*/)
+    Viewer::Viewer(QWidget *parent /* = nullptr*/)
             : QOpenGLWidget(parent), func_(nullptr), texter_(nullptr), pressed_button_(Qt::NoButton),
               mouse_pressed_pos_(0, 0), mouse_previous_pos_(0, 0), show_pivot_point_(false), drawable_axes_(nullptr),
               model_idx_(-1) {
@@ -79,11 +79,11 @@ namespace easy3d {
         camera_->setViewDirection(vec3(-1, 0, 0)); // X pointing out
         camera_->showEntireScene();
 
-        easy3d::connect(&camera_->frame_modified, this, static_cast<void (ViewerQt::*)(void)>(&ViewerQt::update));
+        easy3d::connect(&camera_->frame_modified, this, static_cast<void (Viewer::*)(void)>(&Viewer::update));
     }
 
 
-    ViewerQt::~ViewerQt() {
+    Viewer::~Viewer() {
         // Make sure the context is current and then explicitly
         // destroy all underlying OpenGL resources.
         makeCurrent();
@@ -96,7 +96,7 @@ namespace easy3d {
     }
 
 
-    void ViewerQt::cleanup() {
+    void Viewer::cleanup() {
         delete camera_;
         delete drawable_axes_;
         delete texter_;
@@ -112,7 +112,7 @@ namespace easy3d {
     }
 
 
-    void ViewerQt::init() {
+    void Viewer::init() {
         const std::string file_name = resource::directory() + "/data/easy3d.ply";
         auto mesh = SurfaceMeshIO::load(file_name);
         if (mesh)
@@ -125,7 +125,7 @@ namespace easy3d {
     }
 
 
-    void ViewerQt::initializeGL() {
+    void Viewer::initializeGL() {
         QOpenGLWidget::initializeGL();
         func_ = context()->functions();
         func_->initializeOpenGLFunctions();
@@ -136,10 +136,10 @@ namespace easy3d {
 #endif
 
         if (!func_->hasOpenGLFeature(QOpenGLFunctions::Multisample))
-            throw std::runtime_error("Multisample not supported on this machine!!! ViewerQt may not run properly");
+            throw std::runtime_error("Multisample not supported on this machine!!! Viewer may not run properly");
         if (!func_->hasOpenGLFeature(QOpenGLFunctions::Framebuffers))
             throw std::runtime_error(
-                    "Framebuffer Object is not supported on this machine!!! ViewerQt may not run properly");
+                    "Framebuffer Object is not supported on this machine!!! Viewer may not run properly");
 
         background_color_ = setting::background_color;
 
@@ -160,7 +160,7 @@ namespace easy3d {
         int minor = 0;
         func_->glGetIntegerv(GL_MINOR_VERSION, &minor);
         if (major * 10 + minor < 32) {
-            throw std::runtime_error("ViewerQt requires at least OpenGL 3.2");
+            throw std::runtime_error("Viewer requires at least OpenGL 3.2");
         }
 
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
@@ -191,7 +191,7 @@ namespace easy3d {
     }
 
 
-    void ViewerQt::resizeGL(int w, int h) {
+    void Viewer::resizeGL(int w, int h) {
         QOpenGLWidget::resizeGL(w, h);
 
         // The viewport is set up by QOpenGLWidget before drawing.
@@ -202,7 +202,7 @@ namespace easy3d {
     }
 
 
-    void ViewerQt::setBackgroundColor(const vec4 &c) {
+    void Viewer::setBackgroundColor(const vec4 &c) {
         background_color_ = c;
 
         makeCurrent();
@@ -211,7 +211,7 @@ namespace easy3d {
     }
 
 
-    void ViewerQt::mousePressEvent(QMouseEvent *e) {
+    void Viewer::mousePressEvent(QMouseEvent *e) {
         pressed_button_ = e->button();
         mouse_previous_pos_ = e->pos();
         mouse_pressed_pos_ = e->pos();
@@ -247,7 +247,7 @@ namespace easy3d {
     }
 
 
-    void ViewerQt::mouseReleaseEvent(QMouseEvent *e) {
+    void Viewer::mouseReleaseEvent(QMouseEvent *e) {
         if (e->button() == Qt::LeftButton && e->modifiers() == Qt::ControlModifier) { // ZOOM_ON_REGION
             int xmin = std::min(mouse_pressed_pos_.x(), e->pos().x());
             int xmax = std::max(mouse_pressed_pos_.x(), e->pos().x());
@@ -265,7 +265,7 @@ namespace easy3d {
     }
 
 
-    void ViewerQt::mouseMoveEvent(QMouseEvent *e) {
+    void Viewer::mouseMoveEvent(QMouseEvent *e) {
         int x = e->pos().x(), y = e->pos().y();
         // Restrict the cursor to be within the client area during dragging
         if (x < 0 || x > width() || y < 0 || y > height()) {
@@ -297,13 +297,13 @@ namespace easy3d {
     }
 
 
-    void ViewerQt::mouseDoubleClickEvent(QMouseEvent *e) {
+    void Viewer::mouseDoubleClickEvent(QMouseEvent *e) {
         QOpenGLWidget::mouseDoubleClickEvent(e);
         update();
     }
 
 
-    void ViewerQt::wheelEvent(QWheelEvent *e) {
+    void Viewer::wheelEvent(QWheelEvent *e) {
         const int delta = e->delta();
         if (delta <= -1 || delta >= 1) {
             int dy = e->delta() > 0 ? 1 : -1;
@@ -315,7 +315,7 @@ namespace easy3d {
     }
 
 
-    bool ViewerQt::saveSnapshot(const QString &file_name) {
+    bool Viewer::saveSnapshot(const QString &file_name) {
         makeCurrent();
 
         int w = static_cast<int>(width() * dpi_scaling());
@@ -346,7 +346,7 @@ namespace easy3d {
     }
 
 
-    Model *ViewerQt::currentModel() const {
+    Model *Viewer::currentModel() const {
         if (models_.empty())
             return nullptr;
         if (model_idx_ < models_.size())
@@ -354,7 +354,7 @@ namespace easy3d {
         return nullptr;
     }
 
-    void ViewerQt::keyPressEvent(QKeyEvent *e) {
+    void Viewer::keyPressEvent(QKeyEvent *e) {
         if (e->key() == Qt::Key_F1 && e->modifiers() == Qt::NoModifier)
             std::cout << usage() << std::endl;
         else if (e->key() == Qt::Key_Left && e->modifiers() == Qt::KeypadModifier) {
@@ -567,25 +567,25 @@ namespace easy3d {
     }
 
 
-    void ViewerQt::keyReleaseEvent(QKeyEvent *e) {
+    void Viewer::keyReleaseEvent(QKeyEvent *e) {
         QOpenGLWidget::keyReleaseEvent(e);
         update();
     }
 
 
-    void ViewerQt::timerEvent(QTimerEvent *e) {
+    void Viewer::timerEvent(QTimerEvent *e) {
         QOpenGLWidget::timerEvent(e);
         update();
     }
 
 
-    void ViewerQt::closeEvent(QCloseEvent *e) {
+    void Viewer::closeEvent(QCloseEvent *e) {
         cleanup();
         QOpenGLWidget::closeEvent(e);
     }
 
 
-    std::string ViewerQt::usage() const {
+    std::string Viewer::usage() const {
         return std::string(
                 " ------------------------------------------------------------------\n"
                 " Easy3D viewer usage:                                              \n"
@@ -626,7 +626,7 @@ namespace easy3d {
     }
 
 
-    void ViewerQt::addModel(Model *model) {
+    void Viewer::addModel(Model *model) {
         if (!model) {
             LOG(WARNING) << "model is NULL.";
             return;
@@ -662,7 +662,7 @@ namespace easy3d {
     }
 
 
-    void ViewerQt::deleteModel(Model *model) {
+    void Viewer::deleteModel(Model *model) {
         if (!model) {
             LOG(WARNING) << "model is NULL.";
             return;
@@ -692,7 +692,7 @@ namespace easy3d {
     }
 
 
-    void ViewerQt::fitScreen(const Model *model) {
+    void Viewer::fitScreen(const Model *model) {
         if (!model && models_.empty())
             return;
 
@@ -709,8 +709,8 @@ namespace easy3d {
     }
 
 
-    vec3 ViewerQt::pointUnderPixel(const QPoint &p, bool &found) const {
-        const_cast<ViewerQt *>(this)->makeCurrent();
+    vec3 Viewer::pointUnderPixel(const QPoint &p, bool &found) const {
+        const_cast<Viewer *>(this)->makeCurrent();
 
         // Qt (same as GLFW) uses upper corner for its origin while GL uses the lower corner.
         int glx = p.x();
@@ -734,7 +734,7 @@ namespace easy3d {
             easy3d_debug_log_gl_error;
         }
 
-        const_cast<ViewerQt *>(this)->doneCurrent();
+        const_cast<Viewer *>(this)->doneCurrent();
         // here the glGetError() won't work because the OpenGL context is not current.
         // easy3d_debug_log_gl_error;
 
@@ -750,7 +750,7 @@ namespace easy3d {
     }
 
 
-    void ViewerQt::paintGL() {
+    void Viewer::paintGL() {
         easy3d_debug_log_gl_error;
 
 #if 1
@@ -794,7 +794,7 @@ namespace easy3d {
     }
 
 
-    void ViewerQt::drawCornerAxes() {
+    void Viewer::drawCornerAxes() {
         ShaderProgram *program = ShaderManager::get_program("surface/surface");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes;
@@ -884,7 +884,7 @@ namespace easy3d {
     }
 
 
-    void ViewerQt::preDraw() {
+    void Viewer::preDraw() {
         // For normal drawing, i.e., drawing triggered by the paintEvent(),
         // the clearing is done before entering paintGL().
         // If you want to reuse the paintGL() method for offscreen rendering,
@@ -893,7 +893,7 @@ namespace easy3d {
     }
 
 
-    void ViewerQt::postDraw() {
+    void Viewer::postDraw() {
         // draw the Easy3D logo and GPU time
         if (texter_ && texter_->num_fonts() >= 2) {
             const float font_size = 15.0f;
@@ -950,7 +950,7 @@ namespace easy3d {
     }
 
 
-    void ViewerQt::draw() {
+    void Viewer::draw() {
         easy3d_debug_log_gl_error;
 
         for (const auto m: models_) {

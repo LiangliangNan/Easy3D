@@ -24,8 +24,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef PAINT_CANVAS_H
-#define PAINT_CANVAS_H
+#ifndef EASY3D_QT_VIEWER_H
+#define EASY3D_QT_VIEWER_H
 
 #include <easy3d/core/types.h>
 
@@ -43,11 +43,11 @@ namespace easy3d {
     class TrianglesDrawable;
     class TextRenderer;
 
-    class ViewerQt : public QOpenGLWidget {
+    class Viewer : public QOpenGLWidget {
     Q_OBJECT
     public:
-        explicit ViewerQt(QWidget *parent = nullptr);
-        virtual ~ViewerQt() override;
+        explicit Viewer(QWidget *parent = nullptr);
+        virtual ~Viewer() override;
 
         virtual std::string usage() const;
 
@@ -212,4 +212,4 @@ namespace easy3d {
 
 }
 
-#endif // PAINT_CANVAS_H
+#endif // EASY3D_QT_VIEWER_H

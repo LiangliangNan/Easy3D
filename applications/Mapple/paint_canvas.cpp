@@ -182,10 +182,10 @@ void PaintCanvas::initializeGL() {
 #endif
 
     if (!func_->hasOpenGLFeature(QOpenGLFunctions::Multisample))
-        throw std::runtime_error("Multisample not supported on this machine!!! ViewerQt may not run properly");
+        throw std::runtime_error("Multisample not supported on this machine!!! Mapple may not run properly");
     if (!func_->hasOpenGLFeature(QOpenGLFunctions::Framebuffers))
         throw std::runtime_error(
-                "Framebuffer Object is not supported on this machine!!! ViewerQt may not run properly");
+                "Framebuffer Object is not supported on this machine!!! Mapple may not run properly");
 
     func_->glEnable(GL_DEPTH_TEST);
 
@@ -205,7 +205,7 @@ void PaintCanvas::initializeGL() {
     int minor = 0;
     func_->glGetIntegerv(GL_MINOR_VERSION, &minor);
     if (major * 10 + minor < 32) {
-        throw std::runtime_error("ViewerQt requires at least OpenGL 3.2");
+        throw std::runtime_error("Mapple requires at least OpenGL 3.2");
     }
 
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))

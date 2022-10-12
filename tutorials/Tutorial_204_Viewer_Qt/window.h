@@ -24,28 +24,28 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef EASY3D_QT_VIEWER_MAIN_WINDOW_H
-#define EASY3D_QT_VIEWER_MAIN_WINDOW_H
+#ifndef EASY3D_QT_VIEWER_WINDOW_H
+#define EASY3D_QT_VIEWER_WINDOW_H
 
 #include <string>
 #include <QMainWindow>
 
 
 namespace Ui {
-    class MainWindow;
+    class Window;
 }
 
 namespace easy3d {
 
     class Model;
-    class ViewerQt;
+    class Viewer;
 
-    class MainWindow : public QMainWindow {
+    class Window : public QMainWindow {
     Q_OBJECT
     public:
-        explicit MainWindow(QWidget *parent = nullptr);
-        ~MainWindow() override;
-        ViewerQt *viewer() { return viewer_; }
+        explicit Window(QWidget *parent = nullptr);
+        ~Window() override;
+        Viewer *viewer() { return viewer_; }
 
     public slots:
 
@@ -92,7 +92,7 @@ namespace easy3d {
         QString strippedName(const QString &fullFileName);
 
     private:
-        ViewerQt *viewer_;
+        Viewer *viewer_;
 
         QStringList recentFiles_;
         QString curDataDirectory_;
@@ -104,10 +104,10 @@ namespace easy3d {
                 *actionSeparator;
 
     private:
-        Ui::MainWindow *ui;
+        Ui::Window *ui;
 
     };
 
 }
 
-#endif // EASY3D_QT_VIEWER_MAIN_WINDOW_H
+#endif // EASY3D_QT_VIEWER_WINDOW_H

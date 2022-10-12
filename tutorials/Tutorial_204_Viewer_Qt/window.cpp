@@ -24,7 +24,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include "main_window.h"
+#include "window.h"
 
 #include <string>
 #include <iostream>
@@ -55,16 +55,16 @@
 
 #include "viewer.h"
 
-#include <ui_main_window.h>
+#include <ui_window.h>
 
 
 namespace easy3d {
 
-    MainWindow::MainWindow(QWidget *parent)
-            : QMainWindow(parent), ui(new Ui::MainWindow) {
+    Window::Window(QWidget *parent)
+            : QMainWindow(parent), ui(new Ui::Window) {
         ui->setupUi(this);
 
-        viewer_ = new ViewerQt(this);
+        viewer_ = new Viewer(this);
         connect(viewer_, SIGNAL(currentModelChanged()), this, SLOT(onCurrentModelChanged()));
         setCentralWidget(viewer_);
 
@@ -82,17 +82,17 @@ namespace easy3d {
         updateWindowTitle();
     }
 
-    MainWindow::~MainWindow() {
+    Window::~Window() {
     }
 
 
-    void MainWindow::dragEnterEvent(QDragEnterEvent *e) {
+    void Window::dragEnterEvent(QDragEnterEvent *e) {
         if (e->mimeData()->hasUrls())
             e->acceptProposedAction();
     }
 
 
-    void MainWindow::dropEvent(QDropEvent *e) {
+    void Window::dropEvent(QDropEvent *e) {
         if (e->mimeData()->hasUrls())
             e->acceptProposedAction();
 
@@ -108,7 +108,7 @@ namespace easy3d {
     }
 
 
-    bool MainWindow::onOpen() {
+    bool Window::onOpen() {
         const QStringList &fileNames = QFileDialog::getOpenFileNames(
                 this,
                 "Open file(s)",
@@ -145,7 +145,7 @@ namespace easy3d {
     }
 
 
-    bool MainWindow::onSave() {
+    bool Window::onSave() {
         const Model *model = viewer_->currentModel();
         if (!model) {
             std::cerr << "no model exists" << std::endl;
@@ -193,7 +193,7 @@ namespace easy3d {
     }
 
 
-    Model *MainWindow::open(const std::string &file_name) {
+    Model *Window::open(const std::string &file_name) {
         auto models = viewer_->models();
         for (auto m: models) {
             if (m->name() == file_name) {
@@ -236,7 +236,7 @@ namespace easy3d {
     }
 
 
-    void MainWindow::onCurrentModelChanged() {
+    void Window::onCurrentModelChanged() {
         const Model *m = viewer_->currentModel();
         if (m) {
             viewer_->fitScreen(m);
@@ -248,7 +248,7 @@ namespace easy3d {
     }
 
 
-    void MainWindow::setCurrentFile(const QString &fileName) {
+    void Window::setCurrentFile(const QString &fileName) {
         QString dir = fileName.left(fileName.lastIndexOf("/"));
         if (!dir.isEmpty() && file_system::is_directory(dir.toStdString()))
             curDataDirectory_ = dir;
@@ -265,7 +265,7 @@ namespace easy3d {
     }
 
 
-    void MainWindow::onOpenRecentFile() {
+    void Window::onOpenRecentFile() {
         if (okToContinue()) {
             QAction *action = qobject_cast<QAction *>(sender());
             if (action) {
@@ -277,13 +277,13 @@ namespace easy3d {
     }
 
 
-    void MainWindow::onClearRecentFiles() {
+    void Window::onClearRecentFiles() {
         recentFiles_.clear();
         updateRecentFileActions();
     }
 
 
-    void MainWindow::saveSnapshot() {
+    void Window::saveSnapshot() {
         const Model *model = viewer_->currentModel();
 
         const bool overwrite = false;
@@ -314,7 +314,7 @@ namespace easy3d {
     }
 
 
-    void MainWindow::setBackgroundColor() {
+    void Window::setBackgroundColor() {
         const vec4 &c = viewer_->backGroundColor();
         QColor orig(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255),
                     static_cast<int>(c.a * 255));
@@ -327,9 +327,9 @@ namespace easy3d {
     }
 
 
-    bool MainWindow::okToContinue() {
+    bool Window::okToContinue() {
         if (isWindowModified()) {
-            int r = QMessageBox::warning(this, tr("ViewerQt"),
+            int r = QMessageBox::warning(this, tr("Viewer"),
                                          tr("The model has been modified.\n"
                                             "Do you want to save your changes?"),
                                          QMessageBox::Yes | QMessageBox::Default,
@@ -344,8 +344,8 @@ namespace easy3d {
     }
 
 
-    void MainWindow::onAbout() {
-        QString title = QMessageBox::tr("<h3>ViewerQt</h3>");
+    void Window::onAbout() {
+        QString title = QMessageBox::tr("<h3>Viewer</h3>");
 
         QString text = QMessageBox::tr(
                 "<p>This viewer shows how to use Qt for GUI creation and event handling</p>"
@@ -355,27 +355,27 @@ namespace easy3d {
         );
 
         //QMessageBox::about(this, title, text);
-        QMessageBox::about(this, "About ViewerQt", title + text);
+        QMessageBox::about(this, "About Viewer", title + text);
     }
 
 
-    void MainWindow::readSettings() {
-        QSettings settings("liangliang.nan@gmail.com", "ViewerQt");
+    void Window::readSettings() {
+        QSettings settings("liangliang.nan@gmail.com", "Viewer");
         recentFiles_ = settings.value("recentFiles").toStringList();
         updateRecentFileActions();
         curDataDirectory_ = settings.value("currentDirectory").toString();
     }
 
 
-    void MainWindow::writeSettings() {
-        QSettings settings("liangliang.nan@gmail.com", "ViewerQt");
+    void Window::writeSettings() {
+        QSettings settings("liangliang.nan@gmail.com", "Viewer");
         settings.setValue("recentFiles", recentFiles_);
         if (!curDataDirectory_.isEmpty() && file_system::is_directory(curDataDirectory_.toStdString()))
             settings.setValue("currentDirectory", curDataDirectory_);
     }
 
 
-    void MainWindow::updateWindowTitle() {
+    void Window::updateWindowTitle() {
         Model *model = viewer_->currentModel();
 
 #ifndef NDEBUG
@@ -393,7 +393,7 @@ namespace easy3d {
     }
 
 
-    void MainWindow::closeEvent(QCloseEvent *event) {
+    void Window::closeEvent(QCloseEvent *event) {
         if (okToContinue()) {
             writeSettings();
             event->accept();
@@ -403,7 +403,7 @@ namespace easy3d {
     }
 
 
-    void MainWindow::updateRecentFileActions() {
+    void Window::updateRecentFileActions() {
         QMutableStringListIterator i(recentFiles_);
         while (i.hasNext()) {
             if (!QFile::exists(i.next()))
@@ -425,12 +425,12 @@ namespace easy3d {
     }
 
 
-    QString MainWindow::strippedName(const QString &fullFileName) {
+    QString Window::strippedName(const QString &fullFileName) {
         return QFileInfo(fullFileName).fileName();
     }
 
 
-    void MainWindow::createActions() {
+    void Window::createActions() {
         // file menu
         createActionsForFileMenu();
 
@@ -445,7 +445,7 @@ namespace easy3d {
     }
 
 
-    void MainWindow::createActionsForFileMenu() {
+    void Window::createActionsForFileMenu() {
         connect(ui->actionOpen, SIGNAL(triggered()), this, SLOT(onOpen()));
         connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(onSave()));
 
@@ -468,7 +468,7 @@ namespace easy3d {
     }
 
 
-    void MainWindow::createActionsForViewMenu() {
+    void Window::createActionsForViewMenu() {
         connect(ui->actionSnapshot, SIGNAL(triggered()), this, SLOT(saveSnapshot()));
 
         ui->menuView->addSeparator();
@@ -477,12 +477,12 @@ namespace easy3d {
     }
 
 
-    void MainWindow::createActionsForTopologyMenu() {
+    void Window::createActionsForTopologyMenu() {
         connect(ui->actionTopologyStatistics, SIGNAL(triggered()), this, SLOT(reportTopologyStatistics()));
     }
 
 
-    void MainWindow::reportTopologyStatistics() {
+    void Window::reportTopologyStatistics() {
         SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer()->currentModel());
         if (!mesh)
             return;

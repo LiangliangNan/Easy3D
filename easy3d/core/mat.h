@@ -397,7 +397,7 @@ namespace easy3d {
      * \details For a symmetric, positive definite matrix A, this function computes the Cholesky factorization,
      *      i.e. it computes a lower triangular matrix L such that A = L*L'. If the matrix is not symmetric or
      *      positive definite, the function computes only a partial decomposition.
-     * \return \true if the input matrix is symmetric, positive definite (and then the factorization was successful).
+     * \return true if the input matrix is symmetric, positive definite (and then the factorization was successful).
      */
     template<size_t N, typename FT>
     bool cholesky_decompose(const Mat<N, N, FT> &A, Mat<N, N, FT> &L);
