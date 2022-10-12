@@ -26,11 +26,6 @@
 
 #include <easy3d/renderer/setting.h>
 
-#include <fstream>
-
-#include <easy3d/util/file_system.h>
-#include <3rd_party/json/json.hpp>
-
 
 namespace easy3d {
 
@@ -130,6 +125,33 @@ namespace easy3d {
         ClippingPlane *clipping_plane = nullptr;
         vec4 clipping_plane_color = vec4(1.0f, 0.0f, 0.0f, 0.2f);
 
+    }   // namespace setting
+}   // namespace easy3d
+
+
+
+
+#include <fstream>
+#include <easy3d/util/file_system.h>
+#include <3rd_party/json/json.hpp>
+
+
+namespace easy3d {
+
+    // The following two functions are for vectors to be handled as json's built-in types.
+    template<typename Vec>
+    void to_json(nlohmann::json &j, const Vec &v) {
+        j = std::vector<typename Vec::FT>((const typename Vec::FT *) (v), v + v.size());
+    }
+
+    template<typename Vec>
+    void from_json(const nlohmann::json &j, Vec &v) {
+        assert(v.size() == j.size());
+        for (int i = 0; i < v.size(); ++i) v[i] = j.at(i);
+    }
+
+
+    namespace setting {
 
         void initialize(const std::string &setting_file) {
             std::string setting_file_name = setting_file;
@@ -162,99 +184,97 @@ namespace easy3d {
                 return false;
             }
 
-#define SAVE_VAR(group, var)   settings[group][#var] = var;
-#define SAVE_VEC(group, var)   settings[group][#var] = {var[0], var[1], var[2], var[3]};
+#define ENCODE(group, var)   settings[group][#var] = var;
 
-            using json = nlohmann::json;
-            json settings;
+            nlohmann::json settings;
 
             // background color of the viewer
-            SAVE_VEC("global", background_color)
+            ENCODE("global", background_color)
             // highlight: color for highlighted/selected primitives
-            SAVE_VEC("global", highlight_color)
+            ENCODE("global", highlight_color)
             // lighting
-            SAVE_VEC("global", light_position)  // light position defined in camera coordinate system
+            ENCODE("global", light_position)  // light position defined in camera coordinate system
             // material
-            SAVE_VEC("global", material_ambient)
-            SAVE_VEC("global", material_specular)
-            SAVE_VAR("global", material_shininess)    // specular power
+            ENCODE("global", material_ambient)
+            ENCODE("global", material_specular)
+            ENCODE("global", material_shininess)    // specular power
 
             // effect
-            SAVE_VAR("effect", effect_ssao_radius)
-            SAVE_VAR("effect", effect_ssao_intensity)
-            SAVE_VAR("effect", effect_ssao_bias)
-            SAVE_VAR("effect", effect_ssao_sharpness)
-            SAVE_VAR("effect", shadow_light_distance)
-            SAVE_VAR("effect", shadow_softness)
-            SAVE_VAR("effect", shadow_darkness)
+            ENCODE("effect", effect_ssao_radius)
+            ENCODE("effect", effect_ssao_intensity)
+            ENCODE("effect", effect_ssao_bias)
+            ENCODE("effect", effect_ssao_sharpness)
+            ENCODE("effect", shadow_light_distance)
+            ENCODE("effect", shadow_softness)
+            ENCODE("effect", shadow_darkness)
 
             // points drawable
-            SAVE_VAR("points drawable", points_drawable_two_side_lighting)
-            SAVE_VAR("points drawable", points_drawable_distinct_backside_color)
-            SAVE_VEC("points drawable", points_drawable_backside_color)
+            ENCODE("points drawable", points_drawable_two_side_lighting)
+            ENCODE("points drawable", points_drawable_distinct_backside_color)
+            ENCODE("points drawable", points_drawable_backside_color)
             // lines drawable
-            SAVE_VAR("lines drawable", lines_drawable_two_side_lighting)
-            SAVE_VAR("lines drawable", lines_drawable_distinct_backside_color)
-            SAVE_VEC("lines drawable", lines_drawable_backside_color)
+            ENCODE("lines drawable", lines_drawable_two_side_lighting)
+            ENCODE("lines drawable", lines_drawable_distinct_backside_color)
+            ENCODE("lines drawable", lines_drawable_backside_color)
             // triangles drawable
-            SAVE_VAR("triangles drawable", triangles_drawable_two_side_lighting)
-            SAVE_VAR("triangles drawable", triangles_drawable_distinct_backside_color)
-            SAVE_VEC("triangles drawable", triangles_drawable_backside_color)
+            ENCODE("triangles drawable", triangles_drawable_two_side_lighting)
+            ENCODE("triangles drawable", triangles_drawable_distinct_backside_color)
+            ENCODE("triangles drawable", triangles_drawable_backside_color)
 
             // point cloud
-            SAVE_VAR("point cloud", point_cloud_vertices_visible)
-            SAVE_VEC("point cloud", point_cloud_vertices_color)
-            SAVE_VAR("point cloud", point_cloud_vertices_impostors)
-            SAVE_VAR("point cloud", point_cloud_vertices_size)
+            ENCODE("point cloud", point_cloud_vertices_visible)
+            ENCODE("point cloud", point_cloud_vertices_color)
+            ENCODE("point cloud", point_cloud_vertices_impostors)
+            ENCODE("point cloud", point_cloud_vertices_size)
 
             // surface mesh - surface
-            SAVE_VAR("surface mesh", surface_mesh_faces_phong_shading)
-            SAVE_VAR("surface mesh", surface_mesh_faces_visible)
-            SAVE_VEC("surface mesh", surface_mesh_faces_color)
-            SAVE_VAR("surface mesh", surface_mesh_faces_opacity)
+            ENCODE("surface mesh", surface_mesh_faces_phong_shading)
+            ENCODE("surface mesh", surface_mesh_faces_visible)
+            ENCODE("surface mesh", surface_mesh_faces_color)
+            ENCODE("surface mesh", surface_mesh_faces_opacity)
             // surface mesh - vertices
-            SAVE_VAR("surface mesh", surface_mesh_vertices_visible)
-            SAVE_VEC("surface mesh", surface_mesh_vertices_color)
-            SAVE_VAR("surface mesh", surface_mesh_vertices_imposters)
-            SAVE_VAR("surface mesh", surface_mesh_vertices_size)
+            ENCODE("surface mesh", surface_mesh_vertices_visible)
+            ENCODE("surface mesh", surface_mesh_vertices_color)
+            ENCODE("surface mesh", surface_mesh_vertices_imposters)
+            ENCODE("surface mesh", surface_mesh_vertices_size)
             // surface mesh - edges
-            SAVE_VAR("surface mesh", surface_mesh_edges_visible)
-            SAVE_VEC("surface mesh", surface_mesh_edges_color)
-            SAVE_VAR("surface mesh", surface_mesh_edges_imposters)
-            SAVE_VAR("surface mesh", surface_mesh_edges_size)
+            ENCODE("surface mesh", surface_mesh_edges_visible)
+            ENCODE("surface mesh", surface_mesh_edges_color)
+            ENCODE("surface mesh", surface_mesh_edges_imposters)
+            ENCODE("surface mesh", surface_mesh_edges_size)
             // surface mesh - borders
-            SAVE_VAR("surface mesh", surface_mesh_borders_visible)
-            SAVE_VEC("surface mesh", surface_mesh_borders_color)
-            SAVE_VAR("surface mesh", surface_mesh_borders_imposters)
-            SAVE_VAR("surface mesh", surface_mesh_borders_size)
+            ENCODE("surface mesh", surface_mesh_borders_visible)
+            ENCODE("surface mesh", surface_mesh_borders_color)
+            ENCODE("surface mesh", surface_mesh_borders_imposters)
+            ENCODE("surface mesh", surface_mesh_borders_size)
 
             // graph: vertices
-            SAVE_VAR("graph", graph_vertices_visible)
-            SAVE_VEC("graph", graph_vertices_color)
-            SAVE_VAR("graph", graph_vertices_imposters)
-            SAVE_VAR("graph", graph_vertices_size)
+            ENCODE("graph", graph_vertices_visible)
+            ENCODE("graph", graph_vertices_color)
+            ENCODE("graph", graph_vertices_imposters)
+            ENCODE("graph", graph_vertices_size)
             // graph: edges
-            SAVE_VAR("graph", graph_edges_visible)
-            SAVE_VEC("graph", graph_edges_color)
-            SAVE_VAR("graph", graph_edges_imposters)
-            SAVE_VAR("graph", graph_edges_size)
+            ENCODE("graph", graph_edges_visible)
+            ENCODE("graph", graph_edges_color)
+            ENCODE("graph", graph_edges_imposters)
+            ENCODE("graph", graph_edges_size)
 
             // polyhedral mesh - surface
-            SAVE_VAR("polyhedral mesh", poly_mesh_faces_visible)
-            SAVE_VEC("polyhedral mesh", poly_mesh_faces_color)
+            ENCODE("polyhedral mesh", poly_mesh_faces_visible)
+            ENCODE("polyhedral mesh", poly_mesh_faces_color)
             // polyhedral mesh - vertices
-            SAVE_VAR("polyhedral mesh", poly_mesh_vertices_visible)
-            SAVE_VEC("polyhedral mesh", poly_mesh_vertices_color)
-            SAVE_VAR("polyhedral mesh", poly_mesh_vertices_imposters)
-            SAVE_VAR("polyhedral mesh", poly_mesh_vertices_size)
+            ENCODE("polyhedral mesh", poly_mesh_vertices_visible)
+            ENCODE("polyhedral mesh", poly_mesh_vertices_color)
+            ENCODE("polyhedral mesh", poly_mesh_vertices_imposters)
+            ENCODE("polyhedral mesh", poly_mesh_vertices_size)
             // polyhedral mesh - edges
-            SAVE_VAR("polyhedral mesh", poly_mesh_edges_visible)
-            SAVE_VEC("polyhedral mesh", poly_mesh_edges_color)
-            SAVE_VAR("polyhedral mesh", poly_mesh_edges_imposters)
-            SAVE_VAR("polyhedral mesh", poly_mesh_edges_size)
+            ENCODE("polyhedral mesh", poly_mesh_edges_visible)
+            ENCODE("polyhedral mesh", poly_mesh_edges_color)
+            ENCODE("polyhedral mesh", poly_mesh_edges_imposters)
+            ENCODE("polyhedral mesh", poly_mesh_edges_size)
 
             // clipping plane
-            SAVE_VEC("clipping plane", clipping_plane_color)
+            ENCODE("clipping plane", clipping_plane_color)
 
             output << std::setw(4) << settings;
 
@@ -270,128 +290,106 @@ namespace easy3d {
             }
 
             // read a JSON file
-            using json = nlohmann::json;
-            json settings;
+            nlohmann::json settings;
             input >> settings;
 
-#define LOAD_VAR(key, var)    {                                                     \
-            auto pos = settings.find(key);                                          \
-            if (pos != settings.end()) {                                            \
-                auto val_pos = pos->find(#var);                                     \
-                if (val_pos != pos->end()) {                                        \
-                    if (val_pos->is_array())                                        \
-                        LOG(WARNING) << "variable type mismatch: vector vs value";  \
-                    else                                                            \
-                        var = *val_pos;                                             \
-                }                                                                   \
-            }                                                                       \
-            else                                                                    \
-                LOG(WARNING) << "value does not exist for key: " << #var;           \
+#define DECODE(key, var) {                                                           \
+            auto pos = settings.find(key);                                           \
+            if (pos != settings.end()) {                                             \
+                auto val_pos = pos->find(#var);                                      \
+                if (val_pos != pos->end())  var = *val_pos;                          \
+                else LOG(WARNING) << "value does not exist for variable: " << #var;  \
+            }                                                                        \
+            else LOG(WARNING) << "value does not exist for variable: " << #var;      \
         }
 
-#define LOAD_VEC(key, var)    {                                                     \
-            auto pos = settings.find(key);                                          \
-            if (pos != settings.end()) {                                            \
-                auto val_pos = pos->find(#var);                                     \
-                if (val_pos != pos->end()) {                                        \
-                    if (val_pos->is_array()) {                                      \
-                        for (int i = 0; i < val_pos->size(); ++i)                   \
-                            var[i] = val_pos->at(i);                                \
-                    }                                                               \
-                    else                                                            \
-                        LOG(ERROR) << "variable type mismatch: vector vs value";    \
-                }                                                                   \
-                else                                                                \
-                    LOG(ERROR) << "value does not exist for key: " << #var;         \
-            }}
-
             // background color of the viewer
-            LOAD_VEC("global", background_color)
+            DECODE("global", background_color)
             // highlight: color for highlighted/selected primitives
-            LOAD_VEC("global", highlight_color)
+            DECODE("global", highlight_color)
             // lighting
-            LOAD_VEC("global", light_position)  // light position defined in camera coordinate system
+            DECODE("global", light_position)  // light position defined in camera coordinate system
             // material
-            LOAD_VEC("global", material_ambient)
-            LOAD_VEC("global", material_specular)
-            LOAD_VAR("global", material_shininess)    // specular power
+            DECODE("global", material_ambient)
+            DECODE("global", material_specular)
+            DECODE("global", material_shininess)    // specular power
 
             // effect
-            LOAD_VAR("effect", effect_ssao_radius)
-            LOAD_VAR("effect", effect_ssao_intensity)
-            LOAD_VAR("effect", effect_ssao_bias)
-            LOAD_VAR("effect", effect_ssao_sharpness)
-            LOAD_VAR("effect", shadow_light_distance)
-            LOAD_VAR("effect", shadow_softness)
-            LOAD_VAR("effect", shadow_darkness)
+            DECODE("effect", effect_ssao_radius)
+            DECODE("effect", effect_ssao_intensity)
+            DECODE("effect", effect_ssao_bias)
+            DECODE("effect", effect_ssao_sharpness)
+            DECODE("effect", shadow_light_distance)
+            DECODE("effect", shadow_softness)
+            DECODE("effect", shadow_darkness)
 
             // points drawable
-            LOAD_VAR("points drawable", points_drawable_two_side_lighting)
-            LOAD_VAR("points drawable", points_drawable_distinct_backside_color)
-            LOAD_VEC("points drawable", points_drawable_backside_color)
+            DECODE("points drawable", points_drawable_two_side_lighting)
+            DECODE("points drawable", points_drawable_distinct_backside_color)
+            DECODE("points drawable", points_drawable_backside_color)
             // lines drawable
-            LOAD_VAR("lines drawable", lines_drawable_two_side_lighting)
-            LOAD_VAR("lines drawable", lines_drawable_distinct_backside_color)
-            LOAD_VEC("lines drawable", lines_drawable_backside_color)
+            DECODE("lines drawable", lines_drawable_two_side_lighting)
+            DECODE("lines drawable", lines_drawable_distinct_backside_color)
+            DECODE("lines drawable", lines_drawable_backside_color)
             // triangles drawable
-            LOAD_VAR("triangles drawable", triangles_drawable_two_side_lighting)
-            LOAD_VAR("triangles drawable", triangles_drawable_distinct_backside_color)
-            LOAD_VEC("triangles drawable", triangles_drawable_backside_color)
+            DECODE("triangles drawable", triangles_drawable_two_side_lighting)
+            DECODE("triangles drawable", triangles_drawable_distinct_backside_color)
+            DECODE("triangles drawable", triangles_drawable_backside_color)
 
             // point cloud
-            LOAD_VAR("point cloud", point_cloud_vertices_visible)
-            LOAD_VEC("point cloud", point_cloud_vertices_color)
-            LOAD_VAR("point cloud", point_cloud_vertices_impostors)
-            LOAD_VAR("point cloud", point_cloud_vertices_size)
+            DECODE("point cloud", point_cloud_vertices_visible)
+            DECODE("point cloud", point_cloud_vertices_color)
+            DECODE("point cloud", point_cloud_vertices_impostors)
+            DECODE("point cloud", point_cloud_vertices_size)
 
             // surface mesh - surface
-            LOAD_VAR("surface mesh", surface_mesh_faces_phong_shading)
-            LOAD_VAR("surface mesh", surface_mesh_faces_visible)
-            LOAD_VEC("surface mesh", surface_mesh_faces_color)
-            LOAD_VAR("surface mesh", surface_mesh_faces_opacity)
+            DECODE("surface mesh", surface_mesh_faces_phong_shading)
+            DECODE("surface mesh", surface_mesh_faces_visible)
+            DECODE("surface mesh", surface_mesh_faces_color)
+            DECODE("surface mesh", surface_mesh_faces_opacity)
             // surface mesh - vertices
-            LOAD_VAR("surface mesh", surface_mesh_vertices_visible)
-            LOAD_VEC("surface mesh", surface_mesh_vertices_color)
-            LOAD_VAR("surface mesh", surface_mesh_vertices_imposters)
-            LOAD_VAR("surface mesh", surface_mesh_vertices_size)
+            DECODE("surface mesh", surface_mesh_vertices_visible)
+            DECODE("surface mesh", surface_mesh_vertices_color)
+            DECODE("surface mesh", surface_mesh_vertices_imposters)
+            DECODE("surface mesh", surface_mesh_vertices_size)
             // surface mesh - edges
-            LOAD_VAR("surface mesh", surface_mesh_edges_visible)
-            LOAD_VEC("surface mesh", surface_mesh_edges_color)
-            LOAD_VAR("surface mesh", surface_mesh_edges_imposters)
-            LOAD_VAR("surface mesh", surface_mesh_edges_size)
+            DECODE("surface mesh", surface_mesh_edges_visible)
+            DECODE("surface mesh", surface_mesh_edges_color)
+            DECODE("surface mesh", surface_mesh_edges_imposters)
+            DECODE("surface mesh", surface_mesh_edges_size)
             // surface mesh - borders
-            LOAD_VAR("surface mesh", surface_mesh_borders_visible)
-            LOAD_VEC("surface mesh", surface_mesh_borders_color)
-            LOAD_VAR("surface mesh", surface_mesh_borders_imposters)
-            LOAD_VAR("surface mesh", surface_mesh_borders_size)
+            DECODE("surface mesh", surface_mesh_borders_visible)
+            DECODE("surface mesh", surface_mesh_borders_color)
+            DECODE("surface mesh", surface_mesh_borders_imposters)
+            DECODE("surface mesh", surface_mesh_borders_size)
 
             // graph: vertices
-            LOAD_VAR("graph", graph_vertices_visible)
-            LOAD_VEC("graph", graph_vertices_color)
-            LOAD_VAR("graph", graph_vertices_imposters)
-            LOAD_VAR("graph", graph_vertices_size)
+            DECODE("graph", graph_vertices_visible)
+            DECODE("graph", graph_vertices_color)
+            DECODE("graph", graph_vertices_imposters)
+            DECODE("graph", graph_vertices_size)
             // graph: edges
-            LOAD_VAR("graph", graph_edges_visible)
-            LOAD_VEC("graph", graph_edges_color)
-            LOAD_VAR("graph", graph_edges_imposters)
-            LOAD_VAR("graph", graph_edges_size)
+            DECODE("graph", graph_edges_visible)
+            DECODE("graph", graph_edges_color)
+            DECODE("graph", graph_edges_imposters)
+            DECODE("graph", graph_edges_size)
 
             // polyhedral mesh - surface
-            LOAD_VAR("polyhedral mesh", poly_mesh_faces_visible)
-            LOAD_VEC("polyhedral mesh", poly_mesh_faces_color)
+            DECODE("polyhedral mesh", poly_mesh_faces_visible)
+            DECODE("polyhedral mesh", poly_mesh_faces_color)
             // polyhedral mesh - vertices
-            LOAD_VAR("polyhedral mesh", poly_mesh_vertices_visible)
-            LOAD_VEC("polyhedral mesh", poly_mesh_vertices_color)
-            LOAD_VAR("polyhedral mesh", poly_mesh_vertices_imposters)
-            LOAD_VAR("polyhedral mesh", poly_mesh_vertices_size)
+            DECODE("polyhedral mesh", poly_mesh_vertices_visible)
+            DECODE("polyhedral mesh", poly_mesh_vertices_color)
+            DECODE("polyhedral mesh", poly_mesh_vertices_imposters)
+            DECODE("polyhedral mesh", poly_mesh_vertices_size)
             // polyhedral mesh - edges
-            LOAD_VAR("polyhedral mesh", poly_mesh_edges_visible)
-            LOAD_VEC("polyhedral mesh", poly_mesh_edges_color)
-            LOAD_VAR("polyhedral mesh", poly_mesh_edges_imposters)
-            LOAD_VAR("polyhedral mesh", poly_mesh_edges_size)
+            DECODE("polyhedral mesh", poly_mesh_edges_visible)
+            DECODE("polyhedral mesh", poly_mesh_edges_color)
+            DECODE("polyhedral mesh", poly_mesh_edges_imposters)
+            DECODE("polyhedral mesh", poly_mesh_edges_size)
 
             // clipping plane
-            LOAD_VEC("clipping plane", clipping_plane_color)
+            DECODE("clipping plane", clipping_plane_color)
 
             return true;
         }
