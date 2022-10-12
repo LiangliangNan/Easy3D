@@ -29,6 +29,9 @@ target_link_libraries(${PROJECT_NAME} PUBLIC easy3d_core)
 
 include(../../cmake/UseCGAL.cmake)
 
+# The following set_property(...) command will set the list of transitive link dependencies to easy3d_core, and
+# it thus will remove CGAL.
+#set_property(TARGET ${PROJECT_NAME} PROPERTY INTERFACE_LINK_LIBRARIES easy3d_core)
 
 # Alias target (recommended by policy CMP0028) and it looks nicer
 message(STATUS "Adding target: easy3d::${MODULE_NAME} (${PROJECT_NAME})")
