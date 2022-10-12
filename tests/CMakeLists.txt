@@ -85,7 +85,6 @@ set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "tests")
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
 
-target_compile_definitions(${PROJECT_NAME} PRIVATE GLEW_STATIC)
 
 target_link_libraries(${PROJECT_NAME} 3rd_imgui easy3d_util easy3d_core easy3d_fileio easy3d_gui easy3d_kdtree easy3d_renderer easy3d_viewer easy3d_algo)
 if (EASY3D_HAS_CGAL)

@@ -29,7 +29,6 @@ set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "easy3d")
 target_include_directories(${PROJECT_NAME} PUBLIC ${EASY3D_INCLUDE_DIR})
 target_link_libraries(${PROJECT_NAME} PUBLIC easy3d_core easy3d_util easy3d_renderer)
 
-target_compile_definitions(${PROJECT_NAME} PRIVATE GLEW_STATIC)
 
 if (MSVC)
     target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_DEPRECATE)
