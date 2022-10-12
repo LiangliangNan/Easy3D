@@ -51,12 +51,13 @@ namespace easy3d {
 		 *      - If \p setting_file is another non-empty string: a setting file with the same name will be created and 
 		 *		  setting parameters will be written to this file.
          */
-        void initialize(const std::string& setting_file = "default");
+        void initialize(const std::string &setting_file = "default");
 
         /// Save the setting (i.e., rendering parameters) to a file.
-        bool save(const std::string& filename);
+        bool save(const std::string &filename);
+
         /// Load the setting (i.e., rendering parameters) from a file.
-        bool load(const std::string& filename);
+        bool load(const std::string &filename);
 
         /// background color of the viewer
         extern vec4 background_color;
@@ -64,33 +65,33 @@ namespace easy3d {
         extern vec4 highlight_color;
         /// lighting
         extern vec4 light_position;  // light position defined in camera coordinate system
-		/// material
-		extern vec4 material_ambient;
-		extern vec4 material_specular;
-		extern float material_shininess;    // specular power
+        /// material
+        extern vec4 material_ambient;
+        extern vec4 material_specular;
+        extern float material_shininess;    // specular power
 
-		/// effect
-		extern float effect_ssao_radius;
-		extern float effect_ssao_intensity;
-		extern float effect_ssao_bias;
-		extern float effect_ssao_sharpness;
-		extern bool effect_edl_enabled;
-		extern bool effect_transparency_enabled;
-		extern bool effect_shadow_enabled;
-		extern float shadow_light_distance;
-		extern float shadow_softness;
-		extern float shadow_darkness;
+        /// effect
+        extern float effect_ssao_radius;
+        extern float effect_ssao_intensity;
+        extern float effect_ssao_bias;
+        extern float effect_ssao_sharpness;
+        extern bool effect_edl_enabled;
+        extern bool effect_transparency_enabled;
+        extern bool effect_shadow_enabled;
+        extern float shadow_light_distance;
+        extern float shadow_softness;
+        extern float shadow_darkness;
 
         /// points drawable
-		extern bool points_drawable_two_side_lighting;
-        extern bool points_drawable_distinct_backside_color;  
+        extern bool points_drawable_two_side_lighting;
+        extern bool points_drawable_distinct_backside_color;
         extern vec4 points_drawable_backside_color;
-		// lines drawable
+        // lines drawable
         extern bool lines_drawable_two_side_lighting;
-        extern bool lines_drawable_distinct_backside_color;		
-        extern vec4 lines_drawable_backside_color;		
-		// triangles drawable
-		extern bool triangles_drawable_two_side_lighting;
+        extern bool lines_drawable_distinct_backside_color;
+        extern vec4 lines_drawable_backside_color;
+        // triangles drawable
+        extern bool triangles_drawable_two_side_lighting;
         extern bool triangles_drawable_distinct_backside_color;
         extern vec4 triangles_drawable_backside_color;
 
@@ -98,7 +99,7 @@ namespace easy3d {
         extern bool point_cloud_vertices_visible;
         extern vec4 point_cloud_vertices_color;
         extern bool point_cloud_vertices_impostors;
-		extern float point_cloud_vertices_size;
+        extern float point_cloud_vertices_size;
 
         /// surface mesh - surface
         extern bool surface_mesh_faces_phong_shading;
@@ -132,22 +133,22 @@ namespace easy3d {
         extern bool graph_edges_imposters;
         extern float graph_edges_size;
 
-		/// polyhedral mesh - surface
-		extern bool poly_mesh_faces_visible;
-		extern vec4 poly_mesh_faces_color;
-		/// polyhedral mesh - vertices
-		extern bool poly_mesh_vertices_visible;
-		extern vec4 poly_mesh_vertices_color;
-		extern bool poly_mesh_vertices_imposters;
-		extern float poly_mesh_vertices_size;
-		/// polyhedral mesh - edges
-		extern bool poly_mesh_edges_visible;
-		extern vec4 poly_mesh_edges_color;
-		extern bool poly_mesh_edges_imposters;
-		extern float poly_mesh_edges_size;
+        /// polyhedral mesh - surface
+        extern bool poly_mesh_faces_visible;
+        extern vec4 poly_mesh_faces_color;
+        /// polyhedral mesh - vertices
+        extern bool poly_mesh_vertices_visible;
+        extern vec4 poly_mesh_vertices_color;
+        extern bool poly_mesh_vertices_imposters;
+        extern float poly_mesh_vertices_size;
+        /// polyhedral mesh - edges
+        extern bool poly_mesh_edges_visible;
+        extern vec4 poly_mesh_edges_color;
+        extern bool poly_mesh_edges_imposters;
+        extern float poly_mesh_edges_size;
 
         /// clipping plane
-        extern ClippingPlane* clipping_plane;
+        extern ClippingPlane *clipping_plane;
         extern vec4 clipping_plane_color;
 
 

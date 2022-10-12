@@ -25,10 +25,10 @@
  ********************************************************************/
 
 #include <easy3d/renderer/setting.h>
-#include <easy3d/util/file_system.h>
 
 #include <fstream>
 
+#include <easy3d/util/file_system.h>
 #include <3rd_party/json/json.hpp>
 
 
@@ -305,8 +305,6 @@ namespace easy3d {
 				else																\
 					LOG(ERROR) << "value does not exist for key: " << #var;			\
 			}}
-
-            std::string dummy;
 
 			// background color of the viewer
 			LOAD_VEC("global", background_color)
