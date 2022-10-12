@@ -57,8 +57,8 @@ namespace easy3d {
         , virtual_background_(true)
         , virtual_background_color_(setting::background_color)
         , virtual_background_drawable_(nullptr)
-        , light_distance_(setting::shadow_light_distance)
-        , darkness_(setting::shadow_darkness)
+        , light_distance_(setting::effect_shadow_light_distance)
+        , darkness_(setting::effect_shadow_darkness)
     {
     }
 

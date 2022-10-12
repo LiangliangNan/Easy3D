@@ -42,7 +42,7 @@ namespace easy3d {
 
     SoftShadow::SoftShadow(Camera* cam)
         : Shadow(cam)
-        , softness_(setting::shadow_softness)
+        , softness_(setting::effect_shadow_softness)
         , sample_pattern_(SP_Poisson_64_128)
     {
     }

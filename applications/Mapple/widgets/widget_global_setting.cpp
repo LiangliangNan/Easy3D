@@ -81,9 +81,9 @@ WidgetGlobalSetting::WidgetGlobalSetting(QWidget *parent)
     ui_->comboBoxShadowSmoothPattern->setCurrentIndex(2);
     connect(ui_->comboBoxShadowSmoothPattern, SIGNAL(currentIndexChanged(int)), this, SLOT(setShadowSmoothPattern(int)));
 
-    ui_->horizontalSliderShadowLightDistance->setValue(setting::shadow_light_distance);
-    ui_->horizontalSliderShadowSoftness->setValue(setting::shadow_softness * 100);
-    ui_->horizontalSliderShadowDarkness->setValue(setting::shadow_darkness * 100);
+    ui_->horizontalSliderShadowLightDistance->setValue(setting::effect_shadow_light_distance);
+    ui_->horizontalSliderShadowSoftness->setValue(setting::effect_shadow_softness * 100);
+    ui_->horizontalSliderShadowDarkness->setValue(setting::effect_shadow_darkness * 100);
 
     //----------------------------------------------
 

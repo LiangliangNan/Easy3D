@@ -52,9 +52,9 @@ namespace easy3d {
         bool effect_edl_enabled = false;
         bool effect_transparency_enabled = false;
         bool effect_shadow_enabled = false;
-        float shadow_light_distance = 50.0f;
-        float shadow_softness = 0.5f;
-        float shadow_darkness = 0.6f;
+        float effect_shadow_light_distance = 50.0f;
+        float effect_shadow_softness = 0.5f;
+        float effect_shadow_darkness = 0.6f;
 
         // points drawable
         bool points_drawable_two_side_lighting = true;
@@ -204,9 +204,9 @@ namespace easy3d {
             ENCODE("effect", effect_ssao_intensity)
             ENCODE("effect", effect_ssao_bias)
             ENCODE("effect", effect_ssao_sharpness)
-            ENCODE("effect", shadow_light_distance)
-            ENCODE("effect", shadow_softness)
-            ENCODE("effect", shadow_darkness)
+            ENCODE("effect", effect_shadow_light_distance)
+            ENCODE("effect", effect_shadow_softness)
+            ENCODE("effect", effect_shadow_darkness)
 
             // points drawable
             ENCODE("points drawable", points_drawable_two_side_lighting)
@@ -319,9 +319,9 @@ namespace easy3d {
             DECODE("effect", effect_ssao_intensity)
             DECODE("effect", effect_ssao_bias)
             DECODE("effect", effect_ssao_sharpness)
-            DECODE("effect", shadow_light_distance)
-            DECODE("effect", shadow_softness)
-            DECODE("effect", shadow_darkness)
+            DECODE("effect", effect_shadow_light_distance)
+            DECODE("effect", effect_shadow_softness)
+            DECODE("effect", effect_shadow_darkness)
 
             // points drawable
             DECODE("points drawable", points_drawable_two_side_lighting)

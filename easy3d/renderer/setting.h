@@ -78,9 +78,9 @@ namespace easy3d {
         extern bool effect_edl_enabled;
         extern bool effect_transparency_enabled;
         extern bool effect_shadow_enabled;
-        extern float shadow_light_distance;
-        extern float shadow_softness;
-        extern float shadow_darkness;
+        extern float effect_shadow_light_distance;
+        extern float effect_shadow_softness;
+        extern float effect_shadow_darkness;
 
         /// points drawable
         extern bool points_drawable_two_side_lighting;
