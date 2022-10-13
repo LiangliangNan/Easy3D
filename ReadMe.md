@@ -119,7 +119,7 @@ There are many options to build Easy3D. Choose one of the following (not an exha
     ```
   - On Windows with Microsoft Visual Studio
     ```
-        $ cd City3D
+        $ cd Easy3D
         $ mkdir Release
         $ cd Release
         $ cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release ..
