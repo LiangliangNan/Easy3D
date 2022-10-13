@@ -2,10 +2,6 @@ cmake_minimum_required(VERSION 3.12)
 
 ################################################################################
 
-if (WIN32 OR MSVC)
-    set(CMAKE_GENERATOR_PLATFORM x64)
-endif()
-
 project(Easy3D)
 
 set(EASY3D_MAJOR_VERSION 2)
