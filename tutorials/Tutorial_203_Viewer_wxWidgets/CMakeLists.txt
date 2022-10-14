@@ -45,11 +45,8 @@ set(${PROJECT_NAME}_SOURCES
 		window.cpp
         )
 
-set(${PROJECT_NAME}_RESOURCES
-		resources/sample.rc
-        )
-
 if (WIN32 OR MSVC)
+	set(${PROJECT_NAME}_RESOURCES resources/sample.rc)
     add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_RESOURCES}) # you can add "WIN32" to disable the console window
     message(STATUS "Creating the wxWidgets viewer with a console window")
 elseif (APPLE)
@@ -70,6 +67,8 @@ elseif (APPLE)
             MACOSX_BUNDLE_COPYRIGHT "Copyright liangliang.nan@gmail.com"
             MACOSX_BUNDLE_GUI_IDENTIFIER "Easy3D.Viewer.wxWidgets"
             )
+else ()
+    add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES}) 
 endif ()
 
 target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES} easy3d::core easy3d::renderer)
