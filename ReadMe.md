@@ -92,16 +92,16 @@ The **optional** third-party libraries are:
   CGAL ([v5.1 or later](https://github.com/CGAL/cgal/releases)) is installed and visible to CMake. In case you have
   multiple versions of CGAL on your platform, simply provide the path of a suitable one to the CMake variable `CGAL_DIR`.
 
-- **[Qt](https://www.qt.io/)** (optional): Easy3D supports Qt ([v5.6 or later](https://download.qt.io/archive/qt/)) for 
+- **[Qt5(https://www.qt.io/)** (optional): Easy3D supports Qt ([v5.6 or later](https://download.qt.io/archive/qt/)) for 
   UI creation, which can help develop sophisticated applications for 3D data processing and visualization. The Qt 
   support is disabled by default (because most users don't need it). You can switch on the CMake option `EASY3D_ENABLE_QT` 
   to include the examples and applications that depend on Qt (e.g., 
-            [`Tutorial_204_Viewer_Qt`](https://github.com/LiangliangNan/Easy3D/tree/main/tutorials/Tutorial_204_Viewer_Qt) 
-            and [`Mapple`](https://github.com/LiangliangNan/Easy3D/tree/main/applications/Mapple)).
+  [`Tutorial_204_Viewer_Qt`](https://github.com/LiangliangNan/Easy3D/tree/main/tutorials/Tutorial_204_Viewer_Qt) and 
+  [`Mapple`](https://github.com/LiangliangNan/Easy3D/tree/main/applications/Mapple)).
   
 To build Easy3D, you need [CMake](https://cmake.org/download/) (`>= 3.12`) and, of course, a compiler that supports `>= C++11`.
 
-Easy3D has been tested on macOS (Xcode >= 8), Windows (MSVC >=2015), and Linux (GCC >= 4.8, Clang >= 3.3). Machines 
+Easy3D has been tested on macOS (Xcode >= 8), Windows (MSVC >=2015 `x64`), and Linux (GCC >= 4.8, Clang >= 3.3). Machines 
 nowadays typically provide higher [supports](https://en.cppreference.com/w/cpp/compiler_support), so you should be able 
 to build Easy3D on almost all platforms.
 
@@ -117,7 +117,7 @@ There are many options to build Easy3D. Choose one of the following (not an exha
         $ cmake -DCMAKE_BUILD_TYPE=Release ..
         $ make
     ```
-  - On Windows with Microsoft Visual Studio
+  - On Windows with Microsoft Visual Studio, use `x64 Native Tools Command Prompt for VS XXXX` (**don't** use the x86 one), then
     ```
         $ cd Easy3D
         $ mkdir Release
@@ -128,9 +128,9 @@ There are many options to build Easy3D. Choose one of the following (not an exha
   
 - Option 2: Use any IDE that can directly handle CMakeLists files to open the `CMakeLists.txt` in the **root** directory of 
   Easy3D. Then you should have obtained a usable project and just build it. I recommend using 
-[CLion](https://www.jetbrains.com/clion/) or [QtCreator](https://www.qt.io/product).
+[CLion](https://www.jetbrains.com/clion/) or [QtCreator](https://www.qt.io/product). For Windows users: your IDE must set for `x64`.
   
-- Option 3: Use CMake-Gui to generate project files for your IDE. Then load the project to your IDE and build it.
+- Option 3: Use CMake-Gui to generate project files for your IDE. Then load the project to your IDE and build it. For Windows users: your IDE must set for `x64`.
 
 Don't have any experience with C/C++ programming? 
 Have a look at <a href="https://github.com/LiangliangNan/Easy3D/blob/main/HowToBuild.md">How to build Easy3D step by 
