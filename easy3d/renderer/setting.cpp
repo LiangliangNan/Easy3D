@@ -139,6 +139,7 @@ namespace easy3d {
 namespace easy3d {
 
     // The following two functions are for vectors to be handled as json's built-in types.
+    //\cond
     template<typename Vec>
     void to_json(nlohmann::json &j, const Vec &v) {
         j = std::vector<typename Vec::FT>((const typename Vec::FT *) (v), v + v.size());
@@ -149,7 +150,7 @@ namespace easy3d {
         assert(v.size() == j.size());
         for (int i = 0; i < v.size(); ++i) v[i] = j.at(i);
     }
-
+    //\endcond
 
     namespace setting {
 

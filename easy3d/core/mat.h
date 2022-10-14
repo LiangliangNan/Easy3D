@@ -264,11 +264,19 @@ namespace easy3d {
     template <typename T>
     Vec<2, T> operator*(const Mat3<T> &lhs, const Vec<2, T> &rhs);
 
-    /** non-homogeneous version */
+    /**
+     * \brief Non-homogeneous, specialized matrix-vector multiplication for 2x2 matrices and 2D vectors.
+     */
     template <typename T>
     Vec<2, T> operator*(const Mat2<T> &lhs, const Vec<2, T> &rhs);
+    /**
+     * \brief Non-homogeneous, specialized matrix-vector multiplication for 3x3 matrices and 3D vectors.
+     */
     template <typename T>
     Vec<3, T> operator*(const Mat3<T> &lhs, const Vec<3, T> &rhs);
+    /**
+     * \brief Non-homogeneous, specialized matrix-vector multiplication for 4x4 matrices and 4D vectors.
+     */
     template <typename T>
     Vec<4, T> operator*(const Mat4<T> &lhs, const Vec<4, T> &rhs);
 
@@ -327,6 +335,7 @@ namespace easy3d {
      * \param alu: Output N x N matrix, containing the LU decomposition of a row-wise permutation of a. This may safely
      *      be the same location as a (a will be overwritten).
      * \param rowp: Output row permutation data for alu.
+     * \param d: The sign of determinant
      * \return \c true on success, false if a is a singular matrix.
      */
     template<size_t N, typename T>
@@ -867,6 +876,7 @@ namespace easy3d {
     }
 
     /*--------------------------- non-homogeneous version ------------------------*/
+    /** Matrix-vector multiplication for 3x3 matrices and 3D vectors. **/
     template <typename T>
     inline Vec<3, T> operator*(const Mat3<T> &lhs, const Vec<3, T> &rhs) {
         Vec<3, T> result;
@@ -880,6 +890,7 @@ namespace easy3d {
     }
 
     /*--------------------------- non-homogeneous version ------------------------*/
+    /** Matrix-vector multiplication for 4x4 matrices and 4D vectors. **/
     template <typename T>
     inline Vec<4, T> operator*(const Mat4<T> &lhs, const Vec<4, T> &rhs) {
         Vec<4, T> result;
@@ -909,6 +920,7 @@ namespace easy3d {
     }
 
     /*----------------------------------------------------------------------------*/
+    /** Compute the trace of a square matrix. **/
     template <size_t D, typename T>
     inline T trace(const Mat<D, D, T> &m) {
         T result = m(0, 0);
@@ -918,6 +930,7 @@ namespace easy3d {
     }
 
     /*----------------------------------------------------------------------------*/
+    /** Compute the determinant of a square matrix. **/
     template <size_t N, typename T>
     inline T determinant(const Mat<N, N, T> &m) {
         /*	Use LU decomposition to find the determinant. */
@@ -930,13 +943,13 @@ namespace easy3d {
         return result;
     }
 
-    /*	determinant() partial specialization for 2x2 matrices */
+    /** Partial specialization for computing the determinant of a 2x2 matrix. **/
     template <typename T>
     inline T determinant(const Mat2<T> &m) {
         return m(0, 0) * m(1, 1) - m(0, 1) * m(1, 0);
     }
 
-    /*	determinant() partial specialization for 3x3 matrices */
+    /** Partial specialization for computing the determinant of a 3x3 matrix. **/
     template <typename T>
     inline T determinant(const Mat3<T> &m) {
         return
@@ -945,7 +958,7 @@ namespace easy3d {
             m(0, 2) * (m(1, 0) * m(2, 1) - m(2, 0) * m(1, 1));
     }
 
-    /*	determinant() partial specialization for 4x4 matrices */
+    /** Partial specialization for computing the determinant of a 4x4 matrix. **/
     template <typename T>
     inline T determinant(const Mat4<T> &m) {
         return
@@ -964,6 +977,7 @@ namespace easy3d {
     }
 
     /*----------------------------------------------------------------------------*/
+    /** Compute the inverse of a square matrix. **/
     template <size_t N, typename T>
     inline Mat<N, N, T> inverse(const Mat<N, N, T> &m) {
         // Use Gauss-Jordan elimination to find inverse. This uses less memory than the LU decomposition method.
@@ -1033,7 +1047,7 @@ namespace easy3d {
         return result;
     }
 
-    /*	inverse() partial specialization for 2x2 matrices */
+    /** Partial specialization for computing the inverse of a 2x2 matrix. **/
     template <typename T>
     inline Mat2<T> inverse(const Mat2<T> &m) {
         Mat2<T> result;
@@ -1049,7 +1063,7 @@ namespace easy3d {
         return result;
     }
 
-    /*	inverse() partial specialization for 3x3 matrices */
+    /** Partial specialization for computing the inverse of a 3x3 matrix. **/
     template <typename T>
     inline Mat3<T> inverse(const Mat3<T> &m) {
         Mat3<T> result;
@@ -1070,7 +1084,7 @@ namespace easy3d {
         return result;
     }
 
-    /*	inverse() partial specialization for 4x4 matrices */
+    /** Partial specialization for computing the inverse of a 4x4 matrix. **/
     template <typename T>
     inline Mat4<T> inverse(const Mat4<T> &m) {
         Mat4<T> result;
@@ -1376,6 +1390,7 @@ namespace easy3d {
 
     /*----------------------------------------------------------------------------*/
 
+    /** Output stream support for Mat. **/
     template <size_t N, size_t M, typename T> inline
     std::ostream& operator<< (std::ostream& output, const Mat<N, M, T>& m) {
         output << std::fixed << std::setprecision(8);
@@ -1391,6 +1406,7 @@ namespace easy3d {
     }
 
     /*----------------------------------------------------------------------------*/
+    /** Input stream support for Mat. **/
     template <size_t N, size_t M, typename T>
     std::istream& operator>> (std::istream& input, Mat<N, M, T>& m) {
         for (int i = 0; i < N; i++) {

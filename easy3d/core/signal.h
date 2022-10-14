@@ -49,7 +49,7 @@ namespace easy3d {
      *
      * \see A more powerful implementation [sigslot](https://github.com/palacaze/sigslot) based on C++14.
      *
-     * \example Test_Signal  \include test_signal.cpp
+     * \example Test_Signal  \include{lineno} test_signal.cpp
      */
 
     template<typename... Args>

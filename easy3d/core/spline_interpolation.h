@@ -53,7 +53,7 @@ namespace easy3d {
      *          for (std::size_t i = 0; i < points.size(); ++i) {
      *              const auto &p = points[i];
      *              if (i > 0)
-     *                  t += distance(kfi.keyframe(i-1).position(), p);
+     *                  t += distance(points[i-1], p);
      *              T[i] = t;
      *              X[i] = p.x;
      *              Y[i] = p.y;
@@ -126,6 +126,8 @@ namespace easy3d {
     };
 
 
+
+    // \cond
     /**
      * \brief A band matrix representation that is capable of solving linear systems.
      * \details A band matrix is a sparse matrix whose non-zero entries are confined to a diagonal band, comprising
@@ -135,9 +137,12 @@ namespace easy3d {
     template<typename FT>
     class BandMatrix {
     public:
-        BandMatrix() {};                             // constructor
-        BandMatrix(int dim, int n_u, int n_l);       // constructor
-        ~BandMatrix() {};                            // destructor
+        /// Constructor
+        BandMatrix() {};
+        /// Constructor
+        BandMatrix(int dim, int n_u, int n_l);
+        /// Destructor
+        ~BandMatrix() {};
 
         void resize(int dim, int n_u, int n_l);      // init with dim,n_u,n_l
         int dim() const;                             // matrix dimension
@@ -145,17 +150,21 @@ namespace easy3d {
         int num_upper() const { return m_upper.size() - 1; }
         int num_lower() const { return m_lower.size() - 1; }
 
-        // access operator
+        /// access operator
         FT &operator()(int i, int j);            // write
+        /// access operator
         const FT &operator()(int i, int j) const;      // read
 
-        // we can store an additional diagonal (in m_lower)
+        /// second diag (used in LU decomposition), saved in m_lower
         FT &saved_diag(int i);
         const FT &saved_diag(int i) const;
 
+        /// LR-Decomposition of the band matrix
         void lu_decompose();
 
+        /// solves Rx=y
         std::vector <FT> r_solve(const std::vector <FT> &b) const;
+        /// solves Ly=b
         std::vector <FT> l_solve(const std::vector <FT> &b) const;
         std::vector <FT> lu_solve(const std::vector <FT> &b, bool is_lu_decomposed = false);
 
@@ -164,7 +173,7 @@ namespace easy3d {
         std::vector <std::vector<FT>> m_lower;  // lower band
 
     };  // BandMatrix
-
+    // \endcond
 
 
     // Cubic spline implementation
@@ -363,6 +372,7 @@ namespace easy3d {
     }
 
 
+    // \cond
     // BandMatrix implementation
     // -------------------------
 
@@ -510,6 +520,7 @@ namespace easy3d {
         x = this->r_solve(y);
         return x;
     }
+    // \endcond
 
 }
 

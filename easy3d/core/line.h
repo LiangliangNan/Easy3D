@@ -87,12 +87,14 @@ namespace easy3d {
     }
 
 
+    /** Output stream support for GenericLine. */
     template <int DIM, typename FT> inline
     std::ostream& operator<<(std::ostream& os, const GenericLine<DIM, FT>& line) {
         return os << line.point() << " " << line.direction();
     }
 
 
+    /** Input stream support for GenericLine. */
     template <int DIM, typename FT> inline
     std::istream& operator>>(std::istream& is, GenericLine<DIM, FT>& line) {
         typename GenericLine<DIM, FT>::Point	p;

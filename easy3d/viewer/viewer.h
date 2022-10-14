@@ -361,6 +361,7 @@ namespace easy3d {
 	    //@}
 
         /// @name Algorithm execution
+        //@{
         /// @brief A function that will be triggered by the shortcut 'Ctrl + E'.
         ///     This function is typically used for applying an algorithm on a model.
         std::function<bool(Viewer* viewer, Model* model)> execute_func_;

@@ -1462,26 +1462,31 @@ namespace easy3d {
 
     //------------------------------------------------------------ output operators
 
+    /// Output stream support for PolyMesh::Vertex.
     inline std::ostream& operator<<(std::ostream& os, PolyMesh::Vertex v)
     {
         return (os << 'v' << v.idx());
     }
-    
+
+    /// Output stream support for PolyMesh::Edge.
     inline std::ostream& operator<<(std::ostream& os, PolyMesh::Edge e)
     {
         return (os << 'e' << e.idx());
     }
 
+    /// Output stream support for PolyMesh::HalfFace.
     inline std::ostream& operator<<(std::ostream& os, PolyMesh::HalfFace h)
     {
         return (os << 'h' << h.idx());
     }
 
+    /// Output stream support for PolyMesh::Face.
     inline std::ostream& operator<<(std::ostream& os, PolyMesh::Face f)
     {
         return (os << 'f' << f.idx());
     }
 
+    /// Output stream support for PolyMesh::Cell.
     inline std::ostream& operator<<(std::ostream& os, PolyMesh::Cell c)
     {
         return (os << 'c' << c.idx());

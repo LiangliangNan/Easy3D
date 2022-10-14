@@ -982,7 +982,7 @@ namespace easy3d {
         /// default constructor
         SurfaceMesh();
 
-        // destructor (is virtual, since we inherit from Geometry_representation)
+        /// destructor (is virtual, since we inherit from Geometry_representation)
         virtual ~SurfaceMesh();
 
         /// copy constructor: copies \c rhs to \c *this. performs a deep copy of all properties.
@@ -2054,22 +2054,25 @@ namespace easy3d {
 
     //------------------------------------------------------------ output operators
 
-
+    /// Output stream support for SurfaceMesh::Vertex.
     inline std::ostream& operator<<(std::ostream& os, SurfaceMesh::Vertex v)
     {
         return (os << 'v' << v.idx());
     }
 
+    /// Output stream support for SurfaceMesh::Halfedge.
     inline std::ostream& operator<<(std::ostream& os, SurfaceMesh::Halfedge h)
     {
         return (os << 'h' << h.idx());
     }
 
+    /// Output stream support for SurfaceMesh::Edge.
     inline std::ostream& operator<<(std::ostream& os, SurfaceMesh::Edge e)
     {
         return (os << 'e' << e.idx());
     }
 
+    /// Output stream support for SurfaceMesh::Face.
     inline std::ostream& operator<<(std::ostream& os, SurfaceMesh::Face f)
     {
         return (os << 'f' << f.idx());

@@ -158,28 +158,37 @@ namespace easy3d {
     template<typename Point_t>
     class Curve {
     public:
+        /// The floating-point number type.
         typedef typename Point_t::FT FT;
     public:
+        /// Default constructor.
         Curve() : steps_(10) {}
 
+        /// Set the number of steps.
         void set_steps(int steps) { steps_ = steps; }
 
+        /// Add a way point.
         void add_way_point(const Point_t &point) {
             way_points_.push_back(point);
             on_way_point_added();
         }
 
+        /// Return the number of nodes.
         int node_count() const { return static_cast<int>(nodes_.size()); }
 
+        /// Return the coordinates of the \p i_th node.
         const Point_t &node(int i) const { return nodes_[i]; }
 
-        FT length_from_starting_point(int i) const { return distances_[i]; }
+        /// Return the total curve length from the start point.
+        FT length_from_start_point(int i) const { return distances_[i]; }
 
+        /// Return the total length of the curve.
         FT total_length() const {
             assert(!distances_.empty());
             return distances_.back();
         }
 
+        /// Clear all cached values.
         void clear() {
             nodes_.clear();
             way_points_.clear();
@@ -227,8 +236,10 @@ namespace easy3d {
     template<typename Point_t>
     class Bezier : public Curve<Point_t> {
     public:
+        /// The floating-point number type.
         typedef typename Point_t::FT FT;
     public:
+        /// Default constructor
         Bezier() = default;
 
     protected:
@@ -286,8 +297,10 @@ namespace easy3d {
     template<typename Point_t>
     class BSpline : public Curve<Point_t> {
     public:
+        /// The floating-point number type.
         typedef typename Point_t::FT FT;
     public:
+        /// Default constructor.
         BSpline() = default;
 
     protected:
@@ -338,8 +351,10 @@ namespace easy3d {
     template<typename Point_t>
     class CatmullRom : public Curve<Point_t> {
     public:
+        /// The floating-point number type.
         typedef typename Point_t::FT FT;
     public:
+        /// Default constructor.
         CatmullRom() = default;
 
     protected:

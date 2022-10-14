@@ -398,24 +398,30 @@ namespace easy3d {
         };
     };
 
+    /// Compute the dot product of two 2D vectors.
     template <class T> inline T dot(const Vec<2, T>& v1, const Vec<2, T>& v2) { return v1.x*v2.x + v1.y*v2.y; }
 
+    /// Compute the determinant of the 2x2 matrix formed by the two 2D vectors as the two rows.
     template <class T> inline  T det(const Vec<2, T>& v1, const Vec<2, T>& v2) {
         return v1.x*v2.y - v1.y*v2.x;
     }
 
-
+    /// The negative vector.
     template <class T> inline Vec<2, T> operator-(const Vec<2, T>& v1) {
         return Vec<2, T>(-v1.x, -v1.y);
     }
+
+    /// Scalar-vector multiplication.
     template <class T2, class T> inline Vec<2, T> operator*(T2 s, const Vec<2, T>& v) {
         return Vec<2, T>(T(s)*v.x, T(s)*v.y);
     }
 
+    /// Vector-vector addition.
     template <class T> inline Vec<2, T> operator+(const Vec<2, T>& v1, const Vec<2, T>& v2) {
         return Vec<2, T>(v1.x + v2.x, v1.y + v2.y);
     }
 
+    /// Vector-vector subtraction.
     template <class T> inline Vec<2, T> operator-(const Vec<2, T>& v1, const Vec<2, T>& v2) {
         return Vec<2, T>(v1.x - v2.x, v1.y - v2.y);
     }
@@ -516,10 +522,12 @@ namespace easy3d {
         };
     };
 
+    /// Compute the dot product of two 3D vectors.
     template <class T> inline T dot(const Vec<3, T>& v1, const Vec<3, T>& v2) {
         return v1.x*v2.x + v1.y*v2.y + v1.z*v2.z;
     }
 
+    /// Compute the cross product of two 3D vectors.
     template <class T> inline  Vec<3, T> cross(const Vec<3, T>& v1, const Vec<3, T>& v2) {
         return Vec<3, T>(
             v1.y*v2.z - v1.z*v2.y,
@@ -528,19 +536,25 @@ namespace easy3d {
             );
     }
 
+    /// The negative vector.
     template <class T> inline Vec<3, T> operator-(const Vec<3, T>& v1) { return Vec<3, T>(-v1.x, -v1.y, -v1.z); }
+
+    /// Scalar-vector multiplication.
     template <class T2, class T> inline Vec<3, T> operator*(T2 s, const Vec<3, T>& v) {
         return Vec<3, T>(T(s)*v.x, T(s)*v.y, T(s)*v.z);
     }
 
+    /// Vector-vector addition.
     template <class T> inline Vec<3, T> operator+(const Vec<3, T>& v1, const Vec<3, T>& v2) {
         return Vec<3, T>(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);
     }
 
+    /// Vector-vector subtraction.
     template <class T> inline Vec<3, T> operator-(const Vec<3, T>& v1, const Vec<3, T>& v2) {
         return Vec<3, T>(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z);
     }
 
+    /// Compute a vector that is orthogonal to the given vector.
     template <class T> inline Vec<3, T> orthogonal(const Vec<3, T>& v) {
         T absx = ::fabs(v.x);
         T absy = ::fabs(v.y);
@@ -648,19 +662,25 @@ namespace easy3d {
         };
     };
 
+    /// Compute the dot product of two 4D vectors.
     template <class T> inline T dot(const Vec<4, T>& v1, const Vec<4, T>& v2) {
         return v1.x*v2.x + v1.y*v2.y + v1.z*v2.z + v1.w*v2.w;
     }
 
+    /// The negative vector.
     template <class T> inline Vec<4, T> operator-(const Vec<4, T>& v1) { return Vec<4, T>(-v1.x, -v1.y, -v1.z, -v1.w); }
+
+    /// Scalar-vector multiplication.
     template <class T2, class T> inline Vec<4, T> operator*(T2 s, const Vec<4, T>& v) {
         return Vec<4, T>(T(s)*v.x, T(s)*v.y, T(s)*v.z, T(s)*v.w);
     }
 
+    /// Vector-vector addition.
     template <class T> inline Vec<4, T> operator+(const Vec<4, T>& v1, const Vec<4, T>& v2) {
         return Vec<4, T>(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z, v1.w + v2.w);
     }
 
+    /// Vector-vector subtraction.
     template <class T> inline Vec<4, T> operator-(const Vec<4, T>& v1, const Vec<4, T>& v2) {
         return Vec<4, T>(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z, v1.w - v2.w);
     }
@@ -669,6 +689,7 @@ namespace easy3d {
 
     //------------------------------- IO (input/output) ----------------------------
 
+    /// Output stream support for Vec.
     template <size_t N, class T> inline std::ostream& operator<<(std::ostream& out, const Vec<N, T>& v) {
         for (size_t i = 0; i < N; i++) {
             out << v[i] << " ";
@@ -676,6 +697,7 @@ namespace easy3d {
         return out;
     }
 
+    /// Input stream support for Vec.
     template <size_t N, class T> inline std::istream& operator>>(std::istream& in, Vec<N, T>& v) {
         for (size_t i = 0; i < N; i++) {
             in >> v[i];
@@ -683,32 +705,39 @@ namespace easy3d {
         return in;
     }
 
+    /// Output stream support specialized for 2D vectors.
     template <class T> inline std::ostream& operator<<(std::ostream& out, const Vec<2, T>& v) {
         return out << v.x << " " << v.y;
     }
 
+    /// Input stream support specialized for 2D vectors.
     template <class T> inline std::istream& operator>>(std::istream& in, Vec<2, T>& v) {
         return in >> v.x >> v.y;
     }
 
+    /// Output stream support specialized for 3D vectors.
     template <class T> inline std::ostream& operator<<(std::ostream& out, const Vec<3, T>& v) {
         return out << v.x << " " << v.y << " " << v.z;
     }
 
+    /// Input stream support specialized for 3D vectors.
     template <class T> inline std::istream& operator>>(std::istream& in, Vec<3, T>& v) {
         return in >> v.x >> v.y >> v.z;
     }
 
+    /// Output stream support specialized for 4D vectors.
     template <class T> inline std::ostream& operator<<(std::ostream& out, const Vec<4, T>& v) {
         return out << v.x << " " << v.y << " " << v.z << " " << v.w;
     }
 
+    /// Input stream support specialized for 4D vectors.
     template <class T> inline std::istream& operator>>(std::istream& in, Vec<4, T>& v) {
         return in >> v.x >> v.y >> v.z >> v.w;
     }
 
     //----------------------------------------------------------------------
 
+    /// Do the coordinates of a vector have NaN?
     template <size_t N, class T>
     inline bool has_nan(const Vec<N, T> &v) {
         for (std::size_t i = 0; i < N; ++i) {
@@ -718,7 +747,7 @@ namespace easy3d {
         return false;
     }
 
-
+    /// Test if two vectors are strictly identical.
     template <size_t N, class T>
     inline bool operator==(const Vec<N,T> &a, const Vec<N,T> &b) {
         bool t = (a[0] == b[0]);
@@ -730,6 +759,7 @@ namespace easy3d {
         return t;
     }
 
+    /// Test if two vectors are strictly not identical.
     template <size_t N, class T>
     inline bool operator!=(const Vec<N,T> &a, const Vec<N,T> &b) {
         bool t = (a[0] != b[0]);
@@ -741,7 +771,7 @@ namespace easy3d {
         return t;
     }
 
-    // lexicographic comparison
+    /// Lexicographic comparison of two vectors
     template <size_t N, class T>
     inline bool operator<(const Vec<N,T> &a, const Vec<N,T> &b) {
         for(unsigned int i=0; i<N; ++i){
@@ -751,7 +781,7 @@ namespace easy3d {
         return false;
     }
 
-    //! return component-wise product
+    /// Component-wise product of two vectors
     template <size_t N, class T>
     inline Vec<N, T> comp_product(const Vec<N, T> &v1, const Vec<N, T> &v2) {
         Vec<N, T> result;
@@ -760,7 +790,7 @@ namespace easy3d {
         return result;
     }
 
-    //! return component-wise minimum
+    /// Component-wise minimum vector
     template <size_t N, class T>
     inline Vec<N, T> comp_min(const Vec<N, T> &v1, const Vec<N, T> &v2) {
         Vec<N, T> result;
@@ -769,7 +799,7 @@ namespace easy3d {
         return result;
     }
 
-    //! return component-wise maximum
+    /// Component-wise maximum vector
     template <size_t N, class T>
     inline Vec<N, T> comp_max(const Vec<N, T> &v1, const Vec<N, T> &v2) {
         Vec<N, T> result;
@@ -778,7 +808,7 @@ namespace easy3d {
         return result;
     }
 
-    //! return the minimum coordinate of all vector elements
+    /// The minimum coordinate of elements in a vector
     template<size_t N, class T>
     inline T min_coord(const Vec<N, T> &a) {
         T result = a[0];
@@ -786,7 +816,7 @@ namespace easy3d {
         return result;
     }
 
-    //! return the maximum coordinate of all vector elements
+    /// The maximum coordinate of elements in a vector
     template<size_t N, class T>
     inline T max_coord(const Vec<N, T> &a) {
         T result = a[0];
@@ -794,7 +824,7 @@ namespace easy3d {
         return result;
     }
 
-    //! component-wise clamp
+    /// Component-wise clamp
     template<size_t N, class T>
     inline Vec<N, T> clamp(const Vec<N, T> &a, const Vec<N, T> &lower, const Vec<N, T> &upper) {
         Vec<N, T> result;

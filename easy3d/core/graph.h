@@ -918,11 +918,13 @@ namespace easy3d {
 	//------------------------------------------------------------ output operators
 
 
+    /** Output stream support for Graph::Vertex. */
 	inline std::ostream& operator<<(std::ostream& os, Graph::Vertex v)
 	{
 		return (os << 'v' << v.idx());
 	}
 
+    /** Output stream support for Graph::Edge. */
 	inline std::ostream& operator<<(std::ostream& os, Graph::Edge e)
 	{
 		return (os << 'e' << e.idx());

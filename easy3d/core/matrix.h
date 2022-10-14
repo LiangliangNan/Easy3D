@@ -31,7 +31,6 @@
 #include <complex>
 #include <algorithm> // for std::min, std::max
 #include <cmath>     // for std::sqrt
-#include <cassert>
 
 
 namespace easy3d {
@@ -76,7 +75,7 @@ namespace easy3d {
          * @param array An array containing at least (rows * cols) elements.
          * @Attention: Matrices are stored internally as row-major.
          */
-        Matrix(int rows, int cols, const std::vector<FT> &array);
+        Matrix(int rows, int cols, const std::vector <FT> &array);
 
         /**
          * This is an override of the above constructor.
@@ -120,13 +119,13 @@ namespace easy3d {
          * Return the data of the matrix as a 1D array.
          * Attention: Matrices are stored internally as row-major (i.e., the rows are concatenated in the returned array).
          */
-        FT* data() { return data_; }
+        FT *data() { return data_; }
 
         /**
          * Return the data of the matrix as a 1D array (const version).
          * Attention: Matrices are stored internally as row-major (i.e., the rows are concatenated in the returned array).
          */
-        const FT* data() const { return data_; }
+        const FT *data() const { return data_; }
 
         /// Return the number of rows.
         int rows() const;
@@ -138,16 +137,16 @@ namespace easy3d {
         Matrix<FT> &resize(int rows, int cols);
 
         /// Get the matrix's row vector as a 1D array.
-        std::vector<FT> get_row(int row) const;
+        std::vector <FT> get_row(int row) const;
 
         /// Get the matrix's column vector as a 1D array.
-        std::vector<FT> get_column(int col) const;
+        std::vector <FT> get_column(int col) const;
 
         /// Set the matrix's row vector
-        void set_row(const std::vector<FT> &v, int row);
+        void set_row(const std::vector <FT> &v, int row);
 
         /// Set the matrix's column vector
-        void set_column(const std::vector<FT> &v, int col);
+        void set_column(const std::vector <FT> &v, int col);
 
         /// Set all elements to zero.
         void load_zero();
@@ -236,7 +235,7 @@ namespace easy3d {
     template<typename FT>
     Matrix<FT> operator*(const Matrix<FT> &, const Matrix<FT> &);        // matrix-matrix multiplication
     template<typename FT>
-    std::vector<FT> operator*(const Matrix<FT> &, const std::vector<FT> &);    // matrix-vector multiplication
+    std::vector <FT> operator*(const Matrix<FT> &, const std::vector <FT> &);    // matrix-vector multiplication
     template<typename FT1, typename FT2>
     Matrix<FT1> operator*(const Matrix<FT1> &, const FT2 &);    // matrix-scalar multiplication
     template<typename FT1, typename FT2>
@@ -252,12 +251,12 @@ namespace easy3d {
     void mult(const Matrix<FT> &, const Matrix<FT> &,
               Matrix<FT> &);            // matrix-matrix multiplication (result has already been allocated)
     template<typename FT>
-    void mult(const Matrix<FT> &, const std::vector<FT> &,
-              std::vector<FT> &);    // matrix-vector multiplication (result has already been allocated)
+    void mult(const Matrix<FT> &, const std::vector <FT> &,
+              std::vector <FT> &);    // matrix-vector multiplication (result has already been allocated)
     template<typename FT>
     Matrix<FT> mult(const Matrix<FT> &, const Matrix<FT> &);        // matrix-matrix multiplication
     template<typename FT>
-    std::vector<FT> mult(const Matrix<FT> &, const std::vector<FT> &);    // matrix-vector multiplication
+    std::vector <FT> mult(const Matrix<FT> &, const std::vector <FT> &);    // matrix-vector multiplication
 
     /// element-wise multiplication / division
     template<typename FT>
@@ -279,19 +278,19 @@ namespace easy3d {
     template<typename FT>
     Matrix<FT> transpose_mult(const Matrix<FT> &, const Matrix<FT> &);        // A^T * B
     template<typename FT>
-    std::vector<FT> transpose_mult(const Matrix<FT> &, const std::vector<FT> &);    // A^T * b
+    std::vector <FT> transpose_mult(const Matrix<FT> &, const std::vector <FT> &);    // A^T * b
     template<typename FT>
     Matrix<FT> mult_transpose(const Matrix<FT> &, const Matrix<FT> &);        // A * B^T
     template<typename FT>
-    Matrix<FT> mult_transpose(const std::vector<FT> &, const std::vector<FT> &);    // a * b^T
+    Matrix<FT> mult_transpose(const std::vector <FT> &, const std::vector <FT> &);    // a * b^T
 
     /// unit and diagonal matrix
     template<typename FT>
     Matrix<FT> identity(int, const FT &);            // Generate an identity matrix.
     template<typename FT>
-    Matrix<FT> diagonal(const std::vector<FT> &);    // Generate a diagonal matrix by given its diagonal elements.
+    Matrix<FT> diagonal(const std::vector <FT> &);    // Generate a diagonal matrix by given its diagonal elements.
     template<typename FT>
-    std::vector<FT> diagonal(const Matrix<FT> &);    // Get the diagonal entries of matrix.
+    std::vector <FT> diagonal(const Matrix<FT> &);    // Get the diagonal entries of matrix.
 
     /// the trace of this matrix, i.e. the sum of the coefficients on the main diagonal.
     /// NOTE: the matrix can be any matrix, not necessarily square.
@@ -304,119 +303,133 @@ namespace easy3d {
     template<typename FT>
     void swap(Matrix<FT> &, Matrix<FT> &);    // Swap two matrices.
     template<typename FT>
-    std::vector<FT> sum(const Matrix<FT> &);    // Matrix's column vectors sum.
+    std::vector <FT> sum(const Matrix<FT> &);    // Matrix's column vectors sum.
     template<typename FT>
-    std::vector<FT> min(const Matrix<FT> &);    // Minimum of matrix's column vectors.
+    std::vector <FT> min(const Matrix<FT> &);    // Minimum of matrix's column vectors.
     template<typename FT>
-    std::vector<FT> max(const Matrix<FT> &);    // Maximum of matrix's column vectors.
+    std::vector <FT> max(const Matrix<FT> &);    // Maximum of matrix's column vectors.
     template<typename FT>
-    std::vector<FT> mean(const Matrix<FT> &);    // Matrix's column vectors mean.
+    std::vector <FT> mean(const Matrix<FT> &);    // Matrix's column vectors mean.
     template<typename FT>
-    Matrix<FT> abs(const Matrix<std::complex<FT> > &A);// Get magnitude of a std::complex matrix.
+    Matrix<FT> abs(const Matrix<std::complex < FT>
+
+    > &A);// Get magnitude of a std::complex matrix.
     template<typename FT>
-    Matrix<FT> arg(const Matrix<std::complex<FT> > &A);// Get angle of a std::complex matrix.
+    Matrix<FT> arg(const Matrix<std::complex < FT>
+
+    > &A);// Get angle of a std::complex matrix.
     template<typename FT>
-    Matrix<FT> real(const Matrix<std::complex<FT> > &A);// Get real part of a std::complex matrix.
+    Matrix<FT> real(const Matrix<std::complex < FT>
+
+    > &A);// Get real part of a std::complex matrix.
     template<typename FT>
-    Matrix<FT> imag(const Matrix<std::complex<FT> > &A);// Get imaginary part of a std::complex matrix.
+    Matrix<FT> imag(const Matrix<std::complex < FT>
+
+    > &A);// Get imaginary part of a std::complex matrix.
 
     /// Convert real matrix to complex matrix.
     template<typename FT>
-    Matrix<std::complex<FT> > complex_matrix(const Matrix<FT> &);
+    Matrix<std::complex < FT> >
+
+    complex_matrix(const Matrix<FT> &);
 
     template<typename FT>
-    Matrix<std::complex<FT> > complex_matrix(const Matrix<FT> &, const Matrix<FT> &); // A for real, B for imaginary
+    Matrix<std::complex < FT> >
+
+    complex_matrix(const Matrix<FT> &, const Matrix<FT> &); // A for real, B for imaginary
 
 
     //----------------------------- Utilities for std::vector ------------------------------//
 
     /// input and output
     template<typename FT>
-    std::ostream &operator<<(std::ostream &, const std::vector<FT> &);// Overload of the output stream.
+    std::ostream &operator<<(std::ostream &, const std::vector <FT> &);// Overload of the output stream.
     template<typename FT>
-    std::istream &operator>>(std::istream &, std::vector<FT> &);        // Overload of the input stream.
+    std::istream &operator>>(std::istream &, std::vector <FT> &);        // Overload of the input stream.
 
     /// arithmetic operators
     template<typename FT>
-    std::vector<FT> operator-(const std::vector<FT> &);    // get negative vector
+    std::vector <FT> operator-(const std::vector <FT> &);    // get negative vector
     template<typename FT>
-    std::vector<FT> operator+(const std::vector<FT> &, const std::vector<FT> &);    // vector-vector addition
+    std::vector <FT> operator+(const std::vector <FT> &, const std::vector <FT> &);    // vector-vector addition
     template<typename FT>
-    std::vector<FT> operator+(const std::vector<FT> &, const FT &);    // vector-scalar addition
+    std::vector <FT> operator+(const std::vector <FT> &, const FT &);    // vector-scalar addition
     template<typename FT>
-    std::vector<FT> operator+(const FT &, const std::vector<FT> &);    // scalar-vector addition
+    std::vector <FT> operator+(const FT &, const std::vector <FT> &);    // scalar-vector addition
     template<typename FT>
-    std::vector<FT> operator-(const std::vector<FT> &, const std::vector<FT> &);    // vector-vector subtraction
+    std::vector <FT> operator-(const std::vector <FT> &, const std::vector <FT> &);    // vector-vector subtraction
     template<typename FT>
-    std::vector<FT> operator-(const std::vector<FT> &, const FT &);    // vector-scalar subtraction
+    std::vector <FT> operator-(const std::vector <FT> &, const FT &);    // vector-scalar subtraction
     template<typename FT>
-    std::vector<FT> operator-(const FT &, const std::vector<FT> &);    // scalar-vector subtraction
+    std::vector <FT> operator-(const FT &, const std::vector <FT> &);    // scalar-vector subtraction
     template<typename FT1, typename FT2>
-    std::vector<FT1> operator*(const std::vector<FT1> &, const FT2 &);    // complex vector-scalar multiplication
+    std::vector <FT1> operator*(const std::vector <FT1> &, const FT2 &);    // complex vector-scalar multiplication
     template<typename FT1, typename FT2>
-    std::vector<FT1> operator*(const FT2 &, const std::vector<FT1> &);    // scalar-complex vector multiplication
+    std::vector <FT1> operator*(const FT2 &, const std::vector <FT1> &);    // scalar-complex vector multiplication
     template<typename FT1, typename FT2>
-    std::vector<FT1> operator/(const std::vector<FT1> &, const FT2 &);    // complex vector-scalar division
+    std::vector <FT1> operator/(const std::vector <FT1> &, const FT2 &);    // complex vector-scalar division
     template<typename FT1, typename FT2>
-    std::vector<FT1> operator/(const FT2 &, const std::vector<FT1> &);    // scalar-complex vector division
+    std::vector <FT1> operator/(const FT2 &, const std::vector <FT1> &);    // scalar-complex vector division
 
 
     /// element-wise multiplication / division
     template<typename FT>
-    std::vector<FT> elem_mult(const std::vector<FT> &, const std::vector<FT> &);    // "*"
+    std::vector <FT> elem_mult(const std::vector <FT> &, const std::vector <FT> &);    // "*"
     template<typename FT>
-    std::vector<FT> elem_divd(const std::vector<FT> &, const std::vector<FT> &);    // "/"
+    std::vector <FT> elem_divd(const std::vector <FT> &, const std::vector <FT> &);    // "/"
     template<typename FT>
-    std::vector<FT> &elem_mult_eq(std::vector<FT> &, const std::vector<FT> &);    // "*="
+    std::vector <FT> &elem_mult_eq(std::vector <FT> &, const std::vector <FT> &);    // "*="
     template<typename FT>
-    std::vector<FT> &elem_divd_eq(std::vector<FT> &, const std::vector<FT> &);    // "/="
+    std::vector <FT> &elem_divd_eq(std::vector <FT> &, const std::vector <FT> &);    // "/="
 
     /// dot product
     template<typename FT>
-    FT operator*(const std::vector<FT> &, const std::vector<FT> &);    // Inner product for vectors.
+    FT operator*(const std::vector <FT> &, const std::vector <FT> &);    // Inner product for vectors.
     template<typename FT>
-    FT dot(const std::vector<FT> &, const std::vector<FT> &);            // Inner product for vectors.
+    FT dot(const std::vector <FT> &, const std::vector <FT> &);            // Inner product for vectors.
 
     /// utilities
     template<typename FT>
-    FT norm(const std::vector<FT> &);                    // Euclidean norm.
+    FT norm(const std::vector <FT> &);                    // Euclidean norm.
     template<typename FT>
-    FT norm(const std::vector<std::complex<FT> > &);    // Euclidean norm.
+    FT norm(const std::vector <std::complex<FT>> &);    // Euclidean norm.
     template<typename FT>
-    void swap(std::vector<FT> &, std::vector<FT> &);// Swap two vectors.
+    void swap(std::vector <FT> &, std::vector <FT> &);// Swap two vectors.
     template<typename FT>
-    std::vector<FT>
+    std::vector <FT>
     linspace(FT, FT, int);// Generates a vector of n points linearly spaced between and including a and b.
     template<typename FT>
-    FT sum(const std::vector<FT> &);    // vector sum.
+    FT sum(const std::vector <FT> &);    // vector sum.
     template<typename FT>
-    FT min(const std::vector<FT> &);    // Minimum value of vector.
+    FT min(const std::vector <FT> &);    // Minimum value of vector.
     template<typename FT>
-    FT max(const std::vector<FT> &);    // Maximum value of vector.
+    FT max(const std::vector <FT> &);    // Maximum value of vector.
     template<typename FT>
-    FT mean(const std::vector<FT> &);
+    FT mean(const std::vector <FT> &);
 
     template<typename FT>
-    std::vector<FT> abs(const std::vector<std::complex<FT> > &);    // Get magnitude of a complex vector.
+    std::vector <FT> abs(const std::vector <std::complex<FT>> &);    // Get magnitude of a complex vector.
     template<typename FT>
-    std::vector<FT> arg(const std::vector<std::complex<FT> > &);    // Get angle of a complex vector.
+    std::vector <FT> arg(const std::vector <std::complex<FT>> &);    // Get angle of a complex vector.
     template<typename FT>
-    std::vector<FT> real(const std::vector<std::complex<FT> > &);    // Get real part of a complex vector.
+    std::vector <FT> real(const std::vector <std::complex<FT>> &);    // Get real part of a complex vector.
     template<typename FT>
-    std::vector<FT> imag(const std::vector<std::complex<FT> > &);    // Get imaginary part of a complex vector.
+    std::vector <FT> imag(const std::vector <std::complex<FT>> &);    // Get imaginary part of a complex vector.
 
     /// Convert real vector to complex vector.
     template<typename FT>
-    std::vector<std::complex<FT> > complex_vector(const std::vector<FT> &);
+    std::vector <std::complex<FT>> complex_vector(const std::vector <FT> &);
 
     template<typename FT>
-    std::vector<std::complex<FT> >
-    complex_vector(const std::vector<FT> &, const std::vector<FT> &); // A for real, B for imaginary
-
+    std::vector <std::complex<FT>>
+    complex_vector(const std::vector <FT> &, const std::vector <FT> &); // A for real, B for imaginary
+}
 
     //-----------------------------  Matrix  Implementation ------------------------------------//
 
 #include <cassert>
+
+namespace easy3d {
 
     /**
     * initialize
@@ -972,15 +985,14 @@ namespace easy3d {
     }
 
 
-    /**
-    * matrix-scalar addition
-    */
+    /** matrix-scalar addition*/
     template<typename FT>
     inline Matrix<FT> operator+(const Matrix<FT> &A, const FT &x) {
         Matrix<FT> tmp(A);
         return tmp += x;
     }
 
+    /** scalar-matrix addition*/
     template<typename FT>
     inline Matrix<FT> operator+(const FT &x, const Matrix<FT> &A) {
         return A + x;
@@ -997,15 +1009,14 @@ namespace easy3d {
     }
 
 
-    /**
-    * matrix-scalar subtraction
-    */
+    /** matrix-scalar subtraction */
     template<typename FT>
     inline Matrix<FT> operator-(const Matrix<FT> &A, const FT &x) {
         Matrix<FT> tmp(A);
         return tmp -= x;
     }
 
+    /** scalar-matrix subtraction */
     template<typename FT>
     inline Matrix<FT> operator-(const FT &x, const Matrix<FT> &A) {
         Matrix<FT> tmp(A);
@@ -1013,9 +1024,7 @@ namespace easy3d {
     }
 
 
-    /**
-    * matrix-matrix subtraction
-    */
+    /** matrix-matrix subtraction */
     template<typename FT>
     inline Matrix<FT> operator-(const Matrix<FT> &A1, const Matrix<FT> &A2) {
         Matrix<FT> tmp(A1);
@@ -1072,14 +1081,14 @@ namespace easy3d {
         return tmp *= s;
     }
 
-    // scalar-matrix multiplication
+    /// scalar-matrix multiplication
     template<typename FT1, typename FT2>
     inline
     Matrix<FT1> operator*(const FT2 &s, const Matrix<FT1> &A) {
         return A * s;
     }
 
-    // matrix-scalar division
+    /// matrix-scalar division
     template<typename FT1, typename FT2>
     inline
     Matrix<FT1> operator/(const Matrix<FT1> &A, const FT2 &s) {
@@ -1087,7 +1096,7 @@ namespace easy3d {
         return tmp /= s;
     }
 
-    // scalar-matrix division
+    /// scalar-matrix division
     template<typename FT1, typename FT2>
     inline
     Matrix<FT1> operator/(const FT2 &s, const Matrix<FT1> &A) {
@@ -1103,9 +1112,9 @@ namespace easy3d {
     }
 
     /**
-    * This is an optimized version of matrix multiplication,
-    * where the destination matrix has already been allocated.
-    */
+     * This is an optimized version of matrix-matrix multiplication,
+     * where the destination matrix has already been allocated.
+     */
     template<typename FT>
     void mult(const Matrix<FT> &A, const Matrix<FT> &B, Matrix<FT> &C) {
         int M = A.rows();
@@ -1135,9 +1144,9 @@ namespace easy3d {
 
 
     /**
-    * This is an optimized version of matrix and vector multiplication,
-    * where the destination vector has already been allocated.
-    */
+     * This is an optimized version of matrix-vector multiplication,
+     * where the destination vector has already been allocated.
+     */
     template<typename FT>
     void mult(const Matrix<FT> &A, const std::vector<FT> &b, std::vector<FT> &c) {
         int M = A.rows();
@@ -1165,9 +1174,9 @@ namespace easy3d {
 
 
     /**
-    * This is an optimized version of matrix multiplication,
-    * where the destination matrix has already been allocated.
-    */
+     * This is an optimized version of matrix-matrix multiplication,
+     * where the destination matrix has already been allocated.
+     */
     template<typename FT>
     Matrix<FT> mult(const Matrix<FT> &A, const Matrix<FT> &B) {
         int M = A.rows();
@@ -1198,9 +1207,9 @@ namespace easy3d {
 
 
     /**
-    * This is an optimized version of matrix and vector multiplication,
-    * where the destination vector has already been allocated.
-    */
+     * This is an optimized version of matrix-vector multiplication,
+     * where the destination vector has already been allocated.
+     */
     template<typename FT>
     std::vector<FT> mult(const Matrix<FT> &A, const std::vector<FT> &b) {
         int M = A.rows();
@@ -1228,39 +1237,35 @@ namespace easy3d {
     }
 
 
-    /**
-    * matrix-matrix element-wise multiplication
-    */
+    /** matrix-matrix element-wise multiplication */
     template<typename FT>
     inline Matrix<FT> elem_mult(const Matrix<FT> &A1, const Matrix<FT> &A2) {
         Matrix<FT> tmp(A1);
         return tmp *= A2;
     }
 
+    /** matrix-matrix element-wise multiplication */
     template<typename FT>
     inline Matrix<FT> &elem_mult_eq(Matrix<FT> &A1, const Matrix<FT> &A2) {
         return A1 *= A2;
     }
 
 
-    /**
-    * matrix-matrix element-wise division
-    */
+    /** * matrix-matrix element-wise division */
     template<typename FT>
     inline Matrix<FT> elem_divd(const Matrix<FT> &A1, const Matrix<FT> &A2) {
         Matrix<FT> tmp(A1);
         return tmp /= A2;
     }
 
+    /** * matrix-matrix element-wise division */
     template<typename FT>
     inline Matrix<FT> &elem_divd_eq(Matrix<FT> &A1, const Matrix<FT> &A2) {
         return A1 /= A2;
     }
 
 
-    /**
-    * matrix transpose
-    */
+    /** matrix transpose */
     template<typename FT>
     Matrix<FT> transpose(const Matrix<FT> &A) {
         int rows = A.cols();
@@ -1275,9 +1280,7 @@ namespace easy3d {
     }
 
 
-    /**
-    * matrix conjugate transpose
-    */
+    /** matrix conjugate transpose */
     template<typename FT>
     Matrix<FT> conjugate_transpose(const Matrix<FT> &A) {
         int rows = A.cols();
@@ -1292,9 +1295,7 @@ namespace easy3d {
     }
 
 
-    /**
-    * matrix-matrix tranpose multiplication: A^T * B.
-    */
+    /** matrix-matrix transpose multiplication: A^T * B. */
     template<typename FT>
     Matrix<FT> transpose_mult(const Matrix<FT> &A1, const Matrix<FT> &A2) {
         assert(A1.rows() == A2.rows());
@@ -1313,9 +1314,7 @@ namespace easy3d {
     }
 
 
-    /**
-    * matrix-vector tranpose multiplication: A^T * b.
-    */
+    /** matrix-vector transpose multiplication: A^T * b. */
     template<typename FT>
     std::vector<FT> transpose_mult(const Matrix<FT> &A, const std::vector<FT> &v) {
         assert(A.rows() == v.size());
@@ -1332,9 +1331,7 @@ namespace easy3d {
     }
 
 
-    /**
-    * matrix-matrix tranpose multiplication: A * B^T.
-    */
+    /** matrix-matrix tranpose multiplication: A * B^T. */
     template<typename FT>
     Matrix<FT> mult_transpose(const Matrix<FT> &A1, const Matrix<FT> &A2) {
         assert(A1.cols() == A2.cols());
@@ -1353,9 +1350,7 @@ namespace easy3d {
     }
 
 
-    /**
-    * vector-vector tranpose multiplication: a * b^T.
-    */
+    /** vector-vector tranpose multiplication: a * b^T. */
     template<typename FT>
     Matrix<FT> mult_transpose(const std::vector<FT> &a, const std::vector<FT> &b) {
         int rows = a.size();
@@ -1370,9 +1365,7 @@ namespace easy3d {
     }
 
 
-    /**
-    * Generate the identity matrix.
-    */
+    /** Generate an identity matrix. */
     template<typename FT>
     Matrix<FT> identity(int N, const FT &x) {
         Matrix<FT> tmp(N, N);
@@ -1383,9 +1376,7 @@ namespace easy3d {
     }
 
 
-    /**
-    * Get the diagonal entries of matrix.
-    */
+    /** Get the diagonal entries of matrix. */
     template<typename FT>
     std::vector<FT> diagonal(const Matrix<FT> &A) {
         int nColumn_ = A.rows();
@@ -1400,9 +1391,7 @@ namespace easy3d {
     }
 
 
-    /**
-    * Generate the diagonal of matrix by given its diagonal elements.
-    */
+    /** Generate the diagonal of matrix by given its diagonal elements. */
     template<typename FT>
     Matrix<FT> diagonal(const std::vector<FT> &d) {
         int N = static_cast<int>(d.size());
@@ -1416,9 +1405,9 @@ namespace easy3d {
 
 
     /**
-    * the trace of this matrix, i.e. the sum of the coefficients on the main diagonal.
-    * NOTE: the matrix can be any matrix, not necessarily square.
-    */
+     * Compute the trace of this matrix, i.e. the sum of the coefficients on the main diagonal.
+     * NOTE: the matrix can be any matrix, not necessarily square.
+     */
     template<typename FT>
     FT trace(const Matrix<FT> &A) {
         int range = std::min(A.rows(), A.cols());
@@ -1430,9 +1419,7 @@ namespace easy3d {
     }
 
 
-    /**
-    * Compute Frobenius norm of matrix.
-    */
+    /** Compute Frobenius norm of matrix. */
     template<typename FT>
     FT norm(const Matrix<FT> &A) {
         int m = A.rows();
@@ -1447,9 +1434,7 @@ namespace easy3d {
     }
 
 
-    /**
-    * Swap two matrices.
-    */
+    /** Swap two matrices. */
     template<typename FT>
     void swap(Matrix<FT> &lhs, Matrix<FT> &rhs) {
         int m = lhs.rows();
@@ -1464,9 +1449,7 @@ namespace easy3d {
     }
 
 
-    /**
-    * Matrix's column vectors sum.
-    */
+    /** Matrix's column vectors sum. */
     template<typename FT>
     std::vector<FT> sum(const Matrix<FT> &A) {
         int m = A.rows();
@@ -1480,9 +1463,7 @@ namespace easy3d {
     }
 
 
-    /**
-    * Minimum of matrix's column vectors.
-    */
+    /** Minimum of matrix's column vectors. */
     template<typename FT>
     std::vector<FT> min(const Matrix<FT> &A) {
         int m = A.rows();
@@ -1501,9 +1482,7 @@ namespace easy3d {
     }
 
 
-    /**
-    * Maximum of matrix's column vectors.
-    */
+    /** Maximum of matrix's column vectors. */
     template<typename FT>
     std::vector<FT> max(const Matrix<FT> &A) {
         int m = A.rows();
@@ -1522,9 +1501,7 @@ namespace easy3d {
     }
 
 
-    /**
-    * Matrix's column vectors mean.
-    */
+    /** Matrix's column vectors mean. */
     template<typename FT>
     inline std::vector<FT> mean(const Matrix<FT> &A) {
         return sum(A) / FT(A.rows());
@@ -1624,7 +1601,7 @@ namespace easy3d {
     //-----------------------------  std::vector  Implementation ------------------------------------//
 
 
-    // Overload the output stream function.
+    /// Output stream support for std::vector<FT>.
     template<typename FT>
     std::ostream &operator<<(std::ostream &out, const std::vector<FT> &A) {
         out << "size: " << A.size() << "\n";
@@ -1635,7 +1612,7 @@ namespace easy3d {
     }
 
 
-    /// Overload the input stream function.
+    /// Input stream support for std::vector<FT>.
     template<typename FT>
     std::istream &operator>>(std::istream &in, std::vector<FT> &A) {
         int size;
@@ -1770,6 +1747,7 @@ namespace easy3d {
         return result;
     }
 
+    /// vector-vector element-wise multiplication: v1 *= v2.
     template<typename FT>
     inline std::vector<FT> &elem_mult_eq(std::vector<FT> &v1, const std::vector<FT> &v2) {
         assert(v1.size() == v2.size());
@@ -1793,7 +1771,7 @@ namespace easy3d {
         return result;
     }
 
-
+    /// vector-vector element-wise division: v1 /= v2.
     template<typename FT>
     inline std::vector<FT> &elem_divd_eq(std::vector<FT> &v1, const std::vector<FT> &v2) {
         assert(v1.size() == v2.size());

@@ -24,8 +24,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef EASY3D_IMAGE_ENCODER_H
-#define EASY3D_IMAGE_ENCODER_H
+#ifndef EASY3D_VIDEO_ENCODER_H
+#define EASY3D_VIDEO_ENCODER_H
 
 #include <string>
 
@@ -37,12 +37,31 @@ namespace internal {
 
 namespace easy3d {
 
+    /**
+     * @brief A class that can encode video frames (e.g., images) into a video file.
+     * @class VideoEncoder easy3d/video/video_encoder.h
+     * @details VideoEncoder is implemented internally base on ffmpeg's muxing example. Below is an example of usage:
+     *      \code
+     *          VideoEncoder encoder;
+     *          encoder.start(output_file, 30, 100 * 1024 * 1024);  // 30 fps, 100 Mbit/s
+     *          for (std::size_t i = 0; i < image_files.size(); ++i) {
+     *              std::vector<unsigned char> data;
+     *              int w, h, c;
+     *              if (ImageIO::load(file_name, data, w, h, c, 0, false))
+     *                  encoder.encode(data.data(), w, h, VideoEncoder::PIX_FMT_RGBA_8888);
+     *          }
+     *          encoder.end();
+     *      \endcode
+     */
 	class VideoEncoder
 	{
 	public:
+        /// Constructor
 		VideoEncoder();
+        /// Destructor
 		~VideoEncoder();
 
+        /// The supported pixel format/storage of the video frames.
         enum PixelFormat {
             PIX_FMT_RGB_888,    /// packed RGB 8:8:8, 24bpp, RGBRGB...
             PIX_FMT_BGR_888,    /// packed BGR 8:8:8, 24bpp, BGRBGR...
@@ -84,4 +103,4 @@ namespace easy3d {
 
 }
 
-#endif	// EASY3D_IMAGE_ENCODER_H
+#endif	// EASY3D_VIDEO_ENCODER_H
