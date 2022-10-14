@@ -19,7 +19,6 @@
 
 namespace easy3d {
 
-    // \cond
     namespace string {
 
         void split(const std::string &in, char separator, std::vector<std::string> &out, bool skip_empty_fields) {
@@ -131,7 +130,6 @@ namespace easy3d {
             return string_stream.str();
         }
 
-        /********************************************************************/
 
         void append_v(std::string &dst, const char *format, va_list ap) {
             // First try with a small fixed size buffer.
@@ -264,5 +262,5 @@ namespace easy3d {
         }
 
     }
-    // \endcond
+
 }

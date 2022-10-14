@@ -188,7 +188,9 @@ namespace easy3d {
         mat4 manipulated_matrix() const;
         ///@}
 
+        /// \brief Returns the vertex array object of this drawable.
         VertexArrayObject *vao() { return vao_; }
+        /// \brief Returns the vertex array object of this drawable.
         const VertexArrayObject *vao() const { return vao_; }
 
     protected:

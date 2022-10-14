@@ -151,8 +151,8 @@ namespace easy3d {
 
         /** \brief Defines the position(), orientation() and fieldOfView() of the camera from calibrated camera
          *      intrinsic and extrinsic parameters. This is an overload of set_from_calibration().
-         *  \param fx and fy: the focal length
-         *  \param cx and cy: the principal point
+         *  \param fx, fy: the focal length
+         *  \param cx, cy: the principal point
          *  \param skew: distortion
          *  \param R: the rotation matrix. It denotes the coordinate system transformation from 3D world coordinates
          *      to 3D camera coordinates.
@@ -246,11 +246,15 @@ namespace easy3d {
 		void centerScene();
 
     public:
+        /// Return the keyframe interpolator.
         KeyFrameInterpolator *keyframe_interpolator() const { return interpolationKfi_; }
 
+        /// Perform keyframe interpolation to look at \p point.
         void interpolateToLookAt(const vec3& point);
+        /// Perform keyframe interpolation to fit the scene bounding box.
         void interpolateToFitScene();
-        void interpolateTo(const Frame &fr, double duration);
+        /// Perform keyframe interpolation to \p frame, done in \p duration second.
+        void interpolateTo(const Frame &frame, double duration);
 
 	public:
 		/**
@@ -341,6 +345,7 @@ namespace easy3d {
 		virtual float zFar() const;
 		virtual void getOrthoWidthHeight(float &halfWidth, float &halfHeight) const;
 		void getFrustumPlanesCoefficients(float coef[6][4]) const;
+        /// Return the 6 plane equations of the Camera frustum.
 		void getFrustumPlanesCoefficients2(float coef[6][4]) const; // my version
 
 	public:
@@ -483,6 +488,7 @@ namespace easy3d {
         KeyFrameInterpolator* interpolationKfi_;
 
 	public:
+        /// A signal indicating the frame has been modified.
 	    Signal<> frame_modified;
 	};
 

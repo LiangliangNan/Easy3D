@@ -62,7 +62,9 @@ namespace easy3d {
         /// Reset element to default value
         virtual void reset(size_t idx) = 0;
 
+        /// Copy the entire properties from \p other.
         virtual bool transfer(const BasePropertyArray& other) = 0;
+        /// Copy the property[from] of \p other to this->property[to].
         virtual bool transfer(const BasePropertyArray& other, std::size_t from, std::size_t to) = 0;
 
         /// Let two elements swap their storage place.
@@ -86,7 +88,9 @@ namespace easy3d {
         /// Set the name of the property
         void set_name(const std::string& n) { name_ = n; }
 
-        bool is_same (const BasePropertyArray& other) const
+        /// Test if two properties are the same.
+        /// \return true only if their names and types are both identical.
+        bool is_same(const BasePropertyArray& other) const
         {
             return (name() == other.name() && type() == other.type());
         }

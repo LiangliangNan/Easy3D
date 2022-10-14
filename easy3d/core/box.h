@@ -91,10 +91,12 @@ namespace easy3d {
 
         /** Return the coordinates of the min corner. */
         inline const Point& min_point() const { return min_; }
+        /** Return the coordinates of the min corner. */
         inline Point& min_point() { return min_; }
 
         /** Return the coordinates of the max corner. */
         inline const Point& max_point() const { return max_; }
+        /** Return the coordinates of the max corner. */
         inline Point& max_point() { return max_; }
 
         /** Return a component of the coordinates of the min corner. \c axis must be in [0, DIM). */
@@ -277,6 +279,7 @@ namespace easy3d {
     };
 
 
+    /** Does the representation of a box have NaN? */
     template<int DIM, typename FT>
     inline bool has_nan(const GenericBox<DIM, FT> &box) {
         return has_nan(box.min_point()) || has_nan(box.max_point());

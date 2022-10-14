@@ -751,17 +751,20 @@ namespace easy3d {
         return Quat(std::sin(t1)*r1, std::cos(t1)*r1, std::sin(t2)*r2, std::cos(t2)*r2);
     }
 
+    /// Output stream support for Quat.
     template <typename FT> inline
     std::ostream& operator<<(std::ostream& os, const Quat<FT>& Q)
     {
         return os << Q[0] << ' ' << Q[1] << ' ' << Q[2] << ' ' << Q[3];
     }
 
+    /// Input stream support for Quat.
     template <typename FT> inline
     std::istream& operator>>(std::istream& is, Quat<FT>& Q) {
         return is >> Q[0] >> Q[1] >> Q[2] >> Q[3];
     }
 
+    /// Do the coordinates of the quaternion have NaN?
     template <class FT> inline
     bool has_nan(const Quat<FT>& Q) {
         for (int i=0; i<4; ++i) {

@@ -34,6 +34,8 @@
 namespace easy3d {
 
     class SurfaceMesh;
+
+    /// ToDo: Not fully implemented; not tested.
     class ConvexHull {
     public:
         static bool convex_hull(const std::vector<vec2> &pts, Polygon2& hull);

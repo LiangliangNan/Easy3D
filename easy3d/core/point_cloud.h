@@ -493,6 +493,7 @@ namespace easy3d {
 
     //------------------------------------------------------------ output operators
 
+    /// Output stream support for PointCloud::Vertex.
     inline std::ostream& operator<<(std::ostream& os, PointCloud::Vertex v)
     {
         return (os << 'v' << v.idx());

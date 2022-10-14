@@ -21,11 +21,13 @@
 
 namespace easy3d {
 
-    void project_to_unit_sphere(SurfaceMesh &mesh) {
-        for (auto v: mesh.vertices()) {
-            auto p = mesh.position(v);
-            auto n = norm(p);
-            mesh.position(v) = (1.0 / n) * p;
+    namespace internal {
+        void project_to_unit_sphere(SurfaceMesh &mesh) {
+            for (auto v: mesh.vertices()) {
+                auto p = mesh.position(v);
+                auto n = norm(p);
+                mesh.position(v) = (1.0 / n) * p;
+            }
         }
     }
 
@@ -75,14 +77,14 @@ namespace easy3d {
     SurfaceMesh SurfaceMeshFactory::octahedron() {
         auto mesh = hexahedron();
         geom::dual(&mesh);
-        project_to_unit_sphere(mesh);
+        internal::project_to_unit_sphere(mesh);
         return mesh;
     }
 
     SurfaceMesh SurfaceMeshFactory::dodecahedron() {
         auto mesh = icosahedron();
         geom::dual(&mesh);
-        project_to_unit_sphere(mesh);
+        internal::project_to_unit_sphere(mesh);
         return mesh;
     }
 
@@ -106,7 +108,7 @@ namespace easy3d {
         auto v11 = mesh.add_vertex(vec3(b, -a, 0));
         auto v12 = mesh.add_vertex(vec3(-b, -a, 0));
 
-        project_to_unit_sphere(mesh);
+        internal::project_to_unit_sphere(mesh);
 
         mesh.add_triangle(v3, v2, v1);
         mesh.add_triangle(v2, v3, v4);
@@ -136,7 +138,7 @@ namespace easy3d {
         auto mesh = icosahedron();
         for (size_t i = 0; i < n_subdivisions; i++) {
             SurfaceMeshSubdivision::loop(&mesh);
-            project_to_unit_sphere(mesh);
+            internal::project_to_unit_sphere(mesh);
         }
         return mesh;
     }
@@ -145,7 +147,7 @@ namespace easy3d {
         auto mesh = hexahedron();
         for (size_t i = 0; i < n_subdivisions; i++) {
             SurfaceMeshSubdivision::catmull_clark(&mesh);
-            project_to_unit_sphere(mesh);
+            internal::project_to_unit_sphere(mesh);
         }
         return mesh;
     }

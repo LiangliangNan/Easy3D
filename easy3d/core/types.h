@@ -115,7 +115,7 @@ namespace easy3d {
     typedef GenericPolygon<float> Polygon2;
 
 
-
+    /// Is this NaN?
     template <typename FT>
     inline bool is_nan(FT v) {
         return (std::isnan(v) || std::isinf(v));

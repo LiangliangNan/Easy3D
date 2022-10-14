@@ -140,6 +140,7 @@ namespace easy3d
 
     }
 
+    /// Call this function to enable the console style (if supported)
     std::ostream& operator<<(std::ostream& s, console::Style style) {
         if (!console::terminal_supports_styles())
             return s;
