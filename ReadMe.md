@@ -111,7 +111,7 @@ There are many options to build Easy3D. Choose one of the following (not an exha
   Visual Studio). 
   - On Linux or macOS, you can simply
     ```
-        $ cd Easy3D
+        $ cd path-to-root-dir-of-Easy3D
         $ mkdir Release
         $ cd Release
         $ cmake -DCMAKE_BUILD_TYPE=Release ..
@@ -119,7 +119,7 @@ There are many options to build Easy3D. Choose one of the following (not an exha
     ```
   - On Windows with Microsoft Visual Studio, use `x64 Native Tools Command Prompt for VS XXXX` (**don't** use the x86 one), then
     ```
-        $ cd Easy3D
+        $ cd path-to-root-dir-of-Easy3D
         $ mkdir Release
         $ cd Release
         $ cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release ..
