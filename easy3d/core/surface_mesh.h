@@ -920,7 +920,7 @@ namespace easy3d {
         {
         public:
 
-            /// default constructur
+            /// default constructor
             HalfedgeAroundFaceCirculator(const SurfaceMesh* m=nullptr, Face f=Face())
             : mesh_(m), active_(true)
             {

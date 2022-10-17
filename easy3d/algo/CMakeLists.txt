@@ -6,7 +6,6 @@ project(${PROJECT_NAME})
 
 
 set(${PROJECT_NAME}_HEADERS
-        convex_hull.h
         delaunay.h
         delaunay_2d.h
         delaunay_3d.h
@@ -42,7 +41,6 @@ set(${PROJECT_NAME}_HEADERS
         )
 
 set(${PROJECT_NAME}_SOURCES
-        convex_hull.cpp
         delaunay.cpp
         delaunay_2d.cpp
         delaunay_3d.cpp
