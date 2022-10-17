@@ -85,14 +85,14 @@ the source code of most third-party libraries (for the core functionalities and 
 few optional (for a few additional features that are typically not needed by most users). 
 
 The **optional** third-party libraries are:
-- **[CGAL](https://www.cgal.org/)** (optional): Easy3D has implemented a few algorithms for advanced surface mesh 
+- **[CGAL](https://www.cgal.org/) (optional)**: Easy3D has implemented a few algorithms for advanced surface mesh 
   processing, such as surface reorientation, detecting/resolving duplicate vertices/faces and self-intersection, 
   and clipping/splitting/slicing surface meshes. These features are disabled by default (because most users don't 
   need them). To enable these features, you can switch on the CMake option `EASY3D_ENABLE_CGAL` and make sure 
   CGAL ([v5.1 or later](https://github.com/CGAL/cgal/releases)) is installed and visible to CMake. In case you have
   multiple versions of CGAL on your platform, simply provide the path of a suitable one to the CMake variable `CGAL_DIR`.
 
-- **[Qt5(https://www.qt.io/)** (optional): Easy3D supports Qt ([v5.6 or later](https://download.qt.io/archive/qt/)) for 
+- **[Qt5](https://www.qt.io/) (optional)**: Easy3D supports Qt ([v5.6 or later](https://download.qt.io/archive/qt/)) for 
   UI creation, which can help develop sophisticated applications for 3D data processing and visualization. The Qt 
   support is disabled by default (because most users don't need it). You can switch on the CMake option `EASY3D_ENABLE_QT` 
   to include the examples and applications that depend on Qt (e.g., 
