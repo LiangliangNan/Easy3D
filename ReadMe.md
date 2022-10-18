@@ -46,10 +46,10 @@ Compared to existing geometry processing libraries (such as [PMP](http://www.pmp
 |------------------------------------------|-------------------------------------------|--------------------------------------------|
 | ![](resources/images/mapple-scalar.jpg)  | ![](resources/images/mapple-polymesh.gif) | ![](resources/images/mapple-animation.gif) |
 
-### A quick glance ###
+### A glance ###
 
-Any types of 3D drawables (e.g., points, lines, triangles, and thus point clouds, mesh surfaces, scalar fields, 
-vector fields) can be rendered by writing a few lines of code with Easy3D. For example, the following code renders a 
+Any type of 3D drawables (e.g., points, lines, triangles, and thus point clouds, mesh surfaces, scalar fields, 
+and vector fields) can be rendered by writing a few lines of code with Easy3D. For example, the following code renders a 
 point cloud as a set of spheres
 
 ```c++
@@ -68,14 +68,14 @@ By abstracting geometric elements as one of the above drawables, more general vi
 scalar fields) can be done very conveniently.
 
 ### Easy3D repository layout
-The repository contains a `CMakeLists.txt` file (in the root directory of the repository) that serves as anchor for 
+The repository contains a `CMakeLists.txt` file (in the root directory of the repository) that serves as an anchor for 
 configuring and building programs, and a set of subfolders:
-* [`3rd_party`](https://github.com/LiangliangNan/Easy3D/tree/main/3rd_party) - source code of third party libraries
+* [`3rd_party`](https://github.com/LiangliangNan/Easy3D/tree/main/3rd_party) - source code of third-party libraries
 * [`applications`](https://github.com/LiangliangNan/Easy3D/tree/main/applications) - applications built on top of Easy3D
 * [`cmake`](https://github.com/LiangliangNan/Easy3D/tree/main/cmake) - CMake-related configuration files
 * [`docs`](https://github.com/LiangliangNan/Easy3D/tree/main/docs) - documentation configuration file (Doxygen)
 * [`easy3d`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d) - source code of Easy3D
-* [`resources`](https://github.com/LiangliangNan/Easy3D/tree/main/resources) - test data, images, shaders, and textures, etc.
+* [`resources`](https://github.com/LiangliangNan/Easy3D/tree/main/resources) - test data, images, shaders, textures, etc.
 * [`tests`](https://github.com/LiangliangNan/Easy3D/tree/main/tests) - a collection of test cases
 * [`tutorials`](https://github.com/LiangliangNan/Easy3D/tree/main/tutorials) - a collection of examples (with detailed explanations in code)
 
@@ -102,12 +102,12 @@ The **optional** third-party libraries are:
 To build Easy3D, you need [CMake](https://cmake.org/download/) (`>= 3.12`) and, of course, a compiler that supports `>= C++11`.
 
 Easy3D has been tested on macOS (Xcode >= 8), Windows (MSVC >=2015 `x64`), and Linux (GCC >= 4.8, Clang >= 3.3). Machines 
-nowadays typically provide higher [supports](https://en.cppreference.com/w/cpp/compiler_support), so you should be able 
+nowadays typically provide higher [support](https://en.cppreference.com/w/cpp/compiler_support), so you should be able 
 to build Easy3D on almost all platforms.
 
-There are many options to build Easy3D. Choose one of the following (not an exhausitive list):
+There are many options to build Easy3D. Choose one of the following (not an exhaustive list):
 
-- Option 1 (purely on command line): Use CMake to generate Makefiles and then `make` (on Linux/macOS) or `nmake`(on Windows with Microsoft 
+- Option 1 (purely on the command line): Use CMake to generate Makefiles and then `make` (on Linux/macOS) or `nmake`(on Windows with Microsoft 
   Visual Studio). 
   - On Linux or macOS, you can simply
     ```
@@ -117,7 +117,7 @@ There are many options to build Easy3D. Choose one of the following (not an exha
         $ cmake -DCMAKE_BUILD_TYPE=Release ..
         $ make
     ```
-  - On Windows with Microsoft Visual Studio, use `x64 Native Tools Command Prompt for VS XXXX` (**don't** use the x86 one), then
+  - On Windows with Microsoft Visual Studio, use the `x64 Native Tools Command Prompt for VS XXXX` (**don't** use the x86 one), then
     ```
         $ cd path-to-root-dir-of-Easy3D
         $ mkdir Release
@@ -139,7 +139,7 @@ step</a>.
 ### Test Easy3D
 A test suite is provided in the `tests` subfolder, which contains a collection of automated test cases (for data 
 structures, IO, algorithms, visualization, etc.) and some semi-automated test cases (for GUI-related functionalities 
-that require interactive user input). All cases are integrated into a single target `tests`.
+that require interactive user input). All cases are integrated into the single target `tests`.
 
 To build and run the test suite, download the entire source, use the `CMakeLists.txt` in the root directory of the 
 repository, switch on the CMake option `EASY3D_BUILD_TESTS` (which is disabled by default), and run CMake. After CMake, 
@@ -149,7 +149,7 @@ you can build ALL or only the `tests` target. Finally, run the `tests` executabl
 This is quite easy, maybe easier than many other open-source libraries :-) 
 After you have built Easy3D, you only need to add the following lines to your CMakeLists file (don't forget to replace `YOUR_APP_NAME` 
 with the actual name of your application) and point `Easy3D_DIR` to your `build` directory of Easy3D when doing cmake. Then the requested
-Easy3D libraries, include directories, and relevant compile definitions of Easy3D are visible and accessible to your project.
+Easy3D libraries, including directories, and relevant compile definitions of Easy3D are visible and accessible to your project.
 ```
 set(CMAKE_CXX_STANDARD 11)                          # specify C++ standard
 find_package(Easy3D REQUIRED)                       # request Easy3D 
@@ -195,7 +195,7 @@ We would like to thank the original authors of these projects for their permissi
 We also thank the users and contributors for reporting/fixing bugs, testing, and providing valuable feedback and suggestions.
 
 ### Citation
-If you use Easy3D in a scientific work, I kindly ask you to cite it:
+If you use Easy3D in scientific work, I kindly ask you to cite it:
 
 ```bibtex
 @article{easy3d2021,
