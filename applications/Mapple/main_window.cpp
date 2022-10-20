@@ -2091,31 +2091,31 @@ void MainWindow::addGaussianNoise() {
 
 
 void MainWindow::applyManipulatedTransformation() {
-    Model* model = viewer_->currentModel();
-    if (!model)
+    const auto& models = viewer_->models();
+    if (models.empty())
         return;
 
-    mat4 manip = model->manipulator()->matrix();
-    auto& points = model->points();
-    for (auto& p : points)
-        p = manip * p;
+    for (auto model : models) {
+        mat4 manip = model->manipulator()->matrix();
+        auto &points = model->points();
+        for (auto &p: points)
+            p = manip * p;
 
-    if (dynamic_cast<SurfaceMesh*>(model)) {
-        dynamic_cast<SurfaceMesh *>(model)->update_vertex_normals();
-    }
-    else if (dynamic_cast<PointCloud*>(model)) {
-        PointCloud* cloud = dynamic_cast<PointCloud*>(model);
-        auto normal = cloud->get_vertex_property<vec3>("v:normal");
-        if (normal) {
-            const mat3& N = transform::normal_matrix(manip);
-            for (auto v : cloud->vertices())
-                normal[v] = N * normal[v];
-            // vector fields...
+        if (dynamic_cast<SurfaceMesh *>(model)) {
+            dynamic_cast<SurfaceMesh *>(model)->update_vertex_normals();
+        } else if (dynamic_cast<PointCloud *>(model)) {
+            PointCloud *cloud = dynamic_cast<PointCloud *>(model);
+            auto normal = cloud->get_vertex_property<vec3>("v:normal");
+            if (normal) {
+                const mat3 &N = transform::normal_matrix(manip);
+                for (auto v: cloud->vertices())
+                    normal[v] = N * normal[v];
+                // vector fields...
+            }
         }
+        model->manipulator()->reset();
+        model->renderer()->update();
     }
-
-    model->manipulator()->reset();
-    model->renderer()->update();
     viewer_->update();
 }
 
