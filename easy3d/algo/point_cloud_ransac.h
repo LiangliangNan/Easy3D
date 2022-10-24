@@ -83,12 +83,12 @@ namespace easy3d {
         ///        primitive_type must be UNKNOWN.
         int detect(
                 PointCloud *cloud,
-                const std::vector<int> &vertitces,
+                const std::vector<int> &vertices,
                 unsigned int min_support = 1000,    // the minimal number of points required for a primitive
-                float dist_thresh = 0.005f,    // relative to the bounding box width. NOTE: Internally the distance threshold is taken as 3 * distance_threshold!!!
-                float bitmap_reso = 0.02f,    // relative to the bounding box width. NOTE: This threshold is NOT multiplied internally!
-                float normal_thresh = 0.8f,    // the cos of the maximal normal deviation
-                float overlook_prob = 0.001f    // the probability with which a primitive is overlooked
+                float dist_thresh = 0.005f,         // relative to the bounding box width. NOTE: Internally the distance threshold is taken as 3 * distance_threshold!!!
+                float bitmap_reso = 0.02f,          // relative to the bounding box width. NOTE: This threshold is NOT multiplied internally!
+                float normal_thresh = 0.8f,         // the cos of the maximal normal deviation
+                float overlook_prob = 0.001f        // the probability with which a primitive is overlooked
         );
 
     private:
