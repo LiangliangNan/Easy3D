@@ -195,7 +195,7 @@ namespace easy3d {
         for (auto model : models) {
             if (model->renderer()->is_visible()) {
                 // transformation introduced by manipulation
-                const mat4 MANIP = model->manipulator()->matrix();
+                const mat4 MANIP = model->manipulator() ? model->manipulator()->matrix() : mat4::identity();
                 // needs be padded when using uniform blocks
                 const mat3 NORMAL = transform::normal_matrix(MANIP);
 

@@ -99,7 +99,7 @@ namespace easy3d {
         // Get combined model-view and projection matrix
         const mat4& MVP = camera()->modelViewProjectionMatrix();
         // transformation introduced by manipulation
-        const mat4& MANIP = model->manipulator()->matrix();
+        const mat4 MANIP = model->manipulator() ? model->manipulator()->matrix() : mat4::identity();
         const mat4& m = MVP * MANIP;
 
 #pragma omp parallel for
@@ -160,9 +160,10 @@ namespace easy3d {
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);	easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
 
+        const mat4 MANIP = model->manipulator() ? model->manipulator()->matrix() : mat4::identity();
         program_->bind();
         program_->set_uniform("MVP", camera()->modelViewProjectionMatrix())
-                ->set_uniform("MANIP", model->manipulator()->matrix());
+                ->set_uniform("MANIP", MANIP);
         drawable->gl_draw();
         program_->release();
 
@@ -221,11 +222,12 @@ namespace easy3d {
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);	easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
 
+        const mat4 MANIP = model->manipulator() ? model->manipulator()->matrix() : mat4::identity();
         program_->bind();
         program_->set_uniform("perspective", camera()->type() == Camera::PERSPECTIVE);
         program_->set_uniform("MV", camera_->modelViewMatrix());easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
         program_->set_uniform("PROJ", camera_->projectionMatrix());
-        program_->set_uniform("MANIP", model->manipulator()->matrix());
+        program_->set_uniform("MANIP", MANIP);
         float ratio = camera_->pixelGLRatio(camera_->pivotPoint());
         program_->set_uniform("sphere_radius", drawable->point_size() * ratio * 0.5f);  // 0.5f from size -> radius
         program_->set_uniform("screen_width", width);easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
@@ -274,7 +276,8 @@ namespace easy3d {
 
         const auto &points = model->get_vertex_property<vec3>("v:point").vector();
         int num = static_cast<int>(points.size());
-        const mat4 &m = camera()->modelViewProjectionMatrix() * model->manipulator()->matrix();
+        const mat4 MANIP = model->manipulator() ? model->manipulator()->matrix() : mat4::identity();
+        const mat4 &m = camera()->modelViewProjectionMatrix() * MANIP;
 
         auto &select = model->vertex_property<bool>("v:select").vector();
 
@@ -324,7 +327,8 @@ namespace easy3d {
 
         const auto &points = model->get_vertex_property<vec3>("v:point").vector();
         int num = static_cast<int>(points.size());
-        const mat4 &m = camera()->modelViewProjectionMatrix() * model->manipulator()->matrix();
+        const mat4 MANIP = model->manipulator() ? model->manipulator()->matrix() : mat4::identity();
+        const mat4 &m = camera()->modelViewProjectionMatrix() * MANIP;
 
         auto& select = model->vertex_property<bool>("v:select").vector();
 

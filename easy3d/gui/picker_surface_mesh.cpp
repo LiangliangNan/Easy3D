@@ -272,9 +272,10 @@ namespace easy3d {
         easy3d_debug_log_gl_error;
         easy3d_debug_log_frame_buffer_error;
 
+        const mat4 MANIP = model->manipulator() ? model->manipulator()->matrix() : mat4::identity();
         program->bind();
         program->set_uniform("MVP", camera()->modelViewProjectionMatrix())
-                ->set_uniform("MANIP", model->manipulator()->matrix());
+                ->set_uniform("MANIP", MANIP);
         drawable->gl_draw();
         program->release();
 
@@ -356,7 +357,8 @@ namespace easy3d {
 
         const auto &points = model->get_vertex_property<vec3>("v:point").vector();
         const int num = static_cast<int>(points.size());
-        const mat4 &m = camera()->modelViewProjectionMatrix() * model->manipulator()->matrix();
+        const mat4 MANIP = model->manipulator() ? model->manipulator()->matrix() : mat4::identity();
+        const mat4 &m = camera()->modelViewProjectionMatrix() * MANIP;
 
         std::vector<bool> status(num, false);
 
@@ -420,7 +422,8 @@ namespace easy3d {
 
         const auto &points = model->get_vertex_property<vec3>("v:point").vector();
         const int num = static_cast<int>(points.size());
-        const mat4 &m = camera()->modelViewProjectionMatrix() * model->manipulator()->matrix();
+        const mat4 MANIP = model->manipulator() ? model->manipulator()->matrix() : mat4::identity();
+        const mat4 &m = camera()->modelViewProjectionMatrix() * MANIP;
 
         std::vector<bool> select_vertices(num, false);
 
