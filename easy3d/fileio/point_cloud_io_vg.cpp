@@ -101,43 +101,40 @@ namespace easy3d {
 
             auto trans = cloud->get_model_property<dvec3>("translation");
             if (trans) { // has translation
-                for (std::size_t i = 0; i < points.size(); ++i) {
-                    const vec3& p = points[i];
+                for (const auto& p : points)
                     output << p.x + trans[0].x << " " << p.y + trans[0].y << " " << p.z + trans[0].z << " ";
-                }
             }
             else { // no translation
-                for (std::size_t i = 0; i < points.size(); ++i)
-                    output << points[i] << " ";
+                for (const auto& p : points)
+                    output << p << " ";
             }
             output << std::endl;
 
             output << "num_colors: " << (cls ? points.size() : 0) << std::endl;
             if (cls) {
                 const std::vector<vec3>& colors = cls.vector();
-                for (std::size_t i = 0; i < colors.size(); ++i)
-                    output << colors[i] << " ";
+                for (const auto& c : colors)
+                    output << c << " ";
                 output << std::endl;
             }
 
             output << "num_normals: " << (nms ? points.size() : 0) << std::endl;
             if (nms) {
                 const std::vector<vec3>& normals = nms.vector();
-                for (std::size_t i = 0; i < normals.size(); ++i)
-                    output << normals[i] << " ";
+                for (const auto& n : normals)
+                    output << n << " ";
                 output << std::endl;
             }
 
             output << "num_groups: " << groups.size() << std::endl;
-            for (std::size_t i = 0; i < groups.size(); ++i) {
-                const VertexGroup& g = groups[i];
+            for (const auto& g : groups) {
                 write_ascii_group(output, g);
 
                 // children
-                const std::vector<VertexGroup>& children = g.children_;;
+                const std::vector<VertexGroup>& children = g.children_;
                 output << "num_children: " << children.size() << std::endl;
-                for (unsigned int j = 0; j < children.size(); ++j)
-                    write_ascii_group(output, children[j]);
+                for (const auto& child : children)
+                    write_ascii_group(output, child);
             }
 
             return true;
@@ -159,8 +156,8 @@ namespace easy3d {
             const std::vector<float>& para = get_group_parameters(g);
             output << "num_group_parameters: " << para.size() << std::endl;
             output << "group_parameters: ";
-            for (std::size_t i = 0; i < para.size(); ++i)
-                output << para[i] << " ";
+            for (const auto& v : para)
+                output << v << " ";
             output << std::endl;
 
             std::string label = g.label_;
@@ -415,8 +412,8 @@ namespace easy3d {
                           << "), stored as ModelProperty<dvec3>(\"translation\")";
             } else if (Translator::instance()->status() == Translator::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
                 const dvec3 &origin = Translator::instance()->translation();
-                auto& points = cloud->get_vertex_property<vec3>("v:point").vector();
-                for (auto& p: points) {
+                auto& pts = cloud->get_vertex_property<vec3>("v:point").vector();
+                for (auto& p: pts) {
                     p.x -= origin.x;
                     p.y -= origin.y;
                     p.z -= origin.z;
@@ -702,14 +699,14 @@ namespace easy3d {
 
 
         void PointCloudIO_vg::collect_groups(const PointCloud* cloud, std::vector<VertexGroup>& groups) {
-            auto primitve_type = cloud->get_vertex_property<int>("v:primitive_type");
-            auto primitve_index = cloud->get_vertex_property<int>("v:primitive_index");
+            auto primitive_type = cloud->get_vertex_property<int>("v:primitive_type");
+            auto primitive_index = cloud->get_vertex_property<int>("v:primitive_index");
 
             // each type has a number of groups; primitive type may not be continuous, e.g., 1, 2, 5, 6
             std::unordered_map<int, std::unordered_map<int, VertexGroup> > temp_groups;    // groups[primitive type][primitive index]
             for (auto v : cloud->vertices()) {
-                int type = primitve_type[v];
-                int index = primitve_index[v];
+                int type = primitive_type[v];
+                int index = primitive_index[v];
                 if (index >= 0)
                     temp_groups[type][index].push_back(v.idx());
             }
