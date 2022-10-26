@@ -50,6 +50,9 @@ namespace easy3d {
      *      model->set_manipulator(new Manipulator(model));
      *      // connect the manipulator's signal to the viewer's update function to automatically update rendering.
      *      model->manipulator()->frame()->modified.connect(viewer, static_cast<void (Viewer::*)(void)>(&Viewer::update));
+     *      // then in the mouse event, call the following functions:
+     *      model->manipulator()->frame()->action_rotate(x, y, dx, dy, camera, axis); // axis = NONE for free rotation
+     *      model->manipulator()->frame()->action_translate(x, y, dx, dy, camera, axis); // axis = NONE for free translation
      * \endcode
      * \code
      *      // don't forget to delete the manipulator when the model is deleted
