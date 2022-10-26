@@ -68,6 +68,12 @@ namespace easy3d {
          */
         const Box3& bounding_box(bool recompute = false) const;
 
+        /**
+         * \brief Invalidates the bounding box of the model. So when bounding_box() is called, the bounding box will be
+         * re-computed. This function is typically called when the geometry of a model is changed.
+         */
+        void invalidate_bounding_box();
+
         /** \brief The vertices of the model. */
         virtual std::vector<vec3>& points() = 0;
         /** \brief The vertices of the model. */
