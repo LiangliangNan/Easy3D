@@ -945,14 +945,10 @@ void PaintCanvas::addModel(Model *model) {
     }
 
     makeCurrent();
-    auto renderer = new Renderer(model);
-    model->set_renderer(renderer);
-    auto manipulator = new Manipulator(model);
-    model->set_manipulator(manipulator);
-    doneCurrent();
-
-    // connect the manipulator's signal to the viewer's update function to automatically update rendering.
+    model->set_renderer(new Renderer(model));
+    model->set_manipulator(new Manipulator(model));
     model->manipulator()->frame()->modified.connect(this, static_cast<void (PaintCanvas::*)(void)>(&PaintCanvas::update));
+    doneCurrent();
 
     models_.push_back(model);
     model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current

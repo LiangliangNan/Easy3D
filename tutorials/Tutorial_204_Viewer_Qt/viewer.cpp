@@ -103,7 +103,6 @@ namespace easy3d {
 
         for (auto m: models_) {
             delete m->renderer();
-            delete m->manipulator();
             delete m;
         }
 
@@ -633,7 +632,7 @@ namespace easy3d {
         }
         for (auto m: models_) {
             if (model == m) {
-                LOG(WARNING) << "model has alreay been added to the viewer.";
+                LOG(WARNING) << "model has already been added to the viewer.";
                 return;
             }
         }
@@ -644,10 +643,7 @@ namespace easy3d {
         }
 
         makeCurrent();
-        auto renderer = new Renderer(model);
-        model->set_renderer(renderer);
-        auto manipulator = new Manipulator(model);
-        model->set_manipulator(manipulator);
+        model->set_renderer(new Renderer(model));
         doneCurrent();
 
         int pre_idx = model_idx_;
@@ -675,7 +671,6 @@ namespace easy3d {
             models_.erase(pos);
             makeCurrent();
             delete model->renderer();
-            delete model->manipulator();
             delete model;
             doneCurrent();
             model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current

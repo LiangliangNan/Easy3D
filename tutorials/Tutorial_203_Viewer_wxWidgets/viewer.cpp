@@ -538,10 +538,7 @@ namespace easy3d {
             }
         }
 
-        auto renderer = new Renderer(model, create);
-        model->set_renderer(renderer);
-        auto manipulator = new Manipulator(model);
-        model->set_manipulator(manipulator);
+        model->set_renderer(new Renderer(model, create));
 
         int pre_idx = model_idx_;
         models_.push_back(model);
@@ -567,7 +564,6 @@ namespace easy3d {
             const std::string name = model->name();
             models_.erase(pos);
             delete model->renderer();
-            delete model->manipulator();
             delete model;
             model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
             LOG(INFO) << "model deleted: " << name;
