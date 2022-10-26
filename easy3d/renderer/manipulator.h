@@ -43,6 +43,18 @@ namespace easy3d {
      *      manipulate this object. In this implementation, the origin of the manipulated frame is always at
      *      the center of the object.
      * \class Manipulator easy3d/renderer/manipulator.h
+     *
+     * The following code shows how to use this manipulator:
+     * \code
+     *      // create a manipulator and attach it to the model
+     *      model->set_manipulator(new Manipulator(model));
+     *      // connect the manipulator's signal to the viewer's update function to automatically update rendering.
+     *      model->manipulator()->frame()->modified.connect(viewer, static_cast<void (Viewer::*)(void)>(&Viewer::update));
+     * \endcode
+     * \code
+     *      // don't forget to delete the manipulator when the model is deleted
+     *      delete model->manipulator();
+     * \endcode
      */
     class Manipulator {
     public:

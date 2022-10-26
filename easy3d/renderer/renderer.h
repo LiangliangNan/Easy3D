@@ -47,6 +47,16 @@ namespace easy3d {
      * \details Renderer also allow to create default drawables for most rendering purposes.
      * \class Renderer easy3d/renderer/renderer.h
      * \sa Drawable, PointsDrawable, LinesDrawable, TrianglesDrawable
+     *
+     * The following code shows how to use renderer:
+     * \code
+     *      // create a renderer and attach it to the model
+     *      model->set_renderer(new Renderer(model, true));
+     * \endcode
+     * \code
+     *      // don't forget to delete the renderer when the model is deleted
+     *      delete model->renderer();
+     * \endcode
      */
     class Renderer {
     public:
