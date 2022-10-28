@@ -26,6 +26,6 @@ jobs:
              rm -rf Release;
              mkdir Release;
              cd Release;
-             cmake -DCMAKE_CXX_COMPILER=${{ matrix.compilers }} -DCMAKE_BUILD_TYPE=Release -DEASY3D_BUILD_TESTS=On ..;
+             cmake -DCMAKE_CXX_COMPILER=${{ matrix.compilers }} -DCMAKE_BUILD_TYPE=Release -DEasy3D_BUILD_TESTS=On ..;
              make;
              

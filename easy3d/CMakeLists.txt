@@ -1,51 +1,51 @@
 # All available Easy3D libraries
-set(CONF_EASY3D_LIBRARIES)
+set(CONF_Easy3D_LIBRARIES)
 
 # Add all targets to the build-tree export set
 set(EXPORT_TARGET_SET)
 
 add_subdirectory(util)
-list(APPEND CONF_EASY3D_LIBRARIES "easy3d::util")
+list(APPEND CONF_Easy3D_LIBRARIES "easy3d::util")
 list(APPEND EXPORT_TARGET_SET "easy3d_util" "3rd_backward" "3rd_easyloggingpp")
 
 add_subdirectory(core)
-list(APPEND CONF_EASY3D_LIBRARIES "easy3d::core")
+list(APPEND CONF_Easy3D_LIBRARIES "easy3d::core")
 list(APPEND EXPORT_TARGET_SET "easy3d_core")
 
 add_subdirectory(fileio)
-list(APPEND CONF_EASY3D_LIBRARIES "easy3d::fileio")
+list(APPEND CONF_Easy3D_LIBRARIES "easy3d::fileio")
 list(APPEND EXPORT_TARGET_SET "easy3d_fileio" "3rd_lastools" "3rd_rply")
 
 add_subdirectory(kdtree)
-list(APPEND CONF_EASY3D_LIBRARIES "easy3d::kdtree")
+list(APPEND CONF_Easy3D_LIBRARIES "easy3d::kdtree")
 list(APPEND EXPORT_TARGET_SET "easy3d_kdtree" "3rd_kdtree")
 
 add_subdirectory(algo)
-list(APPEND CONF_EASY3D_LIBRARIES "easy3d::algo")
+list(APPEND CONF_Easy3D_LIBRARIES "easy3d::algo")
 list(APPEND EXPORT_TARGET_SET "easy3d_algo" "3rd_poisson" "3rd_ransac" "3rd_triangle" "3rd_tetgen" "3rd_glutess")
 
-if (EASY3D_HAS_CGAL)
+if (Easy3D_HAS_CGAL)
     add_subdirectory(algo_ext)  # experimental
-    list(APPEND CONF_EASY3D_LIBRARIES "easy3d::algo_ext")
+    list(APPEND CONF_Easy3D_LIBRARIES "easy3d::algo_ext")
     list(APPEND EXPORT_TARGET_SET "easy3d_algo_ext")
 endif ()
 
-if (EASY3D_HAS_FFMPEG)
+if (Easy3D_HAS_FFMPEG)
     add_subdirectory(video)  # experimental
-    list(APPEND CONF_EASY3D_LIBRARIES "easy3d::video")
+    list(APPEND CONF_Easy3D_LIBRARIES "easy3d::video")
     list(APPEND EXPORT_TARGET_SET "easy3d_video")
 endif ()
 
 add_subdirectory(renderer)
-list(APPEND CONF_EASY3D_LIBRARIES "easy3d::renderer")
+list(APPEND CONF_Easy3D_LIBRARIES "easy3d::renderer")
 list(APPEND EXPORT_TARGET_SET "easy3d_renderer" "3rd_glew")
 
 add_subdirectory(gui)
-list(APPEND CONF_EASY3D_LIBRARIES "easy3d::gui")
+list(APPEND CONF_Easy3D_LIBRARIES "easy3d::gui")
 list(APPEND EXPORT_TARGET_SET "easy3d_gui")
 
 add_subdirectory(viewer)
-list(APPEND CONF_EASY3D_LIBRARIES "easy3d::viewer")
+list(APPEND CONF_Easy3D_LIBRARIES "easy3d::viewer")
 list(APPEND EXPORT_TARGET_SET "easy3d_viewer" "3rd_glfw")
 
 

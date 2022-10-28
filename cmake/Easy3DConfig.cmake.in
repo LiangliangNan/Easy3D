@@ -24,49 +24,81 @@
 #      along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ******************************************************************************
 
-# - Config file for the EASY3D package
+# - Config file for the Easy3D package
 #
 # It defines the following variables:
-#       EASY3D_INCLUDE_DIRS   - include directories for EASY3D
-#       EASY3D_LIBRARIES      - available Easy3D libraries
-#       EASY3D_CGAL_SUPPORT   - whether CGAL support is enabled
-#       EASY3D_FFMPEG_SUPPORT - whether FFMPEG support is enabled
+#       Easy3D_INCLUDE_DIRS         - the include directories for Easy3D
+#       Easy3D_AVAILABLE_LIBRARIES  - all available (but may no be requested) Easy3D libraries
+#       Easy3D_LIBRARIES            - the found Easy3D libraries
+#       Easy3D_CGAL_SUPPORT         - whether CGAL support is enabled
+#       Easy3D_FFMPEG_SUPPORT       - whether FFMPEG support is enabled
 # NOTE: The recommended way to specify libraries and headers with CMake is to use the
 #       target_link_libraries command. This command automatically adds appropriate include
 #       directories, compile definitions, the position-independent-code flag, and links to
 #       requested libraries.
 
+if(POLICY CMP0057)
+  cmake_policy(SET CMP0057 NEW) # support the use of "IN_LIST"
+endif()
+
 include(CMakeFindDependencyMacro)
 find_dependency(Threads)
 
 # Compute paths
-get_filename_component(EASY3D_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+get_filename_component(Easy3D_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 
-set(EASY3D_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
-message(STATUS "EASY3D_INCLUDE_DIRS: ${EASY3D_INCLUDE_DIRS}")
+set(Easy3D_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
+message(STATUS "Easy3D_INCLUDE_DIRS: ${Easy3D_INCLUDE_DIRS}")
 
-set(EASY3D_LIBRARIES "@CONF_EASY3D_LIBRARIES@")
-message(STATUS "EASY3D_LIBRARIES: ${EASY3D_LIBRARIES}")
+set(Easy3D_AVAILABLE_LIBRARIES "@CONF_Easy3D_LIBRARIES@")
+set(Easy3D_LIBRARIES "")
+set(Easy3D_MISSING_LIBRARIES "")
+
+foreach(__Easy3D_component ${Easy3D_FIND_COMPONENTS})
+  if(NOT __Easy3D_component MATCHES "^easy3d::")
+    set(__Easy3D_component easy3d::${__Easy3D_component})
+  endif()
+    if (__Easy3D_component IN_LIST Easy3D_AVAILABLE_LIBRARIES)
+        list(APPEND Easy3D_LIBRARIES ${__Easy3D_component})
+    else ()
+        list(APPEND Easy3D_MISSING_LIBRARIES ${__Easy3D_component})
+    endif ()
+endforeach()
+
+if (NOT Easy3D_LIBRARIES) # if no component has been requested, then the user wants all
+    set(Easy3D_LIBRARIES ${Easy3D_AVAILABLE_LIBRARIES})
+    message(WARNING "You did not explicitly request any Easy3D component, so we assume you need all the available "
+                    "Easy3D components, i.e., ${Easy3D_AVAILABLE_LIBRARIES}. It is highly recommended "
+                    "to request only the necessary Easy3D components.")
+else ()
+    message(STATUS "Found the following Easy3D components: ${Easy3D_LIBRARIES}")
+endif ()
+
+if (Easy3D_MISSING_LIBRARIES)
+    message(FATAL_ERROR "The following Easy3D components are not found: ${Easy3D_MISSING_LIBRARIES}. \n"
+                        "Make sure the requested components have been built and their name are correct. \n"
+                        "The following components are available: ${Easy3D_AVAILABLE_LIBRARIES}.")
+endif ()
+
+message(STATUS "Easy3D_LIBRARIES: ${Easy3D_LIBRARIES}")
 
 # Resolve dependencies for CGAL
-if(POLICY CMP0057)
-  cmake_policy(SET CMP0057 NEW)
-endif()
-if ("easy3d::algo_ext" IN_LIST EASY3D_LIBRARIES) # second arg is the CMake variable name (instead of value)
-    set (EASY3D_CGAL_SUPPORT TRUE)
-    find_dependency(CGAL QUIET)
-    message(STATUS "EASY3D_CGAL_SUPPORT: ${EASY3D_CGAL_SUPPORT} (EASY3D was built with CGAL support)")
+if ("easy3d::algo_ext" IN_LIST Easy3D_LIBRARIES) # second arg is the CMake variable name (instead of value)
+    set (Easy3D_CGAL_SUPPORT TRUE)
+    find_dependency(CGAL REQUIRED)
+    message(STATUS "Easy3D_CGAL_SUPPORT: ${Easy3D_CGAL_SUPPORT} (Easy3D was built with CGAL support)")
 else()
-    set (EASY3D_CGAL_SUPPORT FALSE)
-    message(STATUS "EASY3D_CGAL_SUPPORT: ${EASY3D_CGAL_SUPPORT} (EASY3D was built without CGAL support)")
+    set (Easy3D_CGAL_SUPPORT FALSE)
+    message(STATUS "Easy3D_CGAL_SUPPORT: ${Easy3D_CGAL_SUPPORT} (Easy3D was built without CGAL support)")
 endif()
 
-if ("easy3d::video" IN_LIST EASY3D_LIBRARIES) # second arg is the CMake variable name (instead of value)
-    set (EASY3D_FFMPEG_SUPPORT TRUE)
-    message(STATUS "EASY3D_FFMPEG_SUPPORT: ${EASY3D_FFMPEG_SUPPORT} (EASY3D was built with FFMPEG support)")
+if ("easy3d::video" IN_LIST Easy3D_LIBRARIES) # second arg is the CMake variable name (instead of value)
+    set (Easy3D_FFMPEG_SUPPORT TRUE)
+    #include(@Easy3D_ROOT@/cmake/FindFFMPEG.cmake)
+    message(STATUS "Easy3D_FFMPEG_SUPPORT: ${Easy3D_FFMPEG_SUPPORT} (Easy3D was built with FFMPEG support)")
 else()
-    set (EASY3D_FFMPEG_SUPPORT FALSE)
-    message(STATUS "EASY3D_FFMPEG_SUPPORT: ${EASY3D_FFMPEG_SUPPORT} (EASY3D was built without FFMPEG support)")
+    set (Easy3D_FFMPEG_SUPPORT FALSE)
+    message(STATUS "Easy3D_FFMPEG_SUPPORT: ${Easy3D_FFMPEG_SUPPORT} (Easy3D was built without FFMPEG support)")
 endif()
 
 # Our library dependencies (contains definitions for IMPORTED targets)
@@ -80,6 +112,6 @@ if(NOT TARGET easy3d_util AND
    NOT TARGET easy3d_renderer AND
    NOT TARGET easy3d_gui AND
    NOT TARGET easy3d_viewer AND
-   NOT EASY3D_BINARY_DIR)
-  include("${EASY3D_CMAKE_DIR}/Easy3DTargets.cmake")
+   NOT Easy3D_BINARY_DIR)
+  include("${Easy3D_CMAKE_DIR}/Easy3DTargets.cmake")
 endif()

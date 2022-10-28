@@ -4,14 +4,14 @@ cmake_minimum_required(VERSION 3.12)
 
 project(Easy3D)
 
-set(EASY3D_MAJOR_VERSION 2)
-set(EASY3D_MINOR_VERSION 5)
-set(EASY3D_PATCH_VERSION 0)
-set(EASY3D_VERSION "${EASY3D_MAJOR_VERSION}.${EASY3D_MINOR_VERSION}.${EASY3D_PATCH_VERSION}")
+set(Easy3D_MAJOR_VERSION 2)
+set(Easy3D_MINOR_VERSION 5)
+set(Easy3D_PATCH_VERSION 0)
+set(Easy3D_VERSION "${Easy3D_MAJOR_VERSION}.${Easy3D_MINOR_VERSION}.${Easy3D_PATCH_VERSION}")
 
 message(STATUS "************************************************************")
 message(STATUS "    Package : Easy3D")
-message(STATUS "    Version : ${EASY3D_VERSION}")
+message(STATUS "    Version : ${Easy3D_VERSION}")
 message(STATUS "    Type    : ${CMAKE_BUILD_TYPE}")
 if (CMAKE_SIZEOF_VOID_P EQUAL 8)
     add_definitions(-DENV_64_BIT)
@@ -47,9 +47,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Detect whether this is a top-level project
 if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-    set(EASY3D_TOPLEVEL_PROJECT ON)
+    set(Easy3D_TOPLEVEL_PROJECT ON)
 else ()
-    set(EASY3D_TOPLEVEL_PROJECT OFF)
+    set(Easy3D_TOPLEVEL_PROJECT OFF)
 endif ()
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -57,27 +57,27 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 ################################################################################
 
 # Build tutorials
-option(EASY3D_BUILD_TUTORIALS       "Build Easy3D Tutorials"                                ON)
+option(Easy3D_BUILD_TUTORIALS       "Build Easy3D Tutorials"                                ON)
 # Build documentation
-option(EASY3D_BUILD_DOCUMENTATION   "Build Easy3D Documentation"                            OFF)
+option(Easy3D_BUILD_DOCUMENTATION   "Build Easy3D Documentation"                            OFF)
 # Build tests
-option(EASY3D_BUILD_TESTS           "Build Easy3D Tests"                                    OFF)
+option(Easy3D_BUILD_TESTS           "Build Easy3D Tests"                                    OFF)
 # Build advanced features that require CGAL (>= v5.1)
-option(EASY3D_ENABLE_CGAL           "Build advanced features that require CGAL (>= v5.1)"   OFF)
+option(Easy3D_ENABLE_CGAL           "Build advanced features that require CGAL (>= v5.1)"   OFF)
 # Build advanced examples/applications that require Qt (>= v5.6)
-option(EASY3D_ENABLE_QT             "Build advanced examples/applications that require Qt (>= v5.6)"    OFF)
+option(Easy3D_ENABLE_QT             "Build advanced examples/applications that require Qt (>= v5.6)"    OFF)
 
 ################################################################################
 
-if (EASY3D_ENABLE_CGAL)
+if (Easy3D_ENABLE_CGAL)
     find_package(CGAL QUIET)
     if (CGAL_FOUND)
         if (CGAL_VERSION VERSION_GREATER_EQUAL "5.1")
-            set(EASY3D_HAS_CGAL TRUE)
+            set(Easy3D_HAS_CGAL TRUE)
             add_definitions(-DHAS_CGAL)
             message(STATUS "Found CGAL v${CGAL_VERSION}")
         else ()
-            set(EASY3D_HAS_CGAL FALSE)
+            set(Easy3D_HAS_CGAL FALSE)
             message(FATAL_ERROR "You have requested CGAL support and CGAL v${CGAL_VERSION} is found. However, Easy3D "
                     "requires at least v5.1. Please install CGAL v5.1 or above. In case you have multiple versions "
                     "of CGAL on your platform, provide the path of a suitable one to the CMake variable `CGAL_DIR`. "
@@ -86,12 +86,12 @@ if (EASY3D_ENABLE_CGAL)
                     "  - detecting/resolving duplicate vertices/faces; \n"
                     "  - detecting/resolving self-intersection; \n"
                     "  - clipping/splitting/slicing. \n"
-                    "If you don't need these algorithms, disable CGAL support by setting `EASY3D_ENABLE_CGAL` to `OFF`. "
+                    "If you don't need these algorithms, disable CGAL support by setting `Easy3D_ENABLE_CGAL` to `OFF`. "
                     "You will still be able to use all other features provided by Easy3D without CGAL.")
             return()
         endif ()
     else ()
-        set(EASY3D_HAS_CGAL FALSE)
+        set(Easy3D_HAS_CGAL FALSE)
         message(FATAL_ERROR "You have requested CGAL support but CGAL (v5.1 or later required) was not found. You can "
                 "set 'CGAL_DIR' to the directory containing `CGALConfig.cmake` or `cgal-config.cmake` to help CMake find CGAL. "
                 "Please note that only the following surface mesh algorithms require CGAL (v5.1 or later): \n"
@@ -99,7 +99,7 @@ if (EASY3D_ENABLE_CGAL)
                 "  - detecting/resolving duplicate vertices/faces; \n"
                 "  - detecting/resolving self-intersection; \n"
                 "  - clipping/splitting/slicing. \n"
-                "If you don't need these algorithms, disable CGAL support by setting `EASY3D_ENABLE_CGAL` to `OFF`. "
+                "If you don't need these algorithms, disable CGAL support by setting `Easy3D_ENABLE_CGAL` to `OFF`. "
                 "You will still be able to use all other features provided by Easy3D without CGAL.")
         return()
     endif ()
@@ -107,27 +107,27 @@ endif ()
 
 include(./cmake/FindFFMPEG.cmake)
 if (FFMPEG_FOUND)
-    set(EASY3D_HAS_FFMPEG TRUE)
+    set(Easy3D_HAS_FFMPEG TRUE)
     add_definitions(-DHAS_FFMPEG)
 else ()
-    set(EASY3D_HAS_FFMPEG FALSE)
+    set(Easy3D_HAS_FFMPEG FALSE)
 #    message(FATAL_ERROR "You have requested FFMPEG support but FFMPEG was not found. "
 #            "To use FFMPEG, make sure FFMPEG exists on your system (install/build FFMPEG if necessary). "
 #            "You can modify the search paths of 'include' and 'lib' in 'FindFFMPEG.cmake', and then run CMake. "
 #            "The FFMPEG support allow recording animation into a video file. If you don't need this feature, "
-#            "disable FFMPEG support by setting `EASY3D_ENABLE_FFMPEG` to `OFF`. Without FFMPEG, you will still "
+#            "disable FFMPEG support by setting `Easy3D_ENABLE_FFMPEG` to `OFF`. Without FFMPEG, you will still "
 #            "be able to record animation as a sequence of images.")
 endif ()
 
 ################################################################################
 
 ### Configuration
-set(EASY3D_ROOT ${CMAKE_CURRENT_LIST_DIR})
-set(EASY3D_THIRD_PARTY ${EASY3D_ROOT}/3rd_party)
+set(Easy3D_ROOT ${CMAKE_CURRENT_LIST_DIR})
+set(Easy3D_THIRD_PARTY ${Easy3D_ROOT}/3rd_party)
 
-set(EASY3D_INCLUDE_DIR ${EASY3D_ROOT})
-set(EASY3D_SOURCE_DIR ${EASY3D_ROOT})
-set(EASY3D_BINARY_DIR ${CMAKE_BINARY_DIR})
+set(Easy3D_INCLUDE_DIR ${Easy3D_ROOT})
+set(Easy3D_SOURCE_DIR ${Easy3D_ROOT})
+set(Easy3D_BINARY_DIR ${CMAKE_BINARY_DIR})
 
 ### conditionally compile certain modules depending on libraries found on the system
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
@@ -144,11 +144,11 @@ add_subdirectory(3rd_party)
 
 add_subdirectory(easy3d)
 
-if (EASY3D_BUILD_TUTORIALS)
+if (Easy3D_BUILD_TUTORIALS)
     add_subdirectory(tutorials)
 endif ()
 
-if (EASY3D_BUILD_TESTS)
+if (Easy3D_BUILD_TESTS)
     add_subdirectory(tests)
 endif ()
 
@@ -156,7 +156,7 @@ add_subdirectory(applications)
 
 ################################################################################
 
-if (EASY3D_BUILD_DOCUMENTATION)
+if (Easy3D_BUILD_DOCUMENTATION)
     # generation of Easy3D documentation requires doxygen
     find_package(Doxygen)
     if (${DOXYGEN_FOUND})

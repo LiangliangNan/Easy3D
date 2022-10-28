@@ -157,13 +157,13 @@ elseif (APPLE)
         set(${VAR} ${_LIST} PARENT_SCOPE)
     endfunction()
 
-    resource(VERTEX_SHADERS ${EASY3D_ROOT}/resources/shaders Resources/shaders *.vert)
-    resource(GEOMETRY_SHADERS ${EASY3D_ROOT}/resources/shaders Resources/shaders *.geom)
-    resource(FRAGMENT_SHADERS ${EASY3D_ROOT}/resources/shaders Resources/shaders *.frag)
-    resource(COLORMAPS ${EASY3D_ROOT}/resources/colormaps Resources/colormaps *.png)
-    resource(FONTS ${EASY3D_ROOT}/resources/fonts Resources/fonts *.ttf)
-    resource(IMAGES ${EASY3D_ROOT}/resources/images Resources/images overview.jpg)  # overview.jpg is for splash screen
-    resource(TEXTURES ${EASY3D_ROOT}/resources/textures Resources/textures *.png)
+    resource(VERTEX_SHADERS ${Easy3D_ROOT}/resources/shaders Resources/shaders *.vert)
+    resource(GEOMETRY_SHADERS ${Easy3D_ROOT}/resources/shaders Resources/shaders *.geom)
+    resource(FRAGMENT_SHADERS ${Easy3D_ROOT}/resources/shaders Resources/shaders *.frag)
+    resource(COLORMAPS ${Easy3D_ROOT}/resources/colormaps Resources/colormaps *.png)
+    resource(FONTS ${Easy3D_ROOT}/resources/fonts Resources/fonts *.ttf)
+    resource(IMAGES ${Easy3D_ROOT}/resources/images Resources/images overview.jpg)  # overview.jpg is for splash screen
+    resource(TEXTURES ${Easy3D_ROOT}/resources/textures Resources/textures *.png)
 
     # This tells CMake where to find and install the ICON file
     set(${PROJECT_NAME}_ICON ${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/Mapple.icns)
@@ -184,9 +184,9 @@ elseif (APPLE)
             MACOSX_BUNDLE TRUE
             MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/resources/Mac/Mapple.plist"
             MACOSX_BUNDLE_ICON_FILE "Mapple.icns"
-            MACOSX_BUNDLE_SHORT_VERSION_STRING "${EASY3D_MAJOR_VERSION}.${EASY3D_MINOR_VERSION}.${EASY3D_PATCH_VERSION}"
-            MACOSX_BUNDLE_LONG_VERSION_STRING "${EASY3D_MAJOR_VERSION}.${EASY3D_MINOR_VERSION}.${EASY3D_PATCH_VERSION}"
-            MACOSX_BUNDLE_BUNDLE_VERSION "${EASY3D_MAJOR_VERSION}.${EASY3D_MINOR_VERSION}.${EASY3D_PATCH_VERSION}"
+            MACOSX_BUNDLE_SHORT_VERSION_STRING "${Easy3D_MAJOR_VERSION}.${Easy3D_MINOR_VERSION}.${Easy3D_PATCH_VERSION}"
+            MACOSX_BUNDLE_LONG_VERSION_STRING "${Easy3D_MAJOR_VERSION}.${Easy3D_MINOR_VERSION}.${Easy3D_PATCH_VERSION}"
+            MACOSX_BUNDLE_BUNDLE_VERSION "${Easy3D_MAJOR_VERSION}.${Easy3D_MINOR_VERSION}.${Easy3D_PATCH_VERSION}"
             MACOSX_BUNDLE_GUI_IDENTIFIER "Mapple"
             )
 else ()
@@ -195,7 +195,7 @@ endif ()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "applications")
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_INCLUDE_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE ${Easy3D_INCLUDE_DIR})
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which has been marked as deprecated (the exact warnings
@@ -210,9 +210,9 @@ endif ()
 target_link_libraries(${PROJECT_NAME} PRIVATE Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE easy3d_renderer easy3d_algo easy3d_gui)
-if (EASY3D_HAS_CGAL)
+if (Easy3D_HAS_CGAL)
     target_link_libraries(${PROJECT_NAME} PRIVATE easy3d_algo_ext)
 endif ()
-if (EASY3D_HAS_FFMPEG)
+if (Easy3D_HAS_FFMPEG)
     target_link_libraries(${PROJECT_NAME} PRIVATE easy3d_video)
 endif ()

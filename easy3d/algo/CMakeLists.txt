@@ -80,12 +80,12 @@ add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "easy3d")
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${EASY3D_INCLUDE_DIR})
-target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_THIRD_PARTY}/ransac)
+target_include_directories(${PROJECT_NAME} PUBLIC ${Easy3D_INCLUDE_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE ${Easy3D_THIRD_PARTY}/ransac)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC easy3d_core easy3d_util easy3d_kdtree 3rd_poisson 3rd_ransac 3rd_triangle 3rd_tetgen 3rd_glutess)
 
-set(EIGEN_SOURCE_DIR ${EASY3D_THIRD_PARTY}/eigen)
+set(EIGEN_SOURCE_DIR ${Easy3D_THIRD_PARTY}/eigen)
 target_include_directories(${PROJECT_NAME} PRIVATE ${EIGEN_SOURCE_DIR})
 
 # It's "Boost", not "BOOST" or "boost". Case matters.

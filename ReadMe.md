@@ -88,13 +88,13 @@ The **optional** third-party libraries are:
 - **[CGAL](https://www.cgal.org/) (optional)**: Easy3D has implemented a few algorithms for advanced surface mesh 
   processing, such as surface reorientation, detecting/resolving duplicate vertices/faces and self-intersection, 
   and clipping/splitting/slicing surface meshes. These features are disabled by default (because most users don't 
-  need them). To enable these features, you can switch on the CMake option `EASY3D_ENABLE_CGAL` and make sure 
+  need them). To enable these features, you can switch on the CMake option `Easy3D_ENABLE_CGAL` and make sure 
   CGAL ([v5.1 or later](https://github.com/CGAL/cgal/releases)) is installed and visible to CMake. In case you have
   multiple versions of CGAL on your platform, simply provide the path of a suitable one to the CMake variable `CGAL_DIR`.
 
 - **[Qt5](https://www.qt.io/) (optional)**: Easy3D supports Qt ([v5.6 or later](https://download.qt.io/archive/qt/)) for 
   UI creation, which can help develop sophisticated applications for 3D data processing and visualization. The Qt 
-  support is disabled by default (because most users don't need it). You can switch on the CMake option `EASY3D_ENABLE_QT` 
+  support is disabled by default (because most users don't need it). You can switch on the CMake option `Easy3D_ENABLE_QT` 
   to include the examples and applications that depend on Qt (e.g., 
   [`Tutorial_204_Viewer_Qt`](https://github.com/LiangliangNan/Easy3D/tree/main/tutorials/Tutorial_204_Viewer_Qt) and 
   [`Mapple`](https://github.com/LiangliangNan/Easy3D/tree/main/applications/Mapple)).
@@ -142,7 +142,7 @@ structures, IO, algorithms, visualization, etc.) and some semi-automated test ca
 that require interactive user input). All cases are integrated into the single target `tests`.
 
 To build and run the test suite, download the entire source, use the `CMakeLists.txt` in the root directory of the 
-repository, switch on the CMake option `EASY3D_BUILD_TESTS` (which is disabled by default), and run CMake. After CMake, 
+repository, switch on the CMake option `Easy3D_BUILD_TESTS` (which is disabled by default), and run CMake. After CMake, 
 you can build ALL or only the `tests` target. Finally, run the `tests` executable (i.e., `YOUR_BUILD_DIRECTORY/bin/tests`) for the test.
 
 ### Use Easy3D in your project
@@ -152,7 +152,7 @@ with the actual name of your application) and point `Easy3D_DIR` to your `build`
 Easy3D libraries, including directories, and relevant compile definitions of Easy3D are visible and accessible to your project.
 ```
 set(CMAKE_CXX_STANDARD 11)                          # specify C++ standard
-find_package(Easy3D REQUIRED)                       # request Easy3D 
+find_package(Easy3D COMPONENTS viewer REQUIRED)     # request Easy3D (recommended to request only needed components)
 target_link_libraries(YOUR_APP_NAME easy3d::viewer) # request necessary Easy3D modules (add more if needed, e.g., algo)
 ```
 The minimum code to have a 3D viewer:
@@ -173,7 +173,7 @@ The Easy3D Documentation is an ongoing effort with more and more details being a
 documentation from the source code.
 Easy3D uses [Doxygen](https://www.doxygen.nl/index.html) (`>= 1.8.3`) to generate documentation from source code. 
 To build it from the source code, [install Doxygen](https://www.doxygen.nl/manual/install.html) first. 
-Then, switch on the CMake option `EASY3D_BUILD_DOCUMENTATION` in the main `CMakeList.txt`. Finally, build the `doc` 
+Then, switch on the CMake option `` in the main `CMakeList.txt`. Finally, build the `doc` 
 target to generate the documentation. 
 
 ### Questions, new features, bugs, or contributing to Easy3D

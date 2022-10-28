@@ -57,13 +57,13 @@ set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "easy3d")
 target_compile_definitions(
         ${PROJECT_NAME}
         PRIVATE
-        "EASY3D_MAJOR_VERSION=${EASY3D_MAJOR_VERSION}"
-        "EASY3D_MINOR_VERSION=${EASY3D_MINOR_VERSION}"
-        "EASY3D_PATCH_VERSION=${EASY3D_PATCH_VERSION}"
-        "EASY3D_VERSION=\"${EASY3D_VERSION}\""
+        "Easy3D_MAJOR_VERSION=${Easy3D_MAJOR_VERSION}"
+        "Easy3D_MINOR_VERSION=${Easy3D_MINOR_VERSION}"
+        "Easy3D_PATCH_VERSION=${Easy3D_PATCH_VERSION}"
+        "Easy3D_VERSION=\"${Easy3D_VERSION}\""
 )
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${EASY3D_INCLUDE_DIR})
+target_include_directories(${PROJECT_NAME} PUBLIC ${Easy3D_INCLUDE_DIR})
 
 target_link_libraries(${PROJECT_NAME} PUBLIC easy3d_util)
 

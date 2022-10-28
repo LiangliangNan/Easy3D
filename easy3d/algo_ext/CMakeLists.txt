@@ -22,8 +22,8 @@ add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "easy3d")
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${EASY3D_INCLUDE_DIR})
-target_include_directories(${PROJECT_NAME} PRIVATE ${EASY3D_THIRD_PARTY})
+target_include_directories(${PROJECT_NAME} PUBLIC ${Easy3D_INCLUDE_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE ${Easy3D_THIRD_PARTY})
 
 target_link_libraries(${PROJECT_NAME} PUBLIC easy3d_core)
 

@@ -54,12 +54,12 @@ set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "easy3d")
 target_compile_definitions(
         ${PROJECT_NAME}
         PRIVATE
-        "EASY3D_RESOURCES_DIR=\"${EASY3D_ROOT}/resources\""
+        "EASY3D_RESOURCES_DIR=\"${Easy3D_ROOT}/resources\""
 )
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${EASY3D_INCLUDE_DIR})
+target_include_directories(${PROJECT_NAME} PUBLIC ${Easy3D_INCLUDE_DIR})
 
-set(LASTOOLS_INCLUDE_DIR ${EASY3D_THIRD_PARTY}/lastools/LASzip/src ${EASY3D_THIRD_PARTY}/lastools/LASlib/inc)
+set(LASTOOLS_INCLUDE_DIR ${Easy3D_THIRD_PARTY}/lastools/LASzip/src ${Easy3D_THIRD_PARTY}/lastools/LASlib/inc)
 target_include_directories(${PROJECT_NAME} PRIVATE ${LASTOOLS_INCLUDE_DIR})
 
 target_link_libraries(${PROJECT_NAME} PUBLIC easy3d_core easy3d_util 3rd_lastools 3rd_rply)
