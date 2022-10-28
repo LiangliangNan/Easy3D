@@ -36,7 +36,7 @@
 
 namespace easy3d {
 
-    float PointCloudSimplification::average_spacing(PointCloud *cloud, KdTreeSearch *tree, int k, bool accurate,
+    float PointCloudSimplification::average_space(PointCloud *cloud, KdTreeSearch *tree, int k, bool accurate,
                                                     int samples) {
         KdTreeSearch *kdtree = tree;
         bool need_delete(false);

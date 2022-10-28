@@ -120,7 +120,7 @@ void DialogPointCloudSimplification::computeAvgSpacing() {
         constructKdTree();
 
         if (kdtree_) {
-            float as = PointCloudSimplification::average_spacing(cloud, kdtree_, 6);
+            float as = PointCloudSimplification::average_space(cloud, kdtree_, 6);
             lineEditAverageSpacing->setText(QString("%1").arg(as));
             show();
         }

@@ -50,11 +50,11 @@ namespace easy3d {
          *                 measure, which uses only a subset (i.e., less than samples) of the points.
          * @param samples  Use less than this number of points for the calculation.
          * @param kdtree   A kdtree defined on this point cloud. If null, a new kdtree will be built and used.
-         * @return The average spacing of the point clouds.
+         * @return The average space of the point cloud.
          */
         static float
-        average_spacing(PointCloud *cloud, KdTreeSearch *kdtree = nullptr, int k = 6, bool accurate = false,
-                        int samples = 200000
+        average_space(PointCloud *cloud, KdTreeSearch *kdtree = nullptr, int k = 6, bool accurate = false,
+                      int samples = 10000
         );
 
         //----- simplification using a grid (non-uniform) ------------------------------------------------
