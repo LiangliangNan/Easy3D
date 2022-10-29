@@ -51,6 +51,26 @@ set(Easy3D_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
 message(STATUS "Easy3D_INCLUDE_DIRS: ${Easy3D_INCLUDE_DIRS}")
 
 set(Easy3D_AVAILABLE_LIBRARIES "@CONF_Easy3D_LIBRARIES@")
+
+# print if CGAL support is available
+if ("easy3d::algo_ext" IN_LIST Easy3D_AVAILABLE_LIBRARIES)
+    set (Easy3D_CGAL_SUPPORT TRUE)
+    message(STATUS "Easy3D_CGAL_SUPPORT: ${Easy3D_CGAL_SUPPORT} (Easy3D was built with CGAL-v@CGAL_VERSION@)")
+else()
+    set (Easy3D_CGAL_SUPPORT FALSE)
+    message(STATUS "Easy3D_CGAL_SUPPORT: ${Easy3D_CGAL_SUPPORT} (Easy3D was built without CGAL support)")
+endif()
+
+# print if FFMPEG support is available
+if ("easy3d::video" IN_LIST Easy3D_AVAILABLE_LIBRARIES)
+    set (Easy3D_FFMPEG_SUPPORT TRUE)
+    #include(@Easy3D_ROOT@/cmake/FindFFMPEG.cmake)
+    message(STATUS "Easy3D_FFMPEG_SUPPORT: ${Easy3D_FFMPEG_SUPPORT} (Easy3D was built with FFMPEG support)")
+else()
+    set (Easy3D_FFMPEG_SUPPORT FALSE)
+    message(STATUS "Easy3D_FFMPEG_SUPPORT: ${Easy3D_FFMPEG_SUPPORT} (Easy3D was built without FFMPEG support)")
+endif()
+
 set(Easy3D_LIBRARIES "")
 set(Easy3D_MISSING_LIBRARIES "")
 
@@ -75,36 +95,22 @@ else ()
 endif ()
 
 if (Easy3D_MISSING_LIBRARIES)
-    message(FATAL_ERROR "Could not find the following Easy3D components: ${Easy3D_MISSING_LIBRARIES}. \n"
-                        "Make sure the requested components have been built and their names are correct. \n"
-                        "The full list of available Easy3D components are: ${Easy3D_AVAILABLE_LIBRARIES}")
+    message(WARNING "The following Easy3D components were requested but not found: ${Easy3D_MISSING_LIBRARIES}. \n"
+                    "Make sure these components have been built and their names are correctly specified. \n"
+                    "The full list of available Easy3D components are: ${Easy3D_AVAILABLE_LIBRARIES}")
 endif ()
 
 message(STATUS "Easy3D_LIBRARIES: ${Easy3D_LIBRARIES}")
 
-# Resolve dependencies for CGAL
+# Resolve dependencies
 if ("easy3d::algo_ext" IN_LIST Easy3D_LIBRARIES) # second arg is the CMake variable name (instead of value)
-    set (Easy3D_CGAL_SUPPORT TRUE)
-    message(STATUS "Easy3D_CGAL_SUPPORT: ${Easy3D_CGAL_SUPPORT} (Easy3D was built with CGAL-v@CGAL_VERSION@)")
-    find_dependency(CGAL QUIET)
-    if (NOT CGAL_FOUND)
-        message(FATAL_ERROR "You have requested easy3d::algo_ext. easy3d::algo_ext depends on and was built with "
-                            "CGAL-v@CGAL_VERSION@ but CGAL was not found. Please make sure CGAL exists and set "
-                            "'CGAL_DIR' to the CGAL directory containing `CGALConfig.cmake` or `cgal-config.cmake`, "
-                            "which can help CMake find CGAL.")
-    endif()
-else()
-    set (Easy3D_CGAL_SUPPORT FALSE)
-    message(STATUS "Easy3D_CGAL_SUPPORT: ${Easy3D_CGAL_SUPPORT} (Easy3D was built without CGAL support)")
-endif()
-
-if ("easy3d::video" IN_LIST Easy3D_LIBRARIES) # second arg is the CMake variable name (instead of value)
-    set (Easy3D_FFMPEG_SUPPORT TRUE)
-    #include(@Easy3D_ROOT@/cmake/FindFFMPEG.cmake)
-    message(STATUS "Easy3D_FFMPEG_SUPPORT: ${Easy3D_FFMPEG_SUPPORT} (Easy3D was built with FFMPEG support)")
-else()
-    set (Easy3D_FFMPEG_SUPPORT FALSE)
-    message(STATUS "Easy3D_FFMPEG_SUPPORT: ${Easy3D_FFMPEG_SUPPORT} (Easy3D was built without FFMPEG support)")
+    find_dependency(CGAL)
+    #if (NOT CGAL_FOUND)
+    #    message(FATAL_ERROR "You have requested easy3d::algo_ext. easy3d::algo_ext depends on and was built with "
+    #                        "CGAL-v@CGAL_VERSION@ but CGAL was not found. Please make sure CGAL exists and set "
+    #                        "'CGAL_DIR' to the CGAL directory containing `CGALConfig.cmake` or `cgal-config.cmake`, "
+    #                        "which can help CMake find CGAL.")
+    #endif()
 endif()
 
 # Our library dependencies (contains definitions for IMPORTED targets)
