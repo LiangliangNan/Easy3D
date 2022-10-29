@@ -67,17 +67,17 @@ endforeach()
 
 if (NOT Easy3D_LIBRARIES) # if no component has been requested, then the user wants all
     set(Easy3D_LIBRARIES ${Easy3D_AVAILABLE_LIBRARIES})
-    message(WARNING "You did not explicitly request any Easy3D component, so we assume you need all the available "
+    message(WARNING "You did not explicitly request any Easy3D component, so Easy3D assumes you need all the available "
                     "Easy3D components, i.e., ${Easy3D_AVAILABLE_LIBRARIES}. It is highly recommended "
                     "to request only the necessary Easy3D components.")
 else ()
-    message(STATUS "Found the following Easy3D components: ${Easy3D_LIBRARIES}")
+    message(STATUS "Found Easy3D components: ${Easy3D_LIBRARIES}")
 endif ()
 
 if (Easy3D_MISSING_LIBRARIES)
-    message(FATAL_ERROR "The following Easy3D components are not found: ${Easy3D_MISSING_LIBRARIES}. \n"
-                        "Make sure the requested components have been built and their name are correct. \n"
-                        "The following components are available: ${Easy3D_AVAILABLE_LIBRARIES}.")
+    message(FATAL_ERROR "Could not find the following Easy3D components: ${Easy3D_MISSING_LIBRARIES}. \n"
+                        "Make sure the requested components have been built and their names are correct. \n"
+                        "The full list of available Easy3D components are: ${Easy3D_AVAILABLE_LIBRARIES}.")
 endif ()
 
 message(STATUS "Easy3D_LIBRARIES: ${Easy3D_LIBRARIES}")
