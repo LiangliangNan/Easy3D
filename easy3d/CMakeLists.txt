@@ -1,57 +1,57 @@
 # All available Easy3D libraries
-set(CONF_Easy3D_LIBRARIES)
+set(CONF_Easy3D_COMPONENTS)
 
 # Add all targets to the build-tree export set
 set(EXPORT_TARGET_SET)
 
 add_subdirectory(util)
-list(APPEND CONF_Easy3D_LIBRARIES "easy3d::util")
+list(APPEND CONF_Easy3D_COMPONENTS "util")
 list(APPEND EXPORT_TARGET_SET "easy3d_util" "3rd_backward" "3rd_easyloggingpp")
 
 add_subdirectory(core)
-list(APPEND CONF_Easy3D_LIBRARIES "easy3d::core")
+list(APPEND CONF_Easy3D_COMPONENTS "core")
 list(APPEND EXPORT_TARGET_SET "easy3d_core")
 
 add_subdirectory(fileio)
-list(APPEND CONF_Easy3D_LIBRARIES "easy3d::fileio")
+list(APPEND CONF_Easy3D_COMPONENTS "fileio")
 list(APPEND EXPORT_TARGET_SET "easy3d_fileio" "3rd_lastools" "3rd_rply")
 
 add_subdirectory(kdtree)
-list(APPEND CONF_Easy3D_LIBRARIES "easy3d::kdtree")
+list(APPEND CONF_Easy3D_COMPONENTS "kdtree")
 list(APPEND EXPORT_TARGET_SET "easy3d_kdtree" "3rd_kdtree")
 
 add_subdirectory(algo)
-list(APPEND CONF_Easy3D_LIBRARIES "easy3d::algo")
+list(APPEND CONF_Easy3D_COMPONENTS "algo")
 list(APPEND EXPORT_TARGET_SET "easy3d_algo" "3rd_poisson" "3rd_ransac" "3rd_triangle" "3rd_tetgen" "3rd_glutess")
 
 if (Easy3D_HAS_CGAL)
     add_subdirectory(algo_ext)  # experimental
-    list(APPEND CONF_Easy3D_LIBRARIES "easy3d::algo_ext")
+    list(APPEND CONF_Easy3D_COMPONENTS "algo_ext")
     list(APPEND EXPORT_TARGET_SET "easy3d_algo_ext")
 endif ()
 
 if (Easy3D_HAS_FFMPEG)
     add_subdirectory(video)  # experimental
-    list(APPEND CONF_Easy3D_LIBRARIES "easy3d::video")
+    list(APPEND CONF_Easy3D_COMPONENTS "video")
     list(APPEND EXPORT_TARGET_SET "easy3d_video")
 endif ()
 
 add_subdirectory(renderer)
-list(APPEND CONF_Easy3D_LIBRARIES "easy3d::renderer")
+list(APPEND CONF_Easy3D_COMPONENTS "renderer")
 list(APPEND EXPORT_TARGET_SET "easy3d_renderer" "3rd_glew")
 
 add_subdirectory(gui)
-list(APPEND CONF_Easy3D_LIBRARIES "easy3d::gui")
+list(APPEND CONF_Easy3D_COMPONENTS "gui")
 list(APPEND EXPORT_TARGET_SET "easy3d_gui")
 
 add_subdirectory(viewer)
-list(APPEND CONF_Easy3D_LIBRARIES "easy3d::viewer")
+list(APPEND CONF_Easy3D_COMPONENTS "viewer")
 list(APPEND EXPORT_TARGET_SET "easy3d_viewer" "3rd_glfw")
 
 
 export(TARGETS
         ${EXPORT_TARGET_SET}
-        FILE "${PROJECT_BINARY_DIR}/Easy3DTargets.cmake")
+        FILE "${Easy3D_BINARY_DIR}/Easy3DTargets.cmake")
 
 # Export the package for use from the build-tree
 # (this registers the build-tree with a global CMake-registry)
@@ -59,17 +59,18 @@ export(PACKAGE Easy3D)
 
 ## Create the Easy3DConfig.cmake and Easy3DConfigVersion files
 # ... for the build tree
-#set(CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}")  # also include the build directory
-set(CONF_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}")
+set(CONF_Easy3D_INCLUDE_DIRS "${Easy3D_INCLUDE_DIR}")
+set(CONF_Easy3D_LIBRARY_DIRS "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
+set(CONF_Easy3D_VERSION ${Easy3D_VERSION})
 configure_file(../cmake/Easy3DConfig.cmake.in
-        "${PROJECT_BINARY_DIR}/Easy3DConfig.cmake" @ONLY)
+        "${Easy3D_BINARY_DIR}/Easy3DConfig.cmake" @ONLY)
 # ... for the install tree
-set(CONF_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/include")
+set(CONF_Easy3D_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/include")
 configure_file(../cmake/Easy3DConfig.cmake.in
-        "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/Easy3DConfig.cmake" @ONLY)
+        "${Easy3D_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/Easy3DConfig.cmake" @ONLY)
 # ... for both
 configure_file(../cmake/Easy3DConfigVersion.cmake.in
-        "${PROJECT_BINARY_DIR}/Easy3DConfigVersion.cmake" @ONLY)
+        "${Easy3D_BINARY_DIR}/Easy3DConfigVersion.cmake" @ONLY)
 
 
 

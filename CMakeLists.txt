@@ -7,7 +7,7 @@ project(Easy3D)
 set(Easy3D_MAJOR_VERSION 2)
 set(Easy3D_MINOR_VERSION 5)
 set(Easy3D_PATCH_VERSION 0)
-set(Easy3D_VERSION "${Easy3D_MAJOR_VERSION}.${Easy3D_MINOR_VERSION}.${Easy3D_PATCH_VERSION}")
+set(Easy3D_VERSION ${Easy3D_MAJOR_VERSION}.${Easy3D_MINOR_VERSION}.${Easy3D_PATCH_VERSION})
 
 message(STATUS "************************************************************")
 message(STATUS "    Package : Easy3D")
@@ -126,17 +126,17 @@ set(Easy3D_ROOT ${CMAKE_CURRENT_LIST_DIR})
 set(Easy3D_THIRD_PARTY ${Easy3D_ROOT}/3rd_party)
 
 set(Easy3D_INCLUDE_DIR ${Easy3D_ROOT})
-set(Easy3D_SOURCE_DIR ${Easy3D_ROOT})
-set(Easy3D_BINARY_DIR ${CMAKE_BINARY_DIR})
+set(Easy3D_SOURCE_DIR  ${Easy3D_ROOT})
+set(Easy3D_BINARY_DIR  ${CMAKE_BINARY_DIR})
 
 ### conditionally compile certain modules depending on libraries found on the system
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
 ################################################################################
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${Easy3D_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${Easy3D_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${Easy3D_BINARY_DIR}/lib)
 
 ################################################################################
 

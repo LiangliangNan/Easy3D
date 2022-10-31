@@ -24,7 +24,7 @@
 #      along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ******************************************************************************
 
-set(PACKAGE_VERSION "@Easy3D_VERSION@")
+set(PACKAGE_VERSION "@CONF_Easy3D_VERSION@")
 
 # Check whether the requested PACKAGE_FIND_VERSION is compatible
 if("${PACKAGE_VERSION}" VERSION_LESS "${PACKAGE_FIND_VERSION}")
