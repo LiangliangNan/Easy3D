@@ -60,6 +60,14 @@ set(Easy3D_VERSION @CONF_Easy3D_VERSION@)
 set(found_components "")
 set(missing_components "")
 foreach(component ${Easy3D_FIND_COMPONENTS})
+    string(TOLOWER ${component} component)  # not case sensitive
+    if (component MATCHES "^easy3d::")      # treat 'easy3d::name' as 'name'
+        string(REPLACE "easy3d::" "" component ${component})
+    endif ()
+    if (component MATCHES "^easy3d_")       # treat 'easy3d_name' as 'name'
+        string(REPLACE "easy3d_" "" component ${component})
+    endif ()
+
     if (component IN_LIST Easy3D_AVAILABLE_COMPONENTS)
         list(APPEND found_components ${component})
         set(Easy3D_${component}_FOUND TRUE)
