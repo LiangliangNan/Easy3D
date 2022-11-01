@@ -24,7 +24,10 @@
 #      along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ******************************************************************************
 
-# - Config file for the Easy3D package
+# Config file for Easy3D
+# Reference:
+#   How to create a ProjectConfig.cmake file
+#   https://gitlab.kitware.com/cmake/community/-/wikis/doc/tutorials/How-to-create-a-ProjectConfig.cmake-file
 #
 # It defines the following variables:
 #       Easy3D_FOUND                - True if headers and requested libraries were found.
