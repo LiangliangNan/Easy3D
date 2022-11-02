@@ -35,7 +35,7 @@ namespace easy3d {
         // resource directory (containing color maps, shaders, textures, etc.)
         std::string directory() {
             // first check if the resources has been defined in the
-            std::string dir = EASY3D_RESOURCES_DIR;
+            std::string dir = Easy3D_RESOURCES_DIR;
             if (file_system::is_directory(dir)) {
                 VLOG_N_TIMES(1, 1) << "resources directory: " << dir;
                 return dir;
