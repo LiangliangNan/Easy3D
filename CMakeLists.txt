@@ -161,7 +161,10 @@ endforeach()
 function(add_module module headers sources dependencies)
     add_library(easy3d_${module} STATIC ${headers} ${sources})
     set_target_properties(easy3d_${module} PROPERTIES FOLDER "easy3d")
-    target_include_directories(easy3d_${module} PUBLIC "$<BUILD_INTERFACE:${Easy3D_INCLUDE_DIR}>")
+    target_include_directories(easy3d_${module} PUBLIC
+            "$<BUILD_INTERFACE:${Easy3D_INCLUDE_DIR}>"
+            "$<INSTALL_INTERFACE:${Easy3D_INSTALL_INCLUDE_DIR}>"
+            )
     target_link_libraries(easy3d_${module} PUBLIC ${dependencies})
 
     # Alias target (recommended by policy CMP0028) and it looks nicer
