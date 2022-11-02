@@ -58,6 +58,10 @@ export(TARGETS
 export(PACKAGE Easy3D)
 
 ## Create the Easy3DConfig.cmake and Easy3DConfigVersion files
+# Create the FooBarConfig.cmake and FooBarConfigVersion files
+file(RELATIVE_PATH REL_INCLUDE_DIR "${INSTALL_CMAKE_DIR}" "${INSTALL_INCLUDE_DIR}")
+file(RELATIVE_PATH REL_LIB_DIR "${INSTALL_CMAKE_DIR}" "${INSTALL_LIB_DIR}")
+
 # ... for the build tree
 set(CONF_Easy3D_INCLUDE_DIRS "${Easy3D_INCLUDE_DIR}")
 set(CONF_Easy3D_LIBRARY_DIRS "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
@@ -65,14 +69,24 @@ set(CONF_Easy3D_VERSION ${Easy3D_VERSION})
 configure_file(../cmake/Easy3DConfig.cmake.in
         "${Easy3D_BINARY_DIR}/Easy3DConfig.cmake" @ONLY)
 # ... for the install tree
-set(CONF_Easy3D_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/include")
+set(CONF_Easy3D_INCLUDE_DIRS "${Easy3D_CMAKE_DIR}/${REL_INCLUDE_DIR}")
+set(CONF_Easy3D_LIBRARY_DIRS "${Easy3D_CMAKE_DIR}/${REL_LIB_DIR}")
 configure_file(../cmake/Easy3DConfig.cmake.in
-        "${Easy3D_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/Easy3DConfig.cmake" @ONLY)
+        "${Easy3D_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/Easy3DConfig.cmake" @ONLY)
 # ... for both
 configure_file(../cmake/Easy3DConfigVersion.cmake.in
         "${Easy3D_BINARY_DIR}/Easy3DConfigVersion.cmake" @ONLY)
 
+# Install the Easy3DConfig.cmake and Easy3DConfigVersion.cmake
+install(FILES
+        "${Easy3D_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/Easy3DConfig.cmake"
+        "${Easy3D_BINARY_DIR}/Easy3DConfigVersion.cmake"
+        DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)
+
+# Install the export set for use with the install-tree
+install(EXPORT Easy3DTargets DESTINATION
+        "${INSTALL_CMAKE_DIR}" COMPONENT dev)
 
 
-# TODO: Install Easy3D and use Easy3D from its install tree?
-# https://gitlab.kitware.com/cmake/community/-/wikis/doc/tutorials/How-to-create-a-ProjectConfig.cmake-file
+# References:
+#   https://gitlab.kitware.com/cmake/community/-/wikis/doc/tutorials/How-to-create-a-ProjectConfig.cmake-file

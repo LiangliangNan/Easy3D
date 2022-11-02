@@ -373,25 +373,12 @@ if (GLFW_BUILD_SHARED_LIBRARY)
     endif()
 endif()
 
-foreach(arg ${glfw_PKG_DEPS})
-    string(APPEND deps " ${arg}")
-endforeach()
-foreach(arg ${glfw_PKG_LIBS})
-    string(APPEND libs " ${arg}")
-endforeach()
 
-set(GLFW_PKG_CONFIG_REQUIRES_PRIVATE "${deps}" CACHE INTERNAL
-    "GLFW pkg-config Requires.private")
-set(GLFW_PKG_CONFIG_LIBS_PRIVATE "${libs}" CACHE INTERNAL
-    "GLFW pkg-config Libs.private")
-
-configure_file("${GLFW_SOURCE_DIR}/CMake/glfw3.pc.in" glfw3.pc @ONLY)
-
-if (GLFW_INSTALL)
-    install(TARGETS 3rd_glfw
-            EXPORT glfwTargets
-            RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
-            ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-            LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}")
-endif()
+install(TARGETS 3rd_glfw
+        # IMPORTANT: Add the library to the "export-set"
+        EXPORT Easy3DTargets
+        #RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin
+        LIBRARY DESTINATION ${INSTALL_LIB_DIR} COMPONENT lib
+        PUBLIC_HEADER DESTINATION "${INSTALL_INCLUDE_DIR}/${module}"
+        COMPONENT dev)
 

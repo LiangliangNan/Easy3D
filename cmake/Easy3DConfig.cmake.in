@@ -39,10 +39,10 @@
 #       Easy3D_VERSION              - Easy3D version number in ``X.Y.Z`` format (same as ``Easy3D_VERSION_STRING``)
 #       Easy3D_CGAL_SUPPORT         - True if Easy3D was built with CGAL support.
 #       Easy3D_FFMPEG_SUPPORT       - True if Easy3D was built with FFMPEG support.
-# NOTE: The recommended way to specify libraries and headers with CMake is to use the
-#       target_link_libraries command. This command automatically adds appropriate include
-#       directories, compile definitions, the position-independent-code flag, and links to
-#       requested libraries.
+#
+# NOTE: The recommended way to specify libraries and headers with CMake is to use the target_link_libraries
+#       command. This command automatically adds appropriate include directories, compile definitions, the
+#       position-independent-code flag, and links to requested libraries.
 
 if(POLICY CMP0057)
   cmake_policy(SET CMP0057 NEW) # support the use of "IN_LIST"
@@ -91,8 +91,8 @@ if (Easy3D_FIND_COMPONENTS) # user tries to find components
     elseif (found_components)
         set(Easy3D_FOUND TRUE)
         message(STATUS "Found Easy3D (version '@CONF_Easy3D_VERSION@'). Found components: ${found_components}")
-        message(STATUS "Easy3D_INCLUDE_DIRS: ${Easy3D_INCLUDE_DIRS}")
-        message(STATUS "Easy3D_LIBRARY_DIRS: ${Easy3D_LIBRARY_DIRS}")
+        message(STATUS "Easy3D_INCLUDE_DIRS: ${Easy3D_CMAKE_DIR}/${Easy3D_INCLUDE_DIRS}")
+        message(STATUS "Easy3D_LIBRARY_DIRS: ${Easy3D_CMAKE_DIR}/${Easy3D_LIBRARY_DIRS}")
     endif()
 else ()
     set(components_to_link ${Easy3D_AVAILABLE_COMPONENTS})

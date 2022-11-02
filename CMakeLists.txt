@@ -140,6 +140,54 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${Easy3D_BINARY_DIR}/lib)
 
 ################################################################################
 
+set(CMAKE_INSTALL_PREFIX "/usr/local/Cellar/easy3d/${Easy3D_VERSION}")
+
+# Offer the user the choice of overriding the installation directories
+set(INSTALL_LIB_DIR ${CMAKE_INSTALL_PREFIX}/lib CACHE PATH "Installation directory for libraries")
+set(INSTALL_BIN_DIR ${CMAKE_INSTALL_PREFIX}/bin CACHE PATH "Installation directory for executables")
+set(INSTALL_INCLUDE_DIR ${CMAKE_INSTALL_PREFIX}/include CACHE PATH
+        "Installation directory for header files")
+if(WIN32 AND NOT CYGWIN)
+    set(DEF_INSTALL_CMAKE_DIR ${CMAKE_INSTALL_PREFIX}/CMake)
+else()
+    set(DEF_INSTALL_CMAKE_DIR ${CMAKE_INSTALL_PREFIX}/lib/CMake/Easy3D)
+endif()
+set(INSTALL_CMAKE_DIR ${DEF_INSTALL_CMAKE_DIR} CACHE PATH "Installation directory for CMake files")
+
+# Make relative paths absolute (needed later on)
+foreach(path LIB BIN INCLUDE CMAKE)
+    set(var INSTALL_${path}_DIR)
+    if(NOT IS_ABSOLUTE "${${var}}")
+        set(${var} "${CMAKE_INSTALL_PREFIX}/${${var}}")
+    endif()
+endforeach()
+
+function(add_module module headers sources dependencies)
+    add_library(easy3d_${module} STATIC ${headers} ${sources})
+    set_target_properties(easy3d_${module} PROPERTIES FOLDER "easy3d")
+    target_include_directories(easy3d_${module} PRIVATE ${Easy3D_INCLUDE_DIR})
+    target_link_libraries(easy3d_${module} PUBLIC ${dependencies})
+
+    # Alias target (recommended by policy CMP0028) and it looks nicer
+    message(STATUS "Adding target: easy3d::${module} (easy3d_${module})")
+    add_library(easy3d::${module} ALIAS easy3d_${module})
+    # Export as easy3d::${MODULE_NAME}
+    set_property(TARGET easy3d_${module} PROPERTY EXPORT_NAME easy3d::${module})
+endfunction()
+
+function(install_module module)
+    set_target_properties(easy3d_${module} PROPERTIES PUBLIC_HEADER "${${module}_headers}")
+    install(TARGETS easy3d_${module}
+            # IMPORTANT: Add the library to the "export-set"
+            EXPORT Easy3DTargets
+            #RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin
+            LIBRARY DESTINATION ${INSTALL_LIB_DIR} COMPONENT lib
+            PUBLIC_HEADER DESTINATION "${INSTALL_INCLUDE_DIR}/easy3d/${module}"
+            COMPONENT dev)
+endfunction()
+
+################################################################################
+
 add_subdirectory(3rd_party)
 
 add_subdirectory(easy3d)

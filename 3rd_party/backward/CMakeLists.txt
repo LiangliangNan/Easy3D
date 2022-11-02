@@ -89,5 +89,13 @@ target_include_directories(3rd_backward PRIVATE ${BACKWARD_INCLUDE_DIRS})
 
 find_package(Threads REQUIRED)
 target_link_libraries(3rd_backward PRIVATE Threads::Threads)
-
 set_target_properties(3rd_backward PROPERTIES FOLDER "3rd_party")
+
+
+install(TARGETS 3rd_backward
+        # IMPORTANT: Add the library to the "export-set"
+        EXPORT Easy3DTargets
+        #RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin
+        LIBRARY DESTINATION ${INSTALL_LIB_DIR} COMPONENT lib
+        PUBLIC_HEADER DESTINATION "${INSTALL_INCLUDE_DIR}/${module}"
+        COMPONENT dev)

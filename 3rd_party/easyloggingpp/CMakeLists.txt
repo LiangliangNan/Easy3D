@@ -61,3 +61,13 @@ if (WIN32 OR MSVC)
 endif()
 
 set_target_properties(3rd_easyloggingpp PROPERTIES FOLDER "3rd_party")
+
+
+set_target_properties(3rd_easyloggingpp PROPERTIES PUBLIC_HEADER "src/easylogging++.h")
+install(TARGETS 3rd_easyloggingpp
+        # IMPORTANT: Add the library to the "export-set"
+        EXPORT Easy3DTargets
+        #RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin
+        LIBRARY DESTINATION ${INSTALL_LIB_DIR} COMPONENT lib
+        PUBLIC_HEADER DESTINATION "${INSTALL_INCLUDE_DIR}/3rd_party/easyloggingpp/src/${module}"
+        COMPONENT dev)

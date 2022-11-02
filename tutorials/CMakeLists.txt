@@ -1,4 +1,10 @@
-cmake_minimum_required(VERSION 3.12)
+function(add_sample sample files dependencies)
+    add_executable(${sample} ${files})
+    set_target_properties(${sample} PROPERTIES FOLDER "tutorials")
+    target_include_directories(${sample} PRIVATE ${Easy3D_INCLUDE_DIR})
+    target_link_libraries(${sample} PRIVATE ${dependencies})
+endfunction()
+
 
 # point cloud
 add_subdirectory(Tutorial_101_PointCloud)

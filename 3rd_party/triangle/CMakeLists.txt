@@ -12,9 +12,10 @@ set_target_properties(3rd_triangle PROPERTIES FOLDER "3rd_party")
 set_target_properties(3rd_triangle PROPERTIES "COMPILE_DEFINITIONS" TRILIBRARY)
 
 
-if (MSVC)
-    target_compile_definitions(3rd_triangle PRIVATE
-        _CRT_SECURE_NO_WARNINGS
-        _CRT_SECURE_NO_DEPRECATE
-        )
-endif()
+install(TARGETS 3rd_triangle
+        # IMPORTANT: Add the library to the "export-set"
+        EXPORT Easy3DTargets
+        #RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin
+        LIBRARY DESTINATION ${INSTALL_LIB_DIR} COMPONENT lib
+        PUBLIC_HEADER DESTINATION "${INSTALL_INCLUDE_DIR}/${module}"
+        COMPONENT dev)

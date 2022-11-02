@@ -64,9 +64,6 @@ else ()
     add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} ${${PROJECT_NAME}_RESOURCES})
 endif ()
 
-# If reached here, Qt5 must have been found
-target_compile_definitions(${PROJECT_NAME} PRIVATE HAS_QT5)
-
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which has been marked as deprecated (the exact warnings
 # depend on your compiler). Please consult the documentation of the
@@ -77,7 +74,6 @@ if (MSVC)
     target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_DEPRECATE)
 endif ()
 
-target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL)
-target_link_libraries(${PROJECT_NAME} easy3d::renderer)
-
+target_include_directories(${PROJECT_NAME} PRIVATE ${Easy3D_INCLUDE_DIR})
+target_link_libraries(${PROJECT_NAME} PRIVATE Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL easy3d::renderer)
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "tutorials")

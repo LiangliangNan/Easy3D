@@ -71,6 +71,6 @@ else ()
     add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES}) 
 endif ()
 
+target_include_directories(${PROJECT_NAME} PRIVATE ${Easy3D_INCLUDE_DIR})
 target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES} easy3d::core easy3d::renderer)
-
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "tutorials")
