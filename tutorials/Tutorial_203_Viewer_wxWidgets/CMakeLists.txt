@@ -4,7 +4,7 @@ get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 project(${PROJECT_NAME})
 
 # Request wxWidgets support
-find_package(wxWidgets QUIET COMPONENTS core base gl)
+find_package(wxWidgets COMPONENTS core base gl QUIET)
 if (NOT wxWidgets_FOUND)
     message(WARNING "${PROJECT_NAME} requires wxWidgets but wxWidgets was not found. You can set 'wxWidgets_ROOT_DIR' "
 		   "to the root directory of wxWidgets (e.g., 'D:/dev/wxWidgets-3.2.1') to help CMake find wxWidgets. "
