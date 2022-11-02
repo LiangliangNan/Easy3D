@@ -21,7 +21,7 @@ set_target_properties(3rd_glew PROPERTIES PUBLIC_HEADER "include/GL/glew.h")
 install(TARGETS 3rd_glew
         # IMPORTANT: Add the library to the "export-set"
         EXPORT Easy3DTargets
-        #RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin
-        LIBRARY DESTINATION ${INSTALL_LIB_DIR} COMPONENT lib
-        PUBLIC_HEADER DESTINATION "${INSTALL_INCLUDE_DIR}/3rd_party/glew/include/GL/${module}"
+        #RUNTIME DESTINATION "${Easy3D_INSTALL_BIN_DIR}" COMPONENT bin
+        LIBRARY DESTINATION "${Easy3D_INSTALL_LIB_DIR}" COMPONENT lib
+        PUBLIC_HEADER DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/3rd_party/glew/include/GL/${module}"
         COMPONENT dev)

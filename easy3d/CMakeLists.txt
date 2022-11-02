@@ -59,8 +59,8 @@ export(PACKAGE Easy3D)
 
 ## Create the Easy3DConfig.cmake and Easy3DConfigVersion files
 # Create the FooBarConfig.cmake and FooBarConfigVersion files
-file(RELATIVE_PATH REL_INCLUDE_DIR "${INSTALL_CMAKE_DIR}" "${INSTALL_INCLUDE_DIR}")
-file(RELATIVE_PATH REL_LIB_DIR "${INSTALL_CMAKE_DIR}" "${INSTALL_LIB_DIR}")
+file(RELATIVE_PATH REL_INCLUDE_DIR "${Easy3D_INSTALL_CMAKE_DIR}" "${Easy3D_INSTALL_INCLUDE_DIR}")
+file(RELATIVE_PATH REL_LIB_DIR "${Easy3D_INSTALL_CMAKE_DIR}" "${Easy3D_INSTALL_LIB_DIR}")
 
 # ... for the build tree
 set(CONF_Easy3D_INCLUDE_DIRS "${Easy3D_INCLUDE_DIR}")
@@ -81,11 +81,11 @@ configure_file(../cmake/Easy3DConfigVersion.cmake.in
 install(FILES
         "${Easy3D_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/Easy3DConfig.cmake"
         "${Easy3D_BINARY_DIR}/Easy3DConfigVersion.cmake"
-        DESTINATION "${INSTALL_CMAKE_DIR}" COMPONENT dev)
+        DESTINATION "${Easy3D_INSTALL_CMAKE_DIR}" COMPONENT dev)
 
 # Install the export set for use with the install-tree
 install(EXPORT Easy3DTargets DESTINATION
-        "${INSTALL_CMAKE_DIR}" COMPONENT dev)
+        "${Easy3D_INSTALL_CMAKE_DIR}" COMPONENT dev)
 
 
 # References:

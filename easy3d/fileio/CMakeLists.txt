@@ -41,6 +41,7 @@ set(${module}_sources
         translator.cpp
         )
 
+		
 add_module(${module} "${${module}_headers}" "${${module}_sources}" "${dependencies}")
 
 # The resources directory

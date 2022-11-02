@@ -10,7 +10,7 @@ set_target_properties(3rd_rply PROPERTIES FOLDER "3rd_party")
 install(TARGETS 3rd_rply
         # IMPORTANT: Add the library to the "export-set"
         EXPORT Easy3DTargets
-        #RUNTIME DESTINATION "${INSTALL_BIN_DIR}" COMPONENT bin
-        LIBRARY DESTINATION ${INSTALL_LIB_DIR} COMPONENT lib
-        PUBLIC_HEADER DESTINATION "${INSTALL_INCLUDE_DIR}/${module}"
+        #RUNTIME DESTINATION "${Easy3D_INSTALL_BIN_DIR}" COMPONENT bin
+        LIBRARY DESTINATION "${Easy3D_INSTALL_LIB_DIR}" COMPONENT lib
+        PUBLIC_HEADER DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/${module}"
         COMPONENT dev)
