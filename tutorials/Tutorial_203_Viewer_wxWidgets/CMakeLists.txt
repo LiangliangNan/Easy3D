@@ -7,11 +7,14 @@ project(${PROJECT_NAME})
 find_package(wxWidgets QUIET COMPONENTS core base gl)
 if (NOT wxWidgets_FOUND)
     message(WARNING "${PROJECT_NAME} requires wxWidgets but wxWidgets was not found. You can set 'wxWidgets_ROOT_DIR' "
-					"to the root directory of wxWidgets (e.g., 'D:/dev/wxWidgets-3.2.1') to help CMake find wxWidgets. "
-					"\nNOTE: CMake findwxWidgets module may not detect wxWidgets in versions of CMake older than 3.24. "
-					"You can update your CMake to a version greater or equal to 3.24, or copy the latest version of "
-					"FindwxWidgets.cmake from the following link to your system to fix this: "
-					"https://gitlab.kitware.com/cmake/cmake/-/blob/master/Modules/FindwxWidgets.cmake")
+		   "to the root directory of wxWidgets (e.g., 'D:/dev/wxWidgets-3.2.1') to help CMake find wxWidgets. "
+		   "Without wxWidgets, you will still be able to use all other features provided by Easy3D.")
+    if (${CMAKE_VERSION} VERSION_LESS "3.24.0") 
+    	message(WARNING "Your CMake version is ${CMAKE_VERSION}. The 'findwxWidgets' module in CMake older than 3.24 may not detect wxWidgets. "
+		       "You can update your CMake to a version >= 3.24, or copy the latest version of 'FindwxWidgets.cmake' from the following "
+		       "link to your system to fix this: https://gitlab.kitware.com/cmake/cmake/-/blob/master/Modules/FindwxWidgets.cmake")
+
+    endif()
     return()
 else ()
     message(STATUS "Found wxWidgets v${wxWidgets_VERSION_STRING}")
