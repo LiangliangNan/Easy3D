@@ -186,10 +186,22 @@ function(install_module module)
             COMPONENT dev)
 endfunction()
 
-install(DIRECTORY "${Easy3D_ROOT}/resources/fonts"      DESTINATION "${Easy3D_INSTALL_RESOURCES_DIR}")
-install(DIRECTORY "${Easy3D_ROOT}/resources/shaders"    DESTINATION "${Easy3D_INSTALL_RESOURCES_DIR}")
-install(DIRECTORY "${Easy3D_ROOT}/resources/colormaps"  DESTINATION "${Easy3D_INSTALL_RESOURCES_DIR}")
-install(DIRECTORY "${Easy3D_ROOT}/resources/textures"   DESTINATION "${Easy3D_INSTALL_RESOURCES_DIR}")
+install(DIRECTORY
+        "${Easy3D_ROOT}/resources/fonts"
+        "${Easy3D_ROOT}/resources/shaders"
+        "${Easy3D_ROOT}/resources/colormaps"
+        "${Easy3D_ROOT}/resources/textures"
+        DESTINATION
+        "${Easy3D_INSTALL_RESOURCES_DIR}")
+
+install(FILES
+        "${Easy3D_ROOT}/HowToBuild.md"
+        "${Easy3D_ROOT}/ReadMe.md"
+        "${Easy3D_ROOT}/CONTRIBUTING.md"
+        "${Easy3D_ROOT}/LICENSE"
+        DESTINATION
+        "${CMAKE_INSTALL_PREFIX}"
+        )
 
 ################################################################################
 
