@@ -195,7 +195,6 @@ install(DIRECTORY
         "${Easy3D_INSTALL_RESOURCES_DIR}")
 
 install(FILES
-        "${Easy3D_ROOT}/HowToBuild.md"
         "${Easy3D_ROOT}/ReadMe.md"
         "${Easy3D_ROOT}/CONTRIBUTING.md"
         "${Easy3D_ROOT}/LICENSE"
