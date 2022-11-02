@@ -149,6 +149,7 @@ set(Easy3D_INSTALL_LIB_DIR ${CMAKE_INSTALL_PREFIX}/lib CACHE PATH "Installation 
 set(Easy3D_INSTALL_BIN_DIR ${CMAKE_INSTALL_PREFIX}/bin CACHE PATH "Installation directory for executables")
 set(Easy3D_INSTALL_INCLUDE_DIR ${CMAKE_INSTALL_PREFIX}/include CACHE PATH "Installation directory for header files")
 set(Easy3D_INSTALL_CMAKE_DIR ${CMAKE_INSTALL_PREFIX}/lib/CMake/Easy3D CACHE PATH "Installation directory for CMake files")
+set(Easy3D_INSTALL_RESOURCES_DIR ${CMAKE_INSTALL_PREFIX}/resources CACHE PATH "Installation directory for CMake files")
 
 # Make relative paths absolute (needed later on)
 foreach(path LIB BIN INCLUDE CMAKE)
@@ -184,6 +185,11 @@ function(install_module module)
             PUBLIC_HEADER DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/easy3d/${module}"
             COMPONENT dev)
 endfunction()
+
+install(DIRECTORY "${Easy3D_ROOT}/resources/fonts"      DESTINATION "${Easy3D_INSTALL_RESOURCES_DIR}")
+install(DIRECTORY "${Easy3D_ROOT}/resources/shaders"    DESTINATION "${Easy3D_INSTALL_RESOURCES_DIR}")
+install(DIRECTORY "${Easy3D_ROOT}/resources/colormaps"  DESTINATION "${Easy3D_INSTALL_RESOURCES_DIR}")
+install(DIRECTORY "${Easy3D_ROOT}/resources/textures"   DESTINATION "${Easy3D_INSTALL_RESOURCES_DIR}")
 
 ################################################################################
 

@@ -45,7 +45,11 @@ set(${module}_sources
 add_module(${module} "${${module}_headers}" "${${module}_sources}" "${dependencies}")
 
 # The resources directory
-target_compile_definitions(easy3d_${module} PRIVATE "EASY3D_RESOURCES_DIR=\"${Easy3D_ROOT}/resources\"")
+target_compile_definitions(easy3d_${module} PUBLIC
+        "$<BUILD_INTERFACE:EASY3D_RESOURCES_DIR=\"${Easy3D_ROOT}/resources\">"
+        "$<INSTALL_INTERFACE:EASY3D_RESOURCES_DIR=\"${Easy3D_INSTALL_RESOURCES_DIR}\">"
+        )
+
 set(LASTOOLS_INCLUDE_DIR ${Easy3D_THIRD_PARTY}/lastools/LASzip/src ${Easy3D_THIRD_PARTY}/lastools/LASlib/inc)
 target_include_directories(easy3d_${module} PRIVATE ${LASTOOLS_INCLUDE_DIR})
 
