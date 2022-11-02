@@ -25,7 +25,7 @@
  ********************************************************************/
 
 #include <easy3d/core/graph.h>
-#include <easy3d/util/logging.h>
+#include <easy3d/util/resources.h>
 
 
 using namespace easy3d;
@@ -63,8 +63,8 @@ Graph* old_graph_from_previous_example() {
 
 
 int main(int argc, char** argv) {
-    // Initialize logging.
-    logging::initialize();
+    // Initialize Easy3D.
+    initialize();
 
     Graph* g = old_graph_from_previous_example();
 

@@ -26,8 +26,7 @@
 
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/fileio/point_cloud_io.h>
-#include <easy3d/fileio/resources.h>
-#include <easy3d/util/logging.h>
+#include <easy3d/util/resources.h>
 
 #include <fstream>
 
@@ -41,8 +40,8 @@ using namespace easy3d;
 
 
 int main(int argc, char** argv) {
-    // Initialize logging.
-    logging::initialize();
+    // Initialize Easy3D.
+    initialize();
 
 	// Read the point cloud from a known file. 
     PointCloud* cloud = PointCloudIO::load(resource::directory() + "/data/bunny.bin");

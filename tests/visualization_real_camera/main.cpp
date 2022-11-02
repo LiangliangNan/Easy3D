@@ -25,7 +25,7 @@
  ********************************************************************/
 
 #include "viewer.h"
-#include <easy3d/fileio/resources.h>
+#include <easy3d/util/resources.h>
 #include <easy3d/util/timer.h>
 
 using namespace easy3d;

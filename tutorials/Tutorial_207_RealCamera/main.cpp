@@ -25,8 +25,7 @@
  ********************************************************************/
 
 #include "viewer.h"
-#include <easy3d/fileio/resources.h>
-#include <easy3d/util/logging.h>
+#include <easy3d/util/resources.h>
 
 
 /// This example shows how to
@@ -39,8 +38,8 @@
 using namespace easy3d;
 
 int main(int argc, char **argv) {
-    // Initialize logging.
-    logging::initialize();
+    // Initialize Easy3D.
+    initialize();
 
     // the bundler file (We use only the camera intrinsic and extrinsic parameters).
     const std::string bundler_file = resource::directory() + "/data/fountain/bundle.out";

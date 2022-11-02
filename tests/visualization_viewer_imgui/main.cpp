@@ -25,7 +25,7 @@
  ********************************************************************/
 
 #include <algorithm>
-#include <easy3d/fileio/resources.h>
+#include <easy3d/util/resources.h>
 #include <easy3d/util/timer.h>
 
 #include "viewer.h"

@@ -25,8 +25,7 @@
  ********************************************************************/
 
 #include "viewer.h"
-#include <easy3d/fileio/resources.h>
-#include <easy3d/util/logging.h>
+#include <easy3d/util/resources.h>
 
 
 using namespace easy3d;
@@ -34,8 +33,8 @@ using namespace easy3d;
 // This example shows how to select a model from a set of models by clicking the mouse.
 
 int main(int argc, char **argv) {
-    // Initialize logging.
-    logging::initialize();
+    // Initialize Easy3D.
+    initialize();
 
     PickerViewer viewer("Tutorial_401_ModelPicker");
     viewer.add_model(resource::directory() + "/data/easy3d/easy3d_e.ply");

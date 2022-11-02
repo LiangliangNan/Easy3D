@@ -29,15 +29,14 @@
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/algo/text_mesher.h>
-#include <easy3d/fileio/resources.h>
-#include <easy3d/util/logging.h>
+#include <easy3d/util/resources.h>
 
 
 using namespace easy3d;
 
 int main(int argc, char **argv) {
-    // Initialize logging.
-    logging::initialize();
+    // Initialize Easy3D.
+    initialize();
 
     // Create an Easy3D viewer.
     Viewer viewer("Tutorial_310_TextMesher");

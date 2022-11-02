@@ -26,8 +26,7 @@
 
 
 #include <easy3d/viewer/comp_viewer.h>
-#include <easy3d/fileio/resources.h>
-#include <easy3d/util/logging.h>
+#include <easy3d/util/resources.h>
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_points.h>
@@ -40,8 +39,8 @@ using namespace easy3d;
 // This example shows how to use the built-in composite viewer.
 
 int main(int argc, char** argv) {
-    // Initialize logging.
-    logging::initialize();
+    // Initialize Easy3D.
+    initialize();
 
     // create a 2 by 2 composite viewer
     CompViewer viewer(2, 2, "Tutorial_205_CompositeView");

@@ -29,7 +29,7 @@
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_triangles.h>
-#include <easy3d/fileio/resources.h>
+#include <easy3d/util/resources.h>
 #include <easy3d/core/types.h>
 #include <easy3d/util/logging.h>
 
@@ -55,8 +55,8 @@ using namespace easy3d;
 #if 1   // use the built-in drawables of Easy3D.
 
 int main(int argc, char **argv) {
-    // Initialize logging.
-    logging::initialize();
+    // Initialize Easy3D.
+    initialize();
 
     //-------------------------------------------------------------
 
@@ -152,8 +152,8 @@ int main(int argc, char **argv) {
 #elif 1 //  use the built-in drawables of Easy3D, but we provide customized update functions
 
 int main(int argc, char **argv) {
-    // Initialize logging.
-    logging::initialize();
+    // Initialize Easy3D.
+    initialize();
 
     //-------------------------------------------------------------
 
@@ -329,8 +329,8 @@ protected:
 
 
 int main(int argc, char **argv) {
-    // Initialize logging.
-    logging::initialize();
+    // Initialize Easy3D.
+    initialize();
 
     //-------------------------------------------------------------
 

@@ -57,7 +57,7 @@
 #include <easy3d/renderer/text_renderer.h>
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/buffers.h>
-#include <easy3d/fileio/resources.h>
+#include <easy3d/util/resources.h>
 #include <easy3d/gui/picker_point_cloud.h>
 #include <easy3d/gui/picker_surface_mesh.h>
 #include <easy3d/gui/picker_model.h>

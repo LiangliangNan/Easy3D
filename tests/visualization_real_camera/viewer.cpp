@@ -36,7 +36,7 @@
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/util/string.h>
 #include <easy3d/util/file_system.h>
-#include <easy3d/fileio/resources.h>
+#include <easy3d/util/resources.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
 

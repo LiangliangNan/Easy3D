@@ -56,6 +56,7 @@ namespace easy3d {
          * @param info_to_stdout \c true to log messages at a the \c INFO level to standard output.
          * @param warning_to_stdcout \c true to log messages at a the \c WARNING level to standard output.
          * @param error_to_stdcout \c true to log messages at a the \c ERROR (including \c FATAL) level to standard output.
+         * @param verbose_to_stdcout \c true to log messages at a the \c ERROR (including \c FATAL) level to standard output.
          * @param log_file A string specifying the full path to the log file.
          *      If \p log_file is a valid path: log messages will be written to this file in addition to stderr.
          *      If \p log_file is empty: no log file will be created.
@@ -69,8 +70,9 @@ namespace easy3d {
                 bool info_to_stdout = false,
                 bool warning_to_stdcout = true,
                 bool error_to_stdcout = true,
+                bool verbose_to_stdcout = false,
                 const std::string &log_file = "",
-                int verbosity_threshold = 0
+                int verbosity_threshold = 9
         );
 
         /// Returns whether the logging has been initialized.

@@ -45,17 +45,17 @@ case unless it is already mentioned.  If it is, give it a :+1:.
 
 ## Reporting a runtime bug
 
-If Easy3D crashes, triggering asserts, or behaves unexpectedly at run-time, please enable the verbose logging (which is disabled by default) by replacing
-the line of logger initialization (in your `main()` function), e.g., 
+If Easy3D crashes, triggering asserts, or behaves unexpectedly at run-time, please enable logging to file (which is disabled by default) by replacing
+the line of Easy3D initialization (in your `main()` function), e.g., 
 
 ```c++
-    logging::initialize();
+    easy3d::initialize();
 ```
     
 with 
 
 ```c++
-    logging::initialize(true, true, true, "default", 9);
+    easy3d::initialize(true);
 ```
 
 This makes sure that most events will be logged into a log file.

@@ -27,7 +27,7 @@
 #if 0
 
 #include "viewer.h"
-#include <easy3d/fileio/resources.h>
+#include <easy3d/util/resources.h>
 #include <easy3d/util/timer.h>
 
 using namespace easy3d;
@@ -53,8 +53,7 @@ int test_composite_view(int duration) {
 #else
 
 #include <easy3d/viewer/comp_viewer.h>
-#include <easy3d/fileio/resources.h>
-#include <easy3d/util/logging.h>
+#include <easy3d/util/resources.h>
 #include <easy3d/util/timer.h>
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/renderer.h>

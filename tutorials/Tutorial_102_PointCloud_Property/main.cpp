@@ -26,7 +26,7 @@
 
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/random.h>
-#include <easy3d/util/logging.h>
+#include <easy3d/util/resources.h>
 
 using namespace easy3d;
 
@@ -37,8 +37,8 @@ using namespace easy3d;
 
 
 int main(int argc, char** argv) {
-    // Initialize logging.
-    logging::initialize();
+    // Initialize Easy3D.
+    initialize();
 
 	// Initialize random number generator.
 	srand(0);

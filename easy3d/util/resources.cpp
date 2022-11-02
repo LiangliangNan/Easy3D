@@ -24,18 +24,32 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include <easy3d/fileio/resources.h>
+#include <easy3d/util/resources.h>
 #include <easy3d/util/file_system.h>
+#include <easy3d/util/logging.h>
 
 
 namespace easy3d {
 
+    static std::string resources_dir = Easy3D_RESOURCES_DIR;
+
+    void initialize(bool use_log_file, const std::string& res_dir) {
+        logging::initialize(false, true, true, false, use_log_file ? "default" : "", 9);
+        resource::initialize(res_dir);
+    }
+
+
     namespace resource {
 
-        // resource directory (containing color maps, shaders, textures, etc.)
-        std::string directory() {
-            // first check if the resources has been defined in the
-            std::string dir = Easy3D_RESOURCES_DIR;
+        // Sets the resource directory (containing color maps, shaders, textures, fonts, etc.)
+        void initialize(const std::string& res_dir) {
+            resources_dir = res_dir;
+        }
+
+        // resource directory (containing color maps, shaders, textures, fonts, etc.)
+        const std::string directory() {
+            // first check if the resources directory (with the Easy3D distribution) exist
+            std::string dir = resources_dir;
             if (file_system::is_directory(dir)) {
                 VLOG_N_TIMES(1, 1) << "resources directory: " << dir;
                 return dir;
@@ -73,7 +87,6 @@ namespace easy3d {
                 return file_system::current_working_directory();
             }
         }
-
 
 
         // const int bunny_num_vertices = 453;

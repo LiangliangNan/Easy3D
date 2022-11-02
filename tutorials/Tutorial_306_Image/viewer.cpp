@@ -29,7 +29,7 @@
 #include <easy3d/renderer/texture.h>
 #include <easy3d/renderer/shapes.h>
 #include <easy3d/util/dialogs.h>
-#include <easy3d/fileio/resources.h>
+#include <easy3d/util/resources.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
 

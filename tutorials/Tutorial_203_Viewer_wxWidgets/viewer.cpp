@@ -63,7 +63,7 @@
 #include <easy3d/fileio/poly_mesh_io.h>
 #include <easy3d/fileio/ply_reader_writer.h>
 #include <easy3d/fileio/point_cloud_io_ptx.h>
-#include <easy3d/fileio/resources.h>
+#include <easy3d/util/resources.h>
 #include <easy3d/util/file_system.h>
 
 #include "viewer.h" // ensure "gl.h" is included after "glew.h"
@@ -97,7 +97,7 @@ namespace easy3d {
         // Initialize logging (if it has not been initialized yet)
         if (!logging::is_initialized())
             // initialize logging at the very beginning to make sure everything will be logged into the log file.
-            logging::initialize(true, true, true, "default", 9);
+            logging::initialize(false, true, true, false, "default", 9);
 
         const int gl_major = 3;
         const int gl_minor = 2;

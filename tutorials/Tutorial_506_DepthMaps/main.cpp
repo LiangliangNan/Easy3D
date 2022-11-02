@@ -25,7 +25,7 @@
  ********************************************************************/
 
 #include "viewer.h"
-#include <easy3d/fileio/resources.h>
+#include <easy3d/util/resources.h>
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/renderer.h>
@@ -37,8 +37,8 @@ using namespace easy3d;
 // This example shows how to create depth images from the rendering.
 
 int main(int argc, char **argv) {
-    // Initialize logging.
-    logging::initialize();
+    // Initialize Easy3D.
+    initialize();
 
     DepthImage viewer("Tutorial_506_DepthMaps");
 

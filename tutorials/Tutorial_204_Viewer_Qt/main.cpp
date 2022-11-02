@@ -30,7 +30,7 @@
 #include <QSurfaceFormat>
 #include <QStyleFactory>
 
-#include <easy3d/util/logging.h>
+#include <easy3d/util/resources.h>
 
 #include "window.h"
 
@@ -76,8 +76,8 @@ int main(int argc, char *argv[]) {
 #endif
     QDir::setCurrent(workingDir.absolutePath());
 
-    // Initialize logging.
-    logging::initialize();
+    // Initialize Easy3D.
+    initialize();
 
     Window win;
     win.show();

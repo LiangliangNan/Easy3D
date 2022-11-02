@@ -159,8 +159,10 @@ The minimum code to have a 3D viewer:
 
 ```c++
 #include <easy3d/viewer/viewer.h>
+#include <easy3d/util/resources.h>
 
 int main(int argc, char** argv) {
+    easy3d::initialize();
     easy3d::Viewer viewer("Test");
     return viewer.run();
 }

@@ -31,7 +31,7 @@
 #include <easy3d/core/random.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_points.h>
-#include <easy3d/util/logging.h>
+#include <easy3d/util/resources.h>
 #include <easy3d/util/timer.h>
 
 
@@ -64,8 +64,8 @@ void edit_model(PointCloud *cloud, Viewer *viewer) {
 
 
 int main(int argc, char **argv) {
-    // initialize logging.
-    logging::initialize();
+    // Initialize Easy3D.
+    initialize();
 
     // create the viewer
     Viewer viewer("Tutorial_312_MultiThread");

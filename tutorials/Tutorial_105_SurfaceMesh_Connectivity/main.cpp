@@ -25,7 +25,7 @@
  ********************************************************************/
 
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/util/logging.h>
+#include <easy3d/util/resources.h>
 
 
 using namespace easy3d;
@@ -68,8 +68,8 @@ SurfaceMesh* old_mesh_from_previous_example() {
 
 
 int main(int argc, char** argv) {
-    // Initialize logging.
-    logging::initialize();
+    // Initialize Easy3D.
+    initialize();
 
 	SurfaceMesh* mesh = old_mesh_from_previous_example();
 	

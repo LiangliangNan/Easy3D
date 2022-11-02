@@ -25,8 +25,7 @@
  ********************************************************************/
 
 #include "viewer.h"
-#include <easy3d/fileio/resources.h>
-#include <easy3d/util/logging.h>
+#include <easy3d/util/resources.h>
 
 
 // This example shows how to
@@ -36,8 +35,8 @@
 using namespace easy3d;
 
 int main(int argc, char** argv) {
-    // Initialize logging.
-    logging::initialize();
+    // Initialize Easy3D.
+    initialize();
 
     const std::string& file_name = resource::directory() + "/data/building.off";
 

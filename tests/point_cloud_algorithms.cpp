@@ -33,7 +33,7 @@
 #include <easy3d/algo/delaunay_3d.h>
 #include <easy3d/algo/point_cloud_simplification.h>
 #include <easy3d/fileio/point_cloud_io.h>
-#include <easy3d/fileio/resources.h>
+#include <easy3d/util/resources.h>
 
 
 using namespace easy3d;

@@ -34,7 +34,7 @@
 #include <easy3d/util/string.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/fileio/image_io.h>
-#include <easy3d/fileio/resources.h>
+#include <easy3d/util/resources.h>
 
 #include "paint_canvas.h"
 #include "main_window.h"

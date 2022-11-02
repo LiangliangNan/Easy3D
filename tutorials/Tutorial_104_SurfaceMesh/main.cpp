@@ -26,7 +26,7 @@
 
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/surface_mesh_builder.h>
-#include <easy3d/util/logging.h>
+#include <easy3d/util/resources.h>
 
 
 using namespace easy3d;
@@ -37,8 +37,8 @@ using namespace easy3d;
 
 
 int main(int argc, char** argv) {
-    // Initialize logging.
-    logging::initialize();
+    // Initialize Easy3D.
+    initialize();
 
 	// Easy3D provides two options to construct a surface mesh.
     //  - Option 1: use the add_vertex() and add_[face/triangle/quad]() functions of SurfaceMesh. You can only choose

@@ -44,8 +44,7 @@
 #include <QElapsedTimer>
 #include <QException>
 
-#include <easy3d/fileio/resources.h>
-#include <easy3d/util/logging.h>
+#include <easy3d/util/resources.h>
 
 
 using namespace easy3d;
@@ -89,7 +88,7 @@ public:
 int main(int argc, char *argv[])
 {
     // initialize logging at the very beginning to make sure everything will be logged into the log file.
-    logging::initialize(true, true, true, "default", 9);
+    logging::initialize(true, true, true, true, "default", 9);
 	setting::initialize("default");
 
     //Locale management

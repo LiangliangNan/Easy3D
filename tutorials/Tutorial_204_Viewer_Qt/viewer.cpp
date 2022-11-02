@@ -48,7 +48,7 @@
 #include <easy3d/renderer/text_renderer.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/manipulator.h>
-#include <easy3d/fileio/resources.h>
+#include <easy3d/util/resources.h>
 #include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>

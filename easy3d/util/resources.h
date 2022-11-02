@@ -24,14 +24,22 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef EASY3D_FILEIO_RESOURCES_H
-#define EASY3D_FILEIO_RESOURCES_H
-
+#ifndef EASY3D_UTIL_RESOURCES_H
+#define EASY3D_UTIL_RESOURCES_H
 
 #include <easy3d/core/types.h>
 
 
 namespace easy3d {
+
+    /**
+     * Initializes Easy3D (both resources directory and logging).
+     * @param use_log_file \c True to create a log file along the executable program.
+     * @param resources_dir The resources directory containing color maps, shaders, textures, fonts, etc.
+     *      \c Easy3D_RESOURCES_DIR (default value) is the resources directory coming with the Easy3D distribution.
+     * @sa resource::initialize(), logging::initialize(),
+     */
+    void initialize(bool use_log_file = false, const std::string& resources_dir = Easy3D_RESOURCES_DIR);
 
 
     /// \brief Resources used in Easy3D.
@@ -48,12 +56,15 @@ namespace easy3d {
         /// A 1D array storing a gradually changing color table. Each consecutive 3 elements represent an RGB color.
         extern const std::vector<unsigned char> cold_warm_colors;
 
-		/// Resource directory (containing color maps, shaders, textures, etc.)
-        extern std::string directory();
+        /// Sets the resource directory (containing color maps, shaders, textures, fonts, etc.)
+        extern void initialize(const std::string& resources_dir = Easy3D_RESOURCES_DIR);
+
+		/// Returns the resource directory (containing color maps, shaders, textures, fonts, etc.)
+        extern const std::string directory();
 
     } // namespace resource
 
 } // namespace easy3d
 
 
-#endif // EASY3D_FILEIO_RESOURCES_H
+#endif // EASY3D_UTIL_RESOURCES_H

@@ -25,8 +25,7 @@
  ********************************************************************/
 
 #include "viewer.h"
-#include <easy3d/fileio/resources.h>
-#include <easy3d/util/logging.h>
+#include <easy3d/util/resources.h>
 
 
 using namespace easy3d;
@@ -34,8 +33,8 @@ using namespace easy3d;
 // This example shows how to render an images.
 
 int main(int argc, char **argv) {
-    // Initialize logging.
-    logging::initialize();
+    // Initialize Easy3D.
+    initialize();
 
     // the image file.
     const std::string image_file = resource::directory() + "/data/fountain/images/0000.jpg";

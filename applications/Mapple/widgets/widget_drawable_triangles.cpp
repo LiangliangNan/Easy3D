@@ -40,7 +40,7 @@
 #include <easy3d/core/poly_mesh.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
-#include <easy3d/fileio/resources.h>
+#include <easy3d/util/resources.h>
 
 #include "paint_canvas.h"
 #include "main_window.h"

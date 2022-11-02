@@ -26,7 +26,7 @@
 
 
 #include <random>
-#include <easy3d/util/logging.h>
+#include <easy3d/util/resources.h>
 
 int test_timer();
 int test_signal();
@@ -73,7 +73,7 @@ int test_point_selection();
 
 
 int main(int argc, char* argv[]) {
-    easy3d::logging::initialize(false, false, true);
+    easy3d::initialize();
 
     // Initialize random number generator.
     srand(0);

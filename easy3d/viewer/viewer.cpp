@@ -61,7 +61,7 @@
 #include <easy3d/renderer/setting.h>
 #include <easy3d/renderer/text_renderer.h>
 #include <easy3d/renderer/texture_manager.h>
-#include <easy3d/fileio/resources.h>
+#include <easy3d/util/resources.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
 #include <easy3d/fileio/surface_mesh_io.h>
@@ -131,7 +131,7 @@ namespace easy3d {
 
         // Initialize logging (if it has not been initialized yet)
         if (!logging::is_initialized())
-            logging::initialize();
+            logging::initialize(false, true, true, false, "default", 9);
 
         // create and setup window
         window_ = create_window(title, samples, gl_major, gl_minor, full_screen, resizable,

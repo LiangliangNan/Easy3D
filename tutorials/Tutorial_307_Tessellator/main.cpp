@@ -30,7 +30,7 @@
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/algo/tessellator.h>
-#include <easy3d/util/logging.h>
+#include <easy3d/util/resources.h>
 
 
 using namespace easy3d;
@@ -97,8 +97,8 @@ void triangulate(SurfaceMesh *mesh) {
 
 
 int main(int argc, char **argv) {
-    // initialize logging.
-    logging::initialize();
+    // Initialize Easy3D.
+    initialize();
 
     // create the default Easy3D viewer.
     // (a viewer must be created before creating any drawables).

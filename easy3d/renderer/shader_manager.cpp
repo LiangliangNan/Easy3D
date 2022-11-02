@@ -26,7 +26,7 @@
 
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/opengl_error.h>
-#include <easy3d/fileio/resources.h>
+#include <easy3d/util/resources.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/string.h>
 #include <easy3d/util/logging.h>

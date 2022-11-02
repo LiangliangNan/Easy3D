@@ -29,8 +29,7 @@
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/camera.h>
-#include <easy3d/fileio/resources.h>
-#include <easy3d/util/logging.h>
+#include <easy3d/util/resources.h>
 
 #include <easy3d/algo/point_cloud_normals.h>
 
@@ -87,8 +86,8 @@ bool estimate(Viewer* viewer, Model* model) {
 
 
 int main(int argc, char **argv) {
-    // Initialize logging.
-    logging::initialize();
+    // Initialize Easy3D.
+    initialize();
 
     const std::string file = resource::directory() + "/data/bunny.bin";
 

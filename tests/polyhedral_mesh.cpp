@@ -26,7 +26,7 @@
 
 #include <easy3d/core/poly_mesh.h>
 #include <easy3d/fileio/poly_mesh_io.h>
-#include <easy3d/fileio/resources.h>
+#include <easy3d/util/resources.h>
 #include <easy3d/util/file_system.h>
 
 
