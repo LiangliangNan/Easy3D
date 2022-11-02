@@ -122,7 +122,7 @@ There are many options to build Easy3D. Choose one of the following (not an exha
         $ cd path-to-root-dir-of-Easy3D
         $ mkdir Release
         $ cd Release
-        $ cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release ..
+        $ cmake -G "NMake Makefiles" -DCMAKE_GENERATOR_PLATFORM=x64 -DCMAKE_BUILD_TYPE=Release ..
         $ nmake
     ```
   
