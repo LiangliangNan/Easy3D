@@ -56,11 +56,12 @@ set(poisson_SOURCES
 
 
 add_library(3rd_poisson STATIC ${poisson_SOURCES} ${poisson_HEADERS})
-
 set_target_properties(3rd_poisson PROPERTIES FOLDER "3rd_party")
-
 target_include_directories(3rd_poisson PRIVATE ${EASY3D_poisson_INCLUDE_DIR})
-
+set_target_properties(3rd_poisson PROPERTIES POSITION_INDEPENDENT_CODE ON)
+if (MSVC)
+	target_compile_definitions(3rd_poisson PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
+endif()
 
 # may use OpenMP
 include( ../../cmake/UseOpenMP.cmake )

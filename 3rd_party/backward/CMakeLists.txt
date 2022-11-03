@@ -90,6 +90,10 @@ target_include_directories(3rd_backward PRIVATE ${BACKWARD_INCLUDE_DIRS})
 find_package(Threads REQUIRED)
 target_link_libraries(3rd_backward PRIVATE Threads::Threads)
 set_target_properties(3rd_backward PROPERTIES FOLDER "3rd_party")
+set_target_properties(3rd_backward PROPERTIES POSITION_INDEPENDENT_CODE ON)
+if (MSVC)
+	target_compile_definitions(3rd_backward PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
+endif()
 
 
 install(TARGETS 3rd_backward

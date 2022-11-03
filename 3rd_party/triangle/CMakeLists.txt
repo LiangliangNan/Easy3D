@@ -10,7 +10,10 @@ set_target_properties(3rd_triangle PROPERTIES FOLDER "3rd_party")
 #We use this here to set -DTETLIBRARY for when compiling the
 #library
 set_target_properties(3rd_triangle PROPERTIES "COMPILE_DEFINITIONS" TRILIBRARY)
-
+set_target_properties(3rd_triangle PROPERTIES POSITION_INDEPENDENT_CODE ON)
+if (MSVC)
+	target_compile_definitions(3rd_triangle PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
+endif()
 
 install(TARGETS 3rd_triangle
         # IMPORTANT: Add the library to the "export-set"

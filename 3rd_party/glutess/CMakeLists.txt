@@ -31,8 +31,11 @@ add_library(3rd_glutess STATIC
         )
 
 set_target_properties(3rd_glutess PROPERTIES FOLDER "3rd_party")
-
 target_include_directories(3rd_glutess PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+set_target_properties(3rd_glutess PROPERTIES POSITION_INDEPENDENT_CODE ON)
+if (MSVC)
+	target_compile_definitions(3rd_glutess PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
+endif()
 
 
 install(TARGETS 3rd_glutess

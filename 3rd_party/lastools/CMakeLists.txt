@@ -123,11 +123,13 @@ set(lastools_SOURCES
 
 
 add_library(3rd_lastools STATIC ${lastools_SOURCES} ${lastools_HEADERS})
-
 set_target_properties(3rd_lastools PROPERTIES FOLDER "3rd_party")
-
 set(LASTOOLS_INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR}/LASzip/src ${CMAKE_CURRENT_LIST_DIR}/LASlib/inc)
 target_include_directories(3rd_lastools PRIVATE ${LASTOOLS_INCLUDE_DIR})
+set_target_properties(3rd_lastools PROPERTIES POSITION_INDEPENDENT_CODE ON)
+if (MSVC)
+	target_compile_definitions(3rd_lastools PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
+endif()
 
 
 install(TARGETS 3rd_lastools

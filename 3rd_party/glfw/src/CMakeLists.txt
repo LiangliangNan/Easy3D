@@ -139,6 +139,9 @@ set_target_properties(3rd_glfw PROPERTIES
                       C_EXTENSIONS OFF
                       DEFINE_SYMBOL _GLFW_BUILD_DLL
                       FOLDER "3rd_party")
+if (MSVC)
+	target_compile_definitions(3rd_glfw PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
+endif()
 
 target_include_directories(3rd_glfw PUBLIC
                            "$<BUILD_INTERFACE:${GLFW_SOURCE_DIR}/include>"

@@ -28,6 +28,10 @@ set(IMGUI_INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR} ${Easy3D_THIRD_PARTY}/glew/inclu
 target_include_directories(3rd_imgui PUBLIC ${IMGUI_INCLUDE_DIR})
 
 target_link_libraries(3rd_imgui PUBLIC 3rd_glew 3rd_glfw)
+set_target_properties(3rd_imgui PROPERTIES POSITION_INDEPENDENT_CODE ON)
+if (MSVC)
+	target_compile_definitions(3rd_imgui PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
+endif()
 
 
 if (MSVC)

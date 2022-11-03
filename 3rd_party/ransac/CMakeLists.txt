@@ -205,12 +205,14 @@ set(ransac_SOURCES
 
 
 add_library(3rd_ransac STATIC ${ransac_SOURCES} ${ransac_HEADERS})
-
 set_target_properties(3rd_ransac PROPERTIES FOLDER "3rd_party")
-
 set(RANSAC_INCLUDE_DIR   ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(3rd_ransac PRIVATE ${RANSAC_INCLUDE_DIR})
+set_target_properties(3rd_ransac PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
+if (MSVC)
+	target_compile_definitions(3rd_ransac PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
+endif()
 
 # Liangliang: Otherwise there will be many related errors
 if (APPLE)

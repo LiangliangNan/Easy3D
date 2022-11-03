@@ -15,6 +15,10 @@ set (OpenGL_GL_PREFERENCE GLVND)
 find_package(OpenGL REQUIRED)
 message(STATUS "OpenGL libraries: ${OPENGL_LIBRARIES}")
 target_link_libraries(3rd_glew PUBLIC ${OPENGL_LIBRARIES})
+set_target_properties(3rd_glew PROPERTIES POSITION_INDEPENDENT_CODE ON)
+if (MSVC)
+	target_compile_definitions(3rd_glew PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
+endif()
 
 
 set_target_properties(3rd_glew PROPERTIES PUBLIC_HEADER "include/GL/glew.h")

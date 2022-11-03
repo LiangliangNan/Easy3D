@@ -75,8 +75,12 @@ set(kdtree_SOURCES
 
 
 add_library(3rd_kdtree STATIC ${kdtree_SOURCES} ${kdtree_HEADERS})
-
 set_target_properties(3rd_kdtree PROPERTIES FOLDER "3rd_party")
+set_target_properties(3rd_kdtree PROPERTIES POSITION_INDEPENDENT_CODE ON)
+if (MSVC)
+	target_compile_definitions(3rd_kdtree PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
+endif()
+
 
 install(TARGETS 3rd_kdtree
         # IMPORTANT: Add the library to the "export-set"

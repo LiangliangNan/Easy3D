@@ -27,11 +27,12 @@ set(ELPP_PATCH_VERSION "7")
 set(ELPP_VERSION_STRING "${ELPP_MAJOR_VERSION}.${ELPP_MINOR_VERSION}.${ELPP_PATCH_VERSION}")
 
 
-
 require_cpp11()
 add_library(3rd_easyloggingpp STATIC src/easylogging++.cc)
 set_property(TARGET 3rd_easyloggingpp PROPERTY POSITION_INDEPENDENT_CODE ON)
-
+if (MSVC)
+	target_compile_definitions(3rd_easyloggingpp PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
+endif()
 
 # EasyLogging++: request all features
 target_compile_definitions(
