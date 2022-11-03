@@ -259,9 +259,4 @@ message(STATUS "    Build tests            :  ${Easy3D_BUILD_TESTS}")
 message(STATUS "    With CGAL (>= v5.1)    :  ${Easy3D_ENABLE_CGAL}")
 message(STATUS "    With Qt5 (>= v5.6)     :  ${Easy3D_ENABLE_QT}")
 
-################################################################################
-
-
-
-
 message(STATUS "************************************************************")
