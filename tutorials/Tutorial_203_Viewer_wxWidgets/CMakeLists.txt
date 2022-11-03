@@ -74,6 +74,11 @@ else ()
     add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES}) 
 endif ()
 
+# The resources directory
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+        "RESOURCES_DIR=\"${CMAKE_CURRENT_LIST_DIR}/resources\""
+        )
+
 target_include_directories(${PROJECT_NAME} PRIVATE ${Easy3D_INCLUDE_DIR})
-target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES} easy3d::core easy3d::renderer)
+target_link_libraries(${PROJECT_NAME} easy3d::core easy3d::renderer ${wxWidgets_LIBRARIES})
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "tutorials")

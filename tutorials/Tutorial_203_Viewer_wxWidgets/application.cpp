@@ -44,8 +44,7 @@ namespace easy3d {
         virtual bool OnInit() wxOVERRIDE {
             if (!wxApp::OnInit())
                 return false;
-            auto window = new Window(NULL, title_, wxDefaultPosition, wxSize(width_, height_));
-            window->Show(true);
+            new Window(NULL, title_, wxDefaultPosition, wxSize(width_, height_));
             return true;
         }
     private:

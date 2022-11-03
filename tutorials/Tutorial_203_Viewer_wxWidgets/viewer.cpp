@@ -141,9 +141,8 @@ namespace easy3d {
 
 	void Viewer::init() {
 		// Load OpenGL and its extensions
-		if (!OpenglUtil::init()) {
+		if (OpenglUtil::init()) {
 			glGetError(); // pull and ignore unhandled errors like GL_INVALID_ENUM
-			throw std::runtime_error("failed to load OpenGL and its extensions!");
 		}
 
 #ifndef NDEBUG

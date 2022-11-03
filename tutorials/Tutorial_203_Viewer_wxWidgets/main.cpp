@@ -33,7 +33,7 @@ using namespace easy3d;
 
 int main(int argc, char **argv) {
     // Initialize Easy3D.
-    initialize();
+    initialize(true);
 
     Application app("Tutorial_203_Viewer_wxWidgets");
     return app.run(argc, argv);
@@ -48,15 +48,14 @@ int main(int argc, char **argv) {
 #endif
 
 #include <wx/app.h>
-#include "main_window.h"
+#include "window.h"
 
 class Easy3DApp : public wxApp {
 public:
     virtual bool OnInit() wxOVERRIDE {
         if (!wxApp::OnInit())
             return false;
-        auto window = new easy3d::MainWindow(NULL, "Tutorial_203_Viewer_wxWidgets", wxDefaultPosition, wxSize(800, 600));
-        window->Show(true);
+        new Window(NULL, "Tutorial_203_Viewer_wxWidgets", wxDefaultPosition, wxSize(800, 600));
         return true;
     }
 };
