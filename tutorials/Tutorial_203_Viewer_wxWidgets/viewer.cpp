@@ -142,6 +142,8 @@ namespace easy3d {
 	void Viewer::init() {
 		// Load OpenGL and its extensions
 		if (OpenglUtil::init()) {
+			// Liangliang: a glew bug for Linux. Solution is here:
+			// https://github.com/wxWidgets/wxWidgets/issues/22710
 			glGetError(); // pull and ignore unhandled errors like GL_INVALID_ENUM
 		}
 
