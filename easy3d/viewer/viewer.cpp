@@ -61,7 +61,6 @@
 #include <easy3d/renderer/setting.h>
 #include <easy3d/renderer/text_renderer.h>
 #include <easy3d/renderer/texture_manager.h>
-#include <easy3d/util/resources.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
 #include <easy3d/fileio/surface_mesh_io.h>
@@ -73,6 +72,7 @@
 #include <easy3d/util/logging.h>
 #include <easy3d/util/timer.h>
 #include <easy3d/util/string.h>
+#include <easy3d/util/resources.h>
 
 
 // To have the same shortcut behavior on macOS and other platforms (i.e., Windows, Linux)
@@ -1104,7 +1104,7 @@ namespace easy3d {
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
 
-        glClearDepthf(1.0f);
+        glClearDepth(1.0f);
         glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
 
         // camera is manipulated by the mouse, working in the screen coordinate system
@@ -1523,7 +1523,7 @@ namespace easy3d {
 
         // To make the axis appear over other objects: reserve a tiny bit of the
         // front depth range. NOTE: do remember to restore it later.
-        glDepthRangef(0, 0.01f);
+        glDepthRange(0, 0.01f);
 
         const mat4 &proj = transform::ortho(-1, 1, -1, 1, -1, 1);
         const mat4 &view = camera_->orientation().inverse().matrix();
@@ -1562,7 +1562,7 @@ namespace easy3d {
         // restore
         glScissor(scissor[0], scissor[1], scissor[2], scissor[3]);
         glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
-        glDepthRangef(0.0f, 1.0f);
+        glDepthRange(0.0f, 1.0f);
     }
 
 

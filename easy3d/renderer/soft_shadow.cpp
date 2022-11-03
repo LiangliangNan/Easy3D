@@ -89,7 +89,7 @@ namespace easy3d {
         glGetFloatv(GL_COLOR_CLEAR_VALUE, color);
 
         glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
-        glClearDepthf(1.0f);
+        glClearDepth(1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         program->bind();

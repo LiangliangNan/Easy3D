@@ -189,7 +189,7 @@ void PaintCanvas::initializeGL() {
 
     func_->glEnable(GL_DEPTH_TEST);
 
-    func_->glClearDepthf(1.0f);
+    func_->glClearDepth(1.0f);
     func_->glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
 
     int major_requested = QSurfaceFormat::defaultFormat().majorVersion();

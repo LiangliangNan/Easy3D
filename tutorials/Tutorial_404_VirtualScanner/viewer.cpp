@@ -62,7 +62,7 @@ bool VirtualScanner::key_press_event(int key, int modifiers) {
         FramebufferObject fbo(fw, fh, 0);
         fbo.add_depth_buffer(GL_DEPTH_COMPONENT32F);
         fbo.bind();
-        glClearDepthf(1.0f);
+        glClearDepth(1.0f);
         glClear(GL_DEPTH_BUFFER_BIT);
         draw();
         fbo.release();

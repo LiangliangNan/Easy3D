@@ -88,7 +88,7 @@ namespace easy3d {
      * 		    fbo.add_depth_buffer();
      * 		    fbo.bind();
      * 		    fbo.activate_draw_buffer(0);
-     * 		    glClearDepthf(1.0f);								// optional, done by default
+     * 		    glClearDepth(1.0f);								// optional, done by default
      * 		    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);				// optional, done by default
      * 		    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// optional, done by default
      * 		    you draw code here...
@@ -101,7 +101,7 @@ namespace easy3d {
      * 		    FramebufferObject fbo(w, h, 0);
      * 		    fbo.add_depth_texture();
      * 		    fbo.bind();
-     * 		    glClearDepthf(1.0f);				// optional, done by default
+     * 		    glClearDepth(1.0f);				// optional, done by default
      * 		    glClear(GL_DEPTH_BUFFER_BIT);	    // optional, done by default
      * 		    you draw code here...
      * 		    fbo.release();

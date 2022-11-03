@@ -143,7 +143,7 @@ namespace easy3d {
         background_color_ = setting::background_color;
 
         func_->glEnable(GL_DEPTH_TEST);
-        func_->glClearDepthf(1.0f);
+        func_->glClearDepth(1.0f);
         func_->glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
 
         int major_requested = QSurfaceFormat::defaultFormat().majorVersion();
@@ -836,7 +836,7 @@ namespace easy3d {
 
         // To make the axis appear over other objects: reserve a tiny bit of the
         // front depth range. NOTE: do remember to restore it later.
-        func_->glDepthRangef(0, 0.01f);
+        func_->glDepthRange(0, 0.01f);
 
         const mat4 &proj = transform::ortho(-1, 1, -1, 1, -1, 1);
         const mat4 &view = camera_->orientation().inverse().matrix();
@@ -875,7 +875,7 @@ namespace easy3d {
         // restore
         func_->glScissor(scissor[0], scissor[1], scissor[2], scissor[3]);
         func_->glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
-        func_->glDepthRangef(0.0f, 1.0f);
+        func_->glDepthRange(0.0f, 1.0f);
     }
 
 
