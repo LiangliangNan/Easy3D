@@ -1,5 +1,5 @@
 set(module fileio)
-set(dependencies easy3d_core easy3d_util 3rd_lastools 3rd_rply)
+set(dependencies easy3d::core easy3d::util 3rd_lastools 3rd_rply)
 
 set(${module}_headers
         image_io.h

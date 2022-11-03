@@ -209,10 +209,10 @@ endif ()
 
 target_link_libraries(${PROJECT_NAME} PRIVATE Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE easy3d_renderer easy3d_algo easy3d_gui)
+target_link_libraries(${PROJECT_NAME} PRIVATE easy3d::renderer easy3d::algo easy3d::gui)
 if (Easy3D_HAS_CGAL)
-    target_link_libraries(${PROJECT_NAME} PRIVATE easy3d_algo_ext)
+    target_link_libraries(${PROJECT_NAME} PRIVATE easy3d::algo_ext)
 endif ()
 if (Easy3D_HAS_FFMPEG)
-    target_link_libraries(${PROJECT_NAME} PRIVATE easy3d_video)
+    target_link_libraries(${PROJECT_NAME} PRIVATE easy3d::video)
 endif ()

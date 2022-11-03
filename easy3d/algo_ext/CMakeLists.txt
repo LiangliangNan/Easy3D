@@ -1,5 +1,5 @@
 set(module algo_ext)
-set(dependencies easy3d_core)
+set(dependencies easy3d::core)
 
 set(${module}_headers
         overlapping_faces.h

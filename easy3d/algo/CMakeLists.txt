@@ -1,5 +1,5 @@
 set(module algo)
-set(dependencies easy3d_core easy3d_core easy3d_util easy3d_kdtree 3rd_poisson 3rd_ransac 3rd_triangle 3rd_tetgen 3rd_glutess)
+set(dependencies easy3d::core easy3d::util easy3d::kdtree 3rd_poisson 3rd_ransac 3rd_triangle 3rd_tetgen 3rd_glutess)
 
 set(${module}_headers
         delaunay.h

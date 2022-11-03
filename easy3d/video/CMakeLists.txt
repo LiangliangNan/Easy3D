@@ -1,5 +1,5 @@
 set(module video)
-set(dependencies easy3d_util ${FFMPEG_LIBRARIES})
+set(dependencies easy3d::util ${FFMPEG_LIBRARIES})
 
 set(${module}_headers
         video_encoder.h

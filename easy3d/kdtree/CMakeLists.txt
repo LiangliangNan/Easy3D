@@ -1,5 +1,5 @@
 set(module kdtree)
-set(dependencies easy3d_core 3rd_kdtree)
+set(dependencies easy3d::core 3rd_kdtree)
 
 set(${module}_headers
         kdtree_search.h

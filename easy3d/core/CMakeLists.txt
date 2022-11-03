@@ -1,5 +1,5 @@
 set(module core)
-set(dependencies easy3d_util)
+set(dependencies easy3d::util)
 
 set(${module}_headers
         box.h

@@ -1,5 +1,5 @@
 get_filename_component(sample ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-set(dependencies easy3d_viewer)
+set(dependencies easy3d::viewer)
 
 set(${sample}_files
         main.cpp

@@ -1,5 +1,5 @@
 set(module gui)
-set(dependencies easy3d_core easy3d_util easy3d_renderer)
+set(dependencies easy3d::core easy3d::util easy3d::renderer)
 
 set(${module}_headers
         picker.h
