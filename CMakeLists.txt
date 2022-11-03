@@ -39,7 +39,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 ################################################################################
 
 # Build shared libraries
-option(Easy3D_BUILD_SHARED_LIBS "Build shared Libaries"         OFF)
+option(Easy3D_BUILD_SHARED_LIBS "Build shared Libaries"         ON)
 # Build tutorials
 option(Easy3D_BUILD_TUTORIALS "Build Easy3D Tutorials"          ON)
 # Build documentation
