@@ -4,28 +4,18 @@ cmake_minimum_required(VERSION 3.12)
 
 project(Easy3D)
 
+################################################################################
+
+# specify the C++ standard
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+################################################################################
+
 set(Easy3D_MAJOR_VERSION 2)
 set(Easy3D_MINOR_VERSION 5)
 set(Easy3D_PATCH_VERSION 0)
 set(Easy3D_VERSION ${Easy3D_MAJOR_VERSION}.${Easy3D_MINOR_VERSION}.${Easy3D_PATCH_VERSION})
-
-message(STATUS "************************************************************")
-message(STATUS "    Package : Easy3D")
-message(STATUS "    Version : ${Easy3D_VERSION}")
-message(STATUS "    Type    : ${CMAKE_BUILD_TYPE}")
-if (CMAKE_SIZEOF_VOID_P EQUAL 8)
-    add_definitions(-DENV_64_BIT)
-    message(STATUS "    System  : 64-bit ${CMAKE_SYSTEM_NAME}")
-elseif (CMAKE_SIZEOF_VOID_P EQUAL 4)
-    add_definitions(-DENV_32_BIT)
-    message(STATUS "    System  : 32-bit ${CMAKE_SYSTEM_NAME}")
-	message(FATAL_ERROR "32-bit not supported! You should specify CMake option '-DCMAKE_GENERATOR_PLATFORM=x64'")
-endif ()
-if (APPLE)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.12" CACHE STRING "Minimum OS X deployment version" FORCE)
-    message(STATUS "    Min OSX deployment version : ${CMAKE_OSX_DEPLOYMENT_TARGET}")
-endif ()
-message(STATUS "************************************************************")
 
 ################################################################################
 
@@ -36,14 +26,6 @@ if (${CMAKE_CURRENT_BINARY_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
         set(SAME_BUILD_AND_SOURCE_FOLDER_WARNING_ALREADY_ISSUED TRUE)
     endif ()
 endif ()
-
-################################################################################
-
-# specify the C++ standard
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
-
-################################################################################
 
 # Detect whether this is a top-level project
 if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
@@ -56,6 +38,8 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 ################################################################################
 
+# Build shared libraries
+option(Easy3D_BUILD_SHARED_LIBS     "Build shared Libaries"                                 OFF)
 # Build tutorials
 option(Easy3D_BUILD_TUTORIALS       "Build Easy3D Tutorials"                                ON)
 # Build documentation
@@ -64,8 +48,34 @@ option(Easy3D_BUILD_DOCUMENTATION   "Build Easy3D Documentation"                
 option(Easy3D_BUILD_TESTS           "Build Easy3D Tests"                                    OFF)
 # Build advanced features that require CGAL (>= v5.1)
 option(Easy3D_ENABLE_CGAL           "Build advanced features that require CGAL (>= v5.1)"   OFF)
-# Build advanced examples/applications that require Qt (>= v5.6)
-option(Easy3D_ENABLE_QT             "Build advanced examples/applications that require Qt (>= v5.6)"    OFF)
+# Build advanced examples/applications that require Qt5 (>= v5.6)
+option(Easy3D_ENABLE_QT             "Build advanced examples/applications that require Qt5 (>= v5.6)"    OFF)
+
+################################################################################
+
+if(Easy3D_BUILD_SHARED_LIBS)
+    set(Easy3D_LIB_TYPE SHARED)
+else()
+    set(Easy3D_LIB_TYPE STATIC)
+endif()
+
+################################################################################
+
+### Configuration
+set(Easy3D_ROOT ${CMAKE_CURRENT_LIST_DIR})
+set(Easy3D_THIRD_PARTY ${Easy3D_ROOT}/3rd_party)
+
+set(Easy3D_INCLUDE_DIR ${Easy3D_ROOT})
+set(Easy3D_SOURCE_DIR  ${Easy3D_ROOT})
+set(Easy3D_BINARY_DIR  ${CMAKE_BINARY_DIR})
+
+### conditionally compile certain modules depending on libraries found on the system
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
+
+### Where to put the libraries
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${Easy3D_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${Easy3D_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${Easy3D_BINARY_DIR}/lib)
 
 ################################################################################
 
@@ -121,25 +131,6 @@ endif ()
 
 ################################################################################
 
-### Configuration
-set(Easy3D_ROOT ${CMAKE_CURRENT_LIST_DIR})
-set(Easy3D_THIRD_PARTY ${Easy3D_ROOT}/3rd_party)
-
-set(Easy3D_INCLUDE_DIR ${Easy3D_ROOT})
-set(Easy3D_SOURCE_DIR  ${Easy3D_ROOT})
-set(Easy3D_BINARY_DIR  ${CMAKE_BINARY_DIR})
-
-### conditionally compile certain modules depending on libraries found on the system
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
-
-################################################################################
-
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${Easy3D_BINARY_DIR}/bin)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${Easy3D_BINARY_DIR}/lib)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${Easy3D_BINARY_DIR}/lib)
-
-################################################################################
-
 # Offer the user the choice of overriding the installation directories
 
 # Add the version to the path to allow multiple versions of Easy3D installed into the same directory.
@@ -151,6 +142,10 @@ set(Easy3D_INSTALL_INCLUDE_DIR ${CMAKE_INSTALL_PREFIX}/include CACHE PATH "Insta
 set(Easy3D_INSTALL_CMAKE_DIR ${CMAKE_INSTALL_PREFIX}/lib/CMake/Easy3D CACHE PATH "Installation directory for CMake files")
 set(Easy3D_INSTALL_RESOURCES_DIR ${CMAKE_INSTALL_PREFIX}/resources CACHE PATH "Installation directory for CMake files")
 
+# Setting RPATH
+# See https://cmake.org/Wiki/CMake_RPATH_handling
+set(CMAKE_INSTALL_RPATH ${Easy3D_INSTALL_LIB_DIR})
+
 # Make relative paths absolute (needed later on)
 foreach(path LIB BIN INCLUDE CMAKE)
     set(var Easy3D_INSTALL_${path}_DIR)
@@ -160,7 +155,7 @@ foreach(path LIB BIN INCLUDE CMAKE)
 endforeach()
 
 function(add_module module headers sources dependencies)
-    add_library(easy3d_${module} STATIC ${headers} ${sources})
+    add_library(easy3d_${module} ${Easy3D_LIB_TYPE} ${headers} ${sources})
     set_target_properties(easy3d_${module} PROPERTIES FOLDER "easy3d")
     target_include_directories(easy3d_${module} PUBLIC
             "$<BUILD_INTERFACE:${Easy3D_INCLUDE_DIR}>"
@@ -239,7 +234,34 @@ endif ()
 
 ################################################################################
 
-# hide some variables that might be set in 3rd_party libraries
-mark_as_advanced(FORCE BUILD_SHARED_LIBS)
+### Summary
+message(STATUS "************************************************************")
+message(STATUS "    Package : Easy3D")
+message(STATUS "    Version : ${Easy3D_VERSION}")
+message(STATUS "    Type    : ${CMAKE_BUILD_TYPE}")
+if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+    message(STATUS "    System  : 64-bit ${CMAKE_SYSTEM_NAME}")
+elseif (CMAKE_SIZEOF_VOID_P EQUAL 4)
+    message(STATUS "    System  : 32-bit ${CMAKE_SYSTEM_NAME}")
+    message(FATAL_ERROR "32-bit not supported! You should specify CMake option '-DCMAKE_GENERATOR_PLATFORM=x64'")
+endif ()
+if (APPLE)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "10.12" CACHE STRING "Minimum OS X deployment version" FORCE)
+    message(STATUS "    Min OSX deployment version : ${CMAKE_OSX_DEPLOYMENT_TARGET}")
+endif ()
+
+message(STATUS "------------------------------------------------------------")
+
+message(STATUS "    Build shared libraries :  ${Easy3D_BUILD_SHARED_LIBS}")
+message(STATUS "    Build tutorials        :  ${Easy3D_BUILD_TUTORIALS}")
+message(STATUS "    Build documentation    :  ${Easy3D_BUILD_DOCUMENTATION}")
+message(STATUS "    Build tests            :  ${Easy3D_BUILD_TESTS}")
+message(STATUS "    With CGAL (>= v5.1)    :  ${Easy3D_ENABLE_CGAL}")
+message(STATUS "    With Qt5 (>= v5.6)     :  ${Easy3D_ENABLE_QT}")
 
 ################################################################################
+
+
+
+
+message(STATUS "************************************************************")

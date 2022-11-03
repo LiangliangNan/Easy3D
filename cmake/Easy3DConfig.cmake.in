@@ -80,17 +80,18 @@ foreach(component ${Easy3D_FIND_COMPONENTS})
     endif ()
 endforeach()
 
+string(TOLOWER "@Easy3D_LIB_TYPE@ libraries" lib_type)
 if (Easy3D_FIND_COMPONENTS) # user tries to find components
     set(components_to_link ${found_components})
     if (missing_components)
         message(WARNING "Not all requested Easy3D components have been found.\n"
-                        "Found components: ${found_components}\n"
+                        "Found components (${lib_type}): ${found_components}\n"
                         "Missing components: ${missing_components}\n"
                         "Make sure all components have been built and their names are correctly specified. "
-                        "The available Easy3D components are: ${Easy3D_AVAILABLE_COMPONENTS}\n")
+                        "The available Easy3D components (${lib_type}): ${Easy3D_AVAILABLE_COMPONENTS}\n")
     elseif (found_components)
         set(Easy3D_FOUND TRUE)
-        message(STATUS "Found Easy3D (version '@CONF_Easy3D_VERSION@'). Found components: ${found_components}")
+        message(STATUS "Found Easy3D (version '@CONF_Easy3D_VERSION@'). Found components (${lib_type}): ${found_components}")
         message(STATUS "Easy3D_INCLUDE_DIRS: ${Easy3D_CMAKE_DIR}/${Easy3D_INCLUDE_DIRS}")
         message(STATUS "Easy3D_LIBRARY_DIRS: ${Easy3D_CMAKE_DIR}/${Easy3D_LIBRARY_DIRS}")
     endif()
@@ -99,7 +100,7 @@ else ()
     foreach(component ${Easy3D_AVAILABLE_COMPONENTS})
         set(Easy3D_${component}_FOUND TRUE)
     endforeach()
-    message(STATUS "Found Easy3D (version '@CONF_Easy3D_VERSION@'). Available components: ${Easy3D_AVAILABLE_COMPONENTS}")
+    message(STATUS "Found Easy3D (version '@CONF_Easy3D_VERSION@'). Available components (${lib_type}): ${Easy3D_AVAILABLE_COMPONENTS}")
 endif ()
 
 # Resolve dependencies
