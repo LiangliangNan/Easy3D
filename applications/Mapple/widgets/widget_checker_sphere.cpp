@@ -78,7 +78,7 @@ void WidgetCheckerSphere::initializeGL()
     OpenglUtil::init();
 
     func->glEnable(GL_DEPTH_TEST);
-    func->glClearDepth(1.0f);
+    func->glClearDepthf(1.0f);
     func->glClearColor(
                 static_cast<float>(backgroundColor_.redF()),
                 static_cast<float>(backgroundColor_.greenF()),
