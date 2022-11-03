@@ -39,25 +39,25 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 ################################################################################
 
 # Build shared libraries
-option(Easy3D_BUILD_SHARED_LIBS     "Build shared Libaries"                                 OFF)
+option(Easy3D_BUILD_SHARED_LIBS "Build shared Libaries"         OFF)
 # Build tutorials
-option(Easy3D_BUILD_TUTORIALS       "Build Easy3D Tutorials"                                ON)
+option(Easy3D_BUILD_TUTORIALS "Build Easy3D Tutorials"          ON)
 # Build documentation
-option(Easy3D_BUILD_DOCUMENTATION   "Build Easy3D Documentation"                            OFF)
+option(Easy3D_BUILD_DOCUMENTATION "Build Easy3D Documentation"  OFF)
 # Build tests
-option(Easy3D_BUILD_TESTS           "Build Easy3D Tests"                                    OFF)
+option(Easy3D_BUILD_TESTS "Build Easy3D Tests"                  OFF)
 # Build advanced features that require CGAL (>= v5.1)
-option(Easy3D_ENABLE_CGAL           "Build advanced features that require CGAL (>= v5.1)"   OFF)
+option(Easy3D_ENABLE_CGAL "Build advanced features that require CGAL (>= v5.1)"             OFF)
 # Build advanced examples/applications that require Qt5 (>= v5.6)
-option(Easy3D_ENABLE_QT             "Build advanced examples/applications that require Qt5 (>= v5.6)"    OFF)
+option(Easy3D_ENABLE_QT "Build advanced examples/applications that require Qt5 (>= v5.6)"   OFF)
 
 ################################################################################
 
-if(Easy3D_BUILD_SHARED_LIBS)
+if (Easy3D_BUILD_SHARED_LIBS)
     set(Easy3D_LIB_TYPE SHARED)
-else()
+else ()
     set(Easy3D_LIB_TYPE STATIC)
-endif()
+endif ()
 
 ################################################################################
 
@@ -66,8 +66,8 @@ set(Easy3D_ROOT ${CMAKE_CURRENT_LIST_DIR})
 set(Easy3D_THIRD_PARTY ${Easy3D_ROOT}/3rd_party)
 
 set(Easy3D_INCLUDE_DIR ${Easy3D_ROOT})
-set(Easy3D_SOURCE_DIR  ${Easy3D_ROOT})
-set(Easy3D_BINARY_DIR  ${CMAKE_BINARY_DIR})
+set(Easy3D_SOURCE_DIR ${Easy3D_ROOT})
+set(Easy3D_BINARY_DIR ${CMAKE_BINARY_DIR})
 
 ### conditionally compile certain modules depending on libraries found on the system
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
@@ -121,12 +121,12 @@ if (FFMPEG_FOUND)
     add_definitions(-DHAS_FFMPEG)
 else ()
     set(Easy3D_HAS_FFMPEG FALSE)
-#    message(FATAL_ERROR "You have requested FFMPEG support but FFMPEG was not found. "
-#            "To use FFMPEG, make sure FFMPEG exists on your system (install/build FFMPEG if necessary). "
-#            "You can modify the search paths of 'include' and 'lib' in 'FindFFMPEG.cmake', and then run CMake. "
-#            "The FFMPEG support allow recording animation into a video file. If you don't need this feature, "
-#            "disable FFMPEG support by setting `Easy3D_ENABLE_FFMPEG` to `OFF`. Without FFMPEG, you will still "
-#            "be able to record animation as a sequence of images.")
+    #    message(FATAL_ERROR "You have requested FFMPEG support but FFMPEG was not found. "
+    #            "To use FFMPEG, make sure FFMPEG exists on your system (install/build FFMPEG if necessary). "
+    #            "You can modify the search paths of 'include' and 'lib' in 'FindFFMPEG.cmake', and then run CMake. "
+    #            "The FFMPEG support allow recording animation into a video file. If you don't need this feature, "
+    #            "disable FFMPEG support by setting `Easy3D_ENABLE_FFMPEG` to `OFF`. Without FFMPEG, you will still "
+    #            "be able to record animation as a sequence of images.")
 endif ()
 
 ################################################################################
@@ -134,7 +134,11 @@ endif ()
 # Offer the user the choice of overriding the installation directories
 
 # Add the version to the path to allow multiple versions of Easy3D installed into the same directory.
-set(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX}/${Easy3D_VERSION})
+if (WIN32 OR MSVC)
+    set(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/${Easy3D_VERSION}")
+else ()
+    set(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/Cellar/Easy3D/${Easy3D_VERSION}")
+endif ()
 
 set(Easy3D_INSTALL_LIB_DIR ${CMAKE_INSTALL_PREFIX}/lib CACHE PATH "Installation directory for libraries")
 set(Easy3D_INSTALL_BIN_DIR ${CMAKE_INSTALL_PREFIX}/bin CACHE PATH "Installation directory for executables")
@@ -147,12 +151,12 @@ set(Easy3D_INSTALL_RESOURCES_DIR ${CMAKE_INSTALL_PREFIX}/resources CACHE PATH "I
 set(CMAKE_INSTALL_RPATH ${Easy3D_INSTALL_LIB_DIR})
 
 # Make relative paths absolute (needed later on)
-foreach(path LIB BIN INCLUDE CMAKE)
+foreach (path LIB BIN INCLUDE CMAKE)
     set(var Easy3D_INSTALL_${path}_DIR)
-    if(NOT IS_ABSOLUTE "${${var}}")
+    if (NOT IS_ABSOLUTE "${${var}}")
         set(${var} "${Easy3D_INSTALL_DIR}/${${var}}")
-    endif()
-endforeach()
+    endif ()
+endforeach ()
 
 function(add_module module headers sources dependencies)
     add_library(easy3d_${module} ${Easy3D_LIB_TYPE} ${headers} ${sources})
@@ -161,10 +165,10 @@ function(add_module module headers sources dependencies)
             "$<INSTALL_INTERFACE:${Easy3D_INSTALL_INCLUDE_DIR}>"
             )
     target_link_libraries(easy3d_${module} PUBLIC ${dependencies})
-	set_target_properties(easy3d_${module} PROPERTIES FOLDER "easy3d")
-	if (MSVC)
-		target_compile_definitions(easy3d_${module} PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
-	endif()
+    set_target_properties(easy3d_${module} PROPERTIES FOLDER "easy3d")
+    if (MSVC)
+        target_compile_definitions(easy3d_${module} PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
+    endif ()
 
     # Alias target (recommended by policy CMP0028) and it looks nicer
     message(STATUS "Adding target: easy3d::${module} (easy3d_${module})")
