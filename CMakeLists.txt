@@ -234,7 +234,7 @@ if (Easy3D_BUILD_DOCUMENTATION)
         message(STATUS "Found Doxygen: " ${DOXYGEN_EXECUTABLE})
         # configures Doxygen
         configure_file(docs/Doxyfile.in Doxyfile @ONLY)
-        add_custom_target(doc ALL ${DOXYGEN_EXECUTABLE} Doxyfile
+        add_custom_target(Documentation ALL ${DOXYGEN_EXECUTABLE} Doxyfile
                 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
                 COMMENT "Generating Doxygen documentation")
     else ()

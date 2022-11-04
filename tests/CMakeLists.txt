@@ -1,9 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
-
-get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-project(${PROJECT_NAME})
-
-add_executable(${PROJECT_NAME}
+add_executable(Tests
         test_timer.cpp
         test_signal.cpp
         test_console_style.cpp
@@ -81,12 +76,12 @@ add_executable(${PROJECT_NAME}
         visualization_depth_maps/viewer.cpp
         )
 
-set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "tests")
+set_target_properties(Tests PROPERTIES FOLDER "tests")
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${Easy3D_INCLUDE_DIR})
+target_include_directories(Tests PRIVATE ${Easy3D_INCLUDE_DIR})
 
 
-target_link_libraries(${PROJECT_NAME} 3rd_imgui easy3d::util easy3d::core easy3d::fileio easy3d::gui easy3d::kdtree easy3d::renderer easy3d::viewer easy3d::algo)
+target_link_libraries(Tests 3rd_imgui easy3d::util easy3d::core easy3d::fileio easy3d::gui easy3d::kdtree easy3d::renderer easy3d::viewer easy3d::algo)
 if (Easy3D_HAS_CGAL)
-    target_link_libraries(${PROJECT_NAME} easy3d::algo_ext)
+    target_link_libraries(Tests easy3d::algo_ext)
 endif ()
