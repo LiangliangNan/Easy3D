@@ -42,16 +42,15 @@ typedef void* id;
 #endif
 
 // NOTE: Many Cocoa enum values have been renamed and we need to build across
-//       SDK versions where one is unavailable or the other deprecated
-//       We use the newer names in code and these macros to handle compatibility
+//       SDK versions where one is unavailable or deprecated.
+//       We use the newer names in code and replace them with the older names if
+//       the base SDK does not provide the newer names.
+
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 101400
  #define NSOpenGLContextParameterSwapInterval NSOpenGLCPSwapInterval
  #define NSOpenGLContextParameterSurfaceOpacity NSOpenGLCPSurfaceOpacity
 #endif
 
-// NOTE: Many Cocoa enum values have been renamed and we need to build across
-//       SDK versions where one is unavailable or the other deprecated
-//       We use the newer names in code and these macros to handle compatibility
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 101200
  #define NSBitmapFormatAlphaNonpremultiplied NSAlphaNonpremultipliedBitmapFormat
  #define NSEventMaskAny NSAnyEventMask
@@ -68,6 +67,15 @@ typedef void* id;
  #define NSWindowStyleMaskMiniaturizable NSMiniaturizableWindowMask
  #define NSWindowStyleMaskResizable NSResizableWindowMask
  #define NSWindowStyleMaskTitled NSTitledWindowMask
+#endif
+
+// NOTE: Many Cocoa dynamically linked constants have been renamed and we need
+//       to build across SDK versions where one is unavailable or deprecated.
+//       We use the newer names in code and replace them with the older names if
+//       the deployment target is older than the newer names.
+
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 101300
+ #define NSPasteboardTypeURL NSURLPboardType
 #endif
 
 typedef VkFlags VkMacOSSurfaceCreateFlagsMVK;
@@ -206,7 +214,7 @@ GLFWbool _glfwConnectCocoa(int platformID, _GLFWplatform* platform);
 int _glfwInitCocoa(void);
 void _glfwTerminateCocoa(void);
 
-int _glfwCreateWindowCocoa(_GLFWwindow* window, const _GLFWwndconfig* wndconfig, const _GLFWctxconfig* ctxconfig, const _GLFWfbconfig* fbconfig);
+GLFWbool _glfwCreateWindowCocoa(_GLFWwindow* window, const _GLFWwndconfig* wndconfig, const _GLFWctxconfig* ctxconfig, const _GLFWfbconfig* fbconfig);
 void _glfwDestroyWindowCocoa(_GLFWwindow* window);
 void _glfwSetWindowTitleCocoa(_GLFWwindow* window, const char* title);
 void _glfwSetWindowIconCocoa(_GLFWwindow* window, int count, const GLFWimage* images);
@@ -227,12 +235,12 @@ void _glfwHideWindowCocoa(_GLFWwindow* window);
 void _glfwRequestWindowAttentionCocoa(_GLFWwindow* window);
 void _glfwFocusWindowCocoa(_GLFWwindow* window);
 void _glfwSetWindowMonitorCocoa(_GLFWwindow* window, _GLFWmonitor* monitor, int xpos, int ypos, int width, int height, int refreshRate);
-int _glfwWindowFocusedCocoa(_GLFWwindow* window);
-int _glfwWindowIconifiedCocoa(_GLFWwindow* window);
-int _glfwWindowVisibleCocoa(_GLFWwindow* window);
-int _glfwWindowMaximizedCocoa(_GLFWwindow* window);
-int _glfwWindowHoveredCocoa(_GLFWwindow* window);
-int _glfwFramebufferTransparentCocoa(_GLFWwindow* window);
+GLFWbool _glfwWindowFocusedCocoa(_GLFWwindow* window);
+GLFWbool _glfwWindowIconifiedCocoa(_GLFWwindow* window);
+GLFWbool _glfwWindowVisibleCocoa(_GLFWwindow* window);
+GLFWbool _glfwWindowMaximizedCocoa(_GLFWwindow* window);
+GLFWbool _glfwWindowHoveredCocoa(_GLFWwindow* window);
+GLFWbool _glfwFramebufferTransparentCocoa(_GLFWwindow* window);
 void _glfwSetWindowResizableCocoa(_GLFWwindow* window, GLFWbool enabled);
 void _glfwSetWindowDecoratedCocoa(_GLFWwindow* window, GLFWbool enabled);
 void _glfwSetWindowFloatingCocoa(_GLFWwindow* window, GLFWbool enabled);
@@ -253,8 +261,8 @@ void _glfwSetCursorPosCocoa(_GLFWwindow* window, double xpos, double ypos);
 void _glfwSetCursorModeCocoa(_GLFWwindow* window, int mode);
 const char* _glfwGetScancodeNameCocoa(int scancode);
 int _glfwGetKeyScancodeCocoa(int key);
-int _glfwCreateCursorCocoa(_GLFWcursor* cursor, const GLFWimage* image, int xhot, int yhot);
-int _glfwCreateStandardCursorCocoa(_GLFWcursor* cursor, int shape);
+GLFWbool _glfwCreateCursorCocoa(_GLFWcursor* cursor, const GLFWimage* image, int xhot, int yhot);
+GLFWbool _glfwCreateStandardCursorCocoa(_GLFWcursor* cursor, int shape);
 void _glfwDestroyCursorCocoa(_GLFWcursor* cursor);
 void _glfwSetCursorCocoa(_GLFWwindow* window, _GLFWcursor* cursor);
 void _glfwSetClipboardStringCocoa(const char* string);
@@ -265,7 +273,7 @@ EGLNativeDisplayType _glfwGetEGLNativeDisplayCocoa(void);
 EGLNativeWindowType _glfwGetEGLNativeWindowCocoa(_GLFWwindow* window);
 
 void _glfwGetRequiredInstanceExtensionsCocoa(char** extensions);
-int _glfwGetPhysicalDevicePresentationSupportCocoa(VkInstance instance, VkPhysicalDevice device, uint32_t queuefamily);
+GLFWbool _glfwGetPhysicalDevicePresentationSupportCocoa(VkInstance instance, VkPhysicalDevice device, uint32_t queuefamily);
 VkResult _glfwCreateWindowSurfaceCocoa(VkInstance instance, _GLFWwindow* window, const VkAllocationCallbacks* allocator, VkSurfaceKHR* surface);
 
 void _glfwFreeMonitorCocoa(_GLFWmonitor* monitor);

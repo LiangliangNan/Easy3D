@@ -169,8 +169,8 @@ namespace easy3d {
 
 
     void ViewerImGui::pre_draw() {
-        ImGui_ImplOpenGL3_NewFrame();  
-        ImGui_ImplGlfw_NewFrame();    
+        ImGui_ImplGlfw_NewFrame();
+        ImGui_ImplOpenGL3_NewFrame();
         ImGui::NewFrame();   
 
         Viewer::pre_draw(); 

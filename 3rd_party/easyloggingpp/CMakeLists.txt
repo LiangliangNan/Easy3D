@@ -28,7 +28,7 @@ set(ELPP_VERSION_STRING "${ELPP_MAJOR_VERSION}.${ELPP_MINOR_VERSION}.${ELPP_PATC
 
 
 require_cpp11()
-add_library(3rd_easyloggingpp STATIC src/easylogging++.cc)
+add_library(3rd_easyloggingpp STATIC easylogging++.h easylogging++.cc)
 set_property(TARGET 3rd_easyloggingpp PROPERTY POSITION_INDEPENDENT_CODE ON)
 if (MSVC)
 	target_compile_definitions(3rd_easyloggingpp PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
@@ -64,11 +64,11 @@ endif()
 set_target_properties(3rd_easyloggingpp PROPERTIES FOLDER "3rd_party")
 
 
-set_target_properties(3rd_easyloggingpp PROPERTIES PUBLIC_HEADER "src/easylogging++.h")
+set_target_properties(3rd_easyloggingpp PROPERTIES PUBLIC_HEADER "easylogging++.h")
 install(TARGETS 3rd_easyloggingpp
         # IMPORTANT: Add the library to the "export-set"
         EXPORT Easy3DTargets
         #RUNTIME DESTINATION "${Easy3D_INSTALL_BIN_DIR}" COMPONENT bin
         LIBRARY DESTINATION "${Easy3D_INSTALL_LIB_DIR}" COMPONENT lib
-        PUBLIC_HEADER DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/3rd_party/easyloggingpp/src/${module}"
+        PUBLIC_HEADER DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/3rd_party/easyloggingpp/${module}"
         COMPONENT dev)
