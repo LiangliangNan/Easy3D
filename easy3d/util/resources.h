@@ -28,13 +28,14 @@
 #define EASY3D_UTIL_RESOURCES_H
 
 #include <easy3d/core/types.h>
-#include <easy3d/util/util_export.h>
+#include <easy3d/util/export.h>
 
 
 namespace easy3d {
 
     /**
-     * Initializes Easy3D (both resources directory and logging).
+     * Initializes Easy3D (both resources directory and logging). It internally calls (and is thus identical to calling)
+     * both \c logging::initialize(...) and \c resource::initialize(...).
      * @param use_log_file \c True to create a log file along the executable program.
      * @param resources_dir The resources directory containing color maps, shaders, textures, fonts, etc.
      *      \c Easy3D_RESOURCES_DIR (default value) is the resources directory coming with the Easy3D distribution.

@@ -33,6 +33,9 @@ set(Easy3D_INSTALL_INCLUDE_DIR ${CMAKE_INSTALL_PREFIX}/include CACHE PATH "Insta
 set(Easy3D_INSTALL_CMAKE_DIR ${CMAKE_INSTALL_PREFIX}/lib/CMake/Easy3D CACHE PATH "Installation directory for CMake files")
 set(Easy3D_INSTALL_RESOURCES_DIR ${CMAKE_INSTALL_PREFIX}/resources CACHE PATH "Installation directory for CMake files")
 
+# The include directory of the exported header files
+set(Easy3D_EXPORT_INCLUDE_DIR "${Easy3D_BINARY_DIR}/include")
+
 # Setting RPATH
 # See https://cmake.org/Wiki/CMake_RPATH_handling
 set(CMAKE_INSTALL_RPATH ${Easy3D_INSTALL_LIB_DIR} CACHE PATH "Installation runtime directory" FORCE)
@@ -175,10 +178,10 @@ function(add_module module headers sources private_dependencies public_dependenc
     #Ref: Create dlls on Windows without declspec() using new CMake export all feature
     #     https://www.kitware.com/create-dlls-on-windows-without-declspec-using-new-cmake-export-all-feature/
     include(GenerateExportHeader)
-    generate_export_header(easy3d_${module} EXPORT_FILE_NAME "${Easy3D_BINARY_DIR}/exports/easy3d/${module}/${module}_export.h")
+    generate_export_header(easy3d_${module} EXPORT_FILE_NAME "${Easy3D_EXPORT_INCLUDE_DIR}/easy3d/${module}/export.h")
     target_include_directories(easy3d_${module} PUBLIC
             "$<BUILD_INTERFACE:${Easy3D_INCLUDE_DIR}>"
-            "$<BUILD_INTERFACE:${Easy3D_BINARY_DIR}/exports>"
+            "$<BUILD_INTERFACE:${Easy3D_EXPORT_INCLUDE_DIR}>"
             "$<INSTALL_INTERFACE:${Easy3D_INSTALL_INCLUDE_DIR}>"
             )
     target_link_libraries(easy3d_${module} PRIVATE ${private_dependencies})
@@ -260,7 +263,7 @@ install(FILES
         )
 
 install(DIRECTORY
-        "${Easy3D_BINARY_DIR}/exports/easy3d"
+        "${Easy3D_EXPORT_INCLUDE_DIR}/easy3d"
         DESTINATION
         "${Easy3D_INSTALL_INCLUDE_DIR}")
 

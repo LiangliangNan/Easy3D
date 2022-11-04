@@ -28,7 +28,7 @@
 #define EASY3D_RENDERER_SETTING_H
 
 #include <easy3d/core/types.h>
-#include <easy3d/renderer/renderer_export.h>
+#include <easy3d/renderer/export.h>
 
 
 namespace easy3d {
