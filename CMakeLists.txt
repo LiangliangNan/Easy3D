@@ -19,7 +19,7 @@ set(Easy3D_VERSION ${Easy3D_MAJOR_VERSION}.${Easy3D_MINOR_VERSION}.${Easy3D_PATC
 # Use this snippet *after* PROJECT(xxx):
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     if (WIN32 OR MSVC)  # windows
-        set(CMAKE_INSTALL_PREFIX "C:/Program Files/Easy3/${Easy3D_VERSION}" CACHE PATH "Installation directory" FORCE)
+        set(CMAKE_INSTALL_PREFIX "C:/Program Files/Easy3D/${Easy3D_VERSION}" CACHE PATH "Installation directory" FORCE)
     elseif (APPLE)      # macOS
         set(CMAKE_INSTALL_PREFIX "/usr/local/Cellar/easy3d/${Easy3D_VERSION}" CACHE PATH "Installation directory" FORCE)
     else ()             # Linux: different from tradition, let's keep everything together
@@ -99,6 +99,11 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 if (Easy3D_BUILD_SHARED_LIBS)
     set(Easy3D_LIB_TYPE SHARED)
+    #Ref: Create dlls on Windows without declspec() using new CMake export all feature
+    #     https://www.kitware.com/create-dlls-on-windows-without-declspec-using-new-cmake-export-all-feature/
+    if (WIN32 OR MSVC)
+        set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+    endif ()
 else ()
     set(Easy3D_LIB_TYPE STATIC)
 endif ()
@@ -166,8 +171,13 @@ endforeach ()
 
 function(add_module module headers sources private_dependencies public_dependencies)
     add_library(easy3d_${module} ${Easy3D_LIB_TYPE} ${headers} ${sources})
+    #Ref: Create dlls on Windows without declspec() using new CMake export all feature
+    #     https://www.kitware.com/create-dlls-on-windows-without-declspec-using-new-cmake-export-all-feature/
+    include(GenerateExportHeader)
+    generate_export_header(easy3d_${module})
     target_include_directories(easy3d_${module} PUBLIC
             "$<BUILD_INTERFACE:${Easy3D_INCLUDE_DIR}>"
+            "$<BUILD_INTERFACE:${Easy3D_BINARY_DIR}>"
             "$<INSTALL_INTERFACE:${Easy3D_INSTALL_INCLUDE_DIR}>"
             )
     target_link_libraries(easy3d_${module} PRIVATE ${private_dependencies})

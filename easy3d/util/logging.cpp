@@ -29,8 +29,6 @@
 #include <easy3d/util/stack_tracer.h>
 
 
-INITIALIZE_EASYLOGGINGPP
-
 
 namespace easy3d
 {

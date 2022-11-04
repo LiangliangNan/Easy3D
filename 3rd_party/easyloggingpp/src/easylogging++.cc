@@ -16,6 +16,9 @@
 
 #include "easylogging++.h"
 
+// Liangliang: generate the instance of el::base::Storage (so other libraries don't have to do so and export it)
+#define AUTO_INITIALIZE_EASYLOGGINGPP
+
 #if defined(AUTO_INITIALIZE_EASYLOGGINGPP)
 INITIALIZE_EASYLOGGINGPP
 #endif
@@ -2656,6 +2659,7 @@ void Writer::triggerDispatch(void) {
 	  }
 	catch(std::exception & ex){
 		// Extremely low memory situation; don't let exception be unhandled.
+		ELPP_UNUSED(ex);
 	}
 }
 

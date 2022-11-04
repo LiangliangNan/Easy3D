@@ -1,5 +1,5 @@
 set(module algo)
-set(private_dependencies 3rd_poisson 3rd_ransac 3rd_triangle 3rd_tetgen 3rd_glutess)
+set(private_dependencies 3rd_poisson 3rd_ransac 3rd_triangle 3rd_tetgen 3rd_kdtree 3rd_glutess)
 set(public_dependencies easy3d::core easy3d::util easy3d::kdtree)
 
 set(${module}_headers

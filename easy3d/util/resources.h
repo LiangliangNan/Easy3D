@@ -28,6 +28,7 @@
 #define EASY3D_UTIL_RESOURCES_H
 
 #include <easy3d/core/types.h>
+#include <easy3d/util/easy3d_util_export.h>
 
 
 namespace easy3d {
@@ -48,13 +49,13 @@ namespace easy3d {
 
         /// The vertices of a bunny model.
         /// \see bunny_indices
-        extern const std::vector<vec3>    bunny_vertices;
+        extern const EASY3D_UTIL_EXPORT std::vector<vec3>    bunny_vertices;
         /// The triangle faces of a bunny model. Each consecutive 3 values denote the vertex indices of a triangle.
         /// \see bunny_vertices
-        extern const std::vector<unsigned int>     bunny_indices;
+        extern const EASY3D_UTIL_EXPORT std::vector<unsigned int>     bunny_indices;
 
         /// A 1D array storing a gradually changing color table. Each consecutive 3 elements represent an RGB color.
-        extern const std::vector<unsigned char> cold_warm_colors;
+        extern const EASY3D_UTIL_EXPORT std::vector<unsigned char> cold_warm_colors;
 
         /// Sets the resource directory (containing color maps, shaders, textures, fonts, etc.)
         extern void initialize(const std::string& resources_dir = Easy3D_RESOURCES_DIR);
