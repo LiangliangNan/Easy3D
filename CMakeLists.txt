@@ -137,7 +137,7 @@ endif ()
 if (WIN32 OR MSVC)
     set(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/${Easy3D_VERSION}")
 else ()
-    set(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/Cellar/Easy3D/${Easy3D_VERSION}")
+    set(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/Cellar/easy3d/${Easy3D_VERSION}")
 endif ()
 
 set(Easy3D_INSTALL_LIB_DIR ${CMAKE_INSTALL_PREFIX}/lib CACHE PATH "Installation directory for libraries")

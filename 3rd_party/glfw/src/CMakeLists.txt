@@ -143,9 +143,7 @@ if (MSVC)
 	target_compile_definitions(3rd_glfw PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
 endif()
 
-target_include_directories(3rd_glfw PUBLIC
-                           "$<BUILD_INTERFACE:${GLFW_SOURCE_DIR}/include>"
-                           "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
+target_include_directories(3rd_glfw PRIVATE ${GLFW_SOURCE_DIR}/include)
 target_include_directories(3rd_glfw PRIVATE
                            "${GLFW_SOURCE_DIR}/src"
                            "${GLFW_BINARY_DIR}/src")
@@ -302,7 +300,7 @@ endif()
 
 # Workaround for VS 2008 not shipping with stdint.h
 if (MSVC90)
-    target_include_directories(3rd_glfw PUBLIC "${GLFW_SOURCE_DIR}/deps/vs2008")
+    target_include_directories(3rd_glfw PRIVATE "${GLFW_SOURCE_DIR}/deps/vs2008")
 endif()
 
 # Check for the DirectX 9 SDK as it is not included with VS 2008
