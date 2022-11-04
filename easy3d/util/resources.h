@@ -28,7 +28,7 @@
 #define EASY3D_UTIL_RESOURCES_H
 
 #include <easy3d/core/types.h>
-#include <easy3d/util/easy3d_util_export.h>
+#include <easy3d/util/util_export.h>
 
 
 namespace easy3d {

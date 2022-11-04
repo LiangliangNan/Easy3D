@@ -100,6 +100,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 if (Easy3D_BUILD_SHARED_LIBS)
     set(Easy3D_LIB_TYPE SHARED)
     #Ref: Create dlls on Windows without declspec() using new CMake export all feature
+    #     https://cmake.org/cmake/help/v3.4/prop_tgt/WINDOWS_EXPORT_ALL_SYMBOLS.html#prop_tgt:WINDOWS_EXPORT_ALL_SYMBOLS
     #     https://www.kitware.com/create-dlls-on-windows-without-declspec-using-new-cmake-export-all-feature/
     if (WIN32 OR MSVC)
         set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
@@ -174,10 +175,10 @@ function(add_module module headers sources private_dependencies public_dependenc
     #Ref: Create dlls on Windows without declspec() using new CMake export all feature
     #     https://www.kitware.com/create-dlls-on-windows-without-declspec-using-new-cmake-export-all-feature/
     include(GenerateExportHeader)
-    generate_export_header(easy3d_${module})
+    generate_export_header(easy3d_${module} EXPORT_FILE_NAME "${Easy3D_BINARY_DIR}/exports/easy3d/${module}/${module}_export.h")
     target_include_directories(easy3d_${module} PUBLIC
             "$<BUILD_INTERFACE:${Easy3D_INCLUDE_DIR}>"
-            "$<BUILD_INTERFACE:${Easy3D_BINARY_DIR}>"
+            "$<BUILD_INTERFACE:${Easy3D_BINARY_DIR}/exports>"
             "$<INSTALL_INTERFACE:${Easy3D_INSTALL_INCLUDE_DIR}>"
             )
     target_link_libraries(easy3d_${module} PRIVATE ${private_dependencies})
@@ -257,6 +258,11 @@ install(FILES
         DESTINATION
         "${CMAKE_INSTALL_PREFIX}"
         )
+
+install(DIRECTORY
+        "${Easy3D_BINARY_DIR}/exports/easy3d"
+        DESTINATION
+        "${Easy3D_INSTALL_INCLUDE_DIR}")
 
 ################################################################################
 
