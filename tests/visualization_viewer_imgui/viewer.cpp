@@ -93,10 +93,9 @@ namespace easy3d {
 
     double ViewerImGui::pixel_ratio() {
         // Computes pixel ratio for hidpi devices
-        int fbo_size[2], win_size[2];
-        glfwGetFramebufferSize(window_, &fbo_size[0], &fbo_size[1]);
-        glfwGetWindowSize(window_, &win_size[0], &win_size[1]);
-        return static_cast<double>(fbo_size[0]) / static_cast<double>(win_size[0]);
+		int fw = framebuffer_width();
+		int vw = width(); 
+		return static_cast<double>(fw) / static_cast<double>(vw);
     }
 
 

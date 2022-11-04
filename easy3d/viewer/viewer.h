@@ -131,6 +131,13 @@ namespace easy3d {
         /// @brief Returns the height of the viewer.
         int height() const { return height_; }
 
+		/// @brief Returns the width of the framebuffer.
+		int framebuffer_width() const;
+		/// @brief Returns the height of the framebuffer.
+		int framebuffer_height() const;
+		/// @brief Queries the size of the framebuffer.
+		void framebuffer_size(int& w, int& h) const;
+
         /**
          * @brief Sets the position of the content area of the viewer.
          * @details This function sets the position, in screen coordinates, of the upper-left corner of the content

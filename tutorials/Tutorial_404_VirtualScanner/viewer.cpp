@@ -57,7 +57,7 @@ std::string VirtualScanner::usage() const {
 bool VirtualScanner::key_press_event(int key, int modifiers) {
     if (key == GLFW_KEY_SPACE && modifiers == 0) {
         int fw, fh;
-        glfwGetFramebufferSize(window_, &fw, &fh);
+		framebuffer_size(fw, fh);
 
         FramebufferObject fbo(fw, fh, 0);
         fbo.add_depth_buffer(GL_DEPTH_COMPONENT32F);

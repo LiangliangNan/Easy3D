@@ -574,6 +574,25 @@ namespace easy3d {
     }
 
 
+	int Viewer::framebuffer_width() const {
+		int w, h;
+		glfwGetFramebufferSize(window_, &w, &h);
+		return w;
+	}
+
+
+	int Viewer::framebuffer_height() const {
+		int w, h;
+		glfwGetFramebufferSize(window_, &w, &h);
+		return h;
+	}
+
+
+	void Viewer::framebuffer_size(int& w, int& h) const {
+		glfwGetFramebufferSize(window_, &w, &h);
+	}
+
+
     void Viewer::update() const {
         glfwPostEmptyEvent();
     }
