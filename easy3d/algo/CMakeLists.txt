@@ -1,5 +1,6 @@
 set(module algo)
-set(dependencies easy3d::core easy3d::util easy3d::kdtree 3rd_poisson 3rd_ransac 3rd_triangle 3rd_tetgen 3rd_glutess)
+set(private_dependencies 3rd_poisson 3rd_ransac 3rd_triangle 3rd_tetgen 3rd_glutess)
+set(public_dependencies easy3d::core easy3d::util easy3d::kdtree)
 
 set(${module}_headers
         delaunay.h
@@ -71,7 +72,7 @@ set(${module}_sources
         triangle_mesh_kdtree.cpp
         )
 
-add_module(${module} "${${module}_headers}" "${${module}_sources}" "${dependencies}")
+add_module(${module} "${${module}_headers}" "${${module}_sources}" "${private_dependencies}" "${public_dependencies}")
 target_include_directories(easy3d_${module} PRIVATE ${Easy3D_THIRD_PARTY}/eigen ${Easy3D_THIRD_PARTY}/ransac)
 
 # It's "Boost", not "BOOST" or "boost". Case matters.

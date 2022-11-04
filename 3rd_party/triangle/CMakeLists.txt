@@ -15,10 +15,13 @@ if (MSVC)
 	target_compile_definitions(3rd_triangle PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
 endif()
 
-install(TARGETS 3rd_triangle
-        # IMPORTANT: Add the library to the "export-set"
-        EXPORT Easy3DTargets
-        #RUNTIME DESTINATION "${Easy3D_INSTALL_BIN_DIR}" COMPONENT bin
-        LIBRARY DESTINATION "${Easy3D_INSTALL_LIB_DIR}" COMPONENT lib
-        PUBLIC_HEADER DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/${module}"
-        COMPONENT dev)
+
+if (NOT ${Easy3D_BUILD_SHARED_LIBS})
+	install(TARGETS 3rd_triangle
+			# IMPORTANT: Add the library to the "export-set"
+			EXPORT Easy3DTargets
+			#RUNTIME DESTINATION "${Easy3D_INSTALL_BIN_DIR}" COMPONENT bin
+			LIBRARY DESTINATION "${Easy3D_INSTALL_LIB_DIR}" COMPONENT lib
+			PUBLIC_HEADER DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/${module}"
+			COMPONENT dev)
+endif ()

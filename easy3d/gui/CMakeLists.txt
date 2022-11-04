@@ -1,5 +1,6 @@
 set(module gui)
-set(dependencies easy3d::core easy3d::util easy3d::renderer)
+set(private_dependencies)
+set(public_dependencies easy3d::core easy3d::util easy3d::renderer)
 
 set(${module}_headers
         picker.h
@@ -15,5 +16,5 @@ set(${module}_sources
         picker_surface_mesh.cpp
         )
 
-add_module(${module} "${${module}_headers}" "${${module}_sources}" "${dependencies}")
+add_module(${module} "${${module}_headers}" "${${module}_sources}" "${private_dependencies}" "${public_dependencies}")
 install_module(${module})

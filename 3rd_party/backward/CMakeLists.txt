@@ -84,7 +84,7 @@ if(BACKWARD_SHARED)
     set(libtype SHARED)
 endif()
 add_library(3rd_backward ${libtype} backward.cpp)
-target_compile_definitions(3rd_backward PUBLIC ${BACKWARD_DEFINITIONS})
+target_compile_definitions(3rd_backward PRIVATE ${BACKWARD_DEFINITIONS})
 target_include_directories(3rd_backward PRIVATE ${BACKWARD_INCLUDE_DIRS})
 
 find_package(Threads REQUIRED)
@@ -96,10 +96,12 @@ if (MSVC)
 endif()
 
 
-install(TARGETS 3rd_backward
-        # IMPORTANT: Add the library to the "export-set"
-        EXPORT Easy3DTargets
-        #RUNTIME DESTINATION "${Easy3D_INSTALL_BIN_DIR}" COMPONENT bin
-        LIBRARY DESTINATION "${Easy3D_INSTALL_LIB_DIR}" COMPONENT lib
-        PUBLIC_HEADER DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/${module}"
-        COMPONENT dev)
+if (NOT ${Easy3D_BUILD_SHARED_LIBS})
+    install(TARGETS 3rd_backward
+            # IMPORTANT: Add the library to the "export-set"
+            EXPORT Easy3DTargets
+            #RUNTIME DESTINATION "${Easy3D_INSTALL_BIN_DIR}" COMPONENT bin
+            LIBRARY DESTINATION "${Easy3D_INSTALL_LIB_DIR}" COMPONENT lib
+            PUBLIC_HEADER DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/${module}"
+            COMPONENT dev)
+endif ()

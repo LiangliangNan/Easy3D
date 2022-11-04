@@ -161,13 +161,14 @@ foreach (path LIB BIN INCLUDE CMAKE)
     endif ()
 endforeach ()
 
-function(add_module module headers sources dependencies)
+function(add_module module headers sources private_dependencies public_dependencies)
     add_library(easy3d_${module} ${Easy3D_LIB_TYPE} ${headers} ${sources})
     target_include_directories(easy3d_${module} PUBLIC
             "$<BUILD_INTERFACE:${Easy3D_INCLUDE_DIR}>"
             "$<INSTALL_INTERFACE:${Easy3D_INSTALL_INCLUDE_DIR}>"
             )
-    target_link_libraries(easy3d_${module} PUBLIC ${dependencies})
+    target_link_libraries(easy3d_${module} PRIVATE ${private_dependencies})
+    target_link_libraries(easy3d_${module} PUBLIC ${public_dependencies})
     set_target_properties(easy3d_${module} PROPERTIES FOLDER "easy3d")
     if (MSVC)
         target_compile_definitions(easy3d_${module} PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)

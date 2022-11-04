@@ -1,5 +1,6 @@
 set(module core)
-set(dependencies easy3d::util)
+set(private_dependencies)
+set(public_dependencies easy3d::util)
 
 set(${module}_headers
         box.h
@@ -45,7 +46,7 @@ set(${module}_sources
         version.cpp
         )
 
-add_module(${module} "${${module}_headers}" "${${module}_sources}" "${dependencies}")
+add_module(${module} "${${module}_headers}" "${${module}_sources}" "${private_dependencies}" "${public_dependencies}")
 target_compile_definitions(
         easy3d_${module}
         PRIVATE

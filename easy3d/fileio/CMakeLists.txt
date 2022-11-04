@@ -1,5 +1,6 @@
 set(module fileio)
-set(dependencies easy3d::core easy3d::util 3rd_lastools 3rd_rply)
+set(private_dependencies 3rd_lastools 3rd_rply)
+set(public_dependencies easy3d::core easy3d::util)
 
 set(${module}_headers
         image_io.h
@@ -40,7 +41,7 @@ set(${module}_sources
         )
 
 		
-add_module(${module} "${${module}_headers}" "${${module}_sources}" "${dependencies}")
+add_module(${module} "${${module}_headers}" "${${module}_sources}" "${private_dependencies}" "${public_dependencies}")
 set(LASTOOLS_INCLUDE_DIR ${Easy3D_THIRD_PARTY}/lastools/LASzip/src ${Easy3D_THIRD_PARTY}/lastools/LASlib/inc)
 target_include_directories(easy3d_${module} PRIVATE ${LASTOOLS_INCLUDE_DIR})
 install_module(${module})

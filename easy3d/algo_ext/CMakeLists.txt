@@ -1,5 +1,6 @@
 set(module algo_ext)
-set(dependencies easy3d::core)
+set(private_dependencies)
+set(public_dependencies easy3d::core)
 
 set(${module}_headers
         overlapping_faces.h
@@ -13,6 +14,6 @@ set(${module}_sources
         self_intersection.cpp
         )
 
-add_module(${module} "${${module}_headers}" "${${module}_sources}" "${dependencies}")
+add_module(${module} "${${module}_headers}" "${${module}_sources}" "${private_dependencies}" "${public_dependencies}")
 target_link_libraries(easy3d_${module} PRIVATE ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARIES})
 install_module(${module})

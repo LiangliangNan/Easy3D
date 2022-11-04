@@ -1,5 +1,6 @@
 set(module renderer)
-set(dependencies 3rd_glew easy3d::core easy3d::util easy3d::fileio easy3d::algo)
+set(private_dependencies)
+set(public_dependencies 3rd_glew easy3d::core easy3d::util easy3d::fileio easy3d::algo)
 
 set(${module}_headers
         ambient_occlusion.h
@@ -182,5 +183,5 @@ set(${module}_resources
         ../../resources/shaders/selection/selection_pointcloud_lasso.frag
         )
 
-add_module(${module} "${${module}_headers}" "${${module}_sources}" "${dependencies}")
+add_module(${module} "${${module}_headers}" "${${module}_sources}" "${private_dependencies}" "${public_dependencies}")
 install_module(${module})

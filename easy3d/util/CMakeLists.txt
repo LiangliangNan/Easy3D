@@ -1,5 +1,9 @@
 set(module util)
-set(dependencies 3rd_backward 3rd_easyloggingpp)
+
+find_package(Threads REQUIRED)
+
+set(private_dependencies 3rd_backward)
+set(public_dependencies 3rd_easyloggingpp Threads::Threads)
 
 set(${module}_headers
         console_style.h
@@ -28,7 +32,7 @@ set(${module}_sources
         string.cpp
         )
 
-add_module(${module} "${${module}_headers}" "${${module}_sources}" "${dependencies}")
+add_module(${module} "${${module}_headers}" "${${module}_sources}" "${private_dependencies}" "${public_dependencies}")
 
 # The resources directory
 target_compile_definitions(easy3d_${module} PUBLIC
