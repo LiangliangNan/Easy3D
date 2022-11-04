@@ -274,5 +274,6 @@ message(STATUS "    Build documentation    :  ${Easy3D_BUILD_DOCUMENTATION}")
 message(STATUS "    Build tests            :  ${Easy3D_BUILD_TESTS}")
 message(STATUS "    With CGAL (>= v5.1)    :  ${Easy3D_ENABLE_CGAL}")
 message(STATUS "    With Qt5 (>= v5.6)     :  ${Easy3D_ENABLE_QT}")
+message(STATUS "    Installation directory :  ${CMAKE_INSTALL_PREFIX}")
 
 message(STATUS "************************************************************")
