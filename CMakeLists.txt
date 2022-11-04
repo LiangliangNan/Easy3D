@@ -14,14 +14,17 @@ set(Easy3D_VERSION ${Easy3D_MAJOR_VERSION}.${Easy3D_MINOR_VERSION}.${Easy3D_PATC
 ################################################################################
 
 # Offer the user the choice of overriding the installation directories
+# Let's also add the version to the path to allow multiple versions of Easy3D in the same directory.
 
-# Add the version to the path to allow multiple versions of Easy3D installed into the same directory.
-if (WIN32 OR MSVC)  # windows
-    set(CMAKE_INSTALL_PREFIX "C:/Program Files/Easy3/${Easy3D_VERSION}" CACHE PATH "Installation directory" FORCE)
-elseif (APPLE)      # macOS
-    set(CMAKE_INSTALL_PREFIX "/usr/local/Cellar/easy3d/${Easy3D_VERSION}" CACHE PATH "Installation directory" FORCE)
-else ()             # Linux: different from tradition, let's keep everything together
-    set(CMAKE_INSTALL_PREFIX "/usr/local/easy3d-${Easy3D_VERSION}" CACHE PATH "Installation directory" FORCE)
+# Use this snippet *after* PROJECT(xxx):
+if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    if (WIN32 OR MSVC)  # windows
+        set(CMAKE_INSTALL_PREFIX "C:/Program Files/Easy3/${Easy3D_VERSION}" CACHE PATH "Installation directory" FORCE)
+    elseif (APPLE)      # macOS
+        set(CMAKE_INSTALL_PREFIX "/usr/local/Cellar/easy3d/${Easy3D_VERSION}" CACHE PATH "Installation directory" FORCE)
+    else ()             # Linux: different from tradition, let's keep everything together
+        set(CMAKE_INSTALL_PREFIX "/usr/local/easy3d-${Easy3D_VERSION}" CACHE PATH "Installation directory" FORCE)
+    endif ()
 endif ()
 
 set(Easy3D_INSTALL_LIB_DIR ${CMAKE_INSTALL_PREFIX}/lib CACHE PATH "Installation directory for libraries")
