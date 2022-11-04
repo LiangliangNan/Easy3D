@@ -145,7 +145,7 @@ namespace easy3d
                         output << "\n\n";
                     output << "================================================================= program started ...\n";
                     output.close();
-                    log_file_name = full_path_log_file;
+                    log_file_name = file_system::convert_to_native_style(full_path_log_file);
                 }
             }
 
@@ -155,7 +155,7 @@ namespace easy3d
             el::Configurations defaultConf;
             defaultConf.setToDefault();
             // Values are always std::string
-            defaultConf.setGlobally(el::ConfigurationType::Format, "%levshort %datetime{%d/%M/%Y %h:%m:%s.%g} %fbase:%line] %msg");
+            defaultConf.setGlobally(el::ConfigurationType::Format, "%levshort %datetime{%d/%M/%Y %H:%m:%s.%g} %fbase:%line] %msg");
 
             if (!log_file_name.empty()) {
                 defaultConf.setGlobally(el::ConfigurationType::Filename, log_file_name);
@@ -178,6 +178,8 @@ namespace easy3d
 
             el::Loggers::addFlag(el::LoggingFlag::ColoredTerminalOutput);
             el::Loggers::addFlag(el::LoggingFlag::LogDetailedCrashReason);
+			el::Loggers::addFlag(el::LoggingFlag::AutoSpacing);
+			el::Loggers::addFlag(el::LoggingFlag::DisableApplicationAbortOnFatalLog);
 
             // default logger uses default configurations
             el::Loggers::reconfigureLogger("default", defaultConf);
