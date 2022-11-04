@@ -213,7 +213,7 @@ namespace easy3d {
             ImGui::Separator();
 
             int w, h;
-            glfwGetWindowSize(window_, &w, &h);
+            viewer_size(w, h);
             float x = ImGui::GetIO().MousePos.x;
             float y = ImGui::GetIO().MousePos.y;
             if (x >= 0 && x <= w && y >= 0 && y <= h) {
@@ -269,7 +269,7 @@ namespace easy3d {
 		static bool show_manual = false;
 		if (show_manual) {
 			int w, h;
-			glfwGetWindowSize(window_, &w, &h);
+            viewer_size(w, h);
 			ImGui::SetNextWindowPos(ImVec2(w * 0.5f, h * 0.5f), ImGuiCond_FirstUseEver, ImVec2(0.5f, 0.5f));
 			ImGui::Begin("Easy3D Manual", &show_manual, ImGuiWindowFlags_NoResize);
             ImGui::Text("%s", usage().c_str());
