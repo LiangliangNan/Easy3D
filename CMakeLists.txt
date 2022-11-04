@@ -6,16 +6,72 @@ project(Easy3D)
 
 ################################################################################
 
+set(Easy3D_MAJOR_VERSION 2)
+set(Easy3D_MINOR_VERSION 5)
+set(Easy3D_PATCH_VERSION 0)
+set(Easy3D_VERSION ${Easy3D_MAJOR_VERSION}.${Easy3D_MINOR_VERSION}.${Easy3D_PATCH_VERSION})
+
+################################################################################
+
+# Offer the user the choice of overriding the installation directories
+
+# Add the version to the path to allow multiple versions of Easy3D installed into the same directory.
+if (WIN32 OR MSVC)  # windows
+    set(CMAKE_INSTALL_PREFIX "C:/Program Files/Easy3/${Easy3D_VERSION}" CACHE PATH "Installation directory" FORCE)
+elseif (APPLE)      # macOS
+    set(CMAKE_INSTALL_PREFIX "/usr/local/Cellar/easy3d/${Easy3D_VERSION}" CACHE PATH "Installation directory" FORCE)
+else ()             # Linux: different from tradition, let's keep everything together
+    set(CMAKE_INSTALL_PREFIX "/usr/local/easy3d-${Easy3D_VERSION}" CACHE PATH "Installation directory" FORCE)
+endif ()
+
+set(Easy3D_INSTALL_LIB_DIR ${CMAKE_INSTALL_PREFIX}/lib CACHE PATH "Installation directory for libraries")
+set(Easy3D_INSTALL_BIN_DIR ${CMAKE_INSTALL_PREFIX}/bin CACHE PATH "Installation directory for executables")
+set(Easy3D_INSTALL_INCLUDE_DIR ${CMAKE_INSTALL_PREFIX}/include CACHE PATH "Installation directory for header files")
+set(Easy3D_INSTALL_CMAKE_DIR ${CMAKE_INSTALL_PREFIX}/lib/CMake/Easy3D CACHE PATH "Installation directory for CMake files")
+set(Easy3D_INSTALL_RESOURCES_DIR ${CMAKE_INSTALL_PREFIX}/resources CACHE PATH "Installation directory for CMake files")
+
+# Setting RPATH
+# See https://cmake.org/Wiki/CMake_RPATH_handling
+set(CMAKE_INSTALL_RPATH ${Easy3D_INSTALL_LIB_DIR} CACHE PATH "Installation runtime directory" FORCE)
+
+################################################################################
+
+### Configuration
+set(Easy3D_ROOT ${CMAKE_CURRENT_LIST_DIR})
+set(Easy3D_THIRD_PARTY ${Easy3D_ROOT}/3rd_party)
+
+set(Easy3D_INCLUDE_DIR ${Easy3D_ROOT})
+set(Easy3D_SOURCE_DIR ${Easy3D_ROOT})
+set(Easy3D_BINARY_DIR ${CMAKE_BINARY_DIR})
+
+### conditionally compile certain modules depending on libraries found on the system
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
+
+### Where to put the libraries
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${Easy3D_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${Easy3D_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${Easy3D_BINARY_DIR}/lib)
+
+################################################################################
+
 # specify the C++ standard
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 ################################################################################
 
-set(Easy3D_MAJOR_VERSION 2)
-set(Easy3D_MINOR_VERSION 5)
-set(Easy3D_PATCH_VERSION 0)
-set(Easy3D_VERSION ${Easy3D_MAJOR_VERSION}.${Easy3D_MINOR_VERSION}.${Easy3D_PATCH_VERSION})
+# Build shared libraries
+option(Easy3D_BUILD_SHARED_LIBS "Build shared Libaries"         ON)
+# Build tutorials
+option(Easy3D_BUILD_TUTORIALS "Build Easy3D Tutorials"          ON)
+# Build documentation
+option(Easy3D_BUILD_DOCUMENTATION "Build Easy3D Documentation"  OFF)
+# Build tests
+option(Easy3D_BUILD_TESTS "Build Easy3D Tests"                  OFF)
+# Build advanced features that require CGAL (>= v5.1)
+option(Easy3D_ENABLE_CGAL "Build advanced features that require CGAL (>= v5.1)"             OFF)
+# Build advanced examples/applications that require Qt5 (>= v5.6)
+option(Easy3D_ENABLE_QT "Build advanced examples/applications that require Qt5 (>= v5.6)"   OFF)
 
 ################################################################################
 
@@ -38,44 +94,11 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 ################################################################################
 
-# Build shared libraries
-option(Easy3D_BUILD_SHARED_LIBS "Build shared Libaries"         ON)
-# Build tutorials
-option(Easy3D_BUILD_TUTORIALS "Build Easy3D Tutorials"          ON)
-# Build documentation
-option(Easy3D_BUILD_DOCUMENTATION "Build Easy3D Documentation"  OFF)
-# Build tests
-option(Easy3D_BUILD_TESTS "Build Easy3D Tests"                  OFF)
-# Build advanced features that require CGAL (>= v5.1)
-option(Easy3D_ENABLE_CGAL "Build advanced features that require CGAL (>= v5.1)"             OFF)
-# Build advanced examples/applications that require Qt5 (>= v5.6)
-option(Easy3D_ENABLE_QT "Build advanced examples/applications that require Qt5 (>= v5.6)"   OFF)
-
-################################################################################
-
 if (Easy3D_BUILD_SHARED_LIBS)
     set(Easy3D_LIB_TYPE SHARED)
 else ()
     set(Easy3D_LIB_TYPE STATIC)
 endif ()
-
-################################################################################
-
-### Configuration
-set(Easy3D_ROOT ${CMAKE_CURRENT_LIST_DIR})
-set(Easy3D_THIRD_PARTY ${Easy3D_ROOT}/3rd_party)
-
-set(Easy3D_INCLUDE_DIR ${Easy3D_ROOT})
-set(Easy3D_SOURCE_DIR ${Easy3D_ROOT})
-set(Easy3D_BINARY_DIR ${CMAKE_BINARY_DIR})
-
-### conditionally compile certain modules depending on libraries found on the system
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
-
-### Where to put the libraries
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${Easy3D_BINARY_DIR}/bin)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${Easy3D_BINARY_DIR}/lib)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${Easy3D_BINARY_DIR}/lib)
 
 ################################################################################
 
@@ -121,34 +144,14 @@ if (FFMPEG_FOUND)
     add_definitions(-DHAS_FFMPEG)
 else ()
     set(Easy3D_HAS_FFMPEG FALSE)
-    #    message(FATAL_ERROR "You have requested FFMPEG support but FFMPEG was not found. "
-    #            "To use FFMPEG, make sure FFMPEG exists on your system (install/build FFMPEG if necessary). "
-    #            "You can modify the search paths of 'include' and 'lib' in 'FindFFMPEG.cmake', and then run CMake. "
-    #            "The FFMPEG support allow recording animation into a video file. If you don't need this feature, "
-    #            "disable FFMPEG support by setting `Easy3D_ENABLE_FFMPEG` to `OFF`. Without FFMPEG, you will still "
-    #            "be able to record animation as a sequence of images.")
+    message(WARNING "You have requested FFMPEG support but FFMPEG was not found. "
+            "To use FFMPEG, make sure FFMPEG exists on your system (install/build FFMPEG if necessary). "
+            "You can modify the search paths of 'include' and 'lib' in 'Easy3D/cmake/FindFFMPEG.cmake', "
+            "and then run CMake. The FFMPEG support allows recording animation into a video file. "
+            "Ignore this message if you don't need this feature.")
 endif ()
 
 ################################################################################
-
-# Offer the user the choice of overriding the installation directories
-
-# Add the version to the path to allow multiple versions of Easy3D installed into the same directory.
-if (WIN32 OR MSVC)
-    set(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/${Easy3D_VERSION}")
-else ()
-    set(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/Cellar/easy3d/${Easy3D_VERSION}")
-endif ()
-
-set(Easy3D_INSTALL_LIB_DIR ${CMAKE_INSTALL_PREFIX}/lib CACHE PATH "Installation directory for libraries")
-set(Easy3D_INSTALL_BIN_DIR ${CMAKE_INSTALL_PREFIX}/bin CACHE PATH "Installation directory for executables")
-set(Easy3D_INSTALL_INCLUDE_DIR ${CMAKE_INSTALL_PREFIX}/include CACHE PATH "Installation directory for header files")
-set(Easy3D_INSTALL_CMAKE_DIR ${CMAKE_INSTALL_PREFIX}/lib/CMake/Easy3D CACHE PATH "Installation directory for CMake files")
-set(Easy3D_INSTALL_RESOURCES_DIR ${CMAKE_INSTALL_PREFIX}/resources CACHE PATH "Installation directory for CMake files")
-
-# Setting RPATH
-# See https://cmake.org/Wiki/CMake_RPATH_handling
-set(CMAKE_INSTALL_RPATH ${Easy3D_INSTALL_LIB_DIR})
 
 # Make relative paths absolute (needed later on)
 foreach (path LIB BIN INCLUDE CMAKE)
@@ -188,22 +191,6 @@ function(install_module module)
             COMPONENT dev)
 endfunction()
 
-install(DIRECTORY
-        "${Easy3D_ROOT}/resources/fonts"
-        "${Easy3D_ROOT}/resources/shaders"
-        "${Easy3D_ROOT}/resources/colormaps"
-        "${Easy3D_ROOT}/resources/textures"
-        DESTINATION
-        "${Easy3D_INSTALL_RESOURCES_DIR}")
-
-install(FILES
-        "${Easy3D_ROOT}/ReadMe.md"
-        "${Easy3D_ROOT}/CONTRIBUTING.md"
-        "${Easy3D_ROOT}/LICENSE"
-        DESTINATION
-        "${CMAKE_INSTALL_PREFIX}"
-        )
-
 ################################################################################
 
 add_subdirectory(3rd_party)
@@ -238,6 +225,24 @@ if (Easy3D_BUILD_DOCUMENTATION)
                 "if Doxygen already exists (otherwise install Doxygen first).")
     endif ()
 endif ()
+
+################################################################################
+
+install(DIRECTORY
+        "${Easy3D_ROOT}/resources/fonts"
+        "${Easy3D_ROOT}/resources/shaders"
+        "${Easy3D_ROOT}/resources/colormaps"
+        "${Easy3D_ROOT}/resources/textures"
+        DESTINATION
+        "${Easy3D_INSTALL_RESOURCES_DIR}")
+
+install(FILES
+        "${Easy3D_ROOT}/ReadMe.md"
+        "${Easy3D_ROOT}/CONTRIBUTING.md"
+        "${Easy3D_ROOT}/LICENSE"
+        DESTINATION
+        "${CMAKE_INSTALL_PREFIX}"
+        )
 
 ################################################################################
 
