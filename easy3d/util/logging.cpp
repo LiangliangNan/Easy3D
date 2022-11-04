@@ -178,7 +178,6 @@ namespace easy3d
 
             el::Loggers::addFlag(el::LoggingFlag::ColoredTerminalOutput);
             el::Loggers::addFlag(el::LoggingFlag::LogDetailedCrashReason);
-			el::Loggers::addFlag(el::LoggingFlag::AutoSpacing);
 			el::Loggers::addFlag(el::LoggingFlag::DisableApplicationAbortOnFatalLog);
 
             // default logger uses default configurations
