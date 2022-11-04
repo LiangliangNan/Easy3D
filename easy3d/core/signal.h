@@ -268,10 +268,10 @@ namespace easy3d {
     /**
      * \brief Helper function for resolving overloaded member functions.
      * \details In case of overloading, the pointer to a member function does not map to a unique symbol, so the compiler
-     * won't be able to pick the right symbol. One way of resolving the right symbol is to explicitly cast
-     * the function pointer to the right function type, e.g.,
-     * static_cast<void (Viewer::*)(const std::string&, int)>(&Viewer::print), which is a bit heave syntax.
-     * This helper function does just that for a lighter syntax.
+     *      won't be able to pick the right symbol. One way of resolving the right symbol is to explicitly cast
+     *      the function pointer to the right function type, e.g.,
+     *      static_cast<void (Viewer::*)(const std::string&, int)>(&Viewer::print), which is a bit heave syntax.
+     *      This helper function does just that for a lighter syntax.
      * Example usage:
      *     \code
      *         struct foo {
