@@ -28,7 +28,7 @@
 #define EASY3D_UTIL_LOGGING_H
 
 
-#include <3rd_party/easyloggingpp/src/easylogging++.h>
+#include <3rd_party/easyloggingpp/easylogging++.h>
 
 
 /// To have LOG_IF_EVERY_N
