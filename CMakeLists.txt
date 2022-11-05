@@ -262,7 +262,6 @@ install(DIRECTORY
 
 install(FILES
         "${Easy3D_ROOT}/ReadMe.md"
-        "${Easy3D_ROOT}/CONTRIBUTING.md"
         "${Easy3D_ROOT}/LICENSE"
         DESTINATION
         "${CMAKE_INSTALL_PREFIX}"
