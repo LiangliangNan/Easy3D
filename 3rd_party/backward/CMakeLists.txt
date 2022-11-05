@@ -40,7 +40,7 @@ target_compile_definitions(3rd_${module} PRIVATE ${BACKWARD_DEFINITIONS})
 target_include_directories(3rd_${module} PRIVATE ${BACKWARD_INCLUDE_DIRS})
 
 find_package(Threads REQUIRED)
-target_link_libraries(3rd_${module} PRIVATE Threads::Threads)
+target_link_libraries(3rd_${module} PUBLIC Threads::Threads)
 set_target_properties(3rd_${module} PROPERTIES FOLDER "3rd_party")
 set_target_properties(3rd_${module} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 if (MSVC)
