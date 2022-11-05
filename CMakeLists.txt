@@ -120,6 +120,12 @@ if (Easy3D_ENABLE_CGAL)
         if (CGAL_VERSION VERSION_GREATER_EQUAL "5.1")
             set(Easy3D_HAS_CGAL TRUE)
             add_definitions(-DHAS_CGAL)
+            mark_as_advanced(BUILD_TESTING
+                    CGAL_CTEST_DISPLAY_MEM_AND_TIME
+                    CGAL_DEV_MODE
+                    CGAL_TEST_DRAW_FUNCTIONS
+                    CGAL_WITH_DRAW_FUNCTIONS
+                    CGAL_WITH_GMPXX)
             message(STATUS "Found CGAL v${CGAL_VERSION}")
         else ()
             set(Easy3D_HAS_CGAL FALSE)
@@ -271,18 +277,27 @@ install(DIRECTORY
 
 ### Summary
 message(STATUS "************************************************************")
-message(STATUS "    Package : Easy3D")
-message(STATUS "    Version : ${Easy3D_VERSION}")
-message(STATUS "    Type    : ${CMAKE_BUILD_TYPE}")
+message(STATUS "    Package       : Easy3D")
+message(STATUS "    Version       : ${Easy3D_VERSION}")
+
+message(STATUS "    Generator     : ${CMAKE_GENERATOR}")
+if (CMAKE_CONFIGURATION_TYPES)
+    message(STATUS "    Configuration : ${CMAKE_CONFIGURATION_TYPES}")
+elseif (CMAKE_BUILD_TYPE)
+    message(STATUS "    Build type    : ${CMAKE_BUILD_TYPE}")
+
+endif ()
+
 if (CMAKE_SIZEOF_VOID_P EQUAL 8)
-    message(STATUS "    System  : 64-bit ${CMAKE_SYSTEM_NAME}")
+    message(STATUS "    System        : 64-bit ${CMAKE_SYSTEM_NAME}")
 elseif (CMAKE_SIZEOF_VOID_P EQUAL 4)
-    message(STATUS "    System  : 32-bit ${CMAKE_SYSTEM_NAME}")
+    message(STATUS "    System        : 32-bit ${CMAKE_SYSTEM_NAME}")
     message(FATAL_ERROR "32-bit not supported! You should specify CMake option '-DCMAKE_GENERATOR_PLATFORM=x64'")
 endif ()
 if (APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "10.12" CACHE STRING "Minimum OS X deployment version" FORCE)
     message(STATUS "    Min OSX deployment version : ${CMAKE_OSX_DEPLOYMENT_TARGET}")
+    mark_as_advanced(CMAKE_OSX_ARCHITECTURES)
 endif ()
 
 message(STATUS "------------------------------------------------------------")
@@ -296,3 +311,5 @@ message(STATUS "    With Qt5 (>= v5.6)     :  ${Easy3D_ENABLE_QT}")
 message(STATUS "    Installation directory :  ${CMAKE_INSTALL_PREFIX}")
 
 message(STATUS "************************************************************")
+
+

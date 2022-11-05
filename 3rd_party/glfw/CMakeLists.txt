@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.12...3.20 FATAL_ERROR)
 
 project(GLFW VERSION 3.4.0 LANGUAGES C)
 
-set(CMAKE_LEGACY_CYGWIN_WIN32 OFF)
-
 if (POLICY CMP0054)
     cmake_policy(SET CMP0054 NEW)
 endif()
@@ -16,17 +14,7 @@ if (POLICY CMP0077)
     cmake_policy(SET CMP0077 NEW)
 endif()
 
-set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-
-if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-    set(GLFW_STANDALONE TRUE)
-endif()
-
 include(CMakeDependentOption)
-
-if (GLFW_USE_OSMESA)
-    message(FATAL_ERROR "GLFW_USE_OSMESA has been removed; set the GLFW_PLATFORM init hint")
-endif()
 
 cmake_dependent_option(GLFW_BUILD_WIN32 "Build support for Win32" ON "WIN32" OFF)
 cmake_dependent_option(GLFW_BUILD_COCOA "Build support for Cocoa" ON "APPLE" OFF)
@@ -39,20 +27,17 @@ cmake_dependent_option(GLFW_USE_HYBRID_HPG "Force use of high-performance GPU on
 cmake_dependent_option(USE_MSVC_RUNTIME_LIBRARY_DLL "Use MSVC runtime library DLL" ON
                        "MSVC" OFF)
 
-set(GLFW_LIBRARY_TYPE "${GLFW_LIBRARY_TYPE}" CACHE STRING
-    "Library type override for GLFW (SHARED, STATIC, OBJECT, or empty to follow BUILD_SHARED_LIBS)")
+set(GLFW_LIBRARY_TYPE STATIC)
 
-if (GLFW_LIBRARY_TYPE)
-    if (GLFW_LIBRARY_TYPE STREQUAL "SHARED")
-        set(GLFW_BUILD_SHARED_LIBRARY TRUE)
-    else()
-        set(GLFW_BUILD_SHARED_LIBRARY FALSE)
-    endif()
-else()
-    set(GLFW_BUILD_SHARED_LIBRARY ${BUILD_SHARED_LIBS})
-endif()
-
-list(APPEND CMAKE_MODULE_PATH "${GLFW_SOURCE_DIR}/CMake/modules")
+mark_as_advanced(
+        GLFW_BUILD_WIN32
+        GLFW_BUILD_COCOA
+        GLFW_BUILD_X11
+        GLFW_BUILD_WAYLAND
+        GLFW_USE_HYBRID_HPG
+        USE_MSVC_RUNTIME_LIBRARY_DLL
+        GLFW_LIBRARY_TYPE
+        )
 
 find_package(Threads REQUIRED)
 
@@ -60,16 +45,16 @@ find_package(Threads REQUIRED)
 # Report backend selection
 #--------------------------------------------------------------------
 if (GLFW_BUILD_WIN32)
-    message(STATUS "Including Win32 support")
+    message(STATUS "GLFW including Win32 support")
 endif()
 if (GLFW_BUILD_COCOA)
-    message(STATUS "Including Cocoa support")
+    message(STATUS "GLFW including Cocoa support")
 endif()
 if (GLFW_BUILD_WAYLAND)
-    message(STATUS "Including Wayland support")
+    message(STATUS "GLFW including Wayland support")
 endif()
 if (GLFW_BUILD_X11)
-    message(STATUS "Including X11 support")
+    message(STATUS "GLFW including X11 support")
 endif()
 
 #--------------------------------------------------------------------

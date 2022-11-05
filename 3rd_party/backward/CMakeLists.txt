@@ -20,15 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-cmake_minimum_required(VERSION 3.12)
-project(3rd_backward CXX)
-
-# Introduce variables:
-# * CMAKE_INSTALL_LIBDIR
-# * CMAKE_INSTALL_BINDIR
-# * CMAKE_INSTALL_INCLUDEDIR
-include(GNUInstallDirs)
-
 include(BackwardConfig.cmake)
 
 # check if compiler is nvcc or nvcc_wrapper
@@ -73,12 +64,6 @@ endif()
 #target_include_directories(backward_object PRIVATE ${BACKWARD_INCLUDE_DIRS})
 #set(BACKWARD_ENABLE $<TARGET_OBJECTS:backward_object> CACHE STRING
 #	"Link with this object to setup backward automatically")
-
-
-###############################################################################
-# BACKWARD LIBRARY (Includes backward.cpp)
-###############################################################################
-option(BACKWARD_SHARED "Build dynamic backward-cpp shared lib" OFF)
 
 if(BACKWARD_SHARED)
     set(libtype SHARED)
