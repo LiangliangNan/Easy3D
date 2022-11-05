@@ -100,6 +100,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 ################################################################################
 
+include(GenerateExportHeader)
 if (Easy3D_BUILD_SHARED_LIBS)
     set(Easy3D_LIB_TYPE SHARED)
     #Ref: Create dlls on Windows without declspec() using new CMake export all feature
@@ -183,15 +184,16 @@ function(add_module module headers sources private_dependencies public_dependenc
     add_library(easy3d_${module} ${Easy3D_LIB_TYPE} ${headers} ${sources})
     #Ref: Create dlls on Windows without declspec() using new CMake export all feature
     #     https://www.kitware.com/create-dlls-on-windows-without-declspec-using-new-cmake-export-all-feature/
-    include(GenerateExportHeader)
     generate_export_header(easy3d_${module} EXPORT_FILE_NAME "${Easy3D_EXPORT_INCLUDE_DIR}/easy3d/${module}/export.h")
     target_include_directories(easy3d_${module} PUBLIC
             "$<BUILD_INTERFACE:${Easy3D_INCLUDE_DIR}>"
             "$<BUILD_INTERFACE:${Easy3D_EXPORT_INCLUDE_DIR}>"
             "$<INSTALL_INTERFACE:${Easy3D_INSTALL_INCLUDE_DIR}>"
             )
-    target_link_libraries(easy3d_${module} PRIVATE ${private_dependencies})
-    target_link_libraries(easy3d_${module} PUBLIC ${public_dependencies})
+    target_link_libraries(easy3d_${module}
+            PRIVATE ${private_dependencies}
+            PUBLIC ${public_dependencies}
+            )
     set_target_properties(easy3d_${module} PROPERTIES FOLDER "easy3d")
     if (MSVC)
         target_compile_definitions(easy3d_${module} PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
