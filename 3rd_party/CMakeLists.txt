@@ -5,9 +5,6 @@ function(add_3rdparty_module module sources headers)
     if (MSVC)
         target_compile_definitions(${module} PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
     endif()
-    message("module: ${module}--------------------------")
-    message("sources: ${sources}}")
-    message("HEADERS: ${headers}")
 endfunction()
 
 
