@@ -1,8 +1,8 @@
-function(add_sample sample files dependencies)
-    add_executable(${sample} ${files})
-    set_target_properties(${sample} PROPERTIES FOLDER "tutorials")
-    target_include_directories(${sample} PRIVATE ${Easy3D_INCLUDE_DIR})
-    target_link_libraries(${sample} PRIVATE ${dependencies})
+function(add_example example files dependencies)
+    add_executable(${example} ${files})
+    set_target_properties(${example} PROPERTIES FOLDER "tutorials")
+    target_include_directories(${example} PRIVATE ${Easy3D_INCLUDE_DIR})
+    target_link_libraries(${example} PRIVATE ${dependencies})
 endfunction()
 
 

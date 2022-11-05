@@ -1,15 +1,13 @@
-cmake_minimum_required(VERSION 3.12)
+get_filename_component(module ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
-project(3rd_imgui)
-
-set(imgui_HEADERS
+set(${module}_HEADERS
         imgui.h
         backends/imgui_impl_glfw.h
         backends/imgui_impl_opengl3.h
         backends/imgui_impl_opengl3_loader.h
         )
 
-set(imgui_SOURCES
+set(${module}_SOURCES
         imgui.cpp
         imgui_draw.cpp
         imgui_widgets.cpp
@@ -18,24 +16,10 @@ set(imgui_SOURCES
         backends/imgui_impl_opengl3.cpp
         )
 
-
-add_library(3rd_imgui STATIC ${imgui_SOURCES} ${imgui_HEADERS})
-
-set_target_properties(3rd_imgui PROPERTIES FOLDER "3rd_party")
-
-set(IMGUI_INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR} ${Easy3D_THIRD_PARTY}/glew/include ${Easy3D_THIRD_PARTY}/glfw/include)
-target_include_directories(3rd_imgui PUBLIC ${IMGUI_INCLUDE_DIR})
-
-target_link_libraries(3rd_imgui PUBLIC 3rd_glew 3rd_glfw)
-set_target_properties(3rd_imgui PROPERTIES POSITION_INDEPENDENT_CODE ON)
-if (MSVC)
-	target_compile_definitions(3rd_imgui PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
-endif()
-
-
-if (MSVC)
-    target_compile_definitions(3rd_imgui PRIVATE
-            _CRT_SECURE_NO_WARNINGS
-            _CRT_SECURE_NO_DEPRECATE
-            )
-endif ()
+add_3rdparty_module(3rd_${module} "${${module}_SOURCES}" "${${module}_HEADERS}")
+target_include_directories(3rd_${module} PUBLIC
+        ${CMAKE_CURRENT_LIST_DIR} 
+        ${Easy3D_THIRD_PARTY}/glew/include 
+        ${Easy3D_THIRD_PARTY}/glfw/include
+        )
+target_link_libraries(3rd_${module} PRIVATE 3rd_glew 3rd_glfw)

@@ -1,9 +1,10 @@
-cmake_minimum_required(VERSION 3.12)
+get_filename_component(module ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
-project(3rd_glutess)
+set(${module}_HEADERS
+		glutess.h
+		)
 
-add_library(3rd_glutess STATIC
-        glutess.h
+set(${module}_SOURCES
         source/dict-list.h
         source/dict.c
         source/dict.h
@@ -30,20 +31,13 @@ add_library(3rd_glutess STATIC
         source/tessmono.h
         )
 
-set_target_properties(3rd_glutess PROPERTIES FOLDER "3rd_party")
-target_include_directories(3rd_glutess PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-set_target_properties(3rd_glutess PROPERTIES POSITION_INDEPENDENT_CODE ON)
-if (MSVC)
-	target_compile_definitions(3rd_glutess PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
-endif()
-
+add_3rdparty_module(3rd_${module} "${${module}_SOURCES}" "${${module}_HEADERS}")
+target_include_directories(3rd_${module} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 if (NOT ${Easy3D_BUILD_SHARED_LIBS})
-	install(TARGETS 3rd_glutess
+	install(TARGETS 3rd_${module}
 			# IMPORTANT: Add the library to the "export-set"
 			EXPORT Easy3DTargets
-			#RUNTIME DESTINATION "${Easy3D_INSTALL_BIN_DIR}" COMPONENT bin
 			LIBRARY DESTINATION "${Easy3D_INSTALL_LIB_DIR}" COMPONENT lib
-			PUBLIC_HEADER DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/${module}"
 			COMPONENT dev)
 endif ()

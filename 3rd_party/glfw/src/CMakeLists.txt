@@ -1,5 +1,5 @@
 
-add_library(3rd_glfw ${GLFW_LIBRARY_TYPE}
+add_library(3rd_${module} ${GLFW_LIBRARY_TYPE}
                  "${GLFW_SOURCE_DIR}/include/GLFW/glfw3.h"
                  "${GLFW_SOURCE_DIR}/include/GLFW/glfw3native.h"
                  internal.h platform.h mappings.h
@@ -10,48 +10,48 @@ add_library(3rd_glfw ${GLFW_LIBRARY_TYPE}
 # The time, thread and module code is shared between all backends on a given OS,
 # including the null backend, which still needs those bits to be functional
 if (APPLE)
-    target_sources(3rd_glfw PRIVATE cocoa_time.h cocoa_time.c posix_thread.h
+    target_sources(3rd_${module} PRIVATE cocoa_time.h cocoa_time.c posix_thread.h
                                 posix_module.c posix_thread.c)
 elseif (WIN32)
-    target_sources(3rd_glfw PRIVATE win32_time.h win32_thread.h win32_module.c
+    target_sources(3rd_${module} PRIVATE win32_time.h win32_thread.h win32_module.c
                                 win32_time.c win32_thread.c)
 else()
-    target_sources(3rd_glfw PRIVATE posix_time.h posix_thread.h posix_module.c
+    target_sources(3rd_${module} PRIVATE posix_time.h posix_thread.h posix_module.c
                                 posix_time.c posix_thread.c)
 endif()
 
 if (GLFW_BUILD_COCOA)
-    target_compile_definitions(3rd_glfw PRIVATE _GLFW_COCOA)
-    target_sources(3rd_glfw PRIVATE cocoa_platform.h cocoa_joystick.h cocoa_init.m
+    target_compile_definitions(3rd_${module} PRIVATE _GLFW_COCOA)
+    target_sources(3rd_${module} PRIVATE cocoa_platform.h cocoa_joystick.h cocoa_init.m
                                 cocoa_joystick.m cocoa_monitor.m cocoa_window.m
                                 nsgl_context.m)
 endif()
 
 if (GLFW_BUILD_WIN32)
-    target_compile_definitions(3rd_glfw PRIVATE _GLFW_WIN32)
-    target_sources(3rd_glfw PRIVATE win32_platform.h win32_joystick.h win32_init.c
+    target_compile_definitions(3rd_${module} PRIVATE _GLFW_WIN32)
+    target_sources(3rd_${module} PRIVATE win32_platform.h win32_joystick.h win32_init.c
                                 win32_joystick.c win32_monitor.c win32_window.c
                                 wgl_context.c)
 endif()
 
 if (GLFW_BUILD_X11)
-    target_compile_definitions(3rd_glfw PRIVATE _GLFW_X11)
-    target_sources(3rd_glfw PRIVATE x11_platform.h xkb_unicode.h x11_init.c
+    target_compile_definitions(3rd_${module} PRIVATE _GLFW_X11)
+    target_sources(3rd_${module} PRIVATE x11_platform.h xkb_unicode.h x11_init.c
                                 x11_monitor.c x11_window.c xkb_unicode.c
                                 glx_context.c)
 endif()
 
 if (GLFW_BUILD_WAYLAND)
-    target_compile_definitions(3rd_glfw PRIVATE _GLFW_WAYLAND)
-    target_sources(3rd_glfw PRIVATE wl_platform.h xkb_unicode.h wl_init.c
+    target_compile_definitions(3rd_${module} PRIVATE _GLFW_WAYLAND)
+    target_sources(3rd_${module} PRIVATE wl_platform.h xkb_unicode.h wl_init.c
                                 wl_monitor.c wl_window.c xkb_unicode.c)
 endif()
 
 if (GLFW_BUILD_X11 OR GLFW_BUILD_WAYLAND)
     if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-        target_sources(3rd_glfw PRIVATE linux_joystick.h linux_joystick.c)
+        target_sources(3rd_${module} PRIVATE linux_joystick.h linux_joystick.c)
     endif()
-    target_sources(3rd_glfw PRIVATE posix_poll.h posix_poll.c)
+    target_sources(3rd_${module} PRIVATE posix_poll.h posix_poll.c)
 endif()
 
 if (GLFW_BUILD_WAYLAND)
@@ -59,11 +59,11 @@ if (GLFW_BUILD_WAYLAND)
     include(CheckFunctionExists)
     check_include_files(xkbcommon/xkbcommon-compose.h HAVE_XKBCOMMON_COMPOSE_H)
     if (HAVE_XKBCOMMON_COMPOSE_H)
-        target_compile_definitions(3rd_glfw PRIVATE HAVE_XKBCOMMON_COMPOSE_H)
+        target_compile_definitions(3rd_${module} PRIVATE HAVE_XKBCOMMON_COMPOSE_H)
     endif()
     check_function_exists(memfd_create HAVE_MEMFD_CREATE)
     if (HAVE_MEMFD_CREATE)
-        target_compile_definitions(3rd_glfw PRIVATE HAVE_MEMFD_CREATE)
+        target_compile_definitions(3rd_${module} PRIVATE HAVE_MEMFD_CREATE)
     endif()
 
     find_program(WAYLAND_SCANNER_EXECUTABLE NAMES wayland-scanner)
@@ -84,7 +84,7 @@ if (GLFW_BUILD_WAYLAND)
             DEPENDS "${protocol_file}"
             VERBATIM)
 
-        target_sources(3rd_glfw PRIVATE "${output_file}.h" "${output_file}-code.h")
+        target_sources(3rd_${module} PRIVATE "${output_file}.h" "${output_file}-code.h")
     endmacro()
 
     wayland_generate(
@@ -112,17 +112,17 @@ endif()
 
 if (WIN32 AND GLFW_BUILD_SHARED_LIBRARY)
     configure_file(glfw.rc.in glfw.rc @ONLY)
-    target_sources(3rd_glfw PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/glfw.rc")
+    target_sources(3rd_${module} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/glfw.rc")
 endif()
 
 if (UNIX AND GLFW_BUILD_SHARED_LIBRARY)
     # On Unix-like systems, shared libraries can use the soname system.
-    set(GLFW_LIB_NAME 3rd_glfw)
+    set(GLFW_LIB_NAME 3rd_${module})
 else()
-    set(GLFW_LIB_NAME 3rd_glfw)
+    set(GLFW_LIB_NAME 3rd_${module})
 endif()
 
-set_target_properties(3rd_glfw PROPERTIES
+set_target_properties(3rd_${module} PROPERTIES
                       OUTPUT_NAME ${GLFW_LIB_NAME}
                       VERSION ${GLFW_VERSION_MAJOR}.${GLFW_VERSION_MINOR}
                       SOVERSION ${GLFW_VERSION_MAJOR}
@@ -132,14 +132,14 @@ set_target_properties(3rd_glfw PROPERTIES
                       DEFINE_SYMBOL _GLFW_BUILD_DLL
                       FOLDER "3rd_party")
 if (MSVC)
-	target_compile_definitions(3rd_glfw PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
+	target_compile_definitions(3rd_${module} PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
 endif()
 
-target_include_directories(3rd_glfw PRIVATE ${GLFW_SOURCE_DIR}/include)
-target_include_directories(3rd_glfw PRIVATE
+target_include_directories(3rd_${module} PRIVATE ${GLFW_SOURCE_DIR}/include)
+target_include_directories(3rd_${module} PRIVATE
                            "${GLFW_SOURCE_DIR}/src"
                            "${GLFW_BINARY_DIR}/src")
-target_link_libraries(3rd_glfw PRIVATE Threads::Threads)
+target_link_libraries(3rd_${module} PRIVATE Threads::Threads)
 
 # Workaround for CMake not knowing about .m files before version 3.16
 if (CMAKE_VERSION VERSION_LESS "3.16" AND APPLE)
@@ -153,7 +153,7 @@ if (GLFW_BUILD_WIN32)
 endif()
 
 if (GLFW_BUILD_COCOA)
-    target_link_libraries(3rd_glfw PRIVATE "-framework Cocoa"
+    target_link_libraries(3rd_${module} PRIVATE "-framework Cocoa"
                                        "-framework IOKit"
                                        "-framework CoreFoundation")
 
@@ -168,20 +168,20 @@ if (GLFW_BUILD_WAYLAND)
         wayland-egl>=0.2.7
         xkbcommon)
 
-    target_include_directories(3rd_glfw PRIVATE ${Wayland_INCLUDE_DIRS})
+    target_include_directories(3rd_${module} PRIVATE ${Wayland_INCLUDE_DIRS})
 
     if (NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
         find_package(EpollShim)
         if (EPOLLSHIM_FOUND)
-            target_include_directories(3rd_glfw PRIVATE ${EPOLLSHIM_INCLUDE_DIRS})
-            target_link_libraries(3rd_glfw PRIVATE ${EPOLLSHIM_LIBRARIES})
+            target_include_directories(3rd_${module} PRIVATE ${EPOLLSHIM_INCLUDE_DIRS})
+            target_link_libraries(3rd_${module} PRIVATE ${EPOLLSHIM_LIBRARIES})
         endif()
     endif()
 endif()
 
 if (GLFW_BUILD_X11)
     find_package(X11 REQUIRED)
-    target_include_directories(3rd_glfw PRIVATE "${X11_X11_INCLUDE_PATH}")
+    target_include_directories(3rd_${module} PRIVATE "${X11_X11_INCLUDE_PATH}")
 
     # Check for XRandR (modern resolution switching and gamma control)
     if (NOT X11_Xrandr_INCLUDE_PATH)
@@ -218,19 +218,19 @@ if (UNIX AND NOT APPLE)
     find_library(RT_LIBRARY rt)
     mark_as_advanced(RT_LIBRARY)
     if (RT_LIBRARY)
-        target_link_libraries(3rd_glfw PRIVATE "${RT_LIBRARY}")
+        target_link_libraries(3rd_${module} PRIVATE "${RT_LIBRARY}")
         list(APPEND glfw_PKG_LIBS "-lrt")
     endif()
 
     find_library(MATH_LIBRARY m)
     mark_as_advanced(MATH_LIBRARY)
     if (MATH_LIBRARY)
-        target_link_libraries(3rd_glfw PRIVATE "${MATH_LIBRARY}")
+        target_link_libraries(3rd_${module} PRIVATE "${MATH_LIBRARY}")
         list(APPEND glfw_PKG_LIBS "-lm")
     endif()
 
     if (CMAKE_DL_LIBS)
-        target_link_libraries(3rd_glfw PRIVATE "${CMAKE_DL_LIBS}")
+        target_link_libraries(3rd_${module} PRIVATE "${CMAKE_DL_LIBS}")
         list(APPEND glfw_PKG_LIBS "-l${CMAKE_DL_LIBS}")
     endif()
 endif()
@@ -248,23 +248,23 @@ endif()
 
 if (WIN32)
     if (GLFW_USE_HYBRID_HPG)
-        target_compile_definitions(3rd_glfw PRIVATE _GLFW_USE_HYBRID_HPG)
+        target_compile_definitions(3rd_${module} PRIVATE _GLFW_USE_HYBRID_HPG)
     endif()
 endif()
 
 # Enable a reasonable set of warnings
 # NOTE: The order matters here, Clang-CL matches both MSVC and Clang
 if (MSVC)
-    target_compile_options(3rd_glfw PRIVATE "/W3")
+    target_compile_options(3rd_${module} PRIVATE "/W3")
 elseif (CMAKE_C_COMPILER_ID STREQUAL "GNU" OR
         CMAKE_C_COMPILER_ID STREQUAL "Clang" OR
         CMAKE_C_COMPILER_ID STREQUAL "AppleClang")
 
-    target_compile_options(3rd_glfw PRIVATE "-Wall")
+    target_compile_options(3rd_${module} PRIVATE "-Wall")
 endif()
 
 if (GLFW_BUILD_WIN32)
-    target_compile_definitions(3rd_glfw PRIVATE UNICODE _UNICODE)
+    target_compile_definitions(3rd_${module} PRIVATE UNICODE _UNICODE)
 endif()
 
 # HACK: When building on MinGW, WINVER and UNICODE need to be defined before
@@ -272,7 +272,7 @@ endif()
 # win32_platform.h.  We define them here until a saner solution can be found
 # NOTE: MinGW-w64 and Visual C++ do /not/ need this hack.
 if (MINGW)
-    target_compile_definitions(3rd_glfw PRIVATE WINVER=0x0501)
+    target_compile_definitions(3rd_${module} PRIVATE WINVER=0x0501)
 endif()
 
 # Workaround for legacy MinGW not providing XInput and DirectInput
@@ -281,18 +281,18 @@ if (MINGW)
     check_include_file(dinput.h DINPUT_H_FOUND)
     check_include_file(xinput.h XINPUT_H_FOUND)
     if (NOT DINPUT_H_FOUND OR NOT XINPUT_H_FOUND)
-        target_include_directories(3rd_glfw PRIVATE "${GLFW_SOURCE_DIR}/deps/mingw")
+        target_include_directories(3rd_${module} PRIVATE "${GLFW_SOURCE_DIR}/deps/mingw")
     endif()
 endif()
 
 # Workaround for the MS CRT deprecating parts of the standard library
 if (MSVC OR CMAKE_C_SIMULATE_ID STREQUAL "MSVC")
-    target_compile_definitions(3rd_glfw PRIVATE _CRT_SECURE_NO_WARNINGS)
+    target_compile_definitions(3rd_${module} PRIVATE _CRT_SECURE_NO_WARNINGS)
 endif()
 
 # Workaround for VS 2008 not shipping with stdint.h
 if (MSVC90)
-    target_include_directories(3rd_glfw PRIVATE "${GLFW_SOURCE_DIR}/deps/vs2008")
+    target_include_directories(3rd_${module} PRIVATE "${GLFW_SOURCE_DIR}/deps/vs2008")
 endif()
 
 # Check for the DirectX 9 SDK as it is not included with VS 2008
@@ -307,7 +307,7 @@ endif()
 # Workaround for -std=c99 on Linux disabling _DEFAULT_SOURCE (POSIX 2008 and more)
 if (GLFW_BUILD_X11 OR GLFW_BUILD_WAYLAND)
     if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-        target_compile_definitions(3rd_glfw PRIVATE _DEFAULT_SOURCE)
+        target_compile_definitions(3rd_${module} PRIVATE _DEFAULT_SOURCE)
     endif()
 endif()
 
@@ -316,19 +316,19 @@ if (GLFW_BUILD_SHARED_LIBRARY)
         if (MINGW)
             # Remove the dependency on the shared version of libgcc
             # NOTE: MinGW-w64 has the correct default but MinGW needs this
-            target_link_libraries(3rd_glfw PRIVATE "-static-libgcc")
+            target_link_libraries(3rd_${module} PRIVATE "-static-libgcc")
 
             # Remove the lib prefix on the DLL (but not the import library)
-            set_target_properties(3rd_glfw PROPERTIES PREFIX "")
+            set_target_properties(3rd_${module} PROPERTIES PREFIX "")
 
             # Add a suffix to the import library to avoid naming conflicts
-            set_target_properties(3rd_glfw PROPERTIES IMPORT_SUFFIX "dll.a")
+            set_target_properties(3rd_${module} PROPERTIES IMPORT_SUFFIX "dll.a")
         else()
             # Add a suffix to the import library to avoid naming conflicts
-            set_target_properties(3rd_glfw PROPERTIES IMPORT_SUFFIX "dll.lib")
+            set_target_properties(3rd_${module} PROPERTIES IMPORT_SUFFIX "dll.lib")
         endif()
 
-        target_compile_definitions(3rd_glfw INTERFACE GLFW_DLL)
+        target_compile_definitions(3rd_${module} INTERFACE GLFW_DLL)
     endif()
 
     if (MINGW)
@@ -339,21 +339,21 @@ if (GLFW_BUILD_SHARED_LIBRARY)
         set(CMAKE_REQUIRED_FLAGS "-Wl,--nxcompat")
         check_c_compiler_flag("" _GLFW_HAS_DEP)
         if (_GLFW_HAS_DEP)
-            target_link_libraries(3rd_glfw PRIVATE "-Wl,--nxcompat")
+            target_link_libraries(3rd_${module} PRIVATE "-Wl,--nxcompat")
         endif()
 
         # Compatibility with address space layout randomization (ASLR)
         set(CMAKE_REQUIRED_FLAGS "-Wl,--dynamicbase")
         check_c_compiler_flag("" _GLFW_HAS_ASLR)
         if (_GLFW_HAS_ASLR)
-            target_link_libraries(3rd_glfw PRIVATE "-Wl,--dynamicbase")
+            target_link_libraries(3rd_${module} PRIVATE "-Wl,--dynamicbase")
         endif()
 
         # Compatibility with 64-bit address space layout randomization (ASLR)
         set(CMAKE_REQUIRED_FLAGS "-Wl,--high-entropy-va")
         check_c_compiler_flag("" _GLFW_HAS_64ASLR)
         if (_GLFW_HAS_64ASLR)
-            target_link_libraries(3rd_glfw PRIVATE "-Wl,--high-entropy-va")
+            target_link_libraries(3rd_${module} PRIVATE "-Wl,--high-entropy-va")
         endif()
 
         # Clear flags again to avoid breaking later tests
@@ -362,17 +362,14 @@ if (GLFW_BUILD_SHARED_LIBRARY)
 
     if (UNIX)
         # Hide symbols not explicitly tagged for export from the shared library
-        target_compile_options(3rd_glfw PRIVATE "-fvisibility=hidden")
+        target_compile_options(3rd_${module} PRIVATE "-fvisibility=hidden")
     endif()
 endif()
 
-
 if (NOT ${Easy3D_BUILD_SHARED_LIBS})
-    install(TARGETS 3rd_glfw
+    install(TARGETS 3rd_${module}
             # IMPORTANT: Add the library to the "export-set"
             EXPORT Easy3DTargets
-            #RUNTIME DESTINATION "${Easy3D_INSTALL_BIN_DIR}" COMPONENT bin
             LIBRARY DESTINATION "${Easy3D_INSTALL_LIB_DIR}" COMPONENT lib
-            PUBLIC_HEADER DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/${module}"
             COMPONENT dev)
 endif ()

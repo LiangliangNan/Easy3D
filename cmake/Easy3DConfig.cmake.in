@@ -102,6 +102,8 @@ else ()
         set(Easy3D_${component}_FOUND TRUE)
     endforeach()
     message(STATUS "Found Easy3D (version '@CONF_Easy3D_VERSION@'). Available components (${lib_type}): ${Easy3D_AVAILABLE_COMPONENTS}")
+    message(STATUS "Easy3D_INCLUDE_DIRS: ${Easy3D_CMAKE_DIR}/${Easy3D_INCLUDE_DIRS}")
+    message(STATUS "Easy3D_LIBRARY_DIRS: ${Easy3D_CMAKE_DIR}/${Easy3D_LIBRARY_DIRS}")
 endif ()
 
 # Resolve dependencies

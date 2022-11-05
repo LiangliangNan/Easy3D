@@ -1,8 +1,6 @@
-cmake_minimum_required(VERSION 3.12)
+get_filename_component(module ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
-project(3rd_kdtree)
-
-set(kdtree_HEADERS
+set(${module}_HEADERS
     ANN/ANN.h
     ANN/ANNperf.h
     ANN/ANNx.h
@@ -55,7 +53,7 @@ set(kdtree_HEADERS
     nanoflann/nanoflann.hpp
     )
 
-set(kdtree_SOURCES
+set(${module}_SOURCES
     ANN/ANN.cpp
     ANN/bd_fix_rad_search.cpp
     ANN/bd_pr_search.cpp
@@ -73,21 +71,13 @@ set(kdtree_SOURCES
     ETH_Kd_Tree/kdTree.cpp
     )
 
-
-add_library(3rd_kdtree STATIC ${kdtree_SOURCES} ${kdtree_HEADERS})
-set_target_properties(3rd_kdtree PROPERTIES FOLDER "3rd_party")
-set_target_properties(3rd_kdtree PROPERTIES POSITION_INDEPENDENT_CODE ON)
-if (MSVC)
-	target_compile_definitions(3rd_kdtree PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
-endif()
+add_3rdparty_module(3rd_${module} "${${module}_SOURCES}" "${${module}_HEADERS}")
 
 
 if (NOT ${Easy3D_BUILD_SHARED_LIBS})
-	install(TARGETS 3rd_kdtree
+	install(TARGETS 3rd_${module}
 			# IMPORTANT: Add the library to the "export-set"
 			EXPORT Easy3DTargets
-			#RUNTIME DESTINATION "${Easy3D_INSTALL_BIN_DIR}" COMPONENT bin
 			LIBRARY DESTINATION "${Easy3D_INSTALL_LIB_DIR}" COMPONENT lib
-			PUBLIC_HEADER DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/${module}"
 			COMPONENT dev)
 endif ()

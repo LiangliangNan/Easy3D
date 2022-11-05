@@ -1,4 +1,15 @@
-cmake_minimum_required(VERSION 3.12)
+function(add_3rdparty_module module sources headers)
+    add_library(${module} STATIC ${sources} ${headers})
+    set_target_properties(${module} PROPERTIES FOLDER "3rd_party")
+    set_target_properties(${module} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    if (MSVC)
+        target_compile_definitions(${module} PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
+    endif()
+    message("module: ${module}--------------------------")
+    message("sources: ${sources}}")
+    message("HEADERS: ${headers}")
+endfunction()
+
 
 add_subdirectory(glew)
 add_subdirectory(glfw)

@@ -1,9 +1,7 @@
 set(module util)
 
-find_package(Threads REQUIRED)
-
 set(private_dependencies 3rd_backward)
-set(public_dependencies 3rd_easyloggingpp Threads::Threads)
+set(public_dependencies 3rd_easyloggingpp)
 
 set(${module}_headers
         console_style.h

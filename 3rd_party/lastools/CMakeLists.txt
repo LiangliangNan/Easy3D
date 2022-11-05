@@ -1,8 +1,6 @@
-cmake_minimum_required(VERSION 3.12)
+get_filename_component(module ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
-project(3rd_lastools)
-
-set(lastools_HEADERS
+set(${module}_HEADERS
     LASlib/inc/lasdefinitions.hpp
     LASlib/inc/lasfilter.hpp
     LASlib/inc/lasreader_asc.hpp
@@ -73,7 +71,7 @@ set(lastools_HEADERS
     LASzip/src/mydefs.hpp
     )
 
-set(lastools_SOURCES
+set(${module}_SOURCES
     LASlib/src/fopen_compressed.cpp
     LASlib/src/lasfilter.cpp
     LASlib/src/lasreader_asc.cpp
@@ -121,23 +119,17 @@ set(lastools_SOURCES
     LASzip/src/laszip.cpp
     )
 
-
-add_library(3rd_lastools STATIC ${lastools_SOURCES} ${lastools_HEADERS})
-set_target_properties(3rd_lastools PROPERTIES FOLDER "3rd_party")
-set(LASTOOLS_INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR}/LASzip/src ${CMAKE_CURRENT_LIST_DIR}/LASlib/inc)
-target_include_directories(3rd_lastools PRIVATE ${LASTOOLS_INCLUDE_DIR})
-set_target_properties(3rd_lastools PROPERTIES POSITION_INDEPENDENT_CODE ON)
-if (MSVC)
-	target_compile_definitions(3rd_lastools PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
-endif()
+add_3rdparty_module(3rd_${module} "${${module}_SOURCES}" "${${module}_HEADERS}")
+target_include_directories(3rd_${module} PRIVATE 
+		${CMAKE_CURRENT_LIST_DIR}/LASzip/src 
+		${CMAKE_CURRENT_LIST_DIR}/LASlib/inc
+		)
 
 
 if (NOT ${Easy3D_BUILD_SHARED_LIBS})
-	install(TARGETS 3rd_lastools
+	install(TARGETS 3rd_${module}
 			# IMPORTANT: Add the library to the "export-set"
 			EXPORT Easy3DTargets
-			#RUNTIME DESTINATION "${Easy3D_INSTALL_BIN_DIR}" COMPONENT bin
 			LIBRARY DESTINATION "${Easy3D_INSTALL_LIB_DIR}" COMPONENT lib
-			PUBLIC_HEADER DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/${module}"
 			COMPONENT dev)
 endif ()

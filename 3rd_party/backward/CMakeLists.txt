@@ -1,24 +1,4 @@
-#
-# CMakeLists.txt
-# Copyright 2013 Google Inc. All Rights Reserved.
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
+get_filename_component(module ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
 include(BackwardConfig.cmake)
 
@@ -55,38 +35,23 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_COMPILER_IS_GNUCXX)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 endif()
 
-###############################################################################
-# BACKWARD OBJECT
-###############################################################################
-
-#add_library(backward_object OBJECT backward.cpp)
-#target_compile_definitions(backward_object PRIVATE ${BACKWARD_DEFINITIONS})
-#target_include_directories(backward_object PRIVATE ${BACKWARD_INCLUDE_DIRS})
-#set(BACKWARD_ENABLE $<TARGET_OBJECTS:backward_object> CACHE STRING
-#	"Link with this object to setup backward automatically")
-
-if(BACKWARD_SHARED)
-    set(libtype SHARED)
-endif()
-add_library(3rd_backward ${libtype} backward.cpp)
-target_compile_definitions(3rd_backward PRIVATE ${BACKWARD_DEFINITIONS})
-target_include_directories(3rd_backward PRIVATE ${BACKWARD_INCLUDE_DIRS})
+add_library(3rd_${module} STATIC backward.cpp)
+target_compile_definitions(3rd_${module} PRIVATE ${BACKWARD_DEFINITIONS})
+target_include_directories(3rd_${module} PRIVATE ${BACKWARD_INCLUDE_DIRS})
 
 find_package(Threads REQUIRED)
-target_link_libraries(3rd_backward PRIVATE Threads::Threads)
-set_target_properties(3rd_backward PROPERTIES FOLDER "3rd_party")
-set_target_properties(3rd_backward PROPERTIES POSITION_INDEPENDENT_CODE ON)
+target_link_libraries(3rd_${module} PRIVATE Threads::Threads)
+set_target_properties(3rd_${module} PROPERTIES FOLDER "3rd_party")
+set_target_properties(3rd_${module} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 if (MSVC)
-	target_compile_definitions(3rd_backward PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
+	target_compile_definitions(3rd_${module} PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
 endif()
 
 
 if (NOT ${Easy3D_BUILD_SHARED_LIBS})
-    install(TARGETS 3rd_backward
+    install(TARGETS 3rd_${module}
             # IMPORTANT: Add the library to the "export-set"
             EXPORT Easy3DTargets
-            #RUNTIME DESTINATION "${Easy3D_INSTALL_BIN_DIR}" COMPONENT bin
             LIBRARY DESTINATION "${Easy3D_INSTALL_LIB_DIR}" COMPONENT lib
-            PUBLIC_HEADER DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/${module}"
             COMPONENT dev)
 endif ()

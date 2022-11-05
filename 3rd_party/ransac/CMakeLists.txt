@@ -1,8 +1,6 @@
-cmake_minimum_required(VERSION 3.12)
+get_filename_component(module ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 
-project(3rd_ransac)
-
-set(ransac_HEADERS
+set(${module}_HEADERS
            BasePrimitiveShape.h
            basic.h
            Bitmap.h
@@ -174,7 +172,7 @@ set(ransac_HEADERS
            GfxTL/NearestNeighbors.h  
   )
 
-set(ransac_SOURCES
+set(${module}_SOURCES
            Bitmap.cpp
            BitmapPrimitiveShape.cpp
            Candidate.cpp
@@ -203,16 +201,8 @@ set(ransac_SOURCES
            MiscLib/RefCount.cpp
     )
 
-
-add_library(3rd_ransac STATIC ${ransac_SOURCES} ${ransac_HEADERS})
-set_target_properties(3rd_ransac PROPERTIES FOLDER "3rd_party")
-set(RANSAC_INCLUDE_DIR   ${CMAKE_CURRENT_LIST_DIR})
-target_include_directories(3rd_ransac PRIVATE ${RANSAC_INCLUDE_DIR})
-set_target_properties(3rd_ransac PROPERTIES POSITION_INDEPENDENT_CODE ON)
-
-if (MSVC)
-	target_compile_definitions(3rd_ransac PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
-endif()
+add_3rdparty_module(3rd_${module} "${${module}_SOURCES}" "${${module}_HEADERS}")
+target_include_directories(3rd_${module} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 
 # Liangliang: Otherwise there will be many related errors
 if (APPLE)
@@ -220,29 +210,10 @@ if (APPLE)
 endif()
 
 
-# ------------------------------------------------------------------------------
-# OpenMP
-# ------------------------------------------------------------------------------
-# Liangliang: In the original RANSAC implementation, OpenMP is enabled if the
-#             DOPARALLEL micro can be set. But the code with OpenMP enabled
-#             causes the process loops infinitely (tested on Windows, Mac, and Linux).
-#             So I just disable OpenMP.
-#include(../../cmake/UseOpenMP.cmake)
-#if (OpenMP_FOUND)
-#    # define DOPARALLEL to enable OpenMP
-#    target_compile_definitions(3rd_ransac PRIVATE DOPARALLEL)
-#    target_include_directories(3rd_ransac PRIVATE ${OpenMP_CXX_INCLUDE_DIRS})
-#    target_link_libraries(3rd_ransac PUBLIC ${OpenMP_CXX_LIBRARIES})
-#    message(STATUS "OpenMP support enabled for RANSAC on ${CMAKE_SYSTEM_NAME}")
-#endif ()
-
-
 if (NOT ${Easy3D_BUILD_SHARED_LIBS})
-    install(TARGETS 3rd_ransac
+    install(TARGETS 3rd_${module}
             # IMPORTANT: Add the library to the "export-set"
             EXPORT Easy3DTargets
-            #RUNTIME DESTINATION "${Easy3D_INSTALL_BIN_DIR}" COMPONENT bin
             LIBRARY DESTINATION "${Easy3D_INSTALL_LIB_DIR}" COMPONENT lib
-            PUBLIC_HEADER DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/${module}"
             COMPONENT dev)
 endif ()

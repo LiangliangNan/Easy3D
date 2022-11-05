@@ -209,7 +209,7 @@ function(install_module module)
     install(TARGETS easy3d_${module}
             # IMPORTANT: Add the library to the "export-set"
             EXPORT Easy3DTargets
-            #RUNTIME DESTINATION "${Easy3D_INSTALL_BIN_DIR}" COMPONENT bin
+            RUNTIME DESTINATION "${Easy3D_INSTALL_BIN_DIR}" COMPONENT bin
             LIBRARY DESTINATION "${Easy3D_INSTALL_LIB_DIR}" COMPONENT lib
             PUBLIC_HEADER DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/easy3d/${module}"
             COMPONENT dev)
