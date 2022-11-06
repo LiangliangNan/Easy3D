@@ -11,6 +11,13 @@ project(Easy3D VERSION ${Easy3D_VERSION})
 
 ################################################################################
 
+# specify the C++ standard
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+message("-- Setting C++11")
+
+################################################################################
+
 # Offer the user the choice of overriding the installation directories
 # Let's also add the version to the path to allow multiple versions of Easy3D in the same directory.
 
@@ -55,12 +62,6 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${Easy3D_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${Easy3D_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${Easy3D_BINARY_DIR}/lib)
-
-################################################################################
-
-# specify the C++ standard
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 ################################################################################
 
