@@ -49,11 +49,11 @@ set(${PROJECT_NAME}_SOURCES
         )
 
 if (WIN32 OR MSVC)
-	set(${PROJECT_NAME}_RESOURCES resources/sample.rc)
+	set(${PROJECT_NAME}_RESOURCES Resources/sample.rc)
     add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_RESOURCES}) # you can add "WIN32" to disable the console window
     message(STATUS "Creating the wxWidgets viewer with a console window")
 elseif (APPLE)
-    set(${PROJECT_NAME}_ICON ${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/sample.icns)
+    set(${PROJECT_NAME}_ICON ${CMAKE_CURRENT_SOURCE_DIR}/Resources/icons/sample.icns)
     #Append the new files to the resources file list
     list(APPEND ${PROJECT_NAME}_RESOURCES ${${PROJECT_NAME}_ICON})
     add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_RESOURCES})
@@ -62,7 +62,7 @@ elseif (APPLE)
             INSTALL_RPATH "@executable_path/../Frameworks"
             MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME}
             MACOSX_BUNDLE TRUE
-            MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/resources/Mac/Info.plist"
+            MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Mac/Info.plist"
             MACOSX_BUNDLE_ICON_FILE "sample.icns"
 			MACOSX_BUNDLE_SHORT_VERSION_STRING "${Easy3D_MAJOR_VERSION}.${Easy3D_MINOR_VERSION}.${Easy3D_PATCH_VERSION}"
             MACOSX_BUNDLE_LONG_VERSION_STRING "${Easy3D_MAJOR_VERSION}.${Easy3D_MINOR_VERSION}.${Easy3D_PATCH_VERSION}"
@@ -76,7 +76,7 @@ endif ()
 
 # The resources directory
 target_compile_definitions(${PROJECT_NAME} PRIVATE
-        "RESOURCES_DIR=\"${CMAKE_CURRENT_LIST_DIR}/resources\""
+        "RESOURCES_DIR=\"${CMAKE_CURRENT_LIST_DIR}/Resources\""
         )
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${Easy3D_INCLUDE_DIR})
