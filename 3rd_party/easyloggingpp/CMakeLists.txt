@@ -4,7 +4,7 @@ macro(require_cpp11)
         if (${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} GREATER 3.0)
                 # CMake 3.1 has built-in CXX standard checks.
                 set(CMAKE_CXX_STANDARD 11)
-                set(CMAKE_CXX_STANDARD_REQUIRED on)
+                set(CMAKE_CXX_STANDARD_REQUIRED ON)
         else()
                 if (CMAKE_CXX_COMPILER_ID MATCHES "GCC")
                     message ("-- GNU CXX (-std=c++11)")
