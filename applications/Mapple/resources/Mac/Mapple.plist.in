@@ -27,13 +27,13 @@
 	<key>CFBundleShortVersionString</key>
 	<string>${MACOSX_BUNDLE_SHORT_VERSION_STRING}</string>
 	<key>CFBundleSignature</key>
-	<string>lnan</string>
+	<string>liangliang.nan.${MACOSX_BUNDLE_BUNDLE_NAME}</string>
 	<key>CFBundleVersion</key>
 	<string>${MACOSX_BUNDLE_BUNDLE_VERSION}</string>
 	<key>CSResourcesFileMapped</key>
 	<true/>
 	<key>LSMinimumSystemVersion</key>
-	<string>10.12</string>
+	<string>@CMAKE_OSX_DEPLOYMENT_TARGET@</string>
 	<key>LSRequiresCarbon</key>
 	<true/>
 	<key>NSHumanReadableCopyright</key>

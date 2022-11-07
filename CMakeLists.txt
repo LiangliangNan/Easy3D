@@ -21,7 +21,6 @@ message("-- Setting C++11")
 # Offer the user the choice of overriding the installation directories
 # Let's also add the version to the path to allow multiple versions of Easy3D in the same directory.
 
-# Use this snippet *after* PROJECT(xxx):
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     if (WIN32 OR MSVC)  # windows
         set(CMAKE_INSTALL_PREFIX "C:/Program Files/Easy3D/${Easy3D_VERSION}" CACHE PATH "Installation directory" FORCE)
@@ -30,6 +29,10 @@ if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     else ()             # Linux: different from tradition, let's keep everything together
         set(CMAKE_INSTALL_PREFIX "/usr/local/easy3d-${Easy3D_VERSION}" CACHE PATH "Installation directory" FORCE)
     endif ()
+endif ()
+
+if (APPLE)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum macOS support" FORCE)
 endif ()
 
 set(Easy3D_INSTALL_LIB_DIR ${CMAKE_INSTALL_PREFIX}/lib CACHE PATH "Installation directory for libraries")
@@ -295,7 +298,6 @@ elseif (CMAKE_SIZEOF_VOID_P EQUAL 4)
     message(FATAL_ERROR "32-bit not supported! You should specify CMake option '-DCMAKE_GENERATOR_PLATFORM=x64'")
 endif ()
 if (APPLE)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum macOS support" FORCE)
     message(STATUS "    Minimum macOS support : ${CMAKE_OSX_DEPLOYMENT_TARGET}")
     mark_as_advanced(CMAKE_OSX_ARCHITECTURES)
 endif ()

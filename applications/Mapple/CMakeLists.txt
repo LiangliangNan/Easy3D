@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 
-get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 project(${PROJECT_NAME})
 
 
@@ -166,7 +166,7 @@ elseif (APPLE)
     resource(TEXTURES ${Easy3D_ROOT}/resources/textures Resources/textures *.png)
 
     # This tells CMake where to find and install the ICON file
-    set(${PROJECT_NAME}_ICON ${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/Mapple.icns)
+    set(${PROJECT_NAME}_ICON ${CMAKE_CURRENT_LIST_DIR}/resources/icons/Mapple.icns)
 
     #Append the new files to the resources file list
     list(APPEND ${PROJECT_NAME}_RESOURCES ${${PROJECT_NAME}_ICON} ${VERTEX_SHADERS} ${GEOMETRY_SHADERS} ${FRAGMENT_SHADERS} ${COLORMAPS} ${FONTS} ${IMAGES} ${TEXTURES})
@@ -178,16 +178,17 @@ elseif (APPLE)
     ## Note: On macOS, high-DPI support is enabled by settings in the Info.plist file. Make sure they are present.
     ## For more information, see: http://doc.qt.io/qt-5/highdpi.html
     ## Enable high DPI support by using my Info.plist file in which I added NSHighResolutionCapable to be true.
+    configure_file("${CMAKE_CURRENT_LIST_DIR}/resources/Mac/Mapple.plist.in" "${CMAKE_CURRENT_BINARY_DIR}/Mapple/resources/Mac/Mapple.plist" @ONLY)
     set_target_properties(${PROJECT_NAME} PROPERTIES
-            INSTALL_RPATH "@executable_path/../Frameworks"
-            MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME}
             MACOSX_BUNDLE TRUE
-            MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/resources/Mac/Mapple.plist"
+            MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME}
+            MACOSX_BUNDLE_GUI_IDENTIFIER ${PROJECT_NAME}
+            MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_BINARY_DIR}/Mapple/resources/Mac/Mapple.plist"
             MACOSX_BUNDLE_ICON_FILE "Mapple.icns"
             MACOSX_BUNDLE_SHORT_VERSION_STRING "${Easy3D_MAJOR_VERSION}.${Easy3D_MINOR_VERSION}.${Easy3D_PATCH_VERSION}"
             MACOSX_BUNDLE_LONG_VERSION_STRING "${Easy3D_MAJOR_VERSION}.${Easy3D_MINOR_VERSION}.${Easy3D_PATCH_VERSION}"
             MACOSX_BUNDLE_BUNDLE_VERSION "${Easy3D_MAJOR_VERSION}.${Easy3D_MINOR_VERSION}.${Easy3D_PATCH_VERSION}"
-            MACOSX_BUNDLE_GUI_IDENTIFIER "Mapple"
+            INSTALL_RPATH "@executable_path/../Frameworks"
             )
 else ()
     add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} ${${PROJECT_NAME}_RESOURCES})
