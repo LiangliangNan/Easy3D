@@ -43,20 +43,20 @@ namespace easy3d {
 
         // Sets the resource directory (containing color maps, shaders, textures, fonts, etc.)
         void initialize(const std::string& res_dir) {
-            resources_dir = res_dir;
+            resources_dir = file_system::convert_to_native_style(res_dir);
         }
 
         // resource directory (containing color maps, shaders, textures, fonts, etc.)
         const std::string directory() {
             // first check if the resources directory (with the Easy3D distribution) exist
-            std::string dir = resources_dir;
+            std::string& dir = resources_dir;
             if (file_system::is_directory(dir)) {
                 VLOG_N_TIMES(1, 1) << "resources directory: " << dir;
                 return dir;
             }
 
             std::string parent = file_system::executable_directory();
-            dir = parent + "/resources";
+            dir = file_system::convert_to_native_style(parent + "/resources");
             if (file_system::is_directory(dir)) {
                 VLOG_N_TIMES(1, 1) << "resources directory: " << dir;
                 return dir;
@@ -67,7 +67,7 @@ namespace easy3d {
                 // "PolyFit.app/Contents/MacOS/PolyFit". Some IDEs may also put the 'exe' in
                 // Debug/Release subfolder, so we may try four times up at most.
                 parent = file_system::parent_directory(parent);
-                dir = parent + "/resources";
+                dir = file_system::convert_to_native_style(parent + "/resources");
                 if (file_system::is_directory(dir)) {
                     VLOG_N_TIMES(1, 1) << "resources directory: " << dir;
                     return dir;
@@ -75,7 +75,7 @@ namespace easy3d {
                 else {
                     for (int i = 0; i < 4; ++i) {
                         parent = file_system::parent_directory(parent);
-                        dir = parent + "/resources";
+                        dir = file_system::convert_to_native_style(parent + "/resources");
                         if (file_system::is_directory(dir)) {
                             VLOG_N_TIMES(1, 1) << "resources directory: " << dir;
                             return dir;
