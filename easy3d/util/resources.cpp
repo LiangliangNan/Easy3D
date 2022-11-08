@@ -31,7 +31,7 @@
 
 namespace easy3d {
 
-    static std::string resources_dir = Easy3D_RESOURCES_DIR;
+    static std::string resources_dir = file_system::convert_to_native_style(Easy3D_RESOURCES_DIR);
 
     void initialize(bool use_log_file, const std::string& res_dir) {
         logging::initialize(false, true, true, false, use_log_file ? "default" : "", 9);
