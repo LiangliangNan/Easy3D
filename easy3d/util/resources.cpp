@@ -43,7 +43,7 @@ namespace easy3d {
 
         // Sets the resource directory (containing color maps, shaders, textures, fonts, etc.)
         void initialize(const std::string& res_dir) {
-            resources_dir = file_system::convert_to_native_style(res_dir);
+            resources_dir = res_dir;
         }
 
         // resource directory (containing color maps, shaders, textures, fonts, etc.)
