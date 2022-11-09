@@ -170,7 +170,7 @@ namespace easy3d {
         void begin_polygon(const vec3 &normal);
         /**
          * @brief Begin the tessellation of a complex polygon.
-         * @details This function does not proivde the polygon normal and let the tessellator to decide.
+         * @details This function does not provide the polygon normal and let the tessellator decide.
          */
         void begin_polygon();
 
