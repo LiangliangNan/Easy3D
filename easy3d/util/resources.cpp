@@ -57,10 +57,8 @@ namespace easy3d {
 
             std::string parent = file_system::executable_directory();
             dir = file_system::convert_to_native_style(parent + "/resources");
-            if (file_system::is_directory(dir)) {
-                VLOG_N_TIMES(1, 1) << "resources directory: " << dir;
+            if (file_system::is_directory(dir))
                 return dir;
-            }
             else {
                 // For macOS, if reached here, we may need to move "up" three times, because
                 // macOS puts the executable file in an application bundle, e.g.,
@@ -68,18 +66,14 @@ namespace easy3d {
                 // Debug/Release subfolder, so we may try four times up at most.
                 parent = file_system::parent_directory(parent);
                 dir = file_system::convert_to_native_style(parent + "/resources");
-                if (file_system::is_directory(dir)) {
-                    VLOG_N_TIMES(1, 1) << "resources directory: " << dir;
+                if (file_system::is_directory(dir))
                     return dir;
-                }
                 else {
                     for (int i = 0; i < 4; ++i) {
                         parent = file_system::parent_directory(parent);
                         dir = file_system::convert_to_native_style(parent + "/resources");
-                        if (file_system::is_directory(dir)) {
-                            VLOG_N_TIMES(1, 1) << "resources directory: " << dir;
+                        if (file_system::is_directory(dir))
                             return dir;
-                        }
                     }
                 }
                 // if still could not find it, show an error and return the current working directory
