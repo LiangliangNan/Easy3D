@@ -1,3 +1,7 @@
+* Things work differently with shared build
+  - log(INFO) doesn't write to the log file
+  - imgui viewer doesn't show the menu.
+
 * ToDo list (or on going):
     - Walkthrough and animation; allow to modify the cameras interactively
     - Implement potree for huge point cloud visualization (https://github.com/potree/potree)
