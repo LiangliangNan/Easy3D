@@ -1,10 +1,11 @@
 #ifndef MiscLib__ALIGNEDALLOCATOR_HEADER__
 #define MiscLib__ALIGNEDALLOCATOR_HEADER__
+
 #include <memory>
-#ifndef __APPLE__
-#include <malloc.h>
-#else
+#if defined(__APPLE__) || (defined(_WIN32) && defined(__MINGW32__))
 #include <stdlib.h>
+#else
+#include <malloc.h>
 #endif
 
 #if defined(__x86_64__) || defined(__i386__) || defined(_M_IX86) || defined(_M_X64)
@@ -25,14 +26,16 @@
 #ifndef a_free  
 #define a_free(a)      free(a) 
 #endif // !_mm_free
-#ifndef a_malloc
-#ifndef __APPLE__
-#define a_malloc(sz, align) aligned_alloc((align), (sz))
-#else
-#define a_malloc(sz, align) malloc(sz) // OSX aligns all allocations to 16 byte boundaries (except valloc which aligns to page boundaries) - so specific alignment requests are ignored.
-#endif
-#endif // !_mm_malloc
 
+#ifndef a_malloc
+#if defined(__APPLE__)
+#define a_malloc(sz, align) malloc(sz) // OSX aligns all allocations to 16 byte boundaries (except valloc which aligns to page boundaries) - so specific alignment requests are ignored.
+#elif (defined(_WIN32) && defined(__MINGW32__))
+#define a_malloc(sz, align) _aligned_malloc((align), (sz))
+#else
+#define a_malloc(sz, align) aligned_alloc((align), (sz))
+#endif
+#endif // !a_malloc
 
 #include <limits>
 #ifdef max
