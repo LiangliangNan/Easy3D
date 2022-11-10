@@ -16,8 +16,8 @@ set(${module}_SOURCES
         source/mesh.h
         source/normal.c
         source/normal.h
-        source/priorityq-heap.c
-        source/priorityq-heap.h
+        #source/priorityq-heap.c
+        #source/priorityq-heap.h
         source/priorityq-sort.h
         source/priorityq.c
         source/priorityq.h

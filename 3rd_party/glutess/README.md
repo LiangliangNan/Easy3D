@@ -1,4 +1,6 @@
 This is a stripped version of GLUtesselator.
+The original code was from:
+    https://gitlab.freedesktop.org/mesa/glu
 
 
 General Polygon Tesselation
