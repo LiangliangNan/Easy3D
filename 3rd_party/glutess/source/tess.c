@@ -32,6 +32,7 @@
 **
 */
 
+
 #include <stddef.h>
 #include <assert.h>
 #include <setjmp.h>
@@ -59,7 +60,7 @@
 /*ARGSUSED*/ static void noEnd( void ) {}
 /*ARGSUSED*/ static void noError( unsigned int errnum ) {}
 /*ARGSUSED*/ static void noCombine( double coords[3], void *data[4],
-				    float weight[4], void **dataOut ) {}
+				    double weight[4], void **dataOut ) {}
 /*ARGSUSED*/ static void noMesh( GLUmesh *mesh ) {}
 
 
@@ -74,7 +75,7 @@
 					     void *polygonData ) {}
 /*ARGSUSED*/ void __gl_noCombineData( double coords[3],
 					       void *data[4],
-					       float weight[4],
+					       double weight[4],
 					       void **outData,
 					       void *polygonData ) {}
 
@@ -322,13 +323,13 @@ TessCallback( GLUtesselator *tess, unsigned int which, _GLUfuncptr fn)
     return;
   case TESS_COMBINE:
     tess->callCombine = (fn == NULL) ? &noCombine :
-	(void (*)(double [3],void *[4], float [4], void ** )) fn;
+	(void (*)(double [3],void *[4], double[4], void ** )) fn;
     return;
   case TESS_COMBINE_DATA:
     tess->callCombineData = (fn == NULL) ? &__gl_noCombineData :
 					   (void (*)(double [3],
 						     void *[4],
-						     float [4],
+						     double [4],
 						     void **,
 						     void *)) fn;
     return;

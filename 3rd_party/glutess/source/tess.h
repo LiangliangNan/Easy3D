@@ -85,7 +85,7 @@ struct GLUtesselator {
   GLUvertex	*event;		/* current sweep event being processed */
 
   void		(*callCombine)( double coords[3], void *data[4],
-			        float weight[4], void **outData );
+			        double weight[4], void **outData );
 
   /*** state needed for rendering callbacks (see render.c) ***/
 
@@ -109,13 +109,13 @@ struct GLUtesselator {
 
   /*** rendering callbacks that also pass polygon data  ***/ 
   void		(*callBeginData)( unsigned int type, void *polygonData );
-  void		(*callEdgeFlagData)( TESS_boolean boundaryEdge,
+  void		(*callEdgeFlagData)( TESS_boolean boundaryEdge, 
 				     void *polygonData );
   void		(*callVertexData)( void *data, void *polygonData );
   void		(*callEndData)( void *polygonData );
   void		(*callErrorData)( unsigned int errnum, void *polygonData );
   void		(*callCombineData)( double coords[3], void *data[4],
-				    float weight[4], void **outData,
+				    double weight[4], void **outData,
 				    void *polygonData );
 
   jmp_buf env;			/* place to jump to when memAllocs fail */
@@ -129,7 +129,7 @@ void __gl_noVertexData( void *data, void *polygonData );
 void __gl_noEndData( void *polygonData );
 void __gl_noErrorData( unsigned int errnum, void *polygonData );
 void __gl_noCombineData( double coords[3], void *data[4],
-			 float weight[4], void **outData,
+			 double weight[4], void **outData,
 			 void *polygonData );
 
 #define CALL_BEGIN_OR_BEGIN_DATA(a) \

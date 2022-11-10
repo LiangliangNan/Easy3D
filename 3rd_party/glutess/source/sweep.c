@@ -32,6 +32,7 @@
 **
 */
 
+
 #include <assert.h>
 #include <stddef.h>
 #include <setjmp.h>		/* longjmp */
@@ -409,7 +410,7 @@ static void AddRightEdges( GLUtesselator *tess, ActiveRegion *regUp,
 
 
 static void CallCombine( GLUtesselator *tess, GLUvertex *isect,
-			 void *data[4], float weights[4], int needed )
+			 void *data[4], double weights[4], int needed )
 {
   double coords[3];
 
@@ -442,7 +443,7 @@ static void SpliceMergeVertices( GLUtesselator *tess, GLUhalfEdge *e1,
  */
 {
   void *data[4] = { NULL, NULL, NULL, NULL };
-  float weights[4] = { 0.5, 0.5, 0.0, 0.0 };
+  double weights[4] = { 0.5, 0.5, 0.0, 0.0 };
 
   data[0] = e1->Org->data;
   data[1] = e2->Org->data;
@@ -451,7 +452,7 @@ static void SpliceMergeVertices( GLUtesselator *tess, GLUhalfEdge *e1,
 }
 
 static void VertexWeights( GLUvertex *isect, GLUvertex *org, GLUvertex *dst,
-			   float *weights )
+			   double *weights )
 /*
  * Find some weights which describe how the intersection vertex is
  * a linear combination of "org" and "dest".  Each of the two edges
@@ -481,7 +482,7 @@ static void GetIntersectData( GLUtesselator *tess, GLUvertex *isect,
  */
 {
   void *data[4];
-  float weights[4];
+  double weights[4];
 
   data[0] = orgUp->data;
   data[1] = dstUp->data;
