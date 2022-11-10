@@ -105,6 +105,11 @@ namespace easy3d {
             delete m->renderer();
             delete m;
         }
+		models_.clear();
+
+		for (auto d : drawables_)
+			delete d;
+		drawables_.clear();
 
         ShaderManager::terminate();
         TextureManager::terminate();
@@ -687,8 +692,44 @@ namespace easy3d {
     }
 
 
+	bool Viewer::add_drawable(Drawable *drawable) {
+		if (!drawable) {
+			LOG(WARNING) << "drawable is NULL.";
+			return false;
+		}
+		for (auto d : drawables_) {
+			if (drawable == d) {
+				LOG(WARNING) << "drawable has already been added to the viewer.";
+				return false;
+			}
+		}
+
+		drawables_.push_back(drawable);
+		return true;
+	}
+
+
+	bool Viewer::delete_drawable(Drawable *drawable) {
+		if (!drawable) {
+			LOG(WARNING) << "drawable is NULL";
+			return false;
+		}
+
+		auto pos = std::find(drawables_.begin(), drawables_.end(), drawable);
+		if (pos != drawables_.end()) {
+			drawables_.erase(pos);
+			delete drawable;
+			return true;
+		}
+		else {
+			LOG(WARNING) << "no such drawable: " << drawable->name();
+			return false;
+		}
+	}
+
+
     void Viewer::fitScreen(const Model *model) {
-        if (!model && models_.empty())
+        if (!model && models_.empty() && drawables_.empty()) 
             return;
 
         Box3 box;
@@ -697,6 +738,8 @@ namespace easy3d {
         else {
             for (auto m: models_)
                 box.grow(m->bounding_box());
+			for (auto d : drawables_)
+				box.grow(d->bounding_box());
         }
         camera_->setSceneBoundingBox(box.min_point(), box.max_point());
         camera_->showEntireScene();
@@ -975,6 +1018,11 @@ namespace easy3d {
                 easy3d_debug_log_gl_error;
             }
         }
+
+		for (auto d : drawables_) {
+			if (d->is_visible())
+				d->draw(camera());
+		}
     }
 
 }

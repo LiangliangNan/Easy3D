@@ -40,6 +40,7 @@ namespace easy3d {
 
     class Camera;
     class Model;
+	class Drawable;
     class TrianglesDrawable;
     class TextRenderer;
 
@@ -64,6 +65,10 @@ namespace easy3d {
 
         const std::vector<easy3d::Model *> &models() const { return models_; }
         easy3d::Model *currentModel() const;
+
+		bool add_drawable(Drawable* drawable);
+		bool delete_drawable(Drawable* drawable);
+		const std::vector<Drawable*>& drawables() const { return drawables_; }
 
         // the camera
         easy3d::Camera *camera() const { return camera_; }
@@ -208,6 +213,9 @@ namespace easy3d {
         easy3d::TrianglesDrawable *drawable_axes_;
         std::vector<easy3d::Model *> models_;
         int model_idx_;
+
+		// drawables independent of any model
+		std::vector<Drawable*> drawables_;
     };
 
 }
