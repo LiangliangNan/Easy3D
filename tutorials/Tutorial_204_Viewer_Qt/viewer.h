@@ -66,6 +66,15 @@ namespace easy3d {
         const std::vector<easy3d::Model *> &models() const { return models_; }
         easy3d::Model *currentModel() const;
 
+        // Attention: In Qt, all rendering happens into an OpenGL framebuffer object. The viewer's OpenGL rendering
+        //      context is made current when paintGL(), resizeGL(), or initializeGL() is called. If you need to call
+        //      the standard OpenGL API functions from other places, you must call `makeCurrent()` first.
+        //      For the drawable to be properly visualized, the render buffers must be updated. There are three
+        //      options to achieve this:
+        //          1) implement your buffer update in this (or an inherited) class, where you call `makeCurrent()`
+        //             before and `doneCurrent()` after you update the buffers;
+        //          2) put your code for buffer update between `viewer_->makeCurrent()` and `viewer_->doneCurrent()`;
+        //          3) provide a customized drawable update function. See `Drawable::set_update_func(...)`.
 		bool add_drawable(Drawable* drawable);
 		bool delete_drawable(Drawable* drawable);
 		const std::vector<Drawable*>& drawables() const { return drawables_; }
