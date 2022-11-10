@@ -15,8 +15,6 @@ cmake_dependent_option(GLFW_USE_HYBRID_HPG "Force use of high-performance GPU on
 cmake_dependent_option(USE_MSVC_RUNTIME_LIBRARY_DLL "Use MSVC runtime library DLL" ON
                        "MSVC" OFF)
 
-set(GLFW_LIBRARY_TYPE STATIC)
-
 mark_as_advanced(
         GLFW_BUILD_WIN32
         GLFW_BUILD_COCOA
@@ -24,7 +22,6 @@ mark_as_advanced(
         GLFW_BUILD_WAYLAND
         GLFW_USE_HYBRID_HPG
         USE_MSVC_RUNTIME_LIBRARY_DLL
-        GLFW_LIBRARY_TYPE
         )
 
 find_package(Threads REQUIRED)

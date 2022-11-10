@@ -1,5 +1,4 @@
-
-add_library(3rd_${module} ${GLFW_LIBRARY_TYPE}
+add_library(3rd_${module} STATIC
                  "${GLFW_SOURCE_DIR}/include/GLFW/glfw3.h"
                  "${GLFW_SOURCE_DIR}/include/GLFW/glfw3native.h"
                  internal.h platform.h mappings.h
