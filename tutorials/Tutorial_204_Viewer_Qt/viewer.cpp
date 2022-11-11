@@ -172,7 +172,7 @@ namespace easy3d {
 #else
         dpi_scaling_ = devicePixelRatio();
 #endif
-        VLOG(1) << "DPI scaling: " << dpi_scaling();
+        VLOG(1) << "DPI scaling: " << dpiScaling();
 
         // This won't work because QOpenGLWidget draws everything in framebuffer and
         // the framebuffer has not been created in the initializeGL() method. We
@@ -181,7 +181,7 @@ namespace easy3d {
         //func_->glgetintegerv(gl_samples, &samples_received);
 
         // create TextRenderer renderer and load default fonts
-        texter_ = new TextRenderer(dpi_scaling());
+        texter_ = new TextRenderer(dpiScaling());
         texter_->add_font(resource::directory() + "/fonts/en_Earth-Normal.ttf");
         texter_->add_font(resource::directory() + "/fonts/en_Roboto-Medium.ttf");
 
@@ -322,8 +322,8 @@ namespace easy3d {
     bool Viewer::saveSnapshot(const QString &file_name) {
         makeCurrent();
 
-        int w = static_cast<int>(width() * dpi_scaling());
-        int h = static_cast<int>(height() * dpi_scaling());
+        int w = static_cast<int>(width() * dpiScaling());
+        int h = static_cast<int>(height() * dpiScaling());
 
         QOpenGLFramebufferObjectFormat format;
         format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
@@ -692,7 +692,7 @@ namespace easy3d {
     }
 
 
-	bool Viewer::add_drawable(Drawable *drawable) {
+	bool Viewer::addDrawable(Drawable *drawable) {
 		if (!drawable) {
 			LOG(WARNING) << "drawable is NULL.";
 			return false;
@@ -709,7 +709,7 @@ namespace easy3d {
 	}
 
 
-	bool Viewer::delete_drawable(Drawable *drawable) {
+	bool Viewer::deleteDrawable(Drawable *drawable) {
 		if (!drawable) {
 			LOG(WARNING) << "drawable is NULL";
 			return false;
@@ -755,9 +755,9 @@ namespace easy3d {
         int gly = height() - 1 - p.y();
 
         // NOTE: when dealing with OpenGL, all positions are relative to the viewer port.
-        //       So we have to handle highdpi desplays.
-        glx = static_cast<int>(glx * dpi_scaling());
-        gly = static_cast<int>(gly * dpi_scaling());
+        //       So we have to handle highdpi displays.
+        glx = static_cast<int>(glx * dpiScaling());
+        gly = static_cast<int>(gly * dpiScaling());
 
         int samples = 0;
         func_->glGetIntegerv(GL_SAMPLES, &samples);
@@ -873,7 +873,7 @@ namespace easy3d {
         func_->glGetIntegerv(GL_VIEWPORT, viewport);
         func_->glGetIntegerv(GL_SCISSOR_BOX, scissor);
 
-        static const int corner_frame_size = static_cast<int>(100 * dpi_scaling());
+        static const int corner_frame_size = static_cast<int>(100 * dpiScaling());
         func_->glViewport(0, 0, corner_frame_size, corner_frame_size);
         func_->glScissor(0, 0, corner_frame_size, corner_frame_size);
 
@@ -935,7 +935,7 @@ namespace easy3d {
         // draw the Easy3D logo and GPU time
         if (texter_ && texter_->num_fonts() >= 2) {
             const float font_size = 15.0f;
-            const float offset = 20.0f * dpi_scaling();
+            const float offset = 20.0f * dpiScaling();
             texter_->draw("Easy3D", offset, offset, font_size, 0);
 
             // FPS computation
@@ -948,7 +948,7 @@ namespace easy3d {
                 fps_string = tr("fps: %1").arg(fps, 0, 'f', ((fps < 10.0) ? 1 : 0));
                 fps_count = 0;
             }
-            texter_->draw(fps_string.toStdString(), offset, 50.0f * dpi_scaling(), 16, 1);
+            texter_->draw(fps_string.toStdString(), offset, 50.0f * dpiScaling(), 16, 1);
         }
 
         if (show_pivot_point_) {

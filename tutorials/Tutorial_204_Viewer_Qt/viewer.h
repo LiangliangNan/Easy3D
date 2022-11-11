@@ -55,7 +55,7 @@ namespace easy3d {
         // the actual samples received
         int samples() const { return samples_; }
         // Scaling factor for high DPI devices
-        double dpi_scaling() const { return dpi_scaling_; }
+        double dpiScaling() const { return dpi_scaling_; }
 
         const easy3d::vec4 &backGroundColor() const { return background_color_; }
         void setBackgroundColor(const easy3d::vec4 &c);
@@ -66,17 +66,21 @@ namespace easy3d {
         const std::vector<easy3d::Model *> &models() const { return models_; }
         easy3d::Model *currentModel() const;
 
-        // Attention: In Qt, all rendering happens into an OpenGL framebuffer object. The viewer's OpenGL rendering
-        //      context is made current when paintGL(), resizeGL(), or initializeGL() is called. If you need to call
-        //      the standard OpenGL API functions from other places, you must call `makeCurrent()` first.
-        //      For the drawable to be properly visualized, the render buffers must be updated. There are three
-        //      options to achieve this:
-        //          1) implement your buffer update in this (or an inherited) class, where you call `makeCurrent()`
-        //             before and `doneCurrent()` after you update the buffers;
-        //          2) put your code for buffer update between `viewer_->makeCurrent()` and `viewer_->doneCurrent()`;
-        //          3) provide a customized drawable update function. See `Drawable::set_update_func(...)`.
-		bool add_drawable(Drawable* drawable);
-		bool delete_drawable(Drawable* drawable);
+        /**
+         * Add a drawable to the viewer
+         * In Qt, all rendering happens into an OpenGL framebuffer object. The viewer's OpenGL rendering
+         * context is made current when paintGL(), resizeGL(), or initializeGL() is called. If you need to call
+         * the standard OpenGL API functions from other places, you must call `makeCurrent()` first.
+         * For the drawable to be properly visualized, the render buffers must be updated. There are three
+         * options to achieve this:
+         *      1) implement your buffer update as a member function of this (or an inherited) class, where you call
+         *         `makeCurrent()` before and `doneCurrent()` after your code;
+         *      2) if buffer update is happened in other places, add `viewer->makeCurrent()` before and
+         *         `viewer->doneCurrent()` after your code;
+         *      3) provide a customized buffer update function for your drawable. See `Drawable::set_update_func(...)`.
+         */
+		bool addDrawable(Drawable* drawable);
+		bool deleteDrawable(Drawable* drawable);
 		const std::vector<Drawable*>& drawables() const { return drawables_; }
 
         // the camera
