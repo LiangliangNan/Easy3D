@@ -85,7 +85,7 @@ namespace internal {
             Matrix4x4 trans0, trans1;
             for (auto i = 0; i < 4; ++i) {
                 for (auto j = 0; j < 4; ++j) {
-                    // ToDo: Why?
+                    // ToDo: Why transpose? (opcode requires 'world' matrix)
                     trans0[i][j] = t0(j, i);
                     trans1[i][j] = t1(j, i);
                 }
