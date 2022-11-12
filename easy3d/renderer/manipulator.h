@@ -76,7 +76,8 @@ namespace easy3d {
         const ManipulatedFrame *frame() const { return frame_; }
 
         /// Returns the transformation introduced by this manipulator.
-        /// \note Rotation is performed around the 'center' of the object.
+        /// \note Rotation is performed around object 'center'. Thus the returned transformation is different from
+        ///     'frame()->matrix()'. Their relation is: 'matrix() == frame()->matrix() * mat4::translation(-center)'.
         mat4 matrix() const;
 
         /// Draws the manipulated frame.
