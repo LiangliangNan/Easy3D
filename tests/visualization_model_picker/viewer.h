@@ -29,8 +29,6 @@
 
 #include <easy3d/viewer/viewer.h>
 
-#include <unordered_map>
-
 // This class demonstrates how to pick a model using the mouse
 
 namespace easy3d {
@@ -48,9 +46,6 @@ protected:
 
 private:
     void mark(easy3d::Model *model);
-
-private:
-    std::unordered_map<easy3d::Model*, easy3d::vec4> initial_colors_;
 };
 
 
