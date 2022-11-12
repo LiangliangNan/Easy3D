@@ -33,6 +33,8 @@
 #include <easy3d/util/file_system.h>
 #include <easy3d/algo/collider.h>
 
+#include <3rd_party/glfw/include/GLFW/glfw3.h>    // for the mouse buttons
+
 using namespace easy3d;
 
 
@@ -46,7 +48,7 @@ CollisionViewer::CollisionViewer(const std::string &title)
     auto mesh0 = dynamic_cast<SurfaceMesh*>(m0);
     auto mesh1 = dynamic_cast<SurfaceMesh*>(m1);
     if (mesh0 && mesh1) {
-        // use the manipulator to transform the first model (for visualization purpose, but its geometry is not changed)
+        // use the manipulator to transform the first model (visualization only and geometry is not changed)
         mesh0->set_manipulator(new Manipulator(mesh0));
 
         mesh0->add_face_property<vec3>("face_color", model0_color_);
@@ -56,44 +58,55 @@ CollisionViewer::CollisionViewer(const std::string &title)
         mesh1->renderer()->get_triangles_drawable("faces")->set_coloring(easy3d::State::COLOR_PROPERTY, easy3d::State::FACE, "face_color");
 
         collider_ = new Collider(mesh0, mesh1);
+        detect();
     }
     else
         LOG(WARNING) << "not two meshes have been loaded";
-
-    timer_.set_interval(20, this, &CollisionViewer::detect);
 }
 
 
 CollisionViewer::~CollisionViewer() {
-    timer_.stop();
     delete collider_;
 }
 
 
 std::string CollisionViewer::usage() const {
-    return ("------------ Collision Viewer usage ------------\n"
-            "Press the 'space' key to start/pause animation. \n"
-            "------------------------------------------------\n");
+    return ("--------------------- Collision Viewer usage ----------------------\n"
+            "Manipulate the bunny to perform real-time collection detection:    \n"
+            "    - ALT + left button: rotate bunny model                        \n"
+            "    - ALT + right button: translate bunny model                    \n"
+            "------------------------------------------------------------------ \n");
+}
+
+
+bool CollisionViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
+    if (collider_ && models().size() == 2 && modifiers == GLFW_MOD_ALT) {
+        auto manipulator = models_[0]->manipulator();
+        if (button == GLFW_MOUSE_BUTTON_LEFT)
+            manipulator->frame()->action_rotate(x, y, dx, dy, camera_, ManipulatedFrame::NONE);
+        else if (button == GLFW_MOUSE_BUTTON_RIGHT)
+            manipulator->frame()->action_translate(x, y, dx, dy, camera_, ManipulatedFrame::NONE);
+        else
+            return false;
+
+        detect();
+        return true;
+    }
+    else
+        return Viewer::mouse_drag_event(x, y, dx, dy, button, modifiers);
 }
 
 
 void CollisionViewer::detect() {
-    if (!collider_ || models().size() < 2)
-        return;
-
-    static float angle = 0.0f;
-    angle += 0.01f;
-
-    models_[0]->manipulator()->frame()->setFromMatrix(mat4::rotation(vec3(0, 0, 1), angle));
     auto pairs = collider_->detect(models_[0]->manipulator()->matrix(), mat4::identity());
-    std::cout << pairs.size() << " pairs of intersecting faces" << std::endl;
+    //std::cout << pairs.size() << " pairs of intersecting faces" << std::endl;
 
     // mark the intersecting faces red
-    auto mesh0_colors = dynamic_cast<SurfaceMesh*>(models_[0])->get_face_property<vec3>("face_color");
-    auto mesh1_colors = dynamic_cast<SurfaceMesh*>(models_[1])->get_face_property<vec3>("face_color");
-    mesh0_colors.vector().assign(dynamic_cast<SurfaceMesh*>(models_[0])->n_faces(), model0_color_);
-    mesh1_colors.vector().assign(dynamic_cast<SurfaceMesh*>(models_[1])->n_faces(), model1_color_);
-    for (const auto& pair : pairs) {
+    auto mesh0_colors = dynamic_cast<SurfaceMesh *>(models_[0])->get_face_property<vec3>("face_color");
+    auto mesh1_colors = dynamic_cast<SurfaceMesh *>(models_[1])->get_face_property<vec3>("face_color");
+    mesh0_colors.vector().assign(dynamic_cast<SurfaceMesh *>(models_[0])->n_faces(), model0_color_);
+    mesh1_colors.vector().assign(dynamic_cast<SurfaceMesh *>(models_[1])->n_faces(), model1_color_);
+    for (const auto &pair : pairs) {
         mesh0_colors[pair.first] = vec3(1.0f, 0.0f, 0.0f);
         mesh1_colors[pair.second] = vec3(1.0f, 0.0f, 0.0f);
     }

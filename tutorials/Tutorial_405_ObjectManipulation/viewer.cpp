@@ -50,10 +50,10 @@ ManipulationViewer::ManipulationViewer(const std::string &title)
 
 std::string ManipulationViewer::usage() const {
     return ("-------------------- Manipulator Viewer usage ---------------------\n"
-            "Press the left button to pick/unpick a model.   \n"
-            "After a model has been picked, using mouse to manipulate the model:\n"
-            "    - left button: rotation                                        \n"
-            "    - right button: translation                                    \n"
+            "Press the left button to pick/unpick a model.                      \n"
+            "When a model is picked, using the mouse to manipulate it:          \n"
+            "    - ALT + left button: rotate the model                          \n"
+            "    - ALT + right button: translate the model                      \n"
             "------------------------------------------------------------------ \n");
 }
 
