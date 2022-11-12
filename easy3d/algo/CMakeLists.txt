@@ -1,8 +1,9 @@
 set(module algo)
-set(private_dependencies 3rd_poisson 3rd_ransac 3rd_triangle 3rd_tetgen 3rd_kdtree 3rd_glutess)
+set(private_dependencies 3rd_poisson 3rd_ransac 3rd_triangle 3rd_tetgen 3rd_kdtree 3rd_glutess 3rd_opcode)
 set(public_dependencies easy3d::core easy3d::util easy3d::kdtree)
 
 set(${module}_headers
+        collider.h
         delaunay.h
         delaunay_2d.h
         delaunay_3d.h
@@ -38,6 +39,7 @@ set(${module}_headers
         )
 
 set(${module}_sources
+        collider.cpp
         delaunay.cpp
         delaunay_2d.cpp
         delaunay_3d.cpp

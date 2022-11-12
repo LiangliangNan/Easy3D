@@ -27,5 +27,7 @@ add_subdirectory(glutess)
 add_subdirectory(backward)
 add_subdirectory(easyloggingpp)
 
+add_subdirectory(opcode)
+
 
 
