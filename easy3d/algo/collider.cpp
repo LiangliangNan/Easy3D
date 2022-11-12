@@ -143,8 +143,9 @@ namespace easy3d {
         Matrix4x4 trans0, trans1;
         for (auto i = 0; i < 4; ++i) {
             for (auto j = 0; j < 4; ++j) {
-                trans0[i][j] = t0(i, j);
-                trans1[i][j] = t1(i, j);
+                // ToDo: Why?
+                trans0[i][j] = t0(j, i); // NOTE: OPCODE matrix has row-major storage, so I have to transpose the matrices
+                trans1[i][j] = t1(j, i); // NOTE: OPCODE matrix has row-major storage, so I have to transpose the matrices
             }
         }
 

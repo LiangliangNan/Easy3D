@@ -53,6 +53,9 @@ private:
 private:
     easy3d::Timer<> timer_;
     easy3d::Collider* collider_;
+
+    easy3d::vec3 model0_color_;
+    easy3d::vec3 model1_color_;
 };
 
 

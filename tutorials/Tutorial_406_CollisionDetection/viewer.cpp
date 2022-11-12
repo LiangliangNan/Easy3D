@@ -38,15 +38,23 @@ using namespace easy3d;
 
 CollisionViewer::CollisionViewer(const std::string &title)
         : Viewer(title)
+        , model0_color_(0.9f, 1.0f, 0.9f)
+        , model1_color_(0.9f, 0.9f, 1.0f)
 {
     auto m0 = add_model(resource::directory() + "/data/bunny.ply");
     auto m1 = add_model(resource::directory() + "/data/mannequin.ply");
     auto mesh0 = dynamic_cast<SurfaceMesh*>(m0);
     auto mesh1 = dynamic_cast<SurfaceMesh*>(m1);
     if (mesh0 && mesh1) {
+        // use the manipulator to transform the first model (for visualization purpose, but its geometry is not changed)
         mesh0->set_manipulator(new Manipulator(mesh0));
-        mesh0->renderer()->get_triangles_drawable("faces")->set_uniform_coloring(vec4(0.7f, 0.8f, 0.7f, 1.0f));
-        mesh1->renderer()->get_triangles_drawable("faces")->set_uniform_coloring(vec4(0.7f, 0.7f, 0.8f, 1.0f));
+
+        mesh0->add_face_property<vec3>("face_color", model0_color_);
+        mesh0->renderer()->get_triangles_drawable("faces")->set_coloring(easy3d::State::COLOR_PROPERTY, easy3d::State::FACE, "face_color");
+
+        mesh1->add_face_property<vec3>("face_color", model1_color_);
+        mesh1->renderer()->get_triangles_drawable("faces")->set_coloring(easy3d::State::COLOR_PROPERTY, easy3d::State::FACE, "face_color");
+
         collider_ = new Collider(mesh0, mesh1);
     }
     else
@@ -76,11 +84,21 @@ void CollisionViewer::detect() {
     static float angle = 0.0f;
     angle += 0.01f;
 
-    const auto T = mat4::rotation(vec3(0, 0, 1), angle);
-
-    auto pairs = collider_->detect(T, mat4::identity());
-    models_[0]->manipulator()->frame()->setFromMatrix(T);
-    update();
-
+    models_[0]->manipulator()->frame()->setFromMatrix(mat4::rotation(vec3(0, 0, 1), angle));
+    auto pairs = collider_->detect(models_[0]->manipulator()->matrix(), mat4::identity());
     std::cout << pairs.size() << " pairs of intersecting faces" << std::endl;
+
+    // mark the intersecting faces red
+    auto mesh0_colors = dynamic_cast<SurfaceMesh*>(models_[0])->get_face_property<vec3>("face_color");
+    auto mesh1_colors = dynamic_cast<SurfaceMesh*>(models_[1])->get_face_property<vec3>("face_color");
+    mesh0_colors.vector().assign(dynamic_cast<SurfaceMesh*>(models_[0])->n_faces(), model0_color_);
+    mesh1_colors.vector().assign(dynamic_cast<SurfaceMesh*>(models_[1])->n_faces(), model1_color_);
+    for (const auto& pair : pairs) {
+        mesh0_colors[pair.first] = vec3(1.0f, 0.0f, 0.0f);
+        mesh1_colors[pair.second] = vec3(1.0f, 0.0f, 0.0f);
+    }
+    models_[0]->renderer()->update();
+    models_[1]->renderer()->update();
+
+    update();
 }
