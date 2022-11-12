@@ -5,48 +5,48 @@ set(CONF_Easy3D_COMPONENTS)
 set(EXPORT_TARGET_SET)
 
 add_subdirectory(util)
-list(APPEND CONF_Easy3D_COMPONENTS "util")
-list(APPEND EXPORT_TARGET_SET "easy3d_util" "3rd_backward" "3rd_easyloggingpp")
+list(APPEND CONF_Easy3D_COMPONENTS util)
+list(APPEND EXPORT_TARGET_SET easy3d_util 3rd_backward 3rd_easyloggingpp)
 
 add_subdirectory(core)
-list(APPEND CONF_Easy3D_COMPONENTS "core")
-list(APPEND EXPORT_TARGET_SET "easy3d_core")
+list(APPEND CONF_Easy3D_COMPONENTS core)
+list(APPEND EXPORT_TARGET_SET easy3d_core)
 
 add_subdirectory(fileio)
-list(APPEND CONF_Easy3D_COMPONENTS "fileio")
-list(APPEND EXPORT_TARGET_SET "easy3d_fileio" "3rd_lastools" "3rd_rply")
+list(APPEND CONF_Easy3D_COMPONENTS fileio)
+list(APPEND EXPORT_TARGET_SET easy3d_fileio 3rd_lastools 3rd_rply)
 
 add_subdirectory(kdtree)
-list(APPEND CONF_Easy3D_COMPONENTS "kdtree")
-list(APPEND EXPORT_TARGET_SET "easy3d_kdtree" "3rd_kdtree")
+list(APPEND CONF_Easy3D_COMPONENTS kdtree)
+list(APPEND EXPORT_TARGET_SET easy3d_kdtree 3rd_kdtree)
 
 add_subdirectory(algo)
-list(APPEND CONF_Easy3D_COMPONENTS "algo")
-list(APPEND EXPORT_TARGET_SET "easy3d_algo" "3rd_poisson" "3rd_ransac" "3rd_triangle" "3rd_tetgen" "3rd_glutess")
+list(APPEND CONF_Easy3D_COMPONENTS algo)
+list(APPEND EXPORT_TARGET_SET easy3d_algo 3rd_poisson 3rd_ransac 3rd_triangle 3rd_tetgen 3rd_glutess 3rd_opcode)
 
 if (Easy3D_HAS_CGAL)
     add_subdirectory(algo_ext)  # experimental
-    list(APPEND CONF_Easy3D_COMPONENTS "algo_ext")
-    list(APPEND EXPORT_TARGET_SET "easy3d_algo_ext")
+    list(APPEND CONF_Easy3D_COMPONENTS algo_ext)
+    list(APPEND EXPORT_TARGET_SET easy3d_algo_ext)
 endif ()
 
 if (Easy3D_HAS_FFMPEG)
     add_subdirectory(video)  # experimental
-    list(APPEND CONF_Easy3D_COMPONENTS "video")
-    list(APPEND EXPORT_TARGET_SET "easy3d_video")
+    list(APPEND CONF_Easy3D_COMPONENTS video)
+    list(APPEND EXPORT_TARGET_SET easy3d_video)
 endif ()
 
 add_subdirectory(renderer)
-list(APPEND CONF_Easy3D_COMPONENTS "renderer")
-list(APPEND EXPORT_TARGET_SET "easy3d_renderer" "3rd_glew")
+list(APPEND CONF_Easy3D_COMPONENTS renderer)
+list(APPEND EXPORT_TARGET_SET easy3d_renderer 3rd_glew)
 
 add_subdirectory(gui)
-list(APPEND CONF_Easy3D_COMPONENTS "gui")
-list(APPEND EXPORT_TARGET_SET "easy3d_gui")
+list(APPEND CONF_Easy3D_COMPONENTS gui)
+list(APPEND EXPORT_TARGET_SET easy3d_gui)
 
 add_subdirectory(viewer)
-list(APPEND CONF_Easy3D_COMPONENTS "viewer")
-list(APPEND EXPORT_TARGET_SET "easy3d_viewer" "3rd_glfw")
+list(APPEND CONF_Easy3D_COMPONENTS viewer)
+list(APPEND EXPORT_TARGET_SET easy3d_viewer 3rd_glfw)
 
 
 export(TARGETS

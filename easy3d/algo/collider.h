@@ -38,11 +38,32 @@ namespace Opcode {
 namespace easy3d {
 
     class SurfaceMesh;
+
+    /**
+     * \brief Efficient collision detection.
+     * \details This class takes two triangle meshes and their transformation matrices as input and outputs the
+     *      intersecting face pairs. This implementation is a wrapper of Opcode. It can achieve real-time performance
+     *      for large meshes.
+     * \class Collider easy3d/algo/collider.h
+     * \todo Extension to general polygonal meshes (by internally triangulate the input).
+     */
     class Collider {
     public:
+        /**
+         * Constructor. It internally initializes the collider (by building the AABB trees) for subsequent
+         * efficient collision detection.
+         * @param mesh0 The first mesh (must be triangle mesh).
+         * @param mesh1 The second mesh (must be triangle mesh).
+         */
         Collider(SurfaceMesh* mesh0, SurfaceMesh* mesh1);
         ~Collider();
 
+        /**
+         * Performs collision detection.
+         * @param t0 The transformation of the first mesh.
+         * @param t1 The transformation of the second mesh.
+         * @return The intersecting face pairs.
+         */
         std::vector< std::pair<SurfaceMesh::Face, SurfaceMesh::Face> > detect(const mat4& t0, const mat4& t1) const;
 
     private:
