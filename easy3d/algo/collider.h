@@ -31,9 +31,10 @@
 #include <easy3d/core/surface_mesh.h>
 
 
-namespace Opcode {
-    class Model;
+namespace internal {
+    class ColliderImpl;
 }
+
 
 namespace easy3d {
 
@@ -67,8 +68,7 @@ namespace easy3d {
         std::vector< std::pair<SurfaceMesh::Face, SurfaceMesh::Face> > detect(const mat4& t0, const mat4& t1) const;
 
     private:
-        Opcode::Model* model0_;
-        Opcode::Model* model1_;
+        internal::ColliderImpl* collider_;
     };
 
 }

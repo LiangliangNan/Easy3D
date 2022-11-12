@@ -25,22 +25,91 @@
  ********************************************************************/
 
 #include <easy3d/algo/collider.h>
-
-#include <map>
 #include <3rd_party/opcode/Opcode.h>
 
 using namespace Opcode;
 using namespace IceMaths;
 
 
-namespace easy3d {
+namespace internal {
 
-    std::map<Opcode::Model*, MeshInterface*> mesh_interfaces;
+    class ColliderImpl {
+    public:
+        ColliderImpl(easy3d::SurfaceMesh *mesh0, easy3d::SurfaceMesh *mesh1) {
+            model0_ = build(mesh0);
+            model1_ = build(mesh1);
+            if (!model0_ || !model1_)
+                return;
 
+            cache_ = new BVTCache;
+            cache_->Model0 = model0_;
+            cache_->Model1 = model1_;
 
-    namespace details {
+            collider_ = new AABBTreeCollider;
+            collider_->SetFirstContact(false);
+            collider_->SetTemporalCoherence(false);
+            collider_->SetPrimitiveTests(true);
+            const char* msg = collider_->ValidateSettings();
+            if (msg) {
+                LOG(WARNING) << "failed setting AABB tree collider: " << msg;
+                delete collider_;
+                collider_ = nullptr;
+            }
+        }
 
-        Opcode::Model* build(const SurfaceMesh* mesh) {
+        ~ColliderImpl() {
+            auto mesh0_interface = model0_->GetMeshInterface();
+            delete [] mesh0_interface->GetTris();
+            delete [] mesh0_interface->GetVerts();
+            delete mesh0_interface;
+            delete model0_;
+
+            auto mesh1_interface = model1_->GetMeshInterface();
+            delete [] mesh1_interface->GetTris();
+            delete [] mesh1_interface->GetVerts();
+            delete mesh1_interface;
+            delete model1_;
+
+            delete cache_;
+            delete collider_;
+        }
+
+    public:
+        std::vector<std::pair<easy3d::SurfaceMesh::Face, easy3d::SurfaceMesh::Face> > detect(const easy3d::mat4 &t0, const easy3d::mat4 &t1) const {
+            std::vector<std::pair<easy3d::SurfaceMesh::Face, easy3d::SurfaceMesh::Face> > result;
+            if (!collider_) {
+                LOG_EVERY_N(10, WARNING) << "the AABB tree collider was not built";
+                return result;
+            }
+
+            Matrix4x4 trans0, trans1;
+            for (auto i = 0; i < 4; ++i) {
+                for (auto j = 0; j < 4; ++j) {
+                    // ToDo: Why?
+                    trans0[i][j] = t0(j, i);
+                    trans1[i][j] = t1(j, i);
+                }
+            }
+
+            if (!collider_->Collide(*cache_, &trans0, &trans1)) {
+                LOG(WARNING) << "failed detecting collision";
+                return result;
+            }
+
+            if (collider_->GetContactStatus()) {
+                const udword num = collider_->GetNbPairs();
+                result.resize(num);
+                const Pair* pairs = collider_->GetPairs();
+                for (udword i = 0; i < num; ++i) {
+                    const Pair& pair = pairs[i];
+                    result[i] = { easy3d::SurfaceMesh::Face(pair.id0), easy3d::SurfaceMesh::Face(pair.id1) };
+                }
+            }
+            return result;
+        }
+
+    private:
+        Opcode::Model* build(const easy3d::SurfaceMesh* mesh) {
             if (!mesh->is_triangle_mesh()) {
                 LOG(WARNING) << "the first mesh (" << mesh->name() << ") is not a triangle mesh";
                 return nullptr;
@@ -54,15 +123,15 @@ namespace easy3d {
             const auto& pts = mesh->points();
             Point* vertices = new Point[pts.size()];
             for (std::size_t i=0; i<pts.size(); ++i)
-                vertices[i].Set(pts[i]);
+                    vertices[i].Set(pts[i]);
 
             IndexedTriangle* indices = new IndexedTriangle[mesh->n_faces()];
             for (const auto& f : mesh->faces()) {
-                std::vector<int> ids;
-                for (const auto& v : mesh->vertices(f))
-                    ids.push_back(v.idx());
-                indices[f.idx()] = IndexedTriangle(ids[0], ids[1], ids[2]);
-            }
+                    std::vector<int> ids;
+                    for (const auto& v : mesh->vertices(f))
+                            ids.push_back(v.idx());
+                    indices[f.idx()] = IndexedTriangle(ids[0], ids[1], ids[2]);
+                }
 
             MeshInterface *mesh_interface = new MeshInterface();
             mesh_interface->SetNbTriangles(mesh->n_faces());
@@ -96,88 +165,32 @@ namespace easy3d {
                 LOG(WARNING) << "failed building AABB tree for the mesh";
                 return nullptr;
             }
-
-            mesh_interfaces[model] = mesh_interface;
             return model;
         }
 
-    }
+    private:
+        Opcode::Model* model0_;
+        Opcode::Model* model1_;
+        BVTCache* cache_;
+        AABBTreeCollider* collider_;
+    };
+}
 
 
-    Collider::Collider(SurfaceMesh *mesh0, SurfaceMesh *mesh1)
-    {
-        model0_ = details::build(mesh0);
-        model1_ = details::build(mesh1);
-        if (!model0_ || !model1_)
-            return;
+namespace easy3d {
+
+
+    Collider::Collider(SurfaceMesh *mesh0, SurfaceMesh *mesh1) {
+        collider_ = new internal::ColliderImpl(mesh0, mesh1);
     }
 
 
     Collider::~Collider() {
-        auto tris = mesh_interfaces[model0_]->GetTris();    delete [] tris;
-        auto verts = mesh_interfaces[model0_]->GetVerts();  delete [] verts;
-        delete mesh_interfaces[model0_];
-        delete mesh_interfaces[model1_];
-        mesh_interfaces.erase(model0_);
-        mesh_interfaces.erase(model1_);
-        delete model0_;
-        delete model1_;
+        delete collider_;
     }
 
 
     std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face> > Collider::detect(const mat4 &t0, const mat4 &t1) const {
-        std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face> > result;
-        if (!model0_) {
-            LOG_EVERY_N(10, WARNING) << "AABB tree for the first mesh not built";
-            return result;
-        }
-        if (!model1_) {
-            LOG_EVERY_N(10, WARNING) << "AABB tree for the second mesh not built";
-            return result;
-        }
-
-        BVTCache cache;
-        cache.Model0 = model0_;
-        cache.Model1 = model1_;
-
-        Matrix4x4 trans0, trans1;
-        for (auto i = 0; i < 4; ++i) {
-            for (auto j = 0; j < 4; ++j) {
-                // ToDo: Why?
-                trans0[i][j] = t0(j, i); // NOTE: OPCODE matrix has row-major storage, so I have to transpose the matrices
-                trans1[i][j] = t1(j, i); // NOTE: OPCODE matrix has row-major storage, so I have to transpose the matrices
-            }
-        }
-
-        // std::cout << "collision detection ...";
-        // t.start();
-        AABBTreeCollider collider;
-        collider.SetFirstContact(false);
-        collider.SetTemporalCoherence(false);
-        collider.SetPrimitiveTests(true);
-        const char* msg = collider.ValidateSettings();
-        if (msg) {
-            LOG(WARNING) << "failed setting AABB tree collider: " << msg;
-            return result;
-        }
-
-        if (!collider.Collide(cache, &trans0, &trans1)) {
-            LOG(WARNING) << "failed detecting collision";
-            return result;
-        }
-
-        //std::cout << "  done. time: " << t.time_string() << std::endl;
-        if (collider.GetContactStatus()) {
-            const udword num = collider.GetNbPairs();
-            result.resize(num);
-            const Pair* pairs = collider.GetPairs();
-            for (udword i = 0; i < num; ++i) {
-                const Pair& pair = pairs[i];
-                udword id0 = pair.id0;
-                udword id1 = pair.id1;
-                result[i] = { SurfaceMesh::Face(id0), SurfaceMesh::Face(id1) };
-            }
-        }
-        return result;
+        return collider_->detect(t0, t1);
     }
 }
