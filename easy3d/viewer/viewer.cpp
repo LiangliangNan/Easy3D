@@ -1103,7 +1103,6 @@ namespace easy3d {
 
             /* Process events once more */
             glfwPollEvents();
-            cleanup();
             return EXIT_SUCCESS;
         }
         catch (const std::exception &e) {
