@@ -37,6 +37,7 @@ namespace easy3d {
 
     std::map<Opcode::Model*, MeshInterface*> mesh_interfaces;
 
+
     namespace details {
 
         Opcode::Model* build(const SurfaceMesh* mesh) {
@@ -45,31 +46,28 @@ namespace easy3d {
                 return nullptr;
             }
 
-            const auto& pts = mesh->points();
-            std::vector<Point> vertices(pts.size());
-            for (std::size_t i=0; i<pts.size(); ++i)
-                    vertices[i].Set(pts[i]);
+            if (mesh->n_vertices() <= 0 || mesh->n_faces() <= 0) {
+                LOG(WARNING) << "invalid geometry";
+                return nullptr;
+            }
 
-            std::vector<IndexedTriangle> indices;
-            indices.reserve(mesh->n_faces());
+            const auto& pts = mesh->points();
+            Point* vertices = new Point[pts.size()];
+            for (std::size_t i=0; i<pts.size(); ++i)
+                vertices[i].Set(pts[i]);
+
+            IndexedTriangle* indices = new IndexedTriangle[mesh->n_faces()];
             for (const auto& f : mesh->faces()) {
                 std::vector<int> ids;
                 for (const auto& v : mesh->vertices(f))
                     ids.push_back(v.idx());
-                indices.emplace_back(IndexedTriangle(ids[0], ids[1], ids[2]));
+                indices[f.idx()] = IndexedTriangle(ids[0], ids[1], ids[2]);
             }
-
-            udword nVertices = vertices.size();
-            udword nTriangles = indices.size();
 
             MeshInterface *mesh_interface = new MeshInterface();
-            mesh_interface->SetNbTriangles(nTriangles);
-            mesh_interface->SetNbVertices(nVertices);
-            bool pointersSet = mesh_interface->SetPointers(indices.data(), vertices.data());
-            if (!pointersSet) {
-                LOG(WARNING) << "failed creating object pointers";
-                return nullptr;
-            }
+            mesh_interface->SetNbTriangles(mesh->n_faces());
+            mesh_interface->SetNbVertices(mesh->n_vertices());
+            mesh_interface->SetPointers(indices, vertices);
 
             udword degenerated_faces = mesh_interface->CheckTopology();
             if (degenerated_faces != 0) {
@@ -116,6 +114,8 @@ namespace easy3d {
 
 
     Collider::~Collider() {
+        auto tris = mesh_interfaces[model0_]->GetTris();    delete [] tris;
+        auto verts = mesh_interfaces[model0_]->GetVerts();  delete [] verts;
         delete mesh_interfaces[model0_];
         delete mesh_interfaces[model1_];
         mesh_interfaces.erase(model0_);
