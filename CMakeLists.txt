@@ -196,7 +196,11 @@ function(add_module module headers sources private_dependencies public_dependenc
             PRIVATE ${private_dependencies}
             PUBLIC ${public_dependencies}
             )
-    set_target_properties(easy3d_${module} PROPERTIES FOLDER "easy3d")
+    set_target_properties(easy3d_${module} PROPERTIES
+            FOLDER "easy3d"
+            SOVERSION ${Easy3D_MAJOR_VERSION}
+            VERSION ${Easy3D_VERSION}
+            )
     if (MSVC)
         target_compile_definitions(easy3d_${module} PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
     endif ()
