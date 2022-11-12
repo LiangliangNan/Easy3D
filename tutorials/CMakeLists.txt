@@ -59,6 +59,7 @@ add_subdirectory(Tutorial_401_ModelPicker)
 add_subdirectory(Tutorial_402_FacePicker)
 add_subdirectory(Tutorial_403_PointSelection)
 add_subdirectory(Tutorial_404_VirtualScanner)
+add_subdirectory(Tutorial_405_ObjectManipulation)
 
 # rendering techniques
 add_subdirectory(Tutorial_501_AmbientOcclusion)

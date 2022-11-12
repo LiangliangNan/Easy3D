@@ -80,7 +80,7 @@ namespace easy3d {
         mat4 matrix() const;
 
         /// Draws the manipulated frame.
-        void draw_frame(Camera* cam) const;
+        void draw_frame(const Camera* cam) const;
 
     protected:
         Model *model_; // the model to be manipulated

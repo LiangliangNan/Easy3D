@@ -76,7 +76,7 @@ namespace easy3d {
     }
 
 
-    void Manipulator::draw_frame( Camera *cam) const {
+    void Manipulator::draw_frame(const Camera *cam) const {
         if (!model_ || !cam)
             return;
 

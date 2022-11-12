@@ -103,6 +103,7 @@ namespace easy3d {
 
         for (auto m: models_) {
             delete m->renderer();
+            delete m->manipulator();
             delete m;
         }
 		models_.clear();
@@ -676,6 +677,7 @@ namespace easy3d {
             models_.erase(pos);
             makeCurrent();
             delete model->renderer();
+            delete model->manipulator();
             delete model;
             doneCurrent();
             model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
