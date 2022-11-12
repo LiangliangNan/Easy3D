@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
     viewer.add_model(resource::directory() + "/data/easy3d/easy3d_d.ply");
 
     if (viewer.models().empty()) {
-        LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
+        LOG(ERROR) << "failed to load the model. Please make sure the file exists and format is correct.";
         return EXIT_FAILURE;
     }
 
