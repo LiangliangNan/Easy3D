@@ -25,6 +25,8 @@
  ********************************************************************/
 
 #include <easy3d/algo/collider.h>
+#include <easy3d/util/stop_watch.h>
+
 #include <3rd_party/opcode/Opcode.h>
 
 using namespace Opcode;
@@ -181,7 +183,9 @@ namespace easy3d {
 
 
     Collider::Collider(SurfaceMesh *mesh0, SurfaceMesh *mesh1) {
+        StopWatch w;
         collider_ = new internal::ColliderImpl(mesh0, mesh1);
+        LOG(INFO) << "building the collider (AABB trees): " << w.time_string();
     }
 
 
