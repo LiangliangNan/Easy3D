@@ -37,11 +37,11 @@ namespace easy3d {
      * Initializes Easy3D (both resources directory and logging). It internally calls (and is thus identical to calling)
      * both \c logging::initialize(...) and \c resource::initialize(...).
      * @param use_log_file \c True to create a log file along the executable program.
-     * @param resources_dir The resources directory containing color maps, shaders, textures, fonts, etc.
-     *      \c Easy3D_RESOURCES_DIR (default value) is the resources directory coming with the Easy3D distribution.
+     * @param resource_dir The resources directory containing color maps, shaders, textures, fonts, etc.
+     *      \c Easy3D_RESOURCE_DIR (default value) is the resources directory coming with the Easy3D distribution.
      * @sa resource::initialize(), logging::initialize(),
      */
-    void initialize(bool use_log_file = false, const std::string& resources_dir = Easy3D_RESOURCES_DIR);
+    void initialize(bool use_log_file = false, const std::string& resource_dir = Easy3D_RESOURCE_DIR);
 
 
     /// \brief Resources used in Easy3D.
@@ -59,7 +59,7 @@ namespace easy3d {
         extern const EASY3D_UTIL_EXPORT std::vector<unsigned char> cold_warm_colors;
 
         /// Sets the resource directory (containing color maps, shaders, textures, fonts, etc.)
-        extern void initialize(const std::string& resources_dir = Easy3D_RESOURCES_DIR);
+        extern void initialize(const std::string& resource_dir = Easy3D_RESOURCE_DIR);
 
 		/// Returns the resource directory (containing color maps, shaders, textures, fonts, etc.)
         extern const std::string directory();

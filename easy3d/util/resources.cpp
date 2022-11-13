@@ -31,7 +31,7 @@
 
 namespace easy3d {
 
-    static std::string resources_dir = file_system::convert_to_native_style(Easy3D_RESOURCES_DIR);
+    static std::string resource_dir = file_system::convert_to_native_style(Easy3D_RESOURCE_DIR);
 
     void initialize(bool use_log_file, const std::string& res_dir) {
         logging::initialize(false, true, true, false, use_log_file ? "default" : "", 9);
@@ -43,13 +43,13 @@ namespace easy3d {
 
         // Sets the resource directory (containing color maps, shaders, textures, fonts, etc.)
         void initialize(const std::string& res_dir) {
-            resources_dir = file_system::convert_to_native_style(res_dir);
+            resource_dir = file_system::convert_to_native_style(res_dir);
         }
 
         // resource directory (containing color maps, shaders, textures, fonts, etc.)
         const std::string directory() {
-            // first check if the resources directory (with the Easy3D distribution) exist
-            std::string& dir = resources_dir;
+            // first check if the resource directory (with the Easy3D distribution) exist
+            std::string& dir = resource_dir;
             if (file_system::is_directory(dir)) {
                 VLOG_N_TIMES(1, 1) << "resources directory: " << dir;
                 return dir;

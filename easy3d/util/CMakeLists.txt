@@ -35,8 +35,8 @@ add_module(${module} "${${module}_headers}" "${${module}_sources}" "${private_de
 
 # The resources directory
 target_compile_definitions(easy3d_${module} PUBLIC
-        "$<BUILD_INTERFACE:Easy3D_RESOURCES_DIR=\"${Easy3D_ROOT}/resources\">"
-        "$<INSTALL_INTERFACE:Easy3D_RESOURCES_DIR=\"${Easy3D_INSTALL_RESOURCES_DIR}\">"
+        "$<BUILD_INTERFACE:Easy3D_RESOURCE_DIR=\"${Easy3D_ROOT}/resources\">"
+        "$<INSTALL_INTERFACE:Easy3D_RESOURCE_DIR=\"${Easy3D_INSTALL_RESOURCE_DIR}\">"
         )
 
 install_module(${module})

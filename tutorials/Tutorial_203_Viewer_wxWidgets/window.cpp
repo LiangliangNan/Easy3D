@@ -61,7 +61,7 @@ namespace easy3d {
 #ifdef WIN32
         SetIcon(wxICON(sample));
 #else
-        SetIcon(wxIcon(std::string(RESOURCES_DIR) + "/icons/sample.xpm"));
+        SetIcon(wxIcon(std::string(RESOURCE_DIR) + "/icons/sample.xpm"));
 #endif
 
         // Make the "File" menu
