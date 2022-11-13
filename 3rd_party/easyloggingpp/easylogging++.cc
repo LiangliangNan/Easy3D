@@ -16,9 +16,6 @@
 
 #include "easylogging++.h"
 
-// Liangliang: generate the instance of el::base::Storage (so other libraries don't have to do so and export it)
-#define AUTO_INITIALIZE_EASYLOGGINGPP
-
 #if defined(AUTO_INITIALIZE_EASYLOGGINGPP)
 INITIALIZE_EASYLOGGINGPP
 #endif
