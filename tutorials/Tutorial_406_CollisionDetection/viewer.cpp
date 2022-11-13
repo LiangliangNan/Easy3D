@@ -30,7 +30,6 @@
 #include <easy3d/renderer/manipulated_frame.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/util/resources.h>
-#include <easy3d/util/file_system.h>
 #include <easy3d/algo/collider.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>    // for the mouse buttons
@@ -59,6 +58,16 @@ CollisionViewer::CollisionViewer(const std::string &title)
 
         collider_ = new Collider(mesh0, mesh1);
         detect();
+
+        timer_.set_interval(50, [this]()->void {
+            static std::mutex mutex; // ensures the previous changes are completed
+            std::lock_guard<std::mutex> guard(mutex);
+            static float angle = 0.0f;
+            angle += 0.0001f;
+            auto T = mat4::rotation(vec3(0, 0, 1), angle) * models_[0]->manipulator()->frame()->matrix();
+            models_[0]->manipulator()->frame()->setFromMatrix(T);
+            detect();
+        });
     }
     else
         LOG(WARNING) << "not two meshes have been loaded";
@@ -66,13 +75,16 @@ CollisionViewer::CollisionViewer(const std::string &title)
 
 
 CollisionViewer::~CollisionViewer() {
+    timer_.stop();
     delete collider_;
 }
 
 
 std::string CollisionViewer::usage() const {
     return ("--------------------- Collision Viewer usage ----------------------\n"
-            "Manipulate the bunny to perform real-time collection detection:    \n"
+            "On start, you will see an animation. Press the 'space' key to stop \n"
+            "the animation. Then you can using your mouse to manipulate the     \n"
+            "bunny model to perform real-time collection detection:             \n"
             "    - ALT + left button: rotate bunny model                        \n"
             "    - ALT + right button: translate bunny model                    \n"
             "------------------------------------------------------------------ \n");
@@ -80,7 +92,7 @@ std::string CollisionViewer::usage() const {
 
 
 bool CollisionViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
-    if (collider_ && models().size() == 2 && modifiers == GLFW_MOD_ALT) {
+    if (collider_ && models().size() == 2 && modifiers == GLFW_MOD_ALT && timer_.is_stopped()) {
         auto manipulator = models_[0]->manipulator();
         if (button == GLFW_MOUSE_BUTTON_LEFT)
             manipulator->frame()->action_rotate(x, y, dx, dy, camera_, ManipulatedFrame::NONE);
@@ -94,6 +106,16 @@ bool CollisionViewer::mouse_drag_event(int x, int y, int dx, int dy, int button,
     }
     else
         return Viewer::mouse_drag_event(x, y, dx, dy, button, modifiers);
+}
+
+
+bool CollisionViewer::key_press_event(int key, int modifiers) {
+    if (key == GLFW_KEY_SPACE) {
+        timer_.stop();
+        return true;
+    }
+    else
+        return Viewer::key_press_event(key, modifiers);
 }
 
 

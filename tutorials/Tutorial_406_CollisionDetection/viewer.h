@@ -28,6 +28,7 @@
 #define EASY3D_TUTORIAL_COLLISION_DETECTION_VIEWER_H
 
 #include <easy3d/viewer/viewer.h>
+#include <easy3d/util/timer.h>
 
 // This class demonstrates how to detect intersecting faces of two meshes.
 
@@ -46,6 +47,7 @@ protected:
 
 private:
     virtual bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;
+    virtual bool key_press_event(int key, int modifiers) override;
 
     void detect();
     void mark(easy3d::Model *model);
@@ -55,6 +57,8 @@ private:
 
     easy3d::vec3 model0_color_;
     easy3d::vec3 model1_color_;
+
+    easy3d::Timer<> timer_;
 };
 
 
