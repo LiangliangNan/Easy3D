@@ -97,7 +97,7 @@ namespace easy3d
         }
 
 
-        void crash_sandler(int sig) {
+        void crash_handler(int sig) {
             std::stringstream ss;
             ss << crash_reason(sig) << "\n"
                << stacktrace_failure_header() << "\n"
@@ -196,7 +196,7 @@ namespace easy3d
             // default logger uses default configurations
             el::Loggers::reconfigureLogger("default", defaultConf);
 
-            el::Helpers::setCrashHandler(crash_sandler);
+            el::Helpers::setCrashHandler(crash_handler);
 
             // allow all levels of verbose messages to be logged into the log file (but not shown on UI).
             el::Loggers::setVerboseLevel(verbosity_threshold);
