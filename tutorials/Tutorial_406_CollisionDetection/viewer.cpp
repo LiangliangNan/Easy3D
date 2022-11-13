@@ -39,8 +39,8 @@ using namespace easy3d;
 
 CollisionViewer::CollisionViewer(const std::string &title)
         : Viewer(title)
-        , model0_color_(0.9f, 1.0f, 0.9f)
-        , model1_color_(0.9f, 0.9f, 1.0f)
+        , model0_color_(0.8f, 1.0f, 0.8f)
+        , model1_color_(0.8f, 0.8f, 1.0f)
 {
     auto m0 = add_model(resource::directory() + "/data/bunny.ply");
     auto m1 = add_model(resource::directory() + "/data/mannequin.ply");
