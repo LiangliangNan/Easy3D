@@ -44,7 +44,7 @@ namespace easy3d {
             return result;
 
         if (!input_mesh->is_triangle_mesh()) {
-            LOG(WARNING) << "input mesh is not a triangulated";
+            LOG(WARNING) << "input mesh is not a triangle mesh";
             return result;
         }
 
