@@ -29,17 +29,6 @@
 #include <easy3d/util/stack_tracer.h>
 
 
-#if 1
-INITIALIZE_EASYLOGGINGPP
-#else // the above macro is equivalent to the followign code:
-namespace el {
-    namespace base {
-        el::base::type::StoragePointer elStorage(new el::base::Storage(el::LogBuilderPtr(new el::base::DefaultLogBuilder())));
-    }
-    el::base::debug::CrashHandler elCrashHandler(ELPP_USE_DEF_CRASH_HANDLER);
-}
-#endif
-
 
 namespace easy3d
 {
