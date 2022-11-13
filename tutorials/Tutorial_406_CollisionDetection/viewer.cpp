@@ -57,6 +57,7 @@ CollisionViewer::CollisionViewer(const std::string &title)
         mesh1->renderer()->get_triangles_drawable("faces")->set_coloring(easy3d::State::COLOR_PROPERTY, easy3d::State::FACE, "face_color");
 
         collider_ = new Collider(mesh0, mesh1);
+        // detect and show the result when the viewer is visible
         detect();
 
         timer_.set_interval(50, [this]()->void {
@@ -120,10 +121,14 @@ bool CollisionViewer::key_press_event(int key, int modifiers) {
 
 
 void CollisionViewer::detect() {
-    auto pairs = collider_->detect(models_[0]->manipulator()->matrix(), mat4::identity());
+    const auto pairs = collider_->detect(models_[0]->manipulator()->matrix(), mat4::identity());
     //std::cout << pairs.size() << " pairs of intersecting faces" << std::endl;
 
     // mark the intersecting faces red
+    // Note: The following code is for visualizing the intersecting faces, and the code is not optimized.
+    //      Ideas for better performance:
+    //          (1) update only the color buffer;
+    //          (2) use a shader storage buffer to transfer the *status* of the faces to the fragment shader.
     auto mesh0_colors = dynamic_cast<SurfaceMesh *>(models_[0])->get_face_property<vec3>("face_color");
     auto mesh1_colors = dynamic_cast<SurfaceMesh *>(models_[1])->get_face_property<vec3>("face_color");
     mesh0_colors.vector().assign(dynamic_cast<SurfaceMesh *>(models_[0])->n_faces(), model0_color_);
