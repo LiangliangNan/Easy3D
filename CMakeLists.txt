@@ -201,8 +201,8 @@ function(add_module module headers sources private_dependencies public_dependenc
             SOVERSION ${Easy3D_MAJOR_VERSION}
             VERSION ${Easy3D_VERSION}
             )
-    if (MSVC)
-        target_compile_definitions(easy3d_${module} PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
+    if (WIN32 OR MSVC)
+        target_compile_definitions(easy3d_${module} PRIVATE NOMINMAX _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)  # get a clean windows
     endif ()
 
     # Alias target (recommended by policy CMP0028) and it looks nicer
