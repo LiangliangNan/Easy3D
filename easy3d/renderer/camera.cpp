@@ -687,7 +687,7 @@ namespace easy3d {
       speed (default is 1 second).
 
       See also interpolateToFitScene() and interpolateToZoomOnPixel(). */
-    void Camera::interpolateTo(const Frame &fr, double duration) {
+    void Camera::interpolateTo(const Frame &fr, float duration) {
         if (interpolationKfi_->is_interpolation_started())
             interpolationKfi_->stop_interpolation();
 
