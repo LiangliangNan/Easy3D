@@ -122,7 +122,6 @@ if (Easy3D_ENABLE_CGAL)
     if (CGAL_FOUND)
         if (CGAL_VERSION VERSION_GREATER_EQUAL "5.1")
             set(Easy3D_HAS_CGAL TRUE)
-            add_definitions(-DHAS_CGAL)
             mark_as_advanced(BUILD_TESTING
                     CGAL_CTEST_DISPLAY_MEM_AND_TIME
                     CGAL_DEV_MODE
@@ -162,7 +161,6 @@ endif ()
 include(./cmake/FindFFMPEG.cmake)
 if (FFMPEG_FOUND)
     set(Easy3D_HAS_FFMPEG TRUE)
-    add_definitions(-DHAS_FFMPEG)
 else ()
     set(Easy3D_HAS_FFMPEG FALSE)
     message(WARNING "You have requested FFMPEG support but FFMPEG was not found. "

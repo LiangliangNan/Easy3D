@@ -16,4 +16,5 @@ set(${module}_sources
 
 add_module(${module} "${${module}_headers}" "${${module}_sources}" "${private_dependencies}" "${public_dependencies}")
 target_link_libraries(easy3d_${module} PRIVATE ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARIES})
+target_compile_definitions(easy3d_${module} PUBLIC HAS_CGAL)
 install_module(${module})

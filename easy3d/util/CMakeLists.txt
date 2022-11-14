@@ -34,7 +34,8 @@ set(${module}_sources
 add_module(${module} "${${module}_headers}" "${${module}_sources}" "${private_dependencies}" "${public_dependencies}")
 
 # The resources directory
-target_compile_definitions(easy3d_${module} PUBLIC
+target_compile_definitions(easy3d_${module} 
+        PUBLIC
         ELPP_FEATURE_ALL
         ELPP_STL_LOGGING
         ELPP_THREAD_SAFE
