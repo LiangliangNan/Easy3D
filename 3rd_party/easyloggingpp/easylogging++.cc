@@ -2656,6 +2656,7 @@ void Writer::triggerDispatch(void) {
 	  }
 	catch(std::exception & ex){
 		// Extremely low memory situation; don't let exception be unhandled.
+        ELPP_UNUSED(ex);
 	}
 }
 
