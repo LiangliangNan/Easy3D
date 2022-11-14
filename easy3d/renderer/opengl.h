@@ -41,11 +41,11 @@
 
 #include <3rd_party/glew/include/GL/glew.h>
 
-#if defined(_WIN32)
+#if defined(_WIN32) || defined(MSVC)
 #define WIN32_LEAN_AND_MEAN 1
+#define NOMINMAX            1
+#define NOMINMAX            1
 #include <Windows.h>
-#undef min
-#undef max
 #endif
 
 
