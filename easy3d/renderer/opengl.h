@@ -33,7 +33,7 @@
  *
  * Always include this file, i.e.,
  *      #include <easy3d/opengl/opengl.h>
- * Instead of any of the following:
+ * instead of any of the following:
  *      #include <OpenGL/gl.h>
  *      #include <GL/gl.h>
  *      #include <GL/glew.h>
@@ -43,7 +43,6 @@
 
 #if defined(_WIN32) || defined(MSVC)
 #define WIN32_LEAN_AND_MEAN 1
-#define NOMINMAX            1
 #define NOMINMAX            1
 #include <Windows.h>
 #endif
