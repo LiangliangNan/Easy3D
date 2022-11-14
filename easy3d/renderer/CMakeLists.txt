@@ -188,12 +188,18 @@ add_module(${module} "${${module}_headers}" "${${module}_sources}" "${private_de
 target_include_directories(easy3d_${module} PRIVATE ${Easy3D_THIRD_PARTY}/glew/include)
 target_compile_definitions(easy3d_${module} PRIVATE GLEW_BUILD PUBLIC GLEW_NO_GLU)
 
-if(LINUX)
+
+if(WIN32 OR MSVC OR APPLE)
+    find_package(OpenGL COMPONENTS OpenGL REQUIRED)
+    message(STATUS "OpenGL library: ${OPENGL_gl_LIBRARY}")
+    target_link_libraries(easy3d_${module} PUBLIC ${OPENGL_gl_LIBRARY})
+else() # == if(UNIX AND NOT APPLE)
     set (OpenGL_GL_PREFERENCE GLVND)
+    find_package(OpenGL COMPONENTS OpenGL GLX REQUIRED)
+    message(STATUS "OpenGL libraries: ${OPENGL_opengl_LIBRARY} ${OPENGL_glx_LIBRARY}")
+    target_link_libraries(easy3d_${module} PUBLIC ${OPENGL_opengl_LIBRARY} ${OPENGL_glx_LIBRARY})
 endif()
-find_package(OpenGL REQUIRED)
-message(STATUS "OpenGL library: ${OPENGL_gl_LIBRARY}")
-target_link_libraries(easy3d_${module} PUBLIC ${OPENGL_gl_LIBRARY})
+
 
 install_module(${module})
 # Install glew.h to the installation directory
