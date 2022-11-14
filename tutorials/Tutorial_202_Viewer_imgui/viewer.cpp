@@ -91,11 +91,11 @@ namespace easy3d {
 	}
 
 
-    double ViewerImGui::pixel_ratio() {
+    float ViewerImGui::pixel_ratio() {
         // Computes pixel ratio for hidpi devices
 		int fw = framebuffer_width();
 		int vw = width();
-		return static_cast<double>(fw) / static_cast<double>(vw);
+		return static_cast<float>(fw) / static_cast<float>(vw);
     }
 
 
@@ -307,7 +307,7 @@ namespace easy3d {
         // draw Easy3D logo
         if (texter_) {
             const float font_size = 15.0f;
-            const float offset_x = (width() * 0.5 - texter_->string_width("Easy3D", font_size) * 0.5) * dpi_scaling();
+            const float offset_x = (width() * 0.5f - texter_->string_width("Easy3D", font_size) * 0.5f) * dpi_scaling();
             const float offset_y = 50.0f * dpi_scaling();
             texter_->draw("Easy3D", offset_x, offset_y, font_size, 0);
         }

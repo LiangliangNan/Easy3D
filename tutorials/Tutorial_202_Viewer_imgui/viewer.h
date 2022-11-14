@@ -83,9 +83,9 @@ namespace easy3d {
 	protected:
         // Ratio between the framebuffer size and the window size.
         // May be different from the DPI scaling!
-        double pixel_ratio();
+		float pixel_ratio();
 
-        double widget_scaling() { return dpi_scaling() / pixel_ratio(); }
+		float widget_scaling() { return dpi_scaling() / pixel_ratio(); }
 
 		// We don't need a per-window font. So this function is static
 		void  reload_font(int font_size = 16);

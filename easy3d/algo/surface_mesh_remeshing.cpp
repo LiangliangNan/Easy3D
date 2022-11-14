@@ -623,6 +623,7 @@ namespace easy3d {
                             p = minimize_squared_areas(v);
                         }
                         catch (std::exception &e) {
+                            (void)e;
                             p = weighted_centroid(v);
                         }
                         u = p - mesh_->position(v);

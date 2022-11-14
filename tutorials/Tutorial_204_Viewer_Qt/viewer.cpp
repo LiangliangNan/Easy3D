@@ -290,7 +290,7 @@ namespace easy3d {
                     camera_->frame()->action_rotate(x, y, dx, dy, camera_, ManipulatedFrame::NONE);
                 else if (pressed_button_ == Qt::RightButton)
                     camera_->frame()->action_translate(x, y, dx, dy, camera_, ManipulatedFrame::NONE);
-                else if (pressed_button_ == Qt::MidButton) {
+                else if (pressed_button_ == Qt::MiddleButton) {
                     if (dy != 0)
                         camera_->frame()->action_zoom(dy > 0 ? 1 : -1, camera_);
                 }
@@ -309,9 +309,9 @@ namespace easy3d {
 
 
     void Viewer::wheelEvent(QWheelEvent *e) {
-        const int delta = e->delta();
+        const int delta = e->angleDelta().y();
         if (delta <= -1 || delta >= 1) {
-            int dy = e->delta() > 0 ? 1 : -1;
+            int dy = e->angleDelta().y() > 0 ? 1 : -1;
             camera_->frame()->action_zoom(dy, camera_);
         }
 

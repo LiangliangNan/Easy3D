@@ -285,11 +285,11 @@ namespace easy3d {
 
     template<typename Point_t>
     void SplineCurveFitting<Point_t>::set_node_to_uniform() {
-        const int n = _point.size() - 1;
+        const std::size_t n = _point.size() - 1;
         _node.resize(_k + n + 1);
 
         FT step = (FT) 1 / (FT) (n - _k + 2);
-        for (int i = 0; i < (int) _node.size(); ++i) {
+        for (std::size_t i = 0; i < _node.size(); ++i) {
             _node[i] = ((FT) i) * step - step * (FT) (_k - 1);
         }
     }

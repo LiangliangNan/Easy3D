@@ -236,10 +236,10 @@ namespace easy3d {
         // This is required to ensure a correct aspect ratio (thus the correct projection matrix)
         camera()->setScreenWidthAndHeight(view_width_, view_height_);
 
-        for (std::size_t i = 0; i < num_rows_; ++i) {
+        for (unsigned int i = 0; i < num_rows_; ++i) {
             auto &row = views_[i];
-            const float y = h - (i + 1) * view_height_;
-            for (std::size_t j = 0; j < num_cols_; ++j)
+            const auto y = h - (i + 1) * view_height_;
+            for (unsigned int j = 0; j < num_cols_; ++j)
                 row[j].viewport = ivec4(j * view_width_, y, view_width_, view_height_);
         }
 

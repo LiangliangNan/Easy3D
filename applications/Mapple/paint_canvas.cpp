@@ -285,7 +285,7 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
             bt = tools::LEFT_BUTTON;
         else if (e->button() == Qt::RightButton)
             bt = tools::RIGHT_BUTTON;
-        else if (e->button() == Qt::MidButton)
+        else if (e->button() == Qt::MiddleButton)
             bt = tools::MIDDLE_BUTTON;
         if (bt != tools::NO_BUTTON) {
             makeCurrent();
@@ -377,7 +377,7 @@ void PaintCanvas::mouseReleaseEvent(QMouseEvent *e) {
         }
         else if (e->button() == Qt::RightButton)
             bt = tools::RIGHT_BUTTON;
-        else if (e->button() == Qt::MidButton)
+        else if (e->button() == Qt::MiddleButton)
             bt = tools::MIDDLE_BUTTON;
         if (bt != tools::NO_BUTTON) {
             makeCurrent();
@@ -469,8 +469,8 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
             pressed_button_ = Qt::RightButton;
             bt = tools::RIGHT_BUTTON;
         }
-        else if (e->buttons() == Qt::MidButton) {
-            pressed_button_ = Qt::MidButton;
+        else if (e->buttons() == Qt::MiddleButton) {
+            pressed_button_ = Qt::MiddleButton;
             bt = tools::MIDDLE_BUTTON;
         }
 
@@ -503,7 +503,7 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
                 frame->action_rotate(x, y, dx, dy, camera_, axis);
             else if (pressed_button_ == Qt::RightButton)
                 frame->action_translate(x, y, dx, dy, camera_, axis);
-            else if (pressed_button_ == Qt::MidButton) {
+            else if (pressed_button_ == Qt::MiddleButton) {
                 if (dy != 0 && frame == camera_->frame()) // zoom is intended for camera manipulation only
                     frame->action_zoom(dy > 0 ? 1 : -1, camera_);
             }
@@ -618,9 +618,9 @@ void PaintCanvas::wheelEvent(QWheelEvent *e) {
         update();
     }
     else {
-        const int delta = e->delta();
+        const int delta = e->angleDelta().y();
         if (delta <= -1 || delta >= 1) {
-            int dy = e->delta() > 0 ? 1 : -1;
+            int dy = e->angleDelta().y() > 0 ? 1 : -1;
             camera_->frame()->action_zoom(dy, camera_);
         }
     }
@@ -1229,13 +1229,13 @@ void PaintCanvas::drawCornerAxes() {
 
 void PaintCanvas::drawPickedFaceAndItsVerticesIDs(const QColor& face_color, const QColor& vertex_color) {
     SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(currentModel());
-    if (!mesh || picked_face_index_ < 0 || picked_face_index_ >= mesh->n_faces())
+    if (!mesh || picked_face_index_ < 0 || picked_face_index_ >= static_cast<int>(mesh->n_faces()))
         return;
 
     // using QPainter
     QPainter painter;
     painter.begin(this);
-    painter.setRenderHint(QPainter::HighQualityAntialiasing);
+    painter.setRenderHint(QPainter::Antialiasing);
     painter.setRenderHint(QPainter::TextAntialiasing);
     painter.beginNativePainting();
 
@@ -1269,13 +1269,13 @@ void PaintCanvas::drawPickedFaceAndItsVerticesIDs(const QColor& face_color, cons
 
 void PaintCanvas::drawPickedVertexID(const QColor &vertex_color) {
     PointCloud* cloud = dynamic_cast<PointCloud*>(currentModel());
-    if (!cloud || picked_vertex_index_ < 0 || picked_vertex_index_ >= cloud->n_vertices())
+    if (!cloud || picked_vertex_index_ < 0 || picked_vertex_index_ >= static_cast<int>(cloud->n_vertices()))
         return;
 
     // using QPainter
     QPainter painter;
     painter.begin(this);
-    painter.setRenderHint(QPainter::HighQualityAntialiasing);
+    painter.setRenderHint(QPainter::Antialiasing);
     painter.setRenderHint(QPainter::TextAntialiasing);
     painter.beginNativePainting();
 
@@ -1334,7 +1334,7 @@ void PaintCanvas::postDraw() {
 #else   // draw frame rate text using Qt.
         QPainter painter; easy3d_debug_log_gl_error;
         painter.begin(this);
-        painter.setRenderHint(QPainter::HighQualityAntialiasing);
+        painter.setRenderHint(QPainter::Antialiasing);
         painter.setRenderHint(QPainter::TextAntialiasing);
         painter.setPen(Qt::black);
         painter.beginNativePainting(); easy3d_debug_log_gl_error;
@@ -1601,7 +1601,7 @@ void PaintCanvas::pasteCamera() {
 
     // get the camera parameters from clipboard string
     const QString str = qApp->clipboard()->text();
-    const QStringList list = str.split(" ", QString::SkipEmptyParts);
+    const QStringList list = str.split(" ", Qt::SkipEmptyParts);
     if (list.size() != 7) {
         LOG(WARNING) << "camera not available in clipboard";
         return;
