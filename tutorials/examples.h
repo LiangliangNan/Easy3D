@@ -233,6 +233,26 @@
  */
 
 /**
+ * \example Tutorial_405_ObjectManipulation
+ * The source file containing the main() function:
+ * \include{lineno} Tutorial_405_ObjectManipulation/main.cpp
+ * The header file of the viewer class:
+ * \include{lineno} Tutorial_405_ObjectManipulation/viewer.h
+ * The source file of the viewer class:
+ * \include{lineno} Tutorial_405_ObjectManipulation/viewer.cpp
+ */
+
+/**
+ * \example Tutorial_406_CollisionDetection
+ * The source file containing the main() function:
+ * \include{lineno} Tutorial_406_CollisionDetection/main.cpp
+ * The header file of the viewer class:
+ * \include{lineno} Tutorial_406_CollisionDetection/viewer.h
+ * The source file of the viewer class:
+ * \include{lineno} Tutorial_406_CollisionDetection/viewer.cpp
+ */
+
+/**
  * \example Tutorial_501_AmbientOcclusion
  * The source file containing the main() function:
  * \include{lineno} Tutorial_501_AmbientOcclusion/main.cpp
