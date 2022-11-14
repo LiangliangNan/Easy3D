@@ -28,15 +28,14 @@
 #define EASY3D_RENDERER_OPENGL_H
 
 
-/* Make it easier for including the OpenGL header file.
+/**
+ * Make it easier to include the OpenGL header file.
  *
  * Always include this file, i.e.,
  *      #include <easy3d/opengl/opengl.h>
- * Instead of:
+ * Instead of any of the following:
  *      #include <OpenGL/gl.h>
- * or
  *      #include <GL/gl.h>
- * or
  *      #include <GL/glew.h>
  */
 
