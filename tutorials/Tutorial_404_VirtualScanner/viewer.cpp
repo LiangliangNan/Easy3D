@@ -85,9 +85,9 @@ bool VirtualScanner::key_press_event(int key, int modifiers) {
 #endif
                 const float d = depths[idx];
                 if (d < 1.0f) {
-                    vec3 vs(x, y, d);
-                    vs.x = (float)(vs.x - viewport[0]) / (float)viewport[2] * 2.0f - 1.0f;
-                    vs.y = (float)(vs.y - viewport[1]) / (float)viewport[3] * 2.0f - 1.0f;
+                    vec3 vs(static_cast<float>(x), static_cast<float>(y), d);
+                    vs.x = static_cast<float>(vs.x - viewport[0]) / viewport[2] * 2.0f - 1.0f;
+                    vs.y = static_cast<float>(vs.y - viewport[1]) / viewport[3] * 2.0f - 1.0f;
                     vs.z = vs.z * 2.0f - 1.0f;
                     points.push_back(invMVP * vs);
                 }
