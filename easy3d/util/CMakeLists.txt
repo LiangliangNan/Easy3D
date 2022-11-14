@@ -46,8 +46,9 @@ target_compile_definitions(easy3d_${module}
         )
 
 if (Easy3D_BUILD_SHARED_LIBS)
-    target_compile_definitions(easy3d_${module} PUBLIC ELPP_AS_DLL)
-    target_compile_definitions(easy3d_${module} PRIVATE ELPP_EXPORT_SYMBOLS)
+    target_compile_definitions(easy3d_${module}
+            PUBLIC ELPP_AS_DLL
+            PRIVATE ELPP_EXPORT_SYMBOLS)
 endif ()
 
 install_module(${module})
