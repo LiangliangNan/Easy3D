@@ -1601,7 +1601,11 @@ void PaintCanvas::pasteCamera() {
 
     // get the camera parameters from clipboard string
     const QString str = qApp->clipboard()->text();
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
     const QStringList list = str.split(" ", Qt::SkipEmptyParts);
+#else
+    const QStringList list = str.split(" ", QString::SkipEmptyParts);
+#endif
     if (list.size() != 7) {
         LOG(WARNING) << "camera not available in clipboard";
         return;
