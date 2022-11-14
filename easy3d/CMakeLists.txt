@@ -58,9 +58,10 @@ export(TARGETS
 export(PACKAGE Easy3D)
 
 ## Create the Easy3DConfig.cmake and Easy3DConfigVersion files
-# Create the FooBarConfig.cmake and FooBarConfigVersion files
-file(RELATIVE_PATH REL_INCLUDE_DIR "${Easy3D_INSTALL_CMAKE_DIR}" "${Easy3D_INSTALL_INCLUDE_DIR}")
-file(RELATIVE_PATH REL_LIB_DIR "${Easy3D_INSTALL_CMAKE_DIR}" "${Easy3D_INSTALL_LIB_DIR}")
+
+# Use relative path?
+#file(RELATIVE_PATH REL_INCLUDE_DIR "${Easy3D_INSTALL_CMAKE_DIR}" "${Easy3D_INSTALL_INCLUDE_DIR}")
+#file(RELATIVE_PATH REL_LIB_DIR "${Easy3D_INSTALL_CMAKE_DIR}" "${Easy3D_INSTALL_LIB_DIR}")
 
 # ... for the build tree
 set(CONF_Easy3D_INCLUDE_DIRS "${Easy3D_INCLUDE_DIR}")
@@ -69,8 +70,8 @@ set(CONF_Easy3D_VERSION ${Easy3D_VERSION})
 configure_file(../cmake/Easy3DConfig.cmake.in
         "${Easy3D_BINARY_DIR}/Easy3DConfig.cmake" @ONLY)
 # ... for the install tree
-set(CONF_Easy3D_INCLUDE_DIRS "${Easy3D_CMAKE_DIR}/${REL_INCLUDE_DIR}")
-set(CONF_Easy3D_LIBRARY_DIRS "${Easy3D_CMAKE_DIR}/${REL_LIB_DIR}")
+set(CONF_Easy3D_INCLUDE_DIRS "${Easy3D_INSTALL_INCLUDE_DIR}")
+set(CONF_Easy3D_LIBRARY_DIRS "${Easy3D_INSTALL_LIB_DIR}")
 configure_file(../cmake/Easy3DConfig.cmake.in
         "${Easy3D_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/Easy3DConfig.cmake" @ONLY)
 # ... for both
