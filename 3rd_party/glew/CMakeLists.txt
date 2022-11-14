@@ -25,7 +25,7 @@ if(LINUX)
 endif()
 find_package(OpenGL REQUIRED)
 message(STATUS "OpenGL library: ${OPENGL_gl_LIBRARY}")
-target_link_libraries(3rd_${module} PUBLIC OpenGL::GL)
+target_link_libraries(3rd_${module} PUBLIC ${OPENGL_gl_LIBRARY})
 
 
 set_target_properties(3rd_${module} PROPERTIES PUBLIC_HEADER "include/GL/glew.h")
