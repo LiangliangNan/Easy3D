@@ -1,6 +1,6 @@
 set(module renderer)
 set(private_dependencies)
-set(public_dependencies 3rd_glew easy3d::core easy3d::util easy3d::fileio easy3d::algo)
+set(public_dependencies easy3d::core easy3d::util easy3d::fileio easy3d::algo)
 
 set(${module}_headers
         ambient_occlusion.h
@@ -63,6 +63,7 @@ set(${module}_sources
         manipulator.cpp
         manipulated_camera_frame.cpp
         manipulated_frame.cpp
+        opengl.cpp
         opengl_error.cpp
         opengl_util.cpp
         opengl_timer.cpp
@@ -184,4 +185,14 @@ set(${module}_resources
         )
 
 add_module(${module} "${${module}_headers}" "${${module}_sources}" "${private_dependencies}" "${public_dependencies}")
+target_include_directories(easy3d_${module} PRIVATE ${Easy3D_THIRD_PARTY}/glew/include)
+target_compile_definitions(easy3d_${module} PRIVATE GLEW_BUILD PUBLIC GLEW_NO_GLU)
+
+if(LINUX)
+    set (OpenGL_GL_PREFERENCE GLVND)
+endif()
+find_package(OpenGL REQUIRED)
+message(STATUS "OpenGL library: ${OPENGL_gl_LIBRARY}")
+target_link_libraries(easy3d_${module} PUBLIC OpenGL::GL)
+
 install_module(${module})

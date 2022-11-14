@@ -1,5 +1,5 @@
 set(module viewer)
-set(private_dependencies 3rd_glew 3rd_glfw)
+set(private_dependencies 3rd_glfw)
 set(public_dependencies easy3d::core easy3d::renderer easy3d::util easy3d::fileio)
 
 set(${module}_headers

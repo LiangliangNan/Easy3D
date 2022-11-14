@@ -8,7 +8,6 @@ function(add_3rdparty_module module sources headers)
 endfunction()
 
 
-add_subdirectory(glew)
 add_subdirectory(glfw)
 add_subdirectory(imgui)
 

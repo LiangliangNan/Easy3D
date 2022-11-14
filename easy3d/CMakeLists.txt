@@ -38,7 +38,7 @@ endif ()
 
 add_subdirectory(renderer)
 list(APPEND CONF_Easy3D_COMPONENTS renderer)
-list(APPEND EXPORT_TARGET_SET easy3d_renderer 3rd_glew)
+list(APPEND EXPORT_TARGET_SET easy3d_renderer)
 
 add_subdirectory(gui)
 list(APPEND CONF_Easy3D_COMPONENTS gui)
