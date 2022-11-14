@@ -51,3 +51,6 @@ if (Easy3D_BUILD_SHARED_LIBS)
 endif ()
 
 install_module(${module})
+# Install easylogging++.h to the installation directory
+install(FILES "${Easy3D_THIRD_PARTY}/easyloggingpp/easylogging++.h"
+        DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/3rd_party/easyloggingpp")

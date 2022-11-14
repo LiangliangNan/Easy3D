@@ -193,6 +193,9 @@ if(LINUX)
 endif()
 find_package(OpenGL REQUIRED)
 message(STATUS "OpenGL library: ${OPENGL_gl_LIBRARY}")
-target_link_libraries(easy3d_${module} PUBLIC OpenGL::GL)
+target_link_libraries(easy3d_${module} PUBLIC ${OPENGL_gl_LIBRARY})
 
 install_module(${module})
+# Install glew.h to the installation directory
+install(FILES "${Easy3D_THIRD_PARTY}/glew/include/GL/glew.h"
+        DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/3rd_party/glew/include/GL")
