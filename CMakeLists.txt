@@ -122,7 +122,6 @@ if (Easy3D_ENABLE_CGAL)
     if (CGAL_FOUND)
         if (CGAL_VERSION VERSION_GREATER_EQUAL "5.1")
             set(Easy3D_HAS_CGAL TRUE)
-            add_definitions(-DHAS_CGAL)
             mark_as_advanced(BUILD_TESTING
                     CGAL_CTEST_DISPLAY_MEM_AND_TIME
                     CGAL_DEV_MODE
@@ -162,7 +161,6 @@ endif ()
 include(./cmake/FindFFMPEG.cmake)
 if (FFMPEG_FOUND)
     set(Easy3D_HAS_FFMPEG TRUE)
-    add_definitions(-DHAS_FFMPEG)
 else ()
     set(Easy3D_HAS_FFMPEG FALSE)
     message(WARNING "You have requested FFMPEG support but FFMPEG was not found. "
@@ -201,8 +199,8 @@ function(add_module module headers sources private_dependencies public_dependenc
             SOVERSION ${Easy3D_MAJOR_VERSION}
             VERSION ${Easy3D_VERSION}
             )
-    if (MSVC)
-        target_compile_definitions(easy3d_${module} PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
+    if (WIN32 OR MSVC)
+        target_compile_definitions(easy3d_${module} PUBLIC NOMINMAX WIN32_LEAN_AND_MEAN VC_EXTRALEAN _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)  # get a clean windows
     endif ()
 
     # Alias target (recommended by policy CMP0028) and it looks nicer
@@ -219,6 +217,7 @@ function(install_module module)
             EXPORT Easy3DTargets
             RUNTIME DESTINATION "${Easy3D_INSTALL_BIN_DIR}" COMPONENT bin
             LIBRARY DESTINATION "${Easy3D_INSTALL_LIB_DIR}" COMPONENT lib
+            ARCHIVE DESTINATION "${Easy3D_INSTALL_LIB_DIR}" COMPONENT lib
             PUBLIC_HEADER DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/easy3d/${module}"
             COMPONENT dev)
 endfunction()

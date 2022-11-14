@@ -1,5 +1,4 @@
 * Things work differently with shared build
-  - log(INFO) doesn't write to the log file
   - imgui viewer doesn't show the menu.
 
 * ToDo list (or on going):

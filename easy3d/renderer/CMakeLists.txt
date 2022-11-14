@@ -1,6 +1,6 @@
 set(module renderer)
 set(private_dependencies)
-set(public_dependencies 3rd_glew easy3d::core easy3d::util easy3d::fileio easy3d::algo)
+set(public_dependencies easy3d::core easy3d::util easy3d::fileio easy3d::algo)
 
 set(${module}_headers
         ambient_occlusion.h
@@ -63,6 +63,7 @@ set(${module}_sources
         manipulator.cpp
         manipulated_camera_frame.cpp
         manipulated_frame.cpp
+        opengl.cpp
         opengl_error.cpp
         opengl_util.cpp
         opengl_timer.cpp
@@ -184,4 +185,23 @@ set(${module}_resources
         )
 
 add_module(${module} "${${module}_headers}" "${${module}_sources}" "${private_dependencies}" "${public_dependencies}")
+target_include_directories(easy3d_${module} PRIVATE ${Easy3D_THIRD_PARTY}/glew/include)
+target_compile_definitions(easy3d_${module} PRIVATE GLEW_BUILD PUBLIC GLEW_NO_GLU)
+
+
+if(WIN32 OR MSVC OR APPLE)
+    find_package(OpenGL COMPONENTS OpenGL REQUIRED)
+    message(STATUS "OpenGL library: ${OPENGL_gl_LIBRARY}")
+    target_link_libraries(easy3d_${module} PUBLIC ${OPENGL_gl_LIBRARY})
+else() # == if(UNIX AND NOT APPLE)
+    set (OpenGL_GL_PREFERENCE GLVND)
+    find_package(OpenGL COMPONENTS OpenGL GLX REQUIRED)
+    message(STATUS "OpenGL libraries: ${OPENGL_opengl_LIBRARY} ${OPENGL_glx_LIBRARY}")
+    target_link_libraries(easy3d_${module} PUBLIC ${OPENGL_opengl_LIBRARY} ${OPENGL_glx_LIBRARY})
+endif()
+
+
 install_module(${module})
+# Install glew.h to the installation directory
+install(FILES "${Easy3D_THIRD_PARTY}/glew/include/GL/glew.h"
+        DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/3rd_party/glew/include/GL")

@@ -120,8 +120,8 @@ void CompositeView::draw_grid() const {
     if (!program)
         return;
 
-    int w = width() * 0.5f * dpi_scaling();
-    int h = height() * 0.5f * dpi_scaling();
+    float w = width() * 0.5f * dpi_scaling();
+    float h = height() * 0.5f * dpi_scaling();
     const mat4& proj = transform::ortho(0.0f, w, h, 0.0f, 0.0f, -1.0f);
 
     // To make the grid appear behind other objects: reserve a tiny bit of the
@@ -152,8 +152,8 @@ void CompositeView::cleanup() {
 
 
 void CompositeView::update_grid() {
-    int x_steps = width() * 0.5f / grid_size_;
-    int y_steps = height() * 0.5f / grid_size_;
+    int x_steps = static_cast<int>(width() * 0.5f / grid_size_);
+    int y_steps = static_cast<int>(height() * 0.5f / grid_size_);
     std::vector<vec3> points;
     shapes::create_grid(x_steps, y_steps, points, 0.99f, grid_size_ * dpi_scaling());
     grid_->update_vertex_buffer(points);

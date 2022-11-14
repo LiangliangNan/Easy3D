@@ -8,7 +8,6 @@ function(add_3rdparty_module module sources headers)
 endfunction()
 
 
-add_subdirectory(glew)
 add_subdirectory(glfw)
 add_subdirectory(imgui)
 
@@ -23,11 +22,10 @@ add_subdirectory(poisson)
 add_subdirectory(triangle)
 add_subdirectory(tetgen)
 add_subdirectory(glutess)
+add_subdirectory(opcode)
 
 add_subdirectory(backward)
-add_subdirectory(easyloggingpp)
 
-add_subdirectory(opcode)
 
 
 

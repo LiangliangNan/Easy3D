@@ -16,20 +16,8 @@
 
 #include "easylogging++.h"
 
-// Liangliang: generate the instance of el::base::Storage (so other libraries don't have to do so and export it)
-#define AUTO_INITIALIZE_EASYLOGGINGPP
-
 #if defined(AUTO_INITIALIZE_EASYLOGGINGPP)
-#if 1
 INITIALIZE_EASYLOGGINGPP
-#else // the above macro is equivalent to the following code:
-namespace el {
-    namespace base {
-        el::base::type::StoragePointer elStorage(new el::base::Storage(el::LogBuilderPtr(new el::base::DefaultLogBuilder())));
-    }
-    el::base::debug::CrashHandler elCrashHandler(ELPP_USE_DEF_CRASH_HANDLER);
-}
-#endif
 #endif
 
 namespace el {
@@ -2668,7 +2656,7 @@ void Writer::triggerDispatch(void) {
 	  }
 	catch(std::exception & ex){
 		// Extremely low memory situation; don't let exception be unhandled.
-		ELPP_UNUSED(ex);
+        ELPP_UNUSED(ex);
 	}
 }
 

@@ -1650,7 +1650,12 @@ namespace easy3d {
         // ------------- draw the picking region with transparency  ---------------
 
         if (pressed_button_ == GLFW_MOUSE_BUTTON_LEFT && modifiers_ == EASY3D_MOD_CONTROL) {
-            const Rect rect(mouse_pressed_x_, mouse_current_x_, mouse_pressed_y_, mouse_current_y_);
+            const Rect rect(
+                static_cast<float>(mouse_pressed_x_), 
+                static_cast<float>(mouse_current_x_), 
+                static_cast<float>(mouse_pressed_y_), 
+                static_cast<float>(mouse_current_y_)
+            );
             if (rect.width() > 0 || rect.height() > 0) {
                 // draw the boundary of the rect
                 shapes::draw_quad_wire(rect, vec4(0.0f, 0.0f, 1.0f, 1.0f), width(), height(), -1.0f);

@@ -22,4 +22,4 @@ target_include_directories(3rd_${module} PUBLIC
         ${Easy3D_THIRD_PARTY}/glew/include 
         ${Easy3D_THIRD_PARTY}/glfw/include
         )
-target_link_libraries(3rd_${module} PRIVATE 3rd_glew 3rd_glfw)
+target_link_libraries(3rd_${module} PRIVATE 3rd_glfw)

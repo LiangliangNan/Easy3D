@@ -2,7 +2,7 @@ set(module util)
 
 find_package(Threads REQUIRED)
 set(private_dependencies 3rd_backward)
-set(public_dependencies 3rd_easyloggingpp Threads::Threads)
+set(public_dependencies Threads::Threads)
 
 set(${module}_headers
         console_style.h
@@ -34,9 +34,23 @@ set(${module}_sources
 add_module(${module} "${${module}_headers}" "${${module}_sources}" "${private_dependencies}" "${public_dependencies}")
 
 # The resources directory
-target_compile_definitions(easy3d_${module} PUBLIC
+target_compile_definitions(easy3d_${module} 
+        PUBLIC
+        ELPP_FEATURE_ALL
+        ELPP_STL_LOGGING
+        ELPP_THREAD_SAFE
+        ELPP_NO_DEFAULT_LOG_FILE
+        ELPP_DISABLE_DEFAULT_CRASH_HANDLING
         "$<BUILD_INTERFACE:Easy3D_RESOURCE_DIR=\"${Easy3D_ROOT}/resources\">"
         "$<INSTALL_INTERFACE:Easy3D_RESOURCE_DIR=\"${Easy3D_INSTALL_RESOURCE_DIR}\">"
         )
 
+if (Easy3D_BUILD_SHARED_LIBS)
+    target_compile_definitions(easy3d_${module} PUBLIC ELPP_AS_DLL)
+    target_compile_definitions(easy3d_${module} PRIVATE ELPP_EXPORT_SYMBOLS)
+endif ()
+
 install_module(${module})
+# Install easylogging++.h to the installation directory
+install(FILES "${Easy3D_THIRD_PARTY}/easyloggingpp/easylogging++.h"
+        DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/3rd_party/easyloggingpp")

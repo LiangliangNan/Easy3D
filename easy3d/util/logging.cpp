@@ -28,6 +28,19 @@
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/stack_tracer.h>
 
+#include <3rd_party/easyloggingpp/easylogging++.cc>
+
+
+#if 1
+INITIALIZE_EASYLOGGINGPP
+#else // the above macro is equivalent to the following code:
+namespace el {
+    namespace base {
+        el::base::type::StoragePointer elStorage(new el::base::Storage(el::LogBuilderPtr(new el::base::DefaultLogBuilder())));
+    }
+    el::base::debug::CrashHandler elCrashHandler(ELPP_USE_DEF_CRASH_HANDLER);
+}
+#endif
 
 
 namespace easy3d
@@ -84,7 +97,7 @@ namespace easy3d
         }
 
 
-        void crash_sandler(int sig) {
+        void crash_handler(int sig) {
             std::stringstream ss;
             ss << crash_reason(sig) << "\n"
                << stacktrace_failure_header() << "\n"
@@ -183,7 +196,7 @@ namespace easy3d
             // default logger uses default configurations
             el::Loggers::reconfigureLogger("default", defaultConf);
 
-            el::Helpers::setCrashHandler(crash_sandler);
+            el::Helpers::setCrashHandler(crash_handler);
 
             // allow all levels of verbose messages to be logged into the log file (but not shown on UI).
             el::Loggers::setVerboseLevel(verbosity_threshold);

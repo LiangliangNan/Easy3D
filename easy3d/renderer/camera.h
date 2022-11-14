@@ -254,7 +254,7 @@ namespace easy3d {
         /// Perform keyframe interpolation to fit the scene bounding box.
         void interpolateToFitScene();
         /// Perform keyframe interpolation to \p frame, done in \p duration second.
-        void interpolateTo(const Frame &frame, double duration);
+        void interpolateTo(const Frame &frame, float duration);
 
 	public:
 		/**

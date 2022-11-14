@@ -103,8 +103,8 @@ void DepthImage::generate_depth() {
 
 void DepthImage::draw_depth() const {
     DepthImage* viewer = const_cast<DepthImage*>(this);
-    int w = width() * dpi_scaling();
-    int h = height() * dpi_scaling();
+    int w = static_cast<int>(width() * dpi_scaling());
+    int h = static_cast<int>(height() * dpi_scaling());
 
     if (!fbo_) {
         const int samples = 0;
