@@ -90,7 +90,7 @@ void DialogSnapshot::saveSnapshot() {
             "Windows Bitmap (*.bmp)\n"
             "24bit RGB Bitmap (*.ppm)",
             &proposedFormat,
-            overwrite ? QFileDialog::DontConfirmOverwrite : QFlags<QFileDialog::Option>(nullptr)
+            overwrite ? QFileDialog::DontConfirmOverwrite : QFileDialog::Option()
     );
 
     // make sure the save file dialog is really hidden
