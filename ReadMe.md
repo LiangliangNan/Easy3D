@@ -69,18 +69,28 @@ scalar fields) can be done very conveniently.
 
 ### Easy3D repository layout
 The repository contains a `CMakeLists.txt` file (in the root directory of the repository) that serves as an anchor for 
-configuring and building programs, and a set of subfolders:
+configuring and building programs, as well as a set of subfolders:
 * [`3rd_party`](https://github.com/LiangliangNan/Easy3D/tree/main/3rd_party) - source code of third-party libraries
 * [`applications`](https://github.com/LiangliangNan/Easy3D/tree/main/applications) - applications built on top of Easy3D
 * [`cmake`](https://github.com/LiangliangNan/Easy3D/tree/main/cmake) - CMake-related configuration files
 * [`docs`](https://github.com/LiangliangNan/Easy3D/tree/main/docs) - documentation configuration file (Doxygen)
-* [`easy3d`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d) - source code of Easy3D
+* [`easy3d`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d) - source code of Easy3D, implementing the Easy3D modules:
+  * [`util`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/util) - utilities, e.g., logging, file system, progress, timer.
+  * [`core`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/core) - basic types and data structures, e.g., vector, matrix, line, plane, point cloud, surface mesh, graph, and polyhedron mesh.
+  * [`fileio`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/fileio) - functionalities for reading/writing data from/into files.
+  * [`kdtree`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/kdtree) - a collection of kd-trees.
+  * [`algo`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/algo) - algorithms for geometry processing.
+  * [`algo_ext`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/algo_ext) - several extended surface mesh processing algorithms (based on CGAL).
+  * [`video`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/video) - a class that can encode an image sequence into a video.
+  * [`renderer`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/renderer) - functionalities and algorithms for rendering and visualization.
+  * [`gui`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/gui) - tools for user interactions, e.g., picking points, faces, or models.
+  * [`viewer`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/viewer) - a simple viewer and a composite viewer.
 * [`resources`](https://github.com/LiangliangNan/Easy3D/tree/main/resources) - test data, images, shaders, textures, etc.
 * [`tests`](https://github.com/LiangliangNan/Easy3D/tree/main/tests) - a collection of test cases
 * [`tutorials`](https://github.com/LiangliangNan/Easy3D/tree/main/tutorials) - a collection of examples (with detailed explanations in code)
 
 ### Build Easy3D
-Like most software, Easy3D depends on some third-party libraries. Easy3D has made this easier for the users by including
+Like most software, Easy3D depends on some third-party libraries. Easy3D has made this easier for users by including
 the source code of most third-party libraries (for the core functionalities and the basic viewer), and it leaves very 
 few optional (for a few additional features that are typically not needed by most users). 
 
@@ -147,13 +157,13 @@ you can build ALL or only the `tests` target. Finally, run the `tests` executabl
 
 ### Use Easy3D in your project
 This is quite easy, maybe easier than many other open-source libraries :-) 
-After you have built Easy3D, you only need to add the following lines to your CMakeLists file (don't forget to replace `YOUR_APP_NAME` 
-with the actual name of your application) and point `Easy3D_DIR` to your `build` directory of Easy3D when doing cmake. Then the requested
-Easy3D libraries, including directories, and relevant compile definitions of Easy3D are visible and accessible to your project.
+After you have built Easy3D, you only need to add the following lines to your CMakeLists file and point `Easy3D_DIR` 
+to your `build` (or the installation) directory of Easy3D when doing cmake. Then the requested Easy3D libraries, 
+including directories and relevant compile definitions of Easy3D, are visible and accessible to your project.
 ```
 set(CMAKE_CXX_STANDARD 11)                          # specify C++ standard
 find_package(Easy3D COMPONENTS viewer REQUIRED)     # request Easy3D (recommended to request only needed components)
-target_link_libraries(YOUR_APP_NAME easy3d::viewer) # request necessary Easy3D modules (add more if needed, e.g., algo)
+target_link_libraries(YOUR_APP_NAME easy3d::viewer) # link to necessary Easy3D modules (add more if needed, e.g., algo)
 ```
 The minimum code to have a 3D viewer:
 
