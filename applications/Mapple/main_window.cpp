@@ -192,6 +192,7 @@ MainWindow::MainWindow(QWidget *parent)
     // options for the model panel
     connect(ui->checkBoxAutoFocus, SIGNAL(toggled(bool)), ui->treeWidgetModels, SLOT(setAutoFocus(bool)));
     connect(ui->checkBoxSelectedOnly, SIGNAL(toggled(bool)), ui->treeWidgetModels, SLOT(setSelectedOnly(bool)));
+    connect(ui->pushButtonApplyToAllModels, SIGNAL(clicked()), ui->treeWidgetModels, SLOT(applyRenderingToAllModels()));
 
 #if 0
     auto actionTest = ui->mainToolBar->addAction("Test");

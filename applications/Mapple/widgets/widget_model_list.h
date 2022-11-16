@@ -87,6 +87,8 @@ private Q_SLOTS :
 
     void showContextMenu(const QPoint &p);
 
+    void applyRenderingToAllModels();
+
 signals:
     void currentDrawableChanged(easy3d::Drawable*);
 

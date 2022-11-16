@@ -26,7 +26,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>24</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -312,7 +312,7 @@
           <x>0</x>
           <y>0</y>
           <width>200</width>
-          <height>331</height>
+          <height>367</height>
          </rect>
         </property>
         <attribute name="icon">
@@ -345,8 +345,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>200</width>
-          <height>331</height>
+          <width>98</width>
+          <height>28</height>
          </rect>
         </property>
         <attribute name="icon">
@@ -379,8 +379,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>200</width>
-          <height>331</height>
+          <width>98</width>
+          <height>28</height>
          </rect>
         </property>
         <attribute name="icon">
@@ -413,8 +413,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>200</width>
-          <height>331</height>
+          <width>98</width>
+          <height>28</height>
          </rect>
         </property>
         <attribute name="icon">
@@ -501,7 +501,7 @@
        <item>
         <widget class="QCheckBox" name="checkBoxAutoFocus">
          <property name="statusTip">
-          <string>Center scree the selected model</string>
+          <string>Center screen the selected model</string>
          </property>
          <property name="text">
           <string>Auto focus</string>
@@ -528,6 +528,29 @@
          </property>
          <property name="text">
           <string>Selected only</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_4">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>5</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QPushButton" name="pushButtonApplyToAllModels">
+         <property name="statusTip">
+          <string>Apply the rendering style of the selected model to all other models</string>
+         </property>
+         <property name="text">
+          <string>Apply to all</string>
          </property>
         </widget>
        </item>
@@ -1246,6 +1269,13 @@
    <header>widgets/widget_log.h</header>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>checkBoxAutoFocus</tabstop>
+  <tabstop>checkBoxSelectedOnly</tabstop>
+  <tabstop>pushButtonApplyToAllModels</tabstop>
+  <tabstop>treeWidgetModels</tabstop>
+  <tabstop>listWidgetLog</tabstop>
+ </tabstops>
  <resources>
   <include location="resources/Mapple.qrc"/>
  </resources>

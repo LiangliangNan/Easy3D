@@ -629,10 +629,10 @@ void WidgetModelList::modelItemChanged(QTreeWidgetItem *current, int column) {
         const std::string path = file_system::parent_directory(prev_name);
         const std::string ext = file_system::extension(prev_name);
         std::string new_name;
-        if (path.empty() || ext.empty())
+        if (path.empty() && ext.empty())
             new_name = text;
         else
-            new_name = path + "/" + text + "." + ext;
+            new_name = path + "/" + text + (ext.empty() ? "" : ("." + ext));
 
         if (new_name != prev_name) {
             model->set_name(new_name);
@@ -879,4 +879,42 @@ void WidgetModelList::decomposeModel(Model *model) {
     viewer()->update();
 
     LOG(INFO) << "model decomposed into " << components.size() << " parts";
+}
+
+
+namespace internal {
+
+    template <typename DRAWABLE> 
+    void propogate(const std::vector<DRAWABLE*>& source_drawables, const std::vector<DRAWABLE*>& target_drawables) {
+        for (auto source_drawable : source_drawables) {
+            for (auto target_drawable : target_drawables) {
+                if (source_drawable->name() == target_drawable->name())  // propogate only when their names are the same
+                    target_drawable->state() = source_drawable->state();
+            }
+        }
+    }
+}
+
+
+void WidgetModelList::applyRenderingToAllModels() {
+    const auto& models = viewer()->models();
+    if (models.size() < 2)
+        return;
+    Model* source = viewer()->currentModel();
+
+    for (auto& target : models) {
+        if (target == source)
+            continue;
+
+        // points drawables
+        internal::propogate(source->renderer()->points_drawables(), target->renderer()->points_drawables());
+        // lines drawables
+        internal::propogate(source->renderer()->lines_drawables(), target->renderer()->lines_drawables());
+        // triangles drawables
+        internal::propogate(source->renderer()->triangles_drawables(), target->renderer()->triangles_drawables());
+    }
+
+    updateModelList();
+    mainWindow_->updateRenderingPanel();
+    viewer()->update();
 }
