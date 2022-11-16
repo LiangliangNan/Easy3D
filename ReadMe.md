@@ -76,7 +76,7 @@ configuring and building programs, as well as a set of subfolders:
 * [`docs`](https://github.com/LiangliangNan/Easy3D/tree/main/docs) - documentation configuration file (Doxygen)
 * [`easy3d`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d) - source code of Easy3D, implementing the Easy3D modules:
   * [`util`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/util) - utilities, e.g., logging, file system, progress, timer.
-  * [`core`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/core) - basic types and data structures, e.g., vector, matrix, line, plane, point cloud, surface mesh, graph, and polyhedron mesh.
+  * [`core`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/core) - basic types and data structures, e.g., point cloud, surface mesh, graph, and polyhedron mesh.
   * [`fileio`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/fileio) - functionalities for reading/writing data from/into files.
   * [`kdtree`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/kdtree) - a collection of kd-trees.
   * [`algo`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/algo) - algorithms for geometry processing.
