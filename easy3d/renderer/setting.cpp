@@ -33,7 +33,7 @@ namespace easy3d {
     namespace setting {
 
         // ui: background color of the viewer
-        vec4 background_color = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+        vec4 background_color = vec4(0.9f, 0.9f, 1.0f, 1.0f);
         // highlight: color for highlighted/selected primitives
         vec4 highlight_color = vec4(1.0f, 0.0f, 0.0f, 1.0f);
         // lighting

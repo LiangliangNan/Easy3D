@@ -45,7 +45,6 @@ TextRendering::TextRendering(const std::string &title)
         , alignment_(TextRenderer::ALIGN_CENTER)
         , upper_left_(true)
 {
-    set_background_color(vec4(1, 1, 1, 1));
 }
 
 
