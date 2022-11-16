@@ -59,6 +59,10 @@ namespace easy3d {
         , alpha_(0.8f)
         , movable_(true)
 	{
+        // Liangliang: 
+        //      IMPORTANT: the internal glfw won't be shared accross dll boundaries
+        glfwInit();
+
         camera()->setUpVector(vec3(0, 1, 0));
         camera()->setViewDirection(vec3(0, 0, -1));
         camera_->showEntireScene();
@@ -165,6 +169,10 @@ namespace easy3d {
 		ImGui::DestroyContext(context_);
 
         Viewer::cleanup();
+
+        // Liangliang: 
+        //      IMPORTANT: the internal glfw won't be shared accross dll boundaries
+        glfwTerminate();
 	}
 
 
