@@ -80,6 +80,9 @@
 
 using namespace easy3d;
 
+static struct Init {
+    Init() { setting::background_color = vec4(1, 1, 1, 1); }
+} init;
 
 PaintCanvas::PaintCanvas(MainWindow* window)
         : QOpenGLWidget(window)

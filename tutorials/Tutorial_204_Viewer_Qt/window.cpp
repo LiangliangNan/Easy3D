@@ -302,7 +302,7 @@ namespace easy3d {
                 "24bit RGB Bitmap (*.ppm)\n"
                 "All Files (*.*)",
                 nullptr,
-                overwrite ? QFileDialog::DontConfirmOverwrite : QFlags<QFileDialog::Option>(nullptr)
+                overwrite ? QFileDialog::DontConfirmOverwrite : QFileDialog::Option()
         );
         // Hide closed dialog
         QApplication::processEvents();
