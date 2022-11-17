@@ -34,7 +34,6 @@
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/buffers.h>
-#include <easy3d/renderer/setting.h>
 #include <easy3d/util/logging.h>
 
 

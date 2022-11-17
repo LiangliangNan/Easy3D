@@ -31,7 +31,7 @@
 #include <easy3d/core/random.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_points.h>
-#include <easy3d/util/resources.h>
+#include <easy3d/util/initializer.h>
 #include <easy3d/util/timer.h>
 
 

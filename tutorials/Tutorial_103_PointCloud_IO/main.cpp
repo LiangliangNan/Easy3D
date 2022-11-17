@@ -27,6 +27,7 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/util/resources.h>
+#include <easy3d/util/initializer.h>
 
 #include <fstream>
 

@@ -29,10 +29,8 @@
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/renderer.h>
-#include <easy3d/renderer/setting.h>
 #include <easy3d/util/file_system.h>
-
-#include <3rd_party/glfw/include/GLFW/glfw3.h>    // for the mouse buttons
+#include <easy3d/util/setting.h>
 
 
 using namespace easy3d;

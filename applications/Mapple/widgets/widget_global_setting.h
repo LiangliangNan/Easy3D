@@ -72,7 +72,6 @@ private slots:
 
 private:
     void disableUnavailableOptions();
-    easy3d::ClippingPlane* clippingPlane() const;
 
 private:
     Ui::WidgetGlobalSetting *ui_;

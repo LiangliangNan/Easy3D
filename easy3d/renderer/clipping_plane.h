@@ -29,7 +29,6 @@
 
 #include <easy3d/core/types.h>
 
-
 namespace easy3d {
 
     class Camera;
@@ -46,6 +45,10 @@ namespace easy3d {
     public:
         ClippingPlane();
         virtual ~ClippingPlane();
+
+        /// returns the instance of the clipping plane.
+        /// The entire program will have only one clipping plane.
+        static ClippingPlane* instance();
 
         /// returns whether the clipping plane has been enabled.
         bool is_enabled() const { return enabled_; }

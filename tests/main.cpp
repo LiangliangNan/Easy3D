@@ -24,9 +24,11 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-
 #include <random>
-#include <easy3d/util/resources.h>
+#include <iostream>
+
+#include <easy3d/util/initializer.h>
+
 
 int test_timer();
 int test_signal();

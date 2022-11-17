@@ -36,8 +36,8 @@
 #include <easy3d/renderer/opengl_error.h>
 #include <easy3d/renderer/buffers.h>
 #include <easy3d/renderer/manipulator.h>
-#include <easy3d/renderer/setting.h>
 #include <easy3d/util/logging.h>
+#include <easy3d/util/setting.h>
 #include <easy3d/util/stop_watch.h>
 
 

@@ -43,7 +43,6 @@
 #include <easy3d/renderer/read_pixel.h>
 #include <easy3d/renderer/opengl_util.h>
 #include <easy3d/renderer/opengl_error.h>
-#include <easy3d/renderer/setting.h>
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/text_renderer.h>
 #include <easy3d/renderer/renderer.h>
@@ -52,6 +51,7 @@
 #include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
+#include <easy3d/util/setting.h>
 
 #include <QKeyEvent>
 #include <QPainter>

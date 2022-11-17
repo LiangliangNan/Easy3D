@@ -28,9 +28,9 @@
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/renderer.h>
-#include <easy3d/util/resources.h>
-
 #include <easy3d/algo/point_cloud_ransac.h>
+#include <easy3d/util/resources.h>
+#include <easy3d/util/initializer.h>
 
 
 using namespace easy3d;

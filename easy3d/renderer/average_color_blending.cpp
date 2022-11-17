@@ -32,9 +32,9 @@
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/shapes.h>
-#include <easy3d/renderer/setting.h>
 #include <easy3d/renderer/transform.h>
 #include <easy3d/renderer/clipping_plane.h>
+#include <easy3d/util/setting.h>
 
 
 namespace easy3d {
@@ -120,10 +120,10 @@ namespace easy3d {
                 program->set_uniform("default_color", d->color());
                 program->set_uniform("selected", d->is_selected());
                 program->set_uniform("highlight_color", setting::highlight_color);
-                if (setting::clipping_plane) {
-                    setting::clipping_plane->set_program(program);
-                    setting::clipping_plane->set_discard_primitives(program, d->plane_clip_discard_primitive());
-                }
+
+                ClippingPlane::instance()->set_program(program);
+                ClippingPlane::instance()->set_discard_primitives(program, d->plane_clip_discard_primitive());
+
                 d->gl_draw();
             }
         }

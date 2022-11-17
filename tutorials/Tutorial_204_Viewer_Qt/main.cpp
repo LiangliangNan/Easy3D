@@ -30,7 +30,7 @@
 #include <QSurfaceFormat>
 #include <QStyleFactory>
 
-#include <easy3d/util/resources.h>
+#include <easy3d/util/initializer.h>
 
 #include "window.h"
 

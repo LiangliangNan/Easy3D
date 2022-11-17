@@ -14,7 +14,6 @@
 #include <cassert>
 
 #include <easy3d/core/types.h>
-#include <easy3d/util/logging.h>
 
 
 namespace easy3d {

@@ -32,7 +32,7 @@
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
-#include <easy3d/renderer/setting.h>
+#include <easy3d/util/setting.h>
 
 
 namespace easy3d {

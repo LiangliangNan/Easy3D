@@ -32,10 +32,10 @@
 #include <easy3d/renderer/opengl_error.h>
 #include <easy3d/renderer/frustum.h>
 #include <easy3d/renderer/drawable_triangles.h>
-#include <easy3d/renderer/setting.h>
 #include <easy3d/renderer/texture.h>
 #include <easy3d/renderer/transform.h>
 #include <easy3d/renderer/clipping_plane.h>
+#include <easy3d/util/setting.h>
 
 
 namespace easy3d {
@@ -96,10 +96,8 @@ namespace easy3d {
         program->set_uniform("MVP", light_projection_matrix_ * light_view_matrix_);	easy3d_debug_log_gl_error;
         for (auto d : surfaces) {
             if (d->is_visible()) {
-                if (setting::clipping_plane) {
-                    setting::clipping_plane->set_program(program);
-                    setting::clipping_plane->set_discard_primitives(program, d->plane_clip_discard_primitive());
-                }
+                ClippingPlane::instance()->set_program(program);
+                ClippingPlane::instance()->set_discard_primitives(program, d->plane_clip_discard_primitive());
                 d->gl_draw();
             }
         }
@@ -175,10 +173,8 @@ namespace easy3d {
                         ->set_uniform("selected", d->is_selected())
                         ->set_uniform("highlight_color", setting::highlight_color);
 
-                if (setting::clipping_plane) {
-                    setting::clipping_plane->set_program(program);
-                    setting::clipping_plane->set_discard_primitives(program, d->plane_clip_discard_primitive());
-                }
+                ClippingPlane::instance()->set_program(program);
+                ClippingPlane::instance()->set_discard_primitives(program, d->plane_clip_discard_primitive());
 
                 bool use_texture = (d->texture() && (d->coloring_method() == State::SCALAR_FIELD || d->coloring_method() == State::TEXTURED));
                 program->set_uniform("use_texture", use_texture);

@@ -25,7 +25,7 @@
  ********************************************************************/
 
 #include <easy3d/core/poly_mesh.h>
-#include <easy3d/util/resources.h>
+#include <easy3d/util/initializer.h>
 
 
 using namespace easy3d;

@@ -31,10 +31,10 @@
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/manipulated_frame.h>
-#include <easy3d/renderer/setting.h>
 #include <easy3d/util/file_system.h>
+#include <easy3d/util/setting.h>
 
-#include <3rd_party/glfw/include/GLFW/glfw3.h>    // for the mouse buttons
+#include <3rd_party/glfw/include/GLFW/glfw3.h>    // for the mouse buttons and keys
 
 using namespace easy3d;
 

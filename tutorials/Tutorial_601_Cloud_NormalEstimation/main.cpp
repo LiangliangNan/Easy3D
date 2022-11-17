@@ -29,9 +29,10 @@
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/camera.h>
-#include <easy3d/util/resources.h>
-
 #include <easy3d/algo/point_cloud_normals.h>
+#include <easy3d/util/resources.h>
+#include <easy3d/util/initializer.h>
+
 
 using namespace easy3d;
 

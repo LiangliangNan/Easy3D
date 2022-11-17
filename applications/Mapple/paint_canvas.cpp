@@ -32,7 +32,6 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/graph.h>
-#include <easy3d/core/poly_mesh.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
@@ -51,7 +50,6 @@
 #include <easy3d/renderer/read_pixel.h>
 #include <easy3d/renderer/opengl_util.h>
 #include <easy3d/renderer/opengl_error.h>
-#include <easy3d/renderer/setting.h>
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/text_renderer.h>
@@ -67,6 +65,7 @@
 #include <easy3d/util/string.h>
 #include <easy3d/util/line_stream.h>
 #include <easy3d/util/dialogs.h>
+#include <easy3d/util/setting.h>
 
 #include <QKeyEvent>
 #include <QPainter>
@@ -75,7 +74,6 @@
 #include <QApplication>
 #include <QClipboard>
 #include <QTime>
-#include <QMessageBox>
 #include <QStatusBar>
 
 using namespace easy3d;
@@ -487,8 +485,8 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
         if (pressed_button_ != Qt::NoButton && modifiers_ != Qt::ControlModifier) {
             ManipulatedFrame *frame = camera()->frame();
             if (e->modifiers() == Qt::AltModifier) {
-                if (setting::clipping_plane && setting::clipping_plane->is_enabled())
-                    frame = setting::clipping_plane->manipulator()->frame();
+                if (ClippingPlane::instance()->is_enabled())
+                    frame = ClippingPlane::instance()->manipulator()->frame();
                 else if (currentModel() && currentModel()->renderer()->is_selected()) {
                     frame = currentModel()->manipulator()->frame();
                 }
@@ -1383,9 +1381,7 @@ void PaintCanvas::postDraw() {
 
     // -------------------- draw the clipping plane ----------------------------
 
-    if (setting::clipping_plane)
-        setting::clipping_plane->draw(camera());    easy3d_debug_log_gl_error;
-
+    ClippingPlane::instance()->draw(camera());    easy3d_debug_log_gl_error;
 
     // -------------------- draw a sphere outline
 

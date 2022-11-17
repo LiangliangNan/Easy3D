@@ -26,6 +26,7 @@
 
 #include "viewer.h"
 #include <easy3d/util/resources.h>
+#include <easy3d/util/initializer.h>
 
 
 using namespace easy3d;

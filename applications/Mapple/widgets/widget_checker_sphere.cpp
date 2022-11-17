@@ -36,7 +36,7 @@
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/opengl_util.h>
 #include <easy3d/renderer/shapes.h>
-#include <easy3d/renderer/setting.h>
+#include <easy3d/util/setting.h>
 
 
 using namespace easy3d;

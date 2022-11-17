@@ -24,7 +24,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include <algorithm>
 #include <easy3d/util/resources.h>
 #include <easy3d/util/timer.h>
 

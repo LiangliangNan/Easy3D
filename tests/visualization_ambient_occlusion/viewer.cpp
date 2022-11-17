@@ -33,7 +33,7 @@
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/shapes.h>
 #include <easy3d/renderer/renderer.h>
-#include <easy3d/renderer/setting.h>
+#include <easy3d/util/setting.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
 

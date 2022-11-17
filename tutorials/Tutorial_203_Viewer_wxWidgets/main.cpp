@@ -26,8 +26,10 @@
 
 #if 1
 
-#include <easy3d/util/resources.h>
+#include <easy3d/util/initializer.h>
+
 #include "application.h"
+
 
 using namespace easy3d;
 

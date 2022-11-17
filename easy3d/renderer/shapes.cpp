@@ -31,8 +31,8 @@
 #include <easy3d/renderer/vertex_array_object.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/opengl.h>
-#include <easy3d/renderer/setting.h>
 #include <easy3d/algo/tessellator.h>
+#include <easy3d/util/setting.h>
 
 
 namespace easy3d {

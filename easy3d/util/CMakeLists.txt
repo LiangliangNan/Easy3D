@@ -8,10 +8,12 @@ set(${module}_headers
         console_style.h
         dialogs.h
         file_system.h
+        initializer.h
         line_stream.h
         logging.h
         progress.h
         resources.h
+        setting.h
         stack_tracer.h
         stop_watch.h
         string.h
@@ -23,9 +25,11 @@ set(${module}_sources
         console_style.cpp
         dialogs.cpp
         file_system.cpp
+        initializer.cpp
         logging.cpp
         progress.cpp
         resources.cpp
+        setting.cpp
         stack_tracer.cpp
         stop_watch.cpp
         string.cpp

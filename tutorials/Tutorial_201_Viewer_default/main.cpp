@@ -24,9 +24,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include <easy3d/util/resources.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/viewer/viewer.h>
+#include <easy3d/util/resources.h>
+#include <easy3d/util/initializer.h>
 
 
 using namespace easy3d;

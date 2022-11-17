@@ -46,7 +46,6 @@
 #include <easy3d/fileio/poly_mesh_io.h>
 #include <easy3d/fileio/ply_reader_writer.h>
 #include <easy3d/fileio/point_cloud_io_ptx.h>
-#include <easy3d/renderer/setting.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/progress.h>

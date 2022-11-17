@@ -56,7 +56,6 @@
 #include <easy3d/renderer/text_renderer.h>
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/framebuffer_object.h>
-#include <easy3d/renderer/setting.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
 #include <easy3d/fileio/surface_mesh_io.h>
@@ -65,6 +64,7 @@
 #include <easy3d/fileio/point_cloud_io_ptx.h>
 #include <easy3d/util/resources.h>
 #include <easy3d/util/file_system.h>
+#include <easy3d/util/setting.h>
 
 #include "viewer.h" // ensure "gl.h" is included after "glew.h"
 

@@ -31,13 +31,13 @@
 
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/renderer.h>
-#include <easy3d/renderer/setting.h>
 #include <easy3d/renderer/soft_shadow.h>
 #include <easy3d/renderer/ambient_occlusion.h>
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/manipulated_frame.h>
+#include <easy3d/util/setting.h>
 
 #include "main_window.h"
 #include "paint_canvas.h"
@@ -102,7 +102,7 @@ WidgetGlobalSetting::WidgetGlobalSetting(QWidget *parent)
     // visible
     ui_->checkBoxClippingPlaneVisible->setChecked(true);
     // default color
-    const vec3& c = clippingPlane()->color();
+    const vec3& c = ClippingPlane::instance()->color();
     QPixmap pixmap(ui_->toolButtonClippingPlaneColor->size());
     pixmap.fill(
             QColor(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255)));
@@ -127,24 +127,14 @@ WidgetGlobalSetting::WidgetGlobalSetting(QWidget *parent)
 WidgetGlobalSetting::~WidgetGlobalSetting()
 {
     delete ui_;
-    if (clippingPlane())
-        delete clippingPlane();
-}
-
-
-easy3d::ClippingPlane* WidgetGlobalSetting::clippingPlane() const {
-    if (!setting::clipping_plane) {
-        setting::clipping_plane = new ClippingPlane;
-        // connect the manipulator's signal to the viewer's update function to automatically update rendering.
-        setting::clipping_plane->manipulator()->frame()->modified.connect(viewer_,
-                static_cast<void (PaintCanvas::*)(void)>(&PaintCanvas::update));
-    }
-    return setting::clipping_plane;
 }
 
 
 void WidgetGlobalSetting::setEnableClippingPlane(bool b) {
-    clippingPlane()->set_enabled(b);
+    ClippingPlane::instance()->set_enabled(b);
+    // connect the manipulator's signal to the viewer's update function to automatically update rendering.
+    ClippingPlane::instance()->manipulator()->frame()->modified.connect(viewer_,
+                                                                        static_cast<void (PaintCanvas::*)(void)>(&PaintCanvas::update));
     if (b) {
         static bool init_size = false;
         if (!init_size) {
@@ -163,7 +153,7 @@ void WidgetGlobalSetting::setEnableClippingPlane(bool b) {
 
 
 void WidgetGlobalSetting::setClippingPlaneVisible(bool b) {
-    clippingPlane()->set_visible(b);
+    ClippingPlane::instance()->set_visible(b);
     viewer_->update();
     disableUnavailableOptions();
 }
@@ -177,7 +167,7 @@ void WidgetGlobalSetting::recenterClippingPlane() {
     }
 
     if (box.is_valid()) {
-        clippingPlane()->fit_scene(box.center(), box.radius());
+        ClippingPlane::instance()->fit_scene(box.center(), box.radius());
         viewer_->camera()->setSceneBoundingBox(box.min_point(), box.max_point());
         viewer_->update();
     }
@@ -185,12 +175,12 @@ void WidgetGlobalSetting::recenterClippingPlane() {
 
 
 void WidgetGlobalSetting::setClippingPlaneColor() {
-    const vec4 &c = clippingPlane()->color();
+    const vec4 &c = ClippingPlane::instance()->color();
     QColor orig(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255));
     const QColor &color = QColorDialog::getColor(orig, this);
     if (color.isValid()) {
         const vec4 new_color(color.redF(), color.greenF(), color.blueF(), c.a);
-        clippingPlane()->set_color(new_color);
+        ClippingPlane::instance()->set_color(new_color);
         viewer_->update();
 
         QPixmap pixmap(ui_->toolButtonClippingPlaneColor->size());
@@ -201,7 +191,7 @@ void WidgetGlobalSetting::setClippingPlaneColor() {
 
 
 void WidgetGlobalSetting::setEnableCrossSection(bool b) {
-    clippingPlane()->set_cross_section(b);
+    ClippingPlane::instance()->set_cross_section(b);
     viewer_->update();
     disableUnavailableOptions();
 
@@ -213,7 +203,7 @@ void WidgetGlobalSetting::setEnableCrossSection(bool b) {
 
 
 void WidgetGlobalSetting::setCrossSectionThickness(double w) {
-    clippingPlane()->set_cross_section_width(w);
+    ClippingPlane::instance()->set_cross_section_width(w);
     viewer_->update();
     LOG(INFO) << "cross-section thickness: " << w;
 }

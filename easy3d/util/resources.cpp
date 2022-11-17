@@ -31,15 +31,10 @@
 
 namespace easy3d {
 
-    static std::string resource_dir = file_system::convert_to_native_style(Easy3D_RESOURCE_DIR);
-
-    void initialize(bool use_log_file, const std::string& res_dir) {
-        logging::initialize(false, true, true, false, use_log_file ? "default" : "", 9);
-        resource::initialize(res_dir);
-    }
-
-
     namespace resource {
+
+        static std::string resource_dir = file_system::convert_to_native_style(Easy3D_RESOURCE_DIR);
+
 
         // Sets the resource directory (containing color maps, shaders, textures, fonts, etc.)
         void initialize(const std::string& res_dir) {

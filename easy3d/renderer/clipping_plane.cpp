@@ -34,7 +34,7 @@
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/manipulator.h>
-#include <easy3d/renderer/setting.h>
+#include <easy3d/util/setting.h>
 
 
 namespace easy3d {
@@ -55,6 +55,12 @@ namespace easy3d {
 
     ClippingPlane::~ClippingPlane() {
         delete manipulator_;
+    }
+
+
+    ClippingPlane* ClippingPlane::instance() {
+        static ClippingPlane cp;
+        return &cp;
     }
 
 

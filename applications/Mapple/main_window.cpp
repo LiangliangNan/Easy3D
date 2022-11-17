@@ -49,7 +49,6 @@
 #include <easy3d/core/poly_mesh.h>
 #include <easy3d/core/random.h>
 #include <easy3d/core/surface_mesh_builder.h>
-#include <easy3d/renderer/setting.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/clipping_plane.h>
@@ -1477,13 +1476,12 @@ void MainWindow::surfaceMeshClip() {
         return;
 
 #if HAS_CGAL
-    auto clipping_plane = easy3d::setting::clipping_plane;
-    if (!clipping_plane || !clipping_plane->is_enabled()) {
-        LOG(WARNING) << "clipping plane is not defined";
+    if (!ClippingPlane::instance()->is_enabled()) {
+        LOG(WARNING) << "clipping plane is not enabled";
         return;
     }
 
-    Surfacer::clip(mesh, clipping_plane->plane0(), false);
+    Surfacer::clip(mesh, ClippingPlane::instance()->plane0(), false);
 
     mesh->renderer()->update();
     viewer_->update();
@@ -1500,13 +1498,12 @@ void MainWindow::surfaceMeshSplit() {
         return;
 
 #if HAS_CGAL
-    auto clipping_plane = easy3d::setting::clipping_plane;
-    if (!clipping_plane || !clipping_plane->is_enabled()) {
-        LOG(WARNING) << "clipping plane is not defined";
+    if (!ClippingPlane::instance()->is_enabled()) {
+        LOG(WARNING) << "clipping plane is not enabled";
         return;
     }
 
-    Surfacer::split(mesh, clipping_plane->plane0());
+    Surfacer::split(mesh, ClippingPlane::instance()->plane0());
 
     mesh->renderer()->update();
     viewer_->update();

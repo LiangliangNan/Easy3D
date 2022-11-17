@@ -24,7 +24,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include <easy3d/renderer/setting.h>
+#include <easy3d/util/setting.h>
 
 
 namespace easy3d {
@@ -122,7 +122,6 @@ namespace easy3d {
         float poly_mesh_edges_size = 1.0f;
 
         // clipping plane
-        ClippingPlane *clipping_plane = nullptr;
         vec4 clipping_plane_color = vec4(1.0f, 0.0f, 0.0f, 0.2f);
 
     }   // namespace setting

@@ -24,33 +24,19 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include "viewer.h"
-#include <easy3d/util/resources.h>
 #include <easy3d/util/initializer.h>
+#include <easy3d/util/logging.h>
+#include <easy3d/util/setting.h>
+#include <easy3d/util/resources.h>
 
 
-using namespace easy3d;
+namespace easy3d {
 
-// This example shows how to manipulate a model in the 3D space using the Manipulator class.
-
-int main(int argc, char **argv) {
-    // Initialize Easy3D.
-    initialize();
-
-    ManipulationViewer viewer("Tutorial_405_ObjectManipulation");
-    viewer.add_model(resource::directory() + "/data/easy3d/easy3d_e.ply");
-    viewer.add_model(resource::directory() + "/data/easy3d/easy3d_a.ply");
-    viewer.add_model(resource::directory() + "/data/easy3d/easy3d_s.ply");
-    viewer.add_model(resource::directory() + "/data/easy3d/easy3d_y.ply");
-    viewer.add_model(resource::directory() + "/data/easy3d/easy3d_3.ply");
-    viewer.add_model(resource::directory() + "/data/easy3d/easy3d_d.ply");
-
-    if (viewer.models().empty()) {
-        LOG(ERROR) << "failed to load the model. Please make sure the file exists and format is correct.";
-        return EXIT_FAILURE;
+    void initialize(bool use_log_file, bool use_setting_file, const std::string& resource_dir) {
+        logging::initialize(false, true, true, false, use_log_file ? "default" : "", 9);
+        setting::initialize(use_setting_file ? "default" : "");
+        resource::initialize(resource_dir);
     }
 
-    // Run the viewer
-    return viewer.run();
-}
+} // namespace easy3d
 

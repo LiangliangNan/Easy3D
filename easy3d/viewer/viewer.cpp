@@ -58,7 +58,6 @@
 #include <easy3d/renderer/framebuffer_object.h>
 #include <easy3d/renderer/opengl_util.h>
 #include <easy3d/renderer/opengl_error.h>
-#include <easy3d/renderer/setting.h>
 #include <easy3d/renderer/text_renderer.h>
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/fileio/point_cloud_io.h>
@@ -73,6 +72,7 @@
 #include <easy3d/util/timer.h>
 #include <easy3d/util/string.h>
 #include <easy3d/util/resources.h>
+#include <easy3d/util/setting.h>
 
 
 // To have the same shortcut behavior on macOS and other platforms (i.e., Windows, Linux)

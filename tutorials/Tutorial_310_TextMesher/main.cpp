@@ -30,6 +30,7 @@
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/algo/text_mesher.h>
 #include <easy3d/util/resources.h>
+#include <easy3d/util/initializer.h>
 
 
 using namespace easy3d;

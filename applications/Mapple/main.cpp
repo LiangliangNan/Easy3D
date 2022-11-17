@@ -44,6 +44,7 @@
 #include <QElapsedTimer>
 #include <QException>
 
+#include <easy3d/util/initializer.h>
 #include <easy3d/util/resources.h>
 
 
@@ -83,14 +84,11 @@ public:
 };
 
 
-#include <easy3d/renderer/setting.h>
 
 int main(int argc, char *argv[])
 {
-    // initialize logging at the very beginning to make sure everything will be logged into the log file.
-    logging::initialize(true, true, true, true);
-    resource::initialize();
-    setting::initialize();
+    // initialize: we want to use both log and setting files
+    initialize(true, true);
 
     //Locale management
     {

@@ -27,6 +27,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/util/resources.h>
+#include <easy3d/util/initializer.h>
 
 
 using namespace easy3d;

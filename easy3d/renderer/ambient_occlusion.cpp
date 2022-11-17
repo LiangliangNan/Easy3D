@@ -41,10 +41,8 @@
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/opengl.h>
 #include <easy3d/renderer/renderer.h>
-#include <easy3d/renderer/setting.h>
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/manipulator.h>
-#include <easy3d/renderer/transform.h>
 
 
 const int  KERNEL_SIZE = 64;
@@ -204,27 +202,22 @@ namespace easy3d {
 
                 for (auto d : model->renderer()->points_drawables()) {
                     if (d->is_visible()) {
-                        if (setting::clipping_plane)
-                            setting::clipping_plane->set_program(program);
+                        ClippingPlane::instance()->set_program(program);
                         d->gl_draw(); easy3d_debug_log_gl_error
                     }
                 }
                 for (auto d : model->renderer()->triangles_drawables()) {
                     if (d->is_visible()) {
-                        if (setting::clipping_plane) {
-                            setting::clipping_plane->set_program(program);
-                            setting::clipping_plane->set_discard_primitives(program, d->plane_clip_discard_primitive());
-                        }
+                        ClippingPlane::instance()->set_program(program);
+                        ClippingPlane::instance()->set_discard_primitives(program, d->plane_clip_discard_primitive());
                         program->set_uniform("smooth_shading", d->smooth_shading());
                         d->gl_draw(); easy3d_debug_log_gl_error
                     }
                 }
                 for (auto d : model->renderer()->lines_drawables()) {
                     if (d->is_visible()) {
-                        if (setting::clipping_plane) {
-                            setting::clipping_plane->set_program(program);
-                            setting::clipping_plane->set_discard_primitives(program, d->plane_clip_discard_primitive());
-                        }
+                        ClippingPlane::instance()->set_program(program);
+                        ClippingPlane::instance()->set_discard_primitives(program, d->plane_clip_discard_primitive());
                         d->gl_draw(); easy3d_debug_log_gl_error
                     }
                 }

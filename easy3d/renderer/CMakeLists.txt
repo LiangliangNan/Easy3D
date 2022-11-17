@@ -29,7 +29,6 @@ set(${module}_headers
         read_pixel.h
         buffers.h
         renderer.h
-        setting.h
         shader_manager.h
         shader_program.h
         shadow.h
@@ -71,7 +70,6 @@ set(${module}_sources
         read_pixel.cpp
         buffers.cpp
         renderer.cpp
-        setting.cpp
         shader_manager.cpp
         shader_program.cpp
         shadow.cpp
