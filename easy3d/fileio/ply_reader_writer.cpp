@@ -523,7 +523,7 @@ namespace easy3d {
         }
 
 
-        namespace details {
+        namespace internal {
 
             template<typename VT_Input, typename VT_Output>
             inline void convert(const GenericProperty<VT_Input> &input, GenericProperty<VT_Output> &output) {
@@ -570,9 +570,9 @@ namespace easy3d {
                                                 const std::string &z_name,
                                                 Vec3Property &prop) {
                 PropertyT x_coords, y_coords, z_coords;
-                if (details::extract_named_property(properties, x_coords, x_name) &&
-                    details::extract_named_property(properties, y_coords, y_name) &&
-                    details::extract_named_property(properties, z_coords, z_name)) {
+                if (internal::extract_named_property(properties, x_coords, x_name) &&
+                    internal::extract_named_property(properties, y_coords, y_name) &&
+                    internal::extract_named_property(properties, z_coords, z_name)) {
                     std::size_t num = x_coords.size();
                     prop.resize(num);
                     for (std::size_t j = 0; j < num; ++j)
@@ -591,8 +591,8 @@ namespace easy3d {
                                                 const std::string &x_name, const std::string &y_name,
                                                 Vec2Property &prop) {
                 PropertyT x_coords, y_coords;
-                if (details::extract_named_property(properties, x_coords, x_name) &&
-                    details::extract_named_property(properties, y_coords, y_name) ) {
+                if (internal::extract_named_property(properties, x_coords, x_name) &&
+                    internal::extract_named_property(properties, y_coords, y_name) ) {
                     std::size_t num = x_coords.size();
                     prop.resize(num);
                     for (std::size_t j = 0; j < num; ++j)
@@ -605,7 +605,7 @@ namespace easy3d {
                     return false;
             }
 
-        } // namespace details
+        } // namespace internal
 
 
         void PlyReader::collect_elements(std::vector<Element> &elements) const {
@@ -637,13 +637,13 @@ namespace easy3d {
                 e_ply_type type = e_ply_type(prop->orig_value_type);
                 if (type == PLY_FLOAT || type == PLY_DOUBLE || type == PLY_FLOAT32 || type == PLY_FLOAT64) {
                     FloatListProperty values;
-                    details::convert(*prop, values);
+                    internal::convert(*prop, values);
                     element->float_list_properties.push_back(values);
                 } else { // must be one of the following integer types:
                     //       PLY_INT8, PLY_UINT8, PLY_INT16, PLY_UINT16, PLY_INT32, PLY_UINT32,
                     //       PLY_CHAR, PLY_UCHAR, PLY_SHORT, PLY_USHORT, PLY_INT, PLY_UINT
                     IntListProperty values;
-                    details::convert(*prop, values);
+                    internal::convert(*prop, values);
                     element->int_list_properties.push_back(values);
                 }
             }
@@ -654,13 +654,13 @@ namespace easy3d {
                 e_ply_type type = e_ply_type(prop->orig_value_type);
                 if (type == PLY_FLOAT || type == PLY_DOUBLE || type == PLY_FLOAT32 || type == PLY_FLOAT64) {
                     FloatProperty values;
-                    details::convert(*prop, values);
+                    internal::convert(*prop, values);
                     element->float_properties.push_back(values);
                 } else { // must be one of the following integer types:
                     //       PLY_INT8, PLY_UINT8, PLY_INT16, PLY_UINT16, PLY_INT32, PLY_UINT32,
                     //       PLY_CHAR, PLY_UCHAR, PLY_SHORT, PLY_USHORT, PLY_INT, PLY_UINT
                     IntProperty values;
-                    details::convert(*prop, values);
+                    internal::convert(*prop, values);
                     element->int_properties.push_back(values);
                 }
             }
@@ -668,18 +668,18 @@ namespace easy3d {
             // extract some standard vec3 properties, e.g., points, normals, colors, texture coords
             for (auto &element : elements) {
                 Vec3Property prop_point("point");
-                if (details::extract_vector_property(element.float_properties, "x", "y", "z", prop_point) ||
-                    details::extract_vector_property(element.float_properties, "X", "Y", "Z", prop_point)) {
+                if (internal::extract_vector_property(element.float_properties, "x", "y", "z", prop_point) ||
+                    internal::extract_vector_property(element.float_properties, "X", "Y", "Z", prop_point)) {
                     element.vec3_properties.push_back(prop_point);
                 }
 
                 Vec2Property prop_texcoord("texcoord");
-                if (details::extract_vector_property(element.float_properties, "texcoord_x", "texcoord_y", prop_texcoord)) {
+                if (internal::extract_vector_property(element.float_properties, "texcoord_x", "texcoord_y", prop_texcoord)) {
                     element.vec2_properties.push_back(prop_texcoord);
                 }
 
                 Vec3Property prop_normal("normal");
-                if (details::extract_vector_property(element.float_properties, "nx", "ny", "nz", prop_normal)) {
+                if (internal::extract_vector_property(element.float_properties, "nx", "ny", "nz", prop_normal)) {
                     element.vec3_properties.push_back(prop_normal);
                     // check if the normals are normalized
                     if (!prop_normal.empty()) {
@@ -691,10 +691,10 @@ namespace easy3d {
                 }
 
                 Vec3Property prop_color("color");
-                if (details::extract_vector_property(element.float_properties, "r", "g", "b", prop_color))
+                if (internal::extract_vector_property(element.float_properties, "r", "g", "b", prop_color))
                     element.vec3_properties.push_back(prop_color);
-                else if (details::extract_vector_property(element.int_properties, "red", "green", "blue", prop_color) ||
-                         details::extract_vector_property(element.int_properties, "diffuse_red", "diffuse_green",
+                else if (internal::extract_vector_property(element.int_properties, "red", "green", "blue", prop_color) ||
+                         internal::extract_vector_property(element.int_properties, "diffuse_red", "diffuse_green",
                                                           "diffuse_blue", prop_color)) {
                     for (std::size_t i = 0; i < prop_color.size(); ++i)
                         prop_color[i] /= 255.0f;
@@ -703,12 +703,12 @@ namespace easy3d {
 
                 // "alpha" property is stored separately (if exists)
                 FloatProperty prop_alpha("alpha");
-                if (details::extract_named_property(element.float_properties, prop_alpha, "a"))
+                if (internal::extract_named_property(element.float_properties, prop_alpha, "a"))
                     element.float_properties.push_back(prop_alpha);
 
                 else { // might be in Int format
                     IntProperty temp("alpha");
-                    if (details::extract_named_property(element.int_properties, temp, "alpha")) {
+                    if (internal::extract_named_property(element.int_properties, temp, "alpha")) {
                         prop_alpha.resize(temp.size());
                         for (std::size_t i = 0; i < prop_alpha.size(); ++i)
                             prop_alpha[i] = temp[i] / 255.0f;

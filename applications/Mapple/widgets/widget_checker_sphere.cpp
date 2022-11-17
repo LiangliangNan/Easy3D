@@ -35,7 +35,7 @@
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/opengl_util.h>
-#include <easy3d/renderer/shapes.h>
+#include <easy3d/renderer/shape.h>
 #include <easy3d/util/setting.h>
 
 
@@ -182,7 +182,7 @@ void WidgetCheckerSphere::createSpheres() {
     const vec3 color2(1, 1, 1);
 
     std::vector<vec3> vertices, normals, colors;
-	shapes::create_checker_sphere(center, radius, slices, stacks, checker_size, color1, color2, vertices, normals, colors);
+	shape::create_checker_sphere(center, radius, slices, stacks, checker_size, color1, color2, vertices, normals, colors);
 
     checkerSphere_ = new TrianglesDrawable("checker_sphere");
     checkerSphere_->update_vertex_buffer(vertices);
@@ -193,7 +193,7 @@ void WidgetCheckerSphere::createSpheres() {
     vertices.clear();
     normals.clear();
     colors.clear();
-    shapes::create_sphere(vec3(0, 0, 0), 0.1, 10, 10, vec3(1, 0, 0), vertices, normals, colors);
+    shape::create_sphere(vec3(0, 0, 0), 0.1, 10, 10, vec3(1, 0, 0), vertices, normals, colors);
     lightSphere_ = new TrianglesDrawable("light");
     lightSphere_->update_vertex_buffer(vertices);
     lightSphere_->update_normal_buffer(normals);

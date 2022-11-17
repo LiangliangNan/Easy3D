@@ -29,7 +29,7 @@
 #include <tools/tool_manager.h>
 #include <tools/canvas.h>
 
-#include <easy3d/renderer/shapes.h>
+#include <easy3d/renderer/shape.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/opengl.h>
 
@@ -98,12 +98,12 @@ namespace easy3d {
             int height = tool_manager()->viewer()->camera()->screenHeight();
 
             // draw the boundary of the rect
-            shapes::draw_quad_wire(rect, vec4(1.0f, 0.0f, 0.0f, 1.0f), width, height, -1.0f);
+            shape::draw_quad_wire(rect, vec4(1.0f, 0.0f, 0.0f, 1.0f), width, height, -1.0f);
 
             // draw the transparent face
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            shapes::draw_quad_filled(rect, vec4(1.0f, 0.0f, 0.0f, 0.2f), width, height, -0.9f);
+            shape::draw_quad_filled(rect, vec4(1.0f, 0.0f, 0.0f, 0.2f), width, height, -0.9f);
             glDisable(GL_BLEND);
         }
 
@@ -113,12 +113,12 @@ namespace easy3d {
             int height = tool_manager()->viewer()->camera()->screenHeight();
 
             // draw the boundary of the rect
-            shapes::draw_polygon_wire(lasso, vec4(1.0f, 0.0f, 0.0f, 1.0f), width, height, -1.0f);
+            shape::draw_polygon_wire(lasso, vec4(1.0f, 0.0f, 0.0f, 1.0f), width, height, -1.0f);
 
             // draw the transparent face
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            shapes::draw_polygon_filled(lasso, vec4(1.0f, 0.0f, 0.0f, 0.2f), width, height, -0.9f);
+            shape::draw_polygon_filled(lasso, vec4(1.0f, 0.0f, 0.0f, 0.2f), width, height, -0.9f);
             glDisable(GL_BLEND);
         }
 

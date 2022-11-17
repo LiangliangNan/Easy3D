@@ -113,7 +113,7 @@ namespace easy3d {
 
 
     // \cond
-    namespace details {
+    namespace internal {
 
         template<class Vertex>
         SurfaceMesh *
@@ -484,7 +484,7 @@ namespace easy3d {
         //////////////////////////////////////////////////////////////////////////
 
         PointCloud::VertexProperty<vec3> colors = cloud->get_vertex_property<vec3>("v:color");
-        SurfaceMesh *result = details::convert_to_mesh(mesh, iXForm, density_attr_name, colors);
+        SurfaceMesh *result = internal::convert_to_mesh(mesh, iXForm, density_attr_name, colors);
         const std::string &file_name = file_system::name_less_extension(cloud->name()) + "_Poisson.ply";
         result->set_name(file_name);
         LOG(INFO) << "total reconstruction time: " << w.time_string();

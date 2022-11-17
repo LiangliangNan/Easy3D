@@ -46,7 +46,7 @@
 #include <easy3d/algo/surface_mesh_triangulation.h>
 #include <easy3d/algo/surface_mesh_features.h>
 #include <easy3d/fileio/surface_mesh_io.h>
-#include <easy3d/util/resources.h>
+#include <easy3d/util/resource.h>
 
 #if HAS_CGAL
 #include <easy3d/algo_ext/surfacer.h>

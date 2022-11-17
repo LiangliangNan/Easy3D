@@ -45,7 +45,7 @@
 #include <QException>
 
 #include <easy3d/util/initializer.h>
-#include <easy3d/util/resources.h>
+#include <easy3d/util/resource.h>
 
 
 using namespace easy3d;

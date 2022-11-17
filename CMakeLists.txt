@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.12)
 
 set(Easy3D_MAJOR_VERSION 2)
 set(Easy3D_MINOR_VERSION 5)
-set(Easy3D_PATCH_VERSION 1)
+set(Easy3D_PATCH_VERSION 2)
 set(Easy3D_VERSION ${Easy3D_MAJOR_VERSION}.${Easy3D_MINOR_VERSION}.${Easy3D_PATCH_VERSION})
 
 project(Easy3D VERSION ${Easy3D_VERSION})

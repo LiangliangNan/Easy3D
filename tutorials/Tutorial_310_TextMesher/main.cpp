@@ -29,7 +29,7 @@
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/algo/text_mesher.h>
-#include <easy3d/util/resources.h>
+#include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
 
 

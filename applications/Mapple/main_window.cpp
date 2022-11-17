@@ -42,7 +42,6 @@
 #include <QPushButton>
 #include <QProgressBar>
 
-#include <easy3d/core/version.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/graph.h>
 #include <easy3d/core/point_cloud.h>
@@ -83,6 +82,7 @@
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/stop_watch.h>
 #include <easy3d/util/line_stream.h>
+#include <easy3d/util/version.h>
 
 #include "paint_canvas.h"
 #include "walk_through.h"
@@ -2048,7 +2048,7 @@ void MainWindow::pointCloudDownsampling() {
     dialog->show();
 }
 
-namespace details {
+namespace internal {
     template<typename MODEL>
     void translate(MODEL* model, const vec3& p) {
         auto points = model->template get_vertex_property<vec3>("v:point");
@@ -2063,13 +2063,13 @@ void MainWindow::translationalRecenter() {
     const vec3 origin = first_model->bounding_box().center();
     for (auto model : viewer_->models()) {
         if (dynamic_cast<SurfaceMesh*>(model))
-            details::translate(dynamic_cast<SurfaceMesh*>(model), origin);
+            internal::translate(dynamic_cast<SurfaceMesh*>(model), origin);
         else if (dynamic_cast<PointCloud*>(model))
-            details::translate(dynamic_cast<PointCloud*>(model), origin);
+            internal::translate(dynamic_cast<PointCloud*>(model), origin);
         else if (dynamic_cast<Graph*>(model))
-            details::translate(dynamic_cast<Graph*>(model), origin);
+            internal::translate(dynamic_cast<Graph*>(model), origin);
         else if (dynamic_cast<PolyMesh*>(model))
-            details::translate(dynamic_cast<PolyMesh*>(model), origin);
+            internal::translate(dynamic_cast<PolyMesh*>(model), origin);
 
         model->manipulator()->reset();
         model->renderer()->update();

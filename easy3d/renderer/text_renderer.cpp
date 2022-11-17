@@ -32,7 +32,7 @@
 namespace easy3d {
 
     //  \cond
-    namespace details {
+    namespace internal {
 
         // Copyright (c) 2020 Liangliang Nan liangliang.nan@gmail.com
         // Copyright (c) 2011 Andreas Krinke andreas.krinke@gmx.de
@@ -94,7 +94,7 @@ namespace easy3d {
 namespace easy3d {
 
     //  \cond
-    namespace details {
+    namespace internal {
 
 #define HASH_LUT_SIZE 256
 #define MAX_ROWS 128
@@ -716,7 +716,7 @@ namespace easy3d {
 #include <easy3d/util/file_system.h>
 
 
-#define get_stash(x) (reinterpret_cast<details::sth_stash *>(x))
+#define get_stash(x) (reinterpret_cast<internal::sth_stash *>(x))
 
 
 namespace easy3d {
@@ -724,7 +724,7 @@ namespace easy3d {
 
     TextRenderer::TextRenderer(float dpi_scale, int texture_size, bool mipmaps) {
         texture_size_ = next_pow2(texture_size);
-        stash_ = details::sth_create(texture_size_, texture_size_, mipmaps, 0, dpi_scale);
+        stash_ = internal::sth_create(texture_size_, texture_size_, mipmaps, 0, dpi_scale);
         easy3d_log_gl_error;
         if (stash_ == nullptr) {
             LOG(ERROR) << "construction of TextRenderer failed";
@@ -877,7 +877,7 @@ namespace easy3d {
 
         program->bind();
 
-        struct details::sth_texture *texture = get_stash(stash_)->tt_textures;
+        struct internal::sth_texture *texture = get_stash(stash_)->tt_textures;
         short tt = 1;
         while (texture) {
             if (texture->nverts > 0) {

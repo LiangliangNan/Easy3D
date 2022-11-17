@@ -25,7 +25,7 @@
  ********************************************************************/
 
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/util/resources.h>
+#include <easy3d/util/resource.h>
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/drawable_lines.h>

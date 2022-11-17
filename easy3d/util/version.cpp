@@ -25,7 +25,7 @@
  ********************************************************************/
 
 
-#include <easy3d/core/version.h>
+#include <easy3d/util/version.h>
 
 
 namespace easy3d {

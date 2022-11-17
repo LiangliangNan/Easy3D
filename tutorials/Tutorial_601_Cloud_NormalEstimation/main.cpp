@@ -30,7 +30,7 @@
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/algo/point_cloud_normals.h>
-#include <easy3d/util/resources.h>
+#include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
 
 

@@ -32,7 +32,7 @@
 #include <easy3d/renderer/opengl.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/shader_manager.h>
-#include <easy3d/renderer/shapes.h>
+#include <easy3d/renderer/shape.h>
 #include <easy3d/renderer/transform.h>
 #include <easy3d/renderer/renderer.h>
 
@@ -155,6 +155,6 @@ void CompositeView::update_grid() {
     int x_steps = static_cast<int>(width() * 0.5f / grid_size_);
     int y_steps = static_cast<int>(height() * 0.5f / grid_size_);
     std::vector<vec3> points;
-    shapes::create_grid(x_steps, y_steps, points, 0.99f, grid_size_ * dpi_scaling());
+    shape::create_grid(x_steps, y_steps, points, 0.99f, grid_size_ * dpi_scaling());
     grid_->update_vertex_buffer(points);
 }

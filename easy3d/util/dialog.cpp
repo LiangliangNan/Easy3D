@@ -24,7 +24,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include <easy3d/util/dialogs.h>
+#include <easy3d/util/dialog.h>
 #include <easy3d/util/file_system.h>
 #include <3rd_party/portable_file_dialogs/portable_file_dialogs.h>
 

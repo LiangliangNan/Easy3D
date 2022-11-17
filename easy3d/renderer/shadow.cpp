@@ -164,8 +164,8 @@ namespace easy3d {
         const float offset_y = 40.0f;
         const float size = 200.0f;
         const Rect quad(offset_x * dpi_scale, (offset_x + size) * dpi_scale, offset_y * dpi_scale, (offset_y + size) * dpi_scale);
-        shapes::draw_depth_texture(quad, fbo_->depth_texture(), w, h, -0.9f);
-        shapes::draw_quad_wire(quad, vec4(1.0f, 0.0f, 0.0f, 1.0f), w, h, -0.99f);   easy3d_debug_log_gl_error;
+        shape::draw_depth_texture(quad, fbo_->depth_texture(), w, h, -0.9f);
+        shape::draw_quad_wire(quad, vec4(1.0f, 0.0f, 0.0f, 1.0f), w, h, -0.99f);   easy3d_debug_log_gl_error;
         draw_light_frustum();		easy3d_debug_log_gl_error;
     #endif
     }

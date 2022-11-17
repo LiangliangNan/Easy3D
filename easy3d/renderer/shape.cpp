@@ -24,7 +24,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include <easy3d/renderer/shapes.h>
+#include <easy3d/renderer/shape.h>
 #include <easy3d/renderer/opengl_error.h>
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/shader_program.h>
@@ -37,7 +37,7 @@
 
 namespace easy3d {
 
-    namespace shapes {
+    namespace shape {
 
         void draw_quad_wire(const Rect &rect, const vec4 &color, int width, int height, float depth) {
             const std::string name = "screen_space/screen_space_color";

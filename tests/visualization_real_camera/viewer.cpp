@@ -32,11 +32,11 @@
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/texture_manager.h>
-#include <easy3d/renderer/shapes.h>
+#include <easy3d/renderer/shape.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/util/string.h>
 #include <easy3d/util/file_system.h>
-#include <easy3d/util/resources.h>
+#include <easy3d/util/resource.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
 
@@ -161,6 +161,6 @@ void RealCamera::post_draw() {
     }
 
     const Rect quad(20 * dpi_scaling(), (20 + tex_w) * dpi_scaling(), 40 * dpi_scaling(), (40 + tex_h) * dpi_scaling());
-    shapes::draw_quad_filled(quad, texture_->id(), w, h, -0.9f);
-    shapes::draw_quad_wire(quad, vec4(1.0f, 0.0f, 0.0f, 1.0f), w, h, -0.99f);
+    shape::draw_quad_filled(quad, texture_->id(), w, h, -0.9f);
+    shape::draw_quad_wire(quad, vec4(1.0f, 0.0f, 0.0f, 1.0f), w, h, -0.99f);
 }

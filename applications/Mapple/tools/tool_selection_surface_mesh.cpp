@@ -33,7 +33,7 @@
 #include <easy3d/gui/picker_surface_mesh.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/renderer.h>
-#include <easy3d/renderer/buffers.h>
+#include <easy3d/renderer/buffer.h>
 #include <easy3d/util/logging.h>
 
 
@@ -54,7 +54,7 @@ namespace easy3d {
                     mesh->add_face_property<bool>("f:select", false);
                 d->set_coloring(State::SCALAR_FIELD, State::FACE, "f:select");
                 d->set_distinct_back_color(false); // the backside also highlighted
-                buffers::update(mesh, d);
+                buffer::update(mesh, d);
             }
             else {
                 auto select = mesh->face_property<bool>("f:select", false);

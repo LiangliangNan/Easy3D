@@ -34,7 +34,7 @@
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/opengl_error.h>
-#include <easy3d/renderer/buffers.h>
+#include <easy3d/renderer/buffer.h>
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/setting.h>
@@ -132,7 +132,7 @@ namespace easy3d {
         if (update_func_)
             update_func_(model_, this);
         else
-            buffers::update(model_, this);
+            buffer::update(model_, this);
 
         LOG_IF(w.elapsed_seconds() > 0.5, INFO) << "updating rendering buffers for drawable '" << name()
                                                 << "' took " << w.time_string();

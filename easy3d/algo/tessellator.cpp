@@ -38,7 +38,7 @@
 namespace easy3d {
 
     //  \cond
-    namespace details {
+    namespace internal {
 
         // VertexManager manages the actual vertices to make sure that the points are unique.
         class VertexManager {
@@ -120,12 +120,12 @@ namespace easy3d {
         TessProperty(tess, TESS_TOLERANCE, 0.);
 
         tess_obj_ = tess;
-        vertex_manager_ = new details::VertexManager;
+        vertex_manager_ = new internal::VertexManager;
     }
 
 
     Tessellator::~Tessellator() {
-        delete reinterpret_cast<details::VertexManager *>(vertex_manager_);
+        delete reinterpret_cast<internal::VertexManager *>(vertex_manager_);
         DeleteTess(get_tess(tess_obj_));
     }
 
@@ -161,7 +161,7 @@ namespace easy3d {
     void Tessellator::add_vertex(const Vertex &v) {
         vertex_data_size_ = v.size();
 
-        Vertex *new_v = reinterpret_cast<details::VertexManager *>(vertex_manager_)->find_or_create(v);
+        Vertex *new_v = reinterpret_cast<internal::VertexManager *>(vertex_manager_)->find_or_create(v);
 
         // TessVertex() takes 3 params: tess object, pointer to vertex coords,
         // and pointer to vertex data to be passed to vertex callback.
@@ -234,7 +234,7 @@ namespace easy3d {
 
 
     const std::vector<Tessellator::Vertex *> &Tessellator::vertices() const {
-        return reinterpret_cast<details::VertexManager *>(vertex_manager_)->vertices();
+        return reinterpret_cast<internal::VertexManager *>(vertex_manager_)->vertices();
     }
 
 
@@ -344,7 +344,7 @@ namespace easy3d {
         Vertex *v = reinterpret_cast<Vertex *>(vertex);
         Tessellator *tessellator = reinterpret_cast<Tessellator *>(cbdata);
         // Adds a vertex index using the vertex manager. This can cause the vertex list to grow.
-        std::size_t id = reinterpret_cast<details::VertexManager *>(tessellator->vertex_manager_)->vertex_id(*v);
+        std::size_t id = reinterpret_cast<internal::VertexManager *>(tessellator->vertex_manager_)->vertex_id(*v);
         tessellator->vertex_ids_.push_back(id);
     }
 
@@ -373,12 +373,12 @@ namespace easy3d {
                    (vd[3] ? (weight[3] * vd[3]->at(i)) : 0.);
         }
 
-        *dataOut = reinterpret_cast<details::VertexManager *>(tessellator->vertex_manager_)->find_or_create(v);
+        *dataOut = reinterpret_cast<internal::VertexManager *>(tessellator->vertex_manager_)->find_or_create(v);
     }
 
 
     void Tessellator::reset() {
-        reinterpret_cast<details::VertexManager *>(vertex_manager_)->clear();
+        reinterpret_cast<internal::VertexManager *>(vertex_manager_)->clear();
 
         num_elements_in_polygon_ = 0;
 

@@ -35,7 +35,7 @@
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/texture_manager.h>
-#include <easy3d/renderer/buffers.h>
+#include <easy3d/renderer/buffer.h>
 #include <easy3d/util/logging.h>
 
 #include "paint_canvas.h"
@@ -356,7 +356,7 @@ void WidgetLinesDrawable::setDefaultColor() {
 }
 
 
-namespace lines_details {
+namespace internal {
 
     // color schemes from scalar fields
     // scalar fields defined on edges
@@ -427,15 +427,15 @@ std::vector<QString> WidgetLinesDrawable::colorSchemes(const easy3d::Model *mode
 
     auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
     if (mesh)
-        lines_details::color_schemes_for_scalar_fields(mesh, scalar_prefix_, schemes);
+        internal::color_schemes_for_scalar_fields(mesh, scalar_prefix_, schemes);
 
     auto graph = dynamic_cast<Graph *>(viewer_->currentModel());
     if (graph)
-        lines_details::color_schemes_for_scalar_fields(graph, scalar_prefix_, schemes);
+        internal::color_schemes_for_scalar_fields(graph, scalar_prefix_, schemes);
 
     auto poly = dynamic_cast<PolyMesh *>(viewer_->currentModel());
     if (poly)
-        lines_details::color_schemes_for_scalar_fields(poly, scalar_prefix_, schemes);
+        internal::color_schemes_for_scalar_fields(poly, scalar_prefix_, schemes);
 
     return schemes;
 }
@@ -446,17 +446,17 @@ std::vector<QString> WidgetLinesDrawable::vectorFields(const easy3d::Model *mode
 
     auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
     if (mesh)
-        lines_details::vector_fields_on_edges(mesh, fields);
+        internal::vector_fields_on_edges(mesh, fields);
 
     else {
         auto graph = dynamic_cast<Graph *>(viewer_->currentModel());
         if (graph)
-            lines_details::vector_fields_on_edges(graph, fields);
+            internal::vector_fields_on_edges(graph, fields);
 
         else {
             auto poly = dynamic_cast<PolyMesh *>(viewer_->currentModel());
             if (poly)
-                lines_details::vector_fields_on_edges(poly, fields);
+                internal::vector_fields_on_edges(poly, fields);
         }
     }
 
@@ -507,7 +507,7 @@ void WidgetLinesDrawable::updateVectorFieldBuffer(Model *model, const std::strin
         drawable->set_update_func([&, name](Model *m, Drawable *d) -> void {
             const float scale = ui_->doubleSpinBoxVectorFieldScale->value();
             if (dynamic_cast<SurfaceMesh *>(m))
-                buffers::update(dynamic_cast<SurfaceMesh*>(m), dynamic_cast<LinesDrawable*>(d), name, State::EDGE, scale);
+                buffer::update(dynamic_cast<SurfaceMesh*>(m), dynamic_cast<LinesDrawable*>(d), name, State::EDGE, scale);
         });
     }
 }

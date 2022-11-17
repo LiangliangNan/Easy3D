@@ -30,7 +30,7 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/algo/point_cloud_ransac.h>
 #include <easy3d/renderer/drawable_points.h>
-#include <easy3d/renderer/buffers.h>
+#include <easy3d/renderer/buffer.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/util/logging.h>
 

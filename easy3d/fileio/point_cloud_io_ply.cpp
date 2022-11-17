@@ -36,7 +36,7 @@ namespace easy3d {
 
 	namespace io {
 
-        namespace details {
+        namespace internal {
 
 			template <typename T, typename PropertyT>
 			inline void add_properties(PointCloud* cloud, const std::vector<PropertyT>& properties)
@@ -50,7 +50,7 @@ namespace easy3d {
 				}
 			}
 
-		} // namespace details
+		} // namespace internal
 
 		bool load_ply(const std::string& file_name, PointCloud* cloud) {
 			std::vector<Element> elements;
@@ -69,12 +69,12 @@ namespace easy3d {
 			for (std::size_t i = 0; i < elements.size(); ++i) {
 				const Element& e = elements[i];
                 if (e.name == "vertex") {
-                    details::add_properties<vec3>(cloud, e.vec3_properties);
-                    details::add_properties<vec2>(cloud, e.vec2_properties);
-                    details::add_properties<float>(cloud, e.float_properties);
-                    details::add_properties<int>(cloud, e.int_properties);
-                    details::add_properties< std::vector<int> >(cloud, e.int_list_properties);
-                    details::add_properties< std::vector<float> >(cloud, e.float_list_properties);
+                    internal::add_properties<vec3>(cloud, e.vec3_properties);
+                    internal::add_properties<vec2>(cloud, e.vec2_properties);
+                    internal::add_properties<float>(cloud, e.float_properties);
+                    internal::add_properties<int>(cloud, e.int_properties);
+                    internal::add_properties< std::vector<int> >(cloud, e.int_list_properties);
+                    internal::add_properties< std::vector<float> >(cloud, e.float_list_properties);
                 }
                 else {
                     const std::string name = "element-" + e.name;
@@ -120,7 +120,7 @@ namespace easy3d {
 		}
 
 
-		namespace details {
+		namespace internal {
 
 			template <typename T>
 			inline void collect_properties(const PointCloud* cloud, std::vector< GenericProperty<T> >& properties) {
@@ -135,7 +135,7 @@ namespace easy3d {
 				}
 			}
 
-		} // namespace details
+		} // namespace internal
 
 		bool save_ply(const std::string& file_name, const PointCloud* cloud, bool binary/* = true*/) {
 			if (!cloud || cloud->n_vertices() == 0) {
@@ -146,12 +146,12 @@ namespace easy3d {
 			std::size_t num = cloud->n_vertices();
 			Element element_vertex("vertex", num);
 
-			details::collect_properties(cloud, element_vertex.vec3_properties);
-            details::collect_properties(cloud, element_vertex.vec2_properties);
-			details::collect_properties(cloud, element_vertex.float_properties);
-			details::collect_properties(cloud, element_vertex.int_properties);
-			details::collect_properties(cloud, element_vertex.int_list_properties);
-			details::collect_properties(cloud, element_vertex.float_list_properties);
+			internal::collect_properties(cloud, element_vertex.vec3_properties);
+            internal::collect_properties(cloud, element_vertex.vec2_properties);
+			internal::collect_properties(cloud, element_vertex.float_properties);
+			internal::collect_properties(cloud, element_vertex.int_properties);
+			internal::collect_properties(cloud, element_vertex.int_list_properties);
+			internal::collect_properties(cloud, element_vertex.float_list_properties);
 
             auto trans = cloud->get_model_property<dvec3>("translation");
             if (trans) { // has translation

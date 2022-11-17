@@ -34,13 +34,13 @@
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/texture_manager.h>
-#include <easy3d/renderer/buffers.h>
+#include <easy3d/renderer/buffer.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/poly_mesh.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
-#include <easy3d/util/resources.h>
+#include <easy3d/util/resource.h>
 
 #include "paint_canvas.h"
 #include "main_window.h"
@@ -296,7 +296,7 @@ void WidgetTrianglesDrawable::updatePanel() {
 
 
 
-namespace triangles_details {
+namespace internal {
 
     template <typename MODEL>
     void collect_color_schemes(MODEL* model, const QString& scalar_prefix, std::vector<QString>& schemes) {
@@ -372,12 +372,12 @@ std::vector<QString> WidgetTrianglesDrawable::colorSchemes(const easy3d::Model *
                 schemes.push_back(QString::fromStdString(name));
         }
 
-        triangles_details::collect_color_schemes(mesh, scalar_prefix_, schemes);
+        internal::collect_color_schemes(mesh, scalar_prefix_, schemes);
     }
 
     auto poly = dynamic_cast<PolyMesh *>(viewer_->currentModel());
     if (poly)
-        triangles_details::collect_color_schemes(poly, scalar_prefix_, schemes);
+        internal::collect_color_schemes(poly, scalar_prefix_, schemes);
 
     return schemes;
 }
@@ -388,11 +388,11 @@ std::vector<QString> WidgetTrianglesDrawable::vectorFields(const easy3d::Model *
 
     auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
     if (mesh)
-        triangles_details::vector_fields_on_faces(mesh, fields);
+        internal::vector_fields_on_faces(mesh, fields);
     else {
         auto poly = dynamic_cast<PolyMesh *>(viewer_->currentModel());
         if (poly)
-            triangles_details::vector_fields_on_faces(poly, fields);
+            internal::vector_fields_on_faces(poly, fields);
     }
 
     // if no vector fields found, add a "not available" item
@@ -578,7 +578,7 @@ void WidgetTrianglesDrawable::setScalarFieldStyle(int idx) {
 }
 
 
-namespace triangles_details {
+namespace internal {
 
     template<typename MODEL>
     // spinbox must appear as a parameter because its value maybe changed and its is used later in a lambda function
@@ -604,7 +604,7 @@ namespace triangles_details {
             drawable = model->renderer()->add_lines_drawable("vector - " + name);
             drawable->set_update_func(
                     [model, drawable, name, spinBox](Model *m, Drawable *d) -> void {
-                        buffers::update(model, dynamic_cast<LinesDrawable *>(drawable), name, State::FACE, spinBox->value());
+                        buffer::update(model, dynamic_cast<LinesDrawable *>(drawable), name, State::FACE, spinBox->value());
                     }
             );
         }
@@ -649,10 +649,10 @@ namespace triangles_details {
 void WidgetTrianglesDrawable::updateVectorFieldBuffer(Model *model, const std::string &name) {
     if (dynamic_cast<SurfaceMesh *>(model)) {
         auto mesh = dynamic_cast<SurfaceMesh *>(model);
-        triangles_details::updateVectorFieldBuffer(mesh, name, ui_->doubleSpinBoxVectorFieldScale);
+        internal::updateVectorFieldBuffer(mesh, name, ui_->doubleSpinBoxVectorFieldScale);
     } else if (dynamic_cast<PolyMesh *>(model)) {
         auto mesh = dynamic_cast<PolyMesh *>(model);
-        triangles_details::updateVectorFieldBuffer(mesh, name, ui_->doubleSpinBoxVectorFieldScale);
+        internal::updateVectorFieldBuffer(mesh, name, ui_->doubleSpinBoxVectorFieldScale);
     }
 }
 
@@ -670,7 +670,7 @@ void WidgetTrianglesDrawable::setHighlightMin(int v) {
     auto& face_range = states_[d].highlight_range;
     face_range.first = v;
 
-    triangles_details::set_highlight_range(mesh, d, face_range);
+    internal::set_highlight_range(mesh, d, face_range);
     viewer_->update();
 }
 
@@ -688,7 +688,7 @@ void WidgetTrianglesDrawable::setHighlightMax(int v) {
     auto& face_range = states_[d].highlight_range;
     face_range.second = v;
 
-    triangles_details::set_highlight_range(mesh, d, face_range);
+    internal::set_highlight_range(mesh, d, face_range);
     viewer_->update();
 }
 

@@ -31,7 +31,7 @@
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/algo/tessellator.h>
 #include <easy3d/fileio/surface_mesh_io.h>
-#include <easy3d/util/resources.h>
+#include <easy3d/util/resource.h>
 
 #include <easy3d/util/stop_watch.h>
 #include <easy3d/util/timer.h>

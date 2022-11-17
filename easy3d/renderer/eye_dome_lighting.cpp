@@ -29,7 +29,7 @@
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/framebuffer_object.h>
 #include <easy3d/renderer/opengl_error.h>
-#include <easy3d/renderer/shapes.h>
+#include <easy3d/renderer/shape.h>
 #include <easy3d/renderer/camera.h>
 
 
@@ -165,7 +165,7 @@ namespace easy3d {
         float diag = scene_radius * 2.0f;
         shade_program_->set_uniform("SceneSize", diag);
 
-        shapes::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);
+        shape::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);
 
         shade_program_->release_texture();
         shade_program_->release();
@@ -203,7 +203,7 @@ namespace easy3d {
         shade_program_->set_uniform("Znear", z_near_);
         shade_program_->set_uniform("Zfar", z_far_);
 
-        shapes::draw_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0, 0, width_ / low_res_factor_, height_ / low_res_factor_, width_, height_, 0.0f);
+        shape::draw_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0, 0, width_ / low_res_factor_, height_ / low_res_factor_, width_, height_, 0.0f);
 
         shade_program_->release_texture();
         shade_program_->release();
@@ -237,7 +237,7 @@ namespace easy3d {
         blur_program_->set_uniform("N", EDL_Bilateral_N);
         blur_program_->set_uniform("sigma", EDL_Bilateral_Sigma);
 
-        shapes::draw_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0, 0, width_ / low_res_factor_, height_ / low_res_factor_, width_, height_, 0.0f);
+        shape::draw_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0, 0, width_ / low_res_factor_, height_ / low_res_factor_, width_, height_, 0.0f);
 
         blur_program_->release_texture();
         blur_program_->release();
@@ -268,7 +268,7 @@ namespace easy3d {
         glDisable(GL_SCISSOR_TEST);
         //-----------------------------------------------------------------------------
 
-        shapes::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);
+        shape::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);
 
         compose_program_->release_texture();
         compose_program_->release();

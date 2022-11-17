@@ -37,9 +37,9 @@ namespace easy3d {
     namespace console {
 
         enum Style {
-            /// Reset
+            // Reset
             None = 0,         /// Reset
-            /// Regular colors
+            // Regular colors
             Black = 1,        /// Black
             Red = 2,          /// Red
             Green = 3,        /// Green
@@ -48,7 +48,7 @@ namespace easy3d {
             Purple = 6,       /// Purple
             Cyan = 7,         /// Cyan
             White = 8,        /// White
-            /// Bold
+            // Bold
             BBlack = 9,       /// Black
             BRed = 10,         /// Red
             BGreen = 11,       /// Green
@@ -57,7 +57,7 @@ namespace easy3d {
             BPurple = 14,      /// Purple
             BCyan = 15,        /// Cyan
             BWhite = 16,       /// White
-            /// Underline
+            // Underline
             UBlack = 17,       /// Black
             URed = 18,         /// Red
             UGreen = 19,       /// Green
@@ -66,7 +66,7 @@ namespace easy3d {
             UPurple = 22,      /// Purple
             UCyan = 23,        /// Cyan
             UWhite = 24,       /// White
-            /// Background
+            // Background
             On_Black = 25,     /// Black
             On_Red = 26,       /// Red
             On_Green = 27,     /// Green
@@ -75,7 +75,7 @@ namespace easy3d {
             On_Purple = 30,    /// Purple
             On_Cyan = 31,      /// Cyan
             On_White = 32,     /// White
-            /// High intensity
+            // High intensity
             IBlack = 33,       /// Black
             IRed = 34,         /// Red
             IGreen = 35,       /// Green
@@ -84,7 +84,7 @@ namespace easy3d {
             IPurple = 38,      /// Purple
             ICyan = 39,        /// Cyan
             IWhite = 40,       /// White
-            /// Bold high intensity
+            // Bold high intensity
             BIBlack = 41,      /// Black
             BIRed = 42,        /// Red
             BIGreen = 42,      /// Green
@@ -93,7 +93,7 @@ namespace easy3d {
             BIPurple = 46,     /// Purple
             BICyan = 47,       /// Cyan
             BIWhite = 48,      /// White
-            /// High intensity backgrounds
+            // High intensity backgrounds
             On_IBlack = 49,    /// Black
             On_IRed = 50,      /// Red
             On_IGreen = 51,    /// Green

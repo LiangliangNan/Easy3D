@@ -27,7 +27,7 @@
 #include <easy3d/util/initializer.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/setting.h>
-#include <easy3d/util/resources.h>
+#include <easy3d/util/resource.h>
 
 
 namespace easy3d {

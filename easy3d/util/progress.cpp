@@ -17,7 +17,7 @@
 namespace easy3d {
 
     //  \cond
-    namespace details {
+    namespace internal {
 
         class Progress {
         public:
@@ -72,11 +72,11 @@ namespace easy3d {
 
 
     ProgressClient::ProgressClient() {
-        details::Progress::instance()->set_client(this);
+        internal::Progress::instance()->set_client(this);
     }
 
     void ProgressClient::cancel() {
-        details::Progress::instance()->cancel();
+        internal::Progress::instance()->cancel();
     }
 
     //_________________________________________________________
@@ -89,17 +89,17 @@ namespace easy3d {
             , quiet_(quiet)
             , update_viewer_(update_viewer)
     {
-        details::Progress::instance()->push();
+        internal::Progress::instance()->push();
         if (!quiet_) {
-            details::Progress::instance()->notify(0, update_viewer_);
+            internal::Progress::instance()->notify(0, update_viewer_);
         }
     }
 
 
     ProgressLogger::~ProgressLogger() {
         // one more notification to make sure the progress reaches its end
-        details::Progress::instance()->notify(100, update_viewer_);
-        details::Progress::instance()->pop();
+        internal::Progress::instance()->notify(100, update_viewer_);
+        internal::Progress::instance()->pop();
     }
 
 
@@ -116,7 +116,7 @@ namespace easy3d {
 
 
     bool ProgressLogger::is_canceled() const {
-        return details::Progress::instance()->is_canceled();
+        return internal::Progress::instance()->is_canceled();
     }
 
 
@@ -131,7 +131,7 @@ namespace easy3d {
         if (percent != cur_percent_) {
             cur_percent_ = percent;
             if (!quiet_) {
-                details::Progress::instance()->notify(std::min<std::size_t>(cur_percent_, 100), update_viewer_);
+                internal::Progress::instance()->notify(std::min<std::size_t>(cur_percent_, 100), update_viewer_);
             }
         }
     }

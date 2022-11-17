@@ -40,16 +40,16 @@ namespace easy3d {
     namespace setting {
 
         /**
-         * \brief Initializes the setting of default rendering.
-         * \details By calling this function with a valid file name, an setting file with an extension ".ini" will be
-         *      created on the first startup of the program. This setting file stores the default rendering parameters.
-         *      User can modify this file to change the default rendering parameters, then the changes will be
-         *      effective for the future.
+         * \brief Initializes the default setting for rendering.
+         * \details By calling this function with a valid file name, a setting file with an extension ".ini" will be
+         *    created on the first startup of the program. This setting file stores the default rendering parameters.
+         *    Users can modify this file to change the default rendering parameters, then the changes will be
+         *    effective for the future.
 		 * @param setting_file A string specifying the name of setting file. Three different values are accepted:
-         *      - "" (an empty string): no setting file will be created.
-		 *		- "default": create a setting file with a title in the form "AppName.ini" next to the executable file.
-		 *      - any non-empty string: a setting file with the same name will be created and setting parameters will
-         *        be written to this file.
+         *    - "": an empty string, indicating that no setting file will be created.
+		 *    - "default": create a setting file with a title in the form "AppName.ini" next to the executable file.
+		 *    - any non-empty string: (if it is a valid path) a setting file with the same name will be created and
+         *      rendering parameters will be written to this file.
          */
         void initialize(const std::string &setting_file = "default");
 

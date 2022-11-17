@@ -29,7 +29,7 @@
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_triangles.h>
-#include <easy3d/util/resources.h>
+#include <easy3d/util/resource.h>
 #include <easy3d/core/types.h>
 #include <easy3d/util/timer.h>
 

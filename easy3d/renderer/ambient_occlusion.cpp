@@ -33,7 +33,7 @@
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/framebuffer_object.h>
 #include <easy3d/renderer/opengl_error.h>
-#include <easy3d/renderer/shapes.h>
+#include <easy3d/renderer/shape.h>
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/transform.h>
 #include <easy3d/renderer/drawable_points.h>
@@ -48,7 +48,7 @@
 const int  KERNEL_SIZE = 64;
 const int  NOISE_RES = 4;
 
-//#define SNAPSHOT_BUFFERS
+//#define SNAPSHOT_BUFFER
 
 namespace easy3d {
 
@@ -227,7 +227,7 @@ namespace easy3d {
         program->release();
         geom_fbo_->release(); easy3d_debug_log_gl_error;
 
-#ifdef SNAPSHOT_BUFFERS
+#ifdef SNAPSHOT_BUFFER
         geom_fbo_->snapshot_color_ppm(0, "ssao_gPosition.ppm");
         geom_fbo_->snapshot_color_ppm(1, "ssao_gNormal.ppm");
 #endif
@@ -267,14 +267,14 @@ namespace easy3d {
         program->bind_texture("gNormal", geom_fbo_->color_texture(1), 1);		// normal
         program->bind_texture("texNoise", noise_texture_, 2); easy3d_debug_log_gl_error
 
-        shapes::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);
+        shape::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);
         easy3d_debug_log_gl_error;
 
         program->release_texture(); easy3d_debug_log_gl_error
         program->release(); easy3d_debug_log_gl_error
         ssao_fbo_->release();
 
-#ifdef SNAPSHOT_BUFFERS
+#ifdef SNAPSHOT_BUFFER
         ssao_fbo_->snapshot_color_ppm(0, "ssao_ssao.ppm");
 #endif
      }
@@ -299,12 +299,12 @@ namespace easy3d {
 
         program->bind(); easy3d_debug_log_gl_error
         program->bind_texture("ssaoInput", ssao_fbo_->color_texture(0), 0);
-        shapes::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);
+        shape::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);
         program->release_texture(); easy3d_debug_log_gl_error
         program->release(); easy3d_debug_log_gl_error
         ssao_fbo_->release();
 
-#ifdef SNAPSHOT_BUFFERS
+#ifdef SNAPSHOT_BUFFER
         ssao_fbo_->snapshot_color_ppm(1, "ssao_blur.ppm");
 #endif
     }

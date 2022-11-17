@@ -32,14 +32,14 @@
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/texture_manager.h>
-#include <easy3d/renderer/shapes.h>
+#include <easy3d/renderer/shape.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/transform.h>
 #include <easy3d/util/string.h>
 #include <easy3d/util/file_system.h>
-#include <easy3d/util/resources.h>
+#include <easy3d/util/resource.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
 
@@ -203,7 +203,7 @@ void RealCamera::update_cameras_drawable(bool ground_truth)
         Camera c;
         KRT_to_camera(i, &c, ground_truth);
         std::vector<vec3> points;
-        shapes::create_camera(points, c.sceneRadius() * 0.03f, c.fieldOfView(), static_cast<float>(views_[i].h)/views_[i].w);
+        shape::create_camera(points, c.sceneRadius() * 0.03f, c.fieldOfView(), static_cast<float>(views_[i].h)/views_[i].w);
         const mat4& m = c.frame()->worldMatrix();
         for (auto& p : points)
             vertices.push_back(m * p);
@@ -248,8 +248,8 @@ void RealCamera::post_draw() {
 
     const int w = width() * dpi_scaling();
     const int h = height() * dpi_scaling();
-    shapes::draw_quad_filled(quad, texture_->id(), w, h, -0.9f);
-    shapes::draw_quad_wire(quad, vec4(1.0f, 0.0f, 0.0f, 1.0f), w, h, -0.99f);
+    shape::draw_quad_filled(quad, texture_->id(), w, h, -0.9f);
+    shape::draw_quad_wire(quad, vec4(1.0f, 0.0f, 0.0f, 1.0f), w, h, -0.99f);
 
 
 

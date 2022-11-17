@@ -98,7 +98,7 @@ namespace easy3d {
 //________________________________________________________________________________
 
     // \cond
-    namespace details {
+    namespace internal {
 
         inline bool contains(const std::vector<unsigned int> &V, unsigned int x) {
             for (unsigned int i = 0; i < V.size(); i++) {
@@ -140,7 +140,7 @@ namespace easy3d {
             // For each edge (t,neigh) incident to v
             for (unsigned int lv = 0; lv < 4; lv++) {
                 unsigned int neigh = tet_vertex(t, lv);
-                if (lv != lvit && !details::contains(visited_neigh, neigh)) {
+                if (lv != lvit && !internal::contains(visited_neigh, neigh)) {
                     visited_neigh.push_back(neigh);
                     get_voronoi_facet(cell, t, lvit, lv, geometry);
                 }
@@ -194,7 +194,7 @@ namespace easy3d {
             lv1 = index(cur, v1);
             lv2 = index(cur, v2);
             unsigned int f = next_around_halfedge_[lv1][lv2];
-            unsigned int lv3 = details::other(lv1, lv2, f);
+            unsigned int lv3 = internal::other(lv1, lv2, f);
 
             if (geometry) {
                 cell.add_to_facet(tet_vertex(cur, lv3), tet_circumcenter(cur), false);

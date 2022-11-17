@@ -57,11 +57,11 @@ namespace easy3d {
          * @param warning_to_stdcout \c true to log messages at a the \c WARNING level to standard output.
          * @param error_to_stdcout \c true to log messages at a the \c ERROR (including \c FATAL) level to standard output.
          * @param verbose_to_stdcout \c true to log messages at a the \c ERROR (including \c FATAL) level to standard output.
-         * @param log_file A string specifying the full path to the log file.
-         *      If \p log_file is a valid path: log messages will be written to this file in addition to stdcout.
-         *      If \p log_file is empty: no log file will be created.
-         *      If \p log_file is "default": create a log file with a title in the form "AppName.log" next to
-         *      the executable file.
+		 * @param log_file A string specifying the name of log file. Three different values are accepted:
+         *    - "": an empty string, indicating that no log file will be created.
+		 *    - "default": create a log file with a title in the form "AppName.log" next to the executable file.
+		 *    - any non-empty string: (if it is a valid path) a log file with the same name will be created and log
+         *      messages will be written to this file.
          * @param verbosity_threshold A \c VLOG(level) with \c level <= \c verbosity_threshold will be written into the
          *      log file (if specified). Value must be in the range [0, 9]. Default is 0.
          * @note This initialization is optional. If not called, log messages will be written to standard output only.

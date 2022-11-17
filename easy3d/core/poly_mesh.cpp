@@ -34,7 +34,7 @@
 
 namespace easy3d {
 
-    namespace details {
+    namespace internal {
 
         template<typename T>
         inline void read(std::istream &input, std::set<T>& data) {
@@ -71,62 +71,62 @@ namespace easy3d {
 
 
     void PolyMesh::VertexConnectivity::read(std::istream &input) {
-        details::read(input, vertices_);
-        details::read(input, edges_);
-        details::read(input, halffaces_);
-        details::read(input, cells_);
+        internal::read(input, vertices_);
+        internal::read(input, edges_);
+        internal::read(input, halffaces_);
+        internal::read(input, cells_);
     }
 
 
     void PolyMesh::VertexConnectivity::write(std::ostream &output) const {
-        details::write(output, vertices_);
-        details::write(output, edges_);
-        details::write(output, halffaces_);
-        details::write(output, cells_);
+        internal::write(output, vertices_);
+        internal::write(output, edges_);
+        internal::write(output, halffaces_);
+        internal::write(output, cells_);
     }
 
 
     void PolyMesh::EdgeConnectivity::read(std::istream &input) {
-        details::read(input, vertices_);
-        details::read(input, halffaces_);
-        details::read(input, cells_);
+        internal::read(input, vertices_);
+        internal::read(input, halffaces_);
+        internal::read(input, cells_);
     }
 
 
     void PolyMesh::EdgeConnectivity::write(std::ostream &output) const {
-        details::write(output, vertices_);
-        details::write(output, halffaces_);
-        details::write(output, cells_);
+        internal::write(output, vertices_);
+        internal::write(output, halffaces_);
+        internal::write(output, cells_);
     }
 
 
     void PolyMesh::HalfFaceConnectivity::read(std::istream &input) {
-        details::read(input, vertices_);
-        details::read(input, edges_);
+        internal::read(input, vertices_);
+        internal::read(input, edges_);
         input.read((char*)(&cell_), sizeof(Cell));
         input.read((char*)(&opposite_), sizeof(HalfFace));
     }
 
 
     void PolyMesh::HalfFaceConnectivity::write(std::ostream &output) const {
-        details::write(output, vertices_);
-        details::write(output, edges_);
+        internal::write(output, vertices_);
+        internal::write(output, edges_);
         output.write((char*)(&cell_), sizeof(Cell));
         output.write((char*)(&opposite_), sizeof(HalfFace));
     }
 
 
     void PolyMesh::CellConnectivity::read(std::istream &input) {
-        details::read(input, vertices_);
-        details::read(input, edges_);
-        details::read(input, halffaces_);
+        internal::read(input, vertices_);
+        internal::read(input, edges_);
+        internal::read(input, halffaces_);
     }
 
 
     void PolyMesh::CellConnectivity::write(std::ostream &output) const {
-        details::write(output, vertices_);
-        details::write(output, edges_);
-        details::write(output, halffaces_);
+        internal::write(output, vertices_);
+        internal::write(output, edges_);
+        internal::write(output, halffaces_);
     }
 
 

@@ -24,41 +24,28 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef EASY3D_UTIL_RESOURCES_H
-#define EASY3D_UTIL_RESOURCES_H
+#ifndef EASY3D_UTIL_VERSION_H
+#define EASY3D_UTIL_VERSION_H
 
-#include <easy3d/core/types.h>
-#include <easy3d/util/export.h>
+
+#include <string>
 
 
 namespace easy3d {
 
+    /// returns the major version number of Easy3D
+    int version_major();
 
-    /// \brief Resources used in Easy3D.
-    /// \namespace easy3d::resource
-    namespace resource {
+    /// returns the major version number of Easy3D
+    int version_minor();
 
-        /// Sets the resource directory (containing color maps, shaders, textures, fonts, etc.)
-        void initialize(const std::string& resource_dir = Easy3D_RESOURCE_DIR);
+    /// returns the minor version number of Easy3D
+    int version_patch();
 
-        /// Returns the resource directory (containing color maps, shaders, textures, fonts, etc.)
-        const std::string directory();
+    /// returns the version string of Easy3D
+    std::string version();
 
-
-        /// The vertices of a bunny model.
-        /// \see bunny_indices
-        extern const EASY3D_UTIL_EXPORT std::vector<vec3>           bunny_vertices;
-        /// The triangle faces of a bunny model. Each consecutive 3 values denote the vertex indices of a triangle.
-        /// \see bunny_vertices
-        extern const EASY3D_UTIL_EXPORT std::vector<unsigned int>   bunny_indices;
-
-        /// A 1D array storing a gradually changing color table. Each consecutive 3 elements represent an RGB color.
-        /// ToDo: This should be moved to another file?
-        extern const EASY3D_UTIL_EXPORT std::vector<unsigned char>  cold_warm_colors;
-
-    } // namespace resource
-
-} // namespace easy3d
+}
 
 
-#endif // EASY3D_UTIL_RESOURCES_H
+#endif  // EASY3D_UTIL_VERSION_H

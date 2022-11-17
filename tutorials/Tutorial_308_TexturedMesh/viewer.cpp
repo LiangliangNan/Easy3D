@@ -49,7 +49,7 @@ namespace easy3d {
         camera()->setUpVector(vec3(0, 1, 0));
     }
 
-    namespace details {
+    namespace internal {
 
         // each group is a set of faces (denoted by their indices) sharing the same material
         struct Group : public std::vector<SurfaceMesh::Face> {
@@ -121,7 +121,7 @@ namespace easy3d {
 
         // group the faces according to the material
         // each group is a set of faces sharing the same material
-        std::vector<details::Group> groups(fom->material_count);
+        std::vector<internal::Group> groups(fom->material_count);
 
         // for each shape
         for (std::size_t ii = 0; ii < fom->group_count; ii++) {

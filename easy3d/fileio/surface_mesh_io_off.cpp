@@ -43,7 +43,7 @@ namespace easy3d {
 
 	namespace io {
 
-        namespace details {
+        namespace internal {
             // Some OFF files may skip lines or may have comments starting with '#'
             static void get_line(LineInputStream& in) {
                 in.get_line() ;
@@ -79,7 +79,7 @@ namespace easy3d {
             // Vertex index starts by 0 in off format.
 
             LineInputStream input(in) ;
-            details::get_line(input) ;
+            internal::get_line(input) ;
 
             std::string magic ;
             input >> magic ;
@@ -91,7 +91,7 @@ namespace easy3d {
             }
 
             if(magic != "NOFF") {
-                details::get_line(input) ;
+                internal::get_line(input) ;
             }
 
             int nb_vertices, nb_facets, nb_edges;
@@ -106,7 +106,7 @@ namespace easy3d {
             if (Translator::instance()->status() == Translator::DISABLED) {
                 vec3 p;
                 for (int i = 0; i < nb_vertices; i++) {
-                    details::get_line(input);
+                    internal::get_line(input);
                     input >> p;
                     if (!input.fail())
                         builder.add_vertex(p);
@@ -117,7 +117,7 @@ namespace easy3d {
             } else if (Translator::instance()->status() == Translator::TRANSLATE_USE_FIRST_POINT) {
                 dvec3 p, origin;
                 for (int i = 0; i < nb_vertices; i++) {
-                    details::get_line(input);
+                    internal::get_line(input);
                     input >> p;
                     if (!input.fail()) {
                         if (i == 0) { // the first point
@@ -137,7 +137,7 @@ namespace easy3d {
                 const dvec3 &origin = Translator::instance()->translation();
                 dvec3 p;
                 for (int i = 0; i < nb_vertices; i++) {
-                    details::get_line(input);
+                    internal::get_line(input);
                     input >> p;
                     if (!input.fail())
                         builder.add_vertex(vec3(p.x - origin.x, p.y - origin.y, p.z - origin.z));
@@ -152,7 +152,7 @@ namespace easy3d {
 
             for (int i = 0; i < nb_facets; i++) {
                 int nb_vertices;
-                details::get_line(input);
+                internal::get_line(input);
                 input >> nb_vertices;
 
 				if (!input.fail()) {

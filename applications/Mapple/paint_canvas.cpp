@@ -38,7 +38,7 @@
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/shader_manager.h>
-#include <easy3d/renderer/shapes.h>
+#include <easy3d/renderer/shape.h>
 #include <easy3d/renderer/transform.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
@@ -54,8 +54,8 @@
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/text_renderer.h>
 #include <easy3d/renderer/manipulator.h>
-#include <easy3d/renderer/buffers.h>
-#include <easy3d/util/resources.h>
+#include <easy3d/renderer/buffer.h>
+#include <easy3d/util/resource.h>
 #include <easy3d/gui/picker_point_cloud.h>
 #include <easy3d/gui/picker_surface_mesh.h>
 #include <easy3d/gui/picker_model.h>
@@ -64,7 +64,7 @@
 #include <easy3d/util/logging.h>
 #include <easy3d/util/string.h>
 #include <easy3d/util/line_stream.h>
-#include <easy3d/util/dialogs.h>
+#include <easy3d/util/dialog.h>
 #include <easy3d/util/setting.h>
 
 #include <QKeyEvent>
@@ -410,7 +410,7 @@ void PaintCanvas::mouseReleaseEvent(QMouseEvent *e) {
 }
 
 
-namespace details {
+namespace internal {
     template<typename MODEL>
     std::string get_vertex_scalar_property(MODEL *model, typename MODEL::Vertex v, const std::string &name) {
         auto prop_float = model->template get_vertex_property<float>(name);
@@ -560,7 +560,7 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
                     const std::string& name = drawable->property_name();
                     auto vertex = PointCloud::Vertex(picked_vertex_index_);
                     auto cloud = dynamic_cast<PointCloud *>(currentModel());
-                    const std::string value_str = details::get_vertex_scalar_property(cloud, vertex, name);
+                    const std::string value_str = internal::get_vertex_scalar_property(cloud, vertex, name);
                     std::stringstream stream;
                     stream << "'" << name << "' on " << vertex << ": " << value_str;
                     window_->statusBar()->showMessage(QString::fromStdString(stream.str()), 2000);
@@ -574,7 +574,7 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
                     const std::string& name = drawable->property_name();
                     auto face = SurfaceMesh::Face(picked_face_index_);
                     auto mesh = dynamic_cast<SurfaceMesh *>(currentModel());
-                    const std::string value_str = details::get_face_scalar_property(mesh, face, name);
+                    const std::string value_str = internal::get_face_scalar_property(mesh, face, name);
                     std::stringstream stream;
                     stream << "'" << name << "' on " << face << ": " << value_str;
                     window_->statusBar()->showMessage(QString::fromStdString(stream.str()), 2000);
@@ -1154,16 +1154,16 @@ void PaintCanvas::drawCornerAxes() {
         const float base = 0.5f;   // the cylinder length, relative to the allowed region
         const float head = 0.2f;   // the cone length, relative to the allowed region
         std::vector<vec3> points, normals, colors;
-        shapes::create_cylinder(0.03, 10, vec3(0, 0, 0), vec3(base, 0, 0), vec3(1, 0, 0), points, normals, colors);
-        shapes::create_cylinder(0.03, 10, vec3(0, 0, 0), vec3(0, base, 0), vec3(0, 1, 0), points, normals, colors);
-        shapes::create_cylinder(0.03, 10, vec3(0, 0, 0), vec3(0, 0, base), vec3(0, 0, 1), points, normals, colors);
-        shapes::create_cone(0.06, 20, vec3(base, 0, 0), vec3(base + head, 0, 0), vec3(1, 0, 0), points, normals,
+        shape::create_cylinder(0.03, 10, vec3(0, 0, 0), vec3(base, 0, 0), vec3(1, 0, 0), points, normals, colors);
+        shape::create_cylinder(0.03, 10, vec3(0, 0, 0), vec3(0, base, 0), vec3(0, 1, 0), points, normals, colors);
+        shape::create_cylinder(0.03, 10, vec3(0, 0, 0), vec3(0, 0, base), vec3(0, 0, 1), points, normals, colors);
+        shape::create_cone(0.06, 20, vec3(base, 0, 0), vec3(base + head, 0, 0), vec3(1, 0, 0), points, normals,
                              colors);
-        shapes::create_cone(0.06, 20, vec3(0, base, 0), vec3(0, base + head, 0), vec3(0, 1, 0), points, normals,
+        shape::create_cone(0.06, 20, vec3(0, base, 0), vec3(0, base + head, 0), vec3(0, 1, 0), points, normals,
                              colors);
-        shapes::create_cone(0.06, 20, vec3(0, 0, base), vec3(0, 0, base + head), vec3(0, 0, 1), points, normals,
+        shape::create_cone(0.06, 20, vec3(0, 0, base), vec3(0, 0, base + head), vec3(0, 0, 1), points, normals,
                              colors);
-        shapes::create_sphere(vec3(0, 0, 0), 0.06, 20, 20, vec3(0, 1, 1), points, normals, colors);
+        shape::create_sphere(vec3(0, 0, 0), 0.06, 20, 20, vec3(0, 1, 1), points, normals, colors);
         drawable_axes_ = new TrianglesDrawable("corner_axes");
         drawable_axes_->update_vertex_buffer(points);
         drawable_axes_->update_normal_buffer(normals);
@@ -1362,11 +1362,11 @@ void PaintCanvas::postDraw() {
         const Rect rect(mouse_pressed_pos_.x(), mouse_current_pos_.x(), mouse_pressed_pos_.y(), mouse_current_pos_.y());
         if (rect.width() > 0 || rect.height() > 0) {
             // draw the boundary of the rect
-            shapes::draw_quad_wire(rect, vec4(0.0f, 0.0f, 1.0f, 1.0f), width(), height(), -1.0f);
+            shape::draw_quad_wire(rect, vec4(0.0f, 0.0f, 1.0f, 1.0f), width(), height(), -1.0f);
             // draw the transparent face
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            shapes::draw_quad_filled(rect, vec4(0.0f, 0.0f, 1.0f, 0.2f), width(), height(), -0.9f);
+            shape::draw_quad_filled(rect, vec4(0.0f, 0.0f, 1.0f, 0.2f), width(), height(), -0.9f);
             glDisable(GL_BLEND);
         }
     }
@@ -1396,7 +1396,7 @@ void PaintCanvas::postDraw() {
         const int radius = 150; // pixels
         float ratio = camera_->pixelGLRatio(camera_->pivotPoint());
         auto manip = mat4::translation(camera_->pivotPoint()) * mat4::scale(radius * ratio) ;
-        shapes::draw_sphere_big_circles(drawable_manip_sphere_, camera_->modelViewProjectionMatrix(), manip);
+        shape::draw_sphere_big_circles(drawable_manip_sphere_, camera_->modelViewProjectionMatrix(), manip);
     }
 }
 
@@ -1483,7 +1483,7 @@ void PaintCanvas::invertSelection() {
             for (auto f : mesh->faces())
                 select[f] = !select[f];
             d->set_coloring(State::SCALAR_FIELD, State::FACE, "f:select");
-            buffers::update(mesh, d);
+            buffer::update(mesh, d);
         }
         else {
             auto select = mesh->face_property<bool>("f:select");
@@ -1513,7 +1513,7 @@ void PaintCanvas::invertSelection() {
             for(auto v : cloud->vertices())
                 select[v] = !select[v];
             d->set_coloring(State::SCALAR_FIELD, State::VERTEX, "v:select");
-            buffers::update(cloud, d);
+            buffer::update(cloud, d);
         }
         else {
             auto select = cloud->vertex_property<bool>("v:select");

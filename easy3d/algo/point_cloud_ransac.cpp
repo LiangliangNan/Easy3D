@@ -49,7 +49,7 @@ typedef ::PointCloud PointCloud_Ransac;
 namespace easy3d {
 
     // \cond
-    namespace details {
+    namespace internal {
 
         // returns the number of detected primitives
         int do_detect(
@@ -276,7 +276,7 @@ namespace easy3d {
             pc[i].index = i;
         }
 
-        return details::do_detect(cloud, pc, types_, min_support, dist_thresh, bitmap_reso, normal_thresh, overlook_prob);
+        return internal::do_detect(cloud, pc, types_, min_support, dist_thresh, bitmap_reso, normal_thresh, overlook_prob);
     }
 
 
@@ -327,7 +327,7 @@ namespace easy3d {
             pc[index].index = idx;
         }
 
-        return details::do_detect(cloud, pc, types_, min_support, dist_thresh, bitmap_reso, normal_thresh, overlook_prob);
+        return internal::do_detect(cloud, pc, types_, min_support, dist_thresh, bitmap_reso, normal_thresh, overlook_prob);
     }
 
 }

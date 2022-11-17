@@ -31,7 +31,7 @@
 #include <easy3d/kdtree/kdtree_search_eth.h>
 #include <easy3d/kdtree/kdtree_search_flann.h>
 #include <easy3d/kdtree/kdtree_search_nanoflann.h>
-#include <easy3d/util/resources.h>
+#include <easy3d/util/resource.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/util/stop_watch.h>
 

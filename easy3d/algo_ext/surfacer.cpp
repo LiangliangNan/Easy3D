@@ -48,7 +48,7 @@ typedef K::Plane_3                                          Plane_3;
 
 namespace easy3d {
 
-    namespace details {
+    namespace internal {
 
         void to_cgal(SurfaceMesh *input, CGALMesh &output) {
             if (input->has_garbage())
@@ -241,9 +241,9 @@ namespace easy3d {
 
     int Surfacer::stitch_borders(SurfaceMesh *input) {
         CGALMesh mesh;
-        details::to_cgal(input, mesh);
+        internal::to_cgal(input, mesh);
         int num = CGAL::Polygon_mesh_processing::stitch_borders(mesh);
-        details::to_easy3d(mesh, input);
+        internal::to_easy3d(mesh, input);
         return num;
     }
 
@@ -254,10 +254,10 @@ namespace easy3d {
 
         std::vector<vec3> points;
         std::vector<Polygon> polygons;
-        details::to_polygon_soup(mesh, points, polygons);
+        internal::to_polygon_soup(mesh, points, polygons);
 
         bool status = orient_and_stitch_polygon_soup(points, polygons);
-        details::to_polygon_mesh(points, polygons, mesh);
+        internal::to_polygon_mesh(points, polygons, mesh);
 
         return status;
     }
@@ -265,7 +265,7 @@ namespace easy3d {
 
     void Surfacer::merge_reversible_connected_components(SurfaceMesh *input) {
         CGALMesh mesh;
-        details::to_cgal(input, mesh);
+        internal::to_cgal(input, mesh);
 
         typedef boost::property_map<CGALMesh, CGAL::dynamic_face_property_t<std::size_t> >::type Fccmap;
         Fccmap fccmap = CGAL::get(CGAL::dynamic_face_property_t<std::size_t>(), mesh);
@@ -283,7 +283,7 @@ namespace easy3d {
             count_prev = count_now;
         } while (true);
 
-        details::to_easy3d(mesh, input);
+        internal::to_easy3d(mesh, input);
     }
 
 
@@ -294,9 +294,9 @@ namespace easy3d {
         }
 
         CGALMesh mesh;
-        details::to_cgal(input_mesh, mesh);
+        internal::to_cgal(input_mesh, mesh);
         CGAL::Polygon_mesh_processing::orient(mesh);
-        details::to_easy3d(mesh, input_mesh);
+        internal::to_easy3d(mesh, input_mesh);
     }
 
 
@@ -305,11 +305,11 @@ namespace easy3d {
         const int num_faces = input_polygons.size();
 
         // stitch
-        details::remove_duplicate_vertices(input_points, input_polygons);
+        internal::remove_duplicate_vertices(input_points, input_polygons);
 
         std::vector<K::Point_3> points;
         std::vector<std::vector<std::size_t> > polygons(input_polygons.size());
-        details::to_cgal(input_points, input_polygons, points, polygons);
+        internal::to_cgal(input_points, input_polygons, points, polygons);
 
         bool status = CGAL::Polygon_mesh_processing::orient_polygon_soup(points, polygons);
         if (!CGAL::Polygon_mesh_processing::is_polygon_soup_a_polygon_mesh(polygons)) {
@@ -318,7 +318,7 @@ namespace easy3d {
         }
 
         // convert to easy3d
-        details::to_easy3d(points, polygons, input_points, input_polygons);
+        internal::to_easy3d(points, polygons, input_points, input_polygons);
 
         std::string msg;
         int diff_vertices = num_vertices - input_points.size();
@@ -342,11 +342,11 @@ namespace easy3d {
         const int num_vertices = input_points.size();
         const int num_faces = input_polygons.size();
 
-        details::remove_duplicate_vertices(input_points, input_polygons);
+        internal::remove_duplicate_vertices(input_points, input_polygons);
 
         std::vector<K::Point_3> points;
         std::vector<std::vector<std::size_t> > polygons(input_polygons.size());
-        details::to_cgal(input_points, input_polygons, points, polygons);
+        internal::to_cgal(input_points, input_polygons, points, polygons);
 
         CGAL::Polygon_mesh_processing::repair_polygon_soup(points, polygons);
 
@@ -357,7 +357,7 @@ namespace easy3d {
             return;
         }
 
-        details::to_easy3d(points, polygons, input_points, input_polygons);
+        internal::to_easy3d(points, polygons, input_points, input_polygons);
 
         int diff_vertices = num_vertices - input_points.size();
         int diff_faces = num_faces - input_polygons.size();
@@ -382,12 +382,12 @@ namespace easy3d {
 
         std::vector<vec3> points;
         std::vector<Polygon> polygons;
-        details::to_polygon_soup(mesh, points, polygons);
+        internal::to_polygon_soup(mesh, points, polygons);
 
         repair_polygon_soup(points, polygons);
 
         // convert to easy3d
-        details::to_polygon_mesh(points, polygons, mesh);
+        internal::to_polygon_mesh(points, polygons, mesh);
     }
 
 
@@ -398,7 +398,7 @@ namespace easy3d {
         }
 
         CGALMesh mesh;
-        details::to_cgal(input_mesh, mesh);
+        internal::to_cgal(input_mesh, mesh);
 
         Plane_3 plane(input_plane.a(), input_plane.b(), input_plane.c(), input_plane.d());
         bool status = CGAL::Polygon_mesh_processing::clip(
@@ -407,7 +407,7 @@ namespace easy3d {
                 CGAL::Polygon_mesh_processing::parameters::clip_volume(clip_volume)
         );
 
-        details::to_easy3d(mesh, input_mesh);
+        internal::to_easy3d(mesh, input_mesh);
         return status;
     }
 
@@ -419,12 +419,12 @@ namespace easy3d {
         }
 
         CGALMesh mesh;
-        details::to_cgal(input_mesh, mesh);
+        internal::to_cgal(input_mesh, mesh);
 
         Plane_3 plane(input_plane.a(), input_plane.b(), input_plane.c(), input_plane.d());
         CGAL::Polygon_mesh_processing::split(mesh, plane);
 
-        details::to_easy3d(mesh, input_mesh);
+        internal::to_easy3d(mesh, input_mesh);
     }
 
 
@@ -462,7 +462,7 @@ namespace easy3d {
         };
 
         CGALMesh mesh;
-        details::to_cgal(input_mesh, mesh);
+        internal::to_cgal(input_mesh, mesh);
         // Slicer constructor from the mesh
         CGAL::Polygon_mesh_slicer<CGALMesh , K> slicer(mesh);
 
@@ -578,7 +578,7 @@ namespace easy3d {
         }
 
         CGALMesh cgal_mesh;
-        details::to_cgal(mesh, cgal_mesh);
+        internal::to_cgal(mesh, cgal_mesh);
 
         std::vector<CGALMesh::Face_index> degenerate_faces;
         CGAL::Polygon_mesh_processing::degenerate_faces(cgal_mesh, std::back_inserter(degenerate_faces));
@@ -589,7 +589,7 @@ namespace easy3d {
         cgal_mesh.collect_garbage();
         std::cout << "faces: " << cgal_mesh.number_of_faces() << std::endl;
         std::cout << degenerate_faces.size() << " degenerate_faces deleted" << std::endl;
-        details::to_easy3d(cgal_mesh, mesh);
+        internal::to_easy3d(cgal_mesh, mesh);
 
         std::vector<std::pair<CGALMesh::Face_index, CGALMesh::Face_index> > intersected_tris;
         CGAL::Polygon_mesh_processing::self_intersections<CGAL::Parallel_if_available_tag>(CGAL::faces(cgal_mesh), cgal_mesh, std::back_inserter(intersected_tris));

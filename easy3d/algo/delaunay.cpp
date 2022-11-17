@@ -20,7 +20,7 @@ namespace easy3d {
 
 
     // \cond
-    namespace details {
+    namespace internal {
         template<typename FT>
         inline FT squared_distance(unsigned int dim, const FT *p1, const FT *p2) {
             FT result(0);
@@ -80,9 +80,9 @@ namespace easy3d {
         std::cerr << "TODO: replace with line walk (or maybe we could use kd-tree here)" << std::endl;
         assert(nb_vertices() > 0);
         unsigned int result = 0;
-        float d = details::squared_distance(dimension(), vertex_ptr(0), p);
+        float d = internal::squared_distance(dimension(), vertex_ptr(0), p);
         for (unsigned int i = 1; i < nb_vertices(); i++) {
-            float cur_d = details::squared_distance(dimension(), vertex_ptr(i), p);
+            float cur_d = internal::squared_distance(dimension(), vertex_ptr(i), p);
             if (cur_d < d) {
                 d = cur_d;
                 result = i;
@@ -230,7 +230,7 @@ namespace easy3d {
             std::vector<unsigned int> N = neighbors_[v];
             for (unsigned int i = 0; i < N.size(); i++) {
                 unsigned int w = N[i];
-                double d = details::squared_distance(dimension(), vertex_ptr(v), vertex_ptr(w));
+                double d = internal::squared_distance(dimension(), vertex_ptr(v), vertex_ptr(w));
                 if (d < 1e-30) {
                     LOG(WARNING) << "Vertices " << v << " and " << w << " are the same";
 

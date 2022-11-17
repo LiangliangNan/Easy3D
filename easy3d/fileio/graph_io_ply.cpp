@@ -34,7 +34,7 @@ namespace easy3d {
 
 	namespace io {
 
-        namespace details {
+        namespace internal {
 
 			template <typename PropertyT>
 			inline bool extract_named_property(std::vector<PropertyT>& properties, PropertyT& wanted, const std::string& name) {
@@ -84,7 +84,7 @@ namespace easy3d {
 				}
 			}
 
-		} // namespace details
+		} // namespace internal
 
 
         bool load_ply(const std::string& file_name, Graph* graph)
@@ -105,7 +105,7 @@ namespace easy3d {
 			for (std::size_t i = 0; i < elements.size(); ++i) {
 				Element& e = elements[i];
                 if (e.name == "vertex") {
-					if (details::extract_named_property(e.vec3_properties, coordinates, "point"))
+					if (internal::extract_named_property(e.vec3_properties, coordinates, "point"))
 						continue;
 					else {
 						LOG(ERROR) << "vertex coordinates (x, y, z properties) do not exist";
@@ -113,15 +113,15 @@ namespace easy3d {
 					}
 				}
                 else if (e.name == "edge") {
-                    if (details::extract_named_property(e.int_list_properties, edge_vertex_indices, "vertex_indices") ||
-                        details::extract_named_property(e.int_list_properties, edge_vertex_indices, "vertex_index"))
+                    if (internal::extract_named_property(e.int_list_properties, edge_vertex_indices, "vertex_indices") ||
+                        internal::extract_named_property(e.int_list_properties, edge_vertex_indices, "vertex_index"))
                         continue;
                     else {
                         // make it compatible with MeshLab (which used two int properties "vertex1" and "vertex2" to
                         // store the vertex indices of the edges.
                         IntProperty vertex_1_indices, vertex_2_indices;
-                        if (details::extract_named_property(e.int_properties, vertex_1_indices, "vertex1") &&
-                            details::extract_named_property(e.int_properties, vertex_2_indices, "vertex2")) {
+                        if (internal::extract_named_property(e.int_properties, vertex_1_indices, "vertex1") &&
+                            internal::extract_named_property(e.int_properties, vertex_2_indices, "vertex2")) {
                             edge_vertex_indices.resize(vertex_1_indices.size());
                             for (std::size_t i = 0; i < edge_vertex_indices.size(); ++i)
                                 edge_vertex_indices[i] = {vertex_1_indices[i], vertex_2_indices[i]};
@@ -177,22 +177,22 @@ namespace easy3d {
 			for (std::size_t i = 0; i < elements.size(); ++i) {
 				Element& e = elements[i];
                 if (e.name == "vertex") {
-                    details::add_vertex_properties<vec3>(graph, e.vec3_properties);
-                    details::add_vertex_properties<vec2>(graph, e.vec2_properties);
-                    details::add_vertex_properties<float>(graph, e.float_properties);
-                    details::add_vertex_properties<int>(graph, e.int_properties);
-                    details::add_vertex_properties< std::vector<int> >(graph, e.int_list_properties);
-                    details::add_vertex_properties< std::vector<float> >(graph, e.float_list_properties);
+                    internal::add_vertex_properties<vec3>(graph, e.vec3_properties);
+                    internal::add_vertex_properties<vec2>(graph, e.vec2_properties);
+                    internal::add_vertex_properties<float>(graph, e.float_properties);
+                    internal::add_vertex_properties<int>(graph, e.int_properties);
+                    internal::add_vertex_properties< std::vector<int> >(graph, e.int_list_properties);
+                    internal::add_vertex_properties< std::vector<float> >(graph, e.float_list_properties);
 				}
                 else if (e.name == "face")
                     LOG(ERROR) << "The Graph has face information (ignored). Is it a mesh?";
                 else if (e.name == "edge") {
-                    details::add_edge_properties<vec3>(graph, e.vec3_properties);
-                    details::add_edge_properties<vec2>(graph, e.vec2_properties);
-                    details::add_edge_properties<float>(graph, e.float_properties);
-                    details::add_edge_properties<int>(graph, e.int_properties);
-                    details::add_edge_properties< std::vector<int> >(graph, e.int_list_properties);
-                    details::add_edge_properties< std::vector<float> >(graph, e.float_list_properties);
+                    internal::add_edge_properties<vec3>(graph, e.vec3_properties);
+                    internal::add_edge_properties<vec2>(graph, e.vec2_properties);
+                    internal::add_edge_properties<float>(graph, e.float_properties);
+                    internal::add_edge_properties<int>(graph, e.int_properties);
+                    internal::add_edge_properties< std::vector<int> >(graph, e.int_list_properties);
+                    internal::add_edge_properties< std::vector<float> >(graph, e.float_list_properties);
 				}
                 else {
                     const std::string name = "element-" + e.name;
@@ -208,7 +208,7 @@ namespace easy3d {
 		}
 
 
-		namespace details {
+		namespace internal {
 
 
 			template <typename T>
@@ -238,7 +238,7 @@ namespace easy3d {
 			}
 
 
-		} // namespace details
+		} // namespace internal
 
 
         bool save_ply(const std::string& file_name, const Graph* graph, bool binary) {
@@ -255,12 +255,12 @@ namespace easy3d {
             Element element_vertex("vertex", graph->n_vertices());
 
 			// attributes defined on element "vertex"
-            details::collect_vertex_properties(graph, element_vertex.vec3_properties);
-            details::collect_vertex_properties(graph, element_vertex.vec2_properties);
-            details::collect_vertex_properties(graph, element_vertex.float_properties);
-            details::collect_vertex_properties(graph, element_vertex.int_properties);
-            details::collect_vertex_properties(graph, element_vertex.int_list_properties);
-            details::collect_vertex_properties(graph, element_vertex.float_list_properties);
+            internal::collect_vertex_properties(graph, element_vertex.vec3_properties);
+            internal::collect_vertex_properties(graph, element_vertex.vec2_properties);
+            internal::collect_vertex_properties(graph, element_vertex.float_properties);
+            internal::collect_vertex_properties(graph, element_vertex.int_properties);
+            internal::collect_vertex_properties(graph, element_vertex.int_list_properties);
+            internal::collect_vertex_properties(graph, element_vertex.float_list_properties);
 
             auto trans = graph->get_model_property<dvec3>("translation");
             if (trans) { // has translation
@@ -295,12 +295,12 @@ namespace easy3d {
             element_edge.int_list_properties.emplace_back(edge_vertex_indices);
 
 			// attributes defined on element "edge"
-            details::collect_edge_properties(graph, element_edge.vec3_properties);
-            details::collect_edge_properties(graph, element_edge.vec2_properties);
-            details::collect_edge_properties(graph, element_edge.float_properties);
-            details::collect_edge_properties(graph, element_edge.int_properties);
-            details::collect_edge_properties(graph, element_edge.int_list_properties);
-            details::collect_edge_properties(graph, element_edge.float_list_properties);
+            internal::collect_edge_properties(graph, element_edge.vec3_properties);
+            internal::collect_edge_properties(graph, element_edge.vec2_properties);
+            internal::collect_edge_properties(graph, element_edge.float_properties);
+            internal::collect_edge_properties(graph, element_edge.int_properties);
+            internal::collect_edge_properties(graph, element_edge.int_list_properties);
+            internal::collect_edge_properties(graph, element_edge.float_list_properties);
 
             elements.emplace_back(element_edge);
 

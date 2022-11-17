@@ -417,7 +417,7 @@ namespace easy3d {
             return false;
         }
 
-        namespace details {
+        namespace internal {
             /** Helper to iterate over elements of a path (including Windows' root, if any). **/
             class PathIterator {
             public:
@@ -495,7 +495,7 @@ namespace easy3d {
             }
 
             // 3
-            details::PathIterator itFrom(from), itTo(to);
+            internal::PathIterator itFrom(from), itTo(to);
             // Iterators may point to Windows roots. As we tested they are equal, there is no need to ++itFrom and ++itTo.
             // However, if we got an Unix root, we must add it to the result.
             std::string res(root == "/" ? "/" : "");

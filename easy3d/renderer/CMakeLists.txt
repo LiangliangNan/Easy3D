@@ -25,9 +25,9 @@ set(${module}_headers
         opengl_error.h
         opengl_util.h
         opengl_timer.h
-        shapes.h
+        shape.h
         read_pixel.h
-        buffers.h
+        buffer.h
         renderer.h
         shader_manager.h
         shader_program.h
@@ -66,9 +66,9 @@ set(${module}_sources
         opengl_error.cpp
         opengl_util.cpp
         opengl_timer.cpp
-        shapes.cpp
+        shape.cpp
         read_pixel.cpp
-        buffers.cpp
+        buffer.cpp
         renderer.cpp
         shader_manager.cpp
         shader_program.cpp

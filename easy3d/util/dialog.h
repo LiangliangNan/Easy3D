@@ -24,8 +24,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef EASY3D_UTIL_DIALOGS_H
-#define EASY3D_UTIL_DIALOGS_H
+#ifndef EASY3D_UTIL_DIALOG_H
+#define EASY3D_UTIL_DIALOG_H
 
 #include <string>
 #include <vector>
@@ -180,7 +180,7 @@ namespace easy3d
         static std::string open(const std::string& file_name, const std::string& filters) ;
 #endif
 
-#ifdef HAS_TINY_FILE_DIALOGS
+#ifdef HAS_TINY_FILE_DIALOG
 
         /**
          * \brief Open a native file open dialog.
@@ -218,7 +218,7 @@ namespace easy3d
 
     };
 
-#ifdef HAS_TINY_FILE_DIALOGS
+#ifdef HAS_TINY_FILE_DIALOG
 
     class ColorDialog {
     public:

@@ -35,17 +35,17 @@ namespace easy3d {
     /**
      * @brief Initialization of Easy3D.
      * @details This function initializes logging, setting, and resources. Internally it calls (and is thus identical
-     *      to calling) \c logging::initialize(...), setting::initialize(...), and \c resource::initialize(...).
-     *      So for advanced initializations, please refer to the documentation of these functions.
-     * @param use_log_file \c True to create a ".log" file along the executable program.
-     * @param use_setting_file \c True to create an ".ini" file along the executable program. This setting file stores
-     *      the default rendering parameters. User can modify this file to change the default rendering parameters,
-     *      then the changes will be effective for the future.
-     * @param resource_dir The resources directory containing color maps, shaders, textures, fonts, etc.
-     *      \c Easy3D_RESOURCE_DIR (default value) is the resources directory coming with the Easy3D distribution.
-     *      In most cases you should use the default parameter (unless you want to use a set of different resources).
+     *    to calling) logging::initialize(), setting::initialize(), and resource::initialize().
+     *    For more fine-grained initializations, please refer to the documentation of these functions.
+     * @param use_log_file \c True to create a ".log" file (which will be created next to the executable program).
+     * @param use_setting_file \c True to create an ".ini" file (which will be created next to the executable program).
+     *    This setting file stores the default rendering parameters. Users can modify this file to change the default
+     *    rendering parameters, then the changes will be effective for the future.
+     * @param resource_dir The resource directory containing color maps, shaders, textures, fonts, etc.
+     *    \c Easy3D_RESOURCE_DIR is the default value, which is the directory coming with the Easy3D distribution.
+     *    In most cases you should use the default resource directory (unless you want to use different resources).
      *
-     * @sa logging::initialize(...), setting::initialize(...), and resource::initialize().
+     * @sa logging::initialize(), setting::initialize(), and resource::initialize().
      */
     void initialize(bool use_log_file = false, bool use_setting_file = false, const std::string& resource_dir = Easy3D_RESOURCE_DIR);
 

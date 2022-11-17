@@ -30,7 +30,7 @@
 #include <easy3d/algo/text_mesher.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/renderer.h>
-#include <easy3d/util/resources.h>
+#include <easy3d/util/resource.h>
 #include <easy3d/util/file_system.h>
 
 #include <QFileDialog>

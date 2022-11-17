@@ -28,7 +28,7 @@
 
 #include <easy3d/renderer/text_renderer.h>
 #include <easy3d/util/file_system.h>
-#include <easy3d/util/resources.h>
+#include <easy3d/util/resource.h>
 #include <easy3d/core/random.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs

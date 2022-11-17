@@ -105,7 +105,7 @@ namespace easy3d {
 
 #ifdef HAS_BOOST
 
-    namespace details {
+    namespace internal {
 
         struct VertexProperty {
             VertexProperty(easy3d::PointCloud::Vertex v = easy3d::PointCloud::Vertex(-1)) : vertex(v) {}
@@ -213,11 +213,11 @@ namespace easy3d {
         void extract_minimum_spanning_tree(const RiemannianGraph &graph, MST_Graph &mst) {
             RiemannianGraph::Vertex top = graph.top;
 
-            std::vector<details::RiemannianGraph::Vertex> predecessor(boost::num_vertices(graph));
+            std::vector<internal::RiemannianGraph::Vertex> predecessor(boost::num_vertices(graph));
             boost::prim_minimum_spanning_tree(
                     graph,
                     &predecessor[0],
-                    boost::weight_map(boost::get(&details::EdgeProperty::weight, graph)).root_vertex(top)
+                    boost::weight_map(boost::get(&internal::EdgeProperty::weight, graph)).root_vertex(top)
             );
 
             // we create a directed graph (i.e., MST_Graph) to represent the MST.
@@ -391,13 +391,13 @@ namespace easy3d {
 
         w.restart();
         LOG(INFO) << "constructing graph...";
-        details::RiemannianGraph riemannian_graph;
-        details::build_graph(cloud, &kdtree, k, riemannian_graph);
+        internal::RiemannianGraph riemannian_graph;
+        internal::build_graph(cloud, &kdtree, k, riemannian_graph);
 
         // a point clouds might be in multiple clusters, so we have to extract the connected components
         // first. After that, we can reorient all the components one by one.
-        std::vector<details::RiemannianGraph> components
-                = details::connected_components(cloud, riemannian_graph);
+        std::vector<internal::RiemannianGraph> components
+                = internal::connected_components(cloud, riemannian_graph);
         LOG(INFO) << "done. #vertices: " << boost::num_vertices(riemannian_graph)
                   << ", #edges: " << boost::num_edges(riemannian_graph)
                   << ", #components: " << components.size()
@@ -405,11 +405,11 @@ namespace easy3d {
 
         w.restart();
         LOG(INFO) << "extract minimum spanning tree...";
-        std::vector<details::MST_Graph> ms_trees;
+        std::vector<internal::MST_Graph> ms_trees;
         for (const auto &graph : components) {
             ms_trees.emplace_back(cloud->get_vertex_property<vec3>("v:normal"));
-            details::MST_Graph &mst = ms_trees.back();
-            details::extract_minimum_spanning_tree(graph, mst);
+            internal::MST_Graph &mst = ms_trees.back();
+            internal::extract_minimum_spanning_tree(graph, mst);
         }
         LOG(INFO) << "done. " << w.time_string();
 
@@ -417,7 +417,7 @@ namespace easy3d {
         LOG(INFO) << "propagate...";
         for (const auto &mst : ms_trees) {
             // Traverse the point set along the MST to propagate source_point's orientation
-            details::BfsVisitor<details::MST_Graph> bfsVisitor(details::propagate_normal);
+            internal::BfsVisitor<internal::MST_Graph> bfsVisitor(internal::propagate_normal);
             boost::breadth_first_search(mst, mst.root, boost::visitor(bfsVisitor));
         }
         LOG(INFO) << "done. " << w.time_string();

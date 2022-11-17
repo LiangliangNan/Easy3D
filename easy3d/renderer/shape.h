@@ -24,8 +24,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef EASY3D_RENDERER_SHAPES_H
-#define EASY3D_RENDERER_SHAPES_H
+#ifndef EASY3D_RENDERER_SHAPE_H
+#define EASY3D_RENDERER_SHAPE_H
 
 #include <vector>
 
@@ -38,9 +38,9 @@ namespace easy3d {
 
     /**
      * \brief A collection of functions for rendering basic shapes
-     * \namespace easy3d::shapes
+     * \namespace easy3d::shape
      */
-    namespace shapes {
+    namespace shape {
 
         /// \name Functions for drawing
         // @{
@@ -338,4 +338,4 @@ namespace easy3d {
 
 }
 
-#endif  // EASY3D_RENDERER_SHAPES_H
+#endif  // EASY3D_RENDERER_SHAPE_H

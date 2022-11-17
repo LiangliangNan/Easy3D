@@ -24,8 +24,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef EASY3D_RENDERER_BUFFERS_H
-#define EASY3D_RENDERER_BUFFERS_H
+#ifndef EASY3D_RENDERER_BUFFER_H
+#define EASY3D_RENDERER_BUFFER_H
 
 
 #include <easy3d/renderer/state.h>
@@ -45,8 +45,8 @@ namespace easy3d {
     class TrianglesDrawable;
 
     /// \brief Functions for updating render buffers.
-    /// \namespace easy3d::buffers
-    namespace buffers {
+    /// \namespace easy3d::buffer
+    namespace buffer {
 
         /// \name The generic API for render buffer update
         //@{
@@ -189,9 +189,9 @@ namespace easy3d {
         void update(PolyMesh *model, LinesDrawable *drawable, const std::string& field, State::Location location, float scale);
         //@}
 
-    }   // namespaces buffers
+    }   // namespaces buffer
 
 }   // namespaces easy3d
 
 
-#endif  // EASY3D_RENDERER_BUFFERS_H
+#endif  // EASY3D_RENDERER_BUFFER_H

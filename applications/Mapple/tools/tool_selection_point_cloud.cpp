@@ -33,7 +33,7 @@
 #include <easy3d/gui/picker_point_cloud.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_points.h>
-#include <easy3d/renderer/buffers.h>
+#include <easy3d/renderer/buffer.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/util/logging.h>
 
@@ -56,7 +56,7 @@ namespace easy3d {
                 if (!cloud->get_vertex_property<bool>("v:select"))
                     cloud->add_vertex_property<bool>("v:select", false);
                 d->set_coloring(State::SCALAR_FIELD, State::VERTEX, "v:select");
-                buffers::update(cloud, d);
+                buffer::update(cloud, d);
             }
             else {
                 auto select = cloud->vertex_property<bool>("v:select", false);

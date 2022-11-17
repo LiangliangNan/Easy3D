@@ -27,9 +27,9 @@
 #include "viewer.h"
 
 #include <easy3d/renderer/texture.h>
-#include <easy3d/renderer/shapes.h>
-#include <easy3d/util/dialogs.h>
-#include <easy3d/util/resources.h>
+#include <easy3d/renderer/shape.h>
+#include <easy3d/util/dialog.h>
+#include <easy3d/util/resource.h>
 
 #include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
 
@@ -149,5 +149,5 @@ void ImageViewer::draw() const {
     compute_image_region(x, y, w, h);
 
     const Rect quad(x, x + w, y, y + h);
-    shapes::draw_quad_filled(quad, texture_->id(), width(), height(), -0.9f);
+    shape::draw_quad_filled(quad, texture_->id(), width(), height(), -0.9f);
 }

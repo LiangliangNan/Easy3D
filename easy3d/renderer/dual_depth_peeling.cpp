@@ -33,7 +33,7 @@
 #include <easy3d/renderer/opengl_error.h>
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/shader_program.h>
-#include <easy3d/renderer/shapes.h>
+#include <easy3d/renderer/shape.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/transform.h>
 #include <easy3d/renderer/clipping_plane.h>
@@ -431,7 +431,7 @@ namespace easy3d {
 
         program->bind();
         program->bind_texture("TempTex", fbo_->color_texture(BackTemp), 0);
-        shapes::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);
+        shape::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);
         program->release_texture();
         program->release();
 
@@ -473,7 +473,7 @@ namespace easy3d {
         program->bind();
         program->bind_texture("FrontBlenderTex", fbo_->color_texture(front_source_), 0);
         program->bind_texture("BackBlenderTex", fbo_->color_texture(Back), 1);
-        shapes::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);
+        shape::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);
         program->release_texture();
         program->release();
     }

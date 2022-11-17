@@ -40,7 +40,7 @@ namespace easy3d {
 
     namespace io {
 
-        namespace details {
+        namespace internal {
 
             // helper for extracting the coordinates of a polygon
             void extract_polygon(json::const_iterator it_coordinates, std::vector<double> &coordinates) {
@@ -140,7 +140,7 @@ namespace easy3d {
 
                 if (it_type.value() == "MultiPolygon" || it_type.value() == "Polygon") {
                     std::vector<double> coordinates;
-                    details::extract_polygon(it_coordinates, coordinates);
+                    internal::extract_polygon(it_coordinates, coordinates);
 
                     std::vector<SurfaceMesh::Vertex> face;
                     for (std::size_t j = 0; j < coordinates.size(); j += 2) {

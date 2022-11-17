@@ -24,7 +24,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include <easy3d/util/resources.h>
+#include <easy3d/util/resource.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
 
@@ -46,7 +46,7 @@ namespace easy3d {
             // first check if the resource directory (with the Easy3D distribution) exist
             std::string& dir = resource_dir;
             if (file_system::is_directory(dir)) {
-                VLOG_N_TIMES(1, 1) << "resources directory: " << dir;
+                VLOG_N_TIMES(1, 1) << "resource directory: " << dir;
                 return dir;
             }
 
@@ -72,7 +72,7 @@ namespace easy3d {
                     }
                 }
                 // if still could not find it, show an error and return the current working directory
-                LOG_N_TIMES(1, ERROR) << "could not find the resources directory";
+                LOG_N_TIMES(1, ERROR) << "could not find the resource directory";
                 return file_system::current_working_directory();
             }
         }

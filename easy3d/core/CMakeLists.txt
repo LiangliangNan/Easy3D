@@ -33,7 +33,6 @@ set(${module}_headers
         polygon.h
         types.h
         vec.h
-        version.h
         )
 
 set(${module}_sources
@@ -43,16 +42,7 @@ set(${module}_sources
         point_cloud.cpp
         surface_mesh.cpp
         poly_mesh.cpp
-        version.cpp
         )
 
 add_module(${module} "${${module}_headers}" "${${module}_sources}" "${private_dependencies}" "${public_dependencies}")
-target_compile_definitions(
-        easy3d_${module}
-        PRIVATE
-        "Easy3D_MAJOR_VERSION=${Easy3D_MAJOR_VERSION}"
-        "Easy3D_MINOR_VERSION=${Easy3D_MINOR_VERSION}"
-        "Easy3D_PATCH_VERSION=${Easy3D_PATCH_VERSION}"
-        "Easy3D_VERSION=\"${Easy3D_VERSION}\""
-)
 install_module(${module})

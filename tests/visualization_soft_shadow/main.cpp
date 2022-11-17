@@ -28,7 +28,7 @@
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/renderer.h>
-#include <easy3d/util/resources.h>
+#include <easy3d/util/resource.h>
 #include <easy3d/util/timer.h>
 
 using namespace easy3d;

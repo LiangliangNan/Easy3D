@@ -37,7 +37,7 @@
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/renderer.h>
-#include <easy3d/renderer/buffers.h>
+#include <easy3d/renderer/buffer.h>
 #include <easy3d/util/logging.h>
 
 #include "paint_canvas.h"
@@ -169,7 +169,7 @@ WidgetPointsDrawable::~WidgetPointsDrawable() {
 }
 
 
-namespace points_details {
+namespace internal {
 
     // color schemes from scalar fields
     // scalar fields defined on vertices
@@ -218,22 +218,22 @@ std::vector<QString> WidgetPointsDrawable::colorSchemes(const easy3d::Model *mod
 
     auto cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
     if (cloud)
-        points_details::color_schemes_for_scalar_fields(cloud, scalar_prefix_, schemes);
+        internal::color_schemes_for_scalar_fields(cloud, scalar_prefix_, schemes);
 
     else {
         auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
         if (mesh)
-            points_details::color_schemes_for_scalar_fields(mesh, scalar_prefix_, schemes);
+            internal::color_schemes_for_scalar_fields(mesh, scalar_prefix_, schemes);
 
         else {
             auto graph = dynamic_cast<Graph *>(viewer_->currentModel());
             if (graph)
-                points_details::color_schemes_for_scalar_fields(graph, scalar_prefix_, schemes);
+                internal::color_schemes_for_scalar_fields(graph, scalar_prefix_, schemes);
 
             else {
                 auto poly = dynamic_cast<PolyMesh *>(viewer_->currentModel());
                 if (poly)
-                    points_details::color_schemes_for_scalar_fields(poly, scalar_prefix_, schemes);
+                    internal::color_schemes_for_scalar_fields(poly, scalar_prefix_, schemes);
             }
         }
     }
@@ -247,22 +247,22 @@ std::vector<QString> WidgetPointsDrawable::vectorFields(const easy3d::Model *mod
 
     auto cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
     if (cloud)
-        points_details::vector_fields_on_vertices(cloud, fields);
+        internal::vector_fields_on_vertices(cloud, fields);
 
     else {
         auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
         if (mesh)
-            points_details::vector_fields_on_vertices(mesh, fields);
+            internal::vector_fields_on_vertices(mesh, fields);
 
         else {
             auto graph = dynamic_cast<Graph *>(viewer_->currentModel());
             if (graph)
-                points_details::vector_fields_on_vertices(graph, fields);
+                internal::vector_fields_on_vertices(graph, fields);
 
             else {
                 auto poly = dynamic_cast<PolyMesh *>(viewer_->currentModel());
                 if (poly)
-                    points_details::vector_fields_on_vertices(poly, fields);
+                    internal::vector_fields_on_vertices(poly, fields);
             }
         }
     }
@@ -596,11 +596,11 @@ void WidgetPointsDrawable::updateVectorFieldBuffer(Model *model, const std::stri
         drawable->set_update_func([&, name](Model *m, Drawable *d) -> void {
             const float scale = ui_->doubleSpinBoxVectorFieldScale->value();
             if (dynamic_cast<SurfaceMesh *>(m))
-                buffers::update(dynamic_cast<SurfaceMesh*>(m), dynamic_cast<LinesDrawable*>(d), name, State::VERTEX, scale);
+                buffer::update(dynamic_cast<SurfaceMesh*>(m), dynamic_cast<LinesDrawable*>(d), name, State::VERTEX, scale);
             else if (dynamic_cast<PointCloud *>(m))
-                buffers::update(dynamic_cast<PointCloud*>(m), dynamic_cast<LinesDrawable*>(d), name, scale);
+                buffer::update(dynamic_cast<PointCloud*>(m), dynamic_cast<LinesDrawable*>(d), name, scale);
             else if (dynamic_cast<PolyMesh *>(m))
-                buffers::update(dynamic_cast<PolyMesh*>(m), dynamic_cast<LinesDrawable*>(d), name, State::VERTEX, scale);
+                buffer::update(dynamic_cast<PolyMesh*>(m), dynamic_cast<LinesDrawable*>(d), name, State::VERTEX, scale);
         });
     }
 }
