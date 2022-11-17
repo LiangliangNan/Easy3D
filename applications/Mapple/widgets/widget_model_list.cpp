@@ -888,8 +888,24 @@ namespace internal {
     void propogate(const std::vector<DRAWABLE*>& source_drawables, const std::vector<DRAWABLE*>& target_drawables) {
         for (auto source_drawable : source_drawables) {
             for (auto target_drawable : target_drawables) {
-                if (source_drawable->name() == target_drawable->name())  // propogate only when their names are the same
+                if (target_drawable->name() == source_drawable->name()) { // propogate only when their names are the same
                     target_drawable->state() = source_drawable->state();
+                    switch (source_drawable->type()) {
+                    case Drawable::DT_POINTS:
+                        dynamic_cast<PointsDrawable*>(target_drawable)->set_point_size(dynamic_cast<PointsDrawable*>(source_drawable)->point_size());
+                        dynamic_cast<PointsDrawable*>(target_drawable)->set_impostor_type(dynamic_cast<PointsDrawable*>(source_drawable)->impostor_type());
+                        break;
+                    case Drawable::DT_LINES:
+                        dynamic_cast<LinesDrawable*>(target_drawable)->set_line_width(dynamic_cast<LinesDrawable*>(source_drawable)->line_width());
+                        dynamic_cast<LinesDrawable*>(target_drawable)->set_impostor_type(dynamic_cast<LinesDrawable*>(source_drawable)->impostor_type());
+                        break;
+                    case Drawable::DT_TRIANGLES:
+                        dynamic_cast<TrianglesDrawable*>(target_drawable)->set_smooth_shading(dynamic_cast<TrianglesDrawable*>(source_drawable)->smooth_shading());
+                        dynamic_cast<TrianglesDrawable*>(target_drawable)->set_opacity(dynamic_cast<TrianglesDrawable*>(source_drawable)->opacity());
+                    default:
+                        break;
+                    }
+                }
             }
         }
     }
