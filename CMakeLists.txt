@@ -69,19 +69,19 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${Easy3D_BINARY_DIR}/lib)
 ################################################################################
 
 # Build shared libraries
-option(Easy3D_BUILD_SHARED_LIBS "Build shared Libaries"         ON)
+option(Easy3D_BUILD_SHARED_LIBS "Build shared libaries"         ON)
 # Build tutorials
-option(Easy3D_BUILD_TUTORIALS "Build Easy3D Tutorials"          ON)
+option(Easy3D_BUILD_TUTORIALS "Build Easy3D tutorials"          ON)
 # Build documentation
-option(Easy3D_BUILD_DOCUMENTATION "Build Easy3D Documentation"  OFF)
+option(Easy3D_BUILD_DOCUMENTATION "Build Easy3D documentation"  OFF)
 # Build tests
-option(Easy3D_BUILD_TESTS "Build Easy3D Tests"                  OFF)
+option(Easy3D_BUILD_TESTS "Build Easy3D tests programs"         OFF)
 # Build advanced features that require CGAL (>= v5.1)
-option(Easy3D_ENABLE_CGAL "Build advanced features that require CGAL (>= v5.1)"             OFF)
+option(Easy3D_ENABLE_CGAL "Build advanced features that require CGAL (>= v5.1)"              OFF)
 # Build advanced examples/applications that require Qt5 (>= v5.6)
-option(Easy3D_ENABLE_QT "Build advanced examples/applications that require Qt5 (>= v5.6)"   OFF)
+option(Easy3D_ENABLE_QT "Build advanced examples/applications that require Qt5 (>= v5.6)"    OFF)
 # Build the video encoding module that requires ffmpeg
-option(Easy3D_ENABLE_FFMPEG "Build the video encoding module that requires ffmpeg"          OFF)
+option(Easy3D_ENABLE_FFMPEG "Build the video encoding module that requires ffmpeg (>= v4.0)" OFF)
 
 ################################################################################
 
