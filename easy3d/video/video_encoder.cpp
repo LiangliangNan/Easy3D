@@ -33,13 +33,12 @@ extern "C" {
 #include <libavutil/imgutils.h>
 }
 
-#include <easy3d/util/logging.h>
-
-
 // check avcodec version
 #if (LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 18, 100)) // this number corresponds to ffmpeg v4.0
     #pragma message "[WARNING]: Your ffmpeg is too old. Please update it to v4.0 or above"
 #endif
+
+#include <easy3d/util/logging.h>
 
 
 namespace internal {
@@ -150,8 +149,7 @@ namespace internal {
 		picture->height = height;
 
 		/* allocate the buffers for the frame data */
-		int ret = av_frame_get_buffer(picture, 0);
-		if (ret < 0) {
+		if (av_frame_get_buffer(picture, 0) < 0) {
             std::string error_msg = "could not allocate frame data";
             LOG(ERROR) << error_msg;
             throw std::runtime_error(error_msg);
@@ -406,11 +404,11 @@ using namespace internal;
 
 namespace easy3d {
 
+    // Reference: https://github.com/FFmpeg/FFmpeg/blob/master/doc/examples/muxing.c
 	VideoEncoder::VideoEncoder() : encoder_(nullptr) {
-        LOG(INFO) << "ffmpeg version : " << av_version_info();
-        LOG(INFO) << "avcodec_version: "
-            << AV_VERSION_MAJOR(LIBAVCODEC_VERSION_INT) << "."
-            << AV_VERSION_MINOR(LIBAVCODEC_VERSION_INT);
+        LOG(INFO) << "ffmpeg version: " << av_version_info() << " (avcodec version: " << LIBAVCODEC_VERSION_MAJOR << "."
+                  << LIBAVCODEC_VERSION_MINOR << "." << LIBAVCODEC_VERSION_MICRO << ")";
+
         if (LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 18, 100)) // this number corresponds to ffmpeg v4.0
             LOG(WARNING) << "your program was built with too old ffmpeg (" << av_version_info() << "), and "
                          << "video encoding is not available. Contact the author of the program to fix it";

@@ -38,9 +38,9 @@ namespace internal {
 namespace easy3d {
 
     /**
-     * @brief A class that can encode video frames (e.g., images) into a video file.
-     * @class VideoEncoder easy3d/video/video_encoder.h
-     * @details VideoEncoder is implemented internally base on ffmpeg's muxing example. Below is an example of usage:
+     * @brief A class that encodes video frames (e.g., images) into a video file.
+     * @details The output format is automatically guessed according to the file extension. Below is an example
+     *    of usage:
      *      \code
      *          VideoEncoder encoder;
      *          encoder.start(output_file, 30, 100 * 1024 * 1024);  // 30 fps, 100 Mbit/s
@@ -52,6 +52,7 @@ namespace easy3d {
      *          }
      *          encoder.end();
      *      \endcode
+     * @class VideoEncoder easy3d/video/video_encoder.h
      */
 	class VideoEncoder
 	{

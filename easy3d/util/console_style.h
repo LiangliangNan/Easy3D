@@ -110,7 +110,9 @@ namespace easy3d {
 
      } // namespace style
 
-    std::ostream& operator<<(std::ostream& s, console::Style style);
+     /// Styled output.
+     /// Example usage: std::cout << console::Style::Green << "Easy3D" << std::endl;
+     std::ostream& operator<<(std::ostream& s, console::Style style);
 
 }
 
