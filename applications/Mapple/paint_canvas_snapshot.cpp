@@ -262,7 +262,10 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
     const int fh = h * dpi_scaling();
     VideoEncoder encoder;
     if (!encoder.start(file_name.toStdString(), fps, bitrate)) {
+        // clean up and restore the settings before exit
+        encoder.end();
         setEnabled(true);
+        easy3d::connect(&camera_->frame_modified, this, static_cast<void (PaintCanvas::*)(void)>(&PaintCanvas::update));
         return;
     }
 

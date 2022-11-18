@@ -24,7 +24,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include "video_encoder.h"
+#include <easy3d/video/video_encoder.h>
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -34,6 +34,13 @@ extern "C" {
 }
 
 #include <easy3d/util/logging.h>
+
+
+// check avcodec version
+#if (LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 18, 100)) // this number corresponds to ffmpeg v4.0
+    #pragma message "[WARNING]: Your ffmpeg is too old. Please update it to v4.0 or above"
+#endif
+
 
 namespace internal {
 
@@ -287,8 +294,10 @@ namespace internal {
             LOG(WARNING) << "could not deduce output format from file extension: using MPEG";
 			avformat_alloc_output_context2(&fmt_ctx, nullptr, "mpeg", filename_.c_str());
 		}
-		if (!fmt_ctx)
-			return false;
+		if (!fmt_ctx) {
+            LOG(ERROR) << "failed to allocate the output media context";
+            return false;
+        }
 
 		fmt = fmt_ctx->oformat;
 		return true;
@@ -373,6 +382,9 @@ namespace internal {
 
 
 	void VideoEncoderImpl::end() {
+        if (!fmt_ctx) // video context was not created or has already been deleted
+            return;
+
 		av_write_trailer(fmt_ctx);
 
 		/* Close each codec. */
@@ -384,6 +396,7 @@ namespace internal {
 
 		/* free the stream */
 		avformat_free_context(fmt_ctx);
+        fmt_ctx = nullptr;
 	}
 
 }
@@ -394,6 +407,13 @@ using namespace internal;
 namespace easy3d {
 
 	VideoEncoder::VideoEncoder() : encoder_(nullptr) {
+        LOG(INFO) << "ffmpeg version : " << av_version_info();
+        LOG(INFO) << "avcodec_version: "
+            << AV_VERSION_MAJOR(LIBAVCODEC_VERSION_INT) << "."
+            << AV_VERSION_MINOR(LIBAVCODEC_VERSION_INT);
+        if (LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 18, 100)) // this number corresponds to ffmpeg v4.0
+            LOG(WARNING) << "your program was built with too old ffmpeg (" << av_version_info() << "), and "
+                         << "video encoding is not available. Contact the author of the program to fix it";
 #ifdef NDEBUG
 		av_log_set_level(AV_LOG_QUIET);
 #else

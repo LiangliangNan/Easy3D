@@ -12,5 +12,5 @@ set(${module}_sources
 
 add_module(${module} "${${module}_headers}" "${${module}_sources}" "${private_dependencies}" "${public_dependencies}")
 target_include_directories(easy3d_${module} PRIVATE ${FFMPEG_INCLUDE_DIRS})
-target_compile_definitions(easy3d_${module} PUBLIC HAS_CGAL)
+target_compile_definitions(easy3d_${module} PUBLIC HAS_FFMPEG)
 install_module(${module})

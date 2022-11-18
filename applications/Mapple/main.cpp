@@ -62,10 +62,13 @@ public:
         try {
             return QApplication::notify(receiver, event);
         } catch(QException& e) {
-            LOG(ERROR) << "an exception was thrown: " << e.what();
+            LOG(ERROR) << "caught an exception: " << e.what();
+        }
+        catch(std::exception& e) {
+            LOG(ERROR) << "caught an exception: " << e.what();
         }
         catch(...) {
-            LOG(ERROR) << "an unknown exception was thrown";
+            LOG(ERROR) << "caught an unknown exception";
         }
         return false;
     }

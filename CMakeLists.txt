@@ -80,6 +80,8 @@ option(Easy3D_BUILD_TESTS "Build Easy3D Tests"                  OFF)
 option(Easy3D_ENABLE_CGAL "Build advanced features that require CGAL (>= v5.1)"             OFF)
 # Build advanced examples/applications that require Qt5 (>= v5.6)
 option(Easy3D_ENABLE_QT "Build advanced examples/applications that require Qt5 (>= v5.6)"   OFF)
+# Build the video encoding module that requires ffmpeg
+option(Easy3D_ENABLE_FFMPEG "Build the video encoding module that requires ffmpeg"          OFF)
 
 ################################################################################
 
@@ -158,16 +160,29 @@ if (Easy3D_ENABLE_CGAL)
     endif ()
 endif ()
 
-include(./cmake/FindFFMPEG.cmake)
-if (FFMPEG_FOUND)
-    set(Easy3D_HAS_FFMPEG TRUE)
-else ()
-    set(Easy3D_HAS_FFMPEG FALSE)
-    message(WARNING "You have requested FFMPEG support but FFMPEG was not found. "
-            "To use FFMPEG, make sure FFMPEG exists on your system (install/build FFMPEG if necessary). "
-            "You can modify the search paths of 'include' and 'lib' in 'Easy3D/cmake/FindFFMPEG.cmake', "
-            "and then run CMake. The FFMPEG support allows recording animation into a video file. "
-            "Ignore this message if you don't need this feature.")
+if (Easy3D_ENABLE_FFMPEG)
+    include(./cmake/FindFFMPEG.cmake)
+    if (FFMPEG_FOUND)
+        set(Easy3D_HAS_FFMPEG TRUE)
+    else ()
+        set(Easy3D_HAS_FFMPEG FALSE)
+        message(WARNING "You have requested ffmpeg support but ffmpeg was not found (v4.0 or later required). "
+                "The ffmpeg support allows encoding/recording animation into a video file. You can ignore "
+                "this warning if you don't need this feature. \n"
+                "To enable video encoding, make sure ffmpeg exists on your system. Modify the search paths of "
+                "'include' and 'lib' in 'Easy3D/cmake/FindFFMPEG.cmake', and then run CMake. \n"
+                "How to install ffmpeg (v4.0 or later required)? \n"
+                "    On Windows, you can download ffmpeg from:  \n"
+                "       https://ffmpeg.org/download.html \n"
+                "    On macOS, use the following command to install ffmpeg: \n"
+                "       brew install ffmpeg \n"
+                "    On Linux, one has to install the libraries using: \n"
+                "       sudo apt-get install libavcodec-dev \n"
+                "       sudo apt-get install libavformat-dev \n"
+                "       sudo apt-get install libswscale-dev \n"
+                "       sudo apt-get install libavutil-dev \n"
+                )
+    endif ()
 endif ()
 
 ################################################################################
@@ -313,6 +328,7 @@ message(STATUS "    Build documentation    :  ${Easy3D_BUILD_DOCUMENTATION}")
 message(STATUS "    Build tests            :  ${Easy3D_BUILD_TESTS}")
 message(STATUS "    With CGAL (>= v5.1)    :  ${Easy3D_ENABLE_CGAL}")
 message(STATUS "    With Qt5 (>= v5.6)     :  ${Easy3D_ENABLE_QT}")
+message(STATUS "    With ffmpeg (>= v4.0)  :  ${Easy3D_ENABLE_FFMPEG}")
 message(STATUS "    Installation directory :  ${CMAKE_INSTALL_PREFIX}")
 
 message(STATUS "************************************************************")
