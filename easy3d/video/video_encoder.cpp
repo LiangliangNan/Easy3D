@@ -33,9 +33,12 @@ extern "C" {
 #include <libavutil/imgutils.h>
 }
 
-// check avcodec version
-#if (LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 18, 100)) // this number corresponds to ffmpeg v4.0
-    #pragma message "[WARNING]: Your ffmpeg is too old. Please update it to v4.0 or above"
+// This implementation requires ffmpeg v3.4 (Sun, 15 Oct 2017 17:08:45) or above.
+// The corresponding libavcodec version is 57.107.100.
+#define MIN_REQUIRED_AVCODEC_VERSION    AV_VERSION_INT(57, 107, 100)
+#if (LIBAVCODEC_VERSION_INT < MIN_REQUIRED_AVCODEC_VERSION) \
+    // this number corresponds to ffmpeg v3.4 (Sun, 15 Oct 2017 17:08:45)
+    #pragma message "[WARNING]: Your ffmpeg is too old. Please update it to v3.4 or above"
 #endif
 
 #include <easy3d/util/logging.h>
@@ -286,6 +289,13 @@ namespace internal {
         LOG(INFO) << "video framerate: " << framerate_;
         LOG(INFO) << "video bitrate: " << bitrate_ / (1024 * 1024) << " Mbit/s";
 
+#if (LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 9, 100))
+        // av_register_all() was deprecated since 2018-02-06 - 0694d87024 - lavf 58.9.100 (ffmpeg 4.0) - avformat.h
+        // https://github.com/FFmpeg/FFmpeg/blob/70d25268c21cbee5f08304da95be1f647c630c15/doc/APIchanges#L86
+        /* Initialize libavcodec, and register all codecs and formats. */
+        av_register_all();
+#endif
+
         /* allocate the output media context */
 		avformat_alloc_output_context2(&fmt_ctx, nullptr, nullptr, filename_.c_str());
 		if (!fmt_ctx) {
@@ -409,9 +419,9 @@ namespace easy3d {
         LOG(INFO) << "ffmpeg version: " << av_version_info() << " (avcodec version: " << LIBAVCODEC_VERSION_MAJOR << "."
                   << LIBAVCODEC_VERSION_MINOR << "." << LIBAVCODEC_VERSION_MICRO << ")";
 
-        if (LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 18, 100)) // this number corresponds to ffmpeg v4.0
-            LOG(WARNING) << "your program was built with too old ffmpeg (" << av_version_info() << "), and "
-                         << "video encoding is not available. Contact the author of the program to fix it";
+        if (LIBAVCODEC_VERSION_INT < MIN_REQUIRED_AVCODEC_VERSION)
+            LOG(WARNING) << "your program was built with too old ffmpeg (" << av_version_info() << "), thus "
+                         << "video encoding may not work properly. Contact the author of the program to fix it";
 #ifdef NDEBUG
 		av_log_set_level(AV_LOG_QUIET);
 #else
