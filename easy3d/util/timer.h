@@ -48,9 +48,9 @@ namespace easy3d {
     template<class... Args>
     class Timer {
     public:
-        Timer() : stopped_(false) {}
+        Timer() : stopped_(false), paused_(false) {}
 
-        ~Timer() { stopped_ = true; }
+        ~Timer() {}
 
         /**
          * \brief Executes function \p func after \p delay milliseconds.
@@ -124,7 +124,7 @@ namespace easy3d {
          * \note When a function has overloads, explicitly cast the function to the right function type using
          *     e.g., \code static_cast<void (*)(const std::string&, int)>(&print). \endcode
          */
-        void set_interval(int interval, std::function<void(Args...)> const &func, Args... args);
+        void set_interval(int interval, std::function<void(Args...)> const &func, Args... args) const;
 
         /**
          * \brief Executes a member function \p func of \p Class \p inst for every \p interval milliseconds.
@@ -135,7 +135,7 @@ namespace easy3d {
          *     e.g., \code static_cast<void (Viewer::*)(const std::string&, int)>(&Viewer::print). \endcode
          */
         template<class Class>
-        void set_interval(int interval, Class *inst, void (Class::*func)(Args...), Args... args);
+        void set_interval(int interval, Class *inst, void (Class::*func)(Args...), Args... args) const;
 
         /**
          * \brief Executes a const member function \p func of \p Class \p inst for every \p interval milliseconds.
@@ -146,16 +146,44 @@ namespace easy3d {
          *     e.g., \code static_cast<void (Viewer::*)(const std::string&, int)>(&Viewer::print). \endcode
          */
         template<class Class>
-        void set_interval(int interval, Class const *inst, void (Class::*func)(Args...) const, Args... args);
+        void set_interval(int interval, Class const *inst, void (Class::*func)(Args...) const, Args... args) const;
 
-        /** \brief Stops the timer. */
+        /**
+         * \brief Stops the timer. After a timer is stopped, it cannot be restarted again. If you want to
+         *      temporarily pause a timer, call pause().
+         * \sa  is_stopped(), pause().
+         */
         void stop() { stopped_ = true; }
 
-        /** \brief Returns whether the timer has been stopped. */
+        /**
+         * \brief Returns whether the timer has been stopped. If a timer is stopped, it cannot be restarted again.
+         * \sa stop(), is_paused().
+         */
         bool is_stopped() const { return stopped_; }
 
+        /**
+         * \brief Pauses the timer. After a timer is paused, it can be resumed by calling resume(). You can
+         *      permanently stop the timer by stop().
+         * \sa is_paused(), resume(), stop().
+         */
+        void pause() { paused_ = true; }
+
+        /**
+         * \brief Returns whether the timer has been paused. After a timer is paused, it can be resumed by
+         *      calling resume()
+         * \sa pause(), resume(), is_stopped().
+         */
+        bool is_paused() const { return paused_; }
+
+        /**
+         * \brief Resumes the timer. This will be effective only when the timer has been paused and not stopped.
+         * \sa pause(), is_paused(), stop().
+         */
+        void resume() { if (!stopped_ && paused_) paused_ = false; }
+
     private:
-        mutable bool stopped_;
+        bool stopped_;
+        bool paused_;
     };
 
 
@@ -197,7 +225,7 @@ namespace easy3d {
 
     template<class... Args>
     void Timer<Args...>::set_timeout(int delay, std::function<void(Args...)> const &func, Args... args) const {
-        stopped_ = false;
+        const_cast<Timer<Args...>*>(this)->stopped_ = false;
         std::thread t([=]() {
             if (stopped_) return;
             std::this_thread::sleep_for(std::chrono::milliseconds(delay));
@@ -211,7 +239,7 @@ namespace easy3d {
     template<class... Args>
     template<class Class>
     void Timer<Args...>::set_timeout(int delay, Class *inst, void (Class::*func)(Args...), Args... args) const {
-        stopped_ = false;
+        const_cast<Timer<Args...>*>(this)->stopped_ = false;
         std::thread t([=]() {
             if (stopped_) return;
             std::this_thread::sleep_for(std::chrono::milliseconds(delay));
@@ -225,7 +253,7 @@ namespace easy3d {
     template<class... Args>
     template<class Class>
     void Timer<Args...>::set_timeout(int delay, Class const *inst, void (Class::*func)(Args...) const, Args... args) const {
-        stopped_ = false;
+        const_cast<Timer<Args...>*>(this)->stopped_ = false;
         std::thread t([=]() {
             if (stopped_) return;
             std::this_thread::sleep_for(std::chrono::milliseconds(delay));
@@ -237,13 +265,14 @@ namespace easy3d {
 
 
     template<class... Args>
-    void Timer<Args...>::set_interval(int interval, std::function<void(Args...)> const &func, Args... args) {
-        stopped_ = false;
+    void Timer<Args...>::set_interval(int interval, std::function<void(Args...)> const &func, Args... args) const {
+        const_cast<Timer<Args...>*>(this)->stopped_ = false;
         std::thread t([=]() {
             while (true) {
                 if (stopped_) return;
                 std::this_thread::sleep_for(std::chrono::milliseconds(interval));
-                if (stopped_) return;
+                if (paused_) continue;
+                else if (stopped_) return;
                 func(args...);
             }
         });
@@ -253,13 +282,14 @@ namespace easy3d {
 
     template<class... Args>
     template<class Class>
-    void Timer<Args...>::set_interval(int interval, Class *inst, void (Class::*func)(Args...), Args... args) {
-        stopped_ = false;
+    void Timer<Args...>::set_interval(int interval, Class *inst, void (Class::*func)(Args...), Args... args) const {
+        const_cast<Timer<Args...>*>(this)->stopped_ = false;
         std::thread t([=]() {
             while (true) {
                 if (stopped_) return;
                 std::this_thread::sleep_for(std::chrono::milliseconds(interval));
-                if (stopped_) return;
+                if (paused_) continue;
+                else if (stopped_) return;
                 (inst->*func)(args...);
             }
         });
@@ -268,13 +298,14 @@ namespace easy3d {
 
     template<class... Args>
     template<class Class>
-    void Timer<Args...>::set_interval(int interval, Class const *inst, void (Class::*func)(Args...) const, Args... args) {
-        stopped_ = false;
+    void Timer<Args...>::set_interval(int interval, Class const *inst, void (Class::*func)(Args...) const, Args... args) const {
+        const_cast<Timer<Args...>*>(this)->stopped_ = false;
         std::thread t([=]() {
             while (true) {
                 if (stopped_) return;
                 std::this_thread::sleep_for(std::chrono::milliseconds(interval));
-                if (stopped_) return;
+                if (paused_) continue;
+                else if (stopped_) return;
                 (inst->*func)(args...);
             }
         });

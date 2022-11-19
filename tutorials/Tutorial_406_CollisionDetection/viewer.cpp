@@ -83,9 +83,10 @@ CollisionViewer::~CollisionViewer() {
 
 std::string CollisionViewer::usage() const {
     return ("--------------------- Collision Viewer usage ----------------------\n"
-            "On start, you will see an animation. Press the 'space' key to stop \n"
-            "the animation. Then you can using your mouse to manipulate the     \n"
-            "bunny model to perform real-time collection detection:             \n"
+            "On start, you will see an animation with highlighted intersecting  \n"
+            "faces. Press 'space' to pause/resume the animation.                \n"
+            "When the animation is paused, you can manipulate the bunny model   \n"
+            "(using your mouse) to perform real-time collection detection:      \n"
             "    - ALT + left button: rotate bunny model                        \n"
             "    - ALT + right button: translate bunny model                    \n"
             "------------------------------------------------------------------ \n");
@@ -93,7 +94,7 @@ std::string CollisionViewer::usage() const {
 
 
 bool CollisionViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
-    if (collider_ && models().size() == 2 && modifiers == GLFW_MOD_ALT && timer_.is_stopped()) {
+    if (collider_ && models().size() == 2 && modifiers == GLFW_MOD_ALT && timer_.is_paused()) {
         auto manipulator = models_[0]->manipulator();
         if (button == GLFW_MOUSE_BUTTON_LEFT)
             manipulator->frame()->action_rotate(x, y, dx, dy, camera_, ManipulatedFrame::NONE);
@@ -112,7 +113,10 @@ bool CollisionViewer::mouse_drag_event(int x, int y, int dx, int dy, int button,
 
 bool CollisionViewer::key_press_event(int key, int modifiers) {
     if (key == GLFW_KEY_SPACE) {
-        timer_.stop();
+        if (timer_.is_paused())
+            timer_.resume();
+        else
+            timer_.pause();
         return true;
     }
     else
