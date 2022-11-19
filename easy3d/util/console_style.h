@@ -111,7 +111,7 @@ namespace easy3d {
      } // namespace style
 
      /// Styled output.
-     /// Example usage: std::cout << console::Style::Green << "Easy3D" << std::endl;
+     /// Example usage: \code std::cout << console::Style::Green << "Easy3D" << std::endl; \endcode
      std::ostream& operator<<(std::ostream& s, console::Style style);
 
 }
