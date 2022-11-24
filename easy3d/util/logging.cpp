@@ -79,13 +79,13 @@ namespace easy3d
         std::string crash_reason(int sig) {
             std::stringstream ss;
             bool found_reason = false;
-            for (int i = 0; i < el::base::consts::kCrashSignalsCount; ++i) {
-                if (el::base::consts::kCrashSignals[i].numb == sig) {
-                    ss << "Application has crashed due to [" << el::base::consts::kCrashSignals[i].name << "] signal";
+            for (const auto& signal : el::base::consts::kCrashSignals) {
+                if (signal.numb == sig) {
+                    ss << "Application has crashed due to [" << signal.name << "] signal";
                     if (ELPP->hasFlag(el::LoggingFlag::LogDetailedCrashReason)) {
                         ss << std::endl <<
-                           "    " << el::base::consts::kCrashSignals[i].brief << std::endl <<
-                           "    " << el::base::consts::kCrashSignals[i].detail;
+                           "    " << signal.brief << std::endl <<
+                           "    " << signal.detail;
                     }
                     found_reason = true;
                 }
@@ -141,7 +141,7 @@ namespace easy3d
             if (!full_path_log_file.empty()) {
                 std::ofstream output(full_path_log_file.c_str(), std::ios::app);
                 if (!output.is_open()) {
-                    if (log_file != "default" && log_file != "") // error only if requested
+                    if (log_file != "default" && !log_file.empty()) // error only if requested
                         log_file_failure_msg = "failed to create log file: " + full_path_log_file;
 
                     // now let's try the current working directory

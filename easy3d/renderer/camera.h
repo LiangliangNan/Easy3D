@@ -147,7 +147,7 @@ namespace easy3d {
          * called, getModelViewMatrix() returns a matrix equivalent to \p mv.
          * Only the orientation() and position() of the Camera are modified.
          */
-		void set_from_model_view_matrix(const mat4& mv);
+		void set_from_model_view_matrix(const mat4& mv) const;
 
         /** \brief Defines the position(), orientation() and fieldOfView() of the camera from calibrated camera
          *      intrinsic and extrinsic parameters. This is an overload of set_from_calibration().
@@ -220,19 +220,19 @@ namespace easy3d {
         // -----------------------------------------------------------------
 
 	public:
-		void setPosition(const vec3 &pos);
-		void setOrientation(const quat &q);
-		void setOrientation(float theta, float phi);
-		void setUpVector(const vec3 &up, bool noMove = true);
-		void setViewDirection(const vec3 &direction);
+		void setPosition(const vec3 &pos) const;
+		void setOrientation(const quat &q) const;
+		void setOrientation(float theta, float phi) const;
+		void setUpVector(const vec3 &up, bool noMove = true) const;
+		void setViewDirection(const vec3 &direction) const;
 		//@}
 
 		/*! @name Positioning tools */
 	public:
-		void lookAt(const vec3 &target);
-		void showEntireScene();
-		void fitSphere(const vec3 &center, float radius);
-		void fitBoundingBox(const vec3 &min, const vec3 &max);
+		void lookAt(const vec3 &target) const;
+		void showEntireScene() const;
+		void fitSphere(const vec3 &center, float radius) const;
+		void fitBoundingBox(const vec3 &min, const vec3 &max) const;
 
         /**
          * \brief Moves the Camera so that the rectangular screen region fits the screen.
@@ -242,8 +242,8 @@ namespace easy3d {
          * a plane (orthogonal to the viewDirection() and passing through the sceneCenter()) that is used to define
          * the 3D rectangle that is eventually fitted.
          */
-		void fitScreenRegion(int xmin, int ymin, int xmax, int ymax);
-		void centerScene();
+		void fitScreenRegion(int xmin, int ymin, int xmax, int ymax) const;
+		void centerScene() const;
 
     public:
         /// Return the keyframe interpolator.
@@ -261,7 +261,7 @@ namespace easy3d {
 		 * \brief Returns the Camera::Type of the Camera. Set by setType(). Mainly used by loadProjectionMatrix().
 		 * \details A Camera::PERSPECTIVE Camera uses a classical projection mainly defined by its fieldOfView().
 		 * With a Camera::ORTHOGRAPHIC type(), the fieldOfView() is meaningless and the width and height of the Camera
-		 * rustum are inferred from the distance to the pivotPoint() using getOrthoWidthHeight(). Both types use
+		 * frustum are inferred from the distance to the pivotPoint() using getOrthoWidthHeight(). Both types use
 		 * zNear() and zFar() (to define their clipping planes) and aspectRatio() (for frustum shape).
 		 */
 		Type type() const { return type_; }
@@ -295,7 +295,7 @@ namespace easy3d {
 		 * fitted to the viewer's window aspect ratio using setScreenWidthAndHeight().
 		 */
 		float aspectRatio() const {
-			return screenWidth_ / static_cast<float>(screenHeight_);
+			return static_cast<float>(screenWidth_) / static_cast<float>(screenHeight_);
 		}
 
 		/**

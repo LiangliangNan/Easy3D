@@ -77,7 +77,7 @@ namespace easy3d {
          * @param model     The model.
          * @param drawable  The drawable.
          * @param field The name of the vector field.
-         * @param scale The length scale of the vectors w.r.t. (0.01 * radius) of the model's bounding sphere.
+         * @param scale The length scale of the vectors is w.r.t. (0.01 * radius) of the model's bounding sphere.
          */
         void update(PointCloud *model, LinesDrawable *drawable, const std::string& field, float scale);
         //@}
@@ -117,7 +117,7 @@ namespace easy3d {
          * @param drawable  The The drawable for visualizing the vector field.
          * @param field The name of the vector field.
          * @param location The location where the vector field is defined.
-         * @param scale The scale of the vector length w.r.t. the average edge length of the surface mesh.
+         * @param scale The scale of the vector length w.r.t. half of the average edge length of the surface mesh.
          */
         void update(SurfaceMesh *model, LinesDrawable *drawable, const std::string& field, State::Location location, float scale);
         //@}
@@ -183,8 +183,8 @@ namespace easy3d {
          * @param drawable  The drawable for visualizing the vector field.
          * @param field The name of the vector field.
          * @param location The location where the vector field is defined.
-         * @param scale The scale of the vector length w.r.t. the average edge length of the polyhedral mesh.
-         * \note Only the scalar fields on border faces and vertices are supported.
+         * @param scale The scale of the vector length w.r.t. half of the average edge length of the polyhedral mesh.
+         * \note Only the vector fields on border faces, border vertices, and border edges are supported.
          */
         void update(PolyMesh *model, LinesDrawable *drawable, const std::string& field, State::Location location, float scale);
         //@}

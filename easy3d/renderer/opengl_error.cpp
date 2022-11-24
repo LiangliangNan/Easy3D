@@ -25,9 +25,7 @@
  ********************************************************************/
 
 #include <easy3d/renderer/opengl_error.h>
-
 #include <easy3d/renderer/opengl.h>
-#include <easy3d/renderer/opengl_util.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
 
@@ -62,8 +60,9 @@ namespace easy3d {
                 return "Table too large";
             case GL_INVALID_FRAMEBUFFER_OPERATION:
                 return "Invalid framebuffer operation (The framebuffer object is not complete)";
+            default:
+                return "Unknown OpenGL error";
             }
-            return "Unknown error";
         }
 
 
@@ -165,7 +164,7 @@ namespace easy3d {
 
             GLenum filter = GL_DEBUG_SEVERITY_MEDIUM;
             GLenum severitycmp = severity;
-            // minor fixup for filtering so notification becomes lowest priority
+            // minor fixup for filtering so notification becomes the lowest priority
             if (GL_DEBUG_SEVERITY_NOTIFICATION == filter) {
                 filter = GL_DEBUG_SEVERITY_LOW + 1;
             }
@@ -175,7 +174,6 @@ namespace easy3d {
 
             if (!filter || severitycmp <= filter)
             {
-
                 //static std::map<GLuint, bool> ignoreMap;
                 //if(ignoreMap[id] == true)
                 //    return;

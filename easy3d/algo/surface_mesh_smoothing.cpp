@@ -28,7 +28,6 @@ namespace easy3d {
 
     SurfaceMeshSmoothing::SurfaceMeshSmoothing(SurfaceMesh *mesh) : mesh_(mesh) {
         how_many_edge_weights_ = 0;
-        how_many_vertex_weights_ = 0;
     }
 
     //-----------------------------------------------------------------------------
@@ -53,7 +52,7 @@ namespace easy3d {
                 eweight[e] = 1.0;
         } else {
             for (auto e : mesh_->edges())
-                eweight[e] = std::max(0.0, geom::cotan_weight(mesh_, e));
+                eweight[e] = static_cast<float>(std::max(0.0, geom::cotan_weight(mesh_, e)));
         }
 
         how_many_edge_weights_ = mesh_->n_edges();
@@ -66,13 +65,11 @@ namespace easy3d {
 
         if (use_uniform_laplace) {
             for (auto v : mesh_->vertices())
-                vweight[v] = 1.0 / mesh_->valence(v);
+                vweight[v] = static_cast<float>(1.0 / mesh_->valence(v));
         } else {
             for (auto v : mesh_->vertices())
-                vweight[v] = 0.5 / geom::voronoi_area(mesh_, v);
+                vweight[v] = static_cast<float>(0.5 / geom::voronoi_area(mesh_, v));
         }
-
-        how_many_vertex_weights_ = mesh_->n_vertices();
     }
 
     //-----------------------------------------------------------------------------
@@ -157,7 +154,7 @@ namespace easy3d {
 
         // collect free (non-boundary) vertices in array free_vertices[]
         // assign indices such that idx[ free_vertices[i] ] == i
-        unsigned i = 0;
+        int i = 0;
         std::vector<SurfaceMesh::Vertex> free_vertices;
         free_vertices.reserve(mesh_->n_vertices());
         for (auto v : mesh_->vertices()) {
@@ -176,24 +173,20 @@ namespace easy3d {
         std::vector<Triplet> triplets;
 
         // setup matrix A and rhs B
-        dvec3 b;
-        double ww;
-        SurfaceMesh::Vertex v, vv;
-        SurfaceMesh::Edge e;
-        for (unsigned int i = 0; i < n; ++i) {
-            v = free_vertices[i];
+        for (i = 0; i < n; ++i) {
+            SurfaceMesh::Vertex v = free_vertices[i];
 
             // rhs row
-            b = static_cast<dvec3>(points[v]) / vweight[v];
+            dvec3 b = static_cast<dvec3>(points[v]) / vweight[v];
 
             // lhs row
-            ww = 0.0;
+            double ww = 0.0;
             for (auto h : mesh_->halfedges(v)) {
-                vv = mesh_->target(h);
-                e = mesh_->edge(h);
+                SurfaceMesh::Vertex vv = mesh_->target(h);
+                SurfaceMesh::Edge e = mesh_->edge(h);
                 ww += eweight[e];
 
-                // fixed boundary vertex -> right hand side
+                // fixed boundary vertex -> right-hand side
                 if (mesh_->is_border(vv)) {
                     b -= -timestep * eweight[e] * static_cast<dvec3>(points[vv]);
                 }
@@ -219,9 +212,9 @@ namespace easy3d {
             std::cerr << "SurfaceMeshSmoothing: Could not solve linear system\n";
         } else {
             // copy solution
-            for (unsigned int i = 0; i < n; ++i) {
+            for (i = 0; i < n; ++i) {
                 const auto &tmp = X.row(i);
-                points[free_vertices[i]] = vec3(tmp(0), tmp(1), tmp(2));
+                points[free_vertices[i]] = vec3(static_cast<float>(tmp(0)), static_cast<float>(tmp(1)), static_cast<float>(tmp(2)));
             }
         }
 

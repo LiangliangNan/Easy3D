@@ -71,7 +71,7 @@ private:
 
     void updateVectorFieldBuffer(easy3d::Model *model, const std::string &name) override ;
 
-    // model depended stuff
+    // model dependent stuff
     std::vector<QString> colorSchemes(const easy3d::Model *model);
     std::vector<QString> vectorFields(const easy3d::Model *model);
 

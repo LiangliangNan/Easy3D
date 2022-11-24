@@ -54,7 +54,7 @@ namespace easy3d {
      * The Percentage Closer Filtering technique uses a uniform size filter kernel, resulting in shadows with a
      * uniformly soft edge. The PCF algorithm is very straightforward and fast, but does not achieve a realistic
      * contact hardening effect. Also, while the kernel size and penumbra width is uniform, the kernel can be
-     * scaled to accomodate different sized lights.
+     * scaled to accommodate different sized lights.
      *
      * --- Percentage-Closer Soft Shadows (PCSS) ---
      * Soft shadows are typically rendered in games by using shadow mapping and Percentage Closer Filtering with
@@ -80,8 +80,8 @@ namespace easy3d {
     public:
         /// \brief Constructor
         /// \param cam The camera used in the view
-        SoftShadow(Camera* cam);
-        virtual ~SoftShadow() override;
+        explicit SoftShadow(Camera* cam);
+        ~SoftShadow() override = default;
 
         // The softness of the shadow. Values must be in [0, 1]. Default: 0.5.
         float softness() const { return softness_; }
@@ -92,9 +92,9 @@ namespace easy3d {
         void set_sample_pattern(SamplePattern pattern) { sample_pattern_ = pattern; }
 
     protected:
-        virtual void ensure_fbo() override;
-        virtual void shadow_map_pass(const std::vector<TrianglesDrawable*>& surfaces) override;
-        virtual void render_pass(const std::vector<TrianglesDrawable*>& surfaces) override;
+        void ensure_fbo() override;
+        void shadow_map_pass(const std::vector<TrianglesDrawable*>& surfaces) override;
+        void render_pass(const std::vector<TrianglesDrawable*>& surfaces) override;
 
     protected:
         // The softness of the shadow, in [0, 1] (w.r.t. 10% of the light's size)

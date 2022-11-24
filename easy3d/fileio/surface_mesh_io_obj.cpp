@@ -60,7 +60,7 @@ namespace easy3d {
                 return false;
             }
 
-            fastObjMesh *fom = fast_obj_read(file_name.c_str());
+            auto fom = fast_obj_read(file_name.c_str());
             if (!fom) {
                 LOG(ERROR) << "failed reading file: " + file_name;
                 return false;
@@ -89,7 +89,7 @@ namespace easy3d {
                 // remaining points
                 for (std::size_t v = 1; v < fom->position_count; ++v) {
                     const double *data = fom->positions + v * 3;
-                    builder.add_vertex(vec3(data[0] - origin.x, data[1] - origin.y, data[2] - origin.z));
+                    builder.add_vertex(vec3(static_cast<float>(data[0] - origin.x), static_cast<float>(data[1] - origin.y), static_cast<float>(data[2] - origin.z)));
                 }
 
                 auto trans = mesh->add_model_property<dvec3>("translation", dvec3(0,0,0));
@@ -99,7 +99,7 @@ namespace easy3d {
                 const dvec3 &origin = Translator::instance()->translation();
                 for (std::size_t v = 1; v < fom->position_count; ++v) {
                     const double *data = fom->positions + v * 3;
-                    builder.add_vertex(vec3(data[0] - origin.x, data[1] - origin.y, data[2] - origin.z));
+                    builder.add_vertex(vec3(static_cast<float>(data[0] - origin.x), static_cast<float>(data[1] - origin.y), static_cast<float>(data[2] - origin.z)));
                 }
                 auto trans = mesh->add_model_property<dvec3>("translation", dvec3(0,0,0));
                 trans[0] = origin;
@@ -145,7 +145,7 @@ namespace easy3d {
                     for (unsigned int kk = 0; kk < fv; ++kk) {  // for each vertex in the face
                         const fastObjIndex &mi = fom->indices[grp.index_offset + idx];
                         if (mi.p)
-                            vertices.emplace_back(SurfaceMesh::Vertex(mi.p - 1));
+                            vertices.emplace_back(SurfaceMesh::Vertex(static_cast<int>(mi.p) - 1));
                         if (mi.t)
                             texcoord_ids.emplace_back(mi.t);
                         ++idx;
@@ -194,7 +194,7 @@ namespace easy3d {
                         if (prop_face_color) {
                             unsigned int mat_id = fom->face_materials[grp.face_offset + jj];
                             const fastObjMaterial &mat = fom->materials[mat_id];
-                            prop_face_color[face] = vec3(mat.Kd); // currently easy3d uses only diffuse
+                            prop_face_color[face] = vec3(mat.Kd); // current implementation of easy3d uses only diffuse
                         }
                     }
                 }
@@ -858,21 +858,21 @@ namespace easy3d {
             auto trans = mesh->get_model_property<dvec3>("translation");
             if (trans) { // has translation
                 const dvec3& origin = trans[0];
-                SurfaceMesh::VertexProperty<vec3> points = mesh->get_vertex_property<vec3>("v:point");
-                for (SurfaceMesh::VertexIterator vit = mesh->vertices_begin(); vit != mesh->vertices_end(); ++vit) {
+                auto points = mesh->get_vertex_property<vec3>("v:point");
+                for (auto vit = mesh->vertices_begin(); vit != mesh->vertices_end(); ++vit) {
                     const vec3 &p = points[*vit];
                     out << "v " << p.x + origin.x << " " << p.y + origin.y << " " << p.z + origin.z << "\n";
                 }
             } else { // no translation
-                SurfaceMesh::VertexProperty<vec3> points = mesh->get_vertex_property<vec3>("v:point");
-                for (SurfaceMesh::VertexIterator vit = mesh->vertices_begin(); vit != mesh->vertices_end(); ++vit)
+                auto points = mesh->get_vertex_property<vec3>("v:point");
+                for (auto vit = mesh->vertices_begin(); vit != mesh->vertices_end(); ++vit)
                     out << "v " << points[*vit] << "\n";
             }
 
             //normals
-            SurfaceMesh::VertexProperty<vec3> normals = mesh->get_vertex_property<vec3>("v:normal");
+            auto normals = mesh->get_vertex_property<vec3>("v:normal");
             if (normals) {
-                for (SurfaceMesh::VertexIterator vit = mesh->vertices_begin(); vit != mesh->vertices_end(); ++vit) {
+                for (auto vit = mesh->vertices_begin(); vit != mesh->vertices_end(); ++vit) {
                     const vec3 &n = normals[*vit];
                     out << "vn " << n << "\n";
                 }
@@ -880,31 +880,29 @@ namespace easy3d {
 
             //optionally texture coordinates
             // do we have them?
-            std::vector<std::string> h_props = mesh->halfedge_properties();
+            auto h_props = mesh->halfedge_properties();
             bool with_tex_coord = false;
-            std::vector<std::string>::iterator h_prop_end = h_props.end();
-            std::vector<std::string>::iterator h_prop_start = h_props.begin();
+            auto h_prop_end = h_props.end(), h_prop_start = h_props.begin();
             while (h_prop_start != h_prop_end) {
-                if (0 == (*h_prop_start).compare("h:texcoord")) {
+                if (*h_prop_start == "h:texcoord")
                     with_tex_coord = true;
-                }
                 ++h_prop_start;
             }
 
             //if so then add
             if (with_tex_coord) {
-                SurfaceMesh::HalfedgeProperty<vec2> tex_coord = mesh->get_halfedge_property<vec2>("h:texcoord");
-                for (SurfaceMesh::HalfedgeIterator hit = mesh->halfedges_begin(); hit != mesh->halfedges_end(); ++hit) {
+                auto tex_coord = mesh->get_halfedge_property<vec2>("h:texcoord");
+                for (auto hit = mesh->halfedges_begin(); hit != mesh->halfedges_end(); ++hit) {
                     const vec2 &tex = tex_coord[*hit];
                     out << "vt " << tex << "\n";
                 }
             }
 
             //faces
-            for (SurfaceMesh::FaceIterator fit = mesh->faces_begin(); fit != mesh->faces_end(); ++fit) {
+            for (auto fit = mesh->faces_begin(); fit != mesh->faces_end(); ++fit) {
                 out << "f ";
-                SurfaceMesh::VertexAroundFaceCirculator fvit = mesh->vertices(*fit), fvend = fvit;
-                SurfaceMesh::HalfedgeAroundFaceCirculator fhit = mesh->halfedges(*fit);
+                auto fvit = mesh->vertices(*fit), fvend = fvit;
+                auto fhit = mesh->halfedges(*fit);
                 do {
                     if (with_tex_coord) {
                         // write vertex index, tex_coord index and normal index

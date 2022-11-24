@@ -24,8 +24,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef EASY_ALGO_OVERLAPPING_FACES_H
-#define EASY_ALGO_OVERLAPPING_FACES_H
+#ifndef EASY_ALGO_EXT_OVERLAPPING_FACES_H
+#define EASY_ALGO_EXT_OVERLAPPING_FACES_H
 
 
 #include <vector>
@@ -34,7 +34,7 @@
 //#define CGAL_KERNEL_NO_ASSERTIONS
 
 #include <CGAL/Simple_cartesian.h>
-#include <CGAL/intersections.h>	// Triangle triangle intersection
+#include <CGAL/intersections.h>	// Triangle-triangle intersection
 #include <CGAL/box_intersection_d.h>
 
 #include <easy3d/core/surface_mesh.h>
@@ -47,8 +47,8 @@ namespace easy3d {
     class OverlappingFaces
     {
     public:
-        OverlappingFaces() {}
-        ~OverlappingFaces() {}
+        OverlappingFaces() = default;
+        ~OverlappingFaces() = default;
 
         /**
           * \brief Detects duplicate faces and folding faces.
@@ -117,4 +117,4 @@ namespace easy3d {
 
 }   // namespace easy3d
 
-#endif  // EASY_ALGO_OVERLAPPING_FACES_H
+#endif  // EASY_ALGO_EXT_OVERLAPPING_FACES_H

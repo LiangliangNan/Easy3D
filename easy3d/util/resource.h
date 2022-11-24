@@ -45,7 +45,7 @@ namespace easy3d {
         void initialize(const std::string& resource_dir = Easy3D_RESOURCE_DIR);
 
         /// Returns the resource directory (containing color maps, shaders, textures, fonts, etc.)
-        const std::string directory();
+        std::string directory();
 
 
         /// The vertices of a bunny model.
@@ -54,10 +54,6 @@ namespace easy3d {
         /// The triangle faces of a bunny model. Each consecutive 3 values denote the vertex indices of a triangle.
         /// \see bunny_vertices
         extern const EASY3D_UTIL_EXPORT std::vector<unsigned int>   bunny_indices;
-
-        /// A 1D array storing a gradually changing color table. Each consecutive 3 elements represent an RGB color.
-        /// ToDo: This should be moved to another file?
-        extern const EASY3D_UTIL_EXPORT std::vector<unsigned char>  cold_warm_colors;
 
     } // namespace resource
 

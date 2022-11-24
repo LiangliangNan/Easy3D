@@ -40,14 +40,13 @@ namespace easy3d {
 class TutorialEyeDomeLighting : public easy3d::Viewer
 {
 public:
-	TutorialEyeDomeLighting(const std::string& title = "");
+	explicit TutorialEyeDomeLighting(const std::string& title = "");
+    ~TutorialEyeDomeLighting() override;
 
 protected:
     bool key_press_event(int key, int modifiers) override;
 
     void draw() const override;
-
-	void cleanup() override;
 
 	std::string usage() const override;
 

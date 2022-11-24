@@ -41,7 +41,7 @@ namespace easy3d {
 
 	class PointsDrawable : public Drawable {
 	public:
-        PointsDrawable(const std::string& name = "", Model* model = nullptr);
+        explicit PointsDrawable(const std::string& name = "", Model* model = nullptr);
 
         Type type() const override;
 
@@ -61,7 +61,7 @@ namespace easy3d {
         void set_point_size(float s) { point_size_ = s; }
 
         // Rendering.
-        virtual void draw(const Camera* camera) const override;
+        void draw(const Camera* camera) const override;
 
     protected:
         // without texture

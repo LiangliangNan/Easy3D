@@ -50,7 +50,7 @@ namespace easy3d {
         static int gl_profile();
 
         static bool is_supported(const std::string &name);  // e.g., "GL_VERSION_3_2", "GL_ARB_vertex_array_object"
-        static bool has_entension(const std::string &name); // e.g., "GL_EXT_framebuffer_object"
+        static bool has_extension(const std::string &name); // e.g., "GL_EXT_framebuffer_object"
 
         static std::string glew_version();
 
@@ -86,7 +86,7 @@ namespace easy3d {
         /// in MB.
         /// returns 0 if the query fails.
         /// NOTE: (1) OpenGL >= 2.0 is required.
-        ///		 (2) currently only NVidia GPU is supported
+        ///		  (2) currently only NVidia GPUs are supported
         static int total_gpu_memory();
 
         static int available_gpu_memory();
@@ -99,32 +99,32 @@ namespace easy3d {
 
         // --------------- buffer information ----------------
 
-        /// display current binded buffer info
-        static void getCurrentBufferInfo();
+        /// display current bound buffer info
+        static void get_current_buffer_info();
 
         /// display the buffer information
-        static void getBufferInfo(unsigned int target, int bufferName);
+        static void get_buffer_info(unsigned int target, int bufferName);
 
         // --------------- GLSL information (GLSL version 4.2 is supported )----------------
 
         /// display VAO information, including its attributes
-        static void getVAOInfo(unsigned int buffer);
+        static void get_vao_info(unsigned int buffer);
 
         /// display detailed info for a program
-        static void getProgramInfo(unsigned int program);
+        static void get_program_info(unsigned int program);
 
         /// display detailed info for attributes in a program
-        static void getAttributesInfo(unsigned int program);
+        static void get_attributes_info(unsigned int program);
 
         /// display info for all active uniforms in a program
-        static void getUniformsInfo(unsigned int program);
+        static void get_uniforms_info(unsigned int program);
 
         /// display a uniform's value(s)
-        static void getUniformInfo(unsigned int program, const std::string &uniName);
+        static void get_uniform_info(unsigned int program, const std::string &uniName);
 
         /// display the values for a uniform in a named block
         static void
-        getUniformInBlockInfo(unsigned int program, const std::string &blockName, const std::string &uniName);
+        get_uniform_in_block_info(unsigned int program, const std::string &blockName, const std::string &uniName);
 
     private:
         /// printf() style + plus a newline at the end

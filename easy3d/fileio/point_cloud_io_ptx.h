@@ -38,7 +38,7 @@ namespace easy3d {
 		class LineInputStream;
 
 		/**
-         * \brief Implementation of file input/output operations for ASCII Cyclone pointcloud export format (PTX).
+         * \brief Implementation of file input/output operations for ASCII Cyclone point cloud export format (PTX).
          * \class PointCloudIO_ptx easy3d/fileio/point_cloud_io_ptx.h
          *
          *  \details PTX is an ASCII based interchange format for point cloud data. It utilizes the concept of separate scans,
@@ -125,7 +125,7 @@ namespace easy3d {
 		class PointCloudIO_ptx
 		{
 		public:
-			PointCloudIO_ptx(const std::string& file_name);
+			explicit PointCloudIO_ptx(const std::string& file_name);
 			~PointCloudIO_ptx();
 
 			/// \brief Reads a single point cloud from the file.

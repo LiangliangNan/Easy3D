@@ -29,8 +29,8 @@
 namespace easy3d {
 
     Translator *Translator::instance() {
-        static Translator translater;
-        return &translater;
+        static Translator translator;
+        return &translator;
     }
 
 } // namespace easy3d

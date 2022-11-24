@@ -59,14 +59,21 @@ namespace easy3d {
         , alpha_(0.8f)
         , movable_(true)
 	{
-        // Liangliang: 
-        //      IMPORTANT: the internal glfw won't be shared accross dll boundaries
-        glfwInit();
-
         camera()->setUpVector(vec3(0, 1, 0));
         camera()->setViewDirection(vec3(0, 0, -1));
         camera_->showEntireScene();
 	}
+
+
+    ViewerImGui::~ViewerImGui() {
+        ImGui_ImplOpenGL3_Shutdown();
+        ImGui_ImplGlfw_Shutdown();
+
+        ImGui::DestroyContext(context_);
+
+        // Not needed: it will be called in the destructor of the base class
+        //Viewer::cleanup();
+    }
 
 
     void ViewerImGui::init() {
@@ -162,20 +169,6 @@ namespace easy3d {
 	}
 
 
-    void ViewerImGui::cleanup() {
-		ImGui_ImplOpenGL3_Shutdown();
-		ImGui_ImplGlfw_Shutdown();
-
-		ImGui::DestroyContext(context_);
-
-        Viewer::cleanup();
-
-        // Liangliang: 
-        //      IMPORTANT: the internal glfw won't be shared accross dll boundaries
-        glfwTerminate();
-	}
-
-
     void ViewerImGui::pre_draw() {
         ImGui_ImplOpenGL3_NewFrame();  
         ImGui_ImplGlfw_NewFrame();    
@@ -206,12 +199,12 @@ namespace easy3d {
                 const std::string& name = "Current model: " + file_system::simple_name(current_model()->name());
                 ImGui::Text("%s", name.c_str());
                 if (dynamic_cast<PointCloud*>(current_model())) {
-                    PointCloud* cloud = dynamic_cast<PointCloud*>(current_model());
+                    auto cloud = dynamic_cast<PointCloud*>(current_model());
                     ImGui::Text("Type: point cloud");
                     ImGui::Text("#Vertices: %i", cloud->n_vertices());
                 }
                 else if (dynamic_cast<SurfaceMesh*>(current_model())) {
-                    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(current_model());
+                    auto mesh = dynamic_cast<SurfaceMesh*>(current_model());
                     ImGui::Text("Type: surface mesh");
                     ImGui::Text("#Faces: %i", mesh->n_faces());
                     ImGui::Text("#Vertices: %i", mesh->n_vertices());

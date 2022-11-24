@@ -25,9 +25,6 @@
  ********************************************************************/
 
 #include <easy3d/fileio/graph_io.h>
-
-#include <clocale>
-
 #include <easy3d/core/graph.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/stop_watch.h>
@@ -39,9 +36,7 @@ namespace easy3d {
 
     Graph* GraphIO::load(const std::string& file_name)
 	{
-		std::setlocale(LC_NUMERIC, "C");
-
-        Graph* graph = new Graph;
+        auto graph = new Graph;
         graph->set_name(file_name);
 
         StopWatch w;
@@ -60,18 +55,15 @@ namespace easy3d {
         }
 
         if (!success || graph->n_vertices() == 0) {
-            LOG(WARNING) << "no valid data in file: " << file_name;
+            LOG(WARNING) << "load graph failed: " << file_name;
             delete graph;
             return nullptr;
         }
 
-        if (success)
-            LOG(INFO) << "graph loaded ("
-                      << "#vertex: " << graph->n_vertices() << ", "
-                      << "#edge: " << graph->n_edges() << "). "
-                      << w.time_string();
-        else
-            LOG(INFO) << "load graph failed";
+        LOG(INFO) << "graph loaded ("
+                  << "#vertex: " << graph->n_vertices() << ", "
+                  << "#edge: " << graph->n_edges() << "). "
+                  << w.time_string();
 
         return graph;
 	}
@@ -96,17 +88,15 @@ namespace easy3d {
                 final_name = final_name + ".ply";
             }
             success = io::save_ply(final_name, graph, true);
-        }
-		else {
+        } else {
             LOG(ERROR) << "unknown file format: " << ext << ". Only PLY format is supported for Graph";
-			success = false;
-		}
+            success = false;
+        }
 
         if (success) {
             LOG(INFO) << "save model done. " << w.time_string();
             return true;
-        }
-        else {
+        } else {
             LOG(INFO) << "save model failed";
             return false;
         }

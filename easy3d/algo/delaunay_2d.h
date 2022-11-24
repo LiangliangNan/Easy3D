@@ -27,18 +27,18 @@ namespace easy3d {
     public:
         Delaunay2();
 
-        virtual ~Delaunay2();
+        ~Delaunay2() override;
 
         /// \brief Sets the vertices from an array of floating point numbers in which each consecutive number pair
         /// denotes a 2D point.
-        virtual void set_vertices(unsigned int nb_vertices, const float *pts);
+        void set_vertices(unsigned int nb_vertices, const float *pts) override;
 
         /// \brief Sets the vertices from an array of 2D points.
         void set_vertices(const std::vector<vec2> &vertices) {
             set_vertices((unsigned int) vertices.size(), &vertices[0].x);
         }
 
-        unsigned int nearest_vertex(const float *p) const {
+        unsigned int nearest_vertex(const float *p) const override {
             return Delaunay::nearest_vertex(p);
         }
 

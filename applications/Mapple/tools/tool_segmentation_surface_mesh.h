@@ -45,11 +45,11 @@ namespace easy3d {
         public:
             ToolSurfaceMeshSegmentation(ToolManager *mgr, SurfaceMeshPicker *picker) : Tool(mgr), picker_(picker) {
             }
-            virtual ~ToolSurfaceMeshSegmentation() {}
+            ~ToolSurfaceMeshSegmentation() override = default;
 
-            virtual void press(int x, int y) {}
-            virtual void drag(int x, int y) {}
-            virtual void release(int x, int y) {}
+            void press(int x, int y) override {}
+            void drag(int x, int y) override {}
+            void release(int x, int y) override {}
 
         protected:
             SurfaceMeshPicker *picker_;
@@ -74,15 +74,15 @@ namespace easy3d {
         // (message, "Left: merge patches; Right: split patch");
         class MultitoolSurfaceMeshFaceSegmentation : public MultiTool {
         public:
-            MultitoolSurfaceMeshFaceSegmentation(ToolManager *mgr);
-            ~MultitoolSurfaceMeshFaceSegmentation();
+            explicit MultitoolSurfaceMeshFaceSegmentation(ToolManager *mgr);
+            ~MultitoolSurfaceMeshFaceSegmentation() override;
 
-            void press(ToolButton button, int x, int y) {}
-            void prepare_hint(ToolButton button, int x, int y);
-            void clear_hint();
-            void draw_hint() const {}
+            void press(ToolButton button, int x, int y) override {}
+            void prepare_hint(ToolButton button, int x, int y) override ;
+            void clear_hint() override ;
+            void draw_hint() const override {}
 
-            std::string instruction() const {
+            std::string instruction() const override {
                 return "Left: merge patches; Right: split patch";
             }
 

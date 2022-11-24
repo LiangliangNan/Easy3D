@@ -83,9 +83,9 @@ namespace easy3d {
          * \brief Constructor.
          * \param cloud The point cloud for which a KdTree will be constructed.
          */
-        KdTreeSearch(const PointCloud *cloud);
+        explicit KdTreeSearch(const PointCloud *cloud);
 
-        virtual ~KdTreeSearch();
+        virtual ~KdTreeSearch() = default;
 
         /// \name Closest point query
         /// @{

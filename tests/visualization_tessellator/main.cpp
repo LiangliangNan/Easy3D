@@ -98,7 +98,7 @@ int test_tessellator(int duration) {
 
     //-------- create a simple mesh with 3 complex faces ---------
 
-    SurfaceMesh *mesh = new SurfaceMesh;
+    auto mesh = new SurfaceMesh;
 
     { // face 1: a concave quad
         SurfaceMesh::Vertex v0 = mesh->add_vertex(vec3(0, 0, 0));

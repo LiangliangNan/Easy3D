@@ -11,8 +11,6 @@
 
 #include <easy3d/algo/surface_mesh_triangulation.h>
 
-#include <climits>
-
 
 namespace easy3d {
 
@@ -52,7 +50,7 @@ namespace easy3d {
         } while ((h = mesh_->next(h)) != h0);
 
         // do we have at least four vertices?
-        const int n = halfedges_.size();
+        const int n = static_cast<int>(halfedges_.size());
         if (n <= 3) return;
 
         // compute minimal triangulation by dynamic programming
@@ -89,7 +87,7 @@ namespace easy3d {
                             break;
                         default:
                             // should never happen
-                            exit(1);
+                            LOG(ERROR) << "should never happen";
                             break;
                     }
 
@@ -107,7 +105,7 @@ namespace easy3d {
         // now add triangles to mesh
         std::vector<ivec2> todo;
         todo.reserve(n);
-        todo.push_back(ivec2(0, n - 1));
+        todo.emplace_back(ivec2(0, n - 1));
         while (!todo.empty()) {
             ivec2 tri = todo.back();
             todo.pop_back();
@@ -120,8 +118,8 @@ namespace easy3d {
             insert_edge(start, split);
             insert_edge(split, end);
 
-            todo.push_back(ivec2(start, split));
-            todo.push_back(ivec2(split, end));
+            todo.emplace_back(ivec2(start, split));
+            todo.emplace_back(ivec2(split, end));
         }
 
 

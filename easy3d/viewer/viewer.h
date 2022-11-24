@@ -75,7 +75,7 @@ namespace easy3d {
          * @param width The width of the viewer, which can be changed by calling resize() after construction.
          * @param height The height of the viewer, which can be changed by calling resize() after construction.
          */
-		Viewer(
+		explicit Viewer(
 			const std::string& title = "Easy3D Viewer",
 			int samples = 4,
             int gl_major = 3,   // must >= 3
@@ -225,11 +225,11 @@ namespace easy3d {
          * @return The pointer to the model added to the viewer (nullptr if failed).
          * @related create_drawables(Model* model).
          */
-        virtual Model* add_model(const std::string& file_name, bool create_default_drawables = true);
+        Model* add_model(const std::string& file_name, bool create_default_drawables = true);
 
         /**
          * @brief Add an existing model to the viewer to be visualized. After a model being added
-         *        to the viewer, the viewer will be incharge of its memory menagement.
+         *        to the viewer, the viewer will be in charge of its memory management.
          * @details This method adds a model into the viewer. It allows the user to control if
          *          default drawables will be created. The default drawables are
          *          - for point clouds: "vertices".
@@ -244,7 +244,7 @@ namespace easy3d {
          * @return The pointer to the model added to the viewer (nullptr if failed).
          * @related add_model(const std::string&, bool).
          */
-        virtual Model* add_model(Model* model, bool create_default_drawables = true);
+        Model* add_model(Model* model, bool create_default_drawables = true);
 
         /**
          * @brief Delete a model. The memory of the model will be released and its existing drawables
@@ -262,9 +262,9 @@ namespace easy3d {
 
         /**
          * @brief Query the active model.
-         * @details The viewer can manage/visiulize/process multiple models. The default behavior
+         * @details The viewer can manage/visualize/process multiple models. The default behavior
          *          of the Easy3D viewer is, when a command is triggerred (e.g., the Save menu was
-         *          clicked), only the active mdoel is processed. This method is used to identify
+         *          clicked), only the active model is processed. This method is used to identify
          *          the active model.
          * @return The active model.
          */
@@ -321,7 +321,7 @@ namespace easy3d {
          * @param model The pointer to the model to be centered on the screen. If nullptr, the
          *        entire scene (i.e., all models) will be centered on the screen at a proper scale.
          */
-        virtual void fit_screen(const easy3d::Model* model = nullptr);
+        void fit_screen(const easy3d::Model* model = nullptr);
 
         /**
          * @brief Take a snapshot of the screen and save it to a file.
@@ -351,7 +351,7 @@ namespace easy3d {
          *            left corner. So it doesn't necessarily correspond to a pixel on High DPI devices, e.g. a Mac with
          *            a Retina display.
          * @note This method assumes that a GL context is available, and that its content was drawn using the Camera
-         *       (i.e. using its projection and modelview matrices). This method hence cannot be used for offscreen
+         *       (i.e. using its projection and model-view matrices). This method hence cannot be used for offscreen
          *       Camera computations. Use cameraCoordinatesOf() and worldCoordinatesOf() to perform similar operations
          *       in that case. The precision of the method highly depends on the z-Buffer, i.e., how the zNear() and
          *       zFar() values are fitted to your scene. Loose boundaries will result in imprecision along the viewing
@@ -404,15 +404,12 @@ namespace easy3d {
 		//		 inherited function.
 		virtual void init();
 
-		// OpenGL resources (e.g., shaders, textures, VAOs) must destroyed when 
-		// there exists a valid rendering context. It is (usually) a bad idea to 
-		// clean up OpenGL in a destructor because the OpenGL context may not exist
-		// (e.g., destroyed already) or the visible one is not *current*. This
-		// cleanup() function is to ensure you have a valid rendering context. 
-		// See also init().
-		// NOTE: Don't forget to call Viewer::cleanup() at the end of your 
-		//		 inherited function.
-		virtual void cleanup();
+		// To destroy OpenGL resources (e.g., shaders, textures, VAOs), there must exist a valid rendering context.
+        // It is (usually) a bad idea to clean up OpenGL in a destructor because the OpenGL context may not exist
+		// (e.g., destroyed already) or the visible one is not *current*. This cleanup() function is to ensure you
+        // have a valid rendering context. See also init().
+		// NOTE: Don't forget to call Viewer::cleanup() at the end of your inherited function.
+		void cleanup();
 
 		// This function will be called before the main draw procedure.
         virtual void pre_draw();

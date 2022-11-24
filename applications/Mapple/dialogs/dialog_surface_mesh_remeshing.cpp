@@ -53,10 +53,6 @@ DialogSurfaceMeshRemeshing::DialogSurfaceMeshRemeshing(MainWindow *window)
 }
 
 
-DialogSurfaceMeshRemeshing::~DialogSurfaceMeshRemeshing() {
-}
-
-
 void DialogSurfaceMeshRemeshing::setRemeshingScheme(const QString &s) {
     if (s == "Uniform Remeshing") {
         labelEdgeLength->setEnabled(true);
@@ -69,7 +65,7 @@ void DialogSurfaceMeshRemeshing::setRemeshingScheme(const QString &s) {
 
 
 void DialogSurfaceMeshRemeshing::apply() {
-    SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
+    auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
     if (!mesh)
         return;
 

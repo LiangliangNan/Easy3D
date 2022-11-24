@@ -30,7 +30,7 @@ namespace easy3d {
      */
     class SurfaceMeshRemeshing {
     public:
-        SurfaceMeshRemeshing(SurfaceMesh *mesh);
+        explicit SurfaceMeshRemeshing(SurfaceMesh *mesh);
 
         ~SurfaceMeshRemeshing();
 

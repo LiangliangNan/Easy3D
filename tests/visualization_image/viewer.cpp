@@ -53,6 +53,14 @@ ImageViewer::ImageViewer(const std::string& title, const std::string& image_file
 }
 
 
+ImageViewer::~ImageViewer() {
+    delete texture_;
+
+    // Not needed: it will be called in the destructor of the base class
+    //Viewer::cleanup();
+}
+
+
 std::string ImageViewer::usage() const {
     return ("------------ Image Viewer usage ---------- \n"
             "Press 'Ctrl + O' to open an image\n"
@@ -66,13 +74,6 @@ void ImageViewer::init() {
     Viewer::init();
     texture_ = Texture::create(image_file_);
     fit_screen();
-}
-
-
-void ImageViewer::cleanup() {
-    if (texture_)
-        delete texture_;
-    Viewer::cleanup();
 }
 
 

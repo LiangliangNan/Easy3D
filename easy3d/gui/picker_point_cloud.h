@@ -43,12 +43,16 @@ namespace easy3d {
      */
     class PointCloudPicker : public Picker {
     public:
-        PointCloudPicker(const Camera *cam);
+        explicit PointCloudPicker(const Camera *cam);
 
-        //------------------ sensitivity (only for CPU implementation of picking a single point)
-
-        int resolution() const { return hit_resolution_; }
-        void set_resolution(int r) { hit_resolution_ = r; }
+        /// \brief Returns the picker resolution (in pixels).
+        /// \details The picker resolution indicates the sensitivity of picking a point. It is used only for
+        ///     the CPU implementation of picking a single point.
+        unsigned int resolution() const { return hit_resolution_; }
+        /// \brief Sets the picker resolution (in pixels).
+        /// \details The picker resolution indicates the sensitivity of picking a point. It is used only for
+        ///     the CPU implementation of picking a single point.
+        void set_resolution(unsigned int r) { hit_resolution_ = r; }
 
         /**
          * @brief Pick vertex at a given screen location.

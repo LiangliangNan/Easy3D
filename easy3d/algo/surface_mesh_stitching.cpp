@@ -89,7 +89,7 @@ namespace easy3d {
         }
         assert(false);
         return true;
-    };
+    }
 
 
     void SurfaceMeshStitching::assign_edge_coordinate(float *coords, SurfaceMesh::Halfedge h) const {

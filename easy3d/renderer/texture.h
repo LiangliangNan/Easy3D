@@ -75,9 +75,9 @@ namespace easy3d {
 
         const std::string &name() const { return name_; }
 
-        void bind(int unit = 0);
+        void bind(int unit = 0) const;
 
-        void release();
+        void release() const;
 
         int width() const { return sizes_[0]; }
 

@@ -48,7 +48,7 @@ namespace easy3d {
 /// \attention The walking mode requires that the scene/object has an upright orientation, i.e., (0, 0, 1).
 class WalkThrough {
 public:
-    WalkThrough(easy3d::Camera *camera);
+    explicit WalkThrough(easy3d::Camera *camera);
 
     virtual ~WalkThrough();
 
@@ -161,7 +161,7 @@ public:
     /// \name Walking through, animation, and visualization.
     //@{
 
-    /// Previews the animation definded by the keyframes.
+    /// Previews the animation defined by the keyframes.
     void preview();
 
     /// Places the character at the idx_th keyframe of the path and modifies the camera view accordingly.

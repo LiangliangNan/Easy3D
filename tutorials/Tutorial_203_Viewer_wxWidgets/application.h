@@ -24,8 +24,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef EASY3D_WXWIDGETS_VIEWER_APPLICATION_H
-#define EASY3D_WXWIDGETS_VIEWER_APPLICATION_H
+#ifndef EASY3D_TUTORIAL_VIEWER_WXWIDGETS_APPLICATION_H
+#define EASY3D_TUTORIAL_VIEWER_WXWIDGETS_APPLICATION_H
 
 #include <string>
 
@@ -34,14 +34,11 @@ namespace easy3d {
     class AppImpl;
     class Application {
     public:
-        Application(const std::string &title = "Untitled", int width = 800, int height = 600);
+        explicit Application(const std::string &title = "Untitled", int width = 800, int height = 600);
 
         int run(int argc, char **argv);
-
-    private:
-        AppImpl *app_;
     };
 
 }
 
-#endif  // EASY3D_WXWIDGETS_VIEWER_APPLICATION_H
+#endif  // EASY3D_TUTORIAL_VIEWER_WXWIDGETS_APPLICATION_H

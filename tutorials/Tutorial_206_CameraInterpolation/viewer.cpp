@@ -36,7 +36,7 @@
 using namespace easy3d;
 
 
-CameraIntrepolation::CameraIntrepolation(const std::string& title)
+CameraInterpolation::CameraInterpolation(const std::string& title)
     : Viewer(title)
 {
     interpolator_ = new KeyFrameInterpolator(camera_->frame());
@@ -45,13 +45,13 @@ CameraIntrepolation::CameraIntrepolation(const std::string& title)
 }
 
 
-CameraIntrepolation::~CameraIntrepolation()
+CameraInterpolation::~CameraInterpolation()
 {
     delete interpolator_;
 }
 
 
-std::string CameraIntrepolation::usage() const {
+std::string CameraInterpolation::usage() const {
     return ("------------ Camera Interpolation usage ---------- \n"
             "Press 'K' to add key frames\n"
             "Press 'Space' to start/stop the animation\n"
@@ -60,7 +60,7 @@ std::string CameraIntrepolation::usage() const {
 }
 
 
-bool CameraIntrepolation::key_press_event(int key, int modifiers)
+bool CameraInterpolation::key_press_event(int key, int modifiers)
 {
     if (key == GLFW_KEY_K && modifiers == 0) {
         easy3d::Frame *frame = camera()->frame();
@@ -101,7 +101,7 @@ bool CameraIntrepolation::key_press_event(int key, int modifiers)
 }
 
 
-void CameraIntrepolation::draw() const {
+void CameraInterpolation::draw() const {
     Viewer::draw();
 
     // shown only when it is not animating

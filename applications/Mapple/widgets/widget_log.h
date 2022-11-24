@@ -36,8 +36,8 @@ class WidgetLog : public QListWidget {
 Q_OBJECT
 
 public:
-    WidgetLog(QWidget *parent = 0);
-    ~WidgetLog();
+    explicit WidgetLog(QWidget *parent = nullptr);
+    ~WidgetLog() override = default;
 
 private Q_SLOTS :
     void showContextMenu(const QPoint &p);

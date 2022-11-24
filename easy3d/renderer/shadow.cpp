@@ -127,7 +127,7 @@ namespace easy3d {
 
         // Multiplying the vertex's position by light MVP (i.e., light_projection_matrix_ * light_view_matrix_) will
         // give homogeneous coordinates, which are in [-1,1] ; but texture sampling must be done in [0,1]. This can
-        // be fixed by tweaking the fetch coordinates directly in the fragment shader but it's more efficient to
+        // be fixed by tweaking the fetch coordinates directly in the fragment shader, but it's more efficient to
         // multiply the homogeneous coordinates by the following matrix, which simply divides  coordinates by 2
         // ( the diagonal: [-1,1] -> [-0.5, 0.5] ) and translates them ( the lower row: [-0.5, 0.5] -> [0,1] ).
         const mat4 clip2Tex(
@@ -151,11 +151,11 @@ namespace easy3d {
 
         // generate shadow map
         glViewport(0, 0, shadow_map_size_, shadow_map_size_);
-        shadow_map_pass(surfaces);          easy3d_debug_log_gl_error;
+        shadow_map_pass(surfaces);          easy3d_debug_log_gl_error
 
         // rendering
         glViewport(0, 0, w, h);
-        render_pass(surfaces);      easy3d_debug_log_gl_error;
+        render_pass(surfaces);      easy3d_debug_log_gl_error
 
         // for debugging
     #ifdef SHOW_SHADOW_MAP_AND_LIGHT_FRUSTUM
@@ -165,8 +165,8 @@ namespace easy3d {
         const float size = 200.0f;
         const Rect quad(offset_x * dpi_scale, (offset_x + size) * dpi_scale, offset_y * dpi_scale, (offset_y + size) * dpi_scale);
         shape::draw_depth_texture(quad, fbo_->depth_texture(), w, h, -0.9f);
-        shape::draw_quad_wire(quad, vec4(1.0f, 0.0f, 0.0f, 1.0f), w, h, -0.99f);   easy3d_debug_log_gl_error;
-        draw_light_frustum();		easy3d_debug_log_gl_error;
+        shape::draw_quad_wire(quad, vec4(1.0f, 0.0f, 0.0f, 1.0f), w, h, -0.99f);   easy3d_debug_log_gl_error
+        draw_light_frustum();		easy3d_debug_log_gl_error
     #endif
     }
 
@@ -187,7 +187,7 @@ namespace easy3d {
         fbo_->deactivate_draw_buffers();
         glClear(GL_DEPTH_BUFFER_BIT);
         program->bind();
-        program->set_uniform("MVP", light_projection_matrix_ * light_view_matrix_);	easy3d_debug_log_gl_error;
+        program->set_uniform("MVP", light_projection_matrix_ * light_view_matrix_);	easy3d_debug_log_gl_error
         for (auto d : surfaces) {
             if (d->is_visible()) {
                 ClippingPlane::instance()->set_program(program);
@@ -225,11 +225,11 @@ namespace easy3d {
 
         program->bind();
         program->set_uniform("MVP", MVP);
-        program->set_uniform("SHADOW", shadow_matrix_);                    easy3d_debug_log_gl_error;
-        program->set_uniform("wLightPos", light_pos_);                     easy3d_debug_log_gl_error;
-        program->set_uniform("wCamPos", wCamPos);                          easy3d_debug_log_gl_error;
-        program->set_uniform("darkness", darkness_);                       easy3d_debug_log_gl_error;
-        program->bind_texture("shadowMap", fbo_->depth_texture(), 0);      easy3d_debug_log_gl_error;
+        program->set_uniform("SHADOW", shadow_matrix_);                    easy3d_debug_log_gl_error
+        program->set_uniform("wLightPos", light_pos_);                     easy3d_debug_log_gl_error
+        program->set_uniform("wCamPos", wCamPos);                          easy3d_debug_log_gl_error
+        program->set_uniform("darkness", darkness_);                       easy3d_debug_log_gl_error
+        program->bind_texture("shadowMap", fbo_->depth_texture(), 0);      easy3d_debug_log_gl_error
         for (auto d : surfaces) {
             if (d->is_visible()) {
                 // transformation introduced by manipulation
@@ -256,7 +256,7 @@ namespace easy3d {
         }
 
         // draw the background plane
-        program->set_uniform("default_color", virtual_background_color_);				easy3d_debug_log_gl_error;
+        program->set_uniform("default_color", virtual_background_color_);				easy3d_debug_log_gl_error
         program->set_uniform("per_vertex_color", false);
         program->set_uniform("is_background", true);
         virtual_background_drawable_->gl_draw();
@@ -272,11 +272,11 @@ namespace easy3d {
         if (!camera_frustum_)
             camera_frustum_ = new Frustum(Frustum::PERSPECTIVE);
         // NOTE: fov is in radians and the 0.2f factor is important because we might get artifacts at the screen borders.
-        float fov = static_cast<float>(camera_->fieldOfView()) + 0.2f;
-        float ar = static_cast<float>(camera_->aspectRatio());
-        float neard = static_cast<float>(camera_->zNear());
-        float fard = static_cast<float>(camera_->zFar());
-        camera_frustum_->set_perspective(fov, ar, neard, fard);
+        auto fov = static_cast<float>(camera_->fieldOfView()) + 0.2f;
+        auto ar = static_cast<float>(camera_->aspectRatio());
+        auto near = static_cast<float>(camera_->zNear());
+        auto far = static_cast<float>(camera_->zFar());
+        camera_frustum_->set_perspective(fov, ar, near, far);
         const vec3& pos = camera_->position();
         const vec3& at = camera_->position() + camera_->viewDirection();
         const vec3& up = camera_->upVector();
@@ -291,7 +291,7 @@ namespace easy3d {
             light_frustum_ = new Frustum(Frustum::PERSPECTIVE);
 
 		const vec3& at = camera_->sceneCenter();
-        vec3 dir = -setting::light_position;
+        vec3 dir = -setting::light_position.xyz();
         const mat3& trans = transform::normal_matrix(inverse(camera_->modelViewMatrix()));
         dir = normalize(trans * dir); // the light's direction in WC.
         float radius = camera_->sceneRadius();
@@ -321,9 +321,9 @@ namespace easy3d {
             // note that only the z-component is need and thus the multiplication can be simplified
             //p.z = view[2] * points[0].x + view[6] * points[0].y + view[10] * points[0].z + view[14];
             for (int i = 0; i < 8; i++) {
-                const vec4& p = light_view * vec4(points[i], 1.0f);
-                //if (p.z > maxZ) maxZ = p.z;  // not necessary for including the camera frustum
-                if (p.z < minZ) minZ = p.z;  // minZ is related to far plane
+                const vec4& q = light_view * vec4(points[i], 1.0f);
+                //if (q.z > maxZ) maxZ = q.z;  // not necessary for including the camera frustum
+                if (q.z < minZ) minZ = q.z;  // minZ is related to far plane
             }
         }
 
@@ -331,14 +331,13 @@ namespace easy3d {
         float zNear = -maxZ;
         float zFar = -minZ;
 
-        // Liangliang: Limit the Z range so as to improves the z-buffer precision
-        //             (maybe slightly, but I didn't notice the difference).
+        // Liangliang: Limit the Z range to improve the z-buffer precision
+        //      (maybe slightly, but I didn't notice the difference).
         zFar = std::min(zFar, zNear + radius * 10.0f);
 
         //----------- determine the X and Y range --------------------------
 
-        float xMin, xMax, yMin, yMax;
-        xMin = yMin = FLT_MAX;
+        float xMax, yMax;
         xMax = yMax = -FLT_MAX;
 
         // set the projection matrix with the new z-bounds
@@ -365,9 +364,7 @@ namespace easy3d {
         // find the extends of all shadow casters' bbox as projected in light's homogeneous coordinates
         p = shade_mvp * at;
         if (p.x + radius > xMax) xMax = p.x + radius;
-        if (p.x - radius < xMin) xMin = p.x - radius;
         if (p.y + radius > yMax) yMax = p.y + radius;
-        if (p.y - radius < yMin) yMin = p.y - radius;
 
         // make sure zNear is positive
         zNear = zNear > 0.001 ? zNear : 0.001f;
@@ -387,16 +384,16 @@ namespace easy3d {
         vec3 dx = cross(up, normal);
         float size = light_frustum_->far_width();
         dx = normalize(dx) * size;
-        vec3 dy = normalize(up) * size;;
+        vec3 dy = normalize(up) * size;
         float tc = 1.0f;
 
         std::vector<vec3> vertices;
         std::vector<vec2> texcoords;
         std::vector<unsigned int> indices;
-        vec3 a(center - dx - dy);	vertices.push_back(a);	texcoords.push_back(vec2(-tc, -tc));
-        vec3 b(center + dx - dy);	vertices.push_back(b);	texcoords.push_back(vec2(+tc, -tc));
-        vec3 c(center + dx + dy);	vertices.push_back(c);	texcoords.push_back(vec2(+tc, +tc));
-        vec3 d(center - dx + dy);	vertices.push_back(d);	texcoords.push_back(vec2(-tc, +tc));
+        vec3 a(center - dx - dy);	vertices.push_back(a);	texcoords.emplace_back(vec2(-tc, -tc));
+        vec3 b(center + dx - dy);	vertices.push_back(b);	texcoords.emplace_back(vec2(+tc, -tc));
+        vec3 c(center + dx + dy);	vertices.push_back(c);	texcoords.emplace_back(vec2(+tc, +tc));
+        vec3 d(center - dx + dy);	vertices.push_back(d);	texcoords.emplace_back(vec2(-tc, +tc));
         indices.push_back(0); indices.push_back(1); indices.push_back(2); // I will render the quad as two triangles
         indices.push_back(0); indices.push_back(2); indices.push_back(3);
 
@@ -413,7 +410,7 @@ namespace easy3d {
 
 
     void Shadow::draw_light_frustum() {
-        vec3 normal = setting::light_position; // the background's normal in VC.
+        vec3 normal = setting::light_position.xyz(); // the background's normal in VC.
         const mat3& trans = transform::normal_matrix(inverse(camera_->modelViewMatrix()));
         normal = normalize(trans * normal);		  // the background's normal in WC.
         float dist = camera_->sceneRadius() * 0.004f;

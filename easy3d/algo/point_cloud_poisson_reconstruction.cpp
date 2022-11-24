@@ -68,9 +68,9 @@ namespace easy3d {
         Octree<Real> &tree;
         double t;
 
-        OctreeProfiler(Octree<Real> &t) : tree(t) { ; }
+        explicit OctreeProfiler(Octree<Real> &_t) : tree(_t), t(0) {}
 
-        void start(void) { t = Time(), tree.resetLocalMemoryUsage(); }
+        void start() { t = Time(), tree.resetLocalMemoryUsage(); }
 
         void print(const char *header) const {
             tree.memoryUsage();
@@ -91,11 +91,10 @@ namespace easy3d {
     };
 
 
-    PoissonReconstruction::PoissonReconstruction(void)
+    PoissonReconstruction::PoissonReconstruction()
             : depth_(8), samples_per_node_(1.0f), triangulate_mesh_(true) {
         // other default parameters
         full_depth_ = 5;
-        voxelDepth_ = depth_;
         cgDepth_ = 0;
         scale_ = 1.1f;
         pointWeight_ = 4.0f;
@@ -103,14 +102,10 @@ namespace easy3d {
         threads_ = omp_get_num_procs();
         LOG(INFO) << "number of threads: " << threads_;
 
-        confidence_ = false;
-        normalWeight_ = false;
         verbose_ = false;
     }
 
-    PoissonReconstruction::~PoissonReconstruction(void) {
-    }
-
+    PoissonReconstruction::~PoissonReconstruction() = default;
 
     // \cond
     namespace internal {
@@ -128,7 +123,7 @@ namespace easy3d {
                 return nullptr;
             }
 
-            SurfaceMesh *result = new SurfaceMesh;
+            auto result = new SurfaceMesh;
             SurfaceMesh::VertexProperty<float> density = result->add_vertex_property<float>(density_attr_name);
             SurfaceMesh::VertexProperty<vec3> color;
             if (has_colors)
@@ -175,9 +170,9 @@ namespace easy3d {
                 mesh.nextPolygon(vertices);
 
                 std::vector<SurfaceMesh::Vertex> face_vts;
-                for (unsigned int j = 0; j < vertices.size(); ++j) {
-                    std::size_t id = vertices[j].idx;
-                    if (!vertices[j].inCore)
+                for (auto v : vertices) {
+                    std::size_t id = v.idx;
+                    if (!v.inCore)
                         id += num_ic_pts;
                     face_vts.push_back(all_vertices[id]);
                 }
@@ -195,7 +190,7 @@ namespace easy3d {
     }
     // \endcond
 
-    SurfaceMesh *PoissonReconstruction::apply(const PointCloud *cloud, const std::string &density_attr_name) {
+    SurfaceMesh *PoissonReconstruction::apply(const PointCloud *cloud, const std::string &density_attr_name) const {
         if (!cloud) {
             LOG(ERROR) << "nullptr point cloud";
             return nullptr;
@@ -237,7 +232,7 @@ namespace easy3d {
         int pointCount;
 
         REAL pointWeightSum;
-        std::vector<typename Octree<REAL>::PointSample> *samples = new std::vector<typename Octree<REAL>::PointSample>();
+        auto samples = new std::vector<typename Octree<REAL>::PointSample>();
         std::vector<ProjectiveData<Point3D<REAL>, REAL> > *sampleData = nullptr;
         DensityEstimator *density = nullptr;
         SparseNodeData<Point3D<REAL>, NORMAL_DEGREE> *normalInfo = nullptr;
@@ -250,7 +245,7 @@ namespace easy3d {
             profiler.start();
             const float *pts = cloud->points()[0];
             const float *nms = normals.vector()[0];
-            const float *cls = 0;
+            const float *cls = nullptr;
             PointCloud::VertexProperty<vec3> colors = cloud->get_vertex_property<vec3>("v:color");
             if (colors) {
                 cls = colors.vector()[0];
@@ -330,15 +325,13 @@ namespace easy3d {
                 profiler.start();
                 std::vector<int> indexMap;
 
-                constexpr int MAX_DEGREE = NORMAL_DEGREE > DEGREE ? NORMAL_DEGREE : DEGREE;
+                constexpr int MAX_DEGREE = (NORMAL_DEGREE > DEGREE) ? NORMAL_DEGREE : DEGREE;
                 tree.inalizeForBroodedMultigrid<MAX_DEGREE, DEGREE, BType>(full_depth_,
                                                                            typename Octree<REAL>::template HasNormalDataFunctor<NORMAL_DEGREE>(
                                                                                    *normalInfo), &indexMap);
 
-                if (normalInfo)
-                    normalInfo->remapIndices(indexMap);
-                if (density)
-                    density->remapIndices(indexMap);
+                normalInfo->remapIndices(indexMap);
+                density->remapIndices(indexMap);
                 if (verbose_)
                     profiler.print(" - Finalized tree:       ");
 
@@ -415,10 +408,9 @@ namespace easy3d {
 #pragma omp parallel for num_threads(threads_) reduction( + : valueSum, weightSum )
             for (int j = 0; j < samples->size(); j++) {
                 ProjectiveData<OrientedPoint3D<REAL>, REAL> &sample = (*samples)[j].sample;
-                REAL w = sample.weight;
-                if (w > 0)
-                    weightSum += w, valueSum += evaluator.value(sample.data.p / sample.weight, omp_get_thread_num(),
-                                                                (*samples)[j].node) * w;
+                if (sample.weight > 0)
+                    weightSum += sample.weight, valueSum += evaluator.value(sample.data.p / sample.weight, omp_get_thread_num(),
+                                                                (*samples)[j].node) * sample.weight;
             }
             isoValue = (REAL) (valueSum / weightSum);
 
@@ -547,29 +539,28 @@ namespace easy3d {
 
         //////////////////////////////////////////////////////////////////////////
 
-        SurfaceMesh *trimmed_mesh = new SurfaceMesh;
+        auto trimmed_mesh = new SurfaceMesh;
         density = trimmed_mesh->add_vertex_property<float>(density_attr_name);
         if (has_color)
             color = trimmed_mesh->add_vertex_property<vec3>("v:color");
 
         std::vector<SurfaceMesh::Vertex> all_vertices;
-        for (std::size_t i = 0; i < vertices.size(); ++i) {
-            const Point3D<REAL> &pt = vertices[i].point;
+        for (auto vert : vertices) {
+            const Point3D<REAL> &pt = vert.point;
             SurfaceMesh::Vertex v = trimmed_mesh->add_vertex(vec3(pt.coords[0], pt.coords[1], pt.coords[2]));
-            all_vertices.push_back(v);;
-            density[v] = vertices[i].value;
+            all_vertices.push_back(v);
+            density[v] = vert.value;
 
             if (has_color) {
-                unsigned char *c = vertices[i].color;
-                color[v] = vec3(c[0] / 255.0f, c[1] / 255.0f, c[2] / 255.0f);
+                unsigned char *c = vert.color;
+                color[v] = vec3(static_cast<float>(c[0]) / 255.0f, static_cast<float>(c[1]) / 255.0f, static_cast<float>(c[2]) / 255.0f);
             }
         }
 
-        for (size_t i = 0; i < polygons.size(); ++i) {
-            const std::vector<int> &plg = polygons[i];
+        for (const auto& plg : polygons) {
             std::vector<SurfaceMesh::Vertex> face_vts;
-            for (unsigned int j = 0; j < plg.size(); ++j) {
-                face_vts.push_back(all_vertices[plg[j]]);
+            for (auto idx : plg) {
+                face_vts.push_back(all_vertices[idx]);
             }
             trimmed_mesh->add_face(face_vts);
         }

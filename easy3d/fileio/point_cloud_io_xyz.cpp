@@ -55,18 +55,18 @@ namespace easy3d {
             input.seekg(0, input.beg);
             ProgressLogger progress(length, true, false);
 
-			dvec3 p;
+			dvec3 v;
             std::vector<dvec3> points;
 			while (!input.eof()) {
 			    if (progress.is_canceled()) {
                     LOG(WARNING) << "saving point cloud file cancelled";
                     return false;
                 }
-				in.get_line();;
+				in.get_line();
 				if (in.current_line()[0] != '#') {
-					in >> p;
+					in >> v;
 					if (!in.fail()) {
-                        points.push_back(p);
+                        points.push_back(v);
                         std::streamoff pos = input.tellg();
                         progress.notify(pos);
 					}
@@ -82,7 +82,7 @@ namespace easy3d {
                 Translator::instance()->set_translation(origin);
 
                 for (const auto &p: points)
-                    cloud->add_vertex(vec3(p.x - origin.x, p.y - origin.y, p.z - origin.z));
+                    cloud->add_vertex(vec3(static_cast<float>(p.x - origin.x), static_cast<float>(p.y - origin.y), static_cast<float>(p.z - origin.z)));
                 auto trans = cloud->add_model_property<dvec3>("translation", dvec3(0, 0, 0));
                 trans[0] = origin;
                 LOG(INFO) << "model translated w.r.t. the first vertex (" << origin
@@ -91,7 +91,7 @@ namespace easy3d {
             else if (Translator::instance()->status() == Translator::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
                 const dvec3 &origin = Translator::instance()->translation();
                 for (const auto &p: points)
-                    cloud->add_vertex(vec3(p.x - origin.x, p.y - origin.y, p.z - origin.z));
+                    cloud->add_vertex(vec3(static_cast<float>(p.x - origin.x), static_cast<float>(p.y - origin.y), static_cast<float>(p.z - origin.z)));
                 auto trans = cloud->add_model_property<dvec3>("translation", dvec3(0, 0, 0));
                 trans[0] = origin;
                 LOG(INFO) << "model translated w.r.t. last known reference point (" << origin
@@ -151,11 +151,6 @@ namespace easy3d {
 
 			std::size_t element_per_point = 3;
 			std::size_t element_size = sizeof(float) * element_per_point;
-			// check size of types
-			if (sizeof(vec3) != sizeof(float) * 3) {
-				LOG(ERROR) << "point coordinates must be \'float\'";
-				return false;
-			}
 
 			// get length of file
 			input.seekg(0, input.end);
@@ -170,12 +165,11 @@ namespace easy3d {
 			cloud->resize(static_cast<unsigned int>(num));
 			auto points = cloud->get_vertex_property<vec3>("v:point");
 
-			input.read((char*)points.data(), num * element_size);	// read the entire blocks
-			if (input.fail()) {
-				LOG(ERROR)
-					<< input.gcount() << " bytes of the block could not be read";
-				return false;
-			}
+            input.read((char *) points.data(), static_cast<long>(num * element_size));    // read the entire blocks
+            if (input.fail()) {
+                LOG(ERROR) << input.gcount() << " bytes of the block could not be read";
+                return false;
+            }
 
             if (Translator::instance()->status() == Translator::TRANSLATE_USE_FIRST_POINT) {
                 auto& positions = points.vector();
@@ -194,11 +188,11 @@ namespace easy3d {
                           << "), stored as ModelProperty<dvec3>(\"translation\")";
             } else if (Translator::instance()->status() == Translator::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
                 const dvec3 &origin = Translator::instance()->translation();
-                auto& points = cloud->get_vertex_property<vec3>("v:point").vector();
-                for (auto& p: points) {
-                    p.x -= origin.x;
-                    p.y -= origin.y;
-                    p.z -= origin.z;
+                auto& pts = cloud->get_vertex_property<vec3>("v:point").vector();
+                for (auto& p: pts) {
+                    p.x -= static_cast<float>(origin.x);
+                    p.y -= static_cast<float>(origin.y);
+                    p.z -= static_cast<float>(origin.z);
                 }
 
                 auto trans = cloud->add_model_property<dvec3>("translation", dvec3(0, 0, 0));
@@ -219,27 +213,20 @@ namespace easy3d {
 				return false;
 			}
 
-			// check size of types
-			if (sizeof(vec3) != sizeof(float) * 3) {
-				LOG(ERROR) << "point coordinates must be \'float\'";
-				return false;
-			}
-
 			auto points = cloud->get_vertex_property<vec3>("v:point");
-
             auto trans = cloud->get_model_property<dvec3>("translation");
             if (trans) { // has translation
                 const dvec3& origin = trans[0];
                 for (auto v : cloud->vertices()) {
                     const vec3& p = points[v];
                     for (unsigned short i=0; i<3; ++i) {
-                        float value = static_cast<float>(p[i] + origin[i]);
+                        auto value = static_cast<float>(p[i] + origin[i]);
                         output.write((char *)&value, sizeof(float));
                     }
                 }
             }
             else
-                output.write((char*)points.data(), cloud->n_vertices() * sizeof(vec3));
+                output.write((char*)points.data(), static_cast<long>(cloud->n_vertices() * sizeof(vec3)));
 			return true;
 		}
 

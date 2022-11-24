@@ -39,18 +39,17 @@ namespace easy3d {
 
 class CollisionViewer : public easy3d::Viewer {
 public:
-    CollisionViewer(const std::string &title);
-    ~CollisionViewer();
+    explicit CollisionViewer(const std::string &title);
+    ~CollisionViewer() override;
 
 protected:
     std::string usage() const override;
 
 private:
-    virtual bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;
-    virtual bool key_press_event(int key, int modifiers) override;
+    bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;
+    bool key_press_event(int key, int modifiers) override;
 
     void detect();
-    void mark(easy3d::Model *model);
 
 private:
     easy3d::Collider* collider_;

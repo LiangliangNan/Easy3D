@@ -40,6 +40,7 @@ namespace easy3d {
     /**
      * @brief A composite viewer, which supports multiple views (arranged in a grid layout) in the same viewer.
      * @class CompViewer easy3d/viewer/comp_viewer.h
+     * \todo Zoom to screen should be implemented w.r.t. the current view.
      */
     class CompViewer : public Viewer {
     public:
@@ -47,6 +48,7 @@ namespace easy3d {
          * @brief Constructor. \p rows and \p cols together define the layout of the composite viewer.
          */
         CompViewer(unsigned int rows, unsigned int cols, const std::string &title = "untitled");
+        ~CompViewer() override;
 
         /**
          * @brief Assigns the model \p m to the view at position (\p row, \p col).
@@ -76,7 +78,6 @@ namespace easy3d {
     protected:
         void init() override;
         void post_resize(int w, int h) override;
-        void cleanup() override;
         void draw() const override;
 
         // overloaded, so mouse positions are relative to the current view

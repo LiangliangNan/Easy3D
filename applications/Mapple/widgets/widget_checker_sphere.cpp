@@ -245,7 +245,7 @@ void WidgetCheckerSphere::paintGL() {
             ->set_uniform("clippingPlaneEnabled", false)
             ->set_uniform("use_texture", false);
 
-    program->set_uniform("MANIP", mat4::translation(lightPos_));
+    program->set_uniform("MANIP", mat4::translation(lightPos_.xyz()));
     lightSphere_->gl_draw();
 
     program->set_uniform("MANIP", mat4::identity());

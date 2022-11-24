@@ -48,7 +48,7 @@ class WidgetDrawable : public QWidget
 
 public:
     explicit WidgetDrawable(QWidget *parent);
-    ~WidgetDrawable();
+    ~WidgetDrawable() override;
 
     // update the panel to be consistent with the drawable's rendering parameters
     virtual void updatePanel() = 0;
@@ -64,7 +64,7 @@ public slots:
 
     void setDistinctBackColor(bool);
 
-    void setScalarFieldStyle(int);
+    virtual void setScalarFieldStyle(int);
     void setScalarFieldDiscreteColors(bool);
     void setScalarFieldNumOfStripes(int);
     void setScalarFieldClamp(bool);
@@ -127,7 +127,7 @@ protected:
     QString         scalar_prefix_;
 
     // the rendering of only the selected drawable can be changed.
-    // this variable keeps the history so the rendering panels are up to date when switching between models.
+    // this variable keeps the history so the rendering panels are up-to-date when switching between models.
     std::unordered_map<easy3d::Model*, std::string> active_drawable_;
 
     static std::vector<ColorMap> colormaps_;

@@ -32,8 +32,7 @@ namespace easy3d {
 
 
     SelfIntersection::~SelfIntersection() {
-        if (mesh_)
-            delete mesh_;
+        delete mesh_;
     }
 
 
@@ -57,13 +56,13 @@ namespace easy3d {
 
         // bounding boxes of the triangles
         std::vector<Box> boxes;
-        for (TrianglesIterator it = triangle_faces_.begin(); it != triangle_faces_.end(); ++it) {
+        for (auto it = triangle_faces_.begin(); it != triangle_faces_.end(); ++it) {
             if (!it->triangle.is_degenerate())
-                boxes.push_back(Box(it->triangle.bbox(), it));
+                boxes.emplace_back(Box(it->triangle.bbox(), it));
         }
         std::vector<std::pair<TrianglesIterator, TrianglesIterator> > intersecting_boxes;
         auto cb = [&intersecting_boxes](const Box &a, const Box &b) {
-            intersecting_boxes.push_back({a.handle(), b.handle()});
+            intersecting_boxes.emplace_back(std::make_pair(a.handle(), b.handle()));
         };
         CGAL::box_self_intersection_d(boxes.begin(), boxes.end(), cb);
 
@@ -226,14 +225,14 @@ namespace easy3d {
         Segment_3 sa(A.triangle.vertex((va + 1) % 3), A.triangle.vertex((va + 2) % 3));
 
         if (CGAL::do_intersect(sa, B.triangle)) {
-            // can't put count_intersection(fa,fb) here since we use intersect below
+            // can't put count_intersection(fa,fb) here since we use intersect below,
             // and then it will be counted twice.
             if (!construct_intersection_) {
                 count_intersection(fa, fb);
                 return true;
             }
             CGAL::Object result = CGAL::intersection(sa, B.triangle);
-            if (const Point_3 *p = CGAL::object_cast<Point_3>(&result)) {
+            if (const auto p = CGAL::object_cast<Point_3>(&result)) {
                 // Single intersection --> segment from shared point to intersection
                 CGAL::Object seg = CGAL::make_object(Segment_3(A.triangle.vertex(va), *p));
                 count_intersection(fa, fb);
@@ -302,13 +301,13 @@ namespace easy3d {
         const int total_shared_vertices = num_comb_shared_vertices + num_geom_shared_vertices;
         if (num_comb_shared_vertices == 3) {
             assert(shared.size() == 3);
-            // Combinatorially duplicate faces should be removed before calling SelftIntersection.
+            // Combinatorially duplicate faces should be removed before calling SelfIntersection.
             ++total_comb_duplicate_face_;
             return false;
         }
         if (total_shared_vertices == 3) {
             assert(shared.size() == 3);
-            // Geometrically duplicate faces should be removed before calling SelftIntersection.
+            // Geometrically duplicate faces should be removed before calling SelfIntersection.
             ++total_geom_duplicate_face_;
             return false;
         }
@@ -333,8 +332,7 @@ namespace easy3d {
 
 
     void SelfIntersection::mesh_to_cgal_triangle_list(SurfaceMesh *input_mesh) {
-        if (mesh_)
-            delete mesh_;
+        delete mesh_;
         mesh_ = new SurfaceMesh(*input_mesh);
 
         triangle_faces_.clear();
@@ -353,13 +351,13 @@ namespace easy3d {
             std::vector<SurfaceMesh::Vertex> vertices;
             for (auto v : mesh_->vertices(f)) {
                 const vec3 &p = prop[v];
-                points.push_back(Point_3(p.x, p.y, p.z));
+                points.emplace_back(Point_3(p.x, p.y, p.z));
                 vertices.push_back(v);
             }
 
             if (points.size() == 3) {
                 Triangle t(points[0], points[1], points[2], f);
-                original_face[triangle_faces_.size()] = to_input_face[f];
+                original_face[static_cast<int>(triangle_faces_.size())] = to_input_face[f];
                 t.index = f.idx();
                 t.vertices = vertices;
                 triangle_faces_.push_back(t);
@@ -371,18 +369,18 @@ namespace easy3d {
 
 
     void SelfIntersection::insert_into_cdt(const CGAL::Object &obj, const Plane_3 &P, CDT_plus_2 &cdt) {
-        if (const Segment_3 *iseg = CGAL::object_cast<Segment_3>(&obj)) {
+        if (const auto iseg = CGAL::object_cast<Segment_3>(&obj)) {
             // Add segment constraint
             cdt.insert_constraint(P.to_2d(iseg->vertex(0)), P.to_2d(iseg->vertex(1)));
-        } else if (const Point_3 *ipoint = CGAL::object_cast<Point_3>(&obj)) {
+        } else if (const auto ipoint = CGAL::object_cast<Point_3>(&obj)) {
             // Add point
             cdt.insert(P.to_2d(*ipoint));
-        } else if (const Triangle_3 *itri = CGAL::object_cast<Triangle_3>(&obj)) {
+        } else if (const auto itri = CGAL::object_cast<Triangle_3>(&obj)) {
             // Add 3 segment constraints
             cdt.insert_constraint(P.to_2d(itri->vertex(0)), P.to_2d(itri->vertex(1)));
             cdt.insert_constraint(P.to_2d(itri->vertex(1)), P.to_2d(itri->vertex(2)));
             cdt.insert_constraint(P.to_2d(itri->vertex(2)), P.to_2d(itri->vertex(0)));
-        } else if (const std::vector<Point_3> *polyp = CGAL::object_cast<std::vector<Point_3> >(&obj)) {
+        } else if (const auto polyp = CGAL::object_cast<std::vector<Point_3> >(&obj)) {
             const std::vector<Point_3> &poly = *polyp;
             const std::size_t m = poly.size();
             assert(m >= 2);
@@ -497,7 +495,7 @@ namespace easy3d {
         // Run constraint Delaunay triangulation on the plane.
         //
         // Inputs:
-        //   P  plane to triangulate upone
+        //   P  plane to triangulate upon
         //   involved_faces  #F list of indices into triangle of involved faces
         // Outputs:
         //   vertices  #V list of vertex positions of output triangulation
@@ -536,11 +534,11 @@ namespace easy3d {
         // Returns global index of vertex (dependent on whether stitch_all flag is
         // set)
         //
-        auto find_or_append_point = [&](const Point_3 &p, const std::size_t ori_f) -> int {
+        auto find_or_append_point = [&](const Point_3 &p, const std::size_t ori_f) -> std::size_t {
             if (!stitch) {
                 // No need to check if p shared by multiple triangles because all shared
                 // vertices would be merged later on.
-                const int index = num_base_vertices + new_vertices.size();
+                const auto index = num_base_vertices + new_vertices.size();
                 new_vertices.push_back(p);
                 return index;
             } else {
@@ -571,7 +569,7 @@ namespace easy3d {
                         key.second = curr < next ? next : curr;
                         auto itr = edge_vertices.find(key);
                         if (itr == edge_vertices.end()) {
-                            const int index = num_base_vertices + new_vertices.size();
+                            const int index = static_cast<int>(num_base_vertices + new_vertices.size());
                             edge_vertices.insert({key, {index}});
                             new_vertices.push_back(p);
                             return index;
@@ -581,7 +579,7 @@ namespace easy3d {
                                     return vid;
                                 }
                             }
-                            const int index = num_base_vertices + new_vertices.size();
+                            const int index = static_cast<int>(num_base_vertices + new_vertices.size());
                             new_vertices.push_back(p);
                             itr->second.push_back(index);
                             return index;
@@ -590,13 +588,13 @@ namespace easy3d {
                 }
 
                 // p must be in the middle of the triangle.
-                auto &existing_face_vertices = face_vertices[ori_f];
+                auto &existing_face_vertices = face_vertices[static_cast<int>(ori_f)];
                 for (const auto vid : existing_face_vertices) {
                     if (p == new_vertices[vid - num_base_vertices]) {
                         return vid;
                     }
                 }
-                const int index = num_base_vertices + new_vertices.size();
+                const int index = static_cast<int>(num_base_vertices + new_vertices.size());
                 new_vertices.push_back(p);
                 existing_face_vertices.push_back(index);
                 return index;
@@ -632,9 +630,9 @@ namespace easy3d {
                     // belong to it and have the correct orientation.
                     const auto &ori_f = involved_faces[0];
                     std::vector<int> corners(3);
-                    corners[0] = find_or_append_point(v0, ori_f);
-                    corners[1] = find_or_append_point(v1, ori_f);
-                    corners[2] = find_or_append_point(v2, ori_f);
+                    corners[0] = static_cast<int>(find_or_append_point(v0, ori_f));
+                    corners[1] = static_cast<int>(find_or_append_point(v1, ori_f));
+                    corners[2] = static_cast<int>(find_or_append_point(v2, ori_f));
                     resolved_faces.emplace_back(corners);
                     source_faces.push_back(ori_f);
                 } else {
@@ -643,9 +641,9 @@ namespace easy3d {
                         const Plane_3 P = tri.triangle.supporting_plane();
                         if (tri.triangle.has_on(center)) {
                             std::vector<int> corners(3);
-                            corners[0] = find_or_append_point(v0, ori_f);
-                            corners[1] = find_or_append_point(v1, ori_f);
-                            corners[2] = find_or_append_point(v2, ori_f);
+                            corners[0] = static_cast<int>(find_or_append_point(v0, ori_f));
+                            corners[1] = static_cast<int>(find_or_append_point(v1, ori_f));
+                            corners[2] = static_cast<int>(find_or_append_point(v2, ori_f));
                             if (CGAL::orientation(P.to_2d(v0), P.to_2d(v1), P.to_2d(v2)) == CGAL::RIGHT_TURN) {
                                 std::swap(corners[0], corners[1]);
                             }
@@ -658,8 +656,8 @@ namespace easy3d {
         };
 
         // Process un-touched faces.
-        for (auto f : mesh_->faces()) {
-            const int fid = f.idx();
+        for (auto face : mesh_->faces()) {
+            const int fid = face.idx();
             if (!is_offending[fid] && !triangle_faces_[fid].triangle.is_degenerate()) {
                 SurfaceMesh::Face f = triangle_faces_[fid].face;
                 std::vector<int> ids;
@@ -782,9 +780,12 @@ namespace easy3d {
             SurfaceMesh::Vertex v = builder.add_vertex(points[p]);
             vertices.push_back(v);
         }
-        for (auto p : new_vertices) {
-            SurfaceMesh::Vertex v = builder.add_vertex(
-                    vec3(CGAL::to_double(p[0]), CGAL::to_double(p[1]), CGAL::to_double(p[2])));
+        for (const auto& p : new_vertices) {
+            SurfaceMesh::Vertex v = builder.add_vertex({
+                    static_cast<float>(CGAL::to_double(p[0])),
+                    static_cast<float>(CGAL::to_double(p[1])),
+                    static_cast<float>(CGAL::to_double(p[2]))
+            });
             vertices.push_back(v);
         }
 

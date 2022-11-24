@@ -88,16 +88,17 @@ namespace easy3d {
 
 
 	float ManipulatedFrame::deltaWithPrevPos(int x, int y, int dx, int dy, Camera *const camera) const {
-		float delta_x = float(dx) / camera->screenWidth();
-		float delta_y = float(dy) / camera->screenHeight();
+        (void)x, (void)y;
+		const float delta_x = static_cast<float>(dx) / static_cast<float>(camera->screenWidth());
+        const float delta_y = static_cast<float>(dy) / static_cast<float>(camera->screenHeight());
 
-		float value = fabs(delta_x) > fabs(delta_y) ? delta_x : delta_y;
+        const float value = std::fabs(delta_x) > std::fabs(delta_y) ? delta_x : delta_y;
 		return value * zoomSensitivity();
 	}
 
 	float ManipulatedFrame::wheelDelta(int wheel_dy) const {
-		static const float WHEEL_SENSITIVITY_COEF = 0.1f;
-		return wheel_dy * wheelSensitivity() * WHEEL_SENSITIVITY_COEF;
+		static const float WHEEL_SENSITIVITY_COEFF = 0.1f;
+		return static_cast<float>(wheel_dy) * wheelSensitivity() * WHEEL_SENSITIVITY_COEFF;
 	}
 
 
@@ -135,10 +136,10 @@ namespace easy3d {
 
 		quat rot;
 		if (axis == NONE) {	// free rotation
-            const float pre_x = float(x - dx);
-            const float pre_y = float(y - dy);
+            const auto pre_x = static_cast<float>(x - dx);
+            const auto pre_y = static_cast<float>(y - dy);
 			// The incremental rotation defined in the ManipulatedFrame coordinate system.
-			rot = deformedBallQuaternion(x, y, pre_x, pre_y, trans[0], trans[1], w, h);
+			rot = deformedBallQuaternion(x, y, static_cast<int>(pre_x), static_cast<int>(pre_y), trans[0], trans[1], w, h);
 		}
 		else {
 #if 0 // old implementation (should work)
@@ -151,20 +152,20 @@ namespace easy3d {
             rotate(rot);
 #else // new implementation
             if (axis == ORTHOGONAL) {
-                const float pre_x = float(x - dx);
-                const float pre_y = float(y - dy);
-                const float prev_angle = atan2(pre_y - trans[1], pre_x - trans[0]);
-                const float angle = atan2(y - trans[1], x - trans[0]);
+                const auto pre_x = static_cast<float>(x - dx);
+                const auto pre_y = static_cast<float>(y - dy);
+                const float prev_angle = std::atan2(pre_y - trans[1], pre_x - trans[0]);
+                const float angle = std::atan2(static_cast<float>(y) - trans[1], static_cast<float>(x) - trans[0]);
                 // The incremental rotation defined in the ManipulatedCameraFrame's coordinate system.
                 rot = quat(vec3(0.0, 0.0, 1.0), angle - prev_angle);
             } else if (axis == VERTICAL) {
-                const float pre_x = float(x - dx);
-                const float pre_y = float(y);    // restricts the movement to be horizontal (so purl vertical rotation)
-                rot = deformedBallQuaternion(x, y, pre_x, pre_y, trans.x, trans.y, w, h);
+                const auto pre_x = static_cast<float>(x - dx);
+                const auto pre_y = static_cast<float>(y);    // restricts the movement to be horizontal (so purl vertical rotation)
+                rot = deformedBallQuaternion(x, y, static_cast<int>(pre_x), static_cast<int>(pre_y), trans.x, trans.y, w, h);
             } else if (axis == HORIZONTAL) {
-                const float pre_x = float(x);    // restricts the movement to be vertical (so purl horizontal rotation)
-                const float pre_y = float(y - dy);
-                rot = deformedBallQuaternion(x, y, pre_x, pre_y, trans.x, trans.y, w, h);
+                const auto pre_x = static_cast<float>(x);    // restricts the movement to be vertical (so purl horizontal rotation)
+                const auto pre_y = static_cast<float>(y - dy);
+                rot = deformedBallQuaternion(x, y, static_cast<int>(pre_x), static_cast<int>(pre_y), trans.x, trans.y, w, h);
             }
 #endif
 		}
@@ -189,14 +190,14 @@ namespace easy3d {
 			switch (camera->type()) {
 				case Camera::PERSPECTIVE:
 					trans *= 2.0f * tan(camera->fieldOfView() / 2.0f) *
-							 fabs((camera->frame()->coordinatesOf(position())).z) /
-							 camera->screenHeight();
+							 std::fabs((camera->frame()->coordinatesOf(position())).z) /
+                            static_cast<float>(camera->screenHeight());
 					break;
 				case Camera::ORTHOGRAPHIC: {
 					float w, h;
 					camera->getOrthoWidthHeight(w, h);
-					trans[0] *= 2.0f * w / camera->screenWidth();
-					trans[1] *= 2.0f * h / camera->screenHeight();
+					trans[0] *= 2.0f * w / static_cast<float>(camera->screenWidth());
+					trans[1] *= 2.0f * h / static_cast<float>(camera->screenHeight());
 					break;
 				}
 			}
@@ -225,14 +226,13 @@ namespace easy3d {
 			case Camera::ORTHOGRAPHIC: {
 				float w, h;
 				camera->getOrthoWidthHeight(w, h);
-				trans[0] *= 2.0f * float(w) / camera->screenWidth();
-				trans[1] *= 2.0f * float(h) / camera->screenHeight();
+				trans[0] *= 2.0f * w / static_cast<float>(camera->screenWidth());
+				trans[1] *= 2.0f * h / static_cast<float>(camera->screenHeight());
 				break;
-			}
+			    }
 			}
 			// Transform to world coordinate system.
-			trans =
-				camera->frame()->orientation().rotate(translationSensitivity() * trans);
+			trans = camera->frame()->orientation().rotate(translationSensitivity() * trans);
 			// And then down to frame
 			if (referenceFrame())
 				trans = referenceFrame()->transformOf(trans);
@@ -281,12 +281,12 @@ namespace easy3d {
 #ifndef DOXYGEN
 	/*! Returns a quaternion computed according to the mouse motion. Mouse positions
 	are projected on a deformed ball, centered on (\p cx,\p cy). */
-	quat ManipulatedFrame::deformedBallQuaternion(int x, int y, int pre_x, int pre_y, float cx, float cy, int w, int h) {
+	quat ManipulatedFrame::deformedBallQuaternion(int x, int y, int pre_x, int pre_y, float cx, float cy, int w, int h) const {
 		// Points on the deformed ball
-		float px = rotationSensitivity() * (pre_x - cx) / w;
-		float py = rotationSensitivity() * (cy - pre_y) / h;
-		float dx = rotationSensitivity() * (x - cx) / w;
-		float dy = rotationSensitivity() * (cy - y) / h;
+		float px = rotationSensitivity() * (static_cast<float>(pre_x) - cx) / static_cast<float>(w);
+		float py = rotationSensitivity() * (cy - static_cast<float>(pre_y)) / static_cast<float>(h);
+		float dx = rotationSensitivity() * (static_cast<float>(x) - cx) / static_cast<float>(w);
+		float dy = rotationSensitivity() * (cy - static_cast<float>(y)) / static_cast<float>(h);
 
 		const vec3 p1(px, py, projectOnBall(px, py));
 		const vec3 p2(dx, dy, projectOnBall(dx, dy));

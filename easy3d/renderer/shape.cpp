@@ -54,14 +54,14 @@ namespace easy3d {
             }
 
             const float x0 = rect.x_min();
-            const float y0 = height - rect.y_max() - 1;
+            const float y0 = static_cast<float>(height) - rect.y_max() - 1;
             const float w = rect.width();
             const float h = rect.height();
 
-            const float min_x = 2.0f * x0 / width - 1.0f;
-            const float min_y = 2.0f * y0 / height - 1.0f;
-            const float max_x = 2.0f * (x0 + w) / width - 1.0f;
-            const float max_y = 2.0f * (y0 + h) / height - 1.0f;
+            const float min_x = 2.0f * x0 / static_cast<float>(width) - 1.0f;
+            const float min_y = 2.0f * y0 / static_cast<float>(height) - 1.0f;
+            const float max_x = 2.0f * (x0 + w) / static_cast<float>(width) - 1.0f;
+            const float max_y = 2.0f * (y0 + h) / static_cast<float>(height) - 1.0f;
 
             const std::vector<vec2> points = {
                     vec2(min_x, min_y),
@@ -71,17 +71,17 @@ namespace easy3d {
             };
 
             unsigned int vertex_buffer = 0;
-            VertexArrayObject vao; easy3d_debug_log_gl_error;
+            VertexArrayObject vao; easy3d_debug_log_gl_error
             vao.create_array_buffer(vertex_buffer, ShaderProgram::POSITION, points.data(), points.size() * sizeof(vec2),
-                                    2, true); easy3d_debug_log_gl_error;
+                                    2, true); easy3d_debug_log_gl_error
 
-            program->bind();    easy3d_debug_log_gl_error;
-            program->set_uniform("screen_color", color); easy3d_debug_log_gl_error;
+            program->bind();    easy3d_debug_log_gl_error
+            program->set_uniform("screen_color", color); easy3d_debug_log_gl_error
             program->set_uniform("depth", depth);
-            vao.bind(); easy3d_debug_log_gl_error;
-            glDrawArrays(GL_LINE_LOOP, 0, points.size());     easy3d_debug_log_gl_error;
-            vao.release();  easy3d_debug_log_gl_error;
-            program->release();     easy3d_debug_log_gl_error;
+            vao.bind(); easy3d_debug_log_gl_error
+            glDrawArrays(GL_LINE_LOOP, 0, static_cast<int>(points.size()));     easy3d_debug_log_gl_error
+            vao.release();  easy3d_debug_log_gl_error
+            program->release();     easy3d_debug_log_gl_error
 
             VertexArrayObject::release_buffer(vertex_buffer);
         }
@@ -102,14 +102,14 @@ namespace easy3d {
             }
 
             const float x0 = rect.x_min();
-            const float y0 = height - rect.y_max() - 1;
+            const float y0 = static_cast<float>(height) - rect.y_max() - 1;
             const float w = rect.width();
             const float h = rect.height();
 
-            const float min_x = 2.0f * x0 / width - 1.0f;
-            const float min_y = 2.0f * y0 / height - 1.0f;
-            const float max_x = 2.0f * (x0 + w) / width - 1.0f;
-            const float max_y = 2.0f * (y0 + h) / height - 1.0f;
+            const float min_x = 2.0f * x0 / static_cast<float>(width) - 1.0f;
+            const float min_y = 2.0f * y0 / static_cast<float>(height) - 1.0f;
+            const float max_x = 2.0f * (x0 + w) / static_cast<float>(width) - 1.0f;
+            const float max_y = 2.0f * (y0 + h) / static_cast<float>(height) - 1.0f;
 
             const std::vector<vec2> points = {
                     vec2(min_x, min_y),
@@ -120,21 +120,21 @@ namespace easy3d {
             const std::vector<unsigned int> indices = {0, 1, 2, 0, 2, 3};
 
             unsigned int vertex_buffer = 0, element_buffer = 0;
-            VertexArrayObject vao; easy3d_debug_log_gl_error;
+            VertexArrayObject vao; easy3d_debug_log_gl_error
             vao.create_array_buffer(vertex_buffer, ShaderProgram::POSITION, points.data(), points.size() * sizeof(vec2),
-                                    2, true);    easy3d_debug_log_gl_error;
+                                    2, true);    easy3d_debug_log_gl_error
             vao.create_element_buffer(element_buffer, indices.data(), indices.size() * sizeof(unsigned int),
-                                      true);    easy3d_debug_log_gl_error;
+                                      true);    easy3d_debug_log_gl_error
 
-            program->bind();      easy3d_debug_log_gl_error;
-            program->set_uniform("screen_color", color); easy3d_debug_log_gl_error;
+            program->bind();      easy3d_debug_log_gl_error
+            program->set_uniform("screen_color", color); easy3d_debug_log_gl_error
             program->set_uniform("depth", depth);
-            vao.bind(); easy3d_debug_log_gl_error;
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);    easy3d_debug_log_gl_error;
-            glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, nullptr);     easy3d_debug_log_gl_error;
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);    easy3d_debug_log_gl_error;
-            vao.release();   easy3d_debug_log_gl_error;
-            program->release();     easy3d_debug_log_gl_error;
+            vao.bind(); easy3d_debug_log_gl_error
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);    easy3d_debug_log_gl_error
+            glDrawElements(GL_TRIANGLES, static_cast<int>(indices.size()), GL_UNSIGNED_INT, nullptr);     easy3d_debug_log_gl_error
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);    easy3d_debug_log_gl_error
+            vao.release();   easy3d_debug_log_gl_error
+            program->release();     easy3d_debug_log_gl_error
 
             VertexArrayObject::release_buffer(vertex_buffer);
             VertexArrayObject::release_buffer(element_buffer);
@@ -157,14 +157,14 @@ namespace easy3d {
             }
 
             const float x0 = rect.x_min();
-            const float y0 = height - rect.y_max() - 1;
+            const float y0 = static_cast<float>(height) - rect.y_max() - 1;
             const float w = rect.width();
             const float h = rect.height();
 
-            const float min_x = 2.0f * x0 / width - 1.0f;
-            const float min_y = 2.0f * y0 / height - 1.0f;
-            const float max_x = 2.0f * (x0 + w) / width - 1.0f;
-            const float max_y = 2.0f * (y0 + h) / height - 1.0f;
+            const float min_x = 2.0f * x0 / static_cast<float>(width) - 1.0f;
+            const float min_y = 2.0f * y0 / static_cast<float>(height) - 1.0f;
+            const float max_x = 2.0f * (x0 + w) / static_cast<float>(width) - 1.0f;
+            const float max_y = 2.0f * (y0 + h) / static_cast<float>(height) - 1.0f;
 
             const std::vector<vec2> points = {
                     vec2(min_x, min_y),
@@ -183,24 +183,24 @@ namespace easy3d {
             static const std::vector<unsigned int> indices = {0, 1, 2, 0, 2, 3};
 
             unsigned int vertex_buffer = 0, texcoord_buffer = 0, element_buffer = 0;
-            VertexArrayObject vao; easy3d_debug_log_gl_error;
+            VertexArrayObject vao; easy3d_debug_log_gl_error
             vao.create_array_buffer(vertex_buffer, ShaderProgram::POSITION, points.data(), points.size() * sizeof(vec2),
-                                    2, true);    easy3d_debug_log_gl_error;
+                                    2, true);    easy3d_debug_log_gl_error
             vao.create_array_buffer(texcoord_buffer, ShaderProgram::TEXCOORD, texcoords.data(),
-                                    texcoords.size() * sizeof(vec2), 2, true);    easy3d_debug_log_gl_error;
+                                    texcoords.size() * sizeof(vec2), 2, true);    easy3d_debug_log_gl_error
             vao.create_element_buffer(element_buffer, indices.data(), indices.size() * sizeof(unsigned int),
-                                      true);    easy3d_debug_log_gl_error;
+                                      true);    easy3d_debug_log_gl_error
 
-            program->bind();      easy3d_debug_log_gl_error;
+            program->bind();      easy3d_debug_log_gl_error
             program->set_uniform("depth", depth);
             program->bind_texture("textureID", texture, 0);
-            vao.bind(); easy3d_debug_log_gl_error;
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);    easy3d_debug_log_gl_error;
-            glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, nullptr);     easy3d_debug_log_gl_error;
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);    easy3d_debug_log_gl_error;
+            vao.bind(); easy3d_debug_log_gl_error
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);    easy3d_debug_log_gl_error
+            glDrawElements(GL_TRIANGLES, static_cast<int>(indices.size()), GL_UNSIGNED_INT, nullptr);     easy3d_debug_log_gl_error
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);    easy3d_debug_log_gl_error
             program->release_texture();
-            vao.release();   easy3d_debug_log_gl_error;
-            program->release();     easy3d_debug_log_gl_error;
+            vao.release();   easy3d_debug_log_gl_error
+            program->release();     easy3d_debug_log_gl_error
 
             VertexArrayObject::release_buffer(vertex_buffer);
             VertexArrayObject::release_buffer(texcoord_buffer);
@@ -241,24 +241,24 @@ namespace easy3d {
             static const std::vector<unsigned int> indices = {0, 1, 2, 0, 2, 3};
 
             unsigned int vertex_buffer = 0, texcoord_buffer = 0, element_buffer = 0;
-            VertexArrayObject vao; easy3d_debug_log_gl_error;
+            VertexArrayObject vao; easy3d_debug_log_gl_error
             vao.create_array_buffer(vertex_buffer, ShaderProgram::POSITION, points.data(), points.size() * sizeof(vec2),
-                                    2, true);    easy3d_debug_log_gl_error;
+                                    2, true);    easy3d_debug_log_gl_error
             vao.create_array_buffer(texcoord_buffer, ShaderProgram::TEXCOORD, texcoords.data(),
-                                    texcoords.size() * sizeof(vec2), 2, true);    easy3d_debug_log_gl_error;
+                                    texcoords.size() * sizeof(vec2), 2, true);    easy3d_debug_log_gl_error
             vao.create_element_buffer(element_buffer, indices.data(), indices.size() * sizeof(unsigned int),
-                                      true);    easy3d_debug_log_gl_error;
+                                      true);    easy3d_debug_log_gl_error
 
-            program->bind();      easy3d_debug_log_gl_error;
+            program->bind();      easy3d_debug_log_gl_error
             program->set_uniform("depth", depth);
             program->bind_texture("textureID", texture, 0);
-            vao.bind(); easy3d_debug_log_gl_error;
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);    easy3d_debug_log_gl_error;
-            glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, nullptr);     easy3d_debug_log_gl_error;
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);    easy3d_debug_log_gl_error;
+            vao.bind(); easy3d_debug_log_gl_error
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);    easy3d_debug_log_gl_error
+            glDrawElements(GL_TRIANGLES, static_cast<int>(indices.size()), GL_UNSIGNED_INT, nullptr);     easy3d_debug_log_gl_error
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);    easy3d_debug_log_gl_error
             program->release_texture();
-            vao.release();   easy3d_debug_log_gl_error;
-            program->release();     easy3d_debug_log_gl_error;
+            vao.release();   easy3d_debug_log_gl_error
+            program->release();     easy3d_debug_log_gl_error
 
             VertexArrayObject::release_buffer(vertex_buffer);
             VertexArrayObject::release_buffer(texcoord_buffer);
@@ -282,14 +282,14 @@ namespace easy3d {
             }
 
             const float x0 = rect.x_min();
-            const float y0 = height - rect.y_max() - 1;
+            const float y0 = static_cast<float>(height) - rect.y_max() - 1;
             const float w = rect.width();
             const float h = rect.height();
 
-            const float min_x = 2.0f * x0 / width - 1.0f;
-            const float min_y = 2.0f * y0 / height - 1.0f;
-            const float max_x = 2.0f * (x0 + w) / width - 1.0f;
-            const float max_y = 2.0f * (y0 + h) / height - 1.0f;
+            const float min_x = 2.0f * x0 / static_cast<float>(width) - 1.0f;
+            const float min_y = 2.0f * y0 / static_cast<float>(height) - 1.0f;
+            const float max_x = 2.0f * (x0 + w) / static_cast<float>(width) - 1.0f;
+            const float max_y = 2.0f * (y0 + h) / static_cast<float>(height) - 1.0f;
 
             const std::vector<vec2> points = {
                     vec2(min_x, min_y),
@@ -308,24 +308,24 @@ namespace easy3d {
             static const std::vector<unsigned int> indices = {0, 1, 2, 0, 2, 3};
 
             unsigned int vertex_buffer = 0, texcoord_buffer = 0, element_buffer = 0;
-            VertexArrayObject vao; easy3d_debug_log_gl_error;
+            VertexArrayObject vao; easy3d_debug_log_gl_error
             vao.create_array_buffer(vertex_buffer, ShaderProgram::POSITION, points.data(), points.size() * sizeof(vec2),
-                                    2, true);    easy3d_debug_log_gl_error;
+                                    2, true);    easy3d_debug_log_gl_error
             vao.create_array_buffer(texcoord_buffer, ShaderProgram::TEXCOORD, texcoords.data(),
-                                    texcoords.size() * sizeof(vec2), 2, true);    easy3d_debug_log_gl_error;
+                                    texcoords.size() * sizeof(vec2), 2, true);    easy3d_debug_log_gl_error
             vao.create_element_buffer(element_buffer, indices.data(), indices.size() * sizeof(unsigned int),
-                                      true);    easy3d_debug_log_gl_error;
+                                      true);    easy3d_debug_log_gl_error
 
-            program->bind();      easy3d_debug_log_gl_error;
+            program->bind();      easy3d_debug_log_gl_error
             program->set_uniform("depth", depth);
             program->bind_texture("textureID", texture, 0);
-            vao.bind(); easy3d_debug_log_gl_error;
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);    easy3d_debug_log_gl_error;
-            glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, nullptr);     easy3d_debug_log_gl_error;
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);    easy3d_debug_log_gl_error;
+            vao.bind(); easy3d_debug_log_gl_error
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);    easy3d_debug_log_gl_error
+            glDrawElements(GL_TRIANGLES, static_cast<int>(indices.size()), GL_UNSIGNED_INT, nullptr);     easy3d_debug_log_gl_error
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);    easy3d_debug_log_gl_error
             program->release_texture();
-            vao.release();   easy3d_debug_log_gl_error;
-            program->release();     easy3d_debug_log_gl_error;
+            vao.release();   easy3d_debug_log_gl_error
+            program->release();     easy3d_debug_log_gl_error
 
             VertexArrayObject::release_buffer(vertex_buffer);
             VertexArrayObject::release_buffer(texcoord_buffer);
@@ -337,14 +337,14 @@ namespace easy3d {
                        int vpw, int vph, float depth)
        {
                 // vertex positions in NDC (Normalized Device Coordinates)
-                // I assume viewportX = 0 and viewportY = 0.  Otherwise use the following equation to
+                // I assume viewportX = 0 and viewportY = 0. Otherwise, use the following equation to
                 // convert from screen coordinates to NDC.
                 //Xndc = 2.0f * (x - viewportX) / vpw - 1.0f;
                 //Yndc = 2.0f * (y - viewportY) / vph - 1.0f;
-                const float min_x = 2.0f * x / vpw - 1.0f;
-                const float min_y = 2.0f * y / vph - 1.0f;
-                const float max_x = 2.0f * (x + w) / vpw - 1.0f;
-                const float max_y = 2.0f * (y + h) / vph - 1.0f;
+                const float min_x = 2.0f * static_cast<float>(x) / static_cast<float>(vpw) - 1.0f;
+                const float min_y = 2.0f * static_cast<float>(y) / static_cast<float>(vph) - 1.0f;
+                const float max_x = 2.0f * static_cast<float>(x + w) / static_cast<float>(vpw) - 1.0f;
+                const float max_y = 2.0f * static_cast<float>(y + h) / static_cast<float>(vph) - 1.0f;
 
                 const float max_yTexCoord = (h == 0) ? 0.0f : 1.0f;
 
@@ -372,27 +372,27 @@ namespace easy3d {
             glBindBuffer(GL_ARRAY_BUFFER, vbo_positions);
             glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 12, positions, GL_STATIC_DRAW);
             glEnableVertexAttribArray(positionAttrib);
-            glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
+            glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
             GLuint vbo_texcoords = 0;
             glGenBuffers(1, &vbo_texcoords);
             glBindBuffer(GL_ARRAY_BUFFER, vbo_texcoords);
             glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 8, texcoords, GL_STATIC_DRAW);
             glEnableVertexAttribArray(texcoordAttrib);
-            glVertexAttribPointer(texcoordAttrib, 2, GL_FLOAT, GL_FALSE, 0, 0);
+            glVertexAttribPointer(texcoordAttrib, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
 
             glBindBuffer(GL_ARRAY_BUFFER, 0);
             glBindVertexArray(0);
 
            // draw
 
-            glBindVertexArray(vao_handle);  easy3d_debug_log_gl_error;
-            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);  easy3d_debug_log_gl_error;
+            glBindVertexArray(vao_handle);  easy3d_debug_log_gl_error
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);  easy3d_debug_log_gl_error
             glBindVertexArray(0);
 
-           glDeleteBuffers(1, &vbo_positions);     easy3d_debug_log_gl_error;
-           glDeleteBuffers(1, &vbo_texcoords);     easy3d_debug_log_gl_error;
-           glDeleteVertexArrays(1, &vao_handle);   easy3d_debug_log_gl_error;
+           glDeleteBuffers(1, &vbo_positions);     easy3d_debug_log_gl_error
+           glDeleteBuffers(1, &vbo_texcoords);     easy3d_debug_log_gl_error
+           glDeleteVertexArrays(1, &vao_handle);   easy3d_debug_log_gl_error
         }
 
 
@@ -424,27 +424,27 @@ namespace easy3d {
             glBindBuffer(GL_ARRAY_BUFFER, vbo_positions);
             glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 12, positions, GL_STATIC_DRAW);
             glEnableVertexAttribArray(positionAttrib);
-            glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
+            glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
             GLuint vbo_texcoords = 0;
             glGenBuffers(1, &vbo_texcoords);
             glBindBuffer(GL_ARRAY_BUFFER, vbo_texcoords);
             glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 8, texcoords, GL_STATIC_DRAW);
             glEnableVertexAttribArray(texcoordAttrib);
-            glVertexAttribPointer(texcoordAttrib, 2, GL_FLOAT, GL_FALSE, 0, 0);
+            glVertexAttribPointer(texcoordAttrib, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
 
             glBindBuffer(GL_ARRAY_BUFFER, 0);
             glBindVertexArray(0);
 
             // draw
 
-            glBindVertexArray(vao_handle);  easy3d_debug_log_gl_error;
-            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);  easy3d_debug_log_gl_error;
+            glBindVertexArray(vao_handle);  easy3d_debug_log_gl_error
+            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);  easy3d_debug_log_gl_error
             glBindVertexArray(0);
 
-            glDeleteBuffers(1, &vbo_positions);     easy3d_debug_log_gl_error;
-            glDeleteBuffers(1, &vbo_texcoords);     easy3d_debug_log_gl_error;
-            glDeleteVertexArrays(1, &vao_handle);   easy3d_debug_log_gl_error;
+            glDeleteBuffers(1, &vbo_positions);     easy3d_debug_log_gl_error
+            glDeleteBuffers(1, &vbo_texcoords);     easy3d_debug_log_gl_error
+            glDeleteVertexArrays(1, &vao_handle);   easy3d_debug_log_gl_error
         }
 
 
@@ -468,22 +468,22 @@ namespace easy3d {
                 const auto &p = polygon[i];
                 // to use the screen space shaders, I need to convert the point coordinates into the NDC space.
                 // also have to follow the OpenGL coordinates rule.
-                points[i].x = {2.0f * p.x / width - 1.0f};
-                points[i].y = {2.0f * (height - p.y - 1) / height - 1.0f};
+                points[i].x = {2.0f * p.x / static_cast<float>(width) - 1.0f};
+                points[i].y = {2.0f * (static_cast<float>(height) - p.y - 1) / static_cast<float>(height) - 1.0f};
             }
 
             unsigned int vertex_buffer = 0;
-            VertexArrayObject vao; easy3d_debug_log_gl_error;
+            VertexArrayObject vao; easy3d_debug_log_gl_error
             vao.create_array_buffer(vertex_buffer, ShaderProgram::POSITION, points.data(), points.size() * sizeof(vec2),
-                                    2, true); easy3d_debug_log_gl_error;
+                                    2, true); easy3d_debug_log_gl_error
 
-            program->bind();    easy3d_debug_log_gl_error;
-            program->set_uniform("screen_color", color); easy3d_debug_log_gl_error;
+            program->bind();    easy3d_debug_log_gl_error
+            program->set_uniform("screen_color", color); easy3d_debug_log_gl_error
             program->set_uniform("depth", depth);
-            vao.bind(); easy3d_debug_log_gl_error;
-            glDrawArrays(GL_LINE_LOOP, 0, points.size());     easy3d_debug_log_gl_error;
-            vao.release();  easy3d_debug_log_gl_error;
-            program->release();     easy3d_debug_log_gl_error;
+            vao.bind(); easy3d_debug_log_gl_error
+            glDrawArrays(GL_LINE_LOOP, 0, static_cast<int>(points.size()));     easy3d_debug_log_gl_error
+            vao.release();  easy3d_debug_log_gl_error
+            program->release();     easy3d_debug_log_gl_error
 
             VertexArrayObject::release_buffer(vertex_buffer);
         }
@@ -512,8 +512,8 @@ namespace easy3d {
                 const auto &p = polygon[i];
                 // to use the screen space shaders, I need to convert the point coordinates into the NDC space.
                 // also have to follow the OpenGL coordinates rule.
-                float x = {2.0f * p.x / width - 1.0f};
-                float y = {2.0f * (height - p.y - 1) / height - 1.0f};
+                float x = {2.0f * p.x / static_cast<float>(width) - 1.0f};
+                float y = {2.0f * (static_cast<float>(height) - p.y - 1) / static_cast<float>(height) - 1.0f};
                 tess.add_vertex(vec3(x, y, 0));
             }
             tess.end_contour();
@@ -529,21 +529,21 @@ namespace easy3d {
                 elements.insert(elements.end(), array.begin(), array.end());
 
             unsigned int vertex_buffer = 0, element_buffer = 0;
-            VertexArrayObject vao; easy3d_debug_log_gl_error;
+            VertexArrayObject vao; easy3d_debug_log_gl_error
             vao.create_array_buffer(vertex_buffer, ShaderProgram::POSITION, points.data(), points.size() * sizeof(vec2),
-                                    2, true);    easy3d_debug_log_gl_error;
+                                    2, true);    easy3d_debug_log_gl_error
             vao.create_element_buffer(element_buffer, elements.data(), elements.size() * sizeof(unsigned int),
-                                      true);easy3d_debug_log_gl_error;
+                                      true);easy3d_debug_log_gl_error
 
-            program->bind();      easy3d_debug_log_gl_error;
-            program->set_uniform("screen_color", color); easy3d_debug_log_gl_error;
+            program->bind();      easy3d_debug_log_gl_error
+            program->set_uniform("screen_color", color); easy3d_debug_log_gl_error
             program->set_uniform("depth", depth);
-            vao.bind(); easy3d_debug_log_gl_error;
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);    easy3d_debug_log_gl_error;
-            glDrawElements(GL_TRIANGLES, elements.size(), GL_UNSIGNED_INT, nullptr); easy3d_debug_log_gl_error;
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);    easy3d_debug_log_gl_error;
-            vao.release();   easy3d_debug_log_gl_error;
-            program->release();easy3d_debug_log_gl_error;
+            vao.bind(); easy3d_debug_log_gl_error
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);    easy3d_debug_log_gl_error
+            glDrawElements(GL_TRIANGLES, static_cast<int>(elements.size()), GL_UNSIGNED_INT, nullptr); easy3d_debug_log_gl_error
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);    easy3d_debug_log_gl_error
+            vao.release();   easy3d_debug_log_gl_error
+            program->release();easy3d_debug_log_gl_error
 
             VertexArrayObject::release_buffer(vertex_buffer);
             VertexArrayObject::release_buffer(element_buffer);
@@ -676,11 +676,11 @@ namespace easy3d {
 
         void create_grid(int x_steps, int y_steps, std::vector<vec3> &points, float depth, float scale) {
             // Horizontal lines
-            float x = scale * 0.5f * (x_steps - 1);
-            float y = -scale * 0.5f * (y_steps - 1);
+            float x = scale * 0.5f * static_cast<float>(x_steps - 1);
+            float y = -scale * 0.5f * static_cast<float>(y_steps - 1);
             for (int i = 0; i < y_steps; i++) {
-                points.push_back(vec3(-x, y, depth));
-                points.push_back(vec3(x, y, depth));
+                points.emplace_back(vec3(-x, y, depth));
+                points.emplace_back(vec3(x, y, depth));
                 y += scale;
             }
 
@@ -688,8 +688,8 @@ namespace easy3d {
             x = -scale * 0.5f * (float) (x_steps - 1);
             y = scale * 0.5f * (float) (y_steps - 1);
             for (int i = 0; i < x_steps; i++) {
-                points.push_back(vec3(x, -y, depth));
-                points.push_back(vec3(x, y, depth));
+                points.emplace_back(vec3(x, -y, depth));
+                points.emplace_back(vec3(x, y, depth));
                 x += scale;
             }
         }
@@ -751,10 +751,11 @@ namespace easy3d {
             indices.clear();
 
             // Compute vertex position of the body
-            const float step_theta = 2.f * M_PI / slices;
+            const auto step_theta = static_cast<float>(2.0 * M_PI / slices);
             for (int i = 0; i < slices; ++i) {
-                const float x = cosf(i * step_theta);
-                const float y = sinf(i * step_theta);
+                const float angle = static_cast<float>(i) * step_theta;
+                const float x = std::cosf(angle);
+                const float y = std::sinf(angle);
                 points.emplace_back(vec3(x, y, 0.f));
 
                 indices.push_back(i);
@@ -800,12 +801,12 @@ namespace easy3d {
                     // we generate triangle fans, but the renderer accept triangles only.
                     // so we collect vertices first, then we split the fan to triangles.
                     std::vector<vec3> fan;
-                    fan.push_back(vec3(static_cast<float>(x11), static_cast<float>(y11), static_cast<float>(z11)));
+                    fan.emplace_back(vec3(static_cast<float>(x11), static_cast<float>(y11), static_cast<float>(z11)));
                     if (v != 0)
-                        fan.push_back(vec3(static_cast<float>(x21), static_cast<float>(y21), static_cast<float>(z21)));
-                    fan.push_back(vec3(static_cast<float>(x22), static_cast<float>(y22), static_cast<float>(z22)));
+                        fan.emplace_back(vec3(static_cast<float>(x21), static_cast<float>(y21), static_cast<float>(z21)));
+                    fan.emplace_back(vec3(static_cast<float>(x22), static_cast<float>(y22), static_cast<float>(z22)));
                     if (v != stacks - 1)
-                        fan.push_back(vec3(static_cast<float>(x12), static_cast<float>(y12), static_cast<float>(z12)));
+                        fan.emplace_back(vec3(static_cast<float>(x12), static_cast<float>(y12), static_cast<float>(z12)));
 
                     int toggle = ((u / checker_size) ^ (v / checker_size)) & 1;
                     vec3 color = toggle ? color1 : color2;
@@ -946,20 +947,20 @@ namespace easy3d {
                                    sin(t * twopi / major_slices);
 
                         // Calculate surface normal
-                        double nx = x - major_radius * cos(t * twopi / major_slices);
+                        double nx = x - major_radius * std::cos(t * twopi / major_slices);
                         double ny = y;
-                        double nz = z - major_radius * sin(t * twopi / major_slices);
-                        vec3 n(nx, ny, nz);
+                        double nz = z - major_radius * std::sin(t * twopi / major_slices);
+                        vec3 n(static_cast<float>(nx), static_cast<float>(ny), static_cast<float>(nz));
                         n.normalize();
 
-                        tmp_pts.push_back(vec3(x, y, z));
+                        tmp_pts.emplace_back(vec3(static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)));
                         tmp_nms.push_back(n);
 
                         if (tmp_pts.size() <= 3) {
-                            points.push_back(vec3(x, y, z));
+                            points.emplace_back(vec3(static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)));
                             normals.push_back(n);
                         } else {
-                            points.push_back(vec3(x, y, z));
+                            points.emplace_back(vec3(static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)));
                             normals.push_back(n);
                             if (flip) {
                                 points.push_back(tmp_pts[tmp_pts.size() - 3]);
@@ -984,7 +985,7 @@ namespace easy3d {
         void create_camera(std::vector<vec3> &points, float width, float fov, float hw_ratio) {
             const float halfWidth = width * 0.5f;
             const float halfHeight = halfWidth * hw_ratio;
-            const float dist = halfHeight / tan(fov * 0.5);
+            const auto dist = static_cast<float>(halfHeight / std::tan(fov * 0.5));
 
             const float arrowHeight = 2.0f * halfHeight;
             const float baseHeight = 1.2f * halfHeight;
@@ -1051,7 +1052,7 @@ namespace easy3d {
                            float hw_ratio) {
             const float halfWidth = width * 0.5f;
             const float halfHeight = halfWidth * hw_ratio;
-            const float dist = halfHeight / tan(fov * 0.5);
+            const auto dist = static_cast<float>(halfHeight / std::tan(fov * 0.5));
 
             const float arrowHeight = 2.0f * halfHeight;
             const float baseHeight = 1.2f * halfHeight;

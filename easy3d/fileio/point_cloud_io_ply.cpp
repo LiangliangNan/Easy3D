@@ -58,16 +58,14 @@ namespace easy3d {
 			if (!reader.read(file_name, elements))
 				return false;
 
-            for (std::size_t i = 0; i < elements.size(); ++i) {
-                const Element& e = elements[i];
+            for (const auto& e : elements) {
                 if (e.name == "vertex") {
                     cloud->resize(static_cast<unsigned int>(e.num_instances));
                     break;
                 }
             }
 
-			for (std::size_t i = 0; i < elements.size(); ++i) {
-				const Element& e = elements[i];
+            for (const auto& e : elements) {
                 if (e.name == "vertex") {
                     internal::add_properties<vec3>(cloud, e.vec3_properties);
                     internal::add_properties<vec2>(cloud, e.vec2_properties);
@@ -105,9 +103,9 @@ namespace easy3d {
                 const dvec3 &origin = Translator::instance()->translation();
                 auto& points = cloud->get_vertex_property<vec3>("v:point").vector();
                 for (auto& p: points) {
-                    p.x -= origin.x;
-                    p.y -= origin.y;
-                    p.z -= origin.z;
+                    p.x -= static_cast<float>(origin.x);
+                    p.y -= static_cast<float>(origin.y);
+                    p.z -= static_cast<float>(origin.z);
                 }
 
                 auto trans = cloud->add_model_property<dvec3>("translation", dvec3(0, 0, 0));
@@ -159,9 +157,9 @@ namespace easy3d {
                 for (auto& prop : element_vertex.vec3_properties) {
                     if (prop.name == "point") {
                         for (auto& v : prop) {
-                            v.x += origin.x;
-                            v.y += origin.y;
-                            v.z += origin.z;
+                            v.x += static_cast<float>(origin.x);
+                            v.y += static_cast<float>(origin.y);
+                            v.z += static_cast<float>(origin.z);
                         }
                     }
                 }
@@ -173,8 +171,7 @@ namespace easy3d {
             binary = binary && (file_name.find("ascii") == std::string::npos);
             LOG_IF(!binary, WARNING) << "you're writing an ASCII ply file. Use binary format for better performance";
 
-            PlyWriter writer;
-            return writer.write(file_name, elements, "", binary);
+            return PlyWriter::write(file_name, elements, "", binary);
 		}
 
 

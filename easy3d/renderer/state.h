@@ -77,12 +77,12 @@ namespace easy3d {
          * Material definition.
          */
         struct Material {
-            Material();
-            Material(const vec3 &ambi, const vec3 &spec, float shin);
+            Material() = default;
+            Material(const vec4 &ambi, const vec4 &spec, float shin);
 
-            vec3 ambient;
+            vec4 ambient;
             //vec3    diffuse; // we have per face/point/line color!
-            vec3 specular;
+            vec4 specular;
             float shininess;   // specular power
         };
 
@@ -92,7 +92,7 @@ namespace easy3d {
         /// assign \c rhs to \c *this. performs a deep copy of all member variables.
         State& operator=(const State& rhs);
 
-        virtual ~State() {}
+        virtual ~State() = default;
 
         bool is_visible() const { return visible_; }
         void set_visible(bool v) { visible_ = v; }

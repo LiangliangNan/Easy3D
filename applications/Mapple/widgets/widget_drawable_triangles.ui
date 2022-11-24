@@ -861,7 +861,7 @@
          </property>
          <property name="toolTip">
           <string>Adjust the length of the vectors.
-The scale is relative to the average edge lenght of the model.</string>
+The scale is relative to the average edge length of the model.</string>
          </property>
          <property name="decimals">
           <number>1</number>
@@ -929,7 +929,7 @@ The scale is relative to the average edge lenght of the model.</string>
           </size>
          </property>
          <property name="toolTip">
-          <string>The lower bound of the triange range to be highlighted.</string>
+          <string>The lower bound of the triangle range to be highlighted.</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
@@ -960,7 +960,7 @@ The scale is relative to the average edge lenght of the model.</string>
           </size>
          </property>
          <property name="toolTip">
-          <string>The upper bound of the triange range to be highlighted.</string>
+          <string>The upper bound of the triangle range to be highlighted.</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>

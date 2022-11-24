@@ -37,11 +37,11 @@
 #include <3rd_party/ransac/SpherePrimitiveShapeConstructor.h>
 #include <3rd_party/ransac/ConePrimitiveShapeConstructor.h>
 #include <3rd_party/ransac/TorusPrimitiveShapeConstructor.h>
-#include <3rd_party/ransac/PlanePrimitiveShape.h>
-#include <3rd_party/ransac/SpherePrimitiveShape.h>
-#include <3rd_party/ransac/CylinderPrimitiveShape.h>
-#include <3rd_party/ransac/ConePrimitiveShape.h>
-#include <3rd_party/ransac/TorusPrimitiveShape.h>
+//#include <3rd_party/ransac/PlanePrimitiveShape.h>
+//#include <3rd_party/ransac/SpherePrimitiveShape.h>
+//#include <3rd_party/ransac/CylinderPrimitiveShape.h>
+//#include <3rd_party/ransac/ConePrimitiveShape.h>
+//#include <3rd_party/ransac/TorusPrimitiveShape.h>
 
 //OMG, there is class with exactly the same name in RANSAC!!!
 typedef ::PointCloud PointCloud_Ransac;
@@ -84,7 +84,7 @@ namespace easy3d {
             RansacShapeDetector detector(ransacOptions); // the detector object
 
             // set which primitives are to be detected by adding the respective constructors
-            std::set<PrimitivesRansac::PrimType>::const_iterator it = types.begin();
+            auto it = types.begin();
             for (; it != types.end(); ++it) {
                 switch (*it) {
                     case PrimitivesRansac::PLANE:
@@ -282,7 +282,7 @@ namespace easy3d {
 
     int PrimitivesRansac::detect(
             PointCloud *cloud,
-            const std::vector<int> &vertitces,
+            const std::vector<int> &vertices,
             unsigned int min_support /* = 1000 */,
             float dist_thresh /* = 0.005 */,
             float bitmap_reso /* = 0.02 */,
@@ -311,13 +311,13 @@ namespace easy3d {
 
         // prepare the data
         PointCloud_Ransac pc;
-        pc.resize(vertitces.size());
+        pc.resize(vertices.size());
 
         const std::vector<vec3> &nms = normals.vector();
         const std::vector<vec3> &pts = cloud->points();
 #pragma omp parallel for
-        for (int index = 0; index < vertitces.size(); ++index) {
-            std::size_t idx = vertitces[index];
+        for (int index = 0; index < vertices.size(); ++index) {
+            std::size_t idx = vertices[index];
             const vec3 &p = pts[idx];
             const vec3 &n = nms[idx];
             pc[index] = Point(

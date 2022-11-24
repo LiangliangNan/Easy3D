@@ -50,12 +50,8 @@ DialogSurfaceMeshFairing::DialogSurfaceMeshFairing(MainWindow *window)
 }
 
 
-DialogSurfaceMeshFairing::~DialogSurfaceMeshFairing() {
-}
-
-
 void DialogSurfaceMeshFairing::apply() {
-    SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
+    auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
     if (!mesh)
         return;
 

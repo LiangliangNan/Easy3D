@@ -43,10 +43,7 @@ bool reconstruction(Viewer* viewer, Model* model) {
     if (!viewer || !model)
         return false;
 
-    PointCloud *cloud = dynamic_cast<PointCloud *>(model);
-    if (!cloud)
-        return false;
-
+    auto cloud = dynamic_cast<PointCloud *>(model);
     auto normals = cloud->get_vertex_property<vec3>("v:normal");
     if (!normals) {
         std::cerr << "Poisson surface reconstruction method requires normal information."

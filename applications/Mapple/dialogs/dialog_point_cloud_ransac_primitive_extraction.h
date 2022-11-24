@@ -39,7 +39,7 @@ class DialogPointCloudRansacPrimitiveExtraction : public Dialog, public Ui::Dial
 
 public:
     explicit DialogPointCloudRansacPrimitiveExtraction(MainWindow *window);
-    ~DialogPointCloudRansacPrimitiveExtraction();
+    ~DialogPointCloudRansacPrimitiveExtraction() override = default;
 
     void setWorkOnSelectedPoints(bool b) { selected_only_ = b; }
 
@@ -57,4 +57,4 @@ private:
     double	default_overlook_probability_;
 };
 
-#endif // DIALOG_RANSAC_PRIMITIVE_EXTRACTION_H
+#endif // DIALOG_POINT_CLOUD_RANSAC_PRIMITIVE_EXTRACTION_H

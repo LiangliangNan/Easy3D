@@ -56,7 +56,7 @@ namespace easy3d {
      * \tparam T The scalar type for matrix elements.
      * \note: Matrices are stored internally as column-major unless MATRIX_ROW_MAJOR is defined.
      * \todo Add a transform() method or overload operator* so as to allow matrices to transform vectors that are
-     *	    M-1 in size, as vectors in	homogeneous space.
+     *	    M-1 in size, as vectors in homogeneous space.
      *
      * \class Mat easy3d/core/mat.h
      * \see Mat2, Mat3, and Mat4
@@ -72,7 +72,7 @@ namespace easy3d {
          * \note The matrix elements are intentionally not initialized. This is efficient
          *       if the user assigns their values from subsequent computations. Use Mat(T s)
          *       to initialize the elements during construction. */
-        Mat();
+        Mat() = default;
 
         /**	\brief Initialized with diagonal as s and others zeros. */
         explicit Mat(T s);
@@ -132,7 +132,7 @@ namespace easy3d {
         /**	\brief Set all elements 0 */
         void load_zero();
 
-        /**	\brief Set diagnal elements s and others 0 */
+        /**	\brief Set diagonal elements s and others 0 */
         void load_identity(T s = T(1));
 
         /**
@@ -159,10 +159,10 @@ namespace easy3d {
 
         //	------- matrix-matrix arithmetic operators --------
 
-        /**	\brief Equality test. Uses sml::equal(). */
+        /**	\brief Equality test. */
         bool operator==(const Mat<N, M, T> &rhs) const;
 
-        /**	I\brief nequality test. Uses sml::equal(). */
+        /**	\brief Inequality test. */
         bool operator!=(const Mat<N, M, T> &rhs) const;
 
         /**
@@ -447,11 +447,6 @@ namespace easy3d {
 
     /*----------------------------------------------------------------------------*/
     template <size_t N, size_t M, typename T>
-    inline Mat<N, M, T>::Mat() {
-    }
-
-    /*----------------------------------------------------------------------------*/
-    template <size_t N, size_t M, typename T>
     inline Mat<N, M, T>::Mat(T s) {
         for (size_t i = 0; i < N; ++i) {
             for (size_t j = 0; j < M; ++j)
@@ -691,7 +686,7 @@ namespace easy3d {
     /*----------------------------------------------------------------------------*/
     template <size_t N, size_t M, typename T>
     inline Vec<N, T> Mat<N, M, T>::operator*(const Vec<M, T> &rhs) const {
-        Vec<M, T> result;
+        Vec<N, T> result;
         for (size_t i = 0; i < N; ++i) {
             result[i] = 0;
             for (size_t j = 0; j < M; ++j) {
@@ -1121,7 +1116,7 @@ namespace easy3d {
     }
 
     /*----------------------------------------------------------------------------*/
-    /*	Adapted from "Numerical Recipes in C" (Press et al) */
+    /*	Adapted from "Numerical Recipes in C" (Press et al.) */
     template <size_t N, size_t M, typename T>
     inline bool gauss_jordan_elimination(
         const Mat<N, N, T> &a,
@@ -1201,7 +1196,7 @@ namespace easy3d {
     }
 
     /*----------------------------------------------------------------------------*/
-    /*	Adapted from "Numerical Recipes in C" (Press et al) */
+    /*	Adapted from "Numerical Recipes in C" (Press et al.) */
     template <size_t N, typename T>
     inline bool lu_decomposition(
         const Mat<N, N, T> &a,
@@ -1277,7 +1272,7 @@ namespace easy3d {
     }
 
     /*----------------------------------------------------------------------------*/
-    /*	Adapted from "Numerical Recipes in C" (Press et al) */
+    /*	Adapted from "Numerical Recipes in C" (Press et al.) */
     template <size_t N, typename T>
     inline void lu_back_substitution(
         const Mat<N, N, T> &alu,
@@ -1470,7 +1465,7 @@ namespace easy3d {
          *       if the user assigns their values from subsequent computations. Use Mat2(T s)
          *       to initialize the elements during construction.
          */
-        Mat2();
+        Mat2() = default;
 
         /**	\brief Initialized with diagonal as s and others zeros.*/
         explicit Mat2(T s);
@@ -1482,7 +1477,7 @@ namespace easy3d {
          * \brief Copies the top-left corner of rhs. This provides compatibility with generic operations implemented
          * by Mat.
          */
-        Mat2(const Mat<3, 3, T> &rhs);
+        explicit Mat2(const Mat<3, 3, T> &rhs);
 
         /**
          * \brief Initialize elements from individual scalars. The digits following s in the parameter names indicate
@@ -1526,12 +1521,6 @@ namespace easy3d {
         static Mat2<T> scale(T x, T y);
 
     }; // class Mat2
-
-
-    /*----------------------------------------------------------------------------*/
-    template <typename T>
-    inline Mat2<T>::Mat2() {
-    }
 
     /*----------------------------------------------------------------------------*/
     template <typename T>
@@ -1641,10 +1630,10 @@ namespace easy3d {
         /**
          * \brief Default constructor.
          * \note The matrix elements are intentionally not initialized. This is efficient
-         *       if the user assigns their values from subsequent compuations. Use Mat3(T s)
-         *       to initialize the elmentment during construction.
+         *       if the user assigns their values from subsequent computations. Use Mat3(T s)
+         *       to initialize the elements during construction.
          */
-        Mat3();
+        Mat3() = default;
 
         /**	\brief Initialized with diagonal as s and others zeros.*/
         explicit Mat3(T s);
@@ -1656,7 +1645,7 @@ namespace easy3d {
          * \brief Copies the top-left corner of rhs. This provides compatibility with generic operations implemented
          * by Mat.
          */
-        Mat3(const Mat<4, 4, T> &rhs);
+        explicit Mat3(const Mat<4, 4, T> &rhs);
 
         /**
          * \brief Initialize elements from individual scalars. The digits following s in the parameter names indicate
@@ -1746,11 +1735,6 @@ namespace easy3d {
     IMPLEMENTATION:
 
     *******************************************************************************/
-
-    /*----------------------------------------------------------------------------*/
-    template <typename T>
-    inline Mat3<T>::Mat3() {
-    }
 
     /*----------------------------------------------------------------------------*/
     template <typename T>
@@ -1958,10 +1942,10 @@ namespace easy3d {
         /**
          * \brief Default constructor.
          * \note The matrix elements are intentionally not initialized. This is efficient
-         *       if the user assigns their values from subsequent compuations. Use Mat4(T s)
-         *       to initialize the elmentment during construction.
+         *       if the user assigns their values from subsequent computations. Use Mat4(T s)
+         *       to initialize the elements during construction.
          */
-        Mat4();
+        Mat4() = default;
 
         /**	\brief Initialized with diagonal as s and others zeros.*/
         explicit Mat4(T s);
@@ -2073,11 +2057,6 @@ namespace easy3d {
     IMPLEMENTATION:
 
     *******************************************************************************/
-
-    /*----------------------------------------------------------------------------*/
-    template <typename T>
-    inline Mat4<T>::Mat4() {
-    }
 
     /*----------------------------------------------------------------------------*/
     template <typename T>

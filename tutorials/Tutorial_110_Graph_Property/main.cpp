@@ -39,7 +39,7 @@ using namespace easy3d;
 // the graph created in the previous tutorial (so you can skip it)
 Graph* old_graph_from_previous_example() {
 	// Create a graph
-	Graph* graph = new Graph;
+	auto graph = new Graph;
 
 	// Add 4 vertices
 	Graph::Vertex v0 = graph->add_vertex(vec3(0, 0, 0));

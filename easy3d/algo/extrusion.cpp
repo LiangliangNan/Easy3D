@@ -47,7 +47,7 @@ namespace easy3d {
             for (std::size_t j = 0; j < contour.size(); ++j) {
                 const vec2 p = contour[j];
                 Tessellator::Vertex vt(vec3(p, 0));
-                vt.push_back(index); // one extra bit to allow stitching within a contour.
+                vt.push_back(static_cast<double>(index)); // one extra bit to allow stitching within a contour.
                 tessellator.add_vertex(vt);
             }
             tessellator.end_contour();
@@ -64,7 +64,7 @@ namespace easy3d {
             for (std::size_t j = 0; j < contour.size(); ++j) {
                 const vec2 p = contour[j];
                 Tessellator::Vertex vt(vec3(p, height));
-                vt.push_back(index); // one extra bit to allow stitching within a contour.
+                vt.push_back(static_cast<double>(index)); // one extra bit to allow stitching within a contour.
                 tessellator.add_vertex(vt);
             }
             tessellator.end_contour();
@@ -88,16 +88,16 @@ namespace easy3d {
                 tessellator.begin_polygon(n);
                 tessellator.begin_contour();
                 Tessellator::Vertex vta(a);
-                vta.push_back(index); // one extra bit to allow stitching within a contour.
+                vta.push_back(static_cast<int>(index)); // one extra bit to allow stitching within a contour.
                 tessellator.add_vertex(vta);
                 Tessellator::Vertex vtb(b);
-                vtb.push_back(index); // one extra bit to allow stitching within a contour.
+                vtb.push_back(static_cast<int>(index)); // one extra bit to allow stitching within a contour.
                 tessellator.add_vertex(vtb);
                 Tessellator::Vertex vtd(d);
-                vtd.push_back(index); // one extra bit to allow stitching within a contour.
+                vtd.push_back(static_cast<int>(index)); // one extra bit to allow stitching within a contour.
                 tessellator.add_vertex(vtd);
                 Tessellator::Vertex vtc(c);
-                vtc.push_back(index); // one extra bit to allow stitching within a contour.
+                vtc.push_back(static_cast<int>(index)); // one extra bit to allow stitching within a contour.
                 tessellator.add_vertex(vtc);
                 tessellator.end_contour();
                 tessellator.end_polygon();
@@ -115,7 +115,7 @@ namespace easy3d {
             return false;
         } else {
             // the vertex index starts from 0 for each character.
-            const int offset = mesh->n_vertices();
+            const unsigned int offset = mesh->n_vertices();
 
             // use SurfaceMeshBuilder (ensuring the final model is manifold).
             SurfaceMeshBuilder builder(mesh);
@@ -126,9 +126,9 @@ namespace easy3d {
                 builder.add_vertex(vec3(v->data()));
 
             for (const auto &e : elements) {
-                builder.add_triangle(SurfaceMesh::Vertex(e[0] + offset),
-                                     SurfaceMesh::Vertex(e[1] + offset),
-                                     SurfaceMesh::Vertex(e[2] + offset));
+                builder.add_triangle(SurfaceMesh::Vertex(static_cast<int>(e[0] + offset)),
+                                     SurfaceMesh::Vertex(static_cast<int>(e[1] + offset)),
+                                     SurfaceMesh::Vertex(static_cast<int>(e[2] + offset)));
             }
 
             builder.end_surface(false);
@@ -141,7 +141,7 @@ namespace easy3d {
         if (simple_contours.empty())
             return nullptr;
         else {
-            SurfaceMesh *mesh = new SurfaceMesh;
+            auto mesh = new SurfaceMesh;
             if (extrude(mesh, simple_contours, height))
                 return mesh;
             else {

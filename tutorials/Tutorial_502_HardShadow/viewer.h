@@ -39,14 +39,13 @@ namespace easy3d {
 class TutorialHardShadow : public easy3d::Viewer
 {
 public:
-	TutorialHardShadow(const std::string& title = "");
+	explicit TutorialHardShadow(const std::string& title = "");
+    ~TutorialHardShadow() override;
 
 protected:
     bool key_press_event(int key, int modifiers) override;
 
     void draw() const override;
-
-	void cleanup() override;
 
     std::string usage() const override;
 

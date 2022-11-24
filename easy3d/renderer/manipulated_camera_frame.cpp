@@ -37,9 +37,6 @@
  *----------------------------------------------------------*/
 
 #include <easy3d/renderer/manipulated_camera_frame.h>
-
-#include <algorithm>
-
 #include <easy3d/renderer/camera.h>
 
 
@@ -95,14 +92,14 @@ namespace easy3d {
             rotateAroundPoint(rot, pivotPoint());
         }
         else {
-            const float pre_x = float(x - dx);
-            const float pre_y = float(y - dy);
             quat rot;
             if (axis == ORTHOGONAL) {
-                const float prev_angle = atan2(pre_y - trans[1], pre_x - trans[0]);
-                const float angle = atan2(y - trans[1], x - trans[0]);
+                const auto pre_x = static_cast<float>(x - dx);
+                const auto pre_y = static_cast<float>(y - dy);
+                const float prev_angle = std::atan2(pre_y - trans[1], pre_x - trans[0]);
+                const float angle = std::atan2(static_cast<float>(y) - trans[1], static_cast<float>(x) - trans[0]);
                 // The incremental rotation defined in the ManipulatedCameraFrame's coordinate system.
-                rot = quat(vec3(0.0, 0.0, 1.0), angle - prev_angle);
+                rot = quat(vec3(0.0f, 0.0f, 1.0f), angle - prev_angle);
             }
             else if (axis == VERTICAL) {
                 const int pre_x = x - dx;
@@ -128,20 +125,20 @@ namespace easy3d {
             return;
 
         if (axis == NONE) {    // free translation
-            vec3 trans(-float(dx), float(dy), 0.0f);
+            vec3 trans(-static_cast<float>(dx), static_cast<float>(dy), 0.0f);
             // Scale to fit the screen mouse displacement
             switch (camera->type())
             {
                 case Camera::PERSPECTIVE:
-                    trans *= 2.0f * tan(camera->fieldOfView() / 2.0f) *
+                    trans *= 2.0f * std::tan(camera->fieldOfView() / 2.0f) *
                              fabs((camera->frame()->coordinatesOf(pivotPoint())).z) /
-                             camera->screenHeight();
+                            static_cast<float>(camera->screenHeight());
                     break;
                 case Camera::ORTHOGRAPHIC: {
                     float w, h;
                     camera->getOrthoWidthHeight(w, h);
-                    trans[0] *= 2.0f * w / camera->screenWidth();
-                    trans[1] *= 2.0f * h / camera->screenHeight();
+                    trans[0] *= 2.0f * w / static_cast<float>(camera->screenWidth());
+                    trans[1] *= 2.0f * h / static_cast<float>(camera->screenHeight());
                     break;
                 }
             }
@@ -149,24 +146,24 @@ namespace easy3d {
         }
         else {
 			vec3 trans;
-			if (axis == HORIZONTAL)
-                trans = vec3(-float(dx), 0.0f, 0.0f);
+            if (axis == HORIZONTAL)
+                trans = vec3(-static_cast<float>(dx), 0.0f, 0.0f);
             else if (axis == VERTICAL)
-                trans = vec3(0.0f, float(dy), 0.0f);
+                trans = vec3(0.0f, static_cast<float>(dy), 0.0f);
             else
                 return;
 
 			switch (camera->type()) {
 			case Camera::PERSPECTIVE:
-				trans *= 2.0f * tan(camera->fieldOfView() / 2.0f) *
+				trans *= 2.0f * std::tan(camera->fieldOfView() / 2.0f) *
 					fabs((camera->frame()->coordinatesOf(pivotPoint())).z) /
-					camera->screenHeight();
+                        static_cast<float>(camera->screenHeight());
 				break;
 			case Camera::ORTHOGRAPHIC: {
 				float w, h;
 				camera->getOrthoWidthHeight(w, h);
-				trans[0] *= 2.0f * w / camera->screenWidth();
-				trans[1] *= 2.0f * h / camera->screenHeight();
+				trans[0] *= 2.0f * w / static_cast<float>(camera->screenWidth());
+				trans[1] *= 2.0f * h / static_cast<float>(camera->screenHeight());
 				break;
 			}
 			}
@@ -207,9 +204,7 @@ namespace easy3d {
 #endif
             // now it is safe
             translate(delta * direction);
-		}
-
-        else {
+        } else {
             // Liangliang:
             //  - We don't want to move the camera too close to (when zoom in) or
             //    too far away from (when zoom out) the scene center. So the camera

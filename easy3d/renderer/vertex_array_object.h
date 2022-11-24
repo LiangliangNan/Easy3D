@@ -59,7 +59,7 @@ namespace easy3d {
 		GLuint id() const { return id_; }
 
 		void bind();
-        void release();
+        void release() const;
 
 		//------------------------- buffer management -------------------
 
@@ -80,20 +80,21 @@ namespace easy3d {
         bool create_storage_buffer(GLuint& buffer, GLuint index, const void* data, std::size_t size);
         bool update_storage_buffer(GLuint& buffer, GLintptr offset, GLsizeiptr size, const void* data);
 
-		// free the GPU memory of the buffer specified by 'handle'
+		/// Frees the GPU memory of the buffer specified by 'handle'
         static void release_buffer(GLuint& buffer);
 
 		// ------------------------- read/write buffer--------------------
 
-		// returns a subset of a buffer object's data store
-		// \param target: can be GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_SHADER_STORAGE_BUFFER, etc.
-		// \param handle: the name of the buffer object.
-		// \param offset: the offset into the buffer object's data store from which data will be returned, 
-		//				  measured in bytes.
-		// \param size:   the size in bytes of the data store region being returned.
-		// \param data:   a pointer to the location where buffer object data is returned.
-        void get_buffer_data(GLenum target, GLuint buffer, GLintptr offset, GLsizeiptr size, void* data);
-
+		/**
+		 * Returns a subset of a buffer object's data store.
+		 * \param target: can be GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_SHADER_STORAGE_BUFFER, etc.
+		 * \param handle: the name of the buffer object.
+		 * \param offset: the offset into the buffer object's data store from which data will be returned,
+		 *      measured in bytes.
+		 * \param size:   the size in bytes of the data store region being returned.
+		 * \param data:   a pointer to the location where buffer object data is returned.
+		 */
+        static void get_buffer_data(GLenum target, GLuint buffer, GLintptr offset, GLsizeiptr size, void* data);
 
 		// \param target: can be GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_SHADER_STORAGE_BUFFER, etc.
 		// \param handle: the name of the buffer object for the mapping.

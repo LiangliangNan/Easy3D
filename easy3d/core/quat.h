@@ -59,7 +59,7 @@ namespace easy3d {
      *
      * You can apply the Quaternion q rotation to the OpenGL matrices using
      *      glMultMatrixd(q.matrix());
-     * which is equvalent to
+     * which is equivalent to
      *      glRotate(q.angle()*180.0/M_PI, q.axis().x, q.axis().y, q.axis().z);
      *
      * Internal representation
@@ -742,7 +742,7 @@ namespace easy3d {
     Quat<FT> Quat<FT>::random_quat()
     {
         // The rand() function is not very portable and may not be available on your system.
-        // Add the appropriate include or replace by an other random function in case of problem.
+        // Add the appropriate include or replace it by another random function in case of problem.
         FT seed = rand() / (FT)RAND_MAX;
         FT r1 = std::sqrt(1.0f - seed);
         FT r2 = std::sqrt(seed);

@@ -24,8 +24,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef EASY3D_TUTORIAL_IMGUI_VIEWER_H
-#define EASY3D_TUTORIAL_IMGUI_VIEWER_H
+#ifndef EASY3D_TUTORIAL_VIEWER_IMGUI_H
+#define EASY3D_TUTORIAL_VIEWER_IMGUI_H
 
 
 #include <easy3d/viewer/viewer.h>
@@ -45,7 +45,7 @@ namespace easy3d {
     class ViewerImGui : public Viewer
 	{
 	public:
-        ViewerImGui(
+        explicit ViewerImGui(
             const std::string& title = "Easy3D ImGui Viewer",
 			int samples = 4,
 			int gl_major = 3,
@@ -55,6 +55,8 @@ namespace easy3d {
 			int depth_bits = 24,
 			int stencil_bits = 8
 		);
+
+        ~ViewerImGui() override;
 
 	protected:
 
@@ -66,8 +68,6 @@ namespace easy3d {
 
 		//  the widgets
 		void post_draw() override;
-
-		void cleanup() override;
 
 		void post_resize(int w, int h) override;
 
@@ -102,10 +102,8 @@ namespace easy3d {
         // Global variables for all the windows
         float	alpha_;
         bool	movable_;
-		
-		float   menu_height_;
 	};
 
 }
 
-#endif	// EASY3D_TUTORIAL_IMGUI_VIEWER_H
+#endif	// EASY3D_TUTORIAL_VIEWER_IMGUI_H

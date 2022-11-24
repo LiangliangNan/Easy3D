@@ -45,7 +45,7 @@ namespace easy3d {
      */
     class TrianglesDrawable : public Drawable {
 	public:
-        TrianglesDrawable(const std::string& name = "", Model* model = nullptr);
+        explicit TrianglesDrawable(const std::string& name = "", Model* model = nullptr);
 
         Type type() const override;
 
@@ -65,7 +65,7 @@ namespace easy3d {
         void set_opacity(float opacity) { opacity_ = opacity; }
 
         // Rendering.
-        virtual void draw(const Camera* camera) const override;
+        void draw(const Camera* camera) const override;
 
 	private:
         bool    smooth_shading_;

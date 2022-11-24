@@ -187,16 +187,16 @@ namespace easy3d {
 
         /// Choose the buffers to render into. This command lets you select which attachments are written to.
         /// \note The default buffer is the 0. In such a case calling to this function is optional.
-        void activate_draw_buffer(unsigned int index);
-        void activate_draw_buffers(unsigned int numbuffers, unsigned int indices[]);
-        void activate_draw_buffers(unsigned int minId, unsigned int maxId); // activate draw buffer in the range [minId, ... maxId]
-        void deactivate_draw_buffers();
+        void activate_draw_buffer(unsigned int index) const;
+        void activate_draw_buffers(unsigned int num_buffers, const unsigned int indices[]) const;
+        void activate_draw_buffers(unsigned int minId, unsigned int maxId) const; // activate draw buffer in the range [minId, ... maxId]
+        void deactivate_draw_buffers() const;
 
         /// Choose the buffers to read from. This command lets you select which attachment to read from.
         /// \note The default buffer is the 0. In such a case calling to this function is optional.
-        void activate_read_buffer(unsigned int index);
+        void activate_read_buffer(unsigned int index) const;
         /// Deactivates reading from the buffers.
-        void deactivate_read_buffer();
+        void deactivate_read_buffer() const;
 
         /// Returns the OpenGL framebuffer object handle for this framebuffer object (returned by the glGenFramebuffers() function).
         /// This handle can be used to attach new images or buffers to the framebuffer. If you attach images or buffers, you are
@@ -210,10 +210,10 @@ namespace easy3d {
 
         /// The returned value can be greater than the requested value since the typically supported
         /// values are 0, 4, 8, ..., and the requests are mapped to the next supported value.
-        int  samaples() const { return samples_; }
+        int  samples() const { return samples_; }
 
         /// Returns the number of color attachments
-        int	 num_color_attachements() const;
+        int	 num_color_attachments() const;
         /// Does the fbo have color attachment at \p index?
         bool has_color_attachment(unsigned int index) const;
 

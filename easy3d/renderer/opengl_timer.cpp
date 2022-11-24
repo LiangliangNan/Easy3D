@@ -38,7 +38,7 @@ namespace easy3d {
         : query_id_(0)
         , running_(false)
     {
-        glGenQueries(1, &query_id_); easy3d_debug_log_gl_error;
+        glGenQueries(1, &query_id_); easy3d_debug_log_gl_error
 
         if (start_timing)
             start();
@@ -47,14 +47,14 @@ namespace easy3d {
 
     OpenGLTimer::~OpenGLTimer() {
         if (query_id_) {
-            glDeleteQueries(1, &query_id_); easy3d_debug_log_gl_error;
+            glDeleteQueries(1, &query_id_); easy3d_debug_log_gl_error
         }
     }
 
 
     void OpenGLTimer::start() {
         assert(!running_);
-        glBeginQuery(GL_TIME_ELAPSED, query_id_);	easy3d_debug_log_gl_error;
+        glBeginQuery(GL_TIME_ELAPSED, query_id_);	easy3d_debug_log_gl_error
         running_ = true;
     }
 
@@ -73,7 +73,7 @@ namespace easy3d {
         GLuint queryReady = 0;
         do {
             // check whether the passed samples counter is immediately available. If a delay
-            // would occur waiting for the query result, GL_FALSE is returned. Otherwise,
+            // occurs waiting for the query result, GL_FALSE is returned. Otherwise,
             // GL_TRUE is returned, which also indicates that the results of all previous
             // queries are available as well.
             glGetQueryObjectuiv(query_id_, GL_QUERY_RESULT_AVAILABLE, &queryReady);

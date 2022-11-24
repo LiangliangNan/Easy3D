@@ -47,7 +47,7 @@ PickerViewer::PickerViewer(const std::string &title)
 std::string PickerViewer::usage() const {
     return ("------------ Picker Viewer usage ---------- \n"
             "Press the left button to pick/unpick a model\n"
-            "------------------------------------------ \n");
+            "------------------------------------------- \n");
 }
 
 

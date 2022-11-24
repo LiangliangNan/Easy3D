@@ -26,8 +26,6 @@
 
 #include <easy3d/core/graph.h>
 
-#include <cmath>
-
 
 namespace easy3d {
 
@@ -46,14 +44,6 @@ namespace easy3d {
 
         deleted_vertices_ = deleted_edges_ = 0;
         garbage_ = false;
-    }
-
-
-    //-----------------------------------------------------------------------------
-
-
-    Graph::~Graph()
-    {
     }
 
 
@@ -185,8 +175,8 @@ namespace easy3d {
 		if (!props.empty())
 		{
 			std::cout << "vertex properties:\n";
-			for (unsigned int i = 0; i < props.size(); ++i)
-                output << "\t" << props[i] << std::endl;
+            for (const auto& p : props)
+                output << "\t" << p << std::endl;
 		}
 
 
@@ -194,16 +184,16 @@ namespace easy3d {
 		if (!props.empty())
 		{
 			std::cout << "edge properties:\n";
-			for (unsigned int i = 0; i < props.size(); ++i)
-                output << "\t" << props[i] << std::endl;
+            for (const auto& p : props)
+                output << "\t" << p << std::endl;
 		}
 
 		props = model_properties();
 		if (!props.empty())
 		{
 			std::cout << "model properties:\n";
-			for (unsigned int i = 0; i < props.size(); ++i)
-                output << "\t" << props[i] << std::endl;
+            for (const auto& p : props)
+                output << "\t" << p << std::endl;
 		}
     }
 
@@ -273,6 +263,8 @@ namespace easy3d {
 
     void Graph::delete_vertex(Vertex v)
     {
+        /// todo: implement this function
+        LOG(WARNING) << "not implemented. Please ask Liangliang (liangliang.nan@gmail.com) to implement this function";
     //    if (vdeleted_[v])  return;
 
     //    // collect incident faces
@@ -310,6 +302,8 @@ namespace easy3d {
 
     void Graph::delete_edge(Edge e)
     {
+        /// todo: implement this function
+        LOG(WARNING) << "not implemented. Please ask Liangliang (liangliang.nan@gmail.com) to implement this function";
     //    if (edeleted_[e])  return;
 
     //    Face f0 = face(halfedge(e, 0));
@@ -324,6 +318,8 @@ namespace easy3d {
 
     void Graph::collect_garbage()
     {
+        /// todo: implement this function
+        LOG(WARNING) << "not implemented. Please ask Liangliang (liangliang.nan@gmail.com) to implement this function";
     //    int  i, i0, i1,
     //    nV(vertices_size()),
     //    nE(edges_size()),

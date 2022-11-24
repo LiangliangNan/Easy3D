@@ -44,7 +44,7 @@ namespace easy3d {
 
 
     int SurfaceMeshTopology::euler_poincare() const {
-        return component_->n_vertices() + component_->n_faces() - component_->n_edges();
+        return static_cast<int>(component_->n_vertices() + component_->n_faces() - component_->n_edges());
     }
 
 }

@@ -218,7 +218,7 @@ namespace easy3d {
                 double x, y, z;
                 for (std::size_t i = 1; i < num; ++i) {
                     input >> x >> y >> z;
-                    points[i] = vec3(x - x0, y - y0, z - z0);
+                    points[i] = vec3(static_cast<float>(x - x0), static_cast<float>(y - y0), static_cast<float>(z - z0));
                     if (input.fail()) {
                         LOG(ERROR) << "failed reading the " << i << "_th point";
                         return false;
@@ -234,7 +234,7 @@ namespace easy3d {
                 double x, y, z;
                 for (std::size_t i = 0; i < num; ++i) {
                     input >> x >> y >> z;
-                    points[i] = vec3(x - origin.x, y - origin.y, z - origin.z);
+                    points[i] = vec3(static_cast<float>(x - origin.x), static_cast<float>(y - origin.y), static_cast<float>(z - origin.z));
                     if (input.fail()) {
                         LOG(ERROR) << "failed reading the " << i << "_th point";
                         return false;
@@ -296,7 +296,7 @@ namespace easy3d {
             for (std::size_t i = 0; i<num_groups; ++i) {
                 VertexGroup g;
                 read_ascii_group(input, g);
-                g.primitive_index_ = i;
+                g.primitive_index_ = static_cast<int>(i);
 
                 if (!g.empty()) {
                     auto prim_type = cloud->vertex_property<int>("v:primitive_type", VertexGroup::UNKNOWN);
@@ -341,7 +341,7 @@ namespace easy3d {
             LOG_IF(num != num_group_parameters(type), ERROR) << "sizes don't match";
             std::vector<float> para(num);
             input >> dummy;
-            double v;
+            float v;
             for (std::size_t i = 0; i < num; ++i) {
                 input >> v;
                 if (input.fail()) {
@@ -393,7 +393,7 @@ namespace easy3d {
 
             // read the points block
             auto points = cloud->get_vertex_property<vec3>("v:point");
-            input.read((char*)points.data(), num * sizeof(vec3));
+            input.read((char*)points.data(), static_cast<long>(num * sizeof(vec3)));
 
             if (Translator::instance()->status() == Translator::TRANSLATE_USE_FIRST_POINT) {
                 auto& positions = points.vector();
@@ -414,9 +414,9 @@ namespace easy3d {
                 const dvec3 &origin = Translator::instance()->translation();
                 auto& pts = cloud->get_vertex_property<vec3>("v:point").vector();
                 for (auto& p: pts) {
-                    p.x -= origin.x;
-                    p.y -= origin.y;
-                    p.z -= origin.z;
+                    p.x -= static_cast<float>(origin.x);
+                    p.y -= static_cast<float>(origin.y);
+                    p.z -= static_cast<float>(origin.z);
                 }
 
                 auto trans = cloud->add_model_property<dvec3>("translation", dvec3(0, 0, 0));
@@ -429,14 +429,14 @@ namespace easy3d {
             input.read((char*)(&num), sizeof(int));
             if (num == cloud->n_vertices()) {
                 auto colors = cloud->add_vertex_property<vec3>("v:color");
-                input.read((char*)colors.data(), num * sizeof(vec3));
+                input.read((char*)colors.data(), static_cast<long>(num * sizeof(vec3)));
             }
 
             // read the normals block if exists
             input.read((char*)(&num), sizeof(int));
             if (num == cloud->n_vertices()) {
                 auto normals = cloud->add_vertex_property<vec3>("v:normal");
-                input.read((char*)normals.data(), num * sizeof(vec3));
+                input.read((char*)normals.data(), static_cast<long>(num * sizeof(vec3)));
             }
 
             //////////////////////////////////////////////////////////////////////////
@@ -493,18 +493,18 @@ namespace easy3d {
                 const dvec3& origin = trans[0];
                 for (const auto& p : points) {
                     for (unsigned short i=0; i<3; ++i) {
-                        float value = static_cast<float>(p[i] + origin[i]);
+                        auto value = static_cast<float>(p[i] + origin[i]);
                         output.write((char *)&value, sizeof(float));
                     }
                 }
             }
             else
-                output.write((char*)points.data(), num * sizeof(vec3));
+                output.write((char*)points.data(), static_cast<long>(num * sizeof(vec3)));
 
             if (cls) {
                 const std::vector<vec3>& colors = cls.vector();
                 output.write((char*)&num, sizeof(int));
-                output.write((char*)colors.data(), num * sizeof(vec3));
+                output.write((char*)colors.data(), static_cast<long>(num * sizeof(vec3)));
             }
             else {
                 int dummy = 0;
@@ -514,7 +514,7 @@ namespace easy3d {
             if (nms) {
                 const std::vector<vec3>& normals = nms.vector();
                 output.write((char*)&num, sizeof(int));
-                output.write((char*)normals.data(), num * sizeof(vec3));
+                output.write((char*)normals.data(), static_cast<long>(num * sizeof(vec3)));
             }
             else {
                 int dummy = 0;
@@ -556,7 +556,7 @@ namespace easy3d {
             LOG_IF(num != num_group_parameters(type), ERROR) << "sizes don't match";
 
             std::vector<float> para(num);
-            input.read((char*)para.data(), num * sizeof(float));
+            input.read((char*)para.data(), static_cast<long>(num * sizeof(float)));
 
             group.primitive_type_ = type;
             assign_group_parameters(group, para);
@@ -576,7 +576,7 @@ namespace easy3d {
             int num_points = 0;
             input.read((char*)&num_points, sizeof(int));
             group.resize(num_points);
-            input.read((char*)group.data(), num_points * sizeof(int));
+            input.read((char*)group.data(), static_cast<long>(num_points * sizeof(int)));
         }
 
 
@@ -589,7 +589,7 @@ namespace easy3d {
             output.write((char*)&num, sizeof(int));
 
             const std::vector<float>& para = get_group_parameters(g);
-            output.write((char*)para.data(), sizeof(float) * num);
+            output.write((char*)para.data(), static_cast<long>(sizeof(float) * num));
 
             //////////////////////////////////////////////////////////////////////////
             std::string label = g.label_;
@@ -603,7 +603,7 @@ namespace easy3d {
 
             std::size_t num_point = g.size();
             output.write((char*)&num_point, sizeof(int));
-            output.write((char*)g.data(), num_point * sizeof(int));
+            output.write((char*)g.data(), static_cast<long>(num_point * sizeof(int)));
         }
 
 
@@ -627,9 +627,10 @@ namespace easy3d {
             case VertexGroup::GENERAL:
                 LOG(WARNING)  << "not implemented for GENERAL";
                 return 0;
+            default:
+                LOG(ERROR)  << "should not reach hear: unknown primitive type";
+                return 0;
             }
-
-            return 0;
         }
 
 

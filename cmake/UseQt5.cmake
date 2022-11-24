@@ -38,7 +38,7 @@
 #           target_link_libraries(${PROJECT_NAME} Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL)
 #       ------------------------------------------------------------------------
 # NOTE: 'UseQt5.cmake' must be included after you define your project but before
-#       'add_executable()' or'add_library()'.
+#       'add_executable()' or 'add_library()'.
 #
 #   The recommended way to specify libraries and headers with CMake is to use the
 #   target_link_libraries command. This command automatically adds appropriate

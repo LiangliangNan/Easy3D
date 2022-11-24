@@ -24,8 +24,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include <thread>
-
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/random.h>

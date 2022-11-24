@@ -60,8 +60,6 @@ DialogPointCloudRansacPrimitiveExtraction::DialogPointCloudRansacPrimitiveExtrac
     connect(pushButtonExtract, SIGNAL(clicked()), this, SLOT(extract()));
 }
 
-DialogPointCloudRansacPrimitiveExtraction::~DialogPointCloudRansacPrimitiveExtraction() {
-}
 
 void DialogPointCloudRansacPrimitiveExtraction::reset() {
     spinBoxMinimumSupport->setValue(default_min_support_);
@@ -73,7 +71,7 @@ void DialogPointCloudRansacPrimitiveExtraction::reset() {
 
 
 void DialogPointCloudRansacPrimitiveExtraction::extract() {
-    PointCloud *cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
+    auto cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
     if (!cloud)
         return;
 

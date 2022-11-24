@@ -46,7 +46,7 @@ namespace easy3d {
          */
         class LineInputStream {
         public:
-            LineInputStream(std::istream &in) : in_(in), line_in_(nullptr) {}
+            explicit LineInputStream(std::istream &in) : in_(in), line_in_(nullptr) {}
 
             ~LineInputStream() {
                 delete line_in_;

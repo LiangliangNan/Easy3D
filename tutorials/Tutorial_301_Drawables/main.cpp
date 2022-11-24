@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
     // Upload the vertex positions to the GPU.
     vertices->update_vertex_buffer(points);
     // Set a color for the vertices (here we want a red color).
-    vertices->set_uniform_coloring(vec4(1.0f, 0.0f, 0.0f, 1.0f));  // r, g, b, a
+    vertices->set_uniform_coloring(vec4(1.0f, 0.0f, 0.0f, 1.0f));  // RBGA
     // Three options are available for visualizing points:
     //      - PLAIN: plain points (i.e., each point is a square on the screen);
     //      - SPHERE: each point is visualized a sphere;

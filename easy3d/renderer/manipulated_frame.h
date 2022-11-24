@@ -111,7 +111,7 @@ namespace easy3d {
 	public:
 		ManipulatedFrame();
 		/*! Virtual destructor. Empty. */
-		~ManipulatedFrame() override {}
+		~ManipulatedFrame() override = default;
 
 		ManipulatedFrame(const ManipulatedFrame &mf);
 		ManipulatedFrame &operator=(const ManipulatedFrame &mf);
@@ -199,22 +199,22 @@ namespace easy3d {
 		virtual void action_end();
 
 		enum ScreenAxis { NONE, HORIZONTAL, VERTICAL, ORTHOGONAL };
-		virtual void action_rotate(int mouse_x, int mouse_y, int mouse_dx, int mouse_dy, Camera *const camera, ScreenAxis axis = NONE);
-		virtual void action_translate(int mouse_x, int mouse_y, int mouse_dx, int mouse_dy, Camera *const camera, ScreenAxis axis = NONE);
-		virtual void action_zoom(int dy_wheel, Camera *const camera);
+		virtual void action_rotate(int mouse_x, int mouse_y, int mouse_dx, int mouse_dy, Camera* camera, ScreenAxis axis);
+		virtual void action_translate(int mouse_x, int mouse_y, int mouse_dx, int mouse_dy, Camera* camera, ScreenAxis axis);
+		virtual void action_zoom(int dy_wheel, Camera* camera);
 		// @}
 
 #ifndef DOXYGEN
 	protected:
         /*! Returns a quaternion computed according to the mouse motion. Mouse positions
         are projected on a deformed ball, centered on (\p cx,\p cy), viewer size (\p w, \p h).*/
-		quat deformedBallQuaternion(int x, int y, int pre_x, int pre_y, float cx, float cy, int w, int h);
+		quat deformedBallQuaternion(int x, int y, int pre_x, int pre_y, float cx, float cy, int w, int h) const;
 
 		Constraint *previousConstraint_; // When manipulation is without constraint.
 
 		/*! Returns a screen scaled delta from event's position to prevPos_, along the
 				X or Y direction, whichever has the largest magnitude. */
-		float deltaWithPrevPos(int x, int y, int dx, int dy, Camera *const camera) const;
+		float deltaWithPrevPos(int x, int y, int dx, int dy, Camera* camera) const;
 		/*! Returns a normalized wheel delta, proportional to wheelSensitivity(). */
 		float wheelDelta(int wheel_dy) const;
 

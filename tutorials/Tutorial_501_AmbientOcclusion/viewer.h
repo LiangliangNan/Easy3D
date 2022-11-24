@@ -40,14 +40,13 @@ namespace easy3d {
 class TutorialAmbientOcclusion : public easy3d::Viewer
 {
 public:
-	TutorialAmbientOcclusion(const std::string& title = "");
+	explicit TutorialAmbientOcclusion(const std::string& title = "");
+    ~TutorialAmbientOcclusion() override;
 
 protected:
     bool key_press_event(int key, int modifiers) override;
 
     void draw() const override;
-
-	void cleanup() override;
 
     std::string usage() const override;
 

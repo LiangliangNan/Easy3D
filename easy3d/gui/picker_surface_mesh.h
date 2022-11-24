@@ -43,15 +43,18 @@ namespace easy3d {
      */
     class SurfaceMeshPicker : public Picker {
     public:
-        SurfaceMeshPicker(const Camera *cam);
+        explicit SurfaceMeshPicker(const Camera *cam);
 
-        ~SurfaceMeshPicker();
+        ~SurfaceMeshPicker() override = default;
 
         //------------------ sensitivity  ---------------------
 
-        int resolution() const { return hit_resolution_; }
-
-        void set_resolution(int r) { hit_resolution_ = r; }
+        /// \brief Returns the picker resolution (in pixels).
+        /// \details The picker resolution indicates the sensitivity for picking a vertex or an edge.
+        unsigned int resolution() const { return hit_resolution_; }
+        /// \brief Sets the picker resolution (in pixels).
+        /// \details The picker resolution indicates the sensitivity for picking a vertex or an edge.
+        void set_resolution(unsigned int r) { hit_resolution_ = r; }
 
         //--------------- pick a single element ---------------
 
@@ -167,7 +170,7 @@ namespace easy3d {
         /**
          * TODO: check if this works also for non-convex faces.
          */
-        inline bool do_intersect(SurfaceMesh *model, SurfaceMesh::Face picked_face, const OrientedLine3 &line) const {
+        static inline bool do_intersect(SurfaceMesh *model, SurfaceMesh::Face picked_face, const OrientedLine3 &line) {
             // Uses Plucker coordinates (see OrientedLine)
             Sign face_sign = ZERO;
             for (auto h : model->halfedges(picked_face)) {

@@ -8,8 +8,8 @@
  * The original code was distributed under the GNU GPL license.
  ********************************************************************/
 
-#ifndef EASY3D_ALGO_SURFACE_MESH_TOPOLYGY_H
-#define EASY3D_ALGO_SURFACE_MESH_TOPOLYGY_H
+#ifndef EASY3D_ALGO_SURFACE_MESH_TOPOLOGY_H
+#define EASY3D_ALGO_SURFACE_MESH_TOPOLOGY_H
 
 
 #include <cstddef>
@@ -22,7 +22,7 @@ namespace easy3d {
     /// \class SurfaceMeshTopology easy3d/algo/surface_mesh_topology.h
     class SurfaceMeshTopology {
     public:
-        SurfaceMeshTopology(const SurfaceMeshComponent *comp);
+        explicit SurfaceMeshTopology(const SurfaceMeshComponent *comp);
 
         /**
          * \brief returns the Euler-Poincare characteristic,
@@ -61,5 +61,5 @@ namespace easy3d {
 
 }
 
-#endif  // EASY3D_ALGO_SURFACE_MESH_TOPOLYGY_H
+#endif  // EASY3D_ALGO_SURFACE_MESH_TOPOLOGY_H
 

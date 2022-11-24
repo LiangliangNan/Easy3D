@@ -41,7 +41,7 @@ public:
     PickerViewer(const std::string &title);
     ~PickerViewer() override;
 
-    easy3d::Model* add_model(const std::string& file_name, bool create_default_drawables = true) override;
+    easy3d::Model* add_model(const std::string& file_name, bool create_default_drawables = true);
 
 protected:
     bool mouse_press_event(int x, int y, int button, int modifiers) override;

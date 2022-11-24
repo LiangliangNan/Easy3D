@@ -37,8 +37,7 @@ Q_OBJECT
 
 public:
     explicit DialogSurfaceMeshSampling(MainWindow *window);
-
-    ~DialogSurfaceMeshSampling();
+    ~DialogSurfaceMeshSampling() override = default;
 
 private Q_SLOTS:
 

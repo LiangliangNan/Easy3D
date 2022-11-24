@@ -46,6 +46,14 @@ TutorialHardShadow::TutorialHardShadow(const std::string& title) : Viewer(title)
 }
 
 
+TutorialHardShadow::~TutorialHardShadow() {
+    delete shadow_;
+
+    // Not needed: it will be called in the destructor of the base class
+    //Viewer::cleanup();
+}
+
+
 std::string TutorialHardShadow::usage() const {
     return ("------------------- Hard Shadow usage ------------------- \n"
             "Press key 'space' to switch between Shadowing and normal rendering\n"
@@ -79,12 +87,4 @@ void TutorialHardShadow::draw() const {
 		shadow_->draw(surfaces);
 	else
 		Viewer::draw();
-}
-
-
-void TutorialHardShadow::cleanup() {
-	if (shadow_)
-		delete shadow_;
-
-	Viewer::cleanup();
 }

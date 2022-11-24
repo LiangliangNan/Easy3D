@@ -50,7 +50,7 @@ namespace easy3d {
     public:
         /// \brief Constructs a line segments from its two end points \p s and \p t.
         GenericSegment(const Point& s, const Point& t);
-        GenericSegment()  {}
+        GenericSegment() = default;
 
         /// \brief Returns the source end point of this line segment.
         const Point& source() const { return s_; }

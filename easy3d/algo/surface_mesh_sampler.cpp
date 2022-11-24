@@ -37,11 +37,11 @@ namespace easy3d {
 
     PointCloud *SurfaceMeshSampler::apply(const SurfaceMesh *input_mesh, int expected_num /* = 1000000 */) {
         auto func = [](const SurfaceMesh *mesh, int num) -> PointCloud * {
-            PointCloud *cloud = new PointCloud;
+            auto cloud = new PointCloud;
             const std::string &name = file_system::name_less_extension(mesh->name()) + "_sampled.ply";
             cloud->set_name(name);
 
-            PointCloud::VertexProperty <vec3> normals = cloud->add_vertex_property<vec3>("v:normal");
+            auto normals = cloud->add_vertex_property<vec3>("v:normal");
 
             LOG(INFO) << "sampling surface...";
 
@@ -52,7 +52,7 @@ namespace easy3d {
             const_cast<SurfaceMesh *>(mesh)->update_face_normals();
 
             // add all mesh vertices (even the requested number is smaller than the
-            // number of vertices in the mesh.
+            // number of vertices in the mesh).
             auto mesh_vertex_normals = mesh->get_vertex_property<vec3>("v:normal");
             for (auto p : mesh->vertices()) {
                 PointCloud::Vertex v = cloud->add_vertex(mesh_points[p]);
@@ -63,13 +63,12 @@ namespace easy3d {
             }
 
             // now we may still need some points
-            int num_needed = num - cloud->n_vertices();
+            int num_needed = num - static_cast<int>(cloud->n_vertices());
             if (num_needed <= 0)
                 return cloud;   // we got enough points already
 
             // collect triangles and compute their areas
-            struct Triangle : std::vector<SurfaceMesh::Vertex> {
-            };
+            struct Triangle : std::vector<SurfaceMesh::Vertex> {};
 
             std::vector<Triangle> triangles;
             std::vector<float> triangle_areas;
@@ -100,8 +99,8 @@ namespace easy3d {
                 }
             }
 
-            float density = num_needed / surface_area;
-            float samples_error = 0.0;
+            float density = static_cast<float>(num_needed) / surface_area;
+            float samples_error = 0.0f;
             std::size_t triangle_num = triangles.size();
             std::size_t num_generated = 0;
             std::size_t triangles_done = 0;
@@ -118,10 +117,10 @@ namespace easy3d {
 
                 // samples number considering the facet size (i.e., area)
                 float samples_num = triangle_areas[idx] * density;
-                std::size_t quant_samples_num = (std::size_t) samples_num;
+                int quant_samples_num = static_cast<int>(samples_num);
 
                 // adjust w.r.t. accumulated error
-                samples_error += samples_num - quant_samples_num;
+                samples_error += samples_num - static_cast<float>(quant_samples_num);
                 if (samples_error > 1.0) {
                     samples_error -= 1.0;
                     quant_samples_num++;
@@ -129,13 +128,13 @@ namespace easy3d {
 
                 if (triangles_done ==
                     triangle_num - 1)        // override number to gather all remaining points if last facet
-                    quant_samples_num = num_needed - num_generated;
+                    quant_samples_num = num_needed - static_cast<int>(num_generated);
 
                 // generate points
                 for (unsigned int j = 0; j < quant_samples_num; j++) {
                     // compute barycentric coords
-                    double s = sqrt((double) rand() / (double) RAND_MAX);
-                    double t = (double) rand() / (double) RAND_MAX;
+                    double s = sqrt(static_cast<double>(rand()) / static_cast<double>(RAND_MAX));
+                    double t = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
                     double c[3];
 
                     c[0] = 1.0 - s;

@@ -37,7 +37,7 @@ using namespace easy3d;
 
 SurfaceMesh* old_mesh_from_previous_example() {
 	// Create a surface mesh
-	SurfaceMesh* mesh = new SurfaceMesh;
+	auto mesh = new SurfaceMesh;
 
 	// Add 4 vertices
 	SurfaceMesh::Vertex v0 = mesh->add_vertex(vec3(0, 0, 0));
@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
 	// for each face, we access the face normal and print it.
 	for (auto f : mesh->faces()) {
 		// We use the built-in function of SurfaceMesh compute_face_normal(). 
-		// Of course you can write your own function to compute the normal of 
+		// Of course, you can write your own function to compute the normal of
 		// a face (the normalized cross product of two consecutive edge vectors). 
 		normals[f] = mesh->compute_face_normal(f);
 		std::cout << "normal of face " << f << ": " << normals[f] << std::endl;

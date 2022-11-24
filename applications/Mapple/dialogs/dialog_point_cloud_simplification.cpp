@@ -53,7 +53,7 @@ DialogPointCloudSimplification::DialogPointCloudSimplification(MainWindow *windo
     lineEditExpectedPointNumber->setText("100000");
     lineEditExpectedPointNumber->setValidator(new QIntValidator(1, 1000000000, this));
 
-    QButtonGroup *buttonGroup = new QButtonGroup(this);
+    auto buttonGroup = new QButtonGroup(this);
     buttonGroup->addButton(radioButtonExpectedPointNumber, 0);
     buttonGroup->addButton(radioButtonDistanceThreshold, 1);
     connect(buttonGroup, SIGNAL(buttonClicked(int)), this, SLOT(strategyChanged(int)));
@@ -66,8 +66,7 @@ DialogPointCloudSimplification::DialogPointCloudSimplification(MainWindow *windo
 
 
 DialogPointCloudSimplification::~DialogPointCloudSimplification() {
-    if (kdtree_)
-        delete kdtree_;
+    delete kdtree_;
 }
 
 
@@ -78,9 +77,9 @@ void DialogPointCloudSimplification::closeEvent(QCloseEvent *e) {
 
 
 void DialogPointCloudSimplification::showEvent(QShowEvent *e) {
-    PointCloud *cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
+    auto cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
     if (cloud) {
-        int num = cloud->n_vertices();
+        auto num = cloud->n_vertices();
         lineEditExpectedPointNumber->setText(QString("%1").arg(num));
     }
     QDialog::showEvent(e);
@@ -105,17 +104,16 @@ void DialogPointCloudSimplification::strategyChanged(int id) {
 
 
 void DialogPointCloudSimplification::constructKdTree() {
-    PointCloud *cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
+    auto cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
     if (cloud) {
-        if (kdtree_)
-            delete kdtree_;
+        delete kdtree_;
         kdtree_ = new KdTreeSearch_ETH(cloud);
     }
 }
 
 
 void DialogPointCloudSimplification::computeAvgSpacing() {
-    PointCloud *cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
+    auto cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
     if (cloud) {
         constructKdTree();
 
@@ -129,7 +127,7 @@ void DialogPointCloudSimplification::computeAvgSpacing() {
 
 
 void DialogPointCloudSimplification::query() {
-    PointCloud *cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
+    auto cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
     if (cloud) {
         if (radioButtonExpectedPointNumber->isChecked()) {
             unsigned int expected_number = lineEditExpectedPointNumber->text().toInt();
@@ -149,14 +147,14 @@ void DialogPointCloudSimplification::query() {
 
 
 void DialogPointCloudSimplification::apply() {
-    PointCloud *cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
+    auto cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
     if (cloud) {
-        if (points_to_remove_.size() == 0) {
+        if (points_to_remove_.empty()) {
             LOG(WARNING) << "no points have been marked. Please first query points that can be removed";
             return;
         }
 
-        int old_num = cloud->n_vertices();
+        auto old_num = cloud->n_vertices();
         for (auto v : points_to_remove_)
             cloud->delete_vertex(v);
 
@@ -164,14 +162,15 @@ void DialogPointCloudSimplification::apply() {
 
         if (!points_to_remove_.empty()) {
             points_to_remove_.clear();
-            int new_num = cloud->n_vertices();
+            auto new_num = cloud->n_vertices();
             LOG(INFO) << old_num - new_num << " points removed. " << new_num << " points remain";
 
             cloud->renderer()->update();
+            window_->updateUi();
             viewer_->update();
         }
 
         delete kdtree_;
-        kdtree_ = 0;
+        kdtree_ = nullptr;
     }
 }

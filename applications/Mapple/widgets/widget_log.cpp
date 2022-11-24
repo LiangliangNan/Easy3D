@@ -47,10 +47,6 @@ WidgetLog::WidgetLog(QWidget *parent)
 }
 
 
-WidgetLog::~WidgetLog() {
-}
-
-
 void WidgetLog::showContextMenu(const QPoint &pos) {
     if (!popupMenu_) {
         popupMenu_ = new QMenu(this);
@@ -74,8 +70,8 @@ void WidgetLog::showContextMenu(const QPoint &pos) {
 void WidgetLog::copySelected() {
     QStringList strings;
 	const QList<QListWidgetItem*>& items = selectedItems();
-	for (int i = 0; i < items.size(); ++i)
-        strings << items[i]->text();
+	for (const auto& it : items)
+        strings << it->text();
 
     QApplication::clipboard()->setText(strings.join("\n"));
 }

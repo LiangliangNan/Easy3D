@@ -71,7 +71,7 @@ namespace easy3d {
                         origin = p;
                         Translator::instance()->set_translation(origin);
                     }
-                    mesh->add_vertex(vec3(p.x - origin.x, p.y - origin.y, p.z - origin.z));
+                    mesh->add_vertex(vec3(static_cast<float>(p.x - origin.x), static_cast<float>(p.y - origin.y), static_cast<float>(p.z - origin.z)));
                     progress.next();
                 }
 
@@ -83,7 +83,7 @@ namespace easy3d {
                 dvec3 p;
                 for (std::size_t v = 0; v < num_vertices; ++v) {
                     input >> p;
-                    mesh->add_vertex(vec3(p.x - origin.x, p.y - origin.y, p.z - origin.z));
+                    mesh->add_vertex(vec3(static_cast<float>(p.x - origin.x), static_cast<float>(p.y - origin.y), static_cast<float>(p.z - origin.z)));
                     progress.next();
                 }
 
@@ -123,7 +123,7 @@ namespace easy3d {
                 return false;
             }
 
-            if (!mesh || mesh->n_vertices() == 0 || mesh->n_faces() == 0 || mesh->n_cells() == 0) {
+            if (mesh->n_vertices() == 0 || mesh->n_faces() == 0 || mesh->n_cells() == 0) {
                 LOG(ERROR) << "polyhedral mesh is empty";
                 return false;
             }
@@ -151,8 +151,8 @@ namespace easy3d {
                 progress.next();
             }
 
-            for (auto c : mesh->cells()) {
-                int num_halffaces = mesh->halffaces(c).size();
+            for (const auto& c : mesh->cells()) {
+                auto num_halffaces = mesh->halffaces(c).size();
                 output << num_halffaces << std::endl;
                 for (auto h : mesh->halffaces(c)) {
                     output << mesh->vertices(h).size() << " ";

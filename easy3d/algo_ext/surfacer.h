@@ -204,7 +204,7 @@ namespace easy3d {
         //@{
 
         /**
-         * \brief Collects all pairs of intersecting faces of a triangule surface mesh.
+         * \brief Collects all pairs of intersecting faces of a triangulated surface mesh.
          * \details Two faces are said to intersect if the corresponding triangles intersect and the intersection is
          * not an edge nor a vertex incident to both faces.
          * \pre mesh.is_triangle_mesh().

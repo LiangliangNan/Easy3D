@@ -132,7 +132,7 @@ void PointSelection::mark_selection(PointCloud *cloud) {
     auto select = cloud->vertex_property<bool>("v:select");
     auto colors = cloud->vertex_property<vec3>("v:color");
     for(auto v : cloud->vertices())
-        colors[v] = select[v] ? vec3(1,0,0) : drawable->color();    // mark selected points red
+        colors[v] = select[v] ? vec3(1,0,0) : drawable->color().xyz();    // mark selected points red
     drawable->set_coloring(easy3d::State::COLOR_PROPERTY, easy3d::State::VERTEX, "v:color");
     drawable->update();
 }

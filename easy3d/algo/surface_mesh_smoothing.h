@@ -26,7 +26,7 @@ namespace easy3d {
     class SurfaceMeshSmoothing {
     public:
         //! \brief Construct with mesh to be smoothed.
-        SurfaceMeshSmoothing(SurfaceMesh *mesh);
+        explicit SurfaceMeshSmoothing(SurfaceMesh *mesh);
 
         // destructor
         ~SurfaceMeshSmoothing();
@@ -60,10 +60,9 @@ namespace easy3d {
         //! the mesh
         SurfaceMesh *mesh_;
 
-        // remember for how many vertices/edges we computed weights
+        // remember for how many edges we computed weights
         // recompute if numbers change (i.e. mesh has changed)
         unsigned int how_many_edge_weights_;
-        unsigned int how_many_vertex_weights_;
     };
 
 } // namespace easy3d

@@ -1,7 +1,5 @@
-* Things work differently with shared build
-  - imgui viewer doesn't show the menu.
-
 * ToDo list (or on going):
+    - CompViewer: zoom in should be w.r.t. current view.
     - Walkthrough and animation; allow to modify the cameras interactively
     - Implement potree for huge point cloud visualization (https://github.com/potree/potree)
     - Add a measuring tool

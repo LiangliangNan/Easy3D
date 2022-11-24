@@ -79,7 +79,7 @@ namespace easy3d {
             return proj;
         }
 
-        // Creates a right handed perspective projection matrix based on a field of view..
+        // Creates a right-handed perspective projection matrix based on a field of view.
         mat4 perspective(float fov, float width, float height, float zNear, float zFar) {
             float rad = fov;
             float h = std::cos(0.5f * rad) / std::sin(0.5f * rad);
@@ -132,24 +132,24 @@ namespace easy3d {
         vec3 project(const vec3& obj, const mat4& mv, const mat4& proj, const int viewport[4], bool lowerleft /* = true*/) {
             mat4 mvp = proj * mv;
             vec3 vs = mvp * obj * 0.5f + vec3(0.5f);
-            vs.x = vs.x * viewport[2] + viewport[0];
-            vs.y = vs.y * viewport[3] + viewport[1];
+            vs.x = vs.x * static_cast<float>(viewport[2]) + static_cast<float>(viewport[0]);
+            vs.y = vs.y * static_cast<float>(viewport[3]) + static_cast<float>(viewport[1]);
 
             return vec3(
                 vs.x,
-                lowerleft ? vs.y : (viewport[3] - 1 - vs.y),
+                lowerleft ? vs.y : (static_cast<float>(viewport[3]) - 1 - vs.y),
                 vs.z
                 );
         }
 
         vec3 project(const vec3& obj, const mat4& mvp, const int viewport[4], bool lowerleft /* = true*/) {
             vec3 vs = mvp * obj * 0.5f + vec3(0.5f);
-            vs.x = vs.x * viewport[2] + viewport[0];
-            vs.y = vs.y * viewport[3] + viewport[1];
+            vs.x = vs.x * static_cast<float>(viewport[2]) + static_cast<float>(viewport[0]);
+            vs.y = vs.y * static_cast<float>(viewport[3]) + static_cast<float>(viewport[1]);
 
             return vec3(
                 vs.x,
-                lowerleft ? vs.y : (viewport[3] - 1 - vs.y),
+                lowerleft ? vs.y : (static_cast<float>(viewport[3]) - 1 - vs.y),
                 vs.z
                 );
         }
@@ -157,12 +157,12 @@ namespace easy3d {
         vec3 unproject(const vec3& win, const mat4& mv, const mat4& proj, const int viewport[4], bool lowerleft /* = true*/) {
             vec3 vs(
                 win.x,
-                lowerleft ? win.y : (viewport[3] - 1 - win.y),
+                lowerleft ? win.y : (static_cast<float>(viewport[3]) - 1 - win.y),
                 win.z
                 );
 
-            vs.x = (vs.x - viewport[0]) / viewport[2] * 2.0f - 1.0f;
-            vs.y = (vs.y - viewport[1]) / viewport[3] * 2.0f - 1.0f;
+            vs.x = (vs.x - static_cast<float>(viewport[0])) / static_cast<float>(viewport[2]) * 2.0f - 1.0f;
+            vs.y = (vs.y - static_cast<float>(viewport[1])) / static_cast<float>(viewport[3]) * 2.0f - 1.0f;
             vs.z = vs.z * 2.0f - 1.0f;
             return inverse(proj * mv) * vs;
         }
@@ -170,12 +170,12 @@ namespace easy3d {
         vec3 unproject(const vec3& win, const mat4& mvp, const int viewport[4], bool lowerleft /* = true*/) {
             vec3 vs(
                 win.x,
-                lowerleft ? win.y : (viewport[3] - 1 - win.y),
+                lowerleft ? win.y : (static_cast<float>(viewport[3]) - 1 - win.y),
                 win.z
                 );
 
-            vs.x = (vs.x - viewport[0]) / viewport[2] * 2.0f - 1.0f;
-            vs.y = (vs.y - viewport[1]) / viewport[3] * 2.0f - 1.0f;
+            vs.x = (vs.x - static_cast<float>(viewport[0])) / static_cast<float>(viewport[2]) * 2.0f - 1.0f;
+            vs.y = (vs.y - static_cast<float>(viewport[1])) / static_cast<float>(viewport[3]) * 2.0f - 1.0f;
             vs.z = vs.z * 2.0f - 1.0f;
             return inverse(mvp) * vs;
         }
@@ -203,7 +203,7 @@ namespace easy3d {
 
         mat4 pick_matrix(const vec2& center, const vec2& delta, const vec4& viewport) {
             //assert(delta.x > 0.0f && delta.y > 0.0f);
-            LOG(ERROR) << "Warning: not sure if pick_matrix() works for lowerleft or upperleft origined viewport.";
+            LOG(WARNING) << "Warning: not sure if pick_matrix() works for lowerleft or upperleft origined viewport.";
 
             mat4 pick(1.0f);
 

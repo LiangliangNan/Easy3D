@@ -53,7 +53,7 @@ int test_texture(int duration) {
 
     //--------------- create a mesh (which contains a single quad) -------------------
 
-    SurfaceMesh *mesh = new SurfaceMesh;
+    auto mesh = new SurfaceMesh;
     auto texcoord = mesh->add_vertex_property<vec2>("v:texcoord");
 
     const auto w = static_cast<float>(tex->width());

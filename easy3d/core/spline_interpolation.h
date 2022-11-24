@@ -138,11 +138,11 @@ namespace easy3d {
     class BandMatrix {
     public:
         /// Constructor
-        BandMatrix() {};
+        BandMatrix() = default;
         /// Constructor
         BandMatrix(int dim, int n_u, int n_l);
         /// Destructor
-        ~BandMatrix() {};
+        ~BandMatrix() = default;
 
         void resize(int dim, int n_u, int n_l);      // init with dim,n_u,n_l
         int dim() const;                             // matrix dimension
@@ -207,13 +207,13 @@ namespace easy3d {
         // TODO: maybe sort x and y, rather than returning an error
         for (int i = 0; i < n - 1; i++) {
             if (x_[i] >= x_[i + 1]) {
-                LOG_N_TIMES(3, ERROR) << "x has to be monotonously increasing (x[" << i << "]=" << x_[i] << ", x[" << i + 1 << "]=" << x_[i + 1] << "). " << COUNTER;;
+                LOG_N_TIMES(3, ERROR) << "x has to be monotonously increasing (x[" << i << "]=" << x_[i] << ", x[" << i + 1 << "]=" << x_[i + 1] << "). " << COUNTER;
                 return;
             }
         }
 
-        if (cubic_spline == true) { // cubic spline interpolation
-            // setting up the matrix and right hand side of the equation system
+        if (cubic_spline) { // cubic spline interpolation
+            // setting up the matrix and right-hand side of the equation system
             // for the parameters b[]
             BandMatrix<FT> A(n, 1, 1);
             std::vector <FT> rhs(n);
@@ -277,7 +277,7 @@ namespace easy3d {
         }
 
         // for left extrapolation coefficients
-        b0_ = (linear_extrapolation_ == false) ? b_[0] : 0.0;
+        b0_ = linear_extrapolation_ ? 0.0 : b_[0];
         c0_ = c_[0];
 
         // for the right extrapolation coefficients
@@ -286,7 +286,7 @@ namespace easy3d {
         // b_[n-1] is determined by the boundary condition
         a_[n - 1] = 0.0;
         c_[n - 1] = 3.0 * a_[n - 2] * h * h + 2.0 * b_[n - 2] * h + c_[n - 2];   // = f'_{n-2}(x_{n-1})
-        if (linear_extrapolation_ == true)
+        if (linear_extrapolation_)
             b_[n - 1] = 0.0;
     }
 
@@ -413,7 +413,7 @@ namespace easy3d {
         int k = j - i;       // what band is the entry
         assert((i >= 0) && (i < dim()) && (j >= 0) && (j < dim()));
         assert((-num_lower() <= k) && (k <= num_upper()));
-        // k=0 -> diogonal, k<0 lower left part, k>0 upper right part
+        // k=0 -> diagonal, k<0 lower left part, k>0 upper right part
         if (k >= 0) return m_upper[k][i];
         else return m_lower[-k][i];
     }
@@ -423,7 +423,7 @@ namespace easy3d {
         int k = j - i;       // what band is the entry
         assert((i >= 0) && (i < dim()) && (j >= 0) && (j < dim()));
         assert((-num_lower() <= k) && (k <= num_upper()));
-        // k=0 -> diogonal, k<0 lower left part, k>0 upper right part
+        // k=0 -> diagonal, k<0 lower left part, k>0 upper right part
         if (k >= 0) return m_upper[k][i];
         else return m_lower[-k][i];
     }
@@ -513,7 +513,7 @@ namespace easy3d {
     std::vector <FT> BandMatrix<FT>::lu_solve(const std::vector <FT> &b, bool is_lu_decomposed) {
         assert(this->dim() == (int) b.size());
         std::vector <FT> x, y;
-        if (is_lu_decomposed == false) {
+        if (!is_lu_decomposed) {
             this->lu_decompose();
         }
         y = this->l_solve(b);

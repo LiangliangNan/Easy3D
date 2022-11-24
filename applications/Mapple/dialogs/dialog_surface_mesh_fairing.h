@@ -37,7 +37,7 @@ Q_OBJECT
 
 public:
     explicit DialogSurfaceMeshFairing(MainWindow *window);
-    ~DialogSurfaceMeshFairing();
+    ~DialogSurfaceMeshFairing() override = default;
 
 private Q_SLOTS:
 

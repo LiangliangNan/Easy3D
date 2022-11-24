@@ -73,13 +73,13 @@ namespace easy3d {
          * can call update() for the rendering buffers of its default drawable to be automatically updated
          * during the rendering stage.
          * In case the default drawables don't meet a particular visualization purpose, client code should skip
-         * the creation of the default drawables (by passing \c fase to \p create_drawables). Instead, create a
+         * the creation of the default drawables (by passing \c false to \p create_drawables). Instead, create a
          * customized drawable and update the buffers accordingly. If the drawable changes or will be modified
          * frequently and its visualization is expected to be automatically updated after each change, provide
          * an update function.
          * \sa update(),
          */
-        Renderer(Model *model, bool create_drawables = true);
+        explicit Renderer(Model *model, bool create_drawables = true);
 
         virtual ~Renderer();
 
@@ -228,7 +228,7 @@ namespace easy3d {
         template<typename FT>
         static void color_from_segmentation(
                 SurfaceMesh *mesh,
-                const SurfaceMesh::FaceProperty<FT> segments,
+                SurfaceMesh::FaceProperty<FT> segments,
                 SurfaceMesh::FaceProperty<vec3> colors
         );
 
@@ -243,7 +243,7 @@ namespace easy3d {
         template<typename FT>
         static void color_from_segmentation(
                 SurfaceMesh *mesh,
-                const SurfaceMesh::VertexProperty<FT> segments,
+                SurfaceMesh::VertexProperty<FT> segments,
                 SurfaceMesh::VertexProperty<vec3> colors
         );
 
@@ -258,7 +258,7 @@ namespace easy3d {
         template<typename FT>
         static void color_from_segmentation(
                 PointCloud *cloud,
-                const PointCloud::VertexProperty<FT> segments,
+                PointCloud::VertexProperty<FT> segments,
                 PointCloud::VertexProperty<vec3> colors
         );
 
@@ -286,9 +286,9 @@ namespace easy3d {
 namespace easy3d {
 
     template<typename FT> inline
-    void Renderer::color_from_segmentation(SurfaceMesh *model, SurfaceMesh::FaceProperty<FT> segments,
+    void Renderer::color_from_segmentation(SurfaceMesh *mesh, SurfaceMesh::FaceProperty<FT> segments,
                                            SurfaceMesh::FaceProperty<vec3> colors) {
-        if (model->empty()) {
+        if (mesh->empty()) {
             LOG(WARNING) << "model has no valid geometry";
             return;
         }
@@ -303,7 +303,7 @@ namespace easy3d {
         }
 
         int max_index = 0;
-        for (auto f : model->faces())
+        for (auto f : mesh->faces())
             max_index = std::max(max_index, static_cast<int>(segments[f]));
 
         // assign each segment a unique color
@@ -311,7 +311,7 @@ namespace easy3d {
         for (auto &c : color_table)
             c = random_color();
 
-        for (auto f : model->faces()) {
+        for (auto f : mesh->faces()) {
             int idx = static_cast<int>(segments[f]);
             if (idx == -1)
                 colors[f] = vec3(0, 0, 0);
@@ -322,9 +322,9 @@ namespace easy3d {
 
 
     template<typename FT> inline
-    void Renderer::color_from_segmentation(SurfaceMesh *model, SurfaceMesh::VertexProperty<FT> segments,
+    void Renderer::color_from_segmentation(SurfaceMesh *mesh, SurfaceMesh::VertexProperty<FT> segments,
                                            SurfaceMesh::VertexProperty<vec3> colors) {
-        if (model->empty()) {
+        if (mesh->empty()) {
             LOG(WARNING) << "model has no valid geometry";
             return;
         }
@@ -339,7 +339,7 @@ namespace easy3d {
         }
 
         int max_index = 0;
-        for (auto v : model->vertices())
+        for (auto v : mesh->vertices())
             max_index = std::max(max_index, static_cast<int>(segments[v]));
 
         // assign each segment a unique color
@@ -347,7 +347,7 @@ namespace easy3d {
         for (auto &c : color_table)
             c = random_color();
 
-        for (auto v : model->vertices()) {
+        for (auto v : mesh->vertices()) {
             int idx = static_cast<int>(segments[v]);
             if (idx == -1)
                 colors[v] = vec3(0, 0, 0);
@@ -358,10 +358,10 @@ namespace easy3d {
 
 
     template<typename FT> inline
-    void Renderer::color_from_segmentation(PointCloud *model,
+    void Renderer::color_from_segmentation(PointCloud *cloud,
                                            const PointCloud::VertexProperty<FT> segments,
                                            PointCloud::VertexProperty<vec3> colors) {
-        if (model->empty()) {
+        if (cloud->empty()) {
             LOG(WARNING) << "model has no valid geometry";
             return;
         }
@@ -376,7 +376,7 @@ namespace easy3d {
         }
 
         int max_index = 0;
-        for (auto v : model->vertices())
+        for (auto v : cloud->vertices())
             max_index = std::max(max_index, static_cast<int>(segments[v]));
 
         // assign each segment a unique color
@@ -384,7 +384,7 @@ namespace easy3d {
         for (auto &c : color_table)
             c = random_color();
 
-        for (auto v : model->vertices()) {
+        for (auto v : cloud->vertices()) {
             int idx = static_cast<int>(segments[v]);
             if (idx == -1)
                 colors[v] = vec3(0, 0, 0);

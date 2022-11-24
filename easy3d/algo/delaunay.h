@@ -27,7 +27,7 @@ namespace easy3d {
     public:
         /// \brief Constructor.
         /// \param dimension The dimension, must be either 2 or 3.
-        Delaunay(unsigned int dimension);
+        explicit Delaunay(unsigned int dimension);
 
         virtual ~Delaunay();
 
@@ -140,7 +140,7 @@ namespace easy3d {
             assert(c1 < nb_cells());
             assert(c2 < nb_cells());
             assert(lv < cell_size());
-            cicl_[cell_size() * c1 + lv] = c2;
+            cicl_[cell_size() * c1 + lv] = static_cast<int>(c2);
         }
 
     protected:

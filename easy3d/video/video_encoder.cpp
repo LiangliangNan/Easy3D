@@ -88,7 +88,7 @@ namespace internal {
             LOG(ERROR) << error_msg;
             throw std::runtime_error(error_msg);
 		}
-		ost->st->id = oc->nb_streams - 1;
+		ost->st->id = static_cast<int>(oc->nb_streams - 1);
         AVCodecContext *c = avcodec_alloc_context3(*codec);
 		if (!c) {
             std::string error_msg = "could not allocate an encoding context";
@@ -161,7 +161,7 @@ namespace internal {
 		return picture;
 	}
 
-	static void open_video(AVFormatContext *oc, const AVCodec *codec,
+	static void open_video(const AVCodec *codec,
 		OutputStream *ost, AVDictionary *opt_arg)
 	{
 		int ret;
@@ -233,7 +233,7 @@ namespace internal {
 			throw std::runtime_error(error_msg);
 		}
 
-		const uint8_t *srcSlice[3] = { image_data, 0, 0 };
+		const uint8_t *srcSlice[3] = { image_data, nullptr, nullptr };
 		int srcStride[3] = { width * channels, 0, 0 }; // first element is bytes per line
 
 		sws_scale(ost->sws_ctx, srcSlice, srcStride, 0, height, ost->frame->data, ost->frame->linesize);
@@ -244,7 +244,7 @@ namespace internal {
 	}
 
 
-	static void close_stream(AVFormatContext *oc, OutputStream *ost)
+	static void close_stream(OutputStream *ost)
 	{
 		avcodec_free_context(&ost->enc);
 		av_frame_free(&ost->frame);
@@ -262,9 +262,9 @@ namespace internal {
 		void end();
 
 	public:
-		OutputStream video_st = { 0 };
-		const AVOutputFormat *fmt;
-		AVFormatContext *fmt_ctx;
+		OutputStream video_st = { nullptr };
+		const AVOutputFormat *fmt = nullptr;
+		AVFormatContext *fmt_ctx = nullptr;
 		const AVCodec *video_codec = nullptr;
 		AVDictionary *opt = nullptr;
 		int framerate_;
@@ -326,7 +326,7 @@ namespace internal {
 
 			/* Now that all the parameters are set, we can open the video codec
 			 * and allocate the necessary encode buffers. */
-			open_video(fmt_ctx, video_codec, &video_st, opt);
+			open_video(video_codec, &video_st, opt);
 
 			av_dump_format(fmt_ctx, 0, filename_.c_str(), 1);
 
@@ -385,7 +385,7 @@ namespace internal {
 			}
 		}
 
-		return (ret == AVERROR_EOF) ? false : true;
+		return (ret != AVERROR_EOF);
 	}
 
 
@@ -396,7 +396,7 @@ namespace internal {
 		av_write_trailer(fmt_ctx);
 
 		/* Close each codec. */
-		close_stream(fmt_ctx, &video_st);
+		close_stream(&video_st);
 
 		if (!(fmt->flags & AVFMT_NOFILE))
 			/* Close the output file. */

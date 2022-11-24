@@ -48,6 +48,14 @@ TextRendering::TextRendering(const std::string &title)
 }
 
 
+TextRendering::~TextRendering() {
+    delete texter_;
+
+    // Not needed: it will be called in the destructor of the base class
+    //Viewer::cleanup();
+}
+
+
 std::string TextRendering::usage() const {
     return ("----------------------- Text Rendering usage ------------------------ \n"
             "Press '+'/'-' to increase/decrease font size                          \n"
@@ -64,8 +72,6 @@ void TextRendering::init() {
     Viewer::init();
 
     texter_ = new TextRenderer(dpi_scaling());
-    if (!texter_)
-        return;
 
     std::vector<std::string> files;
     file_system::get_directory_entries(resource::directory() + "/fonts/", files, false);
@@ -82,12 +88,6 @@ void TextRendering::init() {
     for (std::size_t i =0; i< names.size(); ++i)
         std::cout << "\tfont " << i << ": " << names[i] << std::endl;
 #endif
-}
-
-
-void TextRendering::cleanup() {
-    Viewer::cleanup();
-    delete texter_;
 }
 
 
@@ -173,7 +173,7 @@ void TextRendering::draw() const {
     float x = 50.0f;
     float y = 80.0f;
 
-    const int num_fonts = texter_->num_fonts();
+    const auto num_fonts = texter_->num_fonts();
     const float font_height = texter_->font_height(font_size);
 
     texter_->draw(
@@ -188,7 +188,7 @@ void TextRendering::draw() const {
             line_spacing_, upper_left_);
 
     // the new Y position to start; add extra space
-    y += (font_height * 1.5 + line_spacing_) * 5;
+    y += (font_height * 1.5f + line_spacing_) * 5;
 
     float next_x = 0.0f;
     for (int i = 0; i < num_fonts; ++i) {
@@ -198,7 +198,7 @@ void TextRendering::draw() const {
         } else {
             texter_->draw(std::to_string(i) + " - I Love Easy3D!", next_x * dpi_scaling(), y * dpi_scaling(), font_size,
                           i, colors_[i], upper_left_);
-            y += font_height * 1.5;
+            y += font_height * 1.5f;
         }
     }
 }

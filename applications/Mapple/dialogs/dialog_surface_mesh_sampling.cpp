@@ -46,12 +46,8 @@ DialogSurfaceMeshSampling::DialogSurfaceMeshSampling(MainWindow *window)
 }
 
 
-DialogSurfaceMeshSampling::~DialogSurfaceMeshSampling() {
-}
-
-
 void DialogSurfaceMeshSampling::apply() {
-    SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
+    auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
     if (!mesh)
         return;
 
@@ -61,8 +57,7 @@ void DialogSurfaceMeshSampling::apply() {
         return;
     }
 
-    SurfaceMeshSampler sampler;
-    PointCloud *cloud = sampler.apply(mesh, num);
+    PointCloud *cloud = SurfaceMeshSampler::apply(mesh, num);
     if (cloud) {
         viewer_->addModel(cloud);
         window_->updateUi();

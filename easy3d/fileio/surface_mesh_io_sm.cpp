@@ -85,16 +85,16 @@ namespace easy3d {
 			auto point = mesh->vertex_property<vec3>("v:point");
 
             // read properties from file
-            input.read((char*)vconn.data(), nv * sizeof(SurfaceMesh::VertexConnectivity)  );
-            input.read((char*)hconn.data(), nh * sizeof(SurfaceMesh::HalfedgeConnectivity));
-            input.read((char*)fconn.data(), nf * sizeof(SurfaceMesh::FaceConnectivity)    );
-            input.read((char*)point.data(), nv * sizeof(vec3)                             );
+            input.read((char*)vconn.data(), static_cast<long>(nv * sizeof(SurfaceMesh::VertexConnectivity)  ));
+            input.read((char*)hconn.data(), static_cast<long>(nh * sizeof(SurfaceMesh::HalfedgeConnectivity)));
+            input.read((char*)fconn.data(), static_cast<long>(nf * sizeof(SurfaceMesh::FaceConnectivity)    ));
+            input.read((char*)point.data(), static_cast<long>(nv * sizeof(vec3)                             ));
 
             bool has_colors = false;
             input.read((char*)&has_colors, sizeof(bool));
             if (has_colors) {
                 SurfaceMesh::VertexProperty<vec3> color = mesh->vertex_property<vec3>("v:color");
-                input.read((char*)color.data(), nv * sizeof(vec3));
+                input.read((char*)color.data(), static_cast<long>(nv * sizeof(vec3)));
             }
 
             return mesh->n_faces() > 0;
@@ -122,7 +122,6 @@ namespace easy3d {
             unsigned int nv, ne, nh, nf;
             nv = mesh->n_vertices();
             ne = mesh->n_edges();
-            nh = mesh->n_halfedges();
             nf = mesh->n_faces();
             nh = 2*ne;
 
@@ -137,17 +136,17 @@ namespace easy3d {
             auto point = mesh->get_vertex_property<vec3>("v:point");
 
             // write properties to file
-            output.write((char*)vconn.data(), nv * sizeof(SurfaceMesh::VertexConnectivity));
-            output.write((char*)hconn.data(), nh * sizeof(SurfaceMesh::HalfedgeConnectivity));
-            output.write((char*)fconn.data(), nf * sizeof(SurfaceMesh::FaceConnectivity));
-            output.write((char*)point.data(), nv * sizeof(vec3));
+            output.write((char*)vconn.data(), static_cast<long>(nv * sizeof(SurfaceMesh::VertexConnectivity)));
+            output.write((char*)hconn.data(), static_cast<long>(nh * sizeof(SurfaceMesh::HalfedgeConnectivity)));
+            output.write((char*)fconn.data(), static_cast<long>(nf * sizeof(SurfaceMesh::FaceConnectivity)));
+            output.write((char*)point.data(), static_cast<long>(nv * sizeof(vec3)));
 
             // check for colors
             auto color = mesh->get_vertex_property<vec3>("v:color");
             bool has_colors = color;
             output.write((char*)&has_colors, sizeof(bool));
             if (has_colors)
-                output.write((char*)color.data(), nv * sizeof(vec3));
+                output.write((char*)color.data(), static_cast<long>(nv * sizeof(vec3)));
 
             return true;
         }

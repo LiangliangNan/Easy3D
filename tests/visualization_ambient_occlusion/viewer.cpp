@@ -46,6 +46,14 @@ TutorialAmbientOcclusion::TutorialAmbientOcclusion(const std::string& title) : V
 }
 
 
+TutorialAmbientOcclusion::~TutorialAmbientOcclusion() {
+    delete ao_;
+
+    // Not needed: it will be called in the destructor of the base class
+    //Viewer::cleanup();
+}
+
+
 std::string TutorialAmbientOcclusion::usage() const {
     return ("----------------- Ambient Occlusion usage ----------------- \n"
             "Press key 'space' to switch between Ambient Occlusion and normal rendering\n"
@@ -158,12 +166,4 @@ void TutorialAmbientOcclusion::draw() const {
     }
 	else
 		Viewer::draw();
-}
-
-
-void TutorialAmbientOcclusion::cleanup() {
-	if (ao_)
-		delete ao_;
-
-	Viewer::cleanup();
 }

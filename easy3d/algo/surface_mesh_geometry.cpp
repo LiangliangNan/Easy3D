@@ -13,7 +13,6 @@
 
 #include <limits>
 #include <cmath>
-#include <cfloat>
 
 
 namespace easy3d {
@@ -261,10 +260,10 @@ namespace easy3d {
         //-----------------------------------------------------------------------------
 
         vec3 laplace(const SurfaceMesh *mesh, SurfaceMesh::Vertex v) {
-            vec3 laplace(0.0, 0.0, 0.0);
+            vec3 laplace(0.0f, 0.0f, 0.0f);
 
             if (!mesh->is_isolated(v)) {
-                float weight, sumWeights(0.0);
+                float weight, sumWeights(0.0f);
 
                 for (auto h : mesh->halfedges(v)) {
                     weight = cotan_weight(mesh, mesh->edge(h));
@@ -311,10 +310,10 @@ namespace easy3d {
 
             const float area = voronoi_area(mesh, v);
             if (area > std::numeric_limits<float>::min()) {
-                c.mean = float(0.5) * norm(laplace(mesh, v));
-                c.gauss = (2.0 * M_PI - angle_sum(mesh, v)) / area;
+                c.mean = 0.5f * norm(laplace(mesh, v));
+                c.gauss = (2.0f * M_PI - angle_sum(mesh, v)) / area;
 
-                const float s = sqrt(std::max(float(0.0), c.mean * c.mean - c.gauss));
+                const float s = sqrt(std::max(0.0f, c.mean * c.mean - c.gauss));
                 c.min = c.mean - s;
                 c.max = c.mean + s;
 

@@ -44,12 +44,9 @@ bool reorient(Viewer* viewer, Model* model) {
     if (!viewer || !model)
         return false;
 
-    PointCloud *cloud = dynamic_cast<PointCloud *>(model);
-    if (!cloud)
-        return false;
+    auto cloud = dynamic_cast<PointCloud *>(model);
 
-    PointCloudNormals algo;
-    if (algo.reorient(cloud)) {
+    if (PointCloudNormals::reorient(cloud)) {
         auto normals = cloud->get_vertex_property<vec3>("v:normal");
         auto drawable = cloud->renderer()->get_points_drawable("vertices");
         // Upload the vertex normals to the GPU.
@@ -65,12 +62,8 @@ bool estimate(Viewer* viewer, Model* model) {
     if (!viewer || !model)
         return false;
 
-    PointCloud *cloud = dynamic_cast<PointCloud *>(model);
-    if (!cloud)
-        return false;
-
-    PointCloudNormals algo;
-    if (algo.estimate(cloud)) {
+    auto cloud = dynamic_cast<PointCloud *>(model);
+    if (PointCloudNormals::estimate(cloud)) {
         auto normals = cloud->get_vertex_property<vec3>("v:normal");
         auto drawable = cloud->renderer()->get_points_drawable("vertices");
         // Upload the vertex normals to the GPU.

@@ -180,8 +180,8 @@ namespace easy3d {
             // from non-feature regions to feature vertices.
             for (int iters = 0; iters < 2; ++iters) {
                 for (auto v: mesh_->vertices()) {
-                    float w, ww = 0.0;
-                    float c, cc = 0.0;
+                    double w, ww = 0.0;
+                    double c, cc = 0.0;
 
                     for (auto h : mesh_->halfedges(v)) {
                         c = vsizing_[mesh_->target(h)];
@@ -192,20 +192,20 @@ namespace easy3d {
                         }
                     }
 
-                    if (ww)
+                    if (std::abs(ww) > std::numeric_limits<double>::min())
                         cc /= ww;
-                    vsizing_[v] = cc;
+                    vsizing_[v] = static_cast<float>(cc);
                 }
             }
 
             // now convert per-vertex curvature into target edge length
             for (auto v: mesh_->vertices()) {
-                float c = vsizing_[v];
+                double c = vsizing_[v];
 
                 // get edge length from curvature
-                const float r = 1.0 / c;
-                const float e = approx_error_;
-                float h;
+                const double r = 1.0 / c;
+                const double e = approx_error_;
+                double h;
                 if (e < r) {
                     // see mathworld: "circle segment" and "equilateral triangle"
                     //h = sqrt(2.0*r*e-e*e) * 3.0 / sqrt(3.0);
@@ -222,7 +222,7 @@ namespace easy3d {
                     h = max_edge_length_;
 
                 // store target edge length
-                vsizing_[v] = h;
+                vsizing_[v] = static_cast<float>(h);
             }
         }
 
@@ -263,7 +263,7 @@ namespace easy3d {
             return;
         }
 
-        // find closest triangle of reference mesh
+        // find the closest triangle of reference mesh
         TriangleMeshKdTree::NearestNeighbor nn = kd_tree_->nearest(points_[v]);
         const vec3 p = nn.nearest;
         const SurfaceMesh::Face f = nn.face;
@@ -398,7 +398,7 @@ namespace easy3d {
 
                         // feature rules
                         if (f0 && f1) {
-                            // edge must be feature
+                            // edge must be a feature
                             if (!efeature_[e])
                                 continue;
 
@@ -664,7 +664,7 @@ namespace easy3d {
         SurfaceMesh::Halfedge h;
         SurfaceMesh::Vertex v, vb, vd;
         SurfaceMesh::Face fb, fd;
-        float a0, a1, amin, aa(std::cos(170.0 * M_PI / 180.0));
+        double a0, a1, amin, aa(std::cos(170.0 * M_PI / 180.0));
         vec3 a, b, c, d;
 
         for (auto e : mesh_->edges()) {

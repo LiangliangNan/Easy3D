@@ -31,14 +31,14 @@ namespace easy3d {
     class SurfaceMeshHoleFilling {
     public:
         /// \brief construct with mesh
-        SurfaceMeshHoleFilling(SurfaceMesh *mesh);
+        explicit SurfaceMeshHoleFilling(SurfaceMesh *mesh);
 
         /// \brief fill the hole specified by halfedge h
         bool fill_hole(SurfaceMesh::Halfedge h);
 
     private:
         struct Weight {
-            Weight(float _angle = FLT_MAX, float _area = FLT_MAX)
+            explicit Weight(float _angle = FLT_MAX, float _area = FLT_MAX)
                     : angle(_angle), area(_area) {
             }
 
@@ -65,9 +65,9 @@ namespace easy3d {
         // refine triangulation (isotropic remeshing)
         void refine();
 
-        void split_long_edges(const float lmax);
+        void split_long_edges(float lmax);
 
-        void collapse_short_edges(const float lmin);
+        void collapse_short_edges(float lmin);
 
         void flip_edges();
 

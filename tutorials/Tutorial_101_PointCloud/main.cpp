@@ -40,12 +40,12 @@ int main(int argc, char** argv) {
     initialize();
 
 	// Create a point cloud
-	PointCloud* cloud = new PointCloud;
+	auto cloud = new PointCloud;
 
 	// Add some points. Here we add 100 points on a 10*10 grid.
-	for (float i=-5; i<5; ++i) {
-		for (float j = -5; j < 5; ++j) 
-			cloud->add_vertex(vec3(i, j, 0));// z = 0: all points are on XY plane
+	for (int i=-5; i<5; ++i) {
+		for (int j = -5; j < 5; ++j)
+			cloud->add_vertex(vec3(static_cast<float>(i), static_cast<float>(j), 0));// z = 0: all points are on XY plane
 	}
 	std::cout << "point cloud has " << cloud->n_vertices() << " points" << std::endl;
 

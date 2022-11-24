@@ -40,12 +40,12 @@ class ImageViewer : public easy3d::Viewer
 {
 public:
     ImageViewer(const std::string& title, const std::string& image_file);
+    ~ImageViewer() override;
     
 protected:
-    virtual bool key_press_event(int key, int modifiers) override;
-    virtual bool mouse_scroll_event(int x, int y, int dx, int dy) override;
-    virtual void init() override;
-    virtual void cleanup() override;
+    bool key_press_event(int key, int modifiers) override;
+    bool mouse_scroll_event(int x, int y, int dx, int dy) override;
+    void init() override;
 
     void draw() const override;
 
@@ -55,7 +55,7 @@ protected:
 
     // moves the camera so that the 'model' is centered on the screen.
     // if 'model' is NULL, it centers the entire scene (all models).
-    virtual void fit_screen(const easy3d::Model* model = nullptr) override;
+    void fit_screen();
 
 private:
     easy3d::Texture* texture_;

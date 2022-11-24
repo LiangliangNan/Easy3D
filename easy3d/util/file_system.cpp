@@ -42,7 +42,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <unistd.h>
-#include <stdio.h>
+#include <cstdio>
 #include <pwd.h>
 #endif
 
@@ -72,7 +72,7 @@ namespace easy3d {
 
 
         bool is_file(const std::string& filename) {
-            struct stat statbuf;
+            struct stat statbuf{};
             if (::stat(filename.c_str(), &statbuf) != 0)
                 return false;   // path does not exist
     #ifdef _WIN32
@@ -86,7 +86,7 @@ namespace easy3d {
         bool is_directory(const std::string& path) {
             if (path == path_root(path)) // already the root of the path
                 return true;
-            struct stat statbuf;
+            struct stat statbuf{};
             if (::stat(path.c_str(), &statbuf) != 0)
                 return false;   // path does not exist
     #ifdef _WIN32
@@ -126,8 +126,8 @@ namespace easy3d {
 
             std::vector<std::string> entries;
             get_directory_entries(path, entries, false);
-            for (unsigned int i = 0; i < entries.size(); ++i) {
-                const std::string& entry = path + "/" + entries[i];
+            for (const auto& e : entries) {
+                const std::string& entry = path + "/" + e;
                 if (is_directory(entry)) {
                     if (!delete_directory(entry)) {
 						LOG(WARNING) << "could not delete subdirectory: " << entry;
@@ -247,7 +247,7 @@ namespace easy3d {
 
 
         time_t time_stamp(const std::string& file_or_dir) {
-            struct stat buffer;
+            struct stat buffer{};
             if (!stat(file_or_dir.c_str(), &buffer))
                 return (buffer.st_mtime);
             return 0;
@@ -298,7 +298,7 @@ namespace easy3d {
                 while ((rc = readdir(handle)) != nullptr) {
                     // some OSs (e.g., macOS) may include ".", "..", and ".DS_Store" in directory entries
                     if (std::strcmp(rc->d_name, ".") != 0 && std::strcmp(rc->d_name, "..") != 0 && std::strcmp(rc->d_name, ".DS_Store") != 0)
-                        contents.push_back(rc->d_name);
+                        contents.emplace_back(rc->d_name);
                 }
                 closedir(handle);
             }
@@ -310,12 +310,12 @@ namespace easy3d {
 
 
         std::string extension(const std::string& file_name, bool lowercase) {
-            std::string::size_type dot = file_name.find_last_of('.');
-            std::string::size_type slash = file_name.find_last_of(PATH_SEPARATORS);
+            auto dot = file_name.find_last_of('.');
+            auto slash = file_name.find_last_of(PATH_SEPARATORS);
             if (dot == std::string::npos || (slash != std::string::npos && dot < slash))
-                return std::string("");
+                return "";
 
-            std::string ext(file_name.begin() + dot + 1, file_name.end());
+            std::string ext(file_name.begin() + static_cast<long>(dot) + 1, file_name.end());
             if (lowercase)
                 return string::to_lowercase(ext);
             else
@@ -330,43 +330,43 @@ namespace easy3d {
         std::string parent_directory(const std::string& file_name) {
             std::string::size_type slash = file_name.find_last_of(PATH_SEPARATORS);
             if (slash == std::string::npos)
-                return std::string();
+                return "";
             else
                 return std::string(file_name, 0, slash);
         }
 
         std::string simple_name(const std::string& file_name) {
-            std::string::size_type slash = file_name.find_last_of(PATH_SEPARATORS);
+            auto slash = file_name.find_last_of(PATH_SEPARATORS);
             if (slash == std::string::npos)
                 return file_name;
             else
-                return std::string(file_name.begin() + slash + 1, file_name.end());
+                return std::string(file_name.begin() + static_cast<long>(slash) + 1, file_name.end());
         }
 
 
         // strip one level of extension from the filename.
         std::string name_less_extension(const std::string& file_name)
         {
-            std::string::size_type dot = file_name.find_last_of('.');
-            std::string::size_type slash = file_name.find_last_of(PATH_SEPARATORS);        // Finds forward slash *or* back slash
+            auto dot = file_name.find_last_of('.');
+            auto slash = file_name.find_last_of(PATH_SEPARATORS);        // Finds forward slash *or* backslash
             if (dot == std::string::npos || (slash != std::string::npos && dot < slash))
                 return file_name;
 
-            return std::string(file_name.begin(), file_name.begin() + dot);
+            return std::string(file_name.begin(), file_name.begin() + static_cast<long>(dot));
         }
 
 
         // strip all extensions from the filename.
         std::string name_less_all_extensions(const std::string& file_name) {
-            // Finds start serach position: from last slash, or the begining of the string if none found
-            std::string::size_type startPos = file_name.find_last_of(PATH_SEPARATORS);  // Finds forward slash *or* back slash
+            // Finds start search position: from last slash, or the beginning of the string if none found
+            std::string::size_type startPos = file_name.find_last_of(PATH_SEPARATORS);  // Finds forward slash *or* backslash
             if (startPos == std::string::npos)
                 startPos = 0;
             std::string::size_type dot = file_name.find_first_of('.', startPos);        // Finds *FIRST* dot from start pos
             if (dot == std::string::npos)
                 return file_name;
 
-            return std::string(file_name.begin(), file_name.begin() + dot);
+            return std::string(file_name.begin(), file_name.begin() + static_cast<long>(dot));
         }
 
         std::string replace_extension(std::string const& file_name, std::string const& ext)
@@ -417,11 +417,12 @@ namespace easy3d {
             return false;
         }
 
+        //\cond
         namespace internal {
             /** Helper to iterate over elements of a path (including Windows' root, if any). **/
             class PathIterator {
             public:
-                PathIterator(const std::string & v);
+                explicit PathIterator(const std::string & v);
                 bool valid() const { return start!=end; }
                 PathIterator & operator++();
                 std::string operator*();
@@ -447,7 +448,8 @@ namespace easy3d {
 
             std::string PathIterator::operator*()
             {
-                if (!valid()) return std::string();
+                if (!valid())
+                    return "";
                 return std::string(start, stop);
             }
 
@@ -462,6 +464,7 @@ namespace easy3d {
                 return std::find_first_of(it, end, PATH_SEPARATORS, PATH_SEPARATORS+PATH_SEPARATORS_LEN);
             }
         }
+        //\endcond
 
         //std::string testA = relative_path("C:\\a\\b", "C:\\a/b/d/f");       // d/f
         //std::string testB = relative_path("C:\\a\\d", "C:\\a/b/d/f");       // ../b/d/f
@@ -490,14 +493,14 @@ namespace easy3d {
 
             const std::string root = path_root(from);
             if (root != path_root(to)) {
-				LOG(WARNING) << "could not relativise paths. From=" << from << ", To=" << to << ". Returning 'to' unchanged.";
+				LOG(WARNING) << "could not convert to relative path. From=" << from << ", To=" << to << ". Returning 'to' unchanged.";
                 return simple_name(to);
             }
 
             // 3
             internal::PathIterator itFrom(from), itTo(to);
             // Iterators may point to Windows roots. As we tested they are equal, there is no need to ++itFrom and ++itTo.
-            // However, if we got an Unix root, we must add it to the result.
+            // However, if we got a Unix root, we must add it to the result.
             std::string res(root == "/" ? "/" : "");
             for(; itFrom.valid() && itTo.valid() && *itFrom==*itTo; ++itFrom, ++itTo) {}
 
@@ -598,8 +601,8 @@ namespace easy3d {
                         // no need recursion because 'result' is continuously growing and
                         // the new entries are continuously be checked.
                         get_directory_entries(path, entries);
-                        for (unsigned int j = 0; j < entries.size(); ++j)
-                            result.push_back(result[i] + "/" + entries[j]);
+                        for (const auto& e : entries)
+                            result.push_back(result[i] + "/" + e);
                     }
                 }
             }
@@ -608,19 +611,18 @@ namespace easy3d {
         void get_files(const std::string& dir, std::vector<std::string>& result, bool recursive) {
             std::vector<std::string> entries;
             get_directory_entries(dir, entries, recursive);
-            for (unsigned int i = 0; i < entries.size(); i++) {
-                const std::string name = dir + "/" + entries[i];
-                if (is_file(name)) {
-                    result.push_back(entries[i]);
-                }
+            for (const auto& e : entries) {
+                const std::string name = dir + "/" + e;
+                if (is_file(name))
+                    result.push_back(e);
             }
         }
 
         void get_sub_directories(const std::string& dir, std::vector<std::string>& result, bool recursive) {
             std::vector<std::string> entries;
             get_directory_entries(dir, entries, recursive);
-            for (unsigned int i = 0; i < entries.size(); i++) {
-                const std::string name = dir + "/" + entries[i];
+            for (const auto& e : entries) {
+                const std::string name = dir + "/" + e;
                 if (is_directory(name)) {
                     result.push_back(name);
                 }
@@ -682,7 +684,7 @@ namespace easy3d {
 				LOG(WARNING) << "could not open file: " << filename;
 				return;
 			}
-			out.write(data.c_str(), data.length());
+			out.write(data.c_str(), static_cast<long>(data.length()));
 			out.close();
         }
 

@@ -51,7 +51,7 @@
 namespace easy3d {
 
     bool PointCloudNormals::estimate(PointCloud *cloud, unsigned int k /* = 16 */,
-                                     bool compute_curvature /* = false */) const {
+                                     bool compute_curvature /* = false */) {
         if (!cloud) {
             LOG(ERROR) << "empty input point cloud";
             return false;
@@ -64,7 +64,7 @@ namespace easy3d {
         KdTreeSearch_NanoFLANN kdtree(cloud);
         LOG(INFO) << "done. " << w.time_string();
 
-        int num = cloud->n_vertices();
+        int num = static_cast<int>(cloud->n_vertices());
         const std::vector<vec3> &points = cloud->points();
         std::vector<vec3> &normals = cloud->vertex_property<vec3>("v:normal").vector();
 
@@ -79,14 +79,12 @@ namespace easy3d {
         for (int i = 0; i < num; ++i) {
             const vec3 &p = points[i];
             std::vector<int> neighbors;
-            kdtree.find_closest_k_points(p, k, neighbors);
+            kdtree.find_closest_k_points(p, static_cast<int>(k), neighbors);
 
             PrincipalAxes<3> pca;
             pca.begin();
-            for (unsigned int j = 0; j < neighbors.size(); ++j) {
-                int idx = neighbors[j];
+            for (auto idx : neighbors)
                 pca.add(points[idx]);
-            }
             pca.end();
 
             // the eigen vector corresponding to the smallest eigen value
@@ -108,14 +106,12 @@ namespace easy3d {
     namespace internal {
 
         struct VertexProperty {
-            VertexProperty(easy3d::PointCloud::Vertex v = easy3d::PointCloud::Vertex(-1)) : vertex(v) {}
-
+            explicit VertexProperty(easy3d::PointCloud::Vertex v = easy3d::PointCloud::Vertex(-1)) : vertex(v) {}
             easy3d::PointCloud::Vertex vertex;
         };
 
         struct EdgeProperty {
-            EdgeProperty(float w = -std::numeric_limits<float>::max()) : weight(w) {}
-
+            explicit EdgeProperty(float w = -std::numeric_limits<float>::max()) : weight(w) {}
             float weight;
         };
 
@@ -153,13 +149,12 @@ namespace easy3d {
 
                 // The indices of the neighbors of v (NOTE: the result include v itself).
                 std::vector<int> neighbor_indices;
-                tree->find_closest_k_points(p, k, neighbor_indices);
+                tree->find_closest_k_points(p, static_cast<int>(k), neighbor_indices);
                 if (neighbor_indices.size() < k)
                     continue; // in extreme cases, a point cloud can have less than K points
 
                 // now let's create the edges
-                for (std::size_t i = 0; i < neighbor_indices.size(); ++i) {
-                    int index = neighbor_indices[i];
+                for (auto index : neighbor_indices) {
                     if (index == v.idx())
                         continue; // this is actually the current vertex
 
@@ -190,7 +185,7 @@ namespace easy3d {
         /// - vertices contain the corresponding input point cloud vertex
         /// - a boolean indicating if the normal is oriented.
         struct MST_VertexProperty : public VertexProperty {
-            MST_VertexProperty(easy3d::PointCloud::Vertex v = easy3d::PointCloud::Vertex(-1), bool oriented = false)
+            explicit MST_VertexProperty(easy3d::PointCloud::Vertex v = easy3d::PointCloud::Vertex(-1), bool oriented = false)
                     : VertexProperty(v), is_oriented(oriented) {}
 
             bool is_oriented;
@@ -202,7 +197,7 @@ namespace easy3d {
             typedef typename MST_Graph::edge_descriptor Edge;
 
         public:
-            MST_Graph(PointCloud::VertexProperty<vec3> nmap) : normal_map(nmap) {}
+            explicit MST_Graph(PointCloud::VertexProperty<vec3> nmap) : normal_map(nmap) {}
 
             PointCloud::VertexProperty<vec3> normal_map;
 
@@ -252,10 +247,9 @@ namespace easy3d {
         template<class Graph>
         class BfsVisitor : public boost::default_bfs_visitor {
         public:
-            typedef typename Graph::vertex_descriptor VertexDescriptor;
             typedef typename Graph::edge_descriptor EdgeDescriptor;
 
-            BfsVisitor(std::function<void(EdgeDescriptor e, Graph &g)> fun)
+            explicit BfsVisitor(std::function<void(EdgeDescriptor e, Graph &g)> fun)
                     : func_(fun) {}
 
             // Note: boost requires const graph
@@ -335,7 +329,7 @@ namespace easy3d {
             return components;
         }
 
-        /// propage the normal orientation from the source vertex to the target vertex
+        /// Propagate the normal orientation from the source vertex to the target vertex
         /// It does not orient normals that are already oriented.
         /// It does not propagate the orientation if the angle between 2 normals > angle_max.
         /// \pre Normals must be unit vectors
@@ -370,7 +364,7 @@ namespace easy3d {
     }
 
 
-    bool PointCloudNormals::reorient(PointCloud *cloud, unsigned int k) const {
+    bool PointCloudNormals::reorient(PointCloud *cloud, unsigned int k) {
         if (!cloud) {
             LOG(ERROR) << "empty input point cloud";
             return false;

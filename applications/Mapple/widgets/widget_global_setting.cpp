@@ -102,7 +102,7 @@ WidgetGlobalSetting::WidgetGlobalSetting(QWidget *parent)
     // visible
     ui_->checkBoxClippingPlaneVisible->setChecked(true);
     // default color
-    const vec3& c = ClippingPlane::instance()->color();
+    const auto& c = ClippingPlane::instance()->color();
     QPixmap pixmap(ui_->toolButtonClippingPlaneColor->size());
     pixmap.fill(
             QColor(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255)));
@@ -175,7 +175,7 @@ void WidgetGlobalSetting::recenterClippingPlane() {
 
 
 void WidgetGlobalSetting::setClippingPlaneColor() {
-    const vec4 &c = ClippingPlane::instance()->color();
+    const auto &c = ClippingPlane::instance()->color();
     QColor orig(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255));
     const QColor &color = QColorDialog::getColor(orig, this);
     if (color.isValid()) {
@@ -315,7 +315,7 @@ void WidgetGlobalSetting::setLightDistance(int d) {
 
 
 void WidgetGlobalSetting::setShadowSmoothPattern(int v) {
-    SoftShadow* shadow = dynamic_cast<SoftShadow*>(viewer_->shadow());
+    auto shadow = dynamic_cast<SoftShadow*>(viewer_->shadow());
     if (shadow) {
         shadow->set_sample_pattern(SoftShadow::SamplePattern(v));
         viewer_->update();
@@ -324,7 +324,7 @@ void WidgetGlobalSetting::setShadowSmoothPattern(int v) {
 
 
 void WidgetGlobalSetting::setShadowSoftness(int v) {
-    SoftShadow* shadow = dynamic_cast<SoftShadow*>(viewer_->shadow());
+    auto shadow = dynamic_cast<SoftShadow*>(viewer_->shadow());
     if (shadow) {
         shadow->set_softness(static_cast<float>(v) / 100.0f);
         viewer_->update();

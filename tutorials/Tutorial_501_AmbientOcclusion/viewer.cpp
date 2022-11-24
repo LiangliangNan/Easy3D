@@ -46,6 +46,14 @@ TutorialAmbientOcclusion::TutorialAmbientOcclusion(const std::string& title) : V
 }
 
 
+TutorialAmbientOcclusion::~TutorialAmbientOcclusion() {
+    delete ao_;
+
+    // Not needed: it will be called in the destructor of the base class
+    //Viewer::cleanup();
+}
+
+
 std::string TutorialAmbientOcclusion::usage() const {
     return ("----------------- Ambient Occlusion usage ----------------- \n"
             "Press key 'space' to switch between Ambient Occlusion and normal rendering\n"
@@ -56,37 +64,34 @@ std::string TutorialAmbientOcclusion::usage() const {
 
 bool TutorialAmbientOcclusion::key_press_event(int key, int modifiers) {
     if (key == GLFW_KEY_SPACE) {
-		ao_enabled_ = !ao_enabled_;
-		update();
+        ao_enabled_ = !ao_enabled_;
+        update();
         return true;
-    }
-	else if (key == GLFW_KEY_DOWN) {
-		if (ao_enabled_) {
-			float r = ao_->radius();
-			if (r > 0) 
-				ao_->set_radius(r - 0.1f);
-			// make sure it is valid
-			if (ao_->radius() <= 0)
-				ao_->set_radius(0.1f);
-			std::cout << "radius: " << ao_->radius() << std::endl;
-			update();
-		}
-		return true;
-	}
-	else if (key == GLFW_KEY_UP) {
-		if (ao_enabled_) {
-			float r = ao_->radius();
-			if (r > 0)
-				ao_->set_radius(r + 0.1f);
-			// make sure it is valid
-			if (ao_->radius() >= 1.0f)
-				ao_->set_radius(1.0f);
-			std::cout << "radius: " << ao_->radius() << std::endl;
-			update();
-		}
-		return true;
-	}
-    else
+    } else if (key == GLFW_KEY_DOWN) {
+        if (ao_enabled_) {
+            float r = ao_->radius();
+            if (r > 0)
+                ao_->set_radius(r - 0.1f);
+            // make sure it is valid
+            if (ao_->radius() <= 0)
+                ao_->set_radius(0.1f);
+            std::cout << "radius: " << ao_->radius() << std::endl;
+            update();
+        }
+        return true;
+    } else if (key == GLFW_KEY_UP) {
+        if (ao_enabled_) {
+            float r = ao_->radius();
+            if (r > 0)
+                ao_->set_radius(r + 0.1f);
+            // make sure it is valid
+            if (ao_->radius() >= 1.0f)
+                ao_->set_radius(1.0f);
+            std::cout << "radius: " << ao_->radius() << std::endl;
+            update();
+        }
+        return true;
+    } else
         return Viewer::key_press_event(key, modifiers);
 }
 
@@ -148,22 +153,14 @@ void TutorialAmbientOcclusion::draw() const {
 		program->release_texture();
 		program->release();
 
-        const int x = 20 * dpi_scaling();
-        const int y = 40 * dpi_scaling();
-        const int w = width() / 4 * dpi_scaling();
-        const int h = height() / 4 * dpi_scaling();
+        const float x = 20.0f * dpi_scaling();
+        const float y = 40.0f * dpi_scaling();
+        const float w = static_cast<float>(width()) / 4.0f * dpi_scaling();
+        const float h = static_cast<float>(height()) / 4.0f * dpi_scaling();
         const Rect quad(x, x+w, y, y+h);
-        shape::draw_depth_texture(quad, ao_->ssao_texture(), width() * dpi_scaling(), height() * dpi_scaling(), -0.9f);
-        shape::draw_quad_wire(quad, vec4(1, 0,0, 1), width() * dpi_scaling(), height() * dpi_scaling(), -0.99f);
+        shape::draw_depth_texture(quad, ao_->ssao_texture(), static_cast<int>(static_cast<float>(width()) * dpi_scaling()), static_cast<int>(static_cast<float>(height()) * dpi_scaling()), -0.9f);
+        shape::draw_quad_wire(quad, vec4(1, 0,0, 1), static_cast<int>(static_cast<float>(width()) * dpi_scaling()), static_cast<int>(static_cast<float>(height()) * dpi_scaling()), -0.99f);
     }
 	else
 		Viewer::draw();
-}
-
-
-void TutorialAmbientOcclusion::cleanup() {
-	if (ao_)
-		delete ao_;
-
-	Viewer::cleanup();
 }

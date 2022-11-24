@@ -63,7 +63,7 @@
     </property>
     <addaction name="actionShowPrimitiveIDUnderMouse"/>
     <addaction name="actionShowPrimitivePropertyUnderMouse"/>
-    <addaction name="actionShowCordinatesUnderMouse"/>
+    <addaction name="actionShowCoordinatesUnderMouse"/>
     <addaction name="separator"/>
     <addaction name="actionShowEasy3DLogo"/>
     <addaction name="actionShowFrameRate"/>
@@ -1082,7 +1082,7 @@
     <string>Show the IDs of face and its vertices under mouse</string>
    </property>
   </action>
-  <action name="actionShowCordinatesUnderMouse">
+  <action name="actionShowCoordinatesUnderMouse">
    <property name="checkable">
     <bool>true</bool>
    </property>

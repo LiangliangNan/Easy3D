@@ -47,7 +47,9 @@ namespace easy3d {
 
 
     TextMesher::TextMesher(const std::string &font_file, unsigned short quality)
-            : bezier_steps_(quality) {
+        : bezier_steps_(quality)
+        , ready_(false)
+    {
         font_ = new stbtt_fontinfo;
         set_font(font_file);
     }
@@ -70,7 +72,7 @@ namespace easy3d {
         ready_ = false;
         font_data_.clear();
 
-        auto read_font_file = [](const std::string &font_file, std::vector<unsigned char> &data) -> int {
+        auto read_font_file = [](const std::string &font_file, std::vector<unsigned char> &data) -> std::size_t {
             auto fp = fopen(font_file.c_str(), "rb");
             if (!fp)
                 return 0;
@@ -88,7 +90,7 @@ namespace easy3d {
         };
 
         // load font
-        if (read_font_file(font_file.c_str(), font_data_) == 0) {
+        if (read_font_file(font_file, font_data_) == 0) {
             LOG(ERROR) << "failed loading font file: " << font_file;
             return;
         }
@@ -118,32 +120,32 @@ namespace easy3d {
         }
 
         // a scale factor to produce a font whose "height" is 'pixels' tall
-        float scale = stbtt_ScaleForPixelHeight(get_font(font_), font_size);
+        float scale = stbtt_ScaleForPixelHeight(get_font(font_), static_cast<float>(font_size));
 
         std::size_t old_num = contours.size();
 
         stbtt_vertex *vertices = nullptr;
         const int num_verts = stbtt_GetGlyphShape(get_font(font_), glyph_index, &vertices);
 
-        int contour_begin_index = 0;
+        long contour_begin_index = 0;
         while (contour_begin_index < num_verts) {
             stbtt_vertex *next_contour_begin = std::find_if(
                     vertices + contour_begin_index + 1, vertices + num_verts,
                     [](const stbtt_vertex &p) {
                         return p.type == STBTT_vmove;
                     });
-            const int next_contour_first_index = std::distance(vertices, next_contour_begin);
-            const int current_contour_last_index = next_contour_first_index - 1;
+            const auto next_contour_first_index = std::distance(vertices, next_contour_begin);
+            const auto current_contour_last_index = next_contour_first_index - 1;
 
             Polygon2 contour;
-            for (int vi = contour_begin_index; vi < current_contour_last_index; ++vi) {
+            for (long vi = contour_begin_index; vi < current_contour_last_index; ++vi) {
                 stbtt_vertex *v1 = vertices + vi;
                 stbtt_vertex *v2 = vertices + vi + 1;
 
-                const vec2 p1 = vec2(v1->x * scale + x, v1->y * scale + y);
-                const vec2 p2 = vec2(v2->x * scale + x, v2->y * scale + y);
-                const vec2 pc = vec2(v2->cx * scale + x, v2->cy * scale + y);
-                const vec2 pc1 = vec2(v2->cx1 * scale + x, v2->cy1 * scale + y);
+                const vec2 p1 = vec2(static_cast<float>(v1->x) * scale + x, static_cast<float>(v1->y) * scale + y);
+                const vec2 p2 = vec2(static_cast<float>(v2->x) * scale + x, static_cast<float>(v2->y) * scale + y);
+                const vec2 pc = vec2(static_cast<float>(v2->cx) * scale + x, static_cast<float>(v2->cy) * scale + y);
+                const vec2 pc1 = vec2(static_cast<float>(v2->cx1) * scale + x, static_cast<float>(v2->cy1) * scale + y);
 
                 if (v2->type == STBTT_vline) // line
                     contour.push_back(p1);
@@ -168,7 +170,7 @@ namespace easy3d {
 
         int advanceWidth, leftSideBearing;
         stbtt_GetCodepointHMetrics(get_font(font_), codepoint, &advanceWidth, &leftSideBearing);
-        x += (advanceWidth - leftSideBearing) * scale;
+        x += static_cast<float>(advanceWidth - leftSideBearing) * scale;
 
 //        int ascent, descent, line_gap;
 //        stbtt_GetFontVMetrics(get_font(font_), &ascent, &descent, &line_gap);
@@ -185,9 +187,9 @@ namespace easy3d {
 
         if (collision_free) {
             std::vector<Polygon2> all_contours;
-            for (int i = 0; i < text.size(); ++i) {
-                const int codepoint = static_cast<int>(text[i]);
-//                std::cout << i << ": " << string::from_wstring({text[i]}) << ", codepoint: " << codepoint << std::endl;
+            for (const auto& c : text) {
+                const int codepoint = static_cast<int>(c);
+//                std::cout << i << ": " << string::from_wstring({c}) << ", codepoint: " << codepoint << std::endl;
                 std::vector<Polygon2> contours;
                 if (_generate_contours(codepoint, x, y, font_size, contours)) {
                     if (collision_free) {
@@ -201,9 +203,9 @@ namespace easy3d {
             csg::tessellate(all_contours, Tessellator::WINDING_NONZERO); // the union of the neighboring chars
             results.push_back(all_contours);
         } else {
-            for (int i = 0; i < text.size(); ++i) {
-                const int codepoint = static_cast<int>(text[i]);
-//                std::cout << i << ": " << string::from_wstring({text[i]}) << ", codepoint: " << codepoint << std::endl;
+            for (const auto& c : text) {
+                const int codepoint = static_cast<int>(c);
+//                std::cout << i << ": " << string::from_wstring({c}) << ", codepoint: " << codepoint << std::endl;
                 std::vector<Polygon2> contours;
                 if (_generate_contours(codepoint, x, y, font_size, contours)) {
                     // resolve intersections and determine interior/exterior for each char.
@@ -243,9 +245,9 @@ namespace easy3d {
             return false;
 
         // The std::string class handles bytes independently of the encoding used. If used to handle sequences of
-        // multi-byte or variable-length characters (such as UTF-8), all members of this class (such as length or size),
+        // multibyte or variable-length characters (such as UTF-8), all members of this class (such as length or size),
         // as well as its iterators, will still operate in terms of bytes (not actual encoded characters).
-        // So let's convert it to a multi-byte character string
+        // So let's convert it to a multibyte character string
         const std::wstring the_text = string::to_wstring(text);
         return _generate(mesh, the_text, x, y, font_size, height, collision_free);
     }
@@ -282,7 +284,7 @@ namespace easy3d {
         if (!ready_)
             return nullptr;
 
-        SurfaceMesh *mesh = new SurfaceMesh;
+        auto mesh = new SurfaceMesh;
         if (generate(mesh, text, x, y, font_size, extrude, collision_free))
             return mesh;
         else {

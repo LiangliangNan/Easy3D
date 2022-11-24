@@ -44,7 +44,6 @@
 #include <easy3d/util/file_system.h>
 
 #include <QMenu>
-#include <QColorDialog>
 #include <QTreeWidgetItem>
 #include <QHeaderView>
 #include <QMouseEvent>
@@ -64,7 +63,7 @@ public:
         setFlags(flags() | Qt::ItemIsEditable);
     }
 
-    ~ModelItem() {}
+    ~ModelItem() override = default;
 
     Model *model() { return model_; }
 
@@ -114,7 +113,7 @@ public:
             QTreeWidgetItem::setTextAlignment(i, Qt::AlignLeft);
     }
 
-    ~DrawableItem() {}
+    ~DrawableItem() override = default;
 
     Drawable *drawable() { return drawable_; }
 
@@ -134,9 +133,9 @@ private:
 
 class NoEditDelegate : public QStyledItemDelegate {
 public:
-    NoEditDelegate(QObject *parent = 0) : QStyledItemDelegate(parent) {}
+    explicit NoEditDelegate(QObject *parent = nullptr) : QStyledItemDelegate(parent) {}
 
-    virtual QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const {
+    QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const override {
         return nullptr;
     }
 };
@@ -157,10 +156,6 @@ WidgetModelList::WidgetModelList(QWidget *parent)
         setSelectionMode(QAbstractItemView::SingleSelection);
     else
         setSelectionMode(QAbstractItemView::ExtendedSelection);
-}
-
-
-WidgetModelList::~WidgetModelList() {
 }
 
 
@@ -353,7 +348,7 @@ void WidgetModelList::updateModelList() {
     for (unsigned int i = 0; i < models.size(); ++i) {
         Model *model = models[i];
         const std::string &name = file_system::base_name(model->name());
-        ModelItem *item = dynamic_cast<ModelItem *>(this->topLevelItem(i));
+        auto item = dynamic_cast<ModelItem *>(this->topLevelItem(i));
         if (!item) {
             item = new ModelItem(this, model);
             addTopLevelItem(item);
@@ -429,8 +424,8 @@ void WidgetModelList::showSelected() {
         return;
 
     const QList<QTreeWidgetItem *> &items = selectedItems();
-    for (int i = 0; i < items.size(); ++i) {
-        ModelItem *item = dynamic_cast<ModelItem *>(items[i]);
+    for (const auto& it : items) {
+        auto item = dynamic_cast<ModelItem *>(it);
         Model *model = item->model();
         model->renderer()->set_visible(true);
     }
@@ -445,8 +440,8 @@ void WidgetModelList::hideSelected() {
         return;
 
     const QList<QTreeWidgetItem *> &items = selectedItems();
-    for (int i = 0; i < items.size(); ++i) {
-        ModelItem *item = dynamic_cast<ModelItem *>(items[i]);
+    for (const auto& it : items) {
+        auto item = dynamic_cast<ModelItem *>(it);
         Model *model = item->model();
         model->renderer()->set_visible(false);
     }
@@ -463,21 +458,21 @@ void WidgetModelList::invertShowHide() {
         std::vector<unsigned char> visible(num);
         for (int i = 0; i < num; ++i) {
             QTreeWidgetItem *item = topLevelItem(i);
-            ModelItem *modelItem = dynamic_cast<ModelItem *>(item);
+            auto modelItem = dynamic_cast<ModelItem *>(item);
             visible[i] = (!modelItem->model()->renderer()->is_visible());
         }
         mainWindow_->setShowSelectedOnly(false);
         for (int i = 0; i < num; ++i) {
             QTreeWidgetItem *item = topLevelItem(i);
-            ModelItem *modelItem = dynamic_cast<ModelItem *>(item);
+            auto modelItem = dynamic_cast<ModelItem *>(item);
             modelItem->model()->renderer()->set_visible(visible[i]);
         }
     } else {
         for (int i = 0; i < num; ++i) {
             QTreeWidgetItem *item = topLevelItem(i);
-            ModelItem *modelItem = dynamic_cast<ModelItem *>(item);
+            auto modelItem = dynamic_cast<ModelItem *>(item);
             Model *model = modelItem->model();
-            model->renderer()->set_visible(!model->renderer()->is_visible());;
+            model->renderer()->set_visible(!model->renderer()->is_visible());
         }
     }
 
@@ -491,8 +486,8 @@ void WidgetModelList::showAllModels() {
         mainWindow_->setShowSelectedOnly(false);
     else {
         const std::vector<Model *> &models = viewer()->models();
-        for (int i = 0; i < models.size(); ++i) {
-            models[i]->renderer()->set_visible(true);
+        for (auto& m : models) {
+            m->renderer()->set_visible(true);
         }
         updateModelList();
         viewer()->update();
@@ -502,8 +497,8 @@ void WidgetModelList::showAllModels() {
 
 void WidgetModelList::decomposeSelected() {
     const QList<QTreeWidgetItem *> &items = selectedItems();
-    for (int i = 0; i < items.size(); ++i) {
-        ModelItem *item = dynamic_cast<ModelItem *>(items[i]);
+    for (const auto& it : items) {
+        auto item = dynamic_cast<ModelItem *>(it);
         Model *model = item->model();
         decomposeModel(model);
     }
@@ -526,8 +521,8 @@ void WidgetModelList::invertSelection() {
 void WidgetModelList::mergeSelected() {
     std::vector<Model *> models;
     const QList<QTreeWidgetItem *> &items = selectedItems();
-    for (int i = 0; i < items.size(); ++i) {
-        ModelItem *item = dynamic_cast<ModelItem *>(items[i]);
+    for (const auto& it : items) {
+        auto item = dynamic_cast<ModelItem *>(it);
         models.push_back(item->model());
     }
 
@@ -537,8 +532,8 @@ void WidgetModelList::mergeSelected() {
 
 void WidgetModelList::deleteSelected() {
     const QList<QTreeWidgetItem *> &items = selectedItems();
-    for (int i = 0; i < items.size(); ++i) {
-        ModelItem *item = dynamic_cast<ModelItem *>(items[i]);
+    for (const auto& it : items) {
+        auto item = dynamic_cast<ModelItem *>(it);
         if (item)
             viewer()->deleteModel(item->model());
     }
@@ -566,7 +561,7 @@ void WidgetModelList::currentModelItemChanged(QTreeWidgetItem *current, QTreeWid
     if (current == previous)
         return;
 
-    ModelItem *current_item = dynamic_cast<ModelItem *>(current);
+    auto current_item = dynamic_cast<ModelItem *>(current);
     (void) previous;
     if (!current_item)
         return;
@@ -594,7 +589,7 @@ void WidgetModelList::currentModelItemChanged(QTreeWidgetItem *current, QTreeWid
 void WidgetModelList::modelItemSelectionChanged() {
     int num = topLevelItemCount();
     for (int i = 0; i < num; ++i) {
-        ModelItem *item = dynamic_cast<ModelItem *>(topLevelItem(i));
+        auto item = dynamic_cast<ModelItem *>(topLevelItem(i));
 
         // don't allow changing selection for camera path creation
         if (viewer()->walkThrough()->status() == WalkThrough::STOPPED && viewer()->isSelectModelEnabled())
@@ -648,7 +643,7 @@ void WidgetModelList::modelItemPressed(QTreeWidgetItem *current, int column) {
 
     Model *active_model = nullptr;
     if (dynamic_cast<ModelItem *>(current)) {
-        ModelItem *current_item = dynamic_cast<ModelItem *>(current);
+        auto current_item = dynamic_cast<ModelItem *>(current);
         active_model = current_item->model();
         viewer()->setCurrentModel(active_model);
         if (column == 2 && !selected_only_) {
@@ -658,7 +653,7 @@ void WidgetModelList::modelItemPressed(QTreeWidgetItem *current, int column) {
             model->renderer()->set_visible(visible);
         }
     } else if (dynamic_cast<DrawableItem *>(current)) {
-        DrawableItem *drawable_item = dynamic_cast<DrawableItem *>(current);
+        auto drawable_item = dynamic_cast<DrawableItem *>(current);
         active_model = drawable_item->drawable()->model();
         if (column == 2) {
             Drawable *d = drawable_item->drawable();
@@ -727,8 +722,8 @@ void WidgetModelList::setSelectedOnly(bool b) {
         }
     } else {
         const std::vector<Model *> &models = viewer()->models();
-        for (int i = 0; i < models.size(); ++i) {
-            models[i]->renderer()->set_visible(true);
+        for (auto& m : models) {
+            m->renderer()->set_visible(true);
         }
     }
     updateVisibilities();
@@ -769,15 +764,11 @@ void WidgetModelList::mergeModels(const std::vector<Model *> &models) {
     std::vector<PointCloud *> clouds;
 
     std::vector<Model *> selectedModels;
-    for (std::size_t i = 0; i < models.size(); ++i) {
-        Model *m = models[i];
-        if (dynamic_cast<SurfaceMesh *>(m)) {
-            SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(m);
-            meshes.push_back(mesh);
-        } else if (dynamic_cast<PointCloud *>(m)) {
-            PointCloud *pset = dynamic_cast<PointCloud *>(m);
-            clouds.push_back(pset);
-        }
+    for (auto m : models) {
+        if (dynamic_cast<SurfaceMesh *>(m))
+            meshes.push_back(dynamic_cast<SurfaceMesh *>(m));
+        else if (dynamic_cast<PointCloud *>(m))
+            clouds.push_back(dynamic_cast<PointCloud *>(m));
     }
 
     std::vector<Model *> to_delete;
@@ -831,10 +822,8 @@ void WidgetModelList::mergeModels(const std::vector<Model *> &models) {
         to->renderer()->update();
     }
 
-    for (unsigned int i = 0; i < to_delete.size(); ++i) {
-        Model *model = to_delete[i];
+    for (auto model : to_delete)
         viewer()->deleteModel(model);
-    }
 
     // update display and ui
     if (meshes.size() > 1 || clouds.size() > 1) {
@@ -846,7 +835,7 @@ void WidgetModelList::mergeModels(const std::vector<Model *> &models) {
 
 
 void WidgetModelList::decomposeModel(Model *model) {
-    SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
+    auto mesh = dynamic_cast<SurfaceMesh *>(model);
     if (!mesh)
         return;
 

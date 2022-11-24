@@ -42,10 +42,10 @@ namespace easy3d {
     public:
 
         /// Default constructor
-        BasePropertyArray(const std::string& name) : name_(name) {}
+        explicit BasePropertyArray(const std::string& name) : name_(name) {}
 
         /// Destructor.
-        virtual ~BasePropertyArray() {}
+        virtual ~BasePropertyArray() = default;
 
         /// Reserve memory for n elements.
         virtual void reserve(size_t n) = 0;
@@ -116,34 +116,34 @@ namespace easy3d {
         typedef typename vector_type::reference         reference;
         typedef typename vector_type::const_reference   const_reference;
 
-        PropertyArray(const std::string& name, T t=T()) : BasePropertyArray(name), value_(t) {}
+        explicit PropertyArray(const std::string& name, T t=T()) : BasePropertyArray(name), value_(t) {}
 
 
     public: // virtual interface of BasePropertyArray
 
-        virtual void reserve(size_t n)
+        void reserve(size_t n) override
         {
             data_.reserve(n);
         }
 
-        virtual void resize(size_t n)
+        void resize(size_t n) override
         {
             data_.resize(n, value_);
         }
 
-        virtual void push_back()
+        void push_back() override
         {
             data_.push_back(value_);
         }
 
-        virtual void reset(size_t idx)
+        void reset(size_t idx) override
         {
             data_[idx] = value_;
         }
 
-        bool transfer(const BasePropertyArray& other)
+        bool transfer(const BasePropertyArray& other) override
         {
-            const PropertyArray<T>* pa = dynamic_cast<const PropertyArray*>(&other);
+            const auto pa = dynamic_cast<const PropertyArray*>(&other);
             if(pa != nullptr){
                 std::copy((*pa).data_.begin(), (*pa).data_.end(), data_.end()-(*pa).data_.size());
                 return true;
@@ -151,9 +151,9 @@ namespace easy3d {
             return false;
         }
 
-        bool transfer(const BasePropertyArray& other, std::size_t from, std::size_t to)
+        bool transfer(const BasePropertyArray& other, std::size_t from, std::size_t to) override
         {
-            const PropertyArray<T>* pa = dynamic_cast<const PropertyArray*>(&other);
+            const auto pa = dynamic_cast<const PropertyArray*>(&other);
             if (pa != nullptr)
             {
                 data_[to] = (*pa)[from];
@@ -163,37 +163,37 @@ namespace easy3d {
             return false;
         }
 
-        virtual void shrink_to_fit()
+        void shrink_to_fit() override
         {
             vector_type(data_).swap(data_);
         }
 
-        virtual void swap(size_t i0, size_t i1)
+        void swap(size_t i0, size_t i1) override
         {
             T d(data_[i0]);
             data_[i0]=data_[i1];
             data_[i1]=d;
         }
 
-        virtual void copy(size_t from, size_t to)
+        void copy(size_t from, size_t to) override
         {
             data_[to]=data_[from];
         }
 
-        virtual BasePropertyArray* clone() const
+        BasePropertyArray* clone() const override
         {
-            PropertyArray<T>* p = new PropertyArray<T>(name_, value_);
+            auto p = new PropertyArray<T>(name_, value_);
             p->data_ = data_;
             return p;
         }
 
-        virtual BasePropertyArray* empty_clone() const
+        BasePropertyArray* empty_clone() const override
         {
-            PropertyArray<T>* p = new PropertyArray<T>(this->name_, this->value_);
+            auto p = new PropertyArray<T>(this->name_, this->value_);
             return p;
         }
 
-        virtual const std::type_info& type() const { return typeid(T); }
+        const std::type_info& type() const override { return typeid(T); }
 
 
     public:
@@ -260,7 +260,7 @@ namespace easy3d {
 
     public:
 
-        Property(PropertyArray<T> *p = nullptr) : parray_(p) {}
+        explicit Property(PropertyArray<T> *p = nullptr) : parray_(p) {}
 
         void reset()
         {
@@ -272,13 +272,13 @@ namespace easy3d {
             return parray_ != nullptr;
         }
 
-        reference operator[](size_t i)
+        virtual reference operator[](size_t i)
         {
             assert(parray_ != nullptr);
             return (*parray_)[i];
         }
 
-        const_reference operator[](size_t i) const
+        virtual const_reference operator[](size_t i) const
         {
             assert(parray_ != nullptr);
             return (*parray_)[i];
@@ -366,10 +366,10 @@ namespace easy3d {
 
         void transfer(const PropertyContainer& _rhs)
         {
-            for(std::size_t i=0; i<parrays_.size(); ++i){
-                for (std::size_t j=0; j<_rhs.parrays_.size(); ++j){
-                    if(parrays_[i]->is_same (*(_rhs.parrays_[j]))){
-                        parrays_[i]->transfer(* _rhs.parrays_[j]);
+            for(auto pa : parrays_) {
+                for (auto rpa : _rhs.parrays_) {
+                    if(pa->is_same (*rpa)){
+                        pa->transfer(*rpa);
                         break;
                     }
                 }
@@ -377,13 +377,13 @@ namespace easy3d {
         }
 
         // Copy properties that don't already exist from another container
-        void copy_properties (const PropertyContainer& _rhs)
+        void copy_properties(const PropertyContainer& _rhs)
         {
-            for (std::size_t i = 0; i < _rhs.parrays_.size(); ++ i)
+            for (auto rpa : _rhs.parrays_)
             {
                 bool property_already_exists = false;
-                for (std::size_t j = 0; j < parrays_.size(); ++ j)
-                    if (_rhs.parrays_[i]->is_same (*(parrays_[j])))
+                for(auto pa : parrays_)
+                    if (rpa->is_same(*pa))
                     {
                         property_already_exists = true;
                         break;
@@ -392,7 +392,7 @@ namespace easy3d {
                 if (property_already_exists)
                     continue;
 
-                parrays_.push_back (_rhs.parrays_[i]->empty_clone());
+                parrays_.push_back(rpa->empty_clone());
                 parrays_.back()->resize(size_);
             }
         }
@@ -418,8 +418,8 @@ namespace easy3d {
         std::vector<std::string> properties() const
         {
             std::vector<std::string> names;
-            for (size_t i=0; i<parrays_.size(); ++i)
-                names.push_back(parrays_[i]->name());
+            for(auto pa : parrays_)
+                names.push_back(pa->name());
             return names;
         }
 
@@ -428,9 +428,9 @@ namespace easy3d {
         template <class T> Property<T> add(const std::string& name, const T t=T())
         {
             // if a property with this name already exists, return an invalid property
-            for (size_t i=0; i<parrays_.size(); ++i)
+            for(auto pa : parrays_)
             {
-                if (parrays_[i]->name() == name)
+                if (pa->name() == name)
                 {
                     LOG(ERROR) << "A property with name \""
                               << name << "\" already exists. Returning invalid property.";
@@ -439,7 +439,7 @@ namespace easy3d {
             }
 
             // otherwise add the property
-            PropertyArray<T>* p = new PropertyArray<T>(name, t);
+            auto p = new PropertyArray<T>(name, t);
             p->resize(size_);
             parrays_.push_back(p);
             return Property<T>(p);
@@ -449,9 +449,9 @@ namespace easy3d {
         // get a property by its name. returns invalid property if it does not exist.
         template <class T> Property<T> get(const std::string& name) const
         {
-            for (size_t i=0; i<parrays_.size(); ++i)
-                if (parrays_[i]->name() == name)
-                    return Property<T>(dynamic_cast<PropertyArray<T>*>(parrays_[i]));
+            for(auto pa : parrays_)
+                if (pa->name() == name)
+                    return Property<T>(dynamic_cast<PropertyArray<T>*>(pa));
             return Property<T>();
         }
 
@@ -468,9 +468,9 @@ namespace easy3d {
         // get the type of property by its name. returns typeid(void) if it does not exist.
         const std::type_info& get_type(const std::string& name) const
         {
-            for (size_t i=0; i<parrays_.size(); ++i)
-                if (parrays_[i]->name() == name)
-                    return parrays_[i]->type();
+            for(auto pa : parrays_)
+                if (pa->name() == name)
+                    return pa->type();
             return typeid(void);
         }
 
@@ -478,7 +478,7 @@ namespace easy3d {
         // delete a property. Returns true on success.
         template <class T> bool remove(Property<T>& h)
         {
-            std::vector<BasePropertyArray*>::iterator it=parrays_.begin(), end=parrays_.end();
+            auto it=parrays_.begin(), end=parrays_.end();
             for (; it!=end; ++it)
             {
                 if (*it == h.parray_)
@@ -495,7 +495,7 @@ namespace easy3d {
         // delete a property by name. Returns true on success.
         bool remove(const std::string& name)
         {
-            std::vector<BasePropertyArray*>::iterator it=parrays_.begin(), end=parrays_.end();
+            auto it=parrays_.begin(), end=parrays_.end();
             for (; it!=end; ++it)
             {
                 if ((*it)->name() == name)
@@ -513,7 +513,7 @@ namespace easy3d {
         {
             assert(!old_name.empty());
             assert(!new_name.empty());
-            std::vector<BasePropertyArray*>::iterator it=parrays_.begin(), end=parrays_.end();
+            auto it=parrays_.begin(), end=parrays_.end();
             for (; it!=end; ++it)
             {
                 if ((*it)->name() == old_name)
@@ -529,8 +529,8 @@ namespace easy3d {
         // delete all properties
         void clear()
         {
-            for (size_t i=0; i<parrays_.size(); ++i)
-                delete parrays_[i];
+            for(auto pa : parrays_)
+                delete pa;
             parrays_.clear();
             size_ = 0;
         }
@@ -539,23 +539,25 @@ namespace easy3d {
         // reserve memory for n entries in all arrays
         void reserve(size_t n) const
         {
-            for (size_t i=0; i<parrays_.size(); ++i)
-                parrays_[i]->reserve(n);
+            for(auto pa : parrays_)
+                pa->reserve(n);
         }
 
         // resize all arrays to size n
         void resize(size_t n)
         {
-            for (size_t i=0; i<parrays_.size(); ++i)
-                parrays_[i]->resize(n);
+            for(auto pa : parrays_)
+                pa->resize(n);
             size_ = n;
         }
 
         // resize the vector of properties to n, deleting all other properties
         void resize_property_array(size_t n)
         {
-            if (parrays_.size()<=n)
+            if (parrays_.size()<=n) {
+                // Liangliang: we should add "parrays_.resize(n);" here?
                 return;
+            }
             for (std::size_t i=n; i<parrays_.size(); ++i)
                 delete parrays_[i];
             parrays_.resize(n);
@@ -564,30 +566,30 @@ namespace easy3d {
         // free unused space in all arrays
         void shrink_to_fit() const
         {
-            for (size_t i=0; i<parrays_.size(); ++i)
-                parrays_[i]->shrink_to_fit();
+            for(auto pa : parrays_)
+                pa->shrink_to_fit();
         }
 
         // add a new element to each vector
         void push_back()
         {
-            for (size_t i=0; i<parrays_.size(); ++i)
-                parrays_[i]->push_back();
+            for(auto pa : parrays_)
+                pa->push_back();
             ++size_;
         }
 
         // reset element to its default property values
         void reset(size_t idx)
         {
-            for (std::size_t i=0; i<parrays_.size(); ++i)
-                parrays_[i]->reset(idx);
+            for(auto pa : parrays_)
+                pa->reset(idx);
         }
 
         // swap elements i0 and i1 in all arrays
         void swap(size_t i0, size_t i1) const
         {
-            for (size_t i=0; i<parrays_.size(); ++i)
-                parrays_[i]->swap(i0, i1);
+            for(auto pa : parrays_)
+                pa->swap(i0, i1);
         }
 
         // swap content with other Property_container
@@ -600,8 +602,8 @@ namespace easy3d {
         // copy 'from' -> 'to' in all arrays
         void copy(size_t from, size_t to) const
         {
-            for (size_t i=0; i<parrays_.size(); ++i)
-                parrays_[i]->copy(from, to);
+            for(auto pa : parrays_)
+                pa->copy(from, to);
         }
 
         const std::vector<BasePropertyArray*>& arrays() const { return parrays_; }

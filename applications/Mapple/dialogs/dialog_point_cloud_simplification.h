@@ -25,8 +25,8 @@
  ********************************************************************/
 
 
-#ifndef DIALOG_SAMPLING_RESOLUTION_H
-#define DIALOG_SAMPLING_RESOLUTION_H
+#ifndef DIALOG_POINT_CLOUD_SIMPLIFICATION_H
+#define DIALOG_POINT_CLOUD_SIMPLIFICATION_H
 
 #include <easy3d/core/point_cloud.h>
 
@@ -43,8 +43,8 @@ class DialogPointCloudSimplification : public Dialog, public Ui::DialogPointClou
 	Q_OBJECT
 
 public:
-	DialogPointCloudSimplification(MainWindow *window);
-	~DialogPointCloudSimplification();
+	explicit DialogPointCloudSimplification(MainWindow *window);
+	~DialogPointCloudSimplification() override;
 
 private Q_SLOTS:
 	void strategyChanged(int id);
@@ -54,8 +54,8 @@ private Q_SLOTS:
 	void query();
 
 protected:
-	virtual void closeEvent(QCloseEvent* e);
-	virtual void showEvent(QShowEvent* e);
+	void closeEvent(QCloseEvent* e) override;
+	void showEvent(QShowEvent* e) override;
 
 	void constructKdTree();
 
@@ -64,4 +64,4 @@ private:
 	std::vector<easy3d::PointCloud::Vertex> points_to_remove_;
 };
 
-#endif // DLG_SAMPLING_RESOLUTION_H
+#endif // DIALOG_POINT_CLOUD_SIMPLIFICATION_H

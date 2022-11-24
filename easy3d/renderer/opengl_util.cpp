@@ -75,7 +75,7 @@ namespace easy3d {
     }
 
 
-    bool OpenglUtil::has_entension(const std::string &ext) {
+    bool OpenglUtil::has_extension(const std::string &ext) {
         if (!_glew_initialized)
             init();
         int num = 0;
@@ -100,7 +100,7 @@ namespace easy3d {
         //Detect which profile the context supports:
         int profile = -1;
         glGetIntegerv(GL_CONTEXT_PROFILE_MASK, &profile); // GL_CONTEXT_CORE_PROFILE_BIT  or GL_CONTEXT_COMPATIBILITY_PROFILE_BIT
-        easy3d_debug_log_gl_error;
+        easy3d_debug_log_gl_error
         return profile;
     }
 
@@ -108,7 +108,7 @@ namespace easy3d {
     std::string OpenglUtil::gl_vendor() {
         const GLubyte* str = glGetString(GL_VENDOR);
         if (str)
-            return std::string(reinterpret_cast<const char*>(str));
+            return reinterpret_cast<const char*>(str);
         else
             return err_msg;
     }
@@ -117,7 +117,7 @@ namespace easy3d {
     std::string OpenglUtil::gl_renderer() {
         const GLubyte* str = glGetString(GL_RENDERER);
         if (str)
-            return std::string(reinterpret_cast<const char*>(str));
+            return reinterpret_cast<const char*>(str);
         else
             return err_msg;
     }
@@ -126,7 +126,7 @@ namespace easy3d {
     std::string OpenglUtil::gl_version() {
         const GLubyte* str = glGetString(GL_VERSION);
         if (str)
-            return std::string(reinterpret_cast<const char*>(str));
+            return reinterpret_cast<const char*>(str);
         else
             return err_msg;
     }
@@ -134,7 +134,7 @@ namespace easy3d {
     std::string OpenglUtil::gl_extensions() {
         const GLubyte* str = glGetString(GL_EXTENSIONS);
         if (str)
-            return std::string(reinterpret_cast<const char*>(str));
+            return reinterpret_cast<const char*>(str);
         else
             return err_msg;
     }
@@ -145,7 +145,7 @@ namespace easy3d {
 
         const GLubyte* str = glewGetString(GLEW_VERSION);
         if (str)
-            return std::string(reinterpret_cast<const char*>(str));
+            return reinterpret_cast<const char*>(str);
         else
             return err_msg;
     }
@@ -153,7 +153,7 @@ namespace easy3d {
     std::string OpenglUtil::glsl_version() {
         const GLubyte* str = glGetString(GL_SHADING_LANGUAGE_VERSION);
         if (str)
-            return std::string(reinterpret_cast<const char*>(str));
+            return reinterpret_cast<const char*>(str);
         else
             return "not supported";
     }
@@ -179,7 +179,7 @@ namespace easy3d {
 
         const GLubyte* str = glewGetString(GLEW_VERSION);
         if (str) {
-            float version = std::stof(reinterpret_cast<const char*>(str), 0);
+            float version = std::stof(reinterpret_cast<const char*>(str), nullptr);
             return version;
         }
         else
@@ -190,7 +190,7 @@ namespace easy3d {
     float OpenglUtil::gl_version_number() {
         const GLubyte* str = glGetString(GL_VERSION);
         if (str) {
-            float version = std::stof(reinterpret_cast<const char*>(str), 0);
+            float version = std::stof(reinterpret_cast<const char*>(str), nullptr);
             return version;
         }
         else
@@ -207,7 +207,7 @@ namespace easy3d {
 
     float OpenglUtil::glsl_version_number() {
         const GLubyte* str = glGetString(GL_SHADING_LANGUAGE_VERSION);
-        float version = std::stof(reinterpret_cast<const char*>(str), 0);
+        float version = std::stof(reinterpret_cast<const char*>(str), nullptr);
         return version;
     }
 
@@ -226,6 +226,32 @@ namespace easy3d {
         y = viewport[1];
         width = viewport[2];
         height = viewport[3];
+    }
+
+
+    int OpenglUtil::total_gpu_memory() {
+        if (OpenglUtil::is_supported("GL_NVX_gpu_memory_info")) {		// NVidia
+            int size;
+            glGetIntegerv(GL_GPU_MEMORY_INFO_TOTAL_AVAILABLE_MEMORY_NVX, &size);
+            return size / 1024;
+        }
+        else {
+            LOG(WARNING) << "query of GPU memory is not supported on this machine";
+            return -1;
+        }
+    }
+
+
+    int OpenglUtil::available_gpu_memory() {
+        if (OpenglUtil::is_supported("GL_NVX_gpu_memory_info")) {
+            int size;
+            glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX, &size);
+            return size / 1024;
+        }
+        else {
+            LOG(WARNING) << "query of GPU memory is not supported on this machine";
+            return -1;
+        }
     }
 
 
@@ -258,8 +284,8 @@ namespace easy3d {
 
     bool OpenglUtil::_spInit = OpenglUtil::_init();
 
-    /// display current binded buffer info
-    void OpenglUtil::getCurrentBufferInfo() {
+    /// display current bound buffer info
+    void OpenglUtil::get_current_buffer_info() {
 
         int info;
 
@@ -267,8 +293,7 @@ namespace easy3d {
         _add_message("Current Buffer Bindings");
 
         // iterate for all buffer types
-        std::unordered_map<int, int>::iterator iter = spBufferBound.begin();
-        for (; iter != spBufferBound.end(); ++iter) {
+        for (auto iter = spBufferBound.begin(); iter != spBufferBound.end(); ++iter) {
             // get current binding for a type of buffer
             glGetIntegerv(iter->first, &info);
             // if a buffer is bound get its info
@@ -294,14 +319,14 @@ namespace easy3d {
 
 
     /// display the buffer information
-    void OpenglUtil::getBufferInfo(GLenum target, int bufferName) {
+    void OpenglUtil::get_buffer_info(GLenum target, int bufferName) {
         int info, prevBuffer;
 
         *_output_stream << std::endl;
-        _add_message("Info for buffer name: %d target: %s", bufferName, spBufferBinding[spBoundBuffer[target]].c_str());
+        _add_message("Info for buffer name: %d target: %s", bufferName, spBufferBinding[spBoundBuffer[static_cast<int>(target)]].c_str());
 
         // get previously bound buffer
-        glGetIntegerv(spBoundBuffer[target], &prevBuffer);
+        glGetIntegerv(spBoundBuffer[static_cast<int>(target)], &prevBuffer);
         // bind requested buffer to get info
         glBindBuffer(target, bufferName);
 
@@ -323,7 +348,7 @@ namespace easy3d {
 
 
     /// display detailed VAO info
-    void OpenglUtil::getVAOInfo(unsigned int buffer) {
+    void OpenglUtil::get_vao_info(unsigned int buffer) {
         int count, info, prevBuffer;
 
         *_output_stream << std::endl;
@@ -386,7 +411,7 @@ namespace easy3d {
 
 
     // display info for all active uniforms in a program
-    void OpenglUtil::getUniformsInfo(unsigned int program) {
+    void OpenglUtil::get_uniforms_info(unsigned int program) {
         *_output_stream << std::endl;
 
         // is it a program ?
@@ -463,7 +488,7 @@ namespace easy3d {
 
                 glGetActiveUniformsiv(program, 1, &indices[k], GL_UNIFORM_MATRIX_STRIDE, &uniMatStride);
 
-                int auxSize;
+                int auxSize = 0;
                 if (uniArrayStride > 0)
                     auxSize = uniArrayStride * uniSize;
 
@@ -494,6 +519,9 @@ namespace easy3d {
                     case GL_DOUBLE_MAT4x3:
                         auxSize = 4 * uniMatStride;
                         break;
+                    default:
+                        LOG(WARNING) << "unknown uniform type: " << uniType;
+                        break;
                     }
                 }
                 else
@@ -512,7 +540,7 @@ namespace easy3d {
 
 
     /// display a uniform's value(s)
-    void OpenglUtil::getUniformInfo(unsigned int program, const std::string& uniName) {
+    void OpenglUtil::get_uniform_info(unsigned int program, const std::string& uniName) {
 
         *_output_stream << std::endl;
 
@@ -559,7 +587,7 @@ namespace easy3d {
 
 
     /// display the values for a uniform in a named block
-    void OpenglUtil::getUniformInBlockInfo(unsigned int program, const std::string&blockName, const std::string& uniName) {
+    void OpenglUtil::get_uniform_in_block_info(unsigned int program, const std::string&blockName, const std::string& uniName) {
         *_output_stream << std::endl;
 
         // is it a program ?
@@ -602,7 +630,7 @@ namespace easy3d {
         glBindBuffer(GL_UNIFORM_BUFFER, bufferIndex);
 
         int rows = _get_rows(uniType);
-        int columns = auxSize / (rows * sizeof(float));
+        int columns = auxSize / (rows * static_cast<int>(sizeof(float)));
 
         if (_get_type(uniType) == FLOAT) {
             float f[16];
@@ -629,7 +657,7 @@ namespace easy3d {
 
 
     /// display detailed info for attributes in a program
-    void OpenglUtil::getAttributesInfo(unsigned int program) {
+    void OpenglUtil::get_attributes_info(unsigned int program) {
 
         int activeAttr, size, loc;
         GLsizei length;
@@ -648,17 +676,17 @@ namespace easy3d {
         // how many attribs?
         glGetProgramiv(program, GL_ACTIVE_ATTRIBUTES, &activeAttr);
         // get location and type for each attrib
-        for (unsigned int i = 0; i < (unsigned int)activeAttr; ++i) {
+        for (int i = 0; i < activeAttr; ++i) {
             glGetActiveAttrib(program, i, 256, &length, &size, &type, name);
             loc = glGetAttribLocation(program, name);
-            _add_message("\t%s\tloc: %d\t\ttype: %s", name, loc, spGLSLType[type].c_str());
+            _add_message("\t%s\tloc: %d\t\ttype: %s", name, loc, spGLSLType[static_cast<int>(type)].c_str());
         }
 
     }
 
 
     /// display detailed info for a program
-    void OpenglUtil::getProgramInfo(unsigned int program) {
+    void OpenglUtil::get_program_info(unsigned int program) {
         *_output_stream << std::endl;
 
         // check if name is really a program
@@ -780,7 +808,7 @@ namespace easy3d {
     // it takes the strides into account
     int OpenglUtil::_get_uniform_byte_size(int uniSize, int uniType, int uniArrayStride, int uniMatStride) {
 
-        int auxSize;
+        int auxSize = 0;
         if (uniArrayStride > 0)
             auxSize = uniArrayStride * uniSize;
 
@@ -810,6 +838,9 @@ namespace easy3d {
             case GL_DOUBLE_MAT4x2:
             case GL_DOUBLE_MAT4x3:
                 auxSize = 4 * uniMatStride;
+                break;
+            default:
+                LOG(WARNING) << "unknown uniform type: " << uniType;
                 break;
             }
         }
@@ -1307,6 +1338,7 @@ namespace easy3d {
         spDataF[GL_UNSIGNED_INT_8_8_8_8_REV] = "GL_UNSIGNED_INT_8_8_8_8_REV";
         spDataF[GL_UNSIGNED_INT_10_10_10_2] = "GL_UNSIGNED_INT_10_10_10_2";
         spDataF[GL_UNSIGNED_INT_2_10_10_10_REV] = "GL_UNSIGNED_INT_2_10_10_10_REV";
+
         return true;
     }
 

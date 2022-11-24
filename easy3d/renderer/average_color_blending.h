@@ -50,7 +50,7 @@ namespace easy3d {
     public:
         /// \brief Constructor
         /// \param cam The camera used in the view
-        AverageColorBlending(Camera* cam);
+        explicit AverageColorBlending(Camera* cam);
         ~AverageColorBlending() override;
 
         /// \brief Renders the scene (a set of surfaces) with transparency effect

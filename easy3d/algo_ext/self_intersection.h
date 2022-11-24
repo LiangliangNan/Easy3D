@@ -8,8 +8,8 @@
  * The original code was distributed under the Mozilla Public License v2.
  ********************************************************************/
 
-#ifndef EASY3D_ALGO_SELF_INTERSECTION_H
-#define EASY3D_ALGO_SELF_INTERSECTION_H
+#ifndef EASY3D_ALGO_EXT_SELF_INTERSECTION_H
+#define EASY3D_ALGO_EXT_SELF_INTERSECTION_H
 
 #include <vector>
 #include <unordered_map>
@@ -80,11 +80,6 @@ namespace easy3d {
         typedef CGAL::Segment_3<Kernel> Segment_3;
         typedef CGAL::Plane_3<Kernel> Plane_3;
 
-        // 2D Primitives
-        typedef CGAL::Point_2<Kernel> Point_2;
-        typedef CGAL::Segment_2<Kernel> Segment_2;
-        typedef CGAL::Triangle_2<Kernel> Triangle_2;
-
         // Constrained Delaunay Triangulation
         typedef CGAL::Triangulation_vertex_base_2<Kernel> TVB_2;
         typedef CGAL::Constrained_triangulation_face_base_2<Kernel> CTFB_2;
@@ -130,7 +125,7 @@ namespace easy3d {
         //     conducted
         // Outputs:
         //   vertices  list of vertices of the CDT mesh _back on the 3D plane_
-        //   faces  list of list of triangle indices into vertices
+        //   faces  list of triangle indices into vertices
         //
         void projected_cdt(
                 const std::vector<CGAL::Object> &objects,
@@ -219,4 +214,4 @@ namespace easy3d {
 
 } // namespace easy3d
 
-#endif  // EASY3D_ALGORITHM_EXT_SELF_INTERSECTION_H
+#endif  // EASY3D_ALGO_EXT_SELF_INTERSECTION_H

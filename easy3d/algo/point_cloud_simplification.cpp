@@ -47,7 +47,7 @@ namespace easy3d {
 
         double total = 0.0;
         const std::vector<vec3> &points = cloud->points();
-        int num = cloud->n_vertices();
+        int num = static_cast<int>(cloud->n_vertices());
 
         int step = 1;
         if (!accurate && num > samples)
@@ -63,11 +63,11 @@ namespace easy3d {
             }
 
             double avg = 0.0;
-            for (unsigned int i = 1; i < sqr_distances.size(); ++i) { // starts from 1 to exclude itself
-                avg += std::sqrt(sqr_distances[i]);
+            for (unsigned int j = 1; j < sqr_distances.size(); ++j) { // starts from 1 to exclude itself
+                avg += std::sqrt(sqr_distances[j]);
             }
 
-            total += (avg / neighbors.size());
+            total += (avg / static_cast<double>(neighbors.size()));
             ++count;
         }
 
@@ -87,7 +87,7 @@ namespace easy3d {
         template<class Point>
         class LessEpsilonPoints {
         public:
-            LessEpsilonPoints(float epsilon) : m_epsilon(epsilon) {
+            explicit LessEpsilonPoints(float epsilon) : m_epsilon(epsilon) {
                 assert(epsilon > 0);
             }
 
@@ -133,13 +133,13 @@ namespace easy3d {
         assert(epsilon > 0);
 
         struct Point {
-            const vec3 *pos;
+            const vec3 *pos = nullptr;
             PointCloud::Vertex vertex;
         };
 
-        // Merges points which belong to the same cell of a grid of cell size = epsilon.
+        // Merge points that belong to the same cell of a grid of cell size = epsilon.
         // points_to_keep will contain 1 point per cell; the others will be in points_to_remove.
-        std::set<Point, internal::LessEpsilonPoints<Point> > points_to_keep(epsilon);
+        std::set<Point, internal::LessEpsilonPoints<Point> > points_to_keep((internal::LessEpsilonPoints<Point>)(epsilon));
         std::vector<PointCloud::Vertex> points_to_remove;
 
         const auto &points = cloud->points();
@@ -168,7 +168,7 @@ namespace easy3d {
         std::vector<bool> keep(cloud->n_vertices(), true);
         const std::vector<vec3> &points = cloud->points();
 
-        double sqr_dist = epsilon * epsilon;
+        float sqr_dist = epsilon * epsilon;
         for (std::size_t i = 0; i < points.size(); ++i) {
             if (keep[i]) {
                 const vec3 &p = points[i];
@@ -177,7 +177,7 @@ namespace easy3d {
                 if (neighbors.size() > 1) {
                     for (std::size_t j = 1; j < neighbors.size(); ++j) {
                         int idx = neighbors[j];
-                        keep[idx] = 0;
+                        keep[idx] = false;
                     }
                 }
             }
@@ -186,7 +186,7 @@ namespace easy3d {
         std::vector<PointCloud::Vertex> points_to_remove;
         for (std::size_t i = 0; i < keep.size(); ++i) {
             if (!keep[i])
-                points_to_remove.push_back(PointCloud::Vertex(i));
+                points_to_remove.emplace_back(PointCloud::Vertex(static_cast<int>(i)));
         }
 
         if (need_delete)
@@ -220,7 +220,7 @@ namespace easy3d {
 
         class LessDistPointPair {
         public:
-            LessDistPointPair() {}
+            LessDistPointPair() = default;
 
             bool operator()(const PointPair &pair_a, const PointPair &pair_b) const {
                 return pair_a.distance < pair_b.distance;
@@ -261,18 +261,15 @@ namespace easy3d {
 
             // Now the elements in point_pairs are sorted in an increasing order, so we can delete points now.
             unsigned int remaining_num = num;
-            std::set<internal::PointPair, internal::LessDistPointPair>::iterator pos = point_pairs.begin();
-            std::set<internal::PointPair, internal::LessDistPointPair>::iterator end = point_pairs.end();
-            for (; pos != end; ++pos) {
+            for (const auto& pair : point_pairs) {
                 if (remaining_num == expected_num)
                     break;
-                const internal::PointPair &pair = *pos;
                 unsigned int id_a = pair.index_a;
                 unsigned int id_b = pair.index_b;
                 if (sqr_distance[id_a] < sqr_distance[id_b])
-                    points_to_delete.push_back(id_a);
+                    points_to_delete.push_back(static_cast<int>(id_a));
                 else
-                    points_to_delete.push_back(id_b);
+                    points_to_delete.push_back(static_cast<int>(id_b));
                 --remaining_num;
             }
 
@@ -286,10 +283,14 @@ namespace easy3d {
     PointCloudSimplification::uniform_simplification(PointCloud *cloud, unsigned int num_expected) {
         std::vector<PointCloud::Vertex> points_to_delete;
 
-        int num_original = cloud->n_vertices();
-        int num_should_delete = num_original - num_expected;
-        if (num_should_delete <= 0)
+        if (num_expected >= cloud->n_vertices()) {
+            LOG(WARNING) << "expected point number (" << num_expected << ") must be smaller than the number of points ("
+                         << cloud->n_vertices() << ") in the point cloud";
             return points_to_delete;
+        }
+
+        unsigned int num_original = cloud->n_vertices();
+        unsigned int num_should_delete = num_original - num_expected;
 
         std::vector<bool> remain(cloud->n_vertices(), true);    // 1: keep this point; 0: delete this point
         const std::vector<vec3> &points = cloud->points();
@@ -306,12 +307,11 @@ namespace easy3d {
         while (points_to_delete.size() < num_should_delete) {
             const std::vector<int> &to_delete = internal::uniform_simplification(point_cloud, num_expected);
 
-            for (std::size_t i = 0; i < to_delete.size(); ++i) {
-                int new_id = to_delete[i];
-                int orig_id = original_index[new_id];
+            for (auto new_id : to_delete) {
+                auto orig_id = original_index[new_id];
                 if (remain[orig_id]) {
-                    points_to_delete.push_back(PointCloud::Vertex(orig_id));
-                    remain[orig_id] = 0;
+                    points_to_delete.emplace_back(PointCloud::Vertex(static_cast<int>(orig_id)));
+                    remain[orig_id] = false;
                 }
             }
 

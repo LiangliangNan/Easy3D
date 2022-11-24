@@ -26,7 +26,7 @@ namespace easy3d {
     class SurfaceMeshTetrehedralization {
     public:
         SurfaceMeshTetrehedralization();
-        ~SurfaceMeshTetrehedralization();
+        ~SurfaceMeshTetrehedralization() = default;
 
         /**
          * Sets if Steiner points are allowed on the boundary edges and faces of the input surface. Default is true.
@@ -58,7 +58,7 @@ namespace easy3d {
         /**
          * Sets the maximum volume constraint on all tetrahedra. Default value is -1 (no max volume constraint).
          * \details A positive value indicates that no tetrahedra is generated whose volume is larger than this value.
-         * \note A negagive value indicates no such a constraint.
+         * \note A negative value indicates no such a constraint.
          * More complicated constraints can be set by using set_command_line(). See the "-a" switch in tetgen manual.
          * http://wias-berlin.de/software/tetgen/1.5/doc/manual/manual005.html#cmd-a
          */
@@ -78,8 +78,8 @@ namespace easy3d {
         PolyMesh* apply(SurfaceMesh *mesh);
 
     protected:
-        tetgenio* to_tetgen_surface(SurfaceMesh* mesh);
-        PolyMesh* to_easy3d_poly_mesh(tetgenio* volume);
+        tetgenio* to_tetgen_surface(SurfaceMesh* mesh) const;
+        PolyMesh* to_easy3d_poly_mesh(tetgenio* volume) const;
 
     private:
         bool allow_steiner_points_on_boundary_;

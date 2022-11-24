@@ -83,8 +83,8 @@ namespace easy3d {
                 ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal")
             };
             std::vector<std::string> outputs;
-            outputs.push_back("fragOutput0");
-            outputs.push_back("fragOutput1");
+            outputs.emplace_back("fragOutput0");
+            outputs.emplace_back("fragOutput1");
             program = ShaderManager::create_program_from_files(name, attributes, outputs);
         }
         if (!program)
@@ -174,7 +174,7 @@ namespace easy3d {
         if (!program)
             return;
 
-        glDisable(GL_BLEND);	easy3d_debug_log_gl_error;
+        glDisable(GL_BLEND);	easy3d_debug_log_gl_error
         glEnable(GL_DEPTH_TEST);
 
         program->bind();

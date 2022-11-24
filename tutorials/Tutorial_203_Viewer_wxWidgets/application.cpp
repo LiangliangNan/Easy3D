@@ -41,10 +41,10 @@ namespace easy3d {
     public:
         AppImpl(const std::string &title, int w, int h) : title_(title), width_(w), height_(h) {}
 
-        virtual bool OnInit() wxOVERRIDE {
+        bool OnInit() wxOVERRIDE {
             if (!wxApp::OnInit())
                 return false;
-            new Window(NULL, title_, wxDefaultPosition, wxSize(width_, height_));
+            new Window(nullptr, title_, wxDefaultPosition, wxSize(width_, height_));
             return true;
         }
     private:

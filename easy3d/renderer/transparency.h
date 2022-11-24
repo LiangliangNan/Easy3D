@@ -43,8 +43,8 @@ namespace easy3d {
     class Transparency
     {
     public:
-        Transparency() {}
-        virtual ~Transparency() {}
+        Transparency() = default;
+        virtual ~Transparency() = default;
 
         /// \brief Renders the scene (a set of surfaces) with transparency effect
         virtual void draw(const std::vector<TrianglesDrawable*>& surfaces) = 0;

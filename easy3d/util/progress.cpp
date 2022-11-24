@@ -37,7 +37,7 @@ namespace easy3d {
         protected:
             Progress() : client_(nullptr), level_(0), canceled_(false) {}
 
-            virtual ~Progress() {}
+            virtual ~Progress() = default;
 
             ProgressClient *client_;
             int level_;
@@ -147,7 +147,7 @@ namespace easy3d {
         // The left part consists of lpad characters of the filling string printed using the %.*s specifier,
         // while the right part consists of rpad length of a space left-padded string which we chose to be empty ""
         // so that we only print rpad spaces using the %*s specifier.
-        static const std::string filling_str(width, '|');;
+        static const std::string filling_str(width, '|');
         printf("\r%3d%% [%.*s%*s]", value, lpad, filling_str.data(), rpad, "");
         fflush(stdout);
 #else

@@ -85,19 +85,19 @@ namespace easy3d {
 
         /// returns the thickness of the cross section.
         /// \details The thickness is defined relative to the scene bounding box. Default value is 0.01.
-        float cross_section_width() { return cross_section_width_; }
+        float cross_section_width() const { return cross_section_width_; }
         /// sets the thickness of the cross section.
         void set_cross_section_width(float w) { cross_section_width_ = w; }
 
         /// sets up the shader program for rendering.
         /// \param program The shader program.
-        void set_program(ShaderProgram *program);
+        void set_program(ShaderProgram *program) const;
         /// sets up whether a primitive should be completely discarded if one of its vertices is clipped.
         /// \param program The shader program.
         /// \param plane_clipping_discard Controls clipping plane behavior.
         ///     - true: completely discard a primitive if one of its vertices is clipped by this clipping plane.
         ///     - false: standard plane clipping
-        void set_discard_primitives(ShaderProgram *program, bool plane_clipping_discard);
+        void set_discard_primitives(ShaderProgram *program, bool plane_clipping_discard) const;
 
         /// draws the clipping plane itself.
         void draw(Camera* cam) const;

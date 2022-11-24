@@ -48,6 +48,14 @@ TextRendering::TextRendering(const std::string &title)
 }
 
 
+TextRendering::~TextRendering() {
+    delete texter_;
+
+    // Not needed: it will be called in the destructor of the base class
+    //Viewer::cleanup();
+}
+
+
 std::string TextRendering::usage() const {
     return ("----------------------- Text Rendering usage ------------------------ \n"
             "Press '+'/'-' to increase/decrease font size                          \n"
@@ -82,12 +90,6 @@ void TextRendering::init() {
     for (std::size_t i =0; i< names.size(); ++i)
         std::cout << "\tfont " << i << ": " << names[i] << std::endl;
 #endif
-}
-
-
-void TextRendering::cleanup() {
-    Viewer::cleanup();
-    delete texter_;
 }
 
 

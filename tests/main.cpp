@@ -27,8 +27,8 @@
 #include <random>
 #include <iostream>
 
-#include <easy3d/util/initializer.h>
-
+#include <easy3d/util/logging.h>
+#include <easy3d/util/resource.h>
 
 int test_timer();
 int test_signal();
@@ -74,29 +74,32 @@ int test_face_picker();
 int test_point_selection();
 
 
+using namespace easy3d;
+
 int main(int argc, char* argv[]) {
-    easy3d::initialize();
+    logging::initialize(false, false, true);
+    resource::initialize();
 
     // Initialize random number generator.
     srand(0);
 
     int result = 0;
 
-    result += test_console_style();
-    result += test_timer();
-    result += test_signal();
-
-    result += test_linear_solvers();
-    result += test_spline();
-
-    result += test_point_cloud();
-    result += test_surface_mesh();
-    result += test_polyhedral_mesh();
-    result += test_graph();
-    result += test_kdtree();
-
-    result += test_point_cloud_algorithms();
-    result += test_surface_mesh_algorithms();
+//    result += test_console_style();
+//    result += test_timer();
+//    result += test_signal();
+//
+//    result += test_linear_solvers();
+//    result += test_spline();
+//
+//    result += test_point_cloud();
+//    result += test_surface_mesh();
+//    result += test_polyhedral_mesh();
+//    result += test_graph();
+//    result += test_kdtree();
+//
+//    result += test_point_cloud_algorithms();
+//    result += test_surface_mesh_algorithms();
 
     const int duration = 1500; // in millisecond
     result += test_viewer_imgui(duration);

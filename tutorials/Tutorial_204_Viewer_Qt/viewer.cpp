@@ -169,9 +169,9 @@ namespace easy3d {
         }
 
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
-        dpi_scaling_ = devicePixelRatioF();
+        dpi_scaling_ = static_cast<float>(devicePixelRatioF());
 #else
-        dpi_scaling_ = devicePixelRatio();
+        dpi_scaling_ = static_cast<float>(devicePixelRatio());
 #endif
         VLOG(1) << "DPI scaling: " << dpiScaling();
 
@@ -282,8 +282,6 @@ namespace easy3d {
             if (e->modifiers() == Qt::ControlModifier) {
                 // zoom on region
             } else {
-                int x = e->pos().x();
-                int y = e->pos().y();
                 int dx = x - mouse_previous_pos_.x();
                 int dy = y - mouse_previous_pos_.y();
                 if (pressed_button_ == Qt::LeftButton)
@@ -323,13 +321,13 @@ namespace easy3d {
     bool Viewer::saveSnapshot(const QString &file_name) {
         makeCurrent();
 
-        int w = static_cast<int>(width() * dpiScaling());
-        int h = static_cast<int>(height() * dpiScaling());
+        int w = static_cast<int>(static_cast<float>(width()) * dpiScaling());
+        int h = static_cast<int>(static_cast<float>(height()) * dpiScaling());
 
         QOpenGLFramebufferObjectFormat format;
         format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
         format.setSamples(4);
-        QOpenGLFramebufferObject *fbo = new QOpenGLFramebufferObject(w, h, format);
+        auto fbo = new QOpenGLFramebufferObject(w, h, format);
         fbo->addColorAttachment(w, h);
 
         fbo->bind();
@@ -363,10 +361,10 @@ namespace easy3d {
         if (e->key() == Qt::Key_F1 && e->modifiers() == Qt::NoModifier)
             std::cout << usage() << std::endl;
         else if (e->key() == Qt::Key_Left && e->modifiers() == Qt::KeypadModifier) {
-            float angle = static_cast<float>(1 * M_PI / 180.0); // turn left, 1 degrees each step
+            auto angle = static_cast<float>(1 * M_PI / 180.0); // turn left, 1 degrees each step
             camera_->frame()->action_turn(angle, camera_);
         } else if (e->key() == Qt::Key_Right && e->modifiers() == Qt::KeypadModifier) {
-            float angle = static_cast<float>(1 * M_PI / 180.0); // turn right, 1 degrees each step
+            auto angle = static_cast<float>(1 * M_PI / 180.0); // turn right, 1 degrees each step
             camera_->frame()->action_turn(-angle, camera_);
         } else if (e->key() == Qt::Key_Up && e->modifiers() == Qt::KeypadModifier) {    // move camera forward
             float step = 0.05f * camera_->sceneRadius();
@@ -505,14 +503,14 @@ namespace easy3d {
 					drawable->set_visible(!drawable->is_visible());
             }
         } else if (e->key() == Qt::Key_B && e->modifiers() == Qt::NoModifier) {
-            SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(currentModel());
+            auto mesh = dynamic_cast<SurfaceMesh *>(currentModel());
             if (mesh) {
                 auto drawable = mesh->renderer()->get_lines_drawable("borders");
 				if (drawable)
 					drawable->set_visible(!drawable->is_visible());
             }
         } else if (e->key() == Qt::Key_L && e->modifiers() == Qt::NoModifier) { // locked vertices
-            SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(currentModel());
+            auto mesh = dynamic_cast<SurfaceMesh *>(currentModel());
             if (mesh) {
                 auto drawable = mesh->renderer()->get_points_drawable("locks");
 				if (drawable)
@@ -591,8 +589,7 @@ namespace easy3d {
 
 
     std::string Viewer::usage() const {
-        return std::string(
-                " ------------------------------------------------------------------\n"
+        return  " ------------------------------------------------------------------\n"
                 " Easy3D viewer usage:                                              \n"
                 " ------------------------------------------------------------------\n"
                 "  F1:                  Help                                        \n"
@@ -626,8 +623,7 @@ namespace easy3d {
                 "  'v':                 Toggle vertices                             \n"
                 "  'm':                 Toggle smooth shading (for SurfaceMesh)     \n"
                 "  'd':                 Print model info (drawables, properties)    \n"
-                " ------------------------------------------------------------------\n"
-        );
+                " ------------------------------------------------------------------\n";
     }
 
 
@@ -758,43 +754,43 @@ namespace easy3d {
 
         // NOTE: when dealing with OpenGL, all positions are relative to the viewer port.
         //       So we have to handle highdpi displays.
-        glx = static_cast<int>(glx * dpiScaling());
-        gly = static_cast<int>(gly * dpiScaling());
+        glx = static_cast<int>(static_cast<float>(glx) * dpiScaling());
+        gly = static_cast<int>(static_cast<float>(gly) * dpiScaling());
 
         int samples = 0;
         func_->glGetIntegerv(GL_SAMPLES, &samples);
-        easy3d_debug_log_gl_error;
+        easy3d_debug_log_gl_error
 
         float depth = 1.0f;
         if (samples > 0) {
             opengl::read_depth_ms(depth, glx, gly);
-            easy3d_debug_log_gl_error;
+            easy3d_debug_log_gl_error
         } else {
             opengl::read_depth(depth, glx, gly);
-            easy3d_debug_log_gl_error;
+            easy3d_debug_log_gl_error
         }
 
         const_cast<Viewer *>(this)->doneCurrent();
         // here the glGetError() won't work because the OpenGL context is not current.
-        // easy3d_debug_log_gl_error;
+        // easy3d_debug_log_gl_error
 
         found = depth < 1.0f;
         if (found) {
             // The input to unprojectedCoordinatesOf() is defined in the screen coordinate system
-            vec3 point(p.x(), p.y(), depth);
+            vec3 point(static_cast<float>(p.x()), static_cast<float>(p.y()), depth);
             point = camera_->unprojectedCoordinatesOf(point);
             return point;
         }
 
-        return vec3();
+        return {};
     }
 
 
     void Viewer::paintGL() {
-        easy3d_debug_log_gl_error;
+        easy3d_debug_log_gl_error
 
 #if 1
-        // QOpenGLWidget renders everything into a FBO. Internally it changes
+        // QOpenGLWidget renders everything into an FBO. Internally it changes
         // QSurfaceFormat to always have samples = 0 and the OpenGL context is
         // not a multisample context. So we have to query the render-buffer
         // to know if it is using multisampling. At initializeGL() we were not
@@ -804,9 +800,9 @@ namespace easy3d {
         if (!queried) {
 #if 1
             func_->glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_SAMPLES, &samples_);
-            easy3d_debug_log_frame_buffer_error;
+            easy3d_debug_log_frame_buffer_error
 #else   // the samples can also be retrieved using glGetIntegerv()
-            func_->glGetIntegerv(GL_SAMPLES, &samples_); easy3d_debug_log_gl_error;
+            func_->glGetIntegerv(GL_SAMPLES, &samples_); easy3d_debug_log_gl_error
 #endif
             // warn the user if the expected request was not satisfied
             int samples = QSurfaceFormat::defaultFormat().samples();
@@ -870,7 +866,7 @@ namespace easy3d {
         if (!drawable_axes_->is_visible())
             return;
 
-        // The viewport and the scissor are changed to fit the lower left corner.
+        // The viewport and the scissor box are changed to fit the lower left corner.
         int viewport[4], scissor[4];
         func_->glGetIntegerv(GL_VIEWPORT, viewport);
         func_->glGetIntegerv(GL_SCISSOR_BOX, scissor);
@@ -946,7 +942,7 @@ namespace easy3d {
             static const unsigned int max_count = 40;
             static QString fps_string("fps: ??");
             if (++fps_count == max_count) {
-                fps = 1000.0 * max_count / timer_.restart();
+                fps = 1000.0 * max_count / static_cast<double>(timer_.restart());
                 fps_string = tr("fps: %1").arg(fps, 0, 'f', ((fps < 10.0) ? 1 : 0));
                 fps_count = 0;
             }
@@ -991,7 +987,7 @@ namespace easy3d {
 
 
     void Viewer::draw() {
-        easy3d_debug_log_gl_error;
+        easy3d_debug_log_gl_error
 
         for (const auto m: models_) {
             if (!m->renderer()->is_visible())
@@ -1002,7 +998,7 @@ namespace easy3d {
             for (auto d: m->renderer()->triangles_drawables()) {
                 if (d->is_visible())
                     d->draw(camera());
-                easy3d_debug_log_gl_error;
+                easy3d_debug_log_gl_error
             }
 
             glDepthRange(0.0, 1.0);
@@ -1010,14 +1006,14 @@ namespace easy3d {
             for (auto d: m->renderer()->lines_drawables()) {
                 if (d->is_visible())
                     d->draw(camera());
-                easy3d_debug_log_gl_error;
+                easy3d_debug_log_gl_error
             }
             glDepthFunc(GL_LESS);
 
             for (auto d: m->renderer()->points_drawables()) {
                 if (d->is_visible())
                     d->draw(camera());
-                easy3d_debug_log_gl_error;
+                easy3d_debug_log_gl_error
             }
         }
 

@@ -44,7 +44,8 @@ namespace easy3d {
     Q_OBJECT
     public:
         explicit Window(QWidget *parent = nullptr);
-        ~Window() override;
+        ~Window() override = default;
+
         Viewer *viewer() { return viewer_; }
 
     public slots:

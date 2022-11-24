@@ -47,7 +47,7 @@ Q_OBJECT
 
 public:
     explicit WidgetGlobalSetting(QWidget *parent);
-    ~WidgetGlobalSetting();
+    ~WidgetGlobalSetting() override;
 
 private slots:
     void setEnableClippingPlane(bool);

@@ -38,7 +38,7 @@ Q_OBJECT
 public:
     explicit DialogSurfaceMeshCurvature(MainWindow *window);
 
-    ~DialogSurfaceMeshCurvature();
+    ~DialogSurfaceMeshCurvature() override = default;
 
 private Q_SLOTS:
 

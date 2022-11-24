@@ -59,7 +59,7 @@ namespace easy3d {
                 }
 
                 // sort curvature values
-                std::vector<FT> values = property;;
+                std::vector<FT> values = property;
                 std::sort(values.begin(), values.end());
 
                 const std::size_t n = values.size() - 1;
@@ -313,7 +313,7 @@ namespace easy3d {
 
                         std::size_t num = tessellator.num_elements_in_polygon();
                         triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
-                        count_triangles += num;
+                        count_triangles += static_cast<int>(num);
 
                         const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
                         const auto& indices = tessellator.elements();
@@ -441,7 +441,7 @@ namespace easy3d {
 
                         std::size_t num = tessellator.num_elements_in_polygon();
                         triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
-                        count_triangles += num;
+                        count_triangles += static_cast<int>(num);
                     }
 
                     const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
@@ -995,7 +995,7 @@ namespace easy3d {
 
                         std::size_t num = tessellator.num_elements_in_polygon();
                         triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
-                        count_triangles += num;
+                        count_triangles += static_cast<int>(num);
                     }
 
                     const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
@@ -1110,7 +1110,7 @@ namespace easy3d {
 
                         std::size_t num = tessellator.num_elements_in_polygon();
                         triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
-                        count_triangles += num;
+                        count_triangles += static_cast<int>(num);
                     }
 
                     const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
@@ -1220,7 +1220,7 @@ namespace easy3d {
 
                         std::size_t num = tessellator.num_elements_in_polygon();
                         triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
-                        count_triangles += num;
+                        count_triangles += static_cast<int>(num);
                     }
 
                     const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
@@ -1332,7 +1332,7 @@ namespace easy3d {
 
                         std::size_t num = tessellator.num_elements_in_polygon();
                         triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
-                        count_triangles += num;
+                        count_triangles += static_cast<int>(num);
                     }
 
                     const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
@@ -1452,7 +1452,7 @@ namespace easy3d {
 
                         std::size_t num = tessellator.num_elements_in_polygon();
                         triangle_range[face] = std::make_pair(count_triangles, count_triangles + num - 1);
-                        count_triangles += num;
+                        count_triangles += static_cast<int>(num);
                     }
 
                     const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
@@ -1960,7 +1960,7 @@ namespace easy3d {
                 ++idx;
             }
             drawable->update_vertex_buffer(vertices);
-        };
+        }
 
 
         // -------------------------------------------------------------------------------------------------------------
@@ -2022,14 +2022,14 @@ namespace easy3d {
 
             // use a limited number of edge to compute the length of the vectors.
             float avg_edge_length = 0.0f;
-            const unsigned int num = std::min(static_cast<unsigned int>(500), model->n_edges());
-            for (unsigned int i = 0; i < num; ++i) {
+            const int num = std::min(500, static_cast<int>(model->n_edges()));
+            for (int i = 0; i < num; ++i) {
                 SurfaceMesh::Edge edge(i);
                 auto vs = model->vertex(edge, 0);
                 auto vt = model->vertex(edge, 1);
                 avg_edge_length += distance(points[vs], points[vt]);
             }
-            avg_edge_length /= num;
+            avg_edge_length /= static_cast<float>(num);
 
             std::vector<vec3> d_points;
 
@@ -2075,7 +2075,7 @@ namespace easy3d {
                     break;
             }
             drawable->update_vertex_buffer(d_points);
-        };
+        }
 
 
         // -------------------------------------------------------------------------------------------------------------
@@ -2434,24 +2434,22 @@ namespace easy3d {
                 return;
             }
 
-            if (drawable->name() == "faces:interior")
-
             switch (location) {
                 case State::FACE:
                     if (!model->get_face_property<vec3>(field)) {
-                        LOG(ERROR) << "vector field '" << field << "' not found on the mesh faces (wrong name?)";
+                        LOG(ERROR) << "vector field '" << field << "' not found on the mesh faces (wrong name or location?)";
                         return;
                     }
                     break;
                 case State::VERTEX:
                     if (!model->get_vertex_property<vec3>(field)) {
-                        LOG(ERROR) << "vector field '" << field << "' not found on the mesh vertices (wrong name?)";
+                        LOG(ERROR) << "vector field '" << field << "' not found on the mesh vertices (wrong name or location?)";
                         return;
                     }
                     break;
                 case State::EDGE:
                     if (!model->get_edge_property<vec3>(field)) {
-                        LOG(ERROR) << "vector field '" << field << "' not found on the mesh edges (wrong name?)";
+                        LOG(ERROR) << "vector field '" << field << "' not found on the mesh edges (wrong name or location?)";
                         return;
                     }
                     break;
@@ -2462,60 +2460,62 @@ namespace easy3d {
 
             auto points = model->get_vertex_property<vec3>("v:point");
 
-            // use a limited number of edge to compute the length of the vectors.
+            // use a limited number of border edges to compute the average length of the vectors.
             float avg_edge_length = 0.0f;
-            const unsigned int num = std::min(static_cast<unsigned int>(500), model->n_edges());
-            for (unsigned int i = 0; i < num; ++i) {
-                PolyMesh::Edge edge(i);
-                auto vs = model->vertex(edge, 0);
-                auto vt = model->vertex(edge, 1);
-                avg_edge_length += distance(points[vs], points[vt]);
+            const int num = std::min(500, static_cast<int>(model->n_edges()));
+            int count = 0;
+            for (int i = 0; i < num; ++i) {
+                auto e = PolyMesh::Edge(i);
+                if (model->is_border(e)) {
+                    avg_edge_length += model->edge_length(e);
+                    ++count;
+                }
             }
-            avg_edge_length /= num;
+            avg_edge_length /= static_cast<float>(count * 2);
 
+            // now collect the two endpoints of all the vectors
             std::vector<vec3> d_points;
-
             switch (location) {
                 case State::FACE: {   // on faces
                     auto prop = model->get_face_property<vec3>(field);
-                    d_points.resize(model->n_faces() * 2, vec3(0.0f, 0.0f, 0.0f));
-                    int idx = 0;
+                    d_points.reserve(model->n_faces() * 2);
                     for (auto f: model->faces()) {
                         if (!model->is_border(f))
                             continue;
                         int size = 0;
+                        vec3 p(0, 0, 0);
                         for (auto v: model->vertices(f)) {
-                            d_points[idx] += points[v];
+                            p += points[v];
                             ++size;
                         }
-                        d_points[idx] /= size;
-                        d_points[idx + 1] = d_points[idx] + prop[f] * avg_edge_length * scale;
-                        idx += 2;
+                        p /= size;
+                        d_points.push_back(p);
+                        d_points.push_back(p + prop[f] * avg_edge_length * scale);
                     }
                     break;
                 }
                 case State::VERTEX: {   // on vertices
                     auto prop = model->get_vertex_property<vec3>(field);
-                    d_points.resize(model->n_vertices() * 2, vec3(0.0f, 0.0f, 0.0f));
+                    d_points.reserve(model->n_vertices() * 2);
                     for (auto v: model->vertices()) {
                         if (model->is_border(v)) {
-                            d_points[v.idx() * 2] = points[v];
-                            d_points[v.idx() * 2 + 1] = points[v] + prop[v] * avg_edge_length * scale;
+                            d_points.push_back(points[v]);
+                            d_points.push_back(points[v] + prop[v] * avg_edge_length * scale);
                         }
                     }
                     break;
                 }
                 case State::EDGE: {   // on edges
                     auto prop = model->get_edge_property<vec3>(field);
-                    d_points.resize(model->n_edges() * 2, vec3(0.0f, 0.0f, 0.0f));
+                    d_points.reserve(model->n_edges() * 2);
                     for (auto e : model->edges()) {
                         if (!model->is_border(e))
                             continue;
                         auto v0 = model->vertex(e, 0);
                         auto v1 = model->vertex(e, 1);
                         const auto p = (points[v0] + points[v1]) * 0.5f;
-                        d_points[e.idx() * 2] = p;
-                        d_points[e.idx() * 2 + 1] = p + prop[e] * avg_edge_length * scale;
+                        d_points.push_back(p);
+                        d_points.push_back(p + prop[e] * avg_edge_length * scale);
                     }
                     break;
                 }
@@ -2523,7 +2523,7 @@ namespace easy3d {
                     break;
             }
             drawable->update_vertex_buffer(d_points);
-        };
+        }
 
 
         // -------------------------------------------------------------------------------------------------------------
@@ -2536,7 +2536,7 @@ namespace easy3d {
             }
 
             if (dynamic_cast<SurfaceMesh *>(model)) {
-                SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
+                auto mesh = dynamic_cast<SurfaceMesh *>(model);
                 switch (drawable->type()) {
                     case Drawable::DT_TRIANGLES:
                         update(mesh, dynamic_cast<TrianglesDrawable *>(drawable));
@@ -2549,7 +2549,7 @@ namespace easy3d {
                         return;
                 }
             } else if (dynamic_cast<PointCloud *>(model)) {
-                PointCloud *cloud = dynamic_cast<PointCloud *>(model);
+                auto cloud = dynamic_cast<PointCloud *>(model);
                 switch (drawable->type()) {
                     case Drawable::DT_POINTS:
                         update(cloud, dynamic_cast<PointsDrawable *>(drawable));
@@ -2568,7 +2568,7 @@ namespace easy3d {
                         return;
                 }
             } else if (dynamic_cast<Graph *>(model)) {
-                Graph *graph = dynamic_cast<Graph *>(model);
+                auto graph = dynamic_cast<Graph *>(model);
                 switch (drawable->type()) {
                     case Drawable::DT_POINTS:
                         update(graph, dynamic_cast<PointsDrawable *>(drawable));
@@ -2584,7 +2584,7 @@ namespace easy3d {
                 }
             }
             else if (dynamic_cast<PolyMesh *>(model)) {
-                PolyMesh *mesh = dynamic_cast<PolyMesh *>(model);
+                auto mesh = dynamic_cast<PolyMesh *>(model);
                 switch (drawable->type()) {
                     case Drawable::DT_TRIANGLES:
                         update(mesh, dynamic_cast<TrianglesDrawable *>(drawable), drawable->name() == "faces:border");

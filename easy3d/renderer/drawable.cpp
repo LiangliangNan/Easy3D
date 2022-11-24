@@ -230,17 +230,20 @@ namespace easy3d {
         vao_->bind();
 
         if (element_buffer_) {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer_);	easy3d_debug_log_gl_error;
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer_);
+            easy3d_debug_log_gl_error
 
             // index buffer must be bound if using glDrawElements()
-            glDrawElements(type(), GLsizei(num_indices_), GL_UNSIGNED_INT, nullptr);    easy3d_debug_log_gl_error;
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);	easy3d_debug_log_gl_error;
+            glDrawElements(type(), GLsizei(num_indices_), GL_UNSIGNED_INT, nullptr);
+            easy3d_debug_log_gl_error
+
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         } else
             glDrawArrays(type(), 0, GLsizei(num_vertices_));
-        easy3d_debug_log_gl_error;
+        easy3d_debug_log_gl_error
 
         vao_->release();
-        easy3d_debug_log_gl_error;
+        easy3d_debug_log_gl_error
     }
 
 

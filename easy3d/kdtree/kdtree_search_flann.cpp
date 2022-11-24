@@ -46,7 +46,7 @@ namespace easy3d {
         // create tree
         flann::Matrix<float> dataset(points_, points_num_, 3);
         // construct a single kd-tree optimized for searching lower dimensionality data
-        flann::Index< flann::L2<float> >* tree = new flann::Index< flann::L2<float> >(dataset, flann::KDTreeSingleIndexParams());
+        auto tree = new flann::Index< flann::L2<float> >(dataset, flann::KDTreeSingleIndexParams());
         tree->buildIndex();
         tree_ = tree;
     }

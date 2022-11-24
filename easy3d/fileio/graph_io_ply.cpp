@@ -38,8 +38,7 @@ namespace easy3d {
 
 			template <typename PropertyT>
 			inline bool extract_named_property(std::vector<PropertyT>& properties, PropertyT& wanted, const std::string& name) {
-				typename std::vector< PropertyT >::iterator it = properties.begin();
-				for (; it != properties.end(); ++it) {
+				for (auto it = properties.begin(); it != properties.end(); ++it) {
                     const PropertyT& prop = *it;
                     if (prop.name == name) {
                         wanted = prop;
@@ -102,8 +101,7 @@ namespace easy3d {
 			Vec3Property       coordinates;
 			IntListProperty    edge_vertex_indices;
 
-			for (std::size_t i = 0; i < elements.size(); ++i) {
-				Element& e = elements[i];
+			for (auto& e : elements) {
                 if (e.name == "vertex") {
 					if (internal::extract_named_property(e.vec3_properties, coordinates, "point"))
 						continue;
@@ -156,7 +154,11 @@ namespace easy3d {
                 const dvec3 &origin = Translator::instance()->translation();
 
                 for (auto p: coordinates)
-                    graph->add_vertex(vec3(p.x - origin.x, p.y - origin.y, p.z - origin.z));
+                    graph->add_vertex(vec3(
+                            static_cast<float>(p.x - origin.x),
+                            static_cast<float>(p.y - origin.y),
+                            static_cast<float>(p.z - origin.z))
+                            );
 
                 auto trans = graph->add_model_property<dvec3>("translation", dvec3(0, 0, 0));
                 trans[0] = origin;
@@ -164,7 +166,7 @@ namespace easy3d {
                           << "), stored as ModelProperty<dvec3>(\"translation\")";
             }
 
-            for (auto e : edge_vertex_indices) {
+            for (const auto& e : edge_vertex_indices) {
                 if (e.size() == 2)
                     graph->add_edge(Graph::Vertex(e[0]), Graph::Vertex(e[1]));
                 else {
@@ -174,8 +176,7 @@ namespace easy3d {
             }
 
 			// now let's add the properties
-			for (std::size_t i = 0; i < elements.size(); ++i) {
-				Element& e = elements[i];
+			for (const auto& e : elements) {
                 if (e.name == "vertex") {
                     internal::add_vertex_properties<vec3>(graph, e.vec3_properties);
                     internal::add_vertex_properties<vec2>(graph, e.vec2_properties);
@@ -268,9 +269,9 @@ namespace easy3d {
                 for (auto& prop : element_vertex.vec3_properties) {
                     if (prop.name == "point") {
                         for (auto& v : prop) {
-                            v.x += origin.x;
-                            v.y += origin.y;
-                            v.z += origin.z;
+                            v.x += static_cast<float>(origin.x);
+                            v.y += static_cast<float>(origin.y);
+                            v.z += static_cast<float>(origin.z);
                         }
                     }
                 }
@@ -309,8 +310,7 @@ namespace easy3d {
             binary = binary && (file_name.find("ascii") == std::string::npos);
             LOG_IF(!binary, WARNING) << "you're writing an ASCII ply file. Use binary format for better performance";
 
-            PlyWriter writer;
-            return writer.write(file_name, elements, "", binary);
+            return PlyWriter::write(file_name, elements, "", binary);
 		}
 
 

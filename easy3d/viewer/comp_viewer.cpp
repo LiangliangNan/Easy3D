@@ -71,6 +71,15 @@ namespace easy3d {
     }
 
 
+    CompViewer::~CompViewer() {
+        VertexArrayObject::release_buffer(division_vertex_buffer_);
+        delete division_vao_;
+
+        // Not needed: it will be called in the destructor of the base class
+        // Viewer::cleanup();
+    }
+
+
     void CompViewer::assign(unsigned int row, unsigned int col, const Model *m) {
         if (!m) {
             LOG(ERROR) << "null model cannot be assigned to a view";
@@ -133,13 +142,11 @@ namespace easy3d {
 
         // ------------------------------------------------------------
 
-        for (std::size_t i = 0; i < views_.size(); ++i) {
-            const auto &row = views_[i];
-            for (std::size_t j = 0; j < row.size(); ++j) {
-                const auto &view = row[j];
-                const auto &viewport = view.viewport;
-                glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
-                glScissor(viewport[0], viewport[1], viewport[2], viewport[3]);
+        for (const auto& row : views_) {
+            for (const auto& view : row) {
+                const auto &vp = view.viewport;
+                glViewport(vp[0], vp[1], vp[2], vp[3]);
+                glScissor(vp[0], vp[1], vp[2], vp[3]);
                 for (const auto m: view.models) {
                     if (!m->renderer()->is_visible())
                         continue;
@@ -201,22 +208,15 @@ namespace easy3d {
         lines_program_->set_uniform("depth", depth);
         division_vao_->bind();
         const unsigned int vertex_count = (num_rows_ - 1) * 2 + (num_cols_ - 1) * 2;
-        glDrawArrays(GL_LINES, 0, vertex_count);
+        glDrawArrays(GL_LINES, 0, static_cast<int>(vertex_count));
         division_vao_->release();
         lines_program_->release();
-        easy3d_debug_log_gl_error;
+        easy3d_debug_log_gl_error
     }
 
 
     void CompViewer::post_resize(int w, int h) {
         update_division();
-    }
-
-
-    void CompViewer::cleanup() {
-        division_vao_->release_buffer(division_vertex_buffer_);
-        delete division_vao_;
-        Viewer::cleanup();
     }
 
 
@@ -231,8 +231,8 @@ namespace easy3d {
         glGetIntegerv(GL_VIEWPORT, viewport);
         const int w = viewport[2];
         const int h = viewport[3];
-        view_width_ = int(w / float(num_cols_));
-        view_height_ = int(h / float(num_rows_));
+        view_width_ = static_cast<int>(static_cast<float>(w) / static_cast<float>(num_cols_));
+        view_height_ = static_cast<int>(static_cast<float>(h) / static_cast<float>(num_rows_));
         // This is required to ensure a correct aspect ratio (thus the correct projection matrix)
         camera()->setScreenWidthAndHeight(view_width_, view_height_);
 
@@ -240,7 +240,7 @@ namespace easy3d {
             auto &row = views_[i];
             const auto y = h - (i + 1) * view_height_;
             for (unsigned int j = 0; j < num_cols_; ++j)
-                row[j].viewport = ivec4(j * view_width_, y, view_width_, view_height_);
+                row[j].viewport = ivec4(static_cast<int>(j * view_width_), static_cast<int>(y), static_cast<int>(view_width_), static_cast<int>(view_height_));
         }
 
         // ------------------------------------------------------------
@@ -248,18 +248,18 @@ namespace easy3d {
         // Note: we need NDC
         std::vector<vec2> points;
         for (std::size_t i = 1; i < num_rows_; ++i) {
-            const float y = 2.0f * i * view_height_ / h - 1.0f;
+            const float y = 2.0f * static_cast<float>(i * view_height_) / static_cast<float>(h) - 1.0f;
             points.emplace_back(vec2(-1.0f, y));
             points.emplace_back(vec2(1.0f, y));
         }
         for (std::size_t i = 1; i < num_cols_; ++i) {
-            const float x = 2.0f * i * view_width_ / w - 1.0f;
+            const float x = 2.0f * static_cast<float>(i * view_width_) / static_cast<float>(w) - 1.0f;
             points.emplace_back(vec2(x, -1.0f));
             points.emplace_back(vec2(x, 1.0f));
         }
         division_vao_->create_array_buffer(division_vertex_buffer_, ShaderProgram::POSITION, points.data(),
                                            points.size() * sizeof(vec2), 2, true);
-        easy3d_debug_log_gl_error;
+        easy3d_debug_log_gl_error
     }
 
 
@@ -267,28 +267,7 @@ namespace easy3d {
         // make the mouse position relative to the current view
         x %= view_width_;
         y %= view_height_;
-
-        // control modifier is reserved for zooming on region
-        if (modifiers != EASY3D_MOD_CONTROL) {
-            auto axis = ManipulatedFrame::NONE;
-            if (pressed_key_ == GLFW_KEY_X) axis = ManipulatedFrame::HORIZONTAL;
-            else if (pressed_key_ == GLFW_KEY_Y) axis = ManipulatedFrame::VERTICAL;
-            else if (pressed_key_ == GLFW_KEY_O) axis = ManipulatedFrame::ORTHOGONAL;
-            switch (button) {
-                case GLFW_MOUSE_BUTTON_LEFT:
-                    camera_->frame()->action_rotate(x, y, dx, dy, camera_, axis);
-                    break;
-                case GLFW_MOUSE_BUTTON_RIGHT:
-                    camera_->frame()->action_translate(x, y, dx, dy, camera_, axis);
-                    break;
-                case GLFW_MOUSE_BUTTON_MIDDLE:
-                    if (std::abs(dy) >= 1)
-                        camera_->frame()->action_zoom(dy > 0 ? 1 : -1, camera_);
-                    break;
-            }
-        }
-
-        return false;
+        return Viewer::mouse_drag_event(x, y, dx, dy, button, modifiers);
     }
 
 }

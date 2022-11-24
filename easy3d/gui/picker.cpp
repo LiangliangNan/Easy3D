@@ -33,7 +33,7 @@
 namespace easy3d {
 
 
-    FramebufferObject *Picker::fbo_ = 0;
+    FramebufferObject *Picker::fbo_ = nullptr;
 
 
     Picker::Picker(const Camera *cam)
@@ -50,9 +50,11 @@ namespace easy3d {
     void Picker::setup_framebuffer(int width, int height) {
         // prepare a frame buffer object (fbo), I will do offscreen rendering to the new fbo
         if (!fbo_) {
-            fbo_ = new FramebufferObject(width, height, 0); easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
-            fbo_->add_color_buffer(); easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
-            fbo_->add_depth_buffer(); easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
+            fbo_ = new FramebufferObject(width, height, 0);
+            fbo_->add_color_buffer();
+            fbo_->add_depth_buffer();
+            easy3d_debug_log_gl_error
+            easy3d_debug_log_frame_buffer_error
 
 #if 0
             fbo_->print_attachments();
@@ -60,13 +62,15 @@ namespace easy3d {
             fbo_->print_read_buffer();
 #endif
         }
-        fbo_->ensure_size(width, height); easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
+        fbo_->ensure_size(width, height);
+        easy3d_debug_log_gl_error
+        easy3d_debug_log_frame_buffer_error
     }
 
 
     void Picker::screen_to_opengl(int x, int y, int &gl_x, int &gl_y, int width, int height) const {
-        float dpi_scaling_x = width / static_cast<float>(camera()->screenWidth());
-        float dpi_scaling_y = height / static_cast<float>(camera()->screenHeight());
+        float dpi_scaling_x = static_cast<float>(width) / static_cast<float>(camera()->screenWidth());
+        float dpi_scaling_y = static_cast<float>(height) / static_cast<float>(camera()->screenHeight());
 
         gl_x = static_cast<int>(dpi_scaling_x * x);
         gl_y = static_cast<int>(dpi_scaling_y * (camera()->screenHeight() - 1 - y));

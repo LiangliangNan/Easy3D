@@ -45,7 +45,7 @@ namespace easy3d {
          * \brief Constructor.
          * \param cloud The point cloud for which a KdTree will be constructed.
          */
-        KdTreeSearch_ANN(const PointCloud *cloud);
+        explicit KdTreeSearch_ANN(const PointCloud *cloud);
 
         ~KdTreeSearch_ANN() override;
 

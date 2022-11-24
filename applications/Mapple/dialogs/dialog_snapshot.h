@@ -37,7 +37,7 @@ class DialogSnapshot : public Dialog, public Ui::DialogSnapshot
 
 public:
     explicit DialogSnapshot(MainWindow *window);
-    ~DialogSnapshot();
+    ~DialogSnapshot() override = default;
 
     void saveSnapshot();
 

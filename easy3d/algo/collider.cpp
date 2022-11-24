@@ -104,7 +104,7 @@ namespace internal {
                 const Pair* pairs = collider_->GetPairs();
                 for (udword i = 0; i < num; ++i) {
                     const Pair& pair = pairs[i];
-                    result[i] = { easy3d::SurfaceMesh::Face(pair.id0), easy3d::SurfaceMesh::Face(pair.id1) };
+                    result[i] = { easy3d::SurfaceMesh::Face(static_cast<int>(pair.id0)), easy3d::SurfaceMesh::Face(static_cast<int>(pair.id1)) };
                 }
             }
             return result;
@@ -123,11 +123,11 @@ namespace internal {
             }
 
             const auto& pts = mesh->points();
-            Point* vertices = new Point[pts.size()];
+            auto vertices = new Point[pts.size()];
             for (std::size_t i=0; i<pts.size(); ++i)
                     vertices[i].Set(pts[i]);
 
-            IndexedTriangle* indices = new IndexedTriangle[mesh->n_faces()];
+            auto indices = new IndexedTriangle[mesh->n_faces()];
             for (const auto& f : mesh->faces()) {
                     std::vector<int> ids;
                     for (const auto& v : mesh->vertices(f))
@@ -135,7 +135,7 @@ namespace internal {
                     indices[f.idx()] = IndexedTriangle(ids[0], ids[1], ids[2]);
                 }
 
-            MeshInterface *mesh_interface = new MeshInterface();
+            auto mesh_interface = new MeshInterface();
             mesh_interface->SetNbTriangles(mesh->n_faces());
             mesh_interface->SetNbVertices(mesh->n_vertices());
             mesh_interface->SetPointers(indices, vertices);

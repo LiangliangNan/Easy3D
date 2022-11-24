@@ -32,11 +32,11 @@ namespace easy3d {
     public:
         Delaunay3();
 
-        virtual ~Delaunay3();
+        ~Delaunay3() override;
 
         /// \brief Sets the vertices from an array of floating point numbers in which each consecutive number triple
         /// denotes a 3D point.
-        virtual void set_vertices(unsigned int nb_vertices, const float *vertices);
+        void set_vertices(unsigned int nb_vertices, const float *vertices) override;
 
         /// \brief Sets the vertices from an array of 3D points.
         void set_vertices(const std::vector<vec3> &vertices) {
@@ -56,7 +56,7 @@ namespace easy3d {
 
         int vertex_tet(int v) const { return vertex_cell(v); }
 
-        unsigned int nearest_vertex(const float *p) const {
+        unsigned int nearest_vertex(const float *p) const override {
             return Delaunay::nearest_vertex(p);
         }
 
@@ -77,7 +77,7 @@ namespace easy3d {
             return cell_adjacent(t, lf);
         }
 
-        int tet_facet_vertex(unsigned int t, unsigned int lf, unsigned int lv) {
+        int tet_facet_vertex(unsigned int t, unsigned int lf, unsigned int lv) const {
             assert(lf < 4);
             assert(lv < 3);
             return tet_vertex(t, facet_vertex_[lf][lv]);
@@ -279,10 +279,12 @@ namespace easy3d {
                     return i;
                 }
             }
+
+            // unexpected thing has happened, let's print some information for debugging
             std::cerr << "bisector = " << bisector;
             std::cerr << " facet = [";
-            for (unsigned int i = 0; i < facet_bisector_.size(); i++) {
-                std::cerr << facet_bisector_[i] << " ";
+            for (auto fb : facet_bisector_) {
+                std::cerr << fb << " ";
             }
             std::cerr << "]" << std::endl;
             DCHECK(false) << "should not have reached here";

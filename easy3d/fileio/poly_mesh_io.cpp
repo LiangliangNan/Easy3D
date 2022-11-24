@@ -25,9 +25,6 @@
  ********************************************************************/
 
 #include <easy3d/fileio/poly_mesh_io.h>
-
-#include <clocale>
-
 #include <easy3d/core/poly_mesh.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/stop_watch.h>
@@ -38,45 +35,39 @@ namespace easy3d {
 
 
     PolyMesh *PolyMeshIO::load(const std::string &file_name) {
-        std::setlocale(LC_NUMERIC, "C");
-
-        PolyMesh* mesh = new PolyMesh;
+        auto mesh = new PolyMesh;
         mesh->set_name(file_name);
 
         StopWatch w;
         bool success = false;
 
-        const std::string& ext = file_system::extension(file_name, true);
+        const std::string &ext = file_system::extension(file_name, true);
         if (ext == "plm")
             success = io::load_plm(file_name, mesh);
         else if (ext == "pm")
             success = io::load_pm(file_name, mesh);
         else if (ext == "mesh")
             success = io::load_mesh(file_name, mesh);
-        else if (ext.empty()){
+        else if (ext.empty()) {
             LOG(ERROR) << "unknown file format: no extension" << ext;
             success = false;
-        }
-        else {
+        } else {
             LOG(ERROR) << "unknown file format: " << ext;
             success = false;
         }
 
         if (!success || mesh->n_vertices() == 0 || mesh->n_faces() == 0 || mesh->n_cells() == 0) {
-            LOG(WARNING) << "no valid data in file: " << file_name;
+            LOG(WARNING) << "load surface mesh failed: " << file_name;
             delete mesh;
             return nullptr;
         }
 
-        if (success)
-            LOG(INFO) << "polyhedral mesh loaded ("
-                      << "#vertex: " << mesh->n_vertices() << ", "
-                      << "#edge: " << mesh->n_edges() << ", "
-                      << "#face: " << mesh->n_faces() << ", "
-                      << "#cell: " << mesh->n_cells() << "). "
-                      << w.time_string();
-        else
-            LOG(INFO) << "load surface mesh failed";
+        LOG(INFO) << "polyhedral mesh loaded ("
+                  << "#vertex: " << mesh->n_vertices() << ", "
+                  << "#edge: " << mesh->n_edges() << ", "
+                  << "#face: " << mesh->n_faces() << ", "
+                  << "#cell: " << mesh->n_cells() << "). "
+                  << w.time_string();
 
         return mesh;
     }
@@ -98,7 +89,7 @@ namespace easy3d {
         bool success = false;
 
         std::string final_name = file_name;
-        const std::string& ext = file_system::extension(file_name, true);
+        const std::string &ext = file_system::extension(file_name, true);
 
         if (ext == "plm" || ext.empty()) {
             if (ext.empty()) {
@@ -106,8 +97,7 @@ namespace easy3d {
                 final_name = final_name + ".plm";
             }
             success = io::save_plm(final_name, mesh);
-        }
-        else if (ext == "pm")
+        } else if (ext == "pm")
             success = io::save_pm(final_name, mesh);
         else if (ext == "mesh")
             success = io::save_mesh(file_name, mesh);
@@ -119,8 +109,7 @@ namespace easy3d {
         if (success) {
             LOG(INFO) << "save model done. " << w.time_string();
             return true;
-        }
-        else {
+        } else {
             LOG(INFO) << "save model failed";
             return false;
         }

@@ -24,45 +24,17 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#if 0
-
-#include "viewer.h"
-#include <easy3d/util/resources.h>
-#include <easy3d/util/timer.h>
-
-using namespace easy3d;
-
-int test_composite_view(int duration) {
-    CompositeView viewer("CompositeView");
-
-    // Load model from a file
-    const std::string file_name = resource::directory() + "/data/torusknot.obj";
-    if (!viewer.add_model(file_name, true)) {
-        LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
-        return EXIT_FAILURE;
-    }
-
-    viewer.usage_func_ = []() -> std::string {
-        return "testing composite view...";
-    };
-
-    Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
-    return viewer.run();
-}
-
-#else
-
 #include <easy3d/viewer/comp_viewer.h>
-#include <easy3d/util/resource.h>
-#include <easy3d/util/timer.h>
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/util/resource.h>
+#include <easy3d/util/timer.h>
+
 
 using namespace easy3d;
-
 
 int test_composite_view(int duration) {
     // create a 2 by 2 composite viewer
@@ -103,12 +75,9 @@ int test_composite_view(int duration) {
     sphere_vertices->set_point_size(15);
     viewer.assign(1, 1, sphere_vertices);
 
+    // show a simple message
     viewer.usage_string_ = "testing composite view...";
 
     Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
-
-    // Run the viewer
     return viewer.run();
 }
-
-#endif

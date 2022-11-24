@@ -24,8 +24,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef EASY3D_WXWIDGETS_VIEWER_WINDOW_H
-#define EASY3D_WXWIDGETS_VIEWER_WINDOW_H
+#ifndef EASY3D_TUTORIAL_VIEWER_WXWIDGETS_WINDOW_H
+#define EASY3D_TUTORIAL_VIEWER_WXWIDGETS_WINDOW_H
 
 #include <wx/frame.h>
 
@@ -58,4 +58,4 @@ namespace easy3d {
 
 }
 
-#endif // #ifndef EASY3D_WXWIDGETS_VIEWER_WINDOW_H
+#endif // EASY3D_TUTORIAL_VIEWER_WXWIDGETS_WINDOW_H

@@ -28,7 +28,6 @@
 
 
 #include <vector>
-#include <string>
 #include <cstring>
 #include <cstdlib>  // for std::getenv
 
@@ -120,7 +119,7 @@ namespace easy3d
 #else
             // On non-Windows platforms, we rely on the TERM variable.
             const char *const term = std::getenv("TERM");
-            if (term != NULL && term[0] != '\0') {
+            if (term != nullptr && term[0] != '\0') {
                 term_supports_color =
                         !strcmp(term, "xterm") ||
                         !strcmp(term, "xterm-color") ||

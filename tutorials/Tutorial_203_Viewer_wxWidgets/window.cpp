@@ -65,26 +65,26 @@ namespace easy3d {
 #endif
 
         // Make the "File" menu
-        wxMenu *fileMenu = new wxMenu;
+        auto fileMenu = new wxMenu;
         fileMenu->Append(wxID_OPEN, "&Open...\tCTRL-O");
         fileMenu->Append(wxID_SAVE, "&Save...\tCTRL-S");
         fileMenu->AppendSeparator();
         fileMenu->Append(wxID_EXIT, "E&xit\tALT-X");
 
         // Make the "View" menu
-        wxMenu *viewMenu = new wxMenu;
+        auto viewMenu = new wxMenu;
         viewMenu->Append(VIEW_FIT_SCREEN, "&Fit screen\tF");
         viewMenu->Append(VIEW_SNAPSHOT, "&Snapshot...\tS");
 
         // Make the "Edit" menu
-        wxMenu *editMenu = new wxMenu;
+        auto editMenu = new wxMenu;
         editMenu->Append(EDIT_SUBDIVISION, "&Subdivision");
 
         // Make the "Help" menu
-        wxMenu *helpMenu = new wxMenu;
+        auto helpMenu = new wxMenu;
         helpMenu->Append(wxID_HELP, "&About");
 
-        wxMenuBar *menuBar = new wxMenuBar;
+        auto menuBar = new wxMenuBar;
         menuBar->Append(fileMenu, "&File");
         menuBar->Append(viewMenu, "&View");
         menuBar->Append(editMenu, "&Edit");

@@ -72,7 +72,7 @@ the bug by creating an issue and provide the following:
  - does the issue occur for other test data or particular data only? Provide a small data that can trigger the issue;
  - if you made changes to the source code of Easy3D, a short and self-contained code example that can produce the issue. 
  Just put it inline in the body text. If the bug is reproducible with one of the test programs or examples that come with Easy3D, simply mention that instead;
- - the full log file. By default it is located next to the executable program (unless you have modified the default path);
+ - the full log file. By default, it is located next to the executable program (unless you have modified the default path);
  - the sequence of operations that triggers the issue. For example 
 ```
     1: click menu "Surface Mesh -> Polyhedralization"; 

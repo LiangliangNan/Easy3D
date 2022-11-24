@@ -38,7 +38,7 @@ int test_viewer_imgui(int duration) {
     ViewerImGui viewer("Viewer_imgui");
 
     if (!viewer.add_model(file_name)) {
-        LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
+        LOG(ERROR) << "failed to load model. Please make sure the file exists and format is correct.";
         return EXIT_FAILURE;
     }
 

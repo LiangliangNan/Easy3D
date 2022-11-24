@@ -45,17 +45,13 @@ DialogSnapshot::DialogSnapshot(MainWindow *window)
     const double scale = 1.0;
     doubleSpinBoxImageScale->setValue(scale);
 
-    computeImageSize();;
+    computeImageSize();
 
     connect(viewer_, SIGNAL(resized()), this, SLOT(computeImageSize()));
 
     connect(doubleSpinBoxImageScale, SIGNAL(valueChanged(double)), this, SLOT(computeImageSize()));
     connect(pushButtonOK, SIGNAL(clicked()), this, SLOT(accept()));
     connect(pushButtonCancel, SIGNAL(clicked()), this, SLOT(reject()));
-}
-
-
-DialogSnapshot::~DialogSnapshot() {
 }
 
 

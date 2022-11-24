@@ -39,7 +39,7 @@ namespace easy3d {
      */
 	class LinesDrawable : public Drawable {
 	public:
-        LinesDrawable(const std::string& name = "", Model* model = nullptr);
+        explicit LinesDrawable(const std::string& name = "", Model* model = nullptr);
 
         Type type() const override;
 
@@ -56,7 +56,7 @@ namespace easy3d {
         void set_line_width(float w) { line_width_ = w; }
 
         // Rendering.
-        virtual void draw(const Camera* camera) const override;
+        void draw(const Camera* camera) const override;
 
     protected:
         // without texture

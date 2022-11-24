@@ -41,7 +41,7 @@
 #define EASY3D_MOD_CONTROL GLFW_MOD_CONTROL
 #endif
 
-#define  USE_LASSO     1
+#define  USE_LASSO   1
 
 using namespace easy3d;
 
@@ -52,7 +52,7 @@ PointSelection::PointSelection(const std::string &title) : Viewer(title) {
 std::string PointSelection::usage() const {
     return ("-------------- Point Selection usage -------------- \n"
             "Press Ctrl key, then drag the mouse to select (left button) or deselect (right button) points\n"
-            "---------------------------------------------------------- \n");
+            "--------------------------------------------------- \n");
 }
 
 
@@ -60,7 +60,7 @@ std::string PointSelection::usage() const {
 bool PointSelection::mouse_press_event(int x, int y, int button, int modifiers) {
     if (modifiers == EASY3D_MOD_CONTROL) {
         polygon_.clear();
-        polygon_.push_back(vec2(x, y));
+        polygon_.push_back(vec2(static_cast<float>(x), static_cast<float>(y)));
         return false;
     } else
         return Viewer::mouse_press_event(x, y, button, modifiers);
@@ -77,7 +77,7 @@ bool PointSelection::mouse_release_event(int x, int y, int button, int modifiers
 #if USE_LASSO
                 picker.pick_vertices(cloud, polygon_, button == GLFW_MOUSE_BUTTON_RIGHT);
 #else
-                picker.pick_vertices(model, Rect(polygon_[0], polygon_[2]), false);
+                picker.pick_vertices(cloud, Rect(polygon_[0], polygon_[2]), button == GLFW_MOUSE_BUTTON_RIGHT);
 #endif
                 mark_selection(cloud);
 
@@ -94,14 +94,14 @@ bool PointSelection::mouse_release_event(int x, int y, int button, int modifiers
 bool PointSelection::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
     if (modifiers == EASY3D_MOD_CONTROL) {
 #if USE_LASSO
-        polygon_.push_back(vec2(x, y));
+        polygon_.push_back(vec2(static_cast<float>(x), static_cast<float>(y)));
 #else   // rectangle
         const vec2 first_point = polygon_[0];
         polygon_.clear();
         polygon_.push_back(first_point);
-        polygon_.push_back(vec2(first_point.x, y));
-        polygon_.push_back(vec2(x, y));
-        polygon_.push_back(vec2(x, first_point.y));
+        polygon_.push_back(vec2(first_point.x, static_cast<float>(y)));
+        polygon_.push_back(vec2(static_cast<float>(x), static_cast<float>(y)));
+        polygon_.push_back(vec2(static_cast<float>(x), first_point.y));
 #endif
         return false;
     } else
@@ -128,7 +128,7 @@ void PointSelection::mark_selection(PointCloud *cloud) {
     auto select = cloud->vertex_property<bool>("v:select");
     auto colors = cloud->vertex_property<vec3>("v:color");
     for(auto v : cloud->vertices())
-        colors[v] = select[v] ? vec3(1,0,0) : drawable->color();    // mark selected points red
+        colors[v] = select[v] ? vec3(1,0,0) : drawable->color().xyz();    // mark selected points red
     drawable->set_coloring(easy3d::State::COLOR_PROPERTY, easy3d::State::VERTEX, "v:color");
     drawable->update();
 }

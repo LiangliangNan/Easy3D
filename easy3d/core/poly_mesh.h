@@ -32,7 +32,7 @@
 #include <set>
 
 #include <easy3d/core/types.h>
-#include <easy3d/core/properties.h>
+#include <easy3d/core/property.h>
 
 
 namespace easy3d {
@@ -208,7 +208,7 @@ namespace easy3d {
         public:
 
             /// default constructor
-            explicit VertexProperty() {}
+            VertexProperty() = default;
             explicit VertexProperty(Property<T> p) : Property<T>(p) {}
 
             /// access the data stored for vertex \c v
@@ -232,7 +232,7 @@ namespace easy3d {
         public:
 
             /// default constructor
-            explicit EdgeProperty() {}
+            EdgeProperty() = default;
             explicit EdgeProperty(Property<T> p) : Property<T>(p) {}
 
             /// access the data stored for edge \c e
@@ -256,7 +256,7 @@ namespace easy3d {
         public:
 
             /// default constructor
-            explicit HalfFaceProperty() {}
+            HalfFaceProperty() = default;
             explicit HalfFaceProperty(Property<T> p) : Property<T>(p) {}
 
             /// access the data stored for halfface \c h
@@ -280,7 +280,7 @@ namespace easy3d {
         public:
 
             /// default constructor
-            explicit FaceProperty() {}
+            FaceProperty() = default;
             explicit FaceProperty(Property<T> p) : Property<T>(p) {}
 
             /// access the data stored for face \c f
@@ -304,7 +304,7 @@ namespace easy3d {
         public:
 
             /// default constructor
-            explicit CellProperty() {}
+            CellProperty() = default;
             explicit CellProperty(Property<T> p) : Property<T>(p) {}
 
             /// access the data stored for Cell \c c
@@ -328,7 +328,7 @@ namespace easy3d {
         public:
 
             /// default constructor
-            explicit ModelProperty() {}
+            ModelProperty() = default;
             explicit ModelProperty(Property<T> p) : Property<T>(p) {}
 
             /// access the data stored for the mesh
@@ -356,7 +356,7 @@ namespace easy3d {
         public:
 
             /// Default constructor
-            VertexIterator(Vertex v=Vertex(), const PolyMesh* m=nullptr) : hnd_(v), mesh_(m)
+            explicit VertexIterator(Vertex v=Vertex(), const PolyMesh* m=nullptr) : hnd_(v), mesh_(m)
             {
             }
 
@@ -405,7 +405,7 @@ namespace easy3d {
         public:
 
             /// Default constructor
-            EdgeIterator(Edge e=Edge(), const PolyMesh* m=nullptr) : hnd_(e), mesh_(m)
+            explicit EdgeIterator(Edge e=Edge(), const PolyMesh* m=nullptr) : hnd_(e), mesh_(m)
             {
             }
 
@@ -454,7 +454,7 @@ namespace easy3d {
         public:
 
             /// Default constructor
-            HalfFaceIterator(HalfFace h=HalfFace(), const PolyMesh* m=nullptr) : hnd_(h), mesh_(m)
+            explicit HalfFaceIterator(HalfFace h=HalfFace(), const PolyMesh* m=nullptr) : hnd_(h), mesh_(m)
             {
             }
 
@@ -503,7 +503,7 @@ namespace easy3d {
         public:
 
             /// Default constructor
-            FaceIterator(Face f=Face(), const PolyMesh* m=nullptr) : hnd_(f), mesh_(m)
+            explicit FaceIterator(Face f=Face(), const PolyMesh* m=nullptr) : hnd_(f), mesh_(m)
             {
             }
 
@@ -552,7 +552,7 @@ namespace easy3d {
         public:
 
             /// Default constructor
-            CellIterator(Cell c=Cell(), const PolyMesh* m=nullptr) : hnd_(c), mesh_(m)
+            explicit CellIterator(Cell c=Cell(), const PolyMesh* m=nullptr) : hnd_(c), mesh_(m)
             {
             }
 
@@ -674,7 +674,7 @@ namespace easy3d {
         PolyMesh();
 
         // destructor
-        virtual ~PolyMesh();
+        ~PolyMesh() override = default;
 
         /// copy constructor: copies \c rhs to \c *this. performs a deep copy of all properties.
         PolyMesh(const PolyMesh& rhs) { operator=(rhs); }
@@ -1103,7 +1103,7 @@ namespace easy3d {
         }
 
         /// prints the names of all properties to an output stream (e.g., std::cout).
-        void property_stats(std::ostream &output) const;
+        void property_stats(std::ostream &output) const override;
 
         //@}
 
@@ -1122,7 +1122,7 @@ namespace easy3d {
         /// returns end iterator for vertices
         VertexIterator vertices_end() const
         {
-            return VertexIterator(Vertex(n_vertices()), this);
+            return VertexIterator(Vertex(static_cast<int>(n_vertices())), this);
         }
 
         /// returns vertex container for C++11 range-based for-loops
@@ -1140,7 +1140,7 @@ namespace easy3d {
         /// returns end iterator for edges
         EdgeIterator edges_end() const
         {
-            return EdgeIterator(Edge(n_edges()), this);
+            return EdgeIterator(Edge(static_cast<int>(n_edges())), this);
         }
 
         /// returns edge container for C++11 range-based for-loops
@@ -1158,7 +1158,7 @@ namespace easy3d {
         /// returns end iterator for halffaces
         HalfFaceIterator halffaces_end() const
         {
-            return HalfFaceIterator(HalfFace(n_halffaces()), this);
+            return HalfFaceIterator(HalfFace(static_cast<int>(n_halffaces())), this);
         }
 
         /// returns halfface container for C++11 range-based for-loops
@@ -1176,7 +1176,7 @@ namespace easy3d {
         /// returns end iterator for faces
         FaceIterator faces_end() const
         {
-            return FaceIterator(Face(n_faces()), this);
+            return FaceIterator(Face(static_cast<int>(n_faces())), this);
         }
 
         /// returns face container for C++11 range-based for-loops
@@ -1194,7 +1194,7 @@ namespace easy3d {
         /// returns end iterator for cells
         CellIterator cells_end() const
         {
-            return CellIterator(Cell(n_cells()), this);
+            return CellIterator(Cell(static_cast<int>(n_cells())), this);
         }
 
         /// returns cell container for C++11 range-based for-loops
@@ -1219,7 +1219,7 @@ namespace easy3d {
         HalfFace halfface(Face f, unsigned int i) const
         {
             assert(i<=1);
-            return HalfFace((f.idx() << 1) + i);
+            return HalfFace(static_cast<int>((f.idx() << 1) + i));
         }
 
         /// returns the face of HalfFace \c h.
@@ -1295,7 +1295,7 @@ namespace easy3d {
             return cconn_[c].halffaces_;
         }
 
-        /// returns cthe set of cells around vertex \c v
+        /// returns the set of cells around vertex \c v
         const std::set<Cell>& cells(Vertex v) const
         {
             return vconn_[v].cells_;
@@ -1332,10 +1332,7 @@ namespace easy3d {
         /// returns whether \c e is a boundary edge, i.e., at least one of its incident halfface
         /// is not associated with a cell.
         bool is_border(Edge e) const {
-            for (auto h : halffaces(e)) {
-                if (is_border(h))
-                    return true;
-            }
+            for (auto h : halffaces(e)) { if (is_border(h)) return true; }
             return false;
         }
 
@@ -1371,10 +1368,10 @@ namespace easy3d {
         const vec3& position(Vertex v) const { return vpoint_[v]; }
 
         /// vector of vertex positions (read only)
-        const std::vector<vec3>& points() const { return vpoint_.vector(); }
+        const std::vector<vec3>& points() const override { return vpoint_.vector(); }
 
         /// @brief vector of vertex positions
-        std::vector<vec3>& points() { return vpoint_.vector(); }
+        std::vector<vec3>& points() override { return vpoint_.vector(); }
 
         /// compute face normals by calling compute_face_normal(HalfFace) for each face.
         void update_face_normals();
@@ -1403,7 +1400,7 @@ namespace easy3d {
         Vertex new_vertex()
         {
             vprops_.push_back();
-            return Vertex(n_vertices()-1);
+            return Vertex(static_cast<int>(n_vertices()-1));
         }
 
         /// allocate a new edge, resize edge and edge properties accordingly.
@@ -1411,7 +1408,7 @@ namespace easy3d {
         {
             assert(s != t);
             eprops_.push_back();
-            Edge e = Edge(n_edges() - 1);
+            Edge e = Edge(static_cast<int>(n_edges() - 1));
             econn_[e].vertices_ = {s, t};
             vconn_[s].edges_.insert(e);
             vconn_[t].edges_.insert(e);
@@ -1426,8 +1423,8 @@ namespace easy3d {
             fprops_.push_back();
             hprops_.push_back();
             hprops_.push_back();
-            HalfFace h0(n_halffaces()-2);
-            HalfFace h1(n_halffaces()-1);
+            HalfFace h0(static_cast<int>(n_halffaces()-2));
+            HalfFace h1(static_cast<int>(n_halffaces()-1));
 
             hconn_[h0].opposite_ = h1;
             hconn_[h1].opposite_ = h0;
@@ -1439,7 +1436,7 @@ namespace easy3d {
         Cell new_cell()
         {
             cprops_.push_back();
-            return Cell(n_cells()-1);
+            return Cell(static_cast<int>(n_cells()-1));
         }
 
     private: //------------------------------------------------------- private data

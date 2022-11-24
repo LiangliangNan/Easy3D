@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
 
     const std::string& file_name = resource::directory() + "/data/building.off";
 
-    CameraIntrepolation viewer("Tutorial_206_CameraInterpolation");
+    CameraInterpolation viewer("Tutorial_206_CameraInterpolation");
     if (!viewer.add_model(file_name, true)) {
         LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
         return EXIT_FAILURE;

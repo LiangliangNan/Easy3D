@@ -43,6 +43,14 @@ TransparencyViewer::TransparencyViewer(const std::string& title) : Viewer(title)
 }
 
 
+TransparencyViewer::~TransparencyViewer() {
+    delete transparency_;
+
+    // Not needed: it will be called in the destructor of the base class
+    //Viewer::cleanup();
+}
+
+
 std::string TransparencyViewer::usage() const {
     return ("------------------------ Transparency usage ------------------------ \n"
             "Press key 'space' to turn on/off or switch between different transparency techniques\n"
@@ -126,12 +134,4 @@ void TransparencyViewer::draw() const {
 		transparency_->draw(surfaces);
 	else
 		Viewer::draw();
-}
-
-
-void TransparencyViewer::cleanup() {
-	if (transparency_)
-		delete transparency_;
-
-	Viewer::cleanup();
 }

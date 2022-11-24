@@ -33,7 +33,7 @@
 class VirtualScanner : public easy3d::Viewer
 {
 public:
-    VirtualScanner(const std::string& title = "VirtualScanner");
+    explicit VirtualScanner(const std::string& title = "VirtualScanner");
 
 protected:
     bool key_press_event(int key, int modifiers) override;

@@ -161,7 +161,7 @@ namespace easy3d {
         if (!program)
             return;
 
-        easy3d_debug_log_gl_error;
+        easy3d_debug_log_gl_error
         glEnable(GL_VERTEX_PROGRAM_POINT_SIZE); // starting from GL3.2, using GL_PROGRAM_POINT_SIZE
 
         program->bind();
@@ -211,7 +211,7 @@ namespace easy3d {
         if (!program)
             return;
 
-        easy3d_debug_log_gl_error;
+        easy3d_debug_log_gl_error
 
         program->bind();
         program->set_uniform("perspective", camera->type() == Camera::PERSPECTIVE)
@@ -305,7 +305,8 @@ namespace easy3d {
 
     void PointsDrawable::_draw_spheres_with_texture_sprite(const Camera *camera) const {
         // not implemented (deprecated actually)
-        // please use the implementation based on geometry shader
+        LOG_N_TIMES(5, WARNING) << "draw points as spheres with sprite is deprecated";
+        LOG_N_TIMES(5, WARNING) << "please use the implementation based on geometry shader";
     }
 
 
@@ -321,7 +322,7 @@ namespace easy3d {
         if (!program)
             return;
 
-        easy3d_debug_log_gl_error;
+        easy3d_debug_log_gl_error
 
         program->bind();
         program->set_uniform("perspective", camera->type() == Camera::PERSPECTIVE)
@@ -368,7 +369,7 @@ namespace easy3d {
         if (!program)
             return;
 
-        easy3d_debug_log_gl_error;
+        easy3d_debug_log_gl_error
 
         const mat4 &MVP = camera->modelViewProjectionMatrix();
         // camera position is defined in world coordinate system.
@@ -427,7 +428,7 @@ namespace easy3d {
         if (!program)
             return;
 
-        easy3d_debug_log_gl_error;
+        easy3d_debug_log_gl_error
 
         const mat4 &MVP = camera->modelViewProjectionMatrix();
         // camera position is defined in world coordinate system.

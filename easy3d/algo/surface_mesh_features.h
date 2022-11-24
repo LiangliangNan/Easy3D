@@ -22,7 +22,7 @@ namespace easy3d {
     class SurfaceMeshFeatures {
     public:
         //! \brief Construct with mesh to be analyzed.
-        SurfaceMeshFeatures(SurfaceMesh *mesh);
+        explicit SurfaceMeshFeatures(SurfaceMesh *mesh);
 
         //! \brief Clear features.
         void clear();

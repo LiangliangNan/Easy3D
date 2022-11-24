@@ -30,7 +30,7 @@
 
 #include <easy3d/core/model.h>
 #include <easy3d/core/types.h>
-#include <easy3d/core/properties.h>
+#include <easy3d/core/property.h>
 
 namespace easy3d {
 
@@ -86,7 +86,6 @@ namespace easy3d {
             };
 
         private:
-            friend class VertexIterator;
             friend class PointCloud;
             int idx_;
         };
@@ -109,7 +108,7 @@ namespace easy3d {
         public:
 
             /// default constructor
-            explicit VertexProperty() {}
+            VertexProperty() = default;
             explicit VertexProperty(Property<T> p) : Property<T>(p) {}
 
             /// access the data stored for vertex \c v
@@ -133,7 +132,7 @@ namespace easy3d {
         public:
 
             /// default constructor
-            explicit ModelProperty() {}
+            ModelProperty() = default;
             explicit ModelProperty(Property<T> p) : Property<T>(p) {}
 
             /// access the data stored for the cloud
@@ -160,7 +159,7 @@ namespace easy3d {
         public:
 
             /// Default constructor
-            VertexIterator(Vertex v=Vertex(), const PointCloud* m=nullptr) : hnd_(v), cloud_(m)
+            explicit VertexIterator(Vertex v=Vertex(), const PointCloud* m=nullptr) : hnd_(v), cloud_(m)
             {
                 if (cloud_ && cloud_->has_garbage()) while (cloud_->is_valid(hnd_) && cloud_->is_deleted(hnd_)) ++hnd_.idx_;
             }
@@ -229,7 +228,7 @@ namespace easy3d {
         PointCloud();
 
         /// @brief destructor (is virtual, since we inherit from Geometry_representation)
-        virtual ~PointCloud();
+        ~PointCloud() override = default;
 
         /// @brief copy constructor: copies \c rhs to \c *this. performs a deep copy of all properties.
         PointCloud(const PointCloud& rhs) { operator=(rhs); }
@@ -419,7 +418,7 @@ namespace easy3d {
         }
 
         /// @brief prints the names of all properties to an output stream (e.g., std::cout)
-        void property_stats(std::ostream &output) const;
+        void property_stats(std::ostream &output) const override;
 
         //@}
 
@@ -438,7 +437,7 @@ namespace easy3d {
         /// @brief returns end iterator for vertices
         VertexIterator vertices_end() const
         {
-            return VertexIterator(Vertex(vertices_size()), this);
+            return VertexIterator(Vertex(static_cast<int>(vertices_size())), this);
         }
 
         /// @brief returns vertex container for C++11 range-based for-loops
@@ -461,10 +460,10 @@ namespace easy3d {
         vec3& position(Vertex v) { return vpoint_[v]; }
 
         /// @brief vector of vertex positions (read only)
-        const std::vector<vec3>& points() const { return vpoint_.vector(); }
+        const std::vector<vec3>& points() const override { return vpoint_.vector(); }
 
         /// @brief vector of vertex positions
-        std::vector<vec3>& points() { return vpoint_.vector(); }
+        std::vector<vec3>& points() override { return vpoint_.vector(); }
 
         //@}
 
@@ -474,7 +473,7 @@ namespace easy3d {
         Vertex new_vertex()
         {
             vprops_.push_back();
-            return Vertex(vertices_size()-1);
+            return Vertex(static_cast<int>(vertices_size()-1));
         }
 
 

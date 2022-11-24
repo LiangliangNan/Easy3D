@@ -56,7 +56,7 @@ namespace easy3d {
 
     float SurfaceMeshHoleFilling::compute_angle(const vec3 &_n1,
                                                 const vec3 &_n2) const {
-        return (1.0 - dot(_n1, _n2));
+        return (1.0f - dot(_n1, _n2));
     }
 
     //-----------------------------------------------------------------------------
@@ -110,7 +110,7 @@ namespace easy3d {
 
             hole_.push_back(h);
         } while ((h = mesh_->next(h)) != _h);
-        const int n = hole_.size();
+        const int n = static_cast<int>(hole_.size());
 
         // compute minimal triangulation by dynamic programming
         weight_.clear();
@@ -118,25 +118,24 @@ namespace easy3d {
         index_.clear();
         index_.resize(n, std::vector<int>(n, 0));
 
-        int i, j, m, k, imin;
         Weight w, wmin;
 
         // initialize 2-gons
-        for (i = 0; i < n - 1; ++i) {
+        for (int i = 0; i < n - 1; ++i) {
             weight_[i][i + 1] = Weight(0, 0);
             index_[i][i + 1] = -1;
         }
 
         // n-gons with n>2
-        for (j = 2; j < n; ++j) {
+        for (int j = 2; j < n; ++j) {
             // for all n-gons [i,i+j]
-            for (i = 0; i < n - j; ++i) {
-                k = i + j;
+            for (int i = 0; i < n - j; ++i) {
+                int k = i + j;
                 wmin = Weight();
-                imin = -1;
+                int imin = -1;
 
                 // find best split i < m < i+j
-                for (m = i + 1; m < k; ++m) {
+                for (int m = i + 1; m < k; ++m) {
                     w = weight_[i][m] + compute_weight(i, m, k) + weight_[m][k];
                     if (w < wmin) {
                         wmin = w;
@@ -152,7 +151,7 @@ namespace easy3d {
         // now add triangles to mesh
         std::vector<ivec2> todo;
         todo.reserve(n);
-        todo.push_back(ivec2(0, n - 1));
+        todo.emplace_back(ivec2(0, n - 1));
         while (!todo.empty()) {
             ivec2 tri = todo.back();
             todo.pop_back();
@@ -165,8 +164,8 @@ namespace easy3d {
             mesh_->add_triangle(hole_vertex(start), hole_vertex(split),
                                 hole_vertex(end));
 
-            todo.push_back(ivec2(start, split));
-            todo.push_back(ivec2(split, end));
+            todo.emplace_back(ivec2(start, split));
+            todo.emplace_back(ivec2(split, end));
         }
 
         // clean up
@@ -219,18 +218,17 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
     void SurfaceMeshHoleFilling::refine() {
-        const int n = hole_.size();
-        float l, lmin, lmax;
+        const int n = static_cast<int>(hole_.size());
 
         // compute target edge length
-        l = 0.0;
+        float l = 0.0f;
         for (int i = 0; i < n; ++i) {
             l += distance(points_[hole_vertex(i)],
                           points_[hole_vertex((i + 1) % n)]);
         }
         l /= (float) n;
-        lmin = 0.7 * l;
-        lmax = 1.5 * l;
+        float lmin = 0.7f * l;
+        float lmax = 1.5f * l;
 
         // do some iterations
         for (int iter = 0; iter < 10; ++iter) {
@@ -328,10 +326,10 @@ namespace easy3d {
                     v1 = mesh_->target(h);
                     v3 = mesh_->target(mesh_->next(h));
 
-                    val0 = mesh_->valence(v0);
-                    val1 = mesh_->valence(v1);
-                    val2 = mesh_->valence(v2);
-                    val3 = mesh_->valence(v3);
+                    val0 = static_cast<int>(mesh_->valence(v0));
+                    val1 = static_cast<int>(mesh_->valence(v1));
+                    val2 = static_cast<int>(mesh_->valence(v2));
+                    val3 = static_cast<int>(mesh_->valence(v3));
 
                     val_opt0 = (mesh_->is_border(v0) ? 4 : 6);
                     val_opt1 = (mesh_->is_border(v1) ? 4 : 6);
@@ -378,11 +376,11 @@ namespace easy3d {
         vertices.reserve(mesh_->n_vertices());
         for (auto v : mesh_->vertices()) {
             if (!vlocked_[v]) {
-                idx[v] = vertices.size();
+                idx[v] = static_cast<int>(vertices.size());
                 vertices.push_back(v);
             }
         }
-        const int n = vertices.size();
+        const int n = static_cast<int>(vertices.size());
 
         // setup matrix & rhs
         Eigen::MatrixXd B(n, 3);
@@ -421,7 +419,7 @@ namespace easy3d {
         // copy solution to mesh vertices
         for (int i = 0; i < n; ++i) {
             const auto &tmp = X.row(i);
-            points_[vertices[i]] = vec3(tmp(0), tmp(1), tmp(2));
+            points_[vertices[i]] = vec3(static_cast<float>(tmp(0)), static_cast<float>(tmp(1)), static_cast<float>(tmp(2)));
         }
 
         // clean up

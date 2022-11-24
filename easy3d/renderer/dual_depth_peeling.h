@@ -90,7 +90,7 @@ namespace easy3d {
     public:
         /// \brief Constructor
         /// \param cam The camera used in the view
-        DualDepthPeeling(Camera* cam);
+        explicit DualDepthPeeling(Camera* cam);
         ~DualDepthPeeling() override;
 
         /// \brief Sets the maximum number of peeling layers.
@@ -123,12 +123,12 @@ namespace easy3d {
         // Swap the src/dest render targets:
         void swap_targets();
 
-        bool peeling_done();
+        bool peeling_done() const;
 
         void init_occlusion_query();
         void delete_occlusion_query_id();
 
-        void start_occlusion_query();
+        void start_occlusion_query() const;
         void end_occlusion_query();
 
         // Release all FBOs, shader programs.

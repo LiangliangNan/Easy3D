@@ -40,11 +40,11 @@ namespace easy3d {
 class DepthImage : public easy3d::Viewer
 {
 public:
-    DepthImage(const std::string& title);
+    explicit DepthImage(const std::string& title = "");
+    ~DepthImage() override;
     
 protected:
     void draw() const override;
-    void cleanup() override;
 
     void generate_depth();
     void draw_depth() const;

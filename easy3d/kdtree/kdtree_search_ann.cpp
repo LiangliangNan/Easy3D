@@ -71,11 +71,9 @@ namespace easy3d {
 
     KdTreeSearch_ANN::~KdTreeSearch_ANN() {
 #if COPY_POINT_CLOUD // make a copy of the point cloud when constructing the kd-tree
-        if (points_)
-            annDeallocPts(points_);
+        annDeallocPts(points_);
 #else
-        if (points_)
-            delete[] points_;
+        delete[] points_;
 #endif
 
         delete get_tree(tree_);
@@ -124,7 +122,7 @@ namespace easy3d {
             ann_p[2] = p[2];
 
             neighbors.resize(k);
-            ANNdistArray closest_pts_dists = new ANNdist[k];	// neighbor distances
+            auto closest_pts_dists = new ANNdist[k];	// neighbor distances
             get_tree(tree_)->annkSearch(ann_p, k, neighbors.data(), closest_pts_dists);
             delete [] closest_pts_dists;
     }
@@ -152,8 +150,8 @@ namespace easy3d {
             ann_p[1] = p[1];
             ann_p[2] = p[2];
 
-            ANNidxArray  closest_pts_idx = new ANNidx[k_for_radius_search_];		// near neighbor indices
-            ANNdistArray closest_pts_dists = new ANNdist[k_for_radius_search_];		// near neighbor distances
+            auto closest_pts_idx = new ANNidx[k_for_radius_search_];		// near neighbor indices
+            auto closest_pts_dists = new ANNdist[k_for_radius_search_];		// near neighbor distances
             int n = get_tree(tree_)->annkFRSearch(ann_p, squared_radius, k_for_radius_search_, closest_pts_idx, closest_pts_dists);
 
             int num = std::min(n, k_for_radius_search_);
@@ -175,8 +173,8 @@ namespace easy3d {
             ann_p[1] = p[1];
             ann_p[2] = p[2];
 
-            ANNidxArray  closest_pts_idx = new ANNidx[k_for_radius_search_];		// near neighbor indices
-            ANNdistArray closest_pts_dists = new ANNdist[k_for_radius_search_];		// near neighbor distances
+            auto closest_pts_idx = new ANNidx[k_for_radius_search_];		// near neighbor indices
+            auto closest_pts_dists = new ANNdist[k_for_radius_search_];		// near neighbor distances
             int n = get_tree(tree_)->annkFRSearch(ann_p, squared_radius, k_for_radius_search_, closest_pts_idx, closest_pts_dists);
 
             int num = std::min(n, k_for_radius_search_);

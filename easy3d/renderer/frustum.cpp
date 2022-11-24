@@ -100,7 +100,7 @@ namespace easy3d {
     mat4 Frustum::projection_matrix() const
     {
         if (type_ == PERSPECTIVE) {
-            // These two is equal since I have set the ranges in set_perspective()
+            // These two are equal since I have set the ranges in set_perspective()
             //return transform::perspective(fovy_, ar_, near_, far_);
             return transform::frustum(xmin_, xmax_, ymin_, ymax_, near_, far_);
         }

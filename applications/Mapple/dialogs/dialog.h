@@ -38,8 +38,8 @@ class Dialog : public QDialog {
 Q_OBJECT
 
 public:
-    Dialog(MainWindow *window);
-    ~Dialog();
+    explicit Dialog(MainWindow *window);
+    ~Dialog() override = default;
 
 protected:
 

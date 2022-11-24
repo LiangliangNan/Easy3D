@@ -39,12 +39,12 @@ namespace easy3d {
 
 class ManipulationViewer : public easy3d::Viewer {
 public:
-    ManipulationViewer(const std::string &title);
+    explicit ManipulationViewer(const std::string &title);
 
 protected:
-    virtual bool mouse_press_event(int x, int y, int button, int modifiers) override;
-    virtual bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;
-    virtual void draw() const override;
+    bool mouse_press_event(int x, int y, int button, int modifiers) override;
+    bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;
+    void draw() const override;
     std::string usage() const override;
 
 private:

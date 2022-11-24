@@ -43,10 +43,6 @@ PickerViewer::PickerViewer(const std::string &title)
 }
 
 
-PickerViewer::~PickerViewer() {
-}
-
-
 std::string PickerViewer::usage() const {
     return ("------------ Picker Viewer usage ---------- \n"
             "Press the mouse to pick a face\n"
@@ -79,8 +75,8 @@ bool PickerViewer::mouse_press_event(int x, int y, int button, int modifiers) {
 }
 
 
-Model* PickerViewer::add_model(const std::string& file_name, bool create_default_drawables) {
-    Model* model = Viewer::add_model(file_name, create_default_drawables);
+Model* PickerViewer::add_model(const std::string& file_name) {
+    Model* model = Viewer::add_model(file_name, true);
 
     // make sure the edges are visible
     model->renderer()->get_lines_drawable("edges")->set_visible(true);

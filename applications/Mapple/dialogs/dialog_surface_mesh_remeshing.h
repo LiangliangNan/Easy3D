@@ -37,7 +37,7 @@ Q_OBJECT
 
 public:
     explicit DialogSurfaceMeshRemeshing(MainWindow *window);
-    ~DialogSurfaceMeshRemeshing();
+    ~DialogSurfaceMeshRemeshing() override = default;
 
 private Q_SLOTS:
     void apply();

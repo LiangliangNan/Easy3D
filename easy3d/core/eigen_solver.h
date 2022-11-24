@@ -30,7 +30,7 @@ namespace easy3d {
     public:
         /// \brief Default constructor
         /// @param n: the size of the input matrix
-        EigenSolver(int n);
+        explicit EigenSolver(int n);
         ~EigenSolver();
 
         /// \brief Computes the eigenvalues and eigenvectors of the input matrix \p mat.

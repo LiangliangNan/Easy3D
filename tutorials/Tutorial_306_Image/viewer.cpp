@@ -48,8 +48,17 @@ using namespace easy3d;
 ImageViewer::ImageViewer(const std::string& title, const std::string& image_file)
     : Viewer(title)
     , scale_(1.0f)
+    , texture_(nullptr)
 {
     image_file_ = image_file;
+}
+
+
+ImageViewer::~ImageViewer() {
+    delete texture_;
+
+    // Not needed: it will be called in the destructor of the base class
+    //Viewer::cleanup();
 }
 
 
@@ -57,7 +66,7 @@ std::string ImageViewer::usage() const {
     return ("------------ Image Viewer usage ---------- \n"
             "Press 'Ctrl + O' to open an image\n"
             "Use wheel to zoom in/out\n"
-            "Press 'Space' to reset the view\n"
+            "Press 'F' to reset the view\n"
             "------------------------------------------ \n");
 }
 
@@ -69,18 +78,11 @@ void ImageViewer::init() {
 }
 
 
-void ImageViewer::cleanup() {
-    if (texture_)
-        delete texture_;
-    Viewer::cleanup();
-}
-
-
 void ImageViewer::compute_image_region(int& x, int& y, int& w, int& h) const {
-    w = static_cast<int>(texture_->width() * scale_);
-    h = static_cast<int>(texture_->height() * scale_);
-    x = static_cast<int>((width() - w) * 0.5f);
-    y = static_cast<int>((height() - h) * 0.5f);
+    w = static_cast<int>(static_cast<float>(texture_->width()) * scale_);
+    h = static_cast<int>(static_cast<float>(texture_->height()) * scale_);
+    x = static_cast<int>(static_cast<float>(width() - w) * 0.5f);
+    y = static_cast<int>(static_cast<float>(height() - h) * 0.5f);
 }
 
 
@@ -96,13 +98,12 @@ bool ImageViewer::key_press_event(int key, int modifiers) {
         if (file_name.empty())
             return false;
 
-        if (texture_)
-            delete texture_;
+        delete texture_;
         texture_ = Texture::create(file_name);
         fit_screen();
         return texture_ != nullptr;
     }
-    if (key == GLFW_KEY_SPACE) {
+    if (key == GLFW_KEY_F) {
         fit_screen();
         return true;
     }
@@ -111,18 +112,17 @@ bool ImageViewer::key_press_event(int key, int modifiers) {
 }
 
 
-void ImageViewer::fit_screen(const Model *model) {
-    (void)model;
+void ImageViewer::fit_screen() {
     if (texture_ == nullptr)
         return;
     const int image_w = texture_->width();
     const int image_h = texture_->height();
-    float image_as = image_w / static_cast<float>(image_h);
-    float viewer_as = width() / static_cast<float>(height());
+    float image_as = static_cast<float>(image_w) / static_cast<float>(image_h);
+    float viewer_as = static_cast<float>(width()) / static_cast<float>(height());
     if (image_as < viewer_as) // thin
-        scale_ = height() / static_cast<float>(image_h);
+        scale_ = static_cast<float>(height()) / static_cast<float>(image_h);
     else
-        scale_ = width() / static_cast<float>(image_w);
+        scale_ = static_cast<float>(width()) / static_cast<float>(image_w);
     update();
 }
 
@@ -148,6 +148,6 @@ void ImageViewer::draw() const {
     int x, y, w, h;
     compute_image_region(x, y, w, h);
 
-    const Rect quad(x, x + w, y, y + h);
+    const Rect quad(static_cast<float>(x), static_cast<float>(x + w), static_cast<float>(y), static_cast<float>(y + h));
     shape::draw_quad_filled(quad, texture_->id(), width(), height(), -0.9f);
 }

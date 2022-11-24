@@ -91,7 +91,7 @@ namespace easy3d {
             virtual void send(el::Level level, const std::string& msg) = 0;
         };
 
-    };
+    }
 
 }
 

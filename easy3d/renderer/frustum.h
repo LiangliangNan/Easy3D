@@ -45,7 +45,7 @@ namespace easy3d {
         enum ProjectionType { PERSPECTIVE, ORTHO };
 
     public:
-        Frustum(ProjectionType type);
+        explicit Frustum(ProjectionType type);
 
         // To define a working frustum, you need to call two functions:
         //   - orient(), defining the view matrix.
@@ -80,7 +80,7 @@ namespace easy3d {
         float near_distance() const { return near_; }
         float far_distance() const { return far_; }
 
-        // compute the compute the 8 corner points in world space
+        // compute the 8 corner points in world space
         std::vector<vec3> vertices() const;
 
     private:

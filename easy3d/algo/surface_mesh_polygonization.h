@@ -35,6 +35,7 @@ namespace easy3d {
     /**
      * \brief Merge connected coplanar faces into a general polygon face.
      * \class SurfaceMeshPolygonization easy3d/algo/surface_mesh_polygonization.h
+     * \todo Support faces with holes (i.e., polygons with multiple contours)
      */
     class SurfaceMeshPolygonization {
     public:

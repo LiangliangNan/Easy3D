@@ -217,8 +217,8 @@ void WidgetTrianglesDrawable::updatePanel() {
     {   // color scheme
         ui_->comboBoxColorScheme->clear();
         const std::vector<QString> &schemes = colorSchemes(viewer_->currentModel());
-        for (const auto &scheme : schemes)
-            ui_->comboBoxColorScheme->addItem(scheme);
+        for (const auto &name : schemes)
+            ui_->comboBoxColorScheme->addItem(name);
 
         for (const auto& name : schemes) {
             if (name.contains(QString::fromStdString(scheme.property_name()))) {
@@ -228,7 +228,7 @@ void WidgetTrianglesDrawable::updatePanel() {
         }
 
         // default color
-        vec3 c = d->color();
+        auto c = d->color();
         QPixmap pixmap(ui_->toolButtonDefaultColor->size());
         pixmap.fill(
                 QColor(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255)));
@@ -281,7 +281,7 @@ void WidgetTrianglesDrawable::updatePanel() {
     {   // vector field
         ui_->comboBoxVectorField->clear();
         const std::vector<QString> &fields = vectorFields(viewer_->currentModel());
-        for (auto name : fields)
+        for (const auto& name : fields)
             ui_->comboBoxVectorField->addItem(name);
 
         ui_->comboBoxVectorField->setCurrentText(state.vector_field);
@@ -348,7 +348,7 @@ namespace internal {
     // vector fields defined on faces
     template <typename MODEL>
     void vector_fields_on_faces(MODEL* model, std::vector<QString>& fields) {
-        fields.push_back("f:normal");
+        fields.emplace_back("f:normal");
         for (const auto &name : model->face_properties()) {
             if (model->template get_face_property<vec3>(name)) {
                 if (name != "f:normal" && name != "f:color")
@@ -363,7 +363,7 @@ namespace internal {
 
 std::vector<QString> WidgetTrianglesDrawable::colorSchemes(const easy3d::Model *model) {
     std::vector<QString> schemes;
-    schemes.push_back("uniform color");
+    schemes.emplace_back("uniform color");
 
     auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
     if (mesh) {
@@ -397,7 +397,7 @@ std::vector<QString> WidgetTrianglesDrawable::vectorFields(const easy3d::Model *
 
     // if no vector fields found, add a "not available" item
     if (fields.empty())
-        fields.push_back("not available");
+        fields.emplace_back("not available");
     else   // add one allowing to disable vector fields
         fields.insert(fields.begin(), "disabled");
 
@@ -469,8 +469,8 @@ void WidgetTrianglesDrawable::setColorScheme(const QString &text) {
 
     auto& scheme = d->state();
     scheme.set_clamp_range(ui_->checkBoxScalarFieldClamp->isChecked());
-    scheme.set_clamp_lower(ui_->doubleSpinBoxScalarFieldClampLower->value() / 100.0);
-    scheme.set_clamp_upper(ui_->doubleSpinBoxScalarFieldClampUpper->value() / 100.0);
+    scheme.set_clamp_lower(ui_->doubleSpinBoxScalarFieldClampLower->value() / 100.0f);
+    scheme.set_clamp_upper(ui_->doubleSpinBoxScalarFieldClampUpper->value() / 100.0f);
     states_[d].scalar_style = ui_->comboBoxScalarFieldStyle->currentIndex();
 
     WidgetDrawable::setColorScheme(text);
@@ -514,7 +514,7 @@ void WidgetTrianglesDrawable::setOpacity(int a) {
 
 void WidgetTrianglesDrawable::setDefaultColor() {
     auto d = drawable();
-    const vec3 &c = d->color();
+    const auto &c = d->color();
     QColor orig(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255));
     const QColor &color = QColorDialog::getColor(orig, this);
     if (color.isValid()) {
@@ -531,7 +531,7 @@ void WidgetTrianglesDrawable::setDefaultColor() {
 
 void WidgetTrianglesDrawable::setBackColor() {
     auto d = drawable();
-    const vec3 &c = d->back_color();
+    const auto &c = d->back_color();
     QColor orig(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255));
     const QColor &color = QColorDialog::getColor(orig, this);
     if (color.isValid()) {
@@ -627,9 +627,9 @@ namespace internal {
         if (triangle_range) {
             for (int fid = f_min; fid <= f_max; ++fid) {
                 auto f = SurfaceMesh::Face(fid);
-                const auto &range = triangle_range[f];
-                t_min = std::min(t_min, range.first);
-                t_max = std::max(t_max, range.second);
+                const auto &ran = triangle_range[f];
+                t_min = std::min(t_min, ran.first);
+                t_max = std::max(t_max, ran.second);
             }
 
             d->set_highlight_range(std::make_pair(t_min, t_max));
@@ -658,7 +658,7 @@ void WidgetTrianglesDrawable::updateVectorFieldBuffer(Model *model, const std::s
 
 
 void WidgetTrianglesDrawable::setHighlightMin(int v) {
-    SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
+    auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
     if (!mesh)
         return;
 
@@ -676,7 +676,7 @@ void WidgetTrianglesDrawable::setHighlightMin(int v) {
 
 
 void WidgetTrianglesDrawable::setHighlightMax(int v) {
-    SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
+    auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
     if (!mesh)
         return;
 

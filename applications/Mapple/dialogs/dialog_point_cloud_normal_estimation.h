@@ -39,8 +39,8 @@ class DialogPointCloudNormalEstimation : public QDialog, public Ui::DialogPointC
 	Q_OBJECT
 
 public:
-    DialogPointCloudNormalEstimation(MainWindow *window);
-	~DialogPointCloudNormalEstimation();
+    explicit DialogPointCloudNormalEstimation(MainWindow *window);
+	~DialogPointCloudNormalEstimation() override = default;
 };
 
-#endif // DLG_NORMAL_ESTIMATION_H
+#endif // DIALOG_POINT_CLOUD_NORMAL_ESTIMATION_H

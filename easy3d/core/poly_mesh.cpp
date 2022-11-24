@@ -148,14 +148,6 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    PolyMesh::~PolyMesh()
-    {
-    }
-
-
-    //-----------------------------------------------------------------------------
-
-
     PolyMesh& PolyMesh::operator=(const PolyMesh& rhs)
     {
         if (this != &rhs)
@@ -259,7 +251,7 @@ namespace easy3d {
         for (unsigned int i=0; i<ne; ++i)   econn[i].read(input);
         for (unsigned int i=0; i<nh; ++i)   hconn[i].read(input);
         for (unsigned int i=0; i<nc; ++i)   cconn[i].read(input);
-        input.read((char*)point.data(), nv * sizeof(vec3));
+        input.read((char*)point.data(), static_cast<long>(nv * sizeof(vec3)));
 
         return (n_vertices() > 0 && n_faces() > 0 && n_cells() > 0);
     }
@@ -307,7 +299,7 @@ namespace easy3d {
         for (unsigned int i=0; i<ne; ++i)   econn[i].write(output);
         for (unsigned int i=0; i<nh; ++i)   hconn[i].write(output);
         for (unsigned int i=0; i<nc; ++i)   cconn[i].write(output);
-        output.write((char*)point.data(), nv * sizeof(vec3));
+        output.write((char*)point.data(), static_cast<long>(nv * sizeof(vec3)));
 
         return true;
     }
@@ -591,8 +583,8 @@ namespace easy3d {
             vec3 n(0,0,0);
 
             for (std::size_t id = 0; id < vts.size(); ++id) {
-                int id_prev = (id - 1 + vts.size()) % vts.size();
-                int id_next = (id + 1 + vts.size()) % vts.size();
+                int id_prev = static_cast<int>((id - 1 + vts.size()) % vts.size());
+                int id_next = static_cast<int>((id + 1 + vts.size()) % vts.size());
                 vec3 p0 = vpoint_[vts[id_prev]];
                 vec3 p1 = vpoint_[vts[id]];
                 vec3 p2 = vpoint_[vts[id_next]];

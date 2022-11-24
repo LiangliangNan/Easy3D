@@ -24,7 +24,7 @@ namespace easy3d {
     class ProgressClient {
     public:
         ProgressClient();
-        virtual ~ProgressClient() {}
+        virtual ~ProgressClient() = default;
         virtual void notify(std::size_t percent, bool update_viewer) = 0;
         virtual void cancel();
     };

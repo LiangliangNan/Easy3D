@@ -26,8 +26,6 @@
 
 #include <easy3d/core/point_cloud.h>
 
-#include <cmath>
-
 
 namespace easy3d {
 
@@ -42,14 +40,6 @@ namespace easy3d {
 
         deleted_vertices_ = 0;
         garbage_ = false;
-    }
-
-
-    //-----------------------------------------------------------------------------
-
-
-    PointCloud::~PointCloud()
-    {
     }
 
 
@@ -82,31 +72,12 @@ namespace easy3d {
 
 	PointCloud &PointCloud::join(const PointCloud &other) {
 		// increase capacity
-		const unsigned int nv = vertices_size();
 		resize(vertices_size() + other.vertices_size());
 
 		// append properties in the free space created by resize
 		vprops_.transfer(other.vprops_);
 
-				//        unsigned int inf_value = (std::numeric_limits<unsigned int>::max)();
-		//
-		//        // merge vertex free list
-		//        if(other.vertices_freelist_ != inf_value){
-		//            Vertex vi(nv+other.vertices_freelist_);
-		//            Halfedge inf((std::numeric_limits<unsigned int>::max)());
-		//            // correct the indices in the linked list of free vertices copied (due to vconn_ translation)
-		//            while(vconn_[vi].halfedge_ != inf){
-		//                Vertex corrected_vi = Vertex(unsigned int(vconn_[vi].halfedge_)+nv-nh);
-		//                vconn_[vi].halfedge_ = Halfedge(corrected_vi);
-		//                vi = corrected_vi;
-		//            }
-		//            // append the vertex free linked list of `this` to the copy of `other`
-		//            vconn_[vi].halfedge_ = Halfedge(vertices_freelist_);
-		//            // update the begin of the vertex free linked list
-		//            vertices_freelist_ = nv + other.vertices_freelist_;
-		//        }
-
-				// update garbage infos
+        // update garbage infos
 		garbage_ = garbage_ || other.garbage_;
 		deleted_vertices_ += other.deleted_vertices_;
 		return *this;
@@ -186,16 +157,16 @@ namespace easy3d {
 		if (!props.empty())
 		{
 			std::cout << "vertex properties:\n";
-			for (unsigned int i = 0; i < props.size(); ++i)
-                output << "\t" << props[i] << std::endl;
+            for (const auto& p : props)
+                output << "\t" << p << std::endl;
 		}
 
 		props = model_properties();
 		if (!props.empty())
 		{
 			std::cout << "model properties:\n";
-			for (unsigned int i = 0; i < props.size(); ++i)
-                output << "\t" << props[i] << std::endl;
+            for (const auto& p : props)
+                output << "\t" << p << std::endl;
 		}
     }
 
@@ -230,10 +201,10 @@ namespace easy3d {
 
     void PointCloud::collect_garbage()
     {
-        int  nV(vertices_size());
+        int  nV = static_cast<int>(vertices_size());
 
         // setup handle mapping
-        VertexProperty<Vertex> vmap = add_vertex_property<Vertex>("v:garbage-collection");
+        auto vmap = add_vertex_property<Vertex>("v:garbage-collection");
         for (int i=0; i<nV; ++i)
             vmap[Vertex(i)] = Vertex(i);
 
@@ -243,7 +214,7 @@ namespace easy3d {
             int i0 = 0;
             int i1 = nV - 1;
 
-            while (1)
+            while (true)
             {
                 // find first deleted and last un-deleted
                 while (!vdeleted_[Vertex(i0)] && i0 < i1)  ++i0;
@@ -252,7 +223,7 @@ namespace easy3d {
 
                 // swap
                 vprops_.swap(i0, i1);
-            };
+            }
 
             // remember new size
             nV = vdeleted_[Vertex(i0)] ? i0 : i0+1;

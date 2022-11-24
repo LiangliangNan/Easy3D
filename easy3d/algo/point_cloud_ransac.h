@@ -36,18 +36,19 @@ namespace easy3d {
 
     class PointCloud;
 
-    /// \brief Extract primitives from point clouds using RANSAC.
-    /// \class PrimitivesRansac easy3d/algo/point_cloud_ransac.h
-    /// Usage example:
-    ///     \code
-    ///     PrimitivesRansac ransac;
-    ///     ransac.add_primitive_type(PrimitivesRansac::PLANE);
-    ///     int num = ransac.detect(cloud);
-    ///     \endcode
-
+    /**
+     * \brief Extract primitives from point clouds using RANSAC.
+     * \class PrimitivesRansac easy3d/algo/point_cloud_ransac.h
+     * Usage example:
+     *  \code
+     *      PrimitivesRansac ransac;
+     *      ransac.add_primitive_type(PrimitivesRansac::PLANE);
+     *      int num = ransac.detect(cloud);
+     *  \endcode
+     */
     class PrimitivesRansac {
     public:
-        enum PrimType { // values have to be exactly the same as in RANSAC
+        enum PrimType { // Do NOT modify the order!!! Values have to be exactly the same as in RANSAC
             PLANE = 0,
             SPHERE = 1,
             CYLINDER = 2,
@@ -57,38 +58,59 @@ namespace easy3d {
         };
 
     public:
-        /// \brief Setup the primitive types to be extracted. This is done by adding the interested primitive type one by one.
+        /**
+         * \brief Setup the primitive types to be extracted.
+         * \details This is done by adding the interested primitive types one by one.
+         */
         void add_primitive_type(PrimType t);
 
-        /// \brief Extract primitives from the entire point cloud. \par
-        /// Returns the number of extracted primitives.
-        /// The extracted primitives are stored as properties:
-        ///      - "v:primitive_type"  (one of PLANE, SPHERE, CYLINDER, CONE, TORUS, and UNKNOWN)
-        ///      - "v:primitive_index" (-1, 0, 1, 2...). -1 meaning a vertex does not belong to any primitive (thus its
-        ///        primitive_type must be UNKNOWN.
+        /**
+         * \brief Extract primitives from a point cloud.
+         * \details The extracted primitives are stored as properties:
+         *      - "v:primitive_type"  (one of PLANE, SPHERE, CYLINDER, CONE, TORUS, and UNKNOWN)
+         *      - "v:primitive_index" (-1, 0, 1, 2...). -1 meaning a vertex does not belong to any primitive (thus its
+         *        primitive_type must be UNKNOWN.
+         * \param cloud The input point cloud.
+         * \param min_support The minimal number of points required for a primitive.
+         * \param dist_threshold The distance threshold, defined relative to the bounding box's max dimension.
+         * \param bitmap_resolution The bitmap resolution, defined relative to the bounding box width.
+         * \param normal_threshold The cosine of the maximal normal deviation.
+         * \param overlook_probability The probability with which a primitive is overlooked.
+         * \return The number of extracted primitives.
+         */
         int detect(
                 PointCloud *cloud,
-                unsigned int min_support = 1000,    // the minimal number of points required for a primitive
-                float dist_thresh = 0.005f,    // relative to the bounding box width. NOTE: Internally the distance threshold is taken as 3 * distance_threshold!!!
-                float bitmap_reso = 0.02f,    // relative to the bounding box width. NOTE: This threshold is NOT multiplied internally!
-                float normal_thresh = 0.8f,    // the cos of the maximal normal deviation
-                float overlook_prob = 0.001f    // the probability with which a primitive is overlooked
+                unsigned int min_support = 1000,
+                float dist_threshold = 0.005f,
+                float bitmap_resolution = 0.02f,
+                float normal_threshold = 0.8f,
+                float overlook_probability = 0.001f
         );
 
-        /// \brief Extract primitives from a subset of a point cloud.
-        /// Returns the number of extracted primitives.
-        /// The extracted primitives are stored as properties:
-        ///      - "v:primitive_type"  (one of PLANE, SPHERE, CYLINDER, CONE, TORUS, and UNKNOWN)
-        ///      - "v:primitive_index" (-1, 0, 1, 2...). -1 meaning a vertex does not belong to any primitive (thus its
-        ///        primitive_type must be UNKNOWN.
+
+        /**
+         * \brief Extract primitives from a subset of a point cloud..
+         * \details The extracted primitives are stored as properties:
+         *      - "v:primitive_type"  (one of PLANE, SPHERE, CYLINDER, CONE, TORUS, and UNKNOWN)
+         *      - "v:primitive_index" (-1, 0, 1, 2...). -1 meaning a vertex does not belong to any primitive (thus its
+         *        primitive_type must be UNKNOWN.
+         * \param cloud The input point cloud.
+         * \param vertices The indices of the subset of the input point cloud.
+         * \param min_support The minimal number of points required for a primitive.
+         * \param dist_threshold The distance threshold, defined relative to the bounding box's max dimension.
+         * \param bitmap_resolution The bitmap resolution, defined relative to the bounding box width.
+         * \param normal_threshold The cosine of the maximal normal deviation.
+         * \param overlook_probability The probability with which a primitive is overlooked.
+         * \return The number of extracted primitives.
+         */
         int detect(
                 PointCloud *cloud,
                 const std::vector<int> &vertices,
-                unsigned int min_support = 1000,    // the minimal number of points required for a primitive
-                float dist_thresh = 0.005f,         // relative to the bounding box width. NOTE: Internally the distance threshold is taken as 3 * distance_threshold!!!
-                float bitmap_reso = 0.02f,          // relative to the bounding box width. NOTE: This threshold is NOT multiplied internally!
-                float normal_thresh = 0.8f,         // the cos of the maximal normal deviation
-                float overlook_prob = 0.001f        // the probability with which a primitive is overlooked
+                unsigned int min_support = 1000,
+                float dist_threshold = 0.005f,
+                float bitmap_resolution = 0.02f,
+                float normal_threshold = 0.8f,
+                float overlook_probability = 0.001f
         );
 
     private:

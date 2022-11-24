@@ -24,7 +24,7 @@ namespace easy3d {
     class TriangleMeshKdTree {
     public:
         //! \brief construct with mesh
-        TriangleMeshKdTree(const SurfaceMesh *mesh, unsigned int max_faces = 10, unsigned int max_depth = 30);
+        explicit TriangleMeshKdTree(const SurfaceMesh *mesh, unsigned int max_faces = 10, unsigned int max_depth = 30);
 
         ~TriangleMeshKdTree() { delete root_; }
 
@@ -42,7 +42,7 @@ namespace easy3d {
     private:
         // triangle stores corners and face handle
         struct Triangle {
-            Triangle() {}
+            Triangle() = default;
 
             Triangle(const vec3 &x0, const vec3 &x1, const vec3 &x2, SurfaceMesh::Face ff) {
                 x[0] = x0;

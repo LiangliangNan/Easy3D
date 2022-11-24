@@ -108,7 +108,7 @@ namespace easy3d {
          * \details The frame() can be set or changed using set_frame(). The interpolation_speed() and 
          *      interpolation_period() are set to their default values. 
          */
-        KeyFrameInterpolator(Frame *frame = nullptr);
+        explicit KeyFrameInterpolator(Frame *frame = nullptr);
 
         /** Virtual destructor. Clears the keyframe path. */
         virtual ~KeyFrameInterpolator();
@@ -323,7 +323,7 @@ namespace easy3d {
         /**
          * \brief Calls start_interpolation() or stop_interpolation(), depending on is_interpolation_started().
          */
-        void toggleInterpolation() {
+        void toggle_interpolation() {
             if (is_interpolation_started())
                 stop_interpolation();
             else
@@ -345,13 +345,13 @@ namespace easy3d {
          * \param camera_width Controls the size of the cameras. A good value can be 5% of the scene radius, or
          *      10% of the character height (in walking mode), for instance.
          */
-        virtual void draw_cameras(const Camera* camera, float camera_width, const vec4& color = vec4(0.5f, 0.8f, 0.5f, 1.0f));
+        void draw_cameras(const Camera* camera, float camera_width, const vec4& color = vec4(0.5f, 0.8f, 0.5f, 1.0f));
 
         /**
          * \brief Draws the interpolated camera path.
          * \param camera The current camera used by the viewer.
          */
-        virtual void draw_path(const Camera* camera, float thickness = 2.0f, const vec4& color = vec4(1.0f, 1.0f, 0.5f, 1.0f));
+        void draw_path(const Camera* camera, float thickness = 2.0f, const vec4& color = vec4(1.0f, 1.0f, 0.5f, 1.0f));
 
         //@}
 
@@ -404,7 +404,7 @@ namespace easy3d {
         bool interpolation_started_;
         int last_stopped_index_;
 
-        // is path valid? Adding new keyframes, editing an a keyframe invalidates the path
+        // is path valid? Adding new keyframes or editing a keyframe invalidates the path
         bool pathIsValid_;
 
         LinesDrawable* path_drawable_;

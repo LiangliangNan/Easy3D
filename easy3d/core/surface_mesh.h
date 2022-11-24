@@ -27,7 +27,7 @@
 
 #include <easy3d/core/model.h>
 #include <easy3d/core/types.h>
-#include <easy3d/core/properties.h>
+#include <easy3d/core/property.h>
 
 namespace easy3d {
 
@@ -186,7 +186,7 @@ namespace easy3d {
         public:
 
             /// default constructor
-            explicit VertexProperty() {}
+            VertexProperty() = default;
             explicit VertexProperty(Property<T> p) : Property<T>(p) {}
 
             /// access the data stored for vertex \c v
@@ -210,7 +210,7 @@ namespace easy3d {
         public:
 
             /// default constructor
-            explicit HalfedgeProperty() {}
+            HalfedgeProperty() = default;
             explicit HalfedgeProperty(Property<T> p) : Property<T>(p) {}
 
             /// access the data stored for halfedge \c h
@@ -234,7 +234,7 @@ namespace easy3d {
         public:
 
             /// default constructor
-            explicit EdgeProperty() {}
+            EdgeProperty() = default;
             explicit EdgeProperty(Property<T> p) : Property<T>(p) {}
 
             /// access the data stored for edge \c e
@@ -258,7 +258,7 @@ namespace easy3d {
         public:
 
             /// default constructor
-            explicit FaceProperty() {}
+            FaceProperty() = default;
             explicit FaceProperty(Property<T> p) : Property<T>(p) {}
 
             /// access the data stored for face \c f
@@ -282,7 +282,7 @@ namespace easy3d {
         public:
 
             /// default constructor
-            explicit ModelProperty() {}
+            ModelProperty() = default;
             explicit ModelProperty(Property<T> p) : Property<T>(p) {}
 
             /// access the data stored for the mesh
@@ -310,7 +310,7 @@ namespace easy3d {
         public:
 
             /// Default constructor
-            VertexIterator(Vertex v=Vertex(), const SurfaceMesh* m=nullptr) : hnd_(v), mesh_(m)
+            explicit VertexIterator(Vertex v=Vertex(), const SurfaceMesh* m=nullptr) : hnd_(v), mesh_(m)
             {
                 if (mesh_ && mesh_->has_garbage()) while (mesh_->is_valid(hnd_) && mesh_->is_deleted(hnd_)) ++hnd_.idx_;
             }
@@ -362,7 +362,7 @@ namespace easy3d {
         public:
 
             /// Default constructor
-            HalfedgeIterator(Halfedge h=Halfedge(), const SurfaceMesh* m=nullptr) : hnd_(h), mesh_(m)
+            explicit HalfedgeIterator(Halfedge h=Halfedge(), const SurfaceMesh* m=nullptr) : hnd_(h), mesh_(m)
             {
                 if (mesh_ && mesh_->has_garbage()) while (mesh_->is_valid(hnd_) && mesh_->is_deleted(hnd_)) ++hnd_.idx_;
             }
@@ -414,7 +414,7 @@ namespace easy3d {
         public:
 
             /// Default constructor
-            EdgeIterator(Edge e=Edge(), const SurfaceMesh* m=nullptr) : hnd_(e), mesh_(m)
+            explicit EdgeIterator(Edge e=Edge(), const SurfaceMesh* m=nullptr) : hnd_(e), mesh_(m)
             {
                 if (mesh_ && mesh_->has_garbage()) while (mesh_->is_valid(hnd_) && mesh_->is_deleted(hnd_)) ++hnd_.idx_;
             }
@@ -466,7 +466,7 @@ namespace easy3d {
         public:
 
             /// Default constructor
-            FaceIterator(Face f=Face(), const SurfaceMesh* m=nullptr) : hnd_(f), mesh_(m)
+            explicit FaceIterator(Face f=Face(), const SurfaceMesh* m=nullptr) : hnd_(f), mesh_(m)
             {
                 if (mesh_ && mesh_->has_garbage()) while (mesh_->is_valid(hnd_) && mesh_->is_deleted(hnd_)) ++hnd_.idx_;
             }
@@ -596,7 +596,7 @@ namespace easy3d {
         public:
 
             /// default constructor
-            VertexAroundVertexCirculator(const SurfaceMesh* m=nullptr, Vertex v=Vertex())
+            explicit VertexAroundVertexCirculator(const SurfaceMesh* m=nullptr, Vertex v=Vertex())
             : mesh_(m), active_(true)
             {
                 if (mesh_) halfedge_ = mesh_->out_halfedge(v);
@@ -615,7 +615,7 @@ namespace easy3d {
                 return !operator==(rhs);
             }
 
-            /// pre-increment (rotate couter-clockwise)
+            /// pre-increment (rotate counter-clockwise)
             VertexAroundVertexCirculator& operator++()
             {
                 assert(mesh_);
@@ -679,7 +679,7 @@ namespace easy3d {
         public:
 
             /// default constructor
-            HalfedgeAroundVertexCirculator(const SurfaceMesh* m=nullptr, Vertex v=Vertex())
+            explicit HalfedgeAroundVertexCirculator(const SurfaceMesh* m=nullptr, Vertex v=Vertex())
             : mesh_(m), active_(true)
             {
                 if (mesh_) halfedge_ = mesh_->out_halfedge(v);
@@ -698,7 +698,7 @@ namespace easy3d {
                 return !operator==(rhs);
             }
 
-            /// pre-increment (rotate couter-clockwise)
+            /// pre-increment (rotate counter-clockwise)
             HalfedgeAroundVertexCirculator& operator++()
             {
                 assert(mesh_);
@@ -755,7 +755,7 @@ namespace easy3d {
         public:
 
             /// construct with mesh and vertex (vertex should not be isolated!)
-            FaceAroundVertexCirculator(const SurfaceMesh* m=nullptr, Vertex v=Vertex())
+            explicit FaceAroundVertexCirculator(const SurfaceMesh* m=nullptr, Vertex v=Vertex())
             : mesh_(m), active_(true)
             {
                 if (mesh_)
@@ -844,7 +844,7 @@ namespace easy3d {
         public:
 
             /// default constructor
-            VertexAroundFaceCirculator(const SurfaceMesh* m=nullptr, Face f=Face())
+            explicit VertexAroundFaceCirculator(const SurfaceMesh* m=nullptr, Face f=Face())
             : mesh_(m), active_(true)
             {
                 if (mesh_) halfedge_ = mesh_->halfedge(f);
@@ -921,7 +921,7 @@ namespace easy3d {
         public:
 
             /// default constructor
-            HalfedgeAroundFaceCirculator(const SurfaceMesh* m=nullptr, Face f=Face())
+            explicit HalfedgeAroundFaceCirculator(const SurfaceMesh* m=nullptr, Face f=Face())
             : mesh_(m), active_(true)
             {
                 if (mesh_) halfedge_ = mesh_->halfedge(f);
@@ -983,7 +983,7 @@ namespace easy3d {
         SurfaceMesh();
 
         /// destructor (is virtual, since we inherit from Geometry_representation)
-        virtual ~SurfaceMesh();
+        ~SurfaceMesh() override = default;
 
         /// copy constructor: copies \c rhs to \c *this. performs a deep copy of all properties.
         SurfaceMesh(const SurfaceMesh& rhs) { operator=(rhs); }
@@ -1188,7 +1188,7 @@ namespace easy3d {
         /// returns whether \c v is a manifold vertex (not incident to several patches)
         bool is_manifold(Vertex v) const
         {
-            // [Liangliang: I doulbt. It should also check if more than 1 cones meet at the same vertex.
+            // [Liangliang: I doubt. It should also check if more than 1 cones meet at the same vertex.
             //              See the "resolve_non_manifold_vertices()" in manifold_builder.cpp
 
             // The vertex is non-manifold if more than one gap exists, i.e.
@@ -1307,7 +1307,7 @@ namespace easy3d {
         Halfedge halfedge(Edge e, unsigned int i) const
         {
             assert(i<=1);
-            return Halfedge((e.idx() << 1) + i);
+            return Halfedge(static_cast<int>((e.idx() << 1) + i));
         }
 
         /// returns the \c i'th vertex of edge \c e. \c i has to be 0 or 1.
@@ -1605,7 +1605,7 @@ namespace easy3d {
         }
 
         /// prints the names of all properties to an output stream (e.g., std::cout).
-        void property_stats(std::ostream &output) const;
+        void property_stats(std::ostream &output) const override;
 
         //@}
 
@@ -1624,7 +1624,7 @@ namespace easy3d {
         /// returns end iterator for vertices
         VertexIterator vertices_end() const
         {
-            return VertexIterator(Vertex(vertices_size()), this);
+            return VertexIterator(Vertex(static_cast<int>(vertices_size())), this);
         }
 
         /// returns vertex container for C++11 range-based for-loops
@@ -1642,7 +1642,7 @@ namespace easy3d {
         /// returns end iterator for halfedges
         HalfedgeIterator halfedges_end() const
         {
-            return HalfedgeIterator(Halfedge(halfedges_size()), this);
+            return HalfedgeIterator(Halfedge(static_cast<int>(halfedges_size())), this);
         }
 
         /// returns halfedge container for C++11 range-based for-loops
@@ -1660,7 +1660,7 @@ namespace easy3d {
         /// returns end iterator for edges
         EdgeIterator edges_end() const
         {
-            return EdgeIterator(Edge(edges_size()), this);
+            return EdgeIterator(Edge(static_cast<int>(edges_size())), this);
         }
 
         /// returns edge container for C++11 range-based for-loops
@@ -1678,7 +1678,7 @@ namespace easy3d {
         /// returns end iterator for faces
         FaceIterator faces_end() const
         {
-            return FaceIterator(Face(faces_size()), this);
+            return FaceIterator(Face(static_cast<int>(faces_size())), this);
         }
 
         /// returns face container for C++11 range-based for-loops
@@ -1730,7 +1730,7 @@ namespace easy3d {
 
         /// returns whether the mesh a triangle mesh. this function simply tests
         /// each face, and therefore is not very efficient.
-        /// \sa trianglate(), triangulate(Face)
+        /// \sa triangulate(), triangulate(Face)
         bool is_triangle_mesh() const;
 
         /// returns whether the mesh a quad mesh. this function simply tests
@@ -1738,7 +1738,7 @@ namespace easy3d {
         bool is_quad_mesh() const;
 
         /// triangulate the entire mesh, by calling triangulate(Face) for each face.
-        /// \sa trianglate(Face)
+        /// \sa triangulate(Face)
         void triangulate();
 
         /// triangulate the face \c f
@@ -1752,7 +1752,7 @@ namespace easy3d {
 
         /// returns whether collapsing the halfedge \c h is topologically legal.
         /// \attention This function is only valid for triangle meshes.
-        bool is_collapse_ok(Halfedge h);
+        bool is_collapse_ok(Halfedge h) const;
 
         /** Collapse the halfedge \c h by moving its start vertex into its target
          vertex. For non-boundary halfedges this function removes one vertex, three
@@ -1931,10 +1931,10 @@ namespace easy3d {
         vec3& position(Vertex v) { return vpoint_[v]; }
 
         /// vector of vertex positions (read only)
-        const std::vector<vec3>& points() const { return vpoint_.vector(); }
+        const std::vector<vec3>& points() const override { return vpoint_.vector(); }
 
         /// vector of vertex positions
-        std::vector<vec3>& points() { return vpoint_.vector(); }
+        std::vector<vec3>& points() override { return vpoint_.vector(); }
 
         /// compute face normals by calling compute_face_normal(Face) for each face.
         void update_face_normals();
@@ -1961,7 +1961,7 @@ namespace easy3d {
         Vertex new_vertex()
         {
             vprops_.push_back();
-            return Vertex(vertices_size()-1);
+            return Vertex(static_cast<int>(vertices_size()-1));
         }
 
         /// allocate a new edge, resize edge and halfedge properties accordingly.
@@ -1973,8 +1973,8 @@ namespace easy3d {
             hprops_.push_back();
             hprops_.push_back();
 
-            Halfedge h0(halfedges_size()-2);
-            Halfedge h1(halfedges_size()-1);
+            Halfedge h0(static_cast<int>(halfedges_size()-2));
+            Halfedge h1(static_cast<int>(halfedges_size()-1));
 
             set_target(h0, end);
             set_target(h1, start);
@@ -1986,7 +1986,7 @@ namespace easy3d {
         Face new_face()
         {
             fprops_.push_back();
-            return Face(faces_size()-1);
+            return Face(static_cast<int>(faces_size()-1));
         }
 
 
@@ -2012,7 +2012,7 @@ namespace easy3d {
 
         /// Helper for stitching edges. It checks whether the vertices pointed by h0 and h1 can be merged. It is called
         /// twice by is_stitch_ok(), once per orientation of the edges.
-        bool can_merge_vertices(Halfedge h0, Halfedge h1);
+        bool can_merge_vertices(Halfedge h0, Halfedge h1) const;
 
     private: //------------------------------------------------------- private data
 

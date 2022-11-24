@@ -42,8 +42,8 @@ class WidgetModelList : public QTreeWidget {
 Q_OBJECT
 
 public:
-    WidgetModelList(QWidget *parent = 0);
-    ~WidgetModelList();
+    explicit WidgetModelList(QWidget *parent = nullptr);
+    ~WidgetModelList() override = default;
 
     void init(MainWindow *w);
 
@@ -93,8 +93,8 @@ signals:
     void currentDrawableChanged(easy3d::Drawable*);
 
 protected:
-    void mousePressEvent(QMouseEvent* e);
-    void mouseReleaseEvent(QMouseEvent* e);
+    void mousePressEvent(QMouseEvent* e) override;
+    void mouseReleaseEvent(QMouseEvent* e) override;
 
 private:
     PaintCanvas *viewer();

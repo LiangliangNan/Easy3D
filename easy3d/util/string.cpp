@@ -50,22 +50,20 @@ namespace easy3d {
 
         std::string join(const std::vector<std::string> &in, char separator) {
             std::string result;
-            for (unsigned int i = 0; i < in.size(); i++) {
-                if (result.length() != 0) {
+            for (const auto& str : in) {
+                if (result.length() != 0)
                     result += separator;
-                }
-                result += in[i];
+                result += str;
             }
             return result;
         }
 
         std::string join(const std::vector<std::string> &in, const std::string &separator) {
             std::string result;
-            for (unsigned int i = 0; i < in.size(); i++) {
-                if (result.length() != 0) {
+            for (const auto& str : in) {
+                if (result.length() != 0)
                     result += separator;
-                }
-                result += in[i];
+                result += str;
             }
             return result;
         }

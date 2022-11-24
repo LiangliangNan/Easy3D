@@ -33,7 +33,7 @@
 #include <vector>
 
 #include <easy3d/core/types.h>
-#include <easy3d/core/properties.h>
+#include <easy3d/core/property.h>
 
 
 namespace easy3d {
@@ -92,8 +92,6 @@ namespace easy3d {
             };
 
 		private:
-			friend class VertexIterator;
-			friend class EdgeIterator;
 			friend class Graph;
 			int idx_;
 		};
@@ -146,7 +144,7 @@ namespace easy3d {
 		public:
 
 			/// default constructor
-			explicit VertexProperty() {}
+			explicit VertexProperty() = default;
 			explicit VertexProperty(Property<T> p) : Property<T>(p) {}
 
 			/// access the data stored for vertex \c v
@@ -170,7 +168,7 @@ namespace easy3d {
 		public:
 
 			/// default constructor
-			explicit EdgeProperty() {}
+			explicit EdgeProperty() = default;
 			explicit EdgeProperty(Property<T> p) : Property<T>(p) {}
 
 			/// access the data stored for edge \c e
@@ -193,7 +191,7 @@ namespace easy3d {
 		public:
 
 			/// default constructor
-			explicit ModelProperty() {}
+			explicit ModelProperty() = default;
 			explicit ModelProperty(Property<T> p) : Property<T>(p) {}
 
 			/// access the data stored for the graph
@@ -221,7 +219,7 @@ namespace easy3d {
 		public:
 
 			/// Default constructor
-			VertexIterator(Vertex v = Vertex(), const Graph* g = nullptr) : hnd_(v), graph_(g)
+			explicit VertexIterator(Vertex v = Vertex(), const Graph* g = nullptr) : hnd_(v), graph_(g)
 			{
 				if (graph_ && graph_->has_garbage()) while (graph_->is_valid(hnd_) && graph_->is_deleted(hnd_)) ++hnd_.idx_;
 			}
@@ -273,7 +271,7 @@ namespace easy3d {
 		public:
 
 			/// Default constructor
-			EdgeIterator(Edge e = Edge(), const Graph* g = nullptr) : hnd_(e), graph_(g)
+            explicit EdgeIterator(Edge e = Edge(), const Graph* g = nullptr) : hnd_(e), graph_(g)
 			{
 				if (graph_ && graph_->has_garbage()) while (graph_->is_valid(hnd_) && graph_->is_deleted(hnd_)) ++hnd_.idx_;
 			}
@@ -357,7 +355,7 @@ namespace easy3d {
 	    public:
 
 	        /// default constructor
-	        EdgeAroundVertexCirculator(const Graph* g, Vertex v=Vertex())
+            explicit EdgeAroundVertexCirculator(const Graph* g, Vertex v=Vertex())
 				: graph_(g), vertex_(v), finished_(false)
 	        {
 				iterator_ = graph_->vconn_[vertex_].edges_.begin();
@@ -403,7 +401,7 @@ namespace easy3d {
 			}
 
 	        /// cast to bool: true if vertex is not isolated
-			operator bool() const { return graph_->vconn_[vertex_].edges_.size() > 0; }
+			operator bool() const { return !graph_->vconn_[vertex_].edges_.empty(); }
 
 			/// return current vertex
 			Vertex vertex() const { return vertex_; }
@@ -432,7 +430,7 @@ namespace easy3d {
 		public:
 
 			/// default constructor
-			VertexAroundVertexCirculator(const Graph* g, Vertex v = Vertex())
+            explicit VertexAroundVertexCirculator(const Graph* g, Vertex v = Vertex())
 				: graph_(g), vertex_(v), finished_(false)
 			{
 				iterator_ = graph_->vconn_[vertex_].edges_.begin();
@@ -482,7 +480,7 @@ namespace easy3d {
 			}
 
 	        /// cast to bool: true if vertex is not isolated
-	        operator bool() const { return graph_->vconn_[vertex_].edges_.size() > 0; }
+	        operator bool() const { return !graph_->vconn_[vertex_].edges_.empty(); }
 
 	        /// return current vertex
 	        Vertex vertex() const { return vertex_; }
@@ -518,7 +516,7 @@ namespace easy3d {
 		Graph();
 
 		/// destructor
-		virtual ~Graph();
+		~Graph() override = default;
 
 		/// copy constructor: copies \c rhs to \c *this. performs a deep copy of all properties.
 		Graph(const Graph& rhs) { operator=(rhs); }
@@ -774,7 +772,7 @@ namespace easy3d {
 		}
 
 		/// prints the names of all properties to an output stream (e.g., std::cout)
-		void property_stats(std::ostream& output) const;
+		void property_stats(std::ostream& output) const override;
 
 		//@}
 
@@ -793,7 +791,7 @@ namespace easy3d {
 		/// returns end iterator for vertices
 		VertexIterator vertices_end() const
 		{
-			return VertexIterator(Vertex(vertices_size()), this);
+			return VertexIterator(Vertex(static_cast<int>(vertices_size())), this);
 		}
 
 		/// returns vertex container for C++11 range-based for-loops
@@ -811,7 +809,7 @@ namespace easy3d {
 		/// returns end iterator for edges
 		EdgeIterator edges_end() const
 		{
-			return EdgeIterator(Edge(edges_size()), this);
+			return EdgeIterator(Edge(static_cast<int>(edges_size())), this);
 		}
 
 		/// returns edge container for C++11 range-based for-loops
@@ -867,10 +865,10 @@ namespace easy3d {
 		vec3& position(Vertex v) { return vpoint_[v]; }
 
 		/// vector of vertex positions (read only)
-		const std::vector<vec3>& points() const { return vpoint_.vector(); }
+		const std::vector<vec3>& points() const override { return vpoint_.vector(); }
 
 		/// vector of vertex positions
-		std::vector<vec3>& points() { return vpoint_.vector(); }
+		std::vector<vec3>& points() override { return vpoint_.vector(); }
 
 		/// compute the length of edge \c e.
 		float edge_length(Edge e) const;
@@ -884,14 +882,14 @@ namespace easy3d {
 		Vertex new_vertex()
 		{
 			vprops_.push_back();
-			return Vertex(vertices_size() - 1);
+			return Vertex(static_cast<int>(vertices_size() - 1));
 		}
 
 		/// allocate a new edge, resize edge properties accordingly.
 		Edge new_edge()
 		{
 			eprops_.push_back();
-			return Edge(edges_size() - 1);
+			return Edge(static_cast<int>(edges_size() - 1));
 		}
 
 

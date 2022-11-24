@@ -45,8 +45,6 @@ namespace easy3d {
         start();
     }
 
-    StopWatch::~StopWatch() {}
-
 
     void StopWatch::start() {
     #ifdef _WIN32
@@ -73,7 +71,7 @@ namespace easy3d {
         LONGLONG now_count = largeInteger.QuadPart;
         return static_cast<double>((now_count - start_count_) / static_cast<double>(freq_));
     #else
-        timeval now;
+        timeval now{};
         gettimeofday(&now, nullptr);
         return (now.tv_sec - start_time_.tv_sec) + (now.tv_usec - start_time_.tv_usec) / 1.0e6;
     #endif  // _WIN32

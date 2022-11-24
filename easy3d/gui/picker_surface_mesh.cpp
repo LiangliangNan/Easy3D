@@ -46,10 +46,6 @@ namespace easy3d {
     }
 
 
-    SurfaceMeshPicker::~SurfaceMeshPicker() {
-    }
-
-
     SurfaceMesh::Face SurfaceMeshPicker::pick_face(SurfaceMesh *model, int x, int y) {
         if (!model)
             return SurfaceMesh::Face();
@@ -59,7 +55,7 @@ namespace easy3d {
             program = ShaderManager::get_program("selection/selection_single_primitive");
             if (!program) {
                 std::vector<ShaderProgram::Attribute> attributes;
-                attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+                attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
                 program = ShaderManager::create_program_from_files("selection/selection_single_primitive", attributes);
             }
             if (!program) {
@@ -101,9 +97,9 @@ namespace easy3d {
             return closest_vertex;
 
         const vec3 &p = model->position(closest_vertex);
-        const vec2 &q = project(p);
-        float dist = distance(q, vec2(static_cast<float>(x), static_cast<float>(y)));
-        if (dist < hit_resolution_)
+        const vec2 q(project(p));
+        const float sqr_dist = distance2(q, vec2(static_cast<float>(x), static_cast<float>(y)));
+        if (sqr_dist < static_cast<float>(hit_resolution_ * hit_resolution_))
             return closest_vertex;
         else
             return SurfaceMesh::Vertex();
@@ -151,11 +147,9 @@ namespace easy3d {
 
         const vec3 &s = model->position(model->source(closest_edge));
         const vec3 &t = model->position(model->target(closest_edge));
-        const Segment2 seg(project(s), project(t));
-        float s_dist = seg.squared_distance(vec2(static_cast<float>(x), static_cast<float>(y)));
-        float dist = std::sqrt(s_dist);
-
-        if (dist < hit_resolution_)
+        const Segment2 seg(vec2(project(s)), vec2(project(t)));
+        const float sqr_dist = seg.squared_distance(vec2(static_cast<float>(x), static_cast<float>(y)));
+        if (sqr_dist < static_cast<float>(hit_resolution_ * hit_resolution_))
             return closest_edge;
         else
             return SurfaceMesh::Halfedge();
@@ -203,7 +197,7 @@ namespace easy3d {
 
 
     SurfaceMesh::Face SurfaceMeshPicker::pick_face_cpu(SurfaceMesh *model, int x, int y) {
-        int num = model->n_faces();
+        int num = static_cast<int>(model->n_faces());
         const vec3 &p_near = unproject(x, y, 0);
         const vec3 &p_far = unproject(x, y, 1);
         const OrientedLine3 oline(p_near, p_far);
@@ -263,14 +257,16 @@ namespace easy3d {
         //       of the viewer changed.
 
         // Bind the offscreen fbo for drawing
-        fbo_->bind(); easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
+        fbo_->bind();
+        easy3d_debug_log_gl_error
+        easy3d_debug_log_frame_buffer_error
 
         float color[4];
         glGetFloatv(GL_COLOR_CLEAR_VALUE, color);
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        easy3d_debug_log_gl_error;
-        easy3d_debug_log_frame_buffer_error;
+        easy3d_debug_log_gl_error
+        easy3d_debug_log_frame_buffer_error
 
         const mat4 MANIP = model->manipulator() ? model->manipulator()->matrix() : mat4::identity();
         program->bind();
@@ -291,7 +287,9 @@ namespace easy3d {
         fbo_->read_color(c, gl_x, gl_y);
 
         // switch back to the previous fbo
-        fbo_->release(); easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
+        fbo_->release();
+        easy3d_debug_log_gl_error
+        easy3d_debug_log_frame_buffer_error
 
         // restore the clear color
         glClearColor(color[0], color[1], color[2], color[3]);
@@ -299,7 +297,7 @@ namespace easy3d {
         //--------------------------------------------------------------------------
 
         // Convert the color back to an integer ID
-        int id = rgb::rgba(c[0], c[1], c[2], c[3]);
+        int id = color::encode(c[0], c[1], c[2], c[3]);
         picked_face_ = SurfaceMesh::Face();
 
 #if 0 // If the mesh is a triangle mesh.
@@ -327,9 +325,10 @@ namespace easy3d {
 
             // Now treat the model as a general polygonal mesh.
             for (unsigned int face_id = 0; face_id < model->n_faces(); ++face_id) {
-                const auto &range = triangle_range[SurfaceMesh::Face(face_id)];
+                auto face = SurfaceMesh::Face(static_cast<int>(face_id));
+                const auto &range = triangle_range[face];
                 if (id >= range.first && id <= range.second) {
-                    picked_face_ = SurfaceMesh::Face(face_id);
+                    picked_face_ = face;
                     return picked_face_;
                 }
             }
@@ -348,10 +347,10 @@ namespace easy3d {
         const int win_width = camera()->screenWidth();
         const int win_height = camera()->screenHeight();
 
-        float xmin = rect.left() / (win_width - 1.0f);
-        float ymin = 1.0f - rect.top() / (win_height - 1.0f);
-        float xmax = rect.right() / (win_width - 1);
-        float ymax = 1.0f - rect.bottom() / (win_height - 1.0f);
+        float xmin = rect.left() / static_cast<float>(win_width - 1);
+        float ymin = 1.0f - rect.top() / static_cast<float>(win_height - 1);
+        float xmax = rect.right() / static_cast<float>(win_width - 1);
+        float ymax = 1.0f - rect.bottom() / static_cast<float>(win_height - 1);
         if (xmin > xmax) std::swap(xmin, xmax);
         if (ymin > ymax) std::swap(ymin, ymax);
 
@@ -409,14 +408,14 @@ namespace easy3d {
             const vec2 &p = plg[i];
             const float x = p.x / float(win_width - 1);
             const float y = 1.0f - p.y / float(win_height - 1);
-            region.push_back(vec2(x, y));
+            region.emplace_back(vec2(x, y));
         }
 
         const Box2& box = plg.bbox();
-        float xmin = box.min_point().x / (win_width - 1.0f);
-        float ymin = 1.0f - box.min_point().y / (win_height - 1.0f);
-        float xmax = box.max_point().x / (win_width - 1);
-        float ymax = 1.0f - box.max_point().y / (win_height - 1.0f);
+        float xmin = box.min_point().x / static_cast<float>(win_width - 1);
+        float ymin = 1.0f - box.min_point().y / static_cast<float>(win_height - 1);
+        float xmax = box.max_point().x / static_cast<float>(win_width - 1);
+        float ymax = 1.0f - box.max_point().y / static_cast<float>(win_height - 1);
         if (xmin > xmax) std::swap(xmin, xmax);
         if (ymin > ymax) std::swap(ymin, ymax);
 

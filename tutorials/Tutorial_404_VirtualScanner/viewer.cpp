@@ -79,15 +79,15 @@ bool VirtualScanner::key_press_event(int key, int modifiers) {
             for (int y=0; y<height_; ++y) {
                 // NOTE: when dealing with OpenGL, we always work in the highdpi screen space
 #if defined(__APPLE__)
-                const int idx = static_cast<int>(y * dpi_scaling() * fw + x * dpi_scaling());
+                const int idx = static_cast<int>(static_cast<float>(y) * dpi_scaling() * static_cast<float>(fw) + static_cast<float>(x) * dpi_scaling());
 #else
-                const int idx = y * fw + x;
+                const int idx = static_cast<float>(y * fw + x);
 #endif
                 const float d = depths[idx];
                 if (d < 1.0f) {
                     vec3 vs(static_cast<float>(x), static_cast<float>(y), d);
-                    vs.x = static_cast<float>(vs.x - viewport[0]) / viewport[2] * 2.0f - 1.0f;
-                    vs.y = static_cast<float>(vs.y - viewport[1]) / viewport[3] * 2.0f - 1.0f;
+                    vs.x = static_cast<float>(vs.x - static_cast<float>(viewport[0])) / static_cast<float>(viewport[2]) * 2.0f - 1.0f;
+                    vs.y = static_cast<float>(vs.y - static_cast<float>(viewport[1])) / static_cast<float>(viewport[3]) * 2.0f - 1.0f;
                     vs.z = vs.z * 2.0f - 1.0f;
                     points.push_back(invMVP * vs);
                 }
@@ -95,7 +95,7 @@ bool VirtualScanner::key_press_event(int key, int modifiers) {
         }
 
         if (!points.empty()) {
-            PointCloud* cloud = new PointCloud;
+            auto cloud = new PointCloud;
             for (const auto& p : points)
                 cloud->add_vertex(p);
 

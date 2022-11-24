@@ -28,7 +28,7 @@ namespace easy3d {
      */
     class SurfaceMeshCurvature {
     public:
-        SurfaceMeshCurvature(SurfaceMesh *mesh);
+        explicit SurfaceMeshCurvature(SurfaceMesh *mesh);
 
         ~SurfaceMeshCurvature();
 

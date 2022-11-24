@@ -54,7 +54,7 @@ DialogWalkThrough::DialogWalkThrough(MainWindow *window)
     comboBoxInterpolationMethod->addItem("Spline Fitting");
     comboBoxInterpolationMethod->setCurrentIndex(0);
 
-    QButtonGroup* group = new QButtonGroup(this);
+    auto group = new QButtonGroup(this);
     group->addButton(radioButtonFreeMode);
     group->addButton(radioButtonWalkingMode);
     group->addButton(radioButtonRotateAroundAxis);
@@ -92,11 +92,6 @@ DialogWalkThrough::DialogWalkThrough(MainWindow *window)
     connect(browseButton, SIGNAL(clicked()), this, SLOT(browse()));
 
     easy3d::connect(&walkThrough()->path_modified, this, &DialogWalkThrough::numKeyramesChanged);
-}
-
-
-DialogWalkThrough::~DialogWalkThrough()
-{
 }
 
 
@@ -415,16 +410,16 @@ void DialogWalkThrough::preview(bool b) {
         id_interpolationStopped = easy3d::connect(&interpolator()->interpolation_stopped, interpolationStopped);
         QObject::connect(this, &DialogWalkThrough::previewStopped, this, &DialogWalkThrough::onPreviewStopped);
 
-        for (auto w : findChildren<QComboBox*>()) w->setEnabled(false);
-        for (auto w : findChildren<QLabel*>()) w->setEnabled(false);
-        for (auto w : findChildren<QPushButton*>()) w->setEnabled(w == previewButton);
-        for (auto w : findChildren<QCheckBox*>()) w->setEnabled(false);
-        for (auto w : findChildren<QRadioButton*>()) w->setEnabled(false);
-        for (auto w : findChildren<QSpinBox*>()) w->setEnabled(false);
-        for (auto w : findChildren<QDoubleSpinBox*>()) w->setEnabled(false);
-        for (auto w : findChildren<QLineEdit*>()) w->setEnabled(false);
-        for (auto w : findChildren<QToolButton*>()) w->setEnabled(false);
-        for (auto w : findChildren<QSlider*>()) w->setEnabled(false);
+        for (auto c : findChildren<QComboBox*>()) c->setEnabled(false);
+        for (auto c : findChildren<QLabel*>()) c->setEnabled(false);
+        for (auto c : findChildren<QPushButton*>()) c->setEnabled(c == previewButton);
+        for (auto c : findChildren<QCheckBox*>()) c->setEnabled(false);
+        for (auto c : findChildren<QRadioButton*>()) c->setEnabled(false);
+        for (auto c : findChildren<QSpinBox*>()) c->setEnabled(false);
+        for (auto c : findChildren<QDoubleSpinBox*>()) c->setEnabled(false);
+        for (auto c : findChildren<QLineEdit*>()) c->setEnabled(false);
+        for (auto c : findChildren<QToolButton*>()) c->setEnabled(false);
+        for (auto c : findChildren<QSlider*>()) c->setEnabled(false);
 
         LOG(INFO) << "preview started...";
         w.start();
@@ -438,16 +433,16 @@ void DialogWalkThrough::preview(bool b) {
         LOG(INFO) << "preview finished. " << w.time_string();
         previewButton->setText("Preview");
 
-        for (auto w : findChildren<QComboBox*>()) w->setEnabled(true);
-        for (auto w : findChildren<QLabel*>()) w->setEnabled(true);
-        for (auto w : findChildren<QPushButton*>()) w->setEnabled(true);
-        for (auto w : findChildren<QCheckBox*>()) w->setEnabled(true);
-        for (auto w : findChildren<QRadioButton*>()) w->setEnabled(true);
-        for (auto w : findChildren<QSpinBox*>()) w->setEnabled(true);
-        for (auto w : findChildren<QDoubleSpinBox*>()) w->setEnabled(true);
-        for (auto w : findChildren<QLineEdit*>()) w->setEnabled(true);
-        for (auto w : findChildren<QToolButton*>()) w->setEnabled(true);
-        for (auto w : findChildren<QSlider*>()) w->setEnabled(true);
+        for (auto c : findChildren<QComboBox*>()) c->setEnabled(true);
+        for (auto c : findChildren<QLabel*>()) c->setEnabled(true);
+        for (auto c : findChildren<QPushButton*>()) c->setEnabled(true);
+        for (auto c : findChildren<QCheckBox*>()) c->setEnabled(true);
+        for (auto c : findChildren<QRadioButton*>()) c->setEnabled(true);
+        for (auto c : findChildren<QSpinBox*>()) c->setEnabled(true);
+        for (auto c : findChildren<QDoubleSpinBox*>()) c->setEnabled(true);
+        for (auto c : findChildren<QLineEdit*>()) c->setEnabled(true);
+        for (auto c : findChildren<QToolButton*>()) c->setEnabled(true);
+        for (auto c : findChildren<QSlider*>()) c->setEnabled(true);
 
         viewer_->update();
     }

@@ -37,7 +37,7 @@ Q_OBJECT
 
 public:
     explicit DialogSurfaceMeshHoleFilling(MainWindow *window);
-    ~DialogSurfaceMeshHoleFilling();
+    ~DialogSurfaceMeshHoleFilling() override = default;
 
 private Q_SLOTS:
 

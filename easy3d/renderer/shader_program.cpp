@@ -81,10 +81,10 @@ namespace easy3d {
             OpenglUtil::is_supported("GL_ARB_shading_language_100") &&
             OpenglUtil::is_supported("GL_ARB_vertex_shader") &&
             OpenglUtil::is_supported("GL_ARB_fragment_shader")) || (
-            OpenglUtil::has_entension("GL_EXT_shader_objects") &&
-            OpenglUtil::has_entension("GL_EXT_shading_language_100") &&
-            OpenglUtil::has_entension("GL_EXT_vertex_shader") &&
-            OpenglUtil::has_entension("GL_EXT_fragment_shader"));
+            OpenglUtil::has_extension("GL_EXT_shader_objects") &&
+            OpenglUtil::has_extension("GL_EXT_shading_language_100") &&
+            OpenglUtil::has_extension("GL_EXT_vertex_shader") &&
+            OpenglUtil::has_extension("GL_EXT_fragment_shader"));
     }
 
 
@@ -136,18 +136,18 @@ namespace easy3d {
 			return code;
 		}
 
-        std::string inc_id = include_identifier + ' ';;
+        std::string inc_id = include_identifier + ' ';
         static bool is_recursive_call = false;
 
 		std::string line;
 		while (in.good() && std::getline(in, line)) {
             // Look for the new shader include identifier
-            if (line.find(inc_id) != line.npos)
+            if (line.find(inc_id) != std::string::npos)
             {
-                // Remove the include identifier, this will cause the path to remain
+                // Remove the "include" identifier, this will cause the path to remain
                 line.erase(0, inc_id.size());
 
-                // The include path is relative to the current shader in path
+                // The "include" path is relative to the current shader in path
                 std::string path = get_path(file_name);
                 line.insert(0, path);
 
@@ -156,7 +156,7 @@ namespace easy3d {
                 is_recursive_call = true;
                 code += load_shader_source(line, include_identifier);
 
-                // Do not add this line to the shader source code, as the include
+                // Do not add this line to the shader source code, as the "include"
                 // path would generate a compilation issue in the final source code
                 continue;
             }
@@ -212,8 +212,8 @@ namespace easy3d {
 			return false;
 		}
         unsigned int shader = glCreateShader(spGLShaderTypes[type]);
-		easy3d_debug_log_gl_error;
-        easy3d_debug_log_frame_buffer_error;
+		easy3d_debug_log_gl_error
+        easy3d_debug_log_frame_buffer_error
 		if (!glIsShader(shader)) {
 			LOG(ERROR) << "failed to creat " << spStringShaderTypes[type] << (name_.empty() ? "" : " - \'" +  name_ + "\'");
 			return false;
@@ -227,8 +227,7 @@ namespace easy3d {
 		std::string log;
 		if (!shader_info_log(log, shader)) {
 			LOG(ERROR) << log << " - in " << spStringShaderTypes[type] << " " << (name_.empty() ? "" : "\'" +  name_ + "\'");
-			glDeleteShader(shader);	
-            shader = 0;
+			glDeleteShader(shader);
 			return false;
 		}
 
@@ -274,7 +273,7 @@ namespace easy3d {
 
 
 	/// returns a string with a shader's infolog
-    bool ShaderProgram::shader_info_log(std::string& log, unsigned int shader) {
+    bool ShaderProgram::shader_info_log(std::string& log, unsigned int shader) const {
 		log.clear();
         int compiled = false;
         glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
@@ -292,7 +291,7 @@ namespace easy3d {
 
 
 	/// returns a string with the program's infolog
-	bool ShaderProgram::program_info_log(std::string& log) {
+	bool ShaderProgram::program_info_log(std::string& log) const {
 		log.clear();
         int linked = false;
         glGetProgramiv(program_, GL_LINK_STATUS, &linked);
@@ -309,24 +308,24 @@ namespace easy3d {
 	}
 
 
-	void ShaderProgram::set_program_output(int index, const std::string& name) {
+	void ShaderProgram::set_program_output(int index, const std::string& name) const {
 		glBindFragDataLocation(program_, index, name.c_str());	
 	}
 
 
-    int ShaderProgram::program_output(const std::string& name) {
+    int ShaderProgram::program_output(const std::string& name) const {
 		return glGetFragDataLocation(program_, name.c_str());	
 	}
 
 
-	void ShaderProgram::set_attrib_name(ShaderProgram::AttribType at, const std::string& name) {
+	void ShaderProgram::set_attrib_name(ShaderProgram::AttribType at, const std::string& name) const {
 		glBindAttribLocation(program_, at, name.c_str());	
 	}
 
 
-	void ShaderProgram::set_attrib_names(const std::vector<ShaderProgram::Attribute>& attributes) {
-		for (std::size_t i = 0; i < attributes.size(); ++i) {
-			set_attrib_name(attributes[i].first, attributes[i].second);
+	void ShaderProgram::set_attrib_names(const std::vector<ShaderProgram::Attribute>& attributes) const {
+		for (const auto& attr : attributes) {
+			set_attrib_name(attr.first, attr.second);
 		}
 	}
 
@@ -637,7 +636,7 @@ namespace easy3d {
 	}
 
 
-	bool ShaderProgram::is_program_valid() {
+	bool ShaderProgram::is_program_valid() const {
         if (!program_) {
             LOG(ERROR) << "program does not exist. " << (name_.empty() ? "" : " - \'" +  name_ + "\'");
             return false;
@@ -652,7 +651,7 @@ namespace easy3d {
             glGetProgramiv(program_, GL_INFO_LOG_LENGTH, &log_length);
             if (log_length > 0) {
                 std::string log(log_length + 1, '\0');
-                glGetProgramInfoLog(program_, log_length, 0, &log[0]);
+                glGetProgramInfoLog(program_, log_length, nullptr, &log[0]);
                 LOG(ERROR) << log << (name_.empty() ? "" : " - \'" +  name_ + "\'");
             }
 		}
@@ -667,7 +666,7 @@ namespace easy3d {
 	}
 
 
-	bool ShaderProgram::is_program_linked() {
+	bool ShaderProgram::is_program_linked() const {
         int b = GL_FALSE;
 		if (program_) {
 			glGetProgramiv(program_, GL_LINK_STATUS, &b);	
@@ -676,7 +675,7 @@ namespace easy3d {
 	}
 
 
-	void ShaderProgram::bind() {
+	void ShaderProgram::bind() const {
         // glValidateProgram() is meant to be called directly before a
         // draw call (i.e., glDraw*()) with that shader bound and all
         // the bindings (VAO, textures) set. Its purpose is to ensure
@@ -687,16 +686,16 @@ namespace easy3d {
 	}
 
 
-    void ShaderProgram::release() {
+    void ShaderProgram::release() const {
 		glUseProgram(0);		
 	}
 
 
 	ShaderProgram* ShaderProgram::bind_texture(const std::string& name, unsigned int tex_id, int unit, GLenum tex_target /* = GL_TEXTURE_2D */)
 	{
-        glActiveTexture(GL_TEXTURE0 + unit);     easy3d_debug_log_gl_error;
-        glBindTexture(tex_target, tex_id);    easy3d_debug_log_gl_error;
-        set_uniform(name, unit);	    easy3d_debug_log_gl_error;
+        glActiveTexture(GL_TEXTURE0 + unit);     easy3d_debug_log_gl_error
+        glBindTexture(tex_target, tex_id);    easy3d_debug_log_gl_error
+        set_uniform(name, unit);	    easy3d_debug_log_gl_error
 		return this;
 	}
 
@@ -925,6 +924,9 @@ namespace easy3d {
 						case GL_DOUBLE_MAT4x3:
 							auxSize = 4 * uniMatStride;
 							break;
+                        default:
+                            LOG(WARNING) << "unknown uniform type: " << uniType;
+                            break;
 						}
 					}
 					else
@@ -986,7 +988,7 @@ namespace easy3d {
         u.name = name;
 		u.type = type;
 		u.location = glGetUniformLocation(program_, name.c_str());	
-		u.size = size;
+		u.size = static_cast<int>(size);
 		pUniforms[name] = u;
 	}
 

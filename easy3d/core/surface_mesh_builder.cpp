@@ -203,7 +203,7 @@ namespace easy3d {
                 issues += "\n   - " + std::to_string(num_non_manifold_vertices) + " vertices copied ("
                           + std::to_string(num_copy_occurrences) + " occurrences)";
 
-                if (copied_vertices_for_linking_.size() > 0) {
+                if (!copied_vertices_for_linking_.empty()) {
                     std::size_t occurrences(0);
                     for (const auto &copies : copied_vertices_for_linking_) {
                         LOG_IF(copies.second.empty(), FATAL) << "vertex " << copies.first << " not actually copied";
@@ -284,7 +284,7 @@ namespace easy3d {
         // ---------------------------------------------------------------------------------------------------------
 
         std::vector<Halfedge> halfedges(n);
-        std::vector<char> halfedge_esists(n);
+        std::vector<char> halfedge_exists(n);
 
         // Check and resolve duplicate edges.
 
@@ -298,7 +298,7 @@ namespace easy3d {
             }
 
             halfedges[s] = h;
-            halfedge_esists[s] = h.is_valid();
+            halfedge_exists[s] = static_cast<char>(h.is_valid());
         }
 
         // ---------------------------------------------------------------------------------------------------------
@@ -308,11 +308,11 @@ namespace easy3d {
         // Let's check if the face can be linked to the mesh
         Halfedge inner_next, inner_prev, outer_prev, boundary_next, boundary_prev;
         for (std::size_t s = 0, t = 1; s < n; ++s, ++t, t %= n) {
-            if (halfedge_esists[s] && halfedge_esists[t]) {
+            if (halfedge_exists[s] && halfedge_exists[t]) {
                 inner_prev = halfedges[s];
                 inner_next = halfedges[t];
                 if (mesh_->next(inner_prev) != inner_next) {
-                    // search a free gap
+                    // search a free gap.
                     // free gap will be between boundary_prev and boundary_next
                     outer_prev = mesh_->opposite(inner_next);
                     boundary_prev = outer_prev;
@@ -425,7 +425,7 @@ namespace easy3d {
         for (auto h : mesh->halfedges()) {
             // If 'h' is not visited yet, we walk around the target of 'h' and mark these
             // halfedges as visited. Thus, if we are here and the target is already marked as visited,
-            // it means that the vertex is non manifold.
+            // it means that the vertex is non-manifold.
             if (!visited_halfedge[h]) {
                 visited_halfedge[h] = true;
                 bool is_non_manifold = false;
@@ -446,7 +446,7 @@ namespace easy3d {
                 }
 
                 // While walking the star of this halfedge, if we meet a border halfedge more than once,
-                // it means the mesh is pinched and we are also in the case of a non-manifold situation
+                // it means the mesh is pinched, and we are also in the case of a non-manifold situation
                 auto ih = h, done = ih;
                 int border_counter = 0;
                 do {

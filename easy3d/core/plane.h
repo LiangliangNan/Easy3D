@@ -61,7 +61,7 @@ namespace easy3d {
             coeff_[3] = d;
         }
 
-        GenericPlane() {}
+        GenericPlane() = default;
 
         /// \brief Returns plane equation parameter \p a.
         inline FT a() const { return coeff_[0]; }

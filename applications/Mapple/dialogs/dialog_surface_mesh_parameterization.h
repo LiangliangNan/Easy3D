@@ -37,7 +37,7 @@ Q_OBJECT
 
 public:
     explicit DialogSurfaceMeshParameterization(MainWindow *window);
-    ~DialogSurfaceMeshParameterization();
+    ~DialogSurfaceMeshParameterization() override = default;
 
 private Q_SLOTS:
 

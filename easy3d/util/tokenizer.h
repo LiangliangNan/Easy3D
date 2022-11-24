@@ -58,16 +58,14 @@ namespace easy3d {
 		char mDelims[NV_MAX_DELIM_COUNT];
 		uint32_t mNumDelims;
 	private:
-		bool mVerbose;
 		bool mConsumeWS;
 
 	public:
-		Tokenizer(const char* src, const char* delims = nullptr)
+		explicit Tokenizer(const char* src, const char* delims = nullptr)
 			: mSrcBuf(src)
 			, mTokLen(0)
 			, mTermChar(0)
 			, mNumDelims(0)
-			, mVerbose(false)
 			, mConsumeWS(true)
 		{
 			if (nullptr == delims)
@@ -95,7 +93,6 @@ namespace easy3d {
 			}
 		}
 
-		void setVerbose() { mVerbose = true; }
 		void setConsumeWS(bool ws) { mConsumeWS = ws; }
 
 		inline bool isWhitespace(const char c)
@@ -238,7 +235,7 @@ namespace easy3d {
 		}
 
 		/// accessor to get character that caused 'stop' of last token read
-		char getTermChar() {
+		char getTermChar() const {
 			return mTermChar;
 		}
 
@@ -258,7 +255,7 @@ namespace easy3d {
 		}
 
 		/// accessor to get last read token length
-		uint32_t getLastTokenLen()
+		uint32_t getLastTokenLen() const
 		{
 			return mTokLen;
 		}

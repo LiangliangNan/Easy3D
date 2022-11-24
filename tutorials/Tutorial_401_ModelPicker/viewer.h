@@ -37,10 +37,10 @@ namespace easy3d {
 
 class PickerViewer : public easy3d::Viewer {
 public:
-    PickerViewer(const std::string &title);
+    explicit PickerViewer(const std::string &title);
 
 protected:
-    virtual bool mouse_press_event(int x, int y, int button, int modifiers) override;
+    bool mouse_press_event(int x, int y, int button, int modifiers) override;
 
     std::string usage() const override;
 

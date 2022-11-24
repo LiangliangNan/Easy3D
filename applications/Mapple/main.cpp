@@ -27,7 +27,6 @@
 
 #include "main_window.h"
 
-#include <string>
 #include <iostream>
 #include <stdexcept>
 
@@ -50,13 +49,12 @@
 
 using namespace easy3d;
 
-// reimplemented from QApplication so we can throw exceptions in slots/event handler
+// reimplemented from QApplication, so we can throw exceptions in slots/event handler
 class Mapple : public QApplication
 {
 public:
     Mapple(int &argc, char **argv) : QApplication(argc, argv) { }
-
-    virtual ~Mapple() { }
+    ~Mapple() override = default;
 
     bool notify(QObject * receiver, QEvent * event) override {
         try {
@@ -76,7 +74,7 @@ public:
     bool event(QEvent *e) override {
         switch (e->type()) {
             case QEvent::FileOpen:
-                filesToOpen.push_back(static_cast<QFileOpenEvent *>(e)->file());
+                filesToOpen.push_back(dynamic_cast<QFileOpenEvent *>(e)->file());
                 return true;
             default:
                 return QApplication::event(e);
@@ -95,7 +93,7 @@ int main(int argc, char *argv[])
 
     //Locale management
     {
-        //Force 'English' locale so as to get a consistent behavior everywhere
+        //Force 'English' locale to get a consistent behavior everywhere
         QLocale locale = QLocale(QLocale::English);
         locale.setNumberOptions(QLocale::c().numberOptions());
         QLocale::setDefault(locale);

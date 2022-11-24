@@ -44,7 +44,7 @@ namespace easy3d {
             }
 
             FILE *mesh_file = fopen(file_name.c_str(), "r");
-            if (NULL == mesh_file) {
+            if (nullptr == mesh_file) {
                 LOG(ERROR) << "could not open file: " << file_name;
                 return false;
             }
@@ -65,7 +65,7 @@ namespace easy3d {
                 bool still_comments = true;
                 bool has_line = false;
                 while (still_comments && !feof(file)) {
-                    has_line = fgets(a_line, LINE_MAX, file) != NULL;
+                    has_line = fgets(a_line, LINE_MAX, file) != nullptr;
                     // needs to check for both line feed (LF: '\n') or Carriage return (CR: '\r')
                     still_comments = (a_line[0] == ' ' || a_line[0] == '#' || a_line[0] == '\n' || a_line[0] == '\r');
                 }
@@ -86,7 +86,7 @@ namespace easy3d {
             int version = -1;
             if (2 != sscanf(line, "%s %d", str, &version)) {
                 if (1 != fscanf(mesh_file, " %d", &version)) {
-                    LOG(ERROR) << "wrong file format or file crupted: could not parse version";
+                    LOG(ERROR) << "wrong file format or file corrupted: could not parse version";
                     fclose(mesh_file);
                     return false;
                 }
@@ -109,7 +109,7 @@ namespace easy3d {
                     if (2 != sscanf(line, "%s %d", str, &three)) {
                         // 1 appears on next line?
                         if (1 != fscanf(mesh_file, " %d", &three)) {
-                            LOG(ERROR) << "wrong file format or file crupted: Dimension must be 3";
+                            LOG(ERROR) << "wrong file format or file corrupted: Dimension must be 3";
                             fclose(mesh_file);
                             return false;
                         }
@@ -142,7 +142,7 @@ namespace easy3d {
                                 fclose(mesh_file);
                                 return false;
                             }
-                            vertices[i] = mesh->add_vertex(vec3(x, y, z));
+                            vertices[i] = mesh->add_vertex(vec3(static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)));
                             progress.notify(ftell(mesh_file));
                         }
                     } else if (Translator::instance()->status() == Translator::TRANSLATE_USE_FIRST_POINT) {
@@ -157,14 +157,14 @@ namespace easy3d {
                             if (i == 0) { // the first point
                                 x0 = x;
                                 y0 = y;
-                                z0 = z;;
+                                z0 = z;
                                 Translator::instance()->set_translation(dvec3(x0, y0, z0));
                             }
-                            vertices[i] = mesh->add_vertex(vec3(x - x0, y - y0, z - z0));
+                            vertices[i] = mesh->add_vertex(vec3(static_cast<float>(x - x0), static_cast<float>(y - y0), static_cast<float>(z - z0)));
                             progress.notify(ftell(mesh_file));
                         }
 
-                        auto trans = mesh->add_model_property<dvec3>("translation", dvec3(0,0,0));
+                        auto trans = mesh->add_model_property<dvec3>("translation", dvec3(0, 0, 0));
                         trans[0] = dvec3(x0, y0, z0);
                         LOG(INFO) << "model translated w.r.t. the first vertex (" << trans[0] << "), stored as ModelProperty<dvec3>(\"translation\")";
                     } else if (Translator::instance()->status() == Translator::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
@@ -176,7 +176,7 @@ namespace easy3d {
                                 fclose(mesh_file);
                                 return false;
                             }
-                            vertices[i] = mesh->add_vertex(vec3(x - origin.x, y - origin.y, z - origin.z));
+                            vertices[i] = mesh->add_vertex(vec3(static_cast<float>(x - origin.x), static_cast<float>(y - origin.y), static_cast<float>(z - origin.z)));
                             progress.notify(ftell(mesh_file));
                         }
 
@@ -250,7 +250,7 @@ namespace easy3d {
                                 vertices[indices[7] - 1]
                         );
                         progress.notify(ftell(mesh_file));
-                    };
+                    }
                 } else if (0 == strcmp(str, "End")) {
                     break;
                 } else {
@@ -305,7 +305,7 @@ namespace easy3d {
                 return false;
             }
 
-            if (!mesh || mesh->n_vertices() == 0 || mesh->n_faces() == 0 || mesh->n_cells() == 0) {
+            if (mesh->n_vertices() == 0 || mesh->n_faces() == 0 || mesh->n_cells() == 0) {
                 LOG(ERROR) << "polyhedral mesh is empty";
                 return false;
             }
@@ -317,7 +317,7 @@ namespace easy3d {
             }
 
             FILE *mesh_file = fopen(file_name.c_str(), "w");
-            if (NULL == mesh_file) {
+            if (!mesh_file) {
                 LOG(ERROR) << "could not open file: " << file_name;
                 return false;
             }
@@ -328,7 +328,7 @@ namespace easy3d {
             // print tet vertices
             fprintf(mesh_file, "Vertices\n");
             // print number of tet vertices
-            int number_of_tet_vertices = mesh->n_vertices();
+            auto number_of_tet_vertices = mesh->n_vertices();
             fprintf(mesh_file, "%d\n", number_of_tet_vertices);
 
             ProgressLogger progress(mesh->n_vertices() + mesh->n_faces() + mesh->n_cells(), true, false);
@@ -349,7 +349,7 @@ namespace easy3d {
             // print faces
             fprintf(mesh_file, "Triangles\n");
             // print number of triangles
-            int number_of_triangles = mesh->n_faces();
+            auto number_of_triangles = mesh->n_faces();
             fprintf(mesh_file, "%d\n", number_of_triangles);
             // loop over faces
             for (auto f : mesh->faces()) {
@@ -362,7 +362,7 @@ namespace easy3d {
 
             // print tetrahedra
             fprintf(mesh_file, "Tetrahedra\n");
-            int number_of_tetrahedra = mesh->n_cells();
+            auto number_of_tetrahedra = mesh->n_cells();
             // print number of tetrahedra
             fprintf(mesh_file, "%d\n", number_of_tetrahedra);
             // loop over tetrahedra

@@ -26,14 +26,14 @@ namespace easy3d {
     }
 
     Delaunay3::~Delaunay3() {
-        if (tetgen_in_) delete tetgen_in_;
-        if (tetgen_out_) delete tetgen_out_;
+        delete tetgen_in_;
+        delete tetgen_out_;
     }
 
     void Delaunay3::set_vertices(unsigned int nb_vertices, const float *vertices) {
         Delaunay::set_vertices(nb_vertices, vertices);
         tetgen_out_->clean_memory();
-        tetgen_in_->numberofpoints = nb_vertices;
+        tetgen_in_->numberofpoints = static_cast<int>(nb_vertices);
 
         // Liangliang: tetgen uses double by default.
         tetgen_in_->pointlist = new double[tetgen_in_->numberofpoints * 3];
@@ -71,7 +71,7 @@ namespace easy3d {
 //________________________________________________________________________________
 
 // Pre-computed table for turning around halfedges in
-// a tetrahedron. Given a cell c and an halfedge (v1, v2), 
+// a tetrahedron. Given a cell c and a halfedge (v1, v2),
 // c->neighbor(next_around_halfedge[v1][v2]) is the cell
 // adjacent to c on the left of (v1,v2).
 // Diagonal entries are not supposed to be accessed.
@@ -101,10 +101,7 @@ namespace easy3d {
     namespace internal {
 
         inline bool contains(const std::vector<unsigned int> &V, unsigned int x) {
-            for (unsigned int i = 0; i < V.size(); i++) {
-                if (V[i] == x) { return true; }
-            }
-            return false;
+            return std::find(V.begin(), V.end(), x) != V.end();
         }
 
         inline unsigned int other(unsigned int i1, unsigned int i2, unsigned int i3) {
@@ -123,10 +120,10 @@ namespace easy3d {
     void Delaunay3::get_voronoi_cell(unsigned int v, VoronoiCell3d &cell, bool geometry) const {
         if (nb_cells() == 0) {
             // Security Radius is currently not implemented in 3D.
-            // Standard Delaunay implementation (TETGEN, QHULL or CGAL)
-            // should be used instead.
+            // Standard Delaunay implementation (TETGEN, QHULL or CGAL) should be used instead.
             bool RoS_mode = true;
             assert(!RoS_mode);
+            (void)RoS_mode;
         }
         assert(v < nb_vertices());
         cell.clear();
@@ -135,7 +132,7 @@ namespace easy3d {
         // For each t incident to v
         unsigned int t = vertex_cell(v);
         do {
-            unsigned int lvit = index(t, v);
+            unsigned int lvit = index(t, static_cast<int>(v));
 
             // For each edge (t,neigh) incident to v
             for (unsigned int lv = 0; lv < 4; lv++) {
@@ -156,7 +153,7 @@ namespace easy3d {
     ) const {
         unsigned int v1 = tet_vertex(t, lv1);
         unsigned int v2 = tet_vertex(t, lv2);
-        int first = t, prev, cur, next;  // References to tetrahedra.
+        int first = static_cast<int>(t), prev, cur, next;  // References to tetrahedra.
         unsigned int f;                  // Current facet.
         unsigned int eb1;                // First "edge bisector", i.e. index of vertex
         // opposite to edge (v1,v2) in the triangle
@@ -166,8 +163,8 @@ namespace easy3d {
         // Start iteration from a tetrahedron incident to the border
         // (makes border management much simpler !)
         do {
-            lv1 = index(first, v1);
-            lv2 = index(first, v2);
+            lv1 = index(first, static_cast<int>(v1));
+            lv2 = index(first, static_cast<int>(v2));
             f = next_around_halfedge_[lv2][lv1];  // (= prev_around_halfedge(lv1,lv2))
             prev = tet_adjacent(first, f);
             if (prev == -1) {
@@ -184,15 +181,15 @@ namespace easy3d {
         // Border management: infinite vertex #1
         if (prev == -1) {
             if (geometry) {
-                cell.add_to_facet(eb1, 10.0 * facet_normal(cur, f), true);
+                cell.add_to_facet(static_cast<int>(eb1), 10.0f * facet_normal(cur, f), true);
             } else {
-                cell.add_to_facet(eb1, true);
+                cell.add_to_facet(static_cast<int>(eb1), true);
             }
         }
 
         do {
-            lv1 = index(cur, v1);
-            lv2 = index(cur, v2);
+            lv1 = index(cur, static_cast<int>(v1));
+            lv2 = index(cur, static_cast<int>(v2));
             unsigned int f = next_around_halfedge_[lv1][lv2];
             unsigned int lv3 = internal::other(lv1, lv2, f);
 

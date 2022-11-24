@@ -43,7 +43,7 @@ namespace easy3d {
         namespace internal {
 
             // helper for extracting the coordinates of a polygon
-            void extract_polygon(json::const_iterator it_coordinates, std::vector<double> &coordinates) {
+            void extract_polygon(const json::const_iterator& it_coordinates, std::vector<double> &coordinates) {
                 for (auto it = it_coordinates->begin(); it != it_coordinates->end(); ++it) {
                     if (it->is_array())
                         extract_polygon(it, coordinates);
@@ -150,9 +150,11 @@ namespace easy3d {
                             first_point = false;
                         }
 
-                        face.emplace_back(
-                                builder.add_vertex(vec3(coordinates[j] - dx, coordinates[j + 1] - dy, 0))
-                        );
+                        auto v = builder.add_vertex(vec3(
+                                static_cast<float>(coordinates[j] - dx),
+                                static_cast<float>(coordinates[j + 1] - dy),
+                                0));
+                        face.emplace_back(v);
                     }
                     builder.add_face(face);
                 }

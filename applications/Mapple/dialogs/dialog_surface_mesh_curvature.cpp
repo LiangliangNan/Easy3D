@@ -44,10 +44,6 @@ DialogSurfaceMeshCurvature::DialogSurfaceMeshCurvature(MainWindow *window)
 }
 
 
-DialogSurfaceMeshCurvature::~DialogSurfaceMeshCurvature() {
-}
-
-
 void DialogSurfaceMeshCurvature::apply() {
     auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
     if (!mesh)

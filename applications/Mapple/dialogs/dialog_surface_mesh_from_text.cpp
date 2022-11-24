@@ -52,10 +52,6 @@ DialogSurfaceMeshFromText::DialogSurfaceMeshFromText(MainWindow *window) :
 }
 
 
-DialogSurfaceMeshFromText::~DialogSurfaceMeshFromText() {
-}
-
-
 void DialogSurfaceMeshFromText::setFontFile() {
     const std::string dir = resource::directory() + "/fonts";
     QString fileName = QFileDialog::getOpenFileName(this,

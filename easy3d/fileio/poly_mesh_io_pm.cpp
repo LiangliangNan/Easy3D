@@ -95,7 +95,7 @@ namespace easy3d {
                 progress.next();
             }
 
-            input.read((char*)point.data(), nv * sizeof(vec3));
+            input.read((char*)point.data(), static_cast<long>(nv * sizeof(vec3)));
             progress.next();
 
             return (mesh->n_vertices() > 0 && mesh->n_faces() > 0 && mesh->n_cells() > 0);
@@ -167,7 +167,7 @@ namespace easy3d {
                 progress.next();
             }
 
-            output.write((char*)point.data(), nv * sizeof(vec3));
+            output.write((char*)point.data(), static_cast<long>(nv * sizeof(vec3)));
             progress.next();
 
             return true;

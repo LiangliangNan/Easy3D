@@ -48,11 +48,6 @@ namespace easy3d {
     }
 
 
-    SoftShadow::~SoftShadow()
-    {
-    }
-
-
     void SoftShadow::ensure_fbo() {
         if (!fbo_) {
             fbo_ = new FramebufferObject(shadow_map_size_, shadow_map_size_, 0);
@@ -93,7 +88,7 @@ namespace easy3d {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         program->bind();
-        program->set_uniform("MVP", light_projection_matrix_ * light_view_matrix_);	easy3d_debug_log_gl_error;
+        program->set_uniform("MVP", light_projection_matrix_ * light_view_matrix_);	easy3d_debug_log_gl_error
         for (auto d : surfaces) {
             if (d->is_visible()) {
                 ClippingPlane::instance()->set_program(program);
@@ -135,9 +130,9 @@ namespace easy3d {
 
         program->bind();
         program->set_uniform("MVP", MVP);
-        program->set_uniform("SHADOW", shadow_matrix_);                    easy3d_debug_log_gl_error;
-        program->set_uniform("wLightPos", light_pos_);                     easy3d_debug_log_gl_error;
-        program->set_uniform("wCamPos", wCamPos);                          easy3d_debug_log_gl_error;
+        program->set_uniform("SHADOW", shadow_matrix_);                    easy3d_debug_log_gl_error
+        program->set_uniform("wLightPos", light_pos_);                     easy3d_debug_log_gl_error
+        program->set_uniform("wCamPos", wCamPos);                          easy3d_debug_log_gl_error
 
         program->set_uniform("samplePattern", sample_pattern_);
         program->set_uniform("darkness", darkness_);
@@ -189,7 +184,7 @@ namespace easy3d {
         }
 
         // draw the background plane
-        program->set_uniform("default_color", virtual_background_color_);				easy3d_debug_log_gl_error;
+        program->set_uniform("default_color", virtual_background_color_);				easy3d_debug_log_gl_error
         program->set_uniform("per_vertex_color", false);
         program->set_uniform("is_background", true);
         virtual_background_drawable_->gl_draw();

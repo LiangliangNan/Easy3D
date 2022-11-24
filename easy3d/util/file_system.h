@@ -287,7 +287,7 @@ namespace easy3d {
         std::string convert_to_unix_style(const std::string& path);
 
         /**
-         * @brief Convert sthe path to contain only the current platform's path separators.
+         * @brief Convert a path string such that it uses the current platform's path separators.
          * @param path The path string.
          * @return The path in native style.
          * @sa convert_to_windows_style(), convert_to_unix_style().

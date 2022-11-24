@@ -24,8 +24,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef EASY3D_WXWIDGETS_VIEWER_H
-#define EASY3D_WXWIDGETS_VIEWER_H
+#ifndef EASY3D_TUTORIAL_VIEWER_WXWIDGETS_VIEWER_H
+#define EASY3D_TUTORIAL_VIEWER_WXWIDGETS_VIEWER_H
 
 #include <easy3d/core/types.h>
 #include <wx/glcanvas.h>
@@ -48,7 +48,7 @@ namespace easy3d {
                const wxSize &size = wxDefaultSize, long style = 0,
                const wxString &title = "Easy3D-Viewer-wxWidgets");
 
-        virtual ~Viewer();
+        ~Viewer() override;
 
         /**
          * @brief Add a model from a file to the viewer to be visualized. On success, the viewer
@@ -68,11 +68,11 @@ namespace easy3d {
          * @return The pointer to the model added to the viewer (nullptr if failed).
          * @related create_drawables(Model* model).
          */
-        virtual Model* add_model(const std::string& file_name, bool create_default_drawables = true);
+        virtual Model* add_model(const std::string& file_name, bool create_default_drawables);
 
         /**
          * @brief Add an existing model to the viewer to be visualized. After a model being added
-         *        to the viewer, the viewer will be incharge of its memory menagement.
+         *        to the viewer, the viewer will be in charge of its memory management.
          * @details This method adds a model into the viewer. It allows the user to control if
          *          default drawables will be created. The default drawables are
          *          - for point clouds: "vertices".
@@ -87,7 +87,7 @@ namespace easy3d {
          * @return The pointer to the model added to the viewer (nullptr if failed).
          * @related add_model(const std::string&, bool).
          */
-        virtual Model* add_model(Model* model, bool create_default_drawables = true);
+        virtual Model* add_model(Model* model, bool create_default_drawables);
 
         /**
          * @brief Delete a model. The memory of the model will be released and its existing drawables
@@ -105,9 +105,9 @@ namespace easy3d {
 
         /**
          * @brief Query the active model.
-         * @details The viewer can manage/visiulize/process multiple models. The default behavior
+         * @details The viewer can manage/visualize/process multiple models. The default behavior
          *          of the Easy3D viewer is, when a command is triggerred (e.g., the Save menu was
-         *          clicked), only the active mdoel is processed. This method is used to identify
+         *          clicked), only the active model is processed. This method is used to identify
          *          the active model.
          * @return The active model.
          */
@@ -169,7 +169,7 @@ namespace easy3d {
          * @brief Query the scaling factor for high DPI devices (e.g., MackBook pro).
          * @return The high DPI scaling factor.
          */
-        double dpi_scaling() const;
+        float dpi_scaling() const;
 
         /**
          * @brief Set the background color of the viewer
@@ -220,7 +220,7 @@ namespace easy3d {
     private:
         Camera*	camera_;
 
-        wxGLContext *gl_contex_;
+        wxGLContext *gl_context_;
         bool initialized_;
 
         vec4	background_color_;
@@ -240,4 +240,4 @@ namespace easy3d {
 
 }
 
-#endif // #ifndef EASY3D_WXWIDGETS_VIEWER_H
+#endif // EASY3D_TUTORIAL_VIEWER_WXWIDGETS_VIEWER_H

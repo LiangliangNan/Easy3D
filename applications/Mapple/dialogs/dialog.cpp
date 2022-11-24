@@ -42,8 +42,3 @@ Dialog::Dialog(MainWindow *window)
     const Qt::WindowFlags flags = windowFlags();
     setWindowFlags(flags | Qt::Tool);
 }
-
-
-Dialog::~Dialog() {
-
-}

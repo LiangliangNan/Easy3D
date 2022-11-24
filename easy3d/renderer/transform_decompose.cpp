@@ -62,13 +62,13 @@ namespace easy3d {
             }
 
             // and remove all scaling from the matrix
-            if (scaling.x)
+            if (std::abs(scaling.x) > std::numeric_limits<float>::min())
                 vRows[0] /= scaling.x;
 
-            if (scaling.y)
+            if (std::abs(scaling.y) > std::numeric_limits<float>::min())
                 vRows[1] /= scaling.y;
 
-            if (scaling.z)
+            if (std::abs(scaling.z) > std::numeric_limits<float>::min())
                 vRows[2] /= scaling.z;
 
             // build the 3x3 rotation matrix
@@ -156,7 +156,7 @@ namespace easy3d {
                 epsilon_not_equal(LocalMatrix(3, 1), static_cast<T>(0), epsilon<T>()) ||
                 epsilon_not_equal(LocalMatrix(3, 2), static_cast<T>(0), epsilon<T>()))
             {
-                // rightHandSide is the right hand side of the equation.
+                // rightHandSide is the right-hand side of the equation.
                 vec4 RightHandSide;
                 RightHandSide[0] = LocalMatrix(3, 0);
                 RightHandSide[1] = LocalMatrix(3, 1);
@@ -258,7 +258,6 @@ namespace easy3d {
 
 #else       // the result is the same as above
 
-            int i, j, k = 0;
             T root, trace = Row[0].x + Row[1].y + Row[2].z;
             if(trace > static_cast<T>(0))
             {
@@ -272,11 +271,11 @@ namespace easy3d {
             else
             {
                 static int Next[3] = {1, 2, 0};
-                i = 0;
+                int i = 0;
                 if(Row[1].y > Row[0].x) i = 1;
                 if(Row[2].z > Row[i][i]) i = 2;
-                j = Next[i];
-                k = Next[j];
+                int j = Next[i];
+                int k = Next[j];
 
                 root = sqrt(Row[i][i] - Row[j][j] - Row[k][k] + static_cast<T>(1.0));
 

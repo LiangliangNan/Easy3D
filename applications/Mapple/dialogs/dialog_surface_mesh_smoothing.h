@@ -37,7 +37,7 @@ Q_OBJECT
 
 public:
     explicit DialogSurfaceMeshSmoothing(MainWindow *window);
-    ~DialogSurfaceMeshSmoothing();
+    ~DialogSurfaceMeshSmoothing() override = default;
 
 private Q_SLOTS:
     void apply();

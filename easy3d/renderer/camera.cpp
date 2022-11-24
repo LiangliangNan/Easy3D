@@ -158,10 +158,10 @@ namespace easy3d {
 
 	You should not call this method when the Camera is associated with a Viewer,
 	since the latter automatically updates these values when it is resized (hence
-	overwritting your values).
+	overwriting your values).
 
 	Non-positive dimension are silently replaced by a 1 pixel value to ensure
-	frustrum coherence.
+	frustum coherence.
 
 	If your Camera is used without a Viewer (offscreen rendering, shadow maps),
 	use setAspectRatio() instead to define the projection matrix. */
@@ -197,11 +197,13 @@ namespace easy3d {
 
 	 If you need a completely different zNear computation, overload the zNear() and
 	 zFar() methods in a new class that publicly inherits from Camera and use
-	 Viewer::setCamera(): \code class myCamera :: public qglviewer::Camera
-	 {
-	   virtual double Camera::zNear() const { return 0.001; };
-	   virtual double Camera::zFar() const { return 100.0; };
-	 }
+	 Viewer::setCamera():
+	 \code
+	     class MyCamera :: public Camera
+         {
+           virtual double Camera::zNear() const { return 0.001; };
+           virtual double Camera::zFar() const { return 100.0; };
+         }
 	 \endcode
 
 	 See the <a href="../examples/standardCamera.html">standardCamera example</a>
@@ -260,13 +262,12 @@ namespace easy3d {
 	/*! Defines the Camera type().
 
 	Changing the camera Type alters the viewport and the objects' sizes can be
-	changed. This method garantees that the two frustum match in a plane normal to
+	changed. This method guarantees that the two frustum match in a plane normal to
 	viewDirection(), passing through the pivotPoint().
 
 	Prefix the type with \c Camera if needed, as in:
 	\code
-	camera()->setType(Camera::ORTHOGRAPHIC);
-	// or even qglviewer::Camera::ORTHOGRAPHIC if you do not use namespace
+	    camera()->setType(Camera::ORTHOGRAPHIC);
 	\endcode */
 	void Camera::setType(Type type) {
 		// make ORTHOGRAPHIC frustum fit PERSPECTIVE (at least in plane normal to
@@ -369,7 +370,7 @@ namespace easy3d {
 		{
 		case Camera::PERSPECTIVE:
 		{
-			// #CONNECTION# all non null coefficients were set to 0.0 in constructor.
+			// #CONNECTION# all non-null coefficients were set to 0.0 in constructor.
 			const float f = 1.0f / tan(fieldOfView() / 2.0f);
 			projectionMatrix_[0] = f / aspectRatio();
 			projectionMatrix_[5] = f;
@@ -559,7 +560,7 @@ namespace easy3d {
 		const float prevDist = std::fabs(cameraCoordinatesOf(pivotPoint()).z);
 
 		// If frame's RAP is set directly, projectionMatrixIsUpToDate_ should also be
-		// set to false to ensure proper recomputation of the ORTHO projection matrix.
+		// set to 'false' to ensure proper re-computation of the ORTHO projection matrix.
 		frame()->setPivotPoint(point);
 
 		// orthoCoef_ is used to compensate for changes of the pivotPoint, so that the
@@ -588,11 +589,11 @@ namespace easy3d {
 		switch (type()) {
 		case Camera::PERSPECTIVE:
 			return 2.0f * std::fabs((frame()->coordinatesOf(position)).z) *
-				std::tan(fieldOfView() / 2.0f) / screenHeight();
+				std::tan(fieldOfView() / 2.0f) / static_cast<float>(screenHeight());
 		case Camera::ORTHOGRAPHIC: {
 			float w(0), h(0);
 			getOrthoWidthHeight(w, h);
-			return 2.0f * h / screenHeight();
+			return 2.0f * h / static_cast<float>(screenHeight());
 		}
 		}
 		// Bad compilers complain
@@ -705,14 +706,14 @@ namespace easy3d {
 
 	 You will typically use this method in Viewer::init() after you defined a new
 	 sceneRadius(). */
-	void Camera::showEntireScene() { fitSphere(sceneCenter(), sceneRadius()); }
+	void Camera::showEntireScene() const { fitSphere(sceneCenter(), sceneRadius()); }
 
 	/*! Moves the Camera so that its sceneCenter() is projected on the center of the
 	 window. The orientation() and fieldOfView() are unchanged.
 
 	 Simply projects the current position on a line passing through sceneCenter().
 	 See also showEntireScene().*/
-	void Camera::centerScene() {
+	void Camera::centerScene() const {
 		frame()->projectOnLine(sceneCenter(), viewDirection());
 	}
 
@@ -723,7 +724,7 @@ namespace easy3d {
 
 	 See also setUpVector(), setOrientation(), showEntireScene(), fitSphere() and
 	 fitBoundingBox(). */
-	void Camera::lookAt(const vec3 &target) {
+	void Camera::lookAt(const vec3 &target) const {
 		setViewDirection(target - position());
 	}
 
@@ -735,7 +736,7 @@ namespace easy3d {
 
 	 You should therefore orientate the Camera before you call this method. See
 	 lookAt(), setOrientation() and setUpVector(). */
-	void Camera::fitSphere(const vec3 &center, float radius) {
+	void Camera::fitSphere(const vec3 &center, float radius) const {
 		float distance = 0.0f;
 		switch (type()) {
 		case Camera::PERSPECTIVE: {
@@ -755,8 +756,8 @@ namespace easy3d {
 
 	/*! Moves the Camera so that the (world axis aligned) bounding box (\p min, \p
 	  max) is entirely visible, using fitSphere(). */
-	void Camera::fitBoundingBox(const vec3 &min, const vec3 &max) {
-        float radius = distance(min, max) * 0.5f;
+	void Camera::fitBoundingBox(const vec3 &min, const vec3 &max) const {
+        const float radius = distance(min, max) * 0.5f;
         const vec3& center = 0.5f * (min + max);
         fitSphere(center, radius);
 	}
@@ -769,7 +770,7 @@ namespace easy3d {
 	  3D, it's the intersection of this frustum with a plane (orthogonal to the
 	  viewDirection() and passing through the sceneCenter()) that is used to define
 	  the 3D rectangle that is eventually fitted. */
-	void Camera::fitScreenRegion(int xmin, int ymin, int xmax, int ymax) {
+	void Camera::fitScreenRegion(int xmin, int ymin, int xmax, int ymax) const {
         if (xmin == xmax || ymin == ymax)
             return;
 
@@ -826,14 +827,14 @@ namespace easy3d {
 	 the scene (default mouse binding).
 
 	 When \p noMove is \c true (default), the Camera position() is left unchanged,
-	 which is an intuitive behavior when the Camera is in a walkthrough fly mode
+	 which is an intuitive behavior when the Camera is in a walk-through fly mode
 	 (see the Viewer::MOVE_FORWARD and Viewer::MOVE_BACKWARD
 	 Viewer::MouseAction).
 
 	 The frame()'s ManipulatedFrame::sceneUpVector() is set accordingly.
 
 	 See also setViewDirection(), lookAt() and setOrientation(). */
-	void Camera::setUpVector(const vec3 &up, bool noMove) {
+	void Camera::setUpVector(const vec3 &up, bool noMove) const {
 		quat q(vec3(0.0, 1.0, 0.0), frame()->transformOf(up));
 
 		if (!noMove)
@@ -856,7 +857,7 @@ namespace easy3d {
 
 	 This method can be useful to create Quicktime VR panoramic sequences, see the
 	 Viewer::saveSnapshot() documentation for details. */
-	void Camera::setOrientation(float theta, float phi) {
+	void Camera::setOrientation(float theta, float phi) const {
 		vec3 axis(0.0f, 1.0f, 0.0f);
 		const quat rot1(axis, theta);
 		axis = vec3(-cos(theta), 0.0f, sin(theta));
@@ -865,7 +866,7 @@ namespace easy3d {
 	}
 
 	/*! Sets the Camera orientation(), defined in the world coordinate system. */
-	void Camera::setOrientation(const quat &q) {
+	void Camera::setOrientation(const quat &q) const {
 		frame()->setOrientation(q);
 	}
 
@@ -875,15 +876,15 @@ namespace easy3d {
 	 The Camera position() is not modified. The Camera is rotated so that the
 	 horizon (defined by its upVector()) is preserved. See also lookAt() and
 	 setUpVector(). */
-	void Camera::setViewDirection(const vec3 &direction) {
+	void Camera::setViewDirection(const vec3 &direction) const {
 		if (direction.length2() < 1E-10)
 			return;
 
 		vec3 xAxis = cross(direction, upVector());
 		if (xAxis.length2() < 1E-10)
 		{
-			// target is aligned with upVector, this means a rotation around X axis
-			// X axis is then unchanged, let's keep it !
+			// target is aligned with upVector, this means a rotation around the X axis.
+			// the X axis is then unchanged, let's keep it !
 			xAxis = frame()->inverseTransformOf(vec3(1.0, 0.0, 0.0));
 		}
 
@@ -946,7 +947,7 @@ namespace easy3d {
 
 	/*! Sets the Camera position() (the eye), defined in the world coordinate
 	 * system. */
-	void Camera::setPosition(const vec3 &pos) { frame()->setPosition(pos); }
+	void Camera::setPosition(const vec3 &pos) const { frame()->setPosition(pos); }
 
 	/*! Returns the Camera frame coordinates of a point \p src defined in world
 	coordinates.
@@ -977,7 +978,7 @@ namespace easy3d {
 	vec3 Camera::pivotPoint() const { return frame()->pivotPoint(); }
 
 
-	void Camera::set_from_model_view_matrix(const mat4& mv)
+	void Camera::set_from_model_view_matrix(const mat4& mv) const
 	{
 		// Get upper left (rotation) matrix
 		mat3 rot(mv);
@@ -1091,17 +1092,17 @@ namespace easy3d {
     void Camera::set_from_calibration(const mat34 &proj) {
 		// The 3 lines of the matrix are the normals to the planes x=0, y=0, z=0
 		// in the camera CS. As we normalize them, we do not need the 4th coordinate.
-        vec3 line_0 = proj.row(0);	line_0.normalize();
-        vec3 line_1 = proj.row(1);	line_1.normalize();
-        vec3 line_2 = proj.row(2);	line_2.normalize();
+        vec3 line_0 = vec3(proj.row(0));	line_0.normalize();
+        vec3 line_1 = vec3(proj.row(1));	line_1.normalize();
+        vec3 line_2 = vec3(proj.row(2));	line_2.normalize();
 
-		// The camera position is at (0,0,0) in the camera CS so it is the
+		// The camera position is at (0,0,0) in the camera CS, so it is the
 		// intersection of the 3 planes. It can be seen as the kernel
 		// of the 3x4 projection matrix. We calculate it through 4 dimensional
-		// vectorial product. We go directly into 3D that is to say we directly
+		// vector product. We go directly into 3D that is to say we directly
 		// divide the first 3 coordinates by the 4th one.
 
-		// We derive the 4 dimensional vectorial product formula from the
+		// We derive the 4 dimensional vector product formula from the
 		// computation of a 4x4 determinant that is developed according to
 		// its 4th column. This implies some 3x3 determinants.
         const mat3 m1(
@@ -1141,7 +1142,7 @@ namespace easy3d {
 		column_0.normalize();
 
 		// Y-axis is almost like line_1 but should be orthogonal to the Z axis.
-		// Moreover line_1 is downward oriented as the screen CS.
+		// Moreover, line_1 is downward oriented as the screen CS.
 		vec3 column_1 = -cross(cross(column_2, line_1), column_2);
 		column_1.normalize();
 
@@ -1173,7 +1174,7 @@ namespace easy3d {
 
 	///////////////////////// Camera to world transform ///////////////////////
 
-	/*! Returns the screen projected coordinates of a point \p src defined in the \p
+	/*! Returns the screen projected coordinates of a 3D point \p src defined in the \p
 	 frame coordinate system.
 
 	 When \p frame in \c NULL (default), \p src is expressed in the world coordinate
@@ -1264,9 +1265,9 @@ namespace easy3d {
 		// glGetIntegerv(GL_VIEWPORT, viewport);
 		const int viewport[] = { 0, 0, screenWidth_, screenHeight_ };
 		vec3 vs = mvp * tmp * 0.5f + vec3(0.5f);
-		vs.x = vs.x * viewport[2] + viewport[0];
-		vs.y = vs.y * viewport[3] + viewport[1];
-		return vec3(vs.x, viewport[3] - 1 - vs.y, vs.z);
+		vs.x = vs.x * static_cast<float>(viewport[2]) + static_cast<float>(viewport[0]);
+		vs.y = vs.y * static_cast<float>(viewport[3]) + static_cast<float>(viewport[1]);
+		return vec3(vs.x, static_cast<float>(viewport[3]) - 1.0f - vs.y, vs.z);
 	}
 
 	/*! Returns the world unprojected coordinates of a point \p src defined in the
@@ -1305,9 +1306,9 @@ namespace easy3d {
 		const mat4& mvp = modelViewProjectionMatrix();
 
 		const int viewport[] = { 0, 0, screenWidth_, screenHeight_ };
-		vec3 vs(src.x, viewport[3] - 1 - src.y, src.z);
-		vs.x = (float)(vs.x - viewport[0]) / (float)viewport[2] * 2.0f - 1.0f;
-		vs.y = (float)(vs.y - viewport[1]) / (float)viewport[3] * 2.0f - 1.0f;
+		vec3 vs(src.x, static_cast<float>(viewport[3]) - 1.0f - src.y, src.z);
+		vs.x = (vs.x - static_cast<float>(viewport[0])) / static_cast<float>(viewport[2]) * 2.0f - 1.0f;
+		vs.y = (vs.y - static_cast<float>(viewport[1])) / static_cast<float>(viewport[3]) * 2.0f - 1.0f;
 		vs.z = vs.z * 2.0f - 1.0f;
 
 		vec3 p = inverse(mvp) * vs;
@@ -1333,11 +1334,11 @@ namespace easy3d {
 		switch (type()) {
 		case Camera::PERSPECTIVE:
 			orig = position();
-			dir = vec3(((2.0f * x / screenWidth()) - 1.0f) *
-				tan(fieldOfView() / 2.0f) * aspectRatio(),
-				((2.0f * (screenHeight() - y) / screenHeight()) - 1.0f) *
-				tan(fieldOfView() / 2.0f),
-				-1.0f);
+                dir = vec3(
+                        ((2.0f * static_cast<float>(x) / static_cast<float>(screenWidth())) - 1.0f) * std::tan(fieldOfView() / 2.0f) * aspectRatio(),
+                        ((2.0f * static_cast<float>(screenHeight() - y) / static_cast<float>(screenHeight())) - 1.0f) * std::tan(fieldOfView() / 2.0f),
+                        -1.0f
+                );
 			dir = worldCoordinatesOf(dir) - orig;
 			dir.normalize();
 			break;
@@ -1345,8 +1346,11 @@ namespace easy3d {
 		case Camera::ORTHOGRAPHIC: {
 			float w, h;
 			getOrthoWidthHeight(w, h);
-			orig = vec3((2.0f * x / screenWidth() - 1.0f) * w,
-				-(2.0f * y / screenHeight() - 1.0f) * h, 0.0f);
+            orig = vec3(
+                    (2.0f * static_cast<float>(x) / static_cast<float>(screenWidth()) - 1.0f) * w,
+                    -(2.0f * static_cast<float>(y) / static_cast<float>(screenHeight()) - 1.0f) * h,
+                    0.0f
+            );
 			orig = worldCoordinatesOf(orig);
 			dir = viewDirection();
 			break;
@@ -1420,7 +1424,7 @@ namespace easy3d {
 			// dist[2] = (pos + zNear() * viewDir) * normal[2];
 			// dist[3] = (pos + zFar()  * viewDir) * normal[3];
 
-			// 2 times less computations using expanded/merged equations. Dir vectors are normalized.
+			// 2 times less computation using expanded/merged equations. Dir vectors are normalized.
 			const float posRightCosHH = chhfov * dot(pos, right);
 			dist[0] = -shhfov * posViewDir;
 			dist[1] = dist[0] + posRightCosHH;
@@ -1468,7 +1472,7 @@ namespace easy3d {
 	 */
 	void Camera::getFrustumPlanesCoefficients2(float frustum[6][4]) const
 	{
-        // First of all, let's assume that we're going to store the frustum values in a variable like this:
+        // First, let's assume that we're going to store the frustum values in a variable like this:
         // float frustum[6][4];
         // That's six sets of four numbers (six planes, each with an A, B, C, and D value).
 		const mat4& clip = modelViewProjectionMatrix();
@@ -1690,8 +1694,7 @@ namespace easy3d {
 	//
 	// * QUICK NOTES * 
 	//
-	// WOZZERS!  That seemed like an incredible amount to look at, but if you break it
-	// down, it's not.  Frustum culling is a VERY useful thing when it comes to 3D.
+	// Frustum culling is a VERY useful thing when it comes to 3D.
 	// If you want a large world, there is no way you are going to send it down the
 	// 3D pipeline every frame and let OpenGL take care of it for you.  That would
 	// give you a 0.001 frame rate.  If you hit '+' and bring the sphere count up to
@@ -1700,7 +1703,7 @@ namespace easy3d {
 	// use the sphere code for larger objects.  Let me explain.  Say you have a bunch
 	// of objects, well... all you need to do is give the objects a radius, and then
 	// test that radius against the frustum.  If that sphere is in the frustum, then you
-	// render that object.  Also, you won't be rendering a high poly sphere so it won't
+	// render that object.  Also, you won't be rendering a high poly sphere, so it won't
 	// be so slow.  This goes for bounding box's too (Cubes).  If you don't want to
 	// do a cube, it is really easy to convert the code for rectangles.  Just pass in
 	// a width and height, instead of just a length.  Remember, it's HALF the length of
@@ -1725,7 +1728,7 @@ namespace easy3d {
 	//
 	// 2) Next, we need to combine these 2 matrices.  We do that by matrix multiplication.
 	//
-	// 3) Now that we have the 2 matrixes combined, we can abstract the sides of the frustum.
+	// 3) Now that we have the 2 matrices combined, we can abstract the sides of the frustum.
 	//    This will give us the normal and the distance from the plane to the origin (ABC and D).
 	//
 	// 4) After abstracting a side, we want to normalize the plane data.  (A B C and D).
@@ -1744,7 +1747,7 @@ namespace easy3d {
 	// That's pretty much it with frustums.  There is a lot more we could talk about, but
 	// I don't want to complicate this tutorial more than I already have.
 	//
-	// I want to thank Mark Morley for his tutorial on frustum culling.  Most of everything I got
+	// I want to thank Mark Morley for his tutorial on frustum culling. Most everything I got
 	// here comes from his teaching.  If you want more in-depth, visit his tutorial at:
 	//
 	// http://www.markmorley.com/opengl/frustumculling.html

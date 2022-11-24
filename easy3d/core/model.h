@@ -50,11 +50,11 @@ namespace easy3d {
     public:
         /// \brief Default constructor.
         /// The parameter \p name is optional, but it is useful for handling multiple models with the same viewer.
-        Model(const std::string& name = "unknown");
-        virtual ~Model();
+        explicit Model(const std::string& name = "unknown");
+        virtual ~Model() = default;
 
         /// \brief Sets/Changes the name of a model.
-        /// Asigning a name to a model is optional, but it is useful for handling multiple models with the same viewer.
+        /// Assigning a name to a model is optional, but it is useful for handling multiple models with the same viewer.
         void set_name(const std::string& n) { name_ = n; }
         /// \brief The name of a model.
         const std::string& name() const { return name_; }

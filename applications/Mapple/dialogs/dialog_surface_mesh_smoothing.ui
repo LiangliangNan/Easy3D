@@ -29,7 +29,7 @@
      <item row="1" column="0">
       <widget class="QLabel" name="labelIterations">
        <property name="text">
-        <string>Interations</string>
+        <string>Iterations</string>
        </property>
       </widget>
      </item>

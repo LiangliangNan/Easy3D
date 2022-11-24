@@ -19,7 +19,7 @@ set(${module}_headers
         plane.h
         point_cloud.h
         principal_axes.h
-        properties.h
+        property.h
         quat.h
         random.h
         rect.h

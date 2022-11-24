@@ -43,7 +43,7 @@ class DialogWalkThrough : public Dialog, public Ui::DialogWalkThroughClass
 
 public:
     explicit DialogWalkThrough(MainWindow *window);
-	~DialogWalkThrough();
+	~DialogWalkThrough() override = default;
 
     easy3d::KeyFrameInterpolator* interpolator();
     WalkThrough* walkThrough();
@@ -83,8 +83,8 @@ signals:
     void previewStopped();
 
 protected:
-	virtual	void showEvent(QShowEvent* e);
-	virtual void closeEvent(QCloseEvent* e);
+    void showEvent(QShowEvent* e) override;
+    void closeEvent(QCloseEvent* e) override;
 
     void numKeyramesChanged();
 };

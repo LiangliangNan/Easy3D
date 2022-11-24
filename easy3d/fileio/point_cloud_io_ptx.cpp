@@ -26,9 +26,6 @@
 
 #include <easy3d/fileio/point_cloud_io_ptx.h>
 
-#include <cassert>
-#include <fstream>
-
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/line_stream.h>
@@ -51,12 +48,11 @@ namespace easy3d {
 		}
 
 
-		PointCloudIO_ptx::~PointCloudIO_ptx() {
-			if (input_)
-				delete input_;
-			if (in_)
-				delete in_;
-		}
+        PointCloudIO_ptx::~PointCloudIO_ptx() {
+            delete input_;
+            delete in_;
+        }
+
 
 		// read a single point from the file
 		PointCloud* PointCloudIO_ptx::load_next() {
@@ -107,9 +103,9 @@ namespace easy3d {
 
 				//read sensor transformation matrix
 				vec3 v3[4];
-				for (int i = 0; i < 4; ++i) {
+				for (auto& v : v3) {
 					in.get_line();
-					in >> v3[i];
+					in >> v;
 					if (in.fail()) {
                         LOG_N_TIMES(3, ERROR) << "failed reading sensor transformation matrix. " << COUNTER;
 						return nullptr;
@@ -119,9 +115,9 @@ namespace easy3d {
 
 				//read cloud transformation matrix
 				vec4 v4[4];
-				for (int i = 0; i < 4; ++i) {
+				for (auto& v : v4) {
 					in.get_line();
-					in >> v4[i];
+					in >> v;
 					if (in.fail()) {
                         LOG_N_TIMES(3, ERROR) << "failed reading point cloud transformation matrix. " << COUNTER;
 						return nullptr;
@@ -131,13 +127,13 @@ namespace easy3d {
 			}
 
 			//now we can read the grid cells
-			PointCloud* cloud = new PointCloud;
+			auto cloud = new PointCloud;
             const std::string& cloud_name = file_system::name_less_extension(file_name_) + "-#" + std::to_string(cloud_index_);
 			cloud->set_name(cloud_name);
 
-			PointCloud::VertexProperty<vec3> colors;;
+			PointCloud::VertexProperty<vec3> colors;
 
-			// read the first line, to test if has color information
+			// read the first line to test if it has color information
 			float intensity;
 			vec3 p;
 			in.get_line();

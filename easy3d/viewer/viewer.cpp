@@ -29,13 +29,6 @@
 #include <chrono>
 #include <iostream>
 
-
-#if !defined(_WIN32)
-#  include <unistd.h>
-#  include <sys/wait.h>
-#endif
-
-
 #include <easy3d/renderer/opengl.h>        // Initialize with glewInit()
 #include <3rd_party/glfw/include/GLFW/glfw3.h>    // Include glfw3.h after our OpenGL definitions
 
@@ -138,7 +131,7 @@ namespace easy3d {
                                 depth_bits, stencil_bits, width, height);
         setup_callbacks(window_);
 
-        // create and setup the camera
+        // create and set up the camera
         camera_ = new Camera;
         camera_->setType(Camera::PERSPECTIVE);
         camera_->setUpVector(vec3(0, 0, 1)); // Z pointing up
@@ -680,6 +673,8 @@ namespace easy3d {
                     if (std::abs(dy) >= 1)
                         camera_->frame()->action_zoom(dy > 0 ? 1 : -1, camera_);
                     break;
+                default:
+                    break;
             }
         }
 
@@ -729,10 +724,10 @@ namespace easy3d {
         }
 
         else if (key == GLFW_KEY_LEFT && modifiers == 0) {
-            float angle = static_cast<float>(1 * M_PI / 180.0); // turn left, 1 degrees each step
+            auto angle = static_cast<float>(1 * M_PI / 180.0); // turn left, 1 degrees each step
             camera_->frame()->action_turn(angle, camera_);
         } else if (key == GLFW_KEY_RIGHT && modifiers == 0) {
-            float angle = static_cast<float>(1 * M_PI / 180.0); // turn right, 1 degrees each step
+            auto angle = static_cast<float>(1 * M_PI / 180.0); // turn right, 1 degrees each step
             camera_->frame()->action_turn(-angle, camera_);
         } else if (key == GLFW_KEY_UP && modifiers == 0) {    // move camera forward
             float step = 0.05f * camera_->sceneRadius();
@@ -916,14 +911,14 @@ namespace easy3d {
 					drawable->set_visible(!drawable->is_visible());
             }
         } else if (key == GLFW_KEY_B && modifiers == 0) {
-            SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(current_model());
+            auto mesh = dynamic_cast<SurfaceMesh *>(current_model());
             if (mesh) {
                 auto drawable = mesh->renderer()->get_lines_drawable("borders");
                 if (drawable)
                     drawable->set_visible(!drawable->is_visible());
             }
         } else if (key == GLFW_KEY_L && modifiers == 0) { // locked vertices
-            SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(current_model());
+            auto mesh = dynamic_cast<SurfaceMesh *>(current_model());
             if (mesh) {
                 auto drawable = mesh->renderer()->get_points_drawable("locks");
                 if (drawable)
@@ -1027,14 +1022,14 @@ namespace easy3d {
 
         // NOTE: when dealing with OpenGL, we always work in the highdpi screen space
 #if defined(__APPLE__)
-        glx = static_cast<int>(glx * dpi_scaling());
-        gly = static_cast<int>(gly * dpi_scaling());
+        glx = static_cast<int>(static_cast<float>(glx) * dpi_scaling());
+        gly = static_cast<int>(static_cast<float>(gly) * dpi_scaling());
 #endif
         float depth = std::numeric_limits<float>::max();
         glPixelStorei(GL_PACK_ALIGNMENT, 1);
-        easy3d_debug_log_gl_error;
+        easy3d_debug_log_gl_error
         glReadPixels(glx, gly, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
-        easy3d_debug_log_gl_error;
+        easy3d_debug_log_gl_error
         found = depth < 1.0f;
         if (found) {
             vec3 point(float(x), float(y), depth);
@@ -1532,7 +1527,7 @@ namespace easy3d {
         if (!drawable_axes_->is_visible())
             return;
 
-        // The viewport and the scissor are changed to fit the lower left corner.
+        // The viewport and scissor box are changed to fit the lower left corner.
         int viewport[4], scissor[4];
         glGetIntegerv(GL_VIEWPORT, viewport);
         glGetIntegerv(GL_SCISSOR_BOX, scissor);
@@ -1686,12 +1681,14 @@ namespace easy3d {
             c /= count;
 
             const vec3 p = camera()->projectedCoordinatesOf(c);
-            float x = p.x * dpi_scaling_;
-            float y = (height() - 1 - p.y) * dpi_scaling_;
+            const float x = p.x * dpi_scaling_;
+            const float y = (static_cast<float>(height()) - 1.0f - p.y) * dpi_scaling_;
 
             float depth = 1.0f;
-            glPixelStorei(GL_PACK_ALIGNMENT, 1);    easy3d_debug_log_gl_error;
-            glReadPixels(static_cast<int>(x), static_cast<int>(y), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth); easy3d_debug_log_gl_error;
+            glPixelStorei(GL_PACK_ALIGNMENT, 1);
+            easy3d_debug_log_gl_error
+            glReadPixels(static_cast<int>(x), static_cast<int>(y), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+            easy3d_debug_log_gl_error
             if (depth < 1.0 && p.z < 1.0 && std::abs(depth - p.z) < 0.001)
                 texter->draw(std::to_string(f.idx()), x, p.y * dpi_scaling_, 16, font_id, color);
         }
@@ -1704,12 +1701,14 @@ namespace easy3d {
         for (std::size_t id = 0; id < points.size(); ++id) {
             const vec3& v = points[id];
             const vec3 p = camera()->projectedCoordinatesOf(v);
-            float x = p.x * dpi_scaling_;
-            float y = (height() - 1 - p.y) * dpi_scaling_;
+            const float x = p.x * dpi_scaling_;
+            const float y = (static_cast<float>(height()) - 1.0f - p.y) * dpi_scaling_;
 
             float depth = 1.0f;
-            glPixelStorei(GL_PACK_ALIGNMENT, 1);    easy3d_debug_log_gl_error;
-            glReadPixels(static_cast<int>(x), static_cast<int>(y), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth); easy3d_debug_log_gl_error;
+            glPixelStorei(GL_PACK_ALIGNMENT, 1);
+            easy3d_debug_log_gl_error
+            glReadPixels(static_cast<int>(x), static_cast<int>(y), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+            easy3d_debug_log_gl_error
             if (depth < 1.0 && p.z < 1.0 && std::abs(depth - p.z) < 0.001)
                 texter->draw(std::to_string(id), x, p.y * dpi_scaling_, 16, font_id, color);
         }
@@ -1775,14 +1774,16 @@ namespace easy3d {
             std::size_t count = 0;
             for (auto d : m->renderer()->lines_drawables()) {
                 if (d->is_visible()) {
-                    d->draw(camera()); easy3d_debug_log_gl_error;
+                    d->draw(camera());
+                    easy3d_debug_log_gl_error
                     ++count;
                 }
             }
 
             for (auto d : m->renderer()->points_drawables()) {
                 if (d->is_visible())
-                    d->draw(camera()); easy3d_debug_log_gl_error;
+                    d->draw(camera());
+                easy3d_debug_log_gl_error
             }
 
             if (count > 0) {
@@ -1791,7 +1792,8 @@ namespace easy3d {
             }
             for (auto d : m->renderer()->triangles_drawables()) {
                 if (d->is_visible())
-                    d->draw(camera()); easy3d_debug_log_gl_error;
+                    d->draw(camera());
+                easy3d_debug_log_gl_error
             }
             if (count > 0)
                 glDisable(GL_POLYGON_OFFSET_FILL);

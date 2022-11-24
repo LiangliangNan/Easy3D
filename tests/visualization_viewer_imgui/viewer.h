@@ -45,7 +45,7 @@ namespace easy3d {
     class ViewerImGui : public Viewer
 	{
 	public:
-        ViewerImGui(
+        explicit ViewerImGui(
             const std::string& title = "Easy3D ImGui Viewer",
 			int samples = 4,
 			int gl_major = 3,
@@ -55,6 +55,8 @@ namespace easy3d {
 			int depth_bits = 24,
 			int stencil_bits = 8
 		);
+
+        ~ViewerImGui() override;
 
 	protected:
 
@@ -66,8 +68,6 @@ namespace easy3d {
 
 		//  the widgets
 		void post_draw() override;
-
-		void cleanup() override;
 
 		void post_resize(int w, int h) override;
 

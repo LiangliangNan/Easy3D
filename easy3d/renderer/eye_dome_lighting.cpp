@@ -52,10 +52,10 @@ namespace easy3d {
     {
         // init neighbors in image space
         for (int c = 0; c < 8; c++) {
-            float x = static_cast<float>(std::cos(2 * M_PI * c / 8.0));
-            float y = static_cast<float>(std::sin(2 * M_PI * c / 8.0));
-            neighbours_[c][0] = x / sqrt(x*x + y*y);
-            neighbours_[c][1] = y / sqrt(x*x + y*y);
+            auto x = static_cast<float>(std::cos(2 * M_PI * c / 8.0));
+            auto y = static_cast<float>(std::sin(2 * M_PI * c / 8.0));
+            neighbours_[c][0] = x / std::sqrt(x*x + y*y);
+            neighbours_[c][1] = y / std::sqrt(x*x + y*y);
             neighbours_[c][2] = 0.;
             neighbours_[c][3] = 0.;
         }
@@ -87,11 +87,18 @@ namespace easy3d {
 
         //  EDL-RES2 FBO and TEXTURE
         if (!low_fbo_) {
-            low_fbo_ = new FramebufferObject(w / low_res_factor_, h / low_res_factor_, 0);
+            low_fbo_ = new FramebufferObject(
+                    static_cast<int>(static_cast<float>(w) / low_res_factor_),
+                    static_cast<int>(static_cast<float>(h) / low_res_factor_),
+                    0
+            );
             low_fbo_->add_color_texture(GL_RGBA32F, GL_RGBA, GL_FLOAT);	// color render target for EDL low res pass
             low_fbo_->add_color_texture(GL_RGBA32F, GL_RGBA, GL_FLOAT);	// color render target for EDL low res bilateral filter pass
         }
-        low_fbo_->ensure_size(w / low_res_factor_, h / low_res_factor_);
+        low_fbo_->ensure_size(
+                static_cast<int>(static_cast<float>(w) / low_res_factor_),
+                static_cast<int>(static_cast<float>(h) / low_res_factor_)
+        );
     }
 
 
@@ -182,8 +189,8 @@ namespace easy3d {
         //  VARIABLES
         float d = 2.0f;
         float F_scale = 5.0f;
-        float SX = 1.0f / float(width_ / low_res_factor_);
-        float SY = 1.0f / float(height_ / low_res_factor_);
+        float SX = 1.0f / (static_cast<float>(width_) / low_res_factor_);
+        float SY = 1.0f / (static_cast<float>(height_) / low_res_factor_);
         float L[3] = { 0.0f, 0.0f, -1.0f };
 
         low_fbo_->bind();
@@ -203,7 +210,12 @@ namespace easy3d {
         shade_program_->set_uniform("Znear", z_near_);
         shade_program_->set_uniform("Zfar", z_far_);
 
-        shape::draw_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0, 0, width_ / low_res_factor_, height_ / low_res_factor_, width_, height_, 0.0f);
+        shape::draw_quad(
+                ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0, 0,
+                static_cast<int>(static_cast<float>(width_) / low_res_factor_),
+                static_cast<int>(static_cast<float>(height_) / low_res_factor_),
+                width_, height_, 0.0f
+        );
 
         shade_program_->release_texture();
         shade_program_->release();
@@ -218,8 +230,8 @@ namespace easy3d {
             return;
 
         // shader parameters
-        float SX = 1.0f / float(width_ / low_res_factor_);
-        float SY = 1.0f / float(height_ / low_res_factor_);
+        float SX = 1.0f / (static_cast<float>(width_) / low_res_factor_);
+        float SY = 1.0f / (static_cast<float>(height_) / low_res_factor_);
         int EDL_Bilateral_N = 5;
         float EDL_Bilateral_Sigma = 2.5f;
 
@@ -237,7 +249,11 @@ namespace easy3d {
         blur_program_->set_uniform("N", EDL_Bilateral_N);
         blur_program_->set_uniform("sigma", EDL_Bilateral_Sigma);
 
-        shape::draw_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0, 0, width_ / low_res_factor_, height_ / low_res_factor_, width_, height_, 0.0f);
+        shape::draw_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0, 0,
+                         static_cast<int>(static_cast<float>(width_) / low_res_factor_),
+                         static_cast<int>(static_cast<float>(height_) / low_res_factor_),
+                         width_, height_, 0.0f
+        );
 
         blur_program_->release_texture();
         blur_program_->release();
@@ -322,9 +338,9 @@ namespace easy3d {
 
     void EyeDomeLighting::clear()
     {
-        delete projection_fbo_;	projection_fbo_ = nullptr; 	easy3d_debug_log_gl_error;
-        delete high_fbo_;		high_fbo_ = nullptr;       easy3d_debug_log_gl_error;
-        delete low_fbo_;		low_fbo_ = nullptr; 		easy3d_debug_log_gl_error;
+        delete projection_fbo_;	projection_fbo_ = nullptr; 	easy3d_debug_log_gl_error
+        delete high_fbo_;		high_fbo_ = nullptr;        easy3d_debug_log_gl_error
+        delete low_fbo_;		low_fbo_ = nullptr; 		easy3d_debug_log_gl_error
     }
 
 }

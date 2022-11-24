@@ -40,7 +40,7 @@
 #include <easy3d/renderer/texture.h>
 #include <easy3d/util/setting.h>
 
-//#define SAVE_ITERMEDIATE_FBO
+//#define SAVE_INTERMEDIATE_FBO
 //#define SHOW_DEBUG_INFO
 
 namespace easy3d {
@@ -107,7 +107,7 @@ namespace easy3d {
         num_geom_passes_ = 0;
         current_peel_ = 0;
 
-    #ifdef SAVE_ITERMEDIATE_FBO
+    #ifdef SAVE_INTERMEDIATE_FBO
         if (file_system::is_directory("snapshotBuffers")) {
             std::vector<std::string> files;
             file_system::get_files("snapshotBuffers", files, false);
@@ -136,23 +136,23 @@ namespace easy3d {
     }
 
 
-    bool DualDepthPeeling::peeling_done()
+    bool DualDepthPeeling::peeling_done() const
     {
         return current_peel_ >= max_peels_ ||
             num_written_pixels_ <= occlusion_threshold_;
     }
 
 
-    void DualDepthPeeling::start_occlusion_query()
+    void DualDepthPeeling::start_occlusion_query() const
     {
         // ES 3.0 only supports checking if *any* samples passed. We'll just use
         // that query to stop peeling once all frags are processed, and ignore the
         // requested occlusion ratio.
     #ifdef GL_ES_VERSION_3_0
         glBeginQuery(GL_ANY_SAMPLES_PASSED, occlusion_query_Id_);
-    #else // GL ES 3.0
+    #else  // GL_ES_VERSION_3_0
         glBeginQuery(GL_SAMPLES_PASSED, occlusion_query_Id_);
-    #endif // GL ES 3.0
+    #endif // GL_ES_VERSION_3_0
     }
 
 
@@ -163,10 +163,10 @@ namespace easy3d {
         GLuint anySamplesPassed;
         glGetQueryObjectuiv(occlusion_query_Id_, GL_QUERY_RESULT, &anySamplesPassed);
         num_written_pixels_ = anySamplesPassed ? occlusion_threshold_ + 1 : 0;
-    #else // GL ES 3.0
+    #else  // GL_ES_VERSION_3_0
         glEndQuery(GL_SAMPLES_PASSED);
         glGetQueryObjectuiv(occlusion_query_Id_, GL_QUERY_RESULT, &num_written_pixels_);
-    #endif // GL ES 3.0
+    #endif // GL_ES_VERSION_3_0
     }
 
 
@@ -213,9 +213,9 @@ namespace easy3d {
                         ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal")
                 };
                 std::vector<std::string> outputs;
-                outputs.push_back("fragOutput0");
-                outputs.push_back("fragOutput1");
-                outputs.push_back("fragOutput2");
+                outputs.emplace_back("fragOutput0");
+                outputs.emplace_back("fragOutput1");
+                outputs.emplace_back("fragOutput2");
                 program = ShaderManager::create_program_from_files(name, attributes, outputs);
             }
             if (!program)
@@ -272,7 +272,7 @@ namespace easy3d {
                 }
             }
             program->release_texture();
-            program->release();   easy3d_debug_log_gl_error;
+            program->release();   easy3d_debug_log_gl_error
         }
 
         ++num_geom_passes_;
@@ -292,19 +292,19 @@ namespace easy3d {
             static_cast<unsigned int>(Back),
             static_cast<unsigned int>(front_source_)
         };
-        fbo_->activate_draw_buffers(2, targets);	easy3d_debug_log_gl_error;
+        fbo_->activate_draw_buffers(2, targets);	easy3d_debug_log_gl_error
         glClearColor(0, 0, 0, 0);
         glClear(GL_COLOR_BUFFER_BIT);
 
         // Render target depth_source_ stores (-minDepth, maxDepth, alphaMultiplier)
-        fbo_->activate_draw_buffer(depth_source_);	easy3d_debug_log_gl_error;
+        fbo_->activate_draw_buffer(depth_source_);	easy3d_debug_log_gl_error
         glClearColor(-1, -1, 0, 0);
         glClear(GL_COLOR_BUFFER_BIT);
         glBlendEquation(GL_MAX);
 
         geometry_pass(surfaces);
 
-    #ifdef SAVE_ITERMEDIATE_FBO
+    #ifdef SAVE_INTERMEDIATE_FBO
         fbo_->snapshot_color_ppm(depth_source_, "snapshotBuffers/01.ppm");
     #endif
     }
@@ -340,7 +340,7 @@ namespace easy3d {
 
         // Since we cannot blend the back colors in the geometry passes,
         // we use another render target to do the alpha blending
-        fbo_->activate_draw_buffer(Back);	easy3d_debug_log_gl_error;
+        fbo_->activate_draw_buffer(Back);	easy3d_debug_log_gl_error
         glClearColor(bkg_color_[0], bkg_color_[1], bkg_color_[2], 0);
         glClear(GL_COLOR_BUFFER_BIT);
 
@@ -402,7 +402,7 @@ namespace easy3d {
 
         geometry_pass(surfaces);
 
-    #ifdef SAVE_ITERMEDIATE_FBO
+    #ifdef SAVE_INTERMEDIATE_FBO
         fbo_->snapshot_color_ppm(depth_destination_, "snapshotBuffers/02.ppm");
         fbo_->snapshot_color_ppm(front_destination_, "snapshotBuffers/03.ppm");
         fbo_->snapshot_color_ppm(BackTemp, "snapshotBuffers/04.ppm");
@@ -435,7 +435,7 @@ namespace easy3d {
         program->release_texture();
         program->release();
 
-    #ifdef SAVE_ITERMEDIATE_FBO
+    #ifdef SAVE_INTERMEDIATE_FBO
         fbo_->snapshot_color_ppm(Back, "snapshotBuffers/05.ppm");
     #endif
 

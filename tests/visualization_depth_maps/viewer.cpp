@@ -50,13 +50,11 @@ DepthImage::DepthImage(const std::string& title)
 }
 
 
-void DepthImage::cleanup() {
-    if (fbo_) {
-        delete fbo_;
-        fbo_ = nullptr;
-    }
+DepthImage::~DepthImage() {
+    delete fbo_;
 
-    Viewer::cleanup();
+    // Not needed: it will be called in the destructor of the base class
+    //Viewer::cleanup();
 }
 
 

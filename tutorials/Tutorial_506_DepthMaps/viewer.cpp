@@ -50,13 +50,11 @@ DepthImage::DepthImage(const std::string& title)
 }
 
 
-void DepthImage::cleanup() {
-    if (fbo_) {
-        delete fbo_;
-        fbo_ = nullptr;
-    }
+DepthImage::~DepthImage() {
+    delete fbo_;
 
-    Viewer::cleanup();
+    // Not needed: it will be called in the destructor of the base class
+    //Viewer::cleanup();
 }
 
 
@@ -100,21 +98,21 @@ void DepthImage::generate_depth() {
 
 
 void DepthImage::draw_depth() const {
-    DepthImage* viewer = const_cast<DepthImage*>(this);
-    int w = width() * dpi_scaling();
-    int h = height() * dpi_scaling();
+    auto viewer = const_cast<DepthImage*>(this);
+    auto w = static_cast<float>(width()) * dpi_scaling();
+    auto h = static_cast<float>(height()) * dpi_scaling();
 
     if (!fbo_) {
         const int samples = 0;
-        viewer->fbo_ = new FramebufferObject(w, h, samples);
+        viewer->fbo_ = new FramebufferObject(static_cast<int>(w), static_cast<int>(h), samples);
         viewer->fbo_->add_depth_texture(GL_DEPTH_COMPONENT32F, GL_LINEAR, GL_COMPARE_REF_TO_TEXTURE, GL_LEQUAL);
     }
-    fbo_->ensure_size(w, h);
+    fbo_->ensure_size(static_cast<int>(w), static_cast<int>(h));
 
     // generate
     viewer->generate_depth();
 
     const Rect quad(20 * dpi_scaling(), 20 * dpi_scaling() + w/4, 40 * dpi_scaling(), 40 * dpi_scaling() + h/4);
-    shape::draw_depth_texture(quad, fbo_->depth_texture(), w, h, -0.9f);
-    shape::draw_quad_wire(quad, vec4(1.0f, 0.0f, 0.0f, 1.0f), w, h, -0.99f);
+    shape::draw_depth_texture(quad, fbo_->depth_texture(), static_cast<int>(w), static_cast<int>(h), -0.9f);
+    shape::draw_quad_wire(quad, vec4(1.0f, 0.0f, 0.0f, 1.0f), static_cast<int>(w), static_cast<int>(h), -0.99f);
 }

@@ -40,9 +40,9 @@
 namespace easy3d {
 
 
-    // \cond
     namespace io {
 
+        // \cond
 
 #define VERTEX  "vertex"
 #define FACE    "face"
@@ -85,21 +85,11 @@ namespace easy3d {
         }
 
 
-        bool PlyWriter::is_big_endian() {
-            const int i = 1;
-            const char *p = reinterpret_cast<const char *>(&i);
-            if (p[0] == 1) // Lowest address contains the least significant byte
-                return false; // LITTLE_ENDIAN
-            else
-                return true; // BIG_ENDIAN
-        }
-
-
         bool PlyWriter::write(
                 const std::string &file_name,
                 const std::vector<Element> &elements,
                 const std::string &comment /* = "" */,
-                bool binary /* = false */) const {
+                bool binary /* = false */) {
             e_ply_storage_mode mode = PLY_DEFAULT;
             if (binary) {
                 if (is_big_endian())
@@ -131,16 +121,14 @@ namespace easy3d {
             e_ply_type length_type = PLY_UCHAR;
 #ifndef NDEBUG
             // warn the user if the number of vertices in a face is greater than 255
-            for (std::size_t i = 0; i < elements.size(); ++i) {
-                if (elements[i].name == FACE) {
-                    const std::vector<IntListProperty> &int_list_properties = elements[i].int_list_properties;
-                    for (std::size_t j = 0; j < int_list_properties.size(); ++j) {
-                        if (int_list_properties[j].name == "vertex_indices") {
-                            const IntListProperty &property = int_list_properties[j];
-                            for (std::size_t k = 0; k < property.size(); ++k) {
-                                if (property[k].size() > 255) {
+            for (const auto& e : elements) {
+                if (e.name == FACE) {
+                    for (const auto& property : e.int_list_properties) {
+                        if (property.name == "vertex_indices") {
+                            for (const auto& p : property) {
+                                if (p.size() > 255) {
                                     length_type = PLY_UINT;
-                                    LOG(WARNING) << "face has " << property[k].size()
+                                    LOG(WARNING) << "face has " << p.size()
                                                  << " vertices, thus the length field of the list property 'vertex_indices'"
                                                     " is set to PLY_UINT (this might not be recognized by other software)";
                                 }
@@ -153,9 +141,9 @@ namespace easy3d {
             }
 #endif
 
-            for (std::size_t i = 0; i < elements.size(); ++i) {
-                const std::string &element_name = elements[i].name;
-                const std::size_t num = elements[i].num_instances;
+            for (const auto& e : elements) {
+                const std::string &element_name = e.name;
+                const std::size_t num = e.num_instances;
 
                 // add elements
                 if (!ply_add_element(ply, element_name.data(), static_cast<long>(num))) {
@@ -168,9 +156,8 @@ namespace easy3d {
                 // add properties
 
                 // int list properties
-                const std::vector<IntListProperty> &int_list_properties = elements[i].int_list_properties;
-                for (std::size_t j = 0; j < int_list_properties.size(); ++j) {
-                    const std::string &name = int_list_properties[j].name;
+                for (const auto& property : e.int_list_properties) {
+                    const std::string &name = property.name;
                     if (!ply_add_property(ply, name.data(), PLY_LIST, length_type, PLY_INT)) {
                         LOG(ERROR) << "failed to add int_list property '" << name << "' for element '" << element_name
                                    << "'";
@@ -180,9 +167,8 @@ namespace easy3d {
                 }
 
                 // float list properties
-                const std::vector<FloatListProperty> &float_list_properties = elements[i].float_list_properties;
-                for (std::size_t j = 0; j < float_list_properties.size(); ++j) {
-                    const std::string &name = float_list_properties[j].name;
+                for (const auto& property : e.float_list_properties) {
+                    const std::string &name = property.name;
                     if (!ply_add_property(ply, name.data(), PLY_LIST, length_type, PLY_FLOAT)) {
                         LOG(ERROR) << "failed to add float_list property '" << name << "' for element '" << element_name
                                    << "'";
@@ -192,9 +178,8 @@ namespace easy3d {
                 }
 
                 // vector properties: vec3
-                const std::vector<Vec3Property> &vec3_properties = elements[i].vec3_properties;
-                for (std::size_t j = 0; j < vec3_properties.size(); ++j) {
-                    const std::string &name = vec3_properties[j].name;
+                for (const auto& property : e.vec3_properties) {
+                    const std::string &name = property.name;
 
                     std::string names[3];
                     if (name == "color") {
@@ -202,9 +187,9 @@ namespace easy3d {
                         names[0] = "red";
                         names[1] = "green";
                         names[2] = "blue";
-                        for (std::size_t k = 0; k < 3; ++k) {
-                            if (!ply_add_property(ply, names[k].data(), PLY_UCHAR, length_type, PLY_UINT8)) {
-                                LOG(ERROR) << "failed to add float property '" << names[k] << "' for element '"
+                        for (const auto& n : names) {
+                            if (!ply_add_property(ply, n.data(), PLY_UCHAR, length_type, PLY_UINT8)) {
+                                LOG(ERROR) << "failed to add float property '" << n << "' for element '"
                                            << element_name << "'";
                                 ply_close(ply);
                                 return false;
@@ -225,9 +210,9 @@ namespace easy3d {
                             names[2] = name + "_z";
                         }
 
-                        for (std::size_t k = 0; k < 3; ++k) {
-                            if (!ply_add_property(ply, names[k].data(), PLY_FLOAT, length_type, PLY_FLOAT)) {
-                                LOG(ERROR) << "failed to add float property '" << names[k] << "' for element '"
+                        for (const auto& n : names) {
+                            if (!ply_add_property(ply, n.data(), PLY_FLOAT, length_type, PLY_FLOAT)) {
+                                LOG(ERROR) << "failed to add float property '" << n << "' for element '"
                                            << element_name << "'";
                                 ply_close(ply);
                                 return false;
@@ -237,9 +222,8 @@ namespace easy3d {
                 }
 
                 // vector properties: vec2
-                const std::vector<Vec2Property> &vec2_properties = elements[i].vec2_properties;
-                for (std::size_t j = 0; j < vec2_properties.size(); ++j) {
-                    const std::string &name = vec2_properties[j].name;
+                for (const auto& property : e.vec2_properties) {
+                    const std::string &name = property.name;
 
                     std::string names[2];
                     if (name == "texcoord") {
@@ -250,9 +234,9 @@ namespace easy3d {
                         names[1] = name + "_y";
                     }
 
-                    for (std::size_t k = 0; k < 2; ++k) {
-                        if (!ply_add_property(ply, names[k].data(), PLY_FLOAT, length_type, PLY_FLOAT)) {
-                            LOG(ERROR) << "failed to add float property '" << names[k] << "' for element '"
+                    for (const auto& n : names) {
+                        if (!ply_add_property(ply, n.data(), PLY_FLOAT, length_type, PLY_FLOAT)) {
+                            LOG(ERROR) << "failed to add float property '" << n << "' for element '"
                                        << element_name << "'";
                             ply_close(ply);
                             return false;
@@ -260,9 +244,8 @@ namespace easy3d {
                     }
                 }
 
-                const std::vector<FloatProperty> &float_properties = elements[i].float_properties;
-                for (std::size_t j = 0; j < float_properties.size(); ++j) {
-                    const std::string &name = float_properties[j].name;
+                for (const auto& property : e.float_properties) {
+                    const std::string &name = property.name;
                     if (!ply_add_property(ply, name.data(), PLY_FLOAT, length_type, PLY_FLOAT)) {
                         LOG(ERROR) << "failed to add float property '" << name << "' for element '" << element_name
                                    << "'";
@@ -271,9 +254,8 @@ namespace easy3d {
                     }
                 }
 
-                const std::vector<IntProperty> &int_properties = elements[i].int_properties;
-                for (std::size_t j = 0; j < int_properties.size(); ++j) {
-                    const std::string &name = int_properties[j].name;
+                for (const auto& property : e.int_properties) {
+                    const std::string &name = property.name;
                     if (!ply_add_property(ply, name.data(), PLY_INT, length_type, PLY_INT)) {
                         LOG(ERROR) << "failed to add int property '" << name << "' for element '" << element_name
                                    << "'";
@@ -287,32 +269,27 @@ namespace easy3d {
             if (!ply_write_header(ply))
                 return false;
 
-            for (std::size_t i = 0; i < elements.size(); ++i) {
-                const std::size_t num = elements[i].num_instances;
+            for (const auto& e : elements) {
+                const std::size_t num = e.num_instances;
 
                 for (std::size_t j = 0; j < num; ++j) {
-                    const std::vector<IntListProperty> &int_list_properties = elements[i].int_list_properties;
-                    for (std::size_t k = 0; k < int_list_properties.size(); ++k) {
-                        const std::vector<int> &values = int_list_properties[k][j];
+                    for (const auto& property : e.int_list_properties) {
+                        const std::vector<int> &values = property[j];
                         ply_write(ply, static_cast<double>(values.size()));
-                        for (std::size_t m = 0; m < values.size(); ++m)
-                            ply_write(ply, values[m]);
+                        for (const auto& value : values)
+                            ply_write(ply, value);
                     }
 
-                    const std::vector<FloatListProperty> &float_list_properties = elements[i].float_list_properties;
-                    for (std::size_t k = 0; k < float_list_properties.size(); ++k) {
-                        const std::vector<float> &values = float_list_properties[k][j];
+                    for (const auto& property : e.float_list_properties) {
+                        const std::vector<float> &values = property[j];
                         ply_write(ply, static_cast<double>(values.size()));
-                        for (std::size_t m = 0; m < values.size(); ++m)
-                            ply_write(ply, static_cast<double>(values[m]));
+                        for (const auto& value : values)
+                            ply_write(ply, static_cast<double>(value));
                     }
 
-                    const std::vector<Vec3Property> &vec3_properties = elements[i].vec3_properties;
-                    for (std::size_t k = 0; k < vec3_properties.size(); ++k) {
-                        const std::vector<vec3> &values = vec3_properties[k];
-                        const vec3 &v = values[j];
-
-                        const std::string &name = vec3_properties[k].name;
+                    for (const auto& property : e.vec3_properties) {
+                        const vec3 &v = property[j];
+                        const std::string &name = property.name;
                         if (name == "color") {
                             // save colors in unsigned char format
                             ply_write(ply, static_cast<unsigned char>(v.x * 255));
@@ -326,24 +303,18 @@ namespace easy3d {
                         }
                     }
 
-                    const std::vector<Vec2Property> &vec2_properties = elements[i].vec2_properties;
-                    for (std::size_t k = 0; k < vec2_properties.size(); ++k) {
-                        const std::vector<vec2> &values = vec2_properties[k];
-                        const vec2 &v = values[j];
+                    for (const auto& property : e.vec2_properties) {
+                        const vec2 &v = property[j];
                         ply_write(ply, static_cast<double>(v.x));
                         ply_write(ply, static_cast<double>(v.y));
                     }
 
-                    const std::vector<FloatProperty> &float_properties = elements[i].float_properties;
-                    for (std::size_t k = 0; k < float_properties.size(); ++k) {
-                        const std::vector<float> &values = float_properties[k];
-                        ply_write(ply, static_cast<double>(values[j]));
+                    for (const auto& property : e.float_properties) {
+                        ply_write(ply, static_cast<double>(property[j]));
                     }
 
-                    const std::vector<IntProperty> &int_properties = elements[i].int_properties;
-                    for (std::size_t k = 0; k < int_properties.size(); ++k) {
-                        const std::vector<int> &values = int_properties[k];
-                        ply_write(ply, static_cast<double>(values[j]));
+                    for (const auto& property : e.int_properties) {
+                        ply_write(ply, static_cast<double>(property[j]));
                     }
                 }
             }
@@ -361,8 +332,10 @@ namespace easy3d {
         PlyReader::~PlyReader() {
             for (auto prop : list_properties_)
                 delete prop;
+            list_properties_.clear();
             for (auto prop : value_properties_)
                 delete prop;
+            value_properties_.clear();
         }
 
 
@@ -390,7 +363,7 @@ namespace easy3d {
                 auto &prop = *prop_ptr;
                 prop[instance_index] = ply_get_argument_value(argument);
 
-                return 1;
+                return 1; // returns 1 if should continue processing file, 0 if should abort.
             };
 
             auto callback_list_property = [](p_ply_argument argument) -> int {
@@ -400,7 +373,7 @@ namespace easy3d {
                 long length = 0, value_index = 0;
                 ply_get_argument_property(argument, nullptr, &length, &value_index);
                 if (value_index < 0 || value_index >= length) {
-                    return 1;
+                    return 1; // returns 1 if should continue processing file, 0 if should abort.
                 }
 
                 ListProperty *prop_ptr = nullptr;
@@ -412,7 +385,7 @@ namespace easy3d {
                     entry.resize(length);
                 entry[value_index] = ply_get_argument_value(argument);
 
-                return 1;
+                return 1; // returns 1 if should continue processing file, 0 if should abort.
             };
 
             p_ply_element element = nullptr;
@@ -446,7 +419,7 @@ namespace easy3d {
                     // the same callback function to handle all the properties. But the performance is low. So I handle
                     // list properties and value properties separately.
                     if (type == PLY_LIST) {
-                        ListProperty *prop = new ListProperty(element_name, property_name);
+                        auto prop = new ListProperty(element_name, property_name);
                         prop->orig_value_type = value_type;
                         prop->resize(num_instances);
                         list_properties_.push_back(prop);
@@ -456,7 +429,7 @@ namespace easy3d {
                             return false;
                         }
                     } else {
-                        ValueProperty *prop = new ValueProperty(element_name, property_name);
+                        auto prop = new ValueProperty(element_name, property_name);
                         prop->orig_value_type = type;
                         prop->resize(num_instances);
                         value_properties_.push_back(prop);
@@ -487,7 +460,7 @@ namespace easy3d {
             for (auto prop : value_properties_) delete prop;
             value_properties_.clear();
 
-            return (elements.size() > 0 && elements[0].num_instances > 0);
+            return (!elements.empty() && elements[0].num_instances > 0);
         }
 
 
@@ -552,8 +525,7 @@ namespace easy3d {
             template<typename PropertyT>
             inline bool
             extract_named_property(std::vector<PropertyT> &properties, PropertyT &wanted, const std::string &name) {
-                typename std::vector<PropertyT>::iterator it = properties.begin();
-                for (; it != properties.end(); ++it) {
+                for (auto it = properties.begin(); it != properties.end(); ++it) {
                     const PropertyT &property = *it;
                     if (property.name == name) {
                         wanted = property;
@@ -634,7 +606,7 @@ namespace easy3d {
             for (auto prop : list_properties_) {
                 Element *element = name_to_element[prop->element_name];
 
-                e_ply_type type = e_ply_type(prop->orig_value_type);
+                auto type = e_ply_type(prop->orig_value_type);
                 if (type == PLY_FLOAT || type == PLY_DOUBLE || type == PLY_FLOAT32 || type == PLY_FLOAT64) {
                     FloatListProperty values;
                     internal::convert(*prop, values);
@@ -651,7 +623,7 @@ namespace easy3d {
             for (auto prop : value_properties_) {
                 Element *element = name_to_element[prop->element_name];
 
-                e_ply_type type = e_ply_type(prop->orig_value_type);
+                auto type = e_ply_type(prop->orig_value_type);
                 if (type == PLY_FLOAT || type == PLY_DOUBLE || type == PLY_FLOAT32 || type == PLY_FLOAT64) {
                     FloatProperty values;
                     internal::convert(*prop, values);
@@ -711,14 +683,23 @@ namespace easy3d {
                     if (internal::extract_named_property(element.int_properties, temp, "alpha")) {
                         prop_alpha.resize(temp.size());
                         for (std::size_t i = 0; i < prop_alpha.size(); ++i)
-                            prop_alpha[i] = temp[i] / 255.0f;
+                            prop_alpha[i] = static_cast<float>(temp[i]) / 255.0f;
                         element.float_properties.push_back(prop_alpha);
                     }
                 }
             }
         }
+        // \endcond
+
+        bool is_big_endian() {
+            const int i = 1;
+            const char *p = reinterpret_cast<const char *>(&i);
+            if (p[0] == 1) // Lowest address contains the least significant byte
+                return false; // LITTLE_ENDIAN
+            else
+                return true; // BIG_ENDIAN
+        }
 
     } // namespace io
-    // \endcond
 
 } // namespace easy3d

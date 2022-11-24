@@ -172,8 +172,8 @@ void WidgetLinesDrawable::updatePanel() {
 
     ui_->comboBoxDrawables->clear();
     const auto &drawables = model->renderer()->lines_drawables();
-    for (auto d : drawables)
-        ui_->comboBoxDrawables->addItem(QString::fromStdString(d->name()));
+    for (auto dd : drawables)
+        ui_->comboBoxDrawables->addItem(QString::fromStdString(dd->name()));
     ui_->comboBoxDrawables->setCurrentText(QString::fromStdString(d->name()));
 
     // visible
@@ -199,8 +199,8 @@ void WidgetLinesDrawable::updatePanel() {
     {   // color scheme
         ui_->comboBoxColorScheme->clear();
         const std::vector<QString> &schemes = colorSchemes(viewer_->currentModel());
-        for (const auto &scheme : schemes)
-            ui_->comboBoxColorScheme->addItem(scheme);
+        for (const auto &s : schemes)
+            ui_->comboBoxColorScheme->addItem(s);
 
         for (const auto& name : schemes) {
             if (name.contains(QString::fromStdString(scheme.property_name()))) {
@@ -210,7 +210,7 @@ void WidgetLinesDrawable::updatePanel() {
         }
 
         // default color
-        vec3 c = d->color();
+        const auto& c = d->color();
         QPixmap pixmap(ui_->toolButtonDefaultColor->size());
         pixmap.fill(
                 QColor(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255)));
@@ -244,7 +244,7 @@ void WidgetLinesDrawable::updatePanel() {
     {   // vector field
         ui_->comboBoxVectorField->clear();
         const std::vector<QString> &fields = vectorFields(viewer_->currentModel());
-        for (auto name : fields)
+        for (const auto& name : fields)
             ui_->comboBoxVectorField->addItem(name);
 
         ui_->comboBoxVectorField->setCurrentText(state.vector_field);
@@ -341,7 +341,7 @@ void WidgetLinesDrawable::setColorScheme(const QString &text) {
 
 
 void WidgetLinesDrawable::setDefaultColor() {
-    const vec3 &c = drawable()->color();
+    const auto &c = drawable()->color();
     QColor orig(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255));
     const QColor &color = QColorDialog::getColor(orig, this);
     if (color.isValid()) {
@@ -358,8 +358,7 @@ void WidgetLinesDrawable::setDefaultColor() {
 
 namespace internal {
 
-    // color schemes from scalar fields
-    // scalar fields defined on edges
+    // color schemes from scalar fields defined on edges
     template <typename MODEL>
     void color_schemes_for_scalar_fields(MODEL* model, const QString& scalar_prefix, std::vector<QString>& schemes) {
         // color schemes from color properties and texture
@@ -372,8 +371,7 @@ namespace internal {
                 schemes.push_back(QString::fromStdString(name));
         }
 
-        // color schemes from scalar fields
-        // scalar fields defined on edges
+        // color schemes from scalar fields defined on edges
         for (const auto &name : model->edge_properties()) {
             if (model->template get_edge_property<float>(name))
                 schemes.push_back(scalar_prefix + QString::fromStdString(name));
@@ -423,7 +421,7 @@ namespace internal {
 
 std::vector<QString> WidgetLinesDrawable::colorSchemes(const easy3d::Model *model) {
     std::vector<QString> schemes;
-    schemes.push_back("uniform color");
+    schemes.emplace_back("uniform color");
 
     auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
     if (mesh)
@@ -462,7 +460,7 @@ std::vector<QString> WidgetLinesDrawable::vectorFields(const easy3d::Model *mode
 
     // if no vector fields found, add a "not available" item
     if (fields.empty())
-        fields.push_back("not available");
+        fields.emplace_back("not available");
     else   // add one allowing to disable vector fields
         fields.insert(fields.begin(), "disabled");
 
@@ -472,7 +470,7 @@ std::vector<QString> WidgetLinesDrawable::vectorFields(const easy3d::Model *mode
 
 void WidgetLinesDrawable::setVectorField(const QString &text) {
     auto model = viewer_->currentModel();
-    SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
+    auto mesh = dynamic_cast<SurfaceMesh *>(model);
     if (!mesh)
         return;
 

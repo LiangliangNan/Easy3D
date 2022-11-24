@@ -34,24 +34,24 @@ namespace easy3d {
 
 
     void SurfaceMeshPolygonization::apply(SurfaceMesh *mesh, float angle_threshold) {
-        int orig_faces = mesh->n_faces();
+        if (!mesh)
+            return;
+
+        int orig_faces = static_cast<int>(mesh->n_faces());
         int prev_faces(orig_faces), diff(0);
         do {
-            prev_faces = mesh->n_faces();
+            prev_faces = static_cast<int>(mesh->n_faces());
             internal_apply(mesh, angle_threshold);
-            diff = mesh->n_faces() - prev_faces;
+            diff = static_cast<int>(mesh->n_faces()) - prev_faces;
         } while (diff != 0);
 
-        int current_faces = mesh->n_faces();
+        int current_faces = static_cast<int>(mesh->n_faces());
         if (current_faces < orig_faces)
             LOG(INFO) << orig_faces << " faces merged into " << current_faces;
     }
 
 
     void SurfaceMeshPolygonization::internal_apply(SurfaceMesh *mesh, float angle_threshold) {
-        if (!mesh)
-            return;
-
         SurfaceMesh model = *mesh;
 
         const std::string partition_name = "f:planar_partition";
@@ -98,11 +98,11 @@ namespace easy3d {
             builder.add_vertex(model.position(v));
 
         for (std::size_t i = 0; i < starters.size(); ++i) {
-            const std::vector<SurfaceMesh::Halfedge> &loop = extract_boundary_loop(&model, i, starters[i]);
+            const std::vector<SurfaceMesh::Halfedge> &loop = extract_boundary_loop(&model, static_cast<int>(i), starters[i]);
 
             std::vector<SurfaceMesh::Vertex> vts;
-            for (std::size_t j = 0; j < loop.size(); ++j) {
-                SurfaceMesh::Vertex v = model.target(loop[j]);
+            for (auto h : loop) {
+                SurfaceMesh::Vertex v = model.target(h);
                 vts.push_back(v);
             }
             auto f = builder.add_face(vts);
@@ -175,10 +175,9 @@ namespace easy3d {
                 vertices.push_back(v);
         }
 
-        for (std::size_t i = 0; i < vertices.size(); ++i) {
-            auto v = vertices[i];
+        for (auto v : vertices)
             mesh->join_edges(v);
-        }
+
         if (!vertices.empty())
             mesh->collect_garbage();
     }

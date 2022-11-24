@@ -47,8 +47,7 @@ namespace easy3d {
 		// helper function
 		template <typename T> void read(FILE* in, T& t)
 		{
-			size_t n_items(0);
-			n_items = fread((char*)&t, 1, sizeof(t), in);
+			auto n_items = fread((char*)&t, 1, sizeof(t), in);
 			assert(n_items > 0);
 		}
 
@@ -57,11 +56,11 @@ namespace easy3d {
 
 
 		// helper class for STL reader
-		class CmpVec
+		class CompareVec
 		{
 		public:
 
-			CmpVec(float _eps = FLT_MIN) : eps_(_eps) {}
+			explicit CompareVec(float _eps = FLT_MIN) : eps_(_eps) {}
 
 			bool operator()(const vec3& v0, const vec3& v1) const
 			{
@@ -91,17 +90,15 @@ namespace easy3d {
 				return false;
 			}
 
-			char                            line[100], *c;
-			unsigned int                    i, nT;
-			vec3                           p;
-			SurfaceMesh::Vertex               v;
-			std::vector<SurfaceMesh::Vertex>  vertices(3);
-			size_t n_items(0);
+            char line[100], *c;
+            unsigned int i, nT;
+            vec3 p;
+            SurfaceMesh::Vertex v;
+            std::vector<SurfaceMesh::Vertex> vertices(3);
 
-			CmpVec comp(FLT_MIN);
-			std::map<vec3, SurfaceMesh::Vertex, CmpVec>            vMap(comp);
-			std::map<vec3, SurfaceMesh::Vertex, CmpVec>::iterator  vMapIt;
-
+            CompareVec comp(FLT_MIN);
+			std::map<vec3, SurfaceMesh::Vertex, CompareVec>            vMap(comp);
+			std::map<vec3, SurfaceMesh::Vertex, CompareVec>::iterator  vMapIt;
 
 			// clear mesh
 			mesh->clear();
@@ -133,7 +130,7 @@ namespace easy3d {
 				if (!in) return false;
 
 				// skip dummy header
-				n_items = fread(line, 1, 80, in);
+				auto n_items = fread(line, 1, 80, in);
 				assert(n_items > 0);
 
 				// read number of triangles
@@ -182,10 +179,10 @@ namespace easy3d {
 			else
 			{
 				// parse line by line
-				while (in && !feof(in) && fgets(line, 100, in))
+				while (!feof(in) && fgets(line, 100, in))
 				{
 					// skip white-space
-					for (c = line; isspace(*c) && *c != '\0'; ++c) {};
+					for (c = line; isspace(*c) && *c != '\0'; ++c) {}
 
 					// face begins
 					if ((strncmp(c, "outer", 5) == 0) ||
@@ -199,7 +196,7 @@ namespace easy3d {
 							assert(c != nullptr);
 
 							// skip white-space
-							for (c = line; isspace(*c) && *c != '\0'; ++c) {};
+							for (c = line; isspace(*c) && *c != '\0'; ++c) {}
 
 							// read x, y, z
 							sscanf(c + 6, "%f %f %f", &p[0], &p[1], &p[2]);

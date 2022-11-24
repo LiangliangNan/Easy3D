@@ -65,7 +65,7 @@ namespace easy3d {
                 std::vector<SurfaceMesh::Halfedge> &neighbors
         ) const;
 
-        // the coordinates of an halfedge: represented by its two end points going from the xyz-lexicographically
+        // the coordinates of a halfedge: represented by its two end points going from the xyz-lexicographically
         // smaller endpoint toward the xyz-lexicographically larger end point.
         void assign_edge_coordinate(float* coords, SurfaceMesh::Halfedge) const;
 

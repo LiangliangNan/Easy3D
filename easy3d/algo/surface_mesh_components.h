@@ -32,7 +32,7 @@ namespace easy3d {
         typedef SurfaceMesh::Halfedge Halfedge;
 
     public:
-        SurfaceMeshComponent(SurfaceMesh *mesh) : mesh_(mesh) {}
+        explicit SurfaceMeshComponent(SurfaceMesh *mesh) : mesh_(mesh) {}
 
         /** Extracts connected components */
         static std::vector<SurfaceMeshComponent> extract(SurfaceMesh *mesh);

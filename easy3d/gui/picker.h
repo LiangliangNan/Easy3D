@@ -42,7 +42,7 @@ namespace easy3d {
      */
     class Picker {
     public:
-        Picker(const Camera *cam);
+        explicit Picker(const Camera *cam);
 
         virtual ~Picker();
 

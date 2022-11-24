@@ -25,7 +25,7 @@
 #include <easy3d/core/quat.h>
 #include <easy3d/core/polygon.h>
 #include <easy3d/core/constant.h>
-
+#include <easy3d/core/export.h>
 
 /**
  * Gathers different basic types for geometric operations.
@@ -121,7 +121,40 @@ namespace easy3d {
         return (std::isnan(v) || std::isinf(v));
     }
 
+    /**
+     * @brief Clamps a num to be within a given range.
+     */
+    template<class T>
+    inline T clamp(T x, T lower, T upper) {
+        return std::min(upper, std::max(x, lower));
+    }
 
+    /**
+     * @brief Calculates the next larger power of 2. If the input is already a power of 2, it will return itself.
+     * @param a The starting point for finding the next power of 2.
+     * @return value^2.
+     * Example:
+     *      next_pow2(50);  // returns 64
+     *      next_pow2(64);  // returns 64
+     *      next_pow2(401); // returns 512
+     */
+    inline int next_pow2(int a) {
+        int rval = 1;
+        while (rval < a) rval <<= 1;
+        return rval;
+    }
+
+    /** \brief Rounds the given floating point number \p v to have \p num digits.*/
+    template<class FT>
+    inline FT truncate_digits(const FT &v, int num) {
+        FT tmp = std::pow(10.0, num);
+        auto des = static_cast<long long>((v < 0) ? (v * tmp - 0.5) : (v * tmp + 0.5));
+        return FT(des) / tmp;
+    }
+
+
+    /// \brief Functions for basic geometric computations.
+    /// \namespace easy3d::geom
     namespace geom {
 
         /** \brief Returns a vector orthogonal to v. Its norm() depends on v, but is zero only for a null v.*/
@@ -131,7 +164,7 @@ namespace easy3d {
             const float absz = std::fabs(v.z);
             // Find smallest component. Keep equal case for null values.
             if ((absy >= absx) && (absz >= absx))
-                return vec3(0.0, -v.z, v.y);
+                return vec3(0.0f, -v.z, v.y);
             else {
                 if ((absx >= absy) && (absz >= absy))
                     return vec3(-v.z, 0.0f, v.x);
@@ -217,7 +250,7 @@ namespace easy3d {
 
         /** \brief Computes cotangent of angle between two (un-normalized) vectors */
         template<typename Vec>
-        inline double cotan_angle(const Vec &a, const Vec &b) {
+        inline typename Vec::FT cotan_angle(const Vec &a, const Vec &b) {
             return clamp_cot(dot(a, b) / norm(cross(a, b)));
         }
 
@@ -228,13 +261,15 @@ namespace easy3d {
         }
 
         /** \brief Converts an angle from degrees to radians. */
-        inline float to_radians(float degrees) {
-            return degrees * static_cast<float>(0.01745329251994329576923690768489);
+        template<typename FT>
+        inline FT to_radians(FT degrees) {
+            return degrees * static_cast<FT>(0.01745329251994329576923690768489);
         }
 
         /** \brief Converts an angle from radians to degrees. */
-        inline float to_degrees(float radians) {
-            return radians * static_cast<float>(57.295779513082320876798154814105);
+        template<typename FT>
+        inline FT to_degrees(FT radians) {
+            return radians * static_cast<FT>(57.295779513082320876798154814105);
         }
 
         /** \brief Computes area of a triangle given by three points. */
@@ -254,111 +289,75 @@ namespace easy3d {
         }
 
         /** \brief Computes the distance of a point p to a line segment given by vec3s (v0,v1). */
-        inline float dist_point_line_segment(const vec3 &p, const vec3 &v0, const vec3 &v1, vec3 &nearest_vec3);
+        inline float dist_point_line_segment(const vec3 &p, const vec3 &v0, const vec3 &v1, vec3 &nearest_point);
 
         /** \brief Computes the distance of a point p to the triangle given by vec3s (v0, v1, v2). */
         inline float
-        dist_point_triangle(const vec3 &p, const vec3 &v0, const vec3 &v1, const vec3 &v2, vec3 &nearest_vec3);
+        dist_point_triangle(const vec3 &p, const vec3 &v0, const vec3 &v1, const vec3 &v2, vec3 &nearest_point);
 
         /** \brief Computes the circum center of a tetrahedron. */
-        inline vec3 tetra_circum_center(const vec3& p1, const vec3& p2, const vec3& p3, const vec3& p4);
+        inline vec3 tetra_circum_center(const vec3& p, const vec3& q, const vec3& r, const vec3& s);
 
     } // namespace geom
 
 
-    /**
-     * @brief Clamps a num to be within a given range.
-     */
-    template<class T>
-    inline T clamp(T x, T lower, T upper) {
-        return std::min(upper, std::max(x, lower));
-    };
+    namespace color {
 
-    /**
-     * @brief Calculates the next larger power of 2. If the input is already a power of 2, it will return itself.
-     * @param a The starting point for finding the next power of 2.
-     * @return value^2.
-     * Example:
-     *      next_pow2(50);  // returns 64
-     *      next_pow2(64);  // returns 64
-     *      next_pow2(401); // returns 512
-     */
-    inline int next_pow2(int a) {
-        int rval = 1;
-        while (rval < a) rval <<= 1;
-        return rval;
-    }
-
-    /** \brief Rounds the given floating point number \p v to have \p num digits.*/
-    template<class T>
-    inline T truncate_digits(const T &v, int num) {
-        T tmp = std::pow(10.0, num);
-        long long des = static_cast<long long>((v < 0) ? (v * tmp - 0.5) : (v * tmp + 0.5));
-        T result = T(des) / tmp;
-        return result;
-    }
-
-
-
-    namespace rgb {
-
-        //------- conversion between a RGB(A) color and an integer ----------
-
-        /// \brief Gets red part of RGB. [0, 255]
-        inline int red(int color) { return ((color >> 16) & 0xff); }
-
-        /// \brief Gets green part of RGB. [0, 255]
-        inline int green(int color) { return ((color >> 8) & 0xff); }
-
-        /// \brief Gets blue part of RGB. [0, 255]
-        inline int blue(int color) { return (color & 0xff); }
-
-        /// \brief Gets alpha part of RGBA. [0, 255]
-        inline int alpha(int color) { return color >> 24; }
+        // Encode a color into an integer
 
         /// \brief Encodes an RGB (each component in the range [0, 255]) color in an integer value.
-        inline int rgb(int r, int g, int b) {
-            return (0xffu << 24) | ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xff);
+        inline int encode(int r, int g, int b) {
+            return (0xff << 24) | ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xff);
         }
 
         /// \brief Encodes an RGBA (each component in the range [0, 255]) color in an integer value.
-        inline int rgba(int r, int g, int b, int a) {
+        inline int encode(int r, int g, int b, int a) {
             return ((a & 0xff) << 24) | ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xff);
         }
 
-        /// \brief Converts R,G,B to gray [0, 255]
-        inline int gray(int r, int g, int b) {
-            return (r * 11 + g * 16 + b * 5) / 32;
-        }
+        // Encode an integer into color components
 
         /// \brief Decodes an integer value as RGB color (each component in the range [0, 255]).
-        inline void encode(int value, int &r, int &g, int &b) {
+        inline void decode(int value, int &r, int &g, int &b) {
             r = ((value >> 16) & 0xff);
             g = ((value >> 8) & 0xff);
             b = (value & 0xff);
         }
 
         /// \brief Decodes an integer value as RGBA color (each component in the range [0, 255]).
-        inline void encode(int value, int &r, int &g, int &b, int &a) {
+        inline void decode(int value, int &r, int &g, int &b, int &a) {
             r = ((value >> 16) & 0xff);
             g = ((value >> 8) & 0xff);
             b = (value & 0xff);
             a = (value >> 24);
         }
-    }
 
-}
+
+        // Given a color encoded as an integer, get the color component
+
+        /// \brief Gets the red component of RGB. [0, 255]
+        inline int red(int color) { return ((color >> 16) & 0xff); }
+
+        /// \brief Gets the green component of RGB. [0, 255]
+        inline int green(int color) { return ((color >> 8) & 0xff); }
+
+        /// \brief Gets the blue component of RGB. [0, 255]
+        inline int blue(int color) { return (color & 0xff); }
+
+        /// \brief Gets the alpha component of RGBA. [0, 255]
+        inline int alpha(int color) { return color >> 24; }
+
+    }   // namespace color
+
+}   // namespace easy3d
 
 
 //=============================================================================
 
-//=============================================================================
 
-
+// \cond
 namespace easy3d {
 
-    /// \brief Functions for basic geometric computations.
-    /// \namespace easy3d::geom
     namespace geom {
 
         template<typename FT>
@@ -370,7 +369,7 @@ namespace easy3d {
 
             Vec<3, FT> vu = v - u, wu = w - u, pu = p - u;
 
-            // find largest absolute coordinate of normal
+            // find the largest absolute coordinate of normal
             FT nx = vu[1] * wu[2] - vu[2] * wu[1],
                     ny = vu[2] * wu[0] - vu[0] * wu[2],
                     nz = vu[0] * wu[1] - vu[1] * wu[0], ax = fabs(nx), ay = fabs(ny),
@@ -418,6 +417,8 @@ namespace easy3d {
                     }
                     break;
                 }
+                default:
+                    break;
             }
 
             return result;
@@ -583,7 +584,7 @@ namespace easy3d {
                 }
             }
 
-                // Calculate the distance to an interior point of the triangle
+            // Calculate the distance to an interior point of the triangle
             else {
                 n *= (dot(n, v0p) * inv_d);
                 (v0p = p) -= n;
@@ -636,11 +637,10 @@ namespace easy3d {
 
         }
 
-
     }   // namespace geom
 
 }   // namespace easy3d
-
+// \cond
 
 #endif  // EASY3D_CORE_TYPES_H
 

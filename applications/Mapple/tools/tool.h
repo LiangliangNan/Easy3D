@@ -54,8 +54,8 @@ namespace easy3d {
 
         class Tool {
         public:
-            Tool(ToolManager *mgr) : tool_manager_(mgr) {}
-            virtual ~Tool() {}
+            explicit Tool(ToolManager *mgr) : tool_manager_(mgr) {}
+            virtual ~Tool() = default;
 
             ToolManager *tool_manager() const { return tool_manager_; }
 
@@ -76,7 +76,7 @@ namespace easy3d {
 
         class MultiTool {
         public:
-            MultiTool(ToolManager *mgr) : tool_manager_(mgr) {}
+            explicit MultiTool(ToolManager *mgr) : tool_manager_(mgr) {}
             virtual ~MultiTool();
 
             ToolManager *tool_manager() const { return tool_manager_; }
@@ -98,7 +98,6 @@ namespace easy3d {
 
             void set_tool(ToolButton button, Tool *tool);
             Tool *get_tool(ToolButton button);
-            const Tool *get_tool(ToolButton button) const;
 
             void draw_rect(const Rect& rect) const;
             void draw_lasso(const Polygon2& lasso) const;

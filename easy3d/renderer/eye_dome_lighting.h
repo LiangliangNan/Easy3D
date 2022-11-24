@@ -44,7 +44,7 @@ namespace easy3d {
      * Two image resolutions are used.
      *
      * This pass expects an initialized depth buffer and color buffer. Initialized buffers means they have been
-     * cleared with farest z-value and background color/gradient/transparent color.
+     * cleared with the farthest z-value and background color/gradient/transparent color.
      * An opaque pass may have been performed right after the initialization.
      *
      * Optimization tips:
@@ -72,7 +72,7 @@ namespace easy3d {
     public:
         /// \brief Constructor
         /// \param cam The camera used in the view
-        EyeDomeLighting(Camera* cam);
+        explicit EyeDomeLighting(Camera* cam);
         virtual ~EyeDomeLighting();
 
         void begin();
@@ -127,7 +127,7 @@ namespace easy3d {
         ShaderProgram* blur_program_;
 
         float neighbours_[8][4];
-        int   low_res_factor_; // basically 4
+        float low_res_factor_; // basically 4
 
         //////////////////////////////////////////////////////////////////////////
 

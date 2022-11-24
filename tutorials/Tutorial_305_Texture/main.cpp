@@ -30,7 +30,6 @@
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/renderer.h>
-#include <easy3d/util/file_system.h>
 #include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
 
@@ -64,7 +63,7 @@ int main(int argc, char **argv) {
 
     //--------------- create a mesh (which contains a single quad) -------------------
 
-    SurfaceMesh *mesh = new SurfaceMesh;
+    auto mesh = new SurfaceMesh;
     auto texcoord = mesh->add_vertex_property<vec2>("v:texcoord");
 
     const auto w = static_cast<float>(tex->width());

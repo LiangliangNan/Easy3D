@@ -39,10 +39,9 @@ namespace easy3d {
     class TexturedViewer : public Viewer
     {
     public:
-        TexturedViewer(const std::string& title = "");
+        explicit TexturedViewer(const std::string& title = "");
 
-        // override the behavior of the 'open(const std::string&)' function of the default viewer
-        Model* add_model(const std::string& file_name, bool create_default_drawables) override ;
+        Model* add_model(const std::string& file_name);
     };
 
 }

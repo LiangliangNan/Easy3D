@@ -32,7 +32,7 @@
 #ifdef _WIN32
 #include <cstdint>
 #else
-#include <sys/time.h>
+#include <ctime>
 #endif // _WIN32
 
 
@@ -41,26 +41,23 @@ namespace easy3d {
     /**
      * \brief A high resolution stop watch/timer.
      * \details This timer is able to measure the elapsed time with 1 micro-second accuracy on Windows, Linux, and Unix.
-     *
-     * \class StopWatch easy3d/util/stop_watch.h
-     * \see ChronoWatch
-     *
-     * Usage example:
+     *  Usage example:
      *      \code
-     *      StopWatch w ;
-     *      // do task_1 ...
-     *      LOG(INFO) << "task_1 done. Time: " << w.time_string() << " seconds";
-     *	    w.start();
-     *      // do task_2 ...
-     *      LOG(INFO) << "task_2 done. Time: " << w.time_string() << " seconds";
+     *          StopWatch w ;
+     *          // do task_1 ...
+     *          LOG(INFO) << "task_1 done. Time: " << w.time_string() << " seconds";
+     *	        w.start();
+     *          // do task_2 ...
+     *          LOG(INFO) << "task_2 done. Time: " << w.time_string() << " seconds";
      *      \endcode
+     * \class StopWatch easy3d/util/stop_watch.h
      */
     class StopWatch {
     public:
         /// default constructor. The watch will automatically start after construction.
         StopWatch();
         /// destructor.
-        ~StopWatch();
+        ~StopWatch() = default;
 
         /// starts the timer
         void start();

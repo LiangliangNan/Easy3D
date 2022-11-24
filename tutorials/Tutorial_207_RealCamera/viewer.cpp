@@ -97,7 +97,7 @@ bool RealCamera::key_press_event(int key, int modifiers) {
 
     if (key == GLFW_KEY_SPACE) {
         if (!views_.empty()) {
-            current_view_ = (current_view_ + 1) % views_.size();
+            current_view_ = (current_view_ + 1) % static_cast<int>(views_.size());
             const bool ground_truth = true;
             if (KRT_to_camera(current_view_, camera(), ground_truth)) {
                 update_cameras_drawable(ground_truth);
@@ -105,7 +105,7 @@ bool RealCamera::key_press_event(int key, int modifiers) {
                 set_title("RealCamera: View_" + std::to_string(current_view_));
                 const CameraPara &c = views_[current_view_];
                 // make sure the aspect ratio (actual size does not matter)
-                resize(c.w * scale, c.h * scale);
+                resize(static_cast<int>(static_cast<float>(c.w) * scale), static_cast<int>(static_cast<float>(c.h) * scale));
             }
         }
         return true;
@@ -119,7 +119,7 @@ bool RealCamera::key_press_event(int key, int modifiers) {
                 set_title("RealCamera: View_" + std::to_string(current_view_));
                 const CameraPara &c = views_[current_view_];
                 // make sure the aspect ratio (actual size does not matter)
-                resize(c.w * scale, c.h * scale);
+                resize(static_cast<int>(static_cast<float>(c.w) * scale), static_cast<int>(static_cast<float>(c.h) * scale));
             }
         }
         return true;
@@ -133,7 +133,7 @@ bool RealCamera::key_press_event(int key, int modifiers) {
                 set_title("RealCamera: View_" + std::to_string(current_view_));
                 const CameraPara &c = views_[current_view_];
                 // make sure the aspect ratio (actual size does not matter)
-                resize(c.w * scale, c.h * scale);
+                resize(static_cast<int>(static_cast<float>(c.w) * scale), static_cast<int>(static_cast<float>(c.h) * scale));
             }
         }
         return true;
@@ -172,7 +172,7 @@ bool RealCamera::KRT_to_camera(int view_index, Camera* c, bool ground_truth) {
         const quat q(inverse(cam.R));  // the inverse rotation represented by a quaternion
         c->setOrientation(q);
         c->setPosition(-q.rotate(cam.t));    // camera position: -inverse(rot) * t
-        const float proj11 = 2.0f * cam.fy / cam.h; // proj[1][1]
+        const float proj11 = 2.0f * cam.fy / static_cast<float>(cam.h); // proj[1][1]
         const float fov = 2.0f * std::atan(1.0f / proj11);
         c->setFieldOfView(fov);
     }
@@ -201,9 +201,9 @@ void RealCamera::update_cameras_drawable(bool ground_truth)
     std::vector<vec3> vertices;
     for (std::size_t i = 0; i < views_.size(); ++i) {
         Camera c;
-        KRT_to_camera(i, &c, ground_truth);
+        KRT_to_camera(static_cast<int>(i), &c, ground_truth);
         std::vector<vec3> points;
-        shape::create_camera(points, c.sceneRadius() * 0.03f, c.fieldOfView(), static_cast<float>(views_[i].h)/views_[i].w);
+        shape::create_camera(points, c.sceneRadius() * 0.03f, c.fieldOfView(), static_cast<float>(views_[i].h)/static_cast<float>(views_[i].w));
         const mat4& m = c.frame()->worldMatrix();
         for (auto& p : points)
             vertices.push_back(m * p);
@@ -216,23 +216,23 @@ void RealCamera::update_cameras_drawable(bool ground_truth)
 Rect RealCamera::calculate_image_rect() const {
     if (texture_ == nullptr) {
         LOG_N_TIMES(3, ERROR) << "image not shown";
-        return Rect(0, 0, 0, 0);
+        return {0, 0, 0, 0};
     }
 
     int tex_w = texture_->width();
     int tex_h = texture_->height();
-    const float image_as = tex_w / static_cast<float>(tex_h);
-    const float viewer_as = width() / static_cast<float>(height());
+    const float image_as = static_cast<float>(tex_w) / static_cast<float>(tex_h);
+    const float viewer_as = static_cast<float>(width()) / static_cast<float>(height());
     if (image_as < viewer_as) {// thin
-        tex_h = static_cast<int>(height() * scale);
-        tex_w = static_cast<int>(tex_h * image_as);
+        tex_h = static_cast<int>(static_cast<float>(height()) * scale);
+        tex_w = static_cast<int>(static_cast<float>(tex_h) * image_as);
     }
     else {
-        tex_w = static_cast<int>(width() * scale);
-        tex_h = static_cast<int>(tex_w / image_as);
+        tex_w = static_cast<int>(static_cast<float>(width()) * scale);
+        tex_h = static_cast<int>(static_cast<float>(tex_w) / image_as);
     }
 
-    return Rect(20, (20 + tex_w), 40, (40 + tex_h));
+    return Rect(static_cast<float>(20), static_cast<float>(20 + tex_w), 40.0f, static_cast<float>(40 + tex_h));
 }
 
 
@@ -246,8 +246,8 @@ void RealCamera::post_draw() {
     const Rect quad(image_rect.x_min() * dpi_scaling(), image_rect.x_max() * dpi_scaling(),
                     image_rect.y_min() * dpi_scaling(), image_rect.y_max() * dpi_scaling());
 
-    const int w = width() * dpi_scaling();
-    const int h = height() * dpi_scaling();
+    const int w = static_cast<int>(static_cast<float>(width()) * dpi_scaling());
+    const int h = static_cast<int>(static_cast<float>(height()) * dpi_scaling());
     shape::draw_quad_filled(quad, texture_->id(), w, h, -0.9f);
     shape::draw_quad_wire(quad, vec4(1.0f, 0.0f, 0.0f, 1.0f), w, h, -0.99f);
 
@@ -291,9 +291,9 @@ bool RealCamera::mouse_free_move_event(int x, int y, int dx, int dy, int modifie
     const CameraPara &cam = views_[current_view_];
     const Rect image_rect = calculate_image_rect();
     // cursor is inside the image rectangle
-    if (x >= image_rect.x_min() && x <= image_rect.x_max() && y >= image_rect.y_min() && y <= image_rect.y_max()) {
-        const float image_x = (x - image_rect.x_min()) / image_rect.width() * cam.w;
-        const float image_y = (y - image_rect.y_min()) / image_rect.height() * cam.h;
+    if (static_cast<float>(x) >= image_rect.x_min() && static_cast<float>(x) <= image_rect.x_max() && static_cast<float>(y) >= image_rect.y_min() && static_cast<float>(y) <= image_rect.y_max()) {
+        const float image_x = (static_cast<float>(x) - image_rect.x_min()) / image_rect.width() * static_cast<float>(cam.w);
+        const float image_y = (static_cast<float>(y) - image_rect.y_min()) / image_rect.height() * static_cast<float>(cam.h);
         if (!ray_drawable_) {
             ray_drawable_ = new LinesDrawable("ray");
             add_drawable(ray_drawable_); // add the ray drawable to the viewer
@@ -302,7 +302,7 @@ bool RealCamera::mouse_free_move_event(int x, int y, int dx, int dy, int modifie
             ray_drawable_->set_impostor_type(easy3d::LinesDrawable::CYLINDER);
         }
         const vec3 pos = camera_pos(cam.R, cam.t);
-        const vec3 dir = pixel_to_ray(image_x, image_y, cam.fx, cam.fy, 0, cam.cx, cam.cy, cam.R, cam.t, true);
+        const vec3 dir = pixel_to_ray(static_cast<int>(image_x), static_cast<int>(image_y), cam.fx, cam.fy, 0, cam.cx, cam.cy, cam.R, cam.t, true);
         const std::vector<vec3> points = {pos, pos + dir};
         ray_drawable_->update_vertex_buffer(points);
         ray_drawable_->set_visible(true);
@@ -317,9 +317,9 @@ bool RealCamera::mouse_free_move_event(int x, int y, int dx, int dy, int modifie
             const vec2 q = point_to_pixel(p, cam.fx, cam.fy, 0, cam.cx, cam.cy, cam.R, cam.t);
 
             // visualize the image point (that must be within the image)
-            if (q.x >= 0 && q.x <= cam.w && q.y >= 0 && q.y <= cam.h) {
-                const float screen_x = q.x / cam.w * image_rect.width() + image_rect.x_min();
-                const float screen_y = q.y / cam.h * image_rect.height() + image_rect.y_min();
+            if (q.x >= 0 && q.x <= static_cast<float>(cam.w) && q.y >= 0 && q.y <= static_cast<float>(cam.h)) {
+                const float screen_x = q.x / static_cast<float>(cam.w) * image_rect.width() + image_rect.x_min();
+                const float screen_y = q.y / static_cast<float>(cam.h) * image_rect.height() + image_rect.y_min();
                 if (!cross_drawable_) {
                     cross_drawable_ = new LinesDrawable("cross");
                     add_drawable(cross_drawable_); // add the cross drawable to the viewer
@@ -362,7 +362,7 @@ vec3 RealCamera::pixel_to_ray(int image_x, int image_y, float fx, float fy, floa
            0, 0, 1);
 
     // image point in the camera coordinate system (because p_image = K * p_cam).
-    vec3 P = inverse(K) * vec3(image_x, image_y, 1);
+    vec3 P = inverse(K) * vec3(static_cast<float>(image_x), static_cast<float>(image_y), 1);
     if (convert) {
         /// @attention The camera coordinates in computer vision goes X right, Y down, Z forward,
         ///               while the camera coordinates in OpenGL goes X right, Y up, Z inward.

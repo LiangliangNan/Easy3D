@@ -18,7 +18,7 @@
 namespace easy3d {
 
     SurfaceMeshSimplification::SurfaceMeshSimplification(SurfaceMesh *mesh)
-            : mesh_(mesh), initialized_(false), queue_(nullptr) {
+            : mesh_(mesh), initialized_(false), queue_(nullptr), has_selection_(false), has_features_(false) {
         aspect_ratio_ = 0;
         edge_length_ = 0;
         max_valence_ = 0;
@@ -35,8 +35,7 @@ namespace easy3d {
 
     //-----------------------------------------------------------------------------
 
-    SurfaceMeshSimplification::~SurfaceMeshSimplification() {
-    }
+    SurfaceMeshSimplification::~SurfaceMeshSimplification() = default;
 
     //-----------------------------------------------------------------------------
 
@@ -51,7 +50,7 @@ namespace easy3d {
         aspect_ratio_ = aspect_ratio;
         max_valence_ = max_valence;
         edge_length_ = edge_length;
-        normal_deviation_ = normal_deviation / 180.0 * M_PI;
+        normal_deviation_ = normal_deviation / static_cast<float>(180.0f * M_PI);
         hausdorff_error_ = hausdorff_error;
 
         // properties
@@ -104,14 +103,14 @@ namespace easy3d {
         }
 
         // initialize normal cones
-        if (normal_deviation_) {
+        if (std::abs(normal_deviation_) > std::numeric_limits<float>::min()) {
             for (auto f : mesh_->faces()) {
                 normal_cone_[f] = NormalCone(fnormal_[f]);
             }
         }
 
         // initialize faces' point list
-        if (hausdorff_error_) {
+        if (std::abs(hausdorff_error_) > std::numeric_limits<float>::min()) {
             for (auto f : mesh_->faces()) {
                 Points().swap(face_points_[f]); // free mem
             }
@@ -132,13 +131,6 @@ namespace easy3d {
         if (!initialized_)
             initialize();
 
-        unsigned int nv(mesh_->n_vertices());
-
-        std::vector<SurfaceMesh::Vertex> one_ring;
-        std::vector<SurfaceMesh::Vertex>::iterator or_it, or_end;
-        SurfaceMesh::Halfedge h;
-        SurfaceMesh::Vertex v;
-
         // add properties for priority queue
         vpriority_ = mesh_->add_vertex_property<float>("v:prio");
         heap_pos_ = mesh_->add_vertex_property<int>("v:heap");
@@ -153,6 +145,11 @@ namespace easy3d {
             enqueue_vertex(v);
         }
 
+        unsigned int nv(mesh_->n_vertices());
+        std::vector<SurfaceMesh::Vertex> one_ring;
+        std::vector<SurfaceMesh::Vertex>::iterator or_it, or_end;
+        SurfaceMesh::Halfedge h;
+        SurfaceMesh::Vertex v;
         while (nv > n_vertices && !queue_->empty()) {
             // get 1st element
             v = queue_->front();
@@ -279,7 +276,7 @@ namespace easy3d {
                 --val;
             if (cd.fr.is_valid())
                 --val;
-            if (val > max_valence_ && !(val < std::max(val0, val1)))
+            if (val > max_valence_ && (val >= std::max(val0, val1)))
                 return false;
         }
 
@@ -288,7 +285,7 @@ namespace easy3d {
         const vec3 p1 = vpoint_[cd.v1];
 
         // check for maximum edge length
-        if (edge_length_) {
+        if (std::abs(edge_length_) > std::numeric_limits<float>::min()) {
             for (auto v : mesh_->vertices(cd.v0)) {
                 if (v != cd.v1 && v != cd.vl && v != cd.vr) {
                     if (norm(vpoint_[v] - p1) > edge_length_)
@@ -346,7 +343,7 @@ namespace easy3d {
         }
 
         // check aspect ratio
-        if (aspect_ratio_) {
+        if (std::abs(aspect_ratio_) > std::numeric_limits<float>::min()) {
             float ar0(0), ar1(0);
 
             for (auto f : mesh_->faces(cd.v0)) {
@@ -366,9 +363,9 @@ namespace easy3d {
         }
 
         // check Hausdorff error
-        if (hausdorff_error_) {
+        if (std::abs(hausdorff_error_) > std::numeric_limits<float>::min()) {
             Points points;
-            bool ok;
+            bool ok = false;
 
             // collect points to be tested
             for (auto f : mesh_->faces(cd.v0)) {
@@ -419,7 +416,7 @@ namespace easy3d {
         vquadric_[cd.v1] += vquadric_[cd.v0];
 
         // update normal cones
-        if (normal_deviation_) {
+        if (std::abs(normal_deviation_) > std::numeric_limits<float>::min()) {
             for (auto f : mesh_->faces(cd.v1)) {
                 normal_cone_[f].merge(mesh_->compute_face_normal(f));
             }
@@ -438,7 +435,7 @@ namespace easy3d {
         }
 
         // update Hausdorff error
-        if (hausdorff_error_) {
+        if (std::abs(hausdorff_error_) > std::numeric_limits<float>::min()) {
             Points points;
 
             // collect points to be distributed

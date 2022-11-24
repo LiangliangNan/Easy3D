@@ -45,9 +45,9 @@ namespace easy3d {
          * \brief Constructor.
          * \param cloud The point cloud for which a KdTree will be constructed.
          */
-        KdTreeSearch_ETH(const PointCloud *cloud);
+        explicit KdTreeSearch_ETH(const PointCloud *cloud);
 
-        virtual ~KdTreeSearch_ETH();
+        ~KdTreeSearch_ETH() override;
 
         /// \name Closest point query
         /// @{
@@ -59,14 +59,14 @@ namespace easy3d {
          * \note A \b squared distance is returned by the second argument \p squared_distance.
          * \return The index of the nearest neighbor found.
          */
-        virtual int find_closest_point(const vec3 &p, float &squared_distance) const;
+        int find_closest_point(const vec3 &p, float &squared_distance) const override;
 
         /**
          * \brief Queries the closest point for a given point.
          * \param p The query point.
          * \return The index of the nearest neighbor found.
          */
-        virtual int find_closest_point(const vec3 &p) const;
+        int find_closest_point(const vec3 &p) const override;
         /// @}
 
         /// \name K nearest neighbors search
@@ -81,10 +81,10 @@ namespace easy3d {
          * The values are stored in accordance with their indices.
          * \note The \b squared distances are returned by the argument \p squared_distances.
          */
-        virtual void find_closest_k_points(
+        void find_closest_k_points(
                 const vec3 &p, int k,
                 std::vector<int> &neighbors, std::vector<float> &squared_distances
-        ) const;
+        ) const override;
 
         /**
          * \brief Queries the K nearest neighbors for a given point.
@@ -92,10 +92,10 @@ namespace easy3d {
          * \param k The number of required neighbors.
          * \param neighbors The indices of the neighbors found.
          */
-        virtual void find_closest_k_points(
+        void find_closest_k_points(
                 const vec3 &p, int k,
                 std::vector<int> &neighbors
-        ) const;
+        ) const override;
         /// @}
 
         /// @name Fixed radius search
@@ -110,10 +110,10 @@ namespace easy3d {
          * The values are stored in accordance with their indices.
          * \note The \b squared distances are returned by the argument \p squared_distances.
          */
-        virtual void find_points_in_range(
+        void find_points_in_range(
                 const vec3 &p, float squared_radius,
                 std::vector<int> &neighbors, std::vector<float> &squared_distances
-        ) const;
+        ) const override;
 
         /**
          * \brief Queries the nearest neighbors within a fixed range.
@@ -121,10 +121,10 @@ namespace easy3d {
          * \param squared_radius The search range (which is required to be \b squared).
          * \param neighbors The indices of the neighbors found.
          */
-        virtual void find_points_in_range(
+        void find_points_in_range(
                 const vec3 &p, float squared_radius,
                 std::vector<int> &neighbors
-        ) const;
+        ) const override;
         /// @}
 
 

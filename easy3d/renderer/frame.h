@@ -132,7 +132,7 @@ namespace easy3d {
       the Frame. The default constraint() is \c NULL resulting in no filtering. Use
       setConstraint() to attach a Constraint to a frame.
 
-      Constraints are especially usefull for the ManipulatedFrame instances, in
+      Constraints are especially useful for the ManipulatedFrame instances, in
       order to forbid some mouse motions. See the <a
       href="../examples/constrainedFrame.html">constrainedFrame</a>, <a
       href="../examples/constrainedCamera.html">constrainedCamera</a> and <a
@@ -145,7 +145,7 @@ namespace easy3d {
       <h3>Derived classes</h3>
 
       The ManipulatedFrame class inherits Frame and implements a mouse motion
-      convertion, so that a Frame (and hence an object) can be manipulated in the
+      conversion, so that a Frame (and hence an object) can be manipulated in the
       scene with the mouse.
 
       */
@@ -281,7 +281,7 @@ namespace easy3d {
         void rotateAroundPoint(const quat &rotation, const vec3 &point);
 
         void alignWithFrame(const Frame *const frame, bool move = false,
-                            float threshold = 0.0);
+                            float threshold = 0.0f);
 
         void projectOnLine(const vec3 &origin, const vec3 &direction);
         //@}
@@ -307,7 +307,7 @@ namespace easy3d {
         // frame" section).
 
         // The transformOf() (resp. inverseTransformOf()) functions transform a 3D
-        // vector from (resp. to) the world coordinates system. This section defines
+        // vector from (resp. to) the world coordinate system. This section defines
         // the 3D vector transformation functions. See the Coordinate system
         // transformation of 3D points above for the transformation of 3D points. The
         // difference between the two sets of functions is simple: for vectors, only
@@ -386,8 +386,7 @@ namespace easy3d {
         Use inverse() for a local (i.e. with respect to referenceFrame())
         transformation inverse. */
         Frame worldInverse() const {
-            return Frame(-(orientation().inverse_rotate(position())),
-                         orientation().inverse());
+            return Frame(-(orientation().inverse_rotate(position())), orientation().inverse());
         }
         //@}
 

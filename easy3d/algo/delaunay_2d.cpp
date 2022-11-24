@@ -65,7 +65,7 @@ namespace easy3d {
 
         Delaunay::set_vertices(nb_vertices, vertices);
         //free_triangulateio(triangle_out_) ;
-        triangle_in_->numberofpoints = nb_vertices;
+        triangle_in_->numberofpoints = static_cast<int>(nb_vertices);
 
         // Liangliang: if you provide "vertices" as double type, you can just assign the pointer, but it
         //			   seems float may not work properly for some of my data, so I always use double.

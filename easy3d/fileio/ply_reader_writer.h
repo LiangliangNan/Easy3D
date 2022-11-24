@@ -47,7 +47,7 @@ namespace easy3d {
 		template <typename VT>
         class GenericProperty : public std::vector<VT> {
         public:
-            GenericProperty(const std::string &prop_name = "", const std::vector<VT> &values = std::vector<VT>())
+            explicit GenericProperty(const std::string &prop_name = "", const std::vector<VT> &values = std::vector<VT>())
                     : std::vector<VT>(values), name(prop_name) {}
             std::string name;
         };
@@ -62,7 +62,7 @@ namespace easy3d {
         /// \brief Model element (e.g., faces, vertices, edges) with optional properties
         /// \class Element easy3d/fileio/ply_reader_writer.h
 		struct Element {
-            Element(const std::string &elem_name, std::size_t n_instances = 0) : name(elem_name),
+            explicit Element(const std::string &elem_name, std::size_t n_instances = 0) : name(elem_name),
                                                                                  num_instances(n_instances) {}
 
             std::string name;           // e.g., "vertex", "face", "edge"
@@ -86,7 +86,7 @@ namespace easy3d {
 		class PlyReader
 		{
 		public:
-            PlyReader() {}
+            PlyReader() = default;
             ~PlyReader();
 
             /**
@@ -151,16 +151,17 @@ namespace easy3d {
              *      \arg true if succeeded
              *      \arg false if failed
              */
-			bool write(
-					const std::string& file_name,
-					const std::vector<Element>& elements,
-					const std::string& comment = "",
-					bool binary = false
-			) const;
+            static bool write(
+                    const std::string &file_name,
+                    const std::vector<Element> &elements,
+                    const std::string &comment = "",
+                    bool binary = false
+            );
 
-			/// returns endianness of the system.
-			static bool is_big_endian();
 		};
+
+        /// returns endianness of the system.
+        bool is_big_endian();
 
 	} // namespace io
 

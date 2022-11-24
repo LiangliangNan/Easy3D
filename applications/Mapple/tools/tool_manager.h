@@ -58,7 +58,7 @@ namespace easy3d {
             };
 
         public:
-            ToolManager(Canvas *cvs);
+            explicit ToolManager(Canvas *cvs);
             virtual ~ToolManager();
 
             void set_tool(ToolName name);

@@ -57,7 +57,7 @@ public:
      *      position C of the camera expressed in world coordinates is C = -inverse(rot) * t = -transpose(rot) * t.
      *  \return the camera position in the world coordinate system.
      */
-    easy3d::vec3 camera_pos(const easy3d::mat3 &R, const easy3d::vec3 &t);
+    static easy3d::vec3 camera_pos(const easy3d::mat3 &R, const easy3d::vec3 &t);
 
     /** \brief Computes the ray in the world coordinate system from an image point using the camera
      *      intrinsic and extrinsic parameters.
@@ -80,7 +80,7 @@ public:
      *      edge. The Y axis starts at the top of the image towards image bottom. All image pixels have non-negative
      *      coordinates.
      */
-    easy3d::vec3 pixel_to_ray(int img_x, int img_y,
+    static easy3d::vec3 pixel_to_ray(int img_x, int img_y,
                               float fx, float fy, float skew, float cx, float cy,
                               const easy3d::mat3 &R, const easy3d::vec3 &t, bool convert = true);
 
@@ -104,7 +104,7 @@ public:
      *      edge. The Y axis starts at the top of the image towards image bottom. All image pixels have non-negative
      *      coordinates.
      */
-    easy3d::vec2 point_to_pixel(const easy3d::vec3 &p,
+    static easy3d::vec2 point_to_pixel(const easy3d::vec3 &p,
                                 float fx, float fy, float skew, float cx, float cy,
                                 const easy3d::mat3 &R, const easy3d::vec3 &t, bool convert = true);
 

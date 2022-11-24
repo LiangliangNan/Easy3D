@@ -42,9 +42,3 @@ DialogPointCloudNormalEstimation::DialogPointCloudNormalEstimation(MainWindow *w
 	lineEditNeighborSize->setValidator(new QIntValidator(6, 1000, this));
     lineEditNeighborSize->setText("16");
 }
-
-
-DialogPointCloudNormalEstimation::~DialogPointCloudNormalEstimation()
-{
-
-}

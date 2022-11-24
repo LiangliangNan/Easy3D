@@ -29,8 +29,6 @@
 #include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
 
-#include <fstream>
-
 
 using namespace easy3d;
 

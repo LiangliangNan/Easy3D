@@ -81,9 +81,6 @@ namespace easy3d {
         updateWindowTitle();
     }
 
-    Window::~Window() {
-    }
-
 
     void Window::dragEnterEvent(QDragEnterEvent *e) {
         if (e->mimeData()->hasUrls())
@@ -172,13 +169,13 @@ namespace easy3d {
 
         bool saved = false;
         if (dynamic_cast<const PointCloud *>(model)) {
-            const PointCloud *cloud = dynamic_cast<const PointCloud *>(model);
+            const auto cloud = dynamic_cast<const PointCloud *>(model);
             saved = PointCloudIO::save(fileName.toStdString(), cloud);
         } else if (dynamic_cast<const SurfaceMesh *>(model)) {
-            const SurfaceMesh *mesh = dynamic_cast<const SurfaceMesh *>(model);
+            const auto mesh = dynamic_cast<const SurfaceMesh *>(model);
             saved = SurfaceMeshIO::save(fileName.toStdString(), mesh);
         } else if (dynamic_cast<const Graph *>(model)) {
-            const Graph *graph = dynamic_cast<const Graph *>(model);
+            const auto graph = dynamic_cast<const Graph *>(model);
             saved = GraphIO::save(fileName.toStdString(), graph);
         }
 
@@ -217,10 +214,8 @@ namespace easy3d {
         } else { // point cloud
             if (ext == "ptx") {
                 io::PointCloudIO_ptx serializer(file_name);
-                PointCloud *cloud = nullptr;
-                while ((cloud = serializer.load_next())) {
+                while (auto cloud = serializer.load_next())
                     viewer_->addModel(cloud);
-                }
             } else
                 model = PointCloudIO::load(file_name);
         }
@@ -266,7 +261,7 @@ namespace easy3d {
 
     void Window::onOpenRecentFile() {
         if (okToContinue()) {
-            QAction *action = qobject_cast<QAction *>(sender());
+            auto action = qobject_cast<QAction *>(sender());
             if (action) {
                 const QString filename(action->data().toString());
                 if (open(filename.toStdString()))
@@ -289,7 +284,6 @@ namespace easy3d {
         std::string default_file_name("untitled.png");
         if (model)
             default_file_name = file_system::replace_extension(model->name(), "png");
-        QString proposedFormat = "PNG (*.png)";
         const QString fileName = QFileDialog::getSaveFileName(
                 this,
                 "Please choose a file name",
@@ -319,7 +313,7 @@ namespace easy3d {
                     static_cast<int>(c.a * 255));
         const QColor &color = QColorDialog::getColor(orig, this);
         if (color.isValid()) {
-            const vec4 newColor(color.redF(), color.greenF(), color.blueF(), color.alphaF());
+            const vec4 newColor(static_cast<float>(color.redF()), static_cast<float>(color.greenF()), static_cast<float>(color.blueF()), static_cast<float>(color.alphaF()));
             viewer_->setBackgroundColor(newColor);
             viewer_->update();
         }
@@ -381,13 +375,13 @@ namespace easy3d {
         QString title = "Tutorial_204_Viewer_Qt (Debug Version)";
 #else
         QString title = "Tutorial_202_Viewer_Qt";
-#endif // _DEBUG
+#endif // NDEBUG
 
         QString fileName("Untitled");
         if (model)
             fileName = QString::fromStdString(model->name());
 
-        title = tr("%1[*] - %2").arg(strippedName(fileName)).arg(title);
+        title = tr("%1[*] - %2").arg(strippedName(fileName), title);
         setWindowTitle(title);
     }
 
@@ -450,13 +444,12 @@ namespace easy3d {
 
         actionSeparator = ui->menuFile->addSeparator();
 
-        QList<QAction *> actions;
-        for (int i = 0; i < MaxRecentFiles; ++i) {
-            actionsRecentFile[i] = new QAction(this);
-            actionsRecentFile[i]->setVisible(false);
-            connect(actionsRecentFile[i], SIGNAL(triggered()), this, SLOT(onOpenRecentFile()));
-
-            actions.push_back(actionsRecentFile[i]);
+        QList<QAction*> actions;
+        for (auto& action : actionsRecentFile) {
+            action = new QAction(this);
+            action->setVisible(false);
+            connect(action, SIGNAL(triggered()), this, SLOT(onOpenRecentFile()));
+            actions.push_back(action);
         }
         ui->menuRecentFiles->insertActions(ui->actionClearRecentFiles, actions);
         ui->menuRecentFiles->insertSeparator(ui->actionClearRecentFiles);
@@ -482,7 +475,7 @@ namespace easy3d {
 
 
     void Window::reportTopologyStatistics() {
-        SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer()->currentModel());
+        auto mesh = dynamic_cast<SurfaceMesh *>(viewer()->currentModel());
         if (!mesh)
             return;
 

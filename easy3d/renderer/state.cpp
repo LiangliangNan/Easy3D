@@ -31,12 +31,8 @@
 namespace easy3d {
 
 
-    State::Material::Material() {
-    }
-
-    State::Material::Material(const vec3 &ambi, const vec3 &spec, float shin)
+    State::Material::Material(const vec4 &ambi, const vec4 &spec, float shin)
             : ambient(ambi), specular(spec), shininess(shin) {
-
     }
 
 

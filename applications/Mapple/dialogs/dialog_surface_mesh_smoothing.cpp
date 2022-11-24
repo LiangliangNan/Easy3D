@@ -53,10 +53,6 @@ DialogSurfaceMeshSmoothing::DialogSurfaceMeshSmoothing(MainWindow *window)
 }
 
 
-DialogSurfaceMeshSmoothing::~DialogSurfaceMeshSmoothing() {
-}
-
-
 void DialogSurfaceMeshSmoothing::setSmoothingScheme(const QString &s) {
     if (s == "Explicit Smoothing") {
         labelIterations->setEnabled(true);
@@ -70,7 +66,7 @@ void DialogSurfaceMeshSmoothing::setSmoothingScheme(const QString &s) {
 
 
 void DialogSurfaceMeshSmoothing::apply() {
-    SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
+    auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
     if (!mesh)
         return;
 

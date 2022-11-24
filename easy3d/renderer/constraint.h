@@ -140,7 +140,7 @@ namespace easy3d {
 	{
 	public:
 		/*! Virtual destructor. Empty. */
-		virtual ~Constraint() {}
+		virtual ~Constraint() = default;
 
 		/*! Filters the translation applied to the \p frame. This default
 		implementation is empty (no filtering).
@@ -202,7 +202,7 @@ namespace easy3d {
 	public:
 		AxisPlaneConstraint();
 		/*! Virtual destructor. Empty. */
-		virtual ~AxisPlaneConstraint() {}
+        ~AxisPlaneConstraint() override = default;
 
 		/*! Type lists the different types of translation and rotation constraints
 		that are available.
@@ -245,10 +245,10 @@ namespace easy3d {
 		/*! @name Translation constraint */
 		//@{
 		/*! Overloading of Constraint::constrainTranslation(). Empty */
-		virtual void constrainTranslation(vec3 &translation, Frame *const frame) {
+        void constrainTranslation(vec3 &translation, Frame *const frame) override {
 			(void)(translation);
 			(void)(frame);
-		};
+		}
 
 		void setTranslationConstraint(Type type, const vec3 &direction);
 		/*! Sets the Type() of the translationConstraintType(). Default is
@@ -288,10 +288,10 @@ namespace easy3d {
 		/*! @name Rotation constraint */
 		//@{
 		/*! Overloading of Constraint::constrainRotation(). Empty. */
-		virtual void constrainRotation(quat &rotation, Frame *const frame) {
+        void constrainRotation(quat &rotation, Frame *const frame) override {
 			(void)(rotation);
 			(void)(frame);
-		};
+		}
 
 		void setRotationConstraint(Type type, const vec3 &direction);
 		void setRotationConstraintType(Type type);
@@ -331,10 +331,10 @@ namespace easy3d {
 	class LocalConstraint : public AxisPlaneConstraint {
 	public:
 		/*! Virtual destructor. Empty. */
-		virtual ~LocalConstraint() {};
+        ~LocalConstraint() override = default;
 
-		virtual void constrainTranslation(vec3 &translation, Frame *const frame);
-		virtual void constrainRotation(quat &rotation, Frame *const frame);
+        void constrainTranslation(vec3 &translation, Frame *const frame) override;
+        void constrainRotation(quat &rotation, Frame *const frame) override;
 	};
 
 	/*! \brief An AxisPlaneConstraint defined in the world coordinate system.
@@ -349,10 +349,10 @@ namespace easy3d {
 	class WorldConstraint : public AxisPlaneConstraint {
 	public:
 		/*! Virtual destructor. Empty. */
-		virtual ~WorldConstraint() {};
+        ~WorldConstraint() override = default;
 
-		virtual void constrainTranslation(vec3 &translation, Frame *const frame);
-		virtual void constrainRotation(quat &rotation, Frame *const frame);
+        void constrainTranslation(vec3 &translation, Frame *const frame) override;
+        void constrainRotation(quat &rotation, Frame *const frame) override;
 	};
 
 	/*! \brief An AxisPlaneConstraint defined in the camera coordinate system.
@@ -368,10 +368,10 @@ namespace easy3d {
 	public:
 		explicit CameraConstraint(const Camera *const camera);
 		/*! Virtual destructor. Empty. */
-		virtual ~CameraConstraint() {};
+        ~CameraConstraint() override = default;
 
-		virtual void constrainTranslation(vec3 &translation, Frame *const frame);
-		virtual void constrainRotation(quat &rotation, Frame *const frame);
+        void constrainTranslation(vec3 &translation, Frame *const frame) override;
+        void constrainRotation(quat &rotation, Frame *const frame) override;
 
 		/*! Returns the associated Camera. Set using the CameraConstraint constructor.
 		 */

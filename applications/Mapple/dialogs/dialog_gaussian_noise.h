@@ -36,8 +36,8 @@ class DialogGaussianNoise : public Dialog, public Ui::DialogGaussianNoise {
 Q_OBJECT
 
 public:
-    DialogGaussianNoise(MainWindow *window);
-    ~DialogGaussianNoise();
+    explicit DialogGaussianNoise(MainWindow *window);
+    ~DialogGaussianNoise() override = default;
 
 private Q_SLOTS:
     void apply();

@@ -53,7 +53,7 @@ using namespace easy3d;
 // the mesh created in the previous tutorial (so you can skip it)
 PolyMesh *old_mesh_from_previous_example() {
     // Create a polyhedral mesh
-    PolyMesh *mesh = new PolyMesh;
+    auto mesh = new PolyMesh;
 
     // Add four vertices
     auto v0 = mesh->add_vertex(vec3(-1.0, 0.0, 0.0));

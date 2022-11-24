@@ -57,11 +57,6 @@ DialogGaussianNoise::DialogGaussianNoise(MainWindow *window)
 }
 
 
-DialogGaussianNoise::~DialogGaussianNoise() {
-
-}
-
-
 void DialogGaussianNoise::apply() {
     auto model = viewer_->currentModel();
     if (!model)

@@ -62,7 +62,7 @@ namespace easy3d {
     class Manipulator {
     public:
         /// Constructor. A manipulator can be attached to a \p model.
-        Manipulator(Model *model = nullptr);
+        explicit Manipulator(Model *model = nullptr);
 
         ~Manipulator();
 

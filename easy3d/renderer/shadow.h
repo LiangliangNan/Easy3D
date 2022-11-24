@@ -51,7 +51,7 @@ namespace easy3d {
     public:
         /// \brief Constructor
         /// \param cam The camera used in the view
-        Shadow(Camera* cam);
+        explicit Shadow(Camera* cam);
         virtual ~Shadow();
 
         /// Shadow allows to have a virtual background as the shadow receiver. The virtual background plane is
@@ -62,9 +62,9 @@ namespace easy3d {
         void set_virtual_background(bool b) { virtual_background_ = b; }
 
         /// Query the virtual background color.
-        const vec3& virtual_background_color(const vec3& c) { return virtual_background_color_; }
+        const vec4& virtual_background_color(const vec4& c) { return virtual_background_color_; }
         /// Set the virtual background color.
-        void set_virtual_background_color(const vec3& c) { virtual_background_color_ = c; }
+        void set_virtual_background_color(const vec4& c) { virtual_background_color_ = c; }
 
         /// Query the size of the shadow map. The shadow is assumed to be square.
         int shadow_map_size() const { return shadow_map_size_; }
@@ -123,7 +123,7 @@ namespace easy3d {
 
         // the shadow is cast onto a minimum plane orthogonal to the light direction.
         bool	virtual_background_;
-        vec3    virtual_background_color_;
+        vec4    virtual_background_color_;
         TrianglesDrawable* virtual_background_drawable_;
 
         float	light_distance_;	// for perspective light frustum only

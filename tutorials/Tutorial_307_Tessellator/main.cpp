@@ -90,7 +90,11 @@ void triangulate(SurfaceMesh *mesh) {
         }
 
         for (const auto& t : triangles) {
-            mesh->add_triangle(SurfaceMesh::Vertex(t[0]), SurfaceMesh::Vertex(t[1]), SurfaceMesh::Vertex(t[2]));
+            mesh->add_triangle(
+                    SurfaceMesh::Vertex(static_cast<int>(t[0])),
+                    SurfaceMesh::Vertex(static_cast<int>(t[1])),
+                    SurfaceMesh::Vertex(static_cast<int>(t[2]))
+            );
         }
     }
 }
@@ -108,7 +112,7 @@ int main(int argc, char **argv) {
 
     //-------- create a simple mesh with 3 complex faces ---------
 
-    SurfaceMesh *mesh = new SurfaceMesh;
+    auto mesh = new SurfaceMesh;
 
     { // face 1: a concave quad
         SurfaceMesh::Vertex v0 = mesh->add_vertex(vec3(0, 0, 0));

@@ -171,8 +171,7 @@ WidgetPointsDrawable::~WidgetPointsDrawable() {
 
 namespace internal {
 
-    // color schemes from scalar fields
-    // scalar fields defined on vertices
+    // color schemes from scalar fields defined on vertices
     template <typename MODEL>
     void color_schemes_for_scalar_fields(MODEL* model, const QString& scalar_prefix, std::vector<QString>& schemes) {
         // color schemes from color properties and texture
@@ -214,7 +213,7 @@ namespace internal {
 
 std::vector<QString> WidgetPointsDrawable::colorSchemes(const easy3d::Model *model) {
     std::vector<QString> schemes;
-    schemes.push_back("uniform color");
+    schemes.emplace_back("uniform color");
 
     auto cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
     if (cloud)
@@ -269,7 +268,7 @@ std::vector<QString> WidgetPointsDrawable::vectorFields(const easy3d::Model *mod
 
     // if no vector fields found, add a "not available" item
     if (fields.empty())
-        fields.push_back("not available");
+        fields.emplace_back("not available");
     else   // add one allowing to disable vector fields
         fields.insert(fields.begin(), "disabled");
 
@@ -298,8 +297,8 @@ void WidgetPointsDrawable::updatePanel() {
 
     ui_->comboBoxDrawables->clear();
     const auto &drawables = model->renderer()->points_drawables();
-    for (auto d : drawables)
-        ui_->comboBoxDrawables->addItem(QString::fromStdString(d->name()));
+    for (auto dd : drawables)
+        ui_->comboBoxDrawables->addItem(QString::fromStdString(dd->name()));
     ui_->comboBoxDrawables->setCurrentText(QString::fromStdString(d->name()));
 
     // visible
@@ -335,8 +334,8 @@ void WidgetPointsDrawable::updatePanel() {
     {   // color scheme
         ui_->comboBoxColorScheme->clear();
         const std::vector<QString> &schemes = colorSchemes(viewer_->currentModel());
-        for (const auto &scheme : schemes)
-            ui_->comboBoxColorScheme->addItem(scheme);
+        for (const auto &s : schemes)
+            ui_->comboBoxColorScheme->addItem(s);
 
         for (const auto& name : schemes) {
             if (name.contains(QString::fromStdString(scheme.property_name()))) {
@@ -346,7 +345,7 @@ void WidgetPointsDrawable::updatePanel() {
         }
 
         // default color
-        vec3 c = d->color();
+        auto c = d->color();
         QPixmap pixmap(ui_->toolButtonDefaultColor->size());
         pixmap.fill(
                 QColor(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255)));
@@ -387,7 +386,7 @@ void WidgetPointsDrawable::updatePanel() {
     {   // vector field
         ui_->comboBoxVectorField->clear();
         const std::vector<QString> &fields = vectorFields(viewer_->currentModel());
-        for (auto name : fields)
+        for (const auto& name : fields)
             ui_->comboBoxVectorField->addItem(name);
 
         ui_->comboBoxVectorField->setCurrentText(state.vector_field);
@@ -459,7 +458,7 @@ void WidgetPointsDrawable::setImposterStyle(const QString &style) {
         d->set_impostor_type(PointsDrawable::SPHERE);
     else if (style == "surfel") {
         if (d->normal_buffer() == 0) { // surfel requires point normals
-            SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
+            auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
             if (mesh) {
                 auto normals = mesh->get_vertex_property<vec3>("v:normal");
                 if (!normals) {
@@ -471,7 +470,7 @@ void WidgetPointsDrawable::setImposterStyle(const QString &style) {
                 viewer_->doneCurrent();
             } else if (dynamic_cast<PointCloud *>(viewer_->currentModel())) {
                 if (d->normal_buffer() == 0) { // surfel requires point normals
-                    PointCloud *cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
+                    auto cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
                     auto normals = cloud->get_vertex_property<vec3>("v:normal");
                     if (normals) {
                         viewer_->makeCurrent();
@@ -497,8 +496,8 @@ void WidgetPointsDrawable::setColorScheme(const QString &text) {
     auto d = drawable();
     auto& scheme = d->state();
     scheme.set_clamp_range(ui_->checkBoxScalarFieldClamp->isChecked());
-    scheme.set_clamp_lower(ui_->doubleSpinBoxScalarFieldClampLower->value() / 100.0);
-    scheme.set_clamp_upper(ui_->doubleSpinBoxScalarFieldClampUpper->value() / 100.0);
+    scheme.set_clamp_lower(ui_->doubleSpinBoxScalarFieldClampLower->value() / 100.0f);
+    scheme.set_clamp_upper(ui_->doubleSpinBoxScalarFieldClampUpper->value() / 100.0f);
     states_[d].scalar_style = ui_->comboBoxScalarFieldStyle->currentIndex();
 
     WidgetDrawable::setColorScheme(text);
@@ -507,7 +506,7 @@ void WidgetPointsDrawable::setColorScheme(const QString &text) {
 
 void WidgetPointsDrawable::setDefaultColor() {
     auto d = drawable();
-    const vec3 &c = d->color();
+    const auto &c = d->color();
     QColor orig(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255));
     const QColor &color = QColorDialog::getColor(orig, this);
     if (color.isValid()) {
@@ -524,7 +523,7 @@ void WidgetPointsDrawable::setDefaultColor() {
 
 void WidgetPointsDrawable::setBackColor() {
     auto d = drawable();
-    const vec3 &c = d->back_color();
+    const auto &c = d->back_color();
     QColor orig(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255));
     const QColor &color = QColorDialog::getColor(orig, this);
     if (color.isValid()) {

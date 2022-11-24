@@ -24,8 +24,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef EASY3D_FILEIO_TRANSLATER_H
-#define EASY3D_FILEIO_TRANSLATER_H
+#ifndef EASY3D_FILEIO_TRANSLATOR_H
+#define EASY3D_FILEIO_TRANSLATOR_H
 
 #include <easy3d/core/types.h>
 
@@ -41,7 +41,7 @@ namespace easy3d {
 	public:
 
         /**
-         * \brief Returns the instance of the translater
+         * \brief Returns the instance of the translator
          */
        static Translator* instance();
 
@@ -52,14 +52,14 @@ namespace easy3d {
        };
 
        /**
-        * \brief Sets the status of the translater.
+        * \brief Sets the status of the translator.
         * \param s The new status to be set.
         */
         void set_status(Status s) { status_ = s; }
 
         /**
-         * \brief Checks the status of the translater.
-         * \return The status of the translater.
+         * \brief Checks the status of the translator.
+         * \return The status of the translator.
          */
         Status status() const { return status_; }
 
@@ -85,4 +85,4 @@ namespace easy3d {
 
 } // namespace easy3d
 
-#endif // EASY3D_FILEIO_TRANSLATER_H
+#endif // EASY3D_FILEIO_TRANSLATOR_H

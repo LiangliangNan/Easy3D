@@ -66,8 +66,7 @@ namespace easy3d {
 
     void ClippingPlane::fit_scene(const vec3 &center, float radius) {
         scene_radius_ = radius;
-        //manipulator_->frame()->setPositionAndOrientation(center_, quat());
-        manipulator_->frame()->setPosition(center); // keep the orientation
+        manipulator_->frame()->setPosition(center); // we change position only (and keep the orientation)
     }
 
 
@@ -93,7 +92,7 @@ namespace easy3d {
     }
 
 
-    void ClippingPlane::set_program(ShaderProgram *program) {
+    void ClippingPlane::set_program(ShaderProgram *program) const {
         if (enabled_) {
             glEnable(GL_CLIP_DISTANCE0);
             if (cross_section_)
@@ -106,9 +105,9 @@ namespace easy3d {
         }
 
         program->set_uniform("clippingPlaneEnabled", enabled_);
-        easy3d_debug_log_gl_error;
+        easy3d_debug_log_gl_error
         program->set_uniform("crossSectionEnabled", cross_section_);
-        easy3d_debug_log_gl_error;
+        easy3d_debug_log_gl_error
 
 #if 0
         program->set_uniform("clippingPlane0", plane0());
@@ -120,12 +119,12 @@ namespace easy3d {
         const Plane3 plane_1(center() - cross_section_width_ * scene_radius_ * n, n);
         program->set_uniform("clippingPlane1", plane_1);
 #endif
-        easy3d_debug_log_gl_error;
+        easy3d_debug_log_gl_error
     }
 
 
-    void ClippingPlane::set_discard_primitives(ShaderProgram *program, bool plane_clipping_discard) {
-        // don't discard vertices when visualizing cross sections
+    void ClippingPlane::set_discard_primitives(ShaderProgram *program, bool plane_clipping_discard) const {
+        // don't discard vertices when visualizing cross-sections
         program->set_uniform("planeClippingDiscard", plane_clipping_discard && !cross_section_);
     }
 
@@ -161,7 +160,7 @@ namespace easy3d {
         wireframe.set_line_width(1.0f);
         wireframe.set_uniform_coloring(color_);
         wireframe.draw(cam);
-        easy3d_debug_log_gl_error;
+        easy3d_debug_log_gl_error
 
         // draw the face of the clipping plane
         glEnable(GL_BLEND);
@@ -173,7 +172,7 @@ namespace easy3d {
         face.set_distinct_back_color(false);
         face.draw(cam);
         glDisable(GL_BLEND);
-        easy3d_debug_log_gl_error;
+        easy3d_debug_log_gl_error
 
         const_cast<ClippingPlane *>(this)->set_enabled(status);
     }

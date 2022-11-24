@@ -18,8 +18,7 @@ namespace easy3d {
     SurfaceMesh *SurfaceMeshComponent::to_mesh() const {
         const SurfaceMeshComponent *comp = this;
         SurfaceMesh *mesh = comp->mesh();
-
-        SurfaceMesh *result = new SurfaceMesh;
+        auto result = new SurfaceMesh;
 
         auto points = mesh->get_vertex_property<vec3>("v:point");
         auto vertex_id = mesh->add_vertex_property<int>("SurfaceMeshComponent::construct_mesh:vertex_id");

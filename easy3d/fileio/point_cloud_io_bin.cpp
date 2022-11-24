@@ -55,8 +55,8 @@ namespace easy3d {
             cloud->resize(num);
 
 			// read the points block
-			PointCloud::VertexProperty<vec3> points = cloud->vertex_property<vec3>("v:point");
-            input.read((char*)points.data(), num * sizeof(vec3));
+			auto points = cloud->vertex_property<vec3>("v:point");
+            input.read((char*)points.data(), static_cast<long>(num * sizeof(vec3)));
 
             if (Translator::instance()->status() == Translator::TRANSLATE_USE_FIRST_POINT) {
                 auto& positions = points.vector();
@@ -75,11 +75,11 @@ namespace easy3d {
                           << "), stored as ModelProperty<dvec3>(\"translation\")";
             } else if (Translator::instance()->status() == Translator::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
                 const dvec3 &origin = Translator::instance()->translation();
-                auto& points = cloud->get_vertex_property<vec3>("v:point").vector();
-                for (auto& p: points) {
-                    p.x -= origin.x;
-                    p.y -= origin.y;
-                    p.z -= origin.z;
+                auto& pts = cloud->get_vertex_property<vec3>("v:point").vector();
+                for (auto& p: pts) {
+                    p.x -= static_cast<float>(origin.x);
+                    p.y -= static_cast<float>(origin.y);
+                    p.z -= static_cast<float>(origin.z);
                 }
 
                 auto trans = cloud->add_model_property<dvec3>("translation", dvec3(0, 0, 0));
@@ -92,14 +92,14 @@ namespace easy3d {
             input.read((char*)(&num), sizeof(int));
             if (num > 0) {
 				PointCloud::VertexProperty<vec3> colors = cloud->vertex_property<vec3>("v:color");
-                input.read((char*)colors.data(), num * sizeof(vec3));
+                input.read((char*)colors.data(), static_cast<long>(num * sizeof(vec3)));
 			}
 
             // read the normals block if exists
             input.read((char*)(&num), sizeof(int));
             if (num > 0) {
 				PointCloud::VertexProperty<vec3> normals = cloud->vertex_property<vec3>("v:normal");
-                input.read((char*)normals.data(), num * sizeof(vec3));
+                input.read((char*)normals.data(), static_cast<long>(num * sizeof(vec3)));
                 // check if the normals are normalized
                 const float len = length(normals[PointCloud::Vertex(0)]);
                 LOG_IF(std::abs(1.0 - len) > epsilon<float>(), WARNING)
@@ -118,7 +118,7 @@ namespace easy3d {
 				return false;
 			}
 
-            int num = cloud->n_vertices();
+            int num = static_cast<int>(cloud->n_vertices());
 
 			// write the points block
 			auto points = cloud->get_vertex_property<vec3>("v:point");
@@ -130,32 +130,30 @@ namespace easy3d {
                 for (auto v : cloud->vertices()) {
                     const vec3& p = points[v];
                     for (unsigned short i=0; i<3; ++i) {
-                        float value = static_cast<float>(p[i] + origin[i]);
+                        const auto value = static_cast<float>(p[i] + origin[i]);
                         output.write((char *)&value, sizeof(float));
                     }
                 }
             }
             else
-			    output.write((char*)points.data(), num * sizeof(vec3));
+			    output.write((char*)points.data(), static_cast<long>(num * sizeof(vec3)));
 
 			auto colors = cloud->get_vertex_property<vec3>("v:color");
-			if (colors) {
-                output.write((char*)&num, sizeof(int));
-				output.write((char*)colors.data(), num * sizeof(vec3));
-			}
-            else {
+            if (colors) {
+                output.write((char *) &num, sizeof(int));
+                output.write((char *) colors.data(), static_cast<long>(num * sizeof(vec3)));
+            } else {
                 int num_colors = 0;
-                output.write((char*)&num_colors, sizeof(int));
+                output.write((char *) &num_colors, sizeof(int));
             }
 
 			auto normals = cloud->get_vertex_property<vec3>("v:normal");
-			if (normals) {
-                output.write((char*)&num, sizeof(int));
-				output.write((char*)normals.data(), num * sizeof(vec3));
-			}
-            else {
+            if (normals) {
+                output.write((char *) &num, sizeof(int));
+                output.write((char *) normals.data(), static_cast<long>(num * sizeof(vec3)));
+            } else {
                 int num_normals = 0;
-                output.write((char*)&num_normals, sizeof(int));
+                output.write((char *) &num_normals, sizeof(int));
             }
 
 			return true;

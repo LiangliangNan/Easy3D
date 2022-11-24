@@ -21,7 +21,7 @@
 
 namespace easy3d {
 
-    //! A quadric as a symmetrix 4x4 matrix. Used by the error quadric mesh decimation algorithms.
+    //! A quadric as a symmetric 4x4 matrix. Used by the error quadric mesh decimation algorithms.
     class Quadric {
     public:
         //! construct quadric from upper triangle of symmetric 4x4 matrix
@@ -35,7 +35,7 @@ namespace easy3d {
                   j_(j) {}
 
         //! constructor quadric from given plane equation: ax+by+cz+d=0
-        Quadric(double a = 0.0, double b = 0.0, double c = 0.0, double d = 0.0)
+        explicit Quadric(double a = 0.0, double b = 0.0, double c = 0.0, double d = 0.0)
                 : a_(a * a), b_(a * b), c_(a * c), d_(a * d),
                   e_(b * b), f_(b * c), g_(b * d),
                   h_(c * c), i_(c * d),
@@ -102,10 +102,10 @@ namespace easy3d {
     class NormalCone {
     public:
         //! default constructor (not initialized)
-        NormalCone() {}
+        NormalCone() = default;
 
         //! Initialize cone with center (unit vector) and angle (radius in radians)
-        NormalCone(const vec3 &normal, float angle = 0.0)
+        explicit NormalCone(const vec3 &normal, float angle = 0.0)
                 : center_normal_(normal), angle_(angle) {
         }
 
@@ -135,10 +135,10 @@ namespace easy3d {
                 float center_angle = std::acos(dp);
                 float min_angle = std::min(-angle_, center_angle - nc.angle_);
                 float max_angle = std::max(angle_, center_angle + nc.angle_);
-                angle_ = 0.5 * (max_angle - min_angle);
+                angle_ = 0.5f * (max_angle - min_angle);
 
                 // axis by SLERP
-                float axis_angle = 0.5 * (min_angle + max_angle);
+                float axis_angle = 0.5f * (min_angle + max_angle);
                 center_normal_ = ((center_normal_ * std::sin(center_angle - axis_angle) +
                                    nc.center_normal_ * std::sin(axis_angle)) /
                                   std::sin(center_angle));
@@ -166,7 +166,7 @@ namespace easy3d {
     class SurfaceMeshSimplification {
     public:
         //! Construct with mesh to be simplified.
-        SurfaceMeshSimplification(SurfaceMesh *mesh);
+        explicit SurfaceMeshSimplification(SurfaceMesh *mesh);
 
         // destructor
         ~SurfaceMeshSimplification();
@@ -250,7 +250,7 @@ namespace easy3d {
         // compute aspect ratio for face f
         float aspect_ratio(SurfaceMesh::Face f) const;
 
-        // compute distance from p to triagle f
+        // compute distance from p to triangle f
         float distance(SurfaceMesh::Face f, const vec3 &p) const;
 
     private:

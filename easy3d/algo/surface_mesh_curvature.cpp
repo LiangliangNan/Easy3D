@@ -23,8 +23,7 @@ namespace easy3d {
 
     //-----------------------------------------------------------------------------
 
-    SurfaceMeshCurvature::~SurfaceMeshCurvature() {
-    }
+    SurfaceMeshCurvature::~SurfaceMeshCurvature() = default;
 
     //-----------------------------------------------------------------------------
 
@@ -47,7 +46,7 @@ namespace easy3d {
             kmin = kmax = 0.0;
 
             if (!mesh_->is_isolated(v) && !mesh_->is_border(v)) {
-                laplace = vec3(0.0);
+                laplace = vec3(0.0f);
                 sum_weights = 0.0;
                 sum_angles = 0.0;
                 p0 = mesh_->position(v);
@@ -228,7 +227,7 @@ namespace easy3d {
                 delete[] matrix;
 
                 // curvature values:
-                //   normal vector -> eval with smallest absolute value
+                //   normal vector -> eval with the smallest absolute value
                 //   evals are sorted in decreasing order
                 a1 = fabs(eval1);
                 a2 = fabs(eval2);
@@ -308,7 +307,7 @@ namespace easy3d {
                     kmax += weight * max_curvature_[tv];
                 }
 
-                if (sum_weights) {
+                if (std::abs(sum_weights) > std::numeric_limits<float>::min()) {
                     min_curvature_[v] = kmin / sum_weights;
                     max_curvature_[v] = kmax / sum_weights;
                 }

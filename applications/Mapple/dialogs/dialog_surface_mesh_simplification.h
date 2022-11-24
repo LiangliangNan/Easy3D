@@ -37,7 +37,7 @@ Q_OBJECT
 
 public:
     explicit DialogSurfaceMeshSimplification(MainWindow *window);
-    ~DialogSurfaceMeshSimplification();
+    ~DialogSurfaceMeshSimplification() override = default;
 
 private Q_SLOTS:
 

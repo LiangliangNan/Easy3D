@@ -25,9 +25,6 @@
  ********************************************************************/
 
 #include <easy3d/fileio/surface_mesh_io.h>
-
-#include <fstream>
-
 #include <easy3d/fileio/translator.h>
 #include <easy3d/core/types.h>
 #include <easy3d/core/surface_mesh.h>
@@ -124,7 +121,7 @@ namespace easy3d {
                             origin = p;
                             Translator::instance()->set_translation(origin);
                         }
-                        builder.add_vertex(vec3(p.x - origin.x, p.y - origin.y, p.z - origin.z));
+                        builder.add_vertex(vec3(static_cast<float>(p.x - origin.x), static_cast<float>(p.y - origin.y), static_cast<float>(p.z - origin.z)));
                     }
                     else
                         LOG_N_TIMES(3, ERROR) << "failed reading the " << i << "_th vertex from file. " << COUNTER;
@@ -140,7 +137,7 @@ namespace easy3d {
                     internal::get_line(input);
                     input >> p;
                     if (!input.fail())
-                        builder.add_vertex(vec3(p.x - origin.x, p.y - origin.y, p.z - origin.z));
+                        builder.add_vertex(vec3(static_cast<float>(p.x - origin.x), static_cast<float>(p.y - origin.y), static_cast<float>(p.z - origin.z)));
                     else
                         LOG_N_TIMES(3, ERROR) << "failed reading the " << i << "_th vertex from file. " << COUNTER;
                     progress.next();
@@ -151,27 +148,26 @@ namespace easy3d {
             }
 
             for (int i = 0; i < nb_facets; i++) {
-                int nb_vertices;
+                int nv;
                 internal::get_line(input);
-                input >> nb_vertices;
+                input >> nv;
 
-				if (!input.fail()) {
-					std::vector<SurfaceMesh::Vertex> vertices;
-					for (int j = 0; j < nb_vertices; j++) {
-						int index;
-						input >> index;
-						if (!input.fail()) {
+                if (!input.fail()) {
+                    std::vector<SurfaceMesh::Vertex> vertices;
+                    for (int j = 0; j < nv; j++) {
+                        int index;
+                        input >> index;
+                        if (!input.fail()) {
                             vertices.emplace_back(SurfaceMesh::Vertex(index));
+                        } else {
+                            LOG_N_TIMES(3, ERROR) << "failed reading the " << j << "_th vertex of the " << i
+                                                  << "_th face from file. " << COUNTER;
                         }
-                        else {
-                            LOG_N_TIMES(3, ERROR) << "failed reading the " << j << "_th vertex of the " << i << "_th face from file. " << COUNTER;
-                        }
-					}
-					builder.add_face(vertices);
-				}
-                else {
+                    }
+                    builder.add_face(vertices);
+                } else
                     LOG_N_TIMES(3, ERROR) << "failed reading the " << i << "_th face from file. " << COUNTER;
-                }
+
                 progress.next();
             }
 

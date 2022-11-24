@@ -15,8 +15,8 @@
 #include <easy3d/core/surface_mesh.h>
 #include <vector>
 #include <set>
-#include <float.h>
-#include <limits.h>
+#include <cfloat>
+#include <climits>
 
 namespace easy3d {
 
@@ -34,7 +34,7 @@ namespace easy3d {
         //! \param mesh The mesh on which to compute the geodesic distances.
         //! \param use_virtual_edges A flag to control the use of virtual edges. Default: true.
         //! \sa compute() to actually compute the geodesic distances.
-        SurfaceMeshGeodesic(SurfaceMesh *mesh, bool use_virtual_edges = true);
+        explicit SurfaceMeshGeodesic(SurfaceMesh *mesh, bool use_virtual_edges = true);
 
         // destructor
         ~SurfaceMeshGeodesic();
@@ -42,15 +42,15 @@ namespace easy3d {
         //! \brief Compute geodesic distances from specified seed points.
         //! \details The results are store as SurfaceMesh::VertexProperty<float> with a name "v:geodesic:distance".
         //! \param[in] seed The vector of seed vertices.
-        //! \param[in] maxdist The maximum distance up to which to compute the
+        //! \param[in] max_dist The maximum distance up to which to compute the
         //! geodesic distances.
-        //! \param[in] maxnum The maximum number of neighbors up to which to
+        //! \param[in] max_num The maximum number of neighbors up to which to
         //! compute the geodesic distances.
         //! \param[out] neighbors The vector of neighbor vertices.
         //! \return The number of neighbors that have been found.
         unsigned int compute(const std::vector<SurfaceMesh::Vertex> &seed,
-                             float maxdist = FLT_MAX,
-                             unsigned int maxnum = INT_MAX,
+                             float max_dist = FLT_MAX,
+                             unsigned int max_num = INT_MAX,
                              std::vector<SurfaceMesh::Vertex> *neighbors = nullptr);
 
         //! \brief Access the computed geodesic distance.
@@ -71,7 +71,7 @@ namespace easy3d {
         // functor for comparing two vertices w.r.t. their geodesic distance
         class VertexCmp {
         public:
-            VertexCmp(const SurfaceMesh::VertexProperty<float> &dist) : dist_(dist) {}
+            explicit VertexCmp(const SurfaceMesh::VertexProperty<float> &dist) : dist_(dist) {}
 
             bool operator()(SurfaceMesh::Vertex v0, SurfaceMesh::Vertex v1) const {
                 return ((dist_[v0] == dist_[v1]) ? (v0 < v1)
@@ -102,7 +102,7 @@ namespace easy3d {
         unsigned int init_front(const std::vector<SurfaceMesh::Vertex> &seed,
                                 std::vector<SurfaceMesh::Vertex> *neighbors);
 
-        unsigned int propagate_front(float maxdist, unsigned int maxnum,
+        unsigned int propagate_front(float max_dist, unsigned int max_num,
                                      std::vector<SurfaceMesh::Vertex> *neighbors);
 
         void heap_vertex(SurfaceMesh::Vertex v);

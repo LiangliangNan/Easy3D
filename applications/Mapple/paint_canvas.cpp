@@ -210,9 +210,9 @@ void PaintCanvas::initializeGL() {
     }
 
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
-    dpi_scaling_ = devicePixelRatioF();
+    dpi_scaling_ = static_cast<float>(devicePixelRatioF());
 #else
-    dpi_scaling_ = devicePixelRatio();
+    dpi_scaling_ = static_cast<float>(devicePixelRatio());
 #endif
     VLOG(1) << "DPI scaling: " << dpi_scaling();
 
@@ -247,6 +247,8 @@ void PaintCanvas::resizeGL(int w, int h) {
 
 void PaintCanvas::setBackgroundColor(const vec4 &c) {
     background_color_ = c;
+    if (shadow_)
+        shadow_->set_virtual_background_color(c);
 
     makeCurrent();
     func_->glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
@@ -492,8 +494,6 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
                 }
             }
 
-            int x = e->pos().x();
-            int y = e->pos().y();
             int dx = x - mouse_current_pos_.x();
             int dy = y - mouse_current_pos_.y();
             auto axis = ManipulatedFrame::NONE;
@@ -651,10 +651,10 @@ void PaintCanvas::setCurrentModel(easy3d::Model *m) {
 
 void PaintCanvas::keyPressEvent(QKeyEvent *e) {
     if (e->key() == Qt::Key_Left && e->modifiers() == Qt::KeypadModifier) {
-        float angle = static_cast<float>(1 * M_PI / 180.0); // turn left, 1 degrees each step
+        auto angle = static_cast<float>(1 * M_PI / 180.0); // turn left, 1 degrees each step
         camera_->frame()->action_turn(angle, camera_);
     } else if (e->key() == Qt::Key_Right && e->modifiers() == Qt::KeypadModifier) {
-        float angle = static_cast<float>(1 * M_PI / 180.0); // turn right, 1 degrees each step
+        auto angle = static_cast<float>(1 * M_PI / 180.0); // turn right, 1 degrees each step
         camera_->frame()->action_turn(-angle, camera_);
     } else if (e->key() == Qt::Key_Up && e->modifiers() == Qt::KeypadModifier) {    // move camera forward
         float step = 0.05f * camera_->sceneRadius();
@@ -786,7 +786,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
         }
     }
     else if (e->key() == Qt::Key_B && e->modifiers() == Qt::NoModifier) {
-        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(currentModel());
+        auto mesh = dynamic_cast<SurfaceMesh*>(currentModel());
         if (mesh) {
             auto borders = mesh->renderer()->get_lines_drawable("borders");
             if (borders) {
@@ -796,7 +796,7 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
         }
     }
     else if (e->key() == Qt::Key_L && e->modifiers() == Qt::NoModifier) { // locked vertices
-        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(currentModel());
+        auto mesh = dynamic_cast<SurfaceMesh*>(currentModel());
         if (mesh) {
             auto drawable = mesh->renderer()->get_points_drawable("locks");
             if (drawable) {
@@ -885,8 +885,7 @@ void PaintCanvas::closeEvent(QCloseEvent *e) {
 
 
 std::string PaintCanvas::usage() const {
-    return std::string(
-            " ----------------------------------------------------------------\n"
+    return  " ------------------------------------------------------------------\n"
             " Mapple usage:                                                     \n"
             " ------------------------------------------------------------------\n"
             "  Fn + Delete:         Delete current model                        \n"
@@ -923,8 +922,7 @@ std::string PaintCanvas::usage() const {
             "  'v':                 Toggle vertices                             \n"
             "  'm':                 Toggle smooth shading (for SurfaceMesh)     \n"
             "  'd':                 Print info about drawables and properties   \n"
-            " ------------------------------------------------------------------\n"
-    );
+            " ------------------------------------------------------------------\n";
 }
 
 
@@ -1060,22 +1058,22 @@ vec3 PaintCanvas::pointUnderPixel(const QPoint &p, bool &found) const {
 
     // NOTE: when dealing with OpenGL, all positions are relative to the viewer port.
     //       So we have to handle highdpi displays.
-    glx = static_cast<int>(glx * dpi_scaling());
-    gly = static_cast<int>(gly * dpi_scaling());
+    glx = static_cast<int>(static_cast<float>(glx) * dpi_scaling());
+    gly = static_cast<int>(static_cast<float>(gly) * dpi_scaling());
 
     const_cast<PaintCanvas *>(this)->makeCurrent();
 
     int samples = 0;
     func_->glGetIntegerv(GL_SAMPLES, &samples);
-    easy3d_debug_log_gl_error;
+    easy3d_debug_log_gl_error
 
     float depth = 1.0f;
     if (samples > 0) {
         opengl::read_depth_ms(depth, glx, gly);
-        easy3d_debug_log_gl_error;
+        easy3d_debug_log_gl_error
     } else {
         opengl::read_depth(depth, glx, gly);
-        easy3d_debug_log_gl_error;
+        easy3d_debug_log_gl_error
     }
 
     const_cast<PaintCanvas *>(this)->doneCurrent();
@@ -1083,18 +1081,18 @@ vec3 PaintCanvas::pointUnderPixel(const QPoint &p, bool &found) const {
     found = depth < 1.0f;
     if (found) {
         // The input to unprojectedCoordinatesOf() is defined in the screen coordinate system
-        return camera_->unprojectedCoordinatesOf(vec3(p.x(), p.y(), depth));
+        return camera_->unprojectedCoordinatesOf(vec3(static_cast<float>(p.x()), static_cast<float>(p.y()), depth));
     }
 
-    return vec3();
+    return {};
 }
 
 
 void PaintCanvas::paintGL() {
-    easy3d_debug_log_gl_error;
+    easy3d_debug_log_gl_error
 
 #if 1
-    // QOpenGLWidget renders everything into a FBO. Internally it changes
+    // QOpenGLWidget renders everything into an FBO. Internally it changes
     // QSurfaceFormat to always have samples = 0 and the OpenGL context is
     // not a multisample context. So we have to query the render-buffer
     // to know if it is using multisampling. At initializeGL() we were not
@@ -1104,9 +1102,9 @@ void PaintCanvas::paintGL() {
     if (!queried) {
 #if 1
         func_->glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_SAMPLES, &samples_);
-        easy3d_debug_log_frame_buffer_error;
+        easy3d_debug_log_frame_buffer_error
 #else   // the samples can also be retrieved using glGetIntegerv()
-        func_->glGetIntegerv(GL_SAMPLES, &samples_); easy3d_debug_log_gl_error;
+        func_->glGetIntegerv(GL_SAMPLES, &samples_); easy3d_debug_log_gl_error
 #endif
         // warn the user if the expected request was not satisfied
         int samples = QSurfaceFormat::defaultFormat().samples();
@@ -1216,9 +1214,9 @@ void PaintCanvas::drawCornerAxes() {
             ->set_uniform("clippingPlaneEnabled", false)
             ->set_uniform("selected", false)
             ->set_uniform("highlight_color", setting::highlight_color)
-            ->set_uniform("use_texture", false);  easy3d_debug_log_gl_error;
+            ->set_uniform("use_texture", false);  easy3d_debug_log_gl_error
 
-    drawable_axes_->gl_draw(); easy3d_debug_log_gl_error;
+    drawable_axes_->gl_draw(); easy3d_debug_log_gl_error
     program->release();
 
     // restore
@@ -1229,7 +1227,7 @@ void PaintCanvas::drawCornerAxes() {
 
 
 void PaintCanvas::drawPickedFaceAndItsVerticesIDs(const QColor& face_color, const QColor& vertex_color) {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(currentModel());
+    auto mesh = dynamic_cast<SurfaceMesh*>(currentModel());
     if (!mesh || picked_face_index_ < 0 || picked_face_index_ >= static_cast<int>(mesh->n_faces()))
         return;
 
@@ -1250,15 +1248,15 @@ void PaintCanvas::drawPickedFaceAndItsVerticesIDs(const QColor& face_color, cons
         face_center += p;
         const vec3 proj = camera()->projectedCoordinatesOf(manip * p);
         painter.setPen(vertex_color);
-        painter.drawText(proj.x, proj.y, QString::fromStdString("v" + std::to_string(v.idx())));
+        painter.drawText(static_cast<int>(proj.x), static_cast<int>(proj.y), QString::fromStdString("v" + std::to_string(v.idx())));
         ++valence;
     }
 
     // draw label for the picked face
     const vec3 proj = camera()->projectedCoordinatesOf(manip * (face_center/valence));
     painter.setPen(face_color);
-    painter.drawText(proj.x, proj.y, QString::fromStdString("f" + std::to_string(picked_face_index_)));
-    easy3d_debug_log_gl_error;
+    painter.drawText(static_cast<int>(proj.x), static_cast<int>(proj.y), QString::fromStdString("f" + std::to_string(picked_face_index_)));
+    easy3d_debug_log_gl_error
 
     // finish
     painter.endNativePainting();
@@ -1269,7 +1267,7 @@ void PaintCanvas::drawPickedFaceAndItsVerticesIDs(const QColor& face_color, cons
 
 
 void PaintCanvas::drawPickedVertexID(const QColor &vertex_color) {
-    PointCloud* cloud = dynamic_cast<PointCloud*>(currentModel());
+    auto cloud = dynamic_cast<PointCloud*>(currentModel());
     if (!cloud || picked_vertex_index_ < 0 || picked_vertex_index_ >= static_cast<int>(cloud->n_vertices()))
         return;
 
@@ -1287,8 +1285,8 @@ void PaintCanvas::drawPickedVertexID(const QColor &vertex_color) {
     vec3 pos = cloud->position(vertex);
     pos = camera()->projectedCoordinatesOf(manip * pos);
     painter.setPen(vertex_color);
-    painter.drawText(pos.x, pos.y, QString::fromStdString("v" + std::to_string(picked_vertex_index_)));
-    easy3d_debug_log_gl_error;
+    painter.drawText(static_cast<int>(pos.x), static_cast<int>(pos.y), QString::fromStdString("v" + std::to_string(picked_vertex_index_)));
+    easy3d_debug_log_gl_error
 
     // finish
     painter.endNativePainting();
@@ -1308,7 +1306,7 @@ void PaintCanvas::preDraw() {
 
 
 void PaintCanvas::postDraw() {
-    easy3d_debug_log_gl_error;
+    easy3d_debug_log_gl_error
 
     // draw the Easy3D logo and frame rate
     if (show_easy3d_logo_ && texter_ && texter_->num_fonts() >=2) {
@@ -1324,7 +1322,7 @@ void PaintCanvas::postDraw() {
         static const unsigned int max_count = 40;
         static QString fps_string("fps: ??");
         if (++fps_count == max_count) {
-            fps = 1000.0 * max_count / timer_.restart();
+            fps = 1000.0 * max_count / static_cast<double>(timer_.restart());
             fps_string = tr("fps: %1").arg(fps, 0, 'f', ((fps < 10.0) ? 1 : 0));
             fps_count = 0;
         }
@@ -1333,15 +1331,15 @@ void PaintCanvas::postDraw() {
         if (texter_ && texter_->num_fonts() >=2)
             texter_->draw(fps_string.toStdString(), 20.0f * dpi_scaling(), 50.0f * dpi_scaling(), 16, 1);
 #else   // draw frame rate text using Qt.
-        QPainter painter; easy3d_debug_log_gl_error;
+        QPainter painter; easy3d_debug_log_gl_error
         painter.begin(this);
         painter.setRenderHint(QPainter::Antialiasing);
         painter.setRenderHint(QPainter::TextAntialiasing);
         painter.setPen(Qt::black);
-        painter.beginNativePainting(); easy3d_debug_log_gl_error;
+        painter.beginNativePainting(); easy3d_debug_log_gl_error
         painter.drawText(20, 50, fps_string);
         painter.endNativePainting();
-        painter.end();  easy3d_debug_log_gl_error;
+        painter.end();  easy3d_debug_log_gl_error
         func_->glEnable(GL_DEPTH_TEST); // it seems QPainter disables depth test?
 #endif
     }
@@ -1349,7 +1347,7 @@ void PaintCanvas::postDraw() {
     // shown only when it is not animating
     if (walkThrough() && !walkThrough()->interpolator()->is_interpolation_started())
         walkThrough()->draw();
-    easy3d_debug_log_gl_error;
+    easy3d_debug_log_gl_error
 
     if (show_primitive_id_under_mouse_) {
         drawPickedFaceAndItsVerticesIDs(Qt::darkBlue, Qt::darkMagenta);
@@ -1359,7 +1357,7 @@ void PaintCanvas::postDraw() {
     // ------------- draw the picking region with transparency  ---------------
 
     if (pressed_button_ == Qt::LeftButton && modifiers_ == Qt::ControlModifier) {
-        const Rect rect(mouse_pressed_pos_.x(), mouse_current_pos_.x(), mouse_pressed_pos_.y(), mouse_current_pos_.y());
+        const Rect rect(static_cast<float>(mouse_pressed_pos_.x()), static_cast<float>(mouse_current_pos_.x()), static_cast<float>(mouse_pressed_pos_.y()), static_cast<float>(mouse_current_pos_.y()));
         if (rect.width() > 0 || rect.height() > 0) {
             // draw the boundary of the rect
             shape::draw_quad_wire(rect, vec4(0.0f, 0.0f, 1.0f, 1.0f), width(), height(), -1.0f);
@@ -1373,15 +1371,15 @@ void PaintCanvas::postDraw() {
 
     // ------- draw the axes indicating the orientation of the model  ----------
 
-    drawCornerAxes(); easy3d_debug_log_gl_error;
+    drawCornerAxes(); easy3d_debug_log_gl_error
 
     // ------------------ draw elements from the tool --------------------------
 
-    tool_manager()->draw_hint();    easy3d_debug_log_gl_error;
+    tool_manager()->draw_hint();    easy3d_debug_log_gl_error
 
     // -------------------- draw the clipping plane ----------------------------
 
-    ClippingPlane::instance()->draw(camera());    easy3d_debug_log_gl_error;
+    ClippingPlane::instance()->draw(camera());    easy3d_debug_log_gl_error
 
     // -------------------- draw a sphere outline
 
@@ -1623,7 +1621,7 @@ void PaintCanvas::pasteCamera() {
     quat orient;
     for (int i = 0; i < 4; ++i) {
         bool ok;
-        orient[i] = list[i + 3].toDouble(&ok);
+        orient[i] = static_cast<float>(list[i + 3].toDouble(&ok));
         if (!ok) {
             LOG(WARNING) << "camera not available in clipboard";
             return;
@@ -1662,7 +1660,7 @@ void PaintCanvas::saveState(std::ostream& output) const {
     //-----------------------------------------------------
 
     output << "<windowState>" << std::endl;
-    output << "\t state: " << window()->windowState() << std::endl;;
+    output << "\t state: " << window()->windowState() << std::endl;
     if (window()->windowState() == Qt::WindowNoState) {
         output << "\t size: " << window()->width() << " " << window()->height() << std::endl;
         output << "\t position: " << window()->pos().x() << " " << window()->pos().y() << std::endl;
@@ -1711,7 +1709,7 @@ void PaintCanvas::restoreState(std::istream& input) {
     std::string dummy;
     io::LineInputStream in(input);
     while (!input.eof()) {
-        in.get_line();;
+        in.get_line();
         if (in.current_line()[0] != '<') {
             std::string keyword;
             in >> keyword;
@@ -1789,7 +1787,7 @@ void PaintCanvas::restoreState(std::istream& input) {
                     in >> v;
                     camera()->frame()->setTranslationSensitivity(v);
                 } else if (keyword.find("zoomsOnPivotPoint") != std::string::npos) {
-                    float v(0);
+                    bool v(false);
                     in >> v;
                     camera()->frame()->setZoomsOnPivotPoint(v);
                 } else if (keyword.find("pivotPoint") != std::string::npos) {
@@ -1876,7 +1874,7 @@ void PaintCanvas::draw() {
     if (models_.empty())
         return;
 
-    easy3d_debug_log_gl_error;
+    easy3d_debug_log_gl_error
     // Optimization tips: rendering with multi-effects (e.g., shadowing, SSAO)
     // can benefit from sharing the same geometry pass.
 
@@ -1892,10 +1890,10 @@ void PaintCanvas::draw() {
         edl()->begin();
 
     if (shadow()) {
-        shadow()->draw(surfaces); easy3d_debug_log_gl_error;
+        shadow()->draw(surfaces); easy3d_debug_log_gl_error
         return;
     } else if (transparency()) {
-        transparency()->draw(surfaces); easy3d_debug_log_gl_error;
+        transparency()->draw(surfaces); easy3d_debug_log_gl_error
         return;
     }
     else if (ssao()) {
@@ -1912,7 +1910,7 @@ void PaintCanvas::draw() {
         }
     }
 
-    easy3d_debug_log_gl_error;
+    easy3d_debug_log_gl_error
 
     for (const auto m : models_) {
         if (!m->renderer()->is_visible())
@@ -1924,14 +1922,14 @@ void PaintCanvas::draw() {
         std::size_t count = 0;
         for (auto d : m->renderer()->lines_drawables()) {
             if (d->is_visible()) {
-                d->draw(camera()); easy3d_debug_log_gl_error;
+                d->draw(camera()); easy3d_debug_log_gl_error
                 ++count;
             }
         }
 
         for (auto d : m->renderer()->points_drawables()) {
             if (d->is_visible())
-                d->draw(camera()); easy3d_debug_log_gl_error;
+                d->draw(camera()); easy3d_debug_log_gl_error
         }
 
         if (count > 0) {
@@ -1940,7 +1938,7 @@ void PaintCanvas::draw() {
         }
         for (auto d : m->renderer()->triangles_drawables()) {
             if (d->is_visible())
-                d->draw(camera()); easy3d_debug_log_gl_error;
+                d->draw(camera()); easy3d_debug_log_gl_error
         }
         if (count > 0)
             glDisable(GL_POLYGON_OFFSET_FILL);

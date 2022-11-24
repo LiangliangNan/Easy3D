@@ -37,7 +37,7 @@ namespace easy3d {
 class PointSelection : public easy3d::Viewer
 {
 public:
-    PointSelection(const std::string& title = "PointSelection");
+    explicit PointSelection(const std::string& title = "PointSelection");
 
 private:
     /// Mouse button press event handler

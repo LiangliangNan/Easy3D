@@ -43,10 +43,7 @@ bool extract_plane(Viewer* viewer, Model* model) {
     if (!viewer || !model)
         return false;
 
-    PointCloud *cloud = dynamic_cast<PointCloud *>(model);
-    if (!cloud)
-        return false;
-
+    auto cloud = dynamic_cast<PointCloud *>(model);
     auto normals = cloud->get_vertex_property<vec3>("v:normal");
     if (!normals) {
         std::cerr << "Plane extraction using RANSAC requires normal information but it is not available" << std::endl;

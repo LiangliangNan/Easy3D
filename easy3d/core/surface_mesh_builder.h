@@ -60,7 +60,7 @@ namespace easy3d {
         typedef SurfaceMesh::Face           Face;
         
     public:
-        SurfaceMeshBuilder(SurfaceMesh *mesh);
+        explicit SurfaceMeshBuilder(SurfaceMesh *mesh);
 
         ~SurfaceMeshBuilder();
 
@@ -191,4 +191,4 @@ namespace easy3d {
 
 }
 
-#endif //EASY3D_CORE_MANIFOLD_BUILDER_H
+#endif // EASY3D_CORE_SURFACE_MESH_BUILDER_H

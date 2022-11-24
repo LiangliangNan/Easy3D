@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
     const std::string save_file_name = "./sphere-copy.plm";
     if (PolyMeshIO::save(save_file_name, mesh))
         std::cout << "mesh saved to \'" << save_file_name << "\'"  << std::endl;
-	else
+    else
 		std::cerr << "failed create the new file" << std::endl;
 
 	// delete the mesh (i.e., release memory)

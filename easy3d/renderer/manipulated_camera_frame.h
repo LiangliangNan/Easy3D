@@ -70,7 +70,7 @@ namespace easy3d {
         ManipulatedCameraFrame();
 
         /*! Virtual destructor. Empty. */
-        ~ManipulatedCameraFrame() override {}
+        ~ManipulatedCameraFrame() override = default;
 
         ManipulatedCameraFrame(const ManipulatedCameraFrame &mcf);
 
@@ -118,11 +118,11 @@ namespace easy3d {
         /*! @name Frame manipulation */
         //@{
     public:
-        void action_rotate(int mouse_x, int mouse_y, int mouse_dx, int mouse_dy, Camera *const camera, ScreenAxis axis = NONE) override;
-        void action_translate(int mouse_x, int mouse_y, int mouse_dx, int mouse_dy, Camera *const camera, ScreenAxis axis = NONE) override;
-        void action_zoom(int dy_wheel, Camera *const camera) override;
+        void action_rotate(int mouse_x, int mouse_y, int mouse_dx, int mouse_dy, Camera* camera, ScreenAxis axis) override;
+        void action_translate(int mouse_x, int mouse_y, int mouse_dx, int mouse_dy, Camera* camera, ScreenAxis axis) override;
+        void action_zoom(int dy_wheel, Camera* camera) override;
 
-        virtual void action_turn(float angle_radian, Camera *const camera);        // The rotation around camera Y
+        virtual void action_turn(float angle_radian, Camera* camera);        // The rotation around camera Y
         //@}
 
         //---------------------------------------------------------------

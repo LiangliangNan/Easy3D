@@ -10,10 +10,7 @@
 
 
 #include <easy3d/algo/delaunay.h>
-
 #include <algorithm>
-#include <fstream>
-#include <string>
 
 
 namespace easy3d {
@@ -48,8 +45,7 @@ namespace easy3d {
     }
 
 
-    Delaunay::~Delaunay() {
-    }
+    Delaunay::~Delaunay() = default;
 
 
     void Delaunay::set_vertices(unsigned int nb_vertices, const float *vertices) {
@@ -93,7 +89,7 @@ namespace easy3d {
 
     void Delaunay::get_neighbors(unsigned int v, std::vector<unsigned int> &neighbors) const {
         assert(v < nb_vertices());
-        if (neighbors_.size() != 0) {
+        if (neighbors_.empty()) {
             neighbors = neighbors_[v];
         } else {
             get_neighbors_internal(v, neighbors);
@@ -120,6 +116,7 @@ namespace easy3d {
 
         std::cerr << "update neighbors end" << std::endl;
 
+#if 0
         const bool show_stats = false;
         if (show_stats) {
             std::size_t min_N = neighbors_[0].size();
@@ -144,6 +141,7 @@ namespace easy3d {
                 out << i << " " << histogram[i] << std::endl;
             }
         }
+#endif
     }
 
     void Delaunay::get_neighbors_internal(
@@ -155,22 +153,22 @@ namespace easy3d {
 
 
         // Step 1: traverse the incident cells list, and insert
-        // all neighbors (may be duplicated)
+        // all neighbors (maybe duplicated)
         neighbors.resize(0);
         int vt = v_to_cell_[v];
         if (vt != -1) { // Happens when there are geometrically duplicated vertices.
-            int t = vt;
+            unsigned int t = vt;
             do {
-                unsigned int lvit = index(t, v);
+                unsigned int lvit = index(t, static_cast<int>(v));
                 // In the current cell, test all edges incident to current vertex 'it'
                 for (unsigned int lv = 0; lv < cell_size(); lv++) {
                     if (lvit != lv) {
                         int neigh = cell_vertex(t, lv);
                         assert(neigh != -1);
-                        neighbors.push_back(neigh);
+                        neighbors.push_back(static_cast<unsigned int>(neigh));
                     }
                 }
-                t = next_around_vertex(t, index(t, v));
+                t = next_around_vertex(t, index(t, static_cast<int>(v)));
             } while (t != vt);
         }
 
@@ -187,7 +185,7 @@ namespace easy3d {
         v_to_cell_.assign(nb_vertices(), -1);
         for (unsigned int c = 0; c < nb_cells(); c++) {
             for (unsigned int lv = 0; lv < cell_size(); lv++) {
-                v_to_cell_[cell_vertex(c, lv)] = c;
+                v_to_cell_[cell_vertex(c, lv)] = static_cast<int>(c);
             }
         }
         is_locked_ = false;
@@ -200,7 +198,7 @@ namespace easy3d {
         for (unsigned int v = 0; v < nb_vertices(); v++) {
             int t = v_to_cell_[v];
             if (t != -1) {
-                unsigned int lv = index(t, v);
+                unsigned int lv = index(static_cast<unsigned int>(t), static_cast<int>(v));
                 set_next_around_vertex(t, lv, t);
             }
         }
@@ -209,7 +207,7 @@ namespace easy3d {
                 unsigned int v = cell_vertex(t, lv);
                 if (v_to_cell_[v] != t) {
                     unsigned int t1 = v_to_cell_[v];
-                    unsigned int lv1 = index(t1, v);
+                    unsigned int lv1 = index(t1, static_cast<int>(v));
                     unsigned int t2 = next_around_vertex(t1, lv1);
                     set_next_around_vertex(t1, lv1, t);
                     set_next_around_vertex(t, lv, t2);
@@ -228,18 +226,17 @@ namespace easy3d {
         }
         for (unsigned int v = 0; v < nb_vertices(); v++) {
             std::vector<unsigned int> N = neighbors_[v];
-            for (unsigned int i = 0; i < N.size(); i++) {
-                unsigned int w = N[i];
+            for (auto& w : N) {
                 double d = internal::squared_distance(dimension(), vertex_ptr(v), vertex_ptr(w));
                 if (d < 1e-30) {
                     LOG(WARNING) << "Vertices " << v << " and " << w << " are the same";
 
-                    N[i] = v;
+                    w = v;
                     //		    neighbors_[w].clear() ;
                     result = true;
                 }
             }
-            while (N.size() > 0 && N[0] == v) { N.erase(N.begin()); }
+            while (!N.empty() && N[0] == v) { N.erase(N.begin()); }
         }
         return result;
     }

@@ -49,6 +49,14 @@ TutorialEyeDomeLighting::TutorialEyeDomeLighting(const std::string& title) : Vie
 }
 
 
+TutorialEyeDomeLighting::~TutorialEyeDomeLighting() {
+	delete edl_;
+
+	// Not needed: it will be called in the destructor of the base class
+	//Viewer::cleanup();
+}
+
+
 std::string TutorialEyeDomeLighting::usage() const {
     return ("-------------------- Eye Dome Lighting usage ------------------- \n"
             "Press key 'space' to switch between Eye Dome Lighting and normal rendering\n"
@@ -113,12 +121,4 @@ void TutorialEyeDomeLighting::draw() const {
 	}
 	else
 		Viewer::draw();
-}
-
-
-void TutorialEyeDomeLighting::cleanup() {
-	if (edl_)
-		delete edl_;
-
-	Viewer::cleanup();
 }

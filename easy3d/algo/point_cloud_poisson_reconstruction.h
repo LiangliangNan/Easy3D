@@ -40,8 +40,8 @@ namespace easy3d {
     /// \class PoissonReconstruction easy3d/algo/point_cloud_poisson_reconstruction.h
     class PoissonReconstruction {
     public:
-        PoissonReconstruction(void);
-        ~PoissonReconstruction(void);
+        PoissonReconstruction();
+        ~PoissonReconstruction();
 
         /**
          * \brief Set reconstruction depth.
@@ -59,10 +59,10 @@ namespace easy3d {
          * range [1.0 - 5.0] can be used. For more noisy samples, larger values in the range [15.0 - 20.0] may be needed
          * to provide a smoother, noise-reduced, reconstruction. The default value is 1.0.
          */
-        void set_sampers_per_node(float s) { samples_per_node_ = s; }
+        void set_samples_per_node(float s) { samples_per_node_ = s; }
 
         /// \brief reconstruction
-        SurfaceMesh *apply(const PointCloud *cloud, const std::string &density_attr_name = "v:density");
+        SurfaceMesh *apply(const PointCloud *cloud, const std::string &density_attr_name = "v:density") const;
 
         /// \brief Trim the reconstructed surface model based on the density attribute.
         static SurfaceMesh *trim(
@@ -75,13 +75,10 @@ namespace easy3d {
         /// \brief Other parameters for Poisson surface reconstruction algorithm.
         /// These parameters are usually not needed
         void set_full_depth(int v) { full_depth_ = v; }
-        void set_voxel_depth_(int v) { voxelDepth_ = v; }
         void set_cg_depth(int v) { cgDepth_ = v; }
         void set_scale(float v) { scale_ = v; }
         void set_point_weight(float v) { pointWeight_ = v; }
         void set_gs_iter(int v) { gsIter_ = v; }
-        void set_confidence(bool v) { confidence_ = v; }
-        void set_normal_weight(bool v) { normalWeight_ = v; }
         void set_verbose(bool v) { verbose_ = v; }
 
     private:
@@ -114,12 +111,11 @@ namespace easy3d {
 
     private:
         // these parameters usually do not need to change
-        int voxelDepth_;
         int cgDepth_;
         float scale_;
 
         /*
-        This floating point value specifies the importants that interpolation of the point
+        This floating point value specifies the importance that interpolation of the point
         samples is given in the formulation of the screened Poisson equation. The results
         of the original (unscreened) Poisson Reconstruction can be obtained by setting this
         value to 0. The default value for this parameter is 4.
@@ -128,8 +124,6 @@ namespace easy3d {
 
         int gsIter_;
         int threads_;
-        bool confidence_;
-        bool normalWeight_;
         bool verbose_;
     };
 

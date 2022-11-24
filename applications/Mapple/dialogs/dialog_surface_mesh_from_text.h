@@ -38,7 +38,7 @@ Q_OBJECT
 public:
     explicit DialogSurfaceMeshFromText(MainWindow *window);
 
-    ~DialogSurfaceMeshFromText();
+    ~DialogSurfaceMeshFromText() override = default;
 
 private Q_SLOTS:
 

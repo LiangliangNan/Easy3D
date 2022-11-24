@@ -47,12 +47,8 @@ DialogSurfaceMeshHoleFilling::DialogSurfaceMeshHoleFilling(MainWindow *window)
 }
 
 
-DialogSurfaceMeshHoleFilling::~DialogSurfaceMeshHoleFilling() {
-}
-
-
 void DialogSurfaceMeshHoleFilling::apply() {
-    SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
+    auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
     if (!mesh)
         return;
 
@@ -102,7 +98,7 @@ void DialogSurfaceMeshHoleFilling::apply() {
             } while (hh != h);
 
             if (size < allowed_boundary_size) {
-                holes.push_back({h, size});
+                holes.emplace_back(std::make_pair(h, size));
             }
         }
     }

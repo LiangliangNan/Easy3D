@@ -39,7 +39,7 @@ namespace easy3d {
 
 
     ShaderProgram* ShaderManager::get_program(const std::string& shader_name) {
-        std::unordered_map<std::string, ShaderProgram*>::iterator pos = programs_.find(shader_name);
+        auto pos = programs_.find(shader_name);
         if (pos != programs_.end()) // program already exists
             return pos->second;
         return nullptr;
@@ -52,7 +52,7 @@ namespace easy3d {
         const std::vector<std::string>& outputs /* = std::vector<std::string>() */,
         bool geom_shader /* = false */ )
     {
-        std::unordered_map<std::string, bool>::iterator it = attempt_load_program_.find(base_name);
+        auto it = attempt_load_program_.find(base_name);
         if (it == attempt_load_program_.end())
             attempt_load_program_[base_name] = true;
         else if (!attempt_load_program_[base_name])
@@ -78,7 +78,7 @@ namespace easy3d {
             return nullptr;
         }
 
-        ShaderProgram* program = new ShaderProgram(base_name);
+        auto program = new ShaderProgram(base_name);
 
         bool success = program->load_shader_from_file(ShaderProgram::VERTEX, vs_file);
         if (!success) {
@@ -103,11 +103,11 @@ namespace easy3d {
             }
         }
 
-        program->set_attrib_names(attributes);	easy3d_debug_log_gl_error;
+        program->set_attrib_names(attributes);	easy3d_debug_log_gl_error
         for (std::size_t i = 0; i < outputs.size(); ++i)
             program->set_program_output(static_cast<int>(i), outputs[i]);
 
-        success = program->link_program();	easy3d_debug_log_gl_error;
+        success = program->link_program();	easy3d_debug_log_gl_error
         if (!success) {
             delete program;
             return nullptr;
@@ -132,7 +132,7 @@ namespace easy3d {
 	{
 		// just give a name
 		const std::string name = vert_file_name + frag_file_name + geom_file_name;
-		std::unordered_map<std::string, bool>::iterator it = attempt_load_program_.find(name);
+		auto it = attempt_load_program_.find(name);
 		if (it == attempt_load_program_.end())
 			attempt_load_program_[name] = true;
 		else if (!attempt_load_program_[name])
@@ -158,7 +158,7 @@ namespace easy3d {
 			return nullptr;
 		}
 
-		ShaderProgram* program = new ShaderProgram(name);
+		auto program = new ShaderProgram(name);
 
 		std::string vert_code;
         file_system::read_file_to_string(vert_file, vert_code);
@@ -192,11 +192,11 @@ namespace easy3d {
             }
 		}
 
-		program->set_attrib_names(attributes);	easy3d_debug_log_gl_error;
+		program->set_attrib_names(attributes);	easy3d_debug_log_gl_error
 		for (std::size_t i = 0; i < outputs.size(); ++i)
 			program->set_program_output(static_cast<int>(i), outputs[i]);
 
-        success = program->link_program();	easy3d_debug_log_gl_error;
+        success = program->link_program();	easy3d_debug_log_gl_error
         if (!success) {
             delete program;
             return nullptr;
@@ -225,7 +225,7 @@ namespace easy3d {
             return nullptr;
         }
 
-        ShaderProgram* program = new ShaderProgram;
+        auto program = new ShaderProgram;
 
         bool success = program->load_shader_from_code(ShaderProgram::VERTEX, vert_code);
         if (!success) {
@@ -239,7 +239,6 @@ namespace easy3d {
         }
 
         if (!geom_code.empty()) {
-            std::string geom_code;
             success = program->load_shader_from_code(ShaderProgram::GEOMETRY, geom_code);
             if (!success) {
                 delete program;
@@ -247,11 +246,11 @@ namespace easy3d {
             }
         }
 
-        program->set_attrib_names(attributes);	easy3d_debug_log_gl_error;
+        program->set_attrib_names(attributes);	easy3d_debug_log_gl_error
         for (std::size_t i = 0; i < outputs.size(); ++i)
             program->set_program_output(static_cast<int>(i), outputs[i]);
 
-        success = program->link_program();	easy3d_debug_log_gl_error;
+        success = program->link_program();	easy3d_debug_log_gl_error
         if (!success) {
             delete program;
             return nullptr;
@@ -263,16 +262,14 @@ namespace easy3d {
 
     std::vector<ShaderProgram*> ShaderManager::all_programs() {
         std::vector<ShaderProgram*> result;
-
-        std::unordered_map<std::string, ShaderProgram*>::iterator pos = programs_.begin();
-        for (; pos != programs_.end(); ++pos)
-            result.push_back(pos->second);
+        for (const auto& g : programs_)
+            result.push_back(g.second);
         return result;
     }
 
 
     void ShaderManager::terminate() {
-		for (auto p : programs_)
+		for (const auto& p : programs_)
 			delete p.second;
         programs_.clear();
         attempt_load_program_.clear();

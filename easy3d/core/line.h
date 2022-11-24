@@ -50,7 +50,7 @@ namespace easy3d {
         static GenericLine from_two_points(const Point& p, const Point& q)   { return GenericLine(p, q - p); }
 
         /// \brief Default constructor.
-        GenericLine() {}
+        GenericLine() = default;
 
         /// \brief Sets a line from a point \p p and its direction \p dir.
         void set(const Point& p, const Vector& dir) {

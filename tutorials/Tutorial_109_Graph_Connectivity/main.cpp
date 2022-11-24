@@ -35,7 +35,7 @@ using namespace easy3d;
 //		- access the incident edges of each vertex
 //		- access the two end points of each edge
 
-// There are two way to traverse the incident entities of an element.
+// There are two ways to traverse the incident entities of an element.
 //   - use a "for" loop (cleaner code);
 //   - use a circulator.
 #define USE_FOR_LOOP
@@ -43,22 +43,22 @@ using namespace easy3d;
 // the graph created in the previous tutorial (so you can skip it)
 Graph* old_graph_from_previous_example() {
     // Create a graph
-    Graph* g = new Graph;
+    auto graph = new Graph;
 
     // Add 4 vertices
-    Graph::Vertex v0 = g->add_vertex(vec3(0, 0, 0));
-    Graph::Vertex v1 = g->add_vertex(vec3(1, 0, 0));
-    Graph::Vertex v2 = g->add_vertex(vec3(0, 1, 0));
-    Graph::Vertex v3 = g->add_vertex(vec3(0, 0, 1));
+    Graph::Vertex v0 = graph->add_vertex(vec3(0, 0, 0));
+    Graph::Vertex v1 = graph->add_vertex(vec3(1, 0, 0));
+    Graph::Vertex v2 = graph->add_vertex(vec3(0, 1, 0));
+    Graph::Vertex v3 = graph->add_vertex(vec3(0, 0, 1));
 
     // Add some edges
-    g->add_edge(v0, v1); // e0
-    g->add_edge(v1, v2); // e1
-    g->add_edge(v2, v3); // e2
-    g->add_edge(v3, v0); // e3
-    g->add_edge(v1, v3); // e4
+    graph->add_edge(v0, v1); // e0
+    graph->add_edge(v1, v2); // e1
+    graph->add_edge(v2, v3); // e2
+    graph->add_edge(v3, v0); // e3
+    graph->add_edge(v1, v3); // e4
 
-    return g;
+    return graph;
 }
 
 
@@ -66,21 +66,21 @@ int main(int argc, char** argv) {
     // Initialize Easy3D.
     initialize();
 
-    Graph* g = old_graph_from_previous_example();
+    Graph* graph = old_graph_from_previous_example();
 
     std::cout << "----------------------------------------\n";
     std::cout << "The incident vertices of each vertex" << std::endl;
     std::cout << "----------------------------------------\n";
 
     // loop over all vertices
-    for (auto v : g->vertices()) {
+    for (auto v : graph->vertices()) {
         std::cout << "incident vertices of vertex " << v << ": ";
 #ifdef USE_FOR_LOOP
         // loop over all incident vertices
-        for (auto vv : g->vertices(v))
+        for (auto vv : graph->vertices(v))
             std::cout << vv << " ";
 #else   // use circulator
-        Graph::VertexAroundVertexCirculator cir = g->vertices(v);
+        Graph::VertexAroundVertexCirculator cir = graph->vertices(v);
         Graph::VertexAroundVertexCirculator end = cir;
         do {
             Graph::Vertex vv = *cir;
@@ -96,14 +96,14 @@ int main(int argc, char** argv) {
     std::cout << "----------------------------------------\n";
 
     // loop over all vertices
-    for (auto v : g->vertices()) {
+    for (auto v : graph->vertices()) {
         std::cout << "incident edges of vertex " << v << ": ";
 #ifdef USE_FOR_LOOP
         // loop over all incident outgoing/ingoing edges
-        for (auto h : g->edges(v))
+        for (auto h : graph->edges(v))
             std::cout << h << " ";
 #else   // use circulator
-        Graph::EdgeAroundVertexCirculator cir = g->edges(v);
+        Graph::EdgeAroundVertexCirculator cir = graph->edges(v);
         Graph::EdgeAroundVertexCirculator end = cir;
         do {
             Graph::Edge h = *cir;
@@ -119,16 +119,16 @@ int main(int argc, char** argv) {
     std::cout << "----------------------------------------\n";
 
     // loop over all edges
-    for (auto e : g->edges()) {
+    for (auto e : graph->edges()) {
         std::cout << "the two end points of edge " << e << ": ";
-        Graph::Vertex vs = g->vertex(e, 0);
+        Graph::Vertex vs = graph->vertex(e, 0);
         std::cout << vs << " ";
-        Graph::Vertex vt = g->vertex(e, 1);
+        Graph::Vertex vt = graph->vertex(e, 1);
         std::cout << vt << " " << std::endl;
     }
 
     // Delete the graph (i.e., release memory)
-    delete g;
+    delete graph;
 
     return EXIT_SUCCESS;
 }

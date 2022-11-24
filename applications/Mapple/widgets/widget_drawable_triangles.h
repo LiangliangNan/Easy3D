@@ -56,11 +56,11 @@ public slots:
     void setBackColor();
     void setTextureFile();
     void setOpacity(int);
-    void setScalarFieldStyle(int);
+    void setScalarFieldStyle(int) override;
     void setVectorField(const QString &);
 
-    virtual void setHighlightMin(int) override;
-    virtual void setHighlightMax(int) override;
+    void setHighlightMin(int) override;
+    void setHighlightMax(int) override;
 
 private:
     void connectAll();
@@ -71,7 +71,7 @@ private:
     void disableUnavailableOptions() override;
     void updateVectorFieldBuffer(easy3d::Model *model, const std::string &name) override;
 
-    // model depended stuff
+    // model dependent stuff
     std::vector<QString> colorSchemes(const easy3d::Model *model);
     std::vector<QString> vectorFields(const easy3d::Model *model);
 

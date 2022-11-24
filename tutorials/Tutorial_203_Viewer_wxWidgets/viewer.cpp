@@ -105,15 +105,15 @@ namespace easy3d {
         // Explicitly create a new rendering context instance for this canvas.
         wxGLContextAttrs ctxAttrs;
         ctxAttrs.PlatformDefaults().CoreProfile().OGLVersion(gl_major, gl_minor).EndList();
-        gl_contex_ = new wxGLContext(this, NULL, &ctxAttrs);
+        gl_context_ = new wxGLContext(this, nullptr, &ctxAttrs);
 
-        if (!gl_contex_->IsOK()) {
+        if (!gl_context_->IsOK()) {
             LOG(ERROR) << "OpenGL version error. This app needs an OpenGL 3.2 capable driver.";
-            delete gl_contex_;
-            gl_contex_ = NULL;
+            delete gl_context_;
+            gl_context_ = nullptr;
         }
 
-        // create and setup the camera
+        // create and set up the camera
         camera_ = new Camera;
         camera_->setType(Camera::PERSPECTIVE);
         camera_->setUpVector(vec3(0, 0, 1)); // Z pointing up
@@ -133,7 +133,7 @@ namespace easy3d {
 
         ShaderManager::terminate();
         TextureManager::terminate();
-        delete gl_contex_;
+        delete gl_context_;
 
         LOG(INFO) << "viewer terminated. Bye!";
     }
@@ -168,7 +168,7 @@ namespace easy3d {
 		int w, h;
 		GetClientSize(&w, &h);
 		camera_->setScreenWidthAndHeight(w, h);
-		glViewport(0, 0, w * dpi_scaling(), h * dpi_scaling());
+		glViewport(0, 0, static_cast<int>(static_cast<float>(w) * dpi_scaling()), static_cast<int>(static_cast<float>(h) * dpi_scaling()));
 
 		// create TextRenderer renderer and load default fonts
 		texter_ = new TextRenderer(dpi_scaling());
@@ -178,13 +178,13 @@ namespace easy3d {
 #if 1   // Add a surface mesh of the bunny model
 		const std::vector<vec3> &points = resource::bunny_vertices;
 		const std::vector<unsigned int> &indices = resource::bunny_indices;
-        SurfaceMesh* mesh = new SurfaceMesh;
+        auto mesh = new SurfaceMesh;
         mesh->set_name("bunny");
         for (const auto& p : points)
             mesh->add_vertex(p);
         for (std::size_t i=0; i<indices.size(); i+=3)
-            mesh->add_triangle(SurfaceMesh::Vertex(indices[i]), SurfaceMesh::Vertex(indices[i+1]), SurfaceMesh::Vertex(indices[i+2]));
-        add_model(mesh);
+            mesh->add_triangle(SurfaceMesh::Vertex(static_cast<int>(indices[i])), SurfaceMesh::Vertex(static_cast<int>(indices[i+1])), SurfaceMesh::Vertex(static_cast<int>(indices[i+2])));
+        add_model(mesh, true);
         fit_screen();
 		LOG(INFO) << "program initialized by creating a SurfaceMesh of the bunny model";
 #endif
@@ -214,7 +214,7 @@ namespace easy3d {
         // must always be here
         wxPaintDC dc(this);
 
-        SetCurrent(*gl_contex_);
+        SetCurrent(*gl_context_);
 
         // Initialize OpenGL
         if (!initialized_) {
@@ -240,7 +240,7 @@ namespace easy3d {
         const int w = size.GetWidth();
         const int h = size.GetHeight();
         camera_->setScreenWidthAndHeight(w, h);
-        glViewport(0, 0, w * dpi_scaling(), h * dpi_scaling());
+        glViewport(0, 0, static_cast<int>(static_cast<float>(w) * dpi_scaling()), static_cast<int>(static_cast<float>(h) * dpi_scaling()));
     }
 
 
@@ -385,7 +385,7 @@ namespace easy3d {
             }
         }
         else if (event.GetUnicodeKey() == wxKeyCode('B') && event.GetModifiers() == wxMOD_NONE) {
-            SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(current_model());
+            auto mesh = dynamic_cast<SurfaceMesh *>(current_model());
             if (mesh) {
                 auto drawable = mesh->renderer()->get_lines_drawable("borders");
                 if (drawable)
@@ -393,7 +393,7 @@ namespace easy3d {
             }
         }
         else if (event.GetUnicodeKey() == wxKeyCode('L') && event.GetModifiers() == wxMOD_NONE) { // locked vertices
-            SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(current_model());
+            auto mesh = dynamic_cast<SurfaceMesh *>(current_model());
             if (mesh) {
                 auto drawable = mesh->renderer()->get_points_drawable("locks");
                 if (drawable)
@@ -480,8 +480,8 @@ namespace easy3d {
     }
 
 
-    double Viewer::dpi_scaling() const {
-        return wxWindow::GetContentScaleFactor();
+    float Viewer::dpi_scaling() const {
+        return static_cast<float>(wxWindow::GetContentScaleFactor());
     }
 
 
@@ -615,7 +615,7 @@ namespace easy3d {
 
 
     bool Viewer::snapshot(const std::string& file_name, bool bk_white) const {
-		SetCurrent(*gl_contex_);
+		SetCurrent(*gl_context_);
 
         int x, y, w, h;
         OpenglUtil::viewport(x, y, w, h);
@@ -717,7 +717,7 @@ namespace easy3d {
         if (!drawable_axes_->is_visible())
             return;
 
-        // The viewport and the scissor are changed to fit the lower left corner.
+        // The viewport and the scissor box are changed to fit the lower left corner.
         int viewport[4], scissor[4];
         glGetIntegerv(GL_VIEWPORT, viewport);
         glGetIntegerv(GL_SCISSOR_BOX, scissor);
@@ -802,14 +802,14 @@ namespace easy3d {
             std::size_t count = 0;
             for (auto d : m->renderer()->lines_drawables()) {
                 if (d->is_visible()) {
-                    d->draw(camera_); easy3d_debug_log_gl_error;
+                    d->draw(camera_); easy3d_debug_log_gl_error
                     ++count;
                 }
             }
 
             for (auto d : m->renderer()->points_drawables()) {
                 if (d->is_visible())
-                    d->draw(camera_); easy3d_debug_log_gl_error;
+                    d->draw(camera_); easy3d_debug_log_gl_error
             }
 
             if (count > 0) {
@@ -818,7 +818,7 @@ namespace easy3d {
             }
             for (auto d : m->renderer()->triangles_drawables()) {
                 if (d->is_visible())
-                    d->draw(camera_); easy3d_debug_log_gl_error;
+                    d->draw(camera_); easy3d_debug_log_gl_error
             }
             if (count > 0)
                 glDisable(GL_POLYGON_OFFSET_FILL);

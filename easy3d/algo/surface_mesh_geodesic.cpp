@@ -15,7 +15,7 @@
 namespace easy3d {
 
     SurfaceMeshGeodesic::SurfaceMeshGeodesic(SurfaceMesh *mesh, bool use_virtual_edges)
-            : mesh_(mesh), use_virtual_edges_(use_virtual_edges) {
+            : mesh_(mesh), use_virtual_edges_(use_virtual_edges), front_(nullptr) {
         distance_ = mesh_->vertex_property<float>("v:geodesic:distance");
         processed_ = mesh_->add_vertex_property<bool>("v:geodesic:processed");
 
@@ -25,8 +25,7 @@ namespace easy3d {
 
     //-----------------------------------------------------------------------------
 
-    SurfaceMeshGeodesic::~SurfaceMeshGeodesic() {
-    }
+    SurfaceMeshGeodesic::~SurfaceMeshGeodesic() = default;
 
     //-----------------------------------------------------------------------------
 
@@ -61,7 +60,7 @@ namespace easy3d {
                     // obtuse angle ?
                     if (dot(d0, d1) < max_angle_cos) {
                         // compute angles
-                        alpha = 0.5 * acos(std::min(
+                        alpha = 0.5f * acos(std::min(
                                 one, std::max(minus_one, dot(d0, d1))));
                         beta = max_angle - alpha;
                         tan_beta = tan(beta);
@@ -133,31 +132,29 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
     unsigned int SurfaceMeshGeodesic::compute(const std::vector<SurfaceMesh::Vertex> &seed,
-                                              float maxdist, unsigned int maxnum,
+                                              float max_dist, unsigned int max_num,
                                               std::vector<SurfaceMesh::Vertex> *neighbors) {
-        unsigned int num(0);
-
         // generate front
         front_ = new PriorityQueue(VertexCmp(distance_));
 
         // initialize front with given seed
-        num = init_front(seed, neighbors);
+        unsigned int num = init_front(seed, neighbors);
 
         // sort one-ring neighbors of seed vertices
         if (neighbors) {
             std::sort(neighbors->begin(), neighbors->end(), VertexCmp(distance_));
         }
 
-        // correct if seed vertices have more than maxnum neighbors
-        if (num > maxnum) {
-            num = maxnum;
+        // correct if seed vertices have more than max_num neighbors
+        if (num > max_num) {
+            num = max_num;
             if (neighbors)
-                neighbors->resize(maxnum);
+                neighbors->resize(max_num);
         }
 
         // propagate up to max distance or max number of neighbors
-        if (num < maxnum)
-            num += propagate_front(maxdist, maxnum - num, neighbors);
+        if (num < max_num)
+            num += propagate_front(max_dist, max_num - num, neighbors);
 
         // clean up
         delete front_;
@@ -223,8 +220,8 @@ namespace easy3d {
 
     //-----------------------------------------------------------------------------
 
-    unsigned int SurfaceMeshGeodesic::propagate_front(float maxdist,
-                                                      unsigned int maxnum,
+    unsigned int SurfaceMeshGeodesic::propagate_front(float max_dist,
+                                                      unsigned int max_num,
                                                       std::vector<SurfaceMesh::Vertex> *neighbors) {
         unsigned int num(0);
 
@@ -239,11 +236,11 @@ namespace easy3d {
                 neighbors->push_back(v);
 
             // did we reach maximum distance?
-            if (distance_[v] > maxdist)
+            if (distance_[v] > max_dist)
                 break;
 
             // did we reach maximum number of neighbors
-            if (num >= maxnum)
+            if (num >= max_num)
                 break;
 
             // update front
@@ -262,7 +259,7 @@ namespace easy3d {
     void SurfaceMeshGeodesic::heap_vertex(SurfaceMesh::Vertex v) {
         assert(!processed_[v]);
 
-        SurfaceMesh::Vertex v0, v1, vv, v0_min, v1_min;
+        SurfaceMesh::Vertex v0, v1, vv;
         float dist, dist_min(FLT_MAX), d;
         typename VirtualEdges::const_iterator ve_it, ve_end(virtual_edges_.end());
         bool found(false);
@@ -389,17 +386,17 @@ namespace easy3d {
 
     void SurfaceMeshGeodesic::distance_to_texture_coordinates() {
         // find maximum distance
-        float maxdist(0);
+        float max_dist(0);
         for (auto v : mesh_->vertices()) {
             if (distance_[v] < FLT_MAX) {
-                maxdist = std::max(maxdist, distance_[v]);
+                max_dist = std::max(max_dist, distance_[v]);
             }
         }
 
         auto tex = mesh_->vertex_property<vec2>("v:texcoord");
         for (auto v : mesh_->vertices()) {
             if (distance_[v] < FLT_MAX) {
-                tex[v] = vec2(distance_[v] / maxdist, 0.0);
+                tex[v] = vec2(distance_[v] / max_dist, 0.0);
             } else {
                 tex[v] = vec2(1.0, 0.0);
             }

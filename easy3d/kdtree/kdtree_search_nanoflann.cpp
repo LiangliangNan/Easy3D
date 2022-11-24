@@ -35,7 +35,7 @@ using namespace nanoflann;
 namespace easy3d {
 
     struct PointSet {
-        PointSet(const std::vector<vec3>* points) : pts(points) {}
+        explicit PointSet(const std::vector<vec3>* points) : pts(points) {}
         const std::vector<vec3>*  pts;
 
         // Must return the number of data points
@@ -57,7 +57,7 @@ namespace easy3d {
 
 
     struct KdTree : public KDTreeSingleIndexAdaptor< L2_Simple_Adaptor<float, PointSet>, PointSet, 3, int> {
-        KdTree(PointSet* pset) : KDTreeSingleIndexAdaptor< L2_Simple_Adaptor<float, PointSet>, PointSet, 3, int >(3, *pset, KDTreeSingleIndexAdaptorParams(10)){
+        explicit KdTree(PointSet* pset) : KDTreeSingleIndexAdaptor< L2_Simple_Adaptor<float, PointSet>, PointSet, 3, int >(3, *pset, KDTreeSingleIndexAdaptorParams(10)){
             pset_ = pset;
         }
         ~KdTree() { delete pset_; }
@@ -74,8 +74,8 @@ namespace easy3d {
         points_ = const_cast< std::vector<vec3>* >(&cloud->points());
 
         // create tree
-        PointSet* pset = new PointSet(points_);
-        KdTree* tree = new KdTree(pset);
+        auto pset = new PointSet(points_);
+        auto tree = new KdTree(pset);
         tree->buildIndex();
         tree_ = tree;
     }
@@ -93,7 +93,7 @@ namespace easy3d {
         result_set.init(&index, &squared_distance);
 
         get_tree(tree_)->findNeighbors(result_set, p, nanoflann::SearchParams(10));
-        return index;
+        return static_cast<int>(index);
     }
 
 
@@ -140,7 +140,7 @@ namespace easy3d {
         squared_distances.resize(num);
         for (std::size_t i = 0; i < num; ++i) {
             const std::pair<std::size_t, float>& e = matches[i];
-            neighbors[i] = e.first;
+            neighbors[i] = static_cast<int>(e.first);
             squared_distances[i] = e.second;
         }
     }

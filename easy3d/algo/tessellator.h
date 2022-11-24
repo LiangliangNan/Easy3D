@@ -63,7 +63,7 @@ namespace easy3d {
              * @param idx The index of this vertex. Providing a non-negative index allows to map a resulting vertex to 
              *            the original vertex. Any new vertex generated in the tessellation will have a negative index -1.
              */
-            Vertex(const vec3 &xyz, int idx = 0) : index(idx) { append(xyz); }
+            explicit Vertex(const vec3 &xyz, int idx = 0) : index(idx) { append(xyz); }
 
             /**
              * \brief initialize from a C-style array.
@@ -72,25 +72,21 @@ namespace easy3d {
              * @attention The first 3 components must be the xyz coordinates.
              */
             template<typename FT>
-            Vertex(const FT *data, std::size_t size, int idx = 0) : index(idx) {
-                assign(data, data + size);
-            }
+            Vertex(const FT *data, std::size_t size, int idx = 0) : std::vector<double>(data, data + size), index(idx) {}
 
             /**
              * \brief initialize with a known size but memory is allocated without data initialization.
              * @param idx The index of this vertex. Providing a non-negative index allows to map a resulting vertex to 
              *            the original vertex. Any new vertex generated in the tessellation will have a negative index -1.
              */
-            Vertex(std::size_t size = 0, int idx = 0) : std::vector<double>(size), index(idx) {}
+            explicit Vertex(std::size_t size = 0, int idx = 0) : std::vector<double>(size), index(idx) {}
 
             /**
              * \brief copy constructor.
              * @param idx The index of this vertex. Providing a non-negative index allows to map a resulting vertex to 
              *            the original vertex. Any new vertex generated in the tessellation will have a negative index -1.
              */
-            Vertex(const Vertex &v, int idx = 0) : index(idx) {
-                assign(v.begin(), v.end());
-            }
+            Vertex(const Vertex &v, int idx = 0) : std::vector<double>(v.begin(), v.end()), index(idx) {}
 
             /**
              * \brief append a property (e.g., color, texture coordinates) to this vertex.
@@ -133,7 +129,7 @@ namespace easy3d {
          *                   and exterior
          *  @param b true for the boundary only mode and false for the filled polygons mode.
          */
-        void set_bounary_only(bool b);
+        void set_boundary_only(bool b);
 
         /**
          * \brief Set the wining rule. The new rule will be effective until being changed by calling this function again.
@@ -247,7 +243,7 @@ namespace easy3d {
         static void beginCallback(unsigned int w, void *cbdata);
         static void endCallback(void *cbdata);
         static void vertexCallback(void *vertex, void *cbdata);
-        static void combineCallback(double coords[3], void *vertex_data[4], float weight[4], void **dataOut, void *cbdata);
+        static void combineCallback(const double coords[3], void *vertex_data[4], const float weight[4], void **dataOut, void *cbdata);
 
     private:
         void *tess_obj_;
@@ -260,7 +256,7 @@ namespace easy3d {
         // element.
         std::vector<std::vector<unsigned int> > elements_;
 
-        // The the growing number of elements (triangle or contour) in the current polygon.
+        // The growing number of elements (triangle or contour) in the current polygon.
         unsigned int num_elements_in_polygon_;
 
         // The vertex indices (including the original ones and the new vertices) of the current polygon.

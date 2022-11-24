@@ -71,7 +71,7 @@ namespace easy3d {
         /// @param k Order of the spline (minimum is two)
         /// @param node_type Nodal vector type (uniform, open_uniform). This will define the behavior of the spline
         ///     with its control points as well as its speed according to its parameter.
-        SplineCurveFitting(int k = 2, Node_e node_type = eOPEN_UNIFORM);
+        explicit SplineCurveFitting(int k = 2, Node_e node_type = eOPEN_UNIFORM);
 
         /// \brief Sets the position of the spline control points.
         void set_ctrl_points(const std::vector<Point_t> &point);
@@ -229,7 +229,7 @@ namespace easy3d {
         }
         FT total_length = lengths.back();
 
-        // given a \c value and an sorted sequence of values, find the two indices such that
+        // given a \c value and a sorted sequence of values, find the two indices such that
         // sorted_values[left_index] <= value and sorted_values[right_index] >= value.
         auto find_closest_less_or_equal = [](const std::vector<FT> &sorted_values, FT value,
                                              std::size_t start) -> std::size_t {

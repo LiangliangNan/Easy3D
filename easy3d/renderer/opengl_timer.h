@@ -54,10 +54,10 @@ namespace easy3d {
     {
     public:
         // start the new timer by default.
-        OpenGLTimer(bool start_timing = true);
+        explicit OpenGLTimer(bool start_timing = true);
         virtual ~OpenGLTimer();
 
-        // Start the timer. The next OpenGL call will be the first timed).
+        // Start the timer. The next OpenGL call will be the first timed.
         // This must be called from a thread with the OpenGL context bound.
         void	start();
 

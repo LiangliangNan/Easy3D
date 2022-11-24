@@ -25,9 +25,6 @@
  ********************************************************************/
 
 #include <easy3d/fileio/surface_mesh_io.h>
-
-#include <clocale>
-
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/stop_watch.h>
@@ -38,9 +35,7 @@ namespace easy3d {
 
 
     SurfaceMesh *SurfaceMeshIO::load(const std::string &file_name) {
-        std::setlocale(LC_NUMERIC, "C");
-
-        SurfaceMesh *mesh = new SurfaceMesh;
+        auto mesh = new SurfaceMesh;
         mesh->set_name(file_name);
 
         StopWatch w;
@@ -71,18 +66,16 @@ namespace easy3d {
         }
 
         if (!success || mesh->n_vertices() == 0 || mesh->n_faces() == 0) {
+            LOG(INFO) << "load surface mesh failed: " << file_name;
             delete mesh;
             return nullptr;
         }
 
-        if (success)
-            LOG(INFO) << "surface mesh loaded ("
-                      << "#face: " << mesh->n_faces() << ", "
-                      << "#vertex: " << mesh->n_vertices() << ", "
-                      << "#edge: " << mesh->n_edges() << "). "
-                      << w.time_string();
-        else
-            LOG(INFO) << "load surface mesh failed";
+        LOG(INFO) << "surface mesh loaded ("
+                  << "#face: " << mesh->n_faces() << ", "
+                  << "#vertex: " << mesh->n_vertices() << ", "
+                  << "#edge: " << mesh->n_edges() << "). "
+                  << w.time_string();
 
         return mesh;
     }

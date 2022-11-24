@@ -32,7 +32,6 @@
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 
 #include <CGAL/Surface_mesh.h>
-#include <CGAL/Polygon_mesh_processing/self_intersections.h>
 #include <CGAL/Polygon_mesh_processing/orient_polygon_soup.h>
 #include <CGAL/Polygon_mesh_processing/repair_polygon_soup.h>
 #include <CGAL/Polygon_mesh_processing/polygon_soup_to_polygon_mesh.h>
@@ -40,6 +39,7 @@
 #include <CGAL/Polygon_mesh_processing/clip.h>
 #include <CGAL/Polygon_mesh_slicer.h>
 
+/// ToDo: useCGAL implementation: #include <CGAL/Polygon_mesh_processing/self_intersections.h>
 
 typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
 typedef CGAL::Surface_mesh<K::Point_3>                      CGALMesh;
@@ -64,7 +64,7 @@ namespace easy3d {
             for (auto f : input->faces()) {
                 std::vector<CGALMesh::Vertex_index> vts;
                 for (auto v : input->vertices(f))
-                    vts.push_back(CGALMesh::Vertex_index(v.idx()));
+                    vts.emplace_back(CGALMesh::Vertex_index(v.idx()));
                 output.add_face(vts);
             }
         }
@@ -76,19 +76,16 @@ namespace easy3d {
             output->clear();
             for (auto v : input.vertices()) {
                 const K::Point_3 &p = input.point(v);
-                output->add_vertex(
-                        vec3(CGAL::to_double(p.x()),
-                             CGAL::to_double(p.y()),
-                             CGAL::to_double(p.z())
-                        )
-                );
+                output->add_vertex({static_cast<float>(CGAL::to_double(p.x())),
+                                    static_cast<float>(CGAL::to_double(p.y())),
+                                    static_cast<float>(CGAL::to_double(p.z()))});
             }
 
             for (auto f : input.faces()) {
                 std::vector<SurfaceMesh::Vertex> vts;
                 auto h = input.halfedge(f);
                 for (auto v : input.vertices_around_face(h))
-                    vts.push_back(SurfaceMesh::Vertex(v.idx()));
+                    vts.emplace_back(SurfaceMesh::Vertex(static_cast<int>(v.idx())));
                 output->add_face(vts);
             }
         }
@@ -124,11 +121,9 @@ namespace easy3d {
 
             for (std::size_t i = 0; i < input_points.size(); ++i) {
                 const auto &p = input_points[i];
-                points[i] = vec3(
-                        CGAL::to_double(p.x()),
-                        CGAL::to_double(p.y()),
-                        CGAL::to_double(p.z())
-                );
+                points[i] = vec3({static_cast<float>(CGAL::to_double(p.x())),
+                                  static_cast<float>(CGAL::to_double(p.y())),
+                                  static_cast<float>(CGAL::to_double(p.z()))});
             }
 
             for (std::size_t i = 0; i < input_polygons.size(); ++i) {
@@ -136,7 +131,7 @@ namespace easy3d {
                 auto &plg = polygons[i];
                 plg.resize(input_plg.size());
                 for (std::size_t j = 0; j < input_plg.size(); ++j)
-                    plg[j] = input_plg[j];
+                    plg[j] = static_cast<int>(input_plg[j]);
             }
         }
 
@@ -144,9 +139,9 @@ namespace easy3d {
         void remove_duplicate_vertices(std::vector<vec3> &points,
                                        std::vector<Surfacer::Polygon> &polygons) {
             // helper class for identifying coincident vertices
-            class CmpVec {
+            class CompareVec {
             public:
-                CmpVec(float _eps = FLT_MIN) : eps_(_eps) {}
+                explicit CompareVec(float _eps = FLT_MIN) : eps_(_eps) {}
 
                 bool operator()(const vec3 &v0, const vec3 &v1) const {
                     if (fabs(v0[0] - v1[0]) <= eps_) {
@@ -162,9 +157,9 @@ namespace easy3d {
                 float eps_;
             };
 
-            CmpVec comp(FLT_MIN);
-            std::map<vec3, int, CmpVec> vMap(comp);
-            std::map<vec3, int, CmpVec>::iterator vMapIt;
+            CompareVec comp(FLT_MIN);
+            std::map<vec3, int, CompareVec> vMap(comp);
+            std::map<vec3, int, CompareVec>::iterator vMapIt;
             std::map<int, int> index_map;
 
             std::vector<vec3> result_points = points;
@@ -180,12 +175,12 @@ namespace easy3d {
                 vMapIt = vMap.find(p);
                 if (vMapIt == vMap.end()) {
                     // No : add vertex and remember idx/vector mapping
-                    vMap[p] = points.size();
-                    index_map[i] = points.size();
-                    points.push_back(vec3(p.x, p.y, p.z));
+                    vMap[p] = static_cast<int>(points.size());
+                    index_map[static_cast<int>(i)] = static_cast<int>(points.size());
+                    points.emplace_back(vec3(p.x, p.y, p.z));
                 } else {
                     // Yes : get index from map
-                    index_map[i] = vMapIt->second;
+                    index_map[static_cast<int>(i)] = static_cast<int>(vMapIt->second);
                 }
             }
             for (std::size_t i = 0; i < input_polygons.size(); ++i) {
@@ -223,17 +218,10 @@ namespace easy3d {
             for (const auto &plg : polygons) {
                 std::vector<SurfaceMesh::Vertex> vts;
                 for (auto v : plg)
-                    vts.push_back(SurfaceMesh::Vertex(v));
+                    vts.emplace_back(SurfaceMesh::Vertex(v));
                 builder.add_face(vts);
             }
             builder.end_surface(false);
-        }
-
-        void to_polygon_mesh(std::vector<K::Point_3> &points,
-                             std::vector<std::vector<std::size_t>> &polygons,
-                             CGALMesh& mesh) {
-            mesh.clear();
-            CGAL::Polygon_mesh_processing::polygon_soup_to_polygon_mesh(points, polygons, mesh);
         }
     }
 
@@ -242,9 +230,9 @@ namespace easy3d {
     int Surfacer::stitch_borders(SurfaceMesh *input) {
         CGALMesh mesh;
         internal::to_cgal(input, mesh);
-        int num = CGAL::Polygon_mesh_processing::stitch_borders(mesh);
+        auto num = CGAL::Polygon_mesh_processing::stitch_borders(mesh);
         internal::to_easy3d(mesh, input);
-        return num;
+        return static_cast<int>(num);
     }
 
 
@@ -269,7 +257,7 @@ namespace easy3d {
 
         typedef boost::property_map<CGALMesh, CGAL::dynamic_face_property_t<std::size_t> >::type Fccmap;
         Fccmap fccmap = CGAL::get(CGAL::dynamic_face_property_t<std::size_t>(), mesh);
-        int count_prev = CGAL::Polygon_mesh_processing::connected_components(mesh, fccmap);
+        auto count_prev = CGAL::Polygon_mesh_processing::connected_components(mesh, fccmap);
         if (count_prev <= 1) {
             return; // nothing to be merged
         }
@@ -277,7 +265,7 @@ namespace easy3d {
         // iteratively merge the connected components until the no more connected components can be merged
         do {
             CGAL::Polygon_mesh_processing::merge_reversible_connected_components(mesh);
-            int count_now = CGAL::Polygon_mesh_processing::connected_components(mesh, fccmap);
+            auto count_now = CGAL::Polygon_mesh_processing::connected_components(mesh, fccmap);
             if (count_now == 1 || count_now == count_prev)
                 break;
             count_prev = count_now;
@@ -301,8 +289,8 @@ namespace easy3d {
 
 
     bool Surfacer::orient_and_stitch_polygon_soup(std::vector<vec3> &input_points, std::vector<Polygon> &input_polygons) {
-        const int num_vertices = input_points.size();
-        const int num_faces = input_polygons.size();
+        const auto num_vertices = input_points.size();
+        const auto num_faces = input_polygons.size();
 
         // stitch
         internal::remove_duplicate_vertices(input_points, input_polygons);
@@ -321,8 +309,8 @@ namespace easy3d {
         internal::to_easy3d(points, polygons, input_points, input_polygons);
 
         std::string msg;
-        int diff_vertices = num_vertices - input_points.size();
-        int diff_faces = num_faces - input_polygons.size();
+        int diff_vertices = static_cast<int>(num_vertices - input_points.size());
+        int diff_faces = static_cast<int>(num_faces - input_polygons.size());
         if (diff_vertices != 0) {
             msg += std::to_string(std::abs(diff_vertices)) + " vertices " +
                    (diff_vertices >= 0 ? "removed" : "inserted");
@@ -339,8 +327,8 @@ namespace easy3d {
 
 
     void Surfacer::repair_polygon_soup(std::vector<vec3> &input_points, std::vector<Polygon> &input_polygons) {
-        const int num_vertices = input_points.size();
-        const int num_faces = input_polygons.size();
+        const auto num_vertices = input_points.size();
+        const auto num_faces = input_polygons.size();
 
         internal::remove_duplicate_vertices(input_points, input_polygons);
 
@@ -359,8 +347,8 @@ namespace easy3d {
 
         internal::to_easy3d(points, polygons, input_points, input_polygons);
 
-        int diff_vertices = num_vertices - input_points.size();
-        int diff_faces = num_faces - input_polygons.size();
+        int diff_vertices = static_cast<int>(num_vertices - input_points.size());
+        int diff_faces = static_cast<int>(num_faces - input_polygons.size());
         if (diff_vertices + diff_faces != 0) {
             std::string msg;
             if (diff_vertices != 0) {
@@ -452,9 +440,9 @@ namespace easy3d {
                 for (std::size_t j = 0; j < pl.size(); ++j) {
                     const auto &p = pl[j];
                     polylines[i][j] = vec3(
-                            CGAL::to_double(p.x()),
-                            CGAL::to_double(p.y()),
-                            CGAL::to_double(p.z())
+                            static_cast<float>(CGAL::to_double(p.x())),
+                            static_cast<float>(CGAL::to_double(p.y())),
+                            static_cast<float>(CGAL::to_double(p.z()))
                     );
                 }
             }
@@ -467,8 +455,7 @@ namespace easy3d {
         CGAL::Polygon_mesh_slicer<CGALMesh , K> slicer(mesh);
 
         std::vector< std::vector<CGALPolyline> > CGALResult(input_planes.size());
-        for (std::size_t i=0; i<input_planes.size(); ++i) {
-            const auto &input_plane = input_planes[i];
+        for (const auto &input_plane : input_planes) {
             Plane_3 plane(input_plane.a(), input_plane.b(), input_plane.c(), input_plane.d());
 
             std::vector<CGALPolyline> lines;
@@ -523,7 +510,7 @@ namespace easy3d {
             std::vector<Point_3> points;
             for (auto v : mesh->vertices(f)) {
                 const vec3 &p = prop[v];
-                points.push_back(Point_3(p.x, p.y, p.z));
+                points.emplace_back(Point_3(p.x, p.y, p.z));
             }
 
             if (points.size() == 3) {

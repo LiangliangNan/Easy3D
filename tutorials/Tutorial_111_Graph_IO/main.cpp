@@ -60,9 +60,9 @@ int main(int argc, char** argv) {
     // Write the graph to a new file.
     const std::string save_file_name = "./graph-copy.ply";
     if (GraphIO::save(save_file_name, graph))
-        std::cout << "graph saved to \'" << save_file_name << "\'"  << std::endl;
-	else
-		std::cerr << "failed create the new file" << std::endl;
+        std::cout << "graph saved to \'" << save_file_name << "\'" << std::endl;
+    else
+        std::cerr << "failed create the new file" << std::endl;
 
     // delete the graph (i.e., release memory)
     delete graph;

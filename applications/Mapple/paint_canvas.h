@@ -62,7 +62,7 @@ class PaintCanvas : public QOpenGLWidget, public easy3d::Canvas
        Q_OBJECT
 public:
     explicit PaintCanvas(MainWindow* window);
-    virtual ~PaintCanvas() override;
+    ~PaintCanvas() override;
 
     virtual std::string usage() const;
 
@@ -70,7 +70,7 @@ public:
 	int samples() const { return samples_; }
 
     // Scaling factor for high DPI devices
-    double dpi_scaling() const { return dpi_scaling_; }
+    float dpi_scaling() const { return dpi_scaling_; }
 
     const easy3d::vec4& backGroundColor() const { return background_color_; }
     void setBackgroundColor(const easy3d::vec4& c);
@@ -191,7 +191,7 @@ protected:
      *  - Overload init() instead of this method to modify specific OpenGL state;
      *  - The framebuffer is not yet available at this stage.
      */
-    virtual void initializeGL() override;
+    void initializeGL() override;
 
     /* User-defined initialization method.
      * This method is called within initializeGL() and should be overloaded to
@@ -216,7 +216,7 @@ protected:
      * If you overload this method, first call the inherited method in which
      * the projection matrix is updated.
      */
-    virtual void resizeGL(int width, int height) override;
+    void resizeGL(int width, int height) override;
 
     /* Renders the OpenGL scene. Gets called whenever the widget needs to
 	 * be updated. Internally, it calls the following methods in order:
@@ -229,7 +229,7 @@ protected:
      *       want to reuse the paintGL() method for offscreen rendering,
      *       you have to clear both buffers before calling paintGL().
      */
-    virtual void paintGL() override;
+    void paintGL() override;
 
     /* This function will be called before the main draw procedure.
      */
@@ -244,7 +244,7 @@ protected:
      */
     virtual void postDraw();
 
-    // OpenGL resources (e.g., shaders, textures, VAOs) must destroyed when
+    // OpenGL resources (e.g., shaders, textures, VAOs) can only be destroyed when
     // there exists a valid rendering context. It is (usually) a bad idea to
     // clean up OpenGL in a destructor because the OpenGL context may not exist
     // (e.g., destroyed already) or the visible one is not *current*. This
@@ -252,7 +252,7 @@ protected:
     // See also init().
     // NOTE: Don't forget to call Viewer::cleanup() at the end of your
     //		 inherited function.
-    virtual void cleanup();
+    void cleanup();
 
 signals:
     /*! Signal emitted at the end of the paintGL() method, when frame is drawn.
@@ -266,15 +266,15 @@ signals:
     void drawFinished();
 
 protected:
-    virtual void mousePressEvent(QMouseEvent *) override;    // Mouse button press event handler
-    virtual void mouseMoveEvent(QMouseEvent *) override;
-    virtual void mouseReleaseEvent(QMouseEvent *) override;  // Mouse button release event handler
-    virtual void mouseDoubleClickEvent(QMouseEvent *) override;
-    virtual void wheelEvent(QWheelEvent *) override;         // Mouse scroll event handler
-    virtual void keyPressEvent(QKeyEvent *) override;        // Keyboard press event handler.
-    virtual void keyReleaseEvent(QKeyEvent *) override;      // Keyboard press event handler.
-    virtual void timerEvent(QTimerEvent *) override;
-    virtual void closeEvent(QCloseEvent *) override;
+    void mousePressEvent(QMouseEvent *) override;    // Mouse button press event handler
+    void mouseMoveEvent(QMouseEvent *) override;
+    void mouseReleaseEvent(QMouseEvent *) override;  // Mouse button release event handler
+    void mouseDoubleClickEvent(QMouseEvent *) override;
+    void wheelEvent(QWheelEvent *) override;         // Mouse scroll event handler
+    void keyPressEvent(QKeyEvent *) override;        // Keyboard press event handler.
+    void keyReleaseEvent(QKeyEvent *) override;      // Keyboard press event handler.
+    void timerEvent(QTimerEvent *) override;
+    void closeEvent(QCloseEvent *) override;
 
 protected:
     void drawCornerAxes();
@@ -295,8 +295,8 @@ protected:
     bool show_easy3d_logo_;
     bool show_frame_rate_;
 
-    double  dpi_scaling_;
-    int     samples_;
+    float  dpi_scaling_;
+    int    samples_;
 
     easy3d::Camera*	camera_;
     easy3d::vec4	background_color_;

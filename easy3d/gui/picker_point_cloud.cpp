@@ -42,6 +42,7 @@ namespace easy3d {
     PointCloudPicker::PointCloudPicker(const Camera *cam)
             : Picker(cam)
             , program_(nullptr)
+            , hit_resolution_(15)
     {
         use_gpu_if_supported_ = true;
     }
@@ -49,7 +50,7 @@ namespace easy3d {
 
     PointCloud::Vertex PointCloudPicker::pick_vertex(PointCloud* model, int x, int y) {
         auto drawable = model->renderer()->get_points_drawable("vertices");
-        if (!model || !drawable)
+        if (!drawable)
             return PointCloud::Vertex();
 
         if (use_gpu_if_supported_) {
@@ -60,7 +61,7 @@ namespace easy3d {
             program_ = ShaderManager::get_program(shader_name);
             if (!program_) {
                 std::vector<ShaderProgram::Attribute> attributes;
-                attributes.push_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+                attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
                 program_ = ShaderManager::create_program_from_files(shader_name, attributes);
             }
             if (!program_) {
@@ -95,7 +96,7 @@ namespace easy3d {
         const Line3& line = picking_line(px, py);
         const vec3& p_near = line.point();
 
-        float sqr_dist_thresh = static_cast<float>(hit_resolution_ * hit_resolution_);
+        const auto sqr_dist_thresh = static_cast<float>(hit_resolution_ * hit_resolution_);
         // Get combined model-view and projection matrix
         const mat4& MVP = camera()->modelViewProjectionMatrix();
         // transformation introduced by manipulation
@@ -113,7 +114,7 @@ namespace easy3d {
             y /= w;
             x = 0.5f * x + 0.5f;
             y = 0.5f * y + 0.5f;
-            if (distance2(vec2(x, y), vec2(px, py)) < sqr_dist_thresh) {
+            if (distance2(vec2(x, y), vec2(static_cast<float>(px), static_cast<float>(py))) < sqr_dist_thresh) {
                 status[i] = 1;
                 sqr_dist_to_near[i] = distance2(p, p_near);
             }
@@ -153,12 +154,14 @@ namespace easy3d {
         //       of the viewer changed.
 
         // Bind the offscreen fbo for drawing
-        fbo_->bind(); easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
+        fbo_->bind();
+        easy3d_debug_log_gl_error
+        easy3d_debug_log_frame_buffer_error
 
         float color[4];
         glGetFloatv(GL_COLOR_CLEAR_VALUE, color);
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);	easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         const mat4 MANIP = model->manipulator() ? model->manipulator()->matrix() : mat4::identity();
         program_->bind();
@@ -179,7 +182,9 @@ namespace easy3d {
         fbo_->read_color(c, gl_x, gl_y);
 
         // switch back to the previous fbo
-        fbo_->release(); easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
+        fbo_->release();
+        easy3d_debug_log_gl_error
+        easy3d_debug_log_frame_buffer_error
 
         // restore the clear color
         glClearColor(color[0], color[1], color[2], color[3]);
@@ -187,7 +192,7 @@ namespace easy3d {
         //--------------------------------------------------------------------------
 
         // Convert the color back to an integer ID
-        int id = rgb::rgba(c[0], c[1], c[2], c[3]);
+        int id = color::encode(c[0], c[1], c[2], c[3]);
         return PointCloud::Vertex(id);
     }
 
@@ -215,24 +220,28 @@ namespace easy3d {
         glEnable(GL_PROGRAM_POINT_SIZE); // before OpenGL3.2, use GL_VERTEX_PROGRAM_POINT_SIZE
 
         // Bind the offscreen fbo for drawing
-        fbo_->bind(); easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
+        fbo_->bind();
+        easy3d_debug_log_gl_error
+        easy3d_debug_log_frame_buffer_error
 
         float color[4];
         glGetFloatv(GL_COLOR_CLEAR_VALUE, color);
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);	easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         const mat4 MANIP = model->manipulator() ? model->manipulator()->matrix() : mat4::identity();
         program_->bind();
         program_->set_uniform("perspective", camera()->type() == Camera::PERSPECTIVE);
-        program_->set_uniform("MV", camera_->modelViewMatrix());easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
+        program_->set_uniform("MV", camera_->modelViewMatrix());
         program_->set_uniform("PROJ", camera_->projectionMatrix());
         program_->set_uniform("MANIP", MANIP);
         float ratio = camera_->pixelGLRatio(camera_->pivotPoint());
         program_->set_uniform("sphere_radius", drawable->point_size() * ratio * 0.5f);  // 0.5f from size -> radius
-        program_->set_uniform("screen_width", width);easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
-        drawable->gl_draw();easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
-        program_->release();easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
+        program_->set_uniform("screen_width", width);
+        drawable->gl_draw();
+        program_->release();
+        easy3d_debug_log_gl_error
+        easy3d_debug_log_frame_buffer_error
 
         // --- Maybe this is not necessary ---------
         glFlush();
@@ -243,10 +252,12 @@ namespace easy3d {
         screen_to_opengl(x, y, gl_x, gl_y, width, height);
 
         unsigned char c[4];
-        fbo_->read_color(c, gl_x, gl_y);easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
+        fbo_->read_color(c, gl_x, gl_y);
 
         // switch back to the previous fbo
-        fbo_->release(); easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
+        fbo_->release();
+        easy3d_debug_log_gl_error
+        easy3d_debug_log_frame_buffer_error
 
         glEnable(GL_PROGRAM_POINT_SIZE); // before OpenGL3.2, use GL_VERTEX_PROGRAM_POINT_SIZE
 
@@ -256,7 +267,7 @@ namespace easy3d {
         //--------------------------------------------------------------------------
 
         // Convert the color back to an integer ID
-        int id = rgb::rgba(c[0], c[1], c[2], c[3]);
+        int id = color::encode(c[0], c[1], c[2], c[3]);
         return PointCloud::Vertex(id);
     }
     
@@ -267,10 +278,10 @@ namespace easy3d {
         int win_width = camera()->screenWidth();
         int win_height = camera()->screenHeight();
 
-        float xmin = rect.left() / (win_width - 1.0f);
-        float ymin = 1.0f - rect.top() / (win_height - 1.0f);
-        float xmax = rect.right() / (win_width - 1);
-        float ymax = 1.0f - rect.bottom() / (win_height - 1.0f);
+        float xmin = rect.left() / static_cast<float>(win_width - 1);
+        float ymin = 1.0f - rect.top() / static_cast<float>(win_height - 1);
+        float xmax = rect.right() / static_cast<float>(win_width - 1);
+        float ymax = 1.0f - rect.bottom() / static_cast<float>(win_height - 1);
         if (xmin > xmax) std::swap(xmin, xmax);
         if (ymin > ymax) std::swap(ymin, ymax);
 
@@ -306,22 +317,22 @@ namespace easy3d {
         if (!model)
             return;
 
-        int win_width = camera()->screenWidth();
-        int win_height = camera()->screenHeight();
+        const int win_width = camera()->screenWidth();
+        const int win_height = camera()->screenHeight();
 
         std::vector<vec2> region; // the transformed selection region
         for (std::size_t i = 0; i < plg.size(); ++i) {
             const vec2 &p = plg[i];
-            float x = p.x / float(win_width - 1);
-            float y = 1.0f - p.y / float(win_height - 1);
-            region.push_back(vec2(x, y));
+            const float x = p.x / static_cast<float>(win_width - 1);
+            const float y = 1.0f - p.y / static_cast<float>(win_height - 1);
+            region.emplace_back(vec2(x, y));
         }
 
         const Box2& box = plg.bbox();
-        float xmin = box.min_point().x / (win_width - 1.0f);
-        float ymin = 1.0f - box.min_point().y / (win_height - 1.0f);
-        float xmax = box.max_point().x / (win_width - 1);
-        float ymax = 1.0f - box.max_point().y / (win_height - 1.0f);
+        float xmin = box.min_point().x / static_cast<float>(win_width - 1);
+        float ymin = 1.0f - box.min_point().y / static_cast<float>(win_height - 1);
+        float xmax = box.max_point().x / static_cast<float>(win_width - 1);
+        float ymax = 1.0f - box.max_point().y / static_cast<float>(win_height - 1);
         if (xmin > xmax) std::swap(xmin, xmax);
         if (ymin > ymax) std::swap(ymin, ymax);
 

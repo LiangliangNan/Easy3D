@@ -26,10 +26,6 @@ namespace easy3d {
     }
 
 
-    SurfaceMeshTetrehedralization::~SurfaceMeshTetrehedralization() {
-    }
-
-
     PolyMesh *SurfaceMeshTetrehedralization::apply(SurfaceMesh *mesh) {
         if (!mesh) {
             LOG(WARNING) << "input mesh is NULL";
@@ -46,7 +42,7 @@ namespace easy3d {
         StopWatch w;
         LOG(INFO) << "tetrahedralizing...";
 
-        tetgenbehavior *tetgen_args = new tetgenbehavior;
+        auto *tetgen_args = new tetgenbehavior;
         // Create tetgen argument string from options.
         if (command_line_.empty()) {
             std::ostringstream s;
@@ -91,7 +87,7 @@ namespace easy3d {
         }
 
         tetgenio *tetgen_surface = to_tetgen_surface(mesh);
-        tetgenio *tetgen_volume = new tetgenio;
+        auto *tetgen_volume = new tetgenio;
 
         try {
             ::tetrahedralize(tetgen_args, tetgen_surface, tetgen_volume);
@@ -125,12 +121,12 @@ namespace easy3d {
     }
 
 
-    tetgenio *SurfaceMeshTetrehedralization::to_tetgen_surface(SurfaceMesh *mesh) {
-        tetgenio *tetgen_surface = new tetgenio;
+    tetgenio *SurfaceMeshTetrehedralization::to_tetgen_surface(SurfaceMesh *mesh) const{
+        auto *tetgen_surface = new tetgenio;
         tetgen_surface->initialize();
 
         tetgen_surface->firstnumber = 0;
-        tetgen_surface->numberofpoints = mesh->n_vertices();
+        tetgen_surface->numberofpoints = static_cast<int>(mesh->n_vertices());
 
         // Liangliang: tetgen uses double by default.
         tetgen_surface->pointlist = new double[tetgen_surface->numberofpoints * 3];
@@ -141,7 +137,7 @@ namespace easy3d {
             tetgen_surface->pointlist[idx++] = p.z;
         }
 
-        tetgen_surface->numberoffacets = mesh->n_faces();
+        tetgen_surface->numberoffacets = static_cast<int>(mesh->n_faces());
         tetgen_surface->facetlist = new tetgenio::facet[tetgen_surface->numberoffacets];
         for (auto face : mesh->faces()) {
             int fid = face.idx();
@@ -151,7 +147,7 @@ namespace easy3d {
             f.numberofholes = 0;
             f.holelist = nullptr;
             tetgenio::polygon &p = f.polygonlist[0];
-            p.numberofvertices = mesh->valence(face);
+            p.numberofvertices = static_cast<int>(mesh->valence(face));
             p.vertexlist = new int[p.numberofvertices];
             int vid = 0;
             for (auto vertex : mesh->vertices(face)) {
@@ -163,11 +159,11 @@ namespace easy3d {
     }
 
 
-    PolyMesh *SurfaceMeshTetrehedralization::to_easy3d_poly_mesh(tetgenio *volume) {
+    PolyMesh *SurfaceMeshTetrehedralization::to_easy3d_poly_mesh(tetgenio *volume) const {
         if (volume->numberofpoints <= 0 || volume->numberoftetrahedra <= 0)
             return nullptr;
 
-        PolyMesh *mesh = new PolyMesh;
+        auto mesh = new PolyMesh;
 
         PolyMesh::CellProperty<double> region;
         if (tag_regions_)
@@ -175,7 +171,7 @@ namespace easy3d {
 
         double *p = volume->pointlist;
         for (int i = 0; i < volume->numberofpoints; i++) {
-            mesh->add_vertex(vec3(p[0], p[1], p[2]));
+            mesh->add_vertex(vec3(static_cast<float>(p[0]), static_cast<float>(p[1]), static_cast<float>(p[2])));
             p += 3;
         }
 

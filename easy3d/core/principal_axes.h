@@ -89,14 +89,14 @@ namespace easy3d {
     template <int DIM, typename FT>
     PrincipalAxes<DIM, FT>::PrincipalAxes() {
         M_ = new FT *[DIM];
-        for (unsigned short i = 0; i < DIM; ++i)
+        for (int i = 0; i < DIM; ++i)
             M_[i] = new FT [DIM];
     }
 
 
     template <int DIM, typename FT>
     PrincipalAxes<DIM, FT>::~PrincipalAxes() {
-        for (unsigned short i = 0; i < DIM; ++i)
+        for (int i = 0; i < DIM; ++i)
             delete[] M_[i];
         delete[] M_;
     }
@@ -128,9 +128,9 @@ namespace easy3d {
     inline void PrincipalAxes<DIM, FT>::begin() {
         nb_points_ = 0 ;
         sum_weights_ = 0 ;
-        for (unsigned short i = 0; i < DIM; ++i) {
+        for (int i = 0; i < DIM; ++i) {
             center_[i] = 0;
-            for (unsigned short j = 0; j < DIM; ++j)
+            for (int j = 0; j < DIM; ++j)
                 M_[i][j] = 0;
         }
     }
@@ -138,20 +138,20 @@ namespace easy3d {
 
     template <int DIM, typename FT>
     inline void PrincipalAxes<DIM, FT>::end() {
-        for (unsigned short i = 0; i < DIM; ++i)
+        for (int i = 0; i < DIM; ++i)
             center_[i] /= sum_weights_;
 
         // If the system is under-determined, return the trivial basis.
         if (nb_points_ < DIM + 1) {
-            for (unsigned short i = 0; i < DIM; ++i) {
+            for (int i = 0; i < DIM; ++i) {
                 eigen_value_[i] = FT(1);
-                for (unsigned short j = 0; j < DIM; ++j)
+                for (int j = 0; j < DIM; ++j)
                     axis_[i][j] = (i == j ? FT(1) : FT(0));
             }
         }
         else {
-            for (unsigned short i = 0; i < DIM; ++i) {
-                for (unsigned short j = i; j < DIM; ++j) {
+            for (int i = 0; i < DIM; ++i) {
+                for (int j = i; j < DIM; ++j) {
                     M_[i][j] = M_[i][j]/sum_weights_ - center_[i]*center_[j];
                     if (i != j)
                         M_[j][i] = M_[i][j];
@@ -164,20 +164,20 @@ namespace easy3d {
             EigenSolver<FT> solver(DIM);
             solver.solve(M_, EigenSolver<FT>::DECREASING);
 
-            for (unsigned short i=0; i<DIM; ++i) {
+            for (int i=0; i<DIM; ++i) {
                 eigen_value_[i] = solver.eigen_value(i);
-                for (unsigned short j=0; j<DIM; ++j)
+                for (int j=0; j<DIM; ++j)
                     axis_[i][j] = solver.eigen_vector(j, i); // eigenvectors are stored in columns
             }
 
             // Normalize the eigen vectors
-            for(unsigned short i=0; i<DIM; i++) {
+            for(int i=0; i<DIM; i++) {
                 FT sqr_len(0);
-                for(unsigned short j=0; j<DIM; j++)
+                for(int j=0; j<DIM; j++)
                     sqr_len += (axis_[i][j] * axis_[i][j]);
                 FT s = std::sqrt(sqr_len);
                 s = (s > std::numeric_limits<FT>::min()) ? FT(1) / s : FT(0);
-                for (unsigned short j = 0; j < DIM; ++j)
+                for (int j = 0; j < DIM; ++j)
                     axis_[i][j] *= s;
             }
         }
@@ -190,9 +190,9 @@ namespace easy3d {
     template <int DIM, typename FT>
     template <typename FT2>
     inline void PrincipalAxes<DIM, FT>::add(const Vec<DIM, FT2>& p, FT2 weight) {
-        for (unsigned short i = 0; i < DIM; ++i) {
+        for (int i = 0; i < DIM; ++i) {
             center_[i] += p[i] * weight ;
-            for (unsigned short j = i; j < DIM; ++j)
+            for (int j = i; j < DIM; ++j)
                 M_[i][j] += weight * p[i] * p[j];
         }
         nb_points_++ ;

@@ -51,7 +51,7 @@ namespace easy3d {
     public:
         /// \brief Constructor
         /// \param cam The camera used in the view
-		AmbientOcclusion(Camera* cam);
+		explicit AmbientOcclusion(Camera* cam);
         virtual ~AmbientOcclusion();
 
         /// \brief Sets the sample radius (in pixels). Typical value is in range [0, 4].

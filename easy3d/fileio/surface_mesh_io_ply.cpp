@@ -42,8 +42,7 @@ namespace easy3d {
 
 			template <typename PropertyT>
 			inline bool extract_named_property(std::vector<PropertyT>& properties, PropertyT& wanted, const std::string& name) {
-				typename std::vector< PropertyT >::iterator it = properties.begin();
-				for (; it != properties.end(); ++it) {
+				for (auto it = properties.begin(); it != properties.end(); ++it) {
                     const PropertyT& prop = *it;
                     if (prop.name == name) {
                         wanted = prop;
@@ -126,8 +125,7 @@ namespace easy3d {
 			IntListProperty    edge_vertex_indices;
 
 			const Element* element_vertex = nullptr;
-			for (std::size_t i = 0; i < elements.size(); ++i) {
-				Element& e = elements[i];
+			for (auto& e : elements) {
                 if (e.name == "vertex") {
                     element_vertex = &e;
 					if (internal::extract_named_property(e.vec3_properties, coordinates, "point"))
@@ -142,19 +140,18 @@ namespace easy3d {
                         internal::extract_named_property(e.int_list_properties, face_vertex_indices, "vertex_index")) {
                         internal::extract_named_property(e.float_list_properties, face_halfedge_texcoords, "texcoord");
                         continue;
+                    } else {
+                        LOG(ERROR)
+                                << "edge properties might not be parsed correctly because both 'vertex_indices' and 'vertex_index' not defined on faces";
+                        return false;
                     }
-					else {
-                        LOG(ERROR) << "edge properties might not be parsed correctly because both 'vertex_indices' and 'vertex_index' not defined on faces";
-						return false;
-					}
 				}
                 else if (e.name == "edge") {
                     if (internal::extract_named_property(e.int_list_properties, edge_vertex_indices, "vertex_indices") ||
                         internal::extract_named_property(e.int_list_properties, edge_vertex_indices, "vertex_index"))
-						continue;
-					else {
-                        LOG(ERROR)
-                                << "edge properties might not be parsed correctly because both 'vertex_indices' and 'vertex_index' not defined on edges";
+                        continue;
+                    else {
+                        LOG(ERROR) << "edge properties might not be parsed correctly because both 'vertex_indices' and 'vertex_index' not defined on edges";
                         // return false; // no return because the model can still be visualized
                     }
 				}
@@ -186,7 +183,7 @@ namespace easy3d {
             // create texture coordinate property if texture coordinates present
             SurfaceMesh::HalfedgeProperty<vec2> prop_texcoords;
             if (face_halfedge_texcoords.size() == face_vertex_indices.size())
-                prop_texcoords = prop_texcoords = mesh->add_halfedge_property<vec2>("h:texcoord");
+                prop_texcoords = mesh->add_halfedge_property<vec2>("h:texcoord");
 
             // find the face's halfedge that points to v.
             auto find_face_halfedge = [](SurfaceMesh *mesh, SurfaceMesh::Face face,
@@ -224,33 +221,30 @@ namespace easy3d {
 			}
 
 			// now let's add the remained properties
-			for (std::size_t i = 0; i < elements.size(); ++i) {
-				Element& e = elements[i];
-                if (e.name == "vertex") {
+			for (const auto& e : elements) {
+                if (e.name == "vertex")
                     continue;   // the vertex property has already been added
-                }
                 else if (e.name == "face") {
-					internal::add_face_properties<vec3>(mesh, e.vec3_properties);
+                    internal::add_face_properties<vec3>(mesh, e.vec3_properties);
                     internal::add_face_properties<vec2>(mesh, e.vec2_properties);
-					internal::add_face_properties<float>(mesh, e.float_properties);
-					internal::add_face_properties<int>(mesh, e.int_properties);
-					internal::add_face_properties< std::vector<int> >(mesh, e.int_list_properties);
-					internal::add_face_properties< std::vector<float> >(mesh, e.float_list_properties);
-				}
-                else if (e.name == "edge") {
-					internal::add_edge_properties<vec3>(mesh, e.vec3_properties);
+                    internal::add_face_properties<float>(mesh, e.float_properties);
+                    internal::add_face_properties<int>(mesh, e.int_properties);
+                    internal::add_face_properties<std::vector<int> >(mesh, e.int_list_properties);
+                    internal::add_face_properties<std::vector<float> >(mesh, e.float_list_properties);
+                } else if (e.name == "edge") {
+                    internal::add_edge_properties<vec3>(mesh, e.vec3_properties);
                     internal::add_edge_properties<vec2>(mesh, e.vec2_properties);
-					internal::add_edge_properties<float>(mesh, e.float_properties);
-					internal::add_edge_properties<int>(mesh, e.int_properties);
-					internal::add_edge_properties< std::vector<int> >(mesh, e.int_list_properties);
-					internal::add_edge_properties< std::vector<float> >(mesh, e.float_list_properties);
-				}
-				else {
-				    const std::string name = "element-" + e.name;
+                    internal::add_edge_properties<float>(mesh, e.float_properties);
+                    internal::add_edge_properties<int>(mesh, e.int_properties);
+                    internal::add_edge_properties<std::vector<int> >(mesh, e.int_list_properties);
+                    internal::add_edge_properties<std::vector<float> >(mesh, e.float_list_properties);
+                } else {
+                    const std::string name = "element-" + e.name;
                     auto prop = mesh->add_model_property<Element>(name, Element(""));
                     prop.vector().push_back(e);
                     LOG(WARNING) << "unknown element '" << e.name
-                                 << "' with the following properties has been stored as a model property '" << name << "'"
+                                 << "' with the following properties has been stored as a model property '" << name
+                                 << "'"
                                  << e.property_statistics();
                 }
 			}
@@ -276,9 +270,9 @@ namespace easy3d {
                 const dvec3 &origin = Translator::instance()->translation();
                 auto& points = mesh->get_vertex_property<vec3>("v:point").vector();
                 for (auto& p: points) {
-                    p.x -= origin.x;
-                    p.y -= origin.y;
-                    p.z -= origin.z;
+                    p.x -= static_cast<float>(origin.x);
+                    p.y -= static_cast<float>(origin.y);
+                    p.z -= static_cast<float>(origin.z);
                 }
 
                 auto trans = mesh->add_model_property<dvec3>("translation", dvec3(0, 0, 0));
@@ -365,9 +359,9 @@ namespace easy3d {
                 for (auto& prop : element_vertex.vec3_properties) {
                     if (prop.name == "point") {
                         for (auto& v : prop) {
-                            v.x += origin.x;
-                            v.y += origin.y;
-                            v.z += origin.z;
+                            v.x += static_cast<float>(origin.x);
+                            v.y += static_cast<float>(origin.y);
+                            v.z += static_cast<float>(origin.z);
                         }
                     }
                 }
@@ -434,12 +428,12 @@ namespace easy3d {
 			internal::collect_edge_properties(mesh, element_edge.float_list_properties);
 			// if edge property exist, we need to create the edge element which
 			// must have an extra int list property "vertex_indices"
-			if (element_edge.vec3_properties.size() > 0 ||
-			    element_edge.vec2_properties.size() > 0 ||
-				element_edge.float_properties.size() > 0 ||
-				element_edge.int_properties.size() > 0 ||
-				element_edge.int_list_properties.size() > 0 ||
-				element_edge.float_list_properties.size() > 0)
+			if (!element_edge.vec3_properties.empty() ||
+			    !element_edge.vec2_properties.empty() ||
+				!element_edge.float_properties.empty() ||
+				!element_edge.int_properties.empty() ||
+				!element_edge.int_list_properties.empty() ||
+				!element_edge.float_list_properties.empty())
 			{
 				// vertex_indices
 				IntListProperty edge_vertex_indices;
@@ -459,8 +453,7 @@ namespace easy3d {
             binary = binary && (file_name.find("ascii") == std::string::npos);
             LOG_IF(!binary, WARNING) << "you're writing an ASCII ply file. Use binary format for better performance";
 
-            PlyWriter writer;
-            return writer.write(file_name, elements, "", binary);
+            return PlyWriter::write(file_name, elements, "", binary);
 		}
 
 

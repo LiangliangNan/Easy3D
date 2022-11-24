@@ -26,10 +26,6 @@
 
 
 #include <easy3d/gui/picker_model.h>
-#include <easy3d/core/point_cloud.h>
-#include <easy3d/core/graph.h>
-#include <easy3d/core/surface_mesh.h>
-#include <easy3d/core/poly_mesh.h>
 #include <easy3d/renderer/opengl_error.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/camera.h>
@@ -44,10 +40,6 @@ namespace easy3d {
 
     ModelPicker::ModelPicker(const Camera *cam) : Picker(cam) {
         use_gpu_if_supported_ = true;
-    }
-
-
-    ModelPicker::~ModelPicker() {
     }
 
 
@@ -69,7 +61,9 @@ namespace easy3d {
         //       size is changed.
 
         // Bind the offscreen fbo for drawing
-        fbo_->bind(); easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
+        fbo_->bind();
+        easy3d_debug_log_gl_error
+        easy3d_debug_log_frame_buffer_error
 
         float color[4];
         glGetFloatv(GL_COLOR_CLEAR_VALUE, color);
@@ -91,17 +85,19 @@ namespace easy3d {
         fbo_->read_color(c, gl_x, gl_y);
 
         // switch back to the previous fbo
-        fbo_->release(); easy3d_debug_log_gl_error; easy3d_debug_log_frame_buffer_error;
+        fbo_->release();
+        easy3d_debug_log_gl_error
+        easy3d_debug_log_frame_buffer_error
 
         // restore the clear color
         glClearColor(color[0], color[1], color[2], color[3]);
-        easy3d_debug_log_gl_error;
-        easy3d_debug_log_frame_buffer_error;
+        easy3d_debug_log_gl_error
+        easy3d_debug_log_frame_buffer_error
 
         //--------------------------------------------------------------------------
 
         // Convert the color back to an integer ID
-        int id = rgb::rgba(c[0], c[1], c[2], c[3]);
+        int id = color::encode(c[0], c[1], c[2], c[3]);
         if (id >= 0 && id < models.size()) {
             //LOG(INFO) << "selected model " << models[id]->name();
             return models[id];
@@ -120,8 +116,8 @@ namespace easy3d {
 
             // the color used to render this model
             int r, g, b, a;
-            rgb::encode(static_cast<int>(i), r, g, b, a);
-            const vec4 color(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f);
+            color::decode(static_cast<int>(i), r, g, b, a);
+            const vec4 color(static_cast<float>(r) / 255.0f, static_cast<float>(g) / 255.0f, static_cast<float>(b) / 255.0f, static_cast<float>(a) / 255.0f);
 
             for (auto d : model->renderer()->triangles_drawables()) {
                 if (d->is_visible())    draw(d, color);
@@ -138,9 +134,6 @@ namespace easy3d {
 
     // draw a drawable
     void ModelPicker::draw(Drawable *drawable, const vec4 &color) {
-        if (!drawable)
-            return;
-
         // record
         states_[drawable] = drawable->state();
 

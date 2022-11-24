@@ -60,7 +60,7 @@ namespace easy3d {
     
     void Renderer::create_default_drawables(Model *model) {
         if (dynamic_cast<PointCloud *>(model)) {
-            PointCloud *cloud = dynamic_cast<PointCloud *>(model);
+            auto cloud = dynamic_cast<PointCloud *>(model);
             auto vertices = cloud->renderer()->add_points_drawable("vertices");
 			vertices->set_visible(setting::point_cloud_vertices_visible);
 			vertices->set_color(setting::point_cloud_vertices_color);
@@ -68,7 +68,7 @@ namespace easy3d {
             vertices->set_point_size(setting::point_cloud_vertices_size);
             set_default_rendering_state(cloud, vertices);
         } else if (dynamic_cast<SurfaceMesh *>(model)) {
-            SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(model);
+            auto mesh = dynamic_cast<SurfaceMesh *>(model);
 
             // faces
             auto faces = mesh->renderer()->add_triangles_drawable("faces");
@@ -107,7 +107,7 @@ namespace easy3d {
                 locks->set_point_size(setting::surface_mesh_vertices_size + 5);
             }
         } else if (dynamic_cast<Graph *>(model)) {
-            Graph *graph = dynamic_cast<Graph *>(model);
+            auto graph = dynamic_cast<Graph *>(model);
             // create points drawable for the edges
             auto vertices = graph->renderer()->add_points_drawable("vertices");
             vertices->set_visible(setting::graph_vertices_visible);
@@ -122,7 +122,7 @@ namespace easy3d {
             edges->set_impostor_type(setting::graph_edges_imposters ? LinesDrawable::CYLINDER : LinesDrawable::PLAIN);
 			edges->set_line_width(setting::graph_edges_size);
 		} else if (dynamic_cast<PolyMesh *>(model)) {
-            PolyMesh *mesh = dynamic_cast<PolyMesh *>(model);
+            auto mesh = dynamic_cast<PolyMesh *>(model);
 
             // we have two faces drawables for polyhedral meshes
             // border faces
@@ -317,7 +317,7 @@ namespace easy3d {
                 return d;
             }
         }
-        PointsDrawable* d = new PointsDrawable(name);
+        auto d = new PointsDrawable(name);
         d->set_model(model_);
         points_drawables_.push_back(d);
         return d;
@@ -331,7 +331,7 @@ namespace easy3d {
                 return d;
             }
         }
-        LinesDrawable* d = new LinesDrawable(name);
+        auto d = new LinesDrawable(name);
         d->set_model(model_);
         lines_drawables_.push_back(d);
 
@@ -350,7 +350,7 @@ namespace easy3d {
                 return d;
             }
         }
-        TrianglesDrawable* d = new TrianglesDrawable(name);
+        auto d = new TrianglesDrawable(name);
         d->set_model(model_);
         triangles_drawables_.push_back(d);
 

@@ -63,7 +63,7 @@ namespace easy3d {
             }
         }
 
-        // split longest side of bounding box
+        // split the longest side of bounding box
         vec3 bb = bbox.max_point() - bbox.min_point();
         float length = bb[0];
         int axis = 0;
@@ -147,9 +147,9 @@ namespace easy3d {
             node->left_child = left;
             node->right_child = right;
 
-            // recurse to childen
-            int depthLeft = build_recurse(node->left_child, max_faces, depth - 1);
-            int depthRight = build_recurse(node->right_child, max_faces, depth - 1);
+            // recurse to children
+            unsigned int depthLeft = build_recurse(node->left_child, max_faces, depth - 1);
+            unsigned int depthRight = build_recurse(node->right_child, max_faces, depth - 1);
 
             return std::min(depthLeft, depthRight);
         }

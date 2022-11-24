@@ -52,11 +52,6 @@ const int  NOISE_RES = 4;
 
 namespace easy3d {
 
-    static float lerp(float a, float b, float f)
-    {
-        return a + f * (b - a);
-    }
-
 
     AmbientOcclusion::AmbientOcclusion(Camera* cam)
         : camera_(cam)
@@ -78,7 +73,7 @@ namespace easy3d {
             noise_texture_ = 0;
         }
 		
-		easy3d_debug_log_gl_error;
+		easy3d_debug_log_gl_error
     }
 
 
@@ -110,6 +105,10 @@ namespace easy3d {
         // generates random floats between 0.0 and 1.0
         std::uniform_real_distribution<float> randomFloats(0.0f, 1.0f);
         std::default_random_engine generator;
+
+        auto lerp = [](float a, float b, float f) -> float {
+            return a + f * (b - a);
+        };
 
         // generate sample kernel
         for (unsigned int i = 0; i < KERNEL_SIZE; ++i) {
@@ -171,8 +170,8 @@ namespace easy3d {
                 ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal")
             };
             std::vector<std::string> outputs;
-            outputs.push_back("gPosition");
-            outputs.push_back("gNormal");
+            outputs.emplace_back("gPosition");
+            outputs.emplace_back("gNormal");
             program = ShaderManager::create_program_from_files(name, attributes, outputs);
         }
         if (!program)
@@ -225,7 +224,7 @@ namespace easy3d {
         }
 
         program->release();
-        geom_fbo_->release(); easy3d_debug_log_gl_error;
+        geom_fbo_->release(); easy3d_debug_log_gl_error
 
 #ifdef SNAPSHOT_BUFFER
         geom_fbo_->snapshot_color_ppm(0, "ssao_gPosition.ppm");
@@ -264,11 +263,11 @@ namespace easy3d {
         program->set_uniform("radius", camera_->sceneRadius() * radius_);
         program->set_uniform("bias", bias_);
         program->bind_texture("gPosition", geom_fbo_->color_texture(0), 0);	// position
-        program->bind_texture("gNormal", geom_fbo_->color_texture(1), 1);		// normal
+        program->bind_texture("gNormal", geom_fbo_->color_texture(1), 1);	// normal
         program->bind_texture("texNoise", noise_texture_, 2); easy3d_debug_log_gl_error
 
         shape::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);
-        easy3d_debug_log_gl_error;
+        easy3d_debug_log_gl_error
 
         program->release_texture(); easy3d_debug_log_gl_error
         program->release(); easy3d_debug_log_gl_error

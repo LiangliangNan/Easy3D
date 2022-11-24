@@ -108,7 +108,7 @@ namespace easy3d {
             else {
                 // weights from SIGGRAPH paper "Subdivision Surfaces in Character Animation"
 
-                const float k = mesh->valence(v);
+                const auto k = static_cast<float>(mesh->valence(v));
                 vec3 p(0, 0, 0);
 
                 for (auto vv : mesh->vertices(v))
@@ -253,8 +253,7 @@ namespace easy3d {
                 }
                 p /= k;
 
-                float beta =
-                        (0.625 - pow(0.375 + 0.25 * std::cos(2.0 * M_PI / k), 2.0));
+                auto beta = static_cast<float>(0.625 - std::pow(0.375 + 0.25 * std::cos(2.0 * M_PI / k), 2.0));
 
                 vpoint[v] = points[v] * (float) (1.0 - beta) + beta * p;
             }
@@ -332,9 +331,9 @@ namespace easy3d {
             return false;
 
         // reserve memory
-        int nv = mesh->n_vertices();
-        int ne = mesh->n_edges();
-        int nf = mesh->n_faces();
+        int nv = static_cast<int>(mesh->n_vertices());
+        int ne = static_cast<int>(mesh->n_edges());
+        int nf = static_cast<int>(mesh->n_faces());
         mesh->reserve(nv + nf, ne + 3 * nf, 3 * nf);
 
         auto points = mesh->vertex_property<vec3>("v:point");
@@ -347,8 +346,8 @@ namespace easy3d {
         auto new_pos = mesh->add_vertex_property<vec3>("v:np");
         for (auto v : mesh->vertices()) {
             if (!mesh->is_border(v)) {
-                float n = mesh->valence(v);
-                float alpha = (4.0 - 2.0 * std::cos(2.0 * M_PI / n)) / 9.0;
+                auto n = static_cast<float>(mesh->valence(v));
+                auto alpha = static_cast<float>((4.0 - 2.0 * std::cos(2.0 * M_PI / n)) / 9.0);
                 vec3 p(0, 0, 0);
 
                 for (auto vv : mesh->vertices(v))

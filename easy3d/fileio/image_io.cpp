@@ -89,7 +89,7 @@ namespace easy3d {
                 final_name = final_name + ".png";
             }
 
-            // PNG allows you to set the deflate compression level by setting the global
+            // PNG allows you to set deflate compression level by setting the global
             // variable 'stbi_write_png_compression_level' (it defaults to 8).
             stbi_write_png_compression_level = 8; //
             return ::stbi_write_png(final_name.c_str(), width, height, channels, data.data(), width * channels);

@@ -75,7 +75,7 @@ namespace easy3d {
             bool translate = false;
             double origin_x(0), origin_y(0), origin_z(0);
             if (Translator::instance()->status() == Translator::DISABLED) {
-                if ((!translate) && (x0 > 1e4 || y0 > 1e4 || z0 > 1e4))
+                if (x0 > 1e4 || y0 > 1e4 || z0 > 1e4)
                     LOG(WARNING) << "model has large coordinates (first point: "
                                  << x0 << " " << y0 << " " << z0
                                  << ") and some decimals may be lost. Hint: transform the model w.r.t. its first point";
@@ -95,9 +95,9 @@ namespace easy3d {
                 translate = true;
             }
 
-            float r = p0.have_rgb ? float(p0.get_R()) / USHRT_MAX : p0.intensity % 255 / 255.0f;
-            float g = p0.have_rgb ? float(p0.get_G()) / USHRT_MAX : p0.intensity % 255 / 255.0f;
-            float b = p0.have_rgb ? float(p0.get_B()) / USHRT_MAX : p0.intensity % 255 / 255.0f;
+            float r = p0.have_rgb ? static_cast<float>(p0.get_R()) / USHRT_MAX : static_cast<float>(p0.intensity % 255) / 255.0f;
+            float g = p0.have_rgb ? static_cast<float>(p0.get_G()) / USHRT_MAX : static_cast<float>(p0.intensity % 255) / 255.0f;
+            float b = p0.have_rgb ? static_cast<float>(p0.get_B()) / USHRT_MAX : static_cast<float>(p0.intensity % 255) / 255.0f;
 
             auto colors = cloud->add_vertex_property<vec3>("v:color");
             auto classification = cloud->add_vertex_property<int>("v:classification");
@@ -116,9 +116,9 @@ namespace easy3d {
                 double z = p.coordinates[2] - origin_z;
                 v = cloud->add_vertex(vec3(float(x), float(y), float(z)));
 
-                r = p.have_rgb ? float(p.get_R()) / USHRT_MAX : p.intensity % 255 / 255.0f;
-                g = p.have_rgb ? float(p.get_G()) / USHRT_MAX : p.intensity % 255 / 255.0f;
-                b = p.have_rgb ? float(p.get_B()) / USHRT_MAX : p.intensity % 255 / 255.0f;
+                r = p.have_rgb ? static_cast<float>(p.get_R()) / USHRT_MAX : static_cast<float>(p.intensity % 255) / 255.0f;
+                g = p.have_rgb ? static_cast<float>(p.get_G()) / USHRT_MAX : static_cast<float>(p.intensity % 255) / 255.0f;
+                b = p.have_rgb ? static_cast<float>(p.get_B()) / USHRT_MAX : static_cast<float>(p.intensity % 255) / 255.0f;
 
                 colors[v] = vec3(r, g, b);
                 classification[v] = p.classification;
@@ -202,7 +202,7 @@ namespace easy3d {
 
             // init point
             LASpoint laspoint;
-            laspoint.init(&lasheader, lasheader.point_data_format, lasheader.point_data_record_length, 0);
+            laspoint.init(&lasheader, lasheader.point_data_format, lasheader.point_data_record_length, nullptr);
 
             // open laswriter
             LASwriter *laswriter = laswriteopener.open(&lasheader);
@@ -244,7 +244,6 @@ namespace easy3d {
                 }
             } else {
                 // if the model doesn't have color, I store the height values as the intensity
-                const Box3 &box = cloud->bounding_box();
                 const float ht = box.range(2);
                 for (auto v : cloud->vertices()) {
                     const vec3 &p = points[v];

@@ -41,7 +41,7 @@ class DialogPoissonReconstruction : public Dialog, public Ui::DialogPoissonRecon
 
 public:
     explicit DialogPoissonReconstruction(MainWindow *window);
-    ~DialogPoissonReconstruction();
+    ~DialogPoissonReconstruction() override = default;
 
 private Q_SLOTS:
     void showHint(bool);

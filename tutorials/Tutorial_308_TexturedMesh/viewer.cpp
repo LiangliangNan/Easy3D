@@ -62,14 +62,14 @@ namespace easy3d {
     }
 
 
-    Model *TexturedViewer::add_model(const std::string &file_name, bool create_default_drawables) {
+    Model *TexturedViewer::add_model(const std::string &file_name) {
         if (!file_system::is_file(file_name)) {
             LOG(ERROR) << "file does not exist: " << file_name;
             return nullptr;
         }
 
         if (file_system::extension(file_name, true) != "obj")
-            return Viewer::add_model(file_name, create_default_drawables);
+            return Viewer::add_model(file_name, true);
 
         fastObjMesh *fom = fast_obj_read(file_name.c_str());
         if (!fom) {
@@ -84,7 +84,7 @@ namespace easy3d {
         // ------------------------ build the mesh ------------------------
 
         // clear the mesh in case of existing data
-        SurfaceMesh *mesh = new SurfaceMesh;
+        auto mesh = new SurfaceMesh;
         mesh->set_name(file_name);
 
         SurfaceMeshBuilder builder(mesh);
@@ -139,7 +139,7 @@ namespace easy3d {
                 for (unsigned int kk = 0; kk < fv; ++kk) {  // for each vertex in the face
                     const fastObjIndex &mi = fom->indices[grp.index_offset + idx];
                     if (mi.p)
-                        vertices.emplace_back(SurfaceMesh::Vertex(mi.p - 1));
+                        vertices.emplace_back(SurfaceMesh::Vertex(static_cast<int>(mi.p - 1)));
                     if (mi.t)
                         texcoord_ids.emplace_back(mi.t);
                     ++idx;
@@ -167,7 +167,7 @@ namespace easy3d {
                     }
 
                     auto get_file_name = [](const char *name, const char* path) -> std::string {
-                        std::string file_name("");
+                        std::string file_name;
                         if (name && file_system::is_file(std::string(name)))
                             file_name = std::string(name);
                         else if (path && file_system::is_file(std::string(path)))
@@ -188,7 +188,7 @@ namespace easy3d {
                         g.ambient = vec3(mat.Ka);
                         g.diffuse = vec3(mat.Kd);
                         g.specular = vec3(mat.Ks);
-                        g.shininess = mat.Ns;
+                        g.shininess = static_cast<float>(mat.Ns);
                         g.tex_file = get_file_name(mat.map_Ka.name, mat.map_Ka.path); // use ambient texture it exists
                         if (g.tex_file.empty())
                             g.tex_file = get_file_name(mat.map_Kd.name, mat.map_Kd.path); // then try diffuse texture
@@ -202,7 +202,7 @@ namespace easy3d {
         builder.end_surface();
 
         // since the mesh has been built, skip texture if material and texcoord information don't exist
-        if ((fom->material_count > 0 && fom->materials) == false) {
+        if (fom->material_count == 0 || !fom->materials) {
             Viewer::add_model(mesh, true);
             return mesh;
         }

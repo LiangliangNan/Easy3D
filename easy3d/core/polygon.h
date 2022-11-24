@@ -43,10 +43,10 @@ namespace easy3d {
 
     public:
         /// \brief Default constructor.
-        GenericPolygon() {}
+        GenericPolygon() = default;
 
         /// \brief Initializes with a know size.
-        GenericPolygon(std::size_t size) { BaseClass::resize(size); }
+        explicit GenericPolygon(std::size_t size) { BaseClass::resize(size); }
 
         /// \brief Initializes from a known range.
         template<class InputIterator>
@@ -78,7 +78,7 @@ namespace easy3d {
         /// positive.
         FT area() const;
 
-        /// \brief Returns the smallest axix-aligned bounding box containing this polygon.
+        /// \brief Returns the smallest axis-aligned bounding box containing this polygon.
         GenericBox<2, FT> bbox() const;
     };
 

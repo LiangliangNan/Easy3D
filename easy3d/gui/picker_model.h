@@ -47,8 +47,9 @@ namespace easy3d {
      */
     class ModelPicker : public Picker {
     public:
-        ModelPicker(const Camera *cam);
-        ~ModelPicker();
+        explicit ModelPicker(const Camera *cam);
+
+        ~ModelPicker() override = default;
 
         /**
          * \brief Pick a model from a set of models given the cursor position in the screen coordinate system.

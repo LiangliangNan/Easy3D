@@ -43,7 +43,7 @@ namespace easy3d {
         // VertexManager manages the actual vertices to make sure that the points are unique.
         class VertexManager {
         public:
-            VertexManager() {}
+            VertexManager() = default;
             ~VertexManager() {
                 clear();
             }
@@ -130,7 +130,7 @@ namespace easy3d {
     }
 
 
-    void Tessellator::set_bounary_only(bool b) {
+    void Tessellator::set_boundary_only(bool b) {
         TessProperty(get_tess(tess_obj_), TESS_BOUNDARY_ONLY, b);
     }
 
@@ -172,7 +172,7 @@ namespace easy3d {
         TessVertex(get_tess(tess_obj_), new_v->data(), new_v);
     }
 
-    // to be flexible (any data can be provide)
+    // to be flexible (any data can be provided)
     void Tessellator::add_vertex(const float *data, unsigned int size, int idx)
     {
         add_vertex(Vertex(data, size, idx));
@@ -253,7 +253,7 @@ namespace easy3d {
     //   cbdata: Callback data that points to "this".
     // ****************************************************************************
     void Tessellator::beginCallback(unsigned int w, void *cbdata) {
-        Tessellator *tessellator = reinterpret_cast<Tessellator *>(cbdata);
+        auto tessellator = reinterpret_cast<Tessellator *>(cbdata);
         tessellator->primitive_type_ = w;
         tessellator->vertex_ids_.clear();
 
@@ -269,7 +269,7 @@ namespace easy3d {
     //   cbdata : Callback data that points to "this".
     // ****************************************************************************
     void Tessellator::endCallback(void *cbdata) {
-        Tessellator *tessellator = reinterpret_cast<Tessellator *>(cbdata);
+        auto tessellator = reinterpret_cast<Tessellator *>(cbdata);
 
         // Use the primitive type and intermediate vertex ids to create triangles that
         // get put into the triangle list
@@ -341,8 +341,8 @@ namespace easy3d {
     //   cbdata : Callback data that points to "this".
     // ****************************************************************************
     void Tessellator::vertexCallback(void *vertex, void *cbdata) {
-        Vertex *v = reinterpret_cast<Vertex *>(vertex);
-        Tessellator *tessellator = reinterpret_cast<Tessellator *>(cbdata);
+        auto v = reinterpret_cast<Vertex *>(vertex);
+        auto tessellator = reinterpret_cast<Tessellator *>(cbdata);
         // Adds a vertex index using the vertex manager. This can cause the vertex list to grow.
         std::size_t id = reinterpret_cast<internal::VertexManager *>(tessellator->vertex_manager_)->vertex_id(*v);
         tessellator->vertex_ids_.push_back(id);
@@ -355,9 +355,9 @@ namespace easy3d {
     //   Combine callback for the tessellator that gets called when new vertices
     //   need to be created by combining existing method.
     // ****************************************************************************
-    void Tessellator::combineCallback(double coords[3], void *vertex_data[4], float weight[4], void **dataOut,
+    void Tessellator::combineCallback(const double coords[3], void *vertex_data[4], const float weight[4], void **dataOut,
                                       void *cbdata) {
-        Tessellator *tessellator = reinterpret_cast<Tessellator *>(cbdata);
+        auto tessellator = reinterpret_cast<Tessellator *>(cbdata);
 
         unsigned int size = tessellator->vertex_data_size_;
         Vertex v(size, -1); // assign a negative index
@@ -365,7 +365,7 @@ namespace easy3d {
             v[i] = coords[i];
 
         // Blend the other data fields for the vertex.
-        Vertex **vd = reinterpret_cast<Vertex **>(vertex_data);
+        auto vd = reinterpret_cast<Vertex **>(vertex_data);
         for (std::size_t i = 3; i < size; ++i) {
             v[i] = (vd[0] ? (weight[0] * vd[0]->at(i)) : 0.) +
                    (vd[1] ? (weight[1] * vd[1]->at(i)) : 0.) +
@@ -394,7 +394,7 @@ namespace easy3d {
 
         void tessellate(std::vector<Polygon2> &polygons, Tessellator::WindingRule rule) {
             Tessellator tessellator;
-            tessellator.set_bounary_only(true);
+            tessellator.set_boundary_only(true);
             tessellator.begin_polygon(vec3(0, 0, 1));
             tessellator.set_winding_rule(rule);
             for (const auto &con : polygons) {

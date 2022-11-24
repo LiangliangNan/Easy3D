@@ -97,7 +97,8 @@ namespace easy3d {
         /// \brief Saves a point cloud to an \c LAS/LAS format file.
         /// \details Internally it uses the LASlib of martin.isenburg@rapidlasso.com. See http://rapidlasso.com
 		bool save_las(const std::string& file_name, const PointCloud* cloud);
-	};
+
+	} // namespace io
 
 
 } // namespace easy3d

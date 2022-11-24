@@ -101,7 +101,7 @@ namespace easy3d {
 
             keyframes_.emplace_back(Keyframe(frame, time));
             pathIsValid_ = false;
-            last_stopped_index_ = 0; // may not be valid any more
+            last_stopped_index_ = 0; // may not be valid anymore
             stop_interpolation();
             return true;
         }
@@ -112,7 +112,7 @@ namespace easy3d {
         stop_interpolation();
         keyframes_.pop_back();
         pathIsValid_ = false;
-        last_stopped_index_ = 0; // may not be valid any more
+        last_stopped_index_ = 0; // may not be valid anymore
     }
 
 
@@ -215,7 +215,7 @@ namespace easy3d {
     void KeyFrameInterpolator::start_interpolation() {
         auto animation = [this]() {
             // interval in ms (0.9 to approximately compensate the overhead the timer thread and viewer update)
-            const int interval = static_cast<int>(1000.0f / frame_rate() * 0.9f);
+            const int interval = static_cast<int>(1000.0f / static_cast<float>(frame_rate()) * 0.9f);
             for (int id = last_stopped_index_; id < interpolated_path_.size(); ++id) {
                 if (timer_.is_stopped()) {
                     last_stopped_index_ = id;
@@ -273,15 +273,15 @@ namespace easy3d {
             std::vector<unsigned int> indices;
 
             // camera representation
-            for (std::size_t i = 0; i < keyframes_.size(); ++i) {
+            for (const auto& frame : keyframes_) {
                 std::vector<vec3> cam_points;
                 std::vector<unsigned int> cam_indices;
                 shape::create_camera(cam_points, cam_indices, camera_width, camera->fieldOfView(),
-                                      static_cast<float>(camera->screenHeight()) / camera->screenWidth());
+                                      static_cast<float>(camera->screenHeight()) / static_cast<float>(camera->screenWidth()));
                 unsigned int offset = points.size();
                 for (auto id : cam_indices)
                     indices.push_back(offset + id);
-                const mat4 &m = Frame(keyframes_[i].position(), keyframes_[i].orientation()).matrix();
+                const mat4 &m = Frame(frame.position(), frame.orientation()).matrix();
                 for (auto &p : cam_points)
                     points.push_back(m * p);
             }
@@ -353,7 +353,7 @@ namespace easy3d {
             output << "\t\torientation: " << kf.orientation() << std::endl;
         }
 
-        return keyframes_.size() > 0;
+        return !keyframes_.empty();
     }
 
 
@@ -380,7 +380,7 @@ namespace easy3d {
             add_keyframe(Frame(pos, orient));
         }
 
-        return keyframes_.size() > 0;
+        return !keyframes_.empty();
     }
 
 
@@ -393,31 +393,30 @@ namespace easy3d {
         }
         else if (keyframes_.size() == 2) {   // only two keyframe: linear interpolation
             interpolated_path_.clear();
-            const float interval = interpolation_speed() * interpolation_period() / 1000.0f;
-            const std::size_t num_frames = static_cast<float>(duration() / interval + 1);
-            for (std::size_t i=0; i<num_frames; ++i) {
+            const float interval = interpolation_speed() * static_cast<float>(interpolation_period()) / 1000.0f;
+            const int num_frames = static_cast<int>(duration() / interval + 1);
+            for (int i=0; i<num_frames; ++i) {
                 const float w = static_cast<float>(i) / static_cast<float>(num_frames - 1);
                 const vec3 pos = (1.0f - w) * keyframes_[0].position() + w * keyframes_[1].position();
-                quat orient = quat::slerp(keyframes_[0].orientation(), keyframes_[1].orientation(), w);
+                const auto orient = quat::slerp(keyframes_[0].orientation(), keyframes_[1].orientation(), w);
                 interpolated_path_.emplace_back(Frame(pos, orient.normalized()));
             }
             pathIsValid_ = true;
-            last_stopped_index_ = 0; // not valid any more
+            last_stopped_index_ = 0; // not valid anymore
             return interpolated_path_;
         }
 
         quat prevQ = keyframes_.front().orientation();
-        for (std::size_t i = 0; i < keyframes_.size(); ++i) {
-            Keyframe& kf = keyframes_[i];
-            kf.flip_if_needed(prevQ);
-            prevQ = kf.orientation();
+        for (auto& frame : keyframes_) {
+            frame.flip_if_needed(prevQ);
+            prevQ = frame.orientation();
         }
 
         LOG_IF(keyframes_.size() > 2, INFO) << "interpolating " << keyframes_.size() << " keyframes...";
 
         interpolated_path_.clear();
-        const float interval = interpolation_speed() * interpolation_period() / 1000.0f;
-        const std::size_t num_frames = duration() / interval + 1;
+        const float interval = interpolation_speed() * static_cast<float>(interpolation_period()) / 1000.0f;
+        const int num_frames = static_cast<int>(duration() / interval + 1);
 
         if (interpolation_method_ == INTERPOLATION) {
             // we choose the accumulated path length as parameter, so to have equal intervals.
@@ -460,7 +459,7 @@ namespace easy3d {
         else {
             std::vector<vec3> positions(keyframes_.size());
             std::vector<vec4> orientations(keyframes_.size());
-            for (int i=0; i<keyframes_.size(); ++i) {
+            for (std::size_t i=0; i<keyframes_.size(); ++i) {
                 positions[i] = keyframes_[i].position();
                 const quat& orient = keyframes_[i].orientation();
                 for (unsigned char j=0; j<4; ++j)
@@ -497,7 +496,7 @@ namespace easy3d {
                         << " (at speed " << interpolation_speed() << "x)";
 
         pathIsValid_ = true;
-        last_stopped_index_ = 0; // not valid any more
+        last_stopped_index_ = 0; // not valid anymore
         return interpolated_path_;
     }
 

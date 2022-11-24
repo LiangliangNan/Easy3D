@@ -24,8 +24,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef EASY3D_FILEIO_TOLY_MESH_IO_H
-#define EASY3D_FILEIO_TOLY_MESH_IO_H
+#ifndef EASY3D_FILEIO_POLY_MESH_IO_H
+#define EASY3D_FILEIO_POLY_MESH_IO_H
 
 
 #include <string>
@@ -56,7 +56,7 @@ namespace easy3d {
          * \brief Saves a polyhedral mesh to a file.
          * \details File extension determines file format (now only '*.plm' format is supported).
          * \param file_name The file name.
-         * \param mesh The Polytope mesh.
+         * \param mesh The polyhedral mesh.
          * \return The status of the operation
          *      \arg true if succeeded
          *      \arg false if failed
@@ -86,4 +86,4 @@ namespace easy3d {
 
 } // namespace easy3d
 
-#endif // EASY3D_FILEIO_TOLY_MESH_IO_H
+#endif // EASY3D_FILEIO_POLY_MESH_IO_H

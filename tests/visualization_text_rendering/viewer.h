@@ -36,13 +36,13 @@ namespace easy3d {
 class TextRendering : public easy3d::Viewer
 {
 public:
-    TextRendering(const std::string& title);
+    explicit TextRendering(const std::string& title);
+    ~TextRendering() override;
     
 protected:
     void draw() const override;
 
     void init() override;
-    void cleanup() override;
 
     bool key_press_event(int key, int modifiers) override;
 

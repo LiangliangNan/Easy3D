@@ -40,26 +40,26 @@ int main(int argc, char** argv) {
     initialize();
 
     // Create a graph
-    Graph* g = new Graph;
+    auto graph = new Graph;
 
 	// Add 4 vertices
-    Graph::Vertex v0 = g->add_vertex(vec3(0, 0, 0));
-    Graph::Vertex v1 = g->add_vertex(vec3(1, 0, 0));
-    Graph::Vertex v2 = g->add_vertex(vec3(0, 1, 0));
-    Graph::Vertex v3 = g->add_vertex(vec3(0, 0, 1));
+    Graph::Vertex v0 = graph->add_vertex(vec3(0, 0, 0));
+    Graph::Vertex v1 = graph->add_vertex(vec3(1, 0, 0));
+    Graph::Vertex v2 = graph->add_vertex(vec3(0, 1, 0));
+    Graph::Vertex v3 = graph->add_vertex(vec3(0, 0, 1));
 
     // Add some edges
-    g->add_edge(v0, v1); // e0
-    g->add_edge(v1, v2); // e1
-    g->add_edge(v2, v3); // e2
-    g->add_edge(v3, v0); // e3
-    g->add_edge(v1, v3); // e4
+    graph->add_edge(v0, v1); // e0
+    graph->add_edge(v1, v2); // e1
+    graph->add_edge(v2, v3); // e2
+    graph->add_edge(v3, v0); // e3
+    graph->add_edge(v1, v3); // e4
 
-    std::cout << "vertices: " << g->n_vertices() << std::endl;
-    std::cout << "edges: " << g->n_edges() << std::endl;
+    std::cout << "vertices: " << graph->n_vertices() << std::endl;
+    std::cout << "edges: " << graph->n_edges() << std::endl;
 
     // Delete the graph (i.e., release memory)
-    delete g;
+    delete graph;
 
     return EXIT_SUCCESS;
 }

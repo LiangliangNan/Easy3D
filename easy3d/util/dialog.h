@@ -216,7 +216,7 @@ namespace easy3d
                 );  
 #endif
 
-    };
+    }
 
 #ifdef HAS_TINY_FILE_DIALOG
 
@@ -230,5 +230,5 @@ namespace easy3d
 
 }
 
-#endif	// EASY3D_UTIL_DIALOGS_H
+#endif	// EASY3D_UTIL_DIALOG_H
 

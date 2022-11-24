@@ -46,6 +46,14 @@ TutorialSoftShadow::TutorialSoftShadow(const std::string& title) : Viewer(title)
 }
 
 
+TutorialSoftShadow::~TutorialSoftShadow() {
+    delete shadow_;
+
+    // Not needed: it will be called in the destructor of the base class
+    //Viewer::cleanup();
+}
+
+
 std::string TutorialSoftShadow::usage() const {
     return ("------------------- Soft Shadow usage ------------------- \n"
             "Press key 'space' to switch between Shadowing and normal rendering\n"
@@ -79,12 +87,4 @@ void TutorialSoftShadow::draw() const {
 		shadow_->draw(surfaces);
 	else
 		Viewer::draw();
-}
-
-
-void TutorialSoftShadow::cleanup() {
-	if (shadow_)
-		delete shadow_;
-
-	Viewer::cleanup();
 }

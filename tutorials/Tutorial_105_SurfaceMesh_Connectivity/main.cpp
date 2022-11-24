@@ -49,7 +49,7 @@ using namespace easy3d;
 // the mesh created in the previous tutorial (so you can skip it)
 SurfaceMesh* old_mesh_from_previous_example() {
 	// Create a surface mesh
-	SurfaceMesh* mesh = new SurfaceMesh;
+	auto mesh = new SurfaceMesh;
 
 	// Add 4 vertices
 	SurfaceMesh::Vertex v0 = mesh->add_vertex(vec3(0, 0, 0));

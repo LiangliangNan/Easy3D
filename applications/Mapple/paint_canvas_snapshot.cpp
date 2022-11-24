@@ -66,8 +66,8 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
         return false;
     }
 
-    int sub_w = static_cast<int>(width() * dpi_scaling());
-    int sub_h = static_cast<int>(height() * dpi_scaling());
+    int sub_w = static_cast<int>(static_cast<float>(width()) * dpi_scaling());
+    int sub_h = static_cast<int>(static_cast<float>(height()) * dpi_scaling());
 
     double aspectRatio = sub_w / static_cast<double>(sub_h);
     double newAspectRatio = w / static_cast<double>(h);
@@ -77,18 +77,18 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
     float xMin = 0.0f, yMin = 0.0f;
     if (camera()->type() == Camera::PERSPECTIVE)
         if ((expand && (newAspectRatio > aspectRatio)) || (!expand && (newAspectRatio < aspectRatio))) {
-            yMin = zNear * tan(camera()->fieldOfView() / 2.0);
-            xMin = newAspectRatio * yMin;
+            yMin = static_cast<float>(zNear * std::tan(camera()->fieldOfView() / 2.0));
+            xMin = static_cast<float>(newAspectRatio * yMin);
         } else {
-            xMin = zNear * tan(camera()->fieldOfView() / 2.0) * aspectRatio;
-            yMin = xMin / newAspectRatio;
+            xMin = static_cast<float>(zNear * std::tan(camera()->fieldOfView() / 2.0) * aspectRatio);
+            yMin = static_cast<float>(xMin / newAspectRatio);
         }
     else {
         camera()->getOrthoWidthHeight(xMin, yMin);
         if ((expand && (newAspectRatio > aspectRatio)) || (!expand && (newAspectRatio < aspectRatio)))
-            xMin = newAspectRatio * yMin;
+            xMin = static_cast<float>(newAspectRatio * yMin);
         else
-            yMin = xMin / newAspectRatio;
+            yMin = static_cast<float>(xMin / newAspectRatio);
     }
 
     QImage image(w, h, QImage::Format_RGBA8888);
@@ -122,17 +122,17 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
     QOpenGLFramebufferObjectFormat format;
     format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
     format.setSamples(samples);
-    QOpenGLFramebufferObject *fbo = new QOpenGLFramebufferObject(sub_w, sub_h, format);
+    auto fbo = new QOpenGLFramebufferObject(sub_w, sub_h, format);
     fbo->addColorAttachment(sub_w, sub_h);
 #else
-    FramebufferObject* fbo = new FramebufferObject(sub_w, sub_h, samples);
+    auto fbo = new FramebufferObject(sub_w, sub_h, samples);
     fbo->add_color_buffer();
     fbo->add_depth_buffer();
 #endif
 
     int count = 0;
 #ifdef SHOW_PROGRESS
-    ProgressLogger progress(nbX * nbY * 1.1f, false, false); // the extra 0.1 is for saving the "big" image (time-consuming)
+    ProgressLogger progress(static_cast<std::size_t>(nbX * nbY * 1.1), false, false); // the extra 0.1 is for saving the "big" image (time-consuming)
 #endif
     for (int i = 0; i < nbX; i++) {
         for (int j = 0; j < nbY; j++) {
@@ -144,13 +144,25 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
 #endif
             if (camera()->type() == Camera::PERSPECTIVE) {
                 // change the projection matrix of the camera.
-                const mat4 &proj = transform::frustum(-xMin + i * deltaX, -xMin + (i + 1) * deltaX,
-                                                      yMin - (j + 1) * deltaY, yMin - j * deltaY, zNear, zFar);
+                const mat4 &proj = transform::frustum(
+                        static_cast<float>(-xMin + i * deltaX),
+                        static_cast<float>(-xMin + (i + 1) * deltaX),
+                        static_cast<float>(yMin - (j + 1) * deltaY),
+                        static_cast<float>(yMin - j * deltaY),
+                        static_cast<float>(zNear),
+                        static_cast<float>(zFar)
+                );
                 camera()->set_projection_matrix(proj);
             } else {
                 // change the projection matrix of the camera.
-                const mat4 &proj = transform::ortho(-xMin + i * deltaX, -xMin + (i + 1) * deltaX,
-                                                    yMin - (j + 1) * deltaY, yMin - j * deltaY, zNear, zFar);
+                const mat4 &proj = transform::ortho(
+                        static_cast<float>(-xMin + i * deltaX),
+                        static_cast<float>(-xMin + (i + 1) * deltaX),
+                        static_cast<float>(yMin - (j + 1) * deltaY),
+                        static_cast<float>(yMin - j * deltaY),
+                        static_cast<float>(zNear),
+                        static_cast<float>(zFar)
+                );
                 camera()->set_projection_matrix(proj);
             }
 
@@ -258,8 +270,8 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
     const int bitrate = bit_rate * 1024 * 1024;
     bool success = true;
 
-    const int fw = w * dpi_scaling();
-    const int fh = h * dpi_scaling();
+    const int fw = static_cast<int>(static_cast<float>(w) * dpi_scaling());
+    const int fh = static_cast<int>(static_cast<float>(h) * dpi_scaling());
     VideoEncoder encoder;
     if (!encoder.start(file_name.toStdString(), fps, bitrate)) {
         // clean up and restore the settings before exit
@@ -276,19 +288,18 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
     QOpenGLFramebufferObjectFormat format;
     format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
     format.setSamples(samples());
-    QOpenGLFramebufferObject *fbo = new QOpenGLFramebufferObject(fw, fh, format);
+    auto fbo = new QOpenGLFramebufferObject(fw, fh, format);
     fbo->addColorAttachment(fw, fh, GL_RGBA);
 #else
-    FramebufferObject* fbo = new FramebufferObject(fw, fh, samples());
+    auto fbo = new FramebufferObject(fw, fh, samples());
     fbo->add_color_buffer();
     fbo->add_depth_buffer();
 #endif
 
-    const QString ext_less_name = file_name.left(file_name.lastIndexOf('.'));
 #ifdef SHOW_PROGRESS
     ProgressLogger progress(frames.size(), true, false);
 #endif
-    for (std::size_t frame_index = 0; frame_index < frames.size(); ++frame_index) {
+    for (const auto& f : frames) {
 #ifdef SHOW_PROGRESS
         if (progress.is_canceled()) {
             success = false;
@@ -297,7 +308,6 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
         }
 #endif
 
-        const auto &f = frames[frame_index];
         camera_->setPosition(f.position());
         camera_->setOrientation(f.orientation());
 

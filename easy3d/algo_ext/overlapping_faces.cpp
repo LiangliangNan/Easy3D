@@ -46,7 +46,7 @@ namespace easy3d {
             std::vector< SurfaceMesh::Vertex > vertices;
             for (auto v : mesh->vertices(f)) {
                 const vec3& p = prop[v];
-                points.push_back(Point_3(p.x, p.y, p.z));
+                points.emplace_back(Point_3(p.x, p.y, p.z));
                 vertices.push_back(v);
             }
 
@@ -161,13 +161,13 @@ namespace easy3d {
 
         // bounding boxes of the triangles
         std::vector<Box> boxes;
-        for (TrianglesIterator it = triangle_faces_.begin(); it != triangle_faces_.end(); ++it) {
+        for (auto it = triangle_faces_.begin(); it != triangle_faces_.end(); ++it) {
             if (!it->triangle.is_degenerate())
-                boxes.push_back(Box(it->triangle.bbox(), it));
+                boxes.emplace_back(Box(it->triangle.bbox(), it));
         }
         std::vector< std::pair<TrianglesIterator, TrianglesIterator> > intersecting_boxes;
         auto cb = [&intersecting_boxes](const Box &a, const Box &b) {
-            intersecting_boxes.push_back({ a.handle(), b.handle() });
+            intersecting_boxes.emplace_back(std::make_pair(a.handle(), b.handle()));
         };
         CGAL::box_self_intersection_d(boxes.begin(), boxes.end(), cb);
 
@@ -205,7 +205,7 @@ namespace easy3d {
         auto deleted = mesh.face_property<bool>("f:deleted", false);
 
 #if 1
-        // for each duplication set, keep one face and and delete all its duplications
+        // for each duplication set, keep one face and delete all its duplications
         for (const auto& entry : duplicate_faces) {
             if (deleted[entry.first]) // this duplication set has been processed
                 continue;

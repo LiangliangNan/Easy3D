@@ -26,7 +26,6 @@
 
 #include "viewer.h"
 
-#include <fstream>
 #include <sstream>
 #include <cstring>  // for memcpy()
 
@@ -190,5 +189,5 @@ bool RealCamera::read_bundler_file(const std::string& file_name) {
 		views_.push_back(cam);
 	}
 
-	return cameras.size() > 0;
+	return !cameras.empty();
 }

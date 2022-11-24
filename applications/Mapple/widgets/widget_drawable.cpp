@@ -73,10 +73,8 @@ WidgetDrawable::WidgetDrawable(QWidget *parent)
 
 WidgetDrawable::~WidgetDrawable() {
     if (!colormaps_.empty()) {
-        for (const auto &colormap : colormaps_) {
-            if (colormap.texture)
-                delete colormap.texture;
-        }
+        for (const auto &colormap : colormaps_)
+            delete colormap.texture;
         colormaps_.clear();
     }
 }

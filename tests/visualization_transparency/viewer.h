@@ -40,14 +40,13 @@ namespace easy3d {
 class TransparencyViewer : public easy3d::Viewer
 {
 public:
-    TransparencyViewer(const std::string& title = "");
+    explicit TransparencyViewer(const std::string& title = "");
+    ~TransparencyViewer() override;
 
 protected:
     bool key_press_event(int key, int modifiers) override;
 
     void draw() const override;
-
-	void cleanup() override;
 
     std::string usage() const override;
 

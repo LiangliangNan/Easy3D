@@ -41,7 +41,7 @@ namespace easy3d {
         void fair(unsigned int k = 2);
 
     private:
-        void setup_matrix_row(const SurfaceMesh::Vertex v, SurfaceMesh::VertexProperty<double> vweight,
+        void setup_matrix_row(SurfaceMesh::Vertex v, SurfaceMesh::VertexProperty<double> vweight,
                               SurfaceMesh::EdgeProperty<double> eweight,
                               unsigned int laplace_degree,
                               std::map<SurfaceMesh::Vertex, double> &row);

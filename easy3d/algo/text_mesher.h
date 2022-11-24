@@ -48,7 +48,7 @@ namespace easy3d {
          *      smoother transitions but more vertices. The suggested value is 4.
          * @note The font will be used in all subsequent generation until being modified by calling to set_font().
          */
-        TextMesher(const std::string &font_file, unsigned short quality = 4);
+        explicit TextMesher(const std::string &font_file, unsigned short quality = 4);
 
         ~TextMesher();
 

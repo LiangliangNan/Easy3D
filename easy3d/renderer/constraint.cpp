@@ -178,7 +178,6 @@ namespace easy3d {
 	void LocalConstraint::constrainRotation(quat &rotation, Frame *const) {
 		switch (rotationConstraintType()) {
 		case AxisPlaneConstraint::FREE:
-			break;
 		case AxisPlaneConstraint::PLANE:
 			break;
 		case AxisPlaneConstraint::AXIS: {
@@ -235,7 +234,6 @@ namespace easy3d {
 		Frame *const frame) {
 		switch (rotationConstraintType()) {
 		case AxisPlaneConstraint::FREE:
-			break;
 		case AxisPlaneConstraint::PLANE:
 			break;
 		case AxisPlaneConstraint::AXIS: {
@@ -294,7 +292,6 @@ namespace easy3d {
 		Frame *const frame) {
 		switch (rotationConstraintType()) {
 		case AxisPlaneConstraint::FREE:
-			break;
 		case AxisPlaneConstraint::PLANE:
 			break;
 		case AxisPlaneConstraint::AXIS: {

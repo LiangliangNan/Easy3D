@@ -52,7 +52,7 @@ namespace easy3d {
         //    misrepresented as being the original software.
         // 3. This notice may not be removed or altered from any source distribution.
         //
-        // The significant changes are that all fixed pipeline rendering code has been
+        // The significant changes are that all the fixed pipeline rendering code has been
         // replaced by shader-based rendering.
         // The original code is available at https://github.com/armadillu/ofxFontStash
 
@@ -176,13 +176,11 @@ namespace easy3d {
 
 
         struct sth_stash *sth_create(int cachew, int cacheh, int createMipmaps, int charPadding, float dpiScale) {
-
-            struct sth_stash *stash = nullptr;
             GLubyte *empty_data = nullptr;
             struct sth_texture *texture = nullptr;
 
             // Allocate memory for the font stash.
-            stash = (struct sth_stash *) malloc(sizeof(struct sth_stash));
+            auto stash = (struct sth_stash *) malloc(sizeof(struct sth_stash));
             if (stash == nullptr) goto error;
             memset(stash, 0, sizeof(struct sth_stash));
 
@@ -199,24 +197,24 @@ namespace easy3d {
             // Create first texture for the cache.
             stash->tw = cachew;
             stash->th = cacheh;
-            stash->itw = 1.0f / cachew;
-            stash->ith = 1.0f / cacheh;
+            stash->itw = 1.0f / static_cast<float>(cachew);
+            stash->ith = 1.0f / static_cast<float>(cacheh);
             stash->empty_data = empty_data;
             stash->tt_textures = texture;
             stash->dpiScale = dpiScale;
             glGenTextures(1, &texture->id);
-            easy3d_debug_log_gl_error;
+            easy3d_debug_log_gl_error
             if (!texture->id) goto error;
             glBindTexture(GL_TEXTURE_2D, texture->id);
-            easy3d_debug_log_gl_error;
+            easy3d_debug_log_gl_error
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            easy3d_debug_log_gl_error;
+            easy3d_debug_log_gl_error
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            easy3d_debug_log_gl_error;
+            easy3d_debug_log_gl_error
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, cachew, cacheh, 0, GL_RED, GL_UNSIGNED_BYTE, empty_data);
-            easy3d_debug_log_gl_error;
+            easy3d_debug_log_gl_error
             glBindTexture(GL_TEXTURE_2D, 0);
-            easy3d_debug_log_gl_error;
+            easy3d_debug_log_gl_error
 
             stash->hasMipMap = createMipmaps;
             stash->padding = charPadding;
@@ -273,7 +271,7 @@ namespace easy3d {
         }
 
         int sth_add_font(struct sth_stash *stash, const char *path) {
-            FILE *fp = 0;
+            FILE *fp = nullptr;
             int datasize;
             unsigned char *data = nullptr;
             int idx;
@@ -291,7 +289,7 @@ namespace easy3d {
                 goto error;
             }
             fclose(fp);
-            fp = 0;
+            fp = nullptr;
 
             idx = sth_add_font_from_memory(stash, data);
             // Modify type of the loaded font.
@@ -316,7 +314,7 @@ namespace easy3d {
             struct sth_glyph *glyph = nullptr;
             unsigned char *bmp = nullptr;
             unsigned int h;
-            float size = isize / 10.0f;
+            float size = static_cast<float>(isize) / 10.0f;
             int rh;
             struct sth_row *br = nullptr;
 
@@ -331,17 +329,17 @@ namespace easy3d {
             // Could not find glyph.
 
             // For bitmap fonts: ignore this glyph.
-            if (fnt->type == BMFONT) return 0;
+            if (fnt->type == BMFONT) return nullptr;
 
             // For truetype fonts: create this glyph.
             scale = stash->dpiScale * stbtt_ScaleForPixelHeight(&fnt->font, size);
-            g = stbtt_FindGlyphIndex(&fnt->font, codepoint);
+            g = stbtt_FindGlyphIndex(&fnt->font, static_cast<int>(codepoint));
             if (!g) {
 //                if (codepoint != '\n')
 //                    LOG_N_TIMES(3, WARNING) << "given font does not support character '" << string::from_wstring({wchar_t(codepoint)}) << "'. " << COUNTER;
 //                else
 //                    LOG_N_TIMES(3, WARNING) << "current implementation ignores new line character '\\n'. " << COUNTER;
-                return 0;
+                return nullptr;
             }
             stbtt_GetGlyphHMetrics(&fnt->font, g, &advance, &lsb);
             stbtt_GetGlyphBitmapBox(&fnt->font, g, scale, scale, &x0, &y0, &x1, &y1);
@@ -351,7 +349,7 @@ namespace easy3d {
 
             // Check if glyph is larger than maximum texture size
             if (gw >= stash->tw || gh >= stash->th)
-                return 0;
+                return nullptr;
 
             // Find texture and row where the glyph can be fit.
             br = nullptr;
@@ -396,11 +394,11 @@ namespace easy3d {
                                 glBindTexture(GL_TEXTURE_2D, texture->id);
                                 glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, stash->tw, stash->th, 0, GL_RED,
                                              GL_UNSIGNED_BYTE, stash->empty_data);
-                                easy3d_debug_log_gl_error;
+                                easy3d_debug_log_gl_error
                                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-                                easy3d_debug_log_gl_error;
+                                easy3d_debug_log_gl_error
                                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-                                easy3d_debug_log_gl_error;
+                                easy3d_debug_log_gl_error
                                 glBindTexture(GL_TEXTURE_2D, 0);
                             }
                             continue;
@@ -419,7 +417,7 @@ namespace easy3d {
             fnt->nglyphs++;
             fnt->glyphs = (struct sth_glyph *) realloc(fnt->glyphs, fnt->nglyphs *
                                                                     sizeof(struct sth_glyph)); /* @rlyeh: explicit cast needed in C++ */
-            if (!fnt->glyphs) return 0;
+            if (!fnt->glyphs) return nullptr;
 
             // Init glyph.
             glyph = &fnt->glyphs[fnt->nglyphs - 1];
@@ -431,9 +429,9 @@ namespace easy3d {
             glyph->y0 = br->y;
             glyph->x1 = glyph->x0 + gw;
             glyph->y1 = glyph->y0 + gh;
-            glyph->xadv = scale * advance;
-            glyph->xoff = (float) x0;
-            glyph->yoff = (float) y0;
+            glyph->xadv = scale * static_cast<float>(advance);
+            glyph->xoff = static_cast<float>(x0);
+            glyph->yoff = static_cast<float>(y0);
             glyph->next = 0;
 
             // Advance row location.
@@ -449,7 +447,7 @@ namespace easy3d {
                 stbtt_MakeGlyphBitmap(&fnt->font, bmp, gw, gh, gw, scale, scale, g);
                 // Update texture
                 glBindTexture(GL_TEXTURE_2D, texture->id);
-                easy3d_debug_log_gl_error;
+                easy3d_debug_log_gl_error
 
                 // Liangliang: I need to restore the modified OpenGL state
                 int align;
@@ -476,7 +474,7 @@ namespace easy3d {
                 glPixelStorei(GL_UNPACK_ALIGNMENT, align);
 
                 glBindTexture(GL_TEXTURE_2D, 0);
-                easy3d_debug_log_gl_error;
+                easy3d_debug_log_gl_error
                 free(bmp);
             }
 
@@ -485,7 +483,7 @@ namespace easy3d {
             error:
             if (texture)
                 free(texture);
-            return 0;
+            return nullptr;
         }
 
         static int
@@ -494,20 +492,20 @@ namespace easy3d {
             int rx, ry;
             float scale = 1.0f;
 
-            if (fnt->type == BMFONT) scale = isize / (glyph->size * 10.0f);
+            if (fnt->type == BMFONT) scale = static_cast<float>(isize) / (static_cast<float>(glyph->size) * 10.0f);
 
-            rx = floorf(*x + scale * glyph->xoff);
-            ry = floorf(*y - scale * glyph->yoff);
+            rx = static_cast<int>(floorf(*x + scale * glyph->xoff));
+            ry = static_cast<int>(floorf(*y - scale * glyph->yoff));
 
-            q->x0 = rx;
-            q->y0 = ry;
-            q->x1 = rx + scale * (glyph->x1 - glyph->x0);
-            q->y1 = ry - scale * (glyph->y1 - glyph->y0);
+            q->x0 = static_cast<float>(rx);
+            q->y0 = static_cast<float>(ry);
+            q->x1 = static_cast<float>(rx) + scale * static_cast<float>(glyph->x1 - glyph->x0);
+            q->y1 = static_cast<float>(ry) - scale * static_cast<float>(glyph->y1 - glyph->y0);
 
-            q->s0 = (glyph->x0) * stash->itw;
-            q->t0 = (glyph->y0) * stash->ith;
-            q->s1 = (glyph->x1) * stash->itw;
-            q->t1 = (glyph->y1) * stash->ith;
+            q->s0 = static_cast<float>(glyph->x0) * stash->itw;
+            q->t0 = static_cast<float>(glyph->y0) * stash->ith;
+            q->s1 = static_cast<float>(glyph->x1) * stash->itw;
+            q->t1 = static_cast<float>(glyph->y1) * stash->ith;
 
             *x += scale * glyph->xadv;
 
@@ -546,8 +544,8 @@ namespace easy3d {
             unsigned int codepoint;
             struct sth_glyph *glyph = nullptr;
             struct sth_texture *texture = nullptr;
-            struct sth_quad q;
-            short isize = (short) (size * 10.0f);
+            struct sth_quad q{};
+            auto isize = static_cast<short>(size * 10.0f);
             float *v;
             struct sth_font *fnt = nullptr;
 
@@ -558,7 +556,7 @@ namespace easy3d {
             if (fnt == nullptr) return;
             if (fnt->type != BMFONT && !fnt->data) return;
 
-            int len = wcslen(s);
+            int len = static_cast<int>(wcslen(s));
             float scale = stbtt_ScaleForPixelHeight(&fnt->font, size);
             int c = 0;
             float spacing = stash->charSpacing;
@@ -578,7 +576,7 @@ namespace easy3d {
                 if (c < len && doKerning > 0) {
                     diff = stbtt_GetCodepointKernAdvance(&fnt->font, *(s), *(s + 1));
                     //printf("diff '%c' '%c' = %d\n", *(s-1), *s, diff);
-                    x += diff * scale;
+                    x += static_cast<float>(diff) * scale;
                 }
                 x += dpiScale * spacing;
 
@@ -602,8 +600,8 @@ namespace easy3d {
                           float *minx, float *miny, float *maxx, float *maxy) {
             unsigned int codepoint;
             struct sth_glyph *glyph = nullptr;
-            struct sth_quad q;
-            short isize = (short) (size * 10.0f);
+            struct sth_quad q{};
+            auto isize = static_cast<short>(size * 10.0f);
             struct sth_font *fnt = nullptr;
             float x = 0, y = 0;
 
@@ -615,7 +613,7 @@ namespace easy3d {
             if (fnt == nullptr) return;
             if (fnt->type != BMFONT && !fnt->data) return;
 
-            int len = wcslen(s);
+            int len = static_cast<int>(wcslen(s));
             float scale = stbtt_ScaleForPixelHeight(&fnt->font, size);
             int c = 0;
             float spacing = stash->charSpacing;
@@ -631,7 +629,7 @@ namespace easy3d {
                 if (c < len && doKerning > 0) {
                     diff = stbtt_GetCodepointKernAdvance(&fnt->font, *(s), *(s + 1));
                     //printf("diff '%c' '%c' = %d\n", *(s-1), *s, diff);
-                    x += diff * scale;
+                    x += static_cast<float>(diff) * scale;
                 }
                 x += spacing;
 
@@ -725,7 +723,7 @@ namespace easy3d {
     TextRenderer::TextRenderer(float dpi_scale, int texture_size, bool mipmaps) {
         texture_size_ = next_pow2(texture_size);
         stash_ = internal::sth_create(texture_size_, texture_size_, mipmaps, 0, dpi_scale);
-        easy3d_log_gl_error;
+        easy3d_log_gl_error
         if (stash_ == nullptr) {
             LOG(ERROR) << "construction of TextRenderer failed";
         } else {
@@ -836,18 +834,18 @@ namespace easy3d {
         if (upper_left) { // upper_left corner is the origin
             int viewport[4];
             glGetIntegerv(GL_VIEWPORT, viewport);
-            const int h = viewport[3];
+            const auto h = static_cast<float>(viewport[3]);
             y = h - y - 1 - font_height(font_size);
         }
 
         std::wstring the_text = string::to_wstring(text);
         // compute all necessary vertex/texture coordinates
         sth_draw_text(get_stash(stash_), font_ids_[font_id], font_size, x, y, the_text.c_str(), &end_x);
-        easy3d_debug_log_gl_error;
+        easy3d_debug_log_gl_error
 
         // the actual rendering
         flush_draw(font_color);
-        easy3d_debug_log_gl_error;
+        easy3d_debug_log_gl_error
 
         return end_x;
     }
@@ -885,8 +883,8 @@ namespace easy3d {
                 std::vector<vec4> vertices(texture->nverts);
                 for (int i = 0; i < texture->nverts; ++i) {
                     vertices[i] = vec4(texture->verts + i * 4);
-                    vertices[i].x = 2.0f * vertices[i].x / w - 1.0f;
-                    vertices[i].y = 2.0f * vertices[i].y / h - 1.0f;
+                    vertices[i].x = 2.0f * vertices[i].x / static_cast<float>(w) - 1.0f;
+                    vertices[i].y = 2.0f * vertices[i].y / static_cast<float>(h) - 1.0f;
                 }
 
                 std::vector<unsigned int> indices(texture->nverts / 4 * 6);
@@ -908,7 +906,7 @@ namespace easy3d {
                 program->bind_texture("textureID", texture->id, 0)->set_uniform("font_color", font_color);
                 vao.bind();
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer);
-                glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, nullptr);
+                glDrawElements(GL_TRIANGLES, static_cast<int>(indices.size()), GL_UNSIGNED_INT, nullptr);
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
                 vao.release();
                 program->release_texture();
@@ -966,7 +964,7 @@ namespace easy3d {
 
         while (getline(ss, s, '\n')) {
             lines.push_back(s);
-            float yy = font_size * lineHeight * FONT_STASH_LINE_HEIGHT_MULT * line * get_stash(stash_)->dpiScale;
+            float yy = font_size * lineHeight * FONT_STASH_LINE_HEIGHT_MULT * static_cast<float>(line) * get_stash(stash_)->dpiScale;
             ys.push_back(yy);
             const Rect& dim = _get_bbox(s, font_size, x0, y0 + yy / get_stash(stash_)->dpiScale, ALIGN_LEFT, line_spacing);
 
@@ -1009,7 +1007,7 @@ namespace easy3d {
                               font_ids_[font_id],
                               font_size,
                               x0 + x * get_stash(stash_)->dpiScale,
-                              upper_left ? (h - ys[i] - 1 - font_height(font_size) - y0) : (ys[i] + y0),
+                              upper_left ? (static_cast<float>(h) - ys[i] - 1 - font_height(font_size) - y0) : (ys[i] + y0),
                               the_text.c_str(),
                               &dx
                 );
@@ -1019,7 +1017,7 @@ namespace easy3d {
 
         // the actual rendering
         flush_draw(font_color);
-        easy3d_debug_log_gl_error;
+        easy3d_debug_log_gl_error
 
         return rect;
     }
@@ -1048,7 +1046,7 @@ namespace easy3d {
             if (h > totalArea.height()) totalArea.y_max() = totalArea.y() + h;
             Rect r2 = totalArea;
             r2.y() -= r2.height();
-            r2.y() += ((font_size * lineHeight)) * FONT_STASH_LINE_HEIGHT_MULT * line;
+            r2.y() += ((font_size * lineHeight)) * FONT_STASH_LINE_HEIGHT_MULT * static_cast<float>(line);
             rects.push_back(r2);
 
             ++line;

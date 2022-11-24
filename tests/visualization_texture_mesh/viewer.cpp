@@ -84,7 +84,7 @@ namespace easy3d {
         // ------------------------ build the mesh ------------------------
 
         // clear the mesh in case of existing data
-        SurfaceMesh *mesh = new SurfaceMesh;
+        auto mesh = new SurfaceMesh;
         mesh->set_name(file_name);
 
         SurfaceMeshBuilder builder(mesh);

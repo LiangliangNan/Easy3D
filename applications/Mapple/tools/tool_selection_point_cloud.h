@@ -43,8 +43,8 @@ namespace easy3d {
 
         class ToolPointCloudSelection : public Tool {
         public:
-            ToolPointCloudSelection(ToolManager *mgr);
-            virtual ~ToolPointCloudSelection() {}
+            explicit ToolPointCloudSelection(ToolManager *mgr);
+            ~ToolPointCloudSelection() override = default;
 
             void update_render_buffer(PointCloud* cloud) const;
         };
@@ -54,9 +54,9 @@ namespace easy3d {
         class ToolPointCloudSelectionClick : public ToolPointCloudSelection {
         public:
             ToolPointCloudSelectionClick(ToolManager *mgr, PointCloudPicker *picker, SelectMode mode = SM_SELECT);
-            virtual ~ToolPointCloudSelectionClick();
+            ~ToolPointCloudSelectionClick() override;
 
-            virtual void press(int x, int y);
+            void press(int x, int y) override;
 
             PointCloud* multiple_pick(PointCloud::Vertex& v, int x, int y);
 
@@ -71,9 +71,9 @@ namespace easy3d {
         class ToolPointCloudSelectionRect : public ToolPointCloudSelection {
         public:
             ToolPointCloudSelectionRect(ToolManager *mgr, PointCloudPicker *picker, SelectMode mode = SM_SELECT);
-            virtual void press(int x, int y) override;
-            virtual void drag(int x, int y) override;
-            virtual void release(int x, int y) override;
+            void press(int x, int y) override;
+            void drag(int x, int y) override;
+            void release(int x, int y) override;
 
         protected:
             PointCloudPicker *picker_;
@@ -86,9 +86,9 @@ namespace easy3d {
         class ToolPointCloudSelectionLasso : public ToolPointCloudSelection {
         public:
             ToolPointCloudSelectionLasso(ToolManager *mgr, PointCloudPicker *picker, SelectMode mode = SM_SELECT);
-            virtual void press(int x, int y) override;
-            virtual void drag(int x, int y) override;
-            virtual void release(int x, int y) override;
+            void press(int x, int y) override;
+            void drag(int x, int y) override;
+            void release(int x, int y) override;
 
         protected:
             PointCloudPicker *picker_;
@@ -102,8 +102,8 @@ namespace easy3d {
         // (message, "btn1: select point; btn3: deselect point");
         class MultitoolPointCloudSelectionClick : public MultiTool {
         public:
-            MultitoolPointCloudSelectionClick(ToolManager *mgr);
-            ~MultitoolPointCloudSelectionClick();
+            explicit MultitoolPointCloudSelectionClick(ToolManager *mgr);
+            ~MultitoolPointCloudSelectionClick() override;
 
             void prepare_hint(ToolButton button, int x, int y) override;
             void clear_hint() override;
@@ -121,8 +121,8 @@ namespace easy3d {
         // (message, "btn1: select point; btn3: deselect point");
         class MultitoolPointCloudSelectionRect : public MultiTool {
         public:
-            MultitoolPointCloudSelectionRect(ToolManager *mgr);
-            ~MultitoolPointCloudSelectionRect();
+            explicit MultitoolPointCloudSelectionRect(ToolManager *mgr);
+            ~MultitoolPointCloudSelectionRect() override;
 
             void press(ToolButton button, int x, int y) override;
             void prepare_hint(ToolButton button, int x, int y) override;
@@ -142,8 +142,8 @@ namespace easy3d {
         // (message, "btn1: select point; btn3: deselect point");
         class MultitoolPointCloudSelectionLasso : public MultiTool {
         public:
-            MultitoolPointCloudSelectionLasso(ToolManager *mgr);
-            ~MultitoolPointCloudSelectionLasso();
+            explicit MultitoolPointCloudSelectionLasso(ToolManager *mgr);
+            ~MultitoolPointCloudSelectionLasso() override;
 
             void press(ToolButton button, int x, int y) override;
             void prepare_hint(ToolButton button, int x, int y) override;

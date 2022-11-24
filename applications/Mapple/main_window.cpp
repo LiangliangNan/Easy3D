@@ -252,7 +252,6 @@ void MainWindow::notify(std::size_t percent, bool update_viewer) {
 void MainWindow::send(el::Level level, const std::string &msg) {
     static QMutex mutex;
     mutex.lock();
-    std::string line("");
 	switch (level) {
         case el::Level::Info:
             ui->listWidgetLog->addItem(QString::fromStdString("[INFO] " + msg));
@@ -279,7 +278,7 @@ void MainWindow::send(el::Level level, const std::string &msg) {
 void MainWindow::createStatusBar()
 {
     labelStatusInfo_ = new QLabel("Ready", this);
-    labelStatusInfo_->setFixedWidth(static_cast<int>(ui->dockWidgetRendering->width() * 2.0f));
+    labelStatusInfo_->setFixedWidth(ui->dockWidgetRendering->width() * 2);
     labelStatusInfo_->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     statusBar()->addWidget(labelStatusInfo_);
 
@@ -495,19 +494,19 @@ bool MainWindow::onSave() {
 
     bool saved = false;
     if (dynamic_cast<const PointCloud*>(model)) {
-        const PointCloud* cloud = dynamic_cast<const PointCloud*>(model);
+        const auto cloud = dynamic_cast<const PointCloud*>(model);
         saved = PointCloudIO::save(fileName.toStdString(), cloud);
     }
     else if (dynamic_cast<const SurfaceMesh*>(model)) {
-        const SurfaceMesh* mesh = dynamic_cast<const SurfaceMesh*>(model);
+        const auto mesh = dynamic_cast<const SurfaceMesh*>(model);
         saved = SurfaceMeshIO::save(fileName.toStdString(), mesh);
     }
     else if (dynamic_cast<const Graph*>(model)) {
-        const Graph* graph = dynamic_cast<const Graph*>(model);
+        const auto graph = dynamic_cast<const Graph*>(model);
         saved = GraphIO::save(fileName.toStdString(), graph);
     }
     else if (dynamic_cast<const PolyMesh*>(model)) {
-        const PolyMesh* mesh = dynamic_cast<const PolyMesh*>(model);
+        const auto mesh = dynamic_cast<const PolyMesh*>(model);
         saved = PolyMeshIO::save(fileName.toStdString(), mesh);
     }
 
@@ -635,7 +634,7 @@ void MainWindow::generateColorPropertyFromIndexedColors() {
 
     if (location == 0) {
         if (dynamic_cast<PointCloud*>(viewer_->currentModel())) {
-            PointCloud* cloud = dynamic_cast<PointCloud*>(viewer_->currentModel());
+            auto cloud = dynamic_cast<PointCloud*>(viewer_->currentModel());
             auto indices = cloud->get_vertex_property<int>(attribute_name);
             if (indices) {
                 const std::string color_name = "v:color_indexed";
@@ -738,7 +737,7 @@ WidgetModelList* MainWindow::widgetModelList() const {
 
 void MainWindow::onOpenRecentFile() {
     if (okToContinue()) {
-        QAction *action = qobject_cast<QAction *>(sender());
+        auto action = qobject_cast<QAction *>(sender());
         if (action) {
             const QString filename(action->data().toString());
             if (open(filename.toStdString()))
@@ -766,7 +765,12 @@ void MainWindow::setBackgroundColor() {
     QColor orig(static_cast<int>(c.r * 255), static_cast<int>(c.g * 255), static_cast<int>(c.b * 255), static_cast<int>(c.a * 255));
     const QColor& color = QColorDialog::getColor(orig, this);
     if (color.isValid()) {
-        const vec4 newColor(color.redF(), color.greenF(), color.blueF(), color.alphaF());
+        const vec4 newColor(
+                static_cast<float>(color.redF()),
+                static_cast<float>(color.greenF()),
+                static_cast<float>(color.blueF()),
+                static_cast<float>(color.alphaF())
+                );
         viewer_->setBackgroundColor(newColor);
         viewer_->update();
     }
@@ -847,7 +851,7 @@ bool MainWindow::okToContinue()
 void MainWindow::onAbout()
 {
     QString title = QMessageBox::tr(
-        "<p align=\"center\"><span style=\"font-style:italic;\">I'm good software, though I have defects.</span></p>"
+        R"(<p align="center"><span style="font-style:italic;">I'm good software, though I have defects.</span></p>)"
         );
 
     int bits = 64;
@@ -906,13 +910,13 @@ void MainWindow::updateWindowTitle() {
     QString title = "Mapple (Debug Version)";
 #else
     QString title = "Mapple";
-#endif // _DEBUG
+#endif // NDEBUG
 
     QString fileName("Untitled");
     if (model)
         fileName = QString::fromStdString(model->name());
 
-    title = tr("%1[*] - %2").arg(strippedName(fileName)).arg(title);
+    title = tr("%1[*] - %2").arg(strippedName(fileName), title);
     setWindowTitle(title);
 }
 
@@ -958,7 +962,7 @@ QString MainWindow::strippedName(const QString &fullFileName)
 
 
 void MainWindow::createActionsForFileMenu() {
-    QActionGroup* actionGroup = new QActionGroup(this);
+    auto actionGroup = new QActionGroup(this);
     actionGroup->addAction(ui->actionTranslateDisabled);
     actionGroup->addAction(ui->actionTranslateUseFirstVertex);
     actionGroup->addAction(ui->actionTranslateUseLastKnownVertex);
@@ -969,12 +973,11 @@ void MainWindow::createActionsForFileMenu() {
     actionSeparator = ui->menuFile->addSeparator();
 
     QList<QAction*> actions;
-    for (int i = 0; i < MaxRecentFiles; ++i) {
-        actionsRecentFile[i] = new QAction(this);
-        actionsRecentFile[i]->setVisible(false);
-        connect(actionsRecentFile[i], SIGNAL(triggered()), this, SLOT(onOpenRecentFile()));
-
-        actions.push_back(actionsRecentFile[i]);
+    for (auto& action : actionsRecentFile) {
+        action = new QAction(this);
+        action->setVisible(false);
+        connect(action, SIGNAL(triggered()), this, SLOT(onOpenRecentFile()));
+        actions.push_back(action);
     }
     ui->menuRecentFiles->insertActions(ui->actionClearRecentFiles, actions);
     ui->menuRecentFiles->insertSeparator(ui->actionClearRecentFiles);
@@ -988,7 +991,7 @@ void MainWindow::createActionsForFileMenu() {
 void MainWindow::createActionsForViewMenu() {
     connect(ui->actionShowPrimitiveIDUnderMouse, SIGNAL(toggled(bool)), viewer_, SLOT(showPrimitiveIDUnderMouse(bool)));
     connect(ui->actionShowPrimitivePropertyUnderMouse, SIGNAL(toggled(bool)), this, SLOT(showPrimitivePropertyUnderMouse(bool)));
-    connect(ui->actionShowCordinatesUnderMouse, SIGNAL(toggled(bool)), this, SLOT(showCoordinatesUnderMouse(bool)));
+    connect(ui->actionShowCoordinatesUnderMouse, SIGNAL(toggled(bool)), this, SLOT(showCoordinatesUnderMouse(bool)));
 
     connect(ui->actionShowEasy3DLogo, SIGNAL(toggled(bool)), viewer_, SLOT(showEasy3DLogo(bool)));
     connect(ui->actionShowFrameRate, SIGNAL(toggled(bool)), viewer_, SLOT(showFrameRate(bool)));
@@ -1056,7 +1059,7 @@ void MainWindow::createActionsForSelectMenu() {
 
     //////////////////////////////////////////////////////////////////////////
 
-    QActionGroup* actionGroup = new QActionGroup(this);
+    auto actionGroup = new QActionGroup(this);
     actionGroup->addAction(ui->actionCameraManipulation);
     actionGroup->addAction(ui->actionSelectClick);
     actionGroup->addAction(ui->actionSelectRect);
@@ -1160,7 +1163,7 @@ void MainWindow::operationModeChanged(QAction* act) {
 
 
 void MainWindow::reportTopologyStatistics() {
-    SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer()->currentModel());
+    auto mesh = dynamic_cast<SurfaceMesh *>(viewer()->currentModel());
     if (mesh) {
         std::stringstream stream;
 
@@ -1209,12 +1212,12 @@ void MainWindow::reportTopologyStatistics() {
         LOG(INFO) << stream.str();
     }
 
-    Graph *graph = dynamic_cast<Graph *>(viewer()->currentModel());
+    auto graph = dynamic_cast<Graph *>(viewer()->currentModel());
     if (graph) {
         std::stringstream stream;
         stream << "graph has " << graph->n_vertices() << " vertices and " << graph->n_edges() << " edges" << std::endl;
 
-        std::map<int, int> count; // key (i.e., first element) is the valence
+        std::map<unsigned int, int> count; // key (i.e., first element) is the valence
         for (auto v : graph->vertices())
             ++count[graph->valence(v)];
 
@@ -1259,7 +1262,7 @@ void MainWindow::surfaceMeshTetrahedralization() {
 
 
 void MainWindow::surfaceMeshRepairPolygonSoup() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    auto mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
         return;
 
@@ -1276,7 +1279,7 @@ void MainWindow::surfaceMeshRepairPolygonSoup() {
 
 
 void MainWindow::surfaceMeshStitchWithReorientation() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    auto mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
         return;
 
@@ -1296,7 +1299,7 @@ void MainWindow::surfaceMeshStitchWithReorientation() {
 
 
 void MainWindow::surfaceMeshOrientAndStitchPolygonSoup() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    auto mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
         return;
 
@@ -1315,7 +1318,7 @@ void MainWindow::surfaceMeshOrientAndStitchPolygonSoup() {
 
 
 void MainWindow::surfaceMeshStitchWithoutReorientation() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    auto mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
         return;
 
@@ -1334,7 +1337,7 @@ void MainWindow::surfaceMeshStitchWithoutReorientation() {
 
 
 void MainWindow::surfaceMeshOrientClosedTriangleMesh() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    auto mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
         return;
 
@@ -1351,7 +1354,7 @@ void MainWindow::surfaceMeshOrientClosedTriangleMesh() {
 
 
 void MainWindow::surfaceMeshReverseOrientation() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    auto mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
         return;
 
@@ -1364,7 +1367,7 @@ void MainWindow::surfaceMeshReverseOrientation() {
 
 
 void MainWindow::surfaceMeshRemoveIsolatedVertices() {
-    SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer()->currentModel());
+    auto mesh = dynamic_cast<SurfaceMesh *>(viewer()->currentModel());
     if (!mesh)
         return;
 
@@ -1387,7 +1390,7 @@ void MainWindow::surfaceMeshRemoveIsolatedVertices() {
 
 
 void MainWindow::surfaceMeshRemoveDuplicateAndFoldingFaces() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    auto mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
         return;
 
@@ -1412,7 +1415,7 @@ void MainWindow::surfaceMeshRemoveDuplicateAndFoldingFaces() {
 
 
 void MainWindow::surfaceMeshDetectSelfIntersections() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    auto mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
         return;
 
@@ -1446,7 +1449,7 @@ void MainWindow::surfaceMeshDetectSelfIntersections() {
 
 
 void MainWindow::surfaceMeshRemeshSelfIntersections() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    auto mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
         return;
 
@@ -1471,7 +1474,7 @@ void MainWindow::surfaceMeshRemeshSelfIntersections() {
 
 
 void MainWindow::surfaceMeshClip() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    auto mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
         return;
 
@@ -1493,7 +1496,7 @@ void MainWindow::surfaceMeshClip() {
 
 
 void MainWindow::surfaceMeshSplit() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    auto mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
         return;
 
@@ -1515,7 +1518,7 @@ void MainWindow::surfaceMeshSplit() {
 
 
 void MainWindow::surfaceMeshSlice() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    auto mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
         return;
 
@@ -1531,7 +1534,7 @@ void MainWindow::surfaceMeshSlice() {
 
     const std::vector<Surfacer::Polyline>& polylines = Surfacer::slice(mesh, clipping_plane->plane0());
 
-    Graph* graph = new Graph;
+    auto graph = new Graph;
     for (const auto& polyline : polylines) {
         for (const auto &p : polyline)
             graph->add_vertex(p);
@@ -1556,17 +1559,17 @@ void MainWindow::surfaceMeshSlice() {
     float maxz = mesh->bounding_box().max_point().z;
 
     int num = 10;
-    float step = (maxz - minz) / num;
+    float step = (maxz - minz) / static_cast<float>(num);
 
     std::vector<Plane3> planes(num);
     for (int i=0; i<num; ++i)
-        planes[i] = Plane3(vec3(0, 0, minz + i * step), vec3(0, 0, 1));
+        planes[i] = Plane3(vec3(0, 0, minz + static_cast<float>(i) * step), vec3(0, 0, 1));
 
     const std::vector< std::vector<Surfacer::Polyline> >& all_polylines = Surfacer::slice(mesh, planes);
     if (all_polylines.empty())
         return;
 
-    Graph* graph = new Graph;
+    auto graph = new Graph;
     for (const auto& polylines : all_polylines) {
         for (const auto &polyline : polylines) {
             for (const auto &p : polyline)
@@ -1575,7 +1578,7 @@ void MainWindow::surfaceMeshSlice() {
     }
 
     auto color = graph->add_edge_property<vec3>("e:color");
-    unsigned int idx = 0;
+    int idx = 0;
     for (const auto& polylines : all_polylines) {
         for (const auto &polyline : polylines) {
             const auto& c = random_color();
@@ -1620,15 +1623,14 @@ void MainWindow::surfaceMeshCreateMeshFromText() {
 
 
 void MainWindow::pointCloudEstimateNormals() {
-    PointCloud* cloud = dynamic_cast<PointCloud*>(viewer()->currentModel());
+    auto cloud = dynamic_cast<PointCloud*>(viewer()->currentModel());
     if (!cloud)
         return;
 
     DialogPointCloudNormalEstimation dlg(this);
     if (dlg.exec() == QDialog::Accepted) {
         unsigned int k = dlg.lineEditNeighborSize->text().toUInt();
-        PointCloudNormals pcn;
-        pcn.estimate(cloud, k);
+        PointCloudNormals::estimate(cloud, k);
         cloud->renderer()->update();
         viewer()->update();
     }
@@ -1636,15 +1638,14 @@ void MainWindow::pointCloudEstimateNormals() {
 
 
 void MainWindow::pointCloudReorientNormals() {
-    PointCloud *cloud = dynamic_cast<PointCloud *>(viewer()->currentModel());
+    auto cloud = dynamic_cast<PointCloud *>(viewer()->currentModel());
     if (!cloud)
         return;
 
     DialogPointCloudNormalEstimation dlg(this);
     if (dlg.exec() == QDialog::Accepted) {
         unsigned int k = dlg.lineEditNeighborSize->text().toUInt();
-        PointCloudNormals pcn;
-        pcn.reorient(cloud, k);
+        PointCloudNormals::reorient(cloud, k);
         cloud->renderer()->update();
         viewer()->update();
     }
@@ -1652,7 +1653,7 @@ void MainWindow::pointCloudReorientNormals() {
 
 
 void MainWindow::pointCloudNormalizeNormals() {
-    PointCloud* cloud = dynamic_cast<PointCloud*>(viewer()->currentModel());
+    auto cloud = dynamic_cast<PointCloud*>(viewer()->currentModel());
     if (!cloud)
         return;
 
@@ -1672,7 +1673,7 @@ void MainWindow::pointCloudNormalizeNormals() {
 
 
 void MainWindow::polymeshExtractBoundary() {
-    PolyMesh* poly = dynamic_cast<PolyMesh*>(viewer()->currentModel());
+    auto poly = dynamic_cast<PolyMesh*>(viewer()->currentModel());
     if (!poly)
         return;
 
@@ -1681,14 +1682,13 @@ void MainWindow::polymeshExtractBoundary() {
 
     std::unordered_map<PolyMesh::Vertex, SurfaceMesh::Vertex, PolyMesh::Vertex::Hash> unique_vertex;
 
-
-    SurfaceMesh* mesh = new SurfaceMesh;
+    auto mesh = new SurfaceMesh;
     const std::string &name = file_system::name_less_extension(poly->name()) + "_boundary.ply";
     mesh->set_name(name);
 
     SurfaceMeshBuilder builder(mesh);
     builder.begin_surface();
-    for (auto f : faces) {
+    for (const auto& f : faces) {
         std::vector<SurfaceMesh::Vertex> vts;
         for (auto pv : f) {
             auto pos = unique_vertex.find(pv);
@@ -1716,7 +1716,7 @@ void MainWindow::computeHeightField() {
 
     // add 3 scalar fields defined on vertices, edges, and faces respectively.
     if (dynamic_cast<SurfaceMesh*>(model)) {
-        SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(model);
+        auto mesh = dynamic_cast<SurfaceMesh*>(model);
 
         ProgressLogger progress(4, false, false);
 
@@ -1786,7 +1786,7 @@ void MainWindow::computeHeightField() {
     }
 
     else if (dynamic_cast<PointCloud*>(model)) {
-        PointCloud* cloud = dynamic_cast<PointCloud*>(model);
+        auto cloud = dynamic_cast<PointCloud*>(model);
 
         auto v_height_x = cloud->vertex_property<float>("v:height_x");
         auto v_height_y = cloud->vertex_property<float>("v:height_y");
@@ -1800,7 +1800,7 @@ void MainWindow::computeHeightField() {
     }
 
     else if (dynamic_cast<Graph*>(model)) {
-        Graph* graph = dynamic_cast<Graph*>(model);
+        auto graph = dynamic_cast<Graph*>(model);
 
         auto v_height_x = graph->vertex_property<float>("v:height_x");
         auto v_height_y = graph->vertex_property<float>("v:height_y");
@@ -1826,7 +1826,7 @@ void MainWindow::computeHeightField() {
     }
     // add 3 scalar fields defined on vertices, edges, and faces respectively.
     else if (dynamic_cast<PolyMesh*>(model)) {
-        PolyMesh* mesh = dynamic_cast<PolyMesh*>(model);
+        auto mesh = dynamic_cast<PolyMesh*>(model);
 
         ProgressLogger progress(4, false, false);
 
@@ -1971,7 +1971,7 @@ void MainWindow::surfaceMeshPolygonization() {
 
 
 void MainWindow::surfaceMeshSubdivisionCatmullClark() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    auto mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
         return;
 
@@ -1984,7 +1984,7 @@ void MainWindow::surfaceMeshSubdivisionCatmullClark() {
 
 
 void MainWindow::surfaceMeshSubdivisionLoop() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    auto mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
         return;
 
@@ -1997,7 +1997,7 @@ void MainWindow::surfaceMeshSubdivisionLoop() {
 
 
 void MainWindow::surfaceMeshSubdivisionSqrt3() {
-    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
+    auto mesh = dynamic_cast<SurfaceMesh*>(viewer()->currentModel());
     if (!mesh)
         return;
 
@@ -2102,7 +2102,7 @@ void MainWindow::applyManipulatedTransformation() {
         if (dynamic_cast<SurfaceMesh *>(model)) {
             dynamic_cast<SurfaceMesh *>(model)->update_vertex_normals();
         } else if (dynamic_cast<PointCloud *>(model)) {
-            PointCloud *cloud = dynamic_cast<PointCloud *>(model);
+            auto cloud = dynamic_cast<PointCloud *>(model);
             auto normal = cloud->get_vertex_property<vec3>("v:normal");
             if (normal) {
                 const mat3 &N = transform::normal_matrix(manip);
@@ -2203,7 +2203,7 @@ void MainWindow::animation() {
 
 void MainWindow::showPrimitivePropertyUnderMouse(bool b) {
     if (b)
-        ui->actionShowCordinatesUnderMouse->setChecked(false);
+        ui->actionShowCoordinatesUnderMouse->setChecked(false);
     viewer_->showPrimitivePropertyUnderMouse(b);
 }
 
@@ -2282,7 +2282,7 @@ void MainWindow::setShowKeyframeCameras(bool b) {
 
 
 void MainWindow::surfaceMeshGeodesic() {
-    SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer()->currentModel());
+    auto mesh = dynamic_cast<SurfaceMesh *>(viewer()->currentModel());
     if (!mesh)
         return;
 
@@ -2298,7 +2298,7 @@ void MainWindow::surfaceMeshGeodesic() {
     std::vector<SurfaceMesh::Vertex> seeds;
     const int num_seeds = 1;
     for (int i=0; i<num_seeds; ++i) {
-        const int idx = rand() % mesh->n_vertices();
+        const int idx = rand() % static_cast<int>(mesh->n_vertices());
         SurfaceMesh::Vertex v(idx);
         seeds.push_back(v);
         locked[v] = true;
@@ -2325,14 +2325,13 @@ void MainWindow::pointCloudDelaunayTriangulation2D() {
     const std::vector<vec3>& pts = cloud->points();
 
     std::vector<vec2> points;
-    for (std::size_t i = 0; i < pts.size(); ++i) {
-        points.push_back(vec2(pts[i]));
-    }
+    for (const auto& p : pts)
+        points.emplace_back(vec2(p));
 
     Delaunay2 delaunay;
     delaunay.set_vertices(points);
 
-    SurfaceMesh* mesh = new SurfaceMesh;
+    auto mesh = new SurfaceMesh;
     const std::string &name = file_system::name_less_extension(mesh->name()) + "_delaunay_XY.ply";
     mesh->set_name(name);
 
@@ -2366,13 +2365,12 @@ void MainWindow::pointCloudDelaunayTriangulation3D() {
     Delaunay3 delaunay;
     delaunay.set_vertices(points);
 
-    PolyMesh* mesh = new PolyMesh;
+    auto mesh = new PolyMesh;
     const std::string &name = file_system::name_less_extension(cloud->name()) + "_delaunay.ply";
     mesh->set_name(name);
 
-    for (std::size_t i = 0; i < points.size(); i++) {
-        mesh->add_vertex(points[i]);
-    }
+    for (const auto& p : points)
+        mesh->add_vertex(p);
 
     LOG(INFO) << "building tetrahedral mesh with " << delaunay.nb_tets() << " tetrahedra...";
     StopWatch w;

@@ -52,14 +52,6 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    SurfaceMesh::~SurfaceMesh()
-    {
-    }
-
-
-    //-----------------------------------------------------------------------------
-
-
     SurfaceMesh& SurfaceMesh::operator=(const SurfaceMesh& rhs)
     {
         if (this != &rhs)
@@ -113,78 +105,35 @@ namespace easy3d {
 
         // translate halfedge index in vertex -> halfedge
         for (unsigned int i = nv; i < nv + other.vertices_size(); i++) {
-            Vertex vi(i);
+            Vertex vi(static_cast<int>(i));
             if (vconn_[vi].halfedge_ != Halfedge()) {
-                vconn_[vi].halfedge_ = Halfedge(vconn_[vi].halfedge_.idx() + nh);
+                vconn_[vi].halfedge_ = Halfedge(vconn_[vi].halfedge_.idx() + static_cast<int>(nh));
             }
         }
         // translate halfedge index in face -> halfedge
         for (unsigned int i = nf; i < nf + other.faces_size(); i++) {
-            Face fi(i);
+            Face fi(static_cast<int>(i));
             if (fconn_[fi].halfedge_ != Halfedge()) {
-                fconn_[fi].halfedge_ = Halfedge(fconn_[fi].halfedge_.idx() + nh);
+                fconn_[fi].halfedge_ = Halfedge(fconn_[fi].halfedge_.idx() + static_cast<int>(nh));
             }
         }
         // translate indices in halfedge -> face, halfedge -> target, halfedge -> prev, and halfedge -> next
         for (unsigned int i = nh; i < nh + other.halfedges_size(); i++) {
-            Halfedge hi(i);
+            Halfedge hi(static_cast<int>(i));
             if (hconn_[hi].face_ != Face()) {
-                hconn_[hi].face_ = Face(hconn_[hi].face_.idx() + nf);
+                hconn_[hi].face_ = Face(hconn_[hi].face_.idx() + static_cast<int>(nf));
             }
             if (hconn_[hi].vertex_ != Vertex()) {
-                hconn_[hi].vertex_ = Vertex(hconn_[hi].vertex_.idx() + nv);
+                hconn_[hi].vertex_ = Vertex(hconn_[hi].vertex_.idx() + static_cast<int>(nv));
             }
             if (hconn_[hi].next_ != Halfedge()) {
-                hconn_[hi].next_ = Halfedge(hconn_[hi].next_.idx() + nh);
+                hconn_[hi].next_ = Halfedge(hconn_[hi].next_.idx() + static_cast<int>(nh));
             }
             if (hconn_[hi].prev_ != Halfedge()) {
-                hconn_[hi].prev_ = Halfedge(hconn_[hi].prev_.idx() + nh);
+                hconn_[hi].prev_ = Halfedge(hconn_[hi].prev_.idx() + static_cast<int>(nh));
             }
         }
-//        unsigned int inf_value = (std::numeric_limits<unsigned int>::max)();
-//
-//        // merge vertex free list
-//        if(other.vertices_freelist_ != inf_value){
-//            Vertex vi(nv+other.vertices_freelist_);
-//            Halfedge inf((std::numeric_limits<unsigned int>::max)());
-//            // correct the indices in the linked list of free vertices copied (due to vconn_ translation)
-//            while(vconn_[vi].halfedge_ != inf){
-//                Vertex corrected_vi = Vertex(unsigned int(vconn_[vi].halfedge_)+nv-nh);
-//                vconn_[vi].halfedge_ = Halfedge(corrected_vi);
-//                vi = corrected_vi;
-//            }
-//            // append the vertex free linked list of `this` to the copy of `other`
-//            vconn_[vi].halfedge_ = Halfedge(vertices_freelist_);
-//            // update the begin of the vertex free linked list
-//            vertices_freelist_ = nv + other.vertices_freelist_;
-//        }
-//        // merge face free list
-//        if(other.faces_freelist_ != inf_value){
-//            Face fi(nf+other.faces_freelist_);
-//            Halfedge inf((std::numeric_limits<unsigned int>::max)());
-//            // correct the indices in the linked list of free faces copied (due to fconn_ translation)
-//            while(fconn_[fi].halfedge_ != inf){
-//                Face corrected_fi = Face(unsigned int(fconn_[fi].halfedge_)+nf-nh);
-//                fconn_[fi].halfedge_ = Halfedge(corrected_fi);
-//                fi = corrected_fi;
-//            }
-//            // append the face free linked list of `this` to the copy of `other`
-//            fconn_[fi].halfedge_ = Halfedge(faces_freelist_);
-//            // update the begin of the face free linked list
-//            faces_freelist_ = nf + other.faces_freelist_;
-//        }
-//        // merge edge free list
-//        if(other.edges_freelist_ != inf_value){
-//            Halfedge hi(nh+other.edges_freelist_);
-//            Halfedge inf((std::numeric_limits<unsigned int>::max)());
-//            while(hconn_[hi].next_ != inf){
-//                hi = hconn_[hi].next_;
-//            }
-//            // append the halfedge free linked list of `this` to the copy of `other`
-//            hconn_[hi].next_ = Halfedge(edges_freelist_);
-//            // update the begin of the halfedge free linked list
-//            edges_freelist_ = nh + other.edges_freelist_;
-//        }
+
         // update garbage infos
         garbage_ = garbage_ || other.garbage_;
         deleted_vertices_ += other.deleted_vertices_;
@@ -279,16 +228,16 @@ namespace easy3d {
         auto point = vertex_property<vec3>("v:point");
 
         // read properties from file
-        input.read((char*)vconn.data(), nv * sizeof(SurfaceMesh::VertexConnectivity)  );
-        input.read((char*)hconn.data(), nh * sizeof(SurfaceMesh::HalfedgeConnectivity));
-        input.read((char*)fconn.data(), nf * sizeof(SurfaceMesh::FaceConnectivity)    );
-        input.read((char*)point.data(), nv * sizeof(vec3)                             );
+        input.read((char*)vconn.data(), static_cast<long>(nv * sizeof(SurfaceMesh::VertexConnectivity)  ));
+        input.read((char*)hconn.data(), static_cast<long>(nh * sizeof(SurfaceMesh::HalfedgeConnectivity)));
+        input.read((char*)fconn.data(), static_cast<long>(nf * sizeof(SurfaceMesh::FaceConnectivity)    ));
+        input.read((char*)point.data(), static_cast<long>(nv * sizeof(vec3)                             ));
 
         bool has_colors = false;
         input.read((char*)&has_colors, sizeof(bool));
         if (has_colors) {
             SurfaceMesh::VertexProperty<vec3> color = vertex_property<vec3>("v:color");
-            input.read((char*)color.data(), nv * sizeof(vec3));
+            input.read((char*)color.data(), static_cast<long>(nv * sizeof(vec3)));
         }
 
         return n_faces() > 0;
@@ -331,17 +280,17 @@ namespace easy3d {
         auto point = get_vertex_property<vec3>("v:point");
 
         // write properties to file
-        output.write((char*)vconn.data(), nv * sizeof(SurfaceMesh::VertexConnectivity));
-        output.write((char*)hconn.data(), nh * sizeof(SurfaceMesh::HalfedgeConnectivity));
-        output.write((char*)fconn.data(), nf * sizeof(SurfaceMesh::FaceConnectivity));
-        output.write((char*)point.data(), nv * sizeof(vec3));
+        output.write((char*)vconn.data(), static_cast<long>(nv * sizeof(SurfaceMesh::VertexConnectivity)));
+        output.write((char*)hconn.data(), static_cast<long>(nh * sizeof(SurfaceMesh::HalfedgeConnectivity)));
+        output.write((char*)fconn.data(), static_cast<long>(nf * sizeof(SurfaceMesh::FaceConnectivity)));
+        output.write((char*)point.data(), static_cast<long>(nv * sizeof(vec3)));
 
         // check for colors
         auto color = get_vertex_property<vec3>("v:color");
         bool has_colors = color;
         output.write((char*)&has_colors, sizeof(bool));
         if (has_colors)
-            output.write((char*)color.data(), nv * sizeof(vec3));
+            output.write((char*)color.data(), static_cast<long>(nv * sizeof(vec3)));
 
         return true;
     }
@@ -646,7 +595,7 @@ namespace easy3d {
                 {
                     // here comes the ugly part... we have to relink a whole patch
 
-                    // search a free gap
+                    // search a free gap.
                     // free gap will be between boundary_prev and boundary_next
                     outer_prev = opposite(inner_next);
                     outer_next = opposite(inner_prev);
@@ -935,11 +884,9 @@ namespace easy3d {
 
     bool SurfaceMesh::is_quad_mesh() const
     {
-        FaceIterator fit=faces_begin(), fend=faces_end();
-        for (; fit!=fend; ++fit)
-            if (valence(*fit) != 4)
+        for (auto f : faces())
+            if (valence(f) != 4)
                 return false;
-
         return true;
     }
 
@@ -1586,7 +1533,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    bool SurfaceMesh::can_merge_vertices(Halfedge h0, Halfedge h1) {
+    bool SurfaceMesh::can_merge_vertices(Halfedge h0, Halfedge h1) const {
         // It's OK if they are already the same!
         if (target(h0) == target(h1))
             return true;
@@ -1777,7 +1724,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    bool SurfaceMesh::is_collapse_ok(Halfedge v0v1)
+    bool SurfaceMesh::is_collapse_ok(Halfedge v0v1) const
     {
         Halfedge  v1v0(opposite(v0v1));
         Vertex    v0(target(v1v0));
@@ -1987,11 +1934,8 @@ namespace easy3d {
         } while (++fc != fc_end);
 
         // delete incident faces
-        std::vector<Face>::iterator fit(incident_faces.begin()),
-                                    fend(incident_faces.end());
-
-        for (; fit != fend; ++fit)
-            delete_face(*fit);
+        for (auto f : incident_faces)
+            delete_face(f);
 
         // mark v as deleted if not yet done by delete_face()
         if (!vdeleted_[v])
@@ -2064,8 +2008,7 @@ namespace easy3d {
         // delete isolated vertices
         if (!deleted_edges.empty())
         {
-            std::vector<Edge>::iterator del_it(deleted_edges.begin()),
-                                        del_end(deleted_edges.end());
+            auto del_it(deleted_edges.begin()), del_end(deleted_edges.end());
 
             Halfedge h0, h1, next0, next1, prev0, prev1;
             Vertex   v0, v1;
@@ -2125,10 +2068,8 @@ namespace easy3d {
 
 
         // update outgoing halfedge handles of remaining vertices
-        std::vector<Vertex>::iterator v_it(vertices.begin()),
-                                      v_end(vertices.end());
-        for (; v_it!=v_end; ++v_it)
-            adjust_outgoing_halfedge(*v_it);
+        for (auto v : vertices)
+            adjust_outgoing_halfedge(v);
 
         garbage_ = true;
     }
@@ -2143,15 +2084,14 @@ namespace easy3d {
             return;
 
         int  i, i0, i1,
-        nV(vertices_size()),
-        nE(edges_size()),
-        nH(halfedges_size()),
-        nF(faces_size());
+        nV(static_cast<int>(vertices_size())),
+        nE(static_cast<int>(edges_size())),
+        nH(static_cast<int>(halfedges_size())),
+        nF(static_cast<int>(faces_size()));
 
         Vertex    v;
         Halfedge  h;
         Face      f;
-
 
         // setup handle mapping
         VertexProperty<Vertex>      vmap = add_vertex_property<Vertex>("v:garbage-collection");
@@ -2171,7 +2111,7 @@ namespace easy3d {
         {
             i0=0;  i1=nV-1;
 
-            while (1)
+            while (true)
             {
                 // find first deleted and last un-deleted
                 while (!vdeleted_[Vertex(i0)] && i0 < i1)  ++i0;
@@ -2180,7 +2120,7 @@ namespace easy3d {
 
                 // swap
                 vprops_.swap(i0, i1);
-            };
+            }
 
             // remember new size
             nV = vdeleted_[Vertex(i0)] ? i0 : i0+1;
@@ -2192,7 +2132,7 @@ namespace easy3d {
         {
             i0=0;  i1=nE-1;
 
-            while (1)
+            while (true)
             {
                 // find first deleted and last un-deleted
                 while (!edeleted_[Edge(i0)] && i0 < i1)  ++i0;
@@ -2203,7 +2143,7 @@ namespace easy3d {
                 eprops_.swap(i0, i1);
                 hprops_.swap(2*i0,   2*i1);
                 hprops_.swap(2*i0+1, 2*i1+1);
-            };
+            }
 
             // remember new size
             nE = edeleted_[Edge(i0)] ? i0 : i0+1;
@@ -2216,7 +2156,7 @@ namespace easy3d {
         {
             i0=0;  i1=nF-1;
 
-            while (1)
+            while (true)
             {
                 // find 1st deleted and last un-deleted
                 while (!fdeleted_[Face(i0)] && i0 < i1)  ++i0;
@@ -2225,7 +2165,7 @@ namespace easy3d {
 
                 // swap
                 fprops_.swap(i0, i1);
-            };
+            }
 
             // remember new size
             nF = fdeleted_[Face(i0)] ? i0 : i0+1;

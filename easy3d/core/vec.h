@@ -324,7 +324,7 @@ namespace easy3d {
 
         Vec() : x(0), y(0) { }
         Vec(T x_in, T y_in) : x(x_in), y(y_in) { }
-        Vec(const Vec<3, T>& v) : x(v.x), y(v.y) { } // very useful for inverse promoting from homogeneous coordinates
+        explicit Vec(const Vec<3, T>& v) : x(v.x), y(v.y) { } // very useful for inverse promoting from homogeneous coordinates
 
         explicit Vec(const T& s) : x(s), y(s) { }
 
@@ -443,7 +443,7 @@ namespace easy3d {
 
         Vec() : x(0), y(0), z(0) {}
         explicit Vec(const Vec<2, T>& v, const T& s = 1) : x(v.x), y(v.y), z(s) {} // very useful for promoting to homogeneous coordinates
-        Vec(const Vec<4, T>& v) : x(v.x), y(v.y), z(v.z) {} // very useful for inverse promoting from homogeneous coordinates
+        explicit Vec(const Vec<4, T>& v) : x(v.x), y(v.y), z(v.z) {} // very useful for inverse promoting from homogeneous coordinates
 
         Vec(T x_in, T y_in, T z_in) : x(x_in), y(y_in), z(z_in) {}
 
@@ -490,6 +490,9 @@ namespace easy3d {
 
         T* data() { return _array; }
         const T* data() const { return _array; }
+
+        // the (x, y) components
+        Vec<2, T> xy() const { return  Vec<2, T>(x, y); }
 
         // Conversion operator returning the memory address of the data.
         // Very convenient to pass the data pointer as a parameter to functions.
@@ -556,12 +559,12 @@ namespace easy3d {
 
     /// Compute a vector that is orthogonal to the given vector.
     template <class T> inline Vec<3, T> orthogonal(const Vec<3, T>& v) {
-        T absx = ::fabs(v.x);
-        T absy = ::fabs(v.y);
-        T absz = ::fabs(v.z);
+        T absx = std::fabs(v.x);
+        T absy = std::fabs(v.y);
+        T absz = std::fabs(v.z);
         // Find smallest component. Keep equal case for null values.
         if ((absy >= absx) && (absz >= absx))
-            return Vec<3, T>(0.0, -v.z, v.y);
+            return Vec<3, T>(0.0f, -v.z, v.y);
         else
             if ((absx >= absy) && (absz >= absy))
                 return Vec<3, T>(-v.z, 0.0f, v.x);
@@ -634,6 +637,9 @@ namespace easy3d {
 
         T* data() { return _array; }
         const T* data() const { return _array; }
+
+        // the (x, y, z) components
+        Vec<3, T> xyz() const { return  Vec<3, T>(x, y, z); }
 
         // Conversion operator returning the memory address of the data.
         // Very convenient to pass the data pointer as a parameter to functions.

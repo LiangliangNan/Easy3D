@@ -136,9 +136,10 @@ namespace easy3d {
 
 
 namespace easy3d {
+    //\cond
 
     // The following two functions are for vectors to be handled as json's built-in types.
-    //\cond
+
     template<typename Vec>
     void to_json(nlohmann::json &j, const Vec &v) {
         j = std::vector<typename Vec::FT>((const typename Vec::FT *) (v), v + v.size());
@@ -281,6 +282,16 @@ namespace easy3d {
             return true;
         }
 
+#define DECODE(key, var) {                                                           \
+            auto pos = settings.find(key);                                           \
+            if (pos != settings.end()) {                                             \
+                auto val_pos = pos->find(#var);                                      \
+                if (val_pos != pos->end())  (var) = *val_pos;                          \
+                else LOG(WARNING) << "value does not exist for variable: " << #var;  \
+            }                                                                        \
+            else LOG(WARNING) << "value does not exist for variable: " << #var;      \
+        }
+
         // Load the rendering parameters from a file.
         bool load(const std::string &file_name) {
             std::ifstream input(file_name);
@@ -292,16 +303,6 @@ namespace easy3d {
             // read a JSON file
             nlohmann::json settings;
             input >> settings;
-
-#define DECODE(key, var) {                                                           \
-            auto pos = settings.find(key);                                           \
-            if (pos != settings.end()) {                                             \
-                auto val_pos = pos->find(#var);                                      \
-                if (val_pos != pos->end())  var = *val_pos;                          \
-                else LOG(WARNING) << "value does not exist for variable: " << #var;  \
-            }                                                                        \
-            else LOG(WARNING) << "value does not exist for variable: " << #var;      \
-        }
 
             // background color of the viewer
             DECODE("global", background_color)

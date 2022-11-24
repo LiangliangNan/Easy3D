@@ -137,15 +137,14 @@ namespace easy3d {
             class VertexGroup : public std::vector<int>
             {
             public:
-                VertexGroup(int type = UNKNOWN)
+                explicit VertexGroup(int type = UNKNOWN)
                     : primitive_type_(type)
                     , primitive_index_(-1)
                     , label_("unknown")
                     , color_(0.3f, 0.6f, 1.0f)
-                    , parent_(nullptr)
                 {
                 }
-                ~VertexGroup() {}
+                ~VertexGroup() = default;
 
                 enum PrimType { // keep the values the same as in RANSAC
                     PLANE = 0,
@@ -159,13 +158,12 @@ namespace easy3d {
 
                 //      - "v:primitive_type"  (one of PLANE, SPHERE, CYLINDER, CONE, TORUS, and UNKNOWN)
                 //      - "v:primitive_index" (-1, 0, 1, 2...). -1 meaning a vertex does not belong to any primitive (thus its
-                //        primtive_type must be UNKNOWN.
+                //        primitive_type must be UNKNOWN).
                 int primitive_type_;
                 int primitive_index_;
 
                 std::string		label_;
                 vec3			color_;
-                VertexGroup*	parent_;
                 std::vector<VertexGroup>	children_;
             };
 

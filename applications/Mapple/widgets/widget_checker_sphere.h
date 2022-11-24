@@ -44,7 +44,7 @@ class WidgetCheckerSphere : public QOpenGLWidget
     Q_OBJECT
 public:
     explicit WidgetCheckerSphere(QWidget *parent = nullptr);
-    virtual ~WidgetCheckerSphere() override;
+    ~WidgetCheckerSphere() override;
 
     void setBackgroundColor(const QColor& c) { backgroundColor_ = c; }
     const QColor& backgroundColor() const { return backgroundColor_; }
@@ -56,14 +56,14 @@ public Q_SLOTS:
     void resetLightPosition();
 
 private slots:
-    virtual void mousePressEvent(QMouseEvent *) override;
-    virtual void mouseMoveEvent(QMouseEvent *) override;
-    virtual void mouseReleaseEvent(QMouseEvent *) override;
+    void mousePressEvent(QMouseEvent *) override;
+    void mouseMoveEvent(QMouseEvent *) override;
+    void mouseReleaseEvent(QMouseEvent *) override;
 
 protected:
-    virtual void initializeGL() override;
-    virtual void resizeGL(int width, int height) override;
-    virtual void paintGL() override;
+    void initializeGL() override;
+    void resizeGL(int width, int height) override;
+    void paintGL() override;
 
 private:
     void createSpheres();

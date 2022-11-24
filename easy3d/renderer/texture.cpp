@@ -85,7 +85,7 @@ namespace easy3d {
         }
 
         GLuint tex = 0;
-        glGenTextures(1, &tex); easy3d_debug_log_gl_error;
+        glGenTextures(1, &tex); easy3d_debug_log_gl_error
         if (!tex) {
             LOG(ERROR) << "failed to generate the requested texture";
             return nullptr;
@@ -142,7 +142,7 @@ namespace easy3d {
         }
 
         glBindTexture(GL_TEXTURE_2D, tex);
-        easy3d_debug_log_gl_error;
+        easy3d_debug_log_gl_error
 
         // To be robust to handle
         // - R, RG or RGB textures which are not 4-bytes floats, or the width is not divisible by 4.
@@ -152,23 +152,23 @@ namespace easy3d {
         glGetIntegerv(GL_UNPACK_ALIGNMENT, &align);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
-        easy3d_debug_log_gl_error;
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
-        easy3d_debug_log_gl_error;
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);
-        easy3d_debug_log_gl_error;
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);
-        easy3d_debug_log_gl_error;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, static_cast<int>(filter));
+        easy3d_debug_log_gl_error
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, static_cast<int>(filter));
+        easy3d_debug_log_gl_error
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, static_cast<int>(wrap));
+        easy3d_debug_log_gl_error
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, static_cast<int>(wrap));
+        easy3d_debug_log_gl_error
 
-        glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, format, GL_UNSIGNED_BYTE, rgb_data.data());
-        easy3d_debug_log_gl_error;
+        glTexImage2D(GL_TEXTURE_2D, 0, static_cast<int>(internal_format), width, height, 0, format, GL_UNSIGNED_BYTE, rgb_data.data());
+        easy3d_debug_log_gl_error
         glBindTexture(GL_TEXTURE_2D, 0);
-        easy3d_debug_log_gl_error;
+        easy3d_debug_log_gl_error
 
         glPixelStorei(GL_UNPACK_ALIGNMENT, align);
 
-        Texture *texture = new Texture;
+        auto texture = new Texture;
         texture->wrap_mode_ = wrap_mode;
         texture->filter_mode_ = filter_mode;
 
@@ -181,13 +181,13 @@ namespace easy3d {
     }
 
 
-    void Texture::bind(int unit) {
+    void Texture::bind(int unit) const {
         glActiveTexture(GL_TEXTURE0 + unit);
         glBindTexture(GL_TEXTURE_2D, id_);
     }
 
 
-    void Texture::release() {
+    void Texture::release() const {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, 0);
     }

@@ -69,7 +69,7 @@ namespace easy3d {
         for (i = 0, length = 0.0; i < n; ++i)
             length += distance(points[loop[i]], points[loop[(i + 1) % n]]);
 
-        // map length intervalls to unit circle intervals
+        // map length intervals to unit circle intervals
         for (i = 0, l = 0.0; i < n;) {
             // go from 2pi to 0 to preserve orientation
             angle = 2.0 * M_PI * (1.0 - l / length);
@@ -109,7 +109,7 @@ namespace easy3d {
 
         // collect free (non-boundary) vertices in array free_vertices[]
         // assign indices such that idx[ free_vertices[i] ] == i
-        unsigned i = 0;
+        int i = 0;
         std::vector<SurfaceMesh::Vertex> free_vertices;
         free_vertices.reserve(mesh_->n_vertices());
         for (auto v : mesh_->vertices()) {
@@ -196,7 +196,7 @@ namespace easy3d {
             return false;
         }
 
-        // find boundary vertices with largest distance
+        // find boundary vertices with the largest distance
         float diam(0.0), d;
         SurfaceMesh::Vertex v1, v2;
         for (auto vv1 : boundary) {
@@ -288,12 +288,12 @@ namespace easy3d {
 
         // collect free (non-boundary) vertices in array free_vertices[]
         // assign indices such that idx[ free_vertices[i] ] == i
-        unsigned i = 0;
+        int id = 0;
         std::vector<SurfaceMesh::Vertex> free_vertices;
         free_vertices.reserve(mesh_->n_vertices());
         for (auto v : mesh_->vertices()) {
             if (!locked[v]) {
-                idx[v] = i++;
+                idx[v] = id++;
                 free_vertices.push_back(v);
             }
         }
@@ -303,7 +303,6 @@ namespace easy3d {
         const unsigned int nv = mesh_->n_vertices();
         const unsigned int n = free_vertices.size();
         SurfaceMesh::Vertex vi, vj;
-        SurfaceMesh::Halfedge hh;
         double si, sj0, sj1, sign;
         int row(0), c0, c1;
 
@@ -376,7 +375,7 @@ namespace easy3d {
             LOG(ERROR) << "failed solving the linear system";
         } else {
             // copy solution
-            for (i = 0; i < n; ++i) {
+            for (unsigned int i = 0; i < n; ++i) {
                 tex[free_vertices[i]] = vec2(x[i], x[i + n]);
             }
         }

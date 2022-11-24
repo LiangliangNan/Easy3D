@@ -64,10 +64,10 @@ namespace easy3d {
         Heap() : HeapVector() {}
 
         //! \brief Construct with a given \c HeapInterface.
-        Heap(const HeapInterface &i) : HeapVector(), interface_(i) {}
+        explicit Heap(const HeapInterface &i) : HeapVector(), interface_(i) {}
 
         //! \brief Destructor.
-        ~Heap() {};
+        ~Heap() = default;
 
         //! \brief clear the heap
         void clear() { HeapVector::clear(); }

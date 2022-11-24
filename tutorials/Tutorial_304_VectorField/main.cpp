@@ -49,28 +49,28 @@ int main(int argc, char **argv) {
 
     // Load point cloud data from a file
     const std::string file_name = resource::directory() + "/data/sphere.obj";
-    SurfaceMesh *model = dynamic_cast<SurfaceMesh *>(viewer.add_model(file_name, true));
-    if (!model) {
+    auto mesh = dynamic_cast<SurfaceMesh *>(viewer.add_model(file_name, true));
+    if (!mesh) {
         LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
         return EXIT_FAILURE;
     }
 
     // Get the bounding box of the model. Then we defined the length of the
     // normal vectors to be 5% of the bounding box diagonal.
-    const Box3 &box = model->bounding_box();
+    const Box3 &box = mesh->bounding_box();
     float length = norm(box.max_point() - box.min_point()) * 0.05f;
 
     // Compute the face normals.
-    model->update_face_normals();
-    auto normals = model->get_face_property<vec3>("f:normal");
+    mesh->update_face_normals();
+    auto normals = mesh->get_face_property<vec3>("f:normal");
 
     // Every consecutive two points represent a normal vector.
     std::vector<vec3> points;
-    for (auto f : model->faces()) {
+    for (auto f : mesh->faces()) {
         vec3 center(0, 0, 0); // face center
         int count = 0;
-        for (auto v : model->vertices(f)) {
-            center += model->position(v);
+        for (auto v : mesh->vertices(f)) {
+            center += mesh->position(v);
             ++count;
         }
 
@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
     }
 
     // Create a drawable for rendering the normal vectors.
-    auto drawable = model->renderer()->add_lines_drawable("normals");
+    auto drawable = mesh->renderer()->add_lines_drawable("normals");
     // Upload the data to the GPU.
     drawable->update_vertex_buffer(points);
 
@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
     drawable->set_line_width(3.0f);
 
     // Also show the standard "edges"
-    model->renderer()->get_lines_drawable("edges")->set_visible(true);
+    mesh->renderer()->get_lines_drawable("edges")->set_visible(true);
 
     // Run the viewer
     return viewer.run();

@@ -59,8 +59,8 @@ DialogProperties::DialogProperties(MainWindow *window)
 
     comboBoxCommand->addItem("Remove");
     comboBoxCommand->addItem("Rename");
-    comboBoxCommand->addItem("Convert Data Type");
-    comboBoxCommand->addItem("Generate Color Property");
+    comboBoxCommand->addItem("Convert data type");
+    comboBoxCommand->addItem("Generate color property");
     comboBoxCommand->setCurrentIndex(0);
 
     comboBoxSourceType->setEditable(false);
@@ -94,11 +94,6 @@ DialogProperties::DialogProperties(MainWindow *window)
 }
 
 
-DialogProperties::~DialogProperties() {
-
-}
-
-
 void DialogProperties::commandChanged(const QString &) {
     const QString &command = comboBoxCommand->currentText();
     if (command == "Remove") {
@@ -119,7 +114,7 @@ void DialogProperties::commandChanged(const QString &) {
         comboBoxSourceType->setVisible(false);
         labelPropertyTo->setVisible(false);
         comboBoxTargetType->setVisible(false);
-    } else if (command == "Convert Data Type") {
+    } else if (command == "Convert data type") {
         labelPropertyName->setText("Property");
         labelNewPropertyName->setText("New name");
         labelNewPropertyName->setVisible(false);
@@ -128,7 +123,7 @@ void DialogProperties::commandChanged(const QString &) {
         comboBoxSourceType->setVisible(true);
         labelPropertyTo->setVisible(true);
         comboBoxTargetType->setVisible(true);
-    } else if (command == "Generate Color Property") {
+    } else if (command == "Generate color property") {
         labelPropertyName->setText("Property");
         labelNewPropertyName->setVisible(false);
         lineEditNewPropertyName->setVisible(false);
@@ -1156,8 +1151,7 @@ void DialogProperties::updateProperties() {
     }
     modelChanged(comboBoxModels->currentText());
 
-    connect(comboBoxModels, SIGNAL(currentIndexChanged(const QString &)), this,
-            SLOT(modelChanged(const QString &)));
+    connect(comboBoxModels, SIGNAL(currentIndexChanged(QString)), this, SLOT(modelChanged(QString)));
 }
 
 
@@ -1176,9 +1170,9 @@ void DialogProperties::applyCommand() {
         }
     } else if (command == "Rename")
         succeed = renameProperty();
-    else if (command == "Convert Data Type")
+    else if (command == "Convert data type")
         succeed = convertPropertyDataType();
-    else if (command == "Generate Color Property")
+    else if (command == "Generate color property")
         succeed = generateColorProperty();
 
     if (succeed) {

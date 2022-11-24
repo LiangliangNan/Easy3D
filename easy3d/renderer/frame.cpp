@@ -754,8 +754,7 @@ namespace easy3d {
 
 	The rotation (and translation when \p move is \c true) applied to the Frame are
 	filtered by the possible constraint(). */
-	void Frame::alignWithFrame(const Frame *const frame, bool move,
-		float threshold) {
+	void Frame::alignWithFrame(const Frame *const frame, bool move, float threshold) {
 		vec3 directions[2][3];
 		for (unsigned short d = 0; d < 3; ++d) {
 			vec3 dir((d == 0) ? 1.0f : 0.0f, (d == 1) ? 1.0f : 0.0f, (d == 2) ? 1.0f : 0.0f);
@@ -766,38 +765,38 @@ namespace easy3d {
 			directions[1][d] = inverseTransformOf(dir);
 		}
 
-		float maxProj = 0.0;
-		float proj;
+		float maxProj = 0.0f;
 		unsigned short index[2];
 		index[0] = index[1] = 0;
 		for (unsigned short i = 0; i < 3; ++i)
-			for (unsigned short j = 0; j < 3; ++j)
-				if ((proj = fabs(dot(directions[0][i], directions[1][j]))) >= maxProj)
-				{
-					index[0] = i;
-					index[1] = j;
-					maxProj = proj;
-				}
+			for (unsigned short j = 0; j < 3; ++j) {
+                const float proj = fabs(dot(directions[0][i], directions[1][j]));
+                if (proj >= maxProj) {
+                    index[0] = i;
+                    index[1] = j;
+                    maxProj = proj;
+                }
+            }
 
 		Frame old;
 		old = *this;
 
-		float coef = dot(directions[0][index[0]], directions[1][index[1]]);
-		if (fabs(coef) >= threshold) {
-			const vec3 axis = cross(directions[0][index[0]], directions[1][index[1]]);
+		const float coef = dot(directions[0][index[0]], directions[1][index[1]]);
+		if (std::fabs(coef) >= threshold) {
+			vec3 axis = cross(directions[0][index[0]], directions[1][index[1]]);
 			float angle = asin(axis.norm());
 			if (coef >= 0.0)
 				angle = -angle;
 			rotate(rotation().inverse() * quat(axis, angle) * orientation());
 
-			// Try to align an other axis direction
+			// Try to align another axis direction
 			unsigned short d = (index[1] + 1) % 3;
 			vec3 dir((d == 0) ? 1.0f : 0.0f, (d == 1) ? 1.0f : 0.0f, (d == 2) ? 1.0f : 0.0f);
 			dir = inverseTransformOf(dir);
 
-			float max = 0.0;
+			float max = 0.0f;
 			for (unsigned short i = 0; i < 3; ++i) {
-				float proj = fabs(dot(directions[0][i], dir));
+                const float proj = std::fabs(dot(directions[0][i], dir));
 				if (proj > max) {
 					index[0] = i;
 					max = proj;
@@ -805,8 +804,8 @@ namespace easy3d {
 			}
 
 			if (max >= threshold) {
-				const vec3 axis = cross(directions[0][index[0]], dir);
-				float angle = asin(axis.norm());
+				axis = cross(directions[0][index[0]], dir);
+                angle = asin(axis.norm());
 				if (dot(directions[0][index[0]], dir) >= 0.0f)
 					angle = -angle;
 				rotate(rotation().inverse() * quat(axis, angle) * orientation());
@@ -832,8 +831,8 @@ namespace easy3d {
 		// If you are trying to find a bug here, because of memory problems, you waste
 		// your time. This is a bug in the gcc 3.3 compiler. Compile the library in
 		// debug mode and test. Uncommenting this line also seems to solve the
-		// problem. Horrible. cout << "position = " << position() << endl; If you
-		// found a problem or are using a different compiler, please let me know.
+		// problem. Horrible. cout << "position = " << position() << endl;
+        // If you found a problem or are using a different compiler, please let me know.
 		const vec3& shift = origin - position();
 		const Line3& line = Line3::from_point_and_direction(vec3(0, 0, 0), vec3(direction));
 		const vec3& proj = line.projection(shift);

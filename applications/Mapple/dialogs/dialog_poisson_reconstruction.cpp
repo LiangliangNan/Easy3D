@@ -61,10 +61,6 @@ DialogPoissonReconstruction::DialogPoissonReconstruction(MainWindow *window) :
 }
 
 
-DialogPoissonReconstruction::~DialogPoissonReconstruction() {
-}
-
-
 void DialogPoissonReconstruction::resetParameters() {
     spinBoxOctreeDepth->setValue(default_octree_depth_);
     spinBoxSamplesPerNode->setValue(default_samples_per_node_);
@@ -83,14 +79,14 @@ void DialogPoissonReconstruction::showHint(bool b) {
 
 
 void DialogPoissonReconstruction::reconstruct() {
-    PointCloud *cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
+    auto cloud = dynamic_cast<PointCloud *>(viewer_->currentModel());
     if (cloud) {
         int octree_depth = spinBoxOctreeDepth->value();
-        float sampers_per_node = spinBoxSamplesPerNode->value();
+        double samples_per_node = spinBoxSamplesPerNode->value();
 
         PoissonReconstruction recon;
         recon.set_depth(octree_depth);
-        recon.set_sampers_per_node(sampers_per_node);
+        recon.set_samples_per_node(samples_per_node);
 
         SurfaceMesh *mesh = recon.apply(cloud, density_attr_name_);
         if (mesh) {
@@ -105,7 +101,7 @@ void DialogPoissonReconstruction::reconstruct() {
 
 
 void DialogPoissonReconstruction::trim() {
-    SurfaceMesh *mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
+    auto mesh = dynamic_cast<SurfaceMesh *>(viewer_->currentModel());
     if (mesh) {
         double trim_value = doubleSpinBoxTrimValue->value();
         double area_ratio = doubleSpinBoxIslandAreaRatio->value();

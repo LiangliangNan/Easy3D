@@ -40,8 +40,8 @@ class DialogProperties : public Dialog, public Ui::DialogProperties {
 Q_OBJECT
 
 public:
-    DialogProperties(MainWindow *window);
-    ~DialogProperties();
+    explicit DialogProperties(MainWindow *window);
+    ~DialogProperties() override = default;
 
 private Q_SLOTS:
 

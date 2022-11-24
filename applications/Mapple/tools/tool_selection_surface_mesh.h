@@ -44,8 +44,8 @@ namespace easy3d {
 
         class ToolSurfaceMeshFaceSelection : public Tool {
         public:
-            ToolSurfaceMeshFaceSelection(ToolManager *mgr);
-            virtual ~ToolSurfaceMeshFaceSelection() {}
+            explicit ToolSurfaceMeshFaceSelection(ToolManager *mgr);
+            ~ToolSurfaceMeshFaceSelection() override = default;
 
             void update_render_buffer(SurfaceMesh* mesh) const;
         };
@@ -55,9 +55,9 @@ namespace easy3d {
         class ToolSurfaceMeshFaceSelectionClick : public ToolSurfaceMeshFaceSelection {
         public:
             ToolSurfaceMeshFaceSelectionClick(ToolManager *mgr, SurfaceMeshPicker *picker, SelectMode mode = SM_SELECT);
-            virtual ~ToolSurfaceMeshFaceSelectionClick();
+            ~ToolSurfaceMeshFaceSelectionClick() override;
 
-            virtual void press(int x, int y);
+            void press(int x, int y) override;
 
 		    SurfaceMesh* multiple_pick(SurfaceMesh::Face& f, int x, int y);
 
@@ -73,9 +73,9 @@ namespace easy3d {
         public:
             ToolSurfaceMeshFaceSelectionRect(ToolManager *mgr, SurfaceMeshPicker *picker, SelectMode mode = SM_SELECT);
 
-            virtual void press(int x, int y) override;
-            virtual void drag(int x, int y) override;
-            virtual void release(int x, int y) override;
+            void press(int x, int y) override;
+            void drag(int x, int y) override;
+            void release(int x, int y) override;
 
         protected:
             SurfaceMeshPicker *picker_;
@@ -89,9 +89,9 @@ namespace easy3d {
         public:
             ToolSurfaceMeshFaceSelectionLasso(ToolManager *mgr, SurfaceMeshPicker *picker, SelectMode mode = SM_SELECT);
 
-            virtual void press(int x, int y) override;
-            virtual void drag(int x, int y) override;
-            virtual void release(int x, int y) override;
+            void press(int x, int y) override;
+            void drag(int x, int y) override;
+            void release(int x, int y) override;
 
         protected:
             SurfaceMeshPicker *picker_;
@@ -105,8 +105,8 @@ namespace easy3d {
         // (message, "btn1: select point; btn3: deselect point");
         class MultitoolSurfaceMeshFaceSelectionClick : public MultiTool {
         public:
-            MultitoolSurfaceMeshFaceSelectionClick(ToolManager *mgr);
-            ~MultitoolSurfaceMeshFaceSelectionClick();
+            explicit MultitoolSurfaceMeshFaceSelectionClick(ToolManager *mgr);
+            ~MultitoolSurfaceMeshFaceSelectionClick() override;
 
             void prepare_hint(ToolButton button, int x, int y) override;
             void clear_hint() override;
@@ -124,8 +124,8 @@ namespace easy3d {
         // (message, "btn1: select point; btn3: deselect point");
         class MultitoolSurfaceMeshFaceSelectionRect : public MultiTool {
         public:
-            MultitoolSurfaceMeshFaceSelectionRect(ToolManager *mgr);
-            ~MultitoolSurfaceMeshFaceSelectionRect();
+            explicit MultitoolSurfaceMeshFaceSelectionRect(ToolManager *mgr);
+            ~MultitoolSurfaceMeshFaceSelectionRect() override;
 
             void press(ToolButton button, int x, int y) override;
             void release(ToolButton button, int x, int y) override;
@@ -146,8 +146,8 @@ namespace easy3d {
         // (message, "btn1: select point; btn3: deselect point");
         class MultitoolSurfaceMeshFaceSelectionLasso : public MultiTool {
         public:
-            MultitoolSurfaceMeshFaceSelectionLasso(ToolManager *mgr);
-            ~MultitoolSurfaceMeshFaceSelectionLasso();
+            explicit MultitoolSurfaceMeshFaceSelectionLasso(ToolManager *mgr);
+            ~MultitoolSurfaceMeshFaceSelectionLasso() override;
 
             void press(ToolButton button, int x, int y) override;
             void prepare_hint(ToolButton button, int x, int y) override;

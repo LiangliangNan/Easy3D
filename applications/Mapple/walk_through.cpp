@@ -146,9 +146,9 @@ void WalkThrough::generate_camera_path(const easy3d::Line3 &axis) {
     const auto pitch_angle = geom::to_radians(rotate_pitch_angle_);
     const auto pitch_offset = dist_to_axis * std::tan(pitch_angle);
 
-    const float angle_step = static_cast<float>(2.0 * M_PI / rotate_keyframe_samples_);
+    const auto angle_step = static_cast<float>(2.0 * M_PI / rotate_keyframe_samples_);
     for (int i=0; i<rotate_keyframe_samples_ * rotate_num_loops_; ++i) {
-        easy3d::quat q(up, -angle_step * i); // "-" for counterclockwise rotation
+        easy3d::quat q(up, -angle_step * static_cast<float>(i)); // "-" for counterclockwise rotation
         const auto relative_cam = q.rotate(relative_cam0);
         Camera cam;
         cam.setPosition(at + relative_cam);
@@ -222,7 +222,7 @@ void WalkThrough::delete_last_keyframe() {
     kfi_->delete_last_keyframe();
 
     if (follow_up_)
-        move_to(kfi_->number_of_keyframes() - 1);
+        move_to(static_cast<int>(kfi_->number_of_keyframes() - 1));
 }
 
 
@@ -281,7 +281,7 @@ void WalkThrough::add_keyframe(const vec3 &cam_pos, const vec3 &view_dir) {
     add_keyframe(Frame(cam_pos, to_orientation(dir)));
 
     if (follow_up_)
-        move_to(kfi_->number_of_keyframes() - 1); // move to the new view point.
+        move_to(static_cast<int>(kfi_->number_of_keyframes() - 1)); // move to the new view point.
 }
 
 
@@ -306,9 +306,8 @@ vec3 WalkThrough::character_head(const vec3 &pos) const {
 quat WalkThrough::to_orientation(const vec3 &view_dir) const {
     const vec3 &up_dir = ground_plane_normal_;
     vec3 xAxis = cross(view_dir, up_dir);
-    if (xAxis.length2() <
-        epsilon_sqr<float>()) {    // target is aligned with upVector, this means a rotation around X axis
-        // X axis is then unchanged, let's keep it !
+    if (xAxis.length2() < epsilon_sqr<float>()) {    // target is aligned with this upVector, meaning a rotation around the X axis.
+        // The X axis is then unchanged, so let's keep it!
         // rightVector() == camera_->frame()->inverseTransformOf(vec3(1.0, 0.0, 0.0));
         xAxis = camera_->rightVector();
     }

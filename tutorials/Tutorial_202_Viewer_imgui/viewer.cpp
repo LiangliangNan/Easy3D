@@ -59,14 +59,21 @@ namespace easy3d {
         , alpha_(0.8f)
         , movable_(true)
 	{
-        // Liangliang: 
-        //      IMPORTANT: the internal glfw won't be shared accross dll boundaries
-        glfwInit();
-
         camera()->setUpVector(vec3(0, 1, 0));
         camera()->setViewDirection(vec3(0, 0, -1));
         camera_->showEntireScene();
 	}
+
+
+    ViewerImGui::~ViewerImGui() {
+        ImGui_ImplOpenGL3_Shutdown();
+        ImGui_ImplGlfw_Shutdown();
+
+        ImGui::DestroyContext(context_);
+
+        // Not needed: it will be called in the destructor of the base class
+        //Viewer::cleanup();
+    }
 
 
     void ViewerImGui::init() {
@@ -107,7 +114,7 @@ namespace easy3d {
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		io.Fonts->Clear();
-        io.Fonts->AddFontFromMemoryCompressedTTF(droid_sans_compressed_data, droid_sans_compressed_size, font_size * dpi_scaling());
+        io.Fonts->AddFontFromMemoryCompressedTTF(droid_sans_compressed_data, droid_sans_compressed_size, static_cast<float>(font_size) * dpi_scaling());
 		io.FontGlobalScale = 1.0f / pixel_ratio();
         ImGui_ImplOpenGL3_DestroyDeviceObjects();
 	}
@@ -162,20 +169,6 @@ namespace easy3d {
 	}
 
 
-    void ViewerImGui::cleanup() {
-		ImGui_ImplOpenGL3_Shutdown();
-		ImGui_ImplGlfw_Shutdown();
-
-		ImGui::DestroyContext(context_);
-
-        Viewer::cleanup();
-
-        // Liangliang: 
-        //      IMPORTANT: the internal glfw won't be shared accross dll boundaries
-        glfwTerminate();
-	}
-
-
     void ViewerImGui::pre_draw() {
         ImGui_ImplGlfw_NewFrame();
         ImGui_ImplOpenGL3_NewFrame();
@@ -206,12 +199,12 @@ namespace easy3d {
                 const std::string& name = "Current model: " + file_system::simple_name(current_model()->name());
                 ImGui::Text("%s", name.c_str());
                 if (dynamic_cast<PointCloud*>(current_model())) {
-                    PointCloud* cloud = dynamic_cast<PointCloud*>(current_model());
+                    auto cloud = dynamic_cast<PointCloud*>(current_model());
                     ImGui::Text("Type: point cloud");
                     ImGui::Text("#Vertices: %i", cloud->n_vertices());
                 }
                 else if (dynamic_cast<SurfaceMesh*>(current_model())) {
-                    SurfaceMesh* mesh = dynamic_cast<SurfaceMesh*>(current_model());
+                    auto mesh = dynamic_cast<SurfaceMesh*>(current_model());
                     ImGui::Text("Type: surface mesh");
                     ImGui::Text("#Faces: %i", mesh->n_faces());
                     ImGui::Text("#Vertices: %i", mesh->n_vertices());
@@ -224,7 +217,7 @@ namespace easy3d {
             viewer_size(w, h);
             float x = ImGui::GetIO().MousePos.x;
             float y = ImGui::GetIO().MousePos.y;
-            if (x >= 0 && x <= w && y >= 0 && y <= h) {
+            if (x >= 0 && x <= static_cast<float>(w) && y >= 0 && y <= static_cast<float>(h)) {
                 ImGui::Text("Mouse Position: (%i, %i)", static_cast<int>(x), static_cast<int>(y));
                 bool target = false;
                 const vec3& p = point_under_pixel(static_cast<int>(x), static_cast<int>(y), target);
@@ -259,11 +252,9 @@ namespace easy3d {
 
         static bool show_about = false;
 		if (show_about) {
-            ImGui::SetNextWindowPos(ImVec2(width() * 0.5f, height() * 0.5f), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+            ImGui::SetNextWindowPos(ImVec2(static_cast<float>(width()) * 0.5f, static_cast<float>(height()) * 0.5f), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
             ImGui::Begin("About Easy3D ImGui Viewer", &show_about, ImGuiWindowFlags_NoResize);
-			ImGui::Text(
-                "This viewer shows how to use ImGui for GUI creation and event handling"
-			);
+			ImGui::Text("This viewer shows how to use ImGui for GUI creation and event handling");
 			ImGui::Separator();
 			ImGui::Text(
 				"\n"
@@ -276,9 +267,7 @@ namespace easy3d {
 
 		static bool show_manual = false;
 		if (show_manual) {
-			int w, h;
-            viewer_size(w, h);
-			ImGui::SetNextWindowPos(ImVec2(w * 0.5f, h * 0.5f), ImGuiCond_FirstUseEver, ImVec2(0.5f, 0.5f));
+			ImGui::SetNextWindowPos(ImVec2(static_cast<float>(width()) * 0.5f, static_cast<float>(height()) * 0.5f), ImGuiCond_FirstUseEver, ImVec2(0.5f, 0.5f));
 			ImGui::Begin("Easy3D Manual", &show_manual, ImGuiWindowFlags_NoResize);
             ImGui::Text("%s", usage().c_str());
 			ImGui::End();
@@ -298,7 +287,7 @@ namespace easy3d {
                 ImGui::MenuItem("About", nullptr, &show_about);
 				ImGui::EndMenu();
 			}
-			menu_height_ = ImGui::GetWindowHeight();
+			//float menu_height = ImGui::GetWindowHeight();
 			ImGui::EndMainMenuBar();
 		}
         ImGui::PopStyleVar();
@@ -315,7 +304,7 @@ namespace easy3d {
         // draw Easy3D logo
         if (texter_) {
             const float font_size = 15.0f;
-            const float offset_x = (width() * 0.5f - texter_->string_width("Easy3D", font_size) * 0.5f) * dpi_scaling();
+            const float offset_x = (static_cast<float>(width()) * 0.5f - texter_->string_width("Easy3D", font_size) * 0.5f) * dpi_scaling();
             const float offset_y = 50.0f * dpi_scaling();
             texter_->draw("Easy3D", offset_x, offset_y, font_size, 0);
         }
@@ -371,6 +360,7 @@ namespace easy3d {
                     case 1: ImGui::StyleColorsDark(); break;
                     case 2: ImGui::StyleColorsLight(); break;
                     }
+                    update();
                 }
 
                 ImGui::Checkbox("Panel Movable", &movable_);

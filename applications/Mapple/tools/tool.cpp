@@ -89,8 +89,8 @@ namespace easy3d {
         }
 
         void MultiTool::draw_rect(const Rect& rect) const {
-            int w = rect.width();
-            int h = rect.height();
+            auto w = rect.width();
+            auto h = rect.height();
             if (w <= 0 || h <=0)
                 return;
 
