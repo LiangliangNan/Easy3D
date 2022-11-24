@@ -346,18 +346,20 @@ namespace easy3d {
          * @param y The cursor y-coordinate, relative to the top edge of the content area.
          * @param found indicates whether the point was found or not.
          * @return The coordinates of the 3D point located at pixel (x,y) on screen. The returned point is valid only
-         *         if found was returned true.
-         * @attention The screen point (x, y) is expressed in the screen coordinate system with an origin in the upper
-         *            left corner. So it doesn't necessarily correspond to a pixel on High DPI devices, e.g. a Mac with
-         *            a Retina display.
+         *      if found was returned true.
+         * @attention The screen point (x, y) is expressed in the screen coordinate system with an origin in the
+         *      upper left corner. So it doesn't necessarily correspond to a pixel on High DPI devices, e.g., a
+         *      Mac with a Retina display. If your inherited viewer uses a customized content area, you must also
+         *      reimplement this function such that the x and y are relative to left and top edges of the content
+         *      area, respectively.
          * @note This method assumes that a GL context is available, and that its content was drawn using the Camera
-         *       (i.e. using its projection and model-view matrices). This method hence cannot be used for offscreen
-         *       Camera computations. Use cameraCoordinatesOf() and worldCoordinatesOf() to perform similar operations
-         *       in that case. The precision of the method highly depends on the z-Buffer, i.e., how the zNear() and
-         *       zFar() values are fitted to your scene. Loose boundaries will result in imprecision along the viewing
-         *       direction.
+         *      (i.e. using its projection and model-view matrices). This method hence cannot be used for offscreen
+         *      Camera computations. Use cameraCoordinatesOf() and worldCoordinatesOf() to perform similar operations
+         *      in that case. The precision of the method highly depends on the z-Buffer, i.e., how the zNear() and
+         *      zFar() values are fitted to your scene. Loose boundaries will result in imprecision along the viewing
+         *      direction.
          */
-		vec3 point_under_pixel(int x, int y, bool &found) const;
+		virtual vec3 point_under_pixel(int x, int y, bool &found) const;
 
         /**
          * @brief The usage information of the viewer. For the time being, it is the manual of the

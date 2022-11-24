@@ -1032,7 +1032,7 @@ namespace easy3d {
         easy3d_debug_log_gl_error
         found = depth < 1.0f;
         if (found) {
-            vec3 point(float(x), float(y), depth);
+            vec3 point(static_cast<float>(x), static_cast<float>(y), depth);
             // The input to unprojectedCoordinatesOf() is defined in the screen coordinate system
             point = camera_->unprojectedCoordinatesOf(point);
             return point;
@@ -1140,8 +1140,7 @@ namespace easy3d {
 
     std::string Viewer::usage() const {
         if (usage_string_.empty())
-            return std::string(
-                 " ------------------------------------------------------------------\n"
+            return (" ------------------------------------------------------------------\n"
                     " Easy3D viewer usage:                                              \n"
                     " ------------------------------------------------------------------\n"
                     "  F1:                  Help                                        \n"
@@ -1187,8 +1186,7 @@ namespace easy3d {
                     "  'v':                 Toggle vertices                             \n"
                     "  'm':                 Toggle smooth shading (for SurfaceMesh)     \n"
                     "  'd':                 Print model info (drawables, properties)    \n"
-                    " ------------------------------------------------------------------\n"
-            );
+                    " ------------------------------------------------------------------\n");
         else
             return usage_string_;
     }
