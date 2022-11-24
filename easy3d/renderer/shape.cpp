@@ -754,8 +754,8 @@ namespace easy3d {
             const auto step_theta = static_cast<float>(2.0 * M_PI / slices);
             for (int i = 0; i < slices; ++i) {
                 const float angle = static_cast<float>(i) * step_theta;
-                const float x = std::cosf(angle);
-                const float y = std::sinf(angle);
+                const float x = std::cos(angle);
+                const float y = std::sin(angle);
                 points.emplace_back(vec3(x, y, 0.f));
 
                 indices.push_back(i);
