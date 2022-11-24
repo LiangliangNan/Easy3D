@@ -274,9 +274,9 @@ namespace easy3d {
         // NOTE: fov is in radians and the 0.2f factor is important because we might get artifacts at the screen borders.
         auto fov = static_cast<float>(camera_->fieldOfView()) + 0.2f;
         auto ar = static_cast<float>(camera_->aspectRatio());
-        auto near = static_cast<float>(camera_->zNear());
-        auto far = static_cast<float>(camera_->zFar());
-        camera_frustum_->set_perspective(fov, ar, near, far);
+        auto znear = static_cast<float>(camera_->zNear());
+        auto zfar = static_cast<float>(camera_->zFar());
+        camera_frustum_->set_perspective(fov, ar, znear, zfar);
         const vec3& pos = camera_->position();
         const vec3& at = camera_->position() + camera_->viewDirection();
         const vec3& up = camera_->upVector();

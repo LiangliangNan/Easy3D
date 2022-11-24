@@ -47,7 +47,7 @@ namespace easy3d {
 
         template<typename T>
         inline void write(std::ostream &output, const std::set<T>& data) {
-            unsigned int size = data.size();
+            unsigned int size = static_cast<unsigned int>(data.size());
             output.write((char*)&size, sizeof(unsigned int));
             std::vector<T> array(data.begin(), data.end());
             output.write((char*)array.data(), size * sizeof(T));
@@ -63,7 +63,7 @@ namespace easy3d {
 
         template<typename T>
         inline void write(std::ostream &output, const std::vector<T>& data) {
-            unsigned int size = data.size();
+            unsigned int size = static_cast<unsigned int>(data.size());
             output.write((char*)&size, sizeof(unsigned int));
             output.write((char*)data.data(), size * sizeof(T));
         }

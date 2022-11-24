@@ -194,7 +194,7 @@ namespace easy3d {
                 return false;
             }
 
-            cloud->resize(num);
+            cloud->resize(static_cast<unsigned int>(num));
             std::vector<vec3>& points = cloud->points();
 
             if (Translator::instance()->status() == Translator::DISABLED) {

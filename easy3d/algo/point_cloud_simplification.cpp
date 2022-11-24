@@ -298,7 +298,7 @@ namespace easy3d {
         //---------------------------------------------------------------
 
         std::vector<unsigned int> original_index(num_original);
-        for (int i = 0; i < num_original; ++i)
+        for (unsigned int i = 0; i < num_original; ++i)
             original_index[i] = i;
 
         PointCloud *point_cloud = cloud;

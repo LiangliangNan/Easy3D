@@ -278,7 +278,7 @@ namespace easy3d {
                 std::vector<unsigned int> cam_indices;
                 shape::create_camera(cam_points, cam_indices, camera_width, camera->fieldOfView(),
                                       static_cast<float>(camera->screenHeight()) / static_cast<float>(camera->screenWidth()));
-                unsigned int offset = points.size();
+                unsigned int offset = static_cast<unsigned int>(points.size());
                 for (auto id : cam_indices)
                     indices.push_back(offset + id);
                 const mat4 &m = Frame(frame.position(), frame.orientation()).matrix();

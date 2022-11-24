@@ -453,7 +453,7 @@ namespace easy3d {
 
 #else
 
-    bool PointCloudNormals::reorient(PointCloud *cloud, unsigned int k) const
+    bool PointCloudNormals::reorient(PointCloud *cloud, unsigned int k)
     {
         LOG(ERROR) << "reorient point cloud normals requires boost";
         return false;

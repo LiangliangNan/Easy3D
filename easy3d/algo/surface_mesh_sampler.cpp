@@ -131,9 +131,9 @@ namespace easy3d {
                     quant_samples_num = num_needed - static_cast<int>(num_generated);
 
                 // generate points
-                for (unsigned int j = 0; j < quant_samples_num; j++) {
+                for (int j = 0; j < quant_samples_num; j++) {
                     // compute barycentric coords
-                    double s = sqrt(static_cast<double>(rand()) / static_cast<double>(RAND_MAX));
+                    double s = std::sqrt(static_cast<double>(rand()) / static_cast<double>(RAND_MAX));
                     double t = static_cast<double>(rand()) / static_cast<double>(RAND_MAX);
                     double c[3];
 
