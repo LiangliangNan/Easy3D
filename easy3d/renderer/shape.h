@@ -307,7 +307,7 @@ namespace easy3d {
 //            const float hw_ratio = static_cast<float>(height()) / width();
 //            const float halfWidth = camera()->sceneRadius() * 2;  // large enough to put the image plane behind the object
 //            const float halfHeight = halfWidth * hw_ratio;
-//            const float dist = halfHeight / tan(fov * 0.5);
+//            const float dist = halfHeight / std::tan(fov * 0.5);
 //
 //            // coordinates in camera frame
 //            const vec3 c(0.0f, 0.0f, 0.0f);  // camera center

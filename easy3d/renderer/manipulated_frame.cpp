@@ -143,8 +143,8 @@ namespace easy3d {
 		}
 		else {
 #if 0 // old implementation (should work)
-            const float prev_angle = atan2(pre_y - trans[1], pre_x - trans[0]);
-            const float angle = atan2(y - trans[1], x - trans[0]);
+            const float prev_angle = std::atan2(pre_y - trans[1], pre_x - trans[0]);
+            const float angle = std::atan2(y - trans[1], x - trans[0]);
             const vec3& axis = transformOf(camera->frame()->inverseTransformOf(vec3(0.0, 0.0, -1.0)));
             // The incremental rotation defined in the ManipulatedFrame coordinate system.
             quat rot(axis, angle - prev_angle);
@@ -189,7 +189,7 @@ namespace easy3d {
 			// Scale to fit the screen mouse displacement
 			switch (camera->type()) {
 				case Camera::PERSPECTIVE:
-					trans *= 2.0f * tan(camera->fieldOfView() / 2.0f) *
+					trans *= 2.0f * std::tan(camera->fieldOfView() / 2.0f) *
 							 std::fabs((camera->frame()->coordinatesOf(position())).z) /
                             static_cast<float>(camera->screenHeight());
 					break;
@@ -219,7 +219,7 @@ namespace easy3d {
 
 			switch (camera->type()) {
 			case Camera::PERSPECTIVE:
-				trans *= 2.0 * tan(camera->fieldOfView() / 2.0f) *
+				trans *= 2.0 * std::tan(camera->fieldOfView() / 2.0f) *
 					fabs((camera->frame()->coordinatesOf(position())).z) /
 					camera->screenHeight();
 				break;
@@ -275,7 +275,7 @@ namespace easy3d {
 		const float size_limit = size2 * 0.5f;
 
 		const float d = x * x + y * y;
-		return d < size_limit ? sqrt(size2 - d) : size_limit / sqrt(d);
+		return d < size_limit ? std::sqrt(size2 - d) : size_limit / std::sqrt(d);
 	}
 
 #ifndef DOXYGEN
@@ -293,7 +293,7 @@ namespace easy3d {
 		// Approximation of rotation angle
 		// Should be divided by the projectOnBall size, but it is 1.0
 		const vec3 axis = cross(p2, p1);
-		const float angle = 5.0f * asin(sqrt(axis.length2() / p1.length2() / p2.length2()));
+		const float angle = 5.0f * std::asin(std::sqrt(axis.length2() / p1.length2() / p2.length2()));
 		return quat(axis, angle);
 	}
 

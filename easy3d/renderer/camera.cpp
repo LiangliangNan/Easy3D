@@ -67,7 +67,7 @@ namespace easy3d {
 		setSceneRadius(1.0f);
 
 		// Initial value (only scaled after this)
-		orthoCoef_ = tan(fieldOfView() / 2.0f);
+		orthoCoef_ = std::tan(fieldOfView() / 2.0f);
 
 		// Also defines the pivotPoint(), which changes orthoCoef_. Requires a
 		// frame().
@@ -80,7 +80,7 @@ namespace easy3d {
 
 		// #CONNECTION# initFromDOMElement default values
 		setZNearCoefficient(0.001f);
-		setZClippingCoefficient(sqrt(3.0f));
+		setZClippingCoefficient(std::sqrt(3.0f));
 
 		// Dummy values
 		setScreenWidthAndHeight(600, 400);
@@ -252,7 +252,7 @@ namespace easy3d {
 
 	/*! Sets the vertical fieldOfView() of the Camera (in radians).
 
-	Note that focusDistance() is set to sceneRadius() / tan(fieldOfView()/2) by this
+	Note that focusDistance() is set to sceneRadius() / std::tan(fieldOfView()/2) by this
 	method. */
 	void Camera::setFieldOfView(float fov) {
 		fieldOfView_ = fov;
@@ -274,7 +274,7 @@ namespace easy3d {
 		// viewDirection(), passing through RAP). Done only when CHANGING type since
 		// orthoCoef_ may have been changed with a setPivotPoint() in the meantime.
 		if ((type == Camera::ORTHOGRAPHIC) && (type_ == Camera::PERSPECTIVE))
-			orthoCoef_ = tan(fieldOfView() / 2.0f);
+			orthoCoef_ = std::tan(fieldOfView() / 2.0f);
 		type_ = type;
 		projectionMatrixIsUpToDate_ = false;
 	}
@@ -371,7 +371,7 @@ namespace easy3d {
 		case Camera::PERSPECTIVE:
 		{
 			// #CONNECTION# all non-null coefficients were set to 0.0 in constructor.
-			const float f = 1.0f / tan(fieldOfView() / 2.0f);
+			const float f = 1.0f / std::tan(fieldOfView() / 2.0f);
 			projectionMatrix_[0] = f / aspectRatio();
 			projectionMatrix_[5] = f;
 			projectionMatrix_[10] = (ZNear + ZFar) / (ZNear - ZFar);
@@ -526,7 +526,7 @@ namespace easy3d {
 	/*! Sets the sceneRadius() value. Negative values are ignored.
 
 	\attention This methods also sets focusDistance() to sceneRadius() /
-	tan(fieldOfView()/2) and flySpeed() to 1% of sceneRadius(). */
+	std::tan(fieldOfView()/2) and flySpeed() to 1% of sceneRadius(). */
 	void Camera::setSceneRadius(float radius) {
 		if (radius <= epsilon<float>()) {
 			LOG(ERROR) << "Scene radius must be positive (value is: " << radius << ")";
@@ -626,12 +626,12 @@ namespace easy3d {
 	 implementation.
 
 	 \attention The fieldOfView() is clamped to M_PI/2.0. This happens when the
-	 Camera is at a distance lower than sqrt(2.0) * sceneRadius() from the
+	 Camera is at a distance lower than std::sqrt(2.0) * sceneRadius() from the
 	 sceneCenter(). It optimizes the shadow map resolution, although it may miss
 	 some parts of the scene. */
 	void Camera::setFOVToFitScene() {
-		if (distanceToSceneCenter() > sqrt(2.0f) * sceneRadius())
-			setFieldOfView(2.0f * asin(sceneRadius() / distanceToSceneCenter()));
+		if (distanceToSceneCenter() > std::sqrt(2.0f) * sceneRadius())
+			setFieldOfView(2.0f * std::asin(sceneRadius() / distanceToSceneCenter()));
 		else
 			setFieldOfView(static_cast<float>(M_PI) / 2.0f);
 	}
@@ -740,8 +740,8 @@ namespace easy3d {
 		float distance = 0.0f;
 		switch (type()) {
 		case Camera::PERSPECTIVE: {
-			const float yview = radius / sin(fieldOfView() / 2.0f);
-			const float xview = radius / sin(horizontalFieldOfView() / 2.0f);
+			const float yview = radius / std::sin(fieldOfView() / 2.0f);
+			const float xview = radius / std::sin(horizontalFieldOfView() / 2.0f);
 			distance = std::max(xview, yview);
 			break;
 		}
@@ -793,8 +793,8 @@ namespace easy3d {
 		switch (type()) {
 		case Camera::PERSPECTIVE: {
 			const float distX =
-				(pointX - newCenter).norm() / sin(horizontalFieldOfView() / 2.0f);
-			const float distY = (pointY - newCenter).norm() / sin(fieldOfView() / 2.0f);
+				(pointX - newCenter).norm() / std::sin(horizontalFieldOfView() / 2.0f);
+			const float distY = (pointY - newCenter).norm() / std::sin(fieldOfView() / 2.0f);
 			distance = std::max(distX, distY);
 			break;
 		}
@@ -860,7 +860,7 @@ namespace easy3d {
 	void Camera::setOrientation(float theta, float phi) const {
 		vec3 axis(0.0f, 1.0f, 0.0f);
 		const quat rot1(axis, theta);
-		axis = vec3(-cos(theta), 0.0f, sin(theta));
+		axis = vec3(-std::cos(theta), 0.0f, std::sin(theta));
 		const quat rot2(axis, phi);
 		setOrientation(rot1 * rot2);
 	}
@@ -1085,7 +1085,7 @@ namespace easy3d {
 
 	 Use setFromModelViewMatrix() to set position() and orientation() from a \c
 	 GL_MODELVIEW matrix. fieldOfView() can also be retrieved from a \e perspective
-	 \c GL_PROJECTION matrix using 2.0 * atan(1.0/projectionMatrix[5]).
+	 \c GL_PROJECTION matrix using 2.0 * std::atan(1.0/projectionMatrix[5]).
 
 	 This code was written by Sylvain Paris. Modified and bug fixed by Liangliang Nan.
 	 */
@@ -1151,7 +1151,7 @@ namespace easy3d {
 		// We compute the field of view.
         // The fov computation in this function assumes that image_height = (2.0 * cy). So it is equivalent to
         //      const float proj11 = 2.0f * fy / (2.0f * cy);
-        //      const float fov = 2.0f * atan(1.0f / proj11);
+        //      const float fov = 2.0f * std::atan(1.0f / proj11);
         // However in practice, cy may not be exactly at the image center. To get an accurate fov, the actual image
         // height should be used.
         // TODO: add image size as argument to this function
@@ -1398,8 +1398,8 @@ namespace easy3d {
 		case Camera::PERSPECTIVE:
 		{
 			const float hhfov = horizontalFieldOfView() / 2.0f;
-			const float chhfov = cos(hhfov);
-			const float shhfov = sin(hhfov);
+			const float chhfov = std::cos(hhfov);
+			const float shhfov = std::sin(hhfov);
 			normal[0] = -shhfov * viewDir;
 			normal[1] = normal[0] + chhfov * right;
 			normal[0] = normal[0] - chhfov * right;
@@ -1408,8 +1408,8 @@ namespace easy3d {
 			normal[3] = viewDir;
 
 			const float hfov = fieldOfView() / 2.0f;
-			const float chfov = cos(hfov);
-			const float shfov = sin(hfov);
+			const float chfov = std::cos(hfov);
+			const float shfov = std::sin(hfov);
 			normal[4] = -shfov * viewDir;
 			normal[5] = normal[4] - chfov * up;
 			normal[4] = normal[4] + chfov * up;
@@ -1484,7 +1484,7 @@ namespace easy3d {
 		frustum[0][3] = clip[15] + clip[12];
 
 		/* Normalize the result */
-		float  t = sqrt(frustum[0][0] * frustum[0][0] + frustum[0][1] * frustum[0][1] + frustum[0][2] * frustum[0][2]);
+		float  t = std::sqrt(frustum[0][0] * frustum[0][0] + frustum[0][1] * frustum[0][1] + frustum[0][2] * frustum[0][2]);
 		frustum[0][0] /= t;
 		frustum[0][1] /= t;
 		frustum[0][2] /= t;
@@ -1497,7 +1497,7 @@ namespace easy3d {
 		frustum[1][3] = clip[15] - clip[12];
 
 		/* Normalize the result */
-		t = sqrt(frustum[1][0] * frustum[1][0] + frustum[1][1] * frustum[1][1] + frustum[1][2] * frustum[1][2]);
+		t = std::sqrt(frustum[1][0] * frustum[1][0] + frustum[1][1] * frustum[1][1] + frustum[1][2] * frustum[1][2]);
 		frustum[1][0] /= t;
 		frustum[1][1] /= t;
 		frustum[1][2] /= t;
@@ -1510,7 +1510,7 @@ namespace easy3d {
 		frustum[2][3] = clip[15] + clip[14];
 
 		/* Normalize the result */
-		t = sqrt(frustum[2][0] * frustum[2][0] + frustum[2][1] * frustum[2][1] + frustum[2][2] * frustum[2][2]);
+		t = std::sqrt(frustum[2][0] * frustum[2][0] + frustum[2][1] * frustum[2][1] + frustum[2][2] * frustum[2][2]);
 		frustum[2][0] /= t;
 		frustum[2][1] /= t;
 		frustum[2][2] /= t;
@@ -1523,7 +1523,7 @@ namespace easy3d {
 		frustum[3][3] = clip[15] - clip[14];
 
 		/* Normalize the result */
-		t = sqrt(frustum[3][0] * frustum[3][0] + frustum[3][1] * frustum[3][1] + frustum[3][2] * frustum[3][2]);
+		t = std::sqrt(frustum[3][0] * frustum[3][0] + frustum[3][1] * frustum[3][1] + frustum[3][2] * frustum[3][2]);
 		frustum[3][0] /= t;
 		frustum[3][1] /= t;
 		frustum[3][2] /= t;
@@ -1536,7 +1536,7 @@ namespace easy3d {
 		frustum[4][3] = clip[15] - clip[13];
 
 		/* Normalize the result */
-		t = sqrt(frustum[4][0] * frustum[4][0] + frustum[4][1] * frustum[4][1] + frustum[4][2] * frustum[4][2]);
+		t = std::sqrt(frustum[4][0] * frustum[4][0] + frustum[4][1] * frustum[4][1] + frustum[4][2] * frustum[4][2]);
 		frustum[4][0] /= t;
 		frustum[4][1] /= t;
 		frustum[4][2] /= t;
@@ -1549,7 +1549,7 @@ namespace easy3d {
 		frustum[5][3] = clip[15] + clip[13];
 
 		/* Normalize the result */
-		t = sqrt(frustum[5][0] * frustum[5][0] + frustum[5][1] * frustum[5][1] + frustum[5][2] * frustum[5][2]);
+		t = std::sqrt(frustum[5][0] * frustum[5][0] + frustum[5][1] * frustum[5][1] + frustum[5][2] * frustum[5][2]);
 		frustum[5][0] /= t;
 		frustum[5][1] /= t;
 		frustum[5][2] /= t;

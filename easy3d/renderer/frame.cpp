@@ -741,7 +741,7 @@ namespace easy3d {
 
 	\p threshold measures how close two axis must be to be considered parallel. It
 	is compared with the absolute values of the dot product of the normalized axis.
-	As a result, useful range is sqrt(2)/2 (systematic alignment) to 1 (no
+	As a result, useful range is std::sqrt(2)/2 (systematic alignment) to 1 (no
 	alignment).
 
 	When \p move is set to \c true, the Frame position() is also affected by the
@@ -784,7 +784,7 @@ namespace easy3d {
 		const float coef = dot(directions[0][index[0]], directions[1][index[1]]);
 		if (std::fabs(coef) >= threshold) {
 			vec3 axis = cross(directions[0][index[0]], directions[1][index[1]]);
-			float angle = asin(axis.norm());
+			float angle = std::asin(axis.norm());
 			if (coef >= 0.0)
 				angle = -angle;
 			rotate(rotation().inverse() * quat(axis, angle) * orientation());
@@ -805,7 +805,7 @@ namespace easy3d {
 
 			if (max >= threshold) {
 				axis = cross(directions[0][index[0]], dir);
-                angle = asin(axis.norm());
+                angle = std::asin(axis.norm());
 				if (dot(directions[0][index[0]], dir) >= 0.0f)
 					angle = -angle;
 				rotate(rotation().inverse() * quat(axis, angle) * orientation());

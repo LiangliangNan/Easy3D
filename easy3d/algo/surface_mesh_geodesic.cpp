@@ -39,7 +39,7 @@ namespace easy3d {
 
         const float one(1.0), minus_one(-1.0);
         const float max_angle = 90.0 / 180.0 * M_PI;
-        const float max_angle_cos = cos(max_angle);
+        const float max_angle_cos = std::cos(max_angle);
 
         virtual_edges_.clear();
 
@@ -60,10 +60,10 @@ namespace easy3d {
                     // obtuse angle ?
                     if (dot(d0, d1) < max_angle_cos) {
                         // compute angles
-                        alpha = 0.5f * acos(std::min(
+                        alpha = 0.5f * std::acos(std::min(
                                 one, std::max(minus_one, dot(d0, d1))));
                         beta = max_angle - alpha;
-                        tan_beta = tan(beta);
+                        tan_beta = std::tan(beta);
 
                         // coord system
                         X = normalize(d0 + d1);
@@ -369,8 +369,8 @@ namespace easy3d {
         const double cc = b * b * (u * u - a * a * (1.0 - c * c));
         const double dd = bb * bb - 4.0 * aa * cc;
         if (dd > 0.0) {
-            const double t1 = (-bb + sqrt(dd)) / (2.0 * aa);
-            const double t2 = (-bb - sqrt(dd)) / (2.0 * aa);
+            const double t1 = (-bb + std::sqrt(dd)) / (2.0 * aa);
+            const double t2 = (-bb - std::sqrt(dd)) / (2.0 * aa);
             const double t = std::max(t1, t2);
             const double q = b * (t - u) / t;
             if ((u < t) && (a * c < q) && (q < a / c)) {

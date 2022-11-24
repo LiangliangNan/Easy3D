@@ -296,7 +296,7 @@ namespace easy3d {
 
                     float cos_angle = clamp_cos(dot(p01, p02));
 
-                    angles += acos(cos_angle);
+                    angles += std::acos(cos_angle);
                 }
             }
 
@@ -313,7 +313,7 @@ namespace easy3d {
                 c.mean = 0.5f * norm(laplace(mesh, v));
                 c.gauss = (2.0f * M_PI - angle_sum(mesh, v)) / area;
 
-                const float s = sqrt(std::max(0.0f, c.mean * c.mean - c.gauss));
+                const float s = std::sqrt(std::max(0.0f, c.mean * c.mean - c.gauss));
                 c.min = c.mean - s;
                 c.max = c.mean + s;
 

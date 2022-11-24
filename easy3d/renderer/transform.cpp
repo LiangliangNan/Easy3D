@@ -68,7 +68,7 @@ namespace easy3d {
 
         mat4 perspective(float fov_y, float aspect, float zNear, float zFar) {
             //assert(abs(aspect - std::numeric_limits<float>::epsilon()) > 0.0f);
-            float tanHalfFovy = tan(fov_y / 2.0f);
+            float tanHalfFovy = std::tan(fov_y / 2.0f);
 
             mat4 proj(0.0f);
             proj(0, 0) = 1.0f / (aspect * tanHalfFovy);
@@ -101,7 +101,7 @@ namespace easy3d {
         void makeFrustum(double fovy, double aspect, double near, double far)
         {
             const double DEG2RAD = 3.14159265 / 180;
-            double tangent = tan(fovy / 2 * DEG2RAD);   // tangent of half fovy
+            double tangent = std::tan(fovy / 2 * DEG2RAD);   // tangent of half fovy
             double height = near * tangent;				// half height of near plane
             double width = height * aspect;				// half width of near plane
             // params: left, right, bottom, top, near, far
@@ -110,7 +110,7 @@ namespace easy3d {
         */
 
         mat4 infinite_perspective(float fov_y, float aspect, float zNear) {
-            float const range = tan(fov_y / 2.0f) * zNear;
+            float const range = std::tan(fov_y / 2.0f) * zNear;
             float const left = -range * aspect;
             float const right = range * aspect;
             float const bottom = -range;

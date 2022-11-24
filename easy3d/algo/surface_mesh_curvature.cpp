@@ -68,7 +68,7 @@ namespace easy3d {
                     p1.normalize();
                     p2 -= p0;
                     p2.normalize();
-                    sum_angles += acos(geom::clamp_cos(dot(p1, p2)));
+                    sum_angles += std::acos(geom::clamp_cos(dot(p1, p2)));
                 }
                 laplace -= sum_weights * mesh_->position(v);
                 laplace /= float(2.0) * area;
@@ -76,7 +76,7 @@ namespace easy3d {
                 mean = float(0.5) * norm(laplace);
                 gauss = (2.0 * M_PI - sum_angles) / area;
 
-                const float s = sqrt(std::max(float(0.0), mean * mean - gauss));
+                const float s = std::sqrt(std::max(float(0.0), mean * mean - gauss));
                 kmin = mean - s;
                 kmax = mean + s;
             }
@@ -161,8 +161,8 @@ namespace easy3d {
                 if (l != 0) {   // avoid overflow in case of 0-length edges
                     ev /= l;
                     l *= 0.5; // only consider half of the edge (matching Voronoi area)
-                    angle[e] = atan2(dot(cross(n0, n1), ev), dot(n0, n1));
-                    evec[e] = sqrt(l) * ev;
+                    angle[e] = std::atan2(dot(cross(n0, n1), ev), dot(n0, n1));
+                    evec[e] = std::sqrt(l) * ev;
                 }
             }
         }

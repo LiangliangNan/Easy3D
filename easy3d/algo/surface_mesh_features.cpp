@@ -44,7 +44,7 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
     void SurfaceMeshFeatures::detect_angle(float angle) {
-        const float feature_cosine = cos(angle / 180.0 * M_PI);
+        const float feature_cosine = std::cos(angle / 180.0 * M_PI);
 
         for (auto e : mesh_->edges()) {
             if (!mesh_->is_border(e)) {

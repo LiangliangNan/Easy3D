@@ -34,9 +34,9 @@ namespace easy3d {
     SurfaceMesh SurfaceMeshFactory::tetrahedron() {
         SurfaceMesh mesh;
         float a = 1.0f / 3.0f;
-        float b = sqrt(8.0f / 9.0f);
-        float c = sqrt(2.0f / 9.0f);
-        float d = sqrt(2.0f / 3.0f);
+        float b = std::sqrt(8.0f / 9.0f);
+        float c = std::sqrt(2.0f / 9.0f);
+        float d = std::sqrt(2.0f / 3.0f);
 
         auto v0 = mesh.add_vertex(vec3(0, 0, 1));
         auto v1 = mesh.add_vertex(vec3(-c, d, -a));
@@ -54,7 +54,7 @@ namespace easy3d {
     SurfaceMesh SurfaceMeshFactory::hexahedron() {
         SurfaceMesh mesh;
 
-        float a = 1.0f / sqrt(3.0f);
+        float a = 1.0f / std::sqrt(3.0f);
         auto v0 = mesh.add_vertex(vec3(-a, -a, -a));
         auto v1 = mesh.add_vertex(vec3(a, -a, -a));
         auto v2 = mesh.add_vertex(vec3(a, a, -a));
@@ -91,7 +91,7 @@ namespace easy3d {
     SurfaceMesh SurfaceMeshFactory::icosahedron() {
         SurfaceMesh mesh;
 
-        float phi = (1.0f + sqrt(5.0f)) * 0.5f; // golden ratio
+        float phi = (1.0f + std::sqrt(5.0f)) * 0.5f; // golden ratio
         float a = 1.0f;
         float b = 1.0f / phi;
 

@@ -184,7 +184,7 @@ namespace easy3d {
 			vec3 axis = rotationConstraintDirection();
 			vec3 q = vec3(rotation[0], rotation[1], rotation[2]);
 			project_on_axis(q, axis);
-			rotation = quat(q, 2.0f * acos(rotation[3]));
+			rotation = quat(q, 2.0f * std::acos(rotation[3]));
 		} break;
 		case AxisPlaneConstraint::FORBIDDEN:
 			rotation = quat(); // identity
@@ -240,7 +240,7 @@ namespace easy3d {
 			vec3 q(rotation[0], rotation[1], rotation[2]);
 			vec3 axis = frame->transformOf(rotationConstraintDirection());
 			project_on_axis(q, axis);
-			rotation = quat(q, 2.0f*std::acos(rotation[3]));
+			rotation = quat(q, 2.0f * std::acos(rotation[3]));
 			break;
 		}
 		case AxisPlaneConstraint::FORBIDDEN:
@@ -299,7 +299,7 @@ namespace easy3d {
 				camera()->frame()->inverseTransformOf(rotationConstraintDirection()));
 			vec3 q = vec3(rotation[0], rotation[1], rotation[2]);
 			project_on_axis(q, axis);
-			rotation = quat(q, 2.0f * acos(rotation[3]));
+			rotation = quat(q, 2.0f * std::acos(rotation[3]));
 		} break;
 		case AxisPlaneConstraint::FORBIDDEN:
 			rotation = quat(); // identity

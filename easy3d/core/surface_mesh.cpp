@@ -1095,13 +1095,13 @@ namespace easy3d {
                         p2 -= p0;
 
                         // check whether we can robustly compute angle
-                        denom = sqrt(dot(p1,p1)*dot(p2,p2));
+                        denom = std::sqrt(dot(p1,p1)*dot(p2,p2));
                         if (denom > std::numeric_limits<float>::min())
                         {
                             cosine = dot(p1,p2) / denom;
                             if      (cosine < -1.0) cosine = -1.0;
                             else if (cosine >  1.0) cosine =  1.0;
-                            angle = acos(cosine);
+                            angle = std::acos(cosine);
 
                             n   = fnormal_[face(h)];
 
@@ -1161,13 +1161,13 @@ namespace easy3d {
                     p2 -= p0;
 
                     // check whether we can robustly compute angle
-                    denom = sqrt(dot(p1,p1)*dot(p2,p2));
+                    denom = std::sqrt(dot(p1,p1)*dot(p2,p2));
                     if (denom > std::numeric_limits<float>::min())
                     {
                         cosine = dot(p1,p2) / denom;
                         if      (cosine < -1.0) cosine = -1.0;
                         else if (cosine >  1.0) cosine =  1.0;
-                        angle = acos(cosine);
+                        angle = std::acos(cosine);
 
                         n   = cross(p1,p2);
 

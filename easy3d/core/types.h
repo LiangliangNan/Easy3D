@@ -257,7 +257,7 @@ namespace easy3d {
         /** \brief Computes angle between two (un-normalized) vectors */
         template<typename Vec>
         inline double angle(const Vec &a, const Vec &b) {
-            return atan2(norm(cross(a, b)), dot(a, b));
+            return std::atan2(norm(cross(a, b)), dot(a, b));
         }
 
         /** \brief Converts an angle from degrees to radians. */

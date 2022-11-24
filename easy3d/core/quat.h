@@ -65,10 +65,10 @@ namespace easy3d {
      * Internal representation
      * The internal representation of a Quaternion is a set of 4 numbers, [x y z w], which
      * represents rotations the following way:
-     *  x = axis.x * sin(angle / 2)
-     *  y = axis.y * sin(angle / 2)
-     *  z = axis.z * sin(angle / 2)
-     *  w = cos(angle / 2)
+     *  x = axis.x * std::sin(angle / 2)
+     *  y = axis.y * std::sin(angle / 2)
+     *  z = axis.z * std::sin(angle / 2)
+     *  w = std::cos(angle / 2)
      * \NOTE:
      *   - the angle is in radians and the axis is a unit vector.
      *   - certain implementations place the cosine term in the first position (instead of last).
@@ -136,8 +136,8 @@ namespace easy3d {
         Quat(const Vec3& from, const Vec3& to);
 
         /**
-         * \brief Constructor from the four values of a Quaternion. First three values are axis*sin(angle/2) and
-         * the last one is cos(angle/2).
+         * \brief Constructor from the four values of a Quaternion. First three values are axis*std::sin(angle/2) and
+         * the last one is std::cos(angle/2).
          * \attention The identity Quaternion is Quat(0,0,0,1) and not Quat(0,0,0,0) (which is not unitary). The
          * default Quat() creates such identity Quaternion.
          */

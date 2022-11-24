@@ -221,7 +221,7 @@ namespace easy3d {
         if (rescale) {
             // restore original surface area
             float area_after = geom::surface_area(mesh_);
-            float scale = sqrt(area_before / area_after);
+            float scale = std::sqrt(area_before / area_after);
             for (auto v : mesh_->vertices())
                 mesh_->position(v) *= scale;
 

@@ -113,7 +113,7 @@ namespace easy3d {
 
         /// \brief Returns the length of this vector.
         inline T length() const {
-            return sqrt(length2());
+            return std::sqrt(length2());
         }
 
         /// \brief Returns the norm (i.e., length/magnitude0 of this vector.

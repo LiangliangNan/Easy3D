@@ -208,11 +208,11 @@ namespace easy3d {
                 double h;
                 if (e < r) {
                     // see mathworld: "circle segment" and "equilateral triangle"
-                    //h = sqrt(2.0*r*e-e*e) * 3.0 / sqrt(3.0);
-                    h = sqrt(6.0 * e * r - 3.0 * e * e); // simplified...
+                    //h = std::sqrt(2.0*r*e-e*e) * 3.0 / std::sqrt(3.0);
+                    h = std::sqrt(6.0 * e * r - 3.0 * e * e); // simplified...
                 } else {
                     // this does not really make sense
-                    h = e * 3.0 / sqrt(3.0);
+                    h = e * 3.0 / std::sqrt(3.0);
                 }
 
                 // clamp to min. and max. edge length

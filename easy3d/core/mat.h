@@ -991,7 +991,7 @@ namespace easy3d {
                 if (ipiv[j] != 1) {
                     for (size_t k = 0; k < N; ++k) { // for each column
                         if (ipiv[k] == 0) {
-                            T element = abs(result(j, k));
+                            T element = std::abs(result(j, k));
                             if (element > max) {
                                 max = element;
                                 maxr = j;
@@ -1141,7 +1141,7 @@ namespace easy3d {
                 if (ipiv[j] != 1) {
                     for (size_t k = 0; k < N; ++k) { // for each column
                         if (ipiv[k] == 0) {
-                            T element = abs(amat(j, k));
+                            T element = std::abs(amat(j, k));
                             if (element > max) {
                                 max = element;
                                 maxr = j;
@@ -1213,7 +1213,7 @@ namespace easy3d {
             //	get implicit scaling:
             T max = T(0);
             for (size_t j = 0; j < N; ++j) {
-                T element = abs(amat(i, j));
+                T element = std::abs(amat(i, j));
                 if (element > max)
                     max = element;
             }
@@ -1241,7 +1241,7 @@ namespace easy3d {
                     sum -= amat(i, k) * amat(k, j);
                 amat(i, j) = sum;
 
-                T dum = scalev[i] * abs(sum);
+                T dum = scalev[i] * std::abs(sum);
                 if (dum >= max) {
                     max = dum;
                     imax = i;

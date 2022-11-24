@@ -940,11 +940,11 @@ namespace easy3d {
                         double t = j % major_slices;
 
                         // Calculate point on surface
-                        double x = (major_radius + minor_radius * cos(s * twopi / minor_slices)) *
-                                   cos(t * twopi / major_slices);
-                        double y = minor_radius * sin(s * twopi / minor_slices);
+                        double x = (major_radius + minor_radius * std::cos(s * twopi / minor_slices)) *
+                                std::cos(t * twopi / major_slices);
+                        double y = minor_radius * std::sin(s * twopi / minor_slices);
                         double z = (major_radius + minor_radius * cos(s * twopi / minor_slices)) *
-                                   sin(t * twopi / major_slices);
+                                std::sin(t * twopi / major_slices);
 
                         // Calculate surface normal
                         double nx = x - major_radius * std::cos(t * twopi / major_slices);

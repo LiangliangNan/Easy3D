@@ -241,12 +241,12 @@ namespace easy3d {
             // are easier for authors to deal with. The latter will only be useful
             // when we fix https://bugs.webkit.org/show_bug.cgi?id=23799, so I
             // will leave the Euler angle code here for now.
-            // ret.rotateY = asin(-Row[0][2]);
-            // if (cos(ret.rotateY) != 0) {
-            //     ret.rotateX = atan2(Row[1][2], Row[2][2]);
-            //     ret.rotateZ = atan2(Row[0][1], Row[0][0]);
+            // ret.rotateY = std::asin(-Row[0][2]);
+            // if (std::cos(ret.rotateY) != 0) {
+            //     ret.rotateX = std::atan2(Row[1][2], Row[2][2]);
+            //     ret.rotateZ = std::atan2(Row[0][1], Row[0][0]);
             // } else {
-            //     ret.rotateX = atan2(-Row[2][0], Row[1][1]);
+            //     ret.rotateX = std::atan2(-Row[2][0], Row[1][1]);
             //     ret.rotateZ = 0;
             // }
 #if 0
@@ -261,7 +261,7 @@ namespace easy3d {
             T root, trace = Row[0].x + Row[1].y + Row[2].z;
             if(trace > static_cast<T>(0))
             {
-                root = sqrt(trace + static_cast<T>(1.0));
+                root = std::sqrt(trace + static_cast<T>(1.0));
                 Orientation[3] = static_cast<T>(0.5) * root;    // w
                 root = static_cast<T>(0.5) / root;
                 Orientation[0] = root * (Row[2].y - Row[1].z);  // x
@@ -277,7 +277,7 @@ namespace easy3d {
                 int j = Next[i];
                 int k = Next[j];
 
-                root = sqrt(Row[i][i] - Row[j][j] - Row[k][k] + static_cast<T>(1.0));
+                root = std::sqrt(Row[i][i] - Row[j][j] - Row[k][k] + static_cast<T>(1.0));
 
                 Orientation[i] = static_cast<T>(0.5) * root;
                 root = static_cast<T>(0.5) / root;

@@ -282,7 +282,7 @@ namespace easy3d {
 		 * \details Value is set using setHorizontalFieldOfView() or setFieldOfView(). These values are always linked
 		 * by:
 		 *      \code
-		 *      horizontalFieldOfView() = 2.0 * atan( tan(fieldOfView()/2.0) * aspectRatio() ).
+		 *      horizontalFieldOfView() = 2.0 * std::atan( std::tan(fieldOfView()/2.0) * aspectRatio() ).
 		 *      \endcode
 		 */
 		float horizontalFieldOfView() const {
@@ -356,7 +356,7 @@ namespace easy3d {
 		/**
 		 * \brief Sets the horizontalFieldOfView() of the Camera (in radians).
 		 * \details horizontalFieldOfView() and fieldOfView() are linked by the aspectRatio().
-		 * This method actually calls setFieldOfView(( 2.0 * atan (tan(hfov / 2.0) / aspectRatio()) )) so that a call
+		 * This method actually calls setFieldOfView(( 2.0 * std::atan (std::tan(hfov / 2.0) / aspectRatio()) )) so that a call
 		 * to horizontalFieldOfView() returns the expected value. */
 		void setHorizontalFieldOfView(float hfov) {
 			setFieldOfView(2.0f * std::atan(std::tan(hfov / 2.0f) / aspectRatio()));
