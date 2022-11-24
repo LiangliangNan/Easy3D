@@ -59,6 +59,11 @@ namespace easy3d {
         , alpha_(0.8f)
         , movable_(true)
 	{
+#if defined(_WIN32) || defined(MSVC)
+        // Liangliang: the internal glfw won't be shared accross dll boundaries (But seems ok on mac. That is weird!)
+        glfwInit();
+#endif
+
         camera()->setUpVector(vec3(0, 1, 0));
         camera()->setViewDirection(vec3(0, 0, -1));
         camera_->showEntireScene();
@@ -73,6 +78,11 @@ namespace easy3d {
 
         // Not needed: it will be called in the destructor of the base class
         //Viewer::cleanup();
+
+#if defined(_WIN32) || defined(MSVC)
+        // Liangliang: the internal glfw won't be shared accross dll boundaries (But seems ok on mac. That is weird!)
+        glfwTerminate();
+#endif
     }
 
 
