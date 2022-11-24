@@ -38,9 +38,8 @@ namespace easy3d {
     class VertexArrayObject;
 
     /**
-     * @brief A composite viewer, which supports multiple views (arranged in a grid layout) in the same viewer.
+     * @brief A composite viewer, which supports multiple views (arranged in a grid layout).
      * @class CompViewer easy3d/viewer/comp_viewer.h
-     * \todo Zoom to screen should be implemented w.r.t. the current view.
      */
     class CompViewer : public Viewer {
     public:
@@ -75,11 +74,30 @@ namespace easy3d {
         /// Returns if the splitting lines of the views are visible.
         bool division_visible() const { return division_visible_; }
 
+        /**
+         * @brief Query the XYZ coordinates of the surface point under the cursor.
+         * @param x The cursor x-coordinate, relative to the left edge of the content area.
+         * @param y The cursor y-coordinate, relative to the top edge of the content area.
+         * @param found indicates whether the point was found or not.
+         * @return The coordinates of the 3D point located at pixel (x, y) on screen. The returned point is valid
+         *      only if found was returned true.
+         * @attention The screen point (x, y) is expressed in the screen coordinate system with an origin in the
+         *      upper left corner. So it doesn't necessarily correspond to a pixel on High DPI devices, e.g., a
+         *      Mac with a Retina display. If your inherited viewer uses a customized content area, you must also
+         *      reimplement this function such that the x and y are relative to left and top edges of the content
+         *      area, respectively.
+         */
+        vec3 point_under_pixel(int x, int y, bool &found) const override;
+
     protected:
         void init() override;
         void post_resize(int w, int h) override;
         void draw() const override;
 
+        // overloaded, so mouse positions are relative to the current view
+        bool mouse_press_event(int x, int y, int button, int modifiers) override;
+        // overloaded, so mouse positions are relative to the current view
+        bool mouse_release_event(int x, int y, int button, int modifiers) override;
         // overloaded, so mouse positions are relative to the current view
         bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;
 

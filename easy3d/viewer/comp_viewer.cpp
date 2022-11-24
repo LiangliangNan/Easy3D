@@ -263,6 +263,51 @@ namespace easy3d {
     }
 
 
+    vec3 CompViewer::point_under_pixel(int x, int y, bool &found) const {
+        // GLFW (same as Qt) uses upper corner for its origin while GL uses the lower corner.
+        int glx = x;
+        int gly = height() - 1 - y;
+
+        // NOTE: when dealing with OpenGL, we always work in the highdpi screen space
+#if defined(__APPLE__)
+        glx = static_cast<int>(static_cast<float>(glx) * dpi_scaling());
+        gly = static_cast<int>(static_cast<float>(gly) * dpi_scaling());
+#endif
+        float depth = std::numeric_limits<float>::max();
+        glPixelStorei(GL_PACK_ALIGNMENT, 1);
+        glReadPixels(glx, gly, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+        found = depth < 1.0f;
+        if (found) {
+            // This is different from Viewer::point_under_pixel(...).
+            // We use the coordinates w.r.t. the current view.
+            x %= view_width_;
+            y %= view_height_;
+            vec3 point(static_cast<float>(x), static_cast<float>(y), depth);
+            point = camera_->unprojectedCoordinatesOf(point);
+            return point;
+        } else
+            return vec3(0);
+    }
+
+
+    bool CompViewer::mouse_press_event(int x, int y, int button, int modifiers) {
+        // This re-implementation does nothing extra but just hides the pivot point.
+        bool result = Viewer::mouse_press_event(x, y, button, modifiers);
+        show_pivot_point_ = false;
+        return result;
+    }
+
+
+    bool CompViewer::mouse_release_event(int x, int y, int button, int modifiers) {
+        // make the mouse position relative to the current view
+        x %= view_width_;
+        y %= view_height_;
+        mouse_pressed_x_ %= view_width_;
+        mouse_pressed_y_ %= view_height_;
+        return Viewer::mouse_release_event(x, y, button, modifiers);
+    }
+
+
     bool CompViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
         // make the mouse position relative to the current view
         x %= view_width_;
