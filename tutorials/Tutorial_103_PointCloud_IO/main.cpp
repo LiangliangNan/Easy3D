@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
 	// Read the point cloud from a known file. 
     PointCloud* cloud = PointCloudIO::load(resource::directory() + "/data/bunny.bin");
     if (!cloud) {
-        LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
+        LOG(ERROR) << "failed to load model. Please make sure the file exists and format is correct.";
         return EXIT_FAILURE;
     }
 

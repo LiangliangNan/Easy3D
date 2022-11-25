@@ -167,7 +167,7 @@ namespace easy3d {
                 auto x = center[0] + radius * std::sin(phi) * std::cos(theta);
                 auto y = center[1] + radius * std::cos(phi);
                 auto z = center[2] + radius * std::sin(phi) * std::sin(theta);
-                mesh.add_vertex(vec3(x, y, z));
+                mesh.add_vertex(vec3(static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)));
             }
         }
 
@@ -179,11 +179,11 @@ namespace easy3d {
         for (size_t i = 0; i < n_slices; ++i) {
             i0 = i + 1;
             i1 = (i + 1) % n_slices + 1;
-            mesh.add_triangle(v0, SurfaceMesh::Vertex(i1), SurfaceMesh::Vertex(i0));
+            mesh.add_triangle(v0, SurfaceMesh::Vertex(static_cast<int>(i1)), SurfaceMesh::Vertex(static_cast<int>(i0)));
 
             i0 = i + n_slices * (n_stacks - 2) + 1;
             i1 = (i + 1) % n_slices + n_slices * (n_stacks - 2) + 1;
-            mesh.add_triangle(v1, SurfaceMesh::Vertex(i0), SurfaceMesh::Vertex(i1));
+            mesh.add_triangle(v1, SurfaceMesh::Vertex(static_cast<int>(i0)), SurfaceMesh::Vertex(static_cast<int>(i1)));
         }
 
         // add quads per stack / slice
@@ -196,8 +196,12 @@ namespace easy3d {
                 i1 = idx0 + (i + 1) % n_slices;
                 i2 = idx1 + (i + 1) % n_slices;
                 i3 = idx1 + i;
-                mesh.add_quad(SurfaceMesh::Vertex(i0), SurfaceMesh::Vertex(i1), SurfaceMesh::Vertex(i2),
-                              SurfaceMesh::Vertex(i3));
+                mesh.add_quad(
+                    SurfaceMesh::Vertex(static_cast<int>(i0)), 
+                    SurfaceMesh::Vertex(static_cast<int>(i1)), 
+                    SurfaceMesh::Vertex(static_cast<int>(i2)),
+                    SurfaceMesh::Vertex(static_cast<int>(i3))
+                );
             }
         }
 
@@ -214,19 +218,19 @@ namespace easy3d {
         for (size_t i = 0; i < resolution + 1; i++) {
             for (size_t j = 0; j < resolution + 1; j++) {
                 mesh.add_vertex(p);
-                p[1] += 1.0 / resolution;
+                p[1] += static_cast<float>(1.0 / resolution);
             }
             p[1] = 0;
-            p[0] += 1.0 / resolution;
+            p[0] += static_cast<int>(1.0 / resolution);
         }
 
         // generate faces
         for (size_t i = 0; i < resolution; i++) {
             for (size_t j = 0; j < resolution; j++) {
-                auto v0 = SurfaceMesh::Vertex(j + i * (resolution + 1));
-                auto v1 = SurfaceMesh::Vertex(v0.idx() + resolution + 1);
-                auto v2 = SurfaceMesh::Vertex(v0.idx() + resolution + 2);
-                auto v3 = SurfaceMesh::Vertex(v0.idx() + 1);
+                auto v0 = SurfaceMesh::Vertex(static_cast<int>(j + i * (resolution + 1)));
+                auto v1 = SurfaceMesh::Vertex(static_cast<int>(v0.idx() + resolution + 1));
+                auto v2 = SurfaceMesh::Vertex(static_cast<int>(v0.idx() + resolution + 2));
+                auto v3 = SurfaceMesh::Vertex(static_cast<int>(v0.idx() + 1));
                 mesh.add_quad(v0, v1, v2, v3);
             }
         }
@@ -242,11 +246,11 @@ namespace easy3d {
         // add vertices subdividing a circle
         std::vector<SurfaceMesh::Vertex> base_vertices;
         for (size_t i = 0; i < n_subdivisions; i++) {
-            float ratio = static_cast<float>(i) / (n_subdivisions);
-            float r = ratio * (M_PI * 2.0);
-            float x = std::cos(r) * radius;
-            float y = std::sin(r) * radius;
-            auto v = mesh.add_vertex(vec3(x, y, 0.0));
+            double ratio = static_cast<double>(i) / (n_subdivisions);
+            double r = ratio * (M_PI * 2.0);
+            double x = std::cos(r) * radius;
+            double y = std::sin(r) * radius;
+            auto v = mesh.add_vertex(vec3(static_cast<float>(x), static_cast<float>(y), 0.0f));
             base_vertices.push_back(v);
         }
 
@@ -256,7 +260,7 @@ namespace easy3d {
         // generate triangular faces
         for (size_t i = 0; i < n_subdivisions; i++) {
             auto ii = (i + 1) % n_subdivisions;
-            mesh.add_triangle(v0, SurfaceMesh::Vertex(i), SurfaceMesh::Vertex(ii));
+            mesh.add_triangle(v0, SurfaceMesh::Vertex(static_cast<int>(i)), SurfaceMesh::Vertex(static_cast<int>(ii)));
         }
 
         // reverse order for consistent face orientation
@@ -277,13 +281,13 @@ namespace easy3d {
         std::vector<SurfaceMesh::Vertex> bottom_vertices;
         std::vector<SurfaceMesh::Vertex> top_vertices;
         for (size_t i = 0; i < n_subdivisions; i++) {
-            float ratio = static_cast<float>(i) / (n_subdivisions);
-            float r = ratio * (M_PI * 2.0);
-            float x = std::cos(r) * radius;
-            float y = std::sin(r) * radius;
-            SurfaceMesh::Vertex v = mesh.add_vertex(vec3(x, y, 0.0));
+            double ratio = static_cast<double>(i) / (n_subdivisions);
+            double r = ratio * (M_PI * 2.0);
+            double x = std::cos(r) * radius;
+            double y = std::sin(r) * radius;
+            auto v = mesh.add_vertex(vec3(static_cast<float>(x), static_cast<float>(y), 0.0f));
             bottom_vertices.push_back(v);
-            v = mesh.add_vertex(vec3(x, y, height));
+            v = mesh.add_vertex(vec3(static_cast<float>(x), static_cast<float>(y), height));
             top_vertices.push_back(v);
         }
 
@@ -293,8 +297,12 @@ namespace easy3d {
             auto jj = (ii + 2) % (n_subdivisions * 2);
             auto kk = (ii + 3) % (n_subdivisions * 2);
             auto ll = ii + 1;
-            mesh.add_quad(SurfaceMesh::Vertex(ii), SurfaceMesh::Vertex(jj), SurfaceMesh::Vertex(kk),
-                          SurfaceMesh::Vertex(ll));
+            mesh.add_quad(
+                SurfaceMesh::Vertex(static_cast<int>(ii)), 
+                SurfaceMesh::Vertex(static_cast<int>(jj)), 
+                SurfaceMesh::Vertex(static_cast<int>(kk)),
+                SurfaceMesh::Vertex(static_cast<int>(ll))
+            );
         }
 
         // add top polygon
@@ -319,12 +327,12 @@ namespace easy3d {
         // generate vertices
         for (size_t i = 0; i < radial_resolution; i++) {
             for (size_t j = 0; j < tubular_resolution; j++) {
-                float u = static_cast<float>(j) / tubular_resolution * M_PI * 2.0;
-                float v = static_cast<float>(i) / radial_resolution * M_PI * 2.0;
-                float x = (radius + thickness * std::cos(v)) * std::cos(u);
-                float y = (radius + thickness * std::cos(v)) * std::sin(u);
-                float z = thickness * std::sin(v);
-                mesh.add_vertex(vec3(x, y, z));
+                double u = static_cast<double>(j) / tubular_resolution * M_PI * 2.0;
+                double v = static_cast<double>(i) / radial_resolution * M_PI * 2.0;
+                double x = (radius + thickness * std::cos(v)) * std::cos(u);
+                double y = (radius + thickness * std::cos(v)) * std::sin(u);
+                double z = thickness * std::sin(v);
+                mesh.add_vertex(vec3(static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)));
             }
         }
 
@@ -337,8 +345,12 @@ namespace easy3d {
                 auto i1 = i * tubular_resolution + j_next;
                 auto i2 = i_next * tubular_resolution + j_next;
                 auto i3 = i_next * tubular_resolution + j;
-                mesh.add_quad(SurfaceMesh::Vertex(i0), SurfaceMesh::Vertex(i1), SurfaceMesh::Vertex(i2),
-                              SurfaceMesh::Vertex(i3));
+                mesh.add_quad(
+                    SurfaceMesh::Vertex(static_cast<int>(i0)), 
+                    SurfaceMesh::Vertex(static_cast<int>(i1)), 
+                    SurfaceMesh::Vertex(static_cast<int>(i2)),
+                    SurfaceMesh::Vertex(static_cast<int>(i3))
+                );
             }
         }
 

@@ -24,7 +24,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include <easy3d/viewer/comp_viewer.h>
+#include <easy3d/viewer/multi_viewer.h>
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/opengl.h>
 #include <easy3d/renderer/opengl_error.h>
@@ -51,7 +51,7 @@
 namespace easy3d {
 
 
-    CompViewer::CompViewer(unsigned int rows, unsigned int cols, const std::string &title)
+    MultiViewer::MultiViewer(unsigned int rows, unsigned int cols, const std::string &title)
             : Viewer(title)
             , num_rows_(rows)
             , num_cols_(cols)
@@ -71,7 +71,7 @@ namespace easy3d {
     }
 
 
-    CompViewer::~CompViewer() {
+    MultiViewer::~MultiViewer() {
         VertexArrayObject::release_buffer(division_vertex_buffer_);
         delete division_vao_;
 
@@ -80,7 +80,7 @@ namespace easy3d {
     }
 
 
-    void CompViewer::assign(unsigned int row, unsigned int col, const Model *m) {
+    void MultiViewer::assign(unsigned int row, unsigned int col, const Model *m) {
         if (!m) {
             LOG(ERROR) << "null model cannot be assigned to a view";
             return;
@@ -95,7 +95,7 @@ namespace easy3d {
     }
 
 
-    void CompViewer::assign(unsigned int row, unsigned int col, const Drawable *d) {
+    void MultiViewer::assign(unsigned int row, unsigned int col, const Drawable *d) {
         if (!d) {
             LOG(ERROR) << "null drawable cannot be assigned to a view";
             return;
@@ -112,7 +112,7 @@ namespace easy3d {
     }
 
 
-    void CompViewer::init() {
+    void MultiViewer::init() {
         Viewer::init();
 
         // compute the division
@@ -134,7 +134,7 @@ namespace easy3d {
     }
 
 
-    void CompViewer::draw() const {
+    void MultiViewer::draw() const {
         // remember the viewer port and scissor status, later we will have to restore them
         ivec4 viewport, scissor;
         glGetIntegerv(GL_VIEWPORT, viewport);
@@ -198,7 +198,7 @@ namespace easy3d {
     }
 
 
-    void CompViewer::draw_division() const {
+    void MultiViewer::draw_division() const {
         if (!lines_program_)
             return;
 
@@ -215,12 +215,12 @@ namespace easy3d {
     }
 
 
-    void CompViewer::post_resize(int w, int h) {
+    void MultiViewer::post_resize(int w, int h) {
         update_division();
     }
 
 
-    void CompViewer::update_division() {
+    void MultiViewer::update_division() {
         if (views_.empty() || views_[0].empty())
             return;
 
@@ -263,7 +263,7 @@ namespace easy3d {
     }
 
 
-    vec3 CompViewer::point_under_pixel(int x, int y, bool &found) const {
+    vec3 MultiViewer::point_under_pixel(int x, int y, bool &found) const {
         // GLFW (same as Qt) uses upper corner for its origin while GL uses the lower corner.
         int glx = x;
         int gly = height() - 1 - y;
@@ -290,7 +290,7 @@ namespace easy3d {
     }
 
 
-    bool CompViewer::mouse_press_event(int x, int y, int button, int modifiers) {
+    bool MultiViewer::mouse_press_event(int x, int y, int button, int modifiers) {
         // This re-implementation does nothing extra but just hides the pivot point.
         bool result = Viewer::mouse_press_event(x, y, button, modifiers);
         show_pivot_point_ = false;
@@ -298,7 +298,7 @@ namespace easy3d {
     }
 
 
-    bool CompViewer::mouse_release_event(int x, int y, int button, int modifiers) {
+    bool MultiViewer::mouse_release_event(int x, int y, int button, int modifiers) {
         // make the mouse position relative to the current view
         x %= view_width_;
         y %= view_height_;
@@ -308,7 +308,7 @@ namespace easy3d {
     }
 
 
-    bool CompViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
+    bool MultiViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
         // make the mouse position relative to the current view
         x %= view_width_;
         y %= view_height_;

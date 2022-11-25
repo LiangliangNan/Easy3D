@@ -36,7 +36,7 @@ add_subdirectory(Tutorial_203_Viewer_wxWidgets)
 if (Easy3D_ENABLE_QT)
     add_subdirectory(Tutorial_204_Viewer_Qt)
 endif ()
-add_subdirectory(Tutorial_205_CompositeView)
+add_subdirectory(Tutorial_205_MultiView)
 add_subdirectory(Tutorial_206_CameraInterpolation)
 add_subdirectory(Tutorial_207_RealCamera)
 

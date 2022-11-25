@@ -61,17 +61,15 @@ namespace easy3d {
 	{
 	public:
         /**
-         * @brief Creating the Viewer
+         * @brief Constructor
          * @param title The window title of the viewer, which can be changed by calling set_title() after construction.
          * @param samples The number of samples for multisample antialiasing
          * @param gl_major/gl_minor The OpenGL version to request. The created context will be
          *        compatible with the requested version (if the context creation succeeded).
          * @param full_screen Do you want the viewer to be fullscreen?
          * @param resizable Whether the viewer will be resizable by the user.
-         * @param depth_bits The desired bit depths of the depth component of the default
-         *        framebuffer.
-         * @param stencil_bits The desired bit depths of the stencil component of the default
-         *        framebuffer.
+         * @param depth_bits The desired bit depths of the depth component of the default framebuffer.
+         * @param stencil_bits The desired bit depths of the stencil component of the default framebuffer.
          * @param width The width of the viewer, which can be changed by calling resize() after construction.
          * @param height The height of the viewer, which can be changed by calling resize() after construction.
          */

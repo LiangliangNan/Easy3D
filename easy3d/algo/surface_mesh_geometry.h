@@ -56,7 +56,7 @@ namespace easy3d {
         vec3 laplace(const SurfaceMesh *mesh, SurfaceMesh::Vertex v);
 
         /** \brief compute the sum of angles around vertex v (used for Gaussian curvature)    */
-        float angle_sum(const SurfaceMesh *mesh, SurfaceMesh::Vertex v);
+        double angle_sum(const SurfaceMesh *mesh, SurfaceMesh::Vertex v);
 
         /** \brief discrete curvature information for a vertex. used for vertex_curvature()    */
         struct VertexCurvature {

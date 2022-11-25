@@ -107,7 +107,7 @@ namespace easy3d {
         vertices.reserve(mesh_->n_vertices());
         for (auto v : mesh_->vertices()) {
             if (!vlocked_[v]) {
-                idx_[v] = vertices.size();
+                idx_[v] = static_cast<int>(vertices.size());
                 vertices.push_back(v);
             }
         }

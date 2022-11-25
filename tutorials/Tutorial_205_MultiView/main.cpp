@@ -24,21 +24,27 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include <easy3d/viewer/comp_viewer.h>
+
+#include <easy3d/viewer/multi_viewer.h>
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/util/resource.h>
-#include <easy3d/util/timer.h>
-
+#include <easy3d/util/initializer.h>
 
 using namespace easy3d;
 
-int test_composite_view(int duration) {
-    // create a 2 by 2 composite viewer
-    CompViewer viewer(2, 2, "CompositeView");
+
+// This example shows how to use the built-in multi-view viewer.
+
+int main(int argc, char** argv) {
+    // Initialize Easy3D.
+    initialize();
+
+    // create a 2 by 2 MultiViewer
+    MultiViewer viewer(2, 2, "Tutorial_205_MultiView");
 
     // ---------------------------------------------------------------------------
     // setup content for view(0, 0): the graph model (vertices and edges)
@@ -75,9 +81,6 @@ int test_composite_view(int duration) {
     sphere_vertices->set_point_size(15);
     viewer.assign(1, 1, sphere_vertices);
 
-    // show a simple message
-    viewer.usage_string_ = "testing composite view...";
-
-    Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
+    // Run the viewer
     return viewer.run();
 }

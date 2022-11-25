@@ -24,6 +24,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
+#include <easy3d/renderer/camera.h>
 #include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
 
@@ -38,12 +39,13 @@ int main(int argc, char** argv) {
 
     const std::string file_name = resource::directory() + "/data/easy3d.ply";
     ViewerImGui viewer("Tutorial_202_Viewer_imgui");
+    viewer.camera()->setViewDirection(vec3(0, 0, -1));
+    viewer.camera()->setUpVector(vec3(0, 1, 0));
 
     if (!viewer.add_model(file_name)) {
-        LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
+        LOG(ERROR) << "failed to load model. Please make sure the file exists and format is correct.";
         return EXIT_FAILURE;
     }
 
-    viewer.resize(800, 600);
     return viewer.run();
 }

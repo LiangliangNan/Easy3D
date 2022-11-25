@@ -26,8 +26,6 @@
 
 #include "viewer.h"
 
-#include <iostream>
-
 #include <easy3d/util/file_system.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
@@ -53,20 +51,15 @@ namespace easy3d {
 		bool full_screen /* = false */,
 		bool resizable /* = true */,
 		int depth_bits /* = 24 */,
-		int stencil_bits /* = 8 */
-	) 
-		: Viewer(title, samples, gl_major, gl_minor, full_screen, resizable, depth_bits, stencil_bits)
-        , alpha_(0.8f)
-        , movable_(true)
+        int stencil_bits /* = 8 */,
+        int width /* = 960 */,
+        int height /* = 800 */
+	) : Viewer(title, samples, gl_major, gl_minor, full_screen, resizable, depth_bits, stencil_bits, width, height)
 	{
 #if defined(_WIN32) || defined(MSVC)
-        // Liangliang: the internal glfw won't be shared accross dll boundaries (But seems ok on mac. That is weird!)
-        glfwInit();
+		// Liangliang: the internal glfw won't be shared across dll boundaries (But seems ok on mac. That is weird!)
+		glfwInit();
 #endif
-
-        camera()->setUpVector(vec3(0, 1, 0));
-        camera()->setViewDirection(vec3(0, 0, -1));
-        camera_->showEntireScene();
 	}
 
 
@@ -80,8 +73,8 @@ namespace easy3d {
         //Viewer::cleanup();
 
 #if defined(_WIN32) || defined(MSVC)
-        // Liangliang: the internal glfw won't be shared accross dll boundaries (But seems ok on mac. That is weird!)
-        glfwTerminate();
+		// Liangliang: the internal glfw won't be shared across dll boundaries (But seems ok on mac. That is weird!)
+		glfwTerminate();
 #endif
     }
 
@@ -102,7 +95,7 @@ namespace easy3d {
             io.WantCaptureKeyboard = true;
             io.WantTextInput = true;
             io.IniFilename = nullptr;
-			ImGui::StyleColorsDark();
+			ImGui::StyleColorsLight();
 			ImGuiStyle& style = ImGui::GetStyle();
 			style.FrameRounding = 5.0f;
 
@@ -188,78 +181,7 @@ namespace easy3d {
 	}
 
 
-    void ViewerImGui::draw_overlay(bool* visible)
-    {
-        ImGui::SetNextWindowSize(ImVec2(300 * widget_scaling(), 200 * widget_scaling()), ImGuiCond_FirstUseEver);
-        const float distance = 10.0f;
-        static int corner = 1;
-        ImVec2 window_pos = ImVec2(ImGui::GetIO().DisplaySize.x - distance , distance + 30);
-        ImVec2 window_pos_pivot = ImVec2((corner & 1) ? 1.0f : 0.0f, (corner & 2) ? 1.0f : 0.0f);
-        if (corner != -1)
-            ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
-        ImGui::SetNextWindowBgAlpha(alpha_); // Transparent background
-        if (ImGui::Begin("Easy3D: Information", visible, (corner != -1 ? ImGuiWindowFlags_NoMove : 0) | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize/* | ImGuiWindowFlags_AlwaysAutoResize*/ | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav))
-        {
-            ImGui::Text("Info (right-click to change position)");
-            ImGui::Separator();
-            ImGui::Text("Frame rate: %.1f", ImGui::GetIO().Framerate);
-            ImGui::Text("GPU time (ms): %s", gpu_time_);
-
-            if (current_model()) {
-                const std::string& name = "Current model: " + file_system::simple_name(current_model()->name());
-                ImGui::Text("%s", name.c_str());
-                if (dynamic_cast<PointCloud*>(current_model())) {
-                    auto cloud = dynamic_cast<PointCloud*>(current_model());
-                    ImGui::Text("Type: point cloud");
-                    ImGui::Text("#Vertices: %i", cloud->n_vertices());
-                }
-                else if (dynamic_cast<SurfaceMesh*>(current_model())) {
-                    auto mesh = dynamic_cast<SurfaceMesh*>(current_model());
-                    ImGui::Text("Type: surface mesh");
-                    ImGui::Text("#Faces: %i", mesh->n_faces());
-                    ImGui::Text("#Vertices: %i", mesh->n_vertices());
-                    ImGui::Text("#Edges: %i", mesh->n_edges());
-                 }
-            }
-            ImGui::Separator();
-
-            int w, h;
-            viewer_size(w, h);
-            float x = ImGui::GetIO().MousePos.x;
-            float y = ImGui::GetIO().MousePos.y;
-            if (x >= 0 && x <= static_cast<float>(w) && y >= 0 && y <= static_cast<float>(h)) {
-                ImGui::Text("Mouse Position: (%i, %i)", static_cast<int>(x), static_cast<int>(y));
-                bool target = false;
-                const vec3& p = point_under_pixel(static_cast<int>(x), static_cast<int>(y), target);
-                if (target)
-                    ImGui::Text("Point Under Mouse: (%.5f, %.5f, %.5f)", p.x, p.y, p.z);
-                else
-                    ImGui::Text("Point Under Mouse: <invalid>");
-            }
-            else {
-                ImGui::Text("Mouse Position: <invalid>");
-                ImGui::Text("Point Under Mouse: <invalid>");
-            }
-            if (ImGui::BeginPopupContextWindow())
-            {
-                if (ImGui::MenuItem("Custom",       nullptr, corner == -1)) corner = -1;
-                if (ImGui::MenuItem("Top-left",     nullptr, corner == 0)) corner = 0;
-                if (ImGui::MenuItem("Top-right",    nullptr, corner == 1)) corner = 1;
-                if (ImGui::MenuItem("Bottom-left",  nullptr, corner == 2)) corner = 2;
-                if (ImGui::MenuItem("Bottom-right", nullptr, corner == 3)) corner = 3;
-                if (visible && ImGui::MenuItem("Close")) *visible = false;
-                ImGui::EndPopup();
-            }
-        }
-        ImGui::End();
-    }
-
-
     void ViewerImGui::post_draw() {
-        static bool show_overlay = true;
-        if (show_overlay)
-            draw_overlay(&show_overlay);
-
         static bool show_about = false;
 		if (show_about) {
             ImGui::SetNextWindowPos(ImVec2(static_cast<float>(width()) * 0.5f, static_cast<float>(height()) * 0.5f), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
@@ -275,29 +197,17 @@ namespace easy3d {
 			ImGui::End();
 		}
 
-		static bool show_manual = false;
-		if (show_manual) {
-			ImGui::SetNextWindowPos(ImVec2(static_cast<float>(width()) * 0.5f, static_cast<float>(height()) * 0.5f), ImGuiCond_FirstUseEver, ImVec2(0.5f, 0.5f));
-			ImGui::Begin("Easy3D Manual", &show_manual, ImGuiWindowFlags_NoResize);
-            ImGui::Text("%s", usage().c_str());
-			ImGui::End();
-		}
-
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(5, 8));
         if (ImGui::BeginMainMenuBar())
 		{
             draw_menu_file();
-
             draw_menu_view();
 
-			if (ImGui::BeginMenu("Help"))
-			{
-                ImGui::MenuItem("Manual", nullptr, &show_manual);
-				ImGui::Separator();
+			if (ImGui::BeginMenu("Help")) {
                 ImGui::MenuItem("About", nullptr, &show_about);
 				ImGui::EndMenu();
 			}
-			//float menu_height = ImGui::GetWindowHeight();
+			menu_height_ = ImGui::GetWindowHeight();
 			ImGui::EndMainMenuBar();
 		}
         ImGui::PopStyleVar();
@@ -314,8 +224,8 @@ namespace easy3d {
         // draw Easy3D logo
         if (texter_) {
             const float font_size = 15.0f;
-            const float offset_x = (static_cast<float>(width()) * 0.5f - texter_->string_width("Easy3D", font_size) * 0.5f) * dpi_scaling();
-            const float offset_y = 50.0f * dpi_scaling();
+            const float offset_x = (width() - texter_->string_width("Easy3D", font_size) - 20.0f) * dpi_scaling();
+            const float offset_y = (20.0f + menu_height_) * dpi_scaling();
             texter_->draw("Easy3D", offset_x, offset_y, font_size, 0);
         }
 	}
@@ -328,20 +238,6 @@ namespace easy3d {
                 open();
             if (ImGui::MenuItem("Save As...", "Ctrl+S"))
                 save();
-
-            //ImGui::Separator();
-            //if (ImGui::BeginMenu("Recent Files...")) {
-            //	std::string file_name;
-            //	std::vector<Model*>::const_reverse_iterator it = models_.rbegin();
-            //	for (; it != models_.rend(); ++it) {
-            //		if (ImGui::MenuItem((*it)->name().c_str())) {
-            //			file_name = (*it)->name();
-            //		}
-            //	}
-            //	if (!file_name.empty())
-            //		open(file_name);
-            //	ImGui::EndMenu();
-            //}
 
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4"))
@@ -357,28 +253,6 @@ namespace easy3d {
         {
             if (ImGui::MenuItem("Snapshot", nullptr))
                 snapshot();
-
-            ImGui::Separator();
-            if (ImGui::BeginMenu("Options"))
-            {
-                ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.50f);
-
-                static int style_idx = 1;
-                if (ImGui::Combo("Style", &style_idx, "Classic\0Dark\0Light\0")) {
-                    switch (style_idx) {
-                    case 0: ImGui::StyleColorsClassic(); break;
-                    case 1: ImGui::StyleColorsDark(); break;
-                    case 2: ImGui::StyleColorsLight(); break;
-                    }
-                    update();
-                }
-
-                ImGui::Checkbox("Panel Movable", &movable_);
-                ImGui::ColorEdit3("Background Color", (float*)background_color_, ImGuiColorEditFlags_NoInputs);
-                ImGui::DragFloat("Transparency", &alpha_, 0.005f, 0.0f, 1.0f, "%.1f");
-                ImGui::PopItemWidth();
-                ImGui::EndMenu();
-            }
 
             ImGui::EndMenu();
         }

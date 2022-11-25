@@ -24,8 +24,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef EASY3D_VIEWER_COMP_VIEWER_H
-#define EASY3D_VIEWER_COMP_VIEWER_H
+#ifndef EASY3D_VIEWER_MULTI_VIEWER_H
+#define EASY3D_VIEWER_MULTI_VIEWER_H
 
 #include <easy3d/viewer/viewer.h>
 
@@ -38,16 +38,16 @@ namespace easy3d {
     class VertexArrayObject;
 
     /**
-     * @brief A composite viewer, which supports multiple views (arranged in a grid layout).
-     * @class CompViewer easy3d/viewer/comp_viewer.h
+     * @brief A viewer that supports multiple views (arranged in a grid layout).
+     * @class MultiViewer easy3d/viewer/multi_viewer.h
      */
-    class CompViewer : public Viewer {
+    class MultiViewer : public Viewer {
     public:
         /**
-         * @brief Constructor. \p rows and \p cols together define the layout of the composite viewer.
+         * @brief Constructor. \p rows and \p cols together define the layout of the multi-view viewer.
          */
-        CompViewer(unsigned int rows, unsigned int cols, const std::string &title = "untitled");
-        ~CompViewer() override;
+        MultiViewer(unsigned int rows, unsigned int cols, const std::string &title = "untitled");
+        ~MultiViewer() override;
 
         /**
          * @brief Assigns the model \p m to the view at position (\p row, \p col).
@@ -107,7 +107,7 @@ namespace easy3d {
     private:
         unsigned int num_rows_;
         unsigned int num_cols_;
-        // A sub-view of the composite viewer.
+        // A sub-view of the multi-view viewer.
         struct View {
             std::vector<const Model *> models;        // the models to show in this view
             std::vector<const Drawable *> drawables;  // the drawables to show in this view
@@ -125,4 +125,4 @@ namespace easy3d {
 
 }
 
-#endif // EASY3D_VIEWER_COMP_VIEWER_H
+#endif // EASY3D_VIEWER_MULTI_VIEWER_H

@@ -41,7 +41,7 @@ int test_transparency(int duration) {
 
     // Load a mesh model and create a drawable for the faces.
     if (!viewer.add_model(file_name, true)) {
-        LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
+        LOG(ERROR) << "failed to load model. Please make sure the file exists and format is correct.";
         return EXIT_FAILURE;
     }
 

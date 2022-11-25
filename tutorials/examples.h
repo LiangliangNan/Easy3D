@@ -128,7 +128,7 @@
  * \include{lineno} Tutorial_204_Viewer_Qt/window.cpp
  */
 
-/// @example Tutorial_205_CompositeView \include{lineno} Tutorial_205_CompositeView/main.cpp
+/// @example Tutorial_205_MultiView \include{lineno} Tutorial_205_MultiView/main.cpp
 
 /**
  * \example Tutorial_206_CameraInterpolation

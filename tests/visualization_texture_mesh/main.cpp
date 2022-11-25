@@ -36,7 +36,7 @@ int test_texture_mesh(int duration) {
 
     const std::string &file_name = resource::directory() + "/data/domik/domik.obj";
     if (!viewer.add_model(file_name, true)) {
-        LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
+        LOG(ERROR) << "failed to load model. Please make sure the file exists and format is correct.";
         return EXIT_FAILURE;
     }
 

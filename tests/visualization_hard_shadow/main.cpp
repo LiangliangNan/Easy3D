@@ -41,7 +41,7 @@ int test_hard_shadow(int duration) {
 
     Model *model = viewer.add_model(file, true);
     if (!model) {
-        LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
+        LOG(ERROR) << "failed to load model. Please make sure the file exists and format is correct.";
         return EXIT_FAILURE;
     }
 

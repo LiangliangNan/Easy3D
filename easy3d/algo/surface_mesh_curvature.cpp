@@ -28,9 +28,9 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
     void SurfaceMeshCurvature::analyze(unsigned int post_smoothing_steps) {
-        float kmin, kmax, mean, gauss;
-        float area, sum_angles;
-        float weight, sum_weights;
+        double kmin, kmax, mean, gauss;
+        double area, sum_angles;
+        double weight, sum_weights;
         vec3 p0, p1, p2, laplace;
 
         // cotan weight per edge
@@ -71,18 +71,18 @@ namespace easy3d {
                     sum_angles += std::acos(geom::clamp_cos(dot(p1, p2)));
                 }
                 laplace -= sum_weights * mesh_->position(v);
-                laplace /= float(2.0) * area;
+                laplace /= 2.0 * area;
 
                 mean = float(0.5) * norm(laplace);
                 gauss = (2.0 * M_PI - sum_angles) / area;
 
-                const float s = std::sqrt(std::max(float(0.0), mean * mean - gauss));
+                const double s = std::sqrt(std::max(0.0, mean * mean - gauss));
                 kmin = mean - s;
                 kmax = mean + s;
             }
 
-            min_curvature_[v] = kmin;
-            max_curvature_[v] = kmax;
+            min_curvature_[v] = static_cast<float>(kmin);
+            max_curvature_[v] = static_cast<float>(kmax);
         }
 
         // boundary vertices: interpolate from interior neighbors
@@ -105,8 +105,8 @@ namespace easy3d {
                     kmax /= sum_weights;
                 }
 
-                min_curvature_[v] = kmin;
-                max_curvature_[v] = kmax;
+                min_curvature_[v] = static_cast<float>(kmin);
+                max_curvature_[v] = static_cast<float>(kmax);
             }
         }
 
@@ -257,8 +257,8 @@ namespace easy3d {
 
             assert(kmin <= kmax);
 
-            min_curvature_[v] = kmin;
-            max_curvature_[v] = kmax;
+            min_curvature_[v] = static_cast<float>(kmin);
+            max_curvature_[v] = static_cast<float>(kmax);
         }
 
         // clean-up properties
@@ -274,8 +274,8 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
     void SurfaceMeshCurvature::smooth_curvatures(unsigned int iterations) {
-        float kmin, kmax;
-        float weight, sum_weights;
+        double kmin, kmax;
+        double weight, sum_weights;
 
         // properties
         auto vfeature = mesh_->get_vertex_property<bool>("v:feature");
@@ -308,8 +308,8 @@ namespace easy3d {
                 }
 
                 if (std::abs(sum_weights) > std::numeric_limits<float>::min()) {
-                    min_curvature_[v] = kmin / sum_weights;
-                    max_curvature_[v] = kmax / sum_weights;
+                    min_curvature_[v] = static_cast<float>(kmin / sum_weights);
+                    max_curvature_[v] = static_cast<float>(kmax / sum_weights);
                 }
             }
         }

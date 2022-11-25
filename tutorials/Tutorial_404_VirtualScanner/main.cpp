@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
     const std::string file_name = resource::directory() + "/data/house/house.obj";
     Model *model = viewer.add_model(file_name, true);
     if (!model) {
-        LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
+        LOG(ERROR) << "failed to load model. Please make sure the file exists and format is correct.";
         return EXIT_FAILURE;
     }
 

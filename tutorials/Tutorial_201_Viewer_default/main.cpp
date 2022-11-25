@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
     viewer.camera()->setUpVector(vec3(0, 1, 0));
 
     if (!viewer.add_model(file_name)) {
-        LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
+        LOG(ERROR) << "failed to load model. Please make sure the file exists and format is correct.";
         return EXIT_FAILURE;
     }
 

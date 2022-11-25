@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
     // Load a mesh model to the viewer
     auto mesh = dynamic_cast<SurfaceMesh *>(viewer.add_model(file_name, false));
     if (!mesh) {
-        LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
+        LOG(ERROR) << "failed to load model. Please make sure the file exists and format is correct.";
         return EXIT_FAILURE;
     }
 
@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
     const std::string texture_file = resource::directory() + "/colormaps/rainbow.png";
     Texture *texture = TextureManager::request(texture_file);
     if (!texture) {
-        LOG(ERROR) << "Error: failed to create texture.";
+        LOG(ERROR) << "failed to create texture.";
         return EXIT_FAILURE;
     }
 

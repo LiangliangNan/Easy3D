@@ -35,7 +35,7 @@ int test_camera_interpolation() {
 
     CameraIntrepolation viewer("CameraInterpolation");
     if (!viewer.add_model(file_name, true)) {
-        LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
+        LOG(ERROR) << "failed to load model. Please make sure the file exists and format is correct.";
         return EXIT_FAILURE;
     }
 

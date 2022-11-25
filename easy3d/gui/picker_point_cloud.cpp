@@ -81,8 +81,9 @@ namespace easy3d {
                     return pick_vertex_gpu_sphere(model, x, y);
             }
         }
-        else // CPU with OpenMP (if supported)
-            return pick_vertex_cpu(model, x, y);
+
+        // CPU with OpenMP (if supported)
+        return pick_vertex_cpu(model, x, y);
     }
 
 
@@ -308,7 +309,7 @@ namespace easy3d {
                 select[i] = !deselect;
         }
 
-        auto count = std::count(select.begin(), select.end(), 1);
+        auto count = std::count(select.begin(), select.end(), true);
         LOG(INFO) << "current selection: " << count << " points";
     }
 
@@ -361,7 +362,7 @@ namespace easy3d {
             }
         }
 
-        auto count = std::count(select.begin(), select.end(), 1);
+        auto count = std::count(select.begin(), select.end(), true);
         LOG(INFO) << "current selection: " << count << " points";
     }
 

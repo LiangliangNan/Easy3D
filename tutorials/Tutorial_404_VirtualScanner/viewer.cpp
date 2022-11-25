@@ -81,7 +81,7 @@ bool VirtualScanner::key_press_event(int key, int modifiers) {
 #if defined(__APPLE__)
                 const int idx = static_cast<int>(static_cast<float>(y) * dpi_scaling() * static_cast<float>(fw) + static_cast<float>(x) * dpi_scaling());
 #else
-                const int idx = static_cast<float>(y * fw + x);
+                const int idx = static_cast<int>(y * fw + x);
 #endif
                 const float d = depths[idx];
                 if (d < 1.0f) {

@@ -122,7 +122,7 @@ namespace easy3d {
 
 
         void ToolPointCloudSelectionRect::press(int x, int y) {
-            start_ = vec2(x,y);
+            start_ = vec2(static_cast<float>(x), static_cast<float>(y));
         }
 
 
@@ -134,7 +134,7 @@ namespace easy3d {
             for (auto model : tool_manager()->viewer()->models()) {
                 auto cloud = dynamic_cast<PointCloud*>(model);
                 if (cloud && cloud->renderer()->is_visible()) {
-                    picker_->pick_vertices(cloud, Rect(start_, vec2(x, y)), select_mode_ != SM_SELECT);
+                    picker_->pick_vertices(cloud, Rect(start_, vec2(static_cast<float>(x), static_cast<float>(y))), select_mode_ != SM_SELECT);
                     update_render_buffer(cloud);
                 }
             }
@@ -198,14 +198,14 @@ namespace easy3d {
 
         void MultitoolPointCloudSelectionRect::press(ToolButton button, int x, int y) {
             MultiTool::press(button, x, y);
-            start_ = vec2(x, y);
-            end_ = vec2(x, y);
+            start_ = vec2(static_cast<float>(x), static_cast<float>(y));
+            end_ = vec2(static_cast<float>(x), static_cast<float>(y));
         }
 
 
         void MultitoolPointCloudSelectionRect::prepare_hint(ToolButton button, int x, int y) {
             if (button != NO_BUTTON && picker_) {
-                end_ = vec2(x, y);
+                end_ = vec2(static_cast<float>(x), static_cast<float>(y));
             }
         }
 

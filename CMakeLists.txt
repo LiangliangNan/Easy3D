@@ -81,7 +81,7 @@ option(Easy3D_ENABLE_CGAL "Build advanced features that require CGAL (>= v5.1)" 
 # Build advanced examples/applications that require Qt5 (>= v5.6)
 option(Easy3D_ENABLE_QT "Build advanced examples/applications that require Qt5 (>= v5.6)"    OFF)
 # Build the video encoding module that requires ffmpeg
-option(Easy3D_ENABLE_FFMPEG "Build the video encoding module that requires ffmpeg (>= v4.0)" OFF)
+option(Easy3D_ENABLE_FFMPEG "Build the video encoding module that requires ffmpeg (>= v3.4)" OFF)
 
 ################################################################################
 
@@ -166,12 +166,12 @@ if (Easy3D_ENABLE_FFMPEG)
         set(Easy3D_HAS_FFMPEG TRUE)
     else ()
         set(Easy3D_HAS_FFMPEG FALSE)
-        message(WARNING "You have requested ffmpeg support but ffmpeg was not found (v4.0 or later required). "
+        message(WARNING "You have requested ffmpeg support but ffmpeg was not found (v3.4 or later required). "
                 "The ffmpeg support allows encoding/recording animation into a video file. You can ignore "
                 "this warning if you don't need this feature. \n"
                 "To enable video encoding, make sure ffmpeg exists on your system. Modify the search paths of "
                 "'include' and 'lib' in 'Easy3D/cmake/FindFFMPEG.cmake', and then run CMake. \n"
-                "How to install ffmpeg (v4.0 or later required)? \n"
+                "How to install ffmpeg (v3.4 or later required)? \n"
                 "    On Windows, you can download ffmpeg from:  \n"
                 "       https://ffmpeg.org/download.html \n"
                 "    On macOS, use the following command to install ffmpeg: \n"
@@ -328,7 +328,7 @@ message(STATUS "    Build documentation    :  ${Easy3D_BUILD_DOCUMENTATION}")
 message(STATUS "    Build tests            :  ${Easy3D_BUILD_TESTS}")
 message(STATUS "    With CGAL (>= v5.1)    :  ${Easy3D_ENABLE_CGAL}")
 message(STATUS "    With Qt5 (>= v5.6)     :  ${Easy3D_ENABLE_QT}")
-message(STATUS "    With ffmpeg (>= v4.0)  :  ${Easy3D_ENABLE_FFMPEG}")
+message(STATUS "    With ffmpeg (>= v3.4)  :  ${Easy3D_ENABLE_FFMPEG}")
 message(STATUS "    Installation directory :  ${CMAKE_INSTALL_PREFIX}")
 
 message(STATUS "************************************************************")

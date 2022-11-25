@@ -45,17 +45,35 @@ namespace easy3d {
     class ViewerImGui : public Viewer
 	{
 	public:
+        /**
+         * @brief Constructor
+         * @param title The window title of the viewer, which can be changed by calling set_title() after construction.
+         * @param samples The number of samples for multisample antialiasing
+         * @param gl_major/gl_minor The OpenGL version to request. The created context will be
+         *        compatible with the requested version (if the context creation succeeded).
+         * @param full_screen Do you want the viewer to be fullscreen?
+         * @param resizable Whether the viewer will be resizable by the user.
+         * @param depth_bits The desired bit depths of the depth component of the default framebuffer.
+         * @param stencil_bits The desired bit depths of the stencil component of the default framebuffer.
+         * @param width The width of the viewer, which can be changed by calling resize() after construction.
+         * @param height The height of the viewer, which can be changed by calling resize() after construction.
+         */
         explicit ViewerImGui(
-            const std::string& title = "Easy3D ImGui Viewer",
+            const std::string& title = "Easy3D ViewerImGui",
 			int samples = 4,
-			int gl_major = 3,
-			int gl_minor = 2,
+            int gl_major = 3,   // must >= 3
+            int gl_minor = 2,   // must >= 2
 			bool full_screen = false,
 			bool resizable = true,
 			int depth_bits = 24,
-			int stencil_bits = 8
+			int stencil_bits = 8,
+            int width = 800,
+            int height = 600
 		);
 
+        /**
+         * @brief The destructor of the Viewer.
+         */
         ~ViewerImGui() override;
 
 	protected:
@@ -90,18 +108,11 @@ namespace easy3d {
 		// We don't need a per-window font. So this function is static
 		void  reload_font(int font_size = 16);
 
-        // To provide real-time feedback to the user, e.g., current state of the
-        // model and viewer, etc. This is implemented as a simple static window
-        // with no decoration + a context-menu to choose its position.
-        void  draw_overlay(bool* visible);
-
 	protected:
 		// Single global context by default, but can be overridden by the user
 		static ImGuiContext *	context_;
 
-        // Global variables for all the windows
-        float	alpha_;
-        bool	movable_;
+		float menu_height_;
 	};
 
 }

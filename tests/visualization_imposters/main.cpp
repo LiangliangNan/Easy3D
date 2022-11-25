@@ -100,7 +100,7 @@ int test_imposters(int duration) {
     const std::string file_name = resource::directory() + "/data/sphere.obj";
     SurfaceMesh *model = dynamic_cast<SurfaceMesh *>(viewer.add_model(file_name, false));
     if (!model) {
-        LOG(ERROR) << "Error: failed to load model. Please make sure the file exists and format is correct.";
+        LOG(ERROR) << "failed to load model. Please make sure the file exists and format is correct.";
         return EXIT_FAILURE;
     }
 
