@@ -51,7 +51,7 @@
 namespace easy3d {
 
 
-    MultiViewer::MultiViewer(unsigned int rows, unsigned int cols, const std::string &title)
+    MultiViewer::MultiViewer(int rows, int cols, const std::string &title)
             : Viewer(title)
             , num_rows_(rows)
             , num_cols_(cols)
@@ -66,8 +66,8 @@ namespace easy3d {
             row.resize(num_cols_);
 
         // initialized to window size
-        view_width_ = width_;
-        view_height_ = height_;
+        view_width_ = static_cast<int>(static_cast<float>(width()) / static_cast<float>(num_cols_));
+        view_height_ = static_cast<int>(static_cast<float>(height()) / static_cast<float>(num_rows_));
     }
 
 
@@ -80,7 +80,7 @@ namespace easy3d {
     }
 
 
-    void MultiViewer::assign(unsigned int row, unsigned int col, const Model *m) {
+    void MultiViewer::assign(int row, int col, const Model *m) {
         if (!m) {
             LOG(ERROR) << "null model cannot be assigned to a view";
             return;
@@ -95,7 +95,7 @@ namespace easy3d {
     }
 
 
-    void MultiViewer::assign(unsigned int row, unsigned int col, const Drawable *d) {
+    void MultiViewer::assign(int row, int col, const Drawable *d) {
         if (!d) {
             LOG(ERROR) << "null drawable cannot be assigned to a view";
             return;
@@ -227,20 +227,21 @@ namespace easy3d {
         if (!division_vao_)
             division_vao_ = new VertexArrayObject;
 
-        ivec4 viewport;
-        glGetIntegerv(GL_VIEWPORT, viewport);
-        const int w = viewport[2];
-        const int h = viewport[3];
-        view_width_ = static_cast<int>(static_cast<float>(w) / static_cast<float>(num_cols_));
-        view_height_ = static_cast<int>(static_cast<float>(h) / static_cast<float>(num_rows_));
+        view_width_ = static_cast<int>(static_cast<float>(width()) / static_cast<float>(num_cols_));
+        view_height_ = static_cast<int>(static_cast<float>(height()) / static_cast<float>(num_rows_));
         // This is required to ensure a correct aspect ratio (thus the correct projection matrix)
         camera()->setScreenWidthAndHeight(view_width_, view_height_);
 
-        for (unsigned int i = 0; i < num_rows_; ++i) {
+        for (int i = 0; i < num_rows_; ++i) {
             auto &row = views_[i];
-            const auto y = h - (i + 1) * view_height_;
-            for (unsigned int j = 0; j < num_cols_; ++j)
-                row[j].viewport = ivec4(static_cast<int>(j * view_width_), static_cast<int>(y), static_cast<int>(view_width_), static_cast<int>(view_height_));
+            const auto y = height() - (i + 1) * view_height_;
+            for (int j = 0; j < num_cols_; ++j)
+                row[j].viewport = ivec4(
+                        static_cast<int>(static_cast<float>(j * view_width_) * dpi_scaling()),
+                        static_cast<int>(static_cast<float>(y) * dpi_scaling()),
+                        static_cast<int>(static_cast<float>(view_width_) * dpi_scaling()),
+                        static_cast<int>(static_cast<float>(view_height_) * dpi_scaling())
+                );
         }
 
         // ------------------------------------------------------------
@@ -248,12 +249,12 @@ namespace easy3d {
         // Note: we need NDC
         std::vector<vec2> points;
         for (std::size_t i = 1; i < num_rows_; ++i) {
-            const float y = 2.0f * static_cast<float>(i * view_height_) / static_cast<float>(h) - 1.0f;
+            const float y = 2.0f * static_cast<float>(i * view_height_) / static_cast<float>(height()) - 1.0f;
             points.emplace_back(vec2(-1.0f, y));
             points.emplace_back(vec2(1.0f, y));
         }
         for (std::size_t i = 1; i < num_cols_; ++i) {
-            const float x = 2.0f * static_cast<float>(i * view_width_) / static_cast<float>(w) - 1.0f;
+            const float x = 2.0f * static_cast<float>(i * view_width_) / static_cast<float>(width()) - 1.0f;
             points.emplace_back(vec2(x, -1.0f));
             points.emplace_back(vec2(x, 1.0f));
         }

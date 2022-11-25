@@ -44,9 +44,11 @@ namespace easy3d {
     class MultiViewer : public Viewer {
     public:
         /**
-         * @brief Constructor. \p rows and \p cols together define the layout of the multi-view viewer.
+         * @brief Constructor.
+         * @param rows The number of rows (of the grid-like layout).
+         * @param col The number of columns (of the grid-like layout).
          */
-        MultiViewer(unsigned int rows, unsigned int cols, const std::string &title = "untitled");
+        MultiViewer(int rows, int cols, const std::string &title = "untitled");
         ~MultiViewer() override;
 
         /**
@@ -57,7 +59,7 @@ namespace easy3d {
          *      visualization. However, add_model() allows the viewer to take ownership of the model, so memory
          *      management and drawable creation for the model are handled by the viewer.
          */
-        void assign(unsigned int row, unsigned int col, const Model *m);
+        void assign(int row, int col, const Model *m);
 
         /** @brief Assigns the drawable \p d to the view at position (\p row, \p col).
          *  @details This function assigns the drawable \p d to the view at position (\p row, \p col). After that, the
@@ -66,7 +68,7 @@ namespace easy3d {
          *      visualization. However, add_drawable() allows the viewer to take ownership of the drawable, so its
          *      memory management is handled by the viewer.
          */
-        void assign(unsigned int row, unsigned int col, const Drawable *d);
+        void assign(int row, int col, const Drawable *d);
 
         /// Sets the visibility of the splitting lines of the views (visible by default).
         void set_division_visible(bool b) { division_visible_ = b; }
@@ -105,8 +107,8 @@ namespace easy3d {
         void update_division();
 
     private:
-        unsigned int num_rows_;
-        unsigned int num_cols_;
+        int num_rows_;
+        int num_cols_;
         // A sub-view of the multi-view viewer.
         struct View {
             std::vector<const Model *> models;        // the models to show in this view
