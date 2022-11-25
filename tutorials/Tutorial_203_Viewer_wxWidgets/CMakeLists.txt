@@ -76,7 +76,7 @@ endif ()
 
 # The resources directory
 target_compile_definitions(${PROJECT_NAME} PRIVATE
-        "RESOURCE_DIR=\"${CMAKE_CURRENT_LIST_DIR}/Resources\""
+        "RESOURCE_DIR=\"${CMAKE_CURRENT_LIST_DIR}/resources\""
         )
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${Easy3D_INCLUDE_DIR})
