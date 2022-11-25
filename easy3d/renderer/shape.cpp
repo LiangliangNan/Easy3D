@@ -577,20 +577,20 @@ namespace easy3d {
                 }
                 colors.resize(points_xoy.size(), vec3(0, 0, 1));
 
-                auto rot_x = mat4::rotation(vec3(1, 0, 0), M_PI * 0.5f);
+                auto rot_x = mat4::rotation(vec3(1, 0, 0), static_cast<float>(M_PI * 0.5f));
                 for (std::size_t i = 0; i < points_xoy.size(); ++i) {
                     points.push_back(rot_x * points_xoy[i]);
                     colors.emplace_back(vec3(0, 1, 0));
-                    indices.push_back(points_xoy.size() + i);
-                    indices.push_back(points_xoy.size() + (i + 1) % points_xoy.size());
+                    indices.push_back(static_cast<unsigned int>(points_xoy.size() + i));
+                    indices.push_back(static_cast<unsigned int>(points_xoy.size() + (i + 1) % points_xoy.size()));
                 }
 
-                auto rot_y = mat4::rotation(vec3(0, 1, 0), M_PI * 0.5f);
+                auto rot_y = mat4::rotation(vec3(0, 1, 0), static_cast<float>(M_PI * 0.5f));
                 for (std::size_t i = 0; i < points_xoy.size(); ++i) {
                     points.push_back(rot_y * points_xoy[i]);
                     colors.emplace_back(vec3(1, 0, 0));
-                    indices.push_back(points_xoy.size() * 2 + i);
-                    indices.push_back(points_xoy.size() * 2 + (i + 1) % points_xoy.size());
+                    indices.push_back(static_cast<unsigned int>(points_xoy.size() * 2 + i));
+                    indices.push_back(static_cast<unsigned int>(points_xoy.size() * 2 + (i + 1) % points_xoy.size()));
                 }
 
                 if (axes) {
@@ -599,24 +599,24 @@ namespace easy3d {
                     points.emplace_back(vec3(1, 0, 0));
                     colors.emplace_back(vec3(1, 0, 0));
                     colors.emplace_back(vec3(1, 0, 0));
-                    indices.push_back(points.size() - 2);
-                    indices.push_back(points.size() - 1);
+                    indices.push_back(static_cast<unsigned int>(points.size() - 2));
+                    indices.push_back(static_cast<unsigned int>(points.size() - 1));
 
                     // y axis
                     points.emplace_back(vec3(0, -1, 0));
                     points.emplace_back(vec3(0, 1, 0));
                     colors.emplace_back(vec3(0, 1, 0));
                     colors.emplace_back(vec3(0, 1, 0));
-                    indices.push_back(points.size() - 2);
-                    indices.push_back(points.size() - 1);
+                    indices.push_back(static_cast<unsigned int>(points.size() - 2));
+                    indices.push_back(static_cast<unsigned int>(points.size() - 1));
 
                     // z axis
                     points.emplace_back(vec3(0, 0, -1));
                     points.emplace_back(vec3(0, 0, 1));
                     colors.emplace_back(vec3(0, 0, 1));
                     colors.emplace_back(vec3(0, 0, 1));
-                    indices.push_back(points.size() - 2);
-                    indices.push_back(points.size() - 1);
+                    indices.push_back(static_cast<unsigned int>(points.size() - 2));
+                    indices.push_back(static_cast<unsigned int>(points.size() - 1));
                 }
 
                 drawable->update_vertex_buffer(points);
