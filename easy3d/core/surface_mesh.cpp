@@ -1195,11 +1195,13 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
 
-    float SurfaceMesh::edge_length(Edge e) const
-    {
+    float SurfaceMesh::edge_length(Edge e) const {
         return norm(vpoint_[vertex(e,0)] - vpoint_[vertex(e,1)]);
     }
 
+    float SurfaceMesh::edge_length(Halfedge h) const {
+        return norm(vpoint_[source(h)] - vpoint_[target(h)]);
+    }
 
     //-----------------------------------------------------------------------------
 

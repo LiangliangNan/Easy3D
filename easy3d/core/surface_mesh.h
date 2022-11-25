@@ -1951,6 +1951,8 @@ namespace easy3d {
 
         /// compute the length of edge \c e.
         float edge_length(Edge e) const;
+        /// compute the length of an edge denoted by one of its halfedge \c h.
+        float edge_length(Halfedge h) const;
 
         //@}
 
