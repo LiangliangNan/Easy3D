@@ -61,10 +61,13 @@ namespace easy3d {
         void merge_colinear_edges(SurfaceMesh *mesh, float angle_threshold = 1.0f);
 
     private:
-        std::vector<SurfaceMesh::Halfedge>
-        extract_boundary_loop(SurfaceMesh *mesh, int comp_id, SurfaceMesh::Halfedge start);
-
         void internal_apply(SurfaceMesh *mesh, float angle_threshold);
+
+        typedef std::vector<SurfaceMesh::Halfedge> Loop;
+        std::vector<Loop> extract_boundary_loop(const SurfaceMesh *mesh, int comp_id, std::set<SurfaceMesh::Halfedge>& boundary_edges);
+
+        // classify the loops of a planar region into an "outer" loop and several "holes".
+        void classify(const SurfaceMesh *mesh, const std::vector<Loop>& loops, Loop& outer, std::vector<Loop>& holes);
 
     private:
         SurfaceMesh::FaceProperty<int> planar_segments_;

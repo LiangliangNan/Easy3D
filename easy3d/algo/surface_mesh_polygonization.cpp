@@ -38,9 +38,9 @@ namespace easy3d {
             return;
 
         int orig_faces = static_cast<int>(mesh->n_faces());
-        int prev_faces(orig_faces), diff(0);
+        int diff(0);
         do {
-            prev_faces = static_cast<int>(mesh->n_faces());
+            int prev_faces = static_cast<int>(mesh->n_faces());
             internal_apply(mesh, angle_threshold);
             diff = static_cast<int>(mesh->n_faces()) - prev_faces;
         } while (diff != 0);
@@ -59,33 +59,29 @@ namespace easy3d {
         if (!planar_segments_)
             planar_segments_ = model.add_face_property<int>(partition_name, -1);
         else {
-            for (auto f : model.faces())
+            for (auto f: model.faces())
                 planar_segments_[f] = -1;
         }
 
         int num = SurfaceMeshEnumerator::enumerate_planar_components(&model, planar_segments_, angle_threshold);
-        // for each planar patch, find a starting halfedge
-        std::vector<SurfaceMesh::Halfedge> starters(num, SurfaceMesh::Halfedge());
+        // for each planar patch, find all its boundaries halfedges
+        std::vector<std::set<SurfaceMesh::Halfedge> > boundary_edges(num);
 
-        for (auto e : model.edges()) {
+        for (auto e: model.edges()) {
             if (model.is_border(e)) {
                 auto h = model.halfedge(e, 0);
                 if (model.is_border(h))
                     h = model.opposite(h);
                 int id = planar_segments_[model.face(h)];
-                if (starters[id] == SurfaceMesh::Halfedge())
-                    starters[id] = h;
-            }
-            else {
+                boundary_edges[id].insert(h);
+            } else {
                 auto f0 = model.face(e, 0);
                 auto f1 = model.face(e, 1);
                 int id0 = planar_segments_[f0];
                 int id1 = planar_segments_[f1];
                 if (id0 != id1) {
-                    if (starters[id0] == SurfaceMesh::Halfedge())
-                        starters[id0] = model.halfedge(e, 0);
-                    if (starters[id1] == SurfaceMesh::Halfedge())
-                        starters[id1] = model.halfedge(e, 1);
+                    boundary_edges[id0].insert(model.halfedge(e, 0));
+                    boundary_edges[id1].insert(model.halfedge(e, 1));
                 }
             }
         }
@@ -94,59 +90,130 @@ namespace easy3d {
         SurfaceMeshBuilder builder(mesh);
         builder.begin_surface();
 
-        for (auto v : model.vertices())
+        for (auto v: model.vertices())
             builder.add_vertex(model.position(v));
 
-        for (std::size_t i = 0; i < starters.size(); ++i) {
-            const std::vector<SurfaceMesh::Halfedge> &loop = extract_boundary_loop(&model, static_cast<int>(i), starters[i]);
+        typedef std::vector<vec3> Hole;
+
+        int num_faces_with_holes = 0;
+        for (std::size_t i = 0; i < boundary_edges.size(); ++i) {
+            auto &edges = boundary_edges[i]; // contains all the boundaries edges of a planar region
+            const auto &loops = extract_boundary_loop(&model, static_cast<int>(i), edges);
+
+            Loop outer;
+            std::vector<Loop> holes;
+            if (loops.size() == 1)
+                outer = loops[0];
+            else if (loops.size() > 1) {
+                classify(&model, loops, outer, holes);
+                ++num_faces_with_holes;
+            } else // empty
+                break;
 
             std::vector<SurfaceMesh::Vertex> vts;
-            for (auto h : loop) {
+            for (auto h: outer) {
                 SurfaceMesh::Vertex v = model.target(h);
                 vts.push_back(v);
             }
+
             auto f = builder.add_face(vts);
             if (!f.is_valid()) {
                 LOG_N_TIMES(3, WARNING) << "failed to add a face to the surface mesh. " << COUNTER;
                 break;
             }
+
+            for (const auto &hole: holes) {
+                auto face_holes = mesh->face_property<std::vector<Hole> >("f:holes");
+                Hole a_hole;
+                for (auto h: hole)
+                    a_hole.push_back(model.position(model.target(h)));
+                face_holes[f].push_back(a_hole);
+            }
         }
         builder.end_surface(false);
+
+        // print a warning message
+        if (num_faces_with_holes > 0) {
+            if (num_faces_with_holes == 1)
+                LOG(WARNING) << num_faces_with_holes << " face has holes (not handled)";
+            else
+                LOG(WARNING) << num_faces_with_holes << " faces have holes (not handled)";
+        }
 
         merge_colinear_edges(mesh, angle_threshold);
     }
 
 
-    std::vector<SurfaceMesh::Halfedge>
-    SurfaceMeshPolygonization::extract_boundary_loop(SurfaceMesh *mesh, int comp_id, SurfaceMesh::Halfedge start) {
-        assert(planar_segments_[mesh->face(start)] == comp_id);
+    // classify the loops of a planar region into an "outer" loop and several "holes".
+    void SurfaceMeshPolygonization::classify(const SurfaceMesh *mesh, const std::vector<Loop> &loops, Loop &outer,
+                                             std::vector<Loop> &holes) {
+        auto loop_length = [](const SurfaceMesh *m, const Loop &loop) -> float {
+            float length = 0.0f;
+            for (auto h: loop)
+                length += m->edge_length(h);
+            return length;
+        };
 
-        std::vector<SurfaceMesh::Halfedge> loop;
-        loop.push_back(start);
-
-        SurfaceMesh::Halfedge cur = start;
-        do {
-            SurfaceMesh::Halfedge next = mesh->next(cur);
-            if (mesh->is_border(mesh->opposite(next))) {
-                cur = next;
-                if (cur != start)
-                    loop.push_back(cur);
+        std::size_t outer_idx = 0;
+        float longest_length = loop_length(mesh, loops[0]);
+        for (std::size_t i = 1; i < loops.size(); ++i) {
+            float length = loop_length(mesh, loops[i]);
+            if (length > longest_length) {
+                longest_length = length;
+                outer_idx = i;
             }
-            else {
-                SurfaceMesh::Halfedge test = mesh->opposite(next);
-                auto f = mesh->face(test);
-                auto id = planar_segments_[f];
-                if (id != comp_id) {
+        }
+
+        outer.clear();
+        holes.clear();
+        for (std::size_t i = 0; i < loops.size(); ++i) {
+            if (i == outer_idx)
+                outer = loops[i];
+            else
+                holes.push_back(loops[i]);
+        }
+    }
+
+
+    std::vector<SurfaceMeshPolygonization::Loop>
+    SurfaceMeshPolygonization::extract_boundary_loop(const SurfaceMesh *mesh, int comp_id,
+                                                     std::set<SurfaceMesh::Halfedge> &boundary_edges) {
+        std::vector<Loop> loops;
+        while (!boundary_edges.empty()) {
+            SurfaceMesh::Halfedge start = *boundary_edges.begin();
+            assert(planar_segments_[mesh->face(start)] == comp_id);
+
+            Loop loop;
+            loop.push_back(start);
+            boundary_edges.erase(start);
+
+            SurfaceMesh::Halfedge cur = start;
+            do {
+                SurfaceMesh::Halfedge next = mesh->next(cur);
+                if (mesh->is_border(mesh->opposite(next))) {
                     cur = next;
-                    if (cur != start)
+                    if (cur != start) {
                         loop.push_back(cur);
+                        boundary_edges.erase(cur);
+                    }
+                } else {
+                    SurfaceMesh::Halfedge test = mesh->opposite(next);
+                    auto f = mesh->face(test);
+                    auto id = planar_segments_[f];
+                    if (id != comp_id) {
+                        cur = next;
+                        if (cur != start) {
+                            loop.push_back(cur);
+                            boundary_edges.erase(cur);
+                        }
+                    } else
+                        cur = test;
                 }
-                else
-                    cur = test;
-            }
-        } while (cur != start);
+            } while (cur != start);
 
-        return loop;
+            loops.push_back(loop);
+        }
+        return loops;
     }
 
 
@@ -159,7 +226,7 @@ namespace easy3d {
         };
 
         std::vector<SurfaceMesh::Vertex> vertices;
-        for (auto v : mesh->vertices()) {
+        for (auto v: mesh->vertices()) {
             if (mesh->valence(v) != 2)
                 continue;
 
@@ -175,7 +242,7 @@ namespace easy3d {
                 vertices.push_back(v);
         }
 
-        for (auto v : vertices)
+        for (auto v: vertices)
             mesh->join_edges(v);
 
         if (!vertices.empty())
