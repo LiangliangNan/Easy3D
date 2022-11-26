@@ -788,7 +788,7 @@ void WidgetModelList::mergeModels(const std::vector<Model *> &models) {
 
 			unsigned int count = from->n_faces();
 			for (unsigned int id = id_start; id < id_start + count; ++id)
-				index[SurfaceMesh::Face(id)] = static_cast<int>(i);
+				index[SurfaceMesh::Face(static_cast<int>(id))] = static_cast<int>(i);
 
             to_delete.push_back(from);
         }
@@ -813,7 +813,7 @@ void WidgetModelList::mergeModels(const std::vector<Model *> &models) {
 
 			unsigned int count = from->n_vertices();
 			for (unsigned int id = id_start; id < id_start + count; ++id)
-				index[PointCloud::Vertex(id)] = static_cast<int>(i);
+				index[PointCloud::Vertex(static_cast<int>(id))] = static_cast<int>(i);
 
 			to_delete.push_back(from);
         }
@@ -874,10 +874,10 @@ void WidgetModelList::decomposeModel(Model *model) {
 namespace internal {
 
     template <typename DRAWABLE> 
-    void propogate(const std::vector<DRAWABLE*>& source_drawables, const std::vector<DRAWABLE*>& target_drawables) {
+    void propagate(const std::vector<DRAWABLE*>& source_drawables, const std::vector<DRAWABLE*>& target_drawables) {
         for (auto source_drawable : source_drawables) {
             for (auto target_drawable : target_drawables) {
-                if (target_drawable->name() == source_drawable->name()) { // propogate only when their names are the same
+                if (target_drawable->name() == source_drawable->name()) { // propagate only when their names are the same
                     target_drawable->state() = source_drawable->state();
                     switch (source_drawable->type()) {
                     case Drawable::DT_POINTS:
@@ -905,18 +905,18 @@ void WidgetModelList::applyRenderingToAllModels() {
     const auto& models = viewer()->models();
     if (models.size() < 2)
         return;
-    Model* source = viewer()->currentModel();
 
+    Model* source = viewer()->currentModel();
     for (auto& target : models) {
         if (target == source)
             continue;
 
         // points drawables
-        internal::propogate(source->renderer()->points_drawables(), target->renderer()->points_drawables());
+        internal::propagate(source->renderer()->points_drawables(), target->renderer()->points_drawables());
         // lines drawables
-        internal::propogate(source->renderer()->lines_drawables(), target->renderer()->lines_drawables());
+        internal::propagate(source->renderer()->lines_drawables(), target->renderer()->lines_drawables());
         // triangles drawables
-        internal::propogate(source->renderer()->triangles_drawables(), target->renderer()->triangles_drawables());
+        internal::propagate(source->renderer()->triangles_drawables(), target->renderer()->triangles_drawables());
     }
 
     updateModelList();
