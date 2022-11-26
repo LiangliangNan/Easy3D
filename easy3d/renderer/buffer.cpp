@@ -980,9 +980,14 @@ namespace easy3d {
                     model->update_vertex_normals();
                     auto normals = model->get_vertex_property<vec3>("v:normal");
 
+#if HANDLE_HOLES
+                    auto prop_holes = model->get_face_property< std::vector< std::vector<vec3> > >("f:holes");
+#endif
+
                     for (auto face : model->faces()) {
-                        tessellator.begin_polygon(model->compute_face_normal(face));
-                        // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
+                        const auto normal = model->compute_face_normal(face);
+                        tessellator.begin_polygon(normal);
+                        tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                         tessellator.begin_contour();
                         for (auto h : model->halfedges(face)) {
                             auto v = model->target(h);
@@ -991,6 +996,22 @@ namespace easy3d {
                             tessellator.add_vertex(vertex);
                         }
                         tessellator.end_contour();
+
+#if HANDLE_HOLES
+                        if (prop_holes) {
+                            const auto& holes = prop_holes[face];
+                            if (!holes.empty()) {
+                                for (const auto& hole : holes) {
+                                    tessellator.set_winding_rule(Tessellator::WINDING_ODD);
+                                    tessellator.begin_contour();
+                                    for (const auto& p: hole)
+                                        tessellator.add_vertex(p);
+                                    tessellator.end_contour();
+                                }
+                            }
+                        }
+#endif
+
                         tessellator.end_polygon();
 
                         std::size_t num = tessellator.num_elements_in_polygon();

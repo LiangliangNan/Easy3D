@@ -69,7 +69,7 @@ void triangulate(SurfaceMesh *mesh) {
         if (holes && holes[f].size() >= 3) { // has a valid hole
             tessellator.set_winding_rule(Tessellator::WINDING_ODD);
             tessellator.begin_contour();
-            for (auto p : holes[f])
+            for (const auto& p : holes[f])
                 tessellator.add_vertex(p);
             tessellator.end_contour();
         }
