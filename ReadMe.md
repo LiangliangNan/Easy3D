@@ -156,18 +156,18 @@ repository, switch on the CMake option `Easy3D_BUILD_TESTS` (which is disabled b
 you can build ALL or only the `tests` target. Finally, run the `tests` executable (i.e., `YOUR_BUILD_DIRECTORY/bin/tests`) for the test.
 
 ### Use Easy3D in your project
-This is quite easy, maybe easier than many other open-source libraries :-) 
-After you have built Easy3D, you only need to add the following lines to your CMakeLists file and point `Easy3D_DIR` 
-to your `build` (or the installation) directory of Easy3D when doing cmake. Then the requested Easy3D libraries, 
-including directories and relevant compile definitions of Easy3D, are visible and accessible to your project.
+This is quite easy, like many other open-source libraries :-) 
+After you have built Easy3D, you only need to point `Easy3D_DIR` to your `build` (or the installation) directory of Easy3D when doing cmake. Then the requested Easy3D libraries, including directories and relevant compile definitions of Easy3D, are visible and accessible to your project. Below is an example of using the default Easy3D viewer. 
+The `CMakeLists.txt` looks like:
+``` cmake
+set(CMAKE_CXX_STANDARD 11)                       # specify C++ standard
+find_package(Easy3D COMPONENTS viewer REQUIRED)  # request Easy3D (recommended to request only needed components)
+add_executable(Test main.cpp)                    # create an executable target
+target_link_libraries(Test easy3d::viewer)       # link to necessary Easy3D modules (add more if needed, e.g., algo)
 ```
-set(CMAKE_CXX_STANDARD 11)                          # specify C++ standard
-find_package(Easy3D COMPONENTS viewer REQUIRED)     # request Easy3D (recommended to request only needed components)
-target_link_libraries(YOUR_APP_NAME easy3d::viewer) # link to necessary Easy3D modules (add more if needed, e.g., algo)
-```
-The minimum code to have a 3D viewer:
+and the `main.cpp` with minimum code:
 
-```c++
+``` c++
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/util/initializer.h>
 
