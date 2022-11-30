@@ -28,4 +28,4 @@ jobs:
       - name: Configure
         run: cmake -H"." -B"build/${{ matrix.platform }}" -DEasy3D_BUILD_TESTS=ON;
       - name: "Build ${{ matrix.platform }} in ${{ matrix.build_type }}"
-        run: cmake --build;
+        run: cmake --build "build/${{ matrix.platform }}";
