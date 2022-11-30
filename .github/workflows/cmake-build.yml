@@ -1,12 +1,9 @@
 ##############################################################################
-# GitHub Actions Workflow for Easy3D to build tests with GCC
-#
+# GitHub Actions Workflow for building Easy3D on Windows, Ubuntu, and macOS
 # Copyright (C) 2022 Liangliang Nan <liangliang.nan@gmail.com>
-# Copyright (c) 2021 Vissarion Fisikopoulos
-#
-# Licensed under GNU LGPL.3, see LICENCE file
+# Licensed under GNU LGPL-v3 (see the LICENCE file)
 ##############################################################################
-name: cmake-gcc
+name: Test Build Easy3D
 
 on: [push, pull_request]
 
