@@ -39,7 +39,7 @@
 /// To have LOG_IF_FIRST_N
 /// Example: LOG_IF_FIRST_N(5, i < 20, WARNING) << "Log if (i < 10) for first 5, i = " << i << ", " << COUNTER;
 #define LOG_IF_FIRST_N(n, condition, LEVEL)  if (condition) \
-CLOG_N_TIMES(n, LEVEL, ELPP_CURR_FILE_LOGGER_ID)
+    CLOG_N_TIMES(n, LEVEL, ELPP_CURR_FILE_LOGGER_ID)
 
 /// For logging the counter number
 #define COUNTER     ELPP_COUNTER->hitCounts()
