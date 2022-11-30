@@ -23,9 +23,9 @@ jobs:
       - uses: actions/checkout@v1
       - if: ${{ matrix.platform == 'ubuntu' }}
         name: Set up
-        run: sudo apt-get update || true
-             sudo apt-get install libgl1-mesa-dev mesa-common-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+        run: sudo apt-get update || true;
+             sudo apt-get install libgl1-mesa-dev mesa-common-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev;
       - name: Configure
-        run: cmake -H"." -B"build/${{ matrix.platform }}" -DEasy3D_BUILD_TESTS=ON
+        run: cmake -H"." -B"build/${{ matrix.platform }}" -DEasy3D_BUILD_TESTS=ON;
       - name: "Build ${{ matrix.platform }} in ${{ matrix.build_type }}"
-        run: cmake --build
+        run: cmake --build;
