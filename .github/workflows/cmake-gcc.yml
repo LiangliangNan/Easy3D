@@ -12,20 +12,20 @@ on: [push, pull_request]
 
 jobs:
   build:
-    name: ${{ matrix.compilers }}
+    name: "Build ${{ matrix.platform }} in ${{ matrix.build_type }}"
     strategy:
           fail-fast: false
           matrix:
-            compilers: [g++-7, g++-8, g++-9, g++-10, g++-11]
-    runs-on: ubuntu-20.04
+            platform: [windows, ubuntu, macos]
+            build_type: [Debug, Release]
+    runs-on: "${{ matrix.platform }}-latest"
     steps:
       - uses: actions/checkout@v1
-      - run: sudo apt-get update || true;
-             sudo apt-get install ${{ matrix.compilers }};
-             sudo apt-get install libgl1-mesa-dev mesa-common-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev;
-             rm -rf Release;
-             mkdir Release;
-             cd Release;
-             cmake -DCMAKE_CXX_COMPILER=${{ matrix.compilers }} -DCMAKE_BUILD_TYPE=Release -DEasy3D_BUILD_TESTS=On ..;
-             make;
-             
+      - if: ${{ matrix.platform == 'ubuntu' }}
+        name: Set up
+        run: sudo apt-get update || true
+             sudo apt-get install libgl1-mesa-dev mesa-common-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+      - name: Configure
+        run: cmake -H"." -B"build/${{ matrix.platform }}" -DEasy3D_BUILD_TESTS=ON
+      - name: "Build ${{ matrix.platform }} in ${{ matrix.build_type }}"
+        run: cmake --build
