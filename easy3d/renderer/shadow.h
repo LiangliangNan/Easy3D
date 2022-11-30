@@ -89,7 +89,6 @@ namespace easy3d {
         void draw(const std::vector<TrianglesDrawable*>& surfaces);
 
     protected:
-        ///
         virtual void ensure_fbo();
         virtual void shadow_map_pass(const std::vector<TrianglesDrawable*>& surfaces);
         virtual void render_pass(const std::vector<TrianglesDrawable*>& surfaces);

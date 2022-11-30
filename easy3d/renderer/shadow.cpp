@@ -41,7 +41,7 @@
 //#define SHOW_SHADOW_MAP_AND_LIGHT_FRUSTUM
 
 #ifdef SHOW_SHADOW_MAP_AND_LIGHT_FRUSTUM
-#include <easy3d/renderer/primitives.h>
+#include <easy3d/renderer/shape.h>
 #endif
 
 
