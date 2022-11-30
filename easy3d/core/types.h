@@ -11,8 +11,10 @@
 #ifndef EASY3D_CORE_TYPES_H
 #define EASY3D_CORE_TYPES_H
 
-#include <cstdint>
+
+#include <cmath>
 #include <vector>
+#include <cstdint>
 
 #include <easy3d/core/vec.h>
 #include <easy3d/core/mat.h>

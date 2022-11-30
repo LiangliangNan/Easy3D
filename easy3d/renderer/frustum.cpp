@@ -70,7 +70,7 @@ namespace easy3d {
         //////////////////////////////////////////////////////////////////////////
         // I also set the frustum
 
-        ymax_= near_ * tanf(fovy * 0.5f);
+        ymax_= near_ * std::tan(fovy * 0.5f);
         ymin_ = -ymax_;
         xmin_ = ymin_ * aspect;
         xmax_ = ymax_ * aspect;
@@ -82,7 +82,7 @@ namespace easy3d {
         ymin_ = -ymax_;
 
         ar_ = frustum_width / frustum_height;
-        fovy_ = atanf(ymax_ / znear) * 2.0f;
+        fovy_ = std::atan(ymax_ / znear) * 2.0f;
 
         xmin_ = ymin_ * ar_;
         xmax_ = ymax_ * ar_;
@@ -153,7 +153,7 @@ namespace easy3d {
 
     float Frustum::near_height() const {
         if (type_ == PERSPECTIVE) {
-            return tanf(fovy_ / 2.0f) * near_;
+            return std::tan(fovy_ / 2.0f) * near_;
         }
         else
             return ymax_;
@@ -171,7 +171,7 @@ namespace easy3d {
 
     float Frustum::far_height() const {
         if (type_ == PERSPECTIVE) {
-            return tanf(fovy_ / 2.0f) * far_;
+            return std::tan(fovy_ / 2.0f) * far_;
         }
         else
             return ymax_;
@@ -199,9 +199,9 @@ namespace easy3d {
         if (type_ == PERSPECTIVE) {
             // these heights and widths are half the heights and widths of
             // the near and far plane rectangles
-            float near_height = tanf(fovy_ / 2.0f) * near_;
+            float near_height = std::tan(fovy_ / 2.0f) * near_;
             float near_width = near_height * ar_;
-            float far_height = tanf(fovy_ / 2.0f) * far_;
+            float far_height = std::tan(fovy_ / 2.0f) * far_;
             float far_width = far_height * ar_;
             points[0] = nc - right * near_width - up * near_height; // bottom left
             points[1] = nc + right * near_width - up * near_height; // bottom right
