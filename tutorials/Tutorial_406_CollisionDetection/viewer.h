@@ -42,9 +42,6 @@ public:
     explicit CollisionViewer(const std::string &title);
     ~CollisionViewer() override;
 
-protected:
-    std::string usage() const override;
-
 private:
     bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;
     bool key_press_event(int key, int modifiers) override;

@@ -40,24 +40,6 @@ using namespace easy3d;
 //		- estimate normal information of a point cloud.
 //      - re-orient the normals.
 
-bool reorient(Viewer* viewer, Model* model) {
-    if (!viewer || !model)
-        return false;
-
-    auto cloud = dynamic_cast<PointCloud *>(model);
-
-    if (PointCloudNormals::reorient(cloud)) {
-        auto normals = cloud->get_vertex_property<vec3>("v:normal");
-        auto drawable = cloud->renderer()->get_points_drawable("vertices");
-        // Upload the vertex normals to the GPU.
-        drawable->update_normal_buffer(normals.vector());
-        viewer->update();
-        return true;
-    }
-    else
-        return false;
-}
-
 bool estimate(Viewer* viewer, Model* model) {
     if (!viewer || !model)
         return false;
@@ -69,23 +51,41 @@ bool estimate(Viewer* viewer, Model* model) {
         // Upload the vertex normals to the GPU.
         drawable->update_normal_buffer(normals.vector());
         viewer->update();
-
-        // change the function (to allow using the same shortcut)
-        viewer->execute_func_ = reorient;
         return true;
     }
     else
         return false;
 }
 
+bool reorient(Viewer* viewer, Model* model) {
+    if (!viewer || !model)
+        return false;
+
+    auto cloud = dynamic_cast<PointCloud *>(model);
+    auto normals = cloud->get_vertex_property<vec3>("v:normal");
+    if (!normals) {
+        LOG(WARNING) << "normal information does not exist";
+        return false;
+    }
+
+    if (PointCloudNormals::reorient(cloud)) {
+        auto drawable = cloud->renderer()->get_points_drawable("vertices");
+        // Upload the vertex normals to the GPU.
+        drawable->update_normal_buffer(normals.vector());
+        viewer->update();
+        return true;
+    }
+    else
+        return false;
+}
 
 int main(int argc, char **argv) {
-    // Initialize Easy3D.
+    // initialize Easy3D.
     initialize();
 
     const std::string file = resource::directory() + "/data/bunny.bin";
 
-    // Create the viewer.
+    // create the viewer.
     Viewer viewer("Tutorial_601_Cloud_NormalEstimation");
 
     Model *model = viewer.add_model(file, true);
@@ -103,13 +103,14 @@ int main(int argc, char **argv) {
     drawable->set_point_size(3.0f);
     drawable->set_lighting_two_sides(false);
 
-    // usage hint
-    viewer.usage_string_ = "press 'Ctrl + e' to estimate normals (on Mac 'Command + e')\n"
-                           "press it again to re-orient the normals";
-    // set up the function to be executed
-    viewer.execute_func_ = estimate;
+    // usage
+    viewer.set_usage("Ctrl + e: estimate normals\n"
+                     "Ctrl + r: reorient normals");
+    // set up the functions to be executed and their corresponding shortcuts
+    viewer.bind(estimate, model, Viewer::KEY_E, Viewer::MOD_CTRL);
+    viewer.bind(reorient, model, Viewer::KEY_R, Viewer::MOD_CTRL);
 
-    // Run the viewer
+    // run the viewer
     return viewer.run();
 }
 

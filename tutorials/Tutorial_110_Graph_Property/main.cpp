@@ -59,7 +59,7 @@ Graph* old_graph_from_previous_example() {
 
 
 int main(int argc, char** argv) {
-    // Initialize Easy3D.
+    // initialize Easy3D.
     initialize();
 
 	Graph* graph = old_graph_from_previous_example();

@@ -37,7 +37,7 @@ using namespace easy3d;
 int test_eye_dome_lighting(int duration) {
     const std::string file = resource::directory() + "/data/bunny.bin";
 
-    // Create the viewer.
+    // create the viewer.
     TutorialEyeDomeLighting viewer("EyeDomeLighting");
 
     // Read the point cloud from a known file.
@@ -51,7 +51,7 @@ int test_eye_dome_lighting(int duration) {
     drawable->set_uniform_coloring(vec4(0.6f, 0.6f, 1.0f, 1.0f));
     drawable->set_point_size(5.0f);
 
-    viewer.usage_string_ = "testing eye dome lighting...";
+    viewer.set_usage("testing eye dome lighting...");
 
     Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();

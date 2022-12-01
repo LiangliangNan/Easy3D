@@ -40,13 +40,11 @@ PickerViewer::PickerViewer(const std::string &title)
         : Viewer(title) {
     camera()->setUpVector(vec3(0, 1, 0));
     camera()->setViewDirection(vec3(0, 0, -1));
-}
 
-
-std::string PickerViewer::usage() const {
-    return ("------------ Picker Viewer usage ---------- \n"
-            "Press the mouse to pick a face\n"
-            "------------------------------------------ \n");
+    usage_string_ =
+            "------------ Picker Viewer usage ---------- \n"
+            "Press the mouse to pick a face              \n"
+            "------------------------------------------- \n";
 }
 
 

@@ -39,7 +39,7 @@ int test_camera_interpolation() {
         return EXIT_FAILURE;
     }
 
-    viewer.usage_string_ = "testing camera interpolation...";
+    viewer.set_usage("testing camera interpolation...");
 
     return viewer.run();
 }

@@ -39,12 +39,12 @@ using namespace easy3d;
 
 
 int main(int argc, char **argv) {
-    // Initialize Easy3D.
+    // initialize Easy3D.
     initialize();
 
     const std::string file = resource::directory() + "/data/room.obj";
 
-    // Create the viewer.
+    // create the viewer.
     TutorialHardShadow viewer("Tutorial_502_HardShadow");
 
     Model *model = viewer.add_model(file, true);
@@ -57,6 +57,6 @@ int main(int argc, char **argv) {
     drawable->set_uniform_coloring(vec4(0.9f, 0.9f, 0.9f, 1.0f));
     drawable->set_smooth_shading(true);
 
-    // Run the viewer
+    // run the viewer
     return viewer.run();
 }

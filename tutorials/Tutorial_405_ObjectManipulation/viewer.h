@@ -45,7 +45,6 @@ protected:
     bool mouse_press_event(int x, int y, int button, int modifiers) override;
     bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;
     void draw() const override;
-    std::string usage() const override;
 
 private:
     void mark(easy3d::Model *model);

@@ -119,7 +119,6 @@ namespace easy3d {
         // Avoid locale-related number parsing issues.
         setlocale(LC_NUMERIC, "C");
 
-        execute_func_ = nullptr;
         animation_func_ = nullptr;
 
         // Initialize logging (if it has not been initialized yet)
@@ -147,6 +146,55 @@ namespace easy3d {
 
         /* Poll for events once before starting a potentially lengthy loading process.*/
         glfwPollEvents();
+
+        usage_string_ =
+                " ------------------------------------------------------------------\n"
+                " Easy3D viewer usage:                                              \n"
+                " ------------------------------------------------------------------\n"
+                "  F1:                  Help                                        \n"
+                "  F2:                  Toggle animation (if available)             \n"
+                "  Ctrl + 'o':          Open file                                   \n"
+                "  Ctrl + 's':          Save file                                   \n"
+                "  Fn + Delete:         Delete current model                        \n"
+                "  '<' or '>':          Switch between models                       \n"
+                "  's':                 Snapshot                                    \n"
+                "  'p':                 Toggle perspective/orthographic projection) \n"
+                "  'a':                 Toggle axes									\n"
+                "  Ctrl + 'f':          Toggle frame rate                           \n"
+                "  Left drag:           Rotate the camera                           \n"
+                "  Right drag:          Move the camera                             \n"
+                "  'x' + Left drag:     Rotate the camera around horizontal axis    \n"
+                "  'x' + Right drag:    Move the camera along horizontal axis       \n"
+                "  'y' + Left drag:     Rotate the camera around vertical axis      \n"
+                "  'y' + Right drag:    Move the camera along vertical axis         \n"
+                "  'o' + Left drag:     Rotate the camera around ortho-screen axis  \n"
+                "  Middle or Wheel:     Zoom in/out                                 \n"
+                "  Ctrl + '+'/'-':      Zoom in/out                                 \n"
+                "  Left/Right           Turn camera left/right                      \n"
+                "  Ctrl + Left/Right:   Move camera left/right                      \n"
+                "  Up/Down:             Move camera forward/backward                \n"
+                "  Ctrl + Up/Down:      Move camera up/down                         \n"
+                "  Ctrl + 'c':          Copy current view status to clipboard       \n"
+                "  Ctrl + 'v':          Restore view status from clipboard          \n"
+                "  Alt + 'k':           Add key frame to the camera path            \n"
+                "  Alt + 'd':           Delete the camera path                      \n"
+                "  Ctrl + 'k':          Play the camera path                        \n"
+                "  Ctrl + 't':          Toggle camera path                          \n"
+                "  'f':                 Fit screen (all models)                     \n"
+                "  'c':                 Fit screen (current model only)             \n"
+                "  'z' + Left click:    Zoom to target point on model               \n"
+                "  'z' + Right click:   Zoom o fit screen                           \n"
+                "  Shift + Left click:  Define a target point on model              \n"
+                "  Shift + Right click: Undefine the target point (if any) on model \n"
+                "  Ctrl + Left drag:    Zoom to fit region                          \n"
+                "  '-'/'=':             Decrease/Increase point size                \n"
+                "  '{'/'}':             Decrease/Increase line width                \n"
+                "  'b':                 Toggle borders								\n"
+                "  'e':                 Toggle edges							    \n"
+                "  'v':                 Toggle vertices                             \n"
+                "  'm':                 Toggle smooth shading (for SurfaceMesh)     \n"
+                "  'd':                 Print model info (drawables, properties)    \n"
+                " ------------------------------------------------------------------\n";
     }
 
 
@@ -711,6 +759,20 @@ namespace easy3d {
     }
 
     bool Viewer::key_press_event(int key, int modifiers) {
+        auto mod_funcs = commands_.find(Key(key));
+        if (mod_funcs != commands_.end()) {
+            auto func = mod_funcs->second.find(Modifier(modifiers));
+            if (func != mod_funcs->second.end()) {
+                auto model = func->second.second;
+                if (std::find(models_.begin(), models_.end(), model) != models_.end())
+                    return (func->second.first)(this, model);
+                else {
+                    LOG(WARNING) << "model does not exist (have you deleted it?)";
+                    return false;
+                }
+            }
+        }
+
         if (key == GLFW_KEY_F1 && modifiers == 0)
             std::cout << usage() << std::endl;
         else if (key == GLFW_KEY_F2 && modifiers == 0) {
@@ -718,11 +780,6 @@ namespace easy3d {
             if (is_animating_ && !animation_func_)
                 LOG(WARNING) << "animation is enabled but the animation function (i.e., animation_func_) is missing";
         }
-        else if (key == GLFW_KEY_E && modifiers == EASY3D_MOD_CONTROL) {
-            if (execute_func_ && current_model())
-                execute_func_(this, current_model());
-        }
-
         else if (key == GLFW_KEY_LEFT && modifiers == 0) {
             auto angle = static_cast<float>(1 * M_PI / 180.0); // turn left, 1 degrees each step
             camera_->frame()->action_turn(angle, camera_);
@@ -1135,60 +1192,6 @@ namespace easy3d {
 
         // print usage
         std::cout << usage() << std::endl;
-    }
-
-
-    std::string Viewer::usage() const {
-        if (usage_string_.empty())
-            return (" ------------------------------------------------------------------\n"
-                    " Easy3D viewer usage:                                              \n"
-                    " ------------------------------------------------------------------\n"
-                    "  F1:                  Help                                        \n"
-                    "  F2:                  Toggle animation (if available)             \n"
-                    "  Ctrl + 'o':          Open file                                   \n"
-                    "  Ctrl + 's':          Save file                                   \n"
-                    "  Fn + Delete:         Delete current model                        \n"
-                    "  '<' or '>':          Switch between models                       \n"
-                    "  's':                 Snapshot                                    \n"
-                    "  'p':                 Toggle perspective/orthographic projection) \n"
-                    "  'a':                 Toggle axes									\n"
-                    "  Ctrl + 'f':          Toggle frame rate                           \n"
-                    "  Left drag:           Rotate the camera                           \n"
-                    "  Right drag:          Move the camera                             \n"
-                    "  'x' + Left drag:     Rotate the camera around horizontal axis    \n"
-                    "  'x' + Right drag:    Move the camera along horizontal axis       \n"
-                    "  'y' + Left drag:     Rotate the camera around vertical axis      \n"
-                    "  'y' + Right drag:    Move the camera along vertical axis         \n"
-                    "  'o' + Left drag:     Rotate the camera around ortho-screen axis  \n"
-                    "  Middle or Wheel:     Zoom in/out                                 \n"
-                    "  Ctrl + '+'/'-':      Zoom in/out                                 \n"
-                    "  Left/Right           Turn camera left/right                      \n"
-                    "  Ctrl + Left/Right:   Move camera left/right                      \n"
-                    "  Up/Down:             Move camera forward/backward                \n"
-                    "  Ctrl + Up/Down:      Move camera up/down                         \n"
-                    "  Ctrl + 'c':          Copy current view status to clipboard       \n"
-                    "  Ctrl + 'v':          Restore view status from clipboard          \n"
-                    "  Alt + 'k':           Add key frame to the camera path            \n"
-                    "  Alt + 'd':           Delete the camera path                      \n"
-                    "  Ctrl + 'k':          Play the camera path                        \n"
-                    "  Ctrl + 't':          Toggle camera path                          \n"
-                    "  'f':                 Fit screen (all models)                     \n"
-                    "  'c':                 Fit screen (current model only)             \n"
-                    "  'z' + Left click:    Zoom to target point on model               \n"
-                    "  'z' + Right click:   Zoom o fit screen                           \n"
-                    "  Shift + Left click:  Define a target point on model              \n"
-                    "  Shift + Right click: Undefine the target point (if any) on model \n"
-                    "  Ctrl + Left drag:    Zoom to fit region                          \n"
-                    "  '-'/'=':             Decrease/Increase point size                \n"
-                    "  '{'/'}':             Decrease/Increase line width                \n"
-                    "  'b':                 Toggle borders								\n"
-                    "  'e':                 Toggle edges							    \n"
-                    "  'v':                 Toggle vertices                             \n"
-                    "  'm':                 Toggle smooth shading (for SurfaceMesh)     \n"
-                    "  'd':                 Print model info (drawables, properties)    \n"
-                    " ------------------------------------------------------------------\n");
-        else
-            return usage_string_;
     }
 
 

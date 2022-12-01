@@ -36,7 +36,7 @@ using namespace easy3d;
 // This example shows how to map an array buffer for dynamic buffer update (useful for animation).
 
 int main(int argc, char **argv) {
-    // Initialize Easy3D.
+    // initialize Easy3D.
     initialize();
 
     //-------------------------------------------------------------
@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
         return true;
     };
 
-    // Run the viewer
+    // run the viewer
     return viewer.run();
 }
 

@@ -101,7 +101,7 @@ void create_surfels(SurfaceMesh *mesh) {
 
 
 int main(int argc, char **argv) {
-    // Initialize Easy3D.
+    // initialize Easy3D.
     initialize();
 
     // Create the default Easy3D viewer.
@@ -143,7 +143,7 @@ int main(int argc, char **argv) {
 
     // ----------------------------------------------------------------
 
-    // Run the viewer
+    // run the viewer
     return viewer.run();
 }
 

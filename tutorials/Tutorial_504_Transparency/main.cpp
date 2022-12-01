@@ -40,11 +40,11 @@ using namespace easy3d;
 
 
 int main(int argc, char **argv) {
-    // Initialize Easy3D.
+    // initialize Easy3D.
     initialize();
     const std::string file_name = resource::directory() + "/data/torusknot.obj";
 
-    // Create the viewer.
+    // create the viewer.
     TutorialTransparency viewer("Tutorial_504_Transparency");
 
     // Load a mesh model and create a drawable for the faces.
@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
     drawable->set_smooth_shading(true);
     drawable->set_distinct_back_color(false);
 
-    // Run the viewer
+    // run the viewer
     return viewer.run();
 }
 

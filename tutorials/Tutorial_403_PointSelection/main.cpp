@@ -38,12 +38,12 @@ using namespace easy3d;
 // using the mouse.
 
 int main(int argc, char **argv) {
-    // Initialize Easy3D.
+    // initialize Easy3D.
     initialize();
 
     const std::string file = resource::directory() + "/data/polyhedron.bin";
 
-    // Create the viewer.
+    // create the viewer.
     PointSelection viewer("Tutorial_403_PointSelection");
 
     Model *model = viewer.add_model(file, true);
@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
     auto drawable = model->renderer()->get_points_drawable("vertices");
     dynamic_cast<PointsDrawable*>(drawable)->set_point_size(5.0f);
 
-    // Run the viewer
+    // run the viewer
     return viewer.run();
 }
 

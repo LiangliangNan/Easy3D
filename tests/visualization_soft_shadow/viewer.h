@@ -45,10 +45,7 @@ public:
 
 protected:
     bool key_press_event(int key, int modifiers) override;
-
     void draw() const override;
-
-    std::string usage() const override;
 
 private:
 	easy3d::Shadow* shadow_;

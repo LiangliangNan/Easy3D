@@ -34,7 +34,7 @@ using namespace easy3d;
 // This example shows how to select a model from a set of models by clicking the mouse.
 
 int main(int argc, char **argv) {
-    // Initialize Easy3D.
+    // initialize Easy3D.
     initialize();
 
     PickerViewer viewer("Tutorial_401_ModelPicker");
@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    // Run the viewer
+    // run the viewer
     return viewer.run();
 }
 

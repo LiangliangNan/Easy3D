@@ -46,6 +46,11 @@ TutorialEyeDomeLighting::TutorialEyeDomeLighting(const std::string& title) : Vie
 
 	edl_ = new EyeDomeLighting(camera());
 	edl_enabled_ = true;
+
+    usage_string_ =
+            "-------------------- Eye Dome Lighting usage ------------------- \n"
+            "Press key 'space' to switch between Eye Dome Lighting and normal rendering\n"
+            "---------------------------------------------------------------- \n";
 }
 
 
@@ -54,14 +59,6 @@ TutorialEyeDomeLighting::~TutorialEyeDomeLighting() {
 
 	// Not needed: it will be called in the destructor of the base class
 	//Viewer::cleanup();
-}
-
-
-std::string TutorialEyeDomeLighting::usage() const {
-    return ("-------------------- Eye Dome Lighting usage ------------------- \n"
-            "Press key 'space' to switch between Eye Dome Lighting and normal rendering\n"
-            "---------------------------------------------------------------- \n");
-
 }
 
 

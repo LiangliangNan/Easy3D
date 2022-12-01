@@ -40,6 +40,12 @@ using namespace easy3d;
 TransparencyViewer::TransparencyViewer(const std::string& title) : Viewer(title) {
 	transparency_ = new DualDepthPeeling(camera());
 	method_ = 2;
+
+    usage_string_ =
+            "------------------------ Transparency usage ------------------------ \n"
+            "Press key 'space' to turn on/off or switch between different transparency techniques\n"
+            "Press 'up/down' to increase/decrease the transparency of the current model\n"
+            "-------------------------------------------------------------------- \n";
 }
 
 
@@ -48,14 +54,6 @@ TransparencyViewer::~TransparencyViewer() {
 
     // Not needed: it will be called in the destructor of the base class
     //Viewer::cleanup();
-}
-
-
-std::string TransparencyViewer::usage() const {
-    return ("------------------------ Transparency usage ------------------------ \n"
-            "Press key 'space' to turn on/off or switch between different transparency techniques\n"
-            "Press 'up/down' to increase/decrease the transparency of the current model\n"
-            "-------------------------------------------------------------------- \n");
 }
 
 

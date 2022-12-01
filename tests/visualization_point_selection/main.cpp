@@ -47,7 +47,7 @@ int test_point_selection() {
     auto drawable = model->renderer()->get_points_drawable("vertices");
     dynamic_cast<PointsDrawable*>(drawable)->set_point_size(5.0f);
 
-    viewer.usage_string_ = "testing point selection...";
+    viewer.set_usage("testing point selection...");
 
     return viewer.run();
 }

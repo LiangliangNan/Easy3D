@@ -55,7 +55,7 @@ using namespace easy3d;
 #if 1   // use the built-in drawables of Easy3D.
 
 int main(int argc, char **argv) {
-    // Initialize Easy3D.
+    // initialize Easy3D.
     initialize();
 
     //-------------------------------------------------------------
@@ -145,14 +145,14 @@ int main(int argc, char **argv) {
     // Make sure everything is within the visible region of the viewer.
     viewer.fit_screen();
 
-    // Run the viewer
+    // run the viewer
     return viewer.run();
 }
 
 #elif 1 //  use the built-in drawables of Easy3D, but we provide customized update functions
 
 int main(int argc, char **argv) {
-    // Initialize Easy3D.
+    // initialize Easy3D.
     initialize();
 
     //-------------------------------------------------------------
@@ -252,7 +252,7 @@ int main(int argc, char **argv) {
     // Make sure everything is within the visible region of the viewer.
     viewer.fit_screen();
 
-    // Run the viewer
+    // run the viewer
     return viewer.run();
 }
 
@@ -329,7 +329,7 @@ protected:
 
 
 int main(int argc, char **argv) {
-    // Initialize Easy3D.
+    // initialize Easy3D.
     initialize();
 
     //-------------------------------------------------------------
@@ -383,7 +383,7 @@ int main(int argc, char **argv) {
     // Make sure everything is within the visible region of the viewer.
     viewer.fit_screen();
 
-    // Run the viewer
+    // run the viewer
     return viewer.run();
 }
 

@@ -41,16 +41,14 @@ VirtualScanner::VirtualScanner(const std::string &title)
     , add_noise_(false)
 {
     camera()->setUpVector(vec3(0, 1, 0));
-}
 
-
-std::string VirtualScanner::usage() const {
-    return ("-------------- Virtual Scanner usage -------------- \n"
+    usage_string_ =
+            "-------------- Virtual Scanner usage -------------- \n"
             "- change the view using the mouse.\n"
             "- press the 'Space' key to perform scanning. Everything (and only those) visible\n"
             "  will be captured in a point cloud.\n"
             "- press 'n' to toggle Gaussian noise.\n"
-            "---------------------------------------------------------- \n");
+            "---------------------------------------------------------- \n";
 }
 
 

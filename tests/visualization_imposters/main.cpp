@@ -129,7 +129,7 @@ int test_imposters(int duration) {
 
     create_surfels(copy);
 
-    viewer.usage_string_ = "testing imposters...";
+    viewer.set_usage("testing imposters...");
 
     Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();

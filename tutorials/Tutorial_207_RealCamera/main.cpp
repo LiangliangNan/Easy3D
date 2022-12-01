@@ -39,7 +39,7 @@
 using namespace easy3d;
 
 int main(int argc, char **argv) {
-    // Initialize Easy3D.
+    // initialize Easy3D.
     initialize();
 
     // the bundler file (We use only the camera intrinsic and extrinsic parameters).
@@ -49,6 +49,6 @@ int main(int argc, char **argv) {
 
     RealCamera viewer("Tutorial_207_RealCamera", bundler_file, cloud_file);
 
-    // Run the viewer
+    // run the viewer
     return viewer.run();
 }

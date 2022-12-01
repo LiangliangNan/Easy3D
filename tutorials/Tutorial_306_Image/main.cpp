@@ -34,7 +34,7 @@ using namespace easy3d;
 // This example shows how to render an images.
 
 int main(int argc, char **argv) {
-    // Initialize Easy3D.
+    // initialize Easy3D.
     initialize();
 
     // the image file.
@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
 
     ImageViewer viewer("Tutorial_306_Image", image_file);
 
-    // Run the viewer
+    // run the viewer
     return viewer.run();
 }
 

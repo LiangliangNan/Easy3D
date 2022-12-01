@@ -101,7 +101,7 @@ void triangulate(SurfaceMesh *mesh) {
 
 
 int main(int argc, char **argv) {
-    // Initialize Easy3D.
+    // initialize Easy3D.
     initialize();
 
     // create the default Easy3D viewer.

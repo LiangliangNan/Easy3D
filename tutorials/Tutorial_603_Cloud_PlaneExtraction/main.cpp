@@ -75,12 +75,12 @@ bool extract_plane(Viewer* viewer, Model* model) {
 
 
 int main(int argc, char **argv) {
-    // Initialize Easy3D.
+    // initialize Easy3D.
     initialize();
 
     const std::string file = resource::directory() + "/data/polyhedron.bin";
 
-    // Create the viewer.
+    // create the viewer.
     Viewer viewer("Tutorial_603_Cloud_PlaneExtraction");
 
     Model *model = viewer.add_model(file, true);
@@ -94,12 +94,12 @@ int main(int argc, char **argv) {
     drawable->set_uniform_coloring(vec4(0.6f, 0.6f, 1.0f, 1.0f));
     drawable->set_point_size(3.0f);
 
-    // usage hint
-    viewer.usage_string_ = "press 'Ctrl + e' to extract planes (on Mac 'Command + e')";
-    // set up the function to be executed
-    viewer.execute_func_ = extract_plane;
+    // usage
+    viewer.set_usage("'Ctrl + e': extract planes");
+    // set up the function to be executed and its corresponding shortcut
+    viewer.bind(extract_plane, model, Viewer::KEY_E, Viewer::MOD_CTRL);
 
-    // Run the viewer
+    // run the viewer
     return viewer.run();
 }
 

@@ -39,7 +39,7 @@ using namespace easy3d;
 
 
 int main(int argc, char** argv) {
-    // Initialize Easy3D.
+    // initialize Easy3D.
     initialize();
 
 	// Read a mesh specified by its file name

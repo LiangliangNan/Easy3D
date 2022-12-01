@@ -48,7 +48,7 @@ int test_ambient_occlusion(int duration) {
     auto drawable = model->renderer()->get_triangles_drawable("faces");
     drawable->set_uniform_coloring(vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
-    viewer.usage_string_ = "testing ambient occlusion...";
+    viewer.set_usage("testing ambient occlusion...");
 
     Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();

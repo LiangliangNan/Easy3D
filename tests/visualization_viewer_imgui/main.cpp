@@ -42,7 +42,7 @@ int test_viewer_imgui(int duration) {
         return EXIT_FAILURE;
     }
 
-    viewer.usage_string_ = "testing imgui viewer...";
+    viewer.set_usage("testing imgui viewer...");
 
     viewer.resize(800, 600);
 

@@ -44,7 +44,7 @@ int test_model_picker() {
         return EXIT_FAILURE;
     }
 
-    viewer.usage_string_ = "testing model picker...";
+    viewer.set_usage("testing model picker...");
 
     return viewer.run();
 }

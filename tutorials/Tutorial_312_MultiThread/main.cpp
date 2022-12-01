@@ -62,7 +62,7 @@ void edit_model(PointCloud *cloud, Viewer *viewer) {
 
 
 int main(int argc, char **argv) {
-    // Initialize Easy3D.
+    // initialize Easy3D.
     initialize();
 
     // create the viewer

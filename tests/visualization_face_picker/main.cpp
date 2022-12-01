@@ -39,7 +39,7 @@ int test_face_picker() {
         return EXIT_FAILURE;
     }
 
-    viewer.usage_string_ = "testing face picker...";
+    viewer.set_usage("testing face picker...");
 
     return viewer.run();
 }

@@ -46,13 +46,10 @@
 using namespace easy3d;
 
 PointSelection::PointSelection(const std::string &title) : Viewer(title) {
-}
-
-
-std::string PointSelection::usage() const {
-    return ("-------------- Point Selection usage -------------- \n"
+    usage_string_ =
+            "-------------- Point Selection usage -------------- \n"
             "Press Ctrl key, then drag the mouse to select (left button) or deselect (right button) points\n"
-            "--------------------------------------------------- \n");
+            "--------------------------------------------------- \n";
 }
 
 

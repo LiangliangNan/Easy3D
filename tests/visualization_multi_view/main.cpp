@@ -76,7 +76,7 @@ int test_composite_view(int duration) {
     viewer.assign(1, 1, sphere_vertices);
 
     // show a simple message
-    viewer.usage_string_ = "testing composite view...";
+    viewer.set_usage("testing composite view...");
 
     Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();

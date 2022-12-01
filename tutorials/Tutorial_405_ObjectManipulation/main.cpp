@@ -34,7 +34,7 @@ using namespace easy3d;
 // This example shows how to manipulate a model in the 3D space using the Manipulator class.
 
 int main(int argc, char **argv) {
-    // Initialize Easy3D.
+    // initialize Easy3D.
     initialize();
 
     ManipulationViewer viewer("Tutorial_405_ObjectManipulation");
@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    // Run the viewer
+    // run the viewer
     return viewer.run();
 }
 

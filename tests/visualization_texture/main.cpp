@@ -77,7 +77,7 @@ int test_texture(int duration) {
     drawable->set_texture(tex);
     drawable->set_texture_coloring(easy3d::State::VERTEX, "v:texcoord", tex);
 
-    viewer.usage_string_ = "testing texture...";
+    viewer.set_usage("testing texture...");
 
     Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();

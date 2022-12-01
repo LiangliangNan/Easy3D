@@ -82,7 +82,7 @@ int test_multithread() {
     // stop the timer before exit
     Timer<>::single_shot(4000, &timer, &Timer<PointCloud*, Viewer*>::stop); // or Timer<>::single_shot(4000, [&]() -> void { timer.stop(); });
 
-    viewer.usage_string_ = "testing multithreading...";
+    viewer.set_usage("testing multithreading...");
 
     // exit the viewer after 5 seconds
     Timer<>::single_shot(5000, (Viewer*)&viewer, &Viewer::exit);

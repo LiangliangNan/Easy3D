@@ -48,7 +48,7 @@ int test_animation(int duration) {
 
     viewer.set_animation(true);
 
-    viewer.usage_string_ = "testing animation...";
+    viewer.set_usage("testing animation...");
 
     // Define an animation function to specify how vertex positions are updated.
     // In this trivial example, we stretch the model along the Z-axis.

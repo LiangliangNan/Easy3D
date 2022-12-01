@@ -34,7 +34,7 @@
 using namespace easy3d;
 
 int main(int argc, char** argv) {
-    // Initialize Easy3D.
+    // initialize Easy3D.
     initialize();
 
     const std::string file_name = resource::directory() + "/data/easy3d.ply";

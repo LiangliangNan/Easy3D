@@ -40,7 +40,7 @@ using namespace easy3d;
 // This example shows how to use the built-in multi-view viewer.
 
 int main(int argc, char** argv) {
-    // Initialize Easy3D.
+    // initialize Easy3D.
     initialize();
 
     // create a 2 by 2 MultiViewer
@@ -81,6 +81,6 @@ int main(int argc, char** argv) {
     sphere_vertices->set_point_size(15);
     viewer.assign(1, 1, sphere_vertices);
 
-    // Run the viewer
+    // run the viewer
     return viewer.run();
 }

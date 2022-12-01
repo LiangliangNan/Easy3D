@@ -45,16 +45,14 @@ ManipulationViewer::ManipulationViewer(const std::string &title)
     // We always want to look at the front of the easy3d logo.
     camera()->setViewDirection(vec3(0, 0, -1));
     camera()->setUpVector(vec3(0, 1, 0));
-}
 
-
-std::string ManipulationViewer::usage() const {
-    return ("-------------------- Manipulator Viewer usage ---------------------\n"
+    usage_string_ =
+            "-------------------- Manipulator Viewer usage ---------------------\n"
             "Press the left button to pick/unpick a model.                      \n"
             "When a model is picked, using the mouse to manipulate it:          \n"
             "    - ALT + left button: rotate the model                          \n"
             "    - ALT + right button: translate the model                      \n"
-            "------------------------------------------------------------------ \n");
+            "------------------------------------------------------------------ \n";
 }
 
 

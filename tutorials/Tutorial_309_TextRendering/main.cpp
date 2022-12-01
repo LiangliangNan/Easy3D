@@ -34,7 +34,7 @@ using namespace easy3d;
 // This example shows how to render strings using Easy3D.
 
 int main(int argc, char **argv) {
-    // Initialize Easy3D.
+    // initialize Easy3D.
     initialize();
 
     const std::string file_name = resource::directory() + "/data/sphere.obj";
@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
     TextRendering viewer("Tutorial_309_TextRendering");
     viewer.add_model(file_name);
 
-    // Run the viewer
+    // run the viewer
     return viewer.run();
 }
 

@@ -49,7 +49,7 @@ int test_hard_shadow(int duration) {
     drawable->set_uniform_coloring(vec4(0.9f, 0.9f, 0.9f, 1.0f));
     drawable->set_smooth_shading(true);
 
-    viewer.usage_string_ = "testing hard shadow...";
+    viewer.set_usage("testing hard shadow...");
 
     Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();

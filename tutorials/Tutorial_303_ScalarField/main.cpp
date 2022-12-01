@@ -42,7 +42,7 @@ using namespace easy3d;
 
 
 int main(int argc, char **argv) {
-    // Initialize Easy3D.
+    // initialize Easy3D.
     initialize();
 
     const std::string file_name = resource::directory() + "/data/building.off";
@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
     // Use the texture
     drawable->set_texture(texture);
 
-    // Run the viewer
+    // run the viewer
     return viewer.run();
 }
 

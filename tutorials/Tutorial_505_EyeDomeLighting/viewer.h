@@ -48,8 +48,6 @@ protected:
 
     void draw() const override;
 
-	std::string usage() const override;
-
 private:
 	easy3d::EyeDomeLighting* edl_;
 	bool edl_enabled_;

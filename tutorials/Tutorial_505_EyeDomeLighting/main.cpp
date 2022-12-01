@@ -40,12 +40,12 @@ using namespace easy3d;
 
 
 int main(int argc, char **argv) {
-    // Initialize Easy3D.
+    // initialize Easy3D.
     initialize();
 
     const std::string file = resource::directory() + "/data/bunny.bin";
 
-    // Create the viewer.
+    // create the viewer.
     TutorialEyeDomeLighting viewer("Tutorial_505_EyeDomeLighting");
 
     // Read the point cloud from a known file.
@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
     drawable->set_uniform_coloring(vec4(0.6f, 0.6f, 1.0f, 1.0f));
     drawable->set_point_size(5.0f);
 
-    // Run the viewer
+    // run the viewer
     return viewer.run();
 }
 

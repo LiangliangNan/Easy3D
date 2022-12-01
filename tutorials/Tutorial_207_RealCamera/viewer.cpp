@@ -68,24 +68,22 @@ RealCamera::RealCamera(const std::string& title,
         if (read_bundler_file(bundler_file))
             update_cameras_drawable(true);
         else
-            std::cerr << "Error: failed load bundler file." << std::endl;
+            LOG(ERROR) << "failed to load bundler file";
 
         camera()->setUpVector(vec3(0, 1, 0));
         camera()->setViewDirection(vec3(0, 0, -1));
         camera_->showEntireScene();
     }
     else
-        std::cerr << "Error: failed load point cloud." << std::endl;
-}
+        LOG(ERROR) << "failed to load point cloud";
 
-
-std::string RealCamera::usage() const {
-    return ("------------ Real Camera usage ---------- \n"
-            "Press 'Space' to switch views\n"
-            "Press 'H' to show/hide the cameras\n"
-            "Move cursor on image to show corresponding 3D ray\n"
+    usage_string_ =
+            "---------------- Real Camera usage ------------------ \n"
+            "Press 'Space' to switch views                         \n"
+            "Press 'H' to show/hide the cameras                    \n"
+            "Move cursor on image to show corresponding 3D ray     \n"
             "Move cursor on scene to show corresponding image point\n"
-            "----------------------------------------- \n");
+            "----------------------------------------------------- \n";
 }
 
 

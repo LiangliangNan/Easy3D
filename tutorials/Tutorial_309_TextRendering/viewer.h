@@ -41,12 +41,8 @@ public:
     
 protected:
     void draw() const override;
-
     void init() override;
-
     bool key_press_event(int key, int modifiers) override;
-
-    std::string usage() const override;
 
 private:
     easy3d::TextRenderer* texter_;

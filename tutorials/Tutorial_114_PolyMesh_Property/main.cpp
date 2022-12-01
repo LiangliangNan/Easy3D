@@ -54,7 +54,7 @@ PolyMesh *old_mesh_from_previous_example() {
 
 
 int main(int argc, char** argv) {
-    // Initialize Easy3D.
+    // initialize Easy3D.
     initialize();
 
     // Create mesh object

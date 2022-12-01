@@ -71,7 +71,7 @@ int test_scalar_field(int duration) {
     // Use the texture
     drawable->set_texture(texture);
 
-    viewer.usage_string_ = "testing scalar field...";
+    viewer.set_usage("testing scalar field...");
 
     Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();

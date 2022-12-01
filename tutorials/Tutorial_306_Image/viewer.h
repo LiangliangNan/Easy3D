@@ -49,8 +49,6 @@ protected:
 
     void draw() const override;
 
-    std::string usage() const override ;
-
     void compute_image_region(int& x, int& y, int& w, int& h) const;
 
     // moves the camera so that the 'model' is centered on the screen.

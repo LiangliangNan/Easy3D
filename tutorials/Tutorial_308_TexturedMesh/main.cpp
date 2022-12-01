@@ -37,10 +37,10 @@ using namespace easy3d;
 
 
 int main(int argc, char **argv) {
-    // Initialize Easy3D.
+    // initialize Easy3D.
     initialize();
 
-    // Create the viewer.
+    // create the viewer.
     TexturedViewer viewer("Tutorial_308_TexturedMesh");
 
     //----------------------- Load a mesh from a file ------------------------
@@ -52,6 +52,6 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    // Run the viewer
+    // run the viewer
     return viewer.run();
 }

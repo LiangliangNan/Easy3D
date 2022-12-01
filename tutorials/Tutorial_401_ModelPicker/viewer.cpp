@@ -41,13 +41,11 @@ PickerViewer::PickerViewer(const std::string &title)
     // We always want to look at the front of the easy3d logo.
     camera()->setViewDirection(vec3(0, 0, -1));
     camera()->setUpVector(vec3(0, 1, 0));
-}
 
-
-std::string PickerViewer::usage() const {
-    return ("------------ Picker Viewer usage ---------- \n"
+    usage_string_ =
+            "------------ Picker Viewer usage ---------- \n"
             "Press the left button to pick/unpick a model\n"
-            "------------------------------------------- \n");
+            "------------------------------------------- \n";
 }
 
 

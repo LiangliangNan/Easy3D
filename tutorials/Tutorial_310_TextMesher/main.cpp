@@ -36,7 +36,7 @@
 using namespace easy3d;
 
 int main(int argc, char **argv) {
-    // Initialize Easy3D.
+    // initialize Easy3D.
     initialize();
 
     // Create an Easy3D viewer.

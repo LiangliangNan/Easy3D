@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
 #endif
     QDir::setCurrent(workingDir.absolutePath());
 
-    // Initialize Easy3D.
+    // initialize Easy3D.
     initialize();
 
     Window win;

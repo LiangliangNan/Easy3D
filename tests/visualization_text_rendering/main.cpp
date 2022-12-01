@@ -37,7 +37,7 @@ int test_text_rendering(int duration) {
     TextRendering viewer("TextRendering");
     viewer.add_model(file_name);
 
-    viewer.usage_string_ = "testing text rendering...";
+    viewer.set_usage("testing text rendering...");
 
     Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();

@@ -55,7 +55,7 @@ SurfaceMesh* old_mesh_from_previous_example() {
 }
 
 int main(int argc, char** argv) {
-    // Initialize Easy3D.
+    // initialize Easy3D.
     initialize();
 
     // The mesh created from the previous tutorial.

@@ -38,10 +38,10 @@ using namespace easy3d;
 
 
 int main(int argc, char **argv) {
-    // Initialize Easy3D.
+    // initialize Easy3D.
     initialize();
 
-    // Create the viewer.
+    // create the viewer.
     VirtualScanner viewer("Tutorial_404_VirtualScanner");
 
     const std::string file_name = resource::directory() + "/data/house/house.obj";
@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
     if (d)
         d->set_visible(false);
 
-    // Run the viewer
+    // run the viewer
     return viewer.run();
 }
 

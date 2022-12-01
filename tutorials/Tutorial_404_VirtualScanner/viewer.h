@@ -39,9 +39,6 @@ protected:
     bool key_press_event(int key, int modifiers) override;
 
 private:
-    std::string usage() const override;
-
-private:
     bool add_noise_;
 };
 

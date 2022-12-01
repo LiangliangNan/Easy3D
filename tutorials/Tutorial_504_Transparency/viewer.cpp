@@ -41,6 +41,12 @@ TutorialTransparency::TutorialTransparency(const std::string& title) : Viewer(ti
 	transparency_ = new DualDepthPeeling(camera());
 	std::cout << "method: Dual Depth Peeling" << std::endl;
 	method_ = 2;
+
+    usage_string_ =
+            "------------------------ Transparency usage ------------------------ \n"
+            "Press key 'space' to turn on/off or switch between different transparency techniques\n"
+            "Press 'up/down' to increase/decrease the transparency of the current model\n"
+            "-------------------------------------------------------------------- \n";
 }
 
 
@@ -49,14 +55,6 @@ TutorialTransparency::~TutorialTransparency() {
 
     // Not needed: it will be called in the destructor of the base class
     //Viewer::cleanup();
-}
-
-
-std::string TutorialTransparency::usage() const {
-    return ("------------------------ Transparency usage ------------------------ \n"
-            "Press key 'space' to turn on/off or switch between different transparency techniques\n"
-            "Press 'up/down' to increase/decrease the transparency of the current model\n"
-            "-------------------------------------------------------------------- \n");
 }
 
 

@@ -34,7 +34,7 @@ using namespace easy3d;
 // This example shows how to select a face of a surface mesh by clicking the mouse.
 
 int main(int argc, char **argv) {
-    // Initialize Easy3D.
+    // initialize Easy3D.
     initialize();
 
     const std::string file_name = resource::directory() + "/data/quad_mesh/P.off";
@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    // Run the viewer
+    // run the viewer
     return viewer.run();
 }
 

@@ -71,25 +71,23 @@ CollisionViewer::CollisionViewer(const std::string &title)
         });
     }
     else
-        LOG(WARNING) << "not two meshes have been loaded";
-}
+        LOG(WARNING) << "not all two meshe models have been loaded";
 
-
-CollisionViewer::~CollisionViewer() {
-    timer_.stop();
-    delete collider_;
-}
-
-
-std::string CollisionViewer::usage() const {
-    return ("--------------------- Collision Viewer usage ----------------------\n"
+    usage_string_ =
+            "--------------------- Collision Viewer usage ----------------------\n"
             "On start, you will see an animation with highlighted intersecting  \n"
             "faces. Press 'space' to pause/resume the animation.                \n"
             "When the animation is paused, you can manipulate the bunny model   \n"
             "(using your mouse) to perform real-time collection detection:      \n"
             "    - ALT + left button: rotate bunny model                        \n"
             "    - ALT + right button: translate bunny model                    \n"
-            "------------------------------------------------------------------ \n");
+            "------------------------------------------------------------------ \n";
+}
+
+
+CollisionViewer::~CollisionViewer() {
+    timer_.stop();
+    delete collider_;
 }
 
 

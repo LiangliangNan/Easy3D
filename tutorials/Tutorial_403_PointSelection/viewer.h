@@ -54,8 +54,6 @@ private:
     // highlight the selection
     void mark_selection(easy3d::PointCloud* cloud);
 
-    std::string usage() const override;
-
 private:
     easy3d::Polygon2 polygon_;
 };

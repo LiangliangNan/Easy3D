@@ -45,6 +45,15 @@ TextRendering::TextRendering(const std::string &title)
         , alignment_(TextRenderer::ALIGN_CENTER)
         , upper_left_(true)
 {
+    usage_string_ =
+            "----------------------- Text Rendering usage ------------------------ \n"
+            "Press '+'/'-' to increase/decrease font size                          \n"
+            "Press '<'/'>' to increase/decrease character spacing                  \n"
+            "Press 'up'/'down' to increase/decrease line spacing                   \n"
+            "Press 'l'/'c'/'r' to left/center/right align the multi-line text      \n"
+            "Press 'o' to switch the origin between 'upper left' and 'bottom left' \n"
+            "Press 'space' to enable/disable kerning                               \n"
+            "--------------------------------------------------------------------- \n";
 }
 
 
@@ -53,18 +62,6 @@ TextRendering::~TextRendering() {
 
     // Not needed: it will be called in the destructor of the base class
     //Viewer::cleanup();
-}
-
-
-std::string TextRendering::usage() const {
-    return ("----------------------- Text Rendering usage ------------------------ \n"
-            "Press '+'/'-' to increase/decrease font size                          \n"
-            "Press '<'/'>' to increase/decrease character spacing                  \n"
-            "Press 'up'/'down' to increase/decrease line spacing                   \n"
-            "Press 'l'/'c'/'r' to left/center/right align the multi-line text      \n"
-            "Press 'o' to switch the origin between 'upper left' and 'bottom left' \n"
-            "Press 'space' to enable/disable kerning                               \n"
-            "--------------------------------------------------------------------- \n");
 }
 
 

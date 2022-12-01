@@ -46,10 +46,7 @@ protected:
     bool key_press_event(int key, int modifiers) override;
     bool mouse_scroll_event(int x, int y, int dx, int dy) override;
     void init() override;
-
     void draw() const override;
-
-    std::string usage() const override ;
 
     void compute_image_region(int& x, int& y, int& w, int& h) const;
 

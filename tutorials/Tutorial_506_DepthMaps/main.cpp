@@ -37,7 +37,7 @@ using namespace easy3d;
 // This example shows how to create depth images from the rendering.
 
 int main(int argc, char **argv) {
-    // Initialize Easy3D.
+    // initialize Easy3D.
     initialize();
 
     DepthImage viewer("Tutorial_506_DepthMaps");
@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
     auto drawable = model->renderer()->get_points_drawable("vertices");
     drawable->set_point_size(5);
 
-    // Run the viewer
+    // run the viewer
     return viewer.run();
 }
 

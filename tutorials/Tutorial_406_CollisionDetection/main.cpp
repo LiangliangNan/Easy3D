@@ -32,12 +32,12 @@ using namespace easy3d;
 
 // This example shows how to detect the intersecting faces using collision detection.
 int main(int argc, char **argv) {
-    // Initialize Easy3D.
+    // initialize Easy3D.
     initialize();
 
     CollisionViewer viewer("Tutorial_406_CollisionDetection");
 
-    // Run the viewer
+    // run the viewer
     return viewer.run();
 }
 
