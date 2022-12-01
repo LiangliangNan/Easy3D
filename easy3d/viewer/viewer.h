@@ -396,8 +396,8 @@ namespace easy3d {
         /**
          * @brief The key modifiers. Currently only Shift, Ctrl, and Alt are supported.
          */
-        enum Modifier { // Do NOT modify the values!!!
-            MOD_SHIFT = 0x0001, MOD_CTRL = 0x0002, MOD_ALT = 0x0004, MOD_NONE
+        enum Modifier { /* Do NOT modify the values!!! */
+            MOD_NONE = 0x0000, MOD_SHIFT = 0x0001, MOD_CTRL = 0x0002, MOD_ALT = 0x0004
         };
 
         /**
