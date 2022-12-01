@@ -397,7 +397,7 @@ namespace easy3d {
          * @brief The key modifiers. Currently only Shift, Ctrl, and Alt are supported.
          */
         enum Modifier { /* Do NOT modify the values!!! */
-            MOD_NONE = 0x0000, MOD_SHIFT = 0x0001, MOD_CTRL = 0x0002, MOD_ALT = 0x0004
+            MODIF_NONE = 0x0000, MODIF_SHIFT = 0x0001, MOD_CTRL = 0x0002, MODIF_ALT = 0x0004
         };
 
         /**
@@ -425,10 +425,10 @@ namespace easy3d {
          * @param func The function to be executed, which will be triggered by the shortcut.
          * @param model The model to be processed.
          * @param key The shortcut key.
-         * @param modifier The shortcut key modifier (e.g., Ctrl, Shift, Alt). This can be MOD_NONE.
+         * @param modifier The shortcut key modifier (e.g., Ctrl, Shift, Alt). This can be MODIF_NONE.
          * @sa Function
          */
-        void bind(const Function& func, Model* model, Key key, Modifier modifier = MOD_NONE) {
+        void bind(const Function& func, Model* model, Key key, Modifier modifier = MODIF_NONE) {
             commands_[key][modifier] = std::make_pair(func, model);
         }
         //@}
