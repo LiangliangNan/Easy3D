@@ -64,6 +64,7 @@ namespace easy3d {
     bool SurfaceMeshHoleFilling::fill_hole(SurfaceMesh::Halfedge _h) {
         // is it really a hole?
         if (!mesh_->is_border(_h)) {
+            LOG(WARNING) << "user provided hole is not a real hole";
             return false;
         }
 
@@ -161,8 +162,14 @@ namespace easy3d {
                 continue;
             int split = index_[start][end];
 
-            mesh_->add_triangle(hole_vertex(start), hole_vertex(split),
-                                hole_vertex(end));
+            // if one of the vertices is not valid (user input is not a valid hole, or maybe due to
+            // some complicated topological difficulties) -> stop filling and return
+            if (!hole_vertex(start).is_valid() || !hole_vertex(split).is_valid() || !hole_vertex(end).is_valid()) {
+                LOG(ERROR) << "invalid hole (or complicated topology)";
+                return false;
+            }
+
+            mesh_->add_triangle(hole_vertex(start), hole_vertex(split), hole_vertex(end));
 
             todo.emplace_back(ivec2(start, split));
             todo.emplace_back(ivec2(split, end));
@@ -182,10 +189,15 @@ namespace easy3d {
         const SurfaceMesh::Vertex a = hole_vertex(_i);
         const SurfaceMesh::Vertex b = hole_vertex(_j);
         const SurfaceMesh::Vertex c = hole_vertex(_k);
-        SurfaceMesh::Vertex d;
+        // if one of the vertices is not valid (user input is not a valid hole, or maybe due to
+        // some complicated topological difficulties) -> prevent by giving an infinite weight
+        if (!a.is_valid() || !b.is_valid() || !c.is_valid()) {
+            LOG(ERROR) << "invalid hole (or complicated topology)";
+            return Weight();
+        }
 
         // if one of the potential edges already exists, this would result
-        // in an invalid triangulation -> prevent by giving infinite weight
+        // in an invalid triangulation -> prevent by giving an infinite weight
         if (is_interior_edge(a, b) || is_interior_edge(b, c) ||
             is_interior_edge(c, a)) {
             return Weight();
@@ -199,7 +211,7 @@ namespace easy3d {
         const vec3 n = compute_normal(a, b, c);
 
         // ...neighbor to (i,j)
-        d = (_i + 1 == _j) ? opposite_vertex(_j) : hole_vertex(index_[_i][_j]);
+        SurfaceMesh::Vertex d = (_i + 1 == _j) ? opposite_vertex(_j) : hole_vertex(index_[_i][_j]);
         angle = std::max(angle, compute_angle(n, compute_normal(a, d, b)));
 
         // ...neighbor to (j,k)

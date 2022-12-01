@@ -78,15 +78,22 @@ namespace easy3d {
     private:
         // return i'th vertex of hole
         SurfaceMesh::Vertex hole_vertex(unsigned int i) const {
-            assert(i < hole_.size());
-            return mesh_->target(hole_[i]);
+            if (i < hole_.size())
+                return mesh_->target(hole_[i]);
+            else {
+                LOG(ERROR) << "index of hole edge is out of range";
+                return SurfaceMesh::Vertex{};
+            }
         }
 
         // return vertex opposite edge (i-1,i)
         SurfaceMesh::Vertex opposite_vertex(unsigned int i) const {
-            assert(i < hole_.size());
-            return mesh_->target(
-                    mesh_->next(mesh_->opposite(hole_[i])));
+            if (i < hole_.size())
+                return mesh_->target(mesh_->next(mesh_->opposite(hole_[i])));
+            else {
+                LOG(ERROR) << "index of hole edge is out of range";
+                return SurfaceMesh::Vertex{};
+            }
         }
 
         // does interior edge (_a,_b) exist already?

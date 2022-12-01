@@ -80,6 +80,9 @@ void DialogSurfaceMeshHoleFilling::apply() {
     // first, find all the boundaries to be filled
     const int allowed_boundary_size = spinBoxAllowedBoundarySize->value();
 
+    // prepare some information about the smallest and largest holes to the user
+    int min_hole_size = max<int>();
+    int max_hole_size = -max<int>();
     std::vector< std::pair<SurfaceMesh::Halfedge, int> > holes;
 
     auto visited = mesh->add_halfedge_property<bool>("DialogSurfaceMeshHoleFilling::h::visited", false);
@@ -97,7 +100,9 @@ void DialogSurfaceMeshHoleFilling::apply() {
                 hh = mesh->next(hh);
             } while (hh != h);
 
-            if (size < allowed_boundary_size) {
+            min_hole_size = std::min(min_hole_size, size);
+            max_hole_size = std::max(max_hole_size, size);
+            if (size <= allowed_boundary_size) {
                 holes.emplace_back(std::make_pair(h, size));
             }
         }
@@ -123,7 +128,10 @@ void DialogSurfaceMeshHoleFilling::apply() {
     }
 
     if (holes.empty()) {
-        LOG(WARNING) << "no holes found in the model";
+        if (min_hole_size == max<int>() && max_hole_size == -max<int>())
+            LOG(WARNING) << "model is closed and no holes to fill";
+        else
+            LOG(WARNING) << "no holes meet the requirement (smallest: " << min_hole_size << ", largest: " << max_hole_size << ")";
     } else {
         LOG(INFO) << num_closed << " (out of " << holes.size() << ") holes filled";
     }
