@@ -9,16 +9,16 @@ on: [push, pull_request]
 
 jobs:
   build:
-    name: "Build ${{ matrix.platform }} in ${{ matrix.build_type }}"
+    name: "${{ matrix.platform }} - ${{ matrix.build_type }}"
     strategy:
           fail-fast: false
           matrix:
-            platform: [windows, ubuntu, macos]
+            platform: [Windows, Ubuntu, macOS]
             build_type: [Debug, Release]
     runs-on: "${{ matrix.platform }}-latest"
     steps:
       - uses: actions/checkout@v1
-      - if: ${{ matrix.platform == 'ubuntu' }}
+      - if: ${{ matrix.platform == 'Ubuntu' }}
         name: Set up
         run: sudo apt-get update || true;
              sudo apt-get install libgl1-mesa-dev mesa-common-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev;
