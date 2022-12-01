@@ -119,7 +119,7 @@ namespace easy3d {
         }
 
         // construct matrix & rhs
-        const unsigned int n = vertices.size();
+        const unsigned int n = static_cast<unsigned int>(vertices.size());
         SparseMatrix A(n, n);
         Eigen::MatrixXd B(n, 3);
         dvec3 b;
@@ -157,7 +157,7 @@ namespace easy3d {
         } else {
             for (unsigned int i = 0; i < n; ++i) {
                 const auto &tmp = X.row(i);
-                points_[vertices[i]] = vec3(tmp(0), tmp(1), tmp(2));
+                points_[vertices[i]] = vec3(static_cast<float>(tmp(0)), static_cast<float>(tmp(1)), static_cast<float>(tmp(2)));
             }
         }
     }

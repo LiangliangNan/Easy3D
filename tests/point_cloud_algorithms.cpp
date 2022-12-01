@@ -176,7 +176,7 @@ bool test_algo_point_cloud_downsampling() {
 
     int total_num = cloud->n_vertices();
 
-    float threshold = 0.01;
+    float threshold = 0.01f;
     std::cout << "grid downsampling using distance threshold " << threshold << "...";
     {
         PointCloud pcd = *cloud;

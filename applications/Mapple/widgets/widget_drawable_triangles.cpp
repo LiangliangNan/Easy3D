@@ -620,7 +620,7 @@ namespace internal {
 
         // convert to triangle range
         int f_min = (range.first < 0 ? 0 : range.first);
-        int f_max = (range.second >= m->n_faces() ? m->n_faces() - 1 : range.second);
+        int f_max = (range.second >= static_cast<int>(m->n_faces()) ? static_cast<int>(m->n_faces()) - 1 : range.second);
         int t_min = std::numeric_limits<int>::max();
         int t_max = -std::numeric_limits<int>::max();
         auto triangle_range = m->get_face_property<std::pair<int, int> >("f:triangle_range");

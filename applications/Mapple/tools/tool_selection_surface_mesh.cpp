@@ -166,7 +166,7 @@ namespace easy3d {
 
 
         void ToolSurfaceMeshFaceSelectionRect::press(int x, int y) {
-            start_ = vec2(x, y);
+            start_ = vec2(static_cast<float>(x), static_cast<float>(y));
         }
 
 
@@ -178,7 +178,7 @@ namespace easy3d {
             for (auto model : tool_manager()->viewer()->models()) {
                 auto mesh = dynamic_cast<SurfaceMesh*>(model);
                 if (mesh && mesh->renderer()->is_visible()) {
-                    const auto& faces = picker_->pick_faces(mesh, Rect(start_, vec2(x, y)));
+                    const auto& faces = picker_->pick_faces(mesh, Rect(start_, vec2(static_cast<float>(x), static_cast<float>(y))));
                     auto select = mesh->face_property<bool>("f:select");
                     if (!faces.empty()) {
                         for (auto f : faces)
@@ -207,8 +207,8 @@ namespace easy3d {
 
         void MultitoolSurfaceMeshFaceSelectionRect::press(ToolButton button, int x, int y) {
             MultiTool::press(button, x, y);
-            start_ = vec2(x, y);
-            end_ = vec2(x, y);
+            start_ = vec2(static_cast<float>(x), static_cast<float>(y));
+            end_ = vec2(static_cast<float>(x), static_cast<float>(y));
         }
 
         void MultitoolSurfaceMeshFaceSelectionRect::release(ToolButton button, int x, int y) {
@@ -218,7 +218,7 @@ namespace easy3d {
 
         void MultitoolSurfaceMeshFaceSelectionRect::prepare_hint(ToolButton button, int x, int y) {
             if (button != NO_BUTTON && picker_)
-                end_ = vec2(x, y);
+                end_ = vec2(static_cast<float>(x), static_cast<float>(y));
             else
                 clear_hint();
         }
