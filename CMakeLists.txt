@@ -297,7 +297,7 @@ install(DIRECTORY
 ################################################################################
 
 ### Summary
-message(STATUS "************************************************************")
+message(STATUS "****************************************************************************")
 message(STATUS "    Package       : Easy3D")
 message(STATUS "    Version       : ${Easy3D_VERSION}")
 
@@ -320,7 +320,7 @@ if (APPLE)
     mark_as_advanced(CMAKE_OSX_ARCHITECTURES)
 endif ()
 
-message(STATUS "------------------------------------------------------------")
+message(STATUS "----------------------------------------------------------------------------")
 
 message(STATUS "    Build shared libraries :  ${Easy3D_BUILD_SHARED_LIBS}")
 message(STATUS "    Build tutorials        :  ${Easy3D_BUILD_TUTORIALS}")
@@ -329,8 +329,12 @@ message(STATUS "    Build tests            :  ${Easy3D_BUILD_TESTS}")
 message(STATUS "    With CGAL (>= v5.1)    :  ${Easy3D_ENABLE_CGAL}")
 message(STATUS "    With Qt5 (>= v5.6)     :  ${Easy3D_ENABLE_QT}")
 message(STATUS "    With ffmpeg (>= v3.4)  :  ${Easy3D_ENABLE_FFMPEG}")
+
+message(STATUS "----------------------------------------------------------------------------")
+
+message(STATUS "    Build directory        :  ${Easy3D_BINARY_DIR}")
 message(STATUS "    Installation directory :  ${CMAKE_INSTALL_PREFIX}")
 
-message(STATUS "************************************************************")
+message(STATUS "****************************************************************************")
 
 
