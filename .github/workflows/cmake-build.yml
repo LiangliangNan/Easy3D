@@ -9,7 +9,7 @@ on: [push, pull_request]
 
 jobs:
   build:
-    name: "${{ matrix.platform }} - ${{ matrix.build_type }}"
+    name: "Build on ${{ matrix.platform }} - ${{ matrix.build_type }}"
     strategy:
           fail-fast: false
           matrix:
@@ -23,6 +23,6 @@ jobs:
         run: sudo apt-get update || true;
              sudo apt-get install libgl1-mesa-dev mesa-common-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev;
       - name: Configure
-        run: cmake -H"." -B"build/${{ matrix.platform }}" -DEasy3D_BUILD_TESTS=ON;
-      - name: "${{ matrix.platform }} - ${{ matrix.build_type }}"
-        run: cmake --build "build/${{ matrix.platform }}";
+        run: cmake -H"." -B"build/${{ matrix.build_type }}" -DEasy3D_BUILD_TESTS=ON;
+      - name: "Build on ${{ matrix.platform }} - ${{ matrix.build_type }}"
+        run: cmake --build "build/${{ matrix.build_type }}";
