@@ -214,9 +214,9 @@ ELPP_INTERNAL_DEBUGGING_OUT_INFO << ELPP_INTERNAL_DEBUGGING_MSG(internalInfoStre
 #    define ELPP_STACKTRACE 1
 #  else
 #      if ELPP_COMPILER_MSVC
-#         pragma message("Stack trace not available for this compiler")
+#         // pragma message("Stack trace not available for this compiler")
 #      else
-#         warning "Stack trace not available for this compiler";
+#         // warning "Stack trace not available for this compiler";
 #      endif  // ELPP_COMPILER_MSVC
 #    define ELPP_STACKTRACE 0
 #  endif  // ELPP_COMPILER_GCC

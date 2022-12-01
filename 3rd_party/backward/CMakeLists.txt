@@ -35,7 +35,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_COMPILER_IS_GNUCXX)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 endif()
 
-add_library(3rd_${module} STATIC backward.cpp)
+add_library(3rd_${module} STATIC backward.cpp backward.hpp)
 target_compile_definitions(3rd_${module} PRIVATE ${BACKWARD_DEFINITIONS})
 target_include_directories(3rd_${module} PRIVATE ${BACKWARD_INCLUDE_DIRS})
 
