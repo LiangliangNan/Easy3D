@@ -1136,6 +1136,8 @@ namespace easy3d {
                 post_draw();
                 glfwSwapBuffers(window_);
 
+                // Don't call 'glfwPollEvents()' at the beginning of the main loop.
+                // Reason: first frame needs time to complete.
                 if (is_animating_ && animation_func_) {
                     glfwPollEvents();
 
