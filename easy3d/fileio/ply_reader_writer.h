@@ -33,6 +33,8 @@
 
 #include <easy3d/core/types.h>
 
+// Todo: check happly, a header-only implementation of the .ply file format.
+//       https://github.com/nmwsharp/happly
 
 namespace easy3d {
 
