@@ -1764,6 +1764,13 @@ namespace easy3d {
 
 
     void Viewer::draw() const {
+//        glEnable(GL_SCISSOR_TEST);
+//        int scissor[4];
+//        glGetIntegerv(GL_SCISSOR_BOX, scissor);
+//        glScissor(scissor[0], scissor[1], scissor[2] * 0.5f, scissor[3]);
+//        // draw code here...
+//        glScissor(scissor[0], scissor[1], scissor[2], scissor[3]);
+
         for (const auto m : models_) {
             if (!m->renderer()->is_visible())
                 continue;
