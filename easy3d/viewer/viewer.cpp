@@ -1530,14 +1530,12 @@ namespace easy3d {
         if (!drawable_axes_->is_visible())
             return;
 
-        // The viewport and scissor box are changed to fit the lower left corner.
-        int viewport[4], scissor[4];
+        // The viewport is changed to fit the lower left corner.
+        int viewport[4];
         glGetIntegerv(GL_VIEWPORT, viewport);
-        glGetIntegerv(GL_SCISSOR_BOX, scissor);
 
         static int corner_frame_size = static_cast<int>(100 * dpi_scaling());
         glViewport(0, 0, corner_frame_size, corner_frame_size);
-        glScissor(0, 0, corner_frame_size, corner_frame_size);
 
         // To make the axis appear over other objects: reserve a tiny bit of the
         // front depth range. NOTE: do remember to restore it later.
@@ -1577,8 +1575,7 @@ namespace easy3d {
         drawable_axes_->gl_draw();
         program->release();
 
-        // restore
-        glScissor(scissor[0], scissor[1], scissor[2], scissor[3]);
+        // restore the viewport
         glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
         glDepthRange(0.0f, 1.0f);
     }

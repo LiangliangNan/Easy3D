@@ -135,10 +135,9 @@ namespace easy3d {
 
 
     void MultiViewer::draw() const {
-        // remember the viewer port and scissor status, later we will have to restore them
-        ivec4 viewport, scissor;
+        // remember the viewer port, later we will have to restore it after drawing each view
+        ivec4 viewport;
         glGetIntegerv(GL_VIEWPORT, viewport);
-        glGetIntegerv(GL_SCISSOR_BOX, scissor);
 
         // ------------------------------------------------------------
 
@@ -146,7 +145,6 @@ namespace easy3d {
             for (const auto& view : row) {
                 const auto &vp = view.viewport;
                 glViewport(vp[0], vp[1], vp[2], vp[3]);
-                glScissor(vp[0], vp[1], vp[2], vp[3]);
                 for (const auto m: view.models) {
                     if (!m->renderer()->is_visible())
                         continue;
@@ -188,8 +186,7 @@ namespace easy3d {
 
         // ------------------------------------------------------------
 
-        // restore scissor and viewport states.
-        glScissor(scissor[0], scissor[1], scissor[2], scissor[3]);
+        // restore viewport.
         glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 
         // draw the division of views
