@@ -9,11 +9,12 @@ assignees: ''
 
 **Describe the bug**
 A clear and concise description of what the bug is.
-If applicable, add screenshots (of the results or error messages), and the complete run log file to help explain your problem.
 
 **Tell us how to reproduce the bug** 
-If applicable, post your code and data here.
-Then describe the steps to reproduce the behavior.  
+Is it a compile time error or runtime issue?
+ - For compile time issues, post here the code and full compile log.
+ - For runtime issues, post here screenshots (of the results or error messages), as well as the complete run log file. Then describe the steps to reproduce the issue.  
+In all cases, post your code and data here (if relevant). 
 
 **Development/Running environment:**
  - OS: [e.g. Windows 10, macOS 11.6]
