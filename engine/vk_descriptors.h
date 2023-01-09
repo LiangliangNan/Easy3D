@@ -51,6 +51,7 @@ namespace lve {
         class DescriptorBuilder {
         public:
             DescriptorBuilder(DescriptorAllocator* alloc) : allocator(alloc) {}
+            // todo: combine "bind()" and "write()" functions? 
             DescriptorBuilder &bind(uint32_t binding, VkDescriptorType type, VkShaderStageFlags flags);
             DescriptorBuilder &write(uint32_t binding, VkDescriptorType type, VkDescriptorBufferInfo *info);
             DescriptorBuilder &write(uint32_t binding, VkDescriptorType type, VkDescriptorImageInfo *info);

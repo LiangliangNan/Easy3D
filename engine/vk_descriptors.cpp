@@ -7,6 +7,12 @@
 
 namespace lve {
 
+    // The current implementation allocates a large-enough pool. It might be more logical to 
+    // allow the user to config the pool (with some piror knowlege about the pool size).
+    // todo: add the following functions to cofigure allocator?
+    //      - addPoolSize(VkDescriptorType descriptorType, uint32_t count);
+    //      - setPoolFlags(VkDescriptorPoolCreateFlags flags);
+    //      - setMaxSets(uint32_t count);
     struct PoolSizes {
         std::vector<std::pair<VkDescriptorType, float> > sizes = {
                 {VK_DESCRIPTOR_TYPE_SAMPLER,                0.5f},
