@@ -1,0 +1,14 @@
+.idea
+cmake-build-*
+.DS_Store
+3rd_party/.DS_Store
+3rd_party/glew/.DS_Store
+3rd_party/glew/include/.DS_Store
+3rd_party/glfw/.DS_Store
+3rd_party/glfw/include/.DS_Store
+3rd_party/glfw/src/.DS_Store
+3rd_party/imgui/.DS_Store
+applications/Mapple/.DS_Store
+easy3d/.DS_Store
+resources/.DS_Store
+resources/data/.DS_Store
