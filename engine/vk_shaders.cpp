@@ -678,7 +678,7 @@ namespace lve {
             // then ASCII format (vert, frag, geom ...), we use glslangValidator to compile the shader into SPIR-V format.
             // we also save it into a file. Todo: have a GLSLCompiler based on glslang. 
             auto spv_filename = filename + ".spv";
-            auto cmd = "glslangValidator --quiet --target-env vulkan1.3 -V " + filename + " -o " + spv_filename;
+            auto cmd = "glslangValidator --quiet --target-env vulkan1.0 -V " + filename + " -o " + spv_filename;
             std::system(cmd.c_str());
             std::ifstream file(spv_filename);
             if (file.is_open()) {
