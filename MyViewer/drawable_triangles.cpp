@@ -1,7 +1,10 @@
 #include "drawable_triangles.h"
 #include <lve_pipeline.hpp>
 #include <lve_buffer.hpp>
+
+#if USE_SHADER_REFLECTION
 #include <vk_shaders.h>
+#endif
 
 
 namespace lve {
@@ -15,9 +18,6 @@ namespace lve {
         pipelines.solid.reset();
         pipelines.wireframe.reset();
     }
-
-
-#define USE_SHADER_REFLECTION 1
 
     void TrianglesDrawable::preparePipelines() {
 #if USE_SHADER_REFLECTION
@@ -54,7 +54,7 @@ namespace lve {
         VK_CHECK(vkCreatePipelineLayout(lveDevice.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout));
 
         PipelineConfig pipelineConfig;
-        // todo: only difference -> use pipeline variants
+        // todo: only difference between drawables -> use pipeline variants
         pipelineConfig.inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         pipelineConfig.renderPass = renderPass;
         pipelineConfig.pipelineLayout = pipelineLayout;

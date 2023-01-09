@@ -7,14 +7,14 @@
 #include <glm/glm.hpp>
 #include <vk_common.h>
 
+#define USE_SHADER_REFLECTION 1
 #define INTERLEAVED_VERTEX_ATTRIBUTES 1
 
 namespace lve {
 
-// todo: not needed in case of separate vertex attributes
+    // todo: not needed in case of separate vertex attributes
     struct MyVertex {
         MyVertex(const glm::vec3 &p, const glm::vec3 &c) : pos(p), color(c) {}
-
         glm::vec3 pos;
         glm::vec3 color;
     };

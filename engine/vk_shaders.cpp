@@ -645,7 +645,7 @@ namespace lve {
 
             //find what the size of the file is by looking up the location of the cursor
             //because the cursor is at the end, it gives the size directly in bytes
-            std::size_t fileSize = static_cast<std::size_t>(file.tellg());
+            const std::size_t fileSize = static_cast<std::size_t>(file.tellg());
             //spirv expects the buffer to be on uint32, so make sure to reserve an int vector big enough for the entire file
             std::vector<uint32_t> buffer(fileSize / sizeof(uint32_t));
             //put file cursor at beginning
@@ -677,8 +677,9 @@ namespace lve {
         else { 
             // then ASCII format (vert, frag, geom ...), we use glslangValidator to compile the shader into SPIR-V format.
             // we also save it into a file. Todo: have a GLSLCompiler based on glslang. 
-            auto spv_filename = filename + ".spv";
-            auto cmd = "glslangValidator --quiet --target-env vulkan1.0 -V " + filename + " -o " + spv_filename;
+            const auto spv_filename = filename + ".spv";
+            // auto cmd = "glslangValidator --quiet --target-env vulkan1.0 -V " + filename + " -o " + spv_filename;
+            const auto cmd = "glslangValidator --quiet -V " + filename + " -o " + spv_filename; // without "--target-env vulkan1.0"
             std::system(cmd.c_str());
             std::ifstream file(spv_filename);
             if (file.is_open()) {

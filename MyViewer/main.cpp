@@ -42,13 +42,13 @@ int main(int argc, const char *argv[]) {
     load_ply_data(file_name, vertices, indices);
 
 #if 1
-    if (0) {
+    if (1) {
         auto& drawable = viewer.createPointsDrawable();
         drawable.set_name("Vertices");
         drawable.set_visible(true);
         drawable.update_buffers(vertices, indices);
     }
-    if (0) {
+    if (1) {
         auto& drawable = viewer.createLinesDrawable();
         drawable.set_name("Wireframe");
         drawable.set_visible(true);
