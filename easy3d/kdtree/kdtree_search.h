@@ -95,14 +95,14 @@ namespace easy3d {
          * \param p The query point.
          * \param squared_distance The squared distance between the query point and its closest neighbor.
          * \note A \b squared distance is returned by the second argument \p squared_distance.
-         * \return The index of the nearest neighbor found.
+         * \return The index of the nearest neighbor found (the same as in the original point cloud).
          */
         virtual int find_closest_point(const vec3 &p, float &squared_distance) const = 0;
 
         /**
          * \brief Queries the closest point for a given point.
          * \param p The query point.
-         * \return The index of the nearest neighbor found.
+         * \return The index of the nearest neighbor found (the same as in the original point cloud).
          */
         virtual int find_closest_point(const vec3 &p) const = 0;
         /// @}
@@ -114,7 +114,7 @@ namespace easy3d {
          * \brief Queries the K nearest neighbors for a given point.
          * \param p The query point.
          * \param k The number of required neighbors.
-         * \param neighbors The indices of the neighbors found.
+         * \param neighbors The indices of the neighbors found (the same as in the original point cloud).
          * \param squared_distances The squared distances between the query point and its K nearest neighbors.
          * The values are stored in accordance with their indices.
          * \note The \b squared distances are returned by the argument \p squared_distances.
@@ -126,7 +126,7 @@ namespace easy3d {
          * \brief Queries the K nearest neighbors for a given point.
          * \param p The query point.
          * \param k The number of required neighbors.
-         * \param neighbors The indices of the neighbors found.
+         * \param neighbors The indices of the neighbors found (the same as in the original point cloud).
          */
         virtual void find_closest_k_points(const vec3 &p, int k, std::vector<int> &neighbors) const = 0;
         /// @}
@@ -138,7 +138,7 @@ namespace easy3d {
          * \brief Queries the nearest neighbors within a fixed range.
          * \param p The query point.
          * \param squared_radius The search range (which is required to be \b squared).
-         * \param neighbors The indices of the neighbors found.
+         * \param neighbors The indices of the neighbors found (the same as in the original point cloud).
          * \param squared_distances The squared distances between the query point and the neighbors found.
          * The values are stored in accordance with their indices.
          * \note The \b squared distances are returned by the argument \p squared_distances.
@@ -150,7 +150,7 @@ namespace easy3d {
          * \brief Queries the nearest neighbors within a fixed range.
          * \param p The query point.
          * \param squared_radius The search range (which is required to be \b squared).
-         * \param neighbors The indices of the neighbors found.
+         * \param neighbors The indices of the neighbors found (the same as in the original point cloud).
          */
         virtual void find_points_in_range(const vec3 &p, float squared_radius, std::vector<int> &neighbors) const = 0;
         /// @}
