@@ -29,7 +29,6 @@
 
 #include "internal.h"
 
-#if defined(_GLFW_X11) || defined(_GLFW_WAYLAND)
 
 /*
  * Marcus: This code was originally written by Markus G. Kuhn.
@@ -908,7 +907,7 @@ static const struct codepair {
 
 // Convert XKB KeySym to Unicode
 //
-uint32_t _glfwKeySym2Unicode(unsigned int keysym)
+long _glfwKeySym2Unicode(unsigned int keysym)
 {
     int min = 0;
     int max = sizeof(keysymtab) / sizeof(struct codepair) - 1;
@@ -938,8 +937,6 @@ uint32_t _glfwKeySym2Unicode(unsigned int keysym)
     }
 
     // No matching Unicode value found
-    return GLFW_INVALID_CODEPOINT;
+    return -1;
 }
-
-#endif // _GLFW_WAYLAND or _GLFW_X11
 

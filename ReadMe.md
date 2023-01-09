@@ -1,231 +1,164 @@
-<p align="right">
-    <b> <img src="https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-green" title="Supported Platforms"/> </b> <br>
-    <b> <img src="https://img.shields.io/badge/license-GPL-blue" title="license-GPL"/> </b> <br>
-</p>
+# Little Vulkan Engine
 
-![3D model generated and rendered by Easy3D](resources/images/logo.jpg)
+**(Prior version of repo has now been moved to the [tut0-22 branch](https://github.com/blurrypiano/littleVulkanEngine/tree/tut0-22))**
 
-#### Easy3D is an open-source library for 3D modeling, geometry processing, and rendering. It is implemented in C++ and designed with an emphasis on simplicity and efficiency. Easy3D is intended for research and educational purposes, but it is also a good starting point for developing sophisticated 3D applications. 
-Compared to existing geometry processing libraries (such as [PMP](http://www.pmp-library.org/) and [libigl](https://github.com/libigl/libigl/)) that focus on the algorithm aspect, Easy3D also provides a wider range of functionalities for user interactions and rendering.
+A video tutorial series introducing computer graphics for [Vulkan®](https://www.khronos.org/vulkan/), the new generation graphics and compute API from Khronos. The focus of this tutorial is to be approachable to newcomers to computer graphics and graphics APIs, explaining not just the Vulkan API but also computer graphics theory, mathematics and engine architecture.
 
-<p align="center"> 
-     <img src="./resources/images/overview.jpg" width="600"> 
-</p>
+## Table of Contents
 
-### Key features ###
-* Efficient data structures for representing and managing 3D models such as point clouds, polygonal surfaces 
-  (e.g., triangle meshes), polyhedral volumes (e.g., tetrahedral meshes), and graphs. 
-  Easy to add/access arbitrary types of per-element properties. Non-manifoldness is automatically resolved when 
-  loading models from files ...
-  
-* A set of widely used algorithms, e.g., point cloud normal estimation/re-orientation, Poisson surface reconstruction, 
-  RANSAC, mesh simplification, subdivision, smoothing, parameterization, remeshing, and more (the implementation of
-  several surface mesh processing algorithms were taken from [PMP](http://www.pmp-library.org/)).
-   
-* A bunch of rendering techniques, e.g., point/line imposters, ambient occlusion (SSAO), hard shadow (shadow maps), 
-  soft shadow (PCSS), eye-dome lighting (for rendering point clouds without normal information), transparency (average 
-  color blending, dual depth peeling), and more.
-   
-* High-level encapsulation of OpenGL and GLSL for convenient and efficient rendering (based on modern and faster
-  programmable-shader-style rendering, i.e., no fixed function calls). Client code does not need to touch the low-level 
-  APIs of OpenGL. 
-  
-* Step-by-step tutorials demonstrating various uses of the API, to get acquainted with the data structures, rendering techniques, and algorithms 
-  for 3D modeling and geometry processing. 
-  
-* Very easy to use as a callable library (usually only a few lines of code).
-  
-* A viewer that can be used directly to visualize 3D scenes in various formats, which can also be easily extended. 
-  For window/GUI creation, Easy3D currently supports [GLFW](https://www.glfw.org/) (e.g., [the default viewer](https://github.com/LiangliangNan/Easy3D/blob/main/easy3d/viewer)), 
-  [Qt](https://www.qt.io/) (see [the Qt viewer](https://github.com/LiangliangNan/Easy3D/tree/main/tutorials/Tutorial_204_Viewer_Qt)), 
-  and [wxWidgets](https://www.wxwidgets.org/) (see [the wxWidgets viewer](https://github.com/LiangliangNan/Easy3D/tree/main/tutorials/Tutorial_203_Viewer_wxWidgets)).
+- [Building](#Building)
+  - [Building for Unix](#UnixBuild)
+  - [Building for MacOS](#MacOSBuild)
+  - [Building for Windows](#WindowsBuild)
+- [Tutorials](#Tutorials)
+  - [Basics](#Basics)
+  - [Point Lights](#PointLights)
+- [Official Khronos Vulkan Samples](#Khronossamples)
+- [Credits and Attributions](#CreditsAttributions)
 
-* A handy tool <b>Mapple</b> created out of the Easy3D library for rendering and processing 3D data.
+## <a name="Building"></a> Building
 
-|              Scalar field                |              Polyhedral mesh              |              Keyframe animation            |
-|------------------------------------------|-------------------------------------------|--------------------------------------------|
-| ![](resources/images/mapple-scalar.jpg)  | ![](resources/images/mapple-polymesh.gif) | ![](resources/images/mapple-animation.gif) |
+### <a name="UnixBuild"></a> Unix Build Instructions
 
-### A glance ###
+- Install the dependencies: cmake, glm, vulkan and glfw
 
-Any type of 3D drawables (e.g., points, lines, triangles, and thus point clouds, mesh surfaces, scalar fields, 
-and vector fields) can be rendered by writing a few lines of code with Easy3D. For example, the following code renders a 
-point cloud as a set of spheres
+- For example
+  ```
+    sudo apt install vulkan-tools
+    sudo apt install libvulkan-dev
+    sudo apt install vulkan-validationlayers-dev spirv-tools
+    sudo apt install libglfw3-dev
+    sudo apt install libglm-dev
+    sudo apt install cmake
+  ```
+- To Build
+  ```
+   cd LittleVulkanEngine
+   ./unixBuild.sh
+  ```
 
-```c++
-// assume your point cloud has been loaded to the viewer
-PointsDrawable* drawable = cloud->renderer()->get_points_drawable("vertices");
-drawable->set_impostor_type(PointsDrawable::SPHERE); // draw points as spheres.
-drawable->set_point_size(3.0f);    // set point size
+### <a name="MacOSBuild"></a> MacOS Build Instructions
+
+#### Install Dependencies
+
+- [Download and install MacOS Vulkan sdk](https://vulkan.lunarg.com/)
+- [Download and install Homebrew](https://brew.sh/)
+
+- Then in a terminal window
+
+  ```
+    brew install cmake
+    brew install glfw
+    brew install glm
+  ```
+
+- To Build
+  ```
+   cd littleVulkanEngine
+   ./unixBuild.sh
+  ```
+
+### <a name="WindowsBuild"></a> Windows build instructions
+
+- [Download and install Windows Vulkan sdk](https://vulkan.lunarg.com/)
+- [Download and install Windows cmake x64 installer](https://cmake.org/download/)
+  - Make sure to select "Add cmake to the system Path for all users"
+- [Download GLFW](https://www.glfw.org/download.html) (64-bit precompiled binary)
+- [Download GLM](https://github.com/g-truc/glm/releases)
+- Download and open the project and rename "envWindowsExample.cmake" to ".env.cmake"
+- Update the filepath variables in .env.cmake to your installation locations
+
+#### Building for Visual Studio 2019
+
+- In windows powershell
+
 ```
-or as a set of surfels (i.e., 3D discs)
-
-```c++ 
-drawable->set_impostor_type(PointsDrawable::SURFEL);
-``` 
-
-By abstracting geometric elements as one of the above drawables, more general visualization (e.g., vector fields, 
-scalar fields) can be done very conveniently.
-
-### Easy3D repository layout
-The repository contains a `CMakeLists.txt` file (in the root directory of the repository) that serves as an anchor for 
-configuring and building programs, as well as a set of subfolders:
-* [`3rd_party`](https://github.com/LiangliangNan/Easy3D/tree/main/3rd_party) - source code of third-party libraries
-* [`applications`](https://github.com/LiangliangNan/Easy3D/tree/main/applications) - applications built on top of Easy3D
-* [`cmake`](https://github.com/LiangliangNan/Easy3D/tree/main/cmake) - CMake-related configuration files
-* [`docs`](https://github.com/LiangliangNan/Easy3D/tree/main/docs) - documentation configuration file (Doxygen)
-* [`easy3d`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d) - source code of Easy3D, implementing the Easy3D modules:
-  * [`util`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/util) - utilities, e.g., logging, file system, progress, timer.
-  * [`core`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/core) - basic types and data structures, e.g., point cloud, surface mesh, graph, and polyhedron mesh.
-  * [`fileio`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/fileio) - functionalities for reading/writing data from/into files.
-  * [`kdtree`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/kdtree) - a collection of kd-trees.
-  * [`algo`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/algo) - algorithms for geometry processing.
-  * [`algo_ext`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/algo_ext) - several extended surface mesh processing algorithms (based on CGAL).
-  * [`video`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/video) - a class that can encode an image sequence into a video.
-  * [`renderer`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/renderer) - functionalities and algorithms for rendering and visualization.
-  * [`gui`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/gui) - tools for user interactions, e.g., picking points, faces, or models.
-  * [`viewer`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/viewer) - a simple viewer and a composite viewer.
-* [`resources`](https://github.com/LiangliangNan/Easy3D/tree/main/resources) - test data, images, shaders, textures, etc.
-* [`tests`](https://github.com/LiangliangNan/Easy3D/tree/main/tests) - a collection of test cases
-* [`tutorials`](https://github.com/LiangliangNan/Easy3D/tree/main/tutorials) - a collection of examples (with detailed explanations in code)
-
-### Build Easy3D
-Like most software, Easy3D depends on some third-party libraries. Easy3D has made this easier for users by including
-the source code of most third-party libraries (for the core functionalities and the basic viewer), and it leaves very 
-few optional (for a few additional features that are typically not needed by most users). 
-
-The **optional** third-party libraries are:
-- **[CGAL](https://www.cgal.org/) (optional)**: Easy3D has implemented a few algorithms for advanced surface mesh 
-  processing, such as surface reorientation, detecting/resolving duplicate vertices/faces and self-intersection, 
-  and clipping/splitting/slicing surface meshes. These features are disabled by default (because most users don't 
-  need them). To enable these features, you can switch on the CMake option `Easy3D_ENABLE_CGAL` and make sure 
-  CGAL ([v5.1 or later](https://github.com/CGAL/cgal/releases)) is installed and visible to CMake. In case you have
-  multiple versions of CGAL on your platform, simply provide the path of a suitable one to the CMake variable `CGAL_DIR`.
-
-- **[Qt5](https://www.qt.io/) (optional)**: Easy3D supports Qt ([v5.6 or later](https://download.qt.io/archive/qt/)) for 
-  UI creation, which can help develop sophisticated applications for 3D data processing and visualization. The Qt 
-  support is disabled by default (because most users don't need it). You can switch on the CMake option `Easy3D_ENABLE_QT` 
-  to include the examples and applications that depend on Qt (e.g., 
-  [`Tutorial_204_Viewer_Qt`](https://github.com/LiangliangNan/Easy3D/tree/main/tutorials/Tutorial_204_Viewer_Qt) and 
-  [`Mapple`](https://github.com/LiangliangNan/Easy3D/tree/main/applications/Mapple)).
-  
-To build Easy3D, you need [CMake](https://cmake.org/download/) (`>= 3.12`) and, of course, a compiler that supports `>= C++11`.
-
-Easy3D has been tested on macOS (Xcode >= 8), Windows (MSVC >=2015 `x64`), and Linux (GCC >= 4.8, Clang >= 3.3). Machines 
-nowadays typically provide higher [support](https://en.cppreference.com/w/cpp/compiler_support), so you should be able 
-to build Easy3D on almost all platforms.
-
-There are many options to build Easy3D. Choose one of the following (not an exhaustive list):
-
-- Option 1 (purely on the command line): Use CMake to generate Makefiles and then `make` (on Linux/macOS) or `nmake`(on Windows with Microsoft 
-  Visual Studio). 
-  - On Linux or macOS, you can simply
-    ```
-        $ cd path-to-root-dir-of-Easy3D
-        $ mkdir Release
-        $ cd Release
-        $ cmake -DCMAKE_BUILD_TYPE=Release ..
-        $ make
-    ```
-  - On Windows with Microsoft Visual Studio, use the `x64 Native Tools Command Prompt for VS XXXX` (**don't** use the x86 one), then
-    ```
-        $ cd path-to-root-dir-of-Easy3D
-        $ mkdir Release
-        $ cd Release
-        $ cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release ..
-        $ nmake
-    ```
-  
-- Option 2: Use any IDE that can directly handle CMakeLists files to open the `CMakeLists.txt` in the **root** directory of 
-  Easy3D. Then you should have obtained a usable project and just build it. I recommend using 
-[CLion](https://www.jetbrains.com/clion/) or [QtCreator](https://www.qt.io/product). For Windows users: your IDE must be set for `x64`.
-  
-- Option 3: Use CMake-Gui to generate project files for your IDE. Then load the project to your IDE and build it. For Windows users: your IDE must be set for `x64`.
-
-Don't have any experience with C/C++ programming? 
-Have a look at <a href="https://github.com/LiangliangNan/Easy3D/blob/main/HowToBuild.md">How to build Easy3D step by 
-step</a>.
-
-### Test Easy3D
-A test suite is provided in the `tests` subfolder, which contains a collection of automated test cases (for data 
-structures, IO, algorithms, visualization, etc.) and some semi-automated test cases (for GUI-related functionalities 
-that require interactive user input). All cases are integrated into the single target `tests`.
-
-To build and run the test suite, download the entire source, use the `CMakeLists.txt` in the root directory of the 
-repository, switch on the CMake option `Easy3D_BUILD_TESTS` (which is disabled by default), and run CMake. After CMake, 
-you can build ALL or only the `tests` target. Finally, run the `tests` executable (i.e., `YOUR_BUILD_DIRECTORY/bin/tests`) for the test.
-
-### Use Easy3D in your project
-This is quite easy, like many other open-source libraries :-) 
-After you have built Easy3D, you only need to point `Easy3D_DIR` to your `build` (or the installation) directory of Easy3D when doing cmake. Then the requested Easy3D libraries, including directories and relevant compile definitions of Easy3D, are visible and accessible to your project. Below is an example of using the default Easy3D viewer. 
-The `CMakeLists.txt` looks like:
-``` cmake
-set(CMAKE_CXX_STANDARD 11)                       # specify C++ standard
-find_package(Easy3D COMPONENTS viewer REQUIRED)  # request Easy3D (recommended to request only needed components)
-add_executable(Test main.cpp)                    # create an executable target
-target_link_libraries(Test easy3d::viewer)       # link to necessary Easy3D modules (add more if needed, e.g., algo)
-```
-and the `main.cpp` with minimum code:
-
-``` c++
-#include <easy3d/viewer/viewer.h>
-#include <easy3d/util/initializer.h>
-
-int main(int argc, char** argv) {
-    easy3d::initialize();
-    easy3d::Viewer viewer("Test");
-    return viewer.run();
-}
+ cd littleVulkanEngine
+ mkdir build
+ cmake -S . -B .\build\
 ```
 
-### Documentation
-The documentation for Easy3D is available [here](https://3d.bk.tudelft.nl/liangliang/software/easy3d_doc/html/index.html).
+- If cmake finished successfully, it will create a LveEngine.sln file in the build directory that can be opened with visual studio. In visual studio right click the Shaders project -> build, to build the shaders. Right click the LveEngine project -> set as startup project. Change from debug to release, and then build and start without debugging.
 
-The Easy3D Documentation is an ongoing effort with more and more details being added. You can build the latest Easy3D 
-documentation from the source code.
-Easy3D uses [Doxygen](https://www.doxygen.nl/index.html) (`>= 1.8.3`) to generate documentation from source code. 
-To build it from the source code, [install Doxygen](https://www.doxygen.nl/manual/install.html) first. 
-Then, switch on the CMake option `` in the main `CMakeList.txt`. Finally, build the `doc` 
-target to generate the documentation. 
+#### Building for minGW
 
-### Questions, new features, bugs, or contributing to Easy3D
-See the [Contribution Guide](https://github.com/LiangliangNan/Easy3D/blob/main/CONTRIBUTING.md) for more information.
+- [Download and install MinGW-w64](https://www.mingw-w64.org/downloads/), you probably want MingW-W64-builds/
+- Make sure MinGW has been added to your Path
+- Also set MINGW_PATH variable in the project's .env.cmake
+- In windows powershell
 
-### License
-Easy3D is free software; you can redistribute it and/or modify it under the terms of the 
-GNU General Public License as published by the Free Software Foundation; either version 3
-of the License or (at your option) any later version. The full text of the license can be
-found in the accompanying 'License' file.
-
-### Acknowledgments
-The implementation of Easy3D greatly benefited from and was inspired by existing great open-source libraries, such as
-[PMP](http://www.pmp-library.org/), [libQGLViewer](http://libqglviewer.com/), [Surface mesh](https://opensource.cit-ec.de/projects/surface_mesh),
-and [Graphite](http://graphite.gforge.inria.fr/). In particular, the implementation of several surface mesh 
-algorithms was taken (with modifications) from PMP, i.e., simplification, subdivision, smoothing, 
-parameterization, remeshing, hole filling, geodesic distances, fairing, curvatures, and triangulation. 
-We would like to thank the original authors of these projects for their permissive license terms. 
-We also thank the users and contributors for reporting/fixing bugs, testing, and providing valuable feedback and suggestions.
-
-### Citation
-If you use Easy3D in scientific work, I kindly ask you to cite it:
-
-```bibtex
-@article{easy3d2021,
-  title = {Easy3{D}: a lightweight, easy-to-use, and efficient {C}++ library for processing and rendering 3{D} data},
-  author = {Liangliang Nan},
-  journal = {Journal of Open Source Software}，
-  year = {2021},
-  volume = {6},
-  number = {64},
-  pages = {3255},
-  doi = {10.21105/joss.03255},
-  url = {https://doi.org/10.21105/joss.03255}
-}
 ```
----------
+ cd littleVulkanEngine
+ ./mingwBuild.bat
+```
 
-Should you have any questions, comments, or suggestions, please contact me at <i>liangliang.nan@gmail.com</i>
+- This will build the project to build/LveEngine.exe, double click in file explorer to open and run
 
-[<b><i>Liangliang Nan</i></b>](https://3d.bk.tudelft.nl/liangliang/)
+## <a name="Tutorials"></a> Tutorials
 
-Dec. 8, 2018
+### [Vulkan Basics - Tutorials 0 to 22](https://github.com/blurrypiano/littleVulkanEngine/tree/tut0-22)
+
+This branch is a legacy branch that holds all the older tutorials in the series, starting from the beginning and going up until tutorial 22.
+
+### <a name="PointLights"></a> Point Lights
+
+Find the [Preliminary Completed Project Here](https://github.com/blurrypiano/littleVulkanEngine/tree/pointLights)
+
+#### [21 - Intro to Point Lights](https://github.com/blurrypiano/littleVulkanEngine/tree/master/littleVulkanEngine/tutorial21)
+
+In this tutorial we add a point light object to the global UBO and update the vertex shader to make use of this new lighting technique. ([Video](https://youtu.be/Z1lLwAEMt4M))
+
+#### [22 - Vertex vs Fragment Lighting](https://github.com/blurrypiano/littleVulkanEngine/tree/master/littleVulkanEngine/tutorial22)
+
+In this tutorial we explore the differences in per-fragment versus per-vertex lighting ([Video](https://youtu.be/YnMyKHfrgU4))
+
+#### [23 - Project Restructure and cmake](https://github.com/blurrypiano/littleVulkanEngine/tree/tut23)
+
+In this tutorial I change the project to use cmake rather than a simple makefile to make building on multiple platforms simpler and more straightforward. ([Video](https://youtu.be/ZuHK_5cJ6B8))
+
+#### [24 - Billboards](https://github.com/blurrypiano/littleVulkanEngine/tree/tut24)
+
+In this tutorial we implement a second rendering system that uses the billboard technique to render a spherical point light.
+([Video](https://youtu.be/91-89b3wlSo))
+
+#### [25 - Multiple Point Lights](https://github.com/blurrypiano/littleVulkanEngine/tree/tut25)
+
+In this tutorial we add support for multiple point light objects in the scene. Lights will still be stored in the GlobalUbo, however for rendering the light objects we will use push constants.
+
+([Video](https://youtu.be/1olS6ayckKM))
+
+#### [26 - Specular Lighting](https://github.com/blurrypiano/littleVulkanEngine/tree/tut26)
+
+In this tutorial we add specular lighting to our simple fragment shader.
+
+([Video](https://youtu.be/8CTr0SKQ21U))
+
+#### [27 - Alpha Blending and Transparency](https://github.com/blurrypiano/littleVulkanEngine/tree/tut27)
+
+In this tutorial we add a limited blending capability to our point light system, allowing them to be rendered with a nicer appearance. 
+
+([Video](https://youtu.be/uZqxj6tLDY4))
+
+## <a name="Khronossamples"></a> Official Khronos Vulkan Samples
+
+Khronos made an official Vulkan Samples repository available to the public ([press release](https://www.khronos.org/blog/vulkan-releases-unified-samples-repository?utm_source=Khronos%20Blog&utm_medium=Twitter&utm_campaign=Vulkan%20Repository)).
+
+You can find this repository at https://github.com/KhronosGroup/Vulkan-Samples
+
+## <a name="CreditsAttributions"></a> Credits
+
+Thanks to the authors of these libraries :
+
+- [OpenGL Mathematics (GLM)](https://github.com/g-truc/glm)
+
+Thanks to [LunarG](http://www.lunarg.com)
+
+Thanks to the wonderful opensource examples by [Sascha Willems](https://github.com/SaschaWillems/Vulkan)
+
+Thanks to [ThinMatrix](https://www.youtube.com/user/ThinMatrix/featured) and his wonderful OpenGL game tutorial series which was a huge inspiration for this series and how I first started learning computer graphics
+
+Thanks to [Sean Plott](https://day9.tv/) and the #DK30 challenge, for providing the motivating kick to give this a shot
+
+## Attributions / Licenses
+
+- Vulkan and the Vulkan logo are trademarks of the [Khronos Group Inc.](http://www.khronos.org)

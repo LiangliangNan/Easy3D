@@ -74,13 +74,13 @@ static GLFWbool refreshVideoModes(_GLFWmonitor* monitor)
     if (monitor->modes)
         return GLFW_TRUE;
 
-    modes = _glfw.platform.getVideoModes(monitor, &modeCount);
+    modes = _glfwPlatformGetVideoModes(monitor, &modeCount);
     if (!modes)
         return GLFW_FALSE;
 
     qsort(modes, modeCount, sizeof(GLFWvidmode), compareVideoModes);
 
-    _glfw_free(monitor->modes);
+    free(monitor->modes);
     monitor->modes = modes;
     monitor->modeCount = modeCount;
 
@@ -96,16 +96,11 @@ static GLFWbool refreshVideoModes(_GLFWmonitor* monitor)
 //
 void _glfwInputMonitor(_GLFWmonitor* monitor, int action, int placement)
 {
-    assert(monitor != NULL);
-    assert(action == GLFW_CONNECTED || action == GLFW_DISCONNECTED);
-    assert(placement == _GLFW_INSERT_FIRST || placement == _GLFW_INSERT_LAST);
-
     if (action == GLFW_CONNECTED)
     {
         _glfw.monitorCount++;
         _glfw.monitors =
-            _glfw_realloc(_glfw.monitors,
-                          sizeof(_GLFWmonitor*) * _glfw.monitorCount);
+            realloc(_glfw.monitors, sizeof(_GLFWmonitor*) * _glfw.monitorCount);
 
         if (placement == _GLFW_INSERT_FIRST)
         {
@@ -127,10 +122,10 @@ void _glfwInputMonitor(_GLFWmonitor* monitor, int action, int placement)
             if (window->monitor == monitor)
             {
                 int width, height, xoff, yoff;
-                _glfw.platform.getWindowSize(window, &width, &height);
-                _glfw.platform.setWindowMonitor(window, NULL, 0, 0, width, height, 0);
-                _glfw.platform.getWindowFrameSize(window, &xoff, &yoff, NULL, NULL);
-                _glfw.platform.setWindowPos(window, xoff, yoff);
+                _glfwPlatformGetWindowSize(window, &width, &height);
+                _glfwPlatformSetWindowMonitor(window, NULL, 0, 0, width, height, 0);
+                _glfwPlatformGetWindowFrameSize(window, &xoff, &yoff, NULL, NULL);
+                _glfwPlatformSetWindowPos(window, xoff, yoff);
             }
         }
 
@@ -159,7 +154,6 @@ void _glfwInputMonitor(_GLFWmonitor* monitor, int action, int placement)
 //
 void _glfwInputMonitorWindow(_GLFWmonitor* monitor, _GLFWwindow* window)
 {
-    assert(monitor != NULL);
     monitor->window = window;
 }
 
@@ -172,11 +166,12 @@ void _glfwInputMonitorWindow(_GLFWmonitor* monitor, _GLFWwindow* window)
 //
 _GLFWmonitor* _glfwAllocMonitor(const char* name, int widthMM, int heightMM)
 {
-    _GLFWmonitor* monitor = _glfw_calloc(1, sizeof(_GLFWmonitor));
+    _GLFWmonitor* monitor = calloc(1, sizeof(_GLFWmonitor));
     monitor->widthMM = widthMM;
     monitor->heightMM = heightMM;
 
-    strncpy(monitor->name, name, sizeof(monitor->name) - 1);
+    if (name)
+        monitor->name = _glfw_strdup(name);
 
     return monitor;
 }
@@ -188,22 +183,23 @@ void _glfwFreeMonitor(_GLFWmonitor* monitor)
     if (monitor == NULL)
         return;
 
-    _glfw.platform.freeMonitor(monitor);
+    _glfwPlatformFreeMonitor(monitor);
 
     _glfwFreeGammaArrays(&monitor->originalRamp);
     _glfwFreeGammaArrays(&monitor->currentRamp);
 
-    _glfw_free(monitor->modes);
-    _glfw_free(monitor);
+    free(monitor->modes);
+    free(monitor->name);
+    free(monitor);
 }
 
 // Allocates red, green and blue value arrays of the specified size
 //
 void _glfwAllocGammaArrays(GLFWgammaramp* ramp, unsigned int size)
 {
-    ramp->red = _glfw_calloc(size, sizeof(unsigned short));
-    ramp->green = _glfw_calloc(size, sizeof(unsigned short));
-    ramp->blue = _glfw_calloc(size, sizeof(unsigned short));
+    ramp->red = calloc(size, sizeof(unsigned short));
+    ramp->green = calloc(size, sizeof(unsigned short));
+    ramp->blue = calloc(size, sizeof(unsigned short));
     ramp->size = size;
 }
 
@@ -211,9 +207,9 @@ void _glfwAllocGammaArrays(GLFWgammaramp* ramp, unsigned int size)
 //
 void _glfwFreeGammaArrays(GLFWgammaramp* ramp)
 {
-    _glfw_free(ramp->red);
-    _glfw_free(ramp->green);
-    _glfw_free(ramp->blue);
+    free(ramp->red);
+    free(ramp->green);
+    free(ramp->blue);
 
     memset(ramp, 0, sizeof(GLFWgammaramp));
 }
@@ -337,7 +333,7 @@ GLFWAPI void glfwGetMonitorPos(GLFWmonitor* handle, int* xpos, int* ypos)
 
     _GLFW_REQUIRE_INIT();
 
-    _glfw.platform.getMonitorPos(monitor, xpos, ypos);
+    _glfwPlatformGetMonitorPos(monitor, xpos, ypos);
 }
 
 GLFWAPI void glfwGetMonitorWorkarea(GLFWmonitor* handle,
@@ -358,7 +354,7 @@ GLFWAPI void glfwGetMonitorWorkarea(GLFWmonitor* handle,
 
     _GLFW_REQUIRE_INIT();
 
-    _glfw.platform.getMonitorWorkarea(monitor, xpos, ypos, width, height);
+    _glfwPlatformGetMonitorWorkarea(monitor, xpos, ypos, width, height);
 }
 
 GLFWAPI void glfwGetMonitorPhysicalSize(GLFWmonitor* handle, int* widthMM, int* heightMM)
@@ -391,7 +387,7 @@ GLFWAPI void glfwGetMonitorContentScale(GLFWmonitor* handle,
         *yscale = 0.f;
 
     _GLFW_REQUIRE_INIT();
-    _glfw.platform.getMonitorContentScale(monitor, xscale, yscale);
+    _glfwPlatformGetMonitorContentScale(monitor, xscale, yscale);
 }
 
 GLFWAPI const char* glfwGetMonitorName(GLFWmonitor* handle)
@@ -424,7 +420,7 @@ GLFWAPI void* glfwGetMonitorUserPointer(GLFWmonitor* handle)
 GLFWAPI GLFWmonitorfun glfwSetMonitorCallback(GLFWmonitorfun cbfun)
 {
     _GLFW_REQUIRE_INIT_OR_RETURN(NULL);
-    _GLFW_SWAP(GLFWmonitorfun, _glfw.callbacks.monitor, cbfun);
+    _GLFW_SWAP_POINTERS(_glfw.callbacks.monitor, cbfun);
     return cbfun;
 }
 
@@ -452,7 +448,7 @@ GLFWAPI const GLFWvidmode* glfwGetVideoMode(GLFWmonitor* handle)
 
     _GLFW_REQUIRE_INIT_OR_RETURN(NULL);
 
-    _glfw.platform.getVideoMode(monitor, &monitor->currentMode);
+    _glfwPlatformGetVideoMode(monitor, &monitor->currentMode);
     return &monitor->currentMode;
 }
 
@@ -478,7 +474,7 @@ GLFWAPI void glfwSetGamma(GLFWmonitor* handle, float gamma)
     if (!original)
         return;
 
-    values = _glfw_calloc(original->size, sizeof(unsigned short));
+    values = calloc(original->size, sizeof(unsigned short));
 
     for (i = 0;  i < original->size;  i++)
     {
@@ -500,7 +496,7 @@ GLFWAPI void glfwSetGamma(GLFWmonitor* handle, float gamma)
     ramp.size = original->size;
 
     glfwSetGammaRamp(handle, &ramp);
-    _glfw_free(values);
+    free(values);
 }
 
 GLFWAPI const GLFWgammaramp* glfwGetGammaRamp(GLFWmonitor* handle)
@@ -511,7 +507,7 @@ GLFWAPI const GLFWgammaramp* glfwGetGammaRamp(GLFWmonitor* handle)
     _GLFW_REQUIRE_INIT_OR_RETURN(NULL);
 
     _glfwFreeGammaArrays(&monitor->currentRamp);
-    if (!_glfw.platform.getGammaRamp(monitor, &monitor->currentRamp))
+    if (!_glfwPlatformGetGammaRamp(monitor, &monitor->currentRamp))
         return NULL;
 
     return &monitor->currentRamp;
@@ -527,8 +523,6 @@ GLFWAPI void glfwSetGammaRamp(GLFWmonitor* handle, const GLFWgammaramp* ramp)
     assert(ramp->green != NULL);
     assert(ramp->blue != NULL);
 
-    _GLFW_REQUIRE_INIT();
-
     if (ramp->size <= 0)
     {
         _glfwInputError(GLFW_INVALID_VALUE,
@@ -537,12 +531,14 @@ GLFWAPI void glfwSetGammaRamp(GLFWmonitor* handle, const GLFWgammaramp* ramp)
         return;
     }
 
+    _GLFW_REQUIRE_INIT();
+
     if (!monitor->originalRamp.size)
     {
-        if (!_glfw.platform.getGammaRamp(monitor, &monitor->originalRamp))
+        if (!_glfwPlatformGetGammaRamp(monitor, &monitor->originalRamp))
             return;
     }
 
-    _glfw.platform.setGammaRamp(monitor, ramp);
+    _glfwPlatformSetGammaRamp(monitor, ramp);
 }
 
