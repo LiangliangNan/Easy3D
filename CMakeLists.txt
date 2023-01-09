@@ -30,3 +30,4 @@ add_subdirectory(MyViewer)
 
 ############## Build SHADERS #######################
 add_subdirectory(shaders)
+#add_dependencies(engine shaders)
