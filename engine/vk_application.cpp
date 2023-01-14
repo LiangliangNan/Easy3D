@@ -69,14 +69,15 @@ namespace lve {
 
 
     void VulkanApplication::onResize(uint32_t width, uint32_t height) {
-        auto extent = window_->getExtent();
-        camera_->setPerspective(60.0f, (float)extent.width / (float)extent.height, 0.001f, 256.0f);
+        if (height > 0)
+            camera_->setPerspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 0.001f, 256.0f);
 
         //if (/*settings.overlay*/)
         uiOverlay->onResize(width, height);
 
         viewChanged();
     }
+
 
     void VulkanApplication::onKeyEvent(const KeyEvent &event) {
         if (/*settings.overlay && */ uiOverlay->isVisible() && uiOverlay->onKeyEvent(event))
