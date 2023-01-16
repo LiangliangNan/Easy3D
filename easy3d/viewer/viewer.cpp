@@ -1768,7 +1768,11 @@ namespace easy3d {
 //        int scissor[4];
 //        glGetIntegerv(GL_SCISSOR_BOX, scissor);
 //        glScissor(scissor[0], scissor[1], scissor[2] * 0.5f, scissor[3]);
-//        // draw code here...
+//        current_model()->renderer()->get_lines_drawable("edges")->set_visible(false);
+//        draw();
+//        glScissor(scissor[2] * 0.5f, scissor[1], scissor[2] * 0.5f, scissor[3]);
+//        current_model()->renderer()->get_lines_drawable("edges")->set_visible(true);
+//        draw();
 //        glScissor(scissor[0], scissor[1], scissor[2], scissor[3]);
 
         for (const auto m : models_) {
