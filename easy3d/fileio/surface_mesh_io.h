@@ -95,9 +95,9 @@ namespace easy3d {
 		/// Mainly used for easily saving triangles for debugging.
         bool load_trilist(const std::string& file_name, SurfaceMesh* mesh);
 
-        /// Reads Geojson format files. 2D polygons are stored as faces of a 3D surface mesh (all Z-coordinates are set
-        /// to 0). If offset_wrt_first_point is true, apply a translation using the first point in the file.
-        bool load_geojson(const std::string& file_name, SurfaceMesh* mesh, bool offset_wrt_first_point = false);
+        /// Reads Geojson format files. 2D polygons are stored as faces of a 3D surface mesh
+        /// (all Z-coordinates are set to 0).
+        bool load_geojson(const std::string& file_name, SurfaceMesh* mesh);
 
 	} // namespace io
 

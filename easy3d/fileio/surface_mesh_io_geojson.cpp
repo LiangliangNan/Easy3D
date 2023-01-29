@@ -25,6 +25,7 @@
  ********************************************************************/
 
 #include <easy3d/fileio/surface_mesh_io.h>
+#include <easy3d/fileio/translator.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/surface_mesh_builder.h>
 #include <easy3d/util/file_system.h>
@@ -83,8 +84,7 @@ namespace easy3d {
 
         /// Reads Geojson format files using the single header file JSON library: https://github.com/nlohmann/json
         /// 2D polygons are stored as faces of a 3D surface mesh (all Z-coordinates are set to 0).
-        /// If offset_wrt_first_point is true, apply a translation using the first point in the file.
-        bool load_geojson(const std::string &file_name, SurfaceMesh *mesh, bool offset_wrt_first_point) {
+        bool load_geojson(const std::string &file_name, SurfaceMesh *mesh) {
             if (!mesh) {
                 LOG(ERROR) << "null mesh pointer";
                 return false;
@@ -110,17 +110,14 @@ namespace easy3d {
             json object;
             in >> object;
 
-            SurfaceMeshBuilder builder(mesh);
-            builder.begin_surface();
-
             auto it_features = object.find("features");
             if (it_features == object.end())
                 return false;
             if (!it_features->is_array())
                 return false;
 
-            bool first_point = true;
-            double dx(0.0), dy(0.0), dz(0.0);
+            typedef std::vector<dvec3> Face;
+            std::vector<Face> faces;
             for (std::size_t i = 0; i < it_features->size(); ++i) {
                 const json &ei = it_features->at(i);
                 if (!ei.is_object() || ei["type"] != "Feature")
@@ -142,29 +139,74 @@ namespace easy3d {
                     std::vector<double> coordinates;
                     internal::extract_polygon(it_coordinates, coordinates);
 
-                    std::vector<SurfaceMesh::Vertex> face;
-                    for (std::size_t j = 0; j < coordinates.size(); j += 2) {
-                        if (first_point && offset_wrt_first_point) {
-                            dx = coordinates[j];
-                            dy = coordinates[j + 1];
-                            first_point = false;
-                        }
-
-                        auto v = builder.add_vertex(vec3(
-                                static_cast<float>(coordinates[j] - dx),
-                                static_cast<float>(coordinates[j + 1] - dy),
-                                0));
-                        face.emplace_back(v);
+                    Face face;
+                    // The GeoJSON specification says:
+                    //      The first and last positions are equivalent, and they MUST contain
+                    //      identical values; their representation SHOULD also be identical.
+                    // Thus the "-2", see https://www.rfc-editor.org/rfc/rfc7946.html#section-3.1.6
+                    for (std::size_t j = 0; j < coordinates.size() - 2; j += 2) {
+                        face.push_back(dvec3(coordinates[j], coordinates[j + 1], 0.0));
                     }
-                    builder.add_face(face);
+
+                    if (face.size() > 2)
+                        faces.push_back(face);
+                    else
+                        LOG(WARNING) << "face has " << face.size() << " vertices";
                 }
             }
 
-            builder.end_surface();
+            if (faces.empty()) {
+                LOG(ERROR) << "no valid faces found in the file: " << file_name;
+                return false;
+            }
 
-            if (offset_wrt_first_point)
-                LOG(WARNING)
-                        << "Model offset w.r.t. the first point: " << dvec3(dx, dy, dz);
+            SurfaceMeshBuilder builder(mesh);
+            builder.begin_surface();
+
+            if (Translator::instance()->status() == Translator::DISABLED) {
+                for (const auto& face : faces) {
+                    std::vector<SurfaceMesh::Vertex> f;
+                    for (const auto& p : face) {
+                        auto v = builder.add_vertex(vec3(p.data()));
+                        f.push_back(v);
+                    }
+                    builder.add_face(f);
+                }
+            } else if (Translator::instance()->status() == Translator::TRANSLATE_USE_FIRST_POINT) {
+                // the first point
+                const dvec3 origin = faces[0][0];
+                Translator::instance()->set_translation(origin);
+                for (const auto& face : faces) {
+                    std::vector<SurfaceMesh::Vertex> f;
+                    for (const auto& p : face) {
+                        auto v = builder.add_vertex(vec3(
+                                static_cast<float>(p.x - origin.x), static_cast<float>(p.y - origin.y), static_cast<float>(p.z - origin.z)
+                                ));
+                        f.push_back(v);
+                    }
+                    builder.add_face(f);
+                }
+                auto trans = mesh->add_model_property<dvec3>("translation", dvec3(0,0,0));
+                trans[0] = origin;
+                LOG(INFO) << "model translated w.r.t. the first vertex (" << origin << "), stored as ModelProperty<dvec3>(\"translation\")";
+            } else if (Translator::instance()->status() == Translator::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
+                const dvec3 &origin = Translator::instance()->translation();
+                for (const auto& face : faces) {
+                    std::vector<SurfaceMesh::Vertex> f;
+                    for (const auto& p : face) {
+                        auto v = builder.add_vertex(vec3(
+                                static_cast<float>(p.x - origin.x), static_cast<float>(p.y - origin.y), static_cast<float>(p.z - origin.z)
+                        ));
+                        f.push_back(v);
+                    }
+                    builder.add_face(f);
+                }
+                auto trans = mesh->add_model_property<dvec3>("translation", dvec3(0,0,0));
+                trans[0] = origin;
+                LOG(INFO) << "model translated w.r.t. last known reference point (" << origin
+                          << "), stored as ModelProperty<dvec3>(\"translation\")";
+            }
+            builder.end_surface();
 
             return mesh->n_faces() > 0;
         }

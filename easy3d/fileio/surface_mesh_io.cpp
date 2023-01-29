@@ -55,7 +55,7 @@ namespace easy3d {
         else if (ext == "trilist")
             success = io::load_trilist(file_name, mesh);
         else if (ext == "geojson")
-            success = io::load_geojson(file_name, mesh, true);
+            success = io::load_geojson(file_name, mesh);
 
         else if (ext.empty()) {
             LOG(ERROR) << "unknown file format: no extension" << ext;
