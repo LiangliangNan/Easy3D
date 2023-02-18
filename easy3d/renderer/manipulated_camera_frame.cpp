@@ -84,43 +84,40 @@ namespace easy3d {
 
         const int w = camera->screenWidth();
         const int h = camera->screenHeight();
-        if (axis == NONE) {    // free rotation
-            const int pre_x = x - dx;
-            const int pre_y = y - dy;
-            const quat& rot = deformedBallQuaternion(x, y, pre_x, pre_y, trans.x, trans.y, w, h);
-            // Rotates the ManipulatedCameraFrame around its pivotPoint() instead of its origin.
-            rotateAroundPoint(rot, pivotPoint());
-        }
-        else {
-            quat rot;
-            if (axis == ORTHOGONAL) {
-                const auto pre_x = static_cast<float>(x - dx);
-                const auto pre_y = static_cast<float>(y - dy);
-                const float prev_angle = std::atan2(pre_y - trans[1], pre_x - trans[0]);
-                const float angle = std::atan2(static_cast<float>(y) - trans[1], static_cast<float>(x) - trans[0]);
-                // The incremental rotation defined in the ManipulatedCameraFrame's coordinate system.
-                rot = quat(vec3(0.0f, 0.0f, 1.0f), angle - prev_angle);
-            }
-            else if (axis == VERTICAL) {
-                const int pre_x = x - dx;
-                const int pre_y = y;    // restricts the movement to be horizontal (so purl vertical rotation)
-                rot = deformedBallQuaternion(x, y, pre_x, pre_y, trans.x, trans.y, w, h);
-            }
-            else if (axis == HORIZONTAL) {
-                const int pre_x = x;    // restricts the movement to be vertical (so purl horizontal rotation)
-                const int pre_y = y - dy;
-                rot = deformedBallQuaternion(x, y, pre_x, pre_y, trans.x, trans.y, w, h);
-            }
 
-			// Rotates the ManipulatedCameraFrame around its pivotPoint() instead of its origin.
-			rotateAroundPoint(rot, pivotPoint());
-		}
+        static CameraConstraint cons(camera);
+        switch (axis) {
+            case NONE:
+                setConstraint(nullptr);
+                break;
+            case ORTHOGONAL:
+                cons.setRotationConstraint(AxisPlaneConstraint::AXIS, vec3(0, 0, 1));
+                setConstraint(&cons);
+                break;
+            case VERTICAL:
+                cons.setRotationConstraint(AxisPlaneConstraint::AXIS, vec3(0, 1, 0));
+                setConstraint(&cons);
+                break;
+            case HORIZONTAL:
+                cons.setRotationConstraint(AxisPlaneConstraint::AXIS, vec3(1, 0, 0));
+                setConstraint(&cons);
+                break;
+        }
+
+        const int pre_x = x - dx;
+        const int pre_y = y - dy;
+        const quat &rot = deformedBallQuaternion(x, y, pre_x, pre_y, trans.x, trans.y, w, h);
+        // Rotates the ManipulatedCameraFrame around its pivotPoint() instead of its origin.
+        rotateAroundPoint(rot, pivotPoint());
+
         modified.send();
 	}
 
 
 	void ManipulatedCameraFrame::action_translate(int x, int y, int dx, int dy, Camera *const camera, ScreenAxis axis)
 	{
+        //todo: not fully tested
+        //todo: use the Constraint class
         if (dx == 0 && dy == 0)
             return;
 
