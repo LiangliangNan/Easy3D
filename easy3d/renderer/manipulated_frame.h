@@ -212,9 +212,6 @@ namespace easy3d {
 
 		Constraint *previousConstraint_; // When manipulation is without constraint.
 
-		/*! Returns a screen scaled delta from event's position to prevPos_, along the
-				X or Y direction, whichever has the largest magnitude. */
-		float deltaWithPrevPos(int x, int y, int dx, int dy, Camera* camera) const;
 		/*! Returns a normalized wheel delta, proportional to wheelSensitivity(). */
 		float wheelDelta(int wheel_dy) const;
 

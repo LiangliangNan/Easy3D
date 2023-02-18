@@ -86,16 +86,6 @@ namespace easy3d {
 	//                 M o u s e    h a n d l i n g                               //
 	////////////////////////////////////////////////////////////////////////////////
 
-
-	float ManipulatedFrame::deltaWithPrevPos(int x, int y, int dx, int dy, Camera *const camera) const {
-        (void)x, (void)y;
-		const float delta_x = static_cast<float>(dx) / static_cast<float>(camera->screenWidth());
-        const float delta_y = static_cast<float>(dy) / static_cast<float>(camera->screenHeight());
-
-        const float value = std::fabs(delta_x) > std::fabs(delta_y) ? delta_x : delta_y;
-		return value * zoomSensitivity();
-	}
-
 	float ManipulatedFrame::wheelDelta(int wheel_dy) const {
 		static const float WHEEL_SENSITIVITY_COEFF = 0.1f;
 		return static_cast<float>(wheel_dy) * wheelSensitivity() * WHEEL_SENSITIVITY_COEFF;
@@ -122,6 +112,11 @@ namespace easy3d {
 	Emits the manipulated() signal. */
 	void ManipulatedFrame::action_rotate(int x, int y, int dx, int dy, Camera *const camera, ScreenAxis axis)
 	{
+        if (dx == 0 && dy == 0)
+            return;
+
+        //todo: not fully tested
+        //todo: use the Constraint class (see action_rotate() in ManipulatedCameraFrame)
 		vec3 trans = camera->projectedCoordinatesOf(position());
 		DLOG_IF(has_nan(trans), ERROR)
 						<< "projectedCoordinatesOf(position()): " << trans
@@ -136,10 +131,10 @@ namespace easy3d {
 
 		quat rot;
 		if (axis == NONE) {	// free rotation
-            const auto pre_x = static_cast<float>(x - dx);
-            const auto pre_y = static_cast<float>(y - dy);
+            const int pre_x = x - dx;
+            const int pre_y = y - dy;
 			// The incremental rotation defined in the ManipulatedFrame coordinate system.
-			rot = deformedBallQuaternion(x, y, static_cast<int>(pre_x), static_cast<int>(pre_y), trans[0], trans[1], w, h);
+			rot = deformedBallQuaternion(x, y, pre_x, pre_y, trans[0], trans[1], w, h);
 		}
 		else {
 #if 0 // old implementation (should work)
@@ -152,20 +147,20 @@ namespace easy3d {
             rotate(rot);
 #else // new implementation
             if (axis == ORTHOGONAL) {
-                const auto pre_x = static_cast<float>(x - dx);
-                const auto pre_y = static_cast<float>(y - dy);
-                const float prev_angle = std::atan2(pre_y - trans[1], pre_x - trans[0]);
+                const int pre_x = x - dx;
+                const int pre_y = y - dy;
+                const float prev_angle = std::atan2(static_cast<float>(pre_y) - trans[1], static_cast<float>(pre_x) - trans[0]);
                 const float angle = std::atan2(static_cast<float>(y) - trans[1], static_cast<float>(x) - trans[0]);
                 // The incremental rotation defined in the ManipulatedCameraFrame's coordinate system.
                 rot = quat(vec3(0.0, 0.0, 1.0), angle - prev_angle);
             } else if (axis == VERTICAL) {
-                const auto pre_x = static_cast<float>(x - dx);
-                const auto pre_y = static_cast<float>(y);    // restricts the movement to be horizontal (so purl vertical rotation)
-                rot = deformedBallQuaternion(x, y, static_cast<int>(pre_x), static_cast<int>(pre_y), trans.x, trans.y, w, h);
+                const int pre_x = x - dx;
+                const int pre_y = y;    // restricts the movement to be horizontal (so purl vertical rotation)
+                rot = deformedBallQuaternion(x, y, pre_x, pre_y, trans.x, trans.y, w, h);
             } else if (axis == HORIZONTAL) {
-                const auto pre_x = static_cast<float>(x);    // restricts the movement to be vertical (so purl horizontal rotation)
-                const auto pre_y = static_cast<float>(y - dy);
-                rot = deformedBallQuaternion(x, y, static_cast<int>(pre_x), static_cast<int>(pre_y), trans.x, trans.y, w, h);
+                const int pre_x = x;    // restricts the movement to be vertical (so purl horizontal rotation)
+                const int pre_y = y - dy;
+                rot = deformedBallQuaternion(x, y, pre_x, pre_y, trans.x, trans.y, w, h);
             }
 #endif
 		}
@@ -184,6 +179,11 @@ namespace easy3d {
 
 	void ManipulatedFrame::action_translate(int x, int y, int dx, int dy, Camera *const camera, ScreenAxis axis)
 	{
+        if (dx == 0 && dy == 0)
+            return;
+
+        //todo: not fully tested
+        //todo: use the Constraint class
 		if (axis == NONE) {    // free translation
 			vec3 trans(float(dx), -float(dy), 0.0);
 			// Scale to fit the screen mouse displacement
