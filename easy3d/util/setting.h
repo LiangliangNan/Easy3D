@@ -46,7 +46,7 @@ namespace easy3d {
          *    Users can modify this file to change the default rendering parameters, then the changes will be
          *    effective for the future.
 		 * @param setting_file A string specifying the name of setting file. Three different values are accepted:
-         *    - "": an empty string, indicating that no setting file will be created.
+         *    - ""(an empty string): indicating that no setting file will be created.
 		 *    - "default": create a setting file with a title in the form "AppName.ini" next to the executable file.
 		 *    - any non-empty string: (if it is a valid path) a setting file with the same name will be created and
          *      rendering parameters will be written to this file.

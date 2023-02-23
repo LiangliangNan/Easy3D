@@ -167,12 +167,15 @@ namespace easy3d {
 #endif
                 file_path = file_system::parent_directory(file_path);
                 setting_file_name = file_path + "/" + file_system::base_name(app_path) + ".ini";
+                setting_file_name = file_system::convert_to_native_style(setting_file_name);
             }
 
             if (!setting_file_name.empty()) {
                 if (file_system::is_file(setting_file_name))
-                    if (load(setting_file_name))
+                    if (load(setting_file_name)) {
+                        LOG(INFO) << "setting loaded: " << setting_file_name;
                         return;
+                    }
                 save(setting_file_name);
             }
         }
@@ -278,6 +281,7 @@ namespace easy3d {
             ENCODE("clipping plane", clipping_plane_color)
 
             output << std::setw(4) << settings;
+            LOG(INFO) << "setting file created: " << file_name;
 
             return true;
         }
