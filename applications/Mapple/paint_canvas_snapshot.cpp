@@ -55,7 +55,7 @@
 
 using namespace easy3d;
 
-bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_name, bool bk_white, bool expand) {
+bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_name, int back_ground, bool expand) {
     int max_samples = 0;
     makeCurrent();
     func_->glGetIntegerv(GL_MAX_SAMPLES, &max_samples);
@@ -173,9 +173,12 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
 
             fbo->bind();
 
-            if (bk_white)
+            // 0: current color; 1: white; 2: transparent.
+            if (back_ground == 1)       // white
                 func_->glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-            else
+            else if (back_ground == 2)  // transparent
+                func_->glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
+            else                        // current color
                 func_->glClearColor(background_color_[0], background_color_[1], background_color_[2],
                                     background_color_[3]);
             func_->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);

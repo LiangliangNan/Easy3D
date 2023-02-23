@@ -101,10 +101,13 @@ void DialogSnapshot::saveSnapshot() {
     const int w = spinBoxImageWidth->value();
     const int h = spinBoxImageHeight->value();
     const int samples = spinBoxSamples->value();
-    viewer_->saveSnapshot(w, h, samples, fileName,
-                          checkBoxUseWhiteBackground->isChecked(),
-                          checkBoxExpandFrustum->isChecked()
-    );
+    // 0: current color; 1: white; 2: transparent.
+    int bk = 0;
+    if (radioButtonWhiteBackground->isChecked())
+        bk = 1;
+    else if (radioButtonTransparentBackground->isChecked())
+        bk = 2;
+    viewer_->saveSnapshot(w, h, samples, fileName, bk, checkBoxExpandFrustum->isChecked());
 
     if (checkBoxSaveWindowState->isChecked()) {
         const auto state_file = file_system::replace_extension(fileName.toStdString(), "view");

@@ -117,9 +117,9 @@ public:
     /// \param h The required height of the snapshot image
     /// \param samples The required number of samples for rendering (can be different from the default framebuffer).
     /// \param file_name The image file name
-    /// \param bk_white \c true to use a white background color, or use the current background color.
+    /// \param back_ground Determines the background color. 0: current color; 1: white; 2: transparent.
     /// \param expand expand the frustum to ensure the image aspect ratio.
-	bool saveSnapshot(int w, int h, int samples, const QString& file_name, bool bk_white = true, bool expand = true);
+	bool saveSnapshot(int w, int h, int samples, const QString& file_name, int back_ground = 1, bool expand = true);
 
     /// \brief Records the animation of a camera path.
     /// \details This function generates an animation from a camera path and renders the animation into a video (if
