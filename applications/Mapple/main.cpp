@@ -36,9 +36,7 @@
 #include <QSplashScreen>
 #include <QFileOpenEvent>
 
-#ifdef _WIN32
 #include <QStyleFactory>
-#endif
 #include <QSurfaceFormat>
 #include <QElapsedTimer>
 #include <QException>
@@ -50,22 +48,22 @@
 using namespace easy3d;
 
 // reimplemented from QApplication, so we can throw exceptions in slots/event handler
-class Mapple : public QApplication
-{
+class Mapple : public QApplication {
 public:
-    Mapple(int &argc, char **argv) : QApplication(argc, argv) { }
+    Mapple(int &argc, char **argv) : QApplication(argc, argv) {}
+
     ~Mapple() override = default;
 
-    bool notify(QObject * receiver, QEvent * event) override {
+    bool notify(QObject *receiver, QEvent *event) override {
         try {
             return QApplication::notify(receiver, event);
-        } catch(QException& e) {
+        } catch (QException &e) {
             LOG(ERROR) << "caught an exception: " << e.what();
         }
-        catch(std::exception& e) {
+        catch (std::exception &e) {
             LOG(ERROR) << "caught an exception: " << e.what();
         }
-        catch(...) {
+        catch (...) {
             LOG(ERROR) << "caught an unknown exception";
         }
         return false;
@@ -85,9 +83,7 @@ public:
 };
 
 
-
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     // initialize: we want to use both log and setting files
     initialize(true, true);
 
@@ -122,10 +118,10 @@ int main(int argc, char *argv[])
     QSurfaceFormat::setDefaultFormat(format);
 
     // Commented to let Qt choose the most suitable OpenGL implementation
-	//QApplication::setAttribute(Qt::AA_UseDesktopOpenGL);
+    //QApplication::setAttribute(Qt::AA_UseDesktopOpenGL);
 
-	QApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
-	QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
+    QApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+    QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 #endif
@@ -139,14 +135,15 @@ int main(int argc, char *argv[])
 
     Mapple app(argc, argv);
 
-#ifdef _WIN32   // to have similar style as on macOS.
+#ifndef __APPLE__
+    // to have similar style on different platforms (macOS.
     app.setStyle(QStyleFactory::create("Fusion"));
 #endif
 
-     QDir workingDir = QCoreApplication::applicationDirPath();
+    QDir workingDir = QCoreApplication::applicationDirPath();
 #ifdef __APPLE__
     // This makes sure that our "working directory" is not within the application bundle
-    if ( workingDir.dirName() == "MacOS" ) {
+    if (workingDir.dirName() == "MacOS") {
         workingDir.cdUp();
         workingDir.cdUp();
         workingDir.cdUp();
