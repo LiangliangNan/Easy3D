@@ -187,6 +187,8 @@ MainWindow::MainWindow(QWidget *parent)
     // about menu
     connect(ui->actionAbout, SIGNAL(triggered()), this, SLOT(onAbout()));
     connect(ui->actionManual, SIGNAL(triggered()), this, SLOT(showManual()));
+//    QAction *actionAboutQt = ui->menuHelp->addAction(tr("About &Qt"), qApp, &QApplication::aboutQt);
+//    actionAboutQt->setStatusTip(tr("Show the Qt library's About box"));
 
     // options for the model panel
     connect(ui->checkBoxAutoFocus, SIGNAL(toggled(bool)), ui->treeWidgetModels, SLOT(setAutoFocus(bool)));
@@ -865,7 +867,7 @@ void MainWindow::onAbout()
     title += QMessageBox::tr("<h3>Mapple (%1 bit)</h3>").arg(bits);
 #endif
 
-    title += QMessageBox::tr("<h4>Version %1</h4>").arg(version().c_str());
+    title += QMessageBox::tr("<h4>Version %1 (based on Qt v%2)</h4>").arg(version().c_str()).arg(QT_VERSION_STR);
 
     QString text = QMessageBox::tr(
             "<p>Mapple is software for processing and rendering 3D data (e.g., point clouds, graphs, surface meshes, "
