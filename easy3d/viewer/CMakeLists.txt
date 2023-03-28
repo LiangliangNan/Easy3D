@@ -10,6 +10,7 @@ set(${module}_headers
 set(${module}_sources
         viewer.cpp
         multi_viewer.cpp
+        snapshot.cpp
         )
 
 add_module(${module} "${${module}_headers}" "${${module}_sources}" "${private_dependencies}" "${public_dependencies}")

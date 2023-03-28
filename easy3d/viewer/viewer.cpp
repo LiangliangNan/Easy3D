@@ -29,8 +29,8 @@
 #include <chrono>
 #include <iostream>
 
-#include <easy3d/renderer/opengl.h>        // Initialize with glewInit()
-#include <3rd_party/glfw/include/GLFW/glfw3.h>    // Include glfw3.h after our OpenGL definitions
+#include <easy3d/renderer/opengl.h>				// for gl functions
+#include <3rd_party/glfw/include/GLFW/glfw3.h>  // for glfw functions
 
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/graph.h>
@@ -1440,13 +1440,13 @@ namespace easy3d {
     }
 
 
-    bool Viewer::snapshot(bool bk_white /* = true*/) const {
+    bool Viewer::snapshot() const {
         const std::string &title = "Please choose a file name";
         std::string default_file_name("untitled.png");
         if (current_model())
             default_file_name = file_system::replace_extension(current_model()->name(), "png");
         const std::vector<std::string> &filters = {
-                "Image Files (*.png *.jpg *.bmp *.ppm *.tga)", "*.png *.jpg *.bmp *.ppm *.tga",
+                "Image Files (*.png *.jpg *.bmp *.tga)", "*.png *.jpg *.bmp *.tga",
                 "All Files (*.*)", "*"
         };
 
@@ -1456,40 +1456,12 @@ namespace easy3d {
             return false;
 
         const std::string &ext = file_system::extension(file_name, true);
-        if (ext != "png" && ext != "jpg" && ext != "bmp" && ext != "ppm" && ext != "tga") {
-            LOG(ERROR) << "snapshot format must be png, jpg, bmp, ppm, or tga";
+        if (ext != "png" && ext != "jpg" && ext != "bmp" && ext != "tga") {
+            LOG(ERROR) << "snapshot format must be png, jpg, bmp, or tga";
             return false;
         }
 
-        return snapshot(file_name, bk_white);
-    }
-
-
-    bool Viewer::snapshot(const std::string& file_name, bool bk_white) const {
-        int w, h;
-        glfwGetFramebufferSize(window_, &w, &h);
-        FramebufferObject fbo(w, h, samples_);
-        fbo.add_color_buffer();
-        fbo.add_depth_buffer();
-
-        fbo.bind();
-
-        if (bk_white)
-            glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-        else
-            glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-        const_cast<Viewer *>(this)->draw();
-
-        fbo.release();
-
-#if 1   // color render buffer
-        return fbo.snapshot_color(0, file_name);
-#else
-        // depth buffer
-        return fbo.snapshot_depth(file_name);
-#endif
+        return snapshot(file_name, 1.0f, samples_);
     }
 
 

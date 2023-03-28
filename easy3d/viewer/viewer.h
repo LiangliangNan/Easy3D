@@ -323,20 +323,28 @@ namespace easy3d {
 
         /**
          * @brief Take a snapshot of the screen and save it to a file.
-         * @details This method takes a snapshot of the screen and saves the snapshot into a file
+         * @details This method takes a snapshot of the screen and saves the snapshot into an image file.
          *          Internally, it will pop up a file dialog for specifying the file name.
-         * @param bk_white true to have a white background.
          * @return true on success and false otherwise.
          */
-	    bool snapshot(bool bk_white = true) const;
+	    bool snapshot() const;
 
         /**
-         * @brief Take a snapshot of the screen and save it to an image file.
-         * @param image_file the full path to the image file.
-         * @param bk_white true to have a white background.
+         * @brief  Take a snapshot of the screen and save it to an image file. Supported image format: png, jpg, bmp, and tga.
+         * @details This function renders the scene into a framebuffer and takes a snapshot of the framebuffer.
+         *      It allow the snapshot image to have a dimension different from the viewer and it has no limit on the
+         *      image size (if memory allows).
+         * @param file_name The image file name.
+         * @param scaling The scaling factor that determines the size of the image (default to 1.0, using the viewer size), i.e., 
+         *      image_width = viewer_width * scaling;
+         *      image_height = viewer_height * scaling;
+         * @param samples The required number of samples for antialiased rendering (can be different from the default framebuffer).
+         *      The default value is 0 (no antialiasing).
+         * @param back_ground Determines the background color. 0: current color; 1: white; 2: transparent.
+         * @param expand Expand the frustum to ensure the image aspect ratio.
          * @return true on success and false otherwise.
          */
-        bool snapshot(const std::string& image_file, bool bk_white = true) const;
+        bool snapshot(const std::string& file_name, float scaling = 1.0f, int samples = 0, int back_ground = 1, bool expand = true) const;
 
         /**
          * @brief Query the XYZ coordinates of the surface point under the cursor.

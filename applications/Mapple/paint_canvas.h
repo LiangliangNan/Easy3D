@@ -109,16 +109,17 @@ public:
     //		 along the viewing direction.
     easy3d::vec3 pointUnderPixel(const QPoint& p, bool &found) const;
 
-	/// \brief Saves snapshot.
+	/// \brief Take a snapshot of the screen and save it to an image file.
 	/// \details This function renders the scene into a framebuffer and takes a snapshot of the framebuffer.
 	///         It allow the snapshot image to have a dimension different from the viewer and it has no limit on the
 	///         image size (if memory allows).
     /// \param w The required width of the snapshot image
     /// \param h The required height of the snapshot image
-    /// \param samples The required number of samples for rendering (can be different from the default framebuffer).
+    /// \param samples The required number of samples for antialiased rendering (can be different from the default framebuffer).
     /// \param file_name The image file name
     /// \param back_ground Determines the background color. 0: current color; 1: white; 2: transparent.
-    /// \param expand expand the frustum to ensure the image aspect ratio.
+    /// \param expand Expand the frustum to ensure the image aspect ratio.
+    /// \return true on success and false otherwise.
 	bool saveSnapshot(int w, int h, int samples, const QString& file_name, int back_ground = 1, bool expand = true);
 
     /// \brief Records the animation of a camera path.
