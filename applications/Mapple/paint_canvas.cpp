@@ -519,17 +519,22 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
             if (!surface_mesh_picker_)
                 surface_mesh_picker_ = new SurfaceMeshPicker(camera());
             makeCurrent();
-            picked_face_index_ = surface_mesh_picker_->pick_face(mesh, e->pos().x(), e->pos().y()).idx();
+            auto picked_face = surface_mesh_picker_->pick_face(mesh, e->pos().x(), e->pos().y());
             doneCurrent();
+            picked_face_index_ = picked_face.idx();
 
+            // highlight the picked face in the model 
+            // always treat the model as a general polygonal mesh.
             auto drawable = mesh->renderer()->get_triangles_drawable("faces");
-            if (picked_face_index_ >= 0) { // highlight the picked face
+            auto triangle_range = mesh->get_face_property<std::pair<int, int> >("f:triangle_range");
+            if (triangle_range && picked_face.is_valid()) {
+                const auto& range = triangle_range[picked_face];
+                drawable->set_highlight_range(range);
                 drawable->set_highlight(true);
-                drawable->set_highlight_range({picked_face_index_, picked_face_index_});
             }
             else {
-                drawable->set_highlight(false);
                 drawable->set_highlight_range({-1, -1});
+                drawable->set_highlight(false);
             }
             update();
         }
