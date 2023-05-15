@@ -239,8 +239,21 @@ namespace easy3d {
     SurfaceMesh::Face SurfaceMeshPicker::pick_face_gpu(SurfaceMesh *model, int x, int y, ShaderProgram* program) {
         auto drawable = model->renderer()->get_triangles_drawable("faces");
         if (!drawable) {
-            LOG_N_TIMES(3, WARNING) << "drawable 'faces' does not exist. " << COUNTER;
-            return SurfaceMesh::Face();
+            const auto& drawables = model->renderer()->triangles_drawables();
+            if (drawables.empty()) {
+                LOG(WARNING) << "surface mesh doesn't have a TrianglesDrawable";
+                return SurfaceMesh::Face();
+            }
+            else {
+                drawable = drawables[0];
+                std::string msg = "default drawable 'faces' not found (available drawables are: ";
+                for (std::size_t i = 0; i < drawables.size(); ++i) {
+                    msg += drawables[i]->name();
+                    if (i != drawables.size() - 1)
+                        msg += ", ";
+                }
+                LOG(WARNING) << msg << "). Picking from drawable '" << drawable->name() + "'";
+            }
         }
 
         int viewport[4];
