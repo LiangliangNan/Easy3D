@@ -116,10 +116,22 @@ namespace easy3d {
                 vts.push_back(v);
             }
 
+            std::vector<SurfaceMesh::Vertex> tmp = vts;
+            std::sort(tmp.begin(), tmp.end());
+            auto duplicate_pos = std::adjacent_find(tmp.begin(), tmp.end());
+            if (duplicate_pos != tmp.end()) {
+                LOG_N_TIMES(3, ERROR) << "contour has duplicate vertex: " << *duplicate_pos << " (face ignored)";
+#ifndef NDEBUG
+                for (const auto v: vts)
+                    LOG(ERROR) << "\t\t" << v << ": " << model.position(v);
+#endif
+                continue;
+            }
+
             auto f = builder.add_face(vts);
             if (!f.is_valid()) {
                 LOG_N_TIMES(3, WARNING) << "failed to add a face to the surface mesh. " << COUNTER;
-                break;
+                continue;
             }
 
             for (const auto &hole: holes) {

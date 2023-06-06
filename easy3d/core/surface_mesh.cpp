@@ -520,10 +520,21 @@ namespace easy3d {
         const std::size_t n(vertices.size());
         assert (n > 2);
 
+        std::vector<Vertex> vts = vertices;
+        std::sort(vts.begin(), vts.end());
+        auto duplicate_pos = std::adjacent_find(vts.begin(), vts.end());
+        if (duplicate_pos != vts.end()) {
+            LOG_N_TIMES(3, ERROR) << "SurfaceMesh::add_face: face contains duplicate vertex (" << *duplicate_pos << "). Face ignored. " << COUNTER;
+#ifndef NDEBUG
+            for (const auto v: vertices)
+                LOG(ERROR) << "\t\t" << v << ": " << vpoint_[v];
+#endif
+            return Face();
+        }
+
         Vertex        v;
         std::size_t   i, ii, id;
         Halfedge      inner_next, inner_prev, outer_next, outer_prev, boundary_next, boundary_prev, patch_start, patch_end;
-
 
         // use global arrays to avoid new/delete of local arrays!!!
         std::vector<Halfedge>&  halfedges    = add_face_halfedges_;
