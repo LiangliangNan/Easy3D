@@ -69,6 +69,10 @@ namespace easy3d {
         // classify the loops of a planar region into an "outer" loop and several "holes".
         void classify(const SurfaceMesh *mesh, const std::vector<Loop>& loops, Loop& outer, std::vector<Loop>& holes);
 
+        // split a complex face (with duplicate vertices, thus non-manifold) into a few simple faces
+        typedef std::vector<SurfaceMesh::Vertex> Face;
+        std::vector<Face> split_complex_face(const Face& face);
+
     private:
         SurfaceMesh::FaceProperty<int> planar_segments_;
     };

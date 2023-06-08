@@ -51,6 +51,68 @@ namespace easy3d {
     }
 
 
+    // split a complex face (with duplicate vertices, thus non-manifold) into a few simple faces
+    std::vector<SurfaceMeshPolygonization::Face> SurfaceMeshPolygonization::split_complex_face(const Face& face) {
+
+        // check if 'vts' has duplicate vetex, if so, returns the first found vertex
+        auto has_duplication = [](const Face& vts, SurfaceMesh::Vertex& v) -> bool {
+            std::vector<SurfaceMesh::Vertex> tmp = vts;
+            std::sort(tmp.begin(), tmp.end());
+            auto duplicate_pos = std::adjacent_find(tmp.begin(), tmp.end());
+            if (duplicate_pos != tmp.end()) {
+                v = *duplicate_pos;
+                return true;
+            }
+            else
+                return false;
+        };
+
+        SurfaceMesh::Vertex v;
+        if (!has_duplication(face, v))
+            return { face };
+
+        {
+            LOG(ERROR) << "contour has duplicate vertex: " << v;
+            for (const auto v : face)
+                LOG(ERROR) << "\t\t" << v;
+        }
+
+
+        std::vector<SurfaceMeshPolygonization::Face> result;
+
+        // extract a simple face from 'face' 
+		Face simple_face;
+		Face remainder;
+		int num_found = 0;
+		for (std::size_t i = 0; i < face.size(); ++i) {
+			if (face[i] == v) {
+				if (num_found == 0)
+					simple_face.push_back(face[i]);
+				else
+					remainder.push_back(face[i]);
+				++num_found;
+			}
+			else {
+				if (num_found == 1)
+					simple_face.push_back(face[i]);
+				else
+					remainder.push_back(face[i]);
+			}
+		}
+
+		result.push_back(simple_face);
+
+        // now recursively extract simple faces from the remaining set of vertices
+        std::vector<SurfaceMeshPolygonization::Face> tmp = split_complex_face(remainder);
+        result.insert(result.end(), tmp.begin(), tmp.end());
+
+        LOG(ERROR) << "the complex face has been split into the following faces";
+        for (const auto& f : result)
+            LOG(ERROR) << "\t face: " << f;
+        return result;
+    }
+
+
     void SurfaceMeshPolygonization::internal_apply(SurfaceMesh *mesh, float angle_threshold) {
         SurfaceMesh model = *mesh;
 
@@ -116,31 +178,23 @@ namespace easy3d {
                 vts.push_back(v);
             }
 
-            std::vector<SurfaceMesh::Vertex> tmp = vts;
-            std::sort(tmp.begin(), tmp.end());
-            auto duplicate_pos = std::adjacent_find(tmp.begin(), tmp.end());
-            if (duplicate_pos != tmp.end()) {
-                LOG_N_TIMES(3, ERROR) << "contour has duplicate vertex: " << *duplicate_pos << " (face ignored)";
-#ifndef NDEBUG
-                for (const auto v: vts)
-                    LOG(ERROR) << "\t\t" << v << ": " << model.position(v);
-#endif
-                continue;
+            const auto faces = split_complex_face(vts);
+            for (auto face : faces) {
+                auto f = builder.add_face(face);
+                if (!f.is_valid()) {
+                    LOG_N_TIMES(3, WARNING) << "failed to add a face to the surface mesh. " << COUNTER;
+                    continue;
+                }
             }
 
-            auto f = builder.add_face(vts);
-            if (!f.is_valid()) {
-                LOG_N_TIMES(3, WARNING) << "failed to add a face to the surface mesh. " << COUNTER;
-                continue;
-            }
-
-            for (const auto &hole: holes) {
-                auto face_holes = mesh->face_property<std::vector<Hole> >("f:holes");
-                Hole a_hole;
-                for (auto h: hole)
-                    a_hole.push_back(model.position(model.target(h)));
-                face_holes[f].push_back(a_hole);
-            }
+            LOG_IF(!holes.empty(), WARNING) << "planar region has hole(s), but holes are not supported in current implementation";
+            //for (const auto &hole: holes) {
+            //    auto face_holes = mesh->face_property<std::vector<Hole> >("f:holes");
+            //    Hole a_hole;
+            //    for (auto h: hole)
+            //        a_hole.push_back(model.position(model.target(h)));
+            //    face_holes[f].push_back(a_hole);
+            //}
         }
         builder.end_surface(false);
 
