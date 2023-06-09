@@ -10,7 +10,7 @@ list(APPEND EXPORT_TARGET_SET easy3d_util 3rd_backward)
 
 add_subdirectory(core)
 list(APPEND CONF_Easy3D_COMPONENTS core)
-list(APPEND EXPORT_TARGET_SET easy3d_core)
+list(APPEND EXPORT_TARGET_SET easy3d_core 3rd_polypartition)
 
 add_subdirectory(fileio)
 list(APPEND CONF_Easy3D_COMPONENTS fileio)
