@@ -67,11 +67,33 @@ namespace easy3d {
         /// \brief Default constructor.
         PolygonPartition() = default;
 
-        /// \brief Perform convex partition.
-        /// \param poly An input polygon to be partitioned. Vertices have to be in counter-clockwise order.
+        /// \brief Perform convex partition for a polygon without holes.
+        /// \param poly An input polygon (without holes) to be partitioned. Vertices have to be in counter-clockwise order.
         /// \param parts Resulting list of convex polygons, represented by the vertex indices.
+        /// \param method The method to be used.
         /// \return true on success, false on failure.
-        bool apply(const std::vector<vec2> &poly, std::vector<Polygon> &parts, Method method = Optimal) const;
+        bool apply(const std::vector<vec2> &poly,
+                   std::vector<Polygon> &parts,
+                   Method method = Optimal) const;
+
+        /// \brief Perform convex partition for a general polygon. A general polygon can have an arbitrary number
+        ///     of non-hole polygons and an arbitrary number of holes).
+        /// \details This function partitions a list of polygons into convex parts by using the Hertel-Mehlhorn
+        ///     algorithm. The algorithm gives at most four times the number of parts as the optimal algorithm.
+        ///     However, in practice it works much better than that and often gives optimal partition.
+        ///         Time complexity: O(n^2), where n is the number of vertices.
+        ///         Space complexity: O(n).
+        /// \param points A set of points.
+        /// \param polys A set of non-hole polygons (each represented by the vertex indices). The vertices of all
+        ///     non-hole polygons have to be in counter-clockwise order.
+        /// \param holes A set of holes (represented by the vertex indices). The vertices of all hole polygons
+        ///     have to be in clockwise order.
+        /// \param parts Resulting list of convex polygons (represented by the vertex indices).
+        /// \return true on success, false on failure.
+        bool apply(const std::vector<vec2> &points,
+                   const std::vector<Polygon>& polys,
+                   const std::vector<Polygon> &holes,
+                   std::vector<Polygon> &parts) const;
     };
 
 }

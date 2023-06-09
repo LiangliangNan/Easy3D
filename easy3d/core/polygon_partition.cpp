@@ -35,6 +35,7 @@ namespace easy3d {
     bool PolygonPartition::apply(const std::vector<vec2> &input_polygon, std::vector<Polygon> &parts, Method method) const {
         TPPLPoly poly;
         poly.Init(input_polygon.size());
+        poly.SetHole(false);
         for (std::size_t i=0; i<input_polygon.size(); ++i) {
             const auto& p = input_polygon[i];
             poly[i] = {p.x, p.y, i};
@@ -56,6 +57,55 @@ namespace easy3d {
                     return false;
                 }
                 break;
+        }
+
+        for (auto& plg : outputs) {
+            const long size = plg.GetNumPoints();
+            Polygon polygon;
+            for (long i=0; i<size; ++i)
+                polygon.push_back(plg[i].index);
+            parts.push_back(polygon);
+        }
+        return true;
+    }
+
+
+    bool PolygonPartition::apply(const std::vector<vec2> &points, const std::vector<Polygon>& polys,
+                                 const std::vector<Polygon> &holes, std::vector<Polygon> &parts) const {
+        std::list<TPPLPoly> inpolys;
+
+        // add the non-hole polygons to the input polygon list
+        for (const auto& plg : polys) {
+            TPPLPoly poly;
+            poly.Init(plg.size());
+            poly.SetHole(false);
+            for (std::size_t i=0; i<plg.size(); ++i) {
+                std::size_t idx = plg[i];
+                const auto& p = points[idx];
+                poly[i] = {p.x, p.y, idx};
+            }
+            inpolys.push_back(poly);
+        }
+
+        // add the holes polygon to the input polygon list
+        for (const auto& hole : holes) {
+            TPPLPoly hole_poly;
+            hole_poly.Init(hole.size());
+            hole_poly.SetHole(true);
+            for (std::size_t i=0; i<hole.size(); ++i) {
+                std::size_t idx = hole[i];
+                const auto& p = points[idx];
+                hole_poly[i] = {p.x, p.y, idx};
+            }
+            inpolys.push_back(hole_poly);
+        }
+
+        TPPLPartition partition;
+        std::list<TPPLPoly> outputs;
+
+        if (partition.ConvexPartition_HM(&inpolys, &outputs) == 0) {
+            LOG(WARNING) << "convex partition failed";
+            return false;
         }
 
         for (auto& plg : outputs) {
