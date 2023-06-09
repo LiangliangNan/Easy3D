@@ -52,11 +52,15 @@ namespace easy3d {
 
 
     // split a complex face (with duplicate vertices, thus non-manifold) into a few simple faces
-    std::vector<SurfaceMeshPolygonization::Face> SurfaceMeshPolygonization::split_complex_face(const Face& face) {
+    std::vector<SurfaceMeshPolygonization::Contour> SurfaceMeshPolygonization::split_complex_contour(const Contour& contour) {
+#if 0
+        LOG(ERROR) << "TODO: check 'https://github.com/clickstan/polygonPartition'";
+        LOG(ERROR) << "TODO: test on PolyFit results";
+#endif
 
         // check if 'vts' has duplicate vetex, if so, returns the first found vertex
-        auto has_duplication = [](const Face& vts, SurfaceMesh::Vertex& v) -> bool {
-            std::vector<SurfaceMesh::Vertex> tmp = vts;
+        auto has_duplication = [](const Contour& ct, SurfaceMesh::Vertex& v) -> bool {
+            std::vector<SurfaceMesh::Vertex> tmp = ct;
             std::sort(tmp.begin(), tmp.end());
             auto duplicate_pos = std::adjacent_find(tmp.begin(), tmp.end());
             if (duplicate_pos != tmp.end()) {
@@ -68,47 +72,48 @@ namespace easy3d {
         };
 
         SurfaceMesh::Vertex v;
-        if (!has_duplication(face, v))
-            return { face };
+        if (!has_duplication(contour, v))
+            return { contour };
 
-        {
-            LOG(ERROR) << "contour has duplicate vertex: " << v;
-            for (const auto v : face)
-                LOG(ERROR) << "\t\t" << v;
-        }
+#ifndef NDEBUG
+        LOG(ERROR) << "contour has a duplicate vertex: " << v;
+        LOG(ERROR) << "contour: " << contour;
+#endif
 
-
-        std::vector<SurfaceMeshPolygonization::Face> result;
+        std::vector<SurfaceMeshPolygonization::Contour> result;
 
         // extract a simple face from 'face' 
-		Face simple_face;
-		Face remainder;
+        Contour simple_contour;
+        Contour remainder;
 		int num_found = 0;
-		for (std::size_t i = 0; i < face.size(); ++i) {
-			if (face[i] == v) {
+		for (std::size_t i = 0; i < contour.size(); ++i) {
+			if (contour[i] == v) {
 				if (num_found == 0)
-					simple_face.push_back(face[i]);
+                    simple_contour.push_back(contour[i]);
 				else
-					remainder.push_back(face[i]);
+					remainder.push_back(contour[i]);
 				++num_found;
 			}
 			else {
 				if (num_found == 1)
-					simple_face.push_back(face[i]);
+                    simple_contour.push_back(contour[i]);
 				else
-					remainder.push_back(face[i]);
+					remainder.push_back(contour[i]);
 			}
 		}
 
-		result.push_back(simple_face);
+		result.push_back(simple_contour);
 
         // now recursively extract simple faces from the remaining set of vertices
-        std::vector<SurfaceMeshPolygonization::Face> tmp = split_complex_face(remainder);
+        std::vector<SurfaceMeshPolygonization::Contour> tmp = split_complex_contour(remainder);
         result.insert(result.end(), tmp.begin(), tmp.end());
 
-        LOG(ERROR) << "the complex face has been split into the following faces";
-        for (const auto& f : result)
-            LOG(ERROR) << "\t face: " << f;
+#ifndef NDEBUG
+        LOG(WARNING) << "the complex contour has been split into the following simple contours:";
+        for (const auto& ct : result)
+            LOG(WARNING) << "\t contour: " << ct;
+#endif
+
         return result;
     }
 
@@ -178,9 +183,9 @@ namespace easy3d {
                 vts.push_back(v);
             }
 
-            const auto faces = split_complex_face(vts);
-            for (auto face : faces) {
-                auto f = builder.add_face(face);
+            const auto contours = split_complex_contour(vts);
+            for (auto ct : contours) {
+                auto f = builder.add_face(ct);
                 if (!f.is_valid()) {
                     LOG_N_TIMES(3, WARNING) << "failed to add a face to the surface mesh. " << COUNTER;
                     continue;

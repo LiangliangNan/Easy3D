@@ -70,8 +70,8 @@ namespace easy3d {
         void classify(const SurfaceMesh *mesh, const std::vector<Loop>& loops, Loop& outer, std::vector<Loop>& holes);
 
         // split a complex face (with duplicate vertices, thus non-manifold) into a few simple faces
-        typedef std::vector<SurfaceMesh::Vertex> Face;
-        std::vector<Face> split_complex_face(const Face& face);
+        typedef std::vector<SurfaceMesh::Vertex> Contour;
+        std::vector<Contour> split_complex_contour(const Contour& contour);
 
     private:
         SurfaceMesh::FaceProperty<int> planar_segments_;
