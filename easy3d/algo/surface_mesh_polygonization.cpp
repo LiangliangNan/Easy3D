@@ -24,9 +24,12 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
+#include <unordered_map>
+
 #include <easy3d/algo/surface_mesh_polygonization.h>
 #include <easy3d/algo/surface_mesh_enumerator.h>
 #include <easy3d/core/surface_mesh_builder.h>
+#include <easy3d/core/polygon_partition.h>
 #include <easy3d/util/logging.h>
 
 
@@ -52,67 +55,49 @@ namespace easy3d {
 
 
     // split a complex face (with duplicate vertices, thus non-manifold) into a few simple faces
-    std::vector<SurfaceMeshPolygonization::Contour> SurfaceMeshPolygonization::split_complex_contour(const Contour& contour) {
-#if 0
-        LOG(ERROR) << "TODO: check 'https://github.com/clickstan/polygonPartition'";
-        LOG(ERROR) << "TODO: test on PolyFit results";
-#endif
-
-        // check if 'vts' has duplicate vetex, if so, returns the first found vertex
-        auto has_duplication = [](const Contour& ct, SurfaceMesh::Vertex& v) -> bool {
-            std::vector<SurfaceMesh::Vertex> tmp = ct;
-            std::sort(tmp.begin(), tmp.end());
-            auto duplicate_pos = std::adjacent_find(tmp.begin(), tmp.end());
-            if (duplicate_pos != tmp.end()) {
-                v = *duplicate_pos;
-                return true;
-            }
-            else
-                return false;
-        };
-
-        SurfaceMesh::Vertex v;
-        if (!has_duplication(contour, v))
+    std::vector<SurfaceMeshPolygonization::Contour>
+    SurfaceMeshPolygonization::split_complex_contour(const Contour& contour, const vec3& normal, const SurfaceMesh* mesh) const
+    {
+        // check if 'vts' has duplicate vertex, if so, returns the first found vertex
+        std::vector<SurfaceMesh::Vertex> tmp = contour;
+        std::sort(tmp.begin(), tmp.end());
+        auto pos = std::adjacent_find(tmp.begin(), tmp.end());
+        if (pos == tmp.end()) // this is a simple contour
             return { contour };
 
+        // if reached here, it is a complex polygon. We do convex partition.
 #ifndef NDEBUG
-        LOG(ERROR) << "contour has a duplicate vertex: " << v;
-        LOG(ERROR) << "contour: " << contour;
+        LOG(ERROR) << "complex contour: " << contour;
+        LOG(ERROR) << "first duplicate vertex: " << *pos;
 #endif
+
+        std::unordered_map<std::size_t, SurfaceMesh::Vertex> index_map;
+
+        // construct the supporting plane of this planar region
+        Plane3 plane(mesh->position(contour[0]), normal);
+        // project all points onto the supporting plane
+        std::vector<vec2> polygon;
+        for (std::size_t i = 0; i < contour.size(); ++i) {
+            const auto &v = contour[i];
+            const auto &p = mesh->position(v);
+            polygon.push_back(plane.to_2d(p));
+            index_map[i] = v;
+        }
+
+        PolygonPartition partition;
+        std::vector<PolygonPartition::Polygon> parts;
+        if (!partition.apply(polygon, parts)) {
+            LOG(ERROR) << "failed to perform convex partition of a complex polygon (the polygon ignored)";
+            return {};
+        }
 
         std::vector<SurfaceMeshPolygonization::Contour> result;
-
-        // extract a simple face from 'face' 
-        Contour simple_contour;
-        Contour remainder;
-		int num_found = 0;
-		for (std::size_t i = 0; i < contour.size(); ++i) {
-			if (contour[i] == v) {
-				if (num_found == 0)
-                    simple_contour.push_back(contour[i]);
-				else
-					remainder.push_back(contour[i]);
-				++num_found;
-			}
-			else {
-				if (num_found == 1)
-                    simple_contour.push_back(contour[i]);
-				else
-					remainder.push_back(contour[i]);
-			}
-		}
-
-		result.push_back(simple_contour);
-
-        // now recursively extract simple faces from the remaining set of vertices
-        std::vector<SurfaceMeshPolygonization::Contour> tmp = split_complex_contour(remainder);
-        result.insert(result.end(), tmp.begin(), tmp.end());
-
-#ifndef NDEBUG
-        LOG(WARNING) << "the complex contour has been split into the following simple contours:";
-        for (const auto& ct : result)
-            LOG(WARNING) << "\t contour: " << ct;
-#endif
+        for (auto& poly : parts) {
+            std::vector<SurfaceMesh::Vertex> vts;
+            for (const auto& id : poly)
+                vts.push_back(index_map[id]);
+            result.push_back(vts);
+        }
 
         return result;
     }
@@ -130,9 +115,9 @@ namespace easy3d {
                 planar_segments_[f] = -1;
         }
 
-        int num = SurfaceMeshEnumerator::enumerate_planar_components(&model, planar_segments_, angle_threshold);
-        // for each planar patch, find all its boundaries halfedges
-        std::vector<std::set<SurfaceMesh::Halfedge> > boundary_edges(num);
+        const int num = SurfaceMeshEnumerator::enumerate_planar_components(&model, planar_segments_, angle_threshold);
+        // for each planar patch, find all its boundary halfedges
+        std::vector<std::set<SurfaceMesh::Halfedge> > boundary_edges(num);  // the boundary halfedges for each planar patch
 
         for (auto e: model.edges()) {
             if (model.is_border(e)) {
@@ -153,6 +138,18 @@ namespace easy3d {
             }
         }
 
+        // for each planar patch, determine its face normal
+        std::vector<vec3> region_normals(num, vec3(0, 0, 0));  // the normal for each planar patch
+        auto face_normals = model.get_face_property<vec3>("f:normal");
+        if (!face_normals)
+            model.update_face_normals();
+        for (auto f: model.faces()) {
+            int region_id = planar_segments_[f];
+            region_normals[region_id] += face_normals[f];
+        }
+        for (auto& n : region_normals)
+            n.normalize();
+
         mesh->clear();
         SurfaceMeshBuilder builder(mesh);
         builder.begin_surface();
@@ -163,9 +160,9 @@ namespace easy3d {
         typedef std::vector<vec3> Hole;
 
         int num_faces_with_holes = 0;
-        for (std::size_t i = 0; i < boundary_edges.size(); ++i) {
-            auto &edges = boundary_edges[i]; // contains all the boundaries edges of a planar region
-            const auto &loops = extract_boundary_loop(&model, static_cast<int>(i), edges);
+        for (int region_idx = 0; region_idx < num; ++region_idx) {
+            auto &edges = boundary_edges[region_idx]; // contains all the boundaries edges of a planar region
+            const auto &loops = extract_boundary_loop(&model, region_idx, edges);
 
             Loop outer;
             std::vector<Loop> holes;
@@ -183,7 +180,8 @@ namespace easy3d {
                 vts.push_back(v);
             }
 
-            const auto contours = split_complex_contour(vts);
+            const auto& normal = region_normals[region_idx];
+            const auto contours = split_complex_contour(vts, normal, &model);
             for (auto ct : contours) {
                 auto f = builder.add_face(ct);
                 if (!f.is_valid()) {

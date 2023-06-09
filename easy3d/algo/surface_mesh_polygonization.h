@@ -71,7 +71,7 @@ namespace easy3d {
 
         // split a complex face (with duplicate vertices, thus non-manifold) into a few simple faces
         typedef std::vector<SurfaceMesh::Vertex> Contour;
-        std::vector<Contour> split_complex_contour(const Contour& contour);
+        std::vector<Contour> split_complex_contour(const Contour& contour, const vec3& normal, const SurfaceMesh* mesh) const;
 
     private:
         SurfaceMesh::FaceProperty<int> planar_segments_;
