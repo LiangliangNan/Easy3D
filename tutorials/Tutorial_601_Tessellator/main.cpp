@@ -27,6 +27,7 @@
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/algo/tessellator.h>
@@ -106,7 +107,7 @@ int main(int argc, char **argv) {
 
     // create the default Easy3D viewer.
     // (a viewer must be created before creating any drawables).
-    Viewer viewer("Tutorial_307_Tessellator");
+    Viewer viewer(EXAMPLE_TITLE);
     viewer.camera()->setUpVector(vec3(0, 1, 0));
     viewer.camera()->setViewDirection(vec3(0, 0, -1));
 
@@ -161,6 +162,10 @@ int main(int argc, char **argv) {
     // add the model to the viewer
     viewer.add_model(mesh, true);
 
+    // show the vertices
+    mesh->renderer()->get_points_drawable("vertices")->set_visible(true);
+    mesh->renderer()->get_points_drawable("vertices")->set_impostor_type(easy3d::PointsDrawable::SPHERE);
+    mesh->renderer()->get_points_drawable("vertices")->set_point_size(12);
     // show the edges
     mesh->renderer()->get_lines_drawable("edges")->set_visible(true);
     // also show the borders

@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
     const std::string file = resource::directory() + "/data/bunny.bin";
 
     // create the viewer.
-    TutorialEyeDomeLighting viewer("Tutorial_505_EyeDomeLighting");
+    TutorialEyeDomeLighting viewer(EXAMPLE_TITLE);
 
     // Read the point cloud from a known file.
     Model *model = viewer.add_model(file, true);

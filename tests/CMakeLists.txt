@@ -35,6 +35,10 @@ add_executable(Tests
         visualization_image/viewer.h
         visualization_image/viewer.cpp
         visualization_tessellator/main.cpp
+        visualization_convex_partition/main.cpp
+        visualization_cross_section/main.cpp
+        visualization_cross_section/viewer.h
+        visualization_cross_section/viewer.cpp
         visualization_texture_mesh/main.cpp
         visualization_texture_mesh/viewer.h
         visualization_texture_mesh/viewer.cpp

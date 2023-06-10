@@ -25,32 +25,26 @@
  ********************************************************************/
 
 #include "viewer.h"
-#include <easy3d/util/resource.h>
-#include <easy3d/util/initializer.h>
+#include <easy3d/renderer/clipping_plane.h>
 
 
-using namespace easy3d;
+namespace easy3d {
 
-// This example shows how to manipulate a model in the 3D space using the Manipulator class.
-
-int main(int argc, char **argv) {
-    // initialize Easy3D.
-    initialize();
-
-    ManipulationViewer viewer(EXAMPLE_TITLE);
-    viewer.add_model(resource::directory() + "/data/easy3d/easy3d_e.ply");
-    viewer.add_model(resource::directory() + "/data/easy3d/easy3d_a.ply");
-    viewer.add_model(resource::directory() + "/data/easy3d/easy3d_s.ply");
-    viewer.add_model(resource::directory() + "/data/easy3d/easy3d_y.ply");
-    viewer.add_model(resource::directory() + "/data/easy3d/easy3d_3.ply");
-    viewer.add_model(resource::directory() + "/data/easy3d/easy3d_d.ply");
-
-    if (viewer.models().empty()) {
-        LOG(ERROR) << "failed to load the model. Please make sure the file exists and format is correct.";
-        return EXIT_FAILURE;
+    CrossSection::CrossSection(const std::string &title) : Viewer(title) {
+        // Code of interest:
+        ClippingPlane::instance()->set_enabled(true);
     }
 
-    // run the viewer
-    return viewer.run();
-}
+    CrossSection::~CrossSection() {
+        ClippingPlane::instance()->set_enabled(false);
+    }
 
+
+    void CrossSection::post_draw() {
+        Viewer::post_draw();
+
+        // Code of interest:
+        ClippingPlane::instance()->draw(camera());
+	}
+
+}

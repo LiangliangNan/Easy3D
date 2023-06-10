@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
     initialize();
 
     const std::string file_name = resource::directory() + "/data/easy3d.ply";
-    ViewerImGui viewer("Tutorial_202_Viewer_imgui");
+    ViewerImGui viewer(EXAMPLE_TITLE);
     viewer.camera()->setViewDirection(vec3(0, 0, -1));
     viewer.camera()->setUpVector(vec3(0, 1, 0));
 

@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
     const std::string file = resource::directory() + "/data/polyhedron.bin";
 
     // create the viewer.
-    PointSelection viewer("Tutorial_403_PointSelection");
+    PointSelection viewer(EXAMPLE_TITLE);
 
     Model *model = viewer.add_model(file, true);
     if (!model) {

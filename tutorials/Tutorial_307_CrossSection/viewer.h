@@ -24,33 +24,24 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include "viewer.h"
-#include <easy3d/util/resource.h>
-#include <easy3d/util/initializer.h>
+#ifndef EASY3D_TUTORIAL_CROSS_SECTION_H
+#define EASY3D_TUTORIAL_CROSS_SECTION_H
 
+#include <easy3d/viewer/viewer.h>
 
-using namespace easy3d;
+namespace easy3d {
 
-// This example shows how to manipulate a model in the 3D space using the Manipulator class.
+    class CrossSection : public Viewer
+	{
+	public:
+        explicit CrossSection(const std::string& title);
+        ~CrossSection() override;
 
-int main(int argc, char **argv) {
-    // initialize Easy3D.
-    initialize();
+	protected:
+        // draw the clipping plane
+		void post_draw() override;
+	};
 
-    ManipulationViewer viewer(EXAMPLE_TITLE);
-    viewer.add_model(resource::directory() + "/data/easy3d/easy3d_e.ply");
-    viewer.add_model(resource::directory() + "/data/easy3d/easy3d_a.ply");
-    viewer.add_model(resource::directory() + "/data/easy3d/easy3d_s.ply");
-    viewer.add_model(resource::directory() + "/data/easy3d/easy3d_y.ply");
-    viewer.add_model(resource::directory() + "/data/easy3d/easy3d_3.ply");
-    viewer.add_model(resource::directory() + "/data/easy3d/easy3d_d.ply");
-
-    if (viewer.models().empty()) {
-        LOG(ERROR) << "failed to load the model. Please make sure the file exists and format is correct.";
-        return EXIT_FAILURE;
-    }
-
-    // run the viewer
-    return viewer.run();
 }
 
+#endif	// EASY3D_TUTORIAL_CROSS_SECTION_H

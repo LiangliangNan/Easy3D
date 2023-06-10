@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
     // initialize Easy3D.
     initialize(true);
 
-    Application app("Tutorial_203_Viewer_wxWidgets");
+    Application app(EXAMPLE_TITLE);
     return app.run(argc, argv);
 }
 
@@ -52,12 +52,14 @@ int main(int argc, char **argv) {
 #include <wx/app.h>
 #include "window.h"
 
+using namespace easy3d;
+
 class Easy3DApp : public wxApp {
 public:
     virtual bool OnInit() wxOVERRIDE {
         if (!wxApp::OnInit())
             return false;
-        new Window(NULL, "Tutorial_203_Viewer_wxWidgets", wxDefaultPosition, wxSize(800, 600));
+        new Window(NULL, EXAMPLE_TITLE, wxDefaultPosition, wxSize(800, 600));
         return true;
     }
 };

@@ -27,13 +27,12 @@
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/algo/tessellator.h>
 #include <easy3d/fileio/surface_mesh_io.h>
-#include <easy3d/util/resource.h>
 
-#include <easy3d/util/stop_watch.h>
 #include <easy3d/util/timer.h>
 
 using namespace easy3d;
@@ -147,6 +146,10 @@ int test_tessellator(int duration) {
     // add the model to the viewer
     viewer.add_model(mesh, true);
 
+    // show the vertices
+    mesh->renderer()->get_points_drawable("vertices")->set_visible(true);
+    mesh->renderer()->get_points_drawable("vertices")->set_impostor_type(easy3d::PointsDrawable::SPHERE);
+    mesh->renderer()->get_points_drawable("vertices")->set_point_size(12);
     // show the edges
     mesh->renderer()->get_lines_drawable("edges")->set_visible(true);
     // also show the borders

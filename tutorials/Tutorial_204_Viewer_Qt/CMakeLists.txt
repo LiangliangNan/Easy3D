@@ -74,6 +74,9 @@ if (MSVC)
     target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_DEPRECATE)
 endif ()
 
+# The app title
+target_compile_definitions(${PROJECT_NAME} PRIVATE "EXAMPLE_TITLE=\"${PROJECT_NAME}\"")
+
 target_include_directories(${PROJECT_NAME} PRIVATE ${Easy3D_INCLUDE_DIR})
 target_link_libraries(${PROJECT_NAME} PRIVATE Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL easy3d::renderer)
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "tutorials")

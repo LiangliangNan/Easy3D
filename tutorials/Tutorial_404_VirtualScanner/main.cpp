@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
     initialize();
 
     // create the viewer.
-    VirtualScanner viewer("Tutorial_404_VirtualScanner");
+    VirtualScanner viewer(EXAMPLE_TITLE);
 
     const std::string file_name = resource::directory() + "/data/house/house.obj";
     Model *model = viewer.add_model(file_name, true);

@@ -24,33 +24,28 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include "viewer.h"
+#include <easy3d/renderer/camera.h>
 #include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
+#include <easy3d/util/timer.h>
+
+#include "viewer.h"
 
 
 using namespace easy3d;
 
-// This example shows how to manipulate a model in the 3D space using the Manipulator class.
+int test_cross_section(int duration) {
+    CrossSection viewer("CrossSection");
+    viewer.camera()->setViewDirection(vec3(-1, 1, -1));
 
-int main(int argc, char **argv) {
-    // initialize Easy3D.
-    initialize();
-
-    ManipulationViewer viewer(EXAMPLE_TITLE);
-    viewer.add_model(resource::directory() + "/data/easy3d/easy3d_e.ply");
-    viewer.add_model(resource::directory() + "/data/easy3d/easy3d_a.ply");
-    viewer.add_model(resource::directory() + "/data/easy3d/easy3d_s.ply");
-    viewer.add_model(resource::directory() + "/data/easy3d/easy3d_y.ply");
-    viewer.add_model(resource::directory() + "/data/easy3d/easy3d_3.ply");
-    viewer.add_model(resource::directory() + "/data/easy3d/easy3d_d.ply");
-
-    if (viewer.models().empty()) {
-        LOG(ERROR) << "failed to load the model. Please make sure the file exists and format is correct.";
+    const std::string file_name = resource::directory() + "/data/bunny.ply";
+    if (!viewer.add_model(file_name)) {
+        LOG(ERROR) << "failed to load model. Please make sure the file exists and format is correct.";
         return EXIT_FAILURE;
     }
 
-    // run the viewer
+    viewer.set_usage("testing cross section...");
+
+    Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
     return viewer.run();
 }
-

@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
     // initialize Easy3D.
     initialize();
 
-    PickerViewer viewer("Tutorial_401_ModelPicker");
+    PickerViewer viewer(EXAMPLE_TITLE);
     viewer.add_model(resource::directory() + "/data/easy3d/easy3d_e.ply");
     viewer.add_model(resource::directory() + "/data/easy3d/easy3d_a.ply");
     viewer.add_model(resource::directory() + "/data/easy3d/easy3d_s.ply");

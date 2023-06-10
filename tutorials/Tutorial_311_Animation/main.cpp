@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
 
     // Create the default Easy3D viewer.
     // Note: a viewer must be created before creating any drawables.
-    Viewer viewer("Tutorial_311_Animation");
+    Viewer viewer(EXAMPLE_TITLE);
 
     //-------------------------------------------------------------
 

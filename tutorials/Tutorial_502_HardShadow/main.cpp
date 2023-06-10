@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
     const std::string file = resource::directory() + "/data/room.obj";
 
     // create the viewer.
-    TutorialHardShadow viewer("Tutorial_502_HardShadow");
+    TutorialHardShadow viewer(EXAMPLE_TITLE);
 
     Model *model = viewer.add_model(file, true);
     if (!model) {

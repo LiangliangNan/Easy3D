@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
     // the point cloud file.
     const std::string cloud_file = resource::directory() + "/data/fountain/pointcloud.ply";
 
-    RealCamera viewer("Tutorial_207_RealCamera", bundler_file, cloud_file);
+    RealCamera viewer(EXAMPLE_TITLE, bundler_file, cloud_file);
 
     // run the viewer
     return viewer.run();

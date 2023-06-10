@@ -338,7 +338,8 @@ namespace easy3d {
 
 
     void Window::onAbout() {
-        QString title = QMessageBox::tr("<h3>Viewer</h3>");
+        const std::string name = "<h3>" + std::string(EXAMPLE_TITLE) + "</h3>";
+        QString title = QMessageBox::tr(name.c_str());
 
         QString text = QMessageBox::tr(
                 "<p>This viewer shows how to use Qt for GUI creation and event handling</p>"
@@ -371,10 +372,9 @@ namespace easy3d {
     void Window::updateWindowTitle() {
         Model *model = viewer_->currentModel();
 
+        QString title = QString::fromStdString(EXAMPLE_TITLE);
 #ifndef NDEBUG
-        QString title = "Tutorial_204_Viewer_Qt (Debug Version)";
-#else
-        QString title = "Tutorial_202_Viewer_Qt";
+        title += " (Debug Version)";
 #endif // NDEBUG
 
         QString fileName("Untitled");

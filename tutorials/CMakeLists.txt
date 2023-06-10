@@ -3,6 +3,7 @@ function(add_example example files dependencies)
     set_target_properties(${example} PROPERTIES FOLDER "tutorials")
     target_include_directories(${example} PRIVATE ${Easy3D_INCLUDE_DIR})
     target_link_libraries(${example} PRIVATE ${dependencies})
+    target_compile_definitions(${example} PRIVATE "EXAMPLE_TITLE=\"${example}\"")
 endfunction()
 
 
@@ -47,7 +48,7 @@ add_subdirectory(Tutorial_303_ScalarField)
 add_subdirectory(Tutorial_304_VectorField)
 add_subdirectory(Tutorial_305_Texture)
 add_subdirectory(Tutorial_306_Image)
-add_subdirectory(Tutorial_307_Tessellator)
+add_subdirectory(Tutorial_307_CrossSection)
 add_subdirectory(Tutorial_308_TexturedMesh)
 add_subdirectory(Tutorial_309_TextRendering)
 add_subdirectory(Tutorial_310_TextMesher)
@@ -70,17 +71,21 @@ add_subdirectory(Tutorial_504_Transparency)
 add_subdirectory(Tutorial_505_EyeDomeLighting)
 add_subdirectory(Tutorial_506_DepthMaps)
 
+# algorithms - core
+add_subdirectory(Tutorial_601_Tessellator)
+add_subdirectory(Tutorial_602_ConvexPartition)
+
 # algorithms - of point cloud
-add_subdirectory(Tutorial_601_Cloud_NormalEstimation)
-add_subdirectory(Tutorial_602_Cloud_SurfaceReconstruction)
-add_subdirectory(Tutorial_603_Cloud_PlaneExtraction)
-#add_subdirectory(Tutorial_604_Cloud_DownSampling)    #TODO
+add_subdirectory(Tutorial_701_Cloud_NormalEstimation)
+add_subdirectory(Tutorial_702_Cloud_SurfaceReconstruction)
+add_subdirectory(Tutorial_703_Cloud_PlaneExtraction)
+#add_subdirectory(Tutorial_704_Cloud_DownSampling)    #TODO
 
 # algorithms - surface mesh
-#add_subdirectory(Tutorial_701_Mesh_Curvature)        #TODO
-#add_subdirectory(Tutorial_702_Mesh_Smoothing)        #TODO
-#add_subdirectory(Tutorial_703_Mesh_Fairing)          #TODO
-#add_subdirectory(Tutorial_704_Mesh_HoleFilling)      #TODO
-#add_subdirectory(Tutorial_705_Mesh_Remeshing)        #TODO
-#add_subdirectory(Tutorial_706_Mesh_Simplification)   #TODO
-#add_subdirectory(Tutorial_707_Mesh_Subdidivision)    #TODO
+#add_subdirectory(Tutorial_801_Mesh_Curvature)        #TODO
+#add_subdirectory(Tutorial_802_Mesh_Smoothing)        #TODO
+#add_subdirectory(Tutorial_803_Mesh_Fairing)          #TODO
+#add_subdirectory(Tutorial_804_Mesh_HoleFilling)      #TODO
+#add_subdirectory(Tutorial_805_Mesh_Remeshing)        #TODO
+#add_subdirectory(Tutorial_806_Mesh_Simplification)   #TODO
+#add_subdirectory(Tutorial_807_Mesh_Subdidivision)    #TODO

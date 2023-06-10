@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
     const std::string file_name = resource::directory() + "/data/torusknot.obj";
 
     // create the viewer.
-    TutorialTransparency viewer("Tutorial_504_Transparency");
+    TutorialTransparency viewer(EXAMPLE_TITLE);
 
     // Load a mesh model and create a drawable for the faces.
     if (!viewer.add_model(file_name, true)) {

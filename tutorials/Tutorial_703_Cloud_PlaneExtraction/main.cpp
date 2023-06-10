@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
     const std::string file = resource::directory() + "/data/polyhedron.bin";
 
     // create the viewer.
-    Viewer viewer("Tutorial_603_Cloud_PlaneExtraction");
+    Viewer viewer(EXAMPLE_TITLE);
 
     Model *model = viewer.add_model(file, true);
     if (!model) {

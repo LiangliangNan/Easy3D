@@ -101,7 +101,7 @@ namespace easy3d {
         /**
          * @brief Terminate the viewer.
          */
-        void exit();
+        virtual void exit();
 
         /// @name Viewer properties
         //@{

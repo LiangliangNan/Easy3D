@@ -38,7 +38,7 @@ namespace easy3d {
     /**
      * \brief Convex partition of polygons.
      * \details The algorithm assumes simply polygons without self-intersections. For complex unknown structures, you
-     *      may need to use the CSG operator provided in easy3d/algo/tessellator.h to obtain simply polygons first.
+     *      may need to use the CSG operators provided in easy3d/algo/tessellator.h to obtain simply polygons first.
      * \class PolygonPartition easy3d/algo/polygon_partition.h
      */
     class PolygonPartition {
@@ -62,7 +62,7 @@ namespace easy3d {
          * \return true on success, false on failure.
          * \sa apply_HM, apply.
          */
-        bool apply_OPT(const std::vector<vec2> &poly, std::vector<Polygon> &parts) const;
+        static bool apply_OPT(const std::vector<vec2> &poly, std::vector<Polygon> &parts);
 
         /**
          * \brief Partition a polygon into convex polygons by using the Hertel-Mehlhorn algorithm.
@@ -75,7 +75,7 @@ namespace easy3d {
          * \return true on success, false on failure.
          * \sa apply_OPT, apply.
          */
-        bool apply_HM(const std::vector<vec2> &poly, std::vector<Polygon> &parts) const;
+        static bool apply_HM(const std::vector<vec2> &poly, std::vector<Polygon> &parts);
 
         /**
          * \brief Convex partition of a general polygon with an arbitrary number of non-hole and hole contours.
@@ -93,10 +93,10 @@ namespace easy3d {
          * \return true on success, false on failure.
          * \sa apply_OPT, apply_HM.
          */
-        bool apply(const std::vector<vec2> &points,
-                   const std::vector<Polygon> &polys,
-                   const std::vector<Polygon> &holes,
-                   std::vector<Polygon> &parts) const;
+        static bool apply(const std::vector<vec2> &points,
+                          const std::vector<Polygon> &polys,
+                          const std::vector<Polygon> &holes,
+                          std::vector<Polygon> &parts);
     };
 
 }

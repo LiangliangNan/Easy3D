@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
     // the image file.
     const std::string image_file = resource::directory() + "/data/fountain/images/0000.jpg";
 
-    ImageViewer viewer("Tutorial_306_Image", image_file);
+    ImageViewer viewer(EXAMPLE_TITLE, image_file);
 
     // run the viewer
     return viewer.run();

@@ -94,9 +94,8 @@ namespace easy3d {
                 index_map[i] = v;
             }
 
-            PolygonPartition partition;
             std::vector<PolygonPartition::Polygon> parts;
-            if (!partition.apply_OPT(polygon, parts)) {
+            if (!PolygonPartition::apply_OPT(polygon, parts)) {
                 LOG(ERROR) << "failed to perform convex partition of a complex polygon (the polygon ignored)";
                 return {};
             }
@@ -152,9 +151,8 @@ namespace easy3d {
             }
 
             // now let's do the convex partition
-            PolygonPartition partition;
             std::vector<PolygonPartition::Polygon> parts;
-            if (!partition.apply(points, input_polys, hole_polys, parts)) {
+            if (!PolygonPartition::apply(points, input_polys, hole_polys, parts)) {
                 LOG(ERROR) << "failed to perform convex partition of a complex polygon (the polygon ignored)";
                 return {};
             }

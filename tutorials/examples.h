@@ -166,7 +166,15 @@
  * \include{lineno} Tutorial_306_Image/viewer.cpp
  */
 
-/// @example Tutorial_307_Tessellator   \include{lineno} Tutorial_307_Tessellator/main.cpp
+/**
+ * \example visualization_cross_section
+ * The source file containing the main() function:
+ * \include{lineno} visualization_cross_section/main.cpp
+ * The header file of the viewer class:
+ * \include{lineno} visualization_cross_section/viewer.h
+ * The source file of the viewer class:
+ * \include{lineno} visualization_cross_section/viewer.cpp
+ */
 
 /**
  * \example Tutorial_308_TexturedMesh
@@ -313,18 +321,29 @@
  */
 
 /**
- * \example Tutorial_601_Cloud_NormalEstimation
- * \include{lineno} Tutorial_601_Cloud_NormalEstimation/main.cpp
+ * \example Tutorial_601_Tessellator
+ * \include{lineno} Tutorial_601_Tessellator/main.cpp
  */
 
 /**
- * \example Tutorial_602_Cloud_SurfaceReconstruction
- * \include{lineno} Tutorial_602_Cloud_SurfaceReconstruction/main.cpp
+ * \example Tutorial_602_ConvexPartition
+ * \include{lineno} Tutorial_602_ConvexPartition/main.cpp
+ */
+
+
+/**
+ * \example Tutorial_701_Cloud_NormalEstimation
+ * \include{lineno} Tutorial_701_Cloud_NormalEstimation/main.cpp
  */
 
 /**
- * \example Tutorial_603_Cloud_PlaneExtraction
- * \include{lineno} Tutorial_603_Cloud_PlaneExtraction/main.cpp
+ * \example Tutorial_702_Cloud_SurfaceReconstruction
+ * \include{lineno} Tutorial_702_Cloud_SurfaceReconstruction/main.cpp
+ */
+
+/**
+ * \example Tutorial_703_Cloud_PlaneExtraction
+ * \include{lineno} Tutorial_703_Cloud_PlaneExtraction/main.cpp
  */
 
 #endif //EASY3D_EXAMPLES_H

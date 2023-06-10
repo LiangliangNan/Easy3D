@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
     initialize();
 
     // create the viewer
-    Viewer viewer("Tutorial_312_MultiThread");
+    Viewer viewer(EXAMPLE_TITLE);
 
     // create a point cloud (with a per point color property) from a set of random points
     auto cloud = new PointCloud;

@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
 
     // Create the default Easy3D viewer.
     // Note: a viewer must be created before creating any drawables.
-    Viewer viewer("Tutorial_305_Texture");
+    Viewer viewer(EXAMPLE_TITLE);
     viewer.camera()->setUpVector(vec3(0, 1, 0));
     viewer.camera()->setViewDirection(vec3(0, 0, -1));
 

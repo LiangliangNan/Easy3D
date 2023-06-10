@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
     initialize();
 
     // create a 2 by 2 MultiViewer
-    MultiViewer viewer(2, 2, "Tutorial_205_MultiView");
+    MultiViewer viewer(2, 2, EXAMPLE_TITLE);
 
     // ---------------------------------------------------------------------------
     // setup content for view(0, 0): the graph model (vertices and edges)

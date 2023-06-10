@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
     initialize();
 
     // Create an Easy3D viewer.
-    Viewer viewer("Tutorial_310_TextMesher");
+    Viewer viewer(EXAMPLE_TITLE);
 
     // Create an instance of mesher by specifying a font file.
     const std::string font_file = resource::directory() + "/fonts/en_Earth-Normal.ttf";

@@ -32,7 +32,7 @@
 namespace easy3d {
 
 
-    bool PolygonPartition::apply_OPT(const std::vector<vec2> &input_polygon, std::vector<Polygon> &parts) const {
+    bool PolygonPartition::apply_OPT(const std::vector<vec2> &input_polygon, std::vector<Polygon> &parts) {
         TPPLPoly poly;
         poly.Init(input_polygon.size());
         poly.SetHole(false);
@@ -60,7 +60,7 @@ namespace easy3d {
     }
 
 
-    bool PolygonPartition::apply_HM(const std::vector<vec2> &input_polygon, std::vector<Polygon> &parts) const {
+    bool PolygonPartition::apply_HM(const std::vector<vec2> &input_polygon, std::vector<Polygon> &parts) {
         TPPLPoly poly;
         poly.Init(input_polygon.size());
         poly.SetHole(false);
@@ -89,7 +89,7 @@ namespace easy3d {
 
 
     bool PolygonPartition::apply(const std::vector<vec2> &points, const std::vector<Polygon>& polys,
-                                 const std::vector<Polygon> &holes, std::vector<Polygon> &parts) const {
+                                 const std::vector<Polygon> &holes, std::vector<Polygon> &parts) {
         std::list<TPPLPoly> inpolys;
 
         // add the non-hole polygons to the input polygon list

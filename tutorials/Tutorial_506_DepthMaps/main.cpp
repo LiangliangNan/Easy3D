@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
     // initialize Easy3D.
     initialize();
 
-    DepthImage viewer("Tutorial_506_DepthMaps");
+    DepthImage viewer(EXAMPLE_TITLE);
 
     // the point cloud file.
     const std::string file_name = resource::directory() + "/data/fountain/pointcloud.ply";

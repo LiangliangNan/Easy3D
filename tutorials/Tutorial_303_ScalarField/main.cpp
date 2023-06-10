@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
 
     // Create the default Easy3D viewer.
     // Note: a viewer must be created before creating any drawables.
-    Viewer viewer("Tutorial_303_ScalarField");
+    Viewer viewer(EXAMPLE_TITLE);
 
     // Load a mesh model to the viewer
     auto mesh = dynamic_cast<SurfaceMesh *>(viewer.add_model(file_name, false));

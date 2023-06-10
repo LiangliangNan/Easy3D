@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
     const std::string file = resource::directory() + "/data/general_open.obj";
 
     // create the viewer.
-    TutorialAmbientOcclusion viewer("Tutorial_501_AmbientOcclusion");
+    TutorialAmbientOcclusion viewer(EXAMPLE_TITLE);
 
     Model *model = viewer.add_model(file, true);
     if (!model) {

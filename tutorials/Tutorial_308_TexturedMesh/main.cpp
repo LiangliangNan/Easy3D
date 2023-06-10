@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
     initialize();
 
     // create the viewer.
-    TexturedViewer viewer("Tutorial_308_TexturedMesh");
+    TexturedViewer viewer(EXAMPLE_TITLE);
 
     //----------------------- Load a mesh from a file ------------------------
 
