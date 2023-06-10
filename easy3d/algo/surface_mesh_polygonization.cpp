@@ -72,8 +72,8 @@ namespace easy3d {
 
                 // if reached here, it is a complex polygon. We do convex partition.
 #ifndef NDEBUG
-            LOG(ERROR) << "complex contour: " << outer_poly;
-            LOG(ERROR) << "first duplicate vertex: " << *pos;
+            LOG(INFO) << "complex contour: " << outer_poly;
+            LOG(INFO) << "first duplicate vertex: " << *pos;
 #endif
         }
 
