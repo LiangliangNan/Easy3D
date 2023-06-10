@@ -77,6 +77,9 @@ namespace easy3d {
 #endif
         }
 
+        // Note: the "no hole" cases can also be treated as general cases using the same code below.
+        //       But considering that these cases are most common, it is preferred to use the OPT algorithm for
+        //       convex partition (but general cases, only the HM algorithm is available).
         if (input_hole_polys.empty()) {
             std::unordered_map<std::size_t, SurfaceMesh::Vertex> index_map;
 
