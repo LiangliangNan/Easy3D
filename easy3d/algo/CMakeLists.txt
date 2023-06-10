@@ -1,5 +1,5 @@
 set(module algo)
-set(private_dependencies 3rd_poisson 3rd_ransac 3rd_triangle 3rd_tetgen 3rd_kdtree 3rd_glutess 3rd_opcode)
+set(private_dependencies 3rd_poisson 3rd_ransac 3rd_triangle 3rd_tetgen 3rd_polypartition 3rd_glutess 3rd_opcode)
 set(public_dependencies easy3d::core easy3d::util easy3d::kdtree)
 
 set(${module}_headers
@@ -14,6 +14,7 @@ set(${module}_headers
         point_cloud_poisson_reconstruction.h
         point_cloud_ransac.h
         point_cloud_simplification.h
+        polygon_partition.h
         surface_mesh_components.h
         surface_mesh_curvature.h
         surface_mesh_enumerator.h
@@ -50,6 +51,7 @@ set(${module}_sources
         point_cloud_poisson_reconstruction.cpp
         point_cloud_ransac.cpp
         point_cloud_simplification.cpp
+        polygon_partition.cpp
         surface_mesh_components.cpp
         surface_mesh_curvature.cpp
         surface_mesh_enumerator.cpp

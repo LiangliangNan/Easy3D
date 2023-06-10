@@ -24,19 +24,23 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef EASY3D_CORE_POLYGON_PARTITION_H
-#define EASY3D_CORE_POLYGON_PARTITION_H
+#ifndef EASY3D_ALGO_POLYGON_PARTITION_H
+#define EASY3D_ALGO_POLYGON_PARTITION_H
 
 
 #include <vector>
 
-#include <easy3d/core/types.h>
+#include "easy3d/core/types.h"
 
 
 namespace easy3d {
 
-    /// \brief Convex partition of polygons.
-    /// \class PolygonPartition easy3d/core/polygon_partition.h
+    /**
+     * \brief Convex partition of polygons.
+     * \details The algorithm assumes simply polygons without self-intersections. For complex unknown structures, you
+     *      may need to use the CSG operator provided in easy3d/algo/tessellator.h to obtain simply polygons first.
+     * \class PolygonPartition easy3d/algo/polygon_partition.h
+     */
     class PolygonPartition {
     public:
         /// An indexed polygon representation (defined by vertex indices).
@@ -98,4 +102,4 @@ namespace easy3d {
 }
 
 
-#endif  // EASY3D_CORE_POLYGON_PARTITION_H
+#endif  // EASY3D_ALGO_POLYGON_PARTITION_H

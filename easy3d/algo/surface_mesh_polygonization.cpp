@@ -28,8 +28,8 @@
 
 #include <easy3d/algo/surface_mesh_polygonization.h>
 #include <easy3d/algo/surface_mesh_enumerator.h>
+#include <easy3d/algo/polygon_partition.h>
 #include <easy3d/core/surface_mesh_builder.h>
-#include <easy3d/core/polygon_partition.h>
 #include <easy3d/util/logging.h>
 
 

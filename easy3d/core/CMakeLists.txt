@@ -1,5 +1,5 @@
 set(module core)
-set(private_dependencies 3rd_polypartition)
+set(private_dependencies)
 set(public_dependencies easy3d::util)
 
 set(${module}_headers
@@ -31,7 +31,6 @@ set(${module}_headers
         surface_mesh.h
         poly_mesh.h
         polygon.h
-        polygon_partition.h
         types.h
         vec.h
         )
@@ -43,7 +42,6 @@ set(${module}_sources
         point_cloud.cpp
         surface_mesh.cpp
         poly_mesh.cpp
-        polygon_partition.cpp
         )
 
 add_module(${module} "${${module}_headers}" "${${module}_sources}" "${private_dependencies}" "${public_dependencies}")

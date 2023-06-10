@@ -10,7 +10,7 @@ list(APPEND EXPORT_TARGET_SET easy3d_util 3rd_backward)
 
 add_subdirectory(core)
 list(APPEND CONF_Easy3D_COMPONENTS core)
-list(APPEND EXPORT_TARGET_SET easy3d_core 3rd_polypartition)
+list(APPEND EXPORT_TARGET_SET easy3d_core)
 
 add_subdirectory(fileio)
 list(APPEND CONF_Easy3D_COMPONENTS fileio)
@@ -22,7 +22,7 @@ list(APPEND EXPORT_TARGET_SET easy3d_kdtree 3rd_kdtree)
 
 add_subdirectory(algo)
 list(APPEND CONF_Easy3D_COMPONENTS algo)
-list(APPEND EXPORT_TARGET_SET easy3d_algo 3rd_poisson 3rd_ransac 3rd_triangle 3rd_tetgen 3rd_glutess 3rd_opcode)
+list(APPEND EXPORT_TARGET_SET easy3d_algo 3rd_poisson 3rd_ransac 3rd_triangle 3rd_tetgen 3rd_polypartition 3rd_glutess 3rd_opcode)
 
 if (Easy3D_HAS_CGAL)
     add_subdirectory(algo_ext)  # experimental
