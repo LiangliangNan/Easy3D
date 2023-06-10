@@ -87,37 +87,37 @@ int main(int argc, char* argv[]) {
 
     int result = 0;
 
-//    result += test_console_style();
-//    result += test_timer();
-//    result += test_signal();
-//
-//    result += test_linear_solvers();
-//    result += test_spline();
-//
-//    result += test_point_cloud();
-//    result += test_surface_mesh();
-//    result += test_polyhedral_mesh();
-//    result += test_graph();
-//    result += test_kdtree();
-//
-//    result += test_point_cloud_algorithms();
-//    result += test_surface_mesh_algorithms();
+    result += test_console_style();
+    result += test_timer();
+    result += test_signal();
+
+    result += test_linear_solvers();
+    result += test_spline();
+
+    result += test_point_cloud();
+    result += test_surface_mesh();
+    result += test_polyhedral_mesh();
+    result += test_graph();
+    result += test_kdtree();
+
+    result += test_point_cloud_algorithms();
+    result += test_surface_mesh_algorithms();
 
     const int duration = 1500; // in millisecond
-//    result += test_viewer_imgui(duration);
-//    result += test_composite_view(duration);
-//    result += test_real_camera();
-//    result += test_drawables(duration);
-//    result += test_imposters(duration);
-//    result += test_scalar_field(duration);
-//    result += test_vector_field(duration);
-//    result += test_texture(duration);
-//    result += test_image(duration);
-//    result += test_tessellator(duration);
-//    result += test_convex_partition(duration);
-//    result += test_texture_mesh(duration);
-//    result += test_text_rendering(duration);
-//    result += test_text_mesher(duration);
+    result += test_viewer_imgui(duration);
+    result += test_composite_view(duration);
+    result += test_real_camera();
+    result += test_drawables(duration);
+    result += test_imposters(duration);
+    result += test_scalar_field(duration);
+    result += test_vector_field(duration);
+    result += test_texture(duration);
+    result += test_image(duration);
+    result += test_tessellator(duration);
+    result += test_convex_partition(duration);
+    result += test_texture_mesh(duration);
+    result += test_text_rendering(duration);
+    result += test_text_mesher(duration);
     result += test_animation(duration);
     result += test_multithread();
     result += test_cross_section(duration);
