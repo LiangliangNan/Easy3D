@@ -147,7 +147,7 @@ namespace easy3d {
         }
 
         if (num_degenerate > 0) { // propagate the planar partition to degenerate faces
-            LOG(WARNING) << "model has " << num_degenerate << " degenerate faces" << std::endl;
+            LOG(WARNING) << "model has " << num_degenerate << " degenerate faces";
             int num_propagated = 0;
             do {
                 num_propagated = 0;
