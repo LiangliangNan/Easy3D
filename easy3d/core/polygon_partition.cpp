@@ -32,7 +32,7 @@
 namespace easy3d {
 
 
-    bool PolygonPartition::apply(const std::vector<vec2> &input_polygon, std::vector<Polygon> &parts, Method method) const {
+    bool PolygonPartition::apply_OPT(const std::vector<vec2> &input_polygon, std::vector<Polygon> &parts) const {
         TPPLPoly poly;
         poly.Init(input_polygon.size());
         poly.SetHole(false);
@@ -43,20 +43,9 @@ namespace easy3d {
 
         TPPLPartition partition;
         std::list<TPPLPoly> outputs;
-
-        switch (method) {
-            case Hertel_Mehlhorn:
-                if (partition.ConvexPartition_HM(&poly, &outputs) == 0) {
-                    LOG(WARNING) << "convex partition with failed (method: Hertel_Mehlhorn)";
-                    return false;
-                }
-                break;
-            case Optimal:
-                if (partition.ConvexPartition_OPT(&poly, &outputs) == 0) {
-                    LOG(WARNING) << "convex partition with failed (method: Optimal)";
-                    return false;
-                }
-                break;
+        if (partition.ConvexPartition_OPT(&poly, &outputs) == 0) {
+            LOG(WARNING) << "convex partition failed (method: Optimal)";
+            return false;
         }
 
         for (auto& plg : outputs) {
@@ -66,6 +55,35 @@ namespace easy3d {
                 polygon.push_back(plg[i].index);
             parts.push_back(polygon);
         }
+
+        return true;
+    }
+
+
+    bool PolygonPartition::apply_HM(const std::vector<vec2> &input_polygon, std::vector<Polygon> &parts) const {
+        TPPLPoly poly;
+        poly.Init(input_polygon.size());
+        poly.SetHole(false);
+        for (std::size_t i=0; i<input_polygon.size(); ++i) {
+            const auto& p = input_polygon[i];
+            poly[i] = {p.x, p.y, i};
+        }
+
+        TPPLPartition partition;
+        std::list<TPPLPoly> outputs;
+        if (partition.ConvexPartition_HM(&poly, &outputs) == 0) {
+            LOG(WARNING) << "convex partition failed (method: Hertel-Mehlhorn)";
+            return false;
+        }
+
+        for (auto& plg : outputs) {
+            const long size = plg.GetNumPoints();
+            Polygon polygon;
+            for (long i=0; i<size; ++i)
+                polygon.push_back(plg[i].index);
+            parts.push_back(polygon);
+        }
+
         return true;
     }
 

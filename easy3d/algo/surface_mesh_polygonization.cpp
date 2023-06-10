@@ -96,7 +96,7 @@ namespace easy3d {
 
             PolygonPartition partition;
             std::vector<PolygonPartition::Polygon> parts;
-            if (!partition.apply(polygon, parts)) {
+            if (!partition.apply_OPT(polygon, parts)) {
                 LOG(ERROR) << "failed to perform convex partition of a complex polygon (the polygon ignored)";
                 return {};
             }
