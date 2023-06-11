@@ -274,9 +274,9 @@ namespace easy3d {
     inline
     typename GenericPlane<FT>::Point3 GenericPlane<FT>::point() const {
         Point3 p(FT(0), FT(0), FT(0));
-        if (coeff_[0] >= coeff_[1] && coeff_[0] >= coeff_[2])
+        if (std::abs(coeff_[0]) >= std::abs(coeff_[1]) && std::abs(coeff_[0]) >= std::abs(coeff_[2]))
             p.x = -coeff_[3] / coeff_[0];
-        else if (coeff_[1] >= coeff_[0] && coeff_[1] >= coeff_[2])
+        else if (std::abs(coeff_[1]) >= std::abs(coeff_[0]) && std::abs(coeff_[1]) >= std::abs(coeff_[2]))
             p.y = -coeff_[3] / coeff_[1];
         else
             p.z = -coeff_[3] / coeff_[2];
