@@ -123,6 +123,14 @@ namespace easy3d {
 
         if (partition.ConvexPartition_HM(&inpolys, &outputs) == 0) {
             LOG(WARNING) << "convex partition failed";
+#ifndef NDEBUG
+            LOG(WARNING) << "points: " << points;
+            for (const auto& poly : polys)
+                LOG(WARNING) << "polygon: " << poly;
+            for (const auto& hole : holes) {
+                LOG(WARNING) << "hole: " << hole;
+            }
+#endif
             return false;
         }
 

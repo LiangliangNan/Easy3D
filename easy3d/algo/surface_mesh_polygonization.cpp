@@ -78,8 +78,8 @@ namespace easy3d {
         }
 
         // Note: the "no hole" cases can also be treated as general cases using the same code below.
-        //       But considering that these cases are most common, it is preferred to use the OPT algorithm for
-        //       convex partition (but general cases, only the HM algorithm is available).
+        //       But since the "no hole" cases are more common, it is thus preferred to use the OPT algorithm
+        //       (for general cases with holes, only the HM algorithm is available).
         if (input_hole_polys.empty()) {
             std::unordered_map<std::size_t, SurfaceMesh::Vertex> index_map;
 
@@ -99,9 +99,6 @@ namespace easy3d {
                 LOG(WARNING) << "failed to perform convex partition of a complex polygon (the polygon ignored)";
 #ifndef NDEBUG
                 LOG(WARNING) << "outer loop: " << outer_poly;
-                for (const auto& hole : input_hole_polys) {
-                    LOG(WARNING) << "hole: " << hole;
-                }
 #endif
                 return {};
             }
