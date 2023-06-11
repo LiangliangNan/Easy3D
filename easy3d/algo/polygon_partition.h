@@ -70,6 +70,9 @@ namespace easy3d {
          *      However, in practice it works much better than that and often gives optimal partition.
          *      Time complexity: O(n^2), where n is the number of vertices.
          *      Space complexity: O(n).
+         *      See S. Hertel and K. Mehlhorn. Fast triangulation of simple polygons.
+         *          4th Internat. Conf. Found. Comput. Theory, volume 158 of Lecture Notes Comput. Sci.,
+         *          pages 207–218. Springer-Verlag, 1983.
          * \param poly An input polygon (without holes). Vertices have to be in the counter-clockwise order.
          * \param parts Resulting list of convex polygons, represented by the vertex indices.
          * \return true on success, false on failure.
@@ -80,10 +83,13 @@ namespace easy3d {
         /**
          * \brief Convex partition of a general polygon with an arbitrary number of non-hole and hole contours.
          * \details This function partitions a list of polygons into convex parts by using the Hertel-Mehlhorn
-         *     algorithm. The algorithm gives at most four times the number of parts as the optimal algorithm.
-         *     However, in practice it works much better than that and often gives optimal partition.
-         *         Time complexity: O(n^2), where n is the number of vertices.
-         *         Space complexity: O(n).
+         *      algorithm. The algorithm gives at most four times the number of parts as the optimal algorithm.
+         *      However, in practice it works much better than that and often gives optimal partition.
+         *      Time complexity: O(n^2), where n is the number of vertices.
+         *      Space complexity: O(n).
+         *      See S. Hertel and K. Mehlhorn. Fast triangulation of simple polygons.
+         *          4th Internat. Conf. Found. Comput. Theory, volume 158 of Lecture Notes Comput. Sci.,
+         *          pages 207–218. Springer-Verlag, 1983.
          * \param points A set of points.
          * \param polys A set of non-hole polygons (each represented by the vertex indices). The vertices of all
          *     non-hole polygons have to be in counter-clockwise order.
