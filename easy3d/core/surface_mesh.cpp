@@ -1055,7 +1055,8 @@ namespace easy3d {
             hend = h;
             do
             {
-                n += cross(p2-p1, p0-p1);
+                //n += cross(p2-p1, p0-p1);
+                n += cross(p2-p1, p0-p1).normalize(); // To be more robustness
                 h  = next(h);
                 p0 = p1;
                 p1 = p2;
@@ -1063,7 +1064,7 @@ namespace easy3d {
             }
             while (h != hend);
 
-                return n.normalize();
+            return n.normalize();
         }
     }
 
