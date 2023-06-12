@@ -1055,12 +1055,26 @@ namespace easy3d {
             hend = h;
             do
             {
-                // TODO: Check if this function cam handle some special cases (#concave corners == #convex corners, leading to a 0 normal).
+#if 0
+                // I believe this function is not robust for some concave polygons.
                 if (distance2(p2, p1) < min<float>() || distance2(p0, p1) < min<float>() || distance2(p2, p0) < min<float>())
                     LOG(WARNING) << "degenarate case encountered";
                 else
                     n += cross(p2 - p1, p0 - p1);
-
+#else
+                // This seems to be a robust solution: 
+                //   - Choose any point C near the polygon(any vertex or mass center).
+                //   - Sum cross products(P[i] - C) x (P[i + 1] - C) for all i(including last and first points pair).
+                //   - Normalize the sum vector.
+                // Note that after step 2 you have a vector which has normal direction with proper orientation, and its magnitude is 2 S, 
+                // where S is the area of your polygon. That's why it should work unless your polygon has zero or almost zero area. 
+                // By the way, point C is used here only to make calculation a bit more precise for small polygons located far from the origin.
+                // You can choose C = (0, 0, 0), efficiently removing it from calculations.
+                if (distance2(p0, p1) < min<float>())
+                    LOG(WARNING) << "0-length edge encountered";
+                else
+                    n += cross(p0, p1); // C = (0, 0, 0)
+#endif
                 h  = next(h);
                 p0 = p1;
                 p1 = p2;
