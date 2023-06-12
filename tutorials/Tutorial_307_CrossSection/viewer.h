@@ -38,6 +38,9 @@ namespace easy3d {
         ~CrossSection() override;
 
 	protected:
+		// manipulate the crosssection plane
+		bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;
+
         // draw the clipping plane
 		void post_draw() override;
 	};

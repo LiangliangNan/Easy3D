@@ -41,7 +41,7 @@ using namespace easy3d;
 // a set of convex polygons using the PolygonPartition class of Easy3D.
 //
 // Note: For complex unknown structures that have self-intersection, you need to use the CSG operators provided in
-//      easy3d/algo/tessellator.h to obtain simply polygons first.
+//      easy3d/algo/tessellator.h to obtain simply polygons (free of self-intersection) first.
 
 
 int main(int argc, char** argv) {
@@ -96,7 +96,7 @@ int main(int argc, char** argv) {
     for (auto& poly : parts) {
         std::vector<SurfaceMesh::Vertex> vts;
         for (const auto& id : poly)
-            vts.push_back(SurfaceMesh::Vertex(id));
+            vts.push_back(SurfaceMesh::Vertex(static_cast<int>(id)));
         mesh->add_face(vts);
     }
     // add the mesh to the viewer.

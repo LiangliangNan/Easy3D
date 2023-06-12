@@ -31,8 +31,6 @@
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/renderer.h>
 
-#include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
-
 
 using namespace easy3d;
 
@@ -60,7 +58,7 @@ TutorialHardShadow::~TutorialHardShadow() {
 
 
 bool TutorialHardShadow::key_press_event(int key, int modifiers) {
-    if (key == GLFW_KEY_SPACE) {
+    if (key == KEY_SPACE) {
 		shadow_enabled_ = !shadow_enabled_;
 		update();
         return true;

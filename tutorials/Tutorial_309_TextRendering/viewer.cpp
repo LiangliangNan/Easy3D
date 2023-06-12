@@ -31,8 +31,6 @@
 #include <easy3d/util/resource.h>
 #include <easy3d/core/random.h>
 
-#include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
-
 
 using namespace easy3d;
 
@@ -89,66 +87,66 @@ void TextRendering::init() {
 
 
 bool TextRendering::key_press_event(int key, int modifiers) {
-    if (key == GLFW_KEY_MINUS) {
+    if (key == KEY_MINUS) {
         font_size_delta_ = std::max(font_size_delta_ - 1.0f, -20.0f);
         update();
         return true;
     }
-    else if (key == GLFW_KEY_EQUAL) {
+    else if (key == KEY_EQUAL) {
         font_size_delta_ = std::min(font_size_delta_ + 1.0f, 250.0f);
         update();
         return true;
     }
 
-    else if (key == GLFW_KEY_COMMA) {
+    else if (key == KEY_COMMA) {
         const float spacing = texter_->character_spacing();
         texter_->set_character_spacing(std::max(spacing - 0.5f, 0.0f));
         update();
         return true;
     }
-    else if (key == GLFW_KEY_PERIOD) {
+    else if (key == KEY_PERIOD) {
         const float spacing = texter_->character_spacing();
         texter_->set_character_spacing(std::min(spacing + 0.5f, 50.0f));
         update();
         return true;
     }
 
-    else if (key == GLFW_KEY_DOWN) {
+    else if (key == KEY_DOWN) {
         line_spacing_ = std::max(line_spacing_ - 0.1f, -1.0f);
         update();
         return true;
     }
-    else if (key == GLFW_KEY_UP) {
+    else if (key == KEY_UP) {
         line_spacing_ = std::min(line_spacing_ + 0.1f, 2.0f);
         update();
         return true;
     }
 
-    else if (key == GLFW_KEY_L) {
+    else if (key == KEY_L) {
         alignment_ = TextRenderer::ALIGN_LEFT;
         update();
         return true;
     }
 
-    else if (key == GLFW_KEY_C) {
+    else if (key == KEY_C) {
         alignment_ = TextRenderer::ALIGN_CENTER;
         update();
         return true;
     }
 
-    else if (key == GLFW_KEY_R) {
+    else if (key == KEY_R) {
         alignment_ = TextRenderer::ALIGN_RIGHT;
         update();
         return true;
     }
 
-    else if (key == GLFW_KEY_O) {
+    else if (key == KEY_O) {
         upper_left_ = !upper_left_;
         update();
         return true;
     }
 
-    else if (key == GLFW_KEY_SPACE) {
+    else if (key == KEY_SPACE) {
         const bool kerning = texter_->kerning();
         texter_->set_kerning(!kerning);
         update();

@@ -32,10 +32,8 @@
 #include <easy3d/util/resource.h>
 #include <easy3d/algo/collider.h>
 
-#include <3rd_party/glfw/include/GLFW/glfw3.h>    // for the mouse buttons
 
 using namespace easy3d;
-
 
 CollisionViewer::CollisionViewer(const std::string &title)
         : Viewer(title)
@@ -92,11 +90,11 @@ CollisionViewer::~CollisionViewer() {
 
 
 bool CollisionViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
-    if (collider_ && models().size() == 2 && modifiers == GLFW_MOD_ALT && timer_.is_paused()) {
+    if (collider_ && models().size() == 2 && modifiers == MODIF_ALT && timer_.is_paused()) {
         auto manipulator = models_[0]->manipulator();
-        if (button == GLFW_MOUSE_BUTTON_LEFT)
+        if (button == BUTTON_LEFT)
             manipulator->frame()->action_rotate(x, y, dx, dy, camera_, ManipulatedFrame::NONE);
-        else if (button == GLFW_MOUSE_BUTTON_RIGHT)
+        else if (button == BUTTON_RIGHT)
             manipulator->frame()->action_translate(x, y, dx, dy, camera_, ManipulatedFrame::NONE);
         else
             return false;
@@ -110,7 +108,7 @@ bool CollisionViewer::mouse_drag_event(int x, int y, int dx, int dy, int button,
 
 
 bool CollisionViewer::key_press_event(int key, int modifiers) {
-    if (key == GLFW_KEY_SPACE) {
+    if (key == KEY_SPACE) {
         if (timer_.is_paused())
             timer_.resume();
         else

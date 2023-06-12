@@ -90,7 +90,7 @@ int main(int argc, char **argv) {
     // usage
     viewer.set_usage("'Ctrl + r': run reconstruction");
     // set up the function to be executed and its corresponding shortcut
-    viewer.bind(reconstruction, model, Viewer::KEY_R, Viewer::MOD_CTRL);
+    viewer.bind(reconstruction, model, Viewer::KEY_R, Viewer::MODIF_CTRL);
 
     // run the viewer
     return viewer.run();

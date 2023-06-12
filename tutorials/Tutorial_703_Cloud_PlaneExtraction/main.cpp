@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
     // usage
     viewer.set_usage("'Ctrl + e': extract planes");
     // set up the function to be executed and its corresponding shortcut
-    viewer.bind(extract_plane, model, Viewer::KEY_E, Viewer::MOD_CTRL);
+    viewer.bind(extract_plane, model, Viewer::KEY_E, Viewer::MODIF_CTRL);
 
     // run the viewer
     return viewer.run();

@@ -26,6 +26,7 @@
 
 #include "viewer.h"
 #include <easy3d/core/point_cloud.h>
+#include <easy3d/renderer/opengl.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/shader_manager.h>
@@ -33,8 +34,6 @@
 #include <easy3d/renderer/eye_dome_lighting.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/util/setting.h>
-
-#include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
 
 
 using namespace easy3d;
@@ -63,7 +62,7 @@ TutorialEyeDomeLighting::~TutorialEyeDomeLighting() {
 
 
 bool TutorialEyeDomeLighting::key_press_event(int key, int modifiers) {
-    if (key == GLFW_KEY_SPACE) {
+    if (key == KEY_SPACE) {
 		edl_enabled_ = !edl_enabled_;
 		std::cout << "Eye Dome Lighting " << (edl_enabled_ ? "enabled" : "disabled") << std::endl;
 		update();

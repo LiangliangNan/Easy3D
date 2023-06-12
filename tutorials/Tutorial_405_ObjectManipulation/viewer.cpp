@@ -34,7 +34,6 @@
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/setting.h>
 
-#include <3rd_party/glfw/include/GLFW/glfw3.h>    // for the mouse buttons and keys
 
 using namespace easy3d;
 
@@ -57,7 +56,7 @@ ManipulationViewer::ManipulationViewer(const std::string &title)
 
 
 bool ManipulationViewer::mouse_press_event(int x, int y, int button, int modifiers) {
-    if (modifiers != GLFW_MOD_ALT) {// this is reserved for manipulation
+    if (modifiers != MODIF_ALT) {// this is reserved for manipulation
         ModelPicker picker(camera());
         auto model = picker.pick(models(), x, y);
         if (model)
@@ -71,18 +70,18 @@ bool ManipulationViewer::mouse_press_event(int x, int y, int button, int modifie
 
 bool ManipulationViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
     // control modifier is reserved for zooming on region
-    if (modifiers == GLFW_MOD_ALT && selected_model_) {
+    if (modifiers == MODIF_ALT && selected_model_) {
         ManipulatedFrame *frame = selected_model_->manipulator()->frame();
 
         auto axis = ManipulatedFrame::NONE;
-        if (pressed_key_ == GLFW_KEY_X) axis = ManipulatedFrame::HORIZONTAL;
-        else if (pressed_key_ == GLFW_KEY_Y) axis = ManipulatedFrame::VERTICAL;
-        else if (pressed_key_ == GLFW_KEY_O) axis = ManipulatedFrame::ORTHOGONAL;
+        if (pressed_key_ == KEY_X) axis = ManipulatedFrame::HORIZONTAL;
+        else if (pressed_key_ == KEY_Y) axis = ManipulatedFrame::VERTICAL;
+        else if (pressed_key_ == KEY_O) axis = ManipulatedFrame::ORTHOGONAL;
         switch (button) {
-            case GLFW_MOUSE_BUTTON_LEFT:
+            case BUTTON_LEFT:
                 frame->action_rotate(x, y, dx, dy, camera_, axis);
                 break;
-            case GLFW_MOUSE_BUTTON_RIGHT:
+            case BUTTON_RIGHT:
                 frame->action_translate(x, y, dx, dy, camera_, axis);
                 break;
             default:

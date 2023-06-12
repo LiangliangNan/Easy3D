@@ -30,8 +30,6 @@
 #include <easy3d/renderer/key_frame_interpolator.h>
 #include <easy3d/core/model.h>
 
-#include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
-
 
 using namespace easy3d;
 
@@ -60,7 +58,7 @@ CameraInterpolation::~CameraInterpolation()
 
 bool CameraInterpolation::key_press_event(int key, int modifiers)
 {
-    if (key == GLFW_KEY_K && modifiers == 0) {
+    if (key == KEY_K && modifiers == 0) {
         easy3d::Frame *frame = camera()->frame();
         if (interpolator_->add_keyframe(*frame)) {
             float dist = distance(camera_->sceneCenter(), frame->position());
@@ -72,7 +70,7 @@ bool CameraInterpolation::key_press_event(int key, int modifiers)
         else
             return false;
     }
-    else if (key == GLFW_KEY_SPACE && modifiers == 0) {
+    else if (key == KEY_SPACE && modifiers == 0) {
         if (interpolator_->is_interpolation_started()) {
             interpolator_->stop_interpolation();
             std::cout << "Animation stopped" << std::endl;
@@ -84,7 +82,7 @@ bool CameraInterpolation::key_press_event(int key, int modifiers)
         }
         return true;
     }
-    else if (key == GLFW_KEY_D && modifiers == 0) {
+    else if (key == KEY_D && modifiers == 0) {
         interpolator_->delete_path();
         // update scene bounding box
         Box3 box;

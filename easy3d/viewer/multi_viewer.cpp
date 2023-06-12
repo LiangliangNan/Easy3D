@@ -38,15 +38,6 @@
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 
-#include <3rd_party/glfw/include/GLFW/glfw3.h>    // Include glfw3.h after our OpenGL definitions
-
-// To have the same shortcut behavior on macOS and other platforms (i.e., Windows, Linux)
-#ifdef __APPLE__
-#define EASY3D_MOD_CONTROL GLFW_MOD_SUPER
-#else
-#define EASY3D_MOD_CONTROL GLFW_MOD_CONTROL
-#endif
-
 
 namespace easy3d {
 

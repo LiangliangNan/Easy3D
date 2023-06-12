@@ -32,8 +32,6 @@
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/camera.h>
 
-#include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
-
 
 using namespace easy3d;
 
@@ -58,7 +56,7 @@ TransparencyViewer::~TransparencyViewer() {
 
 
 bool TransparencyViewer::key_press_event(int key, int modifiers) {
-    if (key == GLFW_KEY_SPACE) {
+    if (key == KEY_SPACE) {
 		if (transparency_) {
 			delete transparency_;
 			transparency_ = nullptr;
@@ -82,7 +80,7 @@ bool TransparencyViewer::key_press_event(int key, int modifiers) {
 		update();
         return true;
     }
-    else if (key == GLFW_KEY_DOWN) {
+    else if (key == KEY_DOWN) {
         auto faces = current_model()->renderer()->get_triangles_drawable("faces");
         if (faces) {
             float o = faces->opacity();
@@ -96,7 +94,7 @@ bool TransparencyViewer::key_press_event(int key, int modifiers) {
         }
         return true;
     }
-    else if (key == GLFW_KEY_UP) {
+    else if (key == KEY_UP) {
         auto faces = current_model()->renderer()->get_triangles_drawable("faces");
         if (faces) {
             float o = faces->opacity();

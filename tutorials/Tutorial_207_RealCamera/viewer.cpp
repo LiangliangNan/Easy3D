@@ -27,6 +27,7 @@
 #include "viewer.h"
 
 #include <easy3d/core/point_cloud.h>
+#include <easy3d/renderer/opengl.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/camera.h>
@@ -40,8 +41,6 @@
 #include <easy3d/util/string.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/resource.h>
-
-#include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
 
 
 using namespace easy3d;
@@ -93,7 +92,7 @@ bool RealCamera::key_press_event(int key, int modifiers) {
     if (cross_drawable_)
         cross_drawable_->set_visible(false);
 
-    if (key == GLFW_KEY_SPACE) {
+    if (key == KEY_SPACE) {
         if (!views_.empty()) {
             current_view_ = (current_view_ + 1) % static_cast<int>(views_.size());
             const bool ground_truth = true;
@@ -108,7 +107,7 @@ bool RealCamera::key_press_event(int key, int modifiers) {
         }
         return true;
     }
-    else if (key == GLFW_KEY_1) {
+    else if (key == KEY_1) {
         if (!views_.empty()) {
             const bool ground_truth = false;
             if (KRT_to_camera(current_view_, camera(), ground_truth)) {
@@ -122,7 +121,7 @@ bool RealCamera::key_press_event(int key, int modifiers) {
         }
         return true;
     }
-    else if (key == GLFW_KEY_2) {
+    else if (key == KEY_2) {
         if (!views_.empty()) {
             const bool ground_truth = true;
             if (KRT_to_camera(current_view_, camera(), ground_truth)) {
@@ -136,7 +135,7 @@ bool RealCamera::key_press_event(int key, int modifiers) {
         }
         return true;
     }
-    else if (key == GLFW_KEY_H) {
+    else if (key == KEY_H) {
         if (cameras_drawable_) {
             cameras_drawable_->set_visible(!cameras_drawable_->is_visible());
             update();

@@ -35,8 +35,6 @@
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/util/setting.h>
 
-#include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
-
 
 using namespace easy3d;
 
@@ -61,12 +59,12 @@ TutorialAmbientOcclusion::~TutorialAmbientOcclusion() {
 
 
 bool TutorialAmbientOcclusion::key_press_event(int key, int modifiers) {
-    if (key == GLFW_KEY_SPACE) {
+    if (key == KEY_SPACE) {
 		ao_enabled_ = !ao_enabled_;
 		update();
         return true;
     }
-	else if (key == GLFW_KEY_DOWN) {
+	else if (key == KEY_DOWN) {
 		if (ao_enabled_) {
 			float r = ao_->radius();
 			if (r > 0) 
@@ -79,7 +77,7 @@ bool TutorialAmbientOcclusion::key_press_event(int key, int modifiers) {
 		}
 		return true;
 	}
-	else if (key == GLFW_KEY_UP) {
+	else if (key == KEY_UP) {
 		if (ao_enabled_) {
 			float r = ao_->radius();
 			if (r > 0)

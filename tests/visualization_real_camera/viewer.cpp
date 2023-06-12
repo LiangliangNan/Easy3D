@@ -38,8 +38,6 @@
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/resource.h>
 
-#include <3rd_party/glfw/include/GLFW/glfw3.h>	// for the KEYs
-
 
 using namespace easy3d;
 
@@ -80,7 +78,7 @@ void RealCamera::show_next_view() {
             set_title("RealCamera: View_" + std::to_string(current_view_));
             const CameraPara &c = views_[current_view_];
             // make sure the aspect ratio (actual size does not matter)
-            resize(c.w * 0.3, c.h * 0.3);
+            resize(static_cast<int>(c.w * 0.3), static_cast<int>(c.h * 0.3));
         }
     }
 }
@@ -144,8 +142,8 @@ void RealCamera::post_draw() {
     if (texture_ == nullptr)
         return;
 
-    int w = width() * dpi_scaling();
-    int h = height() * dpi_scaling();
+    int w = static_cast<int>(width() * dpi_scaling());
+    int h = static_cast<int>(height() * dpi_scaling());
 
     int tex_w = texture_->width();
     int tex_h = texture_->height();

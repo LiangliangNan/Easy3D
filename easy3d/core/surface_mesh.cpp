@@ -1055,8 +1055,10 @@ namespace easy3d {
             hend = h;
             do
             {
+                // TODO: Check if this function cam handle some special cases.
+                // To be more robustness
                 //n += cross(p2-p1, p0-p1);
-                n += cross(p2-p1, p0-p1).normalize(); // To be more robustness
+                n += cross(p2-p1, p0-p1).normalize();
                 h  = next(h);
                 p0 = p1;
                 p1 = p2;

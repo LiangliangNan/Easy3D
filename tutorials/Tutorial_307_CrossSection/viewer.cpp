@@ -26,6 +26,8 @@
 
 #include "viewer.h"
 #include <easy3d/renderer/clipping_plane.h>
+#include <easy3d/renderer/manipulated_frame.h>
+#include <easy3d/renderer/manipulator.h>
 
 
 namespace easy3d {
@@ -33,6 +35,12 @@ namespace easy3d {
     CrossSection::CrossSection(const std::string &title) : Viewer(title) {
         // Code of interest:
         ClippingPlane::instance()->set_enabled(true);
+
+        usage_string_ =
+            "------------ CrossSection usage ---------- \n"
+            "Left button:  rotate the clipping plane    \n"
+            "Right button: translate the clipping plane \n"
+            "-------------------------------------------\n";
     }
 
     CrossSection::~CrossSection() {
@@ -41,10 +49,24 @@ namespace easy3d {
 
 
     void CrossSection::post_draw() {
-        Viewer::post_draw();
-
         // Code of interest:
         ClippingPlane::instance()->draw(camera());
+
+        Viewer::post_draw();
 	}
+
+
+    bool CrossSection::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
+        ManipulatedFrame* frame = ClippingPlane::instance()->manipulator()->frame();
+
+        if (pressed_button_ == BUTTON_LEFT)
+            frame->action_rotate(x, y, dx, dy, camera_, ManipulatedFrame::NONE);
+        else if (pressed_button_ == BUTTON_RIGHT)
+            frame->action_translate(x, y, dx, dy, camera_, ManipulatedFrame::NONE);
+        else
+            return Viewer::mouse_drag_event(x, y, dx, dy, button, modifiers);
+
+        return false;
+    }
 
 }

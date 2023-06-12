@@ -24,8 +24,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef EASY3D_TUTORIAL_CROSS_SECTION_H
-#define EASY3D_TUTORIAL_CROSS_SECTION_H
+#ifndef EASY3D_TESTS_CROSS_SECTION_H
+#define EASY3D_TESTS_CROSS_SECTION_H
 
 #include <easy3d/viewer/viewer.h>
 
@@ -38,10 +38,13 @@ namespace easy3d {
         ~CrossSection() override;
 
 	protected:
+		// manipulate the crosssection plane
+		bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;
+
         // draw the clipping plane
 		void post_draw() override;
 	};
 
 }
 
-#endif	// EASY3D_TUTORIAL_CROSS_SECTION_H
+#endif	// EASY3D_TESTS_CROSS_SECTION_H

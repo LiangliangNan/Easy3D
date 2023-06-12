@@ -392,6 +392,7 @@ namespace easy3d {
             KEY_Q = 81, KEY_R = 82, KEY_S = 83, KEY_T = 84, KEY_U = 85, KEY_V = 86, KEY_W = 87, KEY_X = 88,
             KEY_Y = 89, KEY_Z = 90,
             // the functional keys
+            KEY_RIGHT = 262, KEY_LEFT = 263, KEY_DOWN = 264, KEY_UP = 265,
             KEY_F1 = 290,   KEY_F2 = 291,   KEY_F3 = 292,   KEY_F4 = 293,   KEY_F5 = 294,
             KEY_F6 = 295,   KEY_F7 = 296,   KEY_F8 = 297,   KEY_F9 = 298,
             // some printable keys
@@ -405,7 +406,23 @@ namespace easy3d {
          * @brief The key modifiers. Currently only Shift, Ctrl, and Alt are supported.
          */
         enum Modifier { /* Do NOT modify the values!!! */
-            MODIF_NONE = 0x0000, MODIF_SHIFT = 0x0001, MOD_CTRL = 0x0002, MODIF_ALT = 0x0004
+            MODIF_NONE = 0x0000, 
+            MODIF_SHIFT = 0x0001, 
+#ifdef __APPLE__    // To have the same shortcut behavior on macOS and other platforms (i.e., Windows and Linux)
+            MODIF_CTRL = 0x0008,
+#else
+            MODIF_CTRL = 0x0002,
+#endif
+            MODIF_ALT = 0x0004
+        };
+
+        /**
+         * @brief Mouse buttons. 
+         */
+        enum Button { // Do NOT modify the values!!!
+            BUTTON_LEFT = 0,
+            BUTTON_RIGHT = 1, 
+            BUTTON_MIDDLE = 2
         };
 
         /**

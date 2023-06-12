@@ -31,8 +31,6 @@
 #include <easy3d/renderer/framebuffer_object.h>
 #include <easy3d/algo/gaussian_noise.h>
 
-#include <3rd_party/glfw/include/GLFW/glfw3.h>    // for the mouse buttons
-
 
 using namespace easy3d;
 
@@ -53,7 +51,7 @@ VirtualScanner::VirtualScanner(const std::string &title)
 
 
 bool VirtualScanner::key_press_event(int key, int modifiers) {
-    if (key == GLFW_KEY_SPACE && modifiers == 0) {
+    if (key == KEY_SPACE && modifiers == 0) {
         int fw, fh;
 		framebuffer_size(fw, fh);
 
@@ -109,7 +107,7 @@ bool VirtualScanner::key_press_event(int key, int modifiers) {
 
         return false;
     }
-    else if (key == GLFW_KEY_N && modifiers == 0) {
+    else if (key == KEY_N && modifiers == 0) {
         add_noise_ = !add_noise_;
         if (add_noise_)
             std::cout << "add_noise = ON" << std::endl;

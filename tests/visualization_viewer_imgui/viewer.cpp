@@ -34,11 +34,12 @@
 #include <easy3d/renderer/text_renderer.h>
 #include <easy3d/renderer/camera.h>
 
+#include <3rd_party/glfw/include/GLFW/glfw3.h>  // for glfw functions
+
 #include <3rd_party/imgui/misc/fonts/imgui_fonts_droid_sans.h>
 #include <3rd_party/imgui/imgui.h>
 #include <3rd_party/imgui/backends/imgui_impl_glfw.h>
 #include <3rd_party/imgui/backends/imgui_impl_opengl3.h>
-#include <3rd_party/glfw/include/GLFW/glfw3.h>
 
 
 namespace easy3d {

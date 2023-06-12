@@ -33,7 +33,6 @@
 #include <easy3d/fileio/image_io.h>
 
 #include <easy3d/renderer/opengl.h>				// for gl functions
-#include <3rd_party/glfw/include/GLFW/glfw3.h>  // for glfw functions
 
 
 namespace easy3d {
@@ -81,7 +80,7 @@ namespace easy3d {
 		}
 
 		int w, h;
-		glfwGetFramebufferSize(window_, &w, &h);
+		framebuffer_size(w, h);
 		w = static_cast<int>(std::ceil(static_cast<float>(w) * scaling));
 		h = static_cast<int>(std::ceil(static_cast<float>(h) * scaling));
 

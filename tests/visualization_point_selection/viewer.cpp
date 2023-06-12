@@ -27,19 +27,11 @@
 #include "viewer.h"
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/gui/picker_point_cloud.h>
+#include <easy3d/renderer/opengl.h>
 #include <easy3d/renderer/shape.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/text_renderer.h>
-
-#include <3rd_party/glfw/include/GLFW/glfw3.h>    // for the mouse buttons
-
-// To have the same shortcut behavior on macOS and other platforms (i.e., Windows, Linux)
-#ifdef __APPLE__
-#define EASY3D_MOD_CONTROL GLFW_MOD_SUPER
-#else
-#define EASY3D_MOD_CONTROL GLFW_MOD_CONTROL
-#endif
 
 
 #define  USE_LASSO     1
@@ -52,7 +44,7 @@ PointSelection::PointSelection(const std::string &title) : Viewer(title) {
 
 /// Mouse button press event handler
 bool PointSelection::mouse_press_event(int x, int y, int button, int modifiers) {
-    if (modifiers == EASY3D_MOD_CONTROL) {
+    if (modifiers == MODIF_CTRL) {
         polygon_.clear();
         polygon_.push_back(vec2(x, y));
         return false;
@@ -63,13 +55,13 @@ bool PointSelection::mouse_press_event(int x, int y, int button, int modifiers) 
 
 /// Mouse button release event handler
 bool PointSelection::mouse_release_event(int x, int y, int button, int modifiers) {
-    if (modifiers == EASY3D_MOD_CONTROL) {
+    if (modifiers == MODIF_CTRL) {
         if (polygon_.size() >= 3) {
             auto cloud = dynamic_cast<PointCloud *>(current_model());
             if (cloud) {
                 PointCloudPicker picker(camera());
 #if USE_LASSO
-                picker.pick_vertices(cloud, polygon_, button == GLFW_MOUSE_BUTTON_RIGHT);
+                picker.pick_vertices(cloud, polygon_, button == BUTTON_RIGHT);
 #else
                 picker.pick_vertices(model, Rect(polygon_[0], polygon_[2]), false);
 #endif
@@ -86,7 +78,7 @@ bool PointSelection::mouse_release_event(int x, int y, int button, int modifiers
 
 /// Mouse drag (i.e., a mouse button was pressed) event handler
 bool PointSelection::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
-    if (modifiers == EASY3D_MOD_CONTROL) {
+    if (modifiers == MODIF_CTRL) {
 #if USE_LASSO
         polygon_.push_back(vec2(x, y));
 #else   // rectangle

@@ -68,14 +68,6 @@
 #include <easy3d/util/setting.h>
 
 
-// To have the same shortcut behavior on macOS and other platforms (i.e., Windows, Linux)
-#ifdef __APPLE__
-#define EASY3D_MOD_CONTROL GLFW_MOD_SUPER
-#else
-#define EASY3D_MOD_CONTROL GLFW_MOD_CONTROL
-#endif
-
-
 namespace easy3d {
 
 
@@ -689,7 +681,7 @@ namespace easy3d {
 
 
     bool Viewer::mouse_release_event(int x, int y, int button, int modifiers) {
-        if (button == GLFW_MOUSE_BUTTON_LEFT && modifiers == EASY3D_MOD_CONTROL) { // ZOOM_ON_REGION
+        if (button == GLFW_MOUSE_BUTTON_LEFT && modifiers == MODIF_CTRL) { // ZOOM_ON_REGION
             int xmin = std::min(mouse_pressed_x_, x);
             int xmax = std::max(mouse_pressed_x_, x);
             int ymin = std::min(mouse_pressed_y_, y);
@@ -705,7 +697,7 @@ namespace easy3d {
 
     bool Viewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
         // control modifier is reserved for zooming on region
-        if (modifiers != EASY3D_MOD_CONTROL) {
+        if (modifiers != MODIF_CTRL) {
             auto axis = ManipulatedFrame::NONE;
             if (pressed_key_ == GLFW_KEY_X) axis = ManipulatedFrame::HORIZONTAL;
             else if (pressed_key_ == GLFW_KEY_Y) axis = ManipulatedFrame::VERTICAL;
@@ -792,28 +784,28 @@ namespace easy3d {
         } else if (key == GLFW_KEY_DOWN && modifiers == 0) {// move camera backward
             float step = 0.05f * camera_->sceneRadius();
             camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, 0.0, step)));
-        } else if (key == GLFW_KEY_LEFT && modifiers == EASY3D_MOD_CONTROL) {    // move camera left
+        } else if (key == GLFW_KEY_LEFT && modifiers == MODIF_CTRL) {    // move camera left
             float step = 0.05f * camera_->sceneRadius();
             camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(-step, 0.0, 0.0)));
-        } else if (key == GLFW_KEY_RIGHT && modifiers == EASY3D_MOD_CONTROL) {    // move camera right
+        } else if (key == GLFW_KEY_RIGHT && modifiers == MODIF_CTRL) {    // move camera right
             float step = 0.05f * camera_->sceneRadius();
             camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(step, 0.0, 0.0)));
-        } else if (key == GLFW_KEY_UP && modifiers == EASY3D_MOD_CONTROL) {    // move camera up
+        } else if (key == GLFW_KEY_UP && modifiers == MODIF_CTRL) {    // move camera up
             float step = 0.05f * camera_->sceneRadius();
             camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, step, 0.0)));
-        } else if (key == GLFW_KEY_DOWN && modifiers == EASY3D_MOD_CONTROL) {    // move camera down
+        } else if (key == GLFW_KEY_DOWN && modifiers == MODIF_CTRL) {    // move camera down
             float step = 0.05f * camera_->sceneRadius();
             camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, -step, 0.0)));
-        } else if (key == GLFW_KEY_C && modifiers == EASY3D_MOD_CONTROL) {    // copy camera
+        } else if (key == GLFW_KEY_C && modifiers == MODIF_CTRL) {    // copy camera
             copy_view();
-        } else if (key == GLFW_KEY_V && modifiers == EASY3D_MOD_CONTROL) {    // copy camera
+        } else if (key == GLFW_KEY_V && modifiers == MODIF_CTRL) {    // copy camera
             paste_view();
         }
         else if (key == GLFW_KEY_A && modifiers == 0) {
             if (drawable_axes_)
                 drawable_axes_->set_visible(!drawable_axes_->is_visible());
         }
-        else if (key == GLFW_KEY_F && modifiers == EASY3D_MOD_CONTROL)
+        else if (key == GLFW_KEY_F && modifiers == MODIF_CTRL)
             show_frame_rate_ = !show_frame_rate_;
         else if (key == GLFW_KEY_C && modifiers == 0) {
             if (current_model())
@@ -856,14 +848,14 @@ namespace easy3d {
             // Aligns frame
             //if (manipulatedFrame())
             //	manipulatedFrame()->alignWithFrame(camera_->frame());
-        } else if (key == GLFW_KEY_O && modifiers == EASY3D_MOD_CONTROL)
+        } else if (key == GLFW_KEY_O && modifiers == MODIF_CTRL)
             open();
-        else if (key == GLFW_KEY_S && modifiers == EASY3D_MOD_CONTROL)
+        else if (key == GLFW_KEY_S && modifiers == MODIF_CTRL)
             save();
 
-        else if (key == GLFW_KEY_MINUS && modifiers == EASY3D_MOD_CONTROL)
+        else if (key == GLFW_KEY_MINUS && modifiers == MODIF_CTRL)
             camera_->frame()->action_zoom(-1, camera_);
-        else if (key == GLFW_KEY_EQUAL && modifiers == EASY3D_MOD_CONTROL)
+        else if (key == GLFW_KEY_EQUAL && modifiers == MODIF_CTRL)
             camera_->frame()->action_zoom(1, camera_);
 
         else if (key == GLFW_KEY_K && modifiers == GLFW_MOD_ALT) { // add key frame
@@ -878,12 +870,12 @@ namespace easy3d {
                 box.grow(m->bounding_box());
             camera_->setSceneBoundingBox(box.min_point(), box.max_point());
             LOG(INFO) << "camera path deleted";
-        } else if (key == GLFW_KEY_K && modifiers == EASY3D_MOD_CONTROL) { // play the path
+        } else if (key == GLFW_KEY_K && modifiers == MODIF_CTRL) { // play the path
             if (kfi_->is_interpolation_started())
                 kfi_->stop_interpolation();
             else
                 kfi_->start_interpolation();
-        } else if (key == GLFW_KEY_T && modifiers == EASY3D_MOD_CONTROL) {
+        } else if (key == GLFW_KEY_T && modifiers == MODIF_CTRL) {
             show_camera_path_ = !show_camera_path_;
             if (show_camera_path_) {
                 const std::size_t count = kfi_->number_of_keyframes();
@@ -1616,7 +1608,7 @@ namespace easy3d {
 
         // ------------- draw the picking region with transparency  ---------------
 
-        if (pressed_button_ == GLFW_MOUSE_BUTTON_LEFT && modifiers_ == EASY3D_MOD_CONTROL) {
+        if (pressed_button_ == GLFW_MOUSE_BUTTON_LEFT && modifiers_ == MODIF_CTRL) {
             const Rect rect(
                 static_cast<float>(mouse_pressed_x_), 
                 static_cast<float>(mouse_current_x_), 
