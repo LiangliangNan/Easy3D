@@ -1055,10 +1055,12 @@ namespace easy3d {
             hend = h;
             do
             {
-                // TODO: Check if this function cam handle some special cases.
-                // To be more robustness
-                //n += cross(p2-p1, p0-p1);
-                n += cross(p2-p1, p0-p1).normalize();
+                // TODO: Check if this function cam handle some special cases (#concave corners == #convex corners, leading to a 0 normal).
+                if (distance2(p2, p1) < min<float>() || distance2(p0, p1) < min<float>() || distance2(p2, p0) < min<float>())
+                    LOG(WARNING) << "degenarate case encountered";
+                else
+                    n += cross(p2 - p1, p0 - p1);
+
                 h  = next(h);
                 p0 = p1;
                 p1 = p2;

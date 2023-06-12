@@ -276,7 +276,12 @@ namespace easy3d {
 
                     auto points = model->get_vertex_property<vec3>("v:point");
                     model->update_vertex_normals();
-                    auto normals = model->get_vertex_property<vec3>("v:normal");
+                    auto vnormals = model->get_vertex_property<vec3>("v:normal");
+                    auto fnormals = model->get_face_property<vec3>("f:normal");
+                    if (!fnormals) {
+                        model->update_face_normals();
+                        fnormals = model->get_face_property<vec3>("f:normal");
+                    }
 
                     const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
                     const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
@@ -296,7 +301,7 @@ namespace easy3d {
                     for (auto face : model->faces()) {
                         tessellator.reset();
 
-                        tessellator.begin_polygon(model->compute_face_normal(face));
+                        tessellator.begin_polygon(fnormals[face]);
                         tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                         tessellator.begin_contour();
                         float coord = (prop[face] - min_value) / (max_value - min_value);
@@ -304,7 +309,7 @@ namespace easy3d {
                         for (auto h : model->halfedges(face)) {
                             auto v = model->target(h);
                             Tessellator::Vertex vertex(points[v], v.idx());
-                            vertex.append(normals[v]);
+                            vertex.append(vnormals[v]);
                             vertex.append(vec2(coord, 0.5f));
                             tessellator.add_vertex(vertex);
                         }
@@ -415,7 +420,12 @@ namespace easy3d {
 
                     auto points = model->get_vertex_property<vec3>("v:point");
                     model->update_vertex_normals();
-                    auto normals = model->get_vertex_property<vec3>("v:normal");
+                    auto vnormals = model->get_vertex_property<vec3>("v:normal");
+                    auto fnormals = model->get_face_property<vec3>("f:normal");
+                    if (!fnormals) {
+                        model->update_face_normals();
+                        fnormals = model->get_face_property<vec3>("f:normal");
+                    }
 
                     const float dummy_lower = (drawable->clamp_range() ? drawable->clamp_lower() : 0.0f);
                     const float dummy_upper = (drawable->clamp_range() ? drawable->clamp_upper() : 0.0f);
@@ -424,13 +434,13 @@ namespace easy3d {
                     internal::clamp_scalar_field(prop.vector(), min_value, max_value, dummy_lower, dummy_upper);
 
                     for (auto face : model->faces()) {
-                        tessellator.begin_polygon(model->compute_face_normal(face));
+                        tessellator.begin_polygon(fnormals[face]);
                         tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                         tessellator.begin_contour();
                         for (auto h : model->halfedges(face)) {
                             auto v = model->target(h);
                             Tessellator::Vertex vertex(points[v], v.idx());
-                            vertex.append(normals[v]);
+                            vertex.append(vnormals[v]);
 
                             float coord = (prop[v] - min_value) / (max_value - min_value);
                             vertex.append(vec2(coord, 0.5f));
@@ -978,21 +988,25 @@ namespace easy3d {
 
                     auto points = model->get_vertex_property<vec3>("v:point");
                     model->update_vertex_normals();
-                    auto normals = model->get_vertex_property<vec3>("v:normal");
+                    auto vnormals = model->get_vertex_property<vec3>("v:normal");
+                    auto fnormals = model->get_face_property<vec3>("f:normal");
+                    if (!fnormals) {
+                        model->update_face_normals();
+                        fnormals = model->get_face_property<vec3>("f:normal");
+                    }
 
 #if HANDLE_HOLES
                     auto prop_holes = model->get_face_property< std::vector< std::vector<vec3> > >("f:holes");
 #endif
 
                     for (auto face : model->faces()) {
-                        const auto normal = model->compute_face_normal(face);
-                        tessellator.begin_polygon(normal);
+                        tessellator.begin_polygon(fnormals[face]);
                         tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                         tessellator.begin_contour();
                         for (auto h : model->halfedges(face)) {
                             auto v = model->target(h);
                             Tessellator::Vertex vertex(points[v], v.idx());
-                            vertex.append(normals[v]);
+                            vertex.append(vnormals[v]);
                             tessellator.add_vertex(vertex);
                         }
                         tessellator.end_contour();
@@ -1112,17 +1126,22 @@ namespace easy3d {
 
                     auto points = model->get_vertex_property<vec3>("v:point");
                     model->update_vertex_normals();
-                    auto normals = model->get_vertex_property<vec3>("v:normal");
+                    auto vnormals = model->get_vertex_property<vec3>("v:normal");
+                    auto fnormals = model->get_face_property<vec3>("f:normal");
+                    if (!fnormals) {
+                        model->update_face_normals();
+                        fnormals = model->get_face_property<vec3>("f:normal");
+                    }
 
                     for (auto face : model->faces()) {
-                        tessellator.begin_polygon(model->compute_face_normal(face));
+                        tessellator.begin_polygon(fnormals[face]);
                         // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                         tessellator.begin_contour();
                         const vec3 &color = fcolor[face];
                         for (auto h : model->halfedges(face)) {
                             auto v = model->target(h);
                             Tessellator::Vertex vertex(points[v], v.idx());
-                            vertex.append(normals[v]);
+                            vertex.append(vnormals[v]);
                             vertex.append(color);
                             tessellator.add_vertex(vertex);
                         }
@@ -1223,16 +1242,21 @@ namespace easy3d {
                      */
                     auto points = model->get_vertex_property<vec3>("v:point");
                     model->update_vertex_normals();
-                    auto normals = model->get_vertex_property<vec3>("v:normal");
+                    auto vnormals = model->get_vertex_property<vec3>("v:normal");
+                    auto fnormals = model->get_face_property<vec3>("f:normal");
+                    if (!fnormals) {
+                        model->update_face_normals();
+                        fnormals = model->get_face_property<vec3>("f:normal");
+                    }
 
                     for (auto face : model->faces()) {
-                        tessellator.begin_polygon(model->compute_face_normal(face));
+                        tessellator.begin_polygon(fnormals[face]);
                         // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                         tessellator.begin_contour();
                         for (auto h : model->halfedges(face)) {
                             auto v = model->target(h);
                             Tessellator::Vertex vertex(points[v], v.idx());
-                            vertex.append(normals[v]);
+                            vertex.append(vnormals[v]);
                             vertex.append(vcolor[v]);
                             tessellator.add_vertex(vertex);
                         }
@@ -1335,16 +1359,21 @@ namespace easy3d {
 
                     auto points = model->get_vertex_property<vec3>("v:point");
                     model->update_vertex_normals();
-                    auto normals = model->get_vertex_property<vec3>("v:normal");
+                    auto vnormals = model->get_vertex_property<vec3>("v:normal");
+                    auto fnormals = model->get_face_property<vec3>("f:normal");
+                    if (!fnormals) {
+                        model->update_face_normals();
+                        fnormals = model->get_face_property<vec3>("f:normal");
+                    }
 
                     for (auto face : model->faces()) {
-                        tessellator.begin_polygon(model->compute_face_normal(face));
+                        tessellator.begin_polygon(fnormals[face]);
                         // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                         tessellator.begin_contour();
                         for (auto h : model->halfedges(face)) {
                             auto v = model->target(h);
                             Tessellator::Vertex vertex(points[v], v.idx());
-                            vertex.append(normals[v]);
+                            vertex.append(vnormals[v]);
                             vertex.append(vtexcoords[v]);
                             tessellator.add_vertex(vertex);
                         }
@@ -1455,16 +1484,21 @@ namespace easy3d {
 
                     auto points = model->get_vertex_property<vec3>("v:point");
                     model->update_vertex_normals();
-                    auto normals = model->get_vertex_property<vec3>("v:normal");
+                    auto vnormals = model->get_vertex_property<vec3>("v:normal");
+                    auto fnormals = model->get_face_property<vec3>("f:normal");
+                    if (!fnormals) {
+                        model->update_face_normals();
+                        fnormals = model->get_face_property<vec3>("f:normal");
+                    }
 
                     for (auto face : model->faces()) {
-                        tessellator.begin_polygon(model->compute_face_normal(face));
+                        tessellator.begin_polygon(fnormals[face]);
                         // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                         tessellator.begin_contour();
                         for (auto h : model->halfedges(face)) {
                             auto v = model->target(h);
                             Tessellator::Vertex vertex(points[v], v.idx());
-                            vertex.append(normals[v]);
+                            vertex.append(vnormals[v]);
                             vertex.append(htexcoords[h]);
                             tessellator.add_vertex(vertex);
                         }
