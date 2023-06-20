@@ -160,6 +160,8 @@ This is quite easy, like many other open-source libraries :-)
 After you have built Easy3D, you only need to point `Easy3D_DIR` to your `build` (or the installation) directory of Easy3D when doing cmake. Then the requested Easy3D libraries, including directories and relevant compile definitions of Easy3D, are visible and accessible to your project. Below is an example of using the default Easy3D viewer. 
 The `CMakeLists.txt` looks like:
 ``` cmake
+cmake_minimum_required(VERSION 3.12)
+project(MyProject)
 set(CMAKE_CXX_STANDARD 11)                       # specify C++ standard
 find_package(Easy3D COMPONENTS viewer REQUIRED)  # request Easy3D (recommended to request only needed components)
 add_executable(Test main.cpp)                    # create an executable target
