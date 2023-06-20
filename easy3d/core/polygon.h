@@ -95,13 +95,13 @@ namespace easy3d {
     #if 0
         return signed_area() < 0;
     #else
-        double sum = 0;
+        FT sum = FT(0);
         for (std::size_t i = 0; i + 1 < BaseClass::size(); ++i) {
             const auto &p1 = BaseClass::at(i);
             const auto &p2 = BaseClass::at((i + 1) % BaseClass::size());
             sum += (p2.x - p1.x) * (p2.y + p1.y);
         }
-        return sum < 0.0;
+        return sum < 0;
     #endif
     }
 

@@ -31,6 +31,7 @@
 
 namespace easy3d {
 
+    /// ToDo: use GenericPolygon<FT>::is_clockwise() to validate the input
 
     bool PolygonPartition::apply_OPT(const std::vector<vec2> &input_polygon, std::vector<Polygon> &parts) {
         TPPLPoly poly;

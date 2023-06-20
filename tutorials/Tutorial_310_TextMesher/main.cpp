@@ -33,6 +33,9 @@
 #include <easy3d/util/initializer.h>
 
 
+// This example shows how to
+//		- generate a surface mesh models from texts
+
 using namespace easy3d;
 
 int main(int argc, char **argv) {
@@ -42,11 +45,11 @@ int main(int argc, char **argv) {
     // Create an Easy3D viewer.
     Viewer viewer(EXAMPLE_TITLE);
 
-    // Create an instance of mesher by specifying a font file.
+    // Create an instance of the mesher by specifying a font file.
     const std::string font_file = resource::directory() + "/fonts/en_Earth-Normal.ttf";
     TextMesher mesher(font_file);
 
-#if 1 // extract and visualize the mesh
+#if 1 // extract and visualize the mesh model of the text
     // Generate a surface mesh for "Easy3D".
     SurfaceMesh* mesh = mesher.generate("Easy3D", 0, 0, 48, 15, true);
     if (mesh)
@@ -56,7 +59,7 @@ int main(int argc, char **argv) {
     mesher.set_font(resource::directory() + "/fonts/en_Roboto-Regular.ttf");
     mesher.generate(mesh,"Makes 3D Easy!", 350, 0, 25, 15, true);
 
-#else // extract and visualize the contours
+#else // extract and visualize the 2D contours of the text
     std::vector< std::vector<Polygon2> > contours;
     mesher.set_font(font_file);
     mesher.generate("Easy3D", 0, -60, 48, contours, true);
