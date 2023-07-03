@@ -130,7 +130,7 @@ if (Easy3D_ENABLE_CGAL)
                     CGAL_TEST_DRAW_FUNCTIONS
                     CGAL_WITH_DRAW_FUNCTIONS
                     CGAL_WITH_GMPXX)
-            message(STATUS "Found CGAL v${CGAL_VERSION}")
+            message(STATUS "Found CGAL v${CGAL_VERSION}. Include dirs: ${CGAL_INCLUDE_DIRS}")
         else ()
             set(Easy3D_HAS_CGAL FALSE)
             message(FATAL_ERROR "You have requested CGAL support and CGAL v${CGAL_VERSION} is found. However, Easy3D "
