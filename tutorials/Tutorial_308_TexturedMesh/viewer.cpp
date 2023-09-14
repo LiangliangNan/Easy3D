@@ -62,14 +62,16 @@ namespace easy3d {
     }
 
 
-    Model *TexturedViewer::add_model(const std::string &file_name) {
+    Model *TexturedViewer::add_model(const std::string &file_name, bool create_default_drawables) {
+        clear_scene(); // delete all existing models
+
         if (!file_system::is_file(file_name)) {
             LOG(ERROR) << "file does not exist: " << file_name;
             return nullptr;
         }
 
         if (file_system::extension(file_name, true) != "obj")
-            return Viewer::add_model(file_name, true);
+            return Viewer::add_model(file_name, create_default_drawables);
 
         fastObjMesh *fom = fast_obj_read(file_name.c_str());
         if (!fom) {
@@ -203,7 +205,7 @@ namespace easy3d {
 
         // since the mesh has been built, skip texture if material and texcoord information don't exist
         if (fom->material_count == 0 || !fom->materials) {
-            Viewer::add_model(mesh, true);
+            Viewer::add_model(mesh, create_default_drawables);
             return mesh;
         }
         else
@@ -269,6 +271,7 @@ namespace easy3d {
                 drawable->update_texcoord_buffer(d_texcoords);
 
             drawable->set_smooth_shading(false);
+            drawable->set_distinct_back_color(false); // ignore inconsistent orientations
             if (prop_texcoords) {
                 if (!group.tex_file.empty()) {
                     Texture *tex = TextureManager::request(group.tex_file, Texture::REPEAT);

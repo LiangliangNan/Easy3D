@@ -41,7 +41,7 @@ namespace easy3d {
     public:
         explicit TexturedViewer(const std::string& title = "");
 
-        Model* add_model(const std::string& file_name);
+        Model* add_model(const std::string& file_name, bool create_default_drawables = true) override;
     };
 
 }
