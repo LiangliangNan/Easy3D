@@ -223,7 +223,7 @@ namespace easy3d {
          * @return The pointer to the model added to the viewer (nullptr if failed).
          * @related create_drawables(Model* model).
          */
-        Model* add_model(const std::string& file_name, bool create_default_drawables = true);
+        virtual Model* add_model(const std::string& file_name, bool create_default_drawables = true);
 
         /**
          * @brief Add an existing model to the viewer to be visualized. After a model being added
