@@ -314,6 +314,7 @@ namespace easy3d {
 
         float xscale(0), yscale(0);
         glfwGetWindowContentScale(window, &xscale, &yscale);
+        LOG_IF(xscale != yscale, ERROR) << "window content scale in X and Y directions not identical (X: " << xscale << ", Y: " << yscale << ")";
         dpi_scaling_ = static_cast<float>(xscale + yscale) * 0.5f;
         VLOG(1) << "DPI scaling: " << dpi_scaling();
 

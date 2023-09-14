@@ -74,7 +74,7 @@ namespace easy3d
     /// \brief Computes the hash value of a 2D vector.
     template <typename FT>
     uint64_t hash(const Vec<2, FT>& value) {
-        uint64_t seed = 0;
+        uint64_t seed(0);
         hash_combine(seed, value.x);
         hash_combine(seed, value.y);
         return seed;
@@ -83,7 +83,7 @@ namespace easy3d
     /// \brief Computes the hash value of a 3D vector.
     template <typename FT>
     uint64_t hash(const Vec<3, FT>& value) {
-        uint64_t seed = 0;
+        uint64_t seed(0);
         hash_combine(seed, value.x);
         hash_combine(seed, value.y);
         hash_combine(seed, value.z);
@@ -94,8 +94,8 @@ namespace easy3d
     /// \brief Computes the hash value of a \p DIM dimensional vector.
     template <int DIM, typename FT> inline
     uint64_t hash(const Vec<DIM, FT>& value) {
-        uint64_t seed = 0;
-        for (uint64_t i=0; i<DIM; ++i)
+        uint64_t seed(0);
+        for (int i=0; i<DIM; ++i)
             hash_combine(seed, value[i]);
         return seed;
     }
@@ -104,7 +104,7 @@ namespace easy3d
     /// \brief Computes the hash value of a 1D array.
     template<typename Iterator>
     inline uint64_t hash(Iterator first, Iterator last) {
-        uint64_t seed = 0;
+        uint64_t seed(0);
         for (; first != last; ++first) {
             hash_combine(seed, *first);
         }
