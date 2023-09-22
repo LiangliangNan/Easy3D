@@ -93,7 +93,7 @@ int main(int argc, char** argv) {
     SurfaceMesh* mesh = new SurfaceMesh;
     for (const auto& p : points)
         mesh->add_vertex({p.x, p.y, 0});
-    for (auto& poly : parts) {
+    for (const auto& poly : parts) {
         std::vector<SurfaceMesh::Vertex> vts;
         for (const auto& id : poly)
             vts.push_back(SurfaceMesh::Vertex(static_cast<int>(id)));
