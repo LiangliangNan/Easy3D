@@ -56,26 +56,26 @@ int main(int argc, char** argv) {
 
     // the vertices of the polygon (including the holes).
     std::vector<vec2> points = {
-            vec2(  0,   0), // 0: start of outer contour, in counter-clockwise order
+            vec2(  0,   0), // 0: start of outer contour, in counterclockwise order
             vec2(500,   0), // 1
             vec2(500, 700), // 2
             vec2(  0, 700), // 3
-            vec2(100, 100), // 4: start of 1st hole, in counter-clockwise order
+            vec2(100, 100), // 4: start of 1st hole, also in counterclockwise order
             vec2(400, 100), // 5
             vec2(400, 300), // 6
             vec2(100, 300), // 7
-            vec2(100, 400), // 8: start of 2nd hole, in counter-clockwise order
+            vec2(100, 400), // 8: start of 2nd hole, also in counterclockwise order
             vec2(400, 400), // 9
             vec2(400, 600), // 10
             vec2(100, 600), // 11
     };
 
-    // the outer contour represented by the vertex indices. Note: must be in counter-clock order.
+    // the outer contour represented by the vertex indices. Note: must be in counterclockwise order.
     std::vector<PolygonPartition::Polygon> polygons = {
             {0, 1, 2, 3}    // outer contour
     };
 
-    // the interior contours representing holes. Note: hole vertices must be in counter-clock order.
+    // the interior contours representing holes. Note: hole vertices must be in clockwise order.
     std::vector<PolygonPartition::Polygon> holes = {
             {7,  6,  5, 4}, // {4, 5, 6, 7} won't work
             {11, 10, 9, 8}, // {8, 9, 10, 11} won't work
