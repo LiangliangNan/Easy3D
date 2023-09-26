@@ -113,21 +113,61 @@ namespace easy3d {
                 return false;
             }
 
+			// determine if the file is a binary STL file
+			auto is_binary = [](const std::string& file) -> bool {
+				// assume it's binary stl, then file size is known from #triangles.
+				// if size matches, it's really binary
+				std::ifstream input(file.c_str(), std::fstream::binary);
+				if (input.fail()) {
+					LOG(ERROR) << "could not open file: " << file;
+					return false;
+				}
 
-			// ASCII or binary STL?
-			c = fgets(line, 6, in);
-			assert(c != nullptr);
-			const bool binary = ((strncmp(line, "SOLID", 5) != 0) &&
-				(strncmp(line, "solid", 5) != 0));
+				// skip header
+				input.seekg(80, std::ifstream::beg);
+				if (input.fail()) {
+					LOG(ERROR) << "file size is less than 80 bytes";
+					return false;
+				}
+
+				// read number of triangles
+				std::int32_t nTriangles = 0;
+				input.read((char*)&nTriangles, 4);
+
+				// compute file size from nTriangles
+				size_t needed_size = 84 + nTriangles * 50; // 50 bytes per triangle face (4*12+2 bytes)
+
+				// get actual file size
+				input.seekg(0, std::fstream::beg);
+				size_t begin_pos = input.tellg();
+				input.seekg(0, std::fstream::end);
+				size_t end_pos = input.tellg();
+				size_t file_size = end_pos - begin_pos;
+				input.close();
+
+				// if sizes match, it is indeed binary format
+				if (needed_size == file_size)
+					return true;
+
+				// NOTE: many people may forget the last two bytes, so let's make it more tolerant
+				if (needed_size == (file_size + 2)) {
+					LOG(ERROR) << "number of triangles in STL file does not match file size. Bytes needed: " << needed_size
+						<< ", available: " << file_size << ". Trying to open it as STL binary file...";
+					return true;
+				}
+
+				return false;
+			};
 
 
 			// parse binary STL
-			if (binary)
+			if (is_binary(file_name))
 			{
 				// re-open file in binary mode
 				fclose(in);
 				in = fopen(file_name.c_str(), "rb");
-				if (!in) return false;
+				if (!in) 
+					return false;
 
 				// skip dummy header
 				auto n_items = fread(line, 1, 80, in);
