@@ -199,12 +199,17 @@ namespace easy3d {
                 program->set_uniform("MANIP", MANIP)
                         ->set_uniform("NORMAL", NORMAL);
 
+#if 0
+                // Liangliang: SSAO is disabled for points drawables because the shader "ssao/geometry_pass" requires normal information, 
+                //             while normal informaiton is not always available for points drawables (e.g., points without normals, and 
+                //             the "locks" drawable for non-manifold vertices.
                 for (auto d : model->renderer()->points_drawables()) {
                     if (d->is_visible()) {
                         ClippingPlane::instance()->set_program(program);
                         d->gl_draw(); easy3d_debug_log_gl_error
                     }
                 }
+#endif
                 for (auto d : model->renderer()->triangles_drawables()) {
                     if (d->is_visible()) {
                         ClippingPlane::instance()->set_program(program);
