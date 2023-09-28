@@ -35,7 +35,7 @@
 
 using namespace easy3d;
 
-CollisionViewer::CollisionViewer(const std::string &title)
+TutorialCollisionDetection::TutorialCollisionDetection(const std::string &title)
         : Viewer(title)
         , model0_color_(0.8f, 1.0f, 0.8f)
         , model1_color_(0.8f, 0.8f, 1.0f)
@@ -48,9 +48,11 @@ CollisionViewer::CollisionViewer(const std::string &title)
         // use the manipulator to transform the first model (visualization only and geometry is not changed)
         mesh0->set_manipulator(new Manipulator(mesh0));
 
+        // the first mesh is colored by a "face_color" property
         mesh0->add_face_property<vec3>("face_color", model0_color_);
         mesh0->renderer()->get_triangles_drawable("faces")->set_coloring(easy3d::State::COLOR_PROPERTY, easy3d::State::FACE, "face_color");
 
+        // the second mesh is also colored by a "face_color" property
         mesh1->add_face_property<vec3>("face_color", model1_color_);
         mesh1->renderer()->get_triangles_drawable("faces")->set_coloring(easy3d::State::COLOR_PROPERTY, easy3d::State::FACE, "face_color");
 
@@ -69,7 +71,7 @@ CollisionViewer::CollisionViewer(const std::string &title)
         });
     }
     else
-        LOG(WARNING) << "not all two meshe models have been loaded";
+        LOG(WARNING) << "not all the two meshes have been loaded";
 
     usage_string_ =
             "--------------------- Collision Viewer usage ----------------------\n"
@@ -83,13 +85,13 @@ CollisionViewer::CollisionViewer(const std::string &title)
 }
 
 
-CollisionViewer::~CollisionViewer() {
+TutorialCollisionDetection::~TutorialCollisionDetection() {
     timer_.stop();
     delete collider_;
 }
 
 
-bool CollisionViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
+bool TutorialCollisionDetection::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
     if (collider_ && models().size() == 2 && modifiers == MODIF_ALT && timer_.is_paused()) {
         auto manipulator = models_[0]->manipulator();
         if (button == BUTTON_LEFT)
@@ -107,7 +109,7 @@ bool CollisionViewer::mouse_drag_event(int x, int y, int dx, int dy, int button,
 }
 
 
-bool CollisionViewer::key_press_event(int key, int modifiers) {
+bool TutorialCollisionDetection::key_press_event(int key, int modifiers) {
     if (key == KEY_SPACE) {
         if (timer_.is_paused())
             timer_.resume();
@@ -120,12 +122,12 @@ bool CollisionViewer::key_press_event(int key, int modifiers) {
 }
 
 
-void CollisionViewer::detect() {
+void TutorialCollisionDetection::detect() {
     const auto pairs = collider_->detect(models_[0]->manipulator()->matrix(), mat4::identity());
     //std::cout << pairs.size() << " pairs of intersecting faces" << std::endl;
 
     // mark the intersecting faces red
-    // Note: The following code is for visualizing the intersecting faces, and the code is not optimized.
+    // Note: The following code is for visualizing the intersecting faces and is not optimized.
     //      Ideas for better performance:
     //          (1) update only the color buffer;
     //          (2) use a shader storage buffer to transfer the *status* of the faces to the fragment shader.

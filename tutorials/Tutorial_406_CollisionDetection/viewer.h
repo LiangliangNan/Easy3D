@@ -24,8 +24,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef EASY3D_TUTORIAL_COLLISION_DETECTION_VIEWER_H
-#define EASY3D_TUTORIAL_COLLISION_DETECTION_VIEWER_H
+#ifndef EASY3D_TUTORIAL_COLLISION_DETECTION_H
+#define EASY3D_TUTORIAL_COLLISION_DETECTION_H
 
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/util/timer.h>
@@ -37,10 +37,10 @@ namespace easy3d {
     class Collider;
 }
 
-class CollisionViewer : public easy3d::Viewer {
+class TutorialCollisionDetection : public easy3d::Viewer {
 public:
-    explicit CollisionViewer(const std::string &title);
-    ~CollisionViewer() override;
+    explicit TutorialCollisionDetection(const std::string &title);
+    ~TutorialCollisionDetection() override;
 
 private:
     bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;
@@ -58,4 +58,4 @@ private:
 };
 
 
-#endif // EASY3D_TUTORIAL_COLLISION_DETECTION_VIEWER_H
+#endif // EASY3D_TUTORIAL_COLLISION_DETECTION_H

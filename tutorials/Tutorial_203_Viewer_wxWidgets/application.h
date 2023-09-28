@@ -31,7 +31,6 @@
 
 namespace easy3d {
 
-    class AppImpl;
     class Application {
     public:
         explicit Application(const std::string &title = "Untitled", int width = 800, int height = 600);

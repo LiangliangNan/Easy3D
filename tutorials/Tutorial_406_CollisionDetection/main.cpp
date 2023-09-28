@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
     // initialize Easy3D.
     initialize();
 
-    CollisionViewer viewer(EXAMPLE_TITLE);
+    TutorialCollisionDetection viewer(EXAMPLE_TITLE);
 
     // run the viewer
     return viewer.run();

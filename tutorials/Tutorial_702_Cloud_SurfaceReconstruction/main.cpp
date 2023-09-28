@@ -48,7 +48,7 @@ bool reconstruction(Viewer* viewer, Model* model) {
     if (!normals) {
         std::cerr << "Poisson surface reconstruction method requires normal information."
                   << " Please provide normal information. Alternatively, you can use the "
-                  << " Tutorial_601_PointCloud_NormalEstimation for normal estimation" << std::endl;
+                  << " Tutorial_701_Cloud_NormalEstimation for normal estimation" << std::endl;
         return false;
     }
 
