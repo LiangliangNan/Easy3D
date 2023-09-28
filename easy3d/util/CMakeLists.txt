@@ -1,7 +1,7 @@
 set(module util)
 
 find_package(Threads REQUIRED)
-set(private_dependencies 3rd_backward)
+set(private_dependencies)
 set(public_dependencies Threads::Threads)
 
 set(${module}_headers
@@ -14,7 +14,6 @@ set(${module}_headers
         progress.h
         resource.h
         setting.h
-        stack_tracer.h
         stop_watch.h
         string.h
         timer.h
@@ -31,7 +30,6 @@ set(${module}_sources
         progress.cpp
         resource.cpp
         setting.cpp
-        stack_tracer.cpp
         stop_watch.cpp
         string.cpp
         version.cpp

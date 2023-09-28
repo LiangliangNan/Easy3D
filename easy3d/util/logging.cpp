@@ -26,7 +26,6 @@
 
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
-#include <easy3d/util/stack_tracer.h>
 
 #include <3rd_party/easyloggingpp/easylogging++.cc>
 
@@ -101,8 +100,7 @@ namespace easy3d
             std::stringstream ss;
             ss << crash_reason(sig) << "\n"
                << stacktrace_failure_header() << "\n"
-//               << el::base::debug::StackTrace();
-                << StackTracer::back_trace_string(32, 4); // more reliable and readable than el
+               << el::base::debug::StackTrace();
 
             LOG(FATAL) << ss.str();
 

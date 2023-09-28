@@ -310,7 +310,11 @@ int SparseMatrix<T>::SolveGS( const std::vector< std::vector< int > >& mcIndices
 {
 	int sum=0;
 #ifdef _WIN32
-#define SetOMPParallel __pragma( omp parallel for num_threads( threads ) )
+    #ifdef _MSC_VER
+        #define SetOMPParallel __pragma( omp parallel for num_threads( threads ) )
+    #else // Liangliang: assumed to be MinGW (and then disable omp)
+        #define SetOMPParallel 
+    #endif
 #else // !_WIN32
 #define SetOMPParallel _Pragma( "omp parallel for num_threads( threads )" )
 #endif // _WIN32

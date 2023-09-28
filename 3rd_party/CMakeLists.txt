@@ -25,8 +25,5 @@ add_subdirectory(glutess)
 add_subdirectory(opcode)
 add_subdirectory(polypartition)
 
-add_subdirectory(backward)
-
-
 
 
