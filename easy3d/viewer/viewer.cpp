@@ -1167,6 +1167,10 @@ namespace easy3d {
 
 
     void Viewer::init() {
+        //// back face culling?
+        //glEnable(GL_CULL_FACE);
+        //glCullFace(GL_BACK); // culls only the back faces
+
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
 

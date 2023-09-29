@@ -188,7 +188,12 @@ void PaintCanvas::initializeGL() {
         throw std::runtime_error(
                 "Framebuffer Object is not supported on this machine!!! Mapple may not run properly");
 
+    //// back face culling?
+    //func_->glEnable(GL_CULL_FACE);
+    //func_->glCullFace(GL_BACK); // culls only the back faces
+
     func_->glEnable(GL_DEPTH_TEST);
+    func_->glDepthFunc(GL_LESS);
 
     func_->glClearDepthf(1.0f);
     func_->glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
