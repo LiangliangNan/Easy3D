@@ -52,6 +52,23 @@ namespace easy3d {
     }
 
 
+    KdTreeSearch_FLANN::KdTreeSearch_FLANN(const std::vector<vec3>& points) : KdTreeSearch(points) {
+        //checks_ = 32;
+        checks_ = flann::FLANN_CHECKS_AUTOTUNED;
+
+        // prepare data
+        points_num_ = int(points.size());
+        points_ = const_cast<float*>(points[0].data());
+
+        // create tree
+        flann::Matrix<float> dataset(points_, points_num_, 3);
+        // construct a single kd-tree optimized for searching lower dimensionality data
+        auto tree = new flann::Index< flann::L2<float> >(dataset, flann::KDTreeSingleIndexParams());
+        tree->buildIndex();
+        tree_ = tree;
+    }
+
+
     KdTreeSearch_FLANN::~KdTreeSearch_FLANN() {
         delete get_tree(tree_);
     }

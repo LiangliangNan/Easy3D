@@ -46,6 +46,12 @@ namespace easy3d {
          */
         explicit KdTreeSearch_NanoFLANN(const PointCloud *cloud);
 
+        /**
+         * \brief Constructor.
+         * \param points The points for which a KdTree will be constructed.
+         */
+        explicit KdTreeSearch_NanoFLANN(const std::vector<vec3>& points);
+
         ~KdTreeSearch_NanoFLANN() override;
 
         /// \name Closest point query

@@ -47,6 +47,12 @@ namespace easy3d {
          */
         explicit KdTreeSearch_ETH(const PointCloud *cloud);
 
+        /**
+         * \brief Constructor.
+         * \param points The points for which a KdTree will be constructed.
+         */
+        explicit KdTreeSearch_ETH(const std::vector<vec3>& points);
+
         ~KdTreeSearch_ETH() override;
 
         /// \name Closest point query

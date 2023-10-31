@@ -69,6 +69,30 @@ namespace easy3d {
     }
 
 
+    KdTreeSearch_ANN::KdTreeSearch_ANN(const std::vector<vec3>& points) : KdTreeSearch(points) {
+        k_for_radius_search_ = 32;
+        LOG(INFO) << "KdTreeSearch_ANN: k = 32 for radius search";
+
+        // prepare data
+        points_num_ = int(points.size());
+#if COPY_POINT_CLOUD // make a copy of the point cloud when constructing the kd-tree
+        points_ = annAllocPts(points_num_, 3);
+        for (int i = 0; i < points_num_; ++i) {
+            const vec3& p = points[i];
+            points_[i][0] = p[0];
+            points_[i][1] = p[1];
+            points_[i][2] = p[2];
+        }
+#else
+        points_ = new float* [points_num_];
+        for (int i = 0; i < points_num_; ++i)
+            points_[i] = const_cast<float*>(points[i].data());
+#endif
+        // create tree
+        tree_ = new ANNkd_tree(const_cast<float**>(points_), points_num_, 3);
+    }
+
+
     KdTreeSearch_ANN::~KdTreeSearch_ANN() {
 #if COPY_POINT_CLOUD // make a copy of the point cloud when constructing the kd-tree
         annDeallocPts(points_);

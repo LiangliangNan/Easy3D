@@ -81,6 +81,18 @@ namespace easy3d {
     }
 
 
+    KdTreeSearch_NanoFLANN::KdTreeSearch_NanoFLANN(const std::vector<vec3>& points) : KdTreeSearch(points) {
+        // prepare data
+        points_ = const_cast<std::vector<vec3>*>(&points);
+
+        // create tree
+        auto pset = new PointSet(points_);
+        auto tree = new KdTree(pset);
+        tree->buildIndex();
+        tree_ = tree;
+    }
+
+
     KdTreeSearch_NanoFLANN::~KdTreeSearch_NanoFLANN() {
         delete get_tree(tree_);
     }

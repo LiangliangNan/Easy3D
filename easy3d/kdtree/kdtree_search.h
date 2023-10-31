@@ -85,6 +85,12 @@ namespace easy3d {
          */
         explicit KdTreeSearch(const PointCloud *cloud);
 
+        /**
+         * \brief Constructor.
+         * \param points The points for which a KdTree will be constructed.
+         */
+        explicit KdTreeSearch(const std::vector<vec3>& points);
+
         virtual ~KdTreeSearch() = default;
 
         /// \name Closest point query

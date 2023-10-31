@@ -34,4 +34,9 @@ namespace easy3d {
         (void)cloud;
     }
 
+    KdTreeSearch::KdTreeSearch(const std::vector<vec3>& points)
+    {
+        (void)points;
+    }
+
 } // namespace easy3d

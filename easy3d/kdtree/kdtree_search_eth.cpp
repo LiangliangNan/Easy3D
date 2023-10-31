@@ -47,6 +47,17 @@ namespace easy3d {
     }
 
 
+    KdTreeSearch_ETH::KdTreeSearch_ETH(const std::vector<vec3>& points) : KdTreeSearch(points) {
+        // prepare data
+        points_num_ = points.size();
+        points_ = const_cast<float*>(points[0].data());
+
+        // create tree
+        const int maxBucketSize = 16;	// number of points per bucket
+        tree_ = new kdtree::KdTree(reinterpret_cast<kdtree::Vector3D*>(points_), points_num_, maxBucketSize);
+    }
+
+
     KdTreeSearch_ETH::~KdTreeSearch_ETH() {
         delete get_tree(tree_);
         points_ = nullptr;

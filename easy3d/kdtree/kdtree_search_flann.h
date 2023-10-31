@@ -47,6 +47,12 @@ namespace easy3d {
          */
         explicit KdTreeSearch_FLANN(const PointCloud *cloud);
 
+        /**
+         * \brief Constructor.
+         * \param points The points for which a KdTree will be constructed.
+         */
+        explicit KdTreeSearch_FLANN(const std::vector<vec3>& points);
+
         ~KdTreeSearch_FLANN() override;
 
         /**
