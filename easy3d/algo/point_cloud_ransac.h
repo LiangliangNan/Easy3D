@@ -28,8 +28,7 @@
 #define EASY3D_ALGO_POINT_CLOUD_RANSAC_H
 
 
-#include <set>
-#include <vector>
+#include <easy3d/core/types.h>
 
 
 namespace easy3d {
@@ -63,6 +62,11 @@ namespace easy3d {
          * \details This is done by adding the interested primitive types one by one.
          */
         void add_primitive_type(PrimType t);
+        /**
+         * \brief Exclude a primitive types to be extracted.
+         * \details This is done by removing the primitive type from the existing list.
+         */
+        void remove_primitive_type(PrimType t);
 
         /**
          * \brief Extract primitives from a point cloud.
@@ -113,8 +117,33 @@ namespace easy3d {
                 float overlook_probability = 0.001f
         );
 
+        //Todo: implement storing parameters for spheres, toruses, and cones.
+        
+        // In addition to the primitive information (primitive type and index stored as per-vertex properties, 
+        // the parameters of the detected primititives can be queried using the perspective functions.
+        struct PlanePrim {
+            int primitive_index;            // the index of this plane (w.r.t. the entire list of detected primitives)
+            std::vector<int> vertices;      // the vertex indices (w.r.t. the point cloud) of this plane
+            Plane3 plane;                   // the plane equation
+            vec3  position; 
+            vec3  normal;
+        };
+        const std::vector<PlanePrim>& get_planes() const { return plane_primitives_; }
+
+        struct CylinderPrim {
+            int primitive_index;            // the index of this cylinder w.r.t. the entire list of detected primitives
+            std::vector<int> vertices;      // the vertex indices (w.r.t. the point cloud) of this cylinder
+            float radius;
+            vec3  position;
+            vec3  direction;
+        };
+        const std::vector<CylinderPrim>& get_cylinders() const { return cylinder_primitives_; }
+
     private:
-        std::set<PrimType> types_;
+        std::set<PrimType>      types_;
+
+        std::vector<PlanePrim>      plane_primitives_;
+        std::vector<CylinderPrim>   cylinder_primitives_;
     };
 
 }
