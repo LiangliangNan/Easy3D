@@ -70,6 +70,14 @@ namespace easy3d {
         /// \brief Returns the squared distance of a point \p p to this line.
         FT	   squared_distance(const Point &p) const { return length2(projection(p) - p); }
 
+        /// \brief Computes the perpendicular foots with another line.
+        /// \param other Another line.
+        /// \param p1 The perpendicular foot on the current line.
+        /// \param p2 The perpendicular foot on the other line.
+        /// \return true if the perpendicular foots exist, and false if the two lines are parallel.
+        /// \note This function is for 3D only. 
+        bool foots(const thisclass& another, Point& p1, Point& p2) const;
+
     private:  // Ambiguities exist for this one.
         GenericLine(const Point & p, const Vector & dir);
 
@@ -85,6 +93,32 @@ namespace easy3d {
       LOG_IF(length(dir_) < 1e-15, ERROR)
               << "degenerate line constructed from point (" << p << ") and direction (" << dir << ")";
     }
+
+
+	template <int DIM, typename FT> inline
+	bool GenericLine<DIM, FT>::foots(const thisclass& other, Point& p1, Point& p2) const {
+        // See the derivation: https://www.jianshu.com/p/34a7c4e1f3f5
+		FT a = dot(dir_, other.direction());
+		FT b = dot(dir_, dir_);
+		FT c = dot(other.direction(), other.direction());
+		if (std::abs(a * a - b * c) < epsilon<FT>()) // the two lines are colinear or parallel
+			return false;
+		FT d = dot(other.point() - p_, dir_);
+		FT e = dot(other.point() - p_, other.direction());
+		FT t1 = 0;
+		FT t2 = 0;
+		if (a == 0) {
+			t1 = d / b;
+			t2 = -e / c;
+		}
+		else {
+			t1 = (a * e - c * d) / (a * a - b * c);
+			t2 = b / a * t1 - d / a;
+		}
+		p1 = p_ + t1 * dir_;
+		p2 = other.point() + t2 * other.direction();
+		return true;
+	}
 
 
     /** Output stream support for GenericLine. */
