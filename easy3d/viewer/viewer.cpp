@@ -754,15 +754,11 @@ namespace easy3d {
     bool Viewer::key_press_event(int key, int modifiers) {
         auto mod_funcs = commands_.find(Key(key));
         if (mod_funcs != commands_.end()) {
-            auto func = mod_funcs->second.find(Modifier(modifiers));
-            if (func != mod_funcs->second.end()) {
-                auto model = func->second.second;
-                if (std::find(models_.begin(), models_.end(), model) != models_.end())
-                    return (func->second.first)(this, model);
-                else {
-                    LOG(WARNING) << "model does not exist (have you deleted it?)";
-                    return false;
-                }
+            auto func_model = mod_funcs->second.find(Modifier(modifiers));
+            if (func_model != mod_funcs->second.end()) {
+                auto func = func_model->second.first;
+                auto model = func_model->second.second;
+                return func(this, model);
             }
         }
 
