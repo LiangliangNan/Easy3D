@@ -14,6 +14,7 @@ set(${module}_headers
         surface_mesh_builder.h
         mat.h
         matrix.h
+        matrix_algo.h
         model.h
         oriented_line.h
         plane.h
@@ -38,6 +39,7 @@ set(${module}_headers
 set(${module}_sources
         graph.cpp
         surface_mesh_builder.cpp
+        matrix_algo.cpp
         model.cpp
         point_cloud.cpp
         surface_mesh.cpp
