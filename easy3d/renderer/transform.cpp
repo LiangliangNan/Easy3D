@@ -221,7 +221,8 @@ namespace easy3d {
         }
 
         mat3 normal_matrix(const mat4& mat) {
-            mat3 submv(mat);
+            // use the 3x3 sub-matrix to extract the rotation matrix (note: the translation has to be excluded) 
+            mat3 submv(mat); 
             return transpose(inverse(submv));
         }
 
@@ -231,9 +232,9 @@ namespace easy3d {
             result(0, 0) = N(0, 0);	result(0, 1) = N(0, 1);	result(0, 2) = N(0, 2);
             result(1, 0) = N(1, 0);	result(1, 1) = N(1, 1);	result(1, 2) = N(1, 2);
             result(2, 0) = N(2, 0);	result(2, 1) = N(2, 1);	result(2, 2) = N(2, 2);
-            // Set the last row to be zeros because of the column major storage. Otherwise
+            // Set the last row to zeros because of the column major storage. Otherwise
             // you need to set the last column to be zeros).
-            result(3, 0) = 0;			result(3, 1) = 0;			result(3, 2) = 0;
+            result(3, 0) = 0;   result(3, 1) = 0;   result(3, 2) = 0;
             return result;
         }
 

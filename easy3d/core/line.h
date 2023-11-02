@@ -76,7 +76,7 @@ namespace easy3d {
         /// \param p2 The perpendicular foot on the other line.
         /// \return true if the perpendicular foots exist, and false if the two lines are parallel.
         /// \note This function is for 3D only. 
-        bool foots(const thisclass& another, Point& p1, Point& p2) const;
+        bool foots(const thisclass& other, Point& p1, Point& p2) const;
 
     private:  // Ambiguities exist for this one.
         GenericLine(const Point & p, const Vector & dir);
