@@ -153,7 +153,7 @@ inline BOOL ByteStreamInFile::seek(const I64 position)
 #elif defined (__MINGW32__)
     return !(fseeko64(file, (off64_t)position, SEEK_SET));
 #else
-    return !(fseeko(file, (off64_t)position, SEEK_SET));
+    return !(fseeko(file, (off_t)position, SEEK_SET));
 #endif
   }
   return TRUE;
@@ -166,7 +166,7 @@ inline BOOL ByteStreamInFile::seekEnd(const I64 distance)
 #elif defined (__MINGW32__)
   return !(fseeko64(file, (off64_t)-distance, SEEK_END));
 #else
-  return !(fseeko(file, (off64_t)-distance, SEEK_END));
+  return !(fseeko(file, (off_t)-distance, SEEK_END));
 #endif
 }
 
