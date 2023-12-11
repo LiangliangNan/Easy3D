@@ -10,14 +10,14 @@
 
   PROGRAMMERS:
 
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
 
   COPYRIGHT:
 
-    (c) 2007-2014, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2007-2022, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
-    terms of the GNU Lesser General Licence as published by the Free Software
+    terms of the Apache Public License 2.0 published by the Apache Software
     Foundation. See the COPYING file for more information.
 
     This software is distributed WITHOUT ANY WARRANTY and without even the
@@ -25,6 +25,7 @@
   
   CHANGE HISTORY:
   
+    11 April 2019 -- 1024 AC_BUFFER_SIZE to 4096 for propagate_carry() overflow
     10 January 2011 -- licensing change for LGPL release and liblas integration
     8 December 2010 -- unified framework for all entropy coders
     30 October 2009 -- refactoring Amir Said's FastAC code
@@ -41,7 +42,7 @@
 
 /* this header byte needs to change in case incompatible change happen */
 #define AC_HEADER_BYTE 2
-#define AC_BUFFER_SIZE 1024
+#define AC_BUFFER_SIZE 4096
 
 const U32 AC__MinLength = 0x01000000U;   // threshold for renormalization
 const U32 AC__MaxLength = 0xFFFFFFFFU;      // maximum AC interval length

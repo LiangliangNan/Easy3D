@@ -9,21 +9,22 @@
 
   PROGRAMMERS:
 
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
 
   COPYRIGHT:
 
-    (c) 2007-2012, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2007-2023, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
-    terms of the GNU Lesser General Licence as published by the Free Software
+    terms of the Apache Public License 2.0 published by the Apache Software
     Foundation. See the COPYING file for more information.
 
     This software is distributed WITHOUT ANY WARRANTY and without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
   
   CHANGE HISTORY:
-  
+
+    22 March 2022 -- Fix fseek for gcc for las/lax file > 2Gb  
      1 October 2011 -- added 64 bit file support in MSVC 6.0 at McCafe at Hbf Linz
     10 January 2011 -- licensing change for LGPL release and liblas integration
     12 December 2010 -- created from ByteStreamOutFile after Howard got pushy (-;
@@ -150,9 +151,9 @@ inline BOOL ByteStreamInFile::seek(const I64 position)
 #if defined _WIN32 && ! defined (__MINGW32__)
     return !(_fseeki64(file, position, SEEK_SET));
 #elif defined (__MINGW32__)
-    return !(fseeko64(file, (off_t)position, SEEK_SET));
+    return !(fseeko64(file, (off64_t)position, SEEK_SET));
 #else
-    return !(fseeko(file, (off_t)position, SEEK_SET));
+    return !(fseeko(file, (off64_t)position, SEEK_SET));
 #endif
   }
   return TRUE;
@@ -163,9 +164,9 @@ inline BOOL ByteStreamInFile::seekEnd(const I64 distance)
 #if defined _WIN32 && ! defined (__MINGW32__)
   return !(_fseeki64(file, -distance, SEEK_END));
 #elif defined (__MINGW32__)
-  return !(fseeko64(file, (off_t)-distance, SEEK_END));
+  return !(fseeko64(file, (off64_t)-distance, SEEK_END));
 #else
-  return !(fseeko(file, (off_t)-distance, SEEK_END));
+  return !(fseeko(file, (off64_t)-distance, SEEK_END));
 #endif
 }
 

@@ -10,11 +10,11 @@
 
   PROGRAMMERS:
 
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
 
   COPYRIGHT:
 
-    (c) 2007-2015, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2007-2015, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
     terms of the GNU Lesser General Licence as published by the Free Software
@@ -25,6 +25,7 @@
 
   CHANGE HISTORY:
 
+    14 June 2023 -- add tell() to the writers to be able to write copc files
     7 September 2018 -- replaced calls to _strdup with calls to the LASCopyString macro
     17 August 2017 -- switch on "native LAS 1.4 extension". turns off with '-no_native'.
     29 March 2017 -- enable "native LAS 1.4 extension" for LASzip via '-native'
@@ -62,6 +63,9 @@ public:
 
   virtual BOOL update_header(const LASheader* header, BOOL use_inventory=FALSE, BOOL update_extra_bytes=FALSE) = 0;
   virtual I64 close(BOOL update_npoints=TRUE) = 0;
+  virtual I64 tell() { return 0; };
+
+  void dealloc();
 
   LASwriter() { npoints = 0; p_count = 0; };
   virtual ~LASwriter() {};

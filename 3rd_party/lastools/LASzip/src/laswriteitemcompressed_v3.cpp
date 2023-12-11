@@ -9,14 +9,14 @@
   
   PROGRAMMERS:
 
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
 
   COPYRIGHT:
 
-    (c) 2007-2017, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2007-2022, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
-    terms of the GNU Lesser General Licence as published by the Free Software
+    terms of the Apache Public License 2.0 published by the Apache Software
     Foundation. See the COPYING file for more information.
 
     This software is distributed WITHOUT ANY WARRANTY and without even the
@@ -52,9 +52,7 @@ typedef struct LASpoint14
   U8 scan_direction_flag : 1;
   U8 edge_of_flight_line : 1;
   U8 legacy_classification : 5;
-  U8 legacy_synthetic_flag : 1;
-  U8 legacy_keypoint_flag  : 1;
-  U8 legacy_withheld_flag  : 1;
+  U8 legacy_flags : 3;
   I8 legacy_scan_angle_rank;
   U8 user_data;
   U16 point_source_ID;
@@ -206,6 +204,8 @@ LASwriteItemCompressed_POINT14_v3::~LASwriteItemCompressed_POINT14_v3()
     delete outstream_point_source;
     delete outstream_gps_time;
   }
+
+//  fprintf(stderr, "%u %u %u %u %u %u %u %u %u\n", num_bytes_channel_returns_XY, num_bytes_Z, num_bytes_classification, num_bytes_flags, num_bytes_intensity, num_bytes_scan_angle, num_bytes_user_data, num_bytes_point_source, num_bytes_gps_time);
 }
 
 inline BOOL LASwriteItemCompressed_POINT14_v3::createAndInitModelsAndCompressors(U32 context, const U8* item)

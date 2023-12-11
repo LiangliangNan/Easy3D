@@ -9,11 +9,11 @@
 
   PROGRAMMERS:
 
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
   
   COPYRIGHT:
   
-    (c) 2007-2017, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2007-2017, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
     terms of the GNU Lesser General Licence as published by the Free Software
@@ -36,7 +36,7 @@
 
 #include "lasdefinitions.hpp"
 
-class LASinventory
+class LASLIB_DLL LASinventory
 {
 public:
   BOOL active() const { return (first == FALSE); }; 
@@ -56,7 +56,7 @@ private:
   BOOL first;
 };
 
-class LASsummary
+class LASLIB_DLL LASsummary
 {
 public:
   BOOL active() const { return (first == FALSE); }; 
@@ -65,10 +65,14 @@ public:
   I64 number_of_returns[16];
   I64 classification[32];
   I64 extended_classification[256];
-  I64 classification_synthetic;
-  I64 classification_keypoint;
-  I64 classification_withheld;
-  I64 classification_extended_overlap;
+  I64 flagged_synthetic;
+  I64 flagged_synthetic_classification[256];
+  I64 flagged_keypoint;
+  I64 flagged_keypoint_classification[256];
+  I64 flagged_withheld;
+  I64 flagged_withheld_classification[256];
+  I64 flagged_extended_overlap;
+  I64 flagged_extended_overlap_classification[256];
   LASpoint min;
   LASpoint max;
   U16 xyz_low_digits_10[3];
@@ -81,7 +85,7 @@ public:
   I64 xyz_fluff_10000[3];
   BOOL add(const LASpoint* point);
   BOOL has_fluff() const { return has_fluff(0) || has_fluff(1) || has_fluff(2); };
-  BOOL has_fluff(U32 i) const { return (number_of_point_records && (number_of_point_records == xyz_fluff_10[i])); };
+  BOOL has_fluff(U32 i) const { return (number_of_point_records && ((min.get_XYZ())[i] != (max.get_XYZ())[i]) && (number_of_point_records == xyz_fluff_10[i])); };
   BOOL has_serious_fluff() const { return has_serious_fluff(0) || has_serious_fluff(1) || has_serious_fluff(2); };
   BOOL has_serious_fluff(U32 i) const { return (number_of_point_records && (number_of_point_records == xyz_fluff_100[i])); };
   BOOL has_very_serious_fluff() const { return has_very_serious_fluff(0) || has_very_serious_fluff(1) || has_very_serious_fluff(2); };
@@ -124,7 +128,7 @@ private:
   F64* values_neg;
 };
 
-class LAShistogram
+class LASLIB_DLL LAShistogram
 {
 public:
   BOOL active() const { return is_active; }; 
@@ -165,6 +169,11 @@ private:
   LASbin* attribute2_bin;
   LASbin* attribute3_bin;
   LASbin* attribute4_bin;
+  LASbin* attribute5_bin;
+  LASbin* attribute6_bin;
+  LASbin* attribute7_bin;
+  LASbin* attribute8_bin;
+  LASbin* attribute9_bin;
   LASbin* wavepacket_index_bin;
   LASbin* wavepacket_offset_bin;
   LASbin* wavepacket_size_bin;
@@ -178,7 +187,7 @@ private:
   LASbin* return_map_bin_intensity;
 };
 
-class LASoccupancyGrid
+class LASLIB_DLL LASoccupancyGrid
 {
 public:
   void reset();

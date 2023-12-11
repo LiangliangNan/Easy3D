@@ -1,3 +1,23 @@
+20 Octover 2023 -- fix integer overflow of number_of_point_records when using laszip_update_inventory
+22 March 2022 -- fix fseek for gcc for las/lax file > 2Gb
+30 December 2021 -- fix small memory leak in lasreaditemcompressed_v3.cpp 
+ 2 December 2020 -- fix memory leak in laszip_dll.cpp
+23 September 2020 -- LASzip and LASlib: rare fix for reading bit-corrupted LAZ files where chunk table is zeroed
+24 December 2019 -- bug fix for file names with special characters like 'Töögrupid.laz'
+ 9 November 2019 -- upped version to 3.4 revision 3 for selective decompression extra bytes fix
+ 9 November 2019 -- fix for selective decompression of more than 16 extra bytes in new point types 6 or higher
+ 9 November 2019 -- moved UTF8toUTF16() function from laszip.hpp to mydefs.hpp and added new mydefs.cpp
+16 October 2019 -- unicode support added for Windows LASzip.dll via in new UTF8toUTF16() function
+11 August 2019 -- added CMake for DLL build and minor fixes to allow 64 bit Windows compile of LASzip.dll
+11 April 2019 -- increase AC_BUFFER_SIZE from 1024 to 4096 to lower chance of ultra-rare propagate_carry() overflow
+10 April 2019 -- fix potential memory leaks found by Connor Manning using valgrind
+31 March 2019 -- better license terms for core arithmetic coder thanks to Amir Said. upgrade to version 3.4 rev 0
+20 March 2019 -- upped to 3.3 r1 for checking consistent legacy and extended classification for new point types
+19 March 2019 -- bug fix when decompressing new point types: zero "legacy classification" if "classification" > 31
+ 7 March 2019 -- upped to 3.3 r0 because hobu was suggesting it for the next release
+21 February 2019 -- bug fix when writing 4,294,967,296 or more points uncompressed to LAS
+28 December 2018 -- fix for LASzip v4 decompression of WavePacket part of PRDF 9 and 10
+27 December 2018 -- upped to 3.2 r9 for bug fix in multi-channel NIR decompression
 7 November 2018 -- laszip DLL: upped to 3.2 r8 for identical legacy and extended flags check
 20 October 2018 -- fixed rare bug in LASinterval::merge_intervals()
 5 October 2018 -- laszip DLL: upped to 3.2 r6 for corrected 'is_empty' return value in laszip_inside_rectangle()

@@ -10,11 +10,11 @@
 
   PROGRAMMERS:
 
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
 
   COPYRIGHT:
 
-    (c) 2007-2015, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2007-2015, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
     terms of the GNU Lesser General Licence as published by the Free Software
@@ -34,7 +34,7 @@
 
 #include "laswriter.hpp"
 
-class LASwriterCompatibleDown : public LASwriter
+class LASLIB_DLL LASwriterCompatibleDown : public LASwriter
 {
 public:
   BOOL open(LASheader* header, LASwriteOpener* laswriteopener, BOOL moveCRSfromEVLRtoVLR=FALSE, BOOL moveEVLRtoVLR=FALSE);
@@ -59,7 +59,7 @@ private:
   I32 start_NIR_band;
 };
 
-class LASwriterCompatibleUp : public LASwriter
+class LASLIB_DLL LASwriterCompatibleUp : public LASwriter
 {
 public:
   BOOL open(LASheader* header, LASwriteOpener* laswriteopener);

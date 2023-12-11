@@ -9,14 +9,14 @@
  
   PROGRAMMERS:
 
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
 
   COPYRIGHT:
 
-    (c) 2005-2015, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2007-2022, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
-    terms of the GNU Lesser General Licence as published by the Free Software
+    terms of the Apache Public License 2.0 published by the Apache Software
     Foundation. See the COPYING file for more information.
 
     This software is distributed WITHOUT ANY WARRANTY and without even the
@@ -37,9 +37,9 @@
 #define LASLIB_DLL
 #else  // _WIN32
 #ifdef COMPILE_AS_DLL
-#define LASLIB_DLL //__declspec(dllexport)
+#define LASLIB_DLL __declspec(dllexport)
 #elif USE_AS_DLL
-#define LASLIB_DLL //__declspec(dllimport)
+#define LASLIB_DLL __declspec(dllimport)
 #else
 #define LASLIB_DLL
 #endif
@@ -124,17 +124,27 @@ typedef union I64U32I32F32 { I64 i64; U32 u32[2]; I32 i32[2]; F32 f32[2]; } I64U
 #define I32_CLAMP(n)    (((n) <= I32_MIN) ? I32_MIN : (((n) >= I32_MAX) ? I32_MAX : ((I32)(n))))
 #define U32_CLAMP(n)    (((n) <= U32_MIN) ? U32_MIN : (((n) >= U32_MAX) ? U32_MAX : ((U32)(n))))
 
-#define I8_QUANTIZE(n) (((n) >= 0) ? (I8)((n)+0.5f) : (I8)((n)-0.5f))
-#define U8_QUANTIZE(n) (((n) >= 0) ? (U8)((n)+0.5f) : (U8)(0))
+#define I8_QUANTIZE(n) (((n) >= 0) ? (I8)((n)+0.5) : (I8)((n)-0.5))
+#define U8_QUANTIZE(n) (((n) >= 0) ? (U8)((n)+0.5) : (U8)(0))
 
-#define I16_QUANTIZE(n) (((n) >= 0) ? (I16)((n)+0.5f) : (I16)((n)-0.5f))
-#define U16_QUANTIZE(n) (((n) >= 0) ? (U16)((n)+0.5f) : (U16)(0))
+#define I16_QUANTIZE(n) (((n) >= 0) ? (I16)((n)+0.5) : (I16)((n)-0.5))
+#define U16_QUANTIZE(n) (((n) >= 0) ? (U16)((n)+0.5) : (U16)(0))
 
-#define I32_QUANTIZE(n) (((n) >= 0) ? (I32)((n)+0.5f) : (I32)((n)-0.5f))
-#define U32_QUANTIZE(n) (((n) >= 0) ? (U32)((n)+0.5f) : (U32)(0))
+#define I32_QUANTIZE(n) (((n) >= 0) ? (I32)((n)+0.5) : (I32)((n)-0.5))
+#define U32_QUANTIZE(n) (((n) >= 0) ? (U32)((n)+0.5) : (U32)(0))
 
-#define I64_QUANTIZE(n) (((n) >= 0) ? (I64)((n)+0.5f) : (I64)((n)-0.5f))
-#define U64_QUANTIZE(n) (((n) >= 0) ? (U64)((n)+0.5f) : (U64)(0))
+#define I64_QUANTIZE(n) (((n) >= 0) ? (I64)((n)+0.5) : (I64)((n)-0.5))
+#define U64_QUANTIZE(n) (((n) >= 0) ? (U64)((n)+0.5) : (U64)(0))
+
+#define I8_CLAMP_QUANTIZE(n)     (((n) <= I8_MIN) ? I8_MIN : (((n) >= I8_MAX) ? I8_MAX : (I8_QUANTIZE(n))))
+#define U8_CLAMP_QUANTIZE(n)     (((n) <= U8_MIN) ? U8_MIN : (((n) >= U8_MAX) ? U8_MAX : (U8_QUANTIZE(n))))
+
+#define I16_CLAMP_QUANTIZE(n)    (((n) <= I16_MIN) ? I16_MIN : (((n) >= I16_MAX) ? I16_MAX : (I16_QUANTIZE(n))))
+#define U16_CLAMP_QUANTIZE(n)    (((n) <= U16_MIN) ? U16_MIN : (((n) >= U16_MAX) ? U16_MAX : (U16_QUANTIZE(n))))
+
+#define I32_CLAMP_QUANTIZE(n)    (((n) <= I32_MIN) ? I32_MIN : (((n) >= I32_MAX) ? I32_MAX : (I32_QUANTIZE(n))))
+#define U32_CLAMP_QUANTIZE(n)    (((n) <= U32_MIN) ? U32_MIN : (((n) >= U32_MAX) ? U32_MAX : (U32_QUANTIZE(n))))
+
 
 #define I16_FLOOR(n) ((((I16)(n)) > (n)) ? (((I16)(n))-1) : ((I16)(n)))
 #define I32_FLOOR(n) ((((I32)(n)) > (n)) ? (((I32)(n))-1) : ((I32)(n)))
@@ -172,7 +182,7 @@ typedef union I64U32I32F32 { I64 i64; U32 u32[2]; I32 i32[2]; F32 f32[2]; } I64U
 inline BOOL IS_LITTLE_ENDIAN()
 {
   const U32 i = 1;
-  return (*((U8*)&i) == 1);
+  return (*((const U8*)&i) == 1);
 }
 
 #define ENDIANSWAP16(n) \
@@ -245,5 +255,10 @@ inline void ENDIAN_SWAP_64(const U8* from, U8* to)
   to[6] = from[1];
   to[7] = from[0];
 }
+
+#if defined(_MSC_VER)
+#include <windows.h>
+wchar_t* UTF8toUTF16(const char* utf8);
+#endif
 
 #endif

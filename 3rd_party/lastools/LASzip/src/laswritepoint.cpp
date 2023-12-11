@@ -9,14 +9,14 @@
   
   PROGRAMMERS:
 
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
 
   COPYRIGHT:
 
-    (c) 2007-2017, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2007-2022, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
-    terms of the GNU Lesser General Licence as published by the Free Software
+    terms of the Apache Public License 2.0 published by the Apache Software
     Foundation. See the COPYING file for more information.
 
     This software is distributed WITHOUT ANY WARRANTY and without even the
@@ -300,26 +300,34 @@ BOOL LASwritePoint::write(const U8 * const * point)
 
   if (chunk_count == chunk_size)
   {
-    if (layered_las14_compression)
+    if (enc)
     {
-      // write how many points are in the chunk
-      outstream->put32bitsLE((U8*)&chunk_count);
-      // write all layers 
-      for (i = 0; i < num_writers; i++)
+      if (layered_las14_compression)
       {
-        ((LASwriteItemCompressed*)writers[i])->chunk_sizes();
+        // write how many points are in the chunk
+        outstream->put32bitsLE((U8*)&chunk_count);
+        // write all layers 
+        for (i = 0; i < num_writers; i++)
+        {
+          ((LASwriteItemCompressed*)writers[i])->chunk_sizes();
+        }
+        for (i = 0; i < num_writers; i++)
+        {
+          ((LASwriteItemCompressed*)writers[i])->chunk_bytes();
+        }
       }
-      for (i = 0; i < num_writers; i++)
+      else
       {
-        ((LASwriteItemCompressed*)writers[i])->chunk_bytes();
+        enc->done();
       }
+      add_chunk_to_table();
+      init(outstream);
     }
     else
     {
-      enc->done();
+      // happens *only* for uncompressed LAS with over U32_MAX points 
+      assert(chunk_size == U32_MAX);
     }
-    add_chunk_to_table();
-    init(outstream);
     chunk_count = 0;
   }
   chunk_count++;
@@ -328,14 +336,20 @@ BOOL LASwritePoint::write(const U8 * const * point)
   {
     for (i = 0; i < num_writers; i++)
     {
-      writers[i]->write(point[i], context);
+      if (!writers[i]->write(point[i], context))
+      {
+        return FALSE;
+      }
     }
   }
   else
   {
     for (i = 0; i < num_writers; i++)
     {
-      writers_raw[i]->write(point[i], context);
+      if (!writers_raw[i]->write(point[i], context))
+      {
+        return FALSE;
+      }
       ((LASwriteItemCompressed*)(writers_compressed[i]))->init(point[i], context);
     }
     writers = writers_compressed;

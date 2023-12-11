@@ -13,15 +13,15 @@
 
   PROGRAMMERS:
 
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
 
   COPYRIGHT:
 
-    (c) 2007-2015, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2007-2022, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
-    terms of the GNU Lesser General Licence as published by the Free Software
-    Foundation. See the LICENSE.txt file for more information.
+    terms of the Apache Public License 2.0 published by the Apache Software
+    Foundation. See the COPYING file for more information.
 
     This software is distributed WITHOUT ANY WARRANTY and without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -51,9 +51,9 @@ public:
   inline F64 get_y(const I32 Y) const { return y_scale_factor*Y+y_offset; };
   inline F64 get_z(const I32 Z) const { return z_scale_factor*Z+z_offset; };
 
-  inline I32 get_X(const F64 x) const { if (x >= x_offset) return (I32)((x-x_offset)/x_scale_factor+0.5); else return (I32)((x-x_offset)/x_scale_factor-0.5); };
-  inline I32 get_Y(const F64 y) const { if (y >= y_offset) return (I32)((y-y_offset)/y_scale_factor+0.5); else return (I32)((y-y_offset)/y_scale_factor-0.5); };
-  inline I32 get_Z(const F64 z) const { if (z >= z_offset) return (I32)((z-z_offset)/z_scale_factor+0.5); else return (I32)((z-z_offset)/z_scale_factor-0.5); };
+  inline I64 get_X(const F64 x) const { if (x >= x_offset) return (I64)(((x-x_offset)/x_scale_factor)+0.5); else return (I64)(((x-x_offset)/x_scale_factor)-0.5); };
+  inline I64 get_Y(const F64 y) const { if (y >= y_offset) return (I64)(((y-y_offset)/y_scale_factor)+0.5); else return (I64)(((y-y_offset)/y_scale_factor)-0.5); };
+  inline I64 get_Z(const F64 z) const { if (z >= z_offset) return (I64)(((z-z_offset)/z_scale_factor)+0.5); else return (I64)(((z-z_offset)/z_scale_factor)-0.5); };
 
   LASquantizer()
   {

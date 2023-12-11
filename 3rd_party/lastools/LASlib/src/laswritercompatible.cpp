@@ -9,11 +9,11 @@
   
   PROGRAMMERS:
 
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
 
   COPYRIGHT:
 
-    (c) 2007-2015, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2007-2015, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
     terms of the GNU Lesser General Licence as published by the Free Software
@@ -276,6 +276,13 @@ BOOL LASwriterCompatibleDown::open(LASheader* header, LASwriteOpener* laswriteop
     }
   }
 
+  // remove the old LASzip (in case it exists)
+
+  if (header->laszip)
+  {
+    header->clean_laszip();
+  }
+  
   writer = laswriteopener->open(header);
 
   if (writer == 0)

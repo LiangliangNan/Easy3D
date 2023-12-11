@@ -10,21 +10,22 @@
 
   PROGRAMMERS:
 
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
 
   COPYRIGHT:
 
-    (c) 2007-2015, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2007-2022, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
-    terms of the GNU Lesser General Licence as published by the Free Software
-    Foundation. See the LICENSE.txt file for more information.
+    terms of the Apache Public License 2.0 published by the Apache Software
+    Foundation. See the COPYING file for more information.
 
     This software is distributed WITHOUT ANY WARRANTY and without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
   
   CHANGE HISTORY:
   
+    24 March 2021 -- bug fix for signed long (I32) in set_value_as_float()
     13 September 2018 -- removed tuples and triple support from attributes
     19 July 2015 -- created after FOSS4GE in the train back from Lake Como
   
@@ -145,6 +146,9 @@ public:
   inline BOOL set_scale(F64 scale) { if (data_type) { this->scale[0] = scale; options |= 0x08; return TRUE; } return FALSE; };
   inline BOOL set_offset(F64 offset) { if (data_type) { this->offset[0] = offset; options |= 0x10; return TRUE; } return FALSE; };
 
+  inline BOOL unset_scale() { if (data_type) { options &= (~0x08); return TRUE; } return FALSE; };
+  inline BOOL unset_offset() { if (data_type) { options &= (~0x10); return TRUE; } return FALSE; };
+
   inline BOOL has_no_data() const { return options & 0x01; };
   inline BOOL has_min() const { return options & 0x02; };
   inline BOOL has_max() const { return options & 0x04; };
@@ -156,8 +160,9 @@ public:
     if (data_type)
     {
       const U32 size_table[10] = { 1, 1, 2, 2, 4, 4, 8, 8, 4, 8 };
-      U32 type = get_type();
-      return size_table[type];
+      I32 type = get_type();
+      I32 dim = get_dim();
+      return size_table[type] * dim;
     }
     else
     {
@@ -165,31 +170,100 @@ public:
     }
   };
 
-  inline F64 get_value_as_float(U8* value) const
+  inline F64 get_value_as_float(U8* pointer) const
   {
-    F64 casted_value;
+    F64 cast_value;
     I32 type = get_type();
     if (type == 0)
-      casted_value = (F64)*((U8*)value);
+      cast_value = (F64)*((U8*)pointer);
     else if (type == 1)
-      casted_value = (F64)*((I8*)value);
+      cast_value = (F64)*((I8*)pointer);
     else if (type == 2)
-      casted_value = (F64)*((U16*)value);
+      cast_value = (F64)*((U16*)pointer);
     else if (type == 3)
-      casted_value = (F64)*((I16*)value);
+      cast_value = (F64)*((I16*)pointer);
     else if (type == 4)
-      casted_value = (F64)*((U32*)value);
+      cast_value = (F64)*((U32*)pointer);
     else if (type == 5)
-      casted_value = (F64)*((I32*)value);
+      cast_value = (F64)*((I32*)pointer);
     else if (type == 6)
-      casted_value = (F64)(I64)*((U64*)value);
+      cast_value = (F64)(I64)*((U64*)pointer);
     else if (type == 7)
-      casted_value = (F64)*((I64*)value);
+      cast_value = (F64)*((I64*)pointer);
     else if (type == 8)
-      casted_value = (F64)*((F32*)value);
+      cast_value = (F64)*((F32*)pointer);
     else
-      casted_value = *((F64*)value);
-    return offset[0]+scale[0]*casted_value;
+      cast_value = *((F64*)pointer);
+    if (options & 0x08)
+    {
+      if (options & 0x10)
+      {
+        return offset[0]+scale[0]*cast_value;
+      }
+      else
+      {
+        return scale[0]*cast_value;
+      }
+    }
+    else
+    {
+      if (options & 0x10)
+      {
+        return offset[0]+cast_value;
+      }
+      else
+      {
+        return cast_value;
+      }
+    }
+  };
+
+  inline void set_value_as_float(U8* pointer, F64 value) const
+  {
+    F64 unoffset_and_unscaled_value;
+    if (options & 0x08)
+    {
+      if (options & 0x10)
+      {
+        unoffset_and_unscaled_value = (value - offset[0])/scale[0];
+      }
+      else
+      {
+        unoffset_and_unscaled_value = value/scale[0];
+      }
+    }
+    else
+    {
+      if (options & 0x10)
+      {
+        unoffset_and_unscaled_value = value - offset[0];
+      }
+      else
+      {
+        unoffset_and_unscaled_value = value;
+      }
+    }
+    I32 type = get_type();
+    if (type == 0)
+      *((U8*)pointer) = U8_QUANTIZE(unoffset_and_unscaled_value);
+    else if (type == 1)
+      *((I8*)pointer) = I8_QUANTIZE(unoffset_and_unscaled_value);
+    else if (type == 2)
+      *((U16*)pointer) = U16_QUANTIZE(unoffset_and_unscaled_value);
+    else if (type == 3)
+      *((I16*)pointer) = I16_QUANTIZE(unoffset_and_unscaled_value);
+    else if (type == 4)
+      *((U32*)pointer) = U32_QUANTIZE(unoffset_and_unscaled_value);
+    else if (type == 5)
+      *((I32*)pointer) = I32_QUANTIZE(unoffset_and_unscaled_value);
+    else if (type == 6)
+      *((U64*)pointer) = U64_QUANTIZE(unoffset_and_unscaled_value);
+    else if (type == 7)
+      *((I64*)pointer) = I64_QUANTIZE(unoffset_and_unscaled_value);
+    else if (type == 8)
+      *((F32*)pointer) = (F32)unoffset_and_unscaled_value;
+    else
+      *((F64*)pointer) = unoffset_and_unscaled_value;
   };
 
 private:
@@ -197,35 +271,35 @@ private:
   {
     return ((I32)data_type - 1)%10;
   };
-  inline I32 get_dim() const
+  inline I32 get_dim() const // compute dimension of deprecated tuple and triple attributes 
   {
-    return 1;
+    return ((I32)data_type - 1)/10 + 1;
   };
-  inline U64I64F64 cast(U8* value) const
+  inline U64I64F64 cast(U8* pointer) const
   {
     I32 type = get_type();
-    U64I64F64 casted_value;
+    U64I64F64 cast_value;
     if (type == 0)
-      casted_value.u64 = *((U8*)value);
+      cast_value.u64 = *((U8*)pointer);
     else if (type == 1)
-      casted_value.i64 = *((I8*)value);
+      cast_value.i64 = *((I8*)pointer);
     else if (type == 2)
-      casted_value.u64 = *((U16*)value);
+      cast_value.u64 = *((U16*)pointer);
     else if (type == 3)
-      casted_value.i64 = *((I16*)value);
+      cast_value.i64 = *((I16*)pointer);
     else if (type == 4)
-      casted_value.u64 = *((U32*)value);
+      cast_value.u64 = *((U32*)pointer);
     else if (type == 5)
-      casted_value.i64 = *((I32*)value);
+      cast_value.i64 = *((I32*)pointer);
     else if (type == 6)
-      casted_value.u64 = *((U64*)value);
+      cast_value.u64 = *((U64*)pointer);
     else if (type == 7)
-      casted_value.i64 = *((I64*)value);
+      cast_value.i64 = *((I64*)pointer);
     else if (type == 8)
-      casted_value.f64 = *((F32*)value);
+      cast_value.f64 = *((F32*)pointer);
     else
-      casted_value.f64 = *((F64*)value);
-    return casted_value;
+      cast_value.f64 = *((F64*)pointer);
+    return cast_value;
   };
   inline U64I64F64 smallest(U64I64F64 a, U64I64F64 b) const
   {
@@ -429,6 +503,15 @@ public:
       return attribute_sizes[index];
     }
     return -1;
+  }
+
+  const CHAR* get_attribute_name(I32 index) const
+  {
+    if (index < number_attributes)
+    {
+      return attributes[index].name;
+    }
+    return 0;
   }
 
   BOOL remove_attribute(I32 index)

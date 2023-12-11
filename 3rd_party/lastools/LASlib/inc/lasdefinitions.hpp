@@ -16,11 +16,11 @@
 
   PROGRAMMERS:
 
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
 
   COPYRIGHT:
 
-    (c) 2005-2018, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2005-2018, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
     terms of the GNU Lesser General Licence as published by the Free Software
@@ -31,6 +31,7 @@
   
   CHANGE HISTORY:
   
+    9 November 2022 -- support of COPC VLR and EVLR
     19 April 2017 -- support for selective decompression for new LAS 1.4 points 
     1 February 2017 -- better support for OGC WKT strings in VLRs or EVLRs
     22 June 2016 -- set default of VLR header "reserved" to 0 instead of 0xAABB
@@ -49,7 +50,7 @@
 #ifndef LAS_DEFINITIONS_HPP
 #define LAS_DEFINITIONS_HPP
 
-#define LAS_TOOLS_VERSION 181108
+#define LAS_TOOLS_VERSION 221128
 
 #include <stdio.h>
 #include <string.h>
@@ -57,6 +58,7 @@
 #include <assert.h>
 
 #include "mydefs.hpp"
+#include "lasvlr.hpp"
 #include "laszip.hpp"
 #include "laspoint.hpp"
 
@@ -82,6 +84,10 @@
 
 #define LAS_TOOLS_IO_IBUFFER_SIZE   262144
 #define LAS_TOOLS_IO_OBUFFER_SIZE   262144
+
+#ifndef MAX_PATH // linux
+#define MAX_PATH 256
+#endif
 
 class LASvlr
 {
@@ -153,31 +159,37 @@ private:
   U8 data[26];
 };
 
-class LASvlr_lastiling
+class LASvlr_copc_info
 {
 public:
-  U32 level;
-  U32 level_index;
-  U32 implicit_levels : 30;
-  U32 buffer : 1;
-  U32 reversible : 1;
-  F32 min_x;
-  F32 max_x;
-  F32 min_y;
-  F32 max_y;
+  F64 center_x;  // Actual (unscaled) X coordinate of center of octree
+  F64 center_y;  // Actual (unscaled) Y coordinate of center of octree
+  F64 center_z;  // Actual (unscaled) Z coordinate of center of octree
+  F64 halfsize;  // Perpendicular distance from the center to any side of the root node.
+  F64 spacing;   // Space between points at the root node. This value is halved at each octree level
+  U64 root_hier_offset; // File offset to the first hierarchy page
+  U64 root_hier_size;   // Size of the first hierarchy page in bytes
+  F64 gpstime_minimum;    // Minimum of GPSTime
+  F64 gpstime_maximum;   // Maximum of GPSTime
+  U64 reserved[11];    // Must be 0
 };
 
-class LASvlr_lasoriginal
+class LAScopc_voxelkey
 {
 public:
-  I64 number_of_point_records;
-  I64 number_of_points_by_return[15];
-  F64 max_x;
-  F64 min_x;
-  F64 max_y;
-  F64 min_y;
-  F64 max_z;
-  F64 min_z;
+  I32 depth;
+  I32 x;
+  I32 y;
+  I32 z;
+};
+
+class LASvlr_copc_entry
+{
+public:
+  LAScopc_voxelkey key;
+  U64 offset;
+  I32 byte_size;
+  I32 point_count;
 };
 
 class LASheader : public LASquantizer, public LASattributer
@@ -232,6 +244,11 @@ public:
   CHAR* vlr_geo_ogc_wkt;
   LASvlr_classification* vlr_classification;
   LASvlr_wave_packet_descr** vlr_wave_packet_descr;
+
+  // LAZ 1.4 format 6 7 8 with COPC only
+  U32 number_of_copc_entries;
+  LASvlr_copc_info* vlr_copc_info;
+  LASvlr_copc_entry* vlr_copc_entries;
 
   LASzip* laszip;
   LASvlr_lastiling* vlr_lastiling;
@@ -353,6 +370,10 @@ public:
       vlr_classification = 0;
       if (vlr_wave_packet_descr) delete [] vlr_wave_packet_descr;
       vlr_wave_packet_descr = 0;
+      if (vlr_copc_info) delete vlr_copc_info;
+      vlr_copc_info = 0;
+      if (vlr_copc_entries) delete [] vlr_copc_entries;
+      vlr_copc_entries = 0;
       number_of_variable_length_records = 0;
     }
   };
@@ -491,7 +512,10 @@ public:
     }
     if (max_x < min_x || max_y < min_y || max_z < min_z)
     {
-      fprintf(stderr,"WARNING: invalid bounding box [ %g %g %g / %g %g %g ]\n", min_x, min_y, min_z, max_x, max_y, max_z);
+      if (number_of_point_records || extended_number_of_point_records)
+      {
+        fprintf(stderr,"WARNING: invalid bounding box [ %g %g %g / %g %g %g ]\n", min_x, min_y, min_z, max_x, max_y, max_z);
+      }
     }
     return TRUE;
   };
@@ -508,11 +532,16 @@ public:
     return FALSE;
   };
 
-  BOOL is_lonlat() const
+  BOOL is_lonlat(const F32 extend = 1.0f) const
   {
     if ((-360.0 <= min_x) && (-90.0 <= min_y) && (max_x <= 360.0) && (max_y <= 90.0))
     {
-      return TRUE;
+      // the x and y coordinates are within the longitude/latitude range
+      if (((max_x - min_x) <= extend) && ((max_y - min_y) <= extend))
+      {
+        // the x and y coordinate ranges are within the maximal extend
+        return TRUE;
+      }
     }
     return FALSE;
   };
@@ -559,7 +588,7 @@ public:
       offset_to_point_data += 54;
       vlrs = (LASvlr*)malloc(sizeof(LASvlr));
     }
-    memset(&(vlrs[i]), 0, sizeof(LASvlr));
+    memset((void*)&(vlrs[i]), 0, sizeof(LASvlr));
     vlrs[i].reserved = 0; // used to be 0xAABB
     strncpy(vlrs[i].user_id, user_id, 16);
     vlrs[i].record_id = record_id;
@@ -656,11 +685,11 @@ public:
     {
       if (keep_existing)
       {
-        i = number_of_variable_length_records;
+        i = number_of_extended_variable_length_records;
       }
       else
       {
-        for (i = 0; i < number_of_variable_length_records; i++)
+        for (i = 0; i < number_of_extended_variable_length_records; i++)
         {
           if ((strcmp(evlrs[i].user_id, user_id) == 0) && (evlrs[i].record_id == record_id))
           {
@@ -885,9 +914,9 @@ public:
 
   void del_geo_double_params()
   {
+    remove_vlr("LASF_Projection", 34736);
     if (vlr_geo_double_params)
     {
-      remove_vlr("LASF_Projection", 34736);
       vlr_geo_double_params = 0;
     }
   }
@@ -905,9 +934,9 @@ public:
 
   void del_geo_ascii_params()
   {
+    remove_vlr("LASF_Projection", 34737);
     if (vlr_geo_ascii_params)
     {
-      remove_vlr("LASF_Projection", 34737);
       vlr_geo_ascii_params = 0;
     }
   }
@@ -935,6 +964,23 @@ public:
     {
       remove_vlr("LASF_Projection", 2111);
       vlr_geo_ogc_wkt_math = 0;
+    }
+  }
+
+  void del_copc()
+  {
+    if (vlr_copc_info)
+    {
+      remove_vlr("copc", 1);
+	  delete vlr_copc_info;
+      vlr_copc_info = 0;
+    }
+
+    if (vlr_copc_entries)
+    {
+      remove_evlr("copc", 1000);
+      delete[] vlr_copc_entries;
+      vlr_copc_entries = 0;
     }
   }
 

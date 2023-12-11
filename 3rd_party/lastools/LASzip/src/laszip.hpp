@@ -10,25 +10,29 @@
 
   PROGRAMMERS:
 
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
 
   COPYRIGHT:
 
-    (c) 2007-2018, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2007-2022, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
-    terms of the GNU Lesser General Licence as published by the Free Software
+    terms of the Apache Public License 2.0 published by the Apache Software
     Foundation. See the COPYING file for more information.
 
     This software is distributed WITHOUT ANY WARRANTY and without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
   CHANGE HISTORY:
-
+    20 October 2023 -- Fix int overflow of number_of_point_records when using laszip_update_inventory
+    20 March 2019 -- upped to 3.3 r1 for consistent legacy and extended class check
+    21 February 2019 -- bug fix when writing 4294967295+ points uncompressed to LAS
+    28 December 2018 -- fix for v4 decompression of WavePacket part of PRDF 9 and 10
+    27 December 2018 -- upped to 3.2 r9 for bug fix in multi-channel NIR decompression
      7 November 2018 -- upped to 3.2 r8 for identical legacy and extended flags check
     20 October 2018 -- upped to 3.2 r7 for rare bug in LASinterval::merge_intervals()
      5 October 2018 -- upped to 3.2 r6 for corrected 'is_empty' return value
-    28 September 2018 -- upped to 3.2 r5 for fix in extended classification writing 
+    28 September 2018 -- upped to 3.2 r5 for fix in extended classification writing
      9 February 2018 -- minor version increment as it can read v4 compressed items
     28 December 2017 -- fix incorrect 'context switch' reported by Wanwannodao
     23 August 2017 -- minor version increment for C++ stream-based read/write API
@@ -61,17 +65,16 @@ typedef __int64   SIGNED_INT64;
 typedef long long SIGNED_INT64;
 #endif
 
-#if defined(_MSC_VER) && \
-    (_MSC_FULL_VER >= 150000000)
+#if defined(_MSC_VER) && (_MSC_FULL_VER >= 150000000)
 #define LASCopyString _strdup
 #else
 #define LASCopyString strdup
 #endif
 
 #define LASZIP_VERSION_MAJOR                3
-#define LASZIP_VERSION_MINOR                2
-#define LASZIP_VERSION_REVISION             8
-#define LASZIP_VERSION_BUILD_DATE      181107
+#define LASZIP_VERSION_MINOR                4
+#define LASZIP_VERSION_REVISION             4
+#define LASZIP_VERSION_BUILD_DATE      231020
 
 #define LASZIP_COMPRESSOR_NONE              0
 #define LASZIP_COMPRESSOR_POINTWISE         1

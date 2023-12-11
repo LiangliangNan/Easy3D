@@ -17,18 +17,18 @@
 
   http://laszip.org/
   http://lastools.org/
-  http://rapidlasso.com/LAStools/
+  https://rapidlasso.de/LAStools/
 
 --------------------------------------------------------------------------
 
   PROGRAMMERS:
   
-  martin@rapidlasso.com
+  info@rapidlasso.de
   
 --------------------------------------------------------------------------
 
   COPYRIGHT:
   
-  (c) 2007-2017, martin isenburg, rapidlasso - fast tools to catch reality
+  (c) 2007-2017, rapidlasso GmbH - fast tools to catch reality
 
 --------------------------------------------------------------------------

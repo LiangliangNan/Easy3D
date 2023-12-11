@@ -84,11 +84,13 @@ set(${module}_SOURCES
     LASlib/src/lasreader_shp.cpp
     LASlib/src/lasreader_txt.cpp
     LASlib/src/lasreader.cpp
+    LASlib/src/lasignore.cpp
     LASlib/src/lasreaderbuffered.cpp
     LASlib/src/lasreadermerged.cpp
     LASlib/src/lasreaderpipeon.cpp
     LASlib/src/lasreaderstored.cpp
     LASlib/src/lastransform.cpp
+    LASlib/src/laskdtree.cpp
     LASlib/src/lasutility.cpp
     LASlib/src/laswaveform13reader.cpp
     LASlib/src/laswaveform13writer.cpp
@@ -104,6 +106,7 @@ set(${module}_SOURCES
     LASzip/src/arithmeticmodel.cpp
     LASzip/src/integercompressor.cpp
     LASzip/src/lasindex.cpp
+    LASzip/src/lascopc.cpp
     LASzip/src/lasinterval.cpp
     LASzip/src/lasquadtree.cpp
     LASzip/src/lasreaditemcompressed_v1.cpp
@@ -117,6 +120,7 @@ set(${module}_SOURCES
     LASzip/src/laswriteitemcompressed_v4.cpp
     LASzip/src/laswritepoint.cpp
     LASzip/src/laszip.cpp
+    LASzip/src/mydefs.cpp
     )
 
 add_3rdparty_module(3rd_${module} "${${module}_SOURCES}" "${${module}_HEADERS}")

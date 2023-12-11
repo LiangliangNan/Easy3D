@@ -9,11 +9,11 @@
   
   PROGRAMMERS:
 
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
 
   COPYRIGHT:
 
-    (c) 2007-2012, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2007-2012, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
     terms of the GNU Lesser General Licence as published by the Free Software
@@ -328,10 +328,10 @@ BOOL LASreaderSHP::read_point_default()
       {
         if (fread(&double_input, sizeof(double), 1, file) != 1) { npoints = p_count; return FALSE; }; // x of point (LITTLE)
         from_little_endian(&double_input);
-        points[3*i+0] = header.get_X(double_input);
+        points[3*i+0] = (I32)header.get_X(double_input);
         if (fread(&double_input, sizeof(double), 1, file) != 1) { npoints = p_count; return FALSE; }; // y of point (LITTLE)
         from_little_endian(&double_input);
-        points[3*i+1] = header.get_Y(double_input);
+        points[3*i+1] = (I32)header.get_Y(double_input);
       }
       // read points z and write LAS points
       if (shape_type == 18) // Multipoint
@@ -343,7 +343,7 @@ BOOL LASreaderSHP::read_point_default()
       {
         if (fread(&double_input, sizeof(double), 1, file) != 1) { npoints = p_count; return FALSE; }; // z of point (LITTLE)
         from_little_endian(&double_input);
-        points[3*i+2] = header.get_Z(double_input);
+        points[3*i+2] = (I32)header.get_Z(double_input);
       }
     }
     else
@@ -359,10 +359,10 @@ BOOL LASreaderSHP::read_point_default()
       {
         if (fread(&double_input, sizeof(double), 1, file) != 1) { npoints = p_count; return FALSE; }; // x of point (LITTLE)
         from_little_endian(&double_input);
-        points[2*i+0] = header.get_Z(double_input);
+        points[2*i+0] = (I32)header.get_X(double_input);
         if (fread(&double_input, sizeof(double), 1, file) != 1) { npoints = p_count; return FALSE; }; // y of point (LITTLE)
         from_little_endian(&double_input);
-        points[2*i+1] = header.get_Z(double_input);
+        points[2*i+1] = (I32)header.get_Y(double_input);
       }
     }
     // read points m
@@ -555,12 +555,12 @@ void LASreaderSHP::populate_bounding_box()
 {
   // compute quantized and then unquantized bounding box
 
-  F64 dequant_min_x = header.get_x(header.get_X(header.min_x));
-  F64 dequant_max_x = header.get_x(header.get_X(header.max_x));
-  F64 dequant_min_y = header.get_y(header.get_Y(header.min_y));
-  F64 dequant_max_y = header.get_y(header.get_Y(header.max_y));
-  F64 dequant_min_z = header.get_z(header.get_Z(header.min_z));
-  F64 dequant_max_z = header.get_z(header.get_Z(header.max_z));
+  F64 dequant_min_x = header.get_x((I32)(header.get_X(header.min_x)));
+  F64 dequant_max_x = header.get_x((I32)(header.get_X(header.max_x)));
+  F64 dequant_min_y = header.get_y((I32)(header.get_Y(header.min_y)));
+  F64 dequant_max_y = header.get_y((I32)(header.get_Y(header.max_y)));
+  F64 dequant_min_z = header.get_z((I32)(header.get_Z(header.min_z)));
+  F64 dequant_max_z = header.get_z((I32)(header.get_Z(header.max_z)));
 
   // make sure there is not sign flip
 

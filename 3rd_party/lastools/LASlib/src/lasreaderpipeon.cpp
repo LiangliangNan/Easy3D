@@ -9,11 +9,11 @@
   
   PROGRAMMERS:
   
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
   
   COPYRIGHT:
   
-    (c) 2007-2012, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2007-2012, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
     terms of the GNU Lesser General Licence as published by the Free Software
@@ -31,6 +31,7 @@
 #include "lasreaderpipeon.hpp"
 
 #include "lasindex.hpp"
+#include "lascopc.hpp"
 #include "lasfilter.hpp"
 #include "lastransform.hpp"
 
@@ -118,6 +119,16 @@ LASindex* LASreaderPipeOn::get_index() const
   return (lasreader ? lasreader->get_index() : 0);
 }
 
+void LASreaderPipeOn::set_copcindex(COPCindex* copcindex)
+{
+  if (lasreader) lasreader->set_copcindex(copcindex);
+}
+
+COPCindex* LASreaderPipeOn::get_copcindex() const
+{
+  return (lasreader ? lasreader->get_copcindex() : 0);
+}
+
 void LASreaderPipeOn::set_filter(LASfilter* filter)
 {
   if (lasreader) lasreader->set_filter(filter);
@@ -141,6 +152,11 @@ BOOL LASreaderPipeOn::inside_circle(const F64 center_x, const F64 center_y, cons
 BOOL LASreaderPipeOn::inside_rectangle(const F64 min_x, const F64 min_y, const F64 max_x, const F64 max_y)
 {
   return (lasreader ? lasreader->inside_rectangle(min_x, min_y, max_x, max_y) : FALSE);
+}
+
+BOOL LASreaderPipeOn::inside_copc_depth(const U8 mode, const I32 depth, const F32 resolution)
+{
+  return (lasreader ? lasreader->inside_copc_depth(mode, depth, resolution) : FALSE);
 }
 
 I32 LASreaderPipeOn::get_format() const

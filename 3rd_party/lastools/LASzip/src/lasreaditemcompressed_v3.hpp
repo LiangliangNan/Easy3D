@@ -9,14 +9,14 @@
 
   PROGRAMMERS:
 
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
 
   COPYRIGHT:
 
-    (c) 2007-2017, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2007-2022, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
-    terms of the GNU Lesser General Licence as published by the Free Software
+    terms of the Apache Public License 2.0 published by the Apache Software
     Foundation. See the COPYING file for more information.
 
     This software is distributed WITHOUT ANY WARRANTY and without even the
@@ -24,6 +24,8 @@
   
   CHANGE HISTORY:
   
+    30 December 2021 -- fix small memory leak
+    19 March 2019 -- set "legacy classification" to zero if "classification > 31"  
     28 August 2017 -- moving 'context' from global development hack to interface  
     19 April 2017 -- support for selective decompression for new LAS 1.4 points 
     22 June 2016 -- created after Island beat Austria 2:1 in the EM2016

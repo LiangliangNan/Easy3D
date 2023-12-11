@@ -9,14 +9,14 @@
 
   PROGRAMMERS:
 
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
 
   COPYRIGHT:
 
-    (c) 2007-2013, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2007-2022, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
-    terms of the GNU Lesser General Licence as published by the Free Software
+    terms of the Apache Public License 2.0 published by the Apache Software
     Foundation. See the COPYING file for more information.
 
     This software is distributed WITHOUT ANY WARRANTY and without even the
@@ -29,7 +29,9 @@
 ===============================================================================
 */
 #include "laszip.hpp"
+
 #include "mydefs.hpp"
+
 #include <assert.h>
 
 #include <string.h>
@@ -258,7 +260,7 @@ bool LASzip::check_item(const LASitem* item)
     break;
   case LASitem::WAVEPACKET14:
     if (item->size != 29) return return_error("WAVEPACKET14 has size != 29");
-    if ((item->version != 0) && (item->version != 3)) return return_error("WAVEPACKET14 has version != 0 and != 3 and != 4"); // version == 4 fixes context-switch
+    if ((item->version != 0) && (item->version != 3) && (item->version != 4)) return return_error("WAVEPACKET14 has version != 0 and != 3 and != 4"); // version == 4 fixes context-switch
     break;
   default:
     if (1)
@@ -1001,3 +1003,4 @@ const char* LASitem::get_name() const
   }
   return 0;
 }
+

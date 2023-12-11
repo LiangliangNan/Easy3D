@@ -64,4 +64,4 @@ a license for commercial and government use.
 
 --------------------
 
-(c) 2007-2014 martin.isenburg@rapidlasso.com
+(c) 2007-2014 info@rapidlasso.de

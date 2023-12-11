@@ -7,11 +7,11 @@
       
   PROGRAMMERS:
   
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
   
   COPYRIGHT:
 
-    (c) 2003-2012, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2003-2018, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
     terms of the GNU Lesser General Licence as published by the Free Software
@@ -22,6 +22,7 @@
   
   CHANGE HISTORY:
   
+    27 December 2018 -- only act if the extension really is a file extension
     20 March 2011 -- added capability for *.zip, *.rar, and *.7z on Windows
     12 December 2003 -- adapted from Stefan Gumhold's SIGGRAPH submission hack
   
@@ -330,9 +331,11 @@ extern "C"
 {
 FILE* fopen_compressed(const char* filename, const char* mode, bool* piped)
 {
+  int len;
   FILE* file;
+  len = (int)strlen(filename);
 
-  if (strstr(filename, ".gz"))
+  if (strcmp(filename+len-3, ".gz") == 0)
   {
 #ifdef _WIN32
     file = fopenGzipped(filename, mode);
@@ -342,7 +345,7 @@ FILE* fopen_compressed(const char* filename, const char* mode, bool* piped)
     return 0;
 #endif
   }
-  else if (strstr(filename, ".zip"))
+  else if (strcmp(filename+len-4, ".zip") == 0)
   {
 #ifdef _WIN32
     file = fopenZIPped(filename, mode);
@@ -352,7 +355,7 @@ FILE* fopen_compressed(const char* filename, const char* mode, bool* piped)
     return 0;
 #endif
   }
-  else if (strstr(filename, ".7z"))
+  else if (strcmp(filename+len-3, ".7z") == 0)
   {
 #ifdef _WIN32
     file = fopen7zipped(filename, mode);
@@ -362,7 +365,7 @@ FILE* fopen_compressed(const char* filename, const char* mode, bool* piped)
     return 0;
 #endif
   }
-  else if (strstr(filename, ".rar"))
+  else if (strcmp(filename+len-4, ".rar") == 0)
   {
 #ifdef _WIN32
     file = fopenRARed(filename, mode);

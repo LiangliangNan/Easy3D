@@ -2,18 +2,18 @@
 ===============================================================================
 
   FILE:  laswriter_las.cpp
-  
+
   CONTENTS:
-  
+
     see corresponding header file
-  
+
   PROGRAMMERS:
 
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
 
   COPYRIGHT:
 
-    (c) 2007-2017, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2007-2017, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
     terms of the GNU Lesser General Licence as published by the Free Software
@@ -21,11 +21,11 @@
 
     This software is distributed WITHOUT ANY WARRANTY and without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-  
+
   CHANGE HISTORY:
-  
+
     see corresponding header file
-  
+
 ===============================================================================
 */
 #include "laswriter_las.hpp"
@@ -64,10 +64,21 @@ BOOL LASwriterLAS::open(const char* file_name, const LASheader* header, U32 comp
     return FALSE;
   }
 
-  file = fopen(file_name, "wb");
+#ifdef _MSC_VER
+  wchar_t* utf16_file_name = UTF8toUTF16(file_name);
+  file = _wfopen(utf16_file_name, L"wb");
   if (file == 0)
   {
-    fprintf(stderr, "ERROR: cannot open file '%s'\n", file_name);
+    fprintf(stderr, "ERROR: cannot open file '%ws' for write\n", utf16_file_name);
+  }
+  delete[] utf16_file_name;
+#else
+  file = fopen(file_name, "wb");
+#endif
+
+  if (file == 0)
+  {
+    fprintf(stderr, "ERROR: cannot open file '%s' for write\n", file_name);
     return FALSE;
   }
 
@@ -172,14 +183,14 @@ BOOL LASwriterLAS::open(ByteStreamOut* stream, const LASheader* header, U32 comp
   }
 
   // fail if we don't use the layered compressor for the new LAS 1.4 point types
-  
+
   if (compressor && (point_data_format > 5) && (compressor != LASZIP_COMPRESSOR_LAYERED_CHUNKED))
   {
     fprintf(stderr,"ERROR: point type %d requires using \"native LAS 1.4 extension\" of LASzip\n", point_data_format);
     return FALSE;
   }
 
-  // do we need a LASzip VLR (because we compress or use non-standard points?) 
+  // do we need a LASzip VLR (because we compress or use non-standard points?)
 
   LASzip* laszip = 0;
   U32 laszip_vlr_data_size = 0;
@@ -567,7 +578,7 @@ BOOL LASwriterLAS::open(ByteStreamOut* stream, const LASheader* header, U32 comp
   {
     // write variable length records variable after variable (to avoid alignment issues)
 
-    U16 reserved = 0xAABB;
+    U16 reserved = 0; // used to be 0xAABB
     if (!stream->put16bitsLE((U8*)&(reserved)))
     {
       fprintf(stderr,"ERROR: writing reserved %d\n", (I32)reserved);
@@ -593,19 +604,19 @@ BOOL LASwriterLAS::open(ByteStreamOut* stream, const LASheader* header, U32 comp
     }
     char description[32];
     memset(description, 0, 32);
-    sprintf(description, "by laszip of LAStools (%d)", LAS_TOOLS_VERSION);  
+    sprintf(description, "by laszip of LAStools (%d)", LAS_TOOLS_VERSION);
     if (!stream->putBytes((U8*)description, 32))
     {
       fprintf(stderr,"ERROR: writing description %s\n", description);
       return FALSE;
     }
     // write the data following the header of the variable length record
-    //     U16  compressor                2 bytes 
-    //     U32  coder                     2 bytes 
-    //     U8   version_major             1 byte 
+    //     U16  compressor                2 bytes
+    //     U32  coder                     2 bytes
+    //     U8   version_major             1 byte
     //     U8   version_minor             1 byte
     //     U16  version_revision          2 bytes
-    //     U32  options                   4 bytes 
+    //     U32  options                   4 bytes
     //     I32  chunk_size                4 bytes
     //     I64  number_of_special_evlrs   8 bytes
     //     I64  offset_to_special_evlrs   8 bytes
@@ -694,7 +705,7 @@ BOOL LASwriterLAS::open(ByteStreamOut* stream, const LASheader* header, U32 comp
   {
     // write variable length records variable after variable (to avoid alignment issues)
 
-    U16 reserved = 0xAABB;
+    U16 reserved = 0; // used to be 0xAABB
     if (!stream->put16bitsLE((U8*)&(reserved)))
     {
       fprintf(stderr,"ERROR: writing reserved %d\n", (I32)reserved);
@@ -727,13 +738,13 @@ BOOL LASwriterLAS::open(ByteStreamOut* stream, const LASheader* header, U32 comp
     }
 
     // write the payload of this VLR which contains 28 bytes
-    //   U32  level                                          4 bytes 
-    //   U32  level_index                                    4 bytes 
-    //   U32  implicit_levels + buffer bit + reversible bit  4 bytes 
-    //   F32  min_x                                          4 bytes 
-    //   F32  max_x                                          4 bytes 
-    //   F32  min_y                                          4 bytes 
-    //   F32  max_y                                          4 bytes 
+    //   U32  level                                          4 bytes
+    //   U32  level_index                                    4 bytes
+    //   U32  implicit_levels + buffer bit + reversible bit  4 bytes
+    //   F32  min_x                                          4 bytes
+    //   F32  max_x                                          4 bytes
+    //   F32  min_y                                          4 bytes
+    //   F32  max_y                                          4 bytes
 
     if (!stream->put32bitsLE((U8*)&(header->vlr_lastiling->level)))
     {
@@ -778,7 +789,7 @@ BOOL LASwriterLAS::open(ByteStreamOut* stream, const LASheader* header, U32 comp
   {
     // write variable length records variable after variable (to avoid alignment issues)
 
-    U16 reserved = 0xAABB;
+    U16 reserved = 0; // used to be 0xAABB
     if (!stream->put16bitsLE((U8*)&(reserved)))
     {
       fprintf(stderr,"ERROR: writing reserved %d\n", (I32)reserved);
@@ -808,6 +819,10 @@ BOOL LASwriterLAS::open(ByteStreamOut* stream, const LASheader* header, U32 comp
       fprintf(stderr,"ERROR: writing description %s\n", description);
       return FALSE;
     }
+
+    // save the position in the stream at which the payload of this VLR was written
+
+    header->vlr_lasoriginal->position = stream->tell();
 
     // write the payload of this VLR which contains 176 bytes
 
@@ -1197,6 +1212,19 @@ BOOL LASwriterLAS::update_header(const LASheader* header, BOOL use_inventory, BO
     }
     stream->seekEnd();
   }
+
+  // COPC EPT hierarchy EVLR is computed and added to the header after the last point is written.
+  // Therefore, it cannot be added when opening the writer. We use update_header to propagate the EVLR
+  // just before closing the writer. EVLRs are written when closing. This trick allows us to be COPC
+  // compatible with minimal changes to the code.
+  for (i = 0; i < (I32)header->number_of_extended_variable_length_records; i++)
+  {
+    if ((strcmp(header->evlrs[i].user_id, "copc") == 0) && header->evlrs[i].record_id == 1000)
+    {
+      evlrs = header->evlrs;
+    }
+  }
+
   return TRUE;
 }
 
@@ -1216,7 +1244,7 @@ I64 LASwriterLAS::close(BOOL update_npoints)
     }
   }
 
-  if (writer) 
+  if (writer)
   {
     writer->done();
     delete writer;
@@ -1228,9 +1256,13 @@ I64 LASwriterLAS::close(BOOL update_npoints)
     I64 real_start_of_first_extended_variable_length_record = stream->tell();
 
     // write extended variable length records variable after variable (to avoid alignment issues)
-
+    U64 copc_root_hier_size = 0;
+    U64 copc_root_hier_offset = 0;
     for (U32 i = 0; i < number_of_extended_variable_length_records; i++)
     {
+      if ((strcmp(evlrs[i].user_id, "copc") == 0) && evlrs[i].record_id == 1000)
+        copc_root_hier_offset = stream->tell() + 60;
+
       // check variable length records contents
 
       if (evlrs[i].reserved != 0xAABB)
@@ -1283,6 +1315,15 @@ I64 LASwriterLAS::close(BOOL update_npoints)
           fprintf(stderr,"ERROR: there should be %u bytes of data in evlrs[%d].data\n", (U32)evlrs[i].record_length_after_header, i);
           return FALSE;
         }
+      }
+
+      if ((strcmp(evlrs[i].user_id, "copc") == 0) && evlrs[i].record_id == 1000)
+      {
+          copc_root_hier_size = evlrs[i].record_length_after_header;
+          stream->seek(375 + 54 + 40);
+          stream->put64bitsLE((U8*)&copc_root_hier_offset);
+          stream->put64bitsLE((U8*)&copc_root_hier_size);
+          stream->seekEnd();
       }
     }
 
@@ -1356,6 +1397,11 @@ I64 LASwriterLAS::close(BOOL update_npoints)
   p_count = 0;
 
   return bytes;
+}
+
+I64 LASwriterLAS::tell()
+{
+  return stream->tell();
 }
 
 LASwriterLAS::LASwriterLAS()

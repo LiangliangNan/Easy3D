@@ -7,14 +7,14 @@
       
   PROGRAMMERS:
   
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
   
   COPYRIGHT:
   
-    (c) 2007-2016, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2007-2022, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
-    terms of the GNU Lesser General Licence as published by the Free Software
+    terms of the Apache Public License 2.0 published by the Apache Software
     Foundation. See the COPYING file for more information.
 
     This software is distributed WITHOUT ANY WARRANTY and without even the
@@ -22,6 +22,8 @@
   
   CHANGE HISTORY:
   
+    11 April 2019 -- increase default alloc from 1024 bytes to 4096 bytes
+    10 April 2019 -- fix potential memory leak found by Connor Manning's valgrind
     22 June 2016 -- access to current size for "native LAS 1.4 compressor"
     19 July 2015 -- moved from LASlib to LASzip for "compatibility mode" in DLL
      9 April 2012 -- created after cooking Zuccini/Onion/Potatoe dinner for Mara
@@ -39,7 +41,7 @@
 class ByteStreamOutArray : public ByteStreamOut
 {
 public:
-  ByteStreamOutArray(I64 alloc=1024);
+  ByteStreamOutArray(I64 alloc=4096);
 /* write a single byte                                       */
   BOOL putByte(U8 byte);
 /* write an array of bytes                                   */
@@ -53,7 +55,7 @@ public:
 /* seek to the end of the file                               */
   BOOL seekEnd();
 /* destructor                                                */
-  ~ByteStreamOutArray(){};
+  ~ByteStreamOutArray() { if (data) free(data); };
 /* get access to data                                        */
   inline I64 getSize() const { return size; };
   inline I64 getCurr() const { return curr; };
@@ -69,7 +71,7 @@ protected:
 class ByteStreamOutArrayLE : public ByteStreamOutArray
 {
 public:
-  ByteStreamOutArrayLE(I64 alloc=1024);
+  ByteStreamOutArrayLE(I64 alloc=4096);
 /* write 16 bit low-endian field                             */
   BOOL put16bitsLE(const U8* bytes);
 /* write 32 bit low-endian field                             */
@@ -89,7 +91,7 @@ private:
 class ByteStreamOutArrayBE : public ByteStreamOutArray
 {
 public:
-  ByteStreamOutArrayBE(I64 alloc=1024);
+  ByteStreamOutArrayBE(I64 alloc=4096);
 /* write 16 bit low-endian field                             */
   BOOL put16bitsLE(const U8* bytes);
 /* write 32 bit low-endian field                             */
@@ -109,7 +111,7 @@ private:
 inline ByteStreamOutArray::ByteStreamOutArray(I64 alloc)
 {
   this->data = (U8*)malloc((U32)alloc);
-  this->alloc = 1024;
+  this->alloc = alloc;
   this->size = 0;
   this->curr = 0;
 }
@@ -118,7 +120,7 @@ inline BOOL ByteStreamOutArray::putByte(U8 byte)
 {
   if (curr == alloc)
   {
-    alloc += 1024;
+    alloc += 4096;
     data = (U8*)realloc(data, (U32)alloc);
     if (data == 0)
     {
@@ -135,7 +137,7 @@ inline BOOL ByteStreamOutArray::putBytes(const U8* bytes, U32 num_bytes)
 {
   if ((curr+num_bytes) > alloc)
   {
-    alloc += (1024+num_bytes);
+    alloc += (4096+num_bytes);
     data = (U8*)realloc(data, (U32)alloc);
     if (data == 0)
     {

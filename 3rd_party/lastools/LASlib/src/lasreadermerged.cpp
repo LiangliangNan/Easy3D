@@ -9,11 +9,11 @@
   
   PROGRAMMERS:
   
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
   
   COPYRIGHT:
   
-    (c) 2007-2012, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2007-2019, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
     terms of the GNU Lesser General Licence as published by the Free Software
@@ -31,6 +31,7 @@
 #include "lasreadermerged.hpp"
 
 #include "lasindex.hpp"
+#include "lascopc.hpp"
 #include "lasfilter.hpp"
 #include "lastransform.hpp"
 
@@ -42,7 +43,7 @@ void LASreaderMerged::set_io_ibuffer_size(I32 io_ibuffer_size)
   this->io_ibuffer_size = io_ibuffer_size;
 }
 
-BOOL LASreaderMerged::add_file_name(const char* file_name)
+BOOL LASreaderMerged::add_file_name(const CHAR* file_name)
 {
   // do we have a file name
   if (file_name == 0)
@@ -488,11 +489,20 @@ BOOL LASreaderMerged::add_file_name(const char* file_name)
     file_name_allocated += 1024;
     if (file_names)
     {
-      file_names = (char**)realloc(file_names, sizeof(char*)*file_name_allocated);
+      file_names = (CHAR**)realloc(file_names, sizeof(CHAR*)*file_name_allocated);
+      if (file_names_ID)
+      {
+        file_names_ID = (U32*)realloc(file_names_ID, sizeof(U32)*file_name_allocated);
+        if (file_names_ID == 0)
+        {
+          fprintf(stderr, "ERROR: alloc for file_names_ID array failed at %d\n", file_name_allocated);
+          return FALSE;
+        }
+      }
     }
     else
     {
-      file_names = (char**)malloc(sizeof(char*)*file_name_allocated);
+      file_names = (CHAR**)malloc(sizeof(CHAR*)*file_name_allocated);
     }
     if (file_names == 0)
     {
@@ -503,6 +513,25 @@ BOOL LASreaderMerged::add_file_name(const char* file_name)
   file_names[file_name_number] = LASCopyString(file_name);
   file_name_number++;
   return TRUE;
+}
+
+BOOL LASreaderMerged::add_file_name(const CHAR* file_name, U32 ID)
+{
+  if (add_file_name(file_name))
+  {
+    if (file_names_ID == 0)
+    {
+      file_names_ID = (U32*)malloc(sizeof(U32)*file_name_allocated);
+      if (file_names_ID == 0)
+      {
+        fprintf(stderr, "ERROR: alloc for file_names_ID array failed at %d\n", file_name_allocated);
+        return FALSE;
+      }
+    }
+    file_names_ID[file_name_number-1] = ID;
+    return TRUE;
+  }
+  return FALSE;
 }
 
 void LASreaderMerged::set_scale_factor(const F64* scale_factor)
@@ -577,7 +606,7 @@ void LASreaderMerged::set_scale_scan_angle(F32 scale_scan_angle)
   this->scale_scan_angle = scale_scan_angle;
 }
 
-void LASreaderMerged::set_parse_string(const char* parse_string)
+void LASreaderMerged::set_parse_string(const CHAR* parse_string)
 {
   if (this->parse_string) free(this->parse_string);
   if (parse_string)
@@ -603,6 +632,12 @@ void LASreaderMerged::set_populate_header(BOOL populate_header)
 void LASreaderMerged::set_keep_lastiling(BOOL keep_lastiling)
 {
   this->keep_lastiling = keep_lastiling;
+}
+
+void LASreaderMerged::set_copc_stream_order(U8 order)
+{
+  if (order < 0 || order > 2) order = 0;
+  copc_stream_order = order;
 }
 
 BOOL LASreaderMerged::open()
@@ -1241,6 +1276,17 @@ BOOL LASreaderMerged::inside_rectangle(const F64 min_x, const F64 min_y, const F
   return TRUE;
 }
 
+BOOL LASreaderMerged::inside_copc_depth(const U8 mode, const I32 depth, const F32 resolution)
+{
+  if (!header.vlr_copc_info)
+    return FALSE;
+
+  inside_depth = mode;
+  copc_depth = depth;
+  copc_resolution = resolution;
+  return TRUE;
+}
+
 I32 LASreaderMerged::get_format() const
 {
   return lasreader->get_format();
@@ -1370,6 +1416,11 @@ void LASreaderMerged::clean()
     }
     free(file_names);
     file_names = 0;
+    if (file_names_ID)
+    {
+      free(file_names_ID);
+      file_names_ID = 0;
+    }
   }
   if (bounding_boxes)
   {
@@ -1401,6 +1452,7 @@ LASreaderMerged::LASreaderMerged()
   parse_string = 0;
   io_ibuffer_size = LAS_TOOLS_IO_IBUFFER_SIZE;
   file_names = 0;
+  file_names_ID = 0;
   bounding_boxes = 0;
   clean();
 }
@@ -1463,11 +1515,30 @@ BOOL LASreaderMerged::open_next_file()
         fprintf(stderr, "ERROR: could not open lasreaderlas for file '%s'\n", file_names[file_name_current]);
         return FALSE;
       }
-      LASindex* index = new LASindex;
+      LASindex *index = new LASindex;
       if (index->read(file_names[file_name_current]))
         lasreaderlas->set_index(index);
       else
+      {
         delete index;
+        index = 0;
+      }
+
+      // Creation of the COPC index
+      if (lasreaderlas->header.vlr_copc_entries)
+      {
+        if (index)
+        {
+          fprintf(stderr, "WARNING: both LAX file and COPC spatial indexing registered. COPC has the precedence.\n");
+				  lasreaderlas->set_index(0);
+        }
+
+        COPCindex *copc_index = new COPCindex(lasreaderlas->header);
+        if (copc_stream_order == 0) 	 copc_index->set_stream_ordered_by_chunk();
+        else if (copc_stream_order == 1) copc_index->set_stream_ordered_spatially();
+        else if (copc_stream_order == 2) copc_index->set_stream_ordered_by_depth();
+        lasreaderlas->set_copcindex(copc_index);
+      }
     }
     else if (lasreaderbin)
     {
@@ -1558,15 +1629,22 @@ BOOL LASreaderMerged::open_next_file()
         return FALSE;
       }
     }
-    file_name_current++;
     if (files_are_flightlines)
     {
-      transform->setPointSource(file_name_current + files_are_flightlines - 1);
+      if (file_names_ID)
+      {
+        transform->setPointSource(file_names_ID[file_name_current] + 1);
+      }
+      else
+      {
+        transform->setPointSource(file_name_current + files_are_flightlines);
+      }
     }
     else if (apply_file_source_ID)
     {
       transform->setPointSource(lasreader->header.file_source_ID);
     }
+    file_name_current++;
     if (filter) lasreader->set_filter(filter);
     if (transform) lasreader->set_transform(transform);
     if (inside)
@@ -1575,6 +1653,7 @@ BOOL LASreaderMerged::open_next_file()
       else if (inside == 1) lasreader->inside_tile(t_ll_x, t_ll_y, t_size);
       else lasreader->inside_circle(c_center_x, c_center_y, c_radius);
     }
+	if (inside_depth) lasreader->inside_copc_depth(inside_depth, copc_depth, copc_resolution);
     return TRUE;
   }
   return FALSE;

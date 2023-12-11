@@ -9,14 +9,14 @@
   
   PROGRAMMERS:
 
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
 
   COPYRIGHT:
 
-    (c) 2007-2017, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2007-2022, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
-    terms of the GNU Lesser General Licence as published by the Free Software
+    terms of the Apache Public License 2.0 published by the Apache Software
     Foundation. See the COPYING file for more information.
 
     This software is distributed WITHOUT ANY WARRANTY and without even the
@@ -207,6 +207,7 @@ LASreadItemCompressed_POINT14_v3::~LASreadItemCompressed_POINT14_v3()
     delete dec_intensity;
     delete dec_scan_angle;
     delete dec_user_data;
+    delete dec_point_source;
     delete dec_gps_time;
 
     delete instream_channel_returns_XY;
@@ -216,6 +217,7 @@ LASreadItemCompressed_POINT14_v3::~LASreadItemCompressed_POINT14_v3()
     delete instream_intensity;
     delete instream_scan_angle;
     delete instream_user_data;
+    delete instream_point_source;
     delete instream_gps_time;
   }
 
@@ -893,10 +895,14 @@ inline void LASreadItemCompressed_POINT14_v3::read(U8* item, U32& context)
     }
     ((LASpoint14*)last_item)->classification = dec_classification->decodeSymbol(contexts[current_context].m_classification[ccc]);
 
-    // legacy copies
+    // update the legacy copy
     if (((LASpoint14*)last_item)->classification < 32)
     {
       ((LASpoint14*)last_item)->legacy_classification = ((LASpoint14*)last_item)->classification;
+    }
+    else
+    {
+      ((LASpoint14*)last_item)->legacy_classification = 0;
     }
   }
 
@@ -1697,7 +1703,7 @@ inline void LASreadItemCompressed_RGBNIR14_v3::read(U8* item, U32& context)
     }
   }
 
-  // dempress
+  // decompress
 
   ////////////////////////////////////////
   // decompress RGB layer 
@@ -1807,11 +1813,11 @@ inline void LASreadItemCompressed_RGBNIR14_v3::read(U8* item, U32& context)
     {
       ((U16*)item)[3] |= (last_item[3]&0xFF00);
     }
-    contexts[current_context].last_item[3] = ((U16*)item)[3];
+    last_item[3] = ((U16*)item)[3];
   }
   else
   {
-    ((U16*)item)[3] = contexts[current_context].last_item[3];
+    ((U16*)item)[3] = last_item[3];
   }
 }
 
@@ -2129,7 +2135,14 @@ LASreadItemCompressed_BYTE14_v3::LASreadItemCompressed_BYTE14_v3(ArithmeticDecod
 
     changed_Bytes[i] = FALSE;
 
-    requested_Bytes[i] = (decompress_selective & (LASZIP_DECOMPRESS_SELECTIVE_BYTE0 << i) ? TRUE : FALSE);
+    if (i > 15) // currently only the first 16 extra bytes can be selectively decompressed
+    {
+      requested_Bytes[i] = TRUE;
+    }
+    else
+    {
+      requested_Bytes[i] = (decompress_selective & (LASZIP_DECOMPRESS_SELECTIVE_BYTE0 << i) ? TRUE : FALSE);
+    }
   }
 
   /* init the bytes buffer to zero */

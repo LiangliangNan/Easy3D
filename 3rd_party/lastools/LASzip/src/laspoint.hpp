@@ -10,21 +10,22 @@
 
   PROGRAMMERS:
 
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
 
   COPYRIGHT:
 
-    (c) 2007-2017, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2007-2022, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
-    terms of the GNU Lesser General Licence as published by the Free Software
-    Foundation. See the LICENSE.txt file for more information.
+    terms of the Apache Public License 2.0 published by the Apache Software
+    Foundation. See the COPYING file for more information.
 
     This software is distributed WITHOUT ANY WARRANTY and without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
   
   CHANGE HISTORY:
   
+    10 May 2019 -- checking for overflows in X, Y, Z of I32 of fixed-point LAS 
     15 June 2018 -- fix in flag copy from legacy (0-5) to extended (6-10) type
     10 March 2017 -- fix in copy_to() and copy_from() new LAS 1.4 point types
     10 October 2016 -- small fixes for NIR and extended scanner channel
@@ -181,7 +182,14 @@ public:
     }
     if (other.extra_bytes && extra_bytes)
     {
-      memcpy(extra_bytes, other.extra_bytes, extra_bytes_number);
+      if (other.extra_bytes_number >= extra_bytes_number)
+      {
+        memcpy(extra_bytes, other.extra_bytes, extra_bytes_number);
+      }
+      else
+      {
+        memcpy(extra_bytes, other.extra_bytes, other.extra_bytes_number);
+      }
     }
     if (other.extended_point_type)
     {
@@ -314,6 +322,7 @@ public:
       case LASitem::BYTE14:
         extra_bytes_number = items[i].size;
         extra_bytes = new U8[extra_bytes_number];
+        memset(extra_bytes, 0, extra_bytes_number);
         this->point[i] = extra_bytes;
         break;
       default:
@@ -373,6 +382,7 @@ public:
       case LASitem::BYTE14:
         extra_bytes_number = items[i].size;
         extra_bytes = new U8[extra_bytes_number];
+        memset(extra_bytes, 0, extra_bytes_number);
         this->point[i] = extra_bytes;
         break;
       default:
@@ -432,36 +442,6 @@ public:
     if (xyz < min_y || xyz > max_y) return FALSE;
     xyz = get_z();
     if (xyz < min_z || xyz > max_z) return FALSE;
-    return TRUE;
-  }
-
-  BOOL is_zero() const
-  {
-    if (((U32*)&(this->X))[0] || ((U32*)&(this->X))[1] || ((U32*)&(this->X))[2] || ((U32*)&(this->X))[3] || ((U32*)&(this->X))[4])
-    {
-      return FALSE;
-    }
-    if (have_gps_time)
-    {
-      if (this->gps_time)
-      {
-        return FALSE;
-      }
-    }
-    if (have_rgb)
-    {
-      if (this->rgb[0] || this->rgb[1] || this->rgb[2])
-      {
-        return FALSE;
-      }
-      if (have_nir)
-      {
-        if (this->rgb[3])
-        {
-          return FALSE;
-        }
-      }
-    }
     return TRUE;
   }
 
@@ -546,6 +526,7 @@ public:
   inline I32 get_X() const { return X; };
   inline I32 get_Y() const { return Y; };
   inline I32 get_Z() const { return Z; };
+  inline const I32* get_XYZ() const { return &X; };
   inline U16 get_intensity() const { return intensity; };
   inline U8 get_return_number() const { return return_number; };
   inline U8 get_number_of_returns() const { return number_of_returns; };
@@ -560,7 +541,9 @@ public:
   inline U16 get_point_source_ID() const { return point_source_ID; };
   inline U8 get_deleted_flag() const { return deleted_flag; };
   inline F64 get_gps_time() const { return gps_time; };
-  inline const U16* get_rgb() const { return rgb; };
+  inline const U16* get_RGB() const { return rgb; };
+  inline const U16* get_RGBI() const { return rgb; };
+  inline U16 get_RGBI(const U32 band) const { return rgb[band]; };
   inline U16 get_R() const { return rgb[0]; };
   inline U16 get_G() const { return rgb[1]; };
   inline U16 get_B() const { return rgb[2]; };
@@ -586,6 +569,7 @@ public:
   inline void set_gps_time(const F64 gps_time) { this->gps_time = gps_time; };
   inline void set_RGB(const U16* rgb) { memcpy(this->rgb, rgb, sizeof(U16) * 3); };
   inline void set_RGBI(const U16* rgb) { memcpy(this->rgb, rgb, sizeof(U16) * 4); };
+  inline void set_RGBI(const U32 band, const U16 value) { rgb[band] = value; };
   inline void set_R(const U16 R) { this->rgb[0] = R; };
   inline void set_G(const U16 G) { this->rgb[1] = G; };
   inline void set_B(const U16 B) { this->rgb[2] = B; };
@@ -596,9 +580,9 @@ public:
   inline F64 get_y() const { return quantizer->get_y(Y); };
   inline F64 get_z() const { return quantizer->get_z(Z); };
 
-  inline void set_x(const F64 x) { this->X = quantizer->get_X(x); };
-  inline void set_y(const F64 y) { this->Y = quantizer->get_Y(y); };
-  inline void set_z(const F64 z) { this->Z = quantizer->get_Z(z); };
+  inline BOOL set_x(const F64 x) { I64 X = quantizer->get_X(x); this->X = (I32)(X); return I32_FITS_IN_RANGE(X); };
+  inline BOOL set_y(const F64 y) { I64 Y = quantizer->get_Y(y); this->Y = (I32)(Y); return I32_FITS_IN_RANGE(Y); };
+  inline BOOL set_z(const F64 z) { I64 Z = quantizer->get_Z(z); this->Z = (I32)(Z); return I32_FITS_IN_RANGE(Z); };
 
   inline BOOL is_extended_point_type() const { return extended_point_type; };
 
@@ -628,18 +612,23 @@ public:
     coordinates[2] = get_z();
   };
 
-  inline void compute_XYZ()
+  inline BOOL compute_XYZ()
   {
-    set_x(coordinates[0]);
-    set_y(coordinates[1]);
-    set_z(coordinates[2]);
+    BOOL retX = set_x(coordinates[0]);
+    BOOL retY = set_y(coordinates[1]);
+    BOOL retZ = set_z(coordinates[2]);
+    return (retX && retY && retZ);
   };
 
-  inline void compute_XYZ(const LASquantizer* quantizer)
+  inline BOOL compute_XYZ(const LASquantizer* quantizer)
   {
-    X = quantizer->get_X(coordinates[0]);
-    Y = quantizer->get_Y(coordinates[1]);
-    Z = quantizer->get_Z(coordinates[2]);
+    I64 X = quantizer->get_X(coordinates[0]);
+    I64 Y = quantizer->get_Y(coordinates[1]);
+    I64 Z = quantizer->get_Z(coordinates[2]);
+    this->X = (I32)(X);
+    this->Y = (I32)(Y);
+    this->Z = (I32)(Z);
+    return (I32_FITS_IN_RANGE(X) && I32_FITS_IN_RANGE(Y) && I32_FITS_IN_RANGE(Z));
   };
 
   // generic functions for attributes in extra bytes
@@ -692,6 +681,14 @@ public:
       return attributer->attributes[index].get_value_as_float(extra_bytes + attributer->attribute_starts[index]);
     }
     return 0.0;
+  };
+
+  inline void set_attribute_as_float(U32 index, F64 value) const
+  {
+    if (has_attribute(index))
+    {
+      attributer->attributes[index].set_value_as_float(extra_bytes + attributer->attribute_starts[index], value);
+    }
   };
 
   // typed and offset functions for attributes in extra bytes (more efficient)

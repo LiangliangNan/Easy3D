@@ -9,11 +9,11 @@
 
   PROGRAMMERS:
 
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
 
   COPYRIGHT:
 
-    (c) 2007-2017, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2007-2021, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
     terms of the GNU Lesser General Licence as published by the Free Software
@@ -24,6 +24,8 @@
   
   CHANGE HISTORY:
   
+     9 June 2021 -- disallow use of '-keep_class' together with '-keep_extended_class'
+     3 April 2021 -- new filter '-keep_profile p1_x p1_y p2_x p2_y width' 
      6 March 2018 -- changed '%g' to '%lf' for all sprintf() of F64 values
     14 December 2017 -- keep multiple flightlines with '-keep_point_source 2 3 4' 
     10 December 2017 -- new '-keep_random_fraction 0.2 4711' uses 4711 as seed

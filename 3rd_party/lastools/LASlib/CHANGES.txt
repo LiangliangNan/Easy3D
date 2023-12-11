@@ -1,3 +1,82 @@
+10 April 2021 -- LASlib: new '-keep_profile p1_x p1_y p2_x p2_y width' keeps a segment of a certain width
+24 March 2021 -- LASlib: bug fix only for signed long (I32) in LASattributer.set_value_as_float()
+21 March 2021 -- LASlib: new LAStransform '-set_NIR 255'
+16 February 2021 -- LASlib: better detection and ERROR when your LAZ file has corruptions in the LAS header
+22 November 2020 -- las2las: when reprojecting only x and y, preserve resolution of z coordinate, if not set explicitely
+11 November 2020 -- lasinfo: new option '-set_vlr_record_id 2 4711' changes 'record ID' field of VLR with index 2
+11 November 2020 -- lasinfo: new option '-set_vlr_user_id 1 "hello martin"' changes 'user ID' field of VLR with index 1
+10 November 2020 -- lasinfo: new option '-set_vlr_description 0 "hello martin"' changes 'description' field of VLR with index 0
+30 October 2020 -- las2las: fail / exit with error code when input file is corrupt
+10 October 2020 -- LASlib: new '-copy_register_into_R 0', '-copy_register_into_G 1', '-copy_register_into_B 2', '-copy_register_into_NIR 3'
+ 5 October 2020 -- LASlib: new '-scale_NIR 2', '-scale_NIR_down', '-scale_NIR_up', '-scale_NIR_to_8bit', '-scale_NIR_to_16bit'
+ 3 October 2020 -- LASlib: new LAStransforms '-add_registers 0 1 2', '-multiply_registers 0 1 2' and '-translate_register 1 10.7'
+30 September 2020 -- LASlib: new LAStransforms '-copy_register_into_point_source 1' and 'copy_attribute_into_point_source 0'
+23 September 2020 -- LASzip and LASlib: rare fix for reading bit-corrupted LAZ files where chunk table is zeroed
+18 June 2020 -- LASlib: new LAStransforms that allow 16 temporary registers for intermediate computations
+ 9 May 2020 -- LASlib and all LAStools: fixed PLY reader for files written by Cloud Compare with odd header entry
+10 March 2020 -- LASlib and all LAStools: enhanced PLY reader to also support "uint" attributes and properties
+ 9 March 2020 -- LASlib and all LAStools: fixed PLY reader for "double" or "float64" attributes and properties
+24 February 2020 -- las2las: check horizontal datum when reprojecting and also set OCG WKT when point type >= 6
+18 February 2020 -- lasinfo: report classification histogram for 'withhelp', 'keypoint', 'synthetic', 'overlap' flagged points 
+15 February 2020 -- LASlib: new transforms '-scale_RGB_to_8bit' and '-scale_RGB_to_16bit' only scale RGB values if needed
+14 February 2020 -- LASlib: new '-multiply_divided_intensity_into_RGB_green 255' '-multiply_scaled_intensity_into_RGB_red 0.4'
+14 February 2020 -- LASlib: new filter '-keep_RGB_greenness 10 65535' keep points if 2G-R-B falls into specified interval
+10 February 2020 -- lasinfo: handle up to 10 attributes with '-histo attribute0 1.0' through '-histo attribute9 0.1'
+10 February 2020 -- LASlib: new transform '-load_attribute_from_text 0 new_attribute.txt'
+ 9 February 2020 -- las2las: add "additional attributes" with '-add_attribute data_type name description [scale offset no_data]'
+ 8 February 2020 -- LASlib: new transforms '-copy_user_data_into_classification' and '-set_attribute 0 1.5'
+30 January 2020 -- LASlib: new transforms to '-copy_attribute_into_x 4' and '-copy_attribute_into_y 5'
+28 January 2020 -- LASlib: PLY point cloud reader stores integer properties as "additional attributes" using "extra bytes"
+ 6 January 2020 -- lasvalidate: fix for LAS 1.4 files with extra bytes and new option '-tile_size 1000' to check tile extend
+24 December 2019 -- LASzip, LASlib, all LAStools: bug fix for file names with special characters like 'Töögrupid.laz'
+16 November 2019 -- LASlib: bug fix in command line parsing of '-inside ... ... ... ...' followed by other commands
+ 9 November 2019 -- laszip: fix for selective decompression of more than 16 extra bytes in new point types 6 or higher
+ 4 November 2019 -- lasdiff: new option '-wildcards folder1/ayu*.laz folder2/ayu*.laz' compares folder of LAS/LAZ files 
+ 3 November 2019 -- lasindex: new option '-meta' produces ASCII file list with number of points, bounding box, file name 
+17 October 2019 -- lasinfo, las2las: support horizontal datum NAD83(PA11) and vertical datum NZVD2016
+16 October 2019 -- LASlib: new option '-copy_scanner_channel_into_user_data' for new LAS 1.4 point types 6 or higher
+26 September 2019 -- open source tools ignore '-fail' which makes closed source tools fail if license expired / not found
+16 September 2019 -- lasindex: new option '-dont_reindex' to prevent recreating of already existing LAX files
+10 August 2019 -- las2las: set exotic vertical datums via '-vertical_epsg 5607' (= "Bora Bora SAU 2001 height")
+18 July 2019 -- txt2las: bug fix in functionality for adding '-add_attribute' in extra bytes introduced in late 2018
+11 July 2019 -- LASlib, LAStools: report file name when LASreader has 'ERROR: 'end-of-file during chunk with index 3254'
+ 4 July 2019 -- LASlib: two new LAStransforms '-switch_RGBI_into_CIR' and '-switch_RGB_intensity_into_CIR'
+ 2 July 2019 -- lasinfo: report missing VerticalCSTypeGeoKey 7837 as DHHN2016
+20 Juni 2019 -- laszip: also compress Trimble '-waveforms' or '-waveforms_with_map' when very first WDP offset is 0
+ 3 June 2019 -- LASlib: new transform '-copy_user_data_into_z'
+24 May 2019 -- las2las: '-add_attribute data_type name description [scale offset no_data]' adds "extra bytes" attribute
+20 May 2019 -- LASlib: warn if '-filtered_transform' is used but no LAStransform or no LASfilter was specified
+10 May 2019 -- LASlib: check for integer overflow during scaling, translating, rotating, and other LAStransforms
+ 3 May 2019 -- txt2las: correctly parse extended classifications larger than 31 by adding '-set_point_type 6' or higher
+16 April 2019 -- LASlib, LAStools: fixed '-keep_extended_classification 41' for multi-core mode of 64 bit executables
+11 April 2019 -- LASzip: increase AC_BUFFER_SIZE from 1024 to 4096 to lower chance of ultra-rare propagate_carry() issue
+31 March 2019 -- LASzip, LASlib, LAStools: better LASzip license thanks to Amir Said. upgrade to version 3.4 revision 0
+19 March 2019 -- LASlib, LASzip, LAStools: bug fix in "legacy class" decompressing new point types with "class > 31"
+ 5 March 2019 -- all LAStools: support GeoTIFF keys 3084 through 3087 used by RIEGL in generic LambertConfConic_2SP
+22 February 2019 -- laszip: warn if uncompressed LAS file has *.laz extension and vice-versa but don't override file.
+21 February 2019 -- LASlib, LASzip, LAStools: bug fix when writing 4,294,967,296 or more points uncompressed to LAS
+19 February 2019 -- las2las: fix '-set_attribute_offset 0 1.5'. new '-unset_attribute_scale 1' '-unset_attribute_offset 0'
+18 February 2019 -- lasinfo: do not expect zero terminated strings for 'user ID' and 'description' of VLRs and EVLRs
+17 February 2019 -- lasinfo: new '-set_geotiff_epsg 32755' adds EPSG code in-place when other GeoTIFF tags present
+16 February 2019 -- lasinfo: option '-rename lala' rename files (tiles) from 'fusa.laz' to 'lala_277750_6122250.laz'
+29 January 2019 -- las2txt: fix when outputting scaled or offset "extra bytes" with '-parse xyz012'
+27 January 2019 -- laszip: fix for '-no_native' or '-compatible' when LAS 1.4 input is already 'native' compressed
+26 January 2019 -- LASlib: bug fix in LASattributer for deprecated tuples and triples and unset scale value of zero
+26 January 2019 -- lasinfo: fix report of min/max extra byte values when scale is not set and has value of zero 
+25 January 2019 -- all LAStools: new "Extra Bytes" transform '-add_scaled_attribute_to_user_data 0 10.0'
+22 January 2019 -- lasinfo: fixed bug of tool simply stopping to read points when reaching a total of 4294967295
+21 January 2019 -- lasinfo: '-repair' or '-repair_counters' bug fix for repairing legacy return counters in LAS header 
+20 January 2019 -- lasinfo: also report min/max values of documented additional attributes stored in 'extra bytes'
+20 January 2019 -- LASlib: also also LASsummarize additional attributes stored in 'extra bytes'
+20 January 2019 -- LASlib: laswaveform13reader.cpp and laswaveform13writer.cpp check that 'wave_packet_descr[0]' is zero
+18 January 2019 -- LASlib: new example 'lasexample_write_only_full_waveform.cpp' shows how to write LAS FWF with LASlib
+ 4 January 2019 -- LASlib: new "Extra Bytes" transform '-add_attribute_to_z 0' & '-add_scaled_attribute_to_z 1 -1.5'
+ 3 January 2019 -- LASlib: new "Extra Bytes" transform '-scale_attribute 0 1.1' & '-translate_attribute 1 10.25'
+28 December 2018 -- LASzip and LASlib: fix for LASzip v4 decompression of WavePacket part of PRDF 9 and 10
+27 December 2018 -- LASzip and LASlib: upped to 3.2 r9 for bug fix in multi-channel NIR decompression
+ 5 December 2018 -- LASlib: new '-transform_affine 0.9999652,0.903571,171.67,736.26' with paramters scale,angledeg,tx,tz
+19 November 2018 -- all LAStools: support for "Hotine Oblique Mercator" (needed for Malaysia, Alaska Zone 1, Madagascar)
+12 November 2018 -- las2las: new option '-save_vlrs' and '-load_vlrs' to copy VLRs from one LAS file to (a set of) another
 7 November 2018 -- LASzip DLL: assure that legacy and extended flags are identical to prevent corrupt LAZ files
 1 November 2018 -- all LAStools: parse more NAD83 GCS representations requested by Kirk Waters from NOAA
 31 October 2018 -- las2las: fix for bug with '-set_ogc_wkt' introduced with the change on 8 May 2018

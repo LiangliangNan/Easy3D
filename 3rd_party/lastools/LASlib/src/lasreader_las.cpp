@@ -2,18 +2,18 @@
 ===============================================================================
 
   FILE:  lasreader_las.cpp
-  
+
   CONTENTS:
-  
+
     see corresponding header file
-  
+
   PROGRAMMERS:
-  
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+
+    info@rapidlasso.de  -  https://rapidlasso.de
 
   COPYRIGHT:
 
-    (c) 2007-2018, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2007-2018, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
     terms of the GNU Lesser General Licence as published by the Free Software
@@ -21,11 +21,11 @@
 
     This software is distributed WITHOUT ANY WARRANTY and without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-  
+
   CHANGE HISTORY:
-  
+
     see corresponding header file
-  
+
 ===============================================================================
 */
 #include "lasreader_las.hpp"
@@ -35,6 +35,7 @@
 #include "bytestreamin_istream.hpp"
 #include "lasreadpoint.hpp"
 #include "lasindex.hpp"
+#include "lascopc.hpp"
 
 #ifdef _WIN32
 #include <fcntl.h>
@@ -52,12 +53,32 @@ BOOL LASreaderLAS::open(const char* file_name, I32 io_buffer_size, BOOL peek_onl
     return FALSE;
   }
 
-  file = fopen(file_name, "rb");
+#ifdef _MSC_VER
+  wchar_t* utf16_file_name = UTF8toUTF16(file_name);
+  file = _wfopen(utf16_file_name, L"rb");
   if (file == 0)
   {
-    fprintf(stderr, "ERROR: cannot open file '%s'\n", file_name);
+    fprintf(stderr, "ERROR: cannot open file '%ws' for read\n", utf16_file_name);
+  }
+  delete [] utf16_file_name;
+#else
+  file = fopen(file_name, "rb");
+#endif
+
+  if (file == 0)
+  {
+    fprintf(stderr, "ERROR: cannot open file '%s' for read\n", file_name);
     return FALSE;
   }
+
+  // save file name for better ERROR message
+
+  if (this->file_name)
+  {
+    free(this->file_name);
+    this->file_name = 0;
+  }
+  this->file_name = LASCopyString(file_name);
 
   if (setvbuf(file, NULL, _IOFBF, io_buffer_size) != 0)
   {
@@ -380,7 +401,7 @@ BOOL LASreaderLAS::open(ByteStreamIn* stream, BOOL peek_only, U32 decompress_sel
 
   if (peek_only)
   {
-    // at least repair point type in incomplete header (no VLRs, no LASzip, no LAStiling) 
+    // at least repair point type in incomplete header (no VLRs, no LASzip, no LAStiling)
     header.point_data_format &= 127;
     return TRUE;
   }
@@ -388,11 +409,12 @@ BOOL LASreaderLAS::open(ByteStreamIn* stream, BOOL peek_only, U32 decompress_sel
   // read the variable length records into the header
 
   U32 vlrs_size = 0;
+  BOOL vlrs_corrupt = FALSE;
 
   if (header.number_of_variable_length_records)
   {
-    header.vlrs = (LASvlr*)malloc(sizeof(LASvlr)*header.number_of_variable_length_records);
-  
+    header.vlrs = (LASvlr*)calloc(header.number_of_variable_length_records, sizeof(LASvlr));
+
     for (i = 0; i < header.number_of_variable_length_records; i++)
     {
       // make sure there are enough bytes left to read a variable length record before the point block starts
@@ -401,6 +423,7 @@ BOOL LASreaderLAS::open(ByteStreamIn* stream, BOOL peek_only, U32 decompress_sel
       {
         fprintf(stderr,"WARNING: only %d bytes until point block after reading %d of %d vlrs. skipping remaining vlrs ...\n", (int)header.offset_to_point_data - vlrs_size - header.header_size, i, header.number_of_variable_length_records);
         header.number_of_variable_length_records = i;
+        vlrs_corrupt = TRUE;
         break;
       }
 
@@ -463,12 +486,12 @@ BOOL LASreaderLAS::open(ByteStreamIn* stream, BOOL peek_only, U32 decompress_sel
           header.laszip = new LASzip();
 
           // read this data following the header of the variable length record
-          //     U16  compressor                2 bytes 
-          //     U32  coder                     2 bytes 
-          //     U8   version_major             1 byte 
+          //     U16  compressor                2 bytes
+          //     U32  coder                     2 bytes
+          //     U8   version_major             1 byte
           //     U8   version_minor             1 byte
           //     U16  version_revision          2 bytes
-          //     U32  options                   4 bytes 
+          //     U32  options                   4 bytes
           //     I32  chunk_size                4 bytes
           //     I64  number_of_special_evlrs   8 bytes
           //     I64  offset_to_special_evlrs   8 bytes
@@ -558,13 +581,13 @@ BOOL LASreaderLAS::open(ByteStreamIn* stream, BOOL peek_only, U32 decompress_sel
           header.vlr_lastiling = new LASvlr_lastiling();
 
           // read the payload of this VLR which contains 28 bytes
-          //   U32  level                                          4 bytes 
-          //   U32  level_index                                    4 bytes 
-          //   U32  implicit_levels + buffer bit + reversible bit  4 bytes 
-          //   F32  min_x                                          4 bytes 
-          //   F32  max_x                                          4 bytes 
-          //   F32  min_y                                          4 bytes 
-          //   F32  max_y                                          4 bytes 
+          //   U32  level                                          4 bytes
+          //   U32  level_index                                    4 bytes
+          //   U32  implicit_levels + buffer bit + reversible bit  4 bytes
+          //   F32  min_x                                          4 bytes
+          //   F32  max_x                                          4 bytes
+          //   F32  min_y                                          4 bytes
+          //   F32  max_y                                          4 bytes
 
           if (header.vlrs[i].record_length_after_header == 28)
           {
@@ -754,7 +777,7 @@ BOOL LASreaderLAS::open(ByteStreamIn* stream, BOOL peek_only, U32 decompress_sel
           else
           {
             fprintf(stderr,"WARNING: unknown LASF_Projection VLR with record_id %d.\n", header.vlrs[i].record_id);
-          } 
+          }
         }
         else
         {
@@ -782,6 +805,13 @@ BOOL LASreaderLAS::open(ByteStreamIn* stream, BOOL peek_only, U32 decompress_sel
           else if (header.vlrs[i].record_id == 4) // ExtraBytes
           {
             header.init_attributes(header.vlrs[i].record_length_after_header/sizeof(LASattribute), (LASattribute*)header.vlrs[i].data);
+            for (j = 0; j < (U32)header.number_attributes; j++)
+            {
+              if (header.attributes[j].data_type > 10)
+              {
+                fprintf(stderr,"WARNING: data type %d of attribute %d ('%s') is deprecated\n", header.attributes[j].data_type, j, header.attributes[j].name);
+              }
+            }
           }
           else if ((header.vlrs[i].record_id >= 100) && (header.vlrs[i].record_id < 355)) // WavePacketDescriptor
           {
@@ -842,6 +872,43 @@ BOOL LASreaderLAS::open(ByteStreamIn* stream, BOOL peek_only, U32 decompress_sel
         i--;
         header.number_of_variable_length_records--;
       }
+      else if (strcmp(header.vlrs[i].user_id, "copc") == 0)
+      {
+        if (header.vlrs[i].data)
+        {
+          if (header.vlrs[i].record_id == 1) // COPC info
+          {
+            if (i != 0)
+            {
+              fprintf(stderr, "WARNING: COPC VLR info should be the first vlr (not specification-conform)\n");
+            }
+
+            if (header.version_major == 1 && header.version_minor == 4 && (header.point_data_format & 0x3F) >= 6 && (header.point_data_format & 0x3F) <= 8)
+            {
+              if (!header.vlr_copc_info)
+              {
+                // Unlike e.g. vlr_geo_ogc_wkt or vlr_classification, vlr_copc_info is not a pointer to the VLR payload (LASvlr_copc_info*)header.vlrs[i].data
+                // Instead we use a copy. This allows to remove the COPC VLR later and maintain the COPC index information for a COPC aware reader but writers
+                // will never receive any COPC data
+                header.vlr_copc_info = new LASvlr_copc_info;
+                memcpy(header.vlr_copc_info, header.vlrs[i].data, sizeof(LASvlr_copc_info));
+              }
+              else
+              {
+                fprintf(stderr, "WARNING: variable length records contain more than one copc info\n");
+              }
+            }
+            else
+            {
+              fprintf(stderr, "WARNING: COPC VLR info should belong in LAZ file 1.4 pdrf 6-8 not LAZ %u.%u pdrf %u (not specification-conform).\n", header.version_major, header.version_minor, header.point_data_format);
+            }
+          }
+        }
+        else
+        {
+          fprintf(stderr, "WARNING: no payload for copc (not specification-conform).\n");
+        }
+      }
     }
   }
 
@@ -873,8 +940,8 @@ BOOL LASreaderLAS::open(ByteStreamIn* stream, BOOL peek_only, U32 decompress_sel
         I64 here = stream->tell();
         stream->seek(header.start_of_first_extended_variable_length_record);
 
-        header.evlrs = (LASevlr*)malloc(sizeof(LASevlr)*header.number_of_extended_variable_length_records);
-  
+		header.evlrs = (LASevlr*)calloc(header.number_of_extended_variable_length_records, sizeof(LASevlr));
+
         // read the extended variable length records into the header
 
         I64 evlrs_size = 0;
@@ -931,12 +998,12 @@ BOOL LASreaderLAS::open(ByteStreamIn* stream, BOOL peek_only, U32 decompress_sel
               header.laszip = new LASzip();
 
               // read this data following the header of the variable length record
-              //     U16  compressor                2 bytes 
-              //     U32  coder                     2 bytes 
-              //     U8   version_major             1 byte 
+              //     U16  compressor                2 bytes
+              //     U32  coder                     2 bytes
+              //     U8   version_major             1 byte
               //     U8   version_minor             1 byte
               //     U16  version_revision          2 bytes
-              //     U32  options                   4 bytes 
+              //     U32  options                   4 bytes
               //     I32  chunk_size                4 bytes
               //     I64  number_of_special_evlrs   8 bytes
               //     I64  offset_to_special_evlrs   8 bytes
@@ -1026,13 +1093,13 @@ BOOL LASreaderLAS::open(ByteStreamIn* stream, BOOL peek_only, U32 decompress_sel
               header.vlr_lastiling = new LASvlr_lastiling();
 
               // read the payload of this VLR which contains 28 bytes
-              //   U32  level                                          4 bytes 
-              //   U32  level_index                                    4 bytes 
-              //   U32  implicit_levels + buffer bit + reversible bit  4 bytes 
-              //   F32  min_x                                          4 bytes 
-              //   F32  max_x                                          4 bytes 
-              //   F32  min_y                                          4 bytes 
-              //   F32  max_y                                          4 bytes 
+              //   U32  level                                          4 bytes
+              //   U32  level_index                                    4 bytes
+              //   U32  implicit_levels + buffer bit + reversible bit  4 bytes
+              //   F32  min_x                                          4 bytes
+              //   F32  max_x                                          4 bytes
+              //   F32  min_y                                          4 bytes
+              //   F32  max_y                                          4 bytes
 
               if (header.evlrs[i].record_length_after_header == 28)
               {
@@ -1206,10 +1273,55 @@ BOOL LASreaderLAS::open(ByteStreamIn* stream, BOOL peek_only, U32 decompress_sel
             i--;
             header.number_of_extended_variable_length_records--;
           }
+          else if (strcmp(header.evlrs[i].user_id, "copc") == 0)
+          {
+            if (header.evlrs[i].data)
+            {
+              if (header.evlrs[i].record_id == 1000) // COPC EPT hierarchy
+              {
+                if (header.vlr_copc_info)
+                {
+                  // COPC offsets values are relative to the beginning of the file. We need to compute
+                  // an extra offset relative to the beginning of this evlr payload
+                  U64 offset_to_first_copc_entry = 60 + header.start_of_first_extended_variable_length_record;
+                  for (j = 0; j < i; j++) { offset_to_first_copc_entry += 60 + header.evlrs[j].record_length_after_header; }
+
+                  if (!EPToctree::set_vlr_entries(header.evlrs[i].data, offset_to_first_copc_entry, header))
+                  {
+                    fprintf(stderr, "WARNING: invalid COPC EPT hierarchy (not specification-conform).\n");
+					          delete header.vlr_copc_info;
+                    header.vlr_copc_info = 0;
+                  }
+                }
+                else
+                {
+                  fprintf(stderr, "WARNING: no COPC VLR info before COPC EPT hierarchy EVLR (not specification-conform).\n");
+                }
+              }
+              else
+              {
+                fprintf(stderr, "WARNING: unknown COPC EVLR (not specification-conform).\n");
+              }
+            }
+            else
+            {
+              fprintf(stderr, "WARNING: no payload for COPC EVLR (not specification-conform).\n");
+            }
+          }
         }
         stream->seek(here);
       }
     }
+  }
+
+  // remove copc vlrs: the header contains two dynamically allocated pointers (vlr_copc_info and vlr_copc_entries) used to build a spatial index.
+  // COPC VLR and EVLR are removed and the header becomes the header of a regular LAZ file.
+  // This way the writers will never be able to produce and invalid the COPC file because we will never actually encounter a COPC header outside this method.
+  if (!keep_copc)
+  {
+    header.remove_vlr("copc", 1);     // copc info
+    header.remove_vlr("copc", 10000); // copc extent (deprecated and no longer part of the specs)
+    header.remove_evlr("copc", 1000); // ept hierachy
   }
 
   // check the compressor state
@@ -1220,19 +1332,27 @@ BOOL LASreaderLAS::open(ByteStreamIn* stream, BOOL peek_only, U32 decompress_sel
     {
       fprintf(stderr,"ERROR: %s\n", header.laszip->get_error());
       fprintf(stderr,"       please upgrade to the latest release of LAStools (with LASzip)\n");
-      fprintf(stderr,"       or contact 'martin.isenburg@rapidlasso.com' for assistance.\n");
+      fprintf(stderr,"       or contact 'info@rapidlasso.de' for assistance.\n");
       return FALSE;
     }
   }
 
   // remove extra bits in point data type
 
-  if ((header.point_data_format & 128) || (header.point_data_format & 64)) 
+  if ((header.point_data_format & 128) || (header.point_data_format & 64))
   {
     if (!header.laszip)
     {
-      fprintf(stderr,"ERROR: this file was compressed with an experimental version of laszip\n");
-      fprintf(stderr,"ERROR: please contact 'martin.isenburg@rapidlasso.com' for assistance.\n");
+      if (vlrs_corrupt)
+      {
+        fprintf(stderr,"ERROR: your LAZ file has corruptions in the LAS header resulting in\n");
+        fprintf(stderr,"ERROR: the laszip VLR being lost. maybe your download failed?\n");
+      }
+      else
+      {
+        fprintf(stderr,"ERROR: this file was compressed with an experimental version of laszip\n");
+        fprintf(stderr,"ERROR: please contact 'info@rapidlasso.de' for assistance.\n");
+      }
       return FALSE;
     }
     header.point_data_format &= 127;
@@ -1268,7 +1388,7 @@ BOOL LASreaderLAS::open(ByteStreamIn* stream, BOOL peek_only, U32 decompress_sel
       for (count = 0; count < number; count++)
       {
         stream->seek(offset + 2);
-        CHAR user_id[16]; 
+        CHAR user_id[16];
         stream->getBytes((U8*)user_id, 16);
         U16 record_id;
         stream->get16bitsLE((U8*)&record_id);
@@ -1339,13 +1459,17 @@ BOOL LASreaderLAS::read_point_default()
   {
     if (reader->read(point.point) == FALSE)
     {
+      if (reader->warning())
+      {
+        fprintf(stderr,"WARNING: '%s' for '%s'\n", reader->warning(), file_name);
+      }
       if (reader->error())
       {
-        fprintf(stderr,"ERROR: '%s' after %u of %u points\n", reader->error(), (U32)p_count, (U32)npoints);
+        fprintf(stderr,"ERROR: '%s' after %u of %u points for '%s'\n", reader->error(), (U32)p_count, (U32)npoints, file_name);
       }
       else
       {
-        fprintf(stderr,"WARNING: end-of-file after %u of %u points\n", (U32)p_count, (U32)npoints);
+        fprintf(stderr,"WARNING: end-of-file after %u of %u points for '%s'\n", (U32)p_count, (U32)npoints, file_name);
       }
       return FALSE;
     }
@@ -1355,7 +1479,7 @@ BOOL LASreaderLAS::read_point_default()
     if (point.have_wavepacket)
     {
       // distance in meters light travels in one nanoseconds divided by two divided by 1000
-      F64 round_trip_distance_in_picoseconds = 0.299792458 / 2 / 1000; 
+      F64 round_trip_distance_in_picoseconds = 0.299792458 / 2 / 1000;
       F64 x = -point.wavepacket.getXt();
       F64 y = -point.wavepacket.getYt();
       F64 z = -point.wavepacket.getZt();
@@ -1366,7 +1490,7 @@ BOOL LASreaderLAS::read_point_default()
       point.wavepacket.setXt((F32)x);
       point.wavepacket.setYt((F32)y);
       point.wavepacket.setZt((F32)z);
-//      alternative to converge on optical origin 
+//      alternative to converge on optical origin
 //      point.wavepacket.setXt(-point.wavepacket.getXt()/point.wavepacket.getLocation());
 //      point.wavepacket.setYt(-point.wavepacket.getYt()/point.wavepacket.getLocation());
 //      point.wavepacket.setZt(-point.wavepacket.getZt()/point.wavepacket.getLocation());
@@ -1401,7 +1525,7 @@ ByteStreamIn* LASreaderLAS::get_stream() const
 
 void LASreaderLAS::close(BOOL close_stream)
 {
-  if (reader) 
+  if (reader)
   {
     reader->done();
     delete reader;
@@ -1422,15 +1546,22 @@ void LASreaderLAS::close(BOOL close_stream)
       fclose(file);
       file = 0;
     }
+    if (file_name)
+    {
+      free(file_name);
+      file_name = 0;
+    }
   }
 }
 
 LASreaderLAS::LASreaderLAS()
 {
   file = 0;
+  file_name = 0;
   stream = 0;
   delete_stream = TRUE;
   reader = 0;
+  keep_copc = FALSE;
 }
 
 LASreaderLAS::~LASreaderLAS()

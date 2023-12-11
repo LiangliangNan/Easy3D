@@ -9,11 +9,11 @@
 
   PROGRAMMERS:
 
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
 
   COPYRIGHT:
 
-    (c) 2007-2017, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2007-2017, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
     terms of the GNU Lesser General Licence as published by the Free Software
@@ -46,6 +46,11 @@
 #else
 #define DIRECTORY_SLASH '/'
 #endif
+
+void LASwriter::dealloc()
+{
+  delete this;
+}
 
 BOOL LASwriteOpener::is_piped() const
 {
@@ -226,11 +231,10 @@ void LASwriteOpener::usage() const
   fprintf(stderr,"  -o lidar.laz\n");
   fprintf(stderr,"  -o xyzta.txt -oparse xyzta (on-the-fly to ASCII)\n");
   fprintf(stderr,"  -o terrasolid.bin\n");
-  fprintf(stderr,"  -o nasa.qi\n");
   fprintf(stderr,"  -odir C:%cdata%cground (specify output directory)\n", DIRECTORY_SLASH, DIRECTORY_SLASH);
   fprintf(stderr,"  -odix _classified (specify file name appendix)\n");
   fprintf(stderr,"  -ocut 2 (cut the last two characters from name)\n");
-  fprintf(stderr,"  -olas -olaz -otxt -obin -oqfit (specify format)\n");
+  fprintf(stderr,"  -olas -olaz -otxt -obin -oqi (specify format)\n");
   fprintf(stderr,"  -stdout (pipe to stdout)\n");
   fprintf(stderr,"  -nil    (pipe to NULL)\n");
 }
@@ -303,7 +307,7 @@ BOOL LASwriteOpener::parse(int argc, char* argv[])
       set_native(TRUE);
       *argv[i]='\0';
     }
-    else if (strcmp(argv[i],"-no_native") == 0)
+    else if (strcmp(argv[i],"-compatible") == 0)
     {
       set_native(FALSE);
       *argv[i]='\0';
@@ -1128,7 +1132,7 @@ void LASwriteOpener::cut_characters(U32 cut)
     if ((len == 0) || (file_name[len] == '\\') || (file_name[len] == '/') || (file_name[len] == ':'))
     {
       len = (I32)strlen(file_name);
-      strncpy(new_file_name, file_name, len-cut);
+      memcpy(new_file_name, file_name, len-cut);
     }
     else
     {

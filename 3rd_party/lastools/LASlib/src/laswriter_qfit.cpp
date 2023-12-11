@@ -9,11 +9,11 @@
   
   PROGRAMMERS:
 
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
 
   COPYRIGHT:
 
-    (c) 2007-2012, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2007-2012, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
     terms of the GNU Lesser General Licence as published by the Free Software
@@ -208,7 +208,7 @@ BOOL LASwriterQFIT::open(ByteStreamOut* stream, const LASheader* header, I32 ver
   // populate some ASCII into the remainder of second header record
 
   memset(buffer, 0, 48);
-  sprintf((char*)buffer, "LAStools by Martin Isenburg");
+  sprintf((char*)buffer, "LAStools by rapidlasso GmbH");
   if (!stream->putBytes((U8*)buffer, version-8))
   {
     fprintf(stderr,"ERROR: writing second header record of QFIT header\n");

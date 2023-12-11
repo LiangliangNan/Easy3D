@@ -9,14 +9,14 @@
   
   PROGRAMMERS:
 
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
 
   COPYRIGHT:
 
-    (c) 2007-2017, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2007-2022, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
-    terms of the GNU Lesser General Licence as published by the Free Software
+    terms of the Apache Public License 2.0 published by the Apache Software
     Foundation. See the COPYING file for more information.
 
     This software is distributed WITHOUT ANY WARRANTY and without even the
@@ -893,10 +893,14 @@ inline void LASreadItemCompressed_POINT14_v4::read(U8* item, U32& context)
     }
     ((LASpoint14*)last_item)->classification = dec_classification->decodeSymbol(contexts[current_context].m_classification[ccc]);
 
-    // legacy copies
+    // update the legacy copy
     if (((LASpoint14*)last_item)->classification < 32)
     {
       ((LASpoint14*)last_item)->legacy_classification = ((LASpoint14*)last_item)->classification;
+    }
+    else
+    {
+      ((LASpoint14*)last_item)->legacy_classification = 0;
     }
   }
 
@@ -2129,7 +2133,14 @@ LASreadItemCompressed_BYTE14_v4::LASreadItemCompressed_BYTE14_v4(ArithmeticDecod
 
     changed_Bytes[i] = FALSE;
 
-    requested_Bytes[i] = (decompress_selective & (LASZIP_DECOMPRESS_SELECTIVE_BYTE0 << i) ? TRUE : FALSE);
+    if (i > 15) // currently only the first 16 extra bytes can be selectively decompressed
+    {
+      requested_Bytes[i] = TRUE;
+    }
+    else
+    {
+      requested_Bytes[i] = (decompress_selective & (LASZIP_DECOMPRESS_SELECTIVE_BYTE0 << i) ? TRUE : FALSE);
+    }
   }
 
   /* init the bytes buffer to zero */

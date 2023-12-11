@@ -11,21 +11,22 @@
 
   PROGRAMMERS:
 
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
 
   COPYRIGHT:
 
-    (c) 2007-2012, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2007-2022, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
-    terms of the GNU Lesser General Licence as published by the Free Software
-    Foundation. See the LICENSE.txt file for more information.
+    terms of the Apache Public License 2.0 published by the Apache Software
+    Foundation. See the COPYING file for more information.
 
     This software is distributed WITHOUT ANY WARRANTY and without even the
     implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
   
   CHANGE HISTORY:
   
+    21 June 2021 -- limit level_offset init loop to 16 after 'memoy' disappears  
     31 March 2015 -- remove unused LASquadtree inheritance of abstract LASspatial 
     11 May 2011 -- moved into LASlib so that LASreader supports spatial indexing
     19 January 2011 -- created after mara met with silke to talk about africa
@@ -42,7 +43,7 @@ class ByteStreamOut;
 
 #define LAS_SPATIAL_QUAD_TREE 0
 
-class LASquadtree
+class LASLIB_DLL LASquadtree
 {
 public:
   LASquadtree();
@@ -60,7 +61,7 @@ public:
   U32 get_cell_index(const F64 x, const F64 y) const;
 
   // map cells to coarser cells
-  BOOL coarsen(const I32 cell_index, I32* coarser_cell_index, U32* num_cell_indices, I32** cell_indices) const;
+  BOOL coarsen(const I32 cell_index, I32* coarser_cell_index, U32* num_cell_indices, I32** cell_indices);
 
   // describe cells
   void get_cell_bounding_box(const I32 cell_index, F32* min, F32* max) const;
@@ -140,7 +141,7 @@ public:
 private:
   U32 sub_level;
   U32 sub_level_index;
-  U32 level_offset[24];
+  U32 level_offset[20];
   U32 coarser_indices[4];
   U32 adaptive_alloc;
   U32* adaptive;

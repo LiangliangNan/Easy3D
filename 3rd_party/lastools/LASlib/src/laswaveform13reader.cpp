@@ -9,11 +9,11 @@
 
   PROGRAMMERS:
 
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
 
   COPYRIGHT:
 
-    (c) 2007-2012, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2007-2012, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
     terms of the GNU Lesser General Licence as published by the Free Software
@@ -85,9 +85,19 @@ BOOL LASwaveform13reader::open(const char* file_name, I64 start_of_waveform_data
     return FALSE;
   }
 
+  // we need wave packet descriptors
+
   if (wave_packet_descr == 0)
   {
     fprintf(stderr,"ERROR: wave packet descriptor pointer is zero\n");
+    return FALSE;
+  }
+
+  // only array positions 1 through 255 should have a wave packet descriptor
+
+  if (wave_packet_descr[0] != 0)
+  {
+    fprintf(stderr,"ERROR: wave_packet_descr[0] with index 0 must be zero\n");
     return FALSE;
   }
 
@@ -96,7 +106,7 @@ BOOL LASwaveform13reader::open(const char* file_name, I64 start_of_waveform_data
   I32 i;
   compressed = FALSE;
 
-  for (i = 0; i < 256; i++)
+  for (i = 1; i < 256; i++)
   {
     if (wave_packet_descr[i])
     {
@@ -189,7 +199,7 @@ BOOL LASwaveform13reader::open(const char* file_name, I64 start_of_waveform_data
         fprintf(stderr,"ERROR: reading index of waveform descriptor %d\n", i);
         return FALSE;
       }
-      if (index > 255)
+      if ((index == 0) || (index > 255))
       {
         fprintf(stderr,"ERROR: cross-check - index %d of waveform descriptor %d out-of-range\n", index, i);
         return FALSE;

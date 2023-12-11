@@ -10,11 +10,11 @@
 
   PROGRAMMERS:
 
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
 
   COPYRIGHT:
 
-    (c) 2007-2012, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2007-2012, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
     terms of the GNU Lesser General Licence as published by the Free Software
@@ -40,7 +40,7 @@ class LASwaveformDescription;
 class ArithmeticEncoder;
 class IntegerCompressor;
 
-class LASwaveform13writer
+class LASLIB_DLL LASwaveform13writer
 {
 public:
   BOOL open(const char* file_name, const LASvlr_wave_packet_descr * const * wave_packet_descr);

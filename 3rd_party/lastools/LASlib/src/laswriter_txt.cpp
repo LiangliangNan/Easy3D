@@ -9,11 +9,11 @@
 
   PROGRAMMERS:
 
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
 
   COPYRIGHT:
 
-    (c) 2007-2012, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2007-2012, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
     terms of the GNU Lesser General Licence as published by the Free Software
@@ -200,14 +200,14 @@ BOOL LASwriterTXT::open(FILE* file, const LASheader* header, const CHAR* parse_s
       }
       fprintf(file, "%u     \012", (U32)((I64*)payload)[4]); // ncols
       fprintf(file, "%u     \012", (U32)((I64*)payload)[5]); // nrows
-      fprintf(file, "%g %g %g\012", ((F64*)payload)[6], ((F64*)payload)[7], ((F64*)payload)[8]); // translation
-      fprintf(file, "%g %g %g\012", ((F64*)payload)[9], ((F64*)payload)[10], ((F64*)payload)[11]); // rotation_row_0
-      fprintf(file, "%g %g %g\012", ((F64*)payload)[12], ((F64*)payload)[13], ((F64*)payload)[14]); // rotation_row_1
-      fprintf(file, "%g %g %g\012", ((F64*)payload)[15], ((F64*)payload)[16], ((F64*)payload)[17]); // rotation_row_2
-      fprintf(file, "%g %g %g %g\012", ((F64*)payload)[18], ((F64*)payload)[19], ((F64*)payload)[20], ((F64*)payload)[21]); // transformation_row_0
-      fprintf(file, "%g %g %g %g\012", ((F64*)payload)[22], ((F64*)payload)[23], ((F64*)payload)[24], ((F64*)payload)[25]); // transformation_row_0
-      fprintf(file, "%g %g %g %g\012", ((F64*)payload)[26], ((F64*)payload)[27], ((F64*)payload)[28], ((F64*)payload)[29]); // transformation_row_0
-      fprintf(file, "%g %g %g %g\012", ((F64*)payload)[30], ((F64*)payload)[31], ((F64*)payload)[32], ((F64*)payload)[33]); // transformation_row_0
+      fprintf(file, "%g %g %g\012", ((F64*)payload)[6], ((F64*)payload)[7], ((F64*)payload)[8]); // scanner registered position
+	  fprintf(file, "%g %g %g\012", ((F64*)payload)[9], ((F64*)payload)[10], ((F64*)payload)[11]); // scanner registered axis 'X'
+      fprintf(file, "%g %g %g\012", ((F64*)payload)[12], ((F64*)payload)[13], ((F64*)payload)[14]); // scanner registered axis 'Y'
+      fprintf(file, "%g %g %g\012", ((F64*)payload)[15], ((F64*)payload)[16], ((F64*)payload)[17]); // scanner registered axis 'Z'
+      fprintf(file, "%g %g %g %g\012", ((F64*)payload)[18], ((F64*)payload)[19], ((F64*)payload)[20], ((F64*)payload)[21]); // r11 r12 r13 - rotation matrix
+      fprintf(file, "%g %g %g %g\012", ((F64*)payload)[22], ((F64*)payload)[23], ((F64*)payload)[24], ((F64*)payload)[25]); // r21 r22 r23
+      fprintf(file, "%g %g %g %g\012", ((F64*)payload)[26], ((F64*)payload)[27], ((F64*)payload)[28], ((F64*)payload)[29]); // r31 r32 r33
+      fprintf(file, "%g %g %g %g\012", ((F64*)payload)[30], ((F64*)payload)[31], ((F64*)payload)[32], ((F64*)payload)[33]); // tr1 tr2 tr3 - transformation 
     }
     else
     {
@@ -467,7 +467,7 @@ BOOL LASwriterTXT::write_point(const LASpoint* point)
       fprintf(file, "%d", point->get_return_number());
       break;
     case 'c': // the classification
-      fprintf(file, "%d", point->get_classification());
+      fprintf(file, "%d", point->get_extended_classification());
       break;
     case 'u': // the user data
       fprintf(file, "%d", point->get_user_data());
@@ -501,21 +501,21 @@ BOOL LASwriterTXT::write_point(const LASpoint* point)
       break;
     case 'R': // the red channel of the RGB field
       if (scale_rgb != 1.0f)
-        fprintf(file, "%.2f", scale_rgb*point->get_rgb()[0]);
+        fprintf(file, "%.2f", scale_rgb*point->get_R());
       else
-        fprintf(file, "%d", point->get_rgb()[0]);
+        fprintf(file, "%d", point->get_R());
       break;
     case 'G': // the green channel of the RGB field
       if (scale_rgb != 1.0f)
-        fprintf(file, "%.2f", scale_rgb*point->get_rgb()[1]);
+        fprintf(file, "%.2f", scale_rgb*point->get_G());
       else
-        fprintf(file, "%d", point->get_rgb()[1]);
+        fprintf(file, "%d", point->get_G());
       break;
     case 'B': // the blue channel of the RGB field
       if (scale_rgb != 1.0f)
-        fprintf(file, "%.2f", scale_rgb*point->get_rgb()[2]);
+        fprintf(file, "%.2f", scale_rgb*point->get_B());
       else
-        fprintf(file, "%d", point->get_rgb()[2]);
+        fprintf(file, "%d", point->get_B());
       break;
     case 'm': // the index of the point (count starts at 0)
 #ifdef _WIN32

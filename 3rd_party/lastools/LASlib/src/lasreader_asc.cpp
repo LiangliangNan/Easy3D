@@ -9,11 +9,11 @@
   
   PROGRAMMERS:
 
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
 
   COPYRIGHT:
 
-    (c) 2007-2014, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2007-2014, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
     terms of the GNU Lesser General Licence as published by the Free Software
@@ -29,6 +29,8 @@
 ===============================================================================
 */
 #include "lasreader_asc.hpp"
+
+#include "lasvlrpayload.hpp"
 
 #include <stdlib.h>
 #include <string.h>
@@ -234,7 +236,7 @@ BOOL LASreaderASC::open(const CHAR* file_name, BOOL comma_not_point)
 
   // init the bounding box z and count the rasters
 
-  F32 elevation = 0;
+  F64 elevation = 0;
   npoints = 0;
   header.min_z = F64_MAX;
   header.max_z = F64_MIN;
@@ -274,7 +276,7 @@ BOOL LASreaderASC::open(const CHAR* file_name, BOOL comma_not_point)
         while ((line[line_curr] != '\0') && (line[line_curr] <= ' ')) line_curr++;
       }
       // get elevation value
-      sscanf(&(line[line_curr]), "%f", &elevation);
+      sscanf(&(line[line_curr]), "%lf", &elevation);
       // skip parsed number
       while ((line[line_curr] != '\0') && (line[line_curr] > ' ')) line_curr++;
       // skip following spaces
@@ -313,6 +315,25 @@ BOOL LASreaderASC::open(const CHAR* file_name, BOOL comma_not_point)
     header.min_z = 0;
     header.max_z = 0;
   }
+
+  // add the VLR for Raster LAZ 
+
+  LASvlrRasterLAZ vlrRasterLAZ;
+  vlrRasterLAZ.nbands = 1;
+  vlrRasterLAZ.nbits = 32;
+  vlrRasterLAZ.ncols = ncols;
+  vlrRasterLAZ.nrows = nrows;
+  vlrRasterLAZ.reserved1 = 0;
+  vlrRasterLAZ.reserved2 = 0;
+  vlrRasterLAZ.stepx = cellsize;
+  vlrRasterLAZ.stepx_y = 0.0;
+  vlrRasterLAZ.stepy = cellsize;
+  vlrRasterLAZ.stepy_x = 0.0;
+  vlrRasterLAZ.llx = xllcenter - 0.5*cellsize;
+  vlrRasterLAZ.lly = yllcenter - 0.5*cellsize;
+  vlrRasterLAZ.sigmaxy = 0.0;
+
+  header.add_vlr("Raster LAZ", 7113, (U16)vlrRasterLAZ.get_payload_size(), vlrRasterLAZ.get_payload(), FALSE, "by LAStools of rapidlasso GmbH", FALSE);
 
   // reopen
 
@@ -358,7 +379,7 @@ BOOL LASreaderASC::seek(const I64 p_index)
 
 BOOL LASreaderASC::read_point_default()
 {
-  F32 elevation;
+  F64 elevation;
   while (p_count < npoints)
   {
     if (line[line_curr] == '\0')
@@ -394,7 +415,7 @@ BOOL LASreaderASC::read_point_default()
       row++;
     }
     // get elevation value
-    sscanf(&(line[line_curr]), "%f", &elevation);
+    sscanf(&(line[line_curr]), "%lf", &elevation);
     // skip parsed number
     while ((line[line_curr] != '\0') && (line[line_curr] > ' ')) line_curr++;
     // skip following spaces
@@ -403,9 +424,18 @@ BOOL LASreaderASC::read_point_default()
     if (elevation != nodata)
     {
       // compute the quantized x, y, and z values
-      point.set_x(xllcenter + col*cellsize);
-      point.set_y(yllcenter + (nrows - row - 1) * cellsize);
-      point.set_z(elevation);
+      if (!point.set_x(xllcenter + col*cellsize))
+      {
+        overflow_I32_x++;
+      }
+      if (!point.set_y(yllcenter + (nrows - row - 1) * cellsize))
+      {
+        overflow_I32_y++;
+      }
+      if (!point.set_z(elevation))
+      {
+        overflow_I32_z++;
+      }
       p_count++;
       col++;
       return TRUE;
@@ -425,6 +455,33 @@ ByteStreamIn* LASreaderASC::get_stream() const
 
 void LASreaderASC::close(BOOL close_stream)
 {
+  if (overflow_I32_x)
+  {
+#ifdef _WIN32
+    fprintf(stderr, "WARNING: total of %I64d integer overflows in x\n", overflow_I32_x);
+#else
+    fprintf(stderr, "WARNING: total of %lld integer overflows in x\n", overflow_I32_x);
+#endif
+    overflow_I32_x = 0;
+  }
+  if (overflow_I32_y)
+  {
+#ifdef _WIN32
+    fprintf(stderr, "WARNING: total of %I64d integer overflows in y\n", overflow_I32_y);
+#else
+    fprintf(stderr, "WARNING: total of %lld integer overflows in y\n", overflow_I32_y);
+#endif
+    overflow_I32_y = 0;
+  }
+  if (overflow_I32_z)
+  {
+#ifdef _WIN32
+    fprintf(stderr, "WARNING: total of %I64d integer overflows in z\n", overflow_I32_z);
+#else
+    fprintf(stderr, "WARNING: total of %lld integer overflows in z\n", overflow_I32_z);
+#endif
+    overflow_I32_z = 0;
+  }
   if (file)
   {
     if (piped) while(fgets(line, line_size, file));
@@ -507,6 +564,9 @@ void LASreaderASC::clean()
   yllcenter = F64_MAX;
   cellsize = 0;
   nodata = -9999;
+  overflow_I32_x = 0;
+  overflow_I32_y = 0;
+  overflow_I32_z = 0;
 }
 
 LASreaderASC::LASreaderASC()
@@ -587,12 +647,12 @@ void LASreaderASC::populate_bounding_box()
 {
   // compute quantized and then unquantized bounding box
 
-  F64 dequant_min_x = header.get_x(header.get_X(header.min_x));
-  F64 dequant_max_x = header.get_x(header.get_X(header.max_x));
-  F64 dequant_min_y = header.get_y(header.get_Y(header.min_y));
-  F64 dequant_max_y = header.get_y(header.get_Y(header.max_y));
-  F64 dequant_min_z = header.get_z(header.get_Z(header.min_z));
-  F64 dequant_max_z = header.get_z(header.get_Z(header.max_z));
+  F64 dequant_min_x = header.get_x((I32)(header.get_X(header.min_x)));
+  F64 dequant_max_x = header.get_x((I32)(header.get_X(header.max_x)));
+  F64 dequant_min_y = header.get_y((I32)(header.get_Y(header.min_y)));
+  F64 dequant_max_y = header.get_y((I32)(header.get_Y(header.max_y)));
+  F64 dequant_min_z = header.get_z((I32)(header.get_Z(header.min_z)));
+  F64 dequant_max_z = header.get_z((I32)(header.get_Z(header.max_z)));
 
   // make sure there is not sign flip
 

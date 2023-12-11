@@ -9,14 +9,14 @@
   
   PROGRAMMERS:
 
-    martin.isenburg@rapidlasso.com  -  http://rapidlasso.com
+    info@rapidlasso.de  -  https://rapidlasso.de
 
   COPYRIGHT:
 
-    (c) 2007-2017, martin isenburg, rapidlasso - fast tools to catch reality
+    (c) 2007-2022, rapidlasso GmbH - fast tools to catch reality
 
     This is free software; you can redistribute and/or modify it under the
-    terms of the GNU Lesser General Licence as published by the Free Software
+    terms of the Apache Public License 2.0 published by the Apache Software
     Foundation. See the COPYING file for more information.
 
     This software is distributed WITHOUT ANY WARRANTY and without even the
@@ -432,7 +432,7 @@ BOOL LASreadPoint::read(U8* const * point)
         init_dec();
         if (current_chunk == tabled_chunks) // no or incomplete chunk table?
         {
-          if (current_chunk == number_chunks)
+          if (current_chunk >= number_chunks)
           {
             number_chunks += 256;
             chunk_starts = (I64*)realloc(chunk_starts, sizeof(I64)*(number_chunks+1));
@@ -545,11 +545,11 @@ BOOL LASreadPoint::check_end()
       if (current_chunk < tabled_chunks)
       {
         I64 here = instream->tell();
-        if (chunk_starts[current_chunk] != here)
+        if (chunk_starts[current_chunk] != here) // then last chunk was corrupt
         {
           // create error string
           if (last_error == 0) last_error = new CHAR[128];
-          // last chunk was corrupt
+          // report error
           sprintf(last_error, "chunk with index %u of %u is corrupt", current_chunk, tabled_chunks);
           return FALSE;
         }
@@ -603,6 +603,10 @@ BOOL LASreadPoint::read_chunk_table()
     // no choice but to fail if adaptive chunking was used
     if (chunk_size == U32_MAX)
     {
+      // create error string
+      if (last_error == 0) last_error = new CHAR[128];
+      // report error
+      sprintf(last_error, "compressor was interrupted before writing adaptive chunk table of LAZ file");
       return FALSE;
     }
     // otherwise we build the chunk table as we read the file
@@ -614,6 +618,10 @@ BOOL LASreadPoint::read_chunk_table()
     }
     chunk_starts[0] = chunks_start;
     tabled_chunks = 1;
+    // create warning string
+    if (last_warning == 0) last_warning = new CHAR[128];
+    // report warning
+    sprintf(last_warning, "compressor was interrupted before writing chunk table of LAZ file");
     return TRUE;
   }
 
@@ -647,9 +655,17 @@ BOOL LASreadPoint::read_chunk_table()
   // read the chunk table
   try
   {
+    // seek to where the chunk table
     instream->seek(chunk_table_start_position);
+    // fail if we did not manage to seek there
+    I64 where_are_we_now = instream->tell();
+    if (where_are_we_now != chunk_table_start_position)
+    {
+      throw 1;
+    }
     U32 version;
     instream->get32bitsLE((U8*)&version);
+    // fail if the version is wrong
     if (version != 0)
     {
       throw 1;
@@ -733,8 +749,32 @@ BOOL LASreadPoint::read_chunk_table()
     }
     // create warning string
     if (last_warning == 0) last_warning = new CHAR[128];
-    // report warning
-    sprintf(last_warning, "corrupt chunk table");
+    // first seek to the end of the file
+    instream->seekEnd();
+    // get position of last byte
+    I64 last_position = instream->tell();
+    // warn if last byte position is before chunk table start position
+    if (last_position <= chunk_table_start_position)
+    {
+      // report warning
+      if (last_position == chunk_table_start_position)
+      {
+        sprintf(last_warning, "chunk table is missing. improper use of LAZ compressor?");
+      }
+      else
+      {
+#ifdef _WIN32
+        sprintf(last_warning, "chunk table and %I64d bytes are missing. LAZ file truncated during copy or transfer?", chunk_table_start_position - last_position);
+#else
+        sprintf(last_warning, "chunk table and %lld bytes are missing. LAZ file truncated during copy or transfer?", chunk_table_start_position - last_position);
+#endif
+      }
+    }
+    else
+    {
+      // report warning
+      sprintf(last_warning, "corrupt chunk table");
+    }
   }
   if (!instream->seek(chunks_start))
   {
