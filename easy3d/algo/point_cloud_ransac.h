@@ -120,7 +120,7 @@ namespace easy3d {
         //Todo: implement storing parameters for spheres, toruses, and cones.
         
         // In addition to the primitive information (primitive type and index stored as per-vertex properties, 
-        // the parameters of the detected primititives can be queried using the perspective functions.
+        // the parameters of the detected primitives can be queried using the perspective functions.
         struct PlanePrim {
             int primitive_index;            // the index of this plane (w.r.t. the entire list of detected primitives)
             std::vector<int> vertices;      // the vertex indices (w.r.t. the point cloud) of this plane
