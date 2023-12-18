@@ -211,34 +211,38 @@ namespace easy3d {
          *        accessed by the 'current_model()' method.
          * @details This method loads a model into the viewer. It allows the user to control if
          *          default drawables will be created. The default drawables are
-         *          - for point clouds: "vertices".
-         *          - for surface meshes: "faces", "vertices", "edges", "borders".
-         *          - for graphs: "vertices", "edges".
+         *            - for point clouds: "vertices".
+         *            - for surface meshes: "faces", "vertices", "edges", "borders", and "locks".
+         *            - for graphs: "vertices" and "edges".
+         *            - polyhedral meshes: "faces:border"， "faces:interior"， "vertices"， and "edges".
          *          These drawables are usually sufficient for basic rendering of the model. In case
          *          the default drawables don't meet the particular visualization purpose, you can
-         *          override create_drawables() or set 'create_default_drawables' to false and create
-         *          the drawables by calling Model::add_[type]_drawable()..
+         *          set 'create_default_drawables' to false and create your needed drawables by 
+         *          calling model->renderer()->add_[type]_drawable(). Here the [type] must be one of 
+         *          "points", "lines", and "triangles'.
          * @param file_name The string of the file name.
-         * @param create_default_drawables If true, the default drawables will be created.
+         * @param create_default_drawables If true, the default drawables will be created. 
          * @return The pointer to the model added to the viewer (nullptr if failed).
-         * @related create_drawables(Model* model).
+         * @related add_model(Model*, bool).
          */
         virtual Model* add_model(const std::string& file_name, bool create_default_drawables = true);
 
         /**
-         * @brief Add an existing model to the viewer to be visualized. After a model being added
-         *        to the viewer, the viewer will be in charge of its memory management.
+         * @brief Add an existing model to the viewer to be visualized. If the model has been successfully 
+         *        added to the viewer, the viewer will be in charge of its memory management.
          * @details This method adds a model into the viewer. It allows the user to control if
          *          default drawables will be created. The default drawables are
-         *          - for point clouds: "vertices".
-         *          - for surface meshes: "faces", "vertices", "edges", "borders".
-         *          - for graphs: "vertices", "edges".
+         *            - for point clouds: "vertices".
+         *            - for surface meshes: "faces", "vertices", "edges", "borders", and "locks".
+         *            - for graphs: "vertices" and "edges".
+         *            - polyhedral meshes: "faces:border"， "faces:interior"， "vertices"， and "edges".
          *          These drawables are usually sufficient for basic rendering of the model. In case
          *          the default drawables don't meet the particular visualization purpose, you can
-         *          override create_drawables() or set 'create_default_drawables' to false and create
-         *          the drawables by calling Model::add_[type]_drawable()..
+         *          set 'create_default_drawables' to false and create your needed drawables by
+         *          calling model->renderer()->add_[type]_drawable(). Here the [type] must be one of
+         *          "points", "lines", and "triangles'.
          * @param model The pointer to the model.
-         * @param create_default_drawables If ture, the default drawables will be created.
+         * @param create_default_drawables If true, the default drawables will be created.
          * @return The pointer to the model added to the viewer (nullptr if failed).
          * @related add_model(const std::string&, bool).
          */
