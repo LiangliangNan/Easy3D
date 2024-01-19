@@ -164,13 +164,12 @@ void main()
 
 	gl_FragDepth = depth;
 
-	if (!lighting) {
-		outputF = gOutColor;
-	}
-
-	else {
+	if (lighting) {
 		vec3 light_dir = normalize(eLightPos);
 		vec3 final_color = shade(normal, light_dir, view_dir, ambient, specular, shininess, gOutColor.xyz);
 		outputF = vec4(final_color, gOutColor.a);
+	}
+	else {
+		outputF = gOutColor;
 	}
 }

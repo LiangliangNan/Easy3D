@@ -162,9 +162,13 @@ void main()
 
 	gl_FragDepth = depth;
 
-	vec3 light_dir = normalize(eLightPos);
-
-	vec3 color = texture(textureID, gOutTexcoord).rgb;
-	vec3 final_color = ComputeLight(normal, light_dir, view_dir, ambient, specular, shininess, color);
-	outputF = vec4(final_color, 1.0);
+	vec4 color = texture(textureID, gOutTexcoord);
+	if (lighting) {
+		vec3 light_dir = normalize(eLightPos);
+		vec3 final_color = ComputeLight(normal, light_dir, view_dir, ambient, specular, shininess, color.rgb);
+		outputF = vec4(final_color, 1.0);
+	}
+	else {
+		outputF = color;
+	}
 }
