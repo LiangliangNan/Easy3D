@@ -1878,6 +1878,18 @@ void PaintCanvas::showCoordinatesUnderMouse(bool b) {
 
 
 void PaintCanvas::draw() {
+    // To have split views of different rendering styles for the same object/scene.
+    //glEnable(GL_SCISSOR_TEST);
+    //int scissor[4];
+    //glGetIntegerv(GL_SCISSOR_BOX, scissor);
+    //glScissor(scissor[0], scissor[1], scissor[2] * 0.5f, scissor[3]);
+    //current_model()->renderer()->get_lines_drawable("edges")->set_visible(false);
+    //Viewer::draw();
+    //glScissor(scissor[2] * 0.5f, scissor[1], scissor[2] * 0.5f, scissor[3]);
+    //current_model()->renderer()->get_lines_drawable("edges")->set_visible(true);
+    //Viewer::draw();
+    //glScissor(scissor[0], scissor[1], scissor[2], scissor[3]);
+
     if (models_.empty())
         return;
 
