@@ -1878,17 +1878,24 @@ void PaintCanvas::showCoordinatesUnderMouse(bool b) {
 
 
 void PaintCanvas::draw() {
-    // To have split views of different rendering styles for the same object/scene.
-    //glEnable(GL_SCISSOR_TEST);
-    //int scissor[4];
-    //glGetIntegerv(GL_SCISSOR_BOX, scissor);
-    //glScissor(scissor[0], scissor[1], scissor[2] * 0.5f, scissor[3]);
-    //current_model()->renderer()->get_lines_drawable("edges")->set_visible(false);
-    //Viewer::draw();
-    //glScissor(scissor[2] * 0.5f, scissor[1], scissor[2] * 0.5f, scissor[3]);
-    //current_model()->renderer()->get_lines_drawable("edges")->set_visible(true);
-    //Viewer::draw();
-    //glScissor(scissor[0], scissor[1], scissor[2], scissor[3]);
+#if 0
+    // Example code: split the view to have different rendering styles for the same object/scene.
+    glEnable(GL_SCISSOR_TEST);
+    int viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    glScissor(viewport[0], viewport[1], viewport[2] * 0.5f, viewport[3]);
+    for (const auto m : models_) {
+        for (auto d : m->renderer()->triangles_drawables())
+            d->draw(camera());
+    }
+    glScissor(viewport[2] * 0.5f, viewport[1], viewport[2] * 0.5f, viewport[3]);
+    for (const auto m : models_) {
+        for (auto d : m->renderer()->lines_drawables())
+            d->draw(camera());
+    }
+    glScissor(viewport[0], viewport[1], viewport[2], viewport[3]);
+
+#else 
 
     if (models_.empty())
         return;
@@ -1965,4 +1972,5 @@ void PaintCanvas::draw() {
 
     if (edl())
         edl()->end();
+#endif
 }
