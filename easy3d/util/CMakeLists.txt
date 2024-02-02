@@ -18,7 +18,7 @@ set(${module}_headers
         string.h
         timer.h
         tokenizer.h
-        version.cpp
+        version.h
         )
 
 set(${module}_sources
