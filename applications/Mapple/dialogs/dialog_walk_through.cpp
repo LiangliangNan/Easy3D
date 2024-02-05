@@ -97,7 +97,7 @@ DialogWalkThrough::DialogWalkThrough(MainWindow *window)
 
 void DialogWalkThrough::numKeyramesChanged() {
     disconnect(horizontalSliderPreview, SIGNAL(valueChanged(int)), this, SLOT(goToKeyframe(int)));
-    auto num = interpolator()->number_of_keyframes();
+    int num = interpolator()->number_of_keyframes();
     if (num == 1) // range is [0, 0]
         horizontalSliderPreview->setEnabled(false);
     else {

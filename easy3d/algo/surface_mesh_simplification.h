@@ -129,7 +129,7 @@ namespace easy3d {
 
                 // axes point in opposite directions
             else if (dp < -0.99999) {
-                angle_ = 2 * M_PI;
+                angle_ = static_cast<float>(2 * M_PI);
             } else {
                 // new angle
                 float center_angle = std::acos(dp);
