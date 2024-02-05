@@ -97,7 +97,7 @@ DialogWalkThrough::DialogWalkThrough(MainWindow *window)
 
 void DialogWalkThrough::numKeyramesChanged() {
     disconnect(horizontalSliderPreview, SIGNAL(valueChanged(int)), this, SLOT(goToKeyframe(int)));
-    int num = interpolator()->number_of_keyframes();
+    auto num = interpolator()->number_of_keyframes();
     if (num == 1) // range is [0, 0]
         horizontalSliderPreview->setEnabled(false);
     else {
@@ -261,7 +261,7 @@ void DialogWalkThrough::goToPreviousKeyframe()
 
 void DialogWalkThrough::goToNextKeyframe()
 {
-    int pos = walkThrough()->current_keyframe_index();
+    auto pos = walkThrough()->current_keyframe_index();
     if (pos >= 0 && pos >= interpolator()->number_of_keyframes() - 1)  // if already at the end, move to the last view point
         walkThrough()->move_to(interpolator()->number_of_keyframes() - 1);
     else

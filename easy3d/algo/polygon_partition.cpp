@@ -35,11 +35,11 @@ namespace easy3d {
 
     bool PolygonPartition::apply_OPT(const std::vector<vec2> &input_polygon, std::vector<Polygon> &parts) {
         TPPLPoly poly;
-        poly.Init(input_polygon.size());
+        poly.Init(static_cast<long>(input_polygon.size()));
         poly.SetHole(false);
         for (std::size_t i=0; i<input_polygon.size(); ++i) {
             const auto& p = input_polygon[i];
-            poly[i] = {p.x, p.y, i};
+            poly[static_cast<int>(i)] = {p.x, p.y, i};
         }
 
         TPPLPartition partition;
@@ -63,11 +63,11 @@ namespace easy3d {
 
     bool PolygonPartition::apply_HM(const std::vector<vec2> &input_polygon, std::vector<Polygon> &parts) {
         TPPLPoly poly;
-        poly.Init(input_polygon.size());
+        poly.Init(static_cast<long>(input_polygon.size()));
         poly.SetHole(false);
         for (std::size_t i=0; i<input_polygon.size(); ++i) {
             const auto& p = input_polygon[i];
-            poly[i] = {p.x, p.y, i};
+            poly[static_cast<int>(i)] = {p.x, p.y, i};
         }
 
         TPPLPartition partition;
@@ -96,12 +96,12 @@ namespace easy3d {
         // add the non-hole polygons to the input polygon list
         for (const auto& plg : polys) {
             TPPLPoly poly;
-            poly.Init(plg.size());
+            poly.Init(static_cast<long>(plg.size()));
             poly.SetHole(false);
             for (std::size_t i=0; i<plg.size(); ++i) {
                 std::size_t idx = plg[i];
                 const auto& p = points[idx];
-                poly[i] = {p.x, p.y, idx};
+                poly[static_cast<int>(i)] = {p.x, p.y, idx};
             }
             inpolys.push_back(poly);
         }
@@ -109,12 +109,12 @@ namespace easy3d {
         // add the holes polygon to the input polygon list
         for (const auto& hole : holes) {
             TPPLPoly hole_poly;
-            hole_poly.Init(hole.size());
+            hole_poly.Init(static_cast<long>(hole.size()));
             hole_poly.SetHole(true);
             for (std::size_t i=0; i<hole.size(); ++i) {
                 std::size_t idx = hole[i];
                 const auto& p = points[idx];
-                hole_poly[i] = {p.x, p.y, idx};
+                hole_poly[static_cast<int>(i)] = {p.x, p.y, idx};
             }
             inpolys.push_back(hole_poly);
         }

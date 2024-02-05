@@ -221,7 +221,7 @@ namespace easy3d {
         /// @}
 
     protected:
-        int points_num_;
+        unsigned int points_num_;
         float *points_; // reference of the original point cloud data
 
         void *tree_;

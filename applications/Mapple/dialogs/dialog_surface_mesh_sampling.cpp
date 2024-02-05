@@ -51,8 +51,8 @@ void DialogSurfaceMeshSampling::apply() {
     if (!mesh)
         return;
 
-    int num = spinBoxPointNumber->value();
-    if (num < mesh->n_vertices()) {
+    auto num = spinBoxPointNumber->value();
+    if (static_cast<unsigned int>(num) < mesh->n_vertices()) {
         LOG(WARNING) << "point num must >= the num of vertices of the input mesh";
         return;
     }
