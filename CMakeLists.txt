@@ -69,7 +69,9 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${Easy3D_BINARY_DIR}/lib)
 ################################################################################
 
 # Build shared libraries
-if (NOT MINGW) # Workaround for using MinGW on Windows
+if (MINGW) # Workaround for using MinGW on Windows
+    set(Easy3D_BUILD_SHARED_LIBS                               OFF)
+else()
     option(Easy3D_BUILD_SHARED_LIBS "Build shared libaries"     ON)
 endif ()
 # Build tutorials
