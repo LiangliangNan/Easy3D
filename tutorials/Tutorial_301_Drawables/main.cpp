@@ -52,7 +52,7 @@ using namespace easy3d;
 //		- create a drawable for a specific rendering purpose;
 //		- use the viewer to visualize drawables.
 
-#if 1   // use the built-in drawables of Easy3D.
+#if 1  // use the built-in drawables of Easy3D.
 
 int main(int argc, char **argv) {
     // initialize Easy3D.
@@ -150,7 +150,7 @@ int main(int argc, char **argv) {
     return viewer.run();
 }
 
-#elif 1 //  use the built-in drawables of Easy3D, but we provide customized update functions
+#elif 0 //  use the built-in drawables of Easy3D, but we provide customized update functions
 
 int main(int argc, char **argv) {
     // initialize Easy3D.
@@ -161,6 +161,7 @@ int main(int argc, char **argv) {
     // Create the default Easy3D viewer.
     // Note: a viewer must be created before creating any drawables.
     Viewer viewer(EXAMPLE_TITLE);
+    viewer.set_usage("");
 
     //-------------------------------------------------------------
 
@@ -337,7 +338,8 @@ int main(int argc, char **argv) {
 
     // Create the default Easy3D viewer.
     // Note: a viewer must be created before creating any drawables.
-    Viewer viewer(EXAMPLE_TITLE);      301_Drawables");
+    Viewer viewer(EXAMPLE_TITLE);
+    viewer.set_usage("");
 
     //-------------------------------------------------------------
 
