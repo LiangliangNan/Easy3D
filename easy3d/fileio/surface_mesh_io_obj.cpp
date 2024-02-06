@@ -36,7 +36,7 @@
 #include <easy3d/util/logging.h>
 
 
-#define USE_FAST_OBJ
+#define USE_TINY_OBJ_LOADER // USE_FAST_OBJ
 
 
 #ifdef USE_FAST_OBJ
@@ -306,6 +306,14 @@ namespace easy3d {
                 // Should I create vertices later, to get rid of isolated vertices?
                 builder.add_vertex(vec3(attrib.vertices.data() + v));
             }
+
+            // has per vertex color 
+            if (attrib.colors.size() == attrib.vertices.size()) {
+                auto colors = mesh->vertex_property<vec3>("v:color");
+                for (unsigned int v = 0; v < mesh->n_vertices(); ++v) {
+                    colors[SurfaceMesh::Vertex(v)] = vec3(attrib.colors.data() + v * 3);
+                }
+            }
 #endif
 
             // create texture coordinate property if texture coordinates present
@@ -329,8 +337,8 @@ namespace easy3d {
             // for each shape
             for (size_t i = 0; i < shapes.size(); i++) {
                 std::size_t index_offset = 0;
-                LOG_IF(ERROR, shapes[i].mesh.num_face_vertices.size() != shapes[i].mesh.material_ids.size());
-                LOG_IF(ERROR, shapes[i].mesh.num_face_vertices.size() != shapes[i].mesh.smoothing_group_ids.size());
+                LOG_IF(shapes[i].mesh.num_face_vertices.size() != shapes[i].mesh.material_ids.size(), ERROR) << "shapes[i].mesh.num_face_vertices.size() != shapes[i].mesh.material_ids.size()";
+                LOG_IF(shapes[i].mesh.num_face_vertices.size() != shapes[i].mesh.smoothing_group_ids.size(), ERROR) << "shapes[i].mesh.num_face_vertices.size() != shapes[i].mesh.smoothing_group_ids.size()";
 
                 // For each face
                 for (std::size_t face_idx = 0; face_idx < shapes[i].mesh.num_face_vertices.size(); ++face_idx) {
@@ -386,10 +394,9 @@ namespace easy3d {
                 }
 
                 for (const auto &mat : materials) {
-                    LOG_IF(WARNING, !mat.ambient_texname.empty()) << "ambient texture ignored: " << mat.ambient_texname;
-                    LOG_IF(WARNING, !mat.diffuse_texname.empty()) << "diffuse texture ignored: " << mat.diffuse_texname;
-                    LOG_IF(WARNING, !mat.specular_texname.empty())
-                                    << "specular texture ignored: " << mat.specular_texname;
+                    LOG_IF(!mat.ambient_texname.empty(), WARNING) << "ambient texture ignored: " << mat.ambient_texname;
+                    LOG_IF(!mat.diffuse_texname.empty(), WARNING) << "diffuse texture ignored: " << mat.diffuse_texname;
+                    LOG_IF(!mat.specular_texname.empty(), WARNING) << "specular texture ignored: " << mat.specular_texname;
                 }
             }
 
