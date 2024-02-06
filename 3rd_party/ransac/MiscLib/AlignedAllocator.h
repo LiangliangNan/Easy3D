@@ -31,7 +31,8 @@
 #if defined(__APPLE__)
 #define a_malloc(sz, align) malloc(sz) // OSX aligns all allocations to 16 byte boundaries (except valloc which aligns to page boundaries) - so specific alignment requests are ignored.
 #elif (defined(_WIN32) && defined(__MINGW32__))
-#define a_malloc(sz, align) _aligned_malloc((align), (sz))
+// #define a_malloc(sz, align) _aligned_malloc((align), (sz)) // Liangliang: seems the order of the argument is wrong? But it still crashes after switched.
+#define a_malloc(sz, align) malloc(sz)                        // Liangliang: the normal malloc works.
 #else
 #define a_malloc(sz, align) aligned_alloc((align), (sz))
 #endif
