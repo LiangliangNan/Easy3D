@@ -908,7 +908,7 @@ namespace easy3d {
         glGetIntegerv(GL_MAX_DRAW_BUFFERS, (GLint*)&maxbuffers);
 
         auto buffers = new GLenum[maxbuffers];
-        int count = 0;
+        unsigned int count = 0;
         for (unsigned int cc = minId; cc <= maxId && count < maxbuffers; cc++) {
             buffers[cc] = GL_COLOR_ATTACHMENT0 + cc;
             count++;

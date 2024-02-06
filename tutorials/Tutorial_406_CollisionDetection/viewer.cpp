@@ -25,6 +25,9 @@
  ********************************************************************/
 
 #include "viewer.h"
+
+#include <mutex>
+
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/manipulated_frame.h>
