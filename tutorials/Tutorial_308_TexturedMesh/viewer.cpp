@@ -38,6 +38,7 @@
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
 
+#define FAST_OBJ_IMPLEMENTATION
 #include <3rd_party/fastobj/fast_obj.h>
 
 

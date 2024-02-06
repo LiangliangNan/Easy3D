@@ -37,7 +37,7 @@
 #include <easy3d/algo/tessellator.h>
 #include <easy3d/util/file_system.h>
 
-
+#define FAST_OBJ_IMPLEMENTATION
 #include <3rd_party/fastobj/fast_obj.h>
 
 
