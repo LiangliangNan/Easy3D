@@ -40,8 +40,8 @@ if (MSVC) #MSVC on Windows
     #       target_link_libraries( ${PROJECT_NAME} Qt5::WinMain )
 elseif (MINGW) #MinGW on Windows
     set(CMAKE_RC_COMPILER_INIT windres)
-    ENABLE_LANGUAGE(RC)
-    SET(CMAKE_RC_COMPILE_OBJECT "<CMAKE_RC_COMPILER> <FLAGS> -O coff <DEFINES> -i <SOURCE> -o <OBJECT>")
+    enable_language(RC)
+    set(CMAKE_RC_COMPILE_OBJECT "<CMAKE_RC_COMPILER> <FLAGS> -O coff <DEFINES> -i <SOURCE> -o <OBJECT>")
     add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} ${${PROJECT_NAME}_RESOURCES})
 elseif (APPLE)
     # This tells CMake where to find and install the ICON file

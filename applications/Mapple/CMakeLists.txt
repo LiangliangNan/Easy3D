@@ -142,8 +142,8 @@ if (MSVC) #MSVC on Windows
 #    )
 elseif (MINGW) #MinGW on Windows
     set(CMAKE_RC_COMPILER_INIT windres)
-    ENABLE_LANGUAGE(RC)
-    SET(CMAKE_RC_COMPILE_OBJECT "<CMAKE_RC_COMPILER> <FLAGS> -O coff <DEFINES> -i <SOURCE> -o <OBJECT>")
+    enable_language(RC)
+    set(CMAKE_RC_COMPILE_OBJECT "<CMAKE_RC_COMPILER> <FLAGS> -O coff <DEFINES> -i <SOURCE> -o <OBJECT>")
     add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} ${${PROJECT_NAME}_RESOURCES})
 elseif (APPLE)
     function(resource VAR SOURCE_PATH DESTINATION PATTERN)
