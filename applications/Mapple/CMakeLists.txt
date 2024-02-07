@@ -129,7 +129,7 @@ set(${PROJECT_NAME}_RESOURCES
         resources/Mapple.rc
         )
 
-if (WIN32 OR MSVC)
+if (MSVC) #MSVC on Windows
     add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} ${${PROJECT_NAME}_RESOURCES})
     # if you want to get rid of the (system) console, use
     #	add_executable( ${PROJECT_NAME} WIN32 ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} ${${PROJECT_NAME}_RESOURCES} )
@@ -140,7 +140,11 @@ if (WIN32 OR MSVC)
 #            POST_BUILD
 #            COMMAND ${WINDEPLOYQT} --no-translations --verbose 0 $<TARGET_FILE:${PROJECT_NAME}>
 #    )
-
+elseif (MINGW) #MinGW on Windows
+    set(CMAKE_RC_COMPILER_INIT windres)
+    ENABLE_LANGUAGE(RC)
+    SET(CMAKE_RC_COMPILE_OBJECT "<CMAKE_RC_COMPILER> <FLAGS> -O coff <DEFINES> -i <SOURCE> -o <OBJECT>")
+    add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} ${${PROJECT_NAME}_RESOURCES})
 elseif (APPLE)
     function(resource VAR SOURCE_PATH DESTINATION PATTERN)
         file(GLOB_RECURSE _LIST CONFIGURE_DEPENDS ${SOURCE_PATH}/${PATTERN})
@@ -190,7 +194,7 @@ elseif (APPLE)
             MACOSX_BUNDLE_BUNDLE_VERSION "${Easy3D_MAJOR_VERSION}.${Easy3D_MINOR_VERSION}.${Easy3D_PATCH_VERSION}"
             INSTALL_RPATH "@executable_path/../Frameworks"
             )
-else ()
+else () #Linux
     add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} ${${PROJECT_NAME}_RESOURCES})
 endif ()
 

@@ -33,11 +33,16 @@ set(${PROJECT_NAME}_RESOURCES
 		resources/ViewerQt.rc
         )
 
-if (WIN32 OR MSVC)
+if (MSVC) #MSVC on Windows
     add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} ${${PROJECT_NAME}_RESOURCES})
     # if you want to get rid of the (system) console, use
     #	add_executable( ${PROJECT_NAME} WIN32 ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} ${${PROJECT_NAME}_RESOURCES} )
     #       target_link_libraries( ${PROJECT_NAME} Qt5::WinMain )
+elseif (MINGW) #MinGW on Windows
+    set(CMAKE_RC_COMPILER_INIT windres)
+    ENABLE_LANGUAGE(RC)
+    SET(CMAKE_RC_COMPILE_OBJECT "<CMAKE_RC_COMPILER> <FLAGS> -O coff <DEFINES> -i <SOURCE> -o <OBJECT>")
+    add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} ${${PROJECT_NAME}_RESOURCES})
 elseif (APPLE)
     # This tells CMake where to find and install the ICON file
     set(${PROJECT_NAME}_ICON ${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/ViewerQt.icns)
@@ -60,7 +65,7 @@ elseif (APPLE)
 			MACOSX_BUNDLE_COPYRIGHT "Copyright liangliang.nan@gmail.com"
             MACOSX_BUNDLE_GUI_IDENTIFIER "Easy3D.Viewer.Qt"
             )
-else ()
+else () #Linux
     add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_FORMS} ${${PROJECT_NAME}_RESOURCES})
 endif ()
 
