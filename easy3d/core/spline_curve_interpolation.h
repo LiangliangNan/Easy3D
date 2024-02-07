@@ -72,8 +72,7 @@ namespace easy3d {
          * \details Sets default boundary conditions to be zero curvature at both ends.
          */
         SplineCurveInterpolation() : left_(second_deriv), right_(second_deriv),
-                                left_value_(0.0), right_value_(0.0),
-                                linear_extrapolation_(false), dim_(0), largest_t_(0.0) {
+                                left_value_(0.0), right_value_(0.0), dim_(0), largest_t_(0.0) {
         }
 
         /**
@@ -81,8 +80,7 @@ namespace easy3d {
          * \attention If called, it has to come before set_points().
          */
         void set_boundary(BoundaryType left, FT left_value,
-                          BoundaryType right, FT right_value,
-                          bool linear_extrapolation = false);
+                          BoundaryType right, FT right_value);
 
         /**
          * Sets the parameters and position of the point samples on the curve.
@@ -117,7 +115,6 @@ namespace easy3d {
         // -------------------------------------------------------------------------
         BoundaryType left_, right_;
         FT left_value_, right_value_;
-        bool linear_extrapolation_;
 
         std::size_t dim_;
         std::vector< SplineInterpolation<FT> > interpolators_;
@@ -133,14 +130,12 @@ namespace easy3d {
     void SplineCurveInterpolation<Point_t>::set_boundary(typename SplineCurveInterpolation<Point_t>::BoundaryType left,
                                                          FT left_value,
                                                          typename SplineCurveInterpolation<Point_t>::BoundaryType right,
-                                                         FT right_value,
-                                                         bool linear_extrapolation) {
+                                                         FT right_value) {
         assert(interpolators_.size() == 0);  // set_points() must not have happened yet
         left_ = left;
         right_ = right;
         left_value_ = left_value;
         right_value_ = right_value;
-        linear_extrapolation_ = linear_extrapolation;
     }
 
 
@@ -160,7 +155,7 @@ namespace easy3d {
                 points.push_back(input_points[i]);
             }
         }
-        const int diff = input_points.size() - points.size();
+        const auto diff = input_points.size() - points.size();
         LOG_IF(diff > 0, WARNING) << diff << " data points discarded because the input has to be monotonously increasing";
 
         dim_ = points[0].dimension();

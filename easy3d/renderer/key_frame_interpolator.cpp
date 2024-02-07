@@ -437,12 +437,12 @@ namespace easy3d {
             // spine interpolation
             typedef SplineCurveInterpolation<vec3> PosFitter;
             PosFitter pos_fitter;
-            pos_fitter.set_boundary(PosFitter::second_deriv, 0, PosFitter::second_deriv, 0, false);
+            pos_fitter.set_boundary(PosFitter::second_deriv, 0, PosFitter::second_deriv, 0);
             pos_fitter.set_points(parameters, positions);
 
             typedef SplineCurveInterpolation<vec4> OrientFitter;
             OrientFitter orient_fitter;
-            orient_fitter.set_boundary(OrientFitter::second_deriv, 0, OrientFitter::second_deriv, 0, false);
+            orient_fitter.set_boundary(OrientFitter::second_deriv, 0, OrientFitter::second_deriv, 0);
             orient_fitter.set_points(parameters, orientations);
 
             for (int i = 0; i < num_frames; ++i) {

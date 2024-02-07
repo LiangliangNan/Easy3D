@@ -93,7 +93,7 @@ namespace easy3d {
         /// Constructor.
         /// Sets default boundary condition to be zero curvature at both ends
         SplineInterpolation() : left_(second_deriv), right_(second_deriv),
-                        left_value_(0.0), right_value_(0.0),
+                        left_value_(0), right_value_(0),
                         linear_extrapolation_(false) {
         }
 
@@ -203,9 +203,9 @@ namespace easy3d {
         }
         x_ = x;
         y_ = y;
-        int n = x.size();
+        const int n = static_cast<int>(x.size());
         // TODO: maybe sort x and y, rather than returning an error
-        for (int i = 0; i < n - 1; i++) {
+        for (std::size_t i = 0; i < n - 1; i++) {
             if (x_[i] >= x_[i + 1]) {
                 LOG_N_TIMES(3, ERROR) << "x has to be monotonously increasing (x[" << i << "]=" << x_[i] << ", x[" << i + 1 << "]=" << x_[i + 1] << "). " << COUNTER;
                 return;
@@ -218,38 +218,38 @@ namespace easy3d {
             BandMatrix<FT> A(n, 1, 1);
             std::vector <FT> rhs(n);
             for (int i = 1; i < n - 1; i++) {
-                A(i, i - 1) = 1.0 / 3.0 * (x[i] - x[i - 1]);
-                A(i, i) = 2.0 / 3.0 * (x[i + 1] - x[i - 1]);
-                A(i, i + 1) = 1.0 / 3.0 * (x[i + 1] - x[i]);
+                A(i, i - 1) = FT(1.0 / 3.0) * (x[i] - x[i - 1]);
+                A(i, i) = FT(2.0 / 3.0) * (x[i + 1] - x[i - 1]);
+                A(i, i + 1) = FT(1.0 / 3.0) * (x[i + 1] - x[i]);
                 rhs[i] = (y[i + 1] - y[i]) / (x[i + 1] - x[i]) - (y[i] - y[i - 1]) / (x[i] - x[i - 1]);
             }
             // boundary conditions
             if (left_ == SplineInterpolation<FT>::second_deriv) {
                 // 2*b[0] = f''
-                A(0, 0) = 2.0;
-                A(0, 1) = 0.0;
+                A(0, 0) = FT(2.0);
+                A(0, 1) = FT(0.0);
                 rhs[0] = left_value_;
             } else if (left_ == SplineInterpolation<FT>::first_deriv) {
                 // c[0] = f', needs to be re-expressed in terms of b:
                 // (2b[0]+b[1])(x[1]-x[0]) = 3 ((y[1]-y[0])/(x[1]-x[0]) - f')
-                A(0, 0) = 2.0 * (x[1] - x[0]);
-                A(0, 1) = 1.0 * (x[1] - x[0]);
-                rhs[0] = 3.0 * ((y[1] - y[0]) / (x[1] - x[0]) - left_value_);
+                A(0, 0) = FT(2.0) * (x[1] - x[0]);
+                A(0, 1) = FT(1.0) * (x[1] - x[0]);
+                rhs[0] = FT(3.0) * ((y[1] - y[0]) / (x[1] - x[0]) - left_value_);
             } else {
                 assert(false);
             }
             if (right_ == SplineInterpolation<FT>::second_deriv) {
                 // 2*b[n-1] = f''
-                A(n - 1, n - 1) = 2.0;
-                A(n - 1, n - 2) = 0.0;
+                A(n - 1, n - 1) = FT(2.0);
+                A(n - 1, n - 2) = FT(0.0);
                 rhs[n - 1] = right_value_;
             } else if (right_ == SplineInterpolation<FT>::first_deriv) {
                 // c[n-1] = f', needs to be re-expressed in terms of b:
                 // (b[n-2]+2b[n-1])(x[n-1]-x[n-2])
                 // = 3 (f' - (y[n-1]-y[n-2])/(x[n-1]-x[n-2]))
-                A(n - 1, n - 1) = 2.0 * (x[n - 1] - x[n - 2]);
-                A(n - 1, n - 2) = 1.0 * (x[n - 1] - x[n - 2]);
-                rhs[n - 1] = 3.0 * (right_value_ - (y[n - 1] - y[n - 2]) / (x[n - 1] - x[n - 2]));
+                A(n - 1, n - 1) = FT(2.0) * (x[n - 1] - x[n - 2]);
+                A(n - 1, n - 2) = FT(1.0) * (x[n - 1] - x[n - 2]);
+                rhs[n - 1] = FT(3.0) * (right_value_ - (y[n - 1] - y[n - 2]) / (x[n - 1] - x[n - 2]));
             } else {
                 assert(false);
             }
@@ -260,34 +260,34 @@ namespace easy3d {
             // calculate parameters a[] and c[] based on b[]
             a_.resize(n);
             c_.resize(n);
-            for (int i = 0; i < n - 1; i++) {
-                a_[i] = 1.0 / 3.0 * (b_[i + 1] - b_[i]) / (x[i + 1] - x[i]);
+            for (std::size_t i = 0; i < n - 1; i++) {
+                a_[i] = FT(1.0 / 3.0) * (b_[i + 1] - b_[i]) / (x[i + 1] - x[i]);
                 c_[i] = (y[i + 1] - y[i]) / (x[i + 1] - x[i])
-                        - 1.0 / 3.0 * (2.0 * b_[i] + b_[i + 1]) * (x[i + 1] - x[i]);
+                        - FT(1.0 / 3.0) * (FT(2.0) * b_[i] + b_[i + 1]) * (x[i + 1] - x[i]);
             }
         } else { // linear interpolation
             a_.resize(n);
             b_.resize(n);
             c_.resize(n);
-            for (int i = 0; i < n - 1; i++) {
-                a_[i] = 0.0;
-                b_[i] = 0.0;
+            for (std::size_t i = 0; i < n - 1; i++) {
+                a_[i] = FT(0.0);
+                b_[i] = FT(0.0);
                 c_[i] = (y_[i + 1] - y_[i]) / (x_[i + 1] - x_[i]);
             }
         }
 
         // for left extrapolation coefficients
-        b0_ = linear_extrapolation_ ? 0.0 : b_[0];
+        b0_ = linear_extrapolation_ ? FT(0.0) : b_[0];
         c0_ = c_[0];
 
         // for the right extrapolation coefficients
         // f_{n-1}(x) = b*(x-x_{n-1})^2 + c*(x-x_{n-1}) + y_{n-1}
         FT h = x[n - 1] - x[n - 2];
         // b_[n-1] is determined by the boundary condition
-        a_[n - 1] = 0.0;
-        c_[n - 1] = 3.0 * a_[n - 2] * h * h + 2.0 * b_[n - 2] * h + c_[n - 2];   // = f'_{n-2}(x_{n-1})
+        a_[n - 1] = FT(0.0);
+        c_[n - 1] = FT(3.0) * a_[n - 2] * h * h + FT(2.0) * b_[n - 2] * h + c_[n - 2];   // = f'_{n-2}(x_{n-1})
         if (linear_extrapolation_)
-            b_[n - 1] = 0.0;
+            b_[n - 1] = FT(0.0);
     }
 
     template<typename FT>
@@ -329,42 +329,42 @@ namespace easy3d {
             // extrapolation to the left
             switch (order) {
                 case 1:
-                    interpol = 2.0 * b0_ * h + c0_;
+                    interpol = FT(2.0) * b0_ * h + c0_;
                     break;
                 case 2:
-                    interpol = 2.0 * b0_ * h;
+                    interpol = FT(2.0) * b0_ * h;
                     break;
                 default:
-                    interpol = 0.0;
+                    interpol = FT(0.0);
                     break;
             }
         } else if (x > x_[n - 1]) {
             // extrapolation to the right
             switch (order) {
                 case 1:
-                    interpol = 2.0 * b_[n - 1] * h + c_[n - 1];
+                    interpol = FT(2.0) * b_[n - 1] * h + c_[n - 1];
                     break;
                 case 2:
-                    interpol = 2.0 * b_[n - 1];
+                    interpol = FT(2.0) * b_[n - 1];
                     break;
                 default:
-                    interpol = 0.0;
+                    interpol = FT(0.0);
                     break;
             }
         } else {
             // interpolation
             switch (order) {
                 case 1:
-                    interpol = (3.0 * a_[idx] * h + 2.0 * b_[idx]) * h + c_[idx];
+                    interpol = (FT(3.0) * a_[idx] * h + FT(2.0) * b_[idx]) * h + c_[idx];
                     break;
                 case 2:
-                    interpol = 6.0 * a_[idx] * h + 2.0 * b_[idx];
+                    interpol = FT(6.0) * a_[idx] * h + FT(2.0) * b_[idx];
                     break;
                 case 3:
-                    interpol = 6.0 * a_[idx];
+                    interpol = FT(6.0) * a_[idx];
                     break;
                 default:
-                    interpol = 0.0;
+                    interpol = FT(0.0);
                     break;
             }
         }
@@ -452,20 +452,20 @@ namespace easy3d {
         // normalize column i so that a_ii=1
         for (int i = 0; i < this->dim(); i++) {
             assert(this->operator()(i, i) != 0.0);
-            this->saved_diag(i) = 1.0 / this->operator()(i, i);
+            this->saved_diag(i) = FT(1.0) / this->operator()(i, i);
             j_min = std::max(0, i - this->num_lower());
             j_max = std::min(this->dim() - 1, i + this->num_upper());
             for (int j = j_min; j <= j_max; j++) {
                 this->operator()(i, j) *= this->saved_diag(i);
             }
-            this->operator()(i, i) = 1.0;          // prevents rounding errors
+            this->operator()(i, i) = FT(1.0);          // prevents rounding errors
         }
 
         // Gauss LR-Decomposition
         for (int k = 0; k < this->dim(); k++) {
             i_max = std::min(this->dim() - 1, k + this->num_lower());  // num_lower not a mistake!
             for (int i = k + 1; i <= i_max; i++) {
-                assert(this->operator()(k, k) != 0.0);
+                assert(this->operator()(k, k) != FT(0.0));
                 x = -this->operator()(i, k) / this->operator()(k, k);
                 this->operator()(i, k) = -x;                         // assembly part of L
                 j_max = std::min(this->dim() - 1, k + this->num_upper());
@@ -485,7 +485,7 @@ namespace easy3d {
         int j_start;
         FT sum;
         for (int i = 0; i < this->dim(); i++) {
-            sum = 0;
+            sum = FT(0);
             j_start = std::max(0, i - this->num_lower());
             for (int j = j_start; j < i; j++) sum += this->operator()(i, j) * x[j];
             x[i] = (b[i] * this->saved_diag(i)) - sum;

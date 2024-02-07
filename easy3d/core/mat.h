@@ -1253,7 +1253,7 @@ namespace easy3d {
                 scalev[imax] = scalev[j]; // also swap scale factor
                 *d = -(*d); // change parity of d
             }
-            (*rowp)[j] = imax;
+            (*rowp)[j] = (T)imax;
 
             //	check for singular matrix:
             if (std::abs(amat(j, j)) < epsilon<T>())
@@ -1286,7 +1286,7 @@ namespace easy3d {
 
         size_t ii = 0;
         for (size_t i = 0; i < N; ++i) {
-            size_t ip = rowp[i];
+            size_t ip = (size_t)rowp[i];
             assert(ip < N);
 
             T sum = result[ip];

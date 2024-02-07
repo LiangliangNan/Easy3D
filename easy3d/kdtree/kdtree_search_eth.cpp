@@ -49,7 +49,7 @@ namespace easy3d {
 
     KdTreeSearch_ETH::KdTreeSearch_ETH(const std::vector<vec3>& points) : KdTreeSearch(points) {
         // prepare data
-        points_num_ = points.size();
+        points_num_ = static_cast<unsigned int>(points.size());
         points_ = const_cast<float*>(points[0].data());
 
         // create tree

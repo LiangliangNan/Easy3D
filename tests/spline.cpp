@@ -73,7 +73,7 @@ int test_spline() {
     std::cout << "spine interpolation use accumulated curve length as parameter (partially printed)" << std::endl;
     {
         SplineCurveInterpolation<vec3> interpolator;
-        interpolator.set_boundary(easy3d::SplineCurveInterpolation<vec3>::second_deriv, 0, easy3d::SplineCurveInterpolation<Vec<3, float>>::second_deriv, 0,false);
+        interpolator.set_boundary(easy3d::SplineCurveInterpolation<vec3>::second_deriv, 0, easy3d::SplineCurveInterpolation<Vec<3, float>>::second_deriv, 0);
         interpolator.set_points(points);
         for (unsigned int i = 0; i < resolution; i+=100) {
             const vec3 p = interpolator.eval_f(float(i) / float(resolution - 1));
@@ -84,7 +84,7 @@ int test_spline() {
     std::cout << "spine interpolation use accumulated time as parameter (partially printed)" << std::endl;
     {
         SplineCurveInterpolation<vec3> interpolator;
-        interpolator.set_boundary(easy3d::SplineCurveInterpolation<vec3>::second_deriv, 0, easy3d::SplineCurveInterpolation<Vec<3, float>>::second_deriv, 0,false);
+        interpolator.set_boundary(easy3d::SplineCurveInterpolation<vec3>::second_deriv, 0, easy3d::SplineCurveInterpolation<Vec<3, float>>::second_deriv, 0);
 
         std::vector<float> t(points.size(), 0.0f);
         for (std::size_t i = 0; i < points.size(); ++i)
