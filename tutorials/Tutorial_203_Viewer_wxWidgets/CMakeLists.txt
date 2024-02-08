@@ -48,8 +48,8 @@ set(${PROJECT_NAME}_SOURCES
 		window.cpp
         )
 
-if (WIN32 OR MSVC)
-	set(${PROJECT_NAME}_RESOURCES "${CMAKE_CURRENT_LIST_DIR}/resources/sample.rc")
+if (MSVC)
+    set(${PROJECT_NAME}_RESOURCES "${CMAKE_CURRENT_LIST_DIR}/resources/sample.rc")
     add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_HEADERS} ${${PROJECT_NAME}_SOURCES} ${${PROJECT_NAME}_RESOURCES}) # you can add "WIN32" to disable the console window
     message(STATUS "Creating the wxWidgets viewer with a console window")
 elseif (APPLE)

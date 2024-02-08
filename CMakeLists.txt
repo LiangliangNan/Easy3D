@@ -22,11 +22,11 @@ message("-- Setting C++11")
 # Let's also add the version to the path to allow multiple versions of Easy3D in the same directory.
 
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    if (WIN32 OR MSVC)  # windows
+    if (WIN32)      # windows
         set(CMAKE_INSTALL_PREFIX "C:/Program Files/Easy3D/${Easy3D_VERSION}" CACHE PATH "Installation directory" FORCE)
-    elseif (APPLE)      # macOS
+    elseif (APPLE)  # macOS
         set(CMAKE_INSTALL_PREFIX "/usr/local/Cellar/easy3d/${Easy3D_VERSION}" CACHE PATH "Installation directory" FORCE)
-    else ()             # Linux: different from tradition, let's keep everything together
+    else ()         # Linux: different from tradition, let's keep everything together
         set(CMAKE_INSTALL_PREFIX "/usr/local/easy3d-${Easy3D_VERSION}" CACHE PATH "Installation directory" FORCE)
     endif ()
 endif ()
@@ -114,7 +114,7 @@ if (Easy3D_BUILD_SHARED_LIBS)
     #Ref: Create dlls on Windows without declspec() using new CMake export all feature
     #     https://cmake.org/cmake/help/v3.4/prop_tgt/WINDOWS_EXPORT_ALL_SYMBOLS.html#prop_tgt:WINDOWS_EXPORT_ALL_SYMBOLS
     #     https://www.kitware.com/create-dlls-on-windows-without-declspec-using-new-cmake-export-all-feature/
-    if (WIN32 OR MSVC)
+    if (MSVC)
         set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
     endif ()
 else ()
@@ -218,7 +218,7 @@ function(add_module module headers sources private_dependencies public_dependenc
             SOVERSION ${Easy3D_MAJOR_VERSION}
             VERSION ${Easy3D_VERSION}
             )
-    if (WIN32 OR MSVC)
+    if (MSVC)
         target_compile_definitions(easy3d_${module} PUBLIC NOMINMAX WIN32_LEAN_AND_MEAN VC_EXTRALEAN _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)  # get a clean windows
     endif ()
 
