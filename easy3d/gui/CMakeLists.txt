@@ -1,6 +1,6 @@
 set(module gui)
 set(private_dependencies)
-set(public_dependencies easy3d::core easy3d::util easy3d::renderer)
+set(public_dependencies easy3d::util easy3d::core easy3d::renderer)
 
 set(${module}_headers
         picker.h

@@ -1,6 +1,6 @@
 set(module renderer)
 set(private_dependencies)
-set(public_dependencies easy3d::core easy3d::util easy3d::fileio easy3d::algo)
+set(public_dependencies easy3d::util easy3d::core easy3d::fileio easy3d::algo)
 
 set(${module}_headers
         ambient_occlusion.h
