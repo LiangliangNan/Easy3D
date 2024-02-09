@@ -201,9 +201,29 @@ endforeach ()
 
 function(add_module module headers sources private_dependencies public_dependencies)
     add_library(easy3d_${module} ${Easy3D_LIB_TYPE} ${headers} ${sources})
+
+    if (MSVC)
+        # get a clean windows
+        target_compile_definitions(easy3d_${module} PUBLIC NOMINMAX WIN32_LEAN_AND_MEAN VC_EXTRALEAN _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
+    endif ()
+
+#    if(MINGW)
+#        # Liangliang: Workaround to handle dynamic library generation using MinGW.
+#        #             Issue: To work with MSVC, CMake's "generate_export_header(...)" is used to generate preprocessor
+#        #                    EXPORT macros (that contains -_declspec(dllexport) or __declspec(dllimport)), and MSVC
+#        #                    requires to explicitly mark the global variables with the macro. However, MinGW has a
+#        #                    Linux/Unix-like behavior, which can either export everything (when the macro is not used)
+#        #                    or export only those marked by this macro. Thus with MinGW, classes/functions/variables not
+#        #                    marked by the macro are not exported.
+#        string(TOUPPER ${module} MODULE_NAME)
+#        set(EXTRA_MICRO_DEFINES "\n//Liangliang: Workaround to handle dynamic library generation using MinGW\n#if (defined(__MINGW32__) || defined(__MINGW64__))\n#  undef  EASY3D_${MODULE_NAME}_EXPORT\n#  define EASY3D_${MODULE_NAME}_EXPORT\n#endif\n")
+#    endif ()
+
     #Ref: Create dlls on Windows without declspec() using new CMake export all feature
     #     https://www.kitware.com/create-dlls-on-windows-without-declspec-using-new-cmake-export-all-feature/
-    generate_export_header(easy3d_${module} EXPORT_FILE_NAME "${Easy3D_EXPORT_INCLUDE_DIR}/easy3d/${module}/export.h")
+    generate_export_header(easy3d_${module}
+            EXPORT_FILE_NAME "${Easy3D_EXPORT_INCLUDE_DIR}/easy3d/${module}/export.h"
+            )
     target_include_directories(easy3d_${module} PUBLIC
             "$<BUILD_INTERFACE:${Easy3D_INCLUDE_DIR}>"
             "$<BUILD_INTERFACE:${Easy3D_EXPORT_INCLUDE_DIR}>"
@@ -218,14 +238,11 @@ function(add_module module headers sources private_dependencies public_dependenc
             SOVERSION ${Easy3D_MAJOR_VERSION}
             VERSION ${Easy3D_VERSION}
             )
-    if (MSVC)
-        target_compile_definitions(easy3d_${module} PUBLIC NOMINMAX WIN32_LEAN_AND_MEAN VC_EXTRALEAN _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)  # get a clean windows
-    endif ()
 
     # Alias target (recommended by policy CMP0028) and it looks nicer
     message(STATUS "Adding target: easy3d::${module} (easy3d_${module})")
     add_library(easy3d::${module} ALIAS easy3d_${module})
-    # Export as easy3d::${MODULE_NAME}
+    # Export as easy3d::${module}
     set_property(TARGET easy3d_${module} PROPERTY EXPORT_NAME easy3d::${module})
 endfunction()
 
