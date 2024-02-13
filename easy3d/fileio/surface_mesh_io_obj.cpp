@@ -242,6 +242,7 @@ namespace easy3d {
 
     namespace io {
 
+        /// TODO: Translator not implemented
         bool load_obj(const std::string &file_name, SurfaceMesh *mesh) {
             if (!mesh) {
                 LOG(ERROR) << "null mesh pointer";
