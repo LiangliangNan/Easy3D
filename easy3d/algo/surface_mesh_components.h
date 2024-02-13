@@ -34,8 +34,8 @@ namespace easy3d {
     public:
         explicit SurfaceMeshComponent(SurfaceMesh *mesh) : mesh_(mesh) {}
 
-        /** Extracts connected components */
-        static std::vector<SurfaceMeshComponent> extract(SurfaceMesh *mesh);
+        /** Extracts connected components. The components are sorted in descending order if \p descending is \p true (in terms of number of faces.*/
+        static std::vector<SurfaceMeshComponent> extract(SurfaceMesh *mesh, bool descending = true);
 
         /** Extracts a single connected component from the seed face */
         static SurfaceMeshComponent extract(SurfaceMesh *mesh, SurfaceMesh::Face seed);

@@ -409,12 +409,12 @@ bool test_algo_surface_mesh_simplification() {
     }
 
     std::cout << "simplification of surface mesh..." << std::endl;
-    const int normal_deviation = 180;
-    const int aspect_ratio = 10;
+    const float normal_deviation = 180.0f;
+    const float aspect_ratio = 10.0f;
 
     const unsigned int expected_vertex_number = static_cast<unsigned int>(mesh->n_vertices() * 0.5f);
     SurfaceMeshSimplification ss(mesh);
-    ss.initialize(aspect_ratio, 0.0, 0.0, normal_deviation, 0.0);
+    ss.initialize(aspect_ratio, 0.0f, 0.0f, normal_deviation, 0.0f);
     ss.simplify(expected_vertex_number);
 
     delete mesh;

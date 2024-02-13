@@ -9,6 +9,9 @@
  ********************************************************************/
 
 #include <easy3d/algo/surface_mesh_components.h>
+
+#include <algorithm>
+
 #include <easy3d/algo/surface_mesh_enumerator.h>
 #include <easy3d/algo/tessellator.h>
 
@@ -112,7 +115,7 @@ namespace easy3d {
     }
 
 
-    std::vector<SurfaceMeshComponent> SurfaceMeshComponent::extract(SurfaceMesh *mesh) {
+    std::vector<SurfaceMeshComponent> SurfaceMeshComponent::extract(SurfaceMesh *mesh, bool descending) {
         auto component_id = mesh->add_vertex_property<int>("SurfaceMeshComponentExtractor::extract::component_id");
         int nb_components = SurfaceMeshEnumerator::enumerate_connected_components(mesh, component_id);
         std::vector<SurfaceMeshComponent> result;
@@ -144,6 +147,12 @@ namespace easy3d {
         }
 
         mesh->remove_vertex_property(component_id);
+        
+        if (descending) {
+            std::sort(result.begin(), result.end(), 
+                [](const SurfaceMeshComponent& a, const SurfaceMeshComponent& b) { return a.n_faces() > b.n_faces(); }
+            );
+        }
 
         return result;
     }

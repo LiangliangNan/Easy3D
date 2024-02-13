@@ -62,12 +62,12 @@ void DialogSurfaceMeshSimplification::apply() {
     if (!mesh)
         return;
 
-    const int normal_deviation = 180;
-    const int aspect_ratio = 10;
+    const float normal_deviation = 180.0f;
+    const float aspect_ratio = 10.0f;
 
     const int expected_vertex_number = lineEditVertexNumber->text().toInt();
     SurfaceMeshSimplification ss(mesh);
-    ss.initialize(aspect_ratio, 0.0, 0.0, normal_deviation, 0.0);
+    ss.initialize(aspect_ratio, 0.0f, 0.0f, normal_deviation, 0.0f);
     ss.simplify(expected_vertex_number);
 
     mesh->renderer()->update();

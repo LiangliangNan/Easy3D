@@ -851,7 +851,7 @@ void WidgetModelList::decomposeModel(Model *model) {
     ProgressLogger progress(components.size(), false, false);
     for (unsigned int i = 0; i < components.size(); i++) {
         if (progress.is_canceled()) {
-            LOG(WARNING) << "decomposing model cancelled";
+            LOG(WARNING) << "decomposing model canceled";
             return;
         }
 
