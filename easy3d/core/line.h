@@ -70,13 +70,13 @@ namespace easy3d {
         /// \brief Returns the squared distance of a point \p p to this line.
         FT	   squared_distance(const Point &p) const { return length2(projection(p) - p); }
 
-        /// \brief Computes the perpendicular foots with another line.
+        /// \brief Computes the perpendicular feet with another line.
         /// \param other Another line.
         /// \param p1 The perpendicular foot on the current line.
         /// \param p2 The perpendicular foot on the other line.
         /// \return true if the perpendicular foots exist, and false if the two lines are parallel.
         /// \note This function is for 3D only. 
-        bool foots(const thisclass& other, Point& p1, Point& p2) const;
+        bool feet(const thisclass& other, Point& p1, Point& p2) const;
 
     private:  // Ambiguities exist for this one.
         GenericLine(const Point & p, const Vector & dir);
@@ -96,7 +96,7 @@ namespace easy3d {
 
 
 	template <int DIM, typename FT> inline
-	bool GenericLine<DIM, FT>::foots(const thisclass& other, Point& p1, Point& p2) const {
+	bool GenericLine<DIM, FT>::feet(const thisclass& other, Point& p1, Point& p2) const {
         // See the derivation: https://www.jianshu.com/p/34a7c4e1f3f5
 		FT a = dot(dir_, other.direction());
 		FT b = dot(dir_, dir_);
