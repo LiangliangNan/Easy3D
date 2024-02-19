@@ -1,5 +1,4 @@
 * ToDo list (or on going):
-    - CompViewer: zoom in should be w.r.t. current view.
     - Walkthrough and animation; allow to modify the cameras interactively
     - Implement potree for huge point cloud visualization (https://github.com/potree/potree)
     - Add a measuring tool
@@ -13,7 +12,6 @@
         - curvature
         - parameterization
         - CSG operations
-        - clipping plane
     - Check if clipper can be used to handle overlapping faces.
     - Generate LODs using [meshoptimizer](https://github.com/zeux/meshoptimizer).
     - Transparency on macOS with AMD graphics has artifact along the edges (an issue with dFdx/dFdy in the fragment shader). 
