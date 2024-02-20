@@ -226,6 +226,11 @@ namespace easy3d {
     //-----------------------------------------------------------------------------
 
     void SurfaceMeshParameterization::lscm() {
+        if (!mesh_->is_triangle_mesh()) {
+            LOG(WARNING) << "input is not a triangle mesh";
+            return;
+        }
+
         // boundary constraints
         if (!setup_lscm_boundary())
             return;

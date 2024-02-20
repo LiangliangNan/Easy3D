@@ -30,6 +30,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/algo/surface_mesh_parameterization.h>
 #include <easy3d/renderer/renderer.h>
+#include <easy3d/util/stop_watch.h>
 
 #include "main_window.h"
 #include "paint_canvas.h"
@@ -58,11 +59,15 @@ void DialogSurfaceMeshParameterization::apply() {
 
     if (comboBoxMethod->currentText() == "LSCM") { //
         LOG(INFO) << "parameterization (Least Squares Conformal Map) ...";
+        StopWatch w;
         para.lscm();
+        LOG(INFO) << "done. time: " << w.time_string();
     }
     else {
         LOG(INFO) << "parameterization (Discrete Harmonic) ...";
+        StopWatch w;
         para.harmonic();
+        LOG(INFO) << "done. time: " << w.time_string();
     }
 
     mesh->renderer()->update();
