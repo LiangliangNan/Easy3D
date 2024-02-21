@@ -98,7 +98,7 @@ namespace easy3d {
          *      transitions but more vertices. Suggested value is 4.
          * @param include_end Ture to extend the curve to the end point.
          *
-         * The following code shows how to visualize a quadratic curve (as a polyline):
+         * The following code shows how to visualize a cubic curve (as a polyline):
          * \code
          * {
          *     vec3 a(0, 0, 0);
