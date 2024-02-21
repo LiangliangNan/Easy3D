@@ -84,19 +84,19 @@ void triangulate(SurfaceMesh *mesh) {
     mesh->clear();
 
     const auto& triangles = tessellator.elements();
-    if (!triangles.empty()) { // in degenerate cases num can be zero
-        const std::vector<Tessellator::Vertex *> &vts = tessellator.vertices();
-        for (auto v : vts) {
-            mesh->add_vertex(vec3(v->data()));
-        }
+    if (triangles.empty())
+        return; // in degenerate cases num can be zero
 
-        for (const auto& t : triangles) {
-            mesh->add_triangle(
-                    SurfaceMesh::Vertex(static_cast<int>(t[0])),
-                    SurfaceMesh::Vertex(static_cast<int>(t[1])),
-                    SurfaceMesh::Vertex(static_cast<int>(t[2]))
-            );
-        }
+    const auto &vts = tessellator.vertices();
+    for (auto v: vts)
+        mesh->add_vertex(vec3(v->data()));
+
+    for (const auto &t: triangles) {
+        mesh->add_triangle(
+                SurfaceMesh::Vertex(static_cast<int>(t[0])),
+                SurfaceMesh::Vertex(static_cast<int>(t[1])),
+                SurfaceMesh::Vertex(static_cast<int>(t[2]))
+        );
     }
 }
 
@@ -116,15 +116,15 @@ int main(int argc, char **argv) {
     auto mesh = new SurfaceMesh;
 
     { // face 1: a concave quad
-        SurfaceMesh::Vertex v0 = mesh->add_vertex(vec3(0, 0, 0));
-        SurfaceMesh::Vertex v1 = mesh->add_vertex(vec3(800, 0, 0));
-        SurfaceMesh::Vertex v2 = mesh->add_vertex(vec3(800, 800, 0));
-        SurfaceMesh::Vertex v3 = mesh->add_vertex(vec3(600, 300, 0));
+        auto v0 = mesh->add_vertex(vec3(0, 0, 0));
+        auto v1 = mesh->add_vertex(vec3(800, 0, 0));
+        auto v2 = mesh->add_vertex(vec3(800, 800, 0));
+        auto v3 = mesh->add_vertex(vec3(600, 300, 0));
         mesh->add_quad(v0, v1, v2, v3);
     }
 
     { // face 2: a self-intersecting face representing a star
-        std::vector<SurfaceMesh::Vertex> vertices = {
+        auto vertices = {
                 mesh->add_vertex(vec3(1500, 0, 0)),
                 mesh->add_vertex(vec3(1300, 800, 0)),
                 mesh->add_vertex(vec3(1100, 0, 0)),
@@ -135,13 +135,13 @@ int main(int argc, char **argv) {
     }
 
     { // face 3: a quad face with a hole
-        std::vector<SurfaceMesh::Vertex> vertices = {
+        auto vertices = {
                 mesh->add_vertex(vec3(1800, 0, 0)),
                 mesh->add_vertex(vec3(2200, 0, 0)),
                 mesh->add_vertex(vec3(2200, 700, 0)),
                 mesh->add_vertex(vec3(1800, 700, 0))
         };
-        SurfaceMesh::Face f = mesh->add_face(vertices);
+        auto f = mesh->add_face(vertices);
 
         // let's create a hole (also a quad shape) in this face
         auto holes = mesh->add_face_property<Hole>("f:holes");
