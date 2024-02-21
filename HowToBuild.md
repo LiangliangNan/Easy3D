@@ -15,7 +15,7 @@ NOTE: There are usually many options to set up a development environment on each
        
      - If you are using Debian, Ubuntu, and their variants such as Mint, run the following `apt-get` commands one by one:
        - `sudo apt-get update`
-       - `sudo apt-get install build-essential cmake-gui libxmu-dev libxi-dev libgl-dev`
+       - `sudo apt-get install build-essential cmake-gui libxmu-dev libxi-dev libgl-dev libxrandr-dev`
        
      - If you are using FreeBSD, run the following `pkg install` command:
        - `pkg install xorg lang/gcc git cmake gmake bash python perl5`
