@@ -26,28 +26,28 @@
 
 
 #include <easy3d/util/version.h>
-
+#include <cassert>
 
 namespace easy3d {
 
-    /// returns the major version number of Easy3D
     int version_major() {
-        return Easy3D_MAJOR_VERSION;
+        return Easy3D_VERSION_MAJOR;
     }
 
-    /// returns the major version number of Easy3D
     int version_minor() {
-        return Easy3D_MINOR_VERSION;
+        return Easy3D_VERSION_MINOR;
     }
 
-    /// returns the minor version number of Easy3D
     int version_patch() {
-        return Easy3D_PATCH_VERSION;
+        return Easy3D_VERSION_PATCH;
     }
 
-    /// returns the version string of Easy3D
     std::string version() {
         return Easy3D_VERSION;
     }
 
+    std::size_t version_number() {
+        assert(EASY3D_VERSION_NR == Easy3D_VERSION_NUMBER);
+        return Easy3D_VERSION_NUMBER;
+    }
 }
