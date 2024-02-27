@@ -2,10 +2,10 @@ cmake_minimum_required(VERSION 3.12)
 
 ################################################################################
 
-set(Easy3D_MAJOR_VERSION 2)
-set(Easy3D_MINOR_VERSION 5)
-set(Easy3D_PATCH_VERSION 3)
-set(Easy3D_VERSION ${Easy3D_MAJOR_VERSION}.${Easy3D_MINOR_VERSION}.${Easy3D_PATCH_VERSION})
+set(Easy3D_VERSION_MAJOR 2)
+set(Easy3D_VERSION_MINOR 5)
+set(Easy3D_VERSION_PATCH 3)
+set(Easy3D_VERSION ${Easy3D_VERSION_MAJOR}.${Easy3D_VERSION_MINOR}.${Easy3D_VERSION_PATCH})
 set(Easy3D_VERSION_NUMBER 10${Easy3D_VERSION_MAJOR}0${Easy3D_VERSION_MINOR}0${Easy3D_VERSION_PATCH})
 
 project(Easy3D VERSION ${Easy3D_VERSION})
