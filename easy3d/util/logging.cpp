@@ -127,7 +127,7 @@ namespace easy3d
                 std::string log_path = app_path;
 #ifdef __APPLE__
                 // macOS may put the executable file in an application bundle, e.g., "PolyFit.app/Contents/MacOS/PolyFit"
-                std::string::size_type pos = log_path.find(".app");
+                std::string::size_type pos = log_path.find(".app/Contents/MacOS/");
                 if (pos != std::string::npos)
                     log_path = log_path.substr(0, pos);
 #endif

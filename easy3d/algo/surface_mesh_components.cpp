@@ -19,6 +19,7 @@
 namespace easy3d {
 
     SurfaceMesh *SurfaceMeshComponent::to_mesh() const {
+        // ToDo: preserve the attributes per element
         const SurfaceMeshComponent *comp = this;
         SurfaceMesh *mesh = comp->mesh();
         auto result = new SurfaceMesh;
