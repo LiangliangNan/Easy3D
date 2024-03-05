@@ -66,7 +66,7 @@ export(PACKAGE Easy3D)
 # ... for the build tree
 set(CONF_Easy3D_INCLUDE_DIRS "${Easy3D_INCLUDE_DIR}")
 set(CONF_Easy3D_LIBRARY_DIRS "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
-set(CONF_Easy3D_VERSION ${Easy3D_VERSION})
+set(CONF_Easy3D_VERSION ${Easy3D_VERSION_STRING})
 configure_file(../cmake/Easy3DConfig.cmake.in
         "${Easy3D_BINARY_DIR}/Easy3DConfig.cmake" @ONLY)
 # ... for the install tree

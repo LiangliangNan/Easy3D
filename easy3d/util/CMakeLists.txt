@@ -39,13 +39,12 @@ add_module(${module} "${${module}_headers}" "${${module}_sources}" "${private_de
 
 # The resources directory
 target_compile_definitions(easy3d_${module}
-        PRIVATE
+        PUBLIC
         "Easy3D_VERSION_MAJOR=${Easy3D_VERSION_MAJOR}"
         "Easy3D_VERSION_MINOR=${Easy3D_VERSION_MINOR}"
         "Easy3D_VERSION_PATCH=${Easy3D_VERSION_PATCH}"
-        "Easy3D_VERSION=\"${Easy3D_VERSION}\""
+        "Easy3D_VERSION_STRING=\"${Easy3D_VERSION_STRING}\""
         "Easy3D_VERSION_NUMBER=${Easy3D_VERSION_NUMBER}"
-        PUBLIC
         ELPP_FEATURE_ALL
         ELPP_STL_LOGGING
         ELPP_THREAD_SAFE

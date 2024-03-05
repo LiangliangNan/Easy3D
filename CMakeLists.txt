@@ -5,10 +5,10 @@ cmake_minimum_required(VERSION 3.12)
 set(Easy3D_VERSION_MAJOR 2)
 set(Easy3D_VERSION_MINOR 5)
 set(Easy3D_VERSION_PATCH 3)
-set(Easy3D_VERSION ${Easy3D_VERSION_MAJOR}.${Easy3D_VERSION_MINOR}.${Easy3D_VERSION_PATCH})
+set(Easy3D_VERSION_STRING ${Easy3D_VERSION_MAJOR}.${Easy3D_VERSION_MINOR}.${Easy3D_VERSION_PATCH})
 set(Easy3D_VERSION_NUMBER 10${Easy3D_VERSION_MAJOR}0${Easy3D_VERSION_MINOR}0${Easy3D_VERSION_PATCH})
 
-project(Easy3D VERSION ${Easy3D_VERSION})
+project(Easy3D VERSION ${Easy3D_VERSION_STRING})
 
 ################################################################################
 
@@ -24,11 +24,11 @@ message("-- Setting C++11")
 
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     if (WIN32)      # windows
-        set(CMAKE_INSTALL_PREFIX "C:/Program Files/Easy3D/${Easy3D_VERSION}" CACHE PATH "Installation directory" FORCE)
+        set(CMAKE_INSTALL_PREFIX "C:/Program Files/Easy3D/${Easy3D_VERSION_STRING}" CACHE PATH "Installation directory" FORCE)
     elseif (APPLE)  # macOS
-        set(CMAKE_INSTALL_PREFIX "/usr/local/Cellar/easy3d/${Easy3D_VERSION}" CACHE PATH "Installation directory" FORCE)
+        set(CMAKE_INSTALL_PREFIX "/usr/local/Cellar/easy3d/${Easy3D_VERSION_STRING}" CACHE PATH "Installation directory" FORCE)
     else ()         # Linux: different from tradition, let's keep everything together
-        set(CMAKE_INSTALL_PREFIX "/usr/local/easy3d-${Easy3D_VERSION}" CACHE PATH "Installation directory" FORCE)
+        set(CMAKE_INSTALL_PREFIX "/usr/local/easy3d-${Easy3D_VERSION_STRING}" CACHE PATH "Installation directory" FORCE)
     endif ()
 endif ()
 
@@ -244,7 +244,7 @@ function(add_module module headers sources private_dependencies public_dependenc
     set_target_properties(easy3d_${module} PROPERTIES
             FOLDER "easy3d"
             SOVERSION ${Easy3D_VERSION_MAJOR}
-            VERSION ${Easy3D_VERSION}
+            VERSION ${Easy3D_VERSION_STRING}
             )
 
     # Alias target (recommended by policy CMP0028) and it looks nicer
@@ -328,7 +328,7 @@ install(DIRECTORY
 ### Summary
 message(STATUS "****************************************************************************")
 message(STATUS "    Package       : Easy3D")
-message(STATUS "    Version       : ${Easy3D_VERSION}")
+message(STATUS "    Version       : ${Easy3D_VERSION_STRING}")
 
 message(STATUS "    Generator     : ${CMAKE_GENERATOR}")
 if (CMAKE_CONFIGURATION_TYPES)

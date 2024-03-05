@@ -33,29 +33,32 @@
 
 namespace easy3d {
 
-    /// returns the major version number of Easy3D
+    /// returns the major version number of Easy3D.
     int version_major();
 
-    /// returns the major version number of Easy3D
+    /// returns the major version number of Easy3D.
     int version_minor();
 
-    /// returns the minor version number of Easy3D
+    /// returns the minor version number of Easy3D.
     int version_patch();
 
-    /// returns the version string of Easy3D, e.g., 2.5.3
-    std::string version();
+    /// returns the version string of Easy3D, in the format [MAJOR].[MINOR].[PATCH], e.g., “2.5.3”.
+    std::string version_string();
 
-    /// returns the version number of Easy3D, e.g., 1020503
+    /// returns the version number of Easy3D, in the format 10[MAJOR]0[MINOR]0[PATCH], e.g., 1020503.
     std::size_t version_number();
 
-    /// returns the release date of Easy3D, e.g., 20240305
+    /// returns the release date of Easy3D, in the format YYYYMMDD, e.g., 20240305.
     std::size_t release_date();
 }
 
-/// Easy3D version number, in the format '10[MAJOR]0[MINOR]0[PATCH]'
+/// Easy3D version string, in the format [MAJOR].[MINOR].[PATCH], e.g., “2.5.3”.
+#define EASY3D_VERSION_STR Easy3D_VERSION_STRING
+
+/// Easy3D version number, in the format 10[MAJOR]0[MINOR]0[PATCH].
 #define EASY3D_VERSION_NR 1020503
 
-/// Easy3D release date, in the format 'YYYYMMDD'
+/// Easy3D release date, in the format YYYYMMDD.
 #define EASY3D_RELEASE_DATE 20240305
 
 

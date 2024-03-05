@@ -42,13 +42,14 @@ namespace easy3d {
         return Easy3D_VERSION_PATCH;
     }
 
-    std::string version() {
-        return Easy3D_VERSION;
+    std::string version_string() {
+        assert(std::string(EASY3D_VERSION_STR) == std::string(Easy3D_VERSION_STRING));
+        return std::string(EASY3D_VERSION_STR);
     }
 
     std::size_t version_number() {
         assert(EASY3D_VERSION_NR == Easy3D_VERSION_NUMBER);
-        return Easy3D_VERSION_NUMBER;
+        return EASY3D_VERSION_NR;
     }
 
     std::size_t release_date() {

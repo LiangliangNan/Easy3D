@@ -39,41 +39,41 @@ int test_console_style() {
         return EXIT_FAILURE;
     }
 
-    std::cout << console::Style::Red << "Easy3D version: " << version() << ", version number: " << version_number() << std::endl;
-    std::cout << console::Style::BRed << "Easy3D version: " << version() << ", version number: " << version_number() << std::endl;
-    std::cout << console::Style::URed << "Easy3D version: " << version() << ", version number: " << version_number() << std::endl;
-    std::cout << console::Style::IRed << "Easy3D version: " << version() << ", version number: " << version_number() << std::endl;
-    std::cout << console::Style::BIRed << "Easy3D version: " << version() << ", version number: " << version_number() << std::endl;
-    std::cout << console::Style::On_Red << "Easy3D version: " << version() << ", version number: " << version_number() << std::endl;
-    std::cout << console::Style::On_IRed << "Easy3D version: " << version() << ", version number: " << version_number() << std::endl;
-    std::cout << console::Style::None << "Easy3D version: " << version() << ", version number: " << version_number() << std::endl;
+    std::cout << console::Style::Red << "Easy3D version: " << version_string() << ", version number: " << version_number() << std::endl;
+    std::cout << console::Style::BRed << "Easy3D version: " << version_string() << ", version number: " << version_number() << std::endl;
+    std::cout << console::Style::URed << "Easy3D version: " << version_string() << ", version number: " << version_number() << std::endl;
+    std::cout << console::Style::IRed << "Easy3D version: " << version_string() << ", version number: " << version_number() << std::endl;
+    std::cout << console::Style::BIRed << "Easy3D version: " << version_string() << ", version number: " << version_number() << std::endl;
+    std::cout << console::Style::On_Red << "Easy3D version: " << version_string() << ", version number: " << version_number() << std::endl;
+    std::cout << console::Style::On_IRed << "Easy3D version: " << version_string() << ", version number: " << version_number() << std::endl;
+    std::cout << console::Style::None << "Easy3D version: " << version_string() << ", version number: " << version_number() << std::endl;
 
-    std::cout << console::Style::Green << "Easy3D version: " << version() << ", version number: " << version_number() << std::endl;
-    std::cout << console::Style::BGreen << "Easy3D version: " << version() << ", version number: " << version_number() << std::endl;
-    std::cout << console::Style::UGreen << "Easy3D version: " << version() << ", version number: " << version_number() << std::endl;
-    std::cout << console::Style::IGreen << "Easy3D version: " << version() << ", version number: " << version_number() << std::endl;
-    std::cout << console::Style::BIGreen << "Easy3D version: " << version() << ", version number: " << version_number() << std::endl;
-    std::cout << console::Style::On_Green << "Easy3D version: " << version() << ", version number: " << version_number() << std::endl;
-    std::cout << console::Style::On_IGreen << "Easy3D version: " << version() << ", version number: " << version_number() << std::endl;
-    std::cout << console::Style::None << "Easy3D version: " << version() << ", version number: " << version_number() << std::endl;
+    std::cout << console::Style::Green << "Easy3D version: " << version_string() << ", version number: " << version_number() << std::endl;
+    std::cout << console::Style::BGreen << "Easy3D version: " << version_string() << ", version number: " << version_number() << std::endl;
+    std::cout << console::Style::UGreen << "Easy3D version: " << version_string() << ", version number: " << version_number() << std::endl;
+    std::cout << console::Style::IGreen << "Easy3D version: " << version_string() << ", version number: " << version_number() << std::endl;
+    std::cout << console::Style::BIGreen << "Easy3D version: " << version_string() << ", version number: " << version_number() << std::endl;
+    std::cout << console::Style::On_Green << "Easy3D version: " << version_string() << ", version number: " << version_number() << std::endl;
+    std::cout << console::Style::On_IGreen << "Easy3D version: " << version_string() << ", version number: " << version_number() << std::endl;
+    std::cout << console::Style::None << "Easy3D version: " << version_string() << ", version number: " << version_number() << std::endl;
 
-    std::cout << console::Style::Blue << "Easy3D version: " << version() << ", version number: " << version_number() << std::endl;
-    std::cout << console::Style::BBlue << "Easy3D version: " << version() << ", version number: " << version_number() << std::endl;
-    std::cout << console::Style::UBlue << "Easy3D version: " << version() << ", version number: " << version_number() << std::endl;
-    std::cout << console::Style::IBlue << "Easy3D version: " << version() << ", version number: " << version_number() << std::endl;
-    std::cout << console::Style::BIBlue << "Easy3D version: " << version() << ", version number: " << version_number() << std::endl;
-    std::cout << console::Style::On_Blue << "Easy3D version: " << version() << ", version number: " << version_number() << std::endl;
-    std::cout << console::Style::On_IBlue << "Easy3D version: " << version() << ", version number: " << version_number() << std::endl;
-    std::cout << console::Style::None << "Easy3D version: " << version() << ", version number: " << version_number() << std::endl;
+    std::cout << console::Style::Blue << "Easy3D version: " << version_string() << ", version number: " << version_number() << std::endl;
+    std::cout << console::Style::BBlue << "Easy3D version: " << version_string() << ", version number: " << version_number() << std::endl;
+    std::cout << console::Style::UBlue << "Easy3D version: " << version_string() << ", version number: " << version_number() << std::endl;
+    std::cout << console::Style::IBlue << "Easy3D version: " << version_string() << ", version number: " << version_number() << std::endl;
+    std::cout << console::Style::BIBlue << "Easy3D version: " << version_string() << ", version number: " << version_number() << std::endl;
+    std::cout << console::Style::On_Blue << "Easy3D version: " << version_string() << ", version number: " << version_number() << std::endl;
+    std::cout << console::Style::On_IBlue << "Easy3D version: " << version_string() << ", version number: " << version_number() << std::endl;
+    std::cout << console::Style::None << "Easy3D version: " << version_string() << ", version number: " << version_number() << std::endl;
 
-    std::cout << console::Style::Purple << "Easy3D version: " << version() << ", version number: " << version_number() << std::endl;
-    std::cout << console::Style::BPurple << "Easy3D version: " << version() << ", version number: " << version_number() << std::endl;
-    std::cout << console::Style::UPurple << "Easy3D version: " << version() << ", version number: " << version_number() << std::endl;
-    std::cout << console::Style::IPurple << "Easy3D version: " << version() << ", version number: " << version_number() << std::endl;
-    std::cout << console::Style::BIPurple << "Easy3D version: " << version() << ", version number: " << version_number() << std::endl;
-    std::cout << console::Style::On_Purple << "Easy3D version: " << version() << ", version number: " << version_number() << std::endl;
-    std::cout << console::Style::On_IPurple << "Easy3D version: " << version() << ", version number: " << version_number() << std::endl;
-    std::cout << console::Style::None << "Easy3D version: " << version() << std::endl;
+    std::cout << console::Style::Purple << "Easy3D version: " << version_string() << ", version number: " << version_number() << std::endl;
+    std::cout << console::Style::BPurple << "Easy3D version: " << version_string() << ", version number: " << version_number() << std::endl;
+    std::cout << console::Style::UPurple << "Easy3D version: " << version_string() << ", version number: " << version_number() << std::endl;
+    std::cout << console::Style::IPurple << "Easy3D version: " << version_string() << ", version number: " << version_number() << std::endl;
+    std::cout << console::Style::BIPurple << "Easy3D version: " << version_string() << ", version number: " << version_number() << std::endl;
+    std::cout << console::Style::On_Purple << "Easy3D version: " << version_string() << ", version number: " << version_number() << std::endl;
+    std::cout << console::Style::On_IPurple << "Easy3D version: " << version_string() << ", version number: " << version_number() << std::endl;
+    std::cout << console::Style::None << "Easy3D version: " << version_string() << std::endl;
 
     std::cout << console::Style::Red   << "Easy3D major: " << version_major() << std::endl;
     std::cout << console::Style::Green << "Easy3D minor: " << version_minor() << std::endl;
