@@ -132,7 +132,7 @@ namespace easy3d {
         }
 
         Eigen::MatrixXd C(m, 1);
-        for (int i = 0; i < n; ++i)
+        for (int i = 0; i < m; ++i)
             C(i, 0) = b[i];
 
         // https://eigen.tuxfamily.org/dox/group__LeastSquares.html
@@ -140,18 +140,21 @@ namespace easy3d {
         // The solve() method in the BDCSVD class can be directly used to solve linear squares systems. It is not
         // enough to compute only the singular values (the default for this class); you also need the singular
         // vectors but the thin SVD decomposition suffices for computing least squares solutions.
-        Eigen::MatrixXd X = M.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(C);
-#else
+        Eigen::VectorXd X = M.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(C);
+#elif 1
         // The solve() method in QR decomposition classes also computes the least squares solution. There are three
         // QR decomposition classes: HouseholderQR (no pivoting, so fast but unstable), ColPivHouseholderQR (column
         // pivoting, thus a bit slower but more accurate) and FullPivHouseholderQR (full pivoting, so slowest and
         // most stable). Here we use the one with column pivoting.
-        Eigen::MatrixXd X = M.colPivHouseholderQr().solve(C);
+        Eigen::VectorXd X = M.colPivHouseholderQr().solve(C);
+#else
+        // Solve the least squares problem using Normal Equations
+        Eigen::VectorXd X = (M.transpose() * M).ldlt().solve(M.transpose() * C);
 #endif
 
         x.resize(n);
         for (int i = 0; i < n; ++i)
-            x[i] = X(i, 0);
+            x[i] = X(i);
 
         return true;
     }
