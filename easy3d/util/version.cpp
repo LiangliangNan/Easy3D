@@ -50,4 +50,8 @@ namespace easy3d {
         assert(EASY3D_VERSION_NR == Easy3D_VERSION_NUMBER);
         return Easy3D_VERSION_NUMBER;
     }
+
+    std::size_t release_date() {
+        return EASY3D_RELEASE_DATE;
+    }
 }

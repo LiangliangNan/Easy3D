@@ -47,13 +47,16 @@ namespace easy3d {
 
     /// returns the version number of Easy3D, e.g., 1020503
     std::size_t version_number();
+
+    /// returns the release date of Easy3D, e.g., 20240305
+    std::size_t release_date();
 }
 
 /// Easy3D version number, in the format '10[MAJOR]0[MINOR]0[PATCH]'
 #define EASY3D_VERSION_NR 1020503
 
 /// Easy3D release date, in the format 'YYYYMMDD'
-#define EASY3D_RELEASE_DATE 20240301
+#define EASY3D_RELEASE_DATE 20240305
 
 
 #endif  // EASY3D_UTIL_VERSION_H
