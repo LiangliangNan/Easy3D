@@ -141,7 +141,7 @@ namespace easy3d {
         // enough to compute only the singular values (the default for this class); you also need the singular
         // vectors but the thin SVD decomposition suffices for computing least squares solutions.
         Eigen::VectorXd X = M.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(C);
-#elif 0
+#elif 1
         // The solve() method in QR decomposition classes also computes the least squares solution. There are three
         // QR decomposition classes: HouseholderQR (no pivoting, so fast but unstable), ColPivHouseholderQR (column
         // pivoting, thus a bit slower but more accurate) and FullPivHouseholderQR (full pivoting, so slowest and
