@@ -32,6 +32,8 @@
 #include <algorithm> // for std::min, std::max
 #include <cmath>     // for std::sqrt
 
+#include <easy3d/core/random.h>
+
 
 namespace easy3d {
 
@@ -154,6 +156,9 @@ namespace easy3d {
         /// Make this matrix identity (i.e., all elements on the diagonal have a value of 1).
         /// @note This function also allow to set the elements on the diagonal to have values other than 1.
         void load_identity(FT v = FT(1));
+
+        /// Set all elements to a random value (in the range [0.0, 1.0])
+        void load_random();
 
         /// Return the transposed matrix.
         Matrix<FT> transpose() const;
@@ -284,13 +289,20 @@ namespace easy3d {
     template<typename FT>
     Matrix<FT> mult_transpose(const std::vector <FT> &, const std::vector <FT> &);    // a * b^T
 
-    /// unit and diagonal matrix
+    /// Generate a matrix with all its elements randomly initialized in the range [0.0, 1.0].
     template<typename FT>
-    Matrix<FT> identity(int, const FT &);            // Generate an identity matrix.
+    Matrix<FT> random(int row, int col);
+
+    /// Generate an unity/identity matrix (i.e., all elements on the diagonal have a value of 1).
+    /// @note This function also allow to set the elements on the diagonal to have values other than 1.
     template<typename FT>
-    Matrix<FT> diagonal(const std::vector <FT> &);    // Generate a diagonal matrix by given its diagonal elements.
+    Matrix<FT> identity(int N, const FT v = FT(1));
+
+    /// diagonal matrix
     template<typename FT>
-    std::vector <FT> diagonal(const Matrix<FT> &);    // Get the diagonal entries of matrix.
+    Matrix<FT> diagonal(const std::vector<FT> &);     // Generate a diagonal matrix by given its diagonal elements.
+    template<typename FT>
+    std::vector <FT> diagonal(const Matrix<FT> &);     // Get the diagonal entries of matrix.
 
     /// the trace of this matrix, i.e. the sum of the coefficients on the main diagonal.
     /// NOTE: the matrix can be any matrix, not necessarily square.
@@ -388,16 +400,19 @@ namespace easy3d {
     template<typename FT>
     FT dot(const std::vector <FT> &, const std::vector <FT> &);            // Inner product for vectors.
 
+    /// Generate a vector with all its elements randomly initialized in the range [0.0, 1.0].
+    template<typename FT>
+    std::vector<FT> random(int size);
+
     /// utilities
     template<typename FT>
-    FT norm(const std::vector <FT> &);                    // Euclidean norm.
+    FT norm(const std::vector <FT> &);                 // Euclidean norm.
     template<typename FT>
-    FT norm(const std::vector <std::complex<FT>> &);    // Euclidean norm.
+    FT norm(const std::vector <std::complex<FT>> &);   // Euclidean norm.
     template<typename FT>
-    void swap(std::vector <FT> &, std::vector <FT> &);// Swap two vectors.
+    void swap(std::vector <FT> &, std::vector <FT> &); // Swap two vectors.
     template<typename FT>
-    std::vector <FT>
-    linspace(FT, FT, int);// Generates a vector of n points linearly spaced between and including a and b.
+    std::vector <FT> linspace(FT, FT, int);// Generates a vector of n points linearly spaced between and including a and b.
     template<typename FT>
     FT sum(const std::vector <FT> &);    // vector sum.
     template<typename FT>
@@ -640,14 +655,11 @@ namespace easy3d {
         return prow_[row][col];
     }
 
-
     /**
-    * Clears the matrix
-    * This resets all values to 0 (zero)
-    */
+     * Clears the matrix such that all values are set to 0 (zero)
+     */
     template<typename FT>
-    inline
-    void Matrix<FT>::load_zero() {
+    inline void Matrix<FT>::load_zero() {
         for (int i = 0; i < nRow_; i++) {
             for (int j = 0; j < nColumn_; j++) {
                 prow_[i][j] = FT(0);
@@ -656,13 +668,12 @@ namespace easy3d {
     }
 
     /**
-    * Sets the matrix to identity
-    * This sets all coefficients of this matrix to be equal to
-    * nROW x nCOL identity matrix.
-    */
+     * Sets the matrix to identity
+     * This sets all coefficients of this matrix to be equal to
+     * nROW x nCOL identity matrix.
+     */
     template<typename FT>
-    inline
-    void Matrix<FT>::load_identity(FT v /* = FT(1.0)*/) {
+    inline void Matrix<FT>::load_identity(FT v /* = FT(1.0)*/) {
         for (int i = 0; i < nRow_; i++) {
             for (int j = 0; j < nColumn_; j++) {
                 prow_[i][j] = (i == j) ? v : FT(0);
@@ -670,6 +681,15 @@ namespace easy3d {
         }
     }
 
+    /// Set all elements to a random value (in the range [0.0, 1.0])
+    template<typename FT>
+    inline void Matrix<FT>::load_random() {
+        for (int i = 0; i < nRow_; i++) {
+            for (int j = 0; j < nColumn_; j++) {
+                prow_[i][j] = random_float();
+            }
+        }
+    }
 
     template<typename FT>
     inline int Matrix<FT>::rows() const {
@@ -1365,9 +1385,20 @@ namespace easy3d {
     }
 
 
+    /// Generate a matrix with its elements in the range [0.0, 1.0].
+    template<typename FT>
+    Matrix<FT> random(int row, int col) {
+        Matrix<FT> tmp(row, col);
+        for (int i = 0; i < row; i++) {
+            for (int j = 0; j < col; j++) {
+                tmp[i][j] = random_float();
+            }
+        }
+    }
+
     /** Generate an identity matrix. */
     template<typename FT>
-    Matrix<FT> identity(int N, const FT &x) {
+    Matrix<FT> identity(int N, const FT& x /*= FT(1)*/) {
         Matrix<FT> tmp(N, N);
         for (int i = 0; i < N; ++i)
             tmp[i][i] = x;
@@ -1850,13 +1881,22 @@ namespace easy3d {
 
     /// std::vector's mean.
     template<typename FT>
-    FT mean(const std::vector<FT> &v) {
+    inline FT mean(const std::vector<FT> &v) {
         return sum(v) / FT(v.size());
+    }
+
+    /// Generate a vector with all its elements randomly initialized in the range [0.0, 1.0].
+    template<typename FT>
+    inline std::vector<FT> random(int size) {
+        std::vector<FT> V(size);
+        for (auto& v : V)
+            v = random_float();
+        return V;
     }
 
     /// std::vector's norm in Euclidean space.
     template<typename FT>
-    FT norm(const std::vector<FT> &v) {
+    inline FT norm(const std::vector<FT> &v) {
         FT sum = 0;
         typename std::vector<FT>::const_iterator itr = v.begin();
 
