@@ -80,12 +80,6 @@ namespace easy3d {
 
         // Not needed: it will be called in the destructor of the base class
         //Viewer::cleanup();
-
-#if defined(_WIN32) && defined(_MSC_VER)
-		// Liangliang: the internal glfw won't be shared across dll boundaries (But seems ok on macOS. That is weird!)
-        // see https://github.com/LiangliangNan/Easy3D/issues/178
-		glfwTerminate();
-#endif
     }
 
 
