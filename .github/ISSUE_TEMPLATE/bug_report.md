@@ -7,10 +7,10 @@ assignees: ''
 
 ---
 
-**Describe the bug**
+**Describe the bug**. 
 A clear and concise description of what the bug is.
 
-**Tell us how to reproduce the bug** 
+**Tell us how to reproduce the bug**. 
 Is it a compile time error or runtime issue?
  - For compile time issues, post here the code and full compile log.
  - For runtime issues, post here screenshots (of the results or error messages), as well as the complete run log of the program. You can change "initialize()" to "initialize(true)" in your "main()" function, and then a log file will be generated next to the executable after you run the program. If running the program involves multiple user inputs, then please also describe the steps so the issue can be reproduced.  
@@ -21,5 +21,5 @@ In all cases, post your code and data here (if relevant).
  - Compiler [e.g. MSVC 2019, Clang 11, GCC 10]
  - Debug or release?
 
-**Additional context**
+**Additional context**. 
 Add any other context about the problem here.
