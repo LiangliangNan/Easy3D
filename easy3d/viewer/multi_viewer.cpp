@@ -223,13 +223,15 @@ namespace easy3d {
         for (int i = 0; i < num_rows_; ++i) {
             auto &row = views_[i];
             const auto y = height() - (i + 1) * view_height_;
-            for (int j = 0; j < num_cols_; ++j)
+            for (int j = 0; j < num_cols_; ++j) {
+                const auto x = j * view_width_;
                 row[j].viewport = ivec4(
-                        static_cast<int>(static_cast<float>(j * view_width_) * dpi_scaling()),
+                        static_cast<int>(static_cast<float>(x) * dpi_scaling()),
                         static_cast<int>(static_cast<float>(y) * dpi_scaling()),
                         static_cast<int>(static_cast<float>(view_width_) * dpi_scaling()),
                         static_cast<int>(static_cast<float>(view_height_) * dpi_scaling())
                 );
+            }
         }
 
         // ------------------------------------------------------------
