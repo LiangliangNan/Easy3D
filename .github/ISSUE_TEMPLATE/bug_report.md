@@ -13,8 +13,8 @@ A clear and concise description of what the bug is.
 **Tell us how to reproduce the bug** 
 Is it a compile time error or runtime issue?
  - For compile time issues, post here the code and full compile log.
- - For runtime issues, post here screenshots (of the results or error messages), as well as the complete run log of the program. You can change "initialize()" to "initialize(true)" in your "main()" function, and then a log file will be generated next to the executable after you run the program. Then describe the steps to reproduce the issue.  
-In all cases, post your code and data here (if relevant). 
+ - For runtime issues, post here screenshots (of the results or error messages), as well as the complete run log of the program. You can change "initialize()" to "initialize(true)" in your "main()" function, and then a log file will be generated next to the executable after you run the program. If running the program involves multiple user inputs, then please also describe the steps so the issue can be reproduced.  
+In all cases, post your code and data here (if relevant).
 
 **Development/Running environment:**
  - OS: [e.g. Windows 10, macOS 11.6]
