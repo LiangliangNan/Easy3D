@@ -236,13 +236,14 @@ namespace easy3d {
 #elif defined(USE_TINY_OBJ_LOADER)
 
 #define TINYOBJLOADER_IMPLEMENTATION
+#define TINYOBJLOADER_USE_DOUBLE // use double
 #include <3rd_party/tinyobjloader/tiny_obj_loader.h>
 
 namespace easy3d {
 
     namespace io {
 
-        /// TODO: Translator not implemented
+
         bool load_obj(const std::string &file_name, SurfaceMesh *mesh) {
             if (!mesh) {
                 LOG(ERROR) << "null mesh pointer";
@@ -288,25 +289,35 @@ namespace easy3d {
             builder.begin_surface();
 
             // add vertices
-#ifdef  TRANSLATE_RELATIVE_TO_FIRST_POINT
-            // the first point
-            auto p0 = attrib.vertices.data();
-            builder.add_vertex(vec3(0, 0, 0));
-
-            // remaining points
-            for (std::size_t v = 3; v < attrib.vertices.size(); v += 3) {
-                auto p = attrib.vertices.data() + v;
-                builder.add_vertex(
-                        vec3(static_cast<float>(p[0] - p0[0]),
-                             static_cast<float>(p[1] - p0[1]),
-                             static_cast<float>(p[2] - p0[2]))
-                );
-            }
-#else
-            for (std::size_t v = 0; v < attrib.vertices.size(); v += 3) {
-                // Should I create vertices later, to get rid of isolated vertices?
-                builder.add_vertex(vec3(attrib.vertices.data() + v));
-            }
+			if (Translator::instance()->status() == Translator::DISABLED) {
+				for (std::size_t v = 0; v < attrib.vertices.size(); v += 3)
+					builder.add_vertex(vec3(attrib.vertices.data() + v));
+			}
+			else if (Translator::instance()->status() == Translator::TRANSLATE_USE_FIRST_POINT) {
+				// the first point
+                const dvec3 origin = dvec3(attrib.vertices.data());
+                builder.add_vertex(vec3(0, 0, 0));
+                // the remaining points
+				for (std::size_t v = 3; v < attrib.vertices.size(); v += 3) {
+                    const double* data = attrib.vertices.data() + v;
+					builder.add_vertex(vec3(static_cast<float>(data[0] - origin.x), static_cast<float>(data[1] - origin.y), static_cast<float>(data[2] - origin.z)));
+				}
+				auto trans = mesh->add_model_property<dvec3>("translation", dvec3(0, 0, 0));
+				trans[0] = origin;
+				LOG(INFO) << "model translated w.r.t. the first vertex (" << origin << "), stored as ModelProperty<dvec3>(\"translation\")";
+		    }
+			else if (Translator::instance()->status() == Translator::TRANSLATE_USE_LAST_KNOWN_OFFSET) {
+                const dvec3& origin = Translator::instance()->translation();
+				builder.add_vertex(vec3(0, 0, 0));
+				// the remaining points
+				for (std::size_t v = 3; v < attrib.vertices.size(); v += 3) {
+					const double* data = attrib.vertices.data() + v;
+					builder.add_vertex(vec3(static_cast<float>(data[0] - origin.x), static_cast<float>(data[1] - origin.y), static_cast<float>(data[2] - origin.z)));
+				}
+				auto trans = mesh->add_model_property<dvec3>("translation", dvec3(0, 0, 0));
+				trans[0] = origin;
+				LOG(INFO) << "model translated w.r.t. last known reference point (" << origin << "), stored as ModelProperty<dvec3>(\"translation\")";
+			}
 
             // has per vertex color 
             if (attrib.colors.size() == attrib.vertices.size()) {
@@ -315,7 +326,6 @@ namespace easy3d {
                     colors[SurfaceMesh::Vertex(v)] = vec3(attrib.colors.data() + v * 3);
                 }
             }
-#endif
 
             // create texture coordinate property if texture coordinates present
             if (!texcoords.empty())
