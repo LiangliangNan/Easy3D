@@ -171,11 +171,12 @@ namespace easy3d {
             }
 
             if (!setting_file_name.empty()) {
-                if (file_system::is_file(setting_file_name))
+                if (file_system::is_file(setting_file_name)) {
                     if (load(setting_file_name)) {
                         LOG(INFO) << "setting loaded: " << setting_file_name;
                         return;
                     }
+                }
                 save(setting_file_name);
             }
         }
