@@ -389,7 +389,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
         LOG(ERROR) << "animation recording failed";
 }
 
-#else
+#else // if FFMPEG doesn't exist, then save animation as image sequences
 
 void PaintCanvas::recordAnimation(const QString &file_name, int, int, bool bk_white) {
     auto kfi = walkThrough()->interpolator();
