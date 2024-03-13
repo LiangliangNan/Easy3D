@@ -123,7 +123,7 @@ namespace easy3d {
 
     void SurfaceMeshSimplification::simplify(unsigned int n_vertices) {
         if (!mesh_->is_triangle_mesh()) {
-            std::cerr << "Not a triangle mesh!" << std::endl;
+            LOG(ERROR) << "not a triangle mesh";
             return;
         }
 

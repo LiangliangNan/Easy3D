@@ -471,7 +471,7 @@ bool MainWindow::onOpen() {
 bool MainWindow::onSave() {
     const Model* model = viewer_->currentModel();
     if (!model) {
-        std::cerr << "no model exists" << std::endl;
+        LOG(ERROR) << "no model exists";
         return false;
     }
 
