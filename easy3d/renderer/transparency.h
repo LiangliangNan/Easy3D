@@ -38,7 +38,7 @@ namespace easy3d {
     /**
      * \brief Base class for rendering with transparency
      * \class Transparency easy3d/renderer/transparency.h
-     * \see AverageColorBlending,
+     * \see AverageColorBlending, DualDepthPeeling
      */
     class Transparency
     {

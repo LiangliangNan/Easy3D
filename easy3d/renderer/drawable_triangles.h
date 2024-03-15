@@ -55,12 +55,14 @@ namespace easy3d {
         /**
          * @brief Query the opacity of the drawable, in the range [0.0, 1.0].
          * @return The opacity of the drawable.
+         * @note Opacity is effective only when transparency (e.g., DualDepthPeeling, AverageColorBlending) rendering is enabled.
          */
         float opacity() const { return opacity_; }
 
         /**
          * @brief Set the opacity of the drawable.
          * @param opacity The new opacity value, in the range [0.0, 1.0].
+         * @note Opacity is effective only when transparency (e.g., DualDepthPeeling, AverageColorBlending) rendering is enabled.
          */
         void set_opacity(float opacity) { opacity_ = opacity; }
 
