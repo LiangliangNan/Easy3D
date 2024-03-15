@@ -260,10 +260,9 @@ namespace easy3d {
         int gly = height() - 1 - y;
 
         // NOTE: when dealing with OpenGL, we always work in the highdpi screen space
-#if defined(__APPLE__)
         glx = static_cast<int>(static_cast<float>(glx) * dpi_scaling());
         gly = static_cast<int>(static_cast<float>(gly) * dpi_scaling());
-#endif
+
         float depth = std::numeric_limits<float>::max();
         glPixelStorei(GL_PACK_ALIGNMENT, 1);
         glReadPixels(glx, gly, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);

@@ -601,10 +601,6 @@ namespace easy3d {
 
 
     void Viewer::resize(int w, int h) {
-#ifndef __APPLE__
-        w = static_cast<int>(w * dpi_scaling());
-        h = static_cast<int>(h * dpi_scaling());
-#endif
         glfwSetWindowSize(window_, w, h);
     }
 
@@ -1067,10 +1063,9 @@ namespace easy3d {
         int gly = height() - 1 - y;
 
         // NOTE: when dealing with OpenGL, we always work in the highdpi screen space
-#if defined(__APPLE__)
         glx = static_cast<int>(static_cast<float>(glx) * dpi_scaling());
         gly = static_cast<int>(static_cast<float>(gly) * dpi_scaling());
-#endif
+
         float depth = std::numeric_limits<float>::max();
         glPixelStorei(GL_PACK_ALIGNMENT, 1);
         easy3d_debug_log_gl_error
@@ -1582,11 +1577,8 @@ namespace easy3d {
             if (!program)
                 return;
 
-#if defined(__APPLE__)
             const float size = 10;
-#else
-            const float size = static_cast<float>(10 * dpi_scaling());
-#endif
+
             LinesDrawable drawable("pivot_point");
             const vec3 &pivot = camera()->projectedCoordinatesOf(camera()->pivotPoint());
             const std::vector<vec3> points = {
