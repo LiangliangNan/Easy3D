@@ -28,7 +28,7 @@
 
 
 #include <vector>
-#include <cstring>
+#include <string>
 #include <cstdlib>  // for std::getenv
 
 namespace easy3d
