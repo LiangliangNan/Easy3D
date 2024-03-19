@@ -67,6 +67,7 @@ namespace easy3d {
 						name = "v:" + name;
 					auto prop = mesh->vertex_property<T>(name);
 					prop.vector() = p;
+					LOG(INFO) << "added vertex property: " << name;
 				}
 			}
 
@@ -84,6 +85,7 @@ namespace easy3d {
 						name = "f:" + name;
 					auto prop = mesh->face_property<T>(name);
 					prop.vector() = p;
+					LOG(INFO) << "added face property: " << name;
 				}
 			}
 
@@ -101,6 +103,7 @@ namespace easy3d {
 						name = "e:" + name;
 					auto prop = mesh->edge_property<T>(name);
 					prop.vector() = p;
+					LOG(INFO) << "added edge property: " << name;
 				}
 			}
 

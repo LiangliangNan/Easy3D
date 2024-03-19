@@ -651,7 +651,8 @@ namespace easy3d {
                 }
 
                 Vec3Property prop_normal("normal");
-                if (internal::extract_vector_property(element.float_properties, "nx", "ny", "nz", prop_normal)) {
+                if (internal::extract_vector_property(element.float_properties, "nx", "ny", "nz", prop_normal) ||
+                    internal::extract_vector_property(element.float_properties, "normal_x", "normal_y", "normal_z", prop_normal)) {
                     element.vec3_properties.push_back(prop_normal);
                     // check if the normals are normalized
                     if (!prop_normal.empty()) {
