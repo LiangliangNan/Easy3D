@@ -25,6 +25,7 @@
  ********************************************************************/
 
 #include <easy3d/core/model.h>
+#include <easy3d/util/logging.h>
 
 
 namespace easy3d {
@@ -57,6 +58,18 @@ namespace easy3d {
     void Model::invalidate_bounding_box() {
         bbox_.clear();
         bbox_known_ = false;
+    }
+
+
+    Renderer* Model::renderer() {
+        LOG_IF(!renderer_, WARNING) << "the renderer of model '" << name() << "' does not exist (or not created). Adding this model to the viewer will create the renderer";
+        return renderer_;
+    }
+
+
+    const Renderer* Model::renderer() const {
+        LOG_IF(!renderer_, WARNING) << "the renderer of model '" << name() << "' does not exist (or not created). Adding this model to the viewer will create the renderer";
+        return renderer_;
     }
 
 }

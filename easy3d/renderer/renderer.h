@@ -38,6 +38,7 @@
 namespace easy3d {
 
     class Model;
+    class Graph;
     class PointsDrawable;
     class LinesDrawable;
     class TrianglesDrawable;
@@ -196,7 +197,7 @@ namespace easy3d {
          *              2. per-vertex texture coordinates: in "v:texcoord";
          *              3. segmentation: in "v:primitive_index";
          *              4. scalar field;
-         *              5: uniform color.
+         *              5. uniform color.
          */
         static void set_default_rendering_state(PointCloud *model, PointsDrawable *drawable);
 
@@ -205,15 +206,28 @@ namespace easy3d {
          * @details The default rendering state is determined by the availability of the vertex/face properties.
          *          The motivation is that the most appealing rendering is demonstrated by default. The following
          *          priority applies:
-         *              1: per-face color: in "f:color";
-         *              2: per-vertex color: in "v:color";
+         *              1. per-face color: in "f:color";
+         *              2. per-vertex color: in "v:color";
          *              3. per-halfedge texture coordinates: in "h:texcoord";
          *              4. per-vertex texture coordinates: in "v:texcoord";
          *              5. segmentation: in "f:chart";
-         *              6. scalar field;
-         *              7 uniform color
+         *              6. scalar field on faces;
+         *              7. scalar field on vertices;
+         *              8. uniform color
          */
         static void set_default_rendering_state(SurfaceMesh *model, TrianglesDrawable *drawable);
+
+        /**
+         * @brief Set the default rendering state of the "vertices" drawable of a graph.
+         * @details The default rendering state is determined by the availability of the vertex properties.
+         *          The motivation is that the most appealing rendering is demonstrated by default. The following
+         *          priority applies:
+         *              1. per-vertex color: in "v:color";
+         *              2. per-vertex texture coordinates: in "v:texcoord";
+         *              3. scalar field;
+         *              4. uniform color.
+         */
+        static void set_default_rendering_state(Graph *model, PointsDrawable *drawable);
 
         // -------------------------------------------------------------------------------------------------------------
 

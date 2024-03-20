@@ -32,6 +32,7 @@
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/util/logging.h>
 #include <easy3d/util/setting.h>
 
 
@@ -111,14 +112,15 @@ namespace easy3d {
             // create points drawable for the edges
             auto vertices = graph->renderer()->add_points_drawable("vertices");
             vertices->set_visible(setting::graph_vertices_visible);
-            vertices->set_uniform_coloring(setting::graph_vertices_color);
+            vertices->set_color(setting::graph_vertices_color);
             vertices->set_impostor_type(setting::graph_vertices_imposters ? PointsDrawable::SPHERE : PointsDrawable::PLAIN);
 			vertices->set_point_size(setting::graph_vertices_size);
+            set_default_rendering_state(graph, vertices);
 
             // create lines drawable for the edges
             auto edges = graph->renderer()->add_lines_drawable("edges");
             edges->set_visible(setting::graph_edges_visible);
-            edges->set_uniform_coloring(setting::graph_edges_color);
+            edges->set_color(setting::graph_edges_color);
             edges->set_impostor_type(setting::graph_edges_imposters ? LinesDrawable::CYLINDER : LinesDrawable::PLAIN);
 			edges->set_line_width(setting::graph_edges_size);
 		} else if (dynamic_cast<PolyMesh *>(model)) {
@@ -160,26 +162,35 @@ namespace easy3d {
         assert(model);
         assert(drawable);
 
+        // Priorities:
+        //     1. per-vertex color: in "v:color";
+        //     2. per-vertex texture coordinates: in "v:texcoord";
+        //     3. segmentation: in "v:primitive_index";
+        //     4. scalar field;
+        //     5: uniform color.
+
+        // 1. per-vertex color: in "v:color"
         auto colors = model->get_vertex_property<vec3>("v:color");
         if (colors) {
             drawable->set_property_coloring(State::VERTEX, "v:color");
             return;
         }
 
+        // 2. per-vertex texture coordinates: in "v:texcoord"
         auto texcoord = model->get_vertex_property<vec2>("v:texcoord");
         if (texcoord) {
             drawable->set_texture_coloring(State::VERTEX, "v:texcoord");
             return;
         }
 
-        // segmentation
+        // 3. segmentation: in "v:primitive_index"
         auto primitive_index = model->get_vertex_property<int>("v:primitive_index");
         if (primitive_index) { // model has segmentation information
             drawable->set_scalar_coloring(State::VERTEX, "v:primitive_index");
             return;
         }
 
-        // other unknown scalar fields
+        // 4. scalar field
         const auto properties = model->vertex_properties();
         for (const auto& name : properties) {
             if (model->get_vertex_property<int>(name) || model->get_vertex_property<unsigned int>(name) ||
@@ -189,11 +200,10 @@ namespace easy3d {
             }
         }
 
+        // 5: uniform color
         drawable->set_uniform_coloring(setting::point_cloud_vertices_color);
     }
 
-
-    // -----------------------------------------------------------------------------------------------------------
 
     void Renderer::set_default_rendering_state(SurfaceMesh *model, TrianglesDrawable *drawable) {
         assert(model);
@@ -205,40 +215,46 @@ namespace easy3d {
         //      3. per-halfedge texture coordinates
         //      4. per-vertex texture coordinates
         //      5. segmentation
-        //      6 uniform color
+        //      6. scalar field on faces
+        //      7. scalar field on vertices
+        //      8. uniform color
 
+        // 1: per-face color
         auto face_colors = model->get_face_property<vec3>("f:color");
         if (face_colors) {
             drawable->set_property_coloring(State::FACE, "f:color");
             return;
         }
 
+        // 2: per-vertex color
         auto vertex_colors = model->get_vertex_property<vec3>("v:color");
         if (vertex_colors) {
             drawable->set_property_coloring(State::VERTEX, "v:color");
             return;
         }
 
+        // 3. per-halfedge texture coordinates
         auto halfedge_texcoords = model->get_halfedge_property<vec2>("h:texcoord");
         if (halfedge_texcoords) {
             drawable->set_texture_coloring(State::HALFEDGE, "h:texcoord");
             return;
         }
 
+        // 4. per-vertex texture coordinates
         auto vertex_texcoords = model->get_vertex_property<vec2>("v:texcoord");
         if (vertex_texcoords) {
             drawable->set_texture_coloring(State::VERTEX, "v:texcoord");
             return;
         }
 
-        // segmentation
+        // 5. segmentation
         auto segmentation = model->get_face_property<int>("f:chart");
         if (segmentation) {
             drawable->set_scalar_coloring(State::FACE, "f:chart");
             return;
         }
 
-        // other unknown scalar fields on faces
+        // 6. scalar field on faces
         const auto face_properties = model->face_properties();
         for (const auto& name : face_properties) {
             if (model->get_face_property<int>(name) || model->get_face_property<unsigned int>(name) ||
@@ -248,7 +264,7 @@ namespace easy3d {
             }
         }
 
-        // other unknown scalar fields on vertices
+        // 7. scalar field on vertices
         const auto vertex_properties = model->vertex_properties();
         for (const auto& name : vertex_properties) {
             if (model->get_vertex_property<int>(name) || model->get_vertex_property<unsigned int>(name) ||
@@ -258,7 +274,47 @@ namespace easy3d {
             }
         }
 
+        // 8. uniform color
         drawable->set_uniform_coloring(setting::surface_mesh_faces_color);
+    }
+
+
+    void Renderer::set_default_rendering_state(Graph *model, PointsDrawable *drawable) {
+        assert(model);
+        assert(drawable);
+
+        // Priorities:
+        //     1. per-vertex color: in "v:color";
+        //     2. per-vertex texture coordinates: in "v:texcoord";
+        //     3. scalar field;
+        //     4: uniform color.
+
+        // 1. per-vertex color: in "v:color"
+        auto colors = model->get_vertex_property<vec3>("v:color");
+        if (colors) {
+            drawable->set_property_coloring(State::VERTEX, "v:color");
+            return;
+        }
+
+        // 2. per-vertex texture coordinates: in "v:texcoord"
+        auto texcoord = model->get_vertex_property<vec2>("v:texcoord");
+        if (texcoord) {
+            drawable->set_texture_coloring(State::VERTEX, "v:texcoord");
+            return;
+        }
+
+        // 3. scalar field
+        const auto properties = model->vertex_properties();
+        for (const auto& name : properties) {
+            if (model->get_vertex_property<int>(name) || model->get_vertex_property<unsigned int>(name) ||
+                model->get_vertex_property<float>(name)) {
+                drawable->set_scalar_coloring(State::VERTEX, name);
+                return;
+            }
+        }
+
+        // 4: uniform color
+        drawable->set_uniform_coloring(setting::graph_vertices_color);
     }
 
 
@@ -288,6 +344,7 @@ namespace easy3d {
             if (d->name() == name)
                 return d;
         }
+        LOG(WARNING) << "the requested drawable '" << name << "' does not exist (or not created)";
         return nullptr;
     }
 
@@ -297,6 +354,7 @@ namespace easy3d {
             if (d->name() == name)
                 return d;
         }
+        LOG(WARNING) << "the requested drawable '" << name << "' does not exist (or not created)";
         return nullptr;
     }
 
@@ -306,6 +364,7 @@ namespace easy3d {
             if (d->name() == name)
                 return d;
         }
+        LOG(WARNING) << "the requested drawable '" << name << "' does not exist (or not created)";
         return nullptr;
     }
 

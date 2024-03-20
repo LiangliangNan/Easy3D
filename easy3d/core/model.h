@@ -91,9 +91,9 @@ namespace easy3d {
          */
         void set_renderer(Renderer* r) { renderer_ = r; }
         /** \brief Gets the renderer of this model. */
-        Renderer* renderer() { return renderer_; }
+        Renderer* renderer();
         /** \brief Gets the constant renderer of this model. */
-        const Renderer* renderer() const { return renderer_; }
+        const Renderer* renderer() const;
 
         /**
          * \brief Attaches a manipulator to this model.
