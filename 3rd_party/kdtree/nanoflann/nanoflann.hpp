@@ -887,8 +887,8 @@ class KDTreeBaseClass
      */
     std::vector<AccessorType> vAcc;
 
-    using Offset    = typename decltype(vAcc)::size_type;
-    using Size      = typename decltype(vAcc)::size_type;
+    using Offset    = typename std::vector<AccessorType>::size_type; 
+    using Size      = typename std::vector<AccessorType>::size_type;
     using Dimension = int32_t;
 
     /*--------------------- Internal Data Structures

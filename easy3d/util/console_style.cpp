@@ -28,6 +28,7 @@
 
 
 #include <vector>
+#include <string>
 #include <cstring>  // for strcmp
 #include <cstdlib>  // for std::getenv
 

@@ -180,9 +180,9 @@ namespace easy3d {
     // -----------------------
 
     template<typename FT>
-    void SplineInterpolation<FT>::set_boundary(SplineInterpolation<FT>::BoundaryType left, FT left_value,
-                                       SplineInterpolation<FT>::BoundaryType right, FT right_value,
-                                       bool linear_extrapolation) {
+	void SplineInterpolation<FT>::set_boundary(typename SplineInterpolation<FT>::BoundaryType left, FT left_value,
+		typename SplineInterpolation<FT>::BoundaryType right, FT right_value,
+		bool linear_extrapolation) {
         assert(x_.size() == 0);  // set_points() must not have happened yet
         left_ = left;
         right_ = right;
@@ -192,7 +192,7 @@ namespace easy3d {
     }
 
     template<typename FT>
-    void SplineInterpolation<FT>::set_data(const std::vector <FT> &x, const std::vector <FT> &y, bool cubic_spline) {
+    void SplineInterpolation<FT>::set_data(const std::vector<FT> &x, const std::vector<FT> &y, bool cubic_spline) {
         if (x.size() != y.size()) {
             LOG(ERROR) << "sizes of x (" << x.size() << ") and y (" << y.size() << ") do not match";
             return;
