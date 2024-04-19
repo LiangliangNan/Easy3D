@@ -227,6 +227,10 @@ namespace easy3d {
             const_cast<Drawable *>(this)->update_needed_ = false;
         }
 
+#ifndef NDEBUG
+        LOG_IF_FIRST_N(1, num_indices_ > 0 && num_vertices_ == 0, ERROR) << "element buffer provided but vertex buffer is empty";
+#endif
+
         vao_->bind();
 
         if (element_buffer_) {
