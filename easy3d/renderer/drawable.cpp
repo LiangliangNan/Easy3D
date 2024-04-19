@@ -228,7 +228,8 @@ namespace easy3d {
         }
 
 #ifndef NDEBUG
-        LOG_IF_FIRST_N(1, num_indices_ > 0 && num_vertices_ == 0, ERROR) << "element buffer provided but vertex buffer is empty";
+        LOG_IF_FIRST_N(1, num_indices_ > 0 && num_vertices_ == 0, ERROR)
+            << "element buffer provided but vertex buffer filled with 0 vertices";
 #endif
 
         vao_->bind();
