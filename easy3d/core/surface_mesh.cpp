@@ -1056,13 +1056,13 @@ namespace easy3d {
             do
             {
 #if 0
-                // I believe this function is not robust for some concave polygons.
+                // I believe this function is not robust for concave polygons.
                 if (distance2(p2, p1) < min<float>() || distance2(p0, p1) < min<float>() || distance2(p2, p0) < min<float>())
                     LOG(WARNING) << "degenarate case encountered";
                 else
                     n += cross(p2 - p1, p0 - p1);
 #else
-                // This seems to be a robust solution: 
+                // This is a robust solution:
                 //   - Choose any point C near the polygon(any vertex or mass center).
                 //   - Sum cross products(P[i] - C) x (P[i + 1] - C) for all i(including last and first points pair).
                 //   - Normalize the sum vector.
@@ -1095,72 +1095,13 @@ namespace easy3d {
         if (!vnormal_)
             vnormal_ = vertex_property<vec3>("v:normal");
 
-        VertexIterator vit, vend=vertices_end();
-
-#if 0   // not stable for concave vertices
-        for (vit=vertices_begin(); vit!=vend; ++vit)
-            vnormal_[*vit] = compute_vertex_normal(*vit);
-#else // the angle-weighted average of incident face average
-
-        auto angle_weighted_face_normals = [this](Vertex v) -> vec3 {
-            vec3     nn(0,0,0);
-            Halfedge  h = out_halfedge(v);
-
-            if (h.is_valid())
-            {
-                const Halfedge hend = h;
-                const vec3& p0 = position(v);
-
-                vec3   n, p1, p2;
-                float  cosine, angle, denom;
-
-                do
-                {
-                    if (!is_border(h))
-                    {
-                        p1 = vpoint_[target(h)];
-                        p1 -= p0;
-
-                        p2 = vpoint_[source(prev(h))];
-                        p2 -= p0;
-
-                        // check whether we can robustly compute angle
-                        denom = std::sqrt(dot(p1,p1)*dot(p2,p2));
-                        if (denom > std::numeric_limits<float>::min())
-                        {
-                            cosine = dot(p1,p2) / denom;
-                            if      (cosine < -1.0) cosine = -1.0;
-                            else if (cosine >  1.0) cosine =  1.0;
-                            angle = std::acos(cosine);
-
-                            n   = fnormal_[face(h)];
-
-                            // check whether normal is != 0
-                            denom = norm(n);
-                            if (denom > std::numeric_limits<float>::min())
-                            {
-                                n  *= angle/denom;
-                                nn += n;
-                            }
-                        }
-                    }
-
-                    h  = next_around_source(h);
-                }
-                while (h != hend);
-
-                nn.normalize();
-            }
-
-            return nn;
-        };
-
         // always re-compute face normals
+        // Note: this call is not needed if you compute the face normal on the fly using cross product of two
+        //       incident edges of a face (but this will not be stable for concave polygonal faces)
         update_face_normals();
 
-        for (vit=vertices_begin(); vit!=vend; ++vit)
-            vnormal_[*vit] = angle_weighted_face_normals(*vit);
-#endif
+        for (VertexIterator vit=vertices_begin(), vend = vertices_end(); vit!=vend; ++vit)
+            vnormal_[*vit] = compute_vertex_normal(*vit);
     }
 
 
@@ -1199,7 +1140,12 @@ namespace easy3d {
                         else if (cosine >  1.0) cosine =  1.0;
                         angle = std::acos(cosine);
 
-                        n   = cross(p1,p2);
+#if 0   // not robust for concave vertices
+                        n   = cross(p1, p2);
+#else   // using face normals previouly calculated by the robust function "compute_face_normal(Face f)"
+                        assert(fnormal_);
+                        n   = fnormal_[face(h)];
+#endif
 
                         // check whether normal is != 0
                         denom = norm(n);

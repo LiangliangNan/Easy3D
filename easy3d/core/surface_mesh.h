@@ -1939,14 +1939,13 @@ namespace easy3d {
         /// compute face normals by calling compute_face_normal(Face) for each face.
         void update_face_normals();
 
-        /// compute normal vector of face \c f.
+        /// compute normal vector of face \c f. This method is robust for concave and general polygonal faces.
         vec3 compute_face_normal(Face f) const;
 
         /// compute vertex normals by calling compute_vertex_normal(Vertex) for each vertex.
         void update_vertex_normals();
 
         /// compute normal vector of vertex \c v. This is the angle-weighted average of incident face normals.
-        /// TODO: not stable for concave vertices or vertices with spanning angles close to 0 or 180 degrees.
         vec3 compute_vertex_normal(Vertex v) const;
 
         /// compute the length of edge \c e.
