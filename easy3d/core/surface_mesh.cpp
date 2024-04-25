@@ -1095,10 +1095,11 @@ namespace easy3d {
         if (!vnormal_)
             vnormal_ = vertex_property<vec3>("v:normal");
 
-        // always re-compute face normals
-        // Note: this call is not needed if you compute the face normal on the fly using cross product of two
-        //       incident edges of a face (but this will not be stable for concave polygonal faces)
-        update_face_normals();
+        // compute face normals if needed.
+        // Note: this is not needed if you compute the face normal on the fly using cross product of two
+        //       incident edges of a face (but the "cross product" approach is not stable for concave polygons)
+        if (!fnormal_)
+            update_face_normals();
 
         for (VertexIterator vit=vertices_begin(), vend = vertices_end(); vit!=vend; ++vit)
             vnormal_[*vit] = compute_vertex_normal(*vit);

@@ -1946,6 +1946,7 @@ namespace easy3d {
         void update_vertex_normals();
 
         /// compute normal vector of vertex \c v. This is the angle-weighted average of incident face normals.
+        /// @note The per-face normals much have been computed.
         vec3 compute_vertex_normal(Vertex v) const;
 
         /// compute the length of edge \c e.
