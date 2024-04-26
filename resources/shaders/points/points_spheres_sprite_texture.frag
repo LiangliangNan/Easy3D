@@ -24,7 +24,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#version 430
+#version 150
 
 
 layout(std140) uniform Matrices {

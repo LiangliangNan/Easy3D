@@ -24,7 +24,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#version 150
+#version 330 core
 
 
 // It uses geometry shader for vertex generation.

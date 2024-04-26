@@ -24,7 +24,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#version 330 core   // for geometry shader to work
+#version 330 core
 
 
 uniform mat4 MANIP = mat4(1.0);

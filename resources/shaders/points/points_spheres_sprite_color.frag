@@ -27,7 +27,6 @@
 #version 150
 
 
-
 uniform mat4 PROJ;
 
 uniform bool	perspective;

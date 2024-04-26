@@ -24,7 +24,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#version 330   // for geometry shader to work
+#version 330 core
 
 
 in  vec3 vtx_position;  // point position
