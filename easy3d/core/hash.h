@@ -37,23 +37,7 @@ namespace easy3d
     // The hash function in Google Optimization Tools
     // https://github.com/google/or-tools/blob/stable/ortools/base/hash.h
 
-#if 0
-    /**
-     * The hash combine function copied from boost with the integer type std::size_t changed to uint64_t.
-     * I found an example that can fail this function (tested on macOS Catalina Version 10.15.4):
-     *      std::vector<float> a = {16, 0}; // hash: 240982999006
-     *      std::vector<float> b = {4, 12}; // hash: 240982999006
-     *      std::cout << "a: " << hash_range(a.begin(), a.end()) << std::endl;
-     *      std::cout << "b: " << hash_range(b.begin(), b.end()) << std::endl;
-     * That is why I need a function for 64-bit integers.
-     */
-    template<typename T>
-    inline void hash_combine(uint64_t &seed, T const& value) {
-        static std::hash<T> hasher;
-        seed ^= hasher(value) + 0x9e3779b9 + (seed<<6) + (seed>>2);
-    }
-
-#else
+#if 1
     /**
      * \brief std::size_t has 64 bits on most systems, but 32 bits on 32-bit Windows. To make the same code robustly
      * run on both 32-bit and 64-bit systems, Easy3D uses 64-bit integer for hash values.
@@ -68,6 +52,21 @@ namespace easy3d
         uint64_t b = (seed ^ a) * 0x9ddfea08eb382d69ULL;
         b ^= (b >> 47);
         seed = b * 0x9ddfea08eb382d69ULL;
+    }
+#else
+    /**
+     * This hash combine function was copied from boost with the integer type std::size_t changed to uint64_t.
+     * I found an example that can fail this function (tested on macOS Catalina Version 10.15.4):
+     *      std::vector<float> a = {16, 0}; // hash: 240982999006
+     *      std::vector<float> b = {4, 12}; // hash: 240982999006
+     *      std::cout << "a: " << hash(a.begin(), a.end()) << std::endl;
+     *      std::cout << "b: " << hash(b.begin(), b.end()) << std::endl;
+     * That is why I need a function for 64-bit integers.
+     */
+    template<typename T>
+    inline void hash_combine(uint64_t &seed, T const& value) {
+        static std::hash<T> hasher;
+        seed ^= hasher(value) + 0x9e3779b9 + (seed<<6) + (seed>>2);
     }
 #endif
 
