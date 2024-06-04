@@ -21,8 +21,7 @@ jobs:
       - if: ${{ matrix.platform == 'Ubuntu' }}
         name: Create Build Environment
         run: sudo apt-get update || true;
-             sudo apt-get install libgl1-mesa-dev mesa-common-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev qt5-default;
-             cmake -DEasy3D_ENABLE_QT=ON;
+             sudo apt-get install libgl1-mesa-dev mesa-common-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev;
       - name: Configure
         run: cmake -H"." -B"build/${{ matrix.build_type }}" -DEasy3D_BUILD_TESTS=ON;
       - name: "Build on ${{ matrix.platform }} - ${{ matrix.build_type }}"
