@@ -48,7 +48,6 @@
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
-#include <easy3d/renderer/framebuffer_object.h>
 #include <easy3d/renderer/opengl_util.h>
 #include <easy3d/renderer/opengl_error.h>
 #include <easy3d/renderer/text_renderer.h>
