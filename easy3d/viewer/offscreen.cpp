@@ -47,8 +47,8 @@ namespace easy3d {
     }
 
 
-    bool OffScreen::render(const std::string &image_file) const {
-        return snapshot(image_file);
+    bool OffScreen::render(const std::string &file_name, float scaling, int samples, int back_ground, bool expand) const {
+        return snapshot(file_name, scaling, samples, back_ground, expand);
     }
 
 

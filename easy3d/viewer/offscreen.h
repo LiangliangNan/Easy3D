@@ -42,6 +42,7 @@ namespace easy3d {
      *              LOG(ERROR) << "failed to load model";
      *              return EXIT_FAILURE;
      *          }
+     *          ... when necessary, access the camera and modify the view here.
      *          bool success = os.render("image.png");
      *      \endcode
      */
@@ -64,11 +65,22 @@ namespace easy3d {
         //@}
 
         /**
-         * @brief Render the current scene into an image file.
-         * @param image_file The file name of the image to which the scene will be saved.
+         * @brief  Render the current scene into an image file. Supported image format: png, jpg, bmp, and tga.
+         * @details This function renders the scene into a framebuffer and takes a snapshot of the framebuffer.
+         *      It allows the snapshot image to have a dimension different from the offscreen renderer, and it
+         *      has no limit on the image size (if memory allows).
+         * @param file_name The image file name.
+         * @param scaling The scaling factor that determines the size of the image (default to 1.0, same size as
+         *      the offscreen renderer), i.e.,
+         *      image_width = width() * scaling;
+         *      image_height = height() * scaling;
+         * @param samples The required number of samples for antialiased rendering (which can be different from
+         *      that of the default framebuffer). The default value is 4.
+         * @param back_ground Determines the background color. 0: current color; 1: white; 2: transparent.
+         * @param expand Expand the frustum to ensure the image aspect ratio.
          * @return true on success and false otherwise.
          */
-        bool render(const std::string& image_file) const;
+        bool render(const std::string& file_name, float scaling = 1.0f, int samples = 4, int back_ground = 1, bool expand = true) const;
 
 
         /// @name Other properties

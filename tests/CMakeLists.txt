@@ -18,6 +18,7 @@ add_executable(Tests
         visualization_viewer_imgui/viewer.h
         visualization_viewer_imgui/viewer.cpp
         visualization_multi_view/main.cpp
+        visualization_offscreen/offscreen.cpp
         visualization_camera_interpolation/main.cpp
         visualization_camera_interpolation/viewer.h
         visualization_camera_interpolation/viewer.cpp

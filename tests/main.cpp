@@ -46,6 +46,7 @@ int test_kdtree();
 int test_point_cloud_algorithms();
 int test_surface_mesh_algorithms();
 
+int offscreen();
 int test_viewer_imgui(int duration);
 int test_composite_view(int duration);
 int test_real_camera();
@@ -102,6 +103,8 @@ int main(int argc, char* argv[]) {
 
     result += test_point_cloud_algorithms();
     result += test_surface_mesh_algorithms();
+
+    result += offscreen();
 
     const int duration = 1500; // in millisecond
     result += test_viewer_imgui(duration);
