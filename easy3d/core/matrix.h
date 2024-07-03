@@ -296,7 +296,7 @@ namespace easy3d {
     /// Generate an unity/identity matrix (i.e., all elements on the diagonal have a value of 1).
     /// @note This function also allow to set the elements on the diagonal to have values other than 1.
     template<typename FT>
-    Matrix<FT> identity(int N, const FT v = FT(1));
+    Matrix<FT> identity(int N, const FT& v = FT(1));
 
     /// diagonal matrix
     template<typename FT>
