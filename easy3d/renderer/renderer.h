@@ -119,19 +119,19 @@ namespace easy3d {
          * Get the points drawable with a given name.
          * Return nullptr if the drawable does not exist.
          */
-        PointsDrawable *get_points_drawable(const std::string &name) const;
+        PointsDrawable *get_points_drawable(const std::string &name, bool warning_not_found = true) const;
 
         /**
          * Get the lines drawable with a given name.
          * Return nullptr if the drawable does not exist.
          */
-        LinesDrawable *get_lines_drawable(const std::string &name) const;
+        LinesDrawable *get_lines_drawable(const std::string &name, bool warning_not_found = true) const;
 
         /**
          * Get the triangles drawable with a given name.
          * Return nullptr if the drawable does not exist.
          */
-        TrianglesDrawable *get_triangles_drawable(const std::string &name) const;
+        TrianglesDrawable *get_triangles_drawable(const std::string &name, bool warning_not_found = true) const;
 
         /**
          * Create a new points drawable and add it to this renderer.

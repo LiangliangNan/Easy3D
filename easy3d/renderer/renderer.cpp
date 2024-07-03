@@ -339,32 +339,32 @@ namespace easy3d {
     }
 
 
-    PointsDrawable* Renderer::get_points_drawable(const std::string& name) const {
+    PointsDrawable* Renderer::get_points_drawable(const std::string& name, bool warning_not_found) const {
         for (auto d : points_drawables_) {
             if (d->name() == name)
                 return d;
         }
-        LOG(WARNING) << "the requested drawable '" << name << "' does not exist (or not created)";
+        LOG_IF(warning_not_found, WARNING) << "the requested drawable '" << name << "' does not exist (or not created)";
         return nullptr;
     }
 
 
-    LinesDrawable* Renderer::get_lines_drawable(const std::string& name) const {
+    LinesDrawable* Renderer::get_lines_drawable(const std::string& name, bool warning_not_found) const {
         for (auto d : lines_drawables_) {
             if (d->name() == name)
                 return d;
         }
-        LOG(WARNING) << "the requested drawable '" << name << "' does not exist (or not created)";
+        LOG_IF(warning_not_found, WARNING) << "the requested drawable '" << name << "' does not exist (or not created)";
         return nullptr;
     }
 
 
-    TrianglesDrawable* Renderer::get_triangles_drawable(const std::string &name) const {
+    TrianglesDrawable* Renderer::get_triangles_drawable(const std::string &name, bool warning_not_found) const {
         for (auto d : triangles_drawables_) {
             if (d->name() == name)
                 return d;
         }
-        LOG(WARNING) << "the requested drawable '" << name << "' does not exist (or not created)";
+        LOG_IF(warning_not_found, WARNING) << "the requested drawable '" << name << "' does not exist (or not created)";
         return nullptr;
     }
 
