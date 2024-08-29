@@ -81,7 +81,6 @@ void main(void)
 	vec2  coordi = vec2(0., 0.);
 	vec3  Ci;
 	float zi;
-	float dist;
 	float dz;
 	float Fi, Gi;
 
@@ -94,10 +93,9 @@ void main(void)
                         Ci = texture(s2_I, tcoordVC.st + coordi).rgb;
                         zi = texture(s2_D, tcoordVC.st + coordi).r;
 
-			dist = clamp(float(c*c + d*d) / float(hN*hN), 0., 1.);
-			dz = (z - zi)*(z - zi);
+			dz = (z - zi);
 
-			Fi = exp(-dist*dist / (2.* sigma*sigma));
+			Fi = exp(-float(c*c + d*d) / (2.f * sigma*sigma));
 			Gi = exp(-dz*dz / (2.* sigmaz*sigmaz));
 
 			RES += Ci * Fi * Gi;
