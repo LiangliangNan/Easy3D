@@ -96,9 +96,17 @@ namespace easy3d {
                 translate = true;
             }
 
-            float r = p0.have_rgb ? static_cast<float>(p0.get_R()) / USHRT_MAX : static_cast<float>(p0.intensity % 255) / 255.0f;
-            float g = p0.have_rgb ? static_cast<float>(p0.get_G()) / USHRT_MAX : static_cast<float>(p0.intensity % 255) / 255.0f;
-            float b = p0.have_rgb ? static_cast<float>(p0.get_B()) / USHRT_MAX : static_cast<float>(p0.intensity % 255) / 255.0f;
+            // In LAStools, each color channel (R, G, B) is stored using 16 bits in LAS 1.2 and LAS 1.4 formats.
+            // Thus, the range of RGB values is [0, 65535] (16-bit unsigned integer). However, in some visualizations,
+            // these values might be normalized to 8-bit, where the range would be [0, 255].
+            // This will be handled at a later stage.
+            float max_rgb = 0.0f;
+            float r = p0.have_rgb ? static_cast<float>(p0.get_R()) : static_cast<float>(p0.intensity % 255);
+            float g = p0.have_rgb ? static_cast<float>(p0.get_G()) : static_cast<float>(p0.intensity % 255);
+            float b = p0.have_rgb ? static_cast<float>(p0.get_B()) : static_cast<float>(p0.intensity % 255);
+            max_rgb = std::max(max_rgb, r);
+            max_rgb = std::max(max_rgb, g);
+            max_rgb = std::max(max_rgb, b);
 
             auto colors = cloud->add_vertex_property<vec3>("v:color");
             auto classification = cloud->add_vertex_property<int>("v:classification");
@@ -117,13 +125,18 @@ namespace easy3d {
                 double z = p.coordinates[2] - origin_z;
                 v = cloud->add_vertex(vec3(float(x), float(y), float(z)));
 
-                r = p.have_rgb ? static_cast<float>(p.get_R()) / USHRT_MAX : static_cast<float>(p.intensity % 255) / 255.0f;
-                g = p.have_rgb ? static_cast<float>(p.get_G()) / USHRT_MAX : static_cast<float>(p.intensity % 255) / 255.0f;
-                b = p.have_rgb ? static_cast<float>(p.get_B()) / USHRT_MAX : static_cast<float>(p.intensity % 255) / 255.0f;
+                r = p.have_rgb ? static_cast<float>(p.get_R()) : static_cast<float>(p.intensity % 255);
+                g = p.have_rgb ? static_cast<float>(p.get_G()) : static_cast<float>(p.intensity % 255);
+                b = p.have_rgb ? static_cast<float>(p.get_B()) : static_cast<float>(p.intensity % 255);
 
                 colors[v] = vec3(r, g, b);
                 classification[v] = p.classification;
             }
+
+            // now bring the colors into the right range
+            float range = (max_rgb < 256) ? 255.0f : USHRT_MAX;
+            for (const auto& v : cloud->vertices())
+                colors[v] = colors[v] / range;
 
             if (translate) {
                 auto trans = cloud->add_model_property<dvec3>("translation", dvec3(0, 0, 0));
