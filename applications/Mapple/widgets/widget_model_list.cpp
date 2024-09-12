@@ -775,7 +775,7 @@ void WidgetModelList::mergeModels(const std::vector<Model *> &models) {
 
     if (meshes.size() > 1) {
         SurfaceMesh *to = meshes[0];
-		auto index = to->add_face_property<int>("f:index", 0);
+		auto index = to->face_property<int>("f:index", 0);
         ProgressLogger logger(meshes.size() - 1, false, false);
         for (std::size_t i = 1; i < meshes.size(); ++i) {
             logger.notify(i);
@@ -800,7 +800,7 @@ void WidgetModelList::mergeModels(const std::vector<Model *> &models) {
 
     if (clouds.size() > 1) {
         PointCloud *to = clouds[0];
-		auto index = to->add_vertex_property<int>("v:index", 0);
+		auto index = to->vertex_property<int>("v:index", 0);
         ProgressLogger logger(clouds.size() - 1, false, false);
         for (int i = 1; i < clouds.size(); ++i) {
             logger.notify(i);
