@@ -18,31 +18,99 @@
 
 namespace easy3d {
 
+
+    namespace internal {
+        // copy vertex property from mesh to component
+        template<typename FT>
+        inline void copy_vertex_property(SurfaceMesh *mesh, SurfaceMesh *comp_mesh,
+                                         SurfaceMesh::VertexProperty<SurfaceMesh::Vertex> orig_vertex,
+                                         const std::string &prop_name) {
+            // test if the property already exists
+            auto prop = mesh->get_vertex_property<FT>(prop_name);
+            if (prop && !comp_mesh->get_vertex_property<FT>(prop_name)) {
+                auto new_prop = comp_mesh->add_vertex_property<FT>(prop_name);
+                for (auto v: comp_mesh->vertices())
+                    new_prop[v] = prop[orig_vertex[v]];
+            }
+        }
+
+        // copy face property from mesh to component
+        template<typename FT>
+        inline void copy_face_property(SurfaceMesh *mesh, SurfaceMesh *comp_mesh,
+                                       SurfaceMesh::FaceProperty<SurfaceMesh::Face> orig_face,
+                                       const std::string &prop_name) {
+            // test if the property already exists
+            auto prop = mesh->get_face_property<FT>(prop_name);
+            if (prop && !comp_mesh->get_face_property<FT>(prop_name)) {
+                auto new_prop = comp_mesh->add_face_property<FT>(prop_name);
+                for (auto f: comp_mesh->faces())
+                    new_prop[f] = prop[orig_face[f]];
+            }
+        }
+    }
+
+
     SurfaceMesh *SurfaceMeshComponent::to_mesh() const {
-        // ToDo: preserve the attributes per element
         const SurfaceMeshComponent *comp = this;
         SurfaceMesh *mesh = comp->mesh();
         auto result = new SurfaceMesh;
 
         auto points = mesh->get_vertex_property<vec3>("v:point");
         auto vertex_id = mesh->add_vertex_property<int>("SurfaceMeshComponent::construct_mesh:vertex_id");
+        auto orig_vertex = result->add_vertex_property<SurfaceMesh::Vertex>("SurfaceMeshComponent::construct_mesh:orig_vertex");
         int id = 0;
         for (auto v : comp->vertices()) {
-            result->add_vertex(points[v]);
+            auto vtx = result->add_vertex(points[v]);
+            orig_vertex[vtx] = v;
             vertex_id[v] = id;
             ++id;
         }
 
+        auto orig_face = result->add_face_property<SurfaceMesh::Face>("SurfaceMeshComponent::construct_mesh:orig_face");
         for (auto f : comp->faces()) {
             std::vector<SurfaceMesh::Vertex> vts;
             for (auto v : mesh->vertices(f)) {
                 int idx = vertex_id[v];
                 vts.emplace_back(SurfaceMesh::Vertex(idx));
             }
-            result->add_face(vts);
+            auto face = result->add_face(vts);
+            orig_face[face] = f;
         }
-
         mesh->remove_vertex_property(vertex_id);
+
+        // handle vertex attributes (only 'float' and 'vec3' are processed)
+        const auto& v_prop_names = mesh->vertex_properties();
+        for (const auto& prop_name : v_prop_names) {
+            // the existence of each property will be checked within each copy function
+            internal::copy_vertex_property<float>(mesh, result, orig_vertex, prop_name);
+            internal::copy_vertex_property<double>(mesh, result, orig_vertex, prop_name);
+            internal::copy_vertex_property<int>(mesh, result, orig_vertex, prop_name);
+            internal::copy_vertex_property<unsigned int>(mesh, result, orig_vertex, prop_name);
+            internal::copy_vertex_property<std::size_t>(mesh, result, orig_vertex, prop_name);
+            internal::copy_vertex_property<bool>(mesh, result, orig_vertex, prop_name);
+            internal::copy_vertex_property<char>(mesh, result, orig_vertex, prop_name);
+            internal::copy_vertex_property<unsigned char>(mesh, result, orig_vertex, prop_name);
+            internal::copy_vertex_property<vec2>(mesh, result, orig_vertex, prop_name);
+            internal::copy_vertex_property<vec3>(mesh, result, orig_vertex, prop_name);
+        }
+        result->remove_vertex_property(orig_vertex);
+
+        // note: handle face attributes (only 'float' and 'vec3' are processed)
+        const auto& f_prop_names = mesh->face_properties();
+        for (const auto& prop_name : f_prop_names) {
+            // the existence of each property will be checked within each copy function
+            internal::copy_face_property<float>(mesh, result, orig_face, prop_name);
+            internal::copy_face_property<double>(mesh, result, orig_face, prop_name);
+            internal::copy_face_property<int>(mesh, result, orig_face, prop_name);
+            internal::copy_face_property<unsigned int>(mesh, result, orig_face, prop_name);
+            internal::copy_face_property<std::size_t>(mesh, result, orig_face, prop_name);
+            internal::copy_face_property<bool>(mesh, result, orig_face, prop_name);
+            internal::copy_face_property<char>(mesh, result, orig_face, prop_name);
+            internal::copy_face_property<unsigned char>(mesh, result, orig_face, prop_name);
+            internal::copy_face_property<vec2>(mesh, result, orig_face, prop_name);
+            internal::copy_face_property<vec3>(mesh, result, orig_face, prop_name);
+        }
+        result->remove_face_property(orig_face);
 
         return result;
     }
