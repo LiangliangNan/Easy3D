@@ -48,6 +48,7 @@ int main(int argc, char** argv) {
         "  ------------------------------------\n"
         "  s: snapshot\n"
         "  ------------------------------------\n"
+        "  f: fit model to screen\n"
         "  l: toggle lighting\n"
         "  d: toggle dividign lines\n"
         "--------------------------------------\n"
