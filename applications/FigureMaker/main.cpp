@@ -43,9 +43,14 @@ int main(int argc, char** argv) {
     // usage
     viewer.set_usage(
         "Usage:\n"
-		"\tCtrl + o: add model(s) to the viewer\n"
-		"\tCtrl + l: toggle lighting\n"
-        "\tCtrl + d: toggle dividign lines"
+        "--------------------------------------\n"
+        "  Ctrl + o: add model(s) to the viewer\n"
+        "  ------------------------------------\n"
+        "  s: snapshot\n"
+        "  ------------------------------------\n"
+        "  l: toggle lighting\n"
+        "  d: toggle dividign lines\n"
+        "--------------------------------------\n"
     );
 
     // run the viewer

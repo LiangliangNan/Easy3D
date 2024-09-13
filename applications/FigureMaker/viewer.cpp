@@ -56,9 +56,9 @@ namespace easy3d {
     }
 
     bool FigureMaker::key_press_event(int key, int modifiers) {
-        if (key == KEY_D && modifiers == MODIF_CTRL)
+        if (key == KEY_D)
             set_division_visible(!division_visible_);
-        else if (key == KEY_L && modifiers == MODIF_CTRL) {
+        else if (key == KEY_L) {
             for (const auto model : models_) {
                 const auto& tri_drawables = model->renderer()->triangles_drawables();
                 for (auto d : tri_drawables)    d->set_lighting(!d->lighting());
