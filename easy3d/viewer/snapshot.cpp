@@ -42,7 +42,7 @@ namespace easy3d {
 
 	bool Viewer::snapshot(const std::string& file_name, bool bk_white) const {
 		int w, h;
-		glfwGetFramebufferSize(window_, &w, &h);
+		framebuffer_size(w, h);
 
 		FramebufferObject fbo(w, h, samples_);
 		fbo.add_color_buffer();

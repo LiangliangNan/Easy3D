@@ -91,6 +91,31 @@ namespace easy3d {
          */
         vec3 point_under_pixel(int x, int y, bool &found) const override;
 
+        /**
+         * @brief Return the number of rows (of the grid-like layout) of the viewer.
+         */
+        int rows() const { return num_rows_; }
+
+        /**
+         * @brief Return the number of columns (of the grid-like layout) of the viewer.
+         */
+        int columns() const { return num_cols_; }
+
+        /**
+         * @brief Set/Change the layout of the viewer.
+         * @param rows The number of rows (of the grid-like layout).
+         * @param col The number of columns (of the grid-like layout).
+         */
+        void set_layout(int rows, int cols);
+
+        /**
+         * @brief Take a snapshot of the screen and save it to a file.
+         * @details This method takes a snapshot of the screen and saves the snapshot into an image file.
+         *          Internally, it will pop up a file dialog for specifying the file name.
+         * @return true on success and false otherwise.
+         */
+        bool snapshot() const override;
+
     protected:
         void init() override;
         void post_resize(int w, int h) override;
@@ -103,10 +128,13 @@ namespace easy3d {
         // overloaded, so mouse positions are relative to the current view
         bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;
 
+        // Keyboard event handler. Note: This function does not reveal the actual character.
+        bool key_press_event(int key, int modifiers) override;
+
         void draw_division() const;
         void update_division();
 
-    private:
+    protected:
         int num_rows_;
         int num_cols_;
         // A sub-view of the multi-view viewer.

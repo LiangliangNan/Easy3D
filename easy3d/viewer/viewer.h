@@ -331,7 +331,7 @@ namespace easy3d {
          *          Internally, it will pop up a file dialog for specifying the file name.
          * @return true on success and false otherwise.
          */
-	    bool snapshot() const;
+	    virtual bool snapshot() const;
 
         /**
          * @brief  Take a snapshot of the screen and save it to an image file. Supported image format: png, jpg, bmp, and tga.

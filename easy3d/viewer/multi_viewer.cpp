@@ -37,6 +37,9 @@
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
+#include <easy3d/renderer/framebuffer_object.h>
+#include <easy3d/util/file_system.h>
+#include <easy3d/util/dialog.h>
 
 
 namespace easy3d {
@@ -44,21 +47,12 @@ namespace easy3d {
 
     MultiViewer::MultiViewer(int rows, int cols, const std::string &title)
             : Viewer(title)
-            , num_rows_(rows)
-            , num_cols_(cols)
             , division_vao_(nullptr)
             , lines_program_(nullptr)
             , division_vertex_buffer_(0)
             , division_visible_(true)
     {
-        // the views are created in the constructor to ensure they are accessible immediately
-        views_.resize(num_rows_);
-        for (auto &row: views_)
-            row.resize(num_cols_);
-
-        // initialized to window size
-        view_width_ = static_cast<int>(static_cast<float>(width()) / static_cast<float>(num_cols_));
-        view_height_ = static_cast<int>(static_cast<float>(height()) / static_cast<float>(num_rows_));
+        set_layout(rows, cols);
     }
 
 
@@ -68,6 +62,67 @@ namespace easy3d {
 
         // Not needed: it will be called in the destructor of the base class
         // Viewer::cleanup();
+    }
+
+
+    void MultiViewer::set_layout(int rows, int cols) {
+        num_rows_ = rows;
+        num_cols_ = cols;
+
+        // the views are created in the constructor to ensure they are accessible immediately
+        views_.resize(num_rows_);
+        for (auto &row: views_)
+            row.resize(num_cols_);
+
+        update_division();
+    }
+
+
+    bool MultiViewer::snapshot() const {
+        const std::string& title = "Please choose a file name";
+        std::string default_file_name("untitled.png");
+        if (current_model())
+            default_file_name = file_system::replace_extension(current_model()->name(), "png");
+        const std::vector<std::string>& filters = {
+                "Image Files (*.png *.jpg *.bmp *.tga)", "*.png *.jpg *.bmp *.tga",
+                "All Files (*.*)", "*"
+        };
+
+        const bool warn_overwrite = true;
+        const std::string& file_name = dialog::save(title, default_file_name, filters, warn_overwrite);
+        if (file_name.empty())
+            return false;
+
+        const std::string& ext = file_system::extension(file_name, true);
+        if (ext != "png" && ext != "jpg" && ext != "bmp" && ext != "tga") {
+            LOG(ERROR) << "snapshot format must be png, jpg, bmp, or tga";
+            return false;
+        }
+
+        // the following code could be made int a dedicated function
+        {
+            int w, h;
+            framebuffer_size(w, h);
+
+            FramebufferObject fbo(w, h, samples_);
+            fbo.add_color_buffer();
+            fbo.add_depth_buffer();
+
+            fbo.bind();
+
+            if (true) // white background
+                glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+            else
+                glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+            const_cast<MultiViewer*>(this)->draw();
+
+            fbo.release();
+
+            // color render buffer
+            return fbo.snapshot_color(0, file_name);
+        }
     }
 
 
@@ -109,7 +164,7 @@ namespace easy3d {
         // compute the division
         update_division();
 
-        // create the shader program for visualizing the division lines
+        // create the shader program for visualizing the dividing lines
         const std::string name = "screen_space/screen_space_color";
         lines_program_ = ShaderManager::get_program(name);
         if (!lines_program_) {
@@ -304,6 +359,27 @@ namespace easy3d {
         x %= view_width_;
         y %= view_height_;
         return Viewer::mouse_drag_event(x, y, dx, dy, button, modifiers);
+    }
+
+
+    bool MultiViewer::key_press_event(int key, int modifiers) {
+        if (key == KEY_D && modifiers == MODIF_CTRL)
+            set_division_visible(!division_visible_);
+        else if (key == KEY_L && modifiers == MODIF_CTRL) {
+            for (const auto model : models_) {
+                const auto& tri_drawables = model->renderer()->triangles_drawables();
+                for (auto d : tri_drawables)    d->set_lighting(!d->lighting());
+                const auto& pts_drawables = model->renderer()->points_drawables();
+                for (auto d : pts_drawables)    d->set_lighting(!d->lighting());
+                const auto& lin_drawables = model->renderer()->lines_drawables();
+                for (auto d : lin_drawables)    d->set_lighting(!d->lighting());
+            }
+        }
+        else
+            return Viewer::key_press_event(key, modifiers);
+
+        update();
+        return false;
     }
 
 }
