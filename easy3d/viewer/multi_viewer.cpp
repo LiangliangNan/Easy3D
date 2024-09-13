@@ -361,25 +361,4 @@ namespace easy3d {
         return Viewer::mouse_drag_event(x, y, dx, dy, button, modifiers);
     }
 
-
-    bool MultiViewer::key_press_event(int key, int modifiers) {
-        if (key == KEY_D && modifiers == MODIF_CTRL)
-            set_division_visible(!division_visible_);
-        else if (key == KEY_L && modifiers == MODIF_CTRL) {
-            for (const auto model : models_) {
-                const auto& tri_drawables = model->renderer()->triangles_drawables();
-                for (auto d : tri_drawables)    d->set_lighting(!d->lighting());
-                const auto& pts_drawables = model->renderer()->points_drawables();
-                for (auto d : pts_drawables)    d->set_lighting(!d->lighting());
-                const auto& lin_drawables = model->renderer()->lines_drawables();
-                for (auto d : lin_drawables)    d->set_lighting(!d->lighting());
-            }
-        }
-        else
-            return Viewer::key_press_event(key, modifiers);
-
-        update();
-        return false;
-    }
-
 }

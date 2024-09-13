@@ -128,9 +128,6 @@ namespace easy3d {
         // overloaded, so mouse positions are relative to the current view
         bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;
 
-        // Keyboard event handler. Note: This function does not reveal the actual character.
-        bool key_press_event(int key, int modifiers) override;
-
         void draw_division() const;
         void update_division();
 
