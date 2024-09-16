@@ -104,6 +104,9 @@ namespace easy3d {
             int w, h;
             framebuffer_size(w, h);
 
+            // Note: it also possible to use a scaled framebuffer size (to render a larger image).
+            //       This requires setting scaled viewport size (by calling glViewport() for each 
+            //       view in MultiViewer::draw().
             FramebufferObject fbo(w, h, samples_);
             fbo.add_color_buffer();
             fbo.add_depth_buffer();
@@ -117,7 +120,7 @@ namespace easy3d {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
             const_cast<MultiViewer*>(this)->draw();
-
+            
             fbo.release();
 
             // color render buffer

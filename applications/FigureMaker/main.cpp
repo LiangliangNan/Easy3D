@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
     // initialize Easy3D.
     initialize(true, true);
 
-    // create a 1 by 1 MultiViewer by default
+    // create a 1 by 1 layout by default
     FigureMaker viewer(1, 1, APP_TITLE);
 
     // usage
@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
         "  ------------------------------------\n"
         "  f: fit model to screen\n"
         "  l: toggle lighting\n"
-        "  d: toggle dividign lines\n"
+        "  d: toggle dividing lines\n"
         "--------------------------------------\n"
     );
 
