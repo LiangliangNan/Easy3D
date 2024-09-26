@@ -38,6 +38,7 @@
 
 #include <QStyleFactory>
 #include <QSurfaceFormat>
+#include <QGLFormat>
 #include <QElapsedTimer>
 #include <QException>
 
@@ -111,6 +112,7 @@ int main(int argc, char *argv[]) {
     format.setProfile(QSurfaceFormat::CoreProfile);
     format.setDepthBufferSize(24);
     format.setStencilBufferSize(8);
+    format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
     format.setSamples(4);
 #ifndef NDEBUG
     format.setOption(QSurfaceFormat::DebugContext);
@@ -122,26 +124,19 @@ int main(int argc, char *argv[]) {
 
     QApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
     QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
+#if (defined(Q_OS_WIN) && QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-#endif
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 7, 0))
-    //QApplication::setAttribute(Qt::AA_DontUseNativeDialogs);
-#endif
-
-#ifdef __APPLE__
-    //QApplication::setAttribute(Qt::AA_DontUseNativeMenuBar);
 #endif
 
     Mapple app(argc, argv);
 
-#ifndef __APPLE__
-    // to have similar style on different platforms (macOS.
+#ifndef Q_OS_MAC
+    // to have similar style on different platforms (macOS)
     app.setStyle(QStyleFactory::create("Fusion"));
 #endif
 
     QDir workingDir = QCoreApplication::applicationDirPath();
-#ifdef __APPLE__
+#ifdef Q_OS_MAC
     // This makes sure that our "working directory" is not within the application bundle
     if (workingDir.dirName() == "MacOS") {
         workingDir.cdUp();
@@ -168,6 +163,15 @@ int main(int argc, char *argv[]) {
         QApplication::processEvents(); //to let the system breath!
     }
 #endif
+
+    if (!QGLFormat::hasOpenGL()) {
+        LOG(ERROR) << "Mapple needs OpenGL to run";
+        return EXIT_FAILURE;
+    }
+    if ((QGLFormat::openGLVersionFlags() & QGLFormat::OpenGL_Version_3_2) == 0) {
+        LOG(ERROR) << "Mapple needs OpenGL 3.2 at least to run";
+        return EXIT_FAILURE;
+    }
 
     try {
         MainWindow win;

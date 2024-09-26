@@ -867,7 +867,7 @@ void MainWindow::onAbout()
     title += QMessageBox::tr("<h3>Mapple (%1 bit)</h3>").arg(bits);
 #endif
 
-    title += QMessageBox::tr("<h4>based on Easy3D v%1 (%2) and Qt v%3</h4>").arg(EASY3D_VERSION_STR).arg(EASY3D_RELEASE_DATE).arg(QT_VERSION_STR);
+    title += QMessageBox::tr("<h4>based on Easy3D v%1 (%2) and Qt v%3</h4>").arg(EASY3D_VERSION_STR).arg(EASY3D_RELEASE_DATE).arg(QT_VERSION_STR); // __DATE__
 
     QString text = QMessageBox::tr(
             "<p>Mapple is software for processing and rendering 3D data (e.g., point clouds, graphs, surface meshes, "
