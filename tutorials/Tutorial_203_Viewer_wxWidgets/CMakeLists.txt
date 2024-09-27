@@ -21,10 +21,9 @@ else ()
     message(STATUS "wxWidgets include directory: ${wxWidgets_INCLUDE_DIRS}")
     message(STATUS "wxWidgets libraries: ${wxWidgets_LIBRARIES}")
     if (wxWidgets_VERSION_STRING VERSION_LESS "3.1.0")
-        message(FATAL_ERROR
+        message(WARNING
                 "Found wxWidgets v${wxWidgets_VERSION_STRING}. However, the minimum version of wxWidgets required is "
-                "v3.1.0. Please install wxWidgets v3.1.0 or above. If you don't need wxWidgets, disable wxWidgets and "
-                "you will still be able to use all other features provided by Easy3D.")
+                "v3.1.0, and thus ${PROJECT_NAME} will be disabled. To enable it, please install wxWidgets v3.1.0 or above.")
         return()
     endif ()
 endif ()
