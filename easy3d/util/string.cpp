@@ -15,6 +15,7 @@
 #include <iomanip>
 #include <cmath>
 #include <codecvt>
+#include <ctime>
 #include <chrono>
 
 
@@ -199,10 +200,14 @@ namespace easy3d {
 
         // format: "Fri Jan 09 11:39:32 2015"
         std::string current_time() {
-            time_t now = ::time(nullptr); /* get current time; same as: time(&now)  */
-            struct tm *timeinfo = localtime(&now);
-            std::string tstr = asctime(timeinfo);
-            return tstr.substr(0, tstr.length() - 1); // discard the terminating null-character
+            // Get the current time as a time_t object
+            std::time_t now = std::time(nullptr);
+            // Convert the time_t to a tm structure
+            std::tm* localTime = std::localtime(&now);
+            // Use a stringstream to format the time
+            std::stringstream ss;
+            ss << std::put_time(localTime, "%a %b %d %H:%M:%S %Y");
+            return ss.str();
         }
 
         // format: "2024-10-24-17-41-16-753"
@@ -210,11 +215,12 @@ namespace easy3d {
             const auto now = std::chrono::system_clock::now();
             const auto now_as_time_t = std::chrono::system_clock::to_time_t(now);
             const auto now_in_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
-            std::stringstream time_stream;
-            time_stream << std::put_time(std::localtime(&now_as_time_t), "%Y-%m-%d-%H-%M-%S") // format like "2024-10-24-17-41-16-753"
-                        << '-' << std::setfill('0') << std::setw(3)
-                        << now_in_ms.count(); // add milliseconds
-            return time_stream.str();
+            // Use a stringstream to format the time
+            std::stringstream ss;
+            ss << std::put_time(std::localtime(&now_as_time_t), "%Y-%m-%d-%H-%M-%S") // format like "2024-10-24-17-41-16-753"
+               << '-' << std::setfill('0') << std::setw(3)
+               << now_in_ms.count(); // add milliseconds
+            return ss.str();
         }
 
 
