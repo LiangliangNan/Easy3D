@@ -15,6 +15,7 @@
 #include <iomanip>
 #include <cmath>
 #include <codecvt>
+#include <chrono>
 
 
 namespace easy3d {
@@ -197,26 +198,23 @@ namespace easy3d {
         }
 
 
-        // format example: "Fri Jan 09 11:39:32 2015"
-        std::string date_time() {
+        std::string current_time() {
+#if 0
+            // The following code will result in the format: "Fri Jan 09 11:39:32 2015"
             time_t now = ::time(nullptr); /* get current time; same as: time(&now)  */
             struct tm *timeinfo = localtime(&now);
             std::string tstr = asctime(timeinfo);
-
-            //return tstr;
             return tstr.substr(0, tstr.length() - 1); // discard the terminating null-character
-
-            // use strftime() to define your own stamp format
-            //size_t strftime(char *strDest, size_t maxsize, const char *format, const struct tm *timeptr);
-
-            // get a precise timestamp as a string
-//            const auto now = std::chrono::system_clock::now();
-//            const auto now_as_time_t = std::chrono::system_clock::to_time_t(now);
-//            const auto now_in_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
-//            std::stringstream time_stream;
-//            time_stream << std::put_time(std::localtime(&now_as_time_t), "%Y%m%d %T")
-//                        << '.' << std::setfill('0') << std::setw(3) << now_in_ms.count();
-//            time_str_ = time_stream.str();
+#endif
+            // get a precise timestamp as a string in the format: "2024-10-24-17-41-16-753"
+            const auto now = std::chrono::system_clock::now();
+            const auto now_as_time_t = std::chrono::system_clock::to_time_t(now);
+            const auto now_in_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+            std::stringstream time_stream;
+            time_stream << std::put_time(std::localtime(&now_as_time_t), "%Y-%m-%d-%H-%M-%S") // format like "2024-10-24-17-41-16-753"
+                        << '-' << std::setfill('0') << std::setw(3)
+                        << now_in_ms.count(); // add milliseconds
+            return time_stream.str();
         }
 
 
