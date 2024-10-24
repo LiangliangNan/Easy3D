@@ -197,16 +197,16 @@ namespace easy3d {
             va_end(ap);
         }
 
-
+        // format: "Fri Jan 09 11:39:32 2015"
         std::string current_time() {
-#if 0
-            // The following code will result in the format: "Fri Jan 09 11:39:32 2015"
             time_t now = ::time(nullptr); /* get current time; same as: time(&now)  */
             struct tm *timeinfo = localtime(&now);
             std::string tstr = asctime(timeinfo);
             return tstr.substr(0, tstr.length() - 1); // discard the terminating null-character
-#endif
-            // get a precise timestamp as a string in the format: "2024-10-24-17-41-16-753"
+        }
+
+        // format: "2024-10-24-17-41-16-753"
+        std::string current_time_detailed() {
             const auto now = std::chrono::system_clock::now();
             const auto now_as_time_t = std::chrono::system_clock::to_time_t(now);
             const auto now_in_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
