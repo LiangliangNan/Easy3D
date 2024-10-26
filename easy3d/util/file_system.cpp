@@ -274,6 +274,7 @@ namespace easy3d {
         void get_directory_entries(const std::string& dir, std::vector<std::string>& contents) {
             if (!is_directory(dir)) {
                 LOG(WARNING) << "directory does not exist: " << dir;
+                return;
             }
 
     #if defined(WIN32) && !defined(__CYGWIN__)
