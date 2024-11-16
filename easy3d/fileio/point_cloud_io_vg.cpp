@@ -41,39 +41,42 @@ x  y  z
 ...
 
 num_colors: num		// can be 0; if not, it must equal to num_points
-r g b
+r g b               // all values are floating point numbers in range [0,1]
 ...
 
 num_normals: num	// can be 0; if not, it must equal to num_points
-nx  ny  nz
+nx  ny  nz          // all values are floating point numbers in range [0,1]
 
 num_groups: num		// can be 0
 
-group_type: type (integer: 	PLANE = 0, CYLINDER = 1, SPHERE = 2, CONE = 3, TORUS = 4, GENERAL = 5)
-num_group_parameters: NUM_GROUP_PARAMETERS   // number of floating point values (integer)
+group_type: type    // integer: PLANE = 0, CYLINDER = 1, SPHERE = 2, CONE = 3, TORUS = 4, GENERAL = 5
+num_group_parameters: NUM_GROUP_PARAMETERS      // integer: the number of parameters for this group type.
+group_parameters: float[NUM_GROUP_PARAMETERS]   // NUM_GROUP_PARAMETERS values in range [0,1]. Parameters of this group.
+group_label: label                              // string: the label of this group.
+group_color: color (r, g, b)                    // vec3: three values in range [0,1]. The color of this group.
+group_num_points: num	                        // integer: can be 0. The number of points in this group.
+idx ...                                         // integers: indices of the points in this group. Total number is group_num_points.
+
+num_children: num   // can be 0
+
+group_type: type
+num_group_parameters: NUM_GROUP_PARAMETERS
 group_parameters: float[NUM_GROUP_PARAMETERS]
-group_label: label  // the first group info
+group_label: label
 group_color: color (r, g, b)
-group_num_points: num	// can be 0
+group_num_points: num
 idx ...
 
-num_children: num		// can be 0
-
-group_type: type (integer: 	PLANE = 0, CYLINDER = 1, SPHERE = 2, CONE = 3, TORUS = 4, GENERAL = 5)
-num_group_parameters: NUM_GROUP_PARAMETERS   // number of floating point values (integer)
+group_type: type
+num_group_parameters: NUM_GROUP_PARAMETERS
 group_parameters: float[NUM_GROUP_PARAMETERS]
-group_label: label  // 0th child of group 0
+group_label: label
 group_color: color (r, g, b)
 group_num_points: num
 idx ...
 
-group_type: type (integer: 	PLANE = 0, CYLINDER = 1, SPHERE = 2, CONE = 3, TORUS = 4, GENERAL = 5)
-num_group_parameters: NUM_GROUP_PARAMETERS   // number of floating point values (integer)
-group_parameters: float[NUM_GROUP_PARAMETERS]
-group_label: label  // 1st child of group 0
-group_color: color (r, g, b)
-group_num_points: num
-idx ...
+...
+
 */
 
 
@@ -141,13 +144,13 @@ namespace easy3d {
         }
 
         /*
-        group_type: type (integer: 	PLANE = 0, CYLINDER = 1, SPHERE = 2, CONE = 3, TORUS = 4, GENERAL = 5)
-        num_group_parameters: NUM_GROUP_PARAMETERS   // number of floating point values (integer)
-        group_parameters: float[NUM_GROUP_PARAMETERS]
-        group_label: label  // the first group info
-        group_color: color (r, g, b)
-        group_num_points: num
-        idx ...
+        group_type: type    // integer: PLANE = 0, CYLINDER = 1, SPHERE = 2, CONE = 3, TORUS = 4, GENERAL = 5
+        num_group_parameters: NUM_GROUP_PARAMETERS      // integer: the number of parameters for this group type.
+        group_parameters: float[NUM_GROUP_PARAMETERS]   // NUM_GROUP_PARAMETERS values in range [0,1]. Parameters of this group.
+        group_label: label                              // string: the label of this group.
+        group_color: color (r, g, b)                    // vec3: three values in range [0,1]. The color of this group.
+        group_num_points: num	                        // integer: can be 0. The number of points in this group.
+        idx ...                                         // integers: indices of the points in this group. Total number is group_num_points.
         */
         void PointCloudIO_vg::write_ascii_group(std::ostream& output, const VertexGroup& g) {
             int type = g.primitive_type_;
@@ -260,6 +263,9 @@ namespace easy3d {
                         LOG(ERROR) << "failed reading the color of the " << i << "_th point";
                         return false;
                     }
+                    // in case the color values are in [0, 255], converting to [0, 1]
+                    if (colors[i].x > 1.0f || colors[i].y > 1.0f || colors[i].z > 1.0f)
+                        colors[i] /= 255.0f;
                 }
             }
 
@@ -358,6 +364,9 @@ namespace easy3d {
 
             vec3 color;
             input >> dummy >> color;
+            // in case the color values are in [0, 255], converting to [0, 1]
+            if (color.x > 1.0f || color.y > 1.0f || color.z > 1.0f)
+                color /= 255.0f;
 
             std::size_t num_points;
             input >> dummy >> num_points;
