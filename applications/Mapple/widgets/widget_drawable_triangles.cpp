@@ -549,14 +549,16 @@ void WidgetTrianglesDrawable::setBackColor() {
 void WidgetTrianglesDrawable::setVectorField(const QString &text) {
     auto mesh = viewer_->currentModel();
 
-    if (text == "disabled") {
-        const auto &drawables = mesh->renderer()->lines_drawables();
-        for (auto d : drawables) {
-            if (d->name().find("vector - f") != std::string::npos)
-                d->set_visible(false);
-        }
+    // hide all
+    const auto &drawables = mesh->renderer()->lines_drawables();
+    for (auto d : drawables) {
+        if (d->name().find("vector - f") != std::string::npos)
+            d->set_visible(false);
+    }
+
+    if (text == "disabled")
         states_[drawable()].vector_field = "disabled";
-    } else {
+    else {
         const std::string &name = text.toStdString();
         updateVectorFieldBuffer(mesh, name);
 
