@@ -387,14 +387,18 @@ namespace easy3d {
     const std::vector<Frame>& KeyFrameInterpolator::interpolate() {
         if (pathIsValid_ || keyframes_.empty()) // already fitted or no keyframe
             return interpolated_path_;
-        else if (keyframes_.size() == 1) {   // only one keyframe
+
+        interpolated_path_.clear();
+        if (keyframes_.size() == 1) {   // only one keyframe
+            LOG(INFO) << "only 1 keyframe: interpolation not possible";
             interpolated_path_.emplace_back(Frame(keyframes_[0].position(), keyframes_[0].orientation()));
             return interpolated_path_;
         }
-        else if (keyframes_.size() == 2) {   // only two keyframe: linear interpolation
-            interpolated_path_.clear();
-            const float interval = interpolation_speed() * static_cast<float>(interpolation_period()) / 1000.0f;
-            const int num_frames = static_cast<int>(duration() / interval + 1);
+
+        const float interval = interpolation_speed() * static_cast<float>(interpolation_period()) / 1000.0f;
+        const int num_frames = static_cast<int>(duration() / interval + 1);
+        if (keyframes_.size() == 2) {   // only two keyframe: linear interpolation
+            LOG(INFO) << "only two keyframe: linear interpolation";
             for (int i=0; i<num_frames; ++i) {
                 const float w = static_cast<float>(i) / static_cast<float>(num_frames - 1);
                 const vec3 pos = (1.0f - w) * keyframes_[0].position() + w * keyframes_[1].position();
@@ -412,12 +416,7 @@ namespace easy3d {
             prevQ = frame.orientation();
         }
 
-        LOG_IF(keyframes_.size() > 2, INFO) << "interpolating " << keyframes_.size() << " keyframes...";
-
-        interpolated_path_.clear();
-        const float interval = interpolation_speed() * static_cast<float>(interpolation_period()) / 1000.0f;
-        const int num_frames = static_cast<int>(duration() / interval + 1);
-
+        LOG_IF(keyframes_.size() > 1, INFO) << "interpolating " << keyframes_.size() << " keyframes...";
         if (interpolation_method_ == INTERPOLATION) {
             // we choose the accumulated path length as parameter, so to have equal intervals.
             std::vector<float> parameters(keyframes_.size());
