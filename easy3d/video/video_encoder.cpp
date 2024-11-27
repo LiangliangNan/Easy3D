@@ -289,7 +289,7 @@ namespace internal {
         LOG(INFO) << "video framerate: " << framerate_;
         LOG(INFO) << "video bitrate: " << bitrate_ / (1024 * 1024) << " Mbit/s";
 
-#ifndef _NDEBUG
+#ifndef NDEBUG
         av_log_set_level(AV_LOG_DEBUG);  // Enable debug logging
 #endif
 
