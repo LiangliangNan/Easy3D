@@ -124,7 +124,7 @@ namespace internal {
 				/* Needed to avoid using macroblocks in which some coeffs overflow.
 				 * This does not happen with normal video, it just happens here as
 				 * the motion of the chroma plane does not match the luma plane. */
-				c->mb_decision = 2;
+				c->mb_decision = FF_MB_DECISION_RD; // rate-distortion optimization for best quality
 			}
 			break;
 
@@ -288,6 +288,10 @@ namespace internal {
         LOG(INFO) << "output file name: " << filename_;
         LOG(INFO) << "video framerate: " << framerate_;
         LOG(INFO) << "video bitrate: " << bitrate_ / (1024 * 1024) << " Mbit/s";
+
+#ifndef _NDEBUG
+        av_log_set_level(AV_LOG_DEBUG);  // Enable debug logging
+#endif
 
 #if (LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 9, 100))
         // av_register_all() was deprecated since 2018-02-06 - 0694d87024 - lavf 58.9.100 (ffmpeg 4.0) - avformat.h
