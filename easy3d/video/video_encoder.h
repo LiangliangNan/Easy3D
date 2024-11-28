@@ -43,14 +43,14 @@ namespace easy3d {
      *    of usage:
      *      \code
      *          VideoEncoder encoder;
-     *          encoder.start(output_file, 30, 10 * 1024 * 1024);  // 30 fps, 10 Mbit/s
+     *          encoder.begin(output_file, 472, 520, 30, 8 * 1024 * 1024); // fps: 30. bitrats: 8 Mbits/sec.
      *          for (std::size_t i = 0; i < image_files.size(); ++i) {
      *              std::vector<unsigned char> data;
      *              int w, h, c;
      *              if (ImageIO::load(file_name, data, w, h, c, 0, false))
      *                  encoder.encode(data.data(), w, h, VideoEncoder::PIX_FMT_RGBA_8888);
      *          }
-     *          encoder.end();
+     *          encoder.finish();
      *      \endcode
      * @class VideoEncoder easy3d/video/video_encoder.h
      */
@@ -72,7 +72,14 @@ namespace easy3d {
 
 		/**
 		 * \param file_name The name of the output video file, e.g., "C:/result.mp4".
-		 *		  The output format is automatically guessed according to the file extension.
+		 *      The output format is automatically guessed according to the file extension, which can be:
+         *          - mp4: MPEG-4 Part 14;
+         *          - mpeg: MPEG-1 Systems / MPEG program stream;
+         *          - avi: Audio Video Interleaved;
+         *          - mov: QuickTime / MOV;
+         *          - gif: CompuServe Graphics Interchange Format;
+         *      Other formats are "h264", "mjpeg", "dvd", "rm", and more.
+         *      If it can't be guessed this way then "mp4" is used by default.
 		 */
 		bool begin(const std::string& file_name, int width, int height, int framerate, int bitrate);
 

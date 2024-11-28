@@ -25,6 +25,8 @@
  ********************************************************************/
 
 #include <easy3d/video/video_encoder.h>
+#include <easy3d/util/logging.h>
+#include <easy3d/util/file_system.h>
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -33,6 +35,7 @@ extern "C" {
 #include <libavutil/imgutils.h>
 }
 
+
 // This implementation requires ffmpeg v3.4 (Sun, 15 Oct 2017 17:08:45) or above.
 // The corresponding libavcodec version is 57.107.100.
 #define MIN_REQUIRED_AVCODEC_VERSION    AV_VERSION_INT(57, 107, 100)
@@ -40,8 +43,6 @@ extern "C" {
     // this number corresponds to ffmpeg v3.4 (Sun, 15 Oct 2017 17:08:45)
     #pragma message "[WARNING]: Your ffmpeg is too old. Please update it to v3.4 or above"
 #endif
-
-#include <easy3d/util/logging.h>
 
 
 #if 0
@@ -532,7 +533,14 @@ namespace internal {
 
         //! Default constructor
         /**
-         * \param filename video filename
+         * \param filename video file name. The video format will be automatically automatically from the extension, e.g.,
+         *      - mp4: MPEG-4 Part 14;
+         *      - mpeg: MPEG-1 Systems / MPEG program stream;
+         *      - avi: Audio Video Interleaved;
+         *      - mov: QuickTime / MOV;
+         *      - gif: CompuServe Graphics Interchange Format;
+         *      Other formats are "h264", "mjpeg", "dvd", "rm", and more. All supported formats can be queried by
+         *      calling supported_output_formats(). If it can't be guessed this way then "mp4" is used by default.
          * \param width video width (must be a multiple of 8)
          * \param height video height (must be a multiple of 8)
          * \param fps frame rate
@@ -542,20 +550,17 @@ namespace internal {
         VideoEncoderImpl(const std::string &filename,
                          int width,
                          int height,
-                         int fps = 25,
+                         int fps = 30,
                          int bitrate = 8000000,
                          int gop = 12);
 
         virtual ~VideoEncoderImpl();
 
-        //! Creates an (empty) video/animation file
-        /** \param format_short_name output format (short name), e.g., "mpeg" (MPEG-1 Systems / MPEG program stream),
-         *      "mp4" (MPEG-4 Part 14), "avi", "mov", "gif", "h264", "mjpeg", "dvd", "rm".
-                    - If empty, the format will be automatically guessed from the filename.
-                    - If it can't be guessed this way then MPEG is used by default.
-            \return success
-        **/
-        bool open(const std::string &formatShortName = "mpeg");
+        /**
+         * Creates an (empty) video/animation file
+         * \return success
+         */
+        bool open();
 
         //! Returns whether the file is opened or not
         inline bool is_open() const { return m_isOpen; }
@@ -580,7 +585,7 @@ namespace internal {
         };
 
         //! Returns the list of supported output formats
-        static bool supported_output_formats(std::vector<OutputFormat> &formats, bool ignoreIfNoFileExtension = true);
+        static bool supported_output_formats(std::vector<OutputFormat> &formats, bool ignore_if_no_file_extension = true);
 
     private:
         //! Returns whether the image size is valid
@@ -695,7 +700,7 @@ namespace internal {
         }
     }
 
-    bool VideoEncoderImpl::supported_output_formats(std::vector<OutputFormat> &formats, bool ignoreIfNoFileExtension) {
+    bool VideoEncoderImpl::supported_output_formats(std::vector<OutputFormat> &formats, bool ignore_if_no_file_extension) {
         try {
             // list of all output formats
             void *ofmt_opaque = nullptr;
@@ -704,7 +709,7 @@ namespace internal {
                 if (format) {
                     // potentially skip the output formats without any extension (= test formats mostly)
                     if (format->video_codec != AV_CODEC_ID_NONE
-                        && (!ignoreIfNoFileExtension || (format->extensions && format->extensions[0] != 0))) {
+                        && (!ignore_if_no_file_extension || (format->extensions && format->extensions[0] != 0))) {
                         /* find the encoder */
                         auto codec = avcodec_find_encoder(format->video_codec);
                         if (!codec) {
@@ -735,7 +740,7 @@ namespace internal {
         return true;
     }
 
-    bool VideoEncoderImpl::open(const std::string &formatShortName) {
+    bool VideoEncoderImpl::open() {
         if (m_isOpen) {
             LOG(ERROR) << "the stream is already opened";
             return false;
@@ -746,11 +751,31 @@ namespace internal {
             return false;
         }
 
-        AVOutputFormat *outputFormat = nullptr;
-        if (!formatShortName.empty()) {
-            outputFormat = av_guess_format(formatShortName.c_str(), nullptr, nullptr);
+        // Check if provided file extension is supported
+        const std::string extension = easy3d::file_system::extension(m_filename, true); // make sure the extension is lowercase
+        std::vector<OutputFormat> formats;
+        if (supported_output_formats(formats, true)) {
+            bool found = false;
+            for (const auto &fmt : formats) {
+                if (fmt.extensions.find(extension) != std::string::npos) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                LOG(WARNING) << "output format is not supported: " << extension << ". Popular formats are: mp4, avi, mov, gif, mpeg...";
+                return false;
+            }
+        } else {
+            LOG(ERROR) << "could not get the list of supported output formats";
+            return false;
+        }
+
+        const AVOutputFormat *outputFormat = nullptr;
+        if (!extension.empty()) {
+            outputFormat = av_guess_format(extension.c_str(), nullptr, nullptr);
             if (!outputFormat)
-                LOG(WARNING) << "could not find output format from short name: " << formatShortName;
+                LOG(WARNING) << "could not find output format from file extension: " << extension;
         }
 
 #if (LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 9, 100))
@@ -764,14 +789,14 @@ namespace internal {
         avformat_alloc_output_context2(&m_ff->formatContext, outputFormat, nullptr, outputFormat ? m_filename.c_str() : nullptr);
         if (!m_ff->formatContext) {
             if (!outputFormat) {
-                LOG(WARNING) << "could not deduce output format from file extension: using MPEG";
-                avformat_alloc_output_context2(&m_ff->formatContext, nullptr, "mpeg", m_filename.c_str());
+                LOG(WARNING) << "could not deduce output format from file extension: using mp4";
+                avformat_alloc_output_context2(&m_ff->formatContext, nullptr, "mp4", m_filename.c_str());
                 if (!m_ff->formatContext) {
                     LOG(ERROR) << "codec not found (failed to allocate the output media context)";
                     return false;
                 }
             } else {
-                LOG(ERROR) << "failed to initialize output context with specified output format: " << formatShortName;
+                LOG(ERROR) << "failed to initialize output context with specified output format: " << extension;
                 return false;
             }
         }
