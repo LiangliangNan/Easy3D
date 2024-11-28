@@ -276,9 +276,9 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
     const int fw = static_cast<int>(static_cast<float>(w) * dpi_scaling());
     const int fh = static_cast<int>(static_cast<float>(h) * dpi_scaling());
     VideoEncoder encoder;
-    if (!encoder.start(file_name.toStdString(), fps, bitrate)) {
+    if (!encoder.begin(file_name.toStdString(), fw, fh, fps, bitrate)) {
         // clean up and restore the settings before exit
-        encoder.end();
+        encoder.finish();
         setEnabled(true);
         easy3d::connect(&camera_->frame_modified, this, static_cast<void (PaintCanvas::*)(void)>(&PaintCanvas::update));
         return;
@@ -367,7 +367,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
     func_->glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
     doneCurrent();
 
-    encoder.end();
+    encoder.finish();
 
     // enable updating the rendering
     easy3d::connect(&camera_->frame_modified, this, static_cast<void (PaintCanvas::*)(void)>(&PaintCanvas::update));  // this works

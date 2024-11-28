@@ -74,7 +74,7 @@ namespace easy3d {
 		 * \param file_name The name of the output video file, e.g., "C:/result.mp4".
 		 *		  The output format is automatically guessed according to the file extension.
 		 */
-		bool start(const std::string& file_name, int framerate, int bitrate);
+		bool begin(const std::string& file_name, int width, int height, int framerate, int bitrate);
 
 		/**
 		 * Encode one frame to the video stream.
@@ -93,7 +93,7 @@ namespace easy3d {
          * Finish encoding all the frames.
          * \note It must be called after encoding all frames.
          */
-		bool end();
+		bool finish();
 
         /// Returns whether the image size (width, height) is acceptable.
         static bool is_size_acceptable(int width, int height) { return (width % 8) == 0 && (height % 8) == 0; }
