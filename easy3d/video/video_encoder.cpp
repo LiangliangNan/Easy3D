@@ -289,10 +289,6 @@ namespace internal {
         LOG(INFO) << "video framerate: " << framerate_;
         LOG(INFO) << "video bitrate: " << bitrate_ / (1024 * 1024) << " Mbit/s";
 
-#ifndef NDEBUG
-        av_log_set_level(AV_LOG_DEBUG);  // Enable debug logging
-#endif
-
 #if (LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 9, 100))
         // av_register_all() was deprecated since 2018-02-06 - 0694d87024 - lavf 58.9.100 (ffmpeg 4.0) - avformat.h
         // https://github.com/FFmpeg/FFmpeg/blob/70d25268c21cbee5f08304da95be1f647c630c15/doc/APIchanges#L86
@@ -429,7 +425,7 @@ namespace easy3d {
 #ifdef NDEBUG
 		av_log_set_level(AV_LOG_QUIET);
 #else
-		av_log_set_level(AV_LOG_INFO);
+		av_log_set_level(AV_LOG_DEBUG); // AV_LOG_INFO
 #endif
 	}
 

@@ -43,7 +43,7 @@ namespace easy3d {
      *    of usage:
      *      \code
      *          VideoEncoder encoder;
-     *          encoder.start(output_file, 30, 100 * 1024 * 1024);  // 30 fps, 100 Mbit/s
+     *          encoder.start(output_file, 30, 10 * 1024 * 1024);  // 30 fps, 10 Mbit/s
      *          for (std::size_t i = 0; i < image_files.size(); ++i) {
      *              std::vector<unsigned char> data;
      *              int w, h, c;
