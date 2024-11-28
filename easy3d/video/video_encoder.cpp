@@ -785,7 +785,7 @@ namespace internal {
 #endif
 
         // find the output format
-        avformat_alloc_output_context2(&m_ff->formatContext, outputFormat, nullptr, outputFormat ? m_filename.c_str() : nullptr);
+        avformat_alloc_output_context2(&m_ff->formatContext, const_cast<AVOutputFormat*>(outputFormat), nullptr, outputFormat ? m_filename.c_str() : nullptr);
         if (!m_ff->formatContext) {
             if (!outputFormat) {
                 LOG(WARNING) << "could not deduce output format from file extension: using mp4";
