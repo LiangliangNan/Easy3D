@@ -43,12 +43,12 @@ namespace easy3d {
      *    of usage:
      *      \code
      *          VideoEncoder encoder;
-     *          encoder.begin(output_file, 472, 520, 30, 8 * 1024 * 1024); // fps: 30. bitrats: 8 Mbits/sec.
+     *          encoder.begin(output_file, 472, 520, 30, 8 * 1024 * 1024); // fps: 30. bitrate: 8 Mbit/sec.
      *          for (std::size_t i = 0; i < image_files.size(); ++i) {
      *              std::vector<unsigned char> data;
      *              int w, h, c;
      *              if (ImageIO::load(file_name, data, w, h, c, 0, false))
-     *                  encoder.encode(data.data(), w, h, VideoEncoder::PIX_FMT_RGBA_8888);
+     *                  encoder.encode(data.data(), w, h, c == 3 ? VideoEncoder::PIX_FMT_RGB_888 : VideoEncoder::PIX_FMT_RGBA_8888);
      *          }
      *          encoder.finish();
      *      \endcode
@@ -77,7 +77,6 @@ namespace easy3d {
          *          - mpeg: MPEG-1 Systems / MPEG program stream;
          *          - avi: Audio Video Interleaved;
          *          - mov: QuickTime / MOV;
-         *          - gif: CompuServe Graphics Interchange Format;
          *      Other formats are "h264", "mjpeg", "dvd", "rm", and more.
          *      If it can't be guessed this way then "mp4" is used by default.
 		 */

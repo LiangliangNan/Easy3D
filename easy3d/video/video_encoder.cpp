@@ -538,7 +538,6 @@ namespace internal {
          *      - mpeg: MPEG-1 Systems / MPEG program stream;
          *      - avi: Audio Video Interleaved;
          *      - mov: QuickTime / MOV;
-         *      - gif: CompuServe Graphics Interchange Format;
          *      Other formats are "h264", "mjpeg", "dvd", "rm", and more. All supported formats can be queried by
          *      calling supported_output_formats(). If it can't be guessed this way then "mp4" is used by default.
          * \param width video width (must be a multiple of 8)
