@@ -63,7 +63,6 @@ namespace easy3d {
          *          - mpeg: MPEG-1 Systems / MPEG program stream;
          *          - avi: Audio Video Interleaved;
          *          - mov: QuickTime / MOV;
-         *      Other formats are "h264", "mjpeg", "dvd", "rm", and more.
          *      If it can't be guessed this way then "mp4" is used by default.
          * \param framerate frame rate (normally between 25 and 60. Default to 30 fps)
          * \param bitrate bit rate (default to 8 Mbits/sec.)
