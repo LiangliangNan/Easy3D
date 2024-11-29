@@ -88,7 +88,6 @@ namespace easy3d {
 		 *		following structures.
          * \param width video width (must be a multiple of 8)
          * \param height video height (must be a multiple of 8)
-         * \param channels the number of channels of the image
          * \param pixel_format pixel format. The correspondences between the image structures and pixel/OpenGL formats are:
 		 *		    RGB 8:8:8, 24bpp     <--->  PIX_FMT_RGB_888    <--->  GL_RGB
          *          BGR 8:8:8, 24bpp     <--->  PIX_FMT_BGR_888    <--->  GL_BGR
@@ -96,7 +95,7 @@ namespace easy3d {
          *          BGRA 8:8:8:8, 32bpp  <--->  PIX_FMT_BGRA_8888  <--->  GL_BGRA
 		 * \return true on successful.
 		 **/
-		bool encode(const unsigned char* image_data, int width, int height, int channels, PixelFormat pixel_format);
+		bool encode(const unsigned char* image_data, int width, int height, PixelFormat pixel_format);
 
         /// Returns whether the image size (width, height) is acceptable.
         static bool is_size_acceptable(int width, int height) { return (width % 8) == 0 && (height % 8) == 0; }

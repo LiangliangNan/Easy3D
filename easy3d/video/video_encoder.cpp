@@ -1092,7 +1092,7 @@ namespace easy3d {
     }
 
 
-    bool VideoEncoder::encode(const unsigned char *image_data, int width, int height, int channels, PixelFormat pixel_format) {
+    bool VideoEncoder::encode(const unsigned char *image_data, int width, int height, PixelFormat pixel_format) {
         if (!is_size_acceptable(width, height)) {
             LOG(ERROR) << "video frame resolution (" << width << ", " << height << ") is not a multiple of 8";
             return false;
@@ -1120,34 +1120,23 @@ namespace easy3d {
             return false;
         }
 
+        int channels = 3;
         AVPixelFormat pix_fmt = AV_PIX_FMT_RGB24;
         switch (pixel_format) {
             case PIX_FMT_RGB_888:
-                if (channels != 3) {
-                    LOG(ERROR) << "pixel format (PIX_FMT_RGB_888) does not match the number of channels (" << channels << ")";
-                    return false;
-                }
+                channels = 3;
                 pix_fmt = AV_PIX_FMT_RGB24;
                 break;
             case PIX_FMT_BGR_888:
-                if (channels != 3) {
-                    LOG(ERROR) << "pixel format (PIX_FMT_BGR_888) does not match the number of channels (" << channels << ")";
-                    return false;
-                }
+                channels = 3;
                 pix_fmt = AV_PIX_FMT_BGR24;
                 break;
             case PIX_FMT_RGBA_8888:
-                if (channels != 4) {
-                    LOG(ERROR) << "pixel format (PIX_FMT_RGBA_8888) does not match the number of channels (" << channels << ")";
-                    return false;
-                }
+                channels = 4;
                 pix_fmt = AV_PIX_FMT_RGBA;
                 break;
             case PIX_FMT_BGRA_8888:
-                if (channels != 4) {
-                    LOG(ERROR) << "pixel format (PIX_FMT_BGRA_8888) does not match the number of channels (" << channels << ")";
-                    return false;
-                }
+                channels = 4;
                 pix_fmt = AV_PIX_FMT_BGRA;
                 break;
         }

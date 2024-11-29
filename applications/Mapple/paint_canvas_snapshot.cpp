@@ -333,14 +333,14 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
         }
         if (image.format() != QImage::Format_RGBA8888)
             image = image.convertToFormat(QImage::Format_RGBA8888);
-        if (!encoder.encode(image.constBits(), image.width(), image.height(), 4, VideoEncoder::PIX_FMT_RGBA_8888)) {
+        if (!encoder.encode(image.constBits(), image.width(), image.height(), VideoEncoder::PIX_FMT_RGBA_8888)) {
             success = false;
             break;
         }
 #else
         std::vector<unsigned char> image;
         fbo->read_color(0, image, GL_RGBA);
-        if (!encoder.encode(image.data(), fw, fh, 4, VideoEncoder::PIX_FMT_RGBA_8888)) {
+        if (!encoder.encode(image.data(), fw, fh, VideoEncoder::PIX_FMT_RGBA_8888)) {
             success = false;
             break;
         }
