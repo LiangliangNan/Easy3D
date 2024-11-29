@@ -42,23 +42,34 @@ namespace easy3d {
      * @details The output format is automatically guessed according to the file extension. Below is an example
      *    of usage:
      *      \code
-     *          VideoEncoder encoder;
-     *          encoder.begin(output_file, 472, 520, 30, 8 * 1024 * 1024); // fps: 30. bitrate: 8 Mbit/sec.
+     *          VideoEncoder encoder(image_file, 30, 8 * 1024 * 1024); // framereate: 30 fps. bitrate: 8 Mbits/sec.
      *          for (std::size_t i = 0; i < image_files.size(); ++i) {
      *              std::vector<unsigned char> data;
      *              int w, h, c;
      *              if (ImageIO::load(file_name, data, w, h, c, 0, false))
      *                  encoder.encode(data.data(), w, h, c == 3 ? VideoEncoder::PIX_FMT_RGB_888 : VideoEncoder::PIX_FMT_RGBA_8888);
      *          }
-     *          encoder.finish();
      *      \endcode
      * @class VideoEncoder easy3d/video/video_encoder.h
      */
 	class VideoEncoder
 	{
 	public:
-        /// Constructor
-		VideoEncoder();
+        /**
+         * Constructor
+         * \param file_name The name of the output video file, e.g., "D:/result.mp4".
+         *      The output format is automatically guessed according to the file extension, which can be:
+         *          - mp4: MPEG-4 Part 14;
+         *          - mpeg: MPEG-1 Systems / MPEG program stream;
+         *          - avi: Audio Video Interleaved;
+         *          - mov: QuickTime / MOV;
+         *      Other formats are "h264", "mjpeg", "dvd", "rm", and more.
+         *      If it can't be guessed this way then "mp4" is used by default.
+         * \param framerate frame rate (normally between 25 and 60. Default to 30 fps)
+         * \param bitrate bit rate (default to 8 Mbits/sec.)
+         */
+		VideoEncoder(const std::string& file_name, int framerate = 30, int bitrate = 8 * 1024 * 1024);
+
         /// Destructor
 		~VideoEncoder();
 
@@ -71,41 +82,31 @@ namespace easy3d {
         };
 
 		/**
-		 * \param file_name The name of the output video file, e.g., "C:/result.mp4".
-		 *      The output format is automatically guessed according to the file extension, which can be:
-         *          - mp4: MPEG-4 Part 14;
-         *          - mpeg: MPEG-1 Systems / MPEG program stream;
-         *          - avi: Audio Video Interleaved;
-         *          - mov: QuickTime / MOV;
-         *      Other formats are "h264", "mjpeg", "dvd", "rm", and more.
-         *      If it can't be guessed this way then "mp4" is used by default.
-		 */
-		bool begin(const std::string& file_name, int width, int height, int framerate, int bitrate);
-
-		/**
 		 * Encode one frame to the video stream.
-		 * \param data The input image data. It is a 1D array of 'unsigned char' which points to the pixel data.
+		 * \param image_data The input image data. It is a 1D array of 'unsigned char' which points to the pixel data.
 		 *		The pixel data consists of 'height' rows of 'width' pixels, with each pixel has one of the
-		 *		following structures. The correspondences between these structures and pixel/OpenGL formats are:
+		 *		following structures.
+         * \param width video width (must be a multiple of 8)
+         * \param height video height (must be a multiple of 8)
+         * \param channels the number of channels of the image
+         * \param pixel_format pixel format. The correspondences between the image structures and pixel/OpenGL formats are:
 		 *		    RGB 8:8:8, 24bpp     <--->  PIX_FMT_RGB_888    <--->  GL_RGB
          *          BGR 8:8:8, 24bpp     <--->  PIX_FMT_BGR_888    <--->  GL_BGR
          *          RGBA 8:8:8:8, 32bpp  <--->  PIX_FMT_RGBA_8888  <--->  GL_RGBA
          *          BGRA 8:8:8:8, 32bpp  <--->  PIX_FMT_BGRA_8888  <--->  GL_BGRA
 		 * \return true on successful.
 		 **/
-		bool encode(const unsigned char* data, int width, int height, PixelFormat pixel_format);
-
-        /**
-         * Finish encoding all the frames.
-         * \note It must be called after encoding all frames.
-         */
-		bool finish();
+		bool encode(const unsigned char* image_data, int width, int height, int channels, PixelFormat pixel_format);
 
         /// Returns whether the image size (width, height) is acceptable.
         static bool is_size_acceptable(int width, int height) { return (width % 8) == 0 && (height % 8) == 0; }
 
 	private:
 		internal::VideoEncoderImpl* encoder_;
+
+        const std::string file_name_;
+        const int framerate_;
+        const int bitrate_;
 	};
 
 }

@@ -270,22 +270,14 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
     // temporarily don't allow updating rendering when the camera parameters are changing.
     easy3d::disconnect_all(&camera_->frame_modified);
 
-    const int bitrate = bit_rate * 1024 * 1024;
     bool success = true;
-
-    const int fw = static_cast<int>(static_cast<float>(w) * dpi_scaling());
-    const int fh = static_cast<int>(static_cast<float>(h) * dpi_scaling());
-    VideoEncoder encoder;
-    if (!encoder.begin(file_name.toStdString(), fw, fh, fps, bitrate)) {
-        // clean up and restore the settings before exit
-        encoder.finish();
-        setEnabled(true);
-        easy3d::connect(&camera_->frame_modified, this, static_cast<void (PaintCanvas::*)(void)>(&PaintCanvas::update));
-        return;
-    }
+    VideoEncoder encoder(file_name.toStdString(), fps, bit_rate * 1024 * 1024);
 
     const auto &frames = kfi->interpolate();
     makeCurrent();
+
+    const int fw = static_cast<int>(static_cast<float>(w) * dpi_scaling());
+    const int fh = static_cast<int>(static_cast<float>(h) * dpi_scaling());
 
 #ifdef USE_QT_FBO
     QOpenGLFramebufferObjectFormat format;
@@ -341,14 +333,14 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
         }
         if (image.format() != QImage::Format_RGBA8888)
             image = image.convertToFormat(QImage::Format_RGBA8888);
-        if (!encoder.encode(image.constBits(), image.width(), image.height(), VideoEncoder::PIX_FMT_RGBA_8888)) {
+        if (!encoder.encode(image.constBits(), image.width(), image.height(), 4, VideoEncoder::PIX_FMT_RGBA_8888)) {
             success = false;
             break;
         }
 #else
-        std::vector<unsigned char> data;
-        fbo->read_color(0, data, GL_RGBA);
-        if (!encoder.encode(data.data(), fw, fh, VideoEncoder::PIX_FMT_RGBA_8888)) {
+        std::vector<unsigned char> image;
+        fbo->read_color(0, image, GL_RGBA);
+        if (!encoder.encode(image.data(), fw, fh, 4, VideoEncoder::PIX_FMT_RGBA_8888)) {
             success = false;
             break;
         }
@@ -366,8 +358,6 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
     // restore the clear color
     func_->glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
     doneCurrent();
-
-    encoder.finish();
 
     // enable updating the rendering
     easy3d::connect(&camera_->frame_modified, this, static_cast<void (PaintCanvas::*)(void)>(&PaintCanvas::update));  // this works

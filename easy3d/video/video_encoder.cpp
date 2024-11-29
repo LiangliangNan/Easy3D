@@ -566,12 +566,21 @@ namespace internal {
 
         /**
          * Adds an image to the stream
-         * \param data the image data
+         * \param image_data The input image data. It is a 1D array of 'unsigned char' which points to the pixel data.
+         *		The pixel data consists of 'height' rows of 'width' pixels, with each pixel has one of the
+         *		following structures.
          * \param width video width (must be a multiple of 8)
          * \param height video height (must be a multiple of 8)
-         * \param channels the number of channels of the image data
-         */
-         virtual bool encode(const unsigned char *data, int width, int height, int channels, AVPixelFormat pixel_format);
+         * \param channels the number of channels of the image
+         * \param pixel_format pixel format. The correspondences between the image structures and pixel/OpenGL formats are:
+         *		    RGB 8:8:8, 24bpp     <--->  PIX_FMT_RGB_888    <--->  GL_RGB
+         *          BGR 8:8:8, 24bpp     <--->  PIX_FMT_BGR_888    <--->  GL_BGR
+         *          RGBA 8:8:8:8, 32bpp  <--->  PIX_FMT_RGBA_8888  <--->  GL_RGBA
+         *          BGRA 8:8:8:8, 32bpp  <--->  PIX_FMT_BGRA_8888  <--->  GL_BGRA
+         * \return true on successful.
+         **/
+
+         virtual bool encode(const unsigned char *image_data, int width, int height, int channels, AVPixelFormat pixel_format);
 
         //! Closes the file
         virtual bool close();
@@ -600,7 +609,6 @@ namespace internal {
         std::string m_filename;
         int m_width;
         int m_height;
-        int m_channels;
         int m_bitrate;
         int m_gop;
         int m_fps;
@@ -955,10 +963,10 @@ namespace internal {
         return true;
     }
 
-    bool VideoEncoderImpl::encode(const unsigned char *data, int width, int height, int channels, AVPixelFormat pixel_format) {
+    bool VideoEncoderImpl::encode(const unsigned char *image_data, int width, int height, int channels, AVPixelFormat pixel_format) {
         // Check if the image matches the size
-        if (m_width != width || m_height != height) { // Check if the image matches the size
-            LOG(ERROR) << "wrong image size";
+        if (m_width != width || m_height != height) {
+            LOG(ERROR) << "image size (" << width << ", " << height << ") differs from video resolution (" << m_width << ", " << m_height << ")";
             return false;
         }
 
@@ -1001,7 +1009,7 @@ namespace internal {
                 return false;
             }
 
-            const uint8_t *srcSlice[3]{data, nullptr, nullptr};
+            const uint8_t *srcSlice[3]{image_data, nullptr, nullptr};
             int srcStride[3]{width * channels, 0, 0}; // first element is bytes per line
 
             sws_scale(m_ff->swsContext,
@@ -1051,7 +1059,12 @@ using namespace internal;
 namespace easy3d {
 
     // Reference: https://github.com/FFmpeg/FFmpeg/blob/master/doc/examples/muxing.c
-    VideoEncoder::VideoEncoder() : encoder_(nullptr) {
+    VideoEncoder::VideoEncoder(const std::string& file_name, int framerate, int bitrate)
+            : encoder_(nullptr)
+            , file_name_(file_name)
+            , framerate_(framerate)
+            , bitrate_(bitrate)
+    {
         LOG(INFO) << "ffmpeg version: " << av_version_info() << " (avcodec version: " << LIBAVCODEC_VERSION_MAJOR << "."
                   << LIBAVCODEC_VERSION_MINOR << "." << LIBAVCODEC_VERSION_MICRO << ")";
 
@@ -1063,85 +1076,84 @@ namespace easy3d {
 #else
         av_log_set_level(AV_LOG_DEBUG); // AV_LOG_INFO
 #endif
+
+        LOG(INFO) << "output file name: " << file_name_;
+        LOG(INFO) << "video framerate: " << framerate_;
+        LOG(INFO) << "video bitrate: " << bitrate_ / (1024 * 1024) << " Mbits/sec";
     }
 
 
     VideoEncoder::~VideoEncoder() {
         if (encoder_) {
-            LOG(WARNING) << "VideoEncoder::end() must be called after encoding all frames";
+            encoder_->close();
             delete encoder_;
+            encoder_ = nullptr;
         }
     }
 
 
-    bool VideoEncoder::begin(const std::string &filename, int width, int height, int fps, int bitrate) {
-        if (!encoder_)
-            encoder_ = new VideoEncoderImpl(filename, width, height, fps, bitrate);
-
-        LOG(INFO) << "output file name: " << filename;
-        LOG(INFO) << "video framerate: " << fps;
-        LOG(INFO) << "video bitrate: " << bitrate / (1024 * 1024) << " Mbit/s";
-
-        return encoder_->open();
-    }
-
-
-    bool VideoEncoder::encode(const unsigned char *data, int width, int height, PixelFormat pixel_format) {
+    bool VideoEncoder::encode(const unsigned char *image_data, int width, int height, int channels, PixelFormat pixel_format) {
         if (!is_size_acceptable(width, height)) {
             LOG(ERROR) << "video frame resolution (" << width << ", " << height << ") is not a multiple of 8";
             return false;
         }
 
+        // In this implementation, the creation of the internal encoder can be delayed when the first image is received.
+        // This makes it convenient to encode image sequences (because the image size is not know before loading the
+        // first image in the sequence).
         if (!encoder_) {
-            LOG(ERROR) << "the video encoder has not started yet";
-            return false;
-        }
-
-        if (encoder_->m_width != 0 && encoder_->m_height != 0 &&
-            encoder_->m_channels != 0) { // already initialized with the image dimension data
-            if (width != encoder_->m_width || height != encoder_->m_height) {
-                LOG(ERROR) << "image size differs from the size of the previously created video stream";
+            if (!encoder_) {
+                encoder_ = new VideoEncoderImpl(file_name_, width, height, framerate_, bitrate_);
+                if (!encoder_) {
+                    LOG(ERROR) << "failed to create the internal video encoder";
+                    return false;
+                }
+            }
+            if (!encoder_->open()) {
+                LOG(ERROR) << "failed to start the internal video encoder";
                 return false;
             }
         }
 
-        int channels = 3;
-        AVPixelFormat pix_fmt = AV_PIX_FMT_RGB24;
-        switch (pixel_format) {
-            case PIX_FMT_RGB_888:
-                channels = 3;
-                pix_fmt = AV_PIX_FMT_RGB24;
-                break;
-            case PIX_FMT_BGR_888:
-                channels = 3;
-                pix_fmt = AV_PIX_FMT_BGR24;
-                break;
-            case PIX_FMT_RGBA_8888:
-                channels = 4;
-                pix_fmt = AV_PIX_FMT_RGBA;
-                break;
-            case PIX_FMT_BGRA_8888:
-                channels = 4;
-                pix_fmt = AV_PIX_FMT_BGRA;
-                break;
-        }
-        return encoder_->encode(data, width, height, channels, pix_fmt);
-    }
-
-
-    bool VideoEncoder::finish() {
-        if (!encoder_) {
-            LOG(ERROR) << "the video encoder has not started yet";
+        if (width != encoder_->m_width || height != encoder_->m_height) {
+            LOG(ERROR) << "image size differs from the size of the previously created video stream";
             return false;
         }
 
-        encoder_->close();
-
-        delete encoder_;
-        encoder_ = nullptr;
-
-        return true;
+        AVPixelFormat pix_fmt = AV_PIX_FMT_RGB24;
+        switch (pixel_format) {
+            case PIX_FMT_RGB_888:
+                if (channels != 3) {
+                    LOG(ERROR) << "pixel format (PIX_FMT_RGB_888) does not match the number of channels (" << channels << ")";
+                    return false;
+                }
+                pix_fmt = AV_PIX_FMT_RGB24;
+                break;
+            case PIX_FMT_BGR_888:
+                if (channels != 3) {
+                    LOG(ERROR) << "pixel format (PIX_FMT_BGR_888) does not match the number of channels (" << channels << ")";
+                    return false;
+                }
+                pix_fmt = AV_PIX_FMT_BGR24;
+                break;
+            case PIX_FMT_RGBA_8888:
+                if (channels != 4) {
+                    LOG(ERROR) << "pixel format (PIX_FMT_RGBA_8888) does not match the number of channels (" << channels << ")";
+                    return false;
+                }
+                pix_fmt = AV_PIX_FMT_RGBA;
+                break;
+            case PIX_FMT_BGRA_8888:
+                if (channels != 4) {
+                    LOG(ERROR) << "pixel format (PIX_FMT_BGRA_8888) does not match the number of channels (" << channels << ")";
+                    return false;
+                }
+                pix_fmt = AV_PIX_FMT_BGRA;
+                break;
+        }
+        return encoder_->encode(image_data, width, height, channels, pix_fmt);
     }
+
 }
 
 
