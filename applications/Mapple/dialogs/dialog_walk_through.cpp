@@ -137,18 +137,18 @@ void DialogWalkThrough::showEvent(QShowEvent* e) {
 	doubleSpinBoxCharacterHeightFactor->setValue(walkThrough()->height_factor());
 	doubleSpinBoxCharacterDistanceFactor->setValue(walkThrough()->third_person_forward_factor());
 
+    if (lineEditOutputFile->text().isEmpty()) {
 #ifdef HAS_FFMPEG
-    std::string name = "./video.mp4";
-    if (viewer_->currentModel())
-        name = file_system::replace_extension(viewer_->currentModel()->name(), "mp4");
+        std::string name = "./video.mp4";
+        if (viewer_->currentModel())
+            name = file_system::replace_extension(viewer_->currentModel()->name(), "mp4");
 #else
-    std::string name = "./video.png";
-    if (viewer_->currentModel())
-        name = file_system::replace_extension(viewer_->currentModel()->name(), "png");
+        std::string name = "./video.png";
+        if (viewer_->currentModel())
+            name = file_system::replace_extension(viewer_->currentModel()->name(), "png");
 #endif
-
-    lineEditOutputFile->setText(QString::fromStdString(name));
-//	QDialog::showEvent(e);
+        lineEditOutputFile->setText(QString::fromStdString(name));
+    }
 }
 
 
