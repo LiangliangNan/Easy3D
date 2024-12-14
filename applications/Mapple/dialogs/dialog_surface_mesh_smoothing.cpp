@@ -46,7 +46,7 @@ DialogSurfaceMeshSmoothing::DialogSurfaceMeshSmoothing(MainWindow *window)
     comboBoxScheme->addItem("Implicit Smoothing");
     comboBoxScheme->setCurrentIndex(0);
 
-    connect(comboBoxScheme, SIGNAL(currentIndexChanged(const QString &)),this, SLOT(setSmoothingScheme(const QString &)));
+    connect(comboBoxScheme, SIGNAL(currentTextChanged(const QString &)),this, SLOT(setSmoothingScheme(const QString &)));
 
     layout()->setSizeConstraint(QLayout::SetFixedSize);
     connect(okButton, SIGNAL(clicked()), this, SLOT(apply()));

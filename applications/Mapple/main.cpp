@@ -38,7 +38,6 @@
 
 #include <QStyleFactory>
 #include <QSurfaceFormat>
-#include <QGLFormat>
 #include <QElapsedTimer>
 #include <QException>
 
@@ -123,8 +122,9 @@ int main(int argc, char *argv[]) {
     //QApplication::setAttribute(Qt::AA_UseDesktopOpenGL);
 
     QApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0) && (QT_VERSION < QT_VERSION_CHECK(6, 0, 0)))
     QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
-#if (defined(Q_OS_WIN) && QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 #endif
 
@@ -163,15 +163,6 @@ int main(int argc, char *argv[]) {
         QApplication::processEvents(); //to let the system breath!
     }
 #endif
-
-    if (!QGLFormat::hasOpenGL()) {
-        LOG(ERROR) << "Mapple needs OpenGL to run";
-        return EXIT_FAILURE;
-    }
-    if ((QGLFormat::openGLVersionFlags() & QGLFormat::OpenGL_Version_3_2) == 0) {
-        LOG(ERROR) << "Mapple needs OpenGL 3.2 at least to run";
-        return EXIT_FAILURE;
-    }
 
     try {
         MainWindow win;

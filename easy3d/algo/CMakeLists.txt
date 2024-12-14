@@ -80,6 +80,9 @@ add_module(${module} "${${module}_headers}" "${${module}_sources}" "${private_de
 target_include_directories(easy3d_${module} PRIVATE ${Easy3D_THIRD_PARTY}/eigen ${Easy3D_THIRD_PARTY}/ransac)
 
 # It's "Boost", not "BOOST" or "boost". Case matters.
+if (POLICY CMP0167)
+    cmake_policy(SET CMP0167 NEW)
+endif ()
 find_package(Boost COMPONENTS graph)
 if (Boost_FOUND)
     target_include_directories(easy3d_${module} PRIVATE ${Boost_INCLUDE_DIRS})

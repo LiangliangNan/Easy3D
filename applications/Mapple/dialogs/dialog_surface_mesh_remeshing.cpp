@@ -46,7 +46,7 @@ DialogSurfaceMeshRemeshing::DialogSurfaceMeshRemeshing(MainWindow *window)
     comboBoxScheme->addItem("Adaptive Remeshing");
     comboBoxScheme->setCurrentIndex(0);
 
-    connect(comboBoxScheme, SIGNAL(currentIndexChanged(const QString &)),this, SLOT(setRemeshingScheme(const QString &)));
+    connect(comboBoxScheme, SIGNAL(currentTextChanged(const QString &)),this, SLOT(setRemeshingScheme(const QString &)));
 
     layout()->setSizeConstraint(QLayout::SetFixedSize);
     connect(okButton, SIGNAL(clicked()), this, SLOT(apply()));

@@ -65,7 +65,7 @@ WidgetLinesDrawable::WidgetLinesDrawable(QWidget *parent)
 
 void WidgetLinesDrawable::connectAll() {
     // which drawable
-    connect(ui_->comboBoxDrawables, SIGNAL(currentIndexChanged(const QString &)),
+    connect(ui_->comboBoxDrawables, SIGNAL(currentTextChanged(const QString &)),
             this, SLOT(setActiveDrawable(const QString &)));
 
     // visible
@@ -75,11 +75,11 @@ void WidgetLinesDrawable::connectAll() {
     connect(ui_->doubleSpinBoxLineWidth, SIGNAL(valueChanged(double)), this, SLOT(setLineWidth(double)));
 
     // imposter
-    connect(ui_->comboBoxImposterStyle, SIGNAL(currentIndexChanged(const QString &)),
+    connect(ui_->comboBoxImposterStyle, SIGNAL(currentTextChanged(const QString &)),
             this, SLOT(setImposterStyle(const QString &)));
 
     // color scheme
-    connect(ui_->comboBoxColorScheme, SIGNAL(currentIndexChanged(const QString &)),
+    connect(ui_->comboBoxColorScheme, SIGNAL(currentTextChanged(const QString &)),
             this, SLOT(setColorScheme(const QString &)));
 
     // default color
@@ -99,7 +99,7 @@ void WidgetLinesDrawable::connectAll() {
     connect(ui_->doubleSpinBoxScalarFieldClampUpper, SIGNAL(valueChanged(double)), this, SLOT(setScalarFieldClampUpper(double)));
 
     // vector field
-    connect(ui_->comboBoxVectorField, SIGNAL(currentIndexChanged(const QString&)), this,
+    connect(ui_->comboBoxVectorField, SIGNAL(currentTextChanged(const QString&)), this,
             SLOT(setVectorField(const QString&)));
     connect(ui_->doubleSpinBoxVectorFieldScale, SIGNAL(valueChanged(double)), this, SLOT(setVectorFieldScale(double)));
 }
@@ -107,7 +107,7 @@ void WidgetLinesDrawable::connectAll() {
 
 void WidgetLinesDrawable::disconnectAll() {
     // which drawable
-    disconnect(ui_->comboBoxDrawables, SIGNAL(currentIndexChanged(const QString &)),
+    disconnect(ui_->comboBoxDrawables, SIGNAL(currentTextChanged(const QString &)),
                this, SLOT(setActiveDrawable(const QString &)));
 
     // visible
@@ -117,11 +117,11 @@ void WidgetLinesDrawable::disconnectAll() {
     disconnect(ui_->doubleSpinBoxLineWidth, SIGNAL(valueChanged(double)), this, SLOT(setLineWidth(double)));
 
     // imposter
-    disconnect(ui_->comboBoxImposterStyle, SIGNAL(currentIndexChanged(const QString &)),
+    disconnect(ui_->comboBoxImposterStyle, SIGNAL(currentTextChanged(const QString &)),
                this, SLOT(setImposterStyle(const QString &)));
 
     // color scheme
-    disconnect(ui_->comboBoxColorScheme, SIGNAL(currentIndexChanged(const QString &)),
+    disconnect(ui_->comboBoxColorScheme, SIGNAL(currentTextChanged(const QString &)),
                this, SLOT(setColorScheme(const QString &)));
 
     // default color
@@ -141,7 +141,7 @@ void WidgetLinesDrawable::disconnectAll() {
     disconnect(ui_->doubleSpinBoxScalarFieldClampUpper, SIGNAL(valueChanged(double)), this, SLOT(setScalarFieldClampUpper(double)));
 
     // vector field
-    disconnect(ui_->comboBoxVectorField, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(setVectorField(const QString&)));
+    disconnect(ui_->comboBoxVectorField, SIGNAL(currentTextChanged(const QString&)), this, SLOT(setVectorField(const QString&)));
     disconnect(ui_->doubleSpinBoxVectorFieldScale, SIGNAL(valueChanged(double)), this, SLOT(setVectorFieldScale(double)));
 }
 

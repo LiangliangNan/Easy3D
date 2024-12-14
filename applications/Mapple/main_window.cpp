@@ -37,7 +37,7 @@
 #include <QSettings>
 #include <QMessageBox>
 #include <QColorDialog>
-#include <QCoreApplication>
+#include <QActionGroup>
 #include <QLabel>
 #include <QPushButton>
 #include <QProgressBar>
@@ -835,12 +835,14 @@ void MainWindow::restoreCameraStateFromFile() {
 bool MainWindow::okToContinue()
 {
     if (isWindowModified()) {
-        int r = QMessageBox::warning(this, tr("Mapple"),
-            tr("The model has been modified.\n"
-            "Do you want to save your changes?"),
-            QMessageBox::Yes | QMessageBox::Default,
-            QMessageBox::No,
-            QMessageBox::Cancel | QMessageBox::Escape);
+        QMessageBox::StandardButton r = QMessageBox::warning(
+             this,
+             tr("Mapple"),
+             tr("The model has been modified.\n"
+                "Do you want to save your changes?"),
+             QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
+             QMessageBox::Yes
+         );
         if (r == QMessageBox::Yes)
             return onSave();
         else if (r == QMessageBox::Cancel)

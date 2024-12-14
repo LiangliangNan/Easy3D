@@ -69,7 +69,7 @@ WidgetTrianglesDrawable::WidgetTrianglesDrawable(QWidget *parent)
 
 void WidgetTrianglesDrawable::connectAll() {
     // which drawable
-    connect(ui_->comboBoxDrawables, SIGNAL(currentIndexChanged(const QString &)),this, SLOT(setActiveDrawable(const QString &)));
+    connect(ui_->comboBoxDrawables, SIGNAL(currentTextChanged(const QString &)),this, SLOT(setActiveDrawable(const QString &)));
 
     // visible
     connect(ui_->checkBoxVisible, SIGNAL(toggled(bool)), this, SLOT(setDrawableVisible(bool)));
@@ -78,10 +78,10 @@ void WidgetTrianglesDrawable::connectAll() {
     connect(ui_->checkBoxPhongShading, SIGNAL(toggled(bool)), this, SLOT(setPhongShading(bool)));
 
     // lighting
-    connect(ui_->comboBoxLightingOptions, SIGNAL(currentIndexChanged(const QString &)),this, SLOT(setLighting(const QString &)));
+    connect(ui_->comboBoxLightingOptions, SIGNAL(currentTextChanged(const QString &)),this, SLOT(setLighting(const QString &)));
 
     // color scheme
-    connect(ui_->comboBoxColorScheme, SIGNAL(currentIndexChanged(const QString &)),this, SLOT(setColorScheme(const QString &)));
+    connect(ui_->comboBoxColorScheme, SIGNAL(currentTextChanged(const QString &)),this, SLOT(setColorScheme(const QString &)));
 
     // default color
     connect(ui_->toolButtonDefaultColor, SIGNAL(clicked()), this, SLOT(setDefaultColor()));
@@ -112,14 +112,14 @@ void WidgetTrianglesDrawable::connectAll() {
     connect(ui_->doubleSpinBoxScalarFieldClampUpper, SIGNAL(valueChanged(double)), this, SLOT(setScalarFieldClampUpper(double)));
 
     // vector field
-    connect(ui_->comboBoxVectorField, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(setVectorField(const QString&)));
+    connect(ui_->comboBoxVectorField, SIGNAL(currentTextChanged(const QString&)), this, SLOT(setVectorField(const QString&)));
     connect(ui_->doubleSpinBoxVectorFieldScale, SIGNAL(valueChanged(double)), this, SLOT(setVectorFieldScale(double)));
 }
 
 
 void WidgetTrianglesDrawable::disconnectAll() {
     // which drawable
-    disconnect(ui_->comboBoxDrawables, SIGNAL(currentIndexChanged(const QString &)),this, SLOT(setActiveDrawable(const QString &)));
+    disconnect(ui_->comboBoxDrawables, SIGNAL(currentTextChanged(const QString &)),this, SLOT(setActiveDrawable(const QString &)));
 
     // visible
     disconnect(ui_->checkBoxVisible, SIGNAL(toggled(bool)), this, SLOT(setDrawableVisible(bool)));
@@ -128,10 +128,10 @@ void WidgetTrianglesDrawable::disconnectAll() {
     disconnect(ui_->checkBoxPhongShading, SIGNAL(toggled(bool)), this, SLOT(setPhongShading(bool)));
 
     // lighting
-    disconnect(ui_->comboBoxLightingOptions, SIGNAL(currentIndexChanged(const QString &)),this, SLOT(setLighting(const QString &)));
+    disconnect(ui_->comboBoxLightingOptions, SIGNAL(currentTextChanged(const QString &)),this, SLOT(setLighting(const QString &)));
 
     // color scheme
-    disconnect(ui_->comboBoxColorScheme, SIGNAL(currentIndexChanged(const QString &)),this, SLOT(setColorScheme(const QString &)));
+    disconnect(ui_->comboBoxColorScheme, SIGNAL(currentTextChanged(const QString &)),this, SLOT(setColorScheme(const QString &)));
 
     // default color
     disconnect(ui_->toolButtonDefaultColor, SIGNAL(clicked()), this, SLOT(setDefaultColor()));
@@ -162,7 +162,7 @@ void WidgetTrianglesDrawable::disconnectAll() {
     disconnect(ui_->doubleSpinBoxScalarFieldClampUpper, SIGNAL(valueChanged(double)), this, SLOT(setScalarFieldClampUpper(double)));
 
     // vector field
-    disconnect(ui_->comboBoxVectorField, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(setVectorField(const QString&)));
+    disconnect(ui_->comboBoxVectorField, SIGNAL(currentTextChanged(const QString&)), this, SLOT(setVectorField(const QString&)));
     disconnect(ui_->doubleSpinBoxVectorFieldScale, SIGNAL(valueChanged(double)), this, SLOT(setVectorFieldScale(double)));
 }
 

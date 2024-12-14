@@ -322,12 +322,14 @@ namespace easy3d {
 
     bool Window::okToContinue() {
         if (isWindowModified()) {
-            int r = QMessageBox::warning(this, tr("Viewer"),
-                                         tr("The model has been modified.\n"
-                                            "Do you want to save your changes?"),
-                                         QMessageBox::Yes | QMessageBox::Default,
-                                         QMessageBox::No,
-                                         QMessageBox::Cancel | QMessageBox::Escape);
+            QMessageBox::StandardButton r = QMessageBox::warning(
+                 this,
+                 tr("Viewer"),
+                 tr("The model has been modified.\n"
+                    "Do you want to save your changes?"),
+                 QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
+                 QMessageBox::Yes
+             );
             if (r == QMessageBox::Yes)
                 return onSave();
             else if (r == QMessageBox::Cancel)

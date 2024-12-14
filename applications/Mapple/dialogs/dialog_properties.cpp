@@ -79,13 +79,13 @@ DialogProperties::DialogProperties(MainWindow *window)
     margins.setLeft(7);
     lineEditNewPropertyName->setTextMargins(margins);
 
-    connect(comboBoxCommand, SIGNAL(currentIndexChanged(const QString &)), this,
+    connect(comboBoxCommand, SIGNAL(currentTextChanged(const QString &)), this,
             SLOT(commandChanged(const QString &)));
-    connect(comboBoxModels, SIGNAL(currentIndexChanged(const QString &)), this,
+    connect(comboBoxModels, SIGNAL(currentTextChanged(const QString &)), this,
             SLOT(modelChanged(const QString &)));
-    connect(comboBoxPropertyLocation, SIGNAL(currentIndexChanged(const QString &)), this,
+    connect(comboBoxPropertyLocation, SIGNAL(currentTextChanged(const QString &)), this,
             SLOT(locationChanged(const QString &)));
-    connect(comboBoxPropertyName, SIGNAL(currentIndexChanged(const QString &)), this,
+    connect(comboBoxPropertyName, SIGNAL(currentTextChanged(const QString &)), this,
             SLOT(propertyChanged(const QString &)));
     connect(updateButton, SIGNAL(clicked()), this, SLOT(updateProperties()));
     connect(applyButton, SIGNAL(clicked()), this, SLOT(applyCommand()));
@@ -176,7 +176,7 @@ void DialogProperties::modelChanged(const QString &text) {
     if (!model)
         return;
 
-    disconnect(comboBoxPropertyLocation, SIGNAL(currentIndexChanged(const QString &)), this,
+    disconnect(comboBoxPropertyLocation, SIGNAL(currentTextChanged(const QString &)), this,
                SLOT(locationChanged(const QString &)));
 
     if (dynamic_cast<SurfaceMesh *>(model)) {
@@ -203,7 +203,7 @@ void DialogProperties::modelChanged(const QString &text) {
 
     locationChanged(comboBoxPropertyLocation->currentText());
 
-    connect(comboBoxPropertyLocation, SIGNAL(currentIndexChanged(const QString &)), this,
+    connect(comboBoxPropertyLocation, SIGNAL(currentTextChanged(const QString &)), this,
             SLOT(locationChanged(const QString &)));
 }
 
@@ -1127,7 +1127,7 @@ void DialogProperties::updateProperties() {
     const std::string &model_text = comboBoxModels->currentText().toStdString();
     bool model_text_has_match = false;
 
-    disconnect(comboBoxModels, SIGNAL(currentIndexChanged(const QString &)), this,
+    disconnect(comboBoxModels, SIGNAL(currentTextChanged(const QString &)), this,
                SLOT(modelChanged(const QString &)));
     comboBoxModels->clear();
 
@@ -1151,7 +1151,7 @@ void DialogProperties::updateProperties() {
     }
     modelChanged(comboBoxModels->currentText());
 
-    connect(comboBoxModels, SIGNAL(currentIndexChanged(QString)), this, SLOT(modelChanged(QString)));
+    connect(comboBoxModels, SIGNAL(currentTextChanged(const QString&)), this, SLOT(modelChanged(const QString&)));
 }
 
 
