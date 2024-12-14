@@ -3,12 +3,10 @@ cmake_minimum_required(VERSION 3.12)
 get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 project(${PROJECT_NAME})
 
-include(../../cmake/UseQt5.cmake)
-if (NOT QT5_FOUND)
-    message(WARNING "${PROJECT_NAME} requires Qt but Qt was not found. You can set 'Qt5_DIR' to the "
-            "directory containing 'Qt5Config.cmake' or 'qt5-config.cmake'. "
-            "Optionally, you can set the Qt5 root directory 'QT5_ROOT_PATH' to the directory "
-            "containing the 'bin' folder.")
+include(../../cmake/UseQt.cmake)
+if (NOT Qt6_FOUND AND NOT Qt5_FOUND)
+    message(WARNING "${PROJECT_NAME} requires Qt (Qt6 or Qt5), but Qt was not found. You can set 'Qt*_DIR' to the "
+            "directory containing 'Qt*Config.cmake' or 'qt*-config.cmake' (* is 5 or 6) to specify the location of Qt.")
     return()
 endif ()
 
@@ -83,5 +81,5 @@ endif ()
 target_compile_definitions(${PROJECT_NAME} PRIVATE "EXAMPLE_TITLE=\"${PROJECT_NAME}\"")
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${Easy3D_INCLUDE_DIR})
-target_link_libraries(${PROJECT_NAME} PRIVATE Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL easy3d::renderer)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${QtLibs} easy3d::renderer)
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "tutorials")

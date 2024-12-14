@@ -4,12 +4,10 @@ get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 project(${PROJECT_NAME})
 
 
-include(../../cmake/UseQt5.cmake)
-if (NOT QT5_FOUND)
-    message(WARNING "${PROJECT_NAME} requires Qt but Qt was not found. You can set 'Qt5_DIR' to the "
-            "directory containing 'Qt5Config.cmake' or 'qt5-config.cmake'. "
-            "Optionally, you can set the Qt5 root directory 'QT5_ROOT_PATH' to the directory "
-            "containing the 'bin' folder.")
+include(../../cmake/UseQt.cmake)
+if (NOT Qt6_FOUND AND NOT Qt5_FOUND)
+    message(WARNING "${PROJECT_NAME} requires Qt (Qt6 or Qt5), but Qt was not found. You can set 'Qt*_DIR' to the "
+            "directory containing 'Qt*Config.cmake' or 'qt*-config.cmake' (* is 5 or 6) to specify the location of Qt.")
     return()
 endif ()
 
@@ -212,7 +210,7 @@ if (MSVC)
     target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_DEPRECATE)
 endif ()
 
-target_link_libraries(${PROJECT_NAME} PRIVATE Qt5::Core Qt5::Gui Qt5::Widgets Qt5::OpenGL)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${QtLibs})
 
 target_link_libraries(${PROJECT_NAME} PRIVATE easy3d::renderer easy3d::algo easy3d::gui)
 if (Easy3D_HAS_CGAL)
