@@ -102,9 +102,10 @@ The **optional** third-party libraries are:
   CGAL ([v5.1 or later](https://github.com/CGAL/cgal/releases)) is installed and visible to CMake. In case you have
   multiple versions of CGAL on your platform, simply provide the path of a suitable one to the CMake variable `CGAL_DIR`.
 
-- **[Qt5](https://www.qt.io/) (optional)**: Easy3D supports Qt ([v5.6 or later](https://download.qt.io/archive/qt/)) for 
-  UI creation, which can help develop sophisticated applications for 3D data processing and visualization. The Qt 
-  support is disabled by default (because most users don't need it). You can switch on the CMake option `Easy3D_ENABLE_QT` 
+- **[Qt](https://www.qt.io/) (optional)**: Easy3D supports Qt >= v5.6 ([v5.14.2](https://download.qt.io/archive/qt/5.14/5.14.2/),
+  [v5.12.12](https://download.qt.io/archive/qt/5.12/5.12.12/), and [v6.7.3](https://www.qt.io/download-qt-installer-oss)
+  have been tested) for UI creation, which can help develop sophisticated applications for 3D data processing and visualization. 
+  The Qt support is disabled by default (because most users don't need it). You can switch on the CMake option `Easy3D_ENABLE_QT` 
   to include the examples and applications that depend on Qt (e.g., 
   [`Tutorial_204_Viewer_Qt`](https://github.com/LiangliangNan/Easy3D/tree/main/tutorials/Tutorial_204_Viewer_Qt) and 
   [`Mapple`](https://github.com/LiangliangNan/Easy3D/tree/main/applications/Mapple)).
