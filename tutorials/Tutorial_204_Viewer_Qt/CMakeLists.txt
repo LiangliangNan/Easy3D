@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.12)
-
 get_filename_component(PROJECT_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 project(${PROJECT_NAME})
 
@@ -73,7 +71,7 @@ endif ()
 # deprecated API in order to know how to port your code away from it.
 target_compile_definitions(${PROJECT_NAME} PRIVATE QT_DEPRECATED_WARNINGS)
 
-if (MSVC)
+if (WIN32 OR MSVC)
     target_compile_definitions(${PROJECT_NAME} PRIVATE _CRT_SECURE_NO_DEPRECATE)
 endif ()
 

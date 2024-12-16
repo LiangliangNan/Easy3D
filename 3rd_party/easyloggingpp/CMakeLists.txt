@@ -27,7 +27,7 @@ set(ELPP_VERSION_STRING "${ELPP_MAJOR_VERSION}.${ELPP_MINOR_VERSION}.${ELPP_PATC
 require_cpp11()
 add_library(3rd_${module} STATIC easylogging++.h easylogging++.cc)
 set_property(TARGET 3rd_${module} PROPERTY POSITION_INDEPENDENT_CODE ON)
-if (MSVC)
+if (WIN32 OR MSVC)
 	target_compile_definitions(3rd_${module} PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
 endif()
 

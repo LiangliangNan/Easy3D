@@ -122,7 +122,7 @@ if (Easy3D_BUILD_SHARED_LIBS)
     #Ref: Create dlls on Windows without declspec() using new CMake export all feature
     #     https://cmake.org/cmake/help/v3.4/prop_tgt/WINDOWS_EXPORT_ALL_SYMBOLS.html#prop_tgt:WINDOWS_EXPORT_ALL_SYMBOLS
     #     https://www.kitware.com/create-dlls-on-windows-without-declspec-using-new-cmake-export-all-feature/
-    if (MSVC)
+    if (WIN32 OR MSVC)
         set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
     endif ()
 else ()
@@ -210,7 +210,7 @@ endforeach ()
 function(add_module module headers sources private_dependencies public_dependencies)
     add_library(easy3d_${module} ${Easy3D_LIB_TYPE} ${headers} ${sources})
 
-    if (MSVC)
+    if (WIN32 OR MSVC)
         # get a clean windows
         target_compile_definitions(easy3d_${module} PUBLIC NOMINMAX WIN32_LEAN_AND_MEAN VC_EXTRALEAN _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
     endif ()

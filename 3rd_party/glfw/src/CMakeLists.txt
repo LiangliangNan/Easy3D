@@ -130,7 +130,7 @@ set_target_properties(3rd_${module} PROPERTIES
                       C_EXTENSIONS OFF
                       DEFINE_SYMBOL _GLFW_BUILD_DLL
                       FOLDER "3rd_party")
-if (MSVC)
+if (WIN32 OR MSVC)
 	target_compile_definitions(3rd_${module} PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
 endif()
 
@@ -253,7 +253,7 @@ endif()
 
 # Enable a reasonable set of warnings
 # NOTE: The order matters here, Clang-CL matches both MSVC and Clang
-if (MSVC)
+if (WIN32 OR MSVC)
     target_compile_options(3rd_${module} PRIVATE "/W3")
 elseif (CMAKE_C_COMPILER_ID STREQUAL "GNU" OR
         CMAKE_C_COMPILER_ID STREQUAL "Clang" OR

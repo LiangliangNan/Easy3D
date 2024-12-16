@@ -85,7 +85,7 @@ set_target_properties(LASlib PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../lib
 )
 
-if(MSVC)
+if (WIN32 OR MSVC)
    target_compile_options(LASlib PRIVATE /Zi)
 
    # Tell linker to include symbol data
@@ -102,7 +102,7 @@ endif()
 
 install(FILES ${LAS_INCLUDES} DESTINATION include/LASlib)
 
-if (MSVC)
+if (WIN32 OR MSVC)
 	foreach( OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES} )
 		install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../lib/${OUTPUTCONFIG} DESTINATION lib/LASlib)
 	endforeach( OUTPUTCONFIG CMAKE_CONFIGURATION_TYPES )

@@ -1,9 +1,6 @@
-cmake_minimum_required(VERSION 3.12)
-
 get_filename_component(MODULE_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 set(PROJECT_NAME 3rd_${MODULE_NAME})
 project(${PROJECT_NAME})
-
 
 
 add_library(${PROJECT_NAME} STATIC
