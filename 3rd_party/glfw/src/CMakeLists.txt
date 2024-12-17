@@ -253,7 +253,7 @@ endif()
 
 # Enable a reasonable set of warnings
 # NOTE: The order matters here, Clang-CL matches both MSVC and Clang
-if (WIN32 OR MSVC)
+if (MSVC)
     target_compile_options(3rd_${module} PRIVATE "/W3")
 elseif (CMAKE_C_COMPILER_ID STREQUAL "GNU" OR
         CMAKE_C_COMPILER_ID STREQUAL "Clang" OR
