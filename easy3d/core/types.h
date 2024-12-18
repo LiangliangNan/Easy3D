@@ -642,7 +642,7 @@ namespace easy3d {
     }   // namespace geom
 
 }   // namespace easy3d
-// \cond
+// \endcond
 
 #endif  // EASY3D_CORE_TYPES_H
 
