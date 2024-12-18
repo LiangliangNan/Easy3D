@@ -55,6 +55,7 @@ target_compile_definitions(easy3d_${module}
         )
 
 if (Easy3D_BUILD_SHARED_LIBS)
+# We do want to export the symbols in easyloggingpp
     target_compile_definitions(easy3d_${module}
             PUBLIC ELPP_AS_DLL
             PRIVATE ELPP_EXPORT_SYMBOLS)
