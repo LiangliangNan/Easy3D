@@ -39,7 +39,7 @@ endif ()
 set(Easy3D_INSTALL_LIB_DIR ${CMAKE_INSTALL_PREFIX}/lib CACHE PATH "Installation directory for libraries")
 set(Easy3D_INSTALL_BIN_DIR ${CMAKE_INSTALL_PREFIX}/bin CACHE PATH "Installation directory for executables")
 set(Easy3D_INSTALL_INCLUDE_DIR ${CMAKE_INSTALL_PREFIX}/include CACHE PATH "Installation directory for header files")
-set(Easy3D_INSTALL_CMAKE_DIR ${CMAKE_INSTALL_PREFIX}/lib/CMake/Easy3D CACHE PATH "Installation directory for CMake files")
+set(Easy3D_INSTALL_CMAKE_DIR ${CMAKE_INSTALL_PREFIX}/lib/CMake CACHE PATH "Installation directory for CMake files")
 set(Easy3D_INSTALL_RESOURCE_DIR ${CMAKE_INSTALL_PREFIX}/resources CACHE PATH "Installation directory for CMake files")
 
 # The include directory of the exported header files
@@ -211,12 +211,22 @@ function(add_module module headers sources private_dependencies public_dependenc
     add_library(easy3d_${module} ${Easy3D_LIB_TYPE} ${headers} ${sources})
 
     if (WIN32 OR MSVC)
-        # get a clean windows
+        # define Windows-specific preprocessor definitions, and get a clean windows
         target_compile_definitions(easy3d_${module} PUBLIC NOMINMAX WIN32_LEAN_AND_MEAN VC_EXTRALEAN _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
     endif ()
 
 #    if(MINGW)
-#        # Liangliang: Workaround to handle dynamic library generation using MinGW.
+#        # shared libraries (dynamic libraries) in MinGW do not automatically propagate symbols from dependencies
+#        # to other libraries. Unlike MSVC, where a chain of dependent libraries can resolve symbols transitively.
+#        # Liangliang: Workaround to handle dynamic library generation using MinGW (does not work).
+#        # MinGW/GCC-specific workaround for transitive linking
+#        if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+#            target_link_libraries(easy3d_${module}
+#                    PRIVATE -Wl,--whole-archive 3rd_easyloggingpp -Wl,--no-whole-archive
+#                    )
+#        endif()
+#
+#        # Liangliang: Workaround to handle dynamic library generation using MinGW (need to .
 #        #             Issue: To work with MSVC, CMake's "generate_export_header(...)" is used to generate preprocessor
 #        #                    EXPORT macros (that contains -_declspec(dllexport) or __declspec(dllimport)), and MSVC
 #        #                    requires to explicitly mark the global variables with the macro. However, MinGW has a
@@ -232,22 +242,28 @@ function(add_module module headers sources private_dependencies public_dependenc
     generate_export_header(easy3d_${module}
             EXPORT_FILE_NAME "${Easy3D_EXPORT_INCLUDE_DIR}/easy3d/${module}/export.h"
             )
+
+    # Include directories for the target
     target_include_directories(easy3d_${module} PUBLIC
             "$<BUILD_INTERFACE:${Easy3D_INCLUDE_DIR}>"
             "$<BUILD_INTERFACE:${Easy3D_EXPORT_INCLUDE_DIR}>"
             "$<INSTALL_INTERFACE:${Easy3D_INSTALL_INCLUDE_DIR}>"
             )
+
+    # Link dependencies
     target_link_libraries(easy3d_${module}
             PRIVATE ${private_dependencies}
             PUBLIC ${public_dependencies}
             )
+
+    # Set properties for the library
     set_target_properties(easy3d_${module} PROPERTIES
             FOLDER "easy3d"
             SOVERSION ${Easy3D_VERSION_MAJOR}
             VERSION ${Easy3D_VERSION_STRING}
             )
 
-    # Alias target (recommended by policy CMP0028) and it looks nicer
+    # Add an alias target (recommended by policy CMP0028) and it looks nicer
     message(STATUS "Adding target: easy3d::${module} (easy3d_${module})")
     add_library(easy3d::${module} ALIAS easy3d_${module})
     # Export as easy3d::${module}

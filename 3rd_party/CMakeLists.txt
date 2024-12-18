@@ -3,8 +3,9 @@ function(add_3rdparty_module module sources headers)
     set_target_properties(${module} PROPERTIES FOLDER "3rd_party")
     set_target_properties(${module} PROPERTIES POSITION_INDEPENDENT_CODE ON)
     if (WIN32 OR MSVC)
-        target_compile_definitions(${module} PRIVATE _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
-    endif()
+        # define Windows-specific preprocessor definitions, and get a clean windows
+        target_compile_definitions(${module} PUBLIC NOMINMAX WIN32_LEAN_AND_MEAN VC_EXTRALEAN _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
+    endif ()
 endfunction()
 
 
@@ -24,6 +25,5 @@ add_subdirectory(tetgen)
 add_subdirectory(glutess)
 add_subdirectory(opcode)
 add_subdirectory(polypartition)
-
 
 

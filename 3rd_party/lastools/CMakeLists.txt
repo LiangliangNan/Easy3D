@@ -129,7 +129,6 @@ target_include_directories(3rd_${module} PRIVATE
 		${CMAKE_CURRENT_LIST_DIR}/LASlib/inc
 		)
 
-
 if (NOT ${Easy3D_BUILD_SHARED_LIBS})
 	install(TARGETS 3rd_${module}
 			# IMPORTANT: Add the library to the "export-set"
