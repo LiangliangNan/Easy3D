@@ -39,7 +39,7 @@ using namespace easy3d;
 
 int main(int argc, char *argv[]) {
     // Note: Calling QSurfaceFormat::setDefaultFormat() before constructing the
-    //       QApplication instance is mandatory on some platforms(for example, macOS)
+    //       QApplication instance is mandatory on some platforms (e.g., macOS)
     //       when an OpenGL core profile context is requested. This is to ensure
     //       that resource sharing between contexts stays functional as all internal
     //       contexts are created using the correct version and profile.

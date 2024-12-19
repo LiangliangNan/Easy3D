@@ -918,11 +918,10 @@ namespace easy3d {
 
 
     void Viewer::preDraw() {
-        // For normal drawing, i.e., drawing triggered by the paintEvent(),
-        // the clearing is done before entering paintGL().
-        // If you want to reuse the paintGL() method for offscreen rendering,
-        // you have to clear both color and depth buffers beforehand.
-        //func_->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        // The Qt6 documentation says (https://doc.qt.io/qt-6/qopenglwidget.html#paintGL):
+        //      Default implementation performs a glClear(). Subclasses are not expected to invoke
+        //      the base class implementation and should perform clearing on their own.
+        func_->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     }
 
 
