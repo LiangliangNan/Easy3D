@@ -35,6 +35,10 @@ namespace easy3d {
 
     class PointCloud;
 
+    ///Todo:
+    /// (1) redesign the APIs
+    /// (2) allow all five types of primitives (and support parameters)
+
     /**
      * \brief Extract primitives from point clouds using RANSAC.
      * \class PrimitivesRansac easy3d/algo/point_cloud_ransac.h
@@ -116,8 +120,6 @@ namespace easy3d {
                 float normal_threshold = 0.8f,
                 float overlook_probability = 0.001f
         );
-
-        //Todo: implement storing parameters for spheres, toruses, and cones.
         
         // In addition to the primitive information (primitive type and index stored as per-vertex properties, 
         // the parameters of the detected primitives can be queried using the perspective functions.
