@@ -74,7 +74,7 @@ void bind_stop_watch(py::module &m) {
                 num_digits (int): Number of decimal places to include in the result.
 
                 Returns:
-                float: Elapsed time in seconds.
+                double: Elapsed time in seconds.
             )pbdoc")
             .def("time_string", &easy3d::StopWatch::time_string,
                  py::arg("num_digits") = 1, R"pbdoc(
