@@ -35,7 +35,7 @@ using namespace easy3d;
 
 int main(int argc, char** argv) {
     // initialize Easy3D.
-    initialize(true, true);
+    initialize(false, true, true);
 
     // create a 1 by 1 layout by default
     FigureMaker viewer(1, 1, APP_TITLE);

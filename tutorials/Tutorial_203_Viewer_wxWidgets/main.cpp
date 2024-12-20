@@ -35,7 +35,7 @@ using namespace easy3d;
 
 int main(int argc, char **argv) {
     // initialize Easy3D.
-    initialize(true);
+    initialize(false, true);
 
     Application app(EXAMPLE_TITLE);
     return app.run(argc, argv);

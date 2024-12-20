@@ -32,8 +32,8 @@
 
 namespace easy3d {
 
-    void initialize(bool use_log_file, bool use_setting_file, const std::string& resource_dir) {
-        logging::initialize(false, true, true, false, use_log_file ? "default" : "", 9);
+    void initialize(bool info_to_stdout, bool use_log_file, bool use_setting_file, const std::string& resource_dir) {
+        logging::initialize(info_to_stdout, true, true, false, use_log_file ? "default" : "", 9);
         setting::initialize(use_setting_file ? "default" : "");
         resource::initialize(resource_dir);
     }

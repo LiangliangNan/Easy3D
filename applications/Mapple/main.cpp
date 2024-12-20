@@ -85,7 +85,7 @@ public:
 
 int main(int argc, char *argv[]) {
     // initialize: we want to use both log and setting files
-    initialize(true, true);
+    initialize(false, true, true);
 
     //Locale management
     {

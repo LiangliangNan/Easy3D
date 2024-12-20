@@ -1,5 +1,5 @@
 import sys
-sys.path.append("cmake-build-release/")
+sys.path.append("../cmake-build-release/")
 
 import easy3d_core
 import easy3d_algo
@@ -8,9 +8,11 @@ import easy3d_util
 import easy3d_viewer
 
 # Initialize Easy3D
-# easy3d_util.initialize()
+easy3d_util.initialize(True)
 
-file_name = "/home/geo3d/Documents/Projects/Easy3D/resources/data/bunny.bin"
+file_name = easy3d_util.resource.directory() + "/data/bunny.bin"
+print("input file name: " + file_name)
+
 # Load the point cloud from a file
 point_cloud = easy3d_fileio.PointCloudIO.load(file_name)
 if not point_cloud:
@@ -24,8 +26,8 @@ if not easy3d_algo.PointCloudNormals.estimate(point_cloud, 16, False):
 if not easy3d_algo.PointCloudNormals.reorient(point_cloud, 16):
     raise ValueError("Normal reorientation failed.")
 
-# Visualize the point cloud
-# viewer = easy3d_viewer.Viewer("Easy3D Viewer")  # Replace with your actual viewer class
+# # Visualize the point cloud
+# viewer = easy3d_viewer.Viewer("Easy3D Viewer")
 # viewer.add_model(point_cloud)
 # viewer.run()
 

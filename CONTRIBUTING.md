@@ -45,22 +45,10 @@ case unless it is already mentioned.  If it is, give it a :+1:.
 
 ## Reporting a runtime bug
 
-If Easy3D crashes, triggering asserts, or behaves unexpectedly at run-time, please enable logging to file (which is disabled by default) by replacing
-the line of Easy3D initialization (in your `main()` function), e.g., 
-
-```c++
-    easy3d::initialize();
-```
-    
-with 
-
-```c++
-    easy3d::initialize(true);
-```
-
-This makes sure that most events will be logged into a log file.
-The log file will often tell you the cause of an error or problem. If it doesn't, that might be a separate bug. Please report 
-the bug by creating an issue and provide the following:
+If Easy3D crashes, triggering asserts, or behaves unexpectedly at run-time, please always include the log file (which 
+is located next to the executable). This log file will often tell you the cause of an error or problem. If it doesn't, 
+that might be a separate bug. 
+Please report the bug by creating an issue and provide the following:
  - a brief description of the issue;
  - operating system name and version (e.g. `Windows 10 64-bit` or `Ubuntu 18.10`);
  - Easy3D release version (e.g., `2.4.3`) if you are using an official release of Easy3D, Otherwise, the Easy3D commit ID (e.g.  

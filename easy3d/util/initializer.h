@@ -37,6 +37,8 @@ namespace easy3d {
      * @details This function initializes logging, setting, and resources. Internally it calls (and is thus identical
      *    to calling) logging::initialize(), setting::initialize(), and resource::initialize().
      *    For more fine-grained initializations, please refer to the documentation of these functions.
+     * @param info_to_stdout \c true to log messages at a the \c INFO level to standard output.
+     *    \c WARNING and \c ERROR (including \c FATAL) levels are always logged to standard output.
      * @param use_log_file \c True to create a ".log" file (which will be created next to the executable program).
      * @param use_setting_file \c True to create an ".ini" file (which will be created next to the executable program).
      *    This setting file stores the default rendering parameters. Users can modify this file to change the default
@@ -47,7 +49,12 @@ namespace easy3d {
      *
      * @sa logging::initialize(), setting::initialize(), and resource::initialize().
      */
-    void initialize(bool use_log_file = false, bool use_setting_file = false, const std::string& resource_dir = Easy3D_RESOURCE_DIR);
+    void initialize(
+            bool info_to_stdout = false,
+            bool use_log_file = true,
+            bool use_setting_file = false,
+            const std::string &resource_dir = Easy3D_RESOURCE_DIR
+    );
 
 
 } // namespace easy3d
