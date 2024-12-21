@@ -14,23 +14,27 @@ file_name = easy3d_util.resource.directory() + "/data/bunny.bin"
 print("input file name: " + file_name)
 
 # Load the point cloud from a file
-point_cloud = easy3d_fileio.PointCloudIO.load(file_name)
-if not point_cloud:
+pc = easy3d_fileio.PointCloudIO.load(file_name)
+if not pc:
     raise ValueError("Failed to load the point cloud.")
 
 # Estimate normals for the point cloud
-if not easy3d_algo.PointCloudNormals.estimate(point_cloud, 16, False):
+if not easy3d_algo.PointCloudNormals.estimate(pc, 16, False):
     raise ValueError("Normal estimation failed.")
 
 # Optional: Reorient normals if needed
-if not easy3d_algo.PointCloudNormals.reorient(point_cloud, 16):
+if not easy3d_algo.PointCloudNormals.reorient(pc, 16):
     raise ValueError("Normal reorientation failed.")
 
 # # Visualize the point cloud
-# viewer = easy3d_viewer.Viewer("Easy3D Viewer")
-# viewer.add_model(point_cloud)
-# viewer.run()
+# ToDo: python binding for the viewer is not ready
+#       The viewer crashes when closing it (due to the ownership of pc?)
+viewer = easy3d_viewer.Viewer("Easy3D Viewer")
+viewer.set_usage("")
+# print(pc.name())
+viewer.add_model(pc)
+viewer.run()
 
 # Save the point cloud into a file
-if not easy3d_fileio.PointCloudIO.save(file_name + "-result.ply", point_cloud):
+if not easy3d_fileio.PointCloudIO.save(file_name + "-result.ply", pc):
     raise ValueError("Saving file failed.")
