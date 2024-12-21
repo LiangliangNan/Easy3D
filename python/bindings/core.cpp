@@ -187,10 +187,6 @@ void init_catmull_rom(py::module_ &m) {
             .def("node", &easy3d::CatmullRom<Point_t>::node);
 }
 
-// Forward declaration of the GenericLine template for different dimensions and types
-template <int DIM, typename FT>
-class GenericLine;
-
 // Define the necessary binding code for GenericLine with double precision (using double)
 template <int DIM>
 void init_generic_line(py::module& m) {
@@ -213,8 +209,8 @@ void init_generic_line(py::module& m) {
 
 void bind_model(py::module& m) {
     py::class_<easy3d::Model>(m, "Model")
-            .def("set_name", &easy3d::Model::set_name)
-            .def("name", &easy3d::Model::name)
+            .def("set_name", &easy3d::Model::set_name, py::arg("name"), "Set the name of the model.")
+            .def("name", &easy3d::Model::name, py::return_value_policy::reference_internal, "Query the name of the model.")
             .def("bounding_box", &easy3d::Model::bounding_box, py::arg("recompute") = false)
             .def("invalidate_bounding_box", &easy3d::Model::invalidate_bounding_box)
             .def("points", py::overload_cast<>(&easy3d::Model::points, py::const_))
@@ -229,29 +225,27 @@ void bind_model(py::module& m) {
 void bind_point_cloud(py::module& m) {
     py::class_<easy3d::PointCloud, easy3d::Model>(m, "PointCloud")
             .def(py::init<>())
-            .def(py::init<const easy3d::PointCloud&>())
             .def("add_vertex", &easy3d::PointCloud::add_vertex)
-            .def("vertices_size", &easy3d::PointCloud::vertices_size)
             .def("n_vertices", &easy3d::PointCloud::n_vertices)
             .def("clear", &easy3d::PointCloud::clear)
-            .def("resize", &easy3d::PointCloud::resize)
+            .def("resize", &easy3d::PointCloud::resize, py::arg("n"))
             .def("has_garbage", &easy3d::PointCloud::has_garbage)
             .def("collect_garbage", &easy3d::PointCloud::collect_garbage)
-            .def("delete_vertex", &easy3d::PointCloud::delete_vertex)
+            .def("delete_vertex", &easy3d::PointCloud::delete_vertex, py::arg("v"))
             .def("is_deleted", &easy3d::PointCloud::is_deleted)
             .def("is_valid", &easy3d::PointCloud::is_valid)
             .def("add_vertex_property", [](easy3d::PointCloud& self, const std::string& name) {
                 return self.add_vertex_property<double>(name);
-            })
+            }, py::arg("name"))
             .def("get_vertex_property", [](easy3d::PointCloud& self, const std::string& name) {
                 return self.get_vertex_property<double>(name);
-            })
+            }, py::arg("name"))
             .def("add_model_property", [](easy3d::PointCloud& self, const std::string& name) {
                 return self.add_model_property<double>(name);
-            })
+            }, py::arg("name"))
             .def("get_model_property", [](easy3d::PointCloud& self, const std::string& name) {
                 return self.get_model_property<double>(name);
-            });
+            }, py::arg("name"));
 }
 
 PYBIND11_MODULE(easy3d_core, m) {

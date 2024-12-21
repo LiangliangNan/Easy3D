@@ -3,6 +3,7 @@
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/core/model.h>
+#include <easy3d/core/point_cloud.h>
 
 
 namespace py = pybind11;
@@ -27,6 +28,8 @@ void init_viewer(py::module& m) {
             .def("exit", &easy3d::Viewer::exit, "Terminate the viewer.")
             .def("set_title", &easy3d::Viewer::set_title, py::arg("title"), "Set the window title of the viewer.")
             .def("title", &easy3d::Viewer::title, py::return_value_policy::reference_internal, "Query the window title of the viewer.")
+            .def("set_usage", &easy3d::Viewer::set_usage, py::arg("usg"), "Set the usage string.")
+            .def("usage", &easy3d::Viewer::usage, py::return_value_policy::reference_internal, "Query the usage.")
             .def("resize", &easy3d::Viewer::resize, py::arg("width"), py::arg("height"), "Set/Change the viewer size.")
             .def("width", &easy3d::Viewer::width, "Returns the width of the viewer/window.")
             .def("height", &easy3d::Viewer::height, "Returns the height of the viewer/window.")
@@ -39,9 +42,12 @@ void init_viewer(py::module& m) {
             .def("add_model", py::overload_cast<const std::string&, bool>(&easy3d::Viewer::add_model),
                  py::arg("file_name"), py::arg("create_default_drawables") = true, py::return_value_policy::reference_internal,
                  "Add a model from a file to the viewer.")
-            .def("add_model", py::overload_cast<easy3d::Model*, bool>(&easy3d::Viewer::add_model),
-                 py::arg("model"), py::arg("create_default_drawables") = true, py::return_value_policy::reference_internal,
-                 "Add an existing to the viewer.")
+            .def("add_model", [](easy3d::Viewer& self, easy3d::PointCloud* pc, bool create_default_drawables = true) {
+                     return self.add_model(static_cast<easy3d::Model*>(pc), create_default_drawables);
+                 },
+                 py::arg("point_cloud"), py::arg("create_default_drawables") = true,
+                 py::return_value_policy::reference_internal,
+                 "Add a PointCloud to the viewer.")
             .def("clear_scene", &easy3d::Viewer::clear_scene, "Delete all visual contents of the viewer.")
             .def("update", &easy3d::Viewer::update, "Update the display (i.e., repaint).")
             .def("fit_screen", &easy3d::Viewer::fit_screen, py::arg("model") = nullptr, "Center the scene or active model on the screen.")

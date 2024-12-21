@@ -690,7 +690,6 @@ namespace easy3d {
         }
 
     }
-    // \endcond
 
 
 } // namespace easy3
