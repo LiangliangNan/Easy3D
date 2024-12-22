@@ -14,7 +14,7 @@
 
 
 #include <easy3d/core/types.h>
-#include <easy3d/core//surface_mesh.h>
+#include <easy3d/core/surface_mesh.h>
 
 
 namespace easy3d {
