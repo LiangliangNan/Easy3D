@@ -27,7 +27,7 @@
 #ifndef EASY3D_ALGO_POINT_CLOUD_RANSAC_H
 #define EASY3D_ALGO_POINT_CLOUD_RANSAC_H
 
-
+#include <set>
 #include <easy3d/core/types.h>
 
 
