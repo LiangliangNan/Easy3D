@@ -31,6 +31,8 @@
 #include <cstdint>
 #include <functional>
 
+#include <easy3d/core/vec.h>
+
 
 namespace easy3d
 {

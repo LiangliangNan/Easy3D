@@ -28,6 +28,9 @@
 #define EASY3D_CORE_HEAP_H
 
 #include <vector>
+#include <cassert>
+#include <iostream>
+
 
 namespace easy3d {
 

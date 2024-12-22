@@ -29,6 +29,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <cassert>
 
 
 namespace easy3d {

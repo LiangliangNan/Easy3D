@@ -32,6 +32,8 @@
 #include <algorithm>
 
 #include <easy3d/core/vec.h>
+#include <easy3d/core/box.h>
+
 
 namespace easy3d {
 
