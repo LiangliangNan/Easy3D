@@ -26,15 +26,21 @@ if not easy3d_algo.PointCloudNormals.estimate(pc, 16, False):
 if not easy3d_algo.PointCloudNormals.reorient(pc, 16):
     raise ValueError("Normal reorientation failed.")
 
+# Save the point cloud into a file
+result_file = file_name + "-result.ply";
+if not easy3d_fileio.PointCloudIO.save(result_file, pc):
+    raise ValueError("Saving file failed.")
+
 # # Visualize the point cloud
-# ToDo: python binding for the viewer is not ready
-#       The viewer crashes when closing it (due to the ownership of pc?)
 viewer = easy3d_viewer.Viewer("Easy3D Viewer")
-viewer.set_usage("")
-# print(pc.name())
-viewer.add_model(pc)
+# viewer.set_usage("")
+viewer.add_model(result_file)
 viewer.run()
 
-# Save the point cloud into a file
-if not easy3d_fileio.PointCloudIO.save(file_name + "-result.ply", pc):
-    raise ValueError("Saving file failed.")
+import os
+os.remove(result_file)
+
+# ToDo: Python binding of Easy3D Viewer is not complete/ready.
+#       Ideally, the processed pc can be directly added to the viewer using
+#           viewer.add_model(pc)
+#       This will be released in a future release.
