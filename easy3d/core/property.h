@@ -27,10 +27,11 @@
 
 #include <vector>
 #include <string>
-#include <iostream>
 #include <algorithm>
 #include <typeinfo>
 #include <cassert>
+
+#include <easy3d/util/logging.h>
 
 
 namespace easy3d {

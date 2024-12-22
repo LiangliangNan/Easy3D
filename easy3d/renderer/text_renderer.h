@@ -126,7 +126,7 @@ namespace easy3d {
          *        defined at the bottom left corner of the content area.
          * @return The region occupied by the text.
          */
-        Rect draw(const std::string &text, float x, float y, float font_size, Align align = ALIGN_LEFT,
+        Rect draw(const std::string &text, float x, float y, float font_size, Align align/* = ALIGN_LEFT*/,
                   int font_id = 0, const vec3 &font_color = vec3(0, 0, 0),
                   float line_spacing = 0.0f, bool upper_left = true) const;
 

@@ -28,6 +28,7 @@
 #define EASY3D_CORE_LINE_H
 
 #include <easy3d/core/vec.h>
+#include <easy3d/core/constant.h>
 #include <easy3d/util/logging.h>
 
 

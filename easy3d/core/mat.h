@@ -626,7 +626,7 @@ namespace easy3d {
     inline bool Mat<N, M, T>::operator==(const Mat<N, M, T> &rhs) const {
         bool result = true;
         for (size_t i = 0; i < N * M; ++i)
-            result &= equal(m_[i], rhs[i]);
+            result &= epsilon_equal(m_[i], rhs[i], T(0));
         return result;
     }
 
@@ -930,7 +930,7 @@ namespace easy3d {
     inline T determinant(const Mat<N, N, T> &m) {
         /*	Use LU decomposition to find the determinant. */
         Mat<N, N, T> tmp;
-        Vec<N, size_t> rowp;
+        Vec<N, T> rowp;
         T result;
         lu_decomposition(m, &tmp, &rowp, &result);
         for (size_t i = 0; i < N; ++i)

@@ -14,7 +14,6 @@
 #include <cassert>
 #include <iostream>
 #include <cmath>
-#include <cfloat>
 #include <cstring>
 #include <limits>
 
