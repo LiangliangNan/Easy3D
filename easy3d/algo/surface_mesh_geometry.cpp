@@ -13,6 +13,7 @@
 
 #include <limits>
 #include <cmath>
+#include <cassert>
 
 
 namespace easy3d {
@@ -42,19 +43,23 @@ namespace easy3d {
 
         //-----------------------------------------------------------------------------
 
-        float volume(const SurfaceMesh& mesh)
+        float volume(const SurfaceMesh* mesh)
         {
-            if (!mesh.is_triangle_mesh()) {
+            if (!mesh->is_triangle_mesh()) {
                 LOG(ERROR) << "input is not a pure triangle mesh!";
                 return 0;
             }
-
+            if (!mesh->is_closed()) {
+                LOG(ERROR) << "input is not closed!";
+                return 0;
+            }
+            
             float volume(0);
-            for (const auto f : mesh.faces()) {
-                auto fv = mesh.vertices(f);
-                const auto& p0 = mesh.position(*fv);
-                const auto& p1 = mesh.position(*(++fv));
-                const auto& p2 = mesh.position(*(++fv));
+            for (const auto f : mesh->faces()) {
+                auto fv = mesh->vertices(f);
+                const auto& p0 = mesh->position(*fv);
+                const auto& p1 = mesh->position(*(++fv));
+                const auto& p2 = mesh->position(*(++fv));
 
                 volume += float(1.0) / float(6.0) * dot(cross(p0, p1), p2);
             }

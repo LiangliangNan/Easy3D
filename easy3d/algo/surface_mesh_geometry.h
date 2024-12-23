@@ -29,7 +29,7 @@ namespace easy3d {
 
         //! \brief Compute the volume of a mesh
         //! \details See \cite zhang_2002_efficient for details.
-        //! \pre Input mesh needs to be a pure triangle mesh.
+        //! \pre Input mesh needs to be a pure triangle mesh, and must be closed.
         float volume(const SurfaceMesh *mesh);
 
         /** \brief barycenter/centroid of a face    */
