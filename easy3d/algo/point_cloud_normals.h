@@ -27,8 +27,6 @@
 #ifndef EASY3D_ALGO_POINT_CLOUD_NORMALS_H
 #define EASY3D_ALGO_POINT_CLOUD_NORMALS_H
 
-#include <string>
-
 
 namespace easy3d {
 
