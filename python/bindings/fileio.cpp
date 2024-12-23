@@ -73,7 +73,7 @@ void bind_point_cloud_io(py::module_ &m) {
 }
 
 
-PYBIND11_MODULE(easy3d_fileio, m) {
+void init_fileio(py::module_& m){
     m.doc() = "Bindings for Easy3D fileio functions";
 
     bind_point_cloud_io(m);

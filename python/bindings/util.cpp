@@ -88,8 +88,7 @@ void bind_stop_watch(py::module &m) {
             )pbdoc");
 }
 
-
-PYBIND11_MODULE(easy3d_util, m) {
+void init_util(py::module_& m) {
     m.doc() = "Bindings for Easy3D util functions";
 
     m.def("initialize", &easy3d::initialize,

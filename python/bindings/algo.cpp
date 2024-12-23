@@ -5,7 +5,7 @@
 
 namespace py = pybind11;
 
-void init_point_cloud_normals(py::module_ &m) {
+void bind_point_cloud_normals(py::module_ &m) {
     py::class_<easy3d::PointCloudNormals>(m, "PointCloudNormals")
             .def_static(
                     "estimate", &easy3d::PointCloudNormals::estimate,
@@ -45,8 +45,6 @@ void init_point_cloud_normals(py::module_ &m) {
             )doc");
 }
 
-PYBIND11_MODULE(easy3d_algo, m) {
-    m.doc() = "Bindings for Easy3D algo functions";
-
-    init_point_cloud_normals(m);
+void init_algo(py::module_& m) {
+    bind_point_cloud_normals(m);
 }

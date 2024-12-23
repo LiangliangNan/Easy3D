@@ -1,38 +1,34 @@
 import sys
 sys.path.append("../cmake-build-release/")
 
-import easy3d_core
-import easy3d_algo
-import easy3d_fileio
-import easy3d_util
-import easy3d_viewer
+import easy3d
 
 # Initialize Easy3D
-easy3d_util.initialize(True)
+easy3d.initialize(True)
 
-file_name = easy3d_util.resource.directory() + "/data/bunny.bin"
+file_name = easy3d.resource.directory() + "/data/bunny.bin"
 print("input file name: " + file_name)
 
 # Load the point cloud from a file
-pc = easy3d_fileio.PointCloudIO.load(file_name)
+pc = easy3d.PointCloudIO.load(file_name)
 if not pc:
     raise ValueError("Failed to load the point cloud.")
 
 # Estimate normals for the point cloud
-if not easy3d_algo.PointCloudNormals.estimate(pc, 16, False):
+if not easy3d.PointCloudNormals.estimate(pc, 16, False):
     raise ValueError("Normal estimation failed.")
 
 # Optional: Reorient normals if needed
-if not easy3d_algo.PointCloudNormals.reorient(pc, 16):
+if not easy3d.PointCloudNormals.reorient(pc, 16):
     raise ValueError("Normal reorientation failed.")
 
 # Save the point cloud into a file
 result_file = file_name + "-result.ply";
-if not easy3d_fileio.PointCloudIO.save(result_file, pc):
+if not easy3d.PointCloudIO.save(result_file, pc):
     raise ValueError("Saving file failed.")
 
 # Visualize the point cloud
-viewer = easy3d_viewer.Viewer("Easy3D Viewer")
+viewer = easy3d.Viewer("Easy3D Viewer")
 # viewer.set_usage("")
 viewer.add_model(result_file)
 viewer.run()

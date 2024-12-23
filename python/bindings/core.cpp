@@ -97,7 +97,7 @@ void bind_generic_box(py::module_ &m, const std::string &class_name) {
 }
 
 
-void define_constants(py::module_& m) {
+void bind_constants(py::module_& m) {
     m.attr("M_PI") = 3.14159265358979323846264338327950288;
 
     m.def("min_int", &easy3d::min<int>, "Get the minimum value for the int type.");
@@ -130,14 +130,14 @@ void define_constants(py::module_& m) {
 
 
 template<typename Point_t>
-void quadratic_binding(py::module_ &m) {
+void bind_quadratic_binding(py::module_ &m) {
     m.def("quadratic", &easy3d::curve::quadratic<Point_t>,
           py::arg("A"), py::arg("B"), py::arg("C"), py::arg("curve"),
           py::arg("bezier_steps") = 4, py::arg("include_end") = false);
 }
 
 template<typename Point_t>
-void cubic_binding(py::module_ &m) {
+void bind_cubic_binding(py::module_ &m) {
     m.def("cubic", &easy3d::curve::cubic<Point_t>,
           py::arg("A"), py::arg("B"), py::arg("C"), py::arg("D"),
           py::arg("curve"), py::arg("bezier_steps") = 4, py::arg("include_end") = false);
@@ -145,7 +145,7 @@ void cubic_binding(py::module_ &m) {
 
 
 template <typename Point_t>
-void init_curve(py::module_ &m) {
+void bind_curve(py::module_ &m) {
     // Bind the base Curve class
     py::class_<easy3d::Curve<Point_t>, std::shared_ptr<easy3d::Curve<Point_t>>>(m, "Curve")
             .def("set_steps", &easy3d::Curve<Point_t>::set_steps)
@@ -158,7 +158,7 @@ void init_curve(py::module_ &m) {
 }
 
 template <typename Point_t>
-void init_bezier(py::module_ &m) {
+void bind_bezier(py::module_ &m) {
     // Bind the Bezier class
     py::class_<easy3d::Bezier<Point_t>, easy3d::Curve<Point_t>, std::shared_ptr<easy3d::Bezier<Point_t>>>(m, "Bezier")
             .def(py::init<>())
@@ -168,7 +168,7 @@ void init_bezier(py::module_ &m) {
 }
 
 template <typename Point_t>
-void init_bspline(py::module_ &m) {
+void bind_bspline(py::module_ &m) {
     // Bind the BSpline class
     py::class_<easy3d::BSpline<Point_t>, easy3d::Curve<Point_t>, std::shared_ptr<easy3d::BSpline<Point_t>>>(m, "BSpline")
             .def(py::init<>())
@@ -178,7 +178,7 @@ void init_bspline(py::module_ &m) {
 }
 
 template <typename Point_t>
-void init_catmull_rom(py::module_ &m) {
+void bind_catmull_rom(py::module_ &m) {
     // Bind the CatmullRom class
     py::class_<easy3d::CatmullRom<Point_t>, easy3d::Curve<Point_t>, std::shared_ptr<easy3d::CatmullRom<Point_t>>>(m, "CatmullRom")
             .def(py::init<>())
@@ -189,7 +189,7 @@ void init_catmull_rom(py::module_ &m) {
 
 // Define the necessary binding code for GenericLine with double precision (using double)
 template <int DIM>
-void init_generic_line(py::module& m) {
+void bind_generic_line(py::module& m) {
     using Line = easy3d::GenericLine<DIM, double>;
 
     py::class_<Line>(m, ("Line" + std::to_string(DIM)).c_str())
@@ -248,7 +248,8 @@ void bind_point_cloud(py::module& m) {
             }, py::arg("name"));
 }
 
-PYBIND11_MODULE(easy3d_core, m) {
+
+void init_core(py::module_& m) {
     m.doc() = "Bindings for Easy3D core functions";
 
     // Bind GenericBox for 2D
@@ -265,20 +266,20 @@ PYBIND11_MODULE(easy3d_core, m) {
         Compute the intersection of two 3D boxes.
     )pbdoc");
 
-    define_constants(m);
+    bind_constants(m);
     // Binding for quadratic and cubic functions
-    quadratic_binding<easy3d::vec3>(m);
-    cubic_binding<easy3d::vec3>(m);
+    bind_quadratic_binding<easy3d::vec3>(m);
+    bind_cubic_binding<easy3d::vec3>(m);
 
     // Binding for Curve classes
-    init_curve<easy3d::vec3>(m);
-    init_bezier<easy3d::vec3>(m);
-    init_bspline<easy3d::vec3>(m);
-    init_catmull_rom<easy3d::vec3>(m);
+    bind_curve<easy3d::vec3>(m);
+    bind_bezier<easy3d::vec3>(m);
+    bind_bspline<easy3d::vec3>(m);
+    bind_catmull_rom<easy3d::vec3>(m);
 
     // Bind GenericLine for both 2D and 3D
-    init_generic_line<2>(m);
-    init_generic_line<3>(m);
+    bind_generic_line<2>(m);
+    bind_generic_line<3>(m);
 
     bind_model(m);
     bind_point_cloud(m);

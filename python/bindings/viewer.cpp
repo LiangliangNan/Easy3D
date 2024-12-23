@@ -9,7 +9,7 @@
 namespace py = pybind11;
 
 
-void init_viewer(py::module& m) {
+void bind_viewer(py::module& m) {
     py::class_<easy3d::Viewer>(m, "Viewer")
             // Binding constructor
             .def(py::init<const std::string&, int, int, int, bool, bool, int, int, int, int>(),
@@ -56,9 +56,8 @@ void init_viewer(py::module& m) {
                  "Take a snapshot of the screen and save it to an image file.");
 }
 
-
-PYBIND11_MODULE(easy3d_viewer, m) {
+void init_viewer(py::module_& m) {
     m.doc() = "Bindings for Easy3D viewer functions";
 
-    init_viewer(m);
+    bind_viewer(m);
 }
