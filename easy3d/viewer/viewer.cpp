@@ -1185,7 +1185,8 @@ namespace easy3d {
         texter_->add_font(resource::directory() + "/fonts/en_Roboto-Medium.ttf");
 
         // print usage
-        std::cout << usage() << std::endl;
+        if (!usage_string_.empty())
+            std::cout << usage() << std::endl;
     }
 
 
