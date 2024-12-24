@@ -193,4 +193,5 @@ add_custom_command(
 )
 
 # Copy setup.py to the Python package directory
-configure_file(${CMAKE_CURRENT_LIST_DIR}/setup.py.in ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/python/setup.py COPYONLY)
+set(CONF_Easy3D_VERSION ${Easy3D_VERSION_STRING})
+configure_file(${CMAKE_CURRENT_LIST_DIR}/setup.py.in ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/python/setup.py @ONLY)
