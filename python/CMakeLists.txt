@@ -165,7 +165,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 
 
 # The following commands are actually not necessary for generating bindings.
-# They are here to make the use of the bindings easier. Basically, the build the package structure,  in CMakeAdd a custom command to copy the compiled PyEasy3D module to the Python package directory
+# They are here to make it easier for the installation of the generated Python module.
 
 # Specify the output directory for the Python package
 set(PYTHON_PACKAGE_DIR "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/python/easy3d")
@@ -173,14 +173,14 @@ set(PYTHON_PACKAGE_DIR "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/python/easy3d")
 # Ensure the directory exists
 file(MAKE_DIRECTORY ${PYTHON_PACKAGE_DIR})
 
-# Generate the __init__.py file with the alias mechanism
-file(WRITE ${PYTHON_PACKAGE_DIR}/__init__.py "
-# Alias for the PyEasy3D module
-try:
-    from .PyEasy3D import *
-except ImportError:
-    from PyEasy3D import *
-")
+# Generate the __init__.py file
+file(WRITE ${PYTHON_PACKAGE_DIR}/__init__.py
+        "# Alias for the PyEasy3D module\n"
+        "try:\n"
+        "    from .PyEasy3D import *\n"
+        "except ImportError:\n"
+        "    from PyEasy3D import *\n"
+        )
 
 # Path to the compiled PyEasy3D module
 set(COMPILED_MODULE "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${PROJECT_NAME}.so")
