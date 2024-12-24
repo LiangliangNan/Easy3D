@@ -6,7 +6,7 @@
 ![3D model generated and rendered by Easy3D](resources/images/logo.jpg)
 
 #### For 3D modeling, geometry processing, and rendering, designed with emphasis on simplicity and efficiency. 
-Easy3D is implemented in C++ and extended with **Python bindings**. It is intended for research and educational purposes, but it is also a good starting point for developing sophisticated 3D applications. 
+Easy3D is implemented in C++ and comes with **Python bindings**. It is intended for research and educational purposes, but it is also a good starting point for developing sophisticated 3D applications. 
 Compared to existing geometry processing libraries (such as [PMP](http://www.pmp-library.org/) and [libigl](https://github.com/libigl/libigl/)) that focus on the algorithm aspect, Easy3D also provides a wider range of functionalities for user interactions and rendering.
 
 <p align="center"> 
@@ -150,7 +150,7 @@ There are many options to build Easy3D. Choose one of the following (not an exha
 
 #### Build and install Python bindings
 - Make sure you have Python and [pybind11](https://pybind11.readthedocs.io/en/stable/index.html) installed. 
-Then switch on the CMake option `Easy3D_ENABLE_PYTHON` and run CMake. After building Easy3D, you can find the Python bindings in `YOUR_BUILD_DIRECTORY/lib/python`.
+Then switch on the CMake option `Easy3D_BUILD_PYTHON_BINDINGS` and run CMake. After building Easy3D, you can find the Python bindings in `YOUR_BUILD_DIRECTORY/lib/python`.
 - To install the Python bindings, you can use the following command:
     ```
       pip install YOUR_BUILD_DIRECTORY/lib/python/setup.py
@@ -200,7 +200,7 @@ import easy3d
 
 easy3d.initialize()
 viewer = easy3d.Viewer("Test")
-viewer.add_model("path-to-your-model")
+viewer.add_model(easy3d.directory() + "/data/bunny.ply")
 viewer.run()
 ```
 
