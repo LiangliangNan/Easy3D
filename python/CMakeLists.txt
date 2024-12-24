@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 project(PyEasy3D)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 11)  # If you use pybind11::overload_cast<...>, then it requires compiling in C++14 mode
 
 find_package(pybind11 REQUIRED)
 
@@ -56,7 +56,6 @@ set(BINDING_SOURCES
         "bindings/easy3d/core/poly_mesh.cpp"
         "bindings/easy3d/core/property.cpp"
         "bindings/easy3d/core/random.cpp"
-        "bindings/easy3d/core/signal.cpp"
         "bindings/easy3d/core/surface_mesh.cpp"
         "bindings/easy3d/core/surface_mesh_builder.cpp"
         "bindings/easy3d/core/types.cpp"
@@ -76,56 +75,19 @@ set(BINDING_SOURCES
 
         "bindings/easy3d/renderer/camera.cpp"
 
-        "bindings/easy3d/util/console_style.cpp"
         "bindings/easy3d/util/dialog.cpp"
         "bindings/easy3d/util/file_system.cpp"
         "bindings/easy3d/util/initializer.cpp"
-        "bindings/easy3d/util/line_stream.cpp"
         "bindings/easy3d/util/logging.cpp"
-        "bindings/easy3d/util/progress.cpp"
         "bindings/easy3d/util/resource.cpp"
         "bindings/easy3d/util/setting.cpp"
         "bindings/easy3d/util/stop_watch.cpp"
         "bindings/easy3d/util/string.cpp"
-        "bindings/easy3d/util/timer.cpp"
-        "bindings/easy3d/util/tokenizer.cpp"
         "bindings/easy3d/util/version.cpp"
 
         "bindings/easy3d/viewer/multi_viewer.cpp"
         "bindings/easy3d/viewer/offscreen.cpp"
         "bindings/easy3d/viewer/viewer.cpp"
-
-#        Seems never needed
-#        "bindings/easy3d/gui/picker.cpp"
-#        "bindings/easy3d/gui/picker_model.cpp"
-#        "bindings/easy3d/gui/picker_point_cloud.cpp"
-#        "bindings/easy3d/gui/picker_surface_mesh.cpp"
-#        "bindings/easy3d/renderer/ambient_occlusion.cpp"
-#        "bindings/easy3d/renderer/buffer.cpp"
-#        "bindings/easy3d/renderer/clipping_plane.cpp"
-#        "bindings/easy3d/renderer/constraint.cpp"
-#        "bindings/easy3d/renderer/drawable_lines.cpp"
-#        "bindings/easy3d/renderer/eye_dome_lighting.cpp"
-#        "bindings/easy3d/renderer/framebuffer_object.cpp"
-#        "bindings/easy3d/renderer/frustum.cpp"
-#        "bindings/easy3d/renderer/key_frame_interpolator.cpp"
-#        "bindings/easy3d/renderer/manipulated_frame.cpp"
-#        "bindings/easy3d/renderer/opengl_error.cpp"
-#        "bindings/easy3d/renderer/opengl_timer.cpp"
-#        "bindings/easy3d/renderer/read_pixel.cpp"
-#        "bindings/easy3d/renderer/renderer.cpp"
-#        "bindings/easy3d/renderer/shader_manager.cpp"
-#        "bindings/easy3d/renderer/shader_program.cpp"
-#        "bindings/easy3d/renderer/shadow.cpp"
-#        "bindings/easy3d/renderer/shape.cpp"
-#        "bindings/easy3d/renderer/soft_shadow.cpp"
-#        "bindings/easy3d/renderer/state.cpp"
-#        "bindings/easy3d/renderer/text_renderer.cpp"
-#        "bindings/easy3d/renderer/texture.cpp"
-#        "bindings/easy3d/renderer/texture_manager.cpp"
-#        "bindings/easy3d/renderer/transform.cpp"
-#        "bindings/easy3d/renderer/transparency.cpp"
-#        "bindings/easy3d/renderer/vertex_array_object.cpp"
         )
 
 if(Easy3D_HAS_CGAL)

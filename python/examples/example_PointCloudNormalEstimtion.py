@@ -1,8 +1,8 @@
 import sys
-sys.path.append("../cmake-build-release/")
-# sys.path.append("/Users/lnan/Documents/Projects/PyEasy3D/cmake-build-release")
+sys.path.append("../../cmake-build-release/lib/python")
 
 import easy3d
+
 
 # Initialize Easy3D
 easy3d.initialize(True) # True to print detailed log

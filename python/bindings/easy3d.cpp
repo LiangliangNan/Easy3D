@@ -16,7 +16,6 @@ void bind_easy3d_core_point_cloud(pybind11::module_ &m);
 void bind_easy3d_core_poly_mesh(pybind11::module_ &m);
 void bind_easy3d_core_property(pybind11::module_ &m);
 void bind_easy3d_core_random(pybind11::module_ &m);
-void bind_easy3d_core_signal(pybind11::module_ &m);
 void bind_easy3d_core_surface_mesh(pybind11::module_ &m);
 void bind_easy3d_core_surface_mesh_builder(pybind11::module_ &m);
 void bind_easy3d_core_types(pybind11::module_ &m);
@@ -65,49 +64,21 @@ void bind_easy3d_fileio_poly_mesh_io(pybind11::module_ &m);
 void bind_easy3d_fileio_surface_mesh_io(pybind11::module_ &m);
 void bind_easy3d_fileio_translator(pybind11::module_ &m);
 
-//void bind_easy3d_gui_picker(pybind11::module_ &m);
-//void bind_easy3d_gui_picker_model(pybind11::module_ &m);
-//void bind_easy3d_gui_picker_point_cloud(pybind11::module_ &m);
-//void bind_easy3d_gui_picker_surface_mesh(pybind11::module_ &m);
-
 void bind_easy3d_kdtree_kdtree_search_ann(pybind11::module_ &m);
 void bind_easy3d_kdtree_kdtree_search_eth(pybind11::module_ &m);
 void bind_easy3d_kdtree_kdtree_search_flann(pybind11::module_ &m);
 void bind_easy3d_kdtree_kdtree_search_nanoflann(pybind11::module_ &m);
 
-//void bind_easy3d_renderer_constraint(pybind11::module_ &m);
 void bind_easy3d_renderer_camera(pybind11::module_ &m);
-//void bind_easy3d_renderer_buffer(pybind11::module_ &m);
-//void bind_easy3d_renderer_clipping_plane(pybind11::module_ &m);
-//void bind_easy3d_renderer_drawable_lines(pybind11::module_ &m);
-//void bind_easy3d_renderer_framebuffer_object(pybind11::module_ &m);
-//void bind_easy3d_renderer_frustum(pybind11::module_ &m);
-//void bind_easy3d_renderer_manipulated_frame(pybind11::module_ &m);
-//void bind_easy3d_renderer_opengl_error(pybind11::module_ &m);
-//void bind_easy3d_renderer_opengl_timer(pybind11::module_ &m);
-//void bind_easy3d_renderer_read_pixel(pybind11::module_ &m);
-//void bind_easy3d_renderer_renderer(pybind11::module_ &m);
-//void bind_easy3d_renderer_shader_manager(pybind11::module_ &m);
-//void bind_easy3d_renderer_shape(pybind11::module_ &m);
-//void bind_easy3d_renderer_shape_1(pybind11::module_ &m);
-//void bind_easy3d_renderer_soft_shadow(pybind11::module_ &m);
-//void bind_easy3d_renderer_texture_manager(pybind11::module_ &m);
-//void bind_easy3d_renderer_transform(pybind11::module_ &m);
-//void bind_easy3d_renderer_vertex_array_object(pybind11::module_ &m);
 
-void bind_easy3d_util_console_style(pybind11::module_ &m);
 void bind_easy3d_util_dialog(pybind11::module_ &m);
 void bind_easy3d_util_file_system(pybind11::module_ &m);
 void bind_easy3d_util_initializer(pybind11::module_ &m);
-void bind_easy3d_util_line_stream(pybind11::module_ &m);
 void bind_easy3d_util_logging(pybind11::module_ &m);
-void bind_easy3d_util_progress(pybind11::module_ &m);
 void bind_easy3d_util_resource(pybind11::module_ &m);
 void bind_easy3d_util_setting(pybind11::module_ &m);
 void bind_easy3d_util_stop_watch(pybind11::module_ &m);
 void bind_easy3d_util_string(pybind11::module_ &m);
-void bind_easy3d_util_timer(pybind11::module_ &m);
-void bind_easy3d_util_tokenizer(pybind11::module_ &m);
 void bind_easy3d_util_version(pybind11::module_ &m);
 
 void bind_easy3d_viewer_viewer(pybind11::module_ &m);
@@ -127,7 +98,6 @@ void bind_core(pybind11::module_ &m) {
     bind_easy3d_core_plane(m);
     bind_easy3d_core_property(m);
     bind_easy3d_core_random(m);
-    bind_easy3d_core_signal(m);
     bind_easy3d_core_types(m);
     bind_easy3d_core_vec(m);
 
@@ -141,19 +111,14 @@ void bind_core(pybind11::module_ &m) {
 }
 
 void bind_util(pybind11::module_ &m) {
-    bind_easy3d_util_console_style(m);
     bind_easy3d_util_dialog(m);
     bind_easy3d_util_file_system(m);
     bind_easy3d_util_initializer(m);
-    bind_easy3d_util_line_stream(m);
     bind_easy3d_util_logging(m);
-    bind_easy3d_util_progress(m);
     bind_easy3d_util_resource(m);
     bind_easy3d_util_setting(m);
     bind_easy3d_util_stop_watch(m);
     bind_easy3d_util_string(m);
-    bind_easy3d_util_timer(m);
-    bind_easy3d_util_tokenizer(m);
     bind_easy3d_util_version(m);
 }
 
