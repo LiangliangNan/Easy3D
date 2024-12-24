@@ -5,14 +5,15 @@
 
 ![3D model generated and rendered by Easy3D](resources/images/logo.jpg)
 
-#### Easy3D is an open-source library for 3D modeling, geometry processing, and rendering. It is implemented in C++ and designed with an emphasis on simplicity and efficiency. Easy3D is intended for research and educational purposes, but it is also a good starting point for developing sophisticated 3D applications. 
+#### For 3D modeling, geometry processing, and rendering, designed with emphasis on simplicity and efficiency. 
+Easy3D is implemented in C++ and comes with **Python bindings**. It is intended for research and educational purposes, but it is also a good starting point for developing sophisticated 3D applications. 
 Compared to existing geometry processing libraries (such as [PMP](http://www.pmp-library.org/) and [libigl](https://github.com/libigl/libigl/)) that focus on the algorithm aspect, Easy3D also provides a wider range of functionalities for user interactions and rendering.
 
 <p align="center"> 
      <img src="./resources/images/overview.jpg" width="600"> 
 </p>
 
-### Key features ###
+### Key features
 * Efficient data structures for representing and managing 3D models such as point clouds, polygonal surfaces 
   (e.g., triangle meshes), polyhedral volumes (e.g., tetrahedral meshes), and graphs. 
   Easy to add/access arbitrary types of per-element properties. Non-manifoldness is automatically resolved when 
@@ -42,11 +43,14 @@ Compared to existing geometry processing libraries (such as [PMP](http://www.pmp
 
 * A handy tool <b>Mapple</b> created out of the Easy3D library for rendering and processing 3D data.
 
+* Python bindings for Easy3D, which allow you to use Easy3D in Python scripts. The Python bindings are generated using 
+  [pybind11](https://pybind11.readthedocs.io/en/stable/index.html). **Note**: the Python bindings (and examples) are still under active development.
+
 |              Scalar field                |              Polyhedral mesh              |              Keyframe animation            |
 |------------------------------------------|-------------------------------------------|--------------------------------------------|
 | ![](resources/images/mapple-scalar.jpg)  | ![](resources/images/mapple-polymesh.gif) | ![](resources/images/mapple-animation.gif) |
 
-### A glance ###
+### A glance
 
 Any type of 3D drawables (e.g., points, lines, triangles, and thus point clouds, mesh surfaces, scalar fields, 
 and vector fields) can be rendered by writing a few lines of code with Easy3D. For example, the following code renders a 
@@ -85,6 +89,7 @@ configuring and building programs, as well as a set of subfolders:
   * [`renderer`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/renderer) - functionalities and algorithms for rendering and visualization.
   * [`gui`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/gui) - tools for user interactions, e.g., picking points, faces, or models.
   * [`viewer`](https://github.com/LiangliangNan/Easy3D/tree/main/easy3d/viewer) - a simple viewer and a composite viewer.
+  * [`python`](https://github.com/LiangliangNan/Easy3D/tree/main/python) - Python bindings for Easy3D, and examples.
 * [`resources`](https://github.com/LiangliangNan/Easy3D/tree/main/resources) - test data, images, shaders, textures, etc.
 * [`tests`](https://github.com/LiangliangNan/Easy3D/tree/main/tests) - a collection of test cases
 * [`tutorials`](https://github.com/LiangliangNan/Easy3D/tree/main/tutorials) - a collection of examples (with detailed explanations in code)
@@ -143,7 +148,15 @@ There are many options to build Easy3D. Choose one of the following (not an exha
   
 - Option 3: Use CMake-Gui to generate project files for your IDE. Then load the project to your IDE and build it. For Windows users: your IDE must be set for `x64`.
 
-Don't have any experience with C/C++ programming? 
+#### Build and install Python bindings
+- Make sure you have Python and [pybind11](https://pybind11.readthedocs.io/en/stable/index.html) installed. 
+Then switch on the CMake option `Easy3D_BUILD_PYTHON_BINDINGS` and run CMake. After building Easy3D, you can find the Python bindings in `YOUR_BUILD_DIRECTORY/lib/python`.
+- To install the Python bindings, you can use the following command:
+    ```
+      pip install YOUR_BUILD_DIRECTORY/lib/python/setup.py
+    ```
+  
+Do not have any experience with C/C++ programming? 
 Have a look at <a href="https://github.com/LiangliangNan/Easy3D/blob/main/HowToBuild.md">How to build Easy3D step by 
 step</a>.
 
@@ -179,6 +192,16 @@ int main(int argc, char** argv) {
     easy3d::Viewer viewer("Test");
     return viewer.run();
 }
+```
+
+Using the Python bindings is also straightforward, for example:
+``` python
+import easy3d
+
+easy3d.initialize()
+viewer = easy3d.Viewer("Test")
+viewer.add_model(easy3d.directory() + "/data/bunny.ply")
+viewer.run()
 ```
 
 ### Documentation
