@@ -129,11 +129,11 @@ set(BINDING_SOURCES
         )
 
 if(Easy3D_HAS_CGAL)
-    list(APPEND SOURCES "bindings/easy3d/algo_ext/surfacer.cpp")
+    list(APPEND BINDING_SOURCES "bindings/easy3d/algo_ext/surfacer.cpp")
 endif()
 
 if(Easy3D_HAS_FFMPEG)
-    list(APPEND SOURCES "bindings/easy3d/video/video_encoder.cpp")
+    list(APPEND BINDING_SOURCES "bindings/easy3d/video/video_encoder.cpp")
 endif()
 
 pybind11_add_module(${PROJECT_NAME} MODULE ${BINDING_SOURCES})
