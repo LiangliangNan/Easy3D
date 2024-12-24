@@ -489,21 +489,21 @@ void bind_easy3d_viewer_viewer(pybind11::module_& m)
 			       return self.add_model(file_name, create_default_drawables);
 		       },
 		       pybind11::arg("file_name"), pybind11::arg("create_default_drawables") = true,
-		       pybind11::return_value_policy::automatic,
+		       pybind11::return_value_policy::reference_internal,
 		       "Add a model from a file to the viewer.");
 		cl.def("add_model", [](easy3d::Viewer& self, easy3d::PointCloud* pc, bool create_default_drawables = true)
 		       {
 			       return self.add_model(static_cast<easy3d::Model*>(pc), create_default_drawables);
 		       },
 		       pybind11::arg("point_cloud"), pybind11::arg("create_default_drawables") = true,
-		       pybind11::return_value_policy::automatic,
+		       pybind11::return_value_policy::reference_internal,
 		       "Add a PointCloud to the viewer.");
 		cl.def("add_model", [](easy3d::Viewer& self, easy3d::SurfaceMesh* mesh, bool create_default_drawables = true)
 		       {
 			       return self.add_model(static_cast<easy3d::Model*>(mesh), create_default_drawables);
 		       },
 		       pybind11::arg("mesh"), pybind11::arg("create_default_drawables") = true,
-		       pybind11::return_value_policy::automatic,
+		       pybind11::return_value_policy::reference_internal,
 		       "Add a SurfaceMesh to the viewer."
 		);
         cl.def("add_model", [](easy3d::Viewer& self, easy3d::Graph* graph, bool create_default_drawables = true)
@@ -511,7 +511,7 @@ void bind_easy3d_viewer_viewer(pybind11::module_& m)
                    return self.add_model(static_cast<easy3d::Model*>(graph), create_default_drawables);
                },
                pybind11::arg("graph"), pybind11::arg("create_default_drawables") = true,
-               pybind11::return_value_policy::automatic,
+               pybind11::return_value_policy::reference_internal,
                "Add a graph to the viewer."
         );
         cl.def("add_model", [](easy3d::Viewer& self, easy3d::PolyMesh* mesh, bool create_default_drawables = true)
@@ -519,7 +519,7 @@ void bind_easy3d_viewer_viewer(pybind11::module_& m)
                    return self.add_model(static_cast<easy3d::Model*>(mesh), create_default_drawables);
                },
                pybind11::arg("mesh"), pybind11::arg("create_default_drawables") = true,
-               pybind11::return_value_policy::automatic,
+               pybind11::return_value_policy::reference_internal,
                "Add a PolyMesh to the viewer."
         );
 		cl.def("models", (const class std::vector<class easy3d::Model *> & (easy3d::Viewer::*)() const) &easy3d::Viewer::models, "Query the models managed by this viewer.\n \n\n The models managed by this viewer.\n\nC++: easy3d::Viewer::models() const --> const class std::vector<class easy3d::Model *> &", pybind11::return_value_policy::automatic);

@@ -380,7 +380,7 @@ void bind_easy3d_viewer_multi_viewer(pybind11::module_& m)
         cl.def("camera", (class easy3d::Camera* (easy3d::MultiViewer::*)()) &easy3d::MultiViewer::camera, "Returns the camera used by the viewer", pybind11::return_value_policy::automatic);
         cl.def("camera", (const class easy3d::Camera* (easy3d::MultiViewer::*)() const) &easy3d::MultiViewer::camera, "Returns the camera used by the viewer", pybind11::return_value_policy::automatic);
         cl.def("snapshot", (bool (easy3d::MultiViewer::*)() const) &easy3d::MultiViewer::snapshot, "Take a snapshot of the screen and save it to a file.\n \n\n This method takes a snapshot of the screen and saves the snapshot into an image file.\n          Internally, it will pop up a file dialog for specifying the file name.\n \n\n true on success and false otherwise.\n\nC++: easy3d::MultiViewer::snapshot() const --> bool");
-		cl.def("assign", (class easy3d::MultiViewer & (easy3d::MultiViewer::*)(const class easy3d::MultiViewer &)) &easy3d::MultiViewer::operator=, "C++: easy3d::MultiViewer::operator=(const class easy3d::MultiViewer &) --> class easy3d::MultiViewer &", pybind11::return_value_policy::automatic, pybind11::arg(""));
+		cl.def("assign", (class easy3d::MultiViewer & (easy3d::MultiViewer::*)(const class easy3d::MultiViewer &)) &easy3d::MultiViewer::operator=, "C++: easy3d::MultiViewer::operator=(const class easy3d::MultiViewer &) --> class easy3d::MultiViewer &", pybind11::return_value_policy::reference_internal, pybind11::arg(""));
 	}
 
 }
