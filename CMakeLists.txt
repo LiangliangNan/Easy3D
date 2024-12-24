@@ -2,6 +2,29 @@ cmake_minimum_required(VERSION 3.12)
 
 ################################################################################
 
+# Build shared libraries
+if (MINGW) # Workaround for using MinGW on Windows
+    set(Easy3D_BUILD_SHARED_LIBS                                OFF)
+else()
+    option(Easy3D_BUILD_SHARED_LIBS "Build shared libaries"     ON )
+endif ()
+# Build tutorials
+option(Easy3D_BUILD_TUTORIALS "Build Easy3D tutorials"          ON )
+# Build documentation
+option(Easy3D_BUILD_DOCUMENTATION "Build Easy3D documentation"  OFF)
+# Build tests
+option(Easy3D_BUILD_TESTS "Build Easy3D tests programs"         OFF)
+# Build Python bindings
+option(Easy3D_BUILD_PYTHON_BINDINGS "Build Python bindings"     ON)
+# Build advanced features that require CGAL (>= v5.1)
+option(Easy3D_ENABLE_CGAL "Build advanced features that require CGAL (>= v5.1)"              OFF)
+# Build examples/applications based on Qt (Qt5 >= v5.6, or Qt6)
+option(Easy3D_ENABLE_QT "Build examples/applications based on Qt (Qt5 >= v5.6, or Qt6)"      OFF)
+# Build the video encoding module that requires ffmpeg
+option(Easy3D_ENABLE_FFMPEG "Build the video encoding module that requires ffmpeg (>= v3.4)" OFF)
+
+################################################################################
+
 set(Easy3D_VERSION_MAJOR 2)
 set(Easy3D_VERSION_MINOR 5)
 set(Easy3D_VERSION_PATCH 4)
@@ -73,27 +96,6 @@ string(REGEX REPLACE "EASY3D_VERSION_NR 10[0-9]0[0-9]0[0-9]" "EASY3D_VERSION_NR 
 string(TIMESTAMP TODAY "%Y%m%d")
 string(REGEX REPLACE "EASY3D_RELEASE_DATE [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]" "EASY3D_RELEASE_DATE ${TODAY}" file_content "${file_content}")
 file(WRITE ${Easy3D_INCLUDE_DIR}/easy3d/util/version.h "${file_content}")
-
-################################################################################
-
-# Build shared libraries
-if (MINGW) # Workaround for using MinGW on Windows
-    set(Easy3D_BUILD_SHARED_LIBS                                OFF)
-else()
-    option(Easy3D_BUILD_SHARED_LIBS "Build shared libaries"     ON )
-endif ()
-# Build tutorials
-option(Easy3D_BUILD_TUTORIALS "Build Easy3D tutorials"          ON )
-# Build documentation
-option(Easy3D_BUILD_DOCUMENTATION "Build Easy3D documentation"  OFF)
-# Build tests
-option(Easy3D_BUILD_TESTS "Build Easy3D tests programs"         OFF)
-# Build advanced features that require CGAL (>= v5.1)
-option(Easy3D_ENABLE_CGAL "Build advanced features that require CGAL (>= v5.1)"              OFF)
-# Build examples/applications based on Qt (Qt5 >= v5.6, or Qt6)
-option(Easy3D_ENABLE_QT "Build examples/applications based on Qt (Qt5 >= v5.6, or Qt6)"      OFF)
-# Build the video encoding module that requires ffmpeg
-option(Easy3D_ENABLE_FFMPEG "Build the video encoding module that requires ffmpeg (>= v3.4)" OFF)
 
 ################################################################################
 
@@ -296,6 +298,10 @@ if (Easy3D_BUILD_TESTS)
     add_subdirectory(tests)
 endif ()
 
+if (Easy3D_BUILD_PYTHON_BINDINGS)
+    add_subdirectory(python)
+endif ()
+
 add_subdirectory(applications)
 
 ################################################################################
@@ -371,6 +377,7 @@ message(STATUS "    Build shared libraries :  ${Easy3D_BUILD_SHARED_LIBS}")
 message(STATUS "    Build tutorials        :  ${Easy3D_BUILD_TUTORIALS}")
 message(STATUS "    Build documentation    :  ${Easy3D_BUILD_DOCUMENTATION}")
 message(STATUS "    Build tests            :  ${Easy3D_BUILD_TESTS}")
+message(STATUS "    Build Python bindings  :  ${Easy3D_BUILD_PYTHON_BINDINGS}")
 message(STATUS "    With CGAL (>= v5.1)    :  ${Easy3D_ENABLE_CGAL}")
 message(STATUS "    With Qt (>= v5.6)      :  ${Easy3D_ENABLE_QT}")
 message(STATUS "    With ffmpeg (>= v3.4)  :  ${Easy3D_ENABLE_FFMPEG}")

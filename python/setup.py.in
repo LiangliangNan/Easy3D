@@ -1,0 +1,9 @@
+from setuptools import setup, find_packages
+
+setup(
+    name="easy3d",
+    version="1.0",
+    packages=["easy3d"],
+    package_data={"easy3d": ["PyEasy3D.so"]},
+    include_package_data=True,
+)
