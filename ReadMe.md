@@ -5,7 +5,7 @@
 
 ![3D model generated and rendered by Easy3D](resources/images/logo.jpg)
 
-#### An open-source library for 3D modeling, geometry processing, and rendering, designed with an emphasis on simplicity and efficiency. 
+#### For 3D modeling, geometry processing, and rendering, designed with emphasis on simplicity and efficiency. 
 Easy3D is implemented in C++ and extended with **Python bindings**. It is intended for research and educational purposes, but it is also a good starting point for developing sophisticated 3D applications. 
 Compared to existing geometry processing libraries (such as [PMP](http://www.pmp-library.org/) and [libigl](https://github.com/libigl/libigl/)) that focus on the algorithm aspect, Easy3D also provides a wider range of functionalities for user interactions and rendering.
 
