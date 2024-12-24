@@ -13,7 +13,7 @@ Compared to existing geometry processing libraries (such as [PMP](http://www.pmp
      <img src="./resources/images/overview.jpg" width="600"> 
 </p>
 
-### Key features ###
+### Key features
 * Efficient data structures for representing and managing 3D models such as point clouds, polygonal surfaces 
   (e.g., triangle meshes), polyhedral volumes (e.g., tetrahedral meshes), and graphs. 
   Easy to add/access arbitrary types of per-element properties. Non-manifoldness is automatically resolved when 
@@ -50,7 +50,7 @@ Compared to existing geometry processing libraries (such as [PMP](http://www.pmp
 |------------------------------------------|-------------------------------------------|--------------------------------------------|
 | ![](resources/images/mapple-scalar.jpg)  | ![](resources/images/mapple-polymesh.gif) | ![](resources/images/mapple-animation.gif) |
 
-### A glance ###
+### A glance
 
 Any type of 3D drawables (e.g., points, lines, triangles, and thus point clouds, mesh surfaces, scalar fields, 
 and vector fields) can be rendered by writing a few lines of code with Easy3D. For example, the following code renders a 
