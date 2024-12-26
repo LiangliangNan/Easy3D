@@ -70,6 +70,9 @@ void bind_easy3d_kdtree_kdtree_search_flann(pybind11::module_ &m);
 void bind_easy3d_kdtree_kdtree_search_nanoflann(pybind11::module_ &m);
 
 void bind_easy3d_renderer_camera(pybind11::module_ &m);
+void bind_easy3d_renderer_drawables(pybind11::module_ &m);
+void bind_easy3d_renderer_renderer(pybind11::module_ &m);
+void bind_easy3d_renderer_state(pybind11::module_ &m);
 
 void bind_easy3d_util_dialog(pybind11::module_ &m);
 void bind_easy3d_util_file_system(pybind11::module_ &m);
@@ -181,6 +184,9 @@ void bind_kdtree(pybind11::module_ &m) {
 
 void bind_renderer(pybind11::module_ &m) {
     bind_easy3d_renderer_camera(m);
+    bind_easy3d_renderer_state(m);
+    bind_easy3d_renderer_drawables(m);
+    bind_easy3d_renderer_renderer(m);
 }
 
 void bind_viewer(pybind11::module_ &m) {
@@ -301,14 +307,12 @@ PYBIND11_MODULE(PyEasy3D, root_module) {
     // bind_easy3d_renderer_constraint(m);
     // bind_easy3d_renderer_buffer(m);
     // bind_easy3d_renderer_clipping_plane(m);
-    // bind_easy3d_renderer_drawable_lines(m);
     // bind_easy3d_renderer_framebuffer_object(m);
     // bind_easy3d_renderer_frustum(m);
     // bind_easy3d_renderer_manipulated_frame(m);
     // bind_easy3d_renderer_opengl_error(m);
     // bind_easy3d_renderer_opengl_timer(m);
     // bind_easy3d_renderer_read_pixel(m);
-    // bind_easy3d_renderer_renderer(m);
     // bind_easy3d_renderer_shader_manager(m);
     // bind_easy3d_renderer_shape(m);
     // bind_easy3d_renderer_shape_1(m);

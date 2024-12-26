@@ -206,7 +206,7 @@ namespace easy3d {
         Box3 bbox_;
 
         // vertex array object
-        std::unique_ptr<VertexArrayObject> vao_;
+        std::shared_ptr<VertexArrayObject> vao_;
 
         std::size_t num_vertices_;
         std::size_t num_indices_;

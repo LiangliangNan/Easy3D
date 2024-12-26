@@ -1,6 +1,7 @@
 #include <easy3d/core/poly_mesh.h>
 #include <easy3d/core/property.h>
 #include <easy3d/core/vec.h>
+#include <easy3d/renderer/renderer.h>
 
 #include <iterator>
 #include <memory>
@@ -885,7 +886,14 @@ void bind_easy3d_core_poly_mesh(pybind11::module_& m)
 		cl.def( pybind11::init( [](){ return new easy3d::PolyMesh(); }, [](){ return new PyCallBack_easy3d_PolyMesh(); } ) );
 		cl.def( pybind11::init( [](PyCallBack_easy3d_PolyMesh const &o){ return new PyCallBack_easy3d_PolyMesh(o); } ) );
 		cl.def( pybind11::init( [](easy3d::PolyMesh const &o){ return new easy3d::PolyMesh(o); } ) );
-		cl.def("assign", (class easy3d::PolyMesh & (easy3d::PolyMesh::*)(const class easy3d::PolyMesh &)) &easy3d::PolyMesh::operator=, "assign  to  performs a deep copy of all properties.\n\nC++: easy3d::PolyMesh::operator=(const class easy3d::PolyMesh &) --> class easy3d::PolyMesh &", pybind11::return_value_policy::automatic, pybind11::arg("rhs"));
+
+        cl.def("name", [](easy3d::PolyMesh& self) { return self.name(); }, pybind11::return_value_policy::copy, "Get the name of the polyhedral mesh.");
+        cl.def("set_name", [](easy3d::PolyMesh& self, const std::string& name) { self.set_name(name); }, "Set the name of the polyhedral mesh.");
+
+        cl.def("renderer", [](const easy3d::PolyMesh& self) -> const easy3d::Renderer* { return self.renderer(); }, pybind11::return_value_policy::reference_internal, "Returns the renderer of the model");
+        cl.def("renderer", [](easy3d::PolyMesh& self) -> easy3d::Renderer* { return self.renderer(); }, pybind11::return_value_policy::reference_internal, "Returns the renderer of the model");
+
+        cl.def("assign", (class easy3d::PolyMesh & (easy3d::PolyMesh::*)(const class easy3d::PolyMesh &)) &easy3d::PolyMesh::operator=, "assign  to  performs a deep copy of all properties.\n\nC++: easy3d::PolyMesh::operator=(const class easy3d::PolyMesh &) --> class easy3d::PolyMesh &", pybind11::return_value_policy::automatic, pybind11::arg("rhs"));
 		cl.def("assign", (class easy3d::PolyMesh & (easy3d::PolyMesh::*)(const class easy3d::PolyMesh &)) &easy3d::PolyMesh::assign, "assign  to  does not copy custom properties.\n\nC++: easy3d::PolyMesh::assign(const class easy3d::PolyMesh &) --> class easy3d::PolyMesh &", pybind11::return_value_policy::automatic, pybind11::arg("rhs"));
 		cl.def("read", (bool (easy3d::PolyMesh::*)(const std::string &)) &easy3d::PolyMesh::read, "Read mesh from a PM file \n Mainly for quick debug purposes. Client code should use PolyMeshIO.\n \n\n PolyMeshIO.\n\nC++: easy3d::PolyMesh::read(const std::string &) --> bool", pybind11::arg("filename"));
 		cl.def("write", (bool (easy3d::PolyMesh::*)(const std::string &) const) &easy3d::PolyMesh::write, "Write mesh to a PM file \n Mainly for quick debug purposes. Client code should use PolyMeshIO.\n \n\n PolyMeshIO.\n\nC++: easy3d::PolyMesh::write(const std::string &) const --> bool", pybind11::arg("filename"));

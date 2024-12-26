@@ -1,6 +1,7 @@
+#include <easy3d/core/vec.h>
 #include <easy3d/core/property.h>
 #include <easy3d/core/surface_mesh.h>
-#include <easy3d/core/vec.h>
+#include <easy3d/renderer/renderer.h>
 
 #include <memory>
 #include <typeinfo>
@@ -940,7 +941,14 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
 		cl.def( pybind11::init( [](){ return new easy3d::SurfaceMesh(); }, [](){ return new PyCallBack_easy3d_SurfaceMesh(); } ) );
 		cl.def( pybind11::init( [](PyCallBack_easy3d_SurfaceMesh const &o){ return new PyCallBack_easy3d_SurfaceMesh(o); } ) );
 		cl.def( pybind11::init( [](easy3d::SurfaceMesh const &o){ return new easy3d::SurfaceMesh(o); } ) );
-		cl.def("assign", (class easy3d::SurfaceMesh & (easy3d::SurfaceMesh::*)(const class easy3d::SurfaceMesh &)) &easy3d::SurfaceMesh::operator=, "assign  to  performs a deep copy of all properties.\n\nC++: easy3d::SurfaceMesh::operator=(const class easy3d::SurfaceMesh &) --> class easy3d::SurfaceMesh &", pybind11::return_value_policy::automatic, pybind11::arg("rhs"));
+
+        cl.def("name", [](easy3d::SurfaceMesh& self) { return self.name(); }, pybind11::return_value_policy::copy, "Get the name of the surface mesh.");
+        cl.def("set_name", [](easy3d::SurfaceMesh& self, const std::string& name) { self.set_name(name); }, "Set the name of the surface mesh.");
+
+        cl.def("renderer", [](const easy3d::SurfaceMesh& self) -> const easy3d::Renderer* { return self.renderer(); }, pybind11::return_value_policy::reference_internal, "Returns the renderer of the model");
+        cl.def("renderer", [](easy3d::SurfaceMesh& self) -> easy3d::Renderer* { return self.renderer(); }, pybind11::return_value_policy::reference_internal, "Returns the renderer of the model");
+
+        cl.def("assign", (class easy3d::SurfaceMesh & (easy3d::SurfaceMesh::*)(const class easy3d::SurfaceMesh &)) &easy3d::SurfaceMesh::operator=, "assign  to  performs a deep copy of all properties.\n\nC++: easy3d::SurfaceMesh::operator=(const class easy3d::SurfaceMesh &) --> class easy3d::SurfaceMesh &", pybind11::return_value_policy::automatic, pybind11::arg("rhs"));
 		cl.def("__iadd__", (class easy3d::SurfaceMesh & (easy3d::SurfaceMesh::*)(const class easy3d::SurfaceMesh &)) &easy3d::SurfaceMesh::operator+=, "Merges another surface mesh into the current one.\n Shifts the indices of vertices of the other mesh by `number_of_vertices() + number_of_removed_vertices()`\n and analogously for halfedges, edges, and faces.\n Copies entries of all property maps which have the same name in both meshes. That is, properties maps which\n are only in `other` are ignored.\n Also copies elements which are marked as removed, and concatenates the freelists of both meshes.\n\nC++: easy3d::SurfaceMesh::operator+=(const class easy3d::SurfaceMesh &) --> class easy3d::SurfaceMesh &", pybind11::return_value_policy::automatic, pybind11::arg("other"));
 		cl.def("join", (class easy3d::SurfaceMesh & (easy3d::SurfaceMesh::*)(const class easy3d::SurfaceMesh &)) &easy3d::SurfaceMesh::join, "Merges another surface mesh into the current one.\n Shifts the indices of vertices of the other mesh by `number_of_vertices() + number_of_removed_vertices()`\n and analogously for halfedges, edges, and faces.\n Copies entries of all property maps which have the same name in both meshes. That is, properties maps which\n are only in `other` are ignored.\n Also copies elements which are marked as removed, and concatenates the freelists of both meshes.\n\nC++: easy3d::SurfaceMesh::join(const class easy3d::SurfaceMesh &) --> class easy3d::SurfaceMesh &", pybind11::return_value_policy::automatic, pybind11::arg("other"));
 		cl.def("assign", (class easy3d::SurfaceMesh & (easy3d::SurfaceMesh::*)(const class easy3d::SurfaceMesh &)) &easy3d::SurfaceMesh::assign, "assign  to  does not copy custom properties.\n\nC++: easy3d::SurfaceMesh::assign(const class easy3d::SurfaceMesh &) --> class easy3d::SurfaceMesh &", pybind11::return_value_policy::automatic, pybind11::arg("rhs"));

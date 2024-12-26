@@ -417,39 +417,37 @@ void bind_easy3d_viewer_multi_viewer(pybind11::module_& m)
         );
 
         // Assign Model to specific view (overloaded)
-        cl.def("assign", [](easy3d::MultiViewer& self, int row, int col, const easy3d::PointCloud* point_cloud)
-               {
+        cl.def("assign", [](easy3d::MultiViewer &self, int row, int col, const easy3d::PointCloud *point_cloud) {
                    self.assign(row, col, point_cloud);
                },
                "Assign a point cloud to the view at position (row, col)",
-               pybind11::arg("row"), pybind11::arg("col"), pybind11::arg("point_cloud"));
-        cl.def("assign", [](easy3d::MultiViewer& self, int row, int col, const easy3d::SurfaceMesh* surface_mesh)
-               {
+               pybind11::arg("row"), pybind11::arg("col"), pybind11::arg("point_cloud")
+        );
+        cl.def("assign", [](easy3d::MultiViewer &self, int row, int col, const easy3d::SurfaceMesh *surface_mesh) {
                    self.assign(row, col, surface_mesh);
                },
                "Assign a surface mesh to the view at position (row, col)",
-               pybind11::arg("row"), pybind11::arg("col"), pybind11::arg("surface_mesh"));
-        cl.def("assign", [](easy3d::MultiViewer& self, int row, int col, const easy3d::PolyMesh* poly_mesh)
-               {
+               pybind11::arg("row"), pybind11::arg("col"), pybind11::arg("surface_mesh")
+        );
+        cl.def("assign", [](easy3d::MultiViewer &self, int row, int col, const easy3d::PolyMesh *poly_mesh) {
                    self.assign(row, col, poly_mesh);
                },
                "Assign a polyhedral mesh to the view at position (row, col)",
-               pybind11::arg("row"), pybind11::arg("col"), pybind11::arg("poly_mesh"));
-        cl.def("assign", [](easy3d::MultiViewer& self, int row, int col, const easy3d::Graph* graph)
-               {
-                   std::cerr << "Assigning model to view at position (" << row << ", " << col << ")" << std::endl;
+               pybind11::arg("row"), pybind11::arg("col"), pybind11::arg("poly_mesh")
+        );
+        cl.def("assign", [](easy3d::MultiViewer &self, int row, int col, const easy3d::Graph *graph) {
                    self.assign(row, col, graph);
                },
                "Assign a graph to the view at position (row, col)",
-               pybind11::arg("row"), pybind11::arg("col"), pybind11::arg("graph"));
+               pybind11::arg("row"), pybind11::arg("col"), pybind11::arg("graph")
+        );
         // Assign Drawable to specific view (overloaded)
-        cl.def("assign", [](easy3d::MultiViewer& self, int row, int col, const easy3d::Drawable* drawable)
-               {
-                    std::cerr << "Assigning drawable to view at position (" << row << ", " << col << ")" << std::endl;
-                    self.assign(row, col, drawable);
+        cl.def("assign", [](easy3d::MultiViewer &self, int row, int col, const easy3d::Drawable *drawable) {
+                   self.assign(row, col, drawable);
                },
                "Assign a drawable to the view at position (row, col)",
-               pybind11::arg("row"), pybind11::arg("col"), pybind11::arg("drawable"));
+               pybind11::arg("row"), pybind11::arg("col"), pybind11::arg("drawable")
+        );
 
         cl.def("set_division_visible", (void (easy3d::MultiViewer::*)(bool)) &easy3d::MultiViewer::set_division_visible, "Sets the visibility of the splitting lines of the views (visible by default).\n\nC++: easy3d::MultiViewer::set_division_visible(bool) --> void", pybind11::arg("b"));
 		cl.def("division_visible", (bool (easy3d::MultiViewer::*)() const) &easy3d::MultiViewer::division_visible, "Returns if the splitting lines of the views are visible.\n\nC++: easy3d::MultiViewer::division_visible() const --> bool");

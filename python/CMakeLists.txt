@@ -74,6 +74,9 @@ set(BINDING_SOURCES
         "bindings/easy3d/kdtree/kdtree_search_nanoflann.cpp"
 
         "bindings/easy3d/renderer/camera.cpp"
+        "bindings/easy3d/renderer/drawables.cpp"
+        "bindings/easy3d/renderer/renderer.cpp"
+        "bindings/easy3d/renderer/state.cpp"
 
         "bindings/easy3d/util/dialog.cpp"
         "bindings/easy3d/util/file_system.cpp"

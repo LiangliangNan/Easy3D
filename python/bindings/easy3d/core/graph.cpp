@@ -1,6 +1,7 @@
+#include <easy3d/core/vec.h>
 #include <easy3d/core/graph.h>
 #include <easy3d/core/property.h>
-#include <easy3d/core/vec.h>
+#include <easy3d/renderer/renderer.h>
 
 #include <memory>
 #include <typeinfo>
@@ -479,7 +480,14 @@ void bind_easy3d_core_graph(pybind11::module_& m)
 		cl.def( pybind11::init( [](){ return new easy3d::Graph(); }, [](){ return new PyCallBack_easy3d_Graph(); } ) );
 		cl.def( pybind11::init( [](PyCallBack_easy3d_Graph const &o){ return new PyCallBack_easy3d_Graph(o); } ) );
 		cl.def( pybind11::init( [](easy3d::Graph const &o){ return new easy3d::Graph(o); } ) );
-		cl.def("assign", (class easy3d::Graph & (easy3d::Graph::*)(const class easy3d::Graph &)) &easy3d::Graph::operator=, "assign  to  performs a deep copy of all properties.\n\nC++: easy3d::Graph::operator=(const class easy3d::Graph &) --> class easy3d::Graph &", pybind11::return_value_policy::automatic, pybind11::arg("rhs"));
+
+        cl.def("name", [](easy3d::Graph& self) { return self.name(); }, pybind11::return_value_policy::copy, "Get the name of the graph.");
+        cl.def("set_name", [](easy3d::Graph& self, const std::string& name) { self.set_name(name); }, "Set the name of the graph.");
+
+        cl.def("renderer", [](const easy3d::Graph& self) -> const easy3d::Renderer* { return self.renderer(); }, pybind11::return_value_policy::reference_internal, "Returns the renderer of the model");
+        cl.def("renderer", [](easy3d::Graph& self) -> easy3d::Renderer* { return self.renderer(); }, pybind11::return_value_policy::reference_internal, "Returns the renderer of the model");
+
+        cl.def("assign", (class easy3d::Graph & (easy3d::Graph::*)(const class easy3d::Graph &)) &easy3d::Graph::operator=, "assign  to  performs a deep copy of all properties.\n\nC++: easy3d::Graph::operator=(const class easy3d::Graph &) --> class easy3d::Graph &", pybind11::return_value_policy::automatic, pybind11::arg("rhs"));
 		cl.def("assign", (class easy3d::Graph & (easy3d::Graph::*)(const class easy3d::Graph &)) &easy3d::Graph::assign, "assign  to  does not copy custom properties.\n\nC++: easy3d::Graph::assign(const class easy3d::Graph &) --> class easy3d::Graph &", pybind11::return_value_policy::automatic, pybind11::arg("rhs"));
 		cl.def("add_vertex", (struct easy3d::Graph::Vertex (easy3d::Graph::*)(const class easy3d::Vec<3, float> &)) &easy3d::Graph::add_vertex, "add a new vertex with position \n\nC++: easy3d::Graph::add_vertex(const class easy3d::Vec<3, float> &) --> struct easy3d::Graph::Vertex", pybind11::arg("p"));
 		cl.def("add_edge", (struct easy3d::Graph::Edge (easy3d::Graph::*)(const struct easy3d::Graph::Vertex &, const struct easy3d::Graph::Vertex &)) &easy3d::Graph::add_edge, "add a new edge connecting vertices  and \n\nC++: easy3d::Graph::add_edge(const struct easy3d::Graph::Vertex &, const struct easy3d::Graph::Vertex &) --> struct easy3d::Graph::Edge", pybind11::arg("v1"), pybind11::arg("v2"));

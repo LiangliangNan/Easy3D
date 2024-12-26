@@ -42,7 +42,9 @@ renderer = easy3d.OffScreen()
 model = renderer.add_model(file_name)
 
 # Render the model to a PNG file.
-renderer.render(file_name + ".png")
+image_file = file_name + "_1.png"
+renderer.render(image_file)
+print("image saved to " + image_file)
 
 # -------------------------------------------------------------------------------
 # Modifying Camera Position
@@ -58,4 +60,6 @@ pos = camera.position() + easy3d.vec3(0.2, 0.2, 0.2)
 camera.setPosition(pos)
 
 # Render the model again with the new camera position.
-renderer.render(file_name + "2.png")
+image_file = file_name + "_2.png"
+renderer.render(image_file)
+print("image saved to " + image_file)

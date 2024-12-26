@@ -67,4 +67,5 @@ viewer.set_usage("")
 
 # Add the point cloud model to the viewer and run the viewer to interact with the model.
 viewer.add_model(pc)
+# Running the Viewer
 viewer.run()

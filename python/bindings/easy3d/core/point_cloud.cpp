@@ -1,5 +1,6 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/property.h>
+#include <easy3d/renderer/renderer.h>
 
 #include <memory>
 #include <typeinfo>
@@ -161,6 +162,13 @@ void bind_easy3d_core_point_cloud(pybind11::module_& m)
             return result;
         }, "Convert the PointCloud to a NumPy array with shape (n, 3)");
 
+
+        cl.def("name", [](easy3d::PointCloud& self) { return self.name(); }, pybind11::return_value_policy::copy, "Get the name of the point cloud.");
+        cl.def("set_name", [](easy3d::PointCloud& self, const std::string& name) { self.set_name(name); }, "Set the name of the point cloud.");
+
+        cl.def("renderer", [](const easy3d::PointCloud& self) -> const easy3d::Renderer* { return self.renderer(); }, pybind11::return_value_policy::reference_internal, "Returns the renderer of the model");
+        cl.def("renderer", [](easy3d::PointCloud& self) -> easy3d::Renderer* { return self.renderer(); }, pybind11::return_value_policy::reference_internal, "Returns the renderer of the model");
+
         cl.def("assign", (class easy3d::PointCloud & (easy3d::PointCloud::*)(const class easy3d::PointCloud &)) &easy3d::PointCloud::operator=, "assign  to  performs a deep copy of all properties.\n\nC++: easy3d::PointCloud::operator=(const class easy3d::PointCloud &) --> class easy3d::PointCloud &", pybind11::return_value_policy::automatic, pybind11::arg("rhs"));
 		cl.def("__iadd__", (class easy3d::PointCloud & (easy3d::PointCloud::*)(const class easy3d::PointCloud &)) &easy3d::PointCloud::operator+=, "Merges another point cloud into the current one.\n Shifts the indices of vertices of the other point cloud by `number_of_vertices() + number_of_removed_vertices()`.\n Copies entries of all property maps which have the same name in both point clouds. That is, property maps which\n are only in `other` are ignored.\n Also copies elements which are marked as removed, and concatenates the freelists of both point clouds.\n\nC++: easy3d::PointCloud::operator+=(const class easy3d::PointCloud &) --> class easy3d::PointCloud &", pybind11::return_value_policy::automatic, pybind11::arg("other"));
 		cl.def("join", (class easy3d::PointCloud & (easy3d::PointCloud::*)(const class easy3d::PointCloud &)) &easy3d::PointCloud::join, "Merges another point cloud into the current one.\n Shifts the indices of vertices of the other point cloud by `number_of_vertices() + number_of_removed_vertices()`.\n Copies entries of all property maps which have the same name in both point cloud. That is, property maps which\n are only in `other` are ignored.\n Also copies elements which are marked as removed, and concatenates the freelists of both point cloud.\n\nC++: easy3d::PointCloud::join(const class easy3d::PointCloud &) --> class easy3d::PointCloud &", pybind11::return_value_policy::automatic, pybind11::arg("other"));
@@ -189,9 +197,6 @@ void bind_easy3d_core_point_cloud(pybind11::module_& m)
 		cl.def("position", (easy3d::vec3 & (easy3d::PointCloud::*)(struct easy3d::PointCloud::Vertex)) &easy3d::PointCloud::position, "position of a vertex\n\nC++: easy3d::PointCloud::position(struct easy3d::PointCloud::Vertex) --> easy3d::vec3 &", pybind11::return_value_policy::automatic, pybind11::arg("v"));
 		cl.def("points", (class std::vector<easy3d::vec3 > & (easy3d::PointCloud::*)()) &easy3d::PointCloud::points, "vector of vertex positions\n\nC++: easy3d::PointCloud::points() --> class std::vector<easy3d::vec3 > &", pybind11::return_value_policy::automatic);
         cl.def("points", (const class std::vector<easy3d::vec3 > & (easy3d::PointCloud::*)() const) &easy3d::PointCloud::points, "vector of vertex positions\n\nC++: easy3d::PointCloud::points() --> class std::vector<easy3d::vec3 > &", pybind11::return_value_policy::automatic);
-
-        cl.def("name", [](easy3d::PointCloud& self) { return self.name(); }, pybind11::return_value_policy::copy, "Get the name of the point cloud.");
-        cl.def("set_name", [](easy3d::PointCloud& self, const std::string& name) { self.set_name(name); }, "Set the name of the point cloud.");
 
         { // easy3d::PointCloud::BaseHandle file:easy3d/core/point_cloud.h line:52
 		 	auto & enclosing_class = cl;
