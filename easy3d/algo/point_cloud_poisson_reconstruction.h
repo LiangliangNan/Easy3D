@@ -67,8 +67,10 @@ namespace easy3d {
         /// \brief Trim the reconstructed surface model based on the density attribute.
         static SurfaceMesh *trim(
                 SurfaceMesh *mesh,
-                const std::string &density_attr_name,
-                float trim_value, float area_ratio, bool triangulate
+                float trim_value,
+                float area_ratio,
+                bool triangulate,
+                const std::string &density_attr_name = "v:density"
         );
 
     public:

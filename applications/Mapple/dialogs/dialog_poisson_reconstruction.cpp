@@ -127,11 +127,9 @@ void DialogPoissonReconstruction::trim() {
             return;
         }
 
-        SurfaceMesh *trimmed_mesh = PoissonReconstruction::trim(mesh, density_attr_name_, trim_value, area_ratio,
-                                                                triangulate);
+        SurfaceMesh *trimmed_mesh = PoissonReconstruction::trim(mesh, trim_value, area_ratio,
+                                                                triangulate, density_attr_name_);
         if (trimmed_mesh) {
-            const std::string &name = file_system::name_less_extension(mesh->name()) + "_trimmed.ply";
-            trimmed_mesh->set_name(name);
             viewer_->addModel(trimmed_mesh);
             window_->updateUi();
             viewer_->update();

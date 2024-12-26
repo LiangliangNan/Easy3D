@@ -487,10 +487,11 @@ namespace easy3d {
 
     SurfaceMesh *PoissonReconstruction::trim(
             SurfaceMesh *mesh,
-            const std::string &density_attr_name,
             float trim_value,
             float area_ratio,
-            bool triangulate) {
+            bool triangulate,
+            const std::string &density_attr_name)
+    {
         if (!mesh)
             return nullptr;
 
@@ -540,6 +541,9 @@ namespace easy3d {
         //////////////////////////////////////////////////////////////////////////
 
         auto trimmed_mesh = new SurfaceMesh;
+        const std::string &file_name = file_system::name_less_extension(mesh->name()) + "_trimmed.ply";
+        trimmed_mesh->set_name(file_name);
+
         density = trimmed_mesh->add_vertex_property<float>(density_attr_name);
         if (has_color)
             color = trimmed_mesh->add_vertex_property<vec3>("v:color");
