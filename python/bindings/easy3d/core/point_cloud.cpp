@@ -1,6 +1,5 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/property.h>
-#include <easy3d/core/vec.h>
 
 #include <memory>
 #include <typeinfo>
@@ -103,6 +102,48 @@ void bind_easy3d_core_point_cloud(pybind11::module_& m)
             }
         }, "Add multiple points to the PointCloud from a NumPy array with shape (n, 3)");
 
+        cl.def("add_point", (struct easy3d::PointCloud::Vertex (easy3d::PointCloud::*)(const easy3d::vec3 &)) &easy3d::PointCloud::add_vertex, "add a new vertex with position \n\nC++: easy3d::PointCloud::add_vertex(const easy3d::vec3 &) --> struct easy3d::PointCloud::Vertex", pybind11::arg("p"));
+
+        cl.def("add_point",
+               [](easy3d::PointCloud &pc, pybind11::object point) {
+                   if (pybind11::isinstance<easy3d::vec3>(point)) {
+                       // If the input is an easy3d::vec3
+                       pc.add_vertex(point.cast<easy3d::vec3>());
+                   } else if (pybind11::isinstance<pybind11::iterable>(point)) {
+                       // Convert iterable (like list) to NumPy array
+                       auto iterable = point.cast<pybind11::iterable>();
+                       std::vector<float> values;
+                       for (auto item : iterable) {
+                           values.push_back(item.cast<float>());
+                       }
+
+                       if (values.size() != 3) {
+                           throw std::runtime_error("Iterable must contain exactly 3 elements.");
+                       }
+
+                       easy3d::vec3 v(values[0], values[1], values[2]);
+                       pc.add_vertex(v);
+                   } else if (pybind11::isinstance<pybind11::array_t<float>>(point)) {
+                       // If the input is a NumPy array
+                       pybind11::array_t<float> array = point.cast<pybind11::array_t<float>>();
+
+                       // Check array shape
+                       if (array.ndim() != 1 || array.shape(0) != 3) {
+                           throw std::runtime_error("NumPy array must be a 1D array with 3 elements.");
+                       }
+
+                       auto buf = array.unchecked<1>(); // Access data buffer
+                       easy3d::vec3 v(buf(0), buf(1), buf(2));
+                       pc.add_vertex(v);
+                   } else {
+                       throw std::runtime_error(
+                               "Input must be of type easy3d::vec3, a NumPy array with 3 elements, or a list/iterable with 3 elements."
+                       );
+                   }
+               },
+               "Adds a single point to the point cloud. Input can be easy3d::vec3, a NumPy array, or a list with 3 elements.",
+               pybind11::arg("point"));
+
         // Retrieve all points as a NumPy array
         cl.def("to_numpy", [](const easy3d::PointCloud &pc) {
             // Create a NumPy array with shape (n_points, 3)
@@ -124,7 +165,6 @@ void bind_easy3d_core_point_cloud(pybind11::module_& m)
 		cl.def("__iadd__", (class easy3d::PointCloud & (easy3d::PointCloud::*)(const class easy3d::PointCloud &)) &easy3d::PointCloud::operator+=, "Merges another point cloud into the current one.\n Shifts the indices of vertices of the other point cloud by `number_of_vertices() + number_of_removed_vertices()`.\n Copies entries of all property maps which have the same name in both point clouds. That is, property maps which\n are only in `other` are ignored.\n Also copies elements which are marked as removed, and concatenates the freelists of both point clouds.\n\nC++: easy3d::PointCloud::operator+=(const class easy3d::PointCloud &) --> class easy3d::PointCloud &", pybind11::return_value_policy::automatic, pybind11::arg("other"));
 		cl.def("join", (class easy3d::PointCloud & (easy3d::PointCloud::*)(const class easy3d::PointCloud &)) &easy3d::PointCloud::join, "Merges another point cloud into the current one.\n Shifts the indices of vertices of the other point cloud by `number_of_vertices() + number_of_removed_vertices()`.\n Copies entries of all property maps which have the same name in both point cloud. That is, property maps which\n are only in `other` are ignored.\n Also copies elements which are marked as removed, and concatenates the freelists of both point cloud.\n\nC++: easy3d::PointCloud::join(const class easy3d::PointCloud &) --> class easy3d::PointCloud &", pybind11::return_value_policy::automatic, pybind11::arg("other"));
 		cl.def("assign", (class easy3d::PointCloud & (easy3d::PointCloud::*)(const class easy3d::PointCloud &)) &easy3d::PointCloud::assign, "assign  to  does not copy custom properties.\n\nC++: easy3d::PointCloud::assign(const class easy3d::PointCloud &) --> class easy3d::PointCloud &", pybind11::return_value_policy::automatic, pybind11::arg("rhs"));
-		cl.def("add_vertex", (struct easy3d::PointCloud::Vertex (easy3d::PointCloud::*)(const easy3d::vec3 &)) &easy3d::PointCloud::add_vertex, "add a new vertex with position \n\nC++: easy3d::PointCloud::add_vertex(const easy3d::vec3 &) --> struct easy3d::PointCloud::Vertex", pybind11::arg("p"));
 		cl.def("vertices_size", (unsigned int (easy3d::PointCloud::*)() const) &easy3d::PointCloud::vertices_size, "returns number of (deleted and valid) vertices in the cloud\n\nC++: easy3d::PointCloud::vertices_size() const --> unsigned int");
 		cl.def("n_vertices", (unsigned int (easy3d::PointCloud::*)() const) &easy3d::PointCloud::n_vertices, "returns number of vertices in the cloud\n\nC++: easy3d::PointCloud::n_vertices() const --> unsigned int");
 		cl.def("clear", (void (easy3d::PointCloud::*)()) &easy3d::PointCloud::clear, "clear cloud: remove all vertices\n\nC++: easy3d::PointCloud::clear() --> void");
@@ -150,7 +190,10 @@ void bind_easy3d_core_point_cloud(pybind11::module_& m)
 		cl.def("points", (class std::vector<easy3d::vec3 > & (easy3d::PointCloud::*)()) &easy3d::PointCloud::points, "vector of vertex positions\n\nC++: easy3d::PointCloud::points() --> class std::vector<easy3d::vec3 > &", pybind11::return_value_policy::automatic);
         cl.def("points", (const class std::vector<easy3d::vec3 > & (easy3d::PointCloud::*)() const) &easy3d::PointCloud::points, "vector of vertex positions\n\nC++: easy3d::PointCloud::points() --> class std::vector<easy3d::vec3 > &", pybind11::return_value_policy::automatic);
 
-		 { // easy3d::PointCloud::BaseHandle file:easy3d/core/point_cloud.h line:52
+        cl.def("name", [](easy3d::PointCloud& self) { return self.name(); }, pybind11::return_value_policy::copy, "Get the name of the point cloud.");
+        cl.def("set_name", [](easy3d::PointCloud& self, const std::string& name) { self.set_name(name); }, "Set the name of the point cloud.");
+
+        { // easy3d::PointCloud::BaseHandle file:easy3d/core/point_cloud.h line:52
 		 	auto & enclosing_class = cl;
 		 	pybind11::class_<easy3d::PointCloud::BaseHandle, std::shared_ptr<easy3d::PointCloud::BaseHandle>> cl(enclosing_class, "BaseHandle", "Base class for topology types (internally it is basically an index)\n \n\n Vertex");
 		 	cl.def( pybind11::init( [](){ return new easy3d::PointCloud::BaseHandle(); } ), "doc" );

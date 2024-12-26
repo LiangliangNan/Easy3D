@@ -25,7 +25,12 @@ void bind_easy3d_core_vec(pybind11::module_& m)
 		cl.def( pybind11::init<const float &>(), pybind11::arg("s") );
 
 		cl.def( pybind11::init( [](easy3d::vec2 const &o){ return new easy3d::vec2(o); } ) );
-		cl.def("length2", (float (easy3d::vec2::*)() const) &easy3d::vec2::length2, "C++: easy3d::vec2::length2() const --> float");
+
+        cl.def("to_numpy", [](const easy3d::vec2 &v) {
+            return pybind11::array_t<float>({2}, {sizeof(float)}, &v.x);
+        }, "Converts the vector to a NumPy array.");
+
+        cl.def("length2", (float (easy3d::vec2::*)() const) &easy3d::vec2::length2, "C++: easy3d::vec2::length2() const --> float");
 		cl.def("length", (float (easy3d::vec2::*)() const) &easy3d::vec2::length, "C++: easy3d::vec2::length() const --> float");
 		cl.def("norm", (float (easy3d::vec2::*)() const) &easy3d::vec2::norm, "C++: easy3d::vec2::norm() const --> float");
 		cl.def("distance2", (float (easy3d::vec2::*)(const easy3d::vec2 &) const) &easy3d::vec2::distance2, "C++: easy3d::vec2::distance2(const easy3d::vec2 &) const --> float", pybind11::arg("rhs"));
@@ -76,6 +81,11 @@ void bind_easy3d_core_vec(pybind11::module_& m)
 		cl.def( pybind11::init<const float &>(), pybind11::arg("s") );
 
 		cl.def( pybind11::init( [](easy3d::vec3 const &o){ return new easy3d::vec3(o); } ) );
+
+        cl.def("to_numpy", [](const easy3d::vec3 &v) {
+            return pybind11::array_t<float>({3}, {sizeof(float)}, &v.x);
+        }, "Converts the vector to a NumPy array.");
+
 		cl.def("__imul__", (easy3d::vec3 & (easy3d::vec3::*)(float)) &easy3d::vec3::operator*=<float>, "C++: easy3d::vec3::operator*=(float) --> easy3d::vec3 &", pybind11::return_value_policy::automatic, pybind11::arg("s"));
 		cl.def("__mul__", (easy3d::vec3 (easy3d::vec3::*)(float) const) &easy3d::vec3::operator*<float>, "C++: easy3d::vec3::operator*(float) const --> easy3d::vec3", pybind11::arg("s"));
 		cl.def("length2", (float (easy3d::vec3::*)() const) &easy3d::vec3::length2, "C++: easy3d::vec3::length2() const --> float");
@@ -131,6 +141,11 @@ void bind_easy3d_core_vec(pybind11::module_& m)
 		cl.def( pybind11::init<const float &>(), pybind11::arg("s") );
 
 		cl.def( pybind11::init( [](easy3d::vec4 const &o){ return new easy3d::vec4(o); } ) );
+
+        cl.def("to_numpy", [](const easy3d::vec4 &v) {
+            return pybind11::array_t<float>({4}, {sizeof(float)}, &v.x);
+        }, "Converts the vector to a NumPy array.");
+
 		cl.def("length2", (float (easy3d::vec4::*)() const) &easy3d::vec4::length2, "C++: easy3d::vec4::length2() const --> float");
 		cl.def("length", (float (easy3d::vec4::*)() const) &easy3d::vec4::length, "C++: easy3d::vec4::length() const --> float");
 		cl.def("norm", (float (easy3d::vec4::*)() const) &easy3d::vec4::norm, "C++: easy3d::vec4::norm() const --> float");
