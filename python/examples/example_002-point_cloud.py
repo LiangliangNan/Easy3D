@@ -16,7 +16,7 @@
 #       "pip install YOUR_BUILD_DIRECTORY/lib/python/setup.py"
 # -------------------------------------------------------------------------------
 import sys
-sys.path.append("../../cmake-build-debug/lib/python")
+sys.path.append("../../cmake-build-release/lib/python")
 
 # -------------------------------------------------------------------------------
 # Importing Necessary Libraries
@@ -27,9 +27,9 @@ import numpy as np      # NumPy library (used for handling data)
 # -------------------------------------------------------------------------------
 # Initializing Easy3D
 # -------------------------------------------------------------------------------
-# The `easy3d.initialize(True)` function initializes the Easy3D library.
-# The `True` parameter enables detailed logging, which is useful for debugging.
-easy3d.initialize(True)
+# The `easy3d.initialize(False)` function initializes the Easy3D library.
+# Use `True` to enable detailed logging, which is useful for debugging.
+easy3d.initialize(False)
 
 # -------------------------------------------------------------------------------
 # Creating a PointCloud Object and Initializing with Points
