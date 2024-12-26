@@ -1,29 +1,17 @@
-#include <easy3d/core/box.h>
 #include <easy3d/core/graph.h>
 #include <easy3d/core/model.h>
-#include <easy3d/core/point_cloud.h>
-#include <easy3d/core/surface_mesh.h>
-#include <easy3d/core/vec.h>
 #include <easy3d/renderer/camera.h>
-#include <easy3d/renderer/drawable.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/renderer.h>
-#include <easy3d/renderer/shader_program.h>
+
 #include <memory>
-#include <ostream>
-#include <sstream> // __str__
-#include <string>
-#include <string_view>
-#include <typeinfo>
 #include <utility>
 #include <vector>
 
-#include <functional>
 #include <pybind11/pybind11.h>
-#include <string>
 #include <pybind11/stl.h>
 
 

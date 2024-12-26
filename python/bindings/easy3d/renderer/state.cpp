@@ -1,16 +1,10 @@
-#include <easy3d/core/mat.h>
 #include <easy3d/core/vec.h>
 #include <easy3d/renderer/state.h>
+
 #include <memory>
-#include <sstream> // __str__
-#include <string>
-#include <string_view>
 #include <utility>
 
-#include <functional>
 #include <pybind11/pybind11.h>
-#include <string>
-#include <pybind11/stl.h>
 
 
 #ifndef BINDER_PYBIND11_TYPE_CASTER
