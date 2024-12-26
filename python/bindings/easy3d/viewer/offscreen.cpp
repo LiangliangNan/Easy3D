@@ -416,7 +416,7 @@ void bind_easy3d_viewer_offscreen(pybind11::module_& m)
                },
                pybind11::arg("poly_mesh"), pybind11::arg("create_default_drawables") = true,
                pybind11::return_value_policy::reference_internal,
-               "Add an existing poly mesh to the viewer."
+               "Add an existing polyhedral mesh to the viewer."
         );
 
         cl.def("camera", (class easy3d::Camera* (easy3d::OffScreen::*)()) &easy3d::OffScreen::camera, "Returns the camera used by the offscreen renderer", pybind11::return_value_policy::reference_internal);

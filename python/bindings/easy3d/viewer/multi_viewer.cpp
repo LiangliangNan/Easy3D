@@ -1,5 +1,10 @@
 #include <easy3d/core/vec.h>
+#include <easy3d/core/point_cloud.h>
+#include <easy3d/core/surface_mesh.h>
+#include <easy3d/core/graph.h>
+#include <easy3d/core/poly_mesh.h>
 #include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/drawable.h>
 #include <easy3d/viewer/multi_viewer.h>
 #include <easy3d/viewer/viewer.h>
 
@@ -371,16 +376,90 @@ void bind_easy3d_viewer_multi_viewer(pybind11::module_& m)
 
 		cl.def( pybind11::init( [](PyCallBack_easy3d_MultiViewer const &o){ return new PyCallBack_easy3d_MultiViewer(o); } ) );
 		cl.def( pybind11::init( [](easy3d::MultiViewer const &o){ return new easy3d::MultiViewer(o); } ) );
-		cl.def("set_division_visible", (void (easy3d::MultiViewer::*)(bool)) &easy3d::MultiViewer::set_division_visible, "Sets the visibility of the splitting lines of the views (visible by default).\n\nC++: easy3d::MultiViewer::set_division_visible(bool) --> void", pybind11::arg("b"));
+
+        cl.def("add_model", [](easy3d::MultiViewer& self, const std::string& file_name, bool create_default_drawables = true)
+               {
+                   return self.add_model(file_name, create_default_drawables);
+               },
+               pybind11::arg("file_name"), pybind11::arg("create_default_drawables") = true,
+               pybind11::return_value_policy::reference_internal,
+               "Add a model from a file to the viewer.");
+        cl.def("add_model", [](easy3d::MultiViewer& self, std::shared_ptr<easy3d::PointCloud> point_cloud, bool create_default_drawables = true)
+               {
+                   return self.add_model(point_cloud, create_default_drawables);
+               },
+               pybind11::arg("point_cloud"), pybind11::arg("create_default_drawables") = true,
+               pybind11::return_value_policy::reference_internal,
+               "Add an existing point cloud to the viewer.");
+        cl.def("add_model", [](easy3d::MultiViewer& self, std::shared_ptr<easy3d::SurfaceMesh> surface_mesh, bool create_default_drawables = true)
+               {
+                   return self.add_model(surface_mesh, create_default_drawables);
+               },
+               pybind11::arg("surface_mesh"), pybind11::arg("create_default_drawables") = true,
+               pybind11::return_value_policy::reference_internal,
+               "Add an existing surface mesh to the viewer."
+        );
+        cl.def("add_model", [](easy3d::MultiViewer& self, std::shared_ptr<easy3d::Graph> graph, bool create_default_drawables = true)
+               {
+                   return self.add_model(graph, create_default_drawables);
+               },
+               pybind11::arg("graph"), pybind11::arg("create_default_drawables") = true,
+               pybind11::return_value_policy::reference_internal,
+               "Add an existing graph to the viewer."
+        );
+        cl.def("add_model", [](easy3d::MultiViewer& self, std::shared_ptr<easy3d::PolyMesh> poly_mesh, bool create_default_drawables = true)
+               {
+                   return self.add_model(poly_mesh, create_default_drawables);
+               },
+               pybind11::arg("poly_mesh"), pybind11::arg("create_default_drawables") = true,
+               pybind11::return_value_policy::reference_internal,
+               "Add an existing polyhedral mesh to the viewer."
+        );
+
+        // Assign Model to specific view (overloaded)
+        cl.def("assign", [](easy3d::MultiViewer& self, int row, int col, const easy3d::PointCloud* point_cloud)
+               {
+                   self.assign(row, col, point_cloud);
+               },
+               "Assign a point cloud to the view at position (row, col)",
+               pybind11::arg("row"), pybind11::arg("col"), pybind11::arg("point_cloud"));
+        cl.def("assign", [](easy3d::MultiViewer& self, int row, int col, const easy3d::SurfaceMesh* surface_mesh)
+               {
+                   self.assign(row, col, surface_mesh);
+               },
+               "Assign a surface mesh to the view at position (row, col)",
+               pybind11::arg("row"), pybind11::arg("col"), pybind11::arg("surface_mesh"));
+        cl.def("assign", [](easy3d::MultiViewer& self, int row, int col, const easy3d::PolyMesh* poly_mesh)
+               {
+                   self.assign(row, col, poly_mesh);
+               },
+               "Assign a polyhedral mesh to the view at position (row, col)",
+               pybind11::arg("row"), pybind11::arg("col"), pybind11::arg("poly_mesh"));
+        cl.def("assign", [](easy3d::MultiViewer& self, int row, int col, const easy3d::Graph* graph)
+               {
+                   std::cerr << "Assigning model to view at position (" << row << ", " << col << ")" << std::endl;
+                   self.assign(row, col, graph);
+               },
+               "Assign a graph to the view at position (row, col)",
+               pybind11::arg("row"), pybind11::arg("col"), pybind11::arg("graph"));
+        // Assign Drawable to specific view (overloaded)
+        cl.def("assign", [](easy3d::MultiViewer& self, int row, int col, const easy3d::Drawable* drawable)
+               {
+                    std::cerr << "Assigning drawable to view at position (" << row << ", " << col << ")" << std::endl;
+                    self.assign(row, col, drawable);
+               },
+               "Assign a drawable to the view at position (row, col)",
+               pybind11::arg("row"), pybind11::arg("col"), pybind11::arg("drawable"));
+
+        cl.def("set_division_visible", (void (easy3d::MultiViewer::*)(bool)) &easy3d::MultiViewer::set_division_visible, "Sets the visibility of the splitting lines of the views (visible by default).\n\nC++: easy3d::MultiViewer::set_division_visible(bool) --> void", pybind11::arg("b"));
 		cl.def("division_visible", (bool (easy3d::MultiViewer::*)() const) &easy3d::MultiViewer::division_visible, "Returns if the splitting lines of the views are visible.\n\nC++: easy3d::MultiViewer::division_visible() const --> bool");
 		cl.def("point_under_pixel", (class easy3d::Vec<3, float> (easy3d::MultiViewer::*)(int, int, bool &) const) &easy3d::MultiViewer::point_under_pixel, "Query the XYZ coordinates of the surface point under the cursor.\n \n\n The cursor x-coordinate, relative to the left edge of the content area.\n \n\n The cursor y-coordinate, relative to the top edge of the content area.\n \n\n indicates whether the point was found or not.\n \n\n The coordinates of the 3D point located at pixel (x, y) on screen. The returned point is valid\n      only if found was returned true.\n \n\n The screen point (x, y) is expressed in the screen coordinate system with an origin in the\n      upper left corner. So it doesn't necessarily correspond to a pixel on High DPI devices, e.g., a\n      Mac with a Retina display. If your inherited viewer uses a customized content area, you must also\n      reimplement this function such that the x and y are relative to left and top edges of the content\n      area, respectively.\n\nC++: easy3d::MultiViewer::point_under_pixel(int, int, bool &) const --> class easy3d::Vec<3, float>", pybind11::arg("x"), pybind11::arg("y"), pybind11::arg("found"));
 		cl.def("rows", (int (easy3d::MultiViewer::*)() const) &easy3d::MultiViewer::rows, "Return the number of rows (of the grid-like layout) of the viewer.\n\nC++: easy3d::MultiViewer::rows() const --> int");
 		cl.def("columns", (int (easy3d::MultiViewer::*)() const) &easy3d::MultiViewer::columns, "Return the number of columns (of the grid-like layout) of the viewer.\n\nC++: easy3d::MultiViewer::columns() const --> int");
 		cl.def("set_layout", (void (easy3d::MultiViewer::*)(int, int)) &easy3d::MultiViewer::set_layout, "Set/Change the layout of the viewer.\n \n\n The number of rows (of the grid-like layout).\n \n\n The number of columns (of the grid-like layout).\n\nC++: easy3d::MultiViewer::set_layout(int, int) --> void", pybind11::arg("rows"), pybind11::arg("cols"));
-        cl.def("camera", (class easy3d::Camera* (easy3d::MultiViewer::*)()) &easy3d::MultiViewer::camera, "Returns the camera used by the viewer", pybind11::return_value_policy::automatic);
-        cl.def("camera", (const class easy3d::Camera* (easy3d::MultiViewer::*)() const) &easy3d::MultiViewer::camera, "Returns the camera used by the viewer", pybind11::return_value_policy::automatic);
+        cl.def("camera", (class easy3d::Camera* (easy3d::MultiViewer::*)()) &easy3d::MultiViewer::camera, "Returns the camera used by the viewer", pybind11::return_value_policy::reference_internal);
+        cl.def("camera", (const class easy3d::Camera* (easy3d::MultiViewer::*)() const) &easy3d::MultiViewer::camera, "Returns the camera used by the viewer", pybind11::return_value_policy::reference_internal);
         cl.def("snapshot", (bool (easy3d::MultiViewer::*)() const) &easy3d::MultiViewer::snapshot, "Take a snapshot of the screen and save it to a file.\n \n\n This method takes a snapshot of the screen and saves the snapshot into an image file.\n          Internally, it will pop up a file dialog for specifying the file name.\n \n\n true on success and false otherwise.\n\nC++: easy3d::MultiViewer::snapshot() const --> bool");
-		cl.def("assign", (class easy3d::MultiViewer & (easy3d::MultiViewer::*)(const class easy3d::MultiViewer &)) &easy3d::MultiViewer::operator=, "C++: easy3d::MultiViewer::operator=(const class easy3d::MultiViewer &) --> class easy3d::MultiViewer &", pybind11::return_value_policy::reference_internal, pybind11::arg(""));
 	}
 
 }

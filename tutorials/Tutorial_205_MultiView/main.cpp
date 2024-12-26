@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
     // ---------------------------------------------------------------------------
     // setup content for view(0, 0): the graph model (vertices and edges)
     const std::string file_graph = resource::directory() + "/data/graph.ply";
-    auto graph = viewer.add_model(file_graph, true);
+    auto graph = viewer.add_model(file_graph);
     if (graph)
         viewer.assign(0, 0, graph);
     else
@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
     // ---------------------------------------------------------------------------
     // setup content for view(0, 1): the surface of the sphere model
     const std::string file_sphere = resource::directory() + "/data/sphere.obj";
-    auto sphere = viewer.add_model(file_sphere, true);
+    auto sphere = viewer.add_model(file_sphere);
     if (sphere) {
         auto sphere_faces = sphere->renderer()->get_triangles_drawable("faces");
         viewer.assign(0, 1, sphere_faces);

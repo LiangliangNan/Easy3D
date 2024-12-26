@@ -520,7 +520,7 @@ void bind_easy3d_viewer_viewer(pybind11::module_& m)
                },
                pybind11::arg("poly_mesh"), pybind11::arg("create_default_drawables") = true,
                pybind11::return_value_policy::reference_internal,
-               "Add an existing poly mesh to the viewer."
+               "Add an existing polyhedral mesh to the viewer."
         );
 		cl.def("models", (const class std::vector<class easy3d::Model *> & (easy3d::Viewer::*)() const) &easy3d::Viewer::models, "Query the models managed by this viewer.\n \n\n The models managed by this viewer.\n\nC++: easy3d::Viewer::models() const --> const class std::vector<class easy3d::Model *> &", pybind11::return_value_policy::automatic);
 		cl.def("drawables", (const class std::vector<class easy3d::Drawable *> & (easy3d::Viewer::*)() const) &easy3d::Viewer::drawables, "Query the drawables managed by this viewer.\n \n\n The drawables managed by this viewer.\n\nC++: easy3d::Viewer::drawables() const --> const class std::vector<class easy3d::Drawable *> &", pybind11::return_value_policy::automatic);

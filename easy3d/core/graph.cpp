@@ -174,7 +174,7 @@ namespace easy3d {
 		props = vertex_properties();
 		if (!props.empty())
 		{
-			std::cout << "vertex properties:\n";
+            output << "vertex properties:\n";
             for (const auto& p : props)
                 output << "\t" << p << std::endl;
 		}
@@ -183,7 +183,7 @@ namespace easy3d {
         props = edge_properties();
 		if (!props.empty())
 		{
-			std::cout << "edge properties:\n";
+            output << "edge properties:\n";
             for (const auto& p : props)
                 output << "\t" << p << std::endl;
 		}
@@ -191,7 +191,7 @@ namespace easy3d {
 		props = model_properties();
 		if (!props.empty())
 		{
-			std::cout << "model properties:\n";
+            output << "model properties:\n";
             for (const auto& p : props)
                 output << "\t" << p << std::endl;
 		}

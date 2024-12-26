@@ -12,8 +12,8 @@
 # Adding Easy3D Python Bindings to the System Path
 # -------------------------------------------------------------------------------
 # This is required if the bindings are not installed via `pip` but are located in
-# a local build directory. To install the bindings, use the following command:
-#       "pip install YOUR_BUILD_DIRECTORY/lib/python/setup.py"
+# a local build directory. For building and installing Python bindings of Easy3D,
+# please refer to: https://github.com/LiangliangNan/Easy3D/blob/main/ReadMe.md
 # -------------------------------------------------------------------------------
 import sys
 sys.path.append("../../cmake-build-release/lib/python")

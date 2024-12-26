@@ -2,18 +2,18 @@
 # Example: The basic Easy3D viewer
 # -------------------------------------------------------------------------------
 # This script demonstrates how to use the Easy3D `Viewer` class to:
-# 1. Create a 3D viewer with a custom title.
-# 2. Load and visualize a 3D mesh model (`SurfaceMesh`) from a file.
-# 3. Load and visualize a 3D point cloud model (`PointCloud`) from a file.
-# 4. Run the viewer to interact with the models (e.g., rotate, zoom, pan).
+# - Create a 3D viewer with a custom title.
+# - Load and visualize a 3D mesh model (`SurfaceMesh`) from a file.
+# - Load and visualize a 3D point cloud model (`PointCloud`) from a file.
+# - Run the viewer to interact with the models (e.g., rotate, zoom, pan).
 
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path
 # -------------------------------------------------------------------------------
 # This is required if the bindings are not installed via `pip` but are located in
-# a local build directory. To install the bindings, use the following command:
-#       "pip install YOUR_BUILD_DIRECTORY/lib/python/setup.py"
+# a local build directory. For building and installing Python bindings of Easy3D,
+# please refer to: https://github.com/LiangliangNan/Easy3D/blob/main/ReadMe.md
 # -------------------------------------------------------------------------------
 import sys
 sys.path.append("../../cmake-build-release/lib/python")
@@ -71,7 +71,9 @@ viewer.add_model(pointcloud)
 # -------------------------------------------------------------------------------
 # Running the Viewer
 # -------------------------------------------------------------------------------
-# The `viewer.run()` function launches the viewer window, where users can:
-# - Interact with the 3D models (e.g., rotate, zoom, pan).
-# - Explore the structure and details of the loaded models.
+# The `viewer.run()` function launches the viewer window to allow the user to
+# interact with the 3D models (e.g., rotate, zoom, pan).
+# Note:
+# - The viewer window remains open until the user manually closes it.
 viewer.run()
+
