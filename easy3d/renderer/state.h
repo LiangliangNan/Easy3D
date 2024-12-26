@@ -144,7 +144,6 @@ namespace easy3d {
          * @param method The coloring method.
          * @param location The the location of the coloring property.
          * @param name The name of the coloring property.
-         * @param texture The texture for the coloring.
          */
         void set_coloring(Method method, Location location, const std::string &name);
 
