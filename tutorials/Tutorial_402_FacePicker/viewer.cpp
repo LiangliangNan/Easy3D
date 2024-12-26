@@ -78,7 +78,7 @@ bool PickerViewer::mouse_press_event(int x, int y, int button, int modifiers) {
 
 
 Model* PickerViewer::add_model(const std::string& file_name) {
-    Model* model = Viewer::add_model(file_name, true);
+    auto model = Viewer::add_model(file_name, true);
 
     // make sure the edges are visible
     model->renderer()->get_lines_drawable("edges")->set_visible(true);

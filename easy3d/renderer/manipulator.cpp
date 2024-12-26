@@ -38,10 +38,8 @@ namespace easy3d {
     Manipulator::Manipulator(Model *model)
             : model_(model), drawable_model_bbox_(nullptr) {
         frame_ = new ManipulatedFrame;
-        if (model_) {
-            model_->set_manipulator(this);
+        if (model_)
             frame_->setPositionAndOrientation(model->bounding_box().center(), quat());
-        }
     }
 
 

@@ -45,7 +45,7 @@ int test_text_mesher(int duration) {
     // Generate a surface mesh for "Easy3D".
     SurfaceMesh* mesh = mesher.generate("Easy3D", 0, 0, 48, 15, true);
     if (mesh)
-        viewer.add_model(mesh); // Add the mesh to the viewer.
+        viewer.add_model(std::shared_ptr<SurfaceMesh>(mesh)); // Add the mesh to the viewer.
 
     // Generate surface for "Makes 3D Easy!".
     mesher.set_font(resource::directory() + "/fonts/en_Roboto-Regular.ttf");

@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
     // form triangles.
     surface->update_element_buffer(indices);
     // Add the drawable to the viewer
-    viewer.add_drawable(surface);
+    viewer.add_drawable(std::shared_ptr<TrianglesDrawable>(surface));
 
     viewer.fit_screen();
 

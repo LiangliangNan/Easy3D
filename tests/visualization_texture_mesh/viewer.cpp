@@ -202,12 +202,10 @@ namespace easy3d {
         builder.end_surface();
 
         // since the mesh has been built, skip texture if material and texcoord information don't exist
-        if ((fom->material_count > 0 && fom->materials) == false) {
-            Viewer::add_model(mesh, true);
-            return mesh;
-        }
+        if ((fom->material_count > 0 && fom->materials) == false)
+            return Viewer::add_model(std::shared_ptr<SurfaceMesh>(mesh), true);
         else
-            Viewer::add_model(mesh, false);
+            Viewer::add_model(std::shared_ptr<SurfaceMesh>(mesh), false);
 
         mesh->update_vertex_normals();
         auto normals = mesh->get_vertex_property<vec3>("v:normal");

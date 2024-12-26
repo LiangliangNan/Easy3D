@@ -66,7 +66,7 @@ void WalkThrough::add_keyframe(const Frame &frame, bool quiet) {
 }
 
 
-void WalkThrough::set_scene(const std::vector<Model *> &scene) {
+void WalkThrough::set_scene(const std::vector< std::shared_ptr<Model> > &scene) {
     if (scene.empty())
         return;
     Box3 box;

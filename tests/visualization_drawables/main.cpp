@@ -50,7 +50,7 @@ int test_drawables(int duration) {
     // Upload the vertex indices of the surface to the GPU.
     surface->update_element_buffer(indices);
     // Add the drawable to the viewer
-    viewer.add_drawable(surface);
+    viewer.add_drawable(std::shared_ptr<TrianglesDrawable>(surface));
 
     // Create a PointsDrawable to visualize the vertices of the "bunny".
     // Only the vertex positions have to be sent to the GPU for visualization.
@@ -64,7 +64,7 @@ int test_drawables(int duration) {
     // Set the vertices size (here 10 pixels).
     vertices->set_point_size(10);
     // Add the drawable to the viewer
-    viewer.add_drawable(vertices);
+    viewer.add_drawable(std::shared_ptr<PointsDrawable>(vertices));
 
     // Create a LinesDrawable to visualize the bounding box of the "bunny".
 
@@ -99,7 +99,7 @@ int test_drawables(int duration) {
     // Set the width of the edges (here 5 pixels).
     bbox_drawable->set_line_width(5.0f);
     // Add the drawable to the viewer
-    viewer.add_drawable(bbox_drawable);
+    viewer.add_drawable(std::shared_ptr<LinesDrawable>(bbox_drawable));
 
     // Make sure everything is within the visible region of the viewer.
     viewer.fit_screen();

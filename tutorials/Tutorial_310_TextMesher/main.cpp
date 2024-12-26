@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
     // Generate a surface mesh for "Easy3D".
     SurfaceMesh* mesh = mesher.generate("Easy3D", 0, 0, 48, 15, true);
     if (mesh)
-        viewer.add_model(mesh); // Add the mesh to the viewer.
+        viewer.add_model(std::shared_ptr<SurfaceMesh>(mesh)); // Add the mesh to the viewer.
 
     // Generate surface for "Makes 3D Easy!".
     mesher.set_font(resource::directory() + "/fonts/en_Roboto-Regular.ttf");
@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
     d->set_impostor_type(LinesDrawable::CONE);
     d->set_line_width(2);
     d->set_property_coloring(easy3d::State::VERTEX);
-    viewer.add_drawable(d);
+    viewer.add_drawable(std::shared_ptr<LinesDrawable>(d));
 #endif
 
     // We always want to look at the front of the meshed text.

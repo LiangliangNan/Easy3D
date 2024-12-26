@@ -387,40 +387,40 @@ void bind_easy3d_viewer_offscreen(pybind11::module_& m)
                pybind11::arg("file_name"), pybind11::arg("create_default_drawables") = true,
                pybind11::return_value_policy::reference_internal,
                "Add a model from a file to the viewer.");
-        cl.def("add_model", [](easy3d::OffScreen& self, easy3d::PointCloud* pc, bool create_default_drawables = true)
+        cl.def("add_model", [](easy3d::OffScreen& self, std::shared_ptr<easy3d::PointCloud> point_cloud, bool create_default_drawables = true)
                {
-                   return self.add_model(static_cast<easy3d::Model*>(pc), create_default_drawables);
+                   return self.add_model(point_cloud, create_default_drawables);
                },
                pybind11::arg("point_cloud"), pybind11::arg("create_default_drawables") = true,
                pybind11::return_value_policy::reference_internal,
-               "Add a PointCloud to the viewer.");
-        cl.def("add_model", [](easy3d::OffScreen& self, easy3d::SurfaceMesh* mesh, bool create_default_drawables = true)
+               "Add an existing point cloud to the viewer.");
+        cl.def("add_model", [](easy3d::OffScreen& self, std::shared_ptr<easy3d::SurfaceMesh> surface_mesh, bool create_default_drawables = true)
                {
-                   return self.add_model(static_cast<easy3d::Model*>(mesh), create_default_drawables);
+                   return self.add_model(surface_mesh, create_default_drawables);
                },
-               pybind11::arg("mesh"), pybind11::arg("create_default_drawables") = true,
+               pybind11::arg("surface_mesh"), pybind11::arg("create_default_drawables") = true,
                pybind11::return_value_policy::reference_internal,
-               "Add a SurfaceMesh to the viewer."
+               "Add an existing surface mesh to the viewer."
         );
-        cl.def("add_model", [](easy3d::OffScreen& self, easy3d::Graph* graph, bool create_default_drawables = true)
+        cl.def("add_model", [](easy3d::OffScreen& self, std::shared_ptr<easy3d::Graph> graph, bool create_default_drawables = true)
                {
-                   return self.add_model(static_cast<easy3d::Model*>(graph), create_default_drawables);
+                   return self.add_model(graph, create_default_drawables);
                },
                pybind11::arg("graph"), pybind11::arg("create_default_drawables") = true,
                pybind11::return_value_policy::reference_internal,
-               "Add a graph to the viewer."
+               "Add an existing graph to the viewer."
         );
-        cl.def("add_model", [](easy3d::OffScreen& self, easy3d::PolyMesh* mesh, bool create_default_drawables = true)
+        cl.def("add_model", [](easy3d::OffScreen& self, std::shared_ptr<easy3d::PolyMesh> poly_mesh, bool create_default_drawables = true)
                {
-                   return self.add_model(static_cast<easy3d::Model*>(mesh), create_default_drawables);
+                   return self.add_model(poly_mesh, create_default_drawables);
                },
-               pybind11::arg("mesh"), pybind11::arg("create_default_drawables") = true,
+               pybind11::arg("poly_mesh"), pybind11::arg("create_default_drawables") = true,
                pybind11::return_value_policy::reference_internal,
-               "Add a PolyMesh to the viewer."
+               "Add an existing poly mesh to the viewer."
         );
 
-        cl.def("camera", (class easy3d::Camera* (easy3d::OffScreen::*)()) &easy3d::OffScreen::camera, "Returns the camera used by the offscreen renderer", pybind11::return_value_policy::automatic);
-        cl.def("camera", (const class easy3d::Camera* (easy3d::OffScreen::*)() const) &easy3d::OffScreen::camera, "Returns the camera used by the offscreen renderer", pybind11::return_value_policy::automatic);
+        cl.def("camera", (class easy3d::Camera* (easy3d::OffScreen::*)()) &easy3d::OffScreen::camera, "Returns the camera used by the offscreen renderer", pybind11::return_value_policy::reference_internal);
+        cl.def("camera", (const class easy3d::Camera* (easy3d::OffScreen::*)() const) &easy3d::OffScreen::camera, "Returns the camera used by the offscreen renderer", pybind11::return_value_policy::reference_internal);
 
 		cl.def("render", [](easy3d::OffScreen const &o, const std::string & a0) -> bool { return o.render(a0); }, "", pybind11::arg("file_name"));
 		cl.def("render", [](easy3d::OffScreen const &o, const std::string & a0, float const & a1) -> bool { return o.render(a0, a1); }, "", pybind11::arg("file_name"), pybind11::arg("scaling"));

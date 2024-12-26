@@ -39,6 +39,9 @@ namespace easy3d {
 
 	protected:
         Model* add_model(const std::string& file_name, bool create_default_drawables = true) override;
+
+        bool delete_model(Model* model) override;
+
 		bool key_press_event(int key, int modifiers) override;
 	};
 

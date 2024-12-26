@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
     mesh->add_quad(v0, v1, v2, v3);
 
     // add the model to the viewer and create the default drawable "faces"
-    viewer.add_model(mesh, true);
+    viewer.add_model(std::shared_ptr<SurfaceMesh>(mesh), true);
 
     // set the texture of the default drawable "faces"
     auto drawable = mesh->renderer()->get_triangles_drawable("faces");

@@ -123,7 +123,7 @@ void TutorialTransparency::draw() const {
     for (auto m : models_) {
         for (auto d : m->renderer()->triangles_drawables()) {
             if (d->type() == Drawable::DT_TRIANGLES)
-                    surfaces.push_back(dynamic_cast<TrianglesDrawable*>(d));
+                    surfaces.push_back(dynamic_cast<TrianglesDrawable*>(d.get()));
         }
     }
 

@@ -27,6 +27,8 @@
 #ifndef EASY3D_RENDERER_WALK_THROUGH_H
 #define EASY3D_RENDERER_WALK_THROUGH_H
 
+#include <memory>
+
 #include <easy3d/core/types.h>
 #include <easy3d/core/signal.h>
 #include <easy3d/renderer/frame.h>
@@ -71,7 +73,7 @@ public:
     //@{
     /// \brief Starts the walking mode.
     /// \param scene All the models in the scene.
-    void set_scene(const std::vector<easy3d::Model *> &scene);
+    void set_scene(const std::vector< std::shared_ptr<easy3d::Model> > &scene);
 
     /// \brief Walks the character to the \c ground_point position.
     /// \details Upon return, the character will be standing at the \p ground_point position looking in a direction

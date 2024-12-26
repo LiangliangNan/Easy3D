@@ -101,11 +101,8 @@ namespace easy3d {
         delete drawable_axes_;
         delete texter_;
 
-        for (auto m: models_) {
-            delete m->renderer();
-            delete m->manipulator();
+        for (auto m: models_)
             delete m;
-        }
 		models_.clear();
 
 		for (auto d : drawables_)
@@ -629,7 +626,7 @@ namespace easy3d {
 
     void Viewer::addModel(Model *model) {
         if (!model) {
-            LOG(WARNING) << "model is NULL.";
+            LOG(WARNING) << "model is nullptr";
             return;
         }
         for (auto m: models_) {
@@ -645,7 +642,7 @@ namespace easy3d {
         }
 
         makeCurrent();
-        model->set_renderer(new Renderer(model));
+        model->set_renderer(std::make_shared<Renderer>(model));
         doneCurrent();
 
         int pre_idx = model_idx_;
@@ -662,7 +659,7 @@ namespace easy3d {
 
     void Viewer::deleteModel(Model *model) {
         if (!model) {
-            LOG(WARNING) << "model is NULL.";
+            LOG(WARNING) << "model is nullptr";
             return;
         }
 
@@ -671,10 +668,8 @@ namespace easy3d {
         if (pos != models_.end()) {
             const std::string name = model->name();
             models_.erase(pos);
-            makeCurrent();
-            delete model->renderer();
-            delete model->manipulator();
-            delete model;
+            makeCurrent();  // make sure the context is current
+            delete model;   // internally the renderer and manipulator will be deleted
             doneCurrent();
             model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
 
@@ -692,7 +687,7 @@ namespace easy3d {
 
 	bool Viewer::addDrawable(Drawable *drawable) {
 		if (!drawable) {
-			LOG(WARNING) << "drawable is NULL.";
+			LOG(WARNING) << "drawable is nullptr";
 			return false;
 		}
 		for (auto d : drawables_) {
@@ -708,21 +703,22 @@ namespace easy3d {
 
 
 	bool Viewer::deleteDrawable(Drawable *drawable) {
-		if (!drawable) {
-			LOG(WARNING) << "drawable is NULL";
-			return false;
-		}
+        if (!drawable) {
+            LOG(WARNING) << "drawable is nullptr";
+            return false;
+        }
 
-		auto pos = std::find(drawables_.begin(), drawables_.end(), drawable);
-		if (pos != drawables_.end()) {
-			drawables_.erase(pos);
-			delete drawable;
-			return true;
-		}
-		else {
-			LOG(WARNING) << "no such drawable: " << drawable->name();
-			return false;
-		}
+        for (auto it = drawables_.begin(); it != drawables_.end(); ++it) {
+            if (*it == drawable) {
+                delete drawable;
+                drawables_.erase(it);
+                return true;
+            }
+        }
+
+        // if the drawable was not found
+        LOG(WARNING) << "no such drawable: " << drawable->name();
+        return false;
 	}
 
 

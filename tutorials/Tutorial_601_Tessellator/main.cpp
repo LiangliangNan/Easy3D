@@ -160,7 +160,7 @@ int main(int argc, char **argv) {
     // ------------------------------------------------------------
 
     // add the model to the viewer
-    viewer.add_model(mesh, true);
+    viewer.add_model(std::shared_ptr<SurfaceMesh>(mesh), true);
 
     // show the vertices
     mesh->renderer()->get_points_drawable("vertices")->set_visible(true);

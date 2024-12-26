@@ -47,7 +47,6 @@ namespace easy3d {
 
     MultiViewer::MultiViewer(int rows, int cols, const std::string &title)
             : Viewer(title)
-            , division_vao_(nullptr)
             , lines_program_(nullptr)
             , division_vertex_buffer_(0)
             , division_visible_(true)
@@ -58,8 +57,7 @@ namespace easy3d {
 
     MultiViewer::~MultiViewer() {
         VertexArrayObject::release_buffer(division_vertex_buffer_);
-        delete division_vao_;
-
+        division_vao_.reset();
         // Not needed: it will be called in the destructor of the base class
         // Viewer::cleanup();
     }
@@ -271,7 +269,7 @@ namespace easy3d {
             return;
 
         if (!division_vao_)
-            division_vao_ = new VertexArrayObject;
+            division_vao_ = std::unique_ptr<VertexArrayObject>(new VertexArrayObject);
 
         view_width_ = static_cast<int>(static_cast<float>(width()) / static_cast<float>(num_cols_));
         view_height_ = static_cast<int>(static_cast<float>(height()) / static_cast<float>(num_rows_));

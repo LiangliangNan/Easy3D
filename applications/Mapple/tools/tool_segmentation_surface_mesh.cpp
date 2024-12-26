@@ -69,7 +69,7 @@ namespace easy3d {
 
         void MultitoolSurfaceMeshFaceSegmentation::clear_hint() {
             for (auto model : tool_manager()->viewer()->models()) {
-                auto mesh = dynamic_cast<SurfaceMesh *>(model);
+                auto mesh = dynamic_cast<SurfaceMesh *>(model.get());
                 if (mesh) {
                     auto drawable = mesh->renderer()->get_triangles_drawable("faces");
                     drawable->set_highlight(false);

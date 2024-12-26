@@ -160,7 +160,7 @@ Model *DialogProperties::getModel() {
     for (auto m : models) {
         const std::string &name = file_system::simple_name(m->name());
         if (name == text)
-            return m;
+            return m.get();
     }
     return nullptr;
 }

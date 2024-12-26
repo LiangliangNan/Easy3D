@@ -76,7 +76,7 @@ void TutorialSoftShadow::draw() const {
     std::vector<TrianglesDrawable*> surfaces;
     for (auto m : models_) {
         for (auto d : m->renderer()->triangles_drawables()) {
-            surfaces.push_back(d);
+            surfaces.push_back(d.get());
         }
     }
 	if (shadow_enabled_)

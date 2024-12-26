@@ -412,7 +412,7 @@ Drawable *WidgetPointsDrawable::drawable() {
     else {
         for (auto d : model->renderer()->points_drawables()) {
             active_drawable_[model] = d->name();
-            return d;
+            return d.get();
         }
         return nullptr;
     }

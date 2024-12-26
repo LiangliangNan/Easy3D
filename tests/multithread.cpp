@@ -65,7 +65,7 @@ int test_multithread() {
         colors[v] = vec3(1.0f, 0.0f, 0.0f);
     }
     // add the point cloud to the viewer for visualization
-    viewer.add_model(cloud);
+    viewer.add_model(std::shared_ptr<PointCloud>(cloud));
 
     // set up visualization parameters
     auto drawable = cloud->renderer()->get_points_drawable("vertices");

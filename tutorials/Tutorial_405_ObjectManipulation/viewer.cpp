@@ -79,10 +79,10 @@ bool ManipulationViewer::mouse_drag_event(int x, int y, int dx, int dy, int butt
         else if (pressed_key_ == KEY_O) axis = ManipulatedFrame::ORTHOGONAL;
         switch (button) {
             case BUTTON_LEFT:
-                frame->action_rotate(x, y, dx, dy, camera_, axis);
+                frame->action_rotate(x, y, dx, dy, camera(), axis);
                 break;
             case BUTTON_RIGHT:
-                frame->action_translate(x, y, dx, dy, camera_, axis);
+                frame->action_translate(x, y, dx, dy, camera(), axis);
                 break;
             default:
                 break;
@@ -96,9 +96,9 @@ bool ManipulationViewer::mouse_drag_event(int x, int y, int dx, int dy, int butt
 
 void ManipulationViewer::mark(easy3d::Model *model) {
     for (auto m : models()) {
-        m->renderer()->set_selected(m == model);
+        m->renderer()->set_selected(m.get() == model);
         auto faces = m->renderer()->get_triangles_drawable("faces");
-        if (m == model)
+        if (m.get() == model)
             faces->set_uniform_coloring(vec4(1, 0, 0, 1.0f));
         else
             faces->set_uniform_coloring(setting::surface_mesh_faces_color);
@@ -107,7 +107,7 @@ void ManipulationViewer::mark(easy3d::Model *model) {
 
     selected_model_ = model;
     if (!model->manipulator()) {    // create manipulator if it doesn't exist
-        model->set_manipulator(new Manipulator(model));
+        model->set_manipulator(std::make_shared<Manipulator>(model));
         model->manipulator()->frame()->modified.connect(this,
                 static_cast<void (ManipulationViewer::*)(void) const>(&ManipulationViewer::update));
     }

@@ -245,7 +245,7 @@ namespace easy3d {
                 return SurfaceMesh::Face();
             }
             else {
-                drawable = drawables[0];
+                drawable = drawables[0].get();
                 std::string msg = "default drawable 'faces' not found (available drawables are: ";
                 for (std::size_t i = 0; i < drawables.size(); ++i) {
                     msg += drawables[i]->name();
@@ -313,10 +313,10 @@ namespace easy3d {
         int id = color::encode(c[0], c[1], c[2], c[3]);
         picked_face_ = SurfaceMesh::Face();
 
-#if 0 // If the mesh is a triangle mesh.
+#if 0 // If the mesh is a triangle mesh
         picked_face_ = SurfaceMesh::Face(id);
         return picked_face_;
-#else
+#else // I want to handle general polygonal meshes
         if (id >= 0) {
             // We draw the polygonal faces as triangles and the picked id is the index of the picked triangle. So we
             // need to figure out from which face this triangle comes from.

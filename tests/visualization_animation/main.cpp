@@ -43,7 +43,7 @@ int test_animation(int duration) {
     surface->update_vertex_buffer(points, true);
 
     surface->update_element_buffer(indices);
-    viewer.add_drawable(surface);
+    viewer.add_drawable(std::shared_ptr<TrianglesDrawable>(surface));
     viewer.fit_screen();
 
     viewer.set_animation(true);

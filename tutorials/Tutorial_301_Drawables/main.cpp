@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
     // Upload the vertex indices of the surface to the GPU.
     surface->update_element_buffer(indices);
     // Add the drawable to the viewer
-    viewer.add_drawable(surface);
+    viewer.add_drawable(std::shared_ptr<TrianglesDrawable>(surface));
 
     //-------------------------------------------------------------
     // Create a PointsDrawable to visualize the vertices of the "bunny".
@@ -103,7 +103,7 @@ int main(int argc, char **argv) {
     // Set the vertices size (here 10 pixels).
     vertices->set_point_size(10);
     // Add the drawable to the viewer
-    viewer.add_drawable(vertices);
+    viewer.add_drawable(std::shared_ptr<PointsDrawable>(vertices));
 
     //-------------------------------------------------------------
     // Create a LinesDrawable to visualize the bounding box of the "bunny".
@@ -139,7 +139,7 @@ int main(int argc, char **argv) {
     // Set the width of the edges (here 5 pixels).
     bbox_drawable->set_line_width(5.0f);
     // Add the drawable to the viewer
-    viewer.add_drawable(bbox_drawable);
+    viewer.add_drawable(std::shared_ptr<LinesDrawable>(bbox_drawable));
 
     //-------------------------------------------------------------
 
@@ -185,7 +185,7 @@ int main(int argc, char **argv) {
     });
 
     // Add the drawable to the viewer
-    viewer.add_drawable(surface);
+    viewer.add_drawable(std::shared_ptr<TrianglesDrawable>(surface));
 
     //-------------------------------------------------------------
     // Create a PointsDrawable to visualize the vertices of the "bunny".
@@ -207,7 +207,7 @@ int main(int argc, char **argv) {
     // Set the vertices size (here 10 pixels).
     vertices->set_point_size(10);
     // Add the drawable to the viewer
-    viewer.add_drawable(vertices);
+    viewer.add_drawable(std::shared_ptr<PointsDrawable>(vertices));
 
     //-------------------------------------------------------------
     // Create a LinesDrawable to visualize the bounding box of the "bunny".
@@ -247,7 +247,7 @@ int main(int argc, char **argv) {
     // Set the width of the edges (here 5 pixels).
     bbox_drawable->set_line_width(5.0f);
     // Add the drawable to the viewer
-    viewer.add_drawable(bbox_drawable);
+    viewer.add_drawable(std::shared_ptr<LinesDrawable>(bbox_drawable));
 
     //-------------------------------------------------------------
 
@@ -350,14 +350,14 @@ int main(int argc, char **argv) {
     // For visualization, the point positions and the vertex indices of the faces have to be sent to the GPU.
     auto surface = new MyTrianglesDrawable("faces");
     // Add the drawable to the viewer
-    viewer.add_drawable(surface);
+    viewer.add_drawable(std::shared_ptr<MyTrianglesDrawable>(surface));
 
     //-------------------------------------------------------------
     // Create a PointsDrawable to visualize the vertices of the "bunny".
     // Only the vertex positions have to be sent to the GPU for visualization.
     auto vertices = new MyPointsDrawable("vertices");
     // Add the drawable to the viewer
-    viewer.add_drawable(vertices);
+    viewer.add_drawable(std::shared_ptr<MyPointsDrawable>(vertices));
     // Set a color for the vertices (here we want a red color).
     vertices->set_uniform_coloring(vec4(1.0f, 0.0f, 0.0f, 1.0f));  // r, g, b, a
     // Three options are available for visualizing points:
@@ -375,7 +375,7 @@ int main(int argc, char **argv) {
     // Compute the bounding box.
     auto bbox_drawable = new MyLinesDrawable("bbox");
     // Add the drawable to the viewer
-    viewer.add_drawable(bbox_drawable);
+    viewer.add_drawable(std::shared_ptr<MyLinesDrawable>(bbox_drawable));
     // Set a color for the edges of the bounding box (here we want a blue color).
     bbox_drawable->set_uniform_coloring(vec4(0.0f, 0.0f, 1.0f, 1.0f));    // r, g, b, a
     // Set the width of the edges (here 5 pixels).

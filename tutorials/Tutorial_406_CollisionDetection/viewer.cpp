@@ -49,7 +49,7 @@ TutorialCollisionDetection::TutorialCollisionDetection(const std::string &title)
     auto mesh1 = dynamic_cast<SurfaceMesh*>(m1);
     if (mesh0 && mesh1) {
         // use the manipulator to transform the first model (visualization only and geometry is not changed)
-        mesh0->set_manipulator(new Manipulator(mesh0));
+        mesh0->set_manipulator(std::make_shared<Manipulator>(mesh0));
 
         // the first mesh is colored by a "face_color" property
         mesh0->add_face_property<vec3>("face_color", model0_color_);
@@ -98,9 +98,9 @@ bool TutorialCollisionDetection::mouse_drag_event(int x, int y, int dx, int dy, 
     if (collider_ && models().size() == 2 && modifiers == MODIF_ALT && timer_.is_paused()) {
         auto manipulator = models_[0]->manipulator();
         if (button == BUTTON_LEFT)
-            manipulator->frame()->action_rotate(x, y, dx, dy, camera_, ManipulatedFrame::NONE);
+            manipulator->frame()->action_rotate(x, y, dx, dy, camera(), ManipulatedFrame::NONE);
         else if (button == BUTTON_RIGHT)
-            manipulator->frame()->action_translate(x, y, dx, dy, camera_, ManipulatedFrame::NONE);
+            manipulator->frame()->action_translate(x, y, dx, dy, camera(), ManipulatedFrame::NONE);
         else
             return false;
 
@@ -134,10 +134,12 @@ void TutorialCollisionDetection::detect() {
     //      Ideas for better performance:
     //          (1) update only the color buffer;
     //          (2) use a shader storage buffer to transfer the *status* of the faces to the fragment shader.
-    auto mesh0_colors = dynamic_cast<SurfaceMesh *>(models_[0])->get_face_property<vec3>("face_color");
-    auto mesh1_colors = dynamic_cast<SurfaceMesh *>(models_[1])->get_face_property<vec3>("face_color");
-    mesh0_colors.vector().assign(dynamic_cast<SurfaceMesh *>(models_[0])->n_faces(), model0_color_);
-    mesh1_colors.vector().assign(dynamic_cast<SurfaceMesh *>(models_[1])->n_faces(), model1_color_);
+    auto mesh0 = dynamic_cast<SurfaceMesh *>(models_[0].get());
+    auto mesh1 = dynamic_cast<SurfaceMesh *>(models_[1].get());
+    auto mesh0_colors = mesh0->get_face_property<vec3>("face_color");
+    auto mesh1_colors = mesh1->get_face_property<vec3>("face_color");
+    mesh0_colors.vector().assign(mesh0->n_faces(), model0_color_);
+    mesh1_colors.vector().assign(mesh1->n_faces(), model1_color_);
     for (const auto &pair : pairs) {
         mesh0_colors[pair.first] = vec3(1.0f, 0.0f, 0.0f);
         mesh1_colors[pair.second] = vec3(1.0f, 0.0f, 0.0f);

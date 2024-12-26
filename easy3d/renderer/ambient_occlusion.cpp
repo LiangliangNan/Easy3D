@@ -141,7 +141,7 @@ namespace easy3d {
     }
 
 
-    unsigned int AmbientOcclusion::generate(const std::vector<Model*>& models) {
+    unsigned int AmbientOcclusion::generate(const std::vector< std::shared_ptr<Model> >& models) {
         int viewport[4];
         glGetIntegerv(GL_VIEWPORT, viewport);
         init(viewport[2], viewport[3]);
@@ -161,7 +161,7 @@ namespace easy3d {
     }
 
 
-    void AmbientOcclusion::geometry_pass(const std::vector<Model*>& models) {
+    void AmbientOcclusion::geometry_pass(const std::vector< std::shared_ptr<Model> >& models) {
         static const std::string name = "ssao/geometry_pass";
         ShaderProgram* program = ShaderManager::get_program(name);
         if (!program) {

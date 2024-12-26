@@ -27,6 +27,7 @@
 #ifndef EASY3D_VIEWER_MULTI_VIEWER_H
 #define EASY3D_VIEWER_MULTI_VIEWER_H
 
+#include <memory>
 #include <easy3d/viewer/viewer.h>
 
 
@@ -55,18 +56,18 @@ namespace easy3d {
          * @brief Assigns the model \p m to the view at position (\p row, \p col).
          * @details This function assigns the model \p m to the view at position (\p row, \p col). After that, the
          *     model will be visualized in this view (regardless of other views visualizing the same model).
-         * @note By default, a model added to the viewer through add_model() is not assigned to any view for
-         *      visualization. However, add_model() allows the viewer to take ownership of the model, so memory
-         *      management and drawable creation for the model are handled by the viewer.
+         * @note You need to first add the model to the viewer by calling add_model(). The add_model() function
+         *      does not assign the model to any view for rendering. However, add_model() allows the viewer to
+         *      take ownership of the model.
          */
         void assign(int row, int col, const Model *m);
 
         /** @brief Assigns the drawable \p d to the view at position (\p row, \p col).
          *  @details This function assigns the drawable \p d to the view at position (\p row, \p col). After that, the
          *      drawable will be visualized in this view (regardless of other views visualizing the same drawable).
-         * @note By default, a drawable added to the viewer through add_drawable() is not assigned to any view for
-         *      visualization. However, add_drawable() allows the viewer to take ownership of the drawable, so its
-         *      memory management is handled by the viewer.
+         * @note You need to first add the drawable to the viewer by calling add_drawable(). The add_drawable()
+         *      function does not assign the drawable to any view for rendering. However, add_drawable() allows the
+         *      viewer to take ownership of the drawable.
          */
         void assign(int row, int col, const Drawable *d);
 
@@ -141,7 +142,9 @@ namespace easy3d {
             ivec4 viewport;
         };
         std::vector<std::vector<View> > views_;
-        VertexArrayObject *division_vao_;
+
+        // Ideally a LinesDrawable should be used here, but the 2D version is not available in the current implementation
+        std::shared_ptr<VertexArrayObject> division_vao_;
         ShaderProgram *lines_program_;
         unsigned int division_vertex_buffer_;
         bool division_visible_;

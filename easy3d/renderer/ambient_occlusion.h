@@ -30,6 +30,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
 #include <easy3d/core/types.h>
 
@@ -44,7 +45,7 @@ namespace easy3d {
      * \brief Traditional Screen Space Ambient Occlusion (SSAO) technique.
      * \class AmbientOcclusion easy3d/renderer/ambient_occlusion.h
      * \details Optimization tip: rendering with multi-effects (e.g., shadowing, SSAO) can benefit from using a shared
-     * geometry pass.
+     *      geometry pass.
      */
     class AmbientOcclusion
     {   
@@ -66,14 +67,14 @@ namespace easy3d {
 
         /// \brief Generates the SSAO texture
         /// \return The SSAO texture ID
-        virtual unsigned int generate(const std::vector<Model*>& models);
+        virtual unsigned int generate(const std::vector< std::shared_ptr<Model> >& models);
         /// \brief Returns the generated SSAO texture ID
         unsigned int ssao_texture() const;
 
     protected:
         void init(int w, int h);
 
-        void geometry_pass(const std::vector<Model*>& models);
+        void geometry_pass(const std::vector< std::shared_ptr<Model> >& models);
         void ssao_pass();
         void blur_pass();
 

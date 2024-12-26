@@ -27,9 +27,9 @@
 #ifndef EASY3D_RENDERER_RENDERER_H
 #define EASY3D_RENDERER_RENDERER_H
 
-
 #include <string>
 #include <vector>
+#include <memory>
 
 #include <easy3d/core/types.h>
 #include <easy3d/core/point_cloud.h>
@@ -52,11 +52,7 @@ namespace easy3d {
      * The following code shows how to use renderer:
      * \code
      *      // create a renderer and attach it to the model
-     *      model->set_renderer(new Renderer(model, true));
-     * \endcode
-     * \code
-     *      // don't forget to delete the renderer when the model is deleted
-     *      delete model->renderer();
+     *      model->set_renderer(std::make_shared<Renderer>(model.get(), create));
      * \endcode
      */
     class Renderer {
@@ -160,76 +156,19 @@ namespace easy3d {
         /**
          * All available points drawables managed by this renderer.
          */
-        const std::vector<PointsDrawable *> &points_drawables() const { return points_drawables_; }
+        const std::vector< std::shared_ptr<PointsDrawable> > &points_drawables() const { return points_drawables_; }
 
         /**
          * All available lines drawables managed by this renderer.
          */
-        const std::vector<LinesDrawable *> &lines_drawables() const { return lines_drawables_; }
+        const std::vector< std::shared_ptr<LinesDrawable> > &lines_drawables() const { return lines_drawables_; }
 
         /**
          * All available triangles drawables managed by this renderer.
          */
-        const std::vector<TrianglesDrawable *> &triangles_drawables() const { return triangles_drawables_; }
+        const std::vector< std::shared_ptr<TrianglesDrawable> > &triangles_drawables() const { return triangles_drawables_; }
 
     public:
-        /**
-         * @brief Create default drawables for rendering.
-         * @details This method creates defaults drawables for rendering a model. The supported default drawables are
-         *              - PointCloud: "vertices".
-         *              - SurfaceMesh: "faces", "vertices", "edges", "borders".
-         *              - Graph: "vertices", "edges".
-         *          These drawables are usually sufficient for basic rendering of the model. In case
-         *          the default drawables don't meet the particular visualization purpose, you can
-         *          override this function or set 'create_default_drawables' to false and create the
-         *          drawables by calling Model::add_[type]_drawable().
-         */
-        static void create_default_drawables(Model *model);
-
-        // -------------------------------------------------------------------------------------------------------------
-
-        /**
-         * @brief Set the default rendering state of the "vertices" drawable of a point cloud.
-         * @details The default rendering state is determined by the availability of the vertex properties.
-         *          The motivation is that the most appealing rendering is demonstrated by default. The following
-         *          priority applies:
-         *              1. per-vertex color: in "v:color";
-         *              2. per-vertex texture coordinates: in "v:texcoord";
-         *              3. segmentation: in "v:primitive_index";
-         *              4. scalar field;
-         *              5. uniform color.
-         */
-        static void set_default_rendering_state(PointCloud *model, PointsDrawable *drawable);
-
-        /**
-         * @brief Set the default rendering state of the "faces" drawable of a surface mesh.
-         * @details The default rendering state is determined by the availability of the vertex/face properties.
-         *          The motivation is that the most appealing rendering is demonstrated by default. The following
-         *          priority applies:
-         *              1. per-face color: in "f:color";
-         *              2. per-vertex color: in "v:color";
-         *              3. per-halfedge texture coordinates: in "h:texcoord";
-         *              4. per-vertex texture coordinates: in "v:texcoord";
-         *              5. segmentation: in "f:chart";
-         *              6. scalar field on faces;
-         *              7. scalar field on vertices;
-         *              8. uniform color
-         */
-        static void set_default_rendering_state(SurfaceMesh *model, TrianglesDrawable *drawable);
-
-        /**
-         * @brief Set the default rendering state of the "vertices" drawable of a graph.
-         * @details The default rendering state is determined by the availability of the vertex properties.
-         *          The motivation is that the most appealing rendering is demonstrated by default. The following
-         *          priority applies:
-         *              1. per-vertex color: in "v:color";
-         *              2. per-vertex texture coordinates: in "v:texcoord";
-         *              3. scalar field;
-         *              4. uniform color.
-         */
-        static void set_default_rendering_state(Graph *model, PointsDrawable *drawable);
-
-        // -------------------------------------------------------------------------------------------------------------
 
         /**
          * @brief Generates random colors for visualizing face-based segmentation of a SurfaceMesh.
@@ -276,15 +215,72 @@ namespace easy3d {
                 PointCloud::VertexProperty<vec3> colors
         );
 
+    private:
+        /*
+         * @brief Create default drawables for rendering.
+         * @details This method creates defaults drawables for rendering a model. The supported default drawables are
+         *              - PointCloud: "vertices".
+         *              - SurfaceMesh: "faces", "vertices", "edges", "borders".
+         *              - Graph: "vertices", "edges".
+         *          These drawables are usually sufficient for basic rendering of the model. In case
+         *          the default drawables don't meet the particular visualization purpose, you can
+         *          override this function or set 'create_default_drawables' to false and create the
+         *          drawables by calling Model::add_[type]_drawable().
+         */
+        void create_default_drawables();
+
+        // -------------------------------------------------------------------------------------------------------------
+
+        /*
+         * @brief Set the default rendering state of the "vertices" drawable of a point cloud.
+         * @details The default rendering state is determined by the availability of the vertex properties.
+         *          The motivation is that the most appealing rendering is demonstrated by default. The following
+         *          priority applies:
+         *              1. per-vertex color: in "v:color";
+         *              2. per-vertex texture coordinates: in "v:texcoord";
+         *              3. segmentation: in "v:primitive_index";
+         *              4. scalar field;
+         *              5. uniform color.
+         */
+        void set_default_rendering_state(PointCloud *model, PointsDrawable *drawable);
+
+        /*
+         * @brief Set the default rendering state of the "faces" drawable of a surface mesh.
+         * @details The default rendering state is determined by the availability of the vertex/face properties.
+         *          The motivation is that the most appealing rendering is demonstrated by default. The following
+         *          priority applies:
+         *              1. per-face color: in "f:color";
+         *              2. per-vertex color: in "v:color";
+         *              3. per-halfedge texture coordinates: in "h:texcoord";
+         *              4. per-vertex texture coordinates: in "v:texcoord";
+         *              5. segmentation: in "f:chart";
+         *              6. scalar field on faces;
+         *              7. scalar field on vertices;
+         *              8. uniform color
+         */
+        void set_default_rendering_state(SurfaceMesh *model, TrianglesDrawable *drawable);
+
+        /*
+         * @brief Set the default rendering state of the "vertices" drawable of a graph.
+         * @details The default rendering state is determined by the availability of the vertex properties.
+         *          The motivation is that the most appealing rendering is demonstrated by default. The following
+         *          priority applies:
+         *              1. per-vertex color: in "v:color";
+         *              2. per-vertex texture coordinates: in "v:texcoord";
+         *              3. scalar field;
+         *              4. uniform color.
+         */
+        void set_default_rendering_state(Graph *model, PointsDrawable *drawable);
+
     protected:
-        Model *model_;
+        Model* model_;
 
         bool visible_;
         bool selected_;
 
-        std::vector<PointsDrawable *> points_drawables_;
-        std::vector<LinesDrawable *> lines_drawables_;
-        std::vector<TrianglesDrawable *> triangles_drawables_;
+        std::vector< std::shared_ptr<PointsDrawable> >      points_drawables_;
+        std::vector< std::shared_ptr<LinesDrawable> >       lines_drawables_;
+        std::vector< std::shared_ptr<TrianglesDrawable> >   triangles_drawables_;
     };
 
 }
