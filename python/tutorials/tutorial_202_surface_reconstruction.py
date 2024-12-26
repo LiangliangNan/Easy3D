@@ -15,7 +15,7 @@
 # -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
-# Step 1: Adding Easy3D Python Bindings to the System Path
+# Adding Easy3D Python Bindings to the System Path
 # -----------------------------------------------------------------------------
 # If the Easy3D Python bindings are located in a custom directory (e.g., from
 # a local build), you'll need to add that directory to the system path to
@@ -26,14 +26,14 @@ import sys
 sys.path.append("../../cmake-build-release/lib/python")  # Update this path based on your setup
 
 # -----------------------------------------------------------------------------
-# Step 2: Importing the Necessary Easy3D Library
+# Importing the Necessary Easy3D Library
 # -----------------------------------------------------------------------------
 # Import the Easy3D library, which provides functions for 3D processing and
 # visualization.
 import easy3d
 
 # -----------------------------------------------------------------------------
-# Step 3: Initializing Easy3D
+# Initializing Easy3D
 # -----------------------------------------------------------------------------
 # Before using any functionality of Easy3D, we need to initialize the library.
 # The 'True' parameter enables detailed logging, which is useful for debugging
@@ -41,7 +41,7 @@ import easy3d
 easy3d.initialize(True)  # Initialize Easy3D with detailed logging
 
 # -----------------------------------------------------------------------------
-# Step 4: Creating the Poisson Reconstruction Object
+# Creating the Poisson Reconstruction Object
 # -----------------------------------------------------------------------------
 # Now, we create an instance of the PoissonReconstruction class. This object
 # will be used to reconstruct a surface mesh from a 3D point cloud using
@@ -49,7 +49,7 @@ easy3d.initialize(True)  # Initialize Easy3D with detailed logging
 reconstructor = easy3d.PoissonReconstruction()  # Create PoissonReconstruction object
 
 # -----------------------------------------------------------------------------
-# Step 5: Setting Reconstruction Parameters
+# Setting Reconstruction Parameters
 # -----------------------------------------------------------------------------
 # Poisson surface reconstruction involves constructing an octree to represent
 # the point cloud. The 'depth' parameter controls the maximum depth of the
@@ -61,7 +61,7 @@ reconstructor = easy3d.PoissonReconstruction()  # Create PoissonReconstruction o
 reconstructor.set_depth(8)  # Adjust this value as needed.
 
 # -----------------------------------------------------------------------------
-# Step 6: Loading the 3D Point Cloud
+# Loading the 3D Point Cloud
 # -----------------------------------------------------------------------------
 # The point cloud is loaded from a file. The Easy3D library supports various
 # formats, including .bin files. The example uses a point cloud file located
@@ -72,7 +72,7 @@ pointcloud_file = easy3d.directory() + "/data/polyhedron.bin"  # Update the path
 point_cloud = easy3d.PointCloudIO.load(pointcloud_file)  # Load the point cloud from the file
 
 # -----------------------------------------------------------------------------
-# Step 7: Applying Poisson Surface Reconstruction
+# Applying Poisson Surface Reconstruction
 # -----------------------------------------------------------------------------
 # We now apply the Poisson surface reconstruction algorithm to the loaded
 # point cloud. The `apply()` method returns a surface mesh.
@@ -96,7 +96,7 @@ print("Number of faces in reconstructed mesh: ", surface_mesh.n_faces())  # Prin
 # trimmed_mesh = reconstructor.trim(surface_mesh, 6.0, 0.01, True)
 
 # -----------------------------------------------------------------------------
-# Step 8: Visualizing the Reconstructed Surface Mesh
+# Visualizing the Reconstructed Surface Mesh
 # -----------------------------------------------------------------------------
 # To visualize the reconstructed surface mesh, we use the Easy3D viewer.
 # The viewer provides an interactive window where you can rotate, zoom, and
@@ -111,7 +111,7 @@ viewer.set_usage("")  # Optional: Set an empty usage description for a clean UI
 viewer.add_model(surface_mesh)  # Add surface mesh to viewer
 
 # -----------------------------------------------------------------------------
-# Step 9: Running the Viewer
+# Running the Viewer
 # -----------------------------------------------------------------------------
 # Finally, we run the viewer to display the reconstructed surface mesh
 # in an interactive window.

@@ -12,7 +12,7 @@
 # -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
-# Step 1: Adding Easy3D Python Bindings to the System Path
+# Adding Easy3D Python Bindings to the System Path
 # -----------------------------------------------------------------------------
 # If the Easy3D Python bindings are located in a custom directory (e.g., from
 # a local build), you'll need to add that directory to the system path to
@@ -28,7 +28,7 @@ import sys
 sys.path.append("../../cmake-build-release/lib/python")  # Update this path as needed
 
 # -----------------------------------------------------------------------------
-# Step 2: Importing the Easy3D Library
+# Importing the Easy3D Library
 # -----------------------------------------------------------------------------
 # Import the Easy3D library, which provides tools for 3D data processing,
 # primitive extraction, and visualization.
@@ -36,7 +36,7 @@ sys.path.append("../../cmake-build-release/lib/python")  # Update this path as n
 import easy3d
 
 # -----------------------------------------------------------------------------
-# Step 3: Initializing Easy3D
+# Initializing Easy3D
 # -----------------------------------------------------------------------------
 # Before using any Easy3D functionality, we must initialize the library.
 # The 'True' parameter enables detailed logging, useful for debugging and
@@ -45,7 +45,7 @@ import easy3d
 easy3d.initialize(True)
 
 # -----------------------------------------------------------------------------
-# Step 4: Loading a Point Cloud
+# Loading a Point Cloud
 # -----------------------------------------------------------------------------
 # The Easy3D library supports various point cloud formats (e.g., .bin, .xyz).
 # Here, we load a sample point cloud file provided by Easy3D. Replace the path
@@ -56,7 +56,7 @@ point_cloud = easy3d.PointCloudIO.load(pointcloud_file)  # Load the point cloud
 print(f"Loaded point cloud with {point_cloud.n_vertices()} points.")  # Print point count
 
 # -----------------------------------------------------------------------------
-# Step 5: Creating a PrimitivesRansac Instance
+# Creating a PrimitivesRansac Instance
 # -----------------------------------------------------------------------------
 # The PrimitivesRansac class is responsible for detecting geometric primitives
 # (e.g., planes, cylinders) in a point cloud using RANSAC (Random Sample Consensus).
@@ -65,7 +65,7 @@ print(f"Loaded point cloud with {point_cloud.n_vertices()} points.")  # Print po
 ransac = easy3d.PrimitivesRansac()  # Create a PrimitivesRansac instance
 
 # -----------------------------------------------------------------------------
-# Step 6: Configuring Primitive Types for Extraction
+# Configuring Primitive Types for Extraction
 # -----------------------------------------------------------------------------
 # Specify the types of primitives to extract. In this example, we add planes.
 # Other available types include cylinders, cones, spheres, and toruses.
@@ -73,7 +73,7 @@ ransac = easy3d.PrimitivesRansac()  # Create a PrimitivesRansac instance
 ransac.add_primitive_type(easy3d.PrimitivesRansac.PLANE)  # Add plane extraction
 
 # -----------------------------------------------------------------------------
-# Step 7: Detecting Primitives in the Point Cloud
+# Detecting Primitives in the Point Cloud
 # -----------------------------------------------------------------------------
 # The detect() method applies the RANSAC algorithm to extract primitives.
 # Parameters:
@@ -93,7 +93,7 @@ ransac.detect(point_cloud,
               )
 
 # -----------------------------------------------------------------------------
-# Step 8: Retrieving Extracted Planes
+# Retrieving Extracted Planes
 # -----------------------------------------------------------------------------
 # Extracted primitives are retrieved using getter methods such as `get_planes`.
 # Each plane object contains attributes like:

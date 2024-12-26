@@ -145,6 +145,16 @@ void bind_easy3d_core_point_cloud(pybind11::module_& m)
                "Adds a single point to the point cloud. Input can be easy3d::vec3, a NumPy array, or a list with 3 elements.",
                pybind11::arg("point"));
 
+        cl.def("delete_point",
+               (void (easy3d::PointCloud::*)(struct easy3d::PointCloud::Vertex)) &easy3d::PointCloud::delete_vertex,
+               "deletes the vertex  from the cloud\n\nC++: easy3d::PointCloud::delete_vertex(struct easy3d::PointCloud::Vertex) --> void",
+               pybind11::arg("v"));
+        cl.def("delete_points", [](easy3d::PointCloud &pc, const std::vector<easy3d::PointCloud::Vertex> &points) {
+            for (auto p: points)
+                pc.delete_vertex(p);
+            pc.collect_garbage();
+        }, "Deletes multiple vertices from the cloud", pybind11::arg("points"));
+
         // Retrieve all points as a NumPy array
         cl.def("to_numpy", [](const easy3d::PointCloud &pc) {
             // Create a NumPy array with shape (n_points, 3)
@@ -179,7 +189,6 @@ void bind_easy3d_core_point_cloud(pybind11::module_& m)
 		cl.def("resize", (void (easy3d::PointCloud::*)(unsigned int)) &easy3d::PointCloud::resize, "resize space for vertices and their currently associated properties.\n\nC++: easy3d::PointCloud::resize(unsigned int) --> void", pybind11::arg("nv"));
 		cl.def("has_garbage", (bool (easy3d::PointCloud::*)() const) &easy3d::PointCloud::has_garbage, "are there deleted vertices?\n\nC++: easy3d::PointCloud::has_garbage() const --> bool");
 		cl.def("collect_garbage", (void (easy3d::PointCloud::*)()) &easy3d::PointCloud::collect_garbage, "remove deleted vertices\n\nC++: easy3d::PointCloud::collect_garbage() --> void");
-		cl.def("delete_vertex", (void (easy3d::PointCloud::*)(struct easy3d::PointCloud::Vertex)) &easy3d::PointCloud::delete_vertex, "deletes the vertex  from the cloud\n\nC++: easy3d::PointCloud::delete_vertex(struct easy3d::PointCloud::Vertex) --> void", pybind11::arg("v"));
 		cl.def("is_deleted", (bool (easy3d::PointCloud::*)(struct easy3d::PointCloud::Vertex) const) &easy3d::PointCloud::is_deleted, "returns whether vertex  is deleted\n \n\n collect_garbage()\n\nC++: easy3d::PointCloud::is_deleted(struct easy3d::PointCloud::Vertex) const --> bool", pybind11::arg("v"));
 		cl.def("is_valid", (bool (easy3d::PointCloud::*)(struct easy3d::PointCloud::Vertex) const) &easy3d::PointCloud::is_valid, "return whether vertex  is valid, i.e. the index is stores it within the array bounds.\n\nC++: easy3d::PointCloud::is_valid(struct easy3d::PointCloud::Vertex) const --> bool", pybind11::arg("v"));
 		cl.def("remove_vertex_property", (bool (easy3d::PointCloud::*)(const std::string &)) &easy3d::PointCloud::remove_vertex_property, "remove the vertex property named \n\nC++: easy3d::PointCloud::remove_vertex_property(const std::string &) --> bool", pybind11::arg("n"));
@@ -227,6 +236,12 @@ void bind_easy3d_core_point_cloud(pybind11::module_& m)
 		 	cl.def( pybind11::init<int>(), pybind11::arg("_idx") );
 
 		 	cl.def( pybind11::init( [](easy3d::PointCloud::Vertex const &o){ return new easy3d::PointCloud::Vertex(o); } ) );
+
+            cl.def("__repr__", [](const easy3d::PointCloud::Vertex& v) {
+                 // Assuming Vertex has an `index()` method or field to represent it uniquely
+                 return "<Vertex index=" + std::to_string(v.idx()) + ">";
+             });
+
 		 	cl.def("__lshift__", (std::ostream & (easy3d::PointCloud::Vertex::*)(std::ostream &) const) &easy3d::PointCloud::Vertex::operator<<, "C++: easy3d::PointCloud::Vertex::operator<<(std::ostream &) const --> std::ostream &", pybind11::return_value_policy::automatic, pybind11::arg("os"));
 		 }
 

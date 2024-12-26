@@ -32,8 +32,14 @@ namespace easy3d {
 
     Model::Model(const std::string &name /* = "unknown" */)
             : name_(name), bbox_known_(false), renderer_(nullptr), manipulator_(nullptr) {
+//        std::cerr << "Model::Model() called: " << name_ << std::endl;
     }
 
+    Model::~Model() {
+//        std::cerr << "Model::~Model() called: " << name() << std::endl;
+        renderer_.reset();
+        manipulator_.reset();
+    }
 
     const Box3 &Model::bounding_box(bool recompute) const {
         if (!bbox_known_ || recompute) {
