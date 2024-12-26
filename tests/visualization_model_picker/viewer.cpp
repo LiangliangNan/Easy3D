@@ -57,7 +57,7 @@ bool ModelPickerViewer::mouse_press_event(int x, int y, int button, int modifier
 
 void ModelPickerViewer::mark(easy3d::Model *model) {
     for (auto m : models()) {
-        if (m == model)
+        if (m.get() == model)
             m->renderer()->set_selected(!m->renderer()->is_selected());
 
         auto faces = m->renderer()->get_triangles_drawable("faces");

@@ -190,7 +190,7 @@ void RealCamera::update_cameras_drawable(bool ground_truth)
 {
     if (!cameras_drawable_) {
         cameras_drawable_ = new LinesDrawable("cameras");
-        add_drawable(cameras_drawable_); // add the camera drawable to the viewer
+        add_drawable(std::shared_ptr<LinesDrawable>(cameras_drawable_)); // add the camera drawable to the viewer
         cameras_drawable_->set_uniform_coloring(vec4(0, 0, 1, 1.0f));
         cameras_drawable_->set_line_width(2.0f);
     }
@@ -293,7 +293,7 @@ bool RealCamera::mouse_free_move_event(int x, int y, int dx, int dy, int modifie
         const float image_y = (static_cast<float>(y) - image_rect.y_min()) / image_rect.height() * static_cast<float>(cam.h);
         if (!ray_drawable_) {
             ray_drawable_ = new LinesDrawable("ray");
-            add_drawable(ray_drawable_); // add the ray drawable to the viewer
+            add_drawable(std::shared_ptr<LinesDrawable>(ray_drawable_)); // add the ray drawable to the viewer
             ray_drawable_->set_uniform_coloring(vec4(0, 1, 0, 1.0f));
             ray_drawable_->set_line_width(3.0f);
             ray_drawable_->set_impostor_type(easy3d::LinesDrawable::CYLINDER);
@@ -319,7 +319,7 @@ bool RealCamera::mouse_free_move_event(int x, int y, int dx, int dy, int modifie
                 const float screen_y = q.y / static_cast<float>(cam.h) * image_rect.height() + image_rect.y_min();
                 if (!cross_drawable_) {
                     cross_drawable_ = new LinesDrawable("cross");
-                    add_drawable(cross_drawable_); // add the cross drawable to the viewer
+                    add_drawable(std::shared_ptr<LinesDrawable>(cross_drawable_)); // add the cross drawable to the viewer
                     cross_drawable_->set_line_width(3.0f);
                 }
 

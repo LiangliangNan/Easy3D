@@ -78,7 +78,7 @@ public:
     void addModel(easy3d::Model* model);
 	void deleteModel(easy3d::Model* model);
 
-	const std::vector<easy3d::Model*>& models() const override { return models_; }
+	const std::vector< std::shared_ptr<easy3d::Model> >& models() const override { return models_; }
     easy3d::Model* currentModel();
 	void setCurrentModel(easy3d::Model* m);
 
@@ -327,7 +327,7 @@ protected:
     bool    show_primitive_property_under_mouse_;
     bool    show_coordinates_under_mouse_;
 
-    std::vector<easy3d::Model*> models_;
+    std::vector< std::shared_ptr<easy3d::Model> > models_;
     int model_idx_;
 
     //----------------- filters -------------------

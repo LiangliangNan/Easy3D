@@ -137,7 +137,7 @@ int main(int argc, char **argv) {
     auto points = copy->get_vertex_property<vec3>("v:point");
     for (auto v : copy->vertices())
         points[v] += trans;
-    viewer.add_model(copy, false);
+    viewer.add_model(std::shared_ptr<SurfaceMesh>(copy), false);
 
     create_surfels(copy);
 

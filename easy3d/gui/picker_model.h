@@ -31,6 +31,7 @@
 #include <easy3d/renderer/state.h>
 #include <easy3d/renderer/camera.h>
 
+#include <memory>
 #include <vector>
 #include <unordered_map>
 
@@ -61,12 +62,12 @@ namespace easy3d {
          *            a Retina display.
          * @return The picked model.
          */
-        Model *pick(const std::vector<Model *> &models, int x, int y);
+        Model *pick(const std::vector< std::shared_ptr<Model> >& models, int x, int y);
 
     private:
 
         // render each model of the scene with a unique color
-        void draw(const std::vector<Model *> &models);
+        void draw(const std::vector< std::shared_ptr<Model> >& models);
         // render the drawable with color
         void draw(Drawable *drawable, const vec4 &color);
 

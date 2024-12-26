@@ -54,10 +54,6 @@ namespace easy3d {
      *      model->manipulator()->frame()->action_rotate(x, y, dx, dy, camera, axis); // axis = NONE for free rotation
      *      model->manipulator()->frame()->action_translate(x, y, dx, dy, camera, axis); // axis = NONE for free translation
      * \endcode
-     * \code
-     *      // don't forget to delete the manipulator when the model is deleted
-     *      delete model->manipulator();
-     * \endcode
      */
     class Manipulator {
     public:

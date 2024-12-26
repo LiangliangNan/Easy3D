@@ -270,7 +270,7 @@ Drawable *WidgetLinesDrawable::drawable() {
     else {
         for (auto d : model->renderer()->lines_drawables() ) {
             active_drawable_[model] = d->name();
-            return d;
+            return d.get();
         }
         return nullptr;
     }

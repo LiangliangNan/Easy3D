@@ -200,7 +200,7 @@ namespace easy3d {
             ImGui::Text("Info (right-click to change position)");
             ImGui::Separator();
             ImGui::Text("Frame rate: %.1f", ImGui::GetIO().Framerate);
-            ImGui::Text("GPU time (ms): %s", gpu_time_);
+            ImGui::Text("GPU time (ms): %s", framerate_);
 
             if (current_model()) {
                 const std::string& name = "Current model: " + file_system::simple_name(current_model()->name());

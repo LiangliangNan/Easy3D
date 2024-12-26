@@ -29,6 +29,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 #include <functional>
 
 #include <easy3d/core/types.h>
@@ -182,16 +183,16 @@ namespace easy3d {
          * \brief Attaches a manipulator to this model.
          * \details This is used to manipulate a drawable that is not part of a model.
          */
-        void set_manipulator(Manipulator* manip) { manipulator_ = manip; }
+        void set_manipulator(std::shared_ptr<Manipulator> manip) { manipulator_ = manip; }
 
         /// \brief Returns the manipulation matrix.
         mat4 manipulated_matrix() const;
         ///@}
 
         /// \brief Returns the vertex array object of this drawable.
-        VertexArrayObject *vao() { return vao_; }
+        VertexArrayObject *vao() { return vao_.get(); }
         /// \brief Returns the vertex array object of this drawable.
-        const VertexArrayObject *vao() const { return vao_; }
+        const VertexArrayObject *vao() const { return vao_.get(); }
 
     protected:
         // actual update of the rendering buffers are here
@@ -205,7 +206,7 @@ namespace easy3d {
         Box3 bbox_;
 
         // vertex array object
-        VertexArrayObject *vao_;
+        std::unique_ptr<VertexArrayObject> vao_;
 
         std::size_t num_vertices_;
         std::size_t num_indices_;
@@ -220,7 +221,7 @@ namespace easy3d {
         unsigned int element_buffer_;
 
         // drawables not attached to a model can also be manipulated
-        Manipulator* manipulator_;   // for manipulation
+        std::shared_ptr<Manipulator> manipulator_;   // for manipulation
     };
 
 }

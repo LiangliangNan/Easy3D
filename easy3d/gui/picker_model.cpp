@@ -43,7 +43,7 @@ namespace easy3d {
     }
 
 
-    Model *ModelPicker::pick(const std::vector<Model *> &models, int x, int y) {
+    Model *ModelPicker::pick(const std::vector< std::shared_ptr<Model> > &models, int x, int y) {
         if (models.empty())
             return nullptr;
 
@@ -100,7 +100,7 @@ namespace easy3d {
         int id = color::encode(c[0], c[1], c[2], c[3]);
         if (id >= 0 && id < models.size()) {
             //LOG(INFO) << "selected model " << models[id]->name();
-            return models[id];
+            return models[id].get();
         }
 
         return nullptr;
@@ -108,9 +108,9 @@ namespace easy3d {
 
 
     // draw the scene
-    void ModelPicker::draw(const std::vector<Model *> &models) {
+    void ModelPicker::draw(const std::vector< std::shared_ptr<Model> > &models) {
         for (std::size_t i = 0; i < models.size(); ++i) {
-            Model *model = models[i];
+            Model *model = models[i].get();
             if (!model->renderer()->is_visible())
                 continue;
 
@@ -120,13 +120,13 @@ namespace easy3d {
             const vec4 color(static_cast<float>(r) / 255.0f, static_cast<float>(g) / 255.0f, static_cast<float>(b) / 255.0f, static_cast<float>(a) / 255.0f);
 
             for (auto d : model->renderer()->triangles_drawables()) {
-                if (d->is_visible())    draw(d, color);
+                if (d->is_visible())    draw(d.get(), color);
             }
             for (auto d : model->renderer()->lines_drawables()) {
-                if (d->is_visible())    draw(d, color);
+                if (d->is_visible())    draw(d.get(), color);
             }
             for (auto d : model->renderer()->points_drawables()) {
-                if (d->is_visible())    draw(d, color);
+                if (d->is_visible())    draw(d.get(), color);
             }
         }
     }

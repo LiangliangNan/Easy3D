@@ -148,7 +148,7 @@ namespace easy3d {
 
         void MultitoolSurfaceMeshFaceSelectionClick::clear_hint() {
             for (auto model : tool_manager()->viewer()->models()) {
-                auto mesh = dynamic_cast<SurfaceMesh *>(model);
+                auto mesh = dynamic_cast<SurfaceMesh *>(model.get());
                 if (mesh) {
                     auto drawable = mesh->renderer()->get_triangles_drawable("faces");
                     drawable->set_highlight(false);
@@ -176,7 +176,7 @@ namespace easy3d {
 
         void ToolSurfaceMeshFaceSelectionRect::release(int x, int y) {
             for (auto model : tool_manager()->viewer()->models()) {
-                auto mesh = dynamic_cast<SurfaceMesh*>(model);
+                auto mesh = dynamic_cast<SurfaceMesh*>(model.get());
                 if (mesh && mesh->renderer()->is_visible()) {
                     const auto& faces = picker_->pick_faces(mesh, Rect(start_, vec2(static_cast<float>(x), static_cast<float>(y))));
                     auto select = mesh->face_property<bool>("f:select");
@@ -255,7 +255,7 @@ namespace easy3d {
                 return;
 
             for (auto model : tool_manager()->viewer()->models()) {
-                auto mesh = dynamic_cast<SurfaceMesh*>(model);
+                auto mesh = dynamic_cast<SurfaceMesh*>(model.get());
                 if (mesh && mesh->renderer()->is_visible()) {
                     const auto& faces = picker_->pick_faces(mesh, lasso_);
                     auto select = mesh->face_property<bool>("f:select");

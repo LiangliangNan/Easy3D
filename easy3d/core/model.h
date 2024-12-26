@@ -30,6 +30,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
 #include <easy3d/core/types.h>
 
@@ -89,7 +90,7 @@ namespace easy3d {
          * \brief Sets the renderer of this model.
          * \note Memory management of the renderer is the user's responsibility.
          */
-        void set_renderer(Renderer* r) { renderer_ = r; }
+        void set_renderer(std::shared_ptr<Renderer> r) { renderer_ = r; }
         /** \brief Gets the renderer of this model. */
         Renderer* renderer();
         /** \brief Gets the constant renderer of this model. */
@@ -99,12 +100,12 @@ namespace easy3d {
          * \brief Attaches a manipulator to this model.
          * \note Memory management of the manipulator is the user's responsibility.
          */
-        void set_manipulator(Manipulator* manip) { manipulator_ = manip; }
+        void set_manipulator(std::shared_ptr<Manipulator> manip) { manipulator_ = manip; }
 
         /** \brief Gets the manipulator attached to this model. */
-        Manipulator* manipulator() { return manipulator_; }
+        Manipulator* manipulator() { return manipulator_.get(); }
         /** \brief Gets the manipulator attached to this model. */
-        const Manipulator* manipulator() const { return manipulator_; }
+        const Manipulator* manipulator() const { return manipulator_.get(); }
 
     protected:
         std::string	name_;
@@ -112,8 +113,8 @@ namespace easy3d {
         Box3		bbox_;
         bool		bbox_known_;
 
-        Renderer* renderer_;         // for rendering
-        Manipulator* manipulator_;   // for manipulation
+        std::shared_ptr<Renderer> renderer_;         // for rendering
+        std::shared_ptr<Manipulator> manipulator_;   // for manipulation
     };
 }
 

@@ -28,7 +28,7 @@ namespace easy3d {
 
     PolyMesh *SurfaceMeshTetrehedralization::apply(SurfaceMesh *mesh) {
         if (!mesh) {
-            LOG(WARNING) << "input mesh is NULL";
+            LOG(WARNING) << "input mesh is nullptr";
             return nullptr;
         }
 

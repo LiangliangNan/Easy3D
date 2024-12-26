@@ -28,6 +28,7 @@
 #define EASY3D_GUI_CANVAS_H
 
 #include <vector>
+#include <memory>
 
 #include "tools/tool_manager.h"
 
@@ -51,7 +52,7 @@ namespace easy3d {
         virtual Camera *camera() = 0;
         virtual const Camera *camera() const = 0;
 
-        virtual const std::vector<Model*>& models() const = 0;
+        virtual const std::vector< std::shared_ptr<easy3d::Model> >& models() const = 0;
 
         tools::ToolManager* tool_manager() const { return tool_manager_; }
 

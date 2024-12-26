@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
     TutorialEyeDomeLighting viewer(EXAMPLE_TITLE);
 
     // Read the point cloud from a known file.
-    Model *model = viewer.add_model(file, true);
+    auto model = viewer.add_model(file, true);
     if (!model) {
         LOG(ERROR) << "failed to load model. Please make sure the file exists and format is correct.";
         return EXIT_FAILURE;

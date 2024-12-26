@@ -341,12 +341,12 @@ void WidgetModelList::updateModelList() {
 
     if (selected_only_) {
         for (auto m : viewer()->models())
-            m->renderer()->set_visible(m == viewer()->currentModel());
+            m->renderer()->set_visible(m.get() == viewer()->currentModel());
     }
 
-    const std::vector<Model *> &models = viewer()->models();
+    const auto &models = viewer()->models();
     for (unsigned int i = 0; i < models.size(); ++i) {
-        Model *model = models[i];
+        Model *model = models[i].get();
         const std::string &name = file_system::base_name(model->name());
         auto item = dynamic_cast<ModelItem *>(this->topLevelItem(i));
         if (!item) {
@@ -362,21 +362,21 @@ void WidgetModelList::updateModelList() {
 
 #if 1   // add the drawables as children
         for (auto d : model->renderer()->points_drawables()) {
-            auto d_item = new DrawableItem(item, d);
+            auto d_item = new DrawableItem(item, d.get());
             d_item->setVisible(2, d->is_visible());
             d_item->setData(3, Qt::DisplayRole, QString::fromStdString(d->name()));
             item->addChild(d_item);
         }
 
         for (auto d : model->renderer()->lines_drawables()) {
-            auto d_item = new DrawableItem(item, d);
+            auto d_item = new DrawableItem(item, d.get());
             d_item->setVisible(2, d->is_visible());
             d_item->setData(3, Qt::DisplayRole, QString::fromStdString(d->name()));
             item->addChild(d_item);
         }
 
         for (auto d : model->renderer()->triangles_drawables()) {
-            auto d_item = new DrawableItem(item, d);
+            auto d_item = new DrawableItem(item, d.get());
             d_item->setVisible(2, d->is_visible());
             d_item->setData(3, Qt::DisplayRole, QString::fromStdString(d->name()));
             item->addChild(d_item);
@@ -485,7 +485,7 @@ void WidgetModelList::showAllModels() {
     if (selected_only_)
         mainWindow_->setShowSelectedOnly(false);
     else {
-        const std::vector<Model *> &models = viewer()->models();
+        const auto &models = viewer()->models();
         for (auto& m : models) {
             m->renderer()->set_visible(true);
         }
@@ -541,7 +541,7 @@ void WidgetModelList::deleteSelected() {
     Model *current_model = viewer()->currentModel();
     if (selected_only_) {
         for (auto m : viewer()->models())
-            m->renderer()->set_visible(m == current_model);
+            m->renderer()->set_visible(m.get() == current_model);
     }
 
     updateModelList();
@@ -571,7 +571,7 @@ void WidgetModelList::currentModelItemChanged(QTreeWidgetItem *current, QTreeWid
 
     if (selected_only_) {
         for (auto m : viewer()->models())
-            m->renderer()->set_visible(m == model);
+            m->renderer()->set_visible(m.get() == model);
     }
     updateVisibilities();
 
@@ -667,7 +667,7 @@ void WidgetModelList::modelItemPressed(QTreeWidgetItem *current, int column) {
     viewer()->setCurrentModel(active_model);
     if (selected_only_) {
         for (auto m : viewer()->models()) {
-            m->renderer()->set_visible(m == active_model);
+            m->renderer()->set_visible(m.get() == active_model);
         }
     }
     updateVisibilities();
@@ -718,10 +718,10 @@ void WidgetModelList::setSelectedOnly(bool b) {
     Model *active_model = viewer()->currentModel();
     if (selected_only_) {
         for (auto m : viewer()->models()) {
-            m->renderer()->set_visible(m == active_model);
+            m->renderer()->set_visible(m.get() == active_model);
         }
     } else {
-        const std::vector<Model *> &models = viewer()->models();
+        const auto &models = viewer()->models();
         for (auto& m : models) {
             m->renderer()->set_visible(true);
         }
@@ -746,7 +746,7 @@ void WidgetModelList::addModel(Model *model, bool make_current) {
 
     if (selected_only_) {
         for (auto m : viewer()->models()) {
-            m->renderer()->set_visible(m == model);
+            m->renderer()->set_visible(m.get() == model);
         }
     }
 
@@ -874,23 +874,23 @@ void WidgetModelList::decomposeModel(Model *model) {
 namespace internal {
 
     template <typename DRAWABLE> 
-    void propagate(const std::vector<DRAWABLE*>& source_drawables, const std::vector<DRAWABLE*>& target_drawables) {
+    void propagate(const std::vector< std::shared_ptr<DRAWABLE> >& source_drawables, const std::vector< std::shared_ptr<DRAWABLE> >& target_drawables) {
         for (auto source_drawable : source_drawables) {
             for (auto target_drawable : target_drawables) {
                 if (target_drawable->name() == source_drawable->name()) { // propagate only when their names are the same
                     target_drawable->state() = source_drawable->state();
                     switch (source_drawable->type()) {
                     case Drawable::DT_POINTS:
-                        dynamic_cast<PointsDrawable*>(target_drawable)->set_point_size(dynamic_cast<PointsDrawable*>(source_drawable)->point_size());
-                        dynamic_cast<PointsDrawable*>(target_drawable)->set_impostor_type(dynamic_cast<PointsDrawable*>(source_drawable)->impostor_type());
+                        dynamic_cast<PointsDrawable*>(target_drawable.get())->set_point_size(dynamic_cast<PointsDrawable*>(source_drawable.get())->point_size());
+                        dynamic_cast<PointsDrawable*>(target_drawable.get())->set_impostor_type(dynamic_cast<PointsDrawable*>(source_drawable.get())->impostor_type());
                         break;
                     case Drawable::DT_LINES:
-                        dynamic_cast<LinesDrawable*>(target_drawable)->set_line_width(dynamic_cast<LinesDrawable*>(source_drawable)->line_width());
-                        dynamic_cast<LinesDrawable*>(target_drawable)->set_impostor_type(dynamic_cast<LinesDrawable*>(source_drawable)->impostor_type());
+                        dynamic_cast<LinesDrawable*>(target_drawable.get())->set_line_width(dynamic_cast<LinesDrawable*>(source_drawable.get())->line_width());
+                        dynamic_cast<LinesDrawable*>(target_drawable.get())->set_impostor_type(dynamic_cast<LinesDrawable*>(source_drawable.get())->impostor_type());
                         break;
                     case Drawable::DT_TRIANGLES:
-                        dynamic_cast<TrianglesDrawable*>(target_drawable)->set_smooth_shading(dynamic_cast<TrianglesDrawable*>(source_drawable)->smooth_shading());
-                        dynamic_cast<TrianglesDrawable*>(target_drawable)->set_opacity(dynamic_cast<TrianglesDrawable*>(source_drawable)->opacity());
+                        dynamic_cast<TrianglesDrawable*>(target_drawable.get())->set_smooth_shading(dynamic_cast<TrianglesDrawable*>(source_drawable.get())->smooth_shading());
+                        dynamic_cast<TrianglesDrawable*>(target_drawable.get())->set_opacity(dynamic_cast<TrianglesDrawable*>(source_drawable.get())->opacity());
                     default:
                         break;
                     }
@@ -908,7 +908,7 @@ void WidgetModelList::applyRenderingToAllModels() {
 
     Model* source = viewer()->currentModel();
     for (auto& target : models) {
-        if (target == source)
+        if (target.get() == source)
             continue;
 
         // points drawables

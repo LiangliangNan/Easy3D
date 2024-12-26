@@ -63,7 +63,7 @@ namespace easy3d {
     }
 
 
-    Model *TexturedViewer::add_model(const std::string &file_name, bool create_default_drawables) {
+    Model* TexturedViewer::add_model(const std::string &file_name, bool create_default_drawables) {
         clear_scene(); // delete all existing models
 
         if (!file_system::is_file(file_name)) {
@@ -205,12 +205,10 @@ namespace easy3d {
         builder.end_surface();
 
         // since the mesh has been built, skip texture if material and texcoord information don't exist
-        if (fom->material_count == 0 || !fom->materials) {
-            Viewer::add_model(mesh, create_default_drawables);
-            return mesh;
-        }
+        if (fom->material_count == 0 || !fom->materials)
+            return Viewer::add_model(std::shared_ptr<SurfaceMesh>(mesh), create_default_drawables);
         else
-            Viewer::add_model(mesh, false);
+            Viewer::add_model(std::shared_ptr<SurfaceMesh>(mesh), false);
 
         mesh->update_vertex_normals();
         auto normals = mesh->get_vertex_property<vec3>("v:normal");

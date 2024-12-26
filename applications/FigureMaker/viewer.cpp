@@ -55,6 +55,21 @@ namespace easy3d {
         return model;
     }
 
+    bool FigureMaker::delete_model(Model* model) {
+        auto deleted = Viewer::delete_model(model);
+        if (deleted) {
+            views_.clear();
+            set_layout(num_rows_, std::max(num_cols_ - 1, 1));
+
+            // re-assign models
+            for (std::size_t  i=0; i<models_.size(); ++i) {
+                const auto& model = models_[i];
+                assign(num_rows_ - 1, i, model.get()); // always assign to the last row
+            }
+        }
+        return deleted;
+    }
+
     bool FigureMaker::key_press_event(int key, int modifiers) {
         if (key == KEY_D)
             set_division_visible(!division_visible_);

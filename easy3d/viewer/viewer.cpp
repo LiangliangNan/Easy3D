@@ -86,13 +86,12 @@ namespace easy3d {
         , should_exit_(false)
         , dpi_scaling_(1.0)
         , title_(title)
-        , camera_(nullptr)
         , is_animating_(false)
         , samples_(0)
         , full_screen_(full_screen)
         , background_color_(setting::background_color)
         , process_events_(true)
-        , texter_(nullptr)
+        , show_easy3d_logo_(true)
         , pressed_button_(-1)
         , modifiers_(-1)
         , drag_active_(false)
@@ -103,7 +102,6 @@ namespace easy3d {
         , pressed_key_(-1)
         , show_pivot_point_(false)
         , show_frame_rate_(false)
-        , drawable_axes_(nullptr)
         , show_camera_path_(false)
         , model_idx_(-1)
     {
@@ -122,7 +120,7 @@ namespace easy3d {
         setup_callbacks(window_);
 
         // create and set up the camera
-        camera_ = new Camera;
+        camera_ = std::make_shared<Camera>();
         camera_->setType(Camera::PERSPECTIVE);
         camera_->setUpVector(vec3(0, 0, 1)); // Z pointing up
         camera_->setViewDirection(vec3(-1, 0, 0)); // X pointing out
@@ -130,10 +128,10 @@ namespace easy3d {
 
         easy3d::connect(&camera_->frame_modified, this, &Viewer::update);
 
-        kfi_ = new KeyFrameInterpolator(camera_->frame());
+        kfi_ = std::unique_ptr<KeyFrameInterpolator>(new KeyFrameInterpolator(camera_->frame()));
         easy3d::connect(&kfi_->interpolation_stopped, this, &Viewer::update);
 
-        sprintf(gpu_time_, "fps: ?? (?? ms/frame)");
+        sprintf(framerate_, "fps: ?? (?? ms/frame)");
 
         /* Poll for events once before starting a potentially lengthy loading process.*/
         glfwPollEvents();
@@ -553,15 +551,7 @@ namespace easy3d {
     }
 
     void Viewer::clear_scene() {
-        for (auto m : models_) {
-            delete m->renderer();
-            delete m->manipulator();
-            delete m;
-        }
         models_.clear();
-
-        for (auto d : drawables_)
-            delete d;
         drawables_.clear();
     }
 
@@ -570,10 +560,10 @@ namespace easy3d {
         if (!window_)
             return;
 
-        delete camera_;
-        delete kfi_;
-        delete drawable_axes_;
-        delete texter_;
+        camera_.reset();
+        kfi_.reset();
+        drawable_axes_.reset();
+        texter_.reset();
 
         clear_scene();
 
@@ -704,14 +694,14 @@ namespace easy3d {
             else if (pressed_key_ == GLFW_KEY_O) axis = ManipulatedFrame::ORTHOGONAL;
             switch (button) {
                 case GLFW_MOUSE_BUTTON_LEFT:
-                    camera_->frame()->action_rotate(x, y, dx, dy, camera_, axis);
+                    camera_->frame()->action_rotate(x, y, dx, dy, camera(), axis);
                     break;
                 case GLFW_MOUSE_BUTTON_RIGHT:
-                    camera_->frame()->action_translate(x, y, dx, dy, camera_, axis);
+                    camera_->frame()->action_translate(x, y, dx, dy, camera(), axis);
                     break;
                 case GLFW_MOUSE_BUTTON_MIDDLE:
                     if (std::abs(dy) >= 1)
-                        camera_->frame()->action_zoom(dy > 0 ? 1 : -1, camera_);
+                        camera_->frame()->action_zoom(dy > 0 ? 1 : -1, camera());
                     break;
                 default:
                     break;
@@ -737,16 +727,16 @@ namespace easy3d {
         (void) x;
         (void) y;
         (void) dx;
-        camera_->frame()->action_zoom(dy, camera_);
+        camera_->frame()->action_zoom(dy, camera());
         return false;
     }
 
 
-    Model *Viewer::current_model() const {
+    Model* Viewer::current_model() const {
         if (models_.empty())
             return nullptr;
         if (model_idx_ < models_.size())
-            return models_[model_idx_];
+            return models_[model_idx_].get();
         return nullptr;
     }
 
@@ -770,10 +760,10 @@ namespace easy3d {
         }
         else if (key == GLFW_KEY_LEFT && modifiers == 0) {
             auto angle = static_cast<float>(1 * M_PI / 180.0); // turn left, 1 degrees each step
-            camera_->frame()->action_turn(angle, camera_);
+            camera_->frame()->action_turn(angle, camera());
         } else if (key == GLFW_KEY_RIGHT && modifiers == 0) {
             auto angle = static_cast<float>(1 * M_PI / 180.0); // turn right, 1 degrees each step
-            camera_->frame()->action_turn(-angle, camera_);
+            camera_->frame()->action_turn(-angle, camera());
         } else if (key == GLFW_KEY_UP && modifiers == 0) {    // move camera forward
             float step = 0.05f * camera_->sceneRadius();
             camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, 0.0, -step)));
@@ -850,9 +840,9 @@ namespace easy3d {
             save();
 
         else if (key == GLFW_KEY_MINUS && modifiers == MODIF_CTRL)
-            camera_->frame()->action_zoom(-1, camera_);
+            camera_->frame()->action_zoom(-1, camera());
         else if (key == GLFW_KEY_EQUAL && modifiers == MODIF_CTRL)
-            camera_->frame()->action_zoom(1, camera_);
+            camera_->frame()->action_zoom(1, camera());
 
         else if (key == GLFW_KEY_K && modifiers == GLFW_MOD_ALT) { // add key frame
             easy3d::Frame *frame = camera()->frame();
@@ -928,7 +918,7 @@ namespace easy3d {
             else
                 model_idx_ = int((model_idx_ - 1 + models_.size()) % models_.size());
             if (model_idx_ >= 0) {
-                fit_screen(models_[model_idx_]);
+                fit_screen(models_[model_idx_].get());
                 std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
             }
         } else if (key == GLFW_KEY_PERIOD && modifiers == 0) {
@@ -937,7 +927,7 @@ namespace easy3d {
             else
                 model_idx_ = int((model_idx_ + 1) % models_.size());
             if (model_idx_ >= 0) {
-                fit_screen(models_[model_idx_]);
+                fit_screen(models_[model_idx_].get());
                 std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
             }
         } else if (key == GLFW_KEY_DELETE && modifiers == 0) {
@@ -945,7 +935,7 @@ namespace easy3d {
                 delete_model(current_model());
         } else if (key == GLFW_KEY_E && modifiers == 0) {
             if (current_model()) {
-                auto *drawable = current_model()->renderer()->get_lines_drawable("edges");
+                auto drawable = current_model()->renderer()->get_lines_drawable("edges");
                 if (drawable)
 					drawable->set_visible(!drawable->is_visible());
             }
@@ -1112,7 +1102,7 @@ namespace easy3d {
                     double current_time = glfwGetTime();
                     ++frame_counter;
                     if (current_time - last_time >= 1.0f) {
-                        sprintf(gpu_time_, "fps: %2.0f (%4.1f ms/frame)",
+                        sprintf(framerate_, "fps: %2.0f (%4.1f ms/frame)",
                                 double(frame_counter) / (current_time - last_time), 1000.0 / double(frame_counter));
                         frame_counter = 0;
                         last_time = current_time;
@@ -1180,7 +1170,7 @@ namespace easy3d {
         glViewport(0, 0, fw, fh);
 
         // create TextRenderer renderer and load default fonts
-        texter_ = new TextRenderer(dpi_scaling());
+        texter_ = std::unique_ptr<TextRenderer>(new TextRenderer(dpi_scaling()));
         texter_->add_font(resource::directory() + "/fonts/en_Earth-Normal.ttf");
         texter_->add_font(resource::directory() + "/fonts/en_Roboto-Medium.ttf");
 
@@ -1201,12 +1191,12 @@ namespace easy3d {
     }
 
 
-    Model *Viewer::add_model(const std::string &file_path, bool create_default_drawables) {
+    Model* Viewer::add_model(const std::string &file_path, bool create_default_drawables) {
         const std::string file_name = file_system::convert_to_native_style(file_path);
         for (auto m : models_) {
             if (m->name() == file_name) {
                 LOG(WARNING) << "model has already been added to the viewer: " << file_name;
-                return m;
+                return m.get();
             }
         }
 
@@ -1215,20 +1205,22 @@ namespace easy3d {
         if (ext == "ply")
             is_ply_mesh = (io::PlyReader::num_instances(file_name, "face") > 0);
 
-        Model *model = nullptr;
+        Model* model = nullptr;
         if ((ext == "ply" && is_ply_mesh) || ext == "obj" || ext == "off" || ext == "stl" || ext == "sm" || ext == "geojson" || ext == "trilist") { // mesh
             model = SurfaceMeshIO::load(file_name);
-        } else if (ext == "ply" && io::PlyReader::num_instances(file_name, "edge") > 0) {
+        }
+        else if (ext == "ply" && io::PlyReader::num_instances(file_name, "edge") > 0) {
             model = GraphIO::load(file_name);
-        } else if (ext == "plm" || ext == "pm" || ext == "mesh") {
+        }
+        else if (ext == "plm" || ext == "pm" || ext == "mesh") {
             model = PolyMeshIO::load(file_name);
         }
         else { // point cloud
             if (ext == "ptx") {
                 io::PointCloudIO_ptx serializer(file_name);
-                PointCloud *cloud = nullptr;
+                PointCloud* cloud = nullptr;
                 while ((cloud = serializer.load_next())) {
-                    model = add_model(cloud, create_default_drawables);
+                    model = add_model(std::shared_ptr<PointCloud>(cloud), create_default_drawables);
                     update();
                 }
                 return model;   // returns the last cloud in the file.
@@ -1238,15 +1230,15 @@ namespace easy3d {
 
         if (model) {
             model->set_name(file_name);
-            add_model(model, create_default_drawables);
+            add_model(std::shared_ptr<Model>(model), create_default_drawables);
         }
         return model;
     }
 
 
-    Model *Viewer::add_model(Model *model, bool create) {
+    Model* Viewer::add_model(std::shared_ptr<Model> model, bool create) {
         if (!model) {
-            LOG(WARNING) << "model is NULL.";
+            LOG(WARNING) << "model is nullptr";
             return nullptr;
         }
         for (auto m : models_) {
@@ -1256,7 +1248,7 @@ namespace easy3d {
             }
         }
 
-        model->set_renderer(new Renderer(model, create));
+        model->set_renderer(std::make_shared<Renderer>(model.get(), create));
 
         int pre_idx = model_idx_;
         models_.push_back(model);
@@ -1266,71 +1258,71 @@ namespace easy3d {
             if (model_idx_ >= 0)
                 LOG(INFO) << "current model: " << model_idx_ << ", " << models_[model_idx_]->name();
         }
-        return model;
+        return model.get();
     }
 
 
     bool Viewer::delete_model(Model *model) {
         if (!model) {
-            LOG(WARNING) << "model is NULL.";
+            LOG(WARNING) << "model is nullptr";
             return false;
         }
 
-        auto pos = std::find(models_.begin(), models_.end(), model);
-        if (pos != models_.end()) {
-            int pre_idx = model_idx_;
-            const std::string name = model->name();
-            models_.erase(pos);
-            delete model->renderer();
-            delete model->manipulator();
-            delete model;
-            model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
-            LOG(INFO) << "model deleted: " << name;
+        for (auto it = models_.begin(); it != models_.end(); ++it) {
+            if (it->get() == model) {
+                int pre_idx = model_idx_;
+                const std::string name = model->name();
+                models_.erase(it);
+                model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
+                LOG(INFO) << "model deleted: " << name;
 
-            if (model_idx_ != pre_idx) {
-                if (model_idx_ >= 0)
-                    LOG(INFO) << "current model: " << model_idx_ << ", " << models_[model_idx_]->name();
+                if (model_idx_ != pre_idx) {
+                    if (model_idx_ >= 0)
+                        LOG(INFO) << "current model: " << model_idx_ << ", " << models_[model_idx_]->name();
+                }
+                return true;
             }
-            return true;
-        } else {
-            LOG(WARNING) << "no such model: " << model->name();
-            return false;
         }
+
+        // if the model was not found
+        LOG(WARNING) << "no such model: " << model->name();
+        return false;
     }
 
 
-    bool Viewer::add_drawable(Drawable *drawable) {
+    Drawable* Viewer::add_drawable(std::shared_ptr<Drawable> drawable) {
         if (!drawable) {
-            LOG(WARNING) << "drawable is NULL.";
-            return false;
+            LOG(WARNING) << "drawable is nullptr.";
+            return nullptr;
         }
         for (auto d : drawables_) {
             if (drawable == d) {
                 LOG(WARNING) << "drawable has already been added to the viewer.";
-                return false;
+                return drawable.get();
             }
         }
 
         drawables_.push_back(drawable);
-        return true;
+        return drawable.get();
     }
 
 
     bool Viewer::delete_drawable(Drawable *drawable) {
         if (!drawable) {
-            LOG(WARNING) << "drawable is NULL";
+            LOG(WARNING) << "drawable is nullptr";
             return false;
         }
 
-        auto pos = std::find(drawables_.begin(), drawables_.end(), drawable);
-        if (pos != drawables_.end()) {
-            drawables_.erase(pos);
-            delete drawable;
-            return true;
-        } else {
-            LOG(WARNING) << "no such drawable: " << drawable->name();
-            return false;
+        for (auto it = drawables_.begin(); it != drawables_.end(); ++it) {
+            if (it->get() == drawable) {
+                drawables_.erase(it);
+                return true;
+            }
         }
+
+        // if the drawable was not found
+        LOG(WARNING) << "no such drawable: " << drawable->name();
+        return false;
     }
 
 
@@ -1340,7 +1332,7 @@ namespace easy3d {
             return;
         }
 
-        auto visual_box = [](const Model *m) -> Box3 {
+        auto visual_box = [](const Model* m) -> Box3 {
             Box3 box = m->bounding_box();
             for (auto d : m->renderer()->points_drawables()) box.grow(d->bounding_box());
             for (auto d : m->renderer()->lines_drawables()) box.grow(d->bounding_box());
@@ -1353,7 +1345,7 @@ namespace easy3d {
             box = visual_box(model);
         else {
             for (auto m : models_)
-                box.grow(visual_box(m));
+                box.grow(visual_box(m.get()));
             for (auto d : drawables_)
                 box.grow(d->bounding_box());
         }
@@ -1393,7 +1385,7 @@ namespace easy3d {
 
 
     bool Viewer::save() const {
-        const Model *m = current_model();
+        Model* m = current_model();
         if (!m) {
             LOG(ERROR) << "no model exists";
             return false;
@@ -1486,7 +1478,7 @@ namespace easy3d {
             shape::create_cone(0.06, 20, vec3(0, 0, base), vec3(0, 0, base + head), vec3(0, 0, 1), points, normals,
                                  colors);
             shape::create_sphere(vec3(0, 0, 0), 0.06, 20, 20, vec3(0, 1, 1), points, normals, colors);
-            const_cast<Viewer*>(this)->drawable_axes_ = new TrianglesDrawable("corner_axes");
+            const_cast<Viewer*>(this)->drawable_axes_ = std::unique_ptr<TrianglesDrawable>(new TrianglesDrawable("corner_axes"));
             drawable_axes_->update_vertex_buffer(points);
             drawable_axes_->update_normal_buffer(normals);
             drawable_axes_->update_color_buffer(colors);
@@ -1555,20 +1547,21 @@ namespace easy3d {
 
 
     void Viewer::post_draw() {
-        // draw the Easy3D logo and GPU time
         if (texter_ && texter_->num_fonts() >=2) {
             const float font_size = 15.0f;
             const float offset = 20.0f * dpi_scaling();
-            texter_->draw("Easy3D", offset, offset, font_size, 0);
-
+            // draw the Easy3D logo and GPU time
+            if (show_easy3d_logo_)
+                texter_->draw("Easy3D", offset, offset, font_size, 0);
+            // draw the framerate
             if (show_frame_rate_)
-                texter_->draw(gpu_time_, offset, 50.0f * dpi_scaling(), 16, 1);
+                texter_->draw(framerate_, offset, 50.0f * dpi_scaling(), font_size, 1);
         }
 
         // shown only when it is not animating
         if (show_camera_path_ && !kfi_->is_interpolation_started()) {
-            kfi_->draw_path(camera_, 2.0f);
-            kfi_->draw_cameras(camera_, camera()->sceneRadius() * 0.05f);
+            kfi_->draw_path(camera(), 2.0f);
+            kfi_->draw_cameras(camera(), camera()->sceneRadius() * 0.05f);
         }
 
         if (show_pivot_point_) {

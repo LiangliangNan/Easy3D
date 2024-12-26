@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
     // create the viewer.
     TutorialHardShadow viewer(EXAMPLE_TITLE);
 
-    Model *model = viewer.add_model(file, true);
+    auto model = viewer.add_model(file, true);
     if (!model) {
         LOG(ERROR) << "failed to load model. Please make sure the file exists and format is correct.";
         return EXIT_FAILURE;

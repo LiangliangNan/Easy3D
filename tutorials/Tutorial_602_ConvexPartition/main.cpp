@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
         mesh->add_face(vts);
     }
     // add the mesh to the viewer.
-    viewer.add_model(mesh);
+    viewer.add_model(std::shared_ptr<SurfaceMesh>(mesh));
 
     // show the vertices
     mesh->renderer()->get_points_drawable("vertices")->set_visible(true);

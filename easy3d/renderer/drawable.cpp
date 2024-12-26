@@ -47,15 +47,13 @@ namespace easy3d {
             : name_(name), model_(model), vao_(nullptr), num_vertices_(0), num_indices_(0),
               update_needed_(false), update_func_(nullptr), vertex_buffer_(0), color_buffer_(0), normal_buffer_(0),
               texcoord_buffer_(0), element_buffer_(0), manipulator_(nullptr) {
-        vao_ = new VertexArrayObject;
+        vao_ = std::unique_ptr<VertexArrayObject>(new VertexArrayObject);
         material_ = Material(setting::material_ambient, setting::material_specular, setting::material_shininess);
     }
 
 
     Drawable::~Drawable() {
         clear();
-        delete vao_;
-        delete manipulator_;
     }
 
 
@@ -254,7 +252,7 @@ namespace easy3d {
 
     Manipulator* Drawable::manipulator() {
         if (manipulator_)
-            return manipulator_;
+            return manipulator_.get();
         else if (model_)
             return model_->manipulator();
         else
@@ -264,7 +262,7 @@ namespace easy3d {
 
     const Manipulator* Drawable::manipulator() const {
         if (manipulator_)
-            return manipulator_;
+            return manipulator_.get();
         else if (model_)
             return model_->manipulator();
         else
@@ -274,7 +272,7 @@ namespace easy3d {
 
     mat4 Drawable::manipulated_matrix() const {
         if (manipulator_)
-            return manipulator()->matrix();
+            return manipulator_->matrix();
         else if (model_ && model_->manipulator())
             return model_->manipulator()->matrix();
         else

@@ -78,13 +78,13 @@ namespace easy3d {
 
 
     Model* OffScreen::add_model(const std::string &file_name, bool create_default_drawables) {
-        Model* model = Viewer::add_model(file_name, create_default_drawables);
+        auto model = Viewer::add_model(file_name, create_default_drawables);
         fit_screen();
         return model;
     }
 
 
-    Model* OffScreen::add_model(Model *model, bool create_default_drawables) {
+    Model* OffScreen::add_model(std::shared_ptr<Model> model, bool create_default_drawables) {
         return Viewer::add_model(model, create_default_drawables);
     }
 
@@ -94,17 +94,17 @@ namespace easy3d {
     }
 
 
-    const std::vector<Model *>& OffScreen::models() const {
+    const std::vector< std::shared_ptr<Model> >& OffScreen::models() const {
         return Viewer::models();
     }
 
 
-    Model * OffScreen::current_model() const {
+    Model* OffScreen::current_model() const {
         return Viewer::current_model();
     }
 
 
-    bool OffScreen::add_drawable(Drawable *drawable) {
+    Drawable* OffScreen::add_drawable(std::shared_ptr<Drawable> drawable) {
         return Viewer::add_drawable(drawable);
     }
 
@@ -114,7 +114,7 @@ namespace easy3d {
     }
 
 
-    const std::vector<Drawable *>& OffScreen::drawables() const {
+    const std::vector< std::shared_ptr<Drawable> >& OffScreen::drawables() const {
         return drawables_;
     }
 

@@ -60,9 +60,9 @@ namespace easy3d {
         ManipulatedFrame* frame = ClippingPlane::instance()->manipulator()->frame();
 
         if (pressed_button_ == BUTTON_LEFT)
-            frame->action_rotate(x, y, dx, dy, camera_, ManipulatedFrame::NONE);
+            frame->action_rotate(x, y, dx, dy, camera(), ManipulatedFrame::NONE);
         else if (pressed_button_ == BUTTON_RIGHT)
-            frame->action_translate(x, y, dx, dy, camera_, ManipulatedFrame::NONE);
+            frame->action_translate(x, y, dx, dy, camera(), ManipulatedFrame::NONE);
         else
             return Viewer::mouse_drag_event(x, y, dx, dy, button, modifiers);
 

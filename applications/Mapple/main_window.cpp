@@ -569,7 +569,7 @@ Model* MainWindow::open(const std::string& file_name) {
             if (viewer_->walkThrough()->interpolator()->read_keyframes(keyframe_file)) {
                 LOG(INFO) << "model has an accompanying animation file \'"
                           << file_system::simple_name(keyframe_file) << "\' (loaded)";
-                viewer_->walkThrough()->set_scene({model});
+                viewer_->walkThrough()->set_scene(viewer_->models());
             }
         }
     }
@@ -2062,10 +2062,14 @@ namespace internal {
 }
 
 void MainWindow::translationalRecenter() {
-    Model* first_model = viewer_->models()[0];
+    if (viewer_->models().empty())
+        return;
+
+    auto first_model = viewer_->models()[0];
 
     const vec3 origin = first_model->bounding_box().center();
-    for (auto model : viewer_->models()) {
+    for (auto m : viewer_->models()) {
+        auto model = m.get();
         if (dynamic_cast<SurfaceMesh*>(model))
             internal::translate(dynamic_cast<SurfaceMesh*>(model), origin);
         else if (dynamic_cast<PointCloud*>(model))
@@ -2097,7 +2101,8 @@ void MainWindow::applyManipulatedTransformation() {
     if (models.empty())
         return;
 
-    for (auto model : models) {
+    for (auto m : models) {
+        auto model = m.get();
         mat4 manip = model->manipulator()->matrix();
         auto &points = model->points();
         for (auto &p: points)

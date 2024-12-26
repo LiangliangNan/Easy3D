@@ -144,11 +144,7 @@ PaintCanvas::~PaintCanvas() {
 
 
 void PaintCanvas::cleanup() {
-    for (auto m : models_) {
-        delete m->renderer();
-        delete m->manipulator();
-        delete m;
-    }
+    models_.clear();
 
     delete camera_;
     delete walkThrough();
@@ -346,7 +342,7 @@ void PaintCanvas::mousePressEvent(QMouseEvent *e) {
                 }
                 // select the picked model (if picked) and deselect others
                 for (auto m : models_)
-                    m->renderer()->set_selected(m == model);
+                    m->renderer()->set_selected(m.get() == model);
             }
 
             else {
@@ -644,14 +640,14 @@ Model *PaintCanvas::currentModel() {
     if (models_.empty())
         return nullptr;
     if (model_idx_ < models_.size())
-        return models_[model_idx_];
+        return models_[model_idx_].get();
     return nullptr;
 }
 
 
 void PaintCanvas::setCurrentModel(easy3d::Model *m) {
     for (int i=0; i<models_.size(); ++i) {
-        if (models_[i] == m) {
+        if (models_[i].get() == m) {
             model_idx_ = i;
             return;
         }
@@ -938,11 +934,11 @@ std::string PaintCanvas::usage() const {
 
 void PaintCanvas::addModel(Model *model) {
     if (!model) {
-        LOG(WARNING) << "model is NULL.";
+        LOG(WARNING) << "model is nullptr";
         return;
     }
     for (auto m : models_) {
-        if (model == m) {
+        if (model == m.get()) {
             LOG(WARNING) << "model '" << file_system::simple_name(model->name()) << "' has already been added to the viewer.";
             return;
         }
@@ -954,12 +950,12 @@ void PaintCanvas::addModel(Model *model) {
     }
 
     makeCurrent();
-    model->set_renderer(new Renderer(model));
-    model->set_manipulator(new Manipulator(model));
+    model->set_renderer(std::make_shared<Renderer>(model));
+    model->set_manipulator(std::make_shared<Manipulator>(model));
     model->manipulator()->frame()->modified.connect(this, static_cast<void (PaintCanvas::*)(void)>(&PaintCanvas::update));
     doneCurrent();
 
-    models_.push_back(model);
+    models_.push_back(std::shared_ptr<Model>(model));
     model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
     adjustSceneRadius();
 }
@@ -967,23 +963,24 @@ void PaintCanvas::addModel(Model *model) {
 
 void PaintCanvas::deleteModel(Model *model) {
     if (!model) {
-        LOG(WARNING) << "model is NULL.";
+        LOG(WARNING) << "model is nullptr";
         return;
     }
 
-    auto pos = std::find(models_.begin(), models_.end(), model);
-    if (pos != models_.end()) {
-        const std::string name = model->name();
-        models_.erase(pos);
-        makeCurrent();
-        delete model->renderer();
-        delete model->manipulator();
-        delete model;
-        doneCurrent();
-        model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
-        LOG(INFO) << "model deleted: " << name;
-    } else
-        LOG(WARNING) << "no such model: " << model->name();
+    for (auto it = models_.begin(); it != models_.end(); ++it) {
+        if (it->get() == model) {
+            const std::string name = model->name();
+            makeCurrent();      // make sure the context is current
+            models_.erase(it);  // internally the renderer and manipulator will be deleted
+            doneCurrent();
+            model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
+            LOG(INFO) << "model deleted: " << name;
+            return;
+        }
+    }
+
+    // if the model was not found
+    LOG(WARNING) << "no such model: " << model->name();
 }
 
 
@@ -1908,7 +1905,7 @@ void PaintCanvas::draw() {
         if (!m->renderer()->is_visible())
             continue;
         for (auto d : m->renderer()->triangles_drawables())
-            surfaces.push_back(d);
+            surfaces.push_back(d.get());
     }
 
     if (edl())

@@ -101,7 +101,7 @@ bool VirtualScanner::key_press_event(int key, int modifiers) {
                 GaussianNoise::apply(cloud, sigma);
                 std::cout << "Gaussian noise added (sigma = " << ratio << " * model radius)" << std::endl;
             }
-            add_model(cloud);
+            add_model(std::shared_ptr<PointCloud>(cloud));
             update();
         }
 

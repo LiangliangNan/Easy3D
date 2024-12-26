@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
 
     // the point cloud file.
     const std::string file_name = resource::directory() + "/data/fountain/pointcloud.ply";
-    Model *model = viewer.add_model(file_name, true);
+    auto model = viewer.add_model(file_name, true);
     if (!model) {
         LOG(ERROR) << "failed to load model. Please make sure the file exists and format is correct.";
         return EXIT_FAILURE;

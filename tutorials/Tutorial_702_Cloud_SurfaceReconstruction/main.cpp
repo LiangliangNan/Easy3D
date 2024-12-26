@@ -58,7 +58,7 @@ bool reconstruction(Viewer* viewer, Model* model) {
     std::cout << "reconstruction depth: " << depth << std::endl;
     Model* surface = algo.apply(cloud);
     if (surface != nullptr) {
-        viewer->add_model(surface, true);
+        viewer->add_model(std::shared_ptr<Model>(surface), true);
         viewer->delete_model(cloud);
         viewer->update();
     }

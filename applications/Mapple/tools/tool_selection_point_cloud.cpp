@@ -132,7 +132,7 @@ namespace easy3d {
 
         void ToolPointCloudSelectionRect::release(int x, int y) {
             for (auto model : tool_manager()->viewer()->models()) {
-                auto cloud = dynamic_cast<PointCloud*>(model);
+                auto cloud = dynamic_cast<PointCloud*>(model.get());
                 if (cloud && cloud->renderer()->is_visible()) {
                     picker_->pick_vertices(cloud, Rect(start_, vec2(static_cast<float>(x), static_cast<float>(y))), select_mode_ != SM_SELECT);
                     update_render_buffer(cloud);
@@ -170,7 +170,7 @@ namespace easy3d {
 
         void MultitoolPointCloudSelectionClick::clear_hint() {
             for (auto model : tool_manager()->viewer()->models()) {
-                auto cloud = dynamic_cast<PointCloud *>(model);
+                auto cloud = dynamic_cast<PointCloud *>(model.get());
                 if (cloud) {
                     auto drawable = cloud->renderer()->get_points_drawable("vertices");
                     drawable->set_highlight(false);
@@ -240,7 +240,7 @@ namespace easy3d {
                 return;
 
             for (auto model : tool_manager()->viewer()->models()) {
-                auto cloud = dynamic_cast<PointCloud*>(model);
+                auto cloud = dynamic_cast<PointCloud*>(model.get());
                 if (cloud && cloud->renderer()->is_visible()) {
                     picker_->pick_vertices(cloud, lasso_, select_mode_ != SM_SELECT);
                     update_render_buffer(cloud);

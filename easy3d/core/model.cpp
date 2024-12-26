@@ -30,24 +30,20 @@
 
 namespace easy3d {
 
-    Model::Model(const std::string& name /* = "unknown" */)
-            : name_(name)
-            , bbox_known_(false)
-            , renderer_(nullptr)
-            , manipulator_(nullptr)
-    {
+    Model::Model(const std::string &name /* = "unknown" */)
+            : name_(name), bbox_known_(false), renderer_(nullptr), manipulator_(nullptr) {
     }
 
 
-    const Box3& Model::bounding_box(bool recompute) const {
+    const Box3 &Model::bounding_box(bool recompute) const {
         if (!bbox_known_ || recompute) {
-            Box3& box = const_cast<Model*>(this)->bbox_;
+            Box3 &box = const_cast<Model *>(this)->bbox_;
             box.clear();
-            for (const auto& p : points())
+            for (const auto &p: points())
                 box.grow(p);
 
             if (box.is_valid())
-                const_cast<Model*>(this)->bbox_known_ = true;
+                const_cast<Model *>(this)->bbox_known_ = true;
             else
                 LOG(WARNING) << "model has no valid geometry";
         }
@@ -61,15 +57,17 @@ namespace easy3d {
     }
 
 
-    Renderer* Model::renderer() {
-        LOG_IF(!renderer_, WARNING) << "the renderer of model '" << name() << "' does not exist (or not created). Adding this model to the viewer will create the renderer";
-        return renderer_;
+    Renderer *Model::renderer() {
+        LOG_IF(!renderer_, WARNING) << "the renderer of model '" << name()
+                                    << "' does not exist (or not created). Adding this model to the viewer will create the renderer";
+        return renderer_.get();
     }
 
 
-    const Renderer* Model::renderer() const {
-        LOG_IF(!renderer_, WARNING) << "the renderer of model '" << name() << "' does not exist (or not created). Adding this model to the viewer will create the renderer";
-        return renderer_;
+    const Renderer *Model::renderer() const {
+        LOG_IF(!renderer_, WARNING) << "the renderer of model '" << name()
+                                    << "' does not exist (or not created). Adding this model to the viewer will create the renderer";
+        return renderer_.get();
     }
 
 }

@@ -212,18 +212,29 @@ namespace easy3d {
 		ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData()); 
 
-        // TODO: a workaround to draw the Easy3D logo at a different location (due to the menu bar)
-        auto texter = texter_;
-        texter_ = nullptr;
+        // TODO: a workaround to draw the Easy3D logo and framerate at a different location (due to the menu bar)
+        auto show_logo = show_easy3d_logo_;
+        auto show_fps = show_frame_rate_;
+        show_easy3d_logo_ = false;
+        show_frame_rate_ = false;
         Viewer::post_draw();
-        texter_ = texter;
+        show_easy3d_logo_ = show_logo;
+        show_frame_rate_ = show_fps;
 
-        // draw Easy3D logo
+        // draw Easy3D logo (on the right side)
         if (texter_) {
             const float font_size = 15.0f;
-            const float offset_x = (width() - texter_->string_width("Easy3D", font_size) - 20.0f) * dpi_scaling();
-            const float offset_y = (20.0f + menu_height_) * dpi_scaling();
-            texter_->draw("Easy3D", offset_x, offset_y, font_size, 0);
+            const float offset_x = (width() - texter_->string_width("Easy3D", font_size) - 50.0f) * dpi_scaling();
+            if (show_easy3d_logo_) {
+                const float offset_y = (20.0f + menu_height_) * dpi_scaling();
+                texter_->draw("Easy3D", offset_x, offset_y, font_size, 0);
+            }
+
+            // draw the framerate
+            if (show_frame_rate_) {
+                const float offset_y = (50.0f + menu_height_) * dpi_scaling();
+                texter_->draw(framerate_, offset_x, offset_y, font_size, 1);
+            }
         }
 	}
 
