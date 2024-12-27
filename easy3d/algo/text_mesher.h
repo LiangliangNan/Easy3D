@@ -65,12 +65,12 @@ namespace easy3d {
          * @param x The x-coordinate of the starting position.
          * @param y The y-coordinate of the starting position.
          * @param font_size The size of the font.
-         * @param extrude The height (in the Z direction) of the 3D model.
+         * @param height The height (in the Z direction) of the 3D model.
          * @param collision_free If true, the final mesh will be free of intersections between characters.
          * @return The generated triangular surface mesh.
          */
         SurfaceMesh *
-        generate(const std::string &text, float x, float y, int font_size, float extrude, bool collision_free = false);
+        generate(const std::string &text, float x, float y, int font_size, float height, bool collision_free = false);
 
         /**
          * @brief Generate 3D surface representation of a text and append the surface to an existing mesh.
@@ -78,11 +78,11 @@ namespace easy3d {
          * @param x The x-coordinate of the starting position.
          * @param y The y-coordinate of the starting position.
          * @param font_size The size of the font.
-         * @param extrude The height (in the Z direction) of the 3D model.
+         * @param height The height (in the Z direction) of the 3D model.
          * @param collision_free If true, the final mesh will be free of intersections between characters.
          * @return \c true on success and \c false on failure.
          */
-        bool generate(SurfaceMesh *mesh, const std::string &text, float x, float y, int font_size, float extrude,
+        bool generate(SurfaceMesh *mesh, const std::string &text, float x, float y, int font_size, float height,
                       bool collision_free = false);
 
         /**
@@ -106,11 +106,11 @@ namespace easy3d {
          * @param x The x-coordinate of the starting position.
          * @param y The y-coordinate of the starting position.
          * @param font_size The size of the font.
-         * @param extrude The height (in the Z direction) of the 3D model.
+         * @param height The height (in the Z direction) of the 3D model.
          * @param collision_free True the mesh will be the union of all the characters.
          * @param True on success and false on failure.
          */
-        bool _generate(SurfaceMesh *mesh, const std::wstring &text, float x, float y, int font_size, float extrude,
+        bool _generate(SurfaceMesh *mesh, const std::wstring &text, float x, float y, int font_size, float height,
                        bool collision_free);
 
         /**

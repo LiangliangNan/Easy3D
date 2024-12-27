@@ -280,13 +280,15 @@ namespace easy3d {
 
 
     SurfaceMesh *
-    TextMesher::generate(const std::string &text, float x, float y, int font_size, float extrude, bool collision_free) {
+    TextMesher::generate(const std::string &text, float x, float y, int font_size, float height, bool collision_free) {
         if (!ready_)
             return nullptr;
 
         auto mesh = new SurfaceMesh;
-        if (generate(mesh, text, x, y, font_size, extrude, collision_free))
+        if (generate(mesh, text, x, y, font_size, height, collision_free)) {
+            mesh->set_name(text);
             return mesh;
+        }
         else {
             delete mesh;
             return nullptr;
