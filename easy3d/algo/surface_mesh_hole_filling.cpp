@@ -96,6 +96,48 @@ namespace easy3d {
         return ok;
     }
 
+    int SurfaceMeshHoleFilling::fill_holes(int allowed_boundary_size) {
+        // find all holes
+        std::vector<std::pair<SurfaceMesh::Halfedge, int> > holes;
+
+        auto visited = mesh_->add_halfedge_property<bool>("TestSurfaceMeshHoleFilling::h::visited", false);
+        int total_holes = 0;
+        for (auto h : mesh_->halfedges()) {
+            if (!visited[h] && mesh_->is_border(h)) {
+                int size = 0;
+                SurfaceMesh::Halfedge hh = h;
+                do {
+                    visited[hh] = true;
+                    ++size;
+                    if (!mesh_->is_manifold(mesh_->target(hh))) {
+                        size += 123456;
+                        break;
+                    }
+                    hh = mesh_->next(hh);
+                } while (hh != h);
+
+                if (size < allowed_boundary_size)
+                    holes.push_back({h, size});
+                else
+                    LOG(INFO) << "hole (size = " << size << ") will not be filled";
+                ++total_holes;
+            }
+        }
+        mesh_->remove_halfedge_property(visited);
+
+        LOG(INFO) << total_holes << " holes found, " << holes.size() << " are smaller than " << allowed_boundary_size;
+
+        // close holes whose sizes are smaller than the min allowed boundary size
+        int num_filled = 0;
+        for (const auto &hole : holes) {
+            SurfaceMeshHoleFilling hf(mesh_);
+            if (hf.fill_hole(hole.first))
+                ++num_filled;
+        }
+        LOG(INFO) << num_filled << " (out of " << total_holes << ") holes filled";
+        return num_filled;
+    }
+
     //-----------------------------------------------------------------------------
 
     bool SurfaceMeshHoleFilling::triangulate_hole(SurfaceMesh::Halfedge _h) {

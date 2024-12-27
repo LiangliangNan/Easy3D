@@ -36,6 +36,11 @@ namespace easy3d {
         /// \brief fill the hole specified by halfedge h
         bool fill_hole(SurfaceMesh::Halfedge h);
 
+        /// \brief fill all holes with size smaller than specified size. The size of a hole is defined as the number of
+        /// boundary edges in the boundary loop of the hole.
+        /// \return the number of holes filled
+        int fill_holes(int size = 500);
+
     private:
         struct Weight {
             explicit Weight(float _angle = FLT_MAX, float _area = FLT_MAX)

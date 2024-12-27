@@ -2,82 +2,74 @@
 # Tutorial: Simplifying a Surface Mesh Using Easy3D
 # -----------------------------------------------------------------------------
 # This tutorial explains how to:
-# 1. Load a surface mesh using Easy3D's `SurfaceMeshIO` class.
-# 2. Simplify the surface mesh using the `SurfaceMeshSimplification` class.
-# 3. Visualize the simplified mesh.
+# 1. Simplify the surface mesh using the `SurfaceMeshSimplification` class.
+# 3. Visualize the original and simplified meshes side-by-side using `MultiViewer`.
 # -----------------------------------------------------------------------------
-# Mesh simplification is a key concept in computer graphics and geometry
-# processing. It reduces the number of vertices and faces in a mesh while
-# preserving its overall shape and appearance. Simplified meshes are
-# computationally more efficient and are often used in applications like
-# real-time rendering, collision detection, and data visualization.
+# Mesh simplification is a crucial process in computer graphics and geometry
+# processing. It reduces the number of vertices and faces in a 3D mesh while
+# preserving its overall structure and visual appearance. This technique is
+# widely used in:
+# - Real-time rendering (e.g., games and VR applications).
+# - Reducing storage and computational requirements.
+# - Level-of-detail (LOD) modeling in computer graphics.
 # -----------------------------------------------------------------------------
 
-# -----------------------------------------------------------------------------
-# If Easy3D is built locally, you need to add its Python bindings to the system path.
-# For installation instructions, visit: https://github.com/LiangliangNan/Easy3D/blob/main/ReadMe.md
+# If Easy3D is not installed via `pip`, you may need to add its Python bindings
+# to the system path. For detailed instructions on building and installing
+# # Python bindings of Easy3D, visit:
+# # https://github.com/LiangliangNan/Easy3D/blob/main/ReadMe.md
 import sys
-sys.path.append("../../cmake-build-release/lib/python")  # Update this path as needed.
+sys.path.append("../../cmake-build-release/lib/python")
 
 # Import Easy3D for 3D geometry processing and visualization.
 import easy3d
 from easy3d import SurfaceMeshIO, SurfaceMeshSimplification
 
-# Easy3D must be initialized before use.
-# Setting `True` to enable detailed output, which is helpful for debugging.
-easy3d.initialize(True)
+# Setting `True` will provide detailed output for debugging purposes.
+easy3d.initialize(False)
 
-# -----------------------------------------------------------------------------
-# Loading the Surface Mesh
-# -----------------------------------------------------------------------------
-# Use the `SurfaceMeshIO` class to load a mesh file. We use the Bunny mesh.
+# Load a 3D surface mesh file using the `SurfaceMeshIO` class.
+# Here, we use the Stanford Bunny model,
 mesh = SurfaceMeshIO.load(easy3d.directory() + "/data/bunny.ply")
-# Print the number of vertices in the original mesh.
-print(f"Input mesh has {mesh.n_vertices()} vertices.")
+# Print details about the original mesh.
+print(f"Number of vertices in the input mesh: {mesh.n_vertices()}")
 
 # -----------------------------------------------------------------------------
-# Simplifying the Surface Mesh
+# Simplify the Surface Mesh
 # -----------------------------------------------------------------------------
-# Mesh simplification reduces the complexity of a 3D model by decreasing
-# the number of vertices and faces while retaining its overall shape.
-# The `SurfaceMeshSimplification` class performs this operation.
+# The `SurfaceMeshSimplification` class simplifies a 3D mesh by reducing the number
+# of vertices and faces while preserving important geometric features.
+
+# To compare the original and simplified meshes, we make a copy of the input mesh.
+copied_mesh = easy3d.SurfaceMesh(mesh)  # Create a copy for simplification.
 
 # Initialize the mesh simplifier.
-simplifier = SurfaceMeshSimplification(mesh)
+simplifier = SurfaceMeshSimplification(copied_mesh)
 
-# Simplify the mesh to a target number of vertices.
-target_vertices = 333  # Desired number of vertices after simplification.
-simplifier.simplify(n_vertices=target_vertices)
+# Set the target number of vertices to 333 (you can play with this parameter)
+simplifier.simplify(333)
 
-# Print the number of vertices in the simplified mesh.
-print(f"After simplification, the mesh has {mesh.n_vertices()} vertices.")
+# Print details about the simplified mesh.
+print(f"Number of vertices in the simplified mesh: {copied_mesh.n_vertices()}")
 
 # -----------------------------------------------------------------------------
-# Use Easy3D's `Viewer` to display the simplified mesh.
+# Visualize Original and Simplified Meshes Side-by-Side
 # -----------------------------------------------------------------------------
+# Use the `MultiViewer` class to create a side-by-side comparison of the meshes.
 
-# Create a viewer instance with a custom title.
-viewer = easy3d.Viewer("Mesh Simplification Tutorial")
+# Create a MultiViewer instance with 1 row and 2 columns.
+viewer = easy3d.MultiViewer(1, 2, "Mesh Simplification Tutorial")
+
+# Add the original mesh to the viewer.
+viewer.add_model(mesh)
+viewer.assign(0, 0, mesh)  # Assign it to the left view (row=0, column=0).
 
 # Add the simplified mesh to the viewer.
-viewer.add_model(mesh)
+viewer.add_model(copied_mesh)
+viewer.assign(0, 1, copied_mesh)  # Assign it to the right view (row=0, column=1).
+
+# Add usage instructions for the viewer (optional).
 viewer.set_usage("")
 
-# Run the viewer.
-# The viewer window remains open until the user closes it manually.
+# Launch the viewer.
 viewer.run()
-
-# -----------------------------------------------------------------------------
-# Notes for Beginners:
-# -----------------------------------------------------------------------------
-# 1. Why simplify a mesh?
-#    - Simplified meshes are faster to render and process.
-#    - They are used in applications like gaming, VR/AR, and CAD tools.
-#
-# 2. What happens during simplification?
-#    - Redundant vertices and faces are removed.
-#    - Important features of the mesh (e.g., sharp edges and corners) are preserved.
-#
-# 3. Experiment with the `target_vertices` parameter to see how it affects
-#    the appearance of the simplified mesh.
-# -----------------------------------------------------------------------------

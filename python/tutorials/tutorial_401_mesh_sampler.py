@@ -20,8 +20,7 @@ sys.path.append("../../cmake-build-release/lib/python")  # Update this path as n
 import easy3d
 
 # Easy3D must be initialized before use.
-# Setting `True` to enable detailed output, which is helpful for debugging.
-easy3d.initialize(True)
+easy3d.initialize(False)
 
 # -----------------------------------------------------------------------------
 # Setting Up the Multi-View Viewer
