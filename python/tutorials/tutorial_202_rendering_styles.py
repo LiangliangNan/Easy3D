@@ -33,7 +33,8 @@ easy3d.initialize(False)
 # Creating a Viewer Instance
 # -------------------------------------------------------------------------------
 # Create a Viewer with a custom title.
-viewer = easy3d.Viewer("Easy3D Viewer")
+viewer = easy3d.Viewer("Easy3D Viewer - Rendering styles")
+viewer.set_usage("") # Optional. Just to hide the lengthy manual in console window
 
 # -------------------------------------------------------------------------------
 # Loading a 3D Model (Sphere)

@@ -104,7 +104,7 @@ print("Number of faces in reconstructed mesh: ", surface_mesh.n_faces())  # Prin
 #
 # First, we create a viewer instance, set its usage description (optional),
 # and add the surface mesh to the viewer.
-viewer = easy3d.Viewer("Easy3D Viewer")  # Create a viewer instance
+viewer = easy3d.Viewer("Easy3D Viewer - Surface reconstruction")
 viewer.set_usage("")  # Optional: Set an empty usage description for a clean UI
 
 # Add the reconstructed mesh to the viewer

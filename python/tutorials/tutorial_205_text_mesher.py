@@ -61,7 +61,7 @@ else:
 # The viewer allows interaction with the model (e.g., rotate, zoom, pan).
 
 # Create an instance of the Viewer with a custom title.
-viewer = easy3d.Viewer("Text Mesher Example")
+viewer = easy3d.Viewer("Easy3D Viewer - Text mesher")
 viewer.set_usage("")
 # Adjust the camera view to look at the text from the front.
 viewer.camera().setViewDirection(easy3d.vec3(0, 0, -1))  # View direction.

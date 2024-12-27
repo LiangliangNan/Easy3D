@@ -71,7 +71,7 @@ lscm_method.lscm()
 # Use Easy3D's `MultiViewer` class to visualize the two results side-by-side.
 
 # Create a MultiViewer instance with 1 row and 2 columns.
-viewer = easy3d.MultiViewer(1, 2, "Mesh Parameterization Tutorial")
+viewer = easy3d.MultiViewer(1, 2, "Easy3D Viewer - Mesh parameterization")
 
 # Add the result of the Harmonic parameterization to the left view.
 viewer.add_model(mesh_harmonic)

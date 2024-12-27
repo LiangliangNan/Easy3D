@@ -58,7 +58,7 @@ print(f"Number of vertices in the simplified mesh: {copied_mesh.n_vertices()}")
 # Use the `MultiViewer` class to create a side-by-side comparison of the meshes.
 
 # Create a MultiViewer instance with 1 row and 2 columns.
-viewer = easy3d.MultiViewer(1, 2, "Mesh Simplification Tutorial")
+viewer = easy3d.MultiViewer(1, 2, "Easy3D Viewer - Mesh simplification")
 
 # Add the original mesh to the viewer.
 viewer.add_model(mesh)

@@ -28,7 +28,7 @@ easy3d.initialize(False)
 # See detailed explanations in "python/tutorials/tutorial_203_multiview.py"
 
 # Create a MultiViewer instance with 1 row and 2 columns.
-viewer = easy3d.MultiViewer(1, 2, "Mesh Sampling Tutorial")
+viewer = easy3d.MultiViewer(1, 2, "Easy3D Viewer - Mesh sampling")
 
 # -----------------------------------------------------------------------------
 # Loading the Surface Mesh

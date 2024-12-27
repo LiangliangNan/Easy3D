@@ -58,7 +58,7 @@ print(f"Modified mesh has {mesh.n_vertices()} vertices and {mesh.n_faces()} face
 # -----------------------------------------------------------------------------
 
 # Create a MultiViewer instance with 1 row and 2 columns (side-by-side comparison).
-viewer = easy3d.MultiViewer(1, 2, "Mesh Hole Filling Tutorial")
+viewer = easy3d.MultiViewer(1, 2, "Easy3D Viewer - Mesh hole filling")
 
 # Add the original mesh to the left view (row=0, column=0).
 viewer.add_model(mesh)

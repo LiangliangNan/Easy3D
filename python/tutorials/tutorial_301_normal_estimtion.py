@@ -60,7 +60,7 @@ print(f"Processed point cloud saved to: {output_file}")
 # Visualizing the Point Cloud
 # -------------------------------------------------------------------------------
 # Create a viewer instance to visualize the point cloud.
-viewer = easy3d.Viewer("Easy3D Viewer")
+viewer = easy3d.Viewer("Easy3D Viewer - Normal estimation")
 
 # Set to an empty to get rid of the lengthy usage instructions
 viewer.set_usage("")
