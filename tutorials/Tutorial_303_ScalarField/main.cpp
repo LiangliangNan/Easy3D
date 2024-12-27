@@ -70,16 +70,15 @@ int main(int argc, char **argv) {
 
     drawable->set_scalar_coloring(State::VERTEX, "v:elevation", nullptr, 0.0f, 0.0f);
 
-    // Create texture for coloring the scalar field.
-    const std::string texture_file = resource::directory() + "/colormaps/rainbow.png";
-    Texture *texture = TextureManager::request(texture_file);
-    if (!texture) {
-        LOG(ERROR) << "failed to create texture.";
-        return EXIT_FAILURE;
-    }
-
-    // Use the texture
-    drawable->set_texture(texture);
+    // A default scalar texture is automatically created.
+    // However, you can choose a more suitable one using the code below:
+//    const std::string texture_file = resource::directory() + "/colormaps/rainbow.png";
+//    Texture *texture = TextureManager::request(texture_file);
+//    if (!texture) {
+//        LOG(ERROR) << "failed to create texture.";
+//        return EXIT_FAILURE;
+//    }
+//    drawable->set_texture(texture); // Use the texture
 
     // run the viewer
     return viewer.run();

@@ -25,7 +25,10 @@
  ********************************************************************/
 
 #include <easy3d/renderer/state.h>
+#include <easy3d/renderer/texture_manager.h>
+#include <easy3d/renderer/opengl_error.h>
 #include <easy3d/util/logging.h>
+#include <easy3d/util/resource.h>
 
 
 namespace easy3d {
@@ -106,9 +109,16 @@ namespace easy3d {
         coloring_method_ = TEXTURED;
         property_location_ = texcoord_location;
         property_name_ = texcoord_name;
-        texture_ = texture;
-        texture_repeat_ = repeat;
-        texture_fractional_repeat_ = repeat_fraction;
+        if (texture) {
+            texture_ = texture;
+            texture_repeat_ = repeat;
+            texture_fractional_repeat_ = repeat_fraction;
+        }
+        else { // create a default color texture
+            texture_ = create_color_texture();
+            texture_repeat_ = 5.0f;
+            texture_fractional_repeat_ = 0.0f;
+        }
     }
 
 
@@ -117,7 +127,10 @@ namespace easy3d {
         coloring_method_ = SCALAR_FIELD;
         property_location_ = scalar_location;
         property_name_ = scalar_name;
-        texture_ = texture;
+        if (texture)
+            texture_ = texture;
+        else // create a default scalar texture
+            texture_ = create_scalar_texture();
         texture_repeat_ = 1.0f;
         texture_fractional_repeat_ = 0.0f;
         clamp_lower_ = clamp_lower;
@@ -129,6 +142,28 @@ namespace easy3d {
         coloring_method_ = method;
         property_location_ = location;
         property_name_ = name;
+
+        if (method == TEXTURED)
+            texture_ = create_color_texture();
+        else if (method == SCALAR_FIELD)
+            texture_ = create_scalar_texture();
+    }
+
+
+    Texture* State::create_color_texture() {
+        const std::string texture_file = resource::directory() + "/textures/checkerboard.png";
+        auto tex = TextureManager::request(texture_file, Texture::REPEAT);
+        LOG_IF_FIRST_N(3, !tex, ERROR) << "failed to create texture from " << texture_file << ". " << COUNTER;
+        return tex;
+    }
+
+
+    Texture* State::create_scalar_texture() {
+        const std::string texture_file = resource::directory() + "/colormaps/default.png";
+        auto tex = TextureManager::request(texture_file);
+        LOG_IF_FIRST_N(3, !tex, ERROR) << "failed to create texture from " << texture_file << ". " << COUNTER;
+        easy3d_debug_log_gl_error
+        return tex;
     }
 
 }

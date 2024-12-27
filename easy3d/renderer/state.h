@@ -119,9 +119,11 @@ namespace easy3d {
          * Constructs a scheme for textured rendering.
          * @param texcoord_location The location of texture coordinate.
          * @param texcoord_name The name of the texture coordinate property.
-         * @param texture The pointer to the texture.
+         * @param texture The pointer to the texture. If nullptr, a default texture will be created from
+         *      "textures/checkerboard.png". Client code is expected to provide a meaningful texture at a later stage.
          * @param repeat The repeat factor of the texture. Default value is 1.0.
          * @param repeat_fraction The fractional repeat factor of the texture. Default value is 0.0.
+         * @note
          */
         void set_texture_coloring(Location texcoord_location, const std::string &texcoord_name,
                                   const Texture *texture = nullptr, float repeat = 1.0f,
@@ -131,7 +133,8 @@ namespace easy3d {
          * Constructs a scheme for rendering scalar fields.
          * @param scalar_location The location of the scalar field.
          * @param scalar_name The name of the scalar field.
-         * @param texture The pointer to the texture.
+         * @param texture The pointer to the texture. Default is nullptr, a scalar default texture will be created
+         *      from "/colormaps/default.png". Client code can provide a more suitable texture at a later stage.
          * @param clamp_lower The percentage of values to be clamped at the lower side of the range. Default is 5%.
          * @param clamp_upper The percentage of values to be clamped at the upper side of the range. Default is 5%.
          */
@@ -257,6 +260,15 @@ namespace easy3d {
         const std::pair<int, int> &highlight_range() const { return highlight_range_; }
 
     protected:
+        // Create a default texture.
+        // Default texture file: "/textures/checkerboard.png";
+        Texture* create_color_texture();
+
+        // Create a default texture for rendering scalar fields.
+        // Default texture file: "/colormaps/default.png";
+        Texture* create_scalar_texture();
+
+    protected:
         bool visible_;
         bool selected_;
 
@@ -275,7 +287,7 @@ namespace easy3d {
         const Texture *texture_;
         // How many times do you want to repeat the texture?
         float texture_repeat_;
-        // Control at a finer level: 100 fractional repeat == repeat.
+        // Control at a finer level: 100 fractional repeat == 1 repeat.
         float texture_fractional_repeat_;
 
         bool ssao_enabled_;

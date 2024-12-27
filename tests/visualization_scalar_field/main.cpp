@@ -60,17 +60,6 @@ int test_scalar_field(int duration) {
 
     drawable->set_scalar_coloring(State::VERTEX, "v:elevation", nullptr, 0.0f, 0.0f);
 
-    // Create texture for coloring the scalar field.
-    const std::string texture_file = resource::directory() + "/colormaps/rainbow.png";
-    Texture *texture = TextureManager::request(texture_file);
-    if (!texture) {
-        LOG(ERROR) << "failed to create texture.";
-        return EXIT_FAILURE;
-    }
-
-    // Use the texture
-    drawable->set_texture(texture);
-
     viewer.set_usage("testing scalar field...");
 
     Timer<>::single_shot(duration, (Viewer*)&viewer, &Viewer::exit);
