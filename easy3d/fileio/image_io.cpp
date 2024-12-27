@@ -124,7 +124,7 @@ namespace easy3d {
             }
 
             char tmp[256];
-            sprintf(tmp, "P6 %i %i %i\n", width, height, 255);
+            snprintf(tmp, sizeof(tmp), "P6 %i %i %i\n", width, height, 255);
             fwrite(tmp, strlen(tmp), 1, fptr);
             fwrite(bits.data(), 1, bits.size(), fptr);
             fclose(fptr);

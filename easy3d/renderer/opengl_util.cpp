@@ -27,7 +27,7 @@
 #include <easy3d/renderer/opengl_util.h>
 
 #include <iostream>
-#include <cstdio>	// for vsprintf()
+#include <cstdio>	// for vsnprintf()
 #include <cstdarg>	// for va_start() and va_end()
 #include <string>	// for to_string()
 
@@ -786,17 +786,12 @@ namespace easy3d {
     }
 
 
-
     // Printf style! plus a newline at the end
     void OpenglUtil::_add_message(std::string format, ...) {
         char spAux[256];
         va_list args;
         va_start(args, format);
-    #ifdef _WIN32
-        vsprintf_s(spAux, format.c_str(), args);
-    #else
-        vsprintf(spAux, format.c_str(), args);
-    #endif
+        vsnprintf(spAux, sizeof(spAux), format.c_str(), args);
         va_end(args);
 
         *_output_stream << spAux << "\n";

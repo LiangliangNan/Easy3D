@@ -131,7 +131,7 @@ namespace easy3d {
         kfi_ = std::unique_ptr<KeyFrameInterpolator>(new KeyFrameInterpolator(camera_->frame()));
         easy3d::connect(&kfi_->interpolation_stopped, this, &Viewer::update);
 
-        sprintf(framerate_, "fps: ?? (?? ms/frame)");
+        snprintf(framerate_, sizeof(framerate_), "fps: ?? (?? ms/frame)");
 
         /* Poll for events once before starting a potentially lengthy loading process.*/
         glfwPollEvents();
@@ -1102,7 +1102,7 @@ namespace easy3d {
                     double current_time = glfwGetTime();
                     ++frame_counter;
                     if (current_time - last_time >= 1.0f) {
-                        sprintf(framerate_, "fps: %2.0f (%4.1f ms/frame)",
+                        snprintf(framerate_, sizeof(framerate_), "fps: %2.0f (%4.1f ms/frame)",
                                 double(frame_counter) / (current_time - last_time), 1000.0 / double(frame_counter));
                         frame_counter = 0;
                         last_time = current_time;
