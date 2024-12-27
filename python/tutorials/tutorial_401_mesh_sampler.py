@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Tutorial: Sampling a Surface Mesh into a Point Cloud
+# Tutorial: Sampling a Surface Mesh into a Point Cloud Using Easy3D
 # -----------------------------------------------------------------------------
 # This tutorial demonstrates how to:
 # 1. Use the Easy3D `SurfaceMeshSampler` class to sample points from a surface mesh.
@@ -29,7 +29,6 @@ easy3d.initialize(False)
 
 # Create a MultiViewer instance with 1 row and 2 columns.
 viewer = easy3d.MultiViewer(1, 2, "Mesh Sampling Tutorial")
-viewer.set_usage("")
 
 # -----------------------------------------------------------------------------
 # Loading the Surface Mesh
@@ -55,6 +54,11 @@ print(f"Sampled point cloud with {point_cloud.n_vertices()} points.")
 viewer.add_model(point_cloud)
 viewer.assign(0, 1, point_cloud)
 
+# Add instructions for the viewer (optional).
+viewer.set_usage(
+    "- Left: Original mesh.\n"
+    "- Right: Sampled point cloud."
+)
 # Launch the viewer.
 viewer.run()
 

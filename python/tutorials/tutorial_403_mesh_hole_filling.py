@@ -75,7 +75,7 @@ holes.set_color(easy3d.vec4(1.0, 0.0, 0.0, 1.0))  # Set hole boundary color to r
 viewer.add_model(copied_mesh)
 viewer.assign(0, 1, copied_mesh)
 
-# Add usage instructions for the viewer (optional).
+# Add instructions for the viewer (optional).
 viewer.set_usage(
     "- Left: Original mesh with holes highlighted in red.\n"
     "- Right: Modified mesh with holes filled."

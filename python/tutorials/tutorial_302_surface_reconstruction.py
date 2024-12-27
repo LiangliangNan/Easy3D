@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Tutorial: Poisson Surface Reconstruction
+# Tutorial: Poisson Surface Reconstruction Using Easy3D
 # -----------------------------------------------------------------------------
 # This tutorial demonstrates how to perform Poisson surface reconstruction
 # using the Easy3D library. The algorithm reconstructs a surface mesh from a

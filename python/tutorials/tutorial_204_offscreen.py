@@ -1,5 +1,5 @@
 # -------------------------------------------------------------------------------
-# Example: Offscreen Rendering
+# Example: Offscreen Rendering with Easy3D
 # -------------------------------------------------------------------------------
 # This script demonstrates how to render 3D models into images without using a viewer.
 # The model is rendered offscreen and saved as PNG images.

@@ -1,5 +1,5 @@
 # -------------------------------------------------------------------------------
-# Example: The Easy3D Multi-View Viewer
+# Example: The Easy3D Multi-View Viewer of Easy3D
 # -------------------------------------------------------------------------------
 # This script demonstrates how to use the Easy3D `MultiViewer` class to:
 # - Create a multi-view 3D viewer with a custom title.

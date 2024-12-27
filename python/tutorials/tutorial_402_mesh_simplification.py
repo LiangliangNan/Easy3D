@@ -68,8 +68,11 @@ viewer.assign(0, 0, mesh)  # Assign it to the left view (row=0, column=0).
 viewer.add_model(copied_mesh)
 viewer.assign(0, 1, copied_mesh)  # Assign it to the right view (row=0, column=1).
 
-# Add usage instructions for the viewer (optional).
-viewer.set_usage("")
+# Add instructions for the viewer (optional).
+viewer.set_usage(
+    "- Left: Original mesh.\n"
+    "- Right: Simplified mesh."
+)
 
 # Launch the viewer.
 viewer.run()

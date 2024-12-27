@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Tutorial: Primitive Extraction from Point Clouds
+# Tutorial: Primitive Extraction from Point Clouds Using Easy3D
 # -----------------------------------------------------------------------------
 # This tutorial demonstrates how to extract basic geometric primitives
 # (planes, cylinders, cones, spheres, and toruses) from 3D point clouds

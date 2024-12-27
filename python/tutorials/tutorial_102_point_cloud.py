@@ -1,5 +1,5 @@
 # -------------------------------------------------------------------------------
-# Example: Working with the PointCloud class
+# Example: Working with the PointCloud class in Easy3D
 # -------------------------------------------------------------------------------
 # This script demonstrates how to use the Easy3D `PointCloud` class:
 # - Initialize a `PointCloud` object with a NumPy array of points.

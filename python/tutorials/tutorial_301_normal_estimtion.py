@@ -1,5 +1,5 @@
 # -------------------------------------------------------------------------------
-# Example: Estimate Point Cloud Normals
+# Example: Estimate Point Cloud Normals Using Easy3D
 # -------------------------------------------------------------------------------
 # This script demonstrates how to estimate normals for a point cloud using Easy3D.
 # The script loads a point cloud from a file, estimates its normals, reorients

@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Tutorial: Point Cloud Downsampling
+# Tutorial: Point Cloud Downsampling Using Easy3D
 # -----------------------------------------------------------------------------
 # This tutorial demonstrates how to downsample a 3D point cloud using the Easy3D
 # library. Downsampling reduces the number of points while preserving the overall

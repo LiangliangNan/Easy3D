@@ -1,5 +1,5 @@
 # -------------------------------------------------------------------------------
-# Example: Demonstrating vec2, vec3, and vec4
+# Example: Basic data types in Easy3D
 # -------------------------------------------------------------------------------
 # This script demonstrates how to use the Easy3D vector classes:
 # - `vec2`: Represents 2D points
