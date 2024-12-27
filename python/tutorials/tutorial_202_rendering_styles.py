@@ -55,7 +55,11 @@ sphere = viewer.add_model(sphere_path)  # Add the model to the viewer.
 # Get the drawable responsible for rendering the triangles (surface) of the model.
 sphere_faces = sphere.renderer().get_triangles_drawable("faces")
 sphere_faces.set_visible(True)  # Ensure the surface is visible.
-sphere_faces.set_color(easy3d.vec4(0.8, 0.8, 0.3, 1.0))  # Set the surface color (RGBA).
+# This "/data/sphere.obj" file contains texture coordinates, and it will be rendered
+# with the default checkboard texture. You can comment the two lines below to check
+# out the textured rendering.
+sphere_faces.set_coloring_method(easy3d.State.UNIFORM_COLOR)    # Set uniform color rendering.
+sphere_faces.set_color(easy3d.vec4(0.8, 0.8, 0.3, 1.0))         # Set the surface color (RGBA).
 
 # Customize the vertex rendering:
 # Get the drawable responsible for rendering the vertices of the model.
