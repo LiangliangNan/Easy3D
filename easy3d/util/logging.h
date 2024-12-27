@@ -33,15 +33,19 @@
 
 /// To have LOG_IF_EVERY_N
 /// Example: LOG_IF_EVERY_N(5, i < 20, WARNING) << "Log if (i < 10) for every 5, i = " << i << ", " << COUNTER;
+/// @attention This 'COUNTER' macro should be placed on the same line as 'LOG_IF_EVERY_N'.
 #define LOG_IF_EVERY_N(n, condition, LEVEL)  if (condition) \
     CLOG_EVERY_N(n, LEVEL, ELPP_CURR_FILE_LOGGER_ID)
 
 /// To have LOG_IF_FIRST_N
 /// Example: LOG_IF_FIRST_N(5, i < 20, WARNING) << "Log if (i < 10) for first 5, i = " << i << ", " << COUNTER;
+/// @attention This 'COUNTER' macro should be placed on the same line as 'LOG_IF_FIRST_N'.
 #define LOG_IF_FIRST_N(n, condition, LEVEL)  if (condition) \
     CLOG_N_TIMES(n, LEVEL, ELPP_CURR_FILE_LOGGER_ID)
 
 /// For logging the counter number
+/// Example: LOG_N_TIMES(3, ERROR) << "failed creating texture" << ". " << COUNTER;
+/// @attention This 'COUNTER' macro should be placed on the same line as 'LOG_N_TIMES'.
 #define COUNTER     ELPP_COUNTER->hitCounts()
 
 

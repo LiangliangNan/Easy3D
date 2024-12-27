@@ -255,8 +255,7 @@ namespace easy3d {
         // Check #3; a face has out-of-range vertices
         for (auto v : vertices) {
             if (v.idx() < 0 || v.idx() >= static_cast<int>(mesh_->n_vertices())) {
-                LOG_N_TIMES(3, ERROR) << "face has out-of-range vertices (number of vertices is "
-                                      << mesh_->n_vertices() << "). " << COUNTER;
+                LOG_N_TIMES(3, ERROR) << "face has out-of-range vertices (number of vertices is " << mesh_->n_vertices() << "). " << COUNTER;
                 ++num_faces_out_of_range_vertices_;
                 return false;
             }

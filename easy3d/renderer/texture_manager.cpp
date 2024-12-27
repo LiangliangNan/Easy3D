@@ -50,8 +50,7 @@ namespace easy3d {
 
             Texture *texture = Texture::create(image_file, wrap, filter);
             if (!texture) {
-                LOG_N_TIMES(3, ERROR) << "failed creating texture from image file: " << image_file
-                                      << ". " << COUNTER;
+                LOG_N_TIMES(3, ERROR) << "failed to create texture from " << image_file << ". " << COUNTER;
                 attempt_load_texture_[image_file] = false;
                 return nullptr;
             }
@@ -90,8 +89,7 @@ namespace easy3d {
 
             Texture *texture = Texture::create(data, width, height, comp, wrap, filter);
             if (!texture) {
-                LOG_N_TIMES(3, ERROR) << "failed creating texture from image file: " << file_name
-                                      << ". " << COUNTER;
+                LOG_N_TIMES(3, ERROR) << "failed to create texture from " << file_name << ". " << COUNTER;
                 attempt_load_texture_[file_name] = false;
                 return nullptr;
             }

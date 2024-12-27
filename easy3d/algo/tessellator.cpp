@@ -63,9 +63,11 @@ namespace easy3d {
                 } else {
 #ifndef NDEBUG
                     if (distance2(vec3(unique_vertices_[pos->second]->data()), vec3(v.data())) > 1e-6) {
-                        LOG_N_TIMES(3, ERROR) << "bad: two distinct points have the same hash key\n"
-                                              << "\t\tpoint: " << vec3(unique_vertices_[pos->second]->data()) << " <-> "
-                                              << vec3(v.data()) << "\n" << "\t\thash key: " << key << ". " << COUNTER;
+                        std::ostringstream os;
+                        os << "bad: two distinct points have the same hash key\n"
+                           << "\t\tpoint: " << vec3(unique_vertices_[pos->second]->data()) << " <-> "
+                           << vec3(v.data()) << "\n" << "\t\thash key: " << key << ". ";
+                        LOG_N_TIMES(3, ERROR) << os.str() << COUNTER; // "COUNTER" must be on the same line as "LOG_N_TIMES"
                     }
 #endif
                     return unique_vertices_[pos->second];

@@ -160,8 +160,7 @@ namespace easy3d {
                         if (!input.fail()) {
                             vertices.emplace_back(SurfaceMesh::Vertex(index));
                         } else {
-                            LOG_N_TIMES(3, ERROR) << "failed reading the " << j << "_th vertex of the " << i
-                                                  << "_th face from file. " << COUNTER;
+                            LOG_N_TIMES(3, ERROR) << "failed to read " << j << "_th vertex of " << i << "_th face from file. " << COUNTER;
                         }
                     }
                     builder.add_face(vertices);

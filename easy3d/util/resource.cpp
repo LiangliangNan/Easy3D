@@ -44,7 +44,7 @@ namespace easy3d {
         // resource directory (containing color maps, shaders, textures, fonts, etc.)
         std::string directory() {
             // first check if the resource directory (with the Easy3D distribution) exist
-            std::string& dir = resource_dir;
+            static std::string& dir = resource_dir;
             if (file_system::is_directory(dir)) {
                 VLOG_N_TIMES(1, 1) << "resource directory: " << dir;
                 return dir;

@@ -117,8 +117,7 @@ namespace easy3d {
 
     void Drawable::update_buffers_internal() {
         if (!model_ && !update_func_) {
-            LOG_N_TIMES(3, ERROR)
-                << "do not know how to update rendering buffers: drawable not associated with a model and no update function specified. " << COUNTER;
+            LOG_N_TIMES(3, ERROR) << "drawable not associated with a model and no update function provided. " << COUNTER;
             return;
         } else if (model_ && model_->points().empty()) {
             clear();
