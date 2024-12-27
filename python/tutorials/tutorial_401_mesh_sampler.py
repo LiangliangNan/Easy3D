@@ -19,9 +19,9 @@ sys.path.append("../../cmake-build-release/lib/python")  # Update this path as n
 # Import the Easy3D library for 3D visualization and processing.
 import easy3d
 
-# Initialize the Easy3D library. The `False` parameter disables detailed logging.
-# Use `True` for more verbose output, which can be helpful for debugging.
-easy3d.initialize(False)
+# Easy3D must be initialized before use.
+# Setting `True` to enable detailed output, which is helpful for debugging.
+easy3d.initialize(True)
 
 # -----------------------------------------------------------------------------
 # Setting Up the Multi-View Viewer
