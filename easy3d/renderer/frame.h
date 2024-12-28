@@ -40,7 +40,7 @@
 #define EASY3D_RENDERER_FRAME_H
 
 #include <easy3d/core/types.h>
-#include <easy3d/core/signal.h>
+#include "easy3d/util/signal.h"
 #include <easy3d/renderer/constraint.h>
 
 

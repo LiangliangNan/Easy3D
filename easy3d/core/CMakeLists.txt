@@ -25,7 +25,6 @@ set(${module}_headers
         random.h
         rect.h
         segment.h
-        signal.h
         spline_curve_fitting.h
         spline_curve_interpolation.h
         spline_interpolation.h

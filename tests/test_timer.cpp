@@ -26,7 +26,6 @@
 
 
 #include <easy3d/util/timer.h>
-#include <easy3d/core/signal.h>
 
 #include <iostream>
 #include <string>
@@ -36,7 +35,7 @@ std::mutex mutex;
 
 using namespace easy3d;
 
-// Trivial classes (that do not make sense, but can show the use of the Signal class).
+// Trivial classes (that do not make sense but can show the use of the Timer class).
 
 class Vehicle {
 public:
@@ -134,12 +133,11 @@ void timer_func_stop(const Car *car, int hours, const std::string &msg) {
 void test_timer_for_functions(Car *car) {
     // ---- no argument
 
-    Timer<>::single_shot(33, static_cast<void (*)(void)> (timer_func_start));
-    Timer<>::single_shot(33, overload<>(timer_func_start));   // also works
+    Timer<>::single_shot(33, static_cast<void (*)(void)> (timer_func_start));   // use static_cast
+    Timer<>::single_shot(33, (void (*)(void))(timer_func_start));               // also works
 
     // ---- one argument
     Timer<Car *>::single_shot(33, static_cast<void (*)(Car *)> (timer_func_start), car);
-    Timer<Car *>::single_shot(33, overload<Car *> (timer_func_start), car);
 
 
     // ---- two argument
@@ -151,13 +149,10 @@ void test_timer_for_functions(Car *car) {
     {   // ---- no argument
         static Timer<> t;
         t.single_shot(33, static_cast<void (*)(void)> (timer_func_start));
-        t.single_shot(33, overload<>(timer_func_start));   // also works
 
         t.set_interval(33, static_cast<void (*)(void)> (timer_func_start));
-        t.set_interval(33, overload<>(timer_func_start));   // also works
 
         t.set_timeout(33, static_cast<void (*)(void)> (timer_func_start));
-        t.set_timeout(33, overload<>(timer_func_start));   // also works
 
         Timer<>::single_shot(500, &t, &Timer<>::stop);
     }
@@ -165,13 +160,10 @@ void test_timer_for_functions(Car *car) {
     {   // ---- one argument
         static Timer<Car *> t;
         t.single_shot(33, static_cast<void (*)(Car *)> (timer_func_start), car);
-        t.single_shot(33, overload<Car*> (timer_func_start), car);  // also works
 
         t.set_interval(33, static_cast<void (*)(Car *)> (timer_func_start), car);
-        t.set_interval(33, overload<Car*>  (timer_func_start), car);  // also works
 
         t.set_timeout(33, static_cast<void (*)(Car *)> (timer_func_start), car);
-        t.set_timeout(33, overload<Car*> (timer_func_start), car);  // also works
 
         Timer<>::single_shot(500, &t, &Timer<Car*>::stop);
     }

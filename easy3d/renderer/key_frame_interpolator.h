@@ -38,7 +38,7 @@
 #define EASY3D_RENDERER_KEY_FRAME_INTERPOLATOR_H
 
 #include <easy3d/core/types.h>
-#include <easy3d/core/signal.h>
+#include "easy3d/util/signal.h"
 #include <easy3d/util/timer.h>
 #include <easy3d/renderer/frame.h>
 

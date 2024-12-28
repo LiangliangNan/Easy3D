@@ -41,7 +41,7 @@
 
 
 #include <easy3d/core/types.h>
-#include <easy3d/core/signal.h>
+#include "easy3d/util/signal.h"
 #include <easy3d/renderer/frame.h>
 
 

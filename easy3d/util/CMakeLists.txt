@@ -14,6 +14,7 @@ set(${module}_headers
         progress.h
         resource.h
         setting.h
+        signal.h
         stop_watch.h
         string.h
         timer.h

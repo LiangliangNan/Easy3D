@@ -24,8 +24,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef EASY3D_CORE_SIGNAL_H
-#define EASY3D_CORE_SIGNAL_H
+#ifndef EASY3D_UTIL_SIGNAL_H
+#define EASY3D_UTIL_SIGNAL_H
 
 
 #include <functional>
@@ -320,4 +320,4 @@ namespace easy3d {
 }
 
 
-#endif // EASY3D_CORE_SIGNAL_H
+#endif // EASY3D_UTIL_SIGNAL_H
