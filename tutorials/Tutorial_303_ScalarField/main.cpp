@@ -52,26 +52,26 @@ int main(int argc, char **argv) {
     Viewer viewer(EXAMPLE_TITLE);
 
     // Load a mesh model to the viewer
-    auto mesh = dynamic_cast<SurfaceMesh *>(viewer.add_model(file_name, false));
+    auto mesh = dynamic_cast<SurfaceMesh *>(viewer.add_model(file_name));
     if (!mesh) {
         LOG(ERROR) << "failed to load model. Please make sure the file exists and format is correct.";
         return EXIT_FAILURE;
     }
 
-    // Add a TrianglesDrawable to visualize the surface.
-    auto drawable = mesh->renderer()->add_triangles_drawable("faces");
-
-    // By default, Easy3D renders the model using either a uniform color, or a per-face/vertex color given in the
-    // model file. In this tutorial, we define a scalar field on the mesh vertices: elevation (here the Z-component
-    // of each vertex). The visualization is done by mapping the scalar value to a colormap.
+    // By default, Easy3D renders the model using either a uniform color, or a per-face/vertex color
+    // if the file contains such information. In this tutorial, we define a scalar field on the mesh
+    // vertices: elevation (i.e., the Z-component of each vertex). The visualization is done by mapping
+    // the scalar value to a colormap.
     auto elevation = mesh->add_vertex_property<float>("v:elevation");
     for (auto v : mesh->vertices())
         elevation[v] = mesh->position(v).z;
 
+    // Tell the drawable to use the scalar property "v:elevation" to color the model.
+    auto drawable = mesh->renderer()->get_triangles_drawable("faces");
     drawable->set_scalar_coloring(State::VERTEX, "v:elevation", nullptr, 0.0f, 0.0f);
 
-    // A default scalar texture is automatically created.
-    // However, you can choose a more suitable one using the code below:
+//    // A default scalar texture is automatically created.
+//    // However, you can choose a more suitable one using the code below:
 //    const std::string texture_file = resource::directory() + "/colormaps/rainbow.png";
 //    Texture *texture = TextureManager::request(texture_file);
 //    if (!texture) {

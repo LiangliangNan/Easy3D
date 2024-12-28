@@ -42,22 +42,22 @@ int test_scalar_field(int duration) {
     Viewer viewer("ScalarField");
 
     // Load a mesh model to the viewer
-    SurfaceMesh *model = dynamic_cast<SurfaceMesh *>(viewer.add_model(file_name, false));
-    if (!model) {
+    auto mesh = dynamic_cast<SurfaceMesh *>(viewer.add_model(file_name));
+    if (!mesh) {
         LOG(ERROR) << "failed to load model. Please make sure the file exists and format is correct.";
         return EXIT_FAILURE;
     }
 
-    // Add a TrianglesDrawable to visualize the surface.
-    auto drawable = model->renderer()->add_triangles_drawable("faces");
+    // By default, Easy3D renders the model using either a uniform color, or a per-face/vertex color
+    // if the file contains such information. In this tutorial, we define a scalar field on the mesh
+    // vertices: elevation (i.e., the Z-component of each vertex). The visualization is done by mapping
+    // the scalar value to a colormap.
+    auto elevation = mesh->add_vertex_property<float>("v:elevation");
+    for (auto v : mesh->vertices())
+        elevation[v] = mesh->position(v).z;
 
-    // By default, Easy3D renders the model using either a uniform color, or a per-face/vertex color given in the
-    // model file. In this tutorial, we define a scalar field on the mesh vertices: elevation (here the Z-component
-    // of each vertex). The visualization is done by mapping the scalar value to a colormap.
-    auto elevation = model->add_vertex_property<float>("v:elevation");
-    for (auto v : model->vertices())
-        elevation[v] = model->position(v).z;
-
+    // Tell the drawable to use the scalar property "v:elevation" to color the model.
+    auto drawable = mesh->renderer()->get_triangles_drawable("faces");
     drawable->set_scalar_coloring(State::VERTEX, "v:elevation", nullptr, 0.0f, 0.0f);
 
     viewer.set_usage("testing scalar field...");
