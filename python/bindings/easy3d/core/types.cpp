@@ -70,4 +70,7 @@ void bind_easy3d_core_types(pybind11::module_& m)
 
     // easy3d::color::alpha(int) file:easy3d/core/types.h line:350
     m.def("alpha", (int (*)(int)) &easy3d::color::alpha, "Gets the alpha component of RGBA. [0, 255]\n\nC++: easy3d::color::alpha(int) --> int", pybind11::arg("color"));
+
+    // easy3d::next_pow2(int) file:easy3d/core/types.h line:143
+    m.def("next_pow2", (int (*)(int)) &easy3d::next_pow2, "Calculates the next larger power of 2. If the input is already a power of 2, it will return itself.\n \n\n The starting point for finding the next power of 2.\n \n\n value^2.\n Example:\n      next_pow2(50);  // returns 64\n      next_pow2(64);  // returns 64\n      next_pow2(401); // returns 512\n\nC++: easy3d::next_pow2(int) --> int", pybind11::arg("a"));
 }

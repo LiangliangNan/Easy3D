@@ -55,6 +55,7 @@ set(BINDING_SOURCES
         "bindings/easy3d/core/point_cloud.cpp"
         "bindings/easy3d/core/poly_mesh.cpp"
         "bindings/easy3d/core/property.cpp"
+        "bindings/easy3d/core/quat.cpp"
         "bindings/easy3d/core/random.cpp"
         "bindings/easy3d/core/surface_mesh.cpp"
         "bindings/easy3d/core/surface_mesh_builder.cpp"

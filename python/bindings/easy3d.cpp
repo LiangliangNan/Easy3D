@@ -15,6 +15,7 @@ void bind_easy3d_core_plane(pybind11::module_ &m);
 void bind_easy3d_core_point_cloud(pybind11::module_ &m);
 void bind_easy3d_core_poly_mesh(pybind11::module_ &m);
 void bind_easy3d_core_property(pybind11::module_ &m);
+void bind_easy3d_core_quat(pybind11::module_ &m);
 void bind_easy3d_core_random(pybind11::module_ &m);
 void bind_easy3d_core_surface_mesh(pybind11::module_ &m);
 void bind_easy3d_core_surface_mesh_builder(pybind11::module_ &m);
@@ -100,6 +101,7 @@ void bind_core(pybind11::module_ &m) {
     bind_easy3d_core_mat(m);
     bind_easy3d_core_plane(m);
     bind_easy3d_core_property(m);
+    bind_easy3d_core_quat(m);
     bind_easy3d_core_random(m);
     bind_easy3d_core_types(m);
     bind_easy3d_core_vec(m);

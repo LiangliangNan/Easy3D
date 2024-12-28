@@ -48,10 +48,10 @@ void bind_easy3d_util_logging(pybind11::module_& m)
 	// easy3d::logging::log_file() file:easy3d/util/logging.h line:82
 	m.def("log_file", (std::string (*)()) &easy3d::logging::log_file, "Returns the full path of the log file (empty if no log file has been created).\n\nC++: easy3d::logging::log_file() --> std::string");
 
-	{ // easy3d::logging::Logger file:easy3d/util/logging.h line:87
-		pybind11::class_<easy3d::logging::Logger, std::shared_ptr<easy3d::logging::Logger>, PyCallBack_easy3d_logging_Logger> cl(m, "Logger", "Base class for a logger (that can log messages to whatever)\n Users should subclass Logger and override send() to do whatever they want.\n \n");
-		cl.def( pybind11::init( [](){ return new PyCallBack_easy3d_logging_Logger(); } ) );
-		cl.def("send", (void (easy3d::logging::Logger::*)(enum el::Level, const std::string &)) &easy3d::logging::Logger::send, "writes the log message  (and may also other given information).\n\nC++: easy3d::logging::Logger::send(enum el::Level, const std::string &) --> void", pybind11::arg("level"), pybind11::arg("msg"));
-		cl.def("assign", (class easy3d::logging::Logger & (easy3d::logging::Logger::*)(const class easy3d::logging::Logger &)) &easy3d::logging::Logger::operator=, "C++: easy3d::logging::Logger::operator=(const class easy3d::logging::Logger &) --> class easy3d::logging::Logger &", pybind11::return_value_policy::automatic, pybind11::arg(""));
-	}
+//	{ // easy3d::logging::Logger file:easy3d/util/logging.h line:87
+//		pybind11::class_<easy3d::logging::Logger, std::shared_ptr<easy3d::logging::Logger>, PyCallBack_easy3d_logging_Logger> cl(m, "Logger", "Base class for a logger (that can log messages to whatever)\n Users should subclass Logger and override send() to do whatever they want.\n \n");
+//		cl.def( pybind11::init( [](){ return new PyCallBack_easy3d_logging_Logger(); } ) );
+//		cl.def("send", (void (easy3d::logging::Logger::*)(enum el::Level, const std::string &)) &easy3d::logging::Logger::send, "writes the log message  (and may also other given information).\n\nC++: easy3d::logging::Logger::send(enum el::Level, const std::string &) --> void", pybind11::arg("level"), pybind11::arg("msg"));
+//		cl.def("assign", (class easy3d::logging::Logger & (easy3d::logging::Logger::*)(const class easy3d::logging::Logger &)) &easy3d::logging::Logger::operator=, "C++: easy3d::logging::Logger::operator=(const class easy3d::logging::Logger &) --> class easy3d::logging::Logger &", pybind11::return_value_policy::automatic, pybind11::arg(""));
+//	}
 }
