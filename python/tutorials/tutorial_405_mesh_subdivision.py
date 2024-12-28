@@ -11,8 +11,8 @@
 # used for quad meshes, the Loop subdivision is ideal for triangular meshes, and
 # the Sqrt3 subdivision is another option for triangular meshes, providing smoother
 # results.
-# We will also visualize compare the input and output using Easy3D's built-in
-# visualization tools.
+# We will also visually compare the input and subdivided model using Easy3D's
+# built-in visualization tools.
 # -----------------------------------------------------------------------------
 
 # If Easy3D is not installed via `pip`, you may need to add its Python bindings
@@ -42,7 +42,7 @@ print(f"Original mesh has {input.n_vertices()} vertices and {input.n_faces()} fa
 # -----------------------------------------------------------------------------
 # Let's make a copy of the input and apply subdivision on the copied mesh.
 output = easy3d.SurfaceMesh(input)
-success = easy3d.SurfaceMeshSubdivision.loop(easy3d.SurfaceMesh(input)) # apply Loop subdivision
+success = easy3d.SurfaceMeshSubdivision.loop(output) # apply Loop subdivision
 # success = easy3d.SurfaceMeshSubdivision.catmull_clark(copied_mesh)    # apply Catmull-Clark
 # success = easy3d.SurfaceMeshSubdivision.sqrt3(copied_mesh)            # apply sqrt3
 if success:
