@@ -26,4 +26,8 @@ add_subdirectory(glutess)
 add_subdirectory(opcode)
 add_subdirectory(polypartition)
 
+if (Easy3D_BUILD_PYTHON_BINDINGS)
+    add_subdirectory(pybind11)
+endif ()
+
 

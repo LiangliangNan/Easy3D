@@ -43,8 +43,7 @@ Compared to existing geometry processing libraries (such as [PMP](http://www.pmp
 
 * A handy tool <b>Mapple</b> created out of the Easy3D library for rendering and processing 3D data.
 
-* Python bindings for Easy3D, which allow you to use Easy3D in Python scripts. The Python bindings are generated using 
-  [pybind11](https://pybind11.readthedocs.io/en/stable/index.html). **Note**: the Python bindings (and examples) are still under active development.
+* Python bindings for Easy3D, which allow you to use Easy3D in Python scripts. 
 
 |              Scalar field                |              Polyhedral mesh              |              Keyframe animation            |
 |------------------------------------------|-------------------------------------------|--------------------------------------------|
@@ -149,7 +148,7 @@ There are many options to build Easy3D. Choose one of the following (not an exha
 - Option 3: Use CMake-Gui to generate project files for your IDE. Then load the project to your IDE and build it. For Windows users: your IDE must be set for `x64`.
 
 #### Build and install Python bindings
-- Make sure you have Python and [pybind11](https://pybind11.readthedocs.io/en/stable/index.html) installed. 
+- Make sure you have Python installed. 
 Then switch on the CMake option `Easy3D_BUILD_PYTHON_BINDINGS` and run CMake. After building Easy3D, you can find the Python bindings in `YOUR_BUILD_DIRECTORY/lib/python`.
 - To install the Python bindings, you can use the following command:
     ```

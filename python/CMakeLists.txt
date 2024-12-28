@@ -3,8 +3,6 @@ project(PyEasy3D)
 
 set(CMAKE_CXX_STANDARD 11)  # If you use pybind11::overload_cast<...>, then it requires compiling in C++14 mode
 
-find_package(pybind11 REQUIRED)
-
 #file(GLOB_RECURSE BINDING_SOURCES "bindings/*.cpp")
 #string(REPLACE ";" "\n" BINDING_SOURCES_NEWLINE "${BINDING_SOURCES}")   # Replace spaces with newlines for better readability
 #message(STATUS "BINDING_SOURCES:\n${BINDING_SOURCES_NEWLINE}")          # Print each file name on a new line
