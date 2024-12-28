@@ -61,11 +61,15 @@ print(f"Processed point cloud saved to: {output_file}")
 # -------------------------------------------------------------------------------
 # Create a viewer instance to visualize the point cloud.
 viewer = easy3d.Viewer("Easy3D Viewer - Normal estimation")
-
 # Set to an empty to get rid of the lengthy usage instructions
 viewer.set_usage("")
 
 # Add the point cloud model to the viewer and run the viewer to interact with the model.
 viewer.add_model(pc)
+
+# Set the camera view direction and up vector for a better view position.
+viewer.camera().setViewDirection(easy3d.vec3(0, 0, -1))   # Set the view direction.
+viewer.camera().setUpVector(easy3d.vec3(0, 1, 0))         # Set the up vector.
+
 # Running the Viewer
 viewer.run()

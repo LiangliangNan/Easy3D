@@ -67,7 +67,7 @@ viewer.assign(0, 1, output)
 
 # This "/data/torusknot.obj" file contains texture coordinates, and by default
 # it will be rendered with the checkboard texture. To better reveal the effect
-# of subdivision, let's show the them with a uniform color and with edges on.
+# of subdivision, let's show them with a uniform color and overlay the edges.
 input.renderer().get_triangles_drawable("faces").set_coloring_method(easy3d.State.UNIFORM_COLOR)    # Set uniform color rendering.
 output.renderer().get_triangles_drawable("faces").set_coloring_method(easy3d.State.UNIFORM_COLOR)   # Set uniform color rendering.
 input.renderer().get_lines_drawable("edges").set_visible(True)    # Set edges/wireframe visible.

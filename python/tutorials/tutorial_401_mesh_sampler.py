@@ -59,13 +59,15 @@ viewer.set_usage(
     "- Left: Original mesh.\n"
     "- Right: Sampled point cloud."
 )
+
+# The bunny model included in Easy3D has a per-face scalar property, which will be rendered by
+# default. To better reveal the effect of sampling, let's show the bunny with a uniform color.
+surface = mesh.renderer().get_triangles_drawable("faces")
+surface.set_coloring_method(easy3d.State.UNIFORM_COLOR)  # Set uniform color rendering.
+
+# Set the camera view direction and up vector for a better view position.
+viewer.camera().setViewDirection(easy3d.vec3(0, 1, 0))   # Set the view direction.
+viewer.camera().setUpVector(easy3d.vec3(0, 0, 1))        # Set the up vector.
+
 # Launch the viewer.
 viewer.run()
-
-# -----------------------------------------------------------------------------
-# Notes:
-# 1. The left view shows the original Bunny surface mesh.
-# 2. The right view shows the sampled point cloud with a near-uniform point
-#    distribution.
-# 3. Modify the `num_points` variable to experiment with different sampling densities.
-# -----------------------------------------------------------------------------

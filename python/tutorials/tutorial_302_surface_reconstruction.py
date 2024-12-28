@@ -110,9 +110,11 @@ viewer.set_usage("")  # Optional: Set an empty usage description for a clean UI
 # Add the reconstructed mesh to the viewer
 viewer.add_model(surface_mesh)  # Add surface mesh to viewer
 
-# -----------------------------------------------------------------------------
+# The reconstructed model also has a scalar field, which will be rendered by default.
+# In this example, we are interested in the reconstructed geometry. Thus, we render
+# the surface mesh with a uniform color.
+surface = surface_mesh.renderer().get_triangles_drawable("faces")
+surface.set_coloring_method(easy3d.State.UNIFORM_COLOR)    # Set uniform color rendering.
+
 # Running the Viewer
-# -----------------------------------------------------------------------------
-# Finally, we run the viewer to display the reconstructed surface mesh
-# in an interactive window.
-viewer.run()  # Start the viewer and display the mesh
+viewer.run()
