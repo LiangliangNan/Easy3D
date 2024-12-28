@@ -105,13 +105,14 @@ public:
         count = 0;
     }
 
-    struct CompareT : public std::binary_function<T,T,bool>
-    {
-        bool operator()(const T& t_1, const T& t_2) const
-        {
-            return t_2 < t_1;
-        }
-    };
+    std::function<bool(T, T)> compare_func = [](const T& t_1, const T& t_2) { return t_2 < t_1; };
+//    struct CompareT : public std::function<T,T,bool>
+//    {
+//        bool operator()(const T& t_1, const T& t_2) const
+//        {
+//            return t_2 < t_1;
+//        }
+//    };
 
     /**
      * Insert a new element in the heap.
@@ -130,8 +131,8 @@ public:
         }
 
         heap.push_back(value);
-        static CompareT compareT;
-        std::push_heap(heap.begin(), heap.end(), compareT);
+//        static CompareT compare_func;
+        std::push_heap(heap.begin(), heap.end(), compare_func);
         ++count;
     }
 
@@ -151,8 +152,8 @@ public:
         }
 
         value = heap[0];
-        static CompareT compareT;
-        std::pop_heap(heap.begin(), heap.end(), compareT);
+//        static CompareT compare_func;
+        std::pop_heap(heap.begin(), heap.end(), compare_func);
         heap.pop_back();
         --count;
 
