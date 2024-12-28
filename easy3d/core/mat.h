@@ -1676,6 +1676,13 @@ namespace easy3d {
          */
         explicit Mat3(const Mat<2, 2, T> &rhs);
 
+        /**
+         * Construct a 3D rotation matrix from a quaternion.
+         * \param q a unit quaternion representing a rotation.
+         * \see rotation() and Quat.
+         */
+        explicit Mat3(const Quat<T> &q);
+
         /** \brief the upper-left 2x2 sub-matrix. */
         Mat2<T> sub() const;
 
@@ -1811,6 +1818,20 @@ namespace easy3d {
         (*this)(0, 0) = rhs(0, 1);	(*this)(0, 0) = rhs(0, 1);	(*this)(0, 2) = T(0);
         (*this)(1, 0) = rhs(1, 1);	(*this)(1, 0) = rhs(1, 1);	(*this)(1, 2) = T(0);
         (*this)(2, 0) = T(0);		(*this)(2, 0) = T(0);		(*this)(2, 2) = T(1);
+    }
+
+    /*----------------------------------------------------------------------------*/
+    template <typename T>
+    inline Mat3<T>::Mat3(const Quat<T> &q) {
+        // input must be unit quaternion
+        assert(std::abs(q.length() - 1) < epsilon<T>());
+        const T x = q.x;
+        const T y = q.y;
+        const T z = q.z;
+        const T w = q.w;
+        (*this)(0, 0) = 1.0 - 2.0 * (y*y + z*z); (*this)(0, 1) = 2.0 * (x*y - w*z);       (*this)(0, 2) = 2.0 * (x*z + w*y);
+        (*this)(1, 0) = 2.0 * (x*y + w*z);       (*this)(1, 1) = 1.0 - 2.0 * (x*x + z*z); (*this)(1, 2) = 2.0 * (y*z - w*x);
+        (*this)(2, 0) = 2.0 * (x*z - w*y);       (*this)(2, 1) = 2.0 * (y*z + w*x);       (*this)(2, 2) = 1.0 - 2.0 * (x*x + y*y);
     }
 
     /*----------------------------------------------------------------------------*/
@@ -1984,10 +2005,13 @@ namespace easy3d {
          */
         explicit Mat4(const Mat<3, 3, T> &rhs);
 
-        /**	\brief Initialize from scale/rotation/translation. */
+        /**
+         * \brief Initialize from scale/rotation/translation.
+         * The the order of the transformations is scale, rotation, translation.
+         */
         Mat4(const Vec<3, T> &s, const Quat<T> &r, const Vec<3, T> &t);
 
-        // the upper-left 3x3 sub-matrix,
+        /** \brief Return the upper-left 3x3 sub-matrix. */
         Mat3<T> sub() const;
 
         /**
