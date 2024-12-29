@@ -38,10 +38,10 @@ viewer = easy3d.Viewer("Easy3D Viewer")
 # -------------------------------------------------------------------------------
 # Loading and Adding a 3D Mesh Model
 # -------------------------------------------------------------------------------
-# Load a 3D mesh file (e.g., Stanford Bunny in .ply format).
+# Load a 3D mesh file (e.g., a hemisphere in .ply format).
 # The `easy3d.directory()` function retrieves the root directory of Easy3D's
 # resources. The model is located in the `data` subdirectory.
-mesh_file = easy3d.directory() + "/data/bunny.ply"
+mesh_file = easy3d.directory() + "/data/hemisphere.ply"
 
 # Add the mesh model to the viewer.
 # This can be done directly using the file path, as shown below:
