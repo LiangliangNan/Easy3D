@@ -121,11 +121,14 @@ if (Easy3D_HAS_FFMPEG)
 endif ()
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE PYBIND11_SIMPLE_GIL_SAFE_ABI) # to use the Python Stable ABI
-# By default, the output .so will include the Python version. Use a CMake command to rename it to a version-independent name
-set_target_properties(${PROJECT_NAME} PROPERTIES
-        SUFFIX ".so"
-        FOLDER "python"
-        )
+
+# Platform-specific suffix for Python extensions
+if (WIN32)
+    set(SUFFIX ".pyd")
+else()
+    set(SUFFIX ".so")
+endif()
+set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ${SUFFIX} FOLDER "python")
 
 
 # The following commands are actually not necessary for generating bindings.
@@ -149,10 +152,10 @@ file(WRITE ${PYTHON_PACKAGE_DIR}/__init__.py
 # Path to the compiled PyEasy3D module
 set(COMPILED_MODULE "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${PROJECT_NAME}.so")
 
-# Copy the compiled PyEasy3D module to the Python package directory
+# Post-build command to copy compiled PyEasy3D module to the Python package directory
 add_custom_command(
-        TARGET PyEasy3D POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy ${COMPILED_MODULE} ${PYTHON_PACKAGE_DIR}/
+        TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> ${PYTHON_PACKAGE_DIR}/
         COMMENT "Copying PyEasy3D module to Python package"
 )
 
