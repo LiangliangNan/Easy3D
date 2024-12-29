@@ -110,7 +110,10 @@ for i, plane in enumerate(planes):
     print(f"  Index: {plane.primitive_index}")
     print(f"  Position: {plane.position}")
     print(f"  Normal: {plane.normal}")
-    print(f"  Vertices: {plane.vertices}")  # e.g., [5788, 5801, 5777, 5796, ... ]
+
+    # Print up to 20 vertex indices (for demonstration purposes)
+    vertex_count = len(plane.vertices)
+    print(f"  Vertices ({min(vertex_count, 20)} out of {vertex_count} shown): {plane.vertices[:20]}")  # e.g., [5788, 5801, 5777, 5796, ... ]
 
 # -----------------------------------------------------------------------------
 # Optional: Detecting Cylinders
@@ -128,3 +131,6 @@ for i, plane in enumerate(planes):
 #     print(f"  Position: {cylinder.position}")
 #     print(f"  Direction: {cylinder.direction}")
 #     print(f"  Radius: {cylinder.radius}")
+#     # Print up to 20 vertex indices (for demonstration purposes)
+#     vertex_count = len(cylinder.vertices)
+#     print(f"  Vertices ({min(vertex_count, 20)} out of {vertex_count} shown): {cylinder.vertices[:20]}")  # e.g., [5788, 5801, 5777, 5796, ... ]

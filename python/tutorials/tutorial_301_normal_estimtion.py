@@ -36,40 +36,51 @@ file_name = easy3d.directory() + "/data/bunny.bin"
 print(f"Input file name: {file_name}")
 
 # Load the point cloud from the specified file.
-pc = easy3d.PointCloudIO.load(file_name)
+point_cloud = easy3d.PointCloudIO.load(file_name)
 
 # -------------------------------------------------------------------------------
 # Estimating Point Cloud Normals
 # -------------------------------------------------------------------------------
-# Estimate normals for the point cloud. The `16` parameter specifies the
-# number of neighbors to use for normal estimation.
-easy3d.PointCloudNormals.estimate(pc, 16)
+# Since we want to visualize both input and resulted point clouds, let's make a
+# copy of the input point cloud. The algorithm will be applied to the copy one.
+copied_point_cloud = easy3d.PointCloud(point_cloud)  # Create a copy
+easy3d.PointCloudNormals.estimate(copied_point_cloud, 16)
 
 # Reorient the normals to ensure consistency.
-easy3d.PointCloudNormals.reorient(pc, 16)
+easy3d.PointCloudNormals.reorient(copied_point_cloud, 16)
 
 # -------------------------------------------------------------------------------
 # Saving the Processed Point Cloud
 # -------------------------------------------------------------------------------
 # Save the point cloud with estimated normals to a new file in .ply format.
 output_file = file_name + "-result.ply"
-easy3d.PointCloudIO.save(output_file, pc)
+easy3d.PointCloudIO.save(output_file, copied_point_cloud)
 print(f"Processed point cloud saved to: {output_file}")
 
 # -------------------------------------------------------------------------------
-# Visualizing the Point Cloud
+# Visualizing the input and the resulted point clouds side-by-side
 # -------------------------------------------------------------------------------
-# Create a viewer instance to visualize the point cloud.
-viewer = easy3d.Viewer("Easy3D Viewer - Normal estimation")
-# Set to an empty to get rid of the lengthy usage instructions
-viewer.set_usage("")
 
-# Add the point cloud model to the viewer and run the viewer to interact with the model.
-viewer.add_model(pc)
+# Create a MultiViewer instance with 1 row and 2 columns.
+viewer = easy3d.MultiViewer(1, 2, "Easy3D Viewer - Normal estimation")
 
-# Set the camera view direction and up vector for a better view position.
+# Add the input point cloud to the viewer and assign it to the left view (row=0, column=0).
+viewer.add_model(point_cloud)
+viewer.assign(0, 0, point_cloud)
+
+# Add the resulted point cloud to the viewer and assign it to the right view (row=0, column=1).
+viewer.add_model(copied_point_cloud)
+viewer.assign(0, 1, copied_point_cloud)
+
+# Add instructions for the viewer (optional).
+viewer.set_usage(
+    "- Left: Original point cloud.\n"
+    "- Right: Resulted point cloud with normal information."
+)
+
+# # Set the camera view direction and up vector for a better view position.
 viewer.camera().setViewDirection(easy3d.vec3(0, 0, -1))   # Set the view direction.
 viewer.camera().setUpVector(easy3d.vec3(0, 1, 0))         # Set the up vector.
 
-# Running the Viewer
+# Launch the viewer.
 viewer.run()

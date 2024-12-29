@@ -9,6 +9,8 @@
 # 1. Load a point cloud from a file.
 # 2. Apply different downsampling techniques, including grid and uniform
 #    simplifications, and measure their effects on the point cloud size.
+# 3. Visualize the original point cloud and the sampled point cloud side-by-side
+#    using Easy3D's `MultiViewer`.
 # -----------------------------------------------------------------------------
 
 # If you built Easy3D locally, you'll need to add its Python bindings to the
@@ -30,8 +32,8 @@ easy3d.initialize(True)
 # Easy3D supports various file formats for point clouds (e.g., .bin, .xyz).
 # Here, we load a sample file provided by Easy3D. Replace the path with your
 # own file if needed.
-pointcloud_file = easy3d.directory() + "/data/polyhedron.bin"  # Update as needed
-point_cloud = easy3d.PointCloudIO.load(pointcloud_file)  # Load the point cloud
+file = easy3d.directory() + "/data/polyhedron.bin"  # Update as needed
+point_cloud = easy3d.PointCloudIO.load(file)  # Load the point cloud
 print(f"Loaded point cloud with {point_cloud.n_vertices()} points.")  # Print the initial point count
 
 # -----------------------------------------------------------------------------
@@ -57,7 +59,7 @@ uniform_indices_by_epsilon = easy3d.PointCloudSimplification.uniform_simplificat
 print(f"Uniform simplification (distance threshold): {len(uniform_indices_by_epsilon)} points will be removed.")
 
 # Option 2: Specify the desired number of points in the final point cloud (`num`).
-target_point_count = 50000
+target_point_count = 10000
 uniform_indices_by_number = easy3d.PointCloudSimplification.uniform_simplification(point_cloud, num=target_point_count)
 print(f"Uniform simplification (target point count): {len(uniform_indices_by_number)} points will be removed.")
 
@@ -66,10 +68,36 @@ print(f"Uniform simplification (target point count): {len(uniform_indices_by_num
 # -----------------------------------------------------------------------------
 # The indices returned by simplification methods indicate the points to be removed.
 # We use `delete_points()` to apply the simplifications to the point cloud.
-point_cloud.delete_points(uniform_indices_by_number)
-print(f"Final point cloud size after simplification: {point_cloud.n_vertices()} points.")
+# Since we want to visualize both the input and the downsampled point clouds, let's
+# make a copy of the original point cloud.
+copied_point_cloud = easy3d.PointCloud(point_cloud)  # Create a copy for simplification.
+copied_point_cloud.delete_points(uniform_indices_by_number)
+print(f"Final point cloud size after simplification: {copied_point_cloud.n_vertices()} points.")
 
-# Optional: Save the result to a file if needed (or visualize using the Easy3D viewer).
+# Optional: Save the result to a file if needed
 # output_file = "downsampled_point_cloud.ply"  # Specify the output file name
-# easy3d.PointCloudIO.save(output_file, point_cloud)
+# easy3d.PointCloudIO.save(output_file, copied_point_cloud)
 # print(f"Downsampled point cloud saved to {output_file}")
+
+# -----------------------------------------------------------------------------
+# Visualize the input and downsampled point cloud side-by-side
+# -----------------------------------------------------------------------------
+# Create a MultiViewer instance with 1 row and 2 columns.
+viewer = easy3d.MultiViewer(1, 2, "Easy3D Viewer - Point Cloud Downsampling")
+
+# Add the input to the viewer and assign it to the left view (row=0, column=0).
+mesh = viewer.add_model(point_cloud)
+viewer.assign(0, 0, mesh)
+
+# Add the downsampled one to the viewer and assign it to the right view (row=0, column=1).
+viewer.add_model(copied_point_cloud)
+viewer.assign(0, 1, copied_point_cloud)
+
+# Add instructions for the viewer (optional).
+viewer.set_usage(
+    "- Left: Original point cloud.\n"
+    "- Right: Downsampled point cloud."
+)
+
+# Launch the viewer.
+viewer.run()
