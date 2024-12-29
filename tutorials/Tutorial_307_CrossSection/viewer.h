@@ -35,14 +35,10 @@ namespace easy3d {
 	{
 	public:
         explicit CrossSection(const std::string& title);
-        ~CrossSection() override;
 
 	protected:
-		// manipulate the crosssection plane
+		// manipulate the clipping plane
 		bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;
-
-        // draw the clipping plane
-		void post_draw() override;
 	};
 
 }

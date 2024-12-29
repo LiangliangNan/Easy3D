@@ -40,25 +40,15 @@ namespace easy3d {
             "------------ CrossSection usage ---------- \n"
             "Left button:  rotate the clipping plane    \n"
             "Right button: translate the clipping plane \n"
+            "Alt + 'c':    enable/disable clipping plan \n"
+            "Alt + 'v':    show/hide clipping plane     \n"
             "-------------------------------------------\n";
     }
 
-    CrossSection::~CrossSection() {
-        ClippingPlane::instance()->set_enabled(false);
-    }
-
-
-    void CrossSection::post_draw() {
-        // Code of interest:
-        ClippingPlane::instance()->draw(camera());
-
-        Viewer::post_draw();
-	}
-
 
     bool CrossSection::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
+        // Code of interest:
         ManipulatedFrame* frame = ClippingPlane::instance()->manipulator()->frame();
-
         if (pressed_button_ == BUTTON_LEFT)
             frame->action_rotate(x, y, dx, dy, camera(), ManipulatedFrame::NONE);
         else if (pressed_button_ == BUTTON_RIGHT)

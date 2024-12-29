@@ -33,25 +33,12 @@
 namespace easy3d {
 
     CrossSection::CrossSection(const std::string &title) : Viewer(title) {
-        // Code of interest:
         ClippingPlane::instance()->set_enabled(true);
     }
 
-    CrossSection::~CrossSection() {
-        // Disable it (otherwise it affects the visualization in subsequent tests)
-        ClippingPlane::instance()->set_enabled(false);
-    }
-
-    void CrossSection::post_draw() {
-        // Code of interest:
-        ClippingPlane::instance()->draw(camera());
-
-        Viewer::post_draw();
-    }
 
     bool CrossSection::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
         ManipulatedFrame* frame = ClippingPlane::instance()->manipulator()->frame();
-
         if (pressed_button_ == BUTTON_LEFT)
             frame->action_rotate(x, y, dx, dy, camera(), ManipulatedFrame::NONE);
         else if (pressed_button_ == BUTTON_RIGHT)

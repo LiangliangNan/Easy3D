@@ -52,6 +52,7 @@
 #include <easy3d/renderer/opengl_error.h>
 #include <easy3d/renderer/text_renderer.h>
 #include <easy3d/renderer/texture_manager.h>
+#include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
 #include <easy3d/fileio/surface_mesh_io.h>
@@ -165,6 +166,8 @@ namespace easy3d {
                 "  Ctrl + Up/Down:      Move camera up/down                         \n"
                 "  Ctrl + 'c':          Copy current view status to clipboard       \n"
                 "  Ctrl + 'v':          Restore view status from clipboard          \n"
+                "  Alt + 'c':           Toggle clipping plane                       \n"
+                "  Alt + 'v':           Toggle clipping plane visibility            \n"
                 "  Alt + 'k':           Add key frame to the camera path            \n"
                 "  Alt + 'd':           Delete the camera path                      \n"
                 "  Ctrl + 'k':          Play the camera path                        \n"
@@ -547,6 +550,10 @@ namespace easy3d {
 
     Viewer::~Viewer() {
         cleanup();
+
+        // necessary to not affect the subsequent examples (a program may have multiple viewers)
+        ClippingPlane::instance()->set_enabled(false);
+
         LOG(INFO) << "viewer terminated. Bye!";
     }
 
@@ -687,7 +694,17 @@ namespace easy3d {
 
     bool Viewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
         // control modifier is reserved for zooming on region
-        if (modifiers != MODIF_CTRL) {
+        if (modifiers == MODIF_CTRL)
+            return false;
+
+        if (modifiers == MODIF_ALT) {
+            ManipulatedFrame* frame = ClippingPlane::instance()->manipulator()->frame();
+            if (pressed_button_ == BUTTON_LEFT)
+                frame->action_rotate(x, y, dx, dy, camera(), ManipulatedFrame::NONE);
+            else if (pressed_button_ == BUTTON_RIGHT)
+                frame->action_translate(x, y, dx, dy, camera(), ManipulatedFrame::NONE);
+        }
+        else { // axis-constrained rotation of a model
             auto axis = ManipulatedFrame::NONE;
             if (pressed_key_ == GLFW_KEY_X) axis = ManipulatedFrame::HORIZONTAL;
             else if (pressed_key_ == GLFW_KEY_Y) axis = ManipulatedFrame::VERTICAL;
@@ -786,6 +803,12 @@ namespace easy3d {
             copy_view();
         } else if (key == GLFW_KEY_V && modifiers == MODIF_CTRL) {    // copy camera
             paste_view();
+        } else if (key == GLFW_KEY_C && modifiers == MODIF_ALT) {     // toggle clipping plane
+            ClippingPlane::instance()->set_enabled(!ClippingPlane::instance()->is_enabled());
+            ClippingPlane::instance()->fit_scene(camera()->sceneCenter(), camera()->sceneRadius());
+        } else if (key == GLFW_KEY_V && modifiers == MODIF_ALT) {     // toggle clipping plane visibility
+            if (ClippingPlane::instance()->is_enabled())
+                ClippingPlane::instance()->set_visible(!ClippingPlane::instance()->is_visible());
         }
         else if (key == GLFW_KEY_A && modifiers == 0) {
             if (drawable_axes_)
@@ -1353,6 +1376,7 @@ namespace easy3d {
         if (box.is_valid()) {
             camera_->setSceneBoundingBox(box.min_point(), box.max_point());
             camera_->showEntireScene();
+            ClippingPlane::instance()->fit_scene(camera()->sceneCenter(), camera()->sceneRadius());
             update();
         }
     }
@@ -1547,6 +1571,9 @@ namespace easy3d {
 
 
     void Viewer::post_draw() {
+
+        ClippingPlane::instance()->draw(camera());
+
         if (texter_ && texter_->num_fonts() >=2) {
             const float font_size = 15.0f;
             const float offset = 20.0f * dpi_scaling();
