@@ -2,9 +2,9 @@ import os
 import subprocess
 
 def run_tests(directory):
-    # Get all .py files in the directory, sort them alphabetically, and skip 'template.py.in'
+    # Get all .py files in the directory, sort them alphabetically, and skip 'tutorial_template.py'
     test_files = sorted(
-        f for f in os.listdir(directory) if f.endswith(".py") and f != "template.py"
+        f for f in os.listdir(directory) if f.endswith(".py") and f != "tutorial_template.py"
     )
 
     # Run each test file

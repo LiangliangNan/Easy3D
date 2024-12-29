@@ -1,7 +1,7 @@
 It took me some time to figure out the issues like 
 	"ImportError: generic_type: type "VertexProperty_easy3d_PolyMesh_VertexConnectivity_t" referenced unknown base type "easy3d::Property<easy3d::PolyMesh::VertexConnectivity>"
 
-It seems in the bindings code, the order of the definition of the types matters. The solution is quite straight.
+It seems in the bindings code, the order of the definition of the types matters. The solution is quite straight forward.
 You will see 
 	struct PyCallBack_easy3d_Property_easy3d_PolyMesh_VertexConnectivity_t : public easy3d::Property<easy3d::PolyMesh::VertexConnectivity> { ... }
 and 
@@ -12,22 +12,16 @@ Just put the definition of
 before
  	"VertexProperty_easy3d_PolyMesh_VertexConnectivity_t"
 
+The error occurs because pybind11 requires that a base class (easy3d::Model) is registered before a derived class (easy3d::Graph).
+If the derived class is registered before the base class, it results in the "unknown base type" error.
 
-The error occurs because pybind11 requires that a base class (easy3d::Model) is registered before a derived class (easy3d::Graph). If the derived class is registered before the base class, it results in the "unknown base type" error.
-
-
-
-
-
-Viewers' add_model(): pybind11::return_value_policy::automatic
-ToDo: use std::sharted_ptr
 
 
 
 
 Issues with C++ reference as argument.
-In C++, your function signature modifies the squared_distance argument directly because it is passed by reference (float &). However, Python doesn’t have the concept of pass-by-reference in the same way. In Pybind11, you must explicitly wrap such arguments to achieve the desired behavior.
-
+In C++, your function signature modifies the squared_distance argument directly because it is passed by reference (float &).
+However, Python doesn’t have the concept of pass-by-reference in the same way. In Pybind11, you must explicitly wrap such arguments to achieve the desired behavior.
 
         cl.def("find_closest_point",
                [](const easy3d::KdTreeSearch_ANN &self, const easy3d::vec3 &p) {
@@ -45,7 +39,6 @@ In C++, your function signature modifies the squared_distance argument directly 
                "Queries the closest point for a given point (returns squared distance as well)",
                pybind11::arg("p"));
 
-     
 Instead of exposing the original find_closest_point directly, a lambda function is used as a wrapper. Inside this wrapper:
 A temporary variable squared_distance is created to store the output.
 The original find_closest_point function is called, modifying squared_distance.
