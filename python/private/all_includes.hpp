@@ -39,7 +39,6 @@
 //#include <easy3d/core/constant.h>
 //#include <easy3d/core/curve.h>
 //#include <easy3d/core/eigen_solver.h>
-//#include <easy3d/core/export.h>
 //#include <easy3d/core/graph.h>
 //#include <easy3d/core/hash.h>
 //#include <easy3d/core/heap.h>
@@ -126,7 +125,6 @@
 //#include <easy3d/renderer/vertex_array_object.h>
 //#include <easy3d/util/console_style.h>
 //#include <easy3d/util/dialog.h>
-//#include <easy3d/util/export.h>
 //#include <easy3d/util/file_system.h>
 //#include <easy3d/util/initializer.h>
 //#include <easy3d/util/line_stream.h>

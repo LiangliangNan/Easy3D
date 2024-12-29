@@ -50,10 +50,10 @@ namespace easy3d {
 
         /// The vertices of a bunny model.
         /// \see bunny_indices
-        extern const EASY3D_UTIL_EXPORT std::vector<vec3>           bunny_vertices;
+        extern EASY3D_UTIL_EXPORT const std::vector<vec3>           bunny_vertices;
         /// The triangle faces of a bunny model. Each consecutive 3 values denote the vertex indices of a triangle.
         /// \see bunny_vertices
-        extern const EASY3D_UTIL_EXPORT std::vector<unsigned int>   bunny_indices;
+        extern EASY3D_UTIL_EXPORT const std::vector<unsigned int>   bunny_indices;
 
     } // namespace resource
 

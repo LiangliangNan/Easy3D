@@ -27,7 +27,6 @@
 #include <easy3d/core/quat.h>
 #include <easy3d/core/polygon.h>
 #include <easy3d/core/constant.h>
-#include <easy3d/core/export.h>
 
 /**
  * Gathers different basic types for geometric operations.

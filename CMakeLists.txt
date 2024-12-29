@@ -15,7 +15,7 @@ option(Easy3D_BUILD_DOCUMENTATION "Build Easy3D documentation"  OFF)
 # Build tests
 option(Easy3D_BUILD_TESTS "Build Easy3D tests programs"         OFF)
 # Build Python bindings
-option(Easy3D_BUILD_PYTHON_BINDINGS "Build Python bindings"     ON)
+option(Easy3D_BUILD_PYTHON_BINDINGS "Build Python bindings"     OFF)
 # Build advanced features that require CGAL (>= v5.1)
 option(Easy3D_ENABLE_CGAL "Build advanced features that require CGAL (>= v5.1)"              OFF)
 # Build examples/applications based on Qt (Qt5 >= v5.6, or Qt6)

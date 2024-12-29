@@ -15,10 +15,10 @@
 #include <cassert>
 
 #include <easy3d/algo/delaunay.h>
+#include <easy3d/algo/export.h>
 
 
 class tetgenio;
-
 
 namespace easy3d {
 
@@ -145,8 +145,8 @@ namespace easy3d {
         }
 
     protected:
-        static unsigned int next_around_halfedge_[4][4];
-        static unsigned int facet_vertex_[4][3];
+        static EASY3D_ALGO_EXPORT unsigned int next_around_halfedge_[4][4];
+        static EASY3D_ALGO_EXPORT unsigned int facet_vertex_[4][3];
 
     protected:
         tetgenio *tetgen_out_;
