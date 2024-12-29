@@ -129,7 +129,7 @@ namespace easy3d {
     }
 
 
-    void ClippingPlane::draw(Camera *cam) const {
+    void ClippingPlane::draw(const Camera *cam) const {
         if (!enabled_ || !visible_)
             return;
 

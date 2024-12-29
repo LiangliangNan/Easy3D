@@ -100,7 +100,7 @@ namespace easy3d {
         void set_discard_primitives(ShaderProgram *program, bool plane_clipping_discard) const;
 
         /// draws the clipping plane itself.
-        void draw(Camera* cam) const;
+        void draw(const Camera* cam) const;
 
         /// returns the manipulator attached to the clipping plane.
         virtual Manipulator *manipulator() { return manipulator_; }
