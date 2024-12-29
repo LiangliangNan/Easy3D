@@ -698,11 +698,14 @@ namespace easy3d {
             return false;
 
         if (modifiers == MODIF_ALT) {
-            ManipulatedFrame* frame = ClippingPlane::instance()->manipulator()->frame();
-            if (pressed_button_ == BUTTON_LEFT)
-                frame->action_rotate(x, y, dx, dy, camera(), ManipulatedFrame::NONE);
-            else if (pressed_button_ == BUTTON_RIGHT)
-                frame->action_translate(x, y, dx, dy, camera(), ManipulatedFrame::NONE);
+            // the clipping plane can be manipulated only when it is enabled
+            if (ClippingPlane::instance()->is_enabled()) {
+                ManipulatedFrame *frame = ClippingPlane::instance()->manipulator()->frame();
+                if (pressed_button_ == BUTTON_LEFT)
+                    frame->action_rotate(x, y, dx, dy, camera(), ManipulatedFrame::NONE);
+                else if (pressed_button_ == BUTTON_RIGHT)
+                    frame->action_translate(x, y, dx, dy, camera(), ManipulatedFrame::NONE);
+            }
         }
         else { // axis-constrained rotation of a model
             auto axis = ManipulatedFrame::NONE;
