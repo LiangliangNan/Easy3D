@@ -1,7 +1,5 @@
 ##############################################################################
 # GitHub Actions Workflow for building Easy3D on Windows, Ubuntu, and macOS
-# Copyright (C) 2022 Liangliang Nan <liangliang.nan@gmail.com>
-# Licensed under GNU LGPL-v3 (see the LICENCE file)
 ##############################################################################
 name: Test Build Easy3D
 
@@ -21,43 +19,52 @@ jobs:
       # Checkout the code
       - uses: actions/checkout@v3
 
-      # Set up dependencies for each platform
+      # Install dependencies for each platform
       - name: Install Dependencies (Ubuntu)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update || true
-          sudo apt-get install -y cmake ninja-build libgl1-mesa-dev mesa-common-dev \
-              libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+          sudo apt-get install -y cmake build-essential libgl1-mesa-dev \
+              mesa-common-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
 
       - name: Install Dependencies (macOS)
         if: runner.os == 'macOS'
         run: |
           brew update || true
-          brew install cmake ninja
+          brew install cmake
 
       - name: Install Dependencies (Windows)
         if: runner.os == 'Windows'
         run: |
           choco install cmake --installargs '"ADD_CMAKE_TO_PATH=System"'
-          choco install ninja
 
       # Configure the project
-      - name: Configure
+      - name: Configure (Linux & macOS)
+        if: runner.os != 'Windows'
         run: |
           cmake -S . -B build/${{ matrix.build_type }} \
-                -G Ninja \
+                -G "Unix Makefiles" \
                 -DEasy3D_BUILD_PYTHON_BINDINGS=ON \
                 -DEasy3D_BUILD_TUTORIALS=ON \
                 -DEasy3D_BUILD_TESTS=ON
 
+      - name: Configure (Windows)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          cmake -S . -B build\${{ matrix.build_type }} ^
+                -G "Visual Studio 17 2022" ^
+                -A x64 ^
+                -DEasy3D_BUILD_PYTHON_BINDINGS=ON ^
+                -DEasy3D_BUILD_TUTORIALS=ON ^
+                -DEasy3D_BUILD_TESTS=ON
+
       # Build the project
-      - name: Build
+      - name: Build (Linux & macOS)
+        if: runner.os != 'Windows'
         run: cmake --build build/${{ matrix.build_type }}
 
-      # Print environment and debug info
-      - name: Print Debug Info
-        run: |
-          echo "Platform: ${{ matrix.platform }}"
-          echo "Build Type: ${{ matrix.build_type }}"
-          cmake --version
-          ninja --version
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: cmake --build build\${{ matrix.build_type }} --config ${{ matrix.build_type }}
