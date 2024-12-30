@@ -1,4 +1,4 @@
-#include <easy3d/core/poly_mesh.h>
+﻿#include <easy3d/core/poly_mesh.h>
 #include <easy3d/core/property.h>
 #include <easy3d/core/vec.h>
 #include <easy3d/renderer/renderer.h>
@@ -26,7 +26,7 @@
 struct PyCallBack_easy3d_Property_easy3d_PolyMesh_HalfFaceConnectivity_t : public easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity> {
     using easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::Property;
 
-    struct easy3d::PolyMesh::HalfFaceConnectivity & operator[](unsigned long a0) override {
+    struct easy3d::PolyMesh::HalfFaceConnectivity & operator[](size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity> *>(this), "__getitem__");
         if (overload) {
@@ -45,7 +45,7 @@ struct PyCallBack_easy3d_Property_easy3d_PolyMesh_HalfFaceConnectivity_t : publi
 struct PyCallBack_easy3d_Property_easy3d_PolyMesh_CellConnectivity_t : public easy3d::Property<easy3d::PolyMesh::CellConnectivity> {
     using easy3d::Property<easy3d::PolyMesh::CellConnectivity>::Property;
 
-    struct easy3d::PolyMesh::CellConnectivity & operator[](unsigned long a0) override {
+    struct easy3d::PolyMesh::CellConnectivity & operator[](size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::Property<easy3d::PolyMesh::CellConnectivity> *>(this), "__getitem__");
         if (overload) {
@@ -98,7 +98,7 @@ struct PyCallBack_easy3d_PolyMesh : public easy3d::PolyMesh {
 struct PyCallBack_easy3d_PolyMesh_VertexProperty_easy3d_PolyMesh_VertexConnectivity_t : public easy3d::PolyMesh::VertexProperty<easy3d::PolyMesh::VertexConnectivity> {
 	using easy3d::PolyMesh::VertexProperty<easy3d::PolyMesh::VertexConnectivity>::VertexProperty;
 
-	struct easy3d::PolyMesh::VertexConnectivity & operator[](unsigned long a0) override {
+	struct easy3d::PolyMesh::VertexConnectivity & operator[](size_t a0) override {
 		pybind11::gil_scoped_acquire gil;
 		pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PolyMesh::VertexProperty<easy3d::PolyMesh::VertexConnectivity> *>(this), "__getitem__");
 		if (overload) {
@@ -118,7 +118,7 @@ struct PyCallBack_easy3d_PolyMesh_VertexProperty_easy3d_Vec_3_float_t : public e
 	using easy3d::PolyMesh::VertexProperty<easy3d::Vec<3, float>>::VertexProperty;
 
 	using _binder_ret_0 = easy3d::Vec<3, float> &;
-	_binder_ret_0 operator[](unsigned long a0) override {
+	_binder_ret_0 operator[](size_t a0) override {
 		pybind11::gil_scoped_acquire gil;
 		pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PolyMesh::VertexProperty<easy3d::Vec<3, float>> *>(this), "__getitem__");
 		if (overload) {
@@ -137,7 +137,7 @@ struct PyCallBack_easy3d_PolyMesh_VertexProperty_easy3d_Vec_3_float_t : public e
 struct PyCallBack_easy3d_PolyMesh_EdgeProperty_easy3d_PolyMesh_EdgeConnectivity_t : public easy3d::PolyMesh::EdgeProperty<easy3d::PolyMesh::EdgeConnectivity> {
 	using easy3d::PolyMesh::EdgeProperty<easy3d::PolyMesh::EdgeConnectivity>::EdgeProperty;
 
-	struct easy3d::PolyMesh::EdgeConnectivity & operator[](unsigned long a0) override {
+	struct easy3d::PolyMesh::EdgeConnectivity & operator[](size_t a0) override {
 		pybind11::gil_scoped_acquire gil;
 		pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PolyMesh::EdgeProperty<easy3d::PolyMesh::EdgeConnectivity> *>(this), "__getitem__");
 		if (overload) {
@@ -156,7 +156,7 @@ struct PyCallBack_easy3d_PolyMesh_EdgeProperty_easy3d_PolyMesh_EdgeConnectivity_
 struct PyCallBack_easy3d_PolyMesh_HalfFaceProperty_easy3d_PolyMesh_HalfFaceConnectivity_t : public easy3d::PolyMesh::HalfFaceProperty<easy3d::PolyMesh::HalfFaceConnectivity> {
 	using easy3d::PolyMesh::HalfFaceProperty<easy3d::PolyMesh::HalfFaceConnectivity>::HalfFaceProperty;
 
-	struct easy3d::PolyMesh::HalfFaceConnectivity & operator[](unsigned long a0) override {
+	struct easy3d::PolyMesh::HalfFaceConnectivity & operator[](size_t a0) override {
 		pybind11::gil_scoped_acquire gil;
 		pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PolyMesh::HalfFaceProperty<easy3d::PolyMesh::HalfFaceConnectivity> *>(this), "__getitem__");
 		if (overload) {
@@ -175,7 +175,7 @@ struct PyCallBack_easy3d_PolyMesh_HalfFaceProperty_easy3d_PolyMesh_HalfFaceConne
 struct PyCallBack_easy3d_PolyMesh_CellProperty_easy3d_PolyMesh_CellConnectivity_t : public easy3d::PolyMesh::CellProperty<easy3d::PolyMesh::CellConnectivity> {
 	using easy3d::PolyMesh::CellProperty<easy3d::PolyMesh::CellConnectivity>::CellProperty;
 
-	struct easy3d::PolyMesh::CellConnectivity & operator[](unsigned long a0) override {
+	struct easy3d::PolyMesh::CellConnectivity & operator[](size_t a0) override {
 		pybind11::gil_scoped_acquire gil;
 		pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PolyMesh::CellProperty<easy3d::PolyMesh::CellConnectivity> *>(this), "__getitem__");
 		if (overload) {
@@ -196,7 +196,7 @@ struct PyCallBack_easy3d_PolyMesh_CellProperty_easy3d_PolyMesh_CellConnectivity_
 struct PyCallBack_easy3d_Property_easy3d_PolyMesh_VertexConnectivity_t : public easy3d::Property<easy3d::PolyMesh::VertexConnectivity> {
     using easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::Property;
 
-    struct easy3d::PolyMesh::VertexConnectivity & operator[](unsigned long a0) override {
+    struct easy3d::PolyMesh::VertexConnectivity & operator[](size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::Property<easy3d::PolyMesh::VertexConnectivity> *>(this), "__getitem__");
         if (overload) {
@@ -215,7 +215,7 @@ struct PyCallBack_easy3d_Property_easy3d_PolyMesh_VertexConnectivity_t : public 
 struct PyCallBack_easy3d_Property_easy3d_PolyMesh_EdgeConnectivity_t : public easy3d::Property<easy3d::PolyMesh::EdgeConnectivity> {
     using easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::Property;
 
-    struct easy3d::PolyMesh::EdgeConnectivity & operator[](unsigned long a0) override {
+    struct easy3d::PolyMesh::EdgeConnectivity & operator[](size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::Property<easy3d::PolyMesh::EdgeConnectivity> *>(this), "__getitem__");
         if (overload) {
@@ -234,7 +234,7 @@ struct PyCallBack_easy3d_Property_easy3d_PolyMesh_EdgeConnectivity_t : public ea
 struct PyCallBack_easy3d_PropertyArray_easy3d_PolyMesh_HalfFaceConnectivity_t : public easy3d::PropertyArray<easy3d::PolyMesh::HalfFaceConnectivity> {
     using easy3d::PropertyArray<easy3d::PolyMesh::HalfFaceConnectivity>::PropertyArray;
 
-    void reserve(unsigned long a0) override {
+    void reserve(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::PolyMesh::HalfFaceConnectivity> *>(this), "reserve");
         if (overload) {
@@ -247,7 +247,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_PolyMesh_HalfFaceConnectivity_t : 
         }
         return PropertyArray::reserve(a0);
     }
-    void resize(unsigned long a0) override {
+    void resize(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::PolyMesh::HalfFaceConnectivity> *>(this), "resize");
         if (overload) {
@@ -273,7 +273,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_PolyMesh_HalfFaceConnectivity_t : 
         }
         return PropertyArray::push_back();
     }
-    void reset(unsigned long a0) override {
+    void reset(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::PolyMesh::HalfFaceConnectivity> *>(this), "reset");
         if (overload) {
@@ -325,7 +325,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_PolyMesh_HalfFaceConnectivity_t : 
         }
         return PropertyArray::shrink_to_fit();
     }
-    void swap(unsigned long a0, unsigned long a1) override {
+    void swap(size_t a0, size_t a1) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::PolyMesh::HalfFaceConnectivity> *>(this), "swap");
         if (overload) {
@@ -338,7 +338,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_PolyMesh_HalfFaceConnectivity_t : 
         }
         return PropertyArray::swap(a0, a1);
     }
-    void copy(unsigned long a0, unsigned long a1) override {
+    void copy(size_t a0, size_t a1) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::PolyMesh::HalfFaceConnectivity> *>(this), "copy");
         if (overload) {
@@ -396,7 +396,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_PolyMesh_HalfFaceConnectivity_t : 
 struct PyCallBack_easy3d_PropertyArray_easy3d_PolyMesh_CellConnectivity_t : public easy3d::PropertyArray<easy3d::PolyMesh::CellConnectivity> {
     using easy3d::PropertyArray<easy3d::PolyMesh::CellConnectivity>::PropertyArray;
 
-    void reserve(unsigned long a0) override {
+    void reserve(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::PolyMesh::CellConnectivity> *>(this), "reserve");
         if (overload) {
@@ -409,7 +409,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_PolyMesh_CellConnectivity_t : publ
         }
         return PropertyArray::reserve(a0);
     }
-    void resize(unsigned long a0) override {
+    void resize(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::PolyMesh::CellConnectivity> *>(this), "resize");
         if (overload) {
@@ -435,7 +435,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_PolyMesh_CellConnectivity_t : publ
         }
         return PropertyArray::push_back();
     }
-    void reset(unsigned long a0) override {
+    void reset(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::PolyMesh::CellConnectivity> *>(this), "reset");
         if (overload) {
@@ -487,7 +487,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_PolyMesh_CellConnectivity_t : publ
         }
         return PropertyArray::shrink_to_fit();
     }
-    void swap(unsigned long a0, unsigned long a1) override {
+    void swap(size_t a0, size_t a1) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::PolyMesh::CellConnectivity> *>(this), "swap");
         if (overload) {
@@ -500,7 +500,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_PolyMesh_CellConnectivity_t : publ
         }
         return PropertyArray::swap(a0, a1);
     }
-    void copy(unsigned long a0, unsigned long a1) override {
+    void copy(size_t a0, size_t a1) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::PolyMesh::CellConnectivity> *>(this), "copy");
         if (overload) {
@@ -558,7 +558,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_PolyMesh_CellConnectivity_t : publ
 struct PyCallBack_easy3d_PropertyArray_easy3d_PolyMesh_VertexConnectivity_t : public easy3d::PropertyArray<easy3d::PolyMesh::VertexConnectivity> {
     using easy3d::PropertyArray<easy3d::PolyMesh::VertexConnectivity>::PropertyArray;
 
-    void reserve(unsigned long a0) override {
+    void reserve(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::PolyMesh::VertexConnectivity> *>(this), "reserve");
         if (overload) {
@@ -571,7 +571,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_PolyMesh_VertexConnectivity_t : pu
         }
         return PropertyArray::reserve(a0);
     }
-    void resize(unsigned long a0) override {
+    void resize(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::PolyMesh::VertexConnectivity> *>(this), "resize");
         if (overload) {
@@ -597,7 +597,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_PolyMesh_VertexConnectivity_t : pu
         }
         return PropertyArray::push_back();
     }
-    void reset(unsigned long a0) override {
+    void reset(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::PolyMesh::VertexConnectivity> *>(this), "reset");
         if (overload) {
@@ -649,7 +649,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_PolyMesh_VertexConnectivity_t : pu
         }
         return PropertyArray::shrink_to_fit();
     }
-    void swap(unsigned long a0, unsigned long a1) override {
+    void swap(size_t a0, size_t a1) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::PolyMesh::VertexConnectivity> *>(this), "swap");
         if (overload) {
@@ -662,7 +662,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_PolyMesh_VertexConnectivity_t : pu
         }
         return PropertyArray::swap(a0, a1);
     }
-    void copy(unsigned long a0, unsigned long a1) override {
+    void copy(size_t a0, size_t a1) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::PolyMesh::VertexConnectivity> *>(this), "copy");
         if (overload) {
@@ -720,7 +720,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_PolyMesh_VertexConnectivity_t : pu
 struct PyCallBack_easy3d_PropertyArray_easy3d_PolyMesh_EdgeConnectivity_t : public easy3d::PropertyArray<easy3d::PolyMesh::EdgeConnectivity> {
     using easy3d::PropertyArray<easy3d::PolyMesh::EdgeConnectivity>::PropertyArray;
 
-    void reserve(unsigned long a0) override {
+    void reserve(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::PolyMesh::EdgeConnectivity> *>(this), "reserve");
         if (overload) {
@@ -733,7 +733,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_PolyMesh_EdgeConnectivity_t : publ
         }
         return PropertyArray::reserve(a0);
     }
-    void resize(unsigned long a0) override {
+    void resize(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::PolyMesh::EdgeConnectivity> *>(this), "resize");
         if (overload) {
@@ -759,7 +759,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_PolyMesh_EdgeConnectivity_t : publ
         }
         return PropertyArray::push_back();
     }
-    void reset(unsigned long a0) override {
+    void reset(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::PolyMesh::EdgeConnectivity> *>(this), "reset");
         if (overload) {
@@ -811,7 +811,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_PolyMesh_EdgeConnectivity_t : publ
         }
         return PropertyArray::shrink_to_fit();
     }
-    void swap(unsigned long a0, unsigned long a1) override {
+    void swap(size_t a0, size_t a1) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::PolyMesh::EdgeConnectivity> *>(this), "swap");
         if (overload) {
@@ -824,7 +824,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_PolyMesh_EdgeConnectivity_t : publ
         }
         return PropertyArray::swap(a0, a1);
     }
-    void copy(unsigned long a0, unsigned long a1) override {
+    void copy(size_t a0, size_t a1) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::PolyMesh::EdgeConnectivity> *>(this), "copy");
         if (overload) {
@@ -1088,7 +1088,7 @@ void bind_easy3d_core_poly_mesh(pybind11::module_& m)
             cl.def( pybind11::init( [](PyCallBack_easy3d_Property_easy3d_PolyMesh_EdgeConnectivity_t const &o){ return new PyCallBack_easy3d_Property_easy3d_PolyMesh_EdgeConnectivity_t(o); } ) );
             cl.def( pybind11::init( [](easy3d::Property<easy3d::PolyMesh::EdgeConnectivity> const &o){ return new easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>(o); } ) );
             cl.def("reset", (void (easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::*)()) &easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::reset, "C++: easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::reset() --> void");
-            cl.def("__getitem__", (struct easy3d::PolyMesh::EdgeConnectivity & (easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::*)(unsigned long)) &easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::operator[], "C++: easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::operator[](unsigned long) --> struct easy3d::PolyMesh::EdgeConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+            cl.def("__getitem__", (struct easy3d::PolyMesh::EdgeConnectivity & (easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::*)(size_t)) &easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::operator[], "C++: easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::operator[](size_t) --> struct easy3d::PolyMesh::EdgeConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
             cl.def("data", (const struct easy3d::PolyMesh::EdgeConnectivity * (easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::*)() const) &easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::data, "C++: easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::data() const --> const struct easy3d::PolyMesh::EdgeConnectivity *", pybind11::return_value_policy::automatic);
             cl.def("vector", (class std::vector<struct easy3d::PolyMesh::EdgeConnectivity> & (easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::*)()) &easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::vector, "C++: easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::vector() --> class std::vector<struct easy3d::PolyMesh::EdgeConnectivity> &", pybind11::return_value_policy::automatic);
             cl.def("array", (class easy3d::PropertyArray<struct easy3d::PolyMesh::EdgeConnectivity> & (easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::*)()) &easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::array, "C++: easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::array() --> class easy3d::PropertyArray<struct easy3d::PolyMesh::EdgeConnectivity> &", pybind11::return_value_policy::automatic);
@@ -1145,7 +1145,7 @@ void bind_easy3d_core_poly_mesh(pybind11::module_& m)
             cl.def( pybind11::init( [](PyCallBack_easy3d_Property_easy3d_PolyMesh_VertexConnectivity_t const &o){ return new PyCallBack_easy3d_Property_easy3d_PolyMesh_VertexConnectivity_t(o); } ) );
             cl.def( pybind11::init( [](easy3d::Property<easy3d::PolyMesh::VertexConnectivity> const &o){ return new easy3d::Property<easy3d::PolyMesh::VertexConnectivity>(o); } ) );
             cl.def("reset", (void (easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::*)()) &easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::reset, "C++: easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::reset() --> void");
-            cl.def("__getitem__", (struct easy3d::PolyMesh::VertexConnectivity & (easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::*)(unsigned long)) &easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::operator[], "C++: easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::operator[](unsigned long) --> struct easy3d::PolyMesh::VertexConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+            cl.def("__getitem__", (struct easy3d::PolyMesh::VertexConnectivity & (easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::*)(size_t)) &easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::operator[], "C++: easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::operator[](size_t) --> struct easy3d::PolyMesh::VertexConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
             cl.def("data", (const struct easy3d::PolyMesh::VertexConnectivity * (easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::*)() const) &easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::data, "C++: easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::data() const --> const struct easy3d::PolyMesh::VertexConnectivity *", pybind11::return_value_policy::automatic);
             cl.def("vector", (class std::vector<struct easy3d::PolyMesh::VertexConnectivity> & (easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::*)()) &easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::vector, "C++: easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::vector() --> class std::vector<struct easy3d::PolyMesh::VertexConnectivity> &", pybind11::return_value_policy::automatic);
             cl.def("array", (class easy3d::PropertyArray<struct easy3d::PolyMesh::VertexConnectivity> & (easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::*)()) &easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::array, "C++: easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::array() --> class easy3d::PropertyArray<struct easy3d::PolyMesh::VertexConnectivity> &", pybind11::return_value_policy::automatic);
@@ -1165,7 +1165,7 @@ void bind_easy3d_core_poly_mesh(pybind11::module_& m)
 			cl.def("__getitem__", (struct easy3d::PolyMesh::VertexConnectivity & (easy3d::PolyMesh::VertexProperty<easy3d::PolyMesh::VertexConnectivity>::*)(struct easy3d::PolyMesh::Vertex)) &easy3d::PolyMesh::VertexProperty<easy3d::PolyMesh::VertexConnectivity>::operator[], "C++: easy3d::PolyMesh::VertexProperty<easy3d::PolyMesh::VertexConnectivity>::operator[](struct easy3d::PolyMesh::Vertex) --> struct easy3d::PolyMesh::VertexConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("v"));
 			cl.def("assign", (class easy3d::PolyMesh::VertexProperty<struct easy3d::PolyMesh::VertexConnectivity> & (easy3d::PolyMesh::VertexProperty<easy3d::PolyMesh::VertexConnectivity>::*)(const class easy3d::PolyMesh::VertexProperty<struct easy3d::PolyMesh::VertexConnectivity> &)) &easy3d::PolyMesh::VertexProperty<easy3d::PolyMesh::VertexConnectivity>::operator=, "C++: easy3d::PolyMesh::VertexProperty<easy3d::PolyMesh::VertexConnectivity>::operator=(const class easy3d::PolyMesh::VertexProperty<struct easy3d::PolyMesh::VertexConnectivity> &) --> class easy3d::PolyMesh::VertexProperty<struct easy3d::PolyMesh::VertexConnectivity> &", pybind11::return_value_policy::automatic, pybind11::arg(""));
 			cl.def("reset", (void (easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::*)()) &easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::reset, "C++: easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::reset() --> void");
-			cl.def("__getitem__", (struct easy3d::PolyMesh::VertexConnectivity & (easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::*)(unsigned long)) &easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::operator[], "C++: easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::operator[](unsigned long) --> struct easy3d::PolyMesh::VertexConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+			cl.def("__getitem__", (struct easy3d::PolyMesh::VertexConnectivity & (easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::*)(size_t)) &easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::operator[], "C++: easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::operator[](size_t) --> struct easy3d::PolyMesh::VertexConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
 			cl.def("data", (const struct easy3d::PolyMesh::VertexConnectivity * (easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::*)() const) &easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::data, "C++: easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::data() const --> const struct easy3d::PolyMesh::VertexConnectivity *", pybind11::return_value_policy::automatic);
 			cl.def("vector", (class std::vector<struct easy3d::PolyMesh::VertexConnectivity> & (easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::*)()) &easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::vector, "C++: easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::vector() --> class std::vector<struct easy3d::PolyMesh::VertexConnectivity> &", pybind11::return_value_policy::automatic);
 			cl.def("array", (class easy3d::PropertyArray<struct easy3d::PolyMesh::VertexConnectivity> & (easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::*)()) &easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::array, "C++: easy3d::Property<easy3d::PolyMesh::VertexConnectivity>::array() --> class easy3d::PropertyArray<struct easy3d::PolyMesh::VertexConnectivity> &", pybind11::return_value_policy::automatic);
@@ -1185,7 +1185,7 @@ void bind_easy3d_core_poly_mesh(pybind11::module_& m)
 			cl.def("__getitem__", (class easy3d::Vec<3, float> & (easy3d::PolyMesh::VertexProperty<easy3d::Vec<3, float>>::*)(struct easy3d::PolyMesh::Vertex)) &easy3d::PolyMesh::VertexProperty<easy3d::Vec<3, float>>::operator[], "C++: easy3d::PolyMesh::VertexProperty<easy3d::Vec<3, float>>::operator[](struct easy3d::PolyMesh::Vertex) --> class easy3d::Vec<3, float> &", pybind11::return_value_policy::automatic, pybind11::arg("v"));
 			cl.def("assign", (class easy3d::PolyMesh::VertexProperty<class easy3d::Vec<3, float> > & (easy3d::PolyMesh::VertexProperty<easy3d::Vec<3, float>>::*)(const class easy3d::PolyMesh::VertexProperty<class easy3d::Vec<3, float> > &)) &easy3d::PolyMesh::VertexProperty<easy3d::Vec<3, float>>::operator=, "C++: easy3d::PolyMesh::VertexProperty<easy3d::Vec<3, float>>::operator=(const class easy3d::PolyMesh::VertexProperty<class easy3d::Vec<3, float> > &) --> class easy3d::PolyMesh::VertexProperty<class easy3d::Vec<3, float> > &", pybind11::return_value_policy::automatic, pybind11::arg(""));
 			cl.def("reset", (void (easy3d::Property<easy3d::Vec<3, float>>::*)()) &easy3d::Property<easy3d::Vec<3, float>>::reset, "C++: easy3d::Property<easy3d::Vec<3, float>>::reset() --> void");
-			cl.def("__getitem__", (class easy3d::Vec<3, float> & (easy3d::Property<easy3d::Vec<3, float>>::*)(unsigned long)) &easy3d::Property<easy3d::Vec<3, float>>::operator[], "C++: easy3d::Property<easy3d::Vec<3, float>>::operator[](unsigned long) --> class easy3d::Vec<3, float> &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+			cl.def("__getitem__", (class easy3d::Vec<3, float> & (easy3d::Property<easy3d::Vec<3, float>>::*)(size_t)) &easy3d::Property<easy3d::Vec<3, float>>::operator[], "C++: easy3d::Property<easy3d::Vec<3, float>>::operator[](size_t) --> class easy3d::Vec<3, float> &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
 			cl.def("data", (const class easy3d::Vec<3, float> * (easy3d::Property<easy3d::Vec<3, float>>::*)() const) &easy3d::Property<easy3d::Vec<3, float>>::data, "C++: easy3d::Property<easy3d::Vec<3, float>>::data() const --> const class easy3d::Vec<3, float> *", pybind11::return_value_policy::automatic);
 			cl.def("vector", (class std::vector<class easy3d::Vec<3, float> > & (easy3d::Property<easy3d::Vec<3, float>>::*)()) &easy3d::Property<easy3d::Vec<3, float>>::vector, "C++: easy3d::Property<easy3d::Vec<3, float>>::vector() --> class std::vector<class easy3d::Vec<3, float> > &", pybind11::return_value_policy::automatic);
 			cl.def("array", (class easy3d::PropertyArray<class easy3d::Vec<3, float> > & (easy3d::Property<easy3d::Vec<3, float>>::*)()) &easy3d::Property<easy3d::Vec<3, float>>::array, "C++: easy3d::Property<easy3d::Vec<3, float>>::array() --> class easy3d::PropertyArray<class easy3d::Vec<3, float> > &", pybind11::return_value_policy::automatic);
@@ -1205,7 +1205,7 @@ void bind_easy3d_core_poly_mesh(pybind11::module_& m)
 			cl.def("__getitem__", (struct easy3d::PolyMesh::EdgeConnectivity & (easy3d::PolyMesh::EdgeProperty<easy3d::PolyMesh::EdgeConnectivity>::*)(struct easy3d::PolyMesh::Edge)) &easy3d::PolyMesh::EdgeProperty<easy3d::PolyMesh::EdgeConnectivity>::operator[], "C++: easy3d::PolyMesh::EdgeProperty<easy3d::PolyMesh::EdgeConnectivity>::operator[](struct easy3d::PolyMesh::Edge) --> struct easy3d::PolyMesh::EdgeConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("e"));
 			cl.def("assign", (class easy3d::PolyMesh::EdgeProperty<struct easy3d::PolyMesh::EdgeConnectivity> & (easy3d::PolyMesh::EdgeProperty<easy3d::PolyMesh::EdgeConnectivity>::*)(const class easy3d::PolyMesh::EdgeProperty<struct easy3d::PolyMesh::EdgeConnectivity> &)) &easy3d::PolyMesh::EdgeProperty<easy3d::PolyMesh::EdgeConnectivity>::operator=, "C++: easy3d::PolyMesh::EdgeProperty<easy3d::PolyMesh::EdgeConnectivity>::operator=(const class easy3d::PolyMesh::EdgeProperty<struct easy3d::PolyMesh::EdgeConnectivity> &) --> class easy3d::PolyMesh::EdgeProperty<struct easy3d::PolyMesh::EdgeConnectivity> &", pybind11::return_value_policy::automatic, pybind11::arg(""));
 			cl.def("reset", (void (easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::*)()) &easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::reset, "C++: easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::reset() --> void");
-			cl.def("__getitem__", (struct easy3d::PolyMesh::EdgeConnectivity & (easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::*)(unsigned long)) &easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::operator[], "C++: easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::operator[](unsigned long) --> struct easy3d::PolyMesh::EdgeConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+			cl.def("__getitem__", (struct easy3d::PolyMesh::EdgeConnectivity & (easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::*)(size_t)) &easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::operator[], "C++: easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::operator[](size_t) --> struct easy3d::PolyMesh::EdgeConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
 			cl.def("data", (const struct easy3d::PolyMesh::EdgeConnectivity * (easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::*)() const) &easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::data, "C++: easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::data() const --> const struct easy3d::PolyMesh::EdgeConnectivity *", pybind11::return_value_policy::automatic);
 			cl.def("vector", (class std::vector<struct easy3d::PolyMesh::EdgeConnectivity> & (easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::*)()) &easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::vector, "C++: easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::vector() --> class std::vector<struct easy3d::PolyMesh::EdgeConnectivity> &", pybind11::return_value_policy::automatic);
 			cl.def("array", (class easy3d::PropertyArray<struct easy3d::PolyMesh::EdgeConnectivity> & (easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::*)()) &easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::array, "C++: easy3d::Property<easy3d::PolyMesh::EdgeConnectivity>::array() --> class easy3d::PropertyArray<struct easy3d::PolyMesh::EdgeConnectivity> &", pybind11::return_value_policy::automatic);
@@ -1222,7 +1222,7 @@ void bind_easy3d_core_poly_mesh(pybind11::module_& m)
             cl.def( pybind11::init( [](PyCallBack_easy3d_Property_easy3d_PolyMesh_HalfFaceConnectivity_t const &o){ return new PyCallBack_easy3d_Property_easy3d_PolyMesh_HalfFaceConnectivity_t(o); } ) );
             cl.def( pybind11::init( [](easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity> const &o){ return new easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>(o); } ) );
             cl.def("reset", (void (easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::*)()) &easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::reset, "C++: easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::reset() --> void");
-            cl.def("__getitem__", (struct easy3d::PolyMesh::HalfFaceConnectivity & (easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::*)(unsigned long)) &easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::operator[], "C++: easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::operator[](unsigned long) --> struct easy3d::PolyMesh::HalfFaceConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+            cl.def("__getitem__", (struct easy3d::PolyMesh::HalfFaceConnectivity & (easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::*)(size_t)) &easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::operator[], "C++: easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::operator[](size_t) --> struct easy3d::PolyMesh::HalfFaceConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
             cl.def("data", (const struct easy3d::PolyMesh::HalfFaceConnectivity * (easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::*)() const) &easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::data, "C++: easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::data() const --> const struct easy3d::PolyMesh::HalfFaceConnectivity *", pybind11::return_value_policy::automatic);
             cl.def("vector", (class std::vector<struct easy3d::PolyMesh::HalfFaceConnectivity> & (easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::*)()) &easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::vector, "C++: easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::vector() --> class std::vector<struct easy3d::PolyMesh::HalfFaceConnectivity> &", pybind11::return_value_policy::automatic);
             cl.def("array", (class easy3d::PropertyArray<struct easy3d::PolyMesh::HalfFaceConnectivity> & (easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::*)()) &easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::array, "C++: easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::array() --> class easy3d::PropertyArray<struct easy3d::PolyMesh::HalfFaceConnectivity> &", pybind11::return_value_policy::automatic);
@@ -1242,7 +1242,7 @@ void bind_easy3d_core_poly_mesh(pybind11::module_& m)
 			cl.def("__getitem__", (struct easy3d::PolyMesh::HalfFaceConnectivity & (easy3d::PolyMesh::HalfFaceProperty<easy3d::PolyMesh::HalfFaceConnectivity>::*)(struct easy3d::PolyMesh::HalfFace)) &easy3d::PolyMesh::HalfFaceProperty<easy3d::PolyMesh::HalfFaceConnectivity>::operator[], "C++: easy3d::PolyMesh::HalfFaceProperty<easy3d::PolyMesh::HalfFaceConnectivity>::operator[](struct easy3d::PolyMesh::HalfFace) --> struct easy3d::PolyMesh::HalfFaceConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("h"));
 			cl.def("assign", (class easy3d::PolyMesh::HalfFaceProperty<struct easy3d::PolyMesh::HalfFaceConnectivity> & (easy3d::PolyMesh::HalfFaceProperty<easy3d::PolyMesh::HalfFaceConnectivity>::*)(const class easy3d::PolyMesh::HalfFaceProperty<struct easy3d::PolyMesh::HalfFaceConnectivity> &)) &easy3d::PolyMesh::HalfFaceProperty<easy3d::PolyMesh::HalfFaceConnectivity>::operator=, "C++: easy3d::PolyMesh::HalfFaceProperty<easy3d::PolyMesh::HalfFaceConnectivity>::operator=(const class easy3d::PolyMesh::HalfFaceProperty<struct easy3d::PolyMesh::HalfFaceConnectivity> &) --> class easy3d::PolyMesh::HalfFaceProperty<struct easy3d::PolyMesh::HalfFaceConnectivity> &", pybind11::return_value_policy::automatic, pybind11::arg(""));
 			cl.def("reset", (void (easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::*)()) &easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::reset, "C++: easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::reset() --> void");
-			cl.def("__getitem__", (struct easy3d::PolyMesh::HalfFaceConnectivity & (easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::*)(unsigned long)) &easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::operator[], "C++: easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::operator[](unsigned long) --> struct easy3d::PolyMesh::HalfFaceConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+			cl.def("__getitem__", (struct easy3d::PolyMesh::HalfFaceConnectivity & (easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::*)(size_t)) &easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::operator[], "C++: easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::operator[](size_t) --> struct easy3d::PolyMesh::HalfFaceConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
 			cl.def("data", (const struct easy3d::PolyMesh::HalfFaceConnectivity * (easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::*)() const) &easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::data, "C++: easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::data() const --> const struct easy3d::PolyMesh::HalfFaceConnectivity *", pybind11::return_value_policy::automatic);
 			cl.def("vector", (class std::vector<struct easy3d::PolyMesh::HalfFaceConnectivity> & (easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::*)()) &easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::vector, "C++: easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::vector() --> class std::vector<struct easy3d::PolyMesh::HalfFaceConnectivity> &", pybind11::return_value_policy::automatic);
 			cl.def("array", (class easy3d::PropertyArray<struct easy3d::PolyMesh::HalfFaceConnectivity> & (easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::*)()) &easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::array, "C++: easy3d::Property<easy3d::PolyMesh::HalfFaceConnectivity>::array() --> class easy3d::PropertyArray<struct easy3d::PolyMesh::HalfFaceConnectivity> &", pybind11::return_value_policy::automatic);
@@ -1259,7 +1259,7 @@ void bind_easy3d_core_poly_mesh(pybind11::module_& m)
             cl.def( pybind11::init( [](PyCallBack_easy3d_Property_easy3d_PolyMesh_CellConnectivity_t const &o){ return new PyCallBack_easy3d_Property_easy3d_PolyMesh_CellConnectivity_t(o); } ) );
             cl.def( pybind11::init( [](easy3d::Property<easy3d::PolyMesh::CellConnectivity> const &o){ return new easy3d::Property<easy3d::PolyMesh::CellConnectivity>(o); } ) );
             cl.def("reset", (void (easy3d::Property<easy3d::PolyMesh::CellConnectivity>::*)()) &easy3d::Property<easy3d::PolyMesh::CellConnectivity>::reset, "C++: easy3d::Property<easy3d::PolyMesh::CellConnectivity>::reset() --> void");
-            cl.def("__getitem__", (struct easy3d::PolyMesh::CellConnectivity & (easy3d::Property<easy3d::PolyMesh::CellConnectivity>::*)(unsigned long)) &easy3d::Property<easy3d::PolyMesh::CellConnectivity>::operator[], "C++: easy3d::Property<easy3d::PolyMesh::CellConnectivity>::operator[](unsigned long) --> struct easy3d::PolyMesh::CellConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+            cl.def("__getitem__", (struct easy3d::PolyMesh::CellConnectivity & (easy3d::Property<easy3d::PolyMesh::CellConnectivity>::*)(size_t)) &easy3d::Property<easy3d::PolyMesh::CellConnectivity>::operator[], "C++: easy3d::Property<easy3d::PolyMesh::CellConnectivity>::operator[](size_t) --> struct easy3d::PolyMesh::CellConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
             cl.def("data", (const struct easy3d::PolyMesh::CellConnectivity * (easy3d::Property<easy3d::PolyMesh::CellConnectivity>::*)() const) &easy3d::Property<easy3d::PolyMesh::CellConnectivity>::data, "C++: easy3d::Property<easy3d::PolyMesh::CellConnectivity>::data() const --> const struct easy3d::PolyMesh::CellConnectivity *", pybind11::return_value_policy::automatic);
             cl.def("vector", (class std::vector<struct easy3d::PolyMesh::CellConnectivity> & (easy3d::Property<easy3d::PolyMesh::CellConnectivity>::*)()) &easy3d::Property<easy3d::PolyMesh::CellConnectivity>::vector, "C++: easy3d::Property<easy3d::PolyMesh::CellConnectivity>::vector() --> class std::vector<struct easy3d::PolyMesh::CellConnectivity> &", pybind11::return_value_policy::automatic);
             cl.def("array", (class easy3d::PropertyArray<struct easy3d::PolyMesh::CellConnectivity> & (easy3d::Property<easy3d::PolyMesh::CellConnectivity>::*)()) &easy3d::Property<easy3d::PolyMesh::CellConnectivity>::array, "C++: easy3d::Property<easy3d::PolyMesh::CellConnectivity>::array() --> class easy3d::PropertyArray<struct easy3d::PolyMesh::CellConnectivity> &", pybind11::return_value_policy::automatic);
@@ -1279,7 +1279,7 @@ void bind_easy3d_core_poly_mesh(pybind11::module_& m)
 			cl.def("__getitem__", (struct easy3d::PolyMesh::CellConnectivity & (easy3d::PolyMesh::CellProperty<easy3d::PolyMesh::CellConnectivity>::*)(struct easy3d::PolyMesh::Cell)) &easy3d::PolyMesh::CellProperty<easy3d::PolyMesh::CellConnectivity>::operator[], "C++: easy3d::PolyMesh::CellProperty<easy3d::PolyMesh::CellConnectivity>::operator[](struct easy3d::PolyMesh::Cell) --> struct easy3d::PolyMesh::CellConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("c"));
 			cl.def("assign", (class easy3d::PolyMesh::CellProperty<struct easy3d::PolyMesh::CellConnectivity> & (easy3d::PolyMesh::CellProperty<easy3d::PolyMesh::CellConnectivity>::*)(const class easy3d::PolyMesh::CellProperty<struct easy3d::PolyMesh::CellConnectivity> &)) &easy3d::PolyMesh::CellProperty<easy3d::PolyMesh::CellConnectivity>::operator=, "C++: easy3d::PolyMesh::CellProperty<easy3d::PolyMesh::CellConnectivity>::operator=(const class easy3d::PolyMesh::CellProperty<struct easy3d::PolyMesh::CellConnectivity> &) --> class easy3d::PolyMesh::CellProperty<struct easy3d::PolyMesh::CellConnectivity> &", pybind11::return_value_policy::automatic, pybind11::arg(""));
 			cl.def("reset", (void (easy3d::Property<easy3d::PolyMesh::CellConnectivity>::*)()) &easy3d::Property<easy3d::PolyMesh::CellConnectivity>::reset, "C++: easy3d::Property<easy3d::PolyMesh::CellConnectivity>::reset() --> void");
-			cl.def("__getitem__", (struct easy3d::PolyMesh::CellConnectivity & (easy3d::Property<easy3d::PolyMesh::CellConnectivity>::*)(unsigned long)) &easy3d::Property<easy3d::PolyMesh::CellConnectivity>::operator[], "C++: easy3d::Property<easy3d::PolyMesh::CellConnectivity>::operator[](unsigned long) --> struct easy3d::PolyMesh::CellConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+			cl.def("__getitem__", (struct easy3d::PolyMesh::CellConnectivity & (easy3d::Property<easy3d::PolyMesh::CellConnectivity>::*)(size_t)) &easy3d::Property<easy3d::PolyMesh::CellConnectivity>::operator[], "C++: easy3d::Property<easy3d::PolyMesh::CellConnectivity>::operator[](size_t) --> struct easy3d::PolyMesh::CellConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
 			cl.def("data", (const struct easy3d::PolyMesh::CellConnectivity * (easy3d::Property<easy3d::PolyMesh::CellConnectivity>::*)() const) &easy3d::Property<easy3d::PolyMesh::CellConnectivity>::data, "C++: easy3d::Property<easy3d::PolyMesh::CellConnectivity>::data() const --> const struct easy3d::PolyMesh::CellConnectivity *", pybind11::return_value_policy::automatic);
 			cl.def("vector", (class std::vector<struct easy3d::PolyMesh::CellConnectivity> & (easy3d::Property<easy3d::PolyMesh::CellConnectivity>::*)()) &easy3d::Property<easy3d::PolyMesh::CellConnectivity>::vector, "C++: easy3d::Property<easy3d::PolyMesh::CellConnectivity>::vector() --> class std::vector<struct easy3d::PolyMesh::CellConnectivity> &", pybind11::return_value_policy::automatic);
 			cl.def("array", (class easy3d::PropertyArray<struct easy3d::PolyMesh::CellConnectivity> & (easy3d::Property<easy3d::PolyMesh::CellConnectivity>::*)()) &easy3d::Property<easy3d::PolyMesh::CellConnectivity>::array, "C++: easy3d::Property<easy3d::PolyMesh::CellConnectivity>::array() --> class easy3d::PropertyArray<struct easy3d::PolyMesh::CellConnectivity> &", pybind11::return_value_policy::automatic);
@@ -1435,7 +1435,7 @@ void bind_easy3d_core_poly_mesh(pybind11::module_& m)
         cl.def("type", (const class std::type_info & (easy3d::PropertyArray<easy3d::PolyMesh::HalfFaceConnectivity>::*)() const) &easy3d::PropertyArray<easy3d::PolyMesh::HalfFaceConnectivity>::type, "C++: easy3d::PropertyArray<easy3d::PolyMesh::HalfFaceConnectivity>::type() const --> const class std::type_info &", pybind11::return_value_policy::automatic);
         cl.def("data", (const struct easy3d::PolyMesh::HalfFaceConnectivity * (easy3d::PropertyArray<easy3d::PolyMesh::HalfFaceConnectivity>::*)() const) &easy3d::PropertyArray<easy3d::PolyMesh::HalfFaceConnectivity>::data, "C++: easy3d::PropertyArray<easy3d::PolyMesh::HalfFaceConnectivity>::data() const --> const struct easy3d::PolyMesh::HalfFaceConnectivity *", pybind11::return_value_policy::automatic);
         cl.def("vector", (class std::vector<struct easy3d::PolyMesh::HalfFaceConnectivity> & (easy3d::PropertyArray<easy3d::PolyMesh::HalfFaceConnectivity>::*)()) &easy3d::PropertyArray<easy3d::PolyMesh::HalfFaceConnectivity>::vector, "C++: easy3d::PropertyArray<easy3d::PolyMesh::HalfFaceConnectivity>::vector() --> class std::vector<struct easy3d::PolyMesh::HalfFaceConnectivity> &", pybind11::return_value_policy::automatic);
-        cl.def("__getitem__", (struct easy3d::PolyMesh::HalfFaceConnectivity & (easy3d::PropertyArray<easy3d::PolyMesh::HalfFaceConnectivity>::*)(unsigned long)) &easy3d::PropertyArray<easy3d::PolyMesh::HalfFaceConnectivity>::operator[], "C++: easy3d::PropertyArray<easy3d::PolyMesh::HalfFaceConnectivity>::operator[](unsigned long) --> struct easy3d::PolyMesh::HalfFaceConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("_idx"));
+        cl.def("__getitem__", (struct easy3d::PolyMesh::HalfFaceConnectivity & (easy3d::PropertyArray<easy3d::PolyMesh::HalfFaceConnectivity>::*)(size_t)) &easy3d::PropertyArray<easy3d::PolyMesh::HalfFaceConnectivity>::operator[], "C++: easy3d::PropertyArray<easy3d::PolyMesh::HalfFaceConnectivity>::operator[](size_t) --> struct easy3d::PolyMesh::HalfFaceConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("_idx"));
         cl.def("assign", (class easy3d::PropertyArray<struct easy3d::PolyMesh::HalfFaceConnectivity> & (easy3d::PropertyArray<easy3d::PolyMesh::HalfFaceConnectivity>::*)(const class easy3d::PropertyArray<struct easy3d::PolyMesh::HalfFaceConnectivity> &)) &easy3d::PropertyArray<easy3d::PolyMesh::HalfFaceConnectivity>::operator=, "C++: easy3d::PropertyArray<easy3d::PolyMesh::HalfFaceConnectivity>::operator=(const class easy3d::PropertyArray<struct easy3d::PolyMesh::HalfFaceConnectivity> &) --> class easy3d::PropertyArray<struct easy3d::PolyMesh::HalfFaceConnectivity> &", pybind11::return_value_policy::automatic, pybind11::arg(""));
         cl.def("reserve", (void (easy3d::BasePropertyArray::*)(unsigned long)) &easy3d::BasePropertyArray::reserve, "Reserve memory for n elements.\n\nC++: easy3d::BasePropertyArray::reserve(unsigned long) --> void", pybind11::arg("n"));
         cl.def("resize", (void (easy3d::BasePropertyArray::*)(unsigned long)) &easy3d::BasePropertyArray::resize, "Resize storage to hold n elements.\n\nC++: easy3d::BasePropertyArray::resize(unsigned long) --> void", pybind11::arg("n"));
@@ -1476,7 +1476,7 @@ void bind_easy3d_core_poly_mesh(pybind11::module_& m)
         cl.def("type", (const class std::type_info & (easy3d::PropertyArray<easy3d::PolyMesh::CellConnectivity>::*)() const) &easy3d::PropertyArray<easy3d::PolyMesh::CellConnectivity>::type, "C++: easy3d::PropertyArray<easy3d::PolyMesh::CellConnectivity>::type() const --> const class std::type_info &", pybind11::return_value_policy::automatic);
         cl.def("data", (const struct easy3d::PolyMesh::CellConnectivity * (easy3d::PropertyArray<easy3d::PolyMesh::CellConnectivity>::*)() const) &easy3d::PropertyArray<easy3d::PolyMesh::CellConnectivity>::data, "C++: easy3d::PropertyArray<easy3d::PolyMesh::CellConnectivity>::data() const --> const struct easy3d::PolyMesh::CellConnectivity *", pybind11::return_value_policy::automatic);
         cl.def("vector", (class std::vector<struct easy3d::PolyMesh::CellConnectivity> & (easy3d::PropertyArray<easy3d::PolyMesh::CellConnectivity>::*)()) &easy3d::PropertyArray<easy3d::PolyMesh::CellConnectivity>::vector, "C++: easy3d::PropertyArray<easy3d::PolyMesh::CellConnectivity>::vector() --> class std::vector<struct easy3d::PolyMesh::CellConnectivity> &", pybind11::return_value_policy::automatic);
-        cl.def("__getitem__", (struct easy3d::PolyMesh::CellConnectivity & (easy3d::PropertyArray<easy3d::PolyMesh::CellConnectivity>::*)(unsigned long)) &easy3d::PropertyArray<easy3d::PolyMesh::CellConnectivity>::operator[], "C++: easy3d::PropertyArray<easy3d::PolyMesh::CellConnectivity>::operator[](unsigned long) --> struct easy3d::PolyMesh::CellConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("_idx"));
+        cl.def("__getitem__", (struct easy3d::PolyMesh::CellConnectivity & (easy3d::PropertyArray<easy3d::PolyMesh::CellConnectivity>::*)(size_t)) &easy3d::PropertyArray<easy3d::PolyMesh::CellConnectivity>::operator[], "C++: easy3d::PropertyArray<easy3d::PolyMesh::CellConnectivity>::operator[](size_t) --> struct easy3d::PolyMesh::CellConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("_idx"));
         cl.def("assign", (class easy3d::PropertyArray<struct easy3d::PolyMesh::CellConnectivity> & (easy3d::PropertyArray<easy3d::PolyMesh::CellConnectivity>::*)(const class easy3d::PropertyArray<struct easy3d::PolyMesh::CellConnectivity> &)) &easy3d::PropertyArray<easy3d::PolyMesh::CellConnectivity>::operator=, "C++: easy3d::PropertyArray<easy3d::PolyMesh::CellConnectivity>::operator=(const class easy3d::PropertyArray<struct easy3d::PolyMesh::CellConnectivity> &) --> class easy3d::PropertyArray<struct easy3d::PolyMesh::CellConnectivity> &", pybind11::return_value_policy::automatic, pybind11::arg(""));
         cl.def("reserve", (void (easy3d::BasePropertyArray::*)(unsigned long)) &easy3d::BasePropertyArray::reserve, "Reserve memory for n elements.\n\nC++: easy3d::BasePropertyArray::reserve(unsigned long) --> void", pybind11::arg("n"));
         cl.def("resize", (void (easy3d::BasePropertyArray::*)(unsigned long)) &easy3d::BasePropertyArray::resize, "Resize storage to hold n elements.\n\nC++: easy3d::BasePropertyArray::resize(unsigned long) --> void", pybind11::arg("n"));
@@ -1517,7 +1517,7 @@ void bind_easy3d_core_poly_mesh(pybind11::module_& m)
         cl.def("type", (const class std::type_info & (easy3d::PropertyArray<easy3d::PolyMesh::VertexConnectivity>::*)() const) &easy3d::PropertyArray<easy3d::PolyMesh::VertexConnectivity>::type, "C++: easy3d::PropertyArray<easy3d::PolyMesh::VertexConnectivity>::type() const --> const class std::type_info &", pybind11::return_value_policy::automatic);
         cl.def("data", (const struct easy3d::PolyMesh::VertexConnectivity * (easy3d::PropertyArray<easy3d::PolyMesh::VertexConnectivity>::*)() const) &easy3d::PropertyArray<easy3d::PolyMesh::VertexConnectivity>::data, "C++: easy3d::PropertyArray<easy3d::PolyMesh::VertexConnectivity>::data() const --> const struct easy3d::PolyMesh::VertexConnectivity *", pybind11::return_value_policy::automatic);
         cl.def("vector", (class std::vector<struct easy3d::PolyMesh::VertexConnectivity> & (easy3d::PropertyArray<easy3d::PolyMesh::VertexConnectivity>::*)()) &easy3d::PropertyArray<easy3d::PolyMesh::VertexConnectivity>::vector, "C++: easy3d::PropertyArray<easy3d::PolyMesh::VertexConnectivity>::vector() --> class std::vector<struct easy3d::PolyMesh::VertexConnectivity> &", pybind11::return_value_policy::automatic);
-        cl.def("__getitem__", (struct easy3d::PolyMesh::VertexConnectivity & (easy3d::PropertyArray<easy3d::PolyMesh::VertexConnectivity>::*)(unsigned long)) &easy3d::PropertyArray<easy3d::PolyMesh::VertexConnectivity>::operator[], "C++: easy3d::PropertyArray<easy3d::PolyMesh::VertexConnectivity>::operator[](unsigned long) --> struct easy3d::PolyMesh::VertexConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("_idx"));
+        cl.def("__getitem__", (struct easy3d::PolyMesh::VertexConnectivity & (easy3d::PropertyArray<easy3d::PolyMesh::VertexConnectivity>::*)(size_t)) &easy3d::PropertyArray<easy3d::PolyMesh::VertexConnectivity>::operator[], "C++: easy3d::PropertyArray<easy3d::PolyMesh::VertexConnectivity>::operator[](size_t) --> struct easy3d::PolyMesh::VertexConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("_idx"));
         cl.def("assign", (class easy3d::PropertyArray<struct easy3d::PolyMesh::VertexConnectivity> & (easy3d::PropertyArray<easy3d::PolyMesh::VertexConnectivity>::*)(const class easy3d::PropertyArray<struct easy3d::PolyMesh::VertexConnectivity> &)) &easy3d::PropertyArray<easy3d::PolyMesh::VertexConnectivity>::operator=, "C++: easy3d::PropertyArray<easy3d::PolyMesh::VertexConnectivity>::operator=(const class easy3d::PropertyArray<struct easy3d::PolyMesh::VertexConnectivity> &) --> class easy3d::PropertyArray<struct easy3d::PolyMesh::VertexConnectivity> &", pybind11::return_value_policy::automatic, pybind11::arg(""));
         cl.def("reserve", (void (easy3d::BasePropertyArray::*)(unsigned long)) &easy3d::BasePropertyArray::reserve, "Reserve memory for n elements.\n\nC++: easy3d::BasePropertyArray::reserve(unsigned long) --> void", pybind11::arg("n"));
         cl.def("resize", (void (easy3d::BasePropertyArray::*)(unsigned long)) &easy3d::BasePropertyArray::resize, "Resize storage to hold n elements.\n\nC++: easy3d::BasePropertyArray::resize(unsigned long) --> void", pybind11::arg("n"));
@@ -1558,7 +1558,7 @@ void bind_easy3d_core_poly_mesh(pybind11::module_& m)
         cl.def("type", (const class std::type_info & (easy3d::PropertyArray<easy3d::PolyMesh::EdgeConnectivity>::*)() const) &easy3d::PropertyArray<easy3d::PolyMesh::EdgeConnectivity>::type, "C++: easy3d::PropertyArray<easy3d::PolyMesh::EdgeConnectivity>::type() const --> const class std::type_info &", pybind11::return_value_policy::automatic);
         cl.def("data", (const struct easy3d::PolyMesh::EdgeConnectivity * (easy3d::PropertyArray<easy3d::PolyMesh::EdgeConnectivity>::*)() const) &easy3d::PropertyArray<easy3d::PolyMesh::EdgeConnectivity>::data, "C++: easy3d::PropertyArray<easy3d::PolyMesh::EdgeConnectivity>::data() const --> const struct easy3d::PolyMesh::EdgeConnectivity *", pybind11::return_value_policy::automatic);
         cl.def("vector", (class std::vector<struct easy3d::PolyMesh::EdgeConnectivity> & (easy3d::PropertyArray<easy3d::PolyMesh::EdgeConnectivity>::*)()) &easy3d::PropertyArray<easy3d::PolyMesh::EdgeConnectivity>::vector, "C++: easy3d::PropertyArray<easy3d::PolyMesh::EdgeConnectivity>::vector() --> class std::vector<struct easy3d::PolyMesh::EdgeConnectivity> &", pybind11::return_value_policy::automatic);
-        cl.def("__getitem__", (struct easy3d::PolyMesh::EdgeConnectivity & (easy3d::PropertyArray<easy3d::PolyMesh::EdgeConnectivity>::*)(unsigned long)) &easy3d::PropertyArray<easy3d::PolyMesh::EdgeConnectivity>::operator[], "C++: easy3d::PropertyArray<easy3d::PolyMesh::EdgeConnectivity>::operator[](unsigned long) --> struct easy3d::PolyMesh::EdgeConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("_idx"));
+        cl.def("__getitem__", (struct easy3d::PolyMesh::EdgeConnectivity & (easy3d::PropertyArray<easy3d::PolyMesh::EdgeConnectivity>::*)(size_t)) &easy3d::PropertyArray<easy3d::PolyMesh::EdgeConnectivity>::operator[], "C++: easy3d::PropertyArray<easy3d::PolyMesh::EdgeConnectivity>::operator[](size_t) --> struct easy3d::PolyMesh::EdgeConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("_idx"));
         cl.def("assign", (class easy3d::PropertyArray<struct easy3d::PolyMesh::EdgeConnectivity> & (easy3d::PropertyArray<easy3d::PolyMesh::EdgeConnectivity>::*)(const class easy3d::PropertyArray<struct easy3d::PolyMesh::EdgeConnectivity> &)) &easy3d::PropertyArray<easy3d::PolyMesh::EdgeConnectivity>::operator=, "C++: easy3d::PropertyArray<easy3d::PolyMesh::EdgeConnectivity>::operator=(const class easy3d::PropertyArray<struct easy3d::PolyMesh::EdgeConnectivity> &) --> class easy3d::PropertyArray<struct easy3d::PolyMesh::EdgeConnectivity> &", pybind11::return_value_policy::automatic, pybind11::arg(""));
         cl.def("reserve", (void (easy3d::BasePropertyArray::*)(unsigned long)) &easy3d::BasePropertyArray::reserve, "Reserve memory for n elements.\n\nC++: easy3d::BasePropertyArray::reserve(unsigned long) --> void", pybind11::arg("n"));
         cl.def("resize", (void (easy3d::BasePropertyArray::*)(unsigned long)) &easy3d::BasePropertyArray::resize, "Resize storage to hold n elements.\n\nC++: easy3d::BasePropertyArray::resize(unsigned long) --> void", pybind11::arg("n"));

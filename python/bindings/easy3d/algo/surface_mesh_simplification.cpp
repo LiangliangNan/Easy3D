@@ -1,4 +1,4 @@
-#include <easy3d/algo/surface_mesh_components.h>
+﻿#include <easy3d/algo/surface_mesh_components.h>
 #include <easy3d/algo/surface_mesh_simplification.h>
 #include <easy3d/algo/surface_mesh_stitching.h>
 #include <easy3d/algo/surface_mesh_subdivision.h>
@@ -36,7 +36,7 @@
 struct PyCallBack_easy3d_Property_easy3d_Quadric_t : public easy3d::Property<easy3d::Quadric> {
     using easy3d::Property<easy3d::Quadric>::Property;
 
-    class easy3d::Quadric & operator[](unsigned long a0) override {
+    class easy3d::Quadric & operator[](size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::Property<easy3d::Quadric> *>(this), "__getitem__");
         if (overload) {
@@ -55,7 +55,7 @@ struct PyCallBack_easy3d_Property_easy3d_Quadric_t : public easy3d::Property<eas
 struct PyCallBack_easy3d_Property_easy3d_NormalCone_t : public easy3d::Property<easy3d::NormalCone> {
     using easy3d::Property<easy3d::NormalCone>::Property;
 
-    class easy3d::NormalCone & operator[](unsigned long a0) override {
+    class easy3d::NormalCone & operator[](size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::Property<easy3d::NormalCone> *>(this), "__getitem__");
         if (overload) {

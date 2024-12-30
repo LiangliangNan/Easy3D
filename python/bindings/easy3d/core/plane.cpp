@@ -1,4 +1,4 @@
-#include <easy3d/core/line.h>
+﻿#include <easy3d/core/line.h>
 #include <easy3d/core/plane.h>
 #include <easy3d/core/vec.h>
 
@@ -30,7 +30,7 @@ void bind_easy3d_core_plane(pybind11::module_& m)
         cl.def("b", (float (easy3d::GenericPlane<float>::*)() const) &easy3d::GenericPlane<float>::b, "C++: easy3d::GenericPlane<float>::b() const --> float");
         cl.def("c", (float (easy3d::GenericPlane<float>::*)() const) &easy3d::GenericPlane<float>::c, "C++: easy3d::GenericPlane<float>::c() const --> float");
         cl.def("d", (float (easy3d::GenericPlane<float>::*)() const) &easy3d::GenericPlane<float>::d, "C++: easy3d::GenericPlane<float>::d() const --> float");
-        cl.def("__getitem__", (float & (easy3d::GenericPlane<float>::*)(unsigned long)) &easy3d::GenericPlane<float>::operator[], "C++: easy3d::GenericPlane<float>::operator[](unsigned long) --> float &", pybind11::return_value_policy::automatic, pybind11::arg("idx"));
+        cl.def("__getitem__", (float & (easy3d::GenericPlane<float>::*)(size_t)) &easy3d::GenericPlane<float>::operator[], "C++: easy3d::GenericPlane<float>::operator[](size_t) --> float &", pybind11::return_value_policy::automatic, pybind11::arg("idx"));
         cl.def("normal", (class easy3d::Vec<3, float> (easy3d::GenericPlane<float>::*)() const) &easy3d::GenericPlane<float>::normal, "C++: easy3d::GenericPlane<float>::normal() const --> class easy3d::Vec<3, float>");
         cl.def("point", (class easy3d::Vec<3, float> (easy3d::GenericPlane<float>::*)() const) &easy3d::GenericPlane<float>::point, "C++: easy3d::GenericPlane<float>::point() const --> class easy3d::Vec<3, float>");
         cl.def("base1", (class easy3d::Vec<3, float> (easy3d::GenericPlane<float>::*)() const) &easy3d::GenericPlane<float>::base1, "C++: easy3d::GenericPlane<float>::base1() const --> class easy3d::Vec<3, float>");

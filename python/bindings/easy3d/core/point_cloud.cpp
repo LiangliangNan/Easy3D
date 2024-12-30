@@ -1,4 +1,4 @@
-#include <easy3d/core/point_cloud.h>
+﻿#include <easy3d/core/point_cloud.h>
 #include <easy3d/core/property.h>
 #include <easy3d/renderer/renderer.h>
 
@@ -56,7 +56,7 @@ struct PyCallBack_easy3d_PointCloud_VertexProperty_easy3d_Vec_3_float_t : public
 	using easy3d::PointCloud::VertexProperty<easy3d::vec3>::VertexProperty;
 
 	using _binder_ret_0 = easy3d::vec3 &;
-	_binder_ret_0 operator[](unsigned long a0) override {
+	_binder_ret_0 operator[](size_t a0) override {
 		pybind11::gil_scoped_acquire gil;
 		pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PointCloud::VertexProperty<easy3d::vec3> *>(this), "__getitem__");
 		if (overload) {
@@ -273,7 +273,7 @@ void bind_easy3d_core_point_cloud(pybind11::module_& m)
 		 	cl.def("__getitem__", (easy3d::vec3 & (easy3d::PointCloud::VertexProperty<easy3d::vec3>::*)(struct easy3d::PointCloud::Vertex)) &easy3d::PointCloud::VertexProperty<easy3d::vec3>::operator[], "C++: easy3d::PointCloud::VertexProperty<easy3d::vec3>::operator[](struct easy3d::PointCloud::Vertex) --> easy3d::vec3 &", pybind11::return_value_policy::automatic, pybind11::arg("v"));
 		 	cl.def("assign", (class easy3d::PointCloud::VertexProperty<easy3d::vec3 > & (easy3d::PointCloud::VertexProperty<easy3d::vec3>::*)(const class easy3d::PointCloud::VertexProperty<easy3d::vec3 > &)) &easy3d::PointCloud::VertexProperty<easy3d::vec3>::operator=, "C++: easy3d::PointCloud::VertexProperty<easy3d::vec3>::operator=(const class easy3d::PointCloud::VertexProperty<easy3d::vec3 > &) --> class easy3d::PointCloud::VertexProperty<easy3d::vec3 > &", pybind11::return_value_policy::automatic, pybind11::arg(""));
 		 	cl.def("reset", (void (easy3d::Property<easy3d::vec3>::*)()) &easy3d::Property<easy3d::vec3>::reset, "C++: easy3d::Property<easy3d::vec3>::reset() --> void");
-		 	cl.def("__getitem__", (easy3d::vec3 & (easy3d::Property<easy3d::vec3>::*)(unsigned long)) &easy3d::Property<easy3d::vec3>::operator[], "C++: easy3d::Property<easy3d::vec3>::operator[](unsigned long) --> easy3d::vec3 &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+		 	cl.def("__getitem__", (easy3d::vec3 & (easy3d::Property<easy3d::vec3>::*)(size_t)) &easy3d::Property<easy3d::vec3>::operator[], "C++: easy3d::Property<easy3d::vec3>::operator[](size_t) --> easy3d::vec3 &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
 		 	cl.def("data", (const easy3d::vec3 * (easy3d::Property<easy3d::vec3>::*)() const) &easy3d::Property<easy3d::vec3>::data, "C++: easy3d::Property<easy3d::vec3>::data() const --> const easy3d::vec3 *", pybind11::return_value_policy::automatic);
 		 	cl.def("vector", (class std::vector<easy3d::vec3 > & (easy3d::Property<easy3d::vec3>::*)()) &easy3d::Property<easy3d::vec3>::vector, "C++: easy3d::Property<easy3d::vec3>::vector() --> class std::vector<easy3d::vec3 > &", pybind11::return_value_policy::automatic);
 		 	cl.def("array", (class easy3d::PropertyArray<easy3d::vec3 > & (easy3d::Property<easy3d::vec3>::*)()) &easy3d::Property<easy3d::vec3>::array, "C++: easy3d::Property<easy3d::vec3>::array() --> class easy3d::PropertyArray<easy3d::vec3 > &", pybind11::return_value_policy::automatic);
