@@ -204,7 +204,8 @@ void bind_video(pybind11::module_ &m) {
 #endif
 
 
-PYBIND11_MODULE(PyEasy3D, root_module) {
+// PyEasy3D_NAME is a preprocessor definition (defined in the CMakeList), which sets the name of the Python module.
+PYBIND11_MODULE(PyEasy3D_NAME, root_module) {
     root_module.doc() = "Python bindings for Easy3D";
 
 #define EASY3D_FLAT_BINDING

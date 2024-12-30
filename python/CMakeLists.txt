@@ -122,41 +122,48 @@ endif ()
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE PYBIND11_SIMPLE_GIL_SAFE_ABI) # to use the Python Stable ABI
 
+set(MODULE_NAME "PyEasy3D") # Sets the base name of the output file
+target_compile_definitions(${PROJECT_NAME} PUBLIC "PyEasy3D_NAME=${MODULE_NAME}")
+
 # Platform-specific suffix for Python extensions
-if (WIN32)
-    set(SUFFIX ".pyd")
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set(MODULE_SUFFIX ".pyd")
 else()
-    set(SUFFIX ".so")
+    set(MODULE_SUFFIX ".so")
 endif()
-set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ${SUFFIX} FOLDER "python")
+# Set the target properties with the computed suffix
+set_target_properties(${PROJECT_NAME} PROPERTIES
+        OUTPUT_NAME ${MODULE_NAME}  # Sets the base name of the output file
+        PREFIX ""                   # Avoid prefixes like 'lib'
+        SUFFIX "${MODULE_SUFFIX}"   # Use the computed suffix
+        FOLDER "python"
+        )
+
 
 
 # The following commands are actually not necessary for generating bindings.
 # They are here to make it easier for the installation of the generated Python module.
 
-# Specify the output directory for the Python package
-set(PYTHON_PACKAGE_DIR "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/python/easy3d")
-
 # Ensure the directory exists
-file(MAKE_DIRECTORY ${PYTHON_PACKAGE_DIR})
+file(MAKE_DIRECTORY ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d)
 
-# Generate the __init__.py file
-file(WRITE ${PYTHON_PACKAGE_DIR}/__init__.py
-        "# Alias for the PyEasy3D module\n"
+# Generate the __init__.py file for the Python package, which imports the compiled module
+file(WRITE ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/__init__.py
+        "# Alias for the ${MODULE_NAME} module\n"
         "try:\n"
-        "    from .PyEasy3D import *\n"
+        "    from .${MODULE_NAME} import *\n"
         "except ImportError:\n"
-        "    from PyEasy3D import *\n"
+        "    from ${MODULE_NAME} import *\n"
         )
 
-# Path to the compiled PyEasy3D module
-set(COMPILED_MODULE "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${PROJECT_NAME}.so")
+# Path to the compiled module
+set(COMPILED_MODULE "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${MODULE_NAME}${MODULE_SUFFIX}")
 
-# Post-build command to copy compiled PyEasy3D module to the Python package directory
+# Post-build command to copy compiled module to the Python package directory
 add_custom_command(
         TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> ${PYTHON_PACKAGE_DIR}/
-        COMMENT "Copying PyEasy3D module to Python package"
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
+        COMMENT "Copying ${MODULE_NAME} module to Python package"
 )
 
 # Copy setup.py to the Python package directory

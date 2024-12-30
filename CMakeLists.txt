@@ -299,6 +299,8 @@ if (Easy3D_BUILD_TESTS)
 endif ()
 
 if (Easy3D_BUILD_PYTHON_BINDINGS)
+    # Specify the output directory for the Python package
+    set(Easy3D_PYTHON_PACKAGE_DIR "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/python")
     add_subdirectory(python)
 endif ()
 
@@ -386,6 +388,9 @@ message(STATUS "----------------------------------------------------------------
 
 message(STATUS "    Build directory        :  ${Easy3D_BINARY_DIR}")
 message(STATUS "    Installation directory :  ${CMAKE_INSTALL_PREFIX}")
+if (Easy3D_BUILD_PYTHON_BINDINGS)
+message(STATUS "    Bindings directory     :  ${Easy3D_PYTHON_PACKAGE_DIR}")
+endif ()
 
 message(STATUS "****************************************************************************")
 
