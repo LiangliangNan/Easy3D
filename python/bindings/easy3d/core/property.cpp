@@ -1,4 +1,4 @@
-#include <easy3d/core/property.h>
+﻿#include <easy3d/core/property.h>
 #include <easy3d/core/types.h>
 
 #include <memory>
@@ -21,7 +21,7 @@
 struct PyCallBack_easy3d_Property_float_t : public easy3d::Property<float> {
     using easy3d::Property<float>::Property;
 
-    float & operator[](unsigned long a0) override {
+    float & operator[](size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::Property<float> *>(this), "__getitem__");
         if (overload) {
@@ -40,7 +40,7 @@ struct PyCallBack_easy3d_Property_float_t : public easy3d::Property<float> {
 struct PyCallBack_easy3d_Property_double_t : public easy3d::Property<double> {
     using easy3d::Property<double>::Property;
 
-    double & operator[](unsigned long a0) override {
+    double & operator[](size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::Property<double> *>(this), "__getitem__");
         if (overload) {
@@ -59,7 +59,7 @@ struct PyCallBack_easy3d_Property_double_t : public easy3d::Property<double> {
 struct PyCallBack_easy3d_Property_int_t : public easy3d::Property<int> {
     using easy3d::Property<int>::Property;
 
-    int & operator[](unsigned long a0) override {
+    int & operator[](size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::Property<int> *>(this), "__getitem__");
         if (overload) {
@@ -80,7 +80,7 @@ struct PyCallBack_easy3d_Property_easy3d_Vec_3_float_t : public easy3d::Property
     using easy3d::Property<easy3d::Vec<3, float>>::Property;
 
     using _binder_ret_0 = easy3d::Vec<3, float> &;
-    _binder_ret_0 operator[](unsigned long a0) override {
+    _binder_ret_0 operator[](size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::Property<easy3d::Vec<3, float>> *>(this), "__getitem__");
         if (overload) {
@@ -100,7 +100,7 @@ struct PyCallBack_easy3d_Property_easy3d_Vec_3_float_t : public easy3d::Property
 struct PyCallBack_easy3d_BasePropertyArray : public easy3d::BasePropertyArray {
 	using easy3d::BasePropertyArray::BasePropertyArray;
 
-	void reserve(unsigned long a0) override {
+	void reserve(size_t a0) override {
 		pybind11::gil_scoped_acquire gil;
 		pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::BasePropertyArray *>(this), "reserve");
 		if (overload) {
@@ -113,7 +113,7 @@ struct PyCallBack_easy3d_BasePropertyArray : public easy3d::BasePropertyArray {
 		}
 		pybind11::pybind11_fail("Tried to call pure virtual function \"BasePropertyArray::reserve\"");
 	}
-	void resize(unsigned long a0) override {
+	void resize(size_t a0) override {
 		pybind11::gil_scoped_acquire gil;
 		pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::BasePropertyArray *>(this), "resize");
 		if (overload) {
@@ -152,7 +152,7 @@ struct PyCallBack_easy3d_BasePropertyArray : public easy3d::BasePropertyArray {
 		}
 		pybind11::pybind11_fail("Tried to call pure virtual function \"BasePropertyArray::push_back\"");
 	}
-	void reset(unsigned long a0) override {
+	void reset(size_t a0) override {
 		pybind11::gil_scoped_acquire gil;
 		pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::BasePropertyArray *>(this), "reset");
 		if (overload) {
@@ -191,7 +191,7 @@ struct PyCallBack_easy3d_BasePropertyArray : public easy3d::BasePropertyArray {
 		}
 		pybind11::pybind11_fail("Tried to call pure virtual function \"BasePropertyArray::transfer\"");
 	}
-	void swap(unsigned long a0, unsigned long a1) override {
+	void swap(size_t a0, size_t a1) override {
 		pybind11::gil_scoped_acquire gil;
 		pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::BasePropertyArray *>(this), "swap");
 		if (overload) {
@@ -204,7 +204,7 @@ struct PyCallBack_easy3d_BasePropertyArray : public easy3d::BasePropertyArray {
 		}
 		pybind11::pybind11_fail("Tried to call pure virtual function \"BasePropertyArray::swap\"");
 	}
-	void copy(unsigned long a0, unsigned long a1) override {
+	void copy(size_t a0, size_t a1) override {
 		pybind11::gil_scoped_acquire gil;
 		pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::BasePropertyArray *>(this), "copy");
 		if (overload) {
@@ -262,7 +262,7 @@ struct PyCallBack_easy3d_BasePropertyArray : public easy3d::BasePropertyArray {
 struct PyCallBack_easy3d_PropertyArray_bool_t : public easy3d::PropertyArray<bool> {
     using easy3d::PropertyArray<bool>::PropertyArray;
 
-    void reserve(unsigned long a0) override {
+    void reserve(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<bool> *>(this), "reserve");
         if (overload) {
@@ -275,7 +275,7 @@ struct PyCallBack_easy3d_PropertyArray_bool_t : public easy3d::PropertyArray<boo
         }
         return PropertyArray::reserve(a0);
     }
-    void resize(unsigned long a0) override {
+    void resize(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<bool> *>(this), "resize");
         if (overload) {
@@ -301,7 +301,7 @@ struct PyCallBack_easy3d_PropertyArray_bool_t : public easy3d::PropertyArray<boo
         }
         return PropertyArray::push_back();
     }
-    void reset(unsigned long a0) override {
+    void reset(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<bool> *>(this), "reset");
         if (overload) {
@@ -353,7 +353,7 @@ struct PyCallBack_easy3d_PropertyArray_bool_t : public easy3d::PropertyArray<boo
         }
         return PropertyArray::shrink_to_fit();
     }
-    void swap(unsigned long a0, unsigned long a1) override {
+    void swap(size_t a0, size_t a1) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<bool> *>(this), "swap");
         if (overload) {
@@ -366,7 +366,7 @@ struct PyCallBack_easy3d_PropertyArray_bool_t : public easy3d::PropertyArray<boo
         }
         return PropertyArray::swap(a0, a1);
     }
-    void copy(unsigned long a0, unsigned long a1) override {
+    void copy(size_t a0, size_t a1) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<bool> *>(this), "copy");
         if (overload) {
@@ -426,7 +426,7 @@ struct PyCallBack_easy3d_Property_std_vector_easy3d_Vec_3_float_t : public easy3
     using easy3d::Property<std::vector<easy3d::Vec<3, float> >>::Property;
 
     using _binder_ret_0 = std::vector<class easy3d::Vec<3, float> > &;
-    _binder_ret_0 operator[](unsigned long a0) override {
+    _binder_ret_0 operator[](size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::Property<std::vector<easy3d::Vec<3, float> >> *>(this), "__getitem__");
         if (overload) {
@@ -445,7 +445,7 @@ struct PyCallBack_easy3d_Property_std_vector_easy3d_Vec_3_float_t : public easy3
 struct PyCallBack_easy3d_PropertyArray_easy3d_Vec_3_float_t : public easy3d::PropertyArray<easy3d::Vec<3, float>> {
     using easy3d::PropertyArray<easy3d::Vec<3, float>>::PropertyArray;
 
-    void reserve(unsigned long a0) override {
+    void reserve(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::Vec<3, float>> *>(this), "reserve");
         if (overload) {
@@ -458,7 +458,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_Vec_3_float_t : public easy3d::Pro
         }
         return PropertyArray::reserve(a0);
     }
-    void resize(unsigned long a0) override {
+    void resize(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::Vec<3, float>> *>(this), "resize");
         if (overload) {
@@ -484,7 +484,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_Vec_3_float_t : public easy3d::Pro
         }
         return PropertyArray::push_back();
     }
-    void reset(unsigned long a0) override {
+    void reset(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::Vec<3, float>> *>(this), "reset");
         if (overload) {
@@ -536,7 +536,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_Vec_3_float_t : public easy3d::Pro
         }
         return PropertyArray::shrink_to_fit();
     }
-    void swap(unsigned long a0, unsigned long a1) override {
+    void swap(size_t a0, size_t a1) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::Vec<3, float>> *>(this), "swap");
         if (overload) {
@@ -549,7 +549,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_Vec_3_float_t : public easy3d::Pro
         }
         return PropertyArray::swap(a0, a1);
     }
-    void copy(unsigned long a0, unsigned long a1) override {
+    void copy(size_t a0, size_t a1) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::Vec<3, float>> *>(this), "copy");
         if (overload) {
@@ -627,7 +627,7 @@ void bind_easy3d_core_property(pybind11::module_& m)
         cl.def( pybind11::init( [](PyCallBack_easy3d_Property_easy3d_Vec_3_float_t const &o){ return new PyCallBack_easy3d_Property_easy3d_Vec_3_float_t(o); } ) );
         cl.def( pybind11::init( [](easy3d::Property<easy3d::Vec<3, float>> const &o){ return new easy3d::Property<easy3d::Vec<3, float>>(o); } ) );
         cl.def("reset", (void (easy3d::Property<easy3d::Vec<3, float>>::*)()) &easy3d::Property<easy3d::Vec<3, float>>::reset, "C++: easy3d::Property<easy3d::Vec<3, float>>::reset() --> void");
-        cl.def("__getitem__", (class easy3d::Vec<3, float> & (easy3d::Property<easy3d::Vec<3, float>>::*)(unsigned long)) &easy3d::Property<easy3d::Vec<3, float>>::operator[], "C++: easy3d::Property<easy3d::Vec<3, float>>::operator[](unsigned long) --> class easy3d::Vec<3, float> &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+        cl.def("__getitem__", (class easy3d::Vec<3, float> & (easy3d::Property<easy3d::Vec<3, float>>::*)(size_t)) &easy3d::Property<easy3d::Vec<3, float>>::operator[], "C++: easy3d::Property<easy3d::Vec<3, float>>::operator[](size_t) --> class easy3d::Vec<3, float> &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
         cl.def("data", (const class easy3d::Vec<3, float> * (easy3d::Property<easy3d::Vec<3, float>>::*)() const) &easy3d::Property<easy3d::Vec<3, float>>::data, "C++: easy3d::Property<easy3d::Vec<3, float>>::data() const --> const class easy3d::Vec<3, float> *", pybind11::return_value_policy::automatic);
         cl.def("vector", (class std::vector<class easy3d::Vec<3, float> > & (easy3d::Property<easy3d::Vec<3, float>>::*)()) &easy3d::Property<easy3d::Vec<3, float>>::vector, "C++: easy3d::Property<easy3d::Vec<3, float>>::vector() --> class std::vector<class easy3d::Vec<3, float> > &", pybind11::return_value_policy::automatic);
         cl.def("array", (class easy3d::PropertyArray<class easy3d::Vec<3, float> > & (easy3d::Property<easy3d::Vec<3, float>>::*)()) &easy3d::Property<easy3d::Vec<3, float>>::array, "C++: easy3d::Property<easy3d::Vec<3, float>>::array() --> class easy3d::PropertyArray<class easy3d::Vec<3, float> > &", pybind11::return_value_policy::automatic);
@@ -644,7 +644,7 @@ void bind_easy3d_core_property(pybind11::module_& m)
         cl.def( pybind11::init( [](PyCallBack_easy3d_Property_float_t const &o){ return new PyCallBack_easy3d_Property_float_t(o); } ) );
         cl.def( pybind11::init( [](easy3d::Property<float> const &o){ return new easy3d::Property<float>(o); } ) );
         cl.def("reset", (void (easy3d::Property<float>::*)()) &easy3d::Property<float>::reset, "C++: easy3d::Property<float>::reset() --> void");
-        cl.def("__getitem__", (float & (easy3d::Property<float>::*)(unsigned long)) &easy3d::Property<float>::operator[], "C++: easy3d::Property<float>::operator[](unsigned long) --> float &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+        cl.def("__getitem__", (float & (easy3d::Property<float>::*)(size_t)) &easy3d::Property<float>::operator[], "C++: easy3d::Property<float>::operator[](size_t) --> float &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
         cl.def("data", (const float * (easy3d::Property<float>::*)() const) &easy3d::Property<float>::data, "C++: easy3d::Property<float>::data() const --> const float *", pybind11::return_value_policy::automatic);
         cl.def("vector", (class std::vector<float> & (easy3d::Property<float>::*)()) &easy3d::Property<float>::vector, "C++: easy3d::Property<float>::vector() --> class std::vector<float> &", pybind11::return_value_policy::automatic);
         cl.def("array", (class easy3d::PropertyArray<float> & (easy3d::Property<float>::*)()) &easy3d::Property<float>::array, "C++: easy3d::Property<float>::array() --> class easy3d::PropertyArray<float> &", pybind11::return_value_policy::automatic);
@@ -658,7 +658,7 @@ void bind_easy3d_core_property(pybind11::module_& m)
         cl.def( pybind11::init<class easy3d::PropertyArray<double> *>(), pybind11::arg("p") );
 
         cl.def("reset", (void (easy3d::Property<double>::*)()) &easy3d::Property<double>::reset, "C++: easy3d::Property<double>::reset() --> void");
-        cl.def("__getitem__", (double & (easy3d::Property<double>::*)(unsigned long)) &easy3d::Property<double>::operator[], "C++: easy3d::Property<double>::operator[](unsigned long) --> double &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+        cl.def("__getitem__", (double & (easy3d::Property<double>::*)(size_t)) &easy3d::Property<double>::operator[], "C++: easy3d::Property<double>::operator[](size_t) --> double &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
         cl.def("data", (const double * (easy3d::Property<double>::*)() const) &easy3d::Property<double>::data, "C++: easy3d::Property<double>::data() const --> const double *", pybind11::return_value_policy::automatic);
         cl.def("vector", (class std::vector<double> & (easy3d::Property<double>::*)()) &easy3d::Property<double>::vector, "C++: easy3d::Property<double>::vector() --> class std::vector<double> &", pybind11::return_value_policy::automatic);
         cl.def("array", (class easy3d::PropertyArray<double> & (easy3d::Property<double>::*)()) &easy3d::Property<double>::array, "C++: easy3d::Property<double>::array() --> class easy3d::PropertyArray<double> &", pybind11::return_value_policy::automatic);
@@ -674,7 +674,7 @@ void bind_easy3d_core_property(pybind11::module_& m)
         cl.def( pybind11::init( [](PyCallBack_easy3d_Property_int_t const &o){ return new PyCallBack_easy3d_Property_int_t(o); } ) );
         cl.def( pybind11::init( [](easy3d::Property<int> const &o){ return new easy3d::Property<int>(o); } ) );
         cl.def("reset", (void (easy3d::Property<int>::*)()) &easy3d::Property<int>::reset, "C++: easy3d::Property<int>::reset() --> void");
-        cl.def("__getitem__", (int & (easy3d::Property<int>::*)(unsigned long)) &easy3d::Property<int>::operator[], "C++: easy3d::Property<int>::operator[](unsigned long) --> int &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+        cl.def("__getitem__", (int & (easy3d::Property<int>::*)(size_t)) &easy3d::Property<int>::operator[], "C++: easy3d::Property<int>::operator[](unsigned long) --> int &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
         cl.def("data", (const int * (easy3d::Property<int>::*)() const) &easy3d::Property<int>::data, "C++: easy3d::Property<int>::data() const --> const int *", pybind11::return_value_policy::automatic);
         cl.def("vector", (class std::vector<int> & (easy3d::Property<int>::*)()) &easy3d::Property<int>::vector, "C++: easy3d::Property<int>::vector() --> class std::vector<int> &", pybind11::return_value_policy::automatic);
         cl.def("array", (class easy3d::PropertyArray<int> & (easy3d::Property<int>::*)()) &easy3d::Property<int>::array, "C++: easy3d::Property<int>::array() --> class easy3d::PropertyArray<int> &", pybind11::return_value_policy::automatic);
@@ -704,7 +704,7 @@ void bind_easy3d_core_property(pybind11::module_& m)
 		cl.def("shrink_to_fit", (void (easy3d::PropertyContainer::*)() const) &easy3d::PropertyContainer::shrink_to_fit, "C++: easy3d::PropertyContainer::shrink_to_fit() const --> void");
 		cl.def("push_back", (void (easy3d::PropertyContainer::*)()) &easy3d::PropertyContainer::push_back, "C++: easy3d::PropertyContainer::push_back() --> void");
 		cl.def("reset", (void (easy3d::PropertyContainer::*)(unsigned long)) &easy3d::PropertyContainer::reset, "C++: easy3d::PropertyContainer::reset(unsigned long) --> void", pybind11::arg("idx"));
-		cl.def("swap", (void (easy3d::PropertyContainer::*)(unsigned long, unsigned long) const) &easy3d::PropertyContainer::swap, "C++: easy3d::PropertyContainer::swap(unsigned long, unsigned long) const --> void", pybind11::arg("i0"), pybind11::arg("i1"));
+		cl.def("swap", (void (easy3d::PropertyContainer::*)(size_t, size_t) const) &easy3d::PropertyContainer::swap, "C++: easy3d::PropertyContainer::swap(size_t, size_t) const --> void", pybind11::arg("i0"), pybind11::arg("i1"));
 		cl.def("swap", (void (easy3d::PropertyContainer::*)(class easy3d::PropertyContainer &)) &easy3d::PropertyContainer::swap, "C++: easy3d::PropertyContainer::swap(class easy3d::PropertyContainer &) --> void", pybind11::arg("other"));
 		cl.def("copy", (void (easy3d::PropertyContainer::*)(unsigned long, unsigned long) const) &easy3d::PropertyContainer::copy, "C++: easy3d::PropertyContainer::copy(unsigned long, unsigned long) const --> void", pybind11::arg("from"), pybind11::arg("to"));
 		cl.def("arrays", (class std::vector<class easy3d::BasePropertyArray *> & (easy3d::PropertyContainer::*)()) &easy3d::PropertyContainer::arrays, "C++: easy3d::PropertyContainer::arrays() --> class std::vector<class easy3d::BasePropertyArray *> &", pybind11::return_value_policy::automatic);
@@ -716,7 +716,7 @@ void bind_easy3d_core_property(pybind11::module_& m)
         cl.def( pybind11::init<class easy3d::PropertyArray<class std::vector<class easy3d::Vec<3, float> > > *>(), pybind11::arg("p") );
 
         cl.def("reset", (void (easy3d::Property<std::vector<easy3d::Vec<3, float> >>::*)()) &easy3d::Property<std::vector<easy3d::Vec<3, float>>>::reset, "C++: easy3d::Property<std::vector<easy3d::Vec<3, float>>>::reset() --> void");
-        cl.def("__getitem__", (class std::vector<class easy3d::Vec<3, float> > & (easy3d::Property<std::vector<easy3d::Vec<3, float> >>::*)(unsigned long)) &easy3d::Property<std::vector<easy3d::Vec<3, float>>>::operator[], "C++: easy3d::Property<std::vector<easy3d::Vec<3, float>>>::operator[](unsigned long) --> class std::vector<class easy3d::Vec<3, float> > &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+        cl.def("__getitem__", (class std::vector<class easy3d::Vec<3, float> > & (easy3d::Property<std::vector<easy3d::Vec<3, float> >>::*)(size_t)) &easy3d::Property<std::vector<easy3d::Vec<3, float>>>::operator[], "C++: easy3d::Property<std::vector<easy3d::Vec<3, float>>>::operator[](size_t) --> class std::vector<class easy3d::Vec<3, float> > &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
         cl.def("data", (const class std::vector<class easy3d::Vec<3, float> > * (easy3d::Property<std::vector<easy3d::Vec<3, float> >>::*)() const) &easy3d::Property<std::vector<easy3d::Vec<3, float>>>::data, "C++: easy3d::Property<std::vector<easy3d::Vec<3, float>>>::data() const --> const class std::vector<class easy3d::Vec<3, float> > *", pybind11::return_value_policy::automatic);
         cl.def("vector", (class std::vector<class std::vector<class easy3d::Vec<3, float> > > & (easy3d::Property<std::vector<easy3d::Vec<3, float> >>::*)()) &easy3d::Property<std::vector<easy3d::Vec<3, float>>>::vector, "C++: easy3d::Property<std::vector<easy3d::Vec<3, float>>>::vector() --> class std::vector<class std::vector<class easy3d::Vec<3, float> > > &", pybind11::return_value_policy::automatic);
         cl.def("array", (class easy3d::PropertyArray<class std::vector<class easy3d::Vec<3, float> > > & (easy3d::Property<std::vector<easy3d::Vec<3, float> >>::*)()) &easy3d::Property<std::vector<easy3d::Vec<3, float>>>::array, "C++: easy3d::Property<std::vector<easy3d::Vec<3, float>>>::array() --> class easy3d::PropertyArray<class std::vector<class easy3d::Vec<3, float> > > &", pybind11::return_value_policy::automatic);
@@ -769,7 +769,7 @@ void bind_easy3d_core_property(pybind11::module_& m)
         cl.def("type", (const class std::type_info & (easy3d::PropertyArray<easy3d::Vec<3, float>>::*)() const) &easy3d::PropertyArray<easy3d::Vec<3, float>>::type, "C++: easy3d::PropertyArray<easy3d::Vec<3, float>>::type() const --> const class std::type_info &", pybind11::return_value_policy::automatic);
         cl.def("data", (const class easy3d::Vec<3, float> * (easy3d::PropertyArray<easy3d::Vec<3, float>>::*)() const) &easy3d::PropertyArray<easy3d::Vec<3, float>>::data, "C++: easy3d::PropertyArray<easy3d::Vec<3, float>>::data() const --> const class easy3d::Vec<3, float> *", pybind11::return_value_policy::automatic);
         cl.def("vector", (class std::vector<class easy3d::Vec<3, float> > & (easy3d::PropertyArray<easy3d::Vec<3, float>>::*)()) &easy3d::PropertyArray<easy3d::Vec<3, float>>::vector, "C++: easy3d::PropertyArray<easy3d::Vec<3, float>>::vector() --> class std::vector<class easy3d::Vec<3, float> > &", pybind11::return_value_policy::automatic);
-        cl.def("__getitem__", (class easy3d::Vec<3, float> & (easy3d::PropertyArray<easy3d::Vec<3, float>>::*)(unsigned long)) &easy3d::PropertyArray<easy3d::Vec<3, float>>::operator[], "C++: easy3d::PropertyArray<easy3d::Vec<3, float>>::operator[](unsigned long) --> class easy3d::Vec<3, float> &", pybind11::return_value_policy::automatic, pybind11::arg("_idx"));
+        cl.def("__getitem__", (class easy3d::Vec<3, float> & (easy3d::PropertyArray<easy3d::Vec<3, float>>::*)(size_t)) &easy3d::PropertyArray<easy3d::Vec<3, float>>::operator[], "C++: easy3d::PropertyArray<easy3d::Vec<3, float>>::operator[](size_t) --> class easy3d::Vec<3, float> &", pybind11::return_value_policy::automatic, pybind11::arg("_idx"));
         cl.def("assign", (class easy3d::PropertyArray<class easy3d::Vec<3, float> > & (easy3d::PropertyArray<easy3d::Vec<3, float>>::*)(const class easy3d::PropertyArray<class easy3d::Vec<3, float> > &)) &easy3d::PropertyArray<easy3d::Vec<3, float>>::operator=, "C++: easy3d::PropertyArray<easy3d::Vec<3, float>>::operator=(const class easy3d::PropertyArray<class easy3d::Vec<3, float> > &) --> class easy3d::PropertyArray<class easy3d::Vec<3, float> > &", pybind11::return_value_policy::automatic, pybind11::arg(""));
         cl.def("reserve", (void (easy3d::BasePropertyArray::*)(unsigned long)) &easy3d::BasePropertyArray::reserve, "Reserve memory for n elements.\n\nC++: easy3d::BasePropertyArray::reserve(unsigned long) --> void", pybind11::arg("n"));
         cl.def("resize", (void (easy3d::BasePropertyArray::*)(unsigned long)) &easy3d::BasePropertyArray::resize, "Resize storage to hold n elements.\n\nC++: easy3d::BasePropertyArray::resize(unsigned long) --> void", pybind11::arg("n"));

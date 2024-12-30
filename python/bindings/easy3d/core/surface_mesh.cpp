@@ -1,4 +1,4 @@
-#include <easy3d/core/vec.h>
+﻿#include <easy3d/core/vec.h>
 #include <easy3d/core/property.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/renderer.h>
@@ -23,7 +23,7 @@
 struct PyCallBack_easy3d_Property_easy3d_SurfaceMesh_Halfedge_t : public easy3d::Property<easy3d::SurfaceMesh::Halfedge> {
     using easy3d::Property<easy3d::SurfaceMesh::Halfedge>::Property;
 
-    struct easy3d::SurfaceMesh::Halfedge & operator[](unsigned long a0) override {
+    struct easy3d::SurfaceMesh::Halfedge & operator[](size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::Property<easy3d::SurfaceMesh::Halfedge> *>(this), "__getitem__");
         if (overload) {
@@ -42,7 +42,7 @@ struct PyCallBack_easy3d_Property_easy3d_SurfaceMesh_Halfedge_t : public easy3d:
 struct PyCallBack_easy3d_Property_easy3d_SurfaceMesh_VertexConnectivity_t : public easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity> {
     using easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::Property;
 
-    struct easy3d::SurfaceMesh::VertexConnectivity & operator[](unsigned long a0) override {
+    struct easy3d::SurfaceMesh::VertexConnectivity & operator[](size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity> *>(this), "__getitem__");
         if (overload) {
@@ -61,7 +61,7 @@ struct PyCallBack_easy3d_Property_easy3d_SurfaceMesh_VertexConnectivity_t : publ
 struct PyCallBack_easy3d_Property_easy3d_SurfaceMesh_HalfedgeConnectivity_t : public easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity> {
     using easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::Property;
 
-    struct easy3d::SurfaceMesh::HalfedgeConnectivity & operator[](unsigned long a0) override {
+    struct easy3d::SurfaceMesh::HalfedgeConnectivity & operator[](size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity> *>(this), "__getitem__");
         if (overload) {
@@ -80,7 +80,7 @@ struct PyCallBack_easy3d_Property_easy3d_SurfaceMesh_HalfedgeConnectivity_t : pu
 struct PyCallBack_easy3d_Property_easy3d_SurfaceMesh_FaceConnectivity_t : public easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity> {
     using easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::Property;
 
-    struct easy3d::SurfaceMesh::FaceConnectivity & operator[](unsigned long a0) override {
+    struct easy3d::SurfaceMesh::FaceConnectivity & operator[](size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity> *>(this), "__getitem__");
         if (overload) {
@@ -133,7 +133,7 @@ struct PyCallBack_easy3d_SurfaceMesh : public easy3d::SurfaceMesh {
 struct PyCallBack_easy3d_SurfaceMesh_VertexProperty_easy3d_SurfaceMesh_VertexConnectivity_t : public easy3d::SurfaceMesh::VertexProperty<easy3d::SurfaceMesh::VertexConnectivity> {
 	using easy3d::SurfaceMesh::VertexProperty<easy3d::SurfaceMesh::VertexConnectivity>::VertexProperty;
 
-	struct easy3d::SurfaceMesh::VertexConnectivity & operator[](unsigned long a0) override {
+	struct easy3d::SurfaceMesh::VertexConnectivity & operator[](size_t a0) override {
 		pybind11::gil_scoped_acquire gil;
 		pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::SurfaceMesh::VertexProperty<easy3d::SurfaceMesh::VertexConnectivity> *>(this), "__getitem__");
 		if (overload) {
@@ -153,7 +153,7 @@ struct PyCallBack_easy3d_SurfaceMesh_VertexProperty_easy3d_Vec_3_float_t : publi
 	using easy3d::SurfaceMesh::VertexProperty<easy3d::Vec<3, float>>::VertexProperty;
 
 	using _binder_ret_0 = easy3d::Vec<3, float> &;
-	_binder_ret_0 operator[](unsigned long a0) override {
+	_binder_ret_0 operator[](size_t a0) override {
 		pybind11::gil_scoped_acquire gil;
 		pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::SurfaceMesh::VertexProperty<easy3d::Vec<3, float>> *>(this), "__getitem__");
 		if (overload) {
@@ -172,7 +172,7 @@ struct PyCallBack_easy3d_SurfaceMesh_VertexProperty_easy3d_Vec_3_float_t : publi
 struct PyCallBack_easy3d_SurfaceMesh_VertexProperty_float_t : public easy3d::SurfaceMesh::VertexProperty<float> {
 	using easy3d::SurfaceMesh::VertexProperty<float>::VertexProperty;
 
-	float & operator[](unsigned long a0) override {
+	float & operator[](size_t a0) override {
 		pybind11::gil_scoped_acquire gil;
 		pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::SurfaceMesh::VertexProperty<float> *>(this), "__getitem__");
 		if (overload) {
@@ -191,7 +191,7 @@ struct PyCallBack_easy3d_SurfaceMesh_VertexProperty_float_t : public easy3d::Sur
 struct PyCallBack_easy3d_SurfaceMesh_HalfedgeProperty_easy3d_SurfaceMesh_HalfedgeConnectivity_t : public easy3d::SurfaceMesh::HalfedgeProperty<easy3d::SurfaceMesh::HalfedgeConnectivity> {
 	using easy3d::SurfaceMesh::HalfedgeProperty<easy3d::SurfaceMesh::HalfedgeConnectivity>::HalfedgeProperty;
 
-	struct easy3d::SurfaceMesh::HalfedgeConnectivity & operator[](unsigned long a0) override {
+	struct easy3d::SurfaceMesh::HalfedgeConnectivity & operator[](size_t a0) override {
 		pybind11::gil_scoped_acquire gil;
 		pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::SurfaceMesh::HalfedgeProperty<easy3d::SurfaceMesh::HalfedgeConnectivity> *>(this), "__getitem__");
 		if (overload) {
@@ -210,7 +210,7 @@ struct PyCallBack_easy3d_SurfaceMesh_HalfedgeProperty_easy3d_SurfaceMesh_Halfedg
 struct PyCallBack_easy3d_SurfaceMesh_FaceProperty_easy3d_SurfaceMesh_FaceConnectivity_t : public easy3d::SurfaceMesh::FaceProperty<easy3d::SurfaceMesh::FaceConnectivity> {
 	using easy3d::SurfaceMesh::FaceProperty<easy3d::SurfaceMesh::FaceConnectivity>::FaceProperty;
 
-	struct easy3d::SurfaceMesh::FaceConnectivity & operator[](unsigned long a0) override {
+	struct easy3d::SurfaceMesh::FaceConnectivity & operator[](size_t a0) override {
 		pybind11::gil_scoped_acquire gil;
 		pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::SurfaceMesh::FaceProperty<easy3d::SurfaceMesh::FaceConnectivity> *>(this), "__getitem__");
 		if (overload) {
@@ -230,7 +230,7 @@ struct PyCallBack_easy3d_SurfaceMesh_FaceProperty_easy3d_SurfaceMesh_FaceConnect
 struct PyCallBack_easy3d_PropertyArray_easy3d_SurfaceMesh_VertexConnectivity_t : public easy3d::PropertyArray<easy3d::SurfaceMesh::VertexConnectivity> {
     using easy3d::PropertyArray<easy3d::SurfaceMesh::VertexConnectivity>::PropertyArray;
 
-    void reserve(unsigned long a0) override {
+    void reserve(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::SurfaceMesh::VertexConnectivity> *>(this), "reserve");
         if (overload) {
@@ -243,7 +243,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_SurfaceMesh_VertexConnectivity_t :
         }
         return PropertyArray::reserve(a0);
     }
-    void resize(unsigned long a0) override {
+    void resize(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::SurfaceMesh::VertexConnectivity> *>(this), "resize");
         if (overload) {
@@ -269,7 +269,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_SurfaceMesh_VertexConnectivity_t :
         }
         return PropertyArray::push_back();
     }
-    void reset(unsigned long a0) override {
+    void reset(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::SurfaceMesh::VertexConnectivity> *>(this), "reset");
         if (overload) {
@@ -321,7 +321,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_SurfaceMesh_VertexConnectivity_t :
         }
         return PropertyArray::shrink_to_fit();
     }
-    void swap(unsigned long a0, unsigned long a1) override {
+    void swap(size_t a0, size_t a1) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::SurfaceMesh::VertexConnectivity> *>(this), "swap");
         if (overload) {
@@ -334,7 +334,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_SurfaceMesh_VertexConnectivity_t :
         }
         return PropertyArray::swap(a0, a1);
     }
-    void copy(unsigned long a0, unsigned long a1) override {
+    void copy(size_t a0, size_t a1) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::SurfaceMesh::VertexConnectivity> *>(this), "copy");
         if (overload) {
@@ -392,7 +392,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_SurfaceMesh_VertexConnectivity_t :
 struct PyCallBack_easy3d_PropertyArray_easy3d_SurfaceMesh_HalfedgeConnectivity_t : public easy3d::PropertyArray<easy3d::SurfaceMesh::HalfedgeConnectivity> {
     using easy3d::PropertyArray<easy3d::SurfaceMesh::HalfedgeConnectivity>::PropertyArray;
 
-    void reserve(unsigned long a0) override {
+    void reserve(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::SurfaceMesh::HalfedgeConnectivity> *>(this), "reserve");
         if (overload) {
@@ -405,7 +405,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_SurfaceMesh_HalfedgeConnectivity_t
         }
         return PropertyArray::reserve(a0);
     }
-    void resize(unsigned long a0) override {
+    void resize(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::SurfaceMesh::HalfedgeConnectivity> *>(this), "resize");
         if (overload) {
@@ -431,7 +431,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_SurfaceMesh_HalfedgeConnectivity_t
         }
         return PropertyArray::push_back();
     }
-    void reset(unsigned long a0) override {
+    void reset(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::SurfaceMesh::HalfedgeConnectivity> *>(this), "reset");
         if (overload) {
@@ -483,7 +483,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_SurfaceMesh_HalfedgeConnectivity_t
         }
         return PropertyArray::shrink_to_fit();
     }
-    void swap(unsigned long a0, unsigned long a1) override {
+    void swap(size_t a0, size_t a1) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::SurfaceMesh::HalfedgeConnectivity> *>(this), "swap");
         if (overload) {
@@ -496,7 +496,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_SurfaceMesh_HalfedgeConnectivity_t
         }
         return PropertyArray::swap(a0, a1);
     }
-    void copy(unsigned long a0, unsigned long a1) override {
+    void copy(size_t a0, size_t a1) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::SurfaceMesh::HalfedgeConnectivity> *>(this), "copy");
         if (overload) {
@@ -555,7 +555,7 @@ struct PyCallBack_easy3d_SurfaceMesh_FaceProperty_easy3d_Vec_3_float_t : public 
 	using easy3d::SurfaceMesh::FaceProperty<easy3d::Vec<3, float>>::FaceProperty;
 
 	using _binder_ret_0 = easy3d::Vec<3, float> &;
-	_binder_ret_0 operator[](unsigned long a0) override {
+	_binder_ret_0 operator[](size_t a0) override {
 		pybind11::gil_scoped_acquire gil;
 		pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::SurfaceMesh::FaceProperty<easy3d::Vec<3, float>> *>(this), "__getitem__");
 		if (overload) {
@@ -574,7 +574,7 @@ struct PyCallBack_easy3d_SurfaceMesh_FaceProperty_easy3d_Vec_3_float_t : public 
 struct PyCallBack_easy3d_Property_easy3d_SurfaceMesh_Vertex_t : public easy3d::Property<easy3d::SurfaceMesh::Vertex> {
     using easy3d::Property<easy3d::SurfaceMesh::Vertex>::Property;
 
-    struct easy3d::SurfaceMesh::Vertex & operator[](unsigned long a0) override {
+    struct easy3d::SurfaceMesh::Vertex & operator[](size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::Property<easy3d::SurfaceMesh::Vertex> *>(this), "__getitem__");
         if (overload) {
@@ -594,7 +594,7 @@ struct PyCallBack_easy3d_Property_easy3d_SurfaceMesh_Vertex_t : public easy3d::P
 struct PyCallBack_easy3d_SurfaceMesh_VertexProperty_easy3d_SurfaceMesh_Vertex_t : public easy3d::SurfaceMesh::VertexProperty<easy3d::SurfaceMesh::Vertex> {
     using easy3d::SurfaceMesh::VertexProperty<easy3d::SurfaceMesh::Vertex>::VertexProperty;
 
-    struct easy3d::SurfaceMesh::Vertex & operator[](unsigned long a0) override {
+    struct easy3d::SurfaceMesh::Vertex & operator[](size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::SurfaceMesh::VertexProperty<easy3d::SurfaceMesh::Vertex> *>(this), "__getitem__");
         if (overload) {
@@ -613,7 +613,7 @@ struct PyCallBack_easy3d_SurfaceMesh_VertexProperty_easy3d_SurfaceMesh_Vertex_t 
 struct PyCallBack_easy3d_PropertyArray_easy3d_SurfaceMesh_Vertex_t : public easy3d::PropertyArray<easy3d::SurfaceMesh::Vertex> {
     using easy3d::PropertyArray<easy3d::SurfaceMesh::Vertex>::PropertyArray;
 
-    void reserve(unsigned long a0) override {
+    void reserve(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::SurfaceMesh::Vertex> *>(this), "reserve");
         if (overload) {
@@ -626,7 +626,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_SurfaceMesh_Vertex_t : public easy
         }
         return PropertyArray::reserve(a0);
     }
-    void resize(unsigned long a0) override {
+    void resize(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::SurfaceMesh::Vertex> *>(this), "resize");
         if (overload) {
@@ -652,7 +652,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_SurfaceMesh_Vertex_t : public easy
         }
         return PropertyArray::push_back();
     }
-    void reset(unsigned long a0) override {
+    void reset(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::SurfaceMesh::Vertex> *>(this), "reset");
         if (overload) {
@@ -704,7 +704,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_SurfaceMesh_Vertex_t : public easy
         }
         return PropertyArray::shrink_to_fit();
     }
-    void swap(unsigned long a0, unsigned long a1) override {
+    void swap(size_t a0, size_t a1) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::SurfaceMesh::Vertex> *>(this), "swap");
         if (overload) {
@@ -717,7 +717,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_SurfaceMesh_Vertex_t : public easy
         }
         return PropertyArray::swap(a0, a1);
     }
-    void copy(unsigned long a0, unsigned long a1) override {
+    void copy(size_t a0, size_t a1) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::SurfaceMesh::Vertex> *>(this), "copy");
         if (overload) {
@@ -775,7 +775,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_SurfaceMesh_Vertex_t : public easy
 struct PyCallBack_easy3d_PropertyArray_easy3d_SurfaceMesh_FaceConnectivity_t : public easy3d::PropertyArray<easy3d::SurfaceMesh::FaceConnectivity> {
     using easy3d::PropertyArray<easy3d::SurfaceMesh::FaceConnectivity>::PropertyArray;
 
-    void reserve(unsigned long a0) override {
+    void reserve(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::SurfaceMesh::FaceConnectivity> *>(this), "reserve");
         if (overload) {
@@ -788,7 +788,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_SurfaceMesh_FaceConnectivity_t : p
         }
         return PropertyArray::reserve(a0);
     }
-    void resize(unsigned long a0) override {
+    void resize(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::SurfaceMesh::FaceConnectivity> *>(this), "resize");
         if (overload) {
@@ -814,7 +814,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_SurfaceMesh_FaceConnectivity_t : p
         }
         return PropertyArray::push_back();
     }
-    void reset(unsigned long a0) override {
+    void reset(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::SurfaceMesh::FaceConnectivity> *>(this), "reset");
         if (overload) {
@@ -866,7 +866,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_SurfaceMesh_FaceConnectivity_t : p
         }
         return PropertyArray::shrink_to_fit();
     }
-    void swap(unsigned long a0, unsigned long a1) override {
+    void swap(size_t a0, size_t a1) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::SurfaceMesh::FaceConnectivity> *>(this), "swap");
         if (overload) {
@@ -879,7 +879,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_SurfaceMesh_FaceConnectivity_t : p
         }
         return PropertyArray::swap(a0, a1);
     }
-    void copy(unsigned long a0, unsigned long a1) override {
+    void copy(size_t a0, size_t a1) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::SurfaceMesh::FaceConnectivity> *>(this), "copy");
         if (overload) {
@@ -1188,7 +1188,7 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
             cl.def( pybind11::init( [](PyCallBack_easy3d_Property_easy3d_SurfaceMesh_VertexConnectivity_t const &o){ return new PyCallBack_easy3d_Property_easy3d_SurfaceMesh_VertexConnectivity_t(o); } ) );
             cl.def( pybind11::init( [](easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity> const &o){ return new easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>(o); } ) );
             cl.def("reset", (void (easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::*)()) &easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::reset, "C++: easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::reset() --> void");
-            cl.def("__getitem__", (struct easy3d::SurfaceMesh::VertexConnectivity & (easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::*)(unsigned long)) &easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::operator[], "C++: easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::operator[](unsigned long) --> struct easy3d::SurfaceMesh::VertexConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+            cl.def("__getitem__", (struct easy3d::SurfaceMesh::VertexConnectivity & (easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::*)(size_t)) &easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::operator[], "C++: easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::operator[](size_t) --> struct easy3d::SurfaceMesh::VertexConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
             cl.def("data", (const struct easy3d::SurfaceMesh::VertexConnectivity * (easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::*)() const) &easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::data, "C++: easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::data() const --> const struct easy3d::SurfaceMesh::VertexConnectivity *", pybind11::return_value_policy::automatic);
             cl.def("vector", (class std::vector<struct easy3d::SurfaceMesh::VertexConnectivity> & (easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::*)()) &easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::vector, "C++: easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::vector() --> class std::vector<struct easy3d::SurfaceMesh::VertexConnectivity> &", pybind11::return_value_policy::automatic);
             cl.def("array", (class easy3d::PropertyArray<struct easy3d::SurfaceMesh::VertexConnectivity> & (easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::*)()) &easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::array, "C++: easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::array() --> class easy3d::PropertyArray<struct easy3d::SurfaceMesh::VertexConnectivity> &", pybind11::return_value_policy::automatic);
@@ -1204,7 +1204,7 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
             cl.def( pybind11::init( [](PyCallBack_easy3d_Property_easy3d_SurfaceMesh_HalfedgeConnectivity_t const &o){ return new PyCallBack_easy3d_Property_easy3d_SurfaceMesh_HalfedgeConnectivity_t(o); } ) );
             cl.def( pybind11::init( [](easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity> const &o){ return new easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>(o); } ) );
             cl.def("reset", (void (easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::*)()) &easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::reset, "C++: easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::reset() --> void");
-            cl.def("__getitem__", (struct easy3d::SurfaceMesh::HalfedgeConnectivity & (easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::*)(unsigned long)) &easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::operator[], "C++: easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::operator[](unsigned long) --> struct easy3d::SurfaceMesh::HalfedgeConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+            cl.def("__getitem__", (struct easy3d::SurfaceMesh::HalfedgeConnectivity & (easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::*)(size_t)) &easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::operator[], "C++: easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::operator[](size_t) --> struct easy3d::SurfaceMesh::HalfedgeConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
             cl.def("data", (const struct easy3d::SurfaceMesh::HalfedgeConnectivity * (easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::*)() const) &easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::data, "C++: easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::data() const --> const struct easy3d::SurfaceMesh::HalfedgeConnectivity *", pybind11::return_value_policy::automatic);
             cl.def("vector", (class std::vector<struct easy3d::SurfaceMesh::HalfedgeConnectivity> & (easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::*)()) &easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::vector, "C++: easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::vector() --> class std::vector<struct easy3d::SurfaceMesh::HalfedgeConnectivity> &", pybind11::return_value_policy::automatic);
             cl.def("array", (class easy3d::PropertyArray<struct easy3d::SurfaceMesh::HalfedgeConnectivity> & (easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::*)()) &easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::array, "C++: easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::array() --> class easy3d::PropertyArray<struct easy3d::SurfaceMesh::HalfedgeConnectivity> &", pybind11::return_value_policy::automatic);
@@ -1220,7 +1220,7 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
             cl.def( pybind11::init( [](PyCallBack_easy3d_Property_easy3d_SurfaceMesh_FaceConnectivity_t const &o){ return new PyCallBack_easy3d_Property_easy3d_SurfaceMesh_FaceConnectivity_t(o); } ) );
             cl.def( pybind11::init( [](easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity> const &o){ return new easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>(o); } ) );
             cl.def("reset", (void (easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::*)()) &easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::reset, "C++: easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::reset() --> void");
-            cl.def("__getitem__", (struct easy3d::SurfaceMesh::FaceConnectivity & (easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::*)(unsigned long)) &easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::operator[], "C++: easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::operator[](unsigned long) --> struct easy3d::SurfaceMesh::FaceConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+            cl.def("__getitem__", (struct easy3d::SurfaceMesh::FaceConnectivity & (easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::*)(size_t)) &easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::operator[], "C++: easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::operator[](size_t) --> struct easy3d::SurfaceMesh::FaceConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
             cl.def("data", (const struct easy3d::SurfaceMesh::FaceConnectivity * (easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::*)() const) &easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::data, "C++: easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::data() const --> const struct easy3d::SurfaceMesh::FaceConnectivity *", pybind11::return_value_policy::automatic);
             cl.def("vector", (class std::vector<struct easy3d::SurfaceMesh::FaceConnectivity> & (easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::*)()) &easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::vector, "C++: easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::vector() --> class std::vector<struct easy3d::SurfaceMesh::FaceConnectivity> &", pybind11::return_value_policy::automatic);
             cl.def("array", (class easy3d::PropertyArray<struct easy3d::SurfaceMesh::FaceConnectivity> & (easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::*)()) &easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::array, "C++: easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::array() --> class easy3d::PropertyArray<struct easy3d::SurfaceMesh::FaceConnectivity> &", pybind11::return_value_policy::automatic);
@@ -1240,7 +1240,7 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
 			cl.def("__getitem__", (struct easy3d::SurfaceMesh::VertexConnectivity & (easy3d::SurfaceMesh::VertexProperty<easy3d::SurfaceMesh::VertexConnectivity>::*)(struct easy3d::SurfaceMesh::Vertex)) &easy3d::SurfaceMesh::VertexProperty<easy3d::SurfaceMesh::VertexConnectivity>::operator[], "C++: easy3d::SurfaceMesh::VertexProperty<easy3d::SurfaceMesh::VertexConnectivity>::operator[](struct easy3d::SurfaceMesh::Vertex) --> struct easy3d::SurfaceMesh::VertexConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("v"));
 			cl.def("assign", (class easy3d::SurfaceMesh::VertexProperty<struct easy3d::SurfaceMesh::VertexConnectivity> & (easy3d::SurfaceMesh::VertexProperty<easy3d::SurfaceMesh::VertexConnectivity>::*)(const class easy3d::SurfaceMesh::VertexProperty<struct easy3d::SurfaceMesh::VertexConnectivity> &)) &easy3d::SurfaceMesh::VertexProperty<easy3d::SurfaceMesh::VertexConnectivity>::operator=, "C++: easy3d::SurfaceMesh::VertexProperty<easy3d::SurfaceMesh::VertexConnectivity>::operator=(const class easy3d::SurfaceMesh::VertexProperty<struct easy3d::SurfaceMesh::VertexConnectivity> &) --> class easy3d::SurfaceMesh::VertexProperty<struct easy3d::SurfaceMesh::VertexConnectivity> &", pybind11::return_value_policy::automatic, pybind11::arg(""));
 			cl.def("reset", (void (easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::*)()) &easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::reset, "C++: easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::reset() --> void");
-			cl.def("__getitem__", (struct easy3d::SurfaceMesh::VertexConnectivity & (easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::*)(unsigned long)) &easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::operator[], "C++: easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::operator[](unsigned long) --> struct easy3d::SurfaceMesh::VertexConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+			cl.def("__getitem__", (struct easy3d::SurfaceMesh::VertexConnectivity & (easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::*)(size_t)) &easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::operator[], "C++: easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::operator[](size_t) --> struct easy3d::SurfaceMesh::VertexConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
 			cl.def("data", (const struct easy3d::SurfaceMesh::VertexConnectivity * (easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::*)() const) &easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::data, "C++: easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::data() const --> const struct easy3d::SurfaceMesh::VertexConnectivity *", pybind11::return_value_policy::automatic);
 			cl.def("vector", (class std::vector<struct easy3d::SurfaceMesh::VertexConnectivity> & (easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::*)()) &easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::vector, "C++: easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::vector() --> class std::vector<struct easy3d::SurfaceMesh::VertexConnectivity> &", pybind11::return_value_policy::automatic);
 			cl.def("array", (class easy3d::PropertyArray<struct easy3d::SurfaceMesh::VertexConnectivity> & (easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::*)()) &easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::array, "C++: easy3d::Property<easy3d::SurfaceMesh::VertexConnectivity>::array() --> class easy3d::PropertyArray<struct easy3d::SurfaceMesh::VertexConnectivity> &", pybind11::return_value_policy::automatic);
@@ -1277,7 +1277,7 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
 			cl.def("__getitem__", (class easy3d::Vec<3, float> & (easy3d::SurfaceMesh::VertexProperty<easy3d::Vec<3, float>>::*)(struct easy3d::SurfaceMesh::Vertex)) &easy3d::SurfaceMesh::VertexProperty<easy3d::Vec<3, float>>::operator[], "C++: easy3d::SurfaceMesh::VertexProperty<easy3d::Vec<3, float>>::operator[](struct easy3d::SurfaceMesh::Vertex) --> class easy3d::Vec<3, float> &", pybind11::return_value_policy::automatic, pybind11::arg("v"));
 			cl.def("assign", (class easy3d::SurfaceMesh::VertexProperty<class easy3d::Vec<3, float> > & (easy3d::SurfaceMesh::VertexProperty<easy3d::Vec<3, float>>::*)(const class easy3d::SurfaceMesh::VertexProperty<class easy3d::Vec<3, float> > &)) &easy3d::SurfaceMesh::VertexProperty<easy3d::Vec<3, float>>::operator=, "C++: easy3d::SurfaceMesh::VertexProperty<easy3d::Vec<3, float>>::operator=(const class easy3d::SurfaceMesh::VertexProperty<class easy3d::Vec<3, float> > &) --> class easy3d::SurfaceMesh::VertexProperty<class easy3d::Vec<3, float> > &", pybind11::return_value_policy::automatic, pybind11::arg(""));
 			cl.def("reset", (void (easy3d::Property<easy3d::Vec<3, float>>::*)()) &easy3d::Property<easy3d::Vec<3, float>>::reset, "C++: easy3d::Property<easy3d::Vec<3, float>>::reset() --> void");
-			cl.def("__getitem__", (class easy3d::Vec<3, float> & (easy3d::Property<easy3d::Vec<3, float>>::*)(unsigned long)) &easy3d::Property<easy3d::Vec<3, float>>::operator[], "C++: easy3d::Property<easy3d::Vec<3, float>>::operator[](unsigned long) --> class easy3d::Vec<3, float> &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+			cl.def("__getitem__", (class easy3d::Vec<3, float> & (easy3d::Property<easy3d::Vec<3, float>>::*)(size_t)) &easy3d::Property<easy3d::Vec<3, float>>::operator[], "C++: easy3d::Property<easy3d::Vec<3, float>>::operator[](size_t) --> class easy3d::Vec<3, float> &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
 			cl.def("data", (const class easy3d::Vec<3, float> * (easy3d::Property<easy3d::Vec<3, float>>::*)() const) &easy3d::Property<easy3d::Vec<3, float>>::data, "C++: easy3d::Property<easy3d::Vec<3, float>>::data() const --> const class easy3d::Vec<3, float> *", pybind11::return_value_policy::automatic);
 			cl.def("vector", (class std::vector<class easy3d::Vec<3, float> > & (easy3d::Property<easy3d::Vec<3, float>>::*)()) &easy3d::Property<easy3d::Vec<3, float>>::vector, "C++: easy3d::Property<easy3d::Vec<3, float>>::vector() --> class std::vector<class easy3d::Vec<3, float> > &", pybind11::return_value_policy::automatic);
 			cl.def("array", (class easy3d::PropertyArray<class easy3d::Vec<3, float> > & (easy3d::Property<easy3d::Vec<3, float>>::*)()) &easy3d::Property<easy3d::Vec<3, float>>::array, "C++: easy3d::Property<easy3d::Vec<3, float>>::array() --> class easy3d::PropertyArray<class easy3d::Vec<3, float> > &", pybind11::return_value_policy::automatic);
@@ -1295,7 +1295,7 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
 			cl.def("__getitem__", (float & (easy3d::SurfaceMesh::VertexProperty<float>::*)(struct easy3d::SurfaceMesh::Vertex)) &easy3d::SurfaceMesh::VertexProperty<float>::operator[], "C++: easy3d::SurfaceMesh::VertexProperty<float>::operator[](struct easy3d::SurfaceMesh::Vertex) --> float &", pybind11::return_value_policy::automatic, pybind11::arg("v"));
 			cl.def("assign", (class easy3d::SurfaceMesh::VertexProperty<float> & (easy3d::SurfaceMesh::VertexProperty<float>::*)(const class easy3d::SurfaceMesh::VertexProperty<float> &)) &easy3d::SurfaceMesh::VertexProperty<float>::operator=, "C++: easy3d::SurfaceMesh::VertexProperty<float>::operator=(const class easy3d::SurfaceMesh::VertexProperty<float> &) --> class easy3d::SurfaceMesh::VertexProperty<float> &", pybind11::return_value_policy::automatic, pybind11::arg(""));
 			cl.def("reset", (void (easy3d::Property<float>::*)()) &easy3d::Property<float>::reset, "C++: easy3d::Property<float>::reset() --> void");
-			cl.def("__getitem__", (float & (easy3d::Property<float>::*)(unsigned long)) &easy3d::Property<float>::operator[], "C++: easy3d::Property<float>::operator[](unsigned long) --> float &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+			cl.def("__getitem__", (float & (easy3d::Property<float>::*)(size_t)) &easy3d::Property<float>::operator[], "C++: easy3d::Property<float>::operator[](size_t) --> float &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
 			cl.def("data", (const float * (easy3d::Property<float>::*)() const) &easy3d::Property<float>::data, "C++: easy3d::Property<float>::data() const --> const float *", pybind11::return_value_policy::automatic);
 			cl.def("vector", (class std::vector<float> & (easy3d::Property<float>::*)()) &easy3d::Property<float>::vector, "C++: easy3d::Property<float>::vector() --> class std::vector<float> &", pybind11::return_value_policy::automatic);
 			cl.def("array", (class easy3d::PropertyArray<float> & (easy3d::Property<float>::*)()) &easy3d::Property<float>::array, "C++: easy3d::Property<float>::array() --> class easy3d::PropertyArray<float> &", pybind11::return_value_policy::automatic);
@@ -1315,7 +1315,7 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
 			cl.def("__getitem__", (struct easy3d::SurfaceMesh::HalfedgeConnectivity & (easy3d::SurfaceMesh::HalfedgeProperty<easy3d::SurfaceMesh::HalfedgeConnectivity>::*)(struct easy3d::SurfaceMesh::Halfedge)) &easy3d::SurfaceMesh::HalfedgeProperty<easy3d::SurfaceMesh::HalfedgeConnectivity>::operator[], "C++: easy3d::SurfaceMesh::HalfedgeProperty<easy3d::SurfaceMesh::HalfedgeConnectivity>::operator[](struct easy3d::SurfaceMesh::Halfedge) --> struct easy3d::SurfaceMesh::HalfedgeConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("h"));
 			cl.def("assign", (class easy3d::SurfaceMesh::HalfedgeProperty<struct easy3d::SurfaceMesh::HalfedgeConnectivity> & (easy3d::SurfaceMesh::HalfedgeProperty<easy3d::SurfaceMesh::HalfedgeConnectivity>::*)(const class easy3d::SurfaceMesh::HalfedgeProperty<struct easy3d::SurfaceMesh::HalfedgeConnectivity> &)) &easy3d::SurfaceMesh::HalfedgeProperty<easy3d::SurfaceMesh::HalfedgeConnectivity>::operator=, "C++: easy3d::SurfaceMesh::HalfedgeProperty<easy3d::SurfaceMesh::HalfedgeConnectivity>::operator=(const class easy3d::SurfaceMesh::HalfedgeProperty<struct easy3d::SurfaceMesh::HalfedgeConnectivity> &) --> class easy3d::SurfaceMesh::HalfedgeProperty<struct easy3d::SurfaceMesh::HalfedgeConnectivity> &", pybind11::return_value_policy::automatic, pybind11::arg(""));
 			cl.def("reset", (void (easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::*)()) &easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::reset, "C++: easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::reset() --> void");
-			cl.def("__getitem__", (struct easy3d::SurfaceMesh::HalfedgeConnectivity & (easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::*)(unsigned long)) &easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::operator[], "C++: easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::operator[](unsigned long) --> struct easy3d::SurfaceMesh::HalfedgeConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+			cl.def("__getitem__", (struct easy3d::SurfaceMesh::HalfedgeConnectivity & (easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::*)(size_t)) &easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::operator[], "C++: easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::operator[](size_t) --> struct easy3d::SurfaceMesh::HalfedgeConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
 			cl.def("data", (const struct easy3d::SurfaceMesh::HalfedgeConnectivity * (easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::*)() const) &easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::data, "C++: easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::data() const --> const struct easy3d::SurfaceMesh::HalfedgeConnectivity *", pybind11::return_value_policy::automatic);
 			cl.def("vector", (class std::vector<struct easy3d::SurfaceMesh::HalfedgeConnectivity> & (easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::*)()) &easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::vector, "C++: easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::vector() --> class std::vector<struct easy3d::SurfaceMesh::HalfedgeConnectivity> &", pybind11::return_value_policy::automatic);
 			cl.def("array", (class easy3d::PropertyArray<struct easy3d::SurfaceMesh::HalfedgeConnectivity> & (easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::*)()) &easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::array, "C++: easy3d::Property<easy3d::SurfaceMesh::HalfedgeConnectivity>::array() --> class easy3d::PropertyArray<struct easy3d::SurfaceMesh::HalfedgeConnectivity> &", pybind11::return_value_policy::automatic);
@@ -1352,7 +1352,7 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
 			cl.def("__getitem__", (struct easy3d::SurfaceMesh::FaceConnectivity & (easy3d::SurfaceMesh::FaceProperty<easy3d::SurfaceMesh::FaceConnectivity>::*)(struct easy3d::SurfaceMesh::Face)) &easy3d::SurfaceMesh::FaceProperty<easy3d::SurfaceMesh::FaceConnectivity>::operator[], "C++: easy3d::SurfaceMesh::FaceProperty<easy3d::SurfaceMesh::FaceConnectivity>::operator[](struct easy3d::SurfaceMesh::Face) --> struct easy3d::SurfaceMesh::FaceConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("f"));
 			cl.def("assign", (class easy3d::SurfaceMesh::FaceProperty<struct easy3d::SurfaceMesh::FaceConnectivity> & (easy3d::SurfaceMesh::FaceProperty<easy3d::SurfaceMesh::FaceConnectivity>::*)(const class easy3d::SurfaceMesh::FaceProperty<struct easy3d::SurfaceMesh::FaceConnectivity> &)) &easy3d::SurfaceMesh::FaceProperty<easy3d::SurfaceMesh::FaceConnectivity>::operator=, "C++: easy3d::SurfaceMesh::FaceProperty<easy3d::SurfaceMesh::FaceConnectivity>::operator=(const class easy3d::SurfaceMesh::FaceProperty<struct easy3d::SurfaceMesh::FaceConnectivity> &) --> class easy3d::SurfaceMesh::FaceProperty<struct easy3d::SurfaceMesh::FaceConnectivity> &", pybind11::return_value_policy::automatic, pybind11::arg(""));
 			cl.def("reset", (void (easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::*)()) &easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::reset, "C++: easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::reset() --> void");
-			cl.def("__getitem__", (struct easy3d::SurfaceMesh::FaceConnectivity & (easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::*)(unsigned long)) &easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::operator[], "C++: easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::operator[](unsigned long) --> struct easy3d::SurfaceMesh::FaceConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+			cl.def("__getitem__", (struct easy3d::SurfaceMesh::FaceConnectivity & (easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::*)(size_t)) &easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::operator[], "C++: easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::operator[](size_t) --> struct easy3d::SurfaceMesh::FaceConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
 			cl.def("data", (const struct easy3d::SurfaceMesh::FaceConnectivity * (easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::*)() const) &easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::data, "C++: easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::data() const --> const struct easy3d::SurfaceMesh::FaceConnectivity *", pybind11::return_value_policy::automatic);
 			cl.def("vector", (class std::vector<struct easy3d::SurfaceMesh::FaceConnectivity> & (easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::*)()) &easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::vector, "C++: easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::vector() --> class std::vector<struct easy3d::SurfaceMesh::FaceConnectivity> &", pybind11::return_value_policy::automatic);
 			cl.def("array", (class easy3d::PropertyArray<struct easy3d::SurfaceMesh::FaceConnectivity> & (easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::*)()) &easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::array, "C++: easy3d::Property<easy3d::SurfaceMesh::FaceConnectivity>::array() --> class easy3d::PropertyArray<struct easy3d::SurfaceMesh::FaceConnectivity> &", pybind11::return_value_policy::automatic);
@@ -1389,7 +1389,7 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
 			cl.def("__getitem__", (class easy3d::Vec<3, float> & (easy3d::SurfaceMesh::FaceProperty<easy3d::Vec<3, float>>::*)(struct easy3d::SurfaceMesh::Face)) &easy3d::SurfaceMesh::FaceProperty<easy3d::Vec<3, float>>::operator[], "C++: easy3d::SurfaceMesh::FaceProperty<easy3d::Vec<3, float>>::operator[](struct easy3d::SurfaceMesh::Face) --> class easy3d::Vec<3, float> &", pybind11::return_value_policy::automatic, pybind11::arg("f"));
 			cl.def("assign", (class easy3d::SurfaceMesh::FaceProperty<class easy3d::Vec<3, float> > & (easy3d::SurfaceMesh::FaceProperty<easy3d::Vec<3, float>>::*)(const class easy3d::SurfaceMesh::FaceProperty<class easy3d::Vec<3, float> > &)) &easy3d::SurfaceMesh::FaceProperty<easy3d::Vec<3, float>>::operator=, "C++: easy3d::SurfaceMesh::FaceProperty<easy3d::Vec<3, float>>::operator=(const class easy3d::SurfaceMesh::FaceProperty<class easy3d::Vec<3, float> > &) --> class easy3d::SurfaceMesh::FaceProperty<class easy3d::Vec<3, float> > &", pybind11::return_value_policy::automatic, pybind11::arg(""));
 			cl.def("reset", (void (easy3d::Property<easy3d::Vec<3, float>>::*)()) &easy3d::Property<easy3d::Vec<3, float>>::reset, "C++: easy3d::Property<easy3d::Vec<3, float>>::reset() --> void");
-			cl.def("__getitem__", (class easy3d::Vec<3, float> & (easy3d::Property<easy3d::Vec<3, float>>::*)(unsigned long)) &easy3d::Property<easy3d::Vec<3, float>>::operator[], "C++: easy3d::Property<easy3d::Vec<3, float>>::operator[](unsigned long) --> class easy3d::Vec<3, float> &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+			cl.def("__getitem__", (class easy3d::Vec<3, float> & (easy3d::Property<easy3d::Vec<3, float>>::*)(size_t)) &easy3d::Property<easy3d::Vec<3, float>>::operator[], "C++: easy3d::Property<easy3d::Vec<3, float>>::operator[](size_t) --> class easy3d::Vec<3, float> &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
 			cl.def("data", (const class easy3d::Vec<3, float> * (easy3d::Property<easy3d::Vec<3, float>>::*)() const) &easy3d::Property<easy3d::Vec<3, float>>::data, "C++: easy3d::Property<easy3d::Vec<3, float>>::data() const --> const class easy3d::Vec<3, float> *", pybind11::return_value_policy::automatic);
 			cl.def("vector", (class std::vector<class easy3d::Vec<3, float> > & (easy3d::Property<easy3d::Vec<3, float>>::*)()) &easy3d::Property<easy3d::Vec<3, float>>::vector, "C++: easy3d::Property<easy3d::Vec<3, float>>::vector() --> class std::vector<class easy3d::Vec<3, float> > &", pybind11::return_value_policy::automatic);
 			cl.def("array", (class easy3d::PropertyArray<class easy3d::Vec<3, float> > & (easy3d::Property<easy3d::Vec<3, float>>::*)()) &easy3d::Property<easy3d::Vec<3, float>>::array, "C++: easy3d::Property<easy3d::Vec<3, float>>::array() --> class easy3d::PropertyArray<class easy3d::Vec<3, float> > &", pybind11::return_value_policy::automatic);
@@ -1606,7 +1606,7 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
         cl.def("type", (const class std::type_info & (easy3d::PropertyArray<easy3d::SurfaceMesh::VertexConnectivity>::*)() const) &easy3d::PropertyArray<easy3d::SurfaceMesh::VertexConnectivity>::type, "C++: easy3d::PropertyArray<easy3d::SurfaceMesh::VertexConnectivity>::type() const --> const class std::type_info &", pybind11::return_value_policy::automatic);
         cl.def("data", (const struct easy3d::SurfaceMesh::VertexConnectivity * (easy3d::PropertyArray<easy3d::SurfaceMesh::VertexConnectivity>::*)() const) &easy3d::PropertyArray<easy3d::SurfaceMesh::VertexConnectivity>::data, "C++: easy3d::PropertyArray<easy3d::SurfaceMesh::VertexConnectivity>::data() const --> const struct easy3d::SurfaceMesh::VertexConnectivity *", pybind11::return_value_policy::automatic);
         cl.def("vector", (class std::vector<struct easy3d::SurfaceMesh::VertexConnectivity> & (easy3d::PropertyArray<easy3d::SurfaceMesh::VertexConnectivity>::*)()) &easy3d::PropertyArray<easy3d::SurfaceMesh::VertexConnectivity>::vector, "C++: easy3d::PropertyArray<easy3d::SurfaceMesh::VertexConnectivity>::vector() --> class std::vector<struct easy3d::SurfaceMesh::VertexConnectivity> &", pybind11::return_value_policy::automatic);
-        cl.def("__getitem__", (struct easy3d::SurfaceMesh::VertexConnectivity & (easy3d::PropertyArray<easy3d::SurfaceMesh::VertexConnectivity>::*)(unsigned long)) &easy3d::PropertyArray<easy3d::SurfaceMesh::VertexConnectivity>::operator[], "C++: easy3d::PropertyArray<easy3d::SurfaceMesh::VertexConnectivity>::operator[](unsigned long) --> struct easy3d::SurfaceMesh::VertexConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("_idx"));
+        cl.def("__getitem__", (struct easy3d::SurfaceMesh::VertexConnectivity & (easy3d::PropertyArray<easy3d::SurfaceMesh::VertexConnectivity>::*)(size_t)) &easy3d::PropertyArray<easy3d::SurfaceMesh::VertexConnectivity>::operator[], "C++: easy3d::PropertyArray<easy3d::SurfaceMesh::VertexConnectivity>::operator[](size_t) --> struct easy3d::SurfaceMesh::VertexConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("_idx"));
         cl.def("assign", (class easy3d::PropertyArray<struct easy3d::SurfaceMesh::VertexConnectivity> & (easy3d::PropertyArray<easy3d::SurfaceMesh::VertexConnectivity>::*)(const class easy3d::PropertyArray<struct easy3d::SurfaceMesh::VertexConnectivity> &)) &easy3d::PropertyArray<easy3d::SurfaceMesh::VertexConnectivity>::operator=, "C++: easy3d::PropertyArray<easy3d::SurfaceMesh::VertexConnectivity>::operator=(const class easy3d::PropertyArray<struct easy3d::SurfaceMesh::VertexConnectivity> &) --> class easy3d::PropertyArray<struct easy3d::SurfaceMesh::VertexConnectivity> &", pybind11::return_value_policy::automatic, pybind11::arg(""));
         cl.def("reserve", (void (easy3d::BasePropertyArray::*)(unsigned long)) &easy3d::BasePropertyArray::reserve, "Reserve memory for n elements.\n\nC++: easy3d::BasePropertyArray::reserve(unsigned long) --> void", pybind11::arg("n"));
         cl.def("resize", (void (easy3d::BasePropertyArray::*)(unsigned long)) &easy3d::BasePropertyArray::resize, "Resize storage to hold n elements.\n\nC++: easy3d::BasePropertyArray::resize(unsigned long) --> void", pybind11::arg("n"));
@@ -1647,7 +1647,7 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
         cl.def("type", (const class std::type_info & (easy3d::PropertyArray<easy3d::SurfaceMesh::HalfedgeConnectivity>::*)() const) &easy3d::PropertyArray<easy3d::SurfaceMesh::HalfedgeConnectivity>::type, "C++: easy3d::PropertyArray<easy3d::SurfaceMesh::HalfedgeConnectivity>::type() const --> const class std::type_info &", pybind11::return_value_policy::automatic);
         cl.def("data", (const struct easy3d::SurfaceMesh::HalfedgeConnectivity * (easy3d::PropertyArray<easy3d::SurfaceMesh::HalfedgeConnectivity>::*)() const) &easy3d::PropertyArray<easy3d::SurfaceMesh::HalfedgeConnectivity>::data, "C++: easy3d::PropertyArray<easy3d::SurfaceMesh::HalfedgeConnectivity>::data() const --> const struct easy3d::SurfaceMesh::HalfedgeConnectivity *", pybind11::return_value_policy::automatic);
         cl.def("vector", (class std::vector<struct easy3d::SurfaceMesh::HalfedgeConnectivity> & (easy3d::PropertyArray<easy3d::SurfaceMesh::HalfedgeConnectivity>::*)()) &easy3d::PropertyArray<easy3d::SurfaceMesh::HalfedgeConnectivity>::vector, "C++: easy3d::PropertyArray<easy3d::SurfaceMesh::HalfedgeConnectivity>::vector() --> class std::vector<struct easy3d::SurfaceMesh::HalfedgeConnectivity> &", pybind11::return_value_policy::automatic);
-        cl.def("__getitem__", (struct easy3d::SurfaceMesh::HalfedgeConnectivity & (easy3d::PropertyArray<easy3d::SurfaceMesh::HalfedgeConnectivity>::*)(unsigned long)) &easy3d::PropertyArray<easy3d::SurfaceMesh::HalfedgeConnectivity>::operator[], "C++: easy3d::PropertyArray<easy3d::SurfaceMesh::HalfedgeConnectivity>::operator[](unsigned long) --> struct easy3d::SurfaceMesh::HalfedgeConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("_idx"));
+        cl.def("__getitem__", (struct easy3d::SurfaceMesh::HalfedgeConnectivity & (easy3d::PropertyArray<easy3d::SurfaceMesh::HalfedgeConnectivity>::*)(size_t)) &easy3d::PropertyArray<easy3d::SurfaceMesh::HalfedgeConnectivity>::operator[], "C++: easy3d::PropertyArray<easy3d::SurfaceMesh::HalfedgeConnectivity>::operator[](size_t) --> struct easy3d::SurfaceMesh::HalfedgeConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("_idx"));
         cl.def("assign", (class easy3d::PropertyArray<struct easy3d::SurfaceMesh::HalfedgeConnectivity> & (easy3d::PropertyArray<easy3d::SurfaceMesh::HalfedgeConnectivity>::*)(const class easy3d::PropertyArray<struct easy3d::SurfaceMesh::HalfedgeConnectivity> &)) &easy3d::PropertyArray<easy3d::SurfaceMesh::HalfedgeConnectivity>::operator=, "C++: easy3d::PropertyArray<easy3d::SurfaceMesh::HalfedgeConnectivity>::operator=(const class easy3d::PropertyArray<struct easy3d::SurfaceMesh::HalfedgeConnectivity> &) --> class easy3d::PropertyArray<struct easy3d::SurfaceMesh::HalfedgeConnectivity> &", pybind11::return_value_policy::automatic, pybind11::arg(""));
         cl.def("reserve", (void (easy3d::BasePropertyArray::*)(unsigned long)) &easy3d::BasePropertyArray::reserve, "Reserve memory for n elements.\n\nC++: easy3d::BasePropertyArray::reserve(unsigned long) --> void", pybind11::arg("n"));
         cl.def("resize", (void (easy3d::BasePropertyArray::*)(unsigned long)) &easy3d::BasePropertyArray::resize, "Resize storage to hold n elements.\n\nC++: easy3d::BasePropertyArray::resize(unsigned long) --> void", pybind11::arg("n"));
@@ -1673,7 +1673,7 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
         cl.def( pybind11::init<class easy3d::PropertyArray<struct easy3d::SurfaceMesh::Halfedge> *>(), pybind11::arg("p") );
 
         cl.def("reset", (void (easy3d::Property<easy3d::SurfaceMesh::Halfedge>::*)()) &easy3d::Property<easy3d::SurfaceMesh::Halfedge>::reset, "C++: easy3d::Property<easy3d::SurfaceMesh::Halfedge>::reset() --> void");
-        cl.def("__getitem__", (struct easy3d::SurfaceMesh::Halfedge & (easy3d::Property<easy3d::SurfaceMesh::Halfedge>::*)(unsigned long)) &easy3d::Property<easy3d::SurfaceMesh::Halfedge>::operator[], "C++: easy3d::Property<easy3d::SurfaceMesh::Halfedge>::operator[](unsigned long) --> struct easy3d::SurfaceMesh::Halfedge &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+        cl.def("__getitem__", (struct easy3d::SurfaceMesh::Halfedge & (easy3d::Property<easy3d::SurfaceMesh::Halfedge>::*)(size_t)) &easy3d::Property<easy3d::SurfaceMesh::Halfedge>::operator[], "C++: easy3d::Property<easy3d::SurfaceMesh::Halfedge>::operator[](size_t) --> struct easy3d::SurfaceMesh::Halfedge &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
         cl.def("data", (const struct easy3d::SurfaceMesh::Halfedge * (easy3d::Property<easy3d::SurfaceMesh::Halfedge>::*)() const) &easy3d::Property<easy3d::SurfaceMesh::Halfedge>::data, "C++: easy3d::Property<easy3d::SurfaceMesh::Halfedge>::data() const --> const struct easy3d::SurfaceMesh::Halfedge *", pybind11::return_value_policy::automatic);
         cl.def("vector", (class std::vector<struct easy3d::SurfaceMesh::Halfedge> & (easy3d::Property<easy3d::SurfaceMesh::Halfedge>::*)()) &easy3d::Property<easy3d::SurfaceMesh::Halfedge>::vector, "C++: easy3d::Property<easy3d::SurfaceMesh::Halfedge>::vector() --> class std::vector<struct easy3d::SurfaceMesh::Halfedge> &", pybind11::return_value_policy::automatic);
         cl.def("array", (class easy3d::PropertyArray<struct easy3d::SurfaceMesh::Halfedge> & (easy3d::Property<easy3d::SurfaceMesh::Halfedge>::*)()) &easy3d::Property<easy3d::SurfaceMesh::Halfedge>::array, "C++: easy3d::Property<easy3d::SurfaceMesh::Halfedge>::array() --> class easy3d::PropertyArray<struct easy3d::SurfaceMesh::Halfedge> &", pybind11::return_value_policy::automatic);
@@ -1690,7 +1690,7 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
         cl.def( pybind11::init( [](PyCallBack_easy3d_Property_easy3d_SurfaceMesh_Vertex_t const &o){ return new PyCallBack_easy3d_Property_easy3d_SurfaceMesh_Vertex_t(o); } ) );
         cl.def( pybind11::init( [](easy3d::Property<easy3d::SurfaceMesh::Vertex> const &o){ return new easy3d::Property<easy3d::SurfaceMesh::Vertex>(o); } ) );
         cl.def("reset", (void (easy3d::Property<easy3d::SurfaceMesh::Vertex>::*)()) &easy3d::Property<easy3d::SurfaceMesh::Vertex>::reset, "C++: easy3d::Property<easy3d::SurfaceMesh::Vertex>::reset() --> void");
-        cl.def("__getitem__", (struct easy3d::SurfaceMesh::Vertex & (easy3d::Property<easy3d::SurfaceMesh::Vertex>::*)(unsigned long)) &easy3d::Property<easy3d::SurfaceMesh::Vertex>::operator[], "C++: easy3d::Property<easy3d::SurfaceMesh::Vertex>::operator[](unsigned long) --> struct easy3d::SurfaceMesh::Vertex &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+        cl.def("__getitem__", (struct easy3d::SurfaceMesh::Vertex & (easy3d::Property<easy3d::SurfaceMesh::Vertex>::*)(size_t)) &easy3d::Property<easy3d::SurfaceMesh::Vertex>::operator[], "C++: easy3d::Property<easy3d::SurfaceMesh::Vertex>::operator[](size_t) --> struct easy3d::SurfaceMesh::Vertex &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
         cl.def("data", (const struct easy3d::SurfaceMesh::Vertex * (easy3d::Property<easy3d::SurfaceMesh::Vertex>::*)() const) &easy3d::Property<easy3d::SurfaceMesh::Vertex>::data, "C++: easy3d::Property<easy3d::SurfaceMesh::Vertex>::data() const --> const struct easy3d::SurfaceMesh::Vertex *", pybind11::return_value_policy::automatic);
         cl.def("vector", (class std::vector<struct easy3d::SurfaceMesh::Vertex> & (easy3d::Property<easy3d::SurfaceMesh::Vertex>::*)()) &easy3d::Property<easy3d::SurfaceMesh::Vertex>::vector, "C++: easy3d::Property<easy3d::SurfaceMesh::Vertex>::vector() --> class std::vector<struct easy3d::SurfaceMesh::Vertex> &", pybind11::return_value_policy::automatic);
         cl.def("array", (class easy3d::PropertyArray<struct easy3d::SurfaceMesh::Vertex> & (easy3d::Property<easy3d::SurfaceMesh::Vertex>::*)()) &easy3d::Property<easy3d::SurfaceMesh::Vertex>::array, "C++: easy3d::Property<easy3d::SurfaceMesh::Vertex>::array() --> class easy3d::PropertyArray<struct easy3d::SurfaceMesh::Vertex> &", pybind11::return_value_policy::automatic);
@@ -1720,7 +1720,7 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
         cl.def("type", (const class std::type_info & (easy3d::PropertyArray<easy3d::SurfaceMesh::Vertex>::*)() const) &easy3d::PropertyArray<easy3d::SurfaceMesh::Vertex>::type, "C++: easy3d::PropertyArray<easy3d::SurfaceMesh::Vertex>::type() const --> const class std::type_info &", pybind11::return_value_policy::automatic);
         cl.def("data", (const struct easy3d::SurfaceMesh::Vertex * (easy3d::PropertyArray<easy3d::SurfaceMesh::Vertex>::*)() const) &easy3d::PropertyArray<easy3d::SurfaceMesh::Vertex>::data, "C++: easy3d::PropertyArray<easy3d::SurfaceMesh::Vertex>::data() const --> const struct easy3d::SurfaceMesh::Vertex *", pybind11::return_value_policy::automatic);
         cl.def("vector", (class std::vector<struct easy3d::SurfaceMesh::Vertex> & (easy3d::PropertyArray<easy3d::SurfaceMesh::Vertex>::*)()) &easy3d::PropertyArray<easy3d::SurfaceMesh::Vertex>::vector, "C++: easy3d::PropertyArray<easy3d::SurfaceMesh::Vertex>::vector() --> class std::vector<struct easy3d::SurfaceMesh::Vertex> &", pybind11::return_value_policy::automatic);
-        cl.def("__getitem__", (struct easy3d::SurfaceMesh::Vertex & (easy3d::PropertyArray<easy3d::SurfaceMesh::Vertex>::*)(unsigned long)) &easy3d::PropertyArray<easy3d::SurfaceMesh::Vertex>::operator[], "C++: easy3d::PropertyArray<easy3d::SurfaceMesh::Vertex>::operator[](unsigned long) --> struct easy3d::SurfaceMesh::Vertex &", pybind11::return_value_policy::automatic, pybind11::arg("_idx"));
+        cl.def("__getitem__", (struct easy3d::SurfaceMesh::Vertex & (easy3d::PropertyArray<easy3d::SurfaceMesh::Vertex>::*)(size_t)) &easy3d::PropertyArray<easy3d::SurfaceMesh::Vertex>::operator[], "C++: easy3d::PropertyArray<easy3d::SurfaceMesh::Vertex>::operator[](size_t) --> struct easy3d::SurfaceMesh::Vertex &", pybind11::return_value_policy::automatic, pybind11::arg("_idx"));
         cl.def("assign", (class easy3d::PropertyArray<struct easy3d::SurfaceMesh::Vertex> & (easy3d::PropertyArray<easy3d::SurfaceMesh::Vertex>::*)(const class easy3d::PropertyArray<struct easy3d::SurfaceMesh::Vertex> &)) &easy3d::PropertyArray<easy3d::SurfaceMesh::Vertex>::operator=, "C++: easy3d::PropertyArray<easy3d::SurfaceMesh::Vertex>::operator=(const class easy3d::PropertyArray<struct easy3d::SurfaceMesh::Vertex> &) --> class easy3d::PropertyArray<struct easy3d::SurfaceMesh::Vertex> &", pybind11::return_value_policy::automatic, pybind11::arg(""));
         cl.def("reserve", (void (easy3d::BasePropertyArray::*)(unsigned long)) &easy3d::BasePropertyArray::reserve, "Reserve memory for n elements.\n\nC++: easy3d::BasePropertyArray::reserve(unsigned long) --> void", pybind11::arg("n"));
         cl.def("resize", (void (easy3d::BasePropertyArray::*)(unsigned long)) &easy3d::BasePropertyArray::resize, "Resize storage to hold n elements.\n\nC++: easy3d::BasePropertyArray::resize(unsigned long) --> void", pybind11::arg("n"));
@@ -1761,7 +1761,7 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
         cl.def("type", (const class std::type_info & (easy3d::PropertyArray<easy3d::SurfaceMesh::FaceConnectivity>::*)() const) &easy3d::PropertyArray<easy3d::SurfaceMesh::FaceConnectivity>::type, "C++: easy3d::PropertyArray<easy3d::SurfaceMesh::FaceConnectivity>::type() const --> const class std::type_info &", pybind11::return_value_policy::automatic);
         cl.def("data", (const struct easy3d::SurfaceMesh::FaceConnectivity * (easy3d::PropertyArray<easy3d::SurfaceMesh::FaceConnectivity>::*)() const) &easy3d::PropertyArray<easy3d::SurfaceMesh::FaceConnectivity>::data, "C++: easy3d::PropertyArray<easy3d::SurfaceMesh::FaceConnectivity>::data() const --> const struct easy3d::SurfaceMesh::FaceConnectivity *", pybind11::return_value_policy::automatic);
         cl.def("vector", (class std::vector<struct easy3d::SurfaceMesh::FaceConnectivity> & (easy3d::PropertyArray<easy3d::SurfaceMesh::FaceConnectivity>::*)()) &easy3d::PropertyArray<easy3d::SurfaceMesh::FaceConnectivity>::vector, "C++: easy3d::PropertyArray<easy3d::SurfaceMesh::FaceConnectivity>::vector() --> class std::vector<struct easy3d::SurfaceMesh::FaceConnectivity> &", pybind11::return_value_policy::automatic);
-        cl.def("__getitem__", (struct easy3d::SurfaceMesh::FaceConnectivity & (easy3d::PropertyArray<easy3d::SurfaceMesh::FaceConnectivity>::*)(unsigned long)) &easy3d::PropertyArray<easy3d::SurfaceMesh::FaceConnectivity>::operator[], "C++: easy3d::PropertyArray<easy3d::SurfaceMesh::FaceConnectivity>::operator[](unsigned long) --> struct easy3d::SurfaceMesh::FaceConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("_idx"));
+        cl.def("__getitem__", (struct easy3d::SurfaceMesh::FaceConnectivity & (easy3d::PropertyArray<easy3d::SurfaceMesh::FaceConnectivity>::*)(size_t)) &easy3d::PropertyArray<easy3d::SurfaceMesh::FaceConnectivity>::operator[], "C++: easy3d::PropertyArray<easy3d::SurfaceMesh::FaceConnectivity>::operator[](size_t) --> struct easy3d::SurfaceMesh::FaceConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("_idx"));
         cl.def("assign", (class easy3d::PropertyArray<struct easy3d::SurfaceMesh::FaceConnectivity> & (easy3d::PropertyArray<easy3d::SurfaceMesh::FaceConnectivity>::*)(const class easy3d::PropertyArray<struct easy3d::SurfaceMesh::FaceConnectivity> &)) &easy3d::PropertyArray<easy3d::SurfaceMesh::FaceConnectivity>::operator=, "C++: easy3d::PropertyArray<easy3d::SurfaceMesh::FaceConnectivity>::operator=(const class easy3d::PropertyArray<struct easy3d::SurfaceMesh::FaceConnectivity> &) --> class easy3d::PropertyArray<struct easy3d::SurfaceMesh::FaceConnectivity> &", pybind11::return_value_policy::automatic, pybind11::arg(""));
         cl.def("reserve", (void (easy3d::BasePropertyArray::*)(unsigned long)) &easy3d::BasePropertyArray::reserve, "Reserve memory for n elements.\n\nC++: easy3d::BasePropertyArray::reserve(unsigned long) --> void", pybind11::arg("n"));
         cl.def("resize", (void (easy3d::BasePropertyArray::*)(unsigned long)) &easy3d::BasePropertyArray::resize, "Resize storage to hold n elements.\n\nC++: easy3d::BasePropertyArray::resize(unsigned long) --> void", pybind11::arg("n"));

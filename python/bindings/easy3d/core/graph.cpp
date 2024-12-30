@@ -1,4 +1,4 @@
-#include <easy3d/core/vec.h>
+﻿#include <easy3d/core/vec.h>
 #include <easy3d/core/graph.h>
 #include <easy3d/core/property.h>
 #include <easy3d/renderer/renderer.h>
@@ -56,7 +56,7 @@ struct PyCallBack_easy3d_Graph : public easy3d::Graph {
 struct PyCallBack_easy3d_Graph_VertexProperty_easy3d_Graph_VertexConnectivity_t : public easy3d::Graph::VertexProperty<easy3d::Graph::VertexConnectivity> {
     using easy3d::Graph::VertexProperty<easy3d::Graph::VertexConnectivity>::VertexProperty;
 
-    struct easy3d::Graph::VertexConnectivity & operator[](unsigned long a0) override {
+    struct easy3d::Graph::VertexConnectivity & operator[](size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::Graph::VertexProperty<easy3d::Graph::VertexConnectivity> *>(this), "__getitem__");
         if (overload) {
@@ -76,7 +76,7 @@ struct PyCallBack_easy3d_Graph_VertexProperty_easy3d_Vec_3_float_t : public easy
     using easy3d::Graph::VertexProperty<easy3d::Vec<3, float>>::VertexProperty;
 
     using _binder_ret_0 = easy3d::Vec<3, float> &;
-    _binder_ret_0 operator[](unsigned long a0) override {
+    _binder_ret_0 operator[](size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::Graph::VertexProperty<easy3d::Vec<3, float>> *>(this), "__getitem__");
         if (overload) {
@@ -95,7 +95,7 @@ struct PyCallBack_easy3d_Graph_VertexProperty_easy3d_Vec_3_float_t : public easy
 struct PyCallBack_easy3d_Graph_EdgeProperty_easy3d_Graph_EdgeConnectivity_t : public easy3d::Graph::EdgeProperty<easy3d::Graph::EdgeConnectivity> {
     using easy3d::Graph::EdgeProperty<easy3d::Graph::EdgeConnectivity>::EdgeProperty;
 
-    struct easy3d::Graph::EdgeConnectivity & operator[](unsigned long a0) override {
+    struct easy3d::Graph::EdgeConnectivity & operator[](size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::Graph::EdgeProperty<easy3d::Graph::EdgeConnectivity> *>(this), "__getitem__");
         if (overload) {
@@ -114,7 +114,7 @@ struct PyCallBack_easy3d_Graph_EdgeProperty_easy3d_Graph_EdgeConnectivity_t : pu
 struct PyCallBack_easy3d_Property_easy3d_Graph_VertexConnectivity_t : public easy3d::Property<easy3d::Graph::VertexConnectivity> {
     using easy3d::Property<easy3d::Graph::VertexConnectivity>::Property;
 
-    struct easy3d::Graph::VertexConnectivity & operator[](unsigned long a0) override {
+    struct easy3d::Graph::VertexConnectivity & operator[](size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::Property<easy3d::Graph::VertexConnectivity> *>(this), "__getitem__");
         if (overload) {
@@ -133,7 +133,7 @@ struct PyCallBack_easy3d_Property_easy3d_Graph_VertexConnectivity_t : public eas
 struct PyCallBack_easy3d_Property_easy3d_Graph_EdgeConnectivity_t : public easy3d::Property<easy3d::Graph::EdgeConnectivity> {
     using easy3d::Property<easy3d::Graph::EdgeConnectivity>::Property;
 
-    struct easy3d::Graph::EdgeConnectivity & operator[](unsigned long a0) override {
+    struct easy3d::Graph::EdgeConnectivity & operator[](size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::Property<easy3d::Graph::EdgeConnectivity> *>(this), "__getitem__");
         if (overload) {
@@ -152,7 +152,7 @@ struct PyCallBack_easy3d_Property_easy3d_Graph_EdgeConnectivity_t : public easy3
 struct PyCallBack_easy3d_PropertyArray_easy3d_Graph_VertexConnectivity_t : public easy3d::PropertyArray<easy3d::Graph::VertexConnectivity> {
     using easy3d::PropertyArray<easy3d::Graph::VertexConnectivity>::PropertyArray;
 
-    void reserve(unsigned long a0) override {
+    void reserve(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::Graph::VertexConnectivity> *>(this), "reserve");
         if (overload) {
@@ -165,7 +165,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_Graph_VertexConnectivity_t : publi
         }
         return PropertyArray::reserve(a0);
     }
-    void resize(unsigned long a0) override {
+    void resize(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::Graph::VertexConnectivity> *>(this), "resize");
         if (overload) {
@@ -191,7 +191,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_Graph_VertexConnectivity_t : publi
         }
         return PropertyArray::push_back();
     }
-    void reset(unsigned long a0) override {
+    void reset(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::Graph::VertexConnectivity> *>(this), "reset");
         if (overload) {
@@ -243,7 +243,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_Graph_VertexConnectivity_t : publi
         }
         return PropertyArray::shrink_to_fit();
     }
-    void swap(unsigned long a0, unsigned long a1) override {
+    void swap(size_t a0, size_t a1) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::Graph::VertexConnectivity> *>(this), "swap");
         if (overload) {
@@ -256,7 +256,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_Graph_VertexConnectivity_t : publi
         }
         return PropertyArray::swap(a0, a1);
     }
-    void copy(unsigned long a0, unsigned long a1) override {
+    void copy(size_t a0, size_t a1) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::Graph::VertexConnectivity> *>(this), "copy");
         if (overload) {
@@ -314,7 +314,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_Graph_VertexConnectivity_t : publi
 struct PyCallBack_easy3d_PropertyArray_easy3d_Graph_EdgeConnectivity_t : public easy3d::PropertyArray<easy3d::Graph::EdgeConnectivity> {
     using easy3d::PropertyArray<easy3d::Graph::EdgeConnectivity>::PropertyArray;
 
-    void reserve(unsigned long a0) override {
+    void reserve(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::Graph::EdgeConnectivity> *>(this), "reserve");
         if (overload) {
@@ -327,7 +327,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_Graph_EdgeConnectivity_t : public 
         }
         return PropertyArray::reserve(a0);
     }
-    void resize(unsigned long a0) override {
+    void resize(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::Graph::EdgeConnectivity> *>(this), "resize");
         if (overload) {
@@ -353,7 +353,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_Graph_EdgeConnectivity_t : public 
         }
         return PropertyArray::push_back();
     }
-    void reset(unsigned long a0) override {
+    void reset(size_t a0) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::Graph::EdgeConnectivity> *>(this), "reset");
         if (overload) {
@@ -405,7 +405,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_Graph_EdgeConnectivity_t : public 
         }
         return PropertyArray::shrink_to_fit();
     }
-    void swap(unsigned long a0, unsigned long a1) override {
+    void swap(size_t a0, size_t a1) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::Graph::EdgeConnectivity> *>(this), "swap");
         if (overload) {
@@ -418,7 +418,7 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_Graph_EdgeConnectivity_t : public 
         }
         return PropertyArray::swap(a0, a1);
     }
-    void copy(unsigned long a0, unsigned long a1) override {
+    void copy(size_t a0, size_t a1) override {
         pybind11::gil_scoped_acquire gil;
         pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::PropertyArray<easy3d::Graph::EdgeConnectivity> *>(this), "copy");
         if (overload) {
@@ -607,7 +607,7 @@ void bind_easy3d_core_graph(pybind11::module_& m)
             cl.def( pybind11::init( [](PyCallBack_easy3d_Property_easy3d_Graph_VertexConnectivity_t const &o){ return new PyCallBack_easy3d_Property_easy3d_Graph_VertexConnectivity_t(o); } ) );
             cl.def( pybind11::init( [](easy3d::Property<easy3d::Graph::VertexConnectivity> const &o){ return new easy3d::Property<easy3d::Graph::VertexConnectivity>(o); } ) );
             cl.def("reset", (void (easy3d::Property<easy3d::Graph::VertexConnectivity>::*)()) &easy3d::Property<easy3d::Graph::VertexConnectivity>::reset, "C++: easy3d::Property<easy3d::Graph::VertexConnectivity>::reset() --> void");
-            cl.def("__getitem__", (struct easy3d::Graph::VertexConnectivity & (easy3d::Property<easy3d::Graph::VertexConnectivity>::*)(unsigned long)) &easy3d::Property<easy3d::Graph::VertexConnectivity>::operator[], "C++: easy3d::Property<easy3d::Graph::VertexConnectivity>::operator[](unsigned long) --> struct easy3d::Graph::VertexConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+            cl.def("__getitem__", (struct easy3d::Graph::VertexConnectivity & (easy3d::Property<easy3d::Graph::VertexConnectivity>::*)(size_t)) &easy3d::Property<easy3d::Graph::VertexConnectivity>::operator[], "C++: easy3d::Property<easy3d::Graph::VertexConnectivity>::operator[](size_t) --> struct easy3d::Graph::VertexConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
             cl.def("data", (const struct easy3d::Graph::VertexConnectivity * (easy3d::Property<easy3d::Graph::VertexConnectivity>::*)() const) &easy3d::Property<easy3d::Graph::VertexConnectivity>::data, "C++: easy3d::Property<easy3d::Graph::VertexConnectivity>::data() const --> const struct easy3d::Graph::VertexConnectivity *", pybind11::return_value_policy::automatic);
             cl.def("vector", (class std::vector<struct easy3d::Graph::VertexConnectivity> & (easy3d::Property<easy3d::Graph::VertexConnectivity>::*)()) &easy3d::Property<easy3d::Graph::VertexConnectivity>::vector, "C++: easy3d::Property<easy3d::Graph::VertexConnectivity>::vector() --> class std::vector<struct easy3d::Graph::VertexConnectivity> &", pybind11::return_value_policy::automatic);
             cl.def("array", (class easy3d::PropertyArray<struct easy3d::Graph::VertexConnectivity> & (easy3d::Property<easy3d::Graph::VertexConnectivity>::*)()) &easy3d::Property<easy3d::Graph::VertexConnectivity>::array, "C++: easy3d::Property<easy3d::Graph::VertexConnectivity>::array() --> class easy3d::PropertyArray<struct easy3d::Graph::VertexConnectivity> &", pybind11::return_value_policy::automatic);
@@ -627,7 +627,7 @@ void bind_easy3d_core_graph(pybind11::module_& m)
 			cl.def("__getitem__", (struct easy3d::Graph::VertexConnectivity & (easy3d::Graph::VertexProperty<easy3d::Graph::VertexConnectivity>::*)(struct easy3d::Graph::Vertex)) &easy3d::Graph::VertexProperty<easy3d::Graph::VertexConnectivity>::operator[], "C++: easy3d::Graph::VertexProperty<easy3d::Graph::VertexConnectivity>::operator[](struct easy3d::Graph::Vertex) --> struct easy3d::Graph::VertexConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("v"));
 			cl.def("assign", (class easy3d::Graph::VertexProperty<struct easy3d::Graph::VertexConnectivity> & (easy3d::Graph::VertexProperty<easy3d::Graph::VertexConnectivity>::*)(const class easy3d::Graph::VertexProperty<struct easy3d::Graph::VertexConnectivity> &)) &easy3d::Graph::VertexProperty<easy3d::Graph::VertexConnectivity>::operator=, "C++: easy3d::Graph::VertexProperty<easy3d::Graph::VertexConnectivity>::operator=(const class easy3d::Graph::VertexProperty<struct easy3d::Graph::VertexConnectivity> &) --> class easy3d::Graph::VertexProperty<struct easy3d::Graph::VertexConnectivity> &", pybind11::return_value_policy::automatic, pybind11::arg(""));
 			cl.def("reset", (void (easy3d::Property<easy3d::Graph::VertexConnectivity>::*)()) &easy3d::Property<easy3d::Graph::VertexConnectivity>::reset, "C++: easy3d::Property<easy3d::Graph::VertexConnectivity>::reset() --> void");
-			cl.def("__getitem__", (struct easy3d::Graph::VertexConnectivity & (easy3d::Property<easy3d::Graph::VertexConnectivity>::*)(unsigned long)) &easy3d::Property<easy3d::Graph::VertexConnectivity>::operator[], "C++: easy3d::Property<easy3d::Graph::VertexConnectivity>::operator[](unsigned long) --> struct easy3d::Graph::VertexConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+			cl.def("__getitem__", (struct easy3d::Graph::VertexConnectivity & (easy3d::Property<easy3d::Graph::VertexConnectivity>::*)(size_t)) &easy3d::Property<easy3d::Graph::VertexConnectivity>::operator[], "C++: easy3d::Property<easy3d::Graph::VertexConnectivity>::operator[](size_t) --> struct easy3d::Graph::VertexConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
 			cl.def("data", (const struct easy3d::Graph::VertexConnectivity * (easy3d::Property<easy3d::Graph::VertexConnectivity>::*)() const) &easy3d::Property<easy3d::Graph::VertexConnectivity>::data, "C++: easy3d::Property<easy3d::Graph::VertexConnectivity>::data() const --> const struct easy3d::Graph::VertexConnectivity *", pybind11::return_value_policy::automatic);
 			cl.def("vector", (class std::vector<struct easy3d::Graph::VertexConnectivity> & (easy3d::Property<easy3d::Graph::VertexConnectivity>::*)()) &easy3d::Property<easy3d::Graph::VertexConnectivity>::vector, "C++: easy3d::Property<easy3d::Graph::VertexConnectivity>::vector() --> class std::vector<struct easy3d::Graph::VertexConnectivity> &", pybind11::return_value_policy::automatic);
 			cl.def("array", (class easy3d::PropertyArray<struct easy3d::Graph::VertexConnectivity> & (easy3d::Property<easy3d::Graph::VertexConnectivity>::*)()) &easy3d::Property<easy3d::Graph::VertexConnectivity>::array, "C++: easy3d::Property<easy3d::Graph::VertexConnectivity>::array() --> class easy3d::PropertyArray<struct easy3d::Graph::VertexConnectivity> &", pybind11::return_value_policy::automatic);
@@ -664,7 +664,7 @@ void bind_easy3d_core_graph(pybind11::module_& m)
 			cl.def("__getitem__", (class easy3d::Vec<3, float> & (easy3d::Graph::VertexProperty<easy3d::Vec<3, float>>::*)(struct easy3d::Graph::Vertex)) &easy3d::Graph::VertexProperty<easy3d::Vec<3, float>>::operator[], "C++: easy3d::Graph::VertexProperty<easy3d::Vec<3, float>>::operator[](struct easy3d::Graph::Vertex) --> class easy3d::Vec<3, float> &", pybind11::return_value_policy::automatic, pybind11::arg("v"));
 			cl.def("assign", (class easy3d::Graph::VertexProperty<class easy3d::Vec<3, float> > & (easy3d::Graph::VertexProperty<easy3d::Vec<3, float>>::*)(const class easy3d::Graph::VertexProperty<class easy3d::Vec<3, float> > &)) &easy3d::Graph::VertexProperty<easy3d::Vec<3, float>>::operator=, "C++: easy3d::Graph::VertexProperty<easy3d::Vec<3, float>>::operator=(const class easy3d::Graph::VertexProperty<class easy3d::Vec<3, float> > &) --> class easy3d::Graph::VertexProperty<class easy3d::Vec<3, float> > &", pybind11::return_value_policy::automatic, pybind11::arg(""));
 			cl.def("reset", (void (easy3d::Property<easy3d::Vec<3, float>>::*)()) &easy3d::Property<easy3d::Vec<3, float>>::reset, "C++: easy3d::Property<easy3d::Vec<3, float>>::reset() --> void");
-			cl.def("__getitem__", (class easy3d::Vec<3, float> & (easy3d::Property<easy3d::Vec<3, float>>::*)(unsigned long)) &easy3d::Property<easy3d::Vec<3, float>>::operator[], "C++: easy3d::Property<easy3d::Vec<3, float>>::operator[](unsigned long) --> class easy3d::Vec<3, float> &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+			cl.def("__getitem__", (class easy3d::Vec<3, float> & (easy3d::Property<easy3d::Vec<3, float>>::*)(size_t)) &easy3d::Property<easy3d::Vec<3, float>>::operator[], "C++: easy3d::Property<easy3d::Vec<3, float>>::operator[](size_t) --> class easy3d::Vec<3, float> &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
 			cl.def("data", (const class easy3d::Vec<3, float> * (easy3d::Property<easy3d::Vec<3, float>>::*)() const) &easy3d::Property<easy3d::Vec<3, float>>::data, "C++: easy3d::Property<easy3d::Vec<3, float>>::data() const --> const class easy3d::Vec<3, float> *", pybind11::return_value_policy::automatic);
 			cl.def("vector", (class std::vector<class easy3d::Vec<3, float> > & (easy3d::Property<easy3d::Vec<3, float>>::*)()) &easy3d::Property<easy3d::Vec<3, float>>::vector, "C++: easy3d::Property<easy3d::Vec<3, float>>::vector() --> class std::vector<class easy3d::Vec<3, float> > &", pybind11::return_value_policy::automatic);
 			cl.def("array", (class easy3d::PropertyArray<class easy3d::Vec<3, float> > & (easy3d::Property<easy3d::Vec<3, float>>::*)()) &easy3d::Property<easy3d::Vec<3, float>>::array, "C++: easy3d::Property<easy3d::Vec<3, float>>::array() --> class easy3d::PropertyArray<class easy3d::Vec<3, float> > &", pybind11::return_value_policy::automatic);
@@ -681,7 +681,7 @@ void bind_easy3d_core_graph(pybind11::module_& m)
             cl.def( pybind11::init( [](PyCallBack_easy3d_Property_easy3d_Graph_EdgeConnectivity_t const &o){ return new PyCallBack_easy3d_Property_easy3d_Graph_EdgeConnectivity_t(o); } ) );
             cl.def( pybind11::init( [](easy3d::Property<easy3d::Graph::EdgeConnectivity> const &o){ return new easy3d::Property<easy3d::Graph::EdgeConnectivity>(o); } ) );
             cl.def("reset", (void (easy3d::Property<easy3d::Graph::EdgeConnectivity>::*)()) &easy3d::Property<easy3d::Graph::EdgeConnectivity>::reset, "C++: easy3d::Property<easy3d::Graph::EdgeConnectivity>::reset() --> void");
-            cl.def("__getitem__", (struct easy3d::Graph::EdgeConnectivity & (easy3d::Property<easy3d::Graph::EdgeConnectivity>::*)(unsigned long)) &easy3d::Property<easy3d::Graph::EdgeConnectivity>::operator[], "C++: easy3d::Property<easy3d::Graph::EdgeConnectivity>::operator[](unsigned long) --> struct easy3d::Graph::EdgeConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+            cl.def("__getitem__", (struct easy3d::Graph::EdgeConnectivity & (easy3d::Property<easy3d::Graph::EdgeConnectivity>::*)(size_t)) &easy3d::Property<easy3d::Graph::EdgeConnectivity>::operator[], "C++: easy3d::Property<easy3d::Graph::EdgeConnectivity>::operator[](size_t) --> struct easy3d::Graph::EdgeConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
             cl.def("data", (const struct easy3d::Graph::EdgeConnectivity * (easy3d::Property<easy3d::Graph::EdgeConnectivity>::*)() const) &easy3d::Property<easy3d::Graph::EdgeConnectivity>::data, "C++: easy3d::Property<easy3d::Graph::EdgeConnectivity>::data() const --> const struct easy3d::Graph::EdgeConnectivity *", pybind11::return_value_policy::automatic);
             cl.def("vector", (class std::vector<struct easy3d::Graph::EdgeConnectivity> & (easy3d::Property<easy3d::Graph::EdgeConnectivity>::*)()) &easy3d::Property<easy3d::Graph::EdgeConnectivity>::vector, "C++: easy3d::Property<easy3d::Graph::EdgeConnectivity>::vector() --> class std::vector<struct easy3d::Graph::EdgeConnectivity> &", pybind11::return_value_policy::automatic);
             cl.def("array", (class easy3d::PropertyArray<struct easy3d::Graph::EdgeConnectivity> & (easy3d::Property<easy3d::Graph::EdgeConnectivity>::*)()) &easy3d::Property<easy3d::Graph::EdgeConnectivity>::array, "C++: easy3d::Property<easy3d::Graph::EdgeConnectivity>::array() --> class easy3d::PropertyArray<struct easy3d::Graph::EdgeConnectivity> &", pybind11::return_value_policy::automatic);
@@ -701,7 +701,7 @@ void bind_easy3d_core_graph(pybind11::module_& m)
 			cl.def("__getitem__", (struct easy3d::Graph::EdgeConnectivity & (easy3d::Graph::EdgeProperty<easy3d::Graph::EdgeConnectivity>::*)(struct easy3d::Graph::Edge)) &easy3d::Graph::EdgeProperty<easy3d::Graph::EdgeConnectivity>::operator[], "C++: easy3d::Graph::EdgeProperty<easy3d::Graph::EdgeConnectivity>::operator[](struct easy3d::Graph::Edge) --> struct easy3d::Graph::EdgeConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("e"));
 			cl.def("assign", (class easy3d::Graph::EdgeProperty<struct easy3d::Graph::EdgeConnectivity> & (easy3d::Graph::EdgeProperty<easy3d::Graph::EdgeConnectivity>::*)(const class easy3d::Graph::EdgeProperty<struct easy3d::Graph::EdgeConnectivity> &)) &easy3d::Graph::EdgeProperty<easy3d::Graph::EdgeConnectivity>::operator=, "C++: easy3d::Graph::EdgeProperty<easy3d::Graph::EdgeConnectivity>::operator=(const class easy3d::Graph::EdgeProperty<struct easy3d::Graph::EdgeConnectivity> &) --> class easy3d::Graph::EdgeProperty<struct easy3d::Graph::EdgeConnectivity> &", pybind11::return_value_policy::automatic, pybind11::arg(""));
 			cl.def("reset", (void (easy3d::Property<easy3d::Graph::EdgeConnectivity>::*)()) &easy3d::Property<easy3d::Graph::EdgeConnectivity>::reset, "C++: easy3d::Property<easy3d::Graph::EdgeConnectivity>::reset() --> void");
-			cl.def("__getitem__", (struct easy3d::Graph::EdgeConnectivity & (easy3d::Property<easy3d::Graph::EdgeConnectivity>::*)(unsigned long)) &easy3d::Property<easy3d::Graph::EdgeConnectivity>::operator[], "C++: easy3d::Property<easy3d::Graph::EdgeConnectivity>::operator[](unsigned long) --> struct easy3d::Graph::EdgeConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+			cl.def("__getitem__", (struct easy3d::Graph::EdgeConnectivity & (easy3d::Property<easy3d::Graph::EdgeConnectivity>::*)(size_t)) &easy3d::Property<easy3d::Graph::EdgeConnectivity>::operator[], "C++: easy3d::Property<easy3d::Graph::EdgeConnectivity>::operator[](size_t) --> struct easy3d::Graph::EdgeConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
 			cl.def("data", (const struct easy3d::Graph::EdgeConnectivity * (easy3d::Property<easy3d::Graph::EdgeConnectivity>::*)() const) &easy3d::Property<easy3d::Graph::EdgeConnectivity>::data, "C++: easy3d::Property<easy3d::Graph::EdgeConnectivity>::data() const --> const struct easy3d::Graph::EdgeConnectivity *", pybind11::return_value_policy::automatic);
 			cl.def("vector", (class std::vector<struct easy3d::Graph::EdgeConnectivity> & (easy3d::Property<easy3d::Graph::EdgeConnectivity>::*)()) &easy3d::Property<easy3d::Graph::EdgeConnectivity>::vector, "C++: easy3d::Property<easy3d::Graph::EdgeConnectivity>::vector() --> class std::vector<struct easy3d::Graph::EdgeConnectivity> &", pybind11::return_value_policy::automatic);
 			cl.def("array", (class easy3d::PropertyArray<struct easy3d::Graph::EdgeConnectivity> & (easy3d::Property<easy3d::Graph::EdgeConnectivity>::*)()) &easy3d::Property<easy3d::Graph::EdgeConnectivity>::array, "C++: easy3d::Property<easy3d::Graph::EdgeConnectivity>::array() --> class easy3d::PropertyArray<struct easy3d::Graph::EdgeConnectivity> &", pybind11::return_value_policy::automatic);
@@ -833,7 +833,7 @@ void bind_easy3d_core_graph(pybind11::module_& m)
         cl.def("type", (const class std::type_info & (easy3d::PropertyArray<easy3d::Graph::VertexConnectivity>::*)() const) &easy3d::PropertyArray<easy3d::Graph::VertexConnectivity>::type, "C++: easy3d::PropertyArray<easy3d::Graph::VertexConnectivity>::type() const --> const class std::type_info &", pybind11::return_value_policy::automatic);
         cl.def("data", (const struct easy3d::Graph::VertexConnectivity * (easy3d::PropertyArray<easy3d::Graph::VertexConnectivity>::*)() const) &easy3d::PropertyArray<easy3d::Graph::VertexConnectivity>::data, "C++: easy3d::PropertyArray<easy3d::Graph::VertexConnectivity>::data() const --> const struct easy3d::Graph::VertexConnectivity *", pybind11::return_value_policy::automatic);
         cl.def("vector", (class std::vector<struct easy3d::Graph::VertexConnectivity> & (easy3d::PropertyArray<easy3d::Graph::VertexConnectivity>::*)()) &easy3d::PropertyArray<easy3d::Graph::VertexConnectivity>::vector, "C++: easy3d::PropertyArray<easy3d::Graph::VertexConnectivity>::vector() --> class std::vector<struct easy3d::Graph::VertexConnectivity> &", pybind11::return_value_policy::automatic);
-        cl.def("__getitem__", (struct easy3d::Graph::VertexConnectivity & (easy3d::PropertyArray<easy3d::Graph::VertexConnectivity>::*)(unsigned long)) &easy3d::PropertyArray<easy3d::Graph::VertexConnectivity>::operator[], "C++: easy3d::PropertyArray<easy3d::Graph::VertexConnectivity>::operator[](unsigned long) --> struct easy3d::Graph::VertexConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("_idx"));
+        cl.def("__getitem__", (struct easy3d::Graph::VertexConnectivity & (easy3d::PropertyArray<easy3d::Graph::VertexConnectivity>::*)(size_t)) &easy3d::PropertyArray<easy3d::Graph::VertexConnectivity>::operator[], "C++: easy3d::PropertyArray<easy3d::Graph::VertexConnectivity>::operator[](size_t) --> struct easy3d::Graph::VertexConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("_idx"));
         cl.def("assign", (class easy3d::PropertyArray<struct easy3d::Graph::VertexConnectivity> & (easy3d::PropertyArray<easy3d::Graph::VertexConnectivity>::*)(const class easy3d::PropertyArray<struct easy3d::Graph::VertexConnectivity> &)) &easy3d::PropertyArray<easy3d::Graph::VertexConnectivity>::operator=, "C++: easy3d::PropertyArray<easy3d::Graph::VertexConnectivity>::operator=(const class easy3d::PropertyArray<struct easy3d::Graph::VertexConnectivity> &) --> class easy3d::PropertyArray<struct easy3d::Graph::VertexConnectivity> &", pybind11::return_value_policy::automatic, pybind11::arg(""));
         cl.def("reserve", (void (easy3d::BasePropertyArray::*)(unsigned long)) &easy3d::BasePropertyArray::reserve, "Reserve memory for n elements.\n\nC++: easy3d::BasePropertyArray::reserve(unsigned long) --> void", pybind11::arg("n"));
         cl.def("resize", (void (easy3d::BasePropertyArray::*)(unsigned long)) &easy3d::BasePropertyArray::resize, "Resize storage to hold n elements.\n\nC++: easy3d::BasePropertyArray::resize(unsigned long) --> void", pybind11::arg("n"));
@@ -873,7 +873,7 @@ void bind_easy3d_core_graph(pybind11::module_& m)
         cl.def("type", (const class std::type_info & (easy3d::PropertyArray<easy3d::Graph::EdgeConnectivity>::*)() const) &easy3d::PropertyArray<easy3d::Graph::EdgeConnectivity>::type, "C++: easy3d::PropertyArray<easy3d::Graph::EdgeConnectivity>::type() const --> const class std::type_info &", pybind11::return_value_policy::automatic);
         cl.def("data", (const struct easy3d::Graph::EdgeConnectivity * (easy3d::PropertyArray<easy3d::Graph::EdgeConnectivity>::*)() const) &easy3d::PropertyArray<easy3d::Graph::EdgeConnectivity>::data, "C++: easy3d::PropertyArray<easy3d::Graph::EdgeConnectivity>::data() const --> const struct easy3d::Graph::EdgeConnectivity *", pybind11::return_value_policy::automatic);
         cl.def("vector", (class std::vector<struct easy3d::Graph::EdgeConnectivity> & (easy3d::PropertyArray<easy3d::Graph::EdgeConnectivity>::*)()) &easy3d::PropertyArray<easy3d::Graph::EdgeConnectivity>::vector, "C++: easy3d::PropertyArray<easy3d::Graph::EdgeConnectivity>::vector() --> class std::vector<struct easy3d::Graph::EdgeConnectivity> &", pybind11::return_value_policy::automatic);
-        cl.def("__getitem__", (struct easy3d::Graph::EdgeConnectivity & (easy3d::PropertyArray<easy3d::Graph::EdgeConnectivity>::*)(unsigned long)) &easy3d::PropertyArray<easy3d::Graph::EdgeConnectivity>::operator[], "C++: easy3d::PropertyArray<easy3d::Graph::EdgeConnectivity>::operator[](unsigned long) --> struct easy3d::Graph::EdgeConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("_idx"));
+        cl.def("__getitem__", (struct easy3d::Graph::EdgeConnectivity & (easy3d::PropertyArray<easy3d::Graph::EdgeConnectivity>::*)(size_t)) &easy3d::PropertyArray<easy3d::Graph::EdgeConnectivity>::operator[], "C++: easy3d::PropertyArray<easy3d::Graph::EdgeConnectivity>::operator[](size_t) --> struct easy3d::Graph::EdgeConnectivity &", pybind11::return_value_policy::automatic, pybind11::arg("_idx"));
         cl.def("assign", (class easy3d::PropertyArray<struct easy3d::Graph::EdgeConnectivity> & (easy3d::PropertyArray<easy3d::Graph::EdgeConnectivity>::*)(const class easy3d::PropertyArray<struct easy3d::Graph::EdgeConnectivity> &)) &easy3d::PropertyArray<easy3d::Graph::EdgeConnectivity>::operator=, "C++: easy3d::PropertyArray<easy3d::Graph::EdgeConnectivity>::operator=(const class easy3d::PropertyArray<struct easy3d::Graph::EdgeConnectivity> &) --> class easy3d::PropertyArray<struct easy3d::Graph::EdgeConnectivity> &", pybind11::return_value_policy::automatic, pybind11::arg(""));
         cl.def("reserve", (void (easy3d::BasePropertyArray::*)(unsigned long)) &easy3d::BasePropertyArray::reserve, "Reserve memory for n elements.\n\nC++: easy3d::BasePropertyArray::reserve(unsigned long) --> void", pybind11::arg("n"));
         cl.def("resize", (void (easy3d::BasePropertyArray::*)(unsigned long)) &easy3d::BasePropertyArray::resize, "Resize storage to hold n elements.\n\nC++: easy3d::BasePropertyArray::resize(unsigned long) --> void", pybind11::arg("n"));
