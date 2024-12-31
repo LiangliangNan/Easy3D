@@ -383,8 +383,8 @@ void bind_easy3d_viewer_viewer(pybind11::module_& m)
 		cl.def( pybind11::init( [](const std::string & a0, int const & a1, int const & a2, int const & a3, bool const & a4, bool const & a5, int const & a6, int const & a7, int const & a8){ return new easy3d::Viewer(a0, a1, a2, a3, a4, a5, a6, a7, a8); }, [](const std::string & a0, int const & a1, int const & a2, int const & a3, bool const & a4, bool const & a5, int const & a6, int const & a7, int const & a8){ return new PyCallBack_easy3d_Viewer(a0, a1, a2, a3, a4, a5, a6, a7, a8); } ), "doc");
 		cl.def( pybind11::init<const std::string &, int, int, int, bool, bool, int, int, int, int>(), pybind11::arg("title"), pybind11::arg("samples"), pybind11::arg("gl_major"), pybind11::arg("gl_minor"), pybind11::arg("full_screen"), pybind11::arg("resizable"), pybind11::arg("depth_bits"), pybind11::arg("stencil_bits"), pybind11::arg("width"), pybind11::arg("height") );
 
-		cl.def( pybind11::init( [](PyCallBack_easy3d_Viewer const &o){ return new PyCallBack_easy3d_Viewer(o); } ) );
-		cl.def( pybind11::init( [](easy3d::Viewer const &o){ return new easy3d::Viewer(o); } ) );
+//		cl.def( pybind11::init( [](PyCallBack_easy3d_Viewer const &o){ return new PyCallBack_easy3d_Viewer(o); } ) );
+//		cl.def( pybind11::init( [](easy3d::Viewer const &o){ return new easy3d::Viewer(o); } ) );
 
 		pybind11::enum_<easy3d::Viewer::Key>(cl, "Key", pybind11::arithmetic(), "The keys. Currently only a limited number of commonly used keys are supported.")
 			.value("KEY_UNKNOWN", easy3d::Viewer::KEY_UNKNOWN)
@@ -541,6 +541,6 @@ void bind_easy3d_viewer_viewer(pybind11::module_& m)
 		cl.def("set_usage", (void (easy3d::Viewer::*)(const std::string &)) &easy3d::Viewer::set_usage, "C++: easy3d::Viewer::set_usage(const std::string &) --> void", pybind11::arg("usg"));
 		cl.def("set_animation", (void (easy3d::Viewer::*)(bool)) &easy3d::Viewer::set_animation, "Enable/Disable animation.\n \n\n To have animation,  must be provided to specify how scene geometry is modified.\n\nC++: easy3d::Viewer::set_animation(bool) --> void", pybind11::arg("b"));
 		cl.def("is_animating", (bool (easy3d::Viewer::*)() const) &easy3d::Viewer::is_animating, "Is animation currently being performed.\n\nC++: easy3d::Viewer::is_animating() const --> bool");
-		cl.def("assign", (class easy3d::Viewer & (easy3d::Viewer::*)(const class easy3d::Viewer &)) &easy3d::Viewer::operator=, "C++: easy3d::Viewer::operator=(const class easy3d::Viewer &) --> class easy3d::Viewer &", pybind11::return_value_policy::automatic, pybind11::arg(""));
+//		cl.def("assign", (class easy3d::Viewer & (easy3d::Viewer::*)(const class easy3d::Viewer &)) &easy3d::Viewer::operator=, "C++: easy3d::Viewer::operator=(const class easy3d::Viewer &) --> class easy3d::Viewer &", pybind11::return_value_policy::automatic, pybind11::arg(""));
 	}
 }

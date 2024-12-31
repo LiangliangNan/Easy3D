@@ -10,6 +10,7 @@ set(${module}_headers
         constraint.h
         drawable.h
         drawable_lines.h
+        drawable_lines_2D.h
         drawable_points.h
         drawable_triangles.h
         dual_depth_peeling.h
@@ -51,6 +52,7 @@ set(${module}_sources
         constraint.cpp
         drawable.cpp
         drawable_lines.cpp
+        drawable_lines_2D.cpp
         drawable_points.cpp
         drawable_triangles.cpp
         dual_depth_peeling.cpp

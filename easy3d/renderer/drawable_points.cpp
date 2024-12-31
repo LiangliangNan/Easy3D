@@ -53,7 +53,7 @@ namespace easy3d {
     }
 
 
-    void PointsDrawable::draw(const Camera *camera /* = false */) const {
+    void PointsDrawable::draw(const Camera *camera) const {
         if (update_needed_ || vertex_buffer_ == 0) {
             const_cast<PointsDrawable *>(this)->update_buffers_internal();
             const_cast<PointsDrawable *>(this)->update_needed_ = false;

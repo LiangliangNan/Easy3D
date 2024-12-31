@@ -40,6 +40,7 @@
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
+#include <easy3d/renderer/drawable_lines_2D.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/shader_manager.h>
@@ -121,7 +122,7 @@ namespace easy3d {
         setup_callbacks(window_);
 
         // create and set up the camera
-        camera_ = std::make_shared<Camera>();
+        camera_ = std::unique_ptr<Camera>(new Camera);
         camera_->setType(Camera::PERSPECTIVE);
         camera_->setUpVector(vec3(0, 0, 1)); // Z pointing up
         camera_->setViewDirection(vec3(-1, 0, 0)); // X pointing out
@@ -570,6 +571,7 @@ namespace easy3d {
         camera_.reset();
         kfi_.reset();
         drawable_axes_.reset();
+        drawable_pivot_.reset();
         texter_.reset();
 
         clear_scene();
@@ -638,6 +640,15 @@ namespace easy3d {
                 const vec3 &p = point_under_pixel(x, y, found);
                 if (found) {
                     camera_->setPivotPoint(p);
+                    // We draw the pivot mark in the screen space.
+                    // A 3D version is implemented in Tutorial_204_Viewer_Qt
+                    if (!drawable_pivot_)
+                        drawable_pivot_ = std::unique_ptr<LinesDrawable2D>(new LinesDrawable2D("pivot"));
+                    const float size = static_cast<float>(10 * dpi_scaling());
+                    const std::vector<vec2> points = { vec2(x - size, y), vec2(x + size, y),
+                                                       vec2(x, y - size), vec2(x, y + size) };
+                    drawable_pivot_->update_vertex_buffer(points, width(), height(), true);
+
                     // show, but hide the visual hint of pivot point after \p delay milliseconds.
                     show_pivot_point_ = true;
                     Timer<>::single_shot(10000, [&]() {
@@ -1565,43 +1576,6 @@ namespace easy3d {
     }
 
 
-    void Viewer::draw_pivot_point() const {
-        ShaderProgram *program = ShaderManager::get_program("lines/lines_plain_color");
-        if (!program) {
-            std::vector<ShaderProgram::Attribute> attributes;
-            attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-            attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
-            program = ShaderManager::create_program_from_files("lines/lines_plain_color", attributes);
-        }
-        if (!program)
-            return;
-
-#if defined(__APPLE__)
-        const float size = 10;
-#else
-        const float size = static_cast<float>(10 * dpi_scaling());
-#endif
-        LinesDrawable drawable("pivot_point");
-        const vec3 &pivot = camera()->projectedCoordinatesOf(camera()->pivotPoint());
-        const std::vector<vec3> points = {
-                vec3(pivot.x - size, pivot.y, 0.5f), vec3(pivot.x + size, pivot.y, 0.5f),
-                vec3(pivot.x, pivot.y - size, 0.5f), vec3(pivot.x, pivot.y + size, 0.5f)
-        };
-        drawable.update_vertex_buffer(points);
-
-        const mat4 &proj = transform::ortho(0.0f, static_cast<float>(width()), static_cast<float>(height()), 0.0f,
-                                            0.0f, -1.0f);
-        glDisable(GL_DEPTH_TEST);   // always on top
-        program->bind();
-        program->set_uniform("MVP", proj);
-        program->set_uniform("per_vertex_color", false);
-        program->set_uniform("default_color", vec4(0.0f, 0.0f, 1.0f, 1.0f));
-        drawable.gl_draw();
-        program->release();
-        glEnable(GL_DEPTH_TEST);   // restore
-    }
-
-
     void Viewer::pre_draw() {
         glfwMakeContextCurrent(window_);
         glClearColor(background_color_[0], background_color_[1], background_color_[2], 1.0f);
@@ -1629,7 +1603,7 @@ namespace easy3d {
         }
 
         if (show_pivot_point_)
-            draw_pivot_point();
+            drawable_pivot_->draw(camera());
 
         // ------------- draw the picking region with transparency  ---------------
 

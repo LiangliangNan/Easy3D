@@ -377,8 +377,8 @@ void bind_easy3d_viewer_offscreen(pybind11::module_& m)
 		cl.def( pybind11::init( [](int const & a0){ return new easy3d::OffScreen(a0); }, [](int const & a0){ return new PyCallBack_easy3d_OffScreen(a0); } ), "doc");
 		cl.def( pybind11::init<int, int>(), pybind11::arg("width"), pybind11::arg("height") );
 
-		cl.def( pybind11::init( [](PyCallBack_easy3d_OffScreen const &o){ return new PyCallBack_easy3d_OffScreen(o); } ) );
-		cl.def( pybind11::init( [](easy3d::OffScreen const &o){ return new easy3d::OffScreen(o); } ) );
+//		cl.def( pybind11::init( [](PyCallBack_easy3d_OffScreen const &o){ return new PyCallBack_easy3d_OffScreen(o); } ) );
+//		cl.def( pybind11::init( [](easy3d::OffScreen const &o){ return new easy3d::OffScreen(o); } ) );
 
         cl.def("add_model", [](easy3d::OffScreen& self, const std::string& file_name, bool create_default_drawables = true)
                {
@@ -435,6 +435,6 @@ void bind_easy3d_viewer_offscreen(pybind11::module_& m)
 		cl.def("models", (const class std::vector<class easy3d::Model *> & (easy3d::OffScreen::*)() const) &easy3d::OffScreen::models, "Query the models managed by this offscreen renderer.\n \n\n The models managed by this offscreen renderer.\n\nC++: easy3d::OffScreen::models() const --> const class std::vector<class easy3d::Model *> &", pybind11::return_value_policy::automatic);
 		cl.def("drawables", (const class std::vector<class easy3d::Drawable *> & (easy3d::OffScreen::*)() const) &easy3d::OffScreen::drawables, "Query the drawables managed by this offscreen renderer.\n \n\n The drawables managed by this offscreen renderer.\n\nC++: easy3d::OffScreen::drawables() const --> const class std::vector<class easy3d::Drawable *> &", pybind11::return_value_policy::automatic);
 		cl.def("clear_scene", (void (easy3d::OffScreen::*)()) &easy3d::OffScreen::clear_scene, "Delete all visual contents of the offscreen renderer (all models and drawables).\n\nC++: easy3d::OffScreen::clear_scene() --> void");
-		cl.def("assign", (class easy3d::OffScreen & (easy3d::OffScreen::*)(const class easy3d::OffScreen &)) &easy3d::OffScreen::operator=, "C++: easy3d::OffScreen::operator=(const class easy3d::OffScreen &) --> class easy3d::OffScreen &", pybind11::return_value_policy::automatic, pybind11::arg(""));
+//		cl.def("assign", (class easy3d::OffScreen & (easy3d::OffScreen::*)(const class easy3d::OffScreen &)) &easy3d::OffScreen::operator=, "C++: easy3d::OffScreen::operator=(const class easy3d::OffScreen &) --> class easy3d::OffScreen &", pybind11::return_value_policy::automatic, pybind11::arg(""));
 	}
 }

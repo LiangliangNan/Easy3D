@@ -374,8 +374,8 @@ void bind_easy3d_viewer_multi_viewer(pybind11::module_& m)
 		cl.def( pybind11::init( [](int const & a0, int const & a1){ return new easy3d::MultiViewer(a0, a1); }, [](int const & a0, int const & a1){ return new PyCallBack_easy3d_MultiViewer(a0, a1); } ), "doc");
 		cl.def( pybind11::init<int, int, const std::string &>(), pybind11::arg("rows"), pybind11::arg("cols"), pybind11::arg("title") );
 
-		cl.def( pybind11::init( [](PyCallBack_easy3d_MultiViewer const &o){ return new PyCallBack_easy3d_MultiViewer(o); } ) );
-		cl.def( pybind11::init( [](easy3d::MultiViewer const &o){ return new easy3d::MultiViewer(o); } ) );
+//		cl.def( pybind11::init( [](PyCallBack_easy3d_MultiViewer const &o){ return new PyCallBack_easy3d_MultiViewer(o); } ) );
+//		cl.def( pybind11::init( [](easy3d::MultiViewer const &o){ return new easy3d::MultiViewer(o); } ) );
 
         cl.def("add_model", [](easy3d::MultiViewer& self, const std::string& file_name, bool create_default_drawables = true)
                {

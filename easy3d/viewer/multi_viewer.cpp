@@ -27,16 +27,12 @@
 #include <easy3d/viewer/multi_viewer.h>
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/opengl.h>
-#include <easy3d/renderer/opengl_error.h>
-#include <easy3d/renderer/vertex_array_object.h>
 #include <easy3d/renderer/drawable_lines.h>
+#include <easy3d/renderer/drawable_lines_2D.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_triangles.h>
-#include <easy3d/renderer/shader_program.h>
-#include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/camera.h>
-#include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/framebuffer_object.h>
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/util/file_system.h>
@@ -48,17 +44,14 @@ namespace easy3d {
 
     MultiViewer::MultiViewer(int rows, int cols, const std::string &title)
             : Viewer(title)
-            , lines_program_(nullptr)
-            , division_vertex_buffer_(0)
-            , division_visible_(true)
     {
+
         set_layout(rows, cols);
     }
 
 
     MultiViewer::~MultiViewer() {
-        VertexArrayObject::release_buffer(division_vertex_buffer_);
-        division_vao_.reset();
+        drawable_division_.reset();
         // Not needed: it will be called in the destructor of the base class
         // Viewer::cleanup();
     }
@@ -160,25 +153,24 @@ namespace easy3d {
     }
 
 
+    void MultiViewer::set_division_visible(bool b) {
+        if (drawable_division_)
+            drawable_division_->set_visible(b);
+    }
+
+
+    bool MultiViewer::division_visible() const {
+        if (drawable_division_)
+            return drawable_division_->is_visible();
+        return false;
+    }
+
+
     void MultiViewer::init() {
         Viewer::init();
 
         // compute the division
         update_division();
-
-        // create the shader program for visualizing the dividing lines
-        const std::string name = "screen_space/screen_space_color";
-        lines_program_ = ShaderManager::get_program(name);
-        if (!lines_program_) {
-            std::vector<ShaderProgram::Attribute> attributes = {
-                    ShaderProgram::Attribute(ShaderProgram::POSITION, "ndc_position")
-            };
-            lines_program_ = ShaderManager::create_program_from_files(name, attributes);
-        }
-        if (!lines_program_) {
-            LOG(ERROR) << "shader doesn't exist: " << name;
-            return;
-        }
     }
 
 
@@ -241,25 +233,8 @@ namespace easy3d {
         glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 
         // draw the division of views
-        if (division_visible_)
-            draw_division();
-    }
-
-
-    void MultiViewer::draw_division() const {
-        if (!lines_program_)
-            return;
-
-        const float depth = -1.0f;
-        lines_program_->bind();
-        lines_program_->set_uniform("screen_color", vec4(0, 0, 0, 1.0f));
-        lines_program_->set_uniform("depth", depth);
-        division_vao_->bind();
-        const unsigned int vertex_count = (num_rows_ - 1) * 2 + (num_cols_ - 1) * 2;
-        glDrawArrays(GL_LINES, 0, static_cast<int>(vertex_count));
-        division_vao_->release();
-        lines_program_->release();
-        easy3d_debug_log_gl_error
+        if (drawable_division_->is_visible())
+            drawable_division_->draw(camera());
     }
 
 
@@ -272,8 +247,8 @@ namespace easy3d {
         if (views_.empty() || views_[0].empty())
             return;
 
-        if (!division_vao_)
-            division_vao_ = std::unique_ptr<VertexArrayObject>(new VertexArrayObject);
+        if (!drawable_division_)
+            drawable_division_ = std::unique_ptr<LinesDrawable2D>(new LinesDrawable2D("division"));
 
         view_width_ = static_cast<int>(static_cast<float>(width()) / static_cast<float>(num_cols_));
         view_height_ = static_cast<int>(static_cast<float>(height()) / static_cast<float>(num_rows_));
@@ -296,21 +271,20 @@ namespace easy3d {
 
         // ------------------------------------------------------------
 
-        // Note: we need NDC
+        // Update the vertex buffer for the division drawable.
+        // Each pair of consecutive points (screen coordinates) represent a line.
         std::vector<vec2> points;
         for (std::size_t i = 1; i < num_rows_; ++i) {
-            const float y = 2.0f * static_cast<float>(i * view_height_) / static_cast<float>(height()) - 1.0f;
-            points.emplace_back(vec2(-1.0f, y));
-            points.emplace_back(vec2(1.0f, y));
+            const float y = i * view_height_;
+            points.emplace_back(vec2(0, y));
+            points.emplace_back(vec2(width(), y));
         }
         for (std::size_t i = 1; i < num_cols_; ++i) {
-            const float x = 2.0f * static_cast<float>(i * view_width_) / static_cast<float>(width()) - 1.0f;
-            points.emplace_back(vec2(x, -1.0f));
-            points.emplace_back(vec2(x, 1.0f));
+            const float x = i * view_width_;
+            points.emplace_back(vec2(x, 0));
+            points.emplace_back(vec2(x, height()));
         }
-        division_vao_->create_array_buffer(division_vertex_buffer_, ShaderProgram::POSITION, points.data(),
-                                           points.size() * sizeof(vec2), 2, true);
-        easy3d_debug_log_gl_error
+        drawable_division_->update_vertex_buffer(points, width(), height(), true);
     }
 
 
@@ -338,14 +312,6 @@ namespace easy3d {
             return point;
         } else
             return vec3(0);
-    }
-
-
-    bool MultiViewer::mouse_press_event(int x, int y, int button, int modifiers) {
-        // This re-implementation does nothing extra but just hides the pivot point.
-        bool result = Viewer::mouse_press_event(x, y, button, modifiers);
-        show_pivot_point_ = false;
-        return result;
     }
 
 

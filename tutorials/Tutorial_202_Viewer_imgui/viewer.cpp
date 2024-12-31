@@ -212,7 +212,7 @@ namespace easy3d {
 		ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData()); 
 
-        // TODO: a workaround to draw the Easy3D logo and framerate at a different location (due to the menu bar)
+        // workaround to draw the Easy3D logo and framerate at a different location (due to the menu bar)
         auto show_logo = show_easy3d_logo_;
         auto show_fps = show_frame_rate_;
         show_easy3d_logo_ = false;

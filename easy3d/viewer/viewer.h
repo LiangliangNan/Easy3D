@@ -42,6 +42,7 @@ namespace easy3d {
 	class Camera;
 	class Model;
     class Drawable;
+    class LinesDrawable2D;
     class TrianglesDrawable;
     class TextRenderer;
     class KeyFrameInterpolator;
@@ -559,7 +560,6 @@ namespace easy3d {
         virtual void callback_event_resize(int w, int h);
 
         void draw_corner_axes() const;
-        void draw_pivot_point() const;
 
         void draw_face_labels(Model* model, TextRenderer* texter, int font_id, const vec3& color) const;
         void draw_vertex_labels(Model* model, TextRenderer* texter, int font_id, const vec3& color) const;
@@ -575,9 +575,9 @@ namespace easy3d {
         int         height_;
 
 		std::string	title_;
-        std::shared_ptr<Camera> camera_;
+        std::unique_ptr<Camera> camera_;
 
-        std::shared_ptr<KeyFrameInterpolator> kfi_;
+        std::unique_ptr<KeyFrameInterpolator> kfi_;
         bool    is_animating_;
 
         std::string usage_string_;
@@ -591,7 +591,7 @@ namespace easy3d {
 		bool	process_events_;
 		char    framerate_[48];       // show the frame rate
 
-        std::shared_ptr<TextRenderer> texter_;
+        std::unique_ptr<TextRenderer> texter_;
         bool    show_easy3d_logo_;
 
 		// mouse
@@ -610,7 +610,10 @@ namespace easy3d {
 		//----------------- viewer data -------------------
 
 		// corner axes
-        std::shared_ptr<TrianglesDrawable> drawable_axes_;
+        std::unique_ptr<TrianglesDrawable> drawable_axes_;
+
+        // pivot cross
+        std::unique_ptr<LinesDrawable2D> drawable_pivot_;
 
         // camera path
         bool	show_camera_path_;

@@ -34,9 +34,7 @@
 namespace easy3d {
 
     class Model;
-    class Drawable;
-    class ShaderProgram;
-    class VertexArrayObject;
+    class LinesDrawable2D;
 
     /**
      * @brief A viewer that supports multiple views (arranged in a grid layout).
@@ -72,10 +70,10 @@ namespace easy3d {
         void assign(int row, int col, const Drawable *d);
 
         /// Sets the visibility of the splitting lines of the views (visible by default).
-        void set_division_visible(bool b) { division_visible_ = b; }
+        void set_division_visible(bool b);
 
         /// Returns if the splitting lines of the views are visible.
-        bool division_visible() const { return division_visible_; }
+        bool division_visible() const;
 
         /**
          * @brief Query the XYZ coordinates of the surface point under the cursor.
@@ -123,13 +121,10 @@ namespace easy3d {
         void draw() const override;
 
         // overloaded, so mouse positions are relative to the current view
-        bool mouse_press_event(int x, int y, int button, int modifiers) override;
-        // overloaded, so mouse positions are relative to the current view
         bool mouse_release_event(int x, int y, int button, int modifiers) override;
         // overloaded, so mouse positions are relative to the current view
         bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;
 
-        void draw_division() const;
         void update_division();
 
     protected:
@@ -143,14 +138,10 @@ namespace easy3d {
         };
         std::vector<std::vector<View> > views_;
 
-        // Ideally a LinesDrawable should be used here, but the 2D version is not available in the current implementation
-        std::shared_ptr<VertexArrayObject> division_vao_;
-        ShaderProgram *lines_program_;
-        unsigned int division_vertex_buffer_;
-        bool division_visible_;
-
         int view_width_;    // the width of the views
         int view_height_;   // the height of the views
+
+        std::unique_ptr<LinesDrawable2D> drawable_division_;
     };
 
 }
