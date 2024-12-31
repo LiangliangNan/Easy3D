@@ -1,0 +1,6 @@
+add examples showing the flexibility of drawables:
+ - create a PointsDrawable and add it to the viewer
+ - create a TrianglesDrawable and add it to the viewer
+ - create a LinesDrawable and add it to the viewer
+ - create a LinesDrawable2D and add it to the viewer
+
