@@ -370,7 +370,7 @@ struct PyCallBack_easy3d_Viewer : public easy3d::Viewer {
 void bind_easy3d_viewer_viewer(pybind11::module_& m)
 {
 	{ // easy3d::Viewer file:easy3d/viewer/viewer.h line:60
-		pybind11::class_<easy3d::Viewer, std::shared_ptr<easy3d::Viewer>, PyCallBack_easy3d_Viewer> cl(m, "Viewer", "The built-in Easy3D viewer.\n \n\n\n \n Easy3D is really easy to use. That's why it has such a name.\n To use the viewer, simply create an instance of Viewer, and call the run() method, e.g.,\n      \n\n\n\n\n The default Easy3D viewer can be easily extended by deriving your enhanced viewer from it\n by re-implementing some of its unctions (see the documentation of Viewer).");
+		pybind11::class_<easy3d::Viewer, std::shared_ptr<easy3d::Viewer>, PyCallBack_easy3d_Viewer> cl(m, "Viewer", "The built-in Easy3D viewer.\n \n\n\n \n Easy3D is really easy to use. That's why it has such a name.\n To use the viewer, simply create an instance of Viewer, and call the run() method, e.g.,\n      \n\n\n\n\n The default Easy3D viewer can be easily extended by deriving your enhanced viewer from it\n by re-implementing some of its functions (see the documentation of Viewer).");
 		cl.def( pybind11::init( [](){ return new easy3d::Viewer(); }, [](){ return new PyCallBack_easy3d_Viewer(); } ), "doc");
 		cl.def( pybind11::init( [](const std::string & a0){ return new easy3d::Viewer(a0); }, [](const std::string & a0){ return new PyCallBack_easy3d_Viewer(a0); } ), "doc");
 		cl.def( pybind11::init( [](const std::string & a0, int const & a1){ return new easy3d::Viewer(a0, a1); }, [](const std::string & a0, int const & a1){ return new PyCallBack_easy3d_Viewer(a0, a1); } ), "doc");

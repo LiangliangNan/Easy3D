@@ -48,8 +48,8 @@ mesh_file = easy3d.directory() + "/data/hemisphere.ply"
 viewer.add_model(mesh_file)
 
 # Alternatively, you can load the model as a `SurfaceMesh` object and add it:
-# model = easy3d.SurfaceMeshIO.load(mesh_file)
-# viewer.add_model(model)
+# mesh = easy3d.SurfaceMeshIO.load(mesh_file)
+# viewer.add_model(mesh)
 
 # -------------------------------------------------------------------------------
 # Loading and Adding a 3D Point Cloud Model

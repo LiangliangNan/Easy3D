@@ -56,7 +56,7 @@ namespace easy3d {
      *          viewer.run();
      *      \endcode
      * The default Easy3D viewer can be easily extended by deriving your enhanced viewer from it
-     * by re-implementing some of its unctions (see the documentation of Viewer).
+     * by re-implementing some of its functions (see the documentation of Viewer).
      */
 	class Viewer
 	{
