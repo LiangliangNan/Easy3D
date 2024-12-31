@@ -1582,7 +1582,6 @@ namespace easy3d {
         const float size = static_cast<float>(10 * dpi_scaling());
 #endif
         LinesDrawable drawable("pivot_point");
-        camera_->setScreenWidthAndHeight(width(), height());
         const vec3 &pivot = camera()->projectedCoordinatesOf(camera()->pivotPoint());
         const std::vector<vec3> points = {
                 vec3(pivot.x - size, pivot.y, 0.5f), vec3(pivot.x + size, pivot.y, 0.5f),
