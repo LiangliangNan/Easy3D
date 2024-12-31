@@ -1565,6 +1565,44 @@ namespace easy3d {
     }
 
 
+    void Viewer::draw_pivot_point() const {
+        ShaderProgram *program = ShaderManager::get_program("lines/lines_plain_color");
+        if (!program) {
+            std::vector<ShaderProgram::Attribute> attributes;
+            attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
+            attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
+            program = ShaderManager::create_program_from_files("lines/lines_plain_color", attributes);
+        }
+        if (!program)
+            return;
+
+#if defined(__APPLE__)
+        const float size = 10;
+#else
+        const float size = static_cast<float>(10 * dpi_scaling());
+#endif
+        LinesDrawable drawable("pivot_point");
+        camera_->setScreenWidthAndHeight(width(), height());
+        const vec3 &pivot = camera()->projectedCoordinatesOf(camera()->pivotPoint());
+        const std::vector<vec3> points = {
+                vec3(pivot.x - size, pivot.y, 0.5f), vec3(pivot.x + size, pivot.y, 0.5f),
+                vec3(pivot.x, pivot.y - size, 0.5f), vec3(pivot.x, pivot.y + size, 0.5f)
+        };
+        drawable.update_vertex_buffer(points);
+
+        const mat4 &proj = transform::ortho(0.0f, static_cast<float>(width()), static_cast<float>(height()), 0.0f,
+                                            0.0f, -1.0f);
+        glDisable(GL_DEPTH_TEST);   // always on top
+        program->bind();
+        program->set_uniform("MVP", proj);
+        program->set_uniform("per_vertex_color", false);
+        program->set_uniform("default_color", vec4(0.0f, 0.0f, 1.0f, 1.0f));
+        drawable.gl_draw();
+        program->release();
+        glEnable(GL_DEPTH_TEST);   // restore
+    }
+
+
     void Viewer::pre_draw() {
         glfwMakeContextCurrent(window_);
         glClearColor(background_color_[0], background_color_[1], background_color_[2], 1.0f);
@@ -1574,9 +1612,6 @@ namespace easy3d {
 
 
     void Viewer::post_draw() {
-
-        ClippingPlane::instance()->draw(camera());
-
         if (texter_ && texter_->num_fonts() >=2) {
             const float font_size = 15.0f;
             const float offset = 20.0f * dpi_scaling();
@@ -1594,41 +1629,8 @@ namespace easy3d {
             kfi_->draw_cameras(camera(), camera()->sceneRadius() * 0.05f);
         }
 
-        if (show_pivot_point_) {
-            ShaderProgram *program = ShaderManager::get_program("lines/lines_plain_color");
-            if (!program) {
-                std::vector<ShaderProgram::Attribute> attributes;
-                attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-                attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
-                program = ShaderManager::create_program_from_files("lines/lines_plain_color", attributes);
-            }
-            if (!program)
-                return;
-
-#if defined(__APPLE__)
-            const float size = 10;
-#else
-            const float size = static_cast<float>(10 * dpi_scaling());
-#endif
-            LinesDrawable drawable("pivot_point");
-            const vec3 &pivot = camera()->projectedCoordinatesOf(camera()->pivotPoint());
-            const std::vector<vec3> points = {
-                    vec3(pivot.x - size, pivot.y, 0.5f), vec3(pivot.x + size, pivot.y, 0.5f),
-                    vec3(pivot.x, pivot.y - size, 0.5f), vec3(pivot.x, pivot.y + size, 0.5f)
-            };
-            drawable.update_vertex_buffer(points);
-
-            const mat4 &proj = transform::ortho(0.0f, static_cast<float>(width()), static_cast<float>(height()), 0.0f,
-                                                0.0f, -1.0f);
-            glDisable(GL_DEPTH_TEST);   // always on top
-            program->bind();
-            program->set_uniform("MVP", proj);
-            program->set_uniform("per_vertex_color", false);
-            program->set_uniform("default_color", vec4(0.0f, 0.0f, 1.0f, 1.0f));
-            drawable.gl_draw();
-            program->release();
-            glEnable(GL_DEPTH_TEST);   // restore
-        }
+        if (show_pivot_point_)
+            draw_pivot_point();
 
         // ------------- draw the picking region with transparency  ---------------
 
@@ -1818,6 +1820,9 @@ namespace easy3d {
         }
 #endif
 #endif
+
+        // draw the transparent clipping plane
+        ClippingPlane::instance()->draw(camera());
     }
 
 }

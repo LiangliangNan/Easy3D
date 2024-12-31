@@ -38,6 +38,7 @@
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/framebuffer_object.h>
+#include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/dialog.h>
 
@@ -228,6 +229,9 @@ namespace easy3d {
                     if (d->is_visible())
                         d->draw(camera());
                 }
+
+                // draw the transparent clipping plane
+                ClippingPlane::instance()->draw(camera());
             }
         }
 
