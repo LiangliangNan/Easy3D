@@ -221,7 +221,9 @@ void bind_easy3d_renderer_drawables(pybind11::module_& m)
 
 	{ // easy3d::LinesDrawable file:easy3d/renderer/drawable_lines.h line:40
 		pybind11::class_<easy3d::LinesDrawable, std::shared_ptr<easy3d::LinesDrawable>, PyCallBack_easy3d_LinesDrawable, easy3d::Drawable> cl(m, "LinesDrawable", "The drawable for rendering a set of line segments, e.g., edges of a mesh, vector fields\n \n\n\n \n PointsDrawable, TrianglesDrawable");
-		cl.def( pybind11::init( [](PyCallBack_easy3d_LinesDrawable const &o){ return new PyCallBack_easy3d_LinesDrawable(o); } ) );
+        cl.def( pybind11::init( [](){ return new easy3d::LinesDrawable(); } ) );
+        cl.def( pybind11::init( [](const std::string& name){ return new easy3d::LinesDrawable(name); } ) );
+        cl.def( pybind11::init( [](PyCallBack_easy3d_LinesDrawable const &o){ return new PyCallBack_easy3d_LinesDrawable(o); } ) );
 		cl.def( pybind11::init( [](easy3d::LinesDrawable const &o){ return new easy3d::LinesDrawable(o); } ) );
 
 		pybind11::enum_<easy3d::LinesDrawable::ImposterType>(cl, "ImposterType", pybind11::arithmetic(), "")
@@ -239,7 +241,9 @@ void bind_easy3d_renderer_drawables(pybind11::module_& m)
 	}
 	{ // easy3d::PointsDrawable file:easy3d/renderer/drawable_points.h line:42
 		pybind11::class_<easy3d::PointsDrawable, std::shared_ptr<easy3d::PointsDrawable>, PyCallBack_easy3d_PointsDrawable, easy3d::Drawable> cl(m, "PointsDrawable", "The drawable for rendering a set of points, e.g., point clouds, vertices of a mesh.\n \n\n\n \n LinesDrawable, TrianglesDrawable");
-		cl.def( pybind11::init( [](PyCallBack_easy3d_PointsDrawable const &o){ return new PyCallBack_easy3d_PointsDrawable(o); } ) );
+        cl.def( pybind11::init( [](){ return new easy3d::PointsDrawable(); } ) );
+        cl.def( pybind11::init( [](const std::string& name){ return new easy3d::PointsDrawable(name); } ) );
+        cl.def( pybind11::init( [](PyCallBack_easy3d_PointsDrawable const &o){ return new PyCallBack_easy3d_PointsDrawable(o); } ) );
 		cl.def( pybind11::init( [](easy3d::PointsDrawable const &o){ return new easy3d::PointsDrawable(o); } ) );
 
 		pybind11::enum_<easy3d::PointsDrawable::ImposterType>(cl, "ImposterType", pybind11::arithmetic(), "")
@@ -257,7 +261,9 @@ void bind_easy3d_renderer_drawables(pybind11::module_& m)
 	}
 	{ // easy3d::TrianglesDrawable file:easy3d/renderer/drawable_triangles.h line:46
 		pybind11::class_<easy3d::TrianglesDrawable, std::shared_ptr<easy3d::TrianglesDrawable>, PyCallBack_easy3d_TrianglesDrawable, easy3d::Drawable> cl(m, "TrianglesDrawable", "The drawable for rendering a set of triangles, e.g., the surface of a triangular mesh.\n \n\n\n \n LinesDrawable, PointsDrawable\n\n \n TrianglesDrawable supports triangles only. Visualizing general polygons typically requires tessellating\n the faces into a set of triangles (using Tessellator or any other methods). Vertex coordinates and properties\n (e.g., color, normal) must be provided as consecutive triplets in an array to be transferred to GPU.\n See Drawable::update_vertex_buffer().");
-		cl.def( pybind11::init( [](PyCallBack_easy3d_TrianglesDrawable const &o){ return new PyCallBack_easy3d_TrianglesDrawable(o); } ) );
+        cl.def( pybind11::init( [](){ return new easy3d::TrianglesDrawable(); } ) );
+        cl.def( pybind11::init( [](const std::string& name){ return new easy3d::TrianglesDrawable(name); } ) );
+        cl.def( pybind11::init( [](PyCallBack_easy3d_TrianglesDrawable const &o){ return new PyCallBack_easy3d_TrianglesDrawable(o); } ) );
 		cl.def( pybind11::init( [](easy3d::TrianglesDrawable const &o){ return new easy3d::TrianglesDrawable(o); } ) );
 		cl.def("type", (enum easy3d::Drawable::Type (easy3d::TrianglesDrawable::*)() const) &easy3d::TrianglesDrawable::type, "C++: easy3d::TrianglesDrawable::type() const --> enum easy3d::Drawable::Type");
 		cl.def("smooth_shading", (bool (easy3d::TrianglesDrawable::*)() const) &easy3d::TrianglesDrawable::smooth_shading, "C++: easy3d::TrianglesDrawable::smooth_shading() const --> bool");

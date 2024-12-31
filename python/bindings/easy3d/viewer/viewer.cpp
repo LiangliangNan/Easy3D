@@ -522,6 +522,19 @@ void bind_easy3d_viewer_viewer(pybind11::module_& m)
                pybind11::return_value_policy::reference_internal,
                "Add an existing polyhedral mesh to the viewer."
         );
+        cl.def("add_drawable", [](easy3d::Viewer &self, std::shared_ptr<easy3d::Drawable> drawable) {
+                   return self.add_drawable(drawable); // Call the C++ function
+               }, pybind11::arg("drawable"),
+               pybind11::return_value_policy::reference_internal,
+               R"doc(
+            Add a drawable to the viewer to be visualized.
+
+            Parameters:
+                drawable (Drawable): The pointer to the drawable.
+
+            Returns:
+                Drawable: The pointer of the drawable added to the viewer.
+        )doc");
 		cl.def("models", (const class std::vector<class easy3d::Model *> & (easy3d::Viewer::*)() const) &easy3d::Viewer::models, "Query the models managed by this viewer.\n \n\n The models managed by this viewer.\n\nC++: easy3d::Viewer::models() const --> const class std::vector<class easy3d::Model *> &", pybind11::return_value_policy::automatic);
 		cl.def("drawables", (const class std::vector<class easy3d::Drawable *> & (easy3d::Viewer::*)() const) &easy3d::Viewer::drawables, "Query the drawables managed by this viewer.\n \n\n The drawables managed by this viewer.\n\nC++: easy3d::Viewer::drawables() const --> const class std::vector<class easy3d::Drawable *> &", pybind11::return_value_policy::automatic);
 		cl.def("clear_scene", (void (easy3d::Viewer::*)()) &easy3d::Viewer::clear_scene, "Delete all visual contents of the viewer (all models and drawables).\n\nC++: easy3d::Viewer::clear_scene() --> void");

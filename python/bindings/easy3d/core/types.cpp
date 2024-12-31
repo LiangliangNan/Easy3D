@@ -17,6 +17,20 @@
 
 void bind_easy3d_core_types(pybind11::module_& m)
 {
+    // easy3d::geom::bounding_box(const std::vector<easy3d::vec3> &) file:easy3d/core/types.h line:179
+    m.def("bounding_box", [](const std::vector<easy3d::vec3> &points) {
+              return easy3d::geom::bounding_box<easy3d::Box3, std::vector<easy3d::vec3> >(points);
+          }, pybind11::arg("points"),
+          R"doc(
+            Compute the bounding box of a set of points.
+
+            Parameters:
+                points (List[vec3]): A list of 3D points.
+
+            Returns:
+                box3: The computed bounding box.
+        )doc");
+
 	// easy3d::geom::orthogonal(const class easy3d::Vec<3, float> &) file:easy3d/core/types.h line:163
 	m.def("orthogonal", (class easy3d::Vec<3, float> (*)(const class easy3d::Vec<3, float> &)) &easy3d::geom::orthogonal, "Returns a vector orthogonal to v. Its norm() depends on v, but is zero only for a null v.\n\nC++: easy3d::geom::orthogonal(const class easy3d::Vec<3, float> &) --> class easy3d::Vec<3, float>", pybind11::arg("v"));
 
