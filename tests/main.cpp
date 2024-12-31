@@ -48,7 +48,7 @@ int test_surface_mesh_algorithms();
 
 int offscreen();
 int test_viewer_imgui(int duration);
-int test_composite_view(int duration);
+int test_multi_view(int duration);
 int test_real_camera();
 int test_drawables(int duration);
 int test_imposters(int duration);
@@ -108,7 +108,7 @@ int main(int argc, char* argv[]) {
 
     const int duration = 1500; // in millisecond
     result += test_viewer_imgui(duration);
-    result += test_composite_view(duration);
+    result += test_multi_view(duration);
     result += test_real_camera();
     result += test_drawables(duration);
     result += test_imposters(duration);

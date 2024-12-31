@@ -36,7 +36,7 @@
 
 using namespace easy3d;
 
-int test_composite_view(int duration) {
+int test_multi_view(int duration) {
     // create a 2 by 2 MultiViewer
     MultiViewer viewer(2, 2, "MultiView");
 
