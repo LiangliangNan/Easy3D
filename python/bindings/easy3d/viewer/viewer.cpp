@@ -1,9 +1,5 @@
 #include <easy3d/core/vec.h>
 #include <easy3d/core/model.h>
-#include <easy3d/core/point_cloud.h>
-#include <easy3d/core/surface_mesh.h>
-#include <easy3d/core/graph.h>
-#include <easy3d/core/poly_mesh.h>
 #include <easy3d/renderer/drawable.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/viewer/viewer.h>
@@ -484,6 +480,7 @@ void bind_easy3d_viewer_viewer(pybind11::module_& m)
 		cl.def("background_color", (const class easy3d::Vec<4, float> & (easy3d::Viewer::*)() const) &easy3d::Viewer::background_color, "Query the background color of the viewer.\n \n\n The background color of the viewer\n\nC++: easy3d::Viewer::background_color() const --> const class easy3d::Vec<4, float> &", pybind11::return_value_policy::automatic);
 		cl.def("open", (bool (easy3d::Viewer::*)()) &easy3d::Viewer::open, "Open a model (PointCloud/SurfaceMesh/Graph) from a file into the viewer. On\n        success, the viewer will be in charge of the memory management of the model.\n \n\n This method loads a model into the viewer. Internally, it will pop up a file\n          dialog for the user to navigate to the file. After loading the model, the\n          necessary drawables (e.g., \"vertices\" for point clouds, \"faces\" for surface\n          meshes, and \"edges\" and \"vertices\" for graphs) will be created for visualization.\n \n\n true on success and false otherwise.\n\nC++: easy3d::Viewer::open() --> bool");
 		cl.def("save", (bool (easy3d::Viewer::*)() const) &easy3d::Viewer::save, "Save the active model (if exists) to a file.\n \n\n This method saves the active model to a file. Internally, it will pop up a file\n          dialog for specifying the file name.\n \n\n true on success and false otherwise.\n\nC++: easy3d::Viewer::save() const --> bool");
+
         cl.def("add_model", [](easy3d::Viewer& self, const std::string& file_name, bool create_default_drawables = true)
                {
                    return self.add_model(file_name, create_default_drawables);
@@ -491,50 +488,31 @@ void bind_easy3d_viewer_viewer(pybind11::module_& m)
                pybind11::arg("file_name"), pybind11::arg("create_default_drawables") = true,
                pybind11::return_value_policy::reference_internal,
                "Add a model from a file to the viewer.");
-        cl.def("add_model", [](easy3d::Viewer& self, std::shared_ptr<easy3d::PointCloud> point_cloud, bool create_default_drawables = true)
-               {
-                   return self.add_model(point_cloud, create_default_drawables);
-               },
-               pybind11::arg("point_cloud"), pybind11::arg("create_default_drawables") = true,
-               pybind11::return_value_policy::reference_internal,
-               "Add an existing point cloud to the viewer.");
-        cl.def("add_model", [](easy3d::Viewer& self, std::shared_ptr<easy3d::SurfaceMesh> surface_mesh, bool create_default_drawables = true)
-               {
-                   return self.add_model(surface_mesh, create_default_drawables);
-               },
-               pybind11::arg("surface_mesh"), pybind11::arg("create_default_drawables") = true,
-               pybind11::return_value_policy::reference_internal,
-               "Add an existing surface mesh to the viewer."
-        );
-        cl.def("add_model", [](easy3d::Viewer& self, std::shared_ptr<easy3d::Graph> graph, bool create_default_drawables = true)
-               {
-                   return self.add_model(graph, create_default_drawables);
-               },
-               pybind11::arg("graph"), pybind11::arg("create_default_drawables") = true,
-               pybind11::return_value_policy::reference_internal,
-               "Add an existing graph to the viewer."
-        );
-        cl.def("add_model", [](easy3d::Viewer& self, std::shared_ptr<easy3d::PolyMesh> poly_mesh, bool create_default_drawables = true)
-               {
-                   return self.add_model(poly_mesh, create_default_drawables);
-               },
-               pybind11::arg("poly_mesh"), pybind11::arg("create_default_drawables") = true,
-               pybind11::return_value_policy::reference_internal,
-               "Add an existing polyhedral mesh to the viewer."
-        );
+
+        cl.def("add_model", [](easy3d::Viewer &self, std::shared_ptr<easy3d::Model> model) {
+                   return self.add_model(model); // Call the C++ function
+               }, pybind11::arg("model"),
+               pybind11::return_value_policy::automatic,
+               R"doc(
+                    Add an existing model to the viewer to be visualized.
+                    Parameters:
+                        model (Model): The pointer to the model.
+                    Returns:
+                        Model: The pointer of the model added to the viewer.
+                )doc");
+
         cl.def("add_drawable", [](easy3d::Viewer &self, std::shared_ptr<easy3d::Drawable> drawable) {
                    return self.add_drawable(drawable); // Call the C++ function
                }, pybind11::arg("drawable"),
-               pybind11::return_value_policy::reference_internal,
+               pybind11::return_value_policy::automatic,
                R"doc(
-            Add a drawable to the viewer to be visualized.
+                    Add a drawable to the viewer to be visualized.
+                    Parameters:
+                        drawable (Drawable): The pointer to the drawable.
+                    Returns:
+                        Drawable: The pointer of the drawable added to the viewer.
+                )doc");
 
-            Parameters:
-                drawable (Drawable): The pointer to the drawable.
-
-            Returns:
-                Drawable: The pointer of the drawable added to the viewer.
-        )doc");
 		cl.def("models", (const class std::vector<class easy3d::Model *> & (easy3d::Viewer::*)() const) &easy3d::Viewer::models, "Query the models managed by this viewer.\n \n\n The models managed by this viewer.\n\nC++: easy3d::Viewer::models() const --> const class std::vector<class easy3d::Model *> &", pybind11::return_value_policy::automatic);
 		cl.def("drawables", (const class std::vector<class easy3d::Drawable *> & (easy3d::Viewer::*)() const) &easy3d::Viewer::drawables, "Query the drawables managed by this viewer.\n \n\n The drawables managed by this viewer.\n\nC++: easy3d::Viewer::drawables() const --> const class std::vector<class easy3d::Drawable *> &", pybind11::return_value_policy::automatic);
 		cl.def("clear_scene", (void (easy3d::Viewer::*)()) &easy3d::Viewer::clear_scene, "Delete all visual contents of the viewer (all models and drawables).\n\nC++: easy3d::Viewer::clear_scene() --> void");

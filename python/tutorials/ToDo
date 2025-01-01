@@ -1,6 +1,10 @@
-add examples showing the flexibility of drawables:
- - create a PointsDrawable and add it to the viewer
- - create a TrianglesDrawable and add it to the viewer
- - create a LinesDrawable and add it to the viewer
- - create a LinesDrawable2D and add it to the viewer
+think about what Python users may needs:
+ - creat/init a point cloud from a Numpy list/array
+ - add/access/edit/visualize Int vertex properties (e.g., segmentation)
+ - give points random color based on specified (by name) Int properties.
+ - construct SrufaceMesh from vertices and indices, and show/explain the use of (and without) element buffer
+ 
+Some planned examples:
+ - put MultiView immediately after Viewer
+ - Use a MultiView to show drawables: PointsDrawable (random points within a cube), TrianglesDrawable, LinesDrawable, LinesDrawable2D,  
 

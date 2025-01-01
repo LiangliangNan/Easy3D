@@ -5,22 +5,22 @@
 #include <pybind11/pybind11.h>
 
 
+void bind_easy3d_core_vec(pybind11::module_ &m);
 void bind_easy3d_core_box(pybind11::module_ &m);
 void bind_easy3d_core_constant(pybind11::module_ &m);
-void bind_easy3d_core_graph(pybind11::module_ &m);
 void bind_easy3d_core_line(pybind11::module_ &m);
-void bind_easy3d_core_mat(pybind11::module_ &m);
-void bind_easy3d_core_model(pybind11::module_ &m);
-void bind_easy3d_core_plane(pybind11::module_ &m);
-void bind_easy3d_core_point_cloud(pybind11::module_ &m);
-void bind_easy3d_core_poly_mesh(pybind11::module_ &m);
-void bind_easy3d_core_property(pybind11::module_ &m);
 void bind_easy3d_core_quat(pybind11::module_ &m);
 void bind_easy3d_core_random(pybind11::module_ &m);
+void bind_easy3d_core_mat(pybind11::module_ &m);
+void bind_easy3d_core_plane(pybind11::module_ &m);
+void bind_easy3d_core_types(pybind11::module_ &m);
+void bind_easy3d_core_model(pybind11::module_ &m);
+void bind_easy3d_core_property(pybind11::module_ &m);
+void bind_easy3d_core_graph(pybind11::module_ &m);
+void bind_easy3d_core_point_cloud(pybind11::module_ &m);
+void bind_easy3d_core_poly_mesh(pybind11::module_ &m);
 void bind_easy3d_core_surface_mesh(pybind11::module_ &m);
 void bind_easy3d_core_surface_mesh_builder(pybind11::module_ &m);
-void bind_easy3d_core_types(pybind11::module_ &m);
-void bind_easy3d_core_vec(pybind11::module_ &m);
 
 void bind_easy3d_algo_collider(pybind11::module_ &m);
 void bind_easy3d_algo_delaunay(pybind11::module_ &m);
@@ -95,21 +95,21 @@ void bind_easy3d_video_video_encoder(pybind11::module_ &m);
 
 // Submodule declarations
 void bind_core(pybind11::module_ &m) {
+    bind_easy3d_core_vec(m);
     bind_easy3d_core_box(m);
     bind_easy3d_core_constant(m);
     bind_easy3d_core_line(m);
-    bind_easy3d_core_mat(m);
-    bind_easy3d_core_plane(m);
-    bind_easy3d_core_property(m);
     bind_easy3d_core_quat(m);
     bind_easy3d_core_random(m);
+    bind_easy3d_core_mat(m);
+    bind_easy3d_core_plane(m);
     bind_easy3d_core_types(m);
-    bind_easy3d_core_vec(m);
 
     bind_easy3d_core_model(m);
+    bind_easy3d_core_property(m);
     bind_easy3d_core_graph(m);
-    bind_easy3d_core_surface_mesh(m);
     bind_easy3d_core_point_cloud(m);
+    bind_easy3d_core_surface_mesh(m);
     bind_easy3d_core_poly_mesh(m);
 
     bind_easy3d_core_surface_mesh_builder(m);

@@ -41,7 +41,7 @@ namespace easy3d {
      * This implementation is inspired by Surface_mesh
      * https://opensource.cit-ec.de/projects/surface_mesh
      */
-    class PointCloud : public virtual Model
+    class PointCloud : public Model
     {
 
     public: //------------------------------------------------------ topology types

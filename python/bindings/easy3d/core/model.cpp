@@ -17,6 +17,54 @@
 	PYBIND11_MAKE_OPAQUE(std::shared_ptr<void>)
 #endif
 
+//struct PyCallBack_easy3d_Model : public easy3d::Model {
+//    using easy3d::Model::Model;  // Inherit constructors
+//
+//    // Override pure virtual function `points()`
+//    std::vector<easy3d::vec3>& points() override {
+//        pybind11::gil_scoped_acquire gil;
+//        pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::Model*>(this), "points");
+//        if (overload) {
+//            auto o = overload.operator()<pybind11::return_value_policy::reference>();
+//            if (pybind11::detail::cast_is_temporary_value_reference<std::vector<easy3d::vec3>&>::value) {
+//                static pybind11::detail::override_caster_t<std::vector<easy3d::vec3>&> caster;
+//                return pybind11::detail::cast_ref<std::vector<easy3d::vec3>&>(std::move(o), caster);
+//            }
+//            return pybind11::detail::cast_safe<std::vector<easy3d::vec3>&>(std::move(o));
+//        }
+//        pybind11::pybind11_fail("Tried to call pure virtual function \"Model::points\"");
+//    }
+//
+//    const std::vector<easy3d::vec3>& points() const override {
+//        pybind11::gil_scoped_acquire gil;
+//        pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::Model*>(this), "points");
+//        if (overload) {
+//            auto o = overload.operator()<pybind11::return_value_policy::reference>();
+//            if (pybind11::detail::cast_is_temporary_value_reference<const std::vector<easy3d::vec3>&>::value) {
+//                static pybind11::detail::override_caster_t<const std::vector<easy3d::vec3>&> caster;
+//                return pybind11::detail::cast_ref<const std::vector<easy3d::vec3>&>(std::move(o), caster);
+//            }
+//            return pybind11::detail::cast_safe<const std::vector<easy3d::vec3>&>(std::move(o));
+//        }
+//        pybind11::pybind11_fail("Tried to call pure virtual function \"Model::points\"");
+//    }
+//
+//    void property_stats(std::ostream& output) const override {
+//        pybind11::gil_scoped_acquire gil;
+//        pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::Model*>(this), "property_stats");
+//        if (overload) {
+//            auto o = overload.operator()<pybind11::return_value_policy::reference>(output);
+//            if (pybind11::detail::cast_is_temporary_value_reference<void>::value) {
+//                static pybind11::detail::override_caster_t<void> caster;
+//                return pybind11::detail::cast_ref<void>(std::move(o), caster);
+//            }
+//            return pybind11::detail::cast_safe<void>(std::move(o));
+//        }
+//        pybind11::pybind11_fail("Tried to call pure virtual function \"Model::property_stats\"");
+//    }
+//
+//};
+
 
 void bind_easy3d_core_model(pybind11::module_& m)
 {

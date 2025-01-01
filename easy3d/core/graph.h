@@ -47,7 +47,7 @@ namespace easy3d {
      * https://opensource.cit-ec.de/projects/surface_mesh
 	 */
 
-	class Graph : public virtual Model
+	class Graph : public Model
 	{
 
 	public: //------------------------------------------------------ topology types

@@ -46,7 +46,7 @@ namespace easy3d {
      * https://opensource.cit-ec.de/projects/surface_mesh
      */
 
-    class PolyMesh : public virtual Model
+    class PolyMesh : public Model
     {
 
     public: //------------------------------------------------------ topology types

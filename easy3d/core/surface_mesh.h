@@ -48,7 +48,7 @@ namespace easy3d {
      * \sa SurfaceMeshBuilder.
      */
 
-    class SurfaceMesh : public virtual Model
+    class SurfaceMesh : public Model
     {
 
     public: //------------------------------------------------------ topology types

@@ -1,8 +1,5 @@
 #include <easy3d/core/vec.h>
-#include <easy3d/core/point_cloud.h>
-#include <easy3d/core/surface_mesh.h>
-#include <easy3d/core/graph.h>
-#include <easy3d/core/poly_mesh.h>
+#include <easy3d/core/model.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/drawable.h>
 #include <easy3d/viewer/multi_viewer.h>
@@ -374,74 +371,14 @@ void bind_easy3d_viewer_multi_viewer(pybind11::module_& m)
 		cl.def( pybind11::init( [](int const & a0, int const & a1){ return new easy3d::MultiViewer(a0, a1); }, [](int const & a0, int const & a1){ return new PyCallBack_easy3d_MultiViewer(a0, a1); } ), "doc");
 		cl.def( pybind11::init<int, int, const std::string &>(), pybind11::arg("rows"), pybind11::arg("cols"), pybind11::arg("title") );
 
-//		cl.def( pybind11::init( [](PyCallBack_easy3d_MultiViewer const &o){ return new PyCallBack_easy3d_MultiViewer(o); } ) );
-//		cl.def( pybind11::init( [](easy3d::MultiViewer const &o){ return new easy3d::MultiViewer(o); } ) );
-
-        cl.def("add_model", [](easy3d::MultiViewer& self, const std::string& file_name, bool create_default_drawables = true)
-               {
-                   return self.add_model(file_name, create_default_drawables);
+        // Assign a model to specific view
+        cl.def("assign", [](easy3d::MultiViewer &self, int row, int col, const easy3d::Model *model) {
+                   self.assign(row, col, model);
                },
-               pybind11::arg("file_name"), pybind11::arg("create_default_drawables") = true,
-               pybind11::return_value_policy::reference_internal,
-               "Add a model from a file to the viewer.");
-        cl.def("add_model", [](easy3d::MultiViewer& self, std::shared_ptr<easy3d::PointCloud> point_cloud, bool create_default_drawables = true)
-               {
-                   return self.add_model(point_cloud, create_default_drawables);
-               },
-               pybind11::arg("point_cloud"), pybind11::arg("create_default_drawables") = true,
-               pybind11::return_value_policy::reference_internal,
-               "Add an existing point cloud to the viewer.");
-        cl.def("add_model", [](easy3d::MultiViewer& self, std::shared_ptr<easy3d::SurfaceMesh> surface_mesh, bool create_default_drawables = true)
-               {
-                   return self.add_model(surface_mesh, create_default_drawables);
-               },
-               pybind11::arg("surface_mesh"), pybind11::arg("create_default_drawables") = true,
-               pybind11::return_value_policy::reference_internal,
-               "Add an existing surface mesh to the viewer."
+               "Assign a model to the view at position (row, col)",
+               pybind11::arg("row"), pybind11::arg("col"), pybind11::arg("model")
         );
-        cl.def("add_model", [](easy3d::MultiViewer& self, std::shared_ptr<easy3d::Graph> graph, bool create_default_drawables = true)
-               {
-                   return self.add_model(graph, create_default_drawables);
-               },
-               pybind11::arg("graph"), pybind11::arg("create_default_drawables") = true,
-               pybind11::return_value_policy::reference_internal,
-               "Add an existing graph to the viewer."
-        );
-        cl.def("add_model", [](easy3d::MultiViewer& self, std::shared_ptr<easy3d::PolyMesh> poly_mesh, bool create_default_drawables = true)
-               {
-                   return self.add_model(poly_mesh, create_default_drawables);
-               },
-               pybind11::arg("poly_mesh"), pybind11::arg("create_default_drawables") = true,
-               pybind11::return_value_policy::reference_internal,
-               "Add an existing polyhedral mesh to the viewer."
-        );
-
-        // Assign Model to specific view (overloaded)
-        cl.def("assign", [](easy3d::MultiViewer &self, int row, int col, const easy3d::PointCloud *point_cloud) {
-                   self.assign(row, col, point_cloud);
-               },
-               "Assign a point cloud to the view at position (row, col)",
-               pybind11::arg("row"), pybind11::arg("col"), pybind11::arg("point_cloud")
-        );
-        cl.def("assign", [](easy3d::MultiViewer &self, int row, int col, const easy3d::SurfaceMesh *surface_mesh) {
-                   self.assign(row, col, surface_mesh);
-               },
-               "Assign a surface mesh to the view at position (row, col)",
-               pybind11::arg("row"), pybind11::arg("col"), pybind11::arg("surface_mesh")
-        );
-        cl.def("assign", [](easy3d::MultiViewer &self, int row, int col, const easy3d::PolyMesh *poly_mesh) {
-                   self.assign(row, col, poly_mesh);
-               },
-               "Assign a polyhedral mesh to the view at position (row, col)",
-               pybind11::arg("row"), pybind11::arg("col"), pybind11::arg("poly_mesh")
-        );
-        cl.def("assign", [](easy3d::MultiViewer &self, int row, int col, const easy3d::Graph *graph) {
-                   self.assign(row, col, graph);
-               },
-               "Assign a graph to the view at position (row, col)",
-               pybind11::arg("row"), pybind11::arg("col"), pybind11::arg("graph")
-        );
-        // Assign Drawable to specific view (overloaded)
+        // Assign a drawable to specific view
         cl.def("assign", [](easy3d::MultiViewer &self, int row, int col, const easy3d::Drawable *drawable) {
                    self.assign(row, col, drawable);
                },
