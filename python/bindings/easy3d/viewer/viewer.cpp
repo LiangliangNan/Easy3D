@@ -365,19 +365,44 @@ struct PyCallBack_easy3d_Viewer : public easy3d::Viewer {
 
 void bind_easy3d_viewer_viewer(pybind11::module_& m)
 {
-	{ // easy3d::Viewer file:easy3d/viewer/viewer.h line:60
-		pybind11::class_<easy3d::Viewer, std::shared_ptr<easy3d::Viewer>, PyCallBack_easy3d_Viewer> cl(m, "Viewer", "The built-in Easy3D viewer.\n \n\n\n \n Easy3D is really easy to use. That's why it has such a name.\n To use the viewer, simply create an instance of Viewer, and call the run() method, e.g.,\n      \n\n\n\n\n The default Easy3D viewer can be easily extended by deriving your enhanced viewer from it\n by re-implementing some of its functions (see the documentation of Viewer).");
-		cl.def( pybind11::init( [](){ return new easy3d::Viewer(); }, [](){ return new PyCallBack_easy3d_Viewer(); } ), "doc");
-		cl.def( pybind11::init( [](const std::string & a0){ return new easy3d::Viewer(a0); }, [](const std::string & a0){ return new PyCallBack_easy3d_Viewer(a0); } ), "doc");
-		cl.def( pybind11::init( [](const std::string & a0, int const & a1){ return new easy3d::Viewer(a0, a1); }, [](const std::string & a0, int const & a1){ return new PyCallBack_easy3d_Viewer(a0, a1); } ), "doc");
-		cl.def( pybind11::init( [](const std::string & a0, int const & a1, int const & a2){ return new easy3d::Viewer(a0, a1, a2); }, [](const std::string & a0, int const & a1, int const & a2){ return new PyCallBack_easy3d_Viewer(a0, a1, a2); } ), "doc");
-		cl.def( pybind11::init( [](const std::string & a0, int const & a1, int const & a2, int const & a3){ return new easy3d::Viewer(a0, a1, a2, a3); }, [](const std::string & a0, int const & a1, int const & a2, int const & a3){ return new PyCallBack_easy3d_Viewer(a0, a1, a2, a3); } ), "doc");
-		cl.def( pybind11::init( [](const std::string & a0, int const & a1, int const & a2, int const & a3, bool const & a4){ return new easy3d::Viewer(a0, a1, a2, a3, a4); }, [](const std::string & a0, int const & a1, int const & a2, int const & a3, bool const & a4){ return new PyCallBack_easy3d_Viewer(a0, a1, a2, a3, a4); } ), "doc");
-		cl.def( pybind11::init( [](const std::string & a0, int const & a1, int const & a2, int const & a3, bool const & a4, bool const & a5){ return new easy3d::Viewer(a0, a1, a2, a3, a4, a5); }, [](const std::string & a0, int const & a1, int const & a2, int const & a3, bool const & a4, bool const & a5){ return new PyCallBack_easy3d_Viewer(a0, a1, a2, a3, a4, a5); } ), "doc");
-		cl.def( pybind11::init( [](const std::string & a0, int const & a1, int const & a2, int const & a3, bool const & a4, bool const & a5, int const & a6){ return new easy3d::Viewer(a0, a1, a2, a3, a4, a5, a6); }, [](const std::string & a0, int const & a1, int const & a2, int const & a3, bool const & a4, bool const & a5, int const & a6){ return new PyCallBack_easy3d_Viewer(a0, a1, a2, a3, a4, a5, a6); } ), "doc");
-		cl.def( pybind11::init( [](const std::string & a0, int const & a1, int const & a2, int const & a3, bool const & a4, bool const & a5, int const & a6, int const & a7){ return new easy3d::Viewer(a0, a1, a2, a3, a4, a5, a6, a7); }, [](const std::string & a0, int const & a1, int const & a2, int const & a3, bool const & a4, bool const & a5, int const & a6, int const & a7){ return new PyCallBack_easy3d_Viewer(a0, a1, a2, a3, a4, a5, a6, a7); } ), "doc");
-		cl.def( pybind11::init( [](const std::string & a0, int const & a1, int const & a2, int const & a3, bool const & a4, bool const & a5, int const & a6, int const & a7, int const & a8){ return new easy3d::Viewer(a0, a1, a2, a3, a4, a5, a6, a7, a8); }, [](const std::string & a0, int const & a1, int const & a2, int const & a3, bool const & a4, bool const & a5, int const & a6, int const & a7, int const & a8){ return new PyCallBack_easy3d_Viewer(a0, a1, a2, a3, a4, a5, a6, a7, a8); } ), "doc");
-		cl.def( pybind11::init<const std::string &, int, int, int, bool, bool, int, int, int, int>(), pybind11::arg("title"), pybind11::arg("samples"), pybind11::arg("gl_major"), pybind11::arg("gl_minor"), pybind11::arg("full_screen"), pybind11::arg("resizable"), pybind11::arg("depth_bits"), pybind11::arg("stencil_bits"), pybind11::arg("width"), pybind11::arg("height") );
+    { // easy3d::Viewer file:easy3d/viewer/viewer.h line:60
+        pybind11::class_<easy3d::Viewer, std::shared_ptr<easy3d::Viewer>, PyCallBack_easy3d_Viewer> cl(m, "Viewer",
+                R"doc(
+                    The built-in Easy3D viewer.
+                    Easy3D is really easy to use. To use the viewer, simply create an instance of Viewer, and call the run() method, e.g.,
+                        >>> viewer = easy3d.Viewer()
+                        >>> viewer.run()
+                    The default Easy3D viewer can be easily extended by deriving your enhanced viewer from it
+                    by re-implementing some of its functions (see the documentation of Viewer).
+                    )doc"
+        );
+
+        cl.def(pybind11::init<const std::string &, int, int, int, bool, bool, int, int, int, int>(),
+               pybind11::arg("title") = "Easy3D Viewer",
+               pybind11::arg("samples") = 4,
+               pybind11::arg("gl_major") = 3, // must >= 3
+               pybind11::arg("gl_minor") = 2, // must >= 2
+               pybind11::arg("full_screen") = false,
+               pybind11::arg("resizable") = true,
+               pybind11::arg("depth_bits") = 24,
+               pybind11::arg("stencil_bits") = 8,
+               pybind11::arg("width") = 800,
+               pybind11::arg("height") = 600,
+               R"doc(
+                    Constructs a Viewer instance.
+                    Parameters:
+                        title (str): The window title of the viewer, which can be changed by calling set_title() after construction.
+                        samples (int): The number of samples for multisample antialiasing.
+                        gl_major (int): The OpenGL major version to request. Must be >= 3.
+                        gl_minor (int): The OpenGL minor version to request. Must be >= 2.
+                        full_screen (bool): Whether the viewer should start in fullscreen mode.
+                        resizable (bool): Whether the viewer window is resizable.
+                        depth_bits (int): Bit depth for the depth buffer.
+                        stencil_bits (int): Bit depth for the stencil buffer.
+                        width (int): Initial width of the viewer window.
+                        height (int): Initial height of the viewer window.
+                    )doc"
+        );
 
 //		cl.def( pybind11::init( [](PyCallBack_easy3d_Viewer const &o){ return new PyCallBack_easy3d_Viewer(o); } ) );
 //		cl.def( pybind11::init( [](easy3d::Viewer const &o){ return new easy3d::Viewer(o); } ) );
