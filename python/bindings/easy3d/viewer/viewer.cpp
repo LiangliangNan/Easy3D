@@ -511,7 +511,9 @@ void bind_easy3d_viewer_viewer(pybind11::module_& m)
                    return self.add_model(file_name, create_default_drawables);
                },
                pybind11::arg("file_name"), pybind11::arg("create_default_drawables") = true,
-               pybind11::return_value_policy::reference_internal,
+               // Liangliang: use automatic_reference because are the returned pointer is managed by the viewer and
+               //       Python should not take ownership but still maintain a valid reference.
+               pybind11::return_value_policy::automatic_reference,
                "Add a model from a file to the viewer.");
 
         cl.def("add_model", [](easy3d::Viewer &self, std::shared_ptr<easy3d::Model> model) {
