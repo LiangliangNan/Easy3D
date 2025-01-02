@@ -1,17 +1,9 @@
-#include <easy3d/core/mat.h>
-#include <easy3d/core/quat.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/vec.h>
 #include <easy3d/gui/picker_surface_mesh.h>
 #include <easy3d/renderer/camera.h>
-#include <easy3d/renderer/frame.h>
+
 #include <memory>
-#include <ostream>
-#include <sstream> // __str__
-#include <string>
-#include <string_view>
-#include <typeinfo>
-#include <vector>
 
 #include <functional>
 #include <pybind11/pybind11.h>
