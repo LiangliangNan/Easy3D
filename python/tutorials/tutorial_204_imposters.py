@@ -1,10 +1,11 @@
 # -------------------------------------------------------------------------------
 # Example: Basic rendering styles in Easy3D
 # -------------------------------------------------------------------------------
-# This script demonstrates how to control the rendering styles of basic drawables。
+# This script demonstrates how to use the two most common imposters for rendering
+# points and lines in Easy3D:
 #   - Render vertices as spheres.
-#   - Render edges as cylinders (wireframe).
-#   - Customize the surface color and visibility.
+#   - Render edges/wireframe as cylinders.
+# This tutorial also show how to customize the surface color and visibility.
 # -------------------------------------------------------------------------------
 
 # -------------------------------------------------------------------------------
@@ -45,48 +46,36 @@ sphere_path = easy3d.directory() + "/data/sphere.obj"  # File path for the spher
 sphere = viewer.add_model(sphere_path)  # Add the model to the viewer.
 
 # -------------------------------------------------------------------------------
-# Customizing the Rendering Style
+# Customize the point imposters: render points as spheres
 # -------------------------------------------------------------------------------
-# By default, only the surface of a SurfaceMesh is rendered. In this example:
-#  - The surface color is modified but remains visible.
-#  - The vertices are displayed as spheres.
-#  - The edges (wireframe) are rendered as cylinders.
-
-# Customize the surface rendering:
-# Get the drawable responsible for rendering the triangles (surface) of the model.
-sphere_faces = sphere.renderer().get_triangles_drawable("faces")
-sphere_faces.set_visible(True)  # Ensure the surface is visible.
-# This "/data/sphere.obj" file contains texture coordinates, and it will be rendered
-# with the default checkboard texture. You can comment the two lines below to check
-# out the textured rendering.
-sphere_faces.set_coloring_method(easy3d.State.UNIFORM_COLOR)    # Set uniform color rendering.
-sphere_faces.set_color(easy3d.vec4(0.8, 0.8, 0.3, 1.0))         # Set the surface color (RGBA).
-
-# Customize the vertex rendering:
 # Get the drawable responsible for rendering the vertices of the model.
-sphere_vertices = sphere.renderer().get_points_drawable("vertices")
-sphere_vertices.set_visible(True)  # Ensure the vertices are visible.
-sphere_vertices.set_impostor_type(easy3d.PointsDrawable.SPHERE)  # Render vertices as spheres.
-sphere_vertices.set_point_size(25)  # Set the size of the vertex spheres.
-sphere_vertices.set_color(easy3d.vec4(1.0, 0.3, 0.3, 1.0))  # Set the vertex color (RGBA).
+vertices = sphere.renderer().get_points_drawable("vertices")
+vertices.set_visible(True)  # Ensure the vertices are visible.
+vertices.set_impostor_type(easy3d.PointsDrawable.SPHERE)  # Render vertices as spheres.
+vertices.set_point_size(25)  # Set the size of the vertex spheres.
+vertices.set_color(easy3d.vec4(1.0, 0.3, 0.3, 1.0))  # Set the vertex color (RGBA).
 
-# Customize the edge rendering:
+# -------------------------------------------------------------------------------
+# Customize the line imposters: render lines/edges/wireframe as cylinders
+# -------------------------------------------------------------------------------
 # Get the drawable responsible for rendering the edges (wireframe) of the model.
-sphere_wireframe = sphere.renderer().get_lines_drawable("edges")
-sphere_wireframe.set_visible(True)  # Ensure the wireframe is visible.
-sphere_wireframe.set_impostor_type(easy3d.LinesDrawable.CYLINDER)  # Render edges as cylinders.
-sphere_wireframe.set_line_width(5)  # Set the thickness of the wireframe cylinders.
-sphere_wireframe.set_uniform_coloring(easy3d.vec4(0.6, 0.6, 1.0, 1.0))  # Set the wireframe color (RGBA).
+edges = sphere.renderer().get_lines_drawable("edges")
+edges.set_visible(True)  # Ensure the wireframe is visible.
+edges.set_impostor_type(easy3d.LinesDrawable.CYLINDER)  # Render edges as cylinders.
+edges.set_line_width(5)  # Set the thickness of the wireframe cylinders.
+edges.set_uniform_coloring(easy3d.vec4(0.6, 0.6, 1.0, 1.0))  # Set the wireframe color (RGBA).
 
 # -------------------------------------------------------------------------------
+# Customizing the surface rendering
+# -------------------------------------------------------------------------------
+# Get the drawable responsible for rendering the triangles (surface) of the model.
+faces = sphere.renderer().get_triangles_drawable("faces")
+faces.set_visible(True)  # Ensure the surface is visible.
+# This "/data/sphere.obj" file contains texture coordinates, and by defauly it will
+# be rendered with a checkboard texture. You can comment the two lines below to check
+# out the textured rendering.
+faces.set_coloring_method(easy3d.State.UNIFORM_COLOR)    # Set uniform color rendering.
+faces.set_color(easy3d.vec4(0.8, 0.8, 0.3, 1.0))         # Set the surface color (RGBA).
+
 # Running the Viewer
-# -------------------------------------------------------------------------------
 viewer.run()
-
-
-# -------------------------------------------------------------------------------
-# Notes:
-# 1. Ensure the file paths are correct, or replace them with paths to your own models.
-# 2. The viewer window remains open until the user manually closes it.
-# 3. You can modify the impostor type, colors, and sizes to explore different visual styles.
-# -------------------------------------------------------------------------------
