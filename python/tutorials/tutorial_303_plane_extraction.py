@@ -9,6 +9,7 @@
 # 1. Load a 3D point cloud from a file.
 # 2. Configure the PrimitivesRansac class for primitive extraction.
 # 3. Extract planes as geometric primitives.
+# 4. Visualize the extracted planar segments.
 # -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
@@ -83,7 +84,6 @@ ransac.add_primitive_type(easy3d.PrimitivesRansac.PLANE)  # Add plane extraction
 # - bitmap_resolution: Bitmap resolution relative to the bounding box width.
 # - normal_threshold: Cosine of the maximum normal deviation.
 # - overlook_probability: Probability of overlooking a primitive.
-
 ransac.detect(point_cloud,
               min_support=200,
               dist_threshold=0.005,
@@ -101,7 +101,10 @@ ransac.detect(point_cloud,
 # - `position`: A point on the plane.
 # - `normal`: The normal vector of the plane.
 # - `vertices`: Indices of points belonging to the plane.
-
+# Note: The extracted primitives are also stored as properties:
+#   - "v:primitive_type"  (one of PLANE, SPHERE, CYLINDER, CONE, TORUS, and UNKNOWN)
+#   - "v:primitive_index" (-1, 0, 1, 2...). -1 meaning a vertex does not belong to any primitive (thus its
+#     primitive_type must be UNKNOWN.
 planes = ransac.get_planes()  # Retrieve detected planes
 print(f"Number of planes extracted: {len(planes)}")  # Print the number of detected planes
 
@@ -134,3 +137,18 @@ for i, plane in enumerate(planes):
 #     # Print up to 20 vertex indices (for demonstration purposes)
 #     vertex_count = len(cylinder.vertices)
 #     print(f"  Vertices ({min(vertex_count, 20)} out of {vertex_count} shown): {cylinder.vertices[:20]}")  # e.g., [5788, 5801, 5777, 5796, ... ]
+
+# -----------------------------------------------------------------------------
+# Visualizing the extracted planar segments
+# -----------------------------------------------------------------------------
+
+viewer = easy3d.Viewer("Easy3D Viewer - Plane extraction")  # Create a viewer
+viewer.set_usage("") # Optional. Just to hide the lengthy manual in console window
+viewer.add_model(point_cloud)  # Add the point cloud to the viewer
+
+# The extracted primitives are also stored in int type vertex property "v:primitive_index".
+# We can color the point cloud by this property.
+point_cloud.renderer().color_by_segmentation("v:primitive_index")
+
+# Run the viewer
+viewer.run()
