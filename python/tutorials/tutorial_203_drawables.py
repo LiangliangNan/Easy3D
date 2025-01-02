@@ -7,6 +7,7 @@
 #   2. Visualizing a set of triangles or a surface using `TrianglesDrawable`.
 #   3. Visualizing a set of edges/lines using `LinesDrawable`.
 #   4. Visualizing a set of edges/lines in screen coordinates using `LinesDrawable2D`.
+#   5. The use of the element buffer (also referred to as the index buffer) in rendering.
 #   5. Running the Easy3D MultiViewer to display the visualizations.
 # -------------------------------------------------------------------------------
 
@@ -53,11 +54,21 @@ viewer.assign(0, 0, points_drawable)                # Assign the drawable to the
 # -------------------------------------------------------------------------------
 # View (0, 1): A set of set of triangles (i.e., a surface) representing a unit cube
 # -------------------------------------------------------------------------------
+# In this tutorial, we use an element/index buffer together with the vertex buffer.
+# This is most efficient in terms of memory usage. For example, to render a unique
+# cube, we need only 8 vertices.
+# Of course, you can use the unindexed approach to avoid using an element/index buffer,
+# which is simpler to use by requires more memory. For this approach, you need to
+# explicitly duplicate the vertices so that each triangle has its own set of three
+# unique vertex positions, rather than sharing vertices between triangles. For the
+# unit cube rendering, the unindexed approach will require 36 vertices (each of the
+# 12 triangles will require 3 vertices).
 cube_vertices = numpy.array([   # Vertices of a unit cube.
     [-0.5, -0.5, -0.5], [0.5, -0.5, -0.5], [0.5, 0.5, -0.5], [-0.5, 0.5, -0.5],
     [-0.5, -0.5,  0.5], [0.5, -0.5,  0.5], [0.5, 0.5,  0.5], [-0.5, 0.5,  0.5],
 ])
 cube_indices = numpy.array([    # Indices for the 12 triangles (two per face of the cube)
+    # each consecutive three indices denote the vertex indices of a single triangle face
     0, 2, 1,    0, 3, 2,    4, 5, 6,    4, 6, 7,    0, 7, 3,    0, 4, 7,
     1, 2, 6,    1, 6, 5,    0, 1, 5,    0, 5, 4,    2, 3, 7,    2, 7, 6,
 ])
@@ -73,7 +84,10 @@ viewer.assign(0, 1, triangles_drawable)  # Assign the cube to the top-right view
 # In this tutorial, we show the wireframe of the above cube.
 wireframe = easy3d.LinesDrawable("wireframe")   # Create a `LinesDrawable` named "wireframe"
 wireframe.update_vertex_buffer(cube_vertices)   # Upload vertex positions
-wireframe_indices = numpy.array([               # Indices for the 12 edges of the cube
+# Similar to the TrianglesDrawable explained above, you can avoid using an element/index buffer by
+# explicitly duplicating the vertices so that each line/edge has its own set of two unique vertices.
+wireframe_indices = numpy.array([  # Indices for the 12 edges of the cube
+    # each consecutive two indices denote the vertex indices of a single line/edge.
     0, 1,   1, 2,   2, 3,   3, 0,       # Bottom face edges
     4, 5,   5, 6,   6, 7,   7, 4,       # Top face edges
     0, 4,   1, 5,   2, 6,   3, 7        # Vertical edges connecting top and bottom faces
@@ -91,7 +105,12 @@ star_vertices = numpy.array([   # The vertices of the star shape (each vertex is
     ], dtype=numpy.float32)
 star = easy3d.LinesDrawable2D("star")   # Create a `LinesDrawable2D` named "star"
 star.update_vertex_buffer(star_vertices, viewer.width(), viewer.height())  # Upload vertex positions
-star_indices = numpy.array([0, 6,   6, 2,   2, 5,   5, 4,   4, 7,   7, 1,   1, 8,   8, 3,   3, 9,   9, 0])  # Indices for the edges of the star.
+# Similar to the TrianglesDrawable explained above, you can avoid using an element/index buffer by
+# explicitly duplicating the vertices so that each line/edge has its own set of two unique vertices.
+star_indices = numpy.array(     # Indices for the edges of the star.
+    # each consecutive two indices denote the vertex indices of a single line/edge.
+    [0, 6,   6, 2,   2, 5,   5, 4,   4, 7,   7, 1,   1, 8,   8, 3,   3, 9,   9, 0]
+)
 star.update_element_buffer(star_indices)  # Upload vertex indices of the star edges
 viewer.add_drawable(star)  # Add the star to the viewer
 viewer.assign(1, 1, star)  # Assign the star to the bottom-right view (1, 1).

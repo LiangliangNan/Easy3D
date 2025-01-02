@@ -51,9 +51,10 @@ sphere = viewer.add_model(sphere_path)  # Add the model to the viewer.
 # Get the drawable responsible for rendering the vertices of the model.
 vertices = sphere.renderer().get_points_drawable("vertices")
 vertices.set_visible(True)  # Ensure the vertices are visible.
-vertices.set_impostor_type(easy3d.PointsDrawable.SPHERE)  # Render vertices as spheres.
+# sphere.update_vertex_normals()  # This line is for "SURFEL" (SURFEL requires vertex normals).
+vertices.set_impostor_type(easy3d.PointsDrawable.SPHERE)  # Render vertices as spheres. Please try "SURFEL"
 vertices.set_point_size(25)  # Set the size of the vertex spheres.
-vertices.set_color(easy3d.vec4(1.0, 0.3, 0.3, 1.0))  # Set the vertex color (RGBA).
+vertices.set_uniform_coloring(easy3d.vec4(1.0, 0.3, 0.3, 1.0))  # Set the vertex color (RGBA).
 
 # -------------------------------------------------------------------------------
 # Customize the line imposters: render lines/edges/wireframe as cylinders
@@ -61,7 +62,7 @@ vertices.set_color(easy3d.vec4(1.0, 0.3, 0.3, 1.0))  # Set the vertex color (RGB
 # Get the drawable responsible for rendering the edges (wireframe) of the model.
 edges = sphere.renderer().get_lines_drawable("edges")
 edges.set_visible(True)  # Ensure the wireframe is visible.
-edges.set_impostor_type(easy3d.LinesDrawable.CYLINDER)  # Render edges as cylinders.
+edges.set_impostor_type(easy3d.LinesDrawable.CYLINDER)  # Render edges as cylinders. Please try "CONE".
 edges.set_line_width(5)  # Set the thickness of the wireframe cylinders.
 edges.set_uniform_coloring(easy3d.vec4(0.6, 0.6, 1.0, 1.0))  # Set the wireframe color (RGBA).
 
@@ -74,8 +75,7 @@ faces.set_visible(True)  # Ensure the surface is visible.
 # This "/data/sphere.obj" file contains texture coordinates, and by defauly it will
 # be rendered with a checkboard texture. You can comment the two lines below to check
 # out the textured rendering.
-faces.set_coloring_method(easy3d.State.UNIFORM_COLOR)    # Set uniform color rendering.
-faces.set_color(easy3d.vec4(0.8, 0.8, 0.3, 1.0))         # Set the surface color (RGBA).
+faces.set_uniform_coloring(easy3d.vec4(0.8, 0.8, 0.3, 1.0))  # Set the surface color (RGBA).
 
 # Running the Viewer
 viewer.run()
