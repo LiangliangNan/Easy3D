@@ -399,6 +399,11 @@ void bind_easy3d_core_point_cloud(pybind11::module_& m)
 		 	cl.def( pybind11::init( [](easy3d::PointCloud::VertexContainer const &o){ return new easy3d::PointCloud::VertexContainer(o); } ) );
 		 	cl.def("begin", (class easy3d::PointCloud::VertexIterator (easy3d::PointCloud::VertexContainer::*)() const) &easy3d::PointCloud::VertexContainer::begin, "C++: easy3d::PointCloud::VertexContainer::begin() const --> class easy3d::PointCloud::VertexIterator");
 		 	cl.def("end", (class easy3d::PointCloud::VertexIterator (easy3d::PointCloud::VertexContainer::*)() const) &easy3d::PointCloud::VertexContainer::end, "C++: easy3d::PointCloud::VertexContainer::end() const --> class easy3d::PointCloud::VertexIterator");
+
+             // Liangliang: provide Python bindings to make VertexContainer iterable
+             cl.def("__iter__", [](const easy3d::PointCloud::VertexContainer &self) {
+                 return pybind11::make_iterator(self.begin(), self.end());
+             }, pybind11::keep_alive<0, 1>());  // Keep the container alive while iterating
 		 }
 
 	}

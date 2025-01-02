@@ -22,8 +22,7 @@ sys.path.append("../../cmake-build-release/lib/python")
 # -------------------------------------------------------------------------------
 # Importing Necessary Libraries
 # -------------------------------------------------------------------------------
-import easy3d           # Easy3D library for 3D visualization and processing
-import numpy as np      # NumPy library (used for handling data)
+import easy3d
 
 # -------------------------------------------------------------------------------
 # Initializing Easy3D

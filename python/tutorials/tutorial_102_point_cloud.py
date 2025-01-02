@@ -21,7 +21,7 @@ sys.path.append("../../cmake-build-release/lib/python")
 # -------------------------------------------------------------------------------
 # Importing Necessary Libraries
 # -------------------------------------------------------------------------------
-import easy3d           # Easy3D library for 3D visualization and processing
+import easy3d
 import numpy as np      # NumPy library (used for handling data)
 
 # -------------------------------------------------------------------------------
@@ -45,6 +45,7 @@ pc.set_name("Small Point Cloud")
 
 # Output the name of the point cloud.
 print(f"Point cloud name: {pc.name()}")  # Output: Small Point Cloud
+print(f"Point cloud has {pc.n_vertices()} vertices.")
 
 # -------------------------------------------------------------------------------
 # Adding Multiple Points to the PointCloud
@@ -54,6 +55,7 @@ more_points = np.array([[7.0, 8.0, 9.0], [10.0, 11.0, 12.0]])  # Additional poin
 
 # Add the new points to the point cloud using `add_points`.
 pc.add_points(more_points)
+print(f"Point cloud has {pc.n_vertices()} vertices.")
 
 # -------------------------------------------------------------------------------
 # Adding Individual Points Using Various Formats
@@ -78,4 +80,8 @@ pc.add_point(point_np)  # Add point using NumPy array format
 points_np = pc.to_numpy()
 
 # Output the point cloud data in NumPy array format.
-print("Point cloud data:\n", points_np)
+print("Point cloud data as numpy array:\n", points_np)
+
+# Iterate all the faces and print the number of its vertices
+for v in pc.vertices():
+    print(f"Vertex {v.idx()} : {pc.position(v)}")

@@ -9,7 +9,7 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
-
+#include <pybind11/numpy.h>
 
 #ifndef BINDER_PYBIND11_TYPE_CASTER
 	#define BINDER_PYBIND11_TYPE_CASTER
@@ -934,6 +934,67 @@ struct PyCallBack_easy3d_PropertyArray_easy3d_SurfaceMesh_FaceConnectivity_t : p
 };
 
 
+// Convert either Python's list of lists (native Python structure) or 1D NumPy arrays of objects (dtype=object)
+// to std::vector< std::vector<unsigned int> >.
+// The "input" represent the vertex indices of the faces in a general polygonal mesh. The total number of elements
+// in the input array is equal to the total number of faces in the mesh, and the i-th element has the number of
+// unsigned int type of indices for the i-th face.
+std::vector<std::vector<unsigned int>> convert(const pybind11::object& input) {
+    std::vector<std::vector<unsigned int>> result;
+
+    // Check if the input is a Python list
+    if (pybind11::isinstance<pybind11::list>(input)) {
+        // Convert the input to a Python list of lists
+        pybind11::list input_list = pybind11::cast<pybind11::list>(input);
+        for (ssize_t i = 0; i < input_list.size(); ++i) {
+            pybind11::object face = input_list[i];
+            if (pybind11::isinstance<pybind11::list>(face)) {
+                pybind11::list face_list = pybind11::cast<pybind11::list>(face);
+                std::vector<unsigned int> face_indices;
+                // Convert each element of the face list to unsigned int
+                for (ssize_t j = 0; j < face_list.size(); ++j) {
+                    face_indices.push_back(static_cast<unsigned int>(pybind11::cast<long>(face_list[j])));
+                }
+                result.push_back(std::move(face_indices));
+            } else {
+                // Handle case where face is not a list (error or unexpected data)
+                throw std::runtime_error("Expected a list of lists for vertex indices");
+            }
+        }
+    }
+    // Check if the input is a 1D NumPy array of objects (dtype=object)
+    else if (pybind11::isinstance<pybind11::array>(input)) {
+        auto arr = pybind11::cast<pybind11::array>(input);
+        // Check if it's a 1D array of Python objects
+        if (arr.ndim() == 1 && arr.dtype().is(pybind11::dtype::of<pybind11::object>())) {
+            auto buf = arr.unchecked<pybind11::object>();  // 1D access
+            for (ssize_t i = 0; i < arr.shape(0); ++i) {
+                pybind11::object face = buf(i);
+                if (pybind11::isinstance<pybind11::list>(face)) {
+                    pybind11::list face_list = pybind11::cast<pybind11::list>(face);
+                    std::vector<unsigned int> face_indices;
+                    // Convert each element of the face list to unsigned int
+                    for (ssize_t j = 0; j < face_list.size(); ++j) {
+                        face_indices.push_back(static_cast<unsigned int>(pybind11::cast<long>(face_list[j])));
+                    }
+                    result.push_back(std::move(face_indices));
+                } else {
+                    // Handle case where face is not a list (error or unexpected data)
+                    throw std::runtime_error("Expected a list of lists for vertex indices");
+                }
+            }
+        } else {
+            throw std::runtime_error("Expected a 1D NumPy array with dtype=object");
+        }
+    } else {
+        throw std::runtime_error("Expected a Python list or 1D NumPy array with dtype=object");
+    }
+
+    return result;
+}
+
+
+
 void bind_easy3d_core_surface_mesh(pybind11::module_& m)
 {
 	{ // easy3d::SurfaceMesh file:easy3d/core/surface_mesh.h line:51
@@ -941,6 +1002,80 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
 		cl.def( pybind11::init( [](){ return new easy3d::SurfaceMesh(); }, [](){ return new PyCallBack_easy3d_SurfaceMesh(); } ) );
 		cl.def( pybind11::init( [](PyCallBack_easy3d_SurfaceMesh const &o){ return new PyCallBack_easy3d_SurfaceMesh(o); } ) );
 		cl.def( pybind11::init( [](easy3d::SurfaceMesh const &o){ return new easy3d::SurfaceMesh(o); } ) );
+
+        // Initialize SurfaceMesh from vertices and vertex indices of faces.
+        //  - the "points" provides the vertex positions. It must be a list of tuples of 3 or a NumPy array with
+        //    shape (n, 3);
+        //  - the "indices" represents the vertex indices of the faces in a general polygonal mesh. The indices are
+        //    0-based (i.e., starting from 0), and must be a list of lists (native Python structure) or a 1D NumPy
+        //    array of objects (dtype=object). The total number of elements in "indices" is equal to the total number
+        //    of faces in the mesh, and it's i-th element has the number of indices for the i-th face.
+        cl.def(pybind11::init([](pybind11::object points, pybind11::object &indices) {
+               auto mesh = std::make_shared<easy3d::SurfaceMesh>();
+
+               // First: add the vertices
+               if (pybind11::isinstance<pybind11::list>(points)) {
+                   // Handle list of tuples
+                   for (auto item: points.cast<pybind11::list>()) {
+                       auto tuple = item.cast<pybind11::tuple>();
+                       if (tuple.size() != 3) {
+                           throw std::invalid_argument("Each point must have 3 coordinates.");
+                       }
+                       mesh->add_vertex(easy3d::vec3(
+                               tuple[0].cast<float>(),
+                               tuple[1].cast<float>(),
+                               tuple[2].cast<float>()
+                       ));
+                   }
+               } else if (pybind11::isinstance<pybind11::array_t<float>>(points)) {    // float type
+                   // Handle NumPy array
+                   auto arr = points.cast<pybind11::array_t<float>>();
+                   if (arr.ndim() != 2 || arr.shape(1) != 3) {
+                       throw std::invalid_argument("Input array must have shape (n, 3).");
+                   }
+                   auto buf = arr.unchecked<2>();
+                   for (ssize_t i = 0; i < arr.shape(0); ++i) {
+                       mesh->add_vertex(easy3d::vec3(buf(i, 0), buf(i, 1), buf(i, 2)));
+                   }
+               } else if (pybind11::isinstance<pybind11::array_t<double>>(points)) {    // double type
+                   // Handle NumPy array
+                   auto arr = points.cast<pybind11::array_t<double>>();
+                   if (arr.ndim() != 2 || arr.shape(1) != 3) {
+                       throw std::invalid_argument("Input array must have shape (n, 3).");
+                   }
+                   auto buf = arr.unchecked<2>();
+                   for (ssize_t i = 0; i < arr.shape(0); ++i) {
+                       mesh->add_vertex(easy3d::vec3(
+                               static_cast<float>(buf(i, 0)),
+                               static_cast<float>(buf(i, 1)),
+                               static_cast<float>(buf(i, 2)))
+                       );
+                   }
+               } else {
+                   throw std::invalid_argument(
+                           "Input vertices must be a list of tuples or a NumPy array with shape (n, 3).");
+               }
+
+               // Second: add the faces
+               const auto processed_indices = convert(indices);
+               for (const auto &ids: processed_indices) {
+                   std::vector<easy3d::SurfaceMesh::Vertex> face;
+                   for (const auto id: ids)
+                       face.push_back(easy3d::SurfaceMesh::Vertex(id));
+                   mesh->add_face(face);
+               }
+               return mesh;
+           }),
+           R"doc(
+                Initialize a SurfaceMesh (not necessarily a triangle mesh) from vertices and vertex indices of faces.
+                - The "points" provides the vertex positions. It must be a list of tuples of 3 or a NumPy array with
+                  shape (n, 3);
+                - The "indices" represents the vertex indices of the faces in a general polygonal mesh. The indices are
+                  0-based (i.e., starting from 0) and must be a list of lists (native Python structure) or a 1D NumPy
+                  array of objects (dtype=object). The total number of elements in "indices" is equal to the total number
+                  of faces in the mesh, and it's i-th element contains the vertex indices for the i-th face.
+                )doc"
+        );
 
         cl.def("name", [](easy3d::SurfaceMesh& self) { return self.name(); }, pybind11::return_value_policy::copy, "Get the name of the surface mesh.");
         cl.def("set_name", [](easy3d::SurfaceMesh& self, const std::string& name) { self.set_name(name); }, "Set the name of the surface mesh.");
@@ -1496,7 +1631,12 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
 			cl.def( pybind11::init( [](easy3d::SurfaceMesh::FaceContainer const &o){ return new easy3d::SurfaceMesh::FaceContainer(o); } ) );
 			cl.def("begin", (class easy3d::SurfaceMesh::FaceIterator (easy3d::SurfaceMesh::FaceContainer::*)() const) &easy3d::SurfaceMesh::FaceContainer::begin, "C++: easy3d::SurfaceMesh::FaceContainer::begin() const --> class easy3d::SurfaceMesh::FaceIterator");
 			cl.def("end", (class easy3d::SurfaceMesh::FaceIterator (easy3d::SurfaceMesh::FaceContainer::*)() const) &easy3d::SurfaceMesh::FaceContainer::end, "C++: easy3d::SurfaceMesh::FaceContainer::end() const --> class easy3d::SurfaceMesh::FaceIterator");
-		}
+
+            // Liangliang: provide Python bindings to make FaceContainer iterable
+            cl.def("__iter__", [](const easy3d::SurfaceMesh::FaceContainer &self) {
+                return pybind11::make_iterator(self.begin(), self.end());
+            }, pybind11::keep_alive<0, 1>());  // Keep the container alive while iterating
+        }
 
 		{ // easy3d::SurfaceMesh::VertexAroundVertexCirculator file:easy3d/core/surface_mesh.h line:594
 			auto & enclosing_class = cl;

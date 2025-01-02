@@ -1,3 +1,0 @@
-think about what Python users may needs:
- - add/access/edit/visualize Int vertex properties (e.g., segmentation)
- - give points random color based on specified (by name) Int properties.
