@@ -39,9 +39,9 @@ viewer = easy3d.Viewer("Easy3D Viewer")
 # Loading and Adding a 3D Mesh Model
 # -------------------------------------------------------------------------------
 # Load a 3D mesh file (e.g., a hemisphere in .ply format).
-# The `easy3d.directory()` function retrieves the root directory of Easy3D's
+# The `easy3d.resource_directory()` function retrieves the root directory of Easy3D's
 # resources. The model is located in the `data` subdirectory.
-mesh_file = easy3d.directory() + "/data/hemisphere.ply"
+mesh_file = easy3d.resource_directory() + "/data/hemisphere.ply"
 
 # Add the mesh model to the viewer.
 # This can be done directly using the file path, as shown below:
@@ -55,7 +55,7 @@ viewer.add_model(mesh_file)
 # Loading and Adding a 3D Point Cloud Model
 # -------------------------------------------------------------------------------
 # Load a 3D point cloud file (e.g., a polyhedron in .bin format).
-pointcloud_file = easy3d.directory() + "/data/polyhedron.bin"
+pointcloud_file = easy3d.resource_directory() + "/data/polyhedron.bin"
 
 # The `PointCloudIO.load()` function reads the point cloud data from the file.
 pointcloud = easy3d.PointCloudIO.load(pointcloud_file)

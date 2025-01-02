@@ -30,7 +30,7 @@ easy3d.initialize(False)
 
 # Load a 3D surface mesh file using the `SurfaceMeshIO` class.
 # Here, we use the Stanford Bunny model,
-mesh = SurfaceMeshIO.load(easy3d.directory() + "/data/bunny.ply")
+mesh = SurfaceMeshIO.load(easy3d.resource_directory() + "/data/bunny.ply")
 # Print details about the original mesh.
 print(f"Number of vertices in the input mesh: {mesh.n_vertices()}")
 

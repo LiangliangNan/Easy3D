@@ -32,7 +32,7 @@ easy3d.initialize(False)
 # Setting Up the Model and Renderer
 # -------------------------------------------------------------------------------
 # Define the input model file. In this case, a 3D model of a bunny in .ply format.
-file_name = easy3d.directory() + "/data/bunny.ply"
+file_name = easy3d.resource_directory() + "/data/bunny.ply"
 print(f"Input file name: {file_name}")
 
 # Create an offscreen renderer instance. This allows rendering without a viewer.

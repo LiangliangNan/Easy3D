@@ -34,7 +34,7 @@ viewer = easy3d.MultiViewer(1, 2, "Easy3D Viewer - Mesh sampling")
 # Loading the Surface Mesh
 # -----------------------------------------------------------------------------
 # Load the Bunny surface mesh from a file. Ensure the file path is correct.
-mesh = viewer.add_model(easy3d.directory() + "/data/bunny.ply")
+mesh = viewer.add_model(easy3d.resource_directory() + "/data/bunny.ply")
 # Assign the surface mesh to the left view (row=0, column=0).
 viewer.assign(0, 0, mesh)
 

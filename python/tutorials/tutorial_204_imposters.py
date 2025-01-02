@@ -42,7 +42,7 @@ viewer.set_usage("") # Optional. Just to hide the lengthy manual in console wind
 # -------------------------------------------------------------------------------
 # Load a sphere model from an OBJ file located in the Easy3D data directory.
 # Replace the file path with the location of your model if necessary.
-sphere_path = easy3d.directory() + "/data/sphere.obj"  # File path for the sphere model.
+sphere_path = easy3d.resource_directory() + "/data/sphere.obj"  # File path for the sphere model.
 sphere = viewer.add_model(sphere_path)  # Add the model to the viewer.
 
 # -------------------------------------------------------------------------------

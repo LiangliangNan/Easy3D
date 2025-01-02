@@ -33,7 +33,7 @@ easy3d.initialize(False)
 # Load a Surface Mesh
 # -----------------------------------------------------------------------------
 # For this tutorial, let's use the torusknot model.
-input = easy3d.SurfaceMeshIO.load(easy3d.directory() + "/data/torusknot.obj")
+input = easy3d.SurfaceMeshIO.load(easy3d.resource_directory() + "/data/torusknot.obj")
 # Print details about the original mesh.
 print(f"Original mesh has {input.n_vertices()} vertices and {input.n_faces()} faces.")
 

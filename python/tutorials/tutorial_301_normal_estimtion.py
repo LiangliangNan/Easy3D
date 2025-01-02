@@ -32,7 +32,7 @@ easy3d.initialize(True)
 # Loading the Point Cloud
 # -------------------------------------------------------------------------------
 # Define the input point cloud file. In this case, a point cloud in .bin format.
-file_name = easy3d.directory() + "/data/bunny.bin"
+file_name = easy3d.resource_directory() + "/data/bunny.bin"
 print(f"Input file name: {file_name}")
 
 # Load the point cloud from the specified file.

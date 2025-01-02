@@ -47,22 +47,22 @@ viewer.set_usage("") # Optional. Just to hide the lengthy manual in console wind
 
 ## View (0, 0) - Bunny Model (SurfaceMesh)
 # This classic 3D model represents a bunny and is loaded as a surface mesh.
-bunny_model = viewer.add_model(easy3d.directory() + "/data/bunny.ply" )  # Load the model.
+bunny_model = viewer.add_model(easy3d.resource_directory() + "/data/bunny.ply" )  # Load the model.
 viewer.assign(0, 0, bunny_model)  # Assign the Bunny model to the top-left view (0, 0).
 
 ## View (0, 1) - Mannequin Model (SurfaceMesh)
 # The mannequin is a human-like 3D model and is loaded as a surface mesh.
-mannequin_model = viewer.add_model(easy3d.directory() + "/data/mannequin.ply")  # Load the model.
+mannequin_model = viewer.add_model(easy3d.resource_directory() + "/data/mannequin.ply")  # Load the model.
 viewer.assign(0, 1, mannequin_model)  # Assign the Mannequin model to the top-right view (0, 1).
 
 ## View (1, 0) - Polyhedron Model (PointCloud)
 # The polyhedron model is a point cloud, representing a collection of 3D points.
-polyhedron_model = viewer.add_model(easy3d.directory() + "/data/polyhedron.bin")  # Load the model.
+polyhedron_model = viewer.add_model(easy3d.resource_directory() + "/data/polyhedron.bin")  # Load the model.
 viewer.assign(1, 0, polyhedron_model)  # Assign the Polyhedron model to the bottom-left view (1, 0).
 
 ## View (1, 1) - Fandisk Model (SurfaceMesh)
 # The fandisk is a commonly used 3D model and is loaded as a surface mesh.
-fandisk_model = viewer.add_model(easy3d.directory() + "/data/fandisk.off")  # Load the model.
+fandisk_model = viewer.add_model(easy3d.resource_directory() + "/data/fandisk.off")  # Load the model.
 viewer.assign(1, 1, fandisk_model)  # Assign the Fandisk model to the bottom-right view (1, 1).
 
 # -------------------------------------------------------------------------------

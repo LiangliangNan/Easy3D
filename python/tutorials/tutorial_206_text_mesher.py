@@ -30,7 +30,7 @@ easy3d.initialize(True)
 # "Roboto-Regular" font file included in Easy3D's default directory.
 
 # Path to the font file (update the path if needed).
-font_path = easy3d.directory() + "/fonts/en_Roboto-Regular.ttf"
+font_path = easy3d.resource_directory() + "/fonts/en_Roboto-Regular.ttf"
 
 # Create an instance of the `TextMesher` using the specified font.
 mesher = easy3d.TextMesher(font_path)

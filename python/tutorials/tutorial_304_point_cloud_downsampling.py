@@ -32,7 +32,7 @@ easy3d.initialize(True)
 # Easy3D supports various file formats for point clouds (e.g., .bin, .xyz).
 # Here, we load a sample file provided by Easy3D. Replace the path with your
 # own file if needed.
-file = easy3d.directory() + "/data/polyhedron.bin"  # Update as needed
+file = easy3d.resource_directory() + "/data/polyhedron.bin"  # Update as needed
 point_cloud = easy3d.PointCloudIO.load(file)  # Load the point cloud
 print(f"Loaded point cloud with {point_cloud.n_vertices()} points.")  # Print the initial point count
 

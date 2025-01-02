@@ -51,7 +51,7 @@ easy3d.initialize(True)
 # Here, we load a sample point cloud file provided by Easy3D. Replace the path
 # with your own dataset as needed.
 
-pointcloud_file = easy3d.directory() + "/data/polyhedron.bin"  # Update if necessary
+pointcloud_file = easy3d.resource_directory() + "/data/polyhedron.bin"  # Update if necessary
 point_cloud = easy3d.PointCloudIO.load(pointcloud_file)  # Load the point cloud
 print(f"Loaded point cloud with {point_cloud.n_vertices()} points.")  # Print point count
 

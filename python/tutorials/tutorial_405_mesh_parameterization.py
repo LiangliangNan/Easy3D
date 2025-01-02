@@ -41,7 +41,7 @@ easy3d.initialize(False)
 
 
 # In this example, we load a 3D surface mesh file of a girl's face.
-mesh_harmonic = easy3d.SurfaceMeshIO.load(easy3d.directory() + "/data/girl_face.ply")
+mesh_harmonic = easy3d.SurfaceMeshIO.load(easy3d.resource_directory() + "/data/girl_face.ply")
 
 # -----------------------------------------------------------------------------
 # Prepare Mesh for LSCM Parameterization

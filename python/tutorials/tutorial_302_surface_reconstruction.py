@@ -68,7 +68,7 @@ reconstructor.set_depth(8)  # Adjust this value as needed.
 # in the Easy3D library's data directory.
 #
 # The `PointCloudIO.load()` function loads the point cloud into memory.
-pointcloud_file = easy3d.directory() + "/data/polyhedron.bin"  # Update the path if necessary
+pointcloud_file = easy3d.resource_directory() + "/data/polyhedron.bin"  # Update the path if necessary
 point_cloud = easy3d.PointCloudIO.load(pointcloud_file)  # Load the point cloud from the file
 
 # -----------------------------------------------------------------------------

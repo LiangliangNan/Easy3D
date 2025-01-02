@@ -259,7 +259,7 @@ PYBIND11_MODULE(PyEasy3D_NAME, root_module) {
      *      import easy3d
      *
      *      easy3d.initialize(True)
-     *      file_name = easy3d.directory() + "/data/bunny.bin"
+     *      file_name = easy3d.resource_directory() + "/data/bunny.bin"
      *      stopwatch = easy3d.StopWatch()
      *      pc = easy3d.PointCloudIO.load(file_name)
      *
@@ -296,7 +296,7 @@ PYBIND11_MODULE(PyEasy3D_NAME, root_module) {
      *       from easy3d import viewer
      *
      *       util.initialize(True)
-     *       file_name = util.directory() + "/data/bunny.bin"
+     *       file_name = util.resource_directory() + "/data/bunny.bin"
      *       stopwatch = util.StopWatch()
      *       pc = fileio.PointCloudIO.load(file_name)
      *       algo.PointCloudNormals.estimate(pc, 16, False)
