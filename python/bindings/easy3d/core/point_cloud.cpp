@@ -79,31 +79,125 @@ void bind_easy3d_core_point_cloud(pybind11::module_& m)
 		cl.def( pybind11::init( [](PyCallBack_easy3d_PointCloud const &o){ return new PyCallBack_easy3d_PointCloud(o); } ) );
 		cl.def( pybind11::init( [](easy3d::PointCloud const &o){ return new easy3d::PointCloud(o); } ) );
 
-        // Initialization from a NumPy array or a list of points
-        cl.def(pybind11::init([](pybind11::array_t<float> arr) {
-            if (arr.ndim() != 2 || arr.shape(1) != 3) {
-                throw std::invalid_argument("Input array must have shape (n, 3).");
-            }
-            auto buf = arr.unchecked<2>();
+        // Liangliang: In C++, the compiler can differentiate between function overloads based on the argument types at
+        //      compile time. However, in Python, the type checking is dynamic, so pybind11 uses the order in which
+        //      functions are registered to decide which overload to call.
+        //      Always define the most specific overloads before the more general ones. General overloads like
+        //      pybind11::object or pybind11::list should come last to avoid overshadowing specific ones.
+
+        // Initialize PointCloud from an array of 3D points
+        cl.def(pybind11::init([](const class std::vector<class easy3d::Vec<3, float> >& points) {
             auto pc = std::make_shared<easy3d::PointCloud>();
-            for (ssize_t i = 0; i < arr.shape(0); ++i) {
-                pc->add_vertex(easy3d::vec3(buf(i, 0), buf(i, 1), buf(i, 2)));
+            for (const auto& p : points) {
+                pc->add_vertex(p);
             }
             return pc;
-        }), "Initialize PointCloud from a NumPy array with shape (n, 3)");
+        }), "Initialize PointCloud from an array of 3D points");
 
-        // Add points to an existing PointCloud
-        cl.def("add_points", [](easy3d::PointCloud &pc, pybind11::array_t<float> arr) {
-            if (arr.ndim() != 2 || arr.shape(1) != 3) {
-                throw std::invalid_argument("Input array must have shape (n, 3).");
+        // Initialize PointCloud from a list of tuples or a NumPy array with shape (n, 3)
+        cl.def(pybind11::init([](pybind11::object points) {
+            auto pc = std::make_shared<easy3d::PointCloud>();
+
+            if (pybind11::isinstance<pybind11::list>(points)) {
+                // Handle list of tuples
+                for (auto item : points.cast<pybind11::list>()) {
+                    auto tuple = item.cast<pybind11::tuple>();
+                    if (tuple.size() != 3) {
+                        throw std::invalid_argument("Each point must have 3 coordinates.");
+                    }
+                    pc->add_vertex(easy3d::vec3(
+                            tuple[0].cast<float>(),
+                            tuple[1].cast<float>(),
+                            tuple[2].cast<float>()
+                    ));
+                }
+            } else if (pybind11::isinstance<pybind11::array_t<float>>(points)) {    // float type
+                // Handle NumPy array
+                auto arr = points.cast<pybind11::array_t<float>>();
+                if (arr.ndim() != 2 || arr.shape(1) != 3) {
+                    throw std::invalid_argument("Input array must have shape (n, 3).");
+                }
+                auto buf = arr.unchecked<2>();
+                for (ssize_t i = 0; i < arr.shape(0); ++i) {
+                    pc->add_vertex(easy3d::vec3(buf(i, 0), buf(i, 1), buf(i, 2)));
+                }
+            } else if (pybind11::isinstance<pybind11::array_t<double>>(points)) {    // double type
+                // Handle NumPy array
+                auto arr = points.cast<pybind11::array_t<double>>();
+                if (arr.ndim() != 2 || arr.shape(1) != 3) {
+                    throw std::invalid_argument("Input array must have shape (n, 3).");
+                }
+                auto buf = arr.unchecked<2>();
+                for (ssize_t i = 0; i < arr.shape(0); ++i) {
+                    pc->add_vertex(easy3d::vec3(
+                            static_cast<float>(buf(i, 0)),
+                            static_cast<float>(buf(i, 1)),
+                            static_cast<float>(buf(i, 2)))
+                            );
+                }
+            } else {
+                throw std::invalid_argument("Input must be a list of tuples or a NumPy array with shape (n, 3).");
             }
-            auto buf = arr.unchecked<2>();
-            for (ssize_t i = 0; i < arr.shape(0); ++i) {
-                pc.add_vertex(easy3d::vec3(buf(i, 0), buf(i, 1), buf(i, 2)));
+
+            return pc;
+        }), "Initialize PointCloud from a list of tuples or a NumPy array with shape (n, 3)");
+
+        // Add multiple points to the PointCloud from an array of 3D points
+        cl.def("add_points", [](easy3d::PointCloud &pc, const class std::vector<class easy3d::Vec<3, float> >& points) {
+            for (const auto& p : points) {
+                pc.add_vertex(p);
             }
-        }, "Add multiple points to the PointCloud from a NumPy array with shape (n, 3)");
+        }, "Add multiple points to the PointCloud from an array of 3D points");
+
+        // Add multiple points to the PointCloud from a list of tuples or a NumPy array with shape (n, 3)
+        cl.def("add_points", [](easy3d::PointCloud &pc, pybind11::object points) {
+            if (pybind11::isinstance<pybind11::list>(points)) {
+                // Handle list of tuples
+                for (auto item : points.cast<pybind11::list>()) {
+                    auto tuple = item.cast<pybind11::tuple>();
+                    if (tuple.size() != 3) {
+                        throw std::invalid_argument("Each point must have 3 coordinates.");
+                    }
+                    pc.add_vertex(easy3d::vec3(
+                            tuple[0].cast<float>(),
+                            tuple[1].cast<float>(),
+                            tuple[2].cast<float>()
+                    ));
+                }
+            } else if (pybind11::isinstance<pybind11::array_t<float>>(points)) {    // float type
+                // Handle NumPy array
+                auto arr = points.cast<pybind11::array_t<float>>();
+                if (arr.ndim() != 2 || arr.shape(1) != 3) {
+                    throw std::invalid_argument("Input array must have shape (n, 3).");
+                }
+                auto buf = arr.unchecked<2>();
+                for (ssize_t i = 0; i < arr.shape(0); ++i) {
+                    pc.add_vertex(easy3d::vec3(buf(i, 0), buf(i, 1), buf(i, 2)));
+                }
+            } else if (pybind11::isinstance<pybind11::array_t<double>>(points)) {    // double type
+                // Handle NumPy array
+                auto arr = points.cast<pybind11::array_t<double>>();
+                if (arr.ndim() != 2 || arr.shape(1) != 3) {
+                    throw std::invalid_argument("Input array must have shape (n, 3).");
+                }
+                auto buf = arr.unchecked<2>();
+                for (ssize_t i = 0; i < arr.shape(0); ++i) {
+                    pc.add_vertex(easy3d::vec3(
+                            static_cast<float>(buf(i, 0)),
+                            static_cast<float>(buf(i, 1)),
+                            static_cast<float>(buf(i, 2)))
+                            );
+                }
+            } else {
+                throw std::invalid_argument("Input must be a list of tuples or a NumPy array with shape (n, 3).");
+            }
+        }, "Add multiple points to the PointCloud from a list of tuples or a NumPy array with shape (n, 3)");
 
         cl.def("add_point", (struct easy3d::PointCloud::Vertex (easy3d::PointCloud::*)(const easy3d::vec3 &)) &easy3d::PointCloud::add_vertex, "add a new vertex with position \n\nC++: easy3d::PointCloud::add_vertex(const easy3d::vec3 &) --> struct easy3d::PointCloud::Vertex", pybind11::arg("p"));
+
+        cl.def("add_point", [](easy3d::PointCloud &pc, const easy3d::Vec<3, float> &point) {
+            return pc.add_vertex(point);
+        }, "Adds a single point to the point cloud.", pybind11::arg("point"));
 
         cl.def("add_point",
                [](easy3d::PointCloud &pc, pybind11::object point) {

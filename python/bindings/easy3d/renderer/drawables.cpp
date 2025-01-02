@@ -4,6 +4,7 @@
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/drawable.h>
 #include <easy3d/renderer/drawable_lines.h>
+#include <easy3d/renderer/drawable_lines_2D.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/manipulator.h>
@@ -13,6 +14,7 @@
 #include <pybind11/pybind11.h>
 #include <string>
 #include <pybind11/stl.h>
+#include <pybind11/numpy.h>
 
 
 #ifndef BINDER_PYBIND11_TYPE_CASTER
@@ -196,8 +198,67 @@ void bind_easy3d_renderer_drawables(pybind11::module_& m)
         cl.def("normal_buffer", (unsigned int (easy3d::Drawable::*)() const) &easy3d::Drawable::normal_buffer, "C++: easy3d::Drawable::normal_buffer() const --> unsigned int");
         cl.def("texcoord_buffer", (unsigned int (easy3d::Drawable::*)() const) &easy3d::Drawable::texcoord_buffer, "C++: easy3d::Drawable::texcoord_buffer() const --> unsigned int");
         cl.def("element_buffer", (unsigned int (easy3d::Drawable::*)() const) &easy3d::Drawable::element_buffer, "C++: easy3d::Drawable::element_buffer() const --> unsigned int");
-        cl.def("update_vertex_buffer", [](easy3d::Drawable &o, const class std::vector<class easy3d::Vec<3, float> > & a0) -> void { return o.update_vertex_buffer(a0); }, "", pybind11::arg("vertices"));
-        cl.def("update_vertex_buffer", (void (easy3d::Drawable::*)(const class std::vector<class easy3d::Vec<3, float> > &, bool)) &easy3d::Drawable::update_vertex_buffer, "Creates/Updates a single buffer.\n \n\n Primitives like lines and triangles can be drawn with or without the element buffer.\n  - With an element buffer: this can reduce the GPU memory consumption.\n  - Without an element buffer: easier data transfer, but uses more GPU memory. In this case, vertices need to\n    be in a correct order, like f1_v1, f1_v2, f1_v3, f2_v1, f2_v2, f2_v3... This requires the shared vertices\n    be duplicated in the vertex buffer.\n\nC++: easy3d::Drawable::update_vertex_buffer(const class std::vector<class easy3d::Vec<3, float> > &, bool) --> void", pybind11::arg("vertices"), pybind11::arg("dynamic"));
+
+        // Liangliang: In C++, the compiler can differentiate between function overloads based on the argument types at
+        //      compile time. However, in Python, the type checking is dynamic, so pybind11 uses the order in which
+        //      functions are registered to decide which overload to call.
+        //      Always define the most specific overloads before the more general ones. General overloads like
+        //      pybind11::object or pybind11::list should come last to avoid overshadowing specific ones.
+        cl.def("update_vertex_buffer",
+               [](easy3d::Drawable &self, const class std::vector<class easy3d::Vec<3, float> > &vertices, bool dynamic = false) -> void {
+                   // Directly update vertex buffer with a std::vector<easy3d::vec3>
+                   self.update_vertex_buffer(vertices, dynamic);
+               },
+               "Update vertex buffer with a std::vector of easy3d::vec3.",
+               pybind11::arg("vertices"),
+               pybind11::arg("dynamic") = false);
+
+        // from a list of tuples (points) or a NumPy array.
+        cl.def("update_vertex_buffer",
+               [](easy3d::Drawable &self, pybind11::object points, bool dynamic = false) -> void {
+                   // Handle list of tuples or numpy array
+                   if (pybind11::isinstance<pybind11::list>(points)) {
+                       std::vector<easy3d::vec3> vertices;
+                       for (auto item : points.cast<pybind11::list>()) {
+                           auto tuple = item.cast<pybind11::tuple>();
+                           if (tuple.size() != 3) {
+                               throw std::invalid_argument("Each point must have 3 coordinates.");
+                           }
+                           vertices.emplace_back(
+                                   tuple[0].cast<float>(),
+                                   tuple[1].cast<float>(),
+                                   tuple[2].cast<float>());
+                       }
+                       self.update_vertex_buffer(vertices, dynamic);
+                   } else if (pybind11::isinstance<pybind11::array_t<float>>(points)) {  // Handle numpy array of floats
+                       auto buf = points.cast<pybind11::array_t<float>>().unchecked<2>();
+                       if (buf.ndim() != 2 || buf.shape(1) != 3) {
+                           throw std::invalid_argument("Input array must have shape (n, 3).");
+                       }
+                       std::vector<easy3d::vec3> vertices(buf.shape(0));
+                       for (ssize_t i = 0; i < buf.shape(0); ++i)
+                           vertices[i] = easy3d::vec3(buf(i, 0), buf(i, 1), buf(i, 2));
+                       self.update_vertex_buffer(vertices, dynamic);
+                   } else if (pybind11::isinstance<pybind11::array_t<double>>(points)) {  // Handle numpy array of doubles
+                       auto buf = points.cast<pybind11::array_t<double>>().unchecked<2>();
+                       if (buf.ndim() != 2 || buf.shape(1) != 3) {
+                           throw std::invalid_argument("Input array must have shape (n, 3).");
+                       }
+                       std::vector<easy3d::vec3> vertices(buf.shape(0));
+                       for (ssize_t i = 0; i < buf.shape(0); ++i)
+                           vertices[i] = easy3d::vec3(
+                                   static_cast<float>(buf(i, 0)),
+                                   static_cast<float>(buf(i, 1)),
+                                   static_cast<float>(buf(i, 2)));
+                       self.update_vertex_buffer(vertices, dynamic);
+                   } else {
+                       throw std::invalid_argument("Input must be a std::vector<easy3d::vec3>, a list of tuples, or a NumPy array (float32 or float64).");
+                   }
+               },
+               "Update vertex buffer with a list of tuples, NumPy array, or std::vector of easy3d::vec3.",
+               pybind11::arg("points"),
+               pybind11::arg("dynamic") = false);
+
         cl.def("update_color_buffer", [](easy3d::Drawable &o, const class std::vector<class easy3d::Vec<3, float> > & a0) -> void { return o.update_color_buffer(a0); }, "", pybind11::arg("colors"));
         cl.def("update_color_buffer", (void (easy3d::Drawable::*)(const class std::vector<class easy3d::Vec<3, float> > &, bool)) &easy3d::Drawable::update_color_buffer, "C++: easy3d::Drawable::update_color_buffer(const class std::vector<class easy3d::Vec<3, float> > &, bool) --> void", pybind11::arg("colors"), pybind11::arg("dynamic"));
         cl.def("update_normal_buffer", [](easy3d::Drawable &o, const class std::vector<class easy3d::Vec<3, float> > & a0) -> void { return o.update_normal_buffer(a0); }, "", pybind11::arg("normals"));
@@ -273,4 +334,91 @@ void bind_easy3d_renderer_drawables(pybind11::module_& m)
 		cl.def("assign", (class easy3d::TrianglesDrawable & (easy3d::TrianglesDrawable::*)(const class easy3d::TrianglesDrawable &)) &easy3d::TrianglesDrawable::operator=, "C++: easy3d::TrianglesDrawable::operator=(const class easy3d::TrianglesDrawable &) --> class easy3d::TrianglesDrawable &", pybind11::return_value_policy::automatic, pybind11::arg(""));
 	}
 
+    { // easy3d::TrianglesDrawable2D file:easy3d/renderer/drawable_triangles_2D.h line:43
+        pybind11::class_<easy3d::LinesDrawable2D, std::shared_ptr<easy3d::LinesDrawable2D>, easy3d::Drawable> cl(m, "LinesDrawable2D");
+        cl.def(pybind11::init<const std::string &>(), pybind11::arg("name") = "");
+        cl.def("type", &easy3d::LinesDrawable2D::type);
+        cl.def("draw", &easy3d::LinesDrawable2D::draw, pybind11::arg("camera"));
+
+        cl.def("update_vertex_buffer",
+               [](easy3d::LinesDrawable2D &self, const class std::vector<class easy3d::Vec<2, float> > &vertices, int width, int height, bool dynamic = false) -> void {
+                   // Directly update vertex buffer with a std::vector<easy3d::vec3>
+                   self.update_vertex_buffer(vertices, width, height, dynamic);
+               },
+               "Update vertex buffer with a std::vector of easy3d::vec3.",
+               pybind11::arg("vertices"),
+               pybind11::arg("width"),
+               pybind11::arg("height"),
+               pybind11::arg("dynamic") = false,
+               R"doc(
+                 Updates the vertex buffer from an array of easy3d::vec2.
+                 Parameters:
+                     vertices: An array of easy3d::vec2.
+                     width: The width of the screen/viewport.
+                     height: The height of the screen/viewport.
+                     dynamic: If True, the buffer is dynamic and can be updated.
+                 )doc"
+        );
+
+        cl.def("update_vertex_buffer",
+               [](easy3d::LinesDrawable2D &self, pybind11::object vertices, int width, int height, bool dynamic = false) {
+                   std::vector<easy3d::vec2> vec_vertices;
+                   // Handle list of tuples
+                   if (pybind11::isinstance<pybind11::list>(vertices)) {
+                       for (auto item: vertices.cast<pybind11::list>()) {
+                           auto tuple = item.cast<pybind11::tuple>();
+                           if (tuple.size() != 2) {
+                               throw std::invalid_argument("Each vertex must have 2 coordinates.");
+                           }
+                           vec_vertices.emplace_back(
+                                   tuple[0].cast<float>(),
+                                   tuple[1].cast<float>()
+                           );
+                       }
+                   }
+                       // Handle NumPy array
+                   else if (pybind11::isinstance<pybind11::array_t<float>>(vertices)) {
+                       auto buf = vertices.cast<pybind11::array_t<float>>().unchecked<2>();
+                       if (buf.ndim() != 2 || buf.shape(1) != 2) {
+                           throw std::invalid_argument("Input array must have shape (n, 2).");
+                       }
+                       vec_vertices.reserve(buf.shape(0));
+                       for (ssize_t i = 0; i < buf.shape(0); ++i) {
+                           vec_vertices.emplace_back(buf(i, 0), buf(i, 1));
+                       }
+                   } else if (pybind11::isinstance<pybind11::array_t<double>>(vertices)) {
+                       auto buf = vertices.cast<pybind11::array_t<double>>().unchecked<2>();
+                       if (buf.ndim() != 2 || buf.shape(1) != 2) {
+                           throw std::invalid_argument("Input array must have shape (n, 2).");
+                       }
+                       vec_vertices.reserve(buf.shape(0));
+                       for (ssize_t i = 0; i < buf.shape(0); ++i) {
+                           vec_vertices.emplace_back(
+                                   static_cast<float>(buf(i, 0)),
+                                   static_cast<float>(buf(i, 1))
+                           );
+                       }
+                   }
+                   // Unsupported type
+                   else {
+                       throw std::invalid_argument("Vertices must be a list of tuples or a NumPy array (float32 or float64).");
+                   }
+                   // Call the C++ method
+                   self.update_vertex_buffer(vec_vertices, width, height, dynamic);
+               },
+               pybind11::arg("vertices"),
+               pybind11::arg("width"),
+               pybind11::arg("height"),
+               pybind11::arg("dynamic") = false,
+               R"doc(
+                 Updates the vertex buffer.
+
+                 Parameters:
+                     vertices: A list of (x, y) tuples or a NumPy array of shape (n, 2).
+                     width: The width of the screen/viewport.
+                     height: The height of the screen/viewport.
+                     dynamic: If True, the buffer is dynamic and can be updated.
+                 )doc"
+        );
+    }
 }
