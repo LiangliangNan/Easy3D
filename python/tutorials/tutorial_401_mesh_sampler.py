@@ -25,7 +25,7 @@ easy3d.initialize(False)
 # -----------------------------------------------------------------------------
 # Setting Up the Multi-View Viewer
 # -----------------------------------------------------------------------------
-# See detailed explanations in "python/tutorials/tutorial_204_multiview.py"
+# See detailed explanations in "python/tutorials/tutorial_202_multiviewer.py"
 
 # Create a MultiViewer instance with 1 row and 2 columns.
 viewer = easy3d.MultiViewer(1, 2, "Easy3D Viewer - Mesh sampling")

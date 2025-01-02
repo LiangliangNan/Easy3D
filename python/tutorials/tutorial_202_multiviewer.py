@@ -35,7 +35,7 @@ easy3d.initialize(False)
 
 # Create a `MultiViewer` instance with a 2x2 grid layout and a custom window title.
 # The MultiViewer allows displaying multiple views in a single window.
-viewer = easy3d.MultiViewer(2, 2, "Easy3D Viewer - Multi-view")
+viewer = easy3d.MultiViewer(2, 2, "Easy3D Viewer - MultiViewer")
 viewer.set_usage("") # Optional. Just to hide the lengthy manual in console window
 
 # -------------------------------------------------------------------------------
