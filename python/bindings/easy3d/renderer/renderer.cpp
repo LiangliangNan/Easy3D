@@ -54,6 +54,9 @@ void bind_easy3d_renderer_renderer(pybind11::module_& m)
                    if (dynamic_cast<easy3d::PointCloud *>(self.model())) {
                        auto cloud = dynamic_cast<easy3d::PointCloud *>(self.model());
                        auto segments = cloud->vertex_property<int>(property_name);
+                       if (!segments) {
+                           throw std::runtime_error("The property \"" + property_name + "\" does not exist, or it is not of int type.");
+                       }
                        const std::string color_name = "v:color-segments";
                        auto coloring = cloud->vertex_property<easy3d::vec3>(color_name, easy3d::vec3(0, 0, 0));
                        easy3d::Renderer::color_from_segmentation(cloud, segments, coloring);
@@ -62,6 +65,9 @@ void bind_easy3d_renderer_renderer(pybind11::module_& m)
                    } else if (dynamic_cast<easy3d::SurfaceMesh *>(self.model())) {
                        auto mesh = dynamic_cast<easy3d::SurfaceMesh *>(self.model());
                        auto segments = mesh->face_property<int>(property_name);
+                       if (!segments) {
+                           throw std::runtime_error("The property \"" + property_name + "\" does not exist, or it is not of int type.");
+                       }
                        const std::string color_name = "f:color-segments";
                        auto coloring = mesh->face_property<easy3d::vec3>(color_name, easy3d::vec3(0, 0, 0));
                        easy3d::Renderer::color_from_segmentation(mesh, segments, coloring);
@@ -72,7 +78,7 @@ void bind_easy3d_renderer_renderer(pybind11::module_& m)
                                "Current implementation of color_by_segmentation() only supports PointCloud and SurfaceMesh.");
                    }
                },
-               "Colorize a model by its segmentation information stored as an integer property \"property_name\", e.g., \"v:primitive_index\" for point clouds, and \"f:chart\" for surface meshes.",
+               "Colorize a model by its segmentation information stored as an integer property specified by \"property_name\". The property must be of int type, per-vertex for point clouds and per-face for surface meshes.",
                pybind11::arg("property_name"));
 
     }
