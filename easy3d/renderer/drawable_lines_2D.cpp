@@ -88,9 +88,9 @@ namespace easy3d {
         program->bind();
         program->set_uniform("screen_color", color_);
         program->set_uniform("depth", depth);
-        vao_->bind();
-        glDrawArrays(GL_LINES, 0, static_cast<int>(num_vertices_));
-        vao_->release();
+
+        gl_draw();
+
         program->release();
         easy3d_debug_log_gl_error
     }
