@@ -4,6 +4,44 @@
 
 #include <pybind11/pybind11.h>
 
+/*
+About pybind11::return_value_policy
+1. automatic (Default)
+Behavior: Pybind11 automatically decides how to handle the returned object based on the type:
+    - If the return type is a raw pointer (PointCloud*), it behaves as take_ownership by default.
+    - If the return type is a reference (PointCloud&), it behaves as reference_internal.
+Use Case: This is suitable for cases where you trust pybind11 to make the right choice based on the return type.
+
+2. automatic_reference
+Behavior: Similar to automatic, but it behaves like reference or reference_internal depending on the context.
+Use Case: Useful when you are sure the returned pointer/reference is managed elsewhere and Python should not take ownership but still maintain a valid reference.
+
+3. reference
+Behavior: Python gets a reference to the C++ object, but Python does not manage its lifetime.
+Use Case: When the returned object is managed entirely by C++ (e.g., a static/global object or managed by another owner).
+If the original object goes out of scope, Python will end up with a dangling reference.
+Example Use Case: Suppose PointCloudIO::load() returns a pointer to a static instance of PointCloud (not dynamically allocated). Python should not take ownership:
+
+4. reference_internal
+Behavior: Python gets a reference to the C++ object, but the reference is tied to the parent object.
+Use Case: When the returned object’s lifetime depends on another object already exposed to Python (e.g., a member of a class or a temporary object).
+Example: If PointCloud is managed by a PointCloudIO object, and you want to ensure PointCloud is valid only as long as PointCloudIO is valid:
+
+5. copy
+Behavior: Python gets a deep copy of the C++ object.
+Use Case: When you want Python to always work with an independent copy of the returned object, even if the original is modified or destroyed in C++.
+Example: If PointCloudIO::load() returns a small, lightweight object (e.g., a struct or small class):
+
+6. take_ownership
+Behavior: Python assumes ownership of the returned object and is responsible for deleting it when it’s no longer needed.
+Use Case: When the returned pointer is dynamically allocated, and you want Python to handle its memory.
+Example: Since load() creates a new PointCloud object with new, take_ownership ensures Python deletes it when it goes out of scope:
+
+7. move
+Behavior: Python takes ownership of the returned object using the C++ move constructor.
+Use Case: When the returned object is a temporary object and can be moved for efficiency.
+Example: If load() returns a std::unique_ptr<PointCloud> or std::shared_ptr<PointCloud>:
+*/
 
 void bind_easy3d_core_vec(pybind11::module_ &m);
 void bind_easy3d_core_box(pybind11::module_ &m);
