@@ -18,7 +18,17 @@ void bind_easy3d_fileio_surface_mesh_io(pybind11::module_ &m)
 	{ // easy3d::SurfaceMeshIO file:easy3d/fileio/surface_mesh_io.h line:43
 		pybind11::class_<easy3d::SurfaceMeshIO, std::shared_ptr<easy3d::SurfaceMeshIO>> cl(m, "SurfaceMeshIO", "Implementation of file input/output operations for SurfaceMesh.\n \n\n\n     ");
 		cl.def( pybind11::init( [](){ return new easy3d::SurfaceMeshIO(); } ) );
-		cl.def_static("load", (class easy3d::SurfaceMesh * (*)(const std::string &)) &easy3d::SurfaceMeshIO::load, "Reads a surface mesh from a file.\n \n\n File extension determines file format (ply, obj, off, stl, poly) and type (i.e. binary or ASCII).\n \n\n The file name.\n \n\n The pointer of the surface mesh (nullptr if failed).\n\nC++: easy3d::SurfaceMeshIO::load(const std::string &) --> class easy3d::SurfaceMesh *", pybind11::return_value_policy::automatic, pybind11::arg("file_name"));
+        // Liangliang: wrap the raw pointer in a std::shared_ptr to ensure proper memory management and shared ownership between Python and C++.
+        cl.def_static(
+                "load",
+                [](const std::string& file_name) -> std::shared_ptr<easy3d::SurfaceMesh> {
+                    return std::shared_ptr<easy3d::SurfaceMesh>(easy3d::SurfaceMeshIO::load(file_name));
+                },
+                "Reads a surface mesh from a file",
+                pybind11::return_value_policy::automatic, // Or use "take_ownership"
+                pybind11::arg("file_name")
+        );
+//        cl.def_static("load", (class easy3d::SurfaceMesh * (*)(const std::string &)) &easy3d::SurfaceMeshIO::load, "Reads a surface mesh from a file.\n \n\n File extension determines file format (ply, obj, off, stl, poly) and type (i.e. binary or ASCII).\n \n\n The file name.\n \n\n The pointer of the surface mesh (nullptr if failed).\n\nC++: easy3d::SurfaceMeshIO::load(const std::string &) --> class easy3d::SurfaceMesh *", pybind11::return_value_policy::automatic, pybind11::arg("file_name"));
 		cl.def_static("save", (bool (*)(const std::string &, const class easy3d::SurfaceMesh *)) &easy3d::SurfaceMeshIO::save, "Saves a surface mesh to a file.\n \n\n File extension determines file format (ply, obj, off, stl, poly) and type (i.e. binary or ASCII).\n \n\n The file name.\n \n\n The surface mesh.\n \n\n The status of the operation\n      \n\n true if succeeded\n      \n\n false if failed\n\nC++: easy3d::SurfaceMeshIO::save(const std::string &, const class easy3d::SurfaceMesh *) --> bool", pybind11::arg("file_name"), pybind11::arg("mesh"));
 	}
 

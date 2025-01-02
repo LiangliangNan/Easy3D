@@ -18,7 +18,17 @@ void bind_easy3d_fileio_poly_mesh_io(pybind11::module_& m)
 	{ // easy3d::PolyMeshIO file:easy3d/fileio/poly_mesh_io.h line:43
 		pybind11::class_<easy3d::PolyMeshIO, std::shared_ptr<easy3d::PolyMeshIO>> cl(m, "PolyMeshIO", "Implementation of file input/output operations for PolyMesh.\n \n\n\n     ");
 		cl.def( pybind11::init( [](){ return new easy3d::PolyMeshIO(); } ) );
-		cl.def_static("load", (class easy3d::PolyMesh * (*)(const std::string &)) &easy3d::PolyMeshIO::load, "Reads a polyhedral mesh from a file.\n \n\n File extension determines file format (now only '*.plm' format is supported).\n \n\n The file name.\n \n\n The pointer of the polyhedral mesh (nullptr if failed).\n\nC++: easy3d::PolyMeshIO::load(const std::string &) --> class easy3d::PolyMesh *", pybind11::return_value_policy::automatic, pybind11::arg("file_name"));
+        // Liangliang: wrap the raw pointer in a std::shared_ptr to ensure proper memory management and shared ownership between Python and C++.
+        cl.def_static(
+                "load",
+                [](const std::string& file_name) -> std::shared_ptr<easy3d::PolyMesh> {
+                    return std::shared_ptr<easy3d::PolyMesh>(easy3d::PolyMeshIO::load(file_name));
+                },
+                "Reads a polyhedral mesh from a file",
+                pybind11::return_value_policy::automatic, // Or use "take_ownership"
+                pybind11::arg("file_name")
+        );
+//        cl.def_static("load", (class easy3d::PolyMesh * (*)(const std::string &)) &easy3d::PolyMeshIO::load, "Reads a polyhedral mesh from a file.\n \n\n File extension determines file format (now only '*.plm' format is supported).\n \n\n The file name.\n \n\n The pointer of the polyhedral mesh (nullptr if failed).\n\nC++: easy3d::PolyMeshIO::load(const std::string &) --> class easy3d::PolyMesh *", pybind11::return_value_policy::automatic, pybind11::arg("file_name"));
 		cl.def_static("save", (bool (*)(const std::string &, const class easy3d::PolyMesh *)) &easy3d::PolyMeshIO::save, "Saves a polyhedral mesh to a file.\n \n\n File extension determines file format (now only '*.plm' format is supported).\n \n\n The file name.\n \n\n The polyhedral mesh.\n \n\n The status of the operation\n      \n\n true if succeeded\n      \n\n false if failed\n\nC++: easy3d::PolyMeshIO::save(const std::string &, const class easy3d::PolyMesh *) --> bool", pybind11::arg("file_name"), pybind11::arg("mesh"));
 	}
 
