@@ -1601,7 +1601,12 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
 			cl.def( pybind11::init( [](easy3d::SurfaceMesh::VertexContainer const &o){ return new easy3d::SurfaceMesh::VertexContainer(o); } ) );
 			cl.def("begin", (class easy3d::SurfaceMesh::VertexIterator (easy3d::SurfaceMesh::VertexContainer::*)() const) &easy3d::SurfaceMesh::VertexContainer::begin, "C++: easy3d::SurfaceMesh::VertexContainer::begin() const --> class easy3d::SurfaceMesh::VertexIterator");
 			cl.def("end", (class easy3d::SurfaceMesh::VertexIterator (easy3d::SurfaceMesh::VertexContainer::*)() const) &easy3d::SurfaceMesh::VertexContainer::end, "C++: easy3d::SurfaceMesh::VertexContainer::end() const --> class easy3d::SurfaceMesh::VertexIterator");
-		}
+
+            // Liangliang: provide Python bindings to make VertexContainer iterable
+            cl.def("__iter__", [](const easy3d::SurfaceMesh::VertexContainer &self) {
+                return pybind11::make_iterator(self.begin(), self.end());
+            }, pybind11::keep_alive<0, 1>());  // Keep the container alive while iterating
+        }
 
 		{ // easy3d::SurfaceMesh::HalfedgeContainer file:easy3d/core/surface_mesh.h line:534
 			auto & enclosing_class = cl;
@@ -1611,7 +1616,12 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
 			cl.def( pybind11::init( [](easy3d::SurfaceMesh::HalfedgeContainer const &o){ return new easy3d::SurfaceMesh::HalfedgeContainer(o); } ) );
 			cl.def("begin", (class easy3d::SurfaceMesh::HalfedgeIterator (easy3d::SurfaceMesh::HalfedgeContainer::*)() const) &easy3d::SurfaceMesh::HalfedgeContainer::begin, "C++: easy3d::SurfaceMesh::HalfedgeContainer::begin() const --> class easy3d::SurfaceMesh::HalfedgeIterator");
 			cl.def("end", (class easy3d::SurfaceMesh::HalfedgeIterator (easy3d::SurfaceMesh::HalfedgeContainer::*)() const) &easy3d::SurfaceMesh::HalfedgeContainer::end, "C++: easy3d::SurfaceMesh::HalfedgeContainer::end() const --> class easy3d::SurfaceMesh::HalfedgeIterator");
-		}
+
+            // Liangliang: provide Python bindings to make HalfedgeContainer iterable
+             cl.def("__iter__", [](const easy3d::SurfaceMesh::HalfedgeContainer &self) {
+                 return pybind11::make_iterator(self.begin(), self.end());
+             }, pybind11::keep_alive<0, 1>());  // Keep the container alive while iterating
+        }
 
 		{ // easy3d::SurfaceMesh::EdgeContainer file:easy3d/core/surface_mesh.h line:549
 			auto & enclosing_class = cl;
@@ -1621,7 +1631,12 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
 			cl.def( pybind11::init( [](easy3d::SurfaceMesh::EdgeContainer const &o){ return new easy3d::SurfaceMesh::EdgeContainer(o); } ) );
 			cl.def("begin", (class easy3d::SurfaceMesh::EdgeIterator (easy3d::SurfaceMesh::EdgeContainer::*)() const) &easy3d::SurfaceMesh::EdgeContainer::begin, "C++: easy3d::SurfaceMesh::EdgeContainer::begin() const --> class easy3d::SurfaceMesh::EdgeIterator");
 			cl.def("end", (class easy3d::SurfaceMesh::EdgeIterator (easy3d::SurfaceMesh::EdgeContainer::*)() const) &easy3d::SurfaceMesh::EdgeContainer::end, "C++: easy3d::SurfaceMesh::EdgeContainer::end() const --> class easy3d::SurfaceMesh::EdgeIterator");
-		}
+
+            // Liangliang: provide Python bindings to make EdgeContainer iterable
+             cl.def("__iter__", [](const easy3d::SurfaceMesh::EdgeContainer &self) {
+                 return pybind11::make_iterator(self.begin(), self.end());
+             }, pybind11::keep_alive<0, 1>());  // Keep the container alive while iterating
+        }
 
 		{ // easy3d::SurfaceMesh::FaceContainer file:easy3d/core/surface_mesh.h line:564
 			auto & enclosing_class = cl;
@@ -1654,7 +1669,12 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
 			cl.def("halfedge", (struct easy3d::SurfaceMesh::Halfedge (easy3d::SurfaceMesh::VertexAroundVertexCirculator::*)() const) &easy3d::SurfaceMesh::VertexAroundVertexCirculator::halfedge, "return current halfedge\n\nC++: easy3d::SurfaceMesh::VertexAroundVertexCirculator::halfedge() const --> struct easy3d::SurfaceMesh::Halfedge");
 			cl.def("begin", (class easy3d::SurfaceMesh::VertexAroundVertexCirculator & (easy3d::SurfaceMesh::VertexAroundVertexCirculator::*)()) &easy3d::SurfaceMesh::VertexAroundVertexCirculator::begin, "C++: easy3d::SurfaceMesh::VertexAroundVertexCirculator::begin() --> class easy3d::SurfaceMesh::VertexAroundVertexCirculator &", pybind11::return_value_policy::automatic);
 			cl.def("end", (class easy3d::SurfaceMesh::VertexAroundVertexCirculator & (easy3d::SurfaceMesh::VertexAroundVertexCirculator::*)()) &easy3d::SurfaceMesh::VertexAroundVertexCirculator::end, "C++: easy3d::SurfaceMesh::VertexAroundVertexCirculator::end() --> class easy3d::SurfaceMesh::VertexAroundVertexCirculator &", pybind11::return_value_policy::automatic);
-		}
+
+            // Liangliang: provide Python bindings to make VertexAroundVertexCirculator iterable
+            cl.def("__iter__", [](easy3d::SurfaceMesh::VertexAroundVertexCirculator &self) {
+                return pybind11::make_iterator(self.begin(), self.end());
+            }, pybind11::keep_alive<0, 1>());  // Keep the container alive while iterating
+        }
 
 		{ // easy3d::SurfaceMesh::HalfedgeAroundVertexCirculator file:easy3d/core/surface_mesh.h line:677
 			auto & enclosing_class = cl;
@@ -1671,7 +1691,12 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
 			cl.def("dereference", (struct easy3d::SurfaceMesh::Halfedge (easy3d::SurfaceMesh::HalfedgeAroundVertexCirculator::*)() const) &easy3d::SurfaceMesh::HalfedgeAroundVertexCirculator::operator*, "get the halfedge the circulator refers to\n\nC++: easy3d::SurfaceMesh::HalfedgeAroundVertexCirculator::operator*() const --> struct easy3d::SurfaceMesh::Halfedge");
 			cl.def("begin", (class easy3d::SurfaceMesh::HalfedgeAroundVertexCirculator & (easy3d::SurfaceMesh::HalfedgeAroundVertexCirculator::*)()) &easy3d::SurfaceMesh::HalfedgeAroundVertexCirculator::begin, "C++: easy3d::SurfaceMesh::HalfedgeAroundVertexCirculator::begin() --> class easy3d::SurfaceMesh::HalfedgeAroundVertexCirculator &", pybind11::return_value_policy::automatic);
 			cl.def("end", (class easy3d::SurfaceMesh::HalfedgeAroundVertexCirculator & (easy3d::SurfaceMesh::HalfedgeAroundVertexCirculator::*)()) &easy3d::SurfaceMesh::HalfedgeAroundVertexCirculator::end, "C++: easy3d::SurfaceMesh::HalfedgeAroundVertexCirculator::end() --> class easy3d::SurfaceMesh::HalfedgeAroundVertexCirculator &", pybind11::return_value_policy::automatic);
-		}
+
+            // Liangliang: provide Python bindings to make HalfedgeAroundVertexCirculator iterable
+            cl.def("__iter__", [](easy3d::SurfaceMesh::HalfedgeAroundVertexCirculator &self) {
+                return pybind11::make_iterator(self.begin(), self.end());
+            }, pybind11::keep_alive<0, 1>());  // Keep the container alive while iterating
+        }
 
 		{ // easy3d::SurfaceMesh::FaceAroundVertexCirculator file:easy3d/core/surface_mesh.h line:753
 			auto & enclosing_class = cl;
@@ -1688,7 +1713,12 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
 			cl.def("dereference", (struct easy3d::SurfaceMesh::Face (easy3d::SurfaceMesh::FaceAroundVertexCirculator::*)() const) &easy3d::SurfaceMesh::FaceAroundVertexCirculator::operator*, "get the face the circulator refers to\n\nC++: easy3d::SurfaceMesh::FaceAroundVertexCirculator::operator*() const --> struct easy3d::SurfaceMesh::Face");
 			cl.def("begin", (class easy3d::SurfaceMesh::FaceAroundVertexCirculator & (easy3d::SurfaceMesh::FaceAroundVertexCirculator::*)()) &easy3d::SurfaceMesh::FaceAroundVertexCirculator::begin, "C++: easy3d::SurfaceMesh::FaceAroundVertexCirculator::begin() --> class easy3d::SurfaceMesh::FaceAroundVertexCirculator &", pybind11::return_value_policy::automatic);
 			cl.def("end", (class easy3d::SurfaceMesh::FaceAroundVertexCirculator & (easy3d::SurfaceMesh::FaceAroundVertexCirculator::*)()) &easy3d::SurfaceMesh::FaceAroundVertexCirculator::end, "C++: easy3d::SurfaceMesh::FaceAroundVertexCirculator::end() --> class easy3d::SurfaceMesh::FaceAroundVertexCirculator &", pybind11::return_value_policy::automatic);
-		}
+
+            // Liangliang: provide Python bindings to make FaceAroundVertexCirculator iterable
+            cl.def("__iter__", [](easy3d::SurfaceMesh::FaceAroundVertexCirculator &self) {
+                return pybind11::make_iterator(self.begin(), self.end());
+            }, pybind11::keep_alive<0, 1>());  // Keep the container alive while iterating
+        }
 
 		{ // easy3d::SurfaceMesh::VertexAroundFaceCirculator file:easy3d/core/surface_mesh.h line:842
 			auto & enclosing_class = cl;
@@ -1705,7 +1735,12 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
 			cl.def("dereference", (struct easy3d::SurfaceMesh::Vertex (easy3d::SurfaceMesh::VertexAroundFaceCirculator::*)() const) &easy3d::SurfaceMesh::VertexAroundFaceCirculator::operator*, "get the vertex the circulator refers to\n\nC++: easy3d::SurfaceMesh::VertexAroundFaceCirculator::operator*() const --> struct easy3d::SurfaceMesh::Vertex");
 			cl.def("begin", (class easy3d::SurfaceMesh::VertexAroundFaceCirculator & (easy3d::SurfaceMesh::VertexAroundFaceCirculator::*)()) &easy3d::SurfaceMesh::VertexAroundFaceCirculator::begin, "C++: easy3d::SurfaceMesh::VertexAroundFaceCirculator::begin() --> class easy3d::SurfaceMesh::VertexAroundFaceCirculator &", pybind11::return_value_policy::automatic);
 			cl.def("end", (class easy3d::SurfaceMesh::VertexAroundFaceCirculator & (easy3d::SurfaceMesh::VertexAroundFaceCirculator::*)()) &easy3d::SurfaceMesh::VertexAroundFaceCirculator::end, "C++: easy3d::SurfaceMesh::VertexAroundFaceCirculator::end() --> class easy3d::SurfaceMesh::VertexAroundFaceCirculator &", pybind11::return_value_policy::automatic);
-		}
+
+            // Liangliang: provide Python bindings to make VertexAroundFaceCirculator iterable
+            cl.def("__iter__", [](easy3d::SurfaceMesh::VertexAroundFaceCirculator &self) {
+                return pybind11::make_iterator(self.begin(), self.end());
+            }, pybind11::keep_alive<0, 1>());  // Keep the container alive while iterating
+        }
 
 		{ // easy3d::SurfaceMesh::HalfedgeAroundFaceCirculator file:easy3d/core/surface_mesh.h line:919
 			auto & enclosing_class = cl;
@@ -1722,7 +1757,12 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
 			cl.def("dereference", (struct easy3d::SurfaceMesh::Halfedge (easy3d::SurfaceMesh::HalfedgeAroundFaceCirculator::*)() const) &easy3d::SurfaceMesh::HalfedgeAroundFaceCirculator::operator*, "get the halfedge the circulator refers to\n\nC++: easy3d::SurfaceMesh::HalfedgeAroundFaceCirculator::operator*() const --> struct easy3d::SurfaceMesh::Halfedge");
 			cl.def("begin", (class easy3d::SurfaceMesh::HalfedgeAroundFaceCirculator & (easy3d::SurfaceMesh::HalfedgeAroundFaceCirculator::*)()) &easy3d::SurfaceMesh::HalfedgeAroundFaceCirculator::begin, "C++: easy3d::SurfaceMesh::HalfedgeAroundFaceCirculator::begin() --> class easy3d::SurfaceMesh::HalfedgeAroundFaceCirculator &", pybind11::return_value_policy::automatic);
 			cl.def("end", (class easy3d::SurfaceMesh::HalfedgeAroundFaceCirculator & (easy3d::SurfaceMesh::HalfedgeAroundFaceCirculator::*)()) &easy3d::SurfaceMesh::HalfedgeAroundFaceCirculator::end, "C++: easy3d::SurfaceMesh::HalfedgeAroundFaceCirculator::end() --> class easy3d::SurfaceMesh::HalfedgeAroundFaceCirculator &", pybind11::return_value_policy::automatic);
-		}
+
+            // Liangliang: provide Python bindings to make HalfedgeAroundFaceCirculator iterable
+            cl.def("__iter__", [](easy3d::SurfaceMesh::HalfedgeAroundFaceCirculator &self) {
+                return pybind11::make_iterator(self.begin(), self.end());
+            }, pybind11::keep_alive<0, 1>());  // Keep the container alive while iterating
+        }
 	}
 
     { // easy3d::PropertyArray file:easy3d/core/property.h line:110

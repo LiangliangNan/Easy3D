@@ -58,6 +58,34 @@ mesh = easy3d.SurfaceMesh(vertices, indices)
 mesh.set_name("Unit cube")
 print(f"Mesh '{mesh.name()}' has {mesh.n_vertices()} vertices and {mesh.n_faces()} faces.")
 
-# Iterate all the faces and print the number of its vertices
-for face in mesh.faces():
-    print(f"Face {face.idx()} has {mesh.valence(face)} vertices")
+print("------- Iterate all the faces ------")
+for f in mesh.faces():
+    # print the number of its vertices
+    print(f"Face {f.idx()} has {mesh.valence(f)} vertices")
+    # iterate all vertices of this face
+    cir = easy3d.SurfaceMesh.VertexAroundFaceCirculator(mesh, f)
+    vertex_indices = [v.idx() for v in cir]    # Collect all its vertex indices and print them in a single line
+    print(f"The vertices are: {' '.join(map(str, vertex_indices))}")
+
+print("------- Iterate all the vertices ------")
+for v in mesh.vertices():
+    #  print the number of its adjacent vertices
+    print(f"Vertex {v.idx()} ({mesh.position(v).x}, {mesh.position(v).y}, {mesh.position(v).z}) has {mesh.valence(v)} adjacent vertices")
+    # iterate all vertices incident to this vertex
+    cir = easy3d.SurfaceMesh.VertexAroundVertexCirculator(mesh, v)
+    vertex_indices = [v.idx() for v in cir]    # Collect indices of all incident vertices and print them in a single line
+    print(f"The vertices are: {' '.join(map(str, vertex_indices))}")
+
+print("------- Iterate all the edges ------")
+for e in mesh.edges():
+    # print the indices of the two end vertices
+    print(f"Edge {e.idx()}： vertex {mesh.vertex(e, 0).idx()} - vertex {mesh.vertex(e, 1).idx()}")
+    # print the indices of the two incident faces
+    print(f"The two incident faces: face {mesh.face(e, 0).idx()} - face {mesh.face(e, 1).idx()}")
+
+print("------- Iterate all the halfedges ------")
+for h in mesh.halfedges():
+    #  print its vertices
+    print(f"Halfedge {h.idx()}： vertex {mesh.source(h).idx()} -> vertex {mesh.target(h).idx()}")
+    #  print the incident face and that incident to its opposite
+    print(f"Halfedge {h.idx()} -> face {mesh.face(h).idx()}. Opposite halfedge {mesh.opposite(h).idx()} -> face {mesh.face(mesh.opposite(h)).idx()}")
