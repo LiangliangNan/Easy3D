@@ -37,7 +37,7 @@ namespace easy3d {
     LinesDrawable2D::LinesDrawable2D(const std::string &name)
             : Drawable(name, nullptr)
     {
-        set_uniform_coloring(vec4(0.0f, 0.0f, 1.0f, 1.0f));
+        set_uniform_coloring(vec4(0.0f, 0.0f, 0.0f, 1.0f));
     }
 
 
