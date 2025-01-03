@@ -149,7 +149,7 @@ There are many options to build Easy3D. Choose one of the following (not an exha
 
 #### Build and install Python bindings
 - Make sure you have Python installed. 
-Then switch on the CMake option `Easy3D_BUILD_PYTHON_BINDINGS` and run CMake. After building Easy3D, you can find the Python bindings in `YOUR_BUILD_DIRECTORY/lib/python`.
+Then switch on the CMake option `Easy3D_BUILD_PYTHON_BINDINGS`, run CMake, and then build. After building Easy3D, you can find the Python bindings in `YOUR_BUILD_DIRECTORY/lib/python`.
 - To install the Python bindings, you can use the following command:
     ```
       pip install YOUR_BUILD_DIRECTORY/lib/python/setup.py
