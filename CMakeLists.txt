@@ -26,8 +26,8 @@ option(Easy3D_ENABLE_FFMPEG "Build the video encoding module that requires ffmpe
 ################################################################################
 
 set(Easy3D_VERSION_MAJOR 2)
-set(Easy3D_VERSION_MINOR 5)
-set(Easy3D_VERSION_PATCH 4)
+set(Easy3D_VERSION_MINOR 6)
+set(Easy3D_VERSION_PATCH 0)
 set(Easy3D_VERSION_STRING ${Easy3D_VERSION_MAJOR}.${Easy3D_VERSION_MINOR}.${Easy3D_VERSION_PATCH})
 set(Easy3D_VERSION_NUMBER 10${Easy3D_VERSION_MAJOR}0${Easy3D_VERSION_MINOR}0${Easy3D_VERSION_PATCH})
 
