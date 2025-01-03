@@ -50,6 +50,10 @@ points_drawable = easy3d.PointsDrawable("points")   # Create a `PointsDrawable` 
 points_drawable.update_vertex_buffer(points);       # Upload vertex positions
 viewer.add_drawable(points_drawable)                # Add the drawable to the viewer.
 viewer.assign(0, 0, points_drawable)                # Assign the drawable to the top-left view (0, 0).
+# The three lines below can change the rendering style of PointsDrawable.
+# points_drawable.set_impostor_type(easy3d.PointsDrawable.SPHERE)  # Render vertices as spheres. Please try "SURFEL"
+# points_drawable.set_point_size(10)  # Set the size of the vertex spheres.
+# points_drawable.set_uniform_coloring(easy3d.vec4(1.0, 0.3, 0.3, 1.0))  # Set color (RGBA).
 
 # -------------------------------------------------------------------------------
 # View (0, 1): A set of set of triangles (i.e., a surface) representing a unit cube
@@ -72,9 +76,13 @@ cube_indices = numpy.array([    # Indices for the 12 triangles (two per face of 
     0, 2, 1,    0, 3, 2,    4, 5, 6,    4, 6, 7,    0, 7, 3,    0, 4, 7,
     1, 2, 6,    1, 6, 5,    0, 1, 5,    0, 5, 4,    2, 3, 7,    2, 7, 6,
 ])
+
 triangles_drawable = easy3d.TrianglesDrawable("cube")     # Create a `TrianglesDrawable` named "cube"
 triangles_drawable.update_vertex_buffer(cube_vertices)    # Upload vertex positions
 triangles_drawable.update_element_buffer(cube_indices)    # Upload the vertex indices of the cube faces
+# You can try feeding the data of a bunny model to the buffers
+# triangles_drawable.update_vertex_buffer(easy3d.bunny_vertices)    # Upload vertex positions
+# triangles_drawable.update_element_buffer(easy3d.bunny_indices)    # Upload the vertex indices of the cube faces
 viewer.add_drawable(triangles_drawable)  # Add the cube to the viewer
 viewer.assign(0, 1, triangles_drawable)  # Assign the cube to the top-right view (0, 1).
 
@@ -114,6 +122,7 @@ star_indices = numpy.array(     # Indices for the edges of the star.
 star.update_element_buffer(star_indices)  # Upload vertex indices of the star edges
 viewer.add_drawable(star)  # Add the star to the viewer
 viewer.assign(1, 1, star)  # Assign the star to the bottom-right view (1, 1).
+star.set_uniform_coloring(easy3d.vec4(0.0, 0.0, 1.0, 1.0))  # Set color (RGBA).
 
 # Running the Viewer
 viewer.run()
