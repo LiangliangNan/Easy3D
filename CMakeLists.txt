@@ -38,7 +38,7 @@ project(Easy3D VERSION ${Easy3D_VERSION_STRING})
 # specify the C++ standard
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-message("-- Setting C++11")
+message(STATUS "Using C++11")
 
 ################################################################################
 
