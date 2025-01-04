@@ -70,18 +70,45 @@ for f in mesh.faces():
     # print the number of its vertices
     print(f"Face {f.idx()} has {mesh.valence(f)} vertices")
     # iterate all vertices of this face
-    cir = easy3d.SurfaceMesh.VertexAroundFaceCirculator(mesh, f)
-    vertex_indices = [v.idx() for v in cir]    # Collect all its vertex indices and print them in a single line
-    print(f"The vertices are: {' '.join(map(str, vertex_indices))}")
+    vcir = easy3d.SurfaceMesh.VertexAroundFaceCirculator(mesh, f)
+    vertex_indices = [v.idx() for v in vcir]    # Collect all its vertex indices and print them in a single line
+    print(f"The incident vertices are: {' '.join(map(str, vertex_indices))}")
+    # alternative to VertexAroundFaceCirculator, one can use mesh.vertices(f) to access all vertices incident to this face
+    vertex_indices = [v.idx() for v in mesh.vertices(f)]
+    print(f"The incident vertices are: {' '.join(map(str, vertex_indices))}")
+    # iterate all halfedges of this face
+    hcir = easy3d.SurfaceMesh.HalfedgeAroundFaceCirculator(mesh, f)
+    halfedge_indices = [h.idx() for h in hcir]    # Collect all its halfedges indices and print them in a single line
+    print(f"The incident halfedges are: {' '.join(map(str, halfedge_indices))}")
+    # alternative to HalfedgeAroundFaceCirculator, one can use mesh.halfedges(f) to access all halfedges incident to this face
+    halfedge_indices = [h.idx() for h in mesh.halfedges(f)]
+    print(f"The incident halfedges are: {' '.join(map(str, halfedge_indices))}")
 
 print("------- Iterate all the vertices ------")
 for v in mesh.vertices():
     #  print the number of its adjacent vertices
     print(f"Vertex {v.idx()} ({mesh.position(v).x}, {mesh.position(v).y}, {mesh.position(v).z}) has {mesh.valence(v)} adjacent vertices")
     # iterate all vertices incident to this vertex
-    cir = easy3d.SurfaceMesh.VertexAroundVertexCirculator(mesh, v)
-    vertex_indices = [v.idx() for v in cir]    # Collect indices of all incident vertices and print them in a single line
-    print(f"The vertices are: {' '.join(map(str, vertex_indices))}")
+    vcir = easy3d.SurfaceMesh.VertexAroundVertexCirculator(mesh, v)
+    vertex_indices = [v.idx() for v in vcir]    # Collect indices of all incident vertices and print them in a single line
+    print(f"The incident vertices are: {' '.join(map(str, vertex_indices))}")
+    # alternative to VertexAroundVertexCirculator, one can use mesh.vertices(v) to access all vertices incident to this vertex
+    vertex_indices = [v.idx() for v in mesh.vertices(v)]
+    print(f"The incident vertices are: {' '.join(map(str, vertex_indices))}")
+    # iterate all halfedges incident to this vertex
+    hcir = easy3d.SurfaceMesh.HalfedgeAroundVertexCirculator(mesh, v)
+    halfedge_indices = [h.idx() for h in hcir]    # Collect indices of all incident halfedges and print them in a single line
+    print(f"The incident halfedges are: {' '.join(map(str, halfedge_indices))}")
+    # alternative to HalfedgeAroundVertexCirculator, one can use mesh.halfedges(v) to access all halfedges incident to this vertex
+    halfedge_indices = [h.idx() for h in mesh.halfedges(v)]
+    print(f"The incident halfedges are: {' '.join(map(str, halfedge_indices))}")
+    # iterate all faces incident to this vertex
+    fcir = easy3d.SurfaceMesh.FaceAroundVertexCirculator(mesh, v)
+    face_indices = [f.idx() for f in fcir]    # Collect indices of all incident faces and print them in a single line
+    print(f"The incident faces are: {' '.join(map(str, face_indices))}")
+    # alternative to FaceAroundVertexCirculator, one can use mesh.faces(v) to access all faces incident to this vertex
+    face_indices = [f.idx() for f in mesh.faces(v)]
+    print(f"The incident faces are: {' '.join(map(str, face_indices))}")
 
 print("------- Iterate all the edges ------")
 for e in mesh.edges():
