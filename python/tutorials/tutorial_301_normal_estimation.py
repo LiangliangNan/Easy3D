@@ -88,8 +88,8 @@ point_cloud = viewer.add_model(easy3d.resource_directory() + "/data/bunny.bin")
 # the functions interactively while the viewer is running.
 # - `estimate` is bound to the shortcut `Ctrl + E`.
 # - `reorient` is bound to the shortcut `Ctrl + R`.
-viewer.bind(estimate, point_cloud, easy3d.Viewer.Key.KEY_E, easy3d.Viewer.Modifier.MODIF_CTRL) # Modifier is optional
-viewer.bind(reorient, point_cloud, easy3d.Viewer.Key.KEY_R, easy3d.Viewer.Modifier.MODIF_CTRL) # Modifier is optional
+viewer.bind(estimate, point_cloud, easy3d.Viewer.KEY_E, easy3d.Viewer.MODIF_CTRL) # Modifier is optional
+viewer.bind(reorient, point_cloud, easy3d.Viewer.KEY_R, easy3d.Viewer.MODIF_CTRL) # Modifier is optional
 
 # Display usage instructions in the viewer window.
 viewer.set_usage("Usage:\n"

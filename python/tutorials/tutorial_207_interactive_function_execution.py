@@ -81,8 +81,8 @@ point_cloud = viewer.add_model(easy3d.resource_directory() + "/data/polyhedron.b
 # let's create two functions for different processing purposes:
 # - `process_1`, bound to the shortcut `e`.
 # - `process_2`, bound to the shortcut `Ctrl + r`.
-viewer.bind(process_1, point_cloud, easy3d.Viewer.Key.KEY_E) # with a key modifier
-viewer.bind(process_2, point_cloud, easy3d.Viewer.Key.KEY_R, easy3d.Viewer.Modifier.MODIF_CTRL) # without key modifier
+viewer.bind(process_1, point_cloud, easy3d.Viewer.KEY_E) # without key modifier
+viewer.bind(process_2, point_cloud, easy3d.Viewer.KEY_R, easy3d.Viewer.MODIF_CTRL) # with key modifier
 
 # Display usage instructions in the viewer window.
 viewer.set_usage("Usage:\n"
