@@ -123,3 +123,12 @@ for h in mesh.halfedges():
     print(f"Halfedge {h.idx()}： vertex {mesh.source(h).idx()} -> vertex {mesh.target(h).idx()}")
     #  print the incident face and that incident to its opposite
     print(f"Halfedge {h.idx()} -> face {mesh.face(h).idx()}. Opposite halfedge {mesh.opposite(h).idx()} -> face {mesh.face(mesh.opposite(h)).idx()}")
+
+
+
+# # Uncomment the following line to visualize the model (overlaid with edges and vertices)
+# viewer = easy3d.Viewer("Easy3D Viewer")
+# viewer.add_model(mesh)
+# mesh.renderer().get_lines_drawable("edges").set_visible(True)       # Ensure the wireframe is visible.
+# mesh.renderer().get_points_drawable("vertices").set_visible(True)   # Ensure the vertices is visible.
+# viewer.run()
