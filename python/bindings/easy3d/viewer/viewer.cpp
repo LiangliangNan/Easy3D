@@ -7,6 +7,7 @@
 #include <memory>
 #include <vector>
 
+#include <pybind11/functional.h> // For std::function binding
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
@@ -560,5 +561,16 @@ void bind_easy3d_viewer_viewer(pybind11::module_& m)
 		cl.def("set_animation", (void (easy3d::Viewer::*)(bool)) &easy3d::Viewer::set_animation, "Enable/Disable animation.\n \n\n To have animation,  must be provided to specify how scene geometry is modified.\n\nC++: easy3d::Viewer::set_animation(bool) --> void", pybind11::arg("b"));
 		cl.def("is_animating", (bool (easy3d::Viewer::*)() const) &easy3d::Viewer::is_animating, "Is animation currently being performed.\n\nC++: easy3d::Viewer::is_animating() const --> bool");
 //		cl.def("assign", (class easy3d::Viewer & (easy3d::Viewer::*)(const class easy3d::Viewer &)) &easy3d::Viewer::operator=, "C++: easy3d::Viewer::operator=(const class easy3d::Viewer &) --> class easy3d::Viewer &", pybind11::return_value_policy::automatic, pybind11::arg(""));
-	}
+
+        // Expose the bind function
+        cl.def("bind", [](easy3d::Viewer &self, const std::function<bool(easy3d::Viewer *, easy3d::Model *)> &func,
+                          easy3d::Model *model, easy3d::Viewer::Key key, easy3d::Viewer::Modifier modifier) {
+                   self.bind(func, model, key, modifier);
+               },
+               pybind11::arg("func"),
+               pybind11::arg("model"),
+               pybind11::arg("key"),
+               pybind11::arg("modifier") = easy3d::Viewer::MODIF_NONE);
+
+    }
 }

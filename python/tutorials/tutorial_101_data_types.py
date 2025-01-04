@@ -31,6 +31,14 @@ import easy3d
 # Use `True` to enable detailed logging, which is useful for debugging.
 easy3d.initialize(False)
 
+print("Well come to Python tutorials of Easy3D!")
+print(f"version_major: {easy3d.version_major()}")
+print(f"version_minor: {easy3d.version_minor()}")
+print(f"version_patch: {easy3d.version_patch()}")
+print(f"version_string: {easy3d.version_string()}")
+print(f"version_number: {easy3d.version_number()}")
+print(f"release_date: {easy3d.release_date()}")
+
 # -------------------------------------------------------------------------------
 # Creating and Converting a vec2 Object
 # -------------------------------------------------------------------------------
