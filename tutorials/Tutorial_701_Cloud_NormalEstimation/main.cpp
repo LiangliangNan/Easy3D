@@ -101,7 +101,7 @@ int main(int argc, char **argv) {
     auto drawable = model->renderer()->get_points_drawable("vertices");
     drawable->set_uniform_coloring(vec4(0.6f, 0.6f, 1.0f, 1.0f));
     drawable->set_point_size(3.0f);
-    drawable->set_lighting_two_sides(false);
+    drawable->set_distinct_back_color(true);
 
     // usage
     viewer.set_usage("Ctrl + e: estimate normals\n"
