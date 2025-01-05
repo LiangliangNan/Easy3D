@@ -80,9 +80,9 @@ cube_indices = numpy.array([    # Indices for the 12 triangles (2 per face).
 triangles_drawable = easy3d.TrianglesDrawable("cube")     # Create a `TrianglesDrawable` named "cube"
 triangles_drawable.update_vertex_buffer(cube_vertices)    # Upload vertex positions
 triangles_drawable.update_element_buffer(cube_indices)    # Upload the vertex indices of the cube faces
-# You can try feeding the data of a bunny model to the buffers
+# [To try]: uncomment the following two lines to feed data of a bunny to the buffers, so you will see a bunny :-)
 # triangles_drawable.update_vertex_buffer(easy3d.bunny_vertices)    # Upload vertex positions
-# triangles_drawable.update_element_buffer(easy3d.bunny_indices)    # Upload the vertex indices of the cube faces
+# triangles_drawable.update_element_buffer(easy3d.bunny_indices)    # Upload the vertex indices of bunny faces
 viewer.add_drawable(triangles_drawable)  # Add the cube to the viewer
 viewer.assign(0, 1, triangles_drawable)  # Assign the cube to the top-right view (0, 1).
 

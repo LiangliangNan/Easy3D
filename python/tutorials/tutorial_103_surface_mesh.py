@@ -52,11 +52,20 @@ indices = [  # Indices of the faces (this cube has both triangle and rectangle f
     [0, 3, 2, 1],    [4, 5, 6, 7],  [0, 4, 7, 3],
     [1, 2, 6, 5],    [0, 1, 5],    [0, 5, 4],    [2, 3, 7],    [2, 7, 6],
 ]
+
 # You can also use Numpy array (don't forget "import numpy")
 # indices = numpy.array([
 #     [0, 3, 2, 1],    [4, 5, 6, 7],  [0, 4, 7, 3],
 #     [1, 2, 6, 5],    [0, 1, 5],    [0, 5, 4],    [2, 3, 7],    [2, 7, 6],
 # ], dtype=object)
+
+# In case you want to represent the cube be a set of triangles (thus to create a triangle mesh), you can provide
+# a 1D array of unsigned/signed integers, with each consecutive three indices representing a triangle face.
+# indices = numpy.array([    # Indices for the 12 triangles (2 per face).
+#     # Each consecutive 3 indices denote the vertex indices of a triangle face.
+#     0, 2, 1,    0, 3, 2,    4, 5, 6,    4, 6, 7,    0, 7, 3,    0, 4, 7,
+#     1, 2, 6,    1, 6, 5,    0, 1, 5,    0, 5, 4,    2, 3, 7,    2, 7, 6,
+# ], dtype=numpy.uint32)
 
 # Initialize a `SurfaceMesh` object with the vertices and indices.
 mesh = easy3d.SurfaceMesh(vertices, indices)
