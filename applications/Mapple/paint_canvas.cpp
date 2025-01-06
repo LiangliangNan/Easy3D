@@ -656,6 +656,8 @@ void PaintCanvas::setCurrentModel(easy3d::Model *m) {
 
 
 void PaintCanvas::keyPressEvent(QKeyEvent *e) {
+    pressed_key_ = e->key();
+
     if (e->key() == Qt::Key_Left && e->modifiers() == Qt::KeypadModifier) {
         auto angle = static_cast<float>(1 * M_PI / 180.0); // turn left, 1 degrees each step
         camera_->frame()->action_turn(angle, camera_);
@@ -862,8 +864,6 @@ void PaintCanvas::keyPressEvent(QKeyEvent *e) {
         // Reload the shader(s) - useful for writing/debugging shader code.
         ShaderManager::reload();
     }
-    else
-        pressed_key_ = e->key();
 
     QOpenGLWidget::keyPressEvent(e);
     update();
