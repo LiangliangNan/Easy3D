@@ -19,7 +19,7 @@
 # # Python bindings of Easy3D, visit:
 # # https://github.com/LiangliangNan/Easy3D/blob/main/ReadMe.md
 import sys
-sys.path.append("../../build/lib/python")  # Update this path to point to your Easy3D build directory.
+sys.path.append("../../cmake-build-release/lib/python")  # Update this path to point to your Easy3D build directory.
 
 # Import Easy3D for 3D geometry processing and visualization.
 import easy3d
