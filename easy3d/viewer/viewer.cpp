@@ -465,20 +465,11 @@ namespace easy3d {
 
     bool Viewer::callback_event_keyboard(int key, int action, int modifiers) {
         try {
-            if (action == GLFW_PRESS) {
-                pressed_key_ = key;
+            if (action == GLFW_PRESS || action == GLFW_REPEAT) {
                 return key_press_event(key, modifiers);
-            }
-            else if (action == GLFW_REPEAT) {
-                pressed_key_ = key;
-                return key_hold_event(key, modifiers);
-            }
-            else if (action == GLFW_RELEASE) {
-                pressed_key_ = -1;
+            } else {
                 return key_release_event(key, modifiers);
             }
-            else
-                return false;
         }
         catch (const std::exception &e) {
             LOG(ERROR) << "Caught exception in event handler: " << e.what();
@@ -1050,14 +1041,9 @@ namespace easy3d {
         } else if (key == GLFW_KEY_F4 && modifiers == GLFW_MOD_ALT) {
             glfwSetWindowShouldClose(window_, true);
         }
+        else
+            pressed_key_ = key;
 
-        return false;
-    }
-
-
-    bool Viewer::key_hold_event(int key, int modifiers) {
-        (void) key;
-        (void) modifiers;
         return false;
     }
 
@@ -1065,6 +1051,7 @@ namespace easy3d {
     bool Viewer::key_release_event(int key, int modifiers) {
         (void) key;
         (void) modifiers;
+        pressed_key_ = -1;
         return false;
     }
 

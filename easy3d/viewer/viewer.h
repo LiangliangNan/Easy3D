@@ -528,7 +528,6 @@ namespace easy3d {
 		// Keyboard event handler.
 		// NOTE: This function does not reveal the actual character.
 		virtual bool key_press_event(int key, int modifiers);
-        virtual bool key_hold_event(int key, int modifiers);
 		virtual bool key_release_event(int key, int modifiers);
 
 		// Handle a file drop event
