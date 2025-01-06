@@ -60,11 +60,13 @@ mesh = easy3d.SurfaceMesh(vertices, indices)
 
 # Adding per-vertex properties
 vertex_elevation = mesh.add_vertex_property("v:elevation", dtype=float) # Elevation (float)
+vertex_class = mesh.add_vertex_property("v:class", dtype=int)           # Class id (int)
 vertex_visited = mesh.add_vertex_property("v:visited", dtype=bool)      # Visited status (bool)
 vertex_color = mesh.add_vertex_property("v:color", dtype=easy3d.vec3)   # Color (vec3 for RGB)
 
 # Adding per-face properties
 face_area = mesh.add_face_property("f:area", dtype=float)               # Area (float)
+face_class = mesh.add_face_property("f:class", dtype=int)               # Class id (int)
 face_status = mesh.add_face_property("f:status", dtype=bool)            # Status (bool)
 face_color = mesh.add_face_property("f:color", dtype=easy3d.vec3)       # Color (vec3 for RGB)
 
@@ -75,15 +77,17 @@ face_color = mesh.add_face_property("f:color", dtype=easy3d.vec3)       # Color 
 
 # Assigning values to vertex properties
 for v in mesh.vertices():
-    vertex_elevation[v] = 1.23                           # Set elevation to 1.23 for all vertices
-    vertex_visited[v] = True                             # Mark all vertices as visited
-    vertex_color[v] = easy3d.vec3(0.0, 1.0, 0.0)         # Set vertex color to green (RGB: 0, 1, 0)
+    vertex_elevation[v] = 1.23                           # Set elevation to 1.23 for this vertex
+    vertex_visited[v] = True                             # Mark this vertex as visited
+    vertex_class[v] = 10                                 # Assign this vertex to class 10
+    vertex_color[v] = easy3d.vec3(0.0, 1.0, 0.0)         # Set the color of this vertex to green (RGB: 0, 1, 0)
 
 # Assigning values to face properties
 for f in mesh.faces():
-    face_area[f] = 1.0                                   # Set face area to 1.0
-    face_status[f] = False                               # Mark all faces as unvisited
-    face_color[f] = easy3d.vec3(0.0, 0.0, 1.0)           # Set face color to blue (RGB: 0, 0, 1)
+    face_area[f] = 1.0                                   # Set face area to 1.0 for this face
+    face_status[f] = False                               # Mark this face as negative
+    face_class[f] = 5                                    # Assign this face to class 10
+    face_color[f] = easy3d.vec3(0.0, 0.0, 1.0)           # Set the color of this face to blue (RGB: 0, 0, 1)
 
 # -----------------------------------------------------------------------------
 # Retrieving Properties
@@ -92,11 +96,13 @@ for f in mesh.faces():
 
 # Retrieve vertex properties
 vertex_elevation_retrieved = mesh.get_vertex_property("v:elevation", dtype=float)
+vertex_class_retrieved = mesh.get_vertex_property("v:class", dtype=int)
 vertex_visited_retrieved = mesh.get_vertex_property("v:visited", dtype=bool)
 vertex_color_retrieved = mesh.get_vertex_property("v:color", dtype=easy3d.vec3)
 
 # Retrieve face properties
 face_area_retrieved = mesh.get_face_property("f:area", dtype=float)
+face_class_retrieved= mesh.get_face_property("f:class", dtype=int)
 face_status_retrieved = mesh.get_face_property("f:status", dtype=bool)
 face_color_retrieved = mesh.get_face_property("f:color", dtype=easy3d.vec3)
 
@@ -108,13 +114,13 @@ face_color_retrieved = mesh.get_face_property("f:color", dtype=easy3d.vec3)
 # Print vertex properties
 print("Vertex Properties:")
 for v in mesh.vertices():
-    print(f"Vertex {v.idx()} --- Elevation: {vertex_elevation_retrieved[v]}, "
+    print(f"Vertex {v.idx()} --- Elevation: {vertex_elevation_retrieved[v]}, Class: {vertex_class_retrieved[v]}, "
           f"Visited: {vertex_visited_retrieved[v]}, Color: {vertex_color_retrieved[v]}")
 
 # Print face properties
 print("\nFace Properties:")
 for f in mesh.faces():
-    print(f"Face {f.idx()} --- Area: {face_area_retrieved[f]}, "
+    print(f"Face {f.idx()} --- Area: {face_area_retrieved[f]}, Class: {face_class_retrieved[f]}, "
           f"Status: {face_status_retrieved[f]}, Color: {face_color_retrieved[f]}")
 
 # -----------------------------------------------------------------------------

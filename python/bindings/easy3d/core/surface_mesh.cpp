@@ -1367,6 +1367,8 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
                [](easy3d::SurfaceMesh &mesh, const std::string &name, pybind11::object dtype) -> pybind11::object {
                    if (dtype.is(pybind11::float_().get_type())) {
                        return pybind11::cast(mesh.add_vertex_property<float>(name));
+                   } else if (dtype.is(pybind11::int_().get_type())) {
+                       return pybind11::cast(mesh.add_vertex_property<int>(name));
                    } else if (dtype.is(pybind11::bool_().get_type())) {
                        return pybind11::cast(mesh.add_vertex_property<bool>(name));
                    } else if (dtype.equal(pybind11::type::of<easy3d::vec3>())) {
@@ -1374,7 +1376,7 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
 //                   } else if (dtype.is(pybind11::str().get_type())) {
 //                       return pybind11::cast(mesh.add_vertex_property<std::string>(name));
                    } else {
-                       throw std::invalid_argument("Unsupported dtype for vertex property. Supported types: float, int, bool, easy3d.vec3, easy3d.vec2, and str");
+                       throw std::invalid_argument("Unsupported dtype for vertex property. Supported types: float, int, bool, and easy3d.vec3");
                    }
                },
                pybind11::arg("name"), pybind11::arg("dtype"));
@@ -1384,6 +1386,8 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
                [](easy3d::SurfaceMesh &mesh, const std::string &name, pybind11::object dtype) -> pybind11::object {
                    if (dtype.is(pybind11::float_().get_type())) {
                        return pybind11::cast(mesh.add_face_property<float>(name));
+                   } else if (dtype.is(pybind11::int_().get_type())) {
+                       return pybind11::cast(mesh.add_face_property<int>(name));
                    } else if (dtype.is(pybind11::bool_().get_type())) {
                        return pybind11::cast(mesh.add_face_property<bool>(name));
                    } else if (dtype.equal(pybind11::type::of<easy3d::vec3>())) {
@@ -1391,7 +1395,7 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
 //                   } else if (dtype.is(pybind11::str().get_type())) {
 //                       return pybind11::cast(mesh.add_face_property<std::string>(name));
                    } else {
-                       throw std::invalid_argument("Unsupported dtype for vertex property. Supported types: float, int, bool, easy3d.vec3, easy3d.vec2, and str");
+                       throw std::invalid_argument("Unsupported dtype for vertex property. Supported types: float, int, bool, and easy3d.vec3");
                    }
                },
                pybind11::arg("name"), pybind11::arg("dtype"));
@@ -1401,6 +1405,8 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
                [](easy3d::SurfaceMesh &mesh, const std::string &name, pybind11::object dtype) -> pybind11::object {
                    if (dtype.is(pybind11::float_().get_type())) {
                        return pybind11::cast(mesh.get_vertex_property<float>(name));
+                   } else if (dtype.is(pybind11::int_().get_type())) {
+                       return pybind11::cast(mesh.get_vertex_property<int>(name));
                    } else if (dtype.is(pybind11::bool_().get_type())) {
                        return pybind11::cast(mesh.get_vertex_property<bool>(name));
                    } else if (dtype.equal(pybind11::type::of<easy3d::vec3>())) {
@@ -1408,7 +1414,7 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
 //                   } else if (dtype.is(pybind11::str().get_type())) {
 //                       return pybind11::cast(mesh.get_vertex_property<std::string>(name));
                    } else {
-                       throw std::invalid_argument("Unsupported dtype for vertex property. Supported types: float, int, bool, easy3d.vec3, easy3d.vec2, and str");
+                       throw std::invalid_argument("Unsupported dtype for vertex property. Supported types: float, int, bool, and easy3d.vec3");
                    }
                },
                pybind11::arg("name"), pybind11::arg("dtype"));
@@ -1418,6 +1424,8 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
                [](easy3d::SurfaceMesh &mesh, const std::string &name, pybind11::object dtype) -> pybind11::object {
                    if (dtype.is(pybind11::float_().get_type())) {
                        return pybind11::cast(mesh.get_face_property<float>(name));
+                   } else if (dtype.is(pybind11::int_().get_type())) {
+                       return pybind11::cast(mesh.get_face_property<int>(name));
                    } else if (dtype.is(pybind11::bool_().get_type())) {
                        return pybind11::cast(mesh.get_face_property<bool>(name));
                    } else if (dtype.equal(pybind11::type::of<easy3d::vec3>())) {
@@ -1425,7 +1433,7 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
 //                   } else if (dtype.is(pybind11::str().get_type())) {
 //                       return pybind11::cast(mesh.get_face_property<std::string>(name));
                    } else {
-                       throw std::invalid_argument("Unsupported dtype for face property. Supported types: float, int, bool, easy3d.vec3, easy3d.vec2, and str");
+                       throw std::invalid_argument("Unsupported dtype for face property. Supported types: float, int, bool, and easy3d.vec3");
                    }
                },
                pybind11::arg("name"), pybind11::arg("dtype"));
