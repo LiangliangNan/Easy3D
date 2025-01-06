@@ -83,7 +83,7 @@ target_include_directories(easy3d_${module} PRIVATE ${Easy3D_THIRD_PARTY}/eigen 
 if (POLICY CMP0167)
     cmake_policy(SET CMP0167 NEW)
 endif ()
-find_package(Boost COMPONENTS graph)
+find_package(Boost QUIET COMPONENTS graph)
 if (Boost_FOUND)
     target_include_directories(easy3d_${module} PRIVATE ${Boost_INCLUDE_DIRS})
     target_compile_definitions(easy3d_${module} PRIVATE HAS_BOOST)

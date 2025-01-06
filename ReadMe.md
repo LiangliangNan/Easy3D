@@ -147,13 +147,13 @@ There are many options to build Easy3D. Choose one of the following (not an exha
   
 - Option 3: Use CMake-Gui to generate project files for your IDE. Then load the project to your IDE and build it. For Windows users: your IDE must be set for `x64`.
 
-#### Build and install Python bindings
-- Make sure you have Python installed. 
-Then switch on the CMake option `Easy3D_BUILD_PYTHON_BINDINGS`, run CMake, and then build. After building Easy3D, you can find the Python bindings in `YOUR_BUILD_DIRECTORY/lib/python`.
-- To install the Python bindings, you can use the following command:
-    ```
-      pip install YOUR_BUILD_DIRECTORY/lib/python/setup.py
-    ```
+#### Build and use Python bindings
+- Make sure you have [Python](https://www.python.org/downloads/) installed. 
+Then switch on the CMake option `Easy3D_BUILD_PYTHON_BINDINGS`, run CMake, and then build. After building Easy3D, you 
+can find the Python bindings module `PyEasy3D` (`PyEasy3D.pyd` on Windows, `PyEasy3D.so` on macOS/Linux) in 
+`YOUR_BUILD_DIRECTORY/lib/python/easy3d`. Before using it in your Python code, you need to simply 
+copy the dependencies into the above directory. More details can be found [here](./python/private/dependencies.md).
+A unified installation/setup procedure will be implemented (when I have more spare time...).
   
 Do not have any experience with C/C++ programming? 
 Have a look at <a href="https://github.com/LiangliangNan/Easy3D/blob/main/HowToBuild.md">How to build Easy3D step by 
