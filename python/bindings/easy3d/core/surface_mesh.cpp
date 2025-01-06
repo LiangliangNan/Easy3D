@@ -187,6 +187,25 @@ struct PyCallBack_easy3d_SurfaceMesh_VertexProperty_float_t : public easy3d::Sur
 	}
 };
 
+// easy3d::SurfaceMesh::VertexProperty file:easy3d/core/surface_mesh.h line:184
+struct PyCallBack_easy3d_SurfaceMesh_VertexProperty_int_t : public easy3d::SurfaceMesh::VertexProperty<int> {
+    using easy3d::SurfaceMesh::VertexProperty<int>::VertexProperty;
+
+    int & operator[](size_t a0) override {
+        pybind11::gil_scoped_acquire gil;
+        pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::SurfaceMesh::VertexProperty<int> *>(this), "__getitem__");
+        if (overload) {
+            auto o = overload.operator()<pybind11::return_value_policy::reference>(a0);
+            if (pybind11::detail::cast_is_temporary_value_reference<int &>::value) {
+                static pybind11::detail::override_caster_t<int &> caster;
+                return pybind11::detail::cast_ref<int &>(std::move(o), caster);
+            }
+            return pybind11::detail::cast_safe<int &>(std::move(o));
+        }
+        return Property::operator[](a0);
+    }
+};
+
 // easy3d::SurfaceMesh::HalfedgeProperty file:easy3d/core/surface_mesh.h line:208
 struct PyCallBack_easy3d_SurfaceMesh_HalfedgeProperty_easy3d_SurfaceMesh_HalfedgeConnectivity_t : public easy3d::SurfaceMesh::HalfedgeProperty<easy3d::SurfaceMesh::HalfedgeConnectivity> {
 	using easy3d::SurfaceMesh::HalfedgeProperty<easy3d::SurfaceMesh::HalfedgeConnectivity>::HalfedgeProperty;
@@ -589,6 +608,25 @@ struct PyCallBack_easy3d_SurfaceMesh_FaceProperty_float_t : public easy3d::Surfa
     }
 };
 
+// easy3d::SurfaceMesh::FaceProperty file:easy3d/core/surface_mesh.h line:256
+struct PyCallBack_easy3d_SurfaceMesh_FaceProperty_int_t : public easy3d::SurfaceMesh::FaceProperty<int> {
+    using easy3d::SurfaceMesh::FaceProperty<int>::FaceProperty;
+
+    int & operator[](size_t a0) override {
+        pybind11::gil_scoped_acquire gil;
+        pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::SurfaceMesh::FaceProperty<int> *>(this), "__getitem__");
+        if (overload) {
+            auto o = overload.operator()<pybind11::return_value_policy::reference>(a0);
+            if (pybind11::detail::cast_is_temporary_value_reference<int &>::value) {
+                static pybind11::detail::override_caster_t<int &> caster;
+                return pybind11::detail::cast_ref<int &>(std::move(o), caster);
+            }
+            return pybind11::detail::cast_safe<int &>(std::move(o));
+        }
+        return Property::operator[](a0);
+    }
+};
+
 // easy3d::Property file:easy3d/core/property.h line:252
 struct PyCallBack_easy3d_Property_easy3d_SurfaceMesh_Vertex_t : public easy3d::Property<easy3d::SurfaceMesh::Vertex> {
     using easy3d::Property<easy3d::SurfaceMesh::Vertex>::Property;
@@ -976,13 +1014,13 @@ std::vector<std::vector<unsigned int>> convert(const pybind11::object& input) {
 
         // Sub-case 1.1: List of lists for general polygonal meshes
         if (!input_list.empty() && pybind11::isinstance<pybind11::list>(input_list[0])) {
-            for (ssize_t i = 0; i < input_list.size(); ++i) {
+            for (pybind11::ssize_t i = 0; i < input_list.size(); ++i) {
                 pybind11::object face = input_list[i];
                 if (pybind11::isinstance<pybind11::list>(face)) {
                     pybind11::list face_list = pybind11::cast<pybind11::list>(face);
                     std::vector<unsigned int> face_indices;
                     // Convert each element of the face list to unsigned int
-                    for (ssize_t j = 0; j < face_list.size(); ++j) {
+                    for (pybind11::ssize_t j = 0; j < face_list.size(); ++j) {
                         face_indices.push_back(static_cast<unsigned int>(pybind11::cast<long>(face_list[j])));
                     }
                     result.push_back(std::move(face_indices));
@@ -994,7 +1032,7 @@ std::vector<std::vector<unsigned int>> convert(const pybind11::object& input) {
         // Sub-case 1.2: Flat list of unsigned/signed integers for triangle meshes
         else if (!input_list.empty() && pybind11::isinstance<pybind11::int_>(input_list[0])) {
             std::vector<unsigned int> temp;
-            for (ssize_t i = 0; i < input_list.size(); ++i) {
+            for (pybind11::ssize_t i = 0; i < input_list.size(); ++i) {
                 temp.push_back(static_cast<unsigned int>(pybind11::cast<long>(input_list[i])));
                 if (temp.size() == 3) {  // Form a triangle face
                     result.push_back(std::move(temp));
@@ -1017,13 +1055,13 @@ std::vector<std::vector<unsigned int>> convert(const pybind11::object& input) {
         if (arr.ndim() == 1) {
             if (arr.dtype().is(pybind11::dtype::of<pybind11::object>())) {
                 auto buf = arr.unchecked<pybind11::object>();  // Access array elements as Python objects
-                for (ssize_t i = 0; i < arr.shape(0); ++i) {
+                for (pybind11::ssize_t i = 0; i < arr.shape(0); ++i) {
                     pybind11::object face = buf(i);
                     if (pybind11::isinstance<pybind11::list>(face)) {
                         pybind11::list face_list = pybind11::cast<pybind11::list>(face);
                         std::vector<unsigned int> face_indices;
                         // Convert each element of the face list to unsigned int
-                        for (ssize_t j = 0; j < face_list.size(); ++j) {
+                        for (pybind11::ssize_t j = 0; j < face_list.size(); ++j) {
                             face_indices.push_back(static_cast<unsigned int>(pybind11::cast<long>(face_list[j])));
                         }
                         result.push_back(std::move(face_indices));
@@ -1036,7 +1074,7 @@ std::vector<std::vector<unsigned int>> convert(const pybind11::object& input) {
             else if (arr.dtype().is(pybind11::dtype::of<unsigned int>())) {
                 auto buf = arr.unchecked<unsigned int>();  // Access array elements as unsigned integers
                 std::vector<unsigned int> temp;
-                for (ssize_t i = 0; i < arr.shape(0); ++i) {
+                for (pybind11::ssize_t i = 0; i < arr.shape(0); ++i) {
                     temp.push_back(buf(i));
                     if (temp.size() == 3) {  // Form a triangle face
                         result.push_back(std::move(temp));
@@ -1052,7 +1090,7 @@ std::vector<std::vector<unsigned int>> convert(const pybind11::object& input) {
             else if (arr.dtype().is(pybind11::dtype::of<int>())) {
                 auto buf = arr.unchecked<int>();  // Access array elements as integers
                 std::vector<unsigned int> temp;
-                for (ssize_t i = 0; i < arr.shape(0); ++i) {
+                for (pybind11::ssize_t i = 0; i < arr.shape(0); ++i) {
                     temp.push_back(static_cast<unsigned int>(buf(i)));
                     if (temp.size() == 3) {  // Form a triangle face
                         result.push_back(std::move(temp));
@@ -1133,7 +1171,7 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
                        throw std::invalid_argument("Input array must have shape (n, 3).");
                    }
                    auto buf = arr.unchecked<2>();
-                   for (ssize_t i = 0; i < arr.shape(0); ++i) {
+                   for (pybind11::ssize_t i = 0; i < arr.shape(0); ++i) {
                        mesh->add_vertex(easy3d::vec3(buf(i, 0), buf(i, 1), buf(i, 2)));
                    }
                } else if (pybind11::isinstance<pybind11::array_t<double>>(points)) { // double type
@@ -1143,7 +1181,7 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
                        throw std::invalid_argument("Input array must have shape (n, 3).");
                    }
                    auto buf = arr.unchecked<2>();
-                   for (ssize_t i = 0; i < arr.shape(0); ++i) {
+                   for (pybind11::ssize_t i = 0; i < arr.shape(0); ++i) {
                        mesh->add_vertex(easy3d::vec3(
                                static_cast<float>(buf(i, 0)),
                                static_cast<float>(buf(i, 1)),
@@ -1621,6 +1659,26 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
 			cl.def("set_name", (void (easy3d::Property<float>::*)(const std::string &)) &easy3d::Property<float>::set_name, "C++: easy3d::Property<float>::set_name(const std::string &) --> void", pybind11::arg("n"));
 			cl.def("assign", (class easy3d::Property<float> & (easy3d::Property<float>::*)(const class easy3d::Property<float> &)) &easy3d::Property<float>::operator=, "C++: easy3d::Property<float>::operator=(const class easy3d::Property<float> &) --> class easy3d::Property<float> &", pybind11::return_value_policy::automatic, pybind11::arg(""));
 		}
+        
+        { // easy3d::SurfaceMesh::VertexProperty file:easy3d/core/surface_mesh.h line:184
+			auto & enclosing_class = cl;
+			pybind11::class_<easy3d::SurfaceMesh::VertexProperty<int>, std::shared_ptr<easy3d::SurfaceMesh::VertexProperty<int>>, PyCallBack_easy3d_SurfaceMesh_VertexProperty_int_t, easy3d::Property<int>> cl(enclosing_class, "VertexProperty_int_t", "");
+			cl.def( pybind11::init( [](){ return new easy3d::SurfaceMesh::VertexProperty<int>(); }, [](){ return new PyCallBack_easy3d_SurfaceMesh_VertexProperty_int_t(); } ) );
+			cl.def( pybind11::init<class easy3d::Property<int>>(), pybind11::arg("p") );
+
+			cl.def("__getitem__", (int & (easy3d::SurfaceMesh::VertexProperty<int>::*)(struct easy3d::SurfaceMesh::Vertex)) &easy3d::SurfaceMesh::VertexProperty<int>::operator[], "C++: easy3d::SurfaceMesh::VertexProperty<int>::operator[](struct easy3d::SurfaceMesh::Vertex) --> int &", pybind11::return_value_policy::automatic, pybind11::arg("v"));
+            cl.def("__getitem__", (int & (easy3d::Property<int>::*)(size_t)) &easy3d::Property<int>::operator[], "C++: easy3d::Property<int>::operator[](size_t) --> int &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+            cl.def("__setitem__", [](easy3d::SurfaceMesh::VertexProperty<int>& prop, const easy3d::SurfaceMesh::Vertex& v, int value) { prop[v] = value; });
+
+            cl.def("assign", (class easy3d::SurfaceMesh::VertexProperty<int> & (easy3d::SurfaceMesh::VertexProperty<int>::*)(const class easy3d::SurfaceMesh::VertexProperty<int> &)) &easy3d::SurfaceMesh::VertexProperty<int>::operator=, "C++: easy3d::SurfaceMesh::VertexProperty<int>::operator=(const class easy3d::SurfaceMesh::VertexProperty<int> &) --> class easy3d::SurfaceMesh::VertexProperty<int> &", pybind11::return_value_policy::automatic, pybind11::arg(""));
+			cl.def("reset", (void (easy3d::Property<int>::*)()) &easy3d::Property<int>::reset, "C++: easy3d::Property<int>::reset() --> void");
+			cl.def("data", (const int * (easy3d::Property<int>::*)() const) &easy3d::Property<int>::data, "C++: easy3d::Property<int>::data() const --> const int *", pybind11::return_value_policy::automatic);
+			cl.def("vector", (class std::vector<int> & (easy3d::Property<int>::*)()) &easy3d::Property<int>::vector, "C++: easy3d::Property<int>::vector() --> class std::vector<int> &", pybind11::return_value_policy::automatic);
+			cl.def("array", (class easy3d::PropertyArray<int> & (easy3d::Property<int>::*)()) &easy3d::Property<int>::array, "C++: easy3d::Property<int>::array() --> class easy3d::PropertyArray<int> &", pybind11::return_value_policy::automatic);
+			cl.def("name", (const std::string & (easy3d::Property<int>::*)() const) &easy3d::Property<int>::name, "C++: easy3d::Property<int>::name() const --> const std::string &", pybind11::return_value_policy::automatic);
+			cl.def("set_name", (void (easy3d::Property<int>::*)(const std::string &)) &easy3d::Property<int>::set_name, "C++: easy3d::Property<int>::set_name(const std::string &) --> void", pybind11::arg("n"));
+			cl.def("assign", (class easy3d::Property<int> & (easy3d::Property<int>::*)(const class easy3d::Property<int> &)) &easy3d::Property<int>::operator=, "C++: easy3d::Property<int>::operator=(const class easy3d::Property<int> &) --> class easy3d::Property<int> &", pybind11::return_value_policy::automatic, pybind11::arg(""));
+		}
 
 		{ // easy3d::SurfaceMesh::HalfedgeProperty file:easy3d/core/surface_mesh.h line:208
 			auto & enclosing_class = cl;
@@ -1743,6 +1801,26 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
             cl.def("name", (const std::string & (easy3d::Property<float>::*)() const) &easy3d::Property<float>::name, "C++: easy3d::Property<float>::name() const --> const std::string &", pybind11::return_value_policy::automatic);
             cl.def("set_name", (void (easy3d::Property<float>::*)(const std::string &)) &easy3d::Property<float>::set_name, "C++: easy3d::Property<float>::set_name(const std::string &) --> void", pybind11::arg("n"));
             cl.def("assign", (class easy3d::Property<float> & (easy3d::Property<float>::*)(const class easy3d::Property<float> &)) &easy3d::Property<float>::operator=, "C++: easy3d::Property<float>::operator=(const class easy3d::Property<float> &) --> class easy3d::Property<float> &", pybind11::return_value_policy::automatic, pybind11::arg(""));
+        }
+
+        { // easy3d::SurfaceMesh::FaceProperty file:easy3d/core/surface_mesh.h line:256
+            auto & enclosing_class = cl;
+            pybind11::class_<easy3d::SurfaceMesh::FaceProperty<int>, std::shared_ptr<easy3d::SurfaceMesh::FaceProperty<int>>, PyCallBack_easy3d_SurfaceMesh_FaceProperty_int_t, easy3d::Property<int>> cl(enclosing_class, "FaceProperty_int_t", "");
+            cl.def( pybind11::init( [](){ return new easy3d::SurfaceMesh::FaceProperty<int>(); }, [](){ return new PyCallBack_easy3d_SurfaceMesh_FaceProperty_int_t(); } ) );
+            cl.def( pybind11::init<class easy3d::Property<int>>(), pybind11::arg("p") );
+
+            cl.def("__getitem__", (int & (easy3d::SurfaceMesh::FaceProperty<int>::*)(struct easy3d::SurfaceMesh::Face)) &easy3d::SurfaceMesh::FaceProperty<int>::operator[], "C++: easy3d::SurfaceMesh::FaceProperty<int>::operator[](struct easy3d::SurfaceMesh::Face) --> int &", pybind11::return_value_policy::automatic, pybind11::arg("f"));
+            cl.def("__getitem__", (int & (easy3d::Property<int>::*)(size_t)) &easy3d::Property<int>::operator[], "C++: easy3d::Property<int>::operator[](size_t) --> int &", pybind11::return_value_policy::automatic, pybind11::arg("i"));
+            cl.def("__setitem__", [](easy3d::SurfaceMesh::FaceProperty<int>& prop, const easy3d::SurfaceMesh::Face& f, int value) { prop[f] = value; });
+
+            cl.def("assign", (class easy3d::SurfaceMesh::FaceProperty<int> & (easy3d::SurfaceMesh::FaceProperty<int>::*)(const class easy3d::SurfaceMesh::FaceProperty<int> &)) &easy3d::SurfaceMesh::FaceProperty<int>::operator=, "C++: easy3d::SurfaceMesh::FaceProperty<int>::operator=(const class easy3d::SurfaceMesh::FaceProperty<int> &) --> class easy3d::SurfaceMesh::FaceProperty<int> &", pybind11::return_value_policy::automatic, pybind11::arg(""));
+            cl.def("reset", (void (easy3d::Property<int>::*)()) &easy3d::Property<int>::reset, "C++: easy3d::Property<int>::reset() --> void");
+            cl.def("data", (const int * (easy3d::Property<int>::*)() const) &easy3d::Property<int>::data, "C++: easy3d::Property<int>::data() const --> const int *", pybind11::return_value_policy::automatic);
+            cl.def("vector", (class std::vector<int> & (easy3d::Property<int>::*)()) &easy3d::Property<int>::vector, "C++: easy3d::Property<int>::vector() --> class std::vector<int> &", pybind11::return_value_policy::automatic);
+            cl.def("array", (class easy3d::PropertyArray<int> & (easy3d::Property<int>::*)()) &easy3d::Property<int>::array, "C++: easy3d::Property<int>::array() --> class easy3d::PropertyArray<int> &", pybind11::return_value_policy::automatic);
+            cl.def("name", (const std::string & (easy3d::Property<int>::*)() const) &easy3d::Property<int>::name, "C++: easy3d::Property<int>::name() const --> const std::string &", pybind11::return_value_policy::automatic);
+            cl.def("set_name", (void (easy3d::Property<int>::*)(const std::string &)) &easy3d::Property<int>::set_name, "C++: easy3d::Property<int>::set_name(const std::string &) --> void", pybind11::arg("n"));
+            cl.def("assign", (class easy3d::Property<int> & (easy3d::Property<int>::*)(const class easy3d::Property<int> &)) &easy3d::Property<int>::operator=, "C++: easy3d::Property<int>::operator=(const class easy3d::Property<int> &) --> class easy3d::Property<int> &", pybind11::return_value_policy::automatic, pybind11::arg(""));
         }
         
 		{ // easy3d::SurfaceMesh::VertexIterator file:easy3d/core/surface_mesh.h line:308

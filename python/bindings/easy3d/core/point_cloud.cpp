@@ -118,7 +118,7 @@ void bind_easy3d_core_point_cloud(pybind11::module_& m)
                     throw std::invalid_argument("Input array must have shape (n, 3).");
                 }
                 auto buf = arr.unchecked<2>();
-                for (ssize_t i = 0; i < arr.shape(0); ++i) {
+                for (pybind11::ssize_t i = 0; i < arr.shape(0); ++i) {
                     pc->add_vertex(easy3d::vec3(buf(i, 0), buf(i, 1), buf(i, 2)));
                 }
             } else if (pybind11::isinstance<pybind11::array_t<double>>(points)) {    // double type
@@ -128,7 +128,7 @@ void bind_easy3d_core_point_cloud(pybind11::module_& m)
                     throw std::invalid_argument("Input array must have shape (n, 3).");
                 }
                 auto buf = arr.unchecked<2>();
-                for (ssize_t i = 0; i < arr.shape(0); ++i) {
+                for (pybind11::ssize_t i = 0; i < arr.shape(0); ++i) {
                     pc->add_vertex(easy3d::vec3(
                             static_cast<float>(buf(i, 0)),
                             static_cast<float>(buf(i, 1)),
@@ -171,7 +171,7 @@ void bind_easy3d_core_point_cloud(pybind11::module_& m)
                     throw std::invalid_argument("Input array must have shape (n, 3).");
                 }
                 auto buf = arr.unchecked<2>();
-                for (ssize_t i = 0; i < arr.shape(0); ++i) {
+                for (pybind11::ssize_t i = 0; i < arr.shape(0); ++i) {
                     pc.add_vertex(easy3d::vec3(buf(i, 0), buf(i, 1), buf(i, 2)));
                 }
             } else if (pybind11::isinstance<pybind11::array_t<double>>(points)) {    // double type
@@ -181,7 +181,7 @@ void bind_easy3d_core_point_cloud(pybind11::module_& m)
                     throw std::invalid_argument("Input array must have shape (n, 3).");
                 }
                 auto buf = arr.unchecked<2>();
-                for (ssize_t i = 0; i < arr.shape(0); ++i) {
+                for (pybind11::ssize_t i = 0; i < arr.shape(0); ++i) {
                     pc.add_vertex(easy3d::vec3(
                             static_cast<float>(buf(i, 0)),
                             static_cast<float>(buf(i, 1)),
@@ -252,7 +252,7 @@ void bind_easy3d_core_point_cloud(pybind11::module_& m)
         // Retrieve all points as a NumPy array
         cl.def("to_numpy", [](const easy3d::PointCloud &pc) {
             // Create a NumPy array with shape (n_points, 3)
-            std::vector<ssize_t> shape = {static_cast<ssize_t>(pc.n_vertices()), 3};
+            std::vector<pybind11::ssize_t> shape = {static_cast<pybind11::ssize_t>(pc.n_vertices()), 3};
             pybind11::array_t<float> result(shape);  // Use a vector for the shape
 
             // Access the mutable buffer
