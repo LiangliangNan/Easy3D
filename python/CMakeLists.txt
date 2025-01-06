@@ -92,13 +92,13 @@ set(BINDING_SOURCES
         "bindings/easy3d/viewer/viewer.cpp"
         )
 
-if(Easy3D_HAS_CGAL)
-    list(APPEND BINDING_SOURCES "bindings/easy3d/algo_ext/surfacer.cpp")
-endif()
-
-if(Easy3D_HAS_FFMPEG)
-    list(APPEND BINDING_SOURCES "bindings/easy3d/video/video_encoder.cpp")
-endif()
+#if(Easy3D_HAS_CGAL)
+#    list(APPEND BINDING_SOURCES "bindings/unused/algo_ext/surfacer.cpp")
+#endif()
+#
+#if(Easy3D_HAS_FFMPEG)
+#    list(APPEND BINDING_SOURCES "bindings/unused/video/video_encoder.cpp")
+#endif()
 
 pybind11_add_module(${PROJECT_NAME} MODULE ${BINDING_SOURCES})
 target_link_libraries(${PROJECT_NAME} PRIVATE
@@ -111,14 +111,14 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
         easy3d::util
         easy3d::viewer
         )
-if (Easy3D_HAS_CGAL)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE HAS_CGAL)
-    target_link_libraries(${PROJECT_NAME} PRIVATE easy3d::algo_ext)
-endif ()
-if (Easy3D_HAS_FFMPEG)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE HAS_FFMPEG)
-    target_link_libraries(${PROJECT_NAME} PRIVATE easy3d::video)
-endif ()
+#if (Easy3D_HAS_CGAL)
+#    target_compile_definitions(${PROJECT_NAME} PRIVATE HAS_CGAL)
+#    target_link_libraries(${PROJECT_NAME} PRIVATE easy3d::algo_ext)
+#endif ()
+#if (Easy3D_HAS_FFMPEG)
+#    target_compile_definitions(${PROJECT_NAME} PRIVATE HAS_FFMPEG)
+#    target_link_libraries(${PROJECT_NAME} PRIVATE easy3d::video)
+#endif ()
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE PYBIND11_SIMPLE_GIL_SAFE_ABI) # to use the Python Stable ABI
 

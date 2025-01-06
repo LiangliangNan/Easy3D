@@ -23,7 +23,7 @@
 # please refer to: https://github.com/LiangliangNan/Easy3D/blob/main/ReadMe.md
 # -------------------------------------------------------------------------------
 import sys
-sys.path.append("../../cmake-build-release/lib/python")
+sys.path.append("../../build/lib/python")  # Update this path to point to your Easy3D build directory.
 
 import easy3d
 
@@ -122,14 +122,14 @@ for v in mesh.vertices():
 print("------- Iterate all the edges ------")
 for e in mesh.edges():
     # print the indices of the two end vertices
-    print(f"Edge {e.idx()}： vertex {mesh.vertex(e, 0).idx()} - vertex {mesh.vertex(e, 1).idx()}")
+    print(f"Edge {e.idx()}: vertex {mesh.vertex(e, 0).idx()} - vertex {mesh.vertex(e, 1).idx()}")
     # print the indices of the two incident faces
     print(f"The two incident faces: face {mesh.face(e, 0).idx()} - face {mesh.face(e, 1).idx()}")
 
 print("------- Iterate all the halfedges ------")
 for h in mesh.halfedges():
     #  print its vertices
-    print(f"Halfedge {h.idx()}： vertex {mesh.source(h).idx()} -> vertex {mesh.target(h).idx()}")
+    print(f"Halfedge {h.idx()}: vertex {mesh.source(h).idx()} -> vertex {mesh.target(h).idx()}")
     #  print the incident face and that incident to its opposite
     print(f"Halfedge {h.idx()} -> face {mesh.face(h).idx()}. Opposite halfedge {mesh.opposite(h).idx()} -> face {mesh.face(mesh.opposite(h)).idx()}")
 

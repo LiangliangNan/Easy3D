@@ -90,9 +90,9 @@ void bind_easy3d_algo_surface_mesh_triangulation(pybind11::module_ &m);
 void bind_easy3d_algo_tessellator(pybind11::module_ &m);
 void bind_easy3d_algo_text_mesher(pybind11::module_ &m);
 void bind_easy3d_algo_triangle_mesh_kdtree(pybind11::module_ &m);
-#ifdef HAS_CGAL
-void bind_easy3d_algo_ext_surfacer(pybind11::module_ &m);
-#endif
+//#ifdef HAS_CGAL
+//void bind_easy3d_algo_ext_surfacer(pybind11::module_ &m);
+//#endif
 
 void bind_easy3d_fileio_graph_io(pybind11::module_ &m);
 void bind_easy3d_fileio_image_io(pybind11::module_ &m);
@@ -125,9 +125,9 @@ void bind_easy3d_viewer_viewer(pybind11::module_ &m);
 void bind_easy3d_viewer_multi_viewer(pybind11::module_ &m);
 void bind_easy3d_viewer_offscreen(pybind11::module_ &m);
 
-#ifdef HAS_FFMPEG
-void bind_easy3d_video_video_encoder(pybind11::module_ &m);
-#endif
+//#ifdef HAS_FFMPEG
+//void bind_easy3d_video_video_encoder(pybind11::module_ &m);
+//#endif
 
 // Submodule declarations
 void bind_core(pybind11::module_ &m) {
@@ -198,11 +198,11 @@ void bind_algo(pybind11::module_ &m) {
     bind_easy3d_algo_triangle_mesh_kdtree(m);
 }
 
-#ifdef HAS_FFMPEG
-void bind_algo_ext(pybind11::module_ &m) {
-    bind_easy3d_algo_ext_surfacer(m);
-}
-#endif
+//#ifdef HAS_FFMPEG
+//void bind_algo_ext(pybind11::module_ &m) {
+//    bind_easy3d_algo_ext_surfacer(m);
+//}
+//#endif
 
 void bind_fileio(pybind11::module_ &m) {
     bind_easy3d_fileio_graph_io(m);
@@ -233,11 +233,11 @@ void bind_viewer(pybind11::module_ &m) {
     bind_easy3d_viewer_offscreen(m);
 }
 
-#ifdef HAS_FFMPEG
-void bind_video(pybind11::module_ &m) {
-    bind_easy3d_video_video_encoder(m);
-}
-#endif
+//#ifdef HAS_FFMPEG
+//void bind_video(pybind11::module_ &m) {
+//    bind_easy3d_video_video_encoder(m);
+//}
+//#endif
 
 
 // PyEasy3D_NAME is a preprocessor definition (defined in the CMakeList), which sets the name of the Python module.
@@ -269,9 +269,9 @@ PYBIND11_MODULE(PyEasy3D_NAME, root_module) {
     bind_util(root_module);
     bind_algo(root_module);
 
-#ifdef HAS_CGAL
-    bind_algo_ext(root_module);
-#endif
+//#ifdef HAS_CGAL
+//    bind_algo_ext(root_module);
+//#endif
 
     bind_fileio(root_module);
     bind_kdtree(root_module);

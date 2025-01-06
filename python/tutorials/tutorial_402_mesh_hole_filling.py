@@ -21,7 +21,7 @@
 # If Easy3D is not installed via `pip`, you may need to add its Python bindings
 # to the system path. Modify the path below according to your setup.
 import sys
-sys.path.append("../../cmake-build-release/lib/python")  # Update this path as needed.
+sys.path.append("../../build/lib/python")  # Update this path to point to your Easy3D build directory.
 
 # Import Easy3D for 3D geometry processing and visualization.
 import easy3d

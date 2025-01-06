@@ -17,7 +17,7 @@
 # please refer to: https://github.com/LiangliangNan/Easy3D/blob/main/ReadMe.md
 # -------------------------------------------------------------------------------
 import sys
-sys.path.append("../../cmake-build-release/lib/python")
+sys.path.append("../../build/lib/python")  # Update this path to point to your Easy3D build directory.
 
 # Importing necessary libraries
 import easy3d           # Easy3D library for 3D visualization and processing

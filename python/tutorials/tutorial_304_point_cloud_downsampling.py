@@ -18,7 +18,7 @@
 # step is not necessary. For building and installing Python bindings of Easy3D,
 # # please refer to: https://github.com/LiangliangNan/Easy3D/blob/main/ReadMe.md
 import sys
-sys.path.append("../../cmake-build-release/lib/python")  # Update this path as needed
+sys.path.append("../../build/lib/python")  # Update this path to point to your Easy3D build directory.
 
 # Importing Easy3D and Initializing the Library
 # Initialization is required before using Easy3D, and the 'True' parameter enables
