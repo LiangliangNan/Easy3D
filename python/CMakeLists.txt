@@ -159,11 +159,20 @@ file(WRITE ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/__init__.py
 # Path to the compiled module
 set(COMPILED_MODULE "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${MODULE_NAME}${MODULE_SUFFIX}")
 
-# Post-build command to copy compiled module to the Python package directory
+# Post-build command to copy the compiled module and its dependencies to the Python package directory
 add_custom_command(
         TARGET ${PROJECT_NAME} POST_BUILD
+#        COMMAND ${CMAKE_COMMAND} -E make_directory ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/   # Already created by "file(MAKE_DIRECTORY ...)"
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-        COMMENT "Copying ${MODULE_NAME} module to Python package"
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:easy3d::algo> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:easy3d::core> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:easy3d::fileio> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:easy3d::kdtree> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:easy3d::renderer> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:easy3d::util> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:easy3d::viewer> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
+#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:OtherDependency1> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
+        COMMENT "Copying ${PROJECT_NAME} module and dependencies to Python package"
 )
 
 # Copy setup.py to the Python package directory
