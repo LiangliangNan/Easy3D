@@ -30,7 +30,7 @@ jobs:
           sudo apt-get update || true
           sudo apt-get install -y cmake build-essential libgl1-mesa-dev \
               mesa-common-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev \
-              libcgal-dev qt6-base-dev libwxgtk3.2-dev \
+              libcgal-dev qt6-base-dev \
               libavcodec-dev libavformat-dev libswscale-dev libavutil-dev
 
       - name: Install Dependencies (macOS)
@@ -44,7 +44,7 @@ jobs:
         run: |
           git clone https://github.com/microsoft/vcpkg.git
           .\vcpkg\bootstrap-vcpkg.bat
-          .\vcpkg\vcpkg install cgal qtbase ffmpeg --triplet x64-windows
+          .\vcpkg\vcpkg install cgal qtbase ffmpeg wxwidgets --triplet x64-windows
 
       # Configure the project
       - name: Configure (Linux & macOS)
