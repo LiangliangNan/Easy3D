@@ -30,14 +30,14 @@ jobs:
           sudo apt-get update || true
           sudo apt-get install -y cmake build-essential libgl1-mesa-dev \
               mesa-common-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev \
-              libcgal-dev qt6-base-dev \
+              libcgal-dev qt6-base-dev libwxgtk3.2-dev \
               libavcodec-dev libavformat-dev libswscale-dev libavutil-dev
 
       - name: Install Dependencies (macOS)
         if: runner.os == 'macOS'
         run: |
           brew update || true
-          brew install cmake cgal qt ffmpeg
+          brew install cmake cgal qt ffmpeg wxwidgets
 
       - name: Install Dependencies (Windows)
         if: runner.os == 'Windows'
