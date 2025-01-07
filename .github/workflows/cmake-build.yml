@@ -45,8 +45,10 @@ jobs:
           # Install vcpkg
           git clone https://github.com/microsoft/vcpkg.git
           .\vcpkg\bootstrap-vcpkg.bat
+          # Update vcpkg to the latest version
+          .\vcpkg\vcpkg update
           # Install required dependencies
-          .\vcpkg\vcpkg install cgal qt6-base ffmpeg --triplet x64-windows
+          .\vcpkg\vcpkg install cgal qtbase ffmpeg --triplet x64-windows
 
       # Configure the project
       - name: Configure (Linux & macOS)
