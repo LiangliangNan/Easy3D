@@ -1,5 +1,5 @@
 ##############################################################################
-# GitHub Actions Workflow to test building PolyFit on Windows, Ubuntu, and macOS.
+# GitHub Actions Workflow to test building Easy3D on Windows, Ubuntu, and macOS.
 #
 # Copyright (C) 2022 Liangliang Nan <liangliang.nan@gmail.com>
 #
@@ -42,29 +42,9 @@ jobs:
       - name: Install Dependencies (Windows)
         if: runner.os == 'Windows'
         run: |
-          # Download and extract prebuilt Qt6
-          curl -L -o qt6.zip https://example.com/path/to/qt6-prebuilt.zip
-          Expand-Archive -Path qt6.zip -DestinationPath C:\Qt6
-          # Add Qt6 to PATH
-          echo "C:\Qt6\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
-          # Download and extract prebuilt CGAL
-          curl -L -o cgal.zip https://example.com/path/to/cgal-prebuilt.zip
-          Expand-Archive -Path cgal.zip -DestinationPath C:\CGAL
-          # Add CGAL to PATH
-          echo "C:\CGAL\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
-          # Download and extract prebuilt FFmpeg
-          curl -L -o ffmpeg.zip https://example.com/path/to/ffmpeg-prebuilt.zip
-          Expand-Archive -Path ffmpeg.zip -DestinationPath C:\FFmpeg
-          # Add FFmpeg to PATH
-          echo "C:\FFmpeg\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
-          # Install CMake using Chocolatey
-          Set-ExecutionPolicy Bypass -Scope Process -Force
-          [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
-          Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-          choco install cmake --installargs '"ADD_CMAKE_TO_PATH=System"'
+          git clone https://github.com/microsoft/vcpkg.git
+          .\vcpkg\bootstrap-vcpkg.bat
+          .\vcpkg\vcpkg install cgal qtbase ffmpeg --triplet x64-windows
 
       # Configure the project
       - name: Configure (Linux & macOS)
@@ -86,6 +66,7 @@ jobs:
           cmake -S . -B build\${{ matrix.build_type }} ^
                 -G "Visual Studio 17 2022" ^
                 -A x64 ^
+                -DCMAKE_TOOLCHAIN_FILE="%cd%\vcpkg\scripts\buildsystems\vcpkg.cmake" ^
                 -DEasy3D_BUILD_PYTHON_BINDINGS=ON ^
                 -DEasy3D_BUILD_TUTORIALS=ON ^
                 -DEasy3D_BUILD_TESTS=ON ^
