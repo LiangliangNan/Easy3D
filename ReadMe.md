@@ -151,18 +151,18 @@ There are many options to build Easy3D. Choose one of the following (not an exha
 - Make sure you have [Python](https://www.python.org/downloads/) installed. 
 Then switch on the CMake option `Easy3D_BUILD_PYTHON_BINDINGS`, run CMake, and then build. After building Easy3D, you 
 can find the Python bindings module `PyEasy3D` (`PyEasy3D.pyd` on Windows, `PyEasy3D.so` on macOS/Linux) in 
-`YOUR_BUILD_DIRECTORY/lib/python/easy3d`. Before using it in your Python code, you need to simply 
-copy the dependencies into the above directory. More details can be found [here](python/dependencies.md).
-A unified installation/setup procedure will be implemented (when I have more spare time...).
+`YOUR_BUILD_DIRECTORY/lib/python/easy3d`. 
+A unified installation/setup procedure will be provided soon (only if I have more spare time...).
   
 Do not have any experience with C/C++ programming? 
 Have a look at <a href="https://github.com/LiangliangNan/Easy3D/blob/main/HowToBuild.md">How to build Easy3D step by 
 step</a>.
 
 ### Test Easy3D
-A test suite is provided in the `tests` subfolder, which contains a collection of automated test cases (for data 
-structures, IO, algorithms, visualization, etc.) and some semi-automated test cases (for GUI-related functionalities 
-that require interactive user input). All cases are integrated into the single target `tests`.
+A test suite is provided in the [`tests`](./tests) subfolder (and [`test`](./python/test) for Python users), which 
+contains a collection of automated test cases (for data structures, IO, algorithms, visualization, etc.) and some 
+semi-automated test cases (for GUI-related functionalities that require interactive user input). All cases are 
+integrated into the single target `tests`.
 
 To build and run the test suite, download the entire source, use the `CMakeLists.txt` in the root directory of the 
 repository, switch on the CMake option `Easy3D_BUILD_TESTS` (which is disabled by default), and run CMake. After CMake, 
