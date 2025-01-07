@@ -42,13 +42,16 @@ jobs:
       - name: Install Dependencies (Windows)
         if: runner.os == 'Windows'
         run: |
-          # Install vcpkg
-          git clone https://github.com/microsoft/vcpkg.git
-          .\vcpkg\bootstrap-vcpkg.bat
-          # Update vcpkg to the latest version
-          #.\vcpkg\vcpkg update
-          # Install required dependencies
-          .\vcpkg\vcpkg install cgal qtbase ffmpeg --triplet x64-windows
+          # Install Chocolatey (if not already installed)
+          Set-ExecutionPolicy Bypass -Scope Process -Force
+          [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
+          Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+
+          # Install dependencies
+          choco install cmake --installargs '"ADD_CMAKE_TO_PATH=System"'
+          choco install cgal
+          choco install qt --version=6.0
+          choco install ffmpeg
 
       # Configure the project
       - name: Configure (Linux & macOS)
@@ -70,7 +73,6 @@ jobs:
           cmake -S . -B build\${{ matrix.build_type }} ^
                 -G "Visual Studio 17 2022" ^
                 -A x64 ^
-                -DCMAKE_TOOLCHAIN_FILE="%cd%\vcpkg\scripts\buildsystems\vcpkg.cmake" ^
                 -DEasy3D_BUILD_PYTHON_BINDINGS=ON ^
                 -DEasy3D_BUILD_TUTORIALS=ON ^
                 -DEasy3D_BUILD_TESTS=ON ^
