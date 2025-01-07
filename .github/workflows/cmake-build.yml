@@ -25,18 +25,22 @@ jobs:
         run: |
           sudo apt-get update || true
           sudo apt-get install -y cmake build-essential libgl1-mesa-dev \
-              mesa-common-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+              mesa-common-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev \
+              libcgal-dev qt6-base-dev ffmpeg
 
       - name: Install Dependencies (macOS)
         if: runner.os == 'macOS'
         run: |
           brew update || true
-          brew install cmake
+          brew install cmake cgal qt@6 ffmpeg
 
       - name: Install Dependencies (Windows)
         if: runner.os == 'Windows'
         run: |
           choco install cmake --installargs '"ADD_CMAKE_TO_PATH=System"'
+          choco install cgal --version=5.6
+          choco install qt --version=6.0
+          choco install ffmpeg --version=4.7
 
       # Configure the project
       - name: Configure (Linux & macOS)
@@ -44,9 +48,13 @@ jobs:
         run: |
           cmake -S . -B build/${{ matrix.build_type }} \
                 -G "Unix Makefiles" \
+                -DEasy3D_BUILD_SHARED_LIBS=ON \
                 -DEasy3D_BUILD_PYTHON_BINDINGS=ON \
                 -DEasy3D_BUILD_TUTORIALS=ON \
-                -DEasy3D_BUILD_TESTS=ON
+                -DEasy3D_BUILD_TESTS=ON \
+                -DEasy3D_ENABLE_CGAL=ON \
+                -DEasy3D_ENABLE_QT=ON \
+                -DEasy3D_ENABLE_FFMPEG=ON
 
       - name: Configure (Windows)
         if: runner.os == 'Windows'
@@ -55,9 +63,13 @@ jobs:
           cmake -S . -B build\${{ matrix.build_type }} ^
                 -G "Visual Studio 17 2022" ^
                 -A x64 ^
+                -DEasy3D_BUILD_SHARED_LIBS=ON \
                 -DEasy3D_BUILD_PYTHON_BINDINGS=ON ^
                 -DEasy3D_BUILD_TUTORIALS=ON ^
-                -DEasy3D_BUILD_TESTS=ON
+                -DEasy3D_BUILD_TESTS=ON ^
+                -DEasy3D_ENABLE_CGAL=ON ^
+                -DEasy3D_ENABLE_QT=ON ^
+                -DEasy3D_ENABLE_FFMPEG=ON
 
       # Build the project
       - name: Build (Linux & macOS)
