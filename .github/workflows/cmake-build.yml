@@ -41,13 +41,16 @@ jobs:
 
       - name: Install Dependencies (Windows)
         if: runner.os == 'Windows'
+        shell: cmd
+        env:
+          VCPKG_BINARY_SOURCES: "clear;default,readwrite"
         run: |
           git clone https://github.com/microsoft/vcpkg.git
           .\vcpkg\bootstrap-vcpkg.bat
           .\vcpkg\vcpkg install boost gmp mpfr cgal wxwidgets --triplet x64-windows
 
           pip install aqtinstall
-          python -m aqt install-qt windows desktop 6.5.2 win64_msvc2019_64 --outputdir C:/Qt
+          python -m aqt install-qt windows desktop 6.5.2 win64_msvc2022_64 --outputdir C:/Qt
 
       # Configure the project
       - name: Configure (Linux & macOS)
@@ -66,9 +69,9 @@ jobs:
         if: runner.os == 'Windows'
         shell: cmd
         run: |
-          cmake -S . -B build\${{ matrix.build_type }} -G "Visual Studio 16 2019" -A x64 ^
+          cmake -S . -B build\${{ matrix.build_type }} -G "Visual Studio 17 2022" -A x64 ^
                 -DCMAKE_TOOLCHAIN_FILE="C:/vcpkg/scripts/buildsystems/vcpkg.cmake" ^
-                -DCMAKE_PREFIX_PATH="C:/Qt/6.5.2/msvc2019_64" ^
+                -DCMAKE_PREFIX_PATH="C:/Qt/6.5.2/msvc2022_64" ^
                 -DEasy3D_BUILD_PYTHON_BINDINGS=ON ^
                 -DEasy3D_BUILD_TUTORIALS=ON ^
                 -DEasy3D_BUILD_TESTS=ON ^
