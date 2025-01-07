@@ -228,8 +228,119 @@ else()
   # It is invalid to install a target twice, too.
   set(PYBIND11_INSTALL OFF)
 endif()
-#
+
 include("${CMAKE_CURRENT_SOURCE_DIR}/tools/pybind11Common.cmake")
-## https://github.com/jtojnar/cmake-snips/#concatenating-paths-when-building-pkg-config-files
-## TODO: cmake 3.20 adds the cmake_path() function, which obsoletes this snippet
-#include("${CMAKE_CURRENT_SOURCE_DIR}/tools/JoinPaths.cmake")
+# https://github.com/jtojnar/cmake-snips/#concatenating-paths-when-building-pkg-config-files
+# TODO: cmake 3.20 adds the cmake_path() function, which obsoletes this snippet
+include("${CMAKE_CURRENT_SOURCE_DIR}/tools/JoinPaths.cmake")
+
+# Relative directory setting
+if(USE_PYTHON_INCLUDE_DIR AND DEFINED Python_INCLUDE_DIRS)
+  file(RELATIVE_PATH CMAKE_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_PREFIX} ${Python_INCLUDE_DIRS})
+elseif(USE_PYTHON_INCLUDE_DIR AND DEFINED PYTHON_INCLUDE_DIR)
+  file(RELATIVE_PATH CMAKE_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_PREFIX} ${PYTHON_INCLUDE_DIRS})
+endif()
+
+if(PYBIND11_INSTALL)
+  install(DIRECTORY ${pybind11_INCLUDE_DIR}/pybind11 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+  set(PYBIND11_CMAKECONFIG_INSTALL_DIR
+      "${CMAKE_INSTALL_DATAROOTDIR}/cmake/${PROJECT_NAME}"
+      CACHE STRING "install path for pybind11Config.cmake")
+
+  if(IS_ABSOLUTE "${CMAKE_INSTALL_INCLUDEDIR}")
+    set(pybind11_INCLUDEDIR "${CMAKE_INSTALL_FULL_INCLUDEDIR}")
+  else()
+    set(pybind11_INCLUDEDIR "\$\{PACKAGE_PREFIX_DIR\}/${CMAKE_INSTALL_INCLUDEDIR}")
+  endif()
+
+  configure_package_config_file(
+    tools/${PROJECT_NAME}Config.cmake.in "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+    INSTALL_DESTINATION ${PYBIND11_CMAKECONFIG_INSTALL_DIR})
+
+  # CMake natively supports header-only libraries
+  write_basic_package_version_file(
+    ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY AnyNewerVersion ARCH_INDEPENDENT)
+
+  install(
+    FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+          ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
+          tools/FindPythonLibsNew.cmake
+          tools/pybind11Common.cmake
+          tools/pybind11Tools.cmake
+          tools/pybind11NewTools.cmake
+          tools/pybind11GuessPythonExtSuffix.cmake
+    DESTINATION ${PYBIND11_CMAKECONFIG_INSTALL_DIR})
+
+  if(NOT PYBIND11_EXPORT_NAME)
+    set(PYBIND11_EXPORT_NAME "${PROJECT_NAME}Targets")
+  endif()
+
+  install(TARGETS pybind11_headers EXPORT "${PYBIND11_EXPORT_NAME}")
+
+  install(
+    EXPORT "${PYBIND11_EXPORT_NAME}"
+    NAMESPACE "pybind11::"
+    DESTINATION ${PYBIND11_CMAKECONFIG_INSTALL_DIR})
+
+  # pkg-config support
+  if(NOT prefix_for_pc_file)
+    if(IS_ABSOLUTE "${CMAKE_INSTALL_DATAROOTDIR}")
+      set(prefix_for_pc_file "${CMAKE_INSTALL_PREFIX}")
+    else()
+      set(pc_datarootdir "${CMAKE_INSTALL_DATAROOTDIR}")
+      if(CMAKE_VERSION VERSION_LESS 3.20)
+        set(prefix_for_pc_file "\${pcfiledir}/..")
+        while(pc_datarootdir)
+          get_filename_component(pc_datarootdir "${pc_datarootdir}" DIRECTORY)
+          string(APPEND prefix_for_pc_file "/..")
+        endwhile()
+      else()
+        cmake_path(RELATIVE_PATH CMAKE_INSTALL_PREFIX BASE_DIRECTORY CMAKE_INSTALL_DATAROOTDIR
+                   OUTPUT_VARIABLE prefix_for_pc_file)
+      endif()
+    endif()
+  endif()
+  join_paths(includedir_for_pc_file "\${prefix}" "${CMAKE_INSTALL_INCLUDEDIR}")
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/tools/pybind11.pc.in"
+                 "${CMAKE_CURRENT_BINARY_DIR}/pybind11.pc" @ONLY)
+  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/pybind11.pc"
+          DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig/")
+
+  # Uninstall target
+  if(PYBIND11_MASTER_PROJECT)
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/tools/cmake_uninstall.cmake.in"
+                   "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake" IMMEDIATE @ONLY)
+
+    add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P
+                                        ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
+  endif()
+endif()
+
+# BUILD_TESTING takes priority, but only if this is the master project
+if(PYBIND11_MASTER_PROJECT AND DEFINED BUILD_TESTING)
+  if(BUILD_TESTING)
+    if(_pybind11_nopython)
+      message(FATAL_ERROR "Cannot activate tests in NOPYTHON mode")
+    else()
+      add_subdirectory(tests)
+    endif()
+  endif()
+else()
+  if(PYBIND11_TEST)
+    if(_pybind11_nopython)
+      message(FATAL_ERROR "Cannot activate tests in NOPYTHON mode")
+    else()
+      add_subdirectory(tests)
+    endif()
+  endif()
+endif()
+
+# Better symmetry with find_package(pybind11 CONFIG) mode.
+if(NOT PYBIND11_MASTER_PROJECT)
+  set(pybind11_FOUND
+      TRUE
+      CACHE INTERNAL "True if pybind11 and all required components found on the system")
+endif()
+
