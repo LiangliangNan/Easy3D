@@ -41,9 +41,6 @@ jobs:
 
       - name: Install Dependencies (Windows)
         if: runner.os == 'Windows'
-        shell: cmd
-        env:
-          VCPKG_BINARY_SOURCES: "clear;default,readwrite"
         run: |
           git clone https://github.com/microsoft/vcpkg.git
           .\vcpkg\bootstrap-vcpkg.bat
