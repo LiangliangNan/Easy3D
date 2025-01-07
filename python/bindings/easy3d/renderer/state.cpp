@@ -1,5 +1,7 @@
 #include <easy3d/core/vec.h>
 #include <easy3d/renderer/state.h>
+#include <easy3d/renderer/texture.h>
+#include <easy3d/renderer/texture_manager.h>
 
 #include <memory>
 #include <utility>
@@ -47,6 +49,17 @@ void bind_easy3d_renderer_state(pybind11::module_& m)
 
         cl.def("set_scalar_coloring", [](easy3d::State &self, enum easy3d::State::Location const & scalar_location, const std::string &scalar_name) -> void { return self.set_scalar_coloring(scalar_location, scalar_name); }, "Constructs a scheme for rendering scalar fields.", pybind11::arg("scalar_location"), pybind11::arg("scalar_name"));
         cl.def("set_scalar_coloring", (void (easy3d::State::*)(enum easy3d::State::Location, const std::string &)) &easy3d::State::set_scalar_coloring, "Constructs a scheme for rendering scalar fields.", pybind11::arg("scalar_location"), pybind11::arg("scalar_name"));
+
+        cl.def("set_texture", [](easy3d::State &self, const std::string &texture_file, bool repeat = false) -> void {
+                   auto tex = easy3d::TextureManager::request(texture_file, repeat ? easy3d::Texture::REPEAT : easy3d::Texture::CLAMP_TO_EDGE);
+                   if (tex)
+                       self.set_texture(tex);
+                   else
+                       LOG(ERROR) << "failed to create texture from " << texture_file;
+               },
+               "Set the texture for rendering scalar fields or texture maps. The texture will be created from the specified texture file.",
+               pybind11::arg("texture_file"), pybind11::arg("repeat") = false
+        );
 
         cl.def("set_coloring", (void (easy3d::State::*)(enum easy3d::State::Method, enum easy3d::State::Location, const std::string &)) &easy3d::State::set_coloring, "Sets the coloring. A generic version of the set_[method]_coloring() method.\n \n\n The coloring method.\n \n\n The the location of the coloring property.\n \n\n The name of the coloring property.\n \n\n The texture for the coloring.\n\nC++: easy3d::State::set_coloring(enum easy3d::State::Method, enum easy3d::State::Location, const std::string &) --> void", pybind11::arg("method"), pybind11::arg("location"), pybind11::arg("name"));
 		cl.def("set_coloring_method", (void (easy3d::State::*)(enum easy3d::State::Method)) &easy3d::State::set_coloring_method, "Sets the coloring method.\n \n\n It has the same effect as if set_coloring() is called without changing the location (2nd argument)\n      and name (3rd argument) of the coloring property. \n\n set_coloring()\n \n\n The coloring method.\n\nC++: easy3d::State::set_coloring_method(enum easy3d::State::Method) --> void", pybind11::arg("method"));

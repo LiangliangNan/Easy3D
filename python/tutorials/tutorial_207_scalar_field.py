@@ -89,21 +89,14 @@ drawable.set_scalar_coloring(
 )
 
 # -----------------------------------------------------------------------------
-# ToDo: Use a Custom Colormap.
-#       This requires to expose Texture and TextureManager to Python.
+# Optional: Use a Custom Colormap.
 # -----------------------------------------------------------------------------
-# Easy3D allows you to use custom textures as colormaps (availabe for C++ users).
-# For example, you can use a colormap like "rainbow.png" to visualize scalar fields.
-#
-# Uncomment the following lines to load and apply a custom colormap. Make sure
+# Easy3D allows you to use custom textures as colormaps. For example, you can use
+# a colormap like "rainbow.png" to visualize scalar fields.
+# Uncomment the following two lines to load and apply a custom colormap. Make sure
 # the colormap file exists in the Easy3D resource directory.
-#
-# texture_file = easy3d.resource_directory() + "/colormaps/rainbow.png"
-# texture = easy3d.TextureManager.request(texture_file)
-# if not texture:
-#     print("Failed to create texture.")
-#     sys.exit(1)
-# drawable.set_texture(texture)
+texture_file = easy3d.resource_directory() + "/colormaps/rainbow.png"
+drawable.set_texture(texture_file)
 
-# Run the viewer to display the surface mesh and the scalar field. T
+# Run the viewer to display the surface mesh and the scalar field.
 viewer.run()
