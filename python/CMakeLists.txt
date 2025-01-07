@@ -139,7 +139,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
         FOLDER "python"
         )
 
-
+     
 
 # The following commands are actually not necessary for generating bindings.
 # They are here to make it easier for the installation of the generated Python module.
@@ -160,19 +160,37 @@ file(WRITE ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/__init__.py
 set(COMPILED_MODULE "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${MODULE_NAME}${MODULE_SUFFIX}")
 
 # Post-build command to copy the compiled module and its dependencies to the Python package directory
-add_custom_command(
-        TARGET ${PROJECT_NAME} POST_BUILD
-#        COMMAND ${CMAKE_COMMAND} -E make_directory ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/   # Already created by "file(MAKE_DIRECTORY ...)"
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:easy3d::algo> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:easy3d::core> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:easy3d::fileio> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:easy3d::kdtree> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:easy3d::renderer> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:easy3d::util> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:easy3d::viewer> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:OtherDependency1> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-        COMMENT "Copying ${PROJECT_NAME} module and dependencies to Python package"
+# Liangliang: the following command works well on Windows/macOS (Linux not tested)
+#add_custom_command(
+#        TARGET ${PROJECT_NAME} POST_BUILD
+##        COMMAND ${CMAKE_COMMAND} -E make_directory ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/   # Already created by "file(MAKE_DIRECTORY ...)"
+#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
+#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:easy3d::algo> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
+#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:easy3d::core> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
+#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:easy3d::fileio> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
+#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:easy3d::kdtree> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
+#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:easy3d::renderer> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
+#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:easy3d::util> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
+#        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:easy3d::viewer> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
+##        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:OtherDependency1> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
+#        COMMENT "Copying ${PROJECT_NAME} module and dependencies to Python package"
+#)
+
+
+# Post-build command to copy the compiled module and its dependencies to Python package directory
+# TARGET_FILE_DIR: Refers to the output directory of the .pyd file.
+# TARGET_RUNTIME_DLLS: Automatically finds all DLL dependencies of the PyEasy3D target.
+# COMMAND_EXPAND_LISTS: Ensures that the DLL list expands correctly in the cmake -E copy command.
+# Liangliang: the following command works well on Windows, but not sure if it works on macOS/Linux
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E echo "Copying the compiled module ${MODULE_NAME}${MODULE_SUFFIX} to ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/..."
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different  $<TARGET_FILE:${PROJECT_NAME}> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
+  COMMAND ${CMAKE_COMMAND} -E echo "Copying the runtime DLLs of ${MODULE_NAME}${MODULE_SUFFIX} to ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/..."
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different  $<TARGET_RUNTIME_DLLS:${PROJECT_NAME}> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
+  # Liangliang: normally we need this:
+  # COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:${PROJECT_NAME}> $<TARGET_FILE_DIR:${PROJECT_NAME}>
+  COMMAND_EXPAND_LISTS
+  COMMENT "Copying ${PROJECT_NAME} module and dependencies to Python package directory"
 )
 
 # Copy setup.py to the Python package directory

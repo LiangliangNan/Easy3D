@@ -152,7 +152,7 @@ There are many options to build Easy3D. Choose one of the following (not an exha
 Then switch on the CMake option `Easy3D_BUILD_PYTHON_BINDINGS`, run CMake, and then build. After building Easy3D, you 
 can find the Python bindings module `PyEasy3D` (`PyEasy3D.pyd` on Windows, `PyEasy3D.so` on macOS/Linux) in 
 `YOUR_BUILD_DIRECTORY/lib/python/easy3d`. Before using it in your Python code, you need to simply 
-copy the dependencies into the above directory. More details can be found [here](./python/private/dependencies.md).
+copy the dependencies into the above directory. More details can be found [here](python/dependencies.md).
 A unified installation/setup procedure will be implemented (when I have more spare time...).
   
 Do not have any experience with C/C++ programming? 

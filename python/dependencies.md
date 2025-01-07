@@ -17,6 +17,7 @@ The `PyEasy3D` module depends on the following Easy3D libraries:
 - `easy3d_algo.dll` (or `.so`/`.dylib`)
 - `easy3d_core.dll` (or `.so`/`.dylib`)
 - `easy3d_fileio.dll` (or `.so`/`.dylib`)
+- `easy3d_gui.dll` (or `.so`/`.dylib`)
 - `easy3d_kdtree.dll` (or `.so`/`.dylib`)
 - `easy3d_renderer.dll` (or `.so`/`.dylib`)
 - `easy3d_util.dll` (or `.so`/`.dylib`)
