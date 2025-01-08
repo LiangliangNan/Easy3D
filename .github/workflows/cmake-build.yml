@@ -46,7 +46,7 @@ jobs:
           architecture: x64
           activate-environment: Easy3DDev
           auto-activate-base: false
-          environment-file: .ci/conda-win.yml
+          environment-file: ./conda-win.yml
 
       # Configure the project
       - name: Configure (Linux & macOS)
