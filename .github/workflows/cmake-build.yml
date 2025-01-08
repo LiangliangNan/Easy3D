@@ -50,12 +50,14 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash -l {0}
         run: |
-          conda install \
+          conda config --add channels conda-forge
+          conda config --add channels defaults
+          conda install -y \
             ninja \
             conda-forge::qt6-main \
             conda-forge::wxwidgets \
             conda-forge::cgal \
-            conda-forge::ffmpeg
+            conda-forge::ffmpeg || exit 1
 
       # Configure the project
       - name: Configure (Linux & macOS)
