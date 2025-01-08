@@ -72,6 +72,14 @@ set(Easy3D_EXPORT_INCLUDE_DIR "${Easy3D_BINARY_DIR}/include")
 # See https://cmake.org/Wiki/CMake_RPATH_handling
 set(CMAKE_INSTALL_RPATH ${Easy3D_INSTALL_LIB_DIR} CACHE PATH "Installation runtime directory" FORCE)
 
+if ( MSVC )
+    # multithreaded compilation with MSVC
+    option(Easy3D_MP_BUILD "Check to activate multithreaded compilation with MSVC" OFF )
+    if( ${OPTION_MP_BUILD} )
+        set( CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS}\ /MP)
+    endif()
+endif()
+
 ################################################################################
 
 ### Configuration
