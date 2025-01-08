@@ -3,7 +3,7 @@ channels:
   - conda-forge
 dependencies:
   - ninja
-  - qt=6.7.*
+  - qt=6.1.*
   - cgal=5.6.*
   - ffmpeg=6.1.*
   - wxwidgets=3.2.*
