@@ -46,7 +46,16 @@ jobs:
           architecture: x64
           activate-environment: Easy3DDev
           auto-activate-base: false
-          environment-file: .github/workflows/conda-win.yml
+      - name: Install Conda Packages (Windows)
+        if: runner.os == 'Windows'
+        shell: bash -l {0}
+        run: |
+          conda install \
+            ninja \
+            conda-forge::qt6-main \
+            conda-forge::wxwidgets \
+            conda-forge::cgal \
+            conda-forge::ffmpeg
 
       # Configure the project
       - name: Configure (Linux & macOS)
