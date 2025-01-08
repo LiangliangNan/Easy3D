@@ -41,11 +41,12 @@ jobs:
 
       - name: Install Dependencies (Windows)
         if: runner.os == 'Windows'
-        run: |
-          git clone https://github.com/microsoft/vcpkg.git
-          .\vcpkg\bootstrap-vcpkg.bat
-          .\vcpkg\vcpkg update
-          .\vcpkg\vcpkg install cgal qtbase ffmpeg wxwidgets --triplet x64-windows
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          architecture: x64
+          activate-environment: Easy3DDev
+          auto-activate-base: false
+          environment-file: .ci/conda-win.yml
 
       # Configure the project
       - name: Configure (Linux & macOS)
@@ -62,17 +63,17 @@ jobs:
 
       - name: Configure (Windows)
         if: runner.os == 'Windows'
-        shell: cmd
+        shell: bash -l {0}
         run: |
-          cmake -S . -B build\${{ matrix.build_type }} ^
-                -G "Visual Studio 17 2022" ^
-                -A x64 ^
-                -DCMAKE_TOOLCHAIN_FILE="%cd%\vcpkg\scripts\buildsystems\vcpkg.cmake" ^
-                -DEasy3D_BUILD_PYTHON_BINDINGS=ON ^
-                -DEasy3D_BUILD_TUTORIALS=ON ^
-                -DEasy3D_BUILD_TESTS=ON ^
-                -DEasy3D_ENABLE_CGAL=ON ^
-                -DEasy3D_ENABLE_QT=ON ^
+          cmake -S . -B build/${{ matrix.build_type }} \
+                -G "Ninja" \
+                -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+                -DCMAKE_PREFIX_PATH="$CONDA_PREFIX/Library" \
+                -DEasy3D_BUILD_PYTHON_BINDINGS=ON \
+                -DEasy3D_BUILD_TUTORIALS=ON \
+                -DEasy3D_BUILD_TESTS=ON \
+                -DEasy3D_ENABLE_CGAL=ON \
+                -DEasy3D_ENABLE_QT=ON \
                 -DEasy3D_ENABLE_FFMPEG=ON
 
       # Build the project
@@ -82,5 +83,5 @@ jobs:
 
       - name: Build (Windows)
         if: runner.os == 'Windows'
-        shell: cmd
-        run: cmake --build build\${{ matrix.build_type }} --config ${{ matrix.build_type }}
+        shell: bash -l {0}
+        run: cmake --build build/${{ matrix.build_type }} --config ${{ matrix.build_type }}
