@@ -21,3 +21,25 @@
 * Long term:
     - support Vulkan.
     - Python bindings.
+
+
+
+Missing or Invalid Code Signature:
+The application or one of its dependencies is not properly code-signed.
+
+Solution: 
+1)Re-sign the Application and Libraries
+Re-sign the application and all its dependencies using the codesign tool. Ensure that all libraries and frameworks are properly signed.
+
+bash
+codesign --force --deep --sign - Mapple.app
+--force: Overwrite any existing code signature.
+--deep: Recursively sign all nested binaries and libraries.
+--sign -: Use an ad-hoc signature (for development). Replace - with your code signing identity for distribution.
+
+2) Verify Code Signatures
+Use the codesign tool to verify the code signatures of the application and its dependencies:
+
+bash
+codesign --verify --deep --strict Mapple.app
+If there are any issues, the tool will provide detailed error messages.
