@@ -15,7 +15,7 @@
 void bind_easy3d_algo_surface_mesh_hole_filling(pybind11::module_& m)
 {
 	{ // easy3d::SurfaceMeshHoleFilling file:easy3d/algo/surface_mesh_hole_filling.h line:31
-		pybind11::class_<easy3d::SurfaceMeshHoleFilling, std::shared_ptr<easy3d::SurfaceMeshHoleFilling>> cl(m, "SurfaceMeshHoleFilling", "This class closes simple holes in a surface mesh.\n \n\n\n \n It closes simple holes (boundary loops of manifold vertices) by first filling the hole with an\n angle/area-minimizing triangulation, followed by isometric remeshing, and finished by curvature-minimizing\n fairing of the filled-in patch. See the following paper for more details:\n  - Peter Liepa. Filling holes in meshes. SGP, pages 200–205, 2003.");
+		pybind11::class_<easy3d::SurfaceMeshHoleFilling, std::shared_ptr<easy3d::SurfaceMeshHoleFilling>> cl(m, "SurfaceMeshHoleFilling", "This class closes simple holes in a surface mesh.\n \n\n\n \n It closes simple holes (boundary loops of manifold vertices) by first filling the hole with an\n angle/area-minimizing triangulation, followed by isometric remeshing, and finished by curvature-minimizing\n fairing of the filled-in patch. See the following paper for more details:\n  - Peter Liepa. Filling holes in meshes. SGP, pages 200-205, 2003.");
 		cl.def( pybind11::init<class easy3d::SurfaceMesh *>(), pybind11::arg("mesh") );
 
         cl.def(pybind11::init(
