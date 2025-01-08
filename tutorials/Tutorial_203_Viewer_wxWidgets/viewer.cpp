@@ -43,7 +43,6 @@
 #include <easy3d/renderer/opengl_util.h>
 #include <easy3d/renderer/opengl_error.h>
 #include <easy3d/renderer/renderer.h>
-#include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/transform.h>

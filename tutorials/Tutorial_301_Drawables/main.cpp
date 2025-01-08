@@ -25,7 +25,6 @@
  ********************************************************************/
 
 #include <easy3d/viewer/viewer.h>
-#include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_triangles.h>
@@ -46,9 +45,10 @@ using namespace easy3d;
 //
 // This example shows how to
 //      - visualize 3D data without explicitly defining a model (i.e., rendering drawables directly);
-//          * a set of triangles;
-//          * a set of points;
-//          * a set of lines.
+//          * a set of points with `PointsDrawable`.
+//          * a set of triangles or a surface using `TrianglesDrawable`.
+//          * a set of edges/lines using `LinesDrawable`.
+//          * a set of edges/lines in screen coordinates using `LinesDrawable2D`.
 //		- create a drawable for a specific rendering purpose;
 //		- use the viewer to visualize drawables.
 

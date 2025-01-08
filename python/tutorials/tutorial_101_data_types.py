@@ -22,6 +22,8 @@ sys.path.append("../../cmake-build-release/lib/python")  # Update this path to p
 # -------------------------------------------------------------------------------
 # Importing Necessary Libraries
 # -------------------------------------------------------------------------------
+# In case you encounter an error like "symbol not found in flat namespace '_PyCode_GetVarnames'", this typically
+# happens the Python version used to run it doesn't match the Python version used to build the bindings of easy3d.
 import easy3d
 
 # -------------------------------------------------------------------------------
