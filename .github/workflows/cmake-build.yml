@@ -39,23 +39,14 @@ jobs:
           brew update || true
           brew install cmake cgal qt ffmpeg wxwidgets
 
-      - name: Install Dependencies (Windows)
+      - name: Install Dependencies and Conda Packages (Windows)
         if: runner.os == 'Windows'
         uses: conda-incubator/setup-miniconda@v3
         with:
           architecture: x64
           activate-environment: Easy3DDev
           auto-activate-base: false
-
-      - name: Configure Conda Channels (Windows)
-        if: runner.os == 'Windows'
-        shell: bash -l {0}
-        run: |
-          conda config --add channels defaults
-          conda config --add channels conda-forge
-
-      - name: Install Conda Packages (Windows)
-        if: runner.os == 'Windows'
+          channels: conda-forge,defaults
         shell: bash -l {0}
         run: |
           conda install -y \
