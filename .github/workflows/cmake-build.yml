@@ -80,6 +80,7 @@ jobs:
                 -G "Ninja" \
                 -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
                 -DCMAKE_PREFIX_PATH="$CONDA_PREFIX/Library" \
+                -DwxWidgets_ROOT_DIR="$CONDA_PREFIX/Library" \
                 -DEasy3D_BUILD_PYTHON_BINDINGS=ON \
                 -DEasy3D_BUILD_TUTORIALS=ON \
                 -DEasy3D_BUILD_TESTS=ON \
