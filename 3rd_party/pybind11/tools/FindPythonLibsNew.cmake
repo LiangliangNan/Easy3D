@@ -332,6 +332,8 @@ if (WIN32)
   # Expose PYTHON_RUNTIME_DLL_NAME to the parent scope or cache
   set(PYTHON_RUNTIME_DLL_NAME "${PYTHON_RUNTIME_DLL_NAME}" CACHE STRING "Name of the Python runtime DLL (e.g., python310.dll)")
   mark_as_advanced(PYTHON_RUNTIME_DLL_NAME)
+elseif (PYTHON_LIBRARIES)
+  message(STATUS "Found Python libraries: ${PYTHON_LIBRARIES}")
 endif ()
 
 #message(STATUS "-------------- PYTHON_EXECUTABLE: ${PYTHON_EXECUTABLE}")
