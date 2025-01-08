@@ -91,7 +91,7 @@ viewer.bind(estimate, point_cloud, easy3d.Viewer.KEY_E, easy3d.Viewer.MODIF_CTRL
 viewer.bind(reorient, point_cloud, easy3d.Viewer.KEY_R, easy3d.Viewer.MODIF_CTRL) # Modifier is optional
 
 # Display usage instructions in the viewer window.
-viewer.set_usage("Usage:\n"
+viewer.set_usage("",
                  "  Ctrl + e: Estimate normals\n"
                  "  Ctrl + r: Reorient normals")
 

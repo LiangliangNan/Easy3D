@@ -32,7 +32,7 @@ namespace easy3d {
     OffScreen::OffScreen(int width, int height)
             : Viewer("Easy3D OffScreen Renderer", 4, 3, 2, false, true, 24, 8, width, height)
     {
-        usage_string_ = "";
+        manual_ = "";
         init();
     }
 

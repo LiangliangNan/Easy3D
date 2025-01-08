@@ -280,7 +280,7 @@ namespace easy3d {
             viewer_size(w, h);
 			ImGui::SetNextWindowPos(ImVec2(w * 0.5f, h * 0.5f), ImGuiCond_FirstUseEver, ImVec2(0.5f, 0.5f));
 			ImGui::Begin("Easy3D Manual", &show_manual, ImGuiWindowFlags_NoResize);
-            ImGui::Text("%s", usage().c_str());
+            ImGui::Text("%s", manual_.c_str());
 			ImGui::End();
 		}
 

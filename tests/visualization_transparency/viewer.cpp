@@ -39,7 +39,7 @@ TransparencyViewer::TransparencyViewer(const std::string& title) : Viewer(title)
 	transparency_ = new DualDepthPeeling(camera());
 	method_ = 2;
 
-    usage_string_ =
+    manual_ =
             "------------------------ Transparency usage ------------------------ \n"
             "Press key 'space' to turn on/off or switch between different transparency techniques\n"
             "Press 'up/down' to increase/decrease the transparency of the current model\n"

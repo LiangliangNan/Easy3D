@@ -88,9 +88,9 @@ viewer.camera().setViewDirection(easy3d.vec3(0, 0, 1))   # Set the view directio
 viewer.camera().setUpVector(easy3d.vec3(0, 1, 0))        # Set the up vector.
 
 # Add instructions for the viewer (optional).
-viewer.set_usage(
-    "- Left: Result of Discrete Harmonic Parameterization.\n"
-    "- Right: Result of Least-Squares Conformal Mapping (LSCM)."
+viewer.set_usage("",
+    "Left view: Discrete Harmonic Parameterization\n"
+    "Right view: Least-Squares Conformal Mapping (LSCM)"
 )
 
 # Launch the viewer

@@ -55,9 +55,9 @@ viewer.add_model(point_cloud)
 viewer.assign(0, 1, point_cloud)
 
 # Add instructions for the viewer (optional).
-viewer.set_usage(
-    "- Left: Original mesh.\n"
-    "- Right: Sampled point cloud."
+viewer.set_usage("",
+    "Left view: Original mesh\n"
+    "Right view: Sampled point cloud"
 )
 
 # The bunny model included in Easy3D has a per-face scalar property, which will be rendered by

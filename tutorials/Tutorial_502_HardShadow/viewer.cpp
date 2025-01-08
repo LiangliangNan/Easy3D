@@ -42,10 +42,7 @@ TutorialHardShadow::TutorialHardShadow(const std::string& title) : Viewer(title)
     shadow_->set_virtual_background_color(background_color());
 	shadow_enabled_ = true;
 
-    usage_string_ =
-            "----------------------- Hard Shadow usage ----------------------- \n"
-            "Press key 'space' to switch between Shadowing and normal rendering\n"
-            "----------------------------------------------------------------- \n";
+    hint_ = "Press 'space' to switch on/off shadowing";
 }
 
 

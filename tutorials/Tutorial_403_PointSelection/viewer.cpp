@@ -38,17 +38,15 @@
 
 using namespace easy3d;
 
+
 PointSelection::PointSelection(const std::string &title) : Viewer(title) {
-    usage_string_ =
-            "-------------- Point Selection usage -------------- \n"
-            "Press Ctrl key, then drag the mouse to select (left button) or deselect (right button) points\n"
-            "--------------------------------------------------- \n";
+    hint_ = "Pressing Shift, drag the mouse to select (left) or deselect (right) points";
 }
 
 
 /// Mouse button press event handler
 bool PointSelection::mouse_press_event(int x, int y, int button, int modifiers) {
-    if (modifiers == MODIF_CTRL) {
+    if (modifiers == MODIF_SHIFT) {
         polygon_.clear();
         polygon_.push_back(vec2(static_cast<float>(x), static_cast<float>(y)));
         return false;
@@ -59,7 +57,7 @@ bool PointSelection::mouse_press_event(int x, int y, int button, int modifiers) 
 
 /// Mouse button release event handler
 bool PointSelection::mouse_release_event(int x, int y, int button, int modifiers) {
-    if (modifiers == MODIF_CTRL) {
+    if (modifiers == MODIF_SHIFT) {
         if (polygon_.size() >= 3) {
             auto cloud = dynamic_cast<PointCloud *>(current_model());
             if (cloud) {
@@ -82,7 +80,7 @@ bool PointSelection::mouse_release_event(int x, int y, int button, int modifiers
 
 /// Mouse drag (i.e., a mouse button was pressed) event handler
 bool PointSelection::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
-    if (modifiers == MODIF_CTRL) {
+    if (modifiers == MODIF_SHIFT) {
 #if USE_LASSO
         polygon_.push_back(vec2(static_cast<float>(x), static_cast<float>(y)));
 #else   // rectangle
@@ -100,6 +98,8 @@ bool PointSelection::mouse_drag_event(int x, int y, int dx, int dy, int button, 
 
 
 void PointSelection::post_draw() {
+    Viewer::post_draw();
+
     if (polygon_.size() >= 3) {
         // draw the boundary of the rect/lasso
         shape::draw_polygon_wire(polygon_, vec4(1.0f, 0.0f, 0.0f, 1.0f), width(), height(), -1.0f);

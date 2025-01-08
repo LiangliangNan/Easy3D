@@ -42,10 +42,7 @@ PickerViewer::PickerViewer(const std::string &title)
     camera()->setViewDirection(vec3(0, 0, -1));
     camera()->setUpVector(vec3(0, 1, 0));
 
-    usage_string_ =
-            "------------ Picker Viewer usage ---------- \n"
-            "Press the left button to pick/unpick a model\n"
-            "------------------------------------------- \n";
+    hint_ = "Press the left button to pick/unpick a model";
 }
 
 

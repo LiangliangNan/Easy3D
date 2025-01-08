@@ -69,9 +69,9 @@ viewer.add_model(copied_mesh)
 viewer.assign(0, 1, copied_mesh)  # Assign it to the right view (row=0, column=1).
 
 # Add instructions for the viewer (optional).
-viewer.set_usage(
-    "- Left: Original mesh.\n"
-    "- Right: Simplified mesh."
+viewer.set_usage("",
+    "Left view: Original mesh\n"
+    "Right view: Simplified mesh"
 )
 
 # Set the camera view direction and up vector for a better view position.

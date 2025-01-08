@@ -94,9 +94,9 @@ viewer.add_model(copied_point_cloud)
 viewer.assign(0, 1, copied_point_cloud)
 
 # Add instructions for the viewer (optional).
-viewer.set_usage(
-    "- Left: Original point cloud.\n"
-    "- Right: Downsampled point cloud."
+viewer.set_usage("",
+    "Left view: Original point cloud\n"
+    "Right view: Downsampled point cloud"
 )
 
 # Launch the viewer.

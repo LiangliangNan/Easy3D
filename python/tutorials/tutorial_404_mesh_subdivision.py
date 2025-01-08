@@ -74,9 +74,9 @@ input.renderer().get_lines_drawable("edges").set_visible(True)    # Set edges/wi
 output.renderer().get_lines_drawable("edges").set_visible(True)   # Set edges/wireframe visible.
 
 # Add instructions for the viewer (optional).
-viewer.set_usage(
-    "- Left: Input mesh.\n"
-    "- Right: Subdivision result."
+viewer.set_usage("",
+    "Left view: Input mesh\n"
+    "Right view: Subdivision result"
 )
 
 # Launch the viewer

@@ -94,10 +94,10 @@ int main(int argc, char **argv) {
     drawable->set_uniform_coloring(vec4(0.6f, 0.6f, 1.0f, 1.0f));
     drawable->set_point_size(3.0f);
 
-    // usage
-    viewer.set_usage("'Ctrl + e': extract planes");
     // set up the function to be executed and its corresponding shortcut
     viewer.bind(extract_plane, model, Viewer::KEY_E, Viewer::MODIF_CTRL);
+    // usage
+    viewer.set_usage("","Ctrl + e: extract planes");
 
     // run the viewer
     return viewer.run();

@@ -42,11 +42,8 @@ TutorialAmbientOcclusion::TutorialAmbientOcclusion(const std::string& title) : V
 	ao_ = new AmbientOcclusion(camera());
 	ao_enabled_ = true;
 
-    usage_string_ =
-            "----------------------- Ambient Occlusion usage ------------------------- \n"
-            "Press key 'space' to switch between Ambient Occlusion and normal rendering\n"
-            "Press 'up/down' to increase/decrease the radius                           \n"
-            "------------------------------------------------------------------------- \n";
+    hint_ = "Press 'space' to switch on/off ambient occlusion\n"
+            "Press 'up/down' to increase/decrease the radius";
 }
 
 
@@ -150,7 +147,7 @@ void TutorialAmbientOcclusion::draw() const {
 		program->release();
 
         const float x = 20.0f * dpi_scaling();
-        const float y = 40.0f * dpi_scaling();
+        const float y = 100.0f * dpi_scaling();
         const float w = static_cast<float>(width()) / 4.0f * dpi_scaling();
         const float h = static_cast<float>(height()) / 4.0f * dpi_scaling();
         const Rect quad(x, x+w, y, y+h);

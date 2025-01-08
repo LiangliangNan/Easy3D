@@ -76,15 +76,20 @@ TutorialCollisionDetection::TutorialCollisionDetection(const std::string &title)
     else
         LOG(WARNING) << "not all the two meshes have been loaded";
 
-    usage_string_ =
+    manual_ =
             "--------------------- Collision Viewer usage ----------------------\n"
             "On start, you will see an animation with highlighted intersecting  \n"
             "faces. Press 'space' to pause/resume the animation.                \n"
             "When the animation is paused, you can manipulate the bunny model   \n"
             "(using your mouse) to perform real-time collection detection:      \n"
-            "    - ALT + left button: rotate bunny model                        \n"
-            "    - ALT + right button: translate bunny model                    \n"
+            "    - Alt + left button: rotate bunny model                        \n"
+            "    - Alt + right button: translate bunny model                    \n"
             "------------------------------------------------------------------ \n";
+
+    hint_ = "Press 'space' to pause/resume animation\n"
+            "When paused:\n"
+            "  - Alt + left button: rotate bunny model\n"
+            "  - Alt + right button: translate bunny model";
 }
 
 

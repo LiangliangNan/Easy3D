@@ -80,9 +80,9 @@ viewer.bind(process_1, point_cloud, easy3d.Viewer.KEY_E) # without key modifier
 viewer.bind(process_2, point_cloud, easy3d.Viewer.KEY_R, easy3d.Viewer.MODIF_CTRL) # with key modifier
 
 # Display usage instructions in the viewer window.
-viewer.set_usage("Usage:\n"
-                 "         e: Run process_1\n"
-                 "  Ctrl + r: Run process_2")
+viewer.set_usage("",
+                 "       e: Run process_1\n"
+                 "Ctrl + r: Run process_2")
 
 # -----------------------------------------------------------------------------
 # Running the Viewer

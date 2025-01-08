@@ -45,13 +45,18 @@ ManipulationViewer::ManipulationViewer(const std::string &title)
     camera()->setViewDirection(vec3(0, 0, -1));
     camera()->setUpVector(vec3(0, 1, 0));
 
-    usage_string_ =
+    manual_ =
             "-------------------- Manipulator Viewer usage ---------------------\n"
             "Press the left button to pick/unpick a model.                      \n"
             "When a model is picked, using the mouse to manipulate it:          \n"
-            "    - ALT + left button: rotate the model                          \n"
-            "    - ALT + right button: translate the model                      \n"
+            "    - Alt + left button: rotate the model                          \n"
+            "    - Alt + right button: translate the model                      \n"
             "------------------------------------------------------------------ \n";
+
+    hint_ = "Press left button to pick/unpick a model\n"
+        "When picked:\n"
+        "  - Alt + left button: rotate bunny model\n"
+        "  - Alt + right button: translate bunny model";
 }
 
 

@@ -167,7 +167,7 @@ namespace easy3d {
          * @brief Set the background color of the viewer
          * @param color The background color.
          */
-        void set_background_color(const easy3d::vec4& c) { background_color_ = c; }
+        void set_background_color(const easy3d::vec4& color) { background_color_ = color; }
 
         /**
          * @brief Query the background color of the viewer.
@@ -374,10 +374,13 @@ namespace easy3d {
 		virtual vec3 point_under_pixel(int x, int y, bool &found) const;
 
         /**
-         * @brief The usage information of the viewer. For the time being, it is the manual of this default viewer.
+         * @brief The usage information of the viewer.
+         * @param manual The manual of the viewer, to be shown in the console window. Using "default" will show the
+         *		default shortcuts of the viewer.
+         * @param screen_hint The hint to the user, which will be sown in the top-left corner of the viewer.
+         * @attention The default shortcuts could be overridden by bind() function calls.
          */
-        const std::string& usage() const { return usage_string_; }
-        void set_usage(const std::string& usg) { usage_string_ = usg; }
+        void set_usage(const std::string& manual = "default", const std::string& screen_hint = "");
 	    //@}
 
         /// @name Algorithm execution
@@ -580,7 +583,8 @@ namespace easy3d {
         std::unique_ptr<KeyFrameInterpolator> kfi_;
         bool    is_animating_;
 
-        std::string usage_string_;
+        std::string manual_;
+		std::string hint_; // shown in the top-left corner of the screen
 
         int		samples_;	// the actual samples
 

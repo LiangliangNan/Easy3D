@@ -76,13 +76,10 @@ RealCamera::RealCamera(const std::string& title,
     else
         LOG(ERROR) << "failed to load point cloud";
 
-    usage_string_ =
-            "---------------- Real Camera usage ------------------ \n"
-            "Press 'Space' to switch views                         \n"
-            "Press 'H' to show/hide the cameras                    \n"
+    hint_ = "Press 'Space' to switch views                         \n"
+            "Press 'h' to show/hide the cameras                    \n"
             "Move cursor on image to show corresponding 3D ray     \n"
-            "Move cursor on scene to show corresponding image point\n"
-            "----------------------------------------------------- \n";
+            "Move cursor on scene to show corresponding image point";
 }
 
 
@@ -229,13 +226,13 @@ Rect RealCamera::calculate_image_rect() const {
         tex_h = static_cast<int>(static_cast<float>(tex_w) / image_as);
     }
 
-    return Rect(static_cast<float>(20), static_cast<float>(20 + tex_w), 40.0f, static_cast<float>(40 + tex_h));
+    const int x = 20.0f;
+    const int y = 120.0f;
+    return Rect(x, x + static_cast<float>(tex_w), y, y + static_cast<float>(tex_h));
 }
 
 
 void RealCamera::post_draw() {
-    Viewer::post_draw();
-
     if (texture_ == nullptr)
         return;
 
@@ -247,8 +244,6 @@ void RealCamera::post_draw() {
     const int h = static_cast<int>(static_cast<float>(height()) * dpi_scaling());
     shape::draw_quad_filled(quad, texture_->id(), w, h, -0.9f);
     shape::draw_quad_wire(quad, vec4(1.0f, 0.0f, 0.0f, 1.0f), w, h, -0.99f);
-
-
 
     if (cross_drawable_ && cross_drawable_->is_visible()) {
         ShaderProgram *program = ShaderManager::get_program("lines/lines_plain_color");
@@ -272,6 +267,8 @@ void RealCamera::post_draw() {
         program->release();
         glEnable(GL_DEPTH_TEST);   // restore
     }
+
+    Viewer::post_draw();
 }
 
 

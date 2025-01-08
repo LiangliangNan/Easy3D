@@ -40,7 +40,7 @@ ImageViewer::ImageViewer(const std::string& title, const std::string& image_file
 {
     image_file_ = image_file;
 
-    usage_string_ =
+    manual_ =
             "------------ Image Viewer usage ---------- \n"
             "Press 'Ctrl + O' to open an image\n"
             "Use wheel to zoom in/out\n"

@@ -138,56 +138,56 @@ namespace easy3d {
         /* Poll for events once before starting a potentially lengthy loading process.*/
         glfwPollEvents();
 
-        usage_string_ =
-                " ------------------------------------------------------------------\n"
-                " Easy3D viewer usage:                                              \n"
-                " ------------------------------------------------------------------\n"
-                "  F1:                  Help                                        \n"
-                "  F2:                  Toggle animation (if available)             \n"
-                "  Ctrl + 'o':          Open file                                   \n"
-                "  Ctrl + 's':          Save file                                   \n"
-                "  Fn + Delete:         Delete current model                        \n"
-                "  '<' or '>':          Switch between models                       \n"
-                "  's':                 Snapshot                                    \n"
-                "  'p':                 Toggle perspective/orthographic projection) \n"
-                "  'a':                 Toggle axes									\n"
-                "  Ctrl + 'f':          Toggle frame rate                           \n"
-                "  Left drag:           Rotate the camera                           \n"
-                "  Right drag:          Move the camera                             \n"
-                "  'x' + Left drag:     Rotate the camera around horizontal axis    \n"
-                "  'x' + Right drag:    Move the camera along horizontal axis       \n"
-                "  'y' + Left drag:     Rotate the camera around vertical axis      \n"
-                "  'y' + Right drag:    Move the camera along vertical axis         \n"
-                "  'o' + Left drag:     Rotate the camera around ortho-screen axis  \n"
-                "  Middle or Wheel:     Zoom in/out                                 \n"
-                "  Ctrl + '+'/'-':      Zoom in/out                                 \n"
-                "  Left/Right           Turn camera left/right                      \n"
-                "  Ctrl + Left/Right:   Move camera left/right                      \n"
-                "  Up/Down:             Move camera forward/backward                \n"
-                "  Ctrl + Up/Down:      Move camera up/down                         \n"
-                "  Ctrl + 'c':          Copy current view status to clipboard       \n"
-                "  Ctrl + 'v':          Restore view status from clipboard          \n"
-                "  Alt + 'c':           Toggle clipping plane                       \n"
-                "  Alt + 'v':           Toggle clipping plane visibility            \n"
-                "  Alt + 'k':           Add key frame to the camera path            \n"
-                "  Alt + 'd':           Delete the camera path                      \n"
-                "  Ctrl + 'k':          Play the camera path                        \n"
-                "  Ctrl + 't':          Toggle camera path                          \n"
-                "  'f':                 Fit screen (all models)                     \n"
-                "  'c':                 Fit screen (current model only)             \n"
-                "  'z' + Left click:    Zoom to target point on model               \n"
-                "  'z' + Right click:   Zoom o fit screen                           \n"
-                "  Shift + Left click:  Define a target point on model              \n"
-                "  Shift + Right click: Undefine the target point (if any) on model \n"
-                "  Ctrl + Left drag:    Zoom to fit region                          \n"
-                "  '-'/'=':             Decrease/Increase point size                \n"
-                "  '{'/'}':             Decrease/Increase line width                \n"
-                "  'b':                 Toggle borders								\n"
-                "  'e':                 Toggle edges							    \n"
-                "  'v':                 Toggle vertices                             \n"
-                "  'm':                 Toggle smooth shading (for SurfaceMesh)     \n"
-                "  'd':                 Print model info (drawables, properties)    \n"
-                " ------------------------------------------------------------------\n";
+        manual_ =
+            "--------------------------------------------------------------\n"
+            " Easy3D Viewer Usage (Shortcuts might be overridden):         \n"
+            "--------------------------------------------------------------\n"
+            "  F1:                      Show help                          \n"
+            "  F2:                      Toggle animation (if available)    \n"
+            "  Ctrl + 'o':              Open file                          \n"
+            "  Ctrl + 's':              Save file                          \n"
+            "  Fn + Delete:             Delete current model               \n"
+            "  '<' or '>':              Switch between models              \n"
+            "  's':                     Take a snapshot                    \n"
+            "  'p':                     Switch between perspective and orthographic projections \n"
+            "  'a':                     Toggle axes visibility                           \n"
+            "  Ctrl + 'f':              Toggle frame rate display                        \n"
+            "  Left drag:               Rotate the camera                                \n"
+            "  Right drag:              Move the camera                                  \n"
+            "  'x' + Left drag:         Rotate the camera around the horizontal axis     \n"
+            "  'x' + Right drag:        Move the camera along the horizontal axis        \n"
+            "  'y' + Left drag:         Rotate the camera around the vertical axis       \n"
+            "  'y' + Right drag:        Move the camera along the vertical axis          \n"
+            "  'o' + Left drag:         Rotate the camera around the ortho-screen axis   \n"
+            "  Middle button or Wheel:  Zoom in/out                                      \n"
+            "  Ctrl + '+'/'-':          Zoom in/out                                      \n"
+            "  Left/Right Arrow:        Turn camera left/right                  \n"
+            "  Ctrl + Left/Right Arrow: Move camera left/right                  \n"
+            "  Up/Down Arrow:           Move camera forward/backward            \n"
+            "  Ctrl + Up/Down Arrow:    Move camera up/down                     \n"
+            "  Ctrl + 'c':              Copy current view status to clipboard   \n"
+            "  Ctrl + 'v':              Restore view status from clipboard      \n"
+            "  Alt + 'c':               Toggle clipping plane                   \n"
+            "  Alt + 'v':               Toggle clipping plane visibility        \n"
+            "  Alt + 'k':               Add key frame to the camera path        \n"
+            "  Alt + 'd':               Delete the camera path                  \n"
+            "  Ctrl + 'k':              Play the camera path                    \n"
+            "  Ctrl + 't':              Toggle camera path visibility           \n"
+            "  'f':                     Fit screen (all models)                 \n"
+            "  'c':                     Fit screen (current model only)         \n"
+            "  'z' + Left click:        Zoom to target point on model           \n"
+            "  'z' + Right click:       Zoom to fit screen                      \n"
+            "  Shift + Left click:      Define a target point on model          \n"
+            "  Shift + Right click:     Undefine the target point (if any) on model\n"
+            "  Ctrl + Left drag:        Zoom to fit region                         \n"
+            "  '-'/'=':                 Decrease/Increase point size               \n"
+            "  '{'/'}':                 Decrease/Increase line width               \n"
+            "  'b':                     Toggle borders visibility                  \n"
+            "  'e':                     Toggle edges visibility                    \n"
+            "  'v':                     Toggle vertices visibility                 \n"
+            "  'm':                     Toggle smooth shading (for SurfaceMesh)    \n"
+            "  'd':                     Print model info (drawables, properties)   \n"
+            "-------------------------------------------------------------------";
     }
 
 
@@ -783,7 +783,7 @@ namespace easy3d {
         }
 
         if (key == GLFW_KEY_F1 && modifiers == 0)
-            std::cout << usage() << std::endl;
+            std::cout << manual_ << std::endl;
         else if (key == GLFW_KEY_F2 && modifiers == 0) {
             is_animating_ = !is_animating_;
             if (is_animating_ && !animation_func_)
@@ -1113,6 +1113,14 @@ namespace easy3d {
     }
 
 
+    void Viewer::set_usage(const std::string& manual, const std::string& screen_hint)
+    {
+        if (manual != "default")
+            manual_ = manual;
+        hint_ = screen_hint;
+    }
+
+
     int Viewer::run(bool see_all) {
         // initialize before showing the window because it can be slow
         init();
@@ -1212,8 +1220,8 @@ namespace easy3d {
         texter_->add_font(resource::directory() + "/fonts/en_Roboto-Medium.ttf");
 
         // print usage
-        if (!usage_string_.empty())
-            std::cout << usage() << std::endl;
+        if (!manual_.empty())
+            std::cout << manual_ << std::endl;
     }
 
 
@@ -1587,13 +1595,25 @@ namespace easy3d {
     void Viewer::post_draw() {
         if (texter_ && texter_->num_fonts() >=2) {
             const float font_size = 15.0f;
-            const float offset = 20.0f * dpi_scaling();
+            float x = 20.0f * dpi_scaling();
+            float y = 0.0f;
             // draw the Easy3D logo and GPU time
-            if (show_easy3d_logo_)
-                texter_->draw("Easy3D", offset, offset, font_size, 0);
+            if (show_easy3d_logo_) {
+                y += font_size * 1.5f * dpi_scaling();
+                texter_->draw("Easy3D", x, y, font_size, 0);
+            }
+
             // draw the framerate
-            if (show_frame_rate_)
-                texter_->draw(framerate_, offset, 50.0f * dpi_scaling(), font_size, 1);
+            if (show_frame_rate_) {
+                y += font_size * 1.5f * dpi_scaling();
+                texter_->draw(framerate_, x, y, font_size, 1);
+            }
+
+            if (!hint_.empty()) {
+                x += font_size * dpi_scaling();
+                y += font_size * 1.5f * dpi_scaling();
+                texter_->draw(hint_, x, y, font_size, TextRenderer::ALIGN_LEFT, 1, vec3(0, 0, 1));
+            }
         }
 
         // shown only when it is not animating

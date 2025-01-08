@@ -46,10 +46,7 @@ TutorialEyeDomeLighting::TutorialEyeDomeLighting(const std::string& title) : Vie
 	edl_ = new EyeDomeLighting(camera());
 	edl_enabled_ = true;
 
-    usage_string_ =
-            "---------- Eye Dome Lighting usage --------- \n"
-            "Press key 'space' to toggle Eye Dome Lighting\n"
-            "-------------------------------------------- \n";
+    hint_ = "Press 'space' to toggle Eye Dome Lighting";
 }
 
 

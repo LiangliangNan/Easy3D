@@ -40,11 +40,8 @@ TutorialTransparency::TutorialTransparency(const std::string& title) : Viewer(ti
 	std::cout << "method: Dual Depth Peeling" << std::endl;
 	method_ = 2;
 
-    usage_string_ =
-            "------------------------ Transparency usage ------------------------ \n"
-            "Press key 'space' to turn on/off or switch between different transparency techniques\n"
-            "Press 'up/down' to increase/decrease the transparency of the current model\n"
-            "-------------------------------------------------------------------- \n";
+    hint_ = "Press 'space' to switch between different transparency techniques\n"
+            "Press 'up/down' to increase/decrease the transparency";
 }
 
 

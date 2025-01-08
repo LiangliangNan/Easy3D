@@ -41,12 +41,9 @@ CameraInterpolation::CameraInterpolation(const std::string& title)
     // update the viewer when the interpolation finishes
     easy3d::connect(&interpolator_->interpolation_stopped, (Viewer*)this, &Viewer::update);
 
-    usage_string_ =
-            "------------ Camera Interpolation usage ---------- \n"
-            "Press 'K' to add key frames\n"
-            "Press 'Space' to start/stop the animation\n"
-            "Press 'D' to delete the camera path\n"
-            "-------------------------------------------------- \n";
+    hint_ = "Press 'k' to add key frames\n"
+            "Press 'space' to start/stop the animation\n"
+            "Press 'd' to delete the camera path";
 }
 
 

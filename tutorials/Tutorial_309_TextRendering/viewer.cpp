@@ -43,7 +43,7 @@ TextRendering::TextRendering(const std::string &title)
         , alignment_(TextRenderer::ALIGN_CENTER)
         , upper_left_(true)
 {
-    usage_string_ =
+    manual_ =
             "----------------------- Text Rendering usage ------------------------ \n"
             "Press '+'/'-' to increase/decrease font size                          \n"
             "Press '<'/'>' to increase/decrease character spacing                  \n"

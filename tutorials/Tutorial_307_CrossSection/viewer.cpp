@@ -36,13 +36,11 @@ namespace easy3d {
         // Code of interest:
         ClippingPlane::instance()->set_enabled(true);
 
-        usage_string_ =
-            "------------ CrossSection usage ---------- \n"
+        hint_ =
             "Left button:  rotate the clipping plane    \n"
             "Right button: translate the clipping plane \n"
             "Alt + 'c':    enable/disable clipping plan \n"
-            "Alt + 'v':    show/hide clipping plane     \n"
-            "-------------------------------------------\n";
+            "Alt + 'v':    show/hide clipping plane";
     }
 
 

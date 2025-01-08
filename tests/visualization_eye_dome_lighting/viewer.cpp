@@ -46,7 +46,7 @@ TutorialEyeDomeLighting::TutorialEyeDomeLighting(const std::string& title) : Vie
 	edl_ = new EyeDomeLighting(camera());
 	edl_enabled_ = true;
 
-    usage_string_ =
+    manual_ =
             "-------------------- Eye Dome Lighting usage ------------------- \n"
             "Press key 'space' to switch between Eye Dome Lighting and normal rendering\n"
             "---------------------------------------------------------------- \n";
@@ -90,9 +90,9 @@ void TutorialEyeDomeLighting::draw() const {
         ShaderProgram* program = ShaderManager::get_program("points/points_plain_color");
 		if (!program) {
 			std::vector<ShaderProgram::Attribute> attributes;
-			attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-			attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
-			attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal"));
+			attributes.emplace_back(ShaderProgram::POSITION, "vtx_position");
+			attributes.emplace_back(ShaderProgram::COLOR, "vtx_color");
+			attributes.emplace_back(ShaderProgram::NORMAL, "vtx_normal");
             program = ShaderManager::create_program_from_files("points/points_plain_color", attributes);
 		}
 		if (!program)

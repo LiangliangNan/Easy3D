@@ -76,9 +76,9 @@ viewer.add_model(copied_mesh)
 viewer.assign(0, 1, copied_mesh)
 
 # Add instructions for the viewer (optional).
-viewer.set_usage(
-    "- Left: Original mesh with holes highlighted in red.\n"
-    "- Right: Modified mesh with holes filled."
+viewer.set_usage("",
+    "Left view: Original mesh with holes highlighted in red\n"
+    "Right view: Modified mesh with holes filled"
 )
 
 # Set the camera view direction and up vector for a better view position.

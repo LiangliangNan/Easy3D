@@ -42,7 +42,7 @@ TutorialAmbientOcclusion::TutorialAmbientOcclusion(const std::string& title) : V
 	ao_ = new AmbientOcclusion(camera());
 	ao_enabled_ = true;
 
-    usage_string_ =
+    manual_ =
             "----------------- Ambient Occlusion usage ----------------- \n"
             "Press key 'space' to switch between Ambient Occlusion and normal rendering\n"
             "Press 'up/down' to increase/decrease the radius\n"

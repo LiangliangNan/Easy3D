@@ -103,12 +103,13 @@ int main(int argc, char **argv) {
     drawable->set_point_size(3.0f);
     drawable->set_distinct_back_color(true);
 
-    // usage
-    viewer.set_usage("Ctrl + e: estimate normals\n"
-                     "Ctrl + r: reorient normals");
     // set up the functions to be executed and their corresponding shortcuts
     viewer.bind(estimate, model, Viewer::KEY_E, Viewer::MODIF_CTRL);
     viewer.bind(reorient, model, Viewer::KEY_R, Viewer::MODIF_CTRL);
+    // usage
+    viewer.set_usage("",
+        "Ctrl + e: estimate normals\n"
+        "Ctrl + r: reorient normals");
 
     // run the viewer
     return viewer.run();
