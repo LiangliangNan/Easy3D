@@ -18,7 +18,7 @@
 void bind_easy3d_algo_surface_mesh_geodesic(pybind11::module_& m)
 {
 	{ // easy3d::SurfaceMeshGeodesic file:easy3d/algo/surface_mesh_geodesic.h line:31
-		pybind11::class_<easy3d::SurfaceMeshGeodesic, std::shared_ptr<easy3d::SurfaceMeshGeodesic>> cl(m, "SurfaceMeshGeodesic", "This class computes geodesic distance from a set of seed vertices.\n \n\n\n \n The method works by a Dykstra-like breadth first traversal from the seed vertices, implemented by a\n heap structure. See the following paper for more details:\n  - Kimmel and Sethian. Computing geodesic paths on manifolds. Proceedings of the National Academy of Sciences,\n    95(15):8431–8435, 1998.");
+		pybind11::class_<easy3d::SurfaceMeshGeodesic, std::shared_ptr<easy3d::SurfaceMeshGeodesic>> cl(m, "SurfaceMeshGeodesic", "This class computes geodesic distance from a set of seed vertices.\n \n\n\n \n The method works by a Dykstra-like breadth first traversal from the seed vertices, implemented by a\n heap structure. See the following paper for more details:\n  - Kimmel and Sethian. Computing geodesic paths on manifolds. Proceedings of the National Academy of Sciences,\n    95(15):8431-8435, 1998.");
 		cl.def( pybind11::init( [](class easy3d::SurfaceMesh * a0){ return new easy3d::SurfaceMeshGeodesic(a0); } ), "doc" , pybind11::arg("mesh"));
 		cl.def( pybind11::init<class easy3d::SurfaceMesh *, bool>(), pybind11::arg("mesh"), pybind11::arg("use_virtual_edges") );
 

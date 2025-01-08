@@ -1,5 +1,9 @@
 ##############################################################################
-# GitHub Actions Workflow for building Easy3D on Windows, Ubuntu, and macOS
+# GitHub Actions Workflow to test building Easy3D on Windows, Ubuntu, and macOS.
+#
+# Copyright (C) 2022 Liangliang Nan <liangliang.nan@gmail.com>
+#
+# Licensed under GNU LGPL.3, see LICENCE file
 ##############################################################################
 name: Test Build Easy3D
 
@@ -25,18 +29,37 @@ jobs:
         run: |
           sudo apt-get update || true
           sudo apt-get install -y cmake build-essential libgl1-mesa-dev \
-              mesa-common-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+              mesa-common-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev \
+              libcgal-dev qt6-base-dev \
+              libavcodec-dev libavformat-dev libswscale-dev libavutil-dev
 
       - name: Install Dependencies (macOS)
         if: runner.os == 'macOS'
         run: |
           brew update || true
-          brew install cmake
+          brew install cmake cgal qt ffmpeg wxwidgets
 
-      - name: Install Dependencies (Windows)
+      # Set up Conda on Windows
+      - name: Set up Conda (Windows)
         if: runner.os == 'Windows'
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          architecture: x64
+          activate-environment: Easy3DDev
+          auto-activate-base: false
+          channels: conda-forge,defaults
+
+      # Install Conda packages on Windows
+      - name: Install Dependencies via Conda (Windows)
+        if: runner.os == 'Windows'
+        shell: bash -l {0}
         run: |
-          choco install cmake --installargs '"ADD_CMAKE_TO_PATH=System"'
+          conda install -y \
+            ninja \
+            conda-forge::qt6-main \
+            conda-forge::wxwidgets \
+            conda-forge::cgal \
+            conda-forge::ffmpeg || exit 1
 
       # Configure the project
       - name: Configure (Linux & macOS)
@@ -46,18 +69,26 @@ jobs:
                 -G "Unix Makefiles" \
                 -DEasy3D_BUILD_PYTHON_BINDINGS=ON \
                 -DEasy3D_BUILD_TUTORIALS=ON \
-                -DEasy3D_BUILD_TESTS=ON
+                -DEasy3D_BUILD_TESTS=ON \
+                -DEasy3D_ENABLE_CGAL=ON \
+                -DEasy3D_ENABLE_QT=ON \
+                -DEasy3D_ENABLE_FFMPEG=ON
 
       - name: Configure (Windows)
         if: runner.os == 'Windows'
-        shell: cmd
+        shell: bash -l {0}
         run: |
-          cmake -S . -B build\${{ matrix.build_type }} ^
-                -G "Visual Studio 17 2022" ^
-                -A x64 ^
-                -DEasy3D_BUILD_PYTHON_BINDINGS=ON ^
-                -DEasy3D_BUILD_TUTORIALS=ON ^
-                -DEasy3D_BUILD_TESTS=ON
+          cmake -S . -B build/${{ matrix.build_type }} \
+                -G "Visual Studio 17 2022" \
+                -A x64 \
+                -DCMAKE_PREFIX_PATH="$CONDA_PREFIX/Library" \
+                -DwxWidgets_ROOT_DIR="$CONDA_PREFIX/Library" \
+                -DEasy3D_BUILD_PYTHON_BINDINGS=ON \
+                -DEasy3D_BUILD_TUTORIALS=ON \
+                -DEasy3D_BUILD_TESTS=ON \
+                -DEasy3D_ENABLE_CGAL=ON \
+                -DEasy3D_ENABLE_QT=ON \
+                -DEasy3D_ENABLE_FFMPEG=ON
 
       # Build the project
       - name: Build (Linux & macOS)
@@ -66,5 +97,5 @@ jobs:
 
       - name: Build (Windows)
         if: runner.os == 'Windows'
-        shell: cmd
-        run: cmake --build build\${{ matrix.build_type }} --config ${{ matrix.build_type }}
+        shell: bash -l {0}
+        run: cmake --build build/${{ matrix.build_type }} --config ${{ matrix.build_type }}
