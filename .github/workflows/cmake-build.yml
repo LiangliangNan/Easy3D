@@ -93,9 +93,9 @@ jobs:
       # Build the project
       - name: Build (Linux & macOS)
         if: runner.os != 'Windows'
-        run: cmake --build build/${{ matrix.build_type }} --parallel
+        run: cmake --build build/${{ matrix.build_type }}
 
       - name: Build (Windows)
         if: runner.os == 'Windows'
         shell: bash -l {0}
-        run: cmake --build build/${{ matrix.build_type }} --config ${{ matrix.build_type }} --parallel
+        run: cmake --build build/${{ matrix.build_type }} --config ${{ matrix.build_type }}
