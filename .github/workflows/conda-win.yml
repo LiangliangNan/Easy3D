@@ -1,5 +1,6 @@
 name: Easy3DDev
 channels:
+  - defaults
   - conda-forge
 dependencies:
   - ninja
