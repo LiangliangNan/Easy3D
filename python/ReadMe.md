@@ -31,10 +31,6 @@ viewer.run()
 
 ### (Optional) Installation
 
-(Currently only Windows is supported. 
-A unified installation/setup procedure will be provided when I have spare time.
-For the time being, Mac and Linux users can implement it by modifying `pyproject.toml`.)
-
 If you want to avoid specifying the path of the generated bindings in your Python code, you can create a wheel (`.whl`) 
 file for the bindings and install it globally. This will make Easy3D work like other Python packages such as [Numpy](https://numpy.org/).
 
