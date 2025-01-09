@@ -273,6 +273,21 @@ function(add_module module headers sources private_dependencies public_dependenc
             VERSION ${Easy3D_VERSION_STRING}
             )
 
+    # RPATH settings for macOS and Linux
+    if(UNIX AND NOT APPLE)
+        # For Linux, $ORIGIN ensures the library looks for dependencies relative to the location of the module.
+        set_target_properties(easy3d_${module} PROPERTIES
+                BUILD_RPATH "$ORIGIN"
+                INSTALL_RPATH "$ORIGIN"
+                )
+    elseif(APPLE)
+        # For macOS, @loader_path serves the same purpose.
+        set_target_properties(easy3d_${module} PROPERTIES
+                BUILD_RPATH "@loader_path"
+                INSTALL_RPATH "@loader_path"
+                )
+    endif()
+
     # Add an alias target (recommended by policy CMP0028) and it looks nicer
     message(STATUS "Adding target: easy3d::${module} (easy3d_${module})")
     add_library(easy3d::${module} ALIAS easy3d_${module})

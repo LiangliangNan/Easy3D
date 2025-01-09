@@ -143,6 +143,21 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 # The following commands are actually not necessary for generating bindings.
 # They are here to make it easier for the installation of the generated Python module.
 
+# RPATH settings for macOS and Linux
+if(UNIX AND NOT APPLE)
+    # For Linux, $ORIGIN ensures the library looks for dependencies relative to the location of the module.
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+            BUILD_RPATH "$ORIGIN"
+            INSTALL_RPATH "$ORIGIN"
+            )
+elseif(APPLE)
+    # For macOS, @loader_path serves the same purpose.
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+            BUILD_RPATH "@loader_path"
+            INSTALL_RPATH "@loader_path"
+            )
+endif()
+
 # Ensure the directory exists
 file(MAKE_DIRECTORY ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d)
 
@@ -162,7 +177,6 @@ set(COMPILED_MODULE "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${EASY3D_MODULE_NAME}${EA
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E echo "Copying the compiled module ${EASY3D_MODULE_NAME}${EASY3D_MODULE_SUFFIX} to ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/..."
         COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${PROJECT_NAME}> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-        COMMAND_EXPAND_LISTS
         )
 
 # Post-build command to copy the dependencies of the compiled module to the Python package directory.
@@ -181,7 +195,6 @@ if (MSVC) #MSVC on Windows. TARGET_RUNTIME_DLLS is only available on Windows.
         add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E echo "Copying Python runtime DLL ${PYTHON_RUNTIME_DLL_NAME} to ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/..."
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PYTHON_RUNTIME_DLL} ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-                COMMAND_EXPAND_LISTS
                 )
     else ()
         message(WARNING "Python runtime DLL (${PYTHON_RUNTIME_DLL_NAME}) not found. This may be due to:\n"
