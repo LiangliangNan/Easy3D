@@ -211,7 +211,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")    # Windows
     set(CONF_LIB_SUFFIX ".dll")
     get_filename_component(CONF_PYTHON_RUNTIME_LIB "${PYTHON_RUNTIME_DLL_NAME}" NAME)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")  # Linux
-    set(CONF_LIB_SUFFIX ".so")
+    set(CONF_LIB_PREFIX "lib")
+    set(CONF_LIB_SUFFIX ".so.${Easy3D_VERSION_STRING}")
     get_filename_component(CONF_PYTHON_RUNTIME_LIB "${PYTHON_LIBRARIES}" NAME)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin") # macOS
     set(CONF_LIB_PREFIX "lib")
