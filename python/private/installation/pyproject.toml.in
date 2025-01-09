@@ -14,6 +14,8 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: GPL License",
     "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
 ]
 requires-python = ">=3.8"  # Specifies Python version requirement
 dynamic = ["dependencies"]
@@ -23,14 +25,21 @@ packages = ["easy3d"]
 
 [tool.setuptools.package-data]
 easy3d = [
-    "@MODULE_NAME@@MODULE_SUFFIX@",
-    "easy3d_core.dll",
-    "easy3d_algo.dll",
-    "easy3d_fileio.dll",
-    "easy3d_gui.dll",
-    "easy3d_kdtree.dll",
-    "easy3d_renderer.dll",
-    "easy3d_util.dll",
-    "easy3d_viewer.dll",
-    "python310.dll"
+    "@CONF_MODULE_NAME@@CONF_MODULE_SUFFIX@",
+
+    # Platform-specific runtime libraries
+    "easy3d_core@CONF_PLATFORM_LIB_EXT@",
+    "easy3d_algo@CONF_PLATFORM_LIB_EXT@",
+    "easy3d_fileio@CONF_PLATFORM_LIB_EXT@",
+    "easy3d_gui@CONF_PLATFORM_LIB_EXT@",
+    "easy3d_kdtree@CONF_PLATFORM_LIB_EXT@",
+    "easy3d_renderer@CONF_PLATFORM_LIB_EXT@",
+    "easy3d_util@CONF_PLATFORM_LIB_EXT@",
+    "easy3d_viewer@CONF_PLATFORM_LIB_EXT@",
+
+    # Python runtime library (platform-specific), e.g.
+    #   - Windows: python310.dll
+    #   - Linux:   libpython3.10.so
+    #   - macOS:   libpython3.10.dylib
+    "@CONF_PYTHON_RUNTIME_LIB@"
 ]

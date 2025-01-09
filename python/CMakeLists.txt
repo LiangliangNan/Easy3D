@@ -191,25 +191,39 @@ if (MSVC) #MSVC on Windows. TARGET_RUNTIME_DLLS is only available on Windows.
     endif()
 
 else() #GCC on macOS/Linux. Other platforms may need to adjust this.
-    # Liangliang: the following command should work on all Windows/macOS/Linux. Commented out because not needed for non-Windows.
-#    add_custom_command(
-#            TARGET ${PROJECT_NAME} POST_BUILD
-#            COMMAND ${CMAKE_COMMAND} -E echo "Copying ${PROJECT_NAME} module and dependencies to Python package"
-#    #        COMMAND ${CMAKE_COMMAND} -E make_directory ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/   # Already created by "file(MAKE_DIRECTORY ...)"
-#            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:easy3d::algo> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-#            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:easy3d::core> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-#            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:easy3d::fileio> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-#            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:easy3d::gui> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-#            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:easy3d::kdtree> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-#            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:easy3d::renderer> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-#            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:easy3d::util> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-#            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:easy3d::viewer> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-#    #        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:OtherDependency> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-#    )
+    # Liangliang: the following command should work on all Windows/macOS/Linux.
+    add_custom_command(
+            TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E echo "Copying ${PROJECT_NAME} module and dependencies to Python package"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:easy3d::algo> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:easy3d::core> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:easy3d::fileio> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:easy3d::gui> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:easy3d::kdtree> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:easy3d::renderer> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:easy3d::util> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:easy3d::viewer> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PYTHON_LIBRARIES} ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
+    )
 endif()
 
+# Platform-specific dynamic library extensions
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")    # Windows
+    set(CONF_PLATFORM_LIB_EXT ".dll")
+    get_filename_component(CONF_PYTHON_RUNTIME_LIB "${PYTHON_RUNTIME_DLL_NAME}" NAME)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")  # Linux
+    set(CONF_PLATFORM_LIB_EXT ".so")
+    get_filename_component(CONF_PYTHON_RUNTIME_LIB "${PYTHON_LIBRARIES}" NAME)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin") # macOS
+    set(CONF_PLATFORM_LIB_EXT ".dylib")
+    get_filename_component(CONF_PYTHON_RUNTIME_LIB "${PYTHON_LIBRARIES}" NAME)
+else()
+    message(FATAL_ERROR "Unsupported platform: ${CMAKE_SYSTEM_NAME}")
+endif()
+set(CONF_Easy3D_VERSION ${Easy3D_VERSION_STRING})
+set(CONF_MODULE_NAME    ${MODULE_NAME})
+set(CONF_MODULE_SUFFIX  ${MODULE_SUFFIX})
 
 # Copy pyproject.toml to the Python package directory
-set(CONF_Easy3D_VERSION ${Easy3D_VERSION_STRING})
 configure_file(${CMAKE_CURRENT_LIST_DIR}/private/installation/pyproject.toml.in ${Easy3D_PYTHON_PACKAGE_DIR}/pyproject.toml @ONLY)
 configure_file(${CMAKE_CURRENT_LIST_DIR}/ReadMe.md ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/python/ReadMe.md) # Copy the readme
