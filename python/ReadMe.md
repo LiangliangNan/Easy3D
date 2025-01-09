@@ -46,8 +46,15 @@ Below are the detailed steps for creating the wheel file and installation.
 
 - Step 2: Build the Wheel
 
+  `cd YOUR_BUILD_DIRECTORY/lib/python`
+- 
   `python -m build`
 
 - Step 3: Install the Wheel
 
   `pip install dist/easy3d-2.6.0-py3-none-any.whl`
+
+  After installation, you can determine where it is installed by using the following command:
+
+  `pip show easy3d`
+  

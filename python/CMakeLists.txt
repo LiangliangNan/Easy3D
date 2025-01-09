@@ -215,7 +215,8 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")  # Linux
     set(CONF_PLATFORM_LIB_EXT ".so")
     get_filename_component(CONF_PYTHON_RUNTIME_LIB "${PYTHON_LIBRARIES}" NAME)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin") # macOS
-    set(CONF_PLATFORM_LIB_EXT ".dylib")
+    set(CONF_PLATFORM_LIB_PRE "lib")
+    set(CONF_PLATFORM_LIB_EXT ".${Easy3D_VERSION_STRING}.dylib")
     get_filename_component(CONF_PYTHON_RUNTIME_LIB "${PYTHON_LIBRARIES}" NAME)
 else()
     message(FATAL_ERROR "Unsupported platform: ${CMAKE_SYSTEM_NAME}")

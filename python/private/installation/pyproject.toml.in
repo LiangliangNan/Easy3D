@@ -28,14 +28,14 @@ easy3d = [
     "@CONF_MODULE_NAME@@CONF_MODULE_SUFFIX@",
 
     # Platform-specific runtime libraries
-    "easy3d_core@CONF_PLATFORM_LIB_EXT@",
-    "easy3d_algo@CONF_PLATFORM_LIB_EXT@",
-    "easy3d_fileio@CONF_PLATFORM_LIB_EXT@",
-    "easy3d_gui@CONF_PLATFORM_LIB_EXT@",
-    "easy3d_kdtree@CONF_PLATFORM_LIB_EXT@",
-    "easy3d_renderer@CONF_PLATFORM_LIB_EXT@",
-    "easy3d_util@CONF_PLATFORM_LIB_EXT@",
-    "easy3d_viewer@CONF_PLATFORM_LIB_EXT@",
+    "@CONF_PLATFORM_LIB_PRE@easy3d_core@CONF_PLATFORM_LIB_EXT@",
+    "@CONF_PLATFORM_LIB_PRE@easy3d_algo@CONF_PLATFORM_LIB_EXT@",
+    "@CONF_PLATFORM_LIB_PRE@easy3d_fileio@CONF_PLATFORM_LIB_EXT@",
+    "@CONF_PLATFORM_LIB_PRE@easy3d_gui@CONF_PLATFORM_LIB_EXT@",
+    "@CONF_PLATFORM_LIB_PRE@easy3d_kdtree@CONF_PLATFORM_LIB_EXT@",
+    "@CONF_PLATFORM_LIB_PRE@easy3d_renderer@CONF_PLATFORM_LIB_EXT@",
+    "@CONF_PLATFORM_LIB_PRE@easy3d_util@CONF_PLATFORM_LIB_EXT@",
+    "@CONF_PLATFORM_LIB_PRE@easy3d_viewer@CONF_PLATFORM_LIB_EXT@",
 
     # Python runtime library (platform-specific), e.g.
     #   - Windows: python310.dll
