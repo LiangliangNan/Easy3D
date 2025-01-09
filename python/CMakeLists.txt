@@ -161,10 +161,10 @@ set(COMPILED_MODULE "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${MODULE_NAME}${MODULE_SU
 
 # Post-build command to copy the compiled module to the Python package directory.
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E echo "Copying the compiled module ${MODULE_NAME}${MODULE_SUFFIX} to ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/..."
-  COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${PROJECT_NAME}> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-  COMMAND_EXPAND_LISTS
-)
+        COMMAND ${CMAKE_COMMAND} -E echo "Copying the compiled module ${MODULE_NAME}${MODULE_SUFFIX} to ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/..."
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${PROJECT_NAME}> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
+        COMMAND_EXPAND_LISTS
+        )
 
 # Post-build command to copy the dependencies of the compiled module to the Python package directory.
 if (MSVC) #MSVC on Windows. TARGET_RUNTIME_DLLS is only available on Windows.
@@ -209,6 +209,7 @@ else() #GCC on macOS/Linux. Other platforms may need to adjust this.
 endif()
 
 
-# Copy setup.py to the Python package directory
+# Copy pyproject.toml to the Python package directory
 set(CONF_Easy3D_VERSION ${Easy3D_VERSION_STRING})
-configure_file(${CMAKE_CURRENT_LIST_DIR}/setup.py.in ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/python/setup.py @ONLY)
+configure_file(${CMAKE_CURRENT_LIST_DIR}/private/installation/pyproject.toml.in ${Easy3D_PYTHON_PACKAGE_DIR}/pyproject.toml @ONLY)
+configure_file(${CMAKE_CURRENT_LIST_DIR}/ReadMe.md ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/python/ReadMe.md) # Copy the readme

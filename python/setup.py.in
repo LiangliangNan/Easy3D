@@ -1,9 +1,0 @@
-from setuptools import setup, find_packages
-
-setup(
-    name="easy3d",
-    version="@CONF_Easy3D_VERSION@",
-    packages=["easy3d"],
-    package_data={"easy3d": ["@MODULE_NAME@@MODULE_SUFFIX@"]},
-    include_package_data=True,
-)

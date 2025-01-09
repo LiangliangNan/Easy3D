@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "easy3d"
+version = "@CONF_Easy3D_VERSION@"
+description = "Python bindings for the Easy3D library"
+authors = [
+    { name = "Liangliang Nan", email = "liangliang.nan@gmail.com" }
+]
+urls = { Homepage = "https://github.com/LiangliangNan/Easy3D" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GPL License",
+    "Operating System :: Microsoft :: Windows",
+]
+requires-python = ">=3.8"  # Specifies Python version requirement
+dynamic = ["dependencies"]
+
+[tool.setuptools]
+packages = ["easy3d"]
+
+[tool.setuptools.package-data]
+easy3d = [
+    "@MODULE_NAME@@MODULE_SUFFIX@",
+    "easy3d_core.dll",
+    "easy3d_algo.dll",
+    "easy3d_fileio.dll",
+    "easy3d_gui.dll",
+    "easy3d_kdtree.dll",
+    "easy3d_renderer.dll",
+    "easy3d_util.dll",
+    "easy3d_viewer.dll",
+    "python310.dll"
+]

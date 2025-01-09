@@ -147,16 +147,12 @@ There are many options to build Easy3D. Choose one of the following (not an exha
   
 - Option 3: Use CMake-Gui to generate project files for your IDE. Then load the project to your IDE and build it. For Windows users: your IDE must be set for `x64`.
 
-#### Build and use Python bindings
-- Make sure you have [Python](https://www.python.org/downloads/) installed. 
-Then switch on the CMake option `Easy3D_BUILD_PYTHON_BINDINGS`, run CMake, and then build. After building Easy3D, you 
-can find the Python bindings module `PyEasy3D` (`PyEasy3D.pyd` on Windows, `PyEasy3D.so` on macOS/Linux) in 
-`YOUR_BUILD_DIRECTORY/lib/python/easy3d`. 
-A unified installation/setup procedure will be provided soon (only if I have more spare time...).
-  
 Do not have any experience with C/C++ programming? 
 Have a look at <a href="https://github.com/LiangliangNan/Easy3D/blob/main/HowToBuild.md">How to build Easy3D step by 
 step</a>.
+
+#### Build and use Python bindings
+- Please check [here](./python/ReadMe.md).
 
 ### Test Easy3D
 A test suite is provided in the [`tests`](./tests) subfolder (and [`test`](./python/test) for Python users), which 
@@ -212,6 +208,8 @@ Easy3D uses [Doxygen](https://www.doxygen.nl/index.html) (`>= 1.8.3`) to generat
 To build it from the source code, [install Doxygen](https://www.doxygen.nl/manual/install.html) first. 
 Then, switch on the CMake option `` in the main `CMakeList.txt`. Finally, build the `doc` 
 target to generate the documentation. 
+
+For Python users, please check these [tutorials](./python/tutorials).
 
 ### Questions, new features, bugs, or contributing to Easy3D
 See the [Contribution Guide](https://github.com/LiangliangNan/Easy3D/blob/main/CONTRIBUTING.md) for more information.
