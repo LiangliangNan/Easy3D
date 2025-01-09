@@ -122,20 +122,19 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE PYBIND11_SIMPLE_GIL_SAFE_ABI) # to use the Python Stable ABI
 
-set(MODULE_NAME "PyEasy3D") # Sets the base name of the output file
-target_compile_definitions(${PROJECT_NAME} PUBLIC "PyEasy3D_NAME=${MODULE_NAME}")
+set(EASY3D_MODULE_NAME "PyEasy3D") # Sets the base name of the output file
+target_compile_definitions(${PROJECT_NAME} PUBLIC "PyEasy3D_NAME=${EASY3D_MODULE_NAME}")
 
 # Platform-specific suffix for Python extensions
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    set(MODULE_SUFFIX ".pyd")
+    set(EASY3D_MODULE_SUFFIX ".pyd")
 else()
-    set(MODULE_SUFFIX ".so")
+    set(EASY3D_MODULE_SUFFIX ".so")
 endif()
 # Set the target properties with the computed suffix
 set_target_properties(${PROJECT_NAME} PROPERTIES
-        OUTPUT_NAME ${MODULE_NAME}  # Sets the base name of the output file
-        PREFIX ""                   # Avoid prefixes like 'lib'
-        SUFFIX "${MODULE_SUFFIX}"   # Use the computed suffix
+        OUTPUT_NAME ${EASY3D_MODULE_NAME}  # Sets the base name of the output file
+        SUFFIX "${EASY3D_MODULE_SUFFIX}"   # Use the computed suffix
         FOLDER "python"
         )
 
@@ -149,19 +148,19 @@ file(MAKE_DIRECTORY ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d)
 
 # Generate the __init__.py file for the Python package, which imports the compiled module
 file(WRITE ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/__init__.py
-        "# Alias for the ${MODULE_NAME} module\n"
+        "# Alias for the ${EASY3D_MODULE_NAME} module\n"
         "try:\n"
-        "    from .${MODULE_NAME} import *\n"
+        "    from .${EASY3D_MODULE_NAME} import *\n"
         "except ImportError:\n"
-        "    from ${MODULE_NAME} import *\n"
+        "    from ${EASY3D_MODULE_NAME} import *\n"
         )
 
 # Path to the compiled module
-set(COMPILED_MODULE "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${MODULE_NAME}${MODULE_SUFFIX}")
+set(COMPILED_MODULE "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${EASY3D_MODULE_NAME}${EASY3D_MODULE_SUFFIX}")
 
 # Post-build command to copy the compiled module to the Python package directory.
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E echo "Copying the compiled module ${MODULE_NAME}${MODULE_SUFFIX} to ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/..."
+        COMMAND ${CMAKE_COMMAND} -E echo "Copying the compiled module ${EASY3D_MODULE_NAME}${EASY3D_MODULE_SUFFIX} to ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/..."
         COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${PROJECT_NAME}> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
         COMMAND_EXPAND_LISTS
         )
@@ -172,7 +171,7 @@ if (MSVC) #MSVC on Windows. TARGET_RUNTIME_DLLS is only available on Windows.
     # TARGET_FILE_DIR: Refers to the output directory of the target file.
     # COMMAND_EXPAND_LISTS: Ensures that the DLL list expands correctly in the cmake -E copy command.
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E echo "Copying the runtime DLLs of ${MODULE_NAME}${MODULE_SUFFIX} to ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/..."
+            COMMAND ${CMAKE_COMMAND} -E echo "Copying the runtime DLLs of ${EASY3D_MODULE_NAME}${EASY3D_MODULE_SUFFIX} to ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/..."
             COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:${PROJECT_NAME}> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
             # Liangliang: normally we need this:
             # COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:${PROJECT_NAME}> $<TARGET_FILE_DIR:${PROJECT_NAME}>
@@ -209,21 +208,21 @@ endif()
 
 # Platform-specific dynamic library extensions
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")    # Windows
-    set(CONF_PLATFORM_LIB_EXT ".dll")
+    set(CONF_LIB_SUFFIX ".dll")
     get_filename_component(CONF_PYTHON_RUNTIME_LIB "${PYTHON_RUNTIME_DLL_NAME}" NAME)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")  # Linux
-    set(CONF_PLATFORM_LIB_EXT ".so")
+    set(CONF_LIB_SUFFIX ".so")
     get_filename_component(CONF_PYTHON_RUNTIME_LIB "${PYTHON_LIBRARIES}" NAME)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin") # macOS
-    set(CONF_PLATFORM_LIB_PRE "lib")
-    set(CONF_PLATFORM_LIB_EXT ".${Easy3D_VERSION_STRING}.dylib")
+    set(CONF_LIB_PREFIX "lib")
+    set(CONF_LIB_SUFFIX ".${Easy3D_VERSION_STRING}.dylib")
     get_filename_component(CONF_PYTHON_RUNTIME_LIB "${PYTHON_LIBRARIES}" NAME)
 else()
     message(FATAL_ERROR "Unsupported platform: ${CMAKE_SYSTEM_NAME}")
 endif()
 set(CONF_Easy3D_VERSION ${Easy3D_VERSION_STRING})
-set(CONF_MODULE_NAME    ${MODULE_NAME})
-set(CONF_MODULE_SUFFIX  ${MODULE_SUFFIX})
+set(CONF_EASY3D_MODULE_NAME    ${EASY3D_MODULE_NAME})
+set(CONF_EASY3D_MODULE_SUFFIX  ${EASY3D_MODULE_SUFFIX})
 
 # Copy pyproject.toml to the Python package directory
 configure_file(${CMAKE_CURRENT_LIST_DIR}/private/installation/pyproject.toml.in ${Easy3D_PYTHON_PACKAGE_DIR}/pyproject.toml @ONLY)
