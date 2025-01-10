@@ -185,7 +185,7 @@ function(copy_runtime_dependencies target destination)
                 COMMAND ldd $<TARGET_FILE:${target}> | grep '=> /' | awk '{print $$3}' | xargs -I {} cp -v {} ${destination}
                 # Liangliang: It took me so much time to figure this out.
                 #             This is a very useful command to save the list of dependencies of a target to a file.
-                COMMAND ldd $<TARGET_FILE:${target}> | awk '/=>/ {print $$3}' > ${destination}/runtime_dependencies.txt
+                #COMMAND ldd $<TARGET_FILE:${target}> | awk '/=>/ {print $$3}' > ${destination}/runtime_dependencies.txt
                 # also copy the Python runtime library
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PYTHON_LIBRARIES} ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
                 COMMAND_EXPAND_LISTS
@@ -202,7 +202,7 @@ function(copy_runtime_dependencies target destination)
                 # Save the list of dependencies to a file, excluding
                 #    - the target itself
                 #    - the dependencies in other directories other than the path of the target file.
-                COMMAND otool -L $<TARGET_FILE:${target}> | awk '/@rpath|\\/|\\// {print $$1}' | sed 's|@rpath|$<TARGET_FILE_DIR:${target}>|g' | grep "^$<TARGET_FILE_DIR:${target}>/" | grep -v "^$<TARGET_FILE:${target}>$" > ${destination}/runtime_dependencies.txt
+                #COMMAND otool -L $<TARGET_FILE:${target}> | awk '/@rpath|\\/|\\// {print $$1}' | sed 's|@rpath|$<TARGET_FILE_DIR:${target}>|g' | grep "^$<TARGET_FILE_DIR:${target}>/" | grep -v "^$<TARGET_FILE:${target}>$" > ${destination}/runtime_dependencies.txt
                 # This one includes the target itself.
                 #COMMAND otool -L $<TARGET_FILE:${target}> | awk '/@rpath|\\/|\\// {print $$1}' | sed 's|@rpath|$<TARGET_FILE_DIR:${target}>|g' | grep "^$<TARGET_FILE_DIR:${target}>/" > ${destination}/runtime_dependencies.txt
                 # This include all dependencies obtained by otool
@@ -222,10 +222,12 @@ copy_runtime_dependencies(${PROJECT_NAME} ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/)
 # Configure and create pyproject.toml
 configure_file(${CMAKE_CURRENT_LIST_DIR}/pyproject.toml.in ${Easy3D_PYTHON_PACKAGE_DIR}/pyproject.toml @ONLY)
 
-# Copy the readme file
-file(COPY ${CMAKE_CURRENT_LIST_DIR}/ReadMe.md DESTINATION ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d)
 # Copy the resource files
 file(COPY ${Easy3D_ROOT}/resources DESTINATION ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d)
+# Copy the readme file
+file(COPY ${CMAKE_CURRENT_LIST_DIR}/README.md DESTINATION ${Easy3D_PYTHON_PACKAGE_DIR})
+# Copy the license files
+file(COPY ${Easy3D_ROOT}/LICENSE DESTINATION ${Easy3D_PYTHON_PACKAGE_DIR})
 
 # Generate the __init__.py file for the Python package
 file(WRITE ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/__init__.py
@@ -253,6 +255,6 @@ file(WRITE ${Easy3D_PYTHON_PACKAGE_DIR}/MANIFEST.in
         "recursive-include easy3d *.pyd\n"
         "recursive-include easy3d *.dylib\n"
         "recursive-include easy3d resources/*\n"
-        "include ReadMe.md\n"
-        "include LICENSE.txt\n"
+        "include README.md\n"
+        "include LICENSE\n"
         )

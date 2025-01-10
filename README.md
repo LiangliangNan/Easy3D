@@ -152,7 +152,7 @@ Have a look at <a href="https://github.com/LiangliangNan/Easy3D/blob/main/HowToB
 step</a>.
 
 #### Build and use Python bindings
-- Please check [here](./python/ReadMe.md).
+- Please check [here](./python/README.md).
 
 ### Test Easy3D
 A test suite is provided in the [`tests`](./tests) subfolder (and [`test`](./python/test) for Python users), which 
