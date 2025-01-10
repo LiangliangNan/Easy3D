@@ -172,7 +172,7 @@ file(WRITE ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/__init__.py
 
 # Post-build command to copy the compiled module to the Python package directory.
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E echo "Copying the compiled module ${EASY3D_MODULE_NAME}${EASY3D_MODULE_SUFFIX} to ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/..."
+        COMMAND ${CMAKE_COMMAND} -E echo "Copying ${EASY3D_MODULE_NAME}${EASY3D_MODULE_SUFFIX} to ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/..."
         COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${PROJECT_NAME}> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
         )
 
@@ -203,7 +203,7 @@ else() #GCC on macOS/Linux. Other platforms may need to adjust this.
     # Liangliang: the following command should work on all Windows/macOS/Linux.
     add_custom_command(
             TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E echo "Copying ${PROJECT_NAME} module and dependencies to Python package"
+            COMMAND ${CMAKE_COMMAND} -E echo "Copying the dependencies of ${EASY3D_MODULE_NAME}${EASY3D_MODULE_SUFFIX} to ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/..."
             COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:easy3d::algo> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
             COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:easy3d::core> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
             COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:easy3d::fileio> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
