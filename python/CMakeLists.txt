@@ -227,9 +227,12 @@ endif()
 #    elseif (UNIX AND NOT APPLE) # Linux
 #        add_custom_command(TARGET ${target} POST_BUILD
 #                COMMAND ${CMAKE_COMMAND} -E echo "Copying runtime dependencies of ${target} to ${destination}..."
-#                # Liangliang: It took me so much time to figure this out
-#                # This is a very useful command to copy the dependencies of a target to a directory.
+#                # Liangliang: It took me so much time to figure this out.
+#                #             This is a very useful command to copy the dependencies of a target to a directory.
 #                COMMAND ldd $<TARGET_FILE:${target}> | grep '=> /' | awk '{print $$3}' | xargs -I {} cp -v {} ${destination}
+#                # Liangliang: It took me so much time to figure this out.
+#                #             This is a very useful command to save the list of dependencies of a target to a file.
+#                COMMAND ldd $<TARGET_FILE:${target}> | awk '/=>/ {print $$3}' > ${destination}/runtime_dependencies.txt
 #        )
 #    elseif (APPLE) # macOS
 #        add_custom_command(TARGET ${target} POST_BUILD
