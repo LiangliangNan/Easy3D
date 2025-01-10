@@ -144,19 +144,19 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 # They are here to make it easier for the installation of the generated Python module.
 
 # RPATH settings for macOS and Linux
-if(UNIX AND NOT APPLE)
+if (APPLE)
+    # For macOS, @loader_path ensures the library looks for dependencies relative to the location of the module.
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+            BUILD_RPATH "@loader_path"
+            INSTALL_RPATH "@loader_path"
+    )
+elseif (UNIX)
     # For Linux, $ORIGIN ensures the library looks for dependencies relative to the location of the module.
     set_target_properties(${PROJECT_NAME} PROPERTIES
             BUILD_RPATH "$ORIGIN"
             INSTALL_RPATH "$ORIGIN"
-            )
-elseif(APPLE)
-    # For macOS, @loader_path serves the same purpose.
-    set_target_properties(${PROJECT_NAME} PROPERTIES
-            BUILD_RPATH "@loader_path"
-            INSTALL_RPATH "@loader_path"
-            )
-endif()
+    )
+endif ()
 
 # Ensure the directory exists
 file(MAKE_DIRECTORY ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d)
@@ -169,9 +169,6 @@ file(WRITE ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/__init__.py
         "except ImportError:\n"
         "    from ${EASY3D_MODULE_NAME} import *\n"
         )
-
-# Path to the compiled module
-set(COMPILED_MODULE "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${EASY3D_MODULE_NAME}${EASY3D_MODULE_SUFFIX}")
 
 # Post-build command to copy the compiled module to the Python package directory.
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
