@@ -27,7 +27,7 @@ include-package-data = true  # Enable dynamic inclusion of files
 # Explicitly specify package data to include
 [tool.setuptools.package-data]
 easy3d = [
-    "*.pyd", "*.dylib", "*.so", "*.dll",  # Compiled modules
+    "*.pyd", "*.dylib", "*.so*", "*.dll",  # Compiled modules
     "ReadMe.md",    # Documentation
     "LICENSE.txt",  # License file
 ]

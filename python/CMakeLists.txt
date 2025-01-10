@@ -248,7 +248,11 @@ file(WRITE ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/__init__.py
 
 # Generate the MANIFEST.in file for creating the whl file
 file(WRITE ${Easy3D_PYTHON_PACKAGE_DIR}/MANIFEST.in
+        "recursive-include easy3d *.so*\n"
+        "recursive-include easy3d *.dll\n"
+        "recursive-include easy3d *.pyd\n"
+        "recursive-include easy3d *.dylib\n"
+        "recursive-include easy3d resources/*\n"
         "include ReadMe.md\n"
         "include LICENSE.txt\n"
-        "recursive-include easy3d/resources *\n"
         )
