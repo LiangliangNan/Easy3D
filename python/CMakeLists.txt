@@ -168,53 +168,12 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${PROJECT_NAME}> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
         )
 
-## Post-build command to copy the dependencies of the compiled module to the Python package directory.
-#if (MSVC) #MSVC on Windows. TARGET_RUNTIME_DLLS is only available on Windows.
-#    # TARGET_RUNTIME_DLLS: Automatically finds all DLL dependencies of the target.
-#    # TARGET_FILE_DIR: Refers to the output directory of the target file.
-#    # COMMAND_EXPAND_LISTS: Ensures that the DLL list expands correctly in the cmake -E copy command.
-#    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-#            COMMAND ${CMAKE_COMMAND} -E echo "Copying the runtime DLLs of ${EASY3D_MODULE_NAME}${EASY3D_MODULE_SUFFIX} to ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/..."
-#            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:${PROJECT_NAME}> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-#            # Liangliang: normally we need this:
-#            # COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:${PROJECT_NAME}> $<TARGET_FILE_DIR:${PROJECT_NAME}>
-#            COMMAND_EXPAND_LISTS
-#            )
-#    if(PYTHON_RUNTIME_DLL)
-#        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-#                COMMAND ${CMAKE_COMMAND} -E echo "Copying Python runtime DLL ${PYTHON_RUNTIME_DLL_NAME} to ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/..."
-#                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PYTHON_RUNTIME_DLL} ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-#                )
-#    else ()
-#        message(WARNING "Python runtime DLL (${PYTHON_RUNTIME_DLL_NAME}) not found. This may be due to:\n"
-#                " - Python is installed but its runtime path is not in the PATH environment variable. You need to add it manually.\n"
-#                " - Python is not installed. You can download the installer from https://www.python.org/downloads/")
-#    endif()
-#
-#else() #GCC on macOS/Linux. Other platforms may need to adjust this.
-#    # Liangliang: the following command should work on all Windows/macOS/Linux.
-#    add_custom_command(
-#            TARGET ${PROJECT_NAME} POST_BUILD
-#            COMMAND ${CMAKE_COMMAND} -E echo "Copying the dependencies of ${EASY3D_MODULE_NAME}${EASY3D_MODULE_SUFFIX} to ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/..."
-#            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:easy3d::algo> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-#            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:easy3d::core> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-#            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:easy3d::fileio> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-#            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:easy3d::gui> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-#            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:easy3d::kdtree> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-#            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:easy3d::renderer> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-#            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:easy3d::util> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-#            COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:easy3d::viewer> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-#            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PYTHON_LIBRARIES} ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-#    )
-#endif()
-
-
 function(copy_runtime_dependencies target destination)
     if (MSVC)
         add_custom_command(TARGET ${target} POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E echo "Copying runtime DLLs of ${target} to ${destination}..."
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:${target}> ${destination}
-
+                # also copy the Python runtime DLL
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PYTHON_RUNTIME_DLL} ${destination}
                 COMMAND_EXPAND_LISTS
         )
@@ -227,7 +186,7 @@ function(copy_runtime_dependencies target destination)
                 # Liangliang: It took me so much time to figure this out.
                 #             This is a very useful command to save the list of dependencies of a target to a file.
                 COMMAND ldd $<TARGET_FILE:${target}> | awk '/=>/ {print $$3}' > ${destination}/runtime_dependencies.txt
-
+                # also copy the Python runtime library
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PYTHON_LIBRARIES} ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
                 COMMAND_EXPAND_LISTS
         )
@@ -249,6 +208,7 @@ function(copy_runtime_dependencies target destination)
                 # This include all dependencies obtained by otool
                 #COMMAND otool -L $<TARGET_FILE:${target}> | awk '/@rpath|\\/|\\// {print $$1}' | sed 's|@rpath|$<TARGET_FILE_DIR:${target}>|g' > ${destination}/runtime_dependencies.txt
 
+                # also copy the Python runtime library
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PYTHON_LIBRARIES} ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
                 COMMAND_EXPAND_LISTS
         )
