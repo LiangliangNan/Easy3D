@@ -139,9 +139,10 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
         )
 
      
-
-# The following commands are actually not necessary for generating bindings.
+# ----------------------------------------------------------------------------------------------------------------------
+# The code below is actually not necessary for generating bindings.
 # They are here to make it easier for the installation of the generated Python module.
+# ----------------------------------------------------------------------------------------------------------------------
 
 # RPATH settings for macOS and Linux
 if (APPLE)
@@ -160,15 +161,6 @@ endif ()
 
 # Ensure the directory exists
 file(MAKE_DIRECTORY ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d)
-
-# Generate the __init__.py file for the Python package, which imports the compiled module
-file(WRITE ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/__init__.py
-        "# Alias for the ${EASY3D_MODULE_NAME} module\n"
-        "try:\n"
-        "    from .${EASY3D_MODULE_NAME} import *\n"
-        "except ImportError:\n"
-        "    from ${EASY3D_MODULE_NAME} import *\n"
-        )
 
 # Post-build command to copy the compiled module to the Python package directory.
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
@@ -266,19 +258,37 @@ endfunction()
 # Use the above function to copy the dependencies of the compiled module to the Python package directory.
 copy_runtime_dependencies(${PROJECT_NAME} ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/)
 
-# Platform-specific dynamic library extensions
-set(CONF_Easy3D_VERSION ${Easy3D_VERSION_STRING})
-set(CONF_EASY3D_MODULE_NAME    ${EASY3D_MODULE_NAME})
-set(CONF_EASY3D_MODULE_SUFFIX  ${EASY3D_MODULE_SUFFIX})
 
-# Copy pyproject.toml
+# Configure and create pyproject.toml
 configure_file(${CMAKE_CURRENT_LIST_DIR}/pyproject.toml.in ${Easy3D_PYTHON_PACKAGE_DIR}/pyproject.toml @ONLY)
-# Copy the MANIFEST.in file
-file(COPY ${CMAKE_CURRENT_LIST_DIR}/MANIFEST.in DESTINATION ${Easy3D_PYTHON_PACKAGE_DIR})
+
 # Copy the readme file
 file(COPY ${CMAKE_CURRENT_LIST_DIR}/ReadMe.md DESTINATION ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d)
 # Copy the resource files
-file(COPY ${Easy3D_ROOT}/resources/colormaps DESTINATION ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/resources)
-file(COPY ${Easy3D_ROOT}/resources/fonts DESTINATION ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/resources)
-file(COPY ${Easy3D_ROOT}/resources/shaders DESTINATION ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/resources)
-file(COPY ${Easy3D_ROOT}/resources/textures DESTINATION ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/resources)
+file(COPY ${Easy3D_ROOT}/resources DESTINATION ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d)
+
+# Generate the __init__.py file for the Python package
+file(WRITE ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/__init__.py
+        "# Alias for the ${EASY3D_MODULE_NAME} module\n"
+        "import os\n"
+        "import sys\n"
+        "\n"
+        "try:\n"
+        "    from .${EASY3D_MODULE_NAME} import *\n"
+        "except ImportError:\n"
+        "    from ${EASY3D_MODULE_NAME} import *\n"
+        "\n"
+        "# Get the path of the current module (__init__.py)\n"
+        "module_path = os.path.abspath(__file__)\n"
+        "# Get the directory containing the module\n"
+        "resource_dir = os.path.join(os.path.dirname(module_path), \"resources\")\n"
+        "# Initialize the resource directory\n"
+        "initialize_resource_directory(resource_dir=resource_dir)\n"
+        )
+
+# Generate the MANIFEST.in file for creating the whl file
+file(WRITE ${Easy3D_PYTHON_PACKAGE_DIR}/MANIFEST.in
+        "include ReadMe.md\n"
+        "include LICENSE.txt\n"
+        "recursive-include easy3d/resources *\n"
+        )

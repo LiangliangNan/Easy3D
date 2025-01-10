@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "easy3d"
-version = "@CONF_Easy3D_VERSION@"
+version = "@Easy3D_VERSION_STRING@"
 description = "Python bindings for the Easy3D library"
 authors = [
     { name = "Liangliang Nan", email = "liangliang.nan@gmail.com" }

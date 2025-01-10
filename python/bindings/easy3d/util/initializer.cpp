@@ -12,13 +12,31 @@
 	PYBIND11_MAKE_OPAQUE(std::shared_ptr<void>)
 #endif
 
+
 void bind_easy3d_util_initializer(pybind11::module_& m)
 {
 	// easy3d::initialize(bool, bool, bool, const std::string &) file:easy3d/util/initializer.h line:52
-	m.def("initialize", []() -> void { return easy3d::initialize(); }, "");
-	m.def("initialize", [](bool const & a0) -> void { return easy3d::initialize(a0); }, "", pybind11::arg("info_to_stdout"));
-	m.def("initialize", [](bool const & a0, bool const & a1) -> void { return easy3d::initialize(a0, a1); }, "", pybind11::arg("info_to_stdout"), pybind11::arg("use_log_file"));
-	m.def("initialize", [](bool const & a0, bool const & a1, bool const & a2) -> void { return easy3d::initialize(a0, a1, a2); }, "", pybind11::arg("info_to_stdout"), pybind11::arg("use_log_file"), pybind11::arg("use_setting_file"));
-	m.def("initialize", (void (*)(bool, bool, bool, const std::string &)) &easy3d::initialize, "Initialization of Easy3D.\n \n\n This function initializes logging, setting, and resources. Internally it calls (and is thus identical\n    to calling) logging::initialize(), setting::initialize(), and resource::initialize().\n    For more fine-grained initializations, please refer to the documentation of these functions.\n \n\n  to log messages at a the  level to standard output.\n     and  (including  levels are always logged to standard output.\n \n\n  to create a \".log\" file (which will be created next to the executable program).\n \n\n  to create an \".ini\" file (which will be created next to the executable program).\n    This setting file stores the default rendering parameters. Users can modify this file to change the default\n    rendering parameters, then the changes will be effective for the future.\n \n\n The resource directory containing color maps, shaders, textures, fonts, etc.\n     is the default value, which is the directory coming with the Easy3D distribution.\n    In most cases you should use the default resource directory (unless you want to use different resources).\n\n \n logging::initialize(), setting::initialize(), and resource::initialize().\n\nC++: easy3d::initialize(bool, bool, bool, const std::string &) --> void", pybind11::arg("info_to_stdout"), pybind11::arg("use_log_file"), pybind11::arg("use_setting_file"), pybind11::arg("resource_dir"));
 
+    // Bind the initialize function using a lambda
+    m.def("initialize",
+          [&](bool info_to_stdout, bool use_log_file, bool use_setting_file) {
+              // Call the actual Easy3D initialize function
+              easy3d::initialize(info_to_stdout, use_log_file, use_setting_file);
+          },
+          pybind11::arg("info_to_stdout") = false,
+          pybind11::arg("use_log_file") = true,
+          pybind11::arg("use_setting_file") = false,
+          R"(
+          Initialization of Easy3D.
+
+          This function initializes logging, setting, and resources.
+          Parameters:
+              info_to_stdout (bool): True to log messages at the INFO level to standard output.
+                  WARNING and ERROR (including FATAL) levels are always logged to standard output.
+              use_log_file (bool): True to create a ".log" file (which will be created next to the executable program).
+              use_setting_file (bool): True to create an ".ini" file (which will be created next to the executable program).
+                  This setting file stores the default rendering parameters. Users can modify this file to change the default
+                  rendering parameters, then the changes will be effective for the future.
+          )"
+    );
 }

@@ -33,26 +33,36 @@ namespace easy3d {
 
     namespace resource {
 
-        static std::string resource_dir = file_system::convert_to_native_style(Easy3D_RESOURCE_DIR);
+        static std::string easy3d_resource_dir = file_system::convert_to_native_style(Easy3D_RESOURCE_DIR);
 
+        bool is_valid_resource_dir(const std::string& dir) {
+            return file_system::is_directory(dir) &&
+                   file_system::is_directory(dir + "/shaders") &&
+                   file_system::is_directory(dir + "/fonts") &&
+                   file_system::is_directory(dir + "/colormaps") &&
+                   file_system::is_directory(dir + "/textures");
+        }
 
         // Sets the resource directory (containing color maps, shaders, textures, fonts, etc.)
-        void initialize(const std::string& res_dir) {
-            resource_dir = file_system::convert_to_native_style(res_dir);
+        void initialize(const std::string& dir) {
+            if (is_valid_resource_dir(dir)) {
+                VLOG_N_TIMES(1, 1) << "resource directory: " << dir;
+                easy3d_resource_dir = file_system::convert_to_native_style(dir);
+            }
         }
 
         // resource directory (containing color maps, shaders, textures, fonts, etc.)
         std::string directory() {
             // first check if the resource directory (with the Easy3D distribution) exist
-            static std::string& dir = resource_dir;
-            if (file_system::is_directory(dir)) {
+            static std::string& dir = easy3d_resource_dir;
+            if (is_valid_resource_dir(dir)) {
                 VLOG_N_TIMES(1, 1) << "resource directory: " << dir;
                 return dir;
             }
 
             std::string parent = file_system::executable_directory();
             dir = file_system::convert_to_native_style(parent + "/resources");
-            if (file_system::is_directory(dir))
+            if (is_valid_resource_dir(dir))
                 return dir;
             else {
                 // For macOS, if reached here, we may need to move "up" three times, because
@@ -61,18 +71,18 @@ namespace easy3d {
                 // Debug/Release sub-folder, so we may try four times up at most.
                 parent = file_system::parent_directory(parent);
                 dir = file_system::convert_to_native_style(parent + "/resources");
-                if (file_system::is_directory(dir))
+                if (is_valid_resource_dir(dir))
                     return dir;
                 else {
                     for (int i = 0; i < 4; ++i) {
                         parent = file_system::parent_directory(parent);
                         dir = file_system::convert_to_native_style(parent + "/resources");
-                        if (file_system::is_directory(dir))
+                        if (is_valid_resource_dir(dir))
                             return dir;
                     }
                 }
                 // if still could not find it, show an error and return the current working directory
-                LOG_N_TIMES(1, ERROR) << "could not find the resource directory";
+                LOG_N_TIMES(1, ERROR) << "could not find the resource directory: " << easy3d_resource_dir;
                 return file_system::current_working_directory();
             }
         }

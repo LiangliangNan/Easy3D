@@ -1,3 +1,0 @@
-include ReadMe.md
-include LICENSE.txt
-recursive-include easy3d/resources *

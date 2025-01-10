@@ -15,8 +15,7 @@
 void bind_easy3d_util_resource(pybind11::module_& m)
 {
 	// easy3d::resource::initialize(const std::string &) file:easy3d/util/resource.h line:45
-	m.def("initialize", []() -> void { return easy3d::resource::initialize(); }, "");
-	m.def("initialize", (void (*)(const std::string &)) &easy3d::resource::initialize, "Initializes the resource directory (that contains color maps, shaders, textures, fonts, etc.).\n \n\n  is the default value, which is the directory coming with the Easy3D\n     distribution. In most cases you should use the default resource directory (unless you want to use\n     different resources).\n\nC++: easy3d::resource::initialize(const std::string &) --> void", pybind11::arg("resource_dir"));
+	m.def("initialize_resource_directory", (void (*)(const std::string &)) &easy3d::resource::initialize, "Initializes the resource directory (that contains colormaps, shaders, textures, fonts, etc.)", pybind11::arg("resource_dir"));
 
 	// easy3d::resource::directory() file:easy3d/util/resource.h line:48
 	m.def("resource_directory", (std::string (*)()) &easy3d::resource::directory, "Returns the resource directory (containing color maps, shaders, textures, fonts, etc.)\n\nC++: easy3d::resource::directory() --> std::string");
