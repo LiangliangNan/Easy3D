@@ -100,10 +100,10 @@ ransac.detect(point_cloud,
 # - `position`: A point on the plane.
 # - `normal`: The normal vector of the plane.
 # - `vertices`: Indices of points belonging to the plane.
-# Note: The extracted primitives are also stored as properties:
+# Note: The extracted primitives are also stored as properties in the point cloud self:
 #   - "v:primitive_type"  (one of PLANE, SPHERE, CYLINDER, CONE, TORUS, and UNKNOWN)
-#   - "v:primitive_index" (-1, 0, 1, 2...). -1 meaning a vertex does not belong to any primitive (thus its
-#     primitive_type must be UNKNOWN.
+#   - "v:primitive_index" (-1, 0, 1, 2...). -1 meaning a vertex does not belong to any
+#     primitive (thus its primitive_type must be UNKNOWN).
 planes = ransac.get_planes()  # Retrieve detected planes
 print(f"Number of planes extracted: {len(planes)}")  # Print the number of detected planes
 
@@ -136,6 +136,24 @@ for i, plane in enumerate(planes):
 #     # Print up to 20 vertex indices (for demonstration purposes)
 #     vertex_count = len(cylinder.vertices)
 #     print(f"  Vertices ({min(vertex_count, 20)} out of {vertex_count} shown): {cylinder.vertices[:20]}")  # e.g., [5788, 5801, 5777, 5796, ... ]
+
+# -----------------------------------------------------------------------------
+# Saving the extraction result into a file
+# -----------------------------------------------------------------------------
+
+# After detection, the point cloud model already carries the result in the "v:primitive_type"
+# and "v:primitive_index" properties, which can be saved into a file in the 'bvg'
+# (Binary Vertex Group) format. The ASCII 'vg' format also works but is slower.
+# See here for more information about these file formats:
+#       https://github.com/LiangliangNan/PolyFit/blob/main/data/ReadMe-data.md
+# Alternatively, the extracted primitives can also be saved into the 'ply' format,
+# where the type and index of a primitive are recorded by the "v:primitive_type"
+# and "v:primitive_index" properties, respectively.
+result_file_name = "extracted_planes.vg"   # You can try ".vg" or ".ply"
+if easy3d.PointCloudIO.save(result_file_name, point_cloud):
+    print(f'Plane extraction result saved to file {result_file_name}')
+else:
+    print(f'Failed to save plane extraction result to file {result_file_name}')
 
 # -----------------------------------------------------------------------------
 # Visualizing the extracted planar segments
