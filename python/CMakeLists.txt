@@ -216,6 +216,33 @@ else() #GCC on macOS/Linux. Other platforms may need to adjust this.
     )
 endif()
 
+
+#function(copy_runtime_dependencies target destination)
+#    if (MSVC)
+#        add_custom_command(TARGET ${target} POST_BUILD
+#                COMMAND ${CMAKE_COMMAND} -E echo "Copying runtime DLLs of ${target} to ${destination}..."
+#                COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:${target}> ${destination}
+#                COMMAND_EXPAND_LISTS
+#        )
+#    elseif (UNIX AND NOT APPLE) # Linux
+#        add_custom_command(TARGET ${target} POST_BUILD
+#                COMMAND ${CMAKE_COMMAND} -E echo "Copying runtime dependencies of ${target} to ${destination}..."
+#                # Liangliang: It took me so much time to figure this out
+#                # This is a very useful command to copy the dependencies of a target to a directory.
+#                COMMAND ldd $<TARGET_FILE:${target}> | grep '=> /' | awk '{print $$3}' | xargs -I {} cp -v {} ${destination}
+#        )
+#    elseif (APPLE) # macOS
+#        add_custom_command(TARGET ${target} POST_BUILD
+#                COMMAND ${CMAKE_COMMAND} -E echo "Copying runtime dependencies of ${target} to ${destination}..."
+#                COMMAND sh -c "otool -L $<TARGET_FILE:${target}> | grep -o '/[^ ]*' | xargs -I {} cp {} ${destination}"
+#                COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${target}> ${destination}
+#        )
+#    endif()
+#endfunction()
+#
+## Usage
+#copy_runtime_dependencies(${PROJECT_NAME} ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/)
+
 # Platform-specific dynamic library extensions
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")    # Windows
     set(CONF_LIB_SUFFIX ".dll")
