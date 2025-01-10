@@ -169,11 +169,11 @@
 /**
  * \example Tutorial_307_CrossSection
  * The source file containing the main() function:
- * \include{lineno} visualization_cross_section/main.cpp
+ * \include{lineno} Tutorial_307_CrossSection/main.cpp
  * The header file of the viewer class:
- * \include{lineno} visualization_cross_section/viewer.h
+ * \include{lineno} Tutorial_307_CrossSection/viewer.h
  * The source file of the viewer class:
- * \include{lineno} visualization_cross_section/viewer.cpp
+ * \include{lineno} Tutorial_307_CrossSection/viewer.cpp
  */
 
 /**
