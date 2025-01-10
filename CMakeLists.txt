@@ -341,6 +341,7 @@ if (Easy3D_BUILD_DOCUMENTATION)
         add_custom_target(Documentation ALL ${DOXYGEN_EXECUTABLE} Doxyfile
                 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
                 COMMENT "Generating Doxygen documentation")
+        set_target_properties(Documentation PROPERTIES FOLDER "doc")
     else ()
         message(WARNING "Building documentation requires Doxygen but Doxygen was not found. Building documentation is "
                 "thus disabled. You can set 'DOXYGEN_EXECUTABLE' to the directory containing the Doxygen executable "
