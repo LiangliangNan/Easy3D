@@ -244,7 +244,6 @@ file(COPY ${Easy3D_ROOT}/LICENSE DESTINATION ${Easy3D_PYTHON_PACKAGE_DIR})
 file(WRITE ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/__init__.py
         "# Alias for the ${EASY3D_MODULE_NAME} module\n"
         "import os\n"
-        "import sys\n"
         "\n"
         "try:\n"
         "    from .${EASY3D_MODULE_NAME} import *\n"
@@ -253,7 +252,7 @@ file(WRITE ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/__init__.py
         "\n"
         "# Get the path of the current module (__init__.py)\n"
         "module_path = os.path.abspath(__file__)\n"
-        "# Get the directory containing the module\n"
+        "# The resources reside in the directory containing the module\n"
         "resource_dir = os.path.join(os.path.dirname(module_path), \"resources\")\n"
         "# Initialize the resource directory\n"
         "initialize_resource_directory(resource_dir=resource_dir)\n"
