@@ -217,13 +217,3 @@ endif ()
 if (Easy3D_HAS_FFMPEG)
     target_link_libraries(${PROJECT_NAME} PRIVATE easy3d::video)
 endif ()
-
-
-#if (MSVC)
-#    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-#            COMMAND ${CMAKE_COMMAND} -E echo "Copying the runtime DLLs of ${PROJECT_NAME} ($<TARGET_RUNTIME_DLLS:${PROJECT_NAME}>) to $<TARGET_FILE_DIR:${PROJECT_NAME}>..."
-#            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:${PROJECT_NAME}> $<TARGET_FILE_DIR:${PROJECT_NAME}>
-#            COMMAND_EXPAND_LISTS
-#            COMMENT "Copying ${PROJECT_NAME} dependencies to the target directory"
-#            )
-#endif()

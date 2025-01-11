@@ -165,10 +165,11 @@ file(MAKE_DIRECTORY ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d)
 function(copy_runtime_dependencies target destination)
     if (MSVC)
         add_custom_command(TARGET ${target} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E make_directory ${destination}
+                # -----------------------------------------------------------------------------------------------
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${target}> ${destination}
                 # -----------------------------------------------------------------------------------------------
                 COMMAND ${CMAKE_COMMAND} -E echo "Copying runtime DLLs of ${target} to ${destination}..."
-                # -----------------------------------------------------------------------------------------------
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:${target}> ${destination}
                 # -----------------------------------------------------------------------------------------------
                 # Copy the Python runtime DLL
@@ -178,10 +179,11 @@ function(copy_runtime_dependencies target destination)
                 )
     elseif (APPLE) # macOS
         add_custom_command(TARGET ${target} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E make_directory ${destination}
+                # -----------------------------------------------------------------------------------------------
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${target}> ${destination}
                 # -----------------------------------------------------------------------------------------------
                 COMMAND ${CMAKE_COMMAND} -E echo "Copying runtime dependencies of ${target} to ${destination}..."
-                # -----------------------------------------------------------------------------------------------
                 # Liangliang: It took me so much time to figure out how to find and copy the dependencies using `add_custom_command`.
                 # (a) This includes all dependencies obtained by `otool` (some may not exist).
                 #                COMMAND otool -L $<TARGET_FILE:${target}> | awk '/@rpath|\\/|\\// {print $$1}' | sed 's|@rpath|$<TARGET_FILE_DIR:${target}>|g' > ${destination}/runtime_dependencies.txt
@@ -200,10 +202,11 @@ function(copy_runtime_dependencies target destination)
                 )
     elseif (UNIX) # Linux
         add_custom_command(TARGET ${target} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E make_directory ${destination}
+                # -----------------------------------------------------------------------------------------------
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${target}> ${destination}
                 # -----------------------------------------------------------------------------------------------
                 COMMAND ${CMAKE_COMMAND} -E echo "Copying runtime dependencies of ${target} to ${destination}..."
-                # -----------------------------------------------------------------------------------------------
                 # Liangliang: It took me so much time to figure out how to find and copy the dependencies using `add_custom_command`.
                 COMMAND ldd $<TARGET_FILE:${target}> | awk '/=>/ {print $$3}' > ${destination}/runtime_dependencies.txt
                 COMMAND ldd $<TARGET_FILE:${target}> | grep '=> /' | awk '{print $$3}' | xargs -I {} cp -v {} ${destination}
