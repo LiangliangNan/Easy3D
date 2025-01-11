@@ -29,10 +29,8 @@ easy3d = [
     "*.dylib", "*.so*", "*.pyd", "*.dll",  # Compiled modules and dependencies
     "LICENSE",      # License file
     "README.md",    # ReadMe file
-]
-
-# Include 'resources' as data files (not package data)
-[tool.setuptools.data-files]
-easy3d = [
     "resources/*",  # Resources directory (includes all subdirectories)
-]
+ ]
+
+[tool.setuptools.exclude-package-data]
+easy3d = [".DS_Store"]
