@@ -13,7 +13,7 @@
 # -------------------------------------------------------------------------------
 # This is required if the bindings are not installed via `pip` but are located in
 # a local build directory. For building and installing Python bindings of Easy3D,
-# please refer to: https://github.com/LiangliangNan/Easy3D/blob/main/ReadMe.md
+# please refer to: https://github.com/LiangliangNan/Easy3D/blob/main/README.md
 # -------------------------------------------------------------------------------
 import sys
 sys.path.append("../../cmake-build-release/lib/python")  # Update this path to point to your Easy3D build directory.

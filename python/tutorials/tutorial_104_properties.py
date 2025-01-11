@@ -8,10 +8,13 @@
 # The same principles apply to PointCloud as well.
 # -----------------------------------------------------------------------------
 
-# If Easy3D was built locally, add its Python bindings to the system path.
-# This step is not required if Easy3D is installed globally via `pip`.
-# For detailed instructions on building and installing Easy3D, refer to:
-# https://github.com/LiangliangNan/Easy3D/blob/main/ReadMe.md
+# -------------------------------------------------------------------------------
+# Adding Easy3D Python Bindings to the System Path
+# -------------------------------------------------------------------------------
+# This is required if the bindings are not installed via `pip` but are located in
+# a local build directory. For building and installing Python bindings of Easy3D,
+# please refer to: https://github.com/LiangliangNan/Easy3D/blob/main/README.md
+# -------------------------------------------------------------------------------
 import sys
 sys.path.append("../../cmake-build-release/lib/python")  # Update this path to point to your Easy3D build directory.
 

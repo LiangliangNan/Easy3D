@@ -26,19 +26,19 @@
 #    distortion in the parameterized space.
 # -----------------------------------------------------------------------------
 
-
-# If Easy3D is not installed via `pip`, you may need to add its Python bindings
-# to the system path. For detailed instructions on building and installing
-# Python bindings of Easy3D, visit:
-# https://github.com/LiangliangNan/Easy3D/blob/main/ReadMe.md
-
+# -------------------------------------------------------------------------------
+# Adding Easy3D Python Bindings to the System Path
+# -------------------------------------------------------------------------------
+# This is required if the bindings are not installed via `pip` but are located in
+# a local build directory. For building and installing Python bindings of Easy3D,
+# please refer to: https://github.com/LiangliangNan/Easy3D/blob/main/README.md
+# -------------------------------------------------------------------------------
 import sys
 sys.path.append("../../cmake-build-release/lib/python")  # Update this path to point to your Easy3D build directory.
 
 # Import and initialize Easy3D
 import easy3d
 easy3d.initialize(False)
-
 
 # In this example, we load a 3D surface mesh file of a girl's face.
 mesh_harmonic = easy3d.SurfaceMeshIO.load(easy3d.resource_directory() + "/data/girl_face.ply")

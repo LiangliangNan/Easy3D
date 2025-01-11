@@ -13,10 +13,13 @@
 #    using Easy3D's `MultiViewer`.
 # -----------------------------------------------------------------------------
 
-# If you built Easy3D locally, you'll need to add its Python bindings to the
-# system path to access them. If Easy3D is globally installed via `pip`, this
-# step is not necessary. For building and installing Python bindings of Easy3D,
-# # please refer to: https://github.com/LiangliangNan/Easy3D/blob/main/ReadMe.md
+# -------------------------------------------------------------------------------
+# Adding Easy3D Python Bindings to the System Path
+# -------------------------------------------------------------------------------
+# This is required if the bindings are not installed via `pip` but are located in
+# a local build directory. For building and installing Python bindings of Easy3D,
+# please refer to: https://github.com/LiangliangNan/Easy3D/blob/main/README.md
+# -------------------------------------------------------------------------------
 import sys
 sys.path.append("../../cmake-build-release/lib/python")  # Update this path to point to your Easy3D build directory.
 

@@ -12,18 +12,13 @@
 # 4. Visualize the extracted planar segments.
 # -----------------------------------------------------------------------------
 
-# -----------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path
-# -----------------------------------------------------------------------------
-# If the Easy3D Python bindings are located in a custom directory (e.g., from
-# a local build), you'll need to add that directory to the system path to
-# access them. You can skip this step if the bindings are installed globally
-# via `pip`.
-#
-# Please refer to the official documentation for building and installing
-# Easy3D Python bindings:
-# https://github.com/LiangliangNan/Easy3D/blob/main/ReadMe.md
-
+# -------------------------------------------------------------------------------
+# This is required if the bindings are not installed via `pip` but are located in
+# a local build directory. For building and installing Python bindings of Easy3D,
+# please refer to: https://github.com/LiangliangNan/Easy3D/blob/main/README.md
+# -------------------------------------------------------------------------------
 import sys
 sys.path.append("../../cmake-build-release/lib/python")  # Update this path to point to your Easy3D build directory.
 

@@ -36,7 +36,7 @@ file for the bindings and install it globally. This will make Easy3D work like o
 
 Below are the detailed steps for creating the wheel file and installation.
 
-- Step 1: Install the build Tool (if not exist)
+- Step 1: Install the build Tool (only if not installed)
 
   - `pip install build`
 
@@ -48,7 +48,7 @@ Below are the detailed steps for creating the wheel file and installation.
 
 - Step 3: Install the Wheel
 
-  - `pip install dist/easy3d-2.6.0-py3-none-any.whl`
+  - `pip install dist/easy3d-2.6.0-py3-none-any.whl` # Update the wheel file name accordingly
 
   You can verify the installation by running the following command:
 
