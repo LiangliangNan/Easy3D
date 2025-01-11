@@ -161,64 +161,72 @@ endif ()
 
 # Ensure the directory exists
 file(MAKE_DIRECTORY ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d)
-
-# Post-build command to copy the compiled module to the Python package directory.
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E echo "Copying ${EASY3D_MODULE_NAME}${EASY3D_MODULE_SUFFIX} to ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/..."
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${PROJECT_NAME}> ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-        )
-
+# Post-build command to copy the compiled module and its dependencies to the Python package directory.
 function(copy_runtime_dependencies target destination)
     if (MSVC)
         add_custom_command(TARGET ${target} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${target}> ${destination}
+                # -----------------------------------------------------------------------------------------------
                 COMMAND ${CMAKE_COMMAND} -E echo "Copying runtime DLLs of ${target} to ${destination}..."
+                # -----------------------------------------------------------------------------------------------
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:${target}> ${destination}
-                # also copy the Python runtime DLL
+                # -----------------------------------------------------------------------------------------------
+                # Copy the Python runtime DLL
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PYTHON_RUNTIME_DLL} ${destination}
+                # -----------------------------------------------------------------------------------------------
                 COMMAND_EXPAND_LISTS
-        )
-    elseif (UNIX AND NOT APPLE) # Linux
-        add_custom_command(TARGET ${target} POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E echo "Copying runtime dependencies of ${target} to ${destination}..."
-                # Liangliang: It took me so much time to figure this out.
-                #             This is a very useful command to copy the dependencies of a target to a directory.
-                COMMAND ldd $<TARGET_FILE:${target}> | grep '=> /' | awk '{print $$3}' | xargs -I {} cp -v {} ${destination}
-                # Liangliang: It took me so much time to figure this out.
-                #             This is a very useful command to save the list of dependencies of a target to a file.
-                #COMMAND ldd $<TARGET_FILE:${target}> | awk '/=>/ {print $$3}' > ${destination}/runtime_dependencies.txt
-                # also copy the Python runtime library
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PYTHON_LIBRARIES} ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
-                COMMAND_EXPAND_LISTS
-        )
+                )
     elseif (APPLE) # macOS
         add_custom_command(TARGET ${target} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${target}> ${destination}
+                # -----------------------------------------------------------------------------------------------
                 COMMAND ${CMAKE_COMMAND} -E echo "Copying runtime dependencies of ${target} to ${destination}..."
-
-                # Liangliang: It took me so much time to figure this out.
-                # Copy each dependency listed in runtime_dependencies.txt to the destination
+                # -----------------------------------------------------------------------------------------------
+                # Liangliang: It took me so much time to figure out how to find and copy the dependencies using `add_custom_command`.
+                # (a) This includes all dependencies obtained by `otool` (some may not exist).
+                #                COMMAND otool -L $<TARGET_FILE:${target}> | awk '/@rpath|\\/|\\// {print $$1}' | sed 's|@rpath|$<TARGET_FILE_DIR:${target}>|g' > ${destination}/runtime_dependencies.txt
+                # (b) This only includes dependencies in the target file directory (or its subdirectories). The `grep` command filters lines starting with the target file directory.
+                #                COMMAND otool -L $<TARGET_FILE:${target}> | awk '/@rpath|\\/|\\// {print $$1}' | sed 's|@rpath|$<TARGET_FILE_DIR:${target}>|g' | grep "^$<TARGET_FILE_DIR:${target}>/" > ${destination}/runtime_dependencies.txt
+                # (c) Both (a) and (b) include a line containing the target file, e.g., "/MyPath/lib/PyEasy3D.so:" (this line is not shown when using the command in terminal).
+                #     The `grep -v` command filters out the line containing the target file.
+                COMMAND otool -L $<TARGET_FILE:${target}> | awk '/@rpath|\\/|\\// {print $$1}' | sed 's|@rpath|$<TARGET_FILE_DIR:${target}>|g' | grep "^$<TARGET_FILE_DIR:${target}>/" | grep -v "^$<TARGET_FILE:${target}>$" > ${destination}/runtime_dependencies.txt
+                # The `xargs` command reads the file line by line and copies each line to the destination directory.
                 COMMAND otool -L $<TARGET_FILE:${target}> | awk '/@rpath|\\/|\\// {print $$1}' | sed 's|@rpath|$<TARGET_FILE_DIR:${target}>|g' | grep "^$<TARGET_FILE_DIR:${target}>/" | grep -v "^$<TARGET_FILE:${target}>$" | xargs -I {} cp -v {} ${destination}
-
-                # Liangliang: It took me so much time to figure this out.
-                # Save the list of dependencies to a file, excluding
-                #    - the target itself
-                #    - the dependencies in other directories other than the path of the target file.
-                #COMMAND otool -L $<TARGET_FILE:${target}> | awk '/@rpath|\\/|\\// {print $$1}' | sed 's|@rpath|$<TARGET_FILE_DIR:${target}>|g' | grep "^$<TARGET_FILE_DIR:${target}>/" | grep -v "^$<TARGET_FILE:${target}>$" > ${destination}/runtime_dependencies.txt
-                # This one includes the target itself.
-                #COMMAND otool -L $<TARGET_FILE:${target}> | awk '/@rpath|\\/|\\// {print $$1}' | sed 's|@rpath|$<TARGET_FILE_DIR:${target}>|g' | grep "^$<TARGET_FILE_DIR:${target}>/" > ${destination}/runtime_dependencies.txt
-                # This include all dependencies obtained by otool
-                #COMMAND otool -L $<TARGET_FILE:${target}> | awk '/@rpath|\\/|\\// {print $$1}' | sed 's|@rpath|$<TARGET_FILE_DIR:${target}>|g' > ${destination}/runtime_dependencies.txt
-
-                # also copy the Python runtime library
+                # -----------------------------------------------------------------------------------------------
+                # Copy the Python runtime library
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PYTHON_LIBRARIES} ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
+                # -----------------------------------------------------------------------------------------------
                 COMMAND_EXPAND_LISTS
-        )
-    endif()
+                )
+    elseif (UNIX) # Linux
+        add_custom_command(TARGET ${target} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${target}> ${destination}
+                # -----------------------------------------------------------------------------------------------
+                COMMAND ${CMAKE_COMMAND} -E echo "Copying runtime dependencies of ${target} to ${destination}..."
+                # -----------------------------------------------------------------------------------------------
+                # Liangliang: It took me so much time to figure out how to find and copy the dependencies using `add_custom_command`.
+                COMMAND ldd $<TARGET_FILE:${target}> | awk '/=>/ {print $$3}' > ${destination}/runtime_dependencies.txt
+                COMMAND ldd $<TARGET_FILE:${target}> | grep '=> /' | awk '{print $$3}' | xargs -I {} cp -v {} ${destination}
+                # -----------------------------------------------------------------------------------------------
+                # Copy the Python runtime library
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PYTHON_LIBRARIES} ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/
+                # -----------------------------------------------------------------------------------------------
+                COMMAND_EXPAND_LISTS
+                )
+    endif ()
 endfunction()
 
-# Use the above function to copy the dependencies of the compiled module to the Python package directory.
+# Use the above function to copy easy3d python module and its dependencies to the Python package directory.
 copy_runtime_dependencies(${PROJECT_NAME} ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/)
 
 
+
+# Platform-specific suffix for Python extensions
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set(EASY3D_MODULE_SUFFIX ".pyd")
+else()
+    set(EASY3D_MODULE_SUFFIX ".so")
+endif()
 # Configure and create pyproject.toml
 configure_file(${CMAKE_CURRENT_LIST_DIR}/pyproject.toml.in ${Easy3D_PYTHON_PACKAGE_DIR}/pyproject.toml @ONLY)
 
@@ -246,15 +254,4 @@ file(WRITE ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/__init__.py
         "resource_dir = os.path.join(os.path.dirname(module_path), \"resources\")\n"
         "# Initialize the resource directory\n"
         "initialize_resource_directory(resource_dir=resource_dir)\n"
-        )
-
-# Generate the MANIFEST.in file for creating the whl file
-file(WRITE ${Easy3D_PYTHON_PACKAGE_DIR}/MANIFEST.in
-        "recursive-include easy3d *.so*\n"
-        "recursive-include easy3d *.dll\n"
-        "recursive-include easy3d *.pyd\n"
-        "recursive-include easy3d *.dylib\n"
-        "recursive-include easy3d resources/*\n"
-        "include README.md\n"
-        "include LICENSE\n"
         )

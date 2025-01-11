@@ -53,4 +53,14 @@ Below are the detailed steps for creating the wheel file and installation.
   You can verify the installation by running the following command:
 
   - `pip show easy3d`
-  
+
+
+
+### System Dependencies (typically already installed for almost all users)
+Before installing `easy3d`, ensure that the following system libraries are installed:
+
+- **OpenGL**: Required for rendering.
+  - On **Ubuntu/Debian**: `sudo apt install libgl1-mesa-dev`
+  - On **Windows**: Install the latest graphics drivers from your GPU manufacturer. 
+  - On **macOS**: Pre-installed.
+  - On **Fedora**: `sudo dnf install mesa-libGL-devel`
