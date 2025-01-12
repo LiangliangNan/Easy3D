@@ -29,6 +29,8 @@ viewer.add_model(easy3d.directory() + "/data/bunny.ply")
 viewer.run()
 ```
 
+**Note**: the Python version used for running the code should match the version used for building the bindings.
+
 ### (Optional) Installation
 
 If you want to avoid specifying the path of the generated bindings in your Python code, you can create a wheel (`.whl`) 
