@@ -138,26 +138,27 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
         FOLDER "python"
         )
 
-     
-# ----------------------------------------------------------------------------------------------------------------------
-# The code below is actually not necessary for generating bindings.
-# They are here to make it easier for the installation of the generated Python module.
-# ----------------------------------------------------------------------------------------------------------------------
-
 # RPATH settings for macOS and Linux
 if (APPLE)
     # For macOS, @loader_path ensures the library looks for dependencies relative to the location of the module.
     set_target_properties(${PROJECT_NAME} PROPERTIES
             BUILD_RPATH "@loader_path"
             INSTALL_RPATH "@loader_path"
-    )
+            )
 elseif (UNIX)
     # For Linux, $ORIGIN ensures the library looks for dependencies relative to the location of the module.
     set_target_properties(${PROJECT_NAME} PROPERTIES
             BUILD_RPATH "$ORIGIN"
             INSTALL_RPATH "$ORIGIN"
-    )
+            )
 endif ()
+
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# The code below is actually not necessary for generating bindings.
+# They are here to make it easier for the installation of the generated Python module.
+# ----------------------------------------------------------------------------------------------------------------------
 
 # Ensure the directory exists
 file(MAKE_DIRECTORY ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d)
