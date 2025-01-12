@@ -223,13 +223,6 @@ endfunction()
 copy_runtime_dependencies(${PROJECT_NAME} ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/)
 
 
-
-# Platform-specific suffix for Python extensions
-if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    set(EASY3D_MODULE_SUFFIX ".pyd")
-else()
-    set(EASY3D_MODULE_SUFFIX ".so")
-endif()
 # Configure and create pyproject.toml
 configure_file(${CMAKE_CURRENT_LIST_DIR}/pyproject.toml.in ${Easy3D_PYTHON_PACKAGE_DIR}/pyproject.toml @ONLY)
 
