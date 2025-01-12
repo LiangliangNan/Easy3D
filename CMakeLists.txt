@@ -98,13 +98,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${Easy3D_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${Easy3D_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${Easy3D_BINARY_DIR}/lib)
 
-### update EASY3D_VERSION_NR and EASY3D_RELEASE_DATE
-file(READ "${Easy3D_INCLUDE_DIR}/easy3d/util/version.h" file_content)
-string(REGEX REPLACE "EASY3D_VERSION_NR 10[0-9]0[0-9]0[0-9]" "EASY3D_VERSION_NR ${Easy3D_VERSION_NUMBER}" file_content "${file_content}")
-string(TIMESTAMP TODAY "%Y%m%d")
-string(REGEX REPLACE "EASY3D_RELEASE_DATE [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]" "EASY3D_RELEASE_DATE ${TODAY}" file_content "${file_content}")
-file(WRITE ${Easy3D_INCLUDE_DIR}/easy3d/util/version.h "${file_content}")
-
 ################################################################################
 
 # Discourage users to build Easy3D directly in its root directory

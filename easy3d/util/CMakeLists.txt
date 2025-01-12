@@ -62,6 +62,13 @@ if (Easy3D_BUILD_SHARED_LIBS)
             PRIVATE ELPP_EXPORT_SYMBOLS)
 endif ()
 
+### update EASY3D_VERSION_NR and EASY3D_RELEASE_DATE
+file(READ "${CMAKE_CURRENT_LIST_DIR}/version.h" file_content)
+string(REGEX REPLACE "EASY3D_VERSION_NR 10[0-9]0[0-9]0[0-9]" "EASY3D_VERSION_NR ${Easy3D_VERSION_NUMBER}" file_content "${file_content}")
+string(TIMESTAMP TODAY "%Y%m%d")
+string(REGEX REPLACE "EASY3D_RELEASE_DATE [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]" "EASY3D_RELEASE_DATE ${TODAY}" file_content "${file_content}")
+file(WRITE ${CMAKE_CURRENT_LIST_DIR}/version.h "${file_content}")
+
 install_module(${module})
 # Install easylogging++.h to the installation directory
 install(FILES "${Easy3D_THIRD_PARTY}/easyloggingpp/easylogging++.h"
