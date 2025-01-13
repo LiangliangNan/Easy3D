@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.12)
 ################################################################################
 
 # Build shared libraries
-if (MINGW) # Workaround for using MinGW on Windows
+if (WIN32 AND CMAKE_CXX_COMPILER MATCHES "mingw") # Workaround for using MinGW on Windows
     set(Easy3D_BUILD_SHARED_LIBS                                OFF)
 else()
     option(Easy3D_BUILD_SHARED_LIBS "Build shared libaries"     ON )
