@@ -45,7 +45,7 @@ if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 elseif(CMAKE_BUILD_PARALLEL_LEVEL)
     # Use build system parallelism (e.g., `make -j` or `ninja`)
-    set(CMAKE_BUILD_PARALLEL_LEVEL 4) # Example: Use 4 threads
+    set(CMAKE_BUILD_PARALLEL_LEVEL 8) # Example: Use 8 threads
 endif()
 
 ################################################################################
