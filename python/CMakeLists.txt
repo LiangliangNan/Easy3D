@@ -169,6 +169,7 @@ function(copy_runtime_dependencies target destination)
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${target}> ${destination}
                 # -----------------------------------------------------------------------------------------------
                 COMMAND ${CMAKE_COMMAND} -E echo "Copying runtime DLLs of ${target} to ${destination}..."
+                COMMAND dumpbin /DEPENDENTS $<TARGET_FILE:${target}> > ${destination}/runtime_dependencies.txt
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:${target}> ${destination}
                 # -----------------------------------------------------------------------------------------------
                 # Copy the Python runtime DLL
