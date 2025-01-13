@@ -40,6 +40,7 @@ print(f"version_patch: {easy3d.version_patch()}")
 print(f"version_string: {easy3d.version_string()}")
 print(f"version_number: {easy3d.version_number()}")
 print(f"release_date: {easy3d.release_date()}")
+print(f"resource directory: {easy3d.resource_directory()}")
 
 # -------------------------------------------------------------------------------
 # Creating and Converting a vec2 Object
