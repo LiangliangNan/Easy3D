@@ -144,7 +144,7 @@ for i, plane in enumerate(planes):
 # Alternatively, the extracted primitives can also be saved into the 'ply' format,
 # where the type and index of a primitive are recorded by the "v:primitive_type"
 # and "v:primitive_index" properties, respectively.
-result_file_name = "extracted_planes.vg"   # You can try ".vg" or ".ply"
+result_file_name = "extracted_planes.bvg"   # You can try ".vg" or ".ply"
 if easy3d.PointCloudIO.save(result_file_name, point_cloud):
     print(f'Plane extraction result saved to file {result_file_name}')
 else:
