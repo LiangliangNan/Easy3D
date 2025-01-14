@@ -128,6 +128,7 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC "PyEasy3D_NAME=${EASY3D_MODULE
 # Platform-specific suffix for Python extensions
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     set(EASY3D_MODULE_SUFFIX ".pyd")
+    set_target_properties(${PROJECT_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}) # put it together with exes/dlls
 else()
     set(EASY3D_MODULE_SUFFIX ".so")
 endif()
@@ -167,10 +168,14 @@ function(copy_runtime_dependencies target destination)
                 COMMAND ${CMAKE_COMMAND} -E make_directory ${destination}
                 # -----------------------------------------------------------------------------------------------
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${target}> ${destination}
-                # -----------------------------------------------------------------------------------------------
                 COMMAND ${CMAKE_COMMAND} -E echo "Copying runtime DLLs of ${target} to ${destination}..."
-                COMMAND dumpbin /DEPENDENTS $<TARGET_FILE:${target}> > ${destination}/runtime_dependencies.txt
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:${target}> ${destination}
+                # -----------------------------------------------------------------------------------------------
+                # Liangliang: both "dumpbin /DEPENDENTS" and "$<TARGET_RUNTIME_DLLS:${target}>" only resolve direct dependencies.
+                # COMMAND dumpbin /DEPENDENTS $<TARGET_FILE:${target}> > ${destination}/runtime_dependencies.txt
+                # COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:${target}> ${destination}
+                # -----------------------------------------------------------------------------------------------
+                # Using a Python script (copy_dependencies.py) to resolve transitive dependencies.
+                COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_LIST_DIR}/helper/copy_dependencies.py $<TARGET_FILE:${target}>  ${destination}
                 # -----------------------------------------------------------------------------------------------
                 # Copy the Python runtime DLL
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PYTHON_RUNTIME_DLL} ${destination}
