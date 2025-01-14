@@ -6,6 +6,7 @@
 #  PYTHONLIBS_FOUND           - have the Python libs been found
 #  PYTHON_PREFIX              - path to the Python installation
 #  PYTHON_LIBRARIES           - path to the python library
+#  PYTHON_EXECUTABLE          - path to the python executable
 #  PYTHON_RUNTIME_DLL_NAME    - (Windows only) the expected name of the Python runtime DLL (e.g., python310.dll)
 #  PYTHON_RUNTIME_DLL         - (Windows only) path to the Python runtime DLL (e.g., python310.dll)
 #  PYTHON_INCLUDE_DIRS        - path to where Python.h is found
@@ -336,7 +337,7 @@ elseif (PYTHON_LIBRARIES)
   message(STATUS "Found Python libraries: ${PYTHON_LIBRARIES}")
 endif ()
 
-#message(STATUS "-------------- PYTHON_EXECUTABLE: ${PYTHON_EXECUTABLE}")
+message(STATUS "Found Python executable: ${PYTHON_EXECUTABLE}")
 #message(STATUS "-------------- PYTHON_PREFIX: ${PYTHON_PREFIX}")
 #message(STATUS "-------------- PYTHON_LIBRARIES: ${PYTHON_LIBRARIES}")
 #message(STATUS "-------------- PYTHON_INCLUDE_DIRS: ${PYTHON_INCLUDE_DIRS}")
