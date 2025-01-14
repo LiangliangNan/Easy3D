@@ -110,9 +110,12 @@ if(MSVC) # That's also clang-cl
   # /bigobj is needed for bigger binding projects due to the limit to 64k
   # addressable sections
   set_property(
-    TARGET pybind11::windows_extras
-    APPEND
-    PROPERTY INTERFACE_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:CXX>:/bigobj>)
+          TARGET pybind11::windows_extras
+          APPEND
+          PROPERTY INTERFACE_COMPILE_OPTIONS
+          $<$<COMPILE_LANGUAGE:CXX>:/bigobj>
+          $<$<COMPILE_LANGUAGE:CXX>:/external:W0>
+  )
 
   # /MP enables multithreaded builds (relevant when there are many files) for MSVC
   if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC") # no Clang no Intel
