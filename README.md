@@ -55,7 +55,7 @@ Any type of 3D drawables (e.g., points, lines, triangles, and thus point clouds,
 and vector fields) can be rendered by writing a few lines of code with Easy3D. For example, the following code renders a 
 point cloud as a set of spheres
 
-```c++
+``` c++
 // assume your point cloud has been loaded to the viewer
 PointsDrawable* drawable = cloud->renderer()->get_points_drawable("vertices");
 drawable->set_impostor_type(PointsDrawable::SPHERE); // draw points as spheres.
@@ -63,7 +63,7 @@ drawable->set_point_size(3.0f);    // set point size
 ```
 or as a set of surfels (i.e., 3D discs)
 
-```c++ 
+``` c++ 
 drawable->set_impostor_type(PointsDrawable::SURFEL);
 ``` 
 
@@ -152,10 +152,10 @@ Have a look at <a href="https://github.com/LiangliangNan/Easy3D/blob/main/HowToB
 step</a>.
 
 #### Build and use Python bindings
-- Please check [here](./python/README.md).
+- Please check [here](https://github.com/LiangliangNan/Easy3D/edit/main/python/README.md).
 
 ### Test Easy3D
-A test suite is provided in the [`tests`](./tests) subfolder (and [`test`](./python/test) for Python users), which 
+A test suite is provided in the [`tests`](https://github.com/LiangliangNan/Easy3D/tree/main/tests) subfolder (and [`test`](https://github.com/LiangliangNan/Easy3D/tree/main/python/test) for Python users), which 
 contains a collection of automated test cases (for data structures, IO, algorithms, visualization, etc.) and some 
 semi-automated test cases (for GUI-related functionalities that require interactive user input). All cases are 
 integrated into the single target `tests`.
@@ -195,7 +195,7 @@ import easy3d
 
 easy3d.initialize()
 viewer = easy3d.Viewer("Test")
-viewer.add_model(easy3d.directory() + "/data/bunny.ply")
+viewer.add_model(easy3d.resource_directory() + "/data/bunny.ply")
 viewer.run()
 ```
 
@@ -209,7 +209,7 @@ To build it from the source code, [install Doxygen](https://www.doxygen.nl/manua
 Then, switch on the CMake option `` in the main `CMakeList.txt`. Finally, build the `doc` 
 target to generate the documentation. 
 
-For Python users, please check these [tutorials](./python/tutorials).
+For Python users, please check these [tutorials](https://github.com/LiangliangNan/Easy3D/tree/main/python/tutorials).
 
 ### Questions, new features, bugs, or contributing to Easy3D
 See the [Contribution Guide](https://github.com/LiangliangNan/Easy3D/blob/main/CONTRIBUTING.md) for more information.
