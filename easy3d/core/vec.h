@@ -32,13 +32,14 @@ namespace easy3d {
     template <size_t N, class T>
     class Vec {
     public:
-        typedef Vec<N, T>   thisclass;
-        typedef T           FT;
+        typedef Vec<N, T>   thisclass;  ///< \typedef The type of this class.
+        typedef T           FT;         ///< \typedef The scalar type of vector elements.
 
         /// \brief Default constructor. All elements will be initialized to zero.
         Vec() { for (size_t i = 0; i < N; i++) { data_[i] = T(0); } }
 
-        /// \brief Constructs a vector from a scalar number \p s. All elements will be initialized to this value.
+        /// \brief Constructs a vector from a scalar number.
+        /// \param s The scalar value to initialize all elements of the vector.
         explicit Vec(const T& s) { for (size_t i = 0; i < N; i++) { data_[i] = s; } }
 
         /// \brief Constructs a vector from another vector of the same dimension/size.
@@ -82,10 +83,10 @@ namespace easy3d {
         const T* data() const { return data_; }
 
         /// \brief Conversion operator returning the constant memory address of the data. Very convenient to pass this
-        /// vector as a data pointer to functions, e.g., \code glVertex3fv(pos); \endcode.
+        /// vector as a data pointer to functions.
         operator const T*() const { return data_; }
-        /// \brief Conversion operator returning the memory address of the data. Very convenient to pass this vector
-        /// as a data pointer to functions, e.g., \code glVertex3fv(pos); \endcode.
+        /// \brief Conversion operator returning the constant memory address of the data. Very convenient to pass this
+        /// vector as a data pointer to functions.
         operator T*() { return data_; }
 
 		// Liangliang: The compiler can't decide whether to use your overloaded 
@@ -115,7 +116,7 @@ namespace easy3d {
             return std::sqrt(length2());
         }
 
-        /// \brief Returns the norm (i.e., length/magnitude0 of this vector.
+        /// \brief Returns the norm (i.e., length/magnitude) of this vector.
         inline T norm() const {
             return length();
         }
@@ -312,19 +313,20 @@ namespace easy3d {
     /**
      * \brief A 2D vector (used for representing 2D points or vectors).
      * \tparam T The scalar type of vector elements.
-     *
-     * \class Vec<2, T> easy3d/core/vec.h
+     * \class Vec<2, T>
+     * \inmodule easy3d/core/vec.h
      */
     template <class T>
     class Vec<2, T> {
     public:
-        typedef Vec<2, T> thisclass;
-        typedef T         FT;
+        typedef Vec<2, T> thisclass;    ///< \typedef The type of this class.
+        typedef T         FT;           ///< \typedef The scalar type of vector elements.
 
         Vec() : x(0), y(0) { }
         Vec(T x_in, T y_in) : x(x_in), y(y_in) { }
         explicit Vec(const Vec<3, T>& v) : x(v.x), y(v.y) { } // very useful for inverse promoting from homogeneous coordinates
 
+        /// \param s The scalar value to initialize all elements of the vector.
         explicit Vec(const T& s) : x(s), y(s) { }
 
         template<class T2> explicit Vec(const Vec<2, T2> & v)
@@ -370,10 +372,11 @@ namespace easy3d {
         T* data() { return _array; }
         const T* data() const { return _array; }
 
-        // Conversion operator returning the memory address of the data.
-        // Very convenient to pass the data pointer as a parameter to functions.
-        // e.g., glVertex2fv(pos);
+        /// \brief Conversion operator returning the constant memory address of the data. Very convenient to pass this
+        /// vector as a data pointer to functions.
         operator const T*() const { return _array; }
+        /// \brief Conversion operator returning the constant memory address of the data. Very convenient to pass this
+        /// vector as a data pointer to functions.
         operator T*() { return _array; }
 
 		// Liangliang: The compiler can't decide whether to use your overloaded 
@@ -429,16 +432,16 @@ namespace easy3d {
     //---------------- vec3 ------------------------------------------------------------------------
 
     /**
-     * \brief A 3D vector (used for representing 3D points or vectors).
+     * \brief A 3D vector (used for representing 3D points or vectors, or RGB colors).
      * \tparam T The scalar type of vector elements.
-     *
-     * \class Vec<3, T> easy3d/core/vec.h
+     * \class Vec<3, T>
+     * \inmodule easy3d/core/vec.h
      */
     template <class T>
     class Vec<3, T> {
     public:
-        typedef Vec<3, T> thisclass;
-        typedef T         FT;
+        typedef Vec<3, T> thisclass;    ///< \typedef The type of this class.
+        typedef T         FT;           ///< \typedef The scalar type of vector elements.
 
         Vec() : x(0), y(0), z(0) {}
         explicit Vec(const Vec<2, T>& v, const T& s = 1) : x(v.x), y(v.y), z(s) {} // very useful for promoting to homogeneous coordinates
@@ -446,6 +449,7 @@ namespace easy3d {
 
         Vec(T x_in, T y_in, T z_in) : x(x_in), y(y_in), z(z_in) {}
 
+        /// \param s The scalar value to initialize all elements of the vector.
         explicit Vec(const T& s) : x(s), y(s), z(s) {  }
 
         template<class T2> explicit Vec(const Vec<3, T2> & v) : x(v.x), y(v.y), z(v.z) {}
@@ -493,14 +497,11 @@ namespace easy3d {
         // the (x, y) components
         Vec<2, T> xy() const { return  Vec<2, T>(x, y); }
 
-        // Conversion operator returning the memory address of the data.
-        // Very convenient to pass the data pointer as a parameter to functions.
-        // ------------
-        //		vec3 pos, normal;
-        //		glNormal3fv(normal);
-        //		glVertex3fv(pos);
-        // ------------
+        /// \brief Conversion operator returning the constant memory address of the data. Very convenient to pass this
+        /// vector as a data pointer to functions.
         operator const T*() const { return _array; }
+        /// \brief Conversion operator returning the constant memory address of the data. Very convenient to pass this
+        /// vector as a data pointer to functions.
         operator T*() { return _array; }
 
 		// Liangliang: The compiler can't decide whether to use your overloaded 
@@ -574,21 +575,22 @@ namespace easy3d {
     // ----------------- vec4 ----------------------------------------------------------------------------------
 
     /**
-     * \brief A 4D vector (used for representing 3D points or vectors in homogeneous coordinates).
+     * \brief A 4D vector (used for representing 4D points or vectors in homogeneous coordinates, or RGBA colors).
      * \tparam T The scalar type of vector elements.
-     *
-     * \class Vec<4, T> easy3d/core/vec.h
+     * \class Vec<4, T>
+     * \inmodule easy3d/core/vec.h
      */
     template <class T>
     class Vec<4, T> {
     public:
-        typedef Vec<4, T> thisclass;
-        typedef T         FT;
+        typedef Vec<4, T> thisclass;    ///< \typedef The type of this class.
+        typedef T         FT;           ///< \typedef The scalar type of vector elements.
 
         Vec() : x(0), y(0), z(0), w(0) {}
         explicit Vec(const Vec<3, T>& v, const T& s = 1) : x(v.x), y(v.y), z(v.z), w(s) {} // very useful for promoting to homogeneous coordinates
         Vec(T x_in, T y_in, T z_in, T w_in) : x(x_in), y(y_in), z(z_in), w(w_in) {}
 
+        /// \param s The scalar value to initialize all elements of the vector.
         explicit Vec(const T& s) : x(s), y(s), z(s), w(s) {  }
 
         template<class T2> explicit Vec(const Vec<4, T2> & v)
@@ -640,10 +642,11 @@ namespace easy3d {
         // the (x, y, z) components
         Vec<3, T> xyz() const { return  Vec<3, T>(x, y, z); }
 
-        // Conversion operator returning the memory address of the data.
-        // Very convenient to pass the data pointer as a parameter to functions.
-        // e.g., glColor4fv(c);
+        /// \brief Conversion operator returning the constant memory address of the data. Very convenient to pass this
+        /// vector as a data pointer to functions.
         operator const T*() const { return _array; }
+        /// \brief Conversion operator returning the constant memory address of the data. Very convenient to pass this
+        /// vector as a data pointer to functions.
         operator T*() { return _array; }
 
 		// Liangliang: The compiler can't decide whether to use your overloaded 
