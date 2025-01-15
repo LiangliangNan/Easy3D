@@ -814,9 +814,9 @@ namespace easy3d {
     }
 
 
-    float
-    TextRenderer::draw(const std::string &text, float x, float y, float font_size, int font_id, const vec3 &font_color,
-                     bool upper_left) const {
+    float TextRenderer::draw(const std::string &text, float x, float y, float font_size, int font_id,
+                             const vec3 &font_color, bool upper_left) const
+    {
         float end_x = 0.0f;
         if (!stash_) {
             LOG_N_TIMES(3, ERROR) << "couldn't draw() due to the failure in initialization. " << COUNTER;

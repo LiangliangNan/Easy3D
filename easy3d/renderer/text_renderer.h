@@ -96,8 +96,8 @@ namespace easy3d {
          *
          * @note: This function will draw the text in one line and thus line breaks (i.e., "\n") will be ignored.
          */
-        float draw(const std::string &text, float x, float y, float font_size, int font_id = 0,
-                   const vec3 &font_color = vec3(0, 0, 0), bool upper_left = true
+        float draw(const std::string &text, float x, float y, float font_size,
+                   int font_id = 0, const vec3 &font_color = vec3(0, 0, 0), bool upper_left = true
         ) const;
 
 
@@ -128,7 +128,8 @@ namespace easy3d {
          */
         Rect draw(const std::string &text, float x, float y, float font_size, Align align/* = ALIGN_LEFT*/,
                   int font_id = 0, const vec3 &font_color = vec3(0, 0, 0),
-                  float line_spacing = 0.0f, bool upper_left = true) const;
+                  float line_spacing = 0.0f, bool upper_left = true
+        ) const;
 
         // -------------------------------------------------------------------------------------------------------------
 
