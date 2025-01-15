@@ -26,7 +26,6 @@ namespace easy3d {
      * \brief Base class for vector types. It provides generic functionality for \p N dimensional vectors.
      * \tparam N The dimension/size of a vector.
      * \tparam T The scalar type of vector elements.
-     *
      * \class Vec easy3d/core/vec.h
      */
     template <size_t N, class T>
@@ -313,8 +312,7 @@ namespace easy3d {
     /**
      * \brief A 2D vector (used for representing 2D points or vectors).
      * \tparam T The scalar type of vector elements.
-     * \class Vec<2, T>
-     * \inmodule easy3d/core/vec.h
+     * \class Vec<2, T> easy3d/core/vec.h
      */
     template <class T>
     class Vec<2, T> {
@@ -434,8 +432,7 @@ namespace easy3d {
     /**
      * \brief A 3D vector (used for representing 3D points or vectors, or RGB colors).
      * \tparam T The scalar type of vector elements.
-     * \class Vec<3, T>
-     * \inmodule easy3d/core/vec.h
+     * \class Vec<3, T> easy3d/core/vec.h
      */
     template <class T>
     class Vec<3, T> {
@@ -577,8 +574,7 @@ namespace easy3d {
     /**
      * \brief A 4D vector (used for representing 4D points or vectors in homogeneous coordinates, or RGBA colors).
      * \tparam T The scalar type of vector elements.
-     * \class Vec<4, T>
-     * \inmodule easy3d/core/vec.h
+     * \class Vec<4, T> easy3d/core/vec.h
      */
     template <class T>
     class Vec<4, T> {
