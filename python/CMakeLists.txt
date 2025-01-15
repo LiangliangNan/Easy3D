@@ -200,7 +200,7 @@ function(copy_runtime_dependencies target destination)
                 # Copy the dependencies of the target to the destination directory:
                 #   (e) xargs -I {} cp -v {} ${destination}: Copies each library file to the destination directory. If does not exist, it will show e.g., "cp: /usr/lib/libc++.1.dylib: No such file or directory".
                 #   (f) || true: Ignores the error during the copy process. This ensures that the command does not cause the build to fail.
-                COMMAND otool -L $<TARGET_FILE:${target}> | awk '/@rpath|\\/|\\// {print $$1}' | sed 's|@rpath|$<TARGET_FILE_DIR:${target}>|g' | xargs -I {} cp -v {} ${destination} || true
+                COMMAND otool -L $<TARGET_FILE:${target}> | awk '/@rpath|\\/|\\// {print $$1}' | sed 's|@rpath|$<TARGET_FILE_DIR:${target}>|g' | grep -v "^$<TARGET_FILE:${target}>$" | xargs -I {} cp -v {} ${destination} || true
                 #   (g) xargs -I {} sh -c '[ -e "{}" ] && cp -v "{}" ${destination}': Ensures only existing files are copied to the destination directory. Thus it avoids the "No such file or directory" message.
                 #COMMAND otool -L $<TARGET_FILE:${target}> | awk '/@rpath|\\/|\\// {print $$1}' | sed 's|@rpath|$<TARGET_FILE_DIR:${target}>|g' | xargs -I {} sh -c '[ -e "{}" ] && cp -v "{}" ${destination}' || true
                 # -----------------------------------------------------------------------------------------------
