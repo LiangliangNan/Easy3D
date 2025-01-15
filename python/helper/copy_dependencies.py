@@ -61,12 +61,19 @@ EXCLUDED_PATHS_AND_FILES = [
 def find_dependencies(target_binary: str, platform: str) -> Set[str]:
     """
     Finds runtime dependencies of a given binary using platform-specific tools.
+    Supports MSVC and MinGW on Windows, macOS, and Linux.
     """
     dependencies = set()
     try:
         if platform == 'win32':  # Windows
-            result = subprocess.run(['dumpbin', '/DEPENDENTS', target_binary], capture_output=True, text=True, check=True)
-            dependencies.update(line.strip() for line in result.stdout.splitlines() if line.strip().endswith(".dll"))
+            # Try using dumpbin (MSVC)
+            try:
+                result = subprocess.run(['dumpbin', '/DEPENDENTS', target_binary], capture_output=True, text=True, check=True)
+                dependencies.update(line.strip() for line in result.stdout.splitlines() if line.strip().endswith(".dll"))
+            except FileNotFoundError:
+                # Fallback to objdump (MinGW)
+                result = subprocess.run(['objdump', '-p', target_binary], capture_output=True, text=True, check=True)
+                dependencies.update(line.split()[-1] for line in result.stdout.splitlines() if "DLL Name:" in line)
 
         elif platform == 'darwin':  # macOS
             result = subprocess.run(['otool', '-L', target_binary], capture_output=True, text=True, check=True)

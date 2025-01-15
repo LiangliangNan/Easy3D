@@ -163,7 +163,7 @@ endif ()
 
 # Post-build command to copy the compiled module and its dependencies to the Python package directory.
 function(copy_runtime_dependencies target destination)
-    if (MSVC)
+    if (WIN32)  # MSVC or MINGW
         add_custom_command(TARGET ${target} POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E make_directory ${destination}
                 # -----------------------------------------------------------------------------------------------

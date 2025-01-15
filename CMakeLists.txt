@@ -3,11 +3,7 @@ cmake_minimum_required(VERSION 3.12)
 ################################################################################
 
 # Build shared libraries
-if (WIN32 AND CMAKE_CXX_COMPILER MATCHES "mingw") # Workaround for using MinGW on Windows
-    set(Easy3D_BUILD_SHARED_LIBS                                OFF)
-else()
-    option(Easy3D_BUILD_SHARED_LIBS "Build shared libaries"     ON )
-endif ()
+option(Easy3D_BUILD_SHARED_LIBS "Build shared libaries"         ON )
 # Build tutorials
 option(Easy3D_BUILD_TUTORIALS "Build Easy3D tutorials"          ON )
 # Build documentation
@@ -119,21 +115,6 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 ################################################################################
 
-include(GenerateExportHeader)
-if (Easy3D_BUILD_SHARED_LIBS)
-    set(Easy3D_LIB_TYPE SHARED)
-    #Ref: Create dlls on Windows without declspec() using new CMake export all feature
-    #     https://cmake.org/cmake/help/v3.4/prop_tgt/WINDOWS_EXPORT_ALL_SYMBOLS.html#prop_tgt:WINDOWS_EXPORT_ALL_SYMBOLS
-    #     https://www.kitware.com/create-dlls-on-windows-without-declspec-using-new-cmake-export-all-feature/
-    if (WIN32 OR MSVC)
-        set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
-    endif ()
-else ()
-    set(Easy3D_LIB_TYPE STATIC)
-endif ()
-
-################################################################################
-
 if (Easy3D_ENABLE_CGAL)
     find_package(CGAL QUIET)
     if (CGAL_FOUND)
@@ -210,35 +191,39 @@ foreach (path LIB BIN INCLUDE CMAKE)
     endif ()
 endforeach ()
 
+################################################################################
+
+include(GenerateExportHeader)
+if (Easy3D_BUILD_SHARED_LIBS)
+    set(Easy3D_LIB_TYPE SHARED)
+    #Ref: Create dlls on Windows without declspec() using new CMake export all feature
+    #     https://cmake.org/cmake/help/v3.4/prop_tgt/WINDOWS_EXPORT_ALL_SYMBOLS.html#prop_tgt:WINDOWS_EXPORT_ALL_SYMBOLS
+    #     https://www.kitware.com/create-dlls-on-windows-without-declspec-using-new-cmake-export-all-feature/
+    # The CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS feature is specific to Windows and is designed to simplify the process of
+    # exporting symbols from a shared library (DLL) when using MSVC. However, it does not work for MinGW because MinGW
+    # uses a different mechanism for symbol visibility and linking.
+    # MinGW relies on the __attribute__((visibility("default"))) attribute to control symbol visibility。
+    if (WIN32)
+        set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+    endif ()
+else ()
+    set(Easy3D_LIB_TYPE STATIC)
+endif ()
+
 function(add_module module headers sources private_dependencies public_dependencies)
     add_library(easy3d_${module} ${Easy3D_LIB_TYPE} ${headers} ${sources})
+
+    if (Easy3D_BUILD_SHARED_LIBS AND WIN32 AND MINGW)
+        # For MINGW, instruct the linker to export all symbols. This is the simplest approach but has drawbacks:
+        #   - This exports all symbols, including internal ones, which can lead to symbol collisions and larger binaries.
+        #   - It is not portable to MSVC.
+        set_target_properties(easy3d_${module} PROPERTIES LINK_FLAGS "-Wl,--export-all-symbols")
+    endif()
 
     if (WIN32 OR MSVC)
         # define Windows-specific preprocessor definitions, and get a clean windows
         target_compile_definitions(easy3d_${module} PUBLIC NOMINMAX WIN32_LEAN_AND_MEAN VC_EXTRALEAN _CRT_SECURE_NO_WARNINGS _CRT_SECURE_NO_DEPRECATE)
     endif ()
-
-#    if(MINGW)
-#        # shared libraries (dynamic libraries) in MinGW do not automatically propagate symbols from dependencies
-#        # to other libraries. Unlike MSVC, where a chain of dependent libraries can resolve symbols transitively.
-#        # Liangliang: Workaround to handle dynamic library generation using MinGW (does not work).
-#        # MinGW/GCC-specific workaround for transitive linking
-#        if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-#            target_link_libraries(easy3d_${module}
-#                    PRIVATE -Wl,--whole-archive 3rd_easyloggingpp -Wl,--no-whole-archive
-#                    )
-#        endif()
-#
-#        # Liangliang: Workaround to handle dynamic library generation using MinGW (need to .
-#        #             Issue: To work with MSVC, CMake's "generate_export_header(...)" is used to generate preprocessor
-#        #                    EXPORT macros (that contains -_declspec(dllexport) or __declspec(dllimport)), and MSVC
-#        #                    requires to explicitly mark the global variables with the macro. However, MinGW has a
-#        #                    Linux/Unix-like behavior, which can either export everything (when the macro is not used)
-#        #                    or export only those marked by this macro. Thus with MinGW, classes/functions/variables not
-#        #                    marked by the macro are not exported.
-#        string(TOUPPER ${module} MODULE_NAME)
-#        set(EXTRA_MICRO_DEFINES "\n//Liangliang: Workaround to handle dynamic library generation using MinGW\n#if (defined(__MINGW32__) || defined(__MINGW64__))\n#  undef  EASY3D_${MODULE_NAME}_EXPORT\n#  define EASY3D_${MODULE_NAME}_EXPORT\n#endif\n")
-#    endif ()
 
     #Ref: Create dlls on Windows without declspec() using new CMake export all feature
     #     https://www.kitware.com/create-dlls-on-windows-without-declspec-using-new-cmake-export-all-feature/
