@@ -1307,6 +1307,11 @@ namespace easy3d {
     }
 
 
+    Model* Viewer::add_model(Model* model, bool create_default_drawables) {
+        return add_model(std::shared_ptr<Model>(model), create_default_drawables);
+    }
+
+
     bool Viewer::delete_model(Model *model) {
         if (!model) {
             LOG(WARNING) << "model is nullptr";
@@ -1349,6 +1354,11 @@ namespace easy3d {
 
         drawables_.push_back(drawable);
         return drawable.get();
+    }
+
+
+    Drawable* Viewer::add_drawable(Drawable* drawable) {
+        return add_drawable(std::shared_ptr<Drawable>(drawable));
     }
 
 

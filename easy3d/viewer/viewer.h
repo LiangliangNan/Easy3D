@@ -249,6 +249,7 @@ namespace easy3d {
          * @related add_model(const std::string&, bool).
          */
         Model* add_model(std::shared_ptr<Model> model, bool create_default_drawables = true);
+        Model* add_model(Model* model, bool create_default_drawables = true);
 
         /**
          * @brief Delete a model. The memory of the model will be released and its existing drawables
@@ -289,6 +290,7 @@ namespace easy3d {
          * @return The pointer of the drawable added to the viewer.
          */
         Drawable* add_drawable(std::shared_ptr<Drawable> drawable);
+        Drawable* add_drawable(Drawable* drawable);
 
         /**
          * Delete the drawable from the viewer. The related drawables will also be deleted.
