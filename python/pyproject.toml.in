@@ -20,7 +20,7 @@ classifiers = [
 ]
 requires-python = ">=3.8"  # Specifies Python version requirement
 dependencies = [
-    # "numpy",   # only Python package dependencies
+    "numpy",
 ]
 
 # Include all non-Python files in the distribution
