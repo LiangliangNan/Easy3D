@@ -65,7 +65,7 @@ namespace easy3d {
 
         /**
          * @brief Creates an OpenGL array buffer and upload data to the buffer.
-         * @param handle The name of the buffer object.
+         * @param buffer The name of the buffer object.
          * @param index  The index of the generic vertex attribute to be enabled.
          * @param data   The pointer to the data.
          * @param size   The size of the data in bytes.
@@ -88,7 +88,7 @@ namespace easy3d {
 		/**
 		 * Returns a subset of a buffer object's data store.
 		 * \param target: can be GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_SHADER_STORAGE_BUFFER, etc.
-		 * \param handle: the name of the buffer object.
+		 * \param buffer: the name of the buffer object.
 		 * \param offset: the offset into the buffer object's data store from which data will be returned,
 		 *      measured in bytes.
 		 * \param size:   the size in bytes of the data store region being returned.

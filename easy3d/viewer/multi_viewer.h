@@ -45,7 +45,7 @@ namespace easy3d {
         /**
          * @brief Constructor.
          * @param rows The number of rows (of the grid-like layout).
-         * @param col The number of columns (of the grid-like layout).
+         * @param cols The number of columns (of the grid-like layout).
          */
         MultiViewer(int rows, int cols, const std::string &title = "untitled");
         ~MultiViewer() override;
@@ -103,7 +103,7 @@ namespace easy3d {
         /**
          * @brief Set/Change the layout of the viewer.
          * @param rows The number of rows (of the grid-like layout).
-         * @param col The number of columns (of the grid-like layout).
+         * @param cols The number of columns (of the grid-like layout).
          */
         void set_layout(int rows, int cols);
 

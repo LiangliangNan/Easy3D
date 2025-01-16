@@ -191,7 +191,7 @@ namespace easy3d {
         /**
          * \brief Generates data for a unit circle as a set of line segments.
 		 * \details The circle is centered at vec3(0, 0, 0) and lies on the XOY plane.
-         * \param slices. The number of subdivisions.
+         * \param slices The number of subdivisions.
          */
         void create_circle(int slices, std::vector<vec3> &points, std::vector<unsigned int> &indices);
 

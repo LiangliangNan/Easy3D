@@ -40,7 +40,7 @@ namespace easy3d {
     /**
      * \brief A matrix representation, which supports dynamic sizes.
      * \attention Matrix has a row-major storage.
-     * \note The matrix classes in #include <easy3d/core/mat.h> has their dimensions templated. So their dimensions
+     * \note The matrix classes in easy3d/core/mat.h has their dimensions templated. So their dimensions
      *      must be constant and known at the compile time. In contrast, this matrix can have dynamic dimensions.
      * \class Matrix easy3d/core/matrix.h
      */
@@ -75,7 +75,7 @@ namespace easy3d {
          * @param rows Number of rows
          * @param cols Number of columns.
          * @param array An array containing at least (rows * cols) elements.
-         * @Attention: Matrices are stored internally as row-major.
+         * @attention: Matrices are stored internally as row-major.
          */
         Matrix(int rows, int cols, const std::vector <FT> &array);
 
@@ -88,7 +88,7 @@ namespace easy3d {
          * @param cols Number of columns.
          * @param array The pointer to the first element of an array used to initialize the matrix. It must have at
          *      least (rows * cols) elements.
-         * @Attention: Matrices are stored internally as row-major.
+         * @attention: Matrices are stored internally as row-major.
          */
         Matrix(int rows, int cols, const FT *array);
 

@@ -101,7 +101,7 @@ namespace easy3d {
          * @brief Set the background color of the offscreen renderer
          * @param color The background color.
          */
-        void set_background_color(const easy3d::vec4& c);
+        void set_background_color(const easy3d::vec4& color);
 
         /**
          * @brief Query the background color of the offscreen renderer.

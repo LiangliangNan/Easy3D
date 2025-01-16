@@ -168,7 +168,7 @@ namespace easy3d {
 		 * Returns the fragment shader color number bound to a user-defined varying out variable
 		 * Note: linking is required for this operation to take effect
 		 * (call method prepare_program afterwards)
-		 * \param the name of the fragment's shader variable
+		 * \param name the name of the fragment's shader variable.
 		 * \returns the fragment color number
 		 */
         int program_output(const std::string& name) const;

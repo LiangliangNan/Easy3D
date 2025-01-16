@@ -289,7 +289,7 @@ namespace easy3d {
         /**
          * \brief Makes a copy of the current depth buffer into a texture.
          * @param texture_handle The target texture (will be created if it does not exist).
-         * @param internalFormat Used to define the texture format.
+         * @param internal_format Used to define the texture format.
          * @param filter Specifies how the texture minifying and magnification function work.
          * @return \p true on success.
          * \note

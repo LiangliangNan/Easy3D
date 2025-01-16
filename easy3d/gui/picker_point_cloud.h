@@ -56,8 +56,8 @@ namespace easy3d {
 
         /**
          * @brief Pick vertex at a given screen location.
-         * @param (x, y) The screen point.
-         * @param deselect True to perform an inverse operation.
+         * @param x The x coordinate of the screen point.
+         * @param y The y coordinate of the screen point.
          * @return The picked vertex.
          */
         PointCloud::Vertex pick_vertex(PointCloud *model, int x, int y);

@@ -2017,17 +2017,24 @@ namespace easy3d {
         /**
          * \brief Static constructor returning a 4D uniform scale matrix.
          * \param s x, y, z, w scale (uniform).
+         * \see scale(Vec<4, T> s), scale(T x, T y, T z, T w).
          */
         static Mat4<T> scale(T s);
 
+        /**
+         * \brief Static constructor returning a 4D non-uniform scale matrix,
+         * \param s a 4D vector denoting the x, y, z, and w scales.
+         * \see scale(T s), scale(T x, T y, T z, T w).
+         */
+        static Mat4<T> scale(const Vec<4, T>& s);  // set w to 1 for 3D scaling
         /**
          * \brief Static constructor returning a 4D non-uniform scale matrix,
          * \param x x scale.
          * \param y y scale.
          * \param z z scale.
          * \param w w scale.
+         * \see scale(T s), scale(Vec<4, T> s).
          */
-        static Mat4<T> scale(const Vec<4, T>& s);  // set w to 1 for 3D scaling
         static Mat4<T> scale(T x, T y, T z, T w);  // set w to 1 for 3D scaling
         
         /**
