@@ -105,7 +105,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
         easy3d::algo
         easy3d::core
         easy3d::fileio
-        easy3d::gui
         easy3d::kdtree
         easy3d::renderer
         easy3d::util
