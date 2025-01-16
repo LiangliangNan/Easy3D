@@ -58,7 +58,7 @@
 
 namespace easy3d {
 
-    // \cond
+
     namespace file_system {
 
         const char UNIX_PATH_SEPARATOR = '/';

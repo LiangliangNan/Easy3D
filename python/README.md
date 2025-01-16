@@ -19,13 +19,13 @@ generated in `YOUR_BUILD_DIRECTORY/lib/python/easy3d`. Here is an example:
 
 ``` python
 import sys
-sys.path.append("YOUR_BUILD_DIRECTORY/lib/python")  # Update this to point to your actual build path
+sys.path.append("YOUR_BUILD_DIRECTORY/lib/python")  # <-- Use your actual build path. Not required if the wheel is installed
 
 import easy3d
 
 easy3d.initialize()
 viewer = easy3d.Viewer("Test")
-viewer.add_model(easy3d.directory() + "/data/bunny.ply")
+viewer.add_model(easy3d.resource_directory() + "/data/bunny.ply")
 viewer.run()
 ```
 
@@ -50,7 +50,7 @@ Below are the detailed steps for creating the wheel file and installation.
 
 - Step 3: Install the Wheel
 
-  - `pip install dist/easy3d-2.6.0-py3-none-any.whl` # Update the wheel file name accordingly
+  - `pip install dist/easy3d-2.6.0-py3-none-any.whl` # <-- Use your actual wheel file name
 
   You can verify the installation by running the following command:
 

@@ -105,9 +105,9 @@ def is_excluded_path_or_file(filepath: str, excluded_list: List[str]) -> bool:
     filepath_lower = filepath.lower()
     return any(excl.lower() in filepath_lower for excl in excluded_list)
 
-def copy_dependencies(target_binary: str, target_binary_dir: str, destination: str, dependencies_file_path : str, resolved_dependencies: Set[str] = None):
+def copy_dependencies(target_binary: str, target_binary_dir: str, destination: str, dependencies_file_path: str, resolved_dependencies: Set[str] = None):
     """
-    Recursively copies the target binary and its transitive runtime dependencies to the destination directory,
+    Recursively copies the transitive runtime dependencies of the target binary to the destination directory,
     avoiding system libraries and excluded paths. Also writes the full paths of dependencies to a file.
     """
     if resolved_dependencies is None:
@@ -133,15 +133,6 @@ def copy_dependencies(target_binary: str, target_binary_dir: str, destination: s
         return
     resolved_dependencies.add(target_binary)
 
-    # Copy the main target binary
-    try:
-        shutil.copy2(target_binary, destination)
-        # Write dependency path to the file
-        with open(dependencies_file_path, 'a') as dependencies_file:
-            dependencies_file.write(target_binary + '\n')
-    except Exception as e:
-        print(f"Error copying {target_binary}: {e}", file=sys.stderr)
-
     # Find and process dependencies
     dependencies = find_dependencies(target_binary, platform)
     for dep in dependencies:
@@ -150,6 +141,16 @@ def copy_dependencies(target_binary: str, target_binary_dir: str, destination: s
         dep_path = find_in_search_paths(os.path.basename(dep), search_paths)
         if dep_path:
             if not is_excluded_path_or_file(dep_path, EXCLUDED_PATHS_AND_FILES):
+                # Copy the dependency to the destination directory
+                try:
+                    shutil.copy2(dep_path, destination)
+                    # Write dependency path to the file (only if not already written)
+                    if dep_path not in resolved_dependencies:
+                        with open(dependencies_file_path, 'a') as dependencies_file:
+                            dependencies_file.write(dep_path + '\n')
+                except Exception as e:
+                    print(f"Error copying {dep_path}: {e}", file=sys.stderr)
+                # Recursively process the dependency's dependencies
                 copy_dependencies(dep_path, target_binary_dir, destination, dependencies_file_path, resolved_dependencies)
 
 

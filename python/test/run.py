@@ -1,4 +1,5 @@
 import os
+import sys
 import subprocess
 
 def run_tests(directory):
@@ -18,7 +19,7 @@ def run_tests(directory):
 
         # Execute the script and stream its output to the console
         process = subprocess.Popen(
-            ["python3", test_path],
+            [sys.executable, test_path],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,

@@ -257,5 +257,5 @@ file(WRITE ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/__init__.py
         "# The resources reside in the directory containing the module\n"
         "resource_dir = os.path.join(os.path.dirname(module_path), \"resources\")\n"
         "# Initialize the resource directory\n"
-        "initialize_resource_directory(resource_dir=resource_dir)\n"
+        "initialize_resource_directory(resource_dir)\n"
         )

@@ -36,7 +36,7 @@ namespace easy3d {
 
     /**
      * \brief A light-weight implementation of the simple signal-slot mechanism.
-     * \class Signal easy3d/core/signal.h
+     * \class Signal easy3d/util/signal.h
      * \details Signal supports any types of functions (functions, lambda functions, and member functions) with any
      *      number of arguments. Connected functions will be called when the send() method of the signal object is
      *      invoked. Any argument passed to send() will be passed to the given functions.

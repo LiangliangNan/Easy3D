@@ -54,8 +54,7 @@ Compared to existing geometry processing libraries (such as [PMP](http://www.pmp
 Any type of 3D drawables (e.g., points, lines, triangles, and thus point clouds, mesh surfaces, scalar fields, 
 and vector fields) can be rendered by writing a few lines of code with Easy3D. For example, the following code renders a 
 point cloud as a set of spheres
-
-``` c++
+```c++
 // assume your point cloud has been loaded to the viewer
 PointsDrawable* drawable = cloud->renderer()->get_points_drawable("vertices");
 drawable->set_impostor_type(PointsDrawable::SPHERE); // draw points as spheres.
@@ -63,7 +62,7 @@ drawable->set_point_size(3.0f);    // set point size
 ```
 or as a set of surfels (i.e., 3D discs)
 
-``` c++ 
+```c++
 drawable->set_impostor_type(PointsDrawable::SURFEL);
 ``` 
 
@@ -152,7 +151,7 @@ Have a look at <a href="https://github.com/LiangliangNan/Easy3D/blob/main/HowToB
 step</a>.
 
 #### Build and use Python bindings
-- Please check [here](https://github.com/LiangliangNan/Easy3D/edit/main/python/README.md).
+- Please check [here](https://github.com/LiangliangNan/Easy3D/blob/main/python/README.md).
 
 ### Test Easy3D
 A test suite is provided in the [`tests`](https://github.com/LiangliangNan/Easy3D/tree/main/tests) subfolder (and [`test`](https://github.com/LiangliangNan/Easy3D/tree/main/python/test) for Python users), which 
@@ -168,7 +167,8 @@ you can build ALL or only the `tests` target. Finally, run the `tests` executabl
 This is quite easy, like many other open-source libraries :-) 
 After you have built Easy3D, you only need to point `Easy3D_DIR` to your `build` (or the installation) directory of Easy3D when doing cmake. Then the requested Easy3D libraries, including directories and relevant compile definitions of Easy3D, are visible and accessible to your project. Below is an example of using the default Easy3D viewer. 
 The `CMakeLists.txt` looks like:
-``` cmake
+
+```cmake
 cmake_minimum_required(VERSION 3.12)
 project(MyProject)
 set(CMAKE_CXX_STANDARD 11)                       # specify C++ standard
@@ -177,8 +177,7 @@ add_executable(Test main.cpp)                    # create an executable target
 target_link_libraries(Test easy3d::viewer)       # link to necessary Easy3D modules (add more if needed, e.g., algo)
 ```
 and the `main.cpp` with minimum code:
-
-``` c++
+```c++
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/util/initializer.h>
 
@@ -188,14 +187,13 @@ int main(int argc, char** argv) {
     return viewer.run();
 }
 ```
-
 Using the Python bindings is also straightforward, for example:
-``` python
+```python
 import easy3d
 
 easy3d.initialize()
 viewer = easy3d.Viewer("Test")
-viewer.add_model(easy3d.resource_directory() + "/data/bunny.ply")
+viewer.add_model(easy3d.resource_directory() + "/data/bunny.ply") # <-- Use your actual file path
 viewer.run()
 ```
 
