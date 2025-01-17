@@ -1,12 +1,15 @@
-# -------------------------------------------------------------------------------
-# Example: Working with the PointCloud class in Easy3D
-# -------------------------------------------------------------------------------
-# This script demonstrates how to use the Easy3D `PointCloud` class:
-# - Initialize a `PointCloud` object with a NumPy array of points.
-# - Add multiple points at once using a NumPy array.
-# - Add individual points using various formats (vec3, lists, NumPy arrays).
-# - Export the entire point cloud back to a NumPy array.
-# -------------------------------------------------------------------------------
+"""
+Tutorial: Working with the PointCloud class in Easy3D
+=====================================================
+
+This script demonstrates how to use the Easy3D `PointCloud` class:
+
+- Initialize a `PointCloud` object with a NumPy array of points.
+- Add multiple points at once using a NumPy array.
+- Add individual points using various formats (vec3, lists, NumPy arrays).
+- Export the entire point cloud back to a NumPy array.
+
+"""
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path

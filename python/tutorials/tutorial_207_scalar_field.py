@@ -1,13 +1,17 @@
-# -----------------------------------------------------------------------------
-# Tutorial: Rendering a Scalar Field on a Surface Mesh Using Easy3D
-# -----------------------------------------------------------------------------
-# This tutorial demonstrates how to visualize a scalar field (e.g., the
-# elevation of vertices) on a 3D surface mesh using Easy3D's Python bindings.
-# It covers the following topics:
-#   - Loading and displaying a 3D surface mesh model.
-#   - Computing and assigning scalar values to mesh vertices.
-#   - Visualizing the scalar field by mapping scalar values to colors.
-# -----------------------------------------------------------------------------
+"""
+Tutorial: Rendering a Scalar Field on a Surface Mesh Using Easy3D
+=================================================================
+
+This tutorial demonstrates how to visualize a scalar field (e.g., the
+elevation of vertices) on a 3D surface mesh using Easy3D's Python bindings.
+
+It covers the following topics:
+
+- Loading and displaying a 3D surface mesh model.
+- Computing and assigning scalar values to mesh vertices.
+- Visualizing the scalar field by mapping scalar values to colors.
+
+"""
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path

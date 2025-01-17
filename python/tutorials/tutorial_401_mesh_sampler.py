@@ -1,13 +1,17 @@
-# -----------------------------------------------------------------------------
-# Tutorial: Sampling a Surface Mesh into a Point Cloud Using Easy3D
-# -----------------------------------------------------------------------------
-# This tutorial demonstrates how to:
-# 1. Use the Easy3D `SurfaceMeshSampler` class to sample points from a surface mesh.
-# 2. Visualize the original surface mesh and the sampled point cloud side-by-side
-#    using Easy3D's `MultiViewer`.
-# The sampling process generates a near-uniform distribution of points over the
-# surface of the mesh.
-# -----------------------------------------------------------------------------
+"""
+Tutorial: Sampling a Surface Mesh into a Point Cloud Using Easy3D
+=================================================================
+
+This tutorial demonstrates how to:
+
+- Use the Easy3D `SurfaceMeshSampler` class to sample points from a surface mesh.
+- Visualize the original surface mesh and the sampled point cloud side-by-side
+  using Easy3D's `MultiViewer`.
+
+The sampling process generates a near-uniform distribution of points over the
+surface of the mesh.
+
+"""
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path

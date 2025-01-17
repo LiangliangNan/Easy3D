@@ -1,18 +1,21 @@
-# -----------------------------------------------------------------------------
-# Tutorial: Poisson Surface Reconstruction Using Easy3D
-# -----------------------------------------------------------------------------
-# This tutorial demonstrates how to perform Poisson surface reconstruction
-# using the Easy3D library. The algorithm reconstructs a surface mesh from a
-# 3D point cloud with consistent normals, resulting in a smooth and complete
-# surface mesh representation.
-#
-# In this example, we will:
-# 1. Load a point cloud.
-# 2. Initialize the PoissonReconstruction algorithm.
-# 3. Set reconstruction parameters.
-# 4. Apply the reconstruction to the point cloud.
-# 5. Visualize the reconstructed surface mesh in an interactive viewer.
-# -----------------------------------------------------------------------------
+"""
+Tutorial: Poisson Surface Reconstruction Using Easy3D
+=====================================================
+
+This tutorial demonstrates how to perform Poisson surface reconstruction
+using the Easy3D library. The algorithm reconstructs a surface mesh from a
+3D point cloud with consistent normals, resulting in a smooth and complete
+surface mesh representation.
+
+In this example, we will:
+
+- Load a point cloud.
+- Initialize the PoissonReconstruction algorithm.
+- Set reconstruction parameters.
+- Apply the reconstruction to the point cloud.
+- Visualize the reconstructed surface mesh in an interactive viewer.
+
+"""
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path

@@ -1,17 +1,20 @@
-# -----------------------------------------------------------------------------
-# Tutorial: Point Cloud Downsampling Using Easy3D
-# -----------------------------------------------------------------------------
-# This tutorial demonstrates how to downsample a 3D point cloud using the Easy3D
-# library. Downsampling reduces the number of points while preserving the overall
-# structure of the cloud, which can speed up processing and reduce memory usage.
-#
-# In this tutorial, we will:
-# 1. Load a point cloud from a file.
-# 2. Apply different downsampling techniques, including grid and uniform
-#    simplifications, and measure their effects on the point cloud size.
-# 3. Visualize the original point cloud and the sampled point cloud side-by-side
-#    using Easy3D's `MultiViewer`.
-# -----------------------------------------------------------------------------
+"""
+Tutorial: Point Cloud Downsampling Using Easy3D
+===============================================
+
+This tutorial demonstrates how to downsample a 3D point cloud using the Easy3D
+library. Downsampling reduces the number of points while preserving the overall
+structure of the cloud, which can speed up processing and reduce memory usage.
+
+In this tutorial, we will:
+
+- Load a point cloud from a file.
+- Apply different downsampling techniques, including grid and uniform
+  simplifications, and measure their effects on the point cloud size.
+- Visualize the original point cloud and the sampled point cloud side-by-side
+  using Easy3D's `MultiViewer`.
+
+"""
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path

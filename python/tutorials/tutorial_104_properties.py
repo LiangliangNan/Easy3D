@@ -1,12 +1,13 @@
-# -----------------------------------------------------------------------------
-# Tutorial: Per-Element Properties in Easy3D
-# -----------------------------------------------------------------------------
-# This tutorial demonstrates how to create, set, and retrieve per-element
-# properties for a 3D model using the Easy3D library. Per-element properties can
-# be attached to vertices or faces of a surface mesh, enabling detailed data
-# storage and manipulation for each element.
-# The same principles apply to PointCloud as well.
-# -----------------------------------------------------------------------------
+"""
+Tutorial: Per-Element Properties in Easy3D
+==========================================
+
+This tutorial demonstrates how to create, set, and retrieve per-element
+properties for a 3D model using the Easy3D library. Per-element properties can
+be attached to vertices or faces of a surface mesh, enabling detailed data
+storage and manipulation for each element.
+The same principles apply to PointCloud as well.
+"""
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path

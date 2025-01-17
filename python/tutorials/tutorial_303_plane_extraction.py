@@ -1,16 +1,19 @@
-# -----------------------------------------------------------------------------
-# Tutorial: Primitive Extraction from Point Clouds Using Easy3D
-# -----------------------------------------------------------------------------
-# This tutorial demonstrates how to extract basic geometric primitives
-# (planes, cylinders, cones, spheres, and toruses) from 3D point clouds
-# using the Easy3D library.
-#
-# In this example, we will:
-# 1. Load a 3D point cloud from a file.
-# 2. Configure the PrimitivesRansac class for primitive extraction.
-# 3. Extract planes as geometric primitives.
-# 4. Visualize the extracted planar segments.
-# -----------------------------------------------------------------------------
+"""
+Tutorial: Primitive Extraction from Point Clouds Using Easy3D
+=============================================================
+
+This tutorial demonstrates how to extract basic geometric primitives
+(planes, cylinders, cones, spheres, and toruses) from 3D point clouds
+using the Easy3D library.
+
+In this example, we will:
+
+- Load a 3D point cloud from a file.
+- Configure the PrimitivesRansac class for primitive extraction.
+- Extract planes as geometric primitives.
+- Visualize the extracted planar segments.
+
+"""
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path

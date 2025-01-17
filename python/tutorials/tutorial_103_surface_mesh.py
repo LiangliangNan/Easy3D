@@ -1,19 +1,22 @@
-# -------------------------------------------------------------------------------
-# Example: Working with the SurfaceMesh class in Easy3D
-# -------------------------------------------------------------------------------
-# This script demonstrates how to use the Easy3D `SurfaceMesh` class:
-# - Initialize a `SurfaceMesh` from vertices and vertex indices of the faces.
-# - Iterate all the faces, query the number of its vertices and print them.
-# - Iterate all the vertices, query the number of its incident vertices and print
-#   them.
-# - Iterate all the edges, print the two end vertices and two incident faces of
-#   each face.
-# - Iterate all the halfedges, print its source and target vertices and its two
-#   incident faces.
-# It seems most Python users will only use this class for visualization, thus
-# a lot of editing operations for SurfaceMesh have not been exposed to Python.
-# Please let me know if you do need editing a mesh in Python.
-# -------------------------------------------------------------------------------
+"""
+Tutorial: Working with the SurfaceMesh class in Easy3D
+======================================================
+
+This script demonstrates how to use the Easy3D `SurfaceMesh` class:
+
+- Initialize a `SurfaceMesh` from vertices and vertex indices of the faces.
+- Iterate all the faces, query the number of its vertices and print them.
+- Iterate all the vertices, query the number of its incident vertices and print
+  them.
+- Iterate all the edges, print the two end vertices and two incident faces of
+  each face.
+- Iterate all the halfedges, print its source and target vertices and its two
+  incident faces.
+
+It seems most Python users will only use this class for visualization, thus
+a lot of editing operations for SurfaceMesh have not been exposed to Python.
+Please let me know if you do need editing a mesh in Python.
+"""
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path

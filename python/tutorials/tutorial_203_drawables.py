@@ -1,15 +1,18 @@
-# -------------------------------------------------------------------------------
-# Tutorial: Drawables in Easy3D
-# -------------------------------------------------------------------------------
-# This tutorial demonstrates how to visualize different types of data using
-# Easy3D's drawables WITHOUT explicitly defining a 3D model. We'll cover:
-#   1. Visualizing a set of points with `PointsDrawable`.
-#   2. Visualizing a set of triangles or a surface using `TrianglesDrawable`.
-#   3. Visualizing a set of edges/lines using `LinesDrawable`.
-#   4. Visualizing a set of edges/lines in screen coordinates using `LinesDrawable2D`.
-#   5. The use of the element buffer (also referred to as the index buffer) in rendering.
-#   5. Running the Easy3D MultiViewer to display the visualizations.
-# -------------------------------------------------------------------------------
+"""
+Tutorial: Drawables in Easy3D
+=============================
+
+This tutorial demonstrates how to visualize different types of data using
+Easy3D's drawables WITHOUT explicitly defining a 3D model. We'll cover:
+
+- Visualizing a set of points with `PointsDrawable`.
+- Visualizing a set of triangles or a surface using `TrianglesDrawable`.
+- Visualizing a set of edges/lines using `LinesDrawable`.
+- Visualizing a set of edges/lines in screen coordinates using `LinesDrawable2D`.
+- The use of the element buffer (also referred to as the index buffer) in rendering.
+- Running the Easy3D MultiViewer to display the visualizations.
+
+"""
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path

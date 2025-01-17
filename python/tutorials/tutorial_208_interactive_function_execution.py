@@ -1,11 +1,12 @@
-# -----------------------------------------------------------------------------
-# Tutorial: Interactively Execute Customized Functions In Easy3D Viewer
-# -----------------------------------------------------------------------------
-# This tutorial demonstrates how to bind customized functions to shortcuts in
-# the Easy3D Viewer. This allows you to execute your own geometry processing
-# algorithms interactively while the viewer is running. This is particularly
-# useful for demonstrating and testing 3D data processing algorithms.
-# -----------------------------------------------------------------------------
+"""
+Tutorial: Interactively Execute Customized Functions In Easy3D Viewer
+=====================================================================
+
+This tutorial demonstrates how to bind customized functions to shortcuts in
+the Easy3D Viewer. This allows you to execute your own geometry processing
+algorithms interactively while the viewer is running. This is particularly
+useful for demonstrating and testing 3D data processing algorithms.
+"""
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path

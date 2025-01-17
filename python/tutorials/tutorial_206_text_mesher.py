@@ -1,10 +1,13 @@
-# -----------------------------------------------------------------------------
-# Tutorial: Generating and Visualizing 3D Text with Easy3D
-# -----------------------------------------------------------------------------
-# This tutorial demonstrates how to use Easy3D's `TextMesher` to:
-# 1. Generate 3D surface mesh models from text.
-# 2. Visualize the generated 3D text meshes using the default Easy3D Viewer.
-# -----------------------------------------------------------------------------
+"""
+Tutorial: Generating and Visualizing 3D Text with Easy3D
+========================================================
+
+This tutorial demonstrates how to use Easy3D's `TextMesher` to:
+
+- Generate 3D surface mesh models from text.
+- Visualize the generated 3D text meshes using the default Easy3D Viewer.
+
+"""
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path

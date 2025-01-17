@@ -1,12 +1,15 @@
-# -------------------------------------------------------------------------------
-# Example: The basic Easy3D viewer
-# -------------------------------------------------------------------------------
-# This script demonstrates how to use the Easy3D `Viewer` class to:
-# - Create a 3D viewer with a custom title.
-# - Load and visualize a 3D mesh model (`SurfaceMesh`) from a file.
-# - Load and visualize a 3D point cloud model (`PointCloud`) from a file.
-# - Run the viewer to interact with the models (e.g., rotate, zoom, pan).
+"""
+Tutorial: The basic Easy3D viewer
+=================================
 
+This script demonstrates how to use the Easy3D `Viewer` class to:
+
+- Create a 3D viewer with a custom title.
+- Load and visualize a 3D mesh model (`SurfaceMesh`) from a file.
+- Load and visualize a 3D point cloud model (`PointCloud`) from a file.
+- Run the viewer to interact with the models (e.g., rotate, zoom, pan).
+
+"""
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path

@@ -1,13 +1,14 @@
-# -------------------------------------------------------------------------------
-# Example: Basic data types in Easy3D
-# -------------------------------------------------------------------------------
-# This script demonstrates how to use the Easy3D vector classes:
-# - `vec2`: Represents 2D points
-# - `vec3`: Represents 3D points
-# - `vec4`: Represents 4D points
-# The script shows how to create these objects and convert them to NumPy arrays
-# for easy manipulation in Python.
-# -------------------------------------------------------------------------------
+"""
+Tutorial: Basic data types in Easy3D
+====================================
+
+This script demonstrates how to use the Easy3D vector classes:
+
+- `vec2`: Represents 2D points
+- `vec3`: Represents 3D points
+- `vec4`: Represents 4D points
+
+"""
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path

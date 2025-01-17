@@ -1,30 +1,33 @@
-# -----------------------------------------------------------------------------
-# Tutorial: Mesh Parameterization Using Easy3D
-# -----------------------------------------------------------------------------
-# This tutorial demonstrates how to:
-# 1. Perform surface mesh parameterization using the `SurfaceMeshParameterization`
-#   class of Easy3D.
-# 2. Visualize the resulting parameterized meshes with texture mapping.
-# -----------------------------------------------------------------------------
-# Mesh parameterization is the process of mapping a 3D surface mesh onto a 2D plane
-# while preserving certain geometric properties such as angles, areas, or overall
-# shape. It is a crucial technique in computer graphics, particularly for texture
-# mapping, mesh analysis, and surface manipulation.
-#
-# The `SurfaceMeshParameterization` class in Easy3D implements two widely used
-# mesh parameterization algorithms:
-#
-#  - **Discrete Harmonic Parameterization**: This method seeks to map the 3D mesh
-#    onto a 2D plane by solving harmonic functions that minimize geometric distortion.
-#    It ensures that the mesh's boundaries are respected and that the surface's
-#    properties (like curvature) are preserved during the mapping.
-#
-#  - **Least-Squares Conformal Mapping (LSCM)**: This algorithm minimizes angular
-#    distortion by applying conformal mapping techniques. The goal is to preserve
-#    local angles and minimize stretching while flattening the 3D surface into a
-#    2D plane. LSCM is often used when creating texture maps, as it reduces texture
-#    distortion in the parameterized space.
-# -----------------------------------------------------------------------------
+"""
+Tutorial: Mesh Parameterization Using Easy3D
+============================================
+
+This tutorial demonstrates how to:
+
+- Perform surface mesh parameterization using the `SurfaceMeshParameterization`
+  class of Easy3D.
+- Visualize the resulting parameterized meshes with texture mapping.
+
+Mesh parameterization is the process of mapping a 3D surface mesh onto a 2D plane
+while preserving certain geometric properties such as angles, areas, or overall
+shape. It is a crucial technique in computer graphics, particularly for texture
+mapping, mesh analysis, and surface manipulation.
+
+The `SurfaceMeshParameterization` class in Easy3D implements two widely used
+mesh parameterization algorithms:
+
+- **Discrete Harmonic Parameterization**: This method seeks to map the 3D mesh
+  onto a 2D plane by solving harmonic functions that minimize geometric distortion.
+  It ensures that the mesh's boundaries are respected and that the surface's
+  properties (like curvature) are preserved during the mapping.
+
+- **Least-Squares Conformal Mapping (LSCM)**: This algorithm minimizes angular
+  distortion by applying conformal mapping techniques. The goal is to preserve
+  local angles and minimize stretching while flattening the 3D surface into a
+  2D plane. LSCM is often used when creating texture maps, as it reduces texture
+  distortion in the parameterized space.
+
+"""
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path

@@ -1,22 +1,27 @@
-# -----------------------------------------------------------------------------
-# Tutorial: Filling Small Holes in a Surface Mesh using Easy3D
-# -----------------------------------------------------------------------------
-# This tutorial demonstrates how to use Easy3D Python bindings to fill small
-# holes in a surface mesh. A "hole" is defined as a boundary loop of manifold
-# vertices in the mesh. We will show how to:
-# 1. Load a 3D mesh.
-# 2. Fill the holes smaller than a given size in the mesh.
-# 3. Visualize the original and modified meshes side-by-side.
-# -----------------------------------------------------------------------------
-# Filling holes in 3D meshes is important for applications like:
-# - 3D printing: Ensuring the mesh is watertight.
-# - Computer graphics: Avoiding rendering artifacts caused by holes.
-# - Geometric modeling: Preparing meshes for further processing.
+"""
+Tutorial: Filling Small Holes in a Surface Mesh using Easy3D
+============================================================
 
-# What is a "Hole" in a Mesh?
-# A hole in a mesh is typically represented by a boundary loop, where the
-# vertices are connected but do not form a closed surface. The size of the hole
-# is measured by the number of boundary edges in the loop.
+This tutorial demonstrates how to use Easy3D Python bindings to fill small
+holes in a surface mesh. A "hole" is defined as a boundary loop of manifold
+vertices in the mesh. We will show how to:
+
+- Load a 3D mesh.
+- Fill the holes smaller than a given size in the mesh.
+- Visualize the original and modified meshes side-by-side.
+
+Filling holes in 3D meshes is important for applications like:
+
+- 3D printing: Ensuring the mesh is watertight.
+- Computer graphics: Avoiding rendering artifacts caused by holes.
+- Geometric modeling: Preparing meshes for further processing.
+
+What is a "Hole" in a Mesh?
+A hole in a mesh is typically represented by a boundary loop, where the
+vertices are connected but do not form a closed surface. The size of the hole
+is measured by the number of boundary edges in the loop.
+
+"""
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path

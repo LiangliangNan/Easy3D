@@ -1,18 +1,22 @@
-# -----------------------------------------------------------------------------
-# Tutorial: Simplifying a Surface Mesh Using Easy3D
-# -----------------------------------------------------------------------------
-# This tutorial explains how to:
-# 1. Simplify the surface mesh using the `SurfaceMeshSimplification` class.
-# 3. Visualize the original and simplified meshes side-by-side using `MultiViewer`.
-# -----------------------------------------------------------------------------
-# Mesh simplification is a crucial process in computer graphics and geometry
-# processing. It reduces the number of vertices and faces in a 3D mesh while
-# preserving its overall structure and visual appearance. This technique is
-# widely used in:
-# - Real-time rendering (e.g., games and VR applications).
-# - Reducing storage and computational requirements.
-# - Level-of-detail (LOD) modeling in computer graphics.
-# -----------------------------------------------------------------------------
+"""
+Tutorial: Simplifying a Surface Mesh Using Easy3D
+=================================================
+
+This tutorial explains how to:
+
+- Simplify the surface mesh using the `SurfaceMeshSimplification` class.
+- Visualize the original and simplified meshes side-by-side using `MultiViewer`.
+
+Mesh simplification is a crucial process in computer graphics and geometry
+processing. It reduces the number of vertices and faces in a 3D mesh while
+preserving its overall structure and visual appearance. This technique is
+widely used in:
+
+- Real-time rendering (e.g., games and VR applications).
+- Reducing storage and computational requirements.
+- Level-of-detail (LOD) modeling in computer graphics.
+
+"""
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path

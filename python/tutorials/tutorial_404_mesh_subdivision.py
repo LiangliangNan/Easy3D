@@ -1,19 +1,23 @@
-# -----------------------------------------------------------------------------
-# Tutorial: Mesh Subdivision with Easy3D
-# -----------------------------------------------------------------------------
-# In this tutorial, we will demonstrate how to apply three popular subdivision
-# algorithms to a 3D surface mesh using Easy3D Python bindings:
-# 1. Catmull-Clark Subdivision
-# 2. Loop Subdivision
-# 3. Sqrt3 Subdivision
-# These subdivision algorithms are useful for smoothing and refining meshes while
-# maintaining their topological properties. The Catmull-Clark algorithm is widely
-# used for quad meshes, the Loop subdivision is ideal for triangular meshes, and
-# the Sqrt3 subdivision is another option for triangular meshes, providing smoother
-# results.
-# We will also visually compare the input and subdivided model using Easy3D's
-# built-in visualization tools.
-# -----------------------------------------------------------------------------
+"""
+Tutorial: Mesh Subdivision with Easy3D
+======================================
+
+In this tutorial, we will demonstrate how to apply three popular subdivision
+algorithms to a 3D surface mesh using Easy3D Python bindings:
+
+- Catmull-Clark Subdivision
+- Loop Subdivision
+- Sqrt3 Subdivision
+
+These subdivision algorithms are useful for smoothing and refining meshes while
+maintaining their topological properties. The Catmull-Clark algorithm is widely
+used for quad meshes, the Loop subdivision is ideal for triangular meshes, and
+the Sqrt3 subdivision is another option for triangular meshes, providing smoother
+results.
+We will also visually compare the input and subdivided model using Easy3D's
+built-in visualization tools.
+
+"""
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path

@@ -1,12 +1,15 @@
-# -------------------------------------------------------------------------------
-# Example: Basic rendering styles in Easy3D
-# -------------------------------------------------------------------------------
-# This script demonstrates how to use the two most common imposters for rendering
-# points and lines in Easy3D:
-#   - Render vertices as spheres.
-#   - Render edges/wireframe as cylinders.
-# This tutorial also show how to customize the surface color and visibility.
-# -------------------------------------------------------------------------------
+"""
+Tutorial: Basic rendering styles in Easy3D
+==========================================
+
+This script demonstrates how to use the two most common imposters for rendering
+points and lines in Easy3D:
+
+- Render vertices as spheres.
+- Render edges/wireframe as cylinders.
+
+This tutorial also show how to customize the surface color and visibility.
+"""
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path

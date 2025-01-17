@@ -1,13 +1,16 @@
-# -------------------------------------------------------------------------------
-# Example: The Easy3D Multi-View Viewer of Easy3D
-# -------------------------------------------------------------------------------
-# This script demonstrates how to use the Easy3D `MultiViewer` class to:
-# - Create a multi-view 3D viewer with a custom title.
-# - Set up a 2x2 layout for visualizing multiple 3D models simultaneously.
-# - Load and visualize different types of 3D models.
-# - Assign models to specific views in the multi-view grid.
-# - Run the viewer to interact with the models (e.g., rotate, zoom, pan).
-# -------------------------------------------------------------------------------
+"""
+Tutorial: The Easy3D Multi-View Viewer of Easy3D
+================================================
+
+This script demonstrates how to use the Easy3D `MultiViewer` class to:
+
+- Create a multi-view 3D viewer with a custom title.
+- Set up a 2x2 layout for visualizing multiple 3D models simultaneously.
+- Load and visualize different types of 3D models.
+- Assign models to specific views in the multi-view grid.
+- Run the viewer to interact with the models (e.g., rotate, zoom, pan).
+
+"""
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path
