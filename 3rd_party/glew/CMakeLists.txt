@@ -9,7 +9,5 @@ add_library(3rd_${module} STATIC
     )
 set_target_properties(3rd_${module} PROPERTIES FOLDER "3rd_party")
 
-target_include_directories(3rd_${module} PRIVATE ${ADTREE_glew_INCLUDE_DIR})
-
 target_compile_definitions(3rd_${module} PRIVATE GLEW_STATIC)
 
