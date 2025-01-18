@@ -1,6 +1,6 @@
 """
-Tutorial: Filling Small Holes in a Surface Mesh using Easy3D
-============================================================
+402: Mesh hole filling
+======================
 
 This tutorial demonstrates how to use Easy3D Python bindings to fill small
 holes in a surface mesh. A "hole" is defined as a boundary loop of manifold
@@ -22,6 +22,8 @@ vertices are connected but do not form a closed surface. The size of the hole
 is measured by the number of boundary edges in the loop.
 
 """
+
+# sphinx_gallery_thumbnail_path = '_static/sphx_glr_tutorial_402_mesh_hole_filling_thumb.png'
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path

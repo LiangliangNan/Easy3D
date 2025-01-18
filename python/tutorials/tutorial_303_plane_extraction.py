@@ -1,6 +1,6 @@
 """
-Tutorial: Primitive Extraction from Point Clouds Using Easy3D
-=============================================================
+303: Plane extraction
+=====================
 
 This tutorial demonstrates how to extract basic geometric primitives
 (planes, cylinders, cones, spheres, and toruses) from 3D point clouds
@@ -14,6 +14,8 @@ In this example, we will:
 - Visualize the extracted planar segments.
 
 """
+
+# sphinx_gallery_thumbnail_path = '_static/sphx_glr_tutorial_303_plane_extraction_thumb.png'
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path

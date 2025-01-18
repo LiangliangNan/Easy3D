@@ -1,6 +1,6 @@
 """
-Tutorial: Per-Element Properties in Easy3D
-==========================================
+104: Properties
+===============
 
 This tutorial demonstrates how to create, set, and retrieve per-element
 properties for a 3D model using the Easy3D library. Per-element properties can

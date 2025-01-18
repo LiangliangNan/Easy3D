@@ -1,6 +1,6 @@
 """
-Tutorial: Sampling a Surface Mesh into a Point Cloud Using Easy3D
-=================================================================
+401: Mesh sampling
+==================
 
 This tutorial demonstrates how to:
 
@@ -12,6 +12,8 @@ The sampling process generates a near-uniform distribution of points over the
 surface of the mesh.
 
 """
+
+# sphinx_gallery_thumbnail_path = '_static/sphx_glr_tutorial_401_mesh_sampler_thumb.png'
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path

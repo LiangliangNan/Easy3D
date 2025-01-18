@@ -1,6 +1,6 @@
 """
-Tutorial: Mesh Parameterization Using Easy3D
-============================================
+405: Mesh parameterization
+==========================
 
 This tutorial demonstrates how to:
 
@@ -28,6 +28,8 @@ mesh parameterization algorithms:
   distortion in the parameterized space.
 
 """
+
+# sphinx_gallery_thumbnail_path = '_static/sphx_glr_tutorial_405_mesh_parameterization_thumb.png'
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path

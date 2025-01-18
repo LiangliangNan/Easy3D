@@ -1,6 +1,6 @@
 """
-Tutorial: Mesh Subdivision with Easy3D
-======================================
+404: Mesh subdivision
+=====================
 
 In this tutorial, we will demonstrate how to apply three popular subdivision
 algorithms to a 3D surface mesh using Easy3D Python bindings:
@@ -18,6 +18,8 @@ We will also visually compare the input and subdivided model using Easy3D's
 built-in visualization tools.
 
 """
+
+# sphinx_gallery_thumbnail_path = '_static/sphx_glr_tutorial_404_mesh_subdivision_thumb.png'
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path

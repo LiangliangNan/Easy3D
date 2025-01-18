@@ -1,6 +1,6 @@
 """
-Tutorial: Point Cloud Downsampling Using Easy3D
-===============================================
+304: Point downsampling
+=======================
 
 This tutorial demonstrates how to downsample a 3D point cloud using the Easy3D
 library. Downsampling reduces the number of points while preserving the overall
@@ -15,6 +15,8 @@ In this tutorial, we will:
   using Easy3D's `MultiViewer`.
 
 """
+
+# sphinx_gallery_thumbnail_path = '_static/sphx_glr_tutorial_304_point_cloud_downsampling_thumb.png'
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path

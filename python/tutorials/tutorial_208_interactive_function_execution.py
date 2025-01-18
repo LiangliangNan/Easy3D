@@ -1,12 +1,14 @@
 """
-Tutorial: Interactively Execute Customized Functions In Easy3D Viewer
-=====================================================================
+208: Interactive function
+=========================
 
 This tutorial demonstrates how to bind customized functions to shortcuts in
 the Easy3D Viewer. This allows you to execute your own geometry processing
 algorithms interactively while the viewer is running. This is particularly
 useful for demonstrating and testing 3D data processing algorithms.
 """
+
+# sphinx_gallery_thumbnail_path = '_static/sphx_glr_tutorial_208_interactive_function_execution_thumb.png'
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path

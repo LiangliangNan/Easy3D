@@ -1,6 +1,6 @@
 """
-Tutorial: Generating and Visualizing 3D Text with Easy3D
-========================================================
+206: Text mesher
+================
 
 This tutorial demonstrates how to use Easy3D's `TextMesher` to:
 
@@ -8,6 +8,8 @@ This tutorial demonstrates how to use Easy3D's `TextMesher` to:
 - Visualize the generated 3D text meshes using the default Easy3D Viewer.
 
 """
+
+# sphinx_gallery_thumbnail_path = '_static/sphx_glr_tutorial_206_text_mesher_thumb.png'
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path

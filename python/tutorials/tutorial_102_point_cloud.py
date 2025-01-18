@@ -1,6 +1,6 @@
 """
-Tutorial: Working with the PointCloud class in Easy3D
-=====================================================
+102: Point cloud
+================
 
 This script demonstrates how to use the Easy3D `PointCloud` class:
 

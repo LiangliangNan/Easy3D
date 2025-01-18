@@ -1,6 +1,6 @@
 """
-Tutorial: Estimate Point Cloud Normals Using Easy3D
-===================================================
+301: Normal estimation
+======================
 
 This script demonstrates how to estimate and reorient normals for a point cloud
 using Easy3D. The script loads a point cloud from a file, visualizes it in a
@@ -8,6 +8,8 @@ viewer, and allows you to interactively estimate and reorient the normals using
 keyboard shortcuts.
 
 """
+
+# sphinx_gallery_thumbnail_path = '_static/sphx_glr_tutorial_301_normal_estimation_thumb.png'
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path

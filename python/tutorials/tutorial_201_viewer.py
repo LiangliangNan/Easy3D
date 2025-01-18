@@ -1,6 +1,6 @@
 """
-Tutorial: The basic Easy3D viewer
-=================================
+201: Easy3D viewer
+==================
 
 This script demonstrates how to use the Easy3D `Viewer` class to:
 
@@ -10,6 +10,8 @@ This script demonstrates how to use the Easy3D `Viewer` class to:
 - Run the viewer to interact with the models (e.g., rotate, zoom, pan).
 
 """
+
+# sphinx_gallery_thumbnail_path = '_static/sphx_glr_tutorial_201_viewer_thumb.png'
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path

@@ -1,6 +1,6 @@
 """
-Tutorial: Basic data types in Easy3D
-====================================
+101: Data types
+===============
 
 This script demonstrates how to use the Easy3D vector classes:
 

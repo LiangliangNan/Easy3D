@@ -1,6 +1,6 @@
 """
-Tutorial: Working with the SurfaceMesh class in Easy3D
-======================================================
+103: Surface mesh
+=================
 
 This script demonstrates how to use the Easy3D `SurfaceMesh` class:
 

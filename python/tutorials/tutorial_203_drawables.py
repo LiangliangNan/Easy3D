@@ -1,6 +1,6 @@
 """
-Tutorial: Drawables in Easy3D
-=============================
+203: Drawables
+==============
 
 This tutorial demonstrates how to visualize different types of data using
 Easy3D's drawables WITHOUT explicitly defining a 3D model. We'll cover:
@@ -13,6 +13,8 @@ Easy3D's drawables WITHOUT explicitly defining a 3D model. We'll cover:
 - Running the Easy3D MultiViewer to display the visualizations.
 
 """
+
+# sphinx_gallery_thumbnail_path = '_static/sphx_glr_tutorial_203_drawables_thumb.png'
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path

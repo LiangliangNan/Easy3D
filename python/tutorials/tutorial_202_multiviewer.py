@@ -1,6 +1,6 @@
 """
-Tutorial: The Easy3D Multi-View Viewer of Easy3D
-================================================
+202: Multi-viewer
+=================
 
 This script demonstrates how to use the Easy3D `MultiViewer` class to:
 
@@ -11,6 +11,8 @@ This script demonstrates how to use the Easy3D `MultiViewer` class to:
 - Run the viewer to interact with the models (e.g., rotate, zoom, pan).
 
 """
+
+# sphinx_gallery_thumbnail_path = '_static/sphx_glr_tutorial_202_multiviewer_thumb.png'
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path

@@ -1,6 +1,6 @@
 """
-Tutorial: Simplifying a Surface Mesh Using Easy3D
-=================================================
+403: Mesh simplification
+========================
 
 This tutorial explains how to:
 
@@ -17,6 +17,8 @@ widely used in:
 - Level-of-detail (LOD) modeling in computer graphics.
 
 """
+
+# sphinx_gallery_thumbnail_path = '_static/sphx_glr_tutorial_403_mesh_simplification_thumb.png'
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path

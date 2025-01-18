@@ -1,6 +1,6 @@
 """
-Tutorial: Poisson Surface Reconstruction Using Easy3D
-=====================================================
+302: Surface reconstruction
+===========================
 
 This tutorial demonstrates how to perform Poisson surface reconstruction
 using the Easy3D library. The algorithm reconstructs a surface mesh from a
@@ -16,6 +16,8 @@ In this example, we will:
 - Visualize the reconstructed surface mesh in an interactive viewer.
 
 """
+
+# sphinx_gallery_thumbnail_path = '_static/sphx_glr_tutorial_302_surface_reconstruction_thumb.png'
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path

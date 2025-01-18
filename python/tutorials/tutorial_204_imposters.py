@@ -1,6 +1,6 @@
 """
-Tutorial: Basic rendering styles in Easy3D
-==========================================
+204: Imposters
+==============
 
 This script demonstrates how to use the two most common imposters for rendering
 points and lines in Easy3D:
@@ -10,6 +10,8 @@ points and lines in Easy3D:
 
 This tutorial also show how to customize the surface color and visibility.
 """
+
+# sphinx_gallery_thumbnail_path = '_static/sphx_glr_tutorial_204_imposters_thumb.png'
 
 # -------------------------------------------------------------------------------
 # Adding Easy3D Python Bindings to the System Path
