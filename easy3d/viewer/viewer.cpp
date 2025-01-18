@@ -169,6 +169,7 @@ namespace easy3d {
             "  Ctrl + 'v':              Restore view status from clipboard      \n"
             "  Alt + 'c':               Toggle clipping plane                   \n"
             "  Alt + 'v':               Toggle clipping plane visibility        \n"
+            "  Alt + 'x':               Toggle cross-section                    \n"
             "  Alt + 'k':               Add key frame to the camera path        \n"
             "  Alt + 'd':               Delete the camera path                  \n"
             "  Ctrl + 'k':              Play the camera path                    \n"
@@ -788,8 +789,7 @@ namespace easy3d {
             is_animating_ = !is_animating_;
             if (is_animating_ && !animation_func_)
                 LOG(WARNING) << "animation is enabled but the animation function (i.e., animation_func_) is missing";
-        }
-        else if (key == GLFW_KEY_LEFT && modifiers == 0) {
+        } else if (key == GLFW_KEY_LEFT && modifiers == 0) {
             auto angle = static_cast<float>(1 * M_PI / 180.0); // turn left, 1 degrees each step
             camera_->frame()->action_turn(angle, camera());
         } else if (key == GLFW_KEY_RIGHT && modifiers == 0) {
@@ -823,6 +823,9 @@ namespace easy3d {
         } else if (key == GLFW_KEY_V && modifiers == MODIF_ALT) {     // toggle clipping plane visibility
             if (ClippingPlane::instance()->is_enabled())
                 ClippingPlane::instance()->set_visible(!ClippingPlane::instance()->is_visible());
+        } else if (key == GLFW_KEY_X && modifiers == MODIF_ALT) {
+            if (ClippingPlane::instance()->is_enabled())
+                ClippingPlane::instance()->set_cross_section(!ClippingPlane::instance()->cross_section());
         }
         else if (key == GLFW_KEY_A && modifiers == 0) {
             if (drawable_axes_)
