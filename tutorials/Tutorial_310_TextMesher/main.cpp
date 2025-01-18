@@ -32,9 +32,13 @@
 #include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
 
+/**
+ * \example{lineno} Tutorial_310_TextMesher
+ * This example shows how to generate a surface mesh models from texts.
+ *
+ * \include{lineno} Tutorial_310_TextMesher/main.cpp
+ */
 
-// This example shows how to
-//		- generate a surface mesh models from texts
 
 using namespace easy3d;
 

@@ -11,9 +11,11 @@ dependencies.
 The script uses platform-specific tools (dumpbin on Windows, otool on macOS, and ldd on Linux) to analyze the
 specified binary and identify its runtime dependencies. The script searches for these dependencies in predefined
 search paths:
-  - On Windows, it searches in the system PATH.
-  - On macOS, it uses default system library paths like /System/Library/Frameworks.
-  - On Linux, it searches paths defined in the LD_LIBRARY_PATH environment variable.
+
+- On Windows, it searches in the system PATH.
+- On macOS, it uses default system library paths like /System/Library/Frameworks.
+- On Linux, it searches paths defined in the LD_LIBRARY_PATH environment variable.
+
 To avoid copying system libraries or irrelevant files, the script excludes paths and files based on a predefined
 list (EXCLUDED_PATHS_AND_FILES). This ensures that only relevant application-level dependencies are included.
 
@@ -21,26 +23,29 @@ Once dependencies are identified and located, the script recursively copies them
 directory. This process ensures all transitive dependencies are also resolved.
 
 Limitations:
-  - The script relies on tools like dumpbin, otool, and ldd, which must be installed on the target platform.
-    If these tools are missing or inaccessible, the script will fail.
-  - The exclusion mechanism is based on simple string matching. This may inadvertently skip necessary dependencies
-    if their paths contain substrings matching the exclusion list, or include unwanted files if their paths are not
-    explicitly excluded.
-  - The script is designed to work on Windows, macOS, and Linux, but has only been tested on Windows. There may be
-    unaddressed issues or edge cases on other platforms.
-  - The script assumes standard runtime dependency resolution methods. It may not work as expected for binaries with
-    unusual build configurations or custom dynamic loading mechanisms.
-  - While the script attempts to handle errors gracefully, issues like missing dependencies, inaccessible paths, or
-    permission errors during copying may still lead to incomplete outputs.
 
+- The script relies on tools like dumpbin, otool, and ldd, which must be installed on the target platform.
+  If these tools are missing or inaccessible, the script will fail.
+- The exclusion mechanism is based on simple string matching. This may inadvertently skip necessary dependencies
+  if their paths contain substrings matching the exclusion list, or include unwanted files if their paths are not
+  explicitly excluded.
+- The script is designed to work on Windows, macOS, and Linux, but has only been tested on Windows. There may be
+  unaddressed issues or edge cases on other platforms.
+- The script assumes standard runtime dependency resolution methods. It may not work as expected for binaries with
+  unusual build configurations or custom dynamic loading mechanisms.
+- While the script attempts to handle errors gracefully, issues like missing dependencies, inaccessible paths, or
+  permission errors during copying may still lead to incomplete outputs.
 
 Usage:
-    python copy_runtime_dependencies.py <target_binary> <search_path> <destination>
+  python copy_runtime_dependencies.py <target_binary> <search_path> <destination>
+
 Arguments:
-    - target_binary (str): The path to the target binary file whose dependencies need to be copied.
-    - search_path (str): A user-specified directory to search for dependencies. This is useful when dependencies
-        are located in a known path (e.g., ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}) different from the target binary.
-    - destination (str): The directory where the target binary and its dependencies will be copied.
+
+ - target_binary (str): The path to the target binary file whose dependencies need to be copied.
+ - search_path (str): A user-specified directory to search for dependencies. This is useful when dependencies
+   are located in a known path (e.g., ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}) different from the target binary.
+ - destination (str): The directory where the target binary and its dependencies will be copied.
+
 """
 
 

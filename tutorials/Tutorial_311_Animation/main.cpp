@@ -31,9 +31,15 @@
 #include <easy3d/util/initializer.h>
 
 
+/**
+ * \example{lineno} Tutorial_311_Animation
+ * This example shows how to map an array buffer for dynamic buffer update (useful for animation).
+ *
+ * \include{lineno} Tutorial_311_Animation/main.cpp
+ */
+
 using namespace easy3d;
 
-// This example shows how to map an array buffer for dynamic buffer update (useful for animation).
 
 int main(int argc, char **argv) {
     // initialize Easy3D.

@@ -34,7 +34,7 @@
 
 using namespace easy3d;
 
-VirtualScanner::VirtualScanner(const std::string &title)
+TutorialVirtualScanner::TutorialVirtualScanner(const std::string &title)
     : Viewer(title)
     , add_noise_(false)
 {
@@ -53,7 +53,7 @@ VirtualScanner::VirtualScanner(const std::string &title)
 }
 
 
-bool VirtualScanner::key_press_event(int key, int modifiers) {
+bool TutorialVirtualScanner::key_press_event(int key, int modifiers) {
     if (key == KEY_SPACE && modifiers == 0) {
         int fw, fh;
 		framebuffer_size(fw, fh);

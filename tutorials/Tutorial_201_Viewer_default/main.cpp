@@ -29,6 +29,12 @@
 #include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
 
+/**
+ * \example{lineno} Tutorial_201_Viewer_default
+ * This example shows how to create a simple viewer using Easy3D.
+ *
+ * \include{lineno} Tutorial_201_Viewer_default/main.cpp
+ */
 
 using namespace easy3d;
 

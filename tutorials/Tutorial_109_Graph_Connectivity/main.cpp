@@ -27,13 +27,19 @@
 #include <easy3d/core/graph.h>
 #include <easy3d/util/initializer.h>
 
+/**
+ * \example{lineno} Tutorial_109_Graph_Connectivity
+ * This example shows how to
+ *		- access the incident vertices of each vertex
+ *		- access the incident edges of each vertex
+ *		- access the two end points of each edge
+ *
+ * \include{lineno} Tutorial_109_Graph_Connectivity/main.cpp
+ */
+
 
 using namespace easy3d;
 
-// This example shows how to
-//		- access the incident vertices of each vertex
-//		- access the incident edges of each vertex
-//		- access the two end points of each edge
 
 // There are two ways to traverse the incident entities of an element.
 //   - use a "for" loop (cleaner code);

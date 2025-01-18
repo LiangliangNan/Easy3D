@@ -37,11 +37,11 @@ namespace easy3d {
 // This tutorial shows how to interpolate camera frames to
 // animate model exploration.
 
-class CameraInterpolation : public easy3d::Viewer
+class TutorialCameraInterpolation : public easy3d::Viewer
 {
 public:
-    explicit CameraInterpolation(const std::string& title);
-    ~CameraInterpolation() override;
+    explicit TutorialCameraInterpolation(const std::string& title);
+    ~TutorialCameraInterpolation() override;
     
 protected:
     bool key_press_event(int key, int modifiers) override;

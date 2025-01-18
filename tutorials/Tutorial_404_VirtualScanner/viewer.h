@@ -30,10 +30,10 @@
 #include <easy3d/viewer/viewer.h>
 
 
-class VirtualScanner : public easy3d::Viewer
+class TutorialVirtualScanner : public easy3d::Viewer
 {
 public:
-    explicit VirtualScanner(const std::string& title = "VirtualScanner");
+    explicit TutorialVirtualScanner(const std::string& title = "VirtualScanner");
 
 protected:
     bool key_press_event(int key, int modifiers) override;

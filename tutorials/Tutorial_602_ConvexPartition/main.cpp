@@ -33,15 +33,19 @@
 #include <easy3d/algo/polygon_partition.h>
 #include <easy3d/util/initializer.h>
 
+/**
+ * \example{lineno} Tutorial_602_ConvexPartition
+ *
+ * This example shows how to partition a polygon (free of self-intersection) with an arbitrary number of holes into
+ * a set of convex polygons using the PolygonPartition class of Easy3D.
+ *
+ * Note: For complex unknown structures that have self-intersection, you need to use the CSG operators provided in
+ * easy3d/algo/tessellator.h to obtain simply polygons (free of self-intersection) first.
+ *
+ * \include{lineno} Tutorial_602_ConvexPartition/main.cpp
+ */
 
 using namespace easy3d;
-
-
-// This example shows how to partition a polygon (free of self-intersection) with an arbitrary number of holes into
-// a set of convex polygons using the PolygonPartition class of Easy3D.
-//
-// Note: For complex unknown structures that have self-intersection, you need to use the CSG operators provided in
-//      easy3d/algo/tessellator.h to obtain simply polygons (free of self-intersection) first.
 
 
 int main(int argc, char** argv) {

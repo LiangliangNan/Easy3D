@@ -27,12 +27,15 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/util/initializer.h>
 
+/**
+ * \example{lineno} Tutorial_106_SurfaceMesh_Property
+ * This example shows how to create and access properties defined on a surface mesh.
+ * We use per-face properties as example, you should be able to do similarly for per-edge/vertex properties.
+ *
+ * \include{lineno} Tutorial_106_SurfaceMesh_Property/main.cpp
+ */
 
 using namespace easy3d;
-
-
-// This example shows how to create and access properties defined on a surface mesh.
-// We use per-face properties as example, you should be able to do similarly for per-edge/vertex properties also.
 
 
 SurfaceMesh* old_mesh_from_previous_example() {

@@ -28,16 +28,26 @@
 #include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
 
+/**
+ * \example Tutorial_401_ModelPicker
+ * This example shows how to select a model from a set of models by clicking the mouse.
+ *
+ * The source file containing the main() function:
+ * \include{lineno} Tutorial_401_ModelPicker/main.cpp
+ * The header file of the viewer class:
+ * \include{lineno} Tutorial_401_ModelPicker/viewer.h
+ * The source file of the viewer class:
+ * \include{lineno} Tutorial_401_ModelPicker/viewer.cpp
+ */
 
 using namespace easy3d;
 
-// This example shows how to select a model from a set of models by clicking the mouse.
 
 int main(int argc, char **argv) {
     // initialize Easy3D.
     initialize();
 
-    PickerViewer viewer(EXAMPLE_TITLE);
+    TutorialModelPicker viewer(EXAMPLE_TITLE);
     viewer.add_model(resource::directory() + "/data/easy3d/easy3d_e.ply");
     viewer.add_model(resource::directory() + "/data/easy3d/easy3d_a.ply");
     viewer.add_model(resource::directory() + "/data/easy3d/easy3d_s.ply");

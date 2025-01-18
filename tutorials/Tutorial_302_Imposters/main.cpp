@@ -33,14 +33,18 @@
 #include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
 
+/**
+ * \example{lineno} Tutorial_302_Imposters
+ * This example shows how to render imposters, e.g.,
+ *      - points as spheres and surfels;
+ *      - lines as cylinders;
+ *      - lines as cones.
+ *
+ * \include{lineno} Tutorial_302_Imposters/main.cpp
+ */
+
 
 using namespace easy3d;
-
-
-// This example shows how to render imposters, e.g.,
-//		- points as spheres, surfels
-//		- lines as cylinders;
-//      - lines as cones.
 
 
 // render mesh vertices as spheres

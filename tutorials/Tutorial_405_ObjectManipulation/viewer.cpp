@@ -38,7 +38,7 @@
 using namespace easy3d;
 
 
-ManipulationViewer::ManipulationViewer(const std::string &title)
+TutorialObjectManipulation::TutorialObjectManipulation(const std::string &title)
         : Viewer(title), selected_model_(nullptr)
 {
     // We always want to look at the front of the easy3d logo.
@@ -60,7 +60,7 @@ ManipulationViewer::ManipulationViewer(const std::string &title)
 }
 
 
-bool ManipulationViewer::mouse_press_event(int x, int y, int button, int modifiers) {
+bool TutorialObjectManipulation::mouse_press_event(int x, int y, int button, int modifiers) {
     if (modifiers != MODIF_ALT) {// this is reserved for manipulation
         ModelPicker picker(camera());
         auto model = picker.pick(models(), x, y);
@@ -73,7 +73,7 @@ bool ManipulationViewer::mouse_press_event(int x, int y, int button, int modifie
 }
 
 
-bool ManipulationViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
+bool TutorialObjectManipulation::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
     // control modifier is reserved for zooming on region
     if (modifiers == MODIF_ALT && selected_model_) {
         ManipulatedFrame *frame = selected_model_->manipulator()->frame();
@@ -99,7 +99,7 @@ bool ManipulationViewer::mouse_drag_event(int x, int y, int dx, int dy, int butt
 }
 
 
-void ManipulationViewer::mark(easy3d::Model *model) {
+void TutorialObjectManipulation::mark(easy3d::Model *model) {
     for (auto m : models()) {
         m->renderer()->set_selected(m.get() == model);
         auto faces = m->renderer()->get_triangles_drawable("faces");
@@ -114,13 +114,13 @@ void ManipulationViewer::mark(easy3d::Model *model) {
     if (!model->manipulator()) {    // create manipulator if it doesn't exist
         model->set_manipulator(std::make_shared<Manipulator>(model));
         model->manipulator()->frame()->modified.connect(this,
-                static_cast<void (ManipulationViewer::*)(void) const>(&ManipulationViewer::update));
+                static_cast<void (TutorialObjectManipulation::*)(void) const>(&TutorialObjectManipulation::update));
     }
     update();
 }
 
 
-void ManipulationViewer::draw() const {
+void TutorialObjectManipulation::draw() const {
     Viewer::draw();
     for (auto m : models()) {
         if (m->renderer()->is_selected() && m->manipulator())

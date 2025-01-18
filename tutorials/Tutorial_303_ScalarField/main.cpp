@@ -33,12 +33,14 @@
 #include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
 
+/**
+ * \example{lineno} Tutorial_303_ScalarField
+ * This example shows how to render a scalar field defined on vertices of a mesh.
+ *
+ * \include{lineno} Tutorial_303_ScalarField/main.cpp
+ */
 
 using namespace easy3d;
-
-
-// This example shows how to
-//		- rendering a scalar field defined on vertices of a mesh.
 
 
 int main(int argc, char **argv) {

@@ -28,10 +28,20 @@
 #include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
 
+/**
+ * \example Tutorial_309_TextRendering
+ * This example shows how to render strings using Easy3D.
+ *
+ * The source file containing the main() function:
+ * \include{lineno} Tutorial_309_TextRendering/main.cpp
+ * The header file of the viewer class:
+ * \include{lineno} Tutorial_309_TextRendering/viewer.h
+ * The source file of the viewer class:
+ * \include{lineno} Tutorial_309_TextRendering/viewer.cpp
+ */
 
 using namespace easy3d;
 
-// This example shows how to render strings using Easy3D.
 
 int main(int argc, char **argv) {
     // initialize Easy3D.
@@ -39,7 +49,7 @@ int main(int argc, char **argv) {
 
     const std::string file_name = resource::directory() + "/data/sphere.obj";
 
-    TextRendering viewer(EXAMPLE_TITLE);
+    TutorialTextRendering viewer(EXAMPLE_TITLE);
     viewer.add_model(file_name);
 
     // run the viewer

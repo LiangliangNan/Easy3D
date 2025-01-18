@@ -33,11 +33,11 @@ namespace easy3d {
     class TextRenderer;
 }
 
-class TextRendering : public easy3d::Viewer
+class TutorialTextRendering : public easy3d::Viewer
 {
 public:
-    explicit TextRendering(const std::string& title);
-    ~TextRendering() override;
+    explicit TutorialTextRendering(const std::string& title);
+    ~TutorialTextRendering() override;
     
 protected:
     void draw() const override;

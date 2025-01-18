@@ -24,42 +24,49 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef EASY3D_TUTORIAL_IMAGE_VIEWER_H
-#define EASY3D_TUTORIAL_IMAGE_VIEWER_H
+#include "viewer.h"
+#include <easy3d/core/model.h>
+#include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/renderer.h>
+#include <easy3d/util/resource.h>
+#include <easy3d/util/initializer.h>
 
-#include <easy3d/viewer/viewer.h>
+
+/**
+ * \example Tutorial_506_DepthMap
+ *
+ * This example shows how to create depth images from the rendering.
+ *
+ * The source file containing the main() function:
+ * \include{lineno} Tutorial_506_DepthMap/main.cpp
+ * The header file of the viewer class:
+ * \include{lineno} Tutorial_506_DepthMap/viewer.h
+ * The source file of the viewer class:
+ * \include{lineno} Tutorial_506_DepthMap/viewer.cpp
+ */
 
 
-// This class visualizes an image in the screen space.
+using namespace easy3d;
 
-namespace easy3d {
-    class Texture;
+
+int main(int argc, char **argv) {
+    // initialize Easy3D.
+    initialize();
+
+    TutorialDepthMap viewer(EXAMPLE_TITLE);
+
+    // the point cloud file.
+    const std::string file_name = resource::directory() + "/data/fountain/pointcloud.ply";
+    auto model = viewer.add_model(file_name, true);
+    if (!model) {
+        LOG(ERROR) << "failed to load model. Please make sure the file exists and format is correct.";
+        return EXIT_FAILURE;
+    }
+
+    auto drawable = model->renderer()->get_points_drawable("vertices");
+    drawable->set_point_size(5);
+
+    // run the viewer
+    return viewer.run();
 }
 
-class ImageViewer : public easy3d::Viewer
-{
-public:
-    ImageViewer(const std::string& title, const std::string& image_file);
-    ~ImageViewer() override;
-    
-protected:
-    bool key_press_event(int key, int modifiers) override;
-    bool mouse_scroll_event(int x, int y, int dx, int dy) override;
-    void init() override;
-
-    void draw() const override;
-
-    void compute_image_region(int& x, int& y, int& w, int& h) const;
-
-    // moves the camera so that the 'model' is centered on the screen.
-    // if 'model' is NULL, it centers the entire scene (all models).
-    void fit_screen();
-
-private:
-    easy3d::Texture* texture_;
-    std::string      image_file_;
-    float            scale_;
-};
-
-
-#endif // EASY3D_TUTORIAL_IMAGE_VIEWER_H

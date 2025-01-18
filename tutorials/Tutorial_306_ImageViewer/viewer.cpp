@@ -34,7 +34,7 @@
 
 using namespace easy3d;
 
-ImageViewer::ImageViewer(const std::string& title, const std::string& image_file)
+TutorialImageViewer::TutorialImageViewer(const std::string& title, const std::string& image_file)
     : Viewer(title)
     , scale_(1.0f)
     , texture_(nullptr)
@@ -48,7 +48,7 @@ ImageViewer::ImageViewer(const std::string& title, const std::string& image_file
 }
 
 
-ImageViewer::~ImageViewer() {
+TutorialImageViewer::~TutorialImageViewer() {
     delete texture_;
 
     // Not needed: it will be called in the destructor of the base class
@@ -56,14 +56,14 @@ ImageViewer::~ImageViewer() {
 }
 
 
-void ImageViewer::init() {
+void TutorialImageViewer::init() {
     Viewer::init();
     texture_ = Texture::create(image_file_);
     fit_screen();
 }
 
 
-void ImageViewer::compute_image_region(int& x, int& y, int& w, int& h) const {
+void TutorialImageViewer::compute_image_region(int& x, int& y, int& w, int& h) const {
     w = static_cast<int>(static_cast<float>(texture_->width()) * scale_);
     h = static_cast<int>(static_cast<float>(texture_->height()) * scale_);
     x = static_cast<int>(static_cast<float>(width() - w) * 0.5f);
@@ -71,7 +71,7 @@ void ImageViewer::compute_image_region(int& x, int& y, int& w, int& h) const {
 }
 
 
-bool ImageViewer::key_press_event(int key, int modifiers) {
+bool TutorialImageViewer::key_press_event(int key, int modifiers) {
     if (key == KEY_O && modifiers == MODIF_CTRL) {
         const std::string title = "Please choose an image file";
         const std::string default_path = resource::directory() + "/data/";
@@ -97,7 +97,7 @@ bool ImageViewer::key_press_event(int key, int modifiers) {
 }
 
 
-void ImageViewer::fit_screen() {
+void TutorialImageViewer::fit_screen() {
     if (texture_ == nullptr)
         return;
     const int image_w = texture_->width();
@@ -112,7 +112,7 @@ void ImageViewer::fit_screen() {
 }
 
 
-bool ImageViewer::mouse_scroll_event(int x, int y, int dx, int dy) {
+bool TutorialImageViewer::mouse_scroll_event(int x, int y, int dx, int dy) {
     (void)x;
     (void)y;
     (void)dx;
@@ -126,7 +126,7 @@ bool ImageViewer::mouse_scroll_event(int x, int y, int dx, int dy) {
 }
 
 
-void ImageViewer::draw() const {
+void TutorialImageViewer::draw() const {
 	if (texture_ == nullptr)
 		return;
 

@@ -28,13 +28,23 @@
 #include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
 
+/**
+ * \example Tutorial_207_RealCamera
+ * This example shows how to
+ *     - render a model from the view given the camera's intrinsic and
+ *       extrinsic parameters. The camera parameters were recovered using
+ *       commonly used computer vision techniques (i.e., calibration, or SfM).
+ *     - how an image point is projected into a ray in the 3D space.
+ *     - how a 3D point is projected onto the image.
+ *
+ * The source file containing the main() function:
+ * \include{lineno} Tutorial_207_RealCamera/main.cpp
+ * The header file of the viewer class:
+ * \include{lineno} Tutorial_207_RealCamera/viewer.h
+ * The source file of the viewer class:
+ * \include{lineno} Tutorial_207_RealCamera/viewer.cpp
+ */
 
-/// This example shows how to
-///     - render a model from the view given the camera's intrinsic and
-///       extrinsic parameters. The camera parameters were recovered using
-///       commonly used computer vision techniques (i.e., calibration, or SfM).
-///     - how an image point is projected into a ray in the 3D space.
-///     - how a 3D point is projected onto the image.
 
 using namespace easy3d;
 
@@ -47,7 +57,7 @@ int main(int argc, char **argv) {
     // the point cloud file.
     const std::string cloud_file = resource::directory() + "/data/fountain/pointcloud.ply";
 
-    RealCamera viewer(EXAMPLE_TITLE, bundler_file, cloud_file);
+    TutorialRealCamera viewer(EXAMPLE_TITLE, bundler_file, cloud_file);
 
     // run the viewer
     return viewer.run();

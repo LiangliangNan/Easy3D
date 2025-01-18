@@ -27,12 +27,15 @@
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/util/initializer.h>
 
+/**
+ * \example{lineno} Tutorial_101_PointCloud
+ * This example shows how to create a point cloud from a set of points
+ *
+ * \include{lineno} Tutorial_101_PointCloud/main.cpp
+ */
+
+
 using namespace easy3d;
-
-
-// This example shows how to
-//		- create a point cloud from a set of points
-
 
 
 int main(int argc, char** argv) {

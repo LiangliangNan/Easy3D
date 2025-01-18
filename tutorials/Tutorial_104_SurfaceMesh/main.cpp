@@ -28,12 +28,14 @@
 #include <easy3d/core/surface_mesh_builder.h>
 #include <easy3d/util/initializer.h>
 
+/**
+ * \example{lineno} Tutorial_104_SurfaceMesh
+ * This example shows how to construct a mesh from its vertices and known connectivity.
+ *
+ * \include{lineno} Tutorial_104_SurfaceMesh/main.cpp
+ */
 
 using namespace easy3d;
-
-
-// This example shows how to
-//		- construct a mesh from its vertices and known connectivity
 
 
 int main(int argc, char** argv) {

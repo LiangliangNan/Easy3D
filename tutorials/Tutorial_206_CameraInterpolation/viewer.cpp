@@ -34,7 +34,7 @@
 using namespace easy3d;
 
 
-CameraInterpolation::CameraInterpolation(const std::string& title)
+TutorialCameraInterpolation::TutorialCameraInterpolation(const std::string& title)
     : Viewer(title)
 {
     interpolator_ = new KeyFrameInterpolator(camera_->frame());
@@ -47,13 +47,13 @@ CameraInterpolation::CameraInterpolation(const std::string& title)
 }
 
 
-CameraInterpolation::~CameraInterpolation()
+TutorialCameraInterpolation::~TutorialCameraInterpolation()
 {
     delete interpolator_;
 }
 
 
-bool CameraInterpolation::key_press_event(int key, int modifiers)
+bool TutorialCameraInterpolation::key_press_event(int key, int modifiers)
 {
     if (key == KEY_K && modifiers == 0) {
         easy3d::Frame *frame = camera()->frame();
@@ -94,7 +94,7 @@ bool CameraInterpolation::key_press_event(int key, int modifiers)
 }
 
 
-void CameraInterpolation::draw() const {
+void TutorialCameraInterpolation::draw() const {
     Viewer::draw();
 
     // shown only when it is not animating

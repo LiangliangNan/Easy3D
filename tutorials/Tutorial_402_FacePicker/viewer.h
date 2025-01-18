@@ -36,9 +36,9 @@ namespace easy3d {
     class Model;
 }
 
-class PickerViewer : public easy3d::Viewer {
+class TutorialFacePicker : public easy3d::Viewer {
 public:
-    explicit PickerViewer(const std::string &title);
+    explicit TutorialFacePicker(const std::string &title);
 
     easy3d::Model* add_model(const std::string& file_name);
 

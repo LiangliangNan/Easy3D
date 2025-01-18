@@ -32,7 +32,7 @@
 using namespace easy3d;
 
 
-bool RealCamera::read_bundler_file(const std::string& file_name) {
+bool TutorialRealCamera::read_bundler_file(const std::string& file_name) {
 	typedef struct {
 		int image;
 		int key;

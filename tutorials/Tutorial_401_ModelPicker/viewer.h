@@ -35,9 +35,9 @@ namespace easy3d {
     class Model;
 }
 
-class PickerViewer : public easy3d::Viewer {
+class TutorialModelPicker : public easy3d::Viewer {
 public:
-    explicit PickerViewer(const std::string &title);
+    explicit TutorialModelPicker(const std::string &title);
 
 protected:
     bool mouse_press_event(int x, int y, int button, int modifiers) override;

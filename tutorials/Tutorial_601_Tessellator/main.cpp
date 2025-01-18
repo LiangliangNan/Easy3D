@@ -33,16 +33,20 @@
 #include <easy3d/algo/tessellator.h>
 #include <easy3d/util/initializer.h>
 
+/**
+ * \example{lineno} Tutorial_601_Tessellator
+ *
+ * This example shows how to triangulate a general polygonal meshes (e.g., meshes with concave faces,
+ * self−intersecting faces, and faces with holes) using the tessellator of Easy3D.
+ *
+ * Note: For general rendering purposes, you can use the tessellator to create a TrianglesDrawable for
+ * the model without explicitly triangulating the mesh.
+ *
+ * \include{lineno} Tutorial_601_Tessellator/main.cpp
+ */
 
 using namespace easy3d;
 
-
-// This example shows how to triangulate a general polygonal meshes (e.g., meshes
-// with concave faces, self−intersecting faces, and faces with holes) using the
-// tessellator of Easy3D.
-//
-// Note: For general rendering purposes, you can use the tessellator to create a
-//       TrianglesDrawable for the model without explicitly triangulating the mesh.
 
 typedef std::vector<vec3> Hole;
 

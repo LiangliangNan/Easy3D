@@ -34,10 +34,10 @@ namespace easy3d {
     class PointCloud;
 }
 
-class PointSelection : public easy3d::Viewer
+class TutorialPointSelection : public easy3d::Viewer
 {
 public:
-    explicit PointSelection(const std::string& title = "PointSelection");
+    explicit TutorialPointSelection(const std::string& title = "PointSelection");
 
 private:
     /// Mouse button press event handler

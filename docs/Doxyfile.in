@@ -778,7 +778,10 @@ WARN_LOGFILE           =
 # spaces.
 # Note: If this tag is empty the current directory is searched.
 
-INPUT                  = @PROJECT_SOURCE_DIR@/easy3d  @PROJECT_SOURCE_DIR@/tutorials/examples.h @PROJECT_SOURCE_DIR@/README.md @PROJECT_SOURCE_DIR@/python/bindings/easy3d @PROJECT_SOURCE_DIR@/python/tutorials
+INPUT                  = @PROJECT_SOURCE_DIR@/easy3d \
+                         @PROJECT_SOURCE_DIR@/README.md \
+                         @PROJECT_SOURCE_DIR@/tutorials \
+                         @PROJECT_SOURCE_DIR@/python/tutorials
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses
@@ -798,7 +801,7 @@ INPUT_ENCODING         = UTF-8
 # *.md, *.mm, *.dox, *.py, *.f90, *.f, *.for, *.tcl, *.vhd, *.vhdl, *.ucf,
 # *.qsf, *.as and *.js.
 
-FILE_PATTERNS          = *.cpp *.h
+FILE_PATTERNS          = *.h *.cpp *.py
 
 # The RECURSIVE tag can be used to specify whether or not subdirectories should
 # be searched for input files as well.
@@ -829,7 +832,7 @@ EXCLUDE_SYMLINKS       = NO
 # Note that the wildcards are matched against the file with absolute path, so to
 # exclude all test directories for example use the pattern */test/*
 
-EXCLUDE_PATTERNS       =
+EXCLUDE_PATTERNS       = @PROJECT_SOURCE_DIR@/tutorials/*.h
 
 # The EXCLUDE_SYMBOLS tag can be used to specify one or more symbol names
 # (namespaces, classes, functions, etc.) that should be excluded from the
@@ -840,13 +843,16 @@ EXCLUDE_PATTERNS       =
 # Note that the wildcards are matched against the file with absolute path, so to
 # exclude all test directories use the pattern */test/*
 
-EXCLUDE_SYMBOLS        =
+EXCLUDE_SYMBOLS        = Tutorial* tutorial* \
+                         Example* example* \
+                         Test* test*
 
 # The EXAMPLE_PATH tag can be used to specify one or more files or directories
 # that contain example code fragments that are included (see the \include
 # command).
 
-EXAMPLE_PATH           = @PROJECT_SOURCE_DIR@/tutorials @PROJECT_SOURCE_DIR@/tests
+EXAMPLE_PATH           = @PROJECT_SOURCE_DIR@/tutorials \
+                         @PROJECT_SOURCE_DIR@/python/tutorials
 
 # If the value of the EXAMPLE_PATH tag contains directories, you can use the
 # EXAMPLE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp and

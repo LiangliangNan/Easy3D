@@ -34,6 +34,21 @@
 
 #include "window.h"
 
+/**
+ * \example Tutorial_204_Viewer_Qt
+ * This example shows how to create a simple viewer using Qt.
+ *
+ * The source file containing the main() function:
+ * \include{lineno} Tutorial_204_Viewer_Qt/main.cpp
+ * The header file of the viewer class:
+ * \include{lineno} Tutorial_204_Viewer_Qt/viewer.h
+ * The source file of the viewer class:
+ * \include{lineno} Tutorial_204_Viewer_Qt/viewer.cpp
+ * The header file of the window class:
+ * \include{lineno} Tutorial_204_Viewer_Qt/window.h
+ * The source file of the window class:
+ * \include{lineno} Tutorial_204_Viewer_Qt/window.cpp
+ */
 
 using namespace easy3d;
 

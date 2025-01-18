@@ -35,7 +35,7 @@
 using namespace easy3d;
 
 
-TextRendering::TextRendering(const std::string &title)
+TutorialTextRendering::TutorialTextRendering(const std::string &title)
         : Viewer(title)
         , texter_(nullptr)
         , font_size_delta_(0.0f)
@@ -55,7 +55,7 @@ TextRendering::TextRendering(const std::string &title)
 }
 
 
-TextRendering::~TextRendering() {
+TutorialTextRendering::~TutorialTextRendering() {
     delete texter_;
 
     // Not needed: it will be called in the destructor of the base class
@@ -63,7 +63,7 @@ TextRendering::~TextRendering() {
 }
 
 
-void TextRendering::init() {
+void TutorialTextRendering::init() {
     Viewer::init();
 
     texter_ = new TextRenderer(dpi_scaling());
@@ -86,7 +86,7 @@ void TextRendering::init() {
 }
 
 
-bool TextRendering::key_press_event(int key, int modifiers) {
+bool TutorialTextRendering::key_press_event(int key, int modifiers) {
     if (key == KEY_MINUS) {
         font_size_delta_ = std::max(font_size_delta_ - 1.0f, -20.0f);
         update();
@@ -158,7 +158,7 @@ bool TextRendering::key_press_event(int key, int modifiers) {
 }
 
 
-void TextRendering::draw() const {
+void TutorialTextRendering::draw() const {
     Viewer::draw();
 
     if (!texter_ || texter_->num_fonts() == 0)

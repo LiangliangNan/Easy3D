@@ -40,7 +40,7 @@
 using namespace easy3d;
 
 
-DepthImage::DepthImage(const std::string& title)
+TutorialDepthMap::TutorialDepthMap(const std::string& title)
     : Viewer(title)
     , fbo_(nullptr)
 {
@@ -50,7 +50,7 @@ DepthImage::DepthImage(const std::string& title)
 }
 
 
-DepthImage::~DepthImage() {
+TutorialDepthMap::~TutorialDepthMap() {
     delete fbo_;
 
     // Not needed: it will be called in the destructor of the base class
@@ -58,13 +58,13 @@ DepthImage::~DepthImage() {
 }
 
 
-void DepthImage::draw() const {
+void TutorialDepthMap::draw() const {
     draw_depth();
     Viewer::draw();
 }
 
 
-void DepthImage::generate_depth() {
+void TutorialDepthMap::generate_depth() {
         static const std::string name = "shadow/shadow_generate";
         ShaderProgram* program = ShaderManager::get_program(name);
         if (!program) {
@@ -97,8 +97,8 @@ void DepthImage::generate_depth() {
 }
 
 
-void DepthImage::draw_depth() const {
-    auto viewer = const_cast<DepthImage*>(this);
+void TutorialDepthMap::draw_depth() const {
+    auto viewer = const_cast<TutorialDepthMap*>(this);
     auto w = static_cast<float>(width()) * dpi_scaling();
     auto h = static_cast<float>(height()) * dpi_scaling();
 

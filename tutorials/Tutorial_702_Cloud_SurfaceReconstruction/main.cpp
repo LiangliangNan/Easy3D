@@ -32,11 +32,16 @@
 #include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
 
+/**
+ * \example{lineno} Tutorial_702_Cloud_SurfaceReconstruction
+ *
+ * This example shows how to reconstruct a smooth surface from a point cloud using the Poisson surface
+ * reconstruction method.
+ *
+ * \include{lineno} Tutorial_702_Cloud_SurfaceReconstruction/main.cpp
+ */
 
 using namespace easy3d;
-
-// This example shows how to
-//		- reconstruct a smooth surface from a point cloud using the Poisson surface reconstruction method
 
 
 bool reconstruction(Viewer* viewer, Model* model) {

@@ -124,7 +124,7 @@ There are many options to build Easy3D. Choose one of the following (not an exha
 - Option 1 (purely on the command line): Use CMake to generate Makefiles and then `make` (on Linux/macOS) or `nmake`(on Windows with Microsoft 
   Visual Studio). 
   - On Linux or macOS, you can simply
-    ```
+    ```bash
         $ cd path-to-root-dir-of-Easy3D
         $ mkdir Release
         $ cd Release
@@ -132,7 +132,7 @@ There are many options to build Easy3D. Choose one of the following (not an exha
         $ make
     ```
   - On Windows with Microsoft Visual Studio, use the `x64 Native Tools Command Prompt for VS XXXX` (**don't** use the x86 one), then
-    ```
+    ```cmd
         $ cd path-to-root-dir-of-Easy3D
         $ mkdir Release
         $ cd Release

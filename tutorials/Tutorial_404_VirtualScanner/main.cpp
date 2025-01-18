@@ -31,18 +31,26 @@
 #include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
 
+/**
+ * \example Tutorial_404_VirtualScanner
+ * This example shows how to perform virtual scanning of a given model.
+ *
+ * The source file containing the main() function:
+ * \include{lineno} Tutorial_404_VirtualScanner/main.cpp
+ * The header file of the viewer class:
+ * \include{lineno} Tutorial_404_VirtualScanner/viewer.h
+ * The source file of the viewer class:
+ * \include{lineno} Tutorial_404_VirtualScanner/viewer.cpp
+ */
 
 using namespace easy3d;
-
-// This example shows how to perform virtual scanning of a given model.
-
 
 int main(int argc, char **argv) {
     // initialize Easy3D.
     initialize();
 
     // create the viewer.
-    VirtualScanner viewer(EXAMPLE_TITLE);
+    TutorialVirtualScanner viewer(EXAMPLE_TITLE);
 
     const std::string file_name = resource::directory() + "/data/house/house.obj";
     auto model = viewer.add_model(file_name, true);

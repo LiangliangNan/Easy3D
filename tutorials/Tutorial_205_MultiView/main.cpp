@@ -34,10 +34,15 @@
 #include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
 
+/**
+ * \example{lineno} Tutorial_205_MultiView
+ * This example shows how to use the built-in multi-view viewer.
+ *
+ * \include{lineno} Tutorial_205_MultiView/main.cpp
+ */
+
 using namespace easy3d;
 
-
-// This example shows how to use the built-in multi-view viewer.
 
 int main(int argc, char** argv) {
     // initialize Easy3D.

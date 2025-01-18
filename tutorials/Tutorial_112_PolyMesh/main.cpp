@@ -27,12 +27,15 @@
 #include <easy3d/core/poly_mesh.h>
 #include <easy3d/util/initializer.h>
 
+/**
+ * \example{lineno} Tutorial_112_PolyMesh
+ * This example shows how to construct a polyhedral mesh (consisting of a single tetrahedron) from its vertices
+ * and known connectivity.
+ *
+ * \include{lineno} Tutorial_112_PolyMesh/main.cpp
+ */
 
 using namespace easy3d;
-
-
-// This example shows how to
-//		- construct a polyhedral mesh (consisting of a single tetrahedron) from its vertices and known connectivity
 
 
 int main(int argc, char **argv) {

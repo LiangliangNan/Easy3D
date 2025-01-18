@@ -29,13 +29,16 @@
 #include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
 
+/**
+ * \example{lineno} Tutorial_107_SurfaceMesh_IO
+ * This example shows how to
+ *      - load a surface mesh from a file;
+ *      - save a surface mesh into a file.
+ *
+ * \include{lineno} Tutorial_107_SurfaceMesh_IO/main.cpp
+ */
 
 using namespace easy3d;
-
-
-// This example shows how to
-//		- load a surface mesh from a file;
-//		- save a surface mesh into a file.
 
 
 int main(int argc, char** argv) {

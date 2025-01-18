@@ -36,7 +36,7 @@
 using namespace easy3d;
 
 
-PickerViewer::PickerViewer(const std::string &title)
+TutorialModelPicker::TutorialModelPicker(const std::string &title)
         : Viewer(title) {
     // We always want to look at the front of the easy3d logo.
     camera()->setViewDirection(vec3(0, 0, -1));
@@ -46,7 +46,7 @@ PickerViewer::PickerViewer(const std::string &title)
 }
 
 
-bool PickerViewer::mouse_press_event(int x, int y, int button, int modifiers) {
+bool TutorialModelPicker::mouse_press_event(int x, int y, int button, int modifiers) {
     ModelPicker picker(camera());
     auto model = picker.pick(models(), x, y);
     if (model)
@@ -56,7 +56,7 @@ bool PickerViewer::mouse_press_event(int x, int y, int button, int modifiers) {
 }
 
 
-void PickerViewer::mark(easy3d::Model *model) {
+void TutorialModelPicker::mark(easy3d::Model *model) {
     for (auto m : models()) {
         if (m.get() == model)
             m->renderer()->set_selected(!m->renderer()->is_selected());

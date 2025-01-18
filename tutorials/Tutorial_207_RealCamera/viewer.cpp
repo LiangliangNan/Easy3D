@@ -48,7 +48,7 @@ using namespace easy3d;
 
 const float scale = 0.3f;
 
-RealCamera::RealCamera(const std::string& title,
+TutorialRealCamera::TutorialRealCamera(const std::string& title,
                        const std::string& bundler_file,
                        const std::string& cloud_file)
     : Viewer(title, 4, 3, 2, false, false)
@@ -83,7 +83,7 @@ RealCamera::RealCamera(const std::string& title,
 }
 
 
-bool RealCamera::key_press_event(int key, int modifiers) {
+bool TutorialRealCamera::key_press_event(int key, int modifiers) {
     if (ray_drawable_)
         ray_drawable_->set_visible(false);
     if (cross_drawable_)
@@ -96,7 +96,7 @@ bool RealCamera::key_press_event(int key, int modifiers) {
             if (KRT_to_camera(current_view_, camera(), ground_truth)) {
                 update_cameras_drawable(ground_truth);
                 std::cout << "----- view " << current_view_ << ": " << (ground_truth ? "ground truth view" : "calibration view") << std::endl;
-                set_title("RealCamera: View_" + std::to_string(current_view_));
+                set_title("TutorialRealCamera: View_" + std::to_string(current_view_));
                 const CameraPara &c = views_[current_view_];
                 // make sure the aspect ratio (actual size does not matter)
                 resize(static_cast<int>(static_cast<float>(c.w) * scale), static_cast<int>(static_cast<float>(c.h) * scale));
@@ -110,7 +110,7 @@ bool RealCamera::key_press_event(int key, int modifiers) {
             if (KRT_to_camera(current_view_, camera(), ground_truth)) {
                 update_cameras_drawable(ground_truth);
                 std::cout << "----- view " << current_view_ << ": " << (ground_truth ? "ground truth view" : "calibration view") << std::endl;
-                set_title("RealCamera: View_" + std::to_string(current_view_));
+                set_title("TutorialRealCamera: View_" + std::to_string(current_view_));
                 const CameraPara &c = views_[current_view_];
                 // make sure the aspect ratio (actual size does not matter)
                 resize(static_cast<int>(static_cast<float>(c.w) * scale), static_cast<int>(static_cast<float>(c.h) * scale));
@@ -124,7 +124,7 @@ bool RealCamera::key_press_event(int key, int modifiers) {
             if (KRT_to_camera(current_view_, camera(), ground_truth)) {
                 update_cameras_drawable(ground_truth);
                 std::cout << "----- view " << current_view_ << ": " << (ground_truth ? "ground truth view" : "calibration view") << std::endl;
-                set_title("RealCamera: View_" + std::to_string(current_view_));
+                set_title("TutorialRealCamera: View_" + std::to_string(current_view_));
                 const CameraPara &c = views_[current_view_];
                 // make sure the aspect ratio (actual size does not matter)
                 resize(static_cast<int>(static_cast<float>(c.w) * scale), static_cast<int>(static_cast<float>(c.h) * scale));
@@ -144,7 +144,7 @@ bool RealCamera::key_press_event(int key, int modifiers) {
 }
 
 
-void RealCamera::load_image() {
+void TutorialRealCamera::load_image() {
     const std::string image_file = resource::directory() + "/data/fountain/images/" + string::to_string(current_view_, 4, '0') + ".jpg";
     if (file_system::is_file(image_file)) {
         texture_ = TextureManager::request(image_file);
@@ -153,7 +153,7 @@ void RealCamera::load_image() {
 }
 
 
-bool RealCamera::KRT_to_camera(int view_index, Camera* c, bool ground_truth) {
+bool TutorialRealCamera::KRT_to_camera(int view_index, Camera* c, bool ground_truth) {
     if (view_index < 0 || view_index >= views_.size()) {
         std::cerr << "Error: invalid view index (" << view_index << ")" << std::endl;
         return false;
@@ -183,7 +183,7 @@ bool RealCamera::KRT_to_camera(int view_index, Camera* c, bool ground_truth) {
 }
 
 
-void RealCamera::update_cameras_drawable(bool ground_truth)
+void TutorialRealCamera::update_cameras_drawable(bool ground_truth)
 {
     if (!cameras_drawable_) {
         cameras_drawable_ = new LinesDrawable("cameras");
@@ -207,7 +207,7 @@ void RealCamera::update_cameras_drawable(bool ground_truth)
 }
 
 
-Rect RealCamera::calculate_image_rect() const {
+Rect TutorialRealCamera::calculate_image_rect() const {
     if (texture_ == nullptr) {
         LOG_N_TIMES(3, ERROR) << "image not shown";
         return {0, 0, 0, 0};
@@ -232,7 +232,7 @@ Rect RealCamera::calculate_image_rect() const {
 }
 
 
-void RealCamera::post_draw() {
+void TutorialRealCamera::post_draw() {
     if (texture_ == nullptr)
         return;
 
@@ -272,7 +272,7 @@ void RealCamera::post_draw() {
 }
 
 
-bool RealCamera::mouse_free_move_event(int x, int y, int dx, int dy, int modifiers) {
+bool TutorialRealCamera::mouse_free_move_event(int x, int y, int dx, int dy, int modifiers) {
     (void) dx;
     (void) dy;
     (void) modifiers;
@@ -344,12 +344,12 @@ bool RealCamera::mouse_free_move_event(int x, int y, int dx, int dy, int modifie
 }
 
 
-vec3 RealCamera::camera_pos(const mat3 &R, const vec3 &t) {
+vec3 TutorialRealCamera::camera_pos(const mat3 &R, const vec3 &t) {
     return -inverse(R) * t; // inverse(R) * (vec3(0, 0, 0) - cam.t);
 }
 
 
-vec3 RealCamera::pixel_to_ray(int image_x, int image_y, float fx, float fy, float skew, float cx, float cy,
+vec3 TutorialRealCamera::pixel_to_ray(int image_x, int image_y, float fx, float fy, float skew, float cx, float cy,
                           const mat3& R, const vec3& t, bool convert) {
     mat3 K(fx, skew, cx,
            0, fy, cy,
@@ -371,7 +371,7 @@ vec3 RealCamera::pixel_to_ray(int image_x, int image_y, float fx, float fy, floa
 }
 
 
-vec2 RealCamera::point_to_pixel(const easy3d::vec3 &p,
+vec2 TutorialRealCamera::point_to_pixel(const easy3d::vec3 &p,
                                 float fx, float fy, float skew, float cx, float cy,
                                 const easy3d::mat3 &R, const easy3d::vec3 &t, bool convert) {
     mat3 K(fx, skew, cx,

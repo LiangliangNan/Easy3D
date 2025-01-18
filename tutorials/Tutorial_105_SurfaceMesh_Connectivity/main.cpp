@@ -27,18 +27,21 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/util/initializer.h>
 
+/**
+ * \example{lineno} Tutorial_105_SurfaceMesh_Connectivity
+ * This example shows how to access the adjacency information of a surface mesh, i.e.,
+ *		- the incident vertices of each vertex
+ *		- the incident outgoing/ingoing edges of each vertex
+ *		- the incident faces of each vertex
+ *		- the incident vertices of each face
+ *		- the incident half-edges of each face
+ *		- the two end points of each edge;
+ *		- the two faces connected by each edge
+ *
+ * \include{lineno} Tutorial_105_SurfaceMesh_Connectivity/main.cpp
+ */
 
 using namespace easy3d;
-
-
-// This example shows how to access the adjacency information of a surface mesh, i.e.,
-//		- the incident vertices of each vertex
-//		- the incident outgoing/ingoing edges of each vertex
-//		- the incident faces of each vertex
-//		- the incident vertices of each face
-//		- the incident half-edges of each face
-//		- the two end points of each edge;
-//		- the two faces connected by each edge
 
 
 // There are two ways to traverse the incident entities of an element.

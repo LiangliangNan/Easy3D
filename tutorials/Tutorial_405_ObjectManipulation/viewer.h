@@ -37,9 +37,9 @@ namespace easy3d {
     class Model;
 }
 
-class ManipulationViewer : public easy3d::Viewer {
+class TutorialObjectManipulation : public easy3d::Viewer {
 public:
-    explicit ManipulationViewer(const std::string &title);
+    explicit TutorialObjectManipulation(const std::string &title);
 
 protected:
     bool mouse_press_event(int x, int y, int button, int modifiers) override;

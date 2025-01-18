@@ -24,34 +24,35 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef EASY3D_TUTORIAL_DEPTH_IMAGE_H
-#define EASY3D_TUTORIAL_DEPTH_IMAGE_H
+#include "viewer.h"
+#include <easy3d/util/resource.h>
+#include <easy3d/util/initializer.h>
 
-#include <easy3d/viewer/viewer.h>
+/**
+ * \example Tutorial_306_ImageViewer
+ * This example shows how to render an images.
+ *
+ * The source file containing the main() function:
+ * \include{lineno} Tutorial_306_ImageViewer/main.cpp
+ * The header file of the viewer class:
+ * \include{lineno} Tutorial_306_ImageViewer/viewer.h
+ * The source file of the viewer class:
+ * \include{lineno} Tutorial_306_ImageViewer/viewer.cpp
+ */
+
+using namespace easy3d;
 
 
-// This DepthImage class visualizes 3D models as depth images.
+int main(int argc, char **argv) {
+    // initialize Easy3D.
+    initialize();
 
-namespace easy3d {
-    class FramebufferObject;
+    // the image file.
+    const std::string image_file = resource::directory() + "/data/fountain/images/0000.jpg";
+
+    TutorialImageViewer viewer(EXAMPLE_TITLE, image_file);
+
+    // run the viewer
+    return viewer.run();
 }
 
-
-class DepthImage : public easy3d::Viewer
-{
-public:
-    explicit DepthImage(const std::string& title = "");
-    ~DepthImage() override;
-
-protected:
-    void draw() const override;
-
-    void generate_depth();
-    void draw_depth() const;
-
-private:
-    easy3d::FramebufferObject*	fbo_;
-};
-
-
-#endif // EASY3D_TUTORIAL_DEPTH_IMAGE_H

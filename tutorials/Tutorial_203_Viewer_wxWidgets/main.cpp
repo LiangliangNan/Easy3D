@@ -24,6 +24,27 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
+/**
+ * \example Tutorial_203_Viewer_wxWidgets
+ * This example shows how to create a simple viewer using wxWidgets.
+ *
+ * The header file of the viewer class:
+ * \include{lineno} Tutorial_203_Viewer_wxWidgets/viewer.h
+ * The source file of the viewer class:
+ * \include{lineno} Tutorial_203_Viewer_wxWidgets/viewer.cpp
+ * The header file of the window class:
+ * \include{lineno} Tutorial_203_Viewer_wxWidgets/window.h
+ * The source file of the window class:
+ * \include{lineno} Tutorial_203_Viewer_wxWidgets/window.cpp
+ * The header file of the application class:
+ * \include{lineno} Tutorial_203_Viewer_wxWidgets/application.h
+ * The source file of the application class:
+ * \include{lineno} Tutorial_203_Viewer_wxWidgets/application.cpp
+ * The source file containing the main() function:
+ * \include{lineno} Tutorial_203_Viewer_wxWidgets/main.cpp
+ */
+
+
 #if 1
 
 #include <easy3d/util/initializer.h>

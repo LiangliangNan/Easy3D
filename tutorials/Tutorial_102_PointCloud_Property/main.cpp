@@ -28,12 +28,14 @@
 #include <easy3d/core/random.h>
 #include <easy3d/util/initializer.h>
 
+/**
+ * \example{lineno} Tutorial_102_PointCloud_Property
+ * This example shows how to add per-point properties to a point cloud and access its properties.
+ *
+ * \include{lineno} Tutorial_102_PointCloud_Property/main.cpp
+ */
+
 using namespace easy3d;
-
-
-// This example shows how to
-//		- add per-point properties to a point cloud;
-//		- access existing properties.
 
 
 int main(int argc, char** argv) {

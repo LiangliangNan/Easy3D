@@ -29,13 +29,14 @@
 #include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
 
+/**
+ * \example{lineno} Tutorial_115_PolyMesh_IO
+ * This example shows how to load a polyhedral mesh from a file and save a polyhedral mesh into a file.
+ *
+ * \include{lineno} Tutorial_115_PolyMesh_IO/main.cpp
+ */
 
 using namespace easy3d;
-
-
-// This example shows how to
-//		- load a polyhedral mesh from a file;
-//		- save a polyhedral mesh into a file.
 
 
 int main(int argc, char** argv) {

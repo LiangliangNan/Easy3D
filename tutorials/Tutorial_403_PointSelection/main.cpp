@@ -31,11 +31,20 @@
 #include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
 
+/**
+ * \example Tutorial_403_PointSelection
+ * This example shows how to select a subset of a point cloud by sketching a rectangle or a lasso using the mouse.
+ *
+ * The source file containing the main() function:
+ * \include{lineno} Tutorial_403_PointSelection/main.cpp
+ * The header file of the viewer class:
+ * \include{lineno} Tutorial_403_PointSelection/viewer.h
+ * The source file of the viewer class:
+ * \include{lineno} Tutorial_403_PointSelection/viewer.cpp
+ */
 
 using namespace easy3d;
 
-// This example shows how to select a subset of a point cloud by sketching a rectangle or a lasso
-// using the mouse.
 
 int main(int argc, char **argv) {
     // initialize Easy3D.
@@ -44,7 +53,7 @@ int main(int argc, char **argv) {
     const std::string file = resource::directory() + "/data/polyhedron.bin";
 
     // create the viewer.
-    PointSelection viewer(EXAMPLE_TITLE);
+    TutorialPointSelection viewer(EXAMPLE_TITLE);
 
     auto model = viewer.add_model(file, true);
     if (!model) {

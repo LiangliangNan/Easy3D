@@ -28,10 +28,20 @@
 #include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
 
+/**
+ * \example Tutorial_402_FacePicker
+ * This example shows how to select a face of a surface mesh by clicking the mouse.
+ *
+ * The source file containing the main() function:
+ * \include{lineno} Tutorial_402_FacePicker/main.cpp
+ * The header file of the viewer class:
+ * \include{lineno} Tutorial_402_FacePicker/viewer.h
+ * The source file of the viewer class:
+ * \include{lineno} Tutorial_402_FacePicker/viewer.cpp
+ */
 
 using namespace easy3d;
 
-// This example shows how to select a face of a surface mesh by clicking the mouse.
 
 int main(int argc, char **argv) {
     // initialize Easy3D.
@@ -39,7 +49,7 @@ int main(int argc, char **argv) {
 
     const std::string file_name = resource::directory() + "/data/quad_mesh/P.off";
 
-    PickerViewer viewer(EXAMPLE_TITLE);
+    TutorialFacePicker viewer(EXAMPLE_TITLE);
     if (!viewer.add_model(file_name)) {
         LOG(ERROR) << "failed to load model. Please make sure the file exists and format is correct.";
         return EXIT_FAILURE;

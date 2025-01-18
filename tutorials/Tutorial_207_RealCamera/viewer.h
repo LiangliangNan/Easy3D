@@ -40,10 +40,10 @@ namespace easy3d {
     class LinesDrawable;
 }
 
-class RealCamera : public easy3d::Viewer
+class TutorialRealCamera : public easy3d::Viewer
 {
 public:
-    RealCamera(const std::string& title,
+    TutorialRealCamera(const std::string& title,
                const std::string& bundler_file,
                const std::string& cloud_file);
 

@@ -39,8 +39,9 @@ namespace easy3d {
         hint_ =
             "Left button:  rotate the clipping plane    \n"
             "Right button: translate the clipping plane \n"
-            "Alt + 'c':    enable/disable clipping plan \n"
-            "Alt + 'v':    show/hide clipping plane";
+            "Alt + 'c':    enable/disable clipping plane\n"
+            "Alt + 'v':    show/hide clipping plane     \n"
+            "Alt + 'x':    toggle cross-section";
     }
 
 

@@ -28,16 +28,25 @@
 #include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
 
+/**
+ * \example Tutorial_405_ObjectManipulation
+ * This example shows how to manipulate a model in the 3D space using the Manipulator class.
+ *
+ * The source file containing the main() function:
+ * \include{lineno} Tutorial_405_ObjectManipulation/main.cpp
+ * The header file of the viewer class:
+ * \include{lineno} Tutorial_405_ObjectManipulation/viewer.h
+ * The source file of the viewer class:
+ * \include{lineno} Tutorial_405_ObjectManipulation/viewer.cpp
+ */
 
 using namespace easy3d;
-
-// This example shows how to manipulate a model in the 3D space using the Manipulator class.
 
 int main(int argc, char **argv) {
     // initialize Easy3D.
     initialize();
 
-    ManipulationViewer viewer(EXAMPLE_TITLE);
+    TutorialObjectManipulation viewer(EXAMPLE_TITLE);
     viewer.add_model(resource::directory() + "/data/easy3d/easy3d_e.ply");
     viewer.add_model(resource::directory() + "/data/easy3d/easy3d_a.ply");
     viewer.add_model(resource::directory() + "/data/easy3d/easy3d_s.ply");

@@ -27,12 +27,15 @@
 #include <easy3d/core/graph.h>
 #include <easy3d/util/initializer.h>
 
+/**
+ * \example{lineno} Tutorial_108_Graph
+ * This example shows how to construct a graph from its vertices and edges
+ *
+ * \include{lineno} Tutorial_108_Graph/main.cpp
+ */
+
 
 using namespace easy3d;
-
-
-// This example shows how to
-//		- construct a graph from its vertices and edges
 
 
 int main(int argc, char** argv) {

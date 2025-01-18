@@ -39,13 +39,13 @@
 using namespace easy3d;
 
 
-PointSelection::PointSelection(const std::string &title) : Viewer(title) {
+TutorialPointSelection::TutorialPointSelection(const std::string &title) : Viewer(title) {
     hint_ = "Pressing Shift, drag the mouse to select (left) or deselect (right) points";
 }
 
 
 /// Mouse button press event handler
-bool PointSelection::mouse_press_event(int x, int y, int button, int modifiers) {
+bool TutorialPointSelection::mouse_press_event(int x, int y, int button, int modifiers) {
     if (modifiers == MODIF_SHIFT) {
         polygon_.clear();
         polygon_.push_back(vec2(static_cast<float>(x), static_cast<float>(y)));
@@ -56,7 +56,7 @@ bool PointSelection::mouse_press_event(int x, int y, int button, int modifiers) 
 
 
 /// Mouse button release event handler
-bool PointSelection::mouse_release_event(int x, int y, int button, int modifiers) {
+bool TutorialPointSelection::mouse_release_event(int x, int y, int button, int modifiers) {
     if (modifiers == MODIF_SHIFT) {
         if (polygon_.size() >= 3) {
             auto cloud = dynamic_cast<PointCloud *>(current_model());
@@ -79,7 +79,7 @@ bool PointSelection::mouse_release_event(int x, int y, int button, int modifiers
 
 
 /// Mouse drag (i.e., a mouse button was pressed) event handler
-bool PointSelection::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
+bool TutorialPointSelection::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
     if (modifiers == MODIF_SHIFT) {
 #if USE_LASSO
         polygon_.push_back(vec2(static_cast<float>(x), static_cast<float>(y)));
@@ -97,7 +97,7 @@ bool PointSelection::mouse_drag_event(int x, int y, int dx, int dy, int button, 
 }
 
 
-void PointSelection::post_draw() {
+void TutorialPointSelection::post_draw() {
     Viewer::post_draw();
 
     if (polygon_.size() >= 3) {
@@ -113,7 +113,7 @@ void PointSelection::post_draw() {
 }
 
 
-void PointSelection::mark_selection(PointCloud *cloud) {
+void TutorialPointSelection::mark_selection(PointCloud *cloud) {
     auto drawable = cloud->renderer()->get_points_drawable("vertices");
     auto select = cloud->vertex_property<bool>("v:select");
     auto colors = cloud->vertex_property<vec3>("v:color");

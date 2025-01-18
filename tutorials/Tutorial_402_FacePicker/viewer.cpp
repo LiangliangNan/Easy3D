@@ -36,7 +36,7 @@
 using namespace easy3d;
 
 
-PickerViewer::PickerViewer(const std::string &title)
+TutorialFacePicker::TutorialFacePicker(const std::string &title)
         : Viewer(title) {
     camera()->setUpVector(vec3(0, 1, 0));
     camera()->setViewDirection(vec3(0, 0, -1));
@@ -45,7 +45,7 @@ PickerViewer::PickerViewer(const std::string &title)
 }
 
 
-bool PickerViewer::mouse_press_event(int x, int y, int button, int modifiers) {
+bool TutorialFacePicker::mouse_press_event(int x, int y, int button, int modifiers) {
     auto model = dynamic_cast<SurfaceMesh *>(current_model());
     if (model) {
         SurfaceMeshPicker picker(camera());
@@ -74,7 +74,7 @@ bool PickerViewer::mouse_press_event(int x, int y, int button, int modifiers) {
 }
 
 
-Model* PickerViewer::add_model(const std::string& file_name) {
+Model* TutorialFacePicker::add_model(const std::string& file_name) {
     auto model = Viewer::add_model(file_name, true);
 
     // make sure the edges are visible

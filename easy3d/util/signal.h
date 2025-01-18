@@ -48,8 +48,6 @@ namespace easy3d {
      *      corresponding signal.
      *
      * \see A more powerful implementation [sigslot](https://github.com/palacaze/sigslot) based on C++14.
-     *
-     * \example{lineno} test_signal.cpp
      */
 
     template<typename... Args>

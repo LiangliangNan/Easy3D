@@ -29,13 +29,15 @@
 #include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
 
+/**
+ * \example{lineno} Tutorial_103_PointCloud_IO
+ * This example shows how to load a point cloud from a file and save a point cloud to a file.
+ *
+ * \include{lineno} Tutorial_103_PointCloud_IO/main.cpp
+ */
+
 
 using namespace easy3d;
-
-
-// This example shows how to
-//		- load a point cloud from a file;
-//		- save a point cloud to a file.
 
 
 int main(int argc, char** argv) {

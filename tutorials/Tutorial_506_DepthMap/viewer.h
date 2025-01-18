@@ -24,25 +24,34 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include "viewer.h"
-#include <easy3d/util/resource.h>
-#include <easy3d/util/initializer.h>
+#ifndef EASY3D_TUTORIAL_DEPTH_MAP_H
+#define EASY3D_TUTORIAL_DEPTH_MAP_H
+
+#include <easy3d/viewer/viewer.h>
 
 
-using namespace easy3d;
+// This DepthMap class visualizes 3D models as depth images.
 
-// This example shows how to render an images.
-
-int main(int argc, char **argv) {
-    // initialize Easy3D.
-    initialize();
-
-    // the image file.
-    const std::string image_file = resource::directory() + "/data/fountain/images/0000.jpg";
-
-    ImageViewer viewer(EXAMPLE_TITLE, image_file);
-
-    // run the viewer
-    return viewer.run();
+namespace easy3d {
+    class FramebufferObject;
 }
 
+
+class TutorialDepthMap : public easy3d::Viewer
+{
+public:
+    explicit TutorialDepthMap(const std::string& title = "");
+    ~TutorialDepthMap() override;
+
+protected:
+    void draw() const override;
+
+    void generate_depth();
+    void draw_depth() const;
+
+private:
+    easy3d::FramebufferObject*	fbo_;
+};
+
+
+#endif // EASY3D_TUTORIAL_DEPTH_MAP_H
