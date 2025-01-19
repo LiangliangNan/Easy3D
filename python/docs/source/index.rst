@@ -24,7 +24,7 @@ Related Links
 
    Easy3D Python Bindings <./index.html>
 
-   generated_tutorials/index
+   auto_tutorials/index
 
    Code for Python Tutorials <https://github.com/LiangliangNan/Easy3D/tree/main/python/tutorials>
 

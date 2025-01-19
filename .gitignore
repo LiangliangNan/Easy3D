@@ -17,5 +17,4 @@ cmake-build-relwithdebinfo
 compile_commands.json
 Release
 auto_tutorials
-generated_tutorials
 python/docs/source/sg_execution_times.rst

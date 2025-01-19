@@ -67,7 +67,7 @@ templates_path = ['_templates']
 # Sphinx-Gallery configuration
 sphinx_gallery_conf = {
     "examples_dirs": ["../../tutorials"],       # Path to the tutorials directory
-    "gallery_dirs": ["generated_tutorials"],    # Output directory for generated tutorials
+    "gallery_dirs": ["auto_tutorials"],         # Output directory for generated tutorials
     "within_subsection_order": FileNameSortKey, # Sort order for tutorials
     "download_all_examples": False,             # Option to provide a download link for all tutorials
     "filename_pattern": r".*\.py",              # Match all .py files
