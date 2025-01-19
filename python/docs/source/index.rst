@@ -10,7 +10,7 @@ Easy3D Python Tutorials
    :maxdepth: 2
    :caption: Contents:
 
-   auto_tutorials/index
+   generated_tutorials/index
 
 About
 -----
