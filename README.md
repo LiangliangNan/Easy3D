@@ -198,16 +198,17 @@ viewer.run()
 ```
 
 ### Documentation
-The documentation for Easy3D is available [here](https://3d.bk.tudelft.nl/liangliang/software/easy3d_doc/html/index.html).
+ - [Easy3D documentation](https://3d.bk.tudelft.nl/liangliang/software/easy3d_doc/html/index.html)
+ - [Python bindings documentation](https://3d.bk.tudelft.nl/liangliang/software/easy3d_doc/python/index.html)
 
-The Easy3D Documentation is an ongoing effort with more and more details being added. You can build the latest Easy3D 
+The documentation is an ongoing effort with more and more details being added. You can build the latest Easy3D 
 documentation from the source code.
 Easy3D uses [Doxygen](https://www.doxygen.nl/index.html) (`>= 1.8.3`) to generate documentation from source code. 
 To build it from the source code, [install Doxygen](https://www.doxygen.nl/manual/install.html) first. 
-Then, switch on the CMake option `` in the main `CMakeList.txt`. Finally, build the `doc` 
-target to generate the documentation. 
+Then, switch on the CMake option `Easy3D_BUILD_DOCUMENTATION` and run CMake. Finally, build the `Documentation` 
+target to generate it. 
 
-For Python users, please check these [tutorials](https://github.com/LiangliangNan/Easy3D/tree/main/python/tutorials).
+For Python users, you may also be interested in the [tutorials](https://github.com/LiangliangNan/Easy3D/tree/main/python/tutorials).
 
 ### Questions, new features, bugs, or contributing to Easy3D
 See the [Contribution Guide](https://github.com/LiangliangNan/Easy3D/blob/main/CONTRIBUTING.md) for more information.
