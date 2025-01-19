@@ -2,5 +2,10 @@
 Easy3D Python Tutorials
 ===========================
 
-Welcome to the Easy3D Python Tutorials gallery! Here you will find tutorials to help you understand and work with the Easy3D library.
+Welcome to the Easy3D Python tutorials!
+
+The tutorials (with code) cover various examples showcasing the most useful functions provided by
+`Easy3D <https://github.com/LiangliangNan/Easy3D>`_, as well as explaining the relevant concepts behind
+the functions.  Easy3D and its tutorials are still under active development. If you would like to contribute,
+please check `here <https://github.com/LiangliangNan/Easy3D/blob/main/CONTRIBUTING.md>`_.
 

@@ -3,33 +3,38 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Easy3D Python Tutorials
-=====================================
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-
-   generated_tutorials/index
+Easy3D Python Bindings
+======================
 
 About
 -----
 
-This documentation provides tutorials for learning the Python bindings of Easy3D, covering various examples in the `tutorials` directory.
-More tutorials will be added in the future.
+`Easy3D <https://github.com/LiangliangNan/Easy3D>`_ is implemented in C++ and comes with Python bindings.
+This documentation provides documentation for the Python bindings of Easy3D.
 
-If you are interested in the original C++ APIs, please check out here: https://github.com/LiangliangNan/Easy3D.
+.. include:: ../../README.md
+   :parser: myst_parser.sphinx_
 
-**Sections include**:
 
-- Step-by-step Python examples with code and comments.
-- Auto-generated HTML tutorials for each `.py` file in the `tutorials` directory.
+Related Links
+~~~~~~~~~~~~~
 
-Further Reading
----------------
+.. toctree::
+   :maxdepth: 2
 
-- Official Python documentation: https://docs.python.org/
-- Sphinx documentation: https://www.sphinx-doc.org/
+   Easy3D Python Bindings <./index.html>
+
+   generated_tutorials/index
+
+   Code for Python Tutorials <https://github.com/LiangliangNan/Easy3D/tree/main/python/tutorials>
+
+   Easy3D Documentation <https://3d.bk.tudelft.nl/liangliang/software/easy3d_doc/html/index.html>
+
+   Easy3D Pre-built Binaries <https://github.com/LiangliangNan/Easy3D/releases>
+
+   Easy3D Source Code <https://github.com/LiangliangNan/Easy3D>
+
+   Code for C++ Tutorials <https://github.com/LiangliangNan/Easy3D/tree/main/tutorials>
 
 .. Indices and tables
 .. ==================

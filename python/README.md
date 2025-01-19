@@ -1,16 +1,13 @@
-# Easy3D Python Bindings
+### Obtain/Build Easy3D Python bindings
 
-Python bindings for the Easy3D library.
+Prebuilt Python bindings are available from the [Releases](https://github.com/LiangliangNan/Easy3D/releases) page. 
+Download the wheel file for your platform and Python version, and install it using `pip`.
 
-More information about Easy3D:
-https://github.com/LiangliangNan/Easy3D
-
-### Build Easy3D bindings
-
-Make sure you have [Python](https://www.python.org/downloads/) installed.
-Then switch on the CMake option `Easy3D_BUILD_PYTHON_BINDINGS`, run CMake, and then build. After building Easy3D, you
-can find the Python bindings module `PyEasy3D` (`PyEasy3D.pyd` on Windows, `PyEasy3D.so` on macOS/Linux) in
-`YOUR_BUILD_DIRECTORY/lib/python/easy3d`.
+If the prebuilt bindings are not available for your platform or specific version of Python, you can build it from the 
+source code. Make sure you have [Python](https://www.python.org/downloads/) installed.
+Then switch on the CMake option `Easy3D_BUILD_PYTHON_BINDINGS`, run CMake, and then build Easy3D. 
+After building Easy3D, you can find the Python bindings module `PyEasy3D` (`PyEasy3D.pyd` on Windows, `PyEasy3D.so` 
+on macOS/Linux) in `YOUR_BUILD_DIRECTORY/lib/python/easy3d`.
 
 ### Use Easy3D bindings in Python code
 
@@ -31,7 +28,8 @@ viewer.run()
 
 **Note**: the Python version used for running the code should match the version used for building the bindings.
 
-### (Optional) Installation
+
+### Installation (Optional)
 
 If you want to avoid specifying the path of the generated bindings in your Python code, you can create a wheel (`.whl`) 
 file for the bindings and install it globally. This will make Easy3D work like other Python packages such as [Numpy](https://numpy.org/).
@@ -55,14 +53,3 @@ Below are the detailed steps for creating the wheel file and installation.
   You can verify the installation by running the following command:
 
   - `pip show easy3d`
-
-
-
-### System Dependencies (typically already installed for almost all users)
-Before installing `easy3d`, ensure that the following system libraries are installed:
-
-- **OpenGL**: Required for rendering.
-  - On **Ubuntu/Debian**: `sudo apt install libgl1-mesa-dev`
-  - On **Windows**: Install the latest graphics drivers from your GPU manufacturer. 
-  - On **macOS**: Pre-installed.
-  - On **Fedora**: `sudo dnf install mesa-libGL-devel`
