@@ -37,13 +37,12 @@ Limitations:
   permission errors during copying may still lead to incomplete outputs.
 
 Usage:
-  python copy_runtime_dependencies.py <target_binary> <search_path> <destination>
+
+  python copy_runtime_dependencies.py <target_binary> <destination>
 
 Arguments:
 
  - target_binary (str): The path to the target binary file whose dependencies need to be copied.
- - search_path (str): A user-specified directory to search for dependencies. This is useful when dependencies
-   are located in a known path (e.g., ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}) different from the target binary.
  - destination (str): The directory where the target binary and its dependencies will be copied.
 
 """
