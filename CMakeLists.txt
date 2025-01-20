@@ -252,19 +252,16 @@ function(add_module module headers sources private_dependencies public_dependenc
             VERSION ${Easy3D_VERSION_STRING}
             )
 
-    # RPATH settings for macOS and Linux
-    if (APPLE)
-        # For macOS, @loader_path ensures the library looks for dependencies relative to the location of the module.
-        set_target_properties(easy3d_${module} PROPERTIES
-                BUILD_RPATH "@loader_path"
-                INSTALL_RPATH "@loader_path"
-        )
-    elseif (UNIX)
-        # For Linux, $ORIGIN ensures the library looks for dependencies relative to the location of the module.
-        set_target_properties(easy3d_${module} PROPERTIES
-                BUILD_RPATH "$ORIGIN"
-                INSTALL_RPATH "$ORIGIN"
-        )
+    # RPATH settings for macOS and Linux. This ensures the library looks for dependencies relative to the location of the module.
+    # Attention: I am not sure if this may has some impact on the subsequent deployment process.
+    if (Easy3D_BUILD_SHARED_LIBS)
+        if (APPLE)
+            # For macOS, @loader_path ensures the library looks for dependencies relative to the location of the module.
+            set_target_properties(easy3d_${module} PROPERTIES BUILD_RPATH "@loader_path" INSTALL_RPATH "@loader_path")
+        elseif (UNIX)
+            # For Linux, $ORIGIN ensures the library looks for dependencies relative to the location of the module.
+            set_target_properties(easy3d_${module} PROPERTIES BUILD_RPATH "$ORIGIN"      INSTALL_RPATH "$ORIGIN")
+        endif ()
     endif ()
 
     # Add an alias target (recommended by policy CMP0028) and it looks nicer
