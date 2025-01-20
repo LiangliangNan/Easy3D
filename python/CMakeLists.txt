@@ -177,6 +177,7 @@ function(copy_runtime_dependencies target destination)
                 COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_LIST_DIR}/helper/copy_dependencies.py $<TARGET_FILE:${target}>  ${destination}
                 # -----------------------------------------------------------------------------------------------
                 # Copy the Python runtime DLL
+                COMMAND ${CMAKE_COMMAND} -E echo "Copying Python runtime DLL ${PYTHON_RUNTIME_DLL} to ${destination}..."
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PYTHON_RUNTIME_DLL} ${destination}
                 # -----------------------------------------------------------------------------------------------
                 COMMAND_EXPAND_LISTS
@@ -204,6 +205,7 @@ function(copy_runtime_dependencies target destination)
                 #COMMAND otool -L $<TARGET_FILE:${target}> | awk '/@rpath|\\/|\\// {print $$1}' | sed 's|@rpath|$<TARGET_FILE_DIR:${target}>|g' | xargs -I {} sh -c '[ -e "{}" ] && cp -v "{}" ${destination}' || true
                 # -----------------------------------------------------------------------------------------------
                 # Copy the Python runtime library
+                COMMAND ${CMAKE_COMMAND} -E echo "Copying Python runtime library ${PYTHON_LIBRARIES} to ${destination}..."
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PYTHON_LIBRARIES} ${destination}
                 # -----------------------------------------------------------------------------------------------
                 COMMAND_EXPAND_LISTS
@@ -220,6 +222,7 @@ function(copy_runtime_dependencies target destination)
                 COMMAND ldd $<TARGET_FILE:${target}> | grep '=> /' | awk '{print $$3}' | xargs -I {} cp -v {} ${destination}
                 # -----------------------------------------------------------------------------------------------
                 # Copy the Python runtime library
+                COMMAND ${CMAKE_COMMAND} -E echo "Copying Python runtime library ${PYTHON_LIBRARIES} to ${destination}..."
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PYTHON_LIBRARIES} ${destination}
                 # -----------------------------------------------------------------------------------------------
                 COMMAND_EXPAND_LISTS
