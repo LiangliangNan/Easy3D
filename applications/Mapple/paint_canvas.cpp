@@ -1380,10 +1380,6 @@ void PaintCanvas::postDraw() {
 
     tool_manager()->draw_hint();    easy3d_debug_log_gl_error
 
-    // -------------------- draw the clipping plane ----------------------------
-
-    ClippingPlane::instance()->draw(camera());    easy3d_debug_log_gl_error
-
     // -------------------- draw a sphere outline
 
     Model* m = currentModel();
@@ -1969,4 +1965,7 @@ void PaintCanvas::draw() {
     if (edl())
         edl()->end();
 #endif
+
+    // draw the clipping plane (not in postDraw so it can be effective when taking snapshots)
+    ClippingPlane::instance()->draw(camera());    easy3d_debug_log_gl_error
 }
