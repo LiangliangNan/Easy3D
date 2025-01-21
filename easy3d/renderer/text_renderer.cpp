@@ -851,6 +851,19 @@ namespace easy3d {
     }
 
 
+#define BACKUP_OPENGL_STATES                                            \
+    GLboolean last_enable_depth_test = glIsEnabled(GL_DEPTH_TEST);      \
+    GLboolean last_enable_blend = glIsEnabled(GL_BLEND);                \
+    GLenum last_blend_src, last_blend_dst;                              \
+    glGetIntegerv(GL_BLEND_SRC, (GLint*)&last_blend_src);               \
+    glGetIntegerv(GL_BLEND_DST, (GLint*)&last_blend_dst);
+
+#define RESTORE_OPENGL_STATES                                           \
+    glBlendFunc(last_blend_src, last_blend_dst);                        \
+    if (last_enable_blend) glEnable(GL_BLEND); else glDisable(GL_BLEND);\
+    if (last_enable_depth_test) glEnable(GL_DEPTH_TEST); else glDisable(GL_DEPTH_TEST);
+
+
     void TextRenderer::flush_draw(const vec3 &font_color) const {
         const std::string name = "text/text";
         auto program = ShaderManager::get_program(name);
@@ -863,6 +876,9 @@ namespace easy3d {
             LOG_N_TIMES(3, ERROR) << "shader doesn't exist: " << name << ". " << COUNTER;
             return;
         }
+
+        // Backup OpenGL states
+        BACKUP_OPENGL_STATES
 
         int viewport[4];
         glGetIntegerv(GL_VIEWPORT, viewport);
@@ -923,8 +939,9 @@ namespace easy3d {
             }
         }
         program->release();
-        glDisable(GL_BLEND);
-        glEnable(GL_DEPTH_TEST);
+
+        // Restore modified OpenGL states
+        RESTORE_OPENGL_STATES
     }
 
 
