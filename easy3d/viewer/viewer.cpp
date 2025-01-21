@@ -1827,8 +1827,8 @@ namespace easy3d {
 #endif
 #endif
 
-        // draw the transparent clipping plane
-        ClippingPlane::instance()->draw(camera());
+        // draw the clipping plane (not in postDraw so it can be effective when taking snapshots)
+        ClippingPlane::instance()->draw(camera()); easy3d_debug_log_gl_error
     }
 
 }
