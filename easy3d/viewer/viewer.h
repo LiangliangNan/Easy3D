@@ -66,8 +66,10 @@ namespace easy3d {
          * @brief Constructor
          * @param title The window title of the viewer, which can be changed by calling set_title() after construction.
          * @param samples The number of samples for multisample antialiasing
-         * @param gl_major/gl_minor The OpenGL version to request. The created context will be
-         *        compatible with the requested version (if the context creation succeeded).
+		 * @param gl_major The OpenGL major version to request. Must be >= 3. The minimal version of OpenGL required to
+		 *		use the Core Profile is OpenGL 3.2.
+		 * @param gl_minor The OpenGL minor version to request. Must be >= 2. The minimal version of OpenGL required to
+		 *		use the Core Profile is OpenGL 3.2.
          * @param full_screen Do you want the viewer to be fullscreen?
          * @param resizable Whether the viewer will be resizable by the user.
          * @param depth_bits The desired bit depths of the depth component of the default framebuffer.
@@ -78,8 +80,8 @@ namespace easy3d {
 		explicit Viewer(
 			const std::string& title = "Easy3D Viewer",
 			int samples = 4,
-            int gl_major = 3,   // must >= 3
-            int gl_minor = 2,   // must >= 2
+            int gl_major = 3,
+            int gl_minor = 2,
             bool full_screen = false,
 			bool resizable = true,
 			int depth_bits = 24,

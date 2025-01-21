@@ -27,11 +27,7 @@
 
 #include "main_window.h"
 
-#include <iostream>
-#include <stdexcept>
-
 #include <QDir>
-#include <QTime>
 #include <QApplication>
 #include <QSplashScreen>
 #include <QFileOpenEvent>
@@ -107,7 +103,7 @@ int main(int argc, char *argv[]) {
     //       that resource sharing between contexts stays functional as all internal
     //       contexts are created using the correct version and profile.
     QSurfaceFormat format = QSurfaceFormat::defaultFormat();
-    format.setVersion(4, 3);
+    format.setVersion(3, 2);
     format.setProfile(QSurfaceFormat::CoreProfile);
     format.setDepthBufferSize(24);
     format.setStencilBufferSize(8);
