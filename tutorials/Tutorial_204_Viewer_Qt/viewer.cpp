@@ -39,14 +39,12 @@
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
-#include <easy3d/renderer/dual_depth_peeling.h>
 #include <easy3d/renderer/read_pixel.h>
 #include <easy3d/renderer/opengl_util.h>
 #include <easy3d/renderer/opengl_error.h>
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/text_renderer.h>
 #include <easy3d/renderer/renderer.h>
-#include <easy3d/renderer/manipulator.h>
 #include <easy3d/util/resource.h>
 #include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/util/logging.h>
@@ -59,7 +57,6 @@
 #include <QOpenGLFunctions>
 #include <QOpenGLFramebufferObjectFormat>
 #include <QApplication>
-#include <QClipboard>
 
 
 namespace easy3d {
