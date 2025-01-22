@@ -604,8 +604,8 @@ void PaintCanvas::mouseMoveEvent(QMouseEvent *e) {
     mouse_current_pos_ = e->pos();
     QOpenGLWidget::mouseMoveEvent(e);
 
-//    if (pressed_button_ == Qt::LeftButton && modifiers_ == Qt::ControlModifier) // zoom on region
-//        update();
+    if (pressed_button_ == Qt::LeftButton && modifiers_ == Qt::ControlModifier) // zoom on region
+        update();
 }
 
 
