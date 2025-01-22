@@ -72,19 +72,19 @@ WidgetCheckerSphere::~WidgetCheckerSphere()
 void WidgetCheckerSphere::initializeGL()
 {
     QOpenGLWidget::initializeGL();
-
     QOpenGLFunctions* func = context()->functions();
     func->initializeOpenGLFunctions();
     OpenglUtil::init();
 
-    func->glEnable(GL_DEPTH_TEST);
-    func->glClearDepthf(1.0f);
-    func->glClearColor(
-                static_cast<float>(backgroundColor_.redF()),
-                static_cast<float>(backgroundColor_.greenF()),
-                static_cast<float>(backgroundColor_.blueF()),
-                1.0f
-            );
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    glClearDepth(1.0f);
+	glClearColor(
+		static_cast<float>(backgroundColor_.redF()),
+		static_cast<float>(backgroundColor_.greenF()),
+		static_cast<float>(backgroundColor_.blueF()),
+		1.0f
+	);
 
     camera_ = new Camera;
     camera_->setType(Camera::ORTHOGRAPHIC);
@@ -216,6 +216,11 @@ void WidgetCheckerSphere::paintGL() {
     }
     if (!program)
         return;
+
+    // The Qt6 documentation says (https://doc.qt.io/qt-6/qopenglwidget.html#paintGL):
+    //      Default implementation performs a glClear(). Subclasses are not expected to invoke
+    //      the base class implementation and should perform clearing on their own.
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     const mat4& MVP = camera_->modelViewProjectionMatrix();
     // camera position is defined in world coordinate system.

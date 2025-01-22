@@ -67,14 +67,14 @@
 #include <easy3d/util/dialog.h>
 #include <easy3d/util/setting.h>
 
+#include <limits>
+
 #include <QKeyEvent>
-#include <QPainter>
-#include <QOpenGLContext>
 #include <QOpenGLFunctions>
 #include <QApplication>
 #include <QClipboard>
-#include <QTime>
 #include <QStatusBar>
+
 
 using namespace easy3d;
 
@@ -85,7 +85,6 @@ static struct Init {
 PaintCanvas::PaintCanvas(MainWindow* window)
         : QOpenGLWidget(window)
         , window_(window)
-        , func_(nullptr)
         , texter_(nullptr)
         , show_easy3d_logo_(true)
         , show_frame_rate_(false)
@@ -170,17 +169,17 @@ void PaintCanvas::init() {
 
 void PaintCanvas::initializeGL() {
     QOpenGLWidget::initializeGL();
-    func_ = context()->functions();
-    func_->initializeOpenGLFunctions();
+    QOpenGLFunctions* func = context()->functions();
+    func->initializeOpenGLFunctions();
 
     OpenglUtil::init();
 #ifndef NDEBUG
     opengl::setup_gl_debug_callback();
 #endif
 
-    if (!func_->hasOpenGLFeature(QOpenGLFunctions::Multisample))
+    if (!func->hasOpenGLFeature(QOpenGLFunctions::Multisample))
         throw std::runtime_error("Multisample not supported on this machine!!! Mapple may not run properly");
-    if (!func_->hasOpenGLFeature(QOpenGLFunctions::Framebuffers))
+    if (!func->hasOpenGLFeature(QOpenGLFunctions::Framebuffers))
         throw std::runtime_error(
                 "Framebuffer Object is not supported on this machine!!! Mapple may not run properly");
 
@@ -188,24 +187,24 @@ void PaintCanvas::initializeGL() {
     //func_->glEnable(GL_CULL_FACE);
     //func_->glCullFace(GL_BACK); // culls only the back faces
 
-    func_->glEnable(GL_DEPTH_TEST);
-    func_->glDepthFunc(GL_LESS);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
 
-    func_->glClearDepthf(1.0f);
-    func_->glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
+    glClearDepth(1.0f);
+    glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
 
     int major_requested = QSurfaceFormat::defaultFormat().majorVersion();
     int minor_requested = QSurfaceFormat::defaultFormat().minorVersion();
-    VLOG(1) << "OpenGL vendor: " << func_->glGetString(GL_VENDOR);
-    VLOG(1) << "OpenGL renderer: " << func_->glGetString(GL_RENDERER);
+    VLOG(1) << "OpenGL vendor: " << glGetString(GL_VENDOR);
+    VLOG(1) << "OpenGL renderer: " << glGetString(GL_RENDERER);
     VLOG(1) << "OpenGL version requested: " << major_requested << "." << minor_requested;
-    VLOG(1) << "OpenGL version received: " << func_->glGetString(GL_VERSION);
-    VLOG(1) << "GLSL version received: " << func_->glGetString(GL_SHADING_LANGUAGE_VERSION);
+    VLOG(1) << "OpenGL version received: " << glGetString(GL_VERSION);
+    VLOG(1) << "GLSL version received: " << glGetString(GL_SHADING_LANGUAGE_VERSION);
 
     int major = 0;
-    func_->glGetIntegerv(GL_MAJOR_VERSION, &major);
+    glGetIntegerv(GL_MAJOR_VERSION, &major);
     int minor = 0;
-    func_->glGetIntegerv(GL_MINOR_VERSION, &minor);
+    glGetIntegerv(GL_MINOR_VERSION, &minor);
     if (major * 10 + minor < 32) {
         throw std::runtime_error("Mapple requires at least OpenGL 3.2");
     }
@@ -252,7 +251,7 @@ void PaintCanvas::setBackgroundColor(const vec4 &c) {
         shadow_->set_virtual_background_color(c);
 
     makeCurrent();
-    func_->glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
+    glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
     doneCurrent();
 }
 
@@ -1071,10 +1070,10 @@ vec3 PaintCanvas::pointUnderPixel(const QPoint &p, bool &found) const {
     const_cast<PaintCanvas *>(this)->makeCurrent();
 
     int samples = 0;
-    func_->glGetIntegerv(GL_SAMPLES, &samples);
+    glGetIntegerv(GL_SAMPLES, &samples);
     easy3d_debug_log_gl_error
 
-    float depth = 1.0f;
+    float depth = std::numeric_limits<float>::max();
     if (samples > 0) {
         opengl::read_depth_ms(depth, glx, gly);
         easy3d_debug_log_gl_error
@@ -1107,16 +1106,12 @@ void PaintCanvas::paintGL() {
     // been created yet, so we do it here.
     static bool queried = false;
     if (!queried) {
-#if 1
-        func_->glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_SAMPLES, &samples_);
-        easy3d_debug_log_frame_buffer_error
-#else   // the samples can also be retrieved using glGetIntegerv()
-        func_->glGetIntegerv(GL_SAMPLES, &samples_); easy3d_debug_log_gl_error
-#endif
+        glGetIntegerv(GL_SAMPLES, &samples_); easy3d_debug_log_gl_error
+
         // warn the user if the expected request was not satisfied
         int samples = QSurfaceFormat::defaultFormat().samples();
         int max_num = 0;
-        func_->glGetIntegerv(GL_MAX_SAMPLES, &max_num);
+        glGetIntegerv(GL_MAX_SAMPLES, &max_num);
         if (samples > 0 && samples_ != samples) {
             if (samples_ == 0)
                 LOG(WARNING) << "MSAA is not available (" << samples << " samples requested)";
@@ -1180,14 +1175,14 @@ void PaintCanvas::drawCornerAxes() {
 
     // The viewport is changed to fit the lower left corner.
     int viewport[4];
-    func_->glGetIntegerv(GL_VIEWPORT, viewport);
+    glGetIntegerv(GL_VIEWPORT, viewport);
 
     static const int corner_frame_size = static_cast<int>(100 * dpi_scaling());
-    func_->glViewport(0, 0, corner_frame_size, corner_frame_size);
+    glViewport(0, 0, corner_frame_size, corner_frame_size);
 
     // To make the axis appear over other objects: reserve a tiny bit of the
     // front depth range. NOTE: do remember to restore it later.
-    func_->glDepthRangef(0, 0.01f);
+    glDepthRange(0.0f, 0.01f);
 
     const mat4 &proj = transform::ortho(-1, 1, -1, 1, -1, 1);
     const mat4 &view = camera_->orientation().inverse().matrix();
@@ -1225,23 +1220,18 @@ void PaintCanvas::drawCornerAxes() {
     program->release();
 
     // restore the viewport
-    func_->glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
-    func_->glDepthRangef(0.0f, 1.0f);
+    glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+    glDepthRange(0.0f, 1.0f);
 }
 
 
-void PaintCanvas::drawPickedFaceAndItsVerticesIDs(const QColor& face_color, const QColor& vertex_color) {
+void PaintCanvas::drawPickedFaceAndItsVerticesIDs() {
     auto mesh = dynamic_cast<SurfaceMesh*>(currentModel());
     if (!mesh || picked_face_index_ < 0 || picked_face_index_ >= static_cast<int>(mesh->n_faces()))
         return;
 
-    // using QPainter
-    QPainter painter;
-    painter.begin(this);
-    painter.setRenderHint(QPainter::Antialiasing);
-    painter.setRenderHint(QPainter::TextAntialiasing);
-    painter.beginNativePainting();
-
+    static const int font_size = 15;
+    static const int font_id = 1;
     mat4 manip = mesh->manipulator()->matrix();
 
     // draw labels for the vertices of the picked face
@@ -1251,36 +1241,24 @@ void PaintCanvas::drawPickedFaceAndItsVerticesIDs(const QColor& face_color, cons
         const auto& p = mesh->position(v);
         face_center += p;
         const vec3 proj = camera()->projectedCoordinatesOf(manip * p);
-        painter.setPen(vertex_color);
-        painter.drawText(static_cast<int>(proj.x), static_cast<int>(proj.y), QString::fromStdString("v" + std::to_string(v.idx())));
+        texter_->draw("v" + std::to_string(v.idx()), static_cast<int>(proj.x), static_cast<int>(proj.y), font_size, font_id, vec3(0, 0, 1));
         ++valence;
     }
 
     // draw label for the picked face
     const vec3 proj = camera()->projectedCoordinatesOf(manip * (face_center/valence));
-    painter.setPen(face_color);
-    painter.drawText(static_cast<int>(proj.x), static_cast<int>(proj.y), QString::fromStdString("f" + std::to_string(picked_face_index_)));
+    texter_->draw("f" + std::to_string(picked_face_index_), static_cast<int>(proj.x), static_cast<int>(proj.y), font_size, font_id, vec3(0, 1, 0));
     easy3d_debug_log_gl_error
-
-    // finish
-    painter.endNativePainting();
-    painter.end();
-    // Liangliang: it seems QPainter disables depth test?
-    func_->glEnable(GL_DEPTH_TEST);
 }
 
 
-void PaintCanvas::drawPickedVertexID(const QColor &vertex_color) {
+void PaintCanvas::drawPickedVertexID() {
     auto cloud = dynamic_cast<PointCloud*>(currentModel());
     if (!cloud || picked_vertex_index_ < 0 || picked_vertex_index_ >= static_cast<int>(cloud->n_vertices()))
         return;
 
-    // using QPainter
-    QPainter painter;
-    painter.begin(this);
-    painter.setRenderHint(QPainter::Antialiasing);
-    painter.setRenderHint(QPainter::TextAntialiasing);
-    painter.beginNativePainting();
+    static const int font_size = 15;
+    static const int font_id = 1;
 
     mat4 manip = cloud->manipulator()->matrix();
 
@@ -1288,15 +1266,8 @@ void PaintCanvas::drawPickedVertexID(const QColor &vertex_color) {
     auto vertex = PointCloud::Vertex(picked_vertex_index_);
     vec3 pos = cloud->position(vertex);
     pos = camera()->projectedCoordinatesOf(manip * pos);
-    painter.setPen(vertex_color);
-    painter.drawText(static_cast<int>(pos.x), static_cast<int>(pos.y), QString::fromStdString("v" + std::to_string(picked_vertex_index_)));
+    texter_->draw("v" + std::to_string(picked_vertex_index_), static_cast<int>(pos.x), static_cast<int>(pos.y), font_size, font_id, vec3(0, 0, 1));
     easy3d_debug_log_gl_error
-
-    // finish
-    painter.endNativePainting();
-    painter.end();
-    // Liangliang: it seems QPainter disables depth test?
-    func_->glEnable(GL_DEPTH_TEST);
 }
 
 
@@ -1304,7 +1275,7 @@ void PaintCanvas::preDraw() {
     // The Qt6 documentation says (https://doc.qt.io/qt-6/qopenglwidget.html#paintGL):
     //      Default implementation performs a glClear(). Subclasses are not expected to invoke
     //      the base class implementation and should perform clearing on their own.
-    func_->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 }
 
 
@@ -1330,21 +1301,9 @@ void PaintCanvas::postDraw() {
             fps_count = 0;
         }
 
-#if 0   // draw frame rate text using Easy3D's built-in TextRenderer
+        // draw frame rate text using Easy3D's built-in TextRenderer
         if (texter_ && texter_->num_fonts() >=2)
             texter_->draw(fps_string.toStdString(), 20.0f * dpi_scaling(), 50.0f * dpi_scaling(), 16, 1);
-#else   // draw frame rate text using Qt.
-        QPainter painter; easy3d_debug_log_gl_error
-        painter.begin(this);
-        painter.setRenderHint(QPainter::Antialiasing);
-        painter.setRenderHint(QPainter::TextAntialiasing);
-        painter.setPen(Qt::black);
-        painter.beginNativePainting(); easy3d_debug_log_gl_error
-        painter.drawText(20, 50, fps_string);
-        painter.endNativePainting();
-        painter.end();  easy3d_debug_log_gl_error
-        func_->glEnable(GL_DEPTH_TEST); // it seems QPainter disables depth test?
-#endif
     }
 
     // shown only when it is not animating
@@ -1353,8 +1312,8 @@ void PaintCanvas::postDraw() {
     easy3d_debug_log_gl_error
 
     if (show_primitive_id_under_mouse_) {
-        drawPickedFaceAndItsVerticesIDs(Qt::darkBlue, Qt::darkMagenta);
-        drawPickedVertexID(Qt::darkMagenta);
+        drawPickedFaceAndItsVerticesIDs();
+        drawPickedVertexID();
     }
 
     // ------------- draw the picking region with transparency  ---------------
@@ -1934,32 +1893,31 @@ void PaintCanvas::draw() {
         if (!m->renderer()->is_visible())
             continue;
 
-        // Let's check if edges and surfaces are both shown. If true, we
-        // make the depth coordinates of the surface smaller, so that displaying
-        // the mesh and the surface together does not cause Z-fighting.
-        std::size_t count = 0;
-        for (auto d : m->renderer()->lines_drawables()) {
-            if (d->is_visible()) {
-                d->draw(camera()); easy3d_debug_log_gl_error
-                ++count;
-            }
+        // Overlaying edges on faces will cause Z-fighting. Previously I used GL_POLYGON_OFFSET_FILL,
+        // but it is deprecated. Now the trick is to temporarily change the depth range and depth comparison method to
+        // properly render edges.
+
+        glDepthRange(0.001, 1.0);
+        for (auto d: m->renderer()->triangles_drawables()) {
+            if (d->is_visible())
+                d->draw(camera());
+            easy3d_debug_log_gl_error
         }
 
-        for (auto d : m->renderer()->points_drawables()) {
+        glDepthRange(0.0, 1.0);
+        glDepthFunc(GL_LEQUAL);
+        for (auto d: m->renderer()->lines_drawables()) {
             if (d->is_visible())
-                d->draw(camera()); easy3d_debug_log_gl_error
+                d->draw(camera());
+            easy3d_debug_log_gl_error
         }
+        glDepthFunc(GL_LESS);
 
-        if (count > 0) {
-            glEnable(GL_POLYGON_OFFSET_FILL);
-            glPolygonOffset(0.5f, -0.0001f);
-        }
-        for (auto d : m->renderer()->triangles_drawables()) {
+        for (auto d: m->renderer()->points_drawables()) {
             if (d->is_visible())
-                d->draw(camera()); easy3d_debug_log_gl_error
+                d->draw(camera());
+            easy3d_debug_log_gl_error
         }
-        if (count > 0)
-            glDisable(GL_POLYGON_OFFSET_FILL);
     }
 
     if (edl())

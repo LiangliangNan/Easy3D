@@ -31,6 +31,7 @@
 
 #include <easy3d/core/types.h>
 
+#include <easy3d/renderer/opengl.h>
 #include <QOpenGLWidget>
 #include <QElapsedTimer>
 
@@ -53,7 +54,6 @@ namespace easy3d {
 }
 
 class QWidget;
-class QOpenGLFunctions;
 class MainWindow;
 class WalkThrough;
 
@@ -279,16 +279,12 @@ protected:
 
 protected:
     void drawCornerAxes();
-    void drawPickedFaceAndItsVerticesIDs(const QColor& face_color, const QColor& vertex_color);
-    void drawPickedVertexID(const QColor& vertex_color);
+    void drawPickedFaceAndItsVerticesIDs();
+    void drawPickedVertexID();
 
 protected:
     MainWindow* window_;
     WalkThrough* walk_through_;
-
-	// Actually I can inherit the viewer from QOpenGLFunctions (thus no such a member
-	// variable). Having it as a member can eliminate including the header file.
-	QOpenGLFunctions* func_;
 
     QElapsedTimer timer_;
     easy3d::TextRenderer* texter_;

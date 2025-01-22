@@ -58,7 +58,7 @@ namespace easy3d {
      *      - GL_TEXTURE_2D textures must have a power of 2 width and height(e.g. 256x512), unless you are using OpenGL 2.0
      *        or higher.
      *      - To create a multisample framebuffer object you should set the sample property to a non-zero value.
-     *      - If you want to use a multisample framebuffer object a texture, you need to blit it to a regular framebuffer
+     *      - If you want to use a multisample framebuffer object as texture, you need to blit it to a regular framebuffer
      *        object using blit_framebuffer().
      *      - It is more efficient(but not required) to call bind() on an FBO before making multiple method calls.
      *        For example :

@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
     //       that resource sharing between contexts stays functional as all internal
     //       contexts are created using the correct version and profile.
     QSurfaceFormat format = QSurfaceFormat::defaultFormat();
-    format.setVersion(3, 2);
+    format.setVersion(4, 3); // Liangliang: don't modify this. The debug context requires 4.3 or above.
     format.setProfile(QSurfaceFormat::CoreProfile);
     format.setDepthBufferSize(24);
     format.setStencilBufferSize(8);
