@@ -1237,17 +1237,26 @@ void PaintCanvas::drawPickedFaceAndItsVerticesIDs() {
     // draw labels for the vertices of the picked face
     vec3 face_center(0, 0, 0);
     int valence = 0;
-    for (auto v : mesh->vertices(SurfaceMesh::Face(picked_face_index_))) {
+    for (auto v : mesh->vertices(SurfaceMesh::Face(picked_face_index_)))
+    {
         const auto& p = mesh->position(v);
         face_center += p;
         const vec3 proj = camera()->projectedCoordinatesOf(manip * p);
-        texter_->draw("v" + std::to_string(v.idx()), static_cast<int>(proj.x), static_cast<int>(proj.y), font_size, font_id, vec3(0, 0, 1));
+        texter_->draw("v" + std::to_string(v.idx()),
+                      static_cast<int>(proj.x) * dpi_scaling(),
+                      static_cast<int>(proj.y) * dpi_scaling(),
+                      font_size, font_id, vec3(0, 0, 1)
+        );
         ++valence;
     }
 
     // draw label for the picked face
-    const vec3 proj = camera()->projectedCoordinatesOf(manip * (face_center/valence));
-    texter_->draw("f" + std::to_string(picked_face_index_), static_cast<int>(proj.x), static_cast<int>(proj.y), font_size, font_id, vec3(0, 1, 0));
+    const vec3 proj = camera()->projectedCoordinatesOf(manip * (face_center / valence));
+    texter_->draw("f" + std::to_string(picked_face_index_),
+                  static_cast<int>(proj.x) * dpi_scaling(),
+                  static_cast<int>(proj.y) * dpi_scaling(),
+                  font_size, font_id, vec3(0, 1, 0)
+    );
     easy3d_debug_log_gl_error
 }
 
@@ -1266,7 +1275,11 @@ void PaintCanvas::drawPickedVertexID() {
     auto vertex = PointCloud::Vertex(picked_vertex_index_);
     vec3 pos = cloud->position(vertex);
     pos = camera()->projectedCoordinatesOf(manip * pos);
-    texter_->draw("v" + std::to_string(picked_vertex_index_), static_cast<int>(pos.x), static_cast<int>(pos.y), font_size, font_id, vec3(0, 0, 1));
+    texter_->draw("v" + std::to_string(picked_vertex_index_),
+                  static_cast<int>(pos.x) * dpi_scaling(),
+                  static_cast<int>(pos.y) * dpi_scaling(),
+                  font_size, font_id, vec3(0, 0, 1)
+    );
     easy3d_debug_log_gl_error
 }
 
