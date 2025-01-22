@@ -48,4 +48,16 @@
 #endif
 
 
+#define BACKUP_OPENGL_STATES                                                            \
+    GLboolean last_enable_depth_test = glIsEnabled(GL_DEPTH_TEST);                      \
+    GLboolean last_enable_blend = glIsEnabled(GL_BLEND);                                \
+    GLenum last_blend_src; glGetIntegerv(GL_BLEND_SRC, (GLint*)&last_blend_src);        \
+    GLenum last_blend_dst; glGetIntegerv(GL_BLEND_DST, (GLint*)&last_blend_dst);
+
+#define RESTORE_OPENGL_STATES                                                           \
+    if (last_enable_blend) glEnable(GL_BLEND); else glDisable(GL_BLEND);                \
+    if (last_enable_depth_test) glEnable(GL_DEPTH_TEST); else glDisable(GL_DEPTH_TEST); \
+    glBlendFunc(last_blend_src, last_blend_dst);
+
+
 #endif // EASY3D_RENDERER_OPENGL_H

@@ -162,6 +162,8 @@ namespace easy3d {
         wireframe.draw(cam);
         easy3d_debug_log_gl_error
 
+        BACKUP_OPENGL_STATES;
+
         // draw the face of the clipping plane
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -171,8 +173,9 @@ namespace easy3d {
         face.set_uniform_coloring(color_);
         face.set_distinct_back_color(false);
         face.draw(cam);
-        glDisable(GL_BLEND);
         easy3d_debug_log_gl_error
+
+        RESTORE_OPENGL_STATES;
 
         const_cast<ClippingPlane *>(this)->set_enabled(status);
     }
