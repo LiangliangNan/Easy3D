@@ -184,8 +184,8 @@ void PaintCanvas::initializeGL() {
                 "Framebuffer Object is not supported on this machine!!! Mapple may not run properly");
 
     //// back face culling?
-    //func_->glEnable(GL_CULL_FACE);
-    //func_->glCullFace(GL_BACK); // culls only the back faces
+    //glEnable(GL_CULL_FACE);
+    //glCullFace(GL_BACK); // culls only the back faces
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -220,7 +220,7 @@ void PaintCanvas::initializeGL() {
     // the framebuffer has not been created in the initializeGL() method. We
     // will query the actual samples in the paintGL() method.
     //int samples_received = 0;
-    //func_->glgetintegerv(gl_samples, &samples_received);
+    //glgetintegerv(gl_samples, &samples_received);
 
     // create TextRenderer renderer and load default fonts
     texter_ = new TextRenderer(dpi_scaling());
@@ -239,7 +239,7 @@ void PaintCanvas::resizeGL(int w, int h) {
 
     // The viewport is set up by QOpenGLWidget before drawing.
     // So I don't need to set up.
-    // func_->glViewport(0, 0, static_cast<int>(w * highdpi_), static_cast<int>(h * highdpi_));
+    // glViewport(0, 0, static_cast<int>(w * highdpi_), static_cast<int>(h * highdpi_));
 
     camera()->setScreenWidthAndHeight(w, h);
 }

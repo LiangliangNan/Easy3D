@@ -447,11 +447,11 @@ void PaintCanvas::recordAnimation(const QString &file_name, int, int, bool bk_wh
         fbo->bind();
 
         if (bk_white)
-            func_->glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+            glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         else
-            func_->glClearColor(background_color_[0], background_color_[1], background_color_[2],
+            glClearColor(background_color_[0], background_color_[1], background_color_[2],
                                 background_color_[3]);
-        func_->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
         draw();
 
@@ -488,7 +488,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, int, int, bool bk_wh
     // clean
     delete fbo;
     // restore the clear color
-    func_->glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
+    glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
     doneCurrent();
 
     // enable updating the rendering
