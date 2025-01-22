@@ -87,11 +87,6 @@ WidgetGlobalSetting::WidgetGlobalSetting(QWidget *parent)
 
     //----------------------------------------------
 
-    QPalette::ColorRole role = parent->backgroundRole();
-    const QColor& bc = parent->palette().color(role);
-    ui_->checkerSphere->setBackgroundColor(bc);
-    connect(ui_->checkerSphere, SIGNAL(lightPositionChanged()), viewer_, SLOT(update()));
-
     connect(ui_->checkBoxClippingPlaneEnable, SIGNAL(toggled(bool)), this, SLOT(setEnableClippingPlane(bool)));
     connect(ui_->checkBoxClippingPlaneVisible, SIGNAL(toggled(bool)), this, SLOT(setClippingPlaneVisible(bool)));
     connect(ui_->toolButtonRecenterClippingPlane, SIGNAL(clicked()), this, SLOT(recenterClippingPlane()));

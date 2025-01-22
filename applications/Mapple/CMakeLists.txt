@@ -34,7 +34,6 @@ set(${PROJECT_NAME}_HEADERS
         dialogs/dialog_point_cloud_simplification.h
         dialogs/dialog_walk_through.h
 
-        widgets/widget_checker_sphere.h
         widgets/widget_drawable.h
         widgets/widget_drawable_points.h
         widgets/widget_drawable_lines.h
@@ -76,7 +75,6 @@ set(${PROJECT_NAME}_SOURCES
         dialogs/dialog_point_cloud_simplification.cpp
         dialogs/dialog_walk_through.cpp
 
-        widgets/widget_checker_sphere.cpp
         widgets/widget_drawable.cpp
         widgets/widget_drawable_points.cpp
         widgets/widget_drawable_lines.cpp
