@@ -1328,36 +1328,33 @@ void PaintCanvas::postDraw() {
         drawPickedVertexID();
     }
 
-    // ------------- draw the picking region with transparency  ---------------
+    { // the drawing within this block requires GL_BLEND enabled, so we have to back up and restore the blend state.
+        GLboolean last_enable_blend = glIsEnabled(GL_BLEND);
+        GLenum last_blend_src; glGetIntegerv(GL_BLEND_SRC, (GLint*)&last_blend_src);
+        GLenum last_blend_dst; glGetIntegerv(GL_BLEND_DST, (GLint*)&last_blend_dst);
 
-    if (pressed_button_ == Qt::LeftButton && modifiers_ == Qt::ControlModifier) {
-        const Rect rect(static_cast<float>(mouse_pressed_pos_.x()), static_cast<float>(mouse_current_pos_.x()), static_cast<float>(mouse_pressed_pos_.y()), static_cast<float>(mouse_current_pos_.y()));
-        if (rect.width() > 0 || rect.height() > 0) {
-            // draw the boundary of the rect
-            shape::draw_quad_wire(rect, vec4(0.0f, 0.0f, 1.0f, 1.0f), width(), height(), -1.0f);
+        // ------------- draw the picking region with transparency  ---------------
+        if (pressed_button_ == Qt::LeftButton && modifiers_ == Qt::ControlModifier) {
+            const Rect rect(static_cast<float>(mouse_pressed_pos_.x()), static_cast<float>(mouse_current_pos_.x()), static_cast<float>(mouse_pressed_pos_.y()), static_cast<float>(mouse_current_pos_.y()));
+            if (rect.width() > 0 || rect.height() > 0) {
+                // draw the boundary of the rect
+                shape::draw_quad_wire(rect, vec4(0.0f, 0.0f, 1.0f, 1.0f), width(), height(), -1.0f);
 
-            // draw the transparent face (have to backup and restore the blend state)
-            GLboolean last_enable_blend = glIsEnabled(GL_BLEND);
-            GLenum last_blend_src; glGetIntegerv(GL_BLEND_SRC, (GLint*)&last_blend_src);
-            GLenum last_blend_dst; glGetIntegerv(GL_BLEND_DST, (GLint*)&last_blend_dst);
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            shape::draw_quad_filled(rect, vec4(0.0f, 0.0f, 1.0f, 0.2f), width(), height(), -0.9f);
-            if (last_enable_blend) glEnable(GL_BLEND); else glDisable(GL_BLEND);
-            glBlendFunc(last_blend_src, last_blend_dst);
+                // draw the transparent face
+                glEnable(GL_BLEND);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                shape::draw_quad_filled(rect, vec4(0.0f, 0.0f, 1.0f, 0.2f), width(), height(), -0.9f);
+            }
         }
+
+        // ------------------ draw elements from the tool --------------------------
+        tool_manager()->draw_hint();    easy3d_debug_log_gl_error
+
+        if (last_enable_blend) glEnable(GL_BLEND); else glDisable(GL_BLEND);
+        glBlendFunc(last_blend_src, last_blend_dst);
     }
 
-    // ------- draw the axes indicating the orientation of the model  ----------
-
-    drawCornerAxes(); easy3d_debug_log_gl_error
-
-    // ------------------ draw elements from the tool --------------------------
-
-    tool_manager()->draw_hint();    easy3d_debug_log_gl_error
-
     // -------------------- draw a sphere outline
-
     Model* m = currentModel();
     if (m && m->renderer()->is_visible() && m->renderer()->is_selected()) {
         m->manipulator()->draw_frame(camera_);
@@ -1371,6 +1368,9 @@ void PaintCanvas::postDraw() {
         auto manip = mat4::translation(camera_->pivotPoint()) * mat4::scale(radius * ratio) ;
         shape::draw_sphere_big_circles(drawable_manip_sphere_, camera_->modelViewProjectionMatrix(), manip);
     }
+
+    // ------- draw the axes indicating the orientation of the model  ----------
+    drawCornerAxes(); easy3d_debug_log_gl_error
 }
 
 
