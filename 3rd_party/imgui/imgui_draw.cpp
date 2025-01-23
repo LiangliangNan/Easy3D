@@ -1,4 +1,4 @@
-// dear imgui, v1.91.7 WIP
+// dear imgui, v1.91.8 WIP
 // (drawing and font code)
 
 /*
@@ -67,13 +67,17 @@ Index of this file:
 #pragma clang diagnostic ignored "-Wreserved-identifier"            // warning: identifier '_Xxx' is reserved because it starts with '_' followed by a capital letter
 #pragma clang diagnostic ignored "-Wunsafe-buffer-usage"            // warning: 'xxx' is an unsafe pointer used for buffer access
 #pragma clang diagnostic ignored "-Wnontrivial-memaccess"           // warning: first argument in call to 'memset' is a pointer to non-trivially copyable type
+#pragma clang diagnostic ignored "-Wcast-qual"                      // warning: cast from 'const xxxx *' to 'xxx *' drops const qualifier
 #elif defined(__GNUC__)
 #pragma GCC diagnostic ignored "-Wpragmas"                          // warning: unknown option after '#pragma GCC diagnostic' kind
 #pragma GCC diagnostic ignored "-Wunused-function"                  // warning: 'xxxx' defined but not used
+#pragma GCC diagnostic ignored "-Wfloat-equal"                      // warning: comparing floating-point with '==' or '!=' is unsafe
 #pragma GCC diagnostic ignored "-Wdouble-promotion"                 // warning: implicit conversion from 'float' to 'double' when passing argument to function
 #pragma GCC diagnostic ignored "-Wconversion"                       // warning: conversion to 'xxxx' from 'xxxx' may alter its value
 #pragma GCC diagnostic ignored "-Wstack-protector"                  // warning: stack protector not protecting local variables: variable length buffer
+#pragma GCC diagnostic ignored "-Wstrict-overflow"                  // warning: assuming signed overflow does not occur when simplifying division / ..when changing X +- C1 cmp C2 to X cmp C2 -+ C1
 #pragma GCC diagnostic ignored "-Wclass-memaccess"                  // [__GNUC__ >= 8] warning: 'memset/memcpy' clearing/writing an object of type 'xxxx' with no trivial copy-assignment; use assignment or value-initialization instead
+#pragma GCC diagnostic ignored "-Wcast-qual"                        // warning: cast from type 'const xxxx *' to type 'xxxx *' casts away qualifiers
 #endif
 
 //-------------------------------------------------------------------------
@@ -105,13 +109,12 @@ namespace IMGUI_STB_NAMESPACE
 #pragma clang diagnostic ignored "-Wunused-function"        // warning: 'xxxx' defined but not used
 #pragma clang diagnostic ignored "-Wmissing-prototypes"
 #pragma clang diagnostic ignored "-Wimplicit-fallthrough"
-#pragma clang diagnostic ignored "-Wcast-qual"              // warning: cast from 'const xxxx *' to 'xxx *' drops const qualifier
 #endif
 
 #if defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wtype-limits"              // warning: comparison is always true due to limited range of data type [-Wtype-limits]
-#pragma GCC diagnostic ignored "-Wcast-qual"                // warning: cast from type 'const xxxx *' to type 'xxxx *' casts away qualifiers
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"     // warning: this statement may fall through
 #endif
 
 #ifndef STB_RECT_PACK_IMPLEMENTATION                        // in case the user already have an implementation in the _same_ compilation unit (e.g. unity builds)
@@ -1666,8 +1669,7 @@ void ImDrawList::AddText(ImFont* font, float font_size, const ImVec2& pos, ImU32
     // Accept null ranges
     if (text_begin == text_end || text_begin[0] == 0)
         return;
-    if (text_end == NULL)
-        text_end = text_begin + strlen(text_begin);
+    // No need to strlen() here: font->RenderText() will do it and may early out.
 
     // Pull default font/size from the shared ImDrawListSharedData instance
     if (font == NULL)
@@ -1690,7 +1692,7 @@ void ImDrawList::AddText(ImFont* font, float font_size, const ImVec2& pos, ImU32
 
 void ImDrawList::AddText(const ImVec2& pos, ImU32 col, const char* text_begin, const char* text_end)
 {
-    AddText(NULL, 0.0f, pos, col, text_begin, text_end);
+    AddText(_Data->Font, _Data->FontSize, pos, col, text_begin, text_end);
 }
 
 void ImDrawList::AddImage(ImTextureID user_texture_id, const ImVec2& p_min, const ImVec2& p_max, const ImVec2& uv_min, const ImVec2& uv_max, ImU32 col)
@@ -2382,6 +2384,38 @@ ImFontConfig::ImFontConfig()
 
 //-----------------------------------------------------------------------------
 // [SECTION] ImFontAtlas
+//-----------------------------------------------------------------------------
+// - Default texture data encoded in ASCII
+// - ImFontAtlas::ClearInputData()
+// - ImFontAtlas::ClearTexData()
+// - ImFontAtlas::ClearFonts()
+// - ImFontAtlas::Clear()
+// - ImFontAtlas::GetTexDataAsAlpha8()
+// - ImFontAtlas::GetTexDataAsRGBA32()
+// - ImFontAtlas::AddFont()
+// - ImFontAtlas::AddFontDefault()
+// - ImFontAtlas::AddFontFromFileTTF()
+// - ImFontAtlas::AddFontFromMemoryTTF()
+// - ImFontAtlas::AddFontFromMemoryCompressedTTF()
+// - ImFontAtlas::AddFontFromMemoryCompressedBase85TTF()
+// - ImFontAtlas::AddCustomRectRegular()
+// - ImFontAtlas::AddCustomRectFontGlyph()
+// - ImFontAtlas::CalcCustomRectUV()
+// - ImFontAtlas::GetMouseCursorTexData()
+// - ImFontAtlas::Build()
+// - ImFontAtlasBuildMultiplyCalcLookupTable()
+// - ImFontAtlasBuildMultiplyRectAlpha8()
+// - ImFontAtlasBuildWithStbTruetype()
+// - ImFontAtlasGetBuilderForStbTruetype()
+// - ImFontAtlasUpdateConfigDataPointers()
+// - ImFontAtlasBuildSetupFont()
+// - ImFontAtlasBuildPackCustomRects()
+// - ImFontAtlasBuildRender8bppRectFromString()
+// - ImFontAtlasBuildRender32bppRectFromString()
+// - ImFontAtlasBuildRenderDefaultTexData()
+// - ImFontAtlasBuildRenderLinesTexData()
+// - ImFontAtlasBuildInit()
+// - ImFontAtlasBuildFinish()
 //-----------------------------------------------------------------------------
 
 // A work of art lies ahead! (. = white layer, X = black layer, others are blank)
@@ -3324,6 +3358,16 @@ void ImFontAtlasBuildFinish(ImFontAtlas* atlas)
 //-------------------------------------------------------------------------
 // [SECTION] ImFontAtlas: glyph ranges helpers
 //-------------------------------------------------------------------------
+// - GetGlyphRangesDefault()
+// - GetGlyphRangesGreek()
+// - GetGlyphRangesKorean()
+// - GetGlyphRangesChineseFull()
+// - GetGlyphRangesChineseSimplifiedCommon()
+// - GetGlyphRangesJapanese()
+// - GetGlyphRangesCyrillic()
+// - GetGlyphRangesThai()
+// - GetGlyphRangesVietnamese()
+//-----------------------------------------------------------------------------
 
 // Retrieve list of range (2 int per range, values are inclusive)
 const ImWchar*   ImFontAtlas::GetGlyphRangesDefault()
@@ -3644,7 +3688,7 @@ ImFont::ImFont()
     Scale = 1.0f;
     Ascent = Descent = 0.0f;
     MetricsTotalSurface = 0;
-    memset(Used4kPagesMap, 0, sizeof(Used4kPagesMap));
+    memset(Used8kPagesMap, 0, sizeof(Used8kPagesMap));
 }
 
 ImFont::~ImFont()
@@ -3664,7 +3708,7 @@ void    ImFont::ClearOutputData()
     DirtyLookupTables = true;
     Ascent = Descent = 0.0f;
     MetricsTotalSurface = 0;
-    memset(Used4kPagesMap, 0, sizeof(Used4kPagesMap));
+    memset(Used8kPagesMap, 0, sizeof(Used8kPagesMap));
 }
 
 static ImWchar FindFirstExistingGlyph(ImFont* font, const ImWchar* candidate_chars, int candidate_chars_count)
@@ -3687,7 +3731,7 @@ void ImFont::BuildLookupTable()
     IndexAdvanceX.clear();
     IndexLookup.clear();
     DirtyLookupTables = false;
-    memset(Used4kPagesMap, 0, sizeof(Used4kPagesMap));
+    memset(Used8kPagesMap, 0, sizeof(Used8kPagesMap));
     GrowIndex(max_codepoint + 1);
     for (int i = 0; i < Glyphs.Size; i++)
     {
@@ -3696,8 +3740,8 @@ void ImFont::BuildLookupTable()
         IndexLookup[codepoint] = (ImWchar)i;
 
         // Mark 4K page as used
-        const int page_n = codepoint / 4096;
-        Used4kPagesMap[page_n >> 3] |= 1 << (page_n & 7);
+        const int page_n = codepoint / 8192;
+        Used8kPagesMap[page_n >> 3] |= 1 << (page_n & 7);
     }
 
     // Create a glyph to handle TAB
@@ -3751,23 +3795,23 @@ void ImFont::BuildLookupTable()
     }
     else if (dot_char != 0)
     {
-        const ImFontGlyph* glyph = FindGlyph(dot_char);
+        const ImFontGlyph* dot_glyph = FindGlyph(dot_char);
         EllipsisChar = dot_char;
         EllipsisCharCount = 3;
-        EllipsisCharStep = (glyph->X1 - glyph->X0) + 1.0f;
-        EllipsisWidth = EllipsisCharStep * 3.0f - 1.0f;
+        EllipsisCharStep = (float)(int)(dot_glyph->X1 - dot_glyph->X0) + 1.0f;
+        EllipsisWidth = ImMax(dot_glyph->AdvanceX, dot_glyph->X0 + EllipsisCharStep * 3.0f - 1.0f); // FIXME: Slightly odd for normally mono-space fonts but since this is used for trailing contents.
     }
 }
 
-// API is designed this way to avoid exposing the 4K page size
+// API is designed this way to avoid exposing the 8K page size
 // e.g. use with IsGlyphRangeUnused(0, 255)
 bool ImFont::IsGlyphRangeUnused(unsigned int c_begin, unsigned int c_last)
 {
-    unsigned int page_begin = (c_begin / 4096);
-    unsigned int page_last = (c_last / 4096);
+    unsigned int page_begin = (c_begin / 8192);
+    unsigned int page_last = (c_last / 8192);
     for (unsigned int page_n = page_begin; page_n <= page_last; page_n++)
-        if ((page_n >> 3) < sizeof(Used4kPagesMap))
-            if (Used4kPagesMap[page_n >> 3] & (1 << (page_n & 7)))
+        if ((page_n >> 3) < sizeof(Used8kPagesMap))
+            if (Used8kPagesMap[page_n >> 3] & (1 << (page_n & 7)))
                 return false;
     return true;
 }
@@ -4080,14 +4124,14 @@ void ImFont::RenderChar(ImDrawList* draw_list, float size, const ImVec2& pos, Im
 // Note: as with every ImDrawList drawing function, this expects that the font atlas texture is bound.
 void ImFont::RenderText(ImDrawList* draw_list, float size, const ImVec2& pos, ImU32 col, const ImVec4& clip_rect, const char* text_begin, const char* text_end, float wrap_width, bool cpu_fine_clip)
 {
-    if (!text_end)
-        text_end = text_begin + strlen(text_begin); // ImGui:: functions generally already provides a valid text_end, so this is merely to handle direct calls.
-
     // Align to be pixel perfect
     float x = IM_TRUNC(pos.x);
     float y = IM_TRUNC(pos.y);
     if (y > clip_rect.w)
         return;
+
+    if (!text_end)
+        text_end = text_begin + strlen(text_begin); // ImGui:: functions generally already provides a valid text_end, so this is merely to handle direct calls.
 
     const float scale = size / FontSize;
     const float line_height = FontSize * scale;

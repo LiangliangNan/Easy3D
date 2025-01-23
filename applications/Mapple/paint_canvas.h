@@ -33,6 +33,7 @@
 
 #include <QOpenGLWidget>
 #include <QElapsedTimer>
+#include <QOpenGLFunctions>
 
 #include "tools/canvas.h"
 
@@ -53,11 +54,10 @@ namespace easy3d {
 }
 
 class QWidget;
-class QOpenGLFunctions;
 class MainWindow;
 class WalkThrough;
 
-class PaintCanvas : public QOpenGLWidget, public easy3d::Canvas
+class PaintCanvas : public QOpenGLWidget, public QOpenGLFunctions, public easy3d::Canvas
 {
        Q_OBJECT
 public:
@@ -107,7 +107,7 @@ public:
     //       The precision of the z-Buffer highly depends on how the zNear() and zFar()
     //       values are fitted to your scene. Loose boundaries will result in imprecision
     //		 along the viewing direction.
-    easy3d::vec3 pointUnderPixel(const QPoint& p, bool &found) const;
+    easy3d::vec3 pointUnderPixel(const QPoint& p, bool &found);
 
 	/// \brief Take a snapshot of the screen and save it to an image file.
 	/// \details This function renders the scene into a framebuffer and takes a snapshot of the framebuffer.
@@ -279,16 +279,12 @@ protected:
 
 protected:
     void drawCornerAxes();
-    void drawPickedFaceAndItsVerticesIDs(const QColor& face_color, const QColor& vertex_color);
-    void drawPickedVertexID(const QColor& vertex_color);
+    void drawPickedFaceAndItsVerticesIDs();
+    void drawPickedVertexID();
 
 protected:
     MainWindow* window_;
     WalkThrough* walk_through_;
-
-	// Actually I can inherit the viewer from QOpenGLFunctions (thus no such a member
-	// variable). Having it as a member can eliminate including the header file.
-	QOpenGLFunctions* func_;
 
     QElapsedTimer timer_;
     easy3d::TextRenderer* texter_;

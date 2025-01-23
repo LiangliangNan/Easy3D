@@ -30,11 +30,11 @@
 #include <easy3d/core/types.h>
 
 #include <QOpenGLWidget>
+#include <QOpenGLFunctions>
 #include <QElapsedTimer>
 
 
 class QWidget;
-class QOpenGLFunctions;
 
 namespace easy3d {
 
@@ -44,7 +44,7 @@ namespace easy3d {
     class TrianglesDrawable;
     class TextRenderer;
 
-    class Viewer : public QOpenGLWidget {
+    class Viewer : public QOpenGLWidget, public QOpenGLFunctions {
     Q_OBJECT
     public:
         explicit Viewer(QWidget *parent = nullptr);
@@ -101,7 +101,7 @@ namespace easy3d {
         //       The precision of the z-Buffer highly depends on how the zNear() and zFar()
         //       values are fitted to your scene. Loose boundaries will result in imprecision
         //		 along the viewing direction.
-        easy3d::vec3 pointUnderPixel(const QPoint &p, bool &found) const;
+        easy3d::vec3 pointUnderPixel(const QPoint &p, bool &found);
 
         // Save snapshot
         // file_name: the image file name
@@ -198,10 +198,6 @@ namespace easy3d {
         void currentModelChanged();
 
     protected:
-        // Actually I can inherit the viewer from QOpenGLFunctions (thus no such a member
-        // variable). Having it as a member can eliminate including the header file.
-        QOpenGLFunctions *func_;
-
         float dpi_scaling_;
         int samples_;
 

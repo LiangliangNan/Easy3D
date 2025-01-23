@@ -143,6 +143,8 @@ namespace easy3d {
         const int h = viewport[3];
         init(w, h);
 
+        BACKUP_OPENGL_STATES;
+
         glDisable(GL_DEPTH_TEST);
 
         // ---------------------------------------------------------------------
@@ -174,8 +176,7 @@ namespace easy3d {
         if (!program)
             return;
 
-        glDisable(GL_BLEND);	easy3d_debug_log_gl_error
-        glEnable(GL_DEPTH_TEST);
+        RESTORE_OPENGL_STATES;
 
         program->bind();
         program->set_uniform("BackgroundColor", bkg_color_);

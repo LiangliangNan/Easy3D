@@ -28,24 +28,25 @@
 #define USE_QT_FBO
 #define SHOW_PROGRESS
 
+
+#include "paint_canvas.h"
+
+#include <QOpenGLFunctions>
+#include <QMessageBox>
+#include <QApplication>
+
 #ifdef  USE_QT_FBO
 #include <QOpenGLFramebufferObject>
 #else
 #include <easy3d/renderer/framebuffer_object.h>
 #endif
 
-#include <QOpenGLFunctions>
-#include <QMessageBox>
-#include <QApplication>
-
-#include "paint_canvas.h"
 #include "main_window.h"
 #include "walk_through.h"
 
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/transform.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
-#include <easy3d/core//model.h>
 #include <easy3d/util/logging.h>
 
 #ifdef SHOW_PROGRESS
@@ -58,7 +59,7 @@ using namespace easy3d;
 bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_name, int back_ground, bool expand) {
     int max_samples = 0;
     makeCurrent();
-    func_->glGetIntegerv(GL_MAX_SAMPLES, &max_samples);
+    glGetIntegerv(GL_MAX_SAMPLES, &max_samples);
     doneCurrent();
     if (samples > max_samples) {
         LOG(WARNING) << "requested samples (" << samples << ") exceeds the supported maximum samples (" << max_samples
@@ -175,13 +176,13 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
 
             // 0: current color; 1: white; 2: transparent.
             if (back_ground == 1)       // white
-                func_->glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+                glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
             else if (back_ground == 2)  // transparent
-                func_->glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
+                glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
             else                        // current color
-                func_->glClearColor(background_color_[0], background_color_[1], background_color_[2],
+                glClearColor(background_color_[0], background_color_[1], background_color_[2],
                                     background_color_[3]);
-            func_->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
             draw();
 
@@ -228,7 +229,7 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
     // clean
     delete fbo;
     // restore the clear color
-    func_->glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
+    glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
     doneCurrent();
 
     // restore the projection matrix
@@ -312,11 +313,11 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
         fbo->bind();
 
         if (bk_white)
-            func_->glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+            glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         else
-            func_->glClearColor(background_color_[0], background_color_[1], background_color_[2],
+            glClearColor(background_color_[0], background_color_[1], background_color_[2],
                                 background_color_[3]);
-        func_->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
         draw();
 
@@ -356,7 +357,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
     // clean
     delete fbo;
     // restore the clear color
-    func_->glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
+    glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
     doneCurrent();
 
     // enable updating the rendering
@@ -446,11 +447,11 @@ void PaintCanvas::recordAnimation(const QString &file_name, int, int, bool bk_wh
         fbo->bind();
 
         if (bk_white)
-            func_->glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+            glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         else
-            func_->glClearColor(background_color_[0], background_color_[1], background_color_[2],
+            glClearColor(background_color_[0], background_color_[1], background_color_[2],
                                 background_color_[3]);
-        func_->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
         draw();
 
@@ -487,7 +488,7 @@ void PaintCanvas::recordAnimation(const QString &file_name, int, int, bool bk_wh
     // clean
     delete fbo;
     // restore the clear color
-    func_->glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
+    glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
     doneCurrent();
 
     // enable updating the rendering

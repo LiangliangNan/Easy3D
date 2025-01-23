@@ -1,0 +1,49 @@
+##############################################################################
+# GitHub Actions Workflow to test building Easy3D using Clang on Ubuntu
+#
+# Copyright (C) 2022 Liangliang Nan <liangliang.nan@gmail.com>
+#
+# Licensed under GNU LGPL.3, see LICENCE file
+##############################################################################
+name: Test Build Easy3D with Clang on Ubuntu
+
+on: [push, pull_request]
+
+jobs:
+  build-clang:
+    name: Build with Clang on Ubuntu
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        build_type: [Debug, Release]
+
+    steps:
+      # Checkout the code
+      - uses: actions/checkout@v3
+
+      # Install dependencies
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update || true
+          sudo apt-get install -y cmake clang build-essential libgl1-mesa-dev \
+              mesa-common-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev \
+              libcgal-dev qt6-base-dev \
+              libavcodec-dev libavformat-dev libswscale-dev libavutil-dev
+
+      # Configure the project using Clang
+      - name: Configure with Clang
+        run: |
+          CC=clang CXX=clang++ \
+          cmake -S . -B build/clang_${{ matrix.build_type }} \
+                -G "Unix Makefiles" \
+                -DEasy3D_BUILD_PYTHON_BINDINGS=ON \
+                -DEasy3D_BUILD_TUTORIALS=ON \
+                -DEasy3D_BUILD_TESTS=ON \
+                -DEasy3D_ENABLE_CGAL=ON \
+                -DEasy3D_ENABLE_QT=ON \
+                -DEasy3D_ENABLE_FFMPEG=ON
+
+      # Build the project with Clang
+      - name: Build with Clang
+        run: cmake --build build/clang_${{ matrix.build_type }}

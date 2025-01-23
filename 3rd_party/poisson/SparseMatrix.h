@@ -69,7 +69,7 @@ public:
 	SparseMatrix( const SparseMatrix& M );
 	~SparseMatrix();
 
-	void SetZero();
+	// void SetZero();
 
 	SparseMatrix<T>& operator = (const SparseMatrix<T>& M);
 

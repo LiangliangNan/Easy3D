@@ -322,6 +322,8 @@ namespace easy3d {
 
         //////////////////////////////////////////////////////////////////////////
 
+        BACKUP_OPENGL_STATES;
+
         glDisable(GL_DEPTH_TEST);
         glEnable(GL_BLEND);
 
@@ -360,8 +362,7 @@ namespace easy3d {
 
         //////////////////////////////////////////////////////////////////////////
 
-        glEnable(GL_DEPTH_TEST);
-        glDisable(GL_BLEND);
+        RESTORE_OPENGL_STATES;
 
         delete_occlusion_query_id();
         stage_ = DDP_Inactive;
