@@ -31,9 +31,9 @@
 
 #include <easy3d/core/types.h>
 
-#include <easy3d/renderer/opengl.h>
 #include <QOpenGLWidget>
 #include <QElapsedTimer>
+#include <QOpenGLFunctions>
 
 #include "tools/canvas.h"
 
@@ -57,7 +57,7 @@ class QWidget;
 class MainWindow;
 class WalkThrough;
 
-class PaintCanvas : public QOpenGLWidget, public easy3d::Canvas
+class PaintCanvas : public QOpenGLWidget, public QOpenGLFunctions, public easy3d::Canvas
 {
        Q_OBJECT
 public:
@@ -107,7 +107,7 @@ public:
     //       The precision of the z-Buffer highly depends on how the zNear() and zFar()
     //       values are fitted to your scene. Loose boundaries will result in imprecision
     //		 along the viewing direction.
-    easy3d::vec3 pointUnderPixel(const QPoint& p, bool &found) const;
+    easy3d::vec3 pointUnderPixel(const QPoint& p, bool &found);
 
 	/// \brief Take a snapshot of the screen and save it to an image file.
 	/// \details This function renders the scene into a framebuffer and takes a snapshot of the framebuffer.

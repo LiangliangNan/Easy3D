@@ -63,7 +63,7 @@ namespace easy3d {
 
 
     Viewer::Viewer(QWidget *parent /* = nullptr*/)
-            : QOpenGLWidget(parent), func_(nullptr), texter_(nullptr), pressed_button_(Qt::NoButton),
+            : QOpenGLWidget(parent), texter_(nullptr), pressed_button_(Qt::NoButton),
               mouse_pressed_pos_(0, 0), mouse_previous_pos_(0, 0), show_pivot_point_(false), drawable_axes_(nullptr),
               model_idx_(-1) {
         // like Qt::StrongFocus plus the widget accepts focus by using the mouse wheel.
@@ -126,38 +126,37 @@ namespace easy3d {
 
     void Viewer::initializeGL() {
         QOpenGLWidget::initializeGL();
-        func_ = context()->functions();
-        func_->initializeOpenGLFunctions();
+        initializeOpenGLFunctions();
 
         OpenglUtil::init();
 #ifndef NDEBUG
         opengl::setup_gl_debug_callback();
 #endif
 
-        if (!func_->hasOpenGLFeature(QOpenGLFunctions::Multisample))
+        if (!hasOpenGLFeature(QOpenGLFunctions::Multisample))
             throw std::runtime_error("Multisample not supported on this machine!!! Viewer may not run properly");
-        if (!func_->hasOpenGLFeature(QOpenGLFunctions::Framebuffers))
+        if (!hasOpenGLFeature(QOpenGLFunctions::Framebuffers))
             throw std::runtime_error(
                     "Framebuffer Object is not supported on this machine!!! Viewer may not run properly");
 
         background_color_ = setting::background_color;
 
-        func_->glEnable(GL_DEPTH_TEST);
-        func_->glClearDepthf(1.0f);
-        func_->glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
+        glEnable(GL_DEPTH_TEST);
+        glClearDepthf(1.0f);
+        glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
 
         int major_requested = QSurfaceFormat::defaultFormat().majorVersion();
         int minor_requested = QSurfaceFormat::defaultFormat().minorVersion();
-        VLOG(1) << "OpenGL vendor: " << func_->glGetString(GL_VENDOR);
-        VLOG(1) << "OpenGL renderer: " << func_->glGetString(GL_RENDERER);
+        VLOG(1) << "OpenGL vendor: " << glGetString(GL_VENDOR);
+        VLOG(1) << "OpenGL renderer: " << glGetString(GL_RENDERER);
         VLOG(1) << "OpenGL version requested: " << major_requested << "." << minor_requested;
-        VLOG(1) << "OpenGL version received: " << func_->glGetString(GL_VERSION);
-        VLOG(1) << "GLSL version received: " << func_->glGetString(GL_SHADING_LANGUAGE_VERSION);
+        VLOG(1) << "OpenGL version received: " << glGetString(GL_VERSION);
+        VLOG(1) << "GLSL version received: " << glGetString(GL_SHADING_LANGUAGE_VERSION);
 
         int major = 0;
-        func_->glGetIntegerv(GL_MAJOR_VERSION, &major);
+        glGetIntegerv(GL_MAJOR_VERSION, &major);
         int minor = 0;
-        func_->glGetIntegerv(GL_MINOR_VERSION, &minor);
+        glGetIntegerv(GL_MINOR_VERSION, &minor);
         if (major * 10 + minor < 32) {
             throw std::runtime_error("Viewer requires at least OpenGL 3.2");
         }
@@ -205,7 +204,7 @@ namespace easy3d {
         background_color_ = c;
 
         makeCurrent();
-        func_->glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
+        glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
         doneCurrent();
     }
 
@@ -325,8 +324,8 @@ namespace easy3d {
         fbo->addColorAttachment(w, h);
 
         fbo->bind();
-        func_->glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-        func_->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
         draw();
 
@@ -335,7 +334,7 @@ namespace easy3d {
         const QImage &image = fbo->toImage();
 
         // restore the clear color
-        func_->glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
+        glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
 
         doneCurrent();
 
@@ -738,7 +737,7 @@ namespace easy3d {
     }
 
 
-    vec3 Viewer::pointUnderPixel(const QPoint &p, bool &found) const {
+    vec3 Viewer::pointUnderPixel(const QPoint &p, bool &found) {
         const_cast<Viewer *>(this)->makeCurrent();
 
         // Qt (same as GLFW) uses upper corner for its origin while GL uses the lower corner.
@@ -751,7 +750,7 @@ namespace easy3d {
         gly = static_cast<int>(static_cast<float>(gly) * dpiScaling());
 
         int samples = 0;
-        func_->glGetIntegerv(GL_SAMPLES, &samples);
+        glGetIntegerv(GL_SAMPLES, &samples);
         easy3d_debug_log_gl_error
 
         float depth = 1.0f;
@@ -792,15 +791,15 @@ namespace easy3d {
         static bool queried = false;
         if (!queried) {
 #if 1
-            func_->glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_SAMPLES, &samples_);
+            glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_SAMPLES, &samples_);
             easy3d_debug_log_frame_buffer_error
 #else   // the samples can also be retrieved using glGetIntegerv()
-            func_->glGetIntegerv(GL_SAMPLES, &samples_); easy3d_debug_log_gl_error
+            glGetIntegerv(GL_SAMPLES, &samples_); easy3d_debug_log_gl_error
 #endif
             // warn the user if the expected request was not satisfied
             int samples = QSurfaceFormat::defaultFormat().samples();
             int max_num = 0;
-            func_->glGetIntegerv(GL_MAX_SAMPLES, &max_num);
+            glGetIntegerv(GL_MAX_SAMPLES, &max_num);
             if (samples > 0 && samples_ != samples) {
                 if (samples_ == 0)
                     LOG(WARNING) << "MSAA is not available (" << samples << " samples requested)";
@@ -861,14 +860,14 @@ namespace easy3d {
 
         // The viewport is changed to fit the lower left corner.
         int viewport[4];
-        func_->glGetIntegerv(GL_VIEWPORT, viewport);
+        glGetIntegerv(GL_VIEWPORT, viewport);
 
         static const int corner_frame_size = static_cast<int>(100 * dpiScaling());
-        func_->glViewport(0, 0, corner_frame_size, corner_frame_size);
+        glViewport(0, 0, corner_frame_size, corner_frame_size);
 
         // To make the axis appear over other objects: reserve a tiny bit of the
         // front depth range. NOTE: do remember to restore it later.
-        func_->glDepthRangef(0, 0.01f);
+        glDepthRangef(0, 0.01f);
 
         const mat4 &proj = transform::ortho(-1, 1, -1, 1, -1, 1);
         const mat4 &view = camera_->orientation().inverse().matrix();
@@ -905,8 +904,8 @@ namespace easy3d {
         program->release();
 
         // restore the viewport
-        func_->glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
-        func_->glDepthRangef(0.0f, 1.0f);
+        glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+        glDepthRangef(0.0f, 1.0f);
     }
 
 
@@ -914,7 +913,7 @@ namespace easy3d {
         // The Qt6 documentation says (https://doc.qt.io/qt-6/qopenglwidget.html#paintGL):
         //      Default implementation performs a glClear(). Subclasses are not expected to invoke
         //      the base class implementation and should perform clearing on their own.
-        func_->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     }
 
 

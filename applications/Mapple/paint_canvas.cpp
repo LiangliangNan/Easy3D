@@ -169,17 +169,16 @@ void PaintCanvas::init() {
 
 void PaintCanvas::initializeGL() {
     QOpenGLWidget::initializeGL();
-    QOpenGLFunctions* func = context()->functions();
-    func->initializeOpenGLFunctions();
+    initializeOpenGLFunctions();
 
     OpenglUtil::init();
 #ifndef NDEBUG
     opengl::setup_gl_debug_callback();
 #endif
 
-    if (!func->hasOpenGLFeature(QOpenGLFunctions::Multisample))
+    if (!hasOpenGLFeature(QOpenGLFunctions::Multisample))
         throw std::runtime_error("Multisample not supported on this machine!!! Mapple may not run properly");
-    if (!func->hasOpenGLFeature(QOpenGLFunctions::Framebuffers))
+    if (!hasOpenGLFeature(QOpenGLFunctions::Framebuffers))
         throw std::runtime_error(
                 "Framebuffer Object is not supported on this machine!!! Mapple may not run properly");
 
@@ -1057,7 +1056,7 @@ void PaintCanvas::adjustSceneRadius() {
 }
 
 
-vec3 PaintCanvas::pointUnderPixel(const QPoint &p, bool &found) const {
+vec3 PaintCanvas::pointUnderPixel(const QPoint &p, bool &found) {
     // Qt (same as GLFW) uses upper corner for its origin while GL uses the lower corner.
     int glx = p.x();
     int gly = height() - 1 - p.y();
