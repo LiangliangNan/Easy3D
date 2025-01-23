@@ -336,7 +336,7 @@ install(DIRECTORY
         "${Easy3D_INSTALL_RESOURCE_DIR}")
 
 install(FILES
-        "${Easy3D_ROOT}/ReadMe.md"
+	"${Easy3D_ROOT}/README.md"
         "${Easy3D_ROOT}/LICENSE"
         DESTINATION
         "${CMAKE_INSTALL_PREFIX}"
