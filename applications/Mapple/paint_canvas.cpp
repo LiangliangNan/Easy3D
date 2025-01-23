@@ -1335,11 +1335,16 @@ void PaintCanvas::postDraw() {
         if (rect.width() > 0 || rect.height() > 0) {
             // draw the boundary of the rect
             shape::draw_quad_wire(rect, vec4(0.0f, 0.0f, 1.0f, 1.0f), width(), height(), -1.0f);
-            // draw the transparent face
+
+            // draw the transparent face (have to backup and restore the blend state)
+            GLboolean last_enable_blend = glIsEnabled(GL_BLEND);
+            GLenum last_blend_src; glGetIntegerv(GL_BLEND_SRC, (GLint*)&last_blend_src);
+            GLenum last_blend_dst; glGetIntegerv(GL_BLEND_DST, (GLint*)&last_blend_dst);
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             shape::draw_quad_filled(rect, vec4(0.0f, 0.0f, 1.0f, 0.2f), width(), height(), -0.9f);
-            glDisable(GL_BLEND);
+            if (last_enable_blend) glEnable(GL_BLEND); else glDisable(GL_BLEND);
+            glBlendFunc(last_blend_src, last_blend_dst);
         }
     }
 
