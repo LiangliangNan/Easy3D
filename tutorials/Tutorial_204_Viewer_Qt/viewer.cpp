@@ -26,6 +26,13 @@
 
 #include "viewer.h"
 
+#include <QKeyEvent>
+#include <QPainter>
+#include <QOpenGLContext>
+#include <QOpenGLFunctions>
+#include <QOpenGLFramebufferObjectFormat>
+#include <QApplication>
+
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/graph.h>
@@ -39,7 +46,6 @@
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
-#include <easy3d/renderer/read_pixel.h>
 #include <easy3d/renderer/opengl_util.h>
 #include <easy3d/renderer/opengl_error.h>
 #include <easy3d/renderer/texture_manager.h>
@@ -50,13 +56,6 @@
 #include <easy3d/util/logging.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/setting.h>
-
-#include <QKeyEvent>
-#include <QPainter>
-#include <QOpenGLContext>
-#include <QOpenGLFunctions>
-#include <QOpenGLFramebufferObjectFormat>
-#include <QApplication>
 
 
 namespace easy3d {
@@ -738,44 +737,83 @@ namespace easy3d {
 
 
     vec3 Viewer::pointUnderPixel(const QPoint &p, bool &found) {
-        const_cast<Viewer *>(this)->makeCurrent();
+    // Liangliang: Qt6's QOpenGLWidget implementation is a black box. Using glReadPixels to read the depth buffer
+    //      outside the paintGL() function has some undefined behaviors, even I made sure the context is made
+    //      current and the defaultFramebufferObject() is bound. Below is what I observed:I guess might be the reason:
+    //        - it works well on macOS and Ubuntu, but not on Windows; it works on all three platforms if Qt5 is used;
+    //        - on Windows, it works if the glReadPixels is called within the paintGL() function;
+    //        - on Windows, when the function is called outside paintGL(), if saving the obtained depth buffer to an
+    //          image, only some edge(s) of the image show correct depth information, and the majority part of the
+    //          depth image shows black and very sparse white pixels.
+    //      I guess the reason might be
+    //        - Depth buffer clearing: on some platforms (e.g., Windows), the depth buffer may be cleared or invalidated
+    //          when Qt performs post rendering operations (e.g., compositing).
+    //        - Driver specific implementation: Windows drivers may optimize FBO usage differently, especially if
+    //          rendering results are only needed for display. This could affect the depth buffer availability outside
+    //          paintGL().
+    //      These platform-specific behaviors are hard to resolve without fully understanding the source code of the
+    //      QOpenGLWidget class. It is bad the Qt keeps such implementation private, and it may change over the time.
+    //
+    //      Solution: rendering into my own framebuffer object with only a depth attachment and then reading the depth
+    //      values. This ensures we have full control over the depth buffer and avoids relying on the QOpenGLWidget's
+    //      internal framebuffer.
 
-        // Qt (same as GLFW) uses upper corner for its origin while GL uses the lower corner.
-        int glx = p.x();
-        int gly = height() - 1 - p.y();
+    makeCurrent();
 
-        // NOTE: when dealing with OpenGL, all positions are relative to the viewer port.
-        //       So we have to handle highdpi displays.
-        glx = static_cast<int>(static_cast<float>(glx) * dpiScaling());
-        gly = static_cast<int>(static_cast<float>(gly) * dpiScaling());
+    int viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    const int w = viewport[2];
+    const int h = viewport[3];
 
-        int samples = 0;
-        glGetIntegerv(GL_SAMPLES, &samples);
-        easy3d_debug_log_gl_error
+    // Create an FBO with a depth attachment
+    QOpenGLFramebufferObjectFormat format;
+    format.setAttachment(QOpenGLFramebufferObject::Depth);
+    format.setSamples(0); // No multisampling
+    QOpenGLFramebufferObject fbo(w, h, format);
 
-        float depth = 1.0f;
-        if (samples > 0) {
-            opengl::read_depth_ms(depth, glx, gly);
-            easy3d_debug_log_gl_error
-        } else {
-            opengl::read_depth(depth, glx, gly);
-            easy3d_debug_log_gl_error
-        }
-
-        const_cast<Viewer *>(this)->doneCurrent();
-        // here the glGetError() won't work because the OpenGL context is not current.
-        // easy3d_debug_log_gl_error
-
-        found = depth < 1.0f;
-        if (found) {
-            // The input to unprojectedCoordinatesOf() is defined in the screen coordinate system
-            vec3 point(static_cast<float>(p.x()), static_cast<float>(p.y()), depth);
-            point = camera_->unprojectedCoordinatesOf(point);
-            return point;
-        }
-
-        return {};
+    // Bind the framebuffer
+    fbo.bind();
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        std::cerr << "Framebuffer is not complete!" << std::endl;
+        return vec3(0, 0, 0);
     }
+
+    // Configure OpenGL state for rendering
+    GLboolean last_enable_depth_test = glIsEnabled(GL_DEPTH_TEST);
+    if (!last_enable_depth_test)
+        glEnable(GL_DEPTH_TEST);
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    // Render the scene
+    draw();
+
+    // Read the depth buffer
+    // Qt (same as GLFW) uses upper corner for its origin while GL uses the lower corner.
+    int glx = p.x();
+    int gly = height() - 1 - p.y();
+    // when dealing with OpenGL, all positions are relative to the viewer port. So we have to handle highdpi displays.
+    glx = static_cast<int>(static_cast<float>(glx) * dpiScaling());
+    gly = static_cast<int>(static_cast<float>(gly) * dpiScaling());
+    float depth = std::numeric_limits<float>::max();
+    glReadPixels(glx, gly, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+
+    // Unbind the framebuffer
+    fbo.release();
+
+    // Restore previous depth test states
+    if (!last_enable_depth_test)
+        glDisable(GL_DEPTH_TEST);
+
+    doneCurrent();
+
+    found = depth < 1.0f;
+    if (found) {
+        // The input to unprojectedCoordinatesOf() is defined in the screen coordinate system
+        return camera_->unprojectedCoordinatesOf(vec3(static_cast<float>(p.x()), static_cast<float>(p.y()), depth));
+    }
+
+    return {};
+}
 
 
     void Viewer::paintGL() {

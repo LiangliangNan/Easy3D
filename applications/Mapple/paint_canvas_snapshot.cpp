@@ -67,8 +67,8 @@ bool PaintCanvas::saveSnapshot(int w, int h, int samples, const QString &file_na
         return false;
     }
 
-    int sub_w = static_cast<int>(static_cast<float>(width()) * dpi_scaling());
-    int sub_h = static_cast<int>(static_cast<float>(height()) * dpi_scaling());
+    int sub_w = static_cast<int>(static_cast<float>(width()) * dpiScaling());
+    int sub_h = static_cast<int>(static_cast<float>(height()) * dpiScaling());
 
     double aspectRatio = sub_w / static_cast<double>(sub_h);
     double newAspectRatio = w / static_cast<double>(h);
@@ -277,8 +277,8 @@ void PaintCanvas::recordAnimation(const QString &file_name, int fps, int bit_rat
     const auto &frames = kfi->interpolate();
     makeCurrent();
 
-    const int fw = static_cast<int>(static_cast<float>(w) * dpi_scaling());
-    const int fh = static_cast<int>(static_cast<float>(h) * dpi_scaling());
+    const int fw = static_cast<int>(static_cast<float>(w) * dpiScaling());
+    const int fh = static_cast<int>(static_cast<float>(h) * dpiScaling());
 
 #ifdef USE_QT_FBO
     QOpenGLFramebufferObjectFormat format;
@@ -406,8 +406,8 @@ void PaintCanvas::recordAnimation(const QString &file_name, int, int, bool bk_wh
     // temporarily don't allow updating rendering when the camera parameters are changing.
     easy3d::disconnect_all(&camera_->frame_modified);
 
-    const int fw = w * dpi_scaling();
-    const int fh = h * dpi_scaling();
+    const int fw = w * dpiScaling();
+    const int fh = h * dpiScaling();
     const auto &frames = kfi->interpolate();
     makeCurrent();
 

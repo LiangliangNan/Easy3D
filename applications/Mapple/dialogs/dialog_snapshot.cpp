@@ -57,8 +57,8 @@ DialogSnapshot::DialogSnapshot(MainWindow *window)
 
 void DialogSnapshot::computeImageSize() {
     double scale = doubleSpinBoxImageScale->value();
-    int w = static_cast<int>(viewer_->width() * viewer_->dpi_scaling() * scale);
-    int h = static_cast<int>(viewer_->height() * viewer_->dpi_scaling() * scale);
+    int w = static_cast<int>(viewer_->width() * viewer_->dpiScaling() * scale);
+    int h = static_cast<int>(viewer_->height() * viewer_->dpiScaling() * scale);
     spinBoxImageWidth->setValue(w);
     spinBoxImageHeight->setValue(h);
 }

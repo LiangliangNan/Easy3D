@@ -26,8 +26,15 @@
 
 
 #include "paint_canvas.h"
-#include "main_window.h"
-#include "walk_through.h"
+
+#include <limits>
+
+#include <QKeyEvent>
+#include <QOpenGLFunctions>
+#include <QApplication>
+#include <QClipboard>
+#include <QStatusBar>
+#include <QOpenGLFramebufferObject>
 
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/point_cloud.h>
@@ -47,7 +54,6 @@
 #include <easy3d/renderer/soft_shadow.h>
 #include <easy3d/renderer/dual_depth_peeling.h>
 #include <easy3d/renderer/eye_dome_lighting.h>
-#include <easy3d/renderer/read_pixel.h>
 #include <easy3d/renderer/opengl_util.h>
 #include <easy3d/renderer/opengl_error.h>
 #include <easy3d/renderer/clipping_plane.h>
@@ -67,13 +73,8 @@
 #include <easy3d/util/dialog.h>
 #include <easy3d/util/setting.h>
 
-#include <limits>
-
-#include <QKeyEvent>
-#include <QOpenGLFunctions>
-#include <QApplication>
-#include <QClipboard>
-#include <QStatusBar>
+#include "main_window.h"
+#include "walk_through.h"
 
 
 using namespace easy3d;
@@ -213,7 +214,7 @@ void PaintCanvas::initializeGL() {
 #else
     dpi_scaling_ = static_cast<float>(devicePixelRatio());
 #endif
-    VLOG(1) << "DPI scaling: " << dpi_scaling();
+    VLOG(1) << "DPI scaling: " << dpiScaling();
 
     // This won't work because QOpenGLWidget draws everything in framebuffer and
     // the framebuffer has not been created in the initializeGL() method. We
@@ -222,7 +223,7 @@ void PaintCanvas::initializeGL() {
     //glgetintegerv(gl_samples, &samples_received);
 
     // create TextRenderer renderer and load default fonts
-    texter_ = new TextRenderer(dpi_scaling());
+    texter_ = new TextRenderer(dpiScaling());
     texter_->add_font(resource::directory() + "/fonts/en_Earth-Normal.ttf");
     texter_->add_font(resource::directory() + "/fonts/en_Roboto-Medium.ttf");
 
@@ -1057,31 +1058,74 @@ void PaintCanvas::adjustSceneRadius() {
 
 
 vec3 PaintCanvas::pointUnderPixel(const QPoint &p, bool &found) {
+    // Liangliang: Qt6's QOpenGLWidget implementation is a black box. Using glReadPixels to read the depth buffer
+    //      outside the paintGL() function has some undefined behaviors, even I made sure the context is made
+    //      current and the defaultFramebufferObject() is bound. Below is what I observed:I guess might be the reason:
+    //        - it works well on macOS and Ubuntu, but not on Windows; it works on all three platforms if Qt5 is used;
+    //        - on Windows, it works if the glReadPixels is called within the paintGL() function;
+    //        - on Windows, when the function is called outside paintGL(), if saving the obtained depth buffer to an
+    //          image, only some edge(s) of the image show correct depth information, and the majority part of the
+    //          depth image shows black and very sparse white pixels.
+    //      I guess the reason might be
+    //        - Depth buffer clearing: on some platforms (e.g., Windows), the depth buffer may be cleared or invalidated
+    //          when Qt performs post rendering operations (e.g., compositing).
+    //        - Driver specific implementation: Windows drivers may optimize FBO usage differently, especially if
+    //          rendering results are only needed for display. This could affect the depth buffer availability outside
+    //          paintGL().
+    //      These platform-specific behaviors are hard to resolve without fully understanding the source code of the
+    //      QOpenGLWidget class. It is bad the Qt keeps such implementation private, and it may change over the time.
+    //
+    //      Solution: rendering into my own framebuffer object with only a depth attachment and then reading the depth
+    //      values. This ensures we have full control over the depth buffer and avoids relying on the QOpenGLWidget's
+    //      internal framebuffer.
+
+    makeCurrent();
+
+    int viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    const int w = viewport[2];
+    const int h = viewport[3];
+
+    // Create an FBO with a depth attachment
+    QOpenGLFramebufferObjectFormat format;
+    format.setAttachment(QOpenGLFramebufferObject::Depth);
+    format.setSamples(0); // No multisampling
+    QOpenGLFramebufferObject fbo(w, h, format);
+
+    // Bind the framebuffer
+    fbo.bind();
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        std::cerr << "Framebuffer is not complete!" << std::endl;
+        return vec3(0, 0, 0);
+    }
+
+    // Configure OpenGL state for rendering
+    GLboolean last_enable_depth_test = glIsEnabled(GL_DEPTH_TEST);
+    if (!last_enable_depth_test)
+        glEnable(GL_DEPTH_TEST);
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    // Render the scene
+    draw();
+
+    // Read the depth buffer
     // Qt (same as GLFW) uses upper corner for its origin while GL uses the lower corner.
     int glx = p.x();
     int gly = height() - 1 - p.y();
-
-    // NOTE: when dealing with OpenGL, all positions are relative to the viewer port.
-    //       So we have to handle highdpi displays.
-    glx = static_cast<int>(static_cast<float>(glx) * dpi_scaling());
-    gly = static_cast<int>(static_cast<float>(gly) * dpi_scaling());
-
-    const_cast<PaintCanvas *>(this)->makeCurrent();
-
-    int samples = 0;
-    glGetIntegerv(GL_SAMPLES, &samples);
-    easy3d_debug_log_gl_error
-
+    // when dealing with OpenGL, all positions are relative to the viewer port. So we have to handle highdpi displays.
+    glx = static_cast<int>(static_cast<float>(glx) * dpiScaling());
+    gly = static_cast<int>(static_cast<float>(gly) * dpiScaling());
     float depth = std::numeric_limits<float>::max();
-    if (samples > 0) {
-        opengl::read_depth_ms(depth, glx, gly);
-        easy3d_debug_log_gl_error
-    } else {
-        opengl::read_depth(depth, glx, gly);
-        easy3d_debug_log_gl_error
-    }
+    glReadPixels(glx, gly, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
 
-    const_cast<PaintCanvas *>(this)->doneCurrent();
+    // Unbind the framebuffer
+    fbo.release();
+
+    // Restore previous depth test states
+    if (!last_enable_depth_test)
+        glDisable(GL_DEPTH_TEST);
+
+    doneCurrent();
 
     found = depth < 1.0f;
     if (found) {
@@ -1176,7 +1220,7 @@ void PaintCanvas::drawCornerAxes() {
     int viewport[4];
     glGetIntegerv(GL_VIEWPORT, viewport);
 
-    static const int corner_frame_size = static_cast<int>(100 * dpi_scaling());
+    static const int corner_frame_size = static_cast<int>(100 * dpiScaling());
     glViewport(0, 0, corner_frame_size, corner_frame_size);
 
     // To make the axis appear over other objects: reserve a tiny bit of the
@@ -1242,8 +1286,8 @@ void PaintCanvas::drawPickedFaceAndItsVerticesIDs() {
         face_center += p;
         const vec3 proj = camera()->projectedCoordinatesOf(manip * p);
         texter_->draw("v" + std::to_string(v.idx()),
-                      static_cast<int>(proj.x) * dpi_scaling(),
-                      static_cast<int>(proj.y) * dpi_scaling(),
+                      static_cast<int>(proj.x) * dpiScaling(),
+                      static_cast<int>(proj.y) * dpiScaling(),
                       font_size, font_id, vec3(0, 0, 1)
         );
         ++valence;
@@ -1252,8 +1296,8 @@ void PaintCanvas::drawPickedFaceAndItsVerticesIDs() {
     // draw label for the picked face
     const vec3 proj = camera()->projectedCoordinatesOf(manip * (face_center / valence));
     texter_->draw("f" + std::to_string(picked_face_index_),
-                  static_cast<int>(proj.x) * dpi_scaling(),
-                  static_cast<int>(proj.y) * dpi_scaling(),
+                  static_cast<int>(proj.x) * dpiScaling(),
+                  static_cast<int>(proj.y) * dpiScaling(),
                   font_size, font_id, vec3(0, 1, 0)
     );
     easy3d_debug_log_gl_error
@@ -1275,8 +1319,8 @@ void PaintCanvas::drawPickedVertexID() {
     vec3 pos = cloud->position(vertex);
     pos = camera()->projectedCoordinatesOf(manip * pos);
     texter_->draw("v" + std::to_string(picked_vertex_index_),
-                  static_cast<int>(pos.x) * dpi_scaling(),
-                  static_cast<int>(pos.y) * dpi_scaling(),
+                  static_cast<int>(pos.x) * dpiScaling(),
+                  static_cast<int>(pos.y) * dpiScaling(),
                   font_size, font_id, vec3(0, 0, 1)
     );
     easy3d_debug_log_gl_error
@@ -1297,7 +1341,7 @@ void PaintCanvas::postDraw() {
     // draw the Easy3D logo and frame rate
     if (show_easy3d_logo_ && texter_ && texter_->num_fonts() >=2) {
         const float font_size = 15.0f;
-        const float offset = 20.0f * dpi_scaling();
+        const float offset = 20.0f * dpiScaling();
         texter_->draw("Easy3D", offset, offset, font_size, 0);
     }
 
@@ -1315,7 +1359,7 @@ void PaintCanvas::postDraw() {
 
         // draw frame rate text using Easy3D's built-in TextRenderer
         if (texter_ && texter_->num_fonts() >=2)
-            texter_->draw(fps_string.toStdString(), 20.0f * dpi_scaling(), 50.0f * dpi_scaling(), 16, 1);
+            texter_->draw(fps_string.toStdString(), 20.0f * dpiScaling(), 50.0f * dpiScaling(), 16, 1);
     }
 
     // shown only when it is not animating

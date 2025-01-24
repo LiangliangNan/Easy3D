@@ -70,7 +70,7 @@ public:
 	int samples() const { return samples_; }
 
     // Scaling factor for high DPI devices
-    float dpi_scaling() const { return dpi_scaling_; }
+    float dpiScaling() const { return dpi_scaling_; }
 
     const easy3d::vec4& backGroundColor() const { return background_color_; }
     void setBackgroundColor(const easy3d::vec4& c);
