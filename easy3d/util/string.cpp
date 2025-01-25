@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <cstdarg>
 #include <iomanip>
+#include <cmath> // for std::isnan
 #include <codecvt>
 #include <ctime>
 #include <chrono>
