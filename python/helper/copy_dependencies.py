@@ -148,6 +148,8 @@ def copy_dependencies(target_binary: str, target_binary_dir: str, destination: s
                 # Copy the dependency to the destination directory
                 try:
                     shutil.copy2(dep_path, destination)
+                    # Print the copy operation
+                    print(f"{dep_path} -> {os.path.join(destination, os.path.basename(dep_path))}")
                     # Write dependency path to the file (only if not already written)
                     if dep_path not in resolved_dependencies:
                         with open(dependencies_file_path, 'a') as dependencies_file:
