@@ -205,9 +205,14 @@ namespace easy3d {
 
         /**
          * \brief Generates data (points, normals, and colors) for a 3D sphere.
-         * \param radius: the radius of the sphere.
-         * \param slices: the number of subdivisions around the z axis (similar to lines of longitude).
-         * \param stacks: the number of subdivisions along the z axis(similar to lines of latitude).
+         * \param center the center of the sphere.
+         * \param radius the radius of the sphere.
+         * \param slices the number of subdivisions around the z axis (similar to lines of longitude).
+         * \param stacks the number of subdivisions along the z axis(similar to lines of latitude).
+         * \param color the color of the sphere.
+         * \param points the points to be returned.
+         * \param normals the normals to be returned.
+         * \param colors the colors to be returned.
          */
         void create_sphere(
                 const vec3 &center, double radius, int slices, int stacks, const vec3 &color,
@@ -216,11 +221,16 @@ namespace easy3d {
 
         /**
          * \brief Generates data (points, normals, and colors) for a 3D checker sphere.
+         * \param center: the center of the sphere.
          * \param radius: the radius of the sphere.
-         * \param slices: the number of subdivisions around the z axis (similar to lines of longitude).
-         * \param stacks: the number of subdivisions along the z axis(similar to lines of latitude).
-         * \param checker_size: how many tiles each checker will occupy
-         * \param color1 and color2: the two interchanging colors
+         * \param slices the number of subdivisions around the z axis (similar to lines of longitude).
+         * \param stacks the number of subdivisions along the z axis(similar to lines of latitude).
+         * \param checker_size how many tiles each checker will occupy.
+         * \param color1 one of the two interchanging colors.
+         * \param color2 the other one of the two interchanging colors.
+         * \param points the points to be returned.
+         * \param normals the normals to be returned.
+         * \param colors the colors to be returned.
          */
         void create_checker_sphere(
                 const vec3 &center, double radius, int slices, int stacks, int checker_size,
@@ -230,6 +240,14 @@ namespace easy3d {
 
         /**
          * \brief Prepares data (points, normals, and colors) for a 3D cylinder defined by two 3D points s and t.
+         * \param radius The radius of the cylinder.
+         * \param slices The number of subdivisions around the z axis (similar to lines of longitude).
+         * \param s The base center.
+         * \param t The top center.
+         * \param color The color of the cylinder.
+         * \param points The points to be returned.
+         * \param normals The normals to be returned.
+         * \param colors The colors to be returned.
          */
         void create_cylinder(
                 double radius, int slices, const vec3 &s, const vec3 &t, const vec3 &color,
@@ -238,7 +256,14 @@ namespace easy3d {
 
         /**
          * \brief Prepares data (points, normals, and colors) for a 3D cone defined by two 3D points b and t.
-         * s is the base center and t is the tip.
+         * \param radius The radius of the cone.
+         * \param slices The number of subdivisions around the z axis (similar to lines of longitude).
+         * \param s The base center.
+         * \param t The top center.
+         * \param color The color of the cone.
+         * \param points The points to be returned.
+         * \param normals The normals to be returned.
+         * \param colors The colors to be returned.
          */
         void create_cone(
                 double radius, int slices, const vec3 &s, const vec3 &t, const vec3 &color,
@@ -260,6 +285,7 @@ namespace easy3d {
 
         /**
          * \brief Generates data (points) for representing a camera in the 3D world as a set of lines.
+         * \param points The points to be returned.
          * \param width The width of the camera. A good value can be 5% of the scene radius, or 10% of the
          *      character height (in walking mode).
          * \param fov The vertical field of view of the camera (in radians).
@@ -269,6 +295,8 @@ namespace easy3d {
 
         /**
          * \brief Prepares data (points) for representing a camera in the 3D world as a set of triangles.
+         * \param points The points to be returned.
+         * \param indices The vertex indices to be returned.
          * \param width The width of the camera. A good value can be 5% of the scene radius, or 10% of the
          *      character height (in walking mode).
          * \param fov The vertical field of view of the camera (in radians).

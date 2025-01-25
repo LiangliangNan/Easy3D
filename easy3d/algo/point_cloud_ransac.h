@@ -97,11 +97,13 @@ namespace easy3d {
 
 
         /**
-         * \brief Extract primitives from a subset of a point cloud..
-         * \details The extracted primitives are stored as properties:
-         *      - "v:primitive_type"  (one of PLANE, SPHERE, CYLINDER, CONE, TORUS, and UNKNOWN)
-         *      - "v:primitive_index" (-1, 0, 1, 2...). -1 meaning a vertex does not belong to any primitive (thus its
-         *        primitive_type must be UNKNOWN.
+         * \brief Extract primitives from a subset of a point cloud.
+         * \details The extracted primitives are stored as per-vertex properties:
+         *          - "v:primitive_type"  (one of PLANE, SPHERE, CYLINDER, CONE, TORUS, and UNKNOWN)
+         *          - "v:primitive_index" (-1, 0, 1, 2...). -1 meaning a vertex does not belong to any primitive (thus
+         *            its primitive_type must be UNKNOWN.
+         *      In addition to the primitive information stored as properties, the parameters of the detected primitives
+         *      can also be queried using this functions. \see get_planes, get_cylinders.
          * \param cloud The input point cloud.
          * \param vertices The indices of the subset of the input point cloud.
          * \param min_support The minimal number of points required for a primitive.
@@ -121,8 +123,9 @@ namespace easy3d {
                 float overlook_probability = 0.001f
         );
         
-        // In addition to the primitive information (primitive type and index stored as per-vertex properties, 
-        // the parameters of the detected primitives can be queried using the perspective functions.
+        /**
+         * \brief Information about a plane primitive.
+         */
         struct PlanePrim {
             int primitive_index;            // the index of this plane (w.r.t. the entire list of detected primitives)
             std::vector<int> vertices;      // the vertex indices (w.r.t. the point cloud) of this plane
@@ -130,8 +133,14 @@ namespace easy3d {
             vec3  position; 
             vec3  normal;
         };
+        /**
+         * \brief Get the detected planes.
+         */
         const std::vector<PlanePrim>& get_planes() const { return plane_primitives_; }
 
+        /**
+         * \brief Information about a cylinder primitive.
+         */
         struct CylinderPrim {
             int primitive_index;            // the index of this cylinder w.r.t. the entire list of detected primitives
             std::vector<int> vertices;      // the vertex indices (w.r.t. the point cloud) of this cylinder
@@ -139,6 +148,9 @@ namespace easy3d {
             vec3  position;
             vec3  direction;
         };
+        /**
+         * Get the detected cylinders.
+         */
         const std::vector<CylinderPrim>& get_cylinders() const { return cylinder_primitives_; }
 
     private:

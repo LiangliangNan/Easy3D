@@ -161,6 +161,7 @@ namespace easy3d {
          * \param model Specifies the model-view matrix.
          * \param proj  Specifies the projection matrix.
          * \param viewport Specifies the viewport.
+         * \param lowerleft Specifies whether the origin is in the lower corner (true) or upper corner (false).
          * \note OpenGL uses the lower corner for its origin while other software (e.g., Qt) may use upper corner.
          * \return The computed object coordinates.
          */
@@ -170,6 +171,7 @@ namespace easy3d {
          * \param win   Specifies the window coordinates to be mapped.
          * \param mvp   Specifies the model-view-projection matrix, i.e., mvp = projection * model_view.
          * \param viewport Specifies the viewport.
+         * \param lowerleft Specifies whether the origin is in the lower corner (true) or upper corner (false).
          * \note OpenGL uses the lower corner for its origin while other software (e.g., Qt) may use upper corner.
          * \return The computed object coordinates.
          */

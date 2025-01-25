@@ -130,7 +130,7 @@ namespace easy3d {
             return string_stream.str();
         }
 
-
+        // \cond
         void append_v(std::string &dst, const char *format, va_list ap) {
             // First try with a small fixed size buffer.
             static const int kFixedBufferSize = 1024;
@@ -180,7 +180,7 @@ namespace easy3d {
             }
             delete[] variable_buffer;
         }
-
+        // \endcond
 
         std::string printf(const char *format, ...) {
             va_list ap;

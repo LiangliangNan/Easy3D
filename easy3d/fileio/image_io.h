@@ -40,41 +40,34 @@ namespace easy3d {
 	{
 	public:
         /**
-         * \brief Load image data from a file. The following formats are supported:
-         *        JPG/JPEG, PNG, BMP, PSD, TGA, GIF, HDR, PNM (.ppm and .pgm). File format is
-         *        determined by the file extension given in the file name.
-         *
+         * \brief Load image data from a file.
+         * \details  The following formats are supported: JPG/JPEG, PNG, BMP, PSD, TGA, GIF, HDR, PNM (.ppm and .pgm).
+         *		The file format is determined by the file extension given in the file name.
          * \param file_name The image file to load.
-         * \param data  Outputs the image data. Data will be empty if the specified image file
-         *              doesn't exist, allocation failed, or the image is corrupt or invalid.
-         *              The image data returned is a 1D array of 'unsigned char' which points
-         *              to the pixel data, or empty when failed. The pixel data consists of
-         *              'height' scanlines of 'width' pixels, with each pixel consisting of N
-         *              interleaved 8-bit channels/components; the first pixel pointed to is
-         *              top-left-most in the image. There is no padding between image scanlines
-         *              or between pixels, regardless of format. The number of channels N is
-         *              'requested_channels' if it is non-zero, or 'channels' otherwise.
-         *              An output image with N components has the following components interleaved
-         *              in this order in each pixel:
-         *                  N=#channels     components
-         *                  1               grey
-         *                  2               grey, alpha
-         *                  3               red, green, blue
-         *                  4               red, green, blue, alpha
-         *
+         * \param data  Outputs the image data. Data will be empty if the specified image file doesn't exist, allocation
+         *		failed, or the image is corrupt or invalid. The image data returned is a 1D array of 'unsigned char'
+         *		which points to the pixel data, or empty when failed. The pixel data consists of 'height' scanlines of
+         *		'width' pixels, with each pixel consisting of N interleaved 8-bit channels/components; the first pixel
+         *		points to the top-left-most in the image. There is no padding between image scanlines or between pixels,
+         *      regardless of format. The number of channels N is 'requested_channels' if it is non-zero, or 'channels'
+         *      otherwise. An output image with N channels has the following components interleaved in this order in
+         *      each pixel:
+    	 *          | N (Channels) | Components              |
+		 *          |--------------|-------------------------|
+		 *          | 1            | Grey                    |
+		 *          | 2            | Grey, Alpha             |
+		 *          | 3            | Red, Green, Blue        |
+		 *          | 4            | Red, Green, Blue, Alpha |
          * \param width Outputs image width in pixels. Unchanged if failed.
          * \param height Outputs image height in pixels. Unchanged if failed.
          * \param channels Outputs the number of 8-bit image channels per pixel. Unchanged if failed.
-         * \param requested_channels User requested image channels. If non-zero, force to treat the
-         *                           image as if it has this number of components. For example, if
-         *                           you set it 4,  you will always get RGBA output, but you can check
-         *                           channels to get the actual number of channels.
-         * \param flip_vertically Flip the image data vertically if it is true (default value). This
-         *                        is convenient for OpenGL applications where the first pixel in the
-         *                        output array is expected to be the bottom left corner of the image.
-         *
+         * \param requested_channels User requested image channels. If non-zero, force to treat the image as if it has
+         *		this number of components. For example, if you set it 4,  you will always get RGBA output, but you can
+         *		check channels to get the actual number of channels.
+         * \param flip_vertically Flip the image data vertically if it is true (default value). This is convenient for
+         *		OpenGL applications where the first pixel in the output array is expected to be the bottom left corner
+         *		of the image.
          * \return true on success or false if failed.
-         *
          * Example usage:
          *      \code
          *			int width, height, channels;
@@ -94,22 +87,22 @@ namespace easy3d {
                 );
 
         /**
-         * \brief Write image data into a file. The following formats are supported
-         *        JPG/JPEG, PNG, BMP, and TGA. File format is determined by the file
-         *        extension given in the file name.
+         * \brief Write image data into a file.
+         * \details The following formats are supported JPG/JPEG, PNG, BMP, and TGA. The file format is determined by
+         *		the file extension given in the file name.
          *
          * \param file_name The file to which the image data will be saved.
-         * \param data  The image data. The image data storage must follow
-         *                  N=#channels     components
-         *                  1               grey
-         *                  2               grey, alpha
-         *                  3               red, green, blue
-         *                  4               red, green, blue, alpha
+         * \param data  The image data. The image data storage must follow:
+		 *                  | N (Channels) | Components              |
+		 *                  |--------------|-------------------------|
+		 *                  | 1            | Grey                    |
+		 *                  | 2            | Grey, Alpha             |
+		 *                  | 3            | Red, Green, Blue        |
+		 *                  | 4            | Red, Green, Blue, Alpha |
          * \param width The width of the image, in pixels.
          * \param height The height of the image, in pixels.
          * \param channels The number of 8-bit image channels per pixel.
          * \param flip_vertically Flip the image data vertically before writing.
-         *
          * \return Return true on success or false if failed.
          */
         static bool	save(

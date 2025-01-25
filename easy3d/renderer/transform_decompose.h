@@ -56,10 +56,10 @@ namespace easy3d {
 
         /**
          * @brief Decomposes a transformation matrix (M = translation * rotation * scaling) into its original components.
-         *  @param M is the input transformation matrix
-         *  @param scaling receives the output scaling for the x, y, z axes
-         *  @param rotation a matrix that receives the output rotation
-         *  @param translation receives the output translation for the x, y, z axes
+         *  @param M The input transformation matrix.
+         *  @param scaling The output scaling for the x, y, z axes
+         *  @param rotation The output rotation.
+         *  @param translation The output translation for the x, y, z axes
          * \note This function cannot handle skew and perspective transformation. See the overloaded function with skew and perspective.
          * \todo Add functions that extract single components, i.e.,
          *      - Quat extract_rotation(const mat4& M);
@@ -70,8 +70,9 @@ namespace easy3d {
 
         /**
          * @brief Decomposes a transformation matrix without scaling (M = translation * rotation) into its original components.
-         *  @param rotation receives the output rotation
-         *  @param translation receives the output translation for the x, y, z axes
+         * @param M The input transformation matrix.
+         * @param rotation The output rotation.
+         * @param translation The output translation for the x, y, z axes
          * \note This function cannot handle scaling, skew, and perspective transformation. See the overloaded function with scaling, skew, and perspective.
          * \todo Add functions that extract single components, i.e.,
          *      - Quat  extract_rotation(const mat4& M);
