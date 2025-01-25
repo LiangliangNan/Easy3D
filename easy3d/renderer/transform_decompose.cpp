@@ -80,17 +80,8 @@ namespace easy3d {
         }
 
 
-        void decompose(const mat4& M, vec3& scaling, quat& rotation, vec3& translation) {
-            mat3 R;
-            decompose(M, scaling, R, translation);
-
-            // and generate the rotation quaternion from it
-            rotation.set_from_rotation_matrix(R);
-        }
-
-
         // Code taken from assimp/matrix4x4.inl
-        void decompose_no_scaling(const mat4& M, mat3& rotation, vec3& translation) {
+        void decompose(const mat4& M, mat3& rotation, vec3& translation) {
             const mat4& _this = M;
 
             // extract translation
@@ -100,15 +91,6 @@ namespace easy3d {
 
             // extract rotation
             rotation = mat3(_this);
-        }
-
-
-        void decompose_no_scaling(const mat4& M, quat& rotation, vec3& translation) {
-            mat3 R;
-            decompose_no_scaling(M, R, translation);
-
-            // and generate the rotation quaternion from it
-            rotation.set_from_rotation_matrix(R);
         }
 
 

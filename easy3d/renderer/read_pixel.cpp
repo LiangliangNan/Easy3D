@@ -57,7 +57,7 @@ namespace easy3d {
 		// read color value at pixel (x, y) from current FBO.
 		// NOTE: (x, y) - the pixel coordinates, which are in the OpenGL coordinate system. 
 		// see http://stackoverflow.com/questions/765434/glreadpixels-from-fbo-fails-with-multisampling?rq=1
-		void read_color_ms(int index, unsigned char rgba[4], int x, int y)
+		void read_color_ms(unsigned char rgba[4], int x, int y)
 		{
 			glFinish();
 
@@ -80,7 +80,7 @@ namespace easy3d {
 			glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, 1, 1);				easy3d_debug_log_gl_error
 
 			// attach a render buffer to color attachment point
-			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index, GL_RENDERBUFFER, color_buffer);		easy3d_debug_log_frame_buffer_error
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, color_buffer);		easy3d_debug_log_frame_buffer_error
 
 			//--------------------------------------------------------------------------
 
@@ -265,7 +265,7 @@ namespace easy3d {
 
 
 		// read the color data of the framebuffer into a specified buffer.
-		void read_color_ms(int index, std::vector<unsigned char>& buffer, unsigned int format, bool flip_vertically /* = true */)
+		void read_color_ms(std::vector<unsigned char>& buffer, unsigned int format, bool flip_vertically /* = true */)
 		{
 			glFinish();
 
@@ -293,7 +293,7 @@ namespace easy3d {
 			glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, w, h);				easy3d_debug_log_gl_error
 
 			// attach a render buffer to color attachment point
-			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index, GL_RENDERBUFFER, color_buffer);		easy3d_debug_log_frame_buffer_error
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, color_buffer);		easy3d_debug_log_frame_buffer_error
 
 			//--------------------------------------------------------------------------
 
@@ -364,7 +364,7 @@ namespace easy3d {
 		}
 
 
-        void snapshot_color_ms(int index, const std::string& file_name)
+        void snapshot_color_ms(const std::string& file_name)
 		{
             int viewport[4];
             glGetIntegerv(GL_VIEWPORT, viewport);
@@ -379,19 +379,19 @@ namespace easy3d {
 
             const std::string& ext = file_system::extension(file_name, true);
             if (ext == "png" || ext == "jpg") {
-                read_color_ms(index, bits, GL_RGBA, true);
+                read_color_ms(bits, GL_RGBA, true);
                 ImageIO::save(file_name, bits, w, h, 4);
             }
             else if (ext == "ppm") {
-                read_color_ms(index, bits, GL_RGB, true);
+                read_color_ms(bits, GL_RGB, true);
                 io::save_ppm(file_name, bits, w, h);
             }
             else if (ext == "bmp") {
-                read_color_ms(index, bits, GL_BGRA, true);
+                read_color_ms(bits, GL_BGRA, true);
                 io::save_bmp(file_name, bits, w, h);
             }
             else if (ext == "tga") {
-                read_color_ms(index, bits, GL_BGRA, true);
+                read_color_ms(bits, GL_BGRA, true);
                 io::save_tga(file_name, bits, w, h);
             }
             else

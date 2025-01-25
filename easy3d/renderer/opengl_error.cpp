@@ -34,8 +34,9 @@ namespace easy3d {
 
     namespace opengl {
 
+        // \cond
         // Convert an OpenGL error code into a descriptive string.
-        inline const char* gl_error_string(GLenum code) {
+        inline std::string gl_error_string(GLenum code) {
             switch (code)
             {
             case GL_NO_ERROR:
@@ -66,46 +67,41 @@ namespace easy3d {
         }
 
 
-        bool check_gl_error(const std::string& file, const std::string& function, int line) {
+        bool check_gl_error(const std::string& file, const std::string& function, int line, std::ostream& os) {
             GLenum error_code = glGetError();
             if (error_code != GL_NO_ERROR) {
-                const std::string& msg = gl_error_string(error_code);
-                LOG(ERROR) << "GL error: \n"
-                           << "\tfile: " << file_system::simple_name(file) << std::endl
-                           << "\tline: " << line << std::endl
-                           << "\tfunction: " << function << std::endl
-                           << "\tinfo: " << msg << std::endl;
+                const std::string msg = gl_error_string(error_code);
+                os << "GL error: \n"
+                   << "\tfile: " << file_system::simple_name(file) << std::endl
+                   << "\tline: " << line << std::endl
+                   << "\tfunction: " << function << std::endl
+                   << "\tinfo: " << msg << std::endl;
                 return false;
             }
-            else
-                return true;
+            return true;
         }
 
-        bool gl_error(std::string& log) {
+        bool gl_error(std::string& msg) {
             GLenum error_code = glGetError();
             if (error_code != GL_NO_ERROR) {
-                const char* str = gl_error_string(error_code);
-                if (str)
-                    log = std::string(str);
+                msg = gl_error_string(error_code);
                 return false;
             }
-            else
-                return true;
+            return true;
         }
 
 
-        bool check_frame_buffer_error(const std::string& file, const std::string& function, int line) {
+        bool check_frame_buffer_error(const std::string& file, const std::string& function, int line, std::ostream& os) {
             std::string msg;
             if (!frame_buffer_error(msg)) {
-				LOG(ERROR) << "GL framebuffer error: \n"
-						   << "\tfile: " << file_system::simple_name(file) << std::endl
-						   << "\tline: " << line << std::endl
-						   << "\tfunction: " << function << std::endl
-						   << "\tinfo: " << msg << std::endl;
+				os << "GL framebuffer error: \n"
+				   << "\tfile: " << file_system::simple_name(file) << std::endl
+				   << "\tline: " << line << std::endl
+				   << "\tfunction: " << function << std::endl
+				   << "\tinfo: " << msg << std::endl;
                 return false;
             }
-            else
-                return true;
+            return true;
         }
 
 
@@ -249,6 +245,8 @@ namespace easy3d {
                 glDebugMessageCallback(opengl_debug_callback, nullptr);  // no user data
             }
         }
+
+        // \endcond
 
     }
 

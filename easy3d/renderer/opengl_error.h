@@ -28,36 +28,40 @@
 #define EASY3D_RENDERER_OPENGL_ERROR_H
 
 #include <string>
+#include <iostream>
 #include <easy3d/util/logging.h>
 
 
 namespace easy3d {
 
-
+/// Checks if OpenGL error occurred. If so, the error message will be written to the std::cerr.
 #define easy3d_gl_error {                                                   \
     opengl::check_gl_error(__FILE__, __FUNCTION__, __LINE__) ;              \
 }
 
+/// Checks if framebuffer error occurred. If so, the error message will be written to the std::cerr.
 #define easy3d_frame_buffer_error {                                         \
     opengl::check_frame_buffer_error(__FILE__, __FUNCTION__, __LINE__) ;    \
 }
 
+/// Checks if OpenGL error occurred. If so, the error will be logged (by the default logger).
 #define easy3d_log_gl_error {                                               \
-    std::string log;                                                        \
-    LOG_IF(!opengl::gl_error(log), ERROR) << "GL error: \n"                 \
+    std::string msg;                                                        \
+    LOG_IF(!opengl::gl_error(msg), ERROR) << "GL error: \n"                 \
     << "\tfile: " << __FILE__ << "\n"                                       \
     << "\tline: " << __LINE__ << "\n"                                       \
     << "\tfunction: " << __FUNCTION__ << "\n"                               \
-    << "\tinfo: " << log;                                                   \
+    << "\tinfo: " << msg;                                                   \
 }
 
+/// Checks if framebuffer error occurred. If so, the error will be logged (by the default logger).
 #define easy3d_log_frame_buffer_error {                                     \
-    std::string log;                                                        \
-    LOG_IF(!opengl::frame_buffer_error(log), ERROR) << "GL error: \n"       \
+    std::string msg;                                                        \
+    LOG_IF(!opengl::frame_buffer_error(msg), ERROR) << "GL error: \n"       \
     << "\tfile: " << __FILE__ << "\n"                                       \
     << "\tline: " << __LINE__ << "\n"                                       \
     << "\tfunction: " << __FUNCTION__ << "\n"                               \
-    << "\tinfo: " << log;                                                   \
+    << "\tinfo: " << msg;                                                   \
 }
 
 
@@ -76,16 +80,47 @@ namespace easy3d {
 
     namespace opengl {
 
-        // Prints the last GL error to the logger.
-        // returns false if an error occurred.
-        bool check_gl_error(const std::string& file, const std::string& function, int line);
-        bool check_frame_buffer_error(const std::string& file, const std::string& function, int line);
+        /**
+         * @brief Checks the last OpenGL error.
+         * @param file The file name where the error occurred.
+         * @param function The function name where the error occurred.
+         * @param line The line number where the error occurred.
+         * @param os The output stream to write the error message. Default is std::cerr.
+         * @return false if an error indeed occurred.
+         * @see check_frame_buffer_error.
+         */
+        bool check_gl_error(const std::string& file, const std::string& function, int line, std::ostream& os = std::cerr);
 
-        // Check if there was an error. The error message will be stored in "log" if provided.
-        // returns false if an error occurred.
-        bool gl_error(std::string& log);
-        bool frame_buffer_error(std::string& log);
+        /**
+         * @brief Checks the last framebuffer error.
+         * @param file The file name where the error occurred.
+         * @param function The function name where the error occurred.
+         * @param line The line number where the error occurred.
+         * @param os The output stream to write the error message. Default is std::cerr.
+         * @return false if an error indeed occurred.
+         * @see check_gl_error.
+         */
+        bool check_frame_buffer_error(const std::string& file, const std::string& function, int line, std::ostream& os = std::cerr);
 
+        /**
+         * @brief Checks if there was an OpenGL error. If there was an error, the error message will be stored in "msg".
+         * @param msg The error message.
+         * @return false if an error occurred.
+         * @see frame_buffer_error.
+         */
+        bool gl_error(std::string& msg);
+        /**
+         * @brief Checks if there was a framebuffer error. If there was an error, the error message will be stored in "msg".
+         * @param msg The error message.
+         * @return false if an error occurred.
+         * @see frame_buffer_error.
+         */
+        bool frame_buffer_error(std::string& msg);
+
+        /**
+         * @brief Set up a debug callback for OpenGL.
+         * @note This has effect only if the working OpenGL version is >= 4.3.
+         */
         void setup_gl_debug_callback();
 
     }

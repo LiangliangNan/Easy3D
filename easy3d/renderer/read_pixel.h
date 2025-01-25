@@ -33,44 +33,121 @@
 
 namespace easy3d {
 
+	/**
+	 * \brief OpenGL-related functionalities for reading pixel/depth data from the framebuffer.
+	 * \details For multisample-version functions, a normal framebuffer is created for bliting color/depth from the
+	 *		multisample framebuffer object. For high-frequent queries, you'd better create a normal fbo for bliting
+	 *		operations. This way, you can avoid frequently allocating and deallocating GPU memories.
+	 * \namespace easy3d::opengl
+	 */
 	namespace opengl {
 
-		// NOTE: For the multisample-version functions, a normal fbo will be created for bliting color/depth from the 
-		//       multisample framebuffer object. So for high-frequent queries, you'd better create a normal fbo for 
-		//		 bliting operations. This way, you can avoid frequently allocating and deallocating GPU memories. But, 
-		//		 do remember to do the cleaning when all queries are done.
-
-		// read color value at pixel (x, y) from current fbo.
-		// (x, y): the pixel coordinates, which are in the OpenGL coordinate system. 
+		/**
+		 * \brief Read color value at pixel (x, y) from the current non-multisample framebuffer.
+		 * \param rgba The color value.
+		 * \param x The x-coordinate of the pixel, represented in the OpenGL coordinate system.
+		 * \param y The y-coordinate of the pixel, represented in the OpenGL coordinate system.
+		 * \see read_color_ms.
+		 */
 		void read_color(unsigned char rgba[4], int x, int y);
-		void read_color_ms(int index, unsigned char rgba[4], int x, int y);	// multisample framebuffer object
+		/**
+		 * \brief Read color value at pixel (x, y) from the current multisample framebuffer.
+		 * \param rgba The color value.
+		 * \param x The x-coordinate of the pixel, represented in the OpenGL coordinate system.
+		 * \param y The y-coordinate of the pixel, represented in the OpenGL coordinate system.
+		 */
+		void read_color_ms(unsigned char rgba[4], int x, int y);
 
-		// read depth value at pixel (x, y) from current fbo.
-		// (x, y): the pixel coordinates, which are in the OpenGL coordinate system. 
+		/**
+		 * \brief Read depth value at pixel (x, y) from the current non-multisample framebuffer.
+		 * \param depth The depth value.
+		 * \param x The x-coordinate of the pixel, represented in the OpenGL coordinate system.
+		 * \param y The y-coordinate of the pixel, represented in the OpenGL coordinate system.
+		 * \see read_depth_ms.
+		 */
 		void read_depth(float& depth, int x, int y);
-		void read_depth_ms(float& depth, int x, int y);		// multisample framebuffer object
+		/**
+		 * \brief Read depth value at pixel (x, y) from the current multisample framebuffer.
+		 * \param depth The depth value.
+		 * \param x The x-coordinate of the pixel, represented in the OpenGL coordinate system.
+		 * \param y The y-coordinate of the pixel, represented in the OpenGL coordinate system.
+		 * \see read_depth.
+		 */
+		void read_depth_ms(float& depth, int x, int y);
 
-		// read the color data of the framebuffer into a specified buffer.
-		// format: format of the pixel data. The following formats are accepted: GL_RGB, GL_BGR, GL_RGBA, and GL_BGRA.
-		void read_color(int index, std::vector<unsigned char>& buffer, unsigned int format, bool flip_vertically = true);
-		void read_color_ms(int index, std::vector<unsigned char>& buffer, unsigned int format, bool flip_vertically = true); // multisample framebuffer object
+		/**
+		* \brief Read color data of the current non-multisample framebuffer into a specified buffer.
+		* \param buffer The buffer to store the color data.
+		* \param format The format of the pixel data. Supported formats: GL_RGB, GL_BGR, GL_RGBA, and GL_BGRA.
+		* \param flip_vertically Flip the image data vertically if it is true (default value). This is convenient for
+		*		OpenGL applications where the first pixel in the output array is expected to be the bottom left corner
+		*		of the image.
+		* \see read_color_ms.
+		*/
+		void read_color(std::vector<unsigned char>& buffer, unsigned int format, bool flip_vertically = true);
+		/**
+		* \brief Read color data of the current multisample framebuffer into a specified buffer.
+		* \param buffer The buffer to store the color data.
+		* \param format The format of the pixel data. Supported formats: GL_RGB, GL_BGR, GL_RGBA, and GL_BGRA.
+		* \param flip_vertically Flip the image data vertically if it is true (default value). This is convenient for
+		*		OpenGL applications where the first pixel in the output array is expected to be the bottom left corner
+		*		of the image.
+		* \see read_color.
+		*/
+		void read_color_ms(std::vector<unsigned char>& buffer, unsigned int format, bool flip_vertically = true);
 
-		// read the depth data of the framebuffer into a specified buffer.
+		/**
+		 * \brief Read the depth data of the current non-multisample framebuffer into a specified buffer.
+		 * \param buffer The buffer to store the depth data.
+		 * \param flip_vertically Flip the image data vertically if it is true (default value). This is convenient for
+		 *		OpenGL applications where the first pixel in the output array is expected to be the bottom left corner
+		 *		of the image.
+		 * \see read_depth_ms.
+		 */
 		void read_depth(std::vector<float>& buffer, bool flip_vertically = true);
-		void read_depth_ms(std::vector<float>& buffer, bool flip_vertically = true); // multisample framebuffer object
+		/**
+		 * \brief Read the depth data of the current multisample framebuffer into a specified buffer.
+		 * \param buffer The buffer to store the depth data.
+		 * \param flip_vertically Flip the image data vertically if it is true (default value). This is convenient for
+		 *		OpenGL applications where the first pixel in the output array is expected to be the bottom left corner
+		 *		of the image.
+		 * \see read_depth.
+		 */
+		void read_depth_ms(std::vector<float>& buffer, bool flip_vertically = true);
 
-		//////////////////////////////////////////////////////////////////////////
-
-        // snapshot the color render buffer attached to color attachment index into an image file.
-        // This is very useful for debugging.
-        // Only png, jpg, bmp, tga, ppm are supported. File format is determined by the given extension.
+		/**
+		 * \brief Snapshot the color render buffer of the current non-multisample framebuffer into an image file. This
+		 *		is very useful for debugging.
+		 * \param file_name The file name of the image file. Supported formats: png, jpg, bmp, tga, and ppm. File format
+		 *		is determined by the extension of the file name.
+		 * \see snapshot_color_ms.
+		 */
         void snapshot_color(const std::string& file_name);
-        void snapshot_color_ms(int index, const std::string& file_name);	// multisample framebuffer object
+		/**
+		 * \brief Snapshot the color render buffer of the current multisample framebuffer into an image file. This
+		 *		is very useful for debugging.
+		 * \param file_name The file name of the image file. Supported formats: png, jpg, bmp, tga, and ppm. File format
+		 *		is determined by the extension of the file name.
+		 * \see snapshot_color.
+		 */
+        void snapshot_color_ms(const std::string& file_name);
 
-        // snapshot the depth render buffer into an image file. This is very useful for debugging.
-        // Only png, jpg, bmp, tga, ppm are supported. File format is determined by the given extension.
+		/**
+		 * \brief Snapshot the depth render buffer of the current non-multisample framebuffer into an image file. This
+		 *		is very useful for debugging.
+		 * \param file_name The file name of the image file. Supported formats: png, jpg, bmp, tga, and ppm. File format
+		 *		is determined by the extension of the file name.
+		 * \see snapshot_depth_ms.
+		 */
         void snapshot_depth(const std::string& file_name);
-        void snapshot_depth_ms(const std::string& file_name);	// multisample framebuffer object
+		/**
+		 * \brief Snapshot the depth render buffer of the current multisample framebuffer into an image file. This
+		 *		is very useful for debugging.
+		 * \param file_name The file name of the image file. Supported formats: png, jpg, bmp, tga, and ppm. File format
+		 *		is determined by the extension of the file name.
+		 * \see snapshot_depth.
+		 */
+        void snapshot_depth_ms(const std::string& file_name);
 
 	}
 
