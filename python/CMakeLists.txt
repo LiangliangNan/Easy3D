@@ -162,13 +162,15 @@ function(copy_runtime_dependencies target destination)
                 COMMAND ${CMAKE_COMMAND} -E make_directory ${destination}
                 # -----------------------------------------------------------------------------------------------
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${target}> ${destination}
+                # -----------------------------------------------------------------------------------------------
                 COMMAND ${CMAKE_COMMAND} -E echo "Copying runtime DLLs of ${target} to ${destination}..."
                 # -----------------------------------------------------------------------------------------------
                 # Liangliang: both "dumpbin /DEPENDENTS" and "$<TARGET_RUNTIME_DLLS:${target}>" only resolve direct dependencies.
                 # COMMAND dumpbin /DEPENDENTS $<TARGET_FILE:${target}> > ${destination}/runtime_dependencies.txt
                 # COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:${target}> ${destination}
-                # -----------------------------------------------------------------------------------------------
+                # ----------
                 # Using a Python script (copy_dependencies.py) to resolve transitive dependencies.
+                # This script should also work for macOS and Linux!!!
                 COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_LIST_DIR}/helper/copy_dependencies.py $<TARGET_FILE:${target}>  ${destination}
                 # -----------------------------------------------------------------------------------------------
                 # Copy the Python runtime DLL
