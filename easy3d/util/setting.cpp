@@ -132,7 +132,7 @@ namespace easy3d {
 
 #include <fstream>
 #include <easy3d/util/file_system.h>
-#include <3rd_party/json/json.hpp>
+#include <3rd_party/nlohmann/json.hpp>
 
 
 namespace easy3d {
@@ -291,7 +291,7 @@ namespace easy3d {
             auto pos = settings.find(key);                                           \
             if (pos != settings.end()) {                                             \
                 auto val_pos = pos->find(#var);                                      \
-                if (val_pos != pos->end())  (var) = *val_pos;                          \
+                if (val_pos != pos->end())  (var) = *val_pos;                        \
                 else LOG(WARNING) << "value does not exist for variable: " << #var;  \
             }                                                                        \
             else LOG(WARNING) << "value does not exist for variable: " << #var;      \
