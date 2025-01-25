@@ -40,7 +40,7 @@ namespace easy3d {
 	{
 	public:
         /**
-         * \brief Load image data from a file. The following formats are supported
+         * \brief Load image data from a file. The following formats are supported:
          *        JPG/JPEG, PNG, BMP, PSD, TGA, GIF, HDR, PNM (.ppm and .pgm). File format is
          *        determined by the file extension given in the file name.
          *
@@ -66,9 +66,9 @@ namespace easy3d {
          * \param height Outputs image height in pixels. Unchanged if failed.
          * \param channels Outputs the number of 8-bit image channels per pixel. Unchanged if failed.
          * \param requested_channels User requested image channels. If non-zero, force to treat the
-         *                           image as if has this number of components, e.g. if you set it 4,
-         *                           you will always get RGBA output, but you can check channels to
-         *                           get the actual number of channels.
+         *                           image as if it has this number of components. For example, if
+         *                           you set it 4,  you will always get RGBA output, but you can check
+         *                           channels to get the actual number of channels.
          * \param flip_vertically Flip the image data vertically if it is true (default value). This
          *                        is convenient for OpenGL applications where the first pixel in the
          *                        output array is expected to be the bottom left corner of the image.
@@ -77,10 +77,10 @@ namespace easy3d {
          *
          * Example usage:
          *      \code
-         *      int width, height, channels;
-         *      std::vector<unsigned char> data;
-         *      bool success = ImageIO::load(data, file_name, &width, &height, &channels, 0);
-         *      // ... process data if true returned ...
+         *			int width, height, channels;
+         *			std::vector<unsigned char> data;
+         *			bool success = ImageIO::load(data, file_name, &width, &height, &channels, 0);
+         *			// ... process data if true returned ...
          *      \endcode
          */
         static bool load(
@@ -98,7 +98,7 @@ namespace easy3d {
          *        JPG/JPEG, PNG, BMP, and TGA. File format is determined by the file
          *        extension given in the file name.
          *
-         * \param file_name The file to which the image data will be save.
+         * \param file_name The file to which the image data will be saved.
          * \param data  The image data. The image data storage must follow
          *                  N=#channels     components
          *                  1               grey
@@ -127,8 +127,8 @@ namespace easy3d {
 	namespace io {
 
         /**
-          * Some image IO functions I wrote years ago. Just want to keep them.
-          * \attention These functions assumes specific input storage.
+          * Some image IO functions I wrote years ago, and I just want to keep them here. Users should use ImageIO.
+          * \attention These functions assume specific input storage.
           */
 
 
