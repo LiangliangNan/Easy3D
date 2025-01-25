@@ -152,7 +152,7 @@ endif ()
 
 # ----------------------------------------------------------------------------------------------------------------------
 # The code below is actually not necessary for generating bindings.
-# They are here to make it easier for the installation of the generated Python module.
+# They are here to make building the whl file easier, for the generated Python module.
 # ----------------------------------------------------------------------------------------------------------------------
 
 # Post-build command to copy the compiled module and its dependencies to the Python package directory.
