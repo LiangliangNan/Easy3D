@@ -27,7 +27,6 @@
 #include "viewer.h"
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/renderer/camera.h>
-#include <easy3d/renderer/read_pixel.h>
 #include <easy3d/renderer/framebuffer_object.h>
 #include <easy3d/algo/gaussian_noise.h>
 
