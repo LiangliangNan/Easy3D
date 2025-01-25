@@ -31,7 +31,7 @@
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
 
-#include <3rd_party/json/json.hpp>
+#include <3rd_party/nlohmann/json.hpp>
 
 
 // for convenience
