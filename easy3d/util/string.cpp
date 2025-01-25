@@ -13,7 +13,6 @@
 #include <algorithm>
 #include <cstdarg>
 #include <iomanip>
-#include <cmath>
 #include <codecvt>
 #include <ctime>
 #include <chrono>
