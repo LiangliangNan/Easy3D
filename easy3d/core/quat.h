@@ -384,12 +384,10 @@ namespace easy3d {
     template <typename FT>
     Quat<FT>::Quat(const Vec3& from, const Vec3& to)
     {
-        const FT epsilon = FT(1E-10);
-
         const FT fromSqNorm = from.length2();
         const FT toSqNorm = to.length2();
         // Identity Quaternion when one vector is null
-        if ((fromSqNorm < epsilon) || (toSqNorm < epsilon))
+        if ((fromSqNorm < epsilon<FT>()) || (toSqNorm < epsilon<FT>()))
         {
             _q[0] = _q[1] = _q[2] = 0.0;
             _q[3] = 1.0;
@@ -400,7 +398,7 @@ namespace easy3d {
             const FT axisSqNorm = axis.length2();
 
             // Aligned vectors, pick any axis, not aligned with from or to
-            if (axisSqNorm < epsilon)
+            if (axisSqNorm < epsilon<FT>())
                 axis = orthogonal(from);
 
             FT angle = std::asin(std::sqrt(axisSqNorm / (fromSqNorm * toSqNorm)));
