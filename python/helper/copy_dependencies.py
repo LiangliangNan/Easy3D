@@ -147,11 +147,12 @@ def copy_dependencies(target_binary: str, target_binary_dir: str, destination: s
             if not is_excluded_path_or_file(dep_path, EXCLUDED_PATHS_AND_FILES):
                 # Copy the dependency to the destination directory
                 try:
-                    shutil.copy2(dep_path, destination)
-                    # Print the copy operation
-                    print(f"{dep_path} -> {os.path.join(destination, os.path.basename(dep_path))}")
-                    # Write dependency path to the file (only if not already written)
                     if dep_path not in resolved_dependencies:
+                        # Copy the dependency to the destination directory
+                        shutil.copy2(dep_path, destination)
+                        # Print the copy operation
+                        print(f"{dep_path} -> {os.path.join(destination, os.path.basename(dep_path))}")
+                        # Write dependency path to the file (only if not already written)
                         with open(dependencies_file_path, 'a') as dependencies_file:
                             dependencies_file.write(dep_path + '\n')
                 except Exception as e:
