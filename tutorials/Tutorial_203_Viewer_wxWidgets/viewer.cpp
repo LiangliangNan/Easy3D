@@ -620,7 +620,7 @@ namespace easy3d {
             glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-        const_cast<Viewer *>(this)->draw();
+        draw();
 
         fbo.release();
 

@@ -132,40 +132,35 @@ namespace easy3d {
     bool ViewerImGui::callback_event_cursor_pos(double x, double y) {
 		if (ImGui::GetIO().WantCaptureMouse)
 			return true;
-		else
-			return Viewer::callback_event_cursor_pos(x, y);
+		return Viewer::callback_event_cursor_pos(x, y);
 	}
 
 
     bool ViewerImGui::callback_event_mouse_button(int button, int action, int modifiers) {
 		if (ImGui::GetIO().WantCaptureMouse)
 			return true;
-		else
-			return Viewer::callback_event_mouse_button(button, action, modifiers);
+		return Viewer::callback_event_mouse_button(button, action, modifiers);
 	}
 
 
     bool ViewerImGui::callback_event_keyboard(int key, int action, int modifiers) {
 		if (ImGui::GetIO().WantCaptureKeyboard)
             return true;
-		else
-			return Viewer::callback_event_keyboard(key, action, modifiers);
+		return Viewer::callback_event_keyboard(key, action, modifiers);
 	}
 
 
     bool ViewerImGui::callback_event_character(unsigned int codepoint) {
 		if (ImGui::GetIO().WantCaptureKeyboard)
 			return true;
-		else
-			return Viewer::callback_event_character(codepoint);
+		return Viewer::callback_event_character(codepoint);
 	}
 
 
     bool ViewerImGui::callback_event_scroll(double dx, double dy) {
 		if (ImGui::GetIO().WantCaptureMouse)
 			return true;
-		else
-			return Viewer::callback_event_scroll(dx, dy);
+		return Viewer::callback_event_scroll(dx, dy);
 	}
 
 
