@@ -36,31 +36,34 @@ namespace easy3d {
 
 
     /**
-     * @brief Spline curve fitting for arbitrary dimensions.
+     * \brief Spline curve fitting for arbitrary dimensions.
      * \details This class uses the efficient blossom algorithm to compute a position on the curve.
-     *      It allow to set the order of the spline and the end points behavior (passing or not).
+     *      It allows to set the order of the spline and the end points behavior (passing or not).
      *      The class can be instantiated with any point type (1D (float), 2D, 3D etc.) as long as the
      *      necessary operator overloads are implemented.
-     * @tparam Point_t: type of a point operators such as '+' '*' must be correctly overloaded. The default
-     *      constructor must be defined to return the null vector (0, 0 ,0 ...)
-     * @tparam FT: floating point representation of the points (float, double etc.)
+     *
+     * \tparam Point A templated point class that supports basic arithmetic operations (addition and scalar
+     *      multiplication). It must be parameterized as `Point<N, T>`, where `N` is the number of dimensions, and
+     *      `T` is the data type.
+     * \tparam N The number of dimensions (e.g., 2 for 2D, 3 for 3D).
+     * \tparam T The scalar type (e.g., `float` or `double`).
+     *
      * Example usage:
      *      \code
      *          const int resolution = 1000;    // Number of line subdivisions to display the spline
      *          const int order = 3;            // Smoothness of the spline (min 2)
-     *          SplineCurveFitting<vec3> fitter(order, SplineCurveFitting<vec3>::eOPEN_UNIFORM);
+     *          SplineCurveFitting<Vec, 3, float> fitter(order, SplineCurveFitting<Vec, 3, float>::eOPEN_UNIFORM);
      *          fitter.set_ctrl_points(points);
      *          for(int i = 0; i < resolution; ++i) {
      *               const vec3 p = fitter.eval_f( float(i) / float(resolution-1) );
      *               std::cout << p << std::endl;
      *          }
      *      \endcode
-     * @class SplineCurveFitting easy3d/core/spline_curve_fitting.h
+     * \class SplineCurveFitting easy3d/core/spline_curve_fitting.h
      */
-    template<typename Point_t>
+    template <template <size_t, class> class Point, size_t N, typename T>
     class SplineCurveFitting {
     public:
-        typedef typename Point_t::FT FT;
         enum Node_e {
             eUNIFORM,
             eOPEN_UNIFORM ///< Connected to the first and last control points
@@ -74,10 +77,10 @@ namespace easy3d {
         explicit SplineCurveFitting(int k = 2, Node_e node_type = eOPEN_UNIFORM);
 
         /// \brief Sets the position of the spline control points.
-        void set_ctrl_points(const std::vector<Point_t> &point);
+        void set_ctrl_points(const std::vector<Point<N, T>> &point);
 
         /// \brief Gets the control points of the spline
-        void get_ctrl_points(std::vector<Point_t> &points) const;
+        void get_ctrl_points(std::vector<Point<N, T>> &points) const;
 
         /// \brief Sets the the nodal vector type
         void set_node_type(Node_e type);
@@ -87,10 +90,10 @@ namespace easy3d {
         /// \note Calling this with equally distributed \p u will result in non-uniformly distributed points on the
         ///     curves (because some of input points are closely spaced but others may not). To get points at fixed
         ///     distances along the curve, use the parameter generated from get_equally_spaced_parameters().
-        Point_t eval_f(FT u) const;
+        Point<N, T> eval_f(T u) const;
 
         /// \brief Evaluates speed of the spline
-        Point_t eval_df(FT u) const;
+        Point<N, T> eval_df(T u) const;
 
         int get_order() const { return _k; }
 
@@ -100,7 +103,7 @@ namespace easy3d {
         ///     curves. This method first evaluates the spline curve at equally spaced values in the parameter
         ///     domain, and then does linear interpolation to compute the parameters that result in points uniformly
         ///     spaced along the curve.
-        std::vector<FT> get_equally_spaced_parameters(std::size_t steps) const;
+        std::vector<T> get_equally_spaced_parameters(std::size_t steps) const;
 
     private:
         // -------------------------------------------------------------------------
@@ -129,16 +132,16 @@ namespace easy3d {
         /// parameter u. The nodal vector size must be equal to (k + point.size())
         /// @param off : offset to apply to the nodal vector 'node' before reading
         /// from it. this is useful to compute derivatives.
-        Point_t eval(FT u,
-                     const std::vector<Point_t> &point,
+        Point<N, T> eval(T u,
+                     const std::vector<Point<N, T>> &point,
                      int k,
-                     const std::vector<FT> &node,
+                     const std::vector<T> &node,
                      int off = 0) const;
 
-        Point_t eval_rec(FT u,
-                         std::vector<Point_t> p_in,
+        Point<N, T> eval_rec(T u,
+                         std::vector<Point<N, T>> p_in,
                          int k,
-                         std::vector<FT> node_in) const;
+                         std::vector<T> node_in) const;
 
         // -------------------------------------------------------------------------
         /// @name attributes
@@ -146,14 +149,14 @@ namespace easy3d {
 
         Node_e _node_type;            ///< Nodal vector type
         int _k;                       ///< spline order
-        std::vector<Point_t> _point;  ///< Control points
-        std::vector<Point_t> _vec;    ///< Control points differences
-        std::vector<FT> _node;    ///< Nodal vector
+        std::vector<Point<N, T>> _point;  ///< Control points
+        std::vector<Point<N, T>> _vec;    ///< Control points differences
+        std::vector<T> _node;    ///< Nodal vector
     };
 
 
-    template<typename Point_t>
-    SplineCurveFitting<Point_t>::SplineCurveFitting(int k, Node_e node_type):
+    template <template <size_t, class> class Point, size_t N, typename T>
+    SplineCurveFitting<Point, N, T>::SplineCurveFitting(int k, Node_e node_type):
             _node_type(node_type),
             _k(k),
             _point(_k),
@@ -164,8 +167,8 @@ namespace easy3d {
 
     // -----------------------------------------------------------------------------
 
-    template<typename Point_t>
-    void SplineCurveFitting<Point_t>::set_ctrl_points(const std::vector<Point_t> &point) {
+    template <template <size_t, class> class Point, size_t N, typename T>
+    void SplineCurveFitting<Point, N, T>::set_ctrl_points(const std::vector<Point<N, T>> &point) {
         _point = point;
         _vec.resize(_point.size() - 1);
         for (int i = 0; i < (int) _vec.size(); ++i)
@@ -179,16 +182,16 @@ namespace easy3d {
 
     // -----------------------------------------------------------------------------
 
-    template<typename Point_t>
-    void SplineCurveFitting<Point_t>::get_ctrl_points(std::vector<Point_t> &points) const {
+    template <template <size_t, class> class Point, size_t N, typename T>
+    void SplineCurveFitting<Point, N, T>::get_ctrl_points(std::vector<Point<N, T>> &points) const {
         points = _point;
     }
 
     // -----------------------------------------------------------------------------
 
     /// The the nodal vector type
-    template<typename Point_t>
-    void SplineCurveFitting<Point_t>::set_node_type(Node_e type) {
+    template <template <size_t, class> class Point, size_t N, typename T>
+    void SplineCurveFitting<Point, N, T>::set_node_type(Node_e type) {
         _node_type = type;
         set_nodal_vector();
         assert_splines();
@@ -196,42 +199,42 @@ namespace easy3d {
 
     // -----------------------------------------------------------------------------
 
-    template<typename Point_t>
-    Point_t SplineCurveFitting<Point_t>::eval_f(FT u) const {
-        u = std::max(std::min(u, (FT) 1), (FT) 0); // clamp between [0 1]
+    template <template <size_t, class> class Point, size_t N, typename T>
+    Point<N, T> SplineCurveFitting<Point, N, T>::eval_f(T u) const {
+        u = std::max(std::min(u, (T) 1), (T) 0); // clamp between [0 1]
         return eval(u, _point, _k, _node);
     }
 
     // -----------------------------------------------------------------------------
 
-    template<typename Point_t>
-    Point_t SplineCurveFitting<Point_t>::eval_df(FT u) const {
-        u = std::max(std::min(u, (FT) 1), (FT) 0); // clamp between [0 1]
-        return eval(u, _vec, (_k - 1), _node, 1) * (FT) (_k - 1);
+    template <template <size_t, class> class Point, size_t N, typename T>
+    Point<N, T> SplineCurveFitting<Point, N, T>::eval_df(T u) const {
+        u = std::max(std::min(u, (T) 1), (T) 0); // clamp between [0 1]
+        return eval(u, _vec, (_k - 1), _node, 1) * (T) (_k - 1);
     }
 
     // -----------------------------------------------------------------------------
 
-    template<typename Point_t>
-    std::vector<typename Point_t::FT> SplineCurveFitting<Point_t>::get_equally_spaced_parameters(std::size_t steps) const {
+    template <template <size_t, class> class Point, size_t N, typename T>
+    std::vector<T> SplineCurveFitting<Point, N, T>::get_equally_spaced_parameters(std::size_t steps) const {
         assert_splines();
 
-        std::vector<FT> lengths(steps, 0);
-        std::vector<FT> parameters(steps, 0);
-        Point_t prev_point;
+        std::vector<T> lengths(steps, 0);
+        std::vector<T> parameters(steps, 0);
+        Point<N, T> prev_point;
         for (std::size_t i = 0; i < steps; ++i) {
-            const FT u = static_cast<FT>(i) / static_cast<FT>(steps - 1);
+            const T u = static_cast<T>(i) / static_cast<T>(steps - 1);
             parameters[i] = u;
-            const Point_t pos = eval_f(u);
+            const Point<N, T> pos = eval_f(u);
             if (i > 0)
                 lengths[i] = lengths[i - 1] + distance(pos, prev_point);
             prev_point = pos;
         }
-        FT total_length = lengths.back();
+        T total_length = lengths.back();
 
         // given a \c value and a sorted sequence of values, find the two indices such that
         // sorted_values[left_index] <= value and sorted_values[right_index] >= value.
-        auto find_closest_less_or_equal = [](const std::vector<FT> &sorted_values, FT value,
+        auto find_closest_less_or_equal = [](const std::vector<T> &sorted_values, T value,
                                              std::size_t start) -> std::size_t {
             assert(value >= sorted_values.front() && value <= sorted_values.back());
             std::size_t index = start;
@@ -242,18 +245,18 @@ namespace easy3d {
             return index;
         };
 
-        std::vector<FT> U(steps);
+        std::vector<T> U(steps);
         for (std::size_t i = 0; i < steps; ++i) {
-            FT u = static_cast<FT>(i) / static_cast<FT>(steps - 1);
-            FT length = total_length * u;
+            T u = static_cast<T>(i) / static_cast<T>(steps - 1);
+            T length = total_length * u;
             std::size_t left_index = find_closest_less_or_equal(lengths, length, i);
             std::size_t right_index = (lengths[left_index] == length) ? left_index : left_index + 1;
             if (lengths[left_index] == lengths[right_index])
                 u = parameters[left_index];
             else { // linear interpolation
-                FT left_u = parameters[left_index];
-                FT right_u = parameters[right_index];
-                FT w = (length - lengths[left_index]) / (lengths[right_index] - lengths[left_index]);
+                T left_u = parameters[left_index];
+                T right_u = parameters[right_index];
+                T w = (length - lengths[left_index]) / (lengths[right_index] - lengths[left_index]);
                 u = (1.0f - w) * left_u + w * right_u;
             }
             U[i] = u;
@@ -263,8 +266,8 @@ namespace easy3d {
 
     // -----------------------------------------------------------------------------
 
-    template<typename Point_t>
-    void SplineCurveFitting<Point_t>::assert_splines() const {
+    template <template <size_t, class> class Point, size_t N, typename T>
+    void SplineCurveFitting<Point, N, T>::assert_splines() const {
         assert(_k > 1);
         assert((int) _point.size() >= _k);
         assert(_node.size() == (_k + _point.size()));
@@ -273,8 +276,8 @@ namespace easy3d {
 
     // -----------------------------------------------------------------------------
 
-    template<typename Point_t>
-    void SplineCurveFitting<Point_t>::set_nodal_vector() {
+    template <template <size_t, class> class Point, size_t N, typename T>
+    void SplineCurveFitting<Point, N, T>::set_nodal_vector() {
         if (_node_type == eOPEN_UNIFORM)
             set_node_to_open_uniform();
         else if (_node_type == eUNIFORM)
@@ -283,21 +286,21 @@ namespace easy3d {
 
     // -----------------------------------------------------------------------------
 
-    template<typename Point_t>
-    void SplineCurveFitting<Point_t>::set_node_to_uniform() {
+    template <template <size_t, class> class Point, size_t N, typename T>
+    void SplineCurveFitting<Point, N, T>::set_node_to_uniform() {
         const std::size_t n = _point.size() - 1;
         _node.resize(_k + n + 1);
 
-        FT step = (FT) 1 / (FT) (n - _k + 2);
+        T step = (T) 1 / (T) (n - _k + 2);
         for (std::size_t i = 0; i < _node.size(); ++i) {
-            _node[i] = ((FT) i) * step - step * (FT) (_k - 1);
+            _node[i] = ((T) i) * step - step * (T) (_k - 1);
         }
     }
 
     // -----------------------------------------------------------------------------
 
-    template<typename Point_t>
-    void SplineCurveFitting<Point_t>::set_node_to_open_uniform() {
+    template <template <size_t, class> class Point, size_t N, typename T>
+    void SplineCurveFitting<Point, N, T>::set_node_to_open_uniform() {
         _node.resize(_k + _point.size());
 
         int acc = 1;
@@ -307,7 +310,7 @@ namespace easy3d {
             else if (i >= ((int) _point.size() + 1))
                 _node[i] = 1.;
             else {
-                _node[i] = (FT) acc / (FT) (_point.size() + 1 - _k);
+                _node[i] = (T) acc / (T) (_point.size() + 1 - _k);
                 acc++;
             }
         }
@@ -315,11 +318,11 @@ namespace easy3d {
 
     // -----------------------------------------------------------------------------
 
-    template<typename Point_t>
-    Point_t SplineCurveFitting<Point_t>::eval(FT u,
-                                  const std::vector<Point_t> &point,
+    template <template <size_t, class> class Point, size_t N, typename T>
+    Point<N, T> SplineCurveFitting<Point, N, T>::eval(T u,
+                                  const std::vector<Point<N, T>> &point,
                                   int k,
-                                  const std::vector<FT> &node,
+                                  const std::vector<T> &node,
                                   int off) const {
         assert(k > 1);
         assert((int) point.size() >= k);
@@ -331,11 +334,11 @@ namespace easy3d {
             dec++;
 
         // TODO: use buffers in attributes for better performances ?
-        std::vector<Point_t> p_rec(k, Point_t());
+        std::vector<Point<N, T>> p_rec(k, Point<N, T>());
         for (int i = dec, j = 0; i < (dec + k); ++i, ++j)
             p_rec[j] = point[i];
 
-        std::vector<FT> node_rec(k + k - 2, (FT) 0);
+        std::vector<T> node_rec(k + k - 2, (T) 0);
         for (int i = (dec + 1), j = 0; i < (dec + k + k - 1); ++i, ++j)
             node_rec[j] = node[i + off];
 
@@ -344,26 +347,26 @@ namespace easy3d {
 
     // -----------------------------------------------------------------------------
 
-    template<typename Point_t>
-    Point_t SplineCurveFitting<Point_t>::eval_rec(FT u,
-                                      std::vector<Point_t> p_in,
+    template <template <size_t, class> class Point, size_t N, typename T>
+    Point<N, T> SplineCurveFitting<Point, N, T>::eval_rec(T u,
+                                      std::vector<Point<N, T>> p_in,
                                       int k,
-                                      std::vector<FT> node_in) const {
+                                      std::vector<T> node_in) const {
         if (p_in.size() == 1)
             return p_in[0];
 
         // TODO: use buffers in attributes for better performances ?
-        std::vector<Point_t> p_out(k - 1, Point_t());
+        std::vector<Point<N, T>> p_out(k - 1, Point<N, T>());
         for (int i = 0; i < (k - 1); ++i) {
-            const FT n0 = node_in[i + k - 1];
-            const FT n1 = node_in[i];
-            const FT f0 = (n0 - u) / (n0 - n1);
-            const FT f1 = (u - n1) / (n0 - n1);
+            const T n0 = node_in[i + k - 1];
+            const T n1 = node_in[i];
+            const T f0 = (n0 - u) / (n0 - n1);
+            const T f1 = (u - n1) / (n0 - n1);
 
             p_out[i] = p_in[i] * f0 + p_in[i + 1] * f1;
         }
 
-        std::vector<FT> node_out(node_in.size() - 2);
+        std::vector<T> node_out(node_in.size() - 2);
         for (int i = 1, j = 0; i < ((int) node_in.size() - 1); ++i, ++j)
             node_out[j] = node_in[i];
 

@@ -434,12 +434,12 @@ namespace easy3d {
             }
 
             // spine interpolation
-            typedef SplineCurveInterpolation<vec3> PosFitter;
+            typedef SplineCurveInterpolation<Vec, 3, float> PosFitter;
             PosFitter pos_fitter;
             pos_fitter.set_boundary(PosFitter::second_deriv, 0, PosFitter::second_deriv, 0);
             pos_fitter.set_points(parameters, positions);
 
-            typedef SplineCurveInterpolation<vec4> OrientFitter;
+            typedef SplineCurveInterpolation<Vec, 4, float> OrientFitter;
             OrientFitter orient_fitter;
             orient_fitter.set_boundary(OrientFitter::second_deriv, 0, OrientFitter::second_deriv, 0);
             orient_fitter.set_points(parameters, orientations);
@@ -467,12 +467,12 @@ namespace easy3d {
 
             // spine fitting
             const int order = 3;  // Smoothness of the spline (min 2)
-            typedef SplineCurveFitting <vec3> PosFitter;
+            typedef SplineCurveFitting <Vec, 3, float> PosFitter;
             PosFitter pos_fitter(order, PosFitter::eOPEN_UNIFORM);
             pos_fitter.set_ctrl_points(positions);
             const std::vector<float> parameters = pos_fitter.get_equally_spaced_parameters(num_frames);
 
-            typedef SplineCurveFitting <vec4> OrientFitter;
+            typedef SplineCurveFitting <Vec, 4, float> OrientFitter;
             OrientFitter orient_fitter(order, OrientFitter::eOPEN_UNIFORM);
             orient_fitter.set_ctrl_points(orientations);
 

@@ -38,14 +38,19 @@ namespace easy3d {
 
 
     /**
-     * @brief Cubic spline curve interpolation for arbitrary dimensions.
+     * \brief Cubic spline curve interpolation for arbitrary dimensions.
      * \details This is a wrapper of SplineInterpolation. It can be instantiated with any point type (1D, 2D, 3D etc.).
-     * @tparam Point_t: type of a point.
-     * @tparam Real_t: floating point representation of the points (float, double etc.)
+     *
+     * \tparam Point A templated point class that supports basic arithmetic operations (addition and scalar
+     *      multiplication). It must be parameterized as `Point<N, T>`, where `N` is the number of dimensions, and
+     *      `T` is the data type.
+     * \tparam N The number of dimensions (e.g., 2 for 2D, 3 for 3D).
+     * \tparam T The scalar type (e.g., `float` or `double`).
+     *
      * Example usage:
      *      \code
      *          const int resolution = 1000;    // Number of line subdivisions to display the spline
-     *          SplineCurveInterpolation<vec3> interpolator;
+     *          SplineCurveInterpolation<Vec, 3, float> interpolator;
      *          interpolator.set_boundary(...);
      *          interpolator.set_points(points);
      *          for (int i = 0; i < resolution; ++i) {
@@ -53,12 +58,12 @@ namespace easy3d {
      *              std::cout << p << std::endl;
      *          }
      *      \endcode
-     * @class SplineCurveInterpolation easy3d/core/spline_curve_interpolation.h
+     * \class SplineCurveInterpolation easy3d/core/spline_curve_interpolation.h
      */
-    template<typename Point_t>
+    template <template <size_t, class> class Point, size_t N, typename T>
     class SplineCurveInterpolation {
     public:
-        typedef typename Point_t::FT FT;
+        using Point_t = Point<N, T>;
 
         enum BoundaryType {
             first_deriv = 1,
@@ -79,8 +84,8 @@ namespace easy3d {
          * Sets the boundary condition (optional).
          * \attention If called, it has to come before set_points().
          */
-        void set_boundary(BoundaryType left, FT left_value,
-                          BoundaryType right, FT right_value);
+        void set_boundary(BoundaryType left, T left_value,
+                          BoundaryType right, T right_value);
 
         /**
          * Sets the parameters and position of the point samples on the curve.
@@ -90,7 +95,7 @@ namespace easy3d {
          * \param cubic_spline \c true for cubic spline interpolation; \c false for linear interpolation.
          * \note The \c parameters have to be monotonously increasing along the curve.
          */
-        void set_points(const std::vector<FT> &parameters, const std::vector<Point_t> &points, bool cubic_spline = true);
+        void set_points(const std::vector<T> &parameters, const std::vector<Point_t> &points, bool cubic_spline = true);
 
         /**
          * Sets the position of the point samples on the curve.
@@ -107,18 +112,18 @@ namespace easy3d {
          * \param u Curve parameter in the range [0, 1]. The actual meaning of the parameter is given by
          *      the \p parameters provided in set_points().
          */
-        Point_t eval_f(FT u) const;
+        Point<N, T> eval_f(T u) const;
 
     private:
         // -------------------------------------------------------------------------
         /// @name Class tools
         // -------------------------------------------------------------------------
         BoundaryType left_, right_;
-        FT left_value_, right_value_;
+        T left_value_, right_value_;
 
         std::size_t dim_;
-        std::vector< SplineInterpolation<FT> > interpolators_;
-        FT largest_t_;
+        std::vector< SplineInterpolation<T> > interpolators_;
+        T largest_t_;
     };
 
 
@@ -126,11 +131,9 @@ namespace easy3d {
     // Cubic spline interpolation implementation
     // -----------------------
 
-    template<typename Point_t>
-    void SplineCurveInterpolation<Point_t>::set_boundary(typename SplineCurveInterpolation<Point_t>::BoundaryType left,
-                                                         FT left_value,
-                                                         typename SplineCurveInterpolation<Point_t>::BoundaryType right,
-                                                         FT right_value) {
+    template <template <size_t, class> class Point, size_t N, typename T>
+    void SplineCurveInterpolation<Point, N, T>::set_boundary(BoundaryType left, T left_value,
+                                                             BoundaryType right, T right_value) {
         assert(interpolators_.size() == 0);  // set_points() must not have happened yet
         left_ = left;
         right_ = right;
@@ -139,17 +142,17 @@ namespace easy3d {
     }
 
 
-    template<typename Point_t>
-    void SplineCurveInterpolation<Point_t>::set_points(const std::vector<FT> &input_parameters,
-                                                       const std::vector<Point_t> &input_points, bool cubic_spline) {
+    template <template <size_t, class> class Point, size_t N, typename T>
+    void SplineCurveInterpolation<Point, N, T>::set_points(const std::vector<T> &input_parameters,
+                                                       const std::vector<Point<N, T>> &input_points, bool cubic_spline) {
         if (input_parameters.empty() || input_parameters.size() != input_points.size())
             return;
 
         // filter out non-monotone data
-        std::vector<FT> parameters;
-        std::vector<Point_t> points;
+        std::vector<T> parameters;
+        std::vector<Point<N, T>> points;
         for (std::size_t i=0; i<input_parameters.size(); ++i) {
-            const FT para = input_parameters[i];
+            const T para = input_parameters[i];
             if (i == 0 || para > parameters.back()) {
                 parameters.push_back(para);
                 points.push_back(input_points[i]);
@@ -162,9 +165,9 @@ namespace easy3d {
         largest_t_ = parameters.back();
 
         // an ND curve is represented in the parametric form: x1(t), x2(t), x3(t)...
-        std::vector< std::vector<FT> > coords(dim_, std::vector<FT>(points.size()));
+        std::vector< std::vector<T> > coords(dim_, std::vector<T>(points.size()));
 
-        FT t(0);
+        T t(0);
         for (std::size_t i = 0; i < points.size(); ++i) {
             const auto &p = points[i];
             if (i > 0)
@@ -178,9 +181,9 @@ namespace easy3d {
         for (std::size_t i=0; i<dim_; ++i) {
             // set boundary condition
             interpolators_[i].set_boundary(
-                    left_ == first_deriv ? SplineInterpolation<FT>::first_deriv : SplineInterpolation<FT>::second_deriv,
+                    left_ == first_deriv ? SplineInterpolation<T>::first_deriv : SplineInterpolation<T>::second_deriv,
                     left_value_,
-                    right_ == first_deriv ? SplineInterpolation<FT>::first_deriv : SplineInterpolation<FT>::second_deriv,
+                    right_ == first_deriv ? SplineInterpolation<T>::first_deriv : SplineInterpolation<T>::second_deriv,
                     right_value_,
                     cubic_spline
             );
@@ -190,15 +193,15 @@ namespace easy3d {
     }
 
 
-    template<typename Point_t>
-    void SplineCurveInterpolation<Point_t>::set_points(const std::vector<Point_t> &points, bool cubic_spline) {
+    template <template <size_t, class> class Point, size_t N, typename T>
+    void SplineCurveInterpolation<Point, N, T>::set_points(const std::vector<Point<N, T>> &points, bool cubic_spline) {
         if (points.size() < 2)
             return;
 
         // we use the accumulated curve distance as the parameters
-        std::vector<FT> parameters(points.size(), FT(0));
+        std::vector<T> parameters(points.size(), T(0));
 
-        FT t(0);
+        T t(0);
         for (std::size_t i = 1; i < points.size(); ++i) {
             const auto &p = points[i];
             t += distance(points[i-1], p);
@@ -209,9 +212,9 @@ namespace easy3d {
     }
 
 
-    template<typename Point_t>
-    Point_t SplineCurveInterpolation<Point_t>::eval_f(FT u) const {
-        Point_t p;
+    template <template <size_t, class> class Point, size_t N, typename T>
+    Point<N, T> SplineCurveInterpolation<Point, N, T>::eval_f(T u) const {
+        Point<N, T> p;
         for (std::size_t i=0; i<dim_; ++i)
             p[i] = interpolators_[i](u * largest_t_);
         return p;

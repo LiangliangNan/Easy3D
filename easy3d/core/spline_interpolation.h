@@ -44,7 +44,8 @@ namespace easy3d {
      *      linearly, if default boundary conditions are used, or otherwise extrapolation is a quadratic function.
      *      The math behind this implementation is described here: https://kluge.in-chemnitz.de/opensource/spline/
      *
-     * Spline interpolation have many applications, e.g., curve interpolation (for any dimensions).
+     *      Spline interpolation have many applications, e.g., curve interpolation (for any dimensions).
+     *
      * The following code shows how to use SplineInterpolation for 3D curve interpolation.
      *      \code
      *          // a 3D curve is represented in the parametric form: x(t), y(t), and z(t).
@@ -106,7 +107,7 @@ namespace easy3d {
         /// Sets the data can carry out the interpolation.
         /// \c true for cubic spline interpolation; \c false for linear interpolation.
         /// \attention The \c x has to be monotonously increasing.
-        void set_data(const std::vector <FT> &x, const std::vector <FT> &y, bool cubic_spline = true);
+        void set_data(const std::vector<FT> &x, const std::vector<FT> &y, bool cubic_spline = true);
 
         /// Evaluates the spline at \p x.
         FT operator()(FT x) const;
@@ -115,10 +116,10 @@ namespace easy3d {
         FT derivative(int order, FT x) const;
 
     private:
-        std::vector <FT> x_, y_;          // x,y coordinates of points
+        std::vector<FT> x_, y_;          // x,y coordinates of points
         // interpolation parameters
         // f(x) = a*(x-x_i)^3 + b*(x-x_i)^2 + c*(x-x_i) + y_i
-        std::vector <FT> a_, b_, c_;      // spline coefficients
+        std::vector<FT> a_, b_, c_;      // spline coefficients
         FT b0_, c0_;                     // for left extrapolation
         BoundaryType left_, right_;
         FT left_value_, right_value_;
@@ -163,14 +164,14 @@ namespace easy3d {
         void lu_decompose();
 
         /// solves Rx=y
-        std::vector <FT> r_solve(const std::vector <FT> &b) const;
+        std::vector<FT> r_solve(const std::vector<FT> &b) const;
         /// solves Ly=b
-        std::vector <FT> l_solve(const std::vector <FT> &b) const;
-        std::vector <FT> lu_solve(const std::vector <FT> &b, bool is_lu_decomposed = false);
+        std::vector<FT> l_solve(const std::vector<FT> &b) const;
+        std::vector<FT> lu_solve(const std::vector<FT> &b, bool is_lu_decomposed = false);
 
     private:
-        std::vector <std::vector<FT>> m_upper;  // upper band
-        std::vector <std::vector<FT>> m_lower;  // lower band
+        std::vector<std::vector<FT>> m_upper;  // upper band
+        std::vector<std::vector<FT>> m_lower;  // lower band
 
     };  // BandMatrix
     // \endcond
@@ -216,7 +217,7 @@ namespace easy3d {
             // setting up the matrix and right-hand side of the equation system
             // for the parameters b[]
             BandMatrix<FT> A(n, 1, 1);
-            std::vector <FT> rhs(n);
+            std::vector<FT> rhs(n);
             for (int i = 1; i < n - 1; i++) {
                 A(i, i - 1) = FT(1.0 / 3.0) * (x[i] - x[i - 1]);
                 A(i, i) = FT(2.0 / 3.0) * (x[i + 1] - x[i - 1]);
@@ -479,9 +480,9 @@ namespace easy3d {
 
     // solves Ly=b
     template<typename FT>
-    std::vector <FT> BandMatrix<FT>::l_solve(const std::vector <FT> &b) const {
+    std::vector<FT> BandMatrix<FT>::l_solve(const std::vector<FT> &b) const {
         assert(this->dim() == (int) b.size());
-        std::vector <FT> x(this->dim());
+        std::vector<FT> x(this->dim());
         int j_start;
         FT sum;
         for (int i = 0; i < this->dim(); i++) {
@@ -495,9 +496,9 @@ namespace easy3d {
 
     // solves Rx=y
     template<typename FT>
-    std::vector <FT> BandMatrix<FT>::r_solve(const std::vector <FT> &b) const {
+    std::vector<FT> BandMatrix<FT>::r_solve(const std::vector<FT> &b) const {
         assert(this->dim() == (int) b.size());
-        std::vector <FT> x(this->dim());
+        std::vector<FT> x(this->dim());
         int j_stop;
         FT sum;
         for (int i = this->dim() - 1; i >= 0; i--) {
@@ -510,9 +511,9 @@ namespace easy3d {
     }
 
     template<typename FT>
-    std::vector <FT> BandMatrix<FT>::lu_solve(const std::vector <FT> &b, bool is_lu_decomposed) {
+    std::vector<FT> BandMatrix<FT>::lu_solve(const std::vector<FT> &b, bool is_lu_decomposed) {
         assert(this->dim() == (int) b.size());
-        std::vector <FT> x, y;
+        std::vector<FT> x, y;
         if (!is_lu_decomposed) {
             this->lu_decompose();
         }

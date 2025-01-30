@@ -61,7 +61,7 @@ int test_spline() {
     std::cout << "spine fitting (partially printed)" << std::endl;
     {
         const int order = 3;            // Smoothness of the spline (min 2)
-        SplineCurveFitting<vec3> fitter(order, SplineCurveFitting<vec3>::eOPEN_UNIFORM);
+        SplineCurveFitting<Vec, 3, float> fitter(order, SplineCurveFitting<Vec, 3, float>::eOPEN_UNIFORM);
         fitter.set_ctrl_points(points);
         for (unsigned int i = 0; i < resolution; i += 100) {
             const vec3 p = fitter.eval_f(float(i) / float(resolution - 1));
@@ -72,8 +72,8 @@ int test_spline() {
     // spine interpolation
     std::cout << "spine interpolation use accumulated curve length as parameter (partially printed)" << std::endl;
     {
-        SplineCurveInterpolation<vec3> interpolator;
-        interpolator.set_boundary(easy3d::SplineCurveInterpolation<vec3>::second_deriv, 0, easy3d::SplineCurveInterpolation<Vec<3, float>>::second_deriv, 0);
+        SplineCurveInterpolation<Vec, 3, float> interpolator;
+        interpolator.set_boundary(SplineCurveInterpolation<Vec, 3, float>::second_deriv, 0, SplineCurveInterpolation<Vec, 3, float>::second_deriv, 0);
         interpolator.set_points(points);
         for (unsigned int i = 0; i < resolution; i+=100) {
             const vec3 p = interpolator.eval_f(float(i) / float(resolution - 1));
@@ -83,8 +83,8 @@ int test_spline() {
 
     std::cout << "spine interpolation use accumulated time as parameter (partially printed)" << std::endl;
     {
-        SplineCurveInterpolation<vec3> interpolator;
-        interpolator.set_boundary(easy3d::SplineCurveInterpolation<vec3>::second_deriv, 0, easy3d::SplineCurveInterpolation<Vec<3, float>>::second_deriv, 0);
+        SplineCurveInterpolation<Vec, 3, float> interpolator;
+        interpolator.set_boundary(SplineCurveInterpolation<Vec, 3, float>::second_deriv, 0, SplineCurveInterpolation<Vec, 3, float>::second_deriv, 0);
 
         std::vector<float> t(points.size(), 0.0f);
         for (std::size_t i = 0; i < points.size(); ++i)
