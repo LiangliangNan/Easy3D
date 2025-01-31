@@ -74,6 +74,7 @@ add_subdirectory(Tutorial_506_DepthMap)
 # algorithms - core
 add_subdirectory(Tutorial_601_Tessellator)
 add_subdirectory(Tutorial_602_ConvexPartition)
+add_subdirectory(Tutorial_603_Curves)
 
 # algorithms - of point cloud
 add_subdirectory(Tutorial_701_Cloud_NormalEstimation)
