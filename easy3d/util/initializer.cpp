@@ -25,6 +25,10 @@
  ********************************************************************/
 
 #include <easy3d/util/initializer.h>
+
+#include <cstdlib> // For srand() and rand()
+#include <ctime>   // For time() to seed the random number generator
+
 #include <easy3d/util/logging.h>
 #include <easy3d/util/setting.h>
 #include <easy3d/util/resource.h>
@@ -34,7 +38,7 @@ namespace easy3d {
 
     void initialize(bool info_to_stdout, bool use_log_file, bool use_setting_file, const std::string& resource_dir) {
         // initialize random number generator
-        srand(0);
+        std::srand(std::time(0)); // Use the current time as the seed
 
         // initialize the logger
         logging::initialize(info_to_stdout, true, true, false, use_log_file ? "default" : "", 9);
