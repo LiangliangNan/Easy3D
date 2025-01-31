@@ -31,8 +31,6 @@
 #include <easy3d/renderer/drawable_lines_2D.h>
 #include <easy3d/util/initializer.h>
 
-#include "easy3d/core/random.h"
-
 /**
  * \example{lineno} Tutorial_603_Curves
  *
@@ -43,7 +41,7 @@
 
 using namespace easy3d;
 
-void create_drawable(Viewer& viewer, const std::vector<vec2>& curve_points) {
+void create_drawable(Viewer& viewer, const std::vector<vec2>& curve_points, const vec3& color) {
     std::vector<unsigned int> indices;
     for (unsigned int i = 0; i < curve_points.size() - 1; ++i) {
         indices.push_back(i);
@@ -53,24 +51,24 @@ void create_drawable(Viewer& viewer, const std::vector<vec2>& curve_points) {
     LinesDrawable2D *drawable = new LinesDrawable2D;
     drawable->update_vertex_buffer(curve_points, viewer.width(), viewer.height());
     drawable->update_element_buffer(indices);
-    drawable->set_uniform_coloring(vec4(random_color(), 1.0f));
+    drawable->set_uniform_coloring(vec4(color, 1.0f));
     viewer.add_drawable(drawable);
 }
 
-void add_Bezier(Viewer& viewer, const std::vector<vec2>& control_points, int bezier_steps) {
-    auto cv = new Bezier<Vec, 2, float>;
-    cv->set_steps(bezier_steps);
-    for (const auto& p : control_points)
-        cv->add_way_point(p);
+// void add_Bezier(Viewer& viewer, const std::vector<vec2>& control_points, int bezier_steps, const vec3& color) {
+//     auto cv = new Bezier<Vec, 2, float>;
+//     cv->set_steps(bezier_steps);
+//     for (const auto& p : control_points)
+//         cv->add_way_point(p);
+//
+//     std::vector<vec2> curve_points;
+//     for (int i = 0; i < cv->node_count(); ++i)
+//         curve_points.push_back(cv->node(i));
+//
+//     create_drawable(viewer, curve_points, color);
+// }
 
-    std::vector<vec2> curve_points;
-    for (int i = 0; i < cv->node_count(); ++i)
-        curve_points.push_back(cv->node(i));
-
-    create_drawable(viewer, curve_points);
-}
-
-void add_BSpline(Viewer& viewer, const std::vector<vec2>& control_points, int bezier_steps) {
+void add_BSpline(Viewer& viewer, const std::vector<vec2>& control_points, int bezier_steps, const vec3& color) {
     auto cv = new BSpline<Vec, 2, float>;
     cv->set_steps(bezier_steps);
     for (const auto& p : control_points)
@@ -80,10 +78,10 @@ void add_BSpline(Viewer& viewer, const std::vector<vec2>& control_points, int be
     for (int i = 0; i < cv->node_count(); ++i)
         curve_points.push_back(cv->node(i));
 
-    create_drawable(viewer, curve_points);
+    create_drawable(viewer, curve_points, color);
 }
 
-void add_CatmullRom(Viewer& viewer, const std::vector<vec2>& control_points, int bezier_steps) {
+void add_CatmullRom(Viewer& viewer, const std::vector<vec2>& control_points, int bezier_steps, const vec3& color) {
     auto cv = new CatmullRom<Vec, 2, float>;
     cv->set_steps(bezier_steps);
     for (const auto& p : control_points)
@@ -93,7 +91,7 @@ void add_CatmullRom(Viewer& viewer, const std::vector<vec2>& control_points, int
     for (int i = 0; i < cv->node_count(); ++i)
         curve_points.push_back(cv->node(i));
 
-    create_drawable(viewer, curve_points);
+    create_drawable(viewer, curve_points, color);
 }
 
 
@@ -107,17 +105,18 @@ int main(int argc, char** argv) {
 
     // the control points
     std::vector<vec2> points = {
-            vec2(100, 100), // 0: start of outer contour, in counterclockwise order
-            vec2(700, 100), // 1
-            vec2(700, 500), // 2
-            vec2(100, 500), // 3
-            vec2(100, 100), // 4: the same as the first point
+        vec2(100, 100), // 0
+        vec2(100, 500), // 1
+        vec2(400, 500), // 2
+        vec2(400, 100), // 3
+        vec2(700, 100), // 4
+        vec2(700, 500), // 5
     };
-    create_drawable(viewer, points); // this is the control polygon
+    create_drawable(viewer, points, vec3(0, 0, 0)); // this is the control polygon
 
-    add_Bezier(viewer, points, 20);
-    add_BSpline(viewer, points, 20);
-    add_CatmullRom(viewer, points, 20);
+    // add_Bezier(viewer, points, 20);
+    add_BSpline(viewer, points, 20, vec3(1, 0, 0));
+    add_CatmullRom(viewer, points, 20, vec3(0, 1, 0));
 
     {
         // spline curve fitting
@@ -131,7 +130,7 @@ int main(int argc, char** argv) {
             const vec2 p = fitter.eval_f( float(i) / float(resolution-1) );
             curve_points.push_back(p);
         }
-        create_drawable(viewer, curve_points);
+        create_drawable(viewer, curve_points, vec3(0, 0, 1));
     }
 
     {
@@ -146,7 +145,7 @@ int main(int argc, char** argv) {
             const vec2 p = interpolator.eval_f(float(i) / float(resolution - 1));
             curve_points.push_back(p);
         }
-        create_drawable(viewer, curve_points);
+        create_drawable(viewer, curve_points, vec3(0, 1, 1));
     }
 
     // run the viewer
