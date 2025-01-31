@@ -33,6 +33,7 @@
 
 using namespace easy3d;
 
+// \cond
 
 TutorialCameraInterpolation::TutorialCameraInterpolation(const std::string& title)
     : Viewer(title)
@@ -103,3 +104,5 @@ void TutorialCameraInterpolation::draw() const {
         interpolator_->draw_path(camera());
     }
 }
+
+// \endcond

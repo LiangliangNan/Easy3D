@@ -59,6 +59,8 @@
 
 namespace easy3d {
 
+    // \cond
+
     Window::Window(QWidget *parent)
             : QMainWindow(parent), ui(new Ui::Window) {
         ui->setupUi(this);
@@ -533,5 +535,7 @@ namespace easy3d {
             std::cout << std::endl;
         }
     }
+
+    // \endcond
 
 }

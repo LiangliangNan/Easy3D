@@ -70,7 +70,7 @@
 
 namespace easy3d {
 
-
+    // \cond
     wxBEGIN_EVENT_TABLE(Viewer, wxGLCanvas)
                     EVT_SIZE(Viewer::OnSize)
                     EVT_PAINT(Viewer::OnPaint)
@@ -835,4 +835,7 @@ namespace easy3d {
         }
 #endif
     }
+
+    // \endcond
+
 }

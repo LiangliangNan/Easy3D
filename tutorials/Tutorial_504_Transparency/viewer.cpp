@@ -35,6 +35,8 @@
 
 using namespace easy3d;
 
+// \cond
+
 TutorialTransparency::TutorialTransparency(const std::string& title) : Viewer(title) {
 	transparency_ = new DualDepthPeeling(camera());
 	std::cout << "method: Dual Depth Peeling" << std::endl;
@@ -129,3 +131,5 @@ void TutorialTransparency::draw() const {
 	else
 		Viewer::draw();
 }
+
+// \endcond

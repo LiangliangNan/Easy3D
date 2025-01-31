@@ -41,6 +41,7 @@
 
 namespace easy3d {
 
+    // \cond
     wxDEFINE_EVENT(VIEW_FIT_SCREEN, wxCommandEvent);
     wxDEFINE_EVENT(VIEW_SNAPSHOT, wxCommandEvent);
     wxDEFINE_EVENT(EDIT_SUBDIVISION, wxCommandEvent);
@@ -196,5 +197,7 @@ namespace easy3d {
     void Window::menuHelpAbout(wxCommandEvent & WXUNUSED(event)) {
         wxMessageBox("Easy3D viewer based on wxWidgets");
     }
+
+    // \endcond
 
 }

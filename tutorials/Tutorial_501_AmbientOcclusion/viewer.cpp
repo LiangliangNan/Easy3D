@@ -38,6 +38,8 @@
 
 using namespace easy3d;
 
+// \cond
+
 TutorialAmbientOcclusion::TutorialAmbientOcclusion(const std::string& title) : Viewer(title) {
 	ao_ = new AmbientOcclusion(camera());
 	ao_enabled_ = true;
@@ -157,3 +159,5 @@ void TutorialAmbientOcclusion::draw() const {
 	else
 		Viewer::draw();
 }
+
+// \endcond

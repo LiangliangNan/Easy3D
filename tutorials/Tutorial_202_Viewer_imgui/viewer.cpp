@@ -42,6 +42,8 @@
 
 namespace easy3d {
 
+	// \cond
+
     ImGuiContext* ViewerImGui::context_ = nullptr;
 
     ViewerImGui::ViewerImGui(
@@ -260,4 +262,7 @@ namespace easy3d {
             ImGui::EndMenu();
         }
     }
+
+	// \endcond
+
 }

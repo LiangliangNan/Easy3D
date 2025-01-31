@@ -38,6 +38,8 @@
 
 using namespace easy3d;
 
+// \cond
+
 TutorialCollisionDetection::TutorialCollisionDetection(const std::string &title)
         : Viewer(title)
         , model0_color_(0.8f, 1.0f, 0.8f)
@@ -154,3 +156,5 @@ void TutorialCollisionDetection::detect() {
 
     update();
 }
+
+// \endcond

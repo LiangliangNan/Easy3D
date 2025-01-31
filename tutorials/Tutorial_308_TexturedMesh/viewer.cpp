@@ -44,6 +44,7 @@
 
 namespace easy3d {
 
+    // \cond
 
     TexturedViewer::TexturedViewer(const std::string &title)
             : Viewer(title) {
@@ -291,5 +292,7 @@ namespace easy3d {
 
         return mesh;
     }
+
+    // \endcond
 
 }

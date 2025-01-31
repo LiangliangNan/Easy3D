@@ -31,6 +31,7 @@
 
 using namespace easy3d;
 
+// \cond
 
 bool TutorialRealCamera::read_bundler_file(const std::string& file_name) {
 	typedef struct {
@@ -191,3 +192,5 @@ bool TutorialRealCamera::read_bundler_file(const std::string& file_name) {
 
 	return !cameras.empty();
 }
+
+// \endcond

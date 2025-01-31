@@ -60,6 +60,7 @@
 
 namespace easy3d {
 
+    // \cond
 
     Viewer::Viewer(QWidget *parent /* = nullptr*/)
             : QOpenGLWidget(parent), texter_(nullptr), pressed_button_(Qt::NoButton),
@@ -1068,5 +1069,7 @@ namespace easy3d {
 		}
 #endif
     }
+
+    // \endcond
 
 }

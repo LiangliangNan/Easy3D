@@ -37,6 +37,8 @@
 
 namespace easy3d {
 
+    // \cond
+
     class AppImpl : public wxApp {
     public:
         AppImpl(const std::string &title, int w, int h) : title_(title), width_(w), height_(h) {}
@@ -63,5 +65,7 @@ namespace easy3d {
     int Application::run(int argc, char **argv) {
         return wxEntry(argc, argv);
     }
+
+    // \endcond
 
 }

@@ -45,6 +45,7 @@
 
 using namespace easy3d;
 
+// \cond
 
 const float scale = 0.3f;
 
@@ -397,3 +398,5 @@ vec2 TutorialRealCamera::point_to_pixel(const easy3d::vec3 &p,
 
     return vec2(q.x, q.y);
 }
+
+// \endcond

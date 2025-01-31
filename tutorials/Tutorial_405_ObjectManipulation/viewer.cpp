@@ -37,6 +37,7 @@
 
 using namespace easy3d;
 
+// \cond
 
 TutorialObjectManipulation::TutorialObjectManipulation(const std::string &title)
         : Viewer(title), selected_model_(nullptr)
@@ -127,3 +128,5 @@ void TutorialObjectManipulation::draw() const {
             m->manipulator()->draw_frame(camera());
     }
 }
+
+// \endcond

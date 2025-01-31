@@ -39,6 +39,7 @@
 
 using namespace easy3d;
 
+// \cond
 
 TutorialDepthMap::TutorialDepthMap(const std::string& title)
     : Viewer(title)
@@ -116,3 +117,5 @@ void TutorialDepthMap::draw_depth() const {
     shape::draw_depth_texture(quad, fbo_->depth_texture(), static_cast<int>(w), static_cast<int>(h), -0.9f);
     shape::draw_quad_wire(quad, vec4(1.0f, 0.0f, 0.0f, 1.0f), static_cast<int>(w), static_cast<int>(h), -0.99f);
 }
+
+// \endcond

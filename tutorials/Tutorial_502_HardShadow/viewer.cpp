@@ -34,6 +34,8 @@
 
 using namespace easy3d;
 
+// \cond
+
 TutorialHardShadow::TutorialHardShadow(const std::string& title) : Viewer(title) {
     camera()->setUpVector(vec3(0, 1, 0));
     camera()->setViewDirection(vec3(0, 0, 1));
@@ -81,3 +83,5 @@ void TutorialHardShadow::draw() const {
 	else
 		Viewer::draw();
 }
+
+// \endcond

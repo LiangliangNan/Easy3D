@@ -199,7 +199,8 @@ viewer.run()
 
 ### Documentation
  - [Easy3D documentation](https://3d.bk.tudelft.nl/liangliang/software/easy3d_doc/html/index.html)
- - [Python bindings documentation](https://3d.bk.tudelft.nl/liangliang/software/easy3d_doc/python/index.html)
+ - [Easy3D Python documentation](https://3d.bk.tudelft.nl/liangliang/software/easy3d_doc/python/index.html)
+ - [Easy3D Python tutorials](https://3d.bk.tudelft.nl/liangliang/software/easy3d_doc/python/auto_tutorials/index.html)
 
 The documentation is an ongoing effort with more and more details being added. You can build the latest Easy3D 
 documentation from the source code.

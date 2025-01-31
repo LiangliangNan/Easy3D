@@ -32,6 +32,8 @@
 
 namespace easy3d {
 
+    // \cond
+
     CrossSection::CrossSection(const std::string &title) : Viewer(title) {
         // Code of interest:
         ClippingPlane::instance()->set_enabled(true);
@@ -57,5 +59,7 @@ namespace easy3d {
 
         return false;
     }
+
+    // \endcond
 
 }

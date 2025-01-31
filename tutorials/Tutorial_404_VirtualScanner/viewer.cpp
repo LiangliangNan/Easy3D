@@ -33,6 +33,8 @@
 
 using namespace easy3d;
 
+// \cond
+
 TutorialVirtualScanner::TutorialVirtualScanner(const std::string &title)
     : Viewer(title)
     , add_noise_(false)
@@ -121,3 +123,4 @@ bool TutorialVirtualScanner::key_press_event(int key, int modifiers) {
         return Viewer::key_press_event(key, modifiers);
 }
 
+// \endcond

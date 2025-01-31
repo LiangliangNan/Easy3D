@@ -38,6 +38,7 @@
 
 using namespace easy3d;
 
+// \cond
 
 TutorialPointSelection::TutorialPointSelection(const std::string &title) : Viewer(title) {
     hint_ = "Pressing Shift, drag the mouse to select (left) or deselect (right) points";
@@ -122,3 +123,5 @@ void TutorialPointSelection::mark_selection(PointCloud *cloud) {
     drawable->set_coloring(easy3d::State::COLOR_PROPERTY, easy3d::State::VERTEX, "v:color");
     drawable->update();
 }
+
+// \endcond

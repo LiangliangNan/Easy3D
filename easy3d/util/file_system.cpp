@@ -58,6 +58,7 @@
 
 namespace easy3d {
 
+    // \cond
 
     namespace file_system {
 
@@ -691,6 +692,7 @@ namespace easy3d {
 
     }
 
+    // \endcond
 
 } // namespace easy3
 

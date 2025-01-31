@@ -35,6 +35,7 @@
 
 using namespace easy3d;
 
+// \cond
 
 TutorialFacePicker::TutorialFacePicker(const std::string &title)
         : Viewer(title) {
@@ -82,3 +83,5 @@ Model* TutorialFacePicker::add_model(const std::string& file_name) {
 
     return model;
 }
+
+// \endcond

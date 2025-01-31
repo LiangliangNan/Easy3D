@@ -31,6 +31,8 @@
 
 namespace easy3d {
 
+    // \cond
+
     namespace resource {
 
         static std::string easy3d_resource_dir = file_system::convert_to_native_style(Easy3D_RESOURCE_DIR);
@@ -1455,6 +1457,8 @@ namespace easy3d {
                 };
 
     } // namespace resource
+
+    // \endcond
 
 } // namespace easy3d
 

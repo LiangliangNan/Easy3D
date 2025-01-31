@@ -29,6 +29,8 @@
 
 namespace easy3d {
 
+    // \cond
+
     // the default parameters used for initialization of both ui and rendering
     namespace setting {
 
@@ -401,6 +403,8 @@ namespace easy3d {
         }
 
     } // namespace setting
+
+    // \endcond
 
 } // namespace easy3d
 

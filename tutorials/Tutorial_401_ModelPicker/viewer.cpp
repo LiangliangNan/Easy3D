@@ -35,6 +35,7 @@
 
 using namespace easy3d;
 
+// \cond
 
 TutorialModelPicker::TutorialModelPicker(const std::string &title)
         : Viewer(title) {
@@ -70,3 +71,5 @@ void TutorialModelPicker::mark(easy3d::Model *model) {
     std::cout << "picked model: " << file_system::simple_name(model->name()) << std::endl;
     update();
 }
+
+// \endcond

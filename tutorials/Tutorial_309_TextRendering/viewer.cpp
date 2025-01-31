@@ -34,6 +34,7 @@
 
 using namespace easy3d;
 
+// \cond
 
 TutorialTextRendering::TutorialTextRendering(const std::string &title)
         : Viewer(title)
@@ -197,3 +198,5 @@ void TutorialTextRendering::draw() const {
         }
     }
 }
+
+// \endcond

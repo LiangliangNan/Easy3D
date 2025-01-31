@@ -34,6 +34,8 @@
 
 using namespace easy3d;
 
+// \cond
+
 TutorialImageViewer::TutorialImageViewer(const std::string& title, const std::string& image_file)
     : Viewer(title)
     , scale_(1.0f)
@@ -136,3 +138,5 @@ void TutorialImageViewer::draw() const {
     const Rect quad(static_cast<float>(x), static_cast<float>(x + w), static_cast<float>(y), static_cast<float>(y + h));
     shape::draw_quad_filled(quad, texture_->id(), width(), height(), -0.9f);
 }
+
+// \endcond
