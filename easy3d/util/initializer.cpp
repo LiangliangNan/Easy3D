@@ -33,8 +33,14 @@
 namespace easy3d {
 
     void initialize(bool info_to_stdout, bool use_log_file, bool use_setting_file, const std::string& resource_dir) {
+        // initialize random number generator
+        srand(0);
+
+        // initialize the logger
         logging::initialize(info_to_stdout, true, true, false, use_log_file ? "default" : "", 9);
+        // initialize the setting
         setting::initialize(use_setting_file ? "default" : "");
+        // initialize the resource directory
         resource::initialize(resource_dir);
     }
 
