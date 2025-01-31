@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>277</width>
-    <height>876</height>
+    <width>276</width>
+    <height>777</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,24 +18,7 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <item>
-      <widget class="WidgetCheckerSphere" name="checkerSphere">
-       <property name="minimumSize">
-        <size>
-         <width>120</width>
-         <height>120</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>120</width>
-         <height>120</height>
-        </size>
-       </property>
-      </widget>
-     </item>
-    </layout>
+    <layout class="QHBoxLayout" name="horizontalLayoutCheckerSphere"/>
    </item>
    <item>
     <layout class="QGridLayout" name="gridLayout">
@@ -63,14 +46,14 @@
         <number>60</number>
        </property>
        <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+        <enum>Qt::Orientation::Horizontal</enum>
        </property>
       </widget>
      </item>
      <item row="0" column="0" colspan="2">
       <widget class="Line" name="line_5">
        <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+        <enum>Qt::Orientation::Horizontal</enum>
        </property>
       </widget>
      </item>
@@ -129,10 +112,10 @@
        <item>
         <spacer name="horizontalSpacer_24">
          <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+          <enum>Qt::Orientation::Horizontal</enum>
          </property>
          <property name="sizeType">
-          <enum>QSizePolicy::Expanding</enum>
+          <enum>QSizePolicy::Policy::Expanding</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -154,14 +137,14 @@
      <item row="17" column="0" colspan="2">
       <widget class="Line" name="line_3">
        <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+        <enum>Qt::Orientation::Horizontal</enum>
        </property>
       </widget>
      </item>
      <item row="8" column="0" rowspan="2" colspan="2">
       <widget class="Line" name="line_2">
        <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+        <enum>Qt::Orientation::Horizontal</enum>
        </property>
       </widget>
      </item>
@@ -197,7 +180,7 @@
        <item>
         <widget class="QCheckBox" name="checkBoxGroundPlaneConstraint">
          <property name="layoutDirection">
-          <enum>Qt::RightToLeft</enum>
+          <enum>Qt::LayoutDirection::RightToLeft</enum>
          </property>
          <property name="text">
           <string/>
@@ -207,10 +190,10 @@
        <item>
         <spacer name="horizontalSpacer_19">
          <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+          <enum>Qt::Orientation::Horizontal</enum>
          </property>
          <property name="sizeType">
-          <enum>QSizePolicy::Expanding</enum>
+          <enum>QSizePolicy::Policy::Expanding</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -278,10 +261,10 @@
        <item>
         <spacer name="horizontalSpacer_23">
          <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+          <enum>Qt::Orientation::Horizontal</enum>
          </property>
          <property name="sizeType">
-          <enum>QSizePolicy::Expanding</enum>
+          <enum>QSizePolicy::Policy::Expanding</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -317,7 +300,7 @@
         <number>4000</number>
        </property>
        <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+        <enum>Qt::Orientation::Horizontal</enum>
        </property>
       </widget>
      </item>
@@ -377,10 +360,10 @@
        <item>
         <spacer name="horizontalSpacer_22">
          <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+          <enum>Qt::Orientation::Horizontal</enum>
          </property>
          <property name="sizeType">
-          <enum>QSizePolicy::Expanding</enum>
+          <enum>QSizePolicy::Policy::Expanding</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -416,7 +399,7 @@
         <number>10</number>
        </property>
        <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+        <enum>Qt::Orientation::Horizontal</enum>
        </property>
       </widget>
      </item>
@@ -485,7 +468,7 @@
        <item>
         <widget class="QCheckBox" name="checkBoxGroundPlaneTexture">
          <property name="layoutDirection">
-          <enum>Qt::RightToLeft</enum>
+          <enum>Qt::LayoutDirection::RightToLeft</enum>
          </property>
          <property name="text">
           <string/>
@@ -514,10 +497,10 @@
        <item>
         <spacer name="horizontalSpacer_20">
          <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+          <enum>Qt::Orientation::Horizontal</enum>
          </property>
          <property name="sizeType">
-          <enum>QSizePolicy::Expanding</enum>
+          <enum>QSizePolicy::Policy::Expanding</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -560,7 +543,7 @@
         <number>50</number>
        </property>
        <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+        <enum>Qt::Orientation::Horizontal</enum>
        </property>
       </widget>
      </item>
@@ -591,7 +574,7 @@
         <number>150</number>
        </property>
        <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+        <enum>Qt::Orientation::Horizontal</enum>
        </property>
       </widget>
      </item>
@@ -657,7 +640,7 @@
        <item>
         <spacer name="horizontalSpacer_6">
          <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+          <enum>Qt::Orientation::Horizontal</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -684,7 +667,7 @@
        <item>
         <spacer name="horizontalSpacer_5">
          <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+          <enum>Qt::Orientation::Horizontal</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -711,7 +694,7 @@
        <item>
         <spacer name="horizontalSpacer_7">
          <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+          <enum>Qt::Orientation::Horizontal</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -728,7 +711,7 @@
        <item>
         <widget class="QCheckBox" name="checkBoxGroundPlane">
          <property name="layoutDirection">
-          <enum>Qt::RightToLeft</enum>
+          <enum>Qt::LayoutDirection::RightToLeft</enum>
          </property>
          <property name="text">
           <string/>
@@ -757,10 +740,10 @@
        <item>
         <spacer name="horizontalSpacer_21">
          <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+          <enum>Qt::Orientation::Horizontal</enum>
          </property>
          <property name="sizeType">
-          <enum>QSizePolicy::Expanding</enum>
+          <enum>QSizePolicy::Policy::Expanding</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -775,7 +758,7 @@
      <item row="4" column="0" colspan="2">
       <widget class="Line" name="line_4">
        <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+        <enum>Qt::Orientation::Horizontal</enum>
        </property>
       </widget>
      </item>
@@ -819,7 +802,7 @@
         <number>200</number>
        </property>
        <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+        <enum>Qt::Orientation::Horizontal</enum>
        </property>
       </widget>
      </item>
@@ -868,7 +851,7 @@
         <number>60</number>
        </property>
        <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+        <enum>Qt::Orientation::Horizontal</enum>
        </property>
       </widget>
      </item>
@@ -877,7 +860,7 @@
    <item>
     <spacer name="verticalSpacer">
      <property name="orientation">
-      <enum>Qt::Vertical</enum>
+      <enum>Qt::Orientation::Vertical</enum>
      </property>
      <property name="sizeHint" stdset="0">
       <size>
@@ -889,13 +872,6 @@
    </item>
   </layout>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>WidgetCheckerSphere</class>
-   <extends>QOpenGLWidget</extends>
-   <header>widgets/widget_checker_sphere.h</header>
-  </customwidget>
- </customwidgets>
  <tabstops>
   <tabstop>checkBoxGroundPlane</tabstop>
   <tabstop>spinBoxGroundPlaneSize</tabstop>

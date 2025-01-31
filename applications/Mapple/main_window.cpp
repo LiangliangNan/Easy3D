@@ -48,7 +48,6 @@
 #include <easy3d/core/poly_mesh.h>
 #include <easy3d/core/random.h>
 #include <easy3d/core/surface_mesh_builder.h>
-#include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/drawable_lines.h>

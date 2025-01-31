@@ -42,6 +42,7 @@
 #include "main_window.h"
 #include "paint_canvas.h"
 #include "widgets/widget_drawable_triangles.h"
+#include "widgets/widget_checker_sphere.h"
 
 #include <ui_widget_global_setting.h>
 
@@ -86,11 +87,13 @@ WidgetGlobalSetting::WidgetGlobalSetting(QWidget *parent)
     ui_->horizontalSliderShadowDarkness->setValue(setting::effect_shadow_darkness * 100);
 
     //----------------------------------------------
-
     QPalette::ColorRole role = parent->backgroundRole();
     const QColor& bc = parent->palette().color(role);
-    ui_->checkerSphere->setBackgroundColor(bc);
-    connect(ui_->checkerSphere, SIGNAL(lightPositionChanged()), viewer_, SLOT(update()));
+    auto checkerSphere = new WidgetCheckerSphere(this);
+    checkerSphere->setBackgroundColor(bc);
+    checkerSphere->setFixedSize(120, 120);
+    connect(checkerSphere, SIGNAL(lightPositionChanged()), viewer_, SLOT(update()));
+    ui_->horizontalLayoutCheckerSphere->addWidget(checkerSphere);
 
     connect(ui_->checkBoxClippingPlaneEnable, SIGNAL(toggled(bool)), this, SLOT(setEnableClippingPlane(bool)));
     connect(ui_->checkBoxClippingPlaneVisible, SIGNAL(toggled(bool)), this, SLOT(setClippingPlaneVisible(bool)));

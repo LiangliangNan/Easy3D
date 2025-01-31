@@ -76,13 +76,15 @@ void WidgetCheckerSphere::initializeGL()
     func->initializeOpenGLFunctions();
     OpenglUtil::init();
 
+    createSpheres();
+
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
     glClearDepth(1.0f);
 	glClearColor(
-		static_cast<float>(backgroundColor_.redF()),
-		static_cast<float>(backgroundColor_.greenF()),
-		static_cast<float>(backgroundColor_.blueF()),
+		backgroundColor_.redF(),
+		backgroundColor_.greenF(),
+		backgroundColor_.blueF(),
 		1.0f
 	);
 
@@ -167,8 +169,8 @@ vec3 WidgetCheckerSphere::projectToSphere(const QPoint& p)
 
 void WidgetCheckerSphere::updateLighting() {
     setting::light_position = lightPos_;
-    update();
     emit lightPositionChanged();
+    update();
 }
 
 
@@ -203,15 +205,15 @@ void WidgetCheckerSphere::createSpheres() {
 
 void WidgetCheckerSphere::paintGL() {
     if (!checkerSphere_)
-        createSpheres();
+        return;
 
     ShaderProgram* program = ShaderManager::get_program("surface/surface");
     if (!program) {
         std::vector<ShaderProgram::Attribute> attributes;
-        attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-        attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "vtx_texcoord"));
-        attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
-        attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal"));
+        attributes.emplace_back(ShaderProgram::POSITION, "vtx_position");
+        attributes.emplace_back(ShaderProgram::TEXCOORD, "vtx_texcoord");
+        attributes.emplace_back(ShaderProgram::COLOR, "vtx_color");
+        attributes.emplace_back(ShaderProgram::NORMAL, "vtx_normal");
         program = ShaderManager::create_program_from_files("surface/surface", attributes);
     }
     if (!program)
