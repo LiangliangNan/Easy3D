@@ -236,7 +236,7 @@ void bind_easy3d_renderer_drawables(pybind11::module_& m)
                            throw std::invalid_argument("Input array must have shape (n, 3).");
                        }
                        std::vector<easy3d::vec3> vertices(buf.shape(0));
-                       for (pybind11::ssize_t i = 0; i < buf.shape(0); ++i)
+                       for (auto i = 0; i < buf.shape(0); ++i)
                            vertices[i] = easy3d::vec3(buf(i, 0), buf(i, 1), buf(i, 2));
                        self.update_vertex_buffer(vertices, dynamic);
                    } else if (pybind11::isinstance<pybind11::array_t<double>>(points)) {  // Handle numpy array of doubles
@@ -245,7 +245,7 @@ void bind_easy3d_renderer_drawables(pybind11::module_& m)
                            throw std::invalid_argument("Input array must have shape (n, 3).");
                        }
                        std::vector<easy3d::vec3> vertices(buf.shape(0));
-                       for (pybind11::ssize_t i = 0; i < buf.shape(0); ++i)
+                       for (auto i = 0; i < buf.shape(0); ++i)
                            vertices[i] = easy3d::vec3(
                                    static_cast<float>(buf(i, 0)),
                                    static_cast<float>(buf(i, 1)),
@@ -383,7 +383,7 @@ void bind_easy3d_renderer_drawables(pybind11::module_& m)
                            throw std::invalid_argument("Input array must have shape (n, 2).");
                        }
                        vec_vertices.reserve(buf.shape(0));
-                       for (pybind11::ssize_t i = 0; i < buf.shape(0); ++i) {
+                       for (auto i = 0; i < buf.shape(0); ++i) {
                            vec_vertices.emplace_back(buf(i, 0), buf(i, 1));
                        }
                    } else if (pybind11::isinstance<pybind11::array_t<double>>(vertices)) {
@@ -392,7 +392,7 @@ void bind_easy3d_renderer_drawables(pybind11::module_& m)
                            throw std::invalid_argument("Input array must have shape (n, 2).");
                        }
                        vec_vertices.reserve(buf.shape(0));
-                       for (pybind11::ssize_t i = 0; i < buf.shape(0); ++i) {
+                       for (auto i = 0; i < buf.shape(0); ++i) {
                            vec_vertices.emplace_back(
                                    static_cast<float>(buf(i, 0)),
                                    static_cast<float>(buf(i, 1))

@@ -1060,13 +1060,13 @@ void PaintCanvas::adjustSceneRadius() {
 vec3 PaintCanvas::pointUnderPixel(const QPoint &p, bool &found) {
     // Liangliang: Qt6's QOpenGLWidget implementation is a black box. Using glReadPixels to read the depth buffer
     //      outside the paintGL() function has some undefined behaviors, even I made sure the context is made
-    //      current and the defaultFramebufferObject() is bound. Below is what I observed:I guess might be the reason:
+    //      current and the defaultFramebufferObject() is bound. Below is what I observed: 
     //        - it works well on macOS and Ubuntu, but not on Windows; it works on all three platforms if Qt5 is used;
     //        - on Windows, it works if the glReadPixels is called within the paintGL() function;
     //        - on Windows, when the function is called outside paintGL(), if saving the obtained depth buffer to an
     //          image, only some edge(s) of the image show correct depth information, and the majority part of the
     //          depth image shows black and very sparse white pixels.
-    //      I guess the reason might be
+    //      I guess the reason might be:
     //        - Depth buffer clearing: on some platforms (e.g., Windows), the depth buffer may be cleared or invalidated
     //          when Qt performs post rendering operations (e.g., compositing).
     //        - Driver specific implementation: Windows drivers may optimize FBO usage differently, especially if

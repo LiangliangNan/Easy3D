@@ -157,7 +157,7 @@ void bind_easy3d_core_point_cloud(pybind11::module_& m)
                     throw std::invalid_argument("Input array must have shape (n, 3).");
                 }
                 auto buf = arr.unchecked<2>();
-                for (pybind11::ssize_t i = 0; i < arr.shape(0); ++i) {
+                for (auto i = 0; i < arr.shape(0); ++i) {
                     pc->add_vertex(easy3d::vec3(buf(i, 0), buf(i, 1), buf(i, 2)));
                 }
             } else if (pybind11::isinstance<pybind11::array_t<double>>(points)) {    // double type
@@ -167,7 +167,7 @@ void bind_easy3d_core_point_cloud(pybind11::module_& m)
                     throw std::invalid_argument("Input array must have shape (n, 3).");
                 }
                 auto buf = arr.unchecked<2>();
-                for (pybind11::ssize_t i = 0; i < arr.shape(0); ++i) {
+                for (auto i = 0; i < arr.shape(0); ++i) {
                     pc->add_vertex(easy3d::vec3(
                             static_cast<float>(buf(i, 0)),
                             static_cast<float>(buf(i, 1)),
@@ -210,7 +210,7 @@ void bind_easy3d_core_point_cloud(pybind11::module_& m)
                     throw std::invalid_argument("Input array must have shape (n, 3).");
                 }
                 auto buf = arr.unchecked<2>();
-                for (pybind11::ssize_t i = 0; i < arr.shape(0); ++i) {
+                for (auto i = 0; i < arr.shape(0); ++i) {
                     pc.add_vertex(easy3d::vec3(buf(i, 0), buf(i, 1), buf(i, 2)));
                 }
             } else if (pybind11::isinstance<pybind11::array_t<double>>(points)) {    // double type
@@ -220,7 +220,7 @@ void bind_easy3d_core_point_cloud(pybind11::module_& m)
                     throw std::invalid_argument("Input array must have shape (n, 3).");
                 }
                 auto buf = arr.unchecked<2>();
-                for (pybind11::ssize_t i = 0; i < arr.shape(0); ++i) {
+                for (auto i = 0; i < arr.shape(0); ++i) {
                     pc.add_vertex(easy3d::vec3(
                             static_cast<float>(buf(i, 0)),
                             static_cast<float>(buf(i, 1)),
