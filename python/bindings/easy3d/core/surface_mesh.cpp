@@ -1014,13 +1014,13 @@ std::vector<std::vector<unsigned int>> convert(const pybind11::object& input) {
 
         // Sub-case 1.1: List of lists for general polygonal meshes
         if (!input_list.empty() && pybind11::isinstance<pybind11::list>(input_list[0])) {
-            for (pybind11::ssize_t i = 0; i < input_list.size(); ++i) {
+            for (auto i = 0; i < input_list.size(); ++i) {
                 pybind11::object face = input_list[i];
                 if (pybind11::isinstance<pybind11::list>(face)) {
                     pybind11::list face_list = pybind11::cast<pybind11::list>(face);
                     std::vector<unsigned int> face_indices;
                     // Convert each element of the face list to unsigned int
-                    for (pybind11::ssize_t j = 0; j < face_list.size(); ++j) {
+                    for (auto j = 0; j < face_list.size(); ++j) {
                         face_indices.push_back(static_cast<unsigned int>(pybind11::cast<long>(face_list[j])));
                     }
                     result.push_back(std::move(face_indices));
@@ -1032,7 +1032,7 @@ std::vector<std::vector<unsigned int>> convert(const pybind11::object& input) {
         // Sub-case 1.2: Flat list of unsigned/signed integers for triangle meshes
         else if (!input_list.empty() && pybind11::isinstance<pybind11::int_>(input_list[0])) {
             std::vector<unsigned int> temp;
-            for (pybind11::ssize_t i = 0; i < input_list.size(); ++i) {
+            for (auto i = 0; i < input_list.size(); ++i) {
                 temp.push_back(static_cast<unsigned int>(pybind11::cast<long>(input_list[i])));
                 if (temp.size() == 3) {  // Form a triangle face
                     result.push_back(std::move(temp));
@@ -1055,13 +1055,13 @@ std::vector<std::vector<unsigned int>> convert(const pybind11::object& input) {
         if (arr.ndim() == 1) {
             if (arr.dtype().is(pybind11::dtype::of<pybind11::object>())) {
                 auto buf = arr.unchecked<pybind11::object>();  // Access array elements as Python objects
-                for (pybind11::ssize_t i = 0; i < arr.shape(0); ++i) {
+                for (auto i = 0; i < arr.shape(0); ++i) {
                     pybind11::object face = buf(i);
                     if (pybind11::isinstance<pybind11::list>(face)) {
                         pybind11::list face_list = pybind11::cast<pybind11::list>(face);
                         std::vector<unsigned int> face_indices;
                         // Convert each element of the face list to unsigned int
-                        for (pybind11::ssize_t j = 0; j < face_list.size(); ++j) {
+                        for (auto j = 0; j < face_list.size(); ++j) {
                             face_indices.push_back(static_cast<unsigned int>(pybind11::cast<long>(face_list[j])));
                         }
                         result.push_back(std::move(face_indices));
@@ -1074,7 +1074,7 @@ std::vector<std::vector<unsigned int>> convert(const pybind11::object& input) {
             else if (arr.dtype().is(pybind11::dtype::of<unsigned int>())) {
                 auto buf = arr.unchecked<unsigned int>();  // Access array elements as unsigned integers
                 std::vector<unsigned int> temp;
-                for (pybind11::ssize_t i = 0; i < arr.shape(0); ++i) {
+                for (auto i = 0; i < arr.shape(0); ++i) {
                     temp.push_back(buf(i));
                     if (temp.size() == 3) {  // Form a triangle face
                         result.push_back(std::move(temp));
@@ -1090,7 +1090,7 @@ std::vector<std::vector<unsigned int>> convert(const pybind11::object& input) {
             else if (arr.dtype().is(pybind11::dtype::of<int>())) {
                 auto buf = arr.unchecked<int>();  // Access array elements as integers
                 std::vector<unsigned int> temp;
-                for (pybind11::ssize_t i = 0; i < arr.shape(0); ++i) {
+                for (auto i = 0; i < arr.shape(0); ++i) {
                     temp.push_back(static_cast<unsigned int>(buf(i)));
                     if (temp.size() == 3) {  // Form a triangle face
                         result.push_back(std::move(temp));
@@ -1171,7 +1171,7 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
                        throw std::invalid_argument("Input array must have shape (n, 3).");
                    }
                    auto buf = arr.unchecked<2>();
-                   for (pybind11::ssize_t i = 0; i < arr.shape(0); ++i) {
+                   for (auto i = 0; i < arr.shape(0); ++i) {
                        mesh->add_vertex(easy3d::vec3(buf(i, 0), buf(i, 1), buf(i, 2)));
                    }
                } else if (pybind11::isinstance<pybind11::array_t<double>>(points)) { // double type
@@ -1181,7 +1181,7 @@ void bind_easy3d_core_surface_mesh(pybind11::module_& m)
                        throw std::invalid_argument("Input array must have shape (n, 3).");
                    }
                    auto buf = arr.unchecked<2>();
-                   for (pybind11::ssize_t i = 0; i < arr.shape(0); ++i) {
+                   for (auto i = 0; i < arr.shape(0); ++i) {
                        mesh->add_vertex(easy3d::vec3(
                                static_cast<float>(buf(i, 0)),
                                static_cast<float>(buf(i, 1)),

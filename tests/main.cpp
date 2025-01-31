@@ -32,7 +32,6 @@
 
 int test_timer();
 int test_signal();
-int test_console_style();
 
 int test_linear_solvers();
 int test_spline();
@@ -88,7 +87,6 @@ int main(int argc, char* argv[]) {
 
     int result = 0;
 
-    result += test_console_style();
     result += test_timer();
     result += test_signal();
 

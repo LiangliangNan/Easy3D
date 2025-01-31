@@ -5,7 +5,6 @@ set(private_dependencies)
 set(public_dependencies Threads::Threads)
 
 set(${module}_headers
-        console_style.h
         dialog.h
         file_system.h
         initializer.h
@@ -23,7 +22,6 @@ set(${module}_headers
         )
 
 set(${module}_sources
-        console_style.cpp
         dialog.cpp
         file_system.cpp
         initializer.cpp
