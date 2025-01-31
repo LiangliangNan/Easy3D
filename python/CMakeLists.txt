@@ -124,6 +124,10 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE PYBIND11_SIMPLE_GIL_SAFE_ABI)
 set(EASY3D_MODULE_NAME "PyEasy3D") # Sets the base name of the output file
 target_compile_definitions(${PROJECT_NAME} PUBLIC "PyEasy3D_NAME=${EASY3D_MODULE_NAME}")
 
+if (MINGW)
+    target_compile_options(${PROJECT_NAME} PRIVATE -O3)   # solves "file too big" and "too many sections (85427)" with MinGW
+endif ()
+
 # Platform-specific suffix for Python extensions
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     set(EASY3D_MODULE_SUFFIX ".pyd")
@@ -131,6 +135,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 else()
     set(EASY3D_MODULE_SUFFIX ".so")
 endif()
+
 # Set the target properties with the computed suffix
 set_target_properties(${PROJECT_NAME} PROPERTIES
         OUTPUT_NAME ${EASY3D_MODULE_NAME}  # Sets the base name of the output file
