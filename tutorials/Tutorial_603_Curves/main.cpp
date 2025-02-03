@@ -55,42 +55,21 @@ void create_drawable(Viewer& viewer, const std::vector<vec2>& curve_points, cons
     viewer.add_drawable(drawable);
 }
 
-// void add_Bezier(Viewer& viewer, const std::vector<vec2>& control_points, int bezier_steps, const vec3& color) {
-//     auto cv = new Bezier<Vec, 2, float>;
-//     cv->set_steps(bezier_steps);
-//     for (const auto& p : control_points)
-//         cv->add_way_point(p);
-//
-//     std::vector<vec2> curve_points;
-//     for (int i = 0; i < cv->node_count(); ++i)
-//         curve_points.push_back(cv->node(i));
-//
-//     create_drawable(viewer, curve_points, color);
-// }
+void add_Bezier(Viewer& viewer, const std::vector<vec2>& control_points, int bezier_steps, const vec3& color) {
+    Bezier<Vec, 2, float> curve;
+    const auto curve_points = curve.generate(control_points, bezier_steps);
+    create_drawable(viewer, curve_points, color);
+}
 
 void add_BSpline(Viewer& viewer, const std::vector<vec2>& control_points, int bezier_steps, const vec3& color) {
-    auto cv = new BSpline<Vec, 2, float>;
-    cv->set_steps(bezier_steps);
-    for (const auto& p : control_points)
-        cv->add_way_point(p);
-
-    std::vector<vec2> curve_points;
-    for (int i = 0; i < cv->node_count(); ++i)
-        curve_points.push_back(cv->node(i));
-
+    BSpline<Vec, 2, float> curve;
+    const auto curve_points = curve.generate(control_points, bezier_steps);
     create_drawable(viewer, curve_points, color);
 }
 
 void add_CatmullRom(Viewer& viewer, const std::vector<vec2>& control_points, int bezier_steps, const vec3& color) {
-    auto cv = new CatmullRom<Vec, 2, float>;
-    cv->set_steps(bezier_steps);
-    for (const auto& p : control_points)
-        cv->add_way_point(p);
-
-    std::vector<vec2> curve_points;
-    for (int i = 0; i < cv->node_count(); ++i)
-        curve_points.push_back(cv->node(i));
-
+    CatmullRom<Vec, 2, float> curve;
+    const auto curve_points = curve.generate(control_points, bezier_steps);
     create_drawable(viewer, curve_points, color);
 }
 
@@ -114,13 +93,14 @@ int main(int argc, char** argv) {
     };
     create_drawable(viewer, points, vec3(0, 0, 0)); // this is the control polygon
 
-    // add_Bezier(viewer, points, 20);
-    add_BSpline(viewer, points, 20, vec3(1, 0, 0));
-    add_CatmullRom(viewer, points, 20, vec3(0, 1, 0));
+    const int resolution = 50;    // Number of line subdivisions to display the spline
+
+    add_Bezier(viewer, points, resolution, vec3(1, 0, 0));
+    add_BSpline(viewer, points, resolution, vec3(0, 1, 0));
+    add_CatmullRom(viewer, points, resolution, vec3(0, 0, 1));
 
     {
         // spline curve fitting
-        const int resolution = 100;    // Number of line subdivisions to display the spline
         const int order = 3;           // Smoothness of the spline (min 2)
         typedef SplineCurveFitting<Vec, 2, float> Fitter;
         Fitter fitter(order, Fitter::eOPEN_UNIFORM);
@@ -135,7 +115,6 @@ int main(int argc, char** argv) {
 
     {
         // spline curve interpolation
-        const int resolution = 100;    // Number of line subdivisions to display the spline
         typedef SplineCurveInterpolation<Vec, 2, float> Interpolator;
         Interpolator interpolator;
         interpolator.set_boundary(Interpolator::second_deriv, 0, Interpolator::second_deriv, 0);

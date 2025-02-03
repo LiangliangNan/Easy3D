@@ -190,80 +190,31 @@ namespace easy3d {
 
     }
 
-
     // =============================================================================
 
 
     /**
-     * \brief Base class for curve fitting/interpolation
-     * \tparam Point A templated point class that supports basic arithmetic operations (addition and scalar
-     *      multiplication). It must be parameterized as `Point<N, T>`, where `N` is the number of dimensions, and
-     *      `T` is the data type.
-     * \tparam N The number of dimensions (e.g., 2 for 2D, 3 for 3D).
-     * \tparam T The scalar type (e.g., `float` or `double`).
-     * \class Curve easy3d/core/curve.h
-     * \sa Bezier, BSpline, and CatmullRom
-     */
-    template <template <size_t, class> class Point, size_t N, typename T>
+   * \brief Abstract base class for curve fitting/interpolation.
+   * \tparam Point A templated point class that supports basic arithmetic operations (addition and scalar
+   *      multiplication). It must be parameterized as `Point<N, T>`, where `N` is the number of dimensions, and
+   *      `T` is the data type.
+   * \tparam N The number of dimensions (e.g., 2 for 2D, 3 for 3D).
+   * \tparam T The scalar type (e.g., `float` or `double`).
+   * \class Curve easy3d/core/curve.h
+   * \sa Bezier, BSpline, and CatmullRom
+   */
+    template<template <size_t, class> class Point, size_t N, typename T>
     class Curve {
     public:
         using Point_t = Point<N, T>;
 
-        /// Default constructor.
-        Curve() : steps_(10) {}
-
-        /// Set the number of steps.
-        void set_steps(int steps) { steps_ = steps; }
-
-        /// Add a way point.
-        void add_way_point(const Point_t &point) {
-            way_points_.push_back(point);
-            on_way_point_added();
-        }
-
-        /// Return the number of nodes.
-        int node_count() const { return static_cast<int>(nodes_.size()); }
-
-        /// Return the coordinates of the \p i_th node.
-        const Point_t &node(int i) const { return nodes_[i]; }
-
-        /// Return the total curve length from the start point.
-        T length_from_start_point(int i) const { return distances_[i]; }
-
-        /// Return the total length of the curve.
-        T total_length() const {
-            assert(!distances_.empty());
-            return distances_.back();
-        }
-
-        /// Clear all cached values.
-        void clear() {
-            nodes_.clear();
-            way_points_.clear();
-            distances_.clear();
-        }
-
-    protected:
-        void add_node(const Point_t &node) {
-            nodes_.push_back(node);
-            if (nodes_.size() == 1)
-                distances_.push_back(0);
-            else {
-                int new_node_index = nodes_.size() - 1;
-                T segment_distance = distance(nodes_[new_node_index], nodes_[new_node_index - 1]);
-                distances_.push_back(segment_distance + distances_[new_node_index - 1]);
-            }
-        }
-
-        virtual void on_way_point_added() = 0;
-
-        virtual Point_t interpolate(T u, const Point_t &P0, const Point_t &P1, const Point_t &P2, const Point_t &P3) const = 0;
-
-    protected:
-        int steps_;
-        std::vector<Point_t> way_points_;
-        std::vector<Point_t> nodes_;
-        std::vector<T> distances_;
+        /**
+         * \brief Generates a curve based on the given control points.
+         * \param control_points A vector of control points that define the curve.
+         * \param num_samples The number of samples to generate along the curve.
+         * \return A vector of points representing the generated curve.
+         */
+        virtual std::vector<Point_t> generate(const std::vector<Point_t> &control_points, size_t num_samples) const = 0;
     };
 
     /**
@@ -277,59 +228,48 @@ namespace easy3d {
      *
      * Example:
      *  \code
-     *      auto cv = new Bezier<Vec, 3, float>;
-     *      cv->set_steps(num);
-     *      for (const auto& p : points)
-     *          cv->add_way_point(p);
-     *      for (int i = 0; i < cv->node_count(); ++i)
-     *          std::cout << cv->node(i) << std::endl;
+     *      Bezier<Vec, 3, float> curve;
+     *      const auto points = curve.generate(control_point, 100);
      *  \endcode
      * \class Bezier easy3d/core/curve.h
      */
-    template <template <size_t, class> class Point, size_t N, typename T>
+    template<template <size_t, class> class Point, size_t N, typename T>
     class Bezier : public Curve<Point, N, T> {
     public:
+        using Point_t = Point<N, T>;
+
         /// Default constructor
         Bezier() = default;
 
-    protected:
-        using Point_t = Point<N, T>;
-        using Curve<Point, N, T>::way_points_;
-        using Curve<Point, N, T>::steps_;
-        using Curve<Point, N, T>::add_node;
+        /**
+         * \brief Generates a curve based on the given control points.
+         * \param control_points A vector of control points that define the curve.
+         * \param num_samples The number of samples to generate along the curve.
+         * \return A vector of points representing the generated curve.
+         */
+        std::vector<Point_t> generate(const std::vector<Point_t> &control_points, size_t num_samples) const override {
+            std::vector<Point_t> curve;
+            curve.reserve(num_samples + 1); // Reserve space to avoid reallocations
 
-        void on_way_point_added() override {
-            if (way_points_.size() < 4)
-                return;
-            int new_control_point_index = way_points_.size() - 1;
-            if (new_control_point_index == 3) {
-                for (int i = 0; i <= steps_; i++) {
-                    T u = (T) i / (T) steps_;
-                    add_node(interpolate(u, way_points_[0], way_points_[1], way_points_[2], way_points_[3]));
-                }
-            } else {
-                if (new_control_point_index % 2 == 0)
-                    return;
-                int pt = new_control_point_index - 2;
-                for (int i = 0; i <= steps_; i++) {
-                    T u = (T) i / (T) steps_;
-                    Point_t point4 = 2 * way_points_[pt] - way_points_[pt - 1];
-                    add_node(interpolate(u, way_points_[pt], point4, way_points_[pt + 1], way_points_[pt + 2]));
+            for (size_t i = 0; i <= num_samples; ++i) {
+                T t = static_cast<T>(i) / num_samples;
+                curve.push_back(interpolate(control_points, t));
+            }
+            return curve;
+        }
+
+    private:
+        Point_t interpolate(const std::vector<Point_t> &control_points, T t) const {
+            std::vector<Point_t> points = control_points; // Copy control points
+            size_t n = points.size();
+            for (size_t k = 1; k < n; ++k) {
+                for (size_t i = 0; i < n - k; ++i) {
+                    points[i] = points[i] * (1 - t) + points[i + 1] * t;
                 }
             }
-        }
-
-        Point_t interpolate(T u, const Point_t &P0, const Point_t &P1, const Point_t &P2,
-                            const Point_t &P3) const override {
-            Point_t point;
-            point = u * u * u * ((-1) * P0 + 3 * P1 - 3 * P2 + P3);
-            point += u * u * (3 * P0 - 6 * P1 + 3 * P2);
-            point += u * ((-3) * P0 + 3 * P1);
-            point += P0;
-            return point;
+            return points[0];
         }
     };
-
 
     /**
      * \brief Class for BSpline curve fitting.
@@ -342,52 +282,68 @@ namespace easy3d {
      *
      * Example:
      *  \code
-     *      auto cv = new BSpline<Vec, 3, float>;
-     *      cv->set_steps(num);
-     *      for (const auto& p : points)
-     *          cv->add_way_point(p);
-     *      for (int i = 0; i < cv->node_count(); ++i)
-     *          std::cout << cv->node(i) << std::endl;
+     *      BSpline<Vec, 3, float> curve;
+     *      const auto points = curve.generate(control_point, 100);
      *  \endcode
      * \class BSpline easy3d/core/curve.h
      */
-    template <template <size_t, class> class Point, size_t N, typename T>
+    template<template <size_t, class> class Point, size_t N, typename T>
     class BSpline : public Curve<Point, N, T> {
     public:
+        using Point_t = Point<N, T>;
+
         /// Default constructor.
         BSpline() = default;
 
-    protected:
-        using Point_t = Point<N, T>;
-        using Curve<Point, N, T>::way_points_;
-        using Curve<Point, N, T>::steps_;
-        using Curve<Point, N, T>::add_node;
+        /**
+         * \brief Generates a curve based on the given control points.
+         * \param control_points A vector of control points that define the curve.
+         * \param num_samples The number of samples to generate along the curve.
+         * \return A vector of points representing the generated curve.
+         */
+        std::vector<Point_t> generate(const std::vector<Point_t> &control_points, size_t num_samples) const override {
+            std::vector<Point_t> curve;
+            size_t n = control_points.size();
+            if (n < 4)
+                return curve;
 
-        void on_way_point_added() override {
-            if (way_points_.size() < 4)
-                return;
-            int new_control_point_index = static_cast<int>(way_points_.size()) - 1;
-            int pt = new_control_point_index - 3;
-            for (int i = 0; i <= steps_; i++) {
-                T u = (T) i / (T) steps_;
-                add_node(interpolate(u, way_points_[pt], way_points_[pt + 1], way_points_[pt + 2],
-                                     way_points_[pt + 3]));
+            curve.reserve(num_samples + 1); // Reserve space to avoid reallocations
+
+            // Sample the curve
+            for (size_t i = 0; i <= num_samples; ++i) {
+                T t = static_cast<T>(i) / num_samples * (n - 3);
+                size_t k = static_cast<size_t>(t);
+                t -= k;
+
+                // Ensure k is within the valid range
+                if (k >= n - 3) {
+                    k = n - 4;
+                    t = 1.0;
+                }
+
+                // Evaluate using a proper B-spline basis
+                curve.push_back(interpolate(t, control_points, k));
             }
+            return curve;
         }
 
-        Point_t interpolate(T u, const Point_t &P0, const Point_t &P1, const Point_t &P2,
-                            const Point_t &P3) const override {
-            Point_t point;
-            point = u * u * u * ((-1) * P0 + 3 * P1 - 3 * P2 + P3) / 6;
-            point += u * u * (3 * P0 - 6 * P1 + 3 * P2) / 6;
-            point += u * ((-3) * P0 + 3 * P2) / 6;
-            point += (P0 + 4 * P1 + P2) / 6;
+    private:
+        Point_t interpolate(T t, const std::vector<Point_t> &control_points, size_t k) const {
+            const T one_sixth = static_cast<T>(1) / 6;
+            Point_t P0 = control_points[k];
+            Point_t P1 = control_points[k + 1];
+            Point_t P2 = control_points[k + 2];
+            Point_t P3 = control_points[k + 3];
 
-            return point;
+            T t2 = t * t;
+            T t3 = t2 * t;
+
+            return (P0 * (-t3 + 3 * t2 - 3 * t + 1) * one_sixth) +
+                   (P1 * (3 * t3 - 6 * t2 + 4) * one_sixth) +
+                   (P2 * (-3 * t3 + 3 * t2 + 3 * t + 1) * one_sixth) +
+                   (P3 * (t3) * one_sixth);
         }
-
     };
-
 
     /**
      * \brief Class for CatmullRom curve interpolation.
@@ -400,49 +356,48 @@ namespace easy3d {
      *
      * Example:
      *  \code
-     *      auto cv = new CatmullRom<Vec, 3, float>;
-     *      cv->set_steps(num);
-     *      for (const auto& p : points)
-     *          cv->add_way_point(p);
-     *      for (int i = 0; i < cv->node_count(); ++i)
-     *          std::cout << cv->node(i) << std::endl;
+     *      CatmullRom<Vec, 3, float> curve;
+     *      const auto points = curve.generate(control_point, 100);
      *  \endcode
      * \class CatmullRom easy3d/core/curve.h
      */
-    template <template <size_t, class> class Point, size_t N, typename T>
+    template<template <size_t, class> class Point, size_t N, typename T>
     class CatmullRom : public Curve<Point, N, T> {
     public:
+        using Point_t = Point<N, T>;
+
         /// Default constructor.
         CatmullRom() = default;
 
-    protected:
-        using Point_t = Point<N, T>;
-        using Curve<Point, N, T>::way_points_;
-        using Curve<Point, N, T>::steps_;
-        using Curve<Point, N, T>::add_node;
+        /**
+         * \brief Generates a curve based on the given control points.
+         * \param control_points A vector of control points that define the curve.
+         * \param num_samples The number of samples to generate along the curve.
+         * \return A vector of points representing the generated curve.
+         */
+        std::vector<Point_t> generate(const std::vector<Point_t> &control_points, size_t num_samples) const override {
+            std::vector<Point_t> curve;
+            curve.reserve(num_samples + 1); // Reserve space to avoid reallocations
 
-        void on_way_point_added() override {
-            if (way_points_.size() < 4)
-                return;
-            int new_control_point_index = way_points_.size() - 1;
-            int pt = new_control_point_index - 2;
-            for (int i = 0; i <= steps_; i++) {
-                T u = (T) i / (T) steps_;
-                add_node(interpolate(u, way_points_[pt - 1], way_points_[pt], way_points_[pt + 1],
-                                     way_points_[pt + 2]));
+            for (size_t i = 0; i <= num_samples; ++i) {
+                T t = static_cast<T>(i) / num_samples;
+                curve.push_back(interpolate(control_points, t));
             }
+            return curve;
         }
 
-        Point_t interpolate(T u, const Point_t &P0, const Point_t &P1, const Point_t &P2,
-                            const Point_t &P3) const override {
-            Point_t point;
-            point = u * u * u * ((-1) * P0 + 3 * P1 - 3 * P2 + P3) / 2;
-            point += u * u * (2 * P0 - 5 * P1 + 4 * P2 - P3) / 2;
-            point += u * ((-1) * P0 + P2) / 2;
-            point += P1;
-            return point;
+    private:
+        Point_t interpolate(const std::vector<Point_t> &control_points, T t) const {
+            size_t n = control_points.size() - 3;
+            size_t i = std::min(static_cast<size_t>(t * n), n - 1);
+            T u = t * n - i;
+            Point_t P0 = control_points[i], P1 = control_points[i + 1], P2 = control_points[i + 2], P3 = control_points[
+                i + 3];
+            return ((P0 * (-1) + P1 * 3 - P2 * 3 + P3) * (u * u * u) / 2 +
+                    (P0 * 2 - P1 * 5 + P2 * 4 - P3) * (u * u) / 2 +
+                    (P0 * (-1) + P2) * u / 2 +
+                    P1);
         }
-
     };
 
 }   // namespace easy3d
