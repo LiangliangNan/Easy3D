@@ -322,13 +322,13 @@ namespace easy3d {
                 }
 
                 // Evaluate using a proper B-spline basis
-                curve.push_back(interpolate(t, control_points, k));
+                curve.push_back(interpolate(control_points, t, k));
             }
             return curve;
         }
 
     private:
-        Point_t interpolate(T t, const std::vector<Point_t> &control_points, size_t k) const {
+        Point_t interpolate(const std::vector<Point_t> &control_points, T t, size_t k) const {
             const T one_sixth = static_cast<T>(1) / 6;
             Point_t P0 = control_points[k];
             Point_t P1 = control_points[k + 1];
