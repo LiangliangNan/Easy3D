@@ -229,7 +229,7 @@ namespace easy3d {
      * Example:
      *  \code
      *      Bezier<Vec, 3, float> curve;
-     *      const auto points = curve.generate(control_point, 100);
+     *      const auto points = curve.generate(control_points, 100);
      *  \endcode
      * \class Bezier easy3d/core/curve.h
      */
@@ -283,7 +283,7 @@ namespace easy3d {
      * Example:
      *  \code
      *      BSpline<Vec, 3, float> curve;
-     *      const auto points = curve.generate(control_point, 100);
+     *      const auto points = curve.generate(control_points, 100);
      *  \endcode
      * \class BSpline easy3d/core/curve.h
      */
@@ -357,7 +357,7 @@ namespace easy3d {
      * Example:
      *  \code
      *      CatmullRom<Vec, 3, float> curve;
-     *      const auto points = curve.generate(control_point, 100);
+     *      const auto points = curve.generate(control_points, 100);
      *  \endcode
      * \class CatmullRom easy3d/core/curve.h
      */
