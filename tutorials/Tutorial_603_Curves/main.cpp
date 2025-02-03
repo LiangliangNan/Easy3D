@@ -93,7 +93,7 @@ int main(int argc, char** argv) {
     };
     create_drawable(viewer, points, vec3(0, 0, 0)); // this is the control polygon
 
-    const int resolution = 50;    // Number of line subdivisions to display the spline
+    const int resolution = 100;    // Number of line subdivisions to display the spline
 
     add_Bezier(viewer, points, resolution, vec3(1, 0, 0));
     add_BSpline(viewer, points, resolution, vec3(0, 1, 0));
@@ -107,10 +107,10 @@ int main(int argc, char** argv) {
         fitter.set_ctrl_points(points);
         std::vector<vec2> curve_points;
         for(int i = 0; i < resolution; ++i) {
-            const vec2 p = fitter.eval_f( float(i) / float(resolution-1) );
+            const vec2 p = fitter.eval_f( static_cast<float>(i) / static_cast<float>(resolution - 1) );
             curve_points.push_back(p);
         }
-        create_drawable(viewer, curve_points, vec3(0, 0, 1));
+        create_drawable(viewer, curve_points, vec3(0, 1, 1));
     }
 
     {
@@ -121,10 +121,10 @@ int main(int argc, char** argv) {
         interpolator.set_points(points);
         std::vector<vec2> curve_points;
         for (int i = 0; i < resolution; ++i) {
-            const vec2 p = interpolator.eval_f(float(i) / float(resolution - 1));
+            const vec2 p = interpolator.eval_f(static_cast<float>(i) / static_cast<float>(resolution - 1));
             curve_points.push_back(p);
         }
-        create_drawable(viewer, curve_points, vec3(0, 1, 1));
+        create_drawable(viewer, curve_points, vec3(1, 0, 1));
     }
 
     // run the viewer
