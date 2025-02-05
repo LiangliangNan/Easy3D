@@ -58,23 +58,26 @@ int main(int argc, char **argv) {
     SurfaceMesh* mesh = mesher.generate("Easy3D", 0, 0, 48, 15, true);
     if (mesh)
         viewer.add_model(std::shared_ptr<SurfaceMesh>(mesh)); // Add the mesh to the viewer.
-
-    // Generate surface for "Makes 3D Easy!".
+    // Generate a surface mesh for "Makes 3D Easy!".
     mesher.set_font(resource::directory() + "/fonts/en_Roboto-Regular.ttf");
     mesher.generate(mesh,"Makes 3D Easy!", 350, 0, 25, 15, true);
 
 #else // extract and visualize the 2D contours of the text
     std::vector< std::vector<Polygon2> > contours;
     mesher.set_font(font_file);
+    // Generate the contours for "Easy3D".
     mesher.generate("Easy3D", 0, -60, 48, contours, true);
     mesher.set_font(resource::directory() + "/fonts/en_Roboto-Regular.ttf");
+    // Generate the contours for "Makes 3D Easy!".
     mesher.generate("Makes 3D Easy!", 350, -60, 25, contours, true);
+
+    // Prepare data for the rendering drawable.
     std::vector<vec3> points, colors;
     std::vector<unsigned int> indices;
     int offset = 0;
     for (auto &cha : contours) {
         for (auto &con : cha) {
-            vec3 c = con.is_clockwise() ? vec3(1, 0, 0) : vec3(0, 1, 0);
+            const vec3 c = con.is_clockwise() ? vec3(1, 0, 0) : vec3(0, 1, 0);
             for (int i = 0; i < con.size(); ++i) {
                 points.push_back(vec3(con[i], 0.0f));
                 colors.push_back(c);
@@ -84,13 +87,15 @@ int main(int argc, char **argv) {
             offset += con.size();
         }
     }
+    // Create the rendering drawable and transfer data into the buffers.
     LinesDrawable *d = new LinesDrawable;
     d->update_vertex_buffer(points);
     d->update_color_buffer(colors);
     d->update_element_buffer(indices);
     d->set_impostor_type(LinesDrawable::CONE);
-    d->set_line_width(2);
+    d->set_line_width(3);
     d->set_property_coloring(easy3d::State::VERTEX);
+    // Add the drawable to the viewer.
     viewer.add_drawable(std::shared_ptr<LinesDrawable>(d));
 #endif
 

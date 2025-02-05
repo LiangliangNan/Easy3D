@@ -92,7 +92,7 @@ namespace easy3d {
          * @param y The y-coordinate of the starting position.
          * @param font_size The size of the font.
          * @param contours The contours of the text (each character may have multiple contours). The generated contours
-         *        are simply appended to his variable.
+         *        are simply appended to this variable.
          * @param collision_free If true, the generated contours will be free of intersections between characters.
          */
         bool generate(const std::string &text, float x, float y, int font_size,
