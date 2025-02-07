@@ -71,9 +71,9 @@ namespace easy3d {
         /// Set/Change the size of the shadow map. The shadow is assumed to be square. Default: 1024 by 1024.
         void set_shadow_map_size(int size) { shadow_map_size_ = size; }
 
-        /// The distance of the light source to the scene scene (w.r.t the scene radius).
+        /// The distance of the light source to the scene (w.r.t. the scene radius).
         float light_distance() const { return light_distance_; }
-        /// Set/Change the distance of the light source to the scene scene (w.r.t the scene radius). Default value is
+        /// Set/Change the distance of the light source to the scene (w.r.t. the scene radius). Default value is
         /// 50 (large enough to mimic the directional light used in the default viewer).
         /// \note Value must be > 1.0.
         void set_light_distance(float dist);
