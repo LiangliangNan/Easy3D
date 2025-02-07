@@ -105,9 +105,12 @@ namespace easy3d {
          * \details It binds the vertex position and UVs arrays to the given attribute array indices and draws the quad.
          * \param position_attrib The vertex attribute array index that represents position in the current shader.
          * \param texcoord_attrib The vertex attribute array index that represents 2D UVs in the current shader.
-         * \param (x, y) The position (i.e., min corner) of the quad.
-         * \param (w, h) The size (i.e., width and height) of the quad.
-         * \param (vpw, vph) The size (i.e., width and height) of the viewport (of the viewer).
+         * \param x The x coordinate of the min corner of the quad.
+         * @param y The y coordinate of the min corner of the quad.
+         * \param w The width of the quad.
+         * @param h The height of the quad.
+         * \param vpw The width of the viewport (of the viewer).
+         * @param vph The height of the viewport (of the viewer).
          * \param depth The depth at which the quad will be drawn. The depth value is the Normalized Device Coordinates
          *              within the range [-1.0, 1.0], corresponding to the near and far clipping planes, respectively.
          */
@@ -183,21 +186,26 @@ namespace easy3d {
          * \details The grid is centered at vec3(0, 0, 0) and lies on the XOY plane.
          * \param x_steps The number of subdivisions along X direction.
          * \param y_steps The number of subdivisions along Y direction.
-         * \param scale The scaling factor
+         * @param depth The depth (Z value) of the generated points.
          * \param points The points to be returned.
+         * \param scale The scaling factor
          */
         void create_grid(int x_steps, int y_steps, std::vector<vec3> &points, float depth = 0.0f, float scale = 0.5f);
 
         /**
          * \brief Generates data for a unit circle as a set of line segments.
-		 * \details The circle is centered at vec3(0, 0, 0) and lies on the XOY plane.
+	 * \details The circle is centered at vec3(0, 0, 0) and lies on the XOY plane.
          * \param slices The number of subdivisions.
+         * \param points The points to be returned.
+         * @param indices The indices of the points.
          */
         void create_circle(int slices, std::vector<vec3> &points, std::vector<unsigned int> &indices);
 
         /**
          * \brief Generates data for a unit box as a set of line segments.
          * \details The box is centered at vec3(0, 0, 0) and is aligned with the main axes.
+         * @param points The points to be returned.
+         * @param colors The colors of the points.
          * \param abstracted \c true to draw an abstracted version (only part of its corners).
          */
         void create_box(std::vector<vec3> &points, std::vector<vec3> &colors, bool abstracted = false);
