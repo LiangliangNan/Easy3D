@@ -73,10 +73,10 @@ namespace easy3d {
      *
      * @param A The input matrix to be decomposed, which can have an arbitrary size.
      * @param U The left side M by M orthogonal matrix.
-     * @param S The middle M by N diagonal matrix, with zero elements outside of its main diagonal.
+     * @param S The middle M by N diagonal matrix, with zero elements outside its main diagonal.
      * @param V The right side N by N orthogonal matrix V.
      *
-     * @return Upon return, U, S, and V carry the result of the SVD decomposition.
+     * Upon return, U, S, and V carry the result of the SVD decomposition.
      *
      * @attention V is returned (instead of V^T).
      */

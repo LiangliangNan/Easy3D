@@ -206,6 +206,7 @@ namespace easy3d {
     template<template <size_t, class> class Point, size_t N, typename T>
     class Curve {
     public:
+        /// The type of points.
         using Point_t = Point<N, T>;
 
         /**
@@ -236,6 +237,7 @@ namespace easy3d {
     template<template <size_t, class> class Point, size_t N, typename T>
     class Bezier : public Curve<Point, N, T> {
     public:
+        /// The type of points.
         using Point_t = Point<N, T>;
 
         /// Default constructor
@@ -290,6 +292,7 @@ namespace easy3d {
     template<template <size_t, class> class Point, size_t N, typename T>
     class BSpline : public Curve<Point, N, T> {
     public:
+        /// The type of points.
         using Point_t = Point<N, T>;
 
         /// Default constructor.
@@ -364,6 +367,7 @@ namespace easy3d {
     template<template <size_t, class> class Point, size_t N, typename T>
     class CatmullRom : public Curve<Point, N, T> {
     public:
+        /// The type of points.
         using Point_t = Point<N, T>;
 
         /// Default constructor.
