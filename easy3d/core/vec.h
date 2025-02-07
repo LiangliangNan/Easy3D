@@ -74,9 +74,9 @@ namespace easy3d {
         }
 
         /// @brief Returns the dimension/size of this vector.
-        static size_t dimension() { return N; }
+        static size_t dimension() { return (size_t)N; }
         /// @brief Returns the dimension/size of this vector.
-        static size_t size() { return N; }
+        static size_t size() { return (size_t)N; }
 
         /// @brief Returns the memory address of the vector.
         T* data()             { return data_; }
@@ -366,8 +366,8 @@ namespace easy3d {
         template <class T2> thisclass operator/ (T2 s) const { return thisclass(x / T(s), y / T(s)); }
         thisclass operator- () const { return thisclass(-x, -y); }
 
-        static size_t dimension() { return 2; }
-        static size_t size() { return 2; }
+        static size_t dimension() { return (size_t)2; }
+        static size_t size() { return (size_t)2; }
 
         T* data() { return _array; }
         const T* data() const { return _array; }
@@ -487,8 +487,8 @@ namespace easy3d {
 
         thisclass operator- () const { return thisclass(-x, -y, -z); }
 
-        static size_t dimension() { return 3; }
-        static size_t size() { return 3; }
+        static size_t dimension() { return (size_t)3; }
+        static size_t size() { return (size_t)3; }
 
         T* data() { return _array; }
         const T* data() const { return _array; }
@@ -614,8 +614,8 @@ namespace easy3d {
             return *this;
         }
 
-        static size_t dimension() { return 4; }
-        static size_t size() { return 4; }
+        static size_t dimension() { return (size_t)4; }
+        static size_t size() { return (size_t)4; }
 
         // operators
         thisclass& operator+=(const thisclass& v) { x += v.x; y += v.y; z += v.z; w += v.w; return *this; }
