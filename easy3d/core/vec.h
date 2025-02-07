@@ -311,7 +311,7 @@ namespace easy3d {
     //-------------------- vec2 -------------------------------------------------------------------
 
     /**
-     * @brief A 2D vector (used for representing 2D points or vectors).
+     * @brief Specialization of Vec for 2D vectors (used for representing 2D points or vectors).
      * @tparam T The scalar type of vector elements.
      * @class Vec<2, T> easy3d/core/vec.h
      */
@@ -322,29 +322,57 @@ namespace easy3d {
         /// @details This typedef represents the type of the current class.
         typedef Vec<2, T>   thisclass;
 
+        /// @brief Default constructor. Initializes x and y to zero.
         Vec() : x(0), y(0) { }
-        Vec(T x_in, T y_in) : x(x_in), y(y_in) { }
-        explicit Vec(const Vec<3, T>& v) : x(v.x), y(v.y) { } // very useful for inverse promoting from homogeneous coordinates
 
+        /// @brief Constructs a 2D vector with the given x and y values.
+        /// @param x_in The x-coordinate.
+        /// @param y_in The y-coordinate.
+        Vec(T x_in, T y_in) : x(x_in), y(y_in) { }
+
+        /// @brief Constructs a 2D vector from a 3D vector (drops the z-coordinate).
+        /// @param v The 3D vector to promote from.
+        explicit Vec(const Vec<3, T>& v) : x(v.x), y(v.y) { }
+
+        /// @brief Constructs a 2D vector with all elements initialized to a scalar value.
         /// @param s The scalar value to initialize all elements of the vector.
         explicit Vec(const T& s) : x(s), y(s) { }
 
+        /// @brief Constructs a 2D vector from another 2D vector of a different scalar type.
+        /// @tparam T2 The scalar type of the source vector.
+        /// @param v The source vector.
         template<class T2> explicit Vec(const Vec<2, T2> & v)
             : x(v.x), y(v.y) {}
 
+        /// @brief Constructs a 2D vector from an array of values.
+        /// @tparam T2 The scalar type of the source array.
+        /// @param v The source array.
         template<class T2> explicit Vec(const T2* v)
             : x(T(v[0])), y(T(v[1])) {}
 
-
+        /// @brief Returns the squared length of this vector.
+        /// @return The squared length of the vector.
         T length2() const { return x*x + y*y; }
+
+        /// @brief Returns the length of this vector.
+        /// @return The length of the vector.
         T length() const { return std::sqrt(x*x + y*y); }
+
+        /// @brief Returns the norm (i.e., length/magnitude) of this vector.
+        /// @return The norm of the vector.
         T norm() const {	return length(); }
+
+        /// @brief Returns the squared Euclidean distance to another vector.
+        /// @param rhs The other vector.
+        /// @return The squared distance between this vector and `rhs`.
         T distance2(const thisclass& rhs) const {
             T dx = rhs.x - x;
             T dy = rhs.y - y;
             return dx*dx + dy*dy;
         }
 
+        /// @brief Normalizes this vector.
+        /// @return A reference to this vector after normalization.
         thisclass& normalize() {
             T s = length();
             s = (s > std::numeric_limits<T>::min()) ? T(1.0) / s : T(0.0);
@@ -352,31 +380,78 @@ namespace easy3d {
             return *this;
         }
 
-        // operators
+        /// @brief Compound addition with another vector.
+        /// @param v The vector to add.
+        /// @return A reference to this vector after addition.
         thisclass& operator+=(const thisclass& v) { x += v.x; y += v.y; return *this; }
+        /// @brief Compound subtraction with another vector.
+        /// @param v The vector to subtract.
+        /// @return A reference to this vector after subtraction.
         thisclass& operator-=(const thisclass& v) { x -= v.x; y -= v.y; return *this; }
+        /// @brief Compound component-wise multiplication with another vector.
+        /// @param v The vector to multiply.
+        /// @return A reference to this vector after multiplication.
         thisclass& operator*=(const thisclass& v) { x *= v.x; y *= v.y; return *this; }
+        /// @brief Compound component-wise division with another vector.
+        /// @param v The vector to divide.
+        /// @return A reference to this vector after division.
         thisclass& operator/=(const thisclass& v) { x /= v.x; y /= v.y; return *this; }
+        /// @brief Compound vector-scalar multiplication.
+        /// @tparam T2 The scalar type.
+        /// @param s The scalar to multiply.
+        /// @return A reference to this vector after multiplication.
         template <class T2> thisclass& operator*=(T2 s) { x *= T(s); y *= T(s); return *this; }
+        /// @brief Compound vector-scalar division.
+        /// @tparam T2 The scalar type.
+        /// @param s The scalar to divide.
+        /// @return A reference to this vector after division.
         template <class T2> thisclass& operator/=(T2 s) { x /= T(s); y /= T(s); return *this; }
 
+        /// @brief Addition with another vector.
+        /// @param v The vector to add.
+        /// @return The resulting vector after addition.
         thisclass operator+ (const thisclass& v) const { return thisclass(x + v.x, y + v.y); }
+        /// @brief Subtraction with another vector.
+        /// @param v The vector to subtract.
+        /// @return The resulting vector after subtraction.
         thisclass operator- (const thisclass& v) const { return thisclass(x - v.x, y - v.y); }
+
+        /// @brief Vector-scalar multiplication.
+        /// @tparam T2 The scalar type.
+        /// @param s The scalar to multiply.
+        /// @return The resulting vector after multiplication.
         template <class T2> thisclass operator* (T2 s) const { return thisclass(x*T(s), y*T(s)); }
+        /// @brief Vector-scalar division.
+        /// @tparam T2 The scalar type.
+        /// @param s The scalar to divide.
+        /// @return The resulting vector after division.
         template <class T2> thisclass operator/ (T2 s) const { return thisclass(x / T(s), y / T(s)); }
+
+        /// @brief Negates this vector (i.e., adds a minus sign).
+        /// @return The negated vector.
         thisclass operator- () const { return thisclass(-x, -y); }
 
+        /// @brief Returns the dimension/size of this vector.
+        /// @return The dimension of the vector (always 2).
         static size_t dimension() { return (size_t)2; }
+        /// @brief Returns the dimension/size of this vector.
+        /// @return The size of the vector (always 2).
         static size_t size() { return (size_t)2; }
 
+        /// @brief Returns the memory address of the vector.
+        /// @return A pointer to the underlying data array.
         T* data() { return _array; }
+        /// @brief Returns the constant memory address of the vector.
+        /// @return A const pointer to the underlying data array.
         const T* data() const { return _array; }
 
         /// @brief Conversion operator returning the constant memory address of the data. Very convenient to pass this
         ///     vector as a data pointer to functions.
+        /// @return A const pointer to the underlying data array.
         operator const T*() const { return _array; }
-        /// @brief Conversion operator returning the constant memory address of the data. Very convenient to pass this
-        ///     vector as a data pointer to functions.
+        /// @brief Conversion operator returning the memory address of the data. Very convenient to pass this vector as
+        ///     a data pointer to functions.
+        /// @return A pointer to the underlying data array.
         operator T*() { return _array; }
 
 		// Liangliang: The compiler can't decide whether to use your overloaded 
@@ -391,11 +466,11 @@ namespace easy3d {
         //    return _array[idx];
         //}
 
-        //data intentionally left public to allow vec.x
+        // Data intentionally left public to allow direct access (e.g., vec.x).
         union {
-            T _array[2];		// array access
-            struct { T x, y; };	// standard names for components
-            struct { T u, v; };	// standard names for components
+            T _array[2];		// Array access
+            struct { T x, y; };	// Standard names for components
+            struct { T u, v; };	// Alternative names for components (e.g., for texture coordinates).
         };
     };
 
@@ -431,7 +506,7 @@ namespace easy3d {
     //---------------- vec3 ------------------------------------------------------------------------
 
     /**
-     * @brief A 3D vector (used for representing 3D points or vectors, or RGB colors).
+     * @brief Specialization of Vec for 3D vectors (used for representing 3D points or vectors, or RGB colors).
      * @tparam T The scalar type of vector elements.
      * @class Vec<3, T> easy3d/core/vec.h
      */
@@ -442,22 +517,51 @@ namespace easy3d {
         /// @details This typedef represents the type of the current class.
         typedef Vec<3, T>   thisclass;
 
+        /// @brief Default constructor. Initializes x, y, and z to zero.
         Vec() : x(0), y(0), z(0) {}
-        explicit Vec(const Vec<2, T>& v, const T& s = 1) : x(v.x), y(v.y), z(s) {} // very useful for promoting to homogeneous coordinates
-        explicit Vec(const Vec<4, T>& v) : x(v.x), y(v.y), z(v.z) {} // very useful for inverse promoting from homogeneous coordinates
 
+        /// @brief Constructs a 3D vector from a 2D vector and a scalar (useful for promoting to homogeneous coordinates).
+        /// @param v The 2D vector.
+        /// @param s The scalar value for the z-coordinate (default is 1).
+        explicit Vec(const Vec<2, T>& v, const T& s = 1) : x(v.x), y(v.y), z(s) {}
+
+        /// @brief Constructs a 3D vector from a 4D vector (drops the w-coordinate).
+        /// @param v The 4D vector.
+        explicit Vec(const Vec<4, T>& v) : x(v.x), y(v.y), z(v.z) {}
+
+        /// @brief Constructs a 3D vector with the given x, y, and z values.
+        /// @param x_in The x-coordinate.
+        /// @param y_in The y-coordinate.
+        /// @param z_in The z-coordinate.
         Vec(T x_in, T y_in, T z_in) : x(x_in), y(y_in), z(z_in) {}
 
+        /// @brief Constructs a 3D vector with all elements initialized to a scalar value.
         /// @param s The scalar value to initialize all elements of the vector.
         explicit Vec(const T& s) : x(s), y(s), z(s) {  }
 
+        /// @brief Constructs a 3D vector from another 3D vector of a different scalar type.
+        /// @tparam T2 The scalar type of the source vector.
+        /// @param v The source vector.
         template<class T2> explicit Vec(const Vec<3, T2> & v) : x(v.x), y(v.y), z(v.z) {}
+
+        /// @brief Constructs a 3D vector from an array of values.
+        /// @tparam T2 The scalar type of the source array.
+        /// @param v The source array.
         template<class T2> explicit Vec(const T2* v)
             : x(T(v[0])), y(T(v[1])), z(T(v[2])) {}
 
+        /// @brief Returns the squared length of this vector.
+        /// @return The squared length of the vector.
         T length2() const { return x*x + y*y + z*z; }
+        /// @brief Returns the length of this vector.
+        /// @return The length of the vector.
         T length() const { return std::sqrt(x*x + y*y + z*z); }
+        /// @brief Returns the norm (i.e., length/magnitude) of this vector.
+        /// @return The norm of the vector.
         T norm() const { return length(); }
+        /// @brief Returns the squared Euclidean distance to another vector.
+        /// @param rhs The other vector.
+        /// @return The squared distance between this vector and `rhs`.
         T distance2(const thisclass& rhs) const {
             T dx = rhs.x - x;
             T dy = rhs.y - y;
@@ -465,6 +569,8 @@ namespace easy3d {
             return dx*dx + dy*dy + dz*dz;
         }
 
+        /// @brief Normalizes this vector.
+        /// @return A reference to this vector after normalization.
         thisclass& normalize() {
             T s = length();
             s = (s > std::numeric_limits<T>::min()) ? T(1.0) / s : T(0.0);
@@ -472,35 +578,82 @@ namespace easy3d {
             return *this;
         }
 
-        // operators
+        /// @brief Compound addition with another vector.
+        /// @param v The vector to add.
+        /// @return A reference to this vector after addition.
         thisclass& operator+=(const thisclass& v) { x += v.x; y += v.y; z += v.z; return *this; }
+        /// @brief Compound subtraction with another vector.
+        /// @param v The vector to subtract.
+        /// @return A reference to this vector after subtraction.
         thisclass& operator-=(const thisclass& v) { x -= v.x; y -= v.y; z -= v.z; return *this; }
+        /// @brief Compound component-wise multiplication with another vector.
+        /// @param v The vector to multiply.
+        /// @return A reference to this vector after multiplication.
         thisclass& operator*=(const thisclass& v) { x *= v.x; y *= v.y; z *= v.z; return *this; }
+        /// @brief Compound component-wise division with another vector.
+        /// @param v The vector to divide.
+        /// @return A reference to this vector after division.
         thisclass& operator/=(const thisclass& v) { x /= v.x; y /= v.y; z /= v.z; return *this; }
+        /// @brief Compound vector-scalar multiplication.
+        /// @tparam T2 The scalar type.
+        /// @param s The scalar to multiply.
+        /// @return A reference to this vector after multiplication.
         template <class T2> thisclass& operator*=(T2 s) { x *= T(s); y *= T(s); z *= T(s); return *this; }
+        /// @brief Compound vector-scalar division.
+        /// @tparam T2 The scalar type.
+        /// @param s The scalar to divide.
+        /// @return A reference to this vector after division.
         template <class T2> thisclass& operator/=(T2 s) { x /= T(s); y /= T(s); z /= T(s); return *this; }
 
+        /// @brief Addition with another vector.
+        /// @param v The vector to add.
+        /// @return The resulting vector after addition.
         thisclass operator+ (const thisclass& v) const { return thisclass(x + v.x, y + v.y, z + v.z); }
+        /// @brief Subtraction with another vector.
+        /// @param v The vector to subtract.
+        /// @return The resulting vector after subtraction.
         thisclass operator- (const thisclass& v) const { return thisclass(x - v.x, y - v.y, z - v.z); }
+
+        /// @brief Vector-scalar multiplication.
+        /// @tparam T2 The scalar type.
+        /// @param s The scalar to multiply.
+        /// @return The resulting vector after multiplication.
         template <class T2> thisclass operator* (T2 s) const { return thisclass(x*T(s), y*T(s), z*T(s)); }
+        /// @brief Vector-scalar division.
+        /// @tparam T2 The scalar type.
+        /// @param s The scalar to divide.
+        /// @return The resulting vector after division.
         template <class T2> thisclass operator/ (T2 s) const { return thisclass(x / T(s), y / T(s), z / T(s)); }
 
+        /// @brief Negates this vector (i.e., adds a minus sign).
+        /// @return The negated vector.
         thisclass operator- () const { return thisclass(-x, -y, -z); }
 
+        /// @brief Returns the dimension/size of this vector.
+        /// @return The dimension of the vector (always 3).
         static size_t dimension() { return (size_t)3; }
+        /// @brief Returns the dimension/size of this vector.
+        /// @return The size of the vector (always 3).
         static size_t size() { return (size_t)3; }
 
+        /// @brief Returns the memory address of the vector.
+        /// @return A pointer to the underlying data array.
         T* data() { return _array; }
+        /// @brief Returns the constant memory address of the vector.
+        /// @return A const pointer to the underlying data array.
         const T* data() const { return _array; }
 
-        // the (x, y) components
+        /// @brief Returns the (x, y) components of this vector as a 2D vector.
+        /// @return A 2D vector containing the x and y components.
         Vec<2, T> xy() const { return  Vec<2, T>(x, y); }
 
         /// @brief Conversion operator returning the constant memory address of the data. Very convenient to pass this
         ///     vector as a data pointer to functions.
+        /// @return A const pointer to the underlying data array.
         operator const T*() const { return _array; }
         /// @brief Conversion operator returning the constant memory address of the data. Very convenient to pass this
         ///     vector as a data pointer to functions.
+        /// @return A pointer to the underlying data array.
         operator T*() { return _array; }
 
 		// Liangliang: The compiler can't decide whether to use your overloaded 
@@ -515,11 +668,11 @@ namespace easy3d {
         //    return _array[idx];
         //}
 
-        //data intentionally left public to allow vec.x
+        // Data intentionally left public to allow direct access (e.g., vec.x).
         union {
-            T _array[3];			// array access
-            struct { T x, y, z; };	// standard names for components
-            struct { T r, g, b; };	// standard names for components
+            T _array[3];			// Array access
+            struct { T x, y, z; };	// Standard names for components
+            struct { T r, g, b; };	// Alternative names for components (e.g., for RGB colors).
         };
     };
 
@@ -573,7 +726,7 @@ namespace easy3d {
     // ----------------- vec4 ----------------------------------------------------------------------------------
 
     /**
-     * @brief A 4D vector (used for representing 4D points or vectors in homogeneous coordinates, or RGBA colors).
+     * @brief Specialization of Vec for 4D vectors (used for representing 4D points or vectors in homogeneous coordinates, or RGBA colors).
      * @tparam T The scalar type of vector elements.
      * @class Vec<4, T> easy3d/core/vec.h
      */
@@ -584,21 +737,49 @@ namespace easy3d {
         /// @details This typedef represents the type of the current class.
         typedef Vec<4, T>   thisclass;
 
+        /// @brief Default constructor. Initializes x, y, z, and w to zero.
         Vec() : x(0), y(0), z(0), w(0) {}
-        explicit Vec(const Vec<3, T>& v, const T& s = 1) : x(v.x), y(v.y), z(v.z), w(s) {} // very useful for promoting to homogeneous coordinates
+
+        /// @brief Constructs a 4D vector from a 3D vector and a scalar (useful for promoting to homogeneous coordinates).
+        /// @param v The 3D vector.
+        /// @param s The scalar value for the w-coordinate (default is 1).
+        explicit Vec(const Vec<3, T>& v, const T& s = 1) : x(v.x), y(v.y), z(v.z), w(s) {}
+
+        /// @brief Constructs a 4D vector with the given x, y, z, and w values.
+        /// @param x_in The x-coordinate.
+        /// @param y_in The y-coordinate.
+        /// @param z_in The z-coordinate.
+        /// @param w_in The w-coordinate.
         Vec(T x_in, T y_in, T z_in, T w_in) : x(x_in), y(y_in), z(z_in), w(w_in) {}
 
+        /// @brief Constructs a 4D vector with all elements initialized to a scalar value.
         /// @param s The scalar value to initialize all elements of the vector.
         explicit Vec(const T& s) : x(s), y(s), z(s), w(s) {  }
 
+        /// @brief Constructs a 4D vector from another 4D vector of a different scalar type.
+        /// @tparam T2 The scalar type of the source vector.
+        /// @param v The source vector.
         template<class T2> explicit Vec(const Vec<4, T2> & v)
             : x(v.x), y(v.y), z(v.z), w(v.w) {}
+
+        /// @brief Constructs a 4D vector from an array of values.
+        /// @tparam T2 The scalar type of the source array.
+        /// @param v The source array.
         template<class T2> explicit Vec(const T2* v)
             : x(v[0]), y(v[1]), z(v[2]), w(v[3]) {}
 
+        /// @brief Returns the squared length of this vector.
+        /// @return The squared length of the vector.
         T length2() const { return x*x + y*y + z*z + w*w; }
+        /// @brief Returns the length of this vector.
+        /// @return The length of the vector.
         T length() const { return std::sqrt(x*x + y*y + z*z + w*w); }
+        /// @brief Returns the norm (i.e., length/magnitude) of this vector.
+        /// @return The norm of the vector.
         T norm() const { return length(); }
+        /// @brief Returns the squared Euclidean distance to another vector.
+        /// @param rhs The other vector.
+        /// @return The squared distance between this vector and `rhs`.
         T distance2(const thisclass& rhs) const {
             T dx = rhs.x - x;
             T dy = rhs.y - y;
@@ -607,6 +788,8 @@ namespace easy3d {
             return dx*dx + dy*dy + dz*dz + dw*dw;
         }
 
+        /// @brief Normalizes this vector.
+        /// @return A reference to this vector after normalization.
         thisclass& normalize() {
             T s = length();
             s = (s > std::numeric_limits<T>::min()) ? T(1.0) / s : T(0.0);
@@ -614,37 +797,87 @@ namespace easy3d {
             return *this;
         }
 
+        /// @brief Returns the dimension/size of this vector.
+        /// @return The dimension of the vector (always 4).
         static size_t dimension() { return (size_t)4; }
+        /// @brief Returns the dimension/size of this vector.
+        /// @return The size of the vector (always 4).
         static size_t size() { return (size_t)4; }
 
-        // operators
+        /// @brief Compound addition with another vector.
+        /// @param v The vector to add.
+        /// @return A reference to this vector after addition.
         thisclass& operator+=(const thisclass& v) { x += v.x; y += v.y; z += v.z; w += v.w; return *this; }
+        /// @brief Compound subtraction with another vector.
+        /// @param v The vector to subtract.
+        /// @return A reference to this vector after subtraction.
         thisclass& operator-=(const thisclass& v) { x -= v.x; y -= v.y; z -= v.z; w -= v.w; return *this; }
+        /// @brief Compound component-wise multiplication with another vector.
+        /// @param v The vector to multiply.
+        /// @return A reference to this vector after multiplication.
         thisclass& operator*=(const thisclass& v) { x *= v.x; y *= v.y; z *= v.z; w *= v.w; return *this; }
+        /// @brief Compound component-wise division with another vector.
+        /// @param v The vector to divide.
+        /// @return A reference to this vector after division.
         thisclass& operator/=(const thisclass& v) { x /= v.x; y /= v.y; z /= v.z; w /= v.w; return *this; }
+
+        /// @brief Compound vector-scalar multiplication.
+        /// @tparam T2 The scalar type.
+        /// @param s The scalar to multiply.
+        /// @return A reference to this vector after multiplication.
         template <class T2> thisclass& operator*=(T2 s) {
             x *= T(s); y *= T(s); z *= T(s); w *= T(s); return *this;
         }
+        /// @brief Compound vector-scalar division.
+        /// @tparam T2 The scalar type.
+        /// @param s The scalar to divide.
+        /// @return A reference to this vector after division.
         template <class T2> thisclass& operator/=(T2 s) {
             x /= T(s); y /= T(s); z /= T(s); w /= T(s); return *this;
         }
+
+        /// @brief Addition with another vector.
+        /// @param v The vector to add.
+        /// @return The resulting vector after addition.
         thisclass operator+ (const thisclass& v) const { return thisclass(x + v.x, y + v.y, z + v.z, w + v.w); }
+        /// @brief Subtraction with another vector.
+        /// @param v The vector to subtract.
+        /// @return The resulting vector after subtraction.
         thisclass operator- (const thisclass& v) const { return thisclass(x - v.x, y - v.y, z - v.z, w - v.w); }
+
+        /// @brief Vector-scalar multiplication.
+        /// @tparam T2 The scalar type.
+        /// @param s The scalar to multiply.
+        /// @return The resulting vector after multiplication.
         template <class T2> thisclass operator* (T2 s) const { return thisclass(x*T(s), y*T(s), z*T(s), w*T(s)); }
+        /// @brief Vector-scalar division.
+        /// @tparam T2 The scalar type.
+        /// @param s The scalar to divide.
+        /// @return The resulting vector after division.
         template <class T2> thisclass operator/ (T2 s) const { return thisclass(x / T(s), y / T(s), z / T(s), w / T(s)); }
+
+        /// @brief Negates this vector (i.e., adds a minus sign).
+        /// @return The negated vector.
         thisclass operator- () const { return thisclass(-x, -y, -z, -w); }
 
+        /// @brief Returns the memory address of the vector.
+        /// @return A pointer to the underlying data array.
         T* data() { return _array; }
+        /// @brief Returns the constant memory address of the vector.
+        /// @return A const pointer to the underlying data array.
         const T* data() const { return _array; }
 
-        // the (x, y, z) components
+        /// @brief Returns the (x, y, z) components of this vector as a 3D vector.
+        /// @return A 3D vector containing the x, y, and z components.
         Vec<3, T> xyz() const { return  Vec<3, T>(x, y, z); }
 
         /// @brief Conversion operator returning the constant memory address of the data. Very convenient to pass this
         ///     vector as a data pointer to functions.
+        /// @return A const pointer to the underlying data array.
         operator const T*() const { return _array; }
-        /// @brief Conversion operator returning the constant memory address of the data. Very convenient to pass this
-        ///     vector as a data pointer to functions.
+        /// @brief Conversion operator returning the memory address of the data. Very convenient to pass thisvector as
+        ///    a data pointer to functions.
+        /// @return A pointer to the underlying data array.
         operator T*() { return _array; }
 
 		// Liangliang: The compiler can't decide whether to use your overloaded 
@@ -659,11 +892,11 @@ namespace easy3d {
         //    return _array[idx];
         //}
 
-        //data intentionally left public to allow vec.x
+        // Data intentionally left public to allow direct access (e.g., vec.x).
         union {
-            T _array[4];				// array access
-            struct { T x, y, z, w; };	// standard names for components
-            struct { T r, g, b, a; };	// standard names for components
+            T _array[4];				// Array access
+            struct { T x, y, z, w; };	// Standard names for components
+            struct { T r, g, b, a; };	// Alternative names for components (e.g., for RGBA colors).
         };
     };
 
