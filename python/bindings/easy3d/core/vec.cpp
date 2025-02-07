@@ -35,9 +35,9 @@ void bind_easy3d_core_vec(pybind11::module_& m)
 		cl.def("norm", (float (easy3d::vec2::*)() const) &easy3d::vec2::norm, "C++: easy3d::vec2::norm() const --> float");
 		cl.def("distance2", (float (easy3d::vec2::*)(const easy3d::vec2 &) const) &easy3d::vec2::distance2, "C++: easy3d::vec2::distance2(const easy3d::vec2 &) const --> float", pybind11::arg("rhs"));
 		cl.def("normalize", (easy3d::vec2 & (easy3d::vec2::*)()) &easy3d::vec2::normalize, "C++: easy3d::vec2::normalize() --> easy3d::vec2 &", pybind11::return_value_policy::automatic);
-        cl.def("dimension", (unsigned long (easy3d::vec2::*)() const) &easy3d::vec2::dimension, "C++: easy3d::vec2::dimension() const --> unsigned long");
-        cl.def("size", (unsigned long (easy3d::vec2::*)() const) &easy3d::vec2::size, "C++: easy3d::vec2::size() const --> unsigned long");
-        cl.def("data", (float * (easy3d::vec2::*)()) &easy3d::vec2::data, "C++: easy3d::vec2::data() --> float *", pybind11::return_value_policy::automatic);
+        cl.def_static ("dimension", &easy3d::vec2::dimension, "C++: easy3d::vec2::dimension() --> size_t");
+        cl.def_static("size", &easy3d::vec2::size, "C++: easy3d::vec2::size() --> size_t");
+        cl.def("data", &easy3d::vec2::data, "C++: easy3d::vec2::data() --> float *", pybind11::return_value_policy::automatic);
 
         // Liangliang: To make the easy3d::vec2 type printable in Python, provide a __repr__ or __str__ method in the Python bindings.
         // This allows Python to represent the object as a readable string.
@@ -105,9 +105,9 @@ void bind_easy3d_core_vec(pybind11::module_& m)
         cl.def("norm", (float (easy3d::vec3::*)() const) &easy3d::vec3::norm, "C++: easy3d::vec3::norm() const --> float");
         cl.def("distance2", (float (easy3d::vec3::*)(const easy3d::vec3 &) const) &easy3d::vec3::distance2, "C++: easy3d::vec3::distance2(const easy3d::vec3 &) const --> float", pybind11::arg("rhs"));
         cl.def("normalize", (easy3d::vec3 & (easy3d::vec3::*)()) &easy3d::vec3::normalize, "C++: easy3d::vec3::normalize() --> easy3d::vec3 &", pybind11::return_value_policy::automatic);
-        cl.def("dimension", (unsigned long (easy3d::vec3::*)() const) &easy3d::vec3::dimension, "C++: easy3d::vec3::dimension() const --> unsigned long");
-        cl.def("size", (unsigned long (easy3d::vec3::*)() const) &easy3d::vec3::size, "C++: easy3d::vec3::size() const --> unsigned long");
-        cl.def("data", (float * (easy3d::vec3::*)()) &easy3d::vec3::data, "C++: easy3d::vec3::data() --> float *", pybind11::return_value_policy::automatic);
+        cl.def("dimension", &easy3d::vec3::dimension, "C++: easy3d::vec3::dimension() --> size_t");
+        cl.def("size", &easy3d::vec3::size, "C++: easy3d::vec3::size() --> size_t");
+        cl.def("data", &easy3d::vec3::data, "C++: easy3d::vec3::data() --> float *", pybind11::return_value_policy::automatic);
         cl.def("xy", (easy3d::vec2 (easy3d::vec3::*)() const) &easy3d::vec3::xy, "C++: easy3d::vec3::xy() const --> easy3d::vec2");
         cl.def("assign", (easy3d::vec3 & (easy3d::vec3::*)(const easy3d::vec3 &)) &easy3d::vec3::operator=, "C++: easy3d::vec3::operator=(const easy3d::vec3 &) --> easy3d::vec3 &", pybind11::return_value_policy::automatic, pybind11::arg(""));
 
@@ -181,9 +181,9 @@ void bind_easy3d_core_vec(pybind11::module_& m)
 		cl.def("norm", (float (easy3d::vec4::*)() const) &easy3d::vec4::norm, "C++: easy3d::vec4::norm() const --> float");
 		cl.def("distance2", (float (easy3d::vec4::*)(const easy3d::vec4 &) const) &easy3d::vec4::distance2, "C++: easy3d::vec4::distance2(const easy3d::vec4 &) const --> float", pybind11::arg("rhs"));
 		cl.def("normalize", (easy3d::vec4 & (easy3d::vec4::*)()) &easy3d::vec4::normalize, "C++: easy3d::vec4::normalize() --> easy3d::vec4 &", pybind11::return_value_policy::automatic);
-		cl.def("dimension", (unsigned long (easy3d::vec4::*)() const) &easy3d::vec4::dimension, "C++: easy3d::vec4::dimension() const --> unsigned long");
-		cl.def("size", (unsigned long (easy3d::vec4::*)() const) &easy3d::vec4::size, "C++: easy3d::vec4::size() const --> unsigned long");
-        cl.def("data", (float * (easy3d::vec4::*)()) &easy3d::vec4::data, "C++: easy3d::vec4::data() --> float *", pybind11::return_value_policy::automatic);
+		cl.def_static("dimension", &easy3d::vec4::dimension, "C++: easy3d::vec4::dimension() --> size_t");
+		cl.def_static("size", &easy3d::vec4::size, "C++: easy3d::vec4::size() --> size_t");
+        cl.def("data", &easy3d::vec4::data, "C++: easy3d::vec4::data() --> float *", pybind11::return_value_policy::automatic);
         cl.def("xyz", (easy3d::vec3 (easy3d::vec4::*)() const) &easy3d::vec4::xyz, "C++: easy3d::vec4::xyz() const --> easy3d::vec3");
 
         // Liangliang: To make the easy3d::vec4 type printable in Python, provide a __repr__ or __str__ method in the Python bindings.
