@@ -32,7 +32,7 @@
 
 
 namespace easy3d {
-
+    /// The matrix type used in this file.
     using MATRIX = easy3d::Matrix<double>;
 
     /**
@@ -50,7 +50,7 @@ namespace easy3d {
      * @return false if failed (failure is reported only if the input matrix is not square).
      *      Upon return, invA carries the inverse of A.
      */
-    bool inverse(const MATRIX&A, MATRIX&invA);
+    bool inverse(const MATRIX &A, MATRIX &invA);
 
 
     /**
@@ -58,7 +58,7 @@ namespace easy3d {
      * @param A The input matrix.
      * @return The inverse of A.
      */
-    MATRIX inverse(const MATRIX&A);
+    MATRIX inverse(const MATRIX &A);
 
 
     /**
@@ -80,7 +80,7 @@ namespace easy3d {
      *
      * @attention V is returned (instead of V^T).
      */
-    void svd_decompose(const MATRIX&A, MATRIX&U, MATRIX&S, MATRIX&V);
+    void svd_decompose(const MATRIX &A, MATRIX &U, MATRIX &S, MATRIX &V);
 
 
     /**
@@ -91,7 +91,8 @@ namespace easy3d {
      * @param x The result of the system was successfully solved (m dimensional).
      * @return false if failed. If true, x carries the least-squares solution to the linear system.
      */
-    bool solve_least_squares(const MATRIX&A, const std::vector<double> &b, std::vector<double> &x);
+    bool solve_least_squares(const MATRIX &A, const std::vector<double> &b, std::vector<double> &x);
+
 }
 
-#endif // EASY3D_MATRIX_ALGOTHMS_H
+#endif // EASY3D_CORE_MATRIX_ALGO_H
