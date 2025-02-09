@@ -488,7 +488,7 @@ namespace easy3d {
         const Frame *referenceFrame_;   ///< Reference Frame
 
     public:
-        Signal<> modified;
+        Signal<> modified;  ///< Signal emitted when the Frame is modified
     };
 
 }
