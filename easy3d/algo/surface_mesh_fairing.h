@@ -12,35 +12,57 @@
 #ifndef EASY3D_ALGO_SURFACE_MESH_FAIRING_H
 #define EASY3D_ALGO_SURFACE_MESH_FAIRING_H
 
-#include <easy3d/core/surface_mesh.h>
 #include <map>
+#include <easy3d/core/surface_mesh.h>
 
 namespace easy3d {
 
     /**
      * \brief A class for implicitly fairing a surface mesh.
      * \class SurfaceMeshFairing easy3d/algo/surface_mesh_fairing.h
-     * See the following paper for more details:
-     *  - Mathieu Desbrun et al. Implicit fairing of irregular meshes using diffusion and curvature flow. SIGGRAPH, 1999.
+     * \details See the following paper for more details:
+     *          - Mathieu Desbrun et al. Implicit fairing of irregular meshes using diffusion and curvature flow. SIGGRAPH, 1999.
      */
     class SurfaceMeshFairing {
     public:
-        //! Construct with mesh to be processed.
-        SurfaceMeshFairing(SurfaceMesh *mesh);
+        /**
+         * \brief Construct with mesh to be processed.
+         * \param mesh The surface mesh to be processed.
+         */
+        explicit SurfaceMeshFairing(SurfaceMesh *mesh);
 
-        // destructor
+        /**
+         * \brief Destructor.
+         */
         ~SurfaceMeshFairing();
 
-        //! minimize surface area (class SurfaceFairing::fair(1))
+        /**
+         * \brief Minimize surface area.
+         * \details This function minimizes the surface area by fairing with degree 1.
+         */
         void minimize_area() { fair(1); }
 
-        //! minimize surface curvature (class SurfaceFairing::fair(2))
+        /**
+         * \brief Minimize surface curvature.
+         * \details This function minimizes the surface curvature by fairing with degree 2.
+         */
         void minimize_curvature() { fair(2); }
 
-        //! compute surface by solving k-harmonic equation
+        /**
+         * \brief Compute surface by solving k-harmonic equation.
+         * \param k The degree of the harmonic equation to solve. Default is 2.
+         */
         void fair(unsigned int k = 2);
 
     private:
+        /**
+         * \brief Set up the matrix row for the fairing process.
+         * \param v The vertex for which to set up the matrix row.
+         * \param vweight The vertex weight property.
+         * \param eweight The edge weight property.
+         * \param laplace_degree The degree of the Laplace operator.
+         * \param row The map to store the matrix row.
+         */
         void setup_matrix_row(SurfaceMesh::Vertex v, SurfaceMesh::VertexProperty<double> vweight,
                               SurfaceMesh::EdgeProperty<double> eweight,
                               unsigned int laplace_degree,

@@ -33,23 +33,30 @@
 
 namespace easy3d {
 
-
     /**
      * \brief Stitch coincident border edges of a surface mesh.
-     *
      * \class SurfaceMeshStitching easy3d/algo/surface_mesh_stitching.h
-     *
      * \deprecated This class only performs stitching, without reversing the orientation of components having
-     * coincident but incompatible boundary cycles. It dose the same thing as Surfacer::stitch_borders()
-     * To stitch incompatible boundaries please use Surfacer::merge_reversible_connected_components().
+     *      coincident but incompatible boundary cycles. It does the same thing as Surfacer::stitch_borders().
+     *      To stitch incompatible boundaries please use Surfacer::merge_reversible_connected_components().
      */
-
     class SurfaceMeshStitching {
     public:
+        /**
+         * \brief Construct with mesh to be stitched.
+         * \param mesh The surface mesh to be stitched.
+         */
         SurfaceMeshStitching(SurfaceMesh *mesh);
 
+        /**
+         * \brief Destructor.
+         */
         virtual ~SurfaceMeshStitching();
 
+        /**
+         * \brief Apply stitching to the surface mesh.
+         * \param dist_threshold The distance threshold for stitching. Default: 1e-6.
+         */
         void apply(float dist_threshold = 1e-6);
 
     private:

@@ -30,28 +30,55 @@ namespace easy3d {
      */
     class SurfaceMeshTriangulation {
     public:
+        /**
+         * \brief Construct with the surface mesh to be triangulated.
+         * \param mesh The surface mesh to be triangulated.
+         */
         explicit SurfaceMeshTriangulation(SurfaceMesh *mesh);
 
-        //! \brief triangulation objective: find the triangulation that minimizes the
-        //! sum of squared triangle areas, or the one that maximizes the minimum
-        //! angle.
+        /**
+         * \brief Triangulation objective: find the triangulation that minimizes the sum of squared triangle areas,
+         *      or the one that maximizes the minimum angle.
+         */
         enum Objective { MIN_AREA, MAX_ANGLE};
 
-        //! \brief triangulate all faces
+        /**
+         * \brief Triangulate all faces.
+         * \param obj The triangulation objective. Default is MIN_AREA.
+         */
         void triangulate(Objective obj = MIN_AREA);
 
-        //! \brief triangulate a particular face f
+        /**
+         * \brief Triangulate a particular face.
+         * \param f The face to be triangulated.
+         * \param obj The triangulation objective. Default is MIN_AREA.
+         */
         void triangulate(SurfaceMesh::Face f, Objective obj = MIN_AREA);
 
     private:
-
-        // compute the weight of the triangle (i,j,k).
+        /**
+         * \brief Compute the weight of the triangle (i, j, k).
+         * \param i The first vertex index.
+         * \param j The second vertex index.
+         * \param k The third vertex index.
+         * \return The weight of the triangle.
+         */
         float compute_weight(int i, int j, int k) const;
 
-        // does edge (a,b) exist?
+        /**
+         * \brief Check if the edge (a, b) exists.
+         * \param a The first vertex.
+         * \param b The second vertex.
+         * \return True if the edge exists, false otherwise.
+         */
         bool is_edge(SurfaceMesh::Vertex a, SurfaceMesh::Vertex b) const;
 
-        // add edges from vertex i to j
+        /**
+         * \brief Add edges from vertex i to j.
+         * \param i The first vertex index.
+         * \param j The second vertex index.
+         * \return True if the edge was added successfully, false otherwise.
+         */
         bool insert_edge(int i, int j);
 
     private:

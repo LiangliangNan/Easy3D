@@ -24,21 +24,31 @@ namespace easy3d {
      * \brief This class closes simple holes in a surface mesh.
      * \class SurfaceMeshHoleFilling easy3d/algo/surface_mesh_hole_filling.h
      * \details It closes simple holes (boundary loops of manifold vertices) by first filling the hole with an
-     * angle/area-minimizing triangulation, followed by isometric remeshing, and finished by curvature-minimizing
-     * fairing of the filled-in patch. See the following paper for more details:
-     *  - Peter Liepa. Filling holes in meshes. SGP, pages 200–205, 2003.
+     *      angle/area-minimizing triangulation, followed by isometric remeshing, and finished by curvature-minimizing
+     *      fairing of the filled-in patch. See the following paper for more details:
+     *      - Peter Liepa. Filling holes in meshes. SGP, pages 200–205, 2003.
      */
     class SurfaceMeshHoleFilling {
     public:
-        /// \brief construct with mesh
+        /**
+         * \brief Construct with mesh.
+         * \param mesh The surface mesh to be processed.
+         */
         explicit SurfaceMeshHoleFilling(SurfaceMesh *mesh);
 
-        /// \brief fill the hole specified by halfedge h
+        /**
+         * \brief Fill the hole specified by halfedge \p h.
+         * \param h The halfedge handle specifying the hole to be filled.
+         * \return True if the hole was successfully filled, false otherwise.
+         */
         bool fill_hole(SurfaceMesh::Halfedge h);
 
-        /// \brief fill all holes with size smaller than specified size. The size of a hole is defined as the number of
-        /// boundary edges in the boundary loop of the hole.
-        /// \return the number of holes filled
+        /**
+         * \brief Fill all holes with size smaller than the specified size.
+         * \details The size of a hole is defined as the number of boundary edges in the boundary loop of the hole.
+         * \param size The maximum size of holes to be filled. Default: 500.
+         * \return The number of holes filled.
+         */
         int fill_holes(int size = 500);
 
     private:

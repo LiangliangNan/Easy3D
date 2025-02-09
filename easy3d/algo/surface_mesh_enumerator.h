@@ -46,7 +46,7 @@ namespace easy3d {
          * @param id The vertex property storing the result.
          * @param seed The seed vertex from which the connected component will be propagated.
          * @param cur_id The index of the connected component to be propagated.
-         * @attention The vertex property id must be initialize with "-1".
+         * @attention The vertex property id must be initialized with "-1".
          */
         static void
         propagate_connected_component(SurfaceMesh *mesh, SurfaceMesh::VertexProperty<int> id, SurfaceMesh::Vertex seed,
@@ -58,7 +58,7 @@ namespace easy3d {
          * @param id The face property storing the result.
          * @param seed The seed face from which the connected component will be propagated.
          * @param cur_id The index of the connected component to be propagated.
-         * @attention The face property id must be initialize with "-1".
+         * @attention The face property id must be initialized with "-1".
          */
         static void
         propagate_connected_component(SurfaceMesh *mesh, SurfaceMesh::FaceProperty<int> id, SurfaceMesh::Face seed,
@@ -87,7 +87,7 @@ namespace easy3d {
          * \param angle_threshold Two faces sharing a common edge are considered coplanar if the dihedral angle is
          *      smaller than \p angle_threshold (in degrees).
          * \pre The face normal property (with name \c "f:normal") must exist and be up to date.
-         * @attention The face property id must be initialize with "-1".
+         * @attention The face property id must be initialized with "-1".
          */
         static void propagate_planar_component(SurfaceMesh *mesh,
                                                SurfaceMesh::FaceProperty<int> id,

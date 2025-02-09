@@ -28,8 +28,6 @@
 #ifndef EASY3D_ALGO_EXTRUSION_H
 #define EASY3D_ALGO_EXTRUSION_H
 
-#include <string>
-
 #include <easy3d/core/types.h>
 
 
@@ -50,7 +48,7 @@ namespace easy3d {
 
     /**
      * \brief Extrudes a 3D surface mesh from a set of simple contours.
-     * \param mesh The output mesh model. Must be allocated before hand.
+     * \param mesh The output mesh model. Must be allocated beforehand.
      * @param contours The input contours, which must be simple, i.e.,
      *      - free of intersections,
      *      - CCW contours defining the outer boundary and CW contours defining holes.

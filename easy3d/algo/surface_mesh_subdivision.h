@@ -21,13 +21,25 @@ namespace easy3d {
     /// \class SurfaceMeshSubdivision easy3d/algo/surface_mesh_subdivision.h
     class SurfaceMeshSubdivision {
     public:
-        /** \brief The Catmull-Clark subdivision. */
+        /**
+         * \brief The Catmull-Clark subdivision.
+         * \param mesh The surface mesh to be subdivided.
+         * \return True if the subdivision was successful, false otherwise.
+         */
         static bool catmull_clark(SurfaceMesh *mesh);
 
-        /** \brief The Loop subdivision. */
+        /**
+         * \brief The Loop subdivision.
+         * \param mesh The surface mesh to be subdivided.
+         * \return True if the subdivision was successful, false otherwise.
+         */
         static bool loop(SurfaceMesh *mesh);
 
-        /** \brief The sqrt3 subdivision. */
+        /**
+         * \brief The sqrt3 subdivision.
+         * \param mesh The surface mesh to be subdivided.
+         * \return True if the subdivision was successful, false otherwise.
+         */
         static bool sqrt3(SurfaceMesh *mesh);
     };
 

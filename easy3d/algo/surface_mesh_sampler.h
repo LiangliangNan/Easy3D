@@ -37,7 +37,13 @@ namespace easy3d {
     /// \class SurfaceMeshSampler easy3d/algo/surface_mesh_sampler.h
     class SurfaceMeshSampler {
     public:
-        /// @param num The expected point number, must be greater than the number of vertices of the surface mesh.
+        /**
+         * \brief Sample the surface mesh into a point cloud.
+         * \param mesh The surface mesh to be sampled.
+         * \param num The expected number of points. Must be greater than the number of vertices of the surface mesh.
+         *      Default: 1000000.
+         * \return A pointer to the generated point cloud.
+         */
         static PointCloud *apply(const SurfaceMesh *mesh, int num = 1000000);
     };
 

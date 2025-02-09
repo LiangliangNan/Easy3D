@@ -62,7 +62,7 @@ namespace easy3d {
 
     public:
         /**
-         * \brief Setup the primitive types to be extracted.
+         * \brief Set up the primitive types to be extracted.
          * \details This is done by adding the interested primitive types one by one.
          */
         void add_primitive_type(PrimType t);
@@ -77,7 +77,7 @@ namespace easy3d {
          * \details The extracted primitives are stored as properties:
          *      - "v:primitive_type"  (one of PLANE, SPHERE, CYLINDER, CONE, TORUS, and UNKNOWN)
          *      - "v:primitive_index" (-1, 0, 1, 2...). -1 meaning a vertex does not belong to any primitive (thus its
-         *        primitive_type must be UNKNOWN.
+         *        primitive_type must be UNKNOWN).
          * \param cloud The input point cloud.
          * \param min_support The minimal number of points required for a primitive.
          * \param dist_threshold The distance threshold, defined relative to the bounding box's max dimension.
@@ -101,7 +101,7 @@ namespace easy3d {
          * \details The extracted primitives are stored as per-vertex properties:
          *          - "v:primitive_type"  (one of PLANE, SPHERE, CYLINDER, CONE, TORUS, and UNKNOWN)
          *          - "v:primitive_index" (-1, 0, 1, 2...). -1 meaning a vertex does not belong to any primitive (thus
-         *            its primitive_type must be UNKNOWN.
+         *            its primitive_type must be UNKNOWN).
          *      In addition to the primitive information stored as properties, the parameters of the detected primitives
          *      can also be queried using this functions. \see get_planes, get_cylinders.
          * \param cloud The input point cloud.
@@ -127,11 +127,11 @@ namespace easy3d {
          * \brief Information about a plane primitive.
          */
         struct PlanePrim {
-            int primitive_index;            // the index of this plane (w.r.t. the entire list of detected primitives)
-            std::vector<int> vertices;      // the vertex indices (w.r.t. the point cloud) of this plane
-            Plane3 plane;                   // the plane equation
-            vec3  position; 
-            vec3  normal;
+            int primitive_index;       /// the index of this plane (w.r.t. the entire list of detected primitives)
+            std::vector<int> vertices; /// the vertex indices (w.r.t. the point cloud) of this plane
+            Plane3 plane;   /// the plane representation
+            vec3  position; /// the position of the plane (represented by a point on the plane)
+            vec3  normal;   /// the normal of the plane
         };
         /**
          * \brief Get the detected planes.
@@ -142,11 +142,11 @@ namespace easy3d {
          * \brief Information about a cylinder primitive.
          */
         struct CylinderPrim {
-            int primitive_index;            // the index of this cylinder w.r.t. the entire list of detected primitives
-            std::vector<int> vertices;      // the vertex indices (w.r.t. the point cloud) of this cylinder
-            float radius;
-            vec3  position;
-            vec3  direction;
+            int primitive_index;       /// the index of this cylinder (w.r.t. the entire list of detected primitives)
+            std::vector<int> vertices; /// the vertex indices (w.r.t. the point cloud) of this cylinder
+            float radius;       /// the radius of the cylinder
+            vec3  position;     /// the position of the cylinder (represented by the center of the bottom circle)
+            vec3  direction;    /// the direction of the cylinder
         };
         /**
          * Get the detected cylinders.

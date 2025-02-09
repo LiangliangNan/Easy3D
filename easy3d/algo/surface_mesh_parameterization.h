@@ -27,25 +27,38 @@ namespace easy3d {
      */
     class SurfaceMeshParameterization {
     public:
-        //! \brief Construct with mesh to be parameterized.
+        /**
+         * \brief Construct with mesh to be parameterized.
+         * \param mesh The surface mesh to be parameterized.
+         */
         explicit SurfaceMeshParameterization(SurfaceMesh *mesh);
 
-        //! \brief Compute discrete harmonic parameterization.
+        /**
+         * \brief Compute discrete harmonic parameterization.
+         * \param use_uniform_weights Flag to indicate whether to use uniform weights. Default: false.
+         */
         void harmonic(bool use_uniform_weights = false);
 
-        //! \brief Compute parameterization based on least squares conformal mapping.
+        /**
+         * \brief Compute parameterization based on least squares conformal mapping.
+         */
         void lscm();
 
     private:
-        //! setup boundary constraints: map surface boundary to unit circle
+        /**
+         * \brief Setup boundary constraints: map surface boundary to unit circle.
+         * \return True if successful, false otherwise.
+         */
         bool setup_boundary_constraints();
 
-        //! setup boundary: pin the two farthest boundary vertices
+        /**
+         * \brief Setup boundary: pin the two farthest boundary vertices.
+         * \return True if successful, false otherwise.
+         */
         bool setup_lscm_boundary();
 
     private:
-        //! the mesh
-        SurfaceMesh *mesh_;
+        SurfaceMesh *mesh_; //!< The mesh to be parameterized.
     };
 
 } // namespace easy3d

@@ -21,21 +21,35 @@ namespace easy3d {
     /// \class SurfaceMeshFeatures easy3d/algo/surface_mesh_features.h
     class SurfaceMeshFeatures {
     public:
-        //! \brief Construct with mesh to be analyzed.
+        /**
+         * \brief Construct with mesh to be analyzed.
+         * \param mesh The surface mesh to be analyzed.
+         */
         explicit SurfaceMeshFeatures(SurfaceMesh *mesh);
 
-        //! \brief Clear features.
+        /**
+         * \brief Clear features.
+         * \details This function clears all previously detected features.
+         */
         void clear();
 
-        //! \brief Mark all boundary edges as features.
+        /**
+         * \brief Mark all boundary edges as features.
+         * \details This function detects and marks all boundary edges of the mesh as feature edges.
+         */
         void detect_boundary();
 
-        //! \brief Mark edges with dihedral angle larger than \p angle as feature.
+        /**
+         * \brief Mark edges with dihedral angle larger than \p angle as feature.
+         * \param angle The dihedral angle threshold.
+         * \details This function detects and marks edges with a dihedral angle larger than the specified angle as feature edges.
+         */
         void detect_angle(float angle);
 
     private:
-        SurfaceMesh *mesh_;
+        SurfaceMesh *mesh_; //!< The mesh to be analyzed.
 
+        // Property handles
         SurfaceMesh::VertexProperty<bool> vfeature_;
         SurfaceMesh::EdgeProperty<bool> efeature_;
     };

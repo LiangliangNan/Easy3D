@@ -22,34 +22,58 @@ namespace easy3d {
     /// \class SurfaceMeshTopology easy3d/algo/surface_mesh_topology.h
     class SurfaceMeshTopology {
     public:
+        /**
+         * \brief Construct with the surface mesh component to analyze.
+         * \param comp The surface mesh component to analyze.
+         */
         explicit SurfaceMeshTopology(const SurfaceMeshComponent *comp);
 
         /**
-         * \brief returns the Euler-Poincare characteristic,
-         *   1: a disc
-         *   2: a sphere
+         * \brief Returns the Euler-Poincare characteristic.
+         * \return 1 for a disc, 2 for a sphere.
          */
         int euler_poincare() const;
 
-        /** \brief returns 0 for a closed surface. */
+        /**
+         * \brief Returns the number of borders.
+         * \return 0 for a closed surface.
+         */
         std::size_t number_of_borders() const { return number_of_borders_; }
 
-        /** \brief returns the number of edges in the largest border. */
+        /**
+         * \brief Returns the number of edges in the largest border.
+         * \return The number of edges in the largest border.
+         */
         std::size_t largest_border_size() const { return largest_border_size_; }
 
-        /** \brief returns if the surface is closed. */
+        /**
+         * \brief Returns if the surface is closed.
+         * \return True if the surface is closed, false otherwise.
+         */
         bool is_closed() const { return number_of_borders_ == 0; }
 
-        /** \brief returns if the surface is topologically equivalent to a sphere. */
+        /**
+         * \brief Returns if the surface is topologically equivalent to a sphere.
+         * \return True if the surface is topologically equivalent to a sphere, false otherwise.
+         */
         bool is_sphere() const { return (number_of_borders() == 0) && (euler_poincare() == 2); }
 
-        /** \brief returns if the surface is topologically equivalent to a disk. */
+        /**
+         * \brief Returns if the surface is topologically equivalent to a disc.
+         * \return True if the surface is topologically equivalent to a disc, false otherwise.
+         */
         bool is_disc() const { return (number_of_borders() == 1) && (euler_poincare() == 1); }
 
-        /** \brief returns if the surface is topologically equivalent to a cylinder. */
+        /**
+         * \brief Returns if the surface is topologically equivalent to a cylinder.
+         * \return True if the surface is topologically equivalent to a cylinder, false otherwise.
+         */
         bool is_cylinder() const { return (number_of_borders() == 2) && (euler_poincare() == 0); }
 
-        /** \brief returns if the surface is topologically equivalent to a torus. */
+        /**
+         * \brief Returns if the surface is topologically equivalent to a torus.
+         * \return True if the surface is topologically equivalent to a torus, false otherwise.
+         */
         bool is_torus() const { return (number_of_borders() == 0) && (euler_poincare() == 0); }
 
     private:

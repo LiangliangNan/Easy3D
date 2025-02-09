@@ -23,20 +23,31 @@ namespace easy3d {
     /// \class TriangleMeshKdTree easy3d/algo/triangle_mesh_kdtree.h
     class TriangleMeshKdTree {
     public:
-        //! \brief construct with mesh
+        /**
+         * \brief Construct with mesh.
+         * \param mesh The surface mesh to build the k-d tree from.
+         * \param max_faces The maximum number of faces in a leaf node. Default is 10.
+         * \param max_depth The maximum depth of the tree. Default is 30.
+         */
         explicit TriangleMeshKdTree(const SurfaceMesh *mesh, unsigned int max_faces = 10, unsigned int max_depth = 30);
-
+        /**
+         * \brief Destructor.
+         */
         ~TriangleMeshKdTree() { delete root_; }
 
         //! \brief nearest neighbor information
         struct NearestNeighbor {
-            float dist;
-            SurfaceMesh::Face face;
-            vec3 nearest;
-            int tests;
+            float dist;             /// distance to the nearest neighbor
+            SurfaceMesh::Face face; /// face handle of the nearest neighbor
+            vec3 nearest;           /// nearest point on the face
+            int tests;              /// number of triangle tests
         };
 
-        //! \brief Return handle of the nearest neighbor
+        /**
+         * \brief Return handle of the nearest neighbor.
+         * \param p The query point.
+         * \return The nearest neighbor information.
+         */
         NearestNeighbor nearest(const vec3 &p) const;
 
     private:
@@ -68,11 +79,11 @@ namespace easy3d {
                 delete right_child;
             }
 
-            unsigned char axis;
-            float split;
-            Triangles *faces;
-            Node *left_child;
-            Node *right_child;
+            unsigned char axis; //!< The splitting axis.
+            float split; //!< The splitting position.
+            Triangles *faces; //!< The list of faces in the node.
+            Node *left_child; //!< The left child node.
+            Node *right_child; //!< The right child node.
         };
 
         // Recursive part of build()
@@ -82,7 +93,7 @@ namespace easy3d {
         void nearest_recurse(Node *node, const vec3 &point, NearestNeighbor &data) const;
 
     private:
-        Node *root_;
+        Node *root_;    //!< The root node of the k-d tree.
     };
 
 } // namespace easy3d

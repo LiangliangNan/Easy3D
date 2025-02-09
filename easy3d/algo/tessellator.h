@@ -34,19 +34,18 @@ namespace easy3d {
 
     /**
      * \brief Tessellator subdivides concave planar polygons, polygons with holes, or polygons with intersecting edges
-     * into triangles or simple contours. \par
+     *      into triangles or simple contours.
      * \class Tessellator easy3d/algo/tessellator.h
-     * This implementation is also able to keep track of the unique vertices and respective indices, which allows to
-     * take advantage of the element buffer for efficient rendering (i.e., avoid sending vertices with the same
-     * geometry to the GPU).
-     * \par
+     * \details This implementation is also able to keep track of the unique vertices and respective indices, which
+     *      allows to take advantage of the element buffer for efficient rendering (i.e., avoid sending vertices with
+     *      the same geometry to the GPU).
      * Typical applications:
      *   - Tessellate concave polygons, polygons with holes, or polygons with intersecting edges;
      *   - Generate buffer data for rendering;
      *   - Triangulate non-triangle surfaces;
      *   - Stitch patches of a triangle meshes;
      *   - CSG operations
-     *  @see
+     *  \see
      *   - csg::tessellate(std::vector<Polygon2> &polygons, Tessellator::WindingRule rule);
      *   - csg::union_of(std::vector<Polygon2> &polygons);
      *   - csg::intersection_of(const Polygon2& polygon_a, const Polygon2& polygon_b, std::vector<Polygon2> &result);
@@ -55,58 +54,69 @@ namespace easy3d {
 
     class Tessellator {
     public:
-        /** A vertex carries both xyz coordinates and its attributes (e.g., color, texcoord). */
+        /**
+         * \brief A vertex carries both xyz coordinates and its attributes (e.g., color, texcoord).
+         */
         struct Vertex : std::vector<double> {
-
             /**
-             * \brief initialize with xyz coordinates and an optional index.
-             * @param idx The index of this vertex. Providing a non-negative index allows to map a resulting vertex to 
+             * \brief Initialize with xyz coordinates and an optional index.
+             * \param xyz The xyz coordinates of the vertex.
+             * \param idx The index of this vertex. Providing a non-negative index allows to map a resulting vertex to
              *            the original vertex. Any new vertex generated in the tessellation will have a negative index -1.
              */
             explicit Vertex(const vec3 &xyz, int idx = 0) : index(idx) { append(xyz); }
 
             /**
-             * \brief initialize from a C-style array.
-             * @param idx The index of this vertex. Providing a non-negative index allows to map a resulting vertex to 
+             * \brief Initialize from a C-style array.
+             * \param data The data array.
+             * \param size The size of the data array.
+             * \param idx The index of this vertex. Providing a non-negative index allows to map a resulting vertex to
              *            the original vertex. Any new vertex generated in the tessellation will have a negative index -1.
-             * @attention The first 3 components must be the xyz coordinates.
+             * \attention The first 3 components must be the xyz coordinates.
              */
             template<typename FT>
             Vertex(const FT *data, std::size_t size, int idx = 0) : std::vector<double>(data, data + size), index(idx) {}
 
             /**
-             * \brief initialize with a known size but memory is allocated without data initialization.
-             * @param idx The index of this vertex. Providing a non-negative index allows to map a resulting vertex to 
+             * \brief Initialize with a known size but memory is allocated without data initialization.
+             * \param size The size of the data for this vertex.
+             * \param idx The index of this vertex. Providing a non-negative index allows to map a resulting vertex to
              *            the original vertex. Any new vertex generated in the tessellation will have a negative index -1.
              */
             explicit Vertex(std::size_t size = 0, int idx = 0) : std::vector<double>(size), index(idx) {}
 
             /**
-             * \brief copy constructor.
-             * @param idx The index of this vertex. Providing a non-negative index allows to map a resulting vertex to 
+             * \brief Copy constructor.
+             * \param v The vertex to copy.
+             * \param idx The index of this vertex. Providing a non-negative index allows to map a resulting vertex to
              *            the original vertex. Any new vertex generated in the tessellation will have a negative index -1.
              */
             Vertex(const Vertex &v, int idx = 0) : std::vector<double>(v.begin(), v.end()), index(idx) {}
 
             /**
-             * \brief append a property (e.g., color, texture coordinates) to this vertex.
-             * @tparam Vec The vector type of the vertex property, e.g., vec2, vec3.
-             * @param v The value of the vertex property.
-             * @note The order you retrieve the properties must be the same as they were appended.
+             * \brief Append a property (e.g., color, texture coordinates) to this vertex.
+             * \tparam Vec The vector type of the vertex property, e.g., vec2, vec3.
+             * \param v The value of the vertex property.
+             * \note The order you retrieve the properties must be the same as they were appended.
              */
             template<typename Vec>
-            inline void append(const Vec &v) {
+            void append(const Vec &v) {
                 for (int i = 0; i < v.size(); ++i)
                     push_back(v[i]);
             }
 
-            // this can be used to carry and map to the original vertex index
+            /// The index of this vertex. This can be used to carry and map to the original vertex index.
             int index;
         };
 
     public:
+        /**
+         * \brief Constructor.
+         */
         Tessellator();
-
+        /**
+         * \brief Destructor.
+         */
         ~Tessellator();
 
         /// \brief The winding rule (default rule is ODD, modify if needed)
@@ -117,23 +127,22 @@ namespace easy3d {
             WINDING_NEGATIVE = 100133,
             WINDING_ABS_GEQ_TWO = 100134
         };
-
-        ///-------------------------------------------------------------------------
-
+        
         /**
-         * @brief Set the working mode of the tessellator.
-         * @details The tessellator has two working modes and this function sets its working mode.
-         * The two working modes:
-         *  - Filled polygons: complex polygons are tessellated into filled polygons;
-         *  - Boundary only: complex polygons are tessellated into simple line loops separating the polygon interior
-         *                   and exterior
-         *  @param b true for the boundary only mode and false for the filled polygons mode.
+         * \brief Set the working mode of the tessellator.
+         * \details The tessellator has two working modes and this function sets its working mode.
+         *      The two working modes:
+         *          - Filled polygons: complex polygons are tessellated into filled polygons;
+         *          - Boundary only: complex polygons are tessellated into simple line loops separating the polygon interior
+         *            and exterior.
+         * \param b True for the boundary only mode and false for the filled polygons mode.
          */
         void set_boundary_only(bool b);
 
         /**
-         * \brief Set the wining rule. The new rule will be effective until being changed by calling this function again.
-         * With the winding rules, complex CSG operations can be implemented:
+         * \brief Set the winding rule. The new rule will be effective until being changed by calling this function again.
+         * \param rule The winding rule to set.
+         * \details With the winding rules, complex CSG operations can be implemented:
          *  - UNION: Draw all input contours as a single polygon. The winding number of each resulting region is the
          *           number of original polygons that cover it. The union can be extracted by using the WINDING_NONZERO
          *           or WINDING_POSITIVE winding rules. Note that with the WINDING_NONZERO winding rule, we would get
@@ -151,8 +160,8 @@ namespace easy3d {
         void set_winding_rule(WindingRule rule);
 
         /**
-         * @brief Begin the tessellation of a complex polygon.
-         * @details This function lets the user supply the polygon normal if known (to improve robustness or to achieve
+         * \brief Begin the tessellation of a complex polygon.
+         * \details This function lets the user supply the polygon normal if known (to improve robustness or to achieve
          *        a specific tessellation purpose like CSG). All input data is projected into a plane perpendicular to
          *        the normal before tesselation.  All output triangles are oriented CCW with respect to the normal.
          *        If the supplied normal is (0,0,0) (the default value), the normal is determined as follows. The
@@ -177,24 +186,67 @@ namespace easy3d {
 
         /**
          * @brief Add a vertex of a contour to the tessellator.
-         * @param data The vertex data.
-         * @param idx The index of this vertex. Providing a non-negative index allows to map a resulting vertex to
-         *            the original vertex. Any new vertex generated in the tessellation will have a negative index -1.
+         * \param data The vertex data.
          */
         void add_vertex(const Vertex &data);
-        /** @overload **/
+        /**
+         * \brief Add a vertex of a contour to the tessellator.
+         * \param data The vertex data.
+         * \param size The size of the vertex data array.
+         * \param idx The index of this vertex. Providing a non-negative index allows to map a resulting vertex to
+         *            the original vertex. Any new vertex generated in the tessellation will have a negative index -1.
+         */
         void add_vertex(const float *data, unsigned int size, int idx = 0);
-        /** @overload **/
+        /**
+         * \brief Add a vertex of a contour to the tessellator.
+         * \param xyz The xyz coordinates of the vertex.
+         * \param idx The index of this vertex. Providing a non-negative index allows to map a resulting vertex to
+         *            the original vertex. Any new vertex generated in the tessellation will have a negative index -1.
+         */
         void add_vertex(const vec3 &xyz, int idx = 0);
-        /** @overload **/
+        /**
+         * \brief Add a vertex of a contour to the tessellator.
+         * \param xyz The xyz coordinates of the vertex.
+         * \param t The texture coordinates of the vertex.
+         * \param idx The index of this vertex. Providing a non-negative index allows to map a resulting vertex to
+         *            the original vertex. Any new vertex generated in the tessellation will have a negative index -1.
+         */
         void add_vertex(const vec3 &xyz, const vec2 &t, int idx = 0);
-        /** @overload **/
+        /**
+         * \brief Add a vertex of a contour to the tessellator.
+         * \param xyz The xyz coordinates of the vertex.
+         * \param v1 The first vertex property.
+         * \param idx The index of this vertex. Providing a non-negative index allows to map a resulting vertex to
+         *            the original vertex. Any new vertex generated in the tessellation will have a negative index -1.
+         */
         void add_vertex(const vec3 &xyz, const vec3 &v1, int idx = 0);
-        /** @overload **/
+        /**
+         * \brief Add a vertex of a contour to the tessellator.
+         * \param xyz The xyz coordinates of the vertex.
+         * \param v1 The first vertex property.
+         * \param t The texture coordinates of the vertex.
+         * \param idx The index of this vertex. Providing a non-negative index allows to map a resulting vertex to
+         *            the original vertex. Any new vertex generated in the tessellation will have a negative index -1.
+         */
         void add_vertex(const vec3 &xyz, const vec3 &v1, const vec2 &t, int idx = 0);
-        /** @overload **/
+        /**
+         * \brief Add a vertex of a contour to the tessellator.
+         * \param xyz The xyz coordinates of the vertex.
+         * \param v1 The first vertex property.
+         * \param v2 The second vertex property.
+         * \param idx The index of this vertex. Providing a non-negative index allows to map a resulting vertex to
+         *            the original vertex. Any new vertex generated in the tessellation will have a negative index -1.
+         */
         void add_vertex(const vec3 &xyz, const vec3 &v1, const vec3 &v2, int idx = 0);
-        /** @overload **/
+        /**
+         * \brief Add a vertex of a contour to the tessellator.
+         * \param xyz The xyz coordinates of the vertex.
+         * \param v1 The first vertex property.
+         * \param v2 The second vertex property.
+         * \param t The texture coordinates of the vertex.
+         * \param idx The index of this vertex. Providing a non-negative index allows to map a resulting vertex to
+         *            the original vertex. Any new vertex generated in the tessellation will have a negative index -1.
+         */
         void add_vertex(const vec3 &xyz, const vec3 &v1, const vec3 &v2, const vec2 &t, int idx = 0);
 
         /**
@@ -211,18 +263,21 @@ namespace easy3d {
 
         /**
          * \brief The list of vertices in the result.
+         * \return The list of vertices.
          */
         const std::vector<Vertex *> &vertices() const;
 
         /**
          * \brief The list of elements (triangle or contour) created over many calls. Each element is represented by
-         * its vertex indices.
+         *      its vertex indices.
+         * \return The list of elements.
          */
         const std::vector<std::vector<unsigned int> > &elements() const { return elements_; }
 
         /**
          * \brief The number of elements (triangle or contour) in the last polygon.
-         * @note must be used after call to end_polygon() and before the next call to begin_polygon().
+         * \return The number of elements in the last polygon.
+         * \note Must be used after call to end_polygon() and before the next call to begin_polygon().
          */
         unsigned int num_elements_in_polygon() const { return num_elements_in_polygon_; }
 
@@ -231,8 +286,9 @@ namespace easy3d {
 
         /**
          * \brief Clear all recorded data (triangle list and vertices) and restart index counter.
-         * This function is useful if you want to selectively stitch faces/components. In this case, call reset()
-         * before you process each set. Then for each set, you collect the vertices and vertex indices of the triangles.
+         * \details This function is useful if you want to selectively stitch faces/components. In this case, call
+         *      reset() before you process each set. Then for each set, you collect the vertices and vertex indices of
+         *      the triangles.
          */
         void reset();
 
@@ -274,29 +330,30 @@ namespace easy3d {
          * The resulting polygons will have the following properties:
          *  - free of intersections,
          *  - CCW contours define the outer boundary and CW contours define holes.
-         * @param polygons The input polygons, and the result on return.
-         * @rule The winding rule to determine the interior and exterior of the complex shape.
+         * \param polygons The input polygons, and the result on return.
+         * \param rule The winding rule to determine the interior and exterior of the complex shape.
          */
         void tessellate(std::vector<Polygon2> &polygons, Tessellator::WindingRule rule);
 
         /**
          * \brief Compute the union of a set of polygons.
-         * @param polygons The input polygons, and the result on return.
+         * \param polygons The input polygons, and the result on return.
          */
         void union_of(std::vector<Polygon2> &polygons);
 
         /**
          * \brief Compute the intersection of two polygons.
-         * @param polygon_a One of the two input polygons.
-         * @param result The result.
+         * \param polygon_a One of the two input polygons.
+         * \param polygon_b The other input polygon.
+         * \param result The result.
          */
         void intersection_of(const Polygon2& polygon_a, const Polygon2& polygon_b, std::vector<Polygon2> &result);
 
         /**
          * \brief Compute the difference of two polygons (i.e., A diff B).
-         * @param polygon_a The A polygon.
-         * @param polygon_b The B polygon.
-         * @param result The result.
+         * \param polygon_a The first polygon.
+         * \param polygon_b The second polygon.
+         * \param result The result.
          */
         void difference_of(const Polygon2& polygon_a, const Polygon2& polygon_b, std::vector<Polygon2> &result);
     }

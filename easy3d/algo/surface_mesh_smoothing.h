@@ -19,41 +19,61 @@ namespace easy3d {
     /**
      * \brief A class for Laplacian smoothing.
      * \class SurfaceMeshSmoothing easy3d/algo/surface_mesh_smoothing.h
-     * See the following papers for more details:
+     * \details See the following papers for more details:
      *  - Mathieu Desbrun et al. Implicit fairing of irregular meshes using diffusion and curvature flow. SIGGRAPH, 1999.
      *  - Misha Kazhdan et al. Can mean‐curvature flow be modified to be non‐singular? CGF, 2012.
      */
     class SurfaceMeshSmoothing {
     public:
-        //! \brief Construct with mesh to be smoothed.
+        /**
+         * \brief Construct with mesh to be smoothed.
+         * \param mesh The surface mesh to be smoothed.
+         */
         explicit SurfaceMeshSmoothing(SurfaceMesh *mesh);
 
-        // destructor
+        /**
+         * \brief Destructor.
+         */
         ~SurfaceMeshSmoothing();
 
-        //! \brief Perform \p iters iterations of explicit Laplacian smoothing.
-        //! Decide whether to use uniform Laplacian or cotan Laplacian (default: cotan).
+        /**
+         * \brief Perform \p iters iterations of explicit Laplacian smoothing.
+         * \param iters The number of iterations. Default: 10.
+         * \param use_uniform_laplace Decide whether to use uniform Laplacian or cotan Laplacian. Default: false.
+         */
         void explicit_smoothing(unsigned int iters = 10,
                                 bool use_uniform_laplace = false);
 
-        //! \brief Perform implicit Laplacian smoothing with \p timestep.
-        //! Decide whether to use uniform Laplacian or cotan Laplacian (default: cotan).
-        //! Decide whether to re-center and re-scale model after smoothing (default: true).
+        /**
+         * \brief Perform implicit Laplacian smoothing with \p timestep.
+         * \param timestep The timestep for implicit smoothing. Default: 0.001.
+         * \param use_uniform_laplace Decide whether to use uniform Laplacian or cotan Laplacian. Default: false.
+         * \param rescale Decide whether to re-center and re-scale model after smoothing. Default: true.
+         */
         void implicit_smoothing(float timestep = 0.001,
                                 bool use_uniform_laplace = false,
                                 bool rescale = true);
 
-        //! \brief Initialize edge and vertex weights.
+        /**
+         * \brief Initialize edge and vertex weights.
+         * \param use_uniform_laplace Decide whether to use uniform Laplacian or cotan Laplacian. Default: false.
+         */
         void initialize(bool use_uniform_laplace = false) {
             compute_edge_weights(use_uniform_laplace);
             compute_vertex_weights(use_uniform_laplace);
         }
 
     private:
-        //! Initialize cotan/uniform Laplace weights.
+        /**
+         * \brief Initialize cotan/uniform Laplace weights.
+         * \param use_uniform_laplace Decide whether to use uniform Laplacian or cotan Laplacian.
+         */
         void compute_edge_weights(bool use_uniform_laplace);
 
-        //! Initialize cotan/uniform Laplace weights.
+        /**
+         * \brief Initialize cotan/uniform Laplace weights.
+         * \param use_uniform_laplace Decide whether to use uniform Laplacian or cotan Laplacian.
+         */
         void compute_vertex_weights(bool use_uniform_laplace);
 
     private:

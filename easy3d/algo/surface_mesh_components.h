@@ -21,63 +21,131 @@ namespace easy3d {
     /**
      * \brief A connected component of a SurfaceMesh.
      * \details Internally, A connected component of a SurfaceMesh stores four lists of SurfaceMesh elements, i.e., vertices,
-     * faces, edges, and halfedges.
+     *      faces, edges, and halfedges.
      * \class SurfaceMeshComponent easy3d/algo/surface_mesh_components.h
      */
     class SurfaceMeshComponent {
     public:
-        typedef SurfaceMesh::Face Face;
-        typedef SurfaceMesh::Vertex Vertex;
-        typedef SurfaceMesh::Edge Edge;
-        typedef SurfaceMesh::Halfedge Halfedge;
+        // convenient type definitions
+        typedef SurfaceMesh::Face       Face;       //!< Face type
+        typedef SurfaceMesh::Vertex     Vertex;     //!< Vertex type
+        typedef SurfaceMesh::Edge       Edge;       //!< Edge type
+        typedef SurfaceMesh::Halfedge   Halfedge;   //!< Halfedge type
 
     public:
+        /**
+         * \brief Constructor that initializes the component with a given mesh.
+         * \param mesh The surface mesh to which this component belongs.
+         */
         explicit SurfaceMeshComponent(SurfaceMesh *mesh) : mesh_(mesh) {}
 
-        /** Extracts connected components. The components are sorted in descending order if \p descending is \p true (in terms of number of faces.*/
+        /**
+         * \brief Extracts connected components from the given mesh.
+         * \param mesh The surface mesh from which to extract components.
+         * \param descending If true, the components are sorted in descending order by the number of faces.
+         * \return A vector of extracted SurfaceMeshComponent objects.
+         */
         static std::vector<SurfaceMeshComponent> extract(SurfaceMesh *mesh, bool descending = true);
 
-        /** Extracts a single connected component from the seed face */
+        /**
+         * \brief Extracts a single connected component from the given seed face.
+         * \param mesh The surface mesh from which to extract the component.
+         * \param seed The seed face to start the extraction.
+         * \return The extracted SurfaceMeshComponent object.
+         */
         static SurfaceMeshComponent extract(SurfaceMesh *mesh, SurfaceMesh::Face seed);
 
-        /** Extracts a single connected component from the seed vertex */
+        /**
+         * \brief Extracts a single connected component from the given seed vertex.
+         * \param mesh The surface mesh from which to extract the component.
+         * \param seed The seed vertex to start the extraction.
+         * \return The extracted SurfaceMeshComponent object.
+         */
         static SurfaceMeshComponent extract(SurfaceMesh *mesh, SurfaceMesh::Vertex seed);
 
+        /**
+         * \brief Returns the list of faces in this component.
+         * \return A constant reference to the vector of faces.
+         */
         const std::vector<Face> &faces() const { return faces_; }
 
+        /**
+         * \brief Returns the list of vertices in this component.
+         * \return A constant reference to the vector of vertices.
+         */
         const std::vector<Vertex> &vertices() const { return vertices_; }
 
+        /**
+         * \brief Returns the list of edges in this component.
+         * \return A constant reference to the vector of edges.
+         */
         const std::vector<Edge> &edges() const { return edges_; }
 
+        /**
+         * \brief Returns the list of halfedges in this component.
+         * \return A constant reference to the vector of halfedges.
+         */
         const std::vector<Halfedge> &halfedges() const { return halfedges_; }
 
+        /**
+         * \brief Returns the number of faces in this component.
+         * \return The number of faces.
+         */
         std::size_t n_faces() const { return faces_.size(); }
 
+        /**
+         * \brief Returns the number of vertices in this component.
+         * \return The number of vertices.
+         */
         std::size_t n_vertices() const { return vertices_.size(); }
 
+        /**
+         * \brief Returns the number of edges in this component.
+         * \return The number of edges.
+         */
         std::size_t n_edges() const { return edges_.size(); }
 
+        /**
+         * \brief Returns the number of halfedges in this component.
+         * \return The number of halfedges.
+         */
         std::size_t n_halfedges() const { return halfedges_.size(); }
 
-        /** Returns the surface mesh to which this component belongs. */
+        /**
+         * \brief Returns the surface mesh to which this component belongs.
+         * \return A pointer to the surface mesh.
+         */
         SurfaceMesh *mesh() const { return mesh_; }
 
         /**
-         * Returns the surface area of this component.
-         * Internally it triangulates the face using the tessellator. So this method also works for concave faces.
+         * \brief Returns the surface area of this component.
+         * \details Internally it triangulates the face using the tessellator. So this method also works for concave faces.
+         * \return The surface area.
          */
         float area() const;
 
-        /** Returns the total border length of this component. */
+        /**
+         * \brief Returns the total border length of this component.
+         * \return The total border length.
+         */
         float border_length() const;
 
-        /** Returns the bounding box of this component. */
+        /**
+         * \brief Returns the bounding box of this component.
+         * \return The bounding box.
+         */
         Box3 bbox() const;
 
-        /** Translates this component by an offset vector. */
+        /**
+         * \brief Translates this component by an offset vector.
+         * \param offset The offset vector.
+         */
         void translate(const vec3 &offset);
 
-        /** Constructs a surface mesh from this component. */
+        /**
+         * \brief Constructs a surface mesh from this component.
+         * \return A pointer to the constructed surface mesh.
+         */
         SurfaceMesh *to_mesh() const;
 
     private:
