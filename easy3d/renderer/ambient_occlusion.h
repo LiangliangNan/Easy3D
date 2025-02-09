@@ -27,8 +27,6 @@
 #ifndef EASY_RENDERER_AMBIENT_OCCLUSION_H
 #define EASY_RENDERER_AMBIENT_OCCLUSION_H
 
-
-#include <string>
 #include <vector>
 #include <memory>
 
@@ -50,34 +48,75 @@ namespace easy3d {
     class AmbientOcclusion
     {   
     public:
-        /// \brief Constructor
-        /// \param cam The camera used in the view
+        /**
+         * \brief Constructor
+         * \param cam The camera used in the view
+         */
 		explicit AmbientOcclusion(Camera* cam);
+        /**
+         * \brief Destructor
+         */
         virtual ~AmbientOcclusion();
 
-        /// \brief Sets the sample radius (in pixels). Typical value is in range [0, 4].
+        /**
+         * \brief Sets the sample radius (in pixels). Typical value is in range [0, 4].
+         * \param r The sample radius
+         */
         void  set_radius(float r) { radius_ = r; }
-        /// \brief Returns the sample radius.
+        /**
+         * \brief Returns the sample radius.
+         * \return The sample radius
+         */
         float radius() const { return radius_; }
 
-        /// \brief Sets the bias. Default value is 0.005.
+        /**
+         * \brief Sets the bias. Default value is 0.005.
+         * \param b The bias value
+         */
         void  set_bias(float b) { bias_ = b; }
-        /// \brief Returns the bias.
+        /**
+         * \brief Returns the bias.
+         * \return The bias value
+         */
         float bias() const { return bias_; }
 
-        /// \brief Generates the SSAO texture
-        /// \return The SSAO texture ID
+        /**
+         * \brief Generates the SSAO texture
+         * \param models The models to be rendered
+         * \return The SSAO texture ID
+         */
         virtual unsigned int generate(const std::vector< std::shared_ptr<Model> >& models);
-        /// \brief Returns the generated SSAO texture ID
+        /**
+         * \brief Returns the generated SSAO texture ID
+         * \return The SSAO texture ID
+         */
         unsigned int ssao_texture() const;
 
     protected:
+        /**
+         * \brief Initializes the SSAO with the given width and height
+         * \param w The width
+         * \param h The height
+         */
         void init(int w, int h);
-
+        /**
+         * \brief Performs the geometry pass
+         * \param models The models to be rendered
+         */
         void geometry_pass(const std::vector< std::shared_ptr<Model> >& models);
+        /**
+         * \brief Performs the SSAO pass
+         */
         void ssao_pass();
+        /**
+         * \brief Performs the blur pass
+         */
         void blur_pass();
-
+        /**
+         * \brief Generates noise texture
+         * \param width The width of the noise texture
+         * \param height The height of the noise texture
+         */
         void generate_noise(int width, int height);
 
     protected:
@@ -86,11 +125,11 @@ namespace easy3d {
         float	radius_;
         float	bias_;
 
-        FramebufferObject*	geom_fbo_;
-        FramebufferObject*	ssao_fbo_;
+        FramebufferObject*	geom_fbo_;  ///< The framebuffer object for geometry pass
+        FramebufferObject*	ssao_fbo_;  ///< The framebuffer object for SSAO pass
 
-        std::vector<vec3> ssao_kernel_;
-        unsigned int	  noise_texture_;
+        std::vector<vec3> ssao_kernel_;     ///< The SSAO kernel
+        unsigned int	  noise_texture_;   ///< The noise texture
 
     private:
         //copying disabled

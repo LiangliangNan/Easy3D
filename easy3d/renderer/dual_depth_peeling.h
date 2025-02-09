@@ -33,69 +33,81 @@
 
 namespace easy3d {
 
+    class Camera;
+    class TrianglesDrawable;
+    class FramebufferObject;
+
     /**
      * \brief Transparency effect using dual depth peeling.
      *
      * \class DualDepthPeeling easy3d/renderer/dual_depth_peeling.h
      *
      * \details DualDepthPeeling implements the dual depth peeling algorithm described in
-     * [Order independent transparency with dual depth peeling]
-     * (http://developer.download.nvidia.com/SDK/10.5/opengl/src/dual_depth_peeling/doc/DualDepthPeeling.pdf)
-     * by L. Bavoil, K. Myers. February 2008.
+     *      [Order independent transparency with dual depth peeling]
+     *      (http://developer.download.nvidia.com/SDK/10.5/opengl/src/dual_depth_peeling/doc/DualDepthPeeling.pdf)
+     *      by L. Bavoil, K. Myers. February 2008.
      *
-     * Depth peeling is traditionally used to perform order independent transparency (OIT) with N geometry passes for
-     * N transparency layers. Dual depth peeling enables peeling N transparency layers in N/2+1 passes, by peeling from
-     * the front and the back simultaneously using a min-max depth buffer. It performs peeling and blends on the fly.
-     * The pass occurs in several stages:
-     * 1. Copy the current (opaque geometry) depth buffer into a texture.
-     * 2. Initialize the min-max depth buffer from the opaque depth texture and the translucent geometry.
-     * 3. Peel the nearest and farthest fragments:
-     *		3a. Blend fragments that match the nearest depth of the min-max depth buffer into the front buffer.
-     *		3b. Write the far depth fragments into a temporary buffer.
-     *		3c. Extract the next set of min/max depth values for the next peel.
-     *		3d. Blend the temporary far fragment texture (3b) into an accumulation texture.
-     *		3e. Go back to 3a and repeat until the maximum number of peels is met, or the desired occlusion ratio is
-     *		    satisfied.
-     * 4. If the occlusion ratio != 0 (i.e. we hit the maximum number of peels before finishing), alpha blend the
-     *    remaining fragments in-between the near and far accumulation textures.
-     * 5. Blend all accumulation buffers over the opaque color buffer to produce the final image.
+     *      Depth peeling is traditionally used to perform order independent transparency (OIT) with N geometry passes
+     *      for N transparency layers. Dual depth peeling enables peeling N transparency layers in N/2+1 passes, by
+     *      peeling from the front and the back simultaneously using a min-max depth buffer. It performs peeling and
+     *      blends on the fly. The pass occurs in several stages:
+     *          1. Copy the current (opaque geometry) depth buffer into a texture.
+     *          2. Initialize the min-max depth buffer from the opaque depth texture and the translucent geometry.
+     *          3. Peel the nearest and farthest fragments:
+     *      		3a. Blend fragments that match the nearest depth of the min-max depth buffer into the front buffer.
+     *      		3b. Write the far depth fragments into a temporary buffer.
+     *      		3c. Extract the next set of min/max depth values for the next peel.
+     *      		3d. Blend the temporary far fragment texture (3b) into an accumulation texture.
+     *      		3e. Go back to 3a and repeat until the maximum number of peels is met, or the desired occlusion
+     *      		    ratio is satisfied.
+     *          4. If the occlusion ratio != 0 (i.e. we hit the maximum number of peels before finishing), alpha blend
+     *             the remaining fragments in-between the near and far accumulation textures.
+     *          5. Blend all accumulation buffers over the opaque color buffer to produce the final image.
      *
-     * Related articals or methods:
-     *  - [VTK Technical Highlight: Dual Depth Peeling](https://blog.kitware.com/vtk-technical-highlight-dual-depth-peeling/)
-     *  - [OpenGL 4.0+ ABuffer V2.0: Linked lists of fragment pages](https://blog.icare3d.org/2010/07/opengl-40-abuffer-v20-linked-lists-of.html)
+     *          Related articles or methods:
+     *           - [VTK Technical Highlight: Dual Depth Peeling](https://blog.kitware.com/vtk-technical-highlight-dual-depth-peeling/)
+     *           - [OpenGL 4.0+ ABuffer V2.0: Linked lists of fragment pages](https://blog.icare3d.org/2010/07/opengl-40-abuffer-v20-linked-lists-of.html)
      *
-     * About antialiasing:
-     *    Dual depth peeling won't work with a multisample FBO, so for better rendering quality, it is possible to add
-     *    a "Fast Approximate Anti-Aliasing" (FXAA) step for post antialiasing.
+     *          About antialiasing:
+     *              Dual depth peeling won't work with a multisample FBO, so for better rendering quality, it is
+     *              possible to add a "Fast Approximate Anti-Aliasing" (FXAA) step for post antialiasing.
      *
-     * Optimization tips: rendering with multi-effects (e.g., shadowing, SSAO) can benefit from sharing the same
-     * geometry pass.
+     *          Optimization tips: rendering with multi-effects (e.g., shadowing, SSAO) can benefit from sharing the
+     *          same geometry pass.
      *
-     * \see AverageColorBlending, DualDepthPeeling
+     * \sa AverageColorBlending
      */
-
-    class Camera;
-    class TrianglesDrawable;
-    class FramebufferObject;
-
     class DualDepthPeeling : public Transparency
     {
     public:
-        /// \brief Constructor
-        /// \param cam The camera used in the view
+        /**
+         * \brief Constructor
+         * \param cam The camera used in the view
+         */
         explicit DualDepthPeeling(Camera* cam);
+        /**
+         * \brief Destructor
+         */
         ~DualDepthPeeling() override;
 
-        /// \brief Sets the maximum number of peeling layers.
-        /// \details It has to be a positive value. Default value is 4. A special value of 0 means no maximum limit.
+        /**
+         * \brief Sets the maximum number of peeling layers.
+         * \details It has to be a positive value. Default value is 4. A special value of 0 means no maximum limit.
+         * \param n The maximum number of peeling layers
+         */
         void set_max_peels(int n) { max_peels_ = n; }
 
-        /// \brief Returns the maximum number of peeling layers.
+        /**
+         * \brief Returns the maximum number of peeling layers.
+         * \return The maximum number of peeling layers
+         */
         int  max_peels() const { return max_peels_; }
 
-        /// \brief Renders the scene (a set of surfaces) with transparency effect
+        /**
+         * \brief Renders the scene (a set of surfaces) with transparency effect
+         * \param surfaces The surfaces to be rendered
+         */
         void draw(const std::vector<TrianglesDrawable*>& surfaces) override;
-
 
     protected:
 
@@ -111,17 +123,23 @@ namespace easy3d {
         // Render the scene to produce the next set of peels.
         void peel(const std::vector<TrianglesDrawable*>& surfaces);
 
+        // Blends the final image.
         void blend_final_image();
 
         // Swap the src/dest render targets:
         void swap_targets();
 
+        // Checks if the peeling is done.
         bool peeling_done() const;
 
+        // Initializes the occlusion query.
         void init_occlusion_query();
+        // Deletes the occlusion query ID.
         void delete_occlusion_query_id();
 
+        // Starts the occlusion query.
         void start_occlusion_query() const;
+        // Ends the occlusion query.
         void end_occlusion_query();
 
         // Release all FBOs, shader programs.

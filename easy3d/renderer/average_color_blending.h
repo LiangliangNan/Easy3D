@@ -39,23 +39,29 @@ namespace easy3d {
 
     /**
      * \brief Transparency effect using average color blending.
-     *
      * \details Optimization tip: rendering with multi-effects (e.g., shadowing, SSAO) can benefit from using a shared
-     * geometry pass.
-     *
+     *      geometry pass.
      * \class AverageColorBlending easy3d/renderer/average_color_blending.h
+     * \sa DualDepthPeeling
      */
     class AverageColorBlending : public Transparency
     {
     public:
-        /// \brief Constructor
-        /// \param cam The camera used in the view
+        /**
+         * \brief Constructor
+         * \param cam The camera used in the view
+         */
         explicit AverageColorBlending(Camera* cam);
+        /**
+         * \brief Destructor
+         */
         ~AverageColorBlending() override;
 
-        /// \brief Renders the scene (a set of surfaces) with transparency effect
+        /**
+         * \brief Renders the scene (a set of surfaces) with transparency effect
+         * \param surfaces The surfaces to be rendered
+         */
         void draw(const std::vector<TrianglesDrawable*>& surfaces) override;
-
 
     protected:
 
