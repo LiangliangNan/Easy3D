@@ -47,138 +47,111 @@
 namespace easy3d {
 
 
-    /*! \brief The Frame class represents a coordinate system, defined by a position
-      and an orientation.
-      \class Frame easy3d/renderer/frame.h
 
-      \details A Frame is a 3D coordinate system, represented by a position() and an
-      orientation(). The order of these transformations is important: the Frame is
-      first translated \e and \e then rotated around the new translated origin.
-
-      A Frame is useful to define the position and orientation of a 3D rigid object,
-      using its matrix() method, as shown below: \code
-      // Builds a Frame at position (0.5,0,0) and oriented such that its Y axis is
-      along the (1,1,1)
-      // direction. One could also have used setPosition() and setOrientation().
-      Frame fr(vec3(0.5,0,0), quat(vec3(0,1,0), vec3(1,1,1)));
-      glPushMatrix();
-      glMultMatrixd(fr.matrix());
-      // Draw your object here, in the local fr coordinate system.
-      glPopMatrix();
-      \endcode
-
-      Many functions are provided to transform a 3D point from one coordinate system
-      (Frame) to an other: see coordinatesOf(), inverseCoordinatesOf(),
-      coordinatesOfIn(), coordinatesOfFrom()...
-
-      You may also want to transform a 3D vector (such as a normal), which
-      corresponds to applying only the rotational part of the frame transformation:
-      see transformOf() and inverseTransformOf(). See the <a
-      href="../examples/frameTransform.html">frameTransform example</a> for an
-      illustration.
-
-      The translation() and the rotation() that are encapsulated in a Frame can also
-      be used to represent a \e rigid \e transformation of space. Such a
-      transformation can also be interpreted as a change of coordinate system, and
-      the coordinate system conversion functions actually allow you to use a Frame
-      as a rigid transformation. Use inverseCoordinatesOf() (resp. coordinatesOf())
-      to apply the transformation (resp. its inverse). Note the inversion.
-
-      <h3>Hierarchy of Frames</h3>
-
-      The position and the orientation of a Frame are actually defined with respect
-      to a referenceFrame(). The default referenceFrame() is the world coordinate
-      system (represented by a \c NULL referenceFrame()). If you setReferenceFrame()
-      to a different Frame, you must then differentiate:
-
-      \arg the \e local translation() and rotation(), defined with respect to the
-      referenceFrame(),
-
-      \arg the \e global position() and orientation(), always defined with respect
-      to the world coordinate system.
-
-      A Frame is actually defined by its translation() with respect to its
-      referenceFrame(), and then by a rotation() of the coordinate system around the
-      new translated origin.
-
-      This terminology for \e local (translation() and rotation()) and \e global
-      (position() and orientation()) definitions is used in all the methods' names
-      and should be sufficient to prevent ambiguities. These notions are obviously
-      identical when the referenceFrame() is \c NULL, i.e. when the Frame is defined
-      in the world coordinate system (the one you are in at the beginning of the
-      Viewer::draw() method, see the <a href="../introduction.html">introduction
-      page</a>).
-
-      Frames can hence easily be organized in a tree hierarchy, which root is the
-      world coordinate system. A loop in the hierarchy would result in an
-      inconsistent (multiple) Frame definition.
-      settingAsReferenceFrameWillCreateALoop() checks this and prevents
-      setReferenceFrame() from creating such a loop.
-
-      This frame hierarchy is used in methods like coordinatesOfIn(),
-      coordinatesOfFrom()... which allow coordinates (or vector) conversions from a
-      Frame to any other one (including the world coordinate system).
-
-      However, one must note that this hierarchical representation is internal to
-      the Frame classes. When the Frames represent OpenGL coordinates system, one
-      should map this hierarchical representation to the OpenGL GL_MODELVIEW matrix
-      stack. See the matrix() documentation for details.
-
-      <h3>Constraints</h3>
-
-      An interesting feature of Frames is that their displacements can be
-      constrained. When a Constraint is attached to a Frame, it filters the input of
-      translate() and rotate(), and only the resulting filtered motion is applied to
-      the Frame. The default constraint() is \c NULL resulting in no filtering. Use
-      setConstraint() to attach a Constraint to a frame.
-
-      Constraints are especially useful for the ManipulatedFrame instances, in
-      order to forbid some mouse motions. See the <a
-      href="../examples/constrainedFrame.html">constrainedFrame</a>, <a
-      href="../examples/constrainedCamera.html">constrainedCamera</a> and <a
-      href="../examples/luxo.html">luxo</a> examples for an illustration.
-
-      Classical constraints are provided for convenience (see LocalConstraint,
-      WorldConstraint and CameraConstraint) and new constraints can very easily be
-      implemented.
-
-      <h3>Derived classes</h3>
-
-      The ManipulatedFrame class inherits Frame and implements a mouse motion
-      conversion, so that a Frame (and hence an object) can be manipulated in the
-      scene with the mouse.
-
-      */
+    /**
+     * \brief The Frame class represents a coordinate system, defined by a position and an orientation.
+     * \class Frame easy3d/renderer/frame.h
+     *
+     * \details A Frame is a 3D coordinate system, represented by a position() and an orientation().
+     * The order of these transformations is important: the Frame is first translated and then rotated around the new translated origin.
+     *
+     * A Frame is useful to define the position and orientation of a 3D rigid object, using its matrix() method.
+     * Many functions are provided to transform a 3D point from one coordinate system (Frame) to another.
+     * You may also want to transform a 3D vector (such as a normal), which corresponds to applying only the rotational part of the frame transformation.
+     *
+     * The translation() and the rotation() that are encapsulated in a Frame can also be used to represent a rigid transformation of space.
+     * Such a transformation can also be interpreted as a change of coordinate system.
+     *
+     * <h3>Hierarchy of Frames</h3>
+     * The position and the orientation of a Frame are actually defined with respect to a referenceFrame().
+     * The default referenceFrame() is the world coordinate system (represented by a NULL referenceFrame()).
+     * Frames can hence easily be organized in a tree hierarchy, which root is the world coordinate system.
+     *
+     * <h3>Constraints</h3>
+     * An interesting feature of Frames is that their displacements can be constrained.
+     * When a Constraint is attached to a Frame, it filters the input of translate() and rotate(), and only the resulting filtered motion is applied to the Frame.
+     * Constraints are especially useful for the ManipulatedFrame instances, in order to forbid some mouse motions.
+     *
+     * <h3>Derived classes</h3>
+     * The ManipulatedFrame class inherits Frame and implements a mouse motion conversion, so that a Frame (and hence an object) can be manipulated in the scene with the mouse.
+     */
     class Frame {
     public:
+        /**
+         * \brief Default constructor.
+         * \details Initializes the Frame object with default values.
+         */
         Frame();
         /*! Virtual destructor. Empty. */
         virtual ~Frame();
 
+        /**
+         * \brief Copy constructor.
+         * \param frame The Frame object to copy from.
+         * \details Creates a new Frame object as a copy of the given Frame object.
+         */
         Frame(const Frame &frame);
+        /**
+         * \brief Assignment operator.
+         * \param frame The Frame object to assign from.
+         * \return A reference to this Frame object.
+         * \details Performs a deep copy of all member variables from the given Frame object.
+         */
         Frame &operator=(const Frame &frame);
 
     public:
         /*! @name World coordinates position and orientation */
         //@{
+
+        /**
+         * \brief Constructor with position and orientation.
+         * \param position The position of the Frame.
+         * \param orientation The orientation of the Frame.
+         * \details Initializes the Frame object with the given position and orientation.
+         */
         Frame(const vec3 &position, const quat &orientation);
 
+        /**
+         * \brief Sets the position of the Frame.
+         * \param position The new position of the Frame.
+         */
         void setPosition(const vec3 &position);
-
+        /**
+         * \brief Sets the position of the Frame with constraint.
+         * \param position The new position of the Frame.
+         */
         void setPositionWithConstraint(vec3 &position);
-
+        /**
+         * \brief Sets the orientation of the Frame.
+         * \param orientation The new orientation of the Frame.
+         */
         void setOrientation(const quat &orientation);
-
+        /**
+         * \brief Sets the orientation of the Frame with constraint.
+         * \param orientation The new orientation of the Frame.
+         */
         void setOrientationWithConstraint(quat &orientation);
-
-        void setPositionAndOrientation(const vec3 &position,
-                                       const quat &orientation);
-
-        void setPositionAndOrientationWithConstraint(vec3 &position,
-                                                     quat &orientation);
-
+        /**
+         * \brief Sets the position and orientation of the Frame.
+         * \param position The new position of the Frame.
+         * \param orientation The new orientation of the Frame.
+         */
+        void setPositionAndOrientation(const vec3 &position, const quat &orientation);
+        /**
+         * \brief Sets the position and orientation of the Frame with constraint.
+         * \param position The new position of the Frame.
+         * \param orientation The new orientation of the Frame.
+         */
+        void setPositionAndOrientationWithConstraint(vec3 &position, quat &orientation);
+        /**
+         * \brief Returns the position of the Frame.
+         * \return The position of the Frame.
+         */
         vec3 position() const;
-
+        /**
+         * \brief Returns the orientation of the Frame.
+         * \return The orientation of the Frame.
+         */
         quat orientation() const;
 
         //@}
@@ -186,118 +159,191 @@ namespace easy3d {
     public:
         /*! @name Local translation and rotation w/r reference Frame */
         //@{
-        /*! Sets the translation() of the frame, locally defined with respect to the
-        referenceFrame(). Emits the modified() signal.
 
-        Use setPosition() to define the world coordinates position(). Use
-        setTranslationWithConstraint() to take into account the potential constraint()
-        of the Frame. */
+        /**
+         * \brief Sets the translation of the Frame.
+         * \param translation The new translation of the Frame.
+         * \details Sets the translation of the Frame, locally defined with respect to the referenceFrame().
+         *      Emits the modified() signal.
+         */
         void setTranslation(const vec3 &translation) {
             t_ = translation;
             modified.send();
         }
-
+        /**
+         * \brief Sets the translation of the Frame with constraint.
+         * \param translation The new translation of the Frame.
+         */
         void setTranslationWithConstraint(vec3 &translation);
 
-        /*! Set the current rotation quat. See rotation() and the different
-        quat constructors. Emits the modified() signal. See also
-        setTranslation() and setRotationWithConstraint(). */
-
-        /*! Sets the rotation() of the Frame, locally defined with respect to the
-         referenceFrame(). Emits the modified() signal.
-
-         Use setOrientation() to define the world coordinates orientation(). The
-         potential constraint() of the Frame is not taken into account, use
-         setRotationWithConstraint() instead. */
+        /**
+         * \brief Sets the rotation of the Frame.
+         * \param rotation The new rotation of the Frame.
+         * \details Sets the rotation of the Frame, locally defined with respect to the referenceFrame().
+         * Emits the modified() signal.
+         */
         void setRotation(const quat &rotation) {
             q_ = rotation;
             modified.send();
         }
-
+        /**
+         * \brief Sets the rotation of the Frame with constraint.
+         * \param rotation The new rotation of the Frame.
+         */
         void setRotationWithConstraint(quat &rotation);
-
+        /**
+         * \brief Sets the translation and rotation of the Frame.
+         * \param translation The new translation of the Frame.
+         * \param rotation The new rotation of the Frame.
+         */
         void setTranslationAndRotation(const vec3 &translation, const quat &rotation);
-
+        /**
+         * \brief Sets the translation and rotation of the Frame with constraint.
+         * \param translation The new translation of the Frame.
+         * \param rotation The new rotation of the Frame.
+         */
         void setTranslationAndRotationWithConstraint(vec3 &translation, quat &rotation);
 
-        /*! Returns the Frame translation, defined with respect to the
-        referenceFrame().
-
-        Use position() to get the result in the world coordinates. These two values
-        are identical when the referenceFrame() is \c NULL (default).
-
-        See also setTranslation() and setTranslationWithConstraint(). */
+        /**
+         * \brief Returns the translation of the Frame.
+         * \return The translation of the Frame.
+         * \details Returns the Frame translation, defined with respect to the referenceFrame().
+         * Use position() to get the result in the world coordinates.
+         */
         vec3 translation() const { return t_; }
-        /*! Returns the Frame rotation, defined with respect to the referenceFrame().
-
-        Use orientation() to get the result in the world coordinates. These two values
-        are identical when the referenceFrame() is \c NULL (default).
-
-        See also setRotation() and setRotationWithConstraint(). */
-
-        /*! Returns the current quat orientation. See setRotation(). */
+        /**
+         * \brief Returns the rotation of the Frame.
+         * \return The rotation of the Frame.
+         * \details Returns the Frame rotation, defined with respect to the referenceFrame().
+         * Use orientation() to get the result in the world coordinates.
+         */
         quat rotation() const { return q_; }
 
     public:
         /*! @name Frame hierarchy */
         //@{
-        /*! Returns the reference Frame, in which coordinates system the Frame is
-        defined.
-
-        The translation() and rotation() of the Frame are defined with respect to the
-        referenceFrame() coordinate system. A \c NULL referenceFrame() (default value)
-        means that the Frame is defined in the world coordinate system.
-
-        Use position() and orientation() to recursively convert values along the
-        referenceFrame() chain and to get values expressed in the world coordinate
-        system. The values match when the referenceFrame() is \c NULL.
-
-        Use setReferenceFrame() to set this value and create a Frame hierarchy.
-        Convenient functions allow you to convert 3D coordinates from one Frame to an
-        other: see coordinatesOf(), localCoordinatesOf(), coordinatesOfIn() and their
-        inverse functions.
-
-        Vectors can also be converted using transformOf(), transformOfIn,
-        localTransformOf() and their inverse functions. */
+        /**
+         * \brief Returns the reference Frame.
+         * \return The reference Frame.
+         * \details Returns the reference Frame, in which coordinates system the Frame is defined.
+         *      The translation() and rotation() of the Frame are defined with respect to the referenceFrame()
+         *      coordinate system. A \c NULL referenceFrame() (default value)means that the Frame is defined in
+         *      the world coordinate system.
+         *      Use position() and orientation() to recursively convert values along the referenceFrame() chain
+         *      and to get values expressed in the world coordinate system. The values match when the
+         *      referenceFrame() is \c NULL.
+         *      Use setReferenceFrame() to set this value and create a Frame hierarchy. Convenient functions allow you
+         *      to convert 3D coordinates from one Frame to another: see coordinatesOf(), localCoordinatesOf(),
+         *      coordinatesOfIn() and their inverse functions.
+         *      Vectors can also be converted using transformOf(), transformOfIn, localTransformOf() and their inverse
+         *      functions.
+         */
         const Frame *referenceFrame() const { return referenceFrame_; }
-
+        /**
+         * \brief Returns the reference Frame.
+         * \return The reference Frame.
+         * \details Returns the reference Frame, in which coordinates system the Frame is defined.
+         * The translation() and rotation() of the Frame are defined with respect to the referenceFrame() coordinate system.
+         */
         void setReferenceFrame(const Frame *const refFrame);
-
-        bool settingAsReferenceFrameWillCreateALoop(const Frame *const frame);
+        /**
+         * \brief Checks if setting the reference Frame will create a loop.
+         * \param frame The Frame to check.
+         * \return true if setting the reference Frame will create a loop, false otherwise.
+         */
+        bool settingAsReferenceFrameWillCreateALoop(const Frame* frame);
         //@}
 
         /*! @name Frame modification */
         //@{
+
+        /**
+         * \brief Translates the Frame.
+         * \param t The translation vector.
+         */
         void translate(vec3 &t);
-
+        /**
+         * \brief Translates the Frame.
+         * \param t The translation vector.
+         */
         void translate(const vec3 &t);
-
+        /**
+         * \brief Rotates the Frame.
+         * \param q The rotation quaternion.
+         */
         void rotate(quat &q);
-
+        /**
+         * \brief Rotates the Frame.
+         * \param q The rotation quaternion.
+         */
         void rotate(const quat &q);
-
+        /**
+         * \brief Rotates the Frame around a point.
+         * \param rotation The rotation quaternion.
+         * \param point The point to rotate around.
+         */
         void rotateAroundPoint(quat &rotation, const vec3 &point);
-
+        /**
+         * \brief Rotates the Frame around a point.
+         * \param rotation The rotation quaternion.
+         * \param point The point to rotate around.
+         */
         void rotateAroundPoint(const quat &rotation, const vec3 &point);
-
-        void alignWithFrame(const Frame *const frame, bool move = false,
-                            float threshold = 0.0f);
-
+        /**
+         * \brief Aligns the Frame with another Frame.
+         * \param frame The Frame to align with.
+         * \param move Whether to move the Frame.
+         * \param threshold The threshold for alignment.
+         */
+        void alignWithFrame(const Frame *const frame, bool move = false, float threshold = 0.0f);
+        /**
+         * \brief Projects the Frame on a line.
+         * \param origin The origin of the line.
+         * \param direction The direction of the line.
+         */
         void projectOnLine(const vec3 &origin, const vec3 &direction);
         //@}
 
         /*! @name Coordinate system transformation of 3D coordinates */
         //@{
+
+        /**
+         * \brief Transforms a 3D point to the Frame's coordinate system.
+         * \param src The source point.
+         * \return The transformed point.
+         */
         vec3 coordinatesOf(const vec3 &src) const;
-
+        /**
+         * \brief Transforms a 3D point from the Frame's coordinate system to the world coordinate system.
+         * \param src The source point.
+         * \return The transformed point.
+         */
         vec3 inverseCoordinatesOf(const vec3 &src) const;
-
+        /**
+         * \brief Transforms a 3D point to the Frame's local coordinate system.
+         * \param src The source point.
+         * \return The transformed point.
+         */
         vec3 localCoordinatesOf(const vec3 &src) const;
-
+        /**
+         * \brief Transforms a 3D point from the Frame's local coordinate system to the world coordinate system.
+         * \param src The source point.
+         * \return The transformed point.
+         */
         vec3 localInverseCoordinatesOf(const vec3 &src) const;
-
+        /**
+         * \brief Transforms a 3D point to another Frame's coordinate system.
+         * \param src The source point.
+         * \param in The target Frame.
+         * \return The transformed point.
+         */
         vec3 coordinatesOfIn(const vec3 &src, const Frame *const in) const;
-
+        /**
+         * \brief Transforms a 3D point from another Frame's coordinate system to the Frame's coordinate system.
+         * \param src The source point.
+         * \param from The source Frame.
+         * \return The transformed point.
+         */
         vec3 coordinatesOfFrom(const vec3 &src, const Frame *const from) const;
         //@}
 
@@ -328,34 +374,60 @@ namespace easy3d {
         // Combining any of these functions with its inverse (in any order) leads to
         // the identity.
         //@{
+        /**
+         * \brief Transforms a 3D vector to the Frame's coordinate system.
+         * \param src The source vector.
+         * \return The transformed vector.
+         */
         vec3 transformOf(const vec3 &src) const;
-
+        /**
+         * \brief Transforms a 3D vector from the Frame's coordinate system to the world coordinate system.
+         * \param src The source vector.
+         * \return The transformed vector.
+         */
         vec3 inverseTransformOf(const vec3 &src) const;
-
+        /**
+         * \brief Transforms a 3D vector to the Frame's local coordinate system.
+         * \param src The source vector.
+         * \return The transformed vector.
+         */
         vec3 localTransformOf(const vec3 &src) const;
-
+        /**
+         * \brief Transforms a 3D vector from the Frame's local coordinate system to the world coordinate system.
+         * \param src The source vector.
+         * \return The transformed vector.
+         */
         vec3 localInverseTransformOf(const vec3 &src) const;
-
+        /**
+         * \brief Transforms a 3D vector to another Frame's coordinate system.
+         * \param src The source vector.
+         * \param in The target Frame.
+         * \return The transformed vector.
+         */
         vec3 transformOfIn(const vec3 &src, const Frame *const in) const;
-
+        /**
+         * \brief Transforms a 3D vector from another Frame's coordinate system to the Frame's coordinate system.
+         * \param src The source vector.
+         * \param from The source Frame.
+         * \return The transformed vector.
+         */
         vec3 transformOfFrom(const vec3 &src, const Frame *const from) const;
         //@}
 
         /*! @name Constraint on the displacement */
         //@{
-        /*! Returns the current constraint applied to the Frame.
-
-        A \c NULL value (default) means that no Constraint is used to filter Frame
-        translation and rotation. See the Constraint class documentation for details.
-
-        You may have to use a \c dynamic_cast to convert the result to a Constraint
-        derived class. */
+        /**
+         * \brief Returns the current constraint applied to the Frame.
+         * \return The current constraint.
+         * \details A NULL value (default) means that no Constraint is used to filter Frame translation and rotation.
+         */
         Constraint *constraint() const { return constraint_; }
 
-        /*! Sets the constraint() attached to the Frame.
-
-        A \c NULL value means no constraint. The previous constraint() should be
-        deleted by the calling method if needed. */
+        /**
+         * \brief Sets the constraint attached to the Frame.
+         * \param constraint The new constraint.
+         * \details A NULL value means no constraint. The previous constraint should be deleted by the calling method if needed.
+         */
         void setConstraint(Constraint *const constraint) { constraint_ = constraint; }
         //@}
 
@@ -363,43 +435,57 @@ namespace easy3d {
         /*! @name Associated matrices */
         //@{
     public:
+        /**
+         * \brief Returns the transformation matrix of the Frame.
+         * \return The transformation matrix.
+         */
         mat4 matrix() const;
-
+        /**
+         * \brief Returns the world transformation matrix of the Frame.
+         * \return The world transformation matrix.
+         */
         mat4 worldMatrix() const;
-
+        /**
+         * \brief Sets the Frame from a transformation matrix.
+         * \param m The transformation matrix.
+         */
         void setFromMatrix(const mat4 &m);
 
         //@}
 
         /*! @name Inversion of the transformation */
         //@{
+        /**
+         * \brief Returns the inverse of the Frame.
+         * \return The inverse of the Frame.
+         * \sa worldInverse()
+         */
         Frame inverse() const;
 
-        /*! Returns the inverse() of the Frame world transformation.
-
-        The orientation() of the new Frame is the quat::inverse() of the
-        original orientation. Its position() is the negated and inverse rotated image
-        of the original position.
-
-        The result Frame has a \c NULL referenceFrame() and a \c NULL constraint().
-
-        Use inverse() for a local (i.e. with respect to referenceFrame())
-        transformation inverse. */
+        /**
+         * \brief Returns the inverse of the Frame's world transformation.
+         * \return The inverse of the Frame's world transformation.
+         * \details The result Frame has a NULL referenceFrame() and a NULL constraint(). The orientation() of the new
+         *      Frame is the quat::inverse() of the original orientation. Its position() is the negated and inverse
+         *      rotated image of the original position.
+         *      Use inverse() for a local (i.e. with respect to referenceFrame()) transformation inverse.
+         * \sa inverse()
+         */
         Frame worldInverse() const {
             return Frame(-(orientation().inverse_rotate(position())), orientation().inverse());
         }
         //@}
 
     private:
-        // P o s i t i o n   a n d   o r i e n t a t i o n
-        vec3 t_;
-        quat q_;
+        // Position and orientation
+        vec3 t_;    ///< Translation vector
+        quat q_;    ///< Rotation quaternion
 
-        // C o n s t r a i n t s
-        Constraint *constraint_;
+        // Constraints
+        Constraint *constraint_;    ///< Constraint applied to the Frame
 
-        // F r a m e   c o m p o s i t i o n
-        const Frame *referenceFrame_;
+        // Frame composition
+        const Frame *referenceFrame_;   ///< Reference Frame
 
     public:
         Signal<> modified;

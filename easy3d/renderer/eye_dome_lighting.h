@@ -28,54 +28,53 @@
 #define EASY3D_RENDERER_EYE_DOME_LIGHTING_H
 
 
-#include <string>
-
 namespace easy3d {
-
-
-    /**
-     * \brief An implementation of the Eye Dome Lighting (EDL) technique.
-     *
-     * \class EyeDomeLighting easy3d/renderer/eye_dome_lighting.h
-     *
-     * \details This class implements an EDL offscreen shading method, which is useful  for rendering point clouds
-     * without normal information.
-     *
-     * Two image resolutions are used.
-     *
-     * This pass expects an initialized depth buffer and color buffer. Initialized buffers means they have been
-     * cleared with the farthest z-value and background color/gradient/transparent color.
-     * An opaque pass may have been performed right after the initialization.
-     *
-     * Optimization tips:
-     * Rendering with multi-effects (e.g., shadowing, SSAO) an benefit from sharing the same geometry pass.
-     *
-     * Example usage:
-     *      \code
-     * 		if (camera()->type() == Camera::PERSPECTIVE)
-     *			edl_->begin(width(), height(), camera()->zNear(), camera()->zFar());
-     *		else {
-     *			float r = camera()->sceneRadius();
-     *			edl_->begin(width(), height(), 2.0f * r, 10.0f * r);
-     *		}
-     *      draw(); // your rendering code here
-     *      edl_->end(camera()->sceneRadius());
-     *      \endcode
-     */
 
     class Camera;
     class ShaderProgram;
     class FramebufferObject;
 
+    /**
+     * \brief An implementation of the Eye Dome Lighting (EDL) technique.
+     * \class EyeDomeLighting easy3d/renderer/eye_dome_lighting.h
+     * \details This class implements an EDL offscreen shading method, which is useful for rendering point clouds
+     *      without normal information.
+     *
+     *      Two image resolutions are used.
+     *
+     *      This pass expects an initialized depth buffer and color buffer. Initialized buffers means they have been
+     *      cleared with the farthest z-value and background color/gradient/transparent color.
+     *      An opaque pass may have been performed right after the initialization.
+     *
+     *      Optimization tips:
+     *          Rendering with multi-effects (e.g., shadowing, SSAO) can benefit from sharing the same geometry pass.
+     *
+     *      Example usage:
+     *          \code
+     *              edl_->begin();
+     *              draw(); // your rendering code here
+     *              edl_->end();
+     *          \endcode
+     */
     class EyeDomeLighting
     {
     public:
-        /// \brief Constructor
-        /// \param cam The camera used in the view
+        /**
+         * \brief Constructor
+         * \param cam The camera used in the view
+         */
         explicit EyeDomeLighting(Camera* cam);
+        /**
+         * \brief Destructor
+         */
         virtual ~EyeDomeLighting();
-
+        /**
+         * \brief Begins the EDL rendering process.
+         */
         void begin();
+        /**
+         * \brief Ends the EDL rendering process.
+         */
         void end();
 
     protected:
