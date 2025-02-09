@@ -76,7 +76,18 @@ namespace easy3d {
          * Material definition.
          */
         struct Material {
+            /**
+             * \brief Default constructor.
+             * \details Initializes the Material object with default values.
+             */
             Material() = default;
+            /**
+             * \brief Parameterized constructor.
+             * \param ambi The ambient color.
+             * \param spec The specular color.
+             * \param shin The shininess value.
+             * \details Initializes the Material object with the given ambient color, specular color, and shininess value.
+             */
             Material(const vec4 &ambi, const vec4 &spec, float shin);
 
             vec4 ambient;       ///< Ambient color
@@ -86,11 +97,27 @@ namespace easy3d {
         };
 
     public:
+        /**
+         * \brief Default constructor.
+         * \details Initializes the State object with default values.
+         */
         State();
+        /**
+         * \brief Copy constructor.
+         * \param s The State object to copy from.
+         * \details Creates a new State object as a copy of the given State object.
+         */
         State(const State& s);
-        /// assign \c rhs to \c *this. performs a deep copy of all member variables.
+        /**
+         * \brief Assignment operator.
+         * \param rhs The State object to assign from.
+         * \return A reference to this State object.
+         * \details Performs a deep copy of all member variables from the given State object.
+         */
         State& operator=(const State& rhs);
-
+        /**
+         * \brief Virtual destructor.
+         */
         virtual ~State() = default;
 
         /**
