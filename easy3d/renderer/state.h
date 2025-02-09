@@ -159,7 +159,7 @@ namespace easy3d {
 
         /**
          * \brief Sets the coloring.
-         * \details A generic version of the set\_[method]\_coloring() method.
+         * \details A generic version of the set_[method]_coloring() method.
          * \param method The coloring method.
          * \param location The location of the coloring property.
          * \param name The name of the coloring property.
@@ -168,7 +168,7 @@ namespace easy3d {
 
         /**
          * \brief Sets the coloring method.
-         * \details It has the same effect as if set\_coloring() is called without changing the location (2nd argument)
+         * \details It has the same effect as if set_coloring() is called without changing the location (2nd argument)
          *      and name (3rd argument) of the coloring property.
          * \param method The coloring method.
          */
@@ -359,20 +359,20 @@ namespace easy3d {
 
         /**
          * \brief Controls the behavior for vertex clipping.
-         * \details If plane\_clip\_discard\_primitive() is \c false (default value, standard plane clip), the clip
+         * \details If plane_clip_discard_primitive() is \c false (default value, standard plane clip), the clip
          *      distances will be linearly interpolated across the primitive (e.g., line, triangle) and the portion
          *      of the primitive with interpolated distances less than 0.0 will be clipped.
-         *      If plane\_clip\_discard\_primitive() is \c true, a primitive will be completely discarded if one of its
+         *      If plane_clip_discard_primitive() is \c true, a primitive will be completely discarded if one of its
          *      vertices has a negative clip distance.
          * \return \c true if the primitive is discarded, \c false otherwise.
          */
         bool plane_clip_discard_primitive() const { return plane_clip_discard_primitive_; }
         /**
          * \brief Sets the behavior for vertex clipping.
-         * \details If plane\_clip\_discard\_primitive() is \c false (default value, standard plane clip), the clip
+         * \details If plane_clip_discard_primitive() is \c false (default value, standard plane clip), the clip
          *      distances will be linearly interpolated across the primitive (e.g., line, triangle) and the portion
          *      of the primitive with interpolated distances less than 0.0 will be clipped.
-         *      If plane\_clip\_discard\_primitive() is \c true, a primitive will be completely discarded if one of its
+         *      If plane_clip_discard_primitive() is \c true, a primitive will be completely discarded if one of its
          *      vertices has a negative clip distance.
          * \param b \c true to discard the primitive, \c false otherwise.
          */
@@ -401,7 +401,7 @@ namespace easy3d {
         void set_highlight_range(const std::pair<int, int> &range) { highlight_range_ = range; }
         /**
          * \brief Returns the range of primitives to be highlighted.
-         * \details Primitives with indices within the range [highlight\_id\_low\_, highlight\_id\_high\_] will be highlighted.
+         * \details Primitives with indices within the range will be highlighted.
          * \return The range of primitives to be highlighted.
          */
         const std::pair<int, int> &highlight_range() const { return highlight_range_; }
