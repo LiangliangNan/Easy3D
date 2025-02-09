@@ -58,7 +58,7 @@ namespace easy3d {
           * \param mesh The input surface mesh.
           * \param duplicate_faces Returns the duplicate face pairs found.
           * \param folding_faces Returns the folding face pairs found.
-          * \param dist_threshold Two vertices are considered coincident if there distance is smaller than it.
+          * \param dist_threshold Two vertices are considered coincident if their distance is smaller than it.
           * \pre mesh.is_triangle_mesh().
           */
         void detect(
@@ -69,15 +69,16 @@ namespace easy3d {
         );
 
         /**
-         * \brief Removes duplicate faces and and folding faces.
-          * \details Two triangle faces are said duplicate if they have the same geometry (vertices within a distance
-          *         threshold). Two triangle faces are said folding if they are coplanar, share one edge (i.e., have
-          *         the same edge geometry), and partially overlap.
-          * \param mesh The input surface mesh.
-          * \param folding_faces \c true also to remove folding faces.
-          * \return The number of faces that have been deleted.
-          * \pre mesh.is_triangle_mesh().
-          */
+         * \brief Removes duplicate faces and folding faces.
+         * \details Two triangle faces are said duplicate if they have the same geometry (vertices within a distance
+         *         threshold). Two triangle faces are said folding if they are coplanar, share one edge (i.e., have
+         *         the same edge geometry), and partially overlap.
+         * \param mesh The input surface mesh.
+         * \param folding_faces \c true also to remove folding faces.
+         * \param dist_threshold Two vertices are considered coincident if their distance is smaller than it.
+         * \return The number of faces that have been deleted.
+         * \pre mesh.is_triangle_mesh().
+         */
         unsigned int remove(
                 SurfaceMesh *mesh,
                 bool folding_faces = false,
@@ -91,9 +92,7 @@ namespace easy3d {
         typedef CGAL::Vector_3<Kernel>		Vector_3;
         typedef CGAL::Triangle_3<Kernel>	Triangle_3;
 
-    private:
         struct Triangle {
-        public:
             Triangle(const Point_3& a, const Point_3& b, const Point_3& c, SurfaceMesh::Face f) : triangle(a, b, c), face(f) {}
             Triangle_3 triangle;
             SurfaceMesh::Face face;
@@ -102,7 +101,7 @@ namespace easy3d {
 
         // Axis-align boxes for all-pairs self-intersection detection
         typedef std::vector<Triangle>				Triangles;
-        typedef typename Triangles::iterator		TrianglesIterator;
+        typedef Triangles::iterator		            TrianglesIterator;
         typedef CGAL::Box_intersection_d::Box_with_handle_d<double, 3, TrianglesIterator>	Box;
 
     private:

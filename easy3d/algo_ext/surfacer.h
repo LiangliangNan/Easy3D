@@ -45,7 +45,7 @@ namespace easy3d {
      *
      * \details This class collects some related algorithms implemented using CGAL.
      *          It allows (re)orientation, detecting and resolving topological issues (e.g., duplicate vertices/faces,
-     *          self intersection), and clipping/splitting/slicing of a surface mesh.
+     *          self-intersection), and clipping/splitting/slicing of a surface mesh.
      *
      * \see OverlappingFaces and SelfIntersection.
      */
@@ -65,26 +65,24 @@ namespace easy3d {
 
         /**
          * \brief Stitches together border halfedges in a polygon mesh.
-         *
          * \details The pairs of halfedges to be stitched are automatically found amongst all border halfedges.
-         * Two border halfedges h1 and h2 can be stitched if the points associated to the source and target vertices
-         * of h1 are the same as those of the target and source vertices of h2 respectively.
+         *      Two border halfedges h1 and h2 can be stitched if the points associated to the source and target
+         *      vertices of h1 are the same as those of the target and source vertices of h2 respectively.
+         * \param mesh The input surface mesh.
+         * \return The number of pairs of halfedges that were stitched.
          *
-         * @return The number of pairs of halfedges that were stitched.
-         *
-         * \see merge_reversible_connected_components
+         * \sa merge_reversible_connected_components
          */
         static int stitch_borders(SurfaceMesh *mesh);
 
         /**
          * \brief Reverses the connected components having incompatible boundary cycles that could be merged if their
-         * orientation were made compatible, and stitches them. Connected components are examined by increasing number
-         * of faces.
-         *
-         * \attention Stitching occurs only if incompatible boundary cycles exists and the corresponding connected
-         *            components are reversible.
-         *
-         * \see stitch_borders()
+         *      orientation were made compatible, and stitches them. Connected components are examined by increasing
+         *      number of faces.
+         * \param mesh The input surface mesh.
+         * \attention Stitching occurs only if incompatible boundary cycles exist and the corresponding connected
+         *      components are reversible.
+         * \sa stitch_borders()
          */
         static void merge_reversible_connected_components(SurfaceMesh *mesh);
 
@@ -92,14 +90,16 @@ namespace easy3d {
          * \brief Tries to consistently orient and stitch a mesh (treated as a polygon soup).
          * \details Internally, it calls
          *      orient_and_stitch_polygon_soup(std::vector<vec3>& points, std::vector<Polygon>& polygons).
-         * \see merge_reversible_connected_components()
+         * \param mesh The input surface mesh.
+         * \return \c true if the orientation and stitching operation succeeded.
+         * \sa merge_reversible_connected_components()
          */
         static bool orient_and_stitch_polygon_soup(SurfaceMesh *mesh);
 
         /**
          * \brief Makes each connected component of a closed triangle surface mesh inward or outward oriented.
          * \pre mesh.is_triangle_mesh(), mesh.is_closed()
-         * @param mesh The input mesh.
+         * \param mesh The input mesh.
          */
         static void orient_closed_triangle_mesh(SurfaceMesh *mesh);
 
@@ -122,32 +122,35 @@ namespace easy3d {
         /**
          * \brief Repairs a given polygon soup through various repairing operations.
          * \details This function carries out the following tasks, in the same order as they are listed:
-         *  - merging of duplicate points, using CGAL::Polygon_mesh_processing::merge_duplicate_points_in_polygon_soup();
-         *  - simplification of polygons to remove geometrically identical consecutive vertices;
-         *  - splitting of "pinched" polygons, that is polygons in which a geometric position appears more than once.
-         *    The splitting process results in multiple non-pinched polygons;
-         *  - removal of invalid polygons, that is polygons with fewer than 2 vertices;
-         *  - removal of duplicate polygons, using Polygon_mesh_processing::merge_duplicate_polygons_in_polygon_soup();
-         *  - removal of isolated points, using Polygon_mesh_processing::remove_isolated_points_in_polygon_soup().
+         *      - merging of duplicate points, using CGAL::Polygon_mesh_processing::merge_duplicate_points_in_polygon_soup();
+         *      - simplification of polygons to remove geometrically identical consecutive vertices;
+         *      - splitting of "pinched" polygons, that is polygons in which a geometric position appears more than once.
+         *        The splitting process results in multiple non-pinched polygons;
+         *      - removal of invalid polygons, that is polygons with fewer than 2 vertices;
+         *      - removal of duplicate polygons, using Polygon_mesh_processing::merge_duplicate_polygons_in_polygon_soup();
+         *      - removal of isolated points, using Polygon_mesh_processing::remove_isolated_points_in_polygon_soup().
+         * \param points Points of the soup of polygons.
+         * \param polygons Each element describes a polygon represented by the index of its vertices in \p points.
          * \note The point and polygon containers will be modified by the repairing operations, and thus the indexation
-         * of the polygons will also be changed.
+         *      of the polygons will also be changed.
          */
         static void repair_polygon_soup(std::vector<vec3> &points, std::vector<Polygon> &polygons);
 
         /**
          * \brief Repairs a given polygon mesh through various repairing operations.
          * \details This function carries out the following tasks, in the same order as they are listed:
-         *  - merging of duplicate points;
-         *  - simplification of faces to remove geometrically identical consecutive vertices;
-         *  - splitting of "pinched" faces, that is face in which a geometric position appears more than once.
-         *    The splitting process results in multiple non-pinched faces;
-         *  - removal of invalid faces, that is faces with fewer than 2 vertices;
-         *  - removal of duplicate faces;
-         *  - removal of isolated points.
-         * This function treats the input mesh as a polygon soup. Internally, it calls
-         * clean_polygon_soup(std::vector<vec3>& points, std::vector<Polygon>& polygons).
+         *      - merging of duplicate points;
+         *      - simplification of faces to remove geometrically identical consecutive vertices;
+         *      - splitting of "pinched" faces, that is face in which a geometric position appears more than once.
+         *        The splitting process results in multiple non-pinched faces;
+         *      - removal of invalid faces, that is faces with fewer than 2 vertices;
+         *      - removal of duplicate faces;
+         *      - removal of isolated points.
+         *  This function treats the input mesh as a polygon soup. Internally, it calls
+         *      clean_polygon_soup(std::vector<vec3>& points, std::vector<Polygon>& polygons).
+         * \param mesh The input surface mesh.
          * \note The point and face containers will be modified by the repairing operations, and thus the indexation
-         * of the polygons will also be changed.
+         *      of the polygons will also be changed.
          */
         static void repair_polygon_soup(SurfaceMesh *mesh);
 
@@ -159,8 +162,9 @@ namespace easy3d {
 
         /**
           * \brief Remove degenerate faces.
-          * \details Any triangle with an edge length smaller than a given threshold is consider degenerate and will
+          * \details Any triangle with an edge length smaller than a given threshold is considered degenerate and will
           *         be removed by the edge collapse operation.
+          * \param mesh The input surface mesh.
           * \param length_threshold The edge length threshold.
           * \return The number of faces removed.
           */
@@ -171,9 +175,10 @@ namespace easy3d {
           * \details Two triangle faces are said duplicate if they have the same geometry (vertices within a distance
           *         threshold). Two triangle faces are said folding if they are coplanar, share one edge (i.e., have
           *         the same edge geometry), and partially overlap.
+          * \param mesh The input surface mesh.
           * \param duplicate_faces Returns the duplicate face pairs found.
           * \param folding_faces Returns the folding face pairs found.
-          * \param dist_threshold Two vertices are considered coincident if there distance is smaller than it.
+          * \param dist_threshold Two vertices are considered coincident if their distance is smaller than it.
           * \pre mesh.is_triangle_mesh().
           */
         static void detect_overlapping_faces(
@@ -184,11 +189,13 @@ namespace easy3d {
         );
 
         /**
-         * \brief Removes duplicate faces and and folding faces.
+         * \brief Removes duplicate faces and folding faces.
           * \details Two triangle faces are said duplicate if they have the same geometry (vertices within a distance
           *         threshold). Two triangle faces are said folding if they are coplanar, share one edge (i.e., have
           *         the same edge geometry), and partially overlap.
+         * \param mesh The input surface mesh.
          * \param folding_faces \c true also to remove folding faces.
+         * \param dist_threshold Two vertices are considered coincident if their distance is smaller than it.
          * \return The number of faces that have been deleted.
          * \pre mesh.is_triangle_mesh().
          */
@@ -206,7 +213,7 @@ namespace easy3d {
         /**
          * \brief Collects all pairs of intersecting faces of a triangulated surface mesh.
          * \details Two faces are said to intersect if the corresponding triangles intersect and the intersection is
-         * not an edge nor a vertex incident to both faces.
+         *      not an edge nor a vertex incident to both faces.
          * \pre mesh.is_triangle_mesh().
          * \param mesh The triangle surface mesh to be checked.
          * \return All pairs of non-adjacent faces that intersect.
@@ -215,16 +222,15 @@ namespace easy3d {
         detect_self_intersections(SurfaceMesh *mesh);
 
         /**
-         * \brief Detects and remesh the intersecting faces.
+         * \brief Detects and remeshes the intersecting faces.
          * \pre mesh.is_triangle_mesh().
-         * @param mesh The input mesh. If self intersection exists, it carries the remeshed model. Otherwise it remains
+         * @param mesh The input mesh. If self-intersection exists, it carries the remeshed model. Otherwise, it remains
          *             unchanged.
-         * @param stitch Stitch the borders
-         * @return \c true if remesh actually occurred (i.e., self intersection was detected).
+         * @param stitch If true, stitch the borders.
+         * @return \c true if remesh actually occurred (i.e., self-intersection was detected).
          */
         static bool remesh_self_intersections(SurfaceMesh *mesh, bool stitch = true);
         //@}
-
 
 
         /// \name Clip, split, and slice
@@ -238,14 +244,14 @@ namespace easy3d {
          * \pre mesh.is_triangle_mesh(), !does_self_intersect(SurfaceMesh* mesh).
          * @param mesh The input triangle mesh.
          * @param plane The clipping plane whose negative side defines the half-space to intersect \p mesh with.
-         *
-         * @return \c true if the output surface mesh is manifold. If \c false is returned \par mesh is only refined
-         *         by the intersection with plane.
+         * @param clip_volume If true, the clipped part will be closed.
+         * @return \c true if the output surface mesh is manifold. If \c false is returned, \p mesh is only refined
+         *         by the intersection with the plane.
          */
         static bool clip(SurfaceMesh *mesh, const Plane3 &plane, bool clip_volume = false);
 
         /**
-         * \brief Split a triangle mesh by a plane.
+         * \brief Splits a triangle mesh by a plane.
          * \details It adds intersection edges of \p mesh and \p plane in \p mesh and duplicates those edges.
          * \pre mesh.is_triangle_mesh(), !does_self_intersect(SurfaceMesh* mesh).
          * @param mesh The input triangle mesh.
@@ -263,8 +269,8 @@ namespace easy3d {
          *         the vector \p pq, and the normal of \p plane is a direct orthogonal basis. The normal vector of
          *         each face is chosen to point on the side of the face where its sequence of vertices is seen
          *         counterclockwise.
-         * \note An edge shared by two faces included in plane will not be reported. For example, if plane passes
-         *       though one face of a cube, only one closed polyline will be reported (the boundary of the face).
+         * \note An edge shared by two faces included in the plane will not be reported. For example, if the plane passes
+         *       through one face of a cube, only one closed polyline will be reported (the boundary of the face).
          * \see slice(SurfaceMesh *mesh, const std::vector<Plane3> &planes).
          */
         static std::vector<Polyline> slice(SurfaceMesh *mesh, const Plane3 &plane);
@@ -280,8 +286,8 @@ namespace easy3d {
          *         the vector \p pq, and the normal of \p plane is a direct orthogonal basis. The normal vector of
          *         each face is chosen to point on the side of the face where its sequence of vertices is seen
          *         counterclockwise.
-         * \note An edge shared by two faces included in plane will not be reported. For example, if plane passes
-         *       though one face of a cube, only one closed polyline will be reported (the boundary of the face).
+         * \note An edge shared by two faces included in the plane will not be reported. For example, if the plane passes
+         *       through one face of a cube, only one closed polyline will be reported (the boundary of the face).
          * \see slice(SurfaceMesh *mesh, const Plane3 &plane).
          */
         static std::vector< std::vector<Polyline> > slice(SurfaceMesh *mesh, const std::vector<Plane3> &planes);

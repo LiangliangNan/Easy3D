@@ -26,46 +26,44 @@
 #include <easy3d/core/surface_mesh.h>
 
 namespace easy3d {
-
-    /// \brief Detects and resolves self-intersection for surface mesh.
-    /// \details Given a triangle mesh compute a new mesh which is the same
-    /// as the input mesh except that any self-intersecting triangles
-    /// have been subdivided (new vertices and face created) so that
-    /// the self-intersection contour lies exactly on edges in the
-    /// the new mesh. New vertices will appear in original faces or
-    /// on original edges. New vertices on edges are "merged" only
-    /// across original faces sharing that edge. This means that if
-    /// the input triangle mesh is a closed manifold the output will
-    /// be too.
-    ///
-    /// Known issues:
-    /// If an existing edge lies exactly on another face then any
-    /// resulting additional vertices along that edge may not get
-    /// properly connected so that the output mesh has the same
-    /// global topology.
-    ///
-    /// \class SelfIntersection  easy3d/algo_ext/self_intersection.h
-
+    /**
+     * \brief Detects and resolves self-intersection for surface mesh.
+     * \details Given a triangle mesh, compute a new mesh which is the same as the input mesh except that any
+     *      self-intersecting triangles have been subdivided (new vertices and faces created) so that the
+     *      self-intersection contour lies exactly on edges in the new mesh. New vertices will appear in original
+     *      faces or on original edges. New vertices on edges are "merged" only across original faces sharing that edge.
+     *      This means that if the input triangle mesh is a closed manifold, the output will be too.
+     * Known issues:
+     *      If an existing edge lies exactly on another face, then any resulting additional vertices along that edge
+     *      may not get properly connected so that the output mesh has the same global topology.
+     * \class SelfIntersection  easy3d/algo_ext/self_intersection.h
+     */
     class SelfIntersection {
     public:
+        /**
+         * \brief Constructor for SelfIntersection.
+         */
         SelfIntersection();
+        /**
+         * \brief Destructor for SelfIntersection.
+         */
         ~SelfIntersection();
 
         /**
          * \brief Detect intersecting face pairs.
-         * @param mesh The input mesh.
-         * @param construct If true, also construct the intersecting geometry.
-         * @return The intersecting face pairs.
+         * \param mesh The input mesh.
+         * \param construct If true, also construct the intersecting geometry.
+         * \return The intersecting face pairs.
          */
         std::vector<std::pair<SurfaceMesh::Face, SurfaceMesh::Face> >
         detect(SurfaceMesh *mesh, bool construct = false);
 
         /**
          * \brief Detect and remesh the intersecting faces.
-         * @param mesh The input mesh. If self intersection exists, it carries the remeshed model. Otherwise it remains
-         *             unchanged.
-         * @param stitch Stitch the borders
-         * @return \c true if remesh actually occurred (i.e., self intersection was detected).
+         * \param mesh The input mesh. If self-intersection exists, it carries the remeshed model. Otherwise, it
+         *      remains unchanged.
+         * \param stitch If true, stitch the borders.
+         * \return \c true if remesh actually occurred (i.e., self-intersection was detected).
          */
         bool remesh(SurfaceMesh *mesh, bool stitch);
 
@@ -91,9 +89,8 @@ namespace easy3d {
         typedef std::vector<std::pair<int, CGAL::Object> > ObjectList;
 
         struct Triangle {
-        public:
-            Triangle(const Point_3 &a, const Point_3 &b, const Point_3 &c, SurfaceMesh::Face f) : triangle(a, b, c),
-                                                                                                  face(f) {}
+            Triangle(const Point_3 &a, const Point_3 &b, const Point_3 &c, SurfaceMesh::Face f)
+                : triangle(a, b, c), face(f), index(-1) {}
 
             Triangle_3 triangle;
             SurfaceMesh::Face face;
@@ -102,15 +99,23 @@ namespace easy3d {
         };
 
         // Axis-align boxes for all-pairs self-intersection detection
-        typedef std::vector<Triangle> Triangles;
-        typedef typename Triangles::iterator TrianglesIterator;
+        typedef std::vector<Triangle>   Triangles;
+        typedef Triangles::iterator     TrianglesIterator;
         typedef CGAL::Box_intersection_d::Box_with_handle_d<double, 3, TrianglesIterator> Box;
 
     private:
-
+        /**
+         * \brief Convert mesh to CGAL triangle list.
+         * \param mesh The input mesh.
+         */
         void mesh_to_cgal_triangle_list(SurfaceMesh *mesh);
 
-        // test if two triangles intersect
+        /**
+         * \brief Test if two triangles intersect.
+         * \param A The first triangle.
+         * \param B The second triangle.
+         * \return \c true if the triangles intersect.
+         */
         bool do_intersect(const Triangle &A, const Triangle &B);
 
         // Given a list of objects (e.g., resulting from intersecting a triangle
