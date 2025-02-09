@@ -33,29 +33,59 @@
 namespace easy3d {
 
     /**
-     * \brief The drawable for rendering a set of line segments, e.g., edges of a mesh, vector fields
+     * \brief The drawable for rendering a set of line segments, e.g., edges of a mesh, vector fields.
      * \class LinesDrawable easy3d/renderer/drawable_lines.h
-     * \see PointsDrawable, TrianglesDrawable
+     * \sa PointsDrawable, TrianglesDrawable
      */
 	class LinesDrawable : public Drawable {
 	public:
+	    /**
+         * \brief Constructor that initializes the drawable with a name and an optional model.
+         * \param name The name of the drawable.
+         * \param model The model to which the drawable is attached (can be nullptr).
+         */
         explicit LinesDrawable(const std::string& name = "", Model* model = nullptr);
 
-        Type type() const override;
+	    /**
+         * \brief Returns the type of the drawable.
+         * \return The type of the drawable, which is DT_LINES.
+         */
+        Type type() const override { return DT_LINES; }
 
-        // a line poster can be a cylinder, or a cone
+	    /**
+         * \brief The type of the line imposter.
+         */
         enum ImposterType {
-            PLAIN,
-            CYLINDER,
-            CONE
+            PLAIN,      //!< Plain mode.
+            CYLINDER,   //!< The lines will be drawn as cylinders.
+            CONE        //!< The lines will be drawn as cons.
         };
+	    /**
+         * \brief Returns the type of the line imposter.
+         * \return The type of the line imposter.
+         */
         ImposterType impostor_type() const { return impostor_type_; }
+	    /**
+         * \brief Sets the type of the line imposter.
+         * \param t The new type of the line imposter.
+         */
         void set_impostor_type(ImposterType t) { impostor_type_ = t; }
 
+	    /**
+         * \brief Returns the width of the lines.
+         * \return The width of the lines.
+         */
         float line_width() const { return line_width_; }
+		/**
+		 * \brief Sets the width of the lines.
+		 * \param w The new width of the lines.
+		 */
         void set_line_width(float w) { line_width_ = w; }
 
-        // Rendering.
+		/**
+		 * \brief Draws the drawable.
+		 * \param camera The camera used for rendering.
+		 */
         void draw(const Camera* camera) const override;
 
     protected:

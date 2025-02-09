@@ -36,42 +36,64 @@ namespace easy3d {
     /**
      * \brief The drawable for rendering a set of triangles, e.g., the surface of a triangular mesh.
      * \class TrianglesDrawable easy3d/renderer/drawable_triangles.h
-     * \see LinesDrawable, PointsDrawable
+     * \sa LinesDrawable, PointsDrawable
      *
      * \note TrianglesDrawable supports triangles only. Visualizing general polygons typically requires tessellating
-     * the faces into a set of triangles (using Tessellator or any other methods). Vertex coordinates and properties
-     * (e.g., color, normal) must be provided as consecutive triplets in an array to be transferred to GPU.
-     * See Drawable::update_vertex_buffer().
+     *		the faces into a set of triangles (using Tessellator or any other methods). Vertex coordinates and
+     *		properties (e.g., color, normal) must be provided as consecutive triplets in an array to be transferred to
+     *		GPU. See Drawable::update_vertex_buffer().
      */
     class TrianglesDrawable : public Drawable {
 	public:
+    	/**
+		 * \brief Constructor that initializes the drawable with a name and an optional model.
+		 * \param name The name of the drawable.
+		 * \param model The model to which the drawable is attached (can be nullptr).
+		 */
         explicit TrianglesDrawable(const std::string& name = "", Model* model = nullptr);
 
-        Type type() const override;
+    	/**
+		 * \brief Returns the type of the drawable.
+		 * \return The type of the drawable, which is DT_TRIANGLES.
+		 */
+		Type type() const override { return DT_TRIANGLES; }
 
-        bool smooth_shading() const { return smooth_shading_; }
-        void set_smooth_shading(bool b) { smooth_shading_ = b; }
+    	/**
+		 * \brief Returns the type of the drawable.
+		 * \return The type of the drawable.
+		 */
+		bool smooth_shading() const { return smooth_shading_; }
+    	/**
+		 * \brief Sets whether smooth shading is enabled.
+		 * \param b True to enable smooth shading, false to disable.
+		 */
+		void set_smooth_shading(bool b) { smooth_shading_ = b; }
 
-        /**
-         * @brief Query the opacity of the drawable, in the range [0.0, 1.0].
-         * @return The opacity of the drawable.
-         * @note Opacity is effective only when transparency (e.g., DualDepthPeeling, AverageColorBlending) rendering is enabled.
-         */
-        float opacity() const { return opacity_; }
+		/**
+		 * \brief Query the opacity of the drawable, in the range [0.0, 1.0], with 0.0 being fully transparent and
+		 *		1.0 being fully opaque.
+		 * \return The opacity of the drawable.
+		 * \note Opacity is effective only when transparency (e.g., DualDepthPeeling, AverageColorBlending) rendering
+		 *		is enabled.
+		 */
+		float opacity() const { return opacity_; }
+		/**
+		 * \brief Set the opacity of the drawable.
+		 * \param opacity The new opacity value, in the range [0.0, 1.0].
+    	 * \note Opacity is effective only when transparency (e.g., DualDepthPeeling, AverageColorBlending) rendering
+		 *		is enabled.
+		 */
+		void set_opacity(float opacity) { opacity_ = opacity; }
 
-        /**
-         * @brief Set the opacity of the drawable.
-         * @param opacity The new opacity value, in the range [0.0, 1.0].
-         * @note Opacity is effective only when transparency (e.g., DualDepthPeeling, AverageColorBlending) rendering is enabled.
-         */
-        void set_opacity(float opacity) { opacity_ = opacity; }
-
-        // Rendering.
-        void draw(const Camera* camera) const override;
+    	/**
+		 * \brief Draws the drawable.
+		 * \param camera The camera used for rendering.
+		 */
+		void draw(const Camera* camera) const override;
 
 	private:
-        bool    smooth_shading_;
-        float   opacity_;
+        bool    smooth_shading_;	//!< Whether smooth shading is enabled.
+        float   opacity_;			//!< The opacity of the drawable.
 	};
 
 }

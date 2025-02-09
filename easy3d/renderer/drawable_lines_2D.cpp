@@ -41,11 +41,6 @@ namespace easy3d {
     }
 
 
-    Drawable::Type LinesDrawable2D::type() const {
-        return DT_LINES;
-    }
-
-
     void LinesDrawable2D::update_vertex_buffer(const std::vector<vec2> &vertices, int width, int height, bool dynamic) {
         assert(vao_);
 

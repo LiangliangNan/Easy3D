@@ -38,15 +38,26 @@ namespace easy3d {
      *      Line width, imposter, texturing, per-element color, and scalar attributes are not implemented given
      *      the limited usage cases.
      * \class LinesDrawable2D easy3d/renderer/drawable_lines_2D.h
-     * \see LinesDrawable the 3D version of lines drawables.
+     * \sa LinesDrawable the 3D version of lines drawables.
      */
 	class LinesDrawable2D : public Drawable {
 	public:
+		/**
+		 * \brief Constructor that initializes the drawable with a name.
+		 * \param name The name of the drawable.
+		 */
         explicit LinesDrawable2D(const std::string& name = "");
 
-        Type type() const override;
+		/**
+		 * \brief Returns the type of the drawable.
+		 * \return The type of the drawable, which is DT_LINES.
+		 */
+        Type type() const override { return DT_LINES; }
 
-        // Rendering.
+		/**
+		 * \brief Draws the drawable.
+		 * \param camera The camera used for rendering.
+		 */
         void draw(const Camera* camera) const override;
 
         /**

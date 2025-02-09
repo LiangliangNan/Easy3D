@@ -50,11 +50,6 @@ namespace easy3d {
     }
 
 
-    Drawable::Type TrianglesDrawable::type() const {
-        return DT_TRIANGLES;
-    }
-
-
     void TrianglesDrawable::draw(const Camera *camera) const {
         if (update_needed_ || vertex_buffer_ == 0) {
             const_cast<TrianglesDrawable *>(this)->update_buffers_internal();

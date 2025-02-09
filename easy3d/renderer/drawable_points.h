@@ -36,31 +36,59 @@ namespace easy3d {
     /**
      * \brief The drawable for rendering a set of points, e.g., point clouds, vertices of a mesh.
      * \class PointsDrawable easy3d/renderer/drawable_points.h
-     * \see LinesDrawable, TrianglesDrawable
+     * \sa LinesDrawable, TrianglesDrawable
      */
 
 	class PointsDrawable : public Drawable {
 	public:
-        explicit PointsDrawable(const std::string& name = "", Model* model = nullptr);
+		/**
+		 * \brief Constructor that initializes the drawable with a name and an optional model.
+		 * \param name The name of the drawable.
+		 * \param model The model to which the drawable is attached (can be nullptr).
+		 */
+		explicit PointsDrawable(const std::string& name = "", Model* model = nullptr);
 
-        Type type() const override;
+		/**
+		 * \brief Returns the type of the drawable.
+		 * \return The type of the drawable, which is DT_POINTS.
+		 */
+		Type type() const override { return DT_POINTS; }
 
-        // a point imposter can be a sphere, or a surfel/disc
+		/**
+		 * \brief The type of the point imposter.
+		 */
         enum ImposterType {
-            PLAIN,
-            SPHERE,
-            SURFEL
+            PLAIN,	//!< Plain mode.
+            SPHERE, //!< The points will be drawn as spheres.
+            SURFEL	//!< The points will be drawn as surfels/discs.
         };
 
-        /** Get/Set impostor type. */
+		/**
+		 * \brief Returns the type of the point imposter.
+		 * \return The type of the point imposter.
+		 */
         ImposterType impostor_type() const { return impostor_type_; }
+		/**
+		 * \brief Sets the type of the point imposter.
+		 * \param t The new type of the point imposter.
+		 */
         void set_impostor_type(ImposterType t) { impostor_type_ = t; }
 
-        /** Get/Set point size. */
+		/**
+		 * \brief Returns the size of the points.
+		 * \return The size of the points.
+		 */
         float point_size() const { return point_size_; }
+		/**
+		 * \brief Sets the size of the points.
+		 * \param s The new size of the points.
+		 */
         void set_point_size(float s) { point_size_ = s; }
 
-        // Rendering.
+		/**
+		 * \brief Draws the drawable.
+		 * \param camera The camera used for rendering.
+		 */
         void draw(const Camera* camera) const override;
 
     protected:

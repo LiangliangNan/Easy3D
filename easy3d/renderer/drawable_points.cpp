@@ -48,11 +48,6 @@ namespace easy3d {
     }
 
 
-    Drawable::Type PointsDrawable::type() const {
-        return DT_POINTS;
-    }
-
-
     void PointsDrawable::draw(const Camera *camera) const {
         if (update_needed_ || vertex_buffer_ == 0) {
             const_cast<PointsDrawable *>(this)->update_buffers_internal();
