@@ -36,18 +36,18 @@
 
 namespace easy3d
 {
-    // The hash function in Google Optimization Tools
-    // https://github.com/google/or-tools/blob/stable/ortools/base/hash.h
-
-#if 1
     /**
-     * \brief std::size_t has 64 bits on most systems, but 32 bits on 32-bit Windows. To make the same code robustly
-     * run on both 32-bit and 64-bit systems, Easy3D uses 64-bit integer for hash values.
-     * This function implements the 64-bit hash combine algorithm (inspired by the \c Hash128to64 function in
-     * [CityHash](https://github.com/google/cityhash/blob/master/src/city.h)).
+     * \brief Combines a hash value with a seed value.
+     * \details std::size_t has 64 bits on most systems, but 32 bits on 32-bit Windows. To make the same code robustly
+     *     run on both 32-bit and 64-bit systems, Easy3D uses 64-bit integer for hash values.
+     *     This function implements the 64-bit hash combine algorithm (inspired by the \c Hash128to64 function in
+     *     [CityHash](https://github.com/google/cityhash/blob/master/src/city.h)).
+     * \tparam T The type of the value to hash.
+     * \param seed The seed value to combine with.
+     * \param value The value to hash.
      */
     template<typename T>
-    inline void hash_combine(uint64_t &seed, T const& value) {
+    void hash_combine(uint64_t &seed, T const& value) {
         static std::hash<T> hasher;
         uint64_t a = (hasher(value) ^ seed) * 0x9ddfea08eb382d69ULL;
         a ^= (a >> 47);
@@ -55,24 +55,13 @@ namespace easy3d
         b ^= (b >> 47);
         seed = b * 0x9ddfea08eb382d69ULL;
     }
-#else
-    /**
-     * This hash combine function was copied from boost with the integer type std::size_t changed to uint64_t.
-     * I found an example that can fail this function (tested on macOS Catalina Version 10.15.4):
-     *      std::vector<float> a = {16, 0}; // hash: 240982999006
-     *      std::vector<float> b = {4, 12}; // hash: 240982999006
-     *      std::cout << "a: " << hash(a.begin(), a.end()) << std::endl;
-     *      std::cout << "b: " << hash(b.begin(), b.end()) << std::endl;
-     * That is why I need a function for 64-bit integers.
-     */
-    template<typename T>
-    inline void hash_combine(uint64_t &seed, T const& value) {
-        static std::hash<T> hasher;
-        seed ^= hasher(value) + 0x9e3779b9 + (seed<<6) + (seed>>2);
-    }
-#endif
 
-    /// \brief Computes the hash value of a 2D vector.
+    /**
+     * \brief Computes the hash value of a 2D vector.
+     * \tparam FT The floating point type.
+     * \param value The 2D vector to hash.
+     * \return The computed hash value.
+     */
     template <typename FT>
     uint64_t hash(const Vec<2, FT>& value) {
         uint64_t seed(0);
@@ -81,7 +70,12 @@ namespace easy3d
         return seed;
     }
 
-    /// \brief Computes the hash value of a 3D vector.
+    /**
+     * \brief Computes the hash value of a 3D vector.
+     * \tparam FT The floating point type.
+     * \param value The 3D vector to hash.
+     * \return The computed hash value.
+     */
     template <typename FT>
     uint64_t hash(const Vec<3, FT>& value) {
         uint64_t seed(0);
@@ -91,9 +85,14 @@ namespace easy3d
         return seed;
     }
 
-
-    /// \brief Computes the hash value of a \p DIM dimensional vector.
-    template <int DIM, typename FT> inline
+    /**
+     * \brief Computes the hash value of a vector with a given dimension.
+     * \tparam DIM The dimension of the vector.
+     * \tparam FT The floating point type.
+     * \param value The vector to hash.
+     * \return The computed hash value.
+     */
+    template <int DIM, typename FT>
     uint64_t hash(const Vec<DIM, FT>& value) {
         uint64_t seed(0);
         for (int i=0; i<DIM; ++i)
@@ -101,10 +100,15 @@ namespace easy3d
         return seed;
     }
 
-
-    /// \brief Computes the hash value of a 1D array.
+    /**
+     * \brief Computes the hash value of a 1D array.
+     * \tparam Iterator The type of the iterator.
+     * \param first The iterator pointing to the first element.
+     * \param last The iterator pointing to the past-the-end element.
+     * \return The computed hash value.
+     */
     template<typename Iterator>
-    inline uint64_t hash(Iterator first, Iterator last) {
+    uint64_t hash(Iterator first, Iterator last) {
         uint64_t seed(0);
         for (; first != last; ++first) {
             hash_combine(seed, *first);
@@ -112,10 +116,15 @@ namespace easy3d
         return seed;
     }
 
-
-    /// \brief Computes the hash value of a 1D array with a given seed value.
+    /**
+     * \brief Computes the hash value of a 1D array with a given seed value.
+     * \tparam Iterator The type of the iterator.
+     * \param seed The seed value to combine with.
+     * \param first The iterator pointing to the first element.
+     * \param last The iterator pointing to the past-the-end element.
+     */
     template<typename Iterator>
-    inline void hash(uint64_t &seed, Iterator first, Iterator last) {
+    void hash(uint64_t &seed, Iterator first, Iterator last) {
         for (; first != last; ++first) {
             hash_combine(seed, *first);
         }

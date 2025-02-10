@@ -40,48 +40,70 @@ namespace easy3d {
 
 
 	/**
-	 * @brief A Graph data structure with easy property management.
+	 * \brief A Graph data structure with easy property management.
 	 * \class Graph easy3d/core/graph.h
-     *
-     * This implementation is inspired by Surface_mesh
-     * https://opensource.cit-ec.de/projects/surface_mesh
+	 *
+	 * This implementation is inspired by Surface_mesh
+	 * https://opensource.cit-ec.de/projects/surface_mesh
 	 */
-
 	class Graph : public Model
 	{
 
 	public: //------------------------------------------------------ topology types
 
-
-		/// Base class for all topology types (internally it is basically an index)
-		/// \sa Vertex, Edge
+		/**
+		 * \brief Base class for all topology types (internally it is basically an index).
+		 * \sa Vertex, Edge
+		 */
 		class BaseHandle
 		{
 		public:
-
-			/// constructor
+			/**
+			 * \brief Constructor with index.
+			 * \param _idx The index of the handle.
+			 */
 			explicit BaseHandle(int _idx = -1) : idx_(_idx) {}
 
-			/// Get the underlying index of this handle
+			/**
+			 * \brief Get the underlying index of this handle.
+			 * \return The index of the handle.
+			 */
 			int idx() const { return idx_; }
 
-			/// reset handle to be invalid (index=-1)
+			/**
+			 * \brief Reset handle to be invalid (index=-1).
+			 */
 			void reset() { idx_ = -1; }
 
-			/// return whether the handle is valid, i.e., the index is not equal to -1.
+			/**
+			 * \brief Return whether the handle is valid, i.e., the index is not equal to -1.
+			 * \return True if the handle is valid, false otherwise.
+			 */
 			bool is_valid() const { return idx_ != -1; }
 
-			/// are two handles equal?
+			/**
+			 * \brief Equality operator.
+			 * \param _rhs The other handle to compare with.
+			 * \return True if the handles are equal, false otherwise.
+			 */
 			bool operator==(const BaseHandle& _rhs) const {
 				return idx_ == _rhs.idx_;
 			}
 
-			/// are two handles different?
+			/**
+			 * \brief Inequality operator.
+			 * \param _rhs The other handle to compare with.
+			 * \return True if the handles are different, false otherwise.
+			 */
 			bool operator!=(const BaseHandle& _rhs) const {
 				return idx_ != _rhs.idx_;
 			}
 
-			/// compare operator useful for sorting handles
+			/**
+			 * \brief Less than operator useful for sorting handles.
+			 * \param _rhs The other handle to compare with.
+			 * \return True if this handle is less than the other handle, false otherwise.
+			 */
 			bool operator<(const BaseHandle& _rhs) const {
 				return idx_ < _rhs.idx_;
 			}
@@ -97,48 +119,64 @@ namespace easy3d {
 		};
 
 
-		/// this type represents a vertex (internally it is basically an index)
-		///  \sa Edge
-		struct Vertex : public BaseHandle
+		/**
+		 * \brief This type represents a vertex (internally it is basically an index).
+		 * \sa Edge
+		 */
+		struct Vertex : BaseHandle
 		{
-			/// default constructor (with invalid index)
+			/**
+			 * \brief Default constructor (with invalid index).
+			 * \param _idx The index of the vertex.
+			 */
 			explicit Vertex(int _idx = -1) : BaseHandle(_idx) {}
 			std::ostream& operator<<(std::ostream& os) const { return os << 'v' << idx(); }
 		};
 
-		/// this type represents an edge (internally it is basically an index)
-		/// \sa Vertex
-		struct Edge : public BaseHandle
+		/**
+		 * \brief This type represents an edge (internally it is basically an index).
+		 * \sa Vertex
+		 */
+		struct Edge : BaseHandle
 		{
-			/// default constructor (with invalid index)
+			/**
+			 * \brief Default constructor (with invalid index).
+			 * \param _idx The index of the edge.
+			 */
 			explicit Edge(int _idx = -1) : BaseHandle(_idx) {}
 		};
 
 
 	public: //-------------------------------------------------- connectivity types
 
-		/// This type stores the vertex connectivity
-		/// \sa EdgeConnectivity
+		/**
+		 * \brief This type stores the vertex connectivity.
+		 * \sa EdgeConnectivity
+		 */
 		struct VertexConnectivity
 		{
-			/// all edges connected with the vertex
+			/// All edges connected with the vertex.
 			std::vector<Edge>  edges_;
 		};
 
-
-		/// This type stores the edge connectivity
-		/// \sa VertexConnectivity
+		/**
+		 * \brief This type stores the edge connectivity.
+		 * \sa VertexConnectivity
+		 */
 		struct EdgeConnectivity
 		{
-            Vertex source_;
-            Vertex target_;
+            Vertex source_;	///< The source vertex of the edge.
+            Vertex target_;	///< The target vertex of the edge.
 		};
 
 
 	public: //------------------------------------------------------ property types
 
-		/// Vertex property of type T
-		/// \sa EdgeProperty
+		/**
+		 * \brief Vertex property of type T.
+		 * \tparam T The type of the property.
+		 * \sa EdgeProperty
+		 */
 		template <class T> class VertexProperty : public Property<T>
 		{
 		public:
@@ -147,13 +185,21 @@ namespace easy3d {
 			explicit VertexProperty() = default;
 			explicit VertexProperty(Property<T> p) : Property<T>(p) {}
 
-			/// access the data stored for vertex \c v
+			/**
+			 * \brief Access the data stored for vertex \c v.
+			 * \param v The vertex.
+			 * \return A reference to the data stored for the vertex.
+			 */
 			typename Property<T>::reference operator[](Vertex v)
 			{
 				return Property<T>::operator[](v.idx());
 			}
 
-			/// access the data stored for vertex \c v
+			/**
+			 * \brief Access the data stored for vertex \c v.
+			 * \param v The vertex.
+			 * \return A const reference to the data stored for the vertex.
+			 */
 			typename Property<T>::const_reference operator[](Vertex v) const
 			{
 				return Property<T>::operator[](v.idx());
@@ -161,8 +207,11 @@ namespace easy3d {
 		};
 
 
-		/// Edge property of type T
-		/// \sa VertexProperty
+		/**
+		 * \brief Edge property of type T.
+		 * \tparam T The type of the property.
+		 * \sa VertexProperty
+		 */
 		template <class T> class EdgeProperty : public Property<T>
 		{
 		public:
@@ -171,21 +220,32 @@ namespace easy3d {
 			explicit EdgeProperty() = default;
 			explicit EdgeProperty(Property<T> p) : Property<T>(p) {}
 
-			/// access the data stored for edge \c e
+			/**
+			 * \brief Access the data stored for edge \c e.
+			 * \param e The edge.
+			 * \return A reference to the data stored for the edge.
+			 */
 			typename Property<T>::reference operator[](Edge e)
 			{
 				return Property<T>::operator[](e.idx());
 			}
 
-			/// access the data stored for edge \c e
+			/**
+			 * \brief Access the data stored for edge \c e.
+			 * \param e The edge.
+			 * \return A const reference to the data stored for the edge.
+			 */
 			typename Property<T>::const_reference operator[](Edge e) const
 			{
 				return Property<T>::operator[](e.idx());
 			}
 		};
 
-		/// Graph property of type T
-		/// \sa VertexProperty, EdgeProperty
+		/**
+		 * \brief Graph property of type T.
+		 * \tparam T The type of the property.
+		 * \sa VertexProperty, EdgeProperty
+		 */
 		template <class T> class ModelProperty : public Property<T>
 		{
 		public:
@@ -194,14 +254,22 @@ namespace easy3d {
 			explicit ModelProperty() = default;
 			explicit ModelProperty(Property<T> p) : Property<T>(p) {}
 
-			/// access the data stored for the graph
-			typename Property<T>::reference operator[](size_t idx)
+			/**
+			 * \brief Access the data stored for the graph.
+			 * \param idx The index.
+			 * \return A reference to the data stored for the graph.
+			 */
+			typename Property<T>::reference operator[](size_t idx) override
 			{
 				return Property<T>::operator[](idx);
 			}
 
-			/// access the data stored for the graph
-			typename Property<T>::const_reference operator[](size_t idx) const
+			/**
+			 * \brief Access the data stored for the graph.
+			 * \param idx The index.
+			 * \return A const reference to the data stored for the graph.
+			 */
+			typename Property<T>::const_reference operator[](size_t idx) const override
 			{
 				return Property<T>::operator[](idx);
 			}
@@ -211,35 +279,54 @@ namespace easy3d {
 
 	public: //------------------------------------------------------ iterator types
 
-		/// this class iterates linearly over all vertices
-		/// \sa vertices_begin(), vertices_end()
-		/// \sa EdgeIterator
+		/**
+		 * \brief This class iterates linearly over all vertices.
+		 * \sa vertices_begin(), vertices_end()
+		 * \sa EdgeIterator
+		 */
 		class VertexIterator
 		{
 		public:
-
-			/// Default constructor
+			/**
+			 * \brief Default constructor.
+			 * \param v The vertex.
+			 * \param g The graph.
+			 */
 			explicit VertexIterator(Vertex v = Vertex(), const Graph* g = nullptr) : hnd_(v), graph_(g)
 			{
 				if (graph_ && graph_->has_garbage()) while (graph_->is_valid(hnd_) && graph_->is_deleted(hnd_)) ++hnd_.idx_;
 			}
 
-			/// get the vertex the iterator refers to
+			/**
+			 * \brief Get the vertex the iterator refers to.
+			 * \return The vertex.
+			 */
 			Vertex operator*()  const { return  hnd_; }
 
-			/// are two iterators equal?
+			/**
+			 * \brief Equality operator.
+			 * \param rhs The other iterator to compare with.
+			 * \return True if the iterators are equal, false otherwise.
+			 */
 			bool operator==(const VertexIterator& rhs) const
 			{
 				return (hnd_ == rhs.hnd_);
 			}
 
-			/// are two iterators different?
+			/**
+			 * \brief Inequality operator.
+			 * \param rhs The other iterator to compare with.
+			 * \return True if the iterators are different, false otherwise.
+			 */
 			bool operator!=(const VertexIterator& rhs) const
 			{
 				return !operator==(rhs);
 			}
 
-			/// pre-increment iterator
+			/**
+			 * \brief Pre-increment iterator.
+			 * \return A reference to the incremented iterator.
+			 */
 			VertexIterator& operator++()
 			{
 				++hnd_.idx_;
@@ -248,7 +335,10 @@ namespace easy3d {
 				return *this;
 			}
 
-			/// pre-decrement iterator
+			/**
+			 * \brief Pre-decrement iterator.
+			 * \return A reference to the decremented iterator.
+			 */
 			VertexIterator& operator--()
 			{
 				--hnd_.idx_;
@@ -263,9 +353,11 @@ namespace easy3d {
 		};
 
 
-		/// this class iterates linearly over all edges
-		/// \sa edges_begin(), edges_end()
-		/// \sa VertexIterator
+		/**
+		 * \brief This class iterates linearly over all edges.
+		 * \sa edges_begin(), edges_end()
+		 * \sa VertexIterator
+		 */
 		class EdgeIterator
 		{
 		public:
@@ -276,22 +368,36 @@ namespace easy3d {
 				if (graph_ && graph_->has_garbage()) while (graph_->is_valid(hnd_) && graph_->is_deleted(hnd_)) ++hnd_.idx_;
 			}
 
-			/// get the edge the iterator refers to
+			/**
+			 * \brief Get the edge the iterator refers to.
+			 * \return The edge.
+			 */
 			Edge operator*()  const { return  hnd_; }
 
-			/// are two iterators equal?
+			/**
+			 * \brief Equality operator.
+			 * \param rhs The other iterator to compare with.
+			 * \return True if the iterators are equal, false otherwise.
+			 */
 			bool operator==(const EdgeIterator& rhs) const
 			{
 				return (hnd_ == rhs.hnd_);
 			}
 
-			/// are two iterators different?
+			/**
+			 * \brief Inequality operator.
+			 * \param rhs The other iterator to compare with.
+			 * \return True if the iterators are different, false otherwise.
+			 */
 			bool operator!=(const EdgeIterator& rhs) const
 			{
 				return !operator==(rhs);
 			}
 
-			/// pre-increment iterator
+			/**
+			 * \brief Pre-increment iterator.
+			 * \return A reference to the incremented iterator.
+			 */
 			EdgeIterator& operator++()
 			{
 				++hnd_.idx_;
@@ -300,7 +406,10 @@ namespace easy3d {
 				return *this;
 			}
 
-			/// pre-decrement iterator
+			/**
+			 * \brief Pre-decrement iterator.
+			 * \return A reference to the decremented iterator.
+			 */
 			EdgeIterator& operator--()
 			{
 				--hnd_.idx_;
@@ -317,12 +426,18 @@ namespace easy3d {
 
 	public: //-------------------------- containers for C++11 range-based for loops
 
-		/// this helper class is a container for iterating through all
-		/// vertices using C++11 range-based for-loops.
-		/// \sa vertices()
+		/**
+		 * \brief This helper class is a container for iterating through all vertices using C++11 range-based for-loops.
+		 * \sa vertices()
+		 */
 		class VertexContainer
 		{
 		public:
+			/**
+			 * \brief Constructor with begin and end iterators.
+			 * \param _begin The begin iterator.
+			 * \param _end The end iterator.
+			 */
 			VertexContainer(VertexIterator _begin, VertexIterator _end) : begin_(_begin), end_(_end) {}
 			VertexIterator begin() const { return begin_; }
 			VertexIterator end()   const { return end_; }
@@ -330,12 +445,18 @@ namespace easy3d {
 			VertexIterator begin_, end_;
 		};
 
-		/// this helper class is a container for iterating through all
-		/// edges using C++11 range-based for-loops.
-		/// \sa edges()
+		/**
+		 * \brief This helper class is a container for iterating through all edges using C++11 range-based for-loops.
+		 * \sa edges()
+		 */
 		class EdgeContainer
 		{
 		public:
+			/**
+			 * \brief Constructor with begin and end iterators.
+			 * \param _begin The begin iterator.
+			 * \param _end The end iterator.
+			 */
 			EdgeContainer(EdgeIterator _begin, EdgeIterator _end) : begin_(_begin), end_(_end) {}
 			EdgeIterator begin() const { return begin_; }
 			EdgeIterator end()   const { return end_; }
@@ -346,15 +467,19 @@ namespace easy3d {
 
 	public: //---------------------------------------------------- circulator types
 
-
-	    /// this class circulates through all edges connected with a vertex.
-	    /// it also acts as a container-concept for C++11 range-based for loops.
-	    /// \sa VertexAroundVertexCirculator, edges(Vertex)
+		/**
+		 * \brief This class circulates through all edges connected with a vertex.
+		 * It also acts as a container-concept for C++11 range-based for loops.
+		 * \sa VertexAroundVertexCirculator, edges(Vertex)
+		 */
 	    class EdgeAroundVertexCirculator
 	    {
 	    public:
-
-	        /// default constructor
+	    	/**
+			 * \brief Default constructor.
+			 * \param g The graph.
+			 * \param v The vertex.
+			 */
             explicit EdgeAroundVertexCirculator(const Graph* g, Vertex v=Vertex())
 				: graph_(g), vertex_(v), finished_(false)
 	        {
@@ -362,19 +487,30 @@ namespace easy3d {
 				end_ = graph_->vconn_[vertex_].edges_.end();
 	        }
 
-	        /// are two circulators equal?
+	    	/**
+			 * \brief Equality operator.
+			 * \param rhs The other circulator to compare with.
+			 * \return True if the circulators are equal, false otherwise.
+			 */
 	        bool operator==(const EdgeAroundVertexCirculator& rhs) const {
 	            assert(graph_);
 				return ((graph_ == rhs.graph_) && (vertex_ == rhs.vertex_) && (iterator_ == rhs.iterator_))
 					|| (finished_);	// to behave like a circulator
 	        }
 
-	        /// are two circulators different?
+	    	/**
+			 * \brief Inequality operator.
+			 * \param rhs The other circulator to compare with.
+			 * \return True if the circulators are different, false otherwise.
+			 */
 	        bool operator!=(const EdgeAroundVertexCirculator& rhs) const {
 	            return !operator==(rhs);
 	        }
 
-	        /// pre-increment
+	    	/**
+			 * \brief Pre-increment circulator.
+			 * \return A reference to the incremented circulator.
+			 */
 	        EdgeAroundVertexCirculator& operator++() {
 	            assert(graph_);
 	            ++iterator_;
@@ -385,7 +521,10 @@ namespace easy3d {
 				return *this;
 	        }
 
-	        /// pre-decrement
+	    	/**
+			 * \brief Pre-decrement circulator.
+			 * \return A reference to the decremented circulator.
+			 */
 	        EdgeAroundVertexCirculator& operator--()
 	        {
 	            assert(graph_);
@@ -393,22 +532,31 @@ namespace easy3d {
 	            return *this;
 	        }
 
-	        /// get the edge the circulator refers to
+	    	/**
+			 * \brief Get the edge the circulator refers to.
+			 * \return The edge.
+			 */
 	        Edge operator*() const { 
 				assert(graph_);
 				if (iterator_ != end_)	return *iterator_;
 				else					return Edge();
 			}
 
-	        /// cast to bool: true if vertex is not isolated
+	    	/**
+			 * \brief Cast to bool: true if vertex is not isolated.
+			 * \return True if vertex is not isolated, false otherwise.
+			 */
 			operator bool() const { return !graph_->vconn_[vertex_].edges_.empty(); }
 
-			/// return current vertex
+	    	/**
+			 * \brief Return current vertex.
+			 * \return The vertex.
+			 */
 			Vertex vertex() const { return vertex_; }
 
-			// helper for C++11 range-based for-loops
+			/// Helper for C++11 range-based for-loops
 			EdgeAroundVertexCirculator& begin() { iterator_ = graph_->vconn_[vertex_].edges_.begin(); return *this; }
-			// helper for C++11 range-based for-loops
+			/// Helper for C++11 range-based for-loops
 			EdgeAroundVertexCirculator& end() { iterator_ = end_; return *this; }
 
 	    private:
@@ -421,10 +569,11 @@ namespace easy3d {
 	    };
 
 
-
-		/// this class circulates through all one-ring neighbors of a vertex.
-		/// it also acts as a container-concept for C++11 range-based for loops.
-		/// \sa EdgeAroundVertexCirculator, vertices(Vertex)
+		/**
+		 * \brief This class circulates through all one-ring neighbors of a vertex.
+		 * It also acts as a container-concept for C++11 range-based for loops.
+		 * \sa EdgeAroundVertexCirculator, vertices(Vertex)
+		 */
 		class VertexAroundVertexCirculator
 		{
 		public:
@@ -437,19 +586,30 @@ namespace easy3d {
 				end_ = graph_->vconn_[vertex_].edges_.end();
 			}
 
-			/// are two circulators equal?
+			/**
+			 * \brief Equality operator.
+			 * \param rhs The other circulator to compare with.
+			 * \return True if the circulators are equal, false otherwise.
+			 */
 			bool operator==(const VertexAroundVertexCirculator& rhs) const {
 				assert(graph_);
 				return ((graph_ == rhs.graph_) && (vertex_ == rhs.vertex_) && (iterator_ == rhs.iterator_))
 					|| (finished_);	// to behave like a circulator
 			}
 
-			/// are two circulators different?
+			/**
+			 * \brief Inequality operator.
+			 * \param rhs The other circulator to compare with.
+			 * \return True if the circulators are different, false otherwise.
+			 */
 			bool operator!=(const VertexAroundVertexCirculator& rhs) const {
 				return !operator==(rhs);
 			}
 
-			/// pre-increment
+			/**
+			 * \brief Pre-increment circulator.
+			 * \return A reference to the incremented circulator.
+			 */
 			VertexAroundVertexCirculator& operator++() {
 				assert(graph_);
 				++iterator_;
@@ -460,7 +620,10 @@ namespace easy3d {
 				return *this;
 			}
 
-			/// pre-decrement
+			/**
+			 * \brief Pre-decrement circulator.
+			 * \return A reference to the decremented circulator.
+			 */
 			VertexAroundVertexCirculator& operator--()
 			{
 				assert(graph_);
@@ -468,7 +631,10 @@ namespace easy3d {
 				return *this;
 			}
 
-			/// get the vertex the circulator refers to
+			/**
+			 * \brief Get the vertex the circulator refers to.
+			 * \return The vertex.
+			 */
 			Vertex operator*() const {
 				assert(graph_);
 				if (iterator_ != end_) {
@@ -479,18 +645,24 @@ namespace easy3d {
 				return Vertex();
 			}
 
-	        /// cast to bool: true if vertex is not isolated
+			/**
+			 * \brief Cast to bool: true if vertex is not isolated.
+			 * \return True if vertex is not isolated, false otherwise.
+			 */
 	        operator bool() const { return !graph_->vconn_[vertex_].edges_.empty(); }
 
-	        /// return current vertex
+			/**
+			 * \brief Return current vertex.
+			 * \return The vertex.
+			 */
 	        Vertex vertex() const { return vertex_; }
 
-			// helper for C++11 range-based for-loops
+			/// Helper for C++11 range-based for-loops
 			VertexAroundVertexCirculator& begin() {
 				iterator_ = graph_->vconn_[vertex_].edges_.begin();
 				return *this;
 			}
-			// helper for C++11 range-based for-loops
+			/// Helper for C++11 range-based for-loops
 			VertexAroundVertexCirculator& end() {
 				iterator_ = end_;
 				return *this;
@@ -518,13 +690,24 @@ namespace easy3d {
 		/// destructor
 		~Graph() override = default;
 
-		/// copy constructor: copies \c rhs to \c *this. performs a deep copy of all properties.
+		/**
+		 * \brief Copy constructor: copies \c rhs to \c *this. Performs a deep copy of all properties.
+		 * \param rhs The graph to copy from.
+		 */
 		Graph(const Graph& rhs) { operator=(rhs); }
 
-		/// assign \c rhs to \c *this. performs a deep copy of all properties.
+		/**
+		 * \brief Assign \c rhs to \c *this. Performs a deep copy of all properties.
+		 * \param rhs The graph to assign from.
+		 * \return A reference to this graph.
+		 */
 		Graph& operator=(const Graph& rhs);
 
-		/// assign \c rhs to \c *this. does not copy custom properties.
+		/**
+		 * \brief Assign \c rhs to \c *this. Does not copy custom properties.
+		 * \param rhs The graph to assign from.
+		 * \return A reference to this graph.
+		 */
 		Graph& assign(const Graph& rhs);
 
 		//@}
@@ -534,10 +717,19 @@ namespace easy3d {
 		/// \name Add new elements by hand
 		//@{
 
-		/// add a new vertex with position \c p
+		/**
+		 * \brief Add a new vertex with position \c p.
+		 * \param p The position of the vertex.
+		 * \return The added vertex.
+		 */
 		Vertex add_vertex(const vec3& p);
 
-		/// add a new edge connecting vertices \c v1 and \c v2
+		/**
+		 * \brief Add a new edge connecting vertices \c v1 and \c v2.
+		 * \param v1 The first vertex.
+		 * \param v2 The second vertex.
+		 * \return The added edge.
+		 */
 		Edge add_edge(const Vertex& v1, const Vertex& v2);
 		//@}
 
@@ -546,59 +738,91 @@ namespace easy3d {
 		/// \name Memory Management
 		//@{
 
-		/// returns number of (deleted and valid) vertices in the graph
-		unsigned int vertices_size() const { return (unsigned int)vprops_.size(); }
-		/// returns number of (deleted and valid)edges in the graph
-		unsigned int edges_size() const { return (unsigned int)eprops_.size(); }
+		/**
+		 * \brief Returns number of (deleted and valid) vertices in the graph.
+		 * \return The number of vertices.
+		 */
+		unsigned int vertices_size() const { return static_cast<unsigned int>(vprops_.size()); }
+		/**
+		 * \brief Returns number of (deleted and valid) edges in the graph.
+		 * \return The number of edges.
+		 */
+		unsigned int edges_size() const { return static_cast<unsigned int>(eprops_.size()); }
 
-		/// returns number of vertices in the graph
+		/**
+		 * \brief Returns number of vertices in the graph.
+		 * \return The number of vertices.
+		 */
 		unsigned int n_vertices() const { return vertices_size() - deleted_vertices_; }
-		/// returns number of edges in the graph
+		/**
+		 * \brief Returns number of edges in the graph.
+		 * \return The number of edges.
+		 */
 		unsigned int n_edges() const { return edges_size() - deleted_edges_; }
 
-        /// \brief Removes all vertices, edges, and properties (and resets garbage state).
-        /// \details After calling this method, the graph is the same as newly constructed.
+		/**
+		 * \brief Removes all vertices, edges, and properties, and resets the garbage state.
+		 * \details After calling this method, the graph is the same as newly constructed.
+		 */
 		void clear();
-
-		/// reserve memory (mainly used in file readers)
+		/**
+		 * \brief Reserves memory for vertices and edges (mainly used in file readers)
+		 * \param nvertices The number of vertices to reserve.
+		 * \param nedges The number of edges to reserve.
+		 */
 		void reserve(unsigned int nvertices, unsigned int nedges);
-
-		/// Resize space for vertices, edges, and their currently associated properties.
-		/// Note: ne is the number of edges.
+		/**
+		 * \brief Resizes the space for vertices, edges, and their currently associated properties.
+		 * \param nv The number of vertices.
+		 * \param ne The number of edges.
+		 */
 		void resize(unsigned int nv, unsigned int ne) {
 			vprops_.resize(nv);
 			eprops_.resize(ne);
 		}
 
-        /// are there deleted vertices or edges?
+		/**
+		 * \brief Checks if there are deleted vertices or edges.
+		 * \return True if there are deleted vertices or edges, false otherwise.
+		 */
         bool has_garbage() const { return garbage_; }
-
-		/// remove deleted vertices/edges
+		/**
+		 * \brief Removes deleted vertices and edges.
+		 */
 		void collect_garbage();
 
+		/**
+		 * \brief Checks if a vertex is deleted.
+		 * \param v The vertex to check.
+		 * \return True if the vertex is deleted, false otherwise.
+		 * \sa collect_garbage()
+		 */
+		bool is_deleted(Vertex v) const { return vdeleted_[v]; }
+		/**
+		 * \brief Checks if an edge is deleted.
+		 * \param e The edge to check.
+		 * \return True if the edge is deleted, false otherwise.
+		 * \sa collect_garbage()
+		 */
+		bool is_deleted(Edge e) const { return edeleted_[e]; }
 
-		/// returns whether vertex \c v is deleted
-		/// \sa collect_garbage()
-		bool is_deleted(Vertex v) const
-		{
-			return vdeleted_[v];
-		}
-		/// returns whether edge \c e is deleted
-		/// \sa collect_garbage()
-		bool is_deleted(Edge e) const
-		{
-			return edeleted_[e];
-		}
-
-		/// return whether vertex \c v is valid, i.e. the index is stores it within the array bounds.
+		/**
+		 * \brief Checks if a vertex is valid, i.e. the index is within the array bounds.
+		 * \param v The vertex to check.
+		 * \return True if the vertex is valid, false otherwise.
+		 */
 		bool is_valid(Vertex v) const
 		{
-			return (0 <= v.idx()) && (v.idx() < (int)vertices_size());
+			return (0 <= v.idx()) && (v.idx() < static_cast<int>(vertices_size()));
 		}
-		/// return whether edge \c e is valid, i.e. the index is stores it within the array bounds.
+		/**
+		 * \brief Checks if an edge is valid, i.e. the index is within the array bounds.
+		 * \param e The edge to check.
+		 * \return True if the edge is valid, false otherwise.
+		 */
 		bool is_valid(Edge e) const
 		{
-			return (0 <= e.idx()) && (e.idx() < (int)edges_size());
+			return (0 <= e.idx()) && (e.idx() < static_cast<int>(edges_size()));
 		}
 		//@}
 
@@ -608,13 +832,22 @@ namespace easy3d {
 		/// \name Low-level connectivity
 		//@{
 
-		/// returns whether \c v is isolated, i.e., not incident to any edge
+		/**
+		 * \brief Checks if a vertex is isolated (not incident to any edge).
+		 * \param v The vertex to check.
+		 * \return True if the vertex is isolated, false otherwise.
+		 */
 		bool is_isolated(Vertex v) const
 		{
 			return vconn_[v].edges_.empty();
 		}
 
-		/// returns the \c i'th vertex of edge \c e. \c i has to be 0 or 1.
+		/**
+		 * \brief Returns the i-th vertex of an edge.
+		 * \param e The edge.
+		 * \param i The index (0 or 1).
+		 * \return The i-th vertex of the edge.
+		 */
 		Vertex vertex(Edge e, unsigned int i) const
 		{
 			assert(i<=1);
@@ -624,10 +857,15 @@ namespace easy3d {
                 return econn_[e].target_;
 		}
 
-        /// returns the starting vertex of an edge, which is equal to vertex(e, 0).
+		/**
+		 * \brief Returns the starting vertex of an edge, which is equal to vertex(e, 0).
+		 * \param e The edge.
+		 */
         Vertex source(Edge e) const { return econn_[e].source_; }
-
-        /// returns the ending vertex of an edge, which is equal to vertex(e, 1).
+		/**
+		 * \brief Returns the ending vertex of an edge, which is equal to vertex(e, 1).
+		 * \param e The edge.
+		 */
         Vertex target(Edge e) const { return econn_[e].target_; }
 		//@}
 
@@ -636,64 +874,107 @@ namespace easy3d {
 		/// \name Property handling
 		//@{
 
-		/** add a vertex property of type \c T with name \c name and default value \c t.
-		 fails if a property named \c name exists already, since the name has to be unique.
-		 in this case it returns an invalid property */
+		/**
+		 * \brief Adds a vertex property.
+		 * \tparam T The type of the property.
+		 * \param name The name of the property.
+		 * \param t The default value of the property.
+		 * \return The added vertex property. The operation fails if a property with the same name already exists,
+		 *		since the name has to be unique. In this case, it returns an invalid property.
+		 */
 		template <class T> VertexProperty<T> add_vertex_property(const std::string& name, const T t = T())
 		{
 			return VertexProperty<T>(vprops_.add<T>(name, t));
 		}
-		/** add a edge property of type \c T with name \c name and default value \c t.
-		 fails if a property named \c name exists already, since the name has to be unique.
-		 in this case it returns an invalid property */
+		/**
+		 * \brief Adds an edge property.
+		 * \tparam T The type of the property.
+		 * \param name The name of the property.
+		 * \param t The default value of the property.
+		 * \return The added edge property. The operation fails if a property with the same name already exists,
+		 *		since the name has to be unique. In this case, it returns an invalid property.
+		 */
 		template <class T> EdgeProperty<T> add_edge_property(const std::string& name, const T t = T())
 		{
 			return EdgeProperty<T>(eprops_.add<T>(name, t));
 		}
-		/** add a model property of type \c T with name \c name and default value \c t.
-		 fails if a property named \c name exists already, since the name has to be unique.
-		 in this case it returns an invalid property */
+		/**
+		 * \brief Adds a model property.
+		 * \tparam T The type of the property.
+		 * \param name The name of the property.
+		 * \param t The default value of the property.
+		 * \return The added model property. The operation fails if a property with the same name already exists,
+		 *		since the name has to be unique. In this case, it returns an invalid property.
+		 */
 		template <class T> ModelProperty<T> add_model_property(const std::string& name, const T t = T())
 		{
 			return ModelProperty<T>(mprops_.add<T>(name, t));
 		}
 
-
-		/** get the vertex property named \c name of type \c T. returns an invalid
-		 VertexProperty if the property does not exist or if the type does not match. */
+		/**
+		 * \brief Gets the vertex property of the specified type and name.
+		 * \tparam T The type of the property.
+		 * \param name The name of the property.
+		 * \return The vertex property. If the property does not exist or the type does not match, it returns an
+		 *		invalid property.
+		 */
 		template <class T> VertexProperty<T> get_vertex_property(const std::string& name) const
 		{
 			return VertexProperty<T>(vprops_.get<T>(name));
 		}
-		/** get the edge property named \c name of type \c T. returns an invalid
-		 VertexProperty if the property does not exist or if the type does not match. */
+		/**
+		 * \brief Gets the edge property of the specified type and name.
+		 * \tparam T The type of the property.
+		 * \param name The name of the property.
+		 * \return The edge property. If the property does not exist or the type does not match, it returns an
+		 *		invalid property.
+		 */
 		template <class T> EdgeProperty<T> get_edge_property(const std::string& name) const
 		{
 			return EdgeProperty<T>(eprops_.get<T>(name));
 		}
-		/** get the model property named \c name of type \c T. returns an invalid
-		 ModelProperty if the property does not exist or if the type does not match. */
+		/**
+		 * \brief Gets the model property of the specified type and name.
+		 * \tparam T The type of the property.
+		 * \param name The name of the property.
+		 * \return The model property. If the property does not exist or the type does not match, it returns an
+		 *		invalid property.
+		 */
 		template <class T> ModelProperty<T> get_model_property(const std::string& name) const
 		{
 			return ModelProperty<T>(mprops_.get<T>(name));
 		}
 
-
-		/** if a vertex property of type \c T with name \c name exists, it is returned.
-		 otherwise this property is added (with default value \c t) */
+		/**
+		 * \brief Gets or adds a vertex property.
+		 * \tparam T The type of the property.
+		 * \param name The name of the property.
+		 * \param t The default value of the property.
+		 * \return The vertex property.
+		 */
 		template <class T> VertexProperty<T> vertex_property(const std::string& name, const T t = T())
 		{
 			return VertexProperty<T>(vprops_.get_or_add<T>(name, t));
 		}
-		/** if an edge property of type \c T with name \c name exists, it is returned.
-		 otherwise this property is added (with default value \c t) */
+		/**
+		 * \brief Gets or adds an edge property.
+		 * \tparam T The type of the property.
+		 * \param name The name of the property.
+		 * \param t The default value of the property.
+		 * \return The edge property.
+		 */
 		template <class T> EdgeProperty<T> edge_property(const std::string& name, const T t = T())
 		{
 			return EdgeProperty<T>(eprops_.get_or_add<T>(name, t));
 		}
 
-		/** if a model property of type \c T with name \c name exists, it is returned.
-		otherwise this property is added (with default value \c t) */
+		/**
+		 * \brief Gets or adds a model property.
+		 * \tparam T The type of the property.
+		 * \param name The name of the property.
+		 * \param t The default value of the property.
+		 * \return The model property.
+		 */
 		template <class T> ModelProperty<T> model_property(const std::string& name, const T t = T())
 		{
 			return ModelProperty<T>(mprops_.get_or_add<T>(name, t));
@@ -735,43 +1016,58 @@ namespace easy3d {
             return mprops_.rename(old_name, new_name);
         }
 
-		/** get the type_info \c T of vertex property \p name. returns an typeid(void)
-		 if the property does not exist or if the type does not match. */
+		/**
+		 * \brief Gets the type information of a vertex property.
+		 * \param name The name of the property.
+		 * \return The type information of the property. Returns a typeid(void) if the property does not exist or
+		 *		if the type does not match.
+		 */
 		const std::type_info& get_vertex_property_type(const std::string& name) const
 		{
 			return vprops_.get_type(name);
 		}
-		/** get the type_info \c T of edge property \p name. returns an typeid(void)
-		 if the property does not exist or if the type does not match. */
+		/**
+		 * \brief Gets the type information of an edge property.
+		 * \param name The name of the property.
+		 * \return The type information of the property. Returns a typeid(void) if the property does not exist or
+		 *		if the type does not match.
+		 */
 		const std::type_info& get_edge_property_type(const std::string& name) const
 		{
 			return eprops_.get_type(name);
 		}
-		/** get the type_info \c T of model property \p name. returns an typeid(void)
-		 if the property does not exist or if the type does not match. */
+		/**
+		 * \brief Gets the type information of a model property.
+		 * \param name The name of the property.
+		 * \return The type information of the property. Returns a typeid(void) if the property does not exist or
+		 *		if the type does not match.
+		 */
 		const std::type_info& get_model_property_type(const std::string& name) const
 		{
 			return mprops_.get_type(name);
 		}
 
 
-		/// returns the names of all vertex properties
+		/// Returns the names of all vertex properties
 		std::vector<std::string> vertex_properties() const
 		{
 			return vprops_.properties();
 		}
-		/// returns the names of all edge properties
+		/// Returns the names of all edge properties
 		std::vector<std::string> edge_properties() const
 		{
 			return eprops_.properties();
 		}
-		/// returns the names of all model properties
+		/// Returns the names of all model properties
 		std::vector<std::string> model_properties() const
 		{
 			return mprops_.properties();
 		}
 
-		/// prints the names of all properties to an output stream (e.g., std::cout)
+		/**
+		 * \brief Prints the names of all properties to an output stream.
+		 * \param output The output stream.
+		 */
 		void property_stats(std::ostream& output) const override;
 
 		//@}
@@ -782,49 +1078,75 @@ namespace easy3d {
 		/// \name Iterators & Circulators
 		//@{
 
-		/// returns start iterator for vertices
+		/**
+		 * \brief Returns the start iterator for vertices.
+		 * \return The start iterator for vertices.
+		 */
 		VertexIterator vertices_begin() const
 		{
 			return VertexIterator(Vertex(0), this);
 		}
 
-		/// returns end iterator for vertices
+		/**
+		 * \brief Returns the end iterator for vertices.
+		 * \return The end iterator for vertices.
+		 */
 		VertexIterator vertices_end() const
 		{
 			return VertexIterator(Vertex(static_cast<int>(vertices_size())), this);
 		}
 
-		/// returns vertex container for C++11 range-based for-loops
+		/**
+		 * \brief Returns the vertex container for range-based for-loops.
+		 * \return The vertex container.
+		 */
 		VertexContainer vertices() const
 		{
 			return VertexContainer(vertices_begin(), vertices_end());
 		}
 
-		/// returns start iterator for edges
+		/**
+		 * \brief Returns the start iterator for edges.
+		 * \return The start iterator for edges.
+		 */
 		EdgeIterator edges_begin() const
 		{
 			return EdgeIterator(Edge(0), this);
 		}
 
-		/// returns end iterator for edges
+		/**
+		 * \brief Returns the end iterator for edges.
+		 * \return The end iterator for edges.
+		 */
 		EdgeIterator edges_end() const
 		{
 			return EdgeIterator(Edge(static_cast<int>(edges_size())), this);
 		}
 
-		/// returns edge container for C++11 range-based for-loops
+		/**
+		 * \brief Returns the edge container for range-based for-loops.
+		 * \return The edge container.
+		 */
 		EdgeContainer edges() const
 		{
 			return EdgeContainer(edges_begin(), edges_end());
 		}
 
-		/// returns circulator for vertices around vertex \c v
+		/**
+		 * \brief Returns the circulator for vertices around a vertex.
+		 * \param v The vertex.
+		 * \return The circulator for vertices around the vertex.
+		 */
 		VertexAroundVertexCirculator vertices(Vertex v) const
 		{
 			return VertexAroundVertexCirculator(this, v);
 		}
 
-		/// returns circulator for edges around vertex \c v
+		/**
+		 * \brief Returns the circulator for edges around a vertex.
+		 * \param v The vertex.
+		 * \return The circulator for edges around the vertex.
+		 */
 		EdgeAroundVertexCirculator edges(Vertex v) const
 		{
 		    return EdgeAroundVertexCirculator(this, v);
@@ -837,18 +1159,31 @@ namespace easy3d {
 		/// \name Higher-level Topological Operations
 		//@{
 
-
-		/** returns the valence (number of incident edges or neighboring vertices)
-		 of vertex \c v. */
+		/**
+		 * \brief Returns the valence (number of incident edges or neighboring vertices) of a vertex.
+		 * \param v The vertex.
+		 * \return The valence of the vertex.
+		 */
 		unsigned int valence(Vertex v) const;
 
-		/// find the edge (a,b)
+		/**
+		 * \brief Finds the edge connecting two vertices.
+		 * \param a The first vertex.
+		 * \param b The second vertex.
+		 * \return The edge connecting the vertices.
+		 */
 		Edge find_edge(Vertex a, Vertex b) const;
 
-		/// deletes the vertex \c v from the graph
+		/**
+		 * \brief Deletes a vertex from the graph.
+		 * \param v The vertex to delete.
+		 */
 		void delete_vertex(Vertex v);
 
-		/// deletes the edge \c e from the graph
+		/**
+		 * \brief Deletes an edge from the graph.
+		 * \param e The edge to delete.
+		 */
 		void delete_edge(Edge e);
 		//@}
 
@@ -858,19 +1193,37 @@ namespace easy3d {
 		/// \name Geometry-related Functions
 		//@{
 
-		/// position of a vertex (read only)
+		/**
+		 * \brief Returns the position of a vertex (read-only).
+		 * \param v The vertex.
+		 * \return The position of the vertex.
+		 */
 		const vec3& position(Vertex v) const { return vpoint_[v]; }
 
-		/// position of a vertex
+		/**
+		 * \brief Returns the position of a vertex.
+		 * \param v The vertex.
+		 * \return The position of the vertex.
+		 */
 		vec3& position(Vertex v) { return vpoint_[v]; }
 
-		/// vector of vertex positions (read only)
+		/**
+		 * \brief Returns the vector of vertex positions (read-only).
+		 * \return The vector of vertex positions.
+		 */
 		const std::vector<vec3>& points() const override { return vpoint_.vector(); }
 
-		/// vector of vertex positions
+		/**
+		 * \brief Returns the vector of vertex positions.
+		 * \return The vector of vertex positions.
+		 */
 		std::vector<vec3>& points() override { return vpoint_.vector(); }
 
-		/// compute the length of edge \c e.
+		/**
+		 * \brief Computes the length of an edge.
+		 * \param e The edge.
+		 * \return The length of the edge.
+		 */
 		float edge_length(Edge e) const;
 
 		//@}
@@ -916,15 +1269,21 @@ namespace easy3d {
 	//------------------------------------------------------------ output operators
 
 
-    /** Output stream support for Graph::Vertex. */
-	inline std::ostream& operator<<(std::ostream& os, Graph::Vertex v)
-	{
+    /**
+     * \brief Output stream support for Graph::Vertex.
+     * \param os The output stream.
+     * \param v The vertex.
+     */
+	inline std::ostream& operator<<(std::ostream& os, Graph::Vertex v) {
 		return (os << 'v' << v.idx());
 	}
 
-    /** Output stream support for Graph::Edge. */
-	inline std::ostream& operator<<(std::ostream& os, Graph::Edge e)
-	{
+    /**
+     * \brief Output stream support for Graph::Edge.
+     * \param os The output stream.
+     * \param e The edge.
+     */
+	inline std::ostream& operator<<(std::ostream& os, Graph::Edge e) {
 		return (os << 'e' << e.idx());
 	}
 
