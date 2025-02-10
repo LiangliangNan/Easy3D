@@ -108,8 +108,9 @@ namespace easy3d {
 				return idx_ < _rhs.idx_;
 			}
 
-            /// helper structure to be able to use std::unordered_map
+            /// Helper structure to be able to use std::unordered_map
             struct Hash {
+				/// Hash function, which is simply the index.
                 std::size_t operator()(const BaseHandle& h) const { return h.idx(); }
             };
 
@@ -130,6 +131,11 @@ namespace easy3d {
 			 * \param _idx The index of the vertex.
 			 */
 			explicit Vertex(int _idx = -1) : BaseHandle(_idx) {}
+			/**
+			 * \brief Output operator.
+			 * \param os The output stream.
+			 * \return The output stream.
+			 */
 			std::ostream& operator<<(std::ostream& os) const { return os << 'v' << idx(); }
 		};
 
@@ -180,9 +186,12 @@ namespace easy3d {
 		template <class T> class VertexProperty : public Property<T>
 		{
 		public:
-
-			/// default constructor
+			/// Default constructor
 			explicit VertexProperty() = default;
+			/**
+			 * \brief Constructor with a property.
+			 * \param p The property.
+			 */
 			explicit VertexProperty(Property<T> p) : Property<T>(p) {}
 
 			/**
@@ -215,9 +224,12 @@ namespace easy3d {
 		template <class T> class EdgeProperty : public Property<T>
 		{
 		public:
-
-			/// default constructor
+			/// Default constructor
 			explicit EdgeProperty() = default;
+			/**
+			 * \brief Constructor with a property.
+			 * \param p The property.
+			 */
 			explicit EdgeProperty(Property<T> p) : Property<T>(p) {}
 
 			/**
@@ -249,9 +261,12 @@ namespace easy3d {
 		template <class T> class ModelProperty : public Property<T>
 		{
 		public:
-
-			/// default constructor
+			/// Default constructor
 			explicit ModelProperty() = default;
+			/**
+			 * \brief Constructor with a property.
+			 * \param p The property.
+			 */
 			explicit ModelProperty(Property<T> p) : Property<T>(p) {}
 
 			/**
@@ -439,7 +454,9 @@ namespace easy3d {
 			 * \param _end The end iterator.
 			 */
 			VertexContainer(VertexIterator _begin, VertexIterator _end) : begin_(_begin), end_(_end) {}
+			/// Returns the begin iterator.
 			VertexIterator begin() const { return begin_; }
+			/// Returns the end iterator.
 			VertexIterator end()   const { return end_; }
 		private:
 			VertexIterator begin_, end_;
@@ -458,7 +475,9 @@ namespace easy3d {
 			 * \param _end The end iterator.
 			 */
 			EdgeContainer(EdgeIterator _begin, EdgeIterator _end) : begin_(_begin), end_(_end) {}
+			/// Returns the begin iterator.
 			EdgeIterator begin() const { return begin_; }
+			/// Returns the end iterator.
 			EdgeIterator end()   const { return end_; }
 		private:
 			EdgeIterator begin_, end_;
