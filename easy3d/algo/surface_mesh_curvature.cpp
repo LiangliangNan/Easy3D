@@ -126,7 +126,7 @@ namespace easy3d {
         auto evec = mesh_->add_edge_property<dvec3>("curv:evec", dvec3(0, 0, 0));
         auto angle = mesh_->add_edge_property<double>("curv:angle", 0.0);
 
-        dvec3 p0, p1, n0, n1, ev;
+        dvec3 n0, n1, ev;
         double l, A, beta, a1, a2, a3;
         dmat3 tensor;
 
@@ -204,16 +204,9 @@ namespace easy3d {
                 if (A != 0)     // avoid overflow in case of 0-area
                     tensor /= A;
 
-                // Liangliang: eigen solver requires FT** as input matrix :-(
-                double **matrix = new double *[3];
-                for (int i = 0; i < 3; ++i) {
-                    matrix[i] = new double[3];
-                    for (int j = 0; j < 3; ++j)
-                        matrix[i][j] = tensor(i, j);
-                }
                 // Eigen-decomposition
-                EigenSolver<double> solver(3);
-                solver.solve(matrix, EigenSolver<double>::DECREASING);
+                EigenSolver<dmat3, double> solver(3);
+                solver.solve(tensor, EigenSolver<dmat3, double>::DECREASING);
                 eval1 = solver.eigen_value(0);
                 eval2 = solver.eigen_value(1);
                 eval3 = solver.eigen_value(2);
@@ -222,9 +215,6 @@ namespace easy3d {
                     evec2[i] = solver.eigen_vector(i, 1);
                     evec3[i] = solver.eigen_vector(i, 2);
                 }
-                for (int i = 0; i < 3; ++i)
-                    delete[] matrix[i];
-                delete[] matrix;
 
                 // curvature values:
                 //   normal vector -> eval with the smallest absolute value

@@ -32,22 +32,33 @@ namespace easy3d {
 
     class PointCloud;
 
-    /// \brief Estimate point cloud normals. It also allows to reorient the point cloud normals based on a minimum
-    /// spanning tree algorithm.
-    /// \class PointCloudNormals easy3d/algo/point_cloud_normals.h
+    /**
+     * \brief Estimates and reorients point cloud normals.
+     * \details This class provides methods to estimate the normals of a point cloud using Principal Component Analysis (PCA)
+     *          and to reorient the normals based on a minimum spanning tree algorithm.
+     * \class PointCloudNormals easy3d/algo/point_cloud_normals.h
+     */
     class PointCloudNormals {
     public:
-        /// \brief Estimates the point cloud normals using PCA.
-        /// \param cloud The input point cloud.
-        /// @param k: the number of neighboring points to construct the covariance matrix.
-        /// @param compute_curvature: also computes the curvature?
+        /**
+         * \brief Estimates the point cloud normals using PCA.
+         * \details This method estimates the normals of the input point cloud by constructing a covariance matrix
+         *          from the neighboring points and computing its eigenvectors.
+         * \param cloud The input point cloud.
+         * \param k The number of neighboring points to construct the covariance matrix.
+         * \param compute_curvature Whether to also compute the curvature.
+         * \return True if the estimation is successful, false otherwise.
+         */
         static bool estimate(PointCloud *cloud, unsigned int k = 16, bool compute_curvature = false);
 
-        /// \brief Reorients the point cloud normals.
-        /// This method implements the normal reorientation method described in
-        ///     Hoppe et al. Surface reconstruction from unorganized points. SIGGRAPH 1992.
-        /// \param cloud The input point cloud.
-        /// @param k: the number of neighboring points to construct the graph.
+        /**
+         * \brief Reorients the point cloud normals.
+         * \details This method reorients the normals of the input point cloud using the normal reorientation method
+         *          described in Hoppe et al. Surface reconstruction from unorganized points. SIGGRAPH 1992.
+         * \param cloud The input point cloud.
+         * \param k The number of neighboring points to construct the graph.
+         * \return True if the reorientation is successful, false otherwise.
+         */
         static bool reorient(PointCloud *cloud, unsigned int k = 16);
     };
 
