@@ -30,10 +30,8 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_111_Graph_IO
+ * \example{lineno} Tutorial_111_Graph_IO/main.cpp
  * This example shows how to load a graph from a file and save a graph into a file.
- *
- * \include{lineno} Tutorial_111_Graph_IO/main.cpp
  */
 
 

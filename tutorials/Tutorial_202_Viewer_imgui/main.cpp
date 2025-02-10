@@ -31,16 +31,15 @@
 #include "viewer.h"
 
 /**
- * \example Tutorial_202_Viewer_imgui
+ * \example{lineno} Tutorial_202_Viewer_imgui/main.cpp
  * This example shows how to enhance the default Easy3D viewer with menus using ImGui.
  *
- * The source file containing the main() function:
- * \include{lineno} Tutorial_202_Viewer_imgui/main.cpp
  * The header file of the viewer class:
  * \include{lineno} Tutorial_202_Viewer_imgui/viewer.h
- * The source file of viewer class class:
+ * The source file of viewer class:
  * \include{lineno} Tutorial_202_Viewer_imgui/viewer.cpp
  */
+
 
 using namespace easy3d;
 

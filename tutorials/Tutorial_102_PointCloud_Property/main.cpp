@@ -29,10 +29,8 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_102_PointCloud_Property
+ * \example{lineno} Tutorial_102_PointCloud_Property/main.cpp
  * This example shows how to add per-point properties to a point cloud and access its properties.
- *
- * \include{lineno} Tutorial_102_PointCloud_Property/main.cpp
  */
 
 using namespace easy3d;

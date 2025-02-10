@@ -29,7 +29,8 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example Tutorial_207_RealCamera
+ * \example{lineno} Tutorial_207_RealCamera/main.cpp
+ * 
  * This example shows how to
  *     - render a model from the view given the camera's intrinsic and
  *       extrinsic parameters. The camera parameters were recovered using
@@ -37,8 +38,6 @@
  *     - how an image point is projected into a ray in the 3D space.
  *     - how a 3D point is projected onto the image.
  *
- * The source file containing the main() function:
- * \include{lineno} Tutorial_207_RealCamera/main.cpp
  * The header file of the viewer class:
  * \include{lineno} Tutorial_207_RealCamera/viewer.h
  * The source file of the viewer class:

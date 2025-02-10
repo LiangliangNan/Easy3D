@@ -29,11 +29,10 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example Tutorial_309_TextRendering
+ * \example{lineno} Tutorial_309_TextRendering/main.cpp
+ * 
  * This example shows how to render strings using Easy3D.
  *
- * The source file containing the main() function:
- * \include{lineno} Tutorial_309_TextRendering/main.cpp
  * The header file of the viewer class:
  * \include{lineno} Tutorial_309_TextRendering/viewer.h
  * The source file of the viewer class:

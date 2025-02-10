@@ -29,13 +29,11 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example Tutorial_206_CameraInterpolation
+ * \example{lineno} Tutorial_206_CameraInterpolation/main.cpp
  * This example shows how to
  *      - create an exploration path using the key frame interpolator,
  *      - play the path as an animation.
  *
- * The source file containing the main() function:
- * \include{lineno} Tutorial_206_CameraInterpolation/main.cpp
  * The header file of the class:
  * \include{lineno} Tutorial_206_CameraInterpolation/viewer.h
  * The source file of the class:

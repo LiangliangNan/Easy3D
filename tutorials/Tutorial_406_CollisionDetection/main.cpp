@@ -28,11 +28,10 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example Tutorial_406_CollisionDetection
+ * \example{lineno} Tutorial_406_CollisionDetection/main.cpp
+ * 
  * This example shows how to detect the intersecting faces using collision detection.
  *
- * The source file containing the main() function:
- * \include{lineno} Tutorial_406_CollisionDetection/main.cpp
  * The header file of the viewer class:
  * \include{lineno} Tutorial_406_CollisionDetection/viewer.h
  * The source file of the viewer class:

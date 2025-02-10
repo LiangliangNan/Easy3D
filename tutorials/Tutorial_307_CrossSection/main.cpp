@@ -31,11 +31,10 @@
 #include "viewer.h"
 
 /**
- * \example Tutorial_307_CrossSection
+ * \example{lineno} Tutorial_307_CrossSection/main.cpp
+ * 
  * This example shows how to render a model with a clipping plane or cross-sections.
  *
- * The source file containing the main() function:
- * \include{lineno} Tutorial_307_CrossSection/main.cpp
  * The header file of the viewer class:
  * \include{lineno} Tutorial_307_CrossSection/viewer.h
  * The source file of the viewer class:

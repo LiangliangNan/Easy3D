@@ -1620,7 +1620,7 @@ namespace easy3d {
     template <typename T>	class Quat;
 
     /**
-     * \brief 3x3 matrix. Extends Mat with 3D-specific functionality and constructors.
+     * \brief 3 by 3 matrix. Extends Mat with 3D-specific functionality and constructors.
      * \tparam T The scalar type for vector elements. \see Mat.
      * \class Mat3 easy3d/core/mat.h
      */
@@ -1953,7 +1953,7 @@ namespace easy3d {
     *******************************************************************************/
 
     /**
-     * \brief 4x4 matrix. Extends Mat with 4D-specific functionality and constructors.
+     * \brief 4 by 4 matrix. Extends Mat with 4D-specific functionality and constructors.
      * \tparam T The scalar type for vector elements. \see Mat.
      * \class Mat4 easy3d/core/mat.h
      */

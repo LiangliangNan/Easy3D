@@ -29,11 +29,10 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example Tutorial_401_ModelPicker
+ * \example{lineno} Tutorial_401_ModelPicker/main.cpp
+ * 
  * This example shows how to select a model from a set of models by clicking the mouse.
  *
- * The source file containing the main() function:
- * \include{lineno} Tutorial_401_ModelPicker/main.cpp
  * The header file of the viewer class:
  * \include{lineno} Tutorial_401_ModelPicker/viewer.h
  * The source file of the viewer class:

@@ -34,10 +34,8 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_303_ScalarField
+ * \example{lineno} Tutorial_303_ScalarField/main.cpp
  * This example shows how to render a scalar field defined on vertices of a mesh.
- *
- * \include{lineno} Tutorial_303_ScalarField/main.cpp
  */
 
 using namespace easy3d;

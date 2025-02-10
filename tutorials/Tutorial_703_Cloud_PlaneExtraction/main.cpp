@@ -33,11 +33,9 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_703_Cloud_PlaneExtraction
+ * \example{lineno} Tutorial_703_Cloud_PlaneExtraction/main.cpp
  *
  * This example shows how to extract planes from a point cloud using RANSAC.
- *
- * \include{lineno} Tutorial_703_Cloud_PlaneExtraction/main.cpp
  */
 
 using namespace easy3d;

@@ -32,11 +32,9 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_603_Curves
+ * \example{lineno} Tutorial_603_Curves/main.cpp
  *
  * This example shows how to create/evaluate several types of curves and curve fitting/interpolation methods in Easy3D.
- *
- * \include{lineno} Tutorial_603_Curves/main.cpp
  */
 
 using namespace easy3d;

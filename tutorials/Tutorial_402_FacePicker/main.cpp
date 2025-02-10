@@ -29,11 +29,10 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example Tutorial_402_FacePicker
+ * \example{lineno} Tutorial_402_FacePicker/main.cpp
+ * 
  * This example shows how to select a face of a surface mesh by clicking the mouse.
  *
- * The source file containing the main() function:
- * \include{lineno} Tutorial_402_FacePicker/main.cpp
  * The header file of the viewer class:
  * \include{lineno} Tutorial_402_FacePicker/viewer.h
  * The source file of the viewer class:

@@ -32,11 +32,10 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example Tutorial_503_SoftShadow
+ * \example{lineno} Tutorial_503_SoftShadow/main.cpp
+ * 
  * This example shows how to renders a scene with hard shadow using the Percentage-Closer Soft Shadows (PCSS) technique.
  *
- * The source file containing the main() function:
- * \include{lineno} Tutorial_503_SoftShadow/main.cpp
  * The header file of the viewer class:
  * \include{lineno} Tutorial_503_SoftShadow/viewer.h
  * The source file of the viewer class:

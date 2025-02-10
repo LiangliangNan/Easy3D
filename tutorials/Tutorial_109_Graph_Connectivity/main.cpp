@@ -28,13 +28,11 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_109_Graph_Connectivity
+ * \example{lineno} Tutorial_109_Graph_Connectivity/main.cpp
  * This example shows how to
  *		- access the incident vertices of each vertex
  *		- access the incident edges of each vertex
  *		- access the two end points of each edge
- *
- * \include{lineno} Tutorial_109_Graph_Connectivity/main.cpp
  */
 
 

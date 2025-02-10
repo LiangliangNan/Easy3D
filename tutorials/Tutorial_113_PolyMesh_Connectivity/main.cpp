@@ -28,7 +28,7 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_113_PolyMesh_Connectivity
+ * \example{lineno} Tutorial_113_PolyMesh_Connectivity/main.cpp
  * This example shows how to access the adjacency information of a polyhedral mesh (consisting of a single tetrahedron):
  *		- the incident vertices of each vertex
  *		- the incident edges of each vertex
@@ -45,8 +45,6 @@
  *		- the incident edges of each cell
  *		- the incident halffaces of each cell
  *		- the two halffaces of each face
- *
- * \include{lineno} Tutorial_113_PolyMesh_Connectivity/main.cpp
  */
 
 using namespace easy3d;

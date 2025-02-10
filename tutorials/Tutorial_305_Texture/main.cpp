@@ -34,10 +34,8 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_305_Texture
+ * \example{lineno} Tutorial_305_Texture/main.cpp
  * This example shows how to create a texture from an image and render a textured quad using the created texture.
- *
- * \include{lineno} Tutorial_305_Texture/main.cpp
  */
 
 using namespace easy3d;

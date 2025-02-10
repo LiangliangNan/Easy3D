@@ -29,11 +29,10 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example Tutorial_306_ImageViewer
+ * \example{lineno} Tutorial_306_ImageViewer/main.cpp
+ * 
  * This example shows how to render an images.
  *
- * The source file containing the main() function:
- * \include{lineno} Tutorial_306_ImageViewer/main.cpp
  * The header file of the viewer class:
  * \include{lineno} Tutorial_306_ImageViewer/viewer.h
  * The source file of the viewer class:

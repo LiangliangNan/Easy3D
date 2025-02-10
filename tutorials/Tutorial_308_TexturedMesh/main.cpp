@@ -29,12 +29,11 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example Tutorial_308_TexturedMesh
+ * \example{lineno} Tutorial_308_TexturedMesh/main.cpp
+ * 
  * This example shows how to override the file loading function of the default easy3d viewer to
  * visualize textured meshes.
  *
- * The source file containing the main() function:
- * \include{lineno} Tutorial_308_TexturedMesh/main.cpp
  * The header file of the viewer class:
  * \include{lineno} Tutorial_308_TexturedMesh/viewer.h
  * The source file of the viewer class:

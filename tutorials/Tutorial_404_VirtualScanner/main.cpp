@@ -32,11 +32,10 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example Tutorial_404_VirtualScanner
+ * \example{lineno} Tutorial_404_VirtualScanner/main.cpp
+ * 
  * This example shows how to perform virtual scanning of a given model.
  *
- * The source file containing the main() function:
- * \include{lineno} Tutorial_404_VirtualScanner/main.cpp
  * The header file of the viewer class:
  * \include{lineno} Tutorial_404_VirtualScanner/viewer.h
  * The source file of the viewer class:

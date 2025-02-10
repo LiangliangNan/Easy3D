@@ -32,12 +32,11 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example Tutorial_505_EyeDomeLighting
+ * \example{lineno} Tutorial_505_EyeDomeLighting/main.cpp
+ * 
  * This example shows how to render a point cloud without normal information (but still be able to perceive the depth)
  * using the Eye Dome Lighting technique.
  *
- * The source file containing the main() function:
- * \include{lineno} Tutorial_505_EyeDomeLighting/main.cpp
  * The header file of the viewer class:
  * \include{lineno} Tutorial_505_EyeDomeLighting/viewer.h
  * The source file of the viewer class:

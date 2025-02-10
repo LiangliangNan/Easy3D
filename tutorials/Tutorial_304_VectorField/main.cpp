@@ -32,10 +32,8 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_304_VectorField
+ * \example{lineno} Tutorial_304_VectorField/main.cpp
  * This example shows how to rendering a vector field defined on a surface mesh.
- *
- * \include{lineno} Tutorial_304_VectorField/main.cpp
  */
 
 using namespace easy3d;

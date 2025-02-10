@@ -28,10 +28,8 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_101_PointCloud
+ * \example{lineno} Tutorial_101_PointCloud/main.cpp
  * This example shows how to create a point cloud from a set of points
- *
- * \include{lineno} Tutorial_101_PointCloud/main.cpp
  */
 
 

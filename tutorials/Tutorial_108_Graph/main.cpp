@@ -28,10 +28,8 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_108_Graph
+ * \example{lineno} Tutorial_108_Graph/main.cpp
  * This example shows how to construct a graph from its vertices and edges
- *
- * \include{lineno} Tutorial_108_Graph/main.cpp
  */
 
 

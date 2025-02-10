@@ -32,11 +32,10 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example Tutorial_502_HardShadow
+ * \example{lineno} Tutorial_502_HardShadow/main.cpp
+ * 
  * This example shows how to renders a scene with hard shadow using the shadow map technique.
  *
- * The source file containing the main() function:
- * \include{lineno} Tutorial_502_HardShadow/main.cpp
  * The header file of the viewer class:
  * \include{lineno} Tutorial_502_HardShadow/viewer.h
  * The source file of the viewer class:

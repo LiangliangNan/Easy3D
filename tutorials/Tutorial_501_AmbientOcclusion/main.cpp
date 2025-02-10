@@ -32,11 +32,10 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example Tutorial_501_AmbientOcclusion
+ * \example{lineno} Tutorial_501_AmbientOcclusion/main.cpp
+ * 
  * This example shows how to renders a surface mesh using ambient occlusion to improve depth perception.
  *
- * The source file containing the main() function:
- * \include{lineno} Tutorial_501_AmbientOcclusion/main.cpp
  * The header file of the viewer class:
  * \include{lineno} Tutorial_501_AmbientOcclusion/viewer.h
  * The source file of the viewer class:

@@ -28,10 +28,8 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_110_Graph_Property
+ * \example{lineno} Tutorial_110_Graph_Property/main.cpp
  * This example shows how to add per-vertex/per-edge properties to a graph, and how to access existing properties.
- *
- * \include{lineno} Tutorial_110_Graph_Property/main.cpp
  */
 
 using namespace easy3d;

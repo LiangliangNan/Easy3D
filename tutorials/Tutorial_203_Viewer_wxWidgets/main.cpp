@@ -25,7 +25,8 @@
  ********************************************************************/
 
 /**
- * \example Tutorial_203_Viewer_wxWidgets
+ * \example{lineno} Tutorial_203_Viewer_wxWidgets/main.cpp
+ * 
  * This example shows how to create a simple viewer using wxWidgets.
  *
  * The header file of the viewer class:
@@ -40,8 +41,6 @@
  * \include{lineno} Tutorial_203_Viewer_wxWidgets/application.h
  * The source file of the application class:
  * \include{lineno} Tutorial_203_Viewer_wxWidgets/application.cpp
- * The source file containing the main() function:
- * \include{lineno} Tutorial_203_Viewer_wxWidgets/main.cpp
  */
 
 

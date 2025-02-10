@@ -34,13 +34,11 @@
 #include <easy3d/util/initializer.h>
 
 /**
- * \example{lineno} Tutorial_701_Cloud_NormalEstimation
+ * \example{lineno} Tutorial_701_Cloud_NormalEstimation/main.cpp
  *
  * This example shows how to
  *      - estimate normal information of a point cloud.
  *      - re-orient the normals.
- *
- * \include{lineno} Tutorial_701_Cloud_NormalEstimation/main.cpp
  */
 
 using namespace easy3d;

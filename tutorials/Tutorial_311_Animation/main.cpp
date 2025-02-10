@@ -32,10 +32,8 @@
 
 
 /**
- * \example{lineno} Tutorial_311_Animation
+ * \example{lineno} Tutorial_311_Animation/main.cpp
  * This example shows how to map an array buffer for dynamic buffer update (useful for animation).
- *
- * \include{lineno} Tutorial_311_Animation/main.cpp
  */
 
 using namespace easy3d;

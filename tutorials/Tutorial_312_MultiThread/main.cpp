@@ -33,10 +33,8 @@
 #include <easy3d/util/timer.h>
 
 /**
- * \example{lineno} Tutorial_312_MultiThread
+ * \example{lineno} Tutorial_312_MultiThread/main.cpp
  * This example shows how to use another thread for repeatedly modifying a model and updating the viewer thread.
- *
- * \include{lineno} Tutorial_312_MultiThread/main.cpp
  */
 
 using namespace easy3d;
