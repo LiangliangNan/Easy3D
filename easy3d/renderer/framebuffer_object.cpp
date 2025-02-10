@@ -1805,7 +1805,7 @@ namespace easy3d {
     bool FramebufferObject::copy_color_to_texture(
         GLuint& texture_handle,
         unsigned int index /* = 0 */,
-        int internalFormat /* = GL_RGBA8 */,
+        int internal_format /* = GL_RGBA8 */,
         GLenum format /* = GL_RGBA */,
         GLenum type /* = GL_UNSIGNED_BYTE */,
         GLenum filter /* = GL_NEAREST*/)
@@ -1830,7 +1830,7 @@ namespace easy3d {
                 glTexParameteri(texture_target_, GL_TEXTURE_MAG_FILTER, static_cast<int>(filter));		easy3d_debug_log_gl_error
                 glTexParameteri(texture_target_, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	easy3d_debug_log_gl_error
                 glTexParameteri(texture_target_, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);	easy3d_debug_log_gl_error
-                glTexImage2D(texture_target_, 0, internalFormat, width_, height_, 0, format, type, nullptr);	easy3d_debug_log_gl_error
+                glTexImage2D(texture_target_, 0, internal_format, width_, height_, 0, format, type, nullptr);	easy3d_debug_log_gl_error
             }
             else
                 glBindTexture(texture_target_, texture_handle);	easy3d_debug_log_gl_error
@@ -1850,7 +1850,7 @@ namespace easy3d {
         }
         else {
             _prepare_resolve_fbo();
-            return resolved_fbo_->copy_color_to_texture(texture_handle, index, internalFormat, format, type, filter);
+            return resolved_fbo_->copy_color_to_texture(texture_handle, index, internal_format, format, type, filter);
         }
     }
 

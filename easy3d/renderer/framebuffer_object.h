@@ -121,156 +121,277 @@ namespace easy3d {
     class FramebufferObject
     {
     public:
-        /// Queries if FramebufferObject is supported.
+        /**
+         * \brief Queries if FramebufferObject is supported.
+         * \return True if supported, false otherwise.
+         */
         static bool is_supported();
 
-        /// Default constructor.
+        /**
+         * \brief Constructor.
+         * \param w The width of the framebuffer.
+         * \param h The height of the framebuffer.
+         * \param samples The number of samples per pixel.
+         */
         FramebufferObject(int w, int h, int samples = 0);
         /// Destructor.
         virtual ~FramebufferObject();
 
         //////////////////////////////////////////////////////////////////////////
 
-        /// Add a color texture render buffer.
+        /**
+         * \brief Add a color texture render buffer.
+         * \param internal_format The internal format of the texture. It looks like GL_[components][size][type], e.g.,
+         *      GL_RG8, GL_RGBA16, GL_R16F, GL_RG16, GL_RGBA32F.
+         * \param format The format of the pixel data, e.g., GL_RED, GL_RG, GL_RGB, GL_BGR, GL_BGRA.
+         * \param type The data type of the pixel data, e.g., GL_BYTE, GL_SHORT, GL_UNSIGNED_INT, GL_INT, GL_FLOAT.
+         * \param filter The texture minifying/magnification functions, e.g., GL_NEAREST, GL_LINEAR.
+         * \return True if successful, false otherwise.
+         */
         bool add_color_texture(
-            GLenum internal_format = GL_RGBA8,	// GL_[components​][size​][type​], e.g., GL_RG8, GL_RGBA16, GL_R16F, GL_RG16, GL_RGBA32F ...
-            GLenum format = GL_RGBA,			// The format of the pixel data (GL_RED, GL_RG, GL_RGB, GL_BGR, GL_BGRA ...)
-            GLenum type = GL_UNSIGNED_BYTE,		// The data type of the pixel data (GL_BYTE, GL_SHORT, GL_UNSIGNED_INT, GL_INT, GL_FLOAT ...)
-            GLenum filter = GL_NEAREST			// The texture minifying/magnification functions. e.g., GL_NEAREST, GL_LINEAR
+            GLenum internal_format = GL_RGBA8,
+            GLenum format = GL_RGBA,
+            GLenum type = GL_UNSIGNED_BYTE,
+            GLenum filter = GL_NEAREST
         );
-        /// Add a color render buffer.
+        /**
+         * \brief Add a color render buffer.
+         * \param internal_format The internal format of the buffer. It looks like GL_[components][size][type], e.g.,
+         *      GL_RG8, GL_RGBA16, GL_R16F, GL_RG16, GL_RGBA32F.
+         * \param format The format of the pixel data, e.g., GL_RED, GL_RG, GL_RGB, GL_BGR, GL_BGRA.
+         * \param type The data type of the pixel data, e.g., GL_BYTE, GL_SHORT, GL_UNSIGNED_INT, GL_INT, GL_FLOAT.
+         * \return True if successful, false otherwise.
+         */
         bool add_color_buffer(
-            GLenum internal_format = GL_RGBA8,	// GL_[components​][size​][type​], e.g., GL_RG8, GL_RGBA16, GL_R16F, GL_RG16, GL_RGBA32F ...
-            GLenum format = GL_RGBA,			// The format of the pixel data (GL_RED, GL_RG, GL_RGB, GL_BGR, GL_BGRA ...)
-            GLenum type = GL_UNSIGNED_BYTE		// The data type of the pixel data (GL_BYTE, GL_SHORT, GL_UNSIGNED_INT, GL_INT, GL_FLOAT ...)
+            GLenum internal_format = GL_RGBA8,
+            GLenum format = GL_RGBA,
+            GLenum type = GL_UNSIGNED_BYTE
         );
-        /// Add a depth texture render buffer.
+        /**
+         * \brief Add a depth texture render buffer.
+         * \param internal_format The internal format of the texture, e.g., GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT32F,
+         *      GL_DEPTH24_STENCIL8, GL_DEPTH32F_STENCIL8, GL_DEPTH_COMPONENT16
+         * \param filter The texture minifying/magnification functions, e.g., GL_NEAREST, GL_LINEAR.
+         * \param compare_mode The compare mode for the texture, e.g., GL_NONE, GL_COMPARE_REF_TO_TEXTURE.
+         * \param compare_func The compare function for the texture, e.g., GL_GEQUAL, GL_LESS, GL_GREATER, GL_EQUAL,
+         *      GL_NOTEQUAL, GL_ALWAYS(for 1.0) and GL_NEVER(for 0.0).
+         * \return True if successful, false otherwise.
+         */
         bool add_depth_texture(
-            GLenum internal_format = GL_DEPTH24_STENCIL8,	// GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT32F, GL_DEPTH24_STENCIL8, GL_DEPTH32F_STENCIL8, GL_DEPTH_COMPONENT16
-            GLenum filter = GL_NEAREST,						// The texture minifying/magnification functions. e.g., GL_NEAREST, GL_LINEAR
-            GLenum compare_mode = GL_NONE,					// GL_COMPARE_REF_TO_TEXTURE.
-            GLenum compare_func = GL_LEQUAL					// GL_GEQUAL, GL_LESS, GL_GREATER, GL_EQUAL, GL_NOTEQUAL, GL_ALWAYS(for 1.0) and GL_NEVER(for 0.0).
+            GLenum internal_format = GL_DEPTH24_STENCIL8,
+            GLenum filter = GL_NEAREST,
+            GLenum compare_mode = GL_NONE,
+            GLenum compare_func = GL_LEQUAL
         );
-        /// Add a depth render buffer.
-        bool add_depth_buffer(
-            GLenum internal_format = GL_DEPTH24_STENCIL8	// GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT32F, GL_DEPTH24_STENCIL8, GL_DEPTH32F_STENCIL8, GL_DEPTH_COMPONENT16
-        );
+        /**
+         * \brief Add a depth render buffer.
+         * \param internal_format The internal format of the buffer, e.g., GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT32F,
+         *      GL_DEPTH24_STENCIL8, GL_DEPTH32F_STENCIL8, GL_DEPTH_COMPONENT16
+         * \return True if successful, false otherwise.
+         */
+        bool add_depth_buffer(GLenum internal_format = GL_DEPTH24_STENCIL8);
 
-		/// Attach an existing color texture to the framebuffer
-		/// \param target GL_TEXTURE_2D, GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_2D_ARRAY
-		/// \param attachment GL_COLOR_ATTACHMENTi
+        /**
+         * \brief Attach an existing color texture to the framebuffer.
+         * \param target The target texture type. GL_TEXTURE_2D, GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_2D_ARRAY
+         * \param texture_id The ID of the texture.
+         * \param attachment The attachment point. GL_COLOR_ATTACHMENTi
+         * \return True if successful, false otherwise.
+         */
 		bool attach_color_texture(GLenum target, GLuint texture_id, GLenum attachment);
-
-		/// Attach an existing depth texture to the framebuffer
-		/// \param target GL_TEXTURE_2D, GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_2D_ARRAY
-		/// \param attachment GL_DEPTH_ATTACHMENT, GL_STENCIL_ATTACHMENT or GL_DEPTH_STENCIL_ATTACHMENT.
+        /**
+         * \brief Attach an existing depth texture to the framebuffer.
+         * \param target The target texture type. GL_TEXTURE_2D, GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_2D_ARRAY
+         * \param texture_id The ID of the texture.
+         * \param attachment The attachment point. GL_DEPTH_ATTACHMENT, GL_STENCIL_ATTACHMENT or GL_DEPTH_STENCIL_ATTACHMENT.
+         * \return True if successful, false otherwise.
+         */
 		bool attach_depth_texture(GLenum target, GLuint texture_id, GLenum attachment);
 
         //////////////////////////////////////////////////////////////////////////
 
-        /// Ensure the size of the buffers is \p (w, h).
-        /// If its size matches the required size, i.e, (w, h), it does nothing.
-        /// If doesn't match, it clears and reallocate memory in the GPU.
+        /**
+         * \brief Ensure the size of the buffers is (w, h). If its size matches the required size, i.e, (w, h), it does
+         *      nothing. Otherwise, it resizes the buffers.
+         * \param w The width of the buffers.
+         * \param h The height of the buffers.
+         */
         void ensure_size(int w, int h);
 
-        /// Bind FBO to FRAMEBUFFER, DRAW_FRAMEBUFFER, or READ_FRAMEBUFFER
-        /// The current binding is saved for later release.
-        /// \note bind() and release() should be called in pair.
+        /**
+         * \brief Bind FBO to FRAMEBUFFER, DRAW_FRAMEBUFFER, or READ_FRAMEBUFFER.
+         * \param target The target framebuffer.
+         * \return True if successful, false otherwise.
+         * \note bind() and release() should be called in pair.
+         */
         bool bind(GLenum target = GL_FRAMEBUFFER);
-        /// Switches rendering back to the default framebuffer.
+        /**
+         * \brief Switches rendering back to the default framebuffer.
+         * \param target The target framebuffer.
+         * \return True if successful, false otherwise.
+         */
         bool release(GLenum target = GL_FRAMEBUFFER);
 
-        /// Returns true if the framebuffer object is valid.
+        /**
+         * \brief Returns true if the framebuffer object is valid.
+         * \return True if valid, false otherwise.
+         */
         bool is_valid() const;
-        /// Check if the framebuffer object is currently bound to the current context.
+        /**
+         * \brief Check if the framebuffer object is currently bound to the current context.
+         * \param target The target framebuffer.
+         * \return True if bound, false otherwise.
+         */
         bool is_bound(GLenum target = GL_FRAMEBUFFER) const;
 
-        /// Choose the buffers to render into. This command lets you select which attachments are written to.
-        /// \note The default buffer is the 0. In such a case calling to this function is optional.
+        /**
+         * \brief Choose the buffers to render into. This command lets you select which attachments are written to.
+         * \param index The index of the buffer.
+         * \note The default buffer is the 0. In such a case calling to this function is optional.
+         */
         void activate_draw_buffer(unsigned int index) const;
+        /**
+         * \brief Choose the buffers to render into.
+         * \param num_buffers The number of buffers.
+         * \param indices The indices of the buffers.
+         */
         void activate_draw_buffers(unsigned int num_buffers, const unsigned int indices[]) const;
-        void activate_draw_buffers(unsigned int minId, unsigned int maxId) const; // activate draw buffer in the range [minId, ... maxId]
+        /**
+         * \brief Choose the buffers in the range [minId, ... maxId] to render into.
+         * \param minId The minimum index of the buffer.
+         * \param maxId The maximum index of the buffer.
+         */
+        void activate_draw_buffers(unsigned int minId, unsigned int maxId) const;
+        /**
+         * \brief Deactivate all draw buffers.
+         */
         void deactivate_draw_buffers() const;
 
-        /// Choose the buffers to read from. This command lets you select which attachment to read from.
-        /// \note The default buffer is the 0. In such a case calling to this function is optional.
+        /**
+         * \brief Choose the buffers to read from. This command lets you select which attachment to read from.
+         * \param index The index of the buffer.
+         * \note The default buffer is the 0. In such a case calling to this function is optional.
+         */
         void activate_read_buffer(unsigned int index) const;
-        /// Deactivates reading from the buffers.
+        /**
+         * \brief Deactivates reading from the buffers.
+         */
         void deactivate_read_buffer() const;
 
-        /// Returns the OpenGL framebuffer object handle for this framebuffer object (returned by the glGenFramebuffers() function).
-        /// This handle can be used to attach new images or buffers to the framebuffer. If you attach images or buffers, you are
-        /// responsible for cleaning up and destroying these objects.
+        /**
+         * \brief Returns the OpenGL framebuffer object handle for this framebuffer object. This handle can be used to
+         *      attach new images or buffers to the framebuffer. If you attach images or buffers, you are responsible
+         *      for cleaning up and destroying these objects.
+         * \return The OpenGL framebuffer object handle.
+         */
         GLuint handle() const { return fbo_id_; }
 
-        /// Returns the width of the render buffers.
+        /**
+         * \brief Returns the width of the render buffers.
+         * \return The width of the render buffers.
+         */
         int  width() const { return width_; }
-        /// Returns the height of the render buffers.
+        /**
+         * \brief Returns the height of the render buffers.
+         * \return The height of the render buffers.
+         */
         int  height() const { return height_; }
 
-        /// The returned value can be greater than the requested value since the typically supported
-        /// values are 0, 4, 8, ..., and the requests are mapped to the next supported value.
+        /**
+         * \brief Returns the number of samples per pixel.
+         * \return The number of samples per pixel.
+         * \note The returned value can be greater than the requested value since the typically supported values are
+         *      0, 4, 8, ..., and the requests are mapped to the next supported value.
+         */
         int  samples() const { return samples_; }
 
-        /// Returns the number of color attachments
+        /**
+         * \brief Returns the number of color attachments.
+         * \return The number of color attachments.
+         */
         int	 num_color_attachments() const;
-        /// Does the fbo have color attachment at \p index?
+        /**
+         * \brief Checks if the framebuffer object has a color attachment at the given index.
+         * \param index The index of the color attachment.
+         * \return True if the color attachment exists, false otherwise.
+         */
         bool has_color_attachment(unsigned int index) const;
 
-        /// Does the fbo have a depth attachment.
+        /**
+         * \brief Checks if the framebuffer object has a depth attachment.
+         * \return True if the depth attachment exists, false otherwise.
+         */
         bool has_depth_attachment() const;
-        /// Returns the depth bits.
+        /**
+         * \brief Returns the depth bits.
+         * \return The depth bits.
+         */
         int  depth_bits() const;
 
-        /// Does the fbo have a stencil buffer.
+        /**
+         * \brief Checks if the framebuffer object has a stencil buffer.
+         * \return True if the stencil buffer exists, false otherwise.
+         */
         bool has_stencil() const;
 
-        /// Returns the texture target, i.e., GL_TEXTURE_2D or GL_TEXTURE_2D_MULTISAMPLE
+        /**
+         * \brief Returns the texture target.
+         * \return The texture target, i.e., GL_TEXTURE_2D or GL_TEXTURE_2D_MULTISAMPLE.
+         */
         GLenum texture_target() const;
 
         /**
-         * Returns the texture id attached to the color attachment \p index of this framebuffer object.
-         * @param index The index of the color attachment.
-         * @param resolve If a multisample framebuffer object is used, the function blits and returns the resolved
+         * \brief Returns the texture ID attached to the color attachment at the given index.
+         * \param index The index of the color attachment.
+         * \param resolve If a multisample framebuffer object is used, the function blits and returns the resolved
          *      non-multisample texture when \p resolve is true.
-         * @return The ID of the color texture.
+         * \return The texture ID.
          */
         GLuint color_texture(unsigned int index = 0, bool resolve = true) const;
-        /// Does the fbo have a color texture for color attachment \p index?
+        /**
+         * \brief Checks if the framebuffer object has a color texture at the given index.
+         * \param index The index of the color texture.
+         * \return True if the color texture exists, false otherwise.
+         */
         bool   has_color_texture(unsigned int index) const;
 
         /**
-         * Returns the texture id for the texture attached to the depth attachment of this framebuffer object.
-         * @param resolve If a multisample framebuffer object is used, the function blits and returns the resolved
+         * \brief Returns the texture ID for the texture attached to the depth attachment.
+         * \param resolve If a multisample framebuffer object is used, the function blits and returns the resolved
          *      non-multisample texture if \p resolve is true.
-         * @return The ID of the depth texture.
+         * \return The depth texture ID.
          */
         GLuint depth_texture(bool resolve = true) const;
-        /// Does the fbo have a depth texture?
+        /**
+         * \brief Checks if the framebuffer object has a depth texture.
+         * \return True if the depth texture exists, false otherwise.
+         */
         bool   has_depth_texture() const;
 
         /**
          * \brief Makes a copy of the current buffer into a texture (regardless the attachments already have textures).
          * \details Internally it creates a texture and uses glCopyTexSubImage2D() to directly copy the buffer in it.
          *
-         * @param texture_handle The target texture (will be created if it does not exist).
-         * @param index The index of the color attachment.
-         * @param internalFormat, format, type Used to define the texture format and hence which and how components of the
-         *      buffer are copied into the texture. See the glTexImage2D() documentation for details.
-         * @param filter Specifies how the texture minifying and magnification function work.
-         *
-         * The typical internalFormat/format/type combinations are:
-         *      For depth:	GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT24 / GL_DEPTH_COMPONENT / GL_UNSIGNED_BYTE
-         *			        GL_DEPTH_COMPONENT32F / GL_DEPTH_COMPONENT / GL_FLOAT
-         *	    For color: 	GL_RGBA8 / GL_RGBA / GL_UNSIGNED_BYTE
-         *			        \p internalFormat mus be GL_[components][size][type], e.g., GL_RG8, GL_RGBA16, GL_R16F,
-         *			           GL_RG16, GL_RGBA32F ...
-         *                  \p format must be one of the GL_RED, GL_RG, GL_RGB, GL_BGR, GL_BGRA ...
-         *					\p type can be GL_UNSIGNED_BYTE, GL_BYTE, GL_UNSIGNED_SHORT, GL_SHORT, GL_UNSIGNED_INT,
-         *					   GL_INT, GL_FLOAT ...
-         *	Use GL_LUMINANCE as the \p internalFormat and GL_RED, GL_GREEN or GL_BLUE as \p format to capture a single
-         *	color component as a luminance (gray scaled) value.
-         * @return \p true on success.
+         * \param texture_handle The target texture (will be created if it does not exist).
+         * \param index The index of the color attachment.
+         * \param internal_format The internal format of the texture.
+         * \param format The format of the pixel data.
+         * \param type The data type of the pixel data.
+         *      The \p internal_format / \p format / \p type together define the texture format and hence which and
+         *      how components of the buffer are copied into the texture. See the glTexImage2D() documentation for
+         *      details. The typical internal_format/format/type combinations are:
+         *          For depth:	GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT24 / GL_DEPTH_COMPONENT / GL_UNSIGNED_BYTE
+         *			            GL_DEPTH_COMPONENT32F / GL_DEPTH_COMPONENT / GL_FLOAT
+         *	        For color: 	GL_RGBA8 / GL_RGBA / GL_UNSIGNED_BYTE
+         *			            \p internal_format must be GL_[components][size][type], e.g., GL_RG8, GL_RGBA16, GL_R16F,
+         *			               GL_RG16, GL_RGBA32F ...
+         *                      \p format must be one of the GL_RED, GL_RG, GL_RGB, GL_BGR, GL_BGRA ...
+         *					    \p type can be GL_UNSIGNED_BYTE, GL_BYTE, GL_UNSIGNED_SHORT, GL_SHORT, GL_UNSIGNED_INT,
+         *					       GL_INT, GL_FLOAT ...
+         *	        Use GL_LUMINANCE as the \p internal_format and GL_RED, GL_GREEN or GL_BLUE as \p format to capture
+         *	        a single color component as a luminance (gray scaled) value.
+         * \param filter The texture minifying/magnification functions.
+         * \return True if successful, false otherwise.
          * \note
          *      - GL_STENCIL is not supported as a format.
          *		- The GL_DEPTH_COMPONENT format may not be supported by all hardware. It may sometimes be emulated in
@@ -280,7 +401,7 @@ namespace easy3d {
         bool copy_color_to_texture(
             GLuint& texture_handle,
             unsigned int index = 0,
-            int internalFormat = GL_RGBA8,
+            int internal_format = GL_RGBA8,
             GLenum format = GL_RGBA,
             GLenum type = GL_UNSIGNED_BYTE,
             GLenum filter = GL_NEAREST
@@ -288,10 +409,10 @@ namespace easy3d {
 
         /**
          * \brief Makes a copy of the current depth buffer into a texture.
-         * @param texture_handle The target texture (will be created if it does not exist).
-         * @param internal_format Used to define the texture format.
-         * @param filter Specifies how the texture minifying and magnification function work.
-         * @return \p true on success.
+         * \param texture_handle The target texture (will be created if it does not exist).
+         * \param internal_format The internal format of the texture.
+         * \param filter The texture minifying/magnification functions.
+         * \return True if successful, false otherwise.
          * \note
          *		- You need to release the texture when you're done.
          */
@@ -308,36 +429,76 @@ namespace easy3d {
         /// Print the read buffer.
         void print_read_buffer() const;
 
-        /// Read the color render buffer attached to color attachment \p index.
-        /// \param format The format of the pixel data. The following formats are accepted: GL_RGB, GL_BGR, GL_RGBA,
-        ///         and GL_BGRA.
+        /**
+         * \brief Read the color render buffer attached to color attachment at the given index.
+         * \param index The index of the color attachment.
+         * \param buffer The buffer to read into.
+         * \param format The format of the pixel data. Supported formats: GL_RGB, GL_BGR, GL_RGBA, and GL_BGRA.
+         * \param flip_vertically If true, flips the buffer vertically.
+         * \return True if successful, false otherwise.
+         */
         bool read_color(unsigned int index, unsigned char* buffer, unsigned int format, bool flip_vertically = true) const;
-        /// Read the color render buffer attached to color attachment \p index.
-        /// \param format The format of the pixel data. The following formats are accepted: GL_RGB, GL_BGR, GL_RGBA,
-        ///         and GL_BGRA.
+        /**
+         * \brief Read the color render buffer attached to color attachment at the given index.
+         * \param index The index of the color attachment.
+         * \param buffer The buffer to read into.
+         * \param format The format of the pixel data. Supported formats: GL_RGB, GL_BGR, GL_RGBA, and GL_BGRA.
+         * \param flip_vertically If true, flips the buffer vertically.
+         * \return True if successful, false otherwise.
+         */
         bool read_color(unsigned int index, std::vector<unsigned char>& buffer, unsigned int format, bool flip_vertically = true) const;
 
-        /// Read the depth render buffer into a specified buffer.
+        /**
+         * \brief Read the depth render buffer into a specified buffer.
+         * \param buffer The buffer to read into.
+         * \param flip_vertically If true, flips the buffer vertically.
+         * \return True if successful, false otherwise.
+         */
         bool read_depth(float* buffer, bool flip_vertically = true) const;
-        /// Read the depth render buffer into a specified buffer.
+        /**
+         * \brief Read the depth render buffer into a specified buffer.
+         * \param buffer The buffer to read into.
+         * \param flip_vertically If true, flips the buffer vertically.
+         * \return True if successful, false otherwise.
+         */
         bool read_depth(std::vector<float>& buffer, bool flip_vertically = true) const;
 
-        /// Reads the color at pixel \p (x, y) from the color render buffer attached to color attachment \p index.
-        /// Returns false if the color attachment index does not exist.
-        /// \note \p (x, y) are in the OpenGL coordinate system.
+        /**
+         * \brief Reads the color at the given pixel coordinates from the color render buffer attached to color
+         *      attachment at the given index.
+         * \param rgba The buffer to read into.
+         * \param x The x-coordinate of the pixel (in the OpenGL coordinate system).
+         * \param y The y-coordinate of the pixel (in the OpenGL coordinate system).
+         * \param index The index of the color attachment.
+         * \return True if successful, false otherwise (if the color attachment index does not exist).
+         * \note (x, y) are in the OpenGL coordinate system.
+         */
         bool read_color(unsigned char rgba[4], int x, int y, int index = 0) const;
 
-        /// Reads the depth at pixel \p (x, y).
-        /// Returns \p false if the depth attachment does not exist.
-        /// \note \p (x, y) are in the OpenGL coordinate system.
+        /**
+         * \brief Reads the depth at the given pixel coordinates.
+         * \param depth The buffer to read into.
+         * \param x The x-coordinate of the pixel (in the OpenGL coordinate system).
+         * \param y The y-coordinate of the pixel (in the OpenGL coordinate system).
+         * \return True if successful, false otherwise (if the depth attachment does not exist).
+         * \note (x, y) are in the OpenGL coordinate system.
+         */
         bool read_depth(float& depth, int x, int y) const;
 
-        /// Snapshots the color render buffer attached to color attachment \p index into an image file.
-        /// \note Only png, jpg, bmp, tga, ppm are supported. File format is determined by the given extension.
+        /**
+         * \brief Snapshots the color render buffer attached to color attachment at the given index into an image file.
+         * \param index The index of the color attachment.
+         * \param file_name The name of the image file.
+         * \return True if successful, false otherwise.
+         * \note Only png, jpg, bmp, tga, ppm are supported. File format is determined by the given extension.
+         */
         bool snapshot_color(unsigned int index, const std::string& file_name) const;
-
-        /// Snapshots the color render buffer into an image file.
-        /// \note Only png, jpg, bmp, tga, ppm are supported. File format is determined by the given extension.
+        /**
+         * \brief Snapshots the depth render buffer into an image file.
+         * \param file_name The name of the image file.
+         * \return True if successful, false otherwise.
+         * \note Only png, jpg, bmp, tga, ppm are supported. File format is determined by the given extension.
+         */
         bool snapshot_depth(const std::string& file_name) const;
 
         /**
@@ -356,41 +517,89 @@ namespace easy3d {
          *
          *      If source equals target a copy is performed within the same buffer. Results are undefined if the
          *      source and target rectangles overlap and have different sizes. The sizes must also be the same
-         *      if any of the framebuffer objects are multisample framebuffers.
+         *      if any of the framebuffer objects are multisample frame buffers.
          *
          *      When multiple render targets are in use, source_color_attachment_index and target_color_attachment_index
-         *      specify the index of the color attachments in the source and destination framebuffers.
+         *      specify the index of the color attachments in the source and destination frame buffers.
          *
+         * \param target The target framebuffer object.
+         * \param source The source framebuffer object.
+         * \param buffers The buffers to blit (e.g., GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_STENCIL_BUFFER_BIT, or
+         *      GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT).
+         * \param filter The interpolation method (GL_LINEAR or GL_NEAREST).
          * \note The scissor test will restrict the blit area if enabled.
          */
          static void blit_framebuffer(
-             FramebufferObject* target, const FramebufferObject* source,
-             GLbitfield buffers,	// e.g., GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_STENCIL_BUFFER_BIT, or GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT
+             FramebufferObject* target,
+             const FramebufferObject* source,
+             GLbitfield buffers,
              GLenum filter = GL_NEAREST
          );
 
-        /// Blit the whole sized buffer of a specific color attachment.
+        /**
+         * \brief Blit the whole sized buffer of a specific color attachment.
+         * \param target The target framebuffer object.
+         * \param source The source framebuffer object.
+         * \param target_color_attachment_index The index of the color attachment in the target framebuffer.
+         * \param source_color_attachment_index The index of the color attachment in the source framebuffer.
+         * \param buffers The buffers to blit (e.g., GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_STENCIL_BUFFER_BIT,
+         *      or GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT).
+         * \param filter The interpolation method (GL_LINEAR or GL_NEAREST).
+         */
         static void blit_framebuffer(
-            FramebufferObject* target, const FramebufferObject* source,
+            FramebufferObject* target,
+            const FramebufferObject* source,
             int target_color_attachment_index, int source_color_attachment_index,
-            GLbitfield buffers,	// e.g., GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_STENCIL_BUFFER_BIT, or GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT
+            GLbitfield buffers,
             GLenum filter = GL_NEAREST
         );
 
-        /// Blit a specified region
+        /**
+         * \brief Blit a specified region.
+         * \param target The target framebuffer object.
+         * \param tx0 The x-coordinate of the lower-left corner of the target rectangle.
+         * \param ty0 The y-coordinate of the lower-left corner of the target rectangle.
+         * \param tx1 The x-coordinate of the upper-right corner of the target rectangle.
+         * \param ty1 The y-coordinate of the upper-right corner of the target rectangle.
+         * \param source The source framebuffer object.
+         * \param sx0 The x-coordinate of the lower-left corner of the source rectangle.
+         * \param sy0 The y-coordinate of the lower-left corner of the source rectangle.
+         * \param sx1 The x-coordinate of the upper-right corner of the source rectangle.
+         * \param sy1 The y-coordinate of the upper-right corner of the source rectangle.
+         * \param buffers The buffers to blit (e.g., GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_STENCIL_BUFFER_BIT,
+         *      , or GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT).
+         * \param filter The interpolation method (GL_LINEAR or GL_NEAREST).
+         */
         static void blit_framebuffer(
             FramebufferObject* target, int tx0, int ty0, int tx1, int ty1,
             const FramebufferObject* source, int sx0, int sy0, int sx1, int sy1,
-            GLbitfield buffers,	// e.g., GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_STENCIL_BUFFER_BIT, or GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT
+            GLbitfield buffers,
             GLenum filter = GL_NEAREST
         );
 
-        /// Blit a specified region of a specific color attachment.
+        /**
+         * \brief Blit a specified region of a specific color attachment.
+         * \param target The target framebuffer object.
+         * \param tx0 The x-coordinate of the lower-left corner of the target rectangle.
+         * \param ty0 The y-coordinate of the lower-left corner of the target rectangle.
+         * \param tx1 The x-coordinate of the upper-right corner of the target rectangle.
+         * \param ty1 The y-coordinate of the upper-right corner of the target rectangle.
+         * \param source The source framebuffer object.
+         * \param sx0 The x-coordinate of the lower-left corner of the source rectangle.
+         * \param sy0 The y-coordinate of the lower-left corner of the source rectangle.
+         * \param sx1 The x-coordinate of the upper-right corner of the source rectangle.
+         * \param sy1 The y-coordinate of the upper-right corner of the source rectangle.
+         * \param target_color_attachment_index The index of the color attachment in the target framebuffer.
+         * \param source_color_attachment_index The index of the color attachment in the source framebuffer.
+         * \param buffers The buffers to blit (e.g., GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_STENCIL_BUFFER_BIT,
+         *      , or GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT).
+         * \param filter The interpolation method (GL_LINEAR or GL_NEAREST).
+         */
         static void blit_framebuffer(
             FramebufferObject* target, int tx0, int ty0, int tx1, int ty1,
             const FramebufferObject* source, int sx0, int sy0, int sx1, int sy1,
             int target_color_attachment_index, int source_color_attachment_index,
-            GLbitfield buffers,	// e.g., GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT, GL_STENCIL_BUFFER_BIT, or GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT
+            GLbitfield buffers,
             GLenum filter = GL_NEAREST
         );
 

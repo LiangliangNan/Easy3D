@@ -36,22 +36,32 @@
 
 namespace easy3d {
 
-    /// \brief Base class for a property array.
-    /// \class BasePropertyArray easy3d/core/property.h
+    /**
+     * \brief Base class for a property array.
+     * \class BasePropertyArray easy3d/core/property.h
+     */
     class BasePropertyArray
     {
     public:
-
-        /// Default constructor
+        /**
+         * \brief Default constructor.
+         * \param name The name of the property array.
+         */
         explicit BasePropertyArray(const std::string& name) : name_(name) {}
 
         /// Destructor.
         virtual ~BasePropertyArray() = default;
 
-        /// Reserve memory for n elements.
+        /**
+         * \brief Reserves memory for n elements.
+         * \param n The number of elements to reserve memory for.
+         */
         virtual void reserve(size_t n) = 0;
 
-        /// Resize storage to hold n elements.
+        /**
+         * \brief Resizes storage to hold n elements.
+         * \param n The number of elements to resize to.
+         */
         virtual void resize(size_t n) = 0;
 
         /// Free unused memory.
@@ -60,37 +70,76 @@ namespace easy3d {
         /// Extend the number of elements by one.
         virtual void push_back() = 0;
 
-        /// Reset element to default value
+        /**
+         * \brief Resets an element to its default value.
+         * \param idx The index of the element to reset.
+         */
         virtual void reset(size_t idx) = 0;
 
-        /// Copy the entire properties from \p other.
+        /**
+         * \brief Copies the entire properties from another property array.
+         * \param other The other property array to copy from.
+         * \return True if the transfer was successful, false otherwise.
+         */
         virtual bool transfer(const BasePropertyArray& other) = 0;
-        /// Copy the property[from] of \p other to this->property[to].
+        /**
+         * \brief Copies a property from one index to another.
+         * \param other The other property array to copy from.
+         * \param from The index to copy from.
+         * \param to The index to copy to.
+         * \return True if the transfer was successful, false otherwise.
+         */
         virtual bool transfer(const BasePropertyArray& other, std::size_t from, std::size_t to) = 0;
 
-        /// Let two elements swap their storage place.
+        /**
+         * \brief Swaps the storage place of two elements.
+         * \param i0 The index of the first element.
+         * \param i1 The index of the second element.
+         */
         virtual void swap(size_t i0, size_t i1) = 0;
 
-        /// Let copy 'from' -> 'to'.
+        /**
+         * \brief Copies an element from one index to another.
+         * \param from The index to copy from.
+         * \param to The index to copy to.
+         */
         virtual void copy(size_t from, size_t to) = 0;
 
-        /// Return a deep copy of self.
-        virtual BasePropertyArray* clone () const = 0;
+        /**
+         * \brief Returns a deep copy of the property array.
+         * \return A pointer to the deep copy of the property array.
+         */
+        virtual BasePropertyArray* clone() const = 0;
 
-        /// Return a empty copy of self.
-        virtual BasePropertyArray* empty_clone () const = 0;
+        /**
+         * \brief Returns an empty copy of the property array.
+         * \return A pointer to the empty copy of the property array.
+         */
+        virtual BasePropertyArray* empty_clone() const = 0;
 
-        /// Return the type_info of the property
+        /**
+         * \brief Returns the type information of the property.
+         * \return The type information of the property.
+         */
         virtual const std::type_info& type() const = 0;
 
-        /// Return the name of the property
+        /**
+         * \brief Returns the name of the property.
+         * \return The name of the property.
+         */
         const std::string& name() const { return name_; }
 
-        /// Set the name of the property
+        /**
+         * \brief Sets the name of the property.
+         * \param n The new name of the property.
+         */
         void set_name(const std::string& n) { name_ = n; }
 
-        /// Test if two properties are the same.
-        /// \return true only if their names and types are both identical.
+        /**
+         * \brief Tests if two properties are the same.
+         * \param other The other property array to compare with.
+         * \return True if their names and types are both identical, false otherwise.
+         */
         bool is_same(const BasePropertyArray& other) const
         {
             return (name() == other.name() && type() == other.type());
@@ -105,18 +154,25 @@ namespace easy3d {
 
     //== CLASS DEFINITION =========================================================
 
-    /// \brief Implementation of a generic property array.
-    /// \class PropertyArray easy3d/core/property.h
+    /**
+     * \brief Implementation of a generic property array.
+     * \class PropertyArray easy3d/core/property.h
+     * \tparam T The type of the property.
+     */
     template <class T>
     class PropertyArray : public BasePropertyArray
     {
     public:
+        typedef T                                      value_type;      ///< The value type of the property.
+        typedef std::vector<value_type>                vector_type;     ///< The vector type of the property.
+        typedef typename vector_type::reference        reference;       ///< The reference type of the property.
+        typedef typename vector_type::const_reference  const_reference; ///< The const reference type of the property.
 
-        typedef T                                       value_type;
-        typedef std::vector<value_type>                 vector_type;
-        typedef typename vector_type::reference         reference;
-        typedef typename vector_type::const_reference   const_reference;
-
+        /**
+         * \brief Constructor.
+         * \param name The name of the property array.
+         * \param t The default value of the property.
+         */
         explicit PropertyArray(const std::string& name, T t=T()) : BasePropertyArray(name), value_(t) {}
 
 
@@ -198,35 +254,45 @@ namespace easy3d {
 
 
     public:
-
-        /// Get pointer to array (does not work for T==bool)
+        /**
+         * \brief Gets a pointer to the array (does not work for T == bool).
+         * \return A pointer to the array.
+         */
         const T* data() const
         {
             return &data_[0];
         }
 
-
-        /// Get reference to the underlying vector
+        /**
+         * \brief Gets a reference to the underlying vector.
+         * \return A reference to the underlying vector.
+         */
         std::vector<T>& vector()
         {
             return data_;
         }
 
-
-        /// Access the i'th element. No range check is performed!
+        /**
+         * \brief Accesses the i-th element. No range check is performed.
+         * \param _idx The index of the element.
+         * \return A reference to the i-th element.
+         */
         reference operator[](size_t _idx)
         {
             assert( size_t(_idx) < data_.size() );
             return data_[_idx];
         }
 
-        /// Const access to the i'th element. No range check is performed!
+        /**
+         * \brief Const access to the i-th element. No range check is performed.
+         * \param _idx The index of the element.
+         * \return A const reference to the i-th element.
+         */
         const_reference operator[](size_t _idx) const
         {
             assert( size_t(_idx) < data_.size());
             return data_[_idx];
         }
-
 
     private:
         vector_type data_;
@@ -247,81 +313,132 @@ namespace easy3d {
 
     //== CLASS DEFINITION =========================================================
 
-    /// \brief Implementation of a generic property.
-    /// \class Property easy3d/core/property.h
+    /**
+     * \brief Implementation of a generic property.
+     * \class Property easy3d/core/property.h
+     * \tparam T The type of the property.
+     */
     template <class T>
     class Property
     {
     public:
-
-        typedef typename PropertyArray<T>::reference reference;
-        typedef typename PropertyArray<T>::const_reference const_reference;
+        typedef typename PropertyArray<T>::reference reference;             ///< The reference type of the property.
+        typedef typename PropertyArray<T>::const_reference const_reference; ///< The const reference type of the property.
 
         friend class PropertyContainer;
 
     public:
-
+        /**
+         * \brief Constructor.
+         * \param p A pointer to the property array.
+         */
         explicit Property(PropertyArray<T> *p = nullptr) : parray_(p) {}
 
+        /// Destructor.
+        virtual ~Property() = default;
+
+        /**
+         * \brief Resets the property.
+         */
         void reset()
         {
             parray_ = nullptr;
         }
 
+        /**
+         * \brief Checks if the property is valid.
+         * \return True if the property is valid, false otherwise.
+         */
         operator bool() const
         {
             return parray_ != nullptr;
         }
 
+        /**
+         * \brief Accesses the i-th element.
+         * \param i The index of the element.
+         * \return A reference to the i-th element.
+         */
         virtual reference operator[](size_t i)
         {
             assert(parray_ != nullptr);
             return (*parray_)[i];
         }
 
+        /**
+         * \brief Const access to the i-th element.
+         * \param i The index of the element.
+         * \return A const reference to the i-th element.
+         */
         virtual const_reference operator[](size_t i) const
         {
             assert(parray_ != nullptr);
             return (*parray_)[i];
         }
 
+        /**
+         * \brief Gets a pointer to the array.
+         * \return A pointer to the array.
+         */
         const T* data() const
         {
             assert(parray_ != nullptr);
             return parray_->data();
         }
 
+        /**
+         * \brief Gets a reference to the underlying vector.
+         * \return A reference to the underlying vector.
+         */
         std::vector<T>& vector()
         {
             assert(parray_ != nullptr);
             return parray_->vector();
         }
 
+        /**
+         * \brief Const access to the underlying vector.
+         * \return A const reference to the underlying vector.
+         */
         const std::vector<T>& vector() const
         {
             assert(parray_ != nullptr);
             return parray_->vector();
         }
 
+        /**
+         * \brief Gets a reference to the property array.
+         * \return A reference to the property array.
+         */
         PropertyArray<T>& array()
         {
             assert(parray_ != nullptr);
             return *parray_;
         }
 
+        /**
+         * \brief Const access to the property array.
+         * \return A const reference to the property array.
+         */
         const PropertyArray<T>& array() const
         {
             assert(parray_ != nullptr);
             return *parray_;
         }
 
-        /// Return the name of the property
+        /**
+         * \brief Returns the name of the property.
+         * \return The name of the property.
+         */
         const std::string& name() const {
             assert(parray_ != nullptr);
             return parray_->name();
         }
 
-        /// Set the name of the property
+        /**
+         * \brief Sets the name of the property.
+         * \param n The new name of the property.
+         */
         void set_name(const std::string& n) {
             assert(parray_ != nullptr);
             parray_->set_name(n);
@@ -332,26 +449,37 @@ namespace easy3d {
     };
 
 
-
     //== CLASS DEFINITION =========================================================
 
 
-    /// \brief Implementation of generic property container.
-    /// \class PropertyContainer easy3d/core/property.h
+    /**
+     * \brief Implementation of a generic property container.
+     * \class PropertyContainer easy3d/core/property.h
+     */
     class PropertyContainer
     {
     public:
-
-        // default constructor
+        /**
+         * \brief Default constructor.
+         */
         PropertyContainer() : size_(0) {}
 
-        // destructor (deletes all property arrays)
+        /**
+         * \brief Destructor. Deletes all property arrays.
+         */
         virtual ~PropertyContainer() { clear(); }
 
-        // copy constructor: performs deep copy of property arrays
+        /**
+         * \brief Copy constructor. Performs deep copy of property arrays.
+         * \param _rhs The property container to copy from.
+         */
         PropertyContainer(const PropertyContainer& _rhs) { operator=(_rhs); }
 
-        // assignment: performs deep copy of property arrays
+        /**
+         * \brief Assignment operator. Performs deep copy of property arrays.
+         * \param _rhs The property container to assign from.
+         * \return A reference to the assigned property container.
+         */
         PropertyContainer& operator=(const PropertyContainer& _rhs)
         {
             if (this != &_rhs)
@@ -365,11 +493,15 @@ namespace easy3d {
             return *this;
         }
 
-        void transfer(const PropertyContainer& _rhs)
+        /**
+         * \brief Transfers properties from another property container.
+         * \param _rhs The property container to transfer from.
+         */
+        void transfer(const PropertyContainer& _rhs) const
         {
             for(auto pa : parrays_) {
                 for (auto rpa : _rhs.parrays_) {
-                    if(pa->is_same (*rpa)){
+                    if(pa->is_same(*rpa)){
                         pa->transfer(*rpa);
                         break;
                     }
@@ -377,7 +509,10 @@ namespace easy3d {
             }
         }
 
-        // Copy properties that don't already exist from another container
+        /**
+         * \brief Copies properties that don't already exist from another container.
+         * \param _rhs The property container to copy from.
+         */
         void copy_properties(const PropertyContainer& _rhs)
         {
             for (auto rpa : _rhs.parrays_)
@@ -398,9 +533,15 @@ namespace easy3d {
             }
         }
 
-        // Transfer one element with all properties
-        // WARNING: properties must be the same in the two containers
-        bool transfer(const PropertyContainer& _rhs, std::size_t from, std::size_t to)
+        /**
+         * \brief Transfers one element with all properties.
+         * \attention Properties must be the same in the two containers
+         * \param _rhs The property container to transfer from.
+         * \param from The index to transfer from.
+         * \param to The index to transfer to.
+         * \return True if the transfer was successful, false otherwise.
+         */
+        bool transfer(const PropertyContainer& _rhs, std::size_t from, std::size_t to) const
         {
             bool out = true;
             for(std::size_t i=0; i<parrays_.size(); ++i)
@@ -409,23 +550,37 @@ namespace easy3d {
             return out;
         }
 
-        // returns the current size of the property arrays
+        /**
+         * \brief Returns the current size of the property arrays.
+         * \return The current size of the property arrays.
+         */
         size_t size() const { return size_; }
 
-        // returns the number of property arrays
+        /**
+         * \brief Returns the number of property arrays.
+         * \return The number of property arrays.
+         */
         size_t n_properties() const { return parrays_.size(); }
 
-        // returns a vector of all property names
+        /**
+         * \brief Returns a vector of all property names.
+         * \return A vector of all property names.
+         */
         std::vector<std::string> properties() const
         {
-            std::vector<std::string> names;
-            for(auto pa : parrays_)
-                names.push_back(pa->name());
+            std::vector<std::string> names(parrays_.size());
+            for(std::size_t i=0; i<parrays_.size(); ++i)
+                names[i] = parrays_[i]->name();
             return names;
         }
 
-
-        // add a property with name \c name and default value \c t
+        /**
+         * \brief Adds a property with a given name and default value.
+         * \tparam T The type of the property.
+         * \param name The name of the property.
+         * \param t The default value of the property.
+         * \return The added property.
+         */
         template <class T> Property<T> add(const std::string& name, const T t=T())
         {
             // if a property with this name already exists, return an invalid property
@@ -446,8 +601,12 @@ namespace easy3d {
             return Property<T>(p);
         }
 
-
-        // get a property by its name. returns invalid property if it does not exist.
+        /**
+         * \brief Gets a property by its name.
+         * \tparam T The type of the property.
+         * \param name The name of the property.
+         * \return The property if it exists, otherwise an invalid property.
+         */
         template <class T> Property<T> get(const std::string& name) const
         {
             for(auto pa : parrays_)
@@ -456,8 +615,13 @@ namespace easy3d {
             return Property<T>();
         }
 
-
-        // returns a property if it exists, otherwise it creates it first.
+        /**
+         * \brief Gets or adds a property by its name.
+         * \tparam T The type of the property.
+         * \param name The name of the property.
+         * \param t The default value of the property.
+         * \return The property if it exists, otherwise the added property.
+         */
         template <class T> Property<T> get_or_add(const std::string& name, const T t=T())
         {
             Property<T> p = get<T>(name);
@@ -465,8 +629,11 @@ namespace easy3d {
             return p;
         }
 
-
-        // get the type of property by its name. returns typeid(void) if it does not exist.
+        /**
+         * \brief Gets the type information of a property by its name.
+         * \param name The name of the property.
+         * \return The type information of the property. Returns a typeid(void) if the property does not exist.
+         */
         const std::type_info& get_type(const std::string& name) const
         {
             for(auto pa : parrays_)
@@ -475,8 +642,12 @@ namespace easy3d {
             return typeid(void);
         }
 
-
-        // delete a property. Returns true on success.
+        /**
+         * \brief Removes a property.
+         * \tparam T The type of the property.
+         * \param h The property to remove.
+         * \return True if the property was removed, false otherwise.
+         */
         template <class T> bool remove(Property<T>& h)
         {
             auto it=parrays_.begin(), end=parrays_.end();
@@ -493,7 +664,11 @@ namespace easy3d {
             return false;
         }
 
-        // delete a property by name. Returns true on success.
+        /**
+         * \brief Removes a property by its name.
+         * \param name The name of the property to remove.
+         * \return True if the property was removed, false otherwise.
+         */
         bool remove(const std::string& name)
         {
             auto it=parrays_.begin(), end=parrays_.end();
@@ -509,7 +684,12 @@ namespace easy3d {
             return false;
         }
 
-        // rename a property. Returns true on success.
+        /**
+         * \brief Renames a property.
+         * \param old_name The current name of the property.
+         * \param new_name The new name of the property.
+         * \return True if the property was renamed, false otherwise.
+         */
         bool rename(const std::string& old_name, const std::string& new_name)
         {
             assert(!old_name.empty());
@@ -526,8 +706,9 @@ namespace easy3d {
             return false;
         }
 
-
-        // delete all properties
+        /**
+         * \brief Deletes all properties.
+         */
         void clear()
         {
             for(auto pa : parrays_)
@@ -536,15 +717,20 @@ namespace easy3d {
             size_ = 0;
         }
 
-
-        // reserve memory for n entries in all arrays
+        /**
+         * \brief Reserves memory for n entries in all arrays.
+         * \param n The number of entries to reserve memory for.
+         */
         void reserve(size_t n) const
         {
             for(auto pa : parrays_)
                 pa->reserve(n);
         }
 
-        // resize all arrays to size n
+        /**
+         * \brief Resizes all arrays to size n.
+         * \param n The new size of the arrays.
+         */
         void resize(size_t n)
         {
             for(auto pa : parrays_)
@@ -552,7 +738,10 @@ namespace easy3d {
             size_ = n;
         }
 
-        // resize the vector of properties to n, deleting all other properties
+        /**
+         * \brief Resizes the vector of properties to n, deleting all other properties.
+         * \param n The new size of the property vector.
+         */
         void resize_property_array(size_t n)
         {
             if (parrays_.size()<=n) {
@@ -564,14 +753,18 @@ namespace easy3d {
             parrays_.resize(n);
         }
 
-        // free unused space in all arrays
+        /**
+         * \brief Frees unused space in all arrays.
+         */
         void shrink_to_fit() const
         {
             for(auto pa : parrays_)
                 pa->shrink_to_fit();
         }
 
-        // add a new element to each vector
+        /**
+         * \brief Adds a new element to each vector.
+         */
         void push_back()
         {
             for(auto pa : parrays_)
@@ -579,35 +772,55 @@ namespace easy3d {
             ++size_;
         }
 
-        // reset element to its default property values
-        void reset(size_t idx)
-        {
+        /**
+         * \brief Resets an element to its default property values.
+         * \param idx The index of the element to reset.
+         */
+        void reset(size_t idx) const {
             for(auto pa : parrays_)
                 pa->reset(idx);
         }
 
-        // swap elements i0 and i1 in all arrays
+        /**
+         * \brief Swaps elements i0 and i1 in all arrays.
+         * \param i0 The index of the first element.
+         * \param i1 The index of the second element.
+         */
         void swap(size_t i0, size_t i1) const
         {
             for(auto pa : parrays_)
                 pa->swap(i0, i1);
         }
 
-        // swap content with other Property_container
-        void swap (PropertyContainer& other)
-        {
-            this->parrays_.swap (other.parrays_);
+        /**
+         * \brief Swaps content with another property container.
+         * \param other The other property container to swap with.
+         */
+        void swap(PropertyContainer& other) noexcept {
+            this->parrays_.swap(other.parrays_);
             std::swap(this->size_, other.size_);
         }
 
-        // copy 'from' -> 'to' in all arrays
+        /**
+         * \brief Copies an element from one index to another in all arrays.
+         * \param from The index to copy from.
+         * \param to The index to copy to.
+         */
         void copy(size_t from, size_t to) const
         {
             for(auto pa : parrays_)
                 pa->copy(from, to);
         }
 
+        /**
+         * \brief Returns the vector of property arrays (read-only).
+         * \return The vector of property arrays.
+         */
         const std::vector<BasePropertyArray*>& arrays() const { return parrays_; }
+        /**
+         * \brief Returns the vector of property arrays.
+         * \return The vector of property arrays.
+         */
         std::vector<BasePropertyArray*>& arrays() { return parrays_; }
 
     private:
