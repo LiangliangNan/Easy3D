@@ -40,89 +40,182 @@ namespace easy3d {
      */
     class OpenglUtil {
     public:
+        /**
+         * \brief Initialize OpenGL.
+         * \return \c true if initialization is successful, \c false otherwise.
+         */
         static bool init();
-
+        /**
+         * \brief Check if OpenGL is initialized.
+         * \return \c true if OpenGL is initialized, \c false otherwise.
+         */
         static bool is_initialized();
 
         // -------------- general information --------------
 
-        /// returns either GL_CONTEXT_CORE_PROFILE_BIT or GL_CONTEXT_COMPATIBILITY_PROFILE_BIT
+        /**
+         * \brief Get the OpenGL profile.
+         * \return Either GL_CONTEXT_CORE_PROFILE_BIT or GL_CONTEXT_COMPATIBILITY_PROFILE_BIT.
+         */
         static int gl_profile();
 
+        /**
+         * \brief Check if a specific OpenGL feature is supported.
+         * \param name The name of the feature, e.g., "GL\_VERSION\_3\_2", "GL\_ARB\_vertex\_array\_object".
+         * \return \c true if the feature is supported, \c false otherwise.
+         */
         static bool is_supported(const std::string &name);  // e.g., "GL_VERSION_3_2", "GL_ARB_vertex_array_object"
+        /**
+         * \brief Check if a specific OpenGL extension is available.
+         * \param name The name of the extension, e.g., "GL\_EXT\_framebuffer\_object".
+         * \return \c true if the extension is available, \c false otherwise.
+         */
         static bool has_extension(const std::string &name); // e.g., "GL_EXT_framebuffer_object"
-
+        /**
+         * \brief Get the GLEW version.
+         * \return The GLEW version as a string.
+         */
         static std::string glew_version();
-
+        /**
+         * \brief Get the OpenGL vendor.
+         * \return The OpenGL vendor as a string.
+         */
         static std::string gl_vendor();
-
+        /**
+         * \brief Get the OpenGL renderer.
+         * \return The OpenGL renderer as a string.
+         */
         static std::string gl_renderer();
-
+        /**
+         * \brief Get the OpenGL version.
+         * \return The OpenGL version as a string.
+         */
         static std::string gl_version();
-
+        /**
+         * \brief Get the OpenGL extensions.
+         * \return The OpenGL extensions as a string.
+         */
         static std::string gl_extensions();
-
+        /**
+         * \brief Get the GLSL version.
+         * \return The GLSL version as a string.
+         */
         static std::string glsl_version();
-
+        /**
+         * \brief Get the major version of OpenGL.
+         * \return The major version of OpenGL.
+         */
         static int gl_major_version();
-
+        /**
+         * \brief Get the minor version of OpenGL.
+         * \return The minor version of OpenGL.
+         */
         static int gl_minor_version();
-
+        /**
+         * \brief Get the GLEW version number.
+         * \return The GLEW version number.
+         */
         static float glew_version_number();
-
+        /**
+         * \brief Get the OpenGL version number.
+         * \return The OpenGL version number.
+         */
         static float gl_version_number();
-
+        /**
+         * \brief Get the GLSL version number.
+         * \return The GLSL version number.
+         */
         static float glsl_version_number();
-
+        /**
+         * \brief Get the number of samples.
+         * \return The number of samples.
+         */
         static int samples();
 
-        /// Query the OpenGL viewport. The parameters are the same as in glViewport(x, y, width, height).
-        /// x, y: the lower left corner of the viewport rectangle, in pixels.
-        /// width, height: the width and height of the viewport.
+        /**
+         * \brief Query the OpenGL viewport. The parameters are the same as in glViewport(x, y, width, height)
+         * \param x The lower left corner x-coordinate of the viewport rectangle, in pixels.
+         * \param y The lower left corner y-coordinate of the viewport rectangle, in pixels.
+         * \param width The width of the viewport.
+         * \param height The height of the viewport.
+         */
         static void viewport(int &x, int &y, int &width, int &height);
 
         // ----------------- GPU memory  -------------------
 
-        /// in MB.
-        /// returns 0 if the query fails.
-        /// NOTE: (1) OpenGL >= 2.0 is required.
-        ///		  (2) currently only NVidia GPUs are supported
+        /**
+         * \brief Get the total GPU memory.
+         * \return The total GPU memory in MB. Returns 0 if the query fails.
+         * \note OpenGL >= 2.0 is required. Currently, only NVidia GPUs are supported.
+         */
         static int total_gpu_memory();
-
+        /**
+         * \brief Get the available GPU memory.
+         * \return The available GPU memory in MB.
+         */
         static int available_gpu_memory();
 
         // ----------------- print information  -------------------
 
-        /// sets the output stream for the messages.
-        /// if null, LOG(INFO) is the default output stream
+        /**
+         * \brief Set the output stream for the messages.
+         * \param out The output stream. If null, LOG(INFO) is the default output stream.
+         */
         static void set_output(std::ostream *out);
 
         // --------------- buffer information ----------------
 
-        /// display current bound buffer info
+        /**
+         * \brief Get current bound buffer info.
+         */
         static void get_current_buffer_info();
 
-        /// display the buffer information
+        /**
+         * \brief Get the buffer information.
+         * \param target The target buffer.
+         * \param bufferName The name of the buffer.
+         */
         static void get_buffer_info(unsigned int target, int bufferName);
 
         // --------------- GLSL information (GLSL version 4.2 is supported )----------------
 
-        /// display VAO information, including its attributes
+        /**
+         * \brief Get VAO information, including its attributes.
+         * \param buffer The VAO buffer.
+         */
         static void get_vao_info(unsigned int buffer);
 
-        /// display detailed info for a program
+        /**
+         * \brief Get detailed info for a program.
+         * \param program The program ID.
+         */
         static void get_program_info(unsigned int program);
 
-        /// display detailed info for attributes in a program
+        /**
+         * \brief Get detailed info for attributes in a program.
+         * \param program The program ID.
+         */
         static void get_attributes_info(unsigned int program);
 
-        /// display info for all active uniforms in a program
+        /**
+         * \brief Get info for all active uniforms in a program.
+         * \param program The program ID.
+         */
         static void get_uniforms_info(unsigned int program);
 
-        /// display a uniform's value(s)
+        /**
+         * \brief Get a uniform's value(s).
+         * \param program The program ID.
+         * \param uniName The name of the uniform.
+         */
         static void get_uniform_info(unsigned int program, const std::string &uniName);
 
-        /// display the values for a uniform in a named block
+        /**
+         * \brief Get the values for a uniform in a named block.
+         * \param program The program ID.
+         * \param blockName The name of the block.
+         * \param uniName The name of the uniform.
+         */
         static void
         get_uniform_in_block_info(unsigned int program, const std::string &blockName, const std::string &uniName);
 
@@ -173,7 +266,6 @@ namespace easy3d {
         static std::unordered_map<int, std::string> spTessGenSpacing;
         static std::unordered_map<int, std::string> spVertexOrder;
     };
-
 
 }
 

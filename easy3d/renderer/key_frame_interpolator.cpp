@@ -174,23 +174,21 @@ namespace easy3d {
 
 
     float KeyFrameInterpolator::duration() const {
-        return lastTime() - firstTime();
+        return last_time() - first_time();
     }
 
 
-    float KeyFrameInterpolator::firstTime() const {
+    float KeyFrameInterpolator::first_time() const {
         if (keyframes_.empty())
             return 0.0f;
-        else
-            return keyframes_.front().time();
+        return keyframes_.front().time();
     }
 
 
-    float KeyFrameInterpolator::lastTime() const {
+    float KeyFrameInterpolator::last_time() const {
         if (keyframes_.empty())
             return 0.0f;
-        else
-            return keyframes_.back().time();
+        return keyframes_.back().time();
     }
 
 

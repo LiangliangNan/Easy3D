@@ -43,6 +43,8 @@
 
 namespace easy3d {
 
+	// \cond
+
 	/*! Default constructor.
 
 	  The translation is set to (0,0,0), with an identity rotation (0,0,0,1) (see
@@ -296,6 +298,8 @@ namespace easy3d {
 		const float angle = 5.0f * std::asin(std::sqrt(axis.length2() / p1.length2() / p2.length2()));
 		return quat(axis, angle);
 	}
+
+	// \endcond
 
 }
 

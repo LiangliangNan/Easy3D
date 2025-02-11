@@ -48,33 +48,43 @@ namespace easy3d {
      */
     class ModelPicker : public Picker {
     public:
+        /**
+         * \brief Constructor.
+         * \param cam The camera used for picking.
+         */
         explicit ModelPicker(const Camera *cam);
-
+        /**
+         * \brief Destructor.
+         */
         ~ModelPicker() override = default;
 
         /**
          * \brief Pick a model from a set of models given the cursor position in the screen coordinate system.
-         * @param models The models
-         * @param x The cursor x-coordinate, relative to the left edge of the content area.
-         * @param y The cursor y-coordinate, relative to the top edge of the content area.
-         * @attention The screen point is expressed in the screen coordinate system with an origin in the upper left
+         * \param models The models.
+         * \param x The cursor x-coordinate, relative to the left edge of the content area.
+         * \param y The cursor y-coordinate, relative to the top edge of the content area.
+         * \attention The screen point is expressed in the screen coordinate system with an origin in the upper left
          *            corner. So it doesn't necessarily correspond to a pixel on High DPI devices, e.g. a Mac with
          *            a Retina display.
-         * @return The picked model.
+         * \return The picked model.
          */
         Model *pick(const std::vector< std::shared_ptr<Model> >& models, int x, int y);
 
     private:
-
-        // render each model of the scene with a unique color
+        /**
+         * \brief Render each model of the scene with a unique color.
+         * \param models The models to render.
+         */
         void draw(const std::vector< std::shared_ptr<Model> >& models);
-        // render the drawable with color
+        /**
+         * \brief Render the drawable with color.
+         * \param drawable The drawable to render.
+         * \param color The color to use for rendering.
+         */
         void draw(Drawable *drawable, const vec4 &color);
 
     private:
-
-        std::unordered_map<Drawable *, State> states_;
-
+        std::unordered_map<Drawable *, State> states_;  ///< The states of the drawables.
     };
 
 

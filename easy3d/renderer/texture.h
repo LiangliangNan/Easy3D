@@ -36,57 +36,92 @@ namespace easy3d {
 
     /**
      * \brief OpenGL texture.
-     *
      * \class Texture easy3d/renderer/texture.h
-     *
      * \details currently only TEXTURE_2D is supported
      */
     class Texture {
     public:
+        /// The wrap mode of the texture.
         enum WrapMode {
-            CLAMP_TO_EDGE, REPEAT
+            CLAMP_TO_EDGE,  ///< Clamp the texture coordinate to the range [0, 1]
+            REPEAT          ///< Repeat the texture coordinate
         };
+        /// The filter mode of the texture.
         enum FilterMode {
-            NEAREST, LINEAR
+            NEAREST,  ///< Nearest neighbor interpolation
+            LINEAR    ///< Linear interpolation
         };
 
         /**
-         * Creates a texture from an image file.
-         * @image_file The full path to the image file.
-         * @return The created texture.
+         * \brief Creates a texture from an image file.
+         * \param image_file The full path to the image file.
+         * \param wrap The wrap mode of the texture.
+         * \param filter The filter mode of the texture.
+         * \return The created texture.
          */
-        static Texture *
-        create(const std::string &image_file, WrapMode wrap = CLAMP_TO_EDGE, FilterMode filter = LINEAR);
+        static Texture* create(const std::string &image_file, WrapMode wrap = CLAMP_TO_EDGE, FilterMode filter = LINEAR);
 
         /**
-         * Creates a texture from the given image data.
-         * @param rgb_data The image data.
-         * @param width The width (i.e., number of columns) of the image.
-         * @param height The rows (i.e., number of rows) of the image.
-         * @param comp The number of components for each pixel (e.g., 3 for RGB)
-         * @return The created texture.
+         * \brief Creates a texture from the given image data.
+         * \param rgb_data The image data.
+         * \param width The width (i.e., number of columns) of the image.
+         * \param height The height (i.e., number of rows) of the image.
+         * \param comp The number of components for each pixel (e.g., 3 for RGB).
+         * \param wrap The wrap mode of the texture.
+         * \param filter The filter mode of the texture.
+         * \return The created texture.
          */
         static Texture *create(const std::vector<unsigned char> &rgb_data, int width, int height, int comp,
                                WrapMode wrap = CLAMP_TO_EDGE, FilterMode filter = LINEAR);
 
+        /**
+         * \brief Destructor.
+         */
         ~Texture();
 
+        /**
+         * \brief Get the OpenGL texture ID.
+         * \return The texture ID.
+         */
         unsigned int id() const { return id_; }
-
+        /**
+         * \brief Get the name of the texture.
+         * \return The name of the texture.
+         */
         const std::string &name() const { return name_; }
-
+        /**
+         * \brief Bind the texture to a texture unit.
+         * \param unit The texture unit to bind to.
+         */
         void bind(int unit = 0) const;
-
+        /**
+         * \brief Release the texture.
+         */
         void release() const;
-
+        /**
+         * \brief Get the width of the texture.
+         * \return The width of the texture.
+         */
         int width() const { return sizes_[0]; }
-
+        /**
+         * \brief Get the height of the texture.
+         * \return The height of the texture.
+         */
         int height() const { return sizes_[1]; }
-
+        /**
+         * \brief Get the number of channels of the texture.
+         * \return The number of channels of the texture.
+         */
         int channels() const { return sizes_[2]; }
-
+        /**
+         * \brief Get the wrap mode of the texture.
+         * \return The wrap mode of the texture.
+         */
         WrapMode wrap_mode() const { return wrap_mode_; }
-
+        /**
+         * \brief Get the filter mode of the texture.
+         * \return The filter mode of the texture.
+         */
         FilterMode filter_mode() const { return filter_mode_; }
 
     private:
@@ -98,7 +133,9 @@ namespace easy3d {
         FilterMode filter_mode_;
 
     private:
-        /** The creation of a texture is only allowed by using the create() function */
+        /**
+         * \brief Private constructor to enforce the use of the create() function.
+         */
         Texture();
 
         //copying disabled
@@ -111,13 +148,13 @@ namespace easy3d {
 
 
     /**
-     * @brief Discretize a gradually varying-color (from left to right) image into a set of uniform colored vertical
-     *        stripes.
-     * @param data The input data to be discretized.
-     * @param width The width of the image (i.e., number of pixels in a row).
-     * @param height The height of the image (i.e., number of pixels in a column).
-     * @param channels The number or color component per pixel.
-     * @param num_stripes The number of stripes. The image will remain unmodified if num_stripes >= image width.
+     * \brief Discretize a gradually varying-color (from left to right) image into a set of uniform colored vertical
+     *      stripes.
+     * \param data The input data to be discrete.
+     * \param width The width of the image (i.e., number of pixels in a row).
+     * \param height The height of the image (i.e., number of pixels in a column).
+     * \param channels The number of color components per pixel.
+     * \param num_stripes The number of stripes. The image will remain unmodified if num_stripes >= image width.
      */
     void discretize_image(
             std::vector<unsigned char> &data,

@@ -44,82 +44,116 @@
 
 namespace easy3d {
 
-
-    /*! \brief A manipulated frame with camera specific mouse bindings.
-      \class ManipulatedCameraFrame easy3d/renderer/manipulated_camera_frame.h
-
-      \details A ManipulatedCameraFrame is a specialization of a ManipulatedFrame, designed
-      to be set as the Camera::frame(). Mouse motions are basically interpreted in a
-      negated way: when the mouse goes to the right, the ManipulatedFrame
-      translation goes to the right, while the ManipulatedCameraFrame has to go to
-      the \e left, so that the \e scene seems to move to the right.
-
-      A ManipulatedCameraFrame rotates around its pivotPoint(), which corresponds to
-      the associated Camera::pivotPoint().
-
-      A ManipulatedCameraFrame can also "fly" in the scene. It basically moves
-      forward, and turns according to the mouse motion. See flySpeed(),
-      sceneUpVector() and the QGLViewer::MOVE_FORWARD and QGLViewer::MOVE_BACKWARD
-      QGLViewer::MouseAction.
-
-      See the <a href="../mouse.html">mouse page</a> for a description of the
-      possible actions that can be performed using the mouse and their bindings.
-      */
+    /**
+     * \brief A manipulated frame with camera-specific mouse bindings.
+     * \class ManipulatedCameraFrame easy3d/renderer/manipulated_camera_frame.h
+     *
+     * \details A ManipulatedCameraFrame is a specialization of a ManipulatedFrame, designed
+     *      to be set as the Camera::frame(). Mouse motions are interpreted in a way that
+     *      mimics the movement of the camera in the scene. For example, when the mouse moves
+     *      to the right, the ManipulatedFrame would translate to the right, but the
+     *      ManipulatedCameraFrame translates to the \e left, making the \e scene appear to
+     *      move to the right.
+     *
+     *      A ManipulatedCameraFrame rotates around its pivotPoint(), which corresponds to
+     *      the associated Camera::pivotPoint().
+     */
     class ManipulatedCameraFrame : public ManipulatedFrame {
     public:
+        /// Default constructor.
         ManipulatedCameraFrame();
 
         /*! Virtual destructor. Empty. */
         ~ManipulatedCameraFrame() override = default;
 
+        /**
+         * \brief Copy constructor.
+         * \param mcf The ManipulatedCameraFrame to copy from.
+         */
         ManipulatedCameraFrame(const ManipulatedCameraFrame &mcf);
 
+        /**
+         * \brief Copy assignment operator.
+         * \param mcf The ManipulatedCameraFrame to assign from.
+         * \return A reference to this ManipulatedCameraFrame.
+         */
         ManipulatedCameraFrame &operator=(const ManipulatedCameraFrame &mcf);
 
         /*! @name Pivot point */
         //@{
-        /*! Returns the point the ManipulatedCameraFrame pivot point, around which the
-        camera rotates.
-
-        It is defined in the world coordinate system. Default value is (0,0,0).
-
-        When the ManipulatedCameraFrame is associated to a Camera,
-        Camera::pivotPoint() also returns this value. This point can interactively be
-        changed using the mouse (see Camera::setPivotPointFromPixel() and
-        QGLViewer::RAP_FROM_PIXEL and QGLViewer::RAP_IS_CENTER in the <a
-        href="../mouse.html">mouse page</a>). */
+        /**
+         * \brief Returns the point the ManipulatedCameraFrame pivots around, which is the
+         *      camera's pivot point.
+         * \details The pivot point is defined in the world coordinate system. Default value is (0,0,0).
+         *      When the ManipulatedCameraFrame is associated with a Camera, Camera::pivotPoint() also returns this
+         *      value. This point can interactively be changed by Camera::setPivotPoint().
+         * \return The pivot point.
+         * \sa setPivotPoint()
+         */
         vec3 pivotPoint() const { return pivotPoint_; }
 
-        /*! Sets the pivotPoint(), defined in the world coordinate system. */
+        /**
+         * \brief Sets the pivotPoint(), defined in the world coordinate system.
+         * \param point The new pivot point.
+         */
         void setPivotPoint(const vec3 &point) { pivotPoint_ = point; }
         //@}
 
         /*! @name Camera manipulation */
         //@{
     public:
-        /*! Returns whether or not the QGLViewer::ZOOM action zooms on the pivot
-          point.
-
-          When set to \c false (default), a zoom action will move the camera along its
-          Camera::viewDirection(), i.e. back and forth along a direction perpendicular
-          to the projection screen.
-
-          setZoomsOnPivotPoint() to \c true will move the camera along an axis defined
-          by the Camera::pivotPoint() and its current position instead. As a result,
-          the projected position of the pivot point on screen will stay the same
-          during a zoom. */
+        /**
+         * \brief Returns whether the QGLViewer::ZOOM action zooms on the pivot point.
+         * \details When set to \c false (default), a zoom action will move the camera along its
+         *      Camera::viewDirection(), i.e., back and forth along a direction perpendicular to the projection screen.
+         *      setZoomsOnPivotPoint() to \c true will move the camera along an axis defined by the Camera::pivotPoint()
+         *      and its current position instead. As a result, the projected position of the pivot point on screen will
+         *      stay the same during a zoom.
+         * \return \c true if zooming on the pivot point is enabled, \c false otherwise.
+         */
         bool zoomsOnPivotPoint() const { return zoomsOnPivotPoint_; }
 
-        /*! Sets the value of zoomsOnPivotPoint(). Default value is false. */
+        /**
+         * \brief Sets the value of zoomsOnPivotPoint().
+         * \param enabled Whether zooming on the pivot point is enabled.
+         */
         void setZoomsOnPivotPoint(bool enabled) { zoomsOnPivotPoint_ = enabled; }
         //@}
 
         /*! @name Frame manipulation */
         //@{
+        /**
+         * \brief Rotates the frame based on mouse movement.
+         * \param mouse_x The current x position of the mouse.
+         * \param mouse_y The current y position of the mouse.
+         * \param mouse_dx The change in x position of the mouse.
+         * \param mouse_dy The change in y position of the mouse.
+         * \param camera The camera associated with the frame.
+         * \param axis The axis of rotation.
+         */
         void action_rotate(int mouse_x, int mouse_y, int mouse_dx, int mouse_dy, Camera* camera, ScreenAxis axis) override;
+        /**
+         * \brief Translates the frame based on mouse movement.
+         * \param mouse_x The current x position of the mouse.
+         * \param mouse_y The current y position of the mouse.
+         * \param mouse_dx The change in x position of the mouse.
+         * \param mouse_dy The change in y position of the mouse.
+         * \param camera The camera associated with the frame.
+         * \param axis The axis of translation.
+         */
         void action_translate(int mouse_x, int mouse_y, int mouse_dx, int mouse_dy, Camera* camera, ScreenAxis axis) override;
+        /**
+         * \brief Zooms the frame based on mouse wheel movement.
+         * \param dy_wheel The change in the mouse wheel position.
+         * \param camera The camera associated with the frame.
+         */
         void action_zoom(int dy_wheel, Camera* camera) override;
-        virtual void action_turn(float angle_radian, Camera* camera);        // The rotation around camera Y
+        /**
+         * \brief Turns the frame around the camera's Y axis.
+         * \param angle_radian The angle of rotation in radians.
+         * \param camera The camera associated with the frame.
+         */
+        virtual void action_turn(float angle_radian, Camera* camera);
         //@}
 
         //---------------------------------------------------------------
@@ -170,14 +204,11 @@ namespace easy3d {
 //        camera()->showEntireScene();
 
     private:
-
         bool zoomsOnPivotPoint_;
-
         vec3 pivotPoint_;
 
     private:
         friend class Camera;
-
         friend class Viewer;
     };
 

@@ -28,7 +28,7 @@
  *
  * The code in this file is adapted from libQGLViewer with significant
  * modifications and enhancement.
- *		- libQGLViewer (version Version 2.7.1, Nov 17th, 2017)
+ *		- libQGLViewer (Version 2.7.1, Nov 17th, 2017)
  * The original code is available at
  *      http://libqglviewer.com/
  *
@@ -60,7 +60,7 @@ namespace easy3d {
      *      interpolated) of your application. When the user start_interpolation(), the KeyFrameInterpolator regularly
      *      updates the frame() position and orientation along the path.
      *
-     *      A keyframes is defined by a Frame and a time, expressed in seconds. The time has to be monotonously
+     *      A keyframe is defined by a Frame and a time, expressed in seconds. The time has to be monotonously
      *      increasing over keyframes. When interpolation_speed() equals 1.0 (default value), these times correspond
      *      to actual user's seconds during interpolation (provided that your main loop is fast enough).
      *      The interpolation is then real-time: the keyframes will be reached at their keyframe_time().
@@ -72,19 +72,19 @@ namespace easy3d {
      *      interpolation_period() * interpolation_speed(). This is especially useful for benchmarking or movie
      *      creation (constant number of snapshots).
      *
-     *      During the interpolation, the KeyFrameInterpolator emits an \c frame_interpolated Signal which will usually
+     *      During the interpolation, the KeyFrameInterpolator emits a \c frame_interpolated Signal which will usually
      *      be connected to the viewer's update() method. The interpolation is stopped when duration has reached.
-     *      Another Signal interpolation_stopped will be emitted when the interpolation reaches its end or the when the
+     *      Another Signal interpolation_stopped will be emitted when the interpolation reaches its end or when the
      *      stop_interpolation() method was triggered.
      *
      *      Note that a Camera has a keyframe_interpolator() method, that can be used to drive the Camera along a
      *      path, or to restore a saved position (a path made of a single keyframe).
-     *      
+     *
      * \note The default duration of any two consecutive keyframes is the same. So for a smoother animation, it is
-     *      suggested to regularly (as equally as possible) sample the viewpoints.
-     *      
-     * \attention If a Constraint is attached to the frame() (see Frame::constraint()), it should be deactivated before 
-     *      is_interpolation_started(), otherwise the interpolated motion (computed as if there was no constraint) will 
+     *      suggested to regularly sample the viewpoints (as equally as possible).
+     *
+     * \attention If a Constraint is attached to the frame() (see Frame::constraint()), it should be deactivated before
+     *      is_interpolation_started(), otherwise the interpolated motion (computed as if there was no constraint) will
      *      probably be erroneous.
      *
      * Animation example:
@@ -97,7 +97,7 @@ namespace easy3d {
      *          // starts animation
      *          kfi->start_interpolation();
      *      \endcode
-     *      
+     *
      * \todo Allow edit the duration for each keyframe?  (not sure due to many keyframes and can be annoying).
      */
     class KeyFrameInterpolator
@@ -105,8 +105,9 @@ namespace easy3d {
     public:
         /**
          * \brief Creates a KeyFrameInterpolator, with \p frame as associated frame().
-         * \details The frame() can be set or changed using set_frame(). The interpolation_speed() and 
-         *      interpolation_period() are set to their default values. 
+         * \details The frame() can be set or changed using set_frame(). The interpolation_speed() and
+         *      interpolation_period() are set to their default values.
+         * \param frame The frame to be associated with the KeyFrameInterpolator.
          */
         explicit KeyFrameInterpolator(Frame *frame = nullptr);
 
@@ -120,6 +121,7 @@ namespace easy3d {
          * \brief Appends a new keyframe to the path.
          * \details Same as add_keyframe(const Frame&, float), except that the keyframe_time() is automatically set
          *      to previous keyframe_time() plus one second (or 0.0 if there is no previous keyframe).
+         * \param frame The frame to be added as a keyframe.
          * \return \c true if the keyframe has been successfully added.
          */
         bool add_keyframe(const Frame& frame);
@@ -127,6 +129,8 @@ namespace easy3d {
         /**
          * \brief Appends a new keyframe to the path, with its associated \p time (in seconds).
          * \details The path will use the current \p frame state.
+         * \param frame The frame to be added as a keyframe.
+         * \param time The time associated with the keyframe.
          * \return \c true if the keyframe has been successfully added.
          * \attention The keyframe_time() have to be monotonously increasing over keyframes.
          */
@@ -141,6 +145,8 @@ namespace easy3d {
         /**
          * \brief Sets the time corresponding to the \p index-th keyframe.
          * \details The \p index has to be in the range [0, number_of_keyframes()-1].
+         * \param index The index of the keyframe.
+         * \param t The time to be set for the keyframe.
          * \note The time \c t have to be monotonously increasing over keyframes.
          * \sa keyframe_time()
          */
@@ -149,6 +155,8 @@ namespace easy3d {
         /**
          * \brief Sets the position of the \p index-th keyframe.
          * \details The \p index has to be in the range [0, number_of_keyframes()-1].
+         * \param index The index of the keyframe.
+         * \param pos The position to be set for the keyframe.
          * \sa keyframe_time()
          */
         void set_keyframe_position(std::size_t index, const vec3& pos);
@@ -156,6 +164,8 @@ namespace easy3d {
         /**
          * \brief Sets the orientation of the \p index-th keyframe.
          * \details The \p index has to be in the range [0, number_of_keyframes()-1].
+         * \param index The index of the keyframe.
+         * \param q The orientation to be set for the keyframe.
          * \sa keyframe_time()
          */
         void set_keyframe_orientation(std::size_t index, const quat& q);
@@ -175,12 +185,16 @@ namespace easy3d {
          * \details The returned Frame was set using set_frame() or with the KeyFrameInterpolator constructor.
          *      When is_interpolation_started(), this Frame's position and orientation will regularly be updated
          *      by a timer, so that they follow the KeyFrameInterpolator path.
+         * \return The associated Frame.
          * \sa set_frame()
          */
         Frame* frame() const { return frame_; }
 
     public:
-        /** Sets the frame() associated to the KeyFrameInterpolator. */
+        /**
+         * \brief Sets the frame() associated to the KeyFrameInterpolator.
+         * \param frame The frame to be associated with the KeyFrameInterpolator.
+         */
         void set_frame(Frame* const frame) { frame_ = frame; }
         //@}
 
@@ -190,12 +204,15 @@ namespace easy3d {
         /**
          * \brief Returns the number of keyframes used by the interpolation.
          * \details Use add_keyframe() to add new keyframes.
+         * \return The number of keyframes.
          */
         std::size_t number_of_keyframes() const { return keyframes_.size(); }
 
         /**
          * \brief Returns the Frame associated with the keyframe at \p index.
          * \details The \p index has to be in the range [0, number_of_keyframes()-1].
+         * \param index The index of the keyframe.
+         * \return The Frame associated with the keyframe.
          * \sa keyframe_time()
          */
         Frame keyframe(std::size_t index) const;
@@ -203,6 +220,8 @@ namespace easy3d {
         /**
          * \brief Returns the time corresponding to the \p index-th keyframe.
          * \details The \p index has to be in the range [0, number_of_keyframes()-1].
+         * \param index The index of the keyframe.
+         * \return The time corresponding to the keyframe.
          * \sa set_keyframe_time().
          */
         float keyframe_time(std::size_t index) const;
@@ -210,6 +229,8 @@ namespace easy3d {
         /**
          * \brief Returns the position of the \p index-th keyframe.
          * \details The \p index has to be in the range [0, number_of_keyframes()-1].
+         * \param index The index of the keyframe.
+         * \return The position of the keyframe.
          * \sa set_keyframe_position()
          */
         const vec3& keyframe_position(std::size_t index) const;
@@ -217,14 +238,17 @@ namespace easy3d {
         /**
          * \brief Returns the orientation of the \p index-th keyframe.
          * \details The \p index has to be in the range [0, number_of_keyframes()-1].
+         * \param index The index of the keyframe.
+         * \return The orientation of the keyframe.
          * \sa set_keyframe_orientation()
          */
         const quat& keyframe_orientation(std::size_t index) const;
 
         /**
          * \brief Returns the duration of the KeyFrameInterpolator path, expressed in seconds.
-         * \details The duration simply corresponds to lastTime() - firstTime(). It returns 0.0 if the path has less
+         * \details The duration simply corresponds to last_time() - first_time(). It returns 0.0 if the path has less
          *      than 2 keyframes.
+         * \return The duration of the path.
          * \sa keyframe_time().
          */
         float duration() const;
@@ -232,26 +256,33 @@ namespace easy3d {
         /**
          * \brief Returns the time corresponding to the first keyframe, expressed in seconds.
          * \details Returns 0.0 if the path is empty.
-         * \sa lastTime(), duration(), and keyframe_time().
+         * \return The time of the first keyframe.
+         * \sa last_time(), duration(), and keyframe_time().
          */
-        float firstTime() const;
+        float first_time() const;
 
         /**
          * \brief Returns the time corresponding to the last keyframe, expressed in seconds.
          * \details Returns 0.0 if the path is empty.
-         * \sa firstTime(), duration(), and keyframe_time().
+         * \return The time of the last keyframe.
+         * \sa first_time(), duration(), and keyframe_time().
          */
-        float lastTime() const;
+        float last_time() const;
         //@}
 
         /*! @name Interpolation parameters */
         //@{
     public:
 
-        enum Method { FITTING, INTERPOLATION };
+        /** Interpolation method */
+        enum Method {
+            FITTING,        ///< Fit a curve to the keyframes
+            INTERPOLATION   ///< Interpolate between keyframes
+        };
         /**
          * \brief Returns the interpolation method.
          * \details Default value is \c Interpolation (cubic spline interpolation).
+         * \return The interpolation method.
          */
         Method interpolation_method() const { return interpolation_method_; }
 
@@ -259,6 +290,7 @@ namespace easy3d {
          * \brief Returns the current interpolation speed.
          * \details Default value is 1.0, which means keyframe_time() will be matched during the interpolation
          *      (provided that your main loop is fast enough).
+         * \return The interpolation speed.
          */
         float interpolation_speed() const { return interpolation_speed_; }
 
@@ -268,28 +300,34 @@ namespace easy3d {
          *      is_interpolation_started(). This period (multiplied by interpolation_speed()) will be added to be the
          *      next frame's time.
          *      The interpolation_period() multiplied by frame_rate() is always equal to 1.0.
+         * \return The interpolation period in milliseconds.
          */
         int interpolation_period() const { return static_cast<int>(1000.0 / fps_); }
 
         /**
          * \brief Returns the desired frame rate. Default value is 30.
          * \details The frame_rate() multiplied by interpolation_period() is always equal to 1.0.
+         * \return The frame rate.
          */
         int frame_rate() const { return fps_; }
 
     public:
-
         /**
          * \brief Sets the interpolation_method().
+         * \param m The interpolation method.
          */
         void set_interpolation_method(Method m);
 
         /**
          * \brief Sets the interpolation_speed().
+         * \param speed The interpolation speed.
          */
         void set_interpolation_speed(float speed);
 
-        /// Sets the desired frame rate.
+        /**
+         * \brief Sets the desired frame rate.
+         * \param fps The frame rate.
+         */
         void set_frame_rate(int fps);
         //@}
 
@@ -299,11 +337,11 @@ namespace easy3d {
         /**
          * \brief Returns whether the interpolation is being performed.
          * \details Use start_interpolation(), stop_interpolation() or toggleInterpolation() to modify this state.
+         * \return \c true if the interpolation is started, \c false otherwise.
          */
         bool is_interpolation_started() const { return interpolation_started_; }
 
     public:
-
         /**
          * \brief Starts the interpolation process.
          * \details A timer is started with an interpolation_period() period that updates the frame()'s position and
@@ -331,7 +369,10 @@ namespace easy3d {
         }
 
     public:
-        /// Computes and returns all the interpolated frames.
+        /**
+         * \brief Computes and returns all the interpolated frames.
+         * \return A vector of interpolated frames.
+         */
         const std::vector<Frame>& interpolate();
         //@}
 
@@ -344,12 +385,15 @@ namespace easy3d {
          * \param camera The current camera used by the viewer.
          * \param camera_width Controls the size of the cameras. A good value can be 5% of the scene radius, or
          *      10% of the character height (in walking mode), for instance.
+         * \param color The color of the cameras.
          */
         void draw_cameras(const Camera* camera, float camera_width, const vec4& color = vec4(0.5f, 0.8f, 0.5f, 1.0f));
 
         /**
          * \brief Draws the interpolated camera path.
          * \param camera The current camera used by the viewer.
+         * \param thickness The thickness of the path.
+         * \param color The color of the path.
          */
         void draw_path(const Camera* camera, float thickness = 2.0f, const vec4& color = vec4(1.0f, 1.0f, 0.5f, 1.0f));
 
@@ -358,9 +402,17 @@ namespace easy3d {
         /*! @name File io */
         //@{
     public:
-        /// saves the camera path to a file
+        /**
+         * \brief Saves the camera path to a file.
+         * \param file_name The name of the file.
+         * \return \c true if the keyframes were successfully saved.
+         */
         bool save_keyframes(const std::string& file_name) const;
-        /// reads camera path from a file
+        /**
+         * \brief Reads the camera path from a file.
+         * \param file_name The name of the file.
+         * \return \c true if the keyframes were successfully read.
+         */
         bool read_keyframes(const std::string& file_name);
         //@}
 
@@ -411,8 +463,8 @@ namespace easy3d {
         TrianglesDrawable* cameras_drawable_;
 
     public:
-        Signal<> frame_interpolated;
-        Signal<> interpolation_stopped;
+        Signal<> frame_interpolated;    ///< Emitted when a frame is interpolated.
+        Signal<> interpolation_stopped; ///< Emitted when the interpolation is stopped.
     };
 
 }

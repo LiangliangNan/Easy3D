@@ -44,167 +44,157 @@
 
 namespace easy3d {
 
-
-	/*! \brief A Frame that can be rotated and translated using the mouse.
+	/**
+	 * \brief A Frame that can be rotated and translated using the mouse.
 	 * \class ManipulatedFrame easy3d/renderer/manipulated_frame.h
 	 *
-	 * \details A ManipulatedFrame converts the mouse motion into a translation and an orientation updates.
-	 * A ManipulatedFrame is used to move an object in the scene. Combined with object selection, its MouseGrabber
-	 * properties and a dynamic update of the scene, the ManipulatedFrame introduces a great reactivity in your
-	 * applications.
-
-	  A ManipulatedFrame is attached to a QGLViewer using
-	  QGLViewer::setManipulatedFrame(): \code init() { setManipulatedFrame( new
-	  ManipulatedFrame() ); }
-
-	  draw()
-	  {
-			glPushMatrix();
-			glMultMatrixd(manipulatedFrame()->matrix());
-			// draw the manipulated object here
-			glPopMatrix();
-	  }
-	  \endcode
-	  See the <a href="../examples/manipulatedFrame.html">manipulatedFrame
-	  example</a> for a complete application.
-
-	  Mouse events are normally sent to the QGLViewer::camera(). You have to press
-	  the QGLViewer::FRAME state key (default is \c Control) to move the
-	  QGLViewer::manipulatedFrame() instead. See the <a href="../mouse.html">mouse
-	  page</a> for a description of mouse button bindings.
-
-	  <h3>Inherited functionalities</h3>
-
-	  A ManipulatedFrame is an overloaded instance of a Frame. The powerful
-	  coordinate system transformation functions (Frame::coordinatesOf(),
-	  Frame::transformOf(), ...) can hence be applied to a ManipulatedFrame.
-
-	  A ManipulatedFrame is also a MouseGrabber. If the mouse cursor gets within a
-	  distance of 10 pixels from the projected position of the ManipulatedFrame, the
-	  ManipulatedFrame becomes the new QGLViewer::mouseGrabber(). It can then be
-	  manipulated directly, without any specific state key, object selection or GUI
-	  intervention. This is very convenient to directly move some objects in the
-	  scene (typically a light). See the <a
-	  href="../examples/mouseGrabber.html">mouseGrabber example</a> as an
-	  illustration. Note that QWidget::setMouseTracking() needs to be enabled in
-	  order to use this feature (see the MouseGrabber documentation).
-
-	  <h3>Advanced functionalities</h3>
-
-	  A QGLViewer can handle at most one ManipulatedFrame at a time. If you want to
-	  move several objects in the scene, you simply have to keep a list of the
-	  different ManipulatedFrames, and to activate the right one (using
-	  QGLViewer::setManipulatedFrame()) when needed. This can for instance be done
-	  according to an object selection: see the <a href="../examples/luxo.html">luxo
-	  example</a> for an illustration.
-
-	  When the ManipulatedFrame is being manipulated using the mouse (mouse pressed
-	  and not yet released), isManipulated() returns \c true. This might be used to
-	  trigger a specific action or display (as is done with QGLViewer::fastDraw()).
-
-	  The ManipulatedFrame also emits a manipulated() signal each time its state is
-	  modified by the mouse. This signal is automatically connected to the
-	  QGLViewer::update() slot when the ManipulatedFrame is attached to a viewer
-	  using QGLViewer::setManipulatedFrame().*/
+	 * \details A ManipulatedFrame converts the mouse motion into translation and orientation updates.
+	 *      A ManipulatedFrame is used to move an object in the scene. Combined with object selection, its MouseGrabber
+	 *      properties and a dynamic update of the scene, the ManipulatedFrame introduces great reactivity in your
+	 *      applications.
+	 */
 	class ManipulatedFrame : public Frame
 	{
 	public:
+		/**
+		 * \brief Default constructor.
+		 */
 		ManipulatedFrame();
 		/*! Virtual destructor. Empty. */
 		~ManipulatedFrame() override = default;
-
+		/**
+		 * \brief Copy constructor.
+		 * \param mf The ManipulatedFrame to copy from.
+		 */
 		ManipulatedFrame(const ManipulatedFrame &mf);
+		/**
+		 * \brief Copy assignment operator.
+		 * \param mf The ManipulatedFrame to assign from.
+		 * \return A reference to this ManipulatedFrame.
+		 */
 		ManipulatedFrame &operator=(const ManipulatedFrame &mf);
 
 
 		/*! @name Manipulation sensitivity */
 		//@{
 	public:
-		/*! Defines the rotationSensitivity(). */
+		/**
+		 * \brief Sets the rotation sensitivity.
+		 * \param sensitivity The new rotation sensitivity.
+		 */
 		void setRotationSensitivity(float sensitivity) {
 			rotationSensitivity_ = sensitivity;
 		}
-		/*! Defines the translationSensitivity(). */
+		/**
+		 * \brief Sets the translation sensitivity.
+		 * \param sensitivity The new translation sensitivity.
+		 */
 		void setTranslationSensitivity(float sensitivity) {
 			translationSensitivity_ = sensitivity;
 		}
-		/*! Defines the wheelSensitivity(). */
+		/**
+		 * \brief Sets the wheel sensitivity.
+		 * \param sensitivity The new wheel sensitivity.
+		 */
 		void setWheelSensitivity(float sensitivity) {
 			wheelSensitivity_ = sensitivity;
 		}
-		/*! Defines the zoomSensitivity(). */
+		/**
+		 * \brief Sets the zoom sensitivity.
+		 * \param sensitivity The new zoom sensitivity.
+		 */
 		void setZoomSensitivity(float sensitivity) { zoomSensitivity_ = sensitivity; }
 
 	public:
-		/*! Returns the influence of a mouse displacement on the ManipulatedFrame
-		rotation.
-
-		Default value is 1.0. With an identical mouse displacement, a higher value
-		will generate a larger rotation (and inversely for lower values). A 0.0 value
-		will forbid ManipulatedFrame mouse rotation (see also constraint()).
-
-		See also setRotationSensitivity(), translationSensitivity(),
-		spinningSensitivity() and wheelSensitivity(). */
+		/**
+		 * \brief Returns the rotation sensitivity.
+		 * \details The rotation sensitivity is the influence of a mouse displacement on the ManipulatedFrame rotation.
+		 *		Default value is 1.0. With an identical mouse displacement, a higher value will generate a larger
+		 *		rotation (and inversely for lower values). A 0.0 value will forbid ManipulatedFrame mouse rotation
+		 *		(see also constraint()).
+		 * \return The rotation sensitivity.
+		 * \sa setRotationSensitivity(), translationSensitivity(), zoomSensitivity(), and wheelSensitivity().
+		 */
 		float rotationSensitivity() const { return rotationSensitivity_; }
-		/*! Returns the influence of a mouse displacement on the ManipulatedFrame
-		translation.
 
-		Default value is 1.0. You should not have to modify this value, since with 1.0
-		the ManipulatedFrame precisely stays under the mouse cursor.
-
-		With an identical mouse displacement, a higher value will generate a larger
-		translation (and inversely for lower values). A 0.0 value will forbid
-		ManipulatedFrame mouse translation (see also constraint()).
-
-		\note When the ManipulatedFrame is used to move a \e Camera (see the
-		ManipulatedCameraFrame class documentation), after zooming on a small region
-		of your scene, the camera may translate too fast. For a camera, it is the
-		Camera::pivotPoint() that exactly matches the mouse displacement. Hence,
-		instead of changing the translationSensitivity(), solve the problem by
-		(temporarily) setting the Camera::pivotPoint() to a point on the zoomed region
-		(see the QGLViewer::RAP_FROM_PIXEL mouse binding in the <a
-		href="../mouse.html">mouse page</a>).
-
-		See also setTranslationSensitivity(), rotationSensitivity(),
-		spinningSensitivity() and wheelSensitivity(). */
+		/**
+		 * \brief Returns the translation sensitivity.
+		 * \details The translation sensitivity is the influence of a mouse displacement on the ManipulatedFrame
+		 *		translation. Default value is 1.0. You should not have to modify this value, since with 1.0 the
+		 *		ManipulatedFrame precisely stays under the mouse cursor. With an identical mouse displacement, a
+		 *		higher value will generate a larger	translation (and inversely for lower values). A 0.0 value will
+		 *		forbid ManipulatedFrame mouse translation (see also constraint()).
+		 * \return The translation sensitivity.
+		 * \sa setTranslationSensitivity(), rotationSensitivity(), zoomSensitivity(), and wheelSensitivity().
+		 */
 		float translationSensitivity() const { return translationSensitivity_; }
-
-		/*! Returns the zoom sensitivity.
-
-		Default value is 1.0. A higher value will make the zoom faster.
-		Use a negative value to invert the zoom in and out directions.
-
-		See also setZoomSensitivity(), translationSensitivity(), rotationSensitivity()
-		wheelSensitivity() and spinningSensitivity(). */
+		/**
+		 * \brief Returns the zoom sensitivity.
+		 * \details Default value is 1.0. A higher value will make the zoom faster. Use a negative value to invert the
+		 *		zoom in and out directions.
+		 * \return The zoom sensitivity.
+		 * \sa setZoomSensitivity(), translationSensitivity(), rotationSensitivity(), and wheelSensitivity().
+		 */
 		float zoomSensitivity() const { return zoomSensitivity_; }
-		/*! Returns the mouse wheel sensitivity.
-
-		Default value is 1.0. A higher value will make the wheel action more efficient
-		(usually meaning a faster zoom). Use a negative value to invert the zoom in
-		and out directions.
-
-		See also setWheelSensitivity(), translationSensitivity(),
-		rotationSensitivity() zoomSensitivity() and spinningSensitivity(). */
+		/**
+		 * \brief Returns the wheel sensitivity.
+		 * \details Default value is 1.0. A higher value will make the wheel action more efficient (usually meaning a
+		 *		faster zoom). Use a negative value to invert the zoom in and out directions.
+		 * \return The wheel sensitivity.
+		 * \sa setWheelSensitivity(), translationSensitivity(), rotationSensitivity(), and zoomSensitivity().
+		 */
 		float wheelSensitivity() const { return wheelSensitivity_; }
 		//@}
 
 		/*! @name Frame manipulation */
 		//@{
 	public:
-		/// Initiates the ManipulatedFrame mouse manipulation.
-		/// \note This function should be called when an action (e.g., drag) starts, e.g., mouse pressed.
+		/**
+		 * \brief Initiates the ManipulatedFrame mouse manipulation.
+		 * \note This function should be called when an action (e.g., drag) starts, e.g., mouse pressed.
+		 */
 		virtual void action_start(); 
-		/// Stops the ManipulatedFrame mouse manipulation.
-        /// \note This function should be called when an action (e.g., drag) ends, e.g., mouse released.
+		/**
+		 * \brief Stops the ManipulatedFrame mouse manipulation.
+		 * \note This function should be called when an action (e.g., drag) ends, e.g., mouse released.
+		 */
 		virtual void action_end();
 
-		enum ScreenAxis { NONE, HORIZONTAL, VERTICAL, ORTHOGONAL };
+		/// \brief ScreenAxis constrains rotation or translation around/along the axis.
+		enum ScreenAxis {
+			NONE,		///< No constraint.
+			HORIZONTAL,	///< Horizontal constraint.
+			VERTICAL,	///< Vertical constraint.
+			ORTHOGONAL	///< Orthogonal constraint.
+		};
+		/**
+		 * \brief Rotates the frame based on mouse movement.
+		 * \param mouse_x The current x position of the mouse.
+		 * \param mouse_y The current y position of the mouse.
+		 * \param mouse_dx The change in x position of the mouse.
+		 * \param mouse_dy The change in y position of the mouse.
+		 * \param camera The camera associated with the frame.
+		 * \param axis The axis of rotation.
+		 */
 		virtual void action_rotate(int mouse_x, int mouse_y, int mouse_dx, int mouse_dy, Camera* camera, ScreenAxis axis);
+		/**
+		 * \brief Translates the frame based on mouse movement.
+		 * \param mouse_x The current x position of the mouse.
+		 * \param mouse_y The current y position of the mouse.
+		 * \param mouse_dx The change in x position of the mouse.
+		 * \param mouse_dy The change in y position of the mouse.
+		 * \param camera The camera associated with the frame.
+		 * \param axis The axis of translation.
+		 */
 		virtual void action_translate(int mouse_x, int mouse_y, int mouse_dx, int mouse_dy, Camera* camera, ScreenAxis axis);
+		/**
+		 * \brief Zooms the frame based on mouse wheel movement.
+		 * \param dy_wheel The change in the mouse wheel position.
+		 * \param camera The camera associated with the frame.
+		 */
 		virtual void action_zoom(int dy_wheel, Camera* camera);
 		// @}
 
-#ifndef DOXYGEN
 	protected:
         /*! Returns a quaternion computed according to the mouse motion. Mouse positions
         are projected on a deformed ball, centered on (\p cx,\p cy), viewer size (\p w, \p h).*/
@@ -214,8 +204,6 @@ namespace easy3d {
 
 		/*! Returns a normalized wheel delta, proportional to wheelSensitivity(). */
 		float wheelDelta(int wheel_dy) const;
-
-#endif // DOXYGEN
 
 	private:
 		// Sensitivity
