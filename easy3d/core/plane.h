@@ -34,26 +34,43 @@
 
 namespace easy3d {
 
-
-    /// \brief A 3D Plane of equation a*x + b*y + c*z + d = 0.
-    /// \class GenericPlane easy3d/core/plane.h
+    /**
+     * \brief A 3D Plane of equation a*x + b*y + c*z + d = 0.
+     * \tparam FT The scalar type for plane coefficients.
+     * \class GenericPlane easy3d/core/plane.h
+     */
     template<typename FT>
     class GenericPlane {
     public:
-        typedef Vec<2, FT>          Point2;
-        typedef Vec<3, FT>          Point3;
-        typedef Vec<3, FT>          Vector3;
-        typedef GenericLine<3, FT>  Line3;
-        typedef GenericPlane<FT>    thisclass;
+        typedef Vec<2, FT>          Point2;     ///< The type of the 2D point.
+        typedef Vec<3, FT>          Point3;     ///< The type of the 3D point.
+        typedef Vec<3, FT>          Vector3;    ///< The type of the 3D vector.
+        typedef GenericLine<3, FT>  Line3;      ///< The type of the 3D line.
+        typedef GenericPlane<FT>    thisclass;  ///< The type of this class.
 
     public:
-        /// \brief Constructs a plane from three points \p p1, \p p2, and \p p3.
+        /**
+         * \brief Constructs a plane from three points \p p1, \p p2, and \p p3.
+         * \param p1 The first point.
+         * \param p2 The second point.
+         * \param p3 The third point.
+         */
         GenericPlane(const Point3 &p1, const Point3 &p2, const Point3 &p3);
 
-        /// \brief Constructs a plane from a point \p p and the plane normal \p n.
+        /**
+         * \brief Constructs a plane from a point \p p and the plane normal \p n.
+         * \param p The point on the plane.
+         * \param n The normal vector of the plane.
+         */
         GenericPlane(const Point3 &p, const Vector3 &n);
 
-        /// \brief Constructs a plane from its equation parameters \p a, \p b, \p c, and \p d.
+        /**
+         * \brief Constructs a plane from its equation parameters \p a, \p b, \p c, and \p d.
+         * \param a The coefficient for x.
+         * \param b The coefficient for y.
+         * \param c The coefficient for z.
+         * \param d The constant term.
+         */
         GenericPlane(FT a, FT b, FT c, FT d) {
             coeff_[0] = a;
             coeff_[1] = b;
@@ -61,121 +78,202 @@ namespace easy3d {
             coeff_[3] = d;
         }
 
+        /**
+         * \brief Default constructor.
+         */
         GenericPlane() = default;
 
-        /// \brief Returns plane equation parameter \p a.
-        inline FT a() const { return coeff_[0]; }
+        /**
+         * \brief Returns plane equation parameter \p a.
+         * \return The coefficient \p a.
+         */
+        FT a() const { return coeff_[0]; }
 
-        /// \brief Returns plane equation parameter \p b.
-        inline FT b() const { return coeff_[1]; }
+        /**
+         * \brief Returns plane equation parameter \p b.
+         * \return The coefficient \p b.
+         */
+        FT b() const { return coeff_[1]; }
 
-        /// \brief Returns plane equation parameter \p c.
-        inline FT c() const { return coeff_[2]; }
+        /**
+         * \brief Returns plane equation parameter \p c.
+         * \return The coefficient \p c.
+         */
+        FT c() const { return coeff_[2]; }
 
-        /// \brief Returns plane equation parameter \p d.
-        inline FT d() const { return coeff_[3]; }
+        /**
+         * \brief Returns plane equation parameter \p d.
+         * \return The coefficient \p d.
+         */
+        FT d() const { return coeff_[3]; }
 
-        /// \brief Returns the \p idx_th parameter of the plane equation.
-        inline FT &operator[](size_t idx) {
+        /**
+         * \brief Returns the \p idx_th parameter of the plane equation.
+         * \param idx The index of the parameter.
+         * \return The \p idx_th parameter.
+         */
+        FT &operator[](size_t idx) {
             assert(idx < 4);
             return coeff_[idx];
         }
 
-        /// \brief Returns the \p idx_th const parameter of the plane equation.
-        inline const FT &operator[](size_t idx) const {
+        /**
+         * \brief Returns the \p idx_th const parameter of the plane equation (const version).
+         * \param idx The index of the parameter.
+         * \return The \p idx_th const parameter.
+         */
+        const FT &operator[](size_t idx) const {
             assert(idx < 4);
             return coeff_[idx];
         }
 
-        /// \brief Returns the normal of the plane.
+        /**
+         * \brief Returns the normal of the plane.
+         * \return The normal vector of the plane.
+         */
         Vector3 normal() const;
 
-        /// \brief Returns a point lying on this plane.
-        /// \note It is a fixed point (anytime you can this function it returns the same point).
+        /**
+         * \brief Returns a point lying on this plane.
+         * \note It is a fixed point (anytime you call this function it returns the same point).
+         * \return A point on the plane.
+         */
         Point3 point() const;
 
-        /// \brief Returns the first ortho-base defined on this plane.
+        /**
+         * \brief Returns the first ortho-base defined on this plane.
+         * \return The first ortho-base vector.
+         */
         Vector3 base1() const;
 
-        /// \brief Returns the second ortho-base defined on this plane.
+        /**
+         * \brief Returns the second ortho-base defined on this plane.
+         * \return The second ortho-base vector.
+         */
         Vector3 base2() const;
 
-        /// \brief Converts a 3D point into a 2D point relative to the local coordinate system defined by the three
-        /// orthogonal vectors base1(), base2(), and normal().
-        /// \note After 3D->2D and then 2D->3D conversion, the resulted 3D point remains unchanged ONLY IF the input
-        /// point lies on the plane. In case the original 3D point does not lie on the plane, the resulted 3D point will
-        /// have coordinates equal to the projection of the input point onto the plane.
+        /**
+         * \brief Converts a 3D point into a 2D point relative to the local coordinate system defined by the three
+         *      orthogonal vectors base1(), base2(), and normal().
+         * \param p The 3D point to convert.
+         * \return The corresponding 2D point.
+         * \note After 3D->2D and then 2D->3D conversion, the resulted 3D point remains unchanged ONLY IF the input
+         *      point lies on the plane. In case the original 3D point does not lie on the plane, the resulted 3D point
+         *      will have coordinates equal to the projection of the input point onto the plane.
+         */
         Point2 to_2d(const Point3 &p) const;
 
-        /// \brief Converts a 2D point in the local coordinate system defined by the three orthogonal vectors base1(),
-        /// base2(), and normal() into the 3D space.
-        /// \note After 3D->2D and then 2D->3D conversion, the resulted 3D point remains unchanged ONLY IF the input
-        /// point lies on the plane. In case the original 3D point does not lie on the plane, the resulted 3D point will
-        /// have coordinates equal to the projection of the input point onto the plane.
+        /**
+         * \brief Converts a 2D point in the local coordinate system defined by the three orthogonal vectors base1(),
+         *      base2(), and normal() into the 3D space.
+         * \param p The 2D point to convert.
+         * \return The corresponding 3D point.
+         * \note After 3D->2D and then 2D->3D conversion, the resulted 3D point remains unchanged ONLY IF the input
+         *      point lies on the plane. In case the original 3D point does not lie on the plane, the resulted 3D
+         *      point will have coordinates equal to the projection of the input point onto the plane.
+         */
         Point3 to_3d(const Point2 &p) const;
 
-        /// \brief The projection of a point \p p on this plane.
+        /**
+         * \brief The projection of a point \p p on this plane.
+         * \param p The point to project.
+         * \return The projected point on the plane.
+         */
         Point3 projection(const Point3 &p) const;
 
-        /// \brief Evaluates the plane (i.e., computes the value of a * x + b * y + c * z + d) for the given point \p p.
-        inline FT value(const Point3 &p) const {
+        /**
+         * \brief Evaluates the plane (i.e., computes the value of a * x + b * y + c * z + d) for the given point \p p.
+         * \param p The point to evaluate.
+         * \return The evaluated value.
+         */
+        FT value(const Point3 &p) const {
             return (coeff_[0] * p.x + coeff_[1] * p.y + coeff_[2] * p.z + coeff_[3]);
         }
 
-        /// \brief Computes the squared distance of a point \p p to this plane.
+        /**
+         * \brief Computes the squared distance of a point \p p to this plane.
+         * \param p The point to compute the distance to.
+         * \return The squared distance to the plane.
+         */
         FT squared_distance(const Point3 &p) const;
 
-        /// \brief Tests if a \p line intersects with this plane.
-        /// Returns true if they do intersect. In this case, \p p stores the intersecting point.
-        /// Otherwise, it returns false (i.e., they don't intersect, meaning the line is parallel to this plane).
-        /// \note Both line and the plane are unlimited.
+        /**
+         * \brief Tests if a \p line intersects with this plane (both line and the plane are unlimited).
+         * \param line The line to test.
+         * \param p The intersection point if they intersect.
+         * \return \c true if they intersect, \c false otherwise (the line is parallel to this plane).
+         */
         bool intersect(const Line3 &line, Point3 &p) const;
-
-        /// \brief Tests if a \p line intersects with this plane.
-        /// Returns true if they do intersect. Otherwise, it returns false (i.e., they don't intersect, meaning the line
-        /// is parallel to this plane).
-        /// \note Both line and the plane are unlimited.
+        /**
+         * \brief Tests if a \p line intersects with this plane (both line and the plane are unlimited).
+         * \param line The line to test.
+         * \return \c true if they intersect, \c false otherwise (the line is parallel to this plane).
+         */
         bool intersect(const Line3 &line) const;
 
-        /// \brief Tests if a \p line segment (given by its two end points \p s and \p t) intersects with this plane.
-        /// Returns true if they do intersect. In this case, \p p stores the intersecting point.
-        /// Otherwise, it returns false (i.e., they don't intersect, meaning the two end points of the line segment
-        /// lie on the same side of the the plane).
+        /**
+         * \brief Tests if a \p line segment (given by its two end points \p s and \p t) intersects with this plane.
+         * \param s The start point of the line segment.
+         * \param t The end point of the line segment.
+         * \param p The intersection point if they intersect.
+         * \return \c true if they intersect, \c false otherwise (the two end points of the line segment lie on the
+         *      same side of the plane).
+         */
         bool intersect(const Point3 &s, const Point3 &t, Point3 &p) const;
-
-        /// \brief Tests if a \p line segment (given by its two end points \p s and \p t) intersects with this plane.
-        /// Returns true if they do intersect. Otherwise, it returns false (i.e., they don't intersect, meaning the two
-        /// end points of the line segment lie on the same side of the the plane).
+        /**
+         * \brief Tests if a \p line segment (given by its two end points \p s and \p t) intersects with this plane.
+         * \param s The start point of the line segment.
+         * \param t The end point of the line segment.
+         * \return \c true if they intersect, \c false otherwise (the two end points of the line segment lie on the
+         *      same side of the plane).
+         */
         bool intersect(const Point3 &s, const Point3 &t) const;
 
-        /// \brief Tests if this plane intersects with \p another plane.
-        /// Returns true if they do intersect. In this case, \p line stores the intersecting line.
-        /// Otherwise, it returns false (i.e., they don't intersect, meaning the two planes are parallel).
+        /**
+         * \brief Tests if this plane intersects with \p another plane.
+         * \param another The other plane to test.
+         * \param line The intersecting line if they intersect.
+         * \return \c true if they intersect, \c false otherwise (the two planes are parallel).
+         */
         bool intersect(const thisclass &another, Line3 &line) const;
-
-        /// \brief Tests if this plane intersects with \p another plane.
-        /// Returns true if they do intersect and false if they don't intersect (i.e.,the two planes are parallel).
+        /**
+         * \brief Tests if this plane intersects with \p another plane.
+         * \param another The other plane to test.
+         * \return \c true if they intersect, \c false otherwise (the two planes are parallel).
+         */
         bool intersect(const thisclass &another) const;
 
-        /// \brief Determines the relative orientation of a point with respect to this plane.
-        /// The return value is one of the following:
-        ///   - 1: p is on the positive side
-        ///   - 0: p is belonging to the plane
-        ///   - -1: p is on the negative side
+        /**
+         * \brief Determines the relative orientation of a point with respect to this plane.
+         * \param p The point to test.
+         * \return 1 if the point is on the positive side, -1 if on the negative side, 0 if on the plane.
+         */
         int orient(const Point3 &p) const;
 
-        /// \brief Returns the constant memory address of the coefficients.
+        /**
+         * \brief Returns the constant memory address of the coefficients.
+         * \return The constant memory address of the coefficients.
+         */
         const FT *data() const { return coeff_; }
 
-        /// \brief Returns the memory address of the coefficients.
+        /**
+         * \brief Returns the memory address of the coefficients.
+         * \return The memory address of the coefficients.
+         */
         FT *data() { return coeff_; }
 
-        /// \brief Conversion operator returning the constant memory address of the coefficients. This is very
-        /// convenient to pass a plane as a parameter to functions.
+        /**
+         * \brief Conversion operator returning the constant memory address of the coefficients. This is very
+         *      convenient to pass a plane as a parameter to functions.
+         * \return The constant memory address of the coefficients.
+         */
         operator const FT *() const { return coeff_; }
 
-        /// \brief Conversion operator returning the memory address of the coefficients. This is very convenient to
-        /// pass a plane as a parameter to functions.
+        /**
+         * \brief Conversion operator returning the memory address of the coefficients. This is very convenient
+         *      to pass a plane as a parameter to functions.
+         * \return The memory address of the coefficients.
+         */
         operator FT *() { return coeff_; }
 
     private:
@@ -191,7 +289,6 @@ namespace easy3d {
 
 
     template<typename FT>
-    inline
     GenericPlane<FT>::GenericPlane(const Point3 &p1, const Point3 &p2, const Point3 &p3) {
         Vector3 n = cross(p2 - p1, p3 - p1);
         n = normalize(n);
@@ -208,7 +305,6 @@ namespace easy3d {
     }
 
     template<typename FT>
-    inline
     GenericPlane<FT>::GenericPlane(const Point3 &p, const Vector3 &n) {
         Vector3 nn = normalize(n);
         coeff_[0] = nn.x;
@@ -222,7 +318,6 @@ namespace easy3d {
 
 
     template<typename FT>
-    inline
     typename GenericPlane<FT>::Vector3 GenericPlane<FT>::normal() const {
         Vector3 n = normalize(Vector3(coeff_[0], coeff_[1], coeff_[2]));
         DLOG_IF(length(n) < 1e-15, ERROR) << "degenerate plane with normal: (" << n << ")";
@@ -231,7 +326,6 @@ namespace easy3d {
 
 
     template<typename FT>
-    inline
     typename GenericPlane<FT>::Vector3 GenericPlane<FT>::base1() const {
         if (coeff_[0] == 0)        // parallel to x-axis
             return Vector3(FT(1), FT(0), FT(0));
@@ -247,14 +341,12 @@ namespace easy3d {
 
 
     template<typename FT>
-    inline
     typename GenericPlane<FT>::Vector3 GenericPlane<FT>::base2() const {
         Vector3 base = cross(normal(), base1());
         return normalize(base);
     }
 
     template<typename FT>
-    inline
     typename GenericPlane<FT>::Point2 GenericPlane<FT>::to_2d(const Point3 &p) const {
         Vector3 vec = p - point();
         FT x = dot(vec, base1());
@@ -264,14 +356,12 @@ namespace easy3d {
 
 
     template<typename FT>
-    inline
     typename GenericPlane<FT>::Point3 GenericPlane<FT>::to_3d(const Point2 &p) const {
         return point() + base1() * p.x + base2() * p.y;
     }
 
 
     template<typename FT>
-    inline
     typename GenericPlane<FT>::Point3 GenericPlane<FT>::point() const {
         Point3 p(FT(0), FT(0), FT(0));
         if (std::abs(coeff_[0]) >= std::abs(coeff_[1]) && std::abs(coeff_[0]) >= std::abs(coeff_[2]))
@@ -299,7 +389,6 @@ namespace easy3d {
     //  -1: p is on the negative side
     //   0: the point p is on the plane.
     template<typename FT>
-    inline
     int GenericPlane<FT>::orient(const Point3 &p) const {
         FT v = value(p);
         if (std::abs(v) < 1e-15)
@@ -310,7 +399,6 @@ namespace easy3d {
 
 
     template<typename FT>
-    inline
     typename GenericPlane<FT>::Point3 GenericPlane<FT>::projection(const Point3 &p) const {
         // the equation of the plane is Ax+By+Cz+D=0
         // the normal direction is (A,B,C)
@@ -329,7 +417,6 @@ namespace easy3d {
 
 
     template<typename FT>
-    inline
     FT GenericPlane<FT>::squared_distance(const Point3 &p) const {
         FT v = value(p);
         return (v * v) / (coeff_[0] * coeff_[0] + coeff_[1] * coeff_[1] + coeff_[2] * coeff_[2]);
@@ -337,7 +424,6 @@ namespace easy3d {
 
 
     template<typename FT>
-    inline
     bool GenericPlane<FT>::intersect(const Line3 &line) const {
         Vector3 dir = line.direction();
         FT c = dot(dir, normal());
@@ -349,7 +435,6 @@ namespace easy3d {
 
 
     template<typename FT>
-    inline
     bool GenericPlane<FT>::intersect(const Line3 &line, Point3 &p) const {
         const Vector3 &dir = line.direction();
         FT c = dot(dir, normal());
@@ -367,7 +452,6 @@ namespace easy3d {
 
 
     template<typename FT>
-    inline
     bool GenericPlane<FT>::intersect(const Point3 &s, const Point3 &t) const {
         int ss = orient(s);
         int st = orient(t);
@@ -381,7 +465,6 @@ namespace easy3d {
 
 
     template<typename FT>
-    inline
     bool GenericPlane<FT>::intersect(const Point3 &s, const Point3 &t, Point3 &p) const {
         int ss = orient(s);
         int st = orient(t);
@@ -408,7 +491,6 @@ namespace easy3d {
 
 
     template<typename FT>
-    inline
     bool GenericPlane<FT>::intersect(const thisclass &another) const {
         const FT &a = coeff_[0];
         const FT &b = coeff_[1];
@@ -442,7 +524,6 @@ namespace easy3d {
 
 
     template<typename FT>
-    inline
     bool GenericPlane<FT>::intersect(const thisclass &another, Line3 &line) const {
         const FT &a = coeff_[0];
         const FT &b = coeff_[1];
@@ -482,14 +563,12 @@ namespace easy3d {
 
     /// Output stream support for GenericPlane.
     template<typename FT>
-    inline
     std::ostream &operator<<(std::ostream &os, const GenericPlane<FT> &plane) {
         return os << plane[0] << ' ' << plane[1] << ' ' << plane[2] << ' ' << plane[3];
     }
 
     /// Input stream support for GenericPlane.
     template<typename FT>
-    inline
     std::istream &operator>>(std::istream &is, GenericPlane<FT> &plane) {
         return is >> plane[0] >> plane[1] >> plane[2] >> plane[3];
     }
@@ -505,7 +584,6 @@ namespace easy3d {
          * \return true if the three planes intersect at a point.
          */
         template<typename FT>
-        inline
         bool intersect(const GenericPlane<FT> &plane1, const GenericPlane<FT> &plane2, const GenericPlane<FT> &plane3,
                        typename GenericPlane<FT>::Point3 &point) {
             typename GenericPlane<FT>::Line3 line;

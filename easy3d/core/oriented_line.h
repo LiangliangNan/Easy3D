@@ -42,7 +42,7 @@ namespace easy3d {
     template<class FT>
     class GenericOrientedLine {
     public:
-        typedef Vec<3, FT> Point;
+        typedef Vec<3, FT> Point;   ///< The type of the point.
 
         /// \brief Constructs a line from two points \p p and \p q.
         GenericOrientedLine(const Point &p, const Point &q);

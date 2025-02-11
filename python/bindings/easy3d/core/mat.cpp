@@ -21,8 +21,8 @@ void bind_easy3d_core_mat(pybind11::module_& m)
 
         cl.def( pybind11::init( [](easy3d::Mat<3UL,3UL,float> const &o){ return new easy3d::Mat<3UL,3UL,float>(o); } ) );
         cl.def_static("identity", (class easy3d::Mat<3, 3, float> (*)()) &easy3d::Mat<3, 3, float>::identity, "C++: easy3d::Mat<3, 3, float>::identity() --> class easy3d::Mat<3, 3, float>");
-        cl.def("num_rows", (unsigned long (easy3d::Mat<3UL,3UL,float>::*)() const) &easy3d::Mat<3, 3, float>::num_rows, "C++: easy3d::Mat<3, 3, float>::num_rows() const --> unsigned long");
-        cl.def("num_columns", (unsigned long (easy3d::Mat<3UL,3UL,float>::*)() const) &easy3d::Mat<3, 3, float>::num_columns, "C++: easy3d::Mat<3, 3, float>::num_columns() const --> unsigned long");
+        cl.def_static("num_rows", &easy3d::Mat<3, 3, float>::num_rows, "C++: easy3d::Mat<3, 3, float>::num_rows() const --> unsigned long");
+        cl.def_static("num_columns", &easy3d::Mat<3, 3, float>::num_columns, "C++: easy3d::Mat<3, 3, float>::num_columns() const --> unsigned long");
         cl.def("row", (class easy3d::Vec<3, float> (easy3d::Mat<3UL,3UL,float>::*)(unsigned long) const) &easy3d::Mat<3, 3, float>::row, "C++: easy3d::Mat<3, 3, float>::row(unsigned long) const --> class easy3d::Vec<3, float>", pybind11::arg("r"));
         cl.def("col", (class easy3d::Vec<3, float> (easy3d::Mat<3UL,3UL,float>::*)(unsigned long) const) &easy3d::Mat<3, 3, float>::col, "C++: easy3d::Mat<3, 3, float>::col(unsigned long) const --> class easy3d::Vec<3, float>", pybind11::arg("c"));
         cl.def("__call__", (float & (easy3d::Mat<3UL,3UL,float>::*)(size_t, size_t)) &easy3d::Mat<3, 3, float>::operator(), "C++: easy3d::Mat<3, 3, float>::operator()(size_t, size_t) --> float &", pybind11::return_value_policy::automatic, pybind11::arg("row"), pybind11::arg("col"));
@@ -55,8 +55,8 @@ void bind_easy3d_core_mat(pybind11::module_& m)
         cl.def( pybind11::init<const float *>(), pybind11::arg("m") );
 
         cl.def_static("identity", (class easy3d::Mat<4, 4, float> (*)()) &easy3d::Mat<4, 4, float>::identity, "C++: easy3d::Mat<4, 4, float>::identity() --> class easy3d::Mat<4, 4, float>");
-        cl.def("num_rows", (unsigned long (easy3d::Mat<4UL,4UL,float>::*)() const) &easy3d::Mat<4, 4, float>::num_rows, "C++: easy3d::Mat<4, 4, float>::num_rows() const --> unsigned long");
-        cl.def("num_columns", (unsigned long (easy3d::Mat<4UL,4UL,float>::*)() const) &easy3d::Mat<4, 4, float>::num_columns, "C++: easy3d::Mat<4, 4, float>::num_columns() const --> unsigned long");
+        cl.def_static("num_rows", &easy3d::Mat<4, 4, float>::num_rows, "C++: easy3d::Mat<4, 4, float>::num_rows() const --> unsigned long");
+        cl.def_static("num_columns", &easy3d::Mat<4, 4, float>::num_columns, "C++: easy3d::Mat<4, 4, float>::num_columns() const --> unsigned long");
         cl.def("row", (class easy3d::Vec<4, float> (easy3d::Mat<4UL,4UL,float>::*)(unsigned long) const) &easy3d::Mat<4, 4, float>::row, "C++: easy3d::Mat<4, 4, float>::row(unsigned long) const --> class easy3d::Vec<4, float>", pybind11::arg("r"));
         cl.def("col", (class easy3d::Vec<4, float> (easy3d::Mat<4UL,4UL,float>::*)(unsigned long) const) &easy3d::Mat<4, 4, float>::col, "C++: easy3d::Mat<4, 4, float>::col(unsigned long) const --> class easy3d::Vec<4, float>", pybind11::arg("c"));
         cl.def("__call__", (float & (easy3d::Mat<4UL,4UL,float>::*)(size_t, size_t)) &easy3d::Mat<4, 4, float>::operator(), "C++: easy3d::Mat<4, 4, float>::operator()(size_t, size_t) --> float &", pybind11::return_value_policy::automatic, pybind11::arg("r"), pybind11::arg("c"));
@@ -103,8 +103,8 @@ void bind_easy3d_core_mat(pybind11::module_& m)
         cl.def_static("rotation", [](float const & a0, float const & a1, float const & a2) -> easy3d::Mat3<float> { return easy3d::Mat3<float>::rotation(a0, a1, a2); }, "", pybind11::arg("x"), pybind11::arg("y"), pybind11::arg("z"));
         cl.def_static("rotation", (class easy3d::Mat3<float> (*)(float, float, float, int)) &easy3d::Mat3<float>::rotation, "C++: easy3d::Mat3<float>::rotation(float, float, float, int) --> class easy3d::Mat3<float>", pybind11::arg("x"), pybind11::arg("y"), pybind11::arg("z"), pybind11::arg("order"));
         cl.def_static("identity", (class easy3d::Mat<3, 3, float> (*)()) &easy3d::Mat<3, 3, float>::identity, "C++: easy3d::Mat<3, 3, float>::identity() --> class easy3d::Mat<3, 3, float>");
-        cl.def("num_rows", (unsigned long (easy3d::Mat<3UL,3UL,float>::*)() const) &easy3d::Mat<3, 3, float>::num_rows, "C++: easy3d::Mat<3, 3, float>::num_rows() const --> unsigned long");
-        cl.def("num_columns", (unsigned long (easy3d::Mat<3UL,3UL,float>::*)() const) &easy3d::Mat<3, 3, float>::num_columns, "C++: easy3d::Mat<3, 3, float>::num_columns() const --> unsigned long");
+        cl.def_static("num_rows", &easy3d::Mat<3, 3, float>::num_rows, "C++: easy3d::Mat<3, 3, float>::num_rows() const --> unsigned long");
+        cl.def_static("num_columns", &easy3d::Mat<3, 3, float>::num_columns, "C++: easy3d::Mat<3, 3, float>::num_columns() const --> unsigned long");
         cl.def("row", (class easy3d::Vec<3, float> (easy3d::Mat<3UL,3UL,float>::*)(unsigned long) const) &easy3d::Mat<3, 3, float>::row, "C++: easy3d::Mat<3, 3, float>::row(unsigned long) const --> class easy3d::Vec<3, float>", pybind11::arg("r"));
         cl.def("col", (class easy3d::Vec<3, float> (easy3d::Mat<3UL,3UL,float>::*)(unsigned long) const) &easy3d::Mat<3, 3, float>::col, "C++: easy3d::Mat<3, 3, float>::col(unsigned long) const --> class easy3d::Vec<3, float>", pybind11::arg("c"));
         cl.def("__call__", (float & (easy3d::Mat<3UL,3UL,float>::*)(size_t, size_t)) &easy3d::Mat<3, 3, float>::operator(), "C++: easy3d::Mat<3, 3, float>::operator()(size_t, size_t) --> float &", pybind11::return_value_policy::automatic, pybind11::arg("row"), pybind11::arg("col"));
@@ -159,8 +159,8 @@ void bind_easy3d_core_mat(pybind11::module_& m)
         cl.def_static("translation", (class easy3d::Mat4<float> (*)(const class easy3d::Vec<3, float> &)) &easy3d::Mat4<float>::translation, "C++: easy3d::Mat4<float>::translation(const class easy3d::Vec<3, float> &) --> class easy3d::Mat4<float>", pybind11::arg("t"));
         cl.def_static("translation", (class easy3d::Mat4<float> (*)(float, float, float)) &easy3d::Mat4<float>::translation, "C++: easy3d::Mat4<float>::translation(float, float, float) --> class easy3d::Mat4<float>", pybind11::arg("x"), pybind11::arg("y"), pybind11::arg("z"));
         cl.def_static("identity", (class easy3d::Mat<4, 4, float> (*)()) &easy3d::Mat<4, 4, float>::identity, "C++: easy3d::Mat<4, 4, float>::identity() --> class easy3d::Mat<4, 4, float>");
-        cl.def("num_rows", (unsigned long (easy3d::Mat<4UL,4UL,float>::*)() const) &easy3d::Mat<4, 4, float>::num_rows, "C++: easy3d::Mat<4, 4, float>::num_rows() const --> unsigned long");
-        cl.def("num_columns", (unsigned long (easy3d::Mat<4UL,4UL,float>::*)() const) &easy3d::Mat<4, 4, float>::num_columns, "C++: easy3d::Mat<4, 4, float>::num_columns() const --> unsigned long");
+        cl.def_static("num_rows", &easy3d::Mat<4, 4, float>::num_rows, "C++: easy3d::Mat<4, 4, float>::num_rows() const --> unsigned long");
+        cl.def_static("num_columns", &easy3d::Mat<4, 4, float>::num_columns, "C++: easy3d::Mat<4, 4, float>::num_columns() const --> unsigned long");
         cl.def("row", (class easy3d::Vec<4, float> (easy3d::Mat<4UL,4UL,float>::*)(unsigned long) const) &easy3d::Mat<4, 4, float>::row, "C++: easy3d::Mat<4, 4, float>::row(unsigned long) const --> class easy3d::Vec<4, float>", pybind11::arg("r"));
         cl.def("col", (class easy3d::Vec<4, float> (easy3d::Mat<4UL,4UL,float>::*)(unsigned long) const) &easy3d::Mat<4, 4, float>::col, "C++: easy3d::Mat<4, 4, float>::col(unsigned long) const --> class easy3d::Vec<4, float>", pybind11::arg("c"));
         cl.def("__call__", (float & (easy3d::Mat<4UL,4UL,float>::*)(size_t, size_t)) &easy3d::Mat<4, 4, float>::operator(), "C++: easy3d::Mat<4, 4, float>::operator()(size_t, size_t) --> float &", pybind11::return_value_policy::automatic, pybind11::arg("r"), pybind11::arg("c"));

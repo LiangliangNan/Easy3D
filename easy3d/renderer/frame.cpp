@@ -43,6 +43,7 @@
 
 namespace easy3d {
 
+	// \cond
 
 	/*! Creates a default Frame.
 
@@ -838,5 +839,7 @@ namespace easy3d {
 		const vec3& proj = line.projection(shift);
 		translate(shift - proj);
 	}
+
+	// \endcond
 
 }

@@ -147,14 +147,14 @@ namespace easy3d {
          * \param neighbors The indices of the neighbors found.
          * \param squared_distances The squared distances between the found neighbors to the query line. The values
          * are stored in accordance with their indices.
-         * \param bToLine Specifies how the points found are ordered. If \bToLine=true, the points found are ordered
-         * by their distances to the line. Otherwise, they are ordered by their distances to \p p1.
+         * \param to_line Specifies how the points found are ordered. If \p to_line is true, the points found are
+         *      ordered by their distances to the line. Otherwise, they are ordered by their distances to \p p1.
          * \note The range is specified by radius (\b not squared) but \b squared distances are returned.
          */
         int find_points_in_cylinder(
                 const vec3 &p1, const vec3 &p2, float radius,
                 std::vector<int> &neighbors, std::vector<float> &squared_distances,
-                bool bToLine = true
+                bool to_line = true
         ) const;
 
         /**
@@ -165,14 +165,14 @@ namespace easy3d {
          * \param p2 The other end point of the query line segment.
          * \param radius The search range (which is \b not squared).
          * \param neighbors The indices of the neighbors found.
-         * \param bToLine Specifies how the points found are ordered. If \bToLine=true, the points found are ordered
-         * by their distances to the line. Otherwise, they are ordered by their distances to \p p1.
+         * \param to_line Specifies how the points found are ordered. If \p to_line is true, the points found are
+         *           ordered by their distances to the line. Otherwise, they are ordered by their distances to \p p1.
          * \note The range is specified by radius (\b not squared) but \b squared distances are returned.
          */
         int find_points_in_cylinder(
                 const vec3 &p1, const vec3 &p2, float radius,
                 std::vector<int> &neighbors,
-                bool bToLine = true
+                bool to_line = true
         ) const;
         /// @}
 
@@ -191,14 +191,15 @@ namespace easy3d {
          * \param neighbors The indices of the neighbors found.
          * \param squared_distances The squared distances between the found neighbors to the query line segment.
          * The values are stored in accordance with their indices.
-         * \param bToLine Specifies how the points found are ordered. If \bToLine=true, the points found are ordered
-         * by their distances to the line. Otherwise, they are ordered by their distances to the view point \p eye.
+         * \param to_line Specifies how the points found are ordered. If \p to_line is true, the points found are
+         *      ordered by their distances to the line. Otherwise, they are ordered by their distances to the view
+         *      point \p eye.
          * \note The angle is specified in \b radian and \b squared distances are returned.
          */
         int find_points_in_cone(
                 const vec3 &eye, const vec3 &p1, const vec3 &p2, float angle_range,
                 std::vector<int> &neighbors, std::vector<float> &squared_distances,
-                bool bToLine = true
+                bool to_line = true
         ) const;
 
         /**

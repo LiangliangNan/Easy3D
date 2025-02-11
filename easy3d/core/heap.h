@@ -36,6 +36,10 @@ namespace easy3d {
 
     /**
      * \brief A class implementing a heap.
+     * \details This class provides methods to manage a heap data structure, including insertion, removal, and
+     *      updating of elements.
+     * \tparam HeapEntry The type of the elements stored in the heap.
+     * \tparam HeapInterface The interface class that provides methods for comparing and managing heap positions.
      * \class Heap easy3d/core/heap.h
      *
      * An example of heap interface
@@ -61,52 +65,85 @@ namespace easy3d {
     template<class HeapEntry, class HeapInterface>
     class Heap : private std::vector<HeapEntry> {
     public:
-        typedef Heap<HeapEntry, HeapInterface> This;
+        typedef Heap<HeapEntry, HeapInterface> This;    ///< This class.
 
-        //! \brief Constructor
+        /**
+         * \brief Default constructor.
+         */
         Heap() : HeapVector() {}
 
-        //! \brief Construct with a given \c HeapInterface.
+        /**
+         * \brief Constructs a heap with a given \c HeapInterface.
+         * \param i The heap interface.
+         */
         explicit Heap(const HeapInterface &i) : HeapVector(), interface_(i) {}
 
-        //! \brief Destructor.
+        /**
+         * \brief Destructor.
+         */
         ~Heap() = default;
 
-        //! \brief clear the heap
+        /**
+         * \brief Clears the heap.
+         */
         void clear() { HeapVector::clear(); }
 
-        //! \brief is heap empty?
+        /**
+         * \brief Checks if the heap is empty.
+         * \return True if the heap is empty, false otherwise.
+         */
         bool empty() { return HeapVector::empty(); }
 
-        //! \brief returns the size of heap
-        unsigned int size() { return (unsigned int) HeapVector::size(); }
+        /**
+         * \brief Returns the size of the heap.
+         * \return The number of elements in the heap.
+         */
+        unsigned int size() { return static_cast<unsigned int>(HeapVector::size()); }
 
-        //! \brief reserve space for N entries
+        /**
+         * \brief Reserves space for \c n entries.
+         * \param n The number of entries to reserve space for.
+         */
         void reserve(unsigned int n) { HeapVector::reserve(n); }
 
-        //! \brief reset heap position to -1 (not in heap)
+        /**
+         * \brief Resets the heap position of an entry to -1 (not in heap).
+         * \param h The entry to reset.
+         */
         void reset_heap_position(HeapEntry h) {
             interface_.set_heap_position(h, -1);
         }
 
-        //! \brief is an entry in the heap?
+        /**
+         * \brief Checks if an entry is stored in the heap.
+         * \param h The entry to check.
+         * \return True if the entry is in the heap, false otherwise.
+         */
         bool is_stored(HeapEntry h) {
             return interface_.get_heap_position(h) != -1;
         }
 
-        //! \brief insert the entry h
+        /**
+         * \brief Inserts an entry into the heap.
+         * \param h The entry to insert.
+         */
         void insert(HeapEntry h) {
             This::push_back(h);
             upheap(size() - 1);
         }
 
-        //! \brief get the first entry
+        /**
+         * \brief Retrieves the first entry in the heap.
+         * \return The first entry in the heap.
+         */
         HeapEntry front() {
             assert(!empty());
             return entry(0);
         }
 
-        //! \brief delete the first entry
+        /**
+         * \brief Deletes the first entry in the heap.
+         */
         void pop_front() {
             assert(!empty());
             interface_.set_heap_position(entry(0), -1);
@@ -118,16 +155,19 @@ namespace easy3d {
                 HeapVector::resize(size() - 1);
         }
 
-        //! \brief remove an entry
+        /**
+         * \brief Removes an entry from the heap.
+         * \param h The entry to remove.
+         */
         void remove(HeapEntry h) {
-            int pos = interface_.get_heap_position(h);
+            const int pos = interface_.get_heap_position(h);
             interface_.set_heap_position(h, -1);
 
             assert(pos != -1);
-            assert((unsigned int) pos < size());
+            assert(static_cast<unsigned int>(pos) < size());
 
             // last item ?
-            if ((unsigned int) pos == size() - 1)
+            if (static_cast<unsigned int>(pos) == size() - 1)
                 HeapVector::resize(size() - 1);
 
             else {
@@ -138,21 +178,27 @@ namespace easy3d {
             }
         }
 
-        //! \brief update an entry: change the key and update the position to
-        //! reestablish the heap property.
+        /**
+         * \brief Updates an entry in the heap.
+         * \details Changes the key of the entry and updates its position to reestablish the heap property.
+         * \param h The entry to update.
+         */
         void update(HeapEntry h) {
-            int pos = interface_.get_heap_position(h);
+            const int pos = interface_.get_heap_position(h);
             assert(pos != -1);
-            assert((unsigned int) pos < size());
+            assert(static_cast<unsigned int>(pos) < size());
             downheap(pos);
             upheap(pos);
         }
 
-        //! \brief check heap condition
+        /**
+         * \brief Checks the heap condition.
+         * \return True if the heap condition is satisfied, false otherwise.
+         */
         bool check() {
             bool ok(true);
-            unsigned int i, j;
-            for (i = 0; i < size(); ++i) {
+            unsigned int j;
+            for (unsigned int i = 0; i < size(); ++i) {
                 if (((j = left(i)) < size()) &&
                     interface_.greater(entry(i), entry(j))) {
                     std::cerr << "Heap condition violated\n";
@@ -171,7 +217,10 @@ namespace easy3d {
         // typedef
         typedef std::vector<HeapEntry> HeapVector;
 
-        //! Upheap. Establish heap property.
+        /**
+         * \brief Upheap operation to establish heap property.
+         * \param idx The index to upheap from.
+         */
         void upheap(unsigned int idx) {
             HeapEntry h = entry(idx);
             unsigned int parentIdx;
@@ -184,14 +233,15 @@ namespace easy3d {
             entry(idx, h);
         }
 
-        //! Downheap. Establish heap property.
+        /**
+         * \brief Downheap operation to establish heap property.
+         * \param idx The index to downheap from.
+         */
         void downheap(unsigned int idx) {
             HeapEntry h = entry(idx);
-            unsigned int childIdx;
-            unsigned int s = size();
-
+            const unsigned int s = size();
             while (idx < s) {
-                childIdx = left(idx);
+                unsigned int childIdx = left(idx);
                 if (childIdx >= s)
                     break;
 
@@ -209,33 +259,52 @@ namespace easy3d {
             entry(idx, h);
         }
 
-        //! Get the entry at index idx
-        inline HeapEntry entry(unsigned int idx) {
+        /**
+         * \brief Gets the entry at the specified index.
+         * \param idx The index of the entry.
+         * \return The entry at the specified index.
+         */
+        HeapEntry entry(unsigned int idx) {
             assert(idx < size());
             return (This::operator[](idx));
         }
 
-        //! Set entry H to index idx and update H's heap position.
-        inline void entry(unsigned int idx, HeapEntry h) {
+        /**
+         * \brief Sets the entry at the specified index and updates its heap position.
+         * \param idx The index to set the entry at.
+         * \param h The entry to set.
+         */
+        void entry(unsigned int idx, HeapEntry h) {
             assert(idx < size());
             This::operator[](idx) = h;
             interface_.set_heap_position(h, idx);
         }
 
-        //! Get parent's index
-        inline unsigned int parent(unsigned int i) { return (i - 1) >> 1; }
+        /**
+         * \brief Gets the parent's index.
+         * \param i The index of the child.
+         * \return The index of the parent.
+         */
+        unsigned int parent(unsigned int i) { return (i - 1) >> 1; }
 
-        //! Get left child's index
-        inline unsigned int left(unsigned int i) { return (i << 1) + 1; }
+        /**
+         * \brief Gets the left child's index.
+         * \param i The index of the parent.
+         * \return The index of the left child.
+         */
+        unsigned int left(unsigned int i) { return (i << 1) + 1; }
 
-        //! Get right child's index
-        inline unsigned int right(unsigned int i) { return (i << 1) + 2; }
+        /**
+         * \brief Gets the right child's index.
+         * \param i The index of the parent.
+         * \return The index of the right child.
+         */
+        unsigned int right(unsigned int i) { return (i << 1) + 2; }
 
         //! Instance of HeapInterface
         HeapInterface interface_;
     };
 
-//=============================================================================
 } // namespace easy3d
 
 #endif  // EASY3D_CORE_HEAP_H
