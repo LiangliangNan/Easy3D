@@ -63,11 +63,13 @@ namespace easy3d {
     template <template <size_t, class> class Point, size_t N, typename T>
     class SplineCurveInterpolation {
     public:
+        /// The point type.
         using Point_t = Point<N, T>;
 
+        /// The boundary type.
         enum BoundaryType {
-            first_deriv = 1,
-            second_deriv = 2
+            first_deriv = 1,    ///< First derivative
+            second_deriv = 2    ///< Second derivative
         };
 
     public:

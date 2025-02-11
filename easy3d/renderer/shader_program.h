@@ -31,11 +31,6 @@
  * Full documentation at 
  * http://www.lighthouse3d.com/very-simple-libs
  *
- * This class allows to create programs, load shaders from files, 
- * associate vertex attribute names with locations, and work with 
- * uniforms, including blocks. It also provides access to the 
- * info logs, and many more useful functionalities.
- *
  *----------------------------------------------------------*/
 
 #ifndef EASY3D_RENDERER_SHADER_PROGRAM_H
@@ -54,50 +49,56 @@ namespace easy3d {
      *
      * \class ShaderProgram easy3d/renderer/shader_program.h
      *
-     * To use the shader program class, you need to do the following:
-     * - Call load_shader_from_code(ShaderProgram::VERTEX, vert_file) to create vertex shader and
+	 * \details This class allows to create programs, load shaders from files,  associate vertex attribute names with
+	 *		locations, and work with uniforms, including blocks. It also provides access to the info logs, and many
+	 *		more useful functionalities.
+     *		To use the shader program class, you need to do the following:
+     *		- Call load_shader_from_code(ShaderProgram::VERTEX, vert_file) to create vertex shader and
      *        load_shader_from_code(ShaderProgram::FRAGMENT, frag_file) to create fragment shader
      *        (you may also need to create other types of shaders depending on your needs).
-     * - Call set_attrib_name(ShaderProgram::POSITION, "position") for vertex attribute "position".
+     *		- Call set_attrib_name(ShaderProgram::POSITION, "position") for vertex attribute "position".
      *        You may also need to set other attributes like normal, color, etc. To know what vertex
      *        attributes need to be set, check your shader code or call print_active_attributes().
-     * - Call link_program() to link the program.
+     *		- Call link_program() to link the program.
      *
-     * For rendering
-     * - Call bind();
-     * - Call set_uniform() to set all the necessary uniforms. You may also need to call set_block(),
+     *		For rendering
+     *		- Call bind();
+     *		- Call set_uniform() to set all the necessary uniforms. You may also need to call set_block(),
      *        set_block_uniform(), and/or set_block_uniform_array_element(). To know what uniforms need to
      *        be set, check your shader code or call print_active_uniforms(), print_active_uniform_blocks().
-     * - Call the drawable's draw() function
-     * - Call release();
+     *		- Call the drawable's draw() function
+     *		- Call release();
      *
-     * To retrieve the model view projection matrix, call camera's <code> modelViewProjectionMatrix() </code>
+     *		To retrieve the model view projection matrix, call camera's <code> modelViewProjectionMatrix() </code>
      */
-
 	class ShaderProgram
 	{
 	public:
-
-		// Types of Vertex Attributes
+		/// Types of vertex attributes
 		enum AttribType {
-			POSITION,
-			COLOR,
-			NORMAL,
-			TEXCOORD
+			POSITION,	///< Position
+			COLOR,		///< Color
+			NORMAL,		///< Normal
+			TEXCOORD	///< Texture coordinates
 		};
-		typedef std::pair<ShaderProgram::AttribType, std::string> Attribute;
+		/// Attribute: a pair of attribute type and attribute name
+		typedef std::pair<AttribType, std::string> Attribute;
 
-		// Types of Shaders
+		/// Types of Shaders
 		enum ShaderType {
-			VERTEX,
-			FRAGMENT,
-			GEOMETRY,
-			TESS_CONTROL,
-			TESS_EVALUATION,
-			COMPUTE,
-			NUM_SHADER_TYPES
+			VERTEX,				///< Vertex shader
+			FRAGMENT,			///< Fragment shader
+			GEOMETRY,			///< Geometry shader
+			TESS_CONTROL,		///< Tessellation control shader
+			TESS_EVALUATION,	///< Tessellation evaluation shader
+			COMPUTE,			///< Compute shader
+			NUM_SHADER_TYPES	///< Number of shader types
 		};
 
+		/**
+		 * \brief Is shader program supported?
+		 * \return \c true if supported, \c false otherwise.
+		 */
         static bool is_supported();
 
 		/**
@@ -106,102 +107,153 @@ namespace easy3d {
 		 *      in identifying issues when multiple programs are used. It is suggested to use the source file name.
 		 */
 		explicit ShaderProgram(const std::string& name = "unknown");
+		/// Destructor
 		~ShaderProgram();
 
+		/**
+		 * \brief Set the name of the shader program.
+		 * \param name The name to set.
+		 */
 		void set_name(const std::string& name) { name_ = name; }
+		/**
+		 * \brief Get the name of the shader program.
+		 * \return The name of the shader program.
+		 */
 		const std::string& name() const { return name_; }
 
-        /// Sets true to log any issues found.
+		/**
+		 * \brief Set verbose mode.
+		 * \param v True to enable verbose mode (log any issues found), false to disable.
+		 */
         void set_verbose(bool v) { verbose_ = v; }
 
 		// ---------------------------------------------------------------
 
-        /// Returns the program index.
+		/**
+		 * \brief Get the program index.
+		 * \return The program index.
+		 */
         unsigned int get_program() const;
 
-        /// Removes (deletes) all shaders
+		/**
+		 * \brief Remove (delete) all shaders.
+		 */
 		void clear();
 
 		//---------------------- Creation ---------------------------
 
 		/**
-		 * Loads the text in the file to the source of the specified shader
-		 * \param st one of the enum values of ShaderType
-         * \param file_name the full path of the file where the source is to be found
-		 * \param inc_id the include identifier string (e.g., "#include")
+		 * \brief Load the text in the file to the source of the specified shader.
+		 * \param st One of the enum values of ShaderType.
+		 * \param file_name The full path of the file where the source is to be found.
+		 * \param inc_id The include identifier string (e.g., "#include").
+		 * \return True if the shader was loaded successfully, false otherwise.
 		 */
 		bool load_shader_from_file(ShaderType st, const std::string& file_name, const std::string& inc_id = "#include");
 
 		/**
-		 * Loads the code to the source of the specified shader
-		 * \param st one of the enum values of ShaderType
-		 * \param code the string of the shader source code
+		 * \brief Load the code to the source of the specified shader.
+		 * \param st One of the enum values of ShaderType.
+		 * \param code The string of the shader source code.
+		 * \return True if the shader was loaded successfully, false otherwise.
 		 */
 		bool load_shader_from_code(ShaderType st, const std::string& code);
 
 		/**
-		 * Defines semantics for the input vertex attributes. This is required for other libraries to know how to
+		 * \brief Define semantics for the input vertex attributes. This is required for other libraries to know how to
 		 * send data to the shader.
-		 * \param at The semantic of the attribute
-		 * \param name The name of the vertex attribute
+		 * \param at The semantic of the attribute.
+		 * \param name The name of the vertex attribute.
 		 * \note To specify a location for an attribute you must do it prior to linking the program, or, if the
-		 *      program is already linked, to link it again afterwards (call method link_program)
+		 *      program is already linked, to link it again afterward (call method link_program).
 		 */
 		void set_attrib_name(ShaderProgram::AttribType at, const std::string& name) const;
+		/**
+		 * \brief Define semantics for multiple input vertex attributes.
+		 * \param attributes A vector of attributes to set.
+		 */
 		void set_attrib_names(const std::vector<ShaderProgram::Attribute>& attributes) const;
 
 		/**
-		 * Prepares program for usage. Links it and collects information about uniform variables and uniform blocks.
+		 * \brief Prepare program for usage. Links it and collects information about uniform variables and uniform blocks.
+		 * \return True if the program was linked successfully, false otherwise.
 		 */
 		bool link_program();
 
 		/**
-		 * Bind a user-defined varying out variable to a fragment shader color number
-		 * Note: linking is required for this operation to take effect
-		 * (call method prepare_program afterwards)
-		 * \param index The fragment color number
-		 * \param name The name of the fragment's shader variable
+		 * \brief Bind a user-defined varying out variable to a fragment shader color number.
+		 * \note Linking is required for this operation to take effect (call method prepare_program afterward).
+		 * \param index The fragment color number.
+		 * \param name The name of the fragment's shader variable.
 		 */
 		void set_program_output(int index, const std::string& name) const;
 
 		/**
-		 * Returns the fragment shader color number bound to a user-defined varying out variable
-		 * Note: linking is required for this operation to take effect
-		 * (call method prepare_program afterwards)
-		 * \param name the name of the fragment's shader variable.
-		 * \returns the fragment color number
+		 * \brief Get the fragment shader color number bound to a user-defined varying out variable.
+		 * \note Linking is required for this operation to take effect (call method prepare_program afterward).
+		 * \param name The name of the fragment's shader variable.
+		 * \return The fragment color number.
 		 */
         int program_output(const std::string& name) const;
 
 		//---------------------- Rendering ---------------------------
 
-        /// Starts using the program.
+		/**
+		 * \brief Start using the program.
+		 */
 		void bind() const;
 
-		// generic function to set the uniform <name> to value
-		// NOTE: if your uniform is an array type, be careful to use the correct uniform names. For example, you have 
-		//		 'uniform vec2/float values[8]' in your shader code, the uniform name is 'values[0]' (not 'values').	
-		//		 So calling to this function looks like: program->set_uniform("values[0]", valueArray);
+		/**
+		 * \brief Set the uniform to value.
+		 * \param name The name of the uniform.
+		 * \param value The value to set.
+		 * \return A pointer to the ShaderProgram object.
+		 * \note If your uniform is an array type, be careful to use the correct uniform names. For example, you have
+		 *		'uniform vec2/float values[8]' in your shader code, the uniform name is 'values[0]' (not 'values').
+		 *		So calling to this function looks like: program->set_uniform("values[0]", valueArray);
+		 */
 		ShaderProgram* set_uniform(const std::string& name, const void *value);
 
-		// For int and bool uniforms. Sets the uniform <name> to the int value
+		/**
+		 * \brief Set the uniform to the int value.
+		 * \param name The name of the uniform.
+		 * \param value The int value to set.
+		 * \return A pointer to the ShaderProgram object.
+		 */
 		ShaderProgram* set_uniform(const std::string& name, int value);
 
-		// For unsigned int uniforms. Sets the uniform <name> to the unsigned int value
+		/**
+		 * \brief Set the uniform to the unsigned int value.
+		 * \param name The name of the uniform.
+		 * \param value The unsigned int value to set.
+		 * \return A pointer to the ShaderProgram object.
+		 */
 		ShaderProgram* set_uniform(const std::string& name, unsigned int value);
 
-		// For float uniforms. Sets the uniform <name> to the float value
+		/**
+		 * \brief Set the uniform to the float value.
+		 * \param name The name of the uniform.
+		 * \param value The float value to set.
+		 * \return A pointer to the ShaderProgram object.
+		 */
 		ShaderProgram* set_uniform(const std::string& name, float value);
 
 		/**
-		 * Sets a uniform block as a whole
+		 * \brief Set a uniform block as a whole.
+		 * \param name The name of the uniform block.
+		 * \param value The value to set.
+		 * \return A pointer to the ShaderProgram object.
 		 */
 		ShaderProgram* set_block(const std::string& name, const void *value);
 
 		/**
-		 * Sets a uniform inside a named block
-		 * Warning: Be careful when using uniform blocks. Please refer to OpenGL Specification Version 4.5
-		 *      (Core Profile) - May 28, 2015 (https://www.opengl.org/registry/doc/glspec45.core.pdf#page=159)
+		 * \brief Set a uniform inside a named block.
+		 * \param blockName The name of the uniform block.
+		 * \param uniformName The name of the uniform.
+		 * \param value The value to set.
+		 * \return A pointer to the ShaderProgram object.
+		 * \warning Be careful when using uniform blocks. Please refer to OpenGL Specification Version 4.5
+		 *		(Core Profile) - May 28, 2015 (https://www.opengl.org/registry/doc/glspec45.core.pdf#page=159)
 		 *		In "Standard Uniform Block Layout", it says "If the member is a three-component vector with components
 		 *		consuming N basic machine units, the base alignment is 4N" (see rule 3 of section 7.6.2.2 in page.159).
 		 *		That means the array stride (the bytes between array elements) is always rounded up to the size of a
@@ -212,66 +264,137 @@ namespace easy3d {
 		ShaderProgram* set_block_uniform(const std::string& blockName, const std::string& uniformName, const void *value);
 
 		/**
-		 * Sets an element of an array of uniforms inside a block
+		 * \brief Set an element of an array of uniforms inside a block.
+		 * \param blockName The name of the uniform block.
+		 * \param uniformName The name of the uniform.
+		 * \param arrayIndex The index of the array element.
+		 * \param value The value to set.
+		 * \return A pointer to the ShaderProgram object.
 		 */
 		ShaderProgram* set_block_uniform_array_element(const std::string& blockName, const std::string& uniformName, int arrayIndex, const void* value);
 
-		// tex_target: GL_TEXTURE_2D, GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_2D_ARRAY
+		/**
+		 * \brief Bind a texture to the shader program.
+		 * \param name The name of the texture.
+		 * \param tex_id The texture ID.
+		 * \param unit The texture unit.
+		 * \param tex_target The texture target, which can be GL_TEXTURE_2D (default), GL_TEXTURE_2D_MULTISAMPLE, or
+		 *		GL_TEXTURE_2D_ARRAY.
+		 * \return A pointer to the ShaderProgram object.
+		 */
 		// default value is GL_TEXTURE_2D (0x0DE1, just to eliminate the inclusion of gl header file).
 		ShaderProgram* bind_texture(const std::string& name, unsigned int tex_id, int unit, unsigned int tex_target = 0x0DE1);
+		/**
+		 * \brief Release a texture from the shader program.
+		 * \param tex_target The texture target (default is GL_TEXTURE_2D).
+		 * \return A pointer to the ShaderProgram object.
+		 */
 		ShaderProgram* release_texture(unsigned int tex_target = 0x0DE1);
 
-        /// Ends using the program.
+		/**
+		 * \brief End using the program.
+		 */
         void release() const;
 
 		// ---------------------- Other info -------------------------------
 
+		/**
+		 * \brief Get the location of an attribute.
+		 * \param name The name of the attribute.
+		 * \return The location of the attribute.
+		 */
 		int get_attribute_location(const std::string& name) const;
 
-		// methods to inquire as to what uniforms/attributes are used by this shader. This can 
-		// save some compute time if the uniforms or attributes are expensive to compute.
-		// Note: the program must be compiled and linked.
+		/**
+		 * \brief Check if a uniform is used by the shader.
+		 * \details This can save some compute time if the uniforms or attributes are expensive to compute.
+		 * \param name The name of the uniform.
+		 * \return True if the uniform is used, false otherwise.
+		 * \note The program must be compiled and linked.
+		 */
 		bool is_uniform_used(const std::string& name);
+
+		/**
+		 * \brief Check if an attribute is used by the shader.
+		 * \param name The name of the attribute.
+		 * \return True if the attribute is used, false otherwise.
+		 */
 		bool is_attribute_used(const std::string& name);
 
-		// returns GL_VALIDATE_STATUS for the program 
-        // glValidateProgram() is meant to be called directly before a draw call (i.e., glDraw*())
-        // with that shader bound and all the bindings (VAO, textures) set. Its purpose is to ensure
-        // that the shader can execute given the current GL state.
+		/**
+		 * \brief Check if the program is valid.
+		 * \return True if the program is valid, false otherwise.
+		 * \note glValidateProgram() is meant to be called directly before a draw call (i.e., glDraw*())
+		 *		with that shader bound and all the bindings (VAO, textures) set. Its purpose is to ensure
+		 *		that the shader can execute given the current GL state.
+		 */
 		bool is_program_valid() const;
 
-		/// Returns true if program linked, false otherwise.
+		/**
+		 * \brief Check if the program is linked.
+		 * \return True if the program is linked, false otherwise.
+		 */
 		bool is_program_linked() const;
 
-		/// Returns true if the program is being used (i.e., between bind() and  release()).
+		/**
+		 * \brief Check if the program is bound.
+		 * \return True if the program is bound (i.e., between bind() and  release()), false otherwise.
+		 */
 		bool is_bound() const;
 
-		// return true if shader compilation was successfully, false otherwise. 
-		// 'log' returns the shader's infolog
+		/**
+		 * \brief Get the shader info log.
+		 * \param log The string to store the shader's info log.
+		 * \param shader The shader ID.
+		 * \return True if shader compilation was successfully, false otherwise.
+		 */
         bool shader_info_log(std::string& log, unsigned int shader) const;
 
-		// return true if program linkage was successfully, false otherwise. 
-		// 'log' returns the program's infolog
+		/**
+		 * \brief Get the program info log.
+		 * \param log The string to store the program's info log.
+		 * \return True if program linkage was successfully, false otherwise.
+		 */
 		bool program_info_log(std::string& log) const;
 
-		// useful for debug. More detailed version are implemented in OpenglInfo class.
-        // NOTE: require OpenGL >= 4.3
+		/**
+		 * \brief Print active attributes.
+		 * \note Requires OpenGL >= 4.3.
+		 */
 		void print_active_attributes();
+		/**
+		 * \brief Print active uniforms.
+		 * \note Requires OpenGL >= 4.3.
+		 */
 		void print_active_uniforms();
+		/**
+		 * \brief Print active uniform blocks.
+		 * \note Requires OpenGL >= 4.3.
+		 */
 		void print_active_uniform_blocks();
 
 		// ---------------------- Load/Save binary -------------------------------
-		// The ready-to-use (i.e., compiled and linked) program in a single binary file.
-        // NOTE: require OpenGL >= 4.1
+		/**
+		 * \brief Load a binary (i.e., compiled and linked) program.
+		 * \param file_name The name of the file to load the binary from.
+		 * \return True if the binary was loaded successfully, false otherwise.
+		 * \note Requires OpenGL >= 4.1.
+		 */
 		bool load_binary(const std::string& file_name);
+		/**
+		 * \brief Save the program to a binary file.
+		 * \param file_name The name of the file to save the binary to.
+		 * \return True if the binary was saved successfully, false otherwise.
+		 * \note Requires OpenGL >= 4.1.
+		 */
         bool save_binary(const std::string& file_name);
 
-        /**
-         * Auxiliary function that loads the shader source code from a file.
-         * \param file_name the full path of the file where the source is to be found
-         * \param inc_id the include identifier string (e.g., "#include")
-         */
-        // aux function to read the shader's source code from a file
+		/**
+		 * \brief Auxiliary function that loads the shader source code from a file.
+		 * \param file_name The full path of the file where the source is to be found.
+		 * \param inc_id The include identifier string (e.g., "#include").
+		 * \return The shader source code as a string.
+		 */
         static std::string load_shader_source(const std::string& file_name, const std::string& inc_id = "#include");
 
 	protected:

@@ -142,7 +142,6 @@ namespace easy3d {
         ) const override;
         /// @}
 
-#ifndef DOXYGEN
     protected:
         int points_num_;
 
@@ -150,7 +149,6 @@ namespace easy3d {
 
         void *tree_;
         int k_for_radius_search_;
-#endif
     };
 
 } // namespace easy3d

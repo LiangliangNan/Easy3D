@@ -266,7 +266,7 @@ namespace easy3d {
 	////////////////////////////////////////////////////////////////////////////////
 
 	/*! Returns "pseudo-distance" from (x,y) to ball of radius size.
-	\arg for a point inside the ball, it is proportional to the euclidean distance
+	\arg for a point inside the ball, it is proportional to the Euclidean distance
 	to the ball \arg for a point outside the ball, it is proportional to the inverse
 	of this distance (tends to zero) on the ball, the function is continuous. */
 	static float projectOnBall(float x, float y) {
@@ -280,7 +280,7 @@ namespace easy3d {
 		return d < size_limit ? std::sqrt(size2 - d) : size_limit / std::sqrt(d);
 	}
 
-#ifndef DOXYGEN
+
 	/*! Returns a quaternion computed according to the mouse motion. Mouse positions
 	are projected on a deformed ball, centered on (\p cx,\p cy). */
 	quat ManipulatedFrame::deformedBallQuaternion(int x, int y, int pre_x, int pre_y, float cx, float cy, int w, int h) const {
@@ -303,5 +303,3 @@ namespace easy3d {
 
 }
 
-
-#endif // DOXYGEN

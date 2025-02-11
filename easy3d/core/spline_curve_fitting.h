@@ -64,46 +64,87 @@ namespace easy3d {
     template <template <size_t, class> class Point, size_t N, typename T>
     class SplineCurveFitting {
     public:
+        /**
+         * \brief The nodal vector (or knot vector) type.
+         * \details In spline curve fitting, the nodal vector (or knot vector) plays a crucial role in defining how the
+         *      spline curve is constructed. The type of nodal vector determines how the control points influence the
+         *      shape of the curve.
+         *      - Uniform Knot Vector: A uniform knot vector means that the knot values are evenly spaced. This results
+         *        in a B-spline where every segment between knots contributes equally to the overall curve. However,
+         *        this type of knot vector does not guarantee that the curve passes through the first and last control
+         *        points. Example of a uniform knot vector for a cubic B-spline (degree 3, 5 control points):
+         *        t=[0,1,2,3,4,5,6].
+         *      - Open Uniform Knot Vector: An open uniform knot vector is a special type of uniform knot vector where
+         *        the first and last knots are repeated degree + 1 times. This ensures that the curve starts at the
+         *        first control point and ends at the last control point, making it more intuitive for curve fitting
+         *        applications. Example of an open uniform knot vector for a cubic B-spline (degree 3, 5 control points):
+         *        t=[0,0,0,0,1,2,3,3,3,3].
+         */
         enum Node_e {
-            eUNIFORM,
-            eOPEN_UNIFORM ///< Connected to the first and last control points
+            eUNIFORM,     ///< Uniform nodal vector
+            eOPEN_UNIFORM ///< Open uniform nodal vector.
         };
 
     public:
-        /// \brief Constructor
-        /// @param k Order of the spline (minimum is two)
-        /// @param node_type Nodal vector type (uniform, open_uniform). This will define the behavior of the spline
-        ///     with its control points as well as its speed according to its parameter.
+        /**
+         * \brief Constructor
+         * \param k Order of the spline (minimum is two)
+         * \param node_type Nodal vector type (uniform, open_uniform). This will define the behavior of the spline
+         *     with its control points as well as its speed according to its parameter.
+         */
         explicit SplineCurveFitting(int k = 2, Node_e node_type = eOPEN_UNIFORM);
 
-        /// \brief Sets the position of the spline control points.
-        void set_ctrl_points(const std::vector<Point<N, T>> &point);
+        /**
+         * \brief Sets the positions of the spline control points.
+         * \param points The control points of the spline.
+         */
+        void set_ctrl_points(const std::vector<Point<N, T>> &points);
 
-        /// \brief Gets the control points of the spline
+        /**
+         * \brief Gets the control points of the spline.
+         * \param points The control points of the spline.
+         */
         void get_ctrl_points(std::vector<Point<N, T>> &points) const;
 
-        /// \brief Sets the nodal vector type
+        /**
+         * \brief Sets the nodal vector type.
+         * \param type The nodal vector type.
+         */
         void set_node_type(Node_e type);
 
-        /// \brief Evaluates position of the spline
-        /// @param u : curve parameter ranging from [0; 1].
-        /// \note Calling this with equally distributed \p u will result in non-uniformly distributed points on the
-        ///     curves (because some input points are closely spaced but others may not). To get points at fixed
-        ///     distances along the curve, use the parameter generated from get_equally_spaced_parameters().
+        /**
+         * \brief Evaluates position of the spline.
+         * \param u Curve parameter ranging from [0, 1].
+         * \note Calling this with equally distributed \p u will result in non-uniformly distributed points on the
+         *     curves (because some input points are closely spaced but others may not). To get points at fixed
+         *     distances along the curve, use the parameter generated from get_equally_spaced_parameters().
+         * \return The evaluated position on the spline.
+         */
         Point<N, T> eval_f(T u) const;
 
-        /// \brief Evaluates speed of the spline
+        /**
+         * \brief Evaluates speed of the spline.
+         * \param u Curve parameter ranging from [0, 1].
+         * \return The evaluated speed on the spline.
+         */
         Point<N, T> eval_df(T u) const;
 
-        /// \brief Gets the order of the spline
+        /**
+         * \brief Gets the order of the spline.
+         * \return The order of the spline.
+         */
         int get_order() const { return _k; }
 
-        /// \brief Gets parameters such that evaluation of the curve positions using these parameters results in
-        ///     equally spaced points along the curve.
-        /// \details Calling eval_f() with equal intervals will result in non-uniformly distributed points on the
-        ///     curves. This method first evaluates the spline curve at equally spaced values in the parameter
-        ///     domain, and then does linear interpolation to compute the parameters that result in points uniformly
-        ///     spaced along the curve.
+        /**
+         * \brief Gets parameters such that evaluation of the curve positions using these parameters results in
+         *     equally spaced points along the curve.
+         * \param steps The number of steps.
+         * \details Calling eval_f() with equal intervals will result in non-uniformly distributed points on the
+         *     curves. This method first evaluates the spline curve at equally spaced values in the parameter
+         *     domain, and then does linear interpolation to compute the parameters that result in points uniformly
+         *     spaced along the curve.
+         * \return The parameters for equally spaced points along the curve.
+         */
         std::vector<T> get_equally_spaced_parameters(std::size_t steps) const;
 
     private:
@@ -111,10 +152,12 @@ namespace easy3d {
         /// @name Class tools
         // -------------------------------------------------------------------------
 
+        /**
+         * \brief Asserts the validity of the spline parameters.
+         */
         void assert_splines() const;
 
-        /// set value and size of the nodal vector depending on the current number
-        /// of control points
+        /// set value and size of the nodal vector depending on the current number of control points
         void set_nodal_vector();
 
         /// Set values of the nodal vector to be uniform
@@ -123,22 +166,28 @@ namespace easy3d {
         /// Set values of the nodal vector to be open uniform
         void set_node_to_open_uniform();
 
-        /// Evaluate the equation of a splines using the blossom algorithm
-        /// @param u : the curve parameter which range from the values
-        /// [node[k-1]; node[point.size()]]
-        /// @param point : the control points which size must be at least equal to
-        /// the order of the spline (point.size() >= k)
-        /// @param k : the spline order (degree == k-1)
-        /// @param node : the nodal vector which defines the speed of the spline
-        /// parameter u. The nodal vector size must be equal to (k + point.size())
-        /// @param off : offset to apply to the nodal vector 'node' before reading
-        /// from it. this is useful to compute derivatives.
+        /**
+         * \brief Evaluates the equation of a spline using the blossom algorithm.
+         * \param u The curve parameter which ranges from the values [node[k-1]; node[point.size()]].
+         * \param point The control points which size must be at least equal to the order of the spline (point.size() >= k).
+         * \param k The spline order (degree == k-1).
+         * \param node The nodal vector which defines the speed of the spline parameter u. The nodal vector size must be equal to (k + point.size()).
+         * \param off Offset to apply to the nodal vector 'node' before reading from it. This is useful to compute derivatives.
+         * \return The evaluated position on the spline.
+         */
         Point<N, T> eval(T u,
                      const std::vector<Point<N, T>> &point,
                      int k,
                      const std::vector<T> &node,
                      int off = 0) const;
-
+        /**
+         * \brief Recursive evaluation of the spline using the blossom algorithm.
+         * \param u The curve parameter.
+         * \param p_in The input control points.
+         * \param k The spline order.
+         * \param node_in The nodal vector.
+         * \return The evaluated position on the spline.
+         */
         Point<N, T> eval_rec(T u,
                          std::vector<Point<N, T>> p_in,
                          int k,
@@ -148,11 +197,11 @@ namespace easy3d {
         /// @name attributes
         // -------------------------------------------------------------------------
 
-        Node_e _node_type;            ///< Nodal vector type
-        int _k;                       ///< spline order
-        std::vector<Point<N, T>> _point;  ///< Control points
-        std::vector<Point<N, T>> _vec;    ///< Control points differences
-        std::vector<T> _node;    ///< Nodal vector
+        Node_e _node_type;                  ///< Nodal vector type
+        int _k;                             ///< spline order
+        std::vector<Point<N, T>> _point;    ///< Control points
+        std::vector<Point<N, T>> _vec;      ///< Control points differences
+        std::vector<T> _node;               ///< Nodal vector
     };
 
 
