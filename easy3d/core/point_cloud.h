@@ -35,7 +35,7 @@
 namespace easy3d {
 
     /**
-     * @brief A data structure for point clouds.
+     * \brief A data structure for point clouds.
      * \class PointCloud easy3d/core/point_cloud.h
      *
      * This implementation is inspired by Surface_mesh
@@ -46,42 +46,73 @@ namespace easy3d {
 
     public: //------------------------------------------------------ topology types
 
-
-        /// @brief Base class for topology types (internally it is basically an index)
-        /// \sa Vertex
+        /**
+         * \brief Base class for topology types (internally it is basically an index).
+         * \class BaseHandle easy3d/core/point_cloud.h
+         * \sa Vertex
+         */
         class BaseHandle
         {
         public:
-
-            /// constructor
+            /**
+             * \brief Constructor.
+             * \param _idx The index of the handle.
+             */
             explicit BaseHandle(int _idx=-1) : idx_(_idx) {}
 
-            /// Get the underlying index of this handle
+            /**
+             * \brief Get the underlying index of this handle.
+             * \return The index of the handle.
+             */
             int idx() const { return idx_; }
 
-            /// reset handle to be invalid (index=-1)
+            /**
+             * \brief Reset handle to be invalid (index = -1).
+             */
             void reset() { idx_=-1; }
 
-            /// return whether the handle is valid, i.e., the index is not equal to -1.
+            /**
+             * \brief Return whether the handle is valid, i.e., the index is not equal to -1.
+             * \return True if the handle is valid, false otherwise.
+             */
             bool is_valid() const { return idx_ != -1; }
 
-            /// are two handles equal?
+            /**
+             * \brief Are two handles equal?
+             * \param _rhs The other handle to compare.
+             * \return True if the handles are equal, false otherwise.
+             */
             bool operator==(const BaseHandle& _rhs) const {
                 return idx_ == _rhs.idx_;
             }
 
-            /// are two handles different?
+            /**
+             * \brief Are two handles different?
+             * \param _rhs The other handle to compare.
+             * \return True if the handles are different, false otherwise.
+             */
             bool operator!=(const BaseHandle& _rhs) const {
                 return idx_ != _rhs.idx_;
             }
 
-            /// compare operator useful for sorting handles
+            /**
+             * \brief Compare operator useful for sorting handles.
+             * \param _rhs The other handle to compare.
+             * \return True if this handle is less than the other handle, false otherwise.
+             */
             bool operator<(const BaseHandle& _rhs) const {
                 return idx_ < _rhs.idx_;
             }
 
-            /// helper structure to be able to use std::unordered_map
+            /**
+             * \brief Helper structure to be able to use std::unordered_map.
+             */
             struct Hash {
+                /**
+                 * \brief Hash function for BaseHandle.
+                 * \param h The handle to hash.
+                 * \return The hash value of the handle, which is the index.
+                 */
                 std::size_t operator()(const BaseHandle& h) const { return h.idx(); }
             };
 
@@ -91,33 +122,59 @@ namespace easy3d {
         };
 
 
-        /// @brief this type represents a vertex (internally it is basically an index)
-        struct Vertex : public BaseHandle
-        {
-            /// default constructor (with invalid index)
+        /**
+         * \brief This type represents a vertex (internally it is basically an index).
+         * \class Vertex easy3d/core/point_cloud.h
+         */
+        struct Vertex : BaseHandle {
+            /**
+             * \brief Default constructor (with invalid index).
+             * \param _idx The index of the vertex.
+             */
             explicit Vertex(int _idx=-1) : BaseHandle(_idx) {}
+            /**
+             * \brief Output stream operator for Vertex.
+             * \param os The output stream.
+             * \return The output stream.
+             */
             std::ostream& operator<<(std::ostream& os) const { return os << 'v' << idx(); }
         };
 
 
     public: //------------------------------------------------------ property types
 
-        /// @brief Vertex property of type T
+        /**
+         * \brief Vertex property of type T.
+         * \class VertexProperty easy3d/core/point_cloud.h
+         */
         template <class T> class VertexProperty : public Property<T>
         {
         public:
-
-            /// default constructor
+            /**
+             * \brief Default constructor.
+             */
             VertexProperty() = default;
+            /**
+             * \brief Constructor with property.
+             * \param p The property.
+             */
             explicit VertexProperty(Property<T> p) : Property<T>(p) {}
 
-            /// access the data stored for vertex \c v
+            /**
+             * \brief Access the data stored for vertex \c v.
+             * \param v The vertex.
+             * \return The reference to the data stored for the vertex.
+             */
             typename Property<T>::reference operator[](Vertex v)
             {
                 return Property<T>::operator[](v.idx());
             }
 
-            /// access the data stored for vertex \c v
+            /**
+             * \brief Access the data stored for vertex \c v.
+             * \param v The vertex.
+             * \return The const reference to the data stored for the vertex.
+             */
             typename Property<T>::const_reference operator[](Vertex v) const
             {
                 return Property<T>::operator[](v.idx());
@@ -125,25 +182,39 @@ namespace easy3d {
         };
 
 
-        /// @brief Cloud property of type T
-        /// \sa VertexProperty
+        /**
+         * \brief Cloud property of type T.
+         * \class ModelProperty easy3d/core/point_cloud.h
+         * \sa VertexProperty
+         */
         template <class T> class ModelProperty : public Property<T>
         {
         public:
-
-            /// default constructor
+            /**
+             * \brief Default constructor.
+             */
             ModelProperty() = default;
+            /**
+             * \brief Constructor with property.
+             * \param p The property.
+             */
             explicit ModelProperty(Property<T> p) : Property<T>(p) {}
 
-            /// access the data stored for the cloud
-            typename Property<T>::reference operator[](size_t idx)
-            {
+            /**
+             * \brief Access the data stored for the cloud.
+             * \param idx The index.
+             * \return The reference to the data stored for the cloud.
+             */
+            typename Property<T>::reference operator[](size_t idx) override {
                 return Property<T>::operator[](idx);
             }
 
-            /// access the data stored for the cloud
-            typename Property<T>::const_reference operator[](size_t idx) const
-            {
+            /**
+             * \brief Access the data stored for the cloud.
+             * \param idx The index.
+             * \return The const reference to the data stored for the cloud.
+             */
+            typename Property<T>::const_reference operator[](size_t idx) const override {
                 return Property<T>::operator[](idx);
             }
         };
@@ -152,34 +223,54 @@ namespace easy3d {
 
     public: //------------------------------------------------------ iterator types
 
-        /// @brief this class iterates linearly over all vertices
-        /// \sa vertices_begin(), vertices_end()
+        /**
+         * \brief This class iterates linearly over all vertices.
+         * \class VertexIterator easy3d/core/point_cloud.h
+         * \sa vertices_begin(), vertices_end()
+         */
         class VertexIterator
         {
         public:
-
-            /// Default constructor
+            /**
+             * \brief Default constructor.
+             * \param v The vertex.
+             * \param m The point cloud.
+             */
             explicit VertexIterator(Vertex v=Vertex(), const PointCloud* m=nullptr) : hnd_(v), cloud_(m)
             {
                 if (cloud_ && cloud_->has_garbage()) while (cloud_->is_valid(hnd_) && cloud_->is_deleted(hnd_)) ++hnd_.idx_;
             }
 
-            /// get the vertex the iterator refers to
+            /**
+             * \brief Get the vertex the iterator refers to.
+             * \return The vertex.
+             */
             Vertex operator*()  const { return  hnd_; }
 
-            /// are two iterators equal?
+            /**
+             * \brief Are two iterators equal?
+             * \param rhs The other iterator.
+             * \return True if the iterators are equal, false otherwise.
+             */
             bool operator==(const VertexIterator& rhs) const
             {
                 return (hnd_==rhs.hnd_);
             }
 
-            /// are two iterators different?
+            /**
+             * \brief Are two iterators different?
+             * \param rhs The other iterator.
+             * \return True if the iterators are different, false otherwise.
+             */
             bool operator!=(const VertexIterator& rhs) const
             {
                 return !operator==(rhs);
             }
 
-            /// pre-increment iterator
+            /**
+             * \brief Pre-increment iterator.
+             * \return The incremented iterator.
+             */
             VertexIterator& operator++()
             {
                 ++hnd_.idx_;
@@ -188,7 +279,10 @@ namespace easy3d {
                 return *this;
             }
 
-            /// pre-decrement iterator
+            /**
+             * \brief Pre-decrement iterator.
+             * \return The decremented iterator.
+             */
             VertexIterator& operator--()
             {
                 --hnd_.idx_;
@@ -205,14 +299,30 @@ namespace easy3d {
 
     public: //-------------------------- containers for C++11 range-based for loops
 
-        /// @brief this helper class is a container for iterating through all
-        /// vertices using C++11 range-based for-loops.
-        /// \sa vertices()
+        /**
+         * \brief This helper class is a container for iterating through all vertices using C++11
+         *      range-based for-loops.
+         * \class VertexContainer easy3d/core/point_cloud.h
+         * \sa vertices()
+         */
         class VertexContainer
         {
         public:
+            /**
+             * \brief Constructor.
+             * \param _begin The begin iterator.
+             * \param _end The end iterator.
+             */
             VertexContainer(VertexIterator _begin, VertexIterator _end) : begin_(_begin), end_(_end) {}
+            /**
+             * \brief Get the begin iterator.
+             * \return The begin iterator.
+             */
             VertexIterator begin() const { return begin_; }
+            /**
+             * \brief Get the end iterator.
+             * \return The end iterator.
+             */
             VertexIterator end()   const { return end_;   }
         private:
             VertexIterator begin_, end_;
@@ -224,33 +334,56 @@ namespace easy3d {
         /// \name Construct, destruct, assignment
         //@{
 
-        /// @brief default constructor
+        /**
+         * \brief Default constructor.
+         */
         PointCloud();
 
-        /// @brief destructor (is virtual, since we inherit from Geometry_representation)
+        /**
+         * \brief Destructor (is virtual, since we inherit from Model).
+         */
         ~PointCloud() override = default;
 
-        /// @brief copy constructor: copies \c rhs to \c *this. performs a deep copy of all properties.
+        /**
+         * \brief Copy constructor: copies \c rhs to \c *this. Performs a deep copy of all properties.
+         * \param rhs The other point cloud.
+         */
         PointCloud(const PointCloud& rhs) { operator=(rhs); }
 
-        /// @brief assign \c rhs to \c *this. performs a deep copy of all properties.
+        /**
+         * \brief Assign \c rhs to \c *this. Performs a deep copy of all properties.
+         * \param rhs The other point cloud.
+         * \return The assigned point cloud.
+         */
         PointCloud& operator=(const PointCloud& rhs);
 
-		/// \brief Merges another point cloud into the current one.
-		/// Shifts the indices of vertices of the other point cloud by `number_of_vertices() + number_of_removed_vertices()`.
-		/// Copies entries of all property maps which have the same name in both point clouds. That is, property maps which
-		/// are only in `other` are ignored.
-		/// Also copies elements which are marked as removed, and concatenates the freelists of both point clouds.
+        /**
+         * \brief Merges another point cloud into the current one.
+         * \details Shifts the indices of vertices of the other point cloud by `number_of_vertices() +
+         *      number_of_removed_vertices()`.  Copies entries of all property maps which have the same name in both
+         *      point clouds. That is, property maps which are only in `other` are ignored. Also copies elements which
+         *      are marked as removed, and concatenates the freelists of both point clouds.
+         * \param other The other point cloud to merge.
+         * \return The merged point cloud.
+         */
 		PointCloud& operator+=(const PointCloud& other) { join(other); return *this; }
 
-		/// \brief Merges another point cloud into the current one.
-		/// Shifts the indices of vertices of the other point cloud by `number_of_vertices() + number_of_removed_vertices()`.
-		/// Copies entries of all property maps which have the same name in both point cloud. That is, property maps which
-		/// are only in `other` are ignored.
-		/// Also copies elements which are marked as removed, and concatenates the freelists of both point cloud.
+        /**
+         * \brief Merges another point cloud into the current one.
+         * \details Shifts the indices of vertices of the other point cloud by `number_of_vertices() +
+         *      number_of_removed_vertices()`. Copies entries of all property maps which have the same name in both
+         *      point clouds. That is, property maps which are only in `other` are ignored. Also copies elements which
+         *      are marked as removed, and concatenates the freelists of both point clouds.
+         * \param other The other point cloud to merge.
+         * \return The merged point cloud.
+         */
 		PointCloud& join(const PointCloud& other);
 
-        /// @brief assign \c rhs to \c *this. does not copy custom properties.
+        /**
+         * \brief Assign \c rhs to \c *this. Does not copy custom properties.
+         * \param rhs The other point cloud.
+         * \return The assigned point cloud.
+         */
         PointCloud& assign(const PointCloud& rhs);
 
         //@}
@@ -261,7 +394,11 @@ namespace easy3d {
         /// \name Add new elements by hand
         //@{
 
-        /// @brief add a new vertex with position \c p
+        /**
+         * \brief Add a new vertex with position \c p.
+         * \param p The position of the new vertex.
+         * \return The added vertex.
+         */
         Vertex add_vertex(const vec3& p);
 
         //@}
@@ -272,38 +409,66 @@ namespace easy3d {
         /// \name Memory Management
         //@{
 
-        /// @brief returns number of (deleted and valid) vertices in the cloud
-        unsigned int vertices_size() const { return (unsigned int) vprops_.size(); }
+        /**
+         * \brief Returns number of (deleted and valid) vertices in the cloud.
+         * \return The number of vertices in the cloud.
+         */
+        unsigned int vertices_size() const { return static_cast<unsigned int>(vprops_.size()); }
 
-        /// @brief returns number of vertices in the cloud
+        /**
+         * \brief Returns number of vertices in the cloud.
+         * \return The number of valid vertices in the cloud.
+         */
         unsigned int n_vertices() const { return vertices_size() - deleted_vertices_; }
 
-        /// @brief clear cloud: remove all vertices
+        /**
+         * \brief Clear cloud: remove all vertices.
+         */
         void clear();
 
-        /// @brief resize space for vertices and their currently associated properties.
+        /**
+         * \brief Resize space for vertices and their currently associated properties.
+         * \param nv The new size for the vertices.
+         */
         void resize(unsigned int nv) { vprops_.resize(nv); }
 
-        /// are there deleted vertices?
+        /**
+         * \brief Are there deleted vertices?
+         * \return True if there are deleted vertices, false otherwise.
+         * \sa delete_vertex(), is_deleted(), and collect_garbage().
+         */
         bool has_garbage() const { return garbage_; }
 
-        /// @brief remove deleted vertices
+        /**
+         * \brief Remove deleted vertices.
+         * \sa delete_vertex(), is_deleted(), and has_garbage().
+         */
         void collect_garbage();
 
-        /// @brief deletes the vertex \c v from the cloud
+        /**
+         * \brief Deletes the vertex \c v from the cloud.
+         * \param v The vertex to delete.
+         * \sa collect_garbage(), is_deleted(), and has_garbage().
+         */
         void delete_vertex(Vertex v);
 
-        /// @brief returns whether vertex \c v is deleted
-        /// \sa collect_garbage()
-        bool is_deleted(Vertex v) const
-        {
+        /**
+         * \brief Returns whether vertex \c v is deleted.
+         * \param v The vertex to check.
+         * \return True if the vertex is deleted, false otherwise.
+         * \sa collect_garbage(), delete_vertex(), and has_garbage().
+         */
+        bool is_deleted(Vertex v) const {
             return vdeleted_[v];
         }
 
-        /// @brief return whether vertex \c v is valid, i.e. the index is stores it within the array bounds.
-        bool is_valid(Vertex v) const
-        {
-            return (0 <= v.idx()) && (v.idx() < (int)vertices_size());
+        /**
+         * \brief Return whether vertex \c v is valid, i.e. the index is stores it within the array bounds.
+         * \param v The vertex to check.
+         * \return True if the vertex is valid, false otherwise.
+         */
+        bool is_valid(Vertex v) const {
+            return (0 <= v.idx()) && (v.idx() < static_cast<int>(vertices_size()));
         }
 
         //@}
@@ -313,111 +478,166 @@ namespace easy3d {
         /// \name Property handling
         //@{
 
-        /** @brief add a vertex property of type \c T with name \c name and default value \c t.
-         fails if a property named \c name exists already, since the name has to be unique.
-         in this case it returns an invalid property */
-        template <class T> VertexProperty<T> add_vertex_property(const std::string& name, const T t=T())
-        {
+        /**
+         * \brief Add a vertex property of type \c T with name \c name and default value \c t.
+         * \param name The name of the property.
+         * \param t The default value of the property.
+         * \return The added vertex property. The operation fails if a property with the same name already exists,
+         *      since the name has to be unique. In this case, it returns an invalid property.
+         */
+        template <class T> VertexProperty<T> add_vertex_property(const std::string& name, const T t=T()) {
             return VertexProperty<T>(vprops_.add<T>(name, t));
         }
         /**
-         * \brief Adds a model property of type \c T with name \c name and default value \c t.
-         * \details Fails if a property named \c name exists already, since the name has to be unique.
-         *      In this case it returns an invalid property.
+         * \brief Add a vertex property of type \c T with name \c name and default value \c t.
+         * \param name The name of the property.
+         * \param t The default value of the property.
+         * \return The added vertex property. The operation fails if a property with the same name already exists,
+         *      since the name has to be unique. In this case, it returns an invalid property.
          * Example:
          *      \code
          *          auto trans = cloud->add_model_property<mat4>("transformation", mat4::identity());
          *          trans[0] = mat4::translation(-x0, -y0, -z0);
          *      \endcode
          */
-        template <class T> ModelProperty<T> add_model_property(const std::string& name, const T t = T())
-        {
+        template <class T> ModelProperty<T> add_model_property(const std::string& name, const T t = T()) {
             return ModelProperty<T>(mprops_.add<T>(name, t));
         }
 
-        /** @brief get the vertex property named \c name of type \c T. returns an invalid
-         VertexProperty if the property does not exist or if the type does not match. */
-        template <class T> VertexProperty<T> get_vertex_property(const std::string& name) const
-        {
+        /**
+         * \brief Get the vertex property named \c name of type \c T.
+         * \param name The name of the property.
+         * \return The vertex property. An invalid VertexProperty will be returned if the property does not exist or
+         *      if the type does not match.
+         */
+        template <class T> VertexProperty<T> get_vertex_property(const std::string& name) const {
             return VertexProperty<T>(vprops_.get<T>(name));
         }
+
         /**
          * \brief Gets the model property named \c name of type \c T.
-         * \return The model property. An invalid ModelProperty will be returned if the
-         *      property does not exist or if the type does not match.
+         * \param name The name of the property.
+         * \return The model property. An invalid ModelProperty will be returned if the property does not exist or
+         *      if the type does not match.
          * Example:
          *      \code
          *          auto T = cloud->get_model_property<mat4>("transformation");
          *          T[0] = mat4::translation(-x0, -y0, -z0);
          *      \endcode
          */
-        template <class T> ModelProperty<T> get_model_property(const std::string& name) const
-        {
+        template <class T> ModelProperty<T> get_model_property(const std::string& name) const {
             return ModelProperty<T>(mprops_.get<T>(name));
         }
 
-        /** @brief if a vertex property of type \c T with name \c name exists, it is returned.
-         otherwise this property is added (with default value \c t) */
-        template <class T> VertexProperty<T> vertex_property(const std::string& name, const T t=T())
-        {
+        /**
+         * \brief Gets or adds a vertex property of type \c T with name \c name.
+         * \param name The name of the property.
+         * \param t The default value of the property.
+         * \return The vertex property. If a vertex property of type \c T with name \c name exists, it is returned.
+         *      otherwise this property is added (with default value \c t) and then returned.
+         */
+        template <class T> VertexProperty<T> vertex_property(const std::string& name, const T t=T()) {
             return VertexProperty<T>(vprops_.get_or_add<T>(name, t));
         }
-        /** @brief if a model property of type \c T with name \c name exists, it is returned.
-        otherwise this property is added (with default value \c t) */
-        template <class T> ModelProperty<T> model_property(const std::string& name, const T t = T())
-        {
+        /**
+         * \brief Gets or adds a model property of type \c T with name \c name.
+         * \param name The name of the property.
+         * \param t The default value of the property.
+         * \return The model property. If a model property of type \c T with name \c name exists, it is returned.
+         *      otherwise this property is added (with default value \c t) and then returned.
+         */
+        template <class T> ModelProperty<T> model_property(const std::string& name, const T t = T()) {
             return ModelProperty<T>(mprops_.get_or_add<T>(name, t));
         }
 
-        /// @brief remove the vertex property \c p
+        /**
+         * \brief Remove the vertex property \c p.
+         * \param p The vertex property to remove.
+         * \return True if the property was removed, false otherwise.
+         */
         template<class T>
         bool remove_vertex_property(VertexProperty<T> &p) { return vprops_.remove(p); }
 
-        /// @brief remove the vertex property named \c n
+        /**
+         * \brief Remove the vertex property named \c n.
+         * \param n The name of the vertex property to remove.
+         * \return True if the property was removed, false otherwise.
+         */
         bool remove_vertex_property(const std::string &n) { return vprops_.remove(n); }
 
-        /// @brief remove the model property \c p
+        /**
+         * \brief Remove the model property \c p.
+         * \param p The model property to remove.
+         * \return True if the property was removed, false otherwise.
+         */
         template<class T>
         bool remove_model_property(ModelProperty<T> &p) { return mprops_.remove(p); }
 
-        /// @brief remove the model property named \c n
+        /**
+         * \brief Remove the model property named \c n.
+         * \param n The name of the model property to remove.
+         * \return True if the property was removed, false otherwise.
+         */
         bool remove_model_property(const std::string &n) { return mprops_.remove(n); }
 
-        /// @brief rename a vertex property given its name
+        /**
+         * \brief Rename a vertex property given its name.
+         * \param old_name The old name of the property.
+         * \param new_name The new name of the property.
+         * \return True if the property was renamed, false otherwise.
+         */
         bool rename_vertex_property(const std::string &old_name, const std::string &new_name) {
             return vprops_.rename(old_name, new_name);
         }
 
-        /// @brief rename a model property given its name
+        /**
+         * \brief Rename a model property given its name.
+         * \param old_name The old name of the property.
+         * \param new_name The new name of the property.
+         * \return True if the property was renamed, false otherwise.
+         */
         bool rename_model_property(const std::string &old_name, const std::string &new_name) {
             return mprops_.rename(old_name, new_name);
         }
 
-        /** @brief get the type_info \c T of vertex property \p name. returns an typeid(void)
-         if the property does not exist or if the type does not match. */
-        const std::type_info& get_vertex_property_type(const std::string& name) const
-        {
+        /**
+         * \brief Get the type_info \c T of vertex property \p name.
+         * \param name The name of the property.
+         * \return The type_info of the property. A typeid(void) is returned if the property does not exist or if the
+         *      type does not match.
+         */
+        const std::type_info& get_vertex_property_type(const std::string& name) const {
             return vprops_.get_type(name);
         }
-        /** @brief get the type_info \c T of model property \p name. returns an typeid(void)
-        if the property does not exist or if the type does not match. */
-        const std::type_info& get_model_property_type(const std::string& name) const
-        {
+        /**
+         * \brief Get the type_info \c T of model property \p name.
+         * \param name The name of the property.
+         * \return The type_info of the property. A typeid(void) is returned if the property does not exist or if the
+         *      type does not match.
+         */
+        const std::type_info& get_model_property_type(const std::string& name) const {
             return mprops_.get_type(name);
         }
 
-        /// @brief returns the names of all vertex properties
-        std::vector<std::string> vertex_properties() const
-        {
+        /**
+         * \brief Returns the names of all vertex properties.
+         * \return A vector of names of all vertex properties.
+         */
+        std::vector<std::string> vertex_properties() const {
             return vprops_.properties();
         }
-        /// @brief returns the names of all model properties
-        std::vector<std::string> model_properties() const
-        {
+        /**
+         * \brief Returns the names of all model properties.
+         * \return A vector of names of all model properties.
+         */
+        std::vector<std::string> model_properties() const {
             return mprops_.properties();
         }
 
-        /// @brief prints the names of all properties to an output stream (e.g., std::cout)
+        /**
+         * \brief Prints the names of all properties to an output stream (e.g., std::cout).
+         * \param output The output stream to print to.
+         */
         void property_stats(std::ostream &output) const override;
 
         //@}
@@ -428,22 +648,28 @@ namespace easy3d {
         /// \name Iterators
         //@{
 
-        /// @brief returns start iterator for vertices
-        VertexIterator vertices_begin() const
-        {
+        /**
+         * \brief Returns start iterator for vertices.
+         * \return The start iterator for vertices.
+         */
+        VertexIterator vertices_begin() const {
             return VertexIterator(Vertex(0), this);
         }
 
-        /// @brief returns end iterator for vertices
-        VertexIterator vertices_end() const
-        {
+        /**
+         * \brief Returns end iterator for vertices.
+         * \return The end iterator for vertices.
+         */
+        VertexIterator vertices_end() const {
             return VertexIterator(Vertex(static_cast<int>(vertices_size())), this);
         }
 
-        /// @brief returns vertex container for C++11 range-based for-loops
-        VertexContainer vertices() const
-        {
-            return VertexContainer(vertices_begin(), vertices_end());
+        /**
+         * \brief Returns vertex container for C++11 range-based for-loops.
+         * \return The vertex container for range-based for-loops.
+         */
+        VertexContainer vertices() const {
+            return {vertices_begin(), vertices_end()};
         }
 
         //@}
@@ -453,16 +679,30 @@ namespace easy3d {
         /// \name Geometry-related Functions
         //@{
 
-        /// @brief position of a vertex (read only)
+        /**
+         * \brief Gets the position of a vertex (read only).
+         * \param v The vertex to get the position of.
+         * \return A const reference to the position of the vertex.
+         */
         const vec3& position(Vertex v) const { return vpoint_[v]; }
 
-        /// @brief position of a vertex
+        /**
+         * \brief Gets the position of a vertex.
+         * \param v The vertex to get the position of.
+         * \return A reference to the position of the vertex.
+         */
         vec3& position(Vertex v) { return vpoint_[v]; }
 
-        /// @brief vector of vertex positions (read only)
+        /**
+         * \brief Returns the vector of vertex positions (read only).
+         * \return A const reference to the vector of vertex positions.
+         */
         const std::vector<vec3>& points() const override { return vpoint_.vector(); }
 
-        /// @brief vector of vertex positions
+        /**
+         * \brief Returns the vector of vertex positions.
+         * \return A reference to the vector of vertex positions.
+         */
         std::vector<vec3>& points() override { return vpoint_.vector(); }
 
         //@}
@@ -492,9 +732,13 @@ namespace easy3d {
 
     //------------------------------------------------------------ output operators
 
-    /// Output stream support for PointCloud::Vertex.
-    inline std::ostream& operator<<(std::ostream& os, PointCloud::Vertex v)
-    {
+    /**
+     * \brief Output stream support for PointCloud::Vertex.
+     * \param os The output stream.
+     * \param v The vertex to output.
+     * \return The output stream.
+     */
+    inline std::ostream& operator<<(std::ostream& os, PointCloud::Vertex v) {
         return (os << 'v' << v.idx());
     }
 

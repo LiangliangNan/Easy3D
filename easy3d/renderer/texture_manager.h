@@ -53,58 +53,64 @@ namespace easy3d {
     class TextureManager {
     public:
         /**
-         * @brief Request a texture from the image file.
-         * @details The generated texture has a unique identifier of its full-path file name. If a texture with the same
+         * \brief Request a texture from the image file.
+         * \details The generated texture has a unique identifier of its full-path file name. If a texture with the same
          *          identifier is requested again, no new texture will be generated and the existing texture is returned.
-         * @param image_file The full path to the image file.
-         * @param wrap The wrap mode.
-         * @param filter The filter mode.
-         * @return The texture created from the image.
+         * \param image_file The full path to the image file.
+         * \param wrap The wrap mode.
+         * \param filter The filter mode.
+         * \return The texture created from the image.
          */
         static Texture *request(const std::string &image_file,
                                 Texture::WrapMode wrap = Texture::CLAMP_TO_EDGE,
                                 Texture::FilterMode filter = Texture::LINEAR);
 
         /**
-         * @brief Request a texture for rendering scalar fields from a gradually varying (from left to right) color
+         * \brief Request a texture for rendering scalar fields from a gradually varying (from left to right) color
          *        image given its file name.
-         * @details This method allows to sample the original image into a specified number of vertical stripes. The
+         * \details This method allows to sample the original image into a specified number of vertical stripes. The
          *          generated texture has a unique identifier in the format: "file_name|num_stripes". If a texture with
          *          the same identifier is requested again, no new texture will be generated and the existing one is
          *          returned.
-         * @param image_file The full path to the image file.
-         * @param num_stripes The number of stripes. If num_stripes == image_width, no sampling will occur.
-         * @param wrap The wrap mode.
-         * @param filter The filter mode.
-         * @return The texture created from the image.
+         * \param image_file The full path to the image file.
+         * \param num_stripes The number of stripes. If num_stripes == image_width, no sampling will occur.
+         * \param wrap The wrap mode.
+         * \param filter The filter mode.
+         * \return The texture created from the image.
          */
         static Texture *request(const std::string &image_file, int num_stripes,
                                 Texture::WrapMode wrap = Texture::CLAMP_TO_EDGE,
                                 Texture::FilterMode filter = Texture::LINEAR);
 
         /**
-         * @brief Request a random color texture for rendering scalar fields. The texture will have a set of uniformly
+         * \brief Request a random color texture for rendering scalar fields. The texture will have a set of uniformly
          *        colored vertical stripes.
-         * @details It first generates a random-colored image, where each row has "num_colors" color and each color
+         * \details It first generates a random-colored image, where each row has "num_colors" color and each color
          *          repeat "stride" times. Then, a texture is created from this image data. The generated texture has a
          *          unique identifier in the format: "random|num_stripes|stride", where num_stripes and stride are
          *          integer numbers. If the requested number of stripes and the stride match a previously generated
          *          texture, no new texture will be generated and the existing texture is returned.
-         * @param num_stripes The number of stripes in the texture.
-         * @param stride The width of each vertical strip. So the total width of the texture is: num_stripes * stride.
-         * @return The texture created.
+         * \param num_stripes The number of stripes in the texture.
+         * \param stride The width of each vertical strip. So the total width of the texture is: num_stripes * stride.
+         * \param wrap The wrap mode.
+         * \param filter The filter mode.
+         * \return The texture created.
          */
         static Texture *request(int num_stripes, int stride,
                                 Texture::WrapMode wrap = Texture::CLAMP_TO_EDGE,
                                 Texture::FilterMode filter = Texture::LINEAR);
 
         /**
-         * Release a texture (deallocate its memory).
-         * @param texture The texture to be released.
+         * \brief Release a texture (deallocate its memory).
+         * \param texture The texture to be released.
          */
         static void release(const Texture *texture);
 
-        /// destroy all textures.
+        /**
+         * \brief Destroy all textures and release their memory.
+         * \note This method should be called before the OpenGL context is deleted. It is typically called in the
+         *      destructor of the viewer.
+         */
         static void terminate();
 
     private:

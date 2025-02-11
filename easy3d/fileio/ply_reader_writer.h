@@ -148,6 +148,9 @@ namespace easy3d {
 		public:
             /**
              * \brief Saves a model stored as a set of \p elements to file \p file_name.
+             * \param file_name The output file.
+             * \param elements The model elements.
+             * \param comment The comment to be written to the file.
              * \param binary true for binary format, otherwise ASCII format.
              * \return The status of the operation
              *      \arg true if succeeded

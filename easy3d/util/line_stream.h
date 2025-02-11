@@ -34,7 +34,6 @@
 
 namespace easy3d {
 
-
     /**
      * \brief File input/output functionalities.
      * \namespace easy3d::io
@@ -47,34 +46,62 @@ namespace easy3d {
          */
         class LineInputStream {
         public:
+            /**
+             * \brief Constructor.
+             * \param in The input stream.
+             */
             explicit LineInputStream(std::istream &in) : in_(in), line_in_(nullptr) {}
-
+            /**
+             * \brief Destructor.
+             */
             ~LineInputStream() {
                 delete line_in_;
                 line_in_ = nullptr;
             }
-
+            /**
+             * \brief Check if the end of the file has been reached.
+             * \return True if the end of the file has been reached, false otherwise.
+             */
             bool eof() const { return in_.eof(); }
-
+            /**
+             * \brief Check if the end of the line has been reached.
+             * \return True if the end of the line has been reached, false otherwise.
+             */
             bool eol() const { return line_in_ == nullptr || line_in_->eof(); }
-
+            /**
+             * \brief Check if the stream has failed.
+             * \return True if the stream has failed, false otherwise.
+             */
             bool fail() const { return in_.fail() || line_in_->fail(); }
-
+            /**
+             * \brief Read the next line from the input stream.
+             */
             void get_line() {
                 getline(in_, buffer_);
                 delete line_in_;
                 line_in_ = new std::istringstream(buffer_);
             }
-
+            /**
+             * \brief Get the current line as an input stream.
+             * \return The current line as an input stream.
+             */
             std::istream &line() {
                 assert(line_in_ != nullptr);
                 return *line_in_;
             }
-
+            /**
+             * \brief Get the current line as a string.
+             * \return The current line as a string.
+             */
             const std::string &current_line() const {
                 return buffer_;
             }
-
+            /**
+             * \brief Extract a value from the current line.
+             * \tparam T The type of the value to extract.
+             * \param param The value to extract.
+             * \return A reference to the LineInputStream object.
+             */
             template<class T>
             LineInputStream &operator>>(T &param) {
                 *line_in_ >> param;
@@ -82,9 +109,9 @@ namespace easy3d {
             }
 
         private:
-            std::istream &in_;
-            std::istringstream *line_in_;
-            std::string buffer_;
+            std::istream &in_;                ///< The input stream.
+            std::istringstream *line_in_;     ///< The current line as an input stream.
+            std::string buffer_;              ///< The buffer to store the current line.
         };
 
 

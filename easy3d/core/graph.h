@@ -110,7 +110,11 @@ namespace easy3d {
 
             /// Helper structure to be able to use std::unordered_map
             struct Hash {
-				/// Hash function, which is simply the index.
+				/**
+				 * \brief Hash function for BaseHandle.
+				 * \param h The handle to hash.
+				 * \return The hash value of the handle, which is the index.
+				 */
                 std::size_t operator()(const BaseHandle& h) const { return h.idx(); }
             };
 

@@ -77,10 +77,14 @@ namespace easy3d {
 		bool save_bin(const std::string& file_name, const PointCloud* cloud);
 
         /// \brief Reads point cloud from an \c xyz format file.
-        /// \details Each line of an \c xyz file contains three floating point numbers representing the \p x, \p y, and
-        /// \p z coordinates of a point.
+        /// \details Each line of an \c xyz file contains three floating point numbers representing the three
+        ///			coordinates of a point.
 		bool load_xyz(const std::string& file_name, PointCloud* cloud);
+		/// \brief Saves a point cloud to an \c xyz format file.
+		/// \details Each line of an \c xyz file contains three floating point numbers representing the three
+		///			coordinates of a point.
 		bool save_xyz(const std::string& file_name, const PointCloud* cloud);
+
         /// \brief Reads point cloud from a binary \c xyz format file.
 		bool load_bxyz(const std::string& file_name, PointCloud* cloud);
         /// \brief Saves a point cloud to a binary \c xyz format file.

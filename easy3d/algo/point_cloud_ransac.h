@@ -51,13 +51,14 @@ namespace easy3d {
      */
     class PrimitivesRansac {
     public:
+        /// The primitive types that can be extracted.
         enum PrimType { // Do NOT modify the order!!! Values have to be exactly the same as in RANSAC
-            PLANE = 0,
-            SPHERE = 1,
-            CYLINDER = 2,
-            CONE = 3,
-            TORUS = 4,
-            UNKNOWN = -1
+            PLANE = 0,      ///< Plane primitive
+            SPHERE = 1,     ///< Sphere primitive
+            CYLINDER = 2,   ///< Cylinder primitive
+            CONE = 3,       ///< Cone primitive
+            TORUS = 4,      ///< Torus primitive
+            UNKNOWN = -1    ///< Unknown primitive
         };
 
     public:
@@ -127,11 +128,11 @@ namespace easy3d {
          * \brief Information about a plane primitive.
          */
         struct PlanePrim {
-            int primitive_index;       /// the index of this plane (w.r.t. the entire list of detected primitives)
-            std::vector<int> vertices; /// the vertex indices (w.r.t. the point cloud) of this plane
-            Plane3 plane;   /// the plane representation
-            vec3  position; /// the position of the plane (represented by a point on the plane)
-            vec3  normal;   /// the normal of the plane
+            int primitive_index;       ///< the index of this plane (w.r.t. the entire list of detected primitives)
+            std::vector<int> vertices; ///< the vertex indices (w.r.t. the point cloud) of this plane
+            Plane3 plane;   ///< the plane representation
+            vec3  position; ///< the position of the plane (represented by a point on the plane)
+            vec3  normal;   ///< the normal of the plane
         };
         /**
          * \brief Get the detected planes.
@@ -142,11 +143,11 @@ namespace easy3d {
          * \brief Information about a cylinder primitive.
          */
         struct CylinderPrim {
-            int primitive_index;       /// the index of this cylinder (w.r.t. the entire list of detected primitives)
-            std::vector<int> vertices; /// the vertex indices (w.r.t. the point cloud) of this cylinder
-            float radius;       /// the radius of the cylinder
-            vec3  position;     /// the position of the cylinder (represented by the center of the bottom circle)
-            vec3  direction;    /// the direction of the cylinder
+            int primitive_index;       ///< the index of this cylinder (w.r.t. the entire list of detected primitives)
+            std::vector<int> vertices; ///< the vertex indices (w.r.t. the point cloud) of this cylinder
+            float radius;       ///< the radius of the cylinder
+            vec3  position;     ///< the position of the cylinder (represented by the center of the bottom circle)
+            vec3  direction;    ///< the direction of the cylinder
         };
         /**
          * Get the detected cylinders.

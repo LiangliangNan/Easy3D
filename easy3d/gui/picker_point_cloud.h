@@ -43,38 +43,52 @@ namespace easy3d {
      */
     class PointCloudPicker : public Picker {
     public:
+        /**
+         * \brief Constructor.
+         * \param cam The camera used for picking.
+         */
         explicit PointCloudPicker(const Camera *cam);
 
-        /// \brief Returns the picker resolution (in pixels).
-        /// \details The picker resolution indicates the sensitivity of picking a point. It is used only for
-        ///     the CPU implementation of picking a single point.
+        /**
+         * \brief Returns the picker resolution (in pixels).
+         * \details The picker resolution indicates the sensitivity of picking a point. It is used only for
+         *     the CPU implementation of picking a single point.
+         * \return The picker resolution in pixels.
+         */
         unsigned int resolution() const { return hit_resolution_; }
-        /// \brief Sets the picker resolution (in pixels).
-        /// \details The picker resolution indicates the sensitivity of picking a point. It is used only for
-        ///     the CPU implementation of picking a single point.
+
+        /**
+         * \brief Sets the picker resolution (in pixels).
+         * \details The picker resolution indicates the sensitivity of picking a point. It is used only for
+         *     the CPU implementation of picking a single point.
+         * \param r The new picker resolution in pixels.
+         */
         void set_resolution(unsigned int r) { hit_resolution_ = r; }
 
         /**
-         * @brief Pick vertex at a given screen location.
-         * @param x The x coordinate of the screen point.
-         * @param y The y coordinate of the screen point.
-         * @return The picked vertex.
+         * \brief Pick vertex at a given screen location.
+         * \param model The point cloud model.
+         * \param x The x coordinate of the screen point.
+         * \param y The y coordinate of the screen point.
+         * \return The picked vertex.
          */
         PointCloud::Vertex pick_vertex(PointCloud *model, int x, int y);
 
         /**
-         * @brief Pick vertices of a point cloud by a rectangle. The selected vertices will be marked in vertex property
-         * "v:select".
-         * @param rect The rectangle region.
-         * @param deselect True to perform an inverse operation.
+         * \brief Pick vertices of a point cloud by a rectangle. The selected vertices will be marked in vertex
+         *      property "v:select".
+         * \param model The point cloud model.
+         * \param rect The rectangle region.
+         * \param deselect True to perform an inverse operation.
          */
         void pick_vertices(PointCloud *model, const Rect& rect, bool deselect);
 
         /**
-         * @brief Pick vertices of a point cloud by a polygon/lasso. The selected vertices will be marked in vertex
-         * property "v:select".
-         * @param plg The polygon region.
-         * @param deselect True to perform an inverse operation.
+         * \brief Pick vertices of a point cloud by a polygon/lasso. The selected vertices will be marked in
+         *      vertex property "v:select".
+         * \param model The point cloud model.
+         * \param plg The polygon region.
+         * \param deselect True to perform an inverse operation.
          */
         void pick_vertices(PointCloud *model, const Polygon2 &plg, bool deselect);
 
