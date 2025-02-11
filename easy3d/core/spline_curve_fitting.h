@@ -82,19 +82,20 @@ namespace easy3d {
         /// \brief Gets the control points of the spline
         void get_ctrl_points(std::vector<Point<N, T>> &points) const;
 
-        /// \brief Sets the the nodal vector type
+        /// \brief Sets the nodal vector type
         void set_node_type(Node_e type);
 
         /// \brief Evaluates position of the spline
         /// @param u : curve parameter ranging from [0; 1].
         /// \note Calling this with equally distributed \p u will result in non-uniformly distributed points on the
-        ///     curves (because some of input points are closely spaced but others may not). To get points at fixed
+        ///     curves (because some input points are closely spaced but others may not). To get points at fixed
         ///     distances along the curve, use the parameter generated from get_equally_spaced_parameters().
         Point<N, T> eval_f(T u) const;
 
         /// \brief Evaluates speed of the spline
         Point<N, T> eval_df(T u) const;
 
+        /// \brief Gets the order of the spline
         int get_order() const { return _k; }
 
         /// \brief Gets parameters such that evaluation of the curve positions using these parameters results in
@@ -189,7 +190,7 @@ namespace easy3d {
 
     // -----------------------------------------------------------------------------
 
-    /// The the nodal vector type
+    /// The nodal vector type
     template <template <size_t, class> class Point, size_t N, typename T>
     void SplineCurveFitting<Point, N, T>::set_node_type(Node_e type) {
         _node_type = type;

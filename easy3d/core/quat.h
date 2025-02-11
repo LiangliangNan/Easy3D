@@ -69,7 +69,7 @@ namespace easy3d {
      *  y = axis.y * std::sin(angle / 2)
      *  z = axis.z * std::sin(angle / 2)
      *  w = std::cos(angle / 2)
-     * \NOTE:
+     * \note
      *   - the angle is in radians and the axis is a unit vector.
      *   - certain implementations place the cosine term in the first position (instead of last).
      *
@@ -106,8 +106,8 @@ namespace easy3d {
     class Quat
     {
     public:
-        typedef Vec<3, FT>	Vec3;
-        typedef Quat<FT>	thisclass;
+        typedef Vec<3, FT>	Vec3;       ///< 3D vector type
+        typedef Quat<FT>	thisclass;  ///< Quaternion type
 
     public:
         /** \brief Default constructor, builds an identity rotation. */

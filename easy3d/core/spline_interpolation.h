@@ -85,9 +85,10 @@ namespace easy3d {
     template<typename FT>
     class SplineInterpolation {
     public:
+        /// Boundary condition type.
         enum BoundaryType {
-            first_deriv = 1,
-            second_deriv = 2
+            first_deriv = 1,    ///< first derivative
+            second_deriv = 2    ///< second derivative
         };
 
     public:

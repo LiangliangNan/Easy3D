@@ -18,14 +18,28 @@
 namespace easy3d {
 
     /**
-     * \brief The based class of GUI element reporting the progress.
+     * \brief The base class of GUI element reporting the progress.
      * \class ProgressClient easy3d/util/progress.h
      */
     class ProgressClient {
     public:
+        /**
+         * \brief Constructor.
+         */
         ProgressClient();
+        /**
+         * \brief Destructor.
+         */
         virtual ~ProgressClient() = default;
+        /**
+         * \brief Notify the progress.
+         * \param percent The progress percentage.
+         * \param update_viewer True to update the viewer.
+         */
         virtual void notify(std::size_t percent, bool update_viewer) = 0;
+        /**
+         * \brief Cancel the progress.
+         */
         virtual void cancel();
     };
 
@@ -37,21 +51,44 @@ namespace easy3d {
      */
     class ProgressLogger {
     public:
-        /// \param max_val The max value (i.e., upper bound) of the progress range.
-        /// \param update_viewer \c true to trigger the viewer to update for each step.
-        /// \param quiet \c true to make the logger quiet (i.e., don't notify the client).
+        /**
+         * \brief Constructor.
+         * \param max_val The max value (i.e., upper bound) of the progress range.
+         * \param update_viewer True to trigger the viewer to update for each step.
+         * \param quiet True to make the logger quiet (i.e., don't notify the client).
+         */
         ProgressLogger(std::size_t max_val, bool update_viewer, bool quiet = false);
+        /**
+         * \brief Destructor.
+         */
         virtual ~ProgressLogger();
-
+        /**
+         * \brief Notify the progress.
+         * \param new_value The new progress value.
+         */
         virtual void notify(std::size_t new_value);
+        /**
+         * \brief Move to the next step.
+         */
         virtual void next();
+        /**
+         * \brief Mark the progress as done.
+         */
         virtual void done() { notify(max_val_); }
-
+        /**
+         * \brief Check if the progress is canceled.
+         * \return True if the progress is canceled, false otherwise.
+         */
         bool is_canceled() const;
 
-        /// Resets the progress logger without changing the progress range.
+        /**
+         * \brief Resets the progress logger without changing the progress range.
+         */
         void reset() { notify(0); }
-        /// Resets the progress logger, and meanwhile changes the progress range.
+        /**
+         * \brief Resets the progress logger, and meanwhile changes the progress range.
+         * \param max_val The new max value of the progress range.
+         */
         void reset(std::size_t max_val);
 
     protected:
@@ -65,8 +102,12 @@ namespace easy3d {
         bool update_viewer_;
     };
 
-    /// A simple progress indicator for console applications. Given percentage = 0.75, the output looks like
-    ///     75% [||||||||||||||||||||||||||||||||||||||||||               ]
+    /**
+     * \brief A simple progress indicator for console applications.
+     * \param percentage The progress percentage.
+     * \details Given percentage = 0.75, the output looks like:
+     *     75% [||||||||||||||||||||||||||||||||||||||||||               ]
+     */
     void print_progress(float percentage);
 
 }   // namespace easy3d

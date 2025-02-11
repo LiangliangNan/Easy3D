@@ -37,19 +37,29 @@ namespace easy3d {
 
     class ShaderProgram;
 
-    /**
-     * \brief Management of shader programs.
-     * \class ShaderManager easy3d/renderer/shader_manager.h
-     * \note make sure to call terminate() to destroy existing programs before the OpenGL context is deleted.
-     */
+	/**
+	 * \brief Management of shader programs.
+	 * \class ShaderManager easy3d/renderer/shader_manager.h
+	 * \note Make sure to call terminate() to destroy existing programs before the OpenGL context is deleted.
+	 */
     class ShaderManager
     {
     public:
-        // return the shader program if it exists and is working, otherwise return 0.
-        // shader_name: the base name of the program's source file.
+    	/**
+		 * \brief Get the shader program if it exists and is working.
+		 * \param shader_name The base name of the program's source file.
+		 * \return The shader program if it exists and is working, otherwise nullptr.
+		 */
         static ShaderProgram* get_program(const std::string& shader_name);
 
-        // create a shader program from shader source files specified by the shader file's base name.
+    	/**
+		 * \brief Create a shader program from shader source files specified by the shader file's base name.
+		 * \param file_base_name The base name of the shader files.
+		 * \param attributes The attributes for the shader program.
+		 * \param outputs The outputs for the shader program.
+		 * \param geom_shader True if a geometry shader is included.
+		 * \return The created shader program.
+		 */
         static ShaderProgram* create_program_from_files(
             const std::string& file_base_name,
             const std::vector<ShaderProgram::Attribute>& attributes = std::vector<ShaderProgram::Attribute>(),
@@ -57,8 +67,18 @@ namespace easy3d {
             bool geom_shader = false
         );
 
-        // create a shader program from shader source files specified by individual file names.
-        // This function allows user providing extra code.
+    	/**
+		 * \brief Create a shader program from shader source files specified by individual file names.
+		 * \param vert_file_name The vertex shader file name.
+		 * \param frag_file_name The fragment shader file name.
+		 * \param geom_file_name The geometry shader file name (optional).
+		 * \param extra_vert_code Extra vertex shader code (optional).
+		 * \param extra_frag_code Extra fragment shader code (optional).
+		 * \param extra_geom_code Extra geometry shader code (optional).
+		 * \param attributes The attributes for the shader program.
+		 * \param outputs The outputs for the shader program.
+		 * \return The created shader program.
+		 */
 		static ShaderProgram* create_program_from_files(
 			const std::string& vert_file_name,
 			const std::string& frag_file_name,
@@ -70,7 +90,15 @@ namespace easy3d {
 			const std::vector<std::string>& outputs = std::vector<std::string>()
 		);
 
-        // create a shader program from completed shader source codes
+    	/**
+		 * \brief Create a shader program from completed shader source codes.
+		 * \param vert_code The vertex shader code.
+		 * \param frag_code The fragment shader code.
+		 * \param geom_code The geometry shader code (optional).
+		 * \param attributes The attributes for the shader program.
+		 * \param outputs The outputs for the shader program.
+		 * \return The created shader program.
+		 */
         static ShaderProgram* create_program_from_codes(
                 const std::string& vert_code,
                 const std::string& frag_code,
@@ -79,11 +107,20 @@ namespace easy3d {
                 const std::vector<std::string>& outputs = std::vector<std::string>()
         );
 
+    	/**
+		 * \brief Get all shader programs.
+		 * \return A vector of all shader programs.
+		 */
         static std::vector<ShaderProgram*> all_programs();
 
-        // destroy all shader programs.
+    	/**
+		 * \brief Destroy all shader programs.
+		 */
         static void terminate();
 
+    	/**
+		 * \brief Reload all shader programs.
+		 */
 		static void reload();
 
     private:
