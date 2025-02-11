@@ -27,7 +27,7 @@
 /** ----------------------------------------------------------
  *
  * the code is adapted from libQGLViewer with modifications.
- *		- libQGLViewer (version Version 2.7.1, Nov 17th, 2017)
+ *		- libQGLViewer (Version 2.7.1, Nov 17th, 2017)
  * The original code is available at
  * http://libqglviewer.com/
  *
@@ -240,12 +240,12 @@ namespace easy3d {
          */
         const Frame *referenceFrame() const { return referenceFrame_; }
         /**
-         * \brief Returns the reference Frame.
-         * \return The reference Frame.
-         * \details Returns the reference Frame, in which coordinates system the Frame is defined.
-         * The translation() and rotation() of the Frame are defined with respect to the referenceFrame() coordinate system.
+         * \brief Sets the reference Frame.
+         * \details The Frame translation() and rotation() are then defined in the referenceFrame() coordinate system.
+         *      Use position() and orientation() to express these in the world coordinate system.
+         * \param refFrame The reference Frame.
          */
-        void setReferenceFrame(const Frame *const refFrame);
+        void setReferenceFrame(const Frame* refFrame);
         /**
          * \brief Checks if setting the reference Frame will create a loop.
          * \param frame The Frame to check.

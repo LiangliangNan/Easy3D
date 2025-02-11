@@ -27,7 +27,7 @@
 /** ----------------------------------------------------------
  *
  * the code is adapted from libQGLViewer with modifications.
- *		- libQGLViewer (version Version 2.7.1, Nov 17th, 2017)
+ *		- libQGLViewer (Version 2.7.1, Nov 17th, 2017)
  * The original code is available at
  * http://libqglviewer.com/
  *
@@ -93,33 +93,33 @@ namespace easy3d {
 	  This method should be used in conjunction with \c glMultMatrixd() to modify
 	  the OpenGL modelview matrix from a Frame hierarchy. With this Frame hierarchy:
 	  \code
-	  Frame* body     = new Frame();
-	  Frame* leftArm  = new Frame();
-	  Frame* rightArm = new Frame();
-	  leftArm->setReferenceFrame(body);
-	  rightArm->setReferenceFrame(body);
+		  Frame* body     = new Frame();
+		  Frame* leftArm  = new Frame();
+		  Frame* rightArm = new Frame();
+		  leftArm->setReferenceFrame(body);
+		  rightArm->setReferenceFrame(body);
 	  \endcode
 
 	  The associated OpenGL drawing code should look like:
 	  \code
-	  void Viewer::draw()
-	  {
-			glPushMatrix();
-			glMultMatrixd(body->matrix());
-			drawBody();
+		  void Viewer::draw()
+		  {
+				glPushMatrix();
+				glMultMatrixd(body->matrix());
+				drawBody();
 
-			glPushMatrix();
-			glMultMatrixd(leftArm->matrix());
-			drawArm();
-			glPopMatrix();
+				glPushMatrix();
+				glMultMatrixd(leftArm->matrix());
+				drawArm();
+				glPopMatrix();
 
-			glPushMatrix();
-			glMultMatrixd(rightArm->matrix());
-			drawArm();
-			glPopMatrix();
+				glPushMatrix();
+				glMultMatrixd(rightArm->matrix());
+				drawArm();
+				glPopMatrix();
 
-			glPopMatrix();
-	  }
+				glPopMatrix();
+		  }
 	  \endcode
 	  Note the use of nested \c glPushMatrix() and \c glPopMatrix() blocks to
 	  represent the frame hierarchy: \c leftArm and \c rightArm are both correctly
@@ -176,12 +176,12 @@ namespace easy3d {
 	  This method should be used in conjunction with \c glMultMatrixd() to modify
 	  the OpenGL modelview matrix from a Frame:
 	  \code
-	  // The modelview here corresponds to the world coordinate system.
-	  Frame fr(pos, quat(from, to));
-	  glPushMatrix();
-	  glMultMatrixd(fr.worldMatrix());
-	  // draw object in the fr coordinate system.
-	  glPopMatrix();
+		  // The modelview here corresponds to the world coordinate system.
+		  Frame fr(pos, quat(from, to));
+		  glPushMatrix();
+		  glMultMatrixd(fr.worldMatrix());
+		  // draw object in the fr coordinate system.
+		  glPopMatrix();
 	  \endcode
 
 	  This matrix represents the global Frame transformation: the entire
@@ -219,14 +219,14 @@ namespace easy3d {
 
 	 Hence, if a code fragment looks like:
 	 \code
-	 double m[16]={...};
-	 glMultMatrixd(m);
+		 double m[16]={...};
+		 glMultMatrixd(m);
 	 \endcode
 	 It is equivalent to write:
 	 \code
-	 Frame fr;
-	 fr.setFromMatrix(m);
-	 glMultMatrixd(fr.matrix());
+		 Frame fr;
+		 fr.setFromMatrix(m);
+		 glMultMatrixd(fr.matrix());
 	 \endcode
 
 	 Using this conversion, you can benefit from the powerful Frame transformation
@@ -535,7 +535,7 @@ namespace easy3d {
 	referenceFrame()). A warning is printed and no action is performed if setting \p
 	refFrame as the referenceFrame() would create a loop in the Frame hierarchy (see
 	settingAsReferenceFrameWillCreateALoop()). */
-	void Frame::setReferenceFrame(const Frame *const refFrame) {
+	void Frame::setReferenceFrame(const Frame* refFrame) {
 		if (settingAsReferenceFrameWillCreateALoop(refFrame))
 			LOG(ERROR) << "Frame::setReferenceFrame would create a loop in Frame hierarchy";
 		else {

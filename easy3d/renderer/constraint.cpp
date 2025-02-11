@@ -27,7 +27,7 @@
 /** ----------------------------------------------------------
  *
  * the code is adapted from libQGLViewer with modifications.
- *		- libQGLViewer (version Version 2.7.1, Nov 17th, 2017)
+ *		- libQGLViewer (Version 2.7.1, Nov 17th, 2017)
  * The original code is available at
  * http://libqglviewer.com/
  *
