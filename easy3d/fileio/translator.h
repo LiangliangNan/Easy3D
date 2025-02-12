@@ -45,6 +45,7 @@ namespace easy3d {
          */
        static Translator* instance();
 
+	   /// The status of the translator.
        enum Status {
            DISABLED, // default behavior: no translation will be recorded and applied to the model.
            TRANSLATE_USE_FIRST_POINT,  // translates the current model w.r.t. its first vertex (also recorded).

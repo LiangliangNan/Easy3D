@@ -69,26 +69,46 @@ namespace easy3d {
     class SoftShadow : public Shadow
     {
     public:
+        /// \brief The sample pattern used for blocker search and PCF filtering
         enum SamplePattern {
-            SP_Poisson_25_25 = 0,   // 25 samples for the blocker search, 25 samples in the PCF filtering, all samples using a Poisson disk
-            SP_Poisson_32_64 = 1,   // 32 samples for the blocker search, 64 samples for the PCF filtering, all samples using a Poisson disk
-            SP_Poisson_64_128 = 2,  // 64 samples for the blocker search, 128 samples for the PCF filtering, all samples using a Poisson disk
-            SP_Poisson_100_100 = 3, // 100 samples for the blocker search, 100 samples for the PCF filtering, all samples using a Poisson disk
-            SP_Regular_49_225 = 4   // 49 samples for the blocker search, 225 samples for the PCF filtering, all samples using regular sampling (faster than Poisson disk)
+            SP_Poisson_25_25 = 0,   ///< 25 samples for the blocker search, 25 samples in the PCF filtering, all samples using a Poisson disk
+            SP_Poisson_32_64 = 1,   ///< 32 samples for the blocker search, 64 samples for the PCF filtering, all samples using a Poisson disk
+            SP_Poisson_64_128 = 2,  ///< 64 samples for the blocker search, 128 samples for the PCF filtering, all samples using a Poisson disk
+            SP_Poisson_100_100 = 3, ///< 100 samples for the blocker search, 100 samples for the PCF filtering, all samples using a Poisson disk
+            SP_Regular_49_225 = 4   ///< 49 samples for the blocker search, 225 samples for the PCF filtering, all samples using regular sampling (faster than Poisson disk)
         };
 
     public:
-        /// \brief Constructor
-        /// \param cam The camera used in the view
+        /**
+         * \brief Constructor.
+         * \param cam The camera used in the view.
+         */
         explicit SoftShadow(Camera* cam);
+        /**
+         * \brief Destructor.
+         */
         ~SoftShadow() override = default;
 
-        // The softness of the shadow. Values must be in [0, 1]. Default: 0.5.
+        /**
+         * \brief Get the softness of the shadow.
+         * \return The softness of the shadow, in the range [0, 1]. Default is 0.5.
+         */
         float softness() const { return softness_; }
+        /**
+         * \brief Set the softness of the shadow.
+         * \param s The softness of the shadow, must be in the range [0, 1].
+         */
         void set_softness(float s) { softness_ = s; }
 
-        // The sampler pattern used for blocker search and PCF filtering.
+        /**
+         * \brief Get the sample pattern used for blocker search and PCF filtering.
+         * \return The sample pattern.
+         */
         SamplePattern sample_pattern() const { return sample_pattern_; }
+        /**
+         * \brief Set the sample pattern used for blocker search and PCF filtering.
+         * \param pattern The sample pattern.
+         */
         void set_sample_pattern(SamplePattern pattern) { sample_pattern_ = pattern; }
 
     protected:

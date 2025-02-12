@@ -52,71 +52,87 @@ namespace easy3d {
      *      builder.end_surface();
      * \endcode
      */
-
     class SurfaceMeshBuilder {
     public:
-        typedef SurfaceMesh::Vertex         Vertex;
-        typedef SurfaceMesh::Halfedge       Halfedge;
-        typedef SurfaceMesh::Face           Face;
+        typedef SurfaceMesh::Vertex   Vertex;   ///< Vertex type.
+        typedef SurfaceMesh::Halfedge Halfedge; ///< Halfedge type.
+        typedef SurfaceMesh::Face     Face;     ///< Face type.
         
     public:
+        /**
+         * \brief Constructor that initializes the builder with a given surface mesh.
+         * \param mesh The surface mesh to build.
+         */
         explicit SurfaceMeshBuilder(SurfaceMesh *mesh);
-
+        /**
+         * \brief Destructor.
+         */
         ~SurfaceMeshBuilder();
 
         // -------------------------------------------------------------------------------------------------------------
 
         /**
-         * @brief Begin surface construction. Must be called at the beginning of the surface construction and used in
-         *        pair with end_surface() at the end of surface mesh construction.
-         * @related end_surface().
-        */
+         * \brief Begin surface construction.
+         * \details Must be called at the beginning of the surface construction and used in
+         *          pair with end_surface() at the end of surface mesh construction.
+         * \sa end_surface().
+         */
         void begin_surface();
 
         /**
-         * @brief Add a vertex to the mesh.
-         * @param p The 3D coordinates of the vertex.
-         * @return The added vertex on success.
+         * \brief Add a vertex to the mesh.
+         * \param p The 3D coordinates of the vertex.
+         * \return The added vertex on success.
          */
         Vertex add_vertex(const vec3 &p);
 
         /**
-         * @brief Add a face to the mesh.
-         * @param vertices The vertices of the face.
-         * @return The added face on success.
-         * @related add_triangle(), add_quad().
+         * \brief Add a face to the mesh.
+         * \param vertices The vertices of the face.
+         * \return The added face on success.
+         * \sa add_triangle(), add_quad().
          */
         Face add_face(const std::vector<Vertex> &vertices);
 
         /**
-         * @brief Add a new triangle face connecting vertices v1, v2, and v3.
-         * @return The added face on success.
-         * @related add_face(), add_quad().
+         * \brief Add a new triangle face connecting vertices v1, v2, and v3.
+         * \param v1 The first vertex of the triangle.
+         * \param v2 The second vertex of the triangle.
+         * \param v3 The third vertex of the triangle.
+         * \return The added face on success.
+         * \sa add_face(), add_quad().
          */
         Face add_triangle(Vertex v1, Vertex v2, Vertex v3);
 
         /**
-         * @brief Add a new quad face connecting vertices v1, v2, v3, and v4.
-         * @return The added face on success.
-         * @related add_face(), add_triangle().
+         * \brief Add a new quad face connecting vertices v1, v2, v3, and v4.
+         * \param v1 The first vertex of the quad.
+         * \param v2 The second vertex of the quad.
+         * \param v3 The third vertex of the quad.
+         * \param v4 The fourth vertex of the quad.
+         * \return The added face on success.
+         * \sa add_face(), add_triangle().
          */
         Face add_quad(Vertex v1, Vertex v2, Vertex v3, Vertex v4);
 
         /**
-         * @brief Finalize surface construction. Must be called at the end of the surface construction and used in
-         *        pair with begin_surface() at the beginning of surface mesh construction.
-         * @param log_issues True to log the issues detected and a report on the process of the issues to the log file.
-         * @related begin_surface().
+         * \brief Finalize surface construction.
+         * \details Must be called at the end of the surface construction and used in
+         *          pair with begin_surface() at the beginning of surface mesh construction.
+         * \param log_issues True to log the issues detected and a report on the process of the issues to the log file.
+         * \sa begin_surface().
          */
         void end_surface(bool log_issues = true);
 
         // -------------------------------------------------------------------------------------------------------------
 
         /**
-         * @brief The actual vertices of the previously added face. The order of the vertices are the same as those
-         *        provided to add_[face/triangle/quad]() for the construction of the face.
-         * @attention The result is valid if the face was successfully added, and it will remain valid until the next
+         * \brief Get the actual vertices of the previously added face.
+         * \details The order of the vertices are the same as those provided to add_[face/triangle/quad]() for the
+         *      construction of the face.
+         * \attention The result is valid if the face was successfully added, and it will remain valid until the next
          *            call to add_[face/triangle/quad]() and end_surface().
+         * \return A vector containing the vertices of the face.
          */
         const std::vector<Vertex> &face_vertices() const { return face_vertices_; }
 

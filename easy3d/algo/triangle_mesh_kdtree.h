@@ -35,12 +35,12 @@ namespace easy3d {
          */
         ~TriangleMeshKdTree() { delete root_; }
 
-        //! \brief nearest neighbor information
+        /// Nearest neighbor information
         struct NearestNeighbor {
-            float dist;             /// distance to the nearest neighbor
-            SurfaceMesh::Face face; /// face handle of the nearest neighbor
-            vec3 nearest;           /// nearest point on the face
-            int tests;              /// number of triangle tests
+            float dist;             ///< distance to the nearest neighbor
+            SurfaceMesh::Face face; ///< face handle of the nearest neighbor
+            vec3 nearest;           ///< nearest point on the face
+            int tests;              ///< number of triangle tests
         };
 
         /**

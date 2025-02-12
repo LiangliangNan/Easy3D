@@ -40,10 +40,10 @@ namespace easy3d {
 	 * \class VertexArrayObject easy3d/renderer/vertex_array_object.h
 	 *
 	 * \details A VAO is an OpenGL container object that encapsulates the state needed to specify
-	 * per-vertex attribute data to the OpenGL pipeline. To put it another way, a VAO
-	 * remembers the states of buffer objects (i.e., vertex buffers) and their associated
-	 * state (e.g. vertex attribute divisors). This allows a very easy and efficient method
-	 * of switching between OpenGL buffer states for rendering different "objects" in a scene.
+	 *		per-vertex attribute data to the OpenGL pipeline. To put it another way, a VAO
+	 *		remembers the states of buffer objects (i.e., vertex buffers) and their associated
+	 *		state (e.g. vertex attribute divisors). This allows a very easy and efficient method
+	 *		of switching between OpenGL buffer states for rendering different "objects" in a scene.
 	 *
 	 * \note This implementation is more than the standard VAO. It also provides functions
 	 *       for creating and managing other buffer objects (i.e., shader storage buffer).
@@ -51,56 +51,112 @@ namespace easy3d {
 	class VertexArrayObject
 	{
 	public:
+		/**
+		 * \brief Check if VAOs are supported by the current OpenGL context.
+		 * \return True if VAOs are supported, false otherwise.
+		 */
         static bool is_supported();
-
+		/**
+		 * \brief Constructor.
+		 */
 		VertexArrayObject();
+		/**
+		 * \brief Destructor.
+		 * \details Deletes the VAO and frees the associated OpenGL resources.
+		 */
 		~VertexArrayObject();
 
+		/**
+		 * \brief Get the OpenGL ID of the VAO.
+		 * \return The OpenGL ID of the VAO.
+		 */
 		GLuint id() const { return id_; }
 
+		/**
+		 * \brief Bind the VAO.
+		 * \details Makes the VAO the current VAO in the OpenGL context.
+		 */
 		void bind();
+		/**
+		 * \brief Release the VAO.
+		 * \details Unbinds the VAO from the OpenGL context.
+		 */
         void release() const;
 
 		//------------------------- buffer management -------------------
 
-        /**
-         * @brief Creates an OpenGL array buffer and upload data to the buffer.
-         * @param buffer The name of the buffer object.
-         * @param index  The index of the generic vertex attribute to be enabled.
-         * @param data   The pointer to the data.
-         * @param size   The size of the data in bytes.
-         * @param dim    The number of components per generic vertex attribute. Must be 1, 2, 3, 4.
-         * @param dynamic The expected usage pattern is GL_STATIC_DRAW or GL_DYNAMIC_DRAW.
-         * @return OpenGL error code.
-         */
+		/**
+		 * \brief Creates an OpenGL array buffer and uploads data to the buffer.
+		 * \param buffer The name of the buffer object.
+		 * \param index  The index of the generic vertex attribute to be enabled.
+		 * \param data   The pointer to the data.
+		 * \param size   The size of the data in bytes.
+		 * \param dim    The number of components per generic vertex attribute. Must be 1, 2, 3, or 4.
+		 * \param dynamic The expected usage pattern is GL_STATIC_DRAW or GL_DYNAMIC_DRAW.
+		 * \return True if the buffer was created successfully, false otherwise.
+		 */
         bool create_array_buffer(GLuint& buffer, GLuint index, const void* data, std::size_t size, std::size_t dim, bool dynamic = false);
-        bool create_element_buffer(GLuint& buffer, const void* data, std::size_t size, bool dynamic = false);
+		/**
+		 * \brief Creates an OpenGL element buffer and uploads data to the buffer.
+		 * \param buffer The name of the buffer object.
+		 * \param data   The pointer to the data.
+		 * \param size   The size of the data in bytes.
+		 * \param dynamic The expected usage pattern is GL_STATIC_DRAW or GL_DYNAMIC_DRAW.
+		 * \return True if the buffer was created successfully, false otherwise.
+		 */
+		bool create_element_buffer(GLuint& buffer, const void* data, std::size_t size, bool dynamic = false);
 
-        // @param index: the index of the binding point.
+		/**
+		 * \brief Creates an OpenGL shader storage buffer and uploads data to the buffer.
+		 * \param buffer The name of the buffer object.
+		 * \param index  The index of the binding point.
+		 * \param data   The pointer to the data.
+		 * \param size   The size of the data in bytes.
+		 * \return True if the buffer was created successfully, false otherwise.
+		 */
         bool create_storage_buffer(GLuint& buffer, GLuint index, const void* data, std::size_t size);
+		/**
+		 * \brief Updates an OpenGL shader storage buffer with new data.
+		 * \param buffer The name of the buffer object.
+		 * \param offset The offset into the buffer object's data store where data replacement will begin, measured in bytes.
+		 * \param size   The size in bytes of the data store region being replaced.
+		 * \param data   The pointer to the new data.
+		 * \return True if the buffer was updated successfully, false otherwise.
+		 */
         bool update_storage_buffer(GLuint& buffer, GLintptr offset, GLsizeiptr size, const void* data);
 
-		/// Frees the GPU memory of the buffer specified by 'handle'
+		/**
+		 * \brief Frees the GPU memory of the buffer specified by 'buffer'.
+		 * \param buffer The name of the buffer object.
+		 */
         static void release_buffer(GLuint& buffer);
 
 		// ------------------------- read/write buffer--------------------
 
 		/**
-		 * Returns a subset of a buffer object's data store.
-		 * \param target: can be GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_SHADER_STORAGE_BUFFER, etc.
-		 * \param buffer: the name of the buffer object.
-		 * \param offset: the offset into the buffer object's data store from which data will be returned,
-		 *      measured in bytes.
-		 * \param size:   the size in bytes of the data store region being returned.
-		 * \param data:   a pointer to the location where buffer object data is returned.
+		 * \brief Returns a subset of a buffer object's data store.
+		 * \param target The target buffer object. Can be GL\_ARRAY\_BUFFER, GL\_ELEMENT\_ARRAY\_BUFFER, GL\_SHADER\_STORAGE\_BUFFER, etc.
+		 * \param buffer The name of the buffer object.
+		 * \param offset The offset into the buffer object's data store from which data will be returned, measured in bytes.
+		 * \param size   The size in bytes of the data store region being returned.
+		 * \param data   A pointer to the location where buffer object data is returned.
 		 */
         static void get_buffer_data(GLenum target, GLuint buffer, GLintptr offset, GLsizeiptr size, void* data);
 
-		// \param target: can be GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_SHADER_STORAGE_BUFFER, etc.
-		// \param handle: the name of the buffer object for the mapping.
-		// \param access: must be GL_READ_ONLY, GL_WRITE_ONLY, or GL_READ_WRITE.
+		/**
+		 * \brief Maps a buffer object's data store.
+		 * \param target The target buffer object. Can be GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_SHADER_STORAGE_BUFFER, etc.
+		 * \param buffer The name of the buffer object.
+		 * \param access The access policy. Must be GL_READ_ONLY, GL_WRITE_ONLY, or GL_READ_WRITE.
+		 * \return A pointer to the mapped data store.
+		 */
         static void* map_buffer(GLenum target, GLuint buffer, GLenum access);
-        static void  unmap_buffer(GLenum target, GLuint buffer);
+		/**
+		 * \brief Unmaps a buffer object's data store.
+		 * \param target The target buffer object. Can be GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_SHADER_STORAGE_BUFFER, etc.
+		 * \param buffer The name of the buffer object.
+		 */
+        static void unmap_buffer(GLenum target, GLuint buffer);
 
 	private:
 		GLuint	id_;
