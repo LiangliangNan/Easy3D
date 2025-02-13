@@ -196,13 +196,13 @@ namespace easy3d {
 		// @}
 
 	protected:
-        /*! Returns a quaternion computed according to the mouse motion. Mouse positions
+        /* Returns a quaternion computed according to the mouse motion. Mouse positions
         are projected on a deformed ball, centered on (\p cx,\p cy), viewer size (\p w, \p h).*/
 		quat deformedBallQuaternion(int x, int y, int pre_x, int pre_y, float cx, float cy, int w, int h) const;
 
 		Constraint *previousConstraint_; // When manipulation is without constraint.
 
-		/*! Returns a normalized wheel delta, proportional to wheelSensitivity(). */
+		/* Returns a normalized wheel delta, proportional to wheelSensitivity(). */
 		float wheelDelta(int wheel_dy) const;
 
 	private:

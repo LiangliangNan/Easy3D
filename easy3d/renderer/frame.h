@@ -251,7 +251,7 @@ namespace easy3d {
          * \param frame The Frame to check.
          * \return true if setting the reference Frame will create a loop, false otherwise.
          */
-        bool settingAsReferenceFrameWillCreateALoop(const Frame* frame);
+        bool settingAsReferenceFrameWillCreateALoop(const Frame* const frame) const;
         //@}
 
         /*! @name Frame modification */

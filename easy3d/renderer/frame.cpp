@@ -538,7 +538,7 @@ namespace easy3d {
 	 * \brief Returns \c true if setting \p frame as the Frame's referenceFrame() would
 	 * create a loop in the Frame hierarchy.
 	 */
-	bool Frame::settingAsReferenceFrameWillCreateALoop(const Frame *const frame) {
+	bool Frame::settingAsReferenceFrameWillCreateALoop(const Frame* const frame) const {
 		const Frame *f = frame;
         while (f != nullptr) {
 			if (f == this)
