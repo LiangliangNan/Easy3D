@@ -43,24 +43,20 @@
 
 namespace easy3d {
 
-
-    /**
-     * \brief A class for tokenizing input character streams.
-     * \class Tokenizer easy3d/util/tokenizer.h
-     */
+	/**
+	 * \brief A utility class for splitting strings into tokens based on delimiters.
+	 * \details This class provides methods to tokenize a given string based on a set of delimiters.
+	 *		It can handle empty tokens and allows for retrieving individual tokens by index.
+	 * \class Tokenizer easy3d/util/tokenizer.h
+	 */
 	class Tokenizer
 	{
-	protected:
-		const char* mSrcBuf; /*< This holds a pointer to an immutable char buffer. */
-		char mTokBuf[NV_MAX_TOKEN_LEN]; /*< This is a temporary buffer for collecting next token. */
-		uint32_t mTokLen; /*< This is the character length of current token, not including null termination. */
-		char mTermChar; /*< This is the character that caused us to stop parsing the current token. */
-		char mDelims[NV_MAX_DELIM_COUNT];
-		uint32_t mNumDelims;
-	private:
-		bool mConsumeWS;
-
 	public:
+		/**
+		 * \brief Constructor that initializes the tokenizer with a source string and optional delimiters.
+		 * \param src The source string to tokenize.
+		 * \param delims The delimiters to use for tokenizing. If nullptr, default delimiters are used.
+		 */
 		explicit Tokenizer(const char* src, const char* delims = nullptr)
 			: mSrcBuf(src)
 			, mTokLen(0)
@@ -93,30 +89,50 @@ namespace easy3d {
 			}
 		}
 
+		/**
+		 * \brief Sets whether to consume whitespace characters.
+		 * \param ws True to consume whitespace, false otherwise.
+		 */
 		void setConsumeWS(bool ws) { mConsumeWS = ws; }
 
-		inline bool isWhitespace(const char c)
-		{
+		/**
+		 * \brief Checks if the given character is a whitespace character.
+		 * \param c The character to check.
+		 * \return True if the character is a whitespace character, false otherwise.
+		 */
+		bool isWhitespace(const char c) {
 			return (' ' == c || '\t' == c);
 		}
-
-		inline bool isQuote(const char c)
-		{
+		/**
+		 * \brief Checks if the given character is a quote character.
+		 * \param c The character to check.
+		 * \return True if the character is a quote character, false otherwise.
+		 */
+		bool isQuote(const char c) {
 			return ('"' == c || '\'' == c);
 		}
-
-		inline bool isEOL(const char c)
-		{
+		/**
+		 * \brief Checks if the given character is an end-of-line character.
+		 * \param c The character to check.
+		 * \return True if the character is an end-of-line character, false otherwise.
+		 */
+		bool isEOL(const char c) {
 			return ('\n' == c || '\r' == c);
 		}
-
-		inline bool isTerm(const char c)
-		{
+		/**
+		 * \brief Checks if the given character is a termination character.
+		 * \param c The character to check.
+		 * \return True if the character is a termination character, false otherwise.
+		 */
+		bool isTerm(const char c) {
 			return (isWhitespace(c) || isEOL(c));
 		}
-
-		inline bool isDelim(const char c)
-		{ // TBD any other delims we want to call out.
+		/**
+		 * \brief Checks if the given character is a delimiter.
+		 * \param c The character to check.
+		 * \return True if the character is a delimiter, false otherwise.
+		 */
+		bool isDelim(const char c) { // TBD any other delims we want to call out.
 			for (uint32_t i = 0; i < mNumDelims; i++)
 				if (c == mDelims[i]) return true;
 			return false;
@@ -124,11 +140,18 @@ namespace easy3d {
 
 
 	public:
-		inline bool atEOF() {
+		/**
+		 * \brief Checks if the tokenizer has reached the end of the source string.
+		 * \return True if the tokenizer has reached the end of the source string, false otherwise.
+		 */
+		bool atEOF() {
 			// EOF is if we've reached a null character. :)
 			return (0 == *mSrcBuf);
 		}
-
+		/**
+		 * \brief Consumes whitespace characters from the source string.
+		 * \return The last whitespace character consumed.
+		 */
 		char consumeWhitespace()
 		{
 			//VERBOSE_TOKEN_DEBUG("consuming whitespace");
@@ -137,7 +160,10 @@ namespace easy3d {
 				mTermChar = *mSrcBuf++;
 			return mTermChar;
 		}
-
+		/**
+		 * \brief Consumes one delimiter character from the source string.
+		 * \return The delimiter character consumed.
+		 */
 		char consumeOneDelim()
 		{
 			//VERBOSE_TOKEN_DEBUG("consuming delimiter");
@@ -151,7 +177,9 @@ namespace easy3d {
 				mTermChar = *mSrcBuf; // so that we return the EOL but DON'T CONSUME IT.
 			return mTermChar;
 		}
-
+		/**
+		 * \brief Consumes characters up to the end of the line.
+		 */
 		void consumeToEOL()
 		{
 			while (!atEOF() && !isEOL(*mSrcBuf)) // eat up to the EOL
@@ -159,7 +187,10 @@ namespace easy3d {
 			while (!atEOF() && isEOL(*mSrcBuf)) // if not null, then eat EOL chars until gone, in case of /r/n type stuff...
 				mSrcBuf++;
 		}
-
+		/**
+		 * \brief Reads the next token from the source string.
+		 * \return True if a token was successfully read, false otherwise.
+		 */
 		bool readToken()
 		{
 			char startedWithQuote = 0; // we'll store the character if we get a quote
@@ -207,7 +238,11 @@ namespace easy3d {
 
 			return (mTokLen > 0 || startedWithQuote); // false if empty string UNLESS quoted empty string...
 		}
-
+		/**
+		 * \brief Checks if the next token matches the given string.
+		 * \param find The string to match.
+		 * \return True if the next token matches the given string, false otherwise.
+		 */
 		bool requireToken(const char *find)
 		{
 			if (find == nullptr || find[0] == 0)
@@ -223,7 +258,11 @@ namespace easy3d {
 			// accepted.
 			return true;
 		}
-
+		/**
+		 * \brief Checks if the next token matches the given string and consumes a delimiter.
+		 * \param find The string to match.
+		 * \return True if the next token matches the given string and a delimiter was consumed, false otherwise.
+		 */
 		bool requireTokenDelim(const char *find)
 		{
 			if (!requireToken(find))
@@ -234,12 +273,19 @@ namespace easy3d {
 			return true;
 		}
 
-		/// accessor to get character that caused 'stop' of last token read
+		/**
+		 * \brief Gets the character that caused the stop of the last token read.
+		 * \return The termination character.
+		 */
 		char getTermChar() const {
 			return mTermChar;
 		}
 
-		/// get last read token as a std::string
+		/**
+		 * \brief Gets the last read token as a std::string.
+		 * \param returnTok The string to store the last read token.
+		 * \return True if the token was successfully retrieved, false otherwise.
+		 */
 		bool getLastToken(std::string& returnTok)
 		{
 			// we just return what's already in the buffer.
@@ -248,20 +294,27 @@ namespace easy3d {
 			return true;
 		}
 
-		/// accessor to get last read token const char *
-		const char* getLastTokenPtr()
-		{
+		/**
+		 * \brief Gets the last read token as a const char*.
+		 * \return The last read token.
+		 */
+		const char* getLastTokenPtr() {
 			return mTokBuf;
 		}
 
-		/// accessor to get last read token length
-		uint32_t getLastTokenLen() const
-		{
+		/**
+		 * \brief Gets the length of the last read token.
+		 * \return The length of the last read token.
+		 */
+		uint32_t getLastTokenLen() const {
 			return mTokLen;
 		}
 
-
-		/// get next token as a std::string
+		/**
+		 * \brief Gets the next token as a std::string.
+		 * \param returnTok The string to store the next token.
+		 * \return True if the token was successfully retrieved, false otherwise.
+		 */
 		bool getTokenString(std::string& returnTok)
 		{
 			if (!readToken()) {
@@ -272,7 +325,12 @@ namespace easy3d {
 			return true;
 		}
 
-		/// get next token as a char array with maximum size.
+		/**
+		 * \brief Gets the next token as a char array with a maximum size.
+		 * \param out The char array to store the next token.
+		 * \param outmax The maximum size of the char array.
+		 * \return True if the token was successfully retrieved, false otherwise.
+		 */
 		bool getTokenString(char out[], const uint32_t outmax)
 		{
 			if (!readToken()) {
@@ -292,7 +350,11 @@ namespace easy3d {
 			return true;
 		}
 
-		/// get next token as a floating-point number
+		/**
+		 * \brief Gets the next token as a floating-point number.
+		 * \param out The floating-point number to store the next token.
+		 * \return True if the token was successfully retrieved, false otherwise.
+		 */
 		bool getTokenFloat(float &out)
 		{
 			if (!readToken()) {
@@ -303,7 +365,12 @@ namespace easy3d {
 			return true;
 		}
 
-		/// get next tokens as array of floating point numbers
+		/**
+		 * \brief Gets the next tokens as an array of floating-point numbers.
+		 * \param out The array to store the floating-point numbers.
+		 * \param size The size of the array.
+		 * \return The number of elements read.
+		 */
 		uint32_t getTokenFloatArray(float out[], uint32_t size)
 		{
 			uint32_t i = 0;
@@ -328,7 +395,12 @@ namespace easy3d {
 			return i; // return number of elements read.
 		}
 
-		/// get next tokens as array of integer numbers
+		/**
+		 * \brief Gets the next tokens as an array of integer numbers.
+		 * \param out The array to store the integer numbers.
+		 * \param size The size of the array.
+		 * \return The number of elements read.
+		 */
 		uint32_t getTokenIntArray(int32_t out[], uint32_t size)
 		{
 			uint32_t i = 0;
@@ -353,7 +425,11 @@ namespace easy3d {
 			return i; // return number of elements read.
 		}
 
-		/// get next token as an integer
+		/**
+		 * \brief Gets the next token as an integer.
+		 * \param out The integer to store the next token.
+		 * \return True if the token was successfully retrieved, false otherwise.
+		 */
 		bool getTokenInt(int32_t &out)
 		{
 			if (!readToken()) {
@@ -364,7 +440,11 @@ namespace easy3d {
 			return true;
 		}
 
-		/// get next token as an unsigned integer
+		/**
+		 * \brief Gets the next token as an unsigned integer.
+		 * \param out The unsigned integer to store the next token.
+		 * \return True if the token was successfully retrieved, false otherwise.
+		 */
 		bool getTokenUint(uint32_t &out)
 		{
 			if (!readToken()) {
@@ -375,7 +455,11 @@ namespace easy3d {
 			return true;
 		}
 
-		/// get next token as some form of boolean value/string
+		/**
+		 * \brief Gets the next token as a boolean value.
+		 * \param out The boolean value to store the next token.
+		 * \return True if the token was successfully retrieved, false otherwise.
+		 */
 		bool getTokenBool(bool &out)
 		{
 			if (!readToken()) {
@@ -404,6 +488,16 @@ namespace easy3d {
 			// ... otherwise, no boolean value detected.
 			return false;
 		}
+
+	protected:
+		const char* mSrcBuf; /*< This holds a pointer to an immutable char buffer. */
+		char mTokBuf[NV_MAX_TOKEN_LEN]; /*< This is a temporary buffer for collecting next token. */
+		uint32_t mTokLen; /*< This is the character length of current token, not including null termination. */
+		char mTermChar; /*< This is the character that caused us to stop parsing the current token. */
+		char mDelims[NV_MAX_DELIM_COUNT];
+		uint32_t mNumDelims;
+	private:
+		bool mConsumeWS;
 	};
 
 }

@@ -40,22 +40,20 @@
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 
-
+// \cond
 namespace easy3d {
 
-	// \cond
-
-	/*! Default constructor.
-
-	  The translation is set to (0,0,0), with an identity rotation (0,0,0,1) (see
-	  Frame constructor for details).
-
-	  The different sensitivities are set to their default values (see
-	  rotationSensitivity(), translationSensitivity(), spinningSensitivity() and
-	  wheelSensitivity()). */
+	/**
+	 * Default constructor.
+	 *
+	 * The translation is set to (0,0,0), with an identity rotation (0,0,0,1) (see
+	 * Frame constructor for details).
+	 *
+	 * The different sensitivities are set to their default values (see
+	 * rotationSensitivity(), translationSensitivity(), spinningSensitivity() and
+	 * wheelSensitivity()). */
 	ManipulatedFrame::ManipulatedFrame()
 	{
-		// #CONNECTION# initFromDOMElement and accessor docs
 		setRotationSensitivity(1.0);
 		setTranslationSensitivity(1.0);
 		setWheelSensitivity(1.0);
@@ -64,7 +62,7 @@ namespace easy3d {
         previousConstraint_ = nullptr;
 	}
 
-	/*! Equal operator. Calls Frame::operator=() and then copy attributes. */
+	/** Equal operator. Calls Frame::operator=() and then copy attributes. */
 	ManipulatedFrame &ManipulatedFrame::operator=(const ManipulatedFrame &mf) {
 		Frame::operator=(mf);
 
@@ -76,8 +74,7 @@ namespace easy3d {
 		return *this;
 	}
 
-	/*! Copy constructor. Performs a deep copy of all attributes using operator=().
-	 */
+	/** Copy constructor. Performs a deep copy of all attributes using operator=(). */
 	ManipulatedFrame::ManipulatedFrame(const ManipulatedFrame &mf)
 		: Frame(mf)
 	{
@@ -103,15 +100,7 @@ namespace easy3d {
 			setConstraint(previousConstraint_);
 	}
 
-	/*! Modifies the ManipulatedFrame according to the mouse motion.
 
-	Actual behavior depends on mouse bindings. See the QGLViewer::MouseAction enum
-	and the <a href="../mouse.html">QGLViewer mouse page</a> for details.
-
-	The \p camera is used to fit the mouse motion with the display parameters (see
-	Camera::screenWidth(), Camera::screenHeight(), Camera::fieldOfView()).
-
-	Emits the manipulated() signal. */
 	void ManipulatedFrame::action_rotate(int x, int y, int dx, int dy, Camera *const camera, ScreenAxis axis)
 	{
         if (dx == 0 && dy == 0)
@@ -265,10 +254,10 @@ namespace easy3d {
 
 	////////////////////////////////////////////////////////////////////////////////
 
-	/*! Returns "pseudo-distance" from (x,y) to ball of radius size.
-	\arg for a point inside the ball, it is proportional to the Euclidean distance
-	to the ball \arg for a point outside the ball, it is proportional to the inverse
-	of this distance (tends to zero) on the ball, the function is continuous. */
+	/** Returns "pseudo-distance" from (x,y) to ball of radius size.
+	 * \arg for a point inside the ball, it is proportional to the Euclidean distance
+	 * to the ball \arg for a point outside the ball, it is proportional to the inverse
+	 * of this distance (tends to zero) on the ball, the function is continuous. */
 	static float projectOnBall(float x, float y) {
 		// If you change the size value, change angle computation in
 		// deformedBallQuaternion().
@@ -281,8 +270,8 @@ namespace easy3d {
 	}
 
 
-	/*! Returns a quaternion computed according to the mouse motion. Mouse positions
-	are projected on a deformed ball, centered on (\p cx,\p cy). */
+	/** Returns a quaternion computed according to the mouse motion. Mouse positions
+	 * are projected on a deformed ball, centered on (\p cx,\p cy). */
 	quat ManipulatedFrame::deformedBallQuaternion(int x, int y, int pre_x, int pre_y, float cx, float cy, int w, int h) const {
 		// Points on the deformed ball
 		float px = rotationSensitivity() * (static_cast<float>(pre_x) - cx) / static_cast<float>(w);
@@ -299,7 +288,5 @@ namespace easy3d {
 		return quat(axis, angle);
 	}
 
-	// \endcond
-
 }
-
+// \endcond

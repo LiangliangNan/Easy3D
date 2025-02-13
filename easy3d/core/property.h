@@ -300,7 +300,10 @@ namespace easy3d {
     };
 
 
-    // specialization for bool properties
+    /**
+     * \brief Specialization for bool properties. It crashes the program and simply returns nullptr as bool* is
+     *      not allowed.
+     */
     template <>
     inline const bool*
     PropertyArray<bool>::data() const

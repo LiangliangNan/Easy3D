@@ -38,76 +38,97 @@
 
 namespace easy3d {
 
-    /// \brief File input/output functionalities.
-    /// \namespace easy3d::io
+	/**
+	 * \brief File input/output functionalities.
+	 * \namespace easy3d::io
+	 */
 	namespace io {
 
-        /// \brief Generic property.
-        /// \class GenericProperty easy3d/fileio/ply_reader_writer.h
-		/// \tparam VT The value type, e.g., int, float, string, vec3, std::vector
-		/// \attention Current implementation uses 'float' --> loss in accuracy when handling large coordinates
+		/**
+		 * \brief Generic property.
+		 * \tparam VT The value type, e.g., int, float, string, vec3, std::vector
+		 * \attention Current implementation uses 'float' --> loss in accuracy when handling large coordinates
+		 * \class GenericProperty easy3d/fileio/ply_reader_writer.h
+		 */
 		template <typename VT>
         class GenericProperty : public std::vector<VT> {
         public:
+			/**
+			 * \brief Constructor to initialize the property with a name and values.
+			 * \param prop_name The name of the property.
+			 * \param values The values of the property.
+			 */
             explicit GenericProperty(const std::string &prop_name = "", const std::vector<VT> &values = std::vector<VT>())
                     : std::vector<VT>(values), name(prop_name) {}
-            std::string name;
+            std::string name;	///< The name of the property.
         };
 
-		typedef GenericProperty<vec3>                   Vec3Property;
-        typedef GenericProperty<vec2>                   Vec2Property;
-		typedef GenericProperty<float>                  FloatProperty;
-		typedef GenericProperty<int>                    IntProperty;
-		typedef GenericProperty< std::vector<float> >	FloatListProperty;
-		typedef GenericProperty< std::vector<int> >     IntListProperty;
+		typedef GenericProperty<vec3>                   Vec3Property;		///< Property for 3D vectors
+        typedef GenericProperty<vec2>                   Vec2Property;		///< Property for 2D vectors
+		typedef GenericProperty<float>                  FloatProperty;		///< Property for scalar fields of float values
+		typedef GenericProperty<int>                    IntProperty;		///< Property for scalar fields of integer values
+		typedef GenericProperty< std::vector<float> >	FloatListProperty;	///< Property for properties of a list of float values
+		typedef GenericProperty< std::vector<int> >     IntListProperty;	///< Property for properties of a list of integer values
 
-        /// \brief Model element (e.g., faces, vertices, edges) with optional properties
-        /// \class Element easy3d/fileio/ply_reader_writer.h
+		/**
+		 * \brief Model element (e.g., faces, vertices, edges) with optional properties.
+		 * \class Element easy3d/fileio/ply_reader_writer.h
+		 */
 		struct Element {
+			/**
+			 * \brief Constructor to initialize the element with a name and number of instances.
+			 * \param elem_name The name of the element.
+			 * \param n_instances The number of instances of the element.
+			 */
             explicit Element(const std::string &elem_name, std::size_t n_instances = 0) : name(elem_name),
                                                                                  num_instances(n_instances) {}
 
-            std::string name;           // e.g., "vertex", "face", "edge"
-            std::size_t num_instances;  // number of instances
+            std::string name;           ///< The name of the element, e.g., "vertex", "face", "edge".
+            std::size_t num_instances;  ///< The number of instances of the element.
 
-			std::vector<Vec3Property>       vec3_properties;    // for "point", "normal", "color", and vector fields
-            std::vector<Vec2Property>       vec2_properties;    // for "texcoord"
-			std::vector<FloatProperty>      float_properties;	// for scalar fields of float values
-			std::vector<IntProperty>        int_properties;     // for scalar fields of integer values
-            std::vector<FloatListProperty>  float_list_properties;	// for properties of a list of float values
-            std::vector<IntListProperty>	int_list_properties;    // for properties of a list of integer values
+			std::vector<Vec3Property>       vec3_properties;		///< Properties for "point", "normal", "color", and vector fields
+            std::vector<Vec2Property>       vec2_properties;		///< Properties for "texcoord".
+			std::vector<FloatProperty>      float_properties;		///< Properties for scalar fields of float values.
+			std::vector<IntProperty>        int_properties;			///< Properties for scalar fields of integer values.
+            std::vector<FloatListProperty>  float_list_properties;	///< Properties for a list of float values.
+            std::vector<IntListProperty>	int_list_properties;    ///< Properties for a list of integer values.
 
+			/**
+			 * \brief Returns a string representation of the property statistics.
+			 * \return A string containing the property statistics.
+			 */
             std::string property_statistics() const;
 		};
 
 
-		/// \brief A general purpose PLY file reader
-		/// \details This class is internally used by PointCloudIO, SurfaceMeshIO, and GraphIO.
-		/// Client code should use PointCloudIO, SurfaceMeshIO, and GraphIO.
-        /// \class PlyReader easy3d/fileio/ply_reader_writer.h
+		/**
+		 * \brief A general purpose PLY file reader.
+		 * \details This class is internally used by PointCloudIO, SurfaceMeshIO, and GraphIO.
+		 * Client code should use PointCloudIO, SurfaceMeshIO, and GraphIO.
+		 * \class PlyReader easy3d/fileio/ply_reader_writer.h
+		 */
 		class PlyReader
 		{
 		public:
             PlyReader() = default;
             ~PlyReader();
 
-            /**
-             * \brief Reads a PLY file and stores the model as a set of \p elements.
-             * \return The status of the operation
-             *      - \c true if succeeded
-             *      - \c false if failed
-             */
+			/**
+			 * \brief Reads a PLY file and stores the model as a set of elements.
+			 * \param file_name The name of the PLY file to read.
+			 * \param elements The vector to store the read elements.
+			 * \return True if the file was successfully read, false otherwise.
+			 */
 			bool read(const std::string& file_name, std::vector<Element>& elements);
-
-            /**
-             * \brief A quick check of the number of instances of a type of element. The typical use is to determine if
-             * 		  a PLY file stores a point cloud, a graph, or a surface mesh. Internally it reads the ply file
-             * 		  header only (without parsing the entire file).
-             * \param file_name The input file.
-             * \param element_name A string denoting the type of the element to be checked. Typical elements are
-             * 		  "vertex", "face", and "edge".
-             * \return The number of instances of the element.
-             */
+			/**
+			 * \brief A quick check of the number of instances of a type of element.
+			 * \details The typical use is to determine if a PLY file stores a point cloud, a graph, or a surface mesh.
+			 *		Internally it reads the ply file header only (without parsing the entire file).
+			 * \param file_name The input file.
+			 * \param element_name A string denoting the type of the element to be checked. Typical elements are
+			 *		"vertex", "face", and "edge".
+			 * \return The number of instances of the element.
+			 */
             static std::size_t num_instances(const std::string& file_name, const std::string& element_name);
 
 		private:
@@ -129,7 +150,7 @@ namespace easy3d {
                 std::string element_name;
 			};
 
-			struct ValueProperty : PlyProperty, GenericProperty< double > {
+			struct ValueProperty : PlyProperty, GenericProperty<double> {
                 ValueProperty(const std::string &elem_name, const std::string &prop_name)
                         : GenericProperty<double>(prop_name), element_name(elem_name) {}
                 std::string element_name;
@@ -140,22 +161,22 @@ namespace easy3d {
 		};
 
 
-		/// \brief A general purpose PLY file writer.
-		/// \details This class is internally used by PointCloudIO, SurfaceMeshIO, and GraphIO.
-		/// Client code should use PointCloudIO, SurfaceMeshIO, and GraphIO.
-        /// \class PlyWriter easy3d/fileio/ply_reader_writer.h
+		/**
+		 * \brief A general purpose PLY file writer.
+		 * \details This class is internally used by PointCloudIO, SurfaceMeshIO, and GraphIO.
+		 * Client code should use PointCloudIO, SurfaceMeshIO, and GraphIO.
+		 * \class PlyWriter easy3d/fileio/ply_reader_writer.h
+		 */
 		class PlyWriter {
 		public:
-            /**
-             * \brief Saves a model stored as a set of \p elements to file \p file_name.
-             * \param file_name The output file.
-             * \param elements The model elements.
-             * \param comment The comment to be written to the file.
-             * \param binary true for binary format, otherwise ASCII format.
-             * \return The status of the operation
-             *      \arg true if succeeded
-             *      \arg false if failed
-             */
+			/**
+			 * \brief Saves a model stored as a set of elements to a file.
+			 * \param file_name The name of the output file.
+			 * \param elements The model elements to save.
+			 * \param comment The comment to be written to the file.
+			 * \param binary True for binary format, otherwise ASCII format.
+			 * \return True if the file was successfully written, false otherwise.
+			 */
             static bool write(
                     const std::string &file_name,
                     const std::vector<Element> &elements,
@@ -165,7 +186,10 @@ namespace easy3d {
 
 		};
 
-        /// returns endianness of the system.
+		/**
+		 * \brief Returns the endianness of the system.
+		 * \return True if the system is big-endian, false otherwise.
+		 */
         bool is_big_endian();
 
 	} // namespace io
