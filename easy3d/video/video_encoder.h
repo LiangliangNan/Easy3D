@@ -37,10 +37,9 @@ namespace internal {
 
 namespace easy3d {
 
-    /**
-     * @brief A class that encodes video frames (e.g., images) into a video file.
-     * @details The output format is automatically guessed according to the file extension. Below is an example
-     *    of usage:
+	/**
+	 * \brief A class that encodes video frames (e.g., images) into a video file.
+	 * \details The output format is automatically guessed according to the file extension. Below is an example:
      *      \code
      *          VideoEncoder encoder(image_file, 30, 8 * 1024 * 1024); // framereate: 30 fps. bitrate: 8 Mbits/sec.
      *          for (std::size_t i = 0; i < image_files.size(); ++i) {
@@ -50,53 +49,58 @@ namespace easy3d {
      *                  encoder.encode(data.data(), w, h, c == 3 ? VideoEncoder::PIX_FMT_RGB_888 : VideoEncoder::PIX_FMT_RGBA_8888);
      *          }
      *      \endcode
-     * @class VideoEncoder easy3d/video/video_encoder.h
+     * \class VideoEncoder easy3d/video/video_encoder.h
      */
 	class VideoEncoder
 	{
 	public:
-        /**
-         * Constructor
-         * \param file_name The name of the output video file, e.g., "D:/result.mp4".
-         *      The output format is automatically guessed according to the file extension, which can be:
-         *          - mp4: MPEG-4 Part 14;
-         *          - mpeg: MPEG-1 Systems / MPEG program stream;
-         *          - avi: Audio Video Interleaved;
-         *          - mov: QuickTime / MOV;
-         *      If it can't be guessed this way then "mp4" is used by default.
-         * \param framerate frame rate (normally between 25 and 60. Default to 30 fps)
-         * \param bitrate bit rate (default to 8 Mbits/sec.)
+		/**
+		 * \brief Constructor to initialize the video encoder.
+		 * \param file_name The name of the output video file, e.g., "D:/result.mp4".
+		 *      The output format is automatically guessed according to the file extension, which can be:
+		 *          - mp4: MPEG-4 Part 14;
+		 *          - mpeg: MPEG-1 Systems / MPEG program stream;
+		 *          - avi: Audio Video Interleaved;
+		 *          - mov: QuickTime / MOV;
+		 *      If it can't be guessed this way then "mp4" is used by default.
+		 * \param framerate The frame rate (normally between 25 and 60, default is 30 fps).
+		 * \param bitrate The bit rate (default is 8 Mbits/sec).
          */
-		VideoEncoder(const std::string& file_name, int framerate = 30, int bitrate = 8 * 1024 * 1024);
+		explicit VideoEncoder(const std::string& file_name, int framerate = 30, int bitrate = 8 * 1024 * 1024);
 
-        /// Destructor
+        /// \brief Destructor to clean up resources.
 		~VideoEncoder();
 
-        /// The supported pixel format/storage of the video frames.
+        /// \brief The supported pixel formats for the video frames.
         enum PixelFormat {
-            PIX_FMT_RGB_888,    /// packed RGB 8:8:8, 24bpp, RGBRGB...
-            PIX_FMT_BGR_888,    /// packed BGR 8:8:8, 24bpp, BGRBGR...
-            PIX_FMT_RGBA_8888,  /// packed RGBA 8:8:8:8, 32bpp, RGBARGBA...
-            PIX_FMT_BGRA_8888   /// packed BGRA 8:8:8:8, 32bpp, BGRABGRA...
+        	PIX_FMT_RGB_888,    ///< Packed RGB 8:8:8, 24bpp, RGBRGB...
+			PIX_FMT_BGR_888,    ///< Packed BGR 8:8:8, 24bpp, BGRBGR...
+			PIX_FMT_RGBA_8888,  ///< Packed RGBA 8:8:8:8, 32bpp, RGBARGBA...
+			PIX_FMT_BGRA_8888   ///< Packed BGRA 8:8:8:8, 32bpp, BGRABGRA...
         };
 
 		/**
-		 * Encode one frame to the video stream.
-		 * \param image_data The input image data. It is a 1D array of 'unsigned char' which points to the pixel data.
+		 * \brief Encodes one frame to the video stream.
+		 * \param image_data The input image data as a 1D array of 'unsigned char' pointing to the pixel data.
 		 *		The pixel data consists of 'height' rows of 'width' pixels, with each pixel has one of the
 		 *		following structures.
-         * \param width video width (must be a multiple of 8)
-         * \param height video height (must be a multiple of 8)
-         * \param pixel_format pixel format. The correspondences between the image structures and pixel/OpenGL formats are:
-		 *		    RGB 8:8:8, 24bpp     <--->  PIX_FMT_RGB_888    <--->  GL_RGB
-         *          BGR 8:8:8, 24bpp     <--->  PIX_FMT_BGR_888    <--->  GL_BGR
-         *          RGBA 8:8:8:8, 32bpp  <--->  PIX_FMT_RGBA_8888  <--->  GL_RGBA
-         *          BGRA 8:8:8:8, 32bpp  <--->  PIX_FMT_BGRA_8888  <--->  GL_BGRA
-		 * \return true on successful.
-		 **/
+		 * \param width The video width (must be a multiple of 8).
+		 * \param height The video height (must be a multiple of 8).
+		 * \param pixel_format The pixel format. Correspondences between image structures and pixel/OpenGL formats are:
+		 *     - RGB 8:8:8, 24bpp     <--->  PIX_FMT_RGB_888    <--->  GL_RGB
+		 *     - BGR 8:8:8, 24bpp     <--->  PIX_FMT_BGR_888    <--->  GL_BGR
+		 *     - RGBA 8:8:8:8, 32bpp  <--->  PIX_FMT_RGBA_8888  <--->  GL_RGBA
+		 *     - BGRA 8:8:8:8, 32bpp  <--->  PIX_FMT_BGRA_8888  <--->  GL_BGRA
+		 * \return True on success, false otherwise.
+		 */
 		bool encode(const unsigned char* image_data, int width, int height, PixelFormat pixel_format);
 
-        /// Returns whether the image size (width, height) is acceptable.
+		/**
+		 * \brief Checks if the image size (width, height) is acceptable.
+		 * \param width The width of the image.
+		 * \param height The height of the image.
+		 * \return True if the size is acceptable, false otherwise.
+		 */
         static bool is_size_acceptable(int width, int height) { return (width % 8) == 0 && (height % 8) == 0; }
 
 	private:
