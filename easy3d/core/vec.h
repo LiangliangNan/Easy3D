@@ -466,11 +466,11 @@ namespace easy3d {
         //    return _array[idx];
         //}
 
-        // Data intentionally left public to allow direct access (e.g., vec.x).
+        /// Data intentionally left public to allow direct access (e.g., vec.x).
         union {
-            T _array[2];		// Array access
-            struct { T x, y; };	// Standard names for components
-            struct { T u, v; };	// Alternative names for components (e.g., for texture coordinates).
+            T _array[2];		/// Array access
+            struct { T x, y; };	/// Standard names for components
+            struct { T u, v; };	/// Alternative names for components (e.g., for texture coordinates).
         };
     };
 
@@ -668,11 +668,11 @@ namespace easy3d {
         //    return _array[idx];
         //}
 
-        // Data intentionally left public to allow direct access (e.g., vec.x).
+        /// Data intentionally left public to allow direct access (e.g., vec.x).
         union {
-            T _array[3];			// Array access
-            struct { T x, y, z; };	// Standard names for components
-            struct { T r, g, b; };	// Alternative names for components (e.g., for RGB colors).
+            T _array[3];			/// Array access
+            struct { T x, y, z; };	/// Standard names for components
+            struct { T r, g, b; };	/// Alternative names for components (e.g., for RGB colors).
         };
     };
 
@@ -892,11 +892,11 @@ namespace easy3d {
         //    return _array[idx];
         //}
 
-        // Data intentionally left public to allow direct access (e.g., vec.x).
+        /// Data intentionally left public to allow direct access (e.g., vec.x).
         union {
-            T _array[4];				// Array access
-            struct { T x, y, z, w; };	// Standard names for components
-            struct { T r, g, b, a; };	// Alternative names for components (e.g., for RGBA colors).
+            T _array[4];				/// Array access
+            struct { T x, y, z, w; };	/// Standard names for components
+            struct { T r, g, b, a; };	/// Alternative names for components (e.g., for RGBA colors).
         };
     };
 
