@@ -246,7 +246,7 @@ int WalkThrough::move_to(int idx, bool animation /* = true */, float duration /*
 
     const auto frame = kfi_->keyframe(idx);
     if (animation)
-        camera_->interpolateTo(frame, duration);
+        camera_->interpolateTo(&frame, duration);
     else
         camera_->frame()->setPositionAndOrientation(frame.position(), frame.orientation());
 

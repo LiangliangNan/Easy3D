@@ -44,13 +44,14 @@
 #include <easy3d/renderer/key_frame_interpolator.h>
 
 
+// \cond
 namespace easy3d {
 
 
 	/*! Default constructor.
 
 	 sceneCenter() is set to (0,0,0) and sceneRadius() is set to 1.0. type() is
-	 Camera::PERSPECTIVE, with a \c M_PI/4 fieldOfView().
+	 PERSPECTIVE, with a \c M_PI/4 fieldOfView().
 
 	 See IODistance(), physicalDistanceToScreen(), physicalScreenWidth() and
 	 focusDistance() documentations for default stereo parameter values. */
@@ -223,10 +224,10 @@ namespace easy3d {
 		const float zMin = zNearCoefficient() * zNearScene;
 		if (z < zMin)
 			switch (type()) {
-			case Camera::PERSPECTIVE:
+			case PERSPECTIVE:
 				z = zMin;
 				break;
-			case Camera::ORTHOGRAPHIC:
+			case ORTHOGRAPHIC:
 				z = 0.0;
 				break;
 			}
@@ -267,13 +268,13 @@ namespace easy3d {
 
 	Prefix the type with \c Camera if needed, as in:
 	\code
-	    camera()->setType(Camera::ORTHOGRAPHIC);
+	    camera()->setType(ORTHOGRAPHIC);
 	\endcode */
 	void Camera::setType(Type type) {
 		// make ORTHOGRAPHIC frustum fit PERSPECTIVE (at least in plane normal to
 		// viewDirection(), passing through RAP). Done only when CHANGING type since
 		// orthoCoef_ may have been changed with a setPivotPoint() in the meantime.
-		if ((type == Camera::ORTHOGRAPHIC) && (type_ == Camera::PERSPECTIVE))
+		if ((type == ORTHOGRAPHIC) && (type_ == PERSPECTIVE))
 			orthoCoef_ = std::tan(fieldOfView() / 2.0f);
 		type_ = type;
 		projectionMatrixIsUpToDate_ = false;
@@ -318,7 +319,7 @@ namespace easy3d {
 	 frustum.
 
 	 These values are only valid and used when the Camera is of type()
-	 Camera::ORTHOGRAPHIC. They are expressed in OpenGL units and are used by
+	 ORTHOGRAPHIC. They are expressed in OpenGL units and are used by
 	 loadProjectionMatrix() to define the projection matrix using: \code glOrtho(
 	 -halfWidth, halfWidth, -halfHeight, halfHeight, zNear(), zFar() ) \endcode
 
@@ -338,11 +339,11 @@ namespace easy3d {
 
 	/*! Computes the projection matrix associated with the Camera.
 
-	 If type() is Camera::PERSPECTIVE, defines a \c GL_PROJECTION matrix similar to
+	 If type() is PERSPECTIVE, defines a \c GL_PROJECTION matrix similar to
 	 what would \c gluPerspective() do using the fieldOfView(), window
 	 aspectRatio(), zNear() and zFar() parameters.
 
-	 If type() is Camera::ORTHOGRAPHIC, the projection matrix is as what \c
+	 If type() is ORTHOGRAPHIC, the projection matrix is as what \c
 	 glOrtho() would do. Frustum's width and height are set using
 	 getOrthoWidthHeight().
 
@@ -368,7 +369,7 @@ namespace easy3d {
 
 		switch (type())
 		{
-		case Camera::PERSPECTIVE:
+		case PERSPECTIVE:
 		{
 			// #CONNECTION# all non-null coefficients were set to 0.0 in constructor.
 			const float f = 1.0f / std::tan(fieldOfView() / 2.0f);
@@ -381,7 +382,7 @@ namespace easy3d {
 			// same as gluPerspective( 180.0*fieldOfView()/M_PI, aspectRatio(), zNear(), zFar() );
 			break;
 		}
-		case Camera::ORTHOGRAPHIC:
+		case ORTHOGRAPHIC:
 		{
 			float w, h;
 			getOrthoWidthHeight(w, h);
@@ -587,10 +588,10 @@ namespace easy3d {
 	 camera()->upVector()); glEnd(); \endcode */
 	float Camera::pixelGLRatio(const vec3 &position) const {
 		switch (type()) {
-		case Camera::PERSPECTIVE:
+		case PERSPECTIVE:
 			return 2.0f * std::fabs((frame()->coordinatesOf(position)).z) *
 				std::tan(fieldOfView() / 2.0f) / static_cast<float>(screenHeight());
-		case Camera::ORTHOGRAPHIC: {
+		case ORTHOGRAPHIC: {
 			float w(0), h(0);
 			getOrthoWidthHeight(w, h);
 			return 2.0f * h / static_cast<float>(screenHeight());
@@ -656,7 +657,7 @@ namespace easy3d {
 #else
         tempFrame.setPositionAndOrientation(pos, ori);
 #endif
-        interpolateTo(tempFrame, 0.5);
+        interpolateTo(&tempFrame, 0.5);
     }
 
     /*! Interpolates the Camera on a one second KeyFrameInterpolator path so that
@@ -678,7 +679,7 @@ namespace easy3d {
         showEntireScene();
         setFrame(originalFrame);
 
-        interpolateTo(tempFrame, 0.5);
+        interpolateTo(&tempFrame, 0.5);
     }
 
     /*! Smoothly interpolates the Camera on a KeyFrameInterpolator path so that it
@@ -688,13 +689,13 @@ namespace easy3d {
       speed (default is 1 second).
 
       See also interpolateToFitScene() and interpolateToZoomOnPixel(). */
-    void Camera::interpolateTo(const Frame &fr, float duration) {
+    void Camera::interpolateTo(const Frame *fr, float duration) {
         if (interpolationKfi_->is_interpolation_started())
             interpolationKfi_->stop_interpolation();
 
         interpolationKfi_->delete_path();
         interpolationKfi_->add_keyframe(*frame());
-        interpolationKfi_->add_keyframe(fr, duration);
+        interpolationKfi_->add_keyframe(*fr, duration);
         interpolationKfi_->start_interpolation();
     }
 
@@ -739,13 +740,13 @@ namespace easy3d {
 	void Camera::fitSphere(const vec3 &center, float radius) const {
 		float distance = 0.0f;
 		switch (type()) {
-		case Camera::PERSPECTIVE: {
+		case PERSPECTIVE: {
 			const float yview = radius / std::sin(fieldOfView() / 2.0f);
 			const float xview = radius / std::sin(horizontalFieldOfView() / 2.0f);
 			distance = std::max(xview, yview);
 			break;
 		}
-		case Camera::ORTHOGRAPHIC: {
+		case ORTHOGRAPHIC: {
 			distance = dot((center - pivotPoint()), viewDirection()) + (radius / orthoCoef_);
 			break;
 		}
@@ -791,14 +792,14 @@ namespace easy3d {
 
 		float distance = 0.0f;
 		switch (type()) {
-		case Camera::PERSPECTIVE: {
+		case PERSPECTIVE: {
 			const float distX =
 				(pointX - newCenter).norm() / std::sin(horizontalFieldOfView() / 2.0f);
 			const float distY = (pointY - newCenter).norm() / std::sin(fieldOfView() / 2.0f);
 			distance = std::max(distX, distY);
 			break;
 		}
-		case Camera::ORTHOGRAPHIC: {
+		case ORTHOGRAPHIC: {
 			const float dist = dot((newCenter - pivotPoint()), vd);
 			//#CONNECTION# getOrthoWidthHeight
 			const float distX = (pointX - newCenter).norm() / orthoCoef_ /
@@ -899,7 +900,7 @@ namespace easy3d {
 	Use setPosition() to set the Camera position. Other convenient methods are
 	showEntireScene() or fitSphere(). Actually returns \c frame()->position().
 
-	This position corresponds to the projection center of a Camera::PERSPECTIVE
+	This position corresponds to the projection center of a PERSPECTIVE
 	Camera. It is not located in the image plane, which is at a zNear() distance
 	ahead. */
 	vec3 Camera::position() const { return frame()->position(); }
@@ -1317,22 +1318,10 @@ namespace easy3d {
 		return p;
 	}
 
-	/*! Gives the coefficients of a 3D half-line passing through the Camera eye and
-	 pixel (x,y).
 
-	 The origin of the half line (eye position) is stored in \p orig, while \p dir
-	 contains the properly oriented and normalized direction of the half line.
-
-	 \p x and \p y are expressed in Qt format (origin in the upper left corner). Use
-	 screenHeight() - y to convert to OpenGL units.
-
-	 This method is useful for analytical intersection in a selection method.
-
-	 See the <a href="../examples/select.html">select example</a> for an
-	 illustration. */
 	void Camera::convertClickToLine(int x, int y, vec3 &orig, vec3 &dir) const {
 		switch (type()) {
-		case Camera::PERSPECTIVE:
+		case PERSPECTIVE:
 			orig = position();
                 dir = vec3(
                         ((2.0f * static_cast<float>(x) / static_cast<float>(screenWidth())) - 1.0f) * std::tan(fieldOfView() / 2.0f) * aspectRatio(),
@@ -1343,7 +1332,7 @@ namespace easy3d {
 			dir.normalize();
 			break;
 
-		case Camera::ORTHOGRAPHIC: {
+		case ORTHOGRAPHIC: {
 			float w, h;
 			getOrthoWidthHeight(w, h);
             orig = vec3(
@@ -1395,7 +1384,7 @@ namespace easy3d {
 
 		switch (type())
 		{
-		case Camera::PERSPECTIVE:
+		case PERSPECTIVE:
 		{
 			const float hhfov = horizontalFieldOfView() / 2.0f;
 			const float chhfov = std::cos(hhfov);
@@ -1436,7 +1425,7 @@ namespace easy3d {
 
 			break;
 		}
-		case Camera::ORTHOGRAPHIC:
+		case ORTHOGRAPHIC:
 			normal[0] = -right;
 			normal[1] = right;
 			normal[4] = up;
@@ -1753,5 +1742,6 @@ namespace easy3d {
 	// http://www.markmorley.com/opengl/frustumculling.html
 	// http://www.crownandcutlass.com/features/technicaldetails/frustum.html
 	//
-
 }
+
+// \endcond

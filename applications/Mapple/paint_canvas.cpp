@@ -1656,7 +1656,7 @@ void PaintCanvas::pasteCamera() {
     new_frame.setPosition(pos);
     new_frame.setOrientation(orient);
     const float duration = 0.5f;
-    camera()->interpolateTo(new_frame, duration);
+    camera()->interpolateTo(&new_frame, duration);
 
     update();
 }
