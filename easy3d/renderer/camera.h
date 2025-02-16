@@ -186,7 +186,11 @@ namespace easy3d {
         void set_from_model_view_matrix(const mat4 &mv) const;
         /**
          * \brief Defines the position(), orientation() and fieldOfView() of the camera from calibrated camera
-         *      intrinsic and extrinsic parameters.
+         *      intrinsic and extrinsic parameters. This function assumes the camera parameters were obtained by
+         *      standard camera calibration, in which image coordinates are denoted in pixels, with the origin point
+         *      (0, 0) corresponding to the top-left corner of the image. The X axis starts at the left edge of an
+         *      image and goes towards the right edge. The Y axis starts at the top of the image towards image bottom.
+         *      All image pixels have non-negative coordinates.
          * \param fx The focal length in the x direction.
          * \param fy The focal length in the y direction.
          * \param skew The skew coefficient.
@@ -200,11 +204,6 @@ namespace easy3d {
          * \param convert True to convert from vision convention to OpenGL convention (i.e., invert Y and Z axes).
          *      This is because the camera coordinates of computer vision goes X right, Y down, Z forward, while the
          *      camera coordinates of OpenGL goes X right, Y up, Z inward.
-         *  \attention This function assumes the camera parameters were obtained by standard camera calibration, in
-         *      which image coordinates are denoted in pixels, with the origin point (0, 0) corresponding to the
-         *      top-left corner of the image. The X axis starts at the left edge of an image and goes towards the right
-         *      edge. The Y axis starts at the top of the image towards image bottom. All image pixels have non-negative
-         *      coordinates.
          *  \sa set_from_calibration.
          */
         void set_from_calibration(float fx, float fy, float skew, float cx, float cy,
@@ -212,21 +211,20 @@ namespace easy3d {
         
         /**
          * \brief Defines the position(), orientation() and fieldOfView() of the camera from calibrated camera
-         *      intrinsic and extrinsic parameters.
-         * \param proj The projection matrix, which can be computed as P = K * M * [R|t], where R is a
-         *      3x3 matrix representing the camera rotation, and t is a 3D vector describing the camera
-         *      translation (rotation first then translation).
+         *      intrinsic and extrinsic parameters. This function assumes the camera parameters were obtained by
+         *      standard camera calibration, in which image coordinates are denoted in pixels, with the origin point
+         *      (0, 0) corresponding to the top-left corner of the image. The X axis starts at the left edge of an
+         *      image and goes towards the right edge. The Y axis starts at the top of the image towards image bottom.
+         *      All image pixels have non-negative coordinates.
+         * \param proj The projection matrix, which can be computed as P = K * M * [R|t], where R is a 3x3 matrix
+         *      representing the camera rotation, and t is a 3D vector describing the camera translation (rotation
+         *      first then translation).
          * \attention The additional M is a 3 by 3 matrix that converts the coordinate system from the vision
          *      convention to the OpenGL convention (i.e., inverting Y and Z axes), i.e.,
          *          M(1, 1) = -1;   // invert the Y axis
          *          M(2, 2) = -1;   // invert the Z axis
-         *      This is because the camera coordinates in computer vision goes X right, Y down, Z forward,
-         *      while the camera coordinates in OpenGL goes X right, Y up, Z inward.
-         *  \attention This function assumes the camera parameters were obtained by standard camera calibration, in
-         *      which image coordinates are denoted in pixels, with the origin point (0, 0) corresponding to the
-         *      top-left corner of the image. The X axis starts at the left edge of an image and goes towards the right
-         *      edge. The Y axis starts at the top of the image towards image bottom. All image pixels have non-negative
-         *      coordinates.
+         *      This is because the camera coordinates in computer vision goes X right, Y down, Z forward, while the
+         *      camera coordinates in OpenGL goes X right, Y up, Z inward.
          *  \sa set_from_calibration.
          */
         void set_from_calibration(const mat34 &proj);
