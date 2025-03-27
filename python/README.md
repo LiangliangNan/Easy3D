@@ -34,7 +34,7 @@ viewer.run()
 If you want to avoid specifying the path of the generated bindings in your Python code, you can create a wheel (`.whl`) 
 file for the bindings and install it globally. This will make Easy3D work like other Python packages such as [Numpy](https://numpy.org/).
 
-Below are the detailed steps for creating the wheel file and installation.
+Below are the detailed steps for creating the wheel file and installation (assuming you have successfully built Easy3D).
 
 - Step 1: Install the `build` tool (only if not installed)
 
