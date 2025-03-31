@@ -38,7 +38,7 @@ viewer.run()
 
 **Note**: the Python version used for running your code should match the version used for building the bindings.
 
-### (Optional) Installing Easy3D Python bindings
+### (Optional) Create distributable installer for Easy3D Python bindings
 
 If you prefer not to build Easy3D from source on each machine, you can create a wheel (`.whl`) installer for easier
 distribution and installation. This will allow you to install Easy3D like any other Python package (e.g., [Numpy](https://numpy.org/)).
@@ -55,10 +55,10 @@ Follow these steps to create and install the wheel file (after you have successf
 
   - `python -m build`
 
-- Step 3: Install the wheel
+You can then find the generated wheel file in the `dist` directory. Users can use this wheel file to install Easy3D Python bindings without needing to build from source:
 
-  - `pip install dist/easy3d-2.6.0-py3-none-any.whl` # <-- Use your actual wheel file name
+`pip install dist/easy3d-2.6.0-py3-none-any.whl` # <-- Use your actual wheel file name
 
-  You can verify the installation by running the following command:
+You can verify the installation by running the following command:
 
-  - `pip show easy3d`
+`pip show easy3d`
