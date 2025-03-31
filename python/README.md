@@ -43,7 +43,7 @@ viewer.run()
 If you prefer not to build Easy3D from source on each machine, you can create a wheel (`.whl`) installer for easier
 distribution and installation. This will allow you to install Easy3D like any other Python package (e.g., [Numpy](https://numpy.org/)).
 
-Follow these steps to build and install the wheel file:
+Follow these steps to create and install the wheel file (after you have successfully built the bindings following the steps above):
 
 - Step 1: Install the `build` tool (if not already installed)
 
