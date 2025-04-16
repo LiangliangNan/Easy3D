@@ -9,11 +9,11 @@ description = "Python bindings for the Easy3D library"
 authors = [
     { name = "Liangliang Nan", email = "liangliang.nan@gmail.com" }
 ]
-license = { text = "GPLv3" }
+license = "GPL-3.0-or-later"  # SPDX license string
+license-files = ["LICENSE"]   # if you want to include a LICENSE file
 urls = { Homepage = "https://github.com/LiangliangNan/Easy3D" }
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX :: Linux",
     "Operating System :: MacOS",
@@ -41,8 +41,7 @@ easy3d = [
     "*.dll",    # Include .dll files (Windows)
     "resources/**/*",  # Include all files in the `resources` directory and its subdirectories
     "LICENSE",
-    "README.md",
-    "runtime_dependencies.txt",
+    "README.md"
 ]
 
 # Exclude specific files (e.g., .DS_Store, runtime_dependencies.txt)

@@ -254,9 +254,9 @@ configure_file(${CMAKE_CURRENT_LIST_DIR}/pyproject.toml.in ${Easy3D_PYTHON_PACKA
 # Copy the resource files
 file(COPY ${Easy3D_ROOT}/resources DESTINATION ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d)
 # Copy the readme file
-file(COPY ${CMAKE_CURRENT_LIST_DIR}/README.md DESTINATION ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d)
+file(COPY ${CMAKE_CURRENT_LIST_DIR}/README.md DESTINATION ${Easy3D_PYTHON_PACKAGE_DIR})
 # Copy the license files
-file(COPY ${Easy3D_ROOT}/LICENSE DESTINATION ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d)
+file(COPY ${Easy3D_ROOT}/LICENSE DESTINATION ${Easy3D_PYTHON_PACKAGE_DIR})
 
 # Generate the __init__.py file for the Python package
 file(WRITE ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/__init__.py
