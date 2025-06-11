@@ -49,8 +49,8 @@ namespace easy3d {
      *
      * \class ShaderProgram easy3d/renderer/shader_program.h
      *
-	 * \details This class allows to create programs, load shaders from files,  associate vertex attribute names with
-	 *		locations, and work with uniforms, including blocks. It also provides access to the info logs, and many
+	 * \details This class creates programs, loads shaders from files, associates vertex attribute names with
+	 *		locations, and works with uniforms, including blocks. It also provides access to the info logs, and many
 	 *		more useful functionalities.
      *		To use the shader program class, you need to do the following:
      *		- Call load_shader_from_code(ShaderProgram::VERTEX, vert_file) to create vertex shader and
