@@ -72,6 +72,7 @@ int main(int argc, char** argv) {
     // initialize Easy3D.
     initialize();
 
+	// Create a mesh
 	SurfaceMesh* mesh = old_mesh_from_previous_example();
 	
     std::cout << "----------------------------------------\n";

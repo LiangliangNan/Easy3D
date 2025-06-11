@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
     // initialize Easy3D.
     initialize();
 
-    // Create mesh object
+    // Create a mesh
     PolyMesh *mesh = old_mesh_from_previous_example();
 
     std::cout << "----------------------------------------\n";
@@ -240,6 +240,9 @@ int main(int argc, char **argv) {
         std::cout << "incident halffaces of face " << f << ": " << mesh->halfface(f, 0) << " " << mesh->halfface(f, 1)
                   << std::endl;
     }
+
+    // Delete the mesh (i.e., release memory)
+    delete mesh;
 
     return EXIT_SUCCESS;
 }

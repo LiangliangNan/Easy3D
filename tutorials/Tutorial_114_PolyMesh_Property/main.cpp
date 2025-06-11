@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
     // initialize Easy3D.
     initialize();
 
-    // Create mesh object
+    // Create a mesh
     PolyMesh *mesh = old_mesh_from_previous_example();
 
 	// We add a per-face property "f:normal" storing the normal of each face
@@ -78,6 +78,7 @@ int main(int argc, char** argv) {
         std::cout << "center of " << f << ": " << center[f] << std::endl;
     }
 
+    // Delete the mesh (i.e., release memory)
 	delete mesh;
 
     return EXIT_SUCCESS;
