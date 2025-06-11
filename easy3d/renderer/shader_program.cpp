@@ -851,16 +851,14 @@ namespace easy3d {
 	void ShaderProgram::_add_blocks() {
 		int count, dataSize, actualLen, activeUnif, maxUniLength;
 		int uniType, uniSize, uniOffset, uniMatStride, uniArrayStride, auxSize;
-		char *name, *name2;
-
 		UniformBlock block;
 
 		glGetProgramiv(program_, GL_ACTIVE_UNIFORM_BLOCKS, &count);	
 
 		for (int i = 0; i < count; ++i) {
-			// Get buffers name
+			// Get buffer name
 			glGetActiveUniformBlockiv(program_, i, GL_UNIFORM_BLOCK_NAME_LENGTH, &actualLen);	
-			name = (char *)malloc(sizeof(char) * actualLen);
+			char *name = (char *)malloc(sizeof(char) * actualLen);
             glGetActiveUniformBlockName(program_, i, actualLen, nullptr, name);
 
 			if (!spBlocks.count(name)) {
@@ -876,17 +874,14 @@ namespace easy3d {
 
 				glGetActiveUniformBlockiv(program_, i, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &activeUnif);	
 
-				unsigned int *indices;
-				indices = (unsigned int *)malloc(sizeof(unsigned int) * activeUnif);
+				unsigned int *indices = (unsigned int *)malloc(sizeof(unsigned int) * activeUnif);
 				glGetActiveUniformBlockiv(program_, i, GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, (int *)indices);	
 
 				glGetProgramiv(program_, GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxUniLength);	
-				name2 = (char *)malloc(sizeof(char) * maxUniLength);
+				char *name2 = (char *)malloc(sizeof(char) * maxUniLength);
 
 				for (int k = 0; k < activeUnif; ++k) {
-
 					BlockUniform bUni;
-
 					glGetActiveUniformName(program_, indices[k], maxUniLength, &actualLen, name2);	
 					glGetActiveUniformsiv(program_, 1, &indices[k], GL_UNIFORM_TYPE, &uniType);	
 					glGetActiveUniformsiv(program_, 1, &indices[k], GL_UNIFORM_SIZE, &uniSize);	
@@ -940,6 +935,7 @@ namespace easy3d {
 
 					block.uniformOffsets[name2] = bUni;
 				}
+				free(indices);
 				free(name2);
 
                 block.name = name;
@@ -949,7 +945,9 @@ namespace easy3d {
 				spBlockCount++;
 			}
 			else
-				glUniformBlockBinding(program_, i, spBlocks[name].bindingIndex);	
+				glUniformBlockBinding(program_, i, spBlocks[name].bindingIndex);
+
+			free(name);
 		}
 	}
 
@@ -960,20 +958,16 @@ namespace easy3d {
         int size;
         int uniArrayStride;
 		GLenum type;
-		char *name;
 
 		int maxUniLength;
-		glGetProgramiv(program_, GL_ACTIVE_UNIFORMS, &count);	
-
+		glGetProgramiv(program_, GL_ACTIVE_UNIFORMS, &count);
 		glGetProgramiv(program_, GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxUniLength);	
 
-		name = (char *)malloc(sizeof(char) * maxUniLength);
-
-		unsigned int loc;
+		char *name = (char *)malloc(sizeof(char) * maxUniLength);
 		for (int i = 0; i < count; ++i) {
 			glGetActiveUniform(program_, i, maxUniLength, &actualLen, &size, &type, name);	
 			// -1 indicates that is not an active uniform, although it may be present in a uniform block
-			loc = glGetUniformLocation(program_, name);	
+			unsigned int loc = glGetUniformLocation(program_, name);
 			if (loc != -1) {
                 glGetActiveUniformsiv(program_, 1, (unsigned int*)&i, GL_UNIFORM_ARRAY_STRIDE, &uniArrayStride);
 				_add_uniform(name, type, size);
