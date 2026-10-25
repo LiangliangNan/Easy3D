@@ -20,6 +20,8 @@ with tempfile.TemporaryDirectory(prefix="python-docs-", dir=build) as temporary:
     shutil.copytree(root / "python" / "docs" / "source", source)
     shutil.copytree(root / "python" / "tutorials", python / "tutorials")
     shutil.copy2(root / "python" / "README.md", python / "README.md")
+    # conf.py reads the project version from the root CMake configuration.
+    shutil.copy2(root / "CMakeLists.txt", Path(temporary) / "CMakeLists.txt")
     html = Path(temporary) / "html"
     subprocess.run(
         [sys.executable, "-m", "sphinx", "-b", "html", "-W", "--keep-going",

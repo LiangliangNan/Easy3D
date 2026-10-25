@@ -62,6 +62,7 @@ gallery. The builder reuses the Read the Docs theme, custom templates, tutorial
 text and code, and checked-in thumbnails in `python/docs/source/_static`.
 It builds in a temporary copy of the sources, checks Sphinx warnings, and places
 the result under `build/doc/html/python` without changing the source tree.
+Both documentation sites read their version from the root `CMakeLists.txt`.
 
 Sphinx-Gallery publishes all tutorial scripts, including downloadable Python files
 and notebooks, without executing them (`plot_gallery=False`). Several tutorials

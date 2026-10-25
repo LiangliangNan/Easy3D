@@ -1,4 +1,4 @@
-.. Easy3D Python Tutorials documentation master file, created by
+.. Easy3D Python bindings tutorials documentation master file, created by
    sphinx-quickstart on Fri Jan 17 22:12:05 2025.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
@@ -26,15 +26,15 @@ Related Links
 
    tutorials/index
 
-   Code for Python Tutorials <https://github.com/LiangliangNan/Easy3D/tree/main/python/tutorials>
+   Code for Python bindings tutorials <https://github.com/LiangliangNan/Easy3D/tree/main/python/tutorials>
 
-   Easy3D Documentation <https://liangliangnan.github.io/Easy3D/>
+   Easy3D documentation <https://liangliangnan.github.io/Easy3D/>
 
-   Easy3D Pre-built Binaries <https://github.com/LiangliangNan/Easy3D/releases>
+   Easy3D pre-built binaries <https://github.com/LiangliangNan/Easy3D/releases>
 
-   Easy3D Source Code <https://github.com/LiangliangNan/Easy3D>
+   Easy3D source code <https://github.com/LiangliangNan/Easy3D>
 
-   Code for C++ Tutorials <https://github.com/LiangliangNan/Easy3D/tree/main/tutorials>
+   Code for C++ tutorials <https://github.com/LiangliangNan/Easy3D/tree/main/tutorials>
 
 .. Indices and tables
 .. ==================

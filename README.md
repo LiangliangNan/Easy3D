@@ -198,9 +198,9 @@ viewer.run()
 ```
 
 ### Documentation
- - [C++ documentation](https://liangliangnan.github.io/Easy3D/)
- - [Python documentation](https://liangliangnan.github.io/Easy3D/python)
- - [Python tutorials](https://liangliangnan.github.io/Easy3D/python/tutorials)
+ - [Easy3D documentation](https://liangliangnan.github.io/Easy3D/)
+ - [Easy3D Python bindings documentation](https://liangliangnan.github.io/Easy3D/python)
+ - [Easy3D Python bindings tutorials](https://liangliangnan.github.io/Easy3D/python/tutorials)
 
 The documentation is an ongoing effort with more and more details being added. You can build the latest Easy3D 
 documentation from the source code.

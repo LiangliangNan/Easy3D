@@ -32,9 +32,9 @@ jobs:
           python-version: '3.12'
           cache: pip
           cache-dependency-path: python/docs/requirements.txt
-      - name: Install Python documentation dependencies
+      - name: Install Python bindings documentation dependencies
         run: python -m pip install -r python/docs/requirements.txt
-      - name: Build Python documentation and tutorials
+      - name: Build Python bindings documentation and tutorials
         run: python python/docs/build.py
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

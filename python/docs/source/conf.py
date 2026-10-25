@@ -13,6 +13,8 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
 import os
+from pathlib import Path
+import re
 import sys
 
 sys.path.insert(0, os.path.abspath("../"))
@@ -23,7 +25,17 @@ sys.path.insert(0, os.path.abspath('../my_env/lib/python3.13/site-packages'))
 project = 'Easy3D Python Bindings'
 copyright = '2025, Liangliang Nan'
 author = 'Liangliang Nan'
-release = '2.6.1'
+
+# Use the same version source as the C++ documentation, without configuring CMake.
+project_cmake = (Path(__file__).resolve().parents[3] / 'CMakeLists.txt').read_text(encoding='utf-8')
+version_parts = []
+for part in ('MAJOR', 'MINOR', 'PATCH'):
+    match = re.search(rf'^\s*set\(\s*Easy3D_VERSION_{part}\s+([0-9]+)\s*\)', project_cmake, re.MULTILINE)
+    if match is None:
+        raise ValueError(f'Cannot read Easy3D_VERSION_{part} from CMakeLists.txt')
+    version_parts.append(match.group(1))
+release = '.'.join(version_parts)
+version = '.'.join(version_parts[:2])
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
