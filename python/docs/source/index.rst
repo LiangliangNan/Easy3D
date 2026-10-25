@@ -22,13 +22,13 @@ Related Links
 .. toctree::
    :maxdepth: 2
 
-   Easy3D Python Bindings <./index.html>
+   Easy3D Python Bindings <self>
 
-   auto_tutorials/index
+   tutorials/index
 
    Code for Python Tutorials <https://github.com/LiangliangNan/Easy3D/tree/main/python/tutorials>
 
-   Easy3D Documentation <https://3d.bk.tudelft.nl/liangliang/software/easy3d_doc/html/index.html>
+   Easy3D Documentation <https://liangliangnan.github.io/Easy3D/>
 
    Easy3D Pre-built Binaries <https://github.com/LiangliangNan/Easy3D/releases>
 

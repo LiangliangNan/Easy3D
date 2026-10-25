@@ -14,7 +14,6 @@
 
 import os
 import sys
-from sphinx_gallery.sorting import FileNameSortKey
 
 sys.path.insert(0, os.path.abspath("../"))
 sys.path.insert(0, os.path.abspath('../my_env/lib/python3.13/site-packages'))
@@ -51,6 +50,9 @@ templates_path = ['_templates']
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
 
+# README.md is included beneath this site's title and intentionally starts at H2.
+suppress_warnings = ['myst.header']
+
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
@@ -67,11 +69,14 @@ templates_path = ['_templates']
 # Sphinx-Gallery configuration
 sphinx_gallery_conf = {
     "examples_dirs": ["../../tutorials"],       # Path to the tutorials directory
-    "gallery_dirs": ["auto_tutorials"],         # Output directory for generated tutorials
-    "within_subsection_order": FileNameSortKey, # Sort order for tutorials
+    "gallery_dirs": ["tutorials"],              # Published at /Easy3D/python/tutorials/
+    "within_subsection_order": "FileNameSortKey", # Sort order for tutorials
     "download_all_examples": False,             # Option to provide a download link for all tutorials
     "filename_pattern": r".*\.py",              # Match all .py files
     "write_computation_times": False,           # Don't write computation times
+    # Tutorials open interactive viewers. Publish their text, code, downloads,
+    # and checked-in thumbnails without importing bindings or opening windows.
+    "plot_gallery": False,
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
