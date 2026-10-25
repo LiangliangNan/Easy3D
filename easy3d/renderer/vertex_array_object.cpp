@@ -98,6 +98,15 @@ namespace easy3d {
 
 
     bool VertexArrayObject::create_array_buffer(GLuint& buffer, GLuint index, const void* data, std::size_t size, std::size_t dim, bool dynamic) {
+        if (!glGetString(GL_VERSION)) {
+            LOG(ERROR) << "creating an array buffer requires a current OpenGL context";
+            return false;
+        }
+        // glGetError() is sticky. An error from Qt or an earlier draw must not
+        // cause a newly created, valid buffer to be deleted below.
+        std::string pending_error;
+        while (!opengl::gl_error(pending_error))
+            LOG(WARNING) << "OpenGL error pending before creating array buffer: " << pending_error;
         release_buffer(buffer);
 		bind();
         glGenBuffers(1, &buffer);                       easy3d_debug_log_gl_error

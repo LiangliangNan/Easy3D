@@ -103,13 +103,18 @@ int main(int argc, char *argv[]) {
     //       that resource sharing between contexts stays functional as all internal
     //       contexts are created using the correct version and profile.
     QSurfaceFormat format = QSurfaceFormat::defaultFormat();
-    format.setVersion(4, 3); // Liangliang: don't modify this. The debug context requires 4.3 or above.
+#ifdef Q_OS_MAC
+    // macOS exposes at most OpenGL 4.1, including on Apple Silicon.
+    format.setVersion(4, 1);
+#else
+    format.setVersion(4, 3); // The core debug callback requires 4.3 or above.
+#endif
     format.setProfile(QSurfaceFormat::CoreProfile);
     format.setDepthBufferSize(24);
     format.setStencilBufferSize(8);
     format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
     format.setSamples(4);
-#ifndef NDEBUG
+#if !defined(NDEBUG) && !defined(Q_OS_MAC)
     format.setOption(QSurfaceFormat::DebugContext);
 #endif
     QSurfaceFormat::setDefaultFormat(format);

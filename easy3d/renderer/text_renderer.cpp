@@ -211,7 +211,7 @@ namespace easy3d {
             easy3d_debug_log_gl_error
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             easy3d_debug_log_gl_error
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, cachew, cacheh, 0, GL_RED, GL_UNSIGNED_BYTE, empty_data);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, cachew, cacheh, 0, GL_RED, GL_UNSIGNED_BYTE, empty_data);
             easy3d_debug_log_gl_error
             glBindTexture(GL_TEXTURE_2D, 0);
             easy3d_debug_log_gl_error
@@ -392,7 +392,7 @@ namespace easy3d {
                                 glGenTextures(1, &texture->id);
                                 if (!texture->id) goto error;
                                 glBindTexture(GL_TEXTURE_2D, texture->id);
-                                glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, stash->tw, stash->th, 0, GL_RED,
+                                glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, stash->tw, stash->th, 0, GL_RED,
                                              GL_UNSIGNED_BYTE, stash->empty_data);
                                 easy3d_debug_log_gl_error
                                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -460,7 +460,11 @@ namespace easy3d {
                 glTexSubImage2D(GL_TEXTURE_2D, 0, glyph->x0, glyph->y0, gw, gh, GL_RED, GL_UNSIGNED_BYTE, bmp);
                 if (stash->hasMipMap > 0) {
                     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-                    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY, 8); //TODO check for hw support!
+                    if (GLEW_EXT_texture_filter_anisotropic || GLEW_ARB_texture_filter_anisotropic) {
+                        GLfloat maximum = 1.0f;
+                        glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maximum);
+                        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, std::min(8.0f, maximum));
+                    }
 #if defined(__ANDROID__) || defined(TARGET_OPENGLES) || defined(TARGET_RASPBERRY_PI)
                     // OpenGLES 1.0 does not support the following.
 #else
@@ -722,6 +726,15 @@ namespace easy3d {
 
     TextRenderer::TextRenderer(float dpi_scale, int texture_size, bool mipmaps) {
         texture_size_ = next_pow2(texture_size);
+        stash_ = nullptr;
+        if (!glGetString(GL_VERSION)) {
+            LOG(ERROR) << "TextRenderer requires a current OpenGL context";
+            return;
+        }
+        // Report errors left by the caller separately from atlas creation errors.
+        std::string pending_error;
+        while (!opengl::gl_error(pending_error))
+            LOG(WARNING) << "OpenGL error pending before TextRenderer construction: " << pending_error;
         stash_ = internal::sth_create(texture_size_, texture_size_, mipmaps, 0, dpi_scale);
         easy3d_log_gl_error
         if (stash_ == nullptr) {

@@ -237,8 +237,9 @@ namespace easy3d {
 
 
         void setup_gl_debug_callback() {
-            // glDebugMessageCallback requires OpenGL >= 4.3
-            if (glDebugMessageCallback) {
+            // A non-null entry point does not guarantee context support (macOS
+            // exposes OpenGL 4.1). KHR_debug also permits use on older contexts.
+            if ((GLEW_VERSION_4_3 || GLEW_KHR_debug) && glDebugMessageCallback && glDebugMessageControl) {
                 glEnable(GL_DEBUG_OUTPUT);
                 glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
                 glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
