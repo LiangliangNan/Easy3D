@@ -53,6 +53,14 @@ namespace easy3d {
     class TextureManager {
     public:
         /**
+         * \brief Request a cached 1x1 white texture for inactive surface samplers.
+         * \details Some drivers validate samplers even when their shader branches
+         * are disabled. The texture is released by terminate(), like other cached textures.
+         * \return The texture, or nullptr if allocation fails. Requires a current context.
+         */
+        static Texture* request_white();
+
+        /**
          * \brief Request a texture from the image file.
          * \details The generated texture has a unique identifier of its full-path file name. If a texture with the same
          *          identifier is requested again, no new texture will be generated and the existing texture is returned.

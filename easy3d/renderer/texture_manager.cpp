@@ -37,6 +37,20 @@ namespace easy3d {
     std::unordered_map<std::string, bool>        TextureManager::attempt_load_texture_; // avoid multiple attempt
 
 
+    Texture* TextureManager::request_white() {
+        const std::string name = "<easy3d:white-fallback>";
+        auto found = textures_.find(name);
+        if (found != textures_.end())
+            return found->second;
+
+        const std::vector<unsigned char> rgba(4, 255);
+        Texture* texture = Texture::create(rgba, 1, 1, 4, Texture::CLAMP_TO_EDGE, Texture::NEAREST);
+        if (texture)
+            textures_[name] = texture;
+        return texture;
+    }
+
+
     Texture* TextureManager::request(const std::string &image_file, Texture::WrapMode wrap, Texture::FilterMode filter) {
         auto pos = textures_.find(image_file);
         if (pos != textures_.end()) // program already exists

@@ -34,6 +34,7 @@
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/shader_manager.h>
+#include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/opengl_util.h>
 #include <easy3d/renderer/shape.h>
 #include <easy3d/util/setting.h>
@@ -232,7 +233,11 @@ void WidgetCheckerSphere::paintGL() {
     const mat4& MV = camera_->modelViewMatrix();
     const vec4& wLightPos = inverse(MV) * setting::light_position;
 
+    const Texture* fallback = TextureManager::request_white();
+    if (!fallback)
+        return;
     program->bind();
+    program->bind_texture("textureID", fallback->id(), 0)->set_uniform("ssaoTexture", 0);
     program->set_uniform("MVP", MVP)
             ->set_uniform("NORMAL", mat3::identity())   // needs be padded when using uniform blocks
             ->set_uniform("lighting", true)
@@ -258,5 +263,6 @@ void WidgetCheckerSphere::paintGL() {
     program->set_uniform("MANIP", mat4::identity());
     checkerSphere_->gl_draw();
 
+    program->release_texture();
     program->release();
 }

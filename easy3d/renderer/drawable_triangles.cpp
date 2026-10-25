@@ -108,9 +108,16 @@ namespace easy3d {
 
         bool use_texture = (texture() && (coloring_method() == State::SCALAR_FIELD || coloring_method() == State::TEXTURED));
         program->set_uniform("use_texture", use_texture);
+        // Keep all active sampler uniforms backed by complete textures, even
+        // when their branches are disabled, to avoid Apple's sampler warnings.
+        const Texture* surface_texture = use_texture ? texture() : TextureManager::request_white();
+        if (!surface_texture) {
+            program->release();
+            return;
+        }
+        program->bind_texture("textureID", surface_texture->id(), 0);
         if (use_texture)
-            program->bind_texture("textureID", texture()->id(), 0)
-                ->set_uniform("texture_repeat", texture_repeat())
+            program->set_uniform("texture_repeat", texture_repeat())
                 ->set_uniform("fractional_repeat", texture_fractional_repeat());
 
         ClippingPlane::instance()->set_program(program);
@@ -118,12 +125,13 @@ namespace easy3d {
 
         if (is_ssao_enabled())
             program->bind_texture("ssaoTexture", ssao_texture_, 1);
+        else
+            program->set_uniform("ssaoTexture", 0);
         gl_draw();
         if (is_ssao_enabled())
             program->release_texture();
 
-        if (use_texture)
-            program->release_texture();
+        program->release_texture();
         program->release();
     }
 

@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
     //       that resource sharing between contexts stays functional as all internal
     //       contexts are created using the correct version and profile.
     QSurfaceFormat format = QSurfaceFormat::defaultFormat();
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     // macOS exposes at most OpenGL 4.1, including on Apple Silicon.
     format.setVersion(4, 1);
 #else
@@ -114,7 +114,7 @@ int main(int argc, char *argv[]) {
     format.setStencilBufferSize(8);
     format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
     format.setSamples(4);
-#if !defined(NDEBUG) && !defined(Q_OS_MAC)
+#if !defined(NDEBUG) && !defined(Q_OS_MACOS)
     format.setOption(QSurfaceFormat::DebugContext);
 #endif
     QSurfaceFormat::setDefaultFormat(format);
@@ -131,13 +131,13 @@ int main(int argc, char *argv[]) {
 
     Mapple app(argc, argv);
 
-#ifndef Q_OS_MAC
+#ifndef Q_OS_MACOS
     // to have similar style on different platforms (macOS)
     app.setStyle(QStyleFactory::create("Fusion"));
 #endif
 
     QDir workingDir = QCoreApplication::applicationDirPath();
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     // This makes sure that our "working directory" is not within the application bundle
     if (workingDir.dirName() == "MacOS") {
         workingDir.cdUp();

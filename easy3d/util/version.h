@@ -59,7 +59,7 @@ namespace easy3d {
 #define EASY3D_VERSION_NR 1020601
 
 /// Easy3D release date, in the format YYYYMMDD.
-#define EASY3D_RELEASE_DATE 20260827
+#define EASY3D_RELEASE_DATE 20261025
 
 
 #endif  // EASY3D_UTIL_VERSION_H
