@@ -1,8 +1,6 @@
 ================================
-Easy3D Python Bindings Tutorials
+Easy3D Python bindings tutorials
 ================================
-
-Welcome to the Easy3D Python Bindings Tutorials!
 
 The tutorials (with code) cover various examples showcasing the most useful functions provided by
 `Easy3D <https://github.com/LiangliangNan/Easy3D>`_, as well as explaining the relevant concepts behind

@@ -22,7 +22,7 @@ Related Links
 .. toctree::
    :maxdepth: 2
 
-   Easy3D Python Bindings <self>
+   Easy3D Python bindings <self>
 
    tutorials/index
 
