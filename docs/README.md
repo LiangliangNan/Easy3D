@@ -4,8 +4,8 @@ The [Documentation workflow](../.github/workflows/documentation.yml) builds the
 existing `Doxyfile.in` and the Sphinx site in `python/docs`, publishing:
 
 - C++ documentation: <https://liangliangnan.github.io/Easy3D/>
-- Python documentation: <https://liangliangnan.github.io/Easy3D/python/>
-- Python tutorials: <https://liangliangnan.github.io/Easy3D/python/tutorials/>
+- Python documentation: <https://liangliangnan.github.io/Easy3D/python>
+- Python tutorials: <https://liangliangnan.github.io/Easy3D/python/tutorials>
 
 This is the Easy3D repository's project
 site; the `LiangliangNan.github.io` repository does not need any changes.

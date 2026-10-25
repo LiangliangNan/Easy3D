@@ -16,7 +16,7 @@
 
 # Asking a question
 
-Please have a look at the [Easy3D documentation](https://3d.bk.tudelft.nl/liangliang/software/easy3d_doc/html/index.html) and 
+Please have a look at the [Easy3D documentation](https://liangliangnan.github.io/Easy3D/) and
 quickly go through the issues to see if the same question has already been answered before you ask a question.
 
 Questions about how to use Easy3D, the design or implementation of Easy3D, or about plans should be asked by opening 
