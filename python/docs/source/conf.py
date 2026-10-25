@@ -18,7 +18,6 @@ import re
 import sys
 
 sys.path.insert(0, os.path.abspath("../"))
-sys.path.insert(0, os.path.abspath('../my_env/lib/python3.13/site-packages'))
 
 # -- Project information -----------------------------------------------------
 
