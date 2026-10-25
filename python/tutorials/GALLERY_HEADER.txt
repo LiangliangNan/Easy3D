@@ -1,6 +1,6 @@
-===========================
+================================
 Easy3D Python Bindings Tutorials
-===========================
+================================
 
 Welcome to the Easy3D Python Bindings Tutorials!
 
