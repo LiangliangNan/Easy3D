@@ -27,6 +27,14 @@
 #ifndef EASY3D_VIEWER_VIEWER_H
 #define EASY3D_VIEWER_VIEWER_H
 
+#ifdef EASY3D_NO_OPENGL
+#ifndef EASY3D_HAS_VULKAN_VIEWER
+#error "Interactive Viewer requires Easy3D_ENABLE_VULKAN_VIEWER=ON in a Vulkan-only build"
+#endif
+#include <easy3d/viewer/vulkan_viewer.h>
+namespace easy3d { using Viewer = VulkanViewer; }
+#else
+
 
 #include <string>
 #include <vector>
@@ -668,4 +676,5 @@ namespace easy3d {
 }
 
 
+#endif // EASY3D_NO_OPENGL
 #endif	// EASY3D_VIEWER_VIEWER_H

@@ -17,7 +17,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        opengl: ["ON", "OFF"]
+        include:
+          - opengl: "OFF"
+            window: "OFF"
+          - opengl: "OFF"
+            window: "ON"
+          - opengl: "ON"
+            window: "ON"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -27,12 +33,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ninja-build libboost-dev libvulkan-dev \
             mesa-vulkan-drivers vulkan-validationlayers glslang-tools spirv-tools \
-            libgl1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+            libgl1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev xvfb xauth
       - name: Configure
         run: |
           cmake -S . -B build-vulkan -G Ninja -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/install" \
             -DEasy3D_ENABLE_VULKAN=ON -DEasy3D_ENABLE_OPENGL=${{ matrix.opengl }} \
+            -DEasy3D_ENABLE_VULKAN_VIEWER=${{ matrix.window }} \
             -DEasy3D_BUILD_TUTORIALS=OFF -DEasy3D_BUILD_TESTS=OFF \
             -DEasy3D_BUILD_VULKAN_TESTS=ON -DEasy3D_VULKAN_TEST_VALIDATION=ON
       - name: Build
@@ -46,7 +53,13 @@ jobs:
           export VK_DRIVER_FILES="$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit)"
           test -n "$VK_DRIVER_FILES"
           unset DISPLAY WAYLAND_DISPLAY
-          ctest --test-dir build-vulkan --output-on-failure
+          ctest --test-dir build-vulkan --output-on-failure -LE desktop
+      - name: Test native Vulkan windows
+        if: matrix.window == 'ON'
+        run: |
+          export VK_DRIVER_FILES="$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit)"
+          xvfb-run -a -s '-screen 0 1280x1024x24 -nolisten tcp -noreset' \
+            ctest --test-dir build-vulkan --output-on-failure -L desktop
       - name: Build and run an installed-package consumer
         run: |
           cmake --install build-vulkan

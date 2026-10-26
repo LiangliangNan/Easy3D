@@ -5,9 +5,14 @@
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/util/initializer.h>
+#include <easy3d/util/resource.h>
+#include <easy3d/util/file_system.h>
+#include <stdexcept>
 #include <iostream>
 int main() {
     easy3d::initialize(false, false, false);
+    if (easy3d::resource::directory() != easy3d::file_system::convert_to_native_style(Easy3D_RESOURCE_DIR))
+        throw std::runtime_error("installed resources were rejected or resolved to the source tree");
 #ifdef EASY3D_NO_OPENGL
     easy3d::OffScreen renderer(101, 77);
 #else

@@ -87,7 +87,7 @@ struct VulkanOffScreen::Impl {
         result.lighting = d.lighting();
         return result;
     }
-    graphics::FrameImage capture(const Camera& cam, const vec4& bg) const {
+    std::vector<graphics::DrawCommand> commands(const Camera& cam) const {
         for (auto it = cache.begin(); it != cache.end(); ) {
             if (it->second.source.expired()) it = cache.erase(it); else ++it;
         }
@@ -105,13 +105,23 @@ struct VulkanOffScreen::Impl {
         }
         for (size_t i = 0; i < drawables.size(); ++i)
             if (drawables[i]->is_visible()) commands.push_back(command(drawables[i], uint32_t(models.size() + i), cam));
-        return device->render(uint32_t(cam.screenWidth()), uint32_t(cam.screenHeight()), commands, bg);
+        return commands;
+    }
+    graphics::FrameImage capture(const Camera& cam, const vec4& bg) const {
+        return device->render(uint32_t(cam.screenWidth()), uint32_t(cam.screenHeight()), commands(cam), bg);
     }
 };
-VulkanOffScreen::VulkanOffScreen(int width, int height, const graphics::DeviceOptions& options) : impl_(new Impl) {
+VulkanOffScreen::VulkanOffScreen(int width, int height, const graphics::DeviceOptions& options)
+    : VulkanOffScreen(width, height, graphics::create_vulkan_device(options)) {}
+VulkanOffScreen::VulkanOffScreen(int width, int height, std::unique_ptr<graphics::RenderDevice> device) : impl_(new Impl) {
+    if (!device) throw std::invalid_argument("scene requires a graphics device");
     resize(width, height);
-    impl_->device = graphics::create_vulkan_device(options);
+    impl_->device = std::move(device);
 }
+bool VulkanOffScreen::present() {
+    return impl_->device->present(uint32_t(width()), uint32_t(height()), impl_->commands(*camera()), background_color());
+}
+void VulkanOffScreen::release_device() { impl_->device.reset(); }
 VulkanOffScreen::~VulkanOffScreen() = default;
 Camera* VulkanOffScreen::camera() { return impl_->camera.get(); }
 const Camera* VulkanOffScreen::camera() const { return impl_->camera.get(); }
@@ -151,6 +161,12 @@ Model* VulkanOffScreen::add_model(const std::string& filename, bool create) {
     if (model) model->set_name(filename);
     return add_model(model, create);
 }
+Model* VulkanOffScreen::add_model(Model* model, bool create) {
+    if (!model) return nullptr;
+    // Do not manufacture a second shared_ptr control block for an owned model.
+    for (const auto& current : impl_->models) if (current.get() == model) return model;
+    return add_model(std::shared_ptr<Model>(model), create);
+}
 bool VulkanOffScreen::delete_model(Model* model) {
     auto& values = impl_->models;
     auto found = std::find_if(values.begin(), values.end(), [model](const std::shared_ptr<Model>& p) { return p.get() == model; });
@@ -172,10 +188,13 @@ bool VulkanOffScreen::delete_drawable(Drawable* drawable) {
 }
 const std::vector<std::shared_ptr<Drawable>>& VulkanOffScreen::drawables() const { return impl_->drawables; }
 void VulkanOffScreen::clear_scene() { impl_->models.clear(); impl_->drawables.clear(); impl_->cache.clear(); }
-void VulkanOffScreen::fit_screen() {
+void VulkanOffScreen::fit_screen(const Model* selected) {
     Box3 box;
-    for (const auto& model : impl_->models) box.grow(model->bounding_box());
-    for (const auto& drawable : impl_->drawables) box.grow(drawable->bounding_box());
+    if (selected) box.grow(selected->bounding_box());
+    else {
+        for (const auto& model : impl_->models) box.grow(model->bounding_box());
+        for (const auto& drawable : impl_->drawables) box.grow(drawable->bounding_box());
+    }
     if (box.is_valid()) { camera()->setSceneBoundingBox(box.min_point(), box.max_point()); camera()->showEntireScene(); }
 }
 graphics::FrameImage VulkanOffScreen::capture() const { return impl_->capture(*camera(), background_color()); }

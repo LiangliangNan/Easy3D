@@ -1,9 +1,9 @@
 # Native Vulkan migration
 
 The `Easy3D-Vulkan` branch starts an incremental migration. It is **not yet a
-replacement for the full OpenGL renderer**. Mapple, FigureMaker, interactive
-Viewer, GUI picking, effects, Python rendering and existing interactive tutorials
-still use OpenGL. They are retained until their Vulkan replacements are ready.
+replacement for the full OpenGL renderer**. A native interactive Vulkan viewer is
+now available as an opt-in host. Mapple, FigureMaker, GUI picking/effects, Python
+rendering and most existing interactive tutorials still use OpenGL. They are retained until their Vulkan replacements are ready.
 
 ## Implemented
 
@@ -31,6 +31,12 @@ still use OpenGL. They are retained until their Vulkan replacements are ready.
   OpenGL uploads/drawing in `renderer/backends/opengl`. Vulkan-only builds exclude
   legacy rendering sources and shader installation entirely; GL-only entry points
   report an explicit unavailable-operation error.
+- An opt-in native `VulkanViewer`/GLFW host: GPU-only swapchain presentation,
+  resize/hide/show, independent windows/devices, orbit/pan/zoom, projection toggle,
+  file drop and depth-based world-point picking. The installed demo uses an
+  embedded bunny by default and needs no source-tree model/shader files.
+- The existing Tutorial 201 compiles unchanged using the `Viewer` alias in a
+  Vulkan-only window build. Legacy custom OpenGL draw callbacks are not ported.
 - A new finite Tutorial 208 and deterministic Vulkan tests, including actual
   bunny mesh loading, property colors, geometry updates, snapshots and picking IDs.
 
@@ -58,6 +64,7 @@ For CPU scene APIs, `VulkanOffScreen` and the Vulkan module, with **no GL/GLEW/G
 
 ```sh
 cmake -S . -B build-vulkan-only -DEasy3D_ENABLE_OPENGL=OFF \
+    -DEasy3D_ENABLE_VULKAN_VIEWER=OFF \
     -DEasy3D_ENABLE_VULKAN=ON -DEasy3D_BUILD_TUTORIALS=OFF \
     -DEasy3D_BUILD_TESTS=OFF -DEasy3D_BUILD_PYTHON_BINDINGS=OFF \
     -DEasy3D_ENABLE_QT=OFF -DEasy3D_BUILD_VULKAN_TESTS=ON \
@@ -80,6 +87,78 @@ On macOS use a Vulkan SDK with MoltenVK and a matching loader/ICD. Follow the SD
 runtime environment/bundling instructions. This implementation requests Vulkan
 1.2 and checks target-format support. macOS and Windows hardware execution are
 still required before making a cross-platform support claim.
+
+## Interactive Vulkan window
+
+The window host is independently opt-in. In a fresh build directory:
+
+```sh
+cmake -S . -B build-vulkan-window -DEasy3D_ENABLE_VULKAN=ON \
+    -DEasy3D_ENABLE_VULKAN_VIEWER=ON -DEasy3D_ENABLE_OPENGL=OFF \
+    -DEasy3D_BUILD_TUTORIALS=OFF
+cmake --build build-vulkan-window --parallel 4
+./build-vulkan-window/bin/VulkanViewer
+# Or load your own model:
+./build-vulkan-window/bin/VulkanViewer path/to/model.ply
+```
+
+Use a separate build/install directory and rebuild consumers: these interfaces
+remain experimental, with source compatibility for the documented subset.
+GLFW's normal platform development dependencies are required (X11 or Wayland on
+Linux; native Cocoa/Win32 on macOS/Windows). The host requests `GLFW_NO_API` and
+never creates an OpenGL context. `Easy3D_ENABLE_OPENGL=ON` is also supported when
+you want to compile the existing applications alongside the Vulkan demo.
+
+Controls: left drag rotates, right/middle drag pans, the wheel zooms, **F** fits
+all models, **P** toggles perspective/orthographic, **Escape** closes. Shift-left
+click sets the camera pivot to a depth-picked surface point. You can also drop a
+model file on the window. `--frames N` bounds demo execution; `--validation`
+requires the Khronos and synchronization validation layers.
+
+For C++ consumers, link `easy3d::viewer` and use:
+
+```cpp
+#include <easy3d/viewer/vulkan_viewer.h>
+easy3d::VulkanViewer viewer("Mesh");
+viewer.add_model("mesh.ply");
+viewer.run();
+```
+
+In a Vulkan-only window build the existing `<easy3d/viewer/viewer.h>` and
+`easy3d::Viewer` name select the same host. `Tutorial_201_Viewer_default` is built
+unchanged in that configuration. Other tutorials are still gated until their
+features and callbacks are ported; the global legacy tutorials option stays OFF.
+In a dual build `Viewer` continues to select the legacy host, while
+`VulkanViewer` selects Vulkan explicitly.
+
+The host reuses Camera/Model/Renderer/Drawable and snapshot APIs from
+`VulkanOffScreen`. `draw_frame()` plus `poll_events()` support an external loop;
+input and pre/post-frame/resize hooks can be overridden. All native callbacks use
+framebuffer-pixel coordinates, including HiDPI conversion. `point_under_pixel()`
+uses the same top-left pixel convention and synchronously reads back depth on
+request. Legacy GL `draw()` callbacks, overlays and full viewer shortcut parity
+are not emulated. The GL-version/MSAA constructor arguments have no native
+counterpart yet; use `VulkanViewerOptions`.
+
+Create/use/destroy GLFW windows on the UI/main thread. Multiple Vulkan windows
+share only GLFW lifetime, not their logical GPU devices or mutable scenes. Do not
+mix these windows with the legacy GLFW Viewer in one process, whose GLFW lifetime
+management is separate. A custom toolkit can supply required instance extensions
+and a surface callback through `graphics::VulkanSurface`; the device owns the
+returned surface and must be destroyed before its native window. Borrowed
+Qt-owned VkDevices are not supported by that adapter yet.
+
+Window tests require a display, unlike the renderer/capture tests:
+
+```sh
+ctest --test-dir build-vulkan-window --output-on-failure -LE desktop
+# Linux software WSI tests (with VK_DRIVER_FILES set to lavapipe):
+xvfb-run -a ctest --test-dir build-vulkan-window --output-on-failure -L desktop
+```
+
+Enable `Easy3D_BUILD_VULKAN_TESTS` and optionally
+`Easy3D_VULKAN_TEST_VALIDATION` when configuring to build these tests. The Vulkan
+window demo runs on the actual desktop on macOS/Windows; Xvfb is Linux-only.
 
 ## Similar existing APIs
 
@@ -131,7 +210,7 @@ package exports the `vulkan` component and finds its Vulkan dependency.
 
 | Area | Current behavior |
 |---|---|
-| Default backend | Existing Viewer/OffScreen remain OpenGL in the default/dual build. In Vulkan-only builds `OffScreen` aliases `VulkanOffScreen`, preserving its common API. |
+| Default backend | Existing Viewer/OffScreen remain OpenGL in the default/dual build. In Vulkan-only builds `OffScreen` aliases `VulkanOffScreen`; enabling the native window option also makes `Viewer` alias `VulkanViewer`. |
 | `VulkanOffScreen` defaults | Opaque mesh faces; uniform or vertex/face property color; plain one-pixel points/lines. Scalar/texture properties are not automatically chosen as defaults yet. |
 | Material/lighting | Basic fixed world-space diffuse term; no full material or back-face-color parity yet. Normal transforms use the inverse transpose. Disable lighting for exact unlit colors. |
 | `TrianglesDrawable::opacity()` | As in the old opaque pass, effective only in a separate transparency pass; such a pass is not implemented here. |
@@ -141,22 +220,26 @@ package exports the `vulkan` component and finds its Vulkan dependency.
 | Snapshot options | Single sample only (default 1); MSAA and `expand=false` are rejected. Scaling, white/current/transparent background and image saving work. No tiled oversized captures. |
 | Readback | RGBA8, D32 and RG32UI; top row first; depth [0,1]; no-hit object/primitive IDs are `UINT32_MAX`. |
 | Picking IDs | Draw-command object ID and draw-primitive index (or explicit native primitive IDs). The adapter uses model/drawable order and generated primitive indices, not original polygon/vertex handles. Existing GUI pickers are not ported. |
-| Resource scheduling | Synchronous capture and uploads, single graphics queue; no multi-frame presentation or asynchronous readback yet. |
+| Resource scheduling | Synchronous capture/uploads and one submitted frame at a time; presentation stays on the GPU with no CPU pixel readback. Per-image presentation semaphores; queue/device idle only at swapchain recreation and destruction. Multiple frames in flight and asynchronous capture are pending. |
 | Resource limits | Fixed 1,024 live texture descriptor sets; expired resources retired at the next capture. Individual allocations, not a suballocator yet. |
 | Scene ownership | Like Viewer, adding a model replaces its renderer. Do not simultaneously attach the same mutable model to GL and CPU-mode hosts. Native immutable geometry can be reused across independent devices. |
 | Threading | Externally synchronize device calls and model edits. CPU snapshots do not make concurrent model/property mutation safe. |
-| Hosts/bindings | GLFW presentation, Qt's two views, wxWidgets, ImGui and Python Vulkan integration remain pending. |
+| Hosts/bindings | Native GLFW is implemented; Qt's two views, wxWidgets, ImGui and Python Vulkan integration remain pending. |
+| Presentation requirements | One queue family supporting both graphics and presentation, transfer-destination surface images, RGBA/BGRA blit support, identity surface transform. Unsupported configurations fail explicitly. FIFO presentation. UNORM formats are preferred; an sRGB-only surface introduces format conversion. |
 
 The existing OpenGL sources and shaders therefore remain necessary. Cleaning them
 out now would remove working applications and tutorials. The Vulkan-only build
-excludes legacy renderer/GUI/viewer implementations, GLEW, GLFW and ImGui code,
-while retaining shared CPU scene APIs and the new offscreen adapter. Delete old
+excludes legacy renderer/GUI/viewer implementations, GLEW and ImGui. The headless
+configuration also excludes GLFW; the optional native window host includes GLFW
+for window/input management. Both retain shared CPU scene APIs and the new offscreen adapter. Delete old
 implementations only after each replacement passes its application/feature tests.
 
 ## Validation and remaining migration
 
 The new CI workflow builds both Vulkan-only and dual configurations, validates
 SPIR-V and renders with lavapipe and synchronization validation without X/Wayland.
+It also tests native window configurations under Xvfb, including resize, multiple
+devices/windows, callback failure containment and independent window lifetime.
 The default existing build workflows retain their OpenGL configuration.
 
 Local verification for this stage used Linux, GCC 14, Qt 6.8.2 and Mesa lavapipe:
@@ -169,7 +252,12 @@ validate native macOS/Windows execution, interactive Qt behavior, or Python
 rendering on Vulkan. The new GitHub workflow is added but has not been run on
 GitHub as part of this local work.
 
-Next implementation gates are native GLFW/Qt/wx surface/frame adapters, portable
+The native-window stage additionally passed headless and Xvfb presentation tests
+with synchronization validation, including live window-image inspection. Tutorial
+201 builds unchanged through the native Viewer alias. Installed-resource
+validation no longer requires legacy GL shaders in Vulkan-only packages.
+
+Next implementation gates are native Qt/wx surface/frame adapters, portable
 impostors, text and texture/scalar state, ID mapping/pickers, MSAA and capture,
 effects/transparency, all applications/tutorials and Python integration, then
 hardware validation and packaging on macOS/Windows/Linux. Switching defaults and

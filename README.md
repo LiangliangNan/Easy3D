@@ -255,7 +255,8 @@ Dec. 8, 2018
 
 ### Experimental Vulkan migration
 
-The `Easy3D-Vulkan` branch adds an opt-in native Vulkan offscreen renderer and a
-`VulkanOffScreen` adapter using existing model/drawable/camera APIs. Existing
-interactive applications still use OpenGL. See [build instructions, supported
+The `Easy3D-Vulkan` branch adds opt-in native Vulkan offscreen and interactive GLFW
+renderers using existing model/drawable/camera APIs. Enable
+`Easy3D_ENABLE_VULKAN_VIEWER` for the native window demo. Mapple and the other
+existing applications still use OpenGL. See [build instructions, supported
 features and migration status](docs/vulkan.md).

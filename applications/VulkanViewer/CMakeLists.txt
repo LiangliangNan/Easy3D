@@ -1,0 +1,11 @@
+add_executable(VulkanViewer main.cpp)
+target_link_libraries(VulkanViewer PRIVATE easy3d::viewer)
+set_target_properties(VulkanViewer PROPERTIES FOLDER "applications")
+install(TARGETS VulkanViewer RUNTIME DESTINATION "${Easy3D_INSTALL_BIN_DIR}")
+if(NOT Easy3D_ENABLE_OPENGL)
+    # Compile an existing tutorial unchanged through the portable Viewer alias.
+    add_executable(Tutorial_201_Viewer_default "${Easy3D_ROOT}/tutorials/Tutorial_201_Viewer_default/main.cpp")
+    target_link_libraries(Tutorial_201_Viewer_default PRIVATE easy3d::viewer)
+    target_compile_definitions(Tutorial_201_Viewer_default PRIVATE EXAMPLE_TITLE="Tutorial_201_Viewer_default")
+    set_target_properties(Tutorial_201_Viewer_default PROPERTIES FOLDER "tutorials")
+endif()

@@ -20,8 +20,12 @@ option(Easy3D_ENABLE_QT "Build examples/applications based on Qt (Qt5 >= v5.8.0,
 option(Easy3D_ENABLE_FFMPEG "Build the video encoding module that requires ffmpeg (>= v3.4)" OFF)
 option(Easy3D_ENABLE_OPENGL "Build the existing OpenGL renderer and application hosts" ON)
 option(Easy3D_ENABLE_VULKAN "Build the experimental native Vulkan renderer" OFF)
+option(Easy3D_ENABLE_VULKAN_VIEWER "Build the native Vulkan/GLFW window host and demo" OFF)
 option(Easy3D_BUILD_VULKAN_TESTS "Build deterministic Vulkan rendering tests" OFF)
 option(Easy3D_VULKAN_TEST_VALIDATION "Require Vulkan and synchronization validation in CTest" OFF)
+if(Easy3D_ENABLE_VULKAN_VIEWER AND NOT Easy3D_ENABLE_VULKAN)
+    message(FATAL_ERROR "Easy3D_ENABLE_VULKAN_VIEWER requires Easy3D_ENABLE_VULKAN")
+endif()
 
 if(NOT Easy3D_ENABLE_OPENGL)
     if(Easy3D_BUILD_TUTORIALS OR Easy3D_BUILD_TESTS OR Easy3D_BUILD_PYTHON_BINDINGS OR Easy3D_ENABLE_QT)
@@ -319,7 +323,7 @@ if (Easy3D_BUILD_PYTHON_BINDINGS)
     add_subdirectory(python)
 endif ()
 
-if(Easy3D_ENABLE_OPENGL)
+if(Easy3D_ENABLE_OPENGL OR Easy3D_ENABLE_VULKAN_VIEWER)
     add_subdirectory(applications)
 endif()
 
@@ -406,6 +410,7 @@ message(STATUS "    With Qt (>= v5.8.0)    :  ${Easy3D_ENABLE_QT}")
 message(STATUS "    With ffmpeg (>= v3.4)  :  ${Easy3D_ENABLE_FFMPEG}")
 message(STATUS "    OpenGL renderer        :  ${Easy3D_ENABLE_OPENGL}")
 message(STATUS "    Vulkan renderer        :  ${Easy3D_ENABLE_VULKAN} (experimental)")
+message(STATUS "    Vulkan window host     :  ${Easy3D_ENABLE_VULKAN_VIEWER} (experimental)")
 
 message(STATUS "----------------------------------------------------------------------------")
 

@@ -39,7 +39,9 @@ namespace easy3d {
 
         bool is_valid_resource_dir(const std::string& dir) {
             return file_system::is_directory(dir) &&
+#ifdef EASY3D_RESOURCE_OPENGL
                    file_system::is_directory(dir + "/shaders") &&
+#endif
                    file_system::is_directory(dir + "/fonts") &&
                    file_system::is_directory(dir + "/colormaps") &&
                    file_system::is_directory(dir + "/textures");

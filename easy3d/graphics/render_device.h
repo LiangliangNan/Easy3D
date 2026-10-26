@@ -89,6 +89,12 @@ public:
     virtual FrameImage render(std::uint32_t width, std::uint32_t height,
                               const std::vector<DrawCommand>& commands,
                               const vec4& background = vec4(1, 1, 1, 1)) = 0;
+    // Queue a frame for a configured presentation surface, without CPU readback.
+    // False means zero extent/out-of-date surface; the host should retry after events.
+    // Headless devices report an unsupported operation explicitly.
+    virtual bool present(std::uint32_t width, std::uint32_t height,
+                         const std::vector<DrawCommand>& commands,
+                         const vec4& background = vec4(1, 1, 1, 1)) = 0;
     virtual unsigned validation_errors() const = 0;
 };
 

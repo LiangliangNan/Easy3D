@@ -1,5 +1,10 @@
-if (Easy3D_ENABLE_QT)
+if (Easy3D_ENABLE_OPENGL AND Easy3D_ENABLE_QT)
     add_subdirectory(Mapple)
 endif ()
 
-add_subdirectory(FigureMaker)
+if(Easy3D_ENABLE_OPENGL)
+    add_subdirectory(FigureMaker)
+endif()
+if(Easy3D_ENABLE_VULKAN_VIEWER)
+    add_subdirectory(VulkanViewer)
+endif()

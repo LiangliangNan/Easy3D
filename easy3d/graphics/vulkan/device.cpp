@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Liangliang Nan
 #include <easy3d/graphics/render_device.h>
+#include <easy3d/graphics/vulkan/surface.h>
 #include <vulkan/vulkan.h>
 #include <algorithm>
 #include <atomic>
@@ -41,6 +42,7 @@ struct Context {
     VkDebugUtilsMessengerEXT messenger = VK_NULL_HANDLE;
     VkPhysicalDevice physical = VK_NULL_HANDLE;
     VkDevice device = VK_NULL_HANDLE;
+    VkSurfaceKHR surface = VK_NULL_HANDLE;
     VkQueue queue = VK_NULL_HANDLE;
     uint32_t family = 0;
     VkCommandPool pool = VK_NULL_HANDLE;
@@ -57,6 +59,7 @@ struct Context {
             if (pool) vkDestroyCommandPool(device, pool, nullptr);
             vkDestroyDevice(device, nullptr);
         }
+        if (surface) vkDestroySurfaceKHR(instance, surface, nullptr);
         if (messenger) {
             auto destroy = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(
                 vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT"));
@@ -71,10 +74,19 @@ struct Context {
         std::cerr << "Vulkan validation: " << data->pMessage << '\n';
         return VK_FALSE;
     }
-    void init(const DeviceOptions& options) {
+    void init(const DeviceOptions& options, const VulkanSurface* window = nullptr) {
         const bool validation = options.validation || options.synchronization_validation;
         auto available = instance_extensions();
         std::vector<const char*> extensions, layers;
+        if (window) {
+            if (!window->create) throw std::invalid_argument("surface creation callback is required");
+            for (const auto& name : window->instance_extensions) {
+                if (!named(available, name.c_str()))
+                    throw std::runtime_error("required surface extension unavailable: " + name);
+                if (std::find_if(extensions.begin(), extensions.end(), [&](const char* e) { return name == e; }) == extensions.end())
+                    extensions.push_back(name.c_str());
+            }
+        }
         VkDebugUtilsMessengerCreateInfoEXT debug_info{};
         debug_info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
         debug_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
@@ -125,9 +137,19 @@ struct Context {
             extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
             info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
         }
+        std::vector<const char*> unique_extensions;
+        for (const char* name : extensions)
+            if (std::find_if(unique_extensions.begin(), unique_extensions.end(), [&](const char* other) {
+                    return std::strcmp(name, other) == 0;
+                }) == unique_extensions.end()) unique_extensions.push_back(name);
+        extensions = std::move(unique_extensions);
         info.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
         info.ppEnabledExtensionNames = extensions.data();
         check(vkCreateInstance(&info, nullptr, &instance), "create Vulkan 1.2 instance");
+        if (window) {
+            check(window->create(instance, &surface), "create native Vulkan surface");
+            if (!surface) throw std::runtime_error("surface callback returned a null surface");
+        }
         if (validation) {
             auto create = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
                 vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT"));
@@ -159,12 +181,27 @@ struct Context {
                 suitable &= (p.optimalTilingFeatures & format.second) == format.second;
             }
             if (!suitable) continue;
+            if (surface) {
+                VkFormatProperties source;
+                vkGetPhysicalDeviceFormatProperties(candidate, VK_FORMAT_R8G8B8A8_UNORM, &source);
+                if (!(source.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT)) continue;
+                uint32_t extension_count = 0;
+                check(vkEnumerateDeviceExtensionProperties(candidate, nullptr, &extension_count, nullptr), "enumerate WSI extensions");
+                std::vector<VkExtensionProperties> supported(extension_count);
+                check(vkEnumerateDeviceExtensionProperties(candidate, nullptr, &extension_count, supported.data()), "enumerate WSI extensions");
+                if (!named(supported, VK_KHR_SWAPCHAIN_EXTENSION_NAME)) continue;
+            }
             uint32_t families = 0;
             vkGetPhysicalDeviceQueueFamilyProperties(candidate, &families, nullptr);
             std::vector<VkQueueFamilyProperties> queues(families);
             vkGetPhysicalDeviceQueueFamilyProperties(candidate, &families, queues.data());
             for (uint32_t i = 0; i < families; ++i) {
                 if (!(queues[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)) continue;
+                if (surface) {
+                    VkBool32 supported = VK_FALSE;
+                    check(vkGetPhysicalDeviceSurfaceSupportKHR(candidate, i, surface, &supported), "query presentation queue");
+                    if (!supported) continue;
+                }
                 int score = props.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU ? 3 :
                             props.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU ? 2 : 1;
                 if (score > best_score) {
@@ -173,13 +210,14 @@ struct Context {
                 break;
             }
         }
-        if (!physical) throw std::runtime_error("no suitable Vulkan 1.2 device with RGBA8, RG32UI and D32 targets");
+        if (!physical) throw std::runtime_error("no suitable Vulkan 1.2 device/graphics queue for requested targets and surface");
         vkGetPhysicalDeviceMemoryProperties(physical, &memory);
         count = 0;
         check(vkEnumerateDeviceExtensionProperties(physical, nullptr, &count, nullptr), "enumerate device extensions");
         std::vector<VkExtensionProperties> device_extensions(count);
         check(vkEnumerateDeviceExtensionProperties(physical, nullptr, &count, device_extensions.data()), "enumerate device extensions");
         extensions.clear();
+        if (surface) extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
         // This extension is mandatory when advertised by a portability device.
         if (named(device_extensions, "VK_KHR_portability_subset")) extensions.push_back("VK_KHR_portability_subset");
         float priority = 1;
@@ -217,7 +255,8 @@ struct Context {
         if (fallback == UINT32_MAX) throw std::runtime_error("no compatible Vulkan memory type");
         return fallback;
     }
-    void execute(const std::function<void(VkCommandBuffer)>& record) {
+    void execute(const std::function<void(VkCommandBuffer)>& record,
+                 VkSemaphore wait = VK_NULL_HANDLE, VkSemaphore signal = VK_NULL_HANDLE) {
         check(vkResetCommandBuffer(command, 0), "reset command buffer");
         VkCommandBufferBeginInfo begin{};
         begin.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -229,6 +268,9 @@ struct Context {
         VkSubmitInfo si{};
         si.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         si.commandBufferCount = 1; si.pCommandBuffers = &command;
+        const VkPipelineStageFlags stage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+        if (wait) { si.waitSemaphoreCount = 1; si.pWaitSemaphores = &wait; si.pWaitDstStageMask = &stage; }
+        if (signal) { si.signalSemaphoreCount = 1; si.pSignalSemaphores = &signal; }
         check(vkQueueSubmit(queue, 1, &si, fence), "submit graphics commands");
         check(vkWaitForFences(device, 1, &fence, VK_TRUE, UINT64_MAX), "wait for capture");
     }
@@ -348,8 +390,6 @@ struct Target {
         fi.renderPass = pass; fi.attachmentCount = 3; fi.pAttachments = views;
         fi.width = width; fi.height = height; fi.layers = 1;
         check(vkCreateFramebuffer(c.device, &fi, nullptr, &framebuffer), "create framebuffer");
-        // RG32UI copies require an eight-byte-aligned offset, including odd extents.
-        readback.init(VkDeviceSize(width) * height * 16 + 8, VK_BUFFER_USAGE_TRANSFER_DST_BIT, true);
     }
 };
 struct GpuVertex {
@@ -375,6 +415,86 @@ struct GpuTexture {
 struct Push { float mvp[16], color[4]; uint32_t object, lighting; float normal[9]; };
 static_assert(sizeof(Push) == 124, "shader push-constant layout changed");
 
+// Presentation semaphores belong to swapchain images, not CPU frame slots. An
+// image is reacquired only after its previous presentation wait has completed.
+struct Swapchain {
+    Context& c;
+    VkSwapchainKHR handle = VK_NULL_HANDLE;
+    VkExtent2D extent{};
+    uint32_t requested_width = 0, requested_height = 0;
+    std::vector<VkImage> images;
+    std::vector<VkSemaphore> ready;
+    VkSemaphore acquired = VK_NULL_HANDLE;
+    bool dirty = false;
+    explicit Swapchain(Context& context) : c(context) {}
+    ~Swapchain() {
+        for (auto s : ready) if (s) vkDestroySemaphore(c.device, s, nullptr);
+        if (acquired) vkDestroySemaphore(c.device, acquired, nullptr);
+        if (handle) vkDestroySwapchainKHR(c.device, handle, nullptr);
+    }
+    void init(uint32_t width, uint32_t height) {
+        requested_width = width; requested_height = height;
+        VkSurfaceCapabilitiesKHR caps;
+        check(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(c.physical, c.surface, &caps), "query surface capabilities");
+        if (!(caps.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_DST_BIT))
+            throw std::runtime_error("surface does not support transfer-destination presentation images");
+        if (!(caps.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR))
+            throw std::runtime_error("rotated Vulkan presentation surfaces are not yet supported");
+        extent = caps.currentExtent;
+        if (extent.width == UINT32_MAX) {
+            extent.width = std::max(caps.minImageExtent.width, std::min(width, caps.maxImageExtent.width));
+            extent.height = std::max(caps.minImageExtent.height, std::min(height, caps.maxImageExtent.height));
+        }
+        if (!extent.width || !extent.height) return;
+        uint32_t count = 0;
+        check(vkGetPhysicalDeviceSurfaceFormatsKHR(c.physical, c.surface, &count, nullptr), "query surface formats");
+        std::vector<VkSurfaceFormatKHR> formats(count);
+        check(vkGetPhysicalDeviceSurfaceFormatsKHR(c.physical, c.surface, &count, formats.data()), "query surface formats");
+        if (formats.size() == 1 && formats[0].format == VK_FORMAT_UNDEFINED)
+            formats[0].format = VK_FORMAT_B8G8R8A8_UNORM;
+        VkSurfaceFormatKHR chosen{};
+        bool found = false;
+        const VkFormat preferred[] = {VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_R8G8B8A8_UNORM,
+                                     VK_FORMAT_B8G8R8A8_SRGB, VK_FORMAT_R8G8B8A8_SRGB};
+        for (auto format : preferred) {
+            for (const auto& candidate : formats) {
+                if (candidate.format != format || candidate.colorSpace != VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) continue;
+                VkFormatProperties properties;
+                vkGetPhysicalDeviceFormatProperties(c.physical, format, &properties);
+                if (!(properties.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_DST_BIT)) continue;
+                chosen = candidate; found = true; break;
+            }
+            if (found) break;
+        }
+        if (!found) throw std::runtime_error("no supported RGBA/BGRA presentation format with blit support");
+        uint32_t image_count = caps.minImageCount + 1;
+        if (caps.maxImageCount && image_count > caps.maxImageCount) image_count = caps.maxImageCount;
+        VkCompositeAlphaFlagBitsKHR alpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+        const VkCompositeAlphaFlagBitsKHR modes[] = {VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+            VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR, VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR,
+            VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR};
+        for (auto mode : modes) if (caps.supportedCompositeAlpha & mode) { alpha = mode; break; }
+        VkSwapchainCreateInfoKHR si{};
+        si.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+        si.surface = c.surface; si.minImageCount = image_count;
+        si.imageFormat = chosen.format; si.imageColorSpace = chosen.colorSpace;
+        si.imageExtent = extent; si.imageArrayLayers = 1;
+        si.imageUsage = VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+        si.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        si.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+        si.compositeAlpha = alpha; si.presentMode = VK_PRESENT_MODE_FIFO_KHR; si.clipped = VK_TRUE;
+        check(vkCreateSwapchainKHR(c.device, &si, nullptr, &handle), "create swapchain");
+        check(vkGetSwapchainImagesKHR(c.device, handle, &count, nullptr), "get presentation images");
+        images.resize(count);
+        check(vkGetSwapchainImagesKHR(c.device, handle, &count, images.data()), "get presentation images");
+        VkSemaphoreCreateInfo sem{};
+        sem.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+        check(vkCreateSemaphore(c.device, &sem, nullptr, &acquired), "create acquire semaphore");
+        ready.resize(count, VK_NULL_HANDLE);
+        for (auto& s : ready) check(vkCreateSemaphore(c.device, &sem, nullptr, &s), "create image presentation semaphore");
+    }
+};
+
 class VulkanDevice final : public RenderDevice {
     Context c_;
     std::string name_;
@@ -385,13 +505,17 @@ class VulkanDevice final : public RenderDevice {
     VkPipelineLayout layout_ = VK_NULL_HANDLE;
     VkPipeline pipelines_[3] = {};
     std::unique_ptr<Target> target_;
+    std::unique_ptr<Swapchain> swapchain_;
     std::shared_ptr<const Image> white_;
     std::map<const Geometry*, std::unique_ptr<GpuGeometry>> geometry_;
     std::map<const Image*, std::unique_ptr<GpuTexture>> textures_;
 public:
     // Separate initialization ensures all members are destroyed if any Vulkan step throws.
     ~VulkanDevice() override {
-        target_.reset(); geometry_.clear(); textures_.clear();
+        // Presentation may still be using image-owned semaphores after the draw
+        // fence completes. Drain at shutdown/recreation only, never per frame.
+        if (c_.device) vkDeviceWaitIdle(c_.device);
+        swapchain_.reset(); target_.reset(); geometry_.clear(); textures_.clear();
         for (auto p : pipelines_) if (p) vkDestroyPipeline(c_.device, p, nullptr);
         if (layout_) vkDestroyPipelineLayout(c_.device, layout_, nullptr);
         if (sampler_) vkDestroySampler(c_.device, sampler_, nullptr);
@@ -401,8 +525,8 @@ public:
     }
     const std::string& name() const override { return name_; }
     unsigned validation_errors() const override { return c_.errors.load(); }
-    void init(const DeviceOptions& options) {
-        c_.init(options); name_ = c_.properties.deviceName;
+    void init(const DeviceOptions& options, const VulkanSurface* surface = nullptr) {
+        c_.init(options, surface); name_ = c_.properties.deviceName;
         white_ = std::make_shared<Image>(1, 1, std::vector<unsigned char>(4, 255));
         create_pass(); create_descriptors(); create_pipelines();
     }
@@ -618,8 +742,9 @@ public:
         auto* result = gpu.get(); textures_.emplace(data.get(), std::move(gpu));
         return *result;
     }
-    FrameImage render(uint32_t width, uint32_t height, const std::vector<DrawCommand>& commands,
-                      const vec4& background) override {
+    struct Prepared { const DrawCommand* command; GpuGeometry* geometry; GpuTexture* texture; };
+    std::vector<Prepared> prepare(uint32_t width, uint32_t height, const std::vector<DrawCommand>& commands,
+                                  const vec4& background) {
         const auto& limits = c_.properties.limits;
         if (!width || !height || width > limits.maxFramebufferWidth || height > limits.maxFramebufferHeight ||
             width > limits.maxImageDimension2D || height > limits.maxImageDimension2D ||
@@ -652,7 +777,6 @@ public:
             std::unique_ptr<Target> target(new Target(c_, width, height));
             target->init(pass_); target_ = std::move(target);
         }
-        struct Prepared { const DrawCommand* command; GpuGeometry* geometry; GpuTexture* texture; };
         std::vector<Prepared> draws;
         for (const auto& command : commands) {
             auto& g = geometry(command.geometry);
@@ -660,14 +784,10 @@ public:
             auto& t = texture(command.texture ? command.texture : white_);
             draws.push_back({&command, &g, &t});
         }
-        FrameImage result;
-        result.width = width; result.height = height;
-        const size_t pixels = size_t(width) * height;
-        const size_t id_offset = (pixels * 4 + 7) & ~size_t(7);
-        const size_t depth_offset = id_offset + pixels * 8;
-        result.rgba.resize(pixels * 4); result.depth.resize(pixels); result.ids.resize(pixels);
-        static_assert(sizeof(FrameImage::Id) == 8, "ID readback must be tightly packed");
-        c_.execute([&](VkCommandBuffer cmd) {
+        return draws;
+    }
+    void encode(VkCommandBuffer cmd, const std::vector<Prepared>& draws, const vec4& background) {
+        const auto width = target_->width, height = target_->height;
             VkClearValue clear[3] = {};
             for (unsigned i = 0; i < 4; ++i) clear[0].color.float32[i] = background[i];
             clear[1].color.uint32[0] = clear[1].color.uint32[1] = UINT32_MAX;
@@ -699,6 +819,23 @@ public:
                 vkCmdDraw(cmd, draw.geometry->count, 1, 0, 0);
             }
             vkCmdEndRenderPass(cmd);
+    }
+    FrameImage render(uint32_t width, uint32_t height, const std::vector<DrawCommand>& commands,
+                      const vec4& background) override {
+        const auto draws = prepare(width, height, commands, background);
+        FrameImage result;
+        result.width = width; result.height = height;
+        const size_t pixels = size_t(width) * height;
+        // Presentation never allocates host readback storage. Allocate only for
+        // an explicitly requested capture, including eight-byte ID alignment.
+        if (!target_->readback.handle)
+            target_->readback.init(VkDeviceSize(pixels) * 16 + 8, VK_BUFFER_USAGE_TRANSFER_DST_BIT, true);
+        const size_t id_offset = (pixels * 4 + 7) & ~size_t(7);
+        const size_t depth_offset = id_offset + pixels * 8;
+        result.rgba.resize(pixels * 4); result.depth.resize(pixels); result.ids.resize(pixels);
+        static_assert(sizeof(FrameImage::Id) == 8, "ID readback must be tightly packed");
+        c_.execute([&](VkCommandBuffer cmd) {
+            encode(cmd, draws, background);
             const VkImage images[] = {target_->color.handle, target_->ids.handle, target_->depth.handle};
             const VkDeviceSize offsets[] = {0, VkDeviceSize(id_offset), VkDeviceSize(depth_offset)};
             for (unsigned i = 0; i < 3; ++i) {
@@ -721,6 +858,53 @@ public:
         std::memcpy(result.depth.data(), bytes.data() + depth_offset, pixels * 4);
         return result;
     }
+    bool present(uint32_t width, uint32_t height, const std::vector<DrawCommand>& commands,
+                 const vec4& background) override {
+        if (!c_.surface) throw std::logic_error("headless Vulkan device has no presentation surface");
+        if (!width || !height) return false;
+        if (!swapchain_ || swapchain_->dirty || swapchain_->requested_width != width || swapchain_->requested_height != height) {
+            // Rare lifecycle boundary. The normal frame path waits only its draw fence.
+            check(vkDeviceWaitIdle(c_.device), "drain presentation before swapchain recreation");
+            swapchain_.reset();
+            std::unique_ptr<Swapchain> next(new Swapchain(c_));
+            next->init(width, height);
+            if (!next->handle) return false;
+            swapchain_ = std::move(next);
+        }
+        const auto draws = prepare(width, height, commands, background);
+        uint32_t image = 0;
+        const auto acquired = vkAcquireNextImageKHR(c_.device, swapchain_->handle, UINT64_MAX,
+                                                    swapchain_->acquired, VK_NULL_HANDLE, &image);
+        if (acquired == VK_ERROR_OUT_OF_DATE_KHR) { swapchain_->dirty = true; return false; }
+        if (acquired != VK_SUBOPTIMAL_KHR) check(acquired, "acquire presentation image");
+        c_.execute([&](VkCommandBuffer cmd) {
+            encode(cmd, draws, background);
+            image_barrier(cmd, swapchain_->images[image], VK_IMAGE_ASPECT_COLOR_BIT,
+                VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, VK_ACCESS_TRANSFER_WRITE_BIT);
+            VkImageBlit copy{};
+            copy.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+            copy.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+            copy.srcOffsets[1] = {int32_t(width), int32_t(height), 1};
+            copy.dstOffsets[1] = {int32_t(swapchain_->extent.width), int32_t(swapchain_->extent.height), 1};
+            vkCmdBlitImage(cmd, target_->color.handle, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                swapchain_->images[image], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy, VK_FILTER_NEAREST);
+            image_barrier(cmd, swapchain_->images[image], VK_IMAGE_ASPECT_COLOR_BIT,
+                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+                VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_ACCESS_TRANSFER_WRITE_BIT, 0);
+        }, swapchain_->acquired, swapchain_->ready[image]);
+        VkPresentInfoKHR info{};
+        info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+        info.waitSemaphoreCount = 1; info.pWaitSemaphores = &swapchain_->ready[image];
+        info.swapchainCount = 1; info.pSwapchains = &swapchain_->handle; info.pImageIndices = &image;
+        const auto presented = vkQueuePresentKHR(c_.queue, &info);
+        if (presented == VK_ERROR_OUT_OF_DATE_KHR || presented == VK_SUBOPTIMAL_KHR || acquired == VK_SUBOPTIMAL_KHR)
+            swapchain_->dirty = true;
+        if (presented != VK_ERROR_OUT_OF_DATE_KHR && presented != VK_SUBOPTIMAL_KHR)
+            check(presented, "present frame");
+        return presented != VK_ERROR_OUT_OF_DATE_KHR;
+    }
+
 };
 } // namespace
 std::unique_ptr<RenderDevice> create_vulkan_device(const DeviceOptions& options) {
@@ -728,4 +912,10 @@ std::unique_ptr<RenderDevice> create_vulkan_device(const DeviceOptions& options)
     device->init(options);
     return std::unique_ptr<RenderDevice>(device.release());
 }
+std::unique_ptr<RenderDevice> create_vulkan_window_device(const VulkanSurface& surface, const DeviceOptions& options) {
+    std::unique_ptr<VulkanDevice> device(new VulkanDevice);
+    device->init(options, &surface);
+    return std::unique_ptr<RenderDevice>(device.release());
+}
+
 } } // namespace easy3d::graphics

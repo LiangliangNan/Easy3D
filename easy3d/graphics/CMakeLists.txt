@@ -27,6 +27,7 @@ install(TARGETS easy3d_vulkan EXPORT Easy3DTargets
         LIBRARY DESTINATION "${Easy3D_INSTALL_LIB_DIR}"
         ARCHIVE DESTINATION "${Easy3D_INSTALL_LIB_DIR}")
 install(FILES render_device.h DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/easy3d/graphics")
+install(FILES vulkan/surface.h DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/easy3d/graphics/vulkan")
 
 if(Easy3D_BUILD_VULKAN_TESTS)
     add_executable(easy3d_vulkan_test tests/render_test.cpp)

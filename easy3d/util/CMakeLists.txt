@@ -35,6 +35,9 @@ set(${module}_sources
         )
 
 add_module(${module} "${${module}_headers}" "${${module}_sources}" "${private_dependencies}" "${public_dependencies}")
+if(Easy3D_ENABLE_OPENGL)
+    target_compile_definitions(easy3d_util PRIVATE EASY3D_RESOURCE_OPENGL)
+endif()
 
 # The resources directory
 target_compile_definitions(easy3d_${module}

@@ -33,6 +33,7 @@ public:
     const vec4& background_color() const;
     virtual Model* add_model(const std::string& filename, bool create_default_drawables = true);
     Model* add_model(std::shared_ptr<Model> model, bool create_default_drawables = true);
+    Model* add_model(Model* model, bool create_default_drawables = true);
     bool delete_model(Model* model);
     const std::vector<std::shared_ptr<Model>>& models() const;
     Model* current_model() const;
@@ -40,12 +41,17 @@ public:
     bool delete_drawable(Drawable* drawable);
     const std::vector<std::shared_ptr<Drawable>>& drawables() const;
     void clear_scene();
-    void fit_screen();
+    void fit_screen(const Model* model = nullptr);
     graphics::FrameImage capture() const;
     // Single sample only at this milestone. Other sample counts are rejected.
     bool render(const std::string& filename, float scaling = 1.0f, int samples = 1,
                 int back_ground = 1, bool expand = true) const;
     const graphics::RenderDevice& device() const;
+protected:
+    VulkanOffScreen(int width, int height, std::unique_ptr<graphics::RenderDevice> device);
+    bool present();
+    // Window hosts must destroy the Vulkan surface/device before the native window.
+    void release_device();
 private:
     struct Impl;
     std::unique_ptr<Impl> impl_;

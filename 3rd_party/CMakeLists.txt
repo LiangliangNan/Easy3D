@@ -9,8 +9,10 @@ function(add_3rdparty_module module sources headers)
 endfunction()
 
 
-if(Easy3D_ENABLE_OPENGL)
+if(Easy3D_ENABLE_OPENGL OR Easy3D_ENABLE_VULKAN_VIEWER)
     add_subdirectory(glfw)
+endif()
+if(Easy3D_ENABLE_OPENGL)
     add_subdirectory(imgui)
 endif()
 
