@@ -46,11 +46,6 @@ namespace easy3d {
 	VertexArrayObject::VertexArrayObject()
 		: id_(0)
 	{
-        if (!is_supported()) {
-            LOG(ERROR) << "vertex array object not supported on this platform";
-            return;
-        }
-
         // Liangliang: it is a bad idea to initialize OpenGL stuff in the constructors
         //			   because the OpenGL context may not exist. In Easy3D, I always
         //             follow the "create when needed" rule.

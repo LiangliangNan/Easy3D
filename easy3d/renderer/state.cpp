@@ -25,10 +25,13 @@
  ********************************************************************/
 
 #include <easy3d/renderer/state.h>
+#ifdef EASY3D_RENDERER_OPENGL
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/opengl_error.h>
+#endif
 #include <easy3d/util/logging.h>
 #include <easy3d/util/resource.h>
+#include <stdexcept>
 
 
 namespace easy3d {
@@ -151,19 +154,29 @@ namespace easy3d {
 
 
     Texture* State::create_color_texture() {
+        if (cpu_only_) throw std::logic_error("legacy texture coloring is not yet supported by the CPU drawable adapter; use graphics::Image");
+#ifdef EASY3D_RENDERER_OPENGL
         const std::string texture_file = resource::directory() + "/textures/checkerboard.png";
         auto tex = TextureManager::request(texture_file, Texture::REPEAT);
         LOG_IF_FIRST_N(3, !tex, ERROR) << "failed to create texture from " << texture_file << ". " << COUNTER;
         return tex;
+#else
+        throw std::logic_error("legacy OpenGL textures are unavailable; use graphics::Image");
+#endif
     }
 
 
     Texture* State::create_scalar_texture() {
+        if (cpu_only_) throw std::logic_error("scalar texture coloring is not yet supported by the CPU drawable adapter");
+#ifdef EASY3D_RENDERER_OPENGL
         const std::string texture_file = resource::directory() + "/colormaps/default.png";
         auto tex = TextureManager::request(texture_file);
         LOG_IF_FIRST_N(3, !tex, ERROR) << "failed to create texture from " << texture_file << ". " << COUNTER;
         easy3d_debug_log_gl_error
         return tex;
+#else
+        throw std::logic_error("legacy OpenGL textures are unavailable; use graphics::Image");
+#endif
     }
 
 }

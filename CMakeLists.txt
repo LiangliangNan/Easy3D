@@ -18,6 +18,22 @@ option(Easy3D_ENABLE_CGAL "Build advanced features that require CGAL (>= v5.1)" 
 option(Easy3D_ENABLE_QT "Build examples/applications based on Qt (Qt5 >= v5.8.0, or Qt6)"      OFF)
 # Build the video encoding module that requires ffmpeg
 option(Easy3D_ENABLE_FFMPEG "Build the video encoding module that requires ffmpeg (>= v3.4)" OFF)
+option(Easy3D_ENABLE_OPENGL "Build the existing OpenGL renderer and application hosts" ON)
+option(Easy3D_ENABLE_VULKAN "Build the experimental native Vulkan renderer" OFF)
+option(Easy3D_BUILD_VULKAN_TESTS "Build deterministic Vulkan rendering tests" OFF)
+option(Easy3D_VULKAN_TEST_VALIDATION "Require Vulkan and synchronization validation in CTest" OFF)
+
+if(NOT Easy3D_ENABLE_OPENGL)
+    if(Easy3D_BUILD_TUTORIALS OR Easy3D_BUILD_TESTS OR Easy3D_BUILD_PYTHON_BINDINGS OR Easy3D_ENABLE_QT)
+        message(FATAL_ERROR "Existing application/tutorial/Python hosts still require OpenGL. For a Vulkan-only build, set Easy3D_BUILD_TUTORIALS, Easy3D_BUILD_TESTS, Easy3D_BUILD_PYTHON_BINDINGS and Easy3D_ENABLE_QT to OFF. Use Easy3D_BUILD_VULKAN_TESTS for native Vulkan tests.")
+    endif()
+endif()
+if(Easy3D_BUILD_VULKAN_TESTS AND NOT Easy3D_ENABLE_VULKAN)
+    message(FATAL_ERROR "Easy3D_BUILD_VULKAN_TESTS requires Easy3D_ENABLE_VULKAN")
+endif()
+if(Easy3D_BUILD_VULKAN_TESTS)
+    enable_testing()
+endif()
 
 ################################################################################
 
@@ -303,7 +319,9 @@ if (Easy3D_BUILD_PYTHON_BINDINGS)
     add_subdirectory(python)
 endif ()
 
-add_subdirectory(applications)
+if(Easy3D_ENABLE_OPENGL)
+    add_subdirectory(applications)
+endif()
 
 ################################################################################
 
@@ -329,11 +347,14 @@ endif ()
 
 install(DIRECTORY
         "${Easy3D_ROOT}/resources/fonts"
-        "${Easy3D_ROOT}/resources/shaders"
         "${Easy3D_ROOT}/resources/colormaps"
         "${Easy3D_ROOT}/resources/textures"
         DESTINATION
         "${Easy3D_INSTALL_RESOURCE_DIR}")
+if(Easy3D_ENABLE_OPENGL)
+    install(DIRECTORY "${Easy3D_ROOT}/resources/shaders"
+            DESTINATION "${Easy3D_INSTALL_RESOURCE_DIR}")
+endif()
 
 install(FILES
 	"${Easy3D_ROOT}/README.md"
@@ -383,6 +404,8 @@ message(STATUS "    Build Python bindings  :  ${Easy3D_BUILD_PYTHON_BINDINGS}")
 message(STATUS "    With CGAL (>= v5.1)    :  ${Easy3D_ENABLE_CGAL}")
 message(STATUS "    With Qt (>= v5.8.0)    :  ${Easy3D_ENABLE_QT}")
 message(STATUS "    With ffmpeg (>= v3.4)  :  ${Easy3D_ENABLE_FFMPEG}")
+message(STATUS "    OpenGL renderer        :  ${Easy3D_ENABLE_OPENGL}")
+message(STATUS "    Vulkan renderer        :  ${Easy3D_ENABLE_VULKAN} (experimental)")
 
 message(STATUS "----------------------------------------------------------------------------")
 

@@ -25,6 +25,7 @@
  ********************************************************************/
 
 #include <easy3d/renderer/drawable_points.h>
+#include <stdexcept>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/shader_manager.h>
@@ -38,17 +39,11 @@
 
 namespace easy3d {
 
-    PointsDrawable::PointsDrawable(const std::string &name /*= ""*/, Model* model)
-            : Drawable(name, model), point_size_(2.0f), impostor_type_(PLAIN)
-    {
-        lighting_two_sides_ = setting::points_drawable_two_side_lighting;
-        distinct_back_color_ = setting::points_drawable_distinct_backside_color;
-        back_color_ = setting::points_drawable_backside_color;
-        set_uniform_coloring(vec4(0.0f, 1.0f, 0.0f, 1.0f));
-    }
+
 
 
     void PointsDrawable::draw(const Camera *camera) const {
+        if (has_cpu_buffers()) throw std::logic_error("draw(camera) requires the OpenGL backend; submit CPU drawables through VulkanOffScreen");
         if (update_needed_ || vertex_buffer_ == 0) {
             const_cast<PointsDrawable *>(this)->update_buffers_internal();
             const_cast<PointsDrawable *>(this)->update_needed_ = false;

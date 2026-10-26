@@ -27,6 +27,14 @@
 #ifndef EASY3D_VIEWER_OFFSCREEN_H
 #define EASY3D_VIEWER_OFFSCREEN_H
 
+#ifdef EASY3D_NO_OPENGL
+#include <easy3d/viewer/vulkan_offscreen.h>
+namespace easy3d {
+    // Preserve the common OffScreen entry point in a Vulkan-only build.
+    using OffScreen = VulkanOffScreen;
+}
+#else
+
 #include <memory>
 #include <easy3d/viewer/viewer.h>
 
@@ -217,4 +225,5 @@ namespace easy3d {
 }
 
 
+#endif // EASY3D_NO_OPENGL
 #endif	// EASY3D_VIEWER_OFFSCREEN_H

@@ -1,0 +1,17 @@
+# Embed compiled SPIR-V in the library. Installed users need no shader compiler or
+# absolute build-tree shader path. uint32_t storage satisfies Vulkan alignment.
+file(READ "${INPUT}" bytes HEX)
+string(LENGTH "${bytes}" length)
+math(EXPR remainder "${length} % 8")
+if(NOT remainder EQUAL 0)
+    message(FATAL_ERROR "SPIR-V size must be a multiple of four bytes")
+endif()
+set(words "")
+while(length GREATER 0)
+    string(SUBSTRING "${bytes}" 0 8 word)
+    string(REGEX REPLACE "(..)(..)(..)(..)" "0x\\4\\3\\2\\1u," word "${word}")
+    string(APPEND words "${word}\n")
+    string(SUBSTRING "${bytes}" 8 -1 bytes)
+    string(LENGTH "${bytes}" length)
+endwhile()
+file(WRITE "${OUTPUT}" "// Generated from ${SYMBOL}. Do not edit.\nstatic const uint32_t ${SYMBOL}[] = {\n${words}};\n")

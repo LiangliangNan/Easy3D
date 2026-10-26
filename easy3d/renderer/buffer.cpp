@@ -36,7 +36,6 @@
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
-#include <easy3d/renderer/texture_manager.h>
 #include <easy3d/algo/tessellator.h>
 
 

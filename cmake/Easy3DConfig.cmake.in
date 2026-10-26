@@ -50,6 +50,9 @@ endif()
 
 include(CMakeFindDependencyMacro)
 find_dependency(Threads)
+if(@Easy3D_ENABLE_VULKAN@)
+    find_dependency(Vulkan)
+endif()
 
 # Compute paths
 get_filename_component(Easy3D_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)

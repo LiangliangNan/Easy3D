@@ -1,19 +1,33 @@
 set(module viewer)
-set(private_dependencies 3rd_glfw)
-set(public_dependencies easy3d::util easy3d::core easy3d::renderer easy3d::fileio)
+set(private_dependencies)
+set(public_dependencies easy3d::renderer)
+set(viewer_headers)
+set(viewer_sources)
 
-set(${module}_headers
-        viewer.h
-        multi_viewer.h
-        offscreen.h
-        )
+if(Easy3D_ENABLE_OPENGL)
+    list(APPEND private_dependencies 3rd_glfw)
+    list(APPEND viewer_headers viewer.h multi_viewer.h offscreen.h)
+    list(APPEND viewer_sources viewer.cpp multi_viewer.cpp snapshot.cpp offscreen.cpp)
+endif()
+if(Easy3D_ENABLE_VULKAN)
+    list(APPEND public_dependencies easy3d::vulkan)
+    list(APPEND viewer_headers vulkan_offscreen.h)
+    list(APPEND viewer_sources vulkan_offscreen.cpp)
+    if(NOT Easy3D_ENABLE_OPENGL)
+        list(APPEND viewer_headers offscreen.h)
+    endif()
+endif()
 
-set(${module}_sources
-        viewer.cpp
-        multi_viewer.cpp
-        snapshot.cpp
-        offscreen.cpp
-        )
+add_module(viewer "${viewer_headers}" "${viewer_sources}" "${private_dependencies}" "${public_dependencies}")
+install_module(viewer)
 
-add_module(${module} "${${module}_headers}" "${${module}_sources}" "${private_dependencies}" "${public_dependencies}")
-install_module(${module})
+if(Easy3D_ENABLE_VULKAN AND Easy3D_BUILD_VULKAN_TESTS)
+    add_executable(easy3d_vulkan_scene_test ../graphics/tests/scene_test.cpp)
+    target_link_libraries(easy3d_vulkan_scene_test PRIVATE easy3d::viewer)
+    set(validation_args)
+    if(Easy3D_VULKAN_TEST_VALIDATION)
+        set(validation_args --validation)
+    endif()
+    add_test(NAME vulkan.scene COMMAND easy3d_vulkan_scene_test ${validation_args})
+    set_tests_properties(vulkan.scene PROPERTIES TIMEOUT 120)
+endif()

@@ -76,7 +76,7 @@ namespace easy3d {
          * an update function.
          * \sa update(),
          */
-        explicit Renderer(Model *model, bool create_drawables = true);
+        explicit Renderer(Model *model, bool create_drawables = true, bool cpu_buffers = false);
 
         virtual ~Renderer();
 
@@ -278,6 +278,7 @@ namespace easy3d {
         bool visible_;
         bool selected_;
 
+        bool cpu_buffers_;
         std::vector< std::shared_ptr<PointsDrawable> >      points_drawables_;
         std::vector< std::shared_ptr<LinesDrawable> >       lines_drawables_;
         std::vector< std::shared_ptr<TrianglesDrawable> >   triangles_drawables_;

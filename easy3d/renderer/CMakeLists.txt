@@ -2,6 +2,21 @@ set(module renderer)
 set(private_dependencies)
 set(public_dependencies easy3d::util easy3d::core easy3d::fileio easy3d::algo)
 
+if(NOT Easy3D_ENABLE_OPENGL)
+    set(renderer_headers camera.h constraint.h drawable.h drawable_lines.h drawable_lines_2D.h
+            drawable_points.h drawable_triangles.h frame.h frustum.h key_frame_interpolator.h
+            manipulator.h manipulated_camera_frame.h manipulated_frame.h shape.h buffer.h
+            renderer.h state.h transform.h transform_decompose.h)
+    set(renderer_sources camera.cpp constraint.cpp drawable.cpp drawable_types.cpp frame.cpp frustum.cpp
+            key_frame_interpolator.cpp manipulator.cpp manipulated_camera_frame.cpp manipulated_frame.cpp
+            shape.cpp buffer.cpp renderer.cpp state.cpp transform.cpp transform_decompose.cpp
+            backends/cpu/opengl_unavailable.cpp)
+    add_module(renderer "${renderer_headers}" "${renderer_sources}" "" "${public_dependencies}")
+    target_compile_definitions(easy3d_renderer PUBLIC EASY3D_NO_OPENGL)
+    install_module(renderer)
+    return()
+endif()
+
 set(${module}_headers
         ambient_occlusion.h
         average_color_blending.h
@@ -51,6 +66,9 @@ set(${module}_sources
         clipping_plane.cpp
         constraint.cpp
         drawable.cpp
+        drawable_types.cpp
+        backends/opengl/drawable_buffers.cpp
+        backends/opengl/shape_draw.cpp
         drawable_lines.cpp
         drawable_lines_2D.cpp
         drawable_points.cpp
@@ -186,7 +204,7 @@ set(${module}_resources
 
 add_module(${module} "${${module}_headers}" "${${module}_sources}" "${private_dependencies}" "${public_dependencies}")
 target_include_directories(easy3d_${module} PRIVATE ${Easy3D_THIRD_PARTY}/glew/include)
-target_compile_definitions(easy3d_${module} PRIVATE GLEW_BUILD PUBLIC GLEW_NO_GLU)
+target_compile_definitions(easy3d_${module} PRIVATE GLEW_BUILD EASY3D_RENDERER_OPENGL PUBLIC GLEW_NO_GLU)
 
 # prefer GLVND
 set(OpenGL_GL_PREFERENCE GLVND)

@@ -38,9 +38,9 @@
 
 namespace easy3d {
 
-    Renderer::Renderer(Model* model, bool create)
+    Renderer::Renderer(Model* model, bool create, bool cpu_buffers)
             : visible_(true)
-            , selected_(false)
+            , selected_(false), cpu_buffers_(cpu_buffers)
     {
         model_ = model;
         if (model_ && create)
@@ -166,6 +166,13 @@ namespace easy3d {
             return;
         }
 
+        // Initial CPU-backend defaults use supported uniform/property colors.
+        // Legacy texture/scalar coloring remains an explicit, unsupported request.
+        if (drawable->has_cpu_buffers()) {
+            drawable->set_uniform_coloring(setting::point_cloud_vertices_color);
+            return;
+        }
+
         // 2. per-vertex texture coordinates: in "v:texcoord"
         auto texcoord = model->get_vertex_property<vec2>("v:texcoord");
         if (texcoord) {
@@ -220,6 +227,13 @@ namespace easy3d {
         auto vertex_colors = model->get_vertex_property<vec3>("v:color");
         if (vertex_colors) {
             drawable->set_property_coloring(State::VERTEX, "v:color");
+            return;
+        }
+
+        // Initial CPU-backend defaults use supported uniform/property colors.
+        // Legacy texture/scalar coloring remains an explicit, unsupported request.
+        if (drawable->has_cpu_buffers()) {
+            drawable->set_uniform_coloring(setting::surface_mesh_faces_color);
             return;
         }
 
@@ -283,6 +297,13 @@ namespace easy3d {
         auto colors = model->get_vertex_property<vec3>("v:color");
         if (colors) {
             drawable->set_property_coloring(State::VERTEX, "v:color");
+            return;
+        }
+
+        // Initial CPU-backend defaults use supported uniform/property colors.
+        // Legacy texture/scalar coloring remains an explicit, unsupported request.
+        if (drawable->has_cpu_buffers()) {
+            drawable->set_uniform_coloring(setting::graph_vertices_color);
             return;
         }
 
@@ -367,6 +388,7 @@ namespace easy3d {
             }
         }
         auto d = std::make_shared<PointsDrawable>(name);
+        if (cpu_buffers_) d->enable_cpu_buffers();
         d->set_model(model_);
         points_drawables_.push_back(d);
         return d.get();
@@ -381,6 +403,7 @@ namespace easy3d {
             }
         }
         auto d = std::make_shared<LinesDrawable>(name);
+        if (cpu_buffers_) d->enable_cpu_buffers();
         d->set_model(model_);
         lines_drawables_.push_back(d);
 
@@ -400,6 +423,7 @@ namespace easy3d {
             }
         }
         auto d = std::make_shared<TrianglesDrawable>(name);
+        if (cpu_buffers_) d->enable_cpu_buffers();
         d->set_model(model_);
         triangles_drawables_.push_back(d);
 

@@ -9,8 +9,10 @@ function(add_3rdparty_module module sources headers)
 endfunction()
 
 
-add_subdirectory(glfw)
-add_subdirectory(imgui)
+if(Easy3D_ENABLE_OPENGL)
+    add_subdirectory(glfw)
+    add_subdirectory(imgui)
+endif()
 
 add_subdirectory(rply)
 add_subdirectory(lastools)

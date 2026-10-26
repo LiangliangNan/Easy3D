@@ -3,6 +3,7 @@ x64
 *.user
 *.log
 build
+build-vulkan*
 .DS_Store
 resources/images/img.pptx
 .idea

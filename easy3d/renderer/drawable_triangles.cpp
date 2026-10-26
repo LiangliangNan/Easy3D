@@ -25,6 +25,7 @@
  ********************************************************************/
 
 #include <easy3d/renderer/drawable_triangles.h>
+#include <stdexcept>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/shader_manager.h>
@@ -38,19 +39,11 @@
 
 namespace easy3d {
 
-    TrianglesDrawable::TrianglesDrawable(const std::string& name, Model* model)
-            : Drawable(name, model)
-            , smooth_shading_(false)
-            , opacity_(0.6f)
-    {
-        lighting_two_sides_ = setting::triangles_drawable_two_side_lighting;
-        distinct_back_color_ = setting::triangles_drawable_distinct_backside_color;
-        back_color_ = setting::triangles_drawable_backside_color;
-        set_uniform_coloring(setting::surface_mesh_faces_color);
-    }
+
 
 
     void TrianglesDrawable::draw(const Camera *camera) const {
+        if (has_cpu_buffers()) throw std::logic_error("draw(camera) requires the OpenGL backend; submit CPU drawables through VulkanOffScreen");
         if (update_needed_ || vertex_buffer_ == 0) {
             const_cast<TrianglesDrawable *>(this)->update_buffers_internal();
             const_cast<TrianglesDrawable *>(this)->update_needed_ = false;

@@ -30,6 +30,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <stdexcept>
 #include <functional>
 
 #include <easy3d/core/types.h>
@@ -57,6 +58,17 @@ namespace easy3d {
 
     class Drawable : public State {
     public:
+        // CPU-owned geometry for explicit graphics backends. Enable before uploading
+        // buffers; GL handles are never synthesized for this mode.
+        struct BufferData {
+            std::vector<vec3> vertices, normals, colors;
+            std::vector<vec2> texcoords;
+            std::vector<unsigned int> indices;
+            std::size_t revision = 0;
+        };
+        void enable_cpu_buffers();
+        bool has_cpu_buffers() const { return bool(cpu_buffers_); }
+        const BufferData& cpu_buffers();
         /**
          * \brief The type of the drawable.
          */
@@ -303,12 +315,28 @@ namespace easy3d {
          * \brief Returns the vertex array object of this drawable.
          * \return The vertex array object.
          */
-        VertexArrayObject *vao() { return vao_.get(); }
+        VertexArrayObject *vao() {
+            if (cpu_buffers_) throw std::logic_error("vao() is OpenGL-only");
+            return vao_.get();
+        }
         /**
          * \brief Returns the vertex array object of this drawable (const version).
          * \return The vertex array object.
          */
-        const VertexArrayObject *vao() const { return vao_.get(); }
+        const VertexArrayObject *vao() const {
+            if (cpu_buffers_) throw std::logic_error("vao() is OpenGL-only");
+            return vao_.get();
+        }
+
+    private:
+        void opengl_initialize();
+        void opengl_release_buffers();
+        void opengl_disable_element_buffer();
+        void opengl_update_vertex_buffer(const std::vector<vec3>&, bool);
+        void opengl_update_color_buffer(const std::vector<vec3>&, bool);
+        void opengl_update_normal_buffer(const std::vector<vec3>&, bool);
+        void opengl_update_texcoord_buffer(const std::vector<vec2>&, bool);
+        void opengl_update_element_buffer(const std::vector<unsigned int>&);
 
     protected:
         // actual update of the rendering buffers are here
@@ -339,6 +367,7 @@ namespace easy3d {
 
         // drawables not attached to a model can also be manipulated
         std::shared_ptr<Manipulator> manipulator_;   //!< The manipulator for the drawable.
+        std::unique_ptr<BufferData> cpu_buffers_;
     };
 
 }

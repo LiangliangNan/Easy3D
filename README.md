@@ -252,3 +252,10 @@ Should you have any questions, comments, or suggestions, please contact me at <i
 [<b><i>Liangliang Nan</i></b>](https://3d.bk.tudelft.nl/liangliang/)
 
 Dec. 8, 2018
+
+### Experimental Vulkan migration
+
+The `Easy3D-Vulkan` branch adds an opt-in native Vulkan offscreen renderer and a
+`VulkanOffScreen` adapter using existing model/drawable/camera APIs. Existing
+interactive applications still use OpenGL. See [build instructions, supported
+features and migration status](docs/vulkan.md).

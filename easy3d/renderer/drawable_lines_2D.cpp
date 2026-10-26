@@ -25,6 +25,7 @@
  ********************************************************************/
 
 #include <easy3d/renderer/drawable_lines_2D.h>
+#include <stdexcept>
 #include <easy3d/renderer/vertex_array_object.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/shader_manager.h>
@@ -34,14 +35,11 @@
 namespace easy3d {
 
 
-    LinesDrawable2D::LinesDrawable2D(const std::string &name)
-            : Drawable(name, nullptr)
-    {
-        set_uniform_coloring(vec4(0.0f, 0.0f, 0.0f, 1.0f));
-    }
+
 
 
     void LinesDrawable2D::update_vertex_buffer(const std::vector<vec2> &vertices, int width, int height, bool dynamic) {
+        if (has_cpu_buffers()) throw std::logic_error("screen-space lines are not yet ported to the CPU drawable adapter");
         assert(vao_);
 
         // convert from screen coordinates to Normalized Device Coordinates (NDC)
@@ -60,6 +58,7 @@ namespace easy3d {
 
 
     void LinesDrawable2D::draw(const Camera *camera) const {
+        if (has_cpu_buffers()) throw std::logic_error("draw(camera) requires the OpenGL backend; submit CPU drawables through VulkanOffScreen");
         if (update_needed_ || vertex_buffer_ == 0) {
             const_cast<LinesDrawable2D *>(this)->update_buffers_internal();
             const_cast<LinesDrawable2D *>(this)->update_needed_ = false;

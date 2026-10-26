@@ -27,13 +27,9 @@
 #include <easy3d/renderer/drawable.h>
 
 #include <cassert>
+#include <stdexcept>
 
 #include <easy3d/core/model.h>
-#include <easy3d/renderer/opengl.h>
-#include <easy3d/renderer/vertex_array_object.h>
-#include <easy3d/renderer/shader_program.h>
-#include <easy3d/renderer/texture_manager.h>
-#include <easy3d/renderer/opengl_error.h>
 #include <easy3d/renderer/buffer.h>
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/util/logging.h>
@@ -43,11 +39,31 @@
 
 namespace easy3d {
 
+    void Drawable::enable_cpu_buffers() {
+        if (vertex_buffer_ || normal_buffer_ || color_buffer_ || texcoord_buffer_ || element_buffer_)
+            throw std::logic_error("cannot transfer an uploaded OpenGL drawable to CPU buffers");
+        if (!cpu_buffers_) cpu_buffers_.reset(new BufferData);
+        cpu_only_ = true;
+    }
+
+    const Drawable::BufferData& Drawable::cpu_buffers() {
+        if (!cpu_buffers_) throw std::logic_error("CPU buffers were not enabled");
+        if (update_needed_ || (!num_vertices_ && (model_ || update_func_))) {
+            update_buffers_internal();
+            update_needed_ = false;
+        }
+        return *cpu_buffers_;
+    }
+
     Drawable::Drawable(const std::string &name, Model *model)
             : name_(name), model_(model), vao_(nullptr), num_vertices_(0), num_indices_(0),
               update_needed_(false), update_func_(nullptr), vertex_buffer_(0), color_buffer_(0), normal_buffer_(0),
               texcoord_buffer_(0), element_buffer_(0), manipulator_(nullptr) {
-        vao_ = std::unique_ptr<VertexArrayObject>(new VertexArrayObject);
+#ifdef EASY3D_RENDERER_OPENGL
+        opengl_initialize();
+#else
+        enable_cpu_buffers();
+#endif
         material_ = Material(setting::material_ambient, setting::material_specular, setting::material_shininess);
     }
 
@@ -97,11 +113,13 @@ namespace easy3d {
 
 
     void Drawable::clear() {
-        VertexArrayObject::release_buffer(vertex_buffer_);
-        VertexArrayObject::release_buffer(color_buffer_);
-        VertexArrayObject::release_buffer(normal_buffer_);
-        VertexArrayObject::release_buffer(texcoord_buffer_);
-        VertexArrayObject::release_buffer(element_buffer_);
+        if (cpu_buffers_) {
+            const auto revision = cpu_buffers_->revision + 1;
+            *cpu_buffers_ = BufferData();
+            cpu_buffers_->revision = revision;
+        }
+        if (vertex_buffer_ || color_buffer_ || normal_buffer_ || texcoord_buffer_ || element_buffer_)
+            opengl_release_buffers();
 
         num_vertices_ = 0;
         num_indices_ = 0;
@@ -110,7 +128,8 @@ namespace easy3d {
 
 
     void Drawable::disable_element_buffer() {
-        VertexArrayObject::release_buffer(element_buffer_);
+        if (cpu_buffers_) { cpu_buffers_->indices.clear(); ++cpu_buffers_->revision; }
+        if (element_buffer_) opengl_disable_element_buffer();
         num_indices_ = 0;
     }
 
@@ -126,6 +145,14 @@ namespace easy3d {
         }
 
         StopWatch w;
+        if (cpu_buffers_) {
+            // Extraction may change which attributes exist (e.g. removal of a
+            // color/normal property). Do not retain arrays from the old snapshot.
+            const auto revision = cpu_buffers_->revision + 1;
+            *cpu_buffers_ = BufferData();
+            cpu_buffers_->revision = revision;
+            num_vertices_ = num_indices_ = 0;
+        }
         if (update_func_)
             update_func_(model_, this);
         else
@@ -137,66 +164,38 @@ namespace easy3d {
 
 
     void Drawable::update_vertex_buffer(const std::vector<vec3> &vertices, bool dynamic) {
-        assert(vao_);
-
-        bool success = vao_->create_array_buffer(vertex_buffer_, ShaderProgram::POSITION, vertices.data(),
-                                                 vertices.size() * sizeof(vec3), 3, dynamic);
-
-        LOG_IF(!success, ERROR) << "failed creating vertex buffer";
-
-        if (!success)
-            num_vertices_ = 0;
-        else {
+        if (cpu_buffers_) {
+            cpu_buffers_->vertices = vertices;
+            ++cpu_buffers_->revision;
             num_vertices_ = vertices.size();
-
-            if (model())
-                bbox_ = model()->bounding_box();
-            else {
-                // update bounding box
-                bbox_.clear();
-                for (const auto &p : vertices)
-                    bbox_.grow(p);
-            }
+            bbox_.clear();
+            for (const auto& p : vertices) bbox_.grow(p);
+            return;
         }
+        opengl_update_vertex_buffer(vertices, dynamic);
     }
-
 
     void Drawable::update_color_buffer(const std::vector<vec3> &colors, bool dynamic) {
-        assert(vao_);
-
-        bool success = vao_->create_array_buffer(color_buffer_, ShaderProgram::COLOR, colors.data(),
-                                                 colors.size() * sizeof(vec3), 3, dynamic);
-        LOG_IF(!success, ERROR) << "failed updating color buffer";
+        if (cpu_buffers_) { cpu_buffers_->colors = colors; ++cpu_buffers_->revision; return; }
+        opengl_update_color_buffer(colors, dynamic);
     }
-
 
     void Drawable::update_normal_buffer(const std::vector<vec3> &normals, bool dynamic) {
-        assert(vao_);
-        bool success = vao_->create_array_buffer(normal_buffer_, ShaderProgram::NORMAL, normals.data(),
-                                                 normals.size() * sizeof(vec3), 3, dynamic);
-        LOG_IF(!success, ERROR) << "failed updating normal buffer";
+        if (cpu_buffers_) { cpu_buffers_->normals = normals; ++cpu_buffers_->revision; return; }
+        opengl_update_normal_buffer(normals, dynamic);
     }
-
 
     void Drawable::update_texcoord_buffer(const std::vector<vec2> &texcoords, bool dynamic) {
-        assert(vao_);
-
-        bool success = vao_->create_array_buffer(texcoord_buffer_, ShaderProgram::TEXCOORD, texcoords.data(),
-                                                 texcoords.size() * sizeof(vec2), 2, dynamic);
-        LOG_IF(!success, ERROR) << "failed updating texcoord buffer";
+        if (cpu_buffers_) { cpu_buffers_->texcoords = texcoords; ++cpu_buffers_->revision; return; }
+        opengl_update_texcoord_buffer(texcoords, dynamic);
     }
-
 
     void Drawable::update_element_buffer(const std::vector<unsigned int> &indices) {
-        assert(vao_);
-
-        bool status = vao_->create_element_buffer(element_buffer_, indices.data(), indices.size() * sizeof(unsigned int));
-        if (!status)
-            num_indices_ = 0;
-        else
-            num_indices_ = indices.size();
+        if (cpu_buffers_) {
+            cpu_buffers_->indices = indices; num_indices_ = indices.size(); ++cpu_buffers_->revision; return;
+        }
+        opengl_update_element_buffer(indices);
     }
-
 
     void Drawable::update_element_buffer(const std::vector< std::vector<unsigned int> > &indices) {
         assert(vao_);
@@ -218,35 +217,6 @@ namespace easy3d {
     }
 
 
-    void Drawable::gl_draw() const {
-        if (update_needed_ || vertex_buffer_ == 0) {
-            const_cast<Drawable *>(this)->update_buffers_internal();
-            const_cast<Drawable *>(this)->update_needed_ = false;
-        }
-
-#ifndef NDEBUG
-        LOG_IF_FIRST_N(1, num_indices_ > 0 && num_vertices_ == 0, ERROR)
-            << "element buffer provided but vertex buffer filled with 0 vertices";
-#endif
-
-        vao_->bind();
-
-        if (element_buffer_) {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer_);
-            easy3d_debug_log_gl_error
-
-            // index buffer must be bound if using glDrawElements()
-            glDrawElements(type(), GLsizei(num_indices_), GL_UNSIGNED_INT, nullptr);
-            easy3d_debug_log_gl_error
-
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-        } else
-            glDrawArrays(type(), 0, GLsizei(num_vertices_));
-        easy3d_debug_log_gl_error
-
-        vao_->release();
-        easy3d_debug_log_gl_error
-    }
 
 
     Manipulator* Drawable::manipulator() {
