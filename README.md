@@ -7,21 +7,21 @@
 
 #### For 3D modeling, geometry processing, and rendering, designed with emphasis on simplicity and efficiency. 
 Easy3D is implemented in C++ and comes with **Python bindings**. It is intended for research and educational purposes, but it is also a good starting point for developing sophisticated 3D applications. 
-Compared to existing geometry processing libraries (such as [PMP](http://www.pmp-library.org/) and [libigl](https://github.com/libigl/libigl/)) that focus on the algorithm aspect, Easy3D also provides a wider range of functionalities for user interactions and rendering.
+Compared to existing geometry processing libraries (such as [PMP](http://www.pmp-library.org/) and [libigl](https://github.com/libigl/libigl/)) that focus on the algorithmic aspect, Easy3D also provides a wider range of functionalities for user interactions and rendering.
 
 <p align="center"> 
      <img src="./resources/images/overview.jpg" width="600"> 
 </p>
 
 ### Key features
-* Efficient data structures for representing and managing 3D models such as point clouds, polygonal surfaces 
+* Efficient data structures for representing and managing 3D models such as point clouds and polygonal surfaces 
   (e.g., triangle meshes), polyhedral volumes (e.g., tetrahedral meshes), and graphs. 
   Easy to add/access arbitrary types of per-element properties. Non-manifoldness is automatically resolved when 
   loading models from files ...
   
 * A set of widely used algorithms, e.g., point cloud normal estimation/re-orientation, Poisson surface reconstruction, 
   RANSAC, mesh simplification, subdivision, smoothing, parameterization, remeshing, and more (the implementation of
-  several surface mesh processing algorithms were taken from [PMP](http://www.pmp-library.org/)).
+  several surface mesh processing algorithms was taken from [PMP](http://www.pmp-library.org/)).
    
 * A bunch of rendering techniques, e.g., point/line imposters, ambient occlusion (SSAO), hard shadow (shadow maps), 
   soft shadow (PCSS), eye-dome lighting (for rendering point clouds without normal information), transparency (average 
@@ -103,11 +103,11 @@ The **optional** third-party libraries are:
   and clipping/splitting/slicing surface meshes. These features are disabled by default (because most users don't 
   need them). To enable these features, you can switch on the CMake option `Easy3D_ENABLE_CGAL` and make sure 
   CGAL ([v5.1 or later](https://github.com/CGAL/cgal/releases)) is installed and visible to CMake. In case you have
-  multiple versions of CGAL on your platform, simply provide the path of a suitable one to the CMake variable `CGAL_DIR`.
+  multiple versions of CGAL on your platform, provide the path of a suitable one to the CMake variable `CGAL_DIR`.
 
 - **[Qt](https://www.qt.io/) (optional)**: Easy3D supports Qt >= v5.8.0 ([v5.14.2](https://download.qt.io/archive/qt/5.14/5.14.2/),
   [v5.12.12](https://download.qt.io/archive/qt/5.12/5.12.12/), and [v6.12.0](https://www.qt.io/download-qt-installer-oss)
-  have been tested) for UI creation, which can help develop sophisticated applications for 3D data processing and visualization. 
+  have been tested) for UI creation, helping you develop sophisticated applications for 3D data processing and visualization. 
   The Qt support is disabled by default (because most users don't need it). You can switch on the CMake option `Easy3D_ENABLE_QT` 
   to include the examples and applications that depend on Qt (e.g., 
   [`Tutorial_204_Viewer_Qt`](https://github.com/LiangliangNan/Easy3D/tree/main/tutorials/Tutorial_204_Viewer_Qt) and 
