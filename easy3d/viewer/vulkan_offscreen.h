@@ -46,6 +46,11 @@ public:
     // graphics::screen_space_projection()). Overlays do not change picking.
     void set_overlays(std::vector<graphics::DrawCommand> commands);
     void fit_screen(const Model* model = nullptr);
+    // Per-viewer world-space halfspaces, keeping dot(plane,vec4(world,1)) >= 0.
+    // Empty disables clipping. At most two finite, nonzero-normal planes.
+    // Overlays remain unclipped. Scene clearing retains this configuration.
+    void set_clipping_planes(const std::vector<vec4>& planes);
+    const std::vector<vec4>& clipping_planes() const;
     struct PickResult {
         std::shared_ptr<Model> model; // null for a standalone drawable
         std::shared_ptr<Drawable> drawable;
@@ -59,6 +64,9 @@ public:
     // an empty result for background/outside pixels. Retains source ownership;
     // face indices describe the current mesh, not future topology edits.
     PickResult pick(int x, int y) const;
+    // Reconstruct a top-left framebuffer pixel center from [0,1] readback depth.
+    // Unlike Camera's legacy coordinate helper, this uses continuous framebuffer coordinates.
+    vec3 unproject_pixel(int x, int y, float depth) const;
     // Color is multisampled when requested; IDs/depth stay center-sampled.
     // Invalid/unsupported requests throw, allowing callers/tests to handle them.
     graphics::FrameImage capture(unsigned samples = 1) const;

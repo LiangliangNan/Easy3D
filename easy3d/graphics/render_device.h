@@ -79,6 +79,13 @@ struct DrawCommand {
     // Unlit, straight-alpha triangle overlays composite after the 3D scene.
     // They neither test/write depth nor modify object/primitive picking IDs.
     bool overlay = false;
+    // Up to two view-space halfspaces: dot(plane, vec4(view_position,1)) >= 0.
+    // When clipping is active, model_view must map the geometry into view space
+    // and be affine for every topology, consistently with model_view_projection.
+    // Triangles/line centerlines clip geometrically; plain points test centers;
+    // analytic impostors clip their actual front surface. Overlays ignore planes.
+    std::vector<vec4> clipping_planes;
+    bool discard_clipped_primitives = false; // reject if any control vertex is outside
     // Plain points use framebuffer-pixel diameters. Spheres and surfels use view-space radii,
     // after transforming their centers; model scaling does not scale the radius.
     PointStyle point_style = PointStyle::plain;
@@ -98,6 +105,9 @@ struct DrawCommand {
     // rasterization; other widths use butt-capped triangle ribbons, without joins.
     float line_width = 1;
 };
+
+// Validates and normalizes finite plane equations with nonzero normals.
+std::vector<vec4> normalize_clipping_planes(const std::vector<vec4>& planes);
 
 // Top-left framebuffer-pixel coordinates to the shared OpenGL clip convention.
 mat4 screen_space_projection(std::uint32_t width, std::uint32_t height);

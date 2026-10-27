@@ -193,7 +193,7 @@ vec3 VulkanViewer::point_under_pixel(int x, int y, bool& found) const {
     const auto pixel = size_t(y) * frame.width + size_t(x);
     if (frame.depth[pixel] >= 1 || frame.ids[pixel].object == UINT32_MAX) return vec3(0);
     found = true;
-    return camera()->unprojectedCoordinatesOf(vec3(float(x) + 0.5f, float(y) + 0.5f, frame.depth[pixel]));
+    return unproject_pixel(x,y,frame.depth[pixel]);
 }
 bool VulkanViewer::mouse_press_event(int x, int y, int button, int modifiers) {
     if (button == GLFW_MOUSE_BUTTON_LEFT && (modifiers & GLFW_MOD_SHIFT)) {

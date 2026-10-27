@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Liangliang Nan
 #include <easy3d/graphics/render_device.h>
+#include <easy3d/graphics/clipping.h>
 #include <easy3d/graphics/vulkan/surface.h>
 #include <vulkan/vulkan.h>
 #include <algorithm>
@@ -534,8 +535,8 @@ struct GpuTexture {
     ~GpuTexture() { if (set) vkFreeDescriptorSets(c.device, pool, 1, &set); }
 };
 // Explicit packing: do not rely on public vec3/mat4 alignment for GPU layouts.
-struct ImpostorUniform { float model_view[16], projection[16], inverse_projection[16], dimensions[4], light[4]; };
-static_assert(sizeof(ImpostorUniform) == 224, "impostor uniform layout changed");
+struct ImpostorUniform { float model_view[16], projection[16], inverse_projection[16], dimensions[4], light[4], clip_planes[8], clip_info[4]; };
+static_assert(sizeof(ImpostorUniform) == 272, "impostor uniform layout changed");
 struct Push { float mvp[16], color[4]; uint32_t object, lighting; float normal[9]; };
 static_assert(sizeof(Push) == 124, "shader push-constant layout changed");
 
@@ -638,6 +639,38 @@ class VulkanDevice final : public RenderDevice {
     std::shared_ptr<const Image> white_;
     std::map<const Geometry*, std::unique_ptr<GpuGeometry>> geometry_;
     std::map<const Image*, std::unique_ptr<GpuTexture>> textures_;
+    struct ClipEntry {
+        std::weak_ptr<const Geometry> source;
+        std::vector<vec4> planes;
+        mat4 model_view; mat3 normal;
+        bool lighting=false, discard=false, analytic=false, baked=false;
+        std::shared_ptr<const Geometry> geometry;
+    };
+    std::map<const Geometry*,ClipEntry> clipped_;
+    DrawCommand clipped(const DrawCommand& input) {
+        auto command=input;
+        command.clipping_planes=normalize_clipping_planes(input.clipping_planes);
+        if (command.overlay || command.clipping_planes.empty()) return command;
+        for (unsigned c=0;c<4;++c) for (unsigned r=0;r<4;++r)
+            if (!std::isfinite(command.model_view(r,c))) throw std::invalid_argument("non-finite clipping model-view");
+        if (command.model_view(3,0)!=0 || command.model_view(3,1)!=0 || command.model_view(3,2)!=0 || command.model_view(3,3)!=1)
+            throw std::invalid_argument("clipping requires an affine model-view transform");
+        const bool analytic=(command.geometry->topology()==Topology::points && command.point_style!=PointStyle::plain) ||
+            (command.geometry->topology()==Topology::lines && command.line_style!=LineStyle::plain);
+        if (analytic && !command.discard_clipped_primitives) return command;
+        auto& entry=clipped_[input.geometry.get()];
+        if (entry.source.lock()!=input.geometry || entry.planes!=command.clipping_planes ||
+            entry.model_view!=command.model_view || entry.normal!=command.normal_matrix ||
+            entry.lighting!=command.lighting || entry.discard!=command.discard_clipped_primitives || entry.analytic!=analytic) {
+            auto result=internal::clip_draw(command);
+            entry.source=input.geometry; entry.planes=command.clipping_planes; entry.model_view=command.model_view;
+            entry.normal=command.normal_matrix; entry.lighting=command.lighting; entry.discard=command.discard_clipped_primitives;
+            entry.analytic=analytic; entry.geometry=result.geometry; entry.baked=command.lighting && !result.lighting;
+        }
+        command.geometry=entry.geometry;
+        if (entry.baked) command.lighting=false;
+        return command;
+    }
 public:
     // Separate initialization ensures all members are destroyed if any Vulkan step throws.
     ~VulkanDevice() override {
@@ -962,7 +995,7 @@ public:
         return expanded_lines(d) || (d.geometry->topology() == Topology::points &&
                (d.point_style != PointStyle::plain || d.point_size != 1));
     }
-    struct Prepared { const DrawCommand* command; GpuGeometry* geometry; GpuTexture* texture; uint32_t uniform_offset; };
+    struct Prepared { DrawCommand command; GpuGeometry* geometry; GpuTexture* texture; uint32_t uniform_offset; };
     std::vector<Prepared> prepare(uint32_t width, uint32_t height, const std::vector<DrawCommand>& commands,
                                   const vec4& background, unsigned samples) {
         require_samples(samples);
@@ -1031,6 +1064,9 @@ public:
                         throw std::invalid_argument("non-finite normal transform");
         }
         // The preceding call's fence has completed. Retire expired resources now.
+        for (auto it=clipped_.begin();it!=clipped_.end();) {
+            if (it->second.source.expired()) it=clipped_.erase(it); else ++it;
+        }
         for (auto it = geometry_.begin(); it != geometry_.end(); ) {
             if (it->second->source.expired()) it = geometry_.erase(it); else ++it;
         }
@@ -1047,7 +1083,8 @@ public:
         const size_t stride = (sizeof(ImpostorUniform) + alignment - 1) / alignment * alignment;
         std::vector<unsigned char> uniforms;
         std::vector<Prepared> draws;
-        for (const auto& command : commands) {
+        for (const auto& original : commands) {
+            auto command=clipped(original);
             auto& g = geometry(command.geometry);
             if (!g.count) continue;
             auto& t = texture(command.texture ? command.texture : white_);
@@ -1084,10 +1121,15 @@ public:
                 u.light[3] = command.point_style == PointStyle::surfel ? 2 : command.point_style == PointStyle::sphere ? 1 : 0;
                 if (expanded_lines(command))
                     u.light[3] = command.line_style == LineStyle::plain ? 5 : command.line_style == LineStyle::cone ? 4 : 3;
+                if (analytic) {
+                    u.clip_info[0]=float(command.clipping_planes.size());
+                    for (size_t plane=0;plane<command.clipping_planes.size();++plane)
+                        for (unsigned c=0;c<4;++c) u.clip_planes[plane*4+c]=command.clipping_planes[plane][c];
+                }
                 uniforms.resize(uniforms.size() + stride);
                 std::memcpy(uniforms.data() + offset, &u, sizeof(u));
             }
-            draws.push_back({&command, &g, &t, offset});
+            draws.push_back({std::move(command), &g, &t, offset});
         }
         if (!uniforms.empty()) {
             if (uniforms.size() > impostor_capacity_) {
@@ -1129,7 +1171,7 @@ public:
         VkRect2D scissor = {{0, 0}, {width, height}};
         vkCmdSetViewport(cmd, 0, 1, &viewport); vkCmdSetScissor(cmd, 0, 1, &scissor);
         for (const auto& draw : draws) {
-            const auto& d = *draw.command;
+            const auto& d = draw.command;
             if (d.overlay) continue;
             unsigned pipeline = d.geometry->topology() == Topology::triangles ? 0 :
                                 d.geometry->topology() == Topology::lines ? 1 : 2;
@@ -1155,7 +1197,7 @@ public:
         if (pass.kind != PassKind::ids) {
             vkCmdNextSubpass(cmd,VK_SUBPASS_CONTENTS_INLINE);
             for (const auto& draw : draws) {
-                const auto& d = *draw.command;
+                const auto& d = draw.command;
                 if (!d.overlay) continue;
                 vkCmdBindPipeline(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,pass.overlay_pipeline);
                 VkDeviceSize offset = 0;

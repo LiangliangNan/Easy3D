@@ -29,6 +29,7 @@
 #include <easy3d/util/initializer.h>
 
 #include "viewer.h"
+#include "../native_viewer_options.h"
 
 /**
  * \example{lineno} Tutorial_307_CrossSection/main.cpp
@@ -48,7 +49,13 @@ int main(int argc, char** argv) {
     initialize();
 
     const std::string file_name = resource::directory() + "/data/bunny.ply";
+#ifdef EASY3D_NO_OPENGL
+    NativeTutorialOptions options;
+    if (!options.parse(argc,argv)) return EXIT_FAILURE;
+    CrossSection viewer(EXAMPLE_TITLE,options.viewer);
+#else
     CrossSection viewer(EXAMPLE_TITLE);
+#endif
     viewer.camera()->setViewDirection(vec3(-1, 1, -1));
 
     if (!viewer.add_model(file_name)) {
@@ -56,5 +63,9 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
     }
 
+#ifdef EASY3D_NO_OPENGL
+    return options.run(viewer);
+#else
     return viewer.run();
+#endif
 }

@@ -2,7 +2,7 @@
 layout(set=0,binding=0) uniform sampler2D image_texture;
 layout(set=1,binding=0,std140) uniform Impostor {
     mat4 model_view; mat4 projection; mat4 inverse_projection;
-    vec4 dimensions; vec4 light;
+    vec4 dimensions; vec4 light; vec4 clip_planes[2]; vec4 clip_info;
 } shape;
 layout(location=0) flat in vec3 base;
 layout(location=1) flat in vec3 end;
@@ -83,6 +83,8 @@ void main() {
     }
     if (surface < 0 || nearest < 0) discard;
     vec3 hit = origin+nearest*direction;
+    for (int i=0;i<int(shape.clip_info.x);++i)
+        if (dot(shape.clip_planes[i],vec4(hit,1))<0) discard;
     vec4 clip = shape.projection*vec4(hit,1);
     float depth = 0.5*(clip.z/clip.w+1);
     if (clip.w <= 0 || depth < 0 || depth > 1) discard;

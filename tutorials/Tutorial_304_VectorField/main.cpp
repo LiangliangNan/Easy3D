@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
 
     // Keep this face-normal example uniformly colored and visibly faceted,
     // regardless of texture coordinates stored in the example OBJ file.
-    auto* faces = mesh->renderer()->get_triangles_drawable("faces");
+    auto faces = mesh->renderer()->get_triangles_drawable("faces");
     faces->set_uniform_coloring(faces->color());
     faces->set_smooth_shading(false);
 

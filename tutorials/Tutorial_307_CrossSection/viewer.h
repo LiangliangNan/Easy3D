@@ -27,6 +27,9 @@
 #ifndef EASY3D_TUTORIAL_CROSS_SECTION_H
 #define EASY3D_TUTORIAL_CROSS_SECTION_H
 
+#ifdef EASY3D_NO_OPENGL
+#include "viewer_vulkan.h"
+#else
 #include <easy3d/viewer/viewer.h>
 
 namespace easy3d {
@@ -43,4 +46,5 @@ namespace easy3d {
 
 }
 
-#endif	// EASY3D_TUTORIAL_CROSS_SECTION_H
+#endif // EASY3D_NO_OPENGL
+#endif // EASY3D_TUTORIAL_CROSS_SECTION_H

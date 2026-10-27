@@ -22,6 +22,9 @@ int main(int argc,char**) {
     try {
         initialize(false,false,false);
         VulkanViewerOptions options; options.width=800; options.height=600;
+        // Synthetic key callbacks should not compete with desktop focus/input.
+        // Navigation itself is exercised separately by vulkan.window.
+        options.visible=false;
         options.device.validation=options.device.synchronization_validation=argc>1;
         TutorialTextRendering viewer("Native text viewer test",options);
         require(viewer.add_model(resource::directory()+"/data/sphere.obj")!=nullptr,"could not load tutorial sphere");

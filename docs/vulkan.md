@@ -72,6 +72,9 @@ Completion gates include:
   color-only subpass before the final MSAA resolve. Overlays do not alter scene
   depth or picking IDs and require no independent-blend feature. Tutorial 306
   runs as a native image viewer with fit, zoom, resize and image reload.
+- Per-viewer world-space clipping with up to two halfspaces/slabs, geometric
+  triangle/line clipping, analytic impostor surface clipping and original source
+  IDs. Tutorial 307 provides native plane/cross-section controls.
 - Native visible-surface model/drawable picking with original SurfaceMesh face
   provenance, world points and retained source ownership. Model/drawable selection
   and primitive-range highlights work on textured geometry and every native style.
@@ -109,7 +112,7 @@ Completion gates include:
   resize/hide/show, independent windows/devices, orbit/pan/zoom, projection toggle,
   file drop and depth-based world-point picking. The installed demo uses an
   embedded bunny by default and needs no source-tree model/shader files.
-- Existing Tutorials 201, 301–306, 308–310 and 401/402 build with the native Vulkan host in
+- Existing Tutorials 201, 301–310 and 401/402 build with the native Vulkan host in
   Vulkan-only window builds. Tutorial 302 uses the same sphere/surfel/cylinder/cone scene code
   as its OpenGL build, with bounded native execution for automated tests. Legacy
   custom OpenGL draw callbacks are not ported. Tutorial 304 exercises the native
@@ -210,7 +213,7 @@ viewer.run();
 
 In a Vulkan-only window build the existing `<easy3d/viewer/viewer.h>` and
 `easy3d::Viewer` name select the same host. `Tutorial_201_Viewer_default` is built
-unchanged in that configuration. Tutorials 301–306, 308–310 and 401/402 are also built in this configuration. Other tutorials remain gated
+unchanged in that configuration. Tutorials 301–310 and 401/402 are also built in this configuration. Other tutorials remain gated
 until their features and callbacks are ported; the global legacy tutorials option stays OFF.
 In a dual build `Viewer` continues to select the legacy host, while
 `VulkanViewer` selects Vulkan explicitly.
@@ -332,6 +335,7 @@ cause.
 | `TrianglesDrawable::opacity()` | As in the old opaque pass, effective only in a separate transparency pass; such a pass is not implemented here. |
 | CPU drawable textures/scalars | `Texture` pixel snapshots, vertex/halfedge UVs and scalar fields are supported without GL calls. Clamp/repeat, nearest/linear filtering and OBJ/MTL diffuse-material groups work; no mipmap, anisotropic or PBR material pipeline yet. |
 | Transparency, SSAO, shadows, EDL, text, clipping | General 3D transparency/effects remain pending. Straight-alpha 2D overlays and basic horizontal TrueType/UTF-8 text are supported; shaping, bidi and automatic font fallback remain pending. The scene adapter still rejects SSAO; overlays are not an effect-pass API. |
+| Clipping | Up to two per-viewer world-space halfspaces. Geometric triangle/line-centerline cuts, center-clipped plain points and front-surface analytic clipping preserve IDs/MSAA. No automatic cut caps; native plane guides use wireframe overlays. |
 | Point and line styles | Plain points of any positive pixel size, spheres and oriented surfels are implemented. Capped cylinders/cones and butt-capped plain wide lines are implemented; joined strokes and rounded plain-line caps remain pending. |
 | Snapshot options | Device-supported MSAA (default 1); `expand=false` remains unsupported. Scaling, white/current/transparent background and image saving work. No tiled oversized captures. |
 | Readback | RGBA8, D32 and RG32UI; top row first; depth [0,1]; no-hit object/primitive IDs are `UINT32_MAX`. |
@@ -455,8 +459,8 @@ fragment intersects its camera ray with the disc plane, rejects hits outside the
 radius, and writes the projected plane depth. No geometry shader, large-point
 feature or mesh approximation is used. Perspective and orthographic views, both
 disc faces, texture/uniform/vertex colors and the existing diffuse lighting are
-supported. Legacy material/back-face-color parity and scene clipping planes
-remain pending.
+supported. Legacy material/back-face-color parity remains pending; the later
+clipping stage adds scene planes.
 
 The disc normal is transformed with the inverse transpose of the affine
 `model_view` linear part, independently of whether lighting is enabled. Its
@@ -507,8 +511,8 @@ front surface without revealing a back surface or introducing a clip-plane cap.
 Colors and native texture coordinates interpolate along the solid's axis, rather
 than across its proxy triangles. Primitive IDs stay those of the original line,
 including indexed geometry and explicit IDs. Full legacy material parity,
-rounded caps, scene clipping planes and arbitrary profile/frustum styles are not
-provided by this stage.
+rounded caps and arbitrary profile/frustum styles are not provided by this
+stage. The later clipping stage adds scene planes.
 
 Vulkan-only window builds now produce `Tutorial_302_Imposters`, alongside Tutorial
 201, even while the global legacy tutorials option is OFF. The tutorial retains
@@ -903,7 +907,7 @@ suite passed all 18 tests; the dual Vulkan/OpenGL suite passed all seven,
 including the real OpenGL material-viewer and texture checks. Pixel probes and
 snapshot inspection confirmed orientation, UV seams, concave coverage and color
 fallbacks. The existing MoltenVK integer-attachment warning remains; validation
-error counts stay zero. Native Qt/wx integration, clipping, remaining GUI picking/effects
+error counts stay zero. Native Qt/wx integration, remaining GUI picking/effects
 and runtime backend selection/fallback remain migration gates.
 
 
@@ -1009,6 +1013,108 @@ shortcut baseline mismatch; five bounded diagnostic repeats passed. Its harness
 now drains initial window/DPI callbacks, uses a smaller initial window, checks
 framebuffer dimensions before comparing pixels and saves expected/actual PNGs on
 a mismatch. The final complete native run passed; the original mismatch was not
-reproduced with diagnostics. Qt/wx/Python integration, clipping, original
+reproduced with diagnostics. Qt/wx/Python integration, original
 vertex/edge and region pickers, advanced effects and runtime backend selection/
 automatic OpenGL fallback remain migration gates.
+
+
+## Portable clipping and Tutorial 307
+
+`VulkanOffScreen::set_clipping_planes()` configures up to two world-space plane
+equations for one native viewer/offscreen instance. Each equation keeps
+`dot(plane, vec4(world_position,1)) >= 0`; two opposing planes form a slab.
+Empty input disables clipping. The setter validates and normalizes finite
+coefficients with nonzero normals before changing state. Scene clearing retains
+this configuration, and overlays remain unclipped and unpickable. Native state
+is per viewer; the retained OpenGL `ClippingPlane` singleton is not used by the
+Vulkan backend.
+
+```cpp
+viewer.set_clipping_planes({easy3d::vec4(1,0,0,0)}); // keep world x >= 0
+viewer.set_clipping_planes({easy3d::vec4(1,0,0,0), easy3d::vec4(-1,0,0,0.2f)});
+// now keep 0 <= world x <= 0.2
+viewer.set_clipping_planes({});
+```
+
+Triangles are clipped geometrically in CPU-owned snapshots, preserving polygon
+winding and interpolating positions, UVs and colors. Original vertex lighting is
+baked before clipping, preserving its interpolation across new cut vertices.
+Generated fan triangles retain the original triangle's primitive ID. Plain line
+centerlines are clipped before native-line/ribbon rasterization, producing butt
+caps perpendicular to the line, with interpolated endpoint colors/UVs. Plain
+points retain center-based clipping, including large screen-space squares.
+`State::plane_clip_discard_primitive()` additionally rejects a primitive when any
+of its control vertices is outside; it applies before curved surface clipping.
+
+Sphere, surfel, cylinder and cone impostors retain their proxy geometry and
+clip their computed front-surface intersections in the fragment shader. A sphere
+whose center lies outside can retain a visible partial surface. MSAA uses the
+existing per-sample analytic paths; no new optional device feature is required.
+Clipping does not synthesize caps or substitute a back intersection when the
+front surface is removed. Closed cut surfaces/back-hit rendering remain future
+work. Geometric cut boundaries use normal rasterizer MSAA, without requiring
+`shaderClipDistance`, geometry shaders or sample-rate shading for plain geometry.
+
+The device caches derived geometric snapshots by source and clipping/transform/
+lighting policy. Prepared commands retain their effective geometry throughout
+submission; independent draws sharing one source can use different cut volumes.
+Expired clipping snapshots retire with the existing fenced resource caches.
+Clipping rebuilds and uploads are synchronous; large meshes with moving planes
+can incur CPU/upload costs. Stable settings reuse the cached cut geometry.
+Low-level `graphics::DrawCommand::clipping_planes` are **view-space** equations;
+when clipping is active, provide an affine `model_view` mapping the geometry into
+that view space, consistently with its MVP. The scene adapter performs world-to-
+view conversion and honors model manipulation. Original primitive IDs survive
+clipping, so raw readback, range highlights and `pick()` source-face mappings
+continue to identify the original primitives rather than generated cut pieces.
+
+Native-only window builds now include `Tutorial_307_CrossSection`. Left/right
+drag rotates/translates its plane; **Alt+C** toggles clipping, **Alt+V** toggles the
+guide, and **Alt+X** toggles a slab ending at the plane. The native tutorial uses
+a slab width of 1% of the scene radius. Its wireframe overlay guide does not
+change scene bounds, depth or picking. The legacy translucent filled guide
+remains in the OpenGL tutorial; native filled 3D plane-guide parity remains
+pending with general transparency. The guide's MVP follows camera changes,
+including resize; its geometry is rebuilt after plane motion. The original
+OpenGL host remains available.
+
+```sh
+./cmake-build-debug/bin/Tutorial_307_CrossSection --frames 3 --samples 4 --validation
+```
+
+This stage also corrects native depth-to-world reconstruction. The legacy
+`Camera::unprojectedCoordinatesOf()` uses a height-minus-one coordinate convention;
+passing framebuffer pixel centers to it introduced a one-pixel Y offset.
+`VulkanOffScreen::unproject_pixel()` instead reconstructs the exact top-left
+framebuffer center from readback depth and the inverse MVP. `pick()` and
+`VulkanViewer::point_under_pixel()` share this conversion. The common legacy
+Camera/OpenGL helpers retain their existing convention. Oblique-plane tests now
+verify world coordinates and clip-volume membership, rather than checking depth
+alone.
+
+Headless `vulkan.clipping` checks halfspaces/slabs, indexed source IDs,
+interpolated vertex lighting/color/UVs, independent per-draw cuts, whole-primitive
+rejection, point/line policy, actual sphere/surfel/cylinder/cone hits, new cut-edge
+MSAA coverage, unchanged center picking/depth, world/model/camera transforms and
+source-face mapping. Invalid planes/transforms fail explicitly. Desktop
+`vulkan.crosssection` exercises the registered toggle/drag callbacks, guide-only
+visibility, world-point reconstruction, slab membership, resize, MSAA changes and
+snapshots. Bounded Tutorial 307 CTest honors `Easy3D_VULKAN_TEST_VALIDATION`, and
+CI validates the modified impostor/ribbon shader binaries.
+
+On 2026-10-27, Apple M4 Pro/MoltenVK 1.4.2 passed the new clipping and native
+cross-section interaction tests with Khronos/synchronization validation,
+including four samples. Tutorial 307 passed bounded four-sample execution with
+validation, all five modified shader binaries passed SPIR-V validation, and the
+retained OpenGL Tutorial 307 source compiles. The complete native suite passed
+25 tests; the dual Vulkan/OpenGL suite passed nine, including real GL material
+and texture checks. The previously documented MoltenVK integer-attachment
+warning remains; validation error counts stay zero.
+
+The recurring text-viewer shortcut harness now uses a hidden native window to
+isolate synthetic key callbacks from desktop focus/input. It retains the actual
+host, presentation, resize, color and depth checks; five bounded repeats and the
+final full suite passed. Remaining gates include filled native plane-guide
+transparency, closed cut caps/back-hit clipping, Qt/wx/Python integration,
+original vertex/edge and region pickers, advanced effects and runtime backend
+selection/automatic OpenGL fallback.

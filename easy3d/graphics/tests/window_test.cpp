@@ -59,6 +59,11 @@ int main(int argc, char**) {
             auto point = viewer.point_under_pixel(int(i % captured.width), int(i / captured.width), found);
             const auto projected = viewer.camera()->projectedCoordinatesOf(point);
             require(found && std::abs(projected.z - captured.depth[i]) < 1e-4f, "depth picking/unprojection mismatch");
+            const auto clip=viewer.camera()->modelViewProjectionMatrix()*vec4(point,1);
+            const float px=(clip.x/clip.w+1)*.5f*captured.width;
+            const float py=(1-clip.y/clip.w)*.5f*captured.height;
+            require(std::abs(px-float(i%captured.width)-.5f)<1e-3f &&
+                    std::abs(py-float(i/captured.width)-.5f)<1e-3f,"world-point picking is offset from framebuffer pixel center");
             break;
         }
         bool found = true; viewer.point_under_pixel(-1, 0, found);

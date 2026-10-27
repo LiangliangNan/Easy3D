@@ -35,6 +35,7 @@ struct VulkanOffScreen::Impl {
     std::vector<std::shared_ptr<Model>> models;
     std::vector<std::shared_ptr<Drawable>> drawables;
     std::vector<graphics::DrawCommand> overlays;
+    std::vector<vec4> clipping_planes;
     struct Cached {
         std::weak_ptr<Drawable> source;
         std::size_t revision = 0;
@@ -199,6 +200,12 @@ struct VulkanOffScreen::Impl {
             result.sphere_light = mat3(cam.modelViewMatrix()) * vec3(0.3f, 0.5f, 1);
         }
         result.model_view_projection = cam.modelViewProjectionMatrix() * d.manipulated_matrix();
+        if (!clipping_planes.empty()) {
+            result.model_view=cam.modelViewMatrix()*d.manipulated_matrix();
+            const auto plane_transform=transpose(inverse(cam.modelViewMatrix()));
+            for (const auto& plane:clipping_planes) result.clipping_planes.push_back(plane_transform*plane);
+            result.discard_clipped_primitives=d.plane_clip_discard_primitive();
+        }
         if (d.lighting()) result.normal_matrix = transform::normal_matrix(d.manipulated_matrix());
         result.color = d.coloring_method() == State::UNIFORM_COLOR ? d.color() : vec4(1, 1, 1, 1);
         result.object_id = id;
@@ -325,6 +332,10 @@ void VulkanOffScreen::set_overlays(std::vector<graphics::DrawCommand> commands) 
     for (auto& command : commands) command.overlay = true;
     impl_->overlays = std::move(commands);
 }
+void VulkanOffScreen::set_clipping_planes(const std::vector<vec4>& planes) {
+    impl_->clipping_planes=graphics::normalize_clipping_planes(planes);
+}
+const std::vector<vec4>& VulkanOffScreen::clipping_planes() const { return impl_->clipping_planes; }
 void VulkanOffScreen::fit_screen(const Model* selected) {
     Box3 box;
     if (selected) box.grow(selected->bounding_box());
@@ -333,6 +344,16 @@ void VulkanOffScreen::fit_screen(const Model* selected) {
         for (const auto& drawable : impl_->drawables) box.grow(drawable->bounding_box());
     }
     if (box.is_valid()) { camera()->setSceneBoundingBox(box.min_point(), box.max_point()); camera()->showEntireScene(); }
+}
+vec3 VulkanOffScreen::unproject_pixel(int x,int y,float depth) const {
+    if (x<0 || y<0 || x>=width() || y>=height() || !std::isfinite(depth) || depth<0 || depth>1)
+        throw std::invalid_argument("invalid framebuffer pixel/depth for unprojection");
+    const vec4 ndc(2*(x+.5f)/width()-1,1-2*(y+.5f)/height(),2*depth-1,1);
+    const auto world=inverse(camera()->modelViewProjectionMatrix())*ndc;
+    if (!std::isfinite(world.w) || world.w==0) throw std::invalid_argument("invalid camera unprojection");
+    const vec3 point(world.x/world.w,world.y/world.w,world.z/world.w);
+    for (unsigned i=0;i<3;++i) if (!std::isfinite(point[i])) throw std::invalid_argument("non-finite world point");
+    return point;
 }
 VulkanOffScreen::PickResult VulkanOffScreen::pick(int x,int y) const {
     PickResult result;
@@ -346,7 +367,7 @@ VulkanOffScreen::PickResult VulkanOffScreen::pick(int x,int y) const {
     if (id.object==UINT32_MAX || frame.depth[pixel]>=1 || id.object>=sources.size()) return result;
     result.model=sources[id.object].model; result.drawable=sources[id.object].drawable;
     result.primitive=id.primitive; result.depth=frame.depth[pixel];
-    result.position=camera()->unprojectedCoordinatesOf(vec3(x+0.5f,y+0.5f,result.depth));
+    result.position=unproject_pixel(x,y,result.depth);
     const auto& faces=result.drawable->cpu_buffers().source_faces;
     auto* mesh=dynamic_cast<SurfaceMesh*>(result.model.get());
     if (mesh && id.primitive<faces.size()) {

@@ -20,7 +20,7 @@ foreach(shader scene.vert scene.frag points.vert points.frag lines.vert lines.fr
     list(APPEND shader_headers "${header}")
 endforeach()
 
-add_module(vulkan "render_device.h;text_renderer.h" "render_device.cpp;text_renderer.cpp;vulkan/device.cpp;${shader_headers}"
+add_module(vulkan "render_device.h;text_renderer.h" "render_device.cpp;text_renderer.cpp;clipping.cpp;vulkan/device.cpp;${shader_headers}"
         "Vulkan::Vulkan" "easy3d::core")
 target_include_directories(easy3d_vulkan PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 install(TARGETS easy3d_vulkan EXPORT Easy3DTargets

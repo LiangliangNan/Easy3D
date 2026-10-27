@@ -15,6 +15,7 @@ layout(set=1,binding=0,std140) uniform Impostor {
     mat4 model_view; mat4 projection; mat4 inverse_projection;
     vec4 dimensions; // framebuffer width, height, unused, view-space radius
     vec4 light; // view-space direction; w = 3 cylinder, 4 cone
+    vec4 clip_planes[2]; vec4 clip_info;
 } shape;
 layout(location=0) flat out vec3 base;
 layout(location=1) flat out vec3 end;

@@ -13,6 +13,7 @@ layout(set=1,binding=0,std140) uniform Points {
     mat4 model_view; mat4 projection; mat4 inverse_projection;
     vec4 dimensions; // width, height, pixel diameter, view-space radius
     vec4 light; // view-space direction; w = style (0 plain, 1 sphere, 2 surfel)
+    vec4 clip_planes[2]; vec4 clip_info;
 } points;
 layout(location=0) out vec4 vertex_color;
 layout(location=1) out vec2 uv;
