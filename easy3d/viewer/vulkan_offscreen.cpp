@@ -54,8 +54,13 @@ struct VulkanOffScreen::Impl {
                 throw std::logic_error("unknown point impostor type");
         }
         if (auto* l = dynamic_cast<LinesDrawable*>(&d)) {
-            if (l->impostor_type() != LinesDrawable::PLAIN || l->line_width() != 1)
-                throw std::logic_error("Vulkan scene adapter currently supports plain one-pixel lines");
+            if (l->impostor_type() != LinesDrawable::PLAIN && l->impostor_type() != LinesDrawable::CYLINDER &&
+                l->impostor_type() != LinesDrawable::CONE)
+                throw std::logic_error("unknown line impostor type");
+            if (l->impostor_type() == LinesDrawable::PLAIN && l->line_width() != 1)
+                throw std::logic_error("plain wide lines are not yet ported; use cylinder/cone impostors");
+            if (!std::isfinite(l->line_width()) || l->line_width() <= 0)
+                throw std::invalid_argument("line width must be finite and positive");
         }
         // As with the legacy opaque pass, TrianglesDrawable::opacity() is only
         // meaningful in a separate transparency pass (not implemented here).
@@ -88,6 +93,14 @@ struct VulkanOffScreen::Impl {
             result.point_style = p->impostor_type() == PointsDrawable::SPHERE ? graphics::PointStyle::sphere :
                                  p->impostor_type() == PointsDrawable::SURFEL ? graphics::PointStyle::surfel : graphics::PointStyle::plain;
             result.sphere_radius = p->point_size() * cam.pixelGLRatio(cam.pivotPoint()) * 0.5f;
+            result.model_view = cam.modelViewMatrix() * d.manipulated_matrix();
+            result.projection = cam.projectionMatrix();
+            result.sphere_light = mat3(cam.modelViewMatrix()) * vec3(0.3f, 0.5f, 1);
+        }
+        if (auto* l = dynamic_cast<LinesDrawable*>(&d)) {
+            result.line_style = l->impostor_type() == LinesDrawable::CYLINDER ? graphics::LineStyle::cylinder :
+                                l->impostor_type() == LinesDrawable::CONE ? graphics::LineStyle::cone : graphics::LineStyle::plain;
+            result.line_radius = l->line_width() * cam.pixelGLRatio(cam.pivotPoint()) * 0.5f;
             result.model_view = cam.modelViewMatrix() * d.manipulated_matrix();
             result.projection = cam.projectionMatrix();
             result.sphere_light = mat3(cam.modelViewMatrix()) * vec3(0.3f, 0.5f, 1);

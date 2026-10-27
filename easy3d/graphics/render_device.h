@@ -52,6 +52,7 @@ private:
 };
 
 enum class PointStyle { plain, sphere, surfel };
+enum class LineStyle { plain, cylinder, cone };
 
 struct DrawCommand {
     std::shared_ptr<const Geometry> geometry;
@@ -68,11 +69,16 @@ struct DrawCommand {
     PointStyle point_style = PointStyle::plain;
     float point_size = 1;
     float sphere_radius = 1; // shared radius for sphere/surfel impostors
-    vec3 sphere_light = vec3(0.3f, 0.5f, 1); // view-space directional diffuse light
+    vec3 sphere_light = vec3(0.3f, 0.5f, 1); // view-space directional diffuse light for all impostors
     // Surfels orient their disc by the inverse-transpose of this affine matrix's
     // linear part, using Vertex::normal (nonzero). Radius stays independent of scale.
     mat4 model_view = mat4::identity();
-    mat4 projection = mat4::identity(); // OpenGL convention; sphere/surfel impostors
+    mat4 projection = mat4::identity(); // OpenGL convention; all impostors
+    // Line impostors transform both endpoints with model_view. Their radius is
+    // in view-space units, independent of model scale. Cones taper from the
+    // first endpoint (base) to the second (tip); cylinders have two flat caps.
+    LineStyle line_style = LineStyle::plain;
+    float line_radius = 1;
 };
 
 struct FrameImage {
@@ -101,6 +107,8 @@ public:
     // Sphere/surfel MSAA additionally requires sampleRateShading. Query by style before
     // offering multisampled impostors on devices without that optional feature.
     virtual std::uint32_t supported_sample_counts(PointStyle style = PointStyle::plain) const = 0;
+    // Cylinder/cone MSAA has the same sampleRateShading requirement.
+    virtual std::uint32_t supported_sample_counts(LineStyle style) const = 0;
     // Synchronous offscreen capture. No window, GL context, surface or swapchain.
     // Instances are externally synchronized; separate instances are independent.
     virtual FrameImage render(std::uint32_t width, std::uint32_t height,

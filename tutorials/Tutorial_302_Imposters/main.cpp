@@ -32,6 +32,8 @@
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
+#include <limits>
+#include <stdexcept>
 
 /**
  * \example{lineno} Tutorial_302_Imposters/main.cpp
@@ -108,7 +110,34 @@ int main(int argc, char **argv) {
 
     // Create the default Easy3D viewer.
     // Note: a viewer must be created before creating any drawables.
+#ifdef EASY3D_NO_OPENGL
+    VulkanViewerOptions options;
+    unsigned max_frames = 0;
+    // Bounded native execution also lets CI exercise this complete tutorial.
+    try {
+        for (int i = 1; i < argc; ++i) {
+            const std::string argument(argv[i]);
+            if (argument == "--validation") {
+                options.device.validation = options.device.synchronization_validation = true;
+            } else if ((argument == "--frames" || argument == "--samples") && i+1 < argc) {
+                const std::string value(argv[++i]);
+                if (value.empty() || value.find_first_not_of("0123456789") != std::string::npos)
+                    throw std::invalid_argument("expected a positive integer");
+                const auto count = std::stoul(value);
+                if (!count || count > std::numeric_limits<unsigned>::max())
+                    throw std::invalid_argument("count out of range");
+                if (argument == "--frames") max_frames = static_cast<unsigned>(count);
+                else options.samples = static_cast<unsigned>(count);
+            } else throw std::invalid_argument("usage: --frames N --samples N --validation");
+        }
+    } catch (const std::exception& e) {
+        LOG(ERROR) << e.what();
+        return EXIT_FAILURE;
+    }
+    Viewer viewer(EXAMPLE_TITLE, options);
+#else
     Viewer viewer(EXAMPLE_TITLE);
+#endif
 
     // Load point cloud data from a file
     const std::string file_name = resource::directory() + "/data/sphere.obj";
@@ -149,6 +178,15 @@ int main(int argc, char **argv) {
     // ----------------------------------------------------------------
 
     // run the viewer
+#ifdef EASY3D_NO_OPENGL
+    const int result = viewer.run(max_frames);
+    if (options.device.validation && viewer.device().validation_errors()) {
+        LOG(ERROR) << "Vulkan validation reported errors";
+        return EXIT_FAILURE;
+    }
+    return result;
+#else
     return viewer.run();
+#endif
 }
 

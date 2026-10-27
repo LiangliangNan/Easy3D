@@ -62,6 +62,9 @@ Completion gates include:
   fragments compute perspective/orthographic ray intersections, silhouette discard
   and actual surface depth, retaining original point primitive IDs. Surfels use
   ray/plane disc intersections and inverse-transpose normal transforms.
+- Capped cylinder and cone line impostors with analytic side/cap intersections,
+  actual surface depth, endpoint color/texture interpolation and original segment
+  IDs, using instanced quads without geometry shaders or wide-line features.
 - Explicit sampler descriptors, including a valid white fallback texture.
 - Device-local geometry/images, staged uploads, coherent/noncoherent host memory,
   fenced submission/readback, explicit image transitions and transfer barriers.
@@ -87,8 +90,10 @@ Completion gates include:
   resize/hide/show, independent windows/devices, orbit/pan/zoom, projection toggle,
   file drop and depth-based world-point picking. The installed demo uses an
   embedded bunny by default and needs no source-tree model/shader files.
-- The existing Tutorial 201 compiles unchanged using the `Viewer` alias in a
-  Vulkan-only window build. Legacy custom OpenGL draw callbacks are not ported.
+- Existing Tutorials 201 and 302 build through the `Viewer` alias in Vulkan-only
+  window builds. Tutorial 302 uses the same sphere/surfel/cylinder/cone scene code
+  as its OpenGL build, with bounded native execution for automated tests. Legacy
+  custom OpenGL draw callbacks are not ported.
 - A new finite Tutorial 208 and deterministic Vulkan tests, including actual
   bunny mesh loading, property colors, geometry updates, snapshots and picking IDs.
 
@@ -185,8 +190,8 @@ viewer.run();
 
 In a Vulkan-only window build the existing `<easy3d/viewer/viewer.h>` and
 `easy3d::Viewer` name select the same host. `Tutorial_201_Viewer_default` is built
-unchanged in that configuration. Other tutorials are still gated until their
-features and callbacks are ported; the global legacy tutorials option stays OFF.
+unchanged in that configuration. Tutorial 302 is also built in this configuration. Other tutorials remain gated
+until their features and callbacks are ported; the global legacy tutorials option stays OFF.
 In a dual build `Viewer` continues to select the legacy host, while
 `VulkanViewer` selects Vulkan explicitly.
 
@@ -307,7 +312,7 @@ cause.
 | `TrianglesDrawable::opacity()` | As in the old opaque pass, effective only in a separate transparency pass; such a pass is not implemented here. |
 | CPU drawable textures/scalars | Legacy `Texture` coloring is rejected. Native `graphics::Image` texturing is implemented. CPU-only implicit legacy texture creation throws before making GL calls. |
 | Transparency, SSAO, shadows, EDL, text, clipping | Not ported. Do not infer support from the low-level draw-command API. The scene adapter rejects SSAO/highlighting/selection; no effect-pass interface is exposed yet. |
-| Point and line styles | Plain points of any positive pixel size, spheres and oriented surfels are implemented. Cylinders/cones and wide lines still report explicit unsupported-style errors. |
+| Point and line styles | Plain points of any positive pixel size, spheres and oriented surfels are implemented. Capped cylinders and cones are implemented; plain wide lines still report explicit unsupported-style errors. |
 | Snapshot options | Device-supported MSAA (default 1); `expand=false` remains unsupported. Scaling, white/current/transparent background and image saving work. No tiled oversized captures. |
 | Readback | RGBA8, D32 and RG32UI; top row first; depth [0,1]; no-hit object/primitive IDs are `UINT32_MAX`. |
 | Picking IDs | Draw-command object ID and draw-primitive index (or explicit native primitive IDs). The adapter uses model/drawable order and generated primitive indices, not original polygon/vertex handles. Existing GUI pickers are not ported. |
@@ -356,8 +361,8 @@ transparent PNG edges, and window presentation. Expected negative tests no longe
 use the logging wrappers. Fresh-configure checks verify the new four defaults.
 The subsequent point/impostor stage also validates this MSAA path on macOS/MoltenVK; Windows validation remains outstanding.
 
-Next implementation gates are native Qt/wx surface/frame adapters, remaining
-impostors (cylinders/cones), text and texture/scalar state, ID mapping/pickers, oversized capture,
+Next implementation gates are native Qt/wx surface/frame adapters, plain wide
+lines, text and texture/scalar state, ID mapping/pickers, oversized capture,
 effects/transparency, all applications/tutorials and Python integration, then
 hardware validation and packaging on macOS/Windows/Linux. The defaults now select
 Vulkan for development. Final backend selection and automatic OpenGL fallback
@@ -451,6 +456,62 @@ presentation/depth picking while switching sphere/surfel/plain styles. The
 previously documented MoltenVK integer-attachment warning persists; validation
 error counts remain zero.
 
-This completes the three `PointsDrawable` styles. Tutorial 302 still requires
-line cylinders and cones before it can be enabled in full on Vulkan. Native
-Qt/wx host integration and the other roadmap gates remain outstanding.
+This completed the three `PointsDrawable` styles. The subsequent cylinder/cone
+stage below enables Tutorial 302 in full on Vulkan. Native Qt/wx host integration
+and the other roadmap gates remain outstanding.
+
+## Cylinder/cone line impostors and Tutorial 302
+
+`LinesDrawable::CYLINDER` and `LinesDrawable::CONE` are now supported by the native
+scene adapter. Radius is `line_width() * camera.pixelGLRatio(camera.pivotPoint()) / 2`,
+matching the existing radius convention. Cylinders have two flat caps; cones have
+a base cap at the first endpoint and taper to the second endpoint. Model/view
+transforms move the endpoints, while radius remains in view-space units. A
+collapsed segment draws nothing. Plain lines still require width one.
+
+Native clients use `LineStyle::cylinder` or `LineStyle::cone`, set `line_radius`,
+and provide an affine `model_view` plus an invertible OpenGL-convention
+`projection`. The shared `sphere_light` field supplies the view-space light for
+all impostors. Query `supported_sample_counts(LineStyle::cylinder)` or
+`LineStyle::cone`; multisampled line impostors require `sampleRateShading`, with
+an explicit error on unsupported devices. Single-sample rendering works without
+that optional feature.
+
+The device reads each pair of packed line endpoints as one instance and emits a
+six-vertex quad bounding their projected solid. Fragment ray intersections choose
+the nearest side/cap surface and write its projected depth. Stable cross-product
+discriminants avoid cone-tip/grazing cancellation. Near/far clipping follows the
+front surface without revealing a back surface or introducing a clip-plane cap.
+Colors and native texture coordinates interpolate along the solid's axis, rather
+than across its proxy triangles. Primitive IDs stay those of the original line,
+including indexed geometry and explicit IDs. Full legacy material parity,
+rounded caps, scene clipping planes and arbitrary profile/frustum styles are not
+provided by this stage.
+
+Vulkan-only window builds now produce `Tutorial_302_Imposters`, alongside Tutorial
+201, even while the global legacy tutorials option is OFF. The tutorial retains
+its shared scene construction code for both backends. Its native build supports:
+
+```sh
+./cmake-build-debug/bin/Tutorial_302_Imposters --frames 3 --samples 4 --validation
+```
+
+Without `--frames`, it remains interactive. The desktop CTest
+`vulkan.tutorial302` runs a bounded three-frame tutorial; enabling
+`Easy3D_VULKAN_TEST_VALIDATION` also enables its Khronos/synchronization checks.
+Validation errors make the tutorial smoke test fail. The Vulkan CI workflow
+validates both new line shaders and runs this test in native-only window jobs.
+
+Local verification on 2026-10-27 used Apple M4 Pro and MoltenVK 1.4.2, explicitly
+selected with `VK_DRIVER_FILES=/usr/local/share/vulkan/icd.d/MoltenVK_icd.json`.
+Renderer and scene regressions passed with Khronos and synchronization validation;
+native window tests verified cylinder/cone presentation and world-point picking.
+The complete Tutorial 302 ran for three frames with four samples and validation.
+New checks cover side/cap/tip depth, reversed segments, axis-parallel rays,
+independent double-precision perspective intersections, partial near/far clipping,
+eye/far rejection, mesh occlusion in both draw orders, endpoint colors/textures,
+lighting, multiple indexed segments, mixed point/line uniform state, collapsed
+segments and invalid inputs. Four-sample tests retain identical center picking
+IDs/depth and verify actual partial edge coverage. Both new shaders pass
+`spirv-val --target-env vulkan1.2`. Validation error counts remain zero; the
+previously documented MoltenVK integer-attachment warning persists.

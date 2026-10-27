@@ -12,6 +12,7 @@ static_assert(std::is_same<easy3d::OffScreen, easy3d::VulkanOffScreen>::value,
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/util/initializer.h>
 #include <easy3d/util/resource.h>
 #include <iostream>
@@ -105,6 +106,31 @@ int main(int argc, char**) {
                             "scene surfel MSAA changed picking/depth");
             }
         }
+        renderer.clear_scene();
+        auto segments = std::make_shared<LinesDrawable>();
+        renderer.add_drawable(segments);
+        segments->update_vertex_buffer({vec3(-0.8f, 0, 0), vec3(0.8f, 0, 0)});
+        segments->set_line_width(17); segments->set_lighting(false);
+        renderer.fit_screen();
+        for (auto style : {LinesDrawable::CYLINDER, LinesDrawable::CONE}) {
+            segments->set_impostor_type(style);
+            for (auto projection : {Camera::PERSPECTIVE, Camera::ORTHOGRAPHIC}) {
+                renderer.camera()->setType(projection);
+                auto solid = renderer.capture();
+                require(hits(solid) > 50, "scene line impostor did not render");
+                const auto native_style = style == LinesDrawable::CYLINDER ? graphics::LineStyle::cylinder : graphics::LineStyle::cone;
+                if (renderer.device().supported_sample_counts(native_style) & 4) {
+                    auto aa = renderer.capture(4);
+                    for (size_t i = 0; i < aa.ids.size(); ++i)
+                        require(aa.ids[i].object == solid.ids[i].object && std::abs(aa.depth[i]-solid.depth[i]) < 1e-5f,
+                                "scene line MSAA changed center-sample picking/depth");
+                }
+            }
+        }
+        segments->set_impostor_type(LinesDrawable::PLAIN);
+        bool wide_rejected = false;
+        try { renderer.capture(); } catch (const std::logic_error&) { wide_rejected = true; }
+        require(wide_rejected, "unsupported plain wide line silently rendered");
         renderer.clear_scene();
         auto custom = std::make_shared<TrianglesDrawable>();
         custom->set_opacity(1);

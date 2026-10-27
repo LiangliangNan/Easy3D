@@ -231,6 +231,174 @@ void surfels(RenderDevice& device) {
     disc.model_view = mat4::identity(); disc.projection = mat4(0.0f);
     rejects([&] { device.render(32, 32, {disc}); });
 }
+void line_impostors(RenderDevice& device) {
+    DrawCommand line;
+    line.object_id = 41; line.line_radius = 0.3f;
+    line.color = vec4(1, 0, 0, 1);
+    std::vector<Vertex> vertices(2);
+    vertices[0].position = vec3(-0.6f, 0, 0);
+    vertices[1].position = vec3(0.6f, 0, 0);
+    auto geometry = [&](std::vector<uint32_t> indices = std::vector<uint32_t>{0, 1}) {
+        line.geometry = std::make_shared<Geometry>(vertices, indices, Topology::lines, std::vector<uint32_t>{201});
+    };
+    geometry();
+    for (auto style : {LineStyle::cylinder, LineStyle::cone}) {
+        line.line_style = style;
+        const auto single = device.render(65, 65, {line}, vec4(0));
+        const float expected = style == LineStyle::cylinder ? 0.35f : 0.425f;
+        require(single.ids[32*65+32].object == 41 && single.ids[32*65+32].primitive == 201,
+                "line impostor lost indexed primitive ID");
+        require(std::abs(single.depth[32*65+32]-expected) < 1e-5f, "line impostor side depth mismatch");
+        require(single.ids[20*65+32].object == UINT32_MAX, "line impostor proxy leaked");
+        DrawCommand plane;
+        plane.geometry = triangle(style == LineStyle::cylinder ? -0.2f : -0.1f, vec4(0, 1, 0, 1));
+        plane.object_id = 9;
+        for (bool reverse : {false, true}) {
+            const auto overlap = device.render(65, 65, reverse ? std::vector<DrawCommand>{plane, line} :
+                                                               std::vector<DrawCommand>{line, plane});
+            const unsigned rim = style == LineStyle::cylinder ? 40 : 36;
+            require(overlap.ids[32*65+32].object == 41 && overlap.ids[rim*65+32].object == 9,
+                    "line/mesh surface occlusion depends on proxy or draw order");
+        }
+        if (device.supported_sample_counts(style) & 4) {
+            const auto aa = device.render(65, 65, {line}, vec4(0), 4);
+            unsigned edges = 0;
+            for (size_t pixel = 0; pixel < aa.ids.size(); ++pixel) {
+                require(aa.ids[pixel].object == single.ids[pixel].object &&
+                        aa.ids[pixel].primitive == single.ids[pixel].primitive &&
+                        std::abs(aa.depth[pixel]-single.depth[pixel]) < 1e-5f,
+                        "line MSAA changed center-sample picking/depth");
+                edges += aa.rgba[4*pixel] > 0 && aa.rgba[4*pixel] < 255;
+            }
+            require(edges > 0, "line impostor MSAA has no partial coverage");
+        }
+    }
+    // Clipping follows the actual front surface, preserving only the visible
+    // portion of a solid, without substituting its back surface or adding caps.
+    for (auto style : {LineStyle::cylinder, LineStyle::cone}) {
+        line.line_style = style;
+        const float center_z = style == LineStyle::cylinder ? -0.8f : -0.9f;
+        vertices[0].position.z = vertices[1].position.z = center_z; geometry();
+        auto clipped = device.render(65, 65, {line});
+        const unsigned rim = style == LineStyle::cylinder ? 40 : 36;
+        require(clipped.ids[32*65+32].object == UINT32_MAX && clipped.ids[rim*65+32].object == 41,
+                "line near clipping leaked a back surface or discarded the visible rim");
+        vertices[0].position.z = vertices[1].position.z = style == LineStyle::cylinder ? 1.2f : 1.1f; geometry();
+        clipped = device.render(65, 65, {line});
+        require(clipped.ids[32*65+32].object == 41 && clipped.ids[rim*65+32].object == UINT32_MAX,
+                "line far clipping mismatch");
+    }
+    // Axis-parallel rays hit flat caps, including the cone's base.
+    vertices[0].position = vec3(0, 0, -0.5f); vertices[1].position = vec3(0, 0, 0.5f); geometry();
+    for (auto style : {LineStyle::cylinder, LineStyle::cone}) {
+        line.line_style = style;
+        auto caps = device.render(65, 65, {line});
+        require(std::abs(caps.depth[32*65+32]-0.25f) < 1e-5f, "axial ray missed base cap");
+        geometry({1, 0});
+        caps = device.render(65, 65, {line});
+        require(std::abs(caps.depth[32*65+32]-0.25f) < 1e-5f, "reversed line missed end cap/cone tip");
+        if (style == LineStyle::cone)
+            require(caps.depth[32*65+39] > 0.5f, "cone did not taper toward its second endpoint");
+        geometry();
+    }
+    // Endpoint colors interpolate along the surface axis, independent of proxy triangles.
+    vertices[0].position = vec3(-0.6f, 0, 0); vertices[1].position = vec3(0.6f, 0, 0);
+    vertices[0].color = vec4(1, 0, 0, 1); vertices[1].color = vec4(0, 0, 1, 1); geometry();
+    line.line_style = LineStyle::cylinder; line.color = vec4(1);
+    auto colored = device.render(65, 65, {line});
+    require(std::abs(int(colored.rgba[(32*65+32)*4])-128) <= 1 &&
+            std::abs(int(colored.rgba[(32*65+32)*4+2])-128) <= 1, "line endpoint color interpolation mismatch");
+    line.lighting = true; line.sphere_light = vec3(0, 0, 1);
+    auto lit = device.render(65, 65, {line});
+    require(lit.rgba[(40*65+32)*4] < colored.rgba[(40*65+32)*4], "cylinder lighting ignores surface normal");
+    line.lighting = false;
+    for (auto& v : vertices) v.color = vec4(1);
+    vertices[0].texcoord = vec2(0, 0); vertices[1].texcoord = vec2(1, 0); geometry();
+    line.texture = std::make_shared<Image>(2, 1, std::vector<unsigned char>{255,0,0,255, 0,255,0,255});
+    auto textured = device.render(65, 65, {line});
+    require(textured.rgba[(32*65+20)*4] == 255 && textured.rgba[(32*65+44)*4+1] == 255,
+            "line texture/axial coordinate mismatch");
+    line.texture.reset(); line.color = vec4(1, 0, 0, 1);
+    // Different styles sharing a geometry must retain independent dynamic uniforms.
+    line.model_view(1,3) = -0.45f; line.line_radius = 0.12f;
+    DrawCommand other = line;
+    other.model_view(1,3) = 0.45f; other.line_style = LineStyle::cone;
+    other.line_radius = 0.2f; other.object_id = 77;
+    Vertex point; point.position = vec3(0);
+    DrawCommand sphere;
+    sphere.geometry = std::make_shared<Geometry>(std::vector<Vertex>{point}, std::vector<uint32_t>{}, Topology::points);
+    sphere.point_style = PointStyle::sphere; sphere.sphere_radius = 0.12f; sphere.object_id = 78;
+    const auto mixed = device.render(80, 64, {line, sphere, other});
+    require(mixed.ids[46*80+40].object == 41 && mixed.ids[18*80+40].object == 77 && mixed.ids[32*80+40].object == 78,
+            "mixed point/line impostors shared draw uniforms or geometry bindings");
+    line.model_view = mat4::identity(); line.line_radius = 0.3f;
+    // Perspective oracle: an axis-aligned finite solid, solved in double precision
+    // directly in camera coordinates, independently of the shader's local basis.
+    vertices[0].position = vec3(-0.6f, 0.05f, -3); vertices[1].position = vec3(0.6f, 0.05f, -3); geometry();
+    line.projection = mat4(0.0f);
+    line.projection(0,0) = 1.3f; line.projection(1,1) = 1.6f;
+    line.projection(2,2) = -11.0f/9; line.projection(2,3) = -20.0f/9; line.projection(3,2) = -1;
+    for (auto style : {LineStyle::cylinder, LineStyle::cone}) {
+        line.line_style = style;
+        const auto image = device.render(93, 71, {line}, vec4(0));
+        unsigned hits = 0;
+        for (unsigned y = 0; y < 71; ++y) for (unsigned x = 0; x < 93; ++x) {
+            const double rx = (2*(x+0.5)/93-1)/1.3, ry = (1-2*(y+0.5)/71)/1.6;
+            const bool cone = style == LineStyle::cone;
+            const double a = ry*ry+1-(cone ? rx*rx/16 : 0);
+            const double b = -0.1*ry-6+(cone ? 0.075*rx : 0);
+            const double c = 9.0025-(cone ? 0.0225 : 0.09);
+            const double discriminant = b*b-4*a*c;
+            double nearest = 1e30;
+            auto candidate = [&](double t) {
+                const double px = rx*t;
+                if (px >= -0.6 && px <= 0.6) nearest = std::min(nearest, t);
+            };
+            if (discriminant > 0) {
+                candidate((-b-std::sqrt(discriminant))/(2*a));
+                candidate((-b+std::sqrt(discriminant))/(2*a));
+            }
+            if (std::abs(rx) > 1e-12) for (double cap : {-0.6, 0.6}) {
+                if (cone && cap > 0) continue;
+                const double t = cap/rx, py = ry*t-0.05, pz = 3-t;
+                if (py*py+pz*pz <= 0.09) nearest = std::min(nearest, t);
+            }
+            const size_t pixel = y*93+x;
+            if (nearest > 1 && nearest < 10) {
+                ++hits;
+                require(image.ids[pixel].object == 41 && image.ids[pixel].primitive == 201,
+                        "perspective line silhouette/ID mismatch");
+                const double depth = 0.5*((11.0*nearest/9-20.0/9)/nearest+1);
+                require(std::abs(image.depth[pixel]-depth) < 2e-5, "perspective line oracle depth mismatch");
+            } else require(image.ids[pixel].object == UINT32_MAX, "perspective line proxy leaked");
+        }
+        require(hits > 50, "line perspective oracle did not cover enough pixels");
+        line.model_view(2,3) = 4;
+        auto behind = device.render(65, 65, {line});
+        for (auto id : behind.ids) require(id.object == UINT32_MAX, "line behind eye was visible");
+        line.model_view(2,3) = -9;
+        auto distant = device.render(65, 65, {line});
+        for (auto id : distant.ids) require(id.object == UINT32_MAX, "line beyond far plane was visible");
+        line.model_view = mat4::identity();
+    }
+    line.projection = mat4::identity(); line.line_radius = 0.15f;
+    // Multiple indexed segments exercise endpoint-instance strides and original IDs.
+    vertices.resize(4);
+    vertices[0].position = vec3(-0.6f, -0.4f, 0); vertices[1].position = vec3(0.6f, -0.4f, 0);
+    vertices[2].position = vec3(-0.6f, 0.4f, 0); vertices[3].position = vec3(0.6f, 0.4f, 0);
+    line.geometry = std::make_shared<Geometry>(vertices, std::vector<uint32_t>{2,3,0,1}, Topology::lines,
+                                               std::vector<uint32_t>{501,502});
+    auto indexed = device.render(65, 65, {line});
+    require(indexed.ids[19*65+32].primitive == 501 && indexed.ids[45*65+32].primitive == 502,
+            "line endpoint instance packing changed primitive IDs");
+    vertices.resize(2); vertices[0].position = vertices[1].position; geometry();
+    auto degenerate = device.render(65, 65, {line});
+    for (auto id : degenerate.ids) require(id.object == UINT32_MAX, "collapsed line impostor was visible");
+    line.line_radius = 0; rejects([&] { device.render(32, 32, {line}); });
+    line.line_radius = 1; line.projection = mat4(0.0f); rejects([&] { device.render(32, 32, {line}); });
+    line.projection = mat4::identity(); line.model_view(3,0) = 1;
+    rejects([&] { device.render(32, 32, {line}); });
+}
 int main(int argc, char**) {
     try {
         DeviceOptions options;
@@ -282,6 +450,7 @@ int main(int argc, char**) {
         }
         point_styles(*device);
         surfels(*device);
+        line_impostors(*device);
         // Valid descriptor for a real texture, then a null texture on the same draw.
         near.texture = std::make_shared<Image>(1, 1, std::vector<unsigned char>{0, 255, 0, 255});
         near.color = vec4(1, 1, 1, 1);
@@ -336,7 +505,7 @@ int main(int argc, char**) {
         auto empty = device->render(19, 17, {});
         for (auto id : empty.ids) require(id.object == UINT32_MAX, "stale target contents after clear");
         require(device->validation_errors() == 0 && second->validation_errors() == 0, "Vulkan validation reported errors");
-        std::cout << "PASS: color, indexed geometry, depth, IDs, orientation, texture, updates, resize, independent devices, large points, sphere/surfel impostors, MSAA, clipping, lines, empty scene\n";
+        std::cout << "PASS: color, indexed geometry, depth, IDs, orientation, texture, updates, resize, independent devices, large points, sphere/surfel impostors, MSAA, clipping, cylinders, cones, lines, empty scene\n";
     } catch (const std::exception& e) {
         std::cerr << "FAIL: " << e.what() << std::endl;
         return 1;

@@ -5,6 +5,7 @@
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/util/initializer.h>
 #include <easy3d/util/resource.h>
 #define GLFW_INCLUDE_NONE
@@ -132,7 +133,32 @@ int main(int argc, char**) {
         require(disc_hits > 100, "surfel presentation/capture is empty");
         points->set_impostor_type(PointsDrawable::PLAIN);
         frame(viewer); // same cached geometry, different point style
-        points->set_visible(false); faces->set_visible(true);
+        points->set_visible(false);
+        auto segment = std::make_shared<LinesDrawable>();
+        viewer.add_drawable(segment);
+        const auto center = model->bounding_box().center();
+        const float extent = model->bounding_box().diagonal_length()*0.4f;
+        segment->update_vertex_buffer({center-vec3(extent,0,0), center+vec3(extent,0,0)});
+        segment->set_line_width(12);
+        for (auto style : {LinesDrawable::CYLINDER, LinesDrawable::CONE}) {
+            segment->set_impostor_type(style);
+            const auto native_style = style == LinesDrawable::CYLINDER ? graphics::LineStyle::cylinder : graphics::LineStyle::cone;
+            viewer.set_samples(viewer.device().supported_sample_counts(native_style) & 4 ? 4 : 1);
+            frame(viewer);
+            const auto solid = viewer.capture();
+            unsigned count = 0;
+            for (size_t i = 0; i < solid.ids.size(); ++i) {
+                if (solid.ids[i].object != 1) continue;
+                if (count++ == 0) {
+                    bool found = false;
+                    const auto p = viewer.point_under_pixel(int(i%solid.width), int(i/solid.width), found);
+                    require(found && std::abs(viewer.camera()->projectedCoordinatesOf(p).z-solid.depth[i]) < 1e-4f,
+                            "line impostor window depth picking mismatch");
+                }
+            }
+            require(count > 20, "line impostor presentation/capture is empty");
+        }
+        segment->set_visible(false); faces->set_visible(true);
         viewer.hide(); VulkanViewer::poll_events(); viewer.show(); frame(viewer);
         bool rejected_samples = false;
         try { viewer.set_samples(3); } catch (const std::invalid_argument&) { rejected_samples = true; }
