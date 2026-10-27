@@ -51,6 +51,8 @@ private:
     const std::vector<unsigned char> rgba_;
 };
 
+enum class PointStyle { plain, sphere };
+
 struct DrawCommand {
     std::shared_ptr<const Geometry> geometry;
     std::shared_ptr<const Image> texture; // null uses a valid white texture
@@ -61,6 +63,14 @@ struct DrawCommand {
     vec4 color = vec4(1, 1, 1, 1);
     std::uint32_t object_id = 0;
     bool lighting = false; // fixed world-space directional diffuse lighting
+    // Plain points use framebuffer-pixel diameters. Spheres use view-space radii,
+    // after transforming their centers; model scaling does not scale the radius.
+    PointStyle point_style = PointStyle::plain;
+    float point_size = 1;
+    float sphere_radius = 1;
+    vec3 sphere_light = vec3(0.3f, 0.5f, 1); // view-space directional diffuse light
+    mat4 model_view = mat4::identity();
+    mat4 projection = mat4::identity(); // OpenGL convention; spheres only
 };
 
 struct FrameImage {
@@ -86,7 +96,9 @@ public:
     virtual const std::string& name() const = 0;
     // Bit mask using the numeric sample counts (1, 2, 4, ...). Color MSAA uses
     // supported RGBA8/D32 counts; integer IDs/depth picking stay single-sampled.
-    virtual std::uint32_t supported_sample_counts() const = 0;
+    // Sphere MSAA additionally requires sampleRateShading. Query by style before
+    // offering multisampled spheres on devices without that optional feature.
+    virtual std::uint32_t supported_sample_counts(PointStyle style = PointStyle::plain) const = 0;
     // Synchronous offscreen capture. No window, GL context, surface or swapchain.
     // Instances are externally synchronized; separate instances are independent.
     virtual FrameImage render(std::uint32_t width, std::uint32_t height,

@@ -6,14 +6,15 @@ if(NOT Easy3D_GLSLANG_VALIDATOR)
 endif()
 
 set(shader_headers)
-foreach(stage vert frag)
-    set(source "${Easy3D_ROOT}/resources/shaders/vulkan/scene.${stage}")
-    set(binary "${CMAKE_CURRENT_BINARY_DIR}/scene_${stage}.spv")
-    set(header "${CMAKE_CURRENT_BINARY_DIR}/scene_${stage}.inc")
+foreach(shader scene.vert scene.frag points.vert points.frag)
+    string(REPLACE "." "_" symbol "${shader}")
+    set(source "${Easy3D_ROOT}/resources/shaders/vulkan/${shader}")
+    set(binary "${CMAKE_CURRENT_BINARY_DIR}/${symbol}.spv")
+    set(header "${CMAKE_CURRENT_BINARY_DIR}/${symbol}.inc")
     add_custom_command(OUTPUT "${header}" "${binary}"
             COMMAND "${Easy3D_GLSLANG_VALIDATOR}" -V --target-env vulkan1.2 -o "${binary}" "${source}"
             COMMAND "${CMAKE_COMMAND}" "-DINPUT=${binary}" "-DOUTPUT=${header}"
-                    "-DSYMBOL=scene_${stage}" -P "${Easy3D_ROOT}/cmake/EmbedSpirv.cmake"
+                    "-DSYMBOL=${symbol}" -P "${Easy3D_ROOT}/cmake/EmbedSpirv.cmake"
             DEPENDS "${source}" "${Easy3D_ROOT}/cmake/EmbedSpirv.cmake"
             VERBATIM)
     list(APPEND shader_headers "${header}")

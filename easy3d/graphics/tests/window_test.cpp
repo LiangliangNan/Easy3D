@@ -4,6 +4,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/drawable_points.h>
 #include <easy3d/util/initializer.h>
 #include <easy3d/util/resource.h>
 #define GLFW_INCLUDE_NONE
@@ -96,6 +97,27 @@ int main(int argc, char**) {
             model->renderer()->update();
         }
         require(extents.size() >= 3, "resize test did not exercise different framebuffer extents");
+        auto* points = model->renderer()->get_points_drawable("vertices");
+        points->set_visible(true); points->set_point_size(9);
+        points->set_impostor_type(PointsDrawable::SPHERE);
+        faces->set_visible(false);
+        viewer.set_samples(viewer.device().supported_sample_counts(graphics::PointStyle::sphere) & 4 ? 4 : 1);
+        frame(viewer);
+        auto spheres = viewer.capture();
+        unsigned sphere_hits=0;
+        for (size_t i=0;i<spheres.ids.size();++i) {
+            if (spheres.ids[i].object==UINT32_MAX) continue;
+            if (sphere_hits++ == 0) {
+                bool found=false;
+                const auto p=viewer.point_under_pixel(int(i%spheres.width),int(i/spheres.width),found);
+                require(found && std::abs(viewer.camera()->projectedCoordinatesOf(p).z-spheres.depth[i])<1e-4f,
+                        "sphere window depth picking mismatch");
+            }
+        }
+        require(sphere_hits>100,"sphere presentation/capture is empty");
+        points->set_impostor_type(PointsDrawable::PLAIN);
+        frame(viewer); // same cached geometry, different point style
+        points->set_visible(false); faces->set_visible(true);
         viewer.hide(); VulkanViewer::poll_events(); viewer.show(); frame(viewer);
         bool rejected_samples = false;
         try { viewer.set_samples(3); } catch (const std::invalid_argument&) { rejected_samples = true; }

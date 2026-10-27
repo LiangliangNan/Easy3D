@@ -11,6 +11,7 @@ static_assert(std::is_same<easy3d::OffScreen, easy3d::VulkanOffScreen>::value,
 #include <easy3d/fileio/image_io.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/drawable_points.h>
 #include <easy3d/util/initializer.h>
 #include <easy3d/util/resource.h>
 #include <iostream>
@@ -69,6 +70,26 @@ int main(int argc, char**) {
         cloud->add_vertex(vec3(-1, 0, 0)); cloud->add_vertex(vec3(1, 0, 0));
         renderer.add_model(cloud);
         require(hits(renderer.capture()) > 0, "point cloud did not render");
+        auto* points = cloud->renderer()->get_points_drawable("vertices");
+        points->set_point_size(17); points->set_lighting(false);
+        const auto large = renderer.capture();
+        require(hits(large)>100,"scene adapter did not expand large points");
+        points->set_impostor_type(PointsDrawable::SPHERE);
+        for (auto type : {Camera::PERSPECTIVE, Camera::ORTHOGRAPHIC}) {
+            renderer.camera()->setType(type);
+            auto spheres = renderer.capture();
+            require(hits(spheres)>50,"scene sphere adapter did not render");
+            if (renderer.device().supported_sample_counts(graphics::PointStyle::sphere) & 4) {
+                auto aa = renderer.capture(4);
+                for (size_t i=0;i<aa.ids.size();++i)
+                    require(aa.ids[i].object==spheres.ids[i].object && std::abs(aa.depth[i]-spheres.depth[i])<1e-5f,
+                            "scene sphere MSAA changed depth/picking");
+            }
+        }
+        points->set_impostor_type(PointsDrawable::SURFEL);
+        bool surfel_rejected=false;
+        try { renderer.capture(); } catch (const std::logic_error&) { surfel_rejected=true; }
+        require(surfel_rejected,"unsupported surfel was silently rendered");
         renderer.clear_scene();
         auto custom = std::make_shared<TrianglesDrawable>();
         custom->set_opacity(1);

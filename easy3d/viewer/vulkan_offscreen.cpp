@@ -49,8 +49,8 @@ struct VulkanOffScreen::Impl {
         if (d.color().w != 1 || d.is_ssao_enabled() || d.highlight() || d.is_selected())
             throw std::logic_error("opacity, SSAO and selection highlighting are not yet ported");
         if (auto* p = dynamic_cast<PointsDrawable*>(&d)) {
-            if (p->impostor_type() != PointsDrawable::PLAIN || p->point_size() != 1)
-                throw std::logic_error("Vulkan scene adapter currently supports plain one-pixel points");
+            if (p->impostor_type() != PointsDrawable::PLAIN && p->impostor_type() != PointsDrawable::SPHERE)
+                throw std::logic_error("Vulkan scene adapter supports plain points and spheres; surfels are not yet ported");
         }
         if (auto* l = dynamic_cast<LinesDrawable*>(&d)) {
             if (l->impostor_type() != LinesDrawable::PLAIN || l->line_width() != 1)
@@ -79,6 +79,14 @@ struct VulkanOffScreen::Impl {
         }
         graphics::DrawCommand result;
         result.geometry = entry.geometry;
+        if (auto* p = dynamic_cast<PointsDrawable*>(&d)) {
+            result.point_size = p->point_size();
+            result.point_style = p->impostor_type() == PointsDrawable::SPHERE ? graphics::PointStyle::sphere : graphics::PointStyle::plain;
+            result.sphere_radius = p->point_size() * cam.pixelGLRatio(cam.pivotPoint()) * 0.5f;
+            result.model_view = cam.modelViewMatrix() * d.manipulated_matrix();
+            result.projection = cam.projectionMatrix();
+            result.sphere_light = mat3(cam.modelViewMatrix()) * vec3(0.3f, 0.5f, 1);
+        }
         result.model_view_projection = cam.modelViewProjectionMatrix() * d.manipulated_matrix();
         if (d.lighting()) result.normal_matrix = transform::normal_matrix(d.manipulated_matrix());
         result.color = d.coloring_method() == State::UNIFORM_COLOR ? d.color() : vec4(1, 1, 1, 1);

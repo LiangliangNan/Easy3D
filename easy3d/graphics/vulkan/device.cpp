@@ -18,6 +18,8 @@
 namespace easy3d { namespace graphics { namespace {
 #include "scene_vert.inc"
 #include "scene_frag.inc"
+#include "points_vert.inc"
+#include "points_frag.inc"
 
 void check(VkResult result, const char* operation) {
     if (result != VK_SUCCESS)
@@ -38,6 +40,7 @@ std::vector<VkExtensionProperties> instance_extensions(const char* layer = nullp
 
 // No mutable global device dispatch or resources: loader dispatch is handle based.
 struct Context {
+    bool sample_shading = false;
     VkInstance instance = VK_NULL_HANDLE;
     VkDebugUtilsMessengerEXT messenger = VK_NULL_HANDLE;
     VkPhysicalDevice physical = VK_NULL_HANDLE;
@@ -229,7 +232,12 @@ struct Context {
         di.queueCreateInfoCount = 1; di.pQueueCreateInfos = &qi;
         di.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
         di.ppEnabledExtensionNames = extensions.data();
-        // No geometry shaders, wide lines, independent blend or other optional features.
+        VkPhysicalDeviceFeatures features{}, enabled{};
+        vkGetPhysicalDeviceFeatures(physical, &features);
+        sample_shading = features.sampleRateShading;
+        enabled.sampleRateShading = features.sampleRateShading;
+        di.pEnabledFeatures = &enabled;
+        // No geometry shaders, large points, wide lines or independent blend.
         check(vkCreateDevice(physical, &di, nullptr, &device), "create device");
         vkGetDeviceQueue(device, family, 0, &queue);
         VkCommandPoolCreateInfo pi{};
@@ -375,7 +383,7 @@ struct RenderPass {
     PassKind kind;
     VkSampleCountFlagBits samples;
     VkRenderPass handle = VK_NULL_HANDLE;
-    VkPipeline pipelines[3] = {};
+    VkPipeline pipelines[4] = {};
     RenderPass(Context& context, PassKind mode, VkSampleCountFlagBits count) : c(context), kind(mode), samples(count) {}
     ~RenderPass() {
         for (auto p : pipelines) if (p) vkDestroyPipeline(c.device, p, nullptr);
@@ -499,6 +507,8 @@ struct GpuTexture {
     ~GpuTexture() { if (set) vkFreeDescriptorSets(c.device, pool, 1, &set); }
 };
 // Explicit packing: do not rely on public vec3/mat4 alignment for GPU layouts.
+struct PointUniform { float model_view[16], projection[16], inverse_projection[16], dimensions[4], light[4]; };
+static_assert(sizeof(PointUniform) == 224, "point uniform layout changed");
 struct Push { float mvp[16], color[4]; uint32_t object, lighting; float normal[9]; };
 static_assert(sizeof(Push) == 124, "shader push-constant layout changed");
 
@@ -589,6 +599,10 @@ class VulkanDevice final : public RenderDevice {
     std::map<unsigned, std::unique_ptr<RenderPass>> passes_;
     std::unique_ptr<RenderPass> id_pass_;
     VkDescriptorSetLayout descriptors_ = VK_NULL_HANDLE;
+    VkDescriptorSetLayout point_descriptors_ = VK_NULL_HANDLE;
+    VkDescriptorSet point_set_ = VK_NULL_HANDLE;
+    std::unique_ptr<Buffer> point_uniforms_;
+    size_t point_capacity_ = 0;
     VkDescriptorPool descriptor_pool_ = VK_NULL_HANDLE;
     VkSampler sampler_ = VK_NULL_HANDLE;
     VkPipelineLayout layout_ = VK_NULL_HANDLE;
@@ -609,9 +623,12 @@ public:
         if (sampler_) vkDestroySampler(c_.device, sampler_, nullptr);
         if (descriptor_pool_) vkDestroyDescriptorPool(c_.device, descriptor_pool_, nullptr);
         if (descriptors_) vkDestroyDescriptorSetLayout(c_.device, descriptors_, nullptr);
+        if (point_descriptors_) vkDestroyDescriptorSetLayout(c_.device, point_descriptors_, nullptr);
     }
     const std::string& name() const override { return name_; }
-    uint32_t supported_sample_counts() const override { return sample_counts_; }
+    uint32_t supported_sample_counts(PointStyle style) const override {
+        return style == PointStyle::sphere && !c_.sample_shading ? 1 : sample_counts_;
+    }
     unsigned validation_errors() const override { return c_.errors.load(); }
     void init(const DeviceOptions& options, const VulkanSurface* surface = nullptr) {
         c_.init(options, surface); name_ = c_.properties.deviceName;
@@ -656,12 +673,20 @@ public:
         li.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
         li.bindingCount = 1; li.pBindings = &binding;
         check(vkCreateDescriptorSetLayout(c_.device, &li, nullptr, &descriptors_), "create descriptor layout");
-        VkDescriptorPoolSize size = {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1024};
+        binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+        binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+        check(vkCreateDescriptorSetLayout(c_.device, &li, nullptr, &point_descriptors_), "create point descriptor layout");
+        VkDescriptorPoolSize sizes[] = {{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1024},
+                                        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1}};
         VkDescriptorPoolCreateInfo pi{};
         pi.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         pi.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-        pi.maxSets = 1024; pi.poolSizeCount = 1; pi.pPoolSizes = &size;
+        pi.maxSets = 1025; pi.poolSizeCount = 2; pi.pPoolSizes = sizes;
         check(vkCreateDescriptorPool(c_.device, &pi, nullptr, &descriptor_pool_), "create descriptor pool");
+        VkDescriptorSetAllocateInfo ai{};
+        ai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        ai.descriptorPool = descriptor_pool_; ai.descriptorSetCount = 1; ai.pSetLayouts = &point_descriptors_;
+        check(vkAllocateDescriptorSets(c_.device, &ai, &point_set_), "allocate point descriptor");
         VkSamplerCreateInfo si{};
         si.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
         si.magFilter = VK_FILTER_NEAREST; si.minFilter = VK_FILTER_NEAREST;
@@ -674,12 +699,13 @@ public:
         VkPushConstantRange push = {VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(Push)};
         VkPipelineLayoutCreateInfo li{};
         li.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-        li.setLayoutCount = 1; li.pSetLayouts = &descriptors_;
+        const VkDescriptorSetLayout sets[] = {descriptors_, point_descriptors_};
+        li.setLayoutCount = 2; li.pSetLayouts = sets;
         li.pushConstantRangeCount = 1; li.pPushConstantRanges = &push;
         check(vkCreatePipelineLayout(c_.device, &li, nullptr, &layout_), "create pipeline layout");
     }
     void create_pipelines(RenderPass& pass) {
-        VkShaderModule modules[2] = {};
+        VkShaderModule modules[4] = {};
         try {
             VkShaderModuleCreateInfo mi{};
             mi.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -687,6 +713,10 @@ public:
             check(vkCreateShaderModule(c_.device, &mi, nullptr, &modules[0]), "create vertex shader");
             mi.codeSize = sizeof(scene_frag); mi.pCode = scene_frag;
             check(vkCreateShaderModule(c_.device, &mi, nullptr, &modules[1]), "create fragment shader");
+            mi.codeSize = sizeof(points_vert); mi.pCode = points_vert;
+            check(vkCreateShaderModule(c_.device, &mi, nullptr, &modules[2]), "create point vertex shader");
+            mi.codeSize = sizeof(points_frag); mi.pCode = points_frag;
+            check(vkCreateShaderModule(c_.device, &mi, nullptr, &modules[3]), "create point fragment shader");
             VkPipelineShaderStageCreateInfo stages[2] = {};
             for (unsigned i = 0; i < 2; ++i) {
                 stages[i].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -738,8 +768,14 @@ public:
             pi.pDynamicState = &dynamic; pi.layout = layout_; pi.renderPass = pass.handle;
             const VkPrimitiveTopology topologies[] = {VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
                 VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_PRIMITIVE_TOPOLOGY_POINT_LIST};
-            for (unsigned i = 0; i < 3; ++i) {
-                assembly.topology = topologies[i];
+            for (unsigned i = 0; i < 4; ++i) {
+                if (i == 3) {
+                    stages[0].module = modules[2]; stages[1].module = modules[3];
+                    binding.inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
+                    ms.sampleShadingEnable = c_.sample_shading && pass.samples != VK_SAMPLE_COUNT_1_BIT;
+                    ms.minSampleShading = 1;
+                }
+                assembly.topology = topologies[i == 3 ? 0 : i];
                 check(vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr, &pass.pipelines[i]), "create pipeline");
             }
         } catch (...) {
@@ -824,7 +860,11 @@ public:
         auto* result = gpu.get(); textures_.emplace(data.get(), std::move(gpu));
         return *result;
     }
-    struct Prepared { const DrawCommand* command; GpuGeometry* geometry; GpuTexture* texture; };
+    static bool expanded_points(const DrawCommand& d) {
+        return d.geometry->topology() == Topology::points &&
+               (d.point_style == PointStyle::sphere || d.point_size != 1);
+    }
+    struct Prepared { const DrawCommand* command; GpuGeometry* geometry; GpuTexture* texture; uint32_t point_offset; };
     std::vector<Prepared> prepare(uint32_t width, uint32_t height, const std::vector<DrawCommand>& commands,
                                   const vec4& background, unsigned samples) {
         require_samples(samples);
@@ -838,6 +878,15 @@ public:
         for (const auto& command : commands) {
             if (!command.geometry || command.object_id == UINT32_MAX)
                 throw std::invalid_argument("draw requires geometry and a non-background object ID");
+            if (command.point_style != PointStyle::plain && command.point_style != PointStyle::sphere)
+                throw std::invalid_argument("unknown point style");
+            if (!std::isfinite(command.point_size) || command.point_size <= 0 ||
+                !std::isfinite(command.sphere_radius) || command.sphere_radius <= 0)
+                throw std::invalid_argument("point size and sphere radius must be finite and positive");
+            if (command.geometry->topology() != Topology::points && command.point_style != PointStyle::plain)
+                throw std::invalid_argument("sphere style requires point geometry");
+            if (command.point_style == PointStyle::sphere && samples > 1 && !c_.sample_shading)
+                throw std::invalid_argument("multisampled spheres require sampleRateShading for correct coverage/depth");
             for (unsigned col = 0; col < 4; ++col) {
                 if (!std::isfinite(command.color[col])) throw std::invalid_argument("non-finite draw color");
                 for (unsigned row = 0; row < 4; ++row)
@@ -862,12 +911,59 @@ public:
             std::unique_ptr<Target> target(new Target(c_, width, height, pass, picking));
             target->init(); target_ = std::move(target);
         }
+        const size_t alignment = std::max(size_t(16), size_t(limits.minUniformBufferOffsetAlignment));
+        const size_t stride = (sizeof(PointUniform) + alignment - 1) / alignment * alignment;
+        std::vector<unsigned char> uniforms;
         std::vector<Prepared> draws;
         for (const auto& command : commands) {
             auto& g = geometry(command.geometry);
             if (!g.count) continue;
             auto& t = texture(command.texture ? command.texture : white_);
-            draws.push_back({&command, &g, &t});
+            uint32_t offset = 0;
+            if (expanded_points(command)) {
+                if (uniforms.size() > UINT32_MAX - stride)
+                    throw std::invalid_argument("too many point draw commands");
+                offset = static_cast<uint32_t>(uniforms.size());
+                PointUniform u{};
+                const auto inv = command.point_style == PointStyle::sphere ? inverse(command.projection) : mat4::identity();
+                for (unsigned col = 0; col < 4; ++col)
+                    for (unsigned row = 0; row < 4; ++row) {
+                        u.model_view[col*4+row] = command.model_view(row,col);
+                        u.projection[col*4+row] = command.projection(row,col);
+                        u.inverse_projection[col*4+row] = inv(row,col);
+                        if (!std::isfinite(u.model_view[col*4+row]) || !std::isfinite(u.projection[col*4+row]) ||
+                            !std::isfinite(u.inverse_projection[col*4+row]))
+                            throw std::invalid_argument("invalid sphere transform/projection");
+                    }
+                u.dimensions[0] = float(width); u.dimensions[1] = float(height);
+                u.dimensions[2] = command.point_size; u.dimensions[3] = command.sphere_radius;
+                for (unsigned i = 0; i < 3; ++i) {
+                    if (!std::isfinite(command.sphere_light[i]))
+                        throw std::invalid_argument("non-finite sphere light");
+                    u.light[i] = command.sphere_light[i];
+                }
+                if (command.point_style == PointStyle::sphere && command.lighting &&
+                    dot(command.sphere_light, command.sphere_light) == 0)
+                    throw std::invalid_argument("sphere lighting requires a nonzero direction");
+                u.light[3] = command.point_style == PointStyle::sphere ? 1 : 0;
+                uniforms.resize(uniforms.size() + stride);
+                std::memcpy(uniforms.data() + offset, &u, sizeof(u));
+            }
+            draws.push_back({&command, &g, &t, offset});
+        }
+        if (!uniforms.empty()) {
+            if (uniforms.size() > point_capacity_) {
+                std::unique_ptr<Buffer> buffer(new Buffer(c_));
+                buffer->init(uniforms.size(), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, true);
+                VkDescriptorBufferInfo info = {buffer->handle, 0, sizeof(PointUniform)};
+                VkWriteDescriptorSet write{};
+                write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                write.dstSet = point_set_; write.descriptorCount = 1;
+                write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC; write.pBufferInfo = &info;
+                vkUpdateDescriptorSets(c_.device, 1, &write, 0, nullptr);
+                point_uniforms_ = std::move(buffer); point_capacity_ = uniforms.size();
+            }
+            point_uniforms_->transfer(uniforms.data(), uniforms.size(), true);
         }
         return draws;
     }
@@ -898,7 +994,11 @@ public:
             const auto& d = *draw.command;
             unsigned pipeline = d.geometry->topology() == Topology::triangles ? 0 :
                                 d.geometry->topology() == Topology::lines ? 1 : 2;
+            const bool expanded = expanded_points(d);
+            if (expanded) pipeline = 3;
             vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pass.pipelines[pipeline]);
+            if (expanded)
+                vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout_, 1, 1, &point_set_, 1, &draw.point_offset);
             VkDeviceSize offset = 0;
             vkCmdBindVertexBuffers(cmd, 0, 1, &draw.geometry->buffer.handle, &offset);
             vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout_, 0, 1, &draw.texture->set, 0, nullptr);
@@ -910,7 +1010,8 @@ public:
             for (unsigned col = 0; col < 3; ++col)
                 for (unsigned row = 0; row < 3; ++row) push.normal[col * 3 + row] = d.normal_matrix(row, col);
             vkCmdPushConstants(cmd, layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
-            vkCmdDraw(cmd, draw.geometry->count, 1, 0, 0);
+            if (expanded) vkCmdDraw(cmd, 6, draw.geometry->count, 0, 0);
+            else vkCmdDraw(cmd, draw.geometry->count, 1, 0, 0);
         }
         vkCmdEndRenderPass(cmd);
     }
