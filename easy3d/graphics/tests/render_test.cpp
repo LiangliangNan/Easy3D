@@ -133,6 +133,104 @@ void point_styles(RenderDevice& device) {
     d.point_size=0; rejects([&]{device.render(32,32,{d});});
     d.point_size=1; d.projection=mat4(0.0f); rejects([&]{device.render(32,32,{d});});
 }
+void surfels(RenderDevice& device) {
+    Vertex vertex;
+    vertex.position = vec3(0);
+    vertex.normal = vec3(1, 0, 1);
+    DrawCommand disc;
+    disc.point_style = PointStyle::surfel;
+    disc.sphere_radius = 0.6f;
+    disc.object_id = 64;
+    disc.color = vec4(1, 0, 0, 1);
+    auto geometry = [&] {
+        disc.geometry = std::make_shared<Geometry>(std::vector<Vertex>{vertex},
+                std::vector<uint32_t>{0}, Topology::points, std::vector<uint32_t>{123});
+    };
+    geometry();
+    disc.model_view(2,3) = 0.2f;
+    auto image = device.render(65, 65, {disc}, vec4(0));
+    require(image.ids[32*65+32].primitive == 123, "surfel lost explicit primitive ID");
+    require(std::abs(image.depth[32*65+32] - 0.6f) < 1e-5f, "surfel center plane depth mismatch");
+    require(std::abs(image.depth[32*65+40] - (0.6f-8.0f/65)) < 1e-5f, "tilted surfel depth is flat");
+    DrawCommand plane;
+    plane.geometry = triangle(0.1f, vec4(0, 1, 0, 1)); plane.object_id = 19;
+    for (bool reverse : {false, true}) {
+        auto overlap = device.render(65, 65, reverse ? std::vector<DrawCommand>{plane, disc} :
+                                                       std::vector<DrawCommand>{disc, plane});
+        require(overlap.ids[32*65+32].object == 19 && overlap.ids[32*65+40].object == 64,
+                "surfel/mesh depth ordering mismatch");
+    }
+    // Off-axis perspective, with a nonuniform model scale. Inverse-transpose
+    // transforms (4,0,1) to (2,0,2), so the expected plane normal is (1,0,1).
+    vertex.normal = vec3(4, 0, 1); geometry();
+    disc.model_view(0,0) = 2; disc.model_view(2,2) = 0.5f;
+    disc.model_view(0,3) = 0.45f; disc.model_view(1,3) = -0.15f; disc.model_view(2,3) = -3;
+    disc.sphere_radius = 0.8f;
+    disc.projection = mat4(0.0f);
+    disc.projection(0,0) = 1.3f; disc.projection(1,1) = 1.6f;
+    disc.projection(2,2) = -11.0f/9; disc.projection(2,3) = -20.0f/9; disc.projection(3,2) = -1;
+    image = device.render(93, 71, {disc}, vec4(0));
+    unsigned hits = 0;
+    const vec3 center(0.45f, -0.15f, -3), normal = normalize(vec3(1, 0, 1));
+    for (unsigned y = 0; y < 71; ++y) for (unsigned x = 0; x < 93; ++x) {
+        const vec3 ray = normalize(vec3((2*(x+0.5f)/93-1)/1.3f, (1-2*(y+0.5f)/71)/1.6f, -1));
+        const float t = dot(center, normal)/dot(ray, normal);
+        const vec3 hit = t*ray, delta = hit-center;
+        const float radial = dot(delta, delta);
+        const size_t pixel = y*93+x;
+        if (t > 0 && radial < 0.64f-1e-5f) {
+            ++hits;
+            const vec4 clip = disc.projection*vec4(hit, 1);
+            require(image.ids[pixel].object == 64 && image.ids[pixel].primitive == 123,
+                    "perspective surfel silhouette/normal transform mismatch");
+            require(std::abs(image.depth[pixel] - (clip.z/clip.w+1)*0.5f) < 2e-5f,
+                    "perspective surfel ray depth mismatch");
+        } else if (t <= 0 || radial > 0.64f+1e-5f)
+            require(image.ids[pixel].object == UINT32_MAX, "surfel proxy leaked outside disc");
+    }
+    require(hits > 100, "surfel oracle did not cover enough pixels");
+    if (device.supported_sample_counts(PointStyle::surfel) & 4) {
+        auto aa = device.render(93, 71, {disc}, vec4(0), 4);
+        unsigned edges = 0;
+        for (size_t i = 0; i < image.ids.size(); ++i) {
+            require(aa.ids[i].object == image.ids[i].object && aa.ids[i].primitive == image.ids[i].primitive &&
+                    std::abs(aa.depth[i]-image.depth[i]) < 1e-5f, "surfel MSAA changed center picking/depth");
+            edges += aa.rgba[4*i] > 0 && aa.rgba[4*i] < 255;
+        }
+        require(edges > 0, "surfel has no antialiased silhouette");
+    }
+    vertex.normal = -vertex.normal; geometry();
+    const auto back = device.render(93, 71, {disc});
+    for (size_t i = 0; i < image.ids.size(); ++i)
+        require(back.ids[i].object == image.ids[i].object && std::abs(back.depth[i]-image.depth[i]) < 1e-5f,
+                "surfel back face changed silhouette/depth");
+    disc.model_view(2,3) = 3; // disc center on/behind the eye plane
+    auto hidden = device.render(65, 65, {disc});
+    for (auto id : hidden.ids) require(id.object == UINT32_MAX, "surfel behind eye was visible");
+    // Near/far clipping, including a partially clipped tilted disc.
+    disc.model_view = mat4::identity(); disc.projection = mat4::identity();
+    vertex.normal = vec3(1, 0, 1); geometry(); disc.sphere_radius = 0.5f;
+    disc.model_view(2,3) = -0.9f;
+    auto clipped = device.render(65, 65, {disc});
+    require(clipped.ids[32*65+25].object == 64 && clipped.ids[32*65+39].object == UINT32_MAX,
+            "surfel near clipping discarded the visible portion or leaked depth");
+    disc.model_view(2,3) = 0.9f;
+    clipped = device.render(65, 65, {disc});
+    require(clipped.ids[32*65+39].object == 64 && clipped.ids[32*65+25].object == UINT32_MAX,
+            "surfel far clipping mismatch");
+    disc.model_view = mat4::identity();
+    vertex.normal = vec3(1, 0, 0); geometry();
+    clipped = device.render(65, 65, {disc});
+    for (auto id : clipped.ids) require(id.object == UINT32_MAX, "edge-on surfel has visible area");
+    vertex.normal = vec3(0); geometry();
+    rejects([&] { device.render(32, 32, {disc}); });
+    vertex.normal = vec3(0, 0, 1); geometry(); disc.model_view(0,0) = 0;
+    rejects([&] { device.render(32, 32, {disc}); });
+    disc.model_view = mat4::identity(); disc.model_view(3,0) = 1;
+    rejects([&] { device.render(32, 32, {disc}); });
+    disc.model_view = mat4::identity(); disc.projection = mat4(0.0f);
+    rejects([&] { device.render(32, 32, {disc}); });
+}
 int main(int argc, char**) {
     try {
         DeviceOptions options;
@@ -183,6 +281,7 @@ int main(int argc, char**) {
             }
         }
         point_styles(*device);
+        surfels(*device);
         // Valid descriptor for a real texture, then a null texture on the same draw.
         near.texture = std::make_shared<Image>(1, 1, std::vector<unsigned char>{0, 255, 0, 255});
         near.color = vec4(1, 1, 1, 1);
@@ -237,7 +336,7 @@ int main(int argc, char**) {
         auto empty = device->render(19, 17, {});
         for (auto id : empty.ids) require(id.object == UINT32_MAX, "stale target contents after clear");
         require(device->validation_errors() == 0 && second->validation_errors() == 0, "Vulkan validation reported errors");
-        std::cout << "PASS: color, indexed geometry, depth, IDs, orientation, texture, updates, resize, independent devices, large points, sphere impostors, MSAA, clipping, lines, empty scene\n";
+        std::cout << "PASS: color, indexed geometry, depth, IDs, orientation, texture, updates, resize, independent devices, large points, sphere/surfel impostors, MSAA, clipping, lines, empty scene\n";
     } catch (const std::exception& e) {
         std::cerr << "FAIL: " << e.what() << std::endl;
         return 1;

@@ -87,9 +87,24 @@ int main(int argc, char**) {
             }
         }
         points->set_impostor_type(PointsDrawable::SURFEL);
-        bool surfel_rejected=false;
-        try { renderer.capture(); } catch (const std::logic_error&) { surfel_rejected=true; }
-        require(surfel_rejected,"unsupported surfel was silently rendered");
+        bool normals_required = false;
+        try { renderer.capture(); } catch (const std::logic_error&) { normals_required = true; }
+        require(normals_required, "surfel without normals was silently rendered");
+        cloud->add_vertex_property<vec3>("v:normal", vec3(0, 0, 1));
+        cloud->renderer()->update();
+        renderer.camera()->setViewDirection(vec3(0, 0, -1));
+        renderer.fit_screen();
+        for (auto type : {Camera::PERSPECTIVE, Camera::ORTHOGRAPHIC}) {
+            renderer.camera()->setType(type);
+            auto discs = renderer.capture();
+            require(hits(discs) > 50, "scene adapter did not render oriented surfels");
+            if (renderer.device().supported_sample_counts(graphics::PointStyle::surfel) & 4) {
+                auto aa = renderer.capture(4);
+                for (size_t i = 0; i < aa.ids.size(); ++i)
+                    require(aa.ids[i].object == discs.ids[i].object && std::abs(aa.depth[i]-discs.depth[i]) < 1e-5f,
+                            "scene surfel MSAA changed picking/depth");
+            }
+        }
         renderer.clear_scene();
         auto custom = std::make_shared<TrianglesDrawable>();
         custom->set_opacity(1);

@@ -627,7 +627,7 @@ public:
     }
     const std::string& name() const override { return name_; }
     uint32_t supported_sample_counts(PointStyle style) const override {
-        return style == PointStyle::sphere && !c_.sample_shading ? 1 : sample_counts_;
+        return style != PointStyle::plain && !c_.sample_shading ? 1 : sample_counts_;
     }
     unsigned validation_errors() const override { return c_.errors.load(); }
     void init(const DeviceOptions& options, const VulkanSurface* surface = nullptr) {
@@ -862,7 +862,7 @@ public:
     }
     static bool expanded_points(const DrawCommand& d) {
         return d.geometry->topology() == Topology::points &&
-               (d.point_style == PointStyle::sphere || d.point_size != 1);
+               (d.point_style != PointStyle::plain || d.point_size != 1);
     }
     struct Prepared { const DrawCommand* command; GpuGeometry* geometry; GpuTexture* texture; uint32_t point_offset; };
     std::vector<Prepared> prepare(uint32_t width, uint32_t height, const std::vector<DrawCommand>& commands,
@@ -878,20 +878,40 @@ public:
         for (const auto& command : commands) {
             if (!command.geometry || command.object_id == UINT32_MAX)
                 throw std::invalid_argument("draw requires geometry and a non-background object ID");
-            if (command.point_style != PointStyle::plain && command.point_style != PointStyle::sphere)
+            if (command.point_style != PointStyle::plain && command.point_style != PointStyle::sphere &&
+                command.point_style != PointStyle::surfel)
                 throw std::invalid_argument("unknown point style");
             if (!std::isfinite(command.point_size) || command.point_size <= 0 ||
                 !std::isfinite(command.sphere_radius) || command.sphere_radius <= 0)
                 throw std::invalid_argument("point size and sphere radius must be finite and positive");
             if (command.geometry->topology() != Topology::points && command.point_style != PointStyle::plain)
-                throw std::invalid_argument("sphere style requires point geometry");
-            if (command.point_style == PointStyle::sphere && samples > 1 && !c_.sample_shading)
-                throw std::invalid_argument("multisampled spheres require sampleRateShading for correct coverage/depth");
+                throw std::invalid_argument("point impostor style requires point geometry");
+            if (command.point_style != PointStyle::plain && samples > 1 && !c_.sample_shading)
+                throw std::invalid_argument("multisampled point impostors require sampleRateShading for correct coverage/depth");
             for (unsigned col = 0; col < 4; ++col) {
                 if (!std::isfinite(command.color[col])) throw std::invalid_argument("non-finite draw color");
                 for (unsigned row = 0; row < 4; ++row)
                     if (!std::isfinite(command.model_view_projection(row, col)))
                         throw std::invalid_argument("non-finite transform");
+            }
+            if (command.point_style == PointStyle::surfel) {
+                if (command.model_view(3,0) != 0 || command.model_view(3,1) != 0 ||
+                    command.model_view(3,2) != 0 || command.model_view(3,3) != 1)
+                    throw std::invalid_argument("surfel model-view transform must be affine");
+                const auto normal_transform = transpose(inverse(mat3(command.model_view)));
+                for (unsigned col = 0; col < 3; ++col)
+                    for (unsigned row = 0; row < 3; ++row)
+                        if (!std::isfinite(normal_transform(row, col)))
+                            throw std::invalid_argument("surfel model-view transform must have an invertible linear part");
+                const auto& vertices = command.geometry->vertices();
+                const auto& indices = command.geometry->indices();
+                const size_t count = indices.empty() ? vertices.size() : indices.size();
+                for (size_t i = 0; i < count; ++i) {
+                    const auto n = normal_transform * vertices[indices.empty() ? i : indices[i]].normal;
+                    const float length_squared = dot(n, n);
+                    if (!std::isfinite(length_squared) || length_squared <= 0)
+                        throw std::invalid_argument("surfels require finite nonzero transformed normals");
+                }
             }
             for (unsigned col = 0; col < 3; ++col)
                 for (unsigned row = 0; row < 3; ++row)
@@ -925,7 +945,7 @@ public:
                     throw std::invalid_argument("too many point draw commands");
                 offset = static_cast<uint32_t>(uniforms.size());
                 PointUniform u{};
-                const auto inv = command.point_style == PointStyle::sphere ? inverse(command.projection) : mat4::identity();
+                const auto inv = command.point_style != PointStyle::plain ? inverse(command.projection) : mat4::identity();
                 for (unsigned col = 0; col < 4; ++col)
                     for (unsigned row = 0; row < 4; ++row) {
                         u.model_view[col*4+row] = command.model_view(row,col);
@@ -933,7 +953,7 @@ public:
                         u.inverse_projection[col*4+row] = inv(row,col);
                         if (!std::isfinite(u.model_view[col*4+row]) || !std::isfinite(u.projection[col*4+row]) ||
                             !std::isfinite(u.inverse_projection[col*4+row]))
-                            throw std::invalid_argument("invalid sphere transform/projection");
+                            throw std::invalid_argument("invalid point impostor transform/projection");
                     }
                 u.dimensions[0] = float(width); u.dimensions[1] = float(height);
                 u.dimensions[2] = command.point_size; u.dimensions[3] = command.sphere_radius;
@@ -942,10 +962,10 @@ public:
                         throw std::invalid_argument("non-finite sphere light");
                     u.light[i] = command.sphere_light[i];
                 }
-                if (command.point_style == PointStyle::sphere && command.lighting &&
+                if (command.point_style != PointStyle::plain && command.lighting &&
                     dot(command.sphere_light, command.sphere_light) == 0)
                     throw std::invalid_argument("sphere lighting requires a nonzero direction");
-                u.light[3] = command.point_style == PointStyle::sphere ? 1 : 0;
+                u.light[3] = command.point_style == PointStyle::surfel ? 2 : command.point_style == PointStyle::sphere ? 1 : 0;
                 uniforms.resize(uniforms.size() + stride);
                 std::memcpy(uniforms.data() + offset, &u, sizeof(u));
             }

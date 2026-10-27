@@ -115,6 +115,21 @@ int main(int argc, char**) {
             }
         }
         require(sphere_hits>100,"sphere presentation/capture is empty");
+        points->set_impostor_type(PointsDrawable::SURFEL);
+        viewer.set_samples(viewer.device().supported_sample_counts(graphics::PointStyle::surfel) & 4 ? 4 : 1);
+        frame(viewer);
+        auto discs = viewer.capture();
+        unsigned disc_hits = 0;
+        for (size_t i = 0; i < discs.ids.size(); ++i) {
+            if (discs.ids[i].object == UINT32_MAX) continue;
+            if (disc_hits++ == 0) {
+                bool found = false;
+                const auto p = viewer.point_under_pixel(int(i%discs.width), int(i/discs.width), found);
+                require(found && std::abs(viewer.camera()->projectedCoordinatesOf(p).z-discs.depth[i]) < 1e-4f,
+                        "surfel window depth picking mismatch");
+            }
+        }
+        require(disc_hits > 100, "surfel presentation/capture is empty");
         points->set_impostor_type(PointsDrawable::PLAIN);
         frame(viewer); // same cached geometry, different point style
         points->set_visible(false); faces->set_visible(true);

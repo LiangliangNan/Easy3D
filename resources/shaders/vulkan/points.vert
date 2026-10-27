@@ -10,13 +10,14 @@ layout(push_constant) uniform Draw {
 layout(set=1,binding=0,std140) uniform Points {
     mat4 model_view; mat4 projection; mat4 inverse_projection;
     vec4 dimensions; // width, height, pixel diameter, view-space radius
-    vec4 light; // view-space direction; w = sphere style
+    vec4 light; // view-space direction; w = style (0 plain, 1 sphere, 2 surfel)
 } points;
 layout(location=0) out vec4 vertex_color;
 layout(location=1) out vec2 uv;
 layout(location=2) flat out uvec2 id;
 layout(location=3) flat out vec3 center;
 layout(location=4) flat out uint lighting;
+layout(location=5) flat out vec3 surfel_normal;
 void main() {
     const vec2 corners[6] = vec2[](vec2(-1,-1),vec2(1,-1),vec2(1,1),vec2(-1,-1),vec2(1,1),vec2(-1,1));
     vec2 corner = corners[gl_VertexIndex];
@@ -24,6 +25,9 @@ void main() {
     uv = texcoord;
     id = uvec2(draw.object_id, primitive_id);
     lighting = draw.lighting;
+    surfel_normal = vec3(0,0,1);
+    if (points.light.w == 2)
+        surfel_normal = normalize(transpose(inverse(mat3(points.model_view))) * normal);
     center = (points.model_view * vec4(position,1)).xyz;
     if (points.light.w == 0) {
         vec4 p = draw.mvp * vec4(position,1);
@@ -51,7 +55,7 @@ void main() {
         if (crosses_eye) { lo=vec2(-1); hi=vec2(1); }
         lo=max(lo,vec2(-1)); hi=min(hi,vec2(1));
         vec2 p = mix(lo,hi,0.5*(corner+1));
-        // Proxy depth must not clip the actual sphere surface.
+        // Proxy depth must not clip the actual impostor surface.
         gl_Position = vec4(p.x,-p.y,0,1);
     }
 }

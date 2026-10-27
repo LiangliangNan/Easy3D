@@ -49,8 +49,9 @@ struct VulkanOffScreen::Impl {
         if (d.color().w != 1 || d.is_ssao_enabled() || d.highlight() || d.is_selected())
             throw std::logic_error("opacity, SSAO and selection highlighting are not yet ported");
         if (auto* p = dynamic_cast<PointsDrawable*>(&d)) {
-            if (p->impostor_type() != PointsDrawable::PLAIN && p->impostor_type() != PointsDrawable::SPHERE)
-                throw std::logic_error("Vulkan scene adapter supports plain points and spheres; surfels are not yet ported");
+            if (p->impostor_type() != PointsDrawable::PLAIN && p->impostor_type() != PointsDrawable::SPHERE &&
+                p->impostor_type() != PointsDrawable::SURFEL)
+                throw std::logic_error("unknown point impostor type");
         }
         if (auto* l = dynamic_cast<LinesDrawable*>(&d)) {
             if (l->impostor_type() != LinesDrawable::PLAIN || l->line_width() != 1)
@@ -59,6 +60,9 @@ struct VulkanOffScreen::Impl {
         // As with the legacy opaque pass, TrianglesDrawable::opacity() is only
         // meaningful in a separate transparency pass (not implemented here).
         const auto& buffers = d.cpu_buffers();
+        if (auto* p = dynamic_cast<PointsDrawable*>(&d))
+            if (p->impostor_type() == PointsDrawable::SURFEL && !buffers.vertices.empty() && buffers.normals.empty())
+                throw std::logic_error("surfel rendering requires point normals");
         auto& entry = cache[&d];
         const bool use_colors = d.coloring_method() == State::COLOR_PROPERTY;
         if (entry.source.lock() != drawable || entry.revision != buffers.revision || !entry.geometry || entry.use_colors != use_colors) {
@@ -81,7 +85,8 @@ struct VulkanOffScreen::Impl {
         result.geometry = entry.geometry;
         if (auto* p = dynamic_cast<PointsDrawable*>(&d)) {
             result.point_size = p->point_size();
-            result.point_style = p->impostor_type() == PointsDrawable::SPHERE ? graphics::PointStyle::sphere : graphics::PointStyle::plain;
+            result.point_style = p->impostor_type() == PointsDrawable::SPHERE ? graphics::PointStyle::sphere :
+                                 p->impostor_type() == PointsDrawable::SURFEL ? graphics::PointStyle::surfel : graphics::PointStyle::plain;
             result.sphere_radius = p->point_size() * cam.pixelGLRatio(cam.pivotPoint()) * 0.5f;
             result.model_view = cam.modelViewMatrix() * d.manipulated_matrix();
             result.projection = cam.projectionMatrix();

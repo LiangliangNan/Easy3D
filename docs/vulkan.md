@@ -57,10 +57,11 @@ Completion gates include:
   swapchain, Qt, GLFW or GLEW dependency in the `easy3d::vulkan` target.
 - Indexed/nonindexed triangle lists, plain points and one-pixel line lists, uniform and
   vertex colors, RGBA8 textures, basic directional lighting and depth testing.
-- Portable large plain points and sphere impostors using six-vertex instanced
+- Portable large plain points, spheres and oriented surfels using six-vertex instanced
   quads, without geometry shaders or the optional `largePoints` feature. Sphere
   fragments compute perspective/orthographic ray intersections, silhouette discard
-  and actual surface depth, retaining original point primitive IDs.
+  and actual surface depth, retaining original point primitive IDs. Surfels use
+  ray/plane disc intersections and inverse-transpose normal transforms.
 - Explicit sampler descriptors, including a valid white fallback texture.
 - Device-local geometry/images, staged uploads, coherent/noncoherent host memory,
   fenced submission/readback, explicit image transitions and transfer barriers.
@@ -306,7 +307,7 @@ cause.
 | `TrianglesDrawable::opacity()` | As in the old opaque pass, effective only in a separate transparency pass; such a pass is not implemented here. |
 | CPU drawable textures/scalars | Legacy `Texture` coloring is rejected. Native `graphics::Image` texturing is implemented. CPU-only implicit legacy texture creation throws before making GL calls. |
 | Transparency, SSAO, shadows, EDL, text, clipping | Not ported. Do not infer support from the low-level draw-command API. The scene adapter rejects SSAO/highlighting/selection; no effect-pass interface is exposed yet. |
-| Point and line styles | Plain points of any positive pixel size and sphere impostors are implemented. Surfels, cylinders/cones and wide lines still report explicit unsupported-style errors. |
+| Point and line styles | Plain points of any positive pixel size, spheres and oriented surfels are implemented. Cylinders/cones and wide lines still report explicit unsupported-style errors. |
 | Snapshot options | Device-supported MSAA (default 1); `expand=false` remains unsupported. Scaling, white/current/transparent background and image saving work. No tiled oversized captures. |
 | Readback | RGBA8, D32 and RG32UI; top row first; depth [0,1]; no-hit object/primitive IDs are `UINT32_MAX`. |
 | Picking IDs | Draw-command object ID and draw-primitive index (or explicit native primitive IDs). The adapter uses model/drawable order and generated primitive indices, not original polygon/vertex handles. Existing GUI pickers are not ported. |
@@ -356,13 +357,13 @@ use the logging wrappers. Fresh-configure checks verify the new four defaults.
 The subsequent point/impostor stage also validates this MSAA path on macOS/MoltenVK; Windows validation remains outstanding.
 
 Next implementation gates are native Qt/wx surface/frame adapters, remaining
-impostors (surfels, cylinders/cones), text and texture/scalar state, ID mapping/pickers, oversized capture,
+impostors (cylinders/cones), text and texture/scalar state, ID mapping/pickers, oversized capture,
 effects/transparency, all applications/tutorials and Python integration, then
 hardware validation and packaging on macOS/Windows/Linux. The defaults now select
 Vulkan for development. Final backend selection and automatic OpenGL fallback
 remain migration gates; the OpenGL backend will remain supported.
 
-## Portable points and sphere impostors
+## Portable points, spheres and surfels
 
 `PointsDrawable::PLAIN` accepts positive finite framebuffer-pixel sizes; sizes
 other than one use instanced triangle quads and never request `largePoints`.
@@ -370,11 +371,14 @@ other than one use instanced triangle quads and never request `largePoints`.
 `point_size() * camera.pixelGLRatio(camera.pivotPoint()) / 2`, matching the legacy
 radius convention. Manipulation transforms the center; radius is independent of
 model scale. Model/default drawable styling remains plain one-pixel points until
-explicitly changed. Surfels remain unsupported.
+explicitly changed. `PointsDrawable::SURFEL` now renders oriented circular discs
+with the same radius convention. Supply point normals (for example `v:normal`
+on a point cloud); missing or zero normals produce explicit errors.
 
 Native `DrawCommand` clients set `point_size` for plain points, or set
 `point_style = PointStyle::sphere`, `sphere_radius`, `model_view` and `projection`
-for spheres. The latter matrices use the Easy3D/OpenGL convention; sphere centers
+for spheres. For discs, use `point_style = PointStyle::surfel` with the same
+radius/matrices, plus a nonzero normal in each referenced `Vertex`. The latter matrices use the Easy3D/OpenGL convention; sphere centers
 are transformed by `model_view`, and `projection` must be invertible. The existing
 `model_view_projection` continues to control plain points/lines/triangles. Sphere
 lighting uses `sphere_light` in view space; the scene adapter transforms the fixed
@@ -398,6 +402,8 @@ the existing separate center-sample pass, with the same sphere intersection and
 surface depth, independently of the color sample count. Proxy triangles never
 become picking primitive IDs. Per-draw matrices/parameters use an aligned dynamic
 uniform buffer; push constants remain within Vulkan's guaranteed 128-byte limit.
+These sample-shading requirements also apply to surfels; query
+`device.supported_sample_counts(PointStyle::surfel)` before selecting MSAA for discs.
 
 Local hardware verification on 2026-10-27 used the existing Debug configuration,
 Apple M4 Pro and **MoltenVK 1.4.2**, explicitly selected with
@@ -415,3 +421,36 @@ This MoltenVK version emits a known spurious warning about blending on the
 RG32UI ID attachment even though blending is disabled. No validation errors are
 reported. The upstream fix checks `blendEnable` before issuing that warning:
 [MoltenVK diagnostic fix](https://skia.googlesource.com/external/github.com/KhronosGroup/MoltenVK/+/4aaf714aa1b3e78e26ecfcefa9c75e9a576c500b%5E2..4aaf714aa1b3e78e26ecfcefa9c75e9a576c500b/).
+
+### Oriented surfel stage
+
+Surfels reuse the instanced quad and conservative projected cube bounds. Each
+fragment intersects its camera ray with the disc plane, rejects hits outside the
+radius, and writes the projected plane depth. No geometry shader, large-point
+feature or mesh approximation is used. Perspective and orthographic views, both
+disc faces, texture/uniform/vertex colors and the existing diffuse lighting are
+supported. Legacy material/back-face-color parity and scene clipping planes
+remain pending.
+
+The disc normal is transformed with the inverse transpose of the affine
+`model_view` linear part, independently of whether lighting is enabled. Its
+linear part must be invertible. Model scaling moves centers and changes normal
+orientation while the radius stays in view-space units, as for spheres. Surfels
+that are exactly edge-on have zero projected area and are discarded. Near/far
+clipping preserves the visible portion of a tilted disc. Picking retains the
+original point ID and plane depth in the center-sample pass.
+
+On 2026-10-27 the renderer, scene and native-window regressions passed on the
+Apple M4 Pro with MoltenVK 1.4.2, Khronos validation and synchronization validation.
+The point shaders also passed SPIR-V validation. New checks cover an independent
+CPU ray/plane oracle, nonuniform normal transforms with lighting disabled,
+explicit indexed IDs, mesh/disc occlusion in both draw orders, reversed normals,
+clipping, edge-on discs, invalid normals/transforms, four-sample silhouette
+coverage, unchanged picking/depth, scene normal-property updates and native
+presentation/depth picking while switching sphere/surfel/plain styles. The
+previously documented MoltenVK integer-attachment warning persists; validation
+error counts remain zero.
+
+This completes the three `PointsDrawable` styles. Tutorial 302 still requires
+line cylinders and cones before it can be enabled in full on Vulkan. Native
+Qt/wx host integration and the other roadmap gates remain outstanding.
