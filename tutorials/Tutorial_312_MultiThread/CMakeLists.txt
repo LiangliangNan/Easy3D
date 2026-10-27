@@ -3,6 +3,7 @@ set(dependencies easy3d::viewer)
 
 set(${example}_files
         main.cpp
+        point_worker.h
         )
 
 add_example(${example} "${${example}_files}" "${dependencies}")

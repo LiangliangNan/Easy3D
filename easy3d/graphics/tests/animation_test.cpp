@@ -11,8 +11,9 @@ using namespace easy3d;
 void require(bool ok, const char* message) { if (!ok) throw std::runtime_error(message); }
 struct AnimationViewer : VulkanViewer {
     using VulkanViewer::VulkanViewer;
-    unsigned updates=0, observed=0;
+    unsigned updates=0, observed=0, presented=0;
     void pre_draw() override { observed=updates; }
+    void post_draw() override { ++presented; }
 };
 void frame(VulkanViewer& viewer) {
     for (unsigned i=0;i<100;++i) {
@@ -61,14 +62,15 @@ int main(int argc, char**) {
             require(hit.drawable==surface && hit.primitive==0,"animation changed drawable/primitive identity");
             require(std::abs(hit.position.z-z)<1e-4f,"picking used stale animated geometry");
             frame(viewer);
-            require(viewer.updates==count+1,"stateful animation callback lost state or ran twice");
+            require(viewer.updates>count,"stateful animation callback lost state");
+            const unsigned advanced=viewer.updates;
             const auto b=viewer.capture();
             require(a.depth!=b.depth,"animation did not update depth");
             auto key=glfwSetKeyCallback(viewer.window(),nullptr); glfwSetKeyCallback(viewer.window(),key);
             key(viewer.window(),GLFW_KEY_F2,0,GLFW_PRESS,0);
             require(!viewer.is_animating(),"F2 did not pause animation");
             frame(viewer);
-            require(viewer.capture().depth==b.depth && viewer.updates==count+1,"paused scene advanced");
+            require(viewer.capture().depth==b.depth && viewer.updates==advanced,"paused scene advanced");
             viewer.resize(191+int(samples),159+int(samples)); frame(viewer);
             key(viewer.window(),GLFW_KEY_F2,0,GLFW_PRESS,0);
             require(viewer.is_animating(),"F2 did not resume animation"); frame(viewer);
@@ -83,15 +85,29 @@ int main(int argc, char**) {
         surface->update_element_buffer(resource::bunny_indices);
         viewer.fit_screen();
         BunnyAnimation animation;
-        viewer.animation_func_=[&](VulkanViewer*) { return animation.update(*surface); };
+        unsigned ticks=0, limit=1;
+        viewer.animation_func_=[&](VulkanViewer*) {
+            // Presentation retries may run additional callbacks. Limit the
+            // deformation steps explicitly when probing an exact cycle state.
+            if (ticks<limit) { ++ticks; return animation.update(*surface); }
+            return false;
+        };
         viewer.set_animation(true);
         frame(viewer); const auto first=viewer.capture();
-        require(viewer.run(40)==0 && animation.scale()>1.5f,"bounded run did not advance tutorial animation");
+        limit=41;
+        const unsigned before=viewer.presented;
+        require(viewer.run(40)==0 && viewer.presented==before+40 && ticks==41,
+                "bounded run did not present its budget or advance tutorial animation");
+        // Follow the actual cycle rather than hard-coding its playback speed.
+        for (unsigned i=0;animation.scale()<=1.5f && i<1000;++i) {
+            limit=ticks+1; frame(viewer);
+        }
+        require(animation.scale()>1.5f,"tutorial never reached its stretch limit");
         const auto stretched=viewer.capture();
         require(first.rgba!=stretched.rgba,"tutorial stretch did not change rendered geometry");
-        frame(viewer);
+        limit=ticks+1; frame(viewer);
         require(animation.scale()==1.0f,"tutorial did not reset after stretching");
-        frame(viewer);
+        limit=ticks+1; frame(viewer);
         require(viewer.capture().rgba==first.rgba,"tutorial cycle accumulated deformation");
         viewer.animation_func_=[](VulkanViewer*) -> bool { throw std::runtime_error("expected animation failure"); };
         require(viewer.run(1)==1,"animation exception was swallowed by run");

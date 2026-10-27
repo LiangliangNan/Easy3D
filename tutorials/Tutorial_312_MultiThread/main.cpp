@@ -30,35 +30,15 @@
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/util/initializer.h>
-#include <easy3d/util/timer.h>
+#include "point_worker.h"
+#include "../native_viewer_options.h"
 
 /**
  * \example{lineno} Tutorial_312_MultiThread/main.cpp
- * This example shows how to use another thread for repeatedly modifying a model and updating the viewer thread.
+ * This example generates point batches on a worker and applies them safely on the viewer thread.
  */
 
 using namespace easy3d;
-
-
-// a function that modifies the model.
-// in this simple example, we add more points (with per point colors) to a point cloud.
-void edit_model(PointCloud *cloud, Viewer *viewer) {
-    if (cloud->n_vertices() >= 1000000) // stop growing when the model is too big
-        return;
-
-    auto colors = cloud->vertex_property<vec3>("v:color");
-    for (int i = 0; i < 100; ++i) {
-        auto v = cloud->add_vertex(vec3(random_float(), random_float(), random_float()));
-        colors[v] = vec3(random_float(), random_float(), random_float()); // we use a random color
-    }
-
-    // notify the renderer to update the OpenGL buffers
-    cloud->renderer()->update();
-    // notify the viewer to update the display
-    viewer->update();
-
-    std::cout << "#points: " << cloud->n_vertices() << std::endl;
-}
 
 
 int main(int argc, char **argv) {
@@ -66,7 +46,13 @@ int main(int argc, char **argv) {
     initialize();
 
     // create the viewer
+#ifdef EASY3D_NO_OPENGL
+    NativeTutorialOptions options;
+    if (!options.parse(argc, argv)) return EXIT_FAILURE;
+    Viewer viewer(EXAMPLE_TITLE, options.viewer);
+#else
     Viewer viewer(EXAMPLE_TITLE);
+#endif
 
     // create a point cloud (with a per point color property) from a set of random points
     auto cloud = new PointCloud;
@@ -87,25 +73,32 @@ int main(int argc, char **argv) {
     // set coloring method: we want to visualize the point cloud using the per point color property
     drawable->set_coloring(Drawable::COLOR_PROPERTY, Drawable::VERTEX, "v:color");
 
-    // run the process in another thread.
-#if 1   //  we use a timer to repeatedly edit the point cloud every 300 milliseconds
-    Timer<PointCloud *, Viewer *> timer;
-    timer.set_interval(300, edit_model, cloud, &viewer);
+    // The worker owns its random generator and produces immutable CPU batches.
+    // One pending batch bounds memory if the viewer is paused or minimized.
+    // No worker ever reads or modifies the cloud, renderer or viewer.
+    PointBatchWorker worker;
+    if (!worker.wait_for_batch(std::chrono::seconds(5))) {
+        LOG(ERROR) << "point worker did not produce its first batch";
+        return EXIT_FAILURE;
+    }
 
-    // stop editing the model after 20 seconds
-    Timer<>::single_shot(20000, &timer, &Timer<PointCloud*, Viewer*>::stop); // or Timer<>::single_shot(4900, [&]() -> void { timer.stop(); });
-#else   // use a simple for loop to repeat the editing a fix number of iterations
-    Timer<>::single_shot(0, [&]() {
-        // in this example, we modify the point cloud 50 times
-        for (int i = 0; i < 50; ++i) {
-            // allow sufficient time for each edit to complete (each edit runs in a separate thread)
-            std::this_thread::sleep_for(std::chrono::milliseconds(300));
-            std::thread t(edit_model, cloud, &viewer);
-            t.detach();
+    viewer.animation_func_ = [&](Viewer* v) {
+        const auto batch = worker.take(); // nonblocking handoff to the UI thread
+        if (batch) {
+            append_point_batch(*cloud, *batch);
+            v->update();
+            std::cout << "#points: " << cloud->n_vertices() << std::endl;
         }
-    });
-#endif
+        if (worker.drained()) v->set_animation(false);
+        return bool(batch);
+    };
+    viewer.set_animation(true); // F2 pauses/resumes consumption
 
-    // run the viewer
+    // worker's destructor interrupts its waits and joins before viewer teardown,
+    // including early window closure, finite --frames runs and exceptions.
+#ifdef EASY3D_NO_OPENGL
+    return options.run(viewer);
+#else
     return viewer.run();
+#endif
 }

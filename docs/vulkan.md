@@ -113,7 +113,7 @@ Completion gates include:
   resize/hide/show, independent windows/devices, orbit/pan/zoom, projection toggle,
   file drop and depth-based world-point picking. The installed demo uses an
   embedded bunny by default and needs no source-tree model/shader files.
-- Existing Tutorials 201, 301–311 and 401/402 build with the native Vulkan host in
+- Existing Tutorials 201, 301–312 and 401/402 build with the native Vulkan host in
   Vulkan-only window builds. Tutorial 302 uses the same sphere/surfel/cylinder/cone scene code
   as its OpenGL build, with bounded native execution for automated tests. Legacy
   custom OpenGL draw callbacks are not ported. Tutorial 304 exercises the native
@@ -1201,8 +1201,8 @@ than from inside the callable itself.
 
 These are frame-based callbacks, not a fixed-rate simulation clock. A real-time
 simulation should compute its own elapsed time. Scene mutation, drawable updates
-and viewer lifetime remain UI-thread operations; this does not yet port the
-worker-thread tutorial or make scene models thread-safe.
+and viewer lifetime remain UI-thread operations. Tutorial 312, described below,
+uses this callback for safe worker-to-UI handoff; scene models are not thread-safe.
 
 ```sh
 ./cmake-build-debug/bin/Tutorial_311_Animation --frames 50 --samples 4 --validation
@@ -1221,3 +1221,53 @@ Verified on Apple M4 Pro / MoltenVK 1.4.2: all 28 native CTests and all
 and zero validation errors. The retained OpenGL tutorial source also passes a
 C++11 compilation check. The previously documented MoltenVK integer-attachment
 blending warning remains.
+
+
+## Worker-thread streaming and Tutorial 312
+
+Tutorial 312 now shares its point-generation and scene-update code across
+Vulkan and OpenGL. Its worker generates batches of 100 positions/colors using
+its own random generator, then publishes an immutable CPU batch through a
+mutex-protected, one-slot mailbox. Only the viewer thread appends those points
+to the model and calls `Renderer::update()`, through the animation callback.
+The worker never accesses a model, renderer, viewer, GLFW or a graphics API.
+This replaces the former detached timer threads editing the displayed cloud.
+
+One pending batch bounds producer memory while F2 pauses consumption or the
+window is minimized. The worker waits when that slot is occupied; it does not
+overwrite/drop earlier batches. Consumption during normal frames is nonblocking.
+A completed-and-empty check holds the mailbox lock, so a final publication
+cannot race with automatic pausing. Worker exceptions are delivered to the
+consumer. A startup wait ensures even a short bounded native run consumes real
+worker output rather than showing only the initial static cloud.
+
+The default produces 66 batches at 300 ms intervals, starting immediately, on top
+of the original 100 red points. Backpressure can extend this duration. The owner
+interrupts pacing/backpressure waits and joins the worker before viewer teardown,
+including early window closure, finite frame budgets and exception unwinding.
+No detached callbacks retain pointers to destroyed scene/viewer objects.
+
+```sh
+./cmake-build-debug/bin/Tutorial_312_MultiThread --frames 100 --samples 4 --validation
+```
+
+`vulkan.multithread` checks finite ordered delivery, immutable retained batches,
+backpressure, cancellation with pending work, destruction during a long pacing
+wait, repeated stop, empty streams and invalid intervals. Its native viewer
+checks that paused workers cannot modify the displayed model, that callbacks
+apply updates on the UI thread, and that streamed point colors, depth and source
+IDs remain correct across one/four samples and resize. It also checks final
+completion and closing with pending work. Tutorial 312 joins the bounded native
+tutorial CTests, completing native build coverage of Tutorials 301–312.
+
+The existing animation regression now follows the tutorial's actual stretch
+cycle instead of assuming the old 1.01 step size; the current 1.002 playback
+rate is preserved. Presentation budgets are counted independently of animation
+steps so swapchain retries do not change exact cycle probes.
+
+Verified on Apple M4 Pro / MoltenVK 1.4.2: all 30 native CTests and all
+10 dual-backend CTests pass. Streaming and animation regressions pass with
+Khronos/synchronization validation enabled, as does Tutorial 312 for 100 frames
+at four samples; validation error counts remain zero. The shared OpenGL
+tutorial source passes a C++11 compilation check. The previously documented
+MoltenVK integer-attachment blending warning remains.
