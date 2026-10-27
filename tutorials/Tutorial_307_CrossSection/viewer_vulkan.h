@@ -4,6 +4,7 @@
 #include <easy3d/viewer/vulkan_viewer.h>
 #include <easy3d/renderer/manipulated_frame.h>
 #include <easy3d/renderer/constraint.h>
+#include <easy3d/util/setting.h>
 #define GLFW_INCLUDE_NONE
 #include <3rd_party/glfw/include/GLFW/glfw3.h>
 
@@ -51,7 +52,8 @@ protected:
         const auto n=mat3(pose)*vec3(0,0,1); const auto c=plane_.position();
         const float width=radius_*.01f;
         // Match the legacy tutorial: keep the negative-normal halfspace, or a
-        // slab ending at that plane. The guide is an unclipped, unpickable overlay.
+        // slab ending at that plane. The guide tests scene depth while leaving
+        // scene depth and picking untouched.
         if (enabled_) {
             std::vector<vec4> planes{vec4(-n,dot(n,c))};
             if (section_) planes.push_back(vec4(n,-dot(n,c)+width));
@@ -73,10 +75,18 @@ protected:
                 band(-r*.06f,-t,r*.06f,t,z); band(-t,-r*.06f,t,r*.06f,z);
             };
             outline(0); if (section_) outline(-width);
-            guide_=std::make_shared<graphics::Geometry>(std::move(vertices)); dirty_=false;
+            guide_=std::make_shared<graphics::Geometry>(std::move(vertices));
+            std::vector<graphics::Vertex> face;
+            const vec3 corners[]={vec3(-r,-r,0),vec3(r,-r,0),vec3(r,r,0),vec3(-r,r,0)};
+            for (unsigned i:{0u,1u,2u,0u,2u,3u}) {
+                graphics::Vertex v; v.position=pose*corners[i]; face.push_back(v);
+            }
+            fill_=std::make_shared<graphics::Geometry>(std::move(face)); dirty_=false;
         }
-        graphics::DrawCommand guide; guide.geometry=guide_; guide.model_view_projection=camera()->modelViewProjectionMatrix();
-        guide.color=vec4(.1f,.4f,.9f,.8f); set_overlays({guide});
+        graphics::DrawCommand fill; fill.geometry=fill_; fill.model_view_projection=camera()->modelViewProjectionMatrix();
+        fill.color=setting::clipping_plane_color; fill.overlay_depth_test=true;
+        auto guide=fill; guide.geometry=guide_; guide.color.w=1;
+        set_overlays({fill,guide});
     }
 private:
     LocalConstraint constraint_;
@@ -85,7 +95,7 @@ private:
     float radius_=1;
     std::weak_ptr<Model> last_model_;
     size_t last_count_=0;
-    std::shared_ptr<const graphics::Geometry> guide_;
+    std::shared_ptr<const graphics::Geometry> guide_,fill_;
 };
 }
 #endif

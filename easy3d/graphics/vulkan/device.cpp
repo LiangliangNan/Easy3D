@@ -392,10 +392,12 @@ struct RenderPass {
     VkRenderPass handle = VK_NULL_HANDLE;
     VkPipeline pipelines[6] = {};
     VkPipeline overlay_pipeline = VK_NULL_HANDLE;
+    VkPipeline depth_overlay_pipeline = VK_NULL_HANDLE;
     RenderPass(Context& context, PassKind mode, VkSampleCountFlagBits count) : c(context), kind(mode), samples(count) {}
     ~RenderPass() {
         for (auto p : pipelines) if (p) vkDestroyPipeline(c.device, p, nullptr);
         if (overlay_pipeline) vkDestroyPipeline(c.device, overlay_pipeline, nullptr);
+        if (depth_overlay_pipeline) vkDestroyPipeline(c.device, depth_overlay_pipeline, nullptr);
         if (handle) vkDestroyRenderPass(c.device, handle, nullptr);
     }
     void init() {
@@ -424,48 +426,62 @@ struct RenderPass {
         VkAttachmentReference depth = {msaa || ids_only ? 1u : 2u, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
         VkAttachmentReference resolves[] = {{2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
                                            {VK_ATTACHMENT_UNUSED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL}};
-        VkSubpassDescription subpasses[2] = {};
+        VkSubpassDescription subpasses[3] = {};
         auto& scene = subpasses[0];
         scene.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
         scene.colorAttachmentCount = 2; scene.pColorAttachments = colors;
         scene.pDepthStencilAttachment = &depth;
-        if (msaa) scene.pResolveAttachments = resolves;
-        auto& overlay = subpasses[1];
+        // Resolve only after depth-tested annotations and HUD composition.
         VkAttachmentReference overlay_color = {0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
+        VkAttachmentReference read_depth = {depth.attachment, VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL};
         const uint32_t preserve[] = {1,2};
+        auto& annotations = subpasses[1];
+        annotations.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+        annotations.colorAttachmentCount = 1; annotations.pColorAttachments = &overlay_color;
+        annotations.pDepthStencilAttachment = &read_depth;
+        if (!msaa) { annotations.preserveAttachmentCount = 1; annotations.pPreserveAttachments = preserve; }
+        auto& overlay = subpasses[2];
         overlay.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
         overlay.colorAttachmentCount = 1; overlay.pColorAttachments = &overlay_color;
         if (msaa) overlay.pResolveAttachments = resolves;
-        else {
-            // Unreferenced picking attachments must survive the color-only subpass.
-            overlay.preserveAttachmentCount = 2; overlay.pPreserveAttachments = preserve;
-        }
-        VkSubpassDependency dependencies[4] = {};
+        else { overlay.preserveAttachmentCount = 2; overlay.pPreserveAttachments = preserve; }
+        VkSubpassDependency dependencies[6] = {};
+        const auto color_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        const auto depth_stages = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
         dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL; dependencies[0].dstSubpass = 0;
         dependencies[0].srcStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
-        dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
-            VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+        dependencies[0].dstStageMask = color_stage | depth_stages;
         dependencies[0].srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
         dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
         dependencies[1].srcSubpass = 0; dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
-        dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
-            VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+        dependencies[1].srcStageMask = color_stage | depth_stages;
         dependencies[1].dstStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
         dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
         dependencies[1].dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
         dependencies[2].srcSubpass = 0; dependencies[2].dstSubpass = 1;
-        dependencies[2].srcStageMask = dependencies[2].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-        dependencies[2].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-        dependencies[2].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        dependencies[2].srcStageMask = dependencies[2].dstStageMask = color_stage | depth_stages;
+        dependencies[2].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        dependencies[2].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
+                                        VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        // Store operations remain depth writes for synchronization even though
+        // annotation pipelines only read the attachment during fragment tests.
         dependencies[2].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-        dependencies[3] = dependencies[1]; dependencies[3].srcSubpass = 1;
-        dependencies[3].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        dependencies[3].srcSubpass = 1; dependencies[3].dstSubpass = 2;
+        dependencies[3].srcStageMask = dependencies[3].dstStageMask = color_stage;
         dependencies[3].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        dependencies[3].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        dependencies[3].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+        dependencies[4] = dependencies[1]; dependencies[4].srcSubpass = 1;
+        dependencies[4].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
+                                        VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        dependencies[5] = dependencies[1]; dependencies[5].srcSubpass = 2;
+        dependencies[5].srcStageMask = color_stage;
+        dependencies[5].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
         VkRenderPassCreateInfo pi{};
         pi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
         pi.attachmentCount = count; pi.pAttachments = attachments;
-        pi.subpassCount = ids_only ? 1 : 2; pi.pSubpasses = subpasses;
-        pi.dependencyCount = ids_only ? 2 : 4; pi.pDependencies = dependencies;
+        pi.subpassCount = ids_only ? 1 : 3; pi.pSubpasses = subpasses;
+        pi.dependencyCount = ids_only ? 2 : 6; pi.pDependencies = dependencies;
         check(vkCreateRenderPass(c.device, &pi, nullptr, &handle), "create scene render pass");
     }
 };
@@ -895,6 +911,10 @@ public:
                 alpha.alphaBlendOp = VK_BLEND_OP_ADD; alpha.colorWriteMask = 0xf;
                 blending.attachmentCount = 1; blending.pAttachments = &alpha;
                 pi.subpass = 1;
+                depth.depthTestEnable = VK_TRUE; depth.depthWriteEnable = VK_FALSE;
+                depth.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+                check(vkCreateGraphicsPipelines(c_.device,VK_NULL_HANDLE,1,&pi,nullptr,&pass.depth_overlay_pipeline), "create depth-tested overlay pipeline");
+                pi.subpass = 2; depth.depthTestEnable = VK_FALSE;
                 check(vkCreateGraphicsPipelines(c_.device,VK_NULL_HANDLE,1,&pi,nullptr,&pass.overlay_pipeline), "create overlay pipeline");
             }
         } catch (...) {
@@ -1009,6 +1029,8 @@ public:
         for (const auto& command : commands) {
             if (!command.geometry || (!command.overlay && command.object_id == UINT32_MAX))
                 throw std::invalid_argument("scene draw requires geometry and a non-background object ID");
+            if (command.overlay_depth_test && !command.overlay)
+                throw std::invalid_argument("overlay depth testing requires an overlay command");
             if (command.overlay && command.geometry->topology() != Topology::triangles)
                 throw std::invalid_argument("overlay draws require triangle geometry");
             if (command.point_style != PointStyle::plain && command.point_style != PointStyle::sphere &&
@@ -1195,20 +1217,23 @@ public:
             else vkCmdDraw(cmd, draw.geometry->count, 1, 0, 0);
         }
         if (pass.kind != PassKind::ids) {
-            vkCmdNextSubpass(cmd,VK_SUBPASS_CONTENTS_INLINE);
-            for (const auto& draw : draws) {
-                const auto& d = draw.command;
-                if (!d.overlay) continue;
-                vkCmdBindPipeline(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,pass.overlay_pipeline);
-                VkDeviceSize offset = 0;
-                vkCmdBindVertexBuffers(cmd,0,1,&draw.geometry->buffer.handle,&offset);
-                vkCmdBindDescriptorSets(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,layout_,0,1,&draw.texture->set,0,nullptr);
-                Push push{};
-                for (unsigned col=0;col<4;++col) for (unsigned row=0;row<4;++row)
-                    push.mvp[col*4+row] = d.model_view_projection(row,col);
-                for (unsigned i=0;i<4;++i) push.color[i] = d.color[i];
-                vkCmdPushConstants(cmd,layout_,VK_SHADER_STAGE_VERTEX_BIT,0,sizeof(push),&push);
-                vkCmdDraw(cmd,draw.geometry->count,1,0,0);
+            for (unsigned phase=0;phase<2;++phase) {
+                vkCmdNextSubpass(cmd,VK_SUBPASS_CONTENTS_INLINE);
+                for (const auto& draw : draws) {
+                    const auto& d = draw.command;
+                    if (!d.overlay || d.overlay_depth_test!=(phase==0)) continue;
+                    const auto pipeline=phase==0 ? pass.depth_overlay_pipeline : pass.overlay_pipeline;
+                    vkCmdBindPipeline(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,pipeline);
+                    VkDeviceSize offset = 0;
+                    vkCmdBindVertexBuffers(cmd,0,1,&draw.geometry->buffer.handle,&offset);
+                    vkCmdBindDescriptorSets(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,layout_,0,1,&draw.texture->set,0,nullptr);
+                    Push push{};
+                    for (unsigned col=0;col<4;++col) for (unsigned row=0;row<4;++row)
+                        push.mvp[col*4+row] = d.model_view_projection(row,col);
+                    for (unsigned i=0;i<4;++i) push.color[i] = d.color[i];
+                    vkCmdPushConstants(cmd,layout_,VK_SHADER_STAGE_VERTEX_BIT,0,sizeof(push),&push);
+                    vkCmdDraw(cmd,draw.geometry->count,1,0,0);
+                }
             }
         }
         vkCmdEndRenderPass(cmd);

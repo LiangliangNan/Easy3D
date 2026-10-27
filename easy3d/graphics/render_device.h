@@ -76,9 +76,13 @@ struct DrawCommand {
     vec4 color = vec4(1, 1, 1, 1);
     std::uint32_t object_id = 0;
     bool lighting = false; // fixed world-space directional diffuse lighting
-    // Unlit, straight-alpha triangle overlays composite after the 3D scene.
-    // They neither test/write depth nor modify object/primitive picking IDs.
+    // Unlit, straight-alpha triangle annotations composite after the 3D scene.
+    // They never write depth or picking IDs; depth testing is opt-in below.
     bool overlay = false;
+    // Depth-tested alpha annotations render after the opaque scene and before
+    // screen overlays. They test scene depth (<=), but never write depth or IDs.
+    // Supply these in back-to-front order when they overlap; triangles only.
+    bool overlay_depth_test = false;
     // Up to two view-space halfspaces: dot(plane, vec4(view_position,1)) >= 0.
     // When clipping is active, model_view must map the geometry into view space
     // and be affine for every topology, consistently with model_view_projection.

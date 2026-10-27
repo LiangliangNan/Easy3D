@@ -68,10 +68,11 @@ Completion gates include:
 - Capped cylinder and cone line impostors with analytic side/cap intersections,
   actual surface depth, endpoint color/texture interpolation and original segment
   IDs, using instanced quads without geometry shaders or wide-line features.
-- Screen-space triangle/image overlays with straight-alpha composition in a
-  color-only subpass before the final MSAA resolve. Overlays do not alter scene
-  depth or picking IDs and require no independent-blend feature. Tutorial 306
-  runs as a native image viewer with fit, zoom, resize and image reload.
+- Screen-space triangle/image overlays and depth-tested translucent annotations,
+  composed in color-only subpasses before final MSAA resolve. Neither writes
+  scene depth or picking IDs; no independent-blend feature is required. Tutorial
+  306 provides a native image viewer, and Tutorial 307 has a transparent filled
+  clipping-plane guide.
 - Per-viewer world-space clipping with up to two halfspaces/slabs, geometric
   triangle/line clipping, analytic impostor surface clipping and original source
   IDs. Tutorial 307 provides native plane/cross-section controls.
@@ -334,8 +335,8 @@ cause.
 | Material/lighting | Basic fixed world-space diffuse term; no full material or back-face-color parity yet. Normal transforms use the inverse transpose. Disable lighting for exact unlit colors. |
 | `TrianglesDrawable::opacity()` | As in the old opaque pass, effective only in a separate transparency pass; such a pass is not implemented here. |
 | CPU drawable textures/scalars | `Texture` pixel snapshots, vertex/halfedge UVs and scalar fields are supported without GL calls. Clamp/repeat, nearest/linear filtering and OBJ/MTL diffuse-material groups work; no mipmap, anisotropic or PBR material pipeline yet. |
-| Transparency, SSAO, shadows, EDL, text, clipping | General 3D transparency/effects remain pending. Straight-alpha 2D overlays and basic horizontal TrueType/UTF-8 text are supported; shaping, bidi and automatic font fallback remain pending. The scene adapter still rejects SSAO; overlays are not an effect-pass API. |
-| Clipping | Up to two per-viewer world-space halfspaces. Geometric triangle/line-centerline cuts, center-clipped plain points and front-surface analytic clipping preserve IDs/MSAA. No automatic cut caps; native plane guides use wireframe overlays. |
+| Transparency, SSAO, shadows, EDL, text, clipping | General 3D transparency/effects remain pending. Straight-alpha 2D overlays, depth-tested translucent annotations and basic horizontal TrueType/UTF-8 text are supported; shaping, bidi and automatic font fallback remain pending. The scene adapter still rejects SSAO; overlays are not an effect-pass API. |
+| Clipping | Up to two per-viewer world-space halfspaces. Geometric triangle/line-centerline cuts, center-clipped plain points and front-surface analytic clipping preserve IDs/MSAA. No automatic cut caps; native plane guides use depth-tested transparent fill and outlines. |
 | Point and line styles | Plain points of any positive pixel size, spheres and oriented surfels are implemented. Capped cylinders/cones and butt-capped plain wide lines are implemented; joined strokes and rounded plain-line caps remain pending. |
 | Snapshot options | Device-supported MSAA (default 1); `expand=false` remains unsupported. Scaling, white/current/transparent background and image saving work. No tiled oversized captures. |
 | Readback | RGBA8, D32 and RG32UI; top row first; depth [0,1]; no-hit object/primitive IDs are `UINT32_MAX`. |
@@ -685,9 +686,10 @@ MoltenVK integer-attachment warning persists; validation error counts stay zero.
 ## Screen-space overlays and Tutorial 306
 
 `graphics::DrawCommand::overlay` selects an unlit, straight-alpha triangle draw
-composited after all scene commands. Ordering is preserved among overlays. It
-uses the normal texture/sampler and per-vertex color/tint state, with depth testing
-and depth writes disabled. The color-only overlay subpass does not bind the
+composited after all opaque scene commands. Ordering is preserved within each
+overlay class: depth-tested annotations first, then HUD overlays. It
+uses the normal texture/sampler and per-vertex color/tint state. Depth writes are
+always disabled; default HUD overlays also disable depth testing. The color-only overlay subpass does not bind the
 integer ID attachment, so blending requires neither `independentBlend` nor
 integer-format blend support. Scene depth and IDs are preserved for picking.
 RGBA8 attachment blending support is checked when selecting the physical device.
@@ -1071,10 +1073,9 @@ continue to identify the original primitives rather than generated cut pieces.
 Native-only window builds now include `Tutorial_307_CrossSection`. Left/right
 drag rotates/translates its plane; **Alt+C** toggles clipping, **Alt+V** toggles the
 guide, and **Alt+X** toggles a slab ending at the plane. The native tutorial uses
-a slab width of 1% of the scene radius. Its wireframe overlay guide does not
-change scene bounds, depth or picking. The legacy translucent filled guide
-remains in the OpenGL tutorial; native filled 3D plane-guide parity remains
-pending with general transparency. The guide's MVP follows camera changes,
+a slab width of 1% of the scene radius. Its guide does not change scene bounds, depth or picking. The following
+annotation stage adds depth-tested transparent fill to the initial wireframe
+guide, using the shared clipping-plane color and opacity. The guide's MVP follows camera changes,
 including resize; its geometry is rebuilt after plane motion. The original
 OpenGL host remains available.
 
@@ -1114,7 +1115,65 @@ warning remains; validation error counts stay zero.
 The recurring text-viewer shortcut harness now uses a hidden native window to
 isolate synthetic key callbacks from desktop focus/input. It retains the actual
 host, presentation, resize, color and depth checks; five bounded repeats and the
-final full suite passed. Remaining gates include filled native plane-guide
-transparency, closed cut caps/back-hit clipping, Qt/wx/Python integration,
+final full suite passed. Remaining gates include closed cut caps/back-hit clipping, Qt/wx/Python integration,
 original vertex/edge and region pickers, advanced effects and runtime backend
 selection/automatic OpenGL fallback.
+
+
+## Depth-tested transparent guides
+
+Tutorial 307 now draws a filled translucent plane and an opaque outline, using
+`setting::clipping_plane_color` (red with opacity 0.2 by default). The fill follows
+the manipulated plane in both clipping and slab modes. It is visible through
+the retained geometry from the cut side, and opaque surfaces nearer the camera
+occlude it. Alt+V hides/shows both fill and outline; the guide remains exempt from
+scene clipping, camera bounds and model picking. The secondary slab boundary is
+outlined. This is a spatial guide, not generated mesh cut-cap geometry.
+
+`graphics::DrawCommand::overlay_depth_test` enables this annotation path when
+`overlay` is true. `VulkanOffScreen::set_overlays()` sets `overlay` automatically,
+so callers can supply a triangle/image annotation and its world-to-clip MVP:
+
+```cpp
+easy3d::graphics::DrawCommand plane;
+plane.geometry = plane_triangles;
+plane.model_view_projection = viewer.camera()->modelViewProjectionMatrix();
+plane.color = easy3d::vec4(1, 0, 0, 0.2f);
+plane.overlay_depth_test = true;
+viewer.set_overlays({plane});
+```
+
+The color render pass has three subpasses: opaque scene, depth-tested alpha
+annotations, then screen/HUD overlays. The annotation subpass binds the scene's
+matching sample-count depth attachment read-only and uses `LESS_OR_EQUAL`, with
+depth writes disabled. It binds only RGBA color, leaving integer IDs preserved.
+The final MSAA resolve occurs after both alpha passes, so opaque edge samples
+occlude/blend the guide independently. A separate center-sample picking pass
+continues to ignore all annotations. Depth attachment store operations and final
+layout transitions have explicit synchronization dependencies, even with a
+read-only fragment-test attachment. No `independentBlend`, depth-resolve feature
+or new shader code is required.
+
+Both modes use unlit straight-alpha color/texture composition and preserve scene
+readback depth/IDs. HUD overlays follow the depth-tested annotations, regardless
+of their interleaving in the input vector. Ordering within each mode follows
+input order. Callers must sort overlapping translucent annotations back-to-front;
+there is no automatic triangle sorting or order-independent transparency. General
+transparent model materials and `TrianglesDrawable::opacity()` remain migration
+gates; this path supplies explicit unlit annotations rather than a new material
+pass. Transparent PNG exports retain straight-alpha conversion at one and
+multiple samples.
+
+Headless `vulkan.depthoverlay` checks front/behind opaque occlusion, coplanarity,
+alpha readback, ordered overlapping layers, HUD precedence, resize, no-hit empty
+scenes and unchanged depth/IDs. A per-sample oracle verifies the guide blends only
+uncovered samples along an opaque MSAA edge before resolve. Native cross-section
+checks verify filled interior color, perspective occlusion from the retained
+side, guide-only visibility and unchanged picking. Scene snapshot regressions
+exercise straight-alpha PNG export for both overlay modes at one/four samples.
+
+Verified on this Mac with Apple M4 Pro / MoltenVK 1.4.2: all 26 native
+Vulkan CTests and all 10 dual-backend CTests pass. The new depth-overlay and
+native cross-section tests also pass with synchronization validation enabled,
+as does Tutorial 307 at four samples. The previously documented MoltenVK
+integer-attachment blending warning remains; validation error counts are zero.

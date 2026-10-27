@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <tutorials/Tutorial_307_CrossSection/viewer_vulkan.h>
 #include <easy3d/util/initializer.h>
+#include <easy3d/util/setting.h>
 #include <fstream>
 #include <iostream>
 using namespace easy3d;
@@ -36,6 +37,7 @@ void check_planes(CrossSection& viewer,const graphics::FrameImage& image) {
 int main(int argc,char**) {
     try {
         initialize(false,false,false);
+        setting::clipping_plane_color=vec4(1,0,0,.25f);
         const std::string file="vulkan-cross-section.off";
         { std::ofstream out(file); out << "OFF\n8 6 0\n-1 -1 -1\n1 -1 -1\n1 1 -1\n-1 1 -1\n"
             "-1 -1 1\n1 -1 1\n1 1 1\n-1 1 1\n4 0 3 2 1\n4 4 5 6 7\n4 0 1 5 4\n4 1 2 6 5\n4 2 3 7 6\n4 3 0 4 7\n";
@@ -47,12 +49,37 @@ int main(int argc,char**) {
         require(viewer.add_model(file)!=nullptr,"cross-section fixture load failed");
         if (viewer.device().supported_sample_counts()&4) viewer.set_samples(4);
         frame(viewer);
+        // Look from the retained side: opaque cube surfaces must hide the guide.
+        const Camera saved(*viewer.camera());
+        viewer.camera()->setViewDirection(vec3(-1,1,1)); viewer.camera()->showEntireScene(); frame(viewer);
+        const auto behind=viewer.capture(); viewer.set_overlays({}); const auto reference=viewer.capture();
+        same_picking(behind,reference);
+        const auto probe_clip=viewer.camera()->modelViewProjectionMatrix()*vec4(.4f,-.4f,-1,1);
+        const int bx=int((probe_clip.x/probe_clip.w+1)*.5f*behind.width),by=int((1-probe_clip.y/probe_clip.w)*.5f*behind.height);
+        require(bx>=0 && by>=0 && bx<int(behind.width) && by<int(behind.height),"occlusion probe outside viewport");
+        const auto bi=size_t(by)*behind.width+bx;
+        require(reference.ids[bi].object!=UINT32_MAX,"occlusion probe missed the cube");
+        const auto a=viewer.unproject_pixel(bx,by,0),b=viewer.unproject_pixel(bx,by,1);
+        const auto plane_point=a+(b-a)*(-a.z/(b.z-a.z));
+        require(std::abs(plane_point.x)<viewer.camera()->sceneRadius()*.95f &&
+                std::abs(plane_point.y)<viewer.camera()->sceneRadius()*.95f,"occlusion probe missed guide interior");
+        for (unsigned c=0;c<4;++c) require(behind.rgba[4*bi+c]==reference.rgba[4*bi+c],"filled guide showed through nearer opaque geometry");
+        *viewer.camera()=saved; frame(viewer);
         const auto initial=viewer.capture();
         require(viewer.clipping_planes().size()==1 && hits(initial)>100,"cross-section did not enable a clipping plane"); check_planes(viewer,initial);
         auto key=glfwSetKeyCallback(viewer.window(),nullptr); glfwSetKeyCallback(viewer.window(),key);
         auto press=[&](int code) { key(viewer.window(),code,0,GLFW_PRESS,GLFW_MOD_ALT); frame(viewer); };
         press(GLFW_KEY_V); const auto hidden=viewer.capture();
         require(hidden.rgba!=initial.rgba,"guide visibility shortcut did not change overlay"); same_picking(initial,hidden);
+        // Probe the plane interior away from the outlines and from the cube.
+        const auto clip=viewer.camera()->modelViewProjectionMatrix()*vec4(-1.2f,1.2f,0,1);
+        const int x=int((clip.x/clip.w+1)*.5f*initial.width),y=int((1-clip.y/clip.w)*.5f*initial.height);
+        require(x>=0 && y>=0 && x<int(initial.width) && y<int(initial.height),"plane interior probe is outside viewport");
+        const auto pixel=size_t(y)*initial.width+x;
+        require(hidden.ids[pixel].object==UINT32_MAX && initial.rgba[4*pixel]>250 &&
+                std::abs(int(initial.rgba[4*pixel+1])-191)<=1 && std::abs(int(initial.rgba[4*pixel+2])-191)<=1,
+                "native clipping plane interior was not filled transparently");
+        require(!viewer.pick(x,y),"filled clipping guide became a picking surface");
         press(GLFW_KEY_V); require(viewer.capture().rgba==initial.rgba,"showing guide did not restore image");
         press(GLFW_KEY_C); const auto full=viewer.capture();
         require(viewer.clipping_planes().empty() && hits(full)>hits(initial),"disabling clipping did not restore full model");

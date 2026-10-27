@@ -41,9 +41,11 @@ public:
     bool delete_drawable(Drawable* drawable);
     const std::vector<std::shared_ptr<Drawable>>& drawables() const;
     void clear_scene();
-    // Triangle commands composited over the scene, in order. Their immutable
+    // Triangle annotations and HUD overlays. Their immutable
     // geometry/images are retained; MVPs are supplied by the caller (for example
-    // graphics::screen_space_projection()). Overlays do not change picking.
+    // graphics::screen_space_projection()). overlay_depth_test annotations test
+    // scene depth and blend first, in input order; HUD overlays follow, in order.
+    // Sort overlapping depth-tested annotations back-to-front. None write depth/IDs.
     void set_overlays(std::vector<graphics::DrawCommand> commands);
     void fit_screen(const Model* model = nullptr);
     // Per-viewer world-space halfspaces, keeping dot(plane,vec4(world,1)) >= 0.
