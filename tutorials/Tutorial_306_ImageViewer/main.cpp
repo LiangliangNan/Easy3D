@@ -27,6 +27,7 @@
 #include "viewer.h"
 #include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
+#include "../native_viewer_options.h"
 
 /**
  * \example{lineno} Tutorial_306_ImageViewer/main.cpp
@@ -49,9 +50,14 @@ int main(int argc, char **argv) {
     // the image file.
     const std::string image_file = resource::directory() + "/data/fountain/images/0000.jpg";
 
-    TutorialImageViewer viewer(EXAMPLE_TITLE, image_file);
-
-    // run the viewer
+#ifdef EASY3D_NO_OPENGL
+    NativeTutorialOptions options;
+    if (!options.parse(argc,argv)) return EXIT_FAILURE;
+    TutorialImageViewer viewer(EXAMPLE_TITLE,image_file,options.viewer);
+    return options.run(viewer);
+#else
+    TutorialImageViewer viewer(EXAMPLE_TITLE,image_file);
     return viewer.run();
+#endif
 }
 

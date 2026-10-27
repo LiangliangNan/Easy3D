@@ -216,6 +216,30 @@ int main(int argc, char**) {
             scalar_hit = true; break;
         }
         require(scalar_hit,"scalar-textured window is empty");
+        std::vector<graphics::Vertex> overlay_vertices(4);
+        overlay_vertices[0].position=vec3(-1,-1,0); overlay_vertices[1].position=vec3(1,-1,0);
+        overlay_vertices[2].position=vec3(1,1,0); overlay_vertices[3].position=vec3(-1,1,0);
+        graphics::DrawCommand overlay;
+        overlay.geometry=std::make_shared<graphics::Geometry>(overlay_vertices,std::vector<uint32_t>{0,1,2,0,2,3});
+        overlay.color=vec4(1,0,0,0.5f);
+        viewer.set_overlays({overlay}); frame(viewer);
+        const auto composed=viewer.capture();
+        require(composed.rgba!=textured.rgba,"native window overlay did not composite color");
+        bool overlay_pick_checked=false;
+        for (size_t i=0;i<composed.ids.size();++i) {
+            require(composed.ids[i].object==textured.ids[i].object && composed.ids[i].primitive==textured.ids[i].primitive &&
+                    composed.depth[i]==textured.depth[i],"native overlay modified picking IDs/depth");
+            if (!overlay_pick_checked && composed.ids[i].object!=UINT32_MAX) {
+                bool found=false;
+                const auto point=viewer.point_under_pixel(int(i%composed.width),int(i/composed.width),found);
+                require(found && std::abs(viewer.camera()->projectedCoordinatesOf(point).z-composed.depth[i])<1e-4f,
+                        "overlay obscured native world-point picking");
+                overlay_pick_checked=true;
+            }
+        }
+        require(overlay_pick_checked,"native overlay picking test had no scene hit");
+        viewer.set_overlays({}); frame(viewer);
+        require(viewer.capture().rgba==textured.rgba,"clearing overlays retained stale color");
         require(viewer.snapshot("vulkan-window.png"), "window snapshot failed");
         require(viewer.device().validation_errors() == 0, "presentation validation errors");
         key(viewer.window(), GLFW_KEY_ESCAPE, 0, GLFW_PRESS, 0);

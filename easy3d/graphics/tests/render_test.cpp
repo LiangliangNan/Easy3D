@@ -580,6 +580,86 @@ void texture_samplers(RenderDevice& device) {
     sampler.wrap = static_cast<TextureWrap>(42);
     rejects([&] { Image invalid(2,1,pixels,sampler); });
 }
+DrawCommand overlay_quad(unsigned width,unsigned height,float left,float top,float right,float bottom,const vec4& color) {
+    std::vector<Vertex> vertices(4);
+    vertices[0].position=vec3(left,top,0); vertices[0].texcoord=vec2(0,0);
+    vertices[1].position=vec3(right,top,0); vertices[1].texcoord=vec2(1,0);
+    vertices[2].position=vec3(right,bottom,0); vertices[2].texcoord=vec2(1,1);
+    vertices[3].position=vec3(left,bottom,0); vertices[3].texcoord=vec2(0,1);
+    DrawCommand result;
+    result.geometry=std::make_shared<Geometry>(vertices,std::vector<uint32_t>{0,1,2,0,2,3});
+    result.model_view_projection=screen_space_projection(width,height);
+    result.color=color; result.overlay=true; result.object_id=UINT32_MAX;
+    return result;
+}
+void overlays(RenderDevice& device) {
+    DrawCommand scene;
+    scene.geometry=triangle(-0.5f,vec4(0,0,1,1)); scene.object_id=21;
+    auto red=overlay_quad(64,64,8,8,56,56,vec4(1,0,0,0.5f));
+    red.lighting=true; // overlays remain unlit
+    auto green=red; green.color=vec4(0,1,0,0.5f);
+    const auto base=device.render(64,64,{scene},vec4(0));
+    const auto tinted=device.render(64,64,{red,scene},vec4(0));
+    const size_t center=32*64+32, background=10*64+10;
+    require(std::abs(int(tinted.rgba[4*center])-128)<=1 && std::abs(int(tinted.rgba[4*center+2])-128)<=1 &&
+            tinted.rgba[4*center+3]==255,"overlay straight-alpha composition mismatch");
+    require(std::abs(int(tinted.rgba[4*background])-128)<=1 && std::abs(int(tinted.rgba[4*background+3])-128)<=1,
+            "overlay transparent-background alpha mismatch");
+    for (size_t i=0;i<base.ids.size();++i)
+        require(tinted.ids[i].object==base.ids[i].object && tinted.ids[i].primitive==base.ids[i].primitive &&
+                tinted.depth[i]==base.depth[i],"overlay modified scene picking/depth");
+    auto layered=device.render(64,64,{red,scene,green},vec4(0));
+    require(std::abs(int(layered.rgba[4*center])-64)<=1 && std::abs(int(layered.rgba[4*center+1])-128)<=1 &&
+            std::abs(int(layered.rgba[4*center+2])-64)<=1,"overlay ordering was not preserved");
+    red.color.w=0;
+    require(device.render(64,64,{scene,red},vec4(0)).rgba==base.rgba,"zero-alpha overlay changed color");
+    red.color.w=0.5f;
+    // Native images are top-first, UV (0,0) is the top-left overlay corner.
+    auto image=overlay_quad(64,64,0,0,64,64,vec4(1));
+    image.texture=std::make_shared<Image>(2,2,std::vector<unsigned char>{
+        255,0,0,128, 0,255,0,128, 0,0,255,128, 255,255,0,128});
+    const auto pictured=device.render(64,64,{image},vec4(0));
+    require(pictured.rgba[(8*64+8)*4]==128 && pictured.rgba[(8*64+56)*4+1]==128 &&
+            pictured.rgba[(56*64+8)*4+2]==128 && pictured.rgba[(56*64+56)*4]==128,
+            "image overlay UV orientation or alpha mismatch");
+    for (size_t i=0;i<pictured.ids.size();++i)
+        require(pictured.ids[i].object==UINT32_MAX && pictured.ids[i].primitive==UINT32_MAX && pictured.depth[i]==1,
+                "overlay-only frame created a scene picking hit");
+    if (device.supported_sample_counts() & 4) {
+        auto aa=device.render(64,64,{red,scene,green},vec4(0),4);
+        require(aa.rgba[4*center]==layered.rgba[4*center] && aa.rgba[4*center+1]==layered.rgba[4*center+1],
+                "MSAA changed interior overlay blending");
+        for (size_t i=0;i<aa.ids.size();++i)
+            require(aa.ids[i].object==base.ids[i].object && aa.ids[i].primitive==base.ids[i].primitive && aa.depth[i]==base.depth[i],
+                    "MSAA overlay changed center-sample scene picking/depth");
+        std::vector<Vertex> triangle_vertices(3);
+        triangle_vertices[0].position=vec3(8.25f,8.25f,0);
+        triangle_vertices[1].position=vec3(55.75f,10.5f,0);
+        triangle_vertices[2].position=vec3(15.5f,55.75f,0);
+        auto edge=red; edge.color=vec4(1,0,0,1);
+        edge.geometry=std::make_shared<Geometry>(triangle_vertices);
+        const auto coverage=device.render(64,64,{edge},vec4(0),4);
+        unsigned partial=0;
+        for (size_t i=0;i<coverage.ids.size();++i) {
+            partial+=coverage.rgba[4*i+3]>0 && coverage.rgba[4*i+3]<255;
+            require(coverage.ids[i].object==UINT32_MAX && coverage.depth[i]==1,"overlay antialiasing created picking hits");
+        }
+        require(partial>0,"overlay triangles bypassed MSAA edge coverage");
+    }
+    for (unsigned i=0;i<4;++i) {
+        const unsigned width=31+i*7,height=23+i*5;
+        auto fill=overlay_quad(width,height,0,0,float(width),float(height),vec4(1,0,0,0.5f));
+        const auto frame=device.render(width,height,{fill},vec4(0,0,1,1),
+                (device.supported_sample_counts() & 4) && i%2 ? 4 : 1);
+        const size_t pixel=(height/2)*width+width/2;
+        require(std::abs(int(frame.rgba[4*pixel])-128)<=1 && std::abs(int(frame.rgba[4*pixel+2])-128)<=1 &&
+                frame.depth[pixel]==1 && frame.ids[pixel].object==UINT32_MAX,"overlay resize/sample-count transition mismatch");
+    }
+    rejects([] { screen_space_projection(0,64); });
+    auto invalid=red;
+    invalid.geometry=std::make_shared<Geometry>(std::vector<Vertex>(2),std::vector<uint32_t>{},Topology::lines);
+    rejects([&] { device.render(32,32,{invalid}); });
+}
 int main(int argc, char**) {
     try {
         DeviceOptions options;
@@ -634,6 +714,7 @@ int main(int argc, char**) {
         line_impostors(*device);
         wide_lines(*device);
         texture_samplers(*device);
+        overlays(*device);
         // Valid descriptor for a real texture, then a null texture on the same draw.
         near.texture = std::make_shared<Image>(1, 1, std::vector<unsigned char>{0, 255, 0, 255});
         near.color = vec4(1, 1, 1, 1);
@@ -688,7 +769,7 @@ int main(int argc, char**) {
         auto empty = device->render(19, 17, {});
         for (auto id : empty.ids) require(id.object == UINT32_MAX, "stale target contents after clear");
         require(device->validation_errors() == 0 && second->validation_errors() == 0, "Vulkan validation reported errors");
-        std::cout << "PASS: color, indexed geometry, depth, IDs, orientation, texture, updates, resize, independent devices, large points, sphere/surfel impostors, MSAA, clipping, cylinders, cones, wide lines, empty scene\n";
+        std::cout << "PASS: color, indexed geometry, depth, IDs, orientation, texture, updates, resize, independent devices, large points, sphere/surfel impostors, MSAA, clipping, cylinders, cones, wide lines, overlays, empty scene\n";
     } catch (const std::exception& e) {
         std::cerr << "FAIL: " << e.what() << std::endl;
         return 1;

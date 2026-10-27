@@ -193,6 +193,19 @@ int main(int argc, char**) {
             }
             require(edges > 0, "transparent MSAA PNG has no partial coverage");
         } else std::cout << "SKIP: device does not advertise four-sample color targets\n";
+        std::vector<graphics::Vertex> screen_triangle(3);
+        screen_triangle[0].position=vec3(-1,-1,0); screen_triangle[1].position=vec3(3,-1,0);
+        screen_triangle[2].position=vec3(-1,3,0);
+        graphics::DrawCommand overlay;
+        overlay.geometry=std::make_shared<graphics::Geometry>(screen_triangle);
+        overlay.color=vec4(0,0,1,0.5f);
+        renderer.set_overlays({overlay});
+        require(renderer.render("vulkan-overlay.png",1,renderer.device().supported_sample_counts() & 4 ? 4 : 1,2),
+                "transparent overlay PNG capture failed");
+        require(ImageIO::load("vulkan-overlay.png",png,w,h,channels,4,false) &&
+                png[0]==0 && png[1]==0 && png[2]>=253 && std::abs(int(png[3])-128)<=1,
+                "overlay PNG did not convert premultiplied output to straight alpha");
+        renderer.set_overlays({});
         // Test the throwing API for expected failures, keeping normal test output
         // free from the user-facing error logger of the bool render() wrapper.
         rejected = false;

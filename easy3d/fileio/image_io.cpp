@@ -28,6 +28,8 @@
 
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
+#include <memory>
+#include <limits>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <3rd_party/stb/stb_image.h>
@@ -49,19 +51,31 @@ namespace easy3d {
     {
         data.clear();
 
-        // flag is non-zero to flip data vertically (so the first pixel in the output array is the bottom left)
-        stbi_set_flip_vertically_on_load(flip_vertically);
-
-        unsigned char* pixels = stbi_load(file_name.c_str(), &width, &height, &channels, requested_channels);
-        if (pixels) {
-            data.assign(pixels, pixels + height * width * channels);
-            stbi_image_free(pixels);
-            return true;
+        if (requested_channels < 0 || requested_channels > 4) {
+            LOG(ERROR) << "requested image channels must be between zero and four";
+            return false;
         }
-        else {
+        // The project requires C++11: stb uses thread_local for this setting.
+        // Concurrent image loads may choose different row orientations safely.
+        stbi_set_flip_vertically_on_load_thread(flip_vertically);
+        int decoded_width=0, decoded_height=0, source_channels=0;
+        std::unique_ptr<unsigned char,decltype(&stbi_image_free)> pixels(
+                stbi_load(file_name.c_str(),&decoded_width,&decoded_height,&source_channels,requested_channels),stbi_image_free);
+        if (!pixels) {
             LOG(ERROR) << "failed load image file: " << file_name << ". " << stbi_failure_reason();
             return false;
         }
+        const int output_channels = requested_channels ? requested_channels : source_channels;
+        const size_t w=static_cast<size_t>(decoded_width), h=static_cast<size_t>(decoded_height);
+        if (decoded_width <= 0 || decoded_height <= 0 || output_channels <= 0 ||
+            w > std::numeric_limits<size_t>::max()/h/size_t(output_channels)) {
+            LOG(ERROR) << "decoded image dimensions overflow addressable storage";
+            return false;
+        }
+        const size_t count=w*h*size_t(output_channels);
+        data.assign(pixels.get(),pixels.get()+count);
+        width=decoded_width; height=decoded_height; channels=source_channels;
+        return true;
     }
 
 

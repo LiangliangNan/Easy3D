@@ -68,6 +68,10 @@ Completion gates include:
 - Capped cylinder and cone line impostors with analytic side/cap intersections,
   actual surface depth, endpoint color/texture interpolation and original segment
   IDs, using instanced quads without geometry shaders or wide-line features.
+- Screen-space triangle/image overlays with straight-alpha composition in a
+  color-only subpass before the final MSAA resolve. Overlays do not alter scene
+  depth or picking IDs and require no independent-blend feature. Tutorial 306
+  runs as a native image viewer with fit, zoom, resize and image reload.
 - CPU-owned immutable texture data with explicit CPU-only factories, shared
   texture/scalar drawable state, vertex/halfedge UV extraction and default texture/
   scalar selection. Tutorials 303 and 305 run with Vulkan using the existing scene APIs.
@@ -97,7 +101,7 @@ Completion gates include:
   resize/hide/show, independent windows/devices, orbit/pan/zoom, projection toggle,
   file drop and depth-based world-point picking. The installed demo uses an
   embedded bunny by default and needs no source-tree model/shader files.
-- Existing Tutorials 201 and 302–305 build through the `Viewer` alias in Vulkan-only
+- Existing Tutorials 201 and 302–306 build through the `Viewer` alias in Vulkan-only
   window builds. Tutorial 302 uses the same sphere/surfel/cylinder/cone scene code
   as its OpenGL build, with bounded native execution for automated tests. Legacy
   custom OpenGL draw callbacks are not ported. Tutorial 304 exercises the native
@@ -198,7 +202,7 @@ viewer.run();
 
 In a Vulkan-only window build the existing `<easy3d/viewer/viewer.h>` and
 `easy3d::Viewer` name select the same host. `Tutorial_201_Viewer_default` is built
-unchanged in that configuration. Tutorials 302–305 are also built in this configuration. Other tutorials remain gated
+unchanged in that configuration. Tutorials 302–306 are also built in this configuration. Other tutorials remain gated
 until their features and callbacks are ported; the global legacy tutorials option stays OFF.
 In a dual build `Viewer` continues to select the legacy host, while
 `VulkanViewer` selects Vulkan explicitly.
@@ -319,7 +323,7 @@ cause.
 | Material/lighting | Basic fixed world-space diffuse term; no full material or back-face-color parity yet. Normal transforms use the inverse transpose. Disable lighting for exact unlit colors. |
 | `TrianglesDrawable::opacity()` | As in the old opaque pass, effective only in a separate transparency pass; such a pass is not implemented here. |
 | CPU drawable textures/scalars | `Texture` pixel snapshots, vertex/halfedge UVs and scalar fields are supported without GL calls. Clamp/repeat and nearest/linear filtering work; no mipmap, anisotropic or multi-material texture pipeline yet. |
-| Transparency, SSAO, shadows, EDL, text, clipping | Not ported. Do not infer support from the low-level draw-command API. The scene adapter rejects SSAO/highlighting/selection; no effect-pass interface is exposed yet. |
+| Transparency, SSAO, shadows, EDL, text, clipping | General 3D transparency/effects and text remain pending. Straight-alpha 2D overlays are supported. The scene adapter still rejects SSAO/highlighting/selection; overlays are not an effect-pass API. |
 | Point and line styles | Plain points of any positive pixel size, spheres and oriented surfels are implemented. Capped cylinders/cones and butt-capped plain wide lines are implemented; joined strokes and rounded plain-line caps remain pending. |
 | Snapshot options | Device-supported MSAA (default 1); `expand=false` remains unsupported. Scaling, white/current/transparent background and image saving work. No tiled oversized captures. |
 | Readback | RGBA8, D32 and RG32UI; top row first; depth [0,1]; no-hit object/primitive IDs are `UINT32_MAX`. |
@@ -628,8 +632,9 @@ snapshots are shared while bound by live drawables; the image-conversion cache
 holds weak references, so replacing a binding retires unused descriptors even
 when CPU texture caches retain the old pixels. A stress regression replaces more
 than 1,024 live CPU snapshots on one drawable without exhausting the descriptor
-pool. Texture alpha is sampled through the existing opaque/depth-writing pass;
-this does not implement transparency.
+pool. Scene texture alpha is sampled through the existing opaque/depth-writing pass;
+this does not implement general 3D transparency. The overlay layer below supplies
+explicit straight-alpha composition for screen-space content.
 
 Constant non-boolean scalar fields map to the palette midpoint rather than
 producing non-finite texture coordinates. Shared scalar extraction checks finite
@@ -663,3 +668,69 @@ headless suite pass with Khronos/synchronization validation. Tutorials 303/305
 run with four samples and validation. The real OpenGL texture smoke test also
 passes. Vulkan-only renderer linkage still contains no GL dependency. The earlier
 MoltenVK integer-attachment warning persists; validation error counts stay zero.
+
+## Screen-space overlays and Tutorial 306
+
+`graphics::DrawCommand::overlay` selects an unlit, straight-alpha triangle draw
+composited after all scene commands. Ordering is preserved among overlays. It
+uses the normal texture/sampler and per-vertex color/tint state, with depth testing
+and depth writes disabled. The color-only overlay subpass does not bind the
+integer ID attachment, so blending requires neither `independentBlend` nor
+integer-format blend support. Scene depth and IDs are preserved for picking.
+RGBA8 attachment blending support is checked when selecting the physical device.
+
+The overlay subpass writes the same color attachment/sample count as the scene.
+For MSAA, final color resolve follows overlay composition, preserving geometric
+coverage and the scene's per-sample colors. Picking still uses the existing
+center-sample ID/depth pass and ignores overlays. A covered image is therefore
+not a world-space picking hit, while overlays over a model leave that model's
+world-point picking intact. This does not introduce general 3D transparency,
+widget clipping, text shaping or legacy GL draw-callback emulation.
+
+`VulkanOffScreen::set_overlays()` retains an ordered copy of immutable draw
+commands and marks them as overlays. Use an identity MVP for clip-space geometry,
+or `graphics::screen_space_projection(width,height)` for top-left framebuffer
+pixel coordinates. Rebuild the projection/geometry when its intended viewport
+placement changes; a scaled capture preserves its normalized placement. Calling
+`set_overlays({})` removes them, and `clear_scene()` clears overlays too. Overlay
+bounds do not affect the 3D camera's fit operation. Native `graphics::Image` data
+and UVs retain their top-first convention. Transparent PNG export uses the
+existing conversion from coverage-premultiplied readback to straight alpha.
+
+Native-only window builds now also provide `Tutorial_306_ImageViewer`, using the
+overlay API without an OpenGL context. Its native host handles image fitting,
+wheel zoom, recentering on resize, **F** to fit, **Ctrl+O** to open, and image-file
+drop/reload. Positions and dimensions use framebuffer pixels, including the
+host's HiDPI conversion. The existing OpenGL tutorial host remains available in
+OpenGL builds.
+
+```sh
+./cmake-build-debug/bin/Tutorial_306_ImageViewer --frames 3 --samples 4 --validation
+```
+
+The desktop smoke test `vulkan.tutorial306` honors
+`Easy3D_VULKAN_TEST_VALIDATION`. A separate desktop `vulkan.imageviewer` test
+checks orientation, aspect-ratio fitting, registered zoom/fit/resize/drop
+callbacks, sample-count changes and absence of scene picking hits. Native-window
+regressions check that overlays preserve all model depth/IDs and world-point
+picking, and that clearing overlays restores scene color. The renderer test
+checks ordered alpha blending, transparent backgrounds, top-first image UVs,
+actual four-sample overlay edge coverage, unchanged scene picking, resize and
+invalid input. Both overlay shaders are embedded and validated in CI.
+
+The image viewer exposed a shared `ImageIO::load()` bug: forced channel conversion
+copied the source channel count rather than the requested output count. RGB-to-
+RGBA loads were truncated, while RGBA-to-RGB loads could overread decoded storage.
+The loader now copies the correct checked byte count, preserves source-channel
+metadata, frees decoded storage through RAII and updates output dimensions only
+after success. Per-load row orientation uses stb's thread-local setting rather
+than its shared global setting. Texture regressions cover both conversion
+directions; existing texture/scalar and OpenGL texture paths remain covered.
+
+On 2026-10-27, Apple M4 Pro/MoltenVK 1.4.2 passed renderer, texture, native-window,
+image-viewer and bounded Tutorial 306 checks with Khronos/synchronization
+validation, including four samples. Overlay shader SPIR-V validation passed. The
+dual Vulkan/OpenGL regression suite also passed, including the retained OpenGL
+texture smoke test. The previously documented MoltenVK integer-attachment warning
+persists; Vulkan validation error counts remain zero. Text/font rendering and
+native Qt/wx host integration remain migration gates.

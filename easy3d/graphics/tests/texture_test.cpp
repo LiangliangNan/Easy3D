@@ -40,6 +40,14 @@ void tests(const graphics::DeviceOptions& options) {
     rejects([&] { texture->bind(); });
     rejects([] { std::unique_ptr<Texture> invalid(Texture::create_cpu({},-1,2,4)); });
     require(ImageIO::save("vulkan-texture-source.png",texture->pixels()->bytes,2,2,4,true),"could not write texture fixture");
+    std::vector<unsigned char> converted;
+    int decoded_width=0,decoded_height=0,source_channels=0;
+    require(ImageIO::load("vulkan-texture-source.png",converted,decoded_width,decoded_height,source_channels,3,false) &&
+            source_channels==4 && converted.size()==12 && converted[2]==255,"RGBA-to-RGB decode copied the wrong byte count/orientation");
+    require(ImageIO::save("vulkan-rgb-source.png",{255,0,0,0,255,0},2,1,3,false),"could not save RGB fixture");
+    require(ImageIO::load("vulkan-rgb-source.png",converted,decoded_width,decoded_height,source_channels,4,false) &&
+            source_channels==3 && converted==std::vector<unsigned char>({255,0,0,255,0,255,0,255}),
+            "RGB-to-RGBA decode truncated converted pixels");
     auto* cached = TextureManager::request_cpu("vulkan-texture-source.png",Texture::CLAMP_TO_EDGE,Texture::NEAREST);
     auto* repeat = TextureManager::request_cpu("vulkan-texture-source.png",Texture::REPEAT,Texture::NEAREST);
     auto* linear = TextureManager::request_cpu("vulkan-texture-source.png",Texture::CLAMP_TO_EDGE,Texture::LINEAR);

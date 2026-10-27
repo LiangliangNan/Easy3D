@@ -24,6 +24,8 @@ namespace easy3d { namespace graphics { namespace {
 #include "lines_frag.inc"
 #include "wide_lines_vert.inc"
 #include "wide_lines_frag.inc"
+#include "overlay_vert.inc"
+#include "overlay_frag.inc"
 
 void check(VkResult result, const char* operation) {
     if (result != VK_SUCCESS)
@@ -175,7 +177,7 @@ struct Context {
             if (props.apiVersion < VK_API_VERSION_1_2 ||
                 std::string(props.deviceName).find(options.device_name) == std::string::npos) continue;
             const std::pair<VkFormat, VkFormatFeatureFlags> formats[] = {
-                {VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT |
+                {VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT | VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT |
                     VK_FORMAT_FEATURE_TRANSFER_SRC_BIT | VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT |
                     VK_FORMAT_FEATURE_TRANSFER_DST_BIT},
                 {VK_FORMAT_R32G32_UINT, VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT | VK_FORMAT_FEATURE_TRANSFER_SRC_BIT},
@@ -388,9 +390,11 @@ struct RenderPass {
     VkSampleCountFlagBits samples;
     VkRenderPass handle = VK_NULL_HANDLE;
     VkPipeline pipelines[6] = {};
+    VkPipeline overlay_pipeline = VK_NULL_HANDLE;
     RenderPass(Context& context, PassKind mode, VkSampleCountFlagBits count) : c(context), kind(mode), samples(count) {}
     ~RenderPass() {
         for (auto p : pipelines) if (p) vkDestroyPipeline(c.device, p, nullptr);
+        if (overlay_pipeline) vkDestroyPipeline(c.device, overlay_pipeline, nullptr);
         if (handle) vkDestroyRenderPass(c.device, handle, nullptr);
     }
     void init() {
@@ -419,12 +423,23 @@ struct RenderPass {
         VkAttachmentReference depth = {msaa || ids_only ? 1u : 2u, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
         VkAttachmentReference resolves[] = {{2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
                                            {VK_ATTACHMENT_UNUSED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL}};
-        VkSubpassDescription subpass{};
-        subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-        subpass.colorAttachmentCount = 2; subpass.pColorAttachments = colors;
-        subpass.pDepthStencilAttachment = &depth;
-        if (msaa) subpass.pResolveAttachments = resolves;
-        VkSubpassDependency dependencies[2] = {};
+        VkSubpassDescription subpasses[2] = {};
+        auto& scene = subpasses[0];
+        scene.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+        scene.colorAttachmentCount = 2; scene.pColorAttachments = colors;
+        scene.pDepthStencilAttachment = &depth;
+        if (msaa) scene.pResolveAttachments = resolves;
+        auto& overlay = subpasses[1];
+        VkAttachmentReference overlay_color = {0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
+        const uint32_t preserve[] = {1,2};
+        overlay.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+        overlay.colorAttachmentCount = 1; overlay.pColorAttachments = &overlay_color;
+        if (msaa) overlay.pResolveAttachments = resolves;
+        else {
+            // Unreferenced picking attachments must survive the color-only subpass.
+            overlay.preserveAttachmentCount = 2; overlay.pPreserveAttachments = preserve;
+        }
+        VkSubpassDependency dependencies[4] = {};
         dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL; dependencies[0].dstSubpass = 0;
         dependencies[0].srcStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
         dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
@@ -437,11 +452,19 @@ struct RenderPass {
         dependencies[1].dstStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
         dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
         dependencies[1].dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+        dependencies[2].srcSubpass = 0; dependencies[2].dstSubpass = 1;
+        dependencies[2].srcStageMask = dependencies[2].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        dependencies[2].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        dependencies[2].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        dependencies[2].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+        dependencies[3] = dependencies[1]; dependencies[3].srcSubpass = 1;
+        dependencies[3].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        dependencies[3].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
         VkRenderPassCreateInfo pi{};
         pi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
         pi.attachmentCount = count; pi.pAttachments = attachments;
-        pi.subpassCount = 1; pi.pSubpasses = &subpass;
-        pi.dependencyCount = 2; pi.pDependencies = dependencies;
+        pi.subpassCount = ids_only ? 1 : 2; pi.pSubpasses = subpasses;
+        pi.dependencyCount = ids_only ? 2 : 4; pi.pDependencies = dependencies;
         check(vkCreateRenderPass(c.device, &pi, nullptr, &handle), "create scene render pass");
     }
 };
@@ -714,7 +737,7 @@ public:
         check(vkCreatePipelineLayout(c_.device, &li, nullptr, &layout_), "create pipeline layout");
     }
     void create_pipelines(RenderPass& pass) {
-        VkShaderModule modules[8] = {};
+        VkShaderModule modules[10] = {};
         try {
             VkShaderModuleCreateInfo mi{};
             mi.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -734,6 +757,10 @@ public:
             check(vkCreateShaderModule(c_.device, &mi, nullptr, &modules[6]), "create wide line vertex shader");
             mi.codeSize = sizeof(wide_lines_frag); mi.pCode = wide_lines_frag;
             check(vkCreateShaderModule(c_.device, &mi, nullptr, &modules[7]), "create wide line fragment shader");
+            mi.codeSize = sizeof(overlay_vert); mi.pCode = overlay_vert;
+            check(vkCreateShaderModule(c_.device, &mi, nullptr, &modules[8]), "create overlay vertex shader");
+            mi.codeSize = sizeof(overlay_frag); mi.pCode = overlay_frag;
+            check(vkCreateShaderModule(c_.device, &mi, nullptr, &modules[9]), "create overlay fragment shader");
             VkPipelineShaderStageCreateInfo stages[2] = {};
             for (unsigned i = 0; i < 2; ++i) {
                 stages[i].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -815,6 +842,26 @@ public:
                 }
                 assembly.topology = topologies[i >= 3 ? 0 : i];
                 check(vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr, &pass.pipelines[i]), "create pipeline");
+            }
+            if (pass.kind != PassKind::ids) {
+                stages[0].module = modules[8]; stages[1].module = modules[9];
+                binding.stride = sizeof(GpuVertex); binding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+                VkVertexInputAttributeDescription overlay_attrs[] = {attrs[0],attrs[2],attrs[3]};
+                vertex.vertexAttributeDescriptionCount = 3; vertex.pVertexAttributeDescriptions = overlay_attrs;
+                assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+                ms.sampleShadingEnable = VK_FALSE; ms.minSampleShading = 0;
+                depth.depthTestEnable = depth.depthWriteEnable = VK_FALSE;
+                VkPipelineColorBlendAttachmentState alpha{};
+                alpha.blendEnable = VK_TRUE;
+                alpha.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+                alpha.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+                alpha.colorBlendOp = VK_BLEND_OP_ADD;
+                alpha.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+                alpha.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+                alpha.alphaBlendOp = VK_BLEND_OP_ADD; alpha.colorWriteMask = 0xf;
+                blending.attachmentCount = 1; blending.pAttachments = &alpha;
+                pi.subpass = 1;
+                check(vkCreateGraphicsPipelines(c_.device,VK_NULL_HANDLE,1,&pi,nullptr,&pass.overlay_pipeline), "create overlay pipeline");
             }
         } catch (...) {
             for (auto m : modules) if (m) vkDestroyShaderModule(c_.device, m, nullptr);
@@ -926,8 +973,10 @@ public:
         for (unsigned i = 0; i < 4; ++i)
             if (!std::isfinite(background[i])) throw std::invalid_argument("non-finite background color");
         for (const auto& command : commands) {
-            if (!command.geometry || command.object_id == UINT32_MAX)
-                throw std::invalid_argument("draw requires geometry and a non-background object ID");
+            if (!command.geometry || (!command.overlay && command.object_id == UINT32_MAX))
+                throw std::invalid_argument("scene draw requires geometry and a non-background object ID");
+            if (command.overlay && command.geometry->topology() != Topology::triangles)
+                throw std::invalid_argument("overlay draws require triangle geometry");
             if (command.point_style != PointStyle::plain && command.point_style != PointStyle::sphere &&
                 command.point_style != PointStyle::surfel)
                 throw std::invalid_argument("unknown point style");
@@ -1080,6 +1129,7 @@ public:
         vkCmdSetViewport(cmd, 0, 1, &viewport); vkCmdSetScissor(cmd, 0, 1, &scissor);
         for (const auto& draw : draws) {
             const auto& d = *draw.command;
+            if (d.overlay) continue;
             unsigned pipeline = d.geometry->topology() == Topology::triangles ? 0 :
                                 d.geometry->topology() == Topology::lines ? 1 : 2;
             const bool expanded = expanded_impostor(d);
@@ -1100,6 +1150,23 @@ public:
             vkCmdPushConstants(cmd, layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
             if (expanded) vkCmdDraw(cmd, 6, expanded_lines(d) ? draw.geometry->count / 2 : draw.geometry->count, 0, 0);
             else vkCmdDraw(cmd, draw.geometry->count, 1, 0, 0);
+        }
+        if (pass.kind != PassKind::ids) {
+            vkCmdNextSubpass(cmd,VK_SUBPASS_CONTENTS_INLINE);
+            for (const auto& draw : draws) {
+                const auto& d = *draw.command;
+                if (!d.overlay) continue;
+                vkCmdBindPipeline(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,pass.overlay_pipeline);
+                VkDeviceSize offset = 0;
+                vkCmdBindVertexBuffers(cmd,0,1,&draw.geometry->buffer.handle,&offset);
+                vkCmdBindDescriptorSets(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,layout_,0,1,&draw.texture->set,0,nullptr);
+                Push push{};
+                for (unsigned col=0;col<4;++col) for (unsigned row=0;row<4;++row)
+                    push.mvp[col*4+row] = d.model_view_projection(row,col);
+                for (unsigned i=0;i<4;++i) push.color[i] = d.color[i];
+                vkCmdPushConstants(cmd,layout_,VK_SHADER_STAGE_VERTEX_BIT,0,sizeof(push),&push);
+                vkCmdDraw(cmd,draw.geometry->count,1,0,0);
+            }
         }
         vkCmdEndRenderPass(cmd);
     }

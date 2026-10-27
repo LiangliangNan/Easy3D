@@ -73,6 +73,9 @@ struct DrawCommand {
     vec4 color = vec4(1, 1, 1, 1);
     std::uint32_t object_id = 0;
     bool lighting = false; // fixed world-space directional diffuse lighting
+    // Unlit, straight-alpha triangle overlays composite after the 3D scene.
+    // They neither test/write depth nor modify object/primitive picking IDs.
+    bool overlay = false;
     // Plain points use framebuffer-pixel diameters. Spheres and surfels use view-space radii,
     // after transforming their centers; model scaling does not scale the radius.
     PointStyle point_style = PointStyle::plain;
@@ -92,6 +95,9 @@ struct DrawCommand {
     // rasterization; other widths use butt-capped triangle ribbons, without joins.
     float line_width = 1;
 };
+
+// Top-left framebuffer-pixel coordinates to the shared OpenGL clip convention.
+mat4 screen_space_projection(std::uint32_t width, std::uint32_t height);
 
 struct FrameImage {
     std::uint32_t width = 0, height = 0;

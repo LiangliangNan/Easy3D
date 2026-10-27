@@ -41,6 +41,10 @@ public:
     bool delete_drawable(Drawable* drawable);
     const std::vector<std::shared_ptr<Drawable>>& drawables() const;
     void clear_scene();
+    // Triangle commands composited over the scene, in order. Their immutable
+    // geometry/images are retained; MVPs are supplied by the caller (for example
+    // graphics::screen_space_projection()). Overlays do not change picking.
+    void set_overlays(std::vector<graphics::DrawCommand> commands);
     void fit_screen(const Model* model = nullptr);
     // Color is multisampled when requested; IDs/depth stay center-sampled.
     // Invalid/unsupported requests throw, allowing callers/tests to handle them.

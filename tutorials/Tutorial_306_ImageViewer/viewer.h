@@ -27,6 +27,9 @@
 #ifndef EASY3D_TUTORIAL_IMAGE_VIEWER_H
 #define EASY3D_TUTORIAL_IMAGE_VIEWER_H
 
+#ifdef EASY3D_NO_OPENGL
+#include "viewer_vulkan.h"
+#else
 #include <easy3d/viewer/viewer.h>
 
 
@@ -62,4 +65,5 @@ private:
 };
 
 
+#endif // legacy OpenGL viewer
 #endif // EASY3D_TUTORIAL_IMAGE_VIEWER_H

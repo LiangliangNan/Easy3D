@@ -33,6 +33,7 @@ struct VulkanOffScreen::Impl {
     vec4 background = vec4(1, 1, 1, 1);
     std::vector<std::shared_ptr<Model>> models;
     std::vector<std::shared_ptr<Drawable>> drawables;
+    std::vector<graphics::DrawCommand> overlays;
     struct Cached {
         std::weak_ptr<Drawable> source;
         std::size_t revision = 0;
@@ -201,6 +202,7 @@ struct VulkanOffScreen::Impl {
         }
         for (size_t i = 0; i < drawables.size(); ++i)
             if (drawables[i]->is_visible()) commands.push_back(command(drawables[i], uint32_t(models.size() + i), cam));
+        commands.insert(commands.end(),overlays.begin(),overlays.end());
         return commands;
     }
     graphics::FrameImage capture(const Camera& cam, const vec4& bg, unsigned samples = 1) const {
@@ -283,7 +285,13 @@ bool VulkanOffScreen::delete_drawable(Drawable* drawable) {
     values.erase(found); impl_->cache.clear(); return true;
 }
 const std::vector<std::shared_ptr<Drawable>>& VulkanOffScreen::drawables() const { return impl_->drawables; }
-void VulkanOffScreen::clear_scene() { impl_->models.clear(); impl_->drawables.clear(); impl_->cache.clear(); }
+void VulkanOffScreen::clear_scene() {
+    impl_->models.clear(); impl_->drawables.clear(); impl_->cache.clear(); impl_->overlays.clear();
+}
+void VulkanOffScreen::set_overlays(std::vector<graphics::DrawCommand> commands) {
+    for (auto& command : commands) command.overlay = true;
+    impl_->overlays = std::move(commands);
+}
 void VulkanOffScreen::fit_screen(const Model* selected) {
     Box3 box;
     if (selected) box.grow(selected->bounding_box());

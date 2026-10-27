@@ -6,7 +6,7 @@ if(NOT Easy3D_GLSLANG_VALIDATOR)
 endif()
 
 set(shader_headers)
-foreach(shader scene.vert scene.frag points.vert points.frag lines.vert lines.frag wide_lines.vert wide_lines.frag)
+foreach(shader scene.vert scene.frag points.vert points.frag lines.vert lines.frag wide_lines.vert wide_lines.frag overlay.vert overlay.frag)
     string(REPLACE "." "_" symbol "${shader}")
     set(source "${Easy3D_ROOT}/resources/shaders/vulkan/${shader}")
     set(binary "${CMAKE_CURRENT_BINARY_DIR}/${symbol}.spv")

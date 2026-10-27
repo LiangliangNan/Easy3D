@@ -32,6 +32,13 @@ Geometry::Geometry(std::vector<Vertex> vertices, std::vector<std::uint32_t> indi
     for (auto id : primitive_ids_)
         if (id == UINT32_MAX) throw std::invalid_argument("UINT32_MAX is reserved for background");
 }
+mat4 screen_space_projection(std::uint32_t width, std::uint32_t height) {
+    if (!width || !height) throw std::invalid_argument("screen-space projection requires positive dimensions");
+    mat4 result = mat4::identity();
+    result(0,0) = 2.0f/width; result(1,1) = -2.0f/height;
+    result(0,3) = -1; result(1,3) = 1;
+    return result;
+}
 Image::Image(std::uint32_t width, std::uint32_t height, std::vector<unsigned char> rgba, Sampler sampler)
     : width_(width), height_(height), rgba_(std::move(rgba)), sampler_(sampler) {
     if ((sampler.wrap != TextureWrap::clamp_to_edge && sampler.wrap != TextureWrap::repeat) ||
