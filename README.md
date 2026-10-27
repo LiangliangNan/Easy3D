@@ -3,6 +3,14 @@
     <b> <img src="https://img.shields.io/badge/license-GPL-blue" title="license-GPL"/> </b> <br>
 </p>
 
+This **Vulkan development branch** now defaults to the native Vulkan/GLFW viewer:
+`Easy3D_ENABLE_VULKAN=ON`, `Easy3D_ENABLE_VULKAN_VIEWER=ON`,
+`Easy3D_ENABLE_OPENGL=OFF`, and `Easy3D_BUILD_TUTORIALS=OFF`. A Vulkan SDK is required.
+Vulkan feature coverage is still incomplete; see [build instructions and migration
+status](docs/vulkan.md). For the existing Qt applications, Python bindings and
+full legacy tutorials, explicitly enable OpenGL. Existing CMake cache values are
+preserved until you reset them or pass new `-D` options.
+
 ![3D model generated and rendered by Easy3D](resources/images/logo.jpg)
 
 #### For 3D modeling, geometry processing, and rendering, designed with emphasis on simplicity and efficiency. 
@@ -255,8 +263,7 @@ Dec. 8, 2018
 
 ### Experimental Vulkan migration
 
-The `Easy3D-Vulkan` branch adds opt-in native Vulkan offscreen and interactive GLFW
-renderers using existing model/drawable/camera APIs. Enable
-`Easy3D_ENABLE_VULKAN_VIEWER` for the native window demo. Mapple and the other
+The `Easy3D-Vulkan` branch adds native Vulkan offscreen and interactive GLFW
+renderers using existing model/drawable/camera APIs. The native window demo is enabled by default in this branch. Mapple and the other
 existing applications still use OpenGL. See [build instructions, supported
 features and migration status](docs/vulkan.md).

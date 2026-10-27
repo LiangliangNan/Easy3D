@@ -15,16 +15,17 @@ int main(int argc, char** argv) {
         for (int i = 1; i < argc; ++i) {
             const std::string arg = argv[i];
             if (arg == "--validation") { options.device.validation = true; options.device.synchronization_validation = true; }
-            else if (arg == "--frames") {
-                if (++i == argc) throw std::invalid_argument("--frames requires a positive integer");
+            else if (arg == "--frames" || arg == "--samples") {
+                const auto message = arg + " requires a positive integer";
+                if (++i == argc) throw std::invalid_argument(message);
                 std::string text = argv[i]; size_t used = 0;
-                if (text.empty() || text[0] == '-') throw std::invalid_argument("--frames requires a positive integer");
+                if (text.empty() || text[0] == '-') throw std::invalid_argument(message);
                 const auto value = std::stoul(text, &used);
                 if (used != text.size() || !value || value > std::numeric_limits<unsigned>::max())
-                    throw std::invalid_argument("--frames requires a positive integer");
-                frames = unsigned(value);
+                    throw std::invalid_argument(message);
+                if (arg == "--frames") frames = unsigned(value); else options.samples = unsigned(value);
             } else if (arg == "--help") {
-                std::cout << "VulkanViewer [model] [--validation] [--frames N]\n"
+                std::cout << "VulkanViewer [model] [--validation] [--frames N] [--samples N]\n"
                           << "Left drag: rotate; right/middle drag: pan; wheel: zoom; F: fit; P: projection; Escape: close.\n";
                 return 0;
             } else model = arg;
@@ -40,7 +41,7 @@ int main(int argc, char** argv) {
                 bunny->add_triangle(vertices[indices[i]], vertices[indices[i+1]], vertices[indices[i+2]]);
             if (!viewer.add_model(bunny)) return 1;
         } else if (!viewer.add_model(model)) return 1;
-        std::cout << "Native Vulkan device: " << viewer.device().name() << '\n';
+        std::cout << "Native Vulkan device: " << viewer.device().name() << ", samples: " << viewer.samples() << '\n';
         return viewer.run(frames);
     } catch (const std::exception& e) { std::cerr << e.what() << '\n'; return 1; }
 }

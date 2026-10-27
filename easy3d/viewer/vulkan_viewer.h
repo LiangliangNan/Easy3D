@@ -8,6 +8,7 @@ namespace easy3d {
 struct VulkanViewerOptions {
     int width = 800, height = 600;
     bool visible = true, resizable = true;
+    unsigned samples = 1;
     graphics::DeviceOptions device;
 };
 
@@ -34,7 +35,11 @@ public:
     void set_title(const std::string& title);
     const std::string& title() const;
     void update() const;
-    bool snapshot(const std::string& filename) const { return render(filename); }
+    void set_samples(unsigned samples);
+    unsigned samples() const;
+    graphics::FrameImage capture() const { return VulkanOffScreen::capture(samples()); }
+    graphics::FrameImage capture(unsigned samples) const { return VulkanOffScreen::capture(samples); }
+    bool snapshot(const std::string& filename) const { return render(filename, 1.0f, int(samples())); }
     // Top-left origin, framebuffer-pixel coordinates (also used by callbacks).
     // Synchronous capture is performed only when explicitly requested.
     vec3 point_under_pixel(int x, int y, bool& found) const;

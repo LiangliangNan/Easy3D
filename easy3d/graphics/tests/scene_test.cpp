@@ -88,8 +88,24 @@ int main(int argc, char**) {
         bool rejected = false;
         try { custom->gl_draw(); } catch (const std::logic_error&) { rejected = true; }
         require(rejected, "GL-only API did not reject CPU drawable");
-        require(!renderer.render("unsupported.png", 1, 4), "unsupported MSAA request succeeded");
+        if (renderer.device().supported_sample_counts() & 4) {
+            custom->set_uniform_coloring(vec4(1, 0, 0, 1)); custom->set_lighting(false);
+            require(renderer.render("vulkan-msaa.png", 1, 4, 2), "four-sample snapshot failed");
+            require(ImageIO::load("vulkan-msaa.png", png, w, h, channels, 4, false), "MSAA PNG loading failed");
+            unsigned edges = 0;
+            for (size_t i = 0; i < png.size(); i += 4) {
+                if (png[i + 3] == 0 || png[i + 3] == 255) continue;
+                ++edges;
+                require(png[i] >= 253 && png[i + 1] == 0 && png[i + 2] == 0, "transparent MSAA edges have a dark fringe");
+            }
+            require(edges > 0, "transparent MSAA PNG has no partial coverage");
+        } else std::cout << "SKIP: device does not advertise four-sample color targets\n";
+        // Test the throwing API for expected failures, keeping normal test output
+        // free from the user-facing error logger of the bool render() wrapper.
+        rejected = false;
+        try { renderer.capture(3); } catch (const std::invalid_argument&) { rejected = true; }
+        require(rejected, "invalid sample count was accepted");
         require(renderer.device().validation_errors() == 0, "Vulkan validation reported errors");
-        std::cout << "PASS: Easy3D model loading, Camera, Renderer/Drawable, CPU extraction, property color, updates, visibility, resize, snapshots, points, custom drawables\n";
+        std::cout << "PASS: Easy3D model loading, Camera, Renderer/Drawable, CPU extraction, property color, updates, visibility, resize, snapshots/MSAA, points, custom drawables\n";
     } catch (const std::exception& e) { std::cerr << "FAIL: " << e.what() << std::endl; return 1; }
 }

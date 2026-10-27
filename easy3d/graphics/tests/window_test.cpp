@@ -43,6 +43,8 @@ int main(int argc, char**) {
         auto* model = viewer.add_model(resource::directory() + "/data/bunny.ply");
         require(model, "test mesh could not load");
         auto* faces = model->renderer()->get_triangles_drawable("faces");
+        const bool msaa = (viewer.device().supported_sample_counts() & 4) != 0;
+        if (msaa) viewer.set_samples(4);
         faces->set_uniform_coloring(vec4(1, 0, 0, 1)); faces->set_lighting(false);
         for (unsigned i = 0; i < 12; ++i) frame(viewer);
         auto captured = viewer.capture();
@@ -84,6 +86,7 @@ int main(int argc, char**) {
         require((viewer.camera()->viewDirection() - direction).norm() > 0, "mouse callback did not rotate");
         std::set<std::pair<int, int>> extents;
         for (unsigned i = 0; i < 8; ++i) {
+            if (msaa) viewer.set_samples(i % 2 ? 1 : 4);
             viewer.resize(151 + i * 13, 113 + i * 7);
             frame(viewer);
             int w, h; viewer.framebuffer_size(w, h);
@@ -94,6 +97,9 @@ int main(int argc, char**) {
         }
         require(extents.size() >= 3, "resize test did not exercise different framebuffer extents");
         viewer.hide(); VulkanViewer::poll_events(); viewer.show(); frame(viewer);
+        bool rejected_samples = false;
+        try { viewer.set_samples(3); } catch (const std::invalid_argument&) { rejected_samples = true; }
+        require(rejected_samples, "invalid window sample count was accepted");
         {
             auto unavailable = options;
             unavailable.device.device_name = "__Easy3D_no_such_physical_device__";
@@ -106,6 +112,7 @@ int main(int argc, char**) {
         // Native GLFW lifetime and GPU caches must survive a second window closing.
         {
             VulkanViewer second("Independent Vulkan device", options);
+            if (msaa) second.set_samples(4);
             require(second.add_model(resource::directory() + "/data/bunny.ply"), "second mesh load failed");
             for (unsigned i = 0; i < 4; ++i) { frame(viewer); frame(second); }
             require(second.device().validation_errors() == 0, "second device validation errors");
@@ -116,9 +123,19 @@ int main(int argc, char**) {
             auto callback = glfwSetKeyCallback(bad.window(), nullptr);
             glfwSetKeyCallback(bad.window(), callback);
             callback(bad.window(), GLFW_KEY_A, 0, GLFW_PRESS, 0);
-            require(bad.should_close() && bad.run(1) == 1, "callback failure escaped or was swallowed");
+            bool reported = false;
+            try { bad.draw_frame(); }
+            catch (const std::runtime_error& e) { reported = std::string(e.what()) == "expected callback failure"; }
+            require(bad.should_close() && reported, "callback failure escaped or was swallowed");
         }
         frame(viewer);
+        {
+            auto invalid = options; invalid.samples = 3;
+            bool rejected = false;
+            try { VulkanViewer bad("Expected invalid MSAA initialization", invalid); }
+            catch (const std::invalid_argument&) { rejected = true; }
+            require(rejected, "invalid initial sample count was accepted");
+        }
         require(viewer.snapshot("vulkan-window.png"), "window snapshot failed");
         require(viewer.device().validation_errors() == 0, "presentation validation errors");
         key(viewer.window(), GLFW_KEY_ESCAPE, 0, GLFW_PRESS, 0);

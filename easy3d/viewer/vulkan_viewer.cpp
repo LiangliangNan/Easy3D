@@ -28,11 +28,12 @@ struct VulkanViewer::Window {
     GLFWwindow* handle = nullptr;
     std::string title;
     int width, height;
+    unsigned samples;
     int button = -1, last_x = 0, last_y = 0;
     double wheel_x = 0, wheel_y = 0;
     std::exception_ptr error;
     Window(const std::string& text, const VulkanViewerOptions& options)
-        : title(text), width(options.width), height(options.height) {
+        : title(text), width(options.width), height(options.height), samples(options.samples) {
         if (width <= 0 || height <= 0) throw std::invalid_argument("window dimensions must be positive");
         runtime = GlfwRuntime::acquire();
         if (!glfwVulkanSupported()) throw std::runtime_error("GLFW could not find a usable Vulkan loader");
@@ -122,9 +123,18 @@ VulkanViewer::VulkanViewer(const std::string& title, const VulkanViewerOptions& 
     : VulkanViewer(std::make_shared<Window>(title, options), options.device) {}
 VulkanViewer::VulkanViewer(std::shared_ptr<Window> host, const graphics::DeviceOptions& options)
     : VulkanOffScreen(host->width, host->height, host->device(options)), window_(std::move(host)) {
-    window_->callbacks(this);
-    int w, h; framebuffer_size(w, h);
-    if (w > 0 && h > 0) VulkanOffScreen::resize(w, h);
+    try {
+        set_samples(window_->samples);
+        window_->callbacks(this);
+        int w, h; framebuffer_size(w, h);
+        if (w > 0 && h > 0) VulkanOffScreen::resize(w, h);
+    } catch (...) {
+        // A failed derived constructor destroys members before base classes.
+        // Release the Vulkan surface before member-owned native-window cleanup.
+        glfwSetWindowUserPointer(window_->handle, nullptr);
+        release_device();
+        throw;
+    }
 }
 VulkanViewer::~VulkanViewer() {
     // Base classes are destroyed after members. Release the surface/device now,
@@ -146,6 +156,12 @@ void VulkanViewer::set_title(const std::string& text) { window_->title = text; g
 const std::string& VulkanViewer::title() const { return window_->title; }
 void VulkanViewer::update() const { glfwPostEmptyEvent(); }
 GLFWwindow* VulkanViewer::window() const { return window_->handle; }
+void VulkanViewer::set_samples(unsigned samples) {
+    if (!samples || samples > 64 || (samples & (samples - 1)) || !(device().supported_sample_counts() & samples))
+        throw std::invalid_argument("unsupported Vulkan viewer sample count");
+    window_->samples = samples;
+}
+unsigned VulkanViewer::samples() const { return window_->samples; }
 bool VulkanViewer::draw_frame() {
     if (window_->error) std::rethrow_exception(window_->error);
     if (should_close() || glfwGetWindowAttrib(window_->handle, GLFW_ICONIFIED)) return false;
@@ -153,7 +169,7 @@ bool VulkanViewer::draw_frame() {
     if (w <= 0 || h <= 0) return false;
     if (width() != w || height() != h) { VulkanOffScreen::resize(w, h); post_resize(w, h); }
     pre_draw();
-    const bool drawn = present();
+    const bool drawn = present(samples());
     if (drawn) post_draw();
     return drawn;
 }

@@ -20,7 +20,7 @@ jobs:
 
     steps:
       # Checkout the code
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       # Install dependencies
       - name: Install Dependencies
@@ -37,6 +37,9 @@ jobs:
           CC=clang CXX=clang++ \
           cmake -S . -B build/clang_${{ matrix.build_type }} \
                 -G "Unix Makefiles" \
+                -DEasy3D_ENABLE_OPENGL=ON \
+                -DEasy3D_ENABLE_VULKAN=OFF \
+                -DEasy3D_ENABLE_VULKAN_VIEWER=OFF \
                 -DEasy3D_BUILD_PYTHON_BINDINGS=ON \
                 -DEasy3D_BUILD_TUTORIALS=ON \
                 -DEasy3D_BUILD_TESTS=ON \

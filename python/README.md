@@ -16,7 +16,10 @@ pip install easy3d-2.6.0-py3-none-any.whl  # <-- Use your actual wheel file name
 If prebuilt bindings are not available for your platform or specific Python version, you can build the bindings from 
 the source code. Here’s how:
 - Ensure you have [Python](https://www.python.org/downloads/) installed on your system.
-- In your CMake configuration, enable the `Easy3D_BUILD_PYTHON_BINDINGS` option.
+- In your CMake configuration, enable `Easy3D_BUILD_PYTHON_BINDINGS` and
+  `Easy3D_ENABLE_OPENGL`. On the Vulkan development branch, Python rendering still
+  uses the legacy backend. Set `Easy3D_ENABLE_VULKAN=OFF` and
+  `Easy3D_ENABLE_VULKAN_VIEWER=OFF` if you want to build it without a Vulkan SDK.
 - Run CMake to configure the project and then build Easy3D. 
 - After building, the Python bindings module, `PyEasy3D`, will be available in `YOUR_BUILD_DIRECTORY/lib/python/easy3d`.
 

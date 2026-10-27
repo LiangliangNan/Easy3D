@@ -47,6 +47,31 @@ int main(int argc, char**) {
         // Y-up input must appear toward the top of the returned image.
         require(image.ids[12 * 64 + 32].object == 21, "image orientation flipped");
         require(image.ids[52 * 64 + 10].object == 21, "triangle base orientation mismatch");
+        std::cout << "Supported color sample counts:";
+        for (unsigned count = 1; count <= 64; count <<= 1)
+            if (device->supported_sample_counts() & count) std::cout << ' ' << count;
+        std::cout << '\n';
+        rejects([&] { device->render(64, 64, {near}, vec4(0), 0); });
+        rejects([&] { device->render(64, 64, {near}, vec4(0), 3); });
+        if (device->supported_sample_counts() & 4) {
+            auto aa = device->render(64, 64, {near, far}, vec4(0, 0, 1, 1), 4);
+            require(aa.ids[center].object == 21 && aa.ids[center].primitive == 173, "MSAA changed center picking IDs");
+            unsigned edge_pixels = 0;
+            for (size_t i = 0; i < aa.ids.size(); ++i) {
+                const auto red = aa.rgba[i * 4], blue = aa.rgba[i * 4 + 2];
+                edge_pixels += red > 0 && red < 255 && blue > 0 && blue < 255;
+                require(aa.ids[i].object == image.ids[i].object && aa.ids[i].primitive == image.ids[i].primitive,
+                        "MSAA changed center-sample primitive IDs");
+                require(std::abs(aa.depth[i] - image.depth[i]) < 1e-5f, "MSAA changed center-sample depth");
+            }
+            require(edge_pixels > 0, "four samples produced no antialiased edges");
+            // Exercise pipeline/target caching while switching sample count and extent.
+            for (unsigned i = 0; i < 8; ++i) {
+                const unsigned w = 63 + i, h = 49 + i;
+                const auto frame = device->render(w, h, {near}, vec4(0), i % 2 ? 1 : 4);
+                require(frame.ids[(h / 2) * w + w / 2].object == 21, "sample-count/resize transition lost geometry");
+            }
+        }
         // Valid descriptor for a real texture, then a null texture on the same draw.
         near.texture = std::make_shared<Image>(1, 1, std::vector<unsigned char>{0, 255, 0, 255});
         near.color = vec4(1, 1, 1, 1);
@@ -79,6 +104,12 @@ int main(int argc, char**) {
         bool point = false;
         for (auto id : primitives.ids) point |= id.object == 21;
         require(point, "point pipeline did not draw");
+        if (device->supported_sample_counts() & 4) {
+            const auto aa = device->render(32, 32, {near}, vec4(1), 4);
+            for (size_t i = 0; i < aa.ids.size(); ++i)
+                require(aa.ids[i].object == primitives.ids[i].object && std::abs(aa.depth[i] - primitives.depth[i]) < 1e-5f,
+                        "point picking changed with MSAA");
+        }
         points.push_back(points[0]);
         points[0].position.x = -0.8f; points[1].position.x = 0.8f;
         near.geometry = std::make_shared<Geometry>(points, std::vector<uint32_t>{}, Topology::lines);
@@ -86,6 +117,12 @@ int main(int argc, char**) {
         unsigned line = 0;
         for (auto id : primitives.ids) line += id.object == 21;
         require(line >= 20, "line pipeline did not draw");
+        if (device->supported_sample_counts() & 4) {
+            const auto aa = device->render(32, 32, {near}, vec4(1), 4);
+            for (size_t i = 0; i < aa.ids.size(); ++i)
+                require(aa.ids[i].object == primitives.ids[i].object && std::abs(aa.depth[i] - primitives.depth[i]) < 1e-5f,
+                        "line picking changed with MSAA");
+        }
         auto empty = device->render(19, 17, {});
         for (auto id : empty.ids) require(id.object == UINT32_MAX, "stale target contents after clear");
         require(device->validation_errors() == 0 && second->validation_errors() == 0, "Vulkan validation reported errors");

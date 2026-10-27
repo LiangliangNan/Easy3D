@@ -84,17 +84,20 @@ class RenderDevice {
 public:
     virtual ~RenderDevice() = default;
     virtual const std::string& name() const = 0;
+    // Bit mask using the numeric sample counts (1, 2, 4, ...). Color MSAA uses
+    // supported RGBA8/D32 counts; integer IDs/depth picking stay single-sampled.
+    virtual std::uint32_t supported_sample_counts() const = 0;
     // Synchronous offscreen capture. No window, GL context, surface or swapchain.
     // Instances are externally synchronized; separate instances are independent.
     virtual FrameImage render(std::uint32_t width, std::uint32_t height,
                               const std::vector<DrawCommand>& commands,
-                              const vec4& background = vec4(1, 1, 1, 1)) = 0;
+                              const vec4& background = vec4(1, 1, 1, 1), unsigned samples = 1) = 0;
     // Queue a frame for a configured presentation surface, without CPU readback.
     // False means zero extent/out-of-date surface; the host should retry after events.
     // Headless devices report an unsupported operation explicitly.
     virtual bool present(std::uint32_t width, std::uint32_t height,
                          const std::vector<DrawCommand>& commands,
-                         const vec4& background = vec4(1, 1, 1, 1)) = 0;
+                         const vec4& background = vec4(1, 1, 1, 1), unsigned samples = 1) = 0;
     virtual unsigned validation_errors() const = 0;
 };
 

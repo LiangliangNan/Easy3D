@@ -25,9 +25,10 @@ int main() {
     mesh->add_triangle(a, b, c);
     renderer.add_model(mesh);
     mesh->renderer()->get_triangles_drawable("faces")->set_uniform_coloring(easy3d::vec4(1, 0.4f, 0, 1));
-    auto frame = renderer.capture();
+    const unsigned samples = renderer.device().supported_sample_counts() & 4 ? 4 : 1;
+    auto frame = renderer.capture(samples);
     unsigned hits = 0;
     for (auto id : frame.ids) hits += id.object != UINT32_MAX;
     std::cout << "Installed OffScreen rendered " << hits << " pixels on " << renderer.device().name() << '\n';
-    return hits > 100 && renderer.render("installed.png") ? 0 : 1;
+    return hits > 100 && renderer.render("installed.png", 1, int(samples)) ? 0 : 1;
 }

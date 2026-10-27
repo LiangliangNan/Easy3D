@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.12)
 # Build shared libraries
 option(Easy3D_BUILD_SHARED_LIBS "Build shared libaries"         ON )
 # Build tutorials
-option(Easy3D_BUILD_TUTORIALS "Build Easy3D tutorials"          ON )
+option(Easy3D_BUILD_TUTORIALS "Build Easy3D tutorials"          OFF)
 # Build documentation
 option(Easy3D_BUILD_DOCUMENTATION "Build Easy3D documentation"  OFF)
 # Build tests
@@ -18,9 +18,9 @@ option(Easy3D_ENABLE_CGAL "Build advanced features that require CGAL (>= v5.1)" 
 option(Easy3D_ENABLE_QT "Build examples/applications based on Qt (Qt5 >= v5.8.0, or Qt6)"      OFF)
 # Build the video encoding module that requires ffmpeg
 option(Easy3D_ENABLE_FFMPEG "Build the video encoding module that requires ffmpeg (>= v3.4)" OFF)
-option(Easy3D_ENABLE_OPENGL "Build the existing OpenGL renderer and application hosts" ON)
-option(Easy3D_ENABLE_VULKAN "Build the experimental native Vulkan renderer" OFF)
-option(Easy3D_ENABLE_VULKAN_VIEWER "Build the native Vulkan/GLFW window host and demo" OFF)
+option(Easy3D_ENABLE_OPENGL "Build the existing OpenGL renderer and application hosts" OFF)
+option(Easy3D_ENABLE_VULKAN "Build the experimental native Vulkan renderer" ON)
+option(Easy3D_ENABLE_VULKAN_VIEWER "Build the native Vulkan/GLFW window host and demo" ON)
 option(Easy3D_BUILD_VULKAN_TESTS "Build deterministic Vulkan rendering tests" OFF)
 option(Easy3D_VULKAN_TEST_VALIDATION "Require Vulkan and synchronization validation in CTest" OFF)
 if(Easy3D_ENABLE_VULKAN_VIEWER AND NOT Easy3D_ENABLE_VULKAN)

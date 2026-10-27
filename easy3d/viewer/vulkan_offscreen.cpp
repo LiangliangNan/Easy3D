@@ -107,8 +107,8 @@ struct VulkanOffScreen::Impl {
             if (drawables[i]->is_visible()) commands.push_back(command(drawables[i], uint32_t(models.size() + i), cam));
         return commands;
     }
-    graphics::FrameImage capture(const Camera& cam, const vec4& bg) const {
-        return device->render(uint32_t(cam.screenWidth()), uint32_t(cam.screenHeight()), commands(cam), bg);
+    graphics::FrameImage capture(const Camera& cam, const vec4& bg, unsigned samples = 1) const {
+        return device->render(uint32_t(cam.screenWidth()), uint32_t(cam.screenHeight()), commands(cam), bg, samples);
     }
 };
 VulkanOffScreen::VulkanOffScreen(int width, int height, const graphics::DeviceOptions& options)
@@ -118,8 +118,8 @@ VulkanOffScreen::VulkanOffScreen(int width, int height, std::unique_ptr<graphics
     resize(width, height);
     impl_->device = std::move(device);
 }
-bool VulkanOffScreen::present() {
-    return impl_->device->present(uint32_t(width()), uint32_t(height()), impl_->commands(*camera()), background_color());
+bool VulkanOffScreen::present(unsigned samples) {
+    return impl_->device->present(uint32_t(width()), uint32_t(height()), impl_->commands(*camera()), background_color(), samples);
 }
 void VulkanOffScreen::release_device() { impl_->device.reset(); }
 VulkanOffScreen::~VulkanOffScreen() = default;
@@ -197,11 +197,11 @@ void VulkanOffScreen::fit_screen(const Model* selected) {
     }
     if (box.is_valid()) { camera()->setSceneBoundingBox(box.min_point(), box.max_point()); camera()->showEntireScene(); }
 }
-graphics::FrameImage VulkanOffScreen::capture() const { return impl_->capture(*camera(), background_color()); }
+graphics::FrameImage VulkanOffScreen::capture(unsigned samples) const { return impl_->capture(*camera(), background_color(), samples); }
 const graphics::RenderDevice& VulkanOffScreen::device() const { return *impl_->device; }
 bool VulkanOffScreen::render(const std::string& filename, float scaling, int samples, int bg, bool expand) const {
     try {
-        if (samples != 1) throw std::invalid_argument("VulkanOffScreen currently requires samples=1");
+        if (samples <= 0) throw std::invalid_argument("sample count must be positive");
         if (!expand) throw std::invalid_argument("VulkanOffScreen currently requires expand=true");
         if (!std::isfinite(scaling) || scaling <= 0 || double(width()) * scaling > std::numeric_limits<int>::max() ||
             double(height()) * scaling > std::numeric_limits<int>::max() || bg < 0 || bg > 2)
@@ -210,7 +210,18 @@ bool VulkanOffScreen::render(const std::string& filename, float scaling, int sam
         const int w = int(width() * double(scaling)), h = int(height() * double(scaling));
         if (w <= 0 || h <= 0) throw std::invalid_argument("scaled snapshot dimensions are zero");
         copy.setScreenWidthAndHeight(w, h);
-        const auto frame = impl_->capture(copy, bg == 0 ? background_color() : bg == 1 ? vec4(1, 1, 1, 1) : vec4(0, 0, 0, 0));
+        auto frame = impl_->capture(copy, bg == 0 ? background_color() : bg == 1 ? vec4(1, 1, 1, 1) : vec4(0, 0, 0, 0), unsigned(samples));
+        if (bg == 2 && samples > 1) {
+            // Opaque fragments resolved against transparent black produce
+            // coverage-premultiplied edges. Image files store straight alpha.
+            for (size_t i = 0; i < frame.rgba.size(); i += 4) {
+                const unsigned alpha = frame.rgba[i + 3];
+                if (alpha && alpha < 255)
+                    for (unsigned c = 0; c < 3; ++c)
+                        frame.rgba[i + c] = static_cast<unsigned char>(std::min(255u,
+                            (unsigned(frame.rgba[i + c]) * 255 + alpha / 2) / alpha));
+            }
+        }
         return ImageIO::save(filename, frame.rgba, w, h, 4, false);
     } catch (const std::exception& e) {
         LOG(ERROR) << "Vulkan snapshot failed: " << e.what(); return false;

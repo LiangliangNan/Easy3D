@@ -42,14 +42,15 @@ public:
     const std::vector<std::shared_ptr<Drawable>>& drawables() const;
     void clear_scene();
     void fit_screen(const Model* model = nullptr);
-    graphics::FrameImage capture() const;
-    // Single sample only at this milestone. Other sample counts are rejected.
+    // Color is multisampled when requested; IDs/depth stay center-sampled.
+    // Invalid/unsupported requests throw, allowing callers/tests to handle them.
+    graphics::FrameImage capture(unsigned samples = 1) const;
     bool render(const std::string& filename, float scaling = 1.0f, int samples = 1,
                 int back_ground = 1, bool expand = true) const;
     const graphics::RenderDevice& device() const;
 protected:
     VulkanOffScreen(int width, int height, std::unique_ptr<graphics::RenderDevice> device);
-    bool present();
+    bool present(unsigned samples = 1);
     // Window hosts must destroy the Vulkan surface/device before the native window.
     void release_device();
 private:

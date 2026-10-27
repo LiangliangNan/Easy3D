@@ -21,7 +21,7 @@ jobs:
 
     steps:
       # Checkout the code
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       # Install dependencies for each platform
       - name: Install Dependencies (Ubuntu)
@@ -67,6 +67,9 @@ jobs:
         run: |
           cmake -S . -B build/${{ matrix.build_type }} \
                 -G "Unix Makefiles" \
+                -DEasy3D_ENABLE_OPENGL=ON \
+                -DEasy3D_ENABLE_VULKAN=OFF \
+                -DEasy3D_ENABLE_VULKAN_VIEWER=OFF \
                 -DEasy3D_BUILD_PYTHON_BINDINGS=ON \
                 -DEasy3D_BUILD_TUTORIALS=ON \
                 -DEasy3D_BUILD_TESTS=ON \
@@ -83,6 +86,9 @@ jobs:
                 -A x64 \
                 -DCMAKE_PREFIX_PATH="$CONDA_PREFIX/Library" \
                 -DwxWidgets_ROOT_DIR="$CONDA_PREFIX/Library" \
+                -DEasy3D_ENABLE_OPENGL=ON \
+                -DEasy3D_ENABLE_VULKAN=OFF \
+                -DEasy3D_ENABLE_VULKAN_VIEWER=OFF \
                 -DEasy3D_BUILD_PYTHON_BINDINGS=ON \
                 -DEasy3D_BUILD_TUTORIALS=ON \
                 -DEasy3D_BUILD_TESTS=ON \
