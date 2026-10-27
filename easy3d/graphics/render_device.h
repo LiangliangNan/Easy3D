@@ -79,6 +79,9 @@ struct DrawCommand {
     // first endpoint (base) to the second (tip); cylinders have two flat caps.
     LineStyle line_style = LineStyle::plain;
     float line_radius = 1;
+    // Plain lines use framebuffer-pixel widths. Width one retains native line
+    // rasterization; other widths use butt-capped triangle ribbons, without joins.
+    float line_width = 1;
 };
 
 struct FrameImage {

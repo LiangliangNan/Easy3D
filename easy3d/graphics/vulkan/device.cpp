@@ -22,6 +22,8 @@ namespace easy3d { namespace graphics { namespace {
 #include "points_frag.inc"
 #include "lines_vert.inc"
 #include "lines_frag.inc"
+#include "wide_lines_vert.inc"
+#include "wide_lines_frag.inc"
 
 void check(VkResult result, const char* operation) {
     if (result != VK_SUCCESS)
@@ -385,7 +387,7 @@ struct RenderPass {
     PassKind kind;
     VkSampleCountFlagBits samples;
     VkRenderPass handle = VK_NULL_HANDLE;
-    VkPipeline pipelines[5] = {};
+    VkPipeline pipelines[6] = {};
     RenderPass(Context& context, PassKind mode, VkSampleCountFlagBits count) : c(context), kind(mode), samples(count) {}
     ~RenderPass() {
         for (auto p : pipelines) if (p) vkDestroyPipeline(c.device, p, nullptr);
@@ -710,7 +712,7 @@ public:
         check(vkCreatePipelineLayout(c_.device, &li, nullptr, &layout_), "create pipeline layout");
     }
     void create_pipelines(RenderPass& pass) {
-        VkShaderModule modules[6] = {};
+        VkShaderModule modules[8] = {};
         try {
             VkShaderModuleCreateInfo mi{};
             mi.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -726,6 +728,10 @@ public:
             check(vkCreateShaderModule(c_.device, &mi, nullptr, &modules[4]), "create line vertex shader");
             mi.codeSize = sizeof(lines_frag); mi.pCode = lines_frag;
             check(vkCreateShaderModule(c_.device, &mi, nullptr, &modules[5]), "create line fragment shader");
+            mi.codeSize = sizeof(wide_lines_vert); mi.pCode = wide_lines_vert;
+            check(vkCreateShaderModule(c_.device, &mi, nullptr, &modules[6]), "create wide line vertex shader");
+            mi.codeSize = sizeof(wide_lines_frag); mi.pCode = wide_lines_frag;
+            check(vkCreateShaderModule(c_.device, &mi, nullptr, &modules[7]), "create wide line fragment shader");
             VkPipelineShaderStageCreateInfo stages[2] = {};
             for (unsigned i = 0; i < 2; ++i) {
                 stages[i].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -744,6 +750,9 @@ public:
                 {5, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(GpuVertex) + offsetof(GpuVertex, position)},
                 {6, 0, VK_FORMAT_R32G32B32A32_SFLOAT, sizeof(GpuVertex) + offsetof(GpuVertex, color)},
                 {7, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(GpuVertex) + offsetof(GpuVertex, texcoord)}};
+            VkVertexInputAttributeDescription wide_attrs[] = {
+                attrs[0], attrs[1], attrs[2], attrs[3], attrs[4], line_attrs[4], line_attrs[5], line_attrs[6],
+                {8, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(GpuVertex) + offsetof(GpuVertex, normal)}};
             VkPipelineVertexInputStateCreateInfo vertex{};
             vertex.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
             vertex.vertexBindingDescriptionCount = 1; vertex.pVertexBindingDescriptions = &binding;
@@ -782,7 +791,7 @@ public:
             pi.pDynamicState = &dynamic; pi.layout = layout_; pi.renderPass = pass.handle;
             const VkPrimitiveTopology topologies[] = {VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
                 VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_PRIMITIVE_TOPOLOGY_POINT_LIST};
-            for (unsigned i = 0; i < 5; ++i) {
+            for (unsigned i = 0; i < 6; ++i) {
                 if (i == 3) {
                     stages[0].module = modules[2]; stages[1].module = modules[3];
                     binding.inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
@@ -794,6 +803,13 @@ public:
                     binding.stride = 2 * sizeof(GpuVertex);
                     vertex.vertexAttributeDescriptionCount = 7;
                     vertex.pVertexAttributeDescriptions = line_attrs;
+                }
+                if (i == 5) {
+                    stages[0].module = modules[6]; stages[1].module = modules[7];
+                    vertex.vertexAttributeDescriptionCount = 9;
+                    vertex.pVertexAttributeDescriptions = wide_attrs;
+                    ms.sampleShadingEnable = VK_FALSE;
+                    ms.minSampleShading = 0;
                 }
                 assembly.topology = topologies[i >= 3 ? 0 : i];
                 check(vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr, &pass.pipelines[i]), "create pipeline");
@@ -881,7 +897,8 @@ public:
         return *result;
     }
     static bool expanded_lines(const DrawCommand& d) {
-        return d.geometry->topology() == Topology::lines && d.line_style != LineStyle::plain;
+        return d.geometry->topology() == Topology::lines &&
+               (d.line_style != LineStyle::plain || d.line_width != 1);
     }
     static bool expanded_impostor(const DrawCommand& d) {
         return expanded_lines(d) || (d.geometry->topology() == Topology::points &&
@@ -907,6 +924,8 @@ public:
             if (command.line_style != LineStyle::plain && command.line_style != LineStyle::cylinder &&
                 command.line_style != LineStyle::cone)
                 throw std::invalid_argument("unknown line style");
+            if (!std::isfinite(command.line_width) || command.line_width <= 0)
+                throw std::invalid_argument("line width must be finite and positive");
             if (!std::isfinite(command.line_radius) || command.line_radius <= 0)
                 throw std::invalid_argument("line radius must be finite and positive");
             if (command.geometry->topology() != Topology::lines && command.line_style != LineStyle::plain)
@@ -978,29 +997,33 @@ public:
                     throw std::invalid_argument("too many impostor draw commands");
                 offset = static_cast<uint32_t>(uniforms.size());
                 ImpostorUniform u{};
-                const auto inv = (command.point_style != PointStyle::plain || expanded_lines(command)) ? inverse(command.projection) : mat4::identity();
+                const bool analytic = command.point_style != PointStyle::plain || command.line_style != LineStyle::plain;
+                mat4 model_view = mat4::identity(), projection = mat4::identity();
+                if (analytic) { model_view = command.model_view; projection = command.projection; }
+                const auto inv = analytic ? inverse(projection) : mat4::identity();
                 for (unsigned col = 0; col < 4; ++col)
                     for (unsigned row = 0; row < 4; ++row) {
-                        u.model_view[col*4+row] = command.model_view(row,col);
-                        u.projection[col*4+row] = command.projection(row,col);
+                        u.model_view[col*4+row] = model_view(row,col);
+                        u.projection[col*4+row] = projection(row,col);
                         u.inverse_projection[col*4+row] = inv(row,col);
                         if (!std::isfinite(u.model_view[col*4+row]) || !std::isfinite(u.projection[col*4+row]) ||
                             !std::isfinite(u.inverse_projection[col*4+row]))
                             throw std::invalid_argument("invalid impostor transform/projection");
                     }
                 u.dimensions[0] = float(width); u.dimensions[1] = float(height);
-                u.dimensions[2] = command.point_size;
+                u.dimensions[2] = expanded_lines(command) ? command.line_width : command.point_size;
                 u.dimensions[3] = expanded_lines(command) ? command.line_radius : command.sphere_radius;
                 for (unsigned i = 0; i < 3; ++i) {
                     if (!std::isfinite(command.sphere_light[i]))
                         throw std::invalid_argument("non-finite impostor light");
                     u.light[i] = command.sphere_light[i];
                 }
-                if ((command.point_style != PointStyle::plain || expanded_lines(command)) && command.lighting &&
+                if (analytic && command.lighting &&
                     dot(command.sphere_light, command.sphere_light) == 0)
                     throw std::invalid_argument("impostor lighting requires a nonzero direction");
                 u.light[3] = command.point_style == PointStyle::surfel ? 2 : command.point_style == PointStyle::sphere ? 1 : 0;
-                if (expanded_lines(command)) u.light[3] = command.line_style == LineStyle::cone ? 4 : 3;
+                if (expanded_lines(command))
+                    u.light[3] = command.line_style == LineStyle::plain ? 5 : command.line_style == LineStyle::cone ? 4 : 3;
                 uniforms.resize(uniforms.size() + stride);
                 std::memcpy(uniforms.data() + offset, &u, sizeof(u));
             }
@@ -1050,7 +1073,7 @@ public:
             unsigned pipeline = d.geometry->topology() == Topology::triangles ? 0 :
                                 d.geometry->topology() == Topology::lines ? 1 : 2;
             const bool expanded = expanded_impostor(d);
-            if (expanded) pipeline = expanded_lines(d) ? 4 : 3;
+            if (expanded) pipeline = expanded_lines(d) ? (d.line_style == LineStyle::plain ? 5 : 4) : 3;
             vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pass.pipelines[pipeline]);
             if (expanded)
                 vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout_, 1, 1, &impostor_set_, 1, &draw.uniform_offset);

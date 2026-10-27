@@ -16,6 +16,7 @@ static_assert(std::is_same<easy3d::OffScreen, easy3d::VulkanOffScreen>::value,
 #include <easy3d/util/initializer.h>
 #include <easy3d/util/resource.h>
 #include <iostream>
+#include <map>
 #include <stdexcept>
 using namespace easy3d;
 void require(bool condition, const char* message) { if (!condition) throw std::runtime_error(message); }
@@ -35,6 +36,28 @@ int main(int argc, char**) {
         require(model, "could not load bunny mesh");
         auto* faces = model->renderer()->get_triangles_drawable("faces");
         faces->set_uniform_coloring(vec4(1, 0, 0, 1));
+        faces->set_lighting(true);
+        faces->set_smooth_shading(false);
+        const auto flat = renderer.capture();
+        std::map<uint32_t, unsigned char> face_colors;
+        for (size_t i = 0; i < flat.ids.size(); ++i) {
+            if (flat.ids[i].object == UINT32_MAX) continue;
+            const auto inserted = face_colors.emplace(flat.ids[i].primitive, flat.rgba[4*i]);
+            require(inserted.second || inserted.first->second == flat.rgba[4*i],
+                    "flat shading varies within a triangle");
+        }
+        faces->set_smooth_shading(true); // no renderer update: style must invalidate its cached snapshot
+        const auto smooth = renderer.capture();
+        unsigned changed = 0;
+        for (size_t i = 0; i < flat.ids.size(); ++i) {
+            require(smooth.ids[i].object == flat.ids[i].object && smooth.ids[i].primitive == flat.ids[i].primitive &&
+                    std::abs(smooth.depth[i]-flat.depth[i]) < 1e-6f, "shading style changed geometry or picking");
+            changed += smooth.rgba[4*i] != flat.rgba[4*i];
+        }
+        require(changed > 50, "flat/smooth shading switch retained stale normals");
+        faces->set_smooth_shading(false);
+        const auto flat_again = renderer.capture();
+        require(flat_again.rgba == flat.rgba, "switching back to flat shading retained smooth normals");
         faces->set_lighting(false);
         auto red = renderer.capture();
         require(hits(red) > 500, "mesh did not render");
@@ -128,9 +151,17 @@ int main(int argc, char**) {
             }
         }
         segments->set_impostor_type(LinesDrawable::PLAIN);
-        bool wide_rejected = false;
-        try { renderer.capture(); } catch (const std::logic_error&) { wide_rejected = true; }
-        require(wide_rejected, "unsupported plain wide line silently rendered");
+        for (auto projection : {Camera::PERSPECTIVE, Camera::ORTHOGRAPHIC}) {
+            renderer.camera()->setType(projection);
+            const auto ribbon = renderer.capture();
+            require(hits(ribbon) > 100, "scene adapter did not expand plain wide lines");
+            if (renderer.device().supported_sample_counts(graphics::LineStyle::plain) & 4) {
+                const auto aa = renderer.capture(4);
+                for (size_t i = 0; i < aa.ids.size(); ++i)
+                    require(aa.ids[i].object == ribbon.ids[i].object && std::abs(aa.depth[i]-ribbon.depth[i]) < 1e-5f,
+                            "scene wide-line MSAA changed center picking/depth");
+            }
+        }
         renderer.clear_scene();
         auto custom = std::make_shared<TrianglesDrawable>();
         custom->set_opacity(1);

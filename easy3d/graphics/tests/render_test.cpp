@@ -2,6 +2,7 @@
 #include <easy3d/graphics/render_device.h>
 #include <cmath>
 #include <iostream>
+#include <limits>
 #include <stdexcept>
 using namespace easy3d;
 using namespace easy3d::graphics;
@@ -399,6 +400,158 @@ void line_impostors(RenderDevice& device) {
     line.projection = mat4::identity(); line.model_view(3,0) = 1;
     rejects([&] { device.render(32, 32, {line}); });
 }
+void wide_lines(RenderDevice& device) {
+    std::vector<Vertex> vertices(2);
+    vertices[0].position = vec3(-0.75f, 0, 0); vertices[1].position = vec3(0.75f, 0, 0);
+    DrawCommand line;
+    line.line_width = 12; line.object_id = 91; line.color = vec4(1, 0, 0, 1);
+    auto geometry = [&](bool reverse = false) {
+        line.geometry = std::make_shared<Geometry>(vertices, reverse ? std::vector<uint32_t>{1,0} :
+                std::vector<uint32_t>{0,1}, Topology::lines, std::vector<uint32_t>{321});
+    };
+    auto count = [](const FrameImage& frame) {
+        unsigned hits = 0;
+        for (auto id : frame.ids) hits += id.object == 91;
+        return hits;
+    };
+    auto msaa = [&](unsigned width, unsigned height, const FrameImage& single) {
+        if (!(device.supported_sample_counts(LineStyle::plain) & 4)) return;
+        const auto aa = device.render(width, height, {line}, vec4(0), 4);
+        unsigned edges = 0;
+        for (size_t i = 0; i < aa.ids.size(); ++i) {
+            require(aa.ids[i].object == single.ids[i].object && aa.ids[i].primitive == single.ids[i].primitive &&
+                    std::abs(aa.depth[i]-single.depth[i]) < 1e-5f, "wide line MSAA changed center picking/depth");
+            edges += aa.rgba[4*i] > 0 && aa.rgba[4*i] < 255;
+        }
+        require(edges > 0, "wide line MSAA produced no partial edge coverage");
+    };
+    geometry();
+    auto horizontal = device.render(64, 48, {line});
+    require(count(horizontal) == 48*12, "wide horizontal line has incorrect pixel width or butt caps");
+    line.line_width = 512;
+    require(count(device.render(64,48,{line})) == 48*48, "portable line width was clamped to a native-device limit");
+    line.line_width = 0.25f;
+    require(count(device.render(65,65,{line})) > 0, "subpixel wide line was rejected or clamped away");
+    vertices[0].position.y = vertices[1].position.y = 1.05f; geometry(); line.line_width = 12;
+    auto outside = device.render(64,64,{line});
+    require(outside.ids[1*64+32].object == 91 && outside.ids[8*64+32].object == UINT32_MAX,
+            "wide line was clipped by its offscreen centerline instead of its ribbon");
+    vertices[0].position.y = vertices[1].position.y = 0; geometry();
+    line.line_width = 12.5f;
+    msaa(64, 48, device.render(64, 48, {line}, vec4(0)));
+    line.line_width = 12;
+    vertices[0].position = vec3(0, -0.75f, 0); vertices[1].position = vec3(0, 0.75f, 0); geometry();
+    require(count(device.render(64, 48, {line})) == 36*12, "wide vertical line has incorrect pixel width");
+    // Independent screen-space rectangle/depth oracle for a diagonal ribbon.
+    vertices[0].position = vec3(-0.65f, -0.55f, -0.6f);
+    vertices[1].position = vec3(0.65f, 0.55f, 0.6f); geometry(); line.line_width = 7.5f;
+    auto diagonal = device.render(93, 71, {line}, vec4(0));
+    const double ax = 0.175*93, ay = 0.775*71, dx = 0.65*93, dy = -0.55*71;
+    const double length_squared = dx*dx+dy*dy;
+    unsigned expected_hits = 0;
+    for (unsigned y = 0; y < 71; ++y) for (unsigned x = 0; x < 93; ++x) {
+        const double px = x+0.5-ax, py = y+0.5-ay;
+        const double along = (px*dx+py*dy)/length_squared;
+        const double across = std::abs(px*dy-py*dx)/std::sqrt(length_squared);
+        const size_t pixel = y*93+x;
+        if (along > 1e-5 && along < 1-1e-5 && across < 3.75-1e-5) {
+            ++expected_hits;
+            require(diagonal.ids[pixel].object == 91 && diagonal.ids[pixel].primitive == 321,
+                    "wide line screen-space silhouette/ID mismatch");
+            // Rasterizer subpixel quantization slightly perturbs the triangle's
+            // interpolation plane; center picking must still match across MSAA.
+            require(std::abs(diagonal.depth[pixel]-(0.2+0.6*along)) < 5e-5,
+                    "wide line interpolated depth mismatch");
+        } else if (along < -1e-5 || along > 1+1e-5 || across > 3.75+1e-5)
+            require(diagonal.ids[pixel].object == UINT32_MAX, "wide line escaped its butt-capped rectangle");
+    }
+    require(expected_hits > 100, "wide-line oracle did not exercise enough pixels");
+    msaa(93, 71, diagonal);
+    geometry(true);
+    auto reversed = device.render(93, 71, {line});
+    for (size_t i = 0; i < diagonal.ids.size(); ++i)
+        require(reversed.ids[i].object == diagonal.ids[i].object && std::abs(reversed.depth[i]-diagonal.depth[i]) < 5e-5f,
+                "reversing a wide segment changed coverage/depth");
+    vertices[0].position = vec3(-0.75f, 0, -0.6f); vertices[1].position = vec3(0.75f, 0, 0.6f); geometry();
+    DrawCommand plane; plane.geometry = triangle(0, vec4(0,1,0,1)); plane.object_id = 19;
+    for (bool reverse : {false, true}) {
+        const auto overlap = device.render(65, 65, reverse ? std::vector<DrawCommand>{plane,line} :
+                                                           std::vector<DrawCommand>{line,plane});
+        require(overlap.ids[32*65+24].object == 91 && overlap.ids[32*65+40].object == 19,
+                "wide line/mesh depth occlusion depends on draw order");
+    }
+    // Near/far clipping happens before width expansion, with no offscreen spikes.
+    vertices[0].position.z = -2; vertices[1].position.z = 0; geometry();
+    auto clipped = device.render(65, 65, {line});
+    require(clipped.ids[32*65+24].object == UINT32_MAX && clipped.ids[32*65+40].object == 91,
+            "wide line near clipping mismatch");
+    vertices[0].color = vec4(1,0,0,1); vertices[1].color = vec4(0,1,0,1); geometry();
+    line.color = vec4(1);
+    const auto clipped_color = device.render(65,65,{line});
+    require(std::abs(int(clipped_color.rgba[(32*65+40)*4])-86) <= 2 &&
+            std::abs(int(clipped_color.rgba[(32*65+40)*4+1])-169) <= 2,
+            "near clipping lost the original endpoint color parameters");
+    vertices[0].position.z = 0; vertices[1].position.z = 2; geometry();
+    clipped = device.render(65, 65, {line});
+    require(clipped.ids[32*65+24].object == 91 && clipped.ids[32*65+40].object == UINT32_MAX,
+            "wide line far clipping mismatch");
+    // Perspective-correct color/UV interpolation with unequal endpoint depths.
+    vertices[0].position = vec3(-0.8f, 0, -2); vertices[1].position = vec3(1.2f, 0, -6);
+    vertices[0].color = vec4(1,0,0,1); vertices[1].color = vec4(0,1,0,1);
+    vertices[0].texcoord = vec2(0,0); vertices[1].texcoord = vec2(1,0); geometry();
+    line.model_view_projection = mat4(0.0f);
+    line.model_view_projection(0,0) = 1.3f; line.model_view_projection(1,1) = 1.6f;
+    line.model_view_projection(2,2) = -11.0f/9; line.model_view_projection(2,3) = -20.0f/9;
+    line.model_view_projection(3,2) = -1;
+    line.color = vec4(1);
+    auto perspective = device.render(93, 71, {line}, vec4(0));
+    for (unsigned x = 24; x < 58; ++x) {
+        const double t = (x+0.5-0.24*93)/(0.39*93);
+        const double fraction = (t/6)/((1-t)/2+t/6);
+        const size_t pixel = 35*93+x;
+        require(perspective.ids[pixel].object == 91, "perspective wide ribbon is missing");
+        require(std::abs(perspective.rgba[4*pixel]-255*(1-fraction)) < 2 &&
+                std::abs(perspective.rgba[4*pixel+1]-255*fraction) < 2,
+                "wide-line endpoint colors are not perspective correct");
+        require(std::abs(perspective.depth[pixel]-(5.0/9+10.0/27*t)) < 5e-5,
+                "wide-line perspective depth mismatch");
+    }
+    // Use solid red for a strict silhouette-coverage MSAA test.
+    vertices[0].color = vertices[1].color = vec4(1,0,0,1); geometry();
+    msaa(93, 71, device.render(93, 71, {line}, vec4(0)));
+    vertices[0].color = vertices[1].color = vec4(1); geometry();
+    line.texture = std::make_shared<Image>(2,1,std::vector<unsigned char>{255,0,0,255, 0,255,0,255});
+    auto textured = device.render(93, 71, {line});
+    require(textured.rgba[(35*93+30)*4] == 255 && textured.rgba[(35*93+56)*4+1] == 255,
+            "wide-line texture coordinate interpolation mismatch");
+    line.texture.reset();
+    line.lighting = true;
+    line.normal_matrix(2,2) = -1;
+    auto lit = device.render(93, 71, {line});
+    require(lit.rgba[(35*93+30)*4] > 200 && lit.rgba[(35*93+30)*4] < 240,
+            "wide-line lighting differs from native line lighting");
+    line.lighting = false; line.color = vec4(1,0,0,1);
+    vertices[0].position = vec3(-0.8f,0,1); vertices[1].position = vec3(0.8f,0,-3); geometry();
+    auto eye_crossing = device.render(93,71,{line});
+    require(count(eye_crossing) > 30 && eye_crossing.ids[35*93+30].object == UINT32_MAX &&
+            eye_crossing.ids[35*93+55].object == 91, "wide line crossing the eye plane was not clipped safely");
+    vertices[0].position.z = 2; vertices[1].position.z = 3; geometry();
+    require(count(device.render(93,71,{line})) == 0, "wide line behind the eye was visible");
+    vertices[0].position = vec3(0,0,-2); vertices[1].position = vec3(0,0,-6); geometry();
+    require(count(device.render(93,71,{line})) == 0, "projectively collapsed wide segment has area");
+    // Shared endpoint geometry with two widths, then a resize/sample-count switch.
+    line.model_view_projection = mat4::identity(); line.line_width = 4;
+    vertices[0].position = vec3(-0.75f,0,0); vertices[1].position = vec3(0.75f,0,0); geometry();
+    DrawCommand other = line; other.line_width = 12; other.object_id = 92;
+    other.model_view_projection(1,3) = 0.5f;
+    auto pair = device.render(80,64,{line,other});
+    require(pair.ids[32*80+40].object == 91 && pair.ids[16*80+40].object == 92 &&
+            pair.ids[22*80+40].object == UINT32_MAX, "wide-line draw widths shared uniform state");
+    line.line_width = 5.5f;
+    msaa(97,53,device.render(97,53,{line},vec4(0)));
+    line.line_width = 0; rejects([&] { device.render(32,32,{line}); });
+    line.line_width = std::numeric_limits<float>::infinity(); rejects([&] { device.render(32,32,{line}); });
+}
 int main(int argc, char**) {
     try {
         DeviceOptions options;
@@ -451,6 +604,7 @@ int main(int argc, char**) {
         point_styles(*device);
         surfels(*device);
         line_impostors(*device);
+        wide_lines(*device);
         // Valid descriptor for a real texture, then a null texture on the same draw.
         near.texture = std::make_shared<Image>(1, 1, std::vector<unsigned char>{0, 255, 0, 255});
         near.color = vec4(1, 1, 1, 1);
@@ -505,7 +659,7 @@ int main(int argc, char**) {
         auto empty = device->render(19, 17, {});
         for (auto id : empty.ids) require(id.object == UINT32_MAX, "stale target contents after clear");
         require(device->validation_errors() == 0 && second->validation_errors() == 0, "Vulkan validation reported errors");
-        std::cout << "PASS: color, indexed geometry, depth, IDs, orientation, texture, updates, resize, independent devices, large points, sphere/surfel impostors, MSAA, clipping, cylinders, cones, lines, empty scene\n";
+        std::cout << "PASS: color, indexed geometry, depth, IDs, orientation, texture, updates, resize, independent devices, large points, sphere/surfel impostors, MSAA, clipping, cylinders, cones, wide lines, empty scene\n";
     } catch (const std::exception& e) {
         std::cerr << "FAIL: " << e.what() << std::endl;
         return 1;

@@ -55,13 +55,16 @@ Completion gates include:
   typed color/depth/object/primitive readback in `easy3d/graphics/render_device.h`.
 - A native Vulkan 1.2 offscreen device, with no OpenGL context, window, surface,
   swapchain, Qt, GLFW or GLEW dependency in the `easy3d::vulkan` target.
-- Indexed/nonindexed triangle lists, plain points and one-pixel line lists, uniform and
+- Indexed/nonindexed triangle lists, plain points and line lists, uniform and
   vertex colors, RGBA8 textures, basic directional lighting and depth testing.
 - Portable large plain points, spheres and oriented surfels using six-vertex instanced
   quads, without geometry shaders or the optional `largePoints` feature. Sphere
   fragments compute perspective/orthographic ray intersections, silhouette discard
   and actual surface depth, retaining original point primitive IDs. Surfels use
   ray/plane disc intersections and inverse-transpose normal transforms.
+- Portable plain wide lines using instanced, butt-capped screen-space ribbons,
+  homogeneous near/far/eye clipping and normal triangle MSAA/depth. No `wideLines`
+  feature, geometry shader or sample-rate shading is required for ribbons.
 - Capped cylinder and cone line impostors with analytic side/cap intersections,
   actual surface depth, endpoint color/texture interpolation and original segment
   IDs, using instanced quads without geometry shaders or wide-line features.
@@ -90,10 +93,11 @@ Completion gates include:
   resize/hide/show, independent windows/devices, orbit/pan/zoom, projection toggle,
   file drop and depth-based world-point picking. The installed demo uses an
   embedded bunny by default and needs no source-tree model/shader files.
-- Existing Tutorials 201 and 302 build through the `Viewer` alias in Vulkan-only
+- Existing Tutorials 201, 302 and 304 build through the `Viewer` alias in Vulkan-only
   window builds. Tutorial 302 uses the same sphere/surfel/cylinder/cone scene code
   as its OpenGL build, with bounded native execution for automated tests. Legacy
-  custom OpenGL draw callbacks are not ported.
+  custom OpenGL draw callbacks are not ported. Tutorial 304 exercises the native
+  vector-field and plain wide-line path.
 - A new finite Tutorial 208 and deterministic Vulkan tests, including actual
   bunny mesh loading, property colors, geometry updates, snapshots and picking IDs.
 
@@ -190,7 +194,7 @@ viewer.run();
 
 In a Vulkan-only window build the existing `<easy3d/viewer/viewer.h>` and
 `easy3d::Viewer` name select the same host. `Tutorial_201_Viewer_default` is built
-unchanged in that configuration. Tutorial 302 is also built in this configuration. Other tutorials remain gated
+unchanged in that configuration. Tutorials 302 and 304 are also built in this configuration. Other tutorials remain gated
 until their features and callbacks are ported; the global legacy tutorials option stays OFF.
 In a dual build `Viewer` continues to select the legacy host, while
 `VulkanViewer` selects Vulkan explicitly.
@@ -312,7 +316,7 @@ cause.
 | `TrianglesDrawable::opacity()` | As in the old opaque pass, effective only in a separate transparency pass; such a pass is not implemented here. |
 | CPU drawable textures/scalars | Legacy `Texture` coloring is rejected. Native `graphics::Image` texturing is implemented. CPU-only implicit legacy texture creation throws before making GL calls. |
 | Transparency, SSAO, shadows, EDL, text, clipping | Not ported. Do not infer support from the low-level draw-command API. The scene adapter rejects SSAO/highlighting/selection; no effect-pass interface is exposed yet. |
-| Point and line styles | Plain points of any positive pixel size, spheres and oriented surfels are implemented. Capped cylinders and cones are implemented; plain wide lines still report explicit unsupported-style errors. |
+| Point and line styles | Plain points of any positive pixel size, spheres and oriented surfels are implemented. Capped cylinders/cones and butt-capped plain wide lines are implemented; joined strokes and rounded plain-line caps remain pending. |
 | Snapshot options | Device-supported MSAA (default 1); `expand=false` remains unsupported. Scaling, white/current/transparent background and image saving work. No tiled oversized captures. |
 | Readback | RGBA8, D32 and RG32UI; top row first; depth [0,1]; no-hit object/primitive IDs are `UINT32_MAX`. |
 | Picking IDs | Draw-command object ID and draw-primitive index (or explicit native primitive IDs). The adapter uses model/drawable order and generated primitive indices, not original polygon/vertex handles. Existing GUI pickers are not ported. |
@@ -361,8 +365,8 @@ transparent PNG edges, and window presentation. Expected negative tests no longe
 use the logging wrappers. Fresh-configure checks verify the new four defaults.
 The subsequent point/impostor stage also validates this MSAA path on macOS/MoltenVK; Windows validation remains outstanding.
 
-Next implementation gates are native Qt/wx surface/frame adapters, plain wide
-lines, text and texture/scalar state, ID mapping/pickers, oversized capture,
+Next implementation gates are native Qt/wx surface/frame adapters, text and
+texture/scalar state, ID mapping/pickers, oversized capture,
 effects/transparency, all applications/tutorials and Python integration, then
 hardware validation and packaging on macOS/Windows/Linux. The defaults now select
 Vulkan for development. Final backend selection and automatic OpenGL fallback
@@ -467,7 +471,8 @@ scene adapter. Radius is `line_width() * camera.pixelGLRatio(camera.pivotPoint()
 matching the existing radius convention. Cylinders have two flat caps; cones have
 a base cap at the first endpoint and taper to the second endpoint. Model/view
 transforms move the endpoints, while radius remains in view-space units. A
-collapsed segment draws nothing. Plain lines still require width one.
+collapsed segment draws nothing. Plain lines use the separate ribbon path below
+when their width differs from one.
 
 Native clients use `LineStyle::cylinder` or `LineStyle::cone`, set `line_radius`,
 and provide an affine `model_view` plus an invertible OpenGL-convention
@@ -515,3 +520,60 @@ segments and invalid inputs. Four-sample tests retain identical center picking
 IDs/depth and verify actual partial edge coverage. Both new shaders pass
 `spirv-val --target-env vulkan1.2`. Validation error counts remain zero; the
 previously documented MoltenVK integer-attachment warning persists.
+
+## Plain wide lines and Tutorial 304
+
+`LinesDrawable::PLAIN` now accepts positive finite widths, including fractional
+widths. The native `DrawCommand::line_width` uses framebuffer pixels and
+`model_view_projection`, independently of `model_view`/`projection` and the
+view-space radius used by cylinders/cones. Width one retains the existing native
+line pipeline. Other widths expand each original segment into a six-vertex
+screen-space ribbon. Pixel width remains constant across perspective/orthographic
+views, framebuffer aspect ratios, camera distance and endpoint depths.
+
+The vertex shader clips the centerline against homogeneous near/far/positive-W
+planes before perspective division, preserving original endpoint interpolation
+parameters. It offsets the clipped endpoints perpendicular to their projected
+screen direction. Caps are flat at the endpoints (butt caps); segments are
+independent line-list strokes with no joins or rounded caps. A segment collapsed
+to one projected point draws nothing in the ribbon path. GPU viewport clipping
+still permits a thick line whose centerline lies just outside the viewport.
+
+A dedicated fragment shader uses perspective-correct endpoint colors/texture
+coordinates and the rasterizer's depth, with no explicit `gl_FragDepth`, silhouette
+discard or sample-rate shading. This preserves normal per-sample triangle depth
+and coverage even on devices without `sampleRateShading`; query
+`supported_sample_counts(LineStyle::plain)` for its available counts. The separate
+center-sample picking pass uses the same ribbon geometry and the original segment
+ID. Endpoint normal lighting follows the existing native one-pixel line convention.
+
+Native-only window builds now also build `Tutorial_304_VectorField`, with its
+original mesh, face-normal vector-field construction and three-pixel plain lines.
+The sphere explicitly uses flat shading to match its face-normal vector field.
+The Vulkan scene adapter honors `TrianglesDrawable::smooth_shading()`: flat
+snapshots assign geometric triangle normals to all three corners, preserving
+vertex colors, primitive order and picking. Switching shading invalidates the
+cached snapshot without requiring a model update.
+It shares bounded execution/validation options with Tutorial 302 through
+`tutorials/native_viewer_options.h`; their OpenGL scene paths are retained.
+
+```sh
+./cmake-build-debug/bin/Tutorial_304_VectorField --frames 3 --samples 4 --validation
+```
+
+Without `--frames` it runs interactively. Desktop CTest `vulkan.tutorial304` runs
+three frames and honors `Easy3D_VULKAN_TEST_VALIDATION`, alongside Tutorial 302.
+CI also validates both new wide-line shaders.
+
+On 2026-10-27, Apple M4 Pro/MoltenVK 1.4.2 passed renderer and scene regressions
+with Khronos and synchronization validation. Tests check horizontal/vertical,
+fractional and oversized pixel widths, offscreen centerlines, a diagonal screen-space coverage/depth reference, reversed endpoints,
+mesh occlusion, near/far/eye clipping, perspective color/UV interpolation,
+lighting, projected degeneracy, independent per-draw widths, resize and four-sample
+coverage with unchanged center picking/depth. Reference-depth comparisons allow
+normal rasterizer subpixel roundoff; MSAA picking comparisons remain strict.
+Native-window tests exercise wide-line presentation and depth picking. Tutorials
+302 and 304 both run with four samples and validation. Both new shaders pass
+SPIR-V validation, and the wide-line fragment SPIR-V has no depth-replacement or
+sample-rate-shading capability. Validation error counts remain zero; the earlier
+MoltenVK integer-attachment warning persists.

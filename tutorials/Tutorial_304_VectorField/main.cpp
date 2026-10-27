@@ -27,9 +27,11 @@
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/drawable_lines.h>
+#include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
+#include "../native_viewer_options.h"
 
 /**
  * \example{lineno} Tutorial_304_VectorField/main.cpp
@@ -45,7 +47,13 @@ int main(int argc, char **argv) {
 
     // Create the default Easy3D viewer.
     // Note: a viewer must be created before creating any drawables.
+#ifdef EASY3D_NO_OPENGL
+    NativeTutorialOptions options;
+    if (!options.parse(argc, argv)) return EXIT_FAILURE;
+    Viewer viewer(EXAMPLE_TITLE, options.viewer);
+#else
     Viewer viewer(EXAMPLE_TITLE);
+#endif
 
     // Load point cloud data from a file
     const std::string file_name = resource::directory() + "/data/sphere.obj";
@@ -54,6 +62,9 @@ int main(int argc, char **argv) {
         LOG(ERROR) << "failed to load model. Please make sure the file exists and format is correct.";
         return EXIT_FAILURE;
     }
+
+    // Show each face as a facet, matching the face-normal vector field.
+    mesh->renderer()->get_triangles_drawable("faces")->set_smooth_shading(false);
 
     // Get the bounding box of the model. Then we defined the length of the
     // normal vectors to be 5% of the bounding box diagonal.
@@ -95,6 +106,10 @@ int main(int argc, char **argv) {
     mesh->renderer()->get_lines_drawable("edges")->set_visible(true);
 
     // run the viewer
+#ifdef EASY3D_NO_OPENGL
+    return options.run(viewer);
+#else
     return viewer.run();
+#endif
 }
 

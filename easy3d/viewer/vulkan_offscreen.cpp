@@ -36,6 +36,7 @@ struct VulkanOffScreen::Impl {
         std::weak_ptr<Drawable> source;
         std::size_t revision = 0;
         bool use_colors = false;
+        bool flat_shading = false;
         std::shared_ptr<const graphics::Geometry> geometry;
     };
     mutable std::map<const Drawable*, Cached> cache;
@@ -57,8 +58,6 @@ struct VulkanOffScreen::Impl {
             if (l->impostor_type() != LinesDrawable::PLAIN && l->impostor_type() != LinesDrawable::CYLINDER &&
                 l->impostor_type() != LinesDrawable::CONE)
                 throw std::logic_error("unknown line impostor type");
-            if (l->impostor_type() == LinesDrawable::PLAIN && l->line_width() != 1)
-                throw std::logic_error("plain wide lines are not yet ported; use cylinder/cone impostors");
             if (!std::isfinite(l->line_width()) || l->line_width() <= 0)
                 throw std::invalid_argument("line width must be finite and positive");
         }
@@ -70,7 +69,10 @@ struct VulkanOffScreen::Impl {
                 throw std::logic_error("surfel rendering requires point normals");
         auto& entry = cache[&d];
         const bool use_colors = d.coloring_method() == State::COLOR_PROPERTY;
-        if (entry.source.lock() != drawable || entry.revision != buffers.revision || !entry.geometry || entry.use_colors != use_colors) {
+        const auto* triangles = dynamic_cast<const TrianglesDrawable*>(&d);
+        const bool flat_shading = triangles && !triangles->smooth_shading();
+        if (entry.source.lock() != drawable || entry.revision != buffers.revision || !entry.geometry ||
+            entry.use_colors != use_colors || entry.flat_shading != flat_shading) {
             const auto n = buffers.vertices.size();
             if ((!buffers.colors.empty() && buffers.colors.size() != n) ||
                 (!buffers.normals.empty() && buffers.normals.size() != n))
@@ -84,7 +86,24 @@ struct VulkanOffScreen::Impl {
             const auto topology = d.type() == Drawable::DT_TRIANGLES ? graphics::Topology::triangles :
                                   d.type() == Drawable::DT_LINES ? graphics::Topology::lines : graphics::Topology::points;
             auto geometry = std::make_shared<graphics::Geometry>(vertices, buffers.indices, topology);
-            entry.source = drawable; entry.revision = buffers.revision; entry.geometry = geometry; entry.use_colors = use_colors;
+            if (flat_shading) {
+                // Geometry has already validated the indices and triangle count.
+                // Give every corner its triangle normal while preserving colors
+                // and primitive order, including indexed/shared-vertex inputs.
+                const auto& indices = geometry->indices();
+                const size_t count = indices.empty() ? vertices.size() : indices.size();
+                std::vector<graphics::Vertex> flat(count);
+                for (size_t i = 0; i < count; i += 3) {
+                    for (size_t j = 0; j < 3; ++j)
+                        flat[i+j] = vertices[indices.empty() ? i+j : indices[i+j]];
+                    const vec3 normal = cross(flat[i+1].position-flat[i].position,
+                                              flat[i+2].position-flat[i].position);
+                    for (size_t j = 0; j < 3; ++j) flat[i+j].normal = normal;
+                }
+                geometry = std::make_shared<graphics::Geometry>(std::move(flat), std::vector<uint32_t>{}, topology);
+            }
+            entry.source = drawable; entry.revision = buffers.revision; entry.geometry = geometry;
+            entry.use_colors = use_colors; entry.flat_shading = flat_shading;
         }
         graphics::DrawCommand result;
         result.geometry = entry.geometry;
@@ -100,6 +119,7 @@ struct VulkanOffScreen::Impl {
         if (auto* l = dynamic_cast<LinesDrawable*>(&d)) {
             result.line_style = l->impostor_type() == LinesDrawable::CYLINDER ? graphics::LineStyle::cylinder :
                                 l->impostor_type() == LinesDrawable::CONE ? graphics::LineStyle::cone : graphics::LineStyle::plain;
+            result.line_width = l->line_width();
             result.line_radius = l->line_width() * cam.pixelGLRatio(cam.pivotPoint()) * 0.5f;
             result.model_view = cam.modelViewMatrix() * d.manipulated_matrix();
             result.projection = cam.projectionMatrix();

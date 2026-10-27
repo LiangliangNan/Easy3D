@@ -140,9 +140,10 @@ int main(int argc, char**) {
         const float extent = model->bounding_box().diagonal_length()*0.4f;
         segment->update_vertex_buffer({center-vec3(extent,0,0), center+vec3(extent,0,0)});
         segment->set_line_width(12);
-        for (auto style : {LinesDrawable::CYLINDER, LinesDrawable::CONE}) {
+        for (auto style : {LinesDrawable::CYLINDER, LinesDrawable::CONE, LinesDrawable::PLAIN}) {
             segment->set_impostor_type(style);
-            const auto native_style = style == LinesDrawable::CYLINDER ? graphics::LineStyle::cylinder : graphics::LineStyle::cone;
+            const auto native_style = style == LinesDrawable::CYLINDER ? graphics::LineStyle::cylinder :
+                                      style == LinesDrawable::CONE ? graphics::LineStyle::cone : graphics::LineStyle::plain;
             viewer.set_samples(viewer.device().supported_sample_counts(native_style) & 4 ? 4 : 1);
             frame(viewer);
             const auto solid = viewer.capture();
