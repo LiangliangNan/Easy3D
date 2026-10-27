@@ -166,13 +166,6 @@ namespace easy3d {
             return;
         }
 
-        // Initial CPU-backend defaults use supported uniform/property colors.
-        // Legacy texture/scalar coloring remains an explicit, unsupported request.
-        if (drawable->has_cpu_buffers()) {
-            drawable->set_uniform_coloring(setting::point_cloud_vertices_color);
-            return;
-        }
-
         // 2. per-vertex texture coordinates: in "v:texcoord"
         auto texcoord = model->get_vertex_property<vec2>("v:texcoord");
         if (texcoord) {
@@ -227,13 +220,6 @@ namespace easy3d {
         auto vertex_colors = model->get_vertex_property<vec3>("v:color");
         if (vertex_colors) {
             drawable->set_property_coloring(State::VERTEX, "v:color");
-            return;
-        }
-
-        // Initial CPU-backend defaults use supported uniform/property colors.
-        // Legacy texture/scalar coloring remains an explicit, unsupported request.
-        if (drawable->has_cpu_buffers()) {
-            drawable->set_uniform_coloring(setting::surface_mesh_faces_color);
             return;
         }
 
@@ -297,13 +283,6 @@ namespace easy3d {
         auto colors = model->get_vertex_property<vec3>("v:color");
         if (colors) {
             drawable->set_property_coloring(State::VERTEX, "v:color");
-            return;
-        }
-
-        // Initial CPU-backend defaults use supported uniform/property colors.
-        // Legacy texture/scalar coloring remains an explicit, unsupported request.
-        if (drawable->has_cpu_buffers()) {
-            drawable->set_uniform_coloring(setting::graph_vertices_color);
             return;
         }
 

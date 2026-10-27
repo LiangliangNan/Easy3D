@@ -608,7 +608,7 @@ class VulkanDevice final : public RenderDevice {
     std::unique_ptr<Buffer> impostor_uniforms_;
     size_t impostor_capacity_ = 0;
     VkDescriptorPool descriptor_pool_ = VK_NULL_HANDLE;
-    VkSampler sampler_ = VK_NULL_HANDLE;
+    VkSampler samplers_[4] = {};
     VkPipelineLayout layout_ = VK_NULL_HANDLE;
     std::unique_ptr<Target> target_;
     std::unique_ptr<Swapchain> swapchain_;
@@ -624,7 +624,7 @@ public:
         swapchain_.reset(); target_.reset(); geometry_.clear(); textures_.clear();
         passes_.clear(); id_pass_.reset();
         if (layout_) vkDestroyPipelineLayout(c_.device, layout_, nullptr);
-        if (sampler_) vkDestroySampler(c_.device, sampler_, nullptr);
+        for (auto sampler : samplers_) if (sampler) vkDestroySampler(c_.device, sampler, nullptr);
         if (descriptor_pool_) vkDestroyDescriptorPool(c_.device, descriptor_pool_, nullptr);
         if (descriptors_) vkDestroyDescriptorSetLayout(c_.device, descriptors_, nullptr);
         if (impostor_descriptors_) vkDestroyDescriptorSetLayout(c_.device, impostor_descriptors_, nullptr);
@@ -694,13 +694,15 @@ public:
         ai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
         ai.descriptorPool = descriptor_pool_; ai.descriptorSetCount = 1; ai.pSetLayouts = &impostor_descriptors_;
         check(vkAllocateDescriptorSets(c_.device, &ai, &impostor_set_), "allocate impostor descriptor");
-        VkSamplerCreateInfo si{};
-        si.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-        si.magFilter = VK_FILTER_NEAREST; si.minFilter = VK_FILTER_NEAREST;
-        si.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
-        si.addressModeU = si.addressModeV = si.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-        si.maxLod = 0;
-        check(vkCreateSampler(c_.device, &si, nullptr, &sampler_), "create sampler");
+        for (unsigned wrap = 0; wrap < 2; ++wrap) for (unsigned filter = 0; filter < 2; ++filter) {
+            VkSamplerCreateInfo si{};
+            si.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+            si.magFilter = si.minFilter = filter ? VK_FILTER_LINEAR : VK_FILTER_NEAREST;
+            si.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+            si.addressModeU = si.addressModeV = si.addressModeW = wrap ? VK_SAMPLER_ADDRESS_MODE_REPEAT : VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+            si.maxLod = 0;
+            check(vkCreateSampler(c_.device, &si, nullptr, &samplers_[wrap*2+filter]), "create sampler");
+        }
     }
     void create_layout() {
         VkPushConstantRange push = {VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(Push)};
@@ -863,6 +865,12 @@ public:
         if (it != textures_.end()) return *it->second;
         if (data->width() > c_.properties.limits.maxImageDimension2D || data->height() > c_.properties.limits.maxImageDimension2D)
             throw std::invalid_argument("texture exceeds device image limits");
+        if (data->sampler().filter == TextureFilter::linear) {
+            VkFormatProperties properties;
+            vkGetPhysicalDeviceFormatProperties(c_.physical, VK_FORMAT_R8G8B8A8_UNORM, &properties);
+            if (!(properties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT))
+                throw std::runtime_error("RGBA8 linear texture filtering is unsupported by this device");
+        }
         std::unique_ptr<GpuTexture> gpu(new GpuTexture(c_, descriptor_pool_));
         gpu->source = data;
         gpu->image.init(data->width(), data->height(), VK_FORMAT_R8G8B8A8_UNORM,
@@ -887,7 +895,9 @@ public:
         ai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
         ai.descriptorPool = descriptor_pool_; ai.descriptorSetCount = 1; ai.pSetLayouts = &descriptors_;
         check(vkAllocateDescriptorSets(c_.device, &ai, &gpu->set), "allocate texture descriptor (maximum 1024 live textures)");
-        VkDescriptorImageInfo image = {sampler_, gpu->image.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
+        const unsigned sampler_index = (data->sampler().wrap == TextureWrap::repeat ? 2 : 0) +
+                                       (data->sampler().filter == TextureFilter::linear ? 1 : 0);
+        VkDescriptorImageInfo image = {samplers_[sampler_index], gpu->image.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
         VkWriteDescriptorSet write{};
         write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         write.dstSet = gpu->set; write.dstBinding = 0; write.descriptorCount = 1;

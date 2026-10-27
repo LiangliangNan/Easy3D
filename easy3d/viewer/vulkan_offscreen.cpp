@@ -16,6 +16,7 @@
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/texture.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
 #include <algorithm>
@@ -37,16 +38,52 @@ struct VulkanOffScreen::Impl {
         std::size_t revision = 0;
         bool use_colors = false;
         bool flat_shading = false;
+        bool textured = false;
+        float repeat = 1;
         std::shared_ptr<const graphics::Geometry> geometry;
+        std::shared_ptr<const graphics::Image> texture_image;
     };
     mutable std::map<const Drawable*, Cached> cache;
+
+    struct CachedImage {
+        std::weak_ptr<const Texture::PixelData> source;
+        std::weak_ptr<const graphics::Image> image;
+    };
+    mutable std::map<const Texture::PixelData*, CachedImage> images;
+    std::shared_ptr<const graphics::Image> image(const Texture* texture) const {
+        if (!texture || !texture->pixels()) throw std::logic_error("texture coloring requires CPU image data");
+        const auto& pixels = texture->pixels();
+        auto& cached = images[pixels.get()];
+        if (cached.source.lock() == pixels) {
+            auto existing = cached.image.lock();
+            if (existing) return existing;
+        }
+        const uint64_t count = uint64_t(pixels->width)*pixels->height;
+        if (count > std::numeric_limits<size_t>::max()/4) throw std::invalid_argument("texture is too large for RGBA8");
+        std::vector<unsigned char> rgba(size_t(count)*4);
+        for (int y = 0; y < pixels->height; ++y) for (int x = 0; x < pixels->width; ++x) {
+            const size_t source = (size_t(pixels->height-1-y)*pixels->width+x)*pixels->channels;
+            const size_t target = (size_t(y)*pixels->width+x)*4;
+            rgba[target] = pixels->bytes[source];
+            rgba[target+1] = pixels->channels > 1 ? pixels->bytes[source+1] : 0;
+            rgba[target+2] = pixels->channels > 2 ? pixels->bytes[source+2] : 0;
+            rgba[target+3] = pixels->channels > 3 ? pixels->bytes[source+3] : 255;
+        }
+        graphics::Sampler sampler;
+        sampler.wrap = texture->wrap_mode() == Texture::REPEAT ? graphics::TextureWrap::repeat : graphics::TextureWrap::clamp_to_edge;
+        sampler.filter = texture->filter_mode() == Texture::LINEAR ? graphics::TextureFilter::linear : graphics::TextureFilter::nearest;
+        auto result = std::make_shared<graphics::Image>(pixels->width,pixels->height,std::move(rgba),sampler);
+        cached.source = pixels; cached.image = result;
+        return result;
+    }
 
     graphics::DrawCommand command(const std::shared_ptr<Drawable>& drawable, uint32_t id, const Camera& cam) const {
         auto& d = *drawable;
         if (!d.has_cpu_buffers())
             throw std::logic_error("drawable must use CPU buffers before Vulkan rendering");
-        if (d.coloring_method() != State::UNIFORM_COLOR && d.coloring_method() != State::COLOR_PROPERTY)
-            throw std::logic_error("Vulkan scene adapter currently supports uniform/property coloring; use graphics::Image for native textures");
+        if (d.coloring_method() != State::UNIFORM_COLOR && d.coloring_method() != State::COLOR_PROPERTY &&
+            d.coloring_method() != State::TEXTURED && d.coloring_method() != State::SCALAR_FIELD)
+            throw std::logic_error("unknown drawable coloring method");
         if (d.color().w != 1 || d.is_ssao_enabled() || d.highlight() || d.is_selected())
             throw std::logic_error("opacity, SSAO and selection highlighting are not yet ported");
         if (auto* p = dynamic_cast<PointsDrawable*>(&d)) {
@@ -69,19 +106,26 @@ struct VulkanOffScreen::Impl {
                 throw std::logic_error("surfel rendering requires point normals");
         auto& entry = cache[&d];
         const bool use_colors = d.coloring_method() == State::COLOR_PROPERTY;
+        const bool textured = d.coloring_method() == State::TEXTURED || d.coloring_method() == State::SCALAR_FIELD;
+        const float repeat = d.texture_repeat()+d.texture_fractional_repeat()/100.0f;
+        if (textured && !std::isfinite(repeat)) throw std::invalid_argument("texture repeat must be finite");
         const auto* triangles = dynamic_cast<const TrianglesDrawable*>(&d);
         const bool flat_shading = triangles && !triangles->smooth_shading();
         if (entry.source.lock() != drawable || entry.revision != buffers.revision || !entry.geometry ||
-            entry.use_colors != use_colors || entry.flat_shading != flat_shading) {
+            entry.use_colors != use_colors || entry.flat_shading != flat_shading ||
+            entry.textured != textured || (textured && entry.repeat != repeat)) {
             const auto n = buffers.vertices.size();
             if ((!buffers.colors.empty() && buffers.colors.size() != n) ||
                 (!buffers.normals.empty() && buffers.normals.size() != n))
                 throw std::logic_error("drawable attribute count does not match vertices");
+            if (textured && buffers.texcoords.size() != n)
+                throw std::logic_error("texture coordinate count does not match vertices");
             std::vector<graphics::Vertex> vertices(n);
             for (size_t i = 0; i < n; ++i) {
                 vertices[i].position = buffers.vertices[i];
                 if (!buffers.normals.empty()) vertices[i].normal = buffers.normals[i];
                 if (use_colors && !buffers.colors.empty()) vertices[i].color = vec4(buffers.colors[i], 1);
+                if (textured) vertices[i].texcoord = vec2(buffers.texcoords[i].x*repeat,1-buffers.texcoords[i].y*repeat);
             }
             const auto topology = d.type() == Drawable::DT_TRIANGLES ? graphics::Topology::triangles :
                                   d.type() == Drawable::DT_LINES ? graphics::Topology::lines : graphics::Topology::points;
@@ -104,9 +148,12 @@ struct VulkanOffScreen::Impl {
             }
             entry.source = drawable; entry.revision = buffers.revision; entry.geometry = geometry;
             entry.use_colors = use_colors; entry.flat_shading = flat_shading;
+            entry.textured = textured; entry.repeat = repeat;
         }
         graphics::DrawCommand result;
         result.geometry = entry.geometry;
+        entry.texture_image = textured ? image(d.texture()) : nullptr;
+        result.texture = entry.texture_image;
         if (auto* p = dynamic_cast<PointsDrawable*>(&d)) {
             result.point_size = p->point_size();
             result.point_style = p->impostor_type() == PointsDrawable::SPHERE ? graphics::PointStyle::sphere :
@@ -136,6 +183,9 @@ struct VulkanOffScreen::Impl {
     std::vector<graphics::DrawCommand> commands(const Camera& cam) const {
         for (auto it = cache.begin(); it != cache.end(); ) {
             if (it->second.source.expired()) it = cache.erase(it); else ++it;
+        }
+        for (auto it = images.begin(); it != images.end(); ) {
+            if (it->second.source.expired() || it->second.image.expired()) it = images.erase(it); else ++it;
         }
         std::vector<graphics::DrawCommand> commands;
         for (size_t i = 0; i < models.size(); ++i) {

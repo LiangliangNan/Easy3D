@@ -39,16 +39,25 @@ private:
     const std::vector<std::uint32_t> primitive_ids_;
 };
 
+enum class TextureWrap { clamp_to_edge, repeat };
+enum class TextureFilter { nearest, linear };
+struct Sampler {
+    TextureWrap wrap = TextureWrap::clamp_to_edge;
+    TextureFilter filter = TextureFilter::nearest;
+};
+
 class Image {
 public:
     // RGBA8, row zero at the top. No implicit global image-loader flip state.
-    Image(std::uint32_t width, std::uint32_t height, std::vector<unsigned char> rgba);
+    Image(std::uint32_t width, std::uint32_t height, std::vector<unsigned char> rgba, Sampler sampler = {});
     std::uint32_t width() const { return width_; }
     std::uint32_t height() const { return height_; }
     const std::vector<unsigned char>& rgba() const { return rgba_; }
+    const Sampler& sampler() const { return sampler_; }
 private:
     const std::uint32_t width_, height_;
     const std::vector<unsigned char> rgba_;
+    const Sampler sampler_;
 };
 
 enum class PointStyle { plain, sphere, surfel };

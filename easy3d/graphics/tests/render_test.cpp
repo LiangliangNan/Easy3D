@@ -552,6 +552,34 @@ void wide_lines(RenderDevice& device) {
     line.line_width = 0; rejects([&] { device.render(32,32,{line}); });
     line.line_width = std::numeric_limits<float>::infinity(); rejects([&] { device.render(32,32,{line}); });
 }
+void texture_samplers(RenderDevice& device) {
+    auto vertices = triangle(0,vec4(1))->vertices();
+    DrawCommand draw; draw.object_id = 61;
+    auto geometry = [&](float u) {
+        for (auto& vertex : vertices) vertex.texcoord = vec2(u,0.5f);
+        draw.geometry = std::make_shared<Geometry>(vertices);
+    };
+    const std::vector<unsigned char> pixels = {255,0,0,255, 0,255,0,255};
+    Sampler sampler;
+    geometry(1.25f);
+    draw.texture = std::make_shared<Image>(2,1,pixels,sampler);
+    auto clamp = device.render(32,32,{draw});
+    const size_t center = 16*32+16;
+    require(clamp.rgba[4*center] == 0 && clamp.rgba[4*center+1] == 255,"clamp-to-edge sampler mismatch");
+    sampler.wrap = TextureWrap::repeat;
+    draw.texture = std::make_shared<Image>(2,1,pixels,sampler);
+    auto repeated = device.render(32,32,{draw});
+    require(repeated.rgba[4*center] == 255 && repeated.rgba[4*center+1] == 0,"repeat sampler mismatch");
+    geometry(0.5f); sampler.wrap = TextureWrap::clamp_to_edge; sampler.filter = TextureFilter::linear;
+    draw.texture = std::make_shared<Image>(2,1,pixels,sampler);
+    auto linear = device.render(32,32,{draw});
+    require(std::abs(int(linear.rgba[4*center])-128) <= 1 && std::abs(int(linear.rgba[4*center+1])-128) <= 1,
+            "linear sampler did not blend its neighboring texels");
+    require(linear.ids[center].object == 61 && repeated.ids[center].object == clamp.ids[center].object &&
+            linear.depth[center] == clamp.depth[center],"sampler selection changed picking/depth");
+    sampler.wrap = static_cast<TextureWrap>(42);
+    rejects([&] { Image invalid(2,1,pixels,sampler); });
+}
 int main(int argc, char**) {
     try {
         DeviceOptions options;
@@ -605,6 +633,7 @@ int main(int argc, char**) {
         surfels(*device);
         line_impostors(*device);
         wide_lines(*device);
+        texture_samplers(*device);
         // Valid descriptor for a real texture, then a null texture on the same draw.
         near.texture = std::make_shared<Image>(1, 1, std::vector<unsigned char>{0, 255, 0, 255});
         near.color = vec4(1, 1, 1, 1);

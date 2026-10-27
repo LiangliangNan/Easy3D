@@ -30,12 +30,13 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
 
 namespace easy3d {
 
     /**
-     * \brief OpenGL texture.
+     * \brief Immutable image data with an optional OpenGL realization.
      * \class Texture easy3d/renderer/texture.h
      * \details currently only TEXTURE_2D is supported
      */
@@ -74,6 +75,18 @@ namespace easy3d {
         static Texture *create(const std::vector<unsigned char> &rgb_data, int width, int height, int comp,
                                WrapMode wrap = CLAMP_TO_EDGE, FilterMode filter = LINEAR);
 
+        // Explicit CPU creation never makes GL calls, including in dual builds.
+        // Pixel row zero is the bottom row, matching the existing Texture API.
+        // Invalid dimensions/formats throw std::invalid_argument.
+        static Texture* create_cpu(const std::string& image_file, WrapMode wrap = CLAMP_TO_EDGE, FilterMode filter = LINEAR);
+        static Texture* create_cpu(const std::vector<unsigned char>& data, int width, int height, int comp,
+                                   WrapMode wrap = CLAMP_TO_EDGE, FilterMode filter = LINEAR);
+        struct PixelData {
+            int width, height, channels;
+            std::vector<unsigned char> bytes;
+        };
+        const std::shared_ptr<const PixelData>& pixels() const { return pixels_; }
+
         /**
          * \brief Destructor.
          */
@@ -81,7 +94,7 @@ namespace easy3d {
 
         /**
          * \brief Get the OpenGL texture ID.
-         * \return The texture ID.
+         * \return The texture ID, or zero for CPU-only textures.
          */
         unsigned int id() const { return id_; }
         /**
@@ -125,6 +138,7 @@ namespace easy3d {
         FilterMode filter_mode() const { return filter_mode_; }
 
     private:
+        std::shared_ptr<const PixelData> pixels_;
         unsigned int id_;
         int sizes_[3];
 
@@ -137,6 +151,8 @@ namespace easy3d {
          * \brief Private constructor to enforce the use of the create() function.
          */
         Texture();
+        bool opengl_upload();
+        void opengl_destroy();
 
         //copying disabled
         Texture(const Texture &);

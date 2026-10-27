@@ -6,10 +6,10 @@ if(NOT Easy3D_ENABLE_OPENGL)
     set(renderer_headers camera.h constraint.h drawable.h drawable_lines.h drawable_lines_2D.h
             drawable_points.h drawable_triangles.h frame.h frustum.h key_frame_interpolator.h
             manipulator.h manipulated_camera_frame.h manipulated_frame.h shape.h buffer.h
-            renderer.h state.h transform.h transform_decompose.h)
+            renderer.h state.h texture.h texture_manager.h transform.h transform_decompose.h)
     set(renderer_sources camera.cpp constraint.cpp drawable.cpp drawable_types.cpp frame.cpp frustum.cpp
             key_frame_interpolator.cpp manipulator.cpp manipulated_camera_frame.cpp manipulated_frame.cpp
-            shape.cpp buffer.cpp renderer.cpp state.cpp transform.cpp transform_decompose.cpp
+            shape.cpp buffer.cpp renderer.cpp state.cpp texture.cpp texture_manager.cpp transform.cpp transform_decompose.cpp
             backends/cpu/opengl_unavailable.cpp)
     add_module(renderer "${renderer_headers}" "${renderer_sources}" "" "${public_dependencies}")
     target_compile_definitions(easy3d_renderer PUBLIC EASY3D_NO_OPENGL)
@@ -96,6 +96,7 @@ set(${module}_sources
         soft_shadow.cpp
         state.cpp
         texture.cpp
+        backends/opengl/texture.cpp
         texture_manager.cpp
         text_renderer.cpp
         transform.cpp

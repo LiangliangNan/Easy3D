@@ -32,8 +32,11 @@ Geometry::Geometry(std::vector<Vertex> vertices, std::vector<std::uint32_t> indi
     for (auto id : primitive_ids_)
         if (id == UINT32_MAX) throw std::invalid_argument("UINT32_MAX is reserved for background");
 }
-Image::Image(std::uint32_t width, std::uint32_t height, std::vector<unsigned char> rgba)
-    : width_(width), height_(height), rgba_(std::move(rgba)) {
+Image::Image(std::uint32_t width, std::uint32_t height, std::vector<unsigned char> rgba, Sampler sampler)
+    : width_(width), height_(height), rgba_(std::move(rgba)), sampler_(sampler) {
+    if ((sampler.wrap != TextureWrap::clamp_to_edge && sampler.wrap != TextureWrap::repeat) ||
+        (sampler.filter != TextureFilter::nearest && sampler.filter != TextureFilter::linear))
+        throw std::invalid_argument("invalid texture sampler");
     if (!width || !height || std::uint64_t(width) * height > std::numeric_limits<std::size_t>::max() / 4 ||
         rgba_.size() != std::uint64_t(width) * height * 4)
         throw std::invalid_argument("invalid RGBA8 image dimensions or storage");

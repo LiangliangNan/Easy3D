@@ -27,6 +27,8 @@
 #include <easy3d/renderer/buffer.h>
 
 #include <algorithm>
+#include <cmath>
+#include <stdexcept>
 
 #include <easy3d/core/graph.h>
 #include <easy3d/core/point_cloud.h>
@@ -57,13 +59,21 @@ namespace easy3d {
                     return;
                 }
 
+                if (!std::isfinite(dummy_lower_percent) || !std::isfinite(dummy_upper_percent) ||
+                    dummy_lower_percent < 0 || dummy_upper_percent < 0 || dummy_lower_percent > 1 ||
+                    dummy_upper_percent > 1 || dummy_lower_percent+dummy_upper_percent > 1)
+                    throw std::invalid_argument("scalar clamp fractions must be nonnegative and sum to at most one");
+                for (const auto value : property)
+                    if (!std::isfinite(static_cast<float>(value)))
+                        throw std::invalid_argument("scalar values must be finite and representable as float");
+
                 // sort curvature values
                 std::vector<FT> values = property;
                 std::sort(values.begin(), values.end());
 
                 const std::size_t n = values.size() - 1;
-                const std::size_t index_lower = n * dummy_lower_percent;
-                const std::size_t index_upper = n - n * dummy_upper_percent;
+                const std::size_t index_lower = std::min(n, static_cast<std::size_t>(double(n)*dummy_lower_percent));
+                const std::size_t index_upper = n-std::min(n, static_cast<std::size_t>(double(n)*dummy_upper_percent));
 
                 min_value = values[index_lower];
                 max_value = values[index_upper];
@@ -88,6 +98,11 @@ namespace easy3d {
             }
 
 
+            template<typename FT>
+            float scalar_coordinate(FT value, float min_value, float max_value) {
+                return max_value == min_value ? 0.5f : static_cast<float>((double(value)-min_value)/(double(max_value)-min_value));
+            }
+
             template<typename MODEL, typename FT>
             inline void
             update_scalar_on_vertices(MODEL *model, PointsDrawable *drawable, typename MODEL::template VertexProperty<FT> prop) {
@@ -111,7 +126,7 @@ namespace easy3d {
                 std::vector<vec2> d_texcoords;
                 d_texcoords.reserve(model->n_vertices());
                 for (auto v : model->vertices()) {
-                    float coord = (prop[v] - min_value) / (max_value - min_value);
+                    float coord = internal::scalar_coordinate(prop[v], min_value, max_value);
                     d_texcoords.emplace_back(vec2(coord, 0.5f));
                 }
                 drawable->update_vertex_buffer(points.vector());
@@ -151,7 +166,7 @@ namespace easy3d {
                     auto t = model->vertex(e, 1);
                     d_points.push_back(points[s]);
                     d_points.push_back(points[t]);
-                    float coord = (prop[e] - min_value) / (max_value - min_value);
+                    float coord = internal::scalar_coordinate(prop[e], min_value, max_value);
                     d_texcoords.emplace_back(vec2(coord, 0.5f));
                     d_texcoords.emplace_back(vec2(coord, 0.5f));
                 }
@@ -185,7 +200,7 @@ namespace easy3d {
                 std::vector<vec2> d_texcoords;
                 d_texcoords.reserve(model->n_vertices());
                 for (auto v : model->vertices()) {
-                    float coord = (prop[v] - min_value) / (max_value - min_value);
+                    float coord = internal::scalar_coordinate(prop[v], min_value, max_value);
                     d_texcoords.emplace_back(vec2(coord, 0.5f));
                 }
                 drawable->update_texcoord_buffer(d_texcoords);
@@ -231,7 +246,7 @@ namespace easy3d {
                     d_normals.reserve(model->n_faces() * 3);
                     d_texcoords.reserve(model->n_faces() * 3);
                     for (auto face : model->faces()) {
-                        const float coord = (prop[face] - min_value) / (max_value - min_value);
+                        const float coord = internal::scalar_coordinate(prop[face], min_value, max_value);
                         for (auto h : model->halfedges(face)) {
                             auto v = model->target(h);
                             d_points.emplace_back(points[v]);
@@ -303,7 +318,7 @@ namespace easy3d {
                         tessellator.begin_polygon(fnormals[face]);
                         tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                         tessellator.begin_contour();
-                        float coord = (prop[face] - min_value) / (max_value - min_value);
+                        float coord = internal::scalar_coordinate(prop[face], min_value, max_value);
 
                         for (auto h : model->halfedges(face)) {
                             auto v = model->target(h);
@@ -368,7 +383,7 @@ namespace easy3d {
                     std::vector<vec2> d_texcoords;
                     d_texcoords.reserve(model->n_vertices());
                     for (auto v : model->vertices()) {
-                        const float coord = (prop[v] - min_value) / (max_value - min_value);
+                        const float coord = internal::scalar_coordinate(prop[v], min_value, max_value);
                         d_texcoords.emplace_back(vec2(coord, 0.5f));
                     }
 
@@ -441,7 +456,7 @@ namespace easy3d {
                             Tessellator::Vertex vertex(points[v], v.idx());
                             vertex.append(vnormals[v]);
 
-                            float coord = (prop[v] - min_value) / (max_value - min_value);
+                            float coord = internal::scalar_coordinate(prop[v], min_value, max_value);
                             vertex.append(vec2(coord, 0.5f));
                             tessellator.add_vertex(vertex);
                         }
@@ -781,7 +796,7 @@ namespace easy3d {
                         for (auto v : model->vertices(f)) {
                             Tessellator::Vertex vertex(points[v], v.idx());
                             vertex.append(normals[v]);
-                            float coord = (prop[v] - min_value) / (max_value - min_value);
+                            float coord = internal::scalar_coordinate(prop[v], min_value, max_value);
                             vertex.append(vec2(coord, 0.5f));
                             tessellator.add_vertex(vertex);
                         }
@@ -849,7 +864,7 @@ namespace easy3d {
                         tessellator.begin_polygon(model->compute_face_normal(f));
                         // tessellator.set_winding_rule(Tessellator::WINDING_NONZERO);  // or POSITIVE
                         tessellator.begin_contour();
-                        float coord = (prop[f] - min_value) / (max_value - min_value);
+                        float coord = internal::scalar_coordinate(prop[f], min_value, max_value);
                         for (auto v : model->vertices(f)) {
                             Tessellator::Vertex vertex(points[v], v.idx());
                             vertex.append(normals[v]);

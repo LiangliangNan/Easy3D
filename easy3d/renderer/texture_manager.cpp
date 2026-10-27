@@ -33,11 +33,13 @@
 
 namespace easy3d {
 
+    std::mutex TextureManager::mutex_;
     std::unordered_map<std::string, Texture *>    TextureManager::textures_;
     std::unordered_map<std::string, bool>        TextureManager::attempt_load_texture_; // avoid multiple attempt
 
 
     Texture* TextureManager::request_white() {
+        std::lock_guard<std::mutex> lock(mutex_);
         const std::string name = "<easy3d:white-fallback>";
         auto found = textures_.find(name);
         if (found != textures_.end())
@@ -51,37 +53,34 @@ namespace easy3d {
     }
 
 
-    Texture* TextureManager::request(const std::string &image_file, Texture::WrapMode wrap, Texture::FilterMode filter) {
-        auto pos = textures_.find(image_file);
-        if (pos != textures_.end()) // program already exists
-            return pos->second;
-        else {
-            auto it = attempt_load_texture_.find(image_file);
-            if (it == attempt_load_texture_.end())
-                attempt_load_texture_[image_file] = true;
-            else if (!attempt_load_texture_[image_file])
-                return nullptr;
-
-            Texture *texture = Texture::create(image_file, wrap, filter);
-            if (!texture) {
-                LOG_N_TIMES(3, ERROR) << "failed to create texture from " << image_file << ". " << COUNTER;
-                attempt_load_texture_[image_file] = false;
-                return nullptr;
-            }
-
-            textures_[image_file] = texture;
-            return texture;
-        }
+    Texture* TextureManager::request(const std::string& file, Texture::WrapMode wrap, Texture::FilterMode filter) {
+        return request_impl(file,wrap,filter,false);
+    }
+    Texture* TextureManager::request_cpu(const std::string& file, Texture::WrapMode wrap, Texture::FilterMode filter) {
+        return request_impl(file,wrap,filter,true);
+    }
+    Texture* TextureManager::request_impl(const std::string& file, Texture::WrapMode wrap, Texture::FilterMode filter, bool cpu) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        const auto key = std::string(cpu ? "cpu|" : "default|")+file+"|"+std::to_string(int(wrap))+"|"+std::to_string(int(filter));
+        auto found = textures_.find(key);
+        if (found != textures_.end()) return found->second;
+        auto attempted = attempt_load_texture_.find(key);
+        if (attempted != attempt_load_texture_.end() && !attempted->second) return nullptr;
+        Texture* texture = cpu ? Texture::create_cpu(file,wrap,filter) : Texture::create(file,wrap,filter);
+        attempt_load_texture_[key] = texture != nullptr;
+        if (texture) textures_[key] = texture;
+        return texture;
     }
 
 
     Texture* TextureManager::request(const std::string &file_name, int num_stripes, Texture::WrapMode wrap, Texture::FilterMode filter) {
+        std::lock_guard<std::mutex> lock(mutex_);
         if (!file_system::is_file(file_name)) {
             LOG(ERROR) << "file does not exist: " << file_name;
             return nullptr;
         }
 
-        const std::string texture_name = file_name + "|" + std::to_string(num_stripes);
+        const std::string texture_name = file_name + "|" + std::to_string(num_stripes) + "|" + std::to_string(int(wrap)) + "|" + std::to_string(int(filter));
         auto pos = textures_.find(texture_name);
         if (pos != textures_.end()) // program already exists
             return pos->second;
@@ -116,7 +115,8 @@ namespace easy3d {
 
 
     Texture* TextureManager::request(int num_stripes, int stride, Texture::WrapMode wrap, Texture::FilterMode filter) {
-        const std::string texture_name = "random|" + std::to_string(num_stripes) + "|" + std::to_string(stride);
+        std::lock_guard<std::mutex> lock(mutex_);
+        const std::string texture_name = "random|" + std::to_string(num_stripes) + "|" + std::to_string(stride) + "|" + std::to_string(int(wrap)) + "|" + std::to_string(int(filter));
         auto pos = textures_.find(texture_name);
         if (pos != textures_.end()) // program already exists
             return pos->second;
@@ -147,10 +147,11 @@ namespace easy3d {
     }
 
     void TextureManager::release(const Texture* texture) {
-        for (const auto& p : textures_) {
-            if (p.second == texture) {
-                textures_.erase(texture->name());
-                attempt_load_texture_.erase(texture->name());
+        std::lock_guard<std::mutex> lock(mutex_);
+        for (auto it = textures_.begin(); it != textures_.end(); ++it) {
+            if (it->second == texture) {
+                attempt_load_texture_.erase(it->first);
+                textures_.erase(it);
                 delete texture;
                 return;
             }
@@ -159,6 +160,7 @@ namespace easy3d {
 
 
     void TextureManager::terminate() {
+        std::lock_guard<std::mutex> lock(mutex_);
         for (const auto& p : textures_)
             delete p.second;
         textures_.clear();

@@ -198,7 +198,7 @@ namespace easy3d {
     }
 
     void Drawable::update_element_buffer(const std::vector< std::vector<unsigned int> > &indices) {
-        assert(vao_);
+        assert(cpu_buffers_ || vao_);
 
         if (type() == DT_POINTS) {
             LOG(WARNING) << "element buffer is not needed for PointsDrawable";

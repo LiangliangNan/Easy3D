@@ -453,7 +453,7 @@ namespace easy3d {
 
         bool lighting_;
 
-        // CPU-backed drawables must not create legacy GL textures implicitly.
+        // CPU-backed drawables create image snapshots without OpenGL calls.
         bool cpu_only_ = false;
         bool lighting_two_sides_;
         bool distinct_back_color_;

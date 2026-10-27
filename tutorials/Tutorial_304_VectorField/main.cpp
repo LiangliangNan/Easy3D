@@ -63,8 +63,11 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    // Show each face as a facet, matching the face-normal vector field.
-    mesh->renderer()->get_triangles_drawable("faces")->set_smooth_shading(false);
+    // Keep this face-normal example uniformly colored and visibly faceted,
+    // regardless of texture coordinates stored in the example OBJ file.
+    auto* faces = mesh->renderer()->get_triangles_drawable("faces");
+    faces->set_uniform_coloring(faces->color());
+    faces->set_smooth_shading(false);
 
     // Get the bounding box of the model. Then we defined the length of the
     // normal vectors to be 5% of the bounding box diagonal.

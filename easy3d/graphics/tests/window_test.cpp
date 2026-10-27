@@ -200,6 +200,22 @@ int main(int argc, char**) {
             catch (const std::invalid_argument&) { rejected = true; }
             require(rejected, "invalid initial sample count was accepted");
         }
+        auto* scalar_mesh = dynamic_cast<SurfaceMesh*>(model);
+        auto scalar = scalar_mesh->add_vertex_property<float>("v:window_scalar");
+        for (auto v : scalar_mesh->vertices()) scalar[v] = scalar_mesh->position(v).z;
+        faces->set_scalar_coloring(State::VERTEX,"v:window_scalar",nullptr,0,0);
+        model->renderer()->update(); frame(viewer);
+        const auto textured = viewer.capture();
+        bool scalar_hit = false;
+        for (size_t i = 0; i < textured.ids.size(); ++i) {
+            if (textured.ids[i].object == UINT32_MAX) continue;
+            bool found = false;
+            const auto point = viewer.point_under_pixel(int(i%textured.width),int(i/textured.width),found);
+            require(found && std::abs(viewer.camera()->projectedCoordinatesOf(point).z-textured.depth[i]) < 1e-4f,
+                    "scalar-textured window depth picking mismatch");
+            scalar_hit = true; break;
+        }
+        require(scalar_hit,"scalar-textured window is empty");
         require(viewer.snapshot("vulkan-window.png"), "window snapshot failed");
         require(viewer.device().validation_errors() == 0, "presentation validation errors");
         key(viewer.window(), GLFW_KEY_ESCAPE, 0, GLFW_PRESS, 0);

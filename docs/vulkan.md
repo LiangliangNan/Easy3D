@@ -68,7 +68,11 @@ Completion gates include:
 - Capped cylinder and cone line impostors with analytic side/cap intersections,
   actual surface depth, endpoint color/texture interpolation and original segment
   IDs, using instanced quads without geometry shaders or wide-line features.
-- Explicit sampler descriptors, including a valid white fallback texture.
+- CPU-owned immutable texture data with explicit CPU-only factories, shared
+  texture/scalar drawable state, vertex/halfedge UV extraction and default texture/
+  scalar selection. Tutorials 303 and 305 run with Vulkan using the existing scene APIs.
+- Per-image clamp/repeat and nearest/linear sampler descriptors, including a valid
+  white fallback texture.
 - Device-local geometry/images, staged uploads, coherent/noncoherent host memory,
   fenced submission/readback, explicit image transitions and transfer barriers.
 - Independent resource realizations on multiple devices. CPU snapshots own their
@@ -93,7 +97,7 @@ Completion gates include:
   resize/hide/show, independent windows/devices, orbit/pan/zoom, projection toggle,
   file drop and depth-based world-point picking. The installed demo uses an
   embedded bunny by default and needs no source-tree model/shader files.
-- Existing Tutorials 201, 302 and 304 build through the `Viewer` alias in Vulkan-only
+- Existing Tutorials 201 and 302–305 build through the `Viewer` alias in Vulkan-only
   window builds. Tutorial 302 uses the same sphere/surfel/cylinder/cone scene code
   as its OpenGL build, with bounded native execution for automated tests. Legacy
   custom OpenGL draw callbacks are not ported. Tutorial 304 exercises the native
@@ -194,7 +198,7 @@ viewer.run();
 
 In a Vulkan-only window build the existing `<easy3d/viewer/viewer.h>` and
 `easy3d::Viewer` name select the same host. `Tutorial_201_Viewer_default` is built
-unchanged in that configuration. Tutorials 302 and 304 are also built in this configuration. Other tutorials remain gated
+unchanged in that configuration. Tutorials 302–305 are also built in this configuration. Other tutorials remain gated
 until their features and callbacks are ported; the global legacy tutorials option stays OFF.
 In a dual build `Viewer` continues to select the legacy host, while
 `VulkanViewer` selects Vulkan explicitly.
@@ -311,10 +315,10 @@ cause.
 | Area | Current behavior |
 |---|---|
 | Default backend | Native Vulkan/GLFW by default; `Viewer`/`OffScreen` alias their Vulkan implementations. Explicitly enabling OpenGL restores legacy `Viewer`/`OffScreen` in a dual build. |
-| `VulkanOffScreen` defaults | Opaque mesh faces; uniform or vertex/face property color; plain one-pixel points/lines. Scalar/texture properties are not automatically chosen as defaults yet. |
+| `VulkanOffScreen` defaults | Opaque mesh faces; uniform/property, texture-coordinate and scalar-property defaults follow the shared renderer selection. Plain one-pixel points/lines remain the initial style. |
 | Material/lighting | Basic fixed world-space diffuse term; no full material or back-face-color parity yet. Normal transforms use the inverse transpose. Disable lighting for exact unlit colors. |
 | `TrianglesDrawable::opacity()` | As in the old opaque pass, effective only in a separate transparency pass; such a pass is not implemented here. |
-| CPU drawable textures/scalars | Legacy `Texture` coloring is rejected. Native `graphics::Image` texturing is implemented. CPU-only implicit legacy texture creation throws before making GL calls. |
+| CPU drawable textures/scalars | `Texture` pixel snapshots, vertex/halfedge UVs and scalar fields are supported without GL calls. Clamp/repeat and nearest/linear filtering work; no mipmap, anisotropic or multi-material texture pipeline yet. |
 | Transparency, SSAO, shadows, EDL, text, clipping | Not ported. Do not infer support from the low-level draw-command API. The scene adapter rejects SSAO/highlighting/selection; no effect-pass interface is exposed yet. |
 | Point and line styles | Plain points of any positive pixel size, spheres and oriented surfels are implemented. Capped cylinders/cones and butt-capped plain wide lines are implemented; joined strokes and rounded plain-line caps remain pending. |
 | Snapshot options | Device-supported MSAA (default 1); `expand=false` remains unsupported. Scaling, white/current/transparent background and image saving work. No tiled oversized captures. |
@@ -365,8 +369,8 @@ transparent PNG edges, and window presentation. Expected negative tests no longe
 use the logging wrappers. Fresh-configure checks verify the new four defaults.
 The subsequent point/impostor stage also validates this MSAA path on macOS/MoltenVK; Windows validation remains outstanding.
 
-Next implementation gates are native Qt/wx surface/frame adapters, text and
-texture/scalar state, ID mapping/pickers, oversized capture,
+Next implementation gates are native Qt/wx surface/frame adapters, text,
+ID mapping/pickers, oversized capture,
 effects/transparency, all applications/tutorials and Python integration, then
 hardware validation and packaging on macOS/Windows/Linux. The defaults now select
 Vulkan for development. Final backend selection and automatic OpenGL fallback
@@ -549,7 +553,8 @@ ID. Endpoint normal lighting follows the existing native one-pixel line conventi
 
 Native-only window builds now also build `Tutorial_304_VectorField`, with its
 original mesh, face-normal vector-field construction and three-pixel plain lines.
-The sphere explicitly uses flat shading to match its face-normal vector field.
+The sphere explicitly uses flat shading and uniform color to match its face-normal
+vector field, regardless of texture coordinates stored in the example OBJ file.
 The Vulkan scene adapter honors `TrianglesDrawable::smooth_shading()`: flat
 snapshots assign geometric triangle normals to all three corners, preserving
 vertex colors, primitive order and picking. Switching shading invalidates the
@@ -577,3 +582,84 @@ Native-window tests exercise wide-line presentation and depth picking. Tutorials
 SPIR-V validation, and the wide-line fragment SPIR-V has no depth-replacement or
 sample-rate-shading capability. Validation error counts remain zero; the earlier
 MoltenVK integer-attachment warning persists.
+
+## Texture/scalar state and Tutorials 303/305
+
+The scene adapter now supports `State::TEXTURED` and `State::SCALAR_FIELD` using
+CPU image snapshots and the existing texture/scalar property extraction. Model
+renderers select texture-coordinate/scalar properties by the same priority as
+the OpenGL renderer. Vertex and halfedge UVs, texture repeat plus fractional
+repeat, uniform/property switching, face/vertex scalar fields and scalar palette
+replacement work with flat or smooth shading. As before, call
+`model->renderer()->update()` after changing model properties or requesting a new
+property extraction on an already uploaded model.
+
+`Texture` retains an immutable `PixelData` snapshot of its input. In Vulkan-only
+builds the existing `Texture::create()` and `TextureManager::request()` APIs
+create CPU textures. In dual builds, use `Texture::create_cpu()` or
+`TextureManager::request_cpu()` when there is no OpenGL context. These explicit
+factories never call GL, and CPU drawables use the CPU-only cache for implicit
+checkerboards/colormaps. The legacy factories still upload GL textures in OpenGL
+builds, while retaining pixels usable by the Vulkan adapter. CPU-only textures
+have ID zero; GL binding of such a texture reports an explicit error. Texture
+manager ownership/release conventions remain in effect; drawables keep borrowed
+`Texture` pointers and require the texture to remain alive while used.
+
+The shared texture factories/manager and file loading are compiled in both
+configurations. GL upload, binding and destruction live separately in
+`renderer/backends/opengl/texture.cpp`, excluded from Vulkan-only builds. No
+OpenGL library/context is needed by native texture loading, scalar normalization
+or rendering. Texture cache entries distinguish CPU/legacy creation and sampler
+choices; releasing a cached texture removes its actual cache entry. Cache lookup
+and mutation are serialized for concurrent CPU requests. Callers still control
+borrowed texture lifetimes and must synchronize release/termination with users.
+
+`Texture` preserves the existing bottom-first input/file-loading convention.
+The Vulkan adapter converts pixels to top-first RGBA8 and transforms texture
+coordinates explicitly, including repeat factors, keeping images upright without
+changing native `graphics::Image` conventions. Color and depth readback remain
+top-first. Each immutable `graphics::Image` has a `Sampler` describing clamp or
+repeat addressing and nearest or linear filtering. Its defaults remain
+nearest/clamp for existing native clients. RGBA8 linear-filter support is checked
+before realization. No mipmaps or anisotropic filtering are introduced.
+
+Texture/palette changes do not alter geometry order or picking IDs. GPU image
+snapshots are shared while bound by live drawables; the image-conversion cache
+holds weak references, so replacing a binding retires unused descriptors even
+when CPU texture caches retain the old pixels. A stress regression replaces more
+than 1,024 live CPU snapshots on one drawable without exhausting the descriptor
+pool. Texture alpha is sampled through the existing opaque/depth-writing pass;
+this does not implement transparency.
+
+Constant non-boolean scalar fields map to the palette midpoint rather than
+producing non-finite texture coordinates. Shared scalar extraction checks finite
+values and valid clamp fractions before sorting/indexing, and computes ranges in
+double precision to avoid float-range overflow. Boolean fields keep their 0/1
+mapping. CPU polygon index uploads also work through the nested-index overload,
+which no longer requires an OpenGL VAO for CPU-backed drawables.
+
+Native-only window builds now include `Tutorial_303_ScalarField` and
+`Tutorial_305_Texture`, using their existing scalar/texture scene code and shared
+native execution options:
+
+```sh
+./cmake-build-debug/bin/Tutorial_303_ScalarField --frames 3 --samples 4 --validation
+./cmake-build-debug/bin/Tutorial_305_Texture --frames 3 --samples 4 --validation
+```
+
+Desktop CTests `vulkan.tutorial303` and `vulkan.tutorial305` honor
+`Easy3D_VULKAN_TEST_VALIDATION`. New headless test `vulkan.texture` covers pixel
+ownership, raw/file orientation, sampler cache variants, repeat and fractional
+repeat, linear filtering, vertex/halfedge UV seams, face/vertex/constant scalar
+fields, invalid inputs, descriptor retirement and unchanged MSAA picking/depth.
+The renderer test independently checks native sampler behavior. Dual builds also
+provide desktop `opengl.texture`, exercising GL upload/readback, sampler state,
+retained CPU data and cache release with a real GL context.
+
+Local verification on 2026-10-27 used Apple M4 Pro/MoltenVK 1.4.2, selected with
+`VK_DRIVER_FILES=/usr/local/share/vulkan/icd.d/MoltenVK_icd.json`. Native and dual
+configurations compile. MoltenVK renderer/texture tests and the dual build's
+headless suite pass with Khronos/synchronization validation. Tutorials 303/305
+run with four samples and validation. The real OpenGL texture smoke test also
+passes. Vulkan-only renderer linkage still contains no GL dependency. The earlier
+MoltenVK integer-attachment warning persists; validation error counts stay zero.
