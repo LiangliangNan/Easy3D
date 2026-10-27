@@ -5,14 +5,62 @@ replacement for the full OpenGL renderer**. A native interactive Vulkan viewer i
 now enabled by default on this development branch. Mapple, FigureMaker, GUI picking/effects, Python
 rendering and most existing interactive tutorials still use OpenGL. They are retained until their Vulkan replacements are ready.
 
+## Final migration goal and backend policy
+
+The completed migration must support **all tutorials on Vulkan**, and targets
+**all applications on Vulkan**, including Mapple, FigureMaker and toolkit-based
+hosts. Porting the renderer alone is not completion: the rendering features,
+interaction, picking, effects, text, snapshots and custom drawing used by those
+programs must also work. Any remaining application limitation must be explicitly
+tracked rather than silently excluded from the migration scope.
+
+Users should be able to select Vulkan or OpenGL through a common public API and
+consistent application configuration. The intended default is automatic
+selection: prefer Vulkan, and use OpenGL if Vulkan initialization is unavailable
+and OpenGL was built and is available. This includes missing loaders/drivers,
+unsuitable devices or required capabilities, and unsupported host/surface setup.
+An explicitly requested backend must either initialize successfully or report an
+actionable error; it must not silently switch backends. Arbitrary rendering or
+application errors must not trigger fallback and conceal defects. Automatic
+fallback should identify the backend selected and explain why Vulkan was
+unavailable. If neither backend can initialize, report both failures.
+
+Backend selection and fallback are final-state requirements, **not implemented
+by the current compile-time Viewer/OffScreen aliases**. Supporting automatic
+fallback requires a dual-backend build and shared viewer/offscreen interfaces,
+scene state and host lifecycle that can choose a backend before creating its
+rendering resources. Vulkan-only and OpenGL-only builds should remain supported,
+with clear diagnostics when the requested backend was not built.
+
+Tutorials and applications should share their application logic across backends.
+Replace backend-specific drawing callbacks with common rendering operations where
+needed; retain explicit low-level backend APIs for advanced use. The maintained
+OpenGL backend remains a supported choice and fallback after Vulkan parity.
+Retiring obsolete implementation details must not remove that support.
+
+Completion gates include:
+
+- Build and run every tutorial with Vulkan, validating the features each teaches.
+- Port every application and its host integration, checking feature parity and
+  documenting any outstanding limitations.
+- Exercise explicit Vulkan, explicit OpenGL and automatic selection in shared
+  tutorial/application paths, including Vulkan initialization failure, fallback
+  cleanup and the case where neither backend is available.
+- Validate rendering, picking, MSAA, snapshots and resource lifetime on supported
+  macOS, Windows and Linux configurations; retain OpenGL regression coverage.
+
 ## Implemented
 
 - Backend-neutral, immutable geometry and image descriptions, draw commands and
   typed color/depth/object/primitive readback in `easy3d/graphics/render_device.h`.
 - A native Vulkan 1.2 offscreen device, with no OpenGL context, window, surface,
   swapchain, Qt, GLFW or GLEW dependency in the `easy3d::vulkan` target.
-- Indexed/nonindexed triangle lists, plain one-pixel point/line lists, uniform and
+- Indexed/nonindexed triangle lists, plain points and one-pixel line lists, uniform and
   vertex colors, RGBA8 textures, basic directional lighting and depth testing.
+- Portable large plain points and sphere impostors using six-vertex instanced
+  quads, without geometry shaders or the optional `largePoints` feature. Sphere
+  fragments compute perspective/orthographic ray intersections, silhouette discard
+  and actual surface depth, retaining original point primitive IDs.
 - Explicit sampler descriptors, including a valid white fallback texture.
 - Device-local geometry/images, staged uploads, coherent/noncoherent host memory,
   fenced submission/readback, explicit image transitions and transfer barriers.
@@ -94,8 +142,8 @@ correctness, not GPU performance or macOS portability.
 
 On macOS use a Vulkan SDK with MoltenVK and a matching loader/ICD. Follow the SDK's
 runtime environment/bundling instructions. This implementation requests Vulkan
-1.2 and checks target-format support. macOS and Windows hardware execution are
-still required before making a cross-platform support claim.
+1.2 and checks target-format support. The point/impostor stage has been tested on this Mac with MoltenVK 1.4.2
+and Apple M4 Pro. Windows hardware execution remains outstanding.
 
 ## Interactive Vulkan window
 
@@ -258,7 +306,7 @@ cause.
 | `TrianglesDrawable::opacity()` | As in the old opaque pass, effective only in a separate transparency pass; such a pass is not implemented here. |
 | CPU drawable textures/scalars | Legacy `Texture` coloring is rejected. Native `graphics::Image` texturing is implemented. CPU-only implicit legacy texture creation throws before making GL calls. |
 | Transparency, SSAO, shadows, EDL, text, clipping | Not ported. Do not infer support from the low-level draw-command API. The scene adapter rejects SSAO/highlighting/selection; no effect-pass interface is exposed yet. |
-| Large points, spheres/surfels, cylinders/cones, wide lines | Not ported; explicit unsupported-style error from the scene adapter. |
+| Point and line styles | Plain points of any positive pixel size and sphere impostors are implemented. Surfels, cylinders/cones and wide lines still report explicit unsupported-style errors. |
 | Snapshot options | Device-supported MSAA (default 1); `expand=false` remains unsupported. Scaling, white/current/transparent background and image saving work. No tiled oversized captures. |
 | Readback | RGBA8, D32 and RG32UI; top row first; depth [0,1]; no-hit object/primitive IDs are `UINT32_MAX`. |
 | Picking IDs | Draw-command object ID and draw-primitive index (or explicit native primitive IDs). The adapter uses model/drawable order and generated primitive indices, not original polygon/vertex handles. Existing GUI pickers are not ported. |
@@ -273,8 +321,9 @@ The existing OpenGL sources and shaders therefore remain necessary. Cleaning the
 out now would remove working applications and tutorials. The Vulkan-only build
 excludes legacy renderer/GUI/viewer implementations, GLEW and ImGui. The headless
 configuration also excludes GLFW; the optional native window host includes GLFW
-for window/input management. Both retain shared CPU scene APIs and the new offscreen adapter. Delete old
-implementations only after each replacement passes its application/feature tests.
+for window/input management. Both retain shared CPU scene APIs and the new offscreen adapter. Retire obsolete
+implementation details only after their replacements pass application/feature
+tests, while retaining the supported OpenGL backend and fallback path.
 
 ## Validation and remaining migration
 
@@ -304,10 +353,65 @@ The MSAA stage verifies real partial edge coverage at four samples, unchanged
 center-sample IDs/depth for triangles/points/lines, sample-count changes and resize,
 transparent PNG edges, and window presentation. Expected negative tests no longer
 use the logging wrappers. Fresh-configure checks verify the new four defaults.
-macOS/MoltenVK and Windows validation of this new path remain outstanding.
+The subsequent point/impostor stage also validates this MSAA path on macOS/MoltenVK; Windows validation remains outstanding.
 
-Next implementation gates are native Qt/wx surface/frame adapters, portable
-impostors, text and texture/scalar state, ID mapping/pickers, oversized capture,
+Next implementation gates are native Qt/wx surface/frame adapters, remaining
+impostors (surfels, cylinders/cones), text and texture/scalar state, ID mapping/pickers, oversized capture,
 effects/transparency, all applications/tutorials and Python integration, then
 hardware validation and packaging on macOS/Windows/Linux. The defaults now select
-Vulkan for development; removing the remaining OpenGL code depends on these gates.
+Vulkan for development. Final backend selection and automatic OpenGL fallback
+remain migration gates; the OpenGL backend will remain supported.
+
+## Portable points and sphere impostors
+
+`PointsDrawable::PLAIN` accepts positive finite framebuffer-pixel sizes; sizes
+other than one use instanced triangle quads and never request `largePoints`.
+`PointsDrawable::SPHERE` uses a view-space radius of
+`point_size() * camera.pixelGLRatio(camera.pivotPoint()) / 2`, matching the legacy
+radius convention. Manipulation transforms the center; radius is independent of
+model scale. Model/default drawable styling remains plain one-pixel points until
+explicitly changed. Surfels remain unsupported.
+
+Native `DrawCommand` clients set `point_size` for plain points, or set
+`point_style = PointStyle::sphere`, `sphere_radius`, `model_view` and `projection`
+for spheres. The latter matrices use the Easy3D/OpenGL convention; sphere centers
+are transformed by `model_view`, and `projection` must be invertible. The existing
+`model_view_projection` continues to control plain points/lines/triangles. Sphere
+lighting uses `sphere_light` in view space; the scene adapter transforms the fixed
+world-space light by the camera rotation. This is basic diffuse lighting, without
+full legacy material parity. Uniform/vertex colors and native textures work.
+
+The sphere proxy conservatively bounds the projected view-space cube, falling
+back to the viewport when it crosses the eye plane. Its rasterization depth does
+not clip the true surface. Fragments intersect a ray reconstructed from the
+inverse projection, discard misses and clipped front surfaces, and write the
+surface depth. This handles off-axis perspective views and orthographic views;
+near-plane clipping can expose only a rim, and does not add a solid cap.
+
+Color MSAA evaluates sphere intersections/depth at each sample using queried and
+enabled `sampleRateShading`. Devices lacking this optional feature support
+single-sample spheres and all plain-point sizes; multisampled sphere draws fail
+explicitly instead of rendering incorrect coverage/depth. Query
+`device.supported_sample_counts(PointStyle::sphere)` for the usable counts.
+Picking always uses
+the existing separate center-sample pass, with the same sphere intersection and
+surface depth, independently of the color sample count. Proxy triangles never
+become picking primitive IDs. Per-draw matrices/parameters use an aligned dynamic
+uniform buffer; push constants remain within Vulkan's guaranteed 128-byte limit.
+
+Local hardware verification on 2026-10-27 used the existing Debug configuration,
+Apple M4 Pro and **MoltenVK 1.4.2**, explicitly selected with
+`VK_DRIVER_FILES=/usr/local/share/vulkan/icd.d/MoltenVK_icd.json`. Renderer and
+scene tests passed with `--validation` (Khronos plus synchronization validation);
+native window/presentation tests also passed with sphere depth picking, style
+switches, resize and multiple windows. Both new shaders passed
+`spirv-val --target-env vulkan1.2`. Tests cover pixel
+sizes, indexed/explicit point IDs, analytic sphere depth and silhouettes,
+mesh/sphere occlusion in both draw orders, off-axis perspective and orthographic
+views, near/far/eye clipping, four-sample coverage, unchanged center-sample
+picking/depth, style changes, resize and independent draw parameters.
+
+This MoltenVK version emits a known spurious warning about blending on the
+RG32UI ID attachment even though blending is disabled. No validation errors are
+reported. The upstream fix checks `blendEnable` before issuing that warning:
+[MoltenVK diagnostic fix](https://skia.googlesource.com/external/github.com/KhronosGroup/MoltenVK/+/4aaf714aa1b3e78e26ecfcefa9c75e9a576c500b%5E2..4aaf714aa1b3e78e26ecfcefa9c75e9a576c500b/).
