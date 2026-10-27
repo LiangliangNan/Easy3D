@@ -74,6 +74,8 @@ Completion gates include:
   runs as a native image viewer with fit, zoom, resize and image reload.
 - CPU TrueType/UTF-8 text layout and immutable glyph atlases, using the native
   overlay path. Tutorial 309 provides font, kerning, spacing, alignment and origin controls.
+- Shared CPU OBJ/MTL diffuse-material import, preserving material groups and UV
+  seams. Tutorial 308 uses the same loader and scene logic on Vulkan and OpenGL.
 - CPU-owned immutable texture data with explicit CPU-only factories, shared
   texture/scalar drawable state, vertex/halfedge UV extraction and default texture/
   scalar selection. Tutorials 303 and 305 run with Vulkan using the existing scene APIs.
@@ -103,7 +105,7 @@ Completion gates include:
   resize/hide/show, independent windows/devices, orbit/pan/zoom, projection toggle,
   file drop and depth-based world-point picking. The installed demo uses an
   embedded bunny by default and needs no source-tree model/shader files.
-- Existing Tutorials 201, 302–306 and 309 build with the native Vulkan host in
+- Existing Tutorials 201, 301–306 and 308–310 build with the native Vulkan host in
   Vulkan-only window builds. Tutorial 302 uses the same sphere/surfel/cylinder/cone scene code
   as its OpenGL build, with bounded native execution for automated tests. Legacy
   custom OpenGL draw callbacks are not ported. Tutorial 304 exercises the native
@@ -204,7 +206,7 @@ viewer.run();
 
 In a Vulkan-only window build the existing `<easy3d/viewer/viewer.h>` and
 `easy3d::Viewer` name select the same host. `Tutorial_201_Viewer_default` is built
-unchanged in that configuration. Tutorials 302–306 and 309 are also built in this configuration. Other tutorials remain gated
+unchanged in that configuration. Tutorials 301–306 and 308–310 are also built in this configuration. Other tutorials remain gated
 until their features and callbacks are ported; the global legacy tutorials option stays OFF.
 In a dual build `Viewer` continues to select the legacy host, while
 `VulkanViewer` selects Vulkan explicitly.
@@ -324,7 +326,7 @@ cause.
 | `VulkanOffScreen` defaults | Opaque mesh faces; uniform/property, texture-coordinate and scalar-property defaults follow the shared renderer selection. Plain one-pixel points/lines remain the initial style. |
 | Material/lighting | Basic fixed world-space diffuse term; no full material or back-face-color parity yet. Normal transforms use the inverse transpose. Disable lighting for exact unlit colors. |
 | `TrianglesDrawable::opacity()` | As in the old opaque pass, effective only in a separate transparency pass; such a pass is not implemented here. |
-| CPU drawable textures/scalars | `Texture` pixel snapshots, vertex/halfedge UVs and scalar fields are supported without GL calls. Clamp/repeat and nearest/linear filtering work; no mipmap, anisotropic or multi-material texture pipeline yet. |
+| CPU drawable textures/scalars | `Texture` pixel snapshots, vertex/halfedge UVs and scalar fields are supported without GL calls. Clamp/repeat, nearest/linear filtering and OBJ/MTL diffuse-material groups work; no mipmap, anisotropic or PBR material pipeline yet. |
 | Transparency, SSAO, shadows, EDL, text, clipping | General 3D transparency/effects remain pending. Straight-alpha 2D overlays and basic horizontal TrueType/UTF-8 text are supported; shaping, bidi and automatic font fallback remain pending. The scene adapter still rejects SSAO/highlighting/selection; overlays are not an effect-pass API. |
 | Point and line styles | Plain points of any positive pixel size, spheres and oriented surfels are implemented. Capped cylinders/cones and butt-capped plain wide lines are implemented; joined strokes and rounded plain-line caps remain pending. |
 | Snapshot options | Device-supported MSAA (default 1); `expand=false` remains unsupported. Scaling, white/current/transparent background and image saving work. No tiled oversized captures. |
@@ -814,3 +816,87 @@ the dual Vulkan/OpenGL suite passed all five, including the retained real OpenGL
 texture check. Snapshot regressions also passed with validation after adding
 one-sample straight-alpha conversion. The existing MoltenVK integer-attachment
 warning persists; validation error counts remain zero.
+
+
+## OBJ material import and Tutorials 301/308/310
+
+Native-only window builds now include `Tutorial_308_TexturedMesh`, using the same
+viewer source and OBJ import implementation as its OpenGL build. The import code
+now lives in `easy3d/renderer/obj_materials.h`, where other applications can use it
+without constructing a window or graphics context:
+
+```cpp
+#include <easy3d/renderer/obj_materials.h>
+auto asset = easy3d::load_obj_materials(obj_file);
+viewer.add_model(asset.mesh, false); // attach with no default drawables
+asset.create_drawables();           // match the attached renderer's CPU/GL mode
+viewer.fit_screen();
+```
+
+`load_obj_materials()` returns a CPU `ObjMaterialMesh` snapshot. It builds a
+SurfaceMesh, retains halfedge UVs and face diffuse colors, and tessellates each
+material group into a separate part. UVs participate in tessellator vertex
+identity, preserving seams even when two corners share an OBJ position. Concave
+polygons and relative/negative OBJ indices work. Faces with incomplete UVs form
+untextured parts instead of sampling undefined coordinates. Valid `map_Kd`
+textures take priority; the original tutorial's ambient/specular maps remain
+color-map fallbacks when no diffuse map is available. Missing maps/UVs use the
+material's `Kd` diffuse color, and absent materials default to white. Texture paths resolve against the OBJ
+location (or use an explicit absolute map path), independently of the process's
+working directory. This follows the bundled fast_obj parser's OBJ/MTL conventions;
+it does not add support for map options or texture filenames containing spaces.
+
+`create_drawables()` creates flat-shaded triangle parts on the mesh's current
+renderer. CPU renderers explicitly request CPU textures even in dual builds;
+OpenGL renderers retain GL buffers/textures. Duplicate part names fail before
+creating additional drawables. Each drawable owns an import snapshot in its
+update callback, so a general `Renderer::update()` refreshes the material subsets
+without replacing each one with the full model. The asset object can be released
+after creation. Topology, UV or material edits require reimporting/rebuilding the
+parts; these snapshots do not automatically follow mesh edits. Texture pointers
+retain the existing borrowed TextureManager lifetime contract.
+
+The parser checks face position/UV/material indices, finite positions/UVs/colors,
+mesh-builder failures and empty tessellations before attachment. The fast_obj
+allocation is released through RAII on success and failure, fixing the tutorial's
+previous parsed-data leak. Tutorial 308 loads and realizes a replacement before
+removing the previous models; OBJ read failures preserve the existing scene.
+This is diffuse-material import, not full MTL rendering: normals are recomputed,
+independent ambient/specular material lighting and MTL opacity are not applied,
+and general 3D transparency,
+PBR and original-face picking maps remain outstanding.
+
+`Tutorial_301_Drawables` now runs its shared standalone-drawable example on Vulkan,
+including sphere points and a five-pixel wire bounding box. Its native path uses
+CPU buffers and bounded execution options. `Tutorial_310_TextMesher` also uses the
+shared meshing/scene code. It refreshes buffers and fits the view after appending
+the second string, so both generated strings enter the initial scene bounds.
+Its existing mesher can report degenerate-face diagnostics; this stage does not
+change text triangulation algorithms. The retained OpenGL paths use the same
+scene construction.
+
+```sh
+./cmake-build-debug/bin/Tutorial_301_Drawables --frames 3 --samples 4 --validation
+./cmake-build-debug/bin/Tutorial_308_TexturedMesh --frames 3 --samples 4 --validation
+./cmake-build-debug/bin/Tutorial_310_TextMesher --frames 3 --samples 4 --validation
+```
+
+Headless `vulkan.objmaterials` checks grouped rendering, shared-position UV seams,
+diffuse texture orientation, missing texture/UV fallbacks, concave polygon
+coverage, negative indices, CPU texture creation in dual builds, rejected input,
+refresh/reload/resize and unchanged center-sample picking/depth with four samples.
+Desktop `vulkan.objviewer` checks the native Tutorial 308 host's snapshots,
+refresh, registered file-drop callback, resize and world-point picking. Desktop
+`opengl.objmaterials` compiles the same tutorial host against OpenGL and checks
+actual GL texture creation, rendered UV/colors, snapshots, refresh and reload.
+The three bounded native tutorial CTests honor `Easy3D_VULKAN_TEST_VALIDATION`.
+
+On 2026-10-27, Apple M4 Pro/MoltenVK 1.4.2 passed the material renderer and
+native material-host regressions with Khronos/synchronization validation, plus
+Tutorials 301, 308 and 310 with four samples and validation. The complete native
+suite passed all 18 tests; the dual Vulkan/OpenGL suite passed all seven,
+including the real OpenGL material-viewer and texture checks. Pixel probes and
+snapshot inspection confirmed orientation, UV seams, concave coverage and color
+fallbacks. The existing MoltenVK integer-attachment warning remains; validation
+error counts stay zero. Native Qt/wx integration, clipping, GUI picking/effects
+and runtime backend selection/fallback remain migration gates.

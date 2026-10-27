@@ -3,11 +3,11 @@ set(private_dependencies)
 set(public_dependencies easy3d::util easy3d::core easy3d::fileio easy3d::algo)
 
 if(NOT Easy3D_ENABLE_OPENGL)
-    set(renderer_headers camera.h constraint.h drawable.h drawable_lines.h drawable_lines_2D.h
+    set(renderer_headers obj_materials.h camera.h constraint.h drawable.h drawable_lines.h drawable_lines_2D.h
             drawable_points.h drawable_triangles.h frame.h frustum.h key_frame_interpolator.h
             manipulator.h manipulated_camera_frame.h manipulated_frame.h shape.h buffer.h
             renderer.h state.h texture.h texture_manager.h transform.h transform_decompose.h)
-    set(renderer_sources camera.cpp constraint.cpp drawable.cpp drawable_types.cpp frame.cpp frustum.cpp
+    set(renderer_sources obj_materials.cpp camera.cpp constraint.cpp drawable.cpp drawable_types.cpp frame.cpp frustum.cpp
             key_frame_interpolator.cpp manipulator.cpp manipulated_camera_frame.cpp manipulated_frame.cpp
             shape.cpp buffer.cpp renderer.cpp state.cpp texture.cpp texture_manager.cpp transform.cpp transform_decompose.cpp
             backends/cpu/opengl_unavailable.cpp)
@@ -18,6 +18,7 @@ if(NOT Easy3D_ENABLE_OPENGL)
 endif()
 
 set(${module}_headers
+        obj_materials.h
         ambient_occlusion.h
         average_color_blending.h
         camera.h
@@ -60,6 +61,7 @@ set(${module}_headers
         )
 
 set(${module}_sources
+        obj_materials.cpp
         ambient_occlusion.cpp
         average_color_blending.cpp
         camera.cpp

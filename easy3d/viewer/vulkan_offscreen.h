@@ -15,8 +15,8 @@ class Drawable;
 // Renderer and Drawable APIs without creating an OpenGL context or GLFW window.
 // The shared renderer library supplies CPU scene policies; its OpenGL backend
 // can be disabled completely, including in builds of this adapter.
-// Opaque uniform/property-colored triangles and plain one-pixel points/lines only.
-// Unsupported effects/textures/impostors fail explicitly; see docs/vulkan.md.
+// Supports the shared geometry, texture and impostor subset documented in docs/vulkan.md.
+// Unsupported scene effects fail explicitly.
 class VulkanOffScreen {
 public:
     explicit VulkanOffScreen(int width = 800, int height = 600,

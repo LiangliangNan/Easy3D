@@ -25,6 +25,7 @@
  ********************************************************************/
 
 #include "viewer.h"
+#include "../native_viewer_options.h"
 #include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
 
@@ -48,7 +49,13 @@ int main(int argc, char **argv) {
     initialize();
 
     // create the viewer.
+#ifdef EASY3D_NO_OPENGL
+    NativeTutorialOptions options;
+    if (!options.parse(argc,argv)) return EXIT_FAILURE;
+    TexturedViewer viewer(EXAMPLE_TITLE,options.viewer);
+#else
     TexturedViewer viewer(EXAMPLE_TITLE);
+#endif
 
     //----------------------- Load a mesh from a file ------------------------
 
@@ -60,5 +67,9 @@ int main(int argc, char **argv) {
     }
 
     // run the viewer
+#ifdef EASY3D_NO_OPENGL
+    return options.run(viewer);
+#else
     return viewer.run();
+#endif
 }

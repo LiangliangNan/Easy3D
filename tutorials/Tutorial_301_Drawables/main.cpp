@@ -25,6 +25,7 @@
  ********************************************************************/
 
 #include <easy3d/viewer/viewer.h>
+#include "../native_viewer_options.h"
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_triangles.h>
@@ -65,8 +66,14 @@ int main(int argc, char **argv) {
 
     // Create the default Easy3D viewer.
     // Note: a viewer must be created before creating any drawables.
+#ifdef EASY3D_NO_OPENGL
+    NativeTutorialOptions options;
+    if (!options.parse(argc,argv)) return EXIT_FAILURE;
+    Viewer viewer(EXAMPLE_TITLE,options.viewer);
+#else
     Viewer viewer(EXAMPLE_TITLE);
     viewer.set_usage("");
+#endif
 
     //-------------------------------------------------------------
 
@@ -82,6 +89,9 @@ int main(int argc, char **argv) {
     // Create a TrianglesDrawable to visualize the surface of the "bunny".
     // For visualization, the point positions and the vertex indices of the faces have to be sent to the GPU.
     auto surface = new TrianglesDrawable("faces");
+#ifdef EASY3D_NO_OPENGL
+    surface->enable_cpu_buffers();
+#endif
     // Upload the vertex positions of the surface to the GPU.
     surface->update_vertex_buffer(points);
     // Upload the vertex indices of the surface to the GPU.
@@ -93,6 +103,9 @@ int main(int argc, char **argv) {
     // Create a PointsDrawable to visualize the vertices of the "bunny".
     // Only the vertex positions have to be sent to the GPU for visualization.
     auto vertices = new PointsDrawable("vertices");
+#ifdef EASY3D_NO_OPENGL
+    vertices->enable_cpu_buffers();
+#endif
     // Upload the vertex positions to the GPU.
     vertices->update_vertex_buffer(points);
     // Set a color for the vertices (here we want a red color).
@@ -150,7 +163,11 @@ int main(int argc, char **argv) {
     viewer.fit_screen();
 
     // run the viewer
+#ifdef EASY3D_NO_OPENGL
+    return options.run(viewer);
+#else
     return viewer.run();
+#endif
 }
 
 #elif 0 //  use the built-in drawables of Easy3D, but we provide customized update functions
@@ -163,8 +180,14 @@ int main(int argc, char **argv) {
 
     // Create the default Easy3D viewer.
     // Note: a viewer must be created before creating any drawables.
+#ifdef EASY3D_NO_OPENGL
+    NativeTutorialOptions options;
+    if (!options.parse(argc,argv)) return EXIT_FAILURE;
+    Viewer viewer(EXAMPLE_TITLE,options.viewer);
+#else
     Viewer viewer(EXAMPLE_TITLE);
     viewer.set_usage("");
+#endif
 
     //-------------------------------------------------------------
 
@@ -258,7 +281,11 @@ int main(int argc, char **argv) {
     viewer.fit_screen();
 
     // run the viewer
+#ifdef EASY3D_NO_OPENGL
+    return options.run(viewer);
+#else
     return viewer.run();
+#endif
 }
 
 #else  // inherit customized drawables from Easy3D drawables, and we reimplement "void update_buffers_internal()"
@@ -341,8 +368,14 @@ int main(int argc, char **argv) {
 
     // Create the default Easy3D viewer.
     // Note: a viewer must be created before creating any drawables.
+#ifdef EASY3D_NO_OPENGL
+    NativeTutorialOptions options;
+    if (!options.parse(argc,argv)) return EXIT_FAILURE;
+    Viewer viewer(EXAMPLE_TITLE,options.viewer);
+#else
     Viewer viewer(EXAMPLE_TITLE);
     viewer.set_usage("");
+#endif
 
     //-------------------------------------------------------------
 
@@ -390,7 +423,11 @@ int main(int argc, char **argv) {
     viewer.fit_screen();
 
     // run the viewer
+#ifdef EASY3D_NO_OPENGL
+    return options.run(viewer);
+#else
     return viewer.run();
+#endif
 }
 
 #endif

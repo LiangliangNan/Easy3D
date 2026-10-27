@@ -26,7 +26,9 @@
 
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/viewer/viewer.h>
+#include "../native_viewer_options.h"
 #include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/algo/text_mesher.h>
 #include <easy3d/util/resource.h>
@@ -45,7 +47,13 @@ int main(int argc, char **argv) {
     initialize();
 
     // Create an Easy3D viewer.
+#ifdef EASY3D_NO_OPENGL
+    NativeTutorialOptions options;
+    if (!options.parse(argc,argv)) return EXIT_FAILURE;
+    Viewer viewer(EXAMPLE_TITLE,options.viewer);
+#else
     Viewer viewer(EXAMPLE_TITLE);
+#endif
 
     // Create an instance of the mesher by specifying a font file.
     const std::string font_file = resource::directory() + "/fonts/en_Earth-Normal.ttf";
@@ -101,6 +109,12 @@ int main(int argc, char **argv) {
     viewer.camera()->setViewDirection(vec3(0, 0, -1));
     viewer.camera()->setUpVector(vec3(0, 1, 0));
 
-    // Go...
+    // The mesher appended geometry after attaching the model; refresh its buffers and fit both strings.
+    if (auto* model=viewer.current_model()) model->renderer()->update();
+    viewer.fit_screen();
+#ifdef EASY3D_NO_OPENGL
+    return options.run(viewer);
+#else
     return viewer.run();
+#endif
 }
