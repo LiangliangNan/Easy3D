@@ -2,7 +2,7 @@
 
 The `Easy3D-Vulkan` branch starts an incremental migration. It is **not yet a
 replacement for the full OpenGL renderer**. A native interactive Vulkan viewer is
-now enabled by default on this development branch. Mapple, FigureMaker, GUI picking/effects, Python
+now enabled by default on this development branch. Mapple, FigureMaker, legacy GUI picking/effects, Python
 rendering and most existing interactive tutorials still use OpenGL. They are retained until their Vulkan replacements are ready.
 
 ## Final migration goal and backend policy
@@ -72,6 +72,10 @@ Completion gates include:
   color-only subpass before the final MSAA resolve. Overlays do not alter scene
   depth or picking IDs and require no independent-blend feature. Tutorial 306
   runs as a native image viewer with fit, zoom, resize and image reload.
+- Native visible-surface model/drawable picking with original SurfaceMesh face
+  provenance, world points and retained source ownership. Model/drawable selection
+  and primitive-range highlights work on textured geometry and every native style.
+  Tutorials 401/402 provide native model/face picking hosts.
 - CPU TrueType/UTF-8 text layout and immutable glyph atlases, using the native
   overlay path. Tutorial 309 provides font, kerning, spacing, alignment and origin controls.
 - Shared CPU OBJ/MTL diffuse-material import, preserving material groups and UV
@@ -105,7 +109,7 @@ Completion gates include:
   resize/hide/show, independent windows/devices, orbit/pan/zoom, projection toggle,
   file drop and depth-based world-point picking. The installed demo uses an
   embedded bunny by default and needs no source-tree model/shader files.
-- Existing Tutorials 201, 301–306 and 308–310 build with the native Vulkan host in
+- Existing Tutorials 201, 301–306, 308–310 and 401/402 build with the native Vulkan host in
   Vulkan-only window builds. Tutorial 302 uses the same sphere/surfel/cylinder/cone scene code
   as its OpenGL build, with bounded native execution for automated tests. Legacy
   custom OpenGL draw callbacks are not ported. Tutorial 304 exercises the native
@@ -206,7 +210,7 @@ viewer.run();
 
 In a Vulkan-only window build the existing `<easy3d/viewer/viewer.h>` and
 `easy3d::Viewer` name select the same host. `Tutorial_201_Viewer_default` is built
-unchanged in that configuration. Tutorials 301–306 and 308–310 are also built in this configuration. Other tutorials remain gated
+unchanged in that configuration. Tutorials 301–306, 308–310 and 401/402 are also built in this configuration. Other tutorials remain gated
 until their features and callbacks are ported; the global legacy tutorials option stays OFF.
 In a dual build `Viewer` continues to select the legacy host, while
 `VulkanViewer` selects Vulkan explicitly.
@@ -327,11 +331,12 @@ cause.
 | Material/lighting | Basic fixed world-space diffuse term; no full material or back-face-color parity yet. Normal transforms use the inverse transpose. Disable lighting for exact unlit colors. |
 | `TrianglesDrawable::opacity()` | As in the old opaque pass, effective only in a separate transparency pass; such a pass is not implemented here. |
 | CPU drawable textures/scalars | `Texture` pixel snapshots, vertex/halfedge UVs and scalar fields are supported without GL calls. Clamp/repeat, nearest/linear filtering and OBJ/MTL diffuse-material groups work; no mipmap, anisotropic or PBR material pipeline yet. |
-| Transparency, SSAO, shadows, EDL, text, clipping | General 3D transparency/effects remain pending. Straight-alpha 2D overlays and basic horizontal TrueType/UTF-8 text are supported; shaping, bidi and automatic font fallback remain pending. The scene adapter still rejects SSAO/highlighting/selection; overlays are not an effect-pass API. |
+| Transparency, SSAO, shadows, EDL, text, clipping | General 3D transparency/effects remain pending. Straight-alpha 2D overlays and basic horizontal TrueType/UTF-8 text are supported; shaping, bidi and automatic font fallback remain pending. The scene adapter still rejects SSAO; overlays are not an effect-pass API. |
 | Point and line styles | Plain points of any positive pixel size, spheres and oriented surfels are implemented. Capped cylinders/cones and butt-capped plain wide lines are implemented; joined strokes and rounded plain-line caps remain pending. |
 | Snapshot options | Device-supported MSAA (default 1); `expand=false` remains unsupported. Scaling, white/current/transparent background and image saving work. No tiled oversized captures. |
 | Readback | RGBA8, D32 and RG32UI; top row first; depth [0,1]; no-hit object/primitive IDs are `UINT32_MAX`. |
-| Picking IDs | Draw-command object ID and draw-primitive index (or explicit native primitive IDs). The adapter uses model/drawable order and generated primitive indices, not original polygon/vertex handles. Existing GUI pickers are not ported. |
+| Picking IDs | Raw captures retain model/standalone order and generated primitive indices. `VulkanOffScreen::pick()` maps a visible hit to its model/drawable and original SurfaceMesh face when provenance exists. Original vertex/edge mappings, region/lasso selection and the legacy GUI picker classes remain pending. |
+| Selection/highlighting | Renderer/drawable selection and inclusive primitive ranges use the shared highlight color, after native lighting/texturing; alpha, depth, IDs and MSAA coverage are preserved. |
 | Resource scheduling | Synchronous capture/uploads and one submitted frame at a time; presentation stays on the GPU with no CPU pixel readback. Per-image presentation semaphores; queue/device idle only at swapchain recreation and destruction. Multiple frames in flight and asynchronous capture are pending. |
 | Resource limits | Fixed 1,024 live texture descriptor sets; expired resources retired at the next capture. Individual allocations, not a suballocator yet. |
 | Scene ownership | Like Viewer, adding a model replaces its renderer. Do not simultaneously attach the same mutable model to GL and CPU-mode hosts. Native immutable geometry can be reused across independent devices. |
@@ -864,7 +869,7 @@ removing the previous models; OBJ read failures preserve the existing scene.
 This is diffuse-material import, not full MTL rendering: normals are recomputed,
 independent ambient/specular material lighting and MTL opacity are not applied,
 and general 3D transparency,
-PBR and original-face picking maps remain outstanding.
+PBR remains outstanding. The following picking stage adds original-face provenance.
 
 `Tutorial_301_Drawables` now runs its shared standalone-drawable example on Vulkan,
 including sphere points and a five-pixel wire bounding box. Its native path uses
@@ -898,5 +903,112 @@ suite passed all 18 tests; the dual Vulkan/OpenGL suite passed all seven,
 including the real OpenGL material-viewer and texture checks. Pixel probes and
 snapshot inspection confirmed orientation, UV seams, concave coverage and color
 fallbacks. The existing MoltenVK integer-attachment warning remains; validation
-error counts stay zero. Native Qt/wx integration, clipping, GUI picking/effects
+error counts stay zero. Native Qt/wx integration, clipping, remaining GUI picking/effects
 and runtime backend selection/fallback remain migration gates.
+
+
+## Source picking, selection and Tutorials 401/402
+
+`VulkanOffScreen::pick(x,y)` synchronously resolves a visible framebuffer-pixel
+hit to its source. `VulkanViewer` inherits this API; its input callbacks already
+convert logical cursor positions to framebuffer pixels, including HiDPI.
+
+```cpp
+const auto hit = viewer.pick(x, y); // top-left framebuffer pixels
+if (hit) {
+    // hit.model is null for a standalone drawable; hit.drawable owns its source.
+    const auto point = hit.position; // world-space surface position at pixel center
+    if (hit.face_index >= 0) {
+        auto face = easy3d::SurfaceMesh::Face(hit.face_index);
+        // Use with the SurfaceMesh in hit.model.
+    }
+}
+```
+
+`PickResult` retains shared model/drawable ownership, generated drawable-local
+`primitive`, `[0,1]` depth and world-space position. `face_index` is an original
+SurfaceMesh face index when triangle provenance exists, otherwise -1. Background
+and out-of-bounds coordinates return an empty result. The pick request creates
+its own draw-source table alongside the submitted commands; removing/reordering
+models, hidden drawables or several material drawables on one model cannot
+reinterpret a previous table. Results survive source removal, but their face
+indices describe the mesh at pick time, not future topology edits or garbage
+collection. Externally synchronize scene edits and device access as before.
+
+Picking uses the normal visible geometry, textures, impostor silhouettes and
+analytic surface depth. It renders one sample at pixel centers, independently
+of the window's MSAA count, preserving the existing center-sample selection
+policy. Overlays do not block source picking. A visible point/line returns its
+model/drawable and generated primitive, without a face mapping. This API does
+not select a hidden face through a visible edge/point and does not implement
+nearest vertex/edge picking or region/lasso selection. It currently performs a
+full synchronous frame readback per request; it is not a hover-readback scheduler.
+Raw `FrameImage` IDs retain their existing model/standalone order and generated
+primitive semantics; only `pick()` uses the request-local drawable IDs.
+
+CPU `Drawable::BufferData::source_faces` stores an optional original face index
+per rendered triangle. Shared SurfaceMesh extraction records this mapping from
+its generated triangle ranges for uniform/property/texture/scalar paths,
+including polygon tessellation and deleted handle gaps. OBJ material parts keep
+and re-upload their own source-face arrays. Manual position/index uploads clear
+provenance. Custom CPU triangle drawables can call `set_source_faces()` after
+their geometry uploads; the setter checks count and negative IDs (-1 is unknown).
+Custom buffers without metadata still return their source and primitive, without
+inventing a polygon handle. Call `Renderer::update()` after shared mesh edits;
+OBJ import snapshots still require rebuilding after topology/attribute changes.
+
+Renderer/drawable selection and `State::highlight_range()` are now supported by
+the native scene adapter. It marks each primitive's corners with the shared
+`setting::highlight_color` RGB and mixes after texture sampling and basic native
+lighting. Selected models/drawables use strength 0.6; inclusive highlighted
+primitive ranges use 0.8; overlapping selection/range yields 0.92. Invalid/empty
+ranges select nothing. These are RGB tints: alpha, depth, silhouette coverage and
+object/primitive IDs remain unchanged. Triangle, native/large point, sphere,
+surfel, native/wide line, cylinder and cone paths all support them. Geometry
+snapshots are rebuilt only when relevant geometry/coloring/highlight state
+changes. Low-level clients can set `graphics::Vertex::highlight` consistently on
+all corners of a primitive; its default strength is zero and overlays ignore it.
+No new optional device feature or push-constant space is required.
+
+Native window builds now include `Tutorial_401_ModelPicker` and
+`Tutorial_402_FacePicker`, with bounded execution and validation options. Their
+native paths use the source-aware API; the OpenGL hosts retain their GUI picker
+implementations. A left click toggles model selection in 401. Tutorial 402
+highlights every generated triangle belonging to the chosen polygon; a
+background click clears the highlight. Native modified/right clicks retain the
+base host's navigation behavior. Mesh face picking remains available after
+resize and sample-count changes.
+
+```sh
+./cmake-build-debug/bin/Tutorial_401_ModelPicker --frames 3 --samples 4 --validation
+./cmake-build-debug/bin/Tutorial_402_FacePicker --frames 3 --samples 4 --validation
+```
+
+Headless `vulkan.picking` checks RGB highlighting on all native styles with
+textures and lighting, unchanged alpha/coverage/IDs/depth at one/four samples,
+model/drawable visibility and source ownership, transformed world points,
+standalone sphere hits, overlays, removal/reordering, resize, polygon/deleted
+handle mappings and property/UV/scalar extraction. Material regressions check
+original face IDs across separate OBJ parts. Desktop `vulkan.pickerviewer`
+drives the registered click callbacks for model toggle and polygon selection,
+HiDPI/resize, MSAA changes, background clear and snapshots. Bounded tutorial
+CTest entries are `vulkan.tutorial401` and `vulkan.tutorial402`; validation-enabled
+configurations require Khronos/synchronization validation. CI validates all
+modified shader binaries through the existing SPIR-V checks.
+
+On 2026-10-27, Apple M4 Pro/MoltenVK 1.4.2 passed the new picking and registered
+picker-host interaction tests with Khronos/synchronization validation, plus
+Tutorials 401/402 with four samples and validation. All eight modified shaders
+passed SPIR-V validation. The complete native suite passed 22 tests; the dual
+Vulkan/OpenGL suite passed eight, including the retained real GL material/texture
+checks. Both retained OpenGL picker tutorial sources also compile. The existing
+MoltenVK integer-attachment warning persists; validation error counts remain zero.
+
+Full-suite verification also exposed an intermittent existing text-viewer
+shortcut baseline mismatch; five bounded diagnostic repeats passed. Its harness
+now drains initial window/DPI callbacks, uses a smaller initial window, checks
+framebuffer dimensions before comparing pixels and saves expected/actual PNGs on
+a mismatch. The final complete native run passed; the original mismatch was not
+reproduced with diagnostics. Qt/wx/Python integration, clipping, original
+vertex/edge and region pickers, advanced effects and runtime backend selection/
+automatic OpenGL fallback remain migration gates.

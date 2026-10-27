@@ -8,6 +8,8 @@ layout(location=5) in vec3 end_position;
 layout(location=6) in vec4 end_color;
 layout(location=7) in vec2 end_texcoord;
 layout(location=8) in vec3 end_normal;
+layout(location=9) in vec4 highlight_color;
+layout(location=3) flat out vec4 selection_tint;
 layout(push_constant) uniform Draw {
     mat4 mvp; vec4 tint; uint object_id; uint lighting; float normal_matrix[9];
 } draw;
@@ -35,6 +37,7 @@ vec4 lit_color(vec4 color, vec3 normal) {
     return color;
 }
 void main() {
+    selection_tint = highlight_color;
     id = uvec2(draw.object_id,primitive_id);
     vec4 start_color = color*draw.tint, finish_color = end_color*draw.tint;
     ribbon_color = start_color; ribbon_uv = texcoord;

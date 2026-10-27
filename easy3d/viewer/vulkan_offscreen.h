@@ -46,6 +46,19 @@ public:
     // graphics::screen_space_projection()). Overlays do not change picking.
     void set_overlays(std::vector<graphics::DrawCommand> commands);
     void fit_screen(const Model* model = nullptr);
+    struct PickResult {
+        std::shared_ptr<Model> model; // null for a standalone drawable
+        std::shared_ptr<Drawable> drawable;
+        std::uint32_t primitive = UINT32_MAX; // generated primitive within this drawable
+        int face_index = -1; // original SurfaceMesh face, when provenance is available
+        vec3 position = vec3(0); // world-space surface point at the pixel center
+        float depth = 1;
+        explicit operator bool() const { return bool(drawable); }
+    };
+    // Synchronous visible-surface picking, in top-left framebuffer pixels. Returns
+    // an empty result for background/outside pixels. Retains source ownership;
+    // face indices describe the current mesh, not future topology edits.
+    PickResult pick(int x, int y) const;
     // Color is multisampled when requested; IDs/depth stay center-sampled.
     // Invalid/unsupported requests throw, allowing callers/tests to handle them.
     graphics::FrameImage capture(unsigned samples = 1) const;

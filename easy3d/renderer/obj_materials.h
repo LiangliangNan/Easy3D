@@ -18,6 +18,7 @@ struct ObjMaterialMesh {
         std::vector<vec3> positions, normals;
         std::vector<vec2> texcoords;
         std::vector<unsigned int> indices;
+        std::vector<int> source_faces;
     };
     std::shared_ptr<SurfaceMesh> mesh;
     std::vector<Part> parts;

@@ -6,6 +6,8 @@ layout(location=4) in uint primitive_id;
 layout(location=5) in vec3 end_position;
 layout(location=6) in vec4 end_color;
 layout(location=7) in vec2 end_texcoord;
+layout(location=9) in vec4 highlight_color;
+layout(location=8) flat out vec4 selection_tint;
 layout(push_constant) uniform Draw {
     mat4 mvp; vec4 tint; uint object_id; uint lighting; float normal_matrix[9];
 } draw;
@@ -23,6 +25,7 @@ layout(location=5) flat out vec2 tip_uv;
 layout(location=6) flat out uvec2 id;
 layout(location=7) flat out uint lighting;
 void main() {
+    selection_tint = highlight_color;
     base = (shape.model_view * vec4(position,1)).xyz;
     end = (shape.model_view * vec4(end_position,1)).xyz;
     base_color = color * draw.tint; tip_color = end_color * draw.tint;

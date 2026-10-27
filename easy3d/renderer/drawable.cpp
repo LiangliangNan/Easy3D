@@ -46,6 +46,13 @@ namespace easy3d {
         cpu_only_ = true;
     }
 
+    void Drawable::set_source_faces(const std::vector<int>& faces) {
+        if (!cpu_buffers_ || type()!=DT_TRIANGLES) throw std::logic_error("face provenance requires CPU triangle buffers");
+        const auto count=(cpu_buffers_->indices.empty() ? cpu_buffers_->vertices.size() : cpu_buffers_->indices.size())/3;
+        if (!faces.empty() && faces.size()!=count) throw std::invalid_argument("face provenance count does not match triangles");
+        for (auto id:faces) if (id < -1) throw std::invalid_argument("invalid source face index");
+        cpu_buffers_->source_faces=faces; ++cpu_buffers_->revision;
+    }
     const Drawable::BufferData& Drawable::cpu_buffers() {
         if (!cpu_buffers_) throw std::logic_error("CPU buffers were not enabled");
         if (update_needed_ || (!num_vertices_ && (model_ || update_func_))) {
@@ -128,7 +135,7 @@ namespace easy3d {
 
 
     void Drawable::disable_element_buffer() {
-        if (cpu_buffers_) { cpu_buffers_->indices.clear(); ++cpu_buffers_->revision; }
+        if (cpu_buffers_) { cpu_buffers_->indices.clear(); cpu_buffers_->source_faces.clear(); ++cpu_buffers_->revision; }
         if (element_buffer_) opengl_disable_element_buffer();
         num_indices_ = 0;
     }
@@ -165,7 +172,7 @@ namespace easy3d {
 
     void Drawable::update_vertex_buffer(const std::vector<vec3> &vertices, bool dynamic) {
         if (cpu_buffers_) {
-            cpu_buffers_->vertices = vertices;
+            cpu_buffers_->vertices = vertices; cpu_buffers_->source_faces.clear();
             ++cpu_buffers_->revision;
             num_vertices_ = vertices.size();
             bbox_.clear();
@@ -192,7 +199,7 @@ namespace easy3d {
 
     void Drawable::update_element_buffer(const std::vector<unsigned int> &indices) {
         if (cpu_buffers_) {
-            cpu_buffers_->indices = indices; num_indices_ = indices.size(); ++cpu_buffers_->revision; return;
+            cpu_buffers_->indices = indices; cpu_buffers_->source_faces.clear(); num_indices_ = indices.size(); ++cpu_buffers_->revision; return;
         }
         opengl_update_element_buffer(indices);
     }

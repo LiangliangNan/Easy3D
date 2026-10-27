@@ -67,6 +67,13 @@ int main(int argc,char**) {
         probe(renderer.camera(),single,vec3(2,-2,0),255,0,255);
         probe(renderer.camera(),single,vec3(4.5f,1,0),0,255,0);
         probe(renderer.camera(),single,vec3(5.5f,1,0),255,255,255,false);
+        const std::vector<vec3> face_probes={vec3(-1.5f,.5f,0),vec3(-2.5f,1.5f,0),vec3(2,1,0),
+            vec3(-2,-2,0),vec3(2,-2,0),vec3(4.5f,1,0)};
+        for (std::size_t face=0;face<face_probes.size();++face) {
+            const auto point=renderer.camera()->projectedCoordinatesOf(face_probes[face]);
+            const auto picked=renderer.pick(int(point.x),int(point.y));
+            require(picked.face_index==int(face),"OBJ material part did not retain its original face index");
+        }
         asset.mesh->renderer()->update();
         require(renderer.capture().rgba==single.rgba,"Renderer::update replaced material subsets with the entire mesh");
         if (renderer.device().supported_sample_counts()&4) {

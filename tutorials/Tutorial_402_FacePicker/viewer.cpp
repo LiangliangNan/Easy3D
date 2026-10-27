@@ -25,7 +25,13 @@
  ********************************************************************/
 
 #include "viewer.h"
+#ifdef EASY3D_NO_OPENGL
+#define GLFW_INCLUDE_NONE
+#include <3rd_party/glfw/include/GLFW/glfw3.h>
+#else
 #include <easy3d/gui/picker_surface_mesh.h>
+#endif
+#include <easy3d/renderer/camera.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
@@ -37,16 +43,39 @@ using namespace easy3d;
 
 // \cond
 
-TutorialFacePicker::TutorialFacePicker(const std::string &title)
-        : Viewer(title) {
+#ifdef EASY3D_NO_OPENGL
+TutorialFacePicker::TutorialFacePicker(const std::string& title,const VulkanViewerOptions& options)
+        : Viewer(title,options) {
+#else
+TutorialFacePicker::TutorialFacePicker(const std::string &title) : Viewer(title) {
+#endif
     camera()->setUpVector(vec3(0, 1, 0));
     camera()->setViewDirection(vec3(0, 0, -1));
 
+#ifndef EASY3D_NO_OPENGL
     hint_ = "Click the left button on a face to pick it";
+#endif
 }
 
 
 bool TutorialFacePicker::mouse_press_event(int x, int y, int button, int modifiers) {
+#ifdef EASY3D_NO_OPENGL
+    if (button==GLFW_MOUSE_BUTTON_LEFT && modifiers==0) {
+        const auto hit=pick(x,y);
+        for (const auto& m:models()) for (const auto& d:m->renderer()->triangles_drawables()) d->set_highlight(false);
+        auto* model=dynamic_cast<SurfaceMesh*>(hit.model.get());
+        auto* drawable=dynamic_cast<TrianglesDrawable*>(hit.drawable.get());
+        if (model && drawable && hit.face_index>=0) {
+            const auto ranges=model->get_face_property<std::pair<int,int>>("f:triangle_range");
+            if (ranges) {
+                drawable->set_highlight_range(ranges[SurfaceMesh::Face(hit.face_index)]);
+                drawable->set_highlight(true);
+                std::cout << "picked face f" << hit.face_index << std::endl;
+            }
+        }
+        update();
+    }
+#else
     auto model = dynamic_cast<SurfaceMesh *>(current_model());
     if (model) {
         SurfaceMeshPicker picker(camera());
@@ -71,12 +100,22 @@ bool TutorialFacePicker::mouse_press_event(int x, int y, int button, int modifie
         LOG_IF(!triangle_range, ERROR) << "face property 'f:triangle_range' not defined";
     }
 
+#endif
     return Viewer::mouse_press_event(x, y, button, modifiers);
 }
 
 
+#ifdef EASY3D_NO_OPENGL
+Model* TutorialFacePicker::add_model(const std::string& file_name,bool create) {
+#else
 Model* TutorialFacePicker::add_model(const std::string& file_name) {
-    auto model = Viewer::add_model(file_name, true);
+#endif
+#ifdef EASY3D_NO_OPENGL
+    auto model = Viewer::add_model(file_name,create);
+#else
+    auto model = Viewer::add_model(file_name,true);
+#endif
+    if (!model) return nullptr;
 
     // make sure the edges are visible
     model->renderer()->get_lines_drawable("edges")->set_visible(true);

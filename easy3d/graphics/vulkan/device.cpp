@@ -515,7 +515,7 @@ struct Target {
 };
 
 struct GpuVertex {
-    float position[3], normal[3], color[4], texcoord[2];
+    float position[3], normal[3], color[4], texcoord[2], highlight[4];
     uint32_t primitive;
 };
 struct GpuGeometry {
@@ -773,19 +773,20 @@ public:
                 {1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(GpuVertex, normal)},
                 {2, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(GpuVertex, color)},
                 {3, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(GpuVertex, texcoord)},
-                {4, 0, VK_FORMAT_R32_UINT, offsetof(GpuVertex, primitive)}};
+                {4, 0, VK_FORMAT_R32_UINT, offsetof(GpuVertex, primitive)},
+                {9, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(GpuVertex, highlight)}};
             VkVertexInputAttributeDescription line_attrs[] = {
                 attrs[0], attrs[2], attrs[3], attrs[4],
                 {5, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(GpuVertex) + offsetof(GpuVertex, position)},
                 {6, 0, VK_FORMAT_R32G32B32A32_SFLOAT, sizeof(GpuVertex) + offsetof(GpuVertex, color)},
-                {7, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(GpuVertex) + offsetof(GpuVertex, texcoord)}};
+                {7, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(GpuVertex) + offsetof(GpuVertex, texcoord)}, attrs[5]};
             VkVertexInputAttributeDescription wide_attrs[] = {
                 attrs[0], attrs[1], attrs[2], attrs[3], attrs[4], line_attrs[4], line_attrs[5], line_attrs[6],
-                {8, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(GpuVertex) + offsetof(GpuVertex, normal)}};
+                {8, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(GpuVertex) + offsetof(GpuVertex, normal)}, attrs[5]};
             VkPipelineVertexInputStateCreateInfo vertex{};
             vertex.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
             vertex.vertexBindingDescriptionCount = 1; vertex.pVertexBindingDescriptions = &binding;
-            vertex.vertexAttributeDescriptionCount = 5; vertex.pVertexAttributeDescriptions = attrs;
+            vertex.vertexAttributeDescriptionCount = 6; vertex.pVertexAttributeDescriptions = attrs;
             VkPipelineInputAssemblyStateCreateInfo assembly{};
             assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
             VkPipelineViewportStateCreateInfo viewport{};
@@ -830,12 +831,12 @@ public:
                 if (i == 4) {
                     stages[0].module = modules[4]; stages[1].module = modules[5];
                     binding.stride = 2 * sizeof(GpuVertex);
-                    vertex.vertexAttributeDescriptionCount = 7;
+                    vertex.vertexAttributeDescriptionCount = 8;
                     vertex.pVertexAttributeDescriptions = line_attrs;
                 }
                 if (i == 5) {
                     stages[0].module = modules[6]; stages[1].module = modules[7];
-                    vertex.vertexAttributeDescriptionCount = 9;
+                    vertex.vertexAttributeDescriptionCount = 10;
                     vertex.pVertexAttributeDescriptions = wide_attrs;
                     ms.sampleShadingEnable = VK_FALSE;
                     ms.minSampleShading = 0;
@@ -882,7 +883,7 @@ public:
             const auto& v = data->vertices()[data->indices().empty() ? i : data->indices()[i]];
             auto& p = packed[i];
             for (unsigned j = 0; j < 3; ++j) { p.position[j] = v.position[j]; p.normal[j] = v.normal[j]; }
-            for (unsigned j = 0; j < 4; ++j) p.color[j] = v.color[j];
+            for (unsigned j = 0; j < 4; ++j) { p.color[j] = v.color[j]; p.highlight[j] = v.highlight[j]; }
             for (unsigned j = 0; j < 2; ++j) p.texcoord[j] = v.texcoord[j];
             p.primitive = data->primitive_ids().empty() ? static_cast<uint32_t>(i / size) : data->primitive_ids()[i / size];
         }

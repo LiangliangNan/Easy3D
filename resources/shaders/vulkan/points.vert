@@ -4,6 +4,8 @@ layout(location=1) in vec3 normal;
 layout(location=2) in vec4 color;
 layout(location=3) in vec2 texcoord;
 layout(location=4) in uint primitive_id;
+layout(location=9) in vec4 highlight_color;
+layout(location=6) flat out vec4 selection_tint;
 layout(push_constant) uniform Draw {
     mat4 mvp; vec4 tint; uint object_id; uint lighting; float normal_matrix[9];
 } draw;
@@ -19,6 +21,7 @@ layout(location=3) flat out vec3 center;
 layout(location=4) flat out uint lighting;
 layout(location=5) flat out vec3 surfel_normal;
 void main() {
+    selection_tint = highlight_color;
     const vec2 corners[6] = vec2[](vec2(-1,-1),vec2(1,-1),vec2(1,1),vec2(-1,-1),vec2(1,1),vec2(-1,1));
     vec2 corner = corners[gl_VertexIndex];
     vertex_color = color * draw.tint;

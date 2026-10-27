@@ -19,6 +19,9 @@ struct Vertex {
     vec3 normal = vec3(0, 0, 1);
     vec4 color = vec4(1, 1, 1, 1);
     vec2 texcoord = vec2(0, 0);
+    // RGB selection tint and mix strength [0,1], applied after texture/lighting.
+    // Set the same value on all corners of a primitive. Overlays ignore this.
+    vec4 highlight = vec4(0);
 };
 
 // Immutable snapshots. Input is copied, so temporaries and later model edits are safe.

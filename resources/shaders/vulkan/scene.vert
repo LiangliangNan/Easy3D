@@ -4,6 +4,8 @@ layout(location = 1) in vec3 normal;
 layout(location = 2) in vec4 color;
 layout(location = 3) in vec2 texcoord;
 layout(location = 4) in uint primitive_id;
+layout(location=9) in vec4 highlight_color;
+layout(location=3) flat out vec4 selection_tint;
 layout(push_constant) uniform Draw {
     mat4 mvp;
     vec4 tint;
@@ -15,6 +17,7 @@ layout(location = 0) out vec4 vertex_color;
 layout(location = 1) out vec2 uv;
 layout(location = 2) flat out uvec2 id;
 void main() {
+    selection_tint = highlight_color;
     vec4 p = draw.mvp * vec4(position, 1.0);
     gl_Position = vec4(p.x, -p.y, 0.5 * (p.z + p.w), p.w);
     gl_PointSize = 1.0;

@@ -23,6 +23,7 @@ void side_hit(float t, float axial_origin, float axial_direction, float length_a
     float tolerance = 1e-6*length_axis;
     if (z >= -tolerance && z <= length_axis+tolerance && t < nearest) { nearest=t; surface=0; }
 }
+layout(location=8) flat in vec4 selection_tint;
 void main() {
     vec3 segment = end-base;
     float length_axis = length(segment);
@@ -99,4 +100,5 @@ void main() {
         }
         out_color.rgb *= 0.2+0.8*abs(dot(normal,normalize(shape.light.xyz)));
     }
+    out_color.rgb = mix(out_color.rgb,selection_tint.rgb,selection_tint.a);
 }

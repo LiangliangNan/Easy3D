@@ -24,8 +24,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef EASY3D_TUTORIAL_PICKER_VIEWER_H
-#define EASY3D_TUTORIAL_PICKER_VIEWER_H
+#ifndef EASY3D_TUTORIAL_FACE_PICKER_VIEWER_H
+#define EASY3D_TUTORIAL_FACE_PICKER_VIEWER_H
 
 #include <easy3d/viewer/viewer.h>
 
@@ -38,13 +38,21 @@ namespace easy3d {
 
 class TutorialFacePicker : public easy3d::Viewer {
 public:
+#ifdef EASY3D_NO_OPENGL
+    explicit TutorialFacePicker(const std::string& title,const easy3d::VulkanViewerOptions& options = {});
+#else
     explicit TutorialFacePicker(const std::string &title);
+#endif
 
+#ifdef EASY3D_NO_OPENGL
+    easy3d::Model* add_model(const std::string& file_name,bool create_default_drawables=true) override;
+#else
     easy3d::Model* add_model(const std::string& file_name);
+#endif
 
 protected:
     bool mouse_press_event(int x, int y, int button, int modifiers) override;
 };
 
 
-#endif // EASY3D_TUTORIAL_PICKER_VIEWER_H
+#endif // EASY3D_TUTORIAL_FACE_PICKER_VIEWER_H

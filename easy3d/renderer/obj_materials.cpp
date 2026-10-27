@@ -111,6 +111,7 @@ ObjMaterialMesh load_obj_materials(const std::string& file) {
                 tessellator.add_vertex(vertex);
             }
             tessellator.end_contour(); tessellator.end_polygon();
+            part.source_faces.insert(part.source_faces.end(),tessellator.elements().size()-before,face.idx());
             if (tessellator.elements().size()==before) throw std::runtime_error("OBJ face produced no triangles: "+file);
         }
         for (const auto* v:tessellator.vertices()) {
@@ -136,6 +137,7 @@ void ObjMaterialMesh::create_drawables() const {
         const auto upload=[snapshot](Model*,Drawable* target) {
             target->update_vertex_buffer(snapshot->positions); target->update_normal_buffer(snapshot->normals);
             target->update_texcoord_buffer(snapshot->texcoords); target->update_element_buffer(snapshot->indices);
+            if (target->has_cpu_buffers()) target->set_source_faces(snapshot->source_faces);
         };
         d->set_update_func(upload);
         upload(mesh.get(),d);

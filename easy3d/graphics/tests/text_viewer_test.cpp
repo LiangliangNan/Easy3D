@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <tutorials/Tutorial_309_TextRendering/viewer_vulkan.h>
 #include <easy3d/util/initializer.h>
+#include <easy3d/fileio/image_io.h>
 #include <iostream>
 using namespace easy3d;
 void require(bool value,const char* message) { if (!value) throw std::runtime_error(message); }
@@ -20,13 +21,14 @@ void same_picking(const graphics::FrameImage& a,const graphics::FrameImage& b) {
 int main(int argc,char**) {
     try {
         initialize(false,false,false);
-        VulkanViewerOptions options; options.width=900; options.height=800;
+        VulkanViewerOptions options; options.width=800; options.height=600;
         options.device.validation=options.device.synchronization_validation=argc>1;
         TutorialTextRendering viewer("Native text viewer test",options);
         require(viewer.add_model(resource::directory()+"/data/sphere.obj")!=nullptr,"could not load tutorial sphere");
         viewer.fit_screen();
         if (viewer.device().supported_sample_counts()&4) viewer.set_samples(4);
-        frame(viewer);
+        // Drain initial show/HiDPI callbacks before taking a pixel-exact baseline.
+        frame(viewer); frame(viewer);
         const auto baseline=viewer.capture();
         auto key=glfwSetKeyCallback(viewer.window(),nullptr); glfwSetKeyCallback(viewer.window(),key);
         auto press=[&](int code) { key(viewer.window(),code,0,GLFW_PRESS,0); frame(viewer); };
@@ -41,15 +43,21 @@ int main(int argc,char**) {
             same_picking(baseline,edited);
             press(pair.second);
             const auto restored=viewer.capture();
+            require(restored.width==baseline.width && restored.height==baseline.height,
+                    "window resized during text shortcut comparison");
             unsigned differences=0,maximum=0;
             for (std::size_t i=0;i<baseline.rgba.size();++i) {
                 unsigned d=unsigned(std::abs(int(restored.rgba[i])-int(baseline.rgba[i])));
                 differences+=d>0; maximum=std::max(maximum,d);
             }
-            if (differences) std::cout << "restored differences " << differences << " max " << maximum << std::endl;
+            if (differences) {
+                std::cout << "restored differences " << differences << " max " << maximum << std::endl;
+                ImageIO::save("vulkan-text-expected.png",baseline.rgba,baseline.width,baseline.height,4,false);
+                ImageIO::save("vulkan-text-actual.png",restored.rgba,restored.width,restored.height,4,false);
+            }
             require(restored.rgba==baseline.rgba,"text shortcut did not restore original text");
         }
-        viewer.resize(760,700); frame(viewer);
+        viewer.resize(760,550); frame(viewer);
         const auto resized=viewer.capture();
         require(resized.width!=baseline.width && resized.height!=baseline.height,"text viewer did not resize");
         require(viewer.snapshot("vulkan-text.png"),"could not save text tutorial snapshot");

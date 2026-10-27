@@ -64,11 +64,15 @@ namespace easy3d {
             std::vector<vec3> vertices, normals, colors;
             std::vector<vec2> texcoords;
             std::vector<unsigned int> indices;
+            // Optional original SurfaceMesh face index per rendered triangle; -1 is unknown.
+            std::vector<int> source_faces;
             std::size_t revision = 0;
         };
         void enable_cpu_buffers();
         bool has_cpu_buffers() const { return bool(cpu_buffers_); }
         const BufferData& cpu_buffers();
+        // CPU triangle provenance. Set after geometry uploads, which invalidate it.
+        void set_source_faces(const std::vector<int>& faces);
         /**
          * \brief The type of the drawable.
          */
@@ -235,6 +239,7 @@ namespace easy3d {
          * \return The number of vertices.
          */
         std::size_t num_vertices() const { return num_vertices_; }
+        std::size_t num_indices() const { return num_indices_; }
 
         /// \name Rendering
         ///@{

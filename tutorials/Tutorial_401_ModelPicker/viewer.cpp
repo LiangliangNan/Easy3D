@@ -25,7 +25,13 @@
  ********************************************************************/
 
 #include "viewer.h"
+#ifdef EASY3D_NO_OPENGL
+#define GLFW_INCLUDE_NONE
+#include <3rd_party/glfw/include/GLFW/glfw3.h>
+#else
 #include <easy3d/gui/picker_model.h>
+#endif
+#include <easy3d/renderer/camera.h>
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/renderer.h>
@@ -37,19 +43,30 @@ using namespace easy3d;
 
 // \cond
 
-TutorialModelPicker::TutorialModelPicker(const std::string &title)
-        : Viewer(title) {
+#ifdef EASY3D_NO_OPENGL
+TutorialModelPicker::TutorialModelPicker(const std::string& title,const VulkanViewerOptions& options)
+        : Viewer(title,options) {
+#else
+TutorialModelPicker::TutorialModelPicker(const std::string &title) : Viewer(title) {
+#endif
     // We always want to look at the front of the easy3d logo.
     camera()->setViewDirection(vec3(0, 0, -1));
     camera()->setUpVector(vec3(0, 1, 0));
 
+#ifndef EASY3D_NO_OPENGL
     hint_ = "Press the left button to pick/unpick a model";
+#endif
 }
 
 
 bool TutorialModelPicker::mouse_press_event(int x, int y, int button, int modifiers) {
+#ifdef EASY3D_NO_OPENGL
+    const auto hit=(button==GLFW_MOUSE_BUTTON_LEFT && modifiers==0) ? pick(x,y) : PickResult{};
+    auto* model=hit.model.get();
+#else
     ModelPicker picker(camera());
     auto model = picker.pick(models(), x, y);
+#endif
     if (model)
         mark(model);
 
@@ -63,6 +80,7 @@ void TutorialModelPicker::mark(easy3d::Model *model) {
             m->renderer()->set_selected(!m->renderer()->is_selected());
 
         auto faces = m->renderer()->get_triangles_drawable("faces");
+        if (!faces) continue;
         if (m->renderer()->is_selected())
             faces->set_uniform_coloring(vec4(1, 0, 0, 1.0f));
         else

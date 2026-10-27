@@ -19,6 +19,7 @@
 #include <easy3d/renderer/texture.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
+#include <easy3d/util/setting.h>
 #include <algorithm>
 #include <cmath>
 #include <limits>
@@ -40,6 +41,9 @@ struct VulkanOffScreen::Impl {
         bool use_colors = false;
         bool flat_shading = false;
         bool textured = false;
+        bool selected = false, highlighted = false;
+        std::pair<int,int> highlight_range = {-1,-1};
+        vec4 highlight_color = vec4(0);
         float repeat = 1;
         std::shared_ptr<const graphics::Geometry> geometry;
         std::shared_ptr<const graphics::Image> texture_image;
@@ -78,15 +82,15 @@ struct VulkanOffScreen::Impl {
         return result;
     }
 
-    graphics::DrawCommand command(const std::shared_ptr<Drawable>& drawable, uint32_t id, const Camera& cam) const {
+    graphics::DrawCommand command(const std::shared_ptr<Drawable>& drawable, uint32_t id, const Camera& cam, bool model_selected = false) const {
         auto& d = *drawable;
         if (!d.has_cpu_buffers())
             throw std::logic_error("drawable must use CPU buffers before Vulkan rendering");
         if (d.coloring_method() != State::UNIFORM_COLOR && d.coloring_method() != State::COLOR_PROPERTY &&
             d.coloring_method() != State::TEXTURED && d.coloring_method() != State::SCALAR_FIELD)
             throw std::logic_error("unknown drawable coloring method");
-        if (d.color().w != 1 || d.is_ssao_enabled() || d.highlight() || d.is_selected())
-            throw std::logic_error("opacity, SSAO and selection highlighting are not yet ported");
+        if (d.color().w != 1 || d.is_ssao_enabled())
+            throw std::logic_error("opacity and SSAO are not yet ported");
         if (auto* p = dynamic_cast<PointsDrawable*>(&d)) {
             if (p->impostor_type() != PointsDrawable::PLAIN && p->impostor_type() != PointsDrawable::SPHERE &&
                 p->impostor_type() != PointsDrawable::SURFEL)
@@ -112,9 +116,13 @@ struct VulkanOffScreen::Impl {
         if (textured && !std::isfinite(repeat)) throw std::invalid_argument("texture repeat must be finite");
         const auto* triangles = dynamic_cast<const TrianglesDrawable*>(&d);
         const bool flat_shading = triangles && !triangles->smooth_shading();
+        const bool selected = model_selected || d.is_selected();
+        const bool highlighted = d.highlight();
         if (entry.source.lock() != drawable || entry.revision != buffers.revision || !entry.geometry ||
             entry.use_colors != use_colors || entry.flat_shading != flat_shading ||
-            entry.textured != textured || (textured && entry.repeat != repeat)) {
+            entry.textured != textured || (textured && entry.repeat != repeat) ||
+            entry.selected != selected || entry.highlighted != highlighted ||
+            entry.highlight_range != d.highlight_range() || entry.highlight_color != setting::highlight_color) {
             const auto n = buffers.vertices.size();
             if ((!buffers.colors.empty() && buffers.colors.size() != n) ||
                 (!buffers.normals.empty() && buffers.normals.size() != n))
@@ -147,6 +155,23 @@ struct VulkanOffScreen::Impl {
                 }
                 geometry = std::make_shared<graphics::Geometry>(std::move(flat), std::vector<uint32_t>{}, topology);
             }
+            if (selected || highlighted) {
+                const auto& source=geometry->vertices(); const auto& indices=geometry->indices();
+                const auto count=indices.empty() ? source.size() : indices.size();
+                const unsigned stride=topology==graphics::Topology::triangles ? 3 : topology==graphics::Topology::lines ? 2 : 1;
+                std::vector<graphics::Vertex> marked(count);
+                const auto range=d.highlight_range();
+                for (size_t i=0;i<count;++i) {
+                    marked[i]=source[indices.empty() ? i : indices[i]];
+                    float strength=selected ? 0.6f : 0;
+                    if (highlighted && range.first>=0 && i/stride>=size_t(range.first) &&
+                        range.second>=range.first && i/stride<=size_t(range.second)) strength=0.8f+0.2f*strength;
+                    marked[i].highlight=vec4(setting::highlight_color.x,setting::highlight_color.y,setting::highlight_color.z,strength);
+                }
+                geometry=std::make_shared<graphics::Geometry>(std::move(marked),std::vector<uint32_t>{},topology);
+            }
+            entry.selected=selected; entry.highlighted=highlighted;
+            entry.highlight_range=d.highlight_range(); entry.highlight_color=setting::highlight_color;
             entry.source = drawable; entry.revision = buffers.revision; entry.geometry = geometry;
             entry.use_colors = use_colors; entry.flat_shading = flat_shading;
             entry.textured = textured; entry.repeat = repeat;
@@ -181,7 +206,8 @@ struct VulkanOffScreen::Impl {
         result.lighting = d.lighting();
         return result;
     }
-    std::vector<graphics::DrawCommand> commands(const Camera& cam) const {
+    struct PickSource { std::shared_ptr<Model> model; std::shared_ptr<Drawable> drawable; };
+    std::vector<graphics::DrawCommand> commands(const Camera& cam, std::vector<PickSource>* sources = nullptr) const {
         for (auto it = cache.begin(); it != cache.end(); ) {
             if (it->second.source.expired()) it = cache.erase(it); else ++it;
         }
@@ -189,19 +215,26 @@ struct VulkanOffScreen::Impl {
             if (it->second.source.expired() || it->second.image.expired()) it = images.erase(it); else ++it;
         }
         std::vector<graphics::DrawCommand> commands;
+        auto append=[&](const std::shared_ptr<Drawable>& d,uint32_t id,const std::shared_ptr<Model>& model,bool selected) {
+            if (!d->is_visible()) return;
+            if (sources) {
+                if (sources->size()>=UINT32_MAX) throw std::length_error("too many picking sources");
+                id=uint32_t(sources->size()); sources->push_back({model,d});
+            }
+            commands.push_back(command(d,id,cam,selected));
+        };
         for (size_t i = 0; i < models.size(); ++i) {
             const auto* renderer = models[i]->renderer();
             if (!renderer || !renderer->is_visible()) continue;
-            if (renderer->is_selected()) throw std::logic_error("model selection highlighting is not yet ported");
             for (const auto& d : renderer->triangles_drawables())
-                if (d->is_visible()) commands.push_back(command(d, uint32_t(i), cam));
+                append(d,uint32_t(i),models[i],renderer->is_selected());
             for (const auto& d : renderer->lines_drawables())
-                if (d->is_visible()) commands.push_back(command(d, uint32_t(i), cam));
+                append(d,uint32_t(i),models[i],renderer->is_selected());
             for (const auto& d : renderer->points_drawables())
-                if (d->is_visible()) commands.push_back(command(d, uint32_t(i), cam));
+                append(d,uint32_t(i),models[i],renderer->is_selected());
         }
         for (size_t i = 0; i < drawables.size(); ++i)
-            if (drawables[i]->is_visible()) commands.push_back(command(drawables[i], uint32_t(models.size() + i), cam));
+            append(drawables[i],uint32_t(models.size()+i),nullptr,false);
         commands.insert(commands.end(),overlays.begin(),overlays.end());
         return commands;
     }
@@ -300,6 +333,27 @@ void VulkanOffScreen::fit_screen(const Model* selected) {
         for (const auto& drawable : impl_->drawables) box.grow(drawable->bounding_box());
     }
     if (box.is_valid()) { camera()->setSceneBoundingBox(box.min_point(), box.max_point()); camera()->showEntireScene(); }
+}
+VulkanOffScreen::PickResult VulkanOffScreen::pick(int x,int y) const {
+    PickResult result;
+    if (x<0 || y<0 || x>=width() || y>=height()) return result;
+    // Keep commands and source mapping together for this exact synchronous draw.
+    std::vector<Impl::PickSource> sources;
+    const auto commands=impl_->commands(*camera(),&sources);
+    const auto frame=impl_->device->render(width(),height(),commands,background_color(),1);
+    const auto pixel=size_t(y)*frame.width+x;
+    const auto id=frame.ids[pixel];
+    if (id.object==UINT32_MAX || frame.depth[pixel]>=1 || id.object>=sources.size()) return result;
+    result.model=sources[id.object].model; result.drawable=sources[id.object].drawable;
+    result.primitive=id.primitive; result.depth=frame.depth[pixel];
+    result.position=camera()->unprojectedCoordinatesOf(vec3(x+0.5f,y+0.5f,result.depth));
+    const auto& faces=result.drawable->cpu_buffers().source_faces;
+    auto* mesh=dynamic_cast<SurfaceMesh*>(result.model.get());
+    if (mesh && id.primitive<faces.size()) {
+        const SurfaceMesh::Face f(faces[id.primitive]);
+        if (mesh->is_valid(f) && !mesh->is_deleted(f)) result.face_index=f.idx();
+    }
+    return result;
 }
 graphics::FrameImage VulkanOffScreen::capture(unsigned samples) const { return impl_->capture(*camera(), background_color(), samples); }
 const graphics::RenderDevice& VulkanOffScreen::device() const { return *impl_->device; }

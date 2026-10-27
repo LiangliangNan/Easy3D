@@ -2150,7 +2150,7 @@ namespace easy3d {
         // -------------------------------------------------------------------------------------------------------------
 
 
-        void update(SurfaceMesh *model, TrianglesDrawable *drawable) {
+        static void update_surface_triangles(SurfaceMesh *model, TrianglesDrawable *drawable) {
             assert(model);
             assert(drawable);
 
@@ -2319,6 +2319,22 @@ namespace easy3d {
 
         // -------------------------------------------------------------------------------------------------------------
 
+
+        void update(SurfaceMesh *model, TrianglesDrawable *drawable) {
+            if (drawable->has_cpu_buffers()) drawable->set_source_faces({});
+            update_surface_triangles(model,drawable);
+            if (!drawable->has_cpu_buffers()) return;
+            const auto ranges=model->get_face_property<std::pair<int,int>>("f:triangle_range");
+            if (!ranges) return;
+            const auto count=(drawable->num_indices() ? drawable->num_indices() : drawable->num_vertices())/3;
+            std::vector<int> faces(count,-1);
+            for (auto f:model->faces()) {
+                const auto range=ranges[f];
+                if (range.first<0 || range.second<range.first || std::size_t(range.second)>=faces.size()) continue;
+                for (int i=range.first;i<=range.second;++i) faces[i]=f.idx();
+            }
+            drawable->set_source_faces(faces);
+        }
 
         void update(Graph *model, PointsDrawable *drawable) {
             internal::update<Graph>(model, drawable);

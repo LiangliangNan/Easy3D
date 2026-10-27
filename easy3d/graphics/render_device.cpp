@@ -25,7 +25,8 @@ Geometry::Geometry(std::vector<Vertex> vertices, std::vector<std::uint32_t> indi
             if (!std::isfinite(v.position[i]) || !std::isfinite(v.normal[i]))
                 throw std::invalid_argument("non-finite vertex");
         for (int i = 0; i < 4; ++i)
-            if (!std::isfinite(v.color[i])) throw std::invalid_argument("non-finite color");
+            if (!std::isfinite(v.color[i]) || !std::isfinite(v.highlight[i])) throw std::invalid_argument("non-finite color/highlight");
+        if (v.highlight.w<0 || v.highlight.w>1) throw std::invalid_argument("highlight strength must be in [0,1]");
         for (int i = 0; i < 2; ++i)
             if (!std::isfinite(v.texcoord[i])) throw std::invalid_argument("non-finite texture coordinate");
     }
