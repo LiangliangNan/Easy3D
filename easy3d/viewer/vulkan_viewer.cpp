@@ -155,6 +155,8 @@ void VulkanViewer::framebuffer_size(int& w, int& h) const { glfwGetFramebufferSi
 void VulkanViewer::set_title(const std::string& text) { window_->title = text; glfwSetWindowTitle(window_->handle, text.c_str()); }
 const std::string& VulkanViewer::title() const { return window_->title; }
 void VulkanViewer::update() const { glfwPostEmptyEvent(); }
+void VulkanViewer::set_animation(bool enabled) { animation_enabled_ = enabled; update(); }
+bool VulkanViewer::is_animating() const { return animation_enabled_ && bool(animation_func_); }
 GLFWwindow* VulkanViewer::window() const { return window_->handle; }
 void VulkanViewer::set_samples(unsigned samples) {
     if (!samples || samples > 64 || (samples & (samples - 1)) || !(device().supported_sample_counts() & samples))
@@ -168,6 +170,10 @@ bool VulkanViewer::draw_frame() {
     int w, h; framebuffer_size(w, h);
     if (w <= 0 || h <= 0) return false;
     if (width() != w || height() != h) { VulkanOffScreen::resize(w, h); post_resize(w, h); }
+    if (is_animating()) {
+        animation_func_(this);
+        if (should_close()) return false;
+    }
     pre_draw();
     const bool drawn = present(samples());
     if (drawn) post_draw();
@@ -214,6 +220,7 @@ bool VulkanViewer::mouse_scroll_event(int, int, int, int dy) { camera()->frame()
 bool VulkanViewer::key_press_event(int key, int) {
     if (key == GLFW_KEY_ESCAPE) { request_close(); return true; }
     if (key == GLFW_KEY_F) { fit_screen(); return true; }
+    if (key == GLFW_KEY_F2) { set_animation(!animation_enabled_); return true; }
     if (key == GLFW_KEY_P) {
         camera()->setType(camera()->type() == Camera::PERSPECTIVE ? Camera::ORTHOGRAPHIC : Camera::PERSPECTIVE);
         return true;

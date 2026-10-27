@@ -25,7 +25,8 @@
  ********************************************************************/
 
 #include <easy3d/viewer/viewer.h>
-#include <easy3d/renderer/vertex_array_object.h>
+#include "animation.h"
+#include "../native_viewer_options.h"
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
@@ -33,7 +34,7 @@
 
 /**
  * \example{lineno} Tutorial_311_Animation/main.cpp
- * This example shows how to map an array buffer for dynamic buffer update (useful for animation).
+ * This example shows portable dynamic buffer updates for animation on Vulkan and OpenGL.
  */
 
 using namespace easy3d;
@@ -47,7 +48,13 @@ int main(int argc, char **argv) {
 
     // Create the default Easy3D viewer.
     // Note: a viewer must be created before creating any drawables.
+#ifdef EASY3D_NO_OPENGL
+    NativeTutorialOptions options;
+    if (!options.parse(argc, argv)) return EXIT_FAILURE;
+    Viewer viewer(EXAMPLE_TITLE, options.viewer);
+#else
     Viewer viewer(EXAMPLE_TITLE);
+#endif
 
     //-------------------------------------------------------------
 
@@ -77,36 +84,18 @@ int main(int argc, char **argv) {
 
     // Define an animation function to specify how vertex positions are updated.
     // In this trivial example, we stretch the model along the Z-axis.
-    viewer.animation_func_ = [&](easy3d::Viewer* v) -> bool {
-        (void)v;
-
-        // map the vertex buffer into the client's address space
-        void* pointer = VertexArrayObject::map_buffer(GL_ARRAY_BUFFER, surface->vertex_buffer(), GL_WRITE_ONLY);
-
-        vec3* vertices = reinterpret_cast<vec3*>(pointer);
-        if (!vertices)
-            return false;
-
-        static float total_scale = 1.0f;
-        float scale = 1.01f;
-        if (total_scale > 1.5f) {
-            scale = 1.0f / total_scale;
-            total_scale = 1.0f;
-        }
-        else
-            total_scale *= scale;
-
-        for (std::size_t i=0; i<points.size(); ++i)
-            vertices[i].z *= scale;
-
-        // unmap the vertex buffer
-        VertexArrayObject::unmap_buffer(GL_ARRAY_BUFFER, surface->vertex_buffer());
-
-        viewer.update();
-        return true;
+    BunnyAnimation animation;
+    viewer.animation_func_ = [surface, &animation](Viewer*) {
+        // Keep editable geometry on the CPU. Updating the drawable publishes a
+        // new snapshot; each backend uploads it before rendering the next frame.
+        return animation.update(*surface);
     };
 
     // run the viewer
+#ifdef EASY3D_NO_OPENGL
+    return options.run(viewer);
+#else
     return viewer.run();
+#endif
 }
 

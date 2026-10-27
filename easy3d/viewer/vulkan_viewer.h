@@ -2,6 +2,7 @@
 #ifndef EASY3D_VIEWER_VULKAN_VIEWER_H
 #define EASY3D_VIEWER_VULKAN_VIEWER_H
 #include <easy3d/viewer/vulkan_offscreen.h>
+#include <functional>
 struct GLFWwindow;
 
 namespace easy3d {
@@ -24,6 +25,14 @@ public:
     // budget for automated demos. Skipped/minimized frames do not use the budget.
     int run(unsigned max_frames = 0);
     bool draw_frame();
+    // Called on the UI thread once before pre_draw() for each renderable frame.
+    // Like Viewer, the bool result is advisory; use set_animation(false) to pause.
+    // Frame-based updates are not a fixed-rate simulation clock. Captures alone
+    // do not advance animation. Replace/clear the callback between frames;
+    // use set_animation(false) from inside it to stop subsequent updates.
+    std::function<bool(VulkanViewer*)> animation_func_;
+    void set_animation(bool enabled);
+    bool is_animating() const;
     static void poll_events();
     void request_close();
     virtual void exit() { request_close(); }
@@ -61,6 +70,7 @@ protected:
 private:
     struct Window;
     std::shared_ptr<Window> window_;
+    bool animation_enabled_ = false;
     VulkanViewer(std::shared_ptr<Window> window, const graphics::DeviceOptions& options);
 };
 }

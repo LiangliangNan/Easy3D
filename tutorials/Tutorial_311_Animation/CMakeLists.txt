@@ -3,6 +3,7 @@ set(dependencies easy3d::viewer)
 
 set(${example}_files
         main.cpp
+        animation.h
         )
 
 add_example(${example} "${${example}_files}" "${dependencies}")

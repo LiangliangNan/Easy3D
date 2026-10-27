@@ -113,7 +113,7 @@ Completion gates include:
   resize/hide/show, independent windows/devices, orbit/pan/zoom, projection toggle,
   file drop and depth-based world-point picking. The installed demo uses an
   embedded bunny by default and needs no source-tree model/shader files.
-- Existing Tutorials 201, 301–310 and 401/402 build with the native Vulkan host in
+- Existing Tutorials 201, 301–311 and 401/402 build with the native Vulkan host in
   Vulkan-only window builds. Tutorial 302 uses the same sphere/surfel/cylinder/cone scene code
   as its OpenGL build, with bounded native execution for automated tests. Legacy
   custom OpenGL draw callbacks are not ported. Tutorial 304 exercises the native
@@ -197,7 +197,8 @@ never creates an OpenGL context. `Easy3D_ENABLE_OPENGL=ON` is also supported whe
 you want to compile the existing applications alongside the Vulkan demo.
 
 Controls: left drag rotates, right/middle drag pans, the wheel zooms, **F** fits
-all models, **P** toggles perspective/orthographic, **Escape** closes. Shift-left
+all models, **P** toggles perspective/orthographic, **F2** pauses/resumes an
+available animation, and **Escape** closes. Shift-left
 click sets the camera pivot to a depth-picked surface point. You can also drop a
 model file on the window. `--frames N` bounds demo execution; `--validation`
 requires the Khronos and synchronization validation layers. Use `--samples 4`
@@ -1177,3 +1178,46 @@ Vulkan CTests and all 10 dual-backend CTests pass. The new depth-overlay and
 native cross-section tests also pass with synchronization validation enabled,
 as does Tutorial 307 at four samples. The previously documented MoltenVK
 integer-attachment blending warning remains; validation error counts are zero.
+
+
+## Native animation and Tutorial 311
+
+Tutorial 311 now shares its animation code across Vulkan and OpenGL. A CPU-owned
+copy of the embedded bunny vertices is stretched along Z and published through
+`TrianglesDrawable::update_vertex_buffer(..., true)`. Each cycle recomputes from
+the original positions, avoiding accumulated deformation. This replaces the
+original OpenGL-only `VertexArrayObject::map_buffer()` example; native Vulkan
+applications do not map an OpenGL buffer or require an OpenGL context.
+
+`VulkanViewer` now provides `animation_func_`, `set_animation()` and
+`is_animating()`, with F2 pause/resume. The callback runs on the UI thread before
+`pre_draw()` and scene extraction for each renderable frame attempt. Capturing,
+saving a snapshot or picking does not advance animation. Closed, iconified and
+zero-sized windows skip updates. A callback can pause itself or request closure;
+exceptions propagate from `draw_frame()` and are reported as failure by `run()`.
+As in the legacy Viewer, the bool callback result is advisory; stop explicitly
+with `set_animation(false)`. Replace or clear a callback between frames, rather
+than from inside the callable itself.
+
+These are frame-based callbacks, not a fixed-rate simulation clock. A real-time
+simulation should compute its own elapsed time. Scene mutation, drawable updates
+and viewer lifetime remain UI-thread operations; this does not yet port the
+worker-thread tutorial or make scene models thread-safe.
+
+```sh
+./cmake-build-debug/bin/Tutorial_311_Animation --frames 50 --samples 4 --validation
+```
+
+The native `vulkan.animation` regression checks stateful callbacks, execution
+before scene extraction, F2 pause/resume, self-pause, current animated surface
+picking/depth, one/four samples, resize, the tutorial's stretch/reset cycle,
+finite run budgets, callback failures and closure. Tutorial 311 also joins the
+bounded native tutorial CTests. The shared tutorial source remains compatible
+with the retained OpenGL Viewer.
+
+Verified on Apple M4 Pro / MoltenVK 1.4.2: all 28 native CTests and all
+10 dual-backend CTests pass. The animation regression and Tutorial 311
+(`--frames 50 --samples 4`) pass with Khronos/synchronization validation enabled
+and zero validation errors. The retained OpenGL tutorial source also passes a
+C++11 compilation check. The previously documented MoltenVK integer-attachment
+blending warning remains.
