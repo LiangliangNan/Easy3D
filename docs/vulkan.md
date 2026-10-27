@@ -72,6 +72,8 @@ Completion gates include:
   color-only subpass before the final MSAA resolve. Overlays do not alter scene
   depth or picking IDs and require no independent-blend feature. Tutorial 306
   runs as a native image viewer with fit, zoom, resize and image reload.
+- CPU TrueType/UTF-8 text layout and immutable glyph atlases, using the native
+  overlay path. Tutorial 309 provides font, kerning, spacing, alignment and origin controls.
 - CPU-owned immutable texture data with explicit CPU-only factories, shared
   texture/scalar drawable state, vertex/halfedge UV extraction and default texture/
   scalar selection. Tutorials 303 and 305 run with Vulkan using the existing scene APIs.
@@ -101,8 +103,8 @@ Completion gates include:
   resize/hide/show, independent windows/devices, orbit/pan/zoom, projection toggle,
   file drop and depth-based world-point picking. The installed demo uses an
   embedded bunny by default and needs no source-tree model/shader files.
-- Existing Tutorials 201 and 302–306 build through the `Viewer` alias in Vulkan-only
-  window builds. Tutorial 302 uses the same sphere/surfel/cylinder/cone scene code
+- Existing Tutorials 201, 302–306 and 309 build with the native Vulkan host in
+  Vulkan-only window builds. Tutorial 302 uses the same sphere/surfel/cylinder/cone scene code
   as its OpenGL build, with bounded native execution for automated tests. Legacy
   custom OpenGL draw callbacks are not ported. Tutorial 304 exercises the native
   vector-field and plain wide-line path.
@@ -202,7 +204,7 @@ viewer.run();
 
 In a Vulkan-only window build the existing `<easy3d/viewer/viewer.h>` and
 `easy3d::Viewer` name select the same host. `Tutorial_201_Viewer_default` is built
-unchanged in that configuration. Tutorials 302–306 are also built in this configuration. Other tutorials remain gated
+unchanged in that configuration. Tutorials 302–306 and 309 are also built in this configuration. Other tutorials remain gated
 until their features and callbacks are ported; the global legacy tutorials option stays OFF.
 In a dual build `Viewer` continues to select the legacy host, while
 `VulkanViewer` selects Vulkan explicitly.
@@ -323,7 +325,7 @@ cause.
 | Material/lighting | Basic fixed world-space diffuse term; no full material or back-face-color parity yet. Normal transforms use the inverse transpose. Disable lighting for exact unlit colors. |
 | `TrianglesDrawable::opacity()` | As in the old opaque pass, effective only in a separate transparency pass; such a pass is not implemented here. |
 | CPU drawable textures/scalars | `Texture` pixel snapshots, vertex/halfedge UVs and scalar fields are supported without GL calls. Clamp/repeat and nearest/linear filtering work; no mipmap, anisotropic or multi-material texture pipeline yet. |
-| Transparency, SSAO, shadows, EDL, text, clipping | General 3D transparency/effects and text remain pending. Straight-alpha 2D overlays are supported. The scene adapter still rejects SSAO/highlighting/selection; overlays are not an effect-pass API. |
+| Transparency, SSAO, shadows, EDL, text, clipping | General 3D transparency/effects remain pending. Straight-alpha 2D overlays and basic horizontal TrueType/UTF-8 text are supported; shaping, bidi and automatic font fallback remain pending. The scene adapter still rejects SSAO/highlighting/selection; overlays are not an effect-pass API. |
 | Point and line styles | Plain points of any positive pixel size, spheres and oriented surfels are implemented. Capped cylinders/cones and butt-capped plain wide lines are implemented; joined strokes and rounded plain-line caps remain pending. |
 | Snapshot options | Device-supported MSAA (default 1); `expand=false` remains unsupported. Scaling, white/current/transparent background and image saving work. No tiled oversized captures. |
 | Readback | RGBA8, D32 and RG32UI; top row first; depth [0,1]; no-hit object/primitive IDs are `UINT32_MAX`. |
@@ -373,7 +375,7 @@ transparent PNG edges, and window presentation. Expected negative tests no longe
 use the logging wrappers. Fresh-configure checks verify the new four defaults.
 The subsequent point/impostor stage also validates this MSAA path on macOS/MoltenVK; Windows validation remains outstanding.
 
-Next implementation gates are native Qt/wx surface/frame adapters, text,
+Next implementation gates are native Qt/wx surface/frame adapters,
 ID mapping/pickers, oversized capture,
 effects/transparency, all applications/tutorials and Python integration, then
 hardware validation and packaging on macOS/Windows/Linux. The defaults now select
@@ -732,5 +734,83 @@ image-viewer and bounded Tutorial 306 checks with Khronos/synchronization
 validation, including four samples. Overlay shader SPIR-V validation passed. The
 dual Vulkan/OpenGL regression suite also passed, including the retained OpenGL
 texture smoke test. The previously documented MoltenVK integer-attachment warning
-persists; Vulkan validation error counts remain zero. Text/font rendering and
-native Qt/wx host integration remain migration gates.
+persists; Vulkan validation error counts remain zero. The next section adds basic
+native text; native Qt/wx host integration remains a migration gate.
+
+
+## Native text and Tutorial 309
+
+`graphics::TextRenderer` rasterizes trusted TrueType/OpenType font files on the
+CPU using the bundled stb_truetype, without a graphics context. It returns a
+`graphics::TextLayout` containing ordinary overlay commands, ink bounds, the last
+line's advance and line height. It is separate from the retained immediate
+OpenGL `easy3d::TextRenderer`; legacy GL callbacks are not emulated.
+
+```cpp
+#include <easy3d/graphics/text_renderer.h>
+easy3d::graphics::TextRenderer text;
+text.add_font(font_file);
+easy3d::graphics::TextOptions options;
+options.x = 20; options.y = 20; options.size = 28;
+auto layout = text.layout(u8"Easy3D — Vulkan", viewer.width(), viewer.height(), options);
+viewer.set_overlays(layout.commands);
+```
+
+All coordinates, size and character spacing use framebuffer pixels. Hosts scale
+logical UI coordinates by their framebuffer/window ratio exactly once. Layout
+supports UTF-8 Unicode scalar values (including non-BMP characters), explicit
+font selection, horizontal kerning, character spacing, multiline spacing and
+left/center/right alignment within the longest line. CRLF is one newline; tabs
+expand to four spaces. With the top-left origin, `y` is the top of the first font
+box and lines advance downward. With the bottom-left origin, `y` measures the
+bottom of that box from the framebuffer bottom and lines advance upward. Ink
+bounds always use top-left framebuffer coordinates. Malformed UTF-8, missing font
+indices, non-finite options and oversized glyphs fail explicitly. Missing
+characters use the selected font's glyph zero. Complex-script shaping, bidi,
+automatic font fallback, wrapping, vertical text and distance-field text are
+not implemented.
+
+Glyphs are cached by font, pixel size and glyph index in paged RGBA8 atlases with
+transparent gutters and linear filtering. Consecutive glyphs on the same page
+batch into one draw; page transitions preserve string order. New glyphs publish
+new immutable atlas snapshots, preserving previously returned layouts, including
+on other devices. `clear_cache()` releases cached sizes/pages without invalidating
+retained commands or loaded fonts. Rebuild layouts when viewport placement or
+DPI changes; otherwise retain them. Cache use is externally synchronized, and
+applications control its lifetime and size retention. The current device's
+1,024-live-texture descriptor limit still applies to simultaneously retained
+atlas versions. Fonts are runtime resources and should come from trusted sources;
+stb_truetype is not a validator for untrusted font data.
+
+Native-only window builds now include `Tutorial_309_TextRendering`. It loads the
+resource fonts and retains the tutorial's size (`+`/`-`), character spacing
+(`<`/`>`), line spacing (up/down), alignment (`L`/`C`/`R`), origin (`O`) and kerning
+(space) controls. Resize/DPI changes rebuild text; unchanged frames reuse it.
+Text shares the color-only overlay pass, retaining MSAA and leaving scene depth,
+IDs and world-point picking untouched. The OpenGL tutorial host is retained.
+
+```sh
+./cmake-build-debug/bin/Tutorial_309_TextRendering --frames 3 --samples 4 --validation
+./cmake-build-debug/bin/easy3d_vulkan_text_test --cpu-only
+```
+
+Headless CTest `vulkan.text` checks layout, Unicode decoding, font selection,
+kerning/spacing/alignment/origins, immutable and multi-page atlases, and GPU glyph
+coverage/alpha against an independent bilinear CPU reference. It also checks
+one/four-sample scene depth and IDs, overlay-only no-hit readback and resize.
+Desktop `vulkan.textviewer` exercises registered shortcut callbacks, resize,
+sample changes, snapshots and sphere world-point picking; `vulkan.tutorial309`
+is a bounded native tutorial smoke test. They honor
+`Easy3D_VULKAN_TEST_VALIDATION`. Installed packages include the new text header;
+the installed-consumer CI check loads an installed font and renders a text overlay.
+Transparent PNG export now converts overlay alpha at both one and multiple
+samples; previously the conversion only ran for multisampling, leaving dark
+single-sample text/image edges in exported files.
+
+On 2026-10-27, Apple M4 Pro/MoltenVK 1.4.2 passed the new text renderer and
+native text interaction tests and Tutorial 309 with four samples, Khronos
+validation and synchronization validation. The native suite passed all 13 tests;
+the dual Vulkan/OpenGL suite passed all five, including the retained real OpenGL
+texture check. Snapshot regressions also passed with validation after adding
+one-sample straight-alpha conversion. The existing MoltenVK integer-attachment
+warning persists; validation error counts remain zero.

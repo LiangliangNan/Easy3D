@@ -315,9 +315,9 @@ bool VulkanOffScreen::render(const std::string& filename, float scaling, int sam
         if (w <= 0 || h <= 0) throw std::invalid_argument("scaled snapshot dimensions are zero");
         copy.setScreenWidthAndHeight(w, h);
         auto frame = impl_->capture(copy, bg == 0 ? background_color() : bg == 1 ? vec4(1, 1, 1, 1) : vec4(0, 0, 0, 0), unsigned(samples));
-        if (bg == 2 && samples > 1) {
-            // Opaque fragments resolved against transparent black produce
-            // coverage-premultiplied edges. Image files store straight alpha.
+        if (bg == 2) {
+            // Alpha overlays and MSAA coverage against transparent black produce
+            // premultiplied colors, including single-sample text. PNG stores straight alpha.
             for (size_t i = 0; i < frame.rgba.size(); i += 4) {
                 const unsigned alpha = frame.rgba[i + 3];
                 if (alpha && alpha < 255)

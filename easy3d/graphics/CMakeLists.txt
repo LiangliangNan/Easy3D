@@ -20,14 +20,14 @@ foreach(shader scene.vert scene.frag points.vert points.frag lines.vert lines.fr
     list(APPEND shader_headers "${header}")
 endforeach()
 
-add_module(vulkan "render_device.h" "render_device.cpp;vulkan/device.cpp;${shader_headers}"
+add_module(vulkan "render_device.h;text_renderer.h" "render_device.cpp;text_renderer.cpp;vulkan/device.cpp;${shader_headers}"
         "Vulkan::Vulkan" "easy3d::core")
 target_include_directories(easy3d_vulkan PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 install(TARGETS easy3d_vulkan EXPORT Easy3DTargets
         RUNTIME DESTINATION "${Easy3D_INSTALL_BIN_DIR}"
         LIBRARY DESTINATION "${Easy3D_INSTALL_LIB_DIR}"
         ARCHIVE DESTINATION "${Easy3D_INSTALL_LIB_DIR}")
-install(FILES render_device.h DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/easy3d/graphics")
+install(FILES render_device.h text_renderer.h DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/easy3d/graphics")
 install(FILES vulkan/surface.h DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/easy3d/graphics/vulkan")
 
 if(Easy3D_BUILD_VULKAN_TESTS)
@@ -37,6 +37,10 @@ if(Easy3D_BUILD_VULKAN_TESTS)
     if(Easy3D_VULKAN_TEST_VALIDATION)
         set(validation_args --validation)
     endif()
+    add_executable(easy3d_vulkan_text_test tests/text_test.cpp)
+    target_link_libraries(easy3d_vulkan_text_test PRIVATE easy3d::vulkan easy3d::util)
+    add_test(NAME vulkan.text COMMAND easy3d_vulkan_text_test ${validation_args})
+    set_tests_properties(vulkan.text PROPERTIES TIMEOUT 120)
     add_test(NAME vulkan.render COMMAND easy3d_vulkan_test ${validation_args})
     set_tests_properties(vulkan.render PROPERTIES TIMEOUT 120)
 endif()

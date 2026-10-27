@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/offscreen.h>
+#include <easy3d/graphics/text_renderer.h>
 #include <easy3d/viewer/vulkan_offscreen.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/renderer.h>
@@ -27,6 +28,17 @@ int main() {
     mesh->renderer()->get_triangles_drawable("faces")->set_uniform_coloring(easy3d::vec4(1, 0.4f, 0, 1));
     const unsigned samples = renderer.device().supported_sample_counts() & 4 ? 4 : 1;
     auto frame = renderer.capture(samples);
+    easy3d::graphics::TextRenderer text;
+    text.add_font(easy3d::resource::directory()+"/fonts/en_Vera.ttf");
+    easy3d::graphics::TextOptions options;
+    options.x=2; options.y=2; options.size=14;
+    renderer.set_overlays(text.layout("Vulkan",renderer.width(),renderer.height(),options).commands);
+    const auto labeled=renderer.capture(samples);
+    if (labeled.rgba==frame.rgba || labeled.depth!=frame.depth)
+        throw std::runtime_error("installed text overlay failed");
+    for (std::size_t i=0;i<frame.ids.size();++i)
+        if (labeled.ids[i].object!=frame.ids[i].object || labeled.ids[i].primitive!=frame.ids[i].primitive)
+            throw std::runtime_error("installed text changed picking");
     unsigned hits = 0;
     for (auto id : frame.ids) hits += id.object != UINT32_MAX;
     std::cout << "Installed OffScreen rendered " << hits << " pixels on " << renderer.device().name() << '\n';

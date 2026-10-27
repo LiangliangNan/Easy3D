@@ -200,11 +200,13 @@ int main(int argc, char**) {
         overlay.geometry=std::make_shared<graphics::Geometry>(screen_triangle);
         overlay.color=vec4(0,0,1,0.5f);
         renderer.set_overlays({overlay});
-        require(renderer.render("vulkan-overlay.png",1,renderer.device().supported_sample_counts() & 4 ? 4 : 1,2),
-                "transparent overlay PNG capture failed");
-        require(ImageIO::load("vulkan-overlay.png",png,w,h,channels,4,false) &&
-                png[0]==0 && png[1]==0 && png[2]>=253 && std::abs(int(png[3])-128)<=1,
-                "overlay PNG did not convert premultiplied output to straight alpha");
+        for (unsigned count : {1u,4u}) {
+            if (!(renderer.device().supported_sample_counts() & count)) continue;
+            require(renderer.render("vulkan-overlay.png",1,int(count),2), "transparent overlay PNG capture failed");
+            require(ImageIO::load("vulkan-overlay.png",png,w,h,channels,4,false) &&
+                    png[0]==0 && png[1]==0 && png[2]>=253 && std::abs(int(png[3])-128)<=1,
+                    "overlay PNG did not convert premultiplied output to straight alpha");
+        }
         renderer.set_overlays({});
         // Test the throwing API for expected failures, keeping normal test output
         // free from the user-facing error logger of the bool render() wrapper.
