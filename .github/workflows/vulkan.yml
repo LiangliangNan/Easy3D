@@ -56,6 +56,7 @@ jobs:
           spirv-val --target-env vulkan1.2 build-vulkan/easy3d/graphics/wide_lines_frag.spv
           spirv-val --target-env vulkan1.2 build-vulkan/easy3d/graphics/overlay_vert.spv
           spirv-val --target-env vulkan1.2 build-vulkan/easy3d/graphics/overlay_frag.spv
+          spirv-val --target-env vulkan1.2 build-vulkan/easy3d/graphics/point_selection_comp.spv
       - name: Render without a display using lavapipe
         run: |
           export VK_DRIVER_FILES="$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit)"

@@ -133,6 +133,23 @@ struct DeviceOptions {
     std::string device_name;
 };
 
+// GPU through-selection of projected point centers in a top-left framebuffer
+// polygon. Polygon crossings use the even-odd rule (boundary included). It is
+// independent of rasterization/occlusion, point style, MSAA and scene readback.
+// Point i maps to bit i in words; empty words start from zero, otherwise supply
+// ceil(points.size()/32) words. Unmatched/padding bits are preserved. Nonfinite
+// points are skipped (usable for deleted vertex slots). Camera MVP uses [-w,w]
+// depth; centers outside its frustum or local halfspaces are skipped.
+struct PointSelectionRequest {
+    std::vector<vec3> points;
+    std::vector<vec2> polygon;
+    std::vector<std::uint32_t> words;
+    mat4 model_view_projection = mat4::identity();
+    std::uint32_t width=0, height=0;
+    bool deselect=false;
+    std::vector<vec4> local_clipping_planes; // up to two, keep dot(plane,[point,1])>=0
+};
+
 class RenderDevice {
 public:
     virtual ~RenderDevice() = default;
@@ -156,6 +173,9 @@ public:
                          const std::vector<DrawCommand>& commands,
                          const vec4& background = vec4(1, 1, 1, 1), unsigned samples = 1) = 0;
     virtual unsigned validation_errors() const = 0;
+    // Synchronous GPU polygon upload, compute dispatch and selection readback.
+    // Externally synchronized like render(); no render targets are modified.
+    virtual std::vector<std::uint32_t> select_points(const PointSelectionRequest& request) = 0;
 };
 
 // Implemented by easy3d::vulkan. Throws std::runtime_error on unavailable devices.

@@ -378,6 +378,9 @@ VulkanOffScreen::PickResult VulkanOffScreen::pick(int x,int y) const {
 }
 graphics::FrameImage VulkanOffScreen::capture(unsigned samples) const { return impl_->capture(*camera(), background_color(), samples); }
 const graphics::RenderDevice& VulkanOffScreen::device() const { return *impl_->device; }
+std::vector<std::uint32_t> VulkanOffScreen::select_points(const graphics::PointSelectionRequest& request) const {
+    return impl_->device->select_points(request);
+}
 bool VulkanOffScreen::render(const std::string& filename, float scaling, int samples, int bg, bool expand) const {
     try {
         if (samples <= 0) throw std::invalid_argument("sample count must be positive");

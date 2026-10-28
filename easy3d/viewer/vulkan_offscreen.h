@@ -66,6 +66,8 @@ public:
     // an empty result for background/outside pixels. Retains source ownership;
     // face indices describe the current mesh, not future topology edits.
     PickResult pick(int x, int y) const;
+    // GPU through-selection; the request owns its point/polygon/bitset snapshot.
+    std::vector<std::uint32_t> select_points(const graphics::PointSelectionRequest& request) const;
     // Reconstruct a top-left framebuffer pixel center from [0,1] readback depth.
     // Unlike Camera's legacy coordinate helper, this uses continuous framebuffer coordinates.
     vec3 unproject_pixel(int x, int y, float depth) const;

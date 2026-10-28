@@ -1,4 +1,5 @@
 ### ToDo list (or on going):
+- Send the computed value of "MVP * MANIP" to shaders (avoiding computing the matrix product for each vertex/fragment)
 - Walkthrough and animation; allow to modify the cameras interactively
 - Implement potree for huge point cloud visualization (https://github.com/potree/potree)
 - Add a measuring tool

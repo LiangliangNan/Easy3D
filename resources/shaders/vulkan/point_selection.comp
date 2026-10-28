@@ -1,0 +1,44 @@
+#version 450
+// Projected-center through-selection, based on the OpenGL lasso implementation.
+// Compute avoids the optional vertexPipelineStoresAndAtomics feature.
+layout(local_size_x=64) in;
+layout(std430,set=0,binding=0) readonly buffer Points { vec4 points[]; };
+layout(std430,set=0,binding=1) readonly buffer Polygon { vec2 polygon[]; };
+layout(std430,set=0,binding=2) buffer Selection { uint words[]; };
+layout(push_constant) uniform Parameters {
+    mat4 mvp;
+    vec4 planes[2];
+    uvec4 dimensions; // width, height, point count, polygon count
+    uvec4 options; // deselect, plane count, unused, unused
+} pc;
+bool contains(vec2 p) {
+    bool inside=false;
+    for (uint i=0,j=pc.dimensions.w-1;i<pc.dimensions.w;j=i++) {
+        vec2 a=polygon[j],b=polygon[i],edge=b-a,delta=p-a;
+        float length2=dot(edge,edge);
+        if (length2>0) {
+            float t=clamp(dot(delta,edge)/length2,0,1);
+            vec2 d=delta-t*edge;
+            if (dot(d,d)<=1e-8) return true;
+        }
+        if ((a.y>p.y)!=(b.y>p.y) && p.x<a.x+(p.y-a.y)*(b.x-a.x)/(b.y-a.y)) inside=!inside;
+    }
+    return inside;
+}
+void main() {
+    uint group=gl_WorkGroupID.y*gl_NumWorkGroups.x+gl_WorkGroupID.x;
+    uint groups=pc.dimensions.z/64+uint(pc.dimensions.z%64!=0);
+    if (group>=groups) return;
+    uint id=group*64+gl_LocalInvocationID.x;
+    if (id>=pc.dimensions.z) return;
+    vec4 local=vec4(points[id].xyz,1),clip=pc.mvp*local;
+    if (any(isnan(clip)) || any(isinf(clip)) || clip.w<=0 ||
+        any(lessThan(clip.xyz,vec3(-clip.w))) || any(greaterThan(clip.xyz,vec3(clip.w)))) return;
+    for (uint i=0;i<pc.options.y;++i) if (dot(pc.planes[i],local)<0) return;
+    vec2 p=vec2((clip.x/clip.w+1)*0.5*pc.dimensions.x,(1-clip.y/clip.w)*0.5*pc.dimensions.y);
+    if (contains(p)) {
+        uint mask=1u<<(id&31u);
+        if (pc.options.x!=0) atomicAnd(words[id>>5],~mask);
+        else atomicOr(words[id>>5],mask);
+    }
+}

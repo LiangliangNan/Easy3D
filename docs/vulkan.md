@@ -113,7 +113,7 @@ Completion gates include:
   resize/hide/show, independent windows/devices, orbit/pan/zoom, projection toggle,
   file drop and depth-based world-point picking. The installed demo uses an
   embedded bunny by default and needs no source-tree model/shader files.
-- Existing Tutorials 201, 301–312 and 401/402 build with the native Vulkan host in
+- Existing Tutorials 201, 301–312 and 401–403 build with the native Vulkan host in
   Vulkan-only window builds. Tutorial 302 uses the same sphere/surfel/cylinder/cone scene code
   as its OpenGL build, with bounded native execution for automated tests. Legacy
   custom OpenGL draw callbacks are not ported. Tutorial 304 exercises the native
@@ -215,7 +215,7 @@ viewer.run();
 
 In a Vulkan-only window build the existing `<easy3d/viewer/viewer.h>` and
 `easy3d::Viewer` name select the same host. `Tutorial_201_Viewer_default` is built
-unchanged in that configuration. Tutorials 301–310 and 401/402 are also built in this configuration. Other tutorials remain gated
+unchanged in that configuration. Tutorials 301–312 and 401–403 are also built in this configuration. Other tutorials remain gated
 until their features and callbacks are ported; the global legacy tutorials option stays OFF.
 In a dual build `Viewer` continues to select the legacy host, while
 `VulkanViewer` selects Vulkan explicitly.
@@ -341,7 +341,7 @@ cause.
 | Point and line styles | Plain points of any positive pixel size, spheres and oriented surfels are implemented. Capped cylinders/cones and butt-capped plain wide lines are implemented; joined strokes and rounded plain-line caps remain pending. |
 | Snapshot options | Device-supported MSAA (default 1); `expand=false` remains unsupported. Scaling, white/current/transparent background and image saving work. No tiled oversized captures. |
 | Readback | RGBA8, D32 and RG32UI; top row first; depth [0,1]; no-hit object/primitive IDs are `UINT32_MAX`. |
-| Picking IDs | Raw captures retain model/standalone order and generated primitive indices. `VulkanOffScreen::pick()` maps a visible hit to its model/drawable and original SurfaceMesh face when provenance exists. Original vertex/edge mappings, region/lasso selection and the legacy GUI picker classes remain pending. |
+| Picking IDs | Raw captures retain model/standalone order and generated primitive indices. `VulkanOffScreen::pick()` maps a visible hit to its model/drawable and original SurfaceMesh face when provenance exists. GPU point-cloud rectangle/lasso through-selection is supported. General vertex/edge hit provenance and the legacy GUI picker classes remain pending. |
 | Selection/highlighting | Renderer/drawable selection and inclusive primitive ranges use the shared highlight color, after native lighting/texturing; alpha, depth, IDs and MSAA coverage are preserved. |
 | Resource scheduling | Synchronous capture/uploads and one submitted frame at a time; presentation stays on the GPU with no CPU pixel readback. Per-image presentation semaphores; queue/device idle only at swapchain recreation and destruction. Multiple frames in flight and asynchronous capture are pending. |
 | Resource limits | Fixed 1,024 live texture descriptor sets; expired resources retired at the next capture. Individual allocations, not a suballocator yet. |
@@ -1017,7 +1017,7 @@ now drains initial window/DPI callbacks, uses a smaller initial window, checks
 framebuffer dimensions before comparing pixels and saves expected/actual PNGs on
 a mismatch. The final complete native run passed; the original mismatch was not
 reproduced with diagnostics. Qt/wx/Python integration, original
-vertex/edge and region pickers, advanced effects and runtime backend selection/
+general vertex/edge and mesh-region pickers, advanced effects and runtime backend selection/
 automatic OpenGL fallback remain migration gates.
 
 
@@ -1117,7 +1117,7 @@ The recurring text-viewer shortcut harness now uses a hidden native window to
 isolate synthetic key callbacks from desktop focus/input. It retains the actual
 host, presentation, resize, color and depth checks; five bounded repeats and the
 final full suite passed. Remaining gates include closed cut caps/back-hit clipping, Qt/wx/Python integration,
-original vertex/edge and region pickers, advanced effects and runtime backend
+original general vertex/edge and mesh-region pickers, advanced effects and runtime backend
 selection/automatic OpenGL fallback.
 
 
@@ -1271,3 +1271,71 @@ Khronos/synchronization validation enabled, as does Tutorial 312 for 100 frames
 at four samples; validation error counts remain zero. The shared OpenGL
 tutorial source passes a C++11 compilation check. The previously documented
 MoltenVK integer-attachment blending warning remains.
+
+
+## GPU lasso selection and Tutorial 403
+
+Tutorial 403 now has a native Vulkan host. Shift-left drag selects and Shift-right
+drag deselects point centers; releasing Shift during a drag still completes the
+gesture. L chooses lasso mode (default), R chooses rectangle mode. Escape cancels
+an active gesture; focus loss or framebuffer resize also cancels it. Outside a
+selection gesture the normal camera controls remain available. A red transparent
+fill and opaque boundary use the existing HUD path and never modify scene depth
+or picking IDs, including under MSAA.
+
+`graphics::RenderDevice::select_points(PointSelectionRequest)` uploads the point
+positions, lasso polygon and packed selection words to three shader storage
+buffers. An embedded GLSL450 compute shader projects each point and performs
+the even-odd in-polygon test **on the GPU**. It updates one bit per source point
+with `atomicOr` / `atomicAnd`, following the OpenGL SSBO lasso implementation.
+Using compute avoids the optional vertex-stage storage-write/atomic feature and
+requires no fragment shader, render pass, depth target or geometry shader. A
+128-byte push block carries the camera/model MVP, viewport, mode and up to two
+local clipping planes. Larger dispatches use a two-dimensional workgroup grid.
+
+This is through-selection of centers, including occluded points, rather than a
+visible-fragment ID query. The shader uses continuous top-left framebuffer pixel
+coordinates, includes polygon boundaries, and rejects centers behind the eye,
+outside the camera frustum or outside the clipping halfspaces. The native host
+transforms its world-space clipping planes into each drawable's local space,
+and uses the same manipulated-model MVP as rendering. Deleted vertex slots are
+skipped while live source vertex indices continue to address their original
+selection bits. This does not add general mesh vertex/edge hit provenance or
+mesh region picking.
+
+The operation is synchronous: host-visible SSBO inputs are flushed if needed,
+then explicit host/compute barriers, a submission fence and noncoherent readback
+invalidation make updated words available to the caller. Tutorial 403 copies the
+result into `v:select` and updates per-point display colors on the UI thread.
+Unmatched flags and unused tail bits are preserved. Empty/degenerate lassos do
+nothing; malformed inputs and storage-buffer/dispatch limit violations fail
+explicitly. The compute pipeline/descriptors are private to each device and are
+created transactionally on first use. A graphics queue without compute support
+reports selection as unavailable; ordinary rendering remains usable. The path
+currently uploads/readbacks a snapshot per operation, without asynchronous
+selection or persistent GPU-only selection state.
+
+```sh
+./cmake-build-debug/bin/Tutorial_403_PointSelection --frames 3 --samples 4 --validation
+```
+
+The headless `vulkan.pointselection` test covers 100,003 input points, concurrent
+bit-word updates, concave/even-odd polygons, boundary inclusion, orientation,
+deselection, padding, nonfinite/deleted slots, clipping, transforms, input
+validation, render-state preservation and independent devices. The desktop
+`vulkan.pointselectionviewer` test drives native gesture handlers and registered keyboard callbacks through
+lasso/rectangle selection, cancellation, modifier release, deleted/occluded
+points, selection colors, unchanged depth/IDs, MSAA, model transforms and
+HiDPI/resize. CI validates the new compute SPIR-V. The retained OpenGL tutorial
+continues to use its existing picker and drawing implementation.
+
+Verified on 2026-10-28 with Apple M4 Pro / MoltenVK 1.4.2: all 33 native
+CTests and all 11 dual-backend CTests pass. The GPU selection and native gesture
+regressions, including an explicit translucent interior-pixel check, pass with
+Khronos/synchronization validation enabled and zero validation errors. Tutorial
+403 passes bounded four-sample execution with validation. The compute SPIR-V
+passes `spirv-val --target-env vulkan1.2`, and the retained OpenGL tutorial
+sources pass a C++11 compilation check. The existing MoltenVK integer-attachment
+blending warning remains. Synthetic gesture tests use explicit framebuffer
+coordinates in a hidden window to avoid macOS cursor-warp/focus timing; native
+event routing remains covered by the existing window tests.

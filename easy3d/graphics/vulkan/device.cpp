@@ -27,6 +27,7 @@ namespace easy3d { namespace graphics { namespace {
 #include "wide_lines_frag.inc"
 #include "overlay_vert.inc"
 #include "overlay_frag.inc"
+#include "point_selection_comp.inc"
 
 void check(VkResult result, const char* operation) {
     if (result != VK_SUCCESS)
@@ -48,6 +49,7 @@ std::vector<VkExtensionProperties> instance_extensions(const char* layer = nullp
 // No mutable global device dispatch or resources: loader dispatch is handle based.
 struct Context {
     bool sample_shading = false;
+    bool compute = false;
     VkInstance instance = VK_NULL_HANDLE;
     VkDebugUtilsMessengerEXT messenger = VK_NULL_HANDLE;
     VkPhysicalDevice physical = VK_NULL_HANDLE;
@@ -214,10 +216,11 @@ struct Context {
                 }
                 int score = props.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU ? 3 :
                             props.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU ? 2 : 1;
+                score=score*2+bool(queues[i].queueFlags & VK_QUEUE_COMPUTE_BIT);
                 if (score > best_score) {
                     best_score = score; physical = candidate; family = i; properties = props;
+                    compute=(queues[i].queueFlags & VK_QUEUE_COMPUTE_BIT)!=0;
                 }
-                break;
             }
         }
         if (!physical) throw std::runtime_error("no suitable Vulkan 1.2 device/graphics queue for requested targets and surface");
@@ -334,6 +337,96 @@ struct Buffer {
         }
         vkUnmapMemory(c.device, memory);
         check(result, write ? "flush host buffer" : "invalidate readback buffer");
+    }
+};
+// Separate compute resources: no render pass, framebuffer, depth or picking IDs.
+struct PointSelector {
+    Context& c;
+    VkDescriptorSetLayout descriptors=VK_NULL_HANDLE;
+    VkDescriptorPool pool=VK_NULL_HANDLE;
+    VkDescriptorSet set=VK_NULL_HANDLE;
+    VkPipelineLayout layout=VK_NULL_HANDLE;
+    VkShaderModule shader=VK_NULL_HANDLE;
+    VkPipeline pipeline=VK_NULL_HANDLE;
+    explicit PointSelector(Context& context):c(context) {}
+    ~PointSelector() {
+        if (pipeline) vkDestroyPipeline(c.device,pipeline,nullptr);
+        if (shader) vkDestroyShaderModule(c.device,shader,nullptr);
+        if (layout) vkDestroyPipelineLayout(c.device,layout,nullptr);
+        if (pool) vkDestroyDescriptorPool(c.device,pool,nullptr);
+        if (descriptors) vkDestroyDescriptorSetLayout(c.device,descriptors,nullptr);
+    }
+    void init() {
+        VkDescriptorSetLayoutBinding bindings[3]={};
+        for (unsigned i=0;i<3;++i) {
+            bindings[i].binding=i; bindings[i].descriptorType=VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            bindings[i].descriptorCount=1; bindings[i].stageFlags=VK_SHADER_STAGE_COMPUTE_BIT;
+        }
+        VkDescriptorSetLayoutCreateInfo di{}; di.sType=VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        di.bindingCount=3; di.pBindings=bindings;
+        check(vkCreateDescriptorSetLayout(c.device,&di,nullptr,&descriptors),"create selection descriptor layout");
+        VkDescriptorPoolSize size={VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,3};
+        VkDescriptorPoolCreateInfo pi{}; pi.sType=VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+        pi.maxSets=1; pi.poolSizeCount=1; pi.pPoolSizes=&size;
+        check(vkCreateDescriptorPool(c.device,&pi,nullptr,&pool),"create selection descriptor pool");
+        VkDescriptorSetAllocateInfo ai{}; ai.sType=VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        ai.descriptorPool=pool; ai.descriptorSetCount=1; ai.pSetLayouts=&descriptors;
+        check(vkAllocateDescriptorSets(c.device,&ai,&set),"allocate selection descriptor set");
+        VkPushConstantRange range={VK_SHADER_STAGE_COMPUTE_BIT,0,128};
+        VkPipelineLayoutCreateInfo li{}; li.sType=VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        li.setLayoutCount=1; li.pSetLayouts=&descriptors; li.pushConstantRangeCount=1; li.pPushConstantRanges=&range;
+        check(vkCreatePipelineLayout(c.device,&li,nullptr,&layout),"create selection pipeline layout");
+        VkShaderModuleCreateInfo si{}; si.sType=VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+        si.codeSize=sizeof(point_selection_comp); si.pCode=point_selection_comp;
+        check(vkCreateShaderModule(c.device,&si,nullptr,&shader),"create selection compute shader");
+        VkComputePipelineCreateInfo ci{}; ci.sType=VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+        ci.layout=layout; ci.stage.sType=VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        ci.stage.stage=VK_SHADER_STAGE_COMPUTE_BIT; ci.stage.module=shader; ci.stage.pName="main";
+        check(vkCreateComputePipelines(c.device,VK_NULL_HANDLE,1,&ci,nullptr,&pipeline),"create selection compute pipeline");
+    }
+    std::vector<uint32_t> run(const PointSelectionRequest& request,std::vector<uint32_t> words,
+                              const std::vector<vec4>& planes) {
+        std::vector<vec4> points; points.reserve(request.points.size());
+        for (const auto& p:request.points) points.emplace_back(p,1);
+        const VkDeviceSize sizes[]={points.size()*sizeof(vec4),request.polygon.size()*sizeof(vec2),words.size()*sizeof(uint32_t)};
+        Buffer positions(c),polygon(c),selection(c); Buffer* buffers[]={&positions,&polygon,&selection};
+        VkDescriptorBufferInfo infos[3]={}; VkWriteDescriptorSet writes[3]={};
+        for (unsigned i=0;i<3;++i) {
+            buffers[i]->init(sizes[i],VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,true);
+            infos[i]={buffers[i]->handle,0,sizes[i]};
+            writes[i].sType=VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET; writes[i].dstSet=set; writes[i].dstBinding=i;
+            writes[i].descriptorCount=1; writes[i].descriptorType=VK_DESCRIPTOR_TYPE_STORAGE_BUFFER; writes[i].pBufferInfo=&infos[i];
+        }
+        positions.transfer(points.data(),size_t(sizes[0]),true);
+        polygon.transfer(const_cast<vec2*>(request.polygon.data()),size_t(sizes[1]),true);
+        selection.transfer(words.data(),size_t(sizes[2]),true);
+        vkUpdateDescriptorSets(c.device,3,writes,0,nullptr);
+        struct Parameters { float mvp[16],planes[8]; uint32_t dimensions[4],options[4]; } push{};
+        static_assert(sizeof(Parameters)==128,"compute selection push layout");
+        for (unsigned col=0;col<4;++col) for (unsigned row=0;row<4;++row)
+            push.mvp[col*4+row]=request.model_view_projection(row,col);
+        for (size_t i=0;i<planes.size();++i) for (unsigned j=0;j<4;++j) push.planes[4*i+j]=planes[i][j];
+        push.dimensions[0]=request.width; push.dimensions[1]=request.height;
+        push.dimensions[2]=uint32_t(points.size()); push.dimensions[3]=uint32_t(request.polygon.size());
+        push.options[0]=request.deselect; push.options[1]=uint32_t(planes.size());
+        const uint32_t groups=uint32_t((points.size()+63)/64);
+        const uint32_t x=std::min(groups,c.properties.limits.maxComputeWorkGroupCount[0]);
+        const uint32_t y=(groups+x-1)/x;
+        if (y>c.properties.limits.maxComputeWorkGroupCount[1]) throw std::invalid_argument("selection exceeds compute dispatch limits");
+        c.execute([&](VkCommandBuffer cmd) {
+            VkMemoryBarrier barrier{}; barrier.sType=VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+            barrier.srcAccessMask=VK_ACCESS_HOST_WRITE_BIT;
+            barrier.dstAccessMask=VK_ACCESS_SHADER_READ_BIT|VK_ACCESS_SHADER_WRITE_BIT;
+            vkCmdPipelineBarrier(cmd,VK_PIPELINE_STAGE_HOST_BIT,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,0,1,&barrier,0,nullptr,0,nullptr);
+            vkCmdBindPipeline(cmd,VK_PIPELINE_BIND_POINT_COMPUTE,pipeline);
+            vkCmdBindDescriptorSets(cmd,VK_PIPELINE_BIND_POINT_COMPUTE,layout,0,1,&set,0,nullptr);
+            vkCmdPushConstants(cmd,layout,VK_SHADER_STAGE_COMPUTE_BIT,0,sizeof(push),&push);
+            vkCmdDispatch(cmd,x,y,1);
+            barrier.srcAccessMask=VK_ACCESS_SHADER_WRITE_BIT; barrier.dstAccessMask=VK_ACCESS_HOST_READ_BIT;
+            vkCmdPipelineBarrier(cmd,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,VK_PIPELINE_STAGE_HOST_BIT,0,1,&barrier,0,nullptr,0,nullptr);
+        });
+        selection.transfer(words.data(),size_t(sizes[2]),false);
+        return words;
     }
 };
 struct GpuImage {
@@ -639,6 +732,7 @@ struct Swapchain {
 class VulkanDevice final : public RenderDevice {
     Context c_;
     std::string name_;
+    std::unique_ptr<PointSelector> point_selector_;
     uint32_t sample_counts_ = 1;
     std::map<unsigned, std::unique_ptr<RenderPass>> passes_;
     std::unique_ptr<RenderPass> id_pass_;
@@ -709,6 +803,34 @@ public:
         return style != LineStyle::plain && !c_.sample_shading ? 1 : sample_counts_;
     }
     unsigned validation_errors() const override { return c_.errors.load(); }
+    std::vector<uint32_t> select_points(const PointSelectionRequest& request) override {
+        if (!request.width || !request.height) throw std::invalid_argument("selection requires positive framebuffer dimensions");
+        if (request.points.size()>UINT32_MAX || request.polygon.size()>UINT32_MAX)
+            throw std::invalid_argument("selection input exceeds 32-bit indexing");
+        const size_t count=(request.points.size()+31)/32;
+        auto words=request.words;
+        if (words.empty()) words.resize(count,0);
+        else if (words.size()!=count) throw std::invalid_argument("selection word count does not match points");
+        for (unsigned i=0;i<16;++i) if (!std::isfinite(request.model_view_projection[i]))
+            throw std::invalid_argument("nonfinite selection transform");
+        for (const auto& p:request.polygon) if (!std::isfinite(p.x) || !std::isfinite(p.y))
+            throw std::invalid_argument("nonfinite selection polygon");
+        const auto planes=normalize_clipping_planes(request.local_clipping_planes);
+        bool area=false;
+        for (size_t i=1;i+1<request.polygon.size();++i) {
+            const auto a=request.polygon[i]-request.polygon[0],b=request.polygon[i+1]-request.polygon[0];
+            area=area || std::abs(double(a.x)*b.y-double(a.y)*b.x)>1e-8;
+        }
+        if (request.points.empty() || !area) return words;
+        const uint64_t sizes[]={uint64_t(request.points.size())*sizeof(vec4),uint64_t(request.polygon.size())*sizeof(vec2),uint64_t(words.size())*sizeof(uint32_t)};
+        for (auto size:sizes) if (size>c_.properties.limits.maxStorageBufferRange)
+            throw std::invalid_argument("selection buffer exceeds device storage-buffer range");
+        if (!c_.compute) throw std::runtime_error("selected graphics queue does not support compute selection");
+        if (!point_selector_) {
+            std::unique_ptr<PointSelector> next(new PointSelector(c_)); next->init(); point_selector_=std::move(next);
+        }
+        return point_selector_->run(request,std::move(words),planes);
+    }
     void init(const DeviceOptions& options, const VulkanSurface* surface = nullptr) {
         c_.init(options, surface); name_ = c_.properties.deviceName;
         white_ = std::make_shared<Image>(1, 1, std::vector<unsigned char>(4, 255));
