@@ -76,6 +76,7 @@ public:
 protected:
     // Same customization points as Viewer: printed at startup/F1 and drawn as a HUD.
     std::string manual_, hint_;
+    int pressed_key_ = -1;
     virtual void pre_draw() {}
     virtual void post_draw() {}
     virtual void post_resize(int, int) {}
@@ -93,7 +94,7 @@ private:
     struct Window;
     std::shared_ptr<Window> window_;
     bool animation_enabled_ = false;
-    int pressed_key_ = -1, pressed_button_ = -1;
+    int pressed_button_ = -1;
     int mouse_pressed_x_ = 0, mouse_pressed_y_ = 0;
     int mouse_current_x_ = 0, mouse_current_y_ = 0;
     bool show_pivot_point_ = false, zoom_region_ = false;

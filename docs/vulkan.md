@@ -1762,3 +1762,54 @@ remains. The OpenGL-only viewer build and all fourteen affected OpenGL tutorial
 translation units pass compilation checks. A source audit confirms that all seven
 custom usage configurations preserve the original OpenGL text exactly, and the
 rendered usage HUD was visually inspected.
+
+
+## Tutorial 405: object manipulation
+
+Tutorial 405 now builds on the native Vulkan host using its original `main.cpp`,
+`viewer.h` and `viewer.cpp` structure. Its manual and hint strings are shared
+between the OpenGL and Vulkan constructors. The hint refers to "the model"
+rather than "bunny", since this example loads the Easy3D letters. Plain left-click selects/unselects a
+visible model; background click clears selection. Alt-left rotates the selected
+model, Alt-right translates it, and X/Y/O use the shared screen-axis constraints.
+Camera controls remain available outside the object gesture. Native selection
+uses the existing selection highlight without overwriting material/texture state.
+
+The shared `Manipulator` supplies the model transform around its local bounding
+box center. Local vertex positions remain unchanged; rendering and picking use
+the same transformed drawable matrices. Native tool state uses weak model
+ownership and verifies scene membership before every drag. Release, focus loss
+and resize end the gesture. Deleting a selected model or clearing the scene is
+safe even when another owner retains that model. No signal callback retains a
+pointer to a destroyed viewer.
+
+`easy3d/renderer/backends/vulkan/manipulator.h` / `manipulator.cpp` implement the
+rendering counterpart of `Manipulator::draw_frame()`. The helper reuses the same
+RGB abstracted box-corner geometry from `shape::create_box()`, and caches its
+immutable guide command until the model/camera transform, viewport or width
+changes. The native `shape::draw_box_wire()` counterpart clips segments against
+homogeneous frustum planes before division and expands them into triangle ribbons.
+A small guide-only depth bias avoids coplanar projection/depth rounding.
+The resulting depth-tested annotation cannot write scene depth or picking IDs.
+It supports normal MSAA and requires neither geometry shaders nor wide lines.
+Like the original manipulation guide, it is independent of model clipping planes.
+
+The new `vulkan.manipulation` test covers selection/unselection, transform-only
+translation and rotation, axis release, unchanged camera/local geometry, picking
+after manipulation, one/four-sample guides, nearer-surface occlusion, focus/resize
+cancellation, deletion during a drag and model lifetime after viewer destruction.
+It also checks finite near/eye-crossing guide vertices and fully clipped boxes,
+and saves a manipulation snapshot. Synthetic mouse gestures use framebuffer coordinates directly, with registered
+key/focus callbacks, so the test does not depend on desktop cursor warping. Native
+mouse callback routing remains covered by the existing window/picker tests.
+Tutorial 405 joins the bounded native tutorial CTests; its source also remains
+compilable with the original OpenGL host.
+
+Verified on MoltenVK on this Mac: the final sequential runs pass all 41 native
+CTests and all 21 combined OpenGL/Vulkan CTests. The combined suite enables
+Khronos/synchronization validation, and the focused native manipulation test also
+passed explicitly with validation. Tutorial 405 passed a three-frame four-sample
+validation run. The OpenGL-only viewer target builds, and the tutorial's OpenGL
+main/viewer sources pass C++11 compilation checks. No validation errors were
+reported; the existing MoltenVK integer-attachment warning remains. A manipulation
+snapshot was visually inspected for the selected object, guide and usage hint.

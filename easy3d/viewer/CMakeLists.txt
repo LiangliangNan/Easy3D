@@ -113,6 +113,12 @@ if(Easy3D_ENABLE_VULKAN AND Easy3D_BUILD_VULKAN_TESTS)
             add_test(NAME vulkan.objviewer COMMAND easy3d_vulkan_obj_viewer_test ${validation_args})
             set_tests_properties(vulkan.objviewer PROPERTIES TIMEOUT 120 LABELS desktop)
         endif()
+        add_executable(easy3d_vulkan_manipulation_test tests/manipulation_test.cpp
+                ../../tutorials/Tutorial_405_ObjectManipulation/viewer.cpp)
+        target_link_libraries(easy3d_vulkan_manipulation_test PRIVATE easy3d::viewer)
+        target_compile_definitions(easy3d_vulkan_manipulation_test PRIVATE EASY3D_TUTORIAL_VULKAN)
+        add_test(NAME vulkan.manipulation COMMAND easy3d_vulkan_manipulation_test ${validation_args})
+        set_tests_properties(vulkan.manipulation PROPERTIES TIMEOUT 120 LABELS desktop)
         add_executable(easy3d_vulkan_usage_test tests/usage_test.cpp
                 ../../tutorials/Tutorial_306_ImageViewer/viewer.cpp
                 ../../tutorials/Tutorial_307_CrossSection/viewer.cpp

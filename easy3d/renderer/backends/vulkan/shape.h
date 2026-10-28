@@ -12,5 +12,9 @@ graphics::DrawCommand draw_quad_wire(const Rect& rect, const vec4& color, unsign
                                      float line_width = 1);
 graphics::DrawCommand draw_lines_2d(const std::vector<vec2>& segments, const vec4& color,
                                    unsigned width, unsigned height, float line_width = 1);
+// Depth-tested RGB box guide. Uses the same create_box() corner geometry as
+// OpenGL, expanding homogeneously clipped segments into triangle ribbons.
+graphics::DrawCommand draw_box_wire(const mat4& mvp,unsigned width,unsigned height,
+                                    float line_width = 1,bool abstracted = false);
 } } }
 #endif
