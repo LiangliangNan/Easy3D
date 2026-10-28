@@ -48,11 +48,12 @@ graphics::DrawCommand draw_quad_wire(const Rect& r,const vec4& color,unsigned wi
     const vec2 a(r.x_min(),r.y_min()),b(r.x_max(),r.y_min()),c(r.x_max(),r.y_max()),d(r.x_min(),r.y_max());
     return draw_lines_2d({a,b,b,c,c,d,d,a},color,width,height,line_width);
 }
-graphics::DrawCommand draw_box_wire(const mat4& mvp,unsigned width,unsigned height,float line_width,bool abstracted) {
+graphics::DrawCommand draw_lines_3d(const std::vector<vec3>& points,const std::vector<vec3>& colors,
+                                   const mat4& mvp,unsigned width,unsigned height,float line_width) {
     if (!width || !height || !std::isfinite(line_width) || line_width<=0)
         throw std::invalid_argument("box guide requires a positive viewport and finite line width");
-    std::vector<vec3> points,colors;
-    easy3d::shape::create_box(points,colors,abstracted);
+    if (points.size()%2 || colors.size()!=points.size())
+        throw std::invalid_argument("3D lines require endpoint/color pairs");
     std::vector<graphics::Vertex> vertices;
     for (size_t i=0;i<points.size();i+=2) {
         vec4 a=mvp*vec4(points[i],1),b=mvp*vec4(points[i+1],1);
@@ -88,5 +89,10 @@ graphics::DrawCommand draw_box_wire(const mat4& mvp,unsigned width,unsigned heig
     result.geometry=std::make_shared<graphics::Geometry>(std::move(vertices));
     result.overlay=result.overlay_depth_test=true;
     return result;
+}
+graphics::DrawCommand draw_box_wire(const mat4& mvp,unsigned width,unsigned height,float line_width,bool abstracted) {
+    std::vector<vec3> points,colors;
+    easy3d::shape::create_box(points,colors,abstracted);
+    return draw_lines_3d(points,colors,mvp,width,height,line_width);
 }
 } } }

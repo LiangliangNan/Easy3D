@@ -113,6 +113,12 @@ if(Easy3D_ENABLE_VULKAN AND Easy3D_BUILD_VULKAN_TESTS)
             add_test(NAME vulkan.objviewer COMMAND easy3d_vulkan_obj_viewer_test ${validation_args})
             set_tests_properties(vulkan.objviewer PROPERTIES TIMEOUT 120 LABELS desktop)
         endif()
+        add_executable(easy3d_vulkan_camera_path_test tests/camera_path_test.cpp
+                ../../tutorials/Tutorial_206_CameraInterpolation/viewer.cpp)
+        target_link_libraries(easy3d_vulkan_camera_path_test PRIVATE easy3d::viewer)
+        target_compile_definitions(easy3d_vulkan_camera_path_test PRIVATE EASY3D_TUTORIAL_VULKAN)
+        add_test(NAME vulkan.camerapath COMMAND easy3d_vulkan_camera_path_test ${validation_args})
+        set_tests_properties(vulkan.camerapath PROPERTIES TIMEOUT 120 LABELS desktop)
         add_executable(easy3d_vulkan_collision_test tests/collision_test.cpp
                 ../../tutorials/Tutorial_406_CollisionDetection/viewer.cpp)
         target_link_libraries(easy3d_vulkan_collision_test PRIVATE easy3d::viewer)

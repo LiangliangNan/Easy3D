@@ -25,16 +25,67 @@
  ********************************************************************/
 
 #include "viewer.h"
+
+namespace {
+const char* const usage_hint = "Press 'k' to add key frames\n"
+            "Press 'space' to start/stop the animation\n"
+            "Press 'd' to delete the camera path";
+}
+
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
 #include <easy3d/core/model.h>
+#include <algorithm>
 
 
 using namespace easy3d;
 
 // \cond
 
+#if EASY3D_TUTORIAL_USES_VULKAN
+TutorialCameraInterpolation::TutorialCameraInterpolation(const std::string& title,const VulkanViewerOptions& options)
+    : TutorialViewer(title,options),interpolator_(new KeyFrameInterpolator(camera()->frame())) {
+    hint_=usage_hint;
+}
+TutorialCameraInterpolation::~TutorialCameraInterpolation() {delete interpolator_;}
+bool TutorialCameraInterpolation::key_press_event(int key,int modifiers) {
+    if (key==KEY_K && modifiers==0) {
+        if (!interpolator_->add_keyframe(*camera()->frame())) return false;
+        camera()->setSceneRadius(std::max(camera()->sceneRadius(),distance(camera()->sceneCenter(),camera()->position())));
+        update();return true;
+    }
+    if (key==KEY_SPACE && modifiers==0) {
+        if (interpolator_->is_interpolation_started()) interpolator_->stop_interpolation();
+        else {interpolator_->start_manual_interpolation();next_frame_=std::chrono::steady_clock::now();}
+        update();return true;
+    }
+    if (key==KEY_D && modifiers==0) {
+        interpolator_->delete_path();
+        Box3 box;for (const auto& model:models()) box.grow(model->bounding_box());
+        if (box.is_valid()) camera()->setSceneBoundingBox(box.min_point(),box.max_point());
+        set_overlays({});update();return true;
+    }
+    return TutorialViewer::key_press_event(key,modifiers);
+}
+void TutorialCameraInterpolation::pre_draw() {
+    if (interpolator_->is_interpolation_started()) {
+        const auto now=std::chrono::steady_clock::now();
+        if (now>=next_frame_) {
+            interpolator_->advance_interpolation();
+            next_frame_=now+std::chrono::milliseconds(interpolator_->interpolation_period());
+        }
+    }
+    std::vector<graphics::DrawCommand> commands;
+    if (!interpolator_->is_interpolation_started()) {
+        auto cameras=path_renderer_.draw_cameras(*interpolator_,*camera(),camera()->sceneRadius()*.05f);
+        auto path=path_renderer_.draw_path(*interpolator_,*camera());
+        if (cameras.geometry) commands.push_back(cameras);
+        if (path.geometry) commands.push_back(path);
+    }
+    set_overlays(std::move(commands));
+}
+#else
 TutorialCameraInterpolation::TutorialCameraInterpolation(const std::string& title)
     : Viewer(title)
 {
@@ -42,9 +93,7 @@ TutorialCameraInterpolation::TutorialCameraInterpolation(const std::string& titl
     // update the viewer when the interpolation finishes
     easy3d::connect(&interpolator_->interpolation_stopped, (Viewer*)this, &Viewer::update);
 
-    hint_ = "Press 'k' to add key frames\n"
-            "Press 'space' to start/stop the animation\n"
-            "Press 'd' to delete the camera path";
+    hint_ = usage_hint;
 }
 
 
@@ -106,3 +155,4 @@ void TutorialCameraInterpolation::draw() const {
 }
 
 // \endcond
+#endif // EASY3D_TUTORIAL_USES_VULKAN

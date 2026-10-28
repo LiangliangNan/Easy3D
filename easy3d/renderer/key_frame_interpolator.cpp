@@ -38,6 +38,9 @@
 
 #include <chrono>
 #include <thread>
+#include <limits>
+#include <stdexcept>
+#include <cmath>
 
 #include <easy3d/renderer/frame.h>
 #include <easy3d/renderer/drawable_lines.h>
@@ -199,18 +202,24 @@ namespace easy3d {
 
 
     void KeyFrameInterpolator::set_interpolation_speed(float speed) {
+        if (!std::isfinite(speed) || speed<=0) throw std::invalid_argument("interpolation speed must be positive and finite");
+        stop_interpolation();
         interpolation_speed_ = speed;
         pathIsValid_ = false;
     }
 
 
     void KeyFrameInterpolator::set_frame_rate(int fps) {
+        if (fps<=0 || fps>1000) throw std::invalid_argument("interpolation frame rate must be in 1..1000");
+        stop_interpolation();
         fps_ = fps;
         pathIsValid_ = false;
     }
 
 
     void KeyFrameInterpolator::start_interpolation() {
+        if (manual_playback_) stop_interpolation();
+        manual_playback_ = false;
         auto animation = [this]() {
             // interval in ms (0.9 to approximately compensate the overhead the timer thread and viewer update)
             const int interval = static_cast<int>(1000.0f / static_cast<float>(frame_rate()) * 0.9f);
@@ -238,13 +247,38 @@ namespace easy3d {
 
         // all done in another thread.
         interpolation_started_ = true;
+        timer_mode_used_ = true;
         timer_.set_timeout(0, animation);
     }
 
 
+    void KeyFrameInterpolator::start_manual_interpolation() {
+        if (timer_mode_used_) throw std::logic_error("manual interpolation requires a fresh, timer-free interpolator");
+        stop_interpolation();
+        if (!frame_ || keyframes_.empty()) return;
+        if (!pathIsValid_) interpolate();
+        if (interpolated_path_.empty()) return;
+        if (last_stopped_index_ < 0 || size_t(last_stopped_index_) >= interpolated_path_.size()) last_stopped_index_=0;
+        manual_playback_=true;
+        interpolation_started_=true;
+    }
+
+    bool KeyFrameInterpolator::advance_interpolation() {
+        if (!manual_playback_ || !interpolation_started_) return false;
+        if (!frame_) {stop_interpolation();return false;}
+        const auto& sample=interpolated_path_.at(size_t(last_stopped_index_));
+        frame_->setPositionAndOrientation(sample.position(),sample.orientation());
+        const bool finished=++last_stopped_index_>=int(interpolated_path_.size());
+        if (finished) {last_stopped_index_=0;interpolation_started_=false;manual_playback_=false;}
+        frame_interpolated.send();
+        if (finished) interpolation_stopped.send();
+        return true;
+    }
+
     void KeyFrameInterpolator::stop_interpolation() {
         timer_.stop();
         interpolation_started_ = false;
+        manual_playback_ = false;
     }
 
 
@@ -390,11 +424,17 @@ namespace easy3d {
         if (keyframes_.size() == 1) {   // only one keyframe
             LOG(INFO) << "only 1 keyframe: interpolation not possible";
             interpolated_path_.emplace_back(Frame(keyframes_[0].position(), keyframes_[0].orientation()));
+            pathIsValid_=true;last_stopped_index_=0;
             return interpolated_path_;
         }
 
+        if (frame_rate()<=0 || frame_rate()>1000 || !std::isfinite(interpolation_speed()) || interpolation_speed()<=0)
+            throw std::invalid_argument("interpolation requires frame rate 1..1000 and positive finite speed");
         const float interval = interpolation_speed() * static_cast<float>(interpolation_period()) / 1000.0f;
-        const int num_frames = static_cast<int>(duration() / interval + 1);
+        const double count = double(duration()) / interval + 1;
+        if (!std::isfinite(count) || count>std::numeric_limits<int>::max())
+            throw std::invalid_argument("interpolation path has too many samples");
+        const int num_frames = std::max(2,static_cast<int>(count));
         if (keyframes_.size() == 2) {   // only two keyframe: linear interpolation
             LOG(INFO) << "only two keyframe: linear interpolation";
             for (int i=0; i<num_frames; ++i) {

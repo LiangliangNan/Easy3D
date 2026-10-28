@@ -320,13 +320,13 @@ namespace easy3d {
 
         /**
          * \brief Sets the interpolation_speed().
-         * \param speed The interpolation speed.
+         * \param speed Positive finite interpolation speed. Changing it stops playback.
          */
         void set_interpolation_speed(float speed);
 
         /**
          * \brief Sets the desired frame rate.
-         * \param fps The frame rate.
+         * \param fps Frame rate in 1..1000. Changing it stops playback.
          */
         void set_frame_rate(int fps);
         //@}
@@ -351,6 +351,17 @@ namespace easy3d {
          *      the interpolation will naturally immediately stop.
          */
         void start_interpolation();
+
+        // UI-thread alternative: no timer or worker is created. The host calls
+        // advance_interpolation() at interpolation_period() intervals. Stop and
+        // restart preserve the next sample; completion resets to the first one.
+        // Captures/readback alone must not advance playback. Use a fresh
+        // interpolator for manual mode: the legacy detached timer cannot be
+        // joined, so switching a timer-used instance to manual mode is rejected.
+        void start_manual_interpolation();
+        // Applies exactly one sample on the calling thread and emits the same
+        // frame/stopped signals. Returns false when manual playback is inactive.
+        bool advance_interpolation();
 
         /**
          * \brief Stops an interpolation started with start_interpolation().
@@ -454,6 +465,8 @@ namespace easy3d {
         Method interpolation_method_;
         float interpolation_speed_;
         bool interpolation_started_;
+        bool manual_playback_ = false;
+        bool timer_mode_used_ = false;
         int last_stopped_index_;
 
         // is path valid? Adding new keyframes or editing a keyframe invalidates the path

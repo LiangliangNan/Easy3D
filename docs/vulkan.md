@@ -1862,3 +1862,60 @@ main/viewer sources pass C++11 compilation checks. No validation errors were
 reported; the previously documented MoltenVK integer-attachment warning remains.
 The default two-mesh scene was visually inspected for collision coloring and its
 usage hint; a source audit confirms that manual and hint text match OpenGL.
+
+
+## Tutorial 206: native camera interpolation
+
+Tutorial 206 now uses the native host in its original `main.cpp`, `viewer.h` and
+`viewer.cpp` pair. It retains the shared usage hint and K/Space/D controls for
+recording keyframes, starting/stopping playback and deleting the path. The legacy
+OpenGL constructor/drawing implementation remains in the same files.
+
+The shared `renderer/KeyFrameInterpolator` adds `start_manual_interpolation()`
+and `advance_interpolation()`. Manual mode starts no worker: the host applies
+one existing interpolated sample per call on the UI thread. Pause/resume retains
+the next sample; completion resets the cursor for replay and emits the normal
+completion signal. Empty, single-key and detached-target paths are handled
+without dereferencing missing frames. Very short two-key paths retain both
+endpoints instead of dividing by zero. Speeds must be positive/finite and frame
+rates 1..1000; changing these stops playback, and excessive sample counts fail
+explicitly. The original `start_interpolation()` timer API remains available.
+Because the legacy detached timer cannot be joined, an instance that has started
+timer playback cannot switch to manual playback; native hosts use fresh,
+timer-free interpolators.
+
+The tutorial advances manual playback in `pre_draw()` using a monotonic clock
+and the shared interpolation period. Captures alone do not advance the camera,
+and delayed frames do not cause catch-up bursts. The spline, quaternion and
+keyframe math are shared with OpenGL rather than reimplemented in the viewer.
+The base Vulkan viewer's global Alt/Ctrl camera-path shortcuts remain a separate
+migration task; this stage implements Tutorial 206's own path workflow.
+
+The native drawing counterpart lives in
+`renderer/backends/vulkan/key_frame_interpolator.h` / `key_frame_interpolator.cpp`.
+It reuses `shape::create_camera()` for green keyframe markers and the shared
+interpolated positions for the pale-yellow path. Markers and homogeneously clipped
+triangle-ribbon paths are depth-tested annotations that never write scene depth
+or picking IDs. They support MSAA without geometry shaders or wide-line features.
+The ribbon path approximates the OpenGL cylinder-style line visual. Marker
+geometry and projected path geometry are cached until relevant keyframes,
+view/projection or viewport parameters change. The native box-guide helper now
+shares this 3D ribbon generation.
+
+The new `vulkan.camerapath` regression covers explicit UI-thread stepping,
+no implicit timer updates, short/single-key paths, resume/replay, invalid cadence,
+record/edit/delete controls, captures, marker/path visibility and geometry reuse,
+MSAA and unchanged depth/IDs. Its fixture records cameras outside the radius-20
+resource sphere and saves a rendered path image for inspection. Tutorial 206 joins
+the bounded native tutorial CTests. Native-only, combined and OpenGL-only viewer
+builds succeed, and the tutorial's OpenGL source pair passes C++11 checks.
+
+Verified on MoltenVK on this Mac: all 45 native CTests and all 23 combined
+OpenGL/Vulkan CTests pass. The focused native test was revalidated after correcting
+its camera fixture scale, and the combined suite uses that corrected fixture.
+The combined suite enables Khronos/synchronization validation; the focused native
+camera-path test also passed explicitly with validation. Tutorial 206 passed a
+three-frame four-sample validation run. The OpenGL-only viewer target and the
+tutorial's OpenGL C++11 source checks pass. No validation errors were reported;
+the existing MoltenVK integer-attachment warning remains. The rendered camera
+markers/path and unchanged usage hint were visually inspected.
