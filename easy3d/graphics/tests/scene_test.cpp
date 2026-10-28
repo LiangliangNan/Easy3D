@@ -16,6 +16,7 @@ static_assert(std::is_same<easy3d::OffScreen, easy3d::VulkanOffScreen>::value,
 #include <easy3d/util/initializer.h>
 #include <easy3d/util/resource.h>
 #include <iostream>
+#include <cmath>
 #include <map>
 #include <stdexcept>
 using namespace easy3d;
@@ -76,8 +77,37 @@ int main(int argc, char**) {
         require(renderer.render("vulkan-bunny.png", 1.5f), "PNG capture failed");
         int w = 0, h = 0, channels = 0;
         std::vector<unsigned char> png;
-        require(ImageIO::load("vulkan-bunny.png", png, w, h, channels, 4, false) && w == 241 && h == 190,
+        require(ImageIO::load("vulkan-bunny.png", png, w, h, channels, 4, false) && w == 242 && h == 191,
                 "scaled PNG dimensions mismatch");
+        for (auto type : {Camera::PERSPECTIVE, Camera::ORTHOGRAPHIC}) {
+            renderer.camera()->setType(type);
+            const auto before = renderer.capture();
+            const auto projection = renderer.camera()->projectionMatrix();
+            bool different_framing = false;
+            for (unsigned count : {1u, 4u}) {
+                if (!(renderer.device().supported_sample_counts() & count)) continue;
+                require(renderer.render("vulkan-current.png", 1, int(count), 0, false), "current-background snapshot failed");
+                require(ImageIO::load("vulkan-current.png", png, w, h, channels, 4, false) &&
+                        png == renderer.capture(count).rgba, "unscaled snapshot differs from live capture");
+                for (float scale : {1.0f, 1.5f, .1f}) {
+                    std::vector<unsigned char> expanded, cropped;
+                    require(renderer.render("vulkan-expand.png", scale, int(count), 2, true), "expanded snapshot failed");
+                    require(ImageIO::load("vulkan-expand.png", expanded, w, h, channels, 4, false), "expanded PNG load failed");
+                    require(w == int(std::ceil(161 * double(scale))) && h == int(std::ceil(127 * double(scale))),
+                            "snapshot dimensions must round upwards");
+                    require(renderer.render("vulkan-crop.png", scale, int(count), 2, false), "cropped snapshot failed");
+                    require(ImageIO::load("vulkan-crop.png", cropped, w, h, channels, 4, false), "cropped PNG load failed");
+                    require(scale != 1 || expanded == cropped, "equal-aspect expand/crop changed framing");
+                    different_framing = different_framing || expanded != cropped;
+                }
+            }
+            require(different_framing, "rounded-aspect expand/crop ignored framing mode");
+            const auto after = renderer.capture();
+            require(before.rgba == after.rgba && before.depth == after.depth, "snapshot changed live camera/rendering");
+            for (unsigned i=0; i<16; ++i)
+                require(projection[i] == renderer.camera()->projectionMatrix()[i], "snapshot changed live projection");
+        }
+        renderer.camera()->setType(Camera::PERSPECTIVE);
         faces->set_uniform_coloring(vec4(0, 0, 1, 1));
         auto blue = renderer.capture();
         for (size_t i = 0; i < blue.ids.size(); ++i)

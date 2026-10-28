@@ -12,6 +12,7 @@
 #include <easy3d/fileio/ply_reader_writer.h>
 #include <easy3d/fileio/image_io.h>
 #include <easy3d/renderer/renderer.h>
+#include <easy3d/renderer/transform.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/backends/vulkan/drawable.h>
 #include <easy3d/renderer/drawable_triangles.h>
@@ -258,14 +259,29 @@ std::shared_ptr<const graphics::PointData> VulkanOffScreen::point_resource(Drawa
 bool VulkanOffScreen::render(const std::string& filename, float scaling, int samples, int bg, bool expand) const {
     try {
         if (samples <= 0) throw std::invalid_argument("sample count must be positive");
-        if (!expand) throw std::invalid_argument("VulkanOffScreen currently requires expand=true");
         if (!std::isfinite(scaling) || scaling <= 0 || double(width()) * scaling > std::numeric_limits<int>::max() ||
             double(height()) * scaling > std::numeric_limits<int>::max() || bg < 0 || bg > 2)
             throw std::invalid_argument("invalid snapshot scaling/background");
         Camera copy(*camera());
-        const int w = int(width() * double(scaling)), h = int(height() * double(scaling));
+        const int w = int(std::ceil(width() * double(scaling))), h = int(std::ceil(height() * double(scaling)));
         if (w <= 0 || h <= 0) throw std::invalid_argument("scaled snapshot dimensions are zero");
         copy.setScreenWidthAndHeight(w, h);
+        copy.projectionMatrix(); // resolve resize invalidation before overriding the matrix
+        // Match snapshot.cpp: preserve one source frustum dimension, expanding
+        // or cropping the other to accommodate the rounded output aspect ratio.
+        const double aspect = double(width()) / height(), output_aspect = double(w) / h;
+        const double near = camera()->zNear(), far = camera()->zFar();
+        float x, y;
+        if (camera()->type() == Camera::PERSPECTIVE) {
+            y = float(near * std::tan(camera()->fieldOfView() * .5));
+            x = float(aspect * y);
+        } else camera()->getOrthoWidthHeight(x, y);
+        if ((expand && output_aspect > aspect) || (!expand && output_aspect < aspect))
+            x = float(output_aspect * y);
+        else y = float(x / output_aspect);
+        copy.set_projection_matrix(camera()->type() == Camera::PERSPECTIVE
+            ? transform::frustum(-x, x, -y, y, float(near), float(far))
+            : transform::ortho(-x, x, -y, y, float(near), float(far)));
         auto frame = impl_->capture(copy, bg == 0 ? background_color() : bg == 1 ? vec4(1, 1, 1, 1) : vec4(0, 0, 0, 0), unsigned(samples));
         if (bg == 2) {
             // Alpha overlays and MSAA coverage against transparent black produce

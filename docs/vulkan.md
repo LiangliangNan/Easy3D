@@ -366,7 +366,7 @@ cause.
 | Transparency, SSAO, shadows, EDL, text, clipping | General 3D transparency/effects remain pending. Straight-alpha 2D overlays, depth-tested translucent annotations and basic horizontal TrueType/UTF-8 text are supported; shaping, bidi and automatic font fallback remain pending. The scene adapter still rejects SSAO; overlays are not an effect-pass API. |
 | Clipping | Up to two per-viewer world-space halfspaces. Geometric triangle/line-centerline cuts, center-clipped plain points and front-surface analytic clipping preserve IDs/MSAA. No automatic cut caps; native plane guides use depth-tested transparent fill and outlines. |
 | Point and line styles | Plain points of any positive pixel size, spheres and oriented surfels are implemented. Capped cylinders/cones and butt-capped plain wide lines are implemented; joined strokes and rounded plain-line caps remain pending. |
-| Snapshot options | Device-supported MSAA (default 1); `expand=false` remains unsupported. Scaling, white/current/transparent background and image saving work. No tiled oversized captures. |
+| Snapshot options | Device-supported MSAA (default 4); expand/crop framing, scaling, white/current/transparent background and image saving work. No tiled oversized captures. |
 | Readback | RGBA8, D32 and RG32UI; top row first; depth [0,1]; no-hit object/primitive IDs are `UINT32_MAX`. |
 | Picking IDs | Raw captures retain model/standalone order and generated primitive indices. `VulkanOffScreen::pick()` maps a visible hit to its model/drawable and original SurfaceMesh face when provenance exists. GPU point-cloud rectangle/lasso through-selection is supported. General vertex/edge hit provenance and the legacy GUI picker classes remain pending. |
 | Selection/highlighting | Renderer/drawable selection and inclusive primitive ranges use the shared highlight color, after native lighting/texturing; alpha, depth, IDs and MSAA coverage are preserved. |
@@ -1597,9 +1597,9 @@ exposes the same file-output parameters/defaults as `Viewer::snapshot()`.
 `VulkanOffScreen::render()` likewise defaults to four samples, matching
 `OffScreen::render()`. Snapshot sampling is independent of presentation sampling;
 `capture()` without arguments still uses the window's current sample count.
-Unsupported sample counts fail explicitly. The existing native limitation that
-`expand=false` is unsupported remains; this step does not claim complete snapshot
-parity. Snapshot rendering keeps the live camera unchanged.
+Unsupported sample counts fail explicitly. Expand/crop framing was still missing
+at this stage and is implemented below. Snapshot rendering keeps the live camera
+unchanged.
 
 Window regression coverage checks that both boolean run modes present multiple
 frames until explicitly closed, that only `run(true)` refits the camera, and that
@@ -2000,3 +2000,28 @@ Verified on this Mac with MoltenVK: all 47 native-only tests and all 25
 combined-backend tests pass. The focused frame-rate test also passes with Vulkan
 validation enabled, and the saved HUD image was visually inspected. Desktop
 suites were run sequentially.
+
+
+## Snapshot expand/crop framing
+
+`VulkanOffScreen::render()` and `VulkanViewer::snapshot()` now accept both
+`expand=true` and `expand=false`, using the perspective/orthographic frustum
+choices in the OpenGL `snapshot.cpp` counterpart. Output dimensions round upwards
+instead of truncating. When rounding changes the aspect ratio, expansion preserves
+the existing view and cropping trims it; matching aspect ratios give identical
+framing. Background and MSAA options retain their existing behavior. This does
+not add tiled captures beyond device image limits.
+
+The temporary camera resolves resize invalidation before assigning its custom
+projection, preventing the camera's lazy projection calculation from overwriting
+the requested frustum. Rendering leaves the live camera, scene depth and picking
+state unchanged. The existing scene regression now covers both camera types,
+one/four samples, equal and rounded aspect ratios, fractional up/down scaling,
+transparent output, unscaled capture equivalence and live-camera preservation.
+
+Verified on this Mac with MoltenVK: all 47 native tests and all 25 combined
+OpenGL/Vulkan tests pass. The final scene regression also passes explicitly with
+native Vulkan/synchronization validation. Native and combined builds and the
+OpenGL-only viewer build succeed. The scaled PNG was visually inspected. The
+existing MoltenVK integer-attachment warning remains; no new validation errors
+were reported. Desktop suites were run sequentially.

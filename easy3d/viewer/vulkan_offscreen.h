@@ -85,6 +85,9 @@ public:
     // Color is multisampled when requested; IDs/depth stay center-sampled.
     // Invalid/unsupported requests throw, allowing callers/tests to handle them.
     graphics::FrameImage capture(unsigned samples = 1) const;
+    // Output dimensions round upwards, matching OffScreen. expand chooses
+    // expansion versus cropping when rounding changes the output aspect ratio.
+    // Rendering uses a camera copy and leaves the live camera unchanged.
     bool render(const std::string& filename, float scaling = 1.0f, int samples = 4,
                 int back_ground = 1, bool expand = true) const;
     const graphics::RenderDevice& device() const;
