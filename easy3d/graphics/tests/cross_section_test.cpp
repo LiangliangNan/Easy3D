@@ -4,6 +4,7 @@
 #include <3rd_party/glfw/include/GLFW/glfw3.h>
 #include <easy3d/util/initializer.h>
 #include <easy3d/util/setting.h>
+#include <easy3d/renderer/clipping_plane.h>
 #include <fstream>
 #include <stdexcept>
 #include <cmath>
@@ -50,6 +51,9 @@ int main(int argc,char**) {
         VulkanViewerOptions options; options.width=360; options.height=280;
         options.device.validation=options.device.synchronization_validation=argc>1;
         CrossSection viewer("Native cross-section test",options);
+        auto* plane=ClippingPlane::instance();
+        require(plane->is_enabled(),"tutorial did not enable shared clipping plane");
+        plane->set_cross_section_width(.01f); // keep the thin slab visible in this small fixture
         viewer.camera()->setViewDirection(vec3(-1,1,-1));
         require(viewer.add_model(file)!=nullptr,"cross-section fixture load failed");
         if (viewer.device().supported_sample_counts()&4) viewer.set_samples(4);
@@ -57,7 +61,8 @@ int main(int argc,char**) {
         // Look from the retained side: opaque cube surfaces must hide the guide.
         const Camera saved(*viewer.camera());
         viewer.camera()->setViewDirection(vec3(-1,1,1)); viewer.camera()->showEntireScene(); frame(viewer);
-        const auto behind=viewer.capture(); viewer.set_overlays({}); const auto reference=viewer.capture();
+        const auto behind=viewer.capture(); plane->set_visible(false); const auto reference=viewer.capture();
+        plane->set_visible(true);
         same_picking(behind,reference);
         const auto probe_clip=viewer.camera()->modelViewProjectionMatrix()*vec4(.4f,-.4f,-1,1);
         const int bx=int((probe_clip.x/probe_clip.w+1)*.5f*behind.width),by=int((1-probe_clip.y/probe_clip.w)*.5f*behind.height);
@@ -72,6 +77,21 @@ int main(int argc,char**) {
         *viewer.camera()=saved; frame(viewer);
         const auto initial=viewer.capture();
         require(viewer.clipping_planes().size()==1 && hits(initial)>100,"cross-section did not enable a clipping plane"); check_planes(viewer,initial);
+        require((plane->center()-viewer.camera()->sceneCenter()).norm()<1e-6f &&
+                std::abs(plane->scene_radius()-viewer.camera()->sceneRadius())<1e-6f,"shared plane was not fitted to tutorial scene");
+        // Changes through the public controller must be visible without a
+        // tutorial pre_draw() copying state into private planes/geometry.
+        const auto color=plane->color();plane->set_color(vec4(0,.5f,1,.4f));
+        const auto recolored=viewer.capture();same_picking(initial,recolored);
+        require(recolored.rgba!=initial.rgba,"tutorial ignored shared plane color");
+        plane->set_color(color);require(viewer.capture().rgba==initial.rgba,"restoring shared plane color changed scene");
+        std::vector<graphics::Vertex> marker(3);
+        marker[0].position=vec3(.7f,.7f,0);marker[1].position=vec3(.95f,.7f,0);marker[2].position=vec3(.7f,.95f,0);
+        graphics::DrawCommand app;app.geometry=std::make_shared<graphics::Geometry>(marker);app.color=vec4(0,1,0,1);
+        viewer.set_overlays({app});frame(viewer);const auto annotated=viewer.capture();same_picking(initial,annotated);
+        require(annotated.rgba!=initial.rgba,"tutorial erased application overlay");
+        frame(viewer);require(viewer.capture().rgba==annotated.rgba,"tutorial frame replaced application overlay");
+        viewer.set_overlays({});require(viewer.capture().rgba==initial.rgba,"clearing application overlay erased shared guide");
         auto key=glfwSetKeyCallback(viewer.window(),nullptr); glfwSetKeyCallback(viewer.window(),key);
         auto press=[&](int code) { key(viewer.window(),code,0,GLFW_PRESS,GLFW_MOD_ALT); frame(viewer); };
         press(GLFW_KEY_V); const auto hidden=viewer.capture();

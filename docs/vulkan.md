@@ -1101,7 +1101,8 @@ continue to identify the original primitives rather than generated cut pieces.
 Native-only window builds now include `Tutorial_307_CrossSection`. Left/right
 drag rotates/translates its plane; **Alt+C** toggles clipping, **Alt+V** toggles the
 guide, and **Alt+X** toggles a slab ending at the plane. The native tutorial uses
-a slab width of 1% of the scene radius. Its guide does not change scene bounds, depth or picking. The following
+a slab width of 1% of the scene radius at this stage; the shared-controller
+consolidation below adopts the OpenGL default instead. Its guide does not change scene bounds, depth or picking. The following
 annotation stage adds depth-tested transparent fill to the initial wireframe
 guide, using the shared clipping-plane color and opacity. The guide's MVP follows camera changes,
 including resize; its geometry is rebuilt after plane motion. The original
@@ -1150,13 +1151,14 @@ selection/automatic OpenGL fallback.
 
 ## Depth-tested transparent guides
 
-Tutorial 307 now draws a filled translucent plane and an opaque outline, using
+At this stage Tutorial 307 gained a filled translucent plane and an opaque outline, using
 `setting::clipping_plane_color` (red with opacity 0.2 by default). The fill follows
 the manipulated plane in both clipping and slab modes. It is visible through
 the retained geometry from the cut side, and opaque surfaces nearer the camera
 occlude it. Alt+V hides/shows both fill and outline; the guide remains exempt from
-scene clipping, camera bounds and model picking. The secondary slab boundary is
-outlined. This is a spatial guide, not generated mesh cut-cap geometry.
+scene clipping, camera bounds and model picking. The private native controller also outlined the secondary slab boundary. The
+shared-controller consolidation below uses the OpenGL guide instead. This is a
+spatial guide, not generated mesh cut-cap geometry.
 
 `graphics::DrawCommand::overlay_depth_test` enables this annotation path when
 `overlay` is true. `VulkanOffScreen::set_overlays()` sets `overlay` automatically,
@@ -2050,8 +2052,8 @@ selection. The shader halfspace/slab signs match OpenGL `set_program()`. Like
 OpenGL, this plane is shared across viewers, including its fitting and enabled
 state. The per-host `set_clipping_planes()` configuration remains available and
 is restored when the shared plane is disabled. Scene clearing retains both.
-Tutorial 307's existing private native controller still works; consolidating it
-onto the shared controller remains a later cleanup.
+Tutorial 307 still used its private native controller at this stage; it is
+consolidated onto the shared controller below.
 
 The plane's transparent face and wire guide use an independent scene-annotation
 path, depth-tested against opaque geometry with scene depth and IDs read-only.
@@ -2070,3 +2072,37 @@ OpenGL-only viewer target succeed. The native renderer has no GL/GLEW imports,
 and the transparent-guide/HUD/application-overlay snapshot was visually inspected.
 The existing MoltenVK integer-attachment warning remains; no new validation
 errors were reported. Desktop suites were run sequentially.
+
+
+## Tutorial 307 shared clipping controller
+
+Tutorial 307 now uses `easy3d::ClippingPlane` in both backends. The tutorial enables
+it and overrides unmodified left/right drags to manipulate its frame, matching
+the OpenGL example. Alt-C/V/X and plane fitting come from the viewer. The native
+private frame, constraint, plane equations, key/mouse setup hooks, guide caches
+and `pre_draw()` overlay replacement have been removed. Only the constructor's
+native window-options signature requires a backend conditional; the tutorial's
+behavior and usage hint now share one implementation.
+
+The renderer owns transparent guide drawing and refreshes it from shared state
+and the capture camera. Application annotations persist across tutorial frames;
+clearing them does not erase the clipping guide. The default slab thickness now
+matches the OpenGL controller (`0.001 * scene radius`) instead of the old native
+private controller's `0.01`. Both backends draw the primary plane face/wire using
+its configured color/opacity; the former native-only secondary outline is gone.
+The singleton retains OpenGL's shared lifetime and state semantics.
+
+The existing native cross-section regression retains clipping/slab equations,
+transparency, guide occlusion, picking, gestures, resize, MSAA and snapshot
+coverage. It now also checks public shared-state color changes without a draw
+callback, fitting and independent application overlays. Its small slab fixture
+explicitly requests a 1% width so it remains visible at the test resolution. The
+usage-hint regression restores shared enablement after inspecting this tutorial.
+
+Verified on this Mac with MoltenVK: all 48 native tests and all 26 combined
+OpenGL/Vulkan tests pass. The expanded cross-section test also passes explicitly
+with Vulkan/synchronization validation. Both configurations build; the OpenGL-only
+viewer target builds and Tutorial 307's OpenGL main/viewer sources compile and
+link as C++11. The native snapshot was visually inspected. The existing MoltenVK
+integer-attachment warning remains; no new validation errors were reported.
+Desktop suites were run sequentially.

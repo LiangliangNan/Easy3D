@@ -7,6 +7,7 @@
 #include <tutorials/Tutorial_403_PointSelection/viewer.h>
 #include <tutorials/Tutorial_404_VirtualScanner/viewer.h>
 #include <easy3d/fileio/image_io.h>
+#include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/util/initializer.h>
 #define GLFW_INCLUDE_NONE
 #include <3rd_party/glfw/include/GLFW/glfw3.h>
@@ -80,7 +81,11 @@ int main(int argc,char**) {
             require(scanner.device().validation_errors()==0,"scanner hint validation errors");
         }
         {Inspect<TutorialPointSelection> x("selection",options);require(x.hint().find("select (left)")!=std::string::npos,"selection hint missing");}
-        {Inspect<CrossSection> x("clipping",options);require(x.hint().find("clipping plane")!=std::string::npos,"clipping hint missing");}
+        {
+            const bool enabled=ClippingPlane::instance()->is_enabled();
+            {Inspect<CrossSection> x("clipping",options);require(x.hint().find("clipping plane")!=std::string::npos,"clipping hint missing");}
+            ClippingPlane::instance()->set_enabled(enabled);
+        }
         {Inspect<TutorialTextRendering> x("text",options);require(x.manual().find("Text Rendering usage")!=std::string::npos,"text manual missing");}
         {Inspect<TutorialModelPicker> x("models",options);require(x.hint().find("pick/unpick a model")!=std::string::npos,"model picker hint missing");}
         {Inspect<TutorialFacePicker> x("faces",options);require(x.hint().find("on a face")!=std::string::npos,"face picker hint missing");}

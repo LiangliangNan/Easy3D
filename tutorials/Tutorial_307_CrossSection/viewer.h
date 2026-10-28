@@ -29,11 +29,6 @@
 
 #include "../viewer_backend.h"
 
-#if EASY3D_TUTORIAL_USES_VULKAN
-#include <easy3d/renderer/manipulated_frame.h>
-#include <easy3d/renderer/constraint.h>
-#endif
-
 namespace easy3d {
 
 class CrossSection : public easy3d::TutorialViewer {
@@ -46,21 +41,6 @@ public:
 
 protected:
     bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;
-#if EASY3D_TUTORIAL_USES_VULKAN
-    bool key_press_event(int key, int modifiers) override;
-    bool mouse_press_event(int x, int y, int button, int modifiers) override;
-    bool mouse_release_event(int x, int y, int button, int modifiers) override;
-    void pre_draw() override;
-
-private:
-    LocalConstraint constraint_;
-    ManipulatedFrame plane_;
-    bool enabled_ = true, visible_ = true, section_ = false, dirty_ = true;
-    float radius_ = 1;
-    std::weak_ptr<Model> last_model_;
-    size_t last_count_ = 0;
-    std::shared_ptr<const graphics::Geometry> guide_, fill_;
-#endif
 };
 
 } // namespace easy3d
