@@ -1,4 +1,5 @@
 ### ToDo list (or on going):
+- Send the computed value of "MVP * MANIP" to shaders (avoiding computing the matrix product for each vertex/fragment)
 - Walkthrough and animation; allow to modify the cameras interactively
 - Implement potree for huge point cloud visualization (https://github.com/potree/potree)
 - Add a measuring tool
@@ -23,23 +24,16 @@
 
 
 
-### About deployment on mac:
+### About deployment on macOS:
 Missing or Invalid Code Signature:
 The application or one of its dependencies is not properly code-signed.
 
 Solution: 
 - Re-sign the application and all its dependencies using the codesign tool. This will ensure that all libraries and frameworks are properly signed.
-
     `codesign --force --deep --sign - Mapple.app`
-
   - `--force`: Overwrite any existing code signature.
-
   - `--deep`: Recursively sign all nested binaries and libraries.
-
   - `--sign -`: Use an ad-hoc signature (for development). Replace - with your code signing identity for distribution.
-
 - Use the codesign tool to verify the code signatures of the application and its dependencies:
-  
   `codesign --verify --deep --strict Mapple.app`
-
   If there are any issues, the tool will provide detailed error messages.
