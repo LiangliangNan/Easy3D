@@ -62,6 +62,7 @@ bool TutorialCameraInterpolation::key_press_event(int key,int modifiers) {
     }
     if (key==KEY_D && modifiers==0) {
         interpolator_->delete_path();
+        path_renderer_=vulkan::KeyFrameInterpolatorRenderer();
         Box3 box;for (const auto& model:models()) box.grow(model->bounding_box());
         if (box.is_valid()) camera()->setSceneBoundingBox(box.min_point(),box.max_point());
         set_overlays({});update();return true;

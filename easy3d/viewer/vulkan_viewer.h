@@ -10,6 +10,8 @@ struct GLFWwindow;
 
 namespace easy3d {
 namespace graphics { class TextRenderer; }
+namespace vulkan { class KeyFrameInterpolatorRenderer; }
+class KeyFrameInterpolator;
 struct VulkanViewerOptions {
     int width = 800, height = 600;
     bool visible = true, resizable = true;
@@ -77,6 +79,9 @@ protected:
     // Same customization points as Viewer: printed at startup/F1 and drawn as a HUD.
     std::string manual_, hint_;
     int pressed_key_ = -1;
+    // Camera-path state corresponds to Viewer's kfi_ and show_camera_path_.
+    std::unique_ptr<KeyFrameInterpolator> kfi_;
+    bool show_camera_path_ = false;
     virtual void pre_draw() {}
     virtual void post_draw() {}
     virtual void post_resize(int, int) {}
@@ -94,6 +99,11 @@ private:
     struct Window;
     std::shared_ptr<Window> window_;
     bool animation_enabled_ = false;
+    std::unique_ptr<vulkan::KeyFrameInterpolatorRenderer> camera_path_renderer_;
+    std::chrono::steady_clock::time_point next_camera_path_frame_;
+    void advance_camera_path();
+    void update_camera_path_overlays() const;
+    void restore_scene_bounds();
     int pressed_button_ = -1;
     int mouse_pressed_x_ = 0, mouse_pressed_y_ = 0;
     int mouse_current_x_ = 0, mouse_current_y_ = 0;

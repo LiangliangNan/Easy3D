@@ -3,6 +3,8 @@
 #include <easy3d/graphics/vulkan/surface.h>
 #include <easy3d/graphics/text_renderer.h>
 #include <easy3d/renderer/backends/vulkan/shape.h>
+#include <easy3d/renderer/backends/vulkan/key_frame_interpolator.h>
+#include <easy3d/renderer/key_frame_interpolator.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/dialog.h>
@@ -36,7 +38,8 @@ const char* const default_manual = "Left drag: rotate; right drag: pan; middle d
                          "F/C: fit scene/model; P: projection; Space: align; F2: animation.\n"
                          "M: shading; E/V/B/L: edges/vertices/borders/locks; +/-: point size; []: line width.\n"
                          ",/.: previous/next model; Delete: delete model; D: properties.\n"
-                         "Ctrl/Command-C/V: copy/paste view; Ctrl/Command-O/S: open/save; S: snapshot.\n";
+                         "Ctrl/Command-C/V: copy/paste view; Ctrl/Command-O/S: open/save; S: snapshot.\n"
+                         "Alt-K/D: add/delete camera path; Ctrl/Command-K: play/pause; Ctrl/Command-T: show/hide path.\n";
 // Toolkit runtime ownership, not a global GPU cache. GLFW requires UI-thread use.
 struct GlfwRuntime {
     GlfwRuntime() { if (!glfwInit()) throw std::runtime_error("GLFW initialization failed (a desktop display is required)"); }
@@ -151,6 +154,8 @@ VulkanViewer::VulkanViewer(std::shared_ptr<Window> host, const graphics::DeviceO
     : VulkanOffScreen(host->width, host->height, host->device(options)), window_(std::move(host)) {
     try {
         manual_ = default_manual;
+        kfi_.reset(new KeyFrameInterpolator(camera()->frame()));
+        camera_path_renderer_.reset(new vulkan::KeyFrameInterpolatorRenderer);
         set_samples(window_->samples);
         window_->callbacks(this);
         int w, h; framebuffer_size(w, h);
@@ -164,6 +169,7 @@ VulkanViewer::VulkanViewer(std::shared_ptr<Window> host, const graphics::DeviceO
     }
 }
 VulkanViewer::~VulkanViewer() {
+    if (kfi_) kfi_->stop_interpolation();
     // Base classes are destroyed after members. Release the surface/device now,
     // while the member-owned GLFW window (and its Metal layer on macOS) still live.
     glfwSetWindowUserPointer(window_->handle, nullptr);
@@ -201,12 +207,37 @@ bool VulkanViewer::draw_frame() {
         animation_func_(this);
         if (should_close()) return false;
     }
+    advance_camera_path();
     print_usage();
     pre_draw();
+    update_camera_path_overlays();
     update_interaction_overlays();
     const bool drawn = present(samples());
     if (drawn) post_draw();
     return drawn;
+}
+void VulkanViewer::advance_camera_path() {
+    if (!kfi_->is_interpolation_started()) return;
+    const auto now=std::chrono::steady_clock::now();
+    if (now<next_camera_path_frame_) return;
+    kfi_->advance_interpolation();
+    next_camera_path_frame_=now+std::chrono::milliseconds(kfi_->interpolation_period());
+}
+void VulkanViewer::update_camera_path_overlays() const {
+    std::vector<graphics::DrawCommand> commands;
+    if (show_camera_path_ && !kfi_->is_interpolation_started()) {
+        auto path=camera_path_renderer_->draw_path(*kfi_,*camera());
+        auto cameras=camera_path_renderer_->draw_cameras(*kfi_,*camera(),camera()->sceneRadius()*.05f);
+        if (path.geometry) commands.push_back(path);
+        if (cameras.geometry) commands.push_back(cameras);
+    }
+    set_viewer_annotations(std::move(commands));
+}
+void VulkanViewer::restore_scene_bounds() {
+    Box3 box;
+    for (const auto& model:models()) box.grow(model->bounding_box());
+    for (const auto& drawable:drawables()) box.grow(drawable->bounding_box());
+    if (box.is_valid()) camera()->setSceneBoundingBox(box.min_point(),box.max_point());
 }
 void VulkanViewer::update_interaction_overlays(bool force) const {
     const bool pivot = show_pivot_point_ && std::chrono::steady_clock::now()<pivot_expires_;
@@ -256,14 +287,18 @@ void VulkanViewer::cancel_interaction() {
     camera()->frame()->action_end();
     update_interaction_overlays(true);
 }
-void VulkanViewer::clear_scene() { VulkanOffScreen::clear_scene(); cancel_interaction(); }
+void VulkanViewer::clear_scene() {
+    VulkanOffScreen::clear_scene();cancel_interaction();update_camera_path_overlays();
+}
 graphics::FrameImage VulkanViewer::capture() const { return capture(samples()); }
 graphics::FrameImage VulkanViewer::capture(unsigned sample_count) const {
+    update_camera_path_overlays();
     update_interaction_overlays();
     return VulkanOffScreen::capture(sample_count);
 }
 bool VulkanViewer::snapshot(const std::string& filename, float scaling, int samples,
                             int back_ground, bool expand) const {
+    update_camera_path_overlays();
     update_interaction_overlays();
     return render(filename, scaling, samples, back_ground, expand);
 }
@@ -377,6 +412,26 @@ bool VulkanViewer::key_press_event(int key, int modifiers) {
         camera()->frame()->translate(camera()->frame()->inverseTransformOf(direction));
     } else if (modifiers == MODIF_CTRL && (key == GLFW_KEY_MINUS || key == GLFW_KEY_EQUAL))
         camera()->frame()->action_zoom(key==GLFW_KEY_EQUAL?1:-1,camera());
+    else if (key == GLFW_KEY_K && modifiers == MODIF_ALT) {
+        if (kfi_->add_keyframe(*camera()->frame())) LOG(INFO) << "key frame added to camera path";
+    } else if (key == GLFW_KEY_D && modifiers == MODIF_ALT) {
+        kfi_->delete_path();
+        camera_path_renderer_.reset(new vulkan::KeyFrameInterpolatorRenderer);
+        set_viewer_annotations({});restore_scene_bounds();update();
+    } else if (key == GLFW_KEY_K && modifiers == MODIF_CTRL) {
+        if (kfi_->is_interpolation_started()) kfi_->stop_interpolation();
+        else {kfi_->start_manual_interpolation();next_camera_path_frame_=std::chrono::steady_clock::now();}
+        update();
+    } else if (key == GLFW_KEY_T && modifiers == MODIF_CTRL) {
+        show_camera_path_=!show_camera_path_;
+        if (show_camera_path_) {
+            float radius=camera()->sceneRadius();
+            for (size_t i=0;i<kfi_->number_of_keyframes();++i)
+                radius=std::max(radius,distance(camera()->sceneCenter(),kfi_->keyframe_position(i)));
+            camera()->setSceneRadius(radius);
+        } else restore_scene_bounds();
+        update();
+    }
     else if (key == GLFW_KEY_C && modifiers == MODIF_CTRL) copy_view();
     else if (key == GLFW_KEY_V && modifiers == MODIF_CTRL) paste_view();
     else if (key == GLFW_KEY_O && modifiers == MODIF_CTRL) open();
@@ -417,8 +472,8 @@ bool VulkanViewer::key_press_event(int key, int modifiers) {
         if (d) d->set_visible(!d->is_visible());
     } else if (key==GLFW_KEY_D && modifiers==0) {
         if (current_model()) current_model()->property_stats(std::cout);
-    } else if ((modifiers==MODIF_ALT && (key==GLFW_KEY_C || key==GLFW_KEY_V || key==GLFW_KEY_X || key==GLFW_KEY_K || key==GLFW_KEY_D)) ||
-               (modifiers==MODIF_CTRL && (key==GLFW_KEY_K || key==GLFW_KEY_T || key==GLFW_KEY_F)) ||
+    } else if ((modifiers==MODIF_ALT && (key==GLFW_KEY_C || key==GLFW_KEY_V || key==GLFW_KEY_X)) ||
+               (modifiers==MODIF_CTRL && (key==GLFW_KEY_F)) ||
                (modifiers==0 && (key==GLFW_KEY_A || key==GLFW_KEY_R))) {
         LOG(WARNING) << "This viewer shortcut is not yet available in the Vulkan backend";
     } else pressed_key_=key;

@@ -92,6 +92,8 @@ protected:
     // Host-owned HUD layer, after application overlays. Updating this cached
     // presentation state does not change the scene or application overlay list.
     void set_viewer_overlays(std::vector<graphics::DrawCommand> commands) const;
+    // Independent host-owned world-space annotations; scene depth/IDs are read-only.
+    void set_viewer_annotations(std::vector<graphics::DrawCommand> commands) const;
     void set_current_model_index(int index);
     VulkanOffScreen(int width, int height, std::unique_ptr<graphics::RenderDevice> device);
     bool present(unsigned samples = 1);

@@ -43,7 +43,7 @@ struct VulkanOffScreen::Impl {
     std::vector<std::shared_ptr<Model>> models;
     int model_idx = -1;
     std::vector<std::shared_ptr<Drawable>> drawables;
-    std::vector<graphics::DrawCommand> overlays, viewer_overlays;
+    std::vector<graphics::DrawCommand> overlays, viewer_overlays, viewer_annotations;
     std::vector<vec4> clipping_planes;
     vulkan::DrawableRenderer drawable_renderer;
 
@@ -71,6 +71,7 @@ struct VulkanOffScreen::Impl {
         }
         for (size_t i = 0; i < drawables.size(); ++i)
             append(drawables[i],uint32_t(models.size()+i),nullptr,false);
+        commands.insert(commands.end(),viewer_annotations.begin(),viewer_annotations.end());
         commands.insert(commands.end(),overlays.begin(),overlays.end());
         commands.insert(commands.end(),viewer_overlays.begin(),viewer_overlays.end());
         return commands;
@@ -167,7 +168,7 @@ bool VulkanOffScreen::delete_drawable(Drawable* drawable) {
 }
 const std::vector<std::shared_ptr<Drawable>>& VulkanOffScreen::drawables() const { return impl_->drawables; }
 void VulkanOffScreen::clear_scene() {
-    impl_->models.clear(); impl_->model_idx = -1; impl_->drawables.clear(); impl_->drawable_renderer.clear(); impl_->overlays.clear(); impl_->viewer_overlays.clear();
+    impl_->models.clear(); impl_->model_idx = -1; impl_->drawables.clear(); impl_->drawable_renderer.clear(); impl_->overlays.clear(); impl_->viewer_overlays.clear(); impl_->viewer_annotations.clear();
 }
 void VulkanOffScreen::set_overlays(std::vector<graphics::DrawCommand> commands) {
     for (auto& command : commands) command.overlay = true;
@@ -176,6 +177,10 @@ void VulkanOffScreen::set_overlays(std::vector<graphics::DrawCommand> commands) 
 void VulkanOffScreen::set_viewer_overlays(std::vector<graphics::DrawCommand> commands) const {
     for (auto& command : commands) { command.overlay = true; command.overlay_depth_test = false; }
     impl_->viewer_overlays = std::move(commands);
+}
+void VulkanOffScreen::set_viewer_annotations(std::vector<graphics::DrawCommand> commands) const {
+    for (auto& command : commands) { command.overlay = true; command.overlay_depth_test = true; }
+    impl_->viewer_annotations = std::move(commands);
 }
 void VulkanOffScreen::set_clipping_planes(const std::vector<vec4>& planes) {
     impl_->clipping_planes=graphics::normalize_clipping_planes(planes);

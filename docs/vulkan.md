@@ -1655,8 +1655,8 @@ models selects the last model and clearing a scene clears that selection, matchi
 the original viewer's ownership policy. Tutorial input overrides remain virtual.
 
 Remaining differences: global clipping-plane shortcuts/Alt manipulation, corner
-axes, frame-rate and camera-path display/playback and shader hot reload still
-need native counterparts. Pivot/region hints and usage hints are implemented
+axes, frame-rate display and shader hot reload still need native counterparts.
+Camera-path display/playback is implemented in the later stages below. Pivot/region hints and usage hints are implemented
 in the stages below. Unsupported
 feature shortcuts warn rather than silently invoking a different camera action;
 Tutorial 307's own clipping controls remain available. This step does not claim
@@ -1705,7 +1705,7 @@ boundaries, one/four samples, unchanged depth and picking IDs, independent
 application overlays, surface picking through a cross, modifier/focus cancellation,
 expiry without frame callbacks, resize and scene clearing. It saves a rendered
 region image for inspection in the test working directory. Remaining viewer gaps
-include global clipping tools, corner axes, camera paths, frame-rate displays
+include global clipping tools, corner axes and frame-rate displays
 and animated focus transitions. Usage displays are implemented below.
 
 Verified on this Mac with MoltenVK: all 38 native CTests and all 19 combined
@@ -1888,8 +1888,8 @@ The tutorial advances manual playback in `pre_draw()` using a monotonic clock
 and the shared interpolation period. Captures alone do not advance the camera,
 and delayed frames do not cause catch-up bursts. The spline, quaternion and
 keyframe math are shared with OpenGL rather than reimplemented in the viewer.
-The base Vulkan viewer's global Alt/Ctrl camera-path shortcuts remain a separate
-migration task; this stage implements Tutorial 206's own path workflow.
+This stage implements Tutorial 206's own path workflow. The shared viewer's
+global Alt/Ctrl camera-path shortcuts are implemented in the next stage below.
 
 The native drawing counterpart lives in
 `renderer/backends/vulkan/key_frame_interpolator.h` / `key_frame_interpolator.cpp`.
@@ -1919,3 +1919,49 @@ three-frame four-sample validation run. The OpenGL-only viewer target and the
 tutorial's OpenGL C++11 source checks pass. No validation errors were reported;
 the existing MoltenVK integer-attachment warning remains. The rendered camera
 markers/path and unchanged usage hint were visually inspected.
+
+
+## Shared viewer camera-path controls
+
+`VulkanViewer` now implements the global camera-path shortcuts corresponding to
+`Viewer`: Alt-K records a keyframe, Alt-D stops/deletes the path, Ctrl/Command-K
+plays/pauses it, and Ctrl/Command-T toggles its display. `kfi_` and
+`show_camera_path_` correspond to the original viewer's protected path state.
+Showing a path expands scene radius to include its keyframes; hiding/deleting it
+restores bounds from attached scene geometry when available. Empty scenes avoid
+invalid bounding boxes. Custom shortcut bindings still take precedence.
+
+Playback uses the shared manual interpolation API on the UI thread, after the
+application animation callback and before `pre_draw()`. It does not replace
+`animation_func_` or its F2 state. Pause/resume retains the next sample; captures
+and snapshots refresh guide drawing without advancing either animation. Delayed
+frames do not cause catch-up bursts. Tutorial-specific path controllers remain
+separate, as in the OpenGL counterpart. Scene clearing preserves the viewer-owned
+path, matching `Viewer`; Alt-D removes it and releases cached guide geometry.
+Tutorial 206's own D action now also releases its guide cache.
+
+A separate host-owned world-annotation layer in `VulkanOffScreen` composes global
+paths independently of application overlays and the viewer HUD. Derived tutorial
+`pre_draw()` implementations can continue replacing `set_overlays()` without
+erasing global markers, and global path updates do not erase clipping guides,
+images or text. Path/camera rendering reuses the renderer backend helper added
+for Tutorial 206, with scene-depth testing and read-only scene depth/picking IDs.
+The default manual lists the new controls.
+
+The new `vulkan.viewercamerapath` regression covers registered shortcut callbacks,
+modifier isolation, visibility/bounds, independent application overlays and
+animation, non-advancing captures, resume, custom bindings, scene-clear retention,
+independent viewers, deletion, resize and one/four-sample depth/ID invariants.
+It saves a rendered global-path image, including a separate application overlay,
+for visual inspection. Native-only, combined and OpenGL-only builds succeed.
+
+Verified on MoltenVK on this Mac: all 24 combined OpenGL/Vulkan CTests pass in
+one run. All 46 native checks pass across the full runs and isolated desktop
+reruns: the existing picker test had an extra selection callback in one run, and
+the existing OBJ-viewer post-resize picking assertion failed in another; both
+passed with validation/CTest in isolation. This is not a claim of a clean native
+single-pass run. The new shared-path regression passes in both configurations and
+also explicitly with native validation. No new validation errors were reported;
+the existing MoltenVK integer-attachment warning remains. The OpenGL-only viewer
+build passes, and the rendered global path/application overlay image was visually
+inspected. GPU/desktop suites were run sequentially.
