@@ -1813,3 +1813,52 @@ validation run. The OpenGL-only viewer target builds, and the tutorial's OpenGL
 main/viewer sources pass C++11 compilation checks. No validation errors were
 reported; the existing MoltenVK integer-attachment warning remains. A manipulation
 snapshot was visually inspected for the selected object, guide and usage hint.
+
+
+## Tutorial 406: collision detection
+
+Tutorial 406 now uses the native Vulkan host through its original `main.cpp`,
+`viewer.h` and `viewer.cpp` pair. The OpenGL constructor/handlers and timer remain
+available in the same files. Both implementations share their manual and hint
+strings. The default scene loads the same bunny and mannequin and colors
+intersecting triangle faces red using the shared CPU `Collider`/Opcode engine.
+
+Native animation runs on the viewer's UI thread through `animation_func_`, not a
+background timer that mutates rendering data. A monotonic per-viewer clock retains
+the original 50 ms update cadence and incremental rotation rule. Delayed or
+minimized frames do not trigger catch-up bursts. Plain Space and F2 share the
+pause/resume state; resuming resets the next tick. Captures do not advance the
+simulation. When paused, Alt-left rotates the bunny and Alt-right translates it,
+then collision detection updates immediately. These gestures leave camera and
+local mesh vertices unchanged. Release, focus loss and resize end the gesture.
+
+The collider uses the shared manipulator matrices for both meshes, while per-face
+`face_color` properties drive the existing renderer and Vulkan command path.
+Color changes preserve source face provenance, scene depth and picking IDs,
+including with MSAA. Native tool state holds weak references and checks scene
+membership before access. Deleting either mesh, clearing the scene or invalidating
+the configured pair stops animation, retires the collision trees and restores
+base face colors, preventing stale red contacts on a remaining mesh. No model
+signal callback refers to a destroyed viewer. Collision trees describe fixed
+triangle geometry; derived viewers can call `initialize_collision()` to rebuild
+for a new two-mesh scene. Unsupported/empty mesh pairs fail before entering the
+underlying collider's triangle-only construction path.
+
+The new `vulkan.collision` regression uses deterministic crossing triangles and
+compares marked face properties against an independent shared-collider result.
+It checks rendered color changes without depth/ID changes at one/four samples,
+source-face picking, separated meshes, paused manipulation, focus/resize cleanup,
+UI-only animation timing, captures, pause/resume, deletion, retired colors and
+retained model lifetime. The tutorial joins bounded native CTests. Native and
+combined builds include the same interaction regression, and the original
+OpenGL main/viewer sources pass C++11 compilation checks.
+
+Verified on MoltenVK on this Mac: final sequential runs pass all 43 native CTests
+and all 22 combined OpenGL/Vulkan CTests. The combined suite enables Khronos and
+synchronization validation; the focused native collision regression also passed
+explicitly with validation. Tutorial 406 passed a three-frame four-sample
+validation run. The OpenGL-only viewer target builds, and Tutorial 406's OpenGL
+main/viewer sources pass C++11 compilation checks. No validation errors were
+reported; the previously documented MoltenVK integer-attachment warning remains.
+The default two-mesh scene was visually inspected for collision coloring and its
+usage hint; a source audit confirms that manual and hint text match OpenGL.
