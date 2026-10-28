@@ -26,6 +26,18 @@
 
 #include "viewer.h"
 
+namespace {
+const char* const usage_manual = "----------------------- Text Rendering usage ------------------------ \n"
+            "Press '+'/'-' to increase/decrease font size                          \n"
+            "Press '<'/'>' to increase/decrease character spacing                  \n"
+            "Press 'up'/'down' to increase/decrease line spacing                   \n"
+            "Press 'l'/'c'/'r' to left/center/right align the multi-line text      \n"
+            "Press 'o' to switch the origin between 'upper left' and 'bottom left' \n"
+            "Press 'space' to enable/disable kerning                               \n"
+            "--------------------------------------------------------------------- \n";
+}
+
+
 #if EASY3D_TUTORIAL_USES_VULKAN
 #include <easy3d/graphics/text_renderer.h>
 #include <easy3d/util/file_system.h>
@@ -41,6 +53,7 @@ using namespace easy3d;
 
 TutorialTextRendering::TutorialTextRendering(const std::string& title,const easy3d::VulkanViewerOptions& options)
         : VulkanViewer(title,options) {
+    manual_ = usage_manual;
     std::vector<std::string> files;
     easy3d::file_system::get_directory_entries(easy3d::resource::directory()+"/fonts/",files,false);
     std::sort(files.begin(),files.end());
@@ -134,15 +147,7 @@ TutorialTextRendering::TutorialTextRendering(const std::string &title)
         , alignment_(TextRenderer::ALIGN_CENTER)
         , upper_left_(true)
 {
-    manual_ =
-            "----------------------- Text Rendering usage ------------------------ \n"
-            "Press '+'/'-' to increase/decrease font size                          \n"
-            "Press '<'/'>' to increase/decrease character spacing                  \n"
-            "Press 'up'/'down' to increase/decrease line spacing                   \n"
-            "Press 'l'/'c'/'r' to left/center/right align the multi-line text      \n"
-            "Press 'o' to switch the origin between 'upper left' and 'bottom left' \n"
-            "Press 'space' to enable/disable kerning                               \n"
-            "--------------------------------------------------------------------- \n";
+    manual_ = usage_manual;
 }
 
 

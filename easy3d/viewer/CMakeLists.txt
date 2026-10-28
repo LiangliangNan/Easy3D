@@ -113,6 +113,18 @@ if(Easy3D_ENABLE_VULKAN AND Easy3D_BUILD_VULKAN_TESTS)
             add_test(NAME vulkan.objviewer COMMAND easy3d_vulkan_obj_viewer_test ${validation_args})
             set_tests_properties(vulkan.objviewer PROPERTIES TIMEOUT 120 LABELS desktop)
         endif()
+        add_executable(easy3d_vulkan_usage_test tests/usage_test.cpp
+                ../../tutorials/Tutorial_306_ImageViewer/viewer.cpp
+                ../../tutorials/Tutorial_307_CrossSection/viewer.cpp
+                ../../tutorials/Tutorial_309_TextRendering/viewer.cpp
+                ../../tutorials/Tutorial_401_ModelPicker/viewer.cpp
+                ../../tutorials/Tutorial_402_FacePicker/viewer.cpp
+                ../../tutorials/Tutorial_403_PointSelection/viewer.cpp
+                ../../tutorials/Tutorial_404_VirtualScanner/viewer.cpp)
+        target_link_libraries(easy3d_vulkan_usage_test PRIVATE easy3d::viewer)
+        target_compile_definitions(easy3d_vulkan_usage_test PRIVATE EASY3D_TUTORIAL_VULKAN)
+        add_test(NAME vulkan.usage COMMAND easy3d_vulkan_usage_test ${validation_args})
+        set_tests_properties(vulkan.usage PROPERTIES TIMEOUT 120 LABELS desktop)
         add_executable(easy3d_vulkan_interaction_overlay_test tests/interaction_overlay_test.cpp)
         target_link_libraries(easy3d_vulkan_interaction_overlay_test PRIVATE easy3d::viewer)
         add_test(NAME vulkan.interactionoverlay COMMAND easy3d_vulkan_interaction_overlay_test ${validation_args})

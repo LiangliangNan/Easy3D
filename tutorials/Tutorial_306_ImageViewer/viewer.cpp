@@ -26,6 +26,14 @@
 
 #include "viewer.h"
 
+namespace {
+const char* const usage_manual = "";
+const char* const usage_hint = "Ctrl + o: open an image\n"
+            "Mouse wheel: zoom in/out\n"
+            "f: reset the view";
+}
+
+
 #if EASY3D_TUTORIAL_USES_VULKAN
 #include <easy3d/fileio/image_io.h>
 #include <easy3d/util/dialog.h>
@@ -40,6 +48,8 @@ using namespace easy3d;
 
 TutorialImageViewer::TutorialImageViewer(const std::string& title,const std::string& file,
                         const easy3d::VulkanViewerOptions& options) : VulkanViewer(title,options) {
+    manual_ = usage_manual;
+    hint_ = usage_hint;
     if (!load_image(file)) throw std::runtime_error("could not load image: "+file);
     fit_screen();
 }
@@ -123,10 +133,8 @@ TutorialImageViewer::TutorialImageViewer(const std::string& title, const std::st
 {
     image_file_ = image_file;
 
-    manual_ = "";
-    hint_ = "Ctrl + o: open an image\n"
-            "Mouse wheel: zoom in/out\n"
-            "f: reset the view";
+    manual_ = usage_manual;
+    hint_ = usage_hint;
 }
 
 

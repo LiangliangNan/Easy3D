@@ -1655,9 +1655,9 @@ models selects the last model and clearing a scene clears that selection, matchi
 the original viewer's ownership policy. Tutorial input overrides remain virtual.
 
 Remaining differences: global clipping-plane shortcuts/Alt manipulation, corner
-axes, frame-rate and camera-path display/playback, shader hot reload and HUD
-usage hints still need native counterparts. Pivot/region hints are implemented
-in the next stage below. Unsupported
+axes, frame-rate and camera-path display/playback and shader hot reload still
+need native counterparts. Pivot/region hints and usage hints are implemented
+in the stages below. Unsupported
 feature shortcuts warn rather than silently invoking a different camera action;
 Tutorial 307's own clipping controls remain available. This step does not claim
 complete interaction or renderer parity.
@@ -1705,8 +1705,8 @@ boundaries, one/four samples, unchanged depth and picking IDs, independent
 application overlays, surface picking through a cross, modifier/focus cancellation,
 expiry without frame callbacks, resize and scene clearing. It saves a rendered
 region image for inspection in the test working directory. Remaining viewer gaps
-include global clipping tools, corner axes, camera paths, frame-rate/HUD usage
-displays and animated focus transitions.
+include global clipping tools, corner axes, camera paths, frame-rate displays
+and animated focus transitions. Usage displays are implemented below.
 
 Verified on this Mac with MoltenVK: all 38 native CTests and all 19 combined
 OpenGL/Vulkan CTests pass, including the new interaction-overlay regression.
@@ -1715,3 +1715,50 @@ native test also passed explicitly with validation. No validation errors were
 reported; the previously documented MoltenVK integer-attachment warning remains.
 The OpenGL-only renderer/viewer build passes. The generated region image was
 visually inspected for transparent fill, boundary and application overlay layering.
+
+
+## Manuals and usage hints across viewer counterparts
+
+Every native `VulkanViewer` now supports the OpenGL viewer's usage behavior:
+print the configured manual once when execution begins, print the current manual
+again on F1, and draw a nonempty usage hint in blue in the upper-left corner.
+The protected `manual_` and `hint_` customization fields match `Viewer`, and
+`set_usage()` retains its existing semantics: an empty manual suppresses help,
+`"default"` preserves the current manual, and an empty hint removes its HUD text.
+The default native manual describes supported native controls. Captures alone do
+not print startup manuals; `run()`, `run_frames()` and first frame presentation do.
+
+All currently ported viewers that customize OpenGL usage text retain that text:
+Tutorials 306 (image), 307 (clipping), 309 (text), 401/402 (model/face picking),
+403 (point selection) and 404 (virtual scanning). The five separate constructor
+implementations use shared file-local text constants for both backends; the
+shared picker constructors now set their hints for either backend. Original
+OpenGL viewer/tutorial/application paths continue to use their existing usage
+presentation. Viewers whose OpenGL counterparts leave a hint empty keep it empty.
+For the picker tutorial tests, the shared tutorial backend selector also supports
+an explicit native host in combined-backend builds.
+
+Native usage hints use the existing CPU TrueType text renderer and bundled
+Roboto Medium font, scaled to framebuffer DPI. Text layout and immutable atlas
+commands are cached and refreshed when hint text, viewport or DPI changes,
+including assignments directly to the protected field. Font loading is lazy;
+missing resource fonts produce a warning without disabling the viewer or console
+manuals. The HUD composes with application overlays and pivot/region hints, and
+never writes scene depth or picking IDs. Scene clearing retains viewer usage,
+matching OpenGL's persistent HUD behavior.
+
+The new `vulkan.usage` regression covers startup output, F1, all seven custom
+usage configurations, blank/default behavior, direct protected-field updates,
+blue multiline HUD rendering, application-overlay isolation, scene clearing,
+resize, MSAA and unchanged depth/picking data. It renders an image for visual
+inspection. Native and combined builds share this coverage; OpenGL source checks
+also cover all fourteen affected tutorial translation units.
+
+Verified on MoltenVK on this Mac: all 39 native CTests and all 20 combined
+OpenGL/Vulkan CTests pass. The combined suite enables Khronos/synchronization
+validation, and the usage test also passed explicitly with validation. No
+validation errors were reported; the existing MoltenVK integer-attachment warning
+remains. The OpenGL-only viewer build and all fourteen affected OpenGL tutorial
+translation units pass compilation checks. A source audit confirms that all seven
+custom usage configurations preserve the original OpenGL text exactly, and the
+rendered usage HUD was visually inspected.

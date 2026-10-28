@@ -26,6 +26,18 @@
 
 #include "viewer.h"
 
+namespace {
+const char* const usage_manual = "-------------- Virtual Scanner usage -------------- \n"
+            "- change the view using the mouse.\n"
+            "- press the 'Space' key to perform scanning. Everything (and only those) visible\n"
+            "  will be captured in a point cloud.\n"
+            "- press 'n' to toggle Gaussian noise.\n"
+            "---------------------------------------------------------- \n";
+const char* const usage_hint = "press 'Space' to perform scanning\n"
+            "press 'n' to toggle Gaussian noise";
+}
+
+
 #if EASY3D_TUTORIAL_USES_VULKAN
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/algo/gaussian_noise.h>
@@ -36,6 +48,8 @@ using namespace easy3d;
 
 TutorialVirtualScanner::TutorialVirtualScanner(const std::string& title,
             const easy3d::VulkanViewerOptions& options) : VulkanViewer(title,options) {
+    manual_ = usage_manual;
+    hint_ = usage_hint;
     camera()->setUpVector(easy3d::vec3(0,1,0));
 }
 
@@ -77,16 +91,9 @@ TutorialVirtualScanner::TutorialVirtualScanner(const std::string &title)
 {
     camera()->setUpVector(vec3(0, 1, 0));
 
-    manual_ =
-            "-------------- Virtual Scanner usage -------------- \n"
-            "- change the view using the mouse.\n"
-            "- press the 'Space' key to perform scanning. Everything (and only those) visible\n"
-            "  will be captured in a point cloud.\n"
-            "- press 'n' to toggle Gaussian noise.\n"
-            "---------------------------------------------------------- \n";
+    manual_ = usage_manual;
 
-    hint_ = "press 'Space' to perform scanning\n"
-            "press 'n' to toggle Gaussian noise";
+    hint_ = usage_hint;
 }
 
 

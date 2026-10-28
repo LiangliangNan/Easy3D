@@ -9,6 +9,7 @@
 struct GLFWwindow;
 
 namespace easy3d {
+namespace graphics { class TextRenderer; }
 struct VulkanViewerOptions {
     int width = 800, height = 600;
     bool visible = true, resizable = true;
@@ -73,6 +74,8 @@ public:
     vec3 point_under_pixel(int x, int y, bool& found) const;
     GLFWwindow* window() const; // borrowed native host; do not destroy; never an OpenGL context
 protected:
+    // Same customization points as Viewer: printed at startup/F1 and drawn as a HUD.
+    std::string manual_, hint_;
     virtual void pre_draw() {}
     virtual void post_draw() {}
     virtual void post_resize(int, int) {}
@@ -101,7 +104,13 @@ private:
     void update_interaction_overlays(bool force = false) const;
     void cancel_interaction();
     std::map<Key, std::map<Modifier, std::pair<Function, Model*>>> commands_;
-    std::string manual_, hint_;
+    mutable std::unique_ptr<graphics::TextRenderer> texter_;
+    mutable bool fonts_tried_ = false;
+    mutable std::string rendered_hint_;
+    mutable float hint_dpi_ = 0;
+    mutable std::vector<graphics::DrawCommand> hint_commands_;
+    bool usage_printed_ = false;
+    void print_usage();
     void copy_view();
     void paste_view();
     VulkanViewer(std::shared_ptr<Window> window, const graphics::DeviceOptions& options);

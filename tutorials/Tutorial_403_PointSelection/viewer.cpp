@@ -26,6 +26,11 @@
 
 #include "viewer.h"
 
+namespace {
+const char* const usage_hint = "Pressing Shift, drag the mouse to select (left) or deselect (right) points";
+}
+
+
 #if EASY3D_TUTORIAL_USES_VULKAN
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/renderer/renderer.h>
@@ -39,7 +44,8 @@
 using namespace easy3d;
 
 TutorialPointSelection::TutorialPointSelection(const std::string& title,
-            const easy3d::VulkanViewerOptions& options) : VulkanViewer(title,options) {}
+            const easy3d::VulkanViewerOptions& options) : VulkanViewer(title,options) {
+    hint_ = usage_hint;}
 
 bool TutorialPointSelection::mouse_press_event(int x,int y,int button,int modifiers) {
     if ((modifiers & GLFW_MOD_SHIFT) && (button==GLFW_MOUSE_BUTTON_LEFT || button==GLFW_MOUSE_BUTTON_RIGHT)) {
@@ -171,7 +177,7 @@ using namespace easy3d;
 // \cond
 
 TutorialPointSelection::TutorialPointSelection(const std::string &title) : Viewer(title) {
-    hint_ = "Pressing Shift, drag the mouse to select (left) or deselect (right) points";
+    hint_ = usage_hint;
 }
 
 

@@ -25,7 +25,7 @@
  ********************************************************************/
 
 #include "viewer.h"
-#ifdef EASY3D_NO_OPENGL
+#if EASY3D_TUTORIAL_USES_VULKAN
 #define GLFW_INCLUDE_NONE
 #include <3rd_party/glfw/include/GLFW/glfw3.h>
 #else
@@ -43,24 +43,22 @@ using namespace easy3d;
 
 // \cond
 
-#ifdef EASY3D_NO_OPENGL
+#if EASY3D_TUTORIAL_USES_VULKAN
 TutorialModelPicker::TutorialModelPicker(const std::string& title,const VulkanViewerOptions& options)
-        : Viewer(title,options) {
+        : TutorialViewer(title,options) {
 #else
-TutorialModelPicker::TutorialModelPicker(const std::string &title) : Viewer(title) {
+TutorialModelPicker::TutorialModelPicker(const std::string &title) : TutorialViewer(title) {
 #endif
     // We always want to look at the front of the easy3d logo.
     camera()->setViewDirection(vec3(0, 0, -1));
     camera()->setUpVector(vec3(0, 1, 0));
 
-#ifndef EASY3D_NO_OPENGL
     hint_ = "Press the left button to pick/unpick a model";
-#endif
 }
 
 
 bool TutorialModelPicker::mouse_press_event(int x, int y, int button, int modifiers) {
-#ifdef EASY3D_NO_OPENGL
+#if EASY3D_TUTORIAL_USES_VULKAN
     const auto hit=(button==GLFW_MOUSE_BUTTON_LEFT && modifiers==0) ? pick(x,y) : PickResult{};
     auto* model=hit.model.get();
 #else
@@ -70,7 +68,7 @@ bool TutorialModelPicker::mouse_press_event(int x, int y, int button, int modifi
     if (model)
         mark(model);
 
-    return Viewer::mouse_press_event(x, y, button, modifiers);
+    return TutorialViewer::mouse_press_event(x, y, button, modifiers);
 }
 
 

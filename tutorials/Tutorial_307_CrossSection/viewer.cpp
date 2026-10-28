@@ -26,6 +26,15 @@
 
 #include "viewer.h"
 
+namespace {
+const char* const usage_hint = "Left button:  rotate the clipping plane    \n"
+            "Right button: translate the clipping plane \n"
+            "Alt + 'c':    enable/disable clipping plane\n"
+            "Alt + 'v':    show/hide clipping plane     \n"
+            "Alt + 'x':    toggle cross-section";
+}
+
+
 #if EASY3D_TUTORIAL_USES_VULKAN
 #include <easy3d/renderer/manipulated_frame.h>
 #include <easy3d/renderer/constraint.h>
@@ -38,6 +47,7 @@ using namespace easy3d;
 namespace easy3d {
 
 CrossSection::CrossSection(const std::string& title,const VulkanViewerOptions& options) : VulkanViewer(title,options) {
+    hint_ = usage_hint;
     constraint_.setTranslationConstraint(AxisPlaneConstraint::AXIS,vec3(0,0,1));
     plane_.setConstraint(&constraint_);
 }
@@ -136,12 +146,7 @@ namespace easy3d {
         // Code of interest:
         ClippingPlane::instance()->set_enabled(true);
 
-        hint_ =
-            "Left button:  rotate the clipping plane    \n"
-            "Right button: translate the clipping plane \n"
-            "Alt + 'c':    enable/disable clipping plane\n"
-            "Alt + 'v':    show/hide clipping plane     \n"
-            "Alt + 'x':    toggle cross-section";
+        hint_ = usage_hint;
     }
 
 

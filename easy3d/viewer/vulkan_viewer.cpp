@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/vulkan_viewer.h>
 #include <easy3d/graphics/vulkan/surface.h>
+#include <easy3d/graphics/text_renderer.h>
 #include <easy3d/renderer/backends/vulkan/shape.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/util/logging.h>
@@ -29,6 +30,13 @@
 
 namespace easy3d {
 namespace {
+const char* const default_manual = "Left drag: rotate; right drag: pan; middle drag/wheel: zoom.\n"
+                         "X/Y/O + drag: constrain axes; Shift-click: pivot; Z-click: focus.\n"
+                         "Ctrl/Command-left drag: region zoom; arrows: navigate; Ctrl/Command-arrows: pan.\n"
+                         "F/C: fit scene/model; P: projection; Space: align; F2: animation.\n"
+                         "M: shading; E/V/B/L: edges/vertices/borders/locks; +/-: point size; []: line width.\n"
+                         ",/.: previous/next model; Delete: delete model; D: properties.\n"
+                         "Ctrl/Command-C/V: copy/paste view; Ctrl/Command-O/S: open/save; S: snapshot.\n";
 // Toolkit runtime ownership, not a global GPU cache. GLFW requires UI-thread use.
 struct GlfwRuntime {
     GlfwRuntime() { if (!glfwInit()) throw std::runtime_error("GLFW initialization failed (a desktop display is required)"); }
@@ -142,6 +150,7 @@ VulkanViewer::VulkanViewer(const std::string& title, const VulkanViewerOptions& 
 VulkanViewer::VulkanViewer(std::shared_ptr<Window> host, const graphics::DeviceOptions& options)
     : VulkanOffScreen(host->width, host->height, host->device(options)), window_(std::move(host)) {
     try {
+        manual_ = default_manual;
         set_samples(window_->samples);
         window_->callbacks(this);
         int w, h; framebuffer_size(w, h);
@@ -192,6 +201,7 @@ bool VulkanViewer::draw_frame() {
         animation_func_(this);
         if (should_close()) return false;
     }
+    print_usage();
     pre_draw();
     update_interaction_overlays();
     const bool drawn = present(samples());
@@ -200,10 +210,33 @@ bool VulkanViewer::draw_frame() {
 }
 void VulkanViewer::update_interaction_overlays(bool force) const {
     const bool pivot = show_pivot_point_ && std::chrono::steady_clock::now()<pivot_expires_;
-    if (!force && pivot==pivot_hint_visible_ && width()==hint_width_ && height()==hint_height_) return;
-    std::vector<graphics::DrawCommand> commands;
     int ww=0,wh=0; glfwGetWindowSize(window(),&ww,&wh);
     const float dpi = ww>0 ? float(width())/ww : 1.0f;
+    const bool hint_changed = rendered_hint_!=hint_ || hint_dpi_!=dpi || width()!=hint_width_ || height()!=hint_height_;
+    if (!force && !hint_changed && pivot==pivot_hint_visible_ && width()==hint_width_ && height()==hint_height_) return;
+    if (hint_changed) {
+        hint_commands_.clear();
+        if (!hint_.empty()) {
+            if (!fonts_tried_) {
+                fonts_tried_=true;
+                try {
+                    texter_.reset(new graphics::TextRenderer);
+                    texter_->add_font(resource::directory()+"/fonts/en_Roboto-Medium.ttf");
+                } catch (const std::exception& e) {
+                    texter_.reset();
+                    LOG(WARNING) << "Viewer usage font unavailable: " << e.what();
+                }
+            }
+            if (texter_) {
+                graphics::TextOptions options;
+                options.size=15*dpi; options.x=35*dpi; options.y=22.5f*dpi;
+                options.color=vec4(0,0,1,1);
+                hint_commands_=texter_->layout(hint_,width(),height(),options).commands;
+            }
+        }
+        rendered_hint_=hint_; hint_dpi_=dpi;
+    }
+    std::vector<graphics::DrawCommand> commands=hint_commands_;
     if (pivot) {
         const float x=pivot_pixel_.x,y=pivot_pixel_.y,size=10*dpi;
         commands.push_back(vulkan::shape::draw_lines_2d({vec2(x-size,y),vec2(x+size,y),
@@ -247,6 +280,7 @@ int VulkanViewer::run(bool see_all) {
 int VulkanViewer::run_frames(unsigned max_frames) {
     try {
         if (window_->error) std::rethrow_exception(window_->error);
+        print_usage();
         unsigned frames = 0;
         while (!should_close()) {
             poll_events();
@@ -330,13 +364,6 @@ bool VulkanViewer::key_press_event(int key, int modifiers) {
     if ((key == GLFW_KEY_ESCAPE && modifiers == 0) || (key == GLFW_KEY_F4 && modifiers == MODIF_ALT)) exit();
     else if (key == GLFW_KEY_F1 && modifiers == 0) {
         if (!manual_.empty()) std::cout << manual_ << '\n';
-        else std::cout << "Left drag: rotate; right drag: pan; middle drag/wheel: zoom.\n"
-                         "X/Y/O + drag: constrain axes; Shift-click: pivot; Z-click: focus.\n"
-                         "Ctrl/Command-left drag: region zoom; arrows: navigate; Ctrl/Command-arrows: pan.\n"
-                         "F/C: fit scene/model; P: projection; Space: align; F2: animation.\n"
-                         "M: shading; E/V/B/L: edges/vertices/borders/locks; +/-: point size; []: line width.\n"
-                         ",/.: previous/next model; Delete: delete model; D: properties.\n"
-                         "Ctrl/Command-C/V: copy/paste view; Ctrl/Command-O/S: open/save; S: snapshot.\n";
     } else if (key == GLFW_KEY_F2 && modifiers == 0) set_animation(!animation_enabled_);
     else if ((key == GLFW_KEY_LEFT || key == GLFW_KEY_RIGHT) && modifiers == 0)
         camera()->frame()->action_turn((key==GLFW_KEY_LEFT?1.0f:-1.0f)*float(M_PI/180.0),camera());
@@ -408,6 +435,12 @@ bool VulkanViewer::key_release_event(int key, int) {
 void VulkanViewer::set_usage(const std::string& manual, const std::string& screen_hint) {
     if (manual!="default") manual_=manual;
     hint_=screen_hint;
+    update();
+}
+void VulkanViewer::print_usage() {
+    if (usage_printed_) return;
+    usage_printed_=true;
+    if (!manual_.empty()) std::cout << manual_ << std::endl;
 }
 void VulkanViewer::copy_view() {
     const auto p=camera()->position(); const auto q=camera()->orientation();

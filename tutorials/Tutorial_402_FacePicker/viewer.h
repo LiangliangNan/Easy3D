@@ -27,7 +27,7 @@
 #ifndef EASY3D_TUTORIAL_FACE_PICKER_VIEWER_H
 #define EASY3D_TUTORIAL_FACE_PICKER_VIEWER_H
 
-#include <easy3d/viewer/viewer.h>
+#include "../viewer_backend.h"
 
 
 // This class demonstrates how to pick faces in a surface mesh using the mouse
@@ -36,15 +36,15 @@ namespace easy3d {
     class Model;
 }
 
-class TutorialFacePicker : public easy3d::Viewer {
+class TutorialFacePicker : public easy3d::TutorialViewer {
 public:
-#ifdef EASY3D_NO_OPENGL
+#if EASY3D_TUTORIAL_USES_VULKAN
     explicit TutorialFacePicker(const std::string& title,const easy3d::VulkanViewerOptions& options = {});
 #else
     explicit TutorialFacePicker(const std::string &title);
 #endif
 
-#ifdef EASY3D_NO_OPENGL
+#if EASY3D_TUTORIAL_USES_VULKAN
     easy3d::Model* add_model(const std::string& file_name,bool create_default_drawables=true) override;
 #else
     easy3d::Model* add_model(const std::string& file_name);
