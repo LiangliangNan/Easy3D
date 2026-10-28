@@ -1656,9 +1656,9 @@ ordering, so keyboard cycling does not alter draw/picking IDs. Adding/deleting
 models selects the last model and clearing a scene clears that selection, matching
 the original viewer's ownership policy. Tutorial input overrides remain virtual.
 
-Remaining differences: global clipping-plane shortcuts/Alt manipulation, corner
-axes and shader hot reload still need native counterparts. Frame-rate display
-is implemented in the later stage below.
+At this stage global clipping controls, corner axes, frame-rate display and
+shader hot reload still lacked native counterparts. The stages below implement
+clipping, axes and frame-rate display; shader hot reload remains outstanding.
 Camera-path display/playback is implemented in the later stages below. Pivot/region hints and usage hints are implemented
 in the stages below. Unsupported
 feature shortcuts warn rather than silently invoking a different camera action;
@@ -1708,7 +1708,8 @@ boundaries, one/four samples, unchanged depth and picking IDs, independent
 application overlays, surface picking through a cross, modifier/focus cancellation,
 expiry without frame callbacks, resize and scene clearing. It saves a rendered
 region image for inspection in the test working directory. Remaining viewer gaps
-include global clipping tools, corner axes and animated focus transitions. Usage displays are implemented below.
+at this stage included global clipping tools, corner axes and animated focus
+transitions. The stages below implement clipping, axes and usage displays.
 
 Verified on this Mac with MoltenVK: all 38 native CTests and all 19 combined
 OpenGL/Vulkan CTests pass, including the new interaction-overlay regression.
@@ -2106,3 +2107,60 @@ viewer target builds and Tutorial 307's OpenGL main/viewer sources compile and
 link as C++11. The native snapshot was visually inspected. The existing MoltenVK
 integer-attachment warning remains; no new validation errors were reported.
 Desktop suites were run sequentially.
+
+
+## Corner orientation axes and independent 3D HUD depth
+
+`VulkanViewer::draw_corner_axes()` now corresponds to `Viewer::draw_corner_axes()`.
+Axes are visible by default; unmodified A toggles visibility and custom bindings
+take precedence. The default manual lists the shortcut. The viewer uses the same
+RGB cylinders/cones and cyan origin sphere from the shared shape helpers, with
+Vulkan's directional diffuse lighting. Geometry is immutable and reused across
+frames. Camera orientation controls the triad; position, zoom and perspective/
+orthographic projection do not change it. The lower-left region is 100 logical
+pixels square, recalculated from each window's framebuffer DPI and dimensions.
+Visibility is per viewer and survives resize and scene clearing.
+
+`graphics::DrawCommand::overlay_independent_depth` introduces triangle HUD draws
+that test and write their own cleared depth attachment. They render after scene
+depth annotations and before flat application/viewer HUD overlays. Flat text and
+region hints retain their existing path. Scene depth and integer picking IDs are
+preserved, including in single-sample captures. This supports solid self-occluding
+widgets without reserving part of the scene's depth range or reading images back
+to the CPU. The viewer's separate 3D HUD layer keeps axes independent of
+application overlays, global camera paths and clipping guides.
+
+The Vulkan pass/framebuffer variant and D32 attachment are created only when a
+frame requests independent HUD depth. The attachment matches the color sample
+count (four bytes per pixel per sample), is cleared each frame and discarded
+after use; it never contributes to depth readback or picking. Adding/removing
+the layer recreates the target when the required pass variant changes. Color
+composition and MSAA resolve finish after all HUD layers. The backend validates
+that independent depth is only requested on triangle overlays and is not combined
+with scene-depth testing. Ordinary offscreen frames retain their existing pass
+and allocation. No additional optional Vulkan device feature is required.
+
+The low-level depth-overlay regression now checks independent depth order,
+per-frame clearing, lighting/normal transforms, flat-HUD ordering, preserved
+scene depth/IDs, removal and invalid flag combinations at one/four samples. The
+new `vulkan.corneraxes` test covers default visibility, registered shortcut and
+modifier behavior, orientation-only transforms, per-window visibility, DPI
+placement, resized placement, clear/resize retention, application overlays,
+snapshots, MSAA coverage and unchanged picking/depth. The usage-hint color oracle
+excludes the corner widget so its blue arrow cannot mask a missing hint.
+
+Existing fixtures account for the persistent default HUD: the streaming test
+hides it before comparing every point's color with source data; the hint test
+compares unlabelled images at the same sample count; and the interaction-clear
+test hides the retained axes before asserting an otherwise empty background.
+
+Verified on this Mac with MoltenVK: all 27 combined OpenGL/Vulkan tests pass in
+one run with validation enabled. All 49 native checks pass across the full suite
+and an isolated rerun: the existing desktop picker depth comparison failed once
+and passed immediately in isolation. This is not a claim of a clean single-pass
+native run. The new corner-axes regression passes in both configurations, and
+focused native axes/independent-depth tests pass with Vulkan/synchronization
+validation. Native/combined builds and the OpenGL-only viewer target succeed.
+The axes/scene/HUD snapshot was visually inspected. No new validation errors
+were reported; the existing MoltenVK integer-attachment warning remains. GPU
+desktop tests were run sequentially.

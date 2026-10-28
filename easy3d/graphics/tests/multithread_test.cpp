@@ -66,6 +66,10 @@ int main(int argc,char**) {
         VulkanViewerOptions options; options.visible=false; options.width=211; options.height=179;
         options.device.validation=options.device.synchronization_validation=argc>1;
         VulkanViewer viewer("Worker handoff regression",options);
+        auto key=glfwSetKeyCallback(viewer.window(),nullptr); glfwSetKeyCallback(viewer.window(),key);
+        // This oracle compares every point's rendered color with its source;
+        // hide the persistent HUD so it cannot cover otherwise valid point hits.
+        key(viewer.window(),GLFW_KEY_A,0,GLFW_PRESS,0);
         auto cloud=std::make_shared<PointCloud>();
         cloud->add_vertex_property<vec3>("v:color");
         cloud->add_vertex(vec3(0,0,0)); cloud->add_vertex(vec3(1,1,1));
@@ -93,7 +97,6 @@ int main(int argc,char**) {
             return true;
         };
         viewer.set_animation(true);
-        auto key=glfwSetKeyCallback(viewer.window(),nullptr); glfwSetKeyCallback(viewer.window(),key);
         key(viewer.window(),GLFW_KEY_F2,0,GLFW_PRESS,0);
         require(!viewer.is_animating(),"F2 did not pause the stream");
         require(worker.wait_for_batch(std::chrono::seconds(5)),"paused worker did not publish");

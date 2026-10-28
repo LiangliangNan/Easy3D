@@ -7,6 +7,8 @@
 #include <easy3d/renderer/key_frame_interpolator.h>
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/manipulator.h>
+#include <easy3d/renderer/shape.h>
+#include <easy3d/renderer/transform.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/dialog.h>
@@ -47,6 +49,7 @@ const char* const default_manual =
     "  's':                     Take a snapshot                                    \n"
     "  'p':                     Switch between perspective and orthographic projections\n"
     "  Ctrl + 'f':              Toggle frame rate display                          \n"
+    "  'a':                     Toggle axes visibility                             \n"
     "  Alt + 'c':               Toggle clipping plane                              \n"
     "  Alt + 'v':               Toggle clipping plane visibility                   \n"
     "  Alt + 'x':               Toggle cross-section                               \n"
@@ -309,7 +312,34 @@ void VulkanViewer::ensure_text_renderer() const {
         texter_.reset();LOG(WARNING) << "Viewer HUD font unavailable: " << e.what();
     }
 }
+void VulkanViewer::draw_corner_axes() const {
+    if (!show_corner_axes_) { set_viewer_3d_overlays({}); return; }
+    if (!corner_axes_geometry_) {
+        // Same cylinders, cones, sphere and RGB colors as Viewer.
+        std::vector<vec3> points,normals,colors;
+        for (const auto& axis : {vec3(1,0,0),vec3(0,1,0),vec3(0,0,1)}) {
+            shape::create_cylinder(.03f,10,vec3(0),.5f*axis,axis,points,normals,colors);
+            shape::create_cone(.06f,20,.5f*axis,.7f*axis,axis,points,normals,colors);
+        }
+        shape::create_sphere(vec3(0),.06f,20,20,vec3(0,1,1),points,normals,colors);
+        std::vector<graphics::Vertex> vertices(points.size());
+        for (size_t i=0;i<points.size();++i) {
+            vertices[i].position=points[i]; vertices[i].normal=normals[i]; vertices[i].color=vec4(colors[i],1);
+        }
+        corner_axes_geometry_=std::make_shared<graphics::Geometry>(std::move(vertices));
+    }
+    int logical_width=0,logical_height=0;glfwGetWindowSize(window(),&logical_width,&logical_height);
+    const float dpi=logical_width>0 ? float(width())/logical_width : 1;
+    const float sx=100*dpi/width(),sy=100*dpi/height();
+    const mat4 view=camera()->orientation().inverse().matrix();
+    const mat4 viewport=mat4::translation(vec3(-1+sx,-1+sy,0))*mat4::scale(sx,sy,1,1);
+    graphics::DrawCommand axes; axes.geometry=corner_axes_geometry_;
+    axes.model_view_projection=viewport*transform::ortho(-1,1,-1,1,-1,1)*view;
+    axes.normal_matrix=mat3(view); axes.lighting=true;
+    set_viewer_3d_overlays({axes});
+}
 void VulkanViewer::update_interaction_overlays(bool force) const {
+    draw_corner_axes();
     const bool pivot = show_pivot_point_ && std::chrono::steady_clock::now()<pivot_expires_;
     int ww=0,wh=0; glfwGetWindowSize(window(),&ww,&wh);
     const float dpi = ww>0 ? float(width())/ww : 1.0f;
@@ -573,7 +603,9 @@ bool VulkanViewer::key_press_event(int key, int modifiers) {
     } else if (modifiers==MODIF_ALT && key==GLFW_KEY_X) {
         auto* plane = ClippingPlane::instance();
         if (plane->is_enabled()) plane->set_cross_section(!plane->cross_section());
-    } else if (modifiers==0 && (key==GLFW_KEY_A || key==GLFW_KEY_R)) {
+    } else if (modifiers==0 && key==GLFW_KEY_A) {
+        show_corner_axes_=!show_corner_axes_;
+    } else if (modifiers==0 && key==GLFW_KEY_R) {
         LOG(WARNING) << "This viewer shortcut is not yet available in the Vulkan backend";
     } else pressed_key_=key;
     return false;

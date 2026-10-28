@@ -46,7 +46,7 @@ struct VulkanOffScreen::Impl {
     std::vector<std::shared_ptr<Model>> models;
     int model_idx = -1;
     std::vector<std::shared_ptr<Drawable>> drawables;
-    std::vector<graphics::DrawCommand> overlays, viewer_overlays, viewer_annotations;
+    std::vector<graphics::DrawCommand> overlays, viewer_overlays, viewer_3d_overlays, viewer_annotations;
     std::vector<vec4> clipping_planes;
     mutable std::vector<vec4> shared_clipping_planes;
     mutable vulkan::ClippingPlaneRenderer clipping_plane_renderer;
@@ -88,6 +88,7 @@ struct VulkanOffScreen::Impl {
         commands.insert(commands.end(),guide.begin(),guide.end());
         commands.insert(commands.end(),viewer_annotations.begin(),viewer_annotations.end());
         commands.insert(commands.end(),overlays.begin(),overlays.end());
+        commands.insert(commands.end(),viewer_3d_overlays.begin(),viewer_3d_overlays.end());
         commands.insert(commands.end(),viewer_overlays.begin(),viewer_overlays.end());
         return commands;
     }
@@ -183,18 +184,22 @@ bool VulkanOffScreen::delete_drawable(Drawable* drawable) {
 }
 const std::vector<std::shared_ptr<Drawable>>& VulkanOffScreen::drawables() const { return impl_->drawables; }
 void VulkanOffScreen::clear_scene() {
-    impl_->models.clear(); impl_->model_idx = -1; impl_->drawables.clear(); impl_->drawable_renderer.clear(); impl_->overlays.clear(); impl_->viewer_overlays.clear(); impl_->viewer_annotations.clear();
+    impl_->models.clear(); impl_->model_idx = -1; impl_->drawables.clear(); impl_->drawable_renderer.clear(); impl_->overlays.clear(); impl_->viewer_overlays.clear(); impl_->viewer_3d_overlays.clear(); impl_->viewer_annotations.clear();
 }
 void VulkanOffScreen::set_overlays(std::vector<graphics::DrawCommand> commands) {
     for (auto& command : commands) command.overlay = true;
     impl_->overlays = std::move(commands);
 }
 void VulkanOffScreen::set_viewer_overlays(std::vector<graphics::DrawCommand> commands) const {
-    for (auto& command : commands) { command.overlay = true; command.overlay_depth_test = false; }
+    for (auto& command : commands) { command.overlay = true; command.overlay_depth_test = command.overlay_independent_depth = false; }
     impl_->viewer_overlays = std::move(commands);
 }
+void VulkanOffScreen::set_viewer_3d_overlays(std::vector<graphics::DrawCommand> commands) const {
+    for (auto& command : commands) { command.overlay = command.overlay_independent_depth = true; command.overlay_depth_test = false; }
+    impl_->viewer_3d_overlays = std::move(commands);
+}
 void VulkanOffScreen::set_viewer_annotations(std::vector<graphics::DrawCommand> commands) const {
-    for (auto& command : commands) { command.overlay = true; command.overlay_depth_test = true; }
+    for (auto& command : commands) { command.overlay = command.overlay_depth_test = true; command.overlay_independent_depth = false; }
     impl_->viewer_annotations = std::move(commands);
 }
 void VulkanOffScreen::set_clipping_planes(const std::vector<vec4>& planes) {

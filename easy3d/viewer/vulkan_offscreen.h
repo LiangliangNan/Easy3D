@@ -46,8 +46,9 @@ public:
     // Triangle annotations and HUD overlays. Their immutable
     // geometry/images are retained; MVPs are supplied by the caller (for example
     // graphics::screen_space_projection()). overlay_depth_test annotations test
-    // scene depth and blend first, in input order; HUD overlays follow, in order.
-    // Sort overlapping depth-tested annotations back-to-front. None write depth/IDs.
+    // scene depth and blend first, in input order; independent-depth 3D HUDs
+    // follow, then flat HUD overlays. Sort overlapping scene-depth annotations
+    // back-to-front. None write scene depth/IDs.
     void set_overlays(std::vector<graphics::DrawCommand> commands);
     void fit_screen(const Model* model = nullptr);
     // Per-viewer world-space halfspaces, keeping dot(plane,vec4(world,1)) >= 0.
@@ -98,6 +99,8 @@ protected:
     // Host-owned HUD layer, after application overlays. Updating this cached
     // presentation state does not change the scene or application overlay list.
     void set_viewer_overlays(std::vector<graphics::DrawCommand> commands) const;
+    // Independent-depth 3D HUD, before flat viewer/application HUD overlays.
+    void set_viewer_3d_overlays(std::vector<graphics::DrawCommand> commands) const;
     // Independent host-owned world-space annotations; scene depth/IDs are read-only.
     void set_viewer_annotations(std::vector<graphics::DrawCommand> commands) const;
     void set_current_model_index(int index);

@@ -83,6 +83,9 @@ protected:
     std::unique_ptr<KeyFrameInterpolator> kfi_;
     bool show_camera_path_ = false;
     bool show_frame_rate_ = false;
+    bool show_corner_axes_ = true;
+    // Corresponds to Viewer::draw_corner_axes(); uses an isolated HUD depth buffer.
+    void draw_corner_axes() const;
     std::string framerate_ = "fps: -- (-- ms/frame)";
     virtual void pre_draw() {}
     virtual void post_draw() {}
@@ -122,6 +125,7 @@ private:
     mutable bool rendered_show_frame_rate_ = false;
     mutable std::string rendered_frame_rate_;
     mutable std::vector<graphics::DrawCommand> frame_rate_commands_;
+    mutable std::shared_ptr<const graphics::Geometry> corner_axes_geometry_;
     void cancel_interaction();
     std::map<Key, std::map<Modifier, std::pair<Function, Model*>>> commands_;
     mutable std::unique_ptr<graphics::TextRenderer> texter_;

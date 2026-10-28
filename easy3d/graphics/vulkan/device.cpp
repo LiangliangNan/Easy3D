@@ -491,22 +491,25 @@ struct RenderPass {
     VkPipeline pipelines[6] = {};
     VkPipeline overlay_pipeline = VK_NULL_HANDLE;
     VkPipeline depth_overlay_pipeline = VK_NULL_HANDLE;
+    VkPipeline hud_3d_pipeline = VK_NULL_HANDLE;
+    bool independent_depth = false;
     RenderPass(Context& context, PassKind mode, VkSampleCountFlagBits count) : c(context), kind(mode), samples(count) {}
     ~RenderPass() {
         for (auto p : pipelines) if (p) vkDestroyPipeline(c.device, p, nullptr);
         if (overlay_pipeline) vkDestroyPipeline(c.device, overlay_pipeline, nullptr);
         if (depth_overlay_pipeline) vkDestroyPipeline(c.device, depth_overlay_pipeline, nullptr);
+        if (hud_3d_pipeline) vkDestroyPipeline(c.device, hud_3d_pipeline, nullptr);
         if (handle) vkDestroyRenderPass(c.device, handle, nullptr);
     }
     void init() {
-        VkAttachmentDescription attachments[3] = {};
+        VkAttachmentDescription attachments[4] = {};
         const bool msaa = kind == PassKind::multisample_color;
         const bool ids_only = kind == PassKind::ids;
         const VkFormat formats[] = {
             ids_only ? VK_FORMAT_R32G32_UINT : VK_FORMAT_R8G8B8A8_UNORM,
             msaa || ids_only ? VK_FORMAT_D32_SFLOAT : VK_FORMAT_R32G32_UINT,
-            msaa ? VK_FORMAT_R8G8B8A8_UNORM : VK_FORMAT_D32_SFLOAT};
-        const unsigned count = ids_only ? 2 : 3;
+            msaa ? VK_FORMAT_R8G8B8A8_UNORM : VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT};
+        const unsigned count = ids_only ? 2 : independent_depth ? 4 : 3;
         for (unsigned i = 0; i < count; ++i) {
             auto& a = attachments[i];
             a.format = formats[i]; a.samples = msaa && i < 2 ? samples : VK_SAMPLE_COUNT_1_BIT;
@@ -517,6 +520,11 @@ struct RenderPass {
             a.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
             a.finalLayout = msaa && i < 2 ? (i == 0 ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL :
                                             VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) : VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+            if (i == 3) {
+                a.samples = samples; a.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+                a.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+                a.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+            }
         }
         VkAttachmentReference colors[] = {
             {ids_only ? VK_ATTACHMENT_UNUSED : 0u, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
@@ -524,7 +532,7 @@ struct RenderPass {
         VkAttachmentReference depth = {msaa || ids_only ? 1u : 2u, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
         VkAttachmentReference resolves[] = {{2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL},
                                            {VK_ATTACHMENT_UNUSED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL}};
-        VkSubpassDescription subpasses[3] = {};
+        VkSubpassDescription subpasses[4] = {};
         auto& scene = subpasses[0];
         scene.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
         scene.colorAttachmentCount = 2; scene.pColorAttachments = colors;
@@ -538,12 +546,21 @@ struct RenderPass {
         annotations.colorAttachmentCount = 1; annotations.pColorAttachments = &overlay_color;
         annotations.pDepthStencilAttachment = &read_depth;
         if (!msaa) { annotations.preserveAttachmentCount = 1; annotations.pPreserveAttachments = preserve; }
-        auto& overlay = subpasses[2];
+        const unsigned flat_subpass = independent_depth ? 3 : 2;
+        VkAttachmentReference hud_depth = {3, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL};
+        if (independent_depth) {
+            auto& hud = subpasses[2];
+            hud.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+            hud.colorAttachmentCount = 1; hud.pColorAttachments = &overlay_color;
+            hud.pDepthStencilAttachment = &hud_depth;
+            if (!msaa) { hud.preserveAttachmentCount = 2; hud.pPreserveAttachments = preserve; }
+        }
+        auto& overlay = subpasses[flat_subpass];
         overlay.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
         overlay.colorAttachmentCount = 1; overlay.pColorAttachments = &overlay_color;
         if (msaa) overlay.pResolveAttachments = resolves;
         else { overlay.preserveAttachmentCount = 2; overlay.pPreserveAttachments = preserve; }
-        VkSubpassDependency dependencies[6] = {};
+        VkSubpassDependency dependencies[9] = {};
         const auto color_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
         const auto depth_stages = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
         dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL; dependencies[0].dstSubpass = 0;
@@ -575,11 +592,23 @@ struct RenderPass {
         dependencies[5] = dependencies[1]; dependencies[5].srcSubpass = 2;
         dependencies[5].srcStageMask = color_stage;
         dependencies[5].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        if (independent_depth) {
+            dependencies[5].srcStageMask |= depth_stages;
+            dependencies[5].srcAccessMask |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+            dependencies[6] = dependencies[3]; dependencies[6].srcSubpass = 2; dependencies[6].dstSubpass = 3;
+            dependencies[7] = dependencies[1]; dependencies[7].srcSubpass = 3;
+            dependencies[7].srcStageMask = color_stage;
+            dependencies[7].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+            dependencies[8].srcSubpass = VK_SUBPASS_EXTERNAL; dependencies[8].dstSubpass = 2;
+            dependencies[8].srcStageMask = dependencies[8].dstStageMask = depth_stages;
+            dependencies[8].srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+            dependencies[8].dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        }
         VkRenderPassCreateInfo pi{};
         pi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
         pi.attachmentCount = count; pi.pAttachments = attachments;
-        pi.subpassCount = ids_only ? 1 : 3; pi.pSubpasses = subpasses;
-        pi.dependencyCount = ids_only ? 2 : 6; pi.pDependencies = dependencies;
+        pi.subpassCount = ids_only ? 1 : independent_depth ? 4 : 3; pi.pSubpasses = subpasses;
+        pi.dependencyCount = ids_only ? 2 : independent_depth ? 9 : 6; pi.pDependencies = dependencies;
         check(vkCreateRenderPass(c.device, &pi, nullptr, &handle), "create scene render pass");
     }
 };
@@ -589,12 +618,12 @@ struct Target {
     unsigned samples;
     RenderPass& color_pass;
     RenderPass* id_pass;
-    GpuImage color, ids, depth, multisample_color, multisample_depth;
+    GpuImage color, ids, depth, multisample_color, multisample_depth, hud_depth;
     VkFramebuffer framebuffer = VK_NULL_HANDLE, id_framebuffer = VK_NULL_HANDLE;
     Buffer readback;
     Target(Context& context, uint32_t w, uint32_t h, RenderPass& pass, RenderPass* picking)
         : c(context), width(w), height(h), samples(unsigned(pass.samples)), color_pass(pass), id_pass(picking),
-          color(c), ids(c), depth(c), multisample_color(c), multisample_depth(c), readback(c) {}
+          color(c), ids(c), depth(c), multisample_color(c), multisample_depth(c), hud_depth(c), readback(c) {}
     ~Target() {
         if (framebuffer) vkDestroyFramebuffer(c.device, framebuffer, nullptr);
         if (id_framebuffer) vkDestroyFramebuffer(c.device, id_framebuffer, nullptr);
@@ -613,16 +642,19 @@ struct Target {
                  VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
         depth.init(width, height, VK_FORMAT_D32_SFLOAT,
                    VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_IMAGE_ASPECT_DEPTH_BIT);
+        if (color_pass.independent_depth)
+            hud_depth.init(width,height,VK_FORMAT_D32_SFLOAT,VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                           VK_IMAGE_ASPECT_DEPTH_BIT,color_pass.samples);
         if (samples == 1) {
-            VkImageView views[] = {color.view, ids.view, depth.view};
-            create_framebuffer(color_pass.handle, views, 3, framebuffer);
+            VkImageView views[] = {color.view, ids.view, depth.view, hud_depth.view};
+            create_framebuffer(color_pass.handle, views, color_pass.independent_depth ? 4 : 3, framebuffer);
         } else {
             multisample_color.init(width, height, VK_FORMAT_R8G8B8A8_UNORM,
                 VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT, color_pass.samples);
             multisample_depth.init(width, height, VK_FORMAT_D32_SFLOAT,
                 VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT, color_pass.samples);
-            VkImageView color_views[] = {multisample_color.view, multisample_depth.view, color.view};
-            create_framebuffer(color_pass.handle, color_views, 3, framebuffer);
+            VkImageView color_views[] = {multisample_color.view, multisample_depth.view, color.view, hud_depth.view};
+            create_framebuffer(color_pass.handle, color_views, color_pass.independent_depth ? 4 : 3, framebuffer);
             VkImageView picking_views[] = {ids.view, depth.view};
             create_framebuffer(id_pass->handle, picking_views, 2, id_framebuffer);
         }
@@ -895,13 +927,15 @@ public:
         if (!(sample_counts_ & samples))
             throw std::invalid_argument("sample count " + std::to_string(samples) + " is unsupported by this device");
     }
-    RenderPass& color_pass(unsigned samples) {
-        auto found = passes_.find(samples);
+    RenderPass& color_pass(unsigned samples, bool independent_depth = false) {
+        const unsigned key = samples | (independent_depth ? 128u : 0u);
+        auto found = passes_.find(key);
         if (found != passes_.end()) return *found->second;
         std::unique_ptr<RenderPass> pass(new RenderPass(c_, samples == 1 ? PassKind::color_ids : PassKind::multisample_color,
                                                       static_cast<VkSampleCountFlagBits>(samples)));
+        pass->independent_depth = independent_depth;
         pass->init(); create_pipelines(*pass);
-        auto* result = pass.get(); passes_.emplace(samples, std::move(pass)); return *result;
+        auto* result = pass.get(); passes_.emplace(key, std::move(pass)); return *result;
     }
     RenderPass* picking_pass(unsigned samples) {
         if (samples == 1) return nullptr;
@@ -1106,7 +1140,17 @@ public:
                 depth.depthTestEnable = VK_TRUE; depth.depthWriteEnable = VK_FALSE;
                 depth.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
                 check(vkCreateGraphicsPipelines(c_.device,VK_NULL_HANDLE,1,&pi,nullptr,&pass.depth_overlay_pipeline), "create depth-tested overlay pipeline");
-                pi.subpass = 2; depth.depthTestEnable = VK_FALSE;
+                if (pass.independent_depth) {
+                    pi.subpass = 2; depth.depthTestEnable = depth.depthWriteEnable = VK_TRUE;
+                    depth.depthCompareOp = VK_COMPARE_OP_LESS;
+                    stages[0].module = modules[0]; // lit triangles, color-only fragment output
+                    vertex.vertexAttributeDescriptionCount = 6; vertex.pVertexAttributeDescriptions = attrs;
+                    check(vkCreateGraphicsPipelines(c_.device,VK_NULL_HANDLE,1,&pi,nullptr,&pass.hud_3d_pipeline), "create independent-depth HUD pipeline");
+                    stages[0].module = modules[8];
+                    vertex.vertexAttributeDescriptionCount = 3; vertex.pVertexAttributeDescriptions = overlay_attrs;
+                }
+                pi.subpass = pass.independent_depth ? 3 : 2;
+                depth.depthTestEnable = depth.depthWriteEnable = VK_FALSE;
                 check(vkCreateGraphicsPipelines(c_.device,VK_NULL_HANDLE,1,&pi,nullptr,&pass.overlay_pipeline), "create overlay pipeline");
             }
         } catch (...) {
@@ -1235,6 +1279,8 @@ public:
                 throw std::invalid_argument("scene draw requires geometry and a non-background object ID");
             if (command.overlay_depth_test && !command.overlay)
                 throw std::invalid_argument("overlay depth testing requires an overlay command");
+            if (command.overlay_independent_depth && (!command.overlay || command.overlay_depth_test))
+                throw std::invalid_argument("independent HUD depth requires an overlay without scene depth testing");
             if (command.overlay && command.geometry->topology() != Topology::triangles)
                 throw std::invalid_argument("overlay draws require triangle geometry");
             if (command.point_style != PointStyle::plain && command.point_style != PointStyle::sphere &&
@@ -1302,8 +1348,11 @@ public:
         for (auto it = textures_.begin(); it != textures_.end(); ) {
             if (it->second->source.expired()) it = textures_.erase(it); else ++it;
         }
-        if (!target_ || target_->width != width || target_->height != height || target_->samples != samples) {
-            auto& pass = color_pass(samples);
+        const bool independent_depth = std::any_of(commands.begin(),commands.end(),
+            [](const DrawCommand& d) {return d.overlay_independent_depth;});
+        if (!target_ || target_->width != width || target_->height != height || target_->samples != samples ||
+            target_->color_pass.independent_depth != independent_depth) {
+            auto& pass = color_pass(samples,independent_depth);
             auto* picking = picking_pass(samples);
             std::unique_ptr<Target> target(new Target(c_, width, height, pass, picking));
             target->init(); target_ = std::move(target);
@@ -1381,7 +1430,7 @@ public:
     void encode_pass(VkCommandBuffer cmd, const std::vector<Prepared>& draws, const vec4& background,
                  const RenderPass& pass, VkFramebuffer framebuffer) {
         const auto width = target_->width, height = target_->height;
-        VkClearValue clear[3] = {};
+        VkClearValue clear[4] = {};
         if (pass.kind == PassKind::ids) {
             clear[0].color.uint32[0] = clear[0].color.uint32[1] = UINT32_MAX;
             clear[1].depthStencil.depth = 1;
@@ -1392,11 +1441,14 @@ public:
                 clear[1].color.uint32[0] = clear[1].color.uint32[1] = UINT32_MAX;
                 clear[2].depthStencil.depth = 1;
             }
+            clear[3].depthStencil.depth = 1;
         }
         VkRenderPassBeginInfo begin{};
         begin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         begin.renderPass = pass.handle; begin.framebuffer = framebuffer;
-        begin.renderArea.extent = {width, height}; begin.clearValueCount = pass.kind == PassKind::ids ? 2 : 3; begin.pClearValues = clear;
+        begin.renderArea.extent = {width, height};
+        begin.clearValueCount = pass.kind == PassKind::ids ? 2 : pass.independent_depth ? 4 : 3;
+        begin.pClearValues = clear;
         vkCmdBeginRenderPass(cmd, &begin, VK_SUBPASS_CONTENTS_INLINE);
         VkViewport viewport = {0, 0, float(width), float(height), 0, 1};
         VkRect2D scissor = {{0, 0}, {width, height}};
@@ -1429,12 +1481,17 @@ public:
             else vkCmdDraw(cmd, draw.geometry->count, 1, 0, 0);
         }
         if (pass.kind != PassKind::ids) {
-            for (unsigned phase=0;phase<2;++phase) {
+            const unsigned phases = pass.independent_depth ? 3 : 2;
+            for (unsigned phase=0;phase<phases;++phase) {
                 vkCmdNextSubpass(cmd,VK_SUBPASS_CONTENTS_INLINE);
                 for (const auto& draw : draws) {
                     const auto& d = draw.command;
-                    if (!d.overlay || d.overlay_depth_test!=(phase==0)) continue;
-                    const auto pipeline=phase==0 ? pass.depth_overlay_pipeline : pass.overlay_pipeline;
+                    if (!d.overlay) continue;
+                    const unsigned draw_phase = d.overlay_depth_test ? 0 :
+                        d.overlay_independent_depth ? 1 : phases-1;
+                    if (draw_phase != phase) continue;
+                    const auto pipeline=phase==0 ? pass.depth_overlay_pipeline :
+                        phase==phases-1 ? pass.overlay_pipeline : pass.hud_3d_pipeline;
                     vkCmdBindPipeline(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,pipeline);
                     VkDeviceSize offset = 0;
                     vkCmdBindVertexBuffers(cmd,0,1,&draw.geometry->buffer.handle,&offset);
@@ -1443,6 +1500,9 @@ public:
                     for (unsigned col=0;col<4;++col) for (unsigned row=0;row<4;++row)
                         push.mvp[col*4+row] = d.model_view_projection(row,col);
                     for (unsigned i=0;i<4;++i) push.color[i] = d.color[i];
+                    push.lighting = d.lighting ? 1 : 0;
+                    for (unsigned col=0;col<3;++col) for (unsigned row=0;row<3;++row)
+                        push.normal[col*3+row] = d.normal_matrix(row,col);
                     vkCmdPushConstants(cmd,layout_,VK_SHADER_STAGE_VERTEX_BIT,0,sizeof(push),&push);
                     vkCmdDraw(cmd,draw.geometry->count,1,0,0);
                 }

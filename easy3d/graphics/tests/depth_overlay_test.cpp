@@ -32,6 +32,26 @@ int main(int argc,char**) {
         for (unsigned count:{1u,4u}) {
             if (!(device->supported_sample_counts()&count)) continue;
             const auto base=device->render(65,65,{near,far},vec4(0),count);
+            auto hud_near=rectangle(-.9f,-.9f,.9f,.9f,.2f,vec4(0,1,0,1),true);
+            auto hud_far=rectangle(-.9f,-.9f,.9f,.9f,.6f,vec4(1,0,0,1),true);
+            hud_near.overlay_independent_depth=hud_far.overlay_independent_depth=true;
+            const auto hud_frame=device->render(65,65,{hud_near,near,hud_far,far},vec4(0),count);
+            probe(hud_frame,16,32,0,255,0); // HUD wins even behind opaque scene depth
+            same_picking(base,hud_frame);
+            const auto hud_reversed=device->render(65,65,{hud_far,near,hud_near,far},vec4(0),count);
+            require(hud_reversed.rgba==hud_frame.rgba,"3D HUD ignored its own depth ordering");same_picking(base,hud_reversed);
+            const auto cleared=device->render(65,65,{near,far,hud_far},vec4(0),count);
+            probe(cleared,16,32,255,0,0);same_picking(base,cleared); // own depth clears each frame
+            auto flat=rectangle(-1,-1,1,1,1,vec4(0,0,1,1),true);
+            const auto layered=device->render(65,65,{flat,hud_near,near,far},vec4(0),count);
+            probe(layered,16,32,0,0,255);same_picking(base,layered);
+            hud_near.lighting=true;
+            const auto lit=device->render(65,65,{near,far,hud_near},vec4(0),count);
+            hud_near.normal_matrix=mat3(0,-1,0,0,0,1,1,0,0);
+            const auto relit=device->render(65,65,{near,far,hud_near},vec4(0),count);
+            require(lit.rgba!=relit.rgba,"3D HUD lighting ignored normal transform");same_picking(base,relit);
+            const auto no_hud=device->render(65,65,{near,far},vec4(0),count);
+            require(no_hud.rgba==base.rgba,"3D HUD left stale color after removal");same_picking(base,no_hud);
             const auto tinted=device->render(65,65,{guide,far,near},vec4(0),count);
             same_picking(base,tinted);
             probe(tinted,16,32,0,0,255);       // plane is behind the near opaque surface
@@ -86,6 +106,12 @@ int main(int argc,char**) {
         auto invalid=guide; invalid.overlay=false; bool rejected=false;
         try { device->render(65,65,{invalid}); } catch (const std::invalid_argument&) { rejected=true; }
         require(rejected,"depth annotation flag was accepted on an opaque scene draw");
+        invalid=guide;invalid.overlay_independent_depth=true;rejected=false;
+        try { device->render(65,65,{invalid}); } catch (const std::invalid_argument&) {rejected=true;}
+        require(rejected,"conflicting HUD/scene depth flags were accepted");
+        invalid.overlay_depth_test=false;invalid.overlay=false;rejected=false;
+        try { device->render(65,65,{invalid}); } catch (const std::invalid_argument&) {rejected=true;}
+        require(rejected,"independent depth was accepted on an opaque scene draw");
         require(device->validation_errors()==0,"depth annotation validation errors");
         std::cout << "PASS: scene-depth alpha annotations, occlusion/coplanarity, premultiplied readback, ordered layers/HUD, per-sample MSAA depth/blending, preserved picking/depth, resize\n";
     } catch (const std::exception& e) { std::cerr << "FAIL: " << e.what() << '\n'; return 1; }

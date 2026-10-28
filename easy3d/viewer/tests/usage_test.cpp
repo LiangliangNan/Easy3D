@@ -44,16 +44,18 @@ int main(int argc,char**) {
         for (unsigned samples:{1u,4u}) {
             if (!(v.device().supported_sample_counts()&samples)) continue;
             v.set_samples(samples);
+            const auto unlabeled=v.capture(); // axes coverage depends on the sample count
             v.set_usage("Custom manual","first hint line\nsecond hint line");
             const auto labeled=v.capture();same_picking(baseline,labeled);
-            unsigned blue=0;for (size_t i=0;i<labeled.rgba.size();i+=4)
+            // Count hint pixels above the corner axes, which also contain blue.
+            unsigned blue=0;for (size_t i=0;i<size_t(labeled.width)*(labeled.height/2)*4;i+=4)
                 blue+=labeled.rgba[i+2]>labeled.rgba[i]+20 && labeled.rgba[i+2]>labeled.rgba[i+1]+20;
             require(blue>50,"multiline blue usage hint was not rendered");
             v.set_overlays({});require(v.capture().rgba==labeled.rgba,"application overlay update erased usage hint");
             v.clear_scene();require(v.capture().rgba==labeled.rgba,"clearing scene lost persistent usage hint");
             v.direct_hint("replacement hint");require(v.capture().rgba!=labeled.rgba,"direct protected hint assignment kept stale text");
             v.set_usage("default","");require(v.manual()=="Custom manual","default sentinel reset custom manual");
-            require(v.capture().rgba==baseline.rgba,"empty hint left stale text");
+            require(v.capture().rgba==unlabeled.rgba,"empty hint left stale text");
         }
         auto key=glfwSetKeyCallback(v.window(),nullptr);glfwSetKeyCallback(v.window(),key);
         {

@@ -114,7 +114,9 @@ int main(int argc,char**) {
         v.clear_scene();
         const auto empty=v.capture();
         for (auto id:empty.ids) require(id.object==UINT32_MAX,"clear retained scene pick IDs");
-        for (auto c:empty.rgba) require(c==255,"clear retained viewer or application overlays");
+        key(v.window(),GLFW_KEY_A,0,GLFW_PRESS,0); // persistent corner axes survive scene clearing
+        const auto no_axes=v.capture();same_picking(empty,no_axes);
+        for (auto c:no_axes.rgba) require(c==255,"clear retained interaction or application overlays");
         require(v.device().validation_errors()==0,"interaction overlay validation errors");
         std::cout << "PASS: pivot/region hints, alpha, MSAA, depth/IDs, layer isolation, expiry, resize and focus\n";
     } catch (const std::exception& e) {std::cerr<<"FAIL: "<<e.what()<<'\n';return 1;}
