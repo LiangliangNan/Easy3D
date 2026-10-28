@@ -42,7 +42,7 @@ public:
     Drawable* add_drawable(std::shared_ptr<Drawable> drawable);
     bool delete_drawable(Drawable* drawable);
     const std::vector<std::shared_ptr<Drawable>>& drawables() const;
-    void clear_scene();
+    virtual void clear_scene();
     // Triangle annotations and HUD overlays. Their immutable
     // geometry/images are retained; MVPs are supplied by the caller (for example
     // graphics::screen_space_projection()). overlay_depth_test annotations test
@@ -89,6 +89,9 @@ public:
                 int back_ground = 1, bool expand = true) const;
     const graphics::RenderDevice& device() const;
 protected:
+    // Host-owned HUD layer, after application overlays. Updating this cached
+    // presentation state does not change the scene or application overlay list.
+    void set_viewer_overlays(std::vector<graphics::DrawCommand> commands) const;
     void set_current_model_index(int index);
     VulkanOffScreen(int width, int height, std::unique_ptr<graphics::RenderDevice> device);
     bool present(unsigned samples = 1);

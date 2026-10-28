@@ -1655,8 +1655,9 @@ models selects the last model and clearing a scene clears that selection, matchi
 the original viewer's ownership policy. Tutorial input overrides remain virtual.
 
 Remaining differences: global clipping-plane shortcuts/Alt manipulation, corner
-axes, frame-rate and camera-path display/playback, shader hot reload, pivot/region
-visual hints and HUD usage hints still need native counterparts. Unsupported
+axes, frame-rate and camera-path display/playback, shader hot reload and HUD
+usage hints still need native counterparts. Pivot/region hints are implemented
+in the next stage below. Unsupported
 feature shortcuts warn rather than silently invoking a different camera action;
 Tutorial 307's own clipping controls remain available. This step does not claim
 complete interaction or renderer parity.
@@ -1669,3 +1670,48 @@ bindings and virtual file actions. It restores clipboard text and substitutes
 virtual file hooks to avoid dialogs during automation. The combined build enables
 Khronos and synchronization validation; no validation errors were reported. The
 OpenGL-only renderer/viewer build also passes with the shared input identifiers.
+
+
+## Native pivot and region visual hints
+
+`VulkanViewer` now displays the interaction hints corresponding to `Viewer`:
+a black screen-space pivot cross after a successful Shift/Z surface pick, and a blue
+outline with 20%-alpha blue fill during Ctrl/Command-left region zoom. Cross size
+and line thickness account for HiDPI scaling. Pivot reset or a background pick
+removes the cross; it expires after ten seconds using a monotonic clock. Both
+explicit captures/snapshots and normal presentation refresh expiration without
+background timers or callbacks that can outlive the viewer.
+
+The host has a separate internal HUD command layer, composed after application
+overlays. Calling `set_overlays()` from a tutorial or application continues to
+replace only that application's commands, so text, clipping guides, images and
+selection drawing cannot accidentally erase the viewer's hints. Neither HUD
+layer writes scene depth or object/primitive IDs. Focus loss and framebuffer
+resize cancel pixel-coordinate gestures/hints; clearing the scene clears both
+layers and interaction state. Releasing the control modifier hides the region
+preview; mouse release removes the preview and applies region zoom.
+
+Screen-space shape generation lives in
+`easy3d/renderer/backends/vulkan/shape.h` / `shape.cpp`, following the existing
+renderer shape counterpart filenames and responsibilities. Quad fill, quad wire
+and 2D line helpers return immutable triangle commands using the existing overlay
+pass. They require neither geometry shaders nor native wide-line support.
+`VulkanViewer` owns gesture/pivot timing, while `VulkanOffScreen` owns scene and
+command composition. Cached hint geometry is replaced when input, viewport or
+visibility changes, rather than rebuilt every presented frame.
+
+The new `vulkan.interactionoverlay` regression checks alpha blending, visible
+boundaries, one/four samples, unchanged depth and picking IDs, independent
+application overlays, surface picking through a cross, modifier/focus cancellation,
+expiry without frame callbacks, resize and scene clearing. It saves a rendered
+region image for inspection in the test working directory. Remaining viewer gaps
+include global clipping tools, corner axes, camera paths, frame-rate/HUD usage
+displays and animated focus transitions.
+
+Verified on this Mac with MoltenVK: all 38 native CTests and all 19 combined
+OpenGL/Vulkan CTests pass, including the new interaction-overlay regression.
+The combined suite enables Khronos and synchronization validation, and the new
+native test also passed explicitly with validation. No validation errors were
+reported; the previously documented MoltenVK integer-attachment warning remains.
+The OpenGL-only renderer/viewer build passes. The generated region image was
+visually inspected for transparent fill, boundary and application overlay layering.

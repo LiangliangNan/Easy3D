@@ -3,6 +3,7 @@
 #define EASY3D_VIEWER_VULKAN_VIEWER_H
 #include <easy3d/viewer/vulkan_offscreen.h>
 #include <functional>
+#include <chrono>
 #include <map>
 #include <easy3d/viewer/viewer_input.h>
 struct GLFWwindow;
@@ -52,8 +53,9 @@ public:
     void update() const;
     void set_samples(unsigned samples);
     unsigned samples() const;
-    graphics::FrameImage capture() const { return VulkanOffScreen::capture(samples()); }
-    graphics::FrameImage capture(unsigned samples) const { return VulkanOffScreen::capture(samples); }
+    graphics::FrameImage capture() const;
+    graphics::FrameImage capture(unsigned samples) const;
+    void clear_scene() override;
     // Matches Viewer::snapshot() file-output parameters. Snapshot MSAA is
     // independent of the window samples; capture() uses the window samples.
     virtual bool open();
@@ -90,6 +92,14 @@ private:
     bool animation_enabled_ = false;
     int pressed_key_ = -1, pressed_button_ = -1;
     int mouse_pressed_x_ = 0, mouse_pressed_y_ = 0;
+    int mouse_current_x_ = 0, mouse_current_y_ = 0;
+    bool show_pivot_point_ = false, zoom_region_ = false;
+    vec2 pivot_pixel_ = vec2(0);
+    std::chrono::steady_clock::time_point pivot_expires_;
+    mutable bool pivot_hint_visible_ = false;
+    mutable int hint_width_ = 0, hint_height_ = 0;
+    void update_interaction_overlays(bool force = false) const;
+    void cancel_interaction();
     std::map<Key, std::map<Modifier, std::pair<Function, Model*>>> commands_;
     std::string manual_, hint_;
     void copy_view();

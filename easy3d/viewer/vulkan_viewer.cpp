@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/vulkan_viewer.h>
 #include <easy3d/graphics/vulkan/surface.h>
+#include <easy3d/renderer/backends/vulkan/shape.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/dialog.h>
@@ -128,11 +129,11 @@ struct VulkanViewer::Window {
             v.drop_event(names);
         }); });
         glfwSetWindowFocusCallback(handle, [](GLFWwindow* w, int focused) { dispatch(w, [&](VulkanViewer& v) {
-            if (!focused) { v.window_->button = -1; v.pressed_key_ = -1; v.pressed_button_ = -1; v.camera()->frame()->action_end(); }
+            if (!focused) { v.window_->button = -1; v.cancel_interaction(); }
             v.focus_event(focused != 0);
         }); });
         glfwSetFramebufferSizeCallback(handle, [](GLFWwindow* w, int width, int height) { dispatch(w, [&](VulkanViewer& v) {
-            if (width > 0 && height > 0) { v.VulkanOffScreen::resize(width, height); v.post_resize(width, height); }
+            if (width > 0 && height > 0) { v.VulkanOffScreen::resize(width, height); v.cancel_interaction(); v.post_resize(width, height); }
         }); });
     }
 };
@@ -186,18 +187,51 @@ bool VulkanViewer::draw_frame() {
     if (should_close() || glfwGetWindowAttrib(window_->handle, GLFW_ICONIFIED)) return false;
     int w, h; framebuffer_size(w, h);
     if (w <= 0 || h <= 0) return false;
-    if (width() != w || height() != h) { VulkanOffScreen::resize(w, h); post_resize(w, h); }
+    if (width() != w || height() != h) { VulkanOffScreen::resize(w, h); cancel_interaction(); post_resize(w, h); }
     if (is_animating()) {
         animation_func_(this);
         if (should_close()) return false;
     }
     pre_draw();
+    update_interaction_overlays();
     const bool drawn = present(samples());
     if (drawn) post_draw();
     return drawn;
 }
+void VulkanViewer::update_interaction_overlays(bool force) const {
+    const bool pivot = show_pivot_point_ && std::chrono::steady_clock::now()<pivot_expires_;
+    if (!force && pivot==pivot_hint_visible_ && width()==hint_width_ && height()==hint_height_) return;
+    std::vector<graphics::DrawCommand> commands;
+    int ww=0,wh=0; glfwGetWindowSize(window(),&ww,&wh);
+    const float dpi = ww>0 ? float(width())/ww : 1.0f;
+    if (pivot) {
+        const float x=pivot_pixel_.x,y=pivot_pixel_.y,size=10*dpi;
+        commands.push_back(vulkan::shape::draw_lines_2d({vec2(x-size,y),vec2(x+size,y),
+                         vec2(x,y-size),vec2(x,y+size)},vec4(0,0,0,1),width(),height(),dpi));
+    }
+    if (zoom_region_ && (mouse_current_x_!=mouse_pressed_x_ || mouse_current_y_!=mouse_pressed_y_)) {
+        const Rect rect{float(mouse_pressed_x_),float(mouse_current_x_),float(mouse_pressed_y_),float(mouse_current_y_)};
+        commands.push_back(vulkan::shape::draw_quad_filled(rect,vec4(0,0,1,.2f),width(),height()));
+        commands.push_back(vulkan::shape::draw_quad_wire(rect,vec4(0,0,1,1),width(),height(),dpi));
+    }
+    set_viewer_overlays(std::move(commands));
+    pivot_hint_visible_=pivot; hint_width_=width(); hint_height_=height();
+}
+void VulkanViewer::cancel_interaction() {
+    pressed_key_ = pressed_button_ = -1;
+    show_pivot_point_ = zoom_region_ = false;
+    camera()->frame()->action_end();
+    update_interaction_overlays(true);
+}
+void VulkanViewer::clear_scene() { VulkanOffScreen::clear_scene(); cancel_interaction(); }
+graphics::FrameImage VulkanViewer::capture() const { return capture(samples()); }
+graphics::FrameImage VulkanViewer::capture(unsigned sample_count) const {
+    update_interaction_overlays();
+    return VulkanOffScreen::capture(sample_count);
+}
 bool VulkanViewer::snapshot(const std::string& filename, float scaling, int samples,
                             int back_ground, bool expand) const {
+    update_interaction_overlays();
     return render(filename, scaling, samples, back_ground, expand);
 }
 int VulkanViewer::run(bool see_all) {
@@ -233,13 +267,19 @@ vec3 VulkanViewer::point_under_pixel(int x, int y, bool& found) const {
     return unproject_pixel(x,y,frame.depth[pixel]);
 }
 bool VulkanViewer::mouse_press_event(int x, int y, int button, int modifiers) {
-    mouse_pressed_x_ = x; mouse_pressed_y_ = y; pressed_button_ = button;
+    mouse_pressed_x_ = mouse_current_x_ = x; mouse_pressed_y_ = mouse_current_y_ = y; pressed_button_ = button;
+    zoom_region_ = button == BUTTON_LEFT && modifiers == MODIF_CTRL;
     camera()->frame()->action_start();
     if (pressed_key_ == GLFW_KEY_Z || modifiers == MODIF_SHIFT) {
         if (button == BUTTON_LEFT) {
             bool found = false;
             const auto point = point_under_pixel(x, y, found);
             camera()->setPivotPoint(found ? point : camera()->sceneCenter());
+            show_pivot_point_ = found;
+            if (found) {
+                pivot_pixel_ = vec2(float(x),float(y));
+                pivot_expires_ = std::chrono::steady_clock::now()+std::chrono::seconds(10);
+            }
             if (found && pressed_key_ == GLFW_KEY_Z && modifiers == 0) {
                 // Apply the legacy zoom target directly on the UI thread.
                 camera()->setPosition(0.1f*camera()->position()+0.9f*point);
@@ -247,9 +287,11 @@ bool VulkanViewer::mouse_press_event(int x, int y, int button, int modifiers) {
             }
         } else if (button == BUTTON_RIGHT) {
             camera()->setPivotPoint(camera()->sceneCenter());
+            show_pivot_point_ = false;
             if (pressed_key_ == GLFW_KEY_Z && modifiers == 0) camera()->showEntireScene();
         }
     }
+    update_interaction_overlays(true);
     return false;
 }
 bool VulkanViewer::mouse_release_event(int x, int y, int button, int modifiers) {
@@ -259,9 +301,14 @@ bool VulkanViewer::mouse_release_event(int x, int y, int button, int modifiers) 
                                   std::max(x,mouse_pressed_x_),std::max(y,mouse_pressed_y_));
     camera()->frame()->action_end();
     pressed_button_ = -1;
+    zoom_region_ = false;
+    update_interaction_overlays(true);
     return false;
 }
 bool VulkanViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
+    mouse_current_x_ = x; mouse_current_y_ = y;
+    zoom_region_ = pressed_button_ == BUTTON_LEFT && modifiers == MODIF_CTRL;
+    update_interaction_overlays(true);
     // Region zoom and clipping/tool manipulation must not move the camera.
     if (modifiers == MODIF_CTRL || modifiers == MODIF_ALT) return false;
     auto axis = ManipulatedFrame::NONE;
@@ -350,7 +397,14 @@ bool VulkanViewer::key_press_event(int key, int modifiers) {
     } else pressed_key_=key;
     return false;
 }
-bool VulkanViewer::key_release_event(int, int) { pressed_key_=-1; return false; }
+bool VulkanViewer::key_release_event(int key, int) {
+    pressed_key_=-1;
+    if (key==GLFW_KEY_LEFT_CONTROL || key==GLFW_KEY_RIGHT_CONTROL ||
+        key==GLFW_KEY_LEFT_SUPER || key==GLFW_KEY_RIGHT_SUPER) {
+        zoom_region_=false; update_interaction_overlays(true);
+    }
+    return false;
+}
 void VulkanViewer::set_usage(const std::string& manual, const std::string& screen_hint) {
     if (manual!="default") manual_=manual;
     hint_=screen_hint;
