@@ -57,6 +57,8 @@ namespace easy3d {
 
         /// puts the clipping plane at the center of the scene.
         void fit_scene(const vec3 &center, float radius);
+        /// radius used by the plane guide and relative cross-section width.
+        float scene_radius() const { return scene_radius_; }
 
         /// the center of the clipping plane. \sa normal()
         vec3 center() const;

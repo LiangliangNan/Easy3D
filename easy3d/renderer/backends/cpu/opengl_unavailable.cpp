@@ -25,6 +25,7 @@
  ********************************************************************/
 
 #include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/drawable_lines_2D.h>
@@ -33,6 +34,9 @@
 #include <stdexcept>
 namespace easy3d {
 namespace { [[noreturn]] void unavailable() { throw std::logic_error("OpenGL operation unavailable in this build; submit CPU drawables through VulkanOffScreen"); } }
+void ClippingPlane::draw(const Camera*) const { unavailable(); }
+void ClippingPlane::set_program(ShaderProgram*) const { unavailable(); }
+void ClippingPlane::set_discard_primitives(ShaderProgram*, bool) const { unavailable(); }
 void PointsDrawable::draw(const Camera*) const { unavailable(); }
 void LinesDrawable::draw(const Camera*) const { unavailable(); }
 void TrianglesDrawable::draw(const Camera*) const { unavailable(); }

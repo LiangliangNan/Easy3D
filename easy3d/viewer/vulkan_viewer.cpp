@@ -5,6 +5,8 @@
 #include <easy3d/renderer/backends/vulkan/shape.h>
 #include <easy3d/renderer/backends/vulkan/key_frame_interpolator.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
+#include <easy3d/renderer/clipping_plane.h>
+#include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/util/dialog.h>
@@ -45,6 +47,11 @@ const char* const default_manual =
     "  's':                     Take a snapshot                                    \n"
     "  'p':                     Switch between perspective and orthographic projections\n"
     "  Ctrl + 'f':              Toggle frame rate display                          \n"
+    "  Alt + 'c':               Toggle clipping plane                              \n"
+    "  Alt + 'v':               Toggle clipping plane visibility                   \n"
+    "  Alt + 'x':               Toggle cross-section                               \n"
+    "  Alt + Left drag:         Rotate the clipping plane                          \n"
+    "  Alt + Right drag:        Move the clipping plane along its normal           \n"
     "  Left drag:               Rotate the camera                                  \n"
     "  Right drag:              Move the camera                                    \n"
     "  'x' + Left drag:         Rotate the camera around the horizontal axis       \n"
@@ -349,6 +356,7 @@ void VulkanViewer::cancel_interaction() {
     pressed_key_ = pressed_button_ = -1;
     show_pivot_point_ = zoom_region_ = false;
     camera()->frame()->action_end();
+    ClippingPlane::instance()->manipulator()->frame()->action_end();
     update_interaction_overlays(true);
 }
 void VulkanViewer::clear_scene() {
@@ -403,6 +411,8 @@ bool VulkanViewer::mouse_press_event(int x, int y, int button, int modifiers) {
     mouse_pressed_x_ = mouse_current_x_ = x; mouse_pressed_y_ = mouse_current_y_ = y; pressed_button_ = button;
     zoom_region_ = button == BUTTON_LEFT && modifiers == MODIF_CTRL;
     camera()->frame()->action_start();
+    if (modifiers == MODIF_ALT && ClippingPlane::instance()->is_enabled())
+        ClippingPlane::instance()->manipulator()->frame()->action_start();
     if (pressed_key_ == GLFW_KEY_Z || modifiers == MODIF_SHIFT) {
         if (button == BUTTON_LEFT) {
             bool found = false;
@@ -433,6 +443,7 @@ bool VulkanViewer::mouse_release_event(int x, int y, int button, int modifiers) 
         camera()->fitScreenRegion(std::min(x,mouse_pressed_x_),std::min(y,mouse_pressed_y_),
                                   std::max(x,mouse_pressed_x_),std::max(y,mouse_pressed_y_));
     camera()->frame()->action_end();
+    ClippingPlane::instance()->manipulator()->frame()->action_end();
     pressed_button_ = -1;
     zoom_region_ = false;
     update_interaction_overlays(true);
@@ -443,7 +454,15 @@ bool VulkanViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, in
     zoom_region_ = pressed_button_ == BUTTON_LEFT && modifiers == MODIF_CTRL;
     update_interaction_overlays(true);
     // Region zoom and clipping/tool manipulation must not move the camera.
-    if (modifiers == MODIF_CTRL || modifiers == MODIF_ALT) return false;
+    if (modifiers == MODIF_CTRL) return false;
+    if (modifiers == MODIF_ALT) {
+        if (ClippingPlane::instance()->is_enabled()) {
+            auto* frame = ClippingPlane::instance()->manipulator()->frame();
+            if (button == BUTTON_LEFT) frame->action_rotate(x,y,dx,dy,camera(),ManipulatedFrame::NONE);
+            else if (button == BUTTON_RIGHT) frame->action_translate(x,y,dx,dy,camera(),ManipulatedFrame::NONE);
+        }
+        return false;
+    }
     auto axis = ManipulatedFrame::NONE;
     if (pressed_key_ == GLFW_KEY_X) axis = ManipulatedFrame::HORIZONTAL;
     else if (pressed_key_ == GLFW_KEY_Y) axis = ManipulatedFrame::VERTICAL;
@@ -544,8 +563,17 @@ bool VulkanViewer::key_press_event(int key, int modifiers) {
         if (d) d->set_visible(!d->is_visible());
     } else if (key==GLFW_KEY_D && modifiers==0) {
         if (current_model()) current_model()->property_stats(std::cout);
-    } else if ((modifiers==MODIF_ALT && (key==GLFW_KEY_C || key==GLFW_KEY_V || key==GLFW_KEY_X)) ||
-               (modifiers==0 && (key==GLFW_KEY_A || key==GLFW_KEY_R))) {
+    } else if (modifiers==MODIF_ALT && key==GLFW_KEY_C) {
+        auto* plane = ClippingPlane::instance();
+        plane->set_enabled(!plane->is_enabled());
+        plane->fit_scene(camera()->sceneCenter(),camera()->sceneRadius());
+    } else if (modifiers==MODIF_ALT && key==GLFW_KEY_V) {
+        auto* plane = ClippingPlane::instance();
+        if (plane->is_enabled()) plane->set_visible(!plane->is_visible());
+    } else if (modifiers==MODIF_ALT && key==GLFW_KEY_X) {
+        auto* plane = ClippingPlane::instance();
+        if (plane->is_enabled()) plane->set_cross_section(!plane->cross_section());
+    } else if (modifiers==0 && (key==GLFW_KEY_A || key==GLFW_KEY_R)) {
         LOG(WARNING) << "This viewer shortcut is not yet available in the Vulkan backend";
     } else pressed_key_=key;
     return false;

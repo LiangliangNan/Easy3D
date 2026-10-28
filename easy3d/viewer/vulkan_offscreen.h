@@ -51,9 +51,12 @@ public:
     void set_overlays(std::vector<graphics::DrawCommand> commands);
     void fit_screen(const Model* model = nullptr);
     // Per-viewer world-space halfspaces, keeping dot(plane,vec4(world,1)) >= 0.
-    // Empty disables clipping. At most two finite, nonzero-normal planes.
+    // Empty disables this host's explicit planes. At most two finite,
+    // nonzero-normal planes. An enabled shared ClippingPlane takes precedence.
     // Overlays remain unclipped. Scene clearing retains this configuration.
     void set_clipping_planes(const std::vector<vec4>& planes);
+    // Effective planes: the enabled shared ClippingPlane takes precedence;
+    // disabling it restores this host's explicitly configured planes.
     const std::vector<vec4>& clipping_planes() const;
     struct PickResult {
         std::shared_ptr<Model> model; // null for a standalone drawable

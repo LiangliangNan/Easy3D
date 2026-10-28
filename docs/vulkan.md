@@ -1053,11 +1053,11 @@ automatic OpenGL fallback remain migration gates.
 `VulkanOffScreen::set_clipping_planes()` configures up to two world-space plane
 equations for one native viewer/offscreen instance. Each equation keeps
 `dot(plane, vec4(world_position,1)) >= 0`; two opposing planes form a slab.
-Empty input disables clipping. The setter validates and normalizes finite
+Empty input disables these explicit planes. The setter validates and normalizes finite
 coefficients with nonzero normals before changing state. Scene clearing retains
-this configuration, and overlays remain unclipped and unpickable. Native state
-is per viewer; the retained OpenGL `ClippingPlane` singleton is not used by the
-Vulkan backend.
+this configuration, and overlays remain unclipped and unpickable. Explicit native plane configuration remains per viewer. The shared
+`ClippingPlane` controls described below now also work with Vulkan and take
+precedence while enabled.
 
 ```cpp
 viewer.set_clipping_planes({easy3d::vec4(1,0,0,0)}); // keep world x >= 0
@@ -2025,3 +2025,48 @@ native Vulkan/synchronization validation. Native and combined builds and the
 OpenGL-only viewer build succeed. The scaled PNG was visually inspected. The
 existing MoltenVK integer-attachment warning remains; no new validation errors
 were reported. Desktop suites were run sequentially.
+
+
+## Shared clipping-plane controls and renderer organization
+
+`VulkanViewer` now implements the OpenGL viewer's Alt-C (enable/disable and fit
+the plane), Alt-V (guide visibility), Alt-X (cross-section) and Alt-left/right
+drags (rotate/translate the plane). Translation follows the plane's local normal
+constraint. Plane gestures leave the camera unchanged, custom shortcut bindings
+take precedence, and the default manual lists the controls. Fitting the scene
+also refits the plane, retaining its orientation, as in `Viewer`.
+
+The existing `easy3d::ClippingPlane` owns the shared CPU state in
+`renderer/clipping_plane.cpp`, now compiled in both backends. OpenGL shader setup
+and drawing moved unchanged into `renderer/backends/opengl/clipping_plane.cpp`.
+The corresponding Vulkan helper lives in
+`renderer/backends/vulkan/clipping_plane.{h,cpp}` and owns guide geometry/cache
+conversion only. Vulkan-only builds expose the shared state without linking GL;
+calling its legacy OpenGL-only drawing/setup methods still fails explicitly.
+
+`VulkanOffScreen` applies the enabled singleton to scene rendering, picking and
+scanning; `clipping_planes()` exposes the effective equations for GPU point
+selection. The shader halfspace/slab signs match OpenGL `set_program()`. Like
+OpenGL, this plane is shared across viewers, including its fitting and enabled
+state. The per-host `set_clipping_planes()` configuration remains available and
+is restored when the shared plane is disabled. Scene clearing retains both.
+Tutorial 307's existing private native controller still works; consolidating it
+onto the shared controller remains a later cleanup.
+
+The plane's transparent face and wire guide use an independent scene-annotation
+path, depth-tested against opaque geometry with scene depth and IDs read-only.
+Guide visibility does not alter clipping. Application overlays, viewer hints and
+camera-path annotations retain their layers. Guide drawing uses the capture
+camera and target dimensions, including scaled snapshots. The new
+`vulkan.clippingplane` test covers registered shortcuts/modifiers, plane/slab
+equations, constrained drags, explicit-plane restoration, custom bindings,
+transparency, independent overlays, scene clearing, snapshots and one/four-sample
+depth/picking invariants.
+
+Verified on this Mac with MoltenVK: all 48 native tests and all 26 combined
+OpenGL/Vulkan tests pass. The focused clipping-plane test also passes explicitly
+with native Vulkan/synchronization validation. Native and combined builds and the
+OpenGL-only viewer target succeed. The native renderer has no GL/GLEW imports,
+and the transparent-guide/HUD/application-overlay snapshot was visually inspected.
+The existing MoltenVK integer-attachment warning remains; no new validation
+errors were reported. Desktop suites were run sequentially.

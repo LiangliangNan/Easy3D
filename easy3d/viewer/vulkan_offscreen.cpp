@@ -15,6 +15,8 @@
 #include <easy3d/renderer/transform.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/backends/vulkan/drawable.h>
+#include <easy3d/renderer/backends/vulkan/clipping_plane.h>
+#include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_points.h>
@@ -46,19 +48,29 @@ struct VulkanOffScreen::Impl {
     std::vector<std::shared_ptr<Drawable>> drawables;
     std::vector<graphics::DrawCommand> overlays, viewer_overlays, viewer_annotations;
     std::vector<vec4> clipping_planes;
+    mutable std::vector<vec4> shared_clipping_planes;
+    mutable vulkan::ClippingPlaneRenderer clipping_plane_renderer;
     vulkan::DrawableRenderer drawable_renderer;
+
+    const std::vector<vec4>& active_clipping_planes() const {
+        const auto& plane = *ClippingPlane::instance();
+        if (!plane.is_enabled()) return clipping_planes;
+        shared_clipping_planes = vulkan::ClippingPlaneRenderer::planes(plane);
+        return shared_clipping_planes;
+    }
 
     struct PickSource { std::shared_ptr<Model> model; std::shared_ptr<Drawable> drawable; };
     std::vector<graphics::DrawCommand> commands(const Camera& cam, std::vector<PickSource>* sources = nullptr) const {
         drawable_renderer.prune();
         std::vector<graphics::DrawCommand> commands;
+        const auto& planes = active_clipping_planes();
         auto append=[&](const std::shared_ptr<Drawable>& d,uint32_t id,const std::shared_ptr<Model>& model,bool selected) {
             if (!d->is_visible()) return;
             if (sources) {
                 if (sources->size()>=UINT32_MAX) throw std::length_error("too many picking sources");
                 id=uint32_t(sources->size()); sources->push_back({model,d});
             }
-            commands.push_back(drawable_renderer.command(d,id,cam,clipping_planes,selected));
+            commands.push_back(drawable_renderer.command(d,id,cam,planes,selected));
         };
         for (size_t i = 0; i < models.size(); ++i) {
             const auto* renderer = models[i]->renderer();
@@ -72,6 +84,8 @@ struct VulkanOffScreen::Impl {
         }
         for (size_t i = 0; i < drawables.size(); ++i)
             append(drawables[i],uint32_t(models.size()+i),nullptr,false);
+        const auto guide = clipping_plane_renderer.draw(*ClippingPlane::instance(),cam);
+        commands.insert(commands.end(),guide.begin(),guide.end());
         commands.insert(commands.end(),viewer_annotations.begin(),viewer_annotations.end());
         commands.insert(commands.end(),overlays.begin(),overlays.end());
         commands.insert(commands.end(),viewer_overlays.begin(),viewer_overlays.end());
@@ -186,7 +200,7 @@ void VulkanOffScreen::set_viewer_annotations(std::vector<graphics::DrawCommand> 
 void VulkanOffScreen::set_clipping_planes(const std::vector<vec4>& planes) {
     impl_->clipping_planes=graphics::normalize_clipping_planes(planes);
 }
-const std::vector<vec4>& VulkanOffScreen::clipping_planes() const { return impl_->clipping_planes; }
+const std::vector<vec4>& VulkanOffScreen::clipping_planes() const { return impl_->active_clipping_planes(); }
 void VulkanOffScreen::fit_screen(const Model* selected) {
     Box3 box;
     if (selected) box.grow(selected->bounding_box());
@@ -194,7 +208,10 @@ void VulkanOffScreen::fit_screen(const Model* selected) {
         for (const auto& model : impl_->models) box.grow(model->bounding_box());
         for (const auto& drawable : impl_->drawables) box.grow(drawable->bounding_box());
     }
-    if (box.is_valid()) { camera()->setSceneBoundingBox(box.min_point(), box.max_point()); camera()->showEntireScene(); }
+    if (box.is_valid()) {
+        camera()->setSceneBoundingBox(box.min_point(), box.max_point()); camera()->showEntireScene();
+        ClippingPlane::instance()->fit_scene(camera()->sceneCenter(),camera()->sceneRadius());
+    }
 }
 vec3 VulkanOffScreen::unproject_pixel(int x,int y,float depth) const {
     if (x<0 || y<0 || x>=width() || y>=height() || !std::isfinite(depth) || depth<0 || depth>1)
