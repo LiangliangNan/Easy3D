@@ -38,16 +38,34 @@ needed; retain explicit low-level backend APIs for advanced use. The maintained
 OpenGL backend remains a supported choice and fallback after Vulkan parity.
 Retiring obsolete implementation details must not remove that support.
 
-Source layout is also a migration requirement. Keep Vulkan tutorial/application
-code as close as practical to its OpenGL counterpart: retain the original class
-names, responsibilities and `main.cpp` / `viewer.h` / `viewer.cpp` organization.
-Use shared declarations and implementation files, with narrow backend-specific
-sections where the graphics APIs differ. Prefer shared scene/control logic over
-parallel class implementations. Explicit Vulkan device, pipeline, shader and
-synchronization code may still need backend-specific implementation files.
+Source layout is a migration requirement across the entire project, not only
+for tutorials and applications. This explicitly includes `easy3d/graphics`,
+`easy3d/renderer` and `easy3d/viewer`: match OpenGL counterpart filenames, class
+responsibilities and directory organization as closely as practical. Existing
+Vulkan code must also be brought into alignment as the migration proceeds;
+parallel module hierarchies and duplicated public abstractions are migration
+debt, not the intended final architecture.
+
+Keep shared rendering concepts and scene/control logic in their corresponding
+modules. Preserve existing class names and public entry points where practical;
+use common interfaces with backend-specific implementations rather than making
+callers choose between duplicate class families. Keep backend selection and
+conditional compilation localized, avoiding repeated backend checks in client
+code. Tutorials and applications should retain their original `main.cpp` /
+`viewer.h` / `viewer.cpp` organization and use these shared module interfaces.
+
+Explicit Vulkan device, pipeline, shader and synchronization operations may need
+backend-specific implementation files. Such files should follow the counterpart
+module's responsibilities and naming conventions; genuine API differences do not
+justify an unrelated organization of higher-level rendering or viewer features.
+Consolidation must preserve supported OpenGL builds, Vulkan headless operation,
+and rendering, depth, picking, MSAA and resource-lifetime correctness.
 
 Completion gates include:
 
+- Align existing and new Vulkan module code with its OpenGL counterparts in
+  filenames, class responsibilities and directory organization, especially in
+  `easy3d/graphics`, `easy3d/renderer` and `easy3d/viewer`.
 - Build and run every tutorial with Vulkan, validating the features each teaches.
 - Port every application and its host integration, checking feature parity and
   documenting any outstanding limitations.
