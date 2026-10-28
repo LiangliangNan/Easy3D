@@ -33,6 +33,8 @@ public:
     const vec4& background_color() const;
     virtual Model* add_model(const std::string& filename, bool create_default_drawables = true);
     Model* add_model(std::shared_ptr<Model> model, bool create_default_drawables = true);
+    // Set fit_scene=false when attaching a result without changing camera state.
+    Model* add_model(std::shared_ptr<Model> model, bool create_default_drawables, bool fit_scene);
     Model* add_model(Model* model, bool create_default_drawables = true);
     bool delete_model(Model* model);
     const std::vector<std::shared_ptr<Model>>& models() const;
@@ -74,6 +76,12 @@ public:
     // Reconstruct a top-left framebuffer pixel center from [0,1] readback depth.
     // Unlike Camera's legacy coordinate helper, this uses continuous framebuffer coordinates.
     vec3 unproject_pixel(int x, int y, float depth) const;
+    // Synchronous visible-surface scan: one world point per non-background
+    // framebuffer pixel, in top-to-bottom row order, at exact pixel centers.
+    // Uses one camera snapshot and inverse MVP; overlays never produce points.
+    // MSAA color does not alter center-sample depth/ID scan semantics. Does not
+    // modify scene/camera or advance animation; includes every visible drawable.
+    std::vector<vec3> scan_visible_points(unsigned samples = 1) const;
     // Color is multisampled when requested; IDs/depth stay center-sampled.
     // Invalid/unsupported requests throw, allowing callers/tests to handle them.
     graphics::FrameImage capture(unsigned samples = 1) const;

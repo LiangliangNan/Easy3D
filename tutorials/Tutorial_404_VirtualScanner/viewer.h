@@ -27,6 +27,9 @@
 #ifndef EASY3D_TUTORIAL_VIRTUAL_SCANNER_H
 #define EASY3D_TUTORIAL_VIRTUAL_SCANNER_H
 
+#ifdef EASY3D_NO_OPENGL
+#include "viewer_vulkan.h"
+#else
 #include <easy3d/viewer/viewer.h>
 
 
@@ -43,4 +46,5 @@ private:
 };
 
 
+#endif // EASY3D_NO_OPENGL
 #endif // EASY3D_TUTORIAL_VIRTUAL_SCANNER_H

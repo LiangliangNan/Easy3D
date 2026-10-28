@@ -113,7 +113,7 @@ Completion gates include:
   resize/hide/show, independent windows/devices, orbit/pan/zoom, projection toggle,
   file drop and depth-based world-point picking. The installed demo uses an
   embedded bunny by default and needs no source-tree model/shader files.
-- Existing Tutorials 201, 301–312 and 401–403 build with the native Vulkan host in
+- Existing Tutorials 201, 301–312 and 401–404 build with the native Vulkan host in
   Vulkan-only window builds. Tutorial 302 uses the same sphere/surfel/cylinder/cone scene code
   as its OpenGL build, with bounded native execution for automated tests. Legacy
   custom OpenGL draw callbacks are not ported. Tutorial 304 exercises the native
@@ -215,7 +215,7 @@ viewer.run();
 
 In a Vulkan-only window build the existing `<easy3d/viewer/viewer.h>` and
 `easy3d::Viewer` name select the same host. `Tutorial_201_Viewer_default` is built
-unchanged in that configuration. Tutorials 301–312 and 401–403 are also built in this configuration. Other tutorials remain gated
+unchanged in that configuration. Tutorials 301–312 and 401–404 are also built in this configuration. Other tutorials remain gated
 until their features and callbacks are ported; the global legacy tutorials option stays OFF.
 In a dual build `Viewer` continues to select the legacy host, while
 `VulkanViewer` selects Vulkan explicitly.
@@ -1410,4 +1410,61 @@ clipping checks pass with Khronos/synchronization validation enabled and zero
 validation errors. Tutorial 403 also passes bounded four-sample validation.
 The modified point vertex and selection compute shaders pass Vulkan 1.2
 SPIR-V validation. The previously documented MoltenVK integer-attachment
+blending warning remains.
+
+
+## Visible-surface scanning and Tutorial 404
+
+`VulkanOffScreen::scan_visible_points(samples)` returns a position-only virtual
+scan of the currently visible scene in world coordinates. Each non-background
+framebuffer pixel contributes one point at its exact pixel center, in top-to-bottom
+row order. This samples rendered surfaces rather than returning the original
+mesh vertices or point-cloud centers. Hidden/occluded geometry and transparent
+HUD/plane annotations do not produce points. Clipping and manipulated-model
+transforms follow the rendering path, including actual sphere/surfel/cylinder/cone
+surface depth rather than proxy geometry.
+
+One effective camera snapshot drives both capture and reconstruction. Its inverse
+MVP is computed once for the whole scan, and custom/calibrated projection and view
+matrices and the interaction pivot (used for impostor sizing) are preserved
+explicitly. The pixel-center reconstruction helper is
+shared with `unproject_pixel()` and picking. Samples come from the existing
+center-sample depth/ID path, so changing color MSAA does not change scan positions;
+an MSAA edge pixel without a center hit contributes no point. Scans use physical
+framebuffer dimensions on HiDPI displays, with no legacy logical-pixel stride or
+height-minus-one conversion. The API does not change the camera/scene or advance
+animation, and an empty scene returns an empty vector.
+
+Tutorial 404 now builds with the native Vulkan host. **Space** acquires the visible
+scene and adds a new PointCloud; **N** toggles the shared Gaussian-noise algorithm.
+Native noise sigma is `0.0001 * camera.sceneRadius()` in world units. Scanned clouds
+remain visible and participate in later scans, as other visible scene models do.
+Acquisition uses the additive `add_model(cloud, true, false)` overload to attach
+results without refitting, keeping the complete camera state and custom matrices.
+It synchronizes framebuffer dimensions if a resize
+arrived before the next draw. Empty acquisitions add no model. The retained OpenGL
+tutorial keeps its existing FBO implementation.
+
+```cpp
+auto world_points = viewer.scan_visible_points(); // synchronous, one center hit per pixel
+```
+
+```sh
+./cmake-build-debug/bin/Tutorial_404_VirtualScanner --frames 3 --samples 4 --validation
+```
+
+`vulkan.scan` tests pixel-center reprojection, perspective/orthographic/custom
+camera matrices, tilted transformed surfaces, occlusion/background rejection,
+transparent overlays, clipping, resize, MSAA invariance, analytic point/line
+impostor surfaces and invalid sample counts. `vulkan.scanviewer` drives the
+registered scanner shortcuts, checking exact acquired clouds, noise toggling,
+camera preservation, resize/HiDPI, MSAA and empty/cleared scenes. Tutorial 404 joins
+the bounded native tutorial tests.
+
+Verified on Apple M4 Pro / MoltenVK 1.4.2: all 36 native CTests and all
+12 dual-backend CTests pass. The headless scan and native scanner regressions
+pass with Khronos/synchronization validation enabled and zero validation errors,
+including custom matrices and non-default pivots. Tutorial 404 passes bounded
+four-sample execution with validation. Both retained OpenGL tutorial sources
+pass a C++11 compilation check. The existing MoltenVK integer-attachment
 blending warning remains.

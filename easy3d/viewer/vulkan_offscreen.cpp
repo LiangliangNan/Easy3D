@@ -12,6 +12,7 @@
 #include <easy3d/fileio/ply_reader_writer.h>
 #include <easy3d/fileio/image_io.h>
 #include <easy3d/renderer/renderer.h>
+#include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/renderer/transform.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/drawable_lines.h>
@@ -27,6 +28,16 @@
 #include <stdexcept>
 
 namespace easy3d {
+namespace {
+vec3 world_pixel(int x,int y,float depth,int width,int height,const mat4& inverse_mvp) {
+    const vec4 ndc(2*(x+.5f)/width-1,1-2*(y+.5f)/height,2*depth-1,1);
+    const auto world=inverse_mvp*ndc;
+    if (!std::isfinite(world.w) || world.w==0) throw std::invalid_argument("invalid camera unprojection");
+    const vec3 point(world.x/world.w,world.y/world.w,world.z/world.w);
+    for (unsigned i=0;i<3;++i) if (!std::isfinite(point[i])) throw std::invalid_argument("non-finite world point");
+    return point;
+}
+}
 struct VulkanOffScreen::Impl {
     std::unique_ptr<graphics::RenderDevice> device;
     std::unique_ptr<Camera> camera{new Camera};
@@ -293,6 +304,9 @@ void VulkanOffScreen::resize(int w, int h) {
 void VulkanOffScreen::set_background_color(const vec4& color) { impl_->background = color; }
 const vec4& VulkanOffScreen::background_color() const { return impl_->background; }
 Model* VulkanOffScreen::add_model(std::shared_ptr<Model> model, bool create) {
+    return add_model(std::move(model),create,true);
+}
+Model* VulkanOffScreen::add_model(std::shared_ptr<Model> model, bool create, bool fit_scene) {
     if (!model || model->empty()) return nullptr;
     for (const auto& current : impl_->models) if (model == current) return current.get();
     // Construct first: unsupported default coloring fails without replacing the model's existing renderer.
@@ -302,7 +316,7 @@ Model* VulkanOffScreen::add_model(std::shared_ptr<Model> model, bool create) {
     for (const auto& d : renderer->lines_drawables()) { d->set_impostor_type(LinesDrawable::PLAIN); d->set_line_width(1); }
     model->set_renderer(renderer);
     impl_->models.push_back(model);
-    fit_screen();
+    if (fit_scene) fit_screen();
     return model.get();
 }
 Model* VulkanOffScreen::add_model(const std::string& filename, bool create) {
@@ -369,12 +383,27 @@ void VulkanOffScreen::fit_screen(const Model* selected) {
 vec3 VulkanOffScreen::unproject_pixel(int x,int y,float depth) const {
     if (x<0 || y<0 || x>=width() || y>=height() || !std::isfinite(depth) || depth<0 || depth>1)
         throw std::invalid_argument("invalid framebuffer pixel/depth for unprojection");
-    const vec4 ndc(2*(x+.5f)/width()-1,1-2*(y+.5f)/height(),2*depth-1,1);
-    const auto world=inverse(camera()->modelViewProjectionMatrix())*ndc;
-    if (!std::isfinite(world.w) || world.w==0) throw std::invalid_argument("invalid camera unprojection");
-    const vec3 point(world.x/world.w,world.y/world.w,world.z/world.w);
-    for (unsigned i=0;i<3;++i) if (!std::isfinite(point[i])) throw std::invalid_argument("non-finite world point");
-    return point;
+    return world_pixel(x,y,depth,width(),height(),inverse(camera()->modelViewProjectionMatrix()));
+}
+std::vector<vec3> VulkanOffScreen::scan_visible_points(unsigned samples) const {
+    Camera snapshot(*camera());
+    // Camera's copy constructor regenerates matrices from its parameters. Keep
+    // effective matrices too, including externally calibrated/custom cameras.
+    snapshot.frame()->setPivotPoint(camera()->pivotPoint()); // do not re-adjust the copied ortho coefficient
+    snapshot.set_projection_matrix(camera()->projectionMatrix());
+    snapshot.set_modelview_matrix(camera()->modelViewMatrix());
+    const auto inv=inverse(snapshot.modelViewProjectionMatrix());
+    for (unsigned i=0;i<16;++i) if (!std::isfinite(inv[i])) throw std::invalid_argument("invalid scan camera inverse");
+    const auto frame=impl_->capture(snapshot,background_color(),samples);
+    std::vector<vec3> points;
+    points.reserve(std::count_if(frame.depth.begin(),frame.depth.end(),[](float d) { return d>=0 && d<1; }));
+    for (unsigned y=0;y<frame.height;++y) for (unsigned x=0;x<frame.width;++x) {
+        const size_t pixel=size_t(y)*frame.width+x;
+        const float d=frame.depth[pixel];
+        if (frame.ids[pixel].object==UINT32_MAX || !std::isfinite(d) || d<0 || d>=1) continue;
+        points.push_back(world_pixel(int(x),int(y),d,int(frame.width),int(frame.height),inv));
+    }
+    return points;
 }
 VulkanOffScreen::PickResult VulkanOffScreen::pick(int x,int y) const {
     PickResult result;

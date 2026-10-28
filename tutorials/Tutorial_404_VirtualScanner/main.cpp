@@ -25,6 +25,7 @@
  ********************************************************************/
 
 #include "viewer.h"
+#include "../native_viewer_options.h"
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_points.h>
@@ -49,7 +50,13 @@ int main(int argc, char **argv) {
     initialize();
 
     // create the viewer.
+#ifdef EASY3D_NO_OPENGL
+    NativeTutorialOptions options;
+    if (!options.parse(argc, argv)) return EXIT_FAILURE;
+    TutorialVirtualScanner viewer(EXAMPLE_TITLE,options.viewer);
+#else
     TutorialVirtualScanner viewer(EXAMPLE_TITLE);
+#endif
 
     const std::string file_name = resource::directory() + "/data/house/house.obj";
     auto model = viewer.add_model(file_name, true);
@@ -63,6 +70,10 @@ int main(int argc, char **argv) {
         d->set_visible(false);
 
     // run the viewer
+#ifdef EASY3D_NO_OPENGL
+    return options.run(viewer);
+#else
     return viewer.run();
+#endif
 }
 
