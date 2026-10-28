@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-#include <tutorials/Tutorial_309_TextRendering/viewer_vulkan.h>
+#include <tutorials/Tutorial_309_TextRendering/viewer.h>
+#define GLFW_INCLUDE_NONE
+#include <3rd_party/glfw/include/GLFW/glfw3.h>
+#include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
 #include <easy3d/fileio/image_io.h>
+#include <stdexcept>
+#include <cmath>
+#include <algorithm>
 #include <iostream>
 using namespace easy3d;
 void require(bool value,const char* message) { if (!value) throw std::runtime_error(message); }

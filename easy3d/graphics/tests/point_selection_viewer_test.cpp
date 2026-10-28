@@ -1,8 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-#include <tutorials/Tutorial_403_PointSelection/viewer_vulkan.h>
+#include <tutorials/Tutorial_403_PointSelection/viewer.h>
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/manipulated_frame.h>
+#define GLFW_INCLUDE_NONE
+#include <3rd_party/glfw/include/GLFW/glfw3.h>
+#include <easy3d/core/point_cloud.h>
+#include <easy3d/renderer/renderer.h>
+#include <easy3d/renderer/drawable_points.h>
 #include <easy3d/util/initializer.h>
+#include <stdexcept>
+#include <cmath>
+#include <algorithm>
 #include <iostream>
 using namespace easy3d;
 void require(bool ok,const char* message) { if (!ok) throw std::runtime_error(message); }

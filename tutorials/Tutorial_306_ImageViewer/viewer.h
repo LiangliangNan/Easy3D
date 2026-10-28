@@ -27,43 +27,46 @@
 #ifndef EASY3D_TUTORIAL_IMAGE_VIEWER_H
 #define EASY3D_TUTORIAL_IMAGE_VIEWER_H
 
-#ifdef EASY3D_NO_OPENGL
-#include "viewer_vulkan.h"
-#else
-#include <easy3d/viewer/viewer.h>
+#include "../viewer_backend.h"
 
+namespace easy3d { class Texture; }
 
-// This class visualizes an image in the screen space.
-
-namespace easy3d {
-    class Texture;
-}
-
-class TutorialImageViewer : public easy3d::Viewer
-{
+// This class visualizes an image in screen space on either backend.
+class TutorialImageViewer : public easy3d::TutorialViewer {
 public:
+#if EASY3D_TUTORIAL_USES_VULKAN
+    TutorialImageViewer(const std::string& title, const std::string& image_file,
+                        const easy3d::VulkanViewerOptions& options = {});
+#else
     TutorialImageViewer(const std::string& title, const std::string& image_file);
+#endif
     ~TutorialImageViewer() override;
-    
+
 protected:
     bool key_press_event(int key, int modifiers) override;
     bool mouse_scroll_event(int x, int y, int dx, int dy) override;
-    void init() override;
-
-    void draw() const override;
-
-    void compute_image_region(int& x, int& y, int& w, int& h) const;
-
-    // moves the camera so that the 'model' is centered on the screen.
-    // if 'model' is NULL, it centers the entire scene (all models).
     void fit_screen();
+#if EASY3D_TUTORIAL_USES_VULKAN
+    bool drop_event(const std::vector<std::string>& files) override;
+    void post_resize(int width, int height) override;
+    void pre_draw() override;
+#else
+    void init() override;
+    void draw() const override;
+    void compute_image_region(int& x, int& y, int& w, int& h) const;
+#endif
 
 private:
+#if EASY3D_TUTORIAL_USES_VULKAN
+    bool load_image(const std::string& file);
+    std::shared_ptr<const easy3d::graphics::Image> image_;
+    float scale_ = 1;
+    bool dirty_ = true;
+#else
     easy3d::Texture* texture_;
-    std::string      image_file_;
-    float            scale_;
+    std::string image_file_;
+    float scale_;
+#endif
 };
 
-
-#endif // legacy OpenGL viewer
 #endif // EASY3D_TUTORIAL_IMAGE_VIEWER_H

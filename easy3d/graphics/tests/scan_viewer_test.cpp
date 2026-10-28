@@ -1,9 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-#include <tutorials/Tutorial_404_VirtualScanner/viewer_vulkan.h>
+#include <tutorials/Tutorial_404_VirtualScanner/viewer.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
+#define GLFW_INCLUDE_NONE
+#include <3rd_party/glfw/include/GLFW/glfw3.h>
+#include <easy3d/core/point_cloud.h>
 #include <easy3d/util/initializer.h>
+#include <cmath>
+#include <algorithm>
 #include <iostream>
 #include <stdexcept>
 using namespace easy3d;

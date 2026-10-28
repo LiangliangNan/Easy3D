@@ -27,24 +27,42 @@
 #ifndef EASY3D_TUTORIAL_CROSS_SECTION_H
 #define EASY3D_TUTORIAL_CROSS_SECTION_H
 
-#ifdef EASY3D_NO_OPENGL
-#include "viewer_vulkan.h"
-#else
-#include <easy3d/viewer/viewer.h>
+#include "../viewer_backend.h"
+
+#if EASY3D_TUTORIAL_USES_VULKAN
+#include <easy3d/renderer/manipulated_frame.h>
+#include <easy3d/renderer/constraint.h>
+#endif
 
 namespace easy3d {
 
-    class CrossSection : public Viewer
-	{
-	public:
-        explicit CrossSection(const std::string& title);
+class CrossSection : public easy3d::TutorialViewer {
+public:
+#if EASY3D_TUTORIAL_USES_VULKAN
+    explicit CrossSection(const std::string& title, const VulkanViewerOptions& options = {});
+#else
+    explicit CrossSection(const std::string& title);
+#endif
 
-	protected:
-		// manipulate the clipping plane
-		bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;
-	};
+protected:
+    bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;
+#if EASY3D_TUTORIAL_USES_VULKAN
+    bool key_press_event(int key, int modifiers) override;
+    bool mouse_press_event(int x, int y, int button, int modifiers) override;
+    bool mouse_release_event(int x, int y, int button, int modifiers) override;
+    void pre_draw() override;
 
-}
+private:
+    LocalConstraint constraint_;
+    ManipulatedFrame plane_;
+    bool enabled_ = true, visible_ = true, section_ = false, dirty_ = true;
+    float radius_ = 1;
+    std::weak_ptr<Model> last_model_;
+    size_t last_count_ = 0;
+    std::shared_ptr<const graphics::Geometry> guide_, fill_;
+#endif
+};
 
-#endif // EASY3D_NO_OPENGL
+} // namespace easy3d
+
 #endif // EASY3D_TUTORIAL_CROSS_SECTION_H

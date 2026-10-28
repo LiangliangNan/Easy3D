@@ -27,40 +27,49 @@
 #ifndef EASY3D_TUTORIAL_POINT_SELECTION_H
 #define EASY3D_TUTORIAL_POINT_SELECTION_H
 
-#ifdef EASY3D_NO_OPENGL
-#include "viewer_vulkan.h"
-#else
-#include <easy3d/viewer/viewer.h>
+#include "../viewer_backend.h"
 
+namespace easy3d { class PointCloud; }
 
-namespace easy3d {
-    class PointCloud;
-}
-
-class TutorialPointSelection : public easy3d::Viewer
-{
+class TutorialPointSelection : public easy3d::TutorialViewer {
 public:
+#if EASY3D_TUTORIAL_USES_VULKAN
+    explicit TutorialPointSelection(const std::string& title = "PointSelection",
+                                    const easy3d::VulkanViewerOptions& options = {});
+#else
     explicit TutorialPointSelection(const std::string& title = "PointSelection");
+#endif
 
+#if EASY3D_TUTORIAL_USES_VULKAN
+protected:
+#else
 private:
-    /// Mouse button press event handler
+#endif
     bool mouse_press_event(int x, int y, int button, int modifiers) override;
-    /// Mouse button release event handler
     bool mouse_release_event(int x, int y, int button, int modifiers) override;
-    /// Mouse drag (i.e., a mouse button was pressed) event handler
     bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;
-
-    // This function will be called after the main draw procedure.
-    // It draws the axes of the coordinate system, the sketching rectangle/lasso, etc. overlaid on the scene.
+#if EASY3D_TUTORIAL_USES_VULKAN
+    bool key_press_event(int key, int modifiers) override;
+    bool focus_event(bool focused) override;
+    void post_resize(int width, int height) override;
+    void pre_draw() override;
+#else
     void post_draw() override;
-
-    // highlight the selection
-    void mark_selection(easy3d::PointCloud* cloud);
+#endif
 
 private:
+#if EASY3D_TUTORIAL_USES_VULKAN
+    void extend(int x, int y);
+    void cancel();
+    bool active_ = false, rectangle_ = false, dirty_ = true;
+    int button_ = -1;
+    std::vector<easy3d::vec2> polygon_;
+    std::weak_ptr<easy3d::Model> target_;
+    std::shared_ptr<const easy3d::graphics::Geometry> fill_, edge_;
+#else
+    void mark_selection(easy3d::PointCloud* cloud);
     easy3d::Polygon2 polygon_;
+#endif
 };
 
-
-#endif // EASY3D_NO_OPENGL
 #endif // EASY3D_TUTORIAL_POINT_SELECTION_H

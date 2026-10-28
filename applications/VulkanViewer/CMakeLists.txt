@@ -6,7 +6,7 @@ if(NOT Easy3D_ENABLE_OPENGL)
     # Existing tutorial scene code shared with the OpenGL builds.
     foreach(tutorial Tutorial_201_Viewer_default Tutorial_301_Drawables Tutorial_302_Imposters Tutorial_303_ScalarField Tutorial_304_VectorField Tutorial_305_Texture Tutorial_306_ImageViewer Tutorial_307_CrossSection Tutorial_308_TexturedMesh Tutorial_309_TextRendering Tutorial_310_TextMesher Tutorial_311_Animation Tutorial_312_MultiThread Tutorial_401_ModelPicker Tutorial_402_FacePicker Tutorial_403_PointSelection Tutorial_404_VirtualScanner)
         add_executable(${tutorial} "${Easy3D_ROOT}/tutorials/${tutorial}/main.cpp")
-        if(tutorial STREQUAL "Tutorial_308_TexturedMesh" OR tutorial STREQUAL "Tutorial_401_ModelPicker" OR tutorial STREQUAL "Tutorial_402_FacePicker")
+        if(EXISTS "${Easy3D_ROOT}/tutorials/${tutorial}/viewer.cpp")
             target_sources(${tutorial} PRIVATE "${Easy3D_ROOT}/tutorials/${tutorial}/viewer.cpp")
         endif()
         target_link_libraries(${tutorial} PRIVATE easy3d::viewer)

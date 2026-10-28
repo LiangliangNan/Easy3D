@@ -27,24 +27,22 @@
 #ifndef EASY3D_TUTORIAL_VIRTUAL_SCANNER_H
 #define EASY3D_TUTORIAL_VIRTUAL_SCANNER_H
 
-#ifdef EASY3D_NO_OPENGL
-#include "viewer_vulkan.h"
-#else
-#include <easy3d/viewer/viewer.h>
+#include "../viewer_backend.h"
 
-
-class TutorialVirtualScanner : public easy3d::Viewer
-{
+class TutorialVirtualScanner : public easy3d::TutorialViewer {
 public:
+#if EASY3D_TUTORIAL_USES_VULKAN
+    explicit TutorialVirtualScanner(const std::string& title = "VirtualScanner",
+                                    const easy3d::VulkanViewerOptions& options = {});
+#else
     explicit TutorialVirtualScanner(const std::string& title = "VirtualScanner");
+#endif
 
 protected:
     bool key_press_event(int key, int modifiers) override;
 
 private:
-    bool add_noise_;
+    bool add_noise_ = false;
 };
 
-
-#endif // EASY3D_NO_OPENGL
 #endif // EASY3D_TUTORIAL_VIRTUAL_SCANNER_H

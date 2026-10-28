@@ -38,6 +38,14 @@ needed; retain explicit low-level backend APIs for advanced use. The maintained
 OpenGL backend remains a supported choice and fallback after Vulkan parity.
 Retiring obsolete implementation details must not remove that support.
 
+Source layout is also a migration requirement. Keep Vulkan tutorial/application
+code as close as practical to its OpenGL counterpart: retain the original class
+names, responsibilities and `main.cpp` / `viewer.h` / `viewer.cpp` organization.
+Use shared declarations and implementation files, with narrow backend-specific
+sections where the graphics APIs differ. Prefer shared scene/control logic over
+parallel class implementations. Explicit Vulkan device, pipeline, shader and
+synchronization code may still need backend-specific implementation files.
+
 Completion gates include:
 
 - Build and run every tutorial with Vulkan, validating the features each teaches.
@@ -1468,3 +1476,48 @@ including custom matrices and non-default pivots. Tutorial 404 passes bounded
 four-sample execution with validation. Both retained OpenGL tutorial sources
 pass a C++11 compilation check. The existing MoltenVK integer-attachment
 blending warning remains.
+
+
+## Tutorial source-layout alignment
+
+Tutorials 306 (image viewer), 307 (cross-section), 309 (text), 403 (point selection)
+and 404 (virtual scanner) now use their original `viewer.h` / `viewer.cpp` pairs
+for both backends. Each header contains one tutorial class declaration and its
+state. All method definitions live out of line in `viewer.cpp`; backend-specific
+includes and implementations stay in that same source file. The five parallel,
+header-only `viewer_vulkan.h` files have been removed. Clients and tests include
+`viewer.h` for either backend.
+
+The shared `tutorials/viewer_backend.h` selects Viewer or VulkanViewer once
+and exposes the `easy3d::TutorialViewer` alias. Tutorial headers use this common
+base without repeating backend includes or per-class aliases. Remaining
+constructor, hook and state differences use `EASY3D_TUTORIAL_USES_VULKAN`. Native-only builds select Vulkan as before. A private
+`EASY3D_TUTORIAL_VULKAN` target definition also selects the Vulkan variant for
+native tutorial tests in combined OpenGL/Vulkan-window builds. This does not
+change the framework's current backend-selection policy or supply runtime
+fallback. OpenGL tutorial code remains in the same source files and keeps its
+existing behavior.
+
+The native tutorial build now compiles each existing `viewer.cpp` when present,
+matching the original tutorial source lists. Interaction tests link those same
+implementation files instead of obtaining implementations through headers, and
+include their GLFW, image I/O and model dependencies explicitly. The moved native
+method bodies and retained OpenGL implementation bodies are unchanged.
+
+This stage aligns the five existing tutorial viewer variants. Core backend
+interfaces, application hosts and further tutorial ports still follow the
+migration gates above; renderer-wide layout consolidation must preserve native
+headless operation and supported OpenGL builds.
+
+Combined-host regression coverage also corrected the animation test setup: it
+now attaches its drawable to the native viewer before uploading data, so CPU
+buffers are selected in dual-backend builds as well as Vulkan-only builds.
+Production animation behavior is unchanged.
+
+Verified on Apple M4 Pro / MoltenVK 1.4.2: all 36 native CTests and all
+17 combined OpenGL/Vulkan-window CTests pass. All five refactored viewer paths
+pass with Khronos/synchronization validation: image/text in the combined build,
+and clipping/selection/scanning in explicit native runs. The five OpenGL
+main/viewer source pairs also pass C++11 compilation checks, as do their native
+viewer implementations in a dual-backend compilation context. No validation
+errors were reported; the existing MoltenVK integer-attachment warning remains.

@@ -30,10 +30,11 @@ int main(int argc, char**) {
         options.device.validation=options.device.synchronization_validation=argc>1;
         AnimationViewer viewer("Animation regression",options);
         auto surface=std::make_shared<TrianglesDrawable>("animated triangle");
+        // Attach before uploads so dual-backend builds select CPU buffers too.
+        viewer.add_drawable(surface);
         const std::vector<vec3> original={{-1,-1,0},{1,-1,0},{0,1,0}};
         surface->update_vertex_buffer(original,true);
         surface->set_uniform_coloring(vec4(1,0,0,1)); surface->set_lighting(false);
-        viewer.add_drawable(surface);
         viewer.camera()->setViewDirection(vec3(0,0,-1));
         viewer.camera()->setUpVector(vec3(0,1,0));
         viewer.fit_screen(); frame(viewer); frame(viewer);
