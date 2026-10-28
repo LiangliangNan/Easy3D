@@ -136,7 +136,7 @@ int main(int argc,char**) {
         // while the viewer and its device are still alive.
         { PointBatchWorker pending(10000,std::chrono::milliseconds(0));
           require(pending.wait_for_batch(std::chrono::seconds(5)),"close test worker startup failed");
-          viewer.request_close(); require(viewer.run(1)==0,"early close failed"); }
+          viewer.request_close(); require(viewer.run_frames(1)==0,"early close failed"); }
         require(viewer.device().validation_errors()==0,"streaming validation errors");
         std::cout << "PASS: immutable bounded worker batches, cancellation/join, UI-thread append, pause/resume, streamed color/depth/IDs, MSAA, resize, early close\n";
     } catch (const std::exception& e) { std::cerr << "FAIL: " << e.what() << '\n'; return 1; }

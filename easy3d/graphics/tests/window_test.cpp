@@ -2,6 +2,7 @@
 #include <easy3d/viewer/vulkan_viewer.h>
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/fileio/image_io.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/drawable_points.h>
@@ -31,6 +32,13 @@ void frame(VulkanViewer& viewer) {
 struct ThrowingViewer : VulkanViewer {
     using VulkanViewer::VulkanViewer;
     bool key_press_event(int, int) override { throw std::runtime_error("expected callback failure"); }
+};
+// A boolean must retain the same meaning as Viewer::run(), rather than
+// accidentally selecting a one-frame budget in the native implementation.
+struct RunViewer : VulkanViewer {
+    using VulkanViewer::VulkanViewer;
+    unsigned frames = 0;
+    void post_draw() override { if (++frames == 2) request_close(); }
 };
 int main(int argc, char**) {
     try {
@@ -246,6 +254,33 @@ int main(int argc, char**) {
         viewer.set_overlays({}); frame(viewer);
         require(viewer.capture().rgba==textured.rgba,"clearing overlays retained stale color");
         require(viewer.snapshot("vulkan-window.png"), "window snapshot failed");
+        const auto camera_before = viewer.camera()->modelViewProjectionMatrix();
+        require(viewer.snapshot("vulkan-window-scaled.png", 0.5f, 1, 2), "parameterized snapshot failed");
+        int image_w=0, image_h=0, channels=0;
+        std::vector<unsigned char> pixels;
+        require(ImageIO::load("vulkan-window-scaled.png", pixels, image_w, image_h, channels, 4, false) &&
+                image_w == int(viewer.width()*0.5) && image_h == int(viewer.height()*0.5),
+                "snapshot scaling did not reach file output");
+        bool transparent=false;
+        for (size_t i=3; i<pixels.size(); i+=4) transparent |= pixels[i]==0;
+        require(transparent, "snapshot background option was ignored");
+        const auto camera_after = viewer.camera()->modelViewProjectionMatrix();
+        for (unsigned i=0; i<16; ++i)
+            require(std::abs(camera_after[i]-camera_before[i])<1e-6f,
+                    "snapshot changed the live camera");
+        {
+            RunViewer run_viewer("run(bool) parity", options);
+            require(run_viewer.add_model(resource::directory()+"/data/bunny.ply"), "run test model missing");
+            run_viewer.camera()->setPosition(run_viewer.camera()->position()+vec3(1,2,3));
+            const auto position=run_viewer.camera()->position();
+            require(run_viewer.run(false)==0 && run_viewer.frames==2 &&
+                    run_viewer.camera()->position()==position, "run(false) changed camera or stopped early");
+            glfwSetWindowShouldClose(run_viewer.window(), GLFW_FALSE);
+            run_viewer.frames=0;
+            require(run_viewer.run(true)==0 && run_viewer.frames==2 &&
+                    run_viewer.camera()->position()!=position, "run(true) did not fit and run until close");
+            require(run_viewer.device().validation_errors()==0, "run parity validation errors");
+        }
         require(viewer.device().validation_errors() == 0, "presentation validation errors");
         key(viewer.window(), GLFW_KEY_ESCAPE, 0, GLFW_PRESS, 0);
         require(viewer.should_close(), "close callback failed");

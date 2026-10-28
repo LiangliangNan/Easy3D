@@ -40,7 +40,7 @@ struct NativeTutorialOptions {
         return true;
     }
     int run(VulkanViewer& host) const {
-        const int result = host.run(frames);
+        const int result = host.run_frames(frames);
         if (viewer.device.validation && host.device().validation_errors()) {
             LOG(ERROR) << "Vulkan validation reported errors";
             return EXIT_FAILURE;

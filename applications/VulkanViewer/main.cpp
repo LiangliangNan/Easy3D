@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
                 if (arg == "--frames") frames = unsigned(value); else options.samples = unsigned(value);
             } else if (arg == "--help") {
                 std::cout << "VulkanViewer [model] [--validation] [--frames N] [--samples N]\n"
-                          << "Left drag: rotate; right/middle drag: pan; wheel: zoom; F: fit; P: projection; Escape: close.\n";
+                          << "Left drag: rotate; right drag: pan; middle drag/wheel: zoom; F1: controls; Escape: close.\n";
                 return 0;
             } else model = arg;
         }
@@ -42,6 +42,6 @@ int main(int argc, char** argv) {
             if (!viewer.add_model(bunny)) return 1;
         } else if (!viewer.add_model(model)) return 1;
         std::cout << "Native Vulkan device: " << viewer.device().name() << ", samples: " << viewer.samples() << '\n';
-        return viewer.run(frames);
+        return viewer.run_frames(frames);
     } catch (const std::exception& e) { std::cerr << e.what() << '\n'; return 1; }
 }

@@ -3,6 +3,8 @@
 #define EASY3D_VIEWER_VULKAN_VIEWER_H
 #include <easy3d/viewer/vulkan_offscreen.h>
 #include <functional>
+#include <map>
+#include <easy3d/viewer/viewer_input.h>
 struct GLFWwindow;
 
 namespace easy3d {
@@ -13,17 +15,21 @@ struct VulkanViewerOptions {
     graphics::DeviceOptions device;
 };
 
-// Native Vulkan/GLFW host. Construct, manipulate and destroy on the UI/main
+// Native Vulkan counterpart of Viewer, using GLFW.
+// Construct, manipulate and destroy on the UI/main
 // thread. Multiple Vulkan viewers share GLFW lifetime, but own independent GPU
 // devices/caches. Do not mix with the legacy GLFW Viewer in the same process.
-class VulkanViewer : public VulkanOffScreen {
+class VulkanViewer : public VulkanOffScreen, public ViewerInput {
 public:
     explicit VulkanViewer(const std::string& title = "Easy3D Vulkan Viewer",
                           const VulkanViewerOptions& options = {});
     ~VulkanViewer() override;
-    // Zero runs until the window closes. Positive values are a finite frame
-    // budget for automated demos. Skipped/minimized frames do not use the budget.
-    int run(unsigned max_frames = 0);
+    // Matches Viewer::run(): optionally fit the scene, show the window and run
+    // until closed. Passing false preserves an explicitly configured camera.
+    int run(bool see_all = true);
+    // Native bounded execution, preserving camera/visibility. Zero runs until
+    // closed; skipped/minimized frames do not consume a positive frame budget.
+    int run_frames(unsigned max_frames = 0);
     bool draw_frame();
     // Called on the UI thread once before pre_draw() for each renderable frame.
     // Like Viewer, the bool result is advisory; use set_animation(false) to pause.
@@ -48,7 +54,18 @@ public:
     unsigned samples() const;
     graphics::FrameImage capture() const { return VulkanOffScreen::capture(samples()); }
     graphics::FrameImage capture(unsigned samples) const { return VulkanOffScreen::capture(samples); }
-    bool snapshot(const std::string& filename) const { return render(filename, 1.0f, int(samples())); }
+    // Matches Viewer::snapshot() file-output parameters. Snapshot MSAA is
+    // independent of the window samples; capture() uses the window samples.
+    virtual bool open();
+    virtual bool save() const;
+    virtual bool snapshot() const;
+    using Function = std::function<bool(VulkanViewer*, Model*)>;
+    void bind(const Function& func, Model* model, Key key, Modifier modifier = MODIF_NONE) {
+        commands_[key][modifier] = std::make_pair(func, model);
+    }
+    void set_usage(const std::string& manual = "default", const std::string& screen_hint = "");
+    bool snapshot(const std::string& filename, float scaling = 1.0f, int samples = 4,
+                  int back_ground = 1, bool expand = true) const;
     // Top-left origin, framebuffer-pixel coordinates (also used by callbacks).
     // Synchronous capture is performed only when explicitly requested.
     vec3 point_under_pixel(int x, int y, bool& found) const;
@@ -63,7 +80,7 @@ protected:
     virtual bool mouse_free_move_event(int, int, int, int, int) { return false; }
     virtual bool mouse_scroll_event(int x, int y, int dx, int dy);
     virtual bool key_press_event(int key, int modifiers);
-    virtual bool key_release_event(int, int) { return false; }
+    virtual bool key_release_event(int key, int modifiers);
     virtual bool char_input_event(unsigned int) { return false; }
     virtual bool drop_event(const std::vector<std::string>& filenames);
     virtual bool focus_event(bool) { return false; }
@@ -71,6 +88,12 @@ private:
     struct Window;
     std::shared_ptr<Window> window_;
     bool animation_enabled_ = false;
+    int pressed_key_ = -1, pressed_button_ = -1;
+    int mouse_pressed_x_ = 0, mouse_pressed_y_ = 0;
+    std::map<Key, std::map<Modifier, std::pair<Function, Model*>>> commands_;
+    std::string manual_, hint_;
+    void copy_view();
+    void paste_view();
     VulkanViewer(std::shared_ptr<Window> window, const graphics::DeviceOptions& options);
 };
 }

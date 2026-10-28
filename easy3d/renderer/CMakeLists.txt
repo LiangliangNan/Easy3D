@@ -1,5 +1,10 @@
 set(module renderer)
 set(private_dependencies)
+set(backend_sources)
+if(Easy3D_ENABLE_VULKAN)
+    list(APPEND backend_sources backends/vulkan/drawable.cpp)
+    list(APPEND private_dependencies easy3d::vulkan)
+endif()
 set(public_dependencies easy3d::util easy3d::core easy3d::fileio easy3d::algo)
 
 if(NOT Easy3D_ENABLE_OPENGL)
@@ -10,8 +15,8 @@ if(NOT Easy3D_ENABLE_OPENGL)
     set(renderer_sources obj_materials.cpp camera.cpp constraint.cpp drawable.cpp drawable_types.cpp frame.cpp frustum.cpp
             key_frame_interpolator.cpp manipulator.cpp manipulated_camera_frame.cpp manipulated_frame.cpp
             shape.cpp buffer.cpp renderer.cpp state.cpp texture.cpp texture_manager.cpp transform.cpp transform_decompose.cpp
-            backends/cpu/opengl_unavailable.cpp)
-    add_module(renderer "${renderer_headers}" "${renderer_sources}" "" "${public_dependencies}")
+            backends/cpu/opengl_unavailable.cpp ${backend_sources})
+    add_module(renderer "${renderer_headers}" "${renderer_sources}" "${private_dependencies}" "${public_dependencies}")
     target_compile_definitions(easy3d_renderer PUBLIC EASY3D_NO_OPENGL)
     install_module(renderer)
     return()
@@ -61,6 +66,7 @@ set(${module}_headers
         )
 
 set(${module}_sources
+        ${backend_sources}
         obj_materials.cpp
         ambient_occlusion.cpp
         average_color_blending.cpp

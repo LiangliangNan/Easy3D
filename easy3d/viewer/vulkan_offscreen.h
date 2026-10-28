@@ -36,7 +36,7 @@ public:
     // Set fit_scene=false when attaching a result without changing camera state.
     Model* add_model(std::shared_ptr<Model> model, bool create_default_drawables, bool fit_scene);
     Model* add_model(Model* model, bool create_default_drawables = true);
-    bool delete_model(Model* model);
+    virtual bool delete_model(Model* model);
     const std::vector<std::shared_ptr<Model>>& models() const;
     Model* current_model() const;
     Drawable* add_drawable(std::shared_ptr<Drawable> drawable);
@@ -85,10 +85,11 @@ public:
     // Color is multisampled when requested; IDs/depth stay center-sampled.
     // Invalid/unsupported requests throw, allowing callers/tests to handle them.
     graphics::FrameImage capture(unsigned samples = 1) const;
-    bool render(const std::string& filename, float scaling = 1.0f, int samples = 1,
+    bool render(const std::string& filename, float scaling = 1.0f, int samples = 4,
                 int back_ground = 1, bool expand = true) const;
     const graphics::RenderDevice& device() const;
 protected:
+    void set_current_model_index(int index);
     VulkanOffScreen(int width, int height, std::unique_ptr<graphics::RenderDevice> device);
     bool present(unsigned samples = 1);
     // Window hosts must destroy the Vulkan surface/device before the native window.

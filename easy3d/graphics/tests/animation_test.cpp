@@ -97,7 +97,7 @@ int main(int argc, char**) {
         frame(viewer); const auto first=viewer.capture();
         limit=41;
         const unsigned before=viewer.presented;
-        require(viewer.run(40)==0 && viewer.presented==before+40 && ticks==41,
+        require(viewer.run_frames(40)==0 && viewer.presented==before+40 && ticks==41,
                 "bounded run did not present its budget or advance tutorial animation");
         // Follow the actual cycle rather than hard-coding its playback speed.
         for (unsigned i=0;animation.scale()<=1.5f && i<1000;++i) {
@@ -111,7 +111,7 @@ int main(int argc, char**) {
         limit=ticks+1; frame(viewer);
         require(viewer.capture().rgba==first.rgba,"tutorial cycle accumulated deformation");
         viewer.animation_func_=[](VulkanViewer*) -> bool { throw std::runtime_error("expected animation failure"); };
-        require(viewer.run(1)==1,"animation exception was swallowed by run");
+        require(viewer.run_frames(1)==1,"animation exception was swallowed by run");
         viewer.animation_func_=[](VulkanViewer* v) { v->request_close(); return true; };
         require(!viewer.draw_frame() && viewer.should_close(),"animation close still presented a frame");
         require(viewer.device().validation_errors()==0,"animation validation errors");

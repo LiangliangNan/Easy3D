@@ -222,7 +222,7 @@ Linux; native Cocoa/Win32 on macOS/Windows). The host requests `GLFW_NO_API` and
 never creates an OpenGL context. `Easy3D_ENABLE_OPENGL=ON` is also supported when
 you want to compile the existing applications alongside the Vulkan demo.
 
-Controls: left drag rotates, right/middle drag pans, the wheel zooms, **F** fits
+Controls: left drag rotates, right drag pans, middle drag/the wheel zoom, **F** fits
 all models, **P** toggles perspective/orthographic, **F2** pauses/resumes an
 available animation, and **Escape** closes. Shift-left
 click sets the camera pivot to a depth-picked surface point. You can also drop a
@@ -324,14 +324,15 @@ package exports the `vulkan` component and finds its Vulkan dependency.
 ## Multisampling and test diagnostics
 
 `VulkanOffScreen::capture(samples)` and `render(filename, scaling, samples, ...)`
-now support the device's RGBA8/D32 sample counts. The default remains one sample.
+now support the device's RGBA8/D32 sample counts. `capture()` defaults to one
+sample; file-output `render()` defaults to four, matching `OffScreen::render()`.
 `RenderDevice::render()` and `present()` also accept a trailing sample-count
 argument. Query `device().supported_sample_counts()` before offering a count:
 `mask & 4` means four samples are available. Unsupported counts are rejected
 explicitly rather than silently reduced.
 
 For a window, set `VulkanViewerOptions.samples` at construction or call
-`viewer.set_samples(4)`. `snapshot()` and no-argument `capture()` use the window's
+`viewer.set_samples(4)`. No-argument `capture()` uses the window's
 current count. Changing the count does not recreate the swapchain; render passes
 and pipelines are cached by pass kind and sample count, and framebuffer resources
 are recreated safely. Rendering remains synchronous at this stage.
@@ -1220,7 +1221,8 @@ applications do not map an OpenGL buffer or require an OpenGL context.
 `pre_draw()` and scene extraction for each renderable frame attempt. Capturing,
 saving a snapshot or picking does not advance animation. Closed, iconified and
 zero-sized windows skip updates. A callback can pause itself or request closure;
-exceptions propagate from `draw_frame()` and are reported as failure by `run()`.
+exceptions propagate from `draw_frame()` and are reported as failure by `run()`
+and `run_frames()`.
 As in the legacy Viewer, the bool callback result is advisory; stop explicitly
 with `set_animation(false)`. Replace or clear a callback between frames, rather
 than from inside the callable itself.
@@ -1539,3 +1541,131 @@ and clipping/selection/scanning in explicit native runs. The five OpenGL
 main/viewer source pairs also pass C++11 compilation checks, as do their native
 viewer implementations in a dual-backend compilation context. No validation
 errors were reported; the existing MoltenVK integer-attachment warning remains.
+
+
+## Renderer/viewer responsibility alignment
+
+The native drawable rendering implementation now lives in
+`easy3d/renderer/backends/vulkan/drawable.h` and `drawable.cpp`, alongside the
+renderer module's existing backend organization. Its internal `DrawableRenderer`
+converts the shared point, line and triangle drawable state into graphics commands
+and owns immutable geometry/image caches. It handles flat shading, textures,
+selection/highlight colors, impostor styles and per-drawable clipping transforms.
+These responsibilities were previously embedded in `VulkanOffScreen::Impl`.
+
+`easy3d/viewer/vulkan_offscreen.cpp` retains host responsibilities: scene ownership,
+camera and viewport control, command ordering, picking provenance, capture,
+presentation and file output. It delegates drawable conversion and cache
+maintenance to the renderer implementation. The internal helper is not a new
+public drawable API; callers continue to use the existing `Drawable` subclasses.
+The low-level device, GPU uploads, synchronization and shader implementation stay
+in `easy3d/graphics`.
+
+The extraction preserves the existing conversion/cache implementation, passing
+clipping planes explicitly instead of obtaining them from viewer state. Cache
+invalidation, weak source ownership and shared point positions for rendering and
+GPU selection retain their existing behavior. Only Vulkan-enabled configurations
+compile and link this renderer implementation. OpenGL implementation files and
+public viewer/drawable interfaces are unchanged. Further module consolidation and
+shared runtime backend selection remain migration work.
+
+Verified on this Mac with MoltenVK: all 36 native CTests and all 17 combined
+OpenGL/Vulkan CTests pass after the extraction. The combined suite enables
+Khronos and synchronization validation. Native-only and combined builds succeed;
+the OpenGL-only renderer/viewer target also builds with Vulkan disabled.
+
+
+## Viewer and offscreen counterpart API alignment
+
+`easy3d::VulkanViewer` is the native counterpart of `easy3d::Viewer`;
+`easy3d::VulkanOffScreen` is the native counterpart of `easy3d::OffScreen`.
+Their API and responsibility alignment is a requirement separate from tutorial
+source organization. Shared entry points must agree on parameter meanings.
+Remaining differences are migration work, not a new intended public API split.
+
+`VulkanViewer::run(bool see_all = true)` now matches `Viewer::run()`: optionally
+fit the scene, show the window and run until it closes. `run(false)` preserves
+the configured camera. Previously Vulkan interpreted the argument as a frame
+count, so `run(true)` stopped after one frame. Native bounded execution now uses
+`run_frames(unsigned max_frames = 0)`, preserving camera/visibility and counting
+only presented frames. Zero means unbounded. Native tutorials, the demo and
+animation/thread tests use that explicitly named extension; external native
+callers that passed frame counts to `run()` must switch to `run_frames()`.
+
+`VulkanViewer::snapshot(filename, scaling, samples, back_ground, expand)` now
+exposes the same file-output parameters/defaults as `Viewer::snapshot()`.
+`VulkanOffScreen::render()` likewise defaults to four samples, matching
+`OffScreen::render()`. Snapshot sampling is independent of presentation sampling;
+`capture()` without arguments still uses the window's current sample count.
+Unsupported sample counts fail explicitly. The existing native limitation that
+`expand=false` is unsupported remains; this step does not claim complete snapshot
+parity. Snapshot rendering keeps the live camera unchanged.
+
+Window regression coverage checks that both boolean run modes present multiple
+frames until explicitly closed, that only `run(true)` refits the camera, and that
+snapshot scaling/background parameters reach image output without changing the
+camera. Existing animation/thread tests retain bounded-frame/error coverage.
+
+Verified on MoltenVK on this Mac: native and combined builds succeed; all 36
+native CTests and all 17 combined OpenGL/Vulkan CTests pass, including the new
+run/snapshot assertions. The combined suite enables Khronos and synchronization
+validation. No validation errors were reported; the previously documented
+MoltenVK integer-attachment warning remains.
+
+
+## Native viewer input counterpart alignment
+
+`VulkanViewer` now implements the same five input hooks as `Viewer`, including
+`key_release_event()` state reset. The two classes share the existing Key,
+Modifier and Button identifiers through `easy3d/viewer/viewer_input.h`. Existing
+`Viewer::KEY_*`, `Viewer::MODIF_*` and `Viewer::BUTTON_*` source usage remains
+valid; Vulkan exposes the same names. `MODIF_CTRL` uses Command on macOS and
+Control elsewhere, matching the original viewer.
+
+The native controls now include:
+
+- Left-drag rotation, right-drag translation and middle-drag/wheel zoom, using
+  the same camera-frame operations as OpenGL. X/Y/O constrain drag axes until
+  key release; focus loss clears held key/button state. Alt-drag is reserved for
+  tools, and Ctrl/Command-drag does not move the camera before region release.
+- Shift-left picks the visible surface pivot or resets to scene center on a
+  background click. Shift-right resets the pivot. Z-left focuses toward the
+  picked point and Z-right fits the scene. Picking uses exact top-left framebuffer
+  pixel centers, including HiDPI, clipping and impostor surface depth.
+- Ctrl/Command-left release fits the dragged region; zero-width/height regions
+  are ignored. Camera actions end on release, including region zoom.
+- Arrow navigation, Ctrl/Command-arrow panning, Ctrl/Command +/- zoom, F/C scene
+  or current-model fit, P projection, Space alignment and F2 animation toggling.
+- M shading; E/V/B/L edges, vertices, borders and locks; +/- point size and []
+  line width, clamped to at least one; comma/period current-model cycling with
+  wraparound; Delete current model; D model properties; F1 usage; Alt-F4 close.
+- Ctrl/Command-C/V camera copy/paste using the original seven-value clipboard
+  format, with invalid/non-finite clipboard data ignored. Paste and Z-focus use
+  immediate UI-thread camera updates instead of timer-driven interpolation.
+- Ctrl/Command-O/S open/save and S snapshot dispatch through matching virtual
+  `open()`, `save()` and `snapshot()` hooks, using the shared native file dialogs.
+  Exact modifier matching prevents a modified key from invoking a plain shortcut.
+- The same `bind(Function, Model*, Key, Modifier)` mechanism for custom shortcuts,
+  checked before default actions, and `set_usage()` for the F1 manual. Bound
+  model pointers remain borrowed, as in the original viewer.
+
+The offscreen scene adapter now tracks a current model separately from scene
+ordering, so keyboard cycling does not alter draw/picking IDs. Adding/deleting
+models selects the last model and clearing a scene clears that selection, matching
+the original viewer's ownership policy. Tutorial input overrides remain virtual.
+
+Remaining differences: global clipping-plane shortcuts/Alt manipulation, corner
+axes, frame-rate and camera-path display/playback, shader hot reload, pivot/region
+visual hints and HUD usage hints still need native counterparts. Unsupported
+feature shortcuts warn rather than silently invoking a different camera action;
+Tutorial 307's own clipping controls remain available. This step does not claim
+complete interaction or renderer parity.
+
+Verified on MoltenVK on this Mac: all 37 native CTests and all 18 combined-backend
+CTests pass. The new `vulkan.input` test covers modifier isolation, model cycling,
+style/size controls, navigation, constrained pan and release, middle/region zoom,
+pivot depth picking, Z-focus, focus cancellation, clipboard roundtrip, custom
+bindings and virtual file actions. It restores clipboard text and substitutes
+virtual file hooks to avoid dialogs during automation. The combined build enables
+Khronos and synchronization validation; no validation errors were reported. The
+OpenGL-only renderer/viewer build also passes with the shared input identifiers.
