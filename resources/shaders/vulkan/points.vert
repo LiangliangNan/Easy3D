@@ -1,4 +1,5 @@
 #version 450
+layout(constant_id=0) const bool native_point=false;
 layout(location=0) in vec3 position;
 layout(location=1) in vec3 normal;
 layout(location=2) in vec4 color;
@@ -24,7 +25,9 @@ layout(location=5) flat out vec3 surfel_normal;
 void main() {
     selection_tint = highlight_color;
     const vec2 corners[6] = vec2[](vec2(-1,-1),vec2(1,-1),vec2(1,1),vec2(-1,-1),vec2(1,1),vec2(-1,1));
-    vec2 corner = corners[gl_VertexIndex];
+    vec2 corner=vec2(0);
+    if (!native_point) corner=corners[gl_VertexIndex];
+    gl_PointSize=1;
     vertex_color = color * draw.tint;
     uv = texcoord;
     id = uvec2(draw.object_id, primitive_id);
@@ -33,6 +36,11 @@ void main() {
     if (points.light.w == 2)
         surfel_normal = normalize(transpose(inverse(mat3(points.model_view))) * normal);
     center = (points.model_view * vec4(position,1)).xyz;
+    if (points.light.w == 0 || points.clip_info.y>0) {
+        for (int i=0;i<int(points.clip_info.x);++i) if (dot(points.clip_planes[i],vec4(center,1))<0) {
+            gl_Position=vec4(2,2,2,1); return;
+        }
+    }
     if (points.light.w == 0) {
         vec4 p = draw.mvp * vec4(position,1);
         gl_Position = vec4(p.x,-p.y,0.5*(p.z+p.w),p.w);

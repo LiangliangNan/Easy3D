@@ -2,7 +2,8 @@
 // Projected-center through-selection, based on the OpenGL lasso implementation.
 // Compute avoids the optional vertexPipelineStoresAndAtomics feature.
 layout(local_size_x=64) in;
-layout(std430,set=0,binding=0) readonly buffer Points { vec4 points[]; };
+struct Point { vec3 position; uint source; };
+layout(std430,set=0,binding=0) readonly buffer Points { Point points[]; };
 layout(std430,set=0,binding=1) readonly buffer Polygon { vec2 polygon[]; };
 layout(std430,set=0,binding=2) buffer Selection { uint words[]; };
 layout(push_constant) uniform Parameters {
@@ -31,14 +32,15 @@ void main() {
     if (group>=groups) return;
     uint id=group*64+gl_LocalInvocationID.x;
     if (id>=pc.dimensions.z) return;
-    vec4 local=vec4(points[id].xyz,1),clip=pc.mvp*local;
+    vec4 local=vec4(points[id].position,1),clip=pc.mvp*local;
     if (any(isnan(clip)) || any(isinf(clip)) || clip.w<=0 ||
         any(lessThan(clip.xyz,vec3(-clip.w))) || any(greaterThan(clip.xyz,vec3(clip.w)))) return;
     for (uint i=0;i<pc.options.y;++i) if (dot(pc.planes[i],local)<0) return;
     vec2 p=vec2((clip.x/clip.w+1)*0.5*pc.dimensions.x,(1-clip.y/clip.w)*0.5*pc.dimensions.y);
     if (contains(p)) {
-        uint mask=1u<<(id&31u);
-        if (pc.options.x!=0) atomicAnd(words[id>>5],~mask);
-        else atomicOr(words[id>>5],mask);
+        uint source=points[id].source;
+        uint mask=1u<<(source&31u);
+        if (pc.options.x!=0) atomicAnd(words[source>>5],~mask);
+        else atomicOr(words[source>>5],mask);
     }
 }

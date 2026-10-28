@@ -66,6 +66,11 @@ int main(int argc,char**) {
         points->set_uniform_coloring(vec4(0,0,1,1)); points->set_lighting(false);
         viewer.camera()->setViewDirection(vec3(0,0,-1)); viewer.camera()->setUpVector(vec3(0,1,0));
         viewer.camera()->setType(Camera::ORTHOGRAPHIC); viewer.fit_screen(); frame(viewer); frame(viewer);
+        const auto original=viewer.point_resource(points);
+        require(original->source_ids()==std::vector<uint32_t>({1,2,3}) && original->source_count()==4,
+                "point snapshot did not preserve deleted source slots");
+        const auto uploads=viewer.device().point_upload_count();
+        require(uploads==1,"point rendering did not realize a single position resource");
         Input input(viewer);
         auto selected=cloud->vertex_property<bool>("v:select");
         auto gesture=[&](vec3 world,int button,bool rectangle=false) {
@@ -113,6 +118,20 @@ int main(int argc,char**) {
         viewer.set_clipping_planes({vec4(0,0,1,.1f)}); frame(viewer);
         gesture(vec3(-.3f,.2f,0),GLFW_MOUSE_BUTTON_LEFT);
         require(selected[left] && !selected[back],"GPU region selection ignored world-space clipping");
+        require(viewer.point_resource(points)==original && viewer.device().point_upload_count()==uploads,
+                "selection colors/transforms/MSAA/resize/clipping replaced the shared point buffer");
+        cloud->position(left).x-=.1f; cloud->renderer()->update(); frame(viewer);
+        require(original->positions()[0].x==-.5f,"position edit mutated the retained immutable point snapshot");
+        require(viewer.point_resource(points)!=original && viewer.device().point_upload_count()==uploads+1,
+                "position mutation did not upload exactly one replacement resource");
+        cloud->delete_vertex(right); cloud->renderer()->update(); frame(viewer);
+        require(viewer.point_resource(points)->source_ids()==std::vector<uint32_t>({1,3}) &&
+                viewer.device().point_upload_count()==uploads+2,"deletion lost source IDs or re-uploaded repeatedly");
+        graphics::PointSelectionRequest retained; retained.points=original;
+        retained.width=viewer.width(); retained.height=viewer.height();
+        retained.polygon={{0,0},{float(viewer.width()),0},{float(viewer.width()),float(viewer.height())},{0,float(viewer.height())}};
+        require(viewer.select_points(retained)[0]==14 && viewer.device().point_upload_count()==uploads+2,
+                "retained point snapshot did not keep its original shared GPU realization");
         require(viewer.device().validation_errors()==0,"native selection validation errors");
         std::cout << "PASS: native lasso/rectangle select/deselect, modifier release, deleted/occluded points, transparent HUD, stable depth/IDs, MSAA, resize/model transforms and clipping\n";
     } catch (const std::exception& e) { std::cerr << "FAIL: " << e.what() << '\n'; return 1; }

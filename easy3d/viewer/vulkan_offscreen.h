@@ -68,6 +68,9 @@ public:
     PickResult pick(int x, int y) const;
     // GPU through-selection; the request owns its point/polygon/bitset snapshot.
     std::vector<std::uint32_t> select_points(const graphics::PointSelectionRequest& request) const;
+    // Unclipped immutable point positions shared by this drawable's rendering
+    // and selection. Extraction is refreshed as needed; color-only changes reuse it.
+    std::shared_ptr<const graphics::PointData> point_resource(Drawable* drawable) const;
     // Reconstruct a top-left framebuffer pixel center from [0,1] readback depth.
     // Unlike Camera's legacy coordinate helper, this uses continuous framebuffer coordinates.
     vec3 unproject_pixel(int x, int y, float depth) const;

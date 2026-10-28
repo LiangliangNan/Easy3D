@@ -2003,6 +2003,16 @@ namespace easy3d {
 
         void update(PointCloud *model, PointsDrawable *drawable) {
             internal::update<PointCloud>(model, drawable);
+            if (drawable->has_cpu_buffers()) {
+                // Keep original vertex slots as indices, excluding deleted slots.
+                if (model->n_vertices()==model->points().size()) drawable->disable_element_buffer();
+                else {
+                    std::vector<unsigned int> live;
+                    live.reserve(model->n_vertices());
+                    for (auto v:model->vertices()) live.push_back(v.idx());
+                    drawable->update_element_buffer(live);
+                }
+            }
         }
 
 

@@ -14,6 +14,23 @@ namespace easy3d { namespace graphics {
 // These descriptions deliberately contain no OpenGL or Vulkan handles.
 enum class Topology { triangles, lines, points };
 
+// Immutable positions in point draw/instance order, with original source slots.
+// Devices realize this once as a shared vertex/storage buffer. Color, normal,
+// texture, highlighting and transform changes can retain the same snapshot.
+class PointData {
+public:
+    explicit PointData(std::vector<vec3> positions, std::vector<std::uint32_t> source_ids={},
+                       std::uint32_t source_count=0);
+    PointData& operator=(const PointData&)=delete;
+    const std::vector<vec3>& positions() const { return positions_; }
+    const std::vector<std::uint32_t>& source_ids() const { return source_ids_; }
+    std::uint32_t source_count() const { return source_count_; }
+private:
+    std::vector<vec3> positions_;
+    std::vector<std::uint32_t> source_ids_;
+    std::uint32_t source_count_;
+};
+
 struct Vertex {
     vec3 position;
     vec3 normal = vec3(0, 0, 1);
@@ -30,16 +47,19 @@ class Geometry {
 public:
     Geometry(std::vector<Vertex> vertices, std::vector<std::uint32_t> indices = {},
              Topology topology = Topology::triangles,
-             std::vector<std::uint32_t> primitive_ids = {});
+             std::vector<std::uint32_t> primitive_ids = {},
+             std::shared_ptr<const PointData> point_data = {});
     const std::vector<Vertex>& vertices() const { return vertices_; }
     const std::vector<std::uint32_t>& indices() const { return indices_; }
     const std::vector<std::uint32_t>& primitive_ids() const { return primitive_ids_; }
     Topology topology() const { return topology_; }
+    const std::shared_ptr<const PointData>& point_data() const { return point_data_; }
 private:
     const std::vector<Vertex> vertices_;
     const std::vector<std::uint32_t> indices_;
     const Topology topology_;
     const std::vector<std::uint32_t> primitive_ids_;
+    std::shared_ptr<const PointData> point_data_;
 };
 
 enum class TextureWrap { clamp_to_edge, repeat };
@@ -136,12 +156,12 @@ struct DeviceOptions {
 // GPU through-selection of projected point centers in a top-left framebuffer
 // polygon. Polygon crossings use the even-odd rule (boundary included). It is
 // independent of rasterization/occlusion, point style, MSAA and scene readback.
-// Point i maps to bit i in words; empty words start from zero, otherwise supply
-// ceil(points.size()/32) words. Unmatched/padding bits are preserved. Nonfinite
+// PointData source IDs address bits; empty words start from zero, otherwise supply
+// ceil(source_count/32) words. Unmatched/padding bits are preserved. Nonfinite
 // points are skipped (usable for deleted vertex slots). Camera MVP uses [-w,w]
 // depth; centers outside its frustum or local halfspaces are skipped.
 struct PointSelectionRequest {
-    std::vector<vec3> points;
+    std::shared_ptr<const PointData> points;
     std::vector<vec2> polygon;
     std::vector<std::uint32_t> words;
     mat4 model_view_projection = mat4::identity();
@@ -176,6 +196,9 @@ public:
     // Synchronous GPU polygon upload, compute dispatch and selection readback.
     // Externally synchronized like render(); no render targets are modified.
     virtual std::vector<std::uint32_t> select_points(const PointSelectionRequest& request) = 0;
+    // Cumulative position-resource realizations, useful for transfer diagnostics.
+    // Rendering and selection share these uploads; attribute uploads are separate.
+    virtual std::uint64_t point_upload_count() const = 0;
 };
 
 // Implemented by easy3d::vulkan. Throws std::runtime_error on unavailable devices.

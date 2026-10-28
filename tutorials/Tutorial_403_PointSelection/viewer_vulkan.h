@@ -42,16 +42,11 @@ protected:
             if (drawable && cloud->renderer()->is_visible() && drawable->is_visible()) {
                 easy3d::graphics::PointSelectionRequest request;
                 request.width=width(); request.height=height(); request.polygon=polygon_;
-                request.points=cloud->points();
-                request.words.resize((request.points.size()+31)/32,0);
-                // Deleted slots keep their source indices but never participate.
-                const float nan=std::numeric_limits<float>::quiet_NaN();
-                for (auto& p:request.points) p=easy3d::vec3(nan);
+                request.points=point_resource(drawable);
+                request.words.resize((size_t(request.points->source_count())+31)/32,0);
                 auto selected=cloud->vertex_property<bool>("v:select");
-                for (auto v:cloud->vertices()) {
-                    request.points[v.idx()]=cloud->position(v);
+                for (auto v:cloud->vertices())
                     if (selected[v]) request.words[v.idx()>>5]|=1u<<(v.idx()&31);
-                }
                 const auto transform=drawable->manipulated_matrix();
                 request.model_view_projection=camera()->modelViewProjectionMatrix()*transform;
                 for (const auto& plane:clipping_planes()) request.local_clipping_planes.push_back(transpose(transform)*plane);

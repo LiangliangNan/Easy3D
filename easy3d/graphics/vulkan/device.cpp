@@ -339,6 +339,13 @@ struct Buffer {
         check(result, write ? "flush host buffer" : "invalidate readback buffer");
     }
 };
+struct GpuPoint { float position[3]; uint32_t source; };
+static_assert(sizeof(GpuPoint)==16,"point vertex/storage layout");
+struct GpuPoints {
+    std::weak_ptr<const PointData> source;
+    Buffer buffer;
+    explicit GpuPoints(Context& c):buffer(c) {}
+};
 // Separate compute resources: no render pass, framebuffer, depth or picking IDs.
 struct PointSelector {
     Context& c;
@@ -385,19 +392,17 @@ struct PointSelector {
         check(vkCreateComputePipelines(c.device,VK_NULL_HANDLE,1,&ci,nullptr,&pipeline),"create selection compute pipeline");
     }
     std::vector<uint32_t> run(const PointSelectionRequest& request,std::vector<uint32_t> words,
-                              const std::vector<vec4>& planes) {
-        std::vector<vec4> points; points.reserve(request.points.size());
-        for (const auto& p:request.points) points.emplace_back(p,1);
-        const VkDeviceSize sizes[]={points.size()*sizeof(vec4),request.polygon.size()*sizeof(vec2),words.size()*sizeof(uint32_t)};
-        Buffer positions(c),polygon(c),selection(c); Buffer* buffers[]={&positions,&polygon,&selection};
+                              const std::vector<vec4>& planes,Buffer& positions) {
+        const auto count=request.points->positions().size();
+        const VkDeviceSize sizes[]={count*sizeof(GpuPoint),request.polygon.size()*sizeof(vec2),words.size()*sizeof(uint32_t)};
+        Buffer polygon(c),selection(c); Buffer* buffers[]={&positions,&polygon,&selection};
         VkDescriptorBufferInfo infos[3]={}; VkWriteDescriptorSet writes[3]={};
         for (unsigned i=0;i<3;++i) {
-            buffers[i]->init(sizes[i],VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,true);
+            if (i) buffers[i]->init(sizes[i],VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,true);
             infos[i]={buffers[i]->handle,0,sizes[i]};
             writes[i].sType=VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET; writes[i].dstSet=set; writes[i].dstBinding=i;
             writes[i].descriptorCount=1; writes[i].descriptorType=VK_DESCRIPTOR_TYPE_STORAGE_BUFFER; writes[i].pBufferInfo=&infos[i];
         }
-        positions.transfer(points.data(),size_t(sizes[0]),true);
         polygon.transfer(const_cast<vec2*>(request.polygon.data()),size_t(sizes[1]),true);
         selection.transfer(words.data(),size_t(sizes[2]),true);
         vkUpdateDescriptorSets(c.device,3,writes,0,nullptr);
@@ -407,9 +412,9 @@ struct PointSelector {
             push.mvp[col*4+row]=request.model_view_projection(row,col);
         for (size_t i=0;i<planes.size();++i) for (unsigned j=0;j<4;++j) push.planes[4*i+j]=planes[i][j];
         push.dimensions[0]=request.width; push.dimensions[1]=request.height;
-        push.dimensions[2]=uint32_t(points.size()); push.dimensions[3]=uint32_t(request.polygon.size());
+        push.dimensions[2]=uint32_t(count); push.dimensions[3]=uint32_t(request.polygon.size());
         push.options[0]=request.deselect; push.options[1]=uint32_t(planes.size());
-        const uint32_t groups=uint32_t((points.size()+63)/64);
+        const uint32_t groups=uint32_t((count+63)/64);
         const uint32_t x=std::min(groups,c.properties.limits.maxComputeWorkGroupCount[0]);
         const uint32_t y=(groups+x-1)/x;
         if (y>c.properties.limits.maxComputeWorkGroupCount[1]) throw std::invalid_argument("selection exceeds compute dispatch limits");
@@ -628,7 +633,11 @@ struct GpuVertex {
     float position[3], normal[3], color[4], texcoord[2], highlight[4];
     uint32_t primitive;
 };
+struct GpuPointAttributes {
+    float normal[3],color[4],texcoord[2],highlight[4]; uint32_t primitive;
+};
 struct GpuGeometry {
+    GpuPoints* points=nullptr;
     std::weak_ptr<const Geometry> source;
     Buffer buffer;
     uint32_t count = 0;
@@ -733,6 +742,8 @@ class VulkanDevice final : public RenderDevice {
     Context c_;
     std::string name_;
     std::unique_ptr<PointSelector> point_selector_;
+    std::map<const PointData*,std::unique_ptr<GpuPoints>> point_resources_;
+    uint64_t point_uploads_=0;
     uint32_t sample_counts_ = 1;
     std::map<unsigned, std::unique_ptr<RenderPass>> passes_;
     std::unique_ptr<RenderPass> id_pass_;
@@ -767,7 +778,7 @@ class VulkanDevice final : public RenderDevice {
             throw std::invalid_argument("clipping requires an affine model-view transform");
         const bool analytic=(command.geometry->topology()==Topology::points && command.point_style!=PointStyle::plain) ||
             (command.geometry->topology()==Topology::lines && command.line_style!=LineStyle::plain);
-        if (analytic && !command.discard_clipped_primitives) return command;
+        if (command.geometry->topology()==Topology::points || (analytic && !command.discard_clipped_primitives)) return command;
         auto& entry=clipped_[input.geometry.get()];
         if (entry.source.lock()!=input.geometry || entry.planes!=command.clipping_planes ||
             entry.model_view!=command.model_view || entry.normal!=command.normal_matrix ||
@@ -803,11 +814,45 @@ public:
         return style != LineStyle::plain && !c_.sample_shading ? 1 : sample_counts_;
     }
     unsigned validation_errors() const override { return c_.errors.load(); }
+    uint64_t point_upload_count() const override { return point_uploads_; }
+    GpuPoints& point_resource(const std::shared_ptr<const PointData>& data) {
+        for (auto it=point_resources_.begin();it!=point_resources_.end();) {
+            if (it->second->source.expired()) it=point_resources_.erase(it); else ++it;
+        }
+        auto found=point_resources_.find(data.get());
+        if (found!=point_resources_.end()) return *found->second;
+        std::unique_ptr<GpuPoints> gpu(new GpuPoints(c_)); gpu->source=data;
+        if (!data->positions().empty()) {
+            std::vector<GpuPoint> packed(data->positions().size());
+            for (size_t i=0;i<packed.size();++i) {
+                for (unsigned j=0;j<3;++j) packed[i].position[j]=data->positions()[i][j];
+                packed[i].source=data->source_ids()[i];
+            }
+            const VkDeviceSize bytes=packed.size()*sizeof(GpuPoint);
+            Buffer staging(c_); staging.init(bytes,VK_BUFFER_USAGE_TRANSFER_SRC_BIT,true);
+            staging.transfer(packed.data(),size_t(bytes),true);
+            gpu->buffer.init(bytes,VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_VERTEX_BUFFER_BIT|VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,false);
+            c_.execute([&](VkCommandBuffer cmd) {
+                VkBufferCopy copy={0,0,bytes}; vkCmdCopyBuffer(cmd,staging.handle,gpu->buffer.handle,1,&copy);
+                VkBufferMemoryBarrier barrier{}; barrier.sType=VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+                barrier.srcAccessMask=VK_ACCESS_TRANSFER_WRITE_BIT;
+                barrier.dstAccessMask=VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+                if (c_.compute) barrier.dstAccessMask|=VK_ACCESS_SHADER_READ_BIT;
+                barrier.srcQueueFamilyIndex=barrier.dstQueueFamilyIndex=VK_QUEUE_FAMILY_IGNORED;
+                barrier.buffer=gpu->buffer.handle; barrier.size=VK_WHOLE_SIZE;
+                vkCmdPipelineBarrier(cmd,VK_PIPELINE_STAGE_TRANSFER_BIT,VK_PIPELINE_STAGE_VERTEX_INPUT_BIT|
+                    (c_.compute?VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT:0),0,0,nullptr,1,&barrier,0,nullptr);
+            });
+            ++point_uploads_;
+        }
+        auto* result=gpu.get(); point_resources_.emplace(data.get(),std::move(gpu)); return *result;
+    }
     std::vector<uint32_t> select_points(const PointSelectionRequest& request) override {
         if (!request.width || !request.height) throw std::invalid_argument("selection requires positive framebuffer dimensions");
-        if (request.points.size()>UINT32_MAX || request.polygon.size()>UINT32_MAX)
+        if (!request.points) throw std::invalid_argument("selection requires a point resource");
+        if (request.polygon.size()>UINT32_MAX)
             throw std::invalid_argument("selection input exceeds 32-bit indexing");
-        const size_t count=(request.points.size()+31)/32;
+        const size_t count=(size_t(request.points->source_count())+31)/32;
         auto words=request.words;
         if (words.empty()) words.resize(count,0);
         else if (words.size()!=count) throw std::invalid_argument("selection word count does not match points");
@@ -821,15 +866,15 @@ public:
             const auto a=request.polygon[i]-request.polygon[0],b=request.polygon[i+1]-request.polygon[0];
             area=area || std::abs(double(a.x)*b.y-double(a.y)*b.x)>1e-8;
         }
-        if (request.points.empty() || !area) return words;
-        const uint64_t sizes[]={uint64_t(request.points.size())*sizeof(vec4),uint64_t(request.polygon.size())*sizeof(vec2),uint64_t(words.size())*sizeof(uint32_t)};
+        if (request.points->positions().empty() || !area) return words;
+        const uint64_t sizes[]={uint64_t(request.points->positions().size())*sizeof(GpuPoint),uint64_t(request.polygon.size())*sizeof(vec2),uint64_t(words.size())*sizeof(uint32_t)};
         for (auto size:sizes) if (size>c_.properties.limits.maxStorageBufferRange)
             throw std::invalid_argument("selection buffer exceeds device storage-buffer range");
         if (!c_.compute) throw std::runtime_error("selected graphics queue does not support compute selection");
         if (!point_selector_) {
             std::unique_ptr<PointSelector> next(new PointSelector(c_)); next->init(); point_selector_=std::move(next);
         }
-        return point_selector_->run(request,std::move(words),planes);
+        return point_selector_->run(request,std::move(words),planes,point_resource(request.points).buffer);
     }
     void init(const DeviceOptions& options, const VulkanSurface* surface = nullptr) {
         c_.init(options, surface); name_ = c_.properties.deviceName;
@@ -958,6 +1003,16 @@ public:
             vertex.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
             vertex.vertexBindingDescriptionCount = 1; vertex.pVertexBindingDescriptions = &binding;
             vertex.vertexAttributeDescriptionCount = 6; vertex.pVertexAttributeDescriptions = attrs;
+            VkVertexInputBindingDescription point_bindings[]={
+                {0,sizeof(GpuPoint),VK_VERTEX_INPUT_RATE_INSTANCE},
+                {1,sizeof(GpuPointAttributes),VK_VERTEX_INPUT_RATE_INSTANCE}};
+            VkVertexInputAttributeDescription point_attrs[]={
+                {0,0,VK_FORMAT_R32G32B32_SFLOAT,0},
+                {1,1,VK_FORMAT_R32G32B32_SFLOAT,offsetof(GpuPointAttributes,normal)},
+                {2,1,VK_FORMAT_R32G32B32A32_SFLOAT,offsetof(GpuPointAttributes,color)},
+                {3,1,VK_FORMAT_R32G32_SFLOAT,offsetof(GpuPointAttributes,texcoord)},
+                {4,1,VK_FORMAT_R32_UINT,offsetof(GpuPointAttributes,primitive)},
+                {9,1,VK_FORMAT_R32G32B32A32_SFLOAT,offsetof(GpuPointAttributes,highlight)}};
             VkPipelineInputAssemblyStateCreateInfo assembly{};
             assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
             VkPipelineViewportStateCreateInfo viewport{};
@@ -992,14 +1047,29 @@ public:
             pi.pDynamicState = &dynamic; pi.layout = layout_; pi.renderPass = pass.handle;
             const VkPrimitiveTopology topologies[] = {VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
                 VK_PRIMITIVE_TOPOLOGY_LINE_LIST, VK_PRIMITIVE_TOPOLOGY_POINT_LIST};
+            VkBool32 native_point=VK_TRUE;
+            VkSpecializationMapEntry point_entry={0,0,sizeof(native_point)};
+            VkSpecializationInfo point_specialization={1,&point_entry,sizeof(native_point),&native_point};
             for (unsigned i = 0; i < 6; ++i) {
+                if (i==2) {
+                    stages[0].module=modules[2]; stages[1].module=modules[3];
+                    stages[0].pSpecializationInfo=&point_specialization;
+                    point_bindings[0].inputRate=point_bindings[1].inputRate=VK_VERTEX_INPUT_RATE_VERTEX;
+                    vertex.vertexBindingDescriptionCount=2; vertex.pVertexBindingDescriptions=point_bindings;
+                    vertex.pVertexAttributeDescriptions=point_attrs;
+                }
                 if (i == 3) {
+                    stages[0].pSpecializationInfo=nullptr;
+                    point_bindings[0].inputRate=point_bindings[1].inputRate=VK_VERTEX_INPUT_RATE_INSTANCE;
                     stages[0].module = modules[2]; stages[1].module = modules[3];
                     binding.inputRate = VK_VERTEX_INPUT_RATE_INSTANCE;
+                    vertex.vertexBindingDescriptionCount=2; vertex.pVertexBindingDescriptions=point_bindings;
+                    vertex.pVertexAttributeDescriptions=point_attrs;
                     ms.sampleShadingEnable = c_.sample_shading && pass.samples != VK_SAMPLE_COUNT_1_BIT;
                     ms.minSampleShading = 1;
                 }
                 if (i == 4) {
+                    vertex.vertexBindingDescriptionCount=1; vertex.pVertexBindingDescriptions=&binding;
                     stages[0].module = modules[4]; stages[1].module = modules[5];
                     binding.stride = 2 * sizeof(GpuVertex);
                     vertex.vertexAttributeDescriptionCount = 8;
@@ -1062,11 +1132,23 @@ public:
             for (unsigned j = 0; j < 2; ++j) p.texcoord[j] = v.texcoord[j];
             p.primitive = data->primitive_ids().empty() ? static_cast<uint32_t>(i / size) : data->primitive_ids()[i / size];
         }
+        if (data->topology()==Topology::points) gpu->points=&point_resource(data->point_data());
         if (count) {
-            const VkDeviceSize bytes = packed.size() * sizeof(GpuVertex);
+            std::vector<GpuPointAttributes> attributes;
+            const void* input=packed.data(); size_t bytes=packed.size()*sizeof(GpuVertex);
+            if (gpu->points) {
+                attributes.resize(count);
+                for (size_t i=0;i<count;++i) {
+                    auto& a=attributes[i]; const auto& v=packed[i];
+                    std::memcpy(a.normal,v.normal,sizeof(a.normal)); std::memcpy(a.color,v.color,sizeof(a.color));
+                    std::memcpy(a.texcoord,v.texcoord,sizeof(a.texcoord)); std::memcpy(a.highlight,v.highlight,sizeof(a.highlight));
+                    a.primitive=v.primitive;
+                }
+                input=attributes.data(); bytes=attributes.size()*sizeof(GpuPointAttributes);
+            }
             Buffer staging(c_);
             staging.init(bytes, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, true);
-            staging.transfer(packed.data(), static_cast<size_t>(bytes), true);
+            staging.transfer(const_cast<void*>(input), bytes, true);
             gpu->buffer.init(bytes, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, false);
             c_.execute([&](VkCommandBuffer cmd) {
                 VkBufferCopy copy = {0, 0, bytes};
@@ -1134,8 +1216,8 @@ public:
                (d.line_style != LineStyle::plain || d.line_width != 1);
     }
     static bool expanded_impostor(const DrawCommand& d) {
-        return expanded_lines(d) || (d.geometry->topology() == Topology::points &&
-               (d.point_style != PointStyle::plain || d.point_size != 1));
+        return expanded_lines(d) || (d.geometry->topology()==Topology::points &&
+            (d.point_style!=PointStyle::plain || d.point_size!=1));
     }
     struct Prepared { DrawCommand command; GpuGeometry* geometry; GpuTexture* texture; uint32_t uniform_offset; };
     std::vector<Prepared> prepare(uint32_t width, uint32_t height, const std::vector<DrawCommand>& commands,
@@ -1214,6 +1296,9 @@ public:
         for (auto it = geometry_.begin(); it != geometry_.end(); ) {
             if (it->second->source.expired()) it = geometry_.erase(it); else ++it;
         }
+        for (auto it=point_resources_.begin();it!=point_resources_.end();) {
+            if (it->second->source.expired()) it=point_resources_.erase(it); else ++it;
+        }
         for (auto it = textures_.begin(); it != textures_.end(); ) {
             if (it->second->source.expired()) it = textures_.erase(it); else ++it;
         }
@@ -1233,7 +1318,7 @@ public:
             if (!g.count) continue;
             auto& t = texture(command.texture ? command.texture : white_);
             uint32_t offset = 0;
-            if (expanded_impostor(command)) {
+            if (expanded_impostor(command) || command.geometry->topology()==Topology::points) {
                 if (uniforms.size() > UINT32_MAX - stride)
                     throw std::invalid_argument("too many impostor draw commands");
                 offset = static_cast<uint32_t>(uniforms.size());
@@ -1241,6 +1326,7 @@ public:
                 const bool analytic = command.point_style != PointStyle::plain || command.line_style != LineStyle::plain;
                 mat4 model_view = mat4::identity(), projection = mat4::identity();
                 if (analytic) { model_view = command.model_view; projection = command.projection; }
+                else if (command.geometry->topology()==Topology::points && !command.clipping_planes.empty()) model_view=command.model_view;
                 const auto inv = analytic ? inverse(projection) : mat4::identity();
                 for (unsigned col = 0; col < 4; ++col)
                     for (unsigned row = 0; row < 4; ++row) {
@@ -1265,7 +1351,8 @@ public:
                 u.light[3] = command.point_style == PointStyle::surfel ? 2 : command.point_style == PointStyle::sphere ? 1 : 0;
                 if (expanded_lines(command))
                     u.light[3] = command.line_style == LineStyle::plain ? 5 : command.line_style == LineStyle::cone ? 4 : 3;
-                if (analytic) {
+                if (analytic || command.geometry->topology()==Topology::points) {
+                    u.clip_info[1]=command.discard_clipped_primitives?1.f:0.f;
                     u.clip_info[0]=float(command.clipping_planes.size());
                     for (size_t plane=0;plane<command.clipping_planes.size();++plane)
                         for (unsigned c=0;c<4;++c) u.clip_planes[plane*4+c]=command.clipping_planes[plane][c];
@@ -1322,10 +1409,13 @@ public:
             const bool expanded = expanded_impostor(d);
             if (expanded) pipeline = expanded_lines(d) ? (d.line_style == LineStyle::plain ? 5 : 4) : 3;
             vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pass.pipelines[pipeline]);
-            if (expanded)
+            if (expanded || d.geometry->topology()==Topology::points)
                 vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout_, 1, 1, &impostor_set_, 1, &draw.uniform_offset);
             VkDeviceSize offset = 0;
-            vkCmdBindVertexBuffers(cmd, 0, 1, &draw.geometry->buffer.handle, &offset);
+            if (draw.geometry->points) {
+                VkBuffer buffers[]={draw.geometry->points->buffer.handle,draw.geometry->buffer.handle};
+                VkDeviceSize offsets[]={0,0}; vkCmdBindVertexBuffers(cmd,0,2,buffers,offsets);
+            } else vkCmdBindVertexBuffers(cmd, 0, 1, &draw.geometry->buffer.handle, &offset);
             vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout_, 0, 1, &draw.texture->set, 0, nullptr);
             Push push{};
             for (unsigned col = 0; col < 4; ++col)

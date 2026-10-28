@@ -1283,9 +1283,9 @@ selection gesture the normal camera controls remain available. A red transparent
 fill and opaque boundary use the existing HUD path and never modify scene depth
 or picking IDs, including under MSAA.
 
-`graphics::RenderDevice::select_points(PointSelectionRequest)` uploads the point
-positions, lasso polygon and packed selection words to three shader storage
-buffers. An embedded GLSL450 compute shader projects each point and performs
+`graphics::RenderDevice::select_points(PointSelectionRequest)` binds the shared
+point-position/source-ID buffer, and uploads the lasso polygon and packed
+selection words. These form three shader storage buffers. An embedded GLSL450 compute shader projects each point and performs
 the even-odd in-polygon test **on the GPU**. It updates one bit per source point
 with `atomicOr` / `atomicAnd`, following the OpenGL SSBO lasso implementation.
 Using compute avoids the optional vertex-stage storage-write/atomic feature and
@@ -1303,7 +1303,7 @@ skipped while live source vertex indices continue to address their original
 selection bits. This does not add general mesh vertex/edge hit provenance or
 mesh region picking.
 
-The operation is synchronous: host-visible SSBO inputs are flushed if needed,
+The operation is synchronous: per-operation polygon/flag SSBO inputs are flushed if needed,
 then explicit host/compute barriers, a submission fence and noncoherent readback
 invalidation make updated words available to the caller. Tutorial 403 copies the
 result into `v:select` and updates per-point display colors on the UI thread.
@@ -1312,8 +1312,9 @@ nothing; malformed inputs and storage-buffer/dispatch limit violations fail
 explicitly. The compute pipeline/descriptors are private to each device and are
 created transactionally on first use. A graphics queue without compute support
 reports selection as unavailable; ordinary rendering remains usable. The path
-currently uploads/readbacks a snapshot per operation, without asynchronous
-selection or persistent GPU-only selection state.
+uploads the polygon/current flags and reads back flags per operation, without
+asynchronous selection or persistent GPU-only selection flags. Position resources
+are retained and shared with rendering, as described below.
 
 ```sh
 ./cmake-build-debug/bin/Tutorial_403_PointSelection --frames 3 --samples 4 --validation
@@ -1339,3 +1340,74 @@ sources pass a C++11 compilation check. The existing MoltenVK integer-attachment
 blending warning remains. Synthetic gesture tests use explicit framebuffer
 coordinates in a hidden window to avoid macOS cursor-warp/focus timing; native
 event routing remains covered by the existing window tests.
+
+
+## Shared point positions for rendering and selection
+
+`graphics::PointData` is an immutable snapshot of point positions and original
+source slots in point draw/instance order. `Geometry::point_data()` and
+`PointSelectionRequest::points` retain the same snapshot. Each device realizes it
+once as a device-local buffer with both `VERTEX_BUFFER` and `STORAGE_BUFFER`
+usage. The 16-byte record contains three position floats and a source-slot ID.
+Rendering binds that exact allocation as its position vertex stream; lasso
+compute binds it as its read-only position/source-ID SSBO. No separate selection
+position buffer or per-gesture position upload remains.
+
+Colors, normals, UVs, generated picking IDs and highlight tints use a separate
+attribute vertex buffer. A color/selection/highlight change can replace those
+attributes while retaining the point-position allocation. Point-cloud extraction
+keeps live source vertex indices and skips deleted slots; indexed/repeated point
+instances retain their source mapping, so atomic selection bits address original
+slots rather than draw order. Source IDs are distinct from generated picking
+primitive IDs.
+
+`VulkanOffScreen::point_resource(drawable)` returns the drawable's current,
+unclipped snapshot. The adapter compares refreshed positions/order/source slots
+and retains it across color-only rebuilds, transforms, style changes, resize and
+MSAA changes. Actual position/topology changes create a new immutable resource,
+uploaded once on first use. Retained older snapshots stay independently usable.
+The adapter can still extract/compare CPU drawable snapshots on state updates;
+this optimization removes redundant GPU position transfers rather than making
+all CPU scene extraction incremental.
+
+Plain-point center clipping and whole-impostor control rejection now run in the
+point vertex shader, while sphere/surfel surface clipping remains in the fragment
+shader. Moving clipping planes therefore does not rebuild/upload a filtered point
+position buffer. Native one-pixel point rasterization is retained using a vertex
+shader specialization; larger points and analytic impostors retain instanced
+quads. Depth, MSAA and picking policies remain unchanged.
+
+A staging upload makes the shared positions visible to vertex input and compute
+reads. Per-operation polygon/selection-word transfers retain host/compute barriers,
+submission fences and noncoherent flush/invalidate handling. Realizations are
+private to each device and expired snapshots retire after completed submissions,
+including when a scene stops drawing points.
+
+For low-level callers, retain a `PointData` snapshot and pass it to successive
+point `Geometry` objects when changing attributes, then also use it in selection:
+
+```cpp
+auto points = geometry->point_data();
+easy3d::graphics::PointSelectionRequest request;
+request.points = points;
+request.width = width;
+request.height = height;
+request.polygon = lasso;
+request.words = selection_words;
+auto selected = device->select_points(request);
+```
+
+`RenderDevice::point_upload_count()` reports cumulative position-resource uploads
+for transfer diagnostics. Regressions assert one realization for render-first and
+selection-first use, no new position uploads for repeated selection, color edits,
+clipping, transforms, MSAA or resize, and exactly one replacement for a position
+edit or deletion. They also cover indexed/duplicate points, sparse source IDs
+across bit words, retained old snapshots and independent devices.
+
+Verified on Apple M4 Pro / MoltenVK 1.4.2: all 33 native CTests and all
+11 dual-backend CTests pass. Shared-resource headless/viewer regressions and
+clipping checks pass with Khronos/synchronization validation enabled and zero
+validation errors. Tutorial 403 also passes bounded four-sample validation.
+The modified point vertex and selection compute shaders pass Vulkan 1.2
+SPIR-V validation. The previously documented MoltenVK integer-attachment
+blending warning remains.

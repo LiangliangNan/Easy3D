@@ -6,8 +6,19 @@
 #include <utility>
 
 namespace easy3d { namespace graphics {
+PointData::PointData(std::vector<vec3> positions,std::vector<uint32_t> ids,uint32_t count)
+    :positions_(std::move(positions)),source_ids_(std::move(ids)),source_count_(count) {
+    if (positions_.size()>UINT32_MAX) throw std::invalid_argument("too many point positions");
+    if (source_ids_.empty()) {
+        source_ids_.resize(positions_.size());
+        for (size_t i=0;i<positions_.size();++i) source_ids_[i]=uint32_t(i);
+    }
+    if (source_ids_.size()!=positions_.size()) throw std::invalid_argument("one source ID is required per point");
+    if (!source_count_) source_count_=uint32_t(positions_.size());
+    for (auto id:source_ids_) if (id>=source_count_) throw std::invalid_argument("point source ID outside source slots");
+}
 Geometry::Geometry(std::vector<Vertex> vertices, std::vector<std::uint32_t> indices,
-                   Topology topology, std::vector<std::uint32_t> ids)
+                   Topology topology, std::vector<std::uint32_t> ids,std::shared_ptr<const PointData> points)
     : vertices_(std::move(vertices)), indices_(std::move(indices)), topology_(topology),
       primitive_ids_(std::move(ids)) {
     if (topology != Topology::triangles && topology != Topology::lines && topology != Topology::points)
@@ -32,6 +43,26 @@ Geometry::Geometry(std::vector<Vertex> vertices, std::vector<std::uint32_t> indi
     }
     for (auto id : primitive_ids_)
         if (id == UINT32_MAX) throw std::invalid_argument("UINT32_MAX is reserved for background");
+    if (topology_==Topology::points) {
+        if (points) {
+            if (points->positions().size()!=count) throw std::invalid_argument("point resource count does not match geometry");
+            for (size_t i=0;i<count;++i) {
+                const auto index=indices_.empty()?uint32_t(i):indices_[i];
+                if (points->positions()[i]!=vertices_[index].position)
+                    throw std::invalid_argument("point resource does not match point geometry");
+            }
+            point_data_=std::move(points);
+        } else {
+            if (vertices_.size()>UINT32_MAX) throw std::invalid_argument("too many point source slots");
+            std::vector<vec3> positions; std::vector<uint32_t> sources;
+            positions.reserve(count); sources.reserve(count);
+            for (size_t i=0;i<count;++i) {
+                const auto index=indices_.empty()?uint32_t(i):indices_[i];
+                positions.push_back(vertices_[index].position); sources.push_back(index);
+            }
+            point_data_=std::make_shared<PointData>(std::move(positions),std::move(sources),uint32_t(vertices_.size()));
+        }
+    } else if (points) throw std::invalid_argument("point resources require point geometry");
 }
 mat4 screen_space_projection(std::uint32_t width, std::uint32_t height) {
     if (!width || !height) throw std::invalid_argument("screen-space projection requires positive dimensions");

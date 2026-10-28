@@ -47,6 +47,7 @@ struct VulkanOffScreen::Impl {
         vec4 highlight_color = vec4(0);
         float repeat = 1;
         std::shared_ptr<const graphics::Geometry> geometry;
+        std::shared_ptr<const graphics::PointData> points;
         std::shared_ptr<const graphics::Image> texture_image;
     };
     mutable std::map<const Drawable*, Cached> cache;
@@ -139,7 +140,27 @@ struct VulkanOffScreen::Impl {
             }
             const auto topology = d.type() == Drawable::DT_TRIANGLES ? graphics::Topology::triangles :
                                   d.type() == Drawable::DT_LINES ? graphics::Topology::lines : graphics::Topology::points;
-            auto geometry = std::make_shared<graphics::Geometry>(vertices, buffers.indices, topology);
+            if (topology==graphics::Topology::points) {
+                const auto count=buffers.indices.empty()?n:buffers.indices.size();
+                if (n>UINT32_MAX) throw std::invalid_argument("too many point source slots");
+                bool unchanged=entry.points && entry.points->positions().size()==count && entry.points->source_count()==n;
+                for (size_t i=0;i<count;++i) {
+                    const auto index=buffers.indices.empty()?uint32_t(i):buffers.indices[i];
+                    if (index>=n) throw std::out_of_range("point drawable index out of range");
+                    if (unchanged && (entry.points->positions()[i]!=buffers.vertices[index] || entry.points->source_ids()[i]!=index))
+                        unchanged=false;
+                }
+                if (!unchanged) {
+                    std::vector<vec3> positions; std::vector<uint32_t> ids;
+                    positions.reserve(count); ids.reserve(count);
+                    for (size_t i=0;i<count;++i) {
+                        const auto index=buffers.indices.empty()?uint32_t(i):buffers.indices[i];
+                        positions.push_back(buffers.vertices[index]); ids.push_back(index);
+                    }
+                    entry.points=std::make_shared<graphics::PointData>(std::move(positions),std::move(ids),uint32_t(n));
+                }
+            } else entry.points.reset();
+            auto geometry = std::make_shared<graphics::Geometry>(vertices, buffers.indices, topology,std::vector<uint32_t>{},entry.points);
             if (flat_shading) {
                 // Geometry has already validated the indices and triangle count.
                 // Give every corner its triangle normal while preserving colors
@@ -169,7 +190,7 @@ struct VulkanOffScreen::Impl {
                         range.second>=range.first && i/stride<=size_t(range.second)) strength=0.8f+0.2f*strength;
                     marked[i].highlight=vec4(setting::highlight_color.x,setting::highlight_color.y,setting::highlight_color.z,strength);
                 }
-                geometry=std::make_shared<graphics::Geometry>(std::move(marked),std::vector<uint32_t>{},topology);
+                geometry=std::make_shared<graphics::Geometry>(std::move(marked),std::vector<uint32_t>{},topology,std::vector<uint32_t>{},entry.points);
             }
             entry.selected=selected; entry.highlighted=highlighted;
             entry.highlight_range=d.highlight_range(); entry.highlight_color=setting::highlight_color;
@@ -380,6 +401,15 @@ graphics::FrameImage VulkanOffScreen::capture(unsigned samples) const { return i
 const graphics::RenderDevice& VulkanOffScreen::device() const { return *impl_->device; }
 std::vector<std::uint32_t> VulkanOffScreen::select_points(const graphics::PointSelectionRequest& request) const {
     return impl_->device->select_points(request);
+}
+std::shared_ptr<const graphics::PointData> VulkanOffScreen::point_resource(Drawable* drawable) const {
+    if (!drawable || drawable->type()!=Drawable::DT_POINTS) throw std::invalid_argument("selection requires a point drawable");
+    for (const auto& model:impl_->models) if (model->renderer())
+        for (const auto& d:model->renderer()->points_drawables()) if (d.get()==drawable)
+            return impl_->command(d,0,*camera(),model->renderer()->is_selected()).geometry->point_data();
+    for (const auto& d:impl_->drawables) if (d.get()==drawable)
+        return impl_->command(d,0,*camera()).geometry->point_data();
+    throw std::invalid_argument("point drawable does not belong to this viewer");
 }
 bool VulkanOffScreen::render(const std::string& filename, float scaling, int samples, int bg, bool expand) const {
     try {
