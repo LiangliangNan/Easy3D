@@ -44,6 +44,7 @@ const char* const default_manual =
     "  '<' or '>':              Switch between models                              \n"
     "  's':                     Take a snapshot                                    \n"
     "  'p':                     Switch between perspective and orthographic projections\n"
+    "  Ctrl + 'f':              Toggle frame rate display                          \n"
     "  Left drag:               Rotate the camera                                  \n"
     "  Right drag:              Move the camera                                    \n"
     "  'x' + Left drag:         Rotate the camera around the horizontal axis       \n"
@@ -254,7 +255,7 @@ bool VulkanViewer::draw_frame() {
     update_camera_path_overlays();
     update_interaction_overlays();
     const bool drawn = present(samples());
-    if (drawn) post_draw();
+    if (drawn) {update_frame_rate();post_draw();}
     return drawn;
 }
 void VulkanViewer::advance_camera_path() {
@@ -280,35 +281,57 @@ void VulkanViewer::restore_scene_bounds() {
     for (const auto& drawable:drawables()) box.grow(drawable->bounding_box());
     if (box.is_valid()) camera()->setSceneBoundingBox(box.min_point(),box.max_point());
 }
+void VulkanViewer::update_frame_rate() {
+    if (!show_frame_rate_) return;
+    ++frame_rate_frames_;
+    const auto now=std::chrono::steady_clock::now();
+    const double elapsed=std::chrono::duration<double>(now-frame_rate_start_).count();
+    if (elapsed<1.0) return;
+    std::ostringstream out;
+    out << "fps: " << std::fixed << std::setprecision(0) << frame_rate_frames_/elapsed
+        << " (" << std::setprecision(1) << 1000.0*elapsed/frame_rate_frames_ << " ms/frame)";
+    framerate_=out.str();frame_rate_frames_=0;frame_rate_start_=now;
+}
+void VulkanViewer::ensure_text_renderer() const {
+    if (fonts_tried_) return;
+    fonts_tried_=true;
+    try {
+        texter_.reset(new graphics::TextRenderer);
+        texter_->add_font(resource::directory()+"/fonts/en_Roboto-Medium.ttf");
+    } catch (const std::exception& e) {
+        texter_.reset();LOG(WARNING) << "Viewer HUD font unavailable: " << e.what();
+    }
+}
 void VulkanViewer::update_interaction_overlays(bool force) const {
     const bool pivot = show_pivot_point_ && std::chrono::steady_clock::now()<pivot_expires_;
     int ww=0,wh=0; glfwGetWindowSize(window(),&ww,&wh);
     const float dpi = ww>0 ? float(width())/ww : 1.0f;
-    const bool hint_changed = rendered_hint_!=hint_ || hint_dpi_!=dpi || width()!=hint_width_ || height()!=hint_height_;
-    if (!force && !hint_changed && pivot==pivot_hint_visible_ && width()==hint_width_ && height()==hint_height_) return;
+    const bool viewport_changed=hint_dpi_!=dpi || width()!=hint_width_ || height()!=hint_height_;
+    const bool hint_changed=viewport_changed || rendered_hint_!=hint_ || rendered_show_frame_rate_!=show_frame_rate_;
+    const std::string frame_rate_text=show_frame_rate_?framerate_:std::string();
+    const bool frame_rate_changed=viewport_changed || rendered_frame_rate_!=frame_rate_text;
+    if (!force && !hint_changed && !frame_rate_changed && pivot==pivot_hint_visible_) return;
+    if (!hint_.empty() || !frame_rate_text.empty()) ensure_text_renderer();
     if (hint_changed) {
         hint_commands_.clear();
-        if (!hint_.empty()) {
-            if (!fonts_tried_) {
-                fonts_tried_=true;
-                try {
-                    texter_.reset(new graphics::TextRenderer);
-                    texter_->add_font(resource::directory()+"/fonts/en_Roboto-Medium.ttf");
-                } catch (const std::exception& e) {
-                    texter_.reset();
-                    LOG(WARNING) << "Viewer usage font unavailable: " << e.what();
-                }
-            }
-            if (texter_) {
-                graphics::TextOptions options;
-                options.size=15*dpi; options.x=35*dpi; options.y=22.5f*dpi;
-                options.color=vec4(0,0,1,1);
-                hint_commands_=texter_->layout(hint_,width(),height(),options).commands;
-            }
+        if (texter_ && !hint_.empty()) {
+            graphics::TextOptions options;
+            options.size=15*dpi;options.x=35*dpi;options.y=(show_frame_rate_?45.0f:22.5f)*dpi;
+            options.color=vec4(0,0,1,1);
+            hint_commands_=texter_->layout(hint_,width(),height(),options).commands;
         }
-        rendered_hint_=hint_; hint_dpi_=dpi;
+        rendered_hint_=hint_;hint_dpi_=dpi;rendered_show_frame_rate_=show_frame_rate_;
     }
-    std::vector<graphics::DrawCommand> commands=hint_commands_;
+    if (frame_rate_changed) {
+        frame_rate_commands_.clear();
+        if (texter_ && !frame_rate_text.empty()) {
+            graphics::TextOptions options;options.size=15*dpi;options.x=20*dpi;options.y=22.5f*dpi;
+            frame_rate_commands_=texter_->layout(frame_rate_text,width(),height(),options).commands;
+        }
+        rendered_frame_rate_=frame_rate_text;
+    }
+    std::vector<graphics::DrawCommand> commands=frame_rate_commands_;
+    commands.insert(commands.end(),hint_commands_.begin(),hint_commands_.end());
     if (pivot) {
         const float x=pivot_pixel_.x,y=pivot_pixel_.y,size=10*dpi;
         commands.push_back(vulkan::shape::draw_lines_2d({vec2(x-size,y),vec2(x+size,y),
@@ -478,6 +501,14 @@ bool VulkanViewer::key_press_event(int key, int modifiers) {
     else if (key == GLFW_KEY_O && modifiers == MODIF_CTRL) open();
     else if (key == GLFW_KEY_S && modifiers == MODIF_CTRL) save();
     else if (key == GLFW_KEY_S && modifiers == 0) snapshot();
+    else if (key == GLFW_KEY_F && modifiers == MODIF_CTRL) {
+        show_frame_rate_=!show_frame_rate_;
+        if (show_frame_rate_) {
+            frame_rate_start_=std::chrono::steady_clock::now();frame_rate_frames_=0;
+            framerate_="fps: -- (-- ms/frame)";
+        }
+        update();
+    }
     else if (key == GLFW_KEY_F && modifiers == 0) fit_screen();
     else if (key == GLFW_KEY_C && modifiers == 0) { if (current_model()) fit_screen(current_model()); }
     else if (key == GLFW_KEY_P && modifiers == 0)
@@ -514,7 +545,6 @@ bool VulkanViewer::key_press_event(int key, int modifiers) {
     } else if (key==GLFW_KEY_D && modifiers==0) {
         if (current_model()) current_model()->property_stats(std::cout);
     } else if ((modifiers==MODIF_ALT && (key==GLFW_KEY_C || key==GLFW_KEY_V || key==GLFW_KEY_X)) ||
-               (modifiers==MODIF_CTRL && (key==GLFW_KEY_F)) ||
                (modifiers==0 && (key==GLFW_KEY_A || key==GLFW_KEY_R))) {
         LOG(WARNING) << "This viewer shortcut is not yet available in the Vulkan backend";
     } else pressed_key_=key;

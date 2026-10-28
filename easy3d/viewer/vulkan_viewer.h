@@ -82,6 +82,8 @@ protected:
     // Camera-path state corresponds to Viewer's kfi_ and show_camera_path_.
     std::unique_ptr<KeyFrameInterpolator> kfi_;
     bool show_camera_path_ = false;
+    bool show_frame_rate_ = false;
+    std::string framerate_ = "fps: -- (-- ms/frame)";
     virtual void pre_draw() {}
     virtual void post_draw() {}
     virtual void post_resize(int, int) {}
@@ -113,6 +115,13 @@ private:
     mutable bool pivot_hint_visible_ = false;
     mutable int hint_width_ = 0, hint_height_ = 0;
     void update_interaction_overlays(bool force = false) const;
+    void update_frame_rate();
+    void ensure_text_renderer() const;
+    std::chrono::steady_clock::time_point frame_rate_start_;
+    unsigned frame_rate_frames_ = 0;
+    mutable bool rendered_show_frame_rate_ = false;
+    mutable std::string rendered_frame_rate_;
+    mutable std::vector<graphics::DrawCommand> frame_rate_commands_;
     void cancel_interaction();
     std::map<Key, std::map<Modifier, std::pair<Function, Model*>>> commands_;
     mutable std::unique_ptr<graphics::TextRenderer> texter_;

@@ -1655,7 +1655,8 @@ models selects the last model and clearing a scene clears that selection, matchi
 the original viewer's ownership policy. Tutorial input overrides remain virtual.
 
 Remaining differences: global clipping-plane shortcuts/Alt manipulation, corner
-axes, frame-rate display and shader hot reload still need native counterparts.
+axes and shader hot reload still need native counterparts. Frame-rate display
+is implemented in the later stage below.
 Camera-path display/playback is implemented in the later stages below. Pivot/region hints and usage hints are implemented
 in the stages below. Unsupported
 feature shortcuts warn rather than silently invoking a different camera action;
@@ -1705,8 +1706,7 @@ boundaries, one/four samples, unchanged depth and picking IDs, independent
 application overlays, surface picking through a cross, modifier/focus cancellation,
 expiry without frame callbacks, resize and scene clearing. It saves a rendered
 region image for inspection in the test working directory. Remaining viewer gaps
-include global clipping tools, corner axes and frame-rate displays
-and animated focus transitions. Usage displays are implemented below.
+include global clipping tools, corner axes and animated focus transitions. Usage displays are implemented below.
 
 Verified on this Mac with MoltenVK: all 38 native CTests and all 19 combined
 OpenGL/Vulkan CTests pass, including the new interaction-overlay regression.
@@ -1965,3 +1965,38 @@ also explicitly with native validation. No new validation errors were reported;
 the existing MoltenVK integer-attachment warning remains. The OpenGL-only viewer
 build passes, and the rendered global path/application overlay image was visually
 inspected. GPU/desktop suites were run sequentially.
+
+
+## Shared viewer frame-rate HUD
+
+`VulkanViewer` now implements Ctrl/Command-F, corresponding to `Viewer`'s
+frame-rate display. It is disabled by default. Each viewer owns its own counters
+and uses a monotonic clock to average successful presented frames over roughly
+one-second intervals. The HUD shows `fps: N (M ms/frame)`; elapsed wall time and
+successful frame count determine both values. Captures and snapshots display
+existing statistics without adding frames or advancing sampling. Skipped,
+minimized and failed presentation attempts do not increment the counter.
+Toggling the display on starts a fresh sample window with a placeholder until a
+measurement is available. Application animation and camera-path playback remain
+independent.
+
+The black frame-rate line uses the existing DPI-scaled HUD text renderer. The
+blue usage hint moves below it while enabled, and returns to its original
+position when hidden. Text/layout caches refresh only when their text, visibility,
+viewport or DPI changes. A rate-only viewer with no usage hint still loads its
+font lazily. Application overlays, pivot/region hints and path annotations retain
+their independent layers; the rate display never writes scene depth or picking
+IDs. Scene clearing and resizing retain the display setting. Custom bindings
+still take precedence, and the aligned default manual now lists Ctrl-F.
+
+The new `vulkan.framerate` test covers the registered shortcut, modifier isolation,
+measured FPS/ms text, per-viewer state, capture purity, hint reflow and restoration,
+application overlay independence, a rate-only viewer, resize, scene clearing,
+custom bindings, one/four samples and unchanged scene depth/IDs. Its deliberate
+sampling wait checks timing behavior; the saved image is a functional HUD check.
+Native-only, combined and OpenGL-only viewer builds succeed.
+
+Verified on this Mac with MoltenVK: all 47 native-only tests and all 25
+combined-backend tests pass. The focused frame-rate test also passes with Vulkan
+validation enabled, and the saved HUD image was visually inspected. Desktop
+suites were run sequentially.
