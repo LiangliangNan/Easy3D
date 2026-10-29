@@ -12,6 +12,39 @@
     - [x] Portable projection/unprojection and logical-coordinate visible-surface queries
     - [x] Concrete viewer/offscreen implementations in matching backend directories
     - [ ] Unified Viewer constructors/subclass storage, capture/picking/selection, GUI and native-only extensions
+    - [ ] Make the following changes:
+      - Remove runtime selection of backends. Try to simplify the code and reduce unnecessary functions and files.
+      - The easy3d/viewer folder contains the implementation of the following classes:
+          - OpenGLViewer: renamed from original OpenGL based Viewer (VulkanViewer' counterpart). opengl_viewer.h, opengl_viewer.cpp
+          - VulkanViewer: Vulkan-based Viewer's counterpart. vulkan_viewer.h, vulkan_viewer.cpp
+          - OpenGLMultiViewer: renamed from original OpenGL based MultiViewer. opengl_multi_viewer.h, opengl_multi_viewer.cpp
+          - VulkanMultiViewer: Vulkan-based MultiViewer's counterpart. vulkan_multi_viewer.h, vulkan_multi_viewer.cpp
+          - OpenGLOffScreen: renamed from original OpenGL based OffScreen. opengl_offscreen.h, opengl_offscreen.cpp
+          - VulkanOffScreen: Vulkan-based OffScreen's counterpart. vulkan_offscreen.h, vulkan_offscreen.cpp
+      - For all these classes, try to simplify the code, reduce the number of private and protected functions, avoid introducing new files/functions as much as possible.
+        - create a viewer.h file, which contains:
+              #if defined(EASY3D_NO_OPENGL) || defined(EASY3D_TUTORIAL_VULKAN)
+              #define EASY3D_TUTORIAL_USES_VULKAN 1
+              #include <easy3d/viewer/vulkan_viewer.h>
+              #include <easy3d/viewer/vulkan_multi_viewer.h>
+              #include <easy3d/viewer/vulkan_offscreen.h>
+              namespace easy3d {
+                  using Viewer = VulkanViewer;
+                  using MultiViewer = VulkanMultiViewer;
+                  using OffScreen = VulkanOffScreen;
+              }
+              #else
+              #define EASY3D_TUTORIAL_USES_VULKAN 0
+              namespace easy3d {
+                  using Viewer = OpenGLViewer;
+                  using MultiViewer = OpenGLMultiViewer;
+                  using OffScreen = OpenGLOffScreen;
+              }
+              #endif
+          With these changes, all my original tutorials almost don't need to make many changes (at least their header files).
+          Also for tutorials where the viewer need to inherit either OpenGLViewer or VulkanViewer, this can be simply implemented
+          using something like "class TutorialXXX : public easy3d::Viewer {...}"
+        
 - Send the computed value of "MVP * MANIP" to shaders (avoiding computing the matrix product for each vertex/fragment)
 - Walkthrough and animation; allow to modify the cameras interactively
 - Implement potree for huge point cloud visualization (https://github.com/potree/potree)
