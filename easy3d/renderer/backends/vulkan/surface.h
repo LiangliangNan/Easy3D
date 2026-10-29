@@ -6,6 +6,7 @@
 #include <functional>
 
 namespace easy3d { namespace graphics {
+namespace internal { class VulkanLoader; }
 // Toolkit integration boundary. No GLFW/Qt dependency in the graphics device.
 // The factory copies extension names and invokes create() synchronously. The
 // device owns the resulting VkSurfaceKHR. Keep the native window alive until
@@ -13,6 +14,8 @@ namespace easy3d { namespace graphics {
 struct VulkanSurface {
     std::vector<std::string> instance_extensions;
     std::function<VkResult(VkInstance, VkSurfaceKHR*)> create;
+    // Native hosts retain the exact loader GLFW uses. External hosts may leave empty.
+    std::shared_ptr<internal::VulkanLoader> loader;
 };
 std::unique_ptr<RenderDevice> create_vulkan_window_device(
         const VulkanSurface& surface, const DeviceOptions& options = {});

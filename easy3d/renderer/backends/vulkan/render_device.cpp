@@ -3,6 +3,7 @@
 #include <easy3d/renderer/render_device.h>
 #include <easy3d/renderer/backend.h>
 #include <easy3d/renderer/backends/clipping.h>
+#include <easy3d/renderer/backends/vulkan/loader.h>
 #include <easy3d/renderer/backends/vulkan/surface.h>
 #include <vulkan/vulkan.h>
 #include <algorithm>
@@ -47,16 +48,18 @@ template<class T> bool named(const std::vector<T>& values, const char* name) {
     for (const auto& v : values) if (std::strcmp(v.extensionName, name) == 0) return true;
     return false;
 }
-std::vector<VkExtensionProperties> instance_extensions(const char* layer = nullptr) {
+std::vector<VkExtensionProperties> instance_extensions(const internal::VulkanDispatch& dispatch,const char* layer = nullptr) {
     uint32_t count = 0;
-    check_initialization(vkEnumerateInstanceExtensionProperties(layer, &count, nullptr), "enumerate instance extensions");
+    check_initialization(dispatch.vkEnumerateInstanceExtensionProperties(layer, &count, nullptr), "enumerate instance extensions");
     std::vector<VkExtensionProperties> values(count);
-    check_initialization(vkEnumerateInstanceExtensionProperties(layer, &count, values.data()), "enumerate instance extensions");
+    check_initialization(dispatch.vkEnumerateInstanceExtensionProperties(layer, &count, values.data()), "enumerate instance extensions");
     return values;
 }
 
 // No mutable global device dispatch or resources: loader dispatch is handle based.
-struct Context {
+struct Context : internal::VulkanDispatch {
+    // Retain the library until all instance/device cleanup has finished.
+    std::shared_ptr<internal::VulkanLoader> library;
     bool sample_shading = false;
     bool compute = false;
     VkInstance instance = VK_NULL_HANDLE;
@@ -86,7 +89,8 @@ struct Context {
                 vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT"));
             if (destroy) destroy(instance, messenger, nullptr);
         }
-        if (instance) vkDestroyInstance(instance, nullptr);
+        // A malformed loader can fail before instance dispatch is complete.
+        if (instance && vkDestroyInstance) vkDestroyInstance(instance, nullptr);
     }
     static VKAPI_ATTR VkBool32 VKAPI_CALL debug(VkDebugUtilsMessageSeverityFlagBitsEXT severity,
             VkDebugUtilsMessageTypeFlagsEXT, const VkDebugUtilsMessengerCallbackDataEXT* data, void* user) {
@@ -96,8 +100,10 @@ struct Context {
         return VK_FALSE;
     }
     void init(const DeviceOptions& options, const VulkanSurface* window = nullptr) {
+        library=window && window->loader ? window->loader : internal::VulkanLoader::open();
+        load_global(*library);
         const bool validation = options.validation || options.synchronization_validation;
-        auto available = instance_extensions();
+        auto available = instance_extensions(*this);
         std::vector<const char*> extensions, layers;
         if (window) {
             if (!window->create) throw std::invalid_argument("surface creation callback is required");
@@ -133,7 +139,7 @@ struct Context {
         VkValidationFeaturesEXT validation_features{};
         VkValidationFeatureEnableEXT sync = VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT;
         if (options.synchronization_validation) {
-            const auto layer_extensions = instance_extensions("VK_LAYER_KHRONOS_validation");
+            const auto layer_extensions = instance_extensions(*this,"VK_LAYER_KHRONOS_validation");
             if (!named(available, VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME) &&
                 !named(layer_extensions, VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME))
                 throw BackendUnavailable("synchronization validation is unavailable");
@@ -167,6 +173,7 @@ struct Context {
         info.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
         info.ppEnabledExtensionNames = extensions.data();
         check_initialization(vkCreateInstance(&info, nullptr, &instance), "create Vulkan 1.2 instance");
+        load_instance(instance,window!=nullptr);
         if (window) {
             check_initialization(window->create(instance, &surface), "create native Vulkan surface");
             if (!surface) throw std::runtime_error("surface callback returned a null surface");
@@ -258,6 +265,7 @@ struct Context {
         di.pEnabledFeatures = &enabled;
         // No geometry shaders, large points, wide lines or independent blend.
         check_initialization(vkCreateDevice(physical, &di, nullptr, &device), "create device");
+        load_device(device,window!=nullptr);
         vkGetDeviceQueue(device, family, 0, &queue);
         VkCommandPoolCreateInfo pi{};
         pi.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -311,40 +319,40 @@ struct Buffer {
     explicit Buffer(Context& context) : c(context) {}
     Buffer(const Buffer&) = delete;
     ~Buffer() {
-        if (handle) vkDestroyBuffer(c.device, handle, nullptr);
-        if (memory) vkFreeMemory(c.device, memory, nullptr);
+        if (handle) c.vkDestroyBuffer(c.device, handle, nullptr);
+        if (memory) c.vkFreeMemory(c.device, memory, nullptr);
     }
     void init(VkDeviceSize size, VkBufferUsageFlags usage, bool host) {
         VkBufferCreateInfo bi{};
         bi.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         bi.size = size; bi.usage = usage; bi.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-        check(vkCreateBuffer(c.device, &bi, nullptr, &handle), "create buffer");
+        check(c.vkCreateBuffer(c.device, &bi, nullptr, &handle), "create buffer");
         VkMemoryRequirements requirements;
-        vkGetBufferMemoryRequirements(c.device, handle, &requirements);
+        c.vkGetBufferMemoryRequirements(c.device, handle, &requirements);
         uint32_t type = c.memory_type(requirements.memoryTypeBits, host ? VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT : 0,
             host ? VK_MEMORY_PROPERTY_HOST_COHERENT_BIT : VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
         coherent = (c.memory.memoryTypes[type].propertyFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) != 0;
         VkMemoryAllocateInfo ai{};
         ai.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         ai.allocationSize = requirements.size; ai.memoryTypeIndex = type;
-        check(vkAllocateMemory(c.device, &ai, nullptr, &memory), "allocate buffer memory");
-        check(vkBindBufferMemory(c.device, handle, memory, 0), "bind buffer memory");
+        check(c.vkAllocateMemory(c.device, &ai, nullptr, &memory), "allocate buffer memory");
+        check(c.vkBindBufferMemory(c.device, handle, memory, 0), "bind buffer memory");
     }
     void transfer(void* data, size_t size, bool write) {
         void* mapped = nullptr;
-        check(vkMapMemory(c.device, memory, 0, VK_WHOLE_SIZE, 0, &mapped), "map host buffer");
+        check(c.vkMapMemory(c.device, memory, 0, VK_WHOLE_SIZE, 0, &mapped), "map host buffer");
         VkMappedMemoryRange range{};
         range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
         range.memory = memory; range.size = VK_WHOLE_SIZE;
         VkResult result = VK_SUCCESS;
         if (write) {
             std::memcpy(mapped, data, size);
-            if (!coherent) result = vkFlushMappedMemoryRanges(c.device, 1, &range);
+            if (!coherent) result = c.vkFlushMappedMemoryRanges(c.device, 1, &range);
         } else {
-            if (!coherent) result = vkInvalidateMappedMemoryRanges(c.device, 1, &range);
+            if (!coherent) result = c.vkInvalidateMappedMemoryRanges(c.device, 1, &range);
             if (result == VK_SUCCESS) std::memcpy(data, mapped, size);
         }
-        vkUnmapMemory(c.device, memory);
+        c.vkUnmapMemory(c.device, memory);
         check(result, write ? "flush host buffer" : "invalidate readback buffer");
     }
 };
@@ -366,11 +374,11 @@ struct PointSelector {
     VkPipeline pipeline=VK_NULL_HANDLE;
     explicit PointSelector(Context& context):c(context) {}
     ~PointSelector() {
-        if (pipeline) vkDestroyPipeline(c.device,pipeline,nullptr);
-        if (shader) vkDestroyShaderModule(c.device,shader,nullptr);
-        if (layout) vkDestroyPipelineLayout(c.device,layout,nullptr);
-        if (pool) vkDestroyDescriptorPool(c.device,pool,nullptr);
-        if (descriptors) vkDestroyDescriptorSetLayout(c.device,descriptors,nullptr);
+        if (pipeline) c.vkDestroyPipeline(c.device,pipeline,nullptr);
+        if (shader) c.vkDestroyShaderModule(c.device,shader,nullptr);
+        if (layout) c.vkDestroyPipelineLayout(c.device,layout,nullptr);
+        if (pool) c.vkDestroyDescriptorPool(c.device,pool,nullptr);
+        if (descriptors) c.vkDestroyDescriptorSetLayout(c.device,descriptors,nullptr);
     }
     void init() {
         VkDescriptorSetLayoutBinding bindings[3]={};
@@ -380,25 +388,25 @@ struct PointSelector {
         }
         VkDescriptorSetLayoutCreateInfo di{}; di.sType=VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
         di.bindingCount=3; di.pBindings=bindings;
-        check(vkCreateDescriptorSetLayout(c.device,&di,nullptr,&descriptors),"create selection descriptor layout");
+        check(c.vkCreateDescriptorSetLayout(c.device,&di,nullptr,&descriptors),"create selection descriptor layout");
         VkDescriptorPoolSize size={VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,3};
         VkDescriptorPoolCreateInfo pi{}; pi.sType=VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         pi.maxSets=1; pi.poolSizeCount=1; pi.pPoolSizes=&size;
-        check(vkCreateDescriptorPool(c.device,&pi,nullptr,&pool),"create selection descriptor pool");
+        check(c.vkCreateDescriptorPool(c.device,&pi,nullptr,&pool),"create selection descriptor pool");
         VkDescriptorSetAllocateInfo ai{}; ai.sType=VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
         ai.descriptorPool=pool; ai.descriptorSetCount=1; ai.pSetLayouts=&descriptors;
-        check(vkAllocateDescriptorSets(c.device,&ai,&set),"allocate selection descriptor set");
+        check(c.vkAllocateDescriptorSets(c.device,&ai,&set),"allocate selection descriptor set");
         VkPushConstantRange range={VK_SHADER_STAGE_COMPUTE_BIT,0,128};
         VkPipelineLayoutCreateInfo li{}; li.sType=VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         li.setLayoutCount=1; li.pSetLayouts=&descriptors; li.pushConstantRangeCount=1; li.pPushConstantRanges=&range;
-        check(vkCreatePipelineLayout(c.device,&li,nullptr,&layout),"create selection pipeline layout");
+        check(c.vkCreatePipelineLayout(c.device,&li,nullptr,&layout),"create selection pipeline layout");
         VkShaderModuleCreateInfo si{}; si.sType=VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
         si.codeSize=sizeof(point_selection_comp); si.pCode=point_selection_comp;
-        check(vkCreateShaderModule(c.device,&si,nullptr,&shader),"create selection compute shader");
+        check(c.vkCreateShaderModule(c.device,&si,nullptr,&shader),"create selection compute shader");
         VkComputePipelineCreateInfo ci{}; ci.sType=VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
         ci.layout=layout; ci.stage.sType=VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         ci.stage.stage=VK_SHADER_STAGE_COMPUTE_BIT; ci.stage.module=shader; ci.stage.pName="main";
-        check(vkCreateComputePipelines(c.device,VK_NULL_HANDLE,1,&ci,nullptr,&pipeline),"create selection compute pipeline");
+        check(c.vkCreateComputePipelines(c.device,VK_NULL_HANDLE,1,&ci,nullptr,&pipeline),"create selection compute pipeline");
     }
     std::vector<uint32_t> run(const PointSelectionRequest& request,std::vector<uint32_t> words,
                               const std::vector<vec4>& planes,Buffer& positions) {
@@ -414,7 +422,7 @@ struct PointSelector {
         }
         polygon.transfer(const_cast<vec2*>(request.polygon.data()),size_t(sizes[1]),true);
         selection.transfer(words.data(),size_t(sizes[2]),true);
-        vkUpdateDescriptorSets(c.device,3,writes,0,nullptr);
+        c.vkUpdateDescriptorSets(c.device,3,writes,0,nullptr);
         struct Parameters { float mvp[16],planes[8]; uint32_t dimensions[4],options[4]; } push{};
         static_assert(sizeof(Parameters)==128,"compute selection push layout");
         for (unsigned col=0;col<4;++col) for (unsigned row=0;row<4;++row)
@@ -431,13 +439,13 @@ struct PointSelector {
             VkMemoryBarrier barrier{}; barrier.sType=VK_STRUCTURE_TYPE_MEMORY_BARRIER;
             barrier.srcAccessMask=VK_ACCESS_HOST_WRITE_BIT;
             barrier.dstAccessMask=VK_ACCESS_SHADER_READ_BIT|VK_ACCESS_SHADER_WRITE_BIT;
-            vkCmdPipelineBarrier(cmd,VK_PIPELINE_STAGE_HOST_BIT,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,0,1,&barrier,0,nullptr,0,nullptr);
-            vkCmdBindPipeline(cmd,VK_PIPELINE_BIND_POINT_COMPUTE,pipeline);
-            vkCmdBindDescriptorSets(cmd,VK_PIPELINE_BIND_POINT_COMPUTE,layout,0,1,&set,0,nullptr);
-            vkCmdPushConstants(cmd,layout,VK_SHADER_STAGE_COMPUTE_BIT,0,sizeof(push),&push);
-            vkCmdDispatch(cmd,x,y,1);
+            c.vkCmdPipelineBarrier(cmd,VK_PIPELINE_STAGE_HOST_BIT,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,0,1,&barrier,0,nullptr,0,nullptr);
+            c.vkCmdBindPipeline(cmd,VK_PIPELINE_BIND_POINT_COMPUTE,pipeline);
+            c.vkCmdBindDescriptorSets(cmd,VK_PIPELINE_BIND_POINT_COMPUTE,layout,0,1,&set,0,nullptr);
+            c.vkCmdPushConstants(cmd,layout,VK_SHADER_STAGE_COMPUTE_BIT,0,sizeof(push),&push);
+            c.vkCmdDispatch(cmd,x,y,1);
             barrier.srcAccessMask=VK_ACCESS_SHADER_WRITE_BIT; barrier.dstAccessMask=VK_ACCESS_HOST_READ_BIT;
-            vkCmdPipelineBarrier(cmd,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,VK_PIPELINE_STAGE_HOST_BIT,0,1,&barrier,0,nullptr,0,nullptr);
+            c.vkCmdPipelineBarrier(cmd,VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,VK_PIPELINE_STAGE_HOST_BIT,0,1,&barrier,0,nullptr,0,nullptr);
         });
         selection.transfer(words.data(),size_t(sizes[2]),false);
         return words;
@@ -451,9 +459,9 @@ struct GpuImage {
     explicit GpuImage(Context& context) : c(context) {}
     GpuImage(const GpuImage&) = delete;
     ~GpuImage() {
-        if (view) vkDestroyImageView(c.device, view, nullptr);
-        if (handle) vkDestroyImage(c.device, handle, nullptr);
-        if (memory) vkFreeMemory(c.device, memory, nullptr);
+        if (view) c.vkDestroyImageView(c.device, view, nullptr);
+        if (handle) c.vkDestroyImage(c.device, handle, nullptr);
+        if (memory) c.vkFreeMemory(c.device, memory, nullptr);
     }
     void init(uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage, VkImageAspectFlags aspect,
               VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT) {
@@ -463,23 +471,23 @@ struct GpuImage {
         ii.mipLevels = 1; ii.arrayLayers = 1; ii.samples = samples;
         ii.tiling = VK_IMAGE_TILING_OPTIMAL; ii.usage = usage;
         ii.sharingMode = VK_SHARING_MODE_EXCLUSIVE; ii.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        check(vkCreateImage(c.device, &ii, nullptr, &handle), "create image");
+        check(c.vkCreateImage(c.device, &ii, nullptr, &handle), "create image");
         VkMemoryRequirements requirements;
-        vkGetImageMemoryRequirements(c.device, handle, &requirements);
+        c.vkGetImageMemoryRequirements(c.device, handle, &requirements);
         VkMemoryAllocateInfo ai{};
         ai.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         ai.allocationSize = requirements.size;
         ai.memoryTypeIndex = c.memory_type(requirements.memoryTypeBits, 0, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-        check(vkAllocateMemory(c.device, &ai, nullptr, &memory), "allocate image memory");
-        check(vkBindImageMemory(c.device, handle, memory, 0), "bind image memory");
+        check(c.vkAllocateMemory(c.device, &ai, nullptr, &memory), "allocate image memory");
+        check(c.vkBindImageMemory(c.device, handle, memory, 0), "bind image memory");
         VkImageViewCreateInfo vi{};
         vi.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         vi.image = handle; vi.viewType = VK_IMAGE_VIEW_TYPE_2D; vi.format = format;
         vi.subresourceRange = {aspect, 0, 1, 0, 1};
-        check(vkCreateImageView(c.device, &vi, nullptr, &view), "create image view");
+        check(c.vkCreateImageView(c.device, &vi, nullptr, &view), "create image view");
     }
 };
-void image_barrier(VkCommandBuffer cmd, VkImage image, VkImageAspectFlags aspect,
+void image_barrier(const Context& c,VkCommandBuffer cmd, VkImage image, VkImageAspectFlags aspect,
                    VkImageLayout old_layout, VkImageLayout new_layout,
                    VkPipelineStageFlags src_stage, VkPipelineStageFlags dst_stage,
                    VkAccessFlags src_access, VkAccessFlags dst_access) {
@@ -489,7 +497,7 @@ void image_barrier(VkCommandBuffer cmd, VkImage image, VkImageAspectFlags aspect
     b.oldLayout = old_layout; b.newLayout = new_layout;
     b.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED; b.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     b.image = image; b.subresourceRange = {aspect, 0, 1, 0, 1};
-    vkCmdPipelineBarrier(cmd, src_stage, dst_stage, 0, 0, nullptr, 0, nullptr, 1, &b);
+    c.vkCmdPipelineBarrier(cmd, src_stage, dst_stage, 0, 0, nullptr, 0, nullptr, 1, &b);
 }
 enum class PassKind { color_ids, multisample_color, ids };
 struct RenderPass {
@@ -506,12 +514,12 @@ struct RenderPass {
     bool depth_preview = false;
     RenderPass(Context& context, PassKind mode, VkSampleCountFlagBits count) : c(context), kind(mode), samples(count) {}
     ~RenderPass() {
-        for (auto p : pipelines) if (p) vkDestroyPipeline(c.device, p, nullptr);
-        if (overlay_pipeline) vkDestroyPipeline(c.device, overlay_pipeline, nullptr);
-        if (depth_overlay_pipeline) vkDestroyPipeline(c.device, depth_overlay_pipeline, nullptr);
-        if (hud_3d_pipeline) vkDestroyPipeline(c.device, hud_3d_pipeline, nullptr);
-        if (depth_texture_pipeline) vkDestroyPipeline(c.device, depth_texture_pipeline, nullptr);
-        if (handle) vkDestroyRenderPass(c.device, handle, nullptr);
+        for (auto p : pipelines) if (p) c.vkDestroyPipeline(c.device, p, nullptr);
+        if (overlay_pipeline) c.vkDestroyPipeline(c.device, overlay_pipeline, nullptr);
+        if (depth_overlay_pipeline) c.vkDestroyPipeline(c.device, depth_overlay_pipeline, nullptr);
+        if (hud_3d_pipeline) c.vkDestroyPipeline(c.device, hud_3d_pipeline, nullptr);
+        if (depth_texture_pipeline) c.vkDestroyPipeline(c.device, depth_texture_pipeline, nullptr);
+        if (handle) c.vkDestroyRenderPass(c.device, handle, nullptr);
     }
     void init() {
         VkAttachmentDescription attachments[4] = {};
@@ -642,7 +650,7 @@ struct RenderPass {
         pi.attachmentCount = count; pi.pAttachments = attachments;
         pi.subpassCount = ids_only ? 1 : independent_depth ? 4 : 3; pi.pSubpasses = subpasses;
         pi.dependencyCount = dependency_count; pi.pDependencies = dependencies;
-        check(vkCreateRenderPass(c.device, &pi, nullptr, &handle), "create scene render pass");
+        check(c.vkCreateRenderPass(c.device, &pi, nullptr, &handle), "create scene render pass");
     }
 };
 struct Target {
@@ -660,16 +668,16 @@ struct Target {
         : c(context), width(w), height(h), samples(unsigned(pass.samples)), color_pass(pass), id_pass(picking),
           color(c), ids(c), depth(c), multisample_color(c), multisample_depth(c), hud_depth(c), readback(c) {}
     ~Target() {
-        if (depth_set) vkFreeDescriptorSets(c.device,depth_pool,1,&depth_set);
-        if (framebuffer) vkDestroyFramebuffer(c.device, framebuffer, nullptr);
-        if (id_framebuffer) vkDestroyFramebuffer(c.device, id_framebuffer, nullptr);
+        if (depth_set) c.vkFreeDescriptorSets(c.device,depth_pool,1,&depth_set);
+        if (framebuffer) c.vkDestroyFramebuffer(c.device, framebuffer, nullptr);
+        if (id_framebuffer) c.vkDestroyFramebuffer(c.device, id_framebuffer, nullptr);
     }
     void create_framebuffer(VkRenderPass pass, const VkImageView* views, unsigned count, VkFramebuffer& result) {
         VkFramebufferCreateInfo fi{};
         fi.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         fi.renderPass = pass; fi.attachmentCount = count; fi.pAttachments = views;
         fi.width = width; fi.height = height; fi.layers = 1;
-        check(vkCreateFramebuffer(c.device, &fi, nullptr, &result), "create scene framebuffer");
+        check(c.vkCreateFramebuffer(c.device, &fi, nullptr, &result), "create scene framebuffer");
     }
     void init() {
         color.init(width, height, VK_FORMAT_R8G8B8A8_UNORM,
@@ -719,7 +727,7 @@ struct GpuTexture {
     VkDescriptorPool pool;
     VkDescriptorSet set = VK_NULL_HANDLE;
     GpuTexture(Context& context, VkDescriptorPool p) : c(context), image(c), pool(p) {}
-    ~GpuTexture() { if (set) vkFreeDescriptorSets(c.device, pool, 1, &set); }
+    ~GpuTexture() { if (set) c.vkFreeDescriptorSets(c.device, pool, 1, &set); }
 };
 // Explicit packing: do not rely on public vec3/mat4 alignment for GPU layouts.
 struct ImpostorUniform { float model_view[16], projection[16], inverse_projection[16], dimensions[4], light[4], clip_planes[8], clip_info[4];
@@ -741,14 +749,14 @@ struct Swapchain {
     bool dirty = false;
     explicit Swapchain(Context& context) : c(context) {}
     ~Swapchain() {
-        for (auto s : ready) if (s) vkDestroySemaphore(c.device, s, nullptr);
-        if (acquired) vkDestroySemaphore(c.device, acquired, nullptr);
-        if (handle) vkDestroySwapchainKHR(c.device, handle, nullptr);
+        for (auto s : ready) if (s) c.vkDestroySemaphore(c.device, s, nullptr);
+        if (acquired) c.vkDestroySemaphore(c.device, acquired, nullptr);
+        if (handle) c.vkDestroySwapchainKHR(c.device, handle, nullptr);
     }
     void init(uint32_t width, uint32_t height) {
         requested_width = width; requested_height = height;
         VkSurfaceCapabilitiesKHR caps;
-        check(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(c.physical, c.surface, &caps), "query surface capabilities");
+        check(c.vkGetPhysicalDeviceSurfaceCapabilitiesKHR(c.physical, c.surface, &caps), "query surface capabilities");
         if (!(caps.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_DST_BIT))
             throw std::runtime_error("surface does not support transfer-destination presentation images");
         if (!(caps.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR))
@@ -760,9 +768,9 @@ struct Swapchain {
         }
         if (!extent.width || !extent.height) return;
         uint32_t count = 0;
-        check(vkGetPhysicalDeviceSurfaceFormatsKHR(c.physical, c.surface, &count, nullptr), "query surface formats");
+        check(c.vkGetPhysicalDeviceSurfaceFormatsKHR(c.physical, c.surface, &count, nullptr), "query surface formats");
         std::vector<VkSurfaceFormatKHR> formats(count);
-        check(vkGetPhysicalDeviceSurfaceFormatsKHR(c.physical, c.surface, &count, formats.data()), "query surface formats");
+        check(c.vkGetPhysicalDeviceSurfaceFormatsKHR(c.physical, c.surface, &count, formats.data()), "query surface formats");
         if (formats.size() == 1 && formats[0].format == VK_FORMAT_UNDEFINED)
             formats[0].format = VK_FORMAT_B8G8R8A8_UNORM;
         VkSurfaceFormatKHR chosen{};
@@ -773,7 +781,7 @@ struct Swapchain {
             for (const auto& candidate : formats) {
                 if (candidate.format != format || candidate.colorSpace != VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) continue;
                 VkFormatProperties properties;
-                vkGetPhysicalDeviceFormatProperties(c.physical, format, &properties);
+                c.vkGetPhysicalDeviceFormatProperties(c.physical, format, &properties);
                 if (!(properties.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_DST_BIT)) continue;
                 chosen = candidate; found = true; break;
             }
@@ -796,15 +804,15 @@ struct Swapchain {
         si.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
         si.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
         si.compositeAlpha = alpha; si.presentMode = VK_PRESENT_MODE_FIFO_KHR; si.clipped = VK_TRUE;
-        check(vkCreateSwapchainKHR(c.device, &si, nullptr, &handle), "create swapchain");
-        check(vkGetSwapchainImagesKHR(c.device, handle, &count, nullptr), "get presentation images");
+        check(c.vkCreateSwapchainKHR(c.device, &si, nullptr, &handle), "create swapchain");
+        check(c.vkGetSwapchainImagesKHR(c.device, handle, &count, nullptr), "get presentation images");
         images.resize(count);
-        check(vkGetSwapchainImagesKHR(c.device, handle, &count, images.data()), "get presentation images");
+        check(c.vkGetSwapchainImagesKHR(c.device, handle, &count, images.data()), "get presentation images");
         VkSemaphoreCreateInfo sem{};
         sem.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-        check(vkCreateSemaphore(c.device, &sem, nullptr, &acquired), "create acquire semaphore");
+        check(c.vkCreateSemaphore(c.device, &sem, nullptr, &acquired), "create acquire semaphore");
         ready.resize(count, VK_NULL_HANDLE);
-        for (auto& s : ready) check(vkCreateSemaphore(c.device, &sem, nullptr, &s), "create image presentation semaphore");
+        for (auto& s : ready) check(c.vkCreateSemaphore(c.device, &sem, nullptr, &s), "create image presentation semaphore");
     }
 };
 
@@ -867,14 +875,14 @@ public:
     ~VulkanDevice() override {
         // Presentation may still be using image-owned semaphores after the draw
         // fence completes. Drain at shutdown/recreation only, never per frame.
-        if (c_.device) vkDeviceWaitIdle(c_.device);
+        if (c_.device) c_.vkDeviceWaitIdle(c_.device);
         swapchain_.reset(); target_.reset(); geometry_.clear(); textures_.clear();
         passes_.clear(); id_pass_.reset();
-        if (layout_) vkDestroyPipelineLayout(c_.device, layout_, nullptr);
-        for (auto sampler : samplers_) if (sampler) vkDestroySampler(c_.device, sampler, nullptr);
-        if (descriptor_pool_) vkDestroyDescriptorPool(c_.device, descriptor_pool_, nullptr);
-        if (descriptors_) vkDestroyDescriptorSetLayout(c_.device, descriptors_, nullptr);
-        if (impostor_descriptors_) vkDestroyDescriptorSetLayout(c_.device, impostor_descriptors_, nullptr);
+        if (layout_) c_.vkDestroyPipelineLayout(c_.device, layout_, nullptr);
+        for (auto sampler : samplers_) if (sampler) c_.vkDestroySampler(c_.device, sampler, nullptr);
+        if (descriptor_pool_) c_.vkDestroyDescriptorPool(c_.device, descriptor_pool_, nullptr);
+        if (descriptors_) c_.vkDestroyDescriptorSetLayout(c_.device, descriptors_, nullptr);
+        if (impostor_descriptors_) c_.vkDestroyDescriptorSetLayout(c_.device, impostor_descriptors_, nullptr);
     }
     const std::string& name() const override { return name_; }
     uint32_t supported_sample_counts(PointStyle style) const override {
@@ -903,14 +911,14 @@ public:
             staging.transfer(packed.data(),size_t(bytes),true);
             gpu->buffer.init(bytes,VK_BUFFER_USAGE_TRANSFER_DST_BIT|VK_BUFFER_USAGE_VERTEX_BUFFER_BIT|VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,false);
             c_.execute([&](VkCommandBuffer cmd) {
-                VkBufferCopy copy={0,0,bytes}; vkCmdCopyBuffer(cmd,staging.handle,gpu->buffer.handle,1,&copy);
+                VkBufferCopy copy={0,0,bytes}; c_.vkCmdCopyBuffer(cmd,staging.handle,gpu->buffer.handle,1,&copy);
                 VkBufferMemoryBarrier barrier{}; barrier.sType=VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
                 barrier.srcAccessMask=VK_ACCESS_TRANSFER_WRITE_BIT;
                 barrier.dstAccessMask=VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
                 if (c_.compute) barrier.dstAccessMask|=VK_ACCESS_SHADER_READ_BIT;
                 barrier.srcQueueFamilyIndex=barrier.dstQueueFamilyIndex=VK_QUEUE_FAMILY_IGNORED;
                 barrier.buffer=gpu->buffer.handle; barrier.size=VK_WHOLE_SIZE;
-                vkCmdPipelineBarrier(cmd,VK_PIPELINE_STAGE_TRANSFER_BIT,VK_PIPELINE_STAGE_VERTEX_INPUT_BIT|
+                c_.vkCmdPipelineBarrier(cmd,VK_PIPELINE_STAGE_TRANSFER_BIT,VK_PIPELINE_STAGE_VERTEX_INPUT_BIT|
                     (c_.compute?VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT:0),0,0,nullptr,1,&barrier,0,nullptr);
             });
             ++point_uploads_;
@@ -953,7 +961,7 @@ public:
         for (auto format : {VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_D32_SFLOAT}) {
             VkImageFormatProperties properties;
             const auto usage = format == VK_FORMAT_D32_SFLOAT ? VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT : VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-            check(vkGetPhysicalDeviceImageFormatProperties(c_.physical, format, VK_IMAGE_TYPE_2D,
+            check(c_.vkGetPhysicalDeviceImageFormatProperties(c_.physical, format, VK_IMAGE_TYPE_2D,
                   VK_IMAGE_TILING_OPTIMAL, usage, 0, &properties), "query MSAA target support");
             sample_counts_ &= properties.sampleCounts;
         }
@@ -991,21 +999,21 @@ public:
         VkDescriptorSetLayoutCreateInfo li{};
         li.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
         li.bindingCount = 1; li.pBindings = &binding;
-        check(vkCreateDescriptorSetLayout(c_.device, &li, nullptr, &descriptors_), "create descriptor layout");
+        check(c_.vkCreateDescriptorSetLayout(c_.device, &li, nullptr, &descriptors_), "create descriptor layout");
         binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
         binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-        check(vkCreateDescriptorSetLayout(c_.device, &li, nullptr, &impostor_descriptors_), "create impostor descriptor layout");
+        check(c_.vkCreateDescriptorSetLayout(c_.device, &li, nullptr, &impostor_descriptors_), "create impostor descriptor layout");
         VkDescriptorPoolSize sizes[] = {{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1025},
                                         {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1}};
         VkDescriptorPoolCreateInfo pi{};
         pi.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         pi.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
         pi.maxSets = 1026; pi.poolSizeCount = 2; pi.pPoolSizes = sizes;
-        check(vkCreateDescriptorPool(c_.device, &pi, nullptr, &descriptor_pool_), "create descriptor pool");
+        check(c_.vkCreateDescriptorPool(c_.device, &pi, nullptr, &descriptor_pool_), "create descriptor pool");
         VkDescriptorSetAllocateInfo ai{};
         ai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
         ai.descriptorPool = descriptor_pool_; ai.descriptorSetCount = 1; ai.pSetLayouts = &impostor_descriptors_;
-        check(vkAllocateDescriptorSets(c_.device, &ai, &impostor_set_), "allocate impostor descriptor");
+        check(c_.vkAllocateDescriptorSets(c_.device, &ai, &impostor_set_), "allocate impostor descriptor");
         for (unsigned wrap = 0; wrap < 2; ++wrap) for (unsigned filter = 0; filter < 2; ++filter) {
             VkSamplerCreateInfo si{};
             si.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -1013,7 +1021,7 @@ public:
             si.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
             si.addressModeU = si.addressModeV = si.addressModeW = wrap ? VK_SAMPLER_ADDRESS_MODE_REPEAT : VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
             si.maxLod = 0;
-            check(vkCreateSampler(c_.device, &si, nullptr, &samplers_[wrap*2+filter]), "create sampler");
+            check(c_.vkCreateSampler(c_.device, &si, nullptr, &samplers_[wrap*2+filter]), "create sampler");
         }
     }
     void create_layout() {
@@ -1023,7 +1031,7 @@ public:
         const VkDescriptorSetLayout sets[] = {descriptors_, impostor_descriptors_};
         li.setLayoutCount = 2; li.pSetLayouts = sets;
         li.pushConstantRangeCount = 1; li.pPushConstantRanges = &push;
-        check(vkCreatePipelineLayout(c_.device, &li, nullptr, &layout_), "create pipeline layout");
+        check(c_.vkCreatePipelineLayout(c_.device, &li, nullptr, &layout_), "create pipeline layout");
     }
     void create_pipelines(RenderPass& pass) {
         VkShaderModule modules[11] = {};
@@ -1031,28 +1039,28 @@ public:
             VkShaderModuleCreateInfo mi{};
             mi.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
             mi.codeSize = sizeof(scene_vert); mi.pCode = scene_vert;
-            check(vkCreateShaderModule(c_.device, &mi, nullptr, &modules[0]), "create vertex shader");
+            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[0]), "create vertex shader");
             mi.codeSize = sizeof(scene_frag); mi.pCode = scene_frag;
-            check(vkCreateShaderModule(c_.device, &mi, nullptr, &modules[1]), "create fragment shader");
+            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[1]), "create fragment shader");
             mi.codeSize = sizeof(points_vert); mi.pCode = points_vert;
-            check(vkCreateShaderModule(c_.device, &mi, nullptr, &modules[2]), "create point vertex shader");
+            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[2]), "create point vertex shader");
             mi.codeSize = sizeof(points_frag); mi.pCode = points_frag;
-            check(vkCreateShaderModule(c_.device, &mi, nullptr, &modules[3]), "create point fragment shader");
+            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[3]), "create point fragment shader");
             mi.codeSize = sizeof(lines_vert); mi.pCode = lines_vert;
-            check(vkCreateShaderModule(c_.device, &mi, nullptr, &modules[4]), "create line vertex shader");
+            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[4]), "create line vertex shader");
             mi.codeSize = sizeof(lines_frag); mi.pCode = lines_frag;
-            check(vkCreateShaderModule(c_.device, &mi, nullptr, &modules[5]), "create line fragment shader");
+            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[5]), "create line fragment shader");
             mi.codeSize = sizeof(wide_lines_vert); mi.pCode = wide_lines_vert;
-            check(vkCreateShaderModule(c_.device, &mi, nullptr, &modules[6]), "create wide line vertex shader");
+            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[6]), "create wide line vertex shader");
             mi.codeSize = sizeof(wide_lines_frag); mi.pCode = wide_lines_frag;
-            check(vkCreateShaderModule(c_.device, &mi, nullptr, &modules[7]), "create wide line fragment shader");
+            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[7]), "create wide line fragment shader");
             mi.codeSize = sizeof(overlay_vert); mi.pCode = overlay_vert;
-            check(vkCreateShaderModule(c_.device, &mi, nullptr, &modules[8]), "create overlay vertex shader");
+            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[8]), "create overlay vertex shader");
             mi.codeSize = sizeof(overlay_frag); mi.pCode = overlay_frag;
-            check(vkCreateShaderModule(c_.device, &mi, nullptr, &modules[9]), "create overlay fragment shader");
+            check(c_.vkCreateShaderModule(c_.device, &mi, nullptr, &modules[9]), "create overlay fragment shader");
             if (pass.depth_preview) {
                 mi.codeSize = sizeof(depth_texture_frag); mi.pCode = depth_texture_frag;
-                check(vkCreateShaderModule(c_.device,&mi,nullptr,&modules[10]), "create depth texture fragment shader");
+                check(c_.vkCreateShaderModule(c_.device,&mi,nullptr,&modules[10]), "create depth texture fragment shader");
             }
             VkPipelineShaderStageCreateInfo stages[2] = {};
             for (unsigned i = 0; i < 2; ++i) {
@@ -1160,7 +1168,7 @@ public:
                     ms.minSampleShading = 0;
                 }
                 assembly.topology = topologies[i >= 3 ? 0 : i];
-                check(vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr, &pass.pipelines[i]), "create pipeline");
+                check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr, &pass.pipelines[i]), "create pipeline");
             }
             if (pass.kind != PassKind::ids) {
                 stages[0].module = modules[8]; stages[1].module = modules[9];
@@ -1182,29 +1190,29 @@ public:
                 pi.subpass = 1;
                 depth.depthTestEnable = VK_TRUE; depth.depthWriteEnable = VK_FALSE;
                 depth.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
-                check(vkCreateGraphicsPipelines(c_.device,VK_NULL_HANDLE,1,&pi,nullptr,&pass.depth_overlay_pipeline), "create depth-tested overlay pipeline");
+                check(c_.vkCreateGraphicsPipelines(c_.device,VK_NULL_HANDLE,1,&pi,nullptr,&pass.depth_overlay_pipeline), "create depth-tested overlay pipeline");
                 if (pass.independent_depth) {
                     pi.subpass = 2; depth.depthTestEnable = depth.depthWriteEnable = VK_TRUE;
                     depth.depthCompareOp = VK_COMPARE_OP_LESS;
                     stages[0].module = modules[0]; // lit triangles, color-only fragment output
                     vertex.vertexAttributeDescriptionCount = 6; vertex.pVertexAttributeDescriptions = attrs;
-                    check(vkCreateGraphicsPipelines(c_.device,VK_NULL_HANDLE,1,&pi,nullptr,&pass.hud_3d_pipeline), "create independent-depth HUD pipeline");
+                    check(c_.vkCreateGraphicsPipelines(c_.device,VK_NULL_HANDLE,1,&pi,nullptr,&pass.hud_3d_pipeline), "create independent-depth HUD pipeline");
                     stages[0].module = modules[8];
                     vertex.vertexAttributeDescriptionCount = 3; vertex.pVertexAttributeDescriptions = overlay_attrs;
                 }
                 pi.subpass = pass.independent_depth ? 3 : 2;
                 depth.depthTestEnable = depth.depthWriteEnable = VK_FALSE;
-                check(vkCreateGraphicsPipelines(c_.device,VK_NULL_HANDLE,1,&pi,nullptr,&pass.overlay_pipeline), "create overlay pipeline");
+                check(c_.vkCreateGraphicsPipelines(c_.device,VK_NULL_HANDLE,1,&pi,nullptr,&pass.overlay_pipeline), "create overlay pipeline");
                 if (pass.depth_preview) {
                     stages[1].module = modules[10];
-                    check(vkCreateGraphicsPipelines(c_.device,VK_NULL_HANDLE,1,&pi,nullptr,&pass.depth_texture_pipeline), "create depth texture overlay pipeline");
+                    check(c_.vkCreateGraphicsPipelines(c_.device,VK_NULL_HANDLE,1,&pi,nullptr,&pass.depth_texture_pipeline), "create depth texture overlay pipeline");
                 }
             }
         } catch (...) {
-            for (auto m : modules) if (m) vkDestroyShaderModule(c_.device, m, nullptr);
+            for (auto m : modules) if (m) c_.vkDestroyShaderModule(c_.device, m, nullptr);
             throw;
         }
-        for (auto m : modules) vkDestroyShaderModule(c_.device, m, nullptr);
+        for (auto m : modules) c_.vkDestroyShaderModule(c_.device, m, nullptr);
     }
     GpuGeometry& geometry(const std::shared_ptr<const Geometry>& data) {
         auto it = geometry_.find(data.get());
@@ -1243,13 +1251,13 @@ public:
             gpu->buffer.init(bytes, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, false);
             c_.execute([&](VkCommandBuffer cmd) {
                 VkBufferCopy copy = {0, 0, bytes};
-                vkCmdCopyBuffer(cmd, staging.handle, gpu->buffer.handle, 1, &copy);
+                c_.vkCmdCopyBuffer(cmd, staging.handle, gpu->buffer.handle, 1, &copy);
                 VkBufferMemoryBarrier barrier{};
                 barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
                 barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT; barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
                 barrier.srcQueueFamilyIndex = barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
                 barrier.buffer = gpu->buffer.handle; barrier.size = VK_WHOLE_SIZE;
-                vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+                c_.vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
                                      0, 0, nullptr, 1, &barrier, 0, nullptr);
             });
         }
@@ -1263,7 +1271,7 @@ public:
             throw std::invalid_argument("texture exceeds device image limits");
         if (data->sampler().filter == TextureFilter::linear) {
             VkFormatProperties properties;
-            vkGetPhysicalDeviceFormatProperties(c_.physical, VK_FORMAT_R8G8B8A8_UNORM, &properties);
+            c_.vkGetPhysicalDeviceFormatProperties(c_.physical, VK_FORMAT_R8G8B8A8_UNORM, &properties);
             if (!(properties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT))
                 throw std::runtime_error("RGBA8 linear texture filtering is unsupported by this device");
         }
@@ -1275,14 +1283,14 @@ public:
         staging.init(data->rgba().size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, true);
         staging.transfer(const_cast<unsigned char*>(data->rgba().data()), data->rgba().size(), true);
         c_.execute([&](VkCommandBuffer cmd) {
-            image_barrier(cmd, gpu->image.handle, VK_IMAGE_ASPECT_COLOR_BIT,
+            image_barrier(c_,cmd, gpu->image.handle, VK_IMAGE_ASPECT_COLOR_BIT,
                 VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                 VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, VK_ACCESS_TRANSFER_WRITE_BIT);
             VkBufferImageCopy copy{};
             copy.imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
             copy.imageExtent = {data->width(), data->height(), 1};
-            vkCmdCopyBufferToImage(cmd, staging.handle, gpu->image.handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
-            image_barrier(cmd, gpu->image.handle, VK_IMAGE_ASPECT_COLOR_BIT,
+            c_.vkCmdCopyBufferToImage(cmd, staging.handle, gpu->image.handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
+            image_barrier(c_,cmd, gpu->image.handle, VK_IMAGE_ASPECT_COLOR_BIT,
                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                 VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
                 VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
@@ -1290,7 +1298,7 @@ public:
         VkDescriptorSetAllocateInfo ai{};
         ai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
         ai.descriptorPool = descriptor_pool_; ai.descriptorSetCount = 1; ai.pSetLayouts = &descriptors_;
-        check(vkAllocateDescriptorSets(c_.device, &ai, &gpu->set), "allocate texture descriptor (maximum 1024 live textures)");
+        check(c_.vkAllocateDescriptorSets(c_.device, &ai, &gpu->set), "allocate texture descriptor (maximum 1024 live textures)");
         const unsigned sampler_index = (data->sampler().wrap == TextureWrap::repeat ? 2 : 0) +
                                        (data->sampler().filter == TextureFilter::linear ? 1 : 0);
         VkDescriptorImageInfo image = {samplers_[sampler_index], gpu->image.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
@@ -1298,7 +1306,7 @@ public:
         write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         write.dstSet = gpu->set; write.dstBinding = 0; write.descriptorCount = 1;
         write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER; write.pImageInfo = &image;
-        vkUpdateDescriptorSets(c_.device, 1, &write, 0, nullptr);
+        c_.vkUpdateDescriptorSets(c_.device, 1, &write, 0, nullptr);
         auto* result = gpu.get(); textures_.emplace(data.get(), std::move(gpu));
         return *result;
     }
@@ -1419,7 +1427,7 @@ public:
         if (!target_ || target_->width != width || target_->height != height || target_->samples != samples ||
             target_->color_pass.independent_depth != independent_depth || target_->color_pass.depth_preview != depth_preview) {
             if (depth_preview) {
-                VkFormatProperties properties;vkGetPhysicalDeviceFormatProperties(c_.physical,VK_FORMAT_D32_SFLOAT,&properties);
+                VkFormatProperties properties;c_.vkGetPhysicalDeviceFormatProperties(c_.physical,VK_FORMAT_D32_SFLOAT,&properties);
                 if (!(properties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT))
                     throw std::runtime_error("scene depth preview requires sampleable D32 depth");
             }
@@ -1432,12 +1440,12 @@ public:
             target_->depth_pool = descriptor_pool_;
             VkDescriptorSetAllocateInfo ai{};ai.sType=VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
             ai.descriptorPool=descriptor_pool_;ai.descriptorSetCount=1;ai.pSetLayouts=&descriptors_;
-            check(vkAllocateDescriptorSets(c_.device,&ai,&target_->depth_set),"allocate scene depth descriptor");
+            check(c_.vkAllocateDescriptorSets(c_.device,&ai,&target_->depth_set),"allocate scene depth descriptor");
             VkDescriptorImageInfo image={samplers_[0],target_->depth.view,VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL};
             VkWriteDescriptorSet write{};write.sType=VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
             write.dstSet=target_->depth_set;write.descriptorCount=1;
             write.descriptorType=VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;write.pImageInfo=&image;
-            vkUpdateDescriptorSets(c_.device,1,&write,0,nullptr);
+            c_.vkUpdateDescriptorSets(c_.device,1,&write,0,nullptr);
         }
         const size_t alignment = std::max(size_t(16), size_t(limits.minUniformBufferOffsetAlignment));
         const size_t stride = (sizeof(ImpostorUniform) + alignment - 1) / alignment * alignment;
@@ -1514,7 +1522,7 @@ public:
                 write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
                 write.dstSet = impostor_set_; write.descriptorCount = 1;
                 write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC; write.pBufferInfo = &info;
-                vkUpdateDescriptorSets(c_.device, 1, &write, 0, nullptr);
+                c_.vkUpdateDescriptorSets(c_.device, 1, &write, 0, nullptr);
                 impostor_uniforms_ = std::move(buffer); impostor_capacity_ = uniforms.size();
             }
             impostor_uniforms_->transfer(uniforms.data(), uniforms.size(), true);
@@ -1543,10 +1551,10 @@ public:
         begin.renderArea.extent = {width, height};
         begin.clearValueCount = pass.kind == PassKind::ids ? 2 : pass.independent_depth ? 4 : 3;
         begin.pClearValues = clear;
-        vkCmdBeginRenderPass(cmd, &begin, VK_SUBPASS_CONTENTS_INLINE);
+        c_.vkCmdBeginRenderPass(cmd, &begin, VK_SUBPASS_CONTENTS_INLINE);
         VkViewport viewport = {0, 0, float(width), float(height), 0, 1};
         VkRect2D scissor = {{0, 0}, {width, height}};
-        vkCmdSetViewport(cmd, 0, 1, &viewport); vkCmdSetScissor(cmd, 0, 1, &scissor);
+        c_.vkCmdSetViewport(cmd, 0, 1, &viewport); c_.vkCmdSetScissor(cmd, 0, 1, &scissor);
         for (const auto& draw : draws) {
             const auto& d = draw.command;
             if (d.overlay) continue;
@@ -1554,14 +1562,14 @@ public:
                                 d.geometry->topology() == Topology::lines ? 1 : 2;
             const bool expanded = expanded_impostor(d);
             if (expanded) pipeline = expanded_lines(d) ? (d.line_style == LineStyle::plain ? 5 : 4) : 3;
-            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pass.pipelines[pipeline]);
-            vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout_, 1, 1, &impostor_set_, 1, &draw.uniform_offset);
+            c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pass.pipelines[pipeline]);
+            c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout_, 1, 1, &impostor_set_, 1, &draw.uniform_offset);
             VkDeviceSize offset = 0;
             if (draw.geometry->points) {
                 VkBuffer buffers[]={draw.geometry->points->buffer.handle,draw.geometry->buffer.handle};
-                VkDeviceSize offsets[]={0,0}; vkCmdBindVertexBuffers(cmd,0,2,buffers,offsets);
-            } else vkCmdBindVertexBuffers(cmd, 0, 1, &draw.geometry->buffer.handle, &offset);
-            vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout_, 0, 1, &draw.texture->set, 0, nullptr);
+                VkDeviceSize offsets[]={0,0}; c_.vkCmdBindVertexBuffers(cmd,0,2,buffers,offsets);
+            } else c_.vkCmdBindVertexBuffers(cmd, 0, 1, &draw.geometry->buffer.handle, &offset);
+            c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout_, 0, 1, &draw.texture->set, 0, nullptr);
             Push push{};
             for (unsigned col = 0; col < 4; ++col)
                 for (unsigned row = 0; row < 4; ++row) push.mvp[col * 4 + row] = d.model_view_projection(row, col);
@@ -1569,14 +1577,14 @@ public:
             push.object = d.object_id; push.lighting = d.lighting ? 1 : 0;
             for (unsigned col = 0; col < 3; ++col)
                 for (unsigned row = 0; row < 3; ++row) push.normal[col * 3 + row] = d.normal_matrix(row, col);
-            vkCmdPushConstants(cmd, layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
-            if (expanded) vkCmdDraw(cmd, 6, expanded_lines(d) ? draw.geometry->count / 2 : draw.geometry->count, 0, 0);
-            else vkCmdDraw(cmd, draw.geometry->count, 1, 0, 0);
+            c_.vkCmdPushConstants(cmd, layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
+            if (expanded) c_.vkCmdDraw(cmd, 6, expanded_lines(d) ? draw.geometry->count / 2 : draw.geometry->count, 0, 0);
+            else c_.vkCmdDraw(cmd, draw.geometry->count, 1, 0, 0);
         }
         if (pass.kind != PassKind::ids) {
             const unsigned phases = pass.independent_depth ? 3 : 2;
             for (unsigned phase=0;phase<phases;++phase) {
-                vkCmdNextSubpass(cmd,VK_SUBPASS_CONTENTS_INLINE);
+                c_.vkCmdNextSubpass(cmd,VK_SUBPASS_CONTENTS_INLINE);
                 for (const auto& draw : draws) {
                     const auto& d = draw.command;
                     if (!d.overlay) continue;
@@ -1585,12 +1593,12 @@ public:
                     if (draw_phase != phase) continue;
                     const auto pipeline=d.scene_depth_texture ? pass.depth_texture_pipeline : phase==0 ? pass.depth_overlay_pipeline :
                         phase==phases-1 ? pass.overlay_pipeline : pass.hud_3d_pipeline;
-                    vkCmdBindPipeline(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,pipeline);
+                    c_.vkCmdBindPipeline(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,pipeline);
                     VkDeviceSize offset = 0;
-                    vkCmdBindVertexBuffers(cmd,0,1,&draw.geometry->buffer.handle,&offset);
+                    c_.vkCmdBindVertexBuffers(cmd,0,1,&draw.geometry->buffer.handle,&offset);
                     const auto texture_set=d.scene_depth_texture ? target_->depth_set : draw.texture->set;
-                    vkCmdBindDescriptorSets(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,layout_,0,1,&texture_set,0,nullptr);
-                    vkCmdBindDescriptorSets(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,layout_,1,1,&impostor_set_,1,&draw.uniform_offset);
+                    c_.vkCmdBindDescriptorSets(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,layout_,0,1,&texture_set,0,nullptr);
+                    c_.vkCmdBindDescriptorSets(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,layout_,1,1,&impostor_set_,1,&draw.uniform_offset);
                     Push push{};
                     for (unsigned col=0;col<4;++col) for (unsigned row=0;row<4;++row)
                         push.mvp[col*4+row] = d.model_view_projection(row,col);
@@ -1598,12 +1606,12 @@ public:
                     push.lighting = d.lighting ? 1 : 0;
                     for (unsigned col=0;col<3;++col) for (unsigned row=0;row<3;++row)
                         push.normal[col*3+row] = d.normal_matrix(row,col);
-                    vkCmdPushConstants(cmd,layout_,VK_SHADER_STAGE_VERTEX_BIT,0,sizeof(push),&push);
-                    vkCmdDraw(cmd,draw.geometry->count,1,0,0);
+                    c_.vkCmdPushConstants(cmd,layout_,VK_SHADER_STAGE_VERTEX_BIT,0,sizeof(push),&push);
+                    c_.vkCmdDraw(cmd,draw.geometry->count,1,0,0);
                 }
             }
         }
-        vkCmdEndRenderPass(cmd);
+        c_.vkCmdEndRenderPass(cmd);
     }
     void encode(VkCommandBuffer cmd, const std::vector<Prepared>& draws, const vec4& background) {
         const bool preview_msaa=target_->color_pass.depth_preview && target_->id_pass;
@@ -1611,7 +1619,7 @@ public:
             // Existing center-sample picking depth is also the preview source.
             // Generate it before color composition; MSAA color still resolves last.
             encode_pass(cmd,draws,background,*target_->id_pass,target_->id_framebuffer);
-            image_barrier(cmd,target_->depth.handle,VK_IMAGE_ASPECT_DEPTH_BIT,
+            image_barrier(c_,cmd,target_->depth.handle,VK_IMAGE_ASPECT_DEPTH_BIT,
                     VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
                     VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT|VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT|VK_PIPELINE_STAGE_TRANSFER_BIT,
                     VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT|VK_ACCESS_TRANSFER_READ_BIT,
@@ -1623,7 +1631,7 @@ public:
         // requires neither depth-resolve extensions nor averaging integer IDs.
         if (target_->id_pass && !preview_msaa) encode_pass(cmd, draws, background, *target_->id_pass, target_->id_framebuffer);
         if (preview_msaa)
-            image_barrier(cmd,target_->depth.handle,VK_IMAGE_ASPECT_DEPTH_BIT,
+            image_barrier(c_,cmd,target_->depth.handle,VK_IMAGE_ASPECT_DEPTH_BIT,
                     VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                     VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,VK_PIPELINE_STAGE_TRANSFER_BIT,
                     VK_ACCESS_SHADER_READ_BIT,VK_ACCESS_TRANSFER_READ_BIT);
@@ -1651,12 +1659,12 @@ public:
                 copy.bufferOffset = offsets[i];
                 copy.imageSubresource = {i == 2 ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
                 copy.imageExtent = {width, height, 1};
-                vkCmdCopyImageToBuffer(cmd, images[i], VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, target_->readback.handle, 1, &copy);
+                c_.vkCmdCopyImageToBuffer(cmd, images[i], VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, target_->readback.handle, 1, &copy);
             }
             VkMemoryBarrier host{};
             host.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
             host.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT; host.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
-            vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_HOST_BIT,
+            c_.vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_HOST_BIT,
                                  0, 1, &host, 0, nullptr, 0, nullptr);
         });
         std::vector<unsigned char> bytes(depth_offset + pixels * 4);
@@ -1672,7 +1680,7 @@ public:
         if (!width || !height) return false;
         if (!swapchain_ || swapchain_->dirty || swapchain_->requested_width != width || swapchain_->requested_height != height) {
             // Rare lifecycle boundary. The normal frame path waits only its draw fence.
-            check(vkDeviceWaitIdle(c_.device), "drain presentation before swapchain recreation");
+            check(c_.vkDeviceWaitIdle(c_.device), "drain presentation before swapchain recreation");
             swapchain_.reset();
             std::unique_ptr<Swapchain> next(new Swapchain(c_));
             next->init(width, height);
@@ -1681,13 +1689,13 @@ public:
         }
         const auto draws = prepare(width, height, commands, background, samples);
         uint32_t image = 0;
-        const auto acquired = vkAcquireNextImageKHR(c_.device, swapchain_->handle, UINT64_MAX,
+        const auto acquired = c_.vkAcquireNextImageKHR(c_.device, swapchain_->handle, UINT64_MAX,
                                                     swapchain_->acquired, VK_NULL_HANDLE, &image);
         if (acquired == VK_ERROR_OUT_OF_DATE_KHR) { swapchain_->dirty = true; return false; }
         if (acquired != VK_SUBOPTIMAL_KHR) check(acquired, "acquire presentation image");
         c_.execute([&](VkCommandBuffer cmd) {
             encode(cmd, draws, background);
-            image_barrier(cmd, swapchain_->images[image], VK_IMAGE_ASPECT_COLOR_BIT,
+            image_barrier(c_,cmd, swapchain_->images[image], VK_IMAGE_ASPECT_COLOR_BIT,
                 VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                 VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, VK_ACCESS_TRANSFER_WRITE_BIT);
             VkImageBlit copy{};
@@ -1695,9 +1703,9 @@ public:
             copy.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
             copy.srcOffsets[1] = {int32_t(width), int32_t(height), 1};
             copy.dstOffsets[1] = {int32_t(swapchain_->extent.width), int32_t(swapchain_->extent.height), 1};
-            vkCmdBlitImage(cmd, target_->color.handle, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            c_.vkCmdBlitImage(cmd, target_->color.handle, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                 swapchain_->images[image], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy, VK_FILTER_NEAREST);
-            image_barrier(cmd, swapchain_->images[image], VK_IMAGE_ASPECT_COLOR_BIT,
+            image_barrier(c_,cmd, swapchain_->images[image], VK_IMAGE_ASPECT_COLOR_BIT,
                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
                 VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_ACCESS_TRANSFER_WRITE_BIT, 0);
         }, swapchain_->acquired, swapchain_->ready[image]);
@@ -1705,7 +1713,7 @@ public:
         info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
         info.waitSemaphoreCount = 1; info.pWaitSemaphores = &swapchain_->ready[image];
         info.swapchainCount = 1; info.pSwapchains = &swapchain_->handle; info.pImageIndices = &image;
-        const auto presented = vkQueuePresentKHR(c_.queue, &info);
+        const auto presented = c_.vkQueuePresentKHR(c_.queue, &info);
         if (presented == VK_ERROR_OUT_OF_DATE_KHR || presented == VK_SUBOPTIMAL_KHR || acquired == VK_SUBOPTIMAL_KHR)
             swapchain_->dirty = true;
         if (presented != VK_ERROR_OUT_OF_DATE_KHR && presented != VK_SUBOPTIMAL_KHR)

@@ -2580,10 +2580,10 @@ shared equivalents are developed; VulkanViewer still uses that host internally.
 This is a source-compatible step for the documented common file/scene API, not
 binary compatibility with the previous class layout.
 
-Availability fallback currently starts after the Vulkan loader library itself is
-loadable. Handling a missing loader binary requires dynamically loading it rather
-than the current private link dependency and remains a migration gate. OpenGL
-validation requests currently fail explicitly instead of being silently ignored.
+Availability fallback also handles a missing or invalid Vulkan loader library;
+the lazy-loading backend described below replaces the original private link
+dependency. OpenGL validation requests currently fail explicitly instead of
+being silently ignored.
 Legacy OpenGL context/global-cache lifetime limitations also remain for the
 upcoming unified window lifecycle work; this step does not claim arbitrary
 interleaving of legacy OpenGL and Vulkan window hosts is supported.
@@ -2607,4 +2607,49 @@ package was not rebuilt in this stage. Both installed consumers build and run,
 including the ordinary OffScreen client with no backend-specific includes, visible geometry, and the
 retained native capture/text client. Validation/synchronization checks report no
 new errors, and the headless viewer has no GL/GLEW/GLFW imports. The existing
+MoltenVK integer-attachment warning remains. Tutorial sources are unchanged.
+
+
+## Optional Vulkan loader at runtime
+
+The renderer now opens the Vulkan loader when a Vulkan backend is requested,
+without a load-time link to the loader library. An application using Automatic
+OffScreen selection can therefore start without Vulkan installed and select
+OpenGL when that backend is built and available. Explicit Vulkan requests still
+report BackendUnavailable; Vulkan-only builds report both backend availability
+failures for Automatic. Rendering errors never switch the selected backend.
+
+Loader ownership and dispatch live in renderer/backends/vulkan/loader.{h,cpp}
+and dispatch_functions.h. Each rendering context owns its instance/device
+function table and retains the library through GPU cleanup. GLFW receives the
+same vkGetInstanceProcAddr before initialization, and its runtime retains the
+library until windows and toolkit state are released. No mutable global device
+dispatch table is shared between contexts. Existing legacy OpenGL/GLFW global
+lifecycle limitations still apply to mixed window hosts.
+
+Platform loader names are tried first, with macOS installation locations and an
+optional build-time SDK library location as additional lookup candidates. Set
+EASY3D_VULKAN_LOADER to choose one loader file explicitly. A nonempty override
+is exclusive: an invalid path or missing vkGetInstanceProcAddr reports failure
+instead of silently trying a different library. The SDK remains required to
+build the Vulkan backend and shaders. Ordinary installed renderer/viewer clients
+no longer need find_package(Vulkan), SDK headers or a Vulkan link dependency;
+advanced native surface integrations can still require Vulkan headers.
+
+The offscreen regression tests run separate processes with an absent loader
+file and with a loadable test library that has no Vulkan exports. They verify
+the diagnostic cause, Automatic OpenGL fallback and explicit Vulkan rejection
+in combined builds, and combined failure diagnostics in Vulkan-only builds.
+Installed-consumer CI configuration explicitly disables Vulkan package lookup.
+Unified interactive Viewer/GUI APIs and common equivalents of the remaining
+native-only extensions are still migration work.
+
+Verified on this Mac with MoltenVK: 67/67 native tests, 40/40 combined
+OpenGL/Vulkan tests and 15/15 headless tests pass. The final cleanup guard was
+also followed by the focused OffScreen tests in both backend profiles. The
+OpenGL-only viewer builds, and both installed clients build with Vulkan package
+lookup disabled and render successfully without a display. Binary inspection
+finds no mandatory Vulkan loader dependency or unresolved vk* imports in the
+renderer/viewer, and no GL/GLEW/GLFW imports in the headless libraries. Validation
+and synchronization tests report no new errors; the previously documented
 MoltenVK integer-attachment warning remains. Tutorial sources are unchanged.

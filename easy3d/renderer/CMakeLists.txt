@@ -241,11 +241,10 @@ endif()
 
 if(Easy3D_ENABLE_VULKAN)
     target_compile_definitions(easy3d_renderer PUBLIC EASY3D_HAS_VULKAN)
-    target_include_directories(easy3d_renderer PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/backends/vulkan")
-    if(UNIX AND Easy3D_BUILD_SHARED_LIBS)
-        # The loader is a private backend dependency. Installed consumers must
-        # resolve it without linking Vulkan themselves or overriding dyld/ld paths.
-        set_property(TARGET easy3d_renderer APPEND PROPERTY INSTALL_RPATH "$<TARGET_FILE_DIR:Vulkan::Vulkan>")
+    target_include_directories(easy3d_renderer PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/backends/vulkan" ${Vulkan_INCLUDE_DIRS})
+    if(UNIX)
+        # Optional last-resort lookup hint, never a load-time dependency or rpath.
+        target_compile_definitions(easy3d_renderer PRIVATE EASY3D_VULKAN_LOADER_HINT="$<TARGET_FILE:Vulkan::Vulkan>")
     endif()
     install(FILES backends/vulkan/surface.h
         DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/easy3d/renderer/backends/vulkan")

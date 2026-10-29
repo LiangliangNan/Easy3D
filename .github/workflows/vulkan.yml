@@ -74,7 +74,8 @@ jobs:
         run: |
           cmake --install build-vulkan
           cmake -S easy3d/viewer/tests/installed -B installed-consumer -G Ninja \
-            -DEasy3D_DIR="${{ github.workspace }}/install/lib/CMake"
+            -DEasy3D_DIR="${{ github.workspace }}/install/lib/CMake" \
+            -DCMAKE_DISABLE_FIND_PACKAGE_Vulkan=TRUE
           cmake --build installed-consumer
           export VK_DRIVER_FILES="$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit)"
           unset DISPLAY WAYLAND_DISPLAY

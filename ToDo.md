@@ -4,7 +4,8 @@
   - Unify APIs for the classes in "easy3d/renderer", "easy3d/viewer", and "easy3d/gui" for Vulkan and OpenGL. Vulkan and 
     OpenGL related calls should remain in the backends.
     - [x] Unified OffScreen scene/file API and initialization-availability fallback
-    - [ ] Unified interactive Viewer/GUI APIs, native-only extensions and missing-loader fallback
+    - [x] Optional runtime Vulkan loader and missing/invalid-loader OffScreen fallback
+    - [ ] Unified interactive Viewer/GUI APIs and native-only extensions
 - Send the computed value of "MVP * MANIP" to shaders (avoiding computing the matrix product for each vertex/fragment)
 - Walkthrough and animation; allow to modify the cameras interactively
 - Implement potree for huge point cloud visualization (https://github.com/potree/potree)

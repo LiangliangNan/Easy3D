@@ -64,6 +64,10 @@ int main(int argc,char** argv) {
     try {
         initialize(false,false,false);
         const std::string mode=argc>1?argv[1]:"";
+        const std::string expected=argc>2?argv[2]:"";
+        const auto check_reason=[&](const std::string& reason) {
+            require(reason.find(expected)!=std::string::npos,"backend failure did not identify the expected loader error");
+        };
         bool invalid=false;try {OffScreen renderer(0,1);}catch(const std::invalid_argument&){invalid=true;}
         require(invalid,"invalid dimensions reached backend initialization");
         OffScreenOptions wrong;wrong.backend=static_cast<Backend>(99);invalid=false;
@@ -71,13 +75,13 @@ int main(int argc,char** argv) {
         require(invalid,"invalid backend request reached fallback");
         if(mode=="--unavailable") {
             bool rejected=false;try {OffScreen renderer(161,127);}catch(const BackendUnavailable& e) {
-                const std::string text=e.what();rejected=text.find("Vulkan:")!=std::string::npos && text.find("OpenGL:")!=std::string::npos;
+                const std::string text=e.what();check_reason(text);rejected=text.find("Vulkan:")!=std::string::npos && text.find("OpenGL:")!=std::string::npos;
             }
             require(rejected,"Automatic did not report both initialization failures");
         } else if(mode=="--fallback") {
-            {OffScreen renderer(161,127);require(renderer.backend()==Backend::OpenGL && !renderer.fallback_reason().empty(),"Automatic did not fall back with diagnostics");exercise(renderer,"unified-fallback");}
+            {OffScreen renderer(161,127);require(renderer.backend()==Backend::OpenGL && !renderer.fallback_reason().empty(),"Automatic did not fall back with diagnostics");check_reason(renderer.fallback_reason());exercise(renderer,"unified-fallback");}
             OffScreenOptions o;o.backend=Backend::Vulkan;bool rejected=false;
-            try {OffScreen renderer(161,127,o);}catch(const BackendUnavailable&){rejected=true;}
+            try {OffScreen renderer(161,127,o);}catch(const BackendUnavailable& e){check_reason(e.what());rejected=true;}
             require(rejected,"explicit Vulkan request silently fell back");
         } else {
             {OffScreen renderer(161,127);

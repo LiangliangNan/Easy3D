@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/vulkan_viewer.h>
+#include <easy3d/renderer/backend.h>
+#include <easy3d/renderer/backends/vulkan/loader.h>
 #include <easy3d/renderer/backends/vulkan/surface.h>
 #include <easy3d/renderer/text_layout.h>
 #include <easy3d/renderer/backends/vulkan/shape.h>
@@ -95,8 +97,15 @@ const char* const default_manual =
     "-------------------------------------------------------------------";
 // Toolkit runtime ownership, not a global GPU cache. GLFW requires UI-thread use.
 struct GlfwRuntime {
-    GlfwRuntime() { if (!glfwInit()) throw std::runtime_error("GLFW initialization failed (a desktop display is required)"); }
-    ~GlfwRuntime() { glfwTerminate(); }
+    std::shared_ptr<graphics::internal::VulkanLoader> loader;
+    GlfwRuntime() : loader(graphics::internal::VulkanLoader::open()) {
+        glfwInitVulkanLoader(loader->get_instance_proc_addr());
+        if (!glfwInit()) {
+            glfwTerminate();glfwInitVulkanLoader(nullptr);
+            throw BackendUnavailable("GLFW initialization failed (a desktop display is required)");
+        }
+    }
+    ~GlfwRuntime() {glfwTerminate();glfwInitVulkanLoader(nullptr);}
     static std::shared_ptr<GlfwRuntime> acquire() {
         static std::weak_ptr<GlfwRuntime> current;
         auto runtime = current.lock();
@@ -131,7 +140,7 @@ struct VulkanViewer::Window {
         uint32_t count = 0;
         const char** required = glfwGetRequiredInstanceExtensions(&count);
         if (!required || !count) throw std::runtime_error("GLFW has no Vulkan surface extensions for this platform");
-        graphics::VulkanSurface surface;
+        graphics::VulkanSurface surface;surface.loader=runtime->loader;
         for (uint32_t i = 0; i < count; ++i) surface.instance_extensions.emplace_back(required[i]);
         surface.create = [this](VkInstance instance, VkSurfaceKHR* result) {
             return glfwCreateWindowSurface(instance, handle, nullptr, result);

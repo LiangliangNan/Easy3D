@@ -15,7 +15,6 @@ if(Easy3D_ENABLE_VULKAN_VIEWER)
         list(APPEND private_dependencies 3rd_glfw)
         list(APPEND viewer_headers viewer.h)
     endif()
-    list(APPEND private_dependencies Vulkan::Vulkan)
     list(APPEND viewer_headers vulkan_viewer.h)
     list(APPEND viewer_sources vulkan_viewer.cpp)
 endif()
@@ -26,6 +25,7 @@ endif()
 
 add_module(viewer "${viewer_headers}" "${viewer_sources}" "${private_dependencies}" "${public_dependencies}")
 if(Easy3D_ENABLE_VULKAN_VIEWER)
+    target_include_directories(easy3d_viewer PRIVATE ${Vulkan_INCLUDE_DIRS})
     target_compile_definitions(easy3d_viewer PUBLIC EASY3D_HAS_VULKAN_VIEWER)
 endif()
 install_module(viewer)
@@ -45,6 +45,24 @@ if(Easy3D_ENABLE_VULKAN AND Easy3D_BUILD_VULKAN_TESTS)
         set_tests_properties(viewer.offscreenunavailable PROPERTIES TIMEOUT 120
             ENVIRONMENT "VK_DRIVER_FILES=${CMAKE_CURRENT_BINARY_DIR}/missing-vulkan-icd.json;VK_ICD_FILENAMES=${CMAKE_CURRENT_BINARY_DIR}/missing-vulkan-icd.json")
     endif()
+
+    if(Easy3D_ENABLE_OPENGL)
+        set(loader_failure_mode --fallback)
+        set(loader_failure_labels desktop)
+    else()
+        set(loader_failure_mode --unavailable)
+        set(loader_failure_labels "")
+    endif()
+    add_test(NAME viewer.offscreenmissingloader COMMAND easy3d_offscreen_backend_test
+        ${loader_failure_mode} "Vulkan loader unavailable:")
+    set_tests_properties(viewer.offscreenmissingloader PROPERTIES TIMEOUT 120
+        LABELS "${loader_failure_labels}"
+        ENVIRONMENT "EASY3D_VULKAN_LOADER=${CMAKE_CURRENT_BINARY_DIR}/missing-vulkan-loader")
+    add_test(NAME viewer.offscreenbadloader COMMAND easy3d_offscreen_backend_test
+        ${loader_failure_mode} "does not export vkGetInstanceProcAddr")
+    set_tests_properties(viewer.offscreenbadloader PROPERTIES TIMEOUT 120
+        LABELS "${loader_failure_labels}"
+        ENVIRONMENT "EASY3D_VULKAN_LOADER=$<TARGET_FILE:easy3d_invalid_vulkan_loader>")
 
     add_executable(easy3d_vulkan_scene_test tests/scene_test.cpp)
     target_link_libraries(easy3d_vulkan_scene_test PRIVATE easy3d::viewer)
