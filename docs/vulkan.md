@@ -66,6 +66,8 @@ module's responsibilities and naming conventions; genuine API differences do not
 justify an unrelated organization of higher-level rendering or viewer features.
 Consolidation must preserve supported OpenGL builds, Vulkan headless operation,
 and rendering, depth, picking, MSAA and resource-lifetime correctness.
+Prioritize these core migration steps over expanding public APIs for individual
+tutorials. Tutorial needs should reuse existing operations where practical.
 
 Completion gates include:
 
@@ -3005,3 +3007,38 @@ and run through Vulkan, forced OpenGL fallback and the installed headless
 package. Headless viewer/renderer binaries import no GL/GLEW/GLFW calls. No new
 Vulkan validation/synchronization errors were reported; the previously noted
 MoltenVK format/blending warning remains.
+
+
+## Concrete viewer implementation consolidation
+
+Concrete host implementations now live in matching backend files:
+
+- `viewer/backends/opengl/viewer.cpp`: OpenGL Viewer implementation, creation
+  adapter and scene-depth query.
+- `viewer/backends/vulkan/viewer.cpp`: VulkanViewer implementation and creation
+  adapter.
+- `viewer/backends/vulkan/offscreen.cpp`: VulkanOffScreen implementation and its
+  adapter for the shared OffScreen class, corresponding to the existing OpenGL
+  offscreen adapter.
+- `viewer/backends/opengl/snapshot.cpp` and `multi_viewer.cpp`: existing OpenGL
+  snapshot and multi-view implementations, retaining their counterpart filenames.
+
+Shared OffScreen, ViewerBase, callback and input APIs remain in the viewer
+module; GLFW lifecycle/frame helpers remain in the shared backend infrastructure.
+CMake compiles each implementation once and retains the same public library,
+headers and dependencies in combined, Vulkan-only, headless and OpenGL-only
+builds. Concrete method bodies retain their existing logic; the standalone snapshot
+and multi-view files are byte-identical relocations. This isolates host code in
+preparation for unifying Viewer constructor/subclass storage. It does not yet
+replace the public Viewer/VulkanViewer class families.
+
+Tutorials, public headers and rendering algorithms are unchanged by this
+consolidation. No additional tutorial-specific operations were added to the
+shared viewer API.
+
+Verified on this Mac with MoltenVK: 75/75 native-window tests, 56/56
+combined-backend tests and 16/16 headless tests pass. The OpenGL-only viewer
+build and existing query regression pass. SDK-independent public clients run
+through Vulkan, automatic OpenGL fallback and the installed headless package.
+The headless viewer/renderer binaries have no GL/GLEW/GLFW imports. Previously
+documented platform warnings remain; no new validation errors were reported.

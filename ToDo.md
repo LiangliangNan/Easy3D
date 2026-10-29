@@ -10,6 +10,7 @@
     - [x] Runtime factory for built-in viewers with explicit backends and availability fallback
     - [x] Portable input/frame callbacks with logical coordinates and gesture capture
     - [x] Portable projection/unprojection and logical-coordinate visible-surface queries
+    - [x] Concrete viewer/offscreen implementations in matching backend directories
     - [ ] Unified Viewer constructors/subclass storage, capture/picking/selection, GUI and native-only extensions
 - Send the computed value of "MVP * MANIP" to shaders (avoiding computing the matrix product for each vertex/fragment)
 - Walkthrough and animation; allow to modify the cameras interactively

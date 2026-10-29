@@ -1,18 +1,1878 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
-#include <easy3d/viewer/backends/viewer.h>
+/********************************************************************
+ * Copyright (C) 2015 Liangliang Nan <liangliang.nan@gmail.com>
+ * https://3d.bk.tudelft.nl/liangliang/
+ *
+ * This file is part of Easy3D. If it is useful in your research/work,
+ * I would be grateful if you show your appreciation by citing it:
+ * ------------------------------------------------------------------
+ *      Liangliang Nan.
+ *      Easy3D: a lightweight, easy-to-use, and efficient C++ library
+ *      for processing and rendering 3D data.
+ *      Journal of Open Source Software, 6(64), 3255, 2021.
+ * ------------------------------------------------------------------
+ *
+ * Easy3D is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License Version 3
+ * as published by the Free Software Foundation.
+ *
+ * Easy3D is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ ********************************************************************/
+
 #include <easy3d/viewer/viewer.h>
-#include <easy3d/renderer/camera.h>
-#include <easy3d/renderer/framebuffer_object.h>
+#include <easy3d/viewer/backends/glfw_runtime.h>
+#include <easy3d/viewer/backends/viewer_loop.h>
+#include <easy3d/renderer/backend.h>
+
+#include <iostream>
+
+#include <easy3d/renderer/opengl.h>				// for gl functions
+#include <3rd_party/glfw/include/GLFW/glfw3.h>  // for glfw functions
+
+#include <easy3d/core/surface_mesh.h>
+#include <easy3d/core/graph.h>
+#include <easy3d/core/point_cloud.h>
+#include <easy3d/core/poly_mesh.h>
 #include <easy3d/renderer/renderer.h>
-#include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/manipulator.h>
+#include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_lines_2D.h>
-#include <easy3d/renderer/drawable_points.h>
-#include <easy3d/renderer/opengl.h>
+#include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/shader_program.h>
+#include <easy3d/renderer/shader_manager.h>
+#include <easy3d/renderer/transform.h>
+#include <easy3d/renderer/shape.h>
+#include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/manipulated_camera_frame.h>
+#include <easy3d/renderer/key_frame_interpolator.h>
+#include <easy3d/renderer/opengl_util.h>
+#include <easy3d/renderer/opengl_error.h>
+#include <easy3d/renderer/text_renderer.h>
+#include <easy3d/renderer/texture_manager.h>
+#include <easy3d/renderer/clipping_plane.h>
+#include <easy3d/fileio/point_cloud_io.h>
+#include <easy3d/fileio/graph_io.h>
+#include <easy3d/fileio/surface_mesh_io.h>
+#include <easy3d/fileio/poly_mesh_io.h>
+#include <easy3d/fileio/ply_reader_writer.h>
+#include <easy3d/fileio/point_cloud_io_ptx.h>
+#include <easy3d/util/dialog.h>
+#include <easy3d/util/file_system.h>
+#include <easy3d/util/logging.h>
+#include <easy3d/util/timer.h>
+#include <easy3d/util/string.h>
+#include <easy3d/util/resource.h>
+#include <easy3d/util/setting.h>
+
+
+#include <easy3d/viewer/backends/viewer.h>
+#include <easy3d/renderer/framebuffer_object.h>
 #include <easy3d/core/model.h>
-#define GLFW_INCLUDE_NONE
-#include <3rd_party/glfw/include/GLFW/glfw3.h>
 #include <stdexcept>
+
+namespace easy3d {
+
+
+    Viewer::Viewer(
+            const std::string &title /* = "Easy3D Viewer" */,
+            int samples /* = 4 */,
+            int gl_major /* = 3 */,
+            int gl_minor /* = 2 */,
+            bool full_screen /* = false */,
+            bool resizable /* = true */,
+            int depth_bits /* = 24 */,
+            int stencil_bits /* = 8 */,
+            int width /* = 960 */,
+            int height /* = 800 */
+    )
+        : window_(nullptr)
+        , should_exit_(false)
+        , dpi_scaling_(1.0)
+        , title_(title)
+        , is_animating_(false)
+        , samples_(0)
+        , full_screen_(full_screen)
+        , background_color_(setting::background_color)
+        , process_events_(true)
+        , show_easy3d_logo_(true)
+        , pressed_button_(-1)
+        , modifiers_(-1)
+        , drag_active_(false)
+        , mouse_current_x_(0)
+        , mouse_current_y_(0)
+        , mouse_pressed_x_(0)
+        , mouse_pressed_y_(0)
+        , pressed_key_(-1)
+        , show_pivot_point_(false)
+        , show_frame_rate_(false)
+        , show_camera_path_(false)
+        , model_idx_(-1)
+    {
+        // Avoid locale-related number parsing issues.
+        setlocale(LC_NUMERIC, "C");
+
+        animation_func_ = nullptr;
+
+        // Initialize logging (if it has not been initialized yet)
+        if (!logging::is_initialized())
+            logging::initialize(false, true, true, false, "default", 9);
+
+        // create and setup window
+        window_ = create_window(title, samples, gl_major, gl_minor, full_screen, resizable,
+                                depth_bits, stencil_bits, width, height);
+        try {
+        setup_callbacks(window_);
+
+        // create and set up the camera
+        camera_ = std::unique_ptr<Camera>(new Camera);
+        camera_->setScreenWidthAndHeight(width_, height_);
+        camera_->setType(Camera::PERSPECTIVE);
+        camera_->setUpVector(vec3(0, 0, 1)); // Z pointing up
+        camera_->setViewDirection(vec3(-1, 0, 0)); // X pointing out
+        camera_->showEntireScene();
+
+        easy3d::connect(&camera_->frame_modified, this, &Viewer::update);
+
+        kfi_ = std::unique_ptr<KeyFrameInterpolator>(new KeyFrameInterpolator(camera_->frame()));
+        easy3d::connect(&kfi_->interpolation_stopped, this, &Viewer::update);
+
+        snprintf(framerate_, sizeof(framerate_), "fps: ?? (?? ms/frame)");
+
+        /* Poll for events once before starting a potentially lengthy loading process.*/
+        glfwPollEvents();
+
+        manual_ =
+            "--------------------------------------------------------------\n"
+            " Easy3D Viewer Usage (Shortcuts might be overridden):         \n"
+            "--------------------------------------------------------------\n"
+            "  F1:                      Show help                          \n"
+            "  F2:                      Toggle animation (if available)    \n"
+            "  Ctrl + 'o':              Open file                          \n"
+            "  Ctrl + 's':              Save file                          \n"
+            "  Fn + Delete:             Delete current model               \n"
+            "  '<' or '>':              Switch between models              \n"
+            "  's':                     Take a snapshot                    \n"
+            "  'p':                     Switch between perspective and orthographic projections \n"
+            "  'a':                     Toggle axes visibility                           \n"
+            "  Ctrl + 'f':              Toggle frame rate display                        \n"
+            "  Left drag:               Rotate the camera                                \n"
+            "  Right drag:              Move the camera                                  \n"
+            "  'x' + Left drag:         Rotate the camera around the horizontal axis     \n"
+            "  'x' + Right drag:        Move the camera along the horizontal axis        \n"
+            "  'y' + Left drag:         Rotate the camera around the vertical axis       \n"
+            "  'y' + Right drag:        Move the camera along the vertical axis          \n"
+            "  'o' + Left drag:         Rotate the camera around the ortho-screen axis   \n"
+            "  Middle button or Wheel:  Zoom in/out                                      \n"
+            "  Ctrl + '+'/'-':          Zoom in/out                                      \n"
+            "  Left/Right Arrow:        Turn camera left/right                  \n"
+            "  Ctrl + Left/Right Arrow: Move camera left/right                  \n"
+            "  Up/Down Arrow:           Move camera forward/backward            \n"
+            "  Ctrl + Up/Down Arrow:    Move camera up/down                     \n"
+            "  Ctrl + 'c':              Copy current view status to clipboard   \n"
+            "  Ctrl + 'v':              Restore view status from clipboard      \n"
+            "  Alt + 'c':               Toggle clipping plane                   \n"
+            "  Alt + 'v':               Toggle clipping plane visibility        \n"
+            "  Alt + 'x':               Toggle cross-section                    \n"
+            "  Alt + 'k':               Add key frame to the camera path        \n"
+            "  Alt + 'd':               Delete the camera path                  \n"
+            "  Ctrl + 'k':              Play the camera path                    \n"
+            "  Ctrl + 't':              Toggle camera path visibility           \n"
+            "  'f':                     Fit screen (all models)                 \n"
+            "  'c':                     Fit screen (current model only)         \n"
+            "  'z' + Left click:        Zoom to target point on model           \n"
+            "  'z' + Right click:       Zoom to fit screen                      \n"
+            "  Shift + Left click:      Define a target point on model          \n"
+            "  Shift + Right click:     Undefine the target point (if any) on model\n"
+            "  Ctrl + Left drag:        Zoom to fit region                         \n"
+            "  '-'/'=':                 Decrease/Increase point size               \n"
+            "  '{'/'}':                 Decrease/Increase line width               \n"
+            "  'b':                     Toggle borders visibility                  \n"
+            "  'e':                     Toggle edges visibility                    \n"
+            "  'v':                     Toggle vertices visibility                 \n"
+            "  'm':                     Toggle smooth shading (for SurfaceMesh)    \n"
+            "  'd':                     Print model info (drawables, properties)   \n"
+            "-------------------------------------------------------------------";
+        } catch (...) { cleanup(); throw; }
+    }
+
+
+    GLFWwindow *Viewer::create_window(
+            const std::string &title,
+            int samples,
+            int gl_major,
+            int gl_minor,
+            bool full_screen,
+            bool resizable,
+            int depth_bits,
+            int stencil_bits,
+            int width,
+            int height) {
+        runtime_ = detail::GlfwRuntime::acquire();
+
+        // Reset the hints, allowing viewers to have different hints.
+        glfwDefaultWindowHints();
+
+        glfwWindowHint(GLFW_SAMPLES, samples);
+
+        glfwWindowHint(GLFW_STENCIL_BITS, stencil_bits);
+        glfwWindowHint(GLFW_DEPTH_BITS, depth_bits);
+
+        /* Request a forward compatible OpenGL glMajor.glMinor core profile context.
+           Default value is an OpenGL 3.2 core profile context. */
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, gl_major);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, gl_minor);
+
+#ifdef __APPLE__
+        // The only OpenGL 3.x and 4.x contexts currently supported by macOS are
+        // forward-compatible, core profile contexts.
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#else
+        if (gl_major >= 3) {
+            if (gl_minor >= 2)
+                glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);	// 3.2+ only
+            if (gl_minor >= 0)
+                glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);			// 3.0+ only
+        }
+#endif
+
+        // make the whole window transparent
+        //glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
+
+        glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
+        glfwWindowHint(GLFW_RESIZABLE, resizable ? GL_TRUE : GL_FALSE);
+
+#ifndef NDEBUG
+        const std::string title_str = title + " - Debug Version";
+#else
+        const std::string title_str = title;
+#endif
+
+        GLFWwindow *window = nullptr;
+        if (full_screen) {
+            GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+            const GLFWvidmode *mode = glfwGetVideoMode(monitor);
+            width = mode->width;
+            height = mode->height;
+            window = glfwCreateWindow(width, height, title_str.c_str(), monitor, runtime_->opengl_share_window());
+        } else {
+            window = glfwCreateWindow(width, height, title_str.c_str(), nullptr, runtime_->opengl_share_window());
+        }
+
+        if (!window) {
+            std::string error_message = "could not create an OpenGL "
+                                        + std::to_string(gl_major) + "." + std::to_string(gl_minor) + " context!";
+            LOG(ERROR) << error_message;
+            throw BackendUnavailable(error_message);
+        }
+        const auto previous_context = glfwGetCurrentContext();
+        auto close_failed_window = [previous_context](GLFWwindow* failed) {
+            glfwDestroyWindow(failed);
+            glfwMakeContextCurrent(previous_context);
+        };
+        std::unique_ptr<GLFWwindow, decltype(close_failed_window)> guard(window, close_failed_window);
+        glfwSetWindowUserPointer(window, this);
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
+        // Enable vsync
+        glfwMakeContextCurrent(window);
+        glfwSwapInterval(1);
+
+        // Load OpenGL and its extensions
+        if (!OpenglUtil::init()) {
+            LOG(ERROR) << "failed to load OpenGL and its extensions!";
+            throw BackendUnavailable("failed to load OpenGL and its extensions!");
+        }
+
+#ifndef NDEBUG
+        opengl::setup_gl_debug_callback();
+#endif
+
+        VLOG(1) << "OpenGL vendor: " << glGetString(GL_VENDOR);
+        VLOG(1) << "OpenGL renderer: " << glGetString(GL_RENDERER);
+        VLOG(1) << "OpenGL version requested: " << gl_major << "." << gl_minor;
+        VLOG(1) << "OpenGL version received: " << glGetString(GL_VERSION);
+        VLOG(1) << "GLSL version received: " << glGetString(GL_SHADING_LANGUAGE_VERSION);
+
+        glGetIntegerv(GL_SAMPLES, &samples_);
+        int max_num = 0;
+        glGetIntegerv(GL_MAX_SAMPLES, &max_num);
+
+        // warn the user if the requests were not satisfied
+        if (samples > 0 && samples_ != samples) {
+            if (samples_ == 0)
+                LOG(WARNING) << "MSAA is not available (" << samples << " samples requested)";
+            else
+                LOG(WARNING) << "MSAA is available with " << samples_ << " samples (" << samples
+                             << " requested but max support is " << max_num << ")";
+        } else
+            VLOG(1) << "samples received: " << samples_ << " (" << samples << " requested, max support is "
+                      << max_num << ")";
+
+        // the request viewer size might not be satisfied, thus we query the actual size
+        glfwGetWindowSize(window, &width_, &height_);
+        VLOG(1) << "viewer size (width/height): " << width_ << "/" << height_;
+
+        float xscale(0), yscale(0);
+        glfwGetWindowContentScale(window, &xscale, &yscale);
+        LOG_IF(xscale != yscale, ERROR) << "window content scale in X and Y directions not identical (X: " << xscale << ", Y: " << yscale << ")";
+        dpi_scaling_ = static_cast<float>(xscale + yscale) * 0.5f;
+        VLOG(1) << "DPI scaling: " << dpi_scaling();
+
+        glfwGetFramebufferSize(window, &framebuffer_width_, &framebuffer_height_);
+        runtime_->attach_opengl_window(window);
+        return guard.release();
+    }
+
+
+    template<class Callback>
+    void Viewer::dispatch_callback(GLFWwindow* window, const Callback& callback) noexcept {
+        auto* viewer = static_cast<Viewer*>(glfwGetWindowUserPointer(window));
+        if (!viewer) return;
+        try {
+            glfwMakeContextCurrent(window);
+            callback(*viewer);
+            if (viewer->callback_error_) glfwSetWindowShouldClose(window, GLFW_TRUE);
+        } catch (...) {
+            if (!viewer->callback_error_) viewer->callback_error_ = std::current_exception();
+            glfwSetWindowShouldClose(window, GLFW_TRUE);
+        }
+    }
+
+    void Viewer::setup_callbacks(GLFWwindow *window) {
+        glfwSetWindowRefreshCallback(window, [](GLFWwindow* win) {
+            dispatch_callback(win, [](Viewer& v) { v.update(); });
+        });
+        glfwSetCursorPosCallback(window, [](GLFWwindow* win, double x, double y) {
+            dispatch_callback(win, [=](Viewer& v) {
+                if (!v.process_events_) return;
+                const int wx = int(x), wy = int(y);
+                const int dx = wx - v.callback_mouse_x_, dy = wy - v.callback_mouse_y_;
+                v.callback_mouse_x_ = wx; v.callback_mouse_y_ = wy;
+                const int modifiers = detail::GlfwRuntime::modifiers(win);
+                const bool handled = v.drag_active_
+                    ? v.dispatch_mouse_drag(wx, wy, dx, dy, v.pressed_button_, modifiers)
+                    : v.dispatch_mouse_move(wx, wy, dx, dy, modifiers);
+                if (handled) { v.mouse_current_x_ = wx; v.mouse_current_y_ = wy; return; }
+                const int w = v.width(), h = v.height();
+                if (x >= 0 && x <= w && y >= 0 && y <= h) v.callback_event_cursor_pos(x, y);
+                else if (v.drag_active_) glfwSetCursorPos(win, std::max(0.0, std::min(double(w), x)),
+                                                               std::max(0.0, std::min(double(h), y)));
+            });
+        });
+        glfwSetMouseButtonCallback(window, [](GLFWwindow* win, int button, int action, int modifiers) {
+            dispatch_callback(win, [=](Viewer& v) {
+                if (!v.process_events_) return;
+                double x, y; glfwGetCursorPos(win, &x, &y);
+                v.mouse_current_x_ = v.callback_mouse_x_ = int(x);
+                v.mouse_current_y_ = v.callback_mouse_y_ = int(y);
+                v.callback_event_mouse_button(button, action, modifiers);
+            });
+        });
+        glfwSetKeyCallback(window, [](GLFWwindow* win, int key, int, int action, int mods) {
+            dispatch_callback(win, [=](Viewer& v) {
+                if (v.process_events_) v.callback_event_keyboard(key, action, mods);
+            });
+        });
+        glfwSetCharCallback(window, [](GLFWwindow* win, unsigned int codepoint) {
+            dispatch_callback(win, [=](Viewer& v) {
+                if (v.process_events_) v.callback_event_character(codepoint);
+            });
+        });
+        glfwSetDropCallback(window, [](GLFWwindow* win, int count, const char** filenames) {
+            dispatch_callback(win, [=](Viewer& v) {
+                if (v.process_events_) v.callback_event_drop(count, filenames);
+            });
+        });
+        glfwSetScrollCallback(window, [](GLFWwindow* win, double dx, double dy) {
+            dispatch_callback(win, [=](Viewer& v) {
+                if (!v.process_events_) return;
+                double x, y; glfwGetCursorPos(win, &x, &y);
+                v.mouse_current_x_ = int(x); v.mouse_current_y_ = int(y);
+                v.callback_event_scroll(dx, dy);
+            });
+        });
+        // Camera/input coordinates are logical window units in this OpenGL host.
+        glfwSetWindowSizeCallback(window, [](GLFWwindow* win, int w, int h) {
+            dispatch_callback(win, [=](Viewer& v) {
+                if (v.process_events_) v.callback_event_resize(w, h);
+            });
+        });
+        glfwSetFramebufferSizeCallback(window, [](GLFWwindow* win, int, int) {
+            dispatch_callback(win, [=](Viewer& v) {
+                if (!v.process_events_) return;
+                int w, h; glfwGetWindowSize(win, &w, &h); v.callback_event_resize(w, h);
+            });
+        });
+        glfwSetWindowFocusCallback(window, [](GLFWwindow* win, int focused) {
+            dispatch_callback(win, [=](Viewer& v) {
+                if (!focused) {
+                    v.drag_active_ = false; v.pressed_button_ = v.pressed_key_ = -1; v.modifiers_ = 0;
+                    v.scroll_remainder_x_ = v.scroll_remainder_y_ = 0;
+                    v.camera_->frame()->action_end();
+                    ClippingPlane::instance()->manipulator()->frame()->action_end();
+                }
+                if (!v.dispatch_focus(focused != 0)) v.focus_event(focused != 0);
+            });
+        });
+        glfwSetWindowCloseCallback(window, [](GLFWwindow* win) {
+            dispatch_callback(win, [](Viewer& v) { v.request_close(); });
+        });
+    }
+
+
+    bool Viewer::callback_event_cursor_pos(double x, double y) {
+        int px = static_cast<int>(x);
+        int py = static_cast<int>(y);
+        try {
+            int dx = px - mouse_current_x_;
+            int dy = py - mouse_current_y_;
+            mouse_current_x_ = px;
+            mouse_current_y_ = py;
+            if (drag_active_)
+                return mouse_drag_event(px, py, dx, dy, pressed_button_, modifiers_);
+            else
+                return mouse_free_move_event(px, py, dx, dy, modifiers_);
+        }
+        catch (const std::exception &e) {
+            if (!callback_error_) callback_error_ = std::current_exception();
+            LOG(ERROR) << "Caught exception in event handler: " << e.what();
+            return false;
+        }
+    }
+
+
+    bool Viewer::callback_event_mouse_button(int button, int action, int modifiers) {
+        try {
+            if (action == GLFW_PRESS) {
+                drag_active_ = true;
+                pressed_button_ = button;
+                modifiers_ = modifiers;
+                mouse_pressed_x_ = mouse_current_x_;
+                mouse_pressed_y_ = mouse_current_y_;
+                if (dispatch_mouse_press(mouse_current_x_, mouse_current_y_, button, modifiers)) return true;
+                return mouse_press_event(mouse_current_x_, mouse_current_y_, button, modifiers);
+            } else if (action == GLFW_RELEASE) {
+                drag_active_ = false;
+                if (dispatch_mouse_release(mouse_current_x_, mouse_current_y_, button, modifiers)) {
+                    pressed_button_ = -1; camera_->frame()->action_end();
+                    ClippingPlane::instance()->manipulator()->frame()->action_end();
+                    return true;
+                }
+                return mouse_release_event(mouse_current_x_, mouse_current_y_, button, modifiers);
+            } else {
+                drag_active_ = false;
+                LOG(INFO) << "GLFW_REPEAT? Seems never happen";
+                return false;
+            }
+        }
+        catch (const std::exception &e) {
+            if (!callback_error_) callback_error_ = std::current_exception();
+            LOG(ERROR) << "Caught exception in event handler: " << e.what();
+            return false;
+        }
+    }
+
+
+    bool Viewer::callback_event_keyboard(int key, int action, int modifiers) {
+        try {
+            if (action == GLFW_PRESS || action == GLFW_REPEAT) {
+                if (dispatch_key_press(key, modifiers)) return true;
+                return key_press_event(key, modifiers);
+            } else {
+                if (dispatch_key_release(key, modifiers)) { pressed_key_ = -1; return true; }
+                return key_release_event(key, modifiers);
+            }
+        }
+        catch (const std::exception &e) {
+            if (!callback_error_) callback_error_ = std::current_exception();
+            LOG(ERROR) << "Caught exception in event handler: " << e.what();
+            return false;
+        }
+    }
+
+
+    bool Viewer::callback_event_character(unsigned int codepoint) {
+        try {
+            if (dispatch_character(codepoint)) return true;
+            return char_input_event(codepoint);
+        }
+        catch (const std::exception &e) {
+            if (!callback_error_) callback_error_ = std::current_exception();
+            LOG(ERROR) << "Caught exception in event handler: " << e.what();
+            return false;
+        }
+    }
+
+
+    bool Viewer::callback_event_drop(int count, const char **filenames) {
+        try {
+            std::vector<std::string> arg(count);
+            for (int i = 0; i < count; ++i)
+                arg[i] = filenames[i];
+            if (dispatch_drop(arg)) return true;
+            return drop_event(arg);
+        }
+        catch (const std::exception &e) {
+            if (!callback_error_) callback_error_ = std::current_exception();
+            LOG(ERROR) << "Caught exception in event handler: " << e.what();
+            return false;
+        }
+    }
+
+
+    bool Viewer::callback_event_scroll(double dx, double dy) {
+        try {
+            scroll_remainder_x_ += dx; scroll_remainder_y_ += dy;
+            const int sx = int(scroll_remainder_x_), sy = int(scroll_remainder_y_);
+            scroll_remainder_x_ -= sx; scroll_remainder_y_ -= sy;
+            if (!sx && !sy) return false;
+            if (dispatch_mouse_scroll(mouse_current_x_, mouse_current_y_, sx, sy)) return true;
+            return mouse_scroll_event(mouse_current_x_, mouse_current_y_, sx, sy);
+        }
+        catch (const std::exception &e) {
+            if (!callback_error_) callback_error_ = std::current_exception();
+            LOG(ERROR) << "Caught exception in event handler: " << e.what();
+            return false;
+        }
+    }
+
+
+    void Viewer::callback_event_resize(int w, int h) {
+        try {
+            int fw, fh; glfwGetFramebufferSize(window_, &fw, &fh);
+            const bool changed = w != width_ || h != height_ || fw != framebuffer_width_ || fh != framebuffer_height_;
+            width_ = w; height_ = h; framebuffer_width_ = fw; framebuffer_height_ = fh;
+            if (w > 0 && h > 0 && (camera_->screenWidth() != w || camera_->screenHeight() != h))
+                camera_->setScreenWidthAndHeight(w, h);
+            glViewport(0, 0, fw, fh);
+            if (changed) post_resize(w, h);
+            notify_resize();
+        } catch (const std::exception& e) {
+            if (!callback_error_) callback_error_ = std::current_exception();
+            LOG(ERROR) << "Caught exception in event handler: " << e.what();
+        }
+    }
+
+
+    bool Viewer::focus_event(bool focused) {
+        if (focused) {
+            // ...
+        }
+        return false;
+    }
+
+
+    Viewer::~Viewer() {
+        cleanup();
+
+        LOG(INFO) << "viewer terminated. Bye!";
+    }
+
+    void Viewer::clear_scene() {
+        glfwMakeContextCurrent(window_);
+        models_.clear();
+        drawables_.clear();
+    }
+
+    void Viewer::cleanup() {
+        // viewer may have already been destroyed by the user
+        if (!window_)
+            return;
+
+        const auto previous_context = glfwGetCurrentContext();
+        glfwMakeContextCurrent(window_);
+        glfwSetWindowUserPointer(window_, nullptr);
+        if (kfi_) kfi_->stop_interpolation();
+        kfi_.reset();
+        camera_.reset();
+        drawable_axes_.reset();
+        drawable_pivot_.reset();
+        texter_.reset();
+
+        clear_scene();
+
+        if (runtime_->last_opengl_window()) {
+            ShaderManager::terminate();
+            TextureManager::terminate_opengl();
+        }
+
+        const auto closing = window_;
+        runtime_->detach_opengl_window(window_);
+        glfwDestroyWindow(window_);
+        window_ = nullptr;
+        if (previous_context && previous_context != closing)
+            glfwMakeContextCurrent(previous_context);
+        runtime_.reset();
+    }
+
+
+    void Viewer::set_title(const std::string &title) {
+        if (title != title_) {
+            glfwSetWindowTitle(window_, title.c_str());
+            title_ = title;
+        }
+    }
+
+
+    void Viewer::set_position(int xpos, int ypos) {
+        glfwSetWindowPos(window_, xpos, ypos);
+    }
+
+
+    void Viewer::resize(int w, int h) {
+#ifndef __APPLE__
+        w = static_cast<int>(w * dpi_scaling());
+        h = static_cast<int>(h * dpi_scaling());
+#endif
+        glfwSetWindowSize(window_, w, h);
+    }
+
+
+	int Viewer::framebuffer_width() const {
+		int w, h;
+		glfwGetFramebufferSize(window_, &w, &h);
+		return w;
+	}
+
+
+	int Viewer::framebuffer_height() const {
+		int w, h;
+		glfwGetFramebufferSize(window_, &w, &h);
+		return h;
+	}
+
+
+	void Viewer::framebuffer_size(int& w, int& h) const {
+		glfwGetFramebufferSize(window_, &w, &h);
+	}
+
+
+    void Viewer::update() const {
+        glfwPostEmptyEvent();
+    }
+
+
+    bool Viewer::mouse_press_event(int x, int y, int button, int modifiers) {
+        camera_->frame()->action_start();
+
+        if (pressed_key_ == GLFW_KEY_Z || modifiers == GLFW_MOD_SHIFT) {
+            if (button == GLFW_MOUSE_BUTTON_LEFT) {
+                bool found = false;
+                const vec3 &p = point_under_pixel(x, y, found);
+                if (found) {
+                    camera_->setPivotPoint(p);
+                    // We draw the pivot mark in the screen space.
+                    // A 3D version is implemented in Tutorial_204_Viewer_Qt
+                    if (!drawable_pivot_)
+                        drawable_pivot_ = std::unique_ptr<LinesDrawable2D>(new LinesDrawable2D("pivot"));
+                    const float size = static_cast<float>(10 * dpi_scaling());
+                    const std::vector<vec2> points = { vec2(x - size, y), vec2(x + size, y),
+                                                       vec2(x, y - size), vec2(x, y + size) };
+                    drawable_pivot_->update_vertex_buffer(points, width(), height(), true);
+
+                    // show, but hide the visual hint of pivot point after \p delay milliseconds.
+                    show_pivot_point_ = true;
+                    Timer<>::single_shot(10000, [&]() {
+                        show_pivot_point_ = false;
+                        update();
+                    });
+
+                    if (pressed_key_ == GLFW_KEY_Z &&  modifiers == 0) {
+#if 1   // with animation
+                        camera()->interpolateToLookAt(p);
+#else   // without animation
+                        const float coef = 0.1f;
+                        const vec3& pos = coef * camera()->frame()->position() + (1.0f - coef)*p;
+                        const quat& ori = camera()->frame()->orientation();
+                        camera_->frame()->setPositionAndOrientation(pos, ori);
+                        camera_->lookAt(p);
+#endif
+                    }
+                } else {
+                    camera_->setPivotPoint(camera_->sceneCenter());
+                    show_pivot_point_ = false;
+                }
+            } else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+                camera_->setPivotPoint(camera_->sceneCenter());
+                show_pivot_point_ = false;
+                if (pressed_key_ == GLFW_KEY_Z &&  modifiers == 0) {
+#if 1   // with animation
+                    camera()->interpolateToFitScene();
+#else   // without animation
+                    camera()->showEntireScene();
+#endif
+                }
+            }
+        }
+
+        return false;
+    }
+
+
+    bool Viewer::mouse_release_event(int x, int y, int button, int modifiers) {
+        if (button == GLFW_MOUSE_BUTTON_LEFT && modifiers == MODIF_CTRL) { // ZOOM_ON_REGION
+            int xmin = std::min(mouse_pressed_x_, x);
+            int xmax = std::max(mouse_pressed_x_, x);
+            int ymin = std::min(mouse_pressed_y_, y);
+            int ymax = std::max(mouse_pressed_y_, y);
+            camera_->fitScreenRegion(xmin, ymin, xmax, ymax);
+        } else
+            camera_->frame()->action_end();
+
+        pressed_button_ = -1;
+        return false;
+    }
+
+
+    bool Viewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
+        // control modifier is reserved for zooming on region
+        if (modifiers == MODIF_CTRL)
+            return false;
+
+        if (modifiers == MODIF_ALT) {
+            // the clipping plane can be manipulated only when it is enabled
+            if (ClippingPlane::instance()->is_enabled()) {
+                ManipulatedFrame *frame = ClippingPlane::instance()->manipulator()->frame();
+                if (pressed_button_ == BUTTON_LEFT)
+                    frame->action_rotate(x, y, dx, dy, camera(), ManipulatedFrame::NONE);
+                else if (pressed_button_ == BUTTON_RIGHT)
+                    frame->action_translate(x, y, dx, dy, camera(), ManipulatedFrame::NONE);
+            }
+        }
+        else { // axis-constrained rotation of a model
+            auto axis = ManipulatedFrame::NONE;
+            if (pressed_key_ == GLFW_KEY_X) axis = ManipulatedFrame::HORIZONTAL;
+            else if (pressed_key_ == GLFW_KEY_Y) axis = ManipulatedFrame::VERTICAL;
+            else if (pressed_key_ == GLFW_KEY_O) axis = ManipulatedFrame::ORTHOGONAL;
+            switch (button) {
+                case GLFW_MOUSE_BUTTON_LEFT:
+                    camera_->frame()->action_rotate(x, y, dx, dy, camera(), axis);
+                    break;
+                case GLFW_MOUSE_BUTTON_RIGHT:
+                    camera_->frame()->action_translate(x, y, dx, dy, camera(), axis);
+                    break;
+                case GLFW_MOUSE_BUTTON_MIDDLE:
+                    if (std::abs(dy) >= 1)
+                        camera_->frame()->action_zoom(dy > 0 ? 1 : -1, camera());
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        return false;
+    }
+
+
+    bool Viewer::mouse_free_move_event(int x, int y, int dx, int dy, int modifiers) {
+        (void) x;
+        (void) y;
+        (void) dx;
+        (void) dy;
+        (void) modifiers;
+        // highlight geometry primitives here
+        return false;
+    }
+
+
+    bool Viewer::mouse_scroll_event(int x, int y, int dx, int dy) {
+        (void) x;
+        (void) y;
+        (void) dx;
+        camera_->frame()->action_zoom(dy, camera());
+        return false;
+    }
+
+
+    Model* Viewer::current_model() const {
+        if (models_.empty())
+            return nullptr;
+        if (model_idx_ < models_.size())
+            return models_[model_idx_].get();
+        return nullptr;
+    }
+
+    bool Viewer::key_press_event(int key, int modifiers) {
+        auto mod_funcs = commands_.find(Key(key));
+        if (mod_funcs != commands_.end()) {
+            auto func_model = mod_funcs->second.find(Modifier(modifiers));
+            if (func_model != mod_funcs->second.end()) {
+                auto func = func_model->second.first;
+                auto model = func_model->second.second;
+                return func(this, model);
+            }
+        }
+
+        if (key == GLFW_KEY_F1 && modifiers == 0)
+            std::cout << manual_ << std::endl;
+        else if (key == GLFW_KEY_F2 && modifiers == 0) {
+            is_animating_ = !is_animating_;
+            if (is_animating_ && !animation_func_)
+                LOG(WARNING) << "animation is enabled but the animation function (i.e., animation_func_) is missing";
+        } else if (key == GLFW_KEY_LEFT && modifiers == 0) {
+            auto angle = static_cast<float>(1 * M_PI / 180.0); // turn left, 1 degrees each step
+            camera_->frame()->action_turn(angle, camera());
+        } else if (key == GLFW_KEY_RIGHT && modifiers == 0) {
+            auto angle = static_cast<float>(1 * M_PI / 180.0); // turn right, 1 degrees each step
+            camera_->frame()->action_turn(-angle, camera());
+        } else if (key == GLFW_KEY_UP && modifiers == 0) {    // move camera forward
+            float step = 0.05f * camera_->sceneRadius();
+            camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, 0.0, -step)));
+        } else if (key == GLFW_KEY_DOWN && modifiers == 0) {// move camera backward
+            float step = 0.05f * camera_->sceneRadius();
+            camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, 0.0, step)));
+        } else if (key == GLFW_KEY_LEFT && modifiers == MODIF_CTRL) {    // move camera left
+            float step = 0.05f * camera_->sceneRadius();
+            camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(-step, 0.0, 0.0)));
+        } else if (key == GLFW_KEY_RIGHT && modifiers == MODIF_CTRL) {    // move camera right
+            float step = 0.05f * camera_->sceneRadius();
+            camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(step, 0.0, 0.0)));
+        } else if (key == GLFW_KEY_UP && modifiers == MODIF_CTRL) {    // move camera up
+            float step = 0.05f * camera_->sceneRadius();
+            camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, step, 0.0)));
+        } else if (key == GLFW_KEY_DOWN && modifiers == MODIF_CTRL) {    // move camera down
+            float step = 0.05f * camera_->sceneRadius();
+            camera_->frame()->translate(camera_->frame()->inverseTransformOf(vec3(0.0, -step, 0.0)));
+        } else if (key == GLFW_KEY_C && modifiers == MODIF_CTRL) {    // copy camera
+            copy_view();
+        } else if (key == GLFW_KEY_V && modifiers == MODIF_CTRL) {    // copy camera
+            paste_view();
+        } else if (key == GLFW_KEY_C && modifiers == MODIF_ALT) {     // toggle clipping plane
+            ClippingPlane::instance()->set_enabled(!ClippingPlane::instance()->is_enabled());
+            ClippingPlane::instance()->fit_scene(camera()->sceneCenter(), camera()->sceneRadius());
+        } else if (key == GLFW_KEY_V && modifiers == MODIF_ALT) {     // toggle clipping plane visibility
+            if (ClippingPlane::instance()->is_enabled())
+                ClippingPlane::instance()->set_visible(!ClippingPlane::instance()->is_visible());
+        } else if (key == GLFW_KEY_X && modifiers == MODIF_ALT) {
+            if (ClippingPlane::instance()->is_enabled())
+                ClippingPlane::instance()->set_cross_section(!ClippingPlane::instance()->cross_section());
+        }
+        else if (key == GLFW_KEY_A && modifiers == 0) {
+            if (drawable_axes_)
+                drawable_axes_->set_visible(!drawable_axes_->is_visible());
+        }
+        else if (key == GLFW_KEY_F && modifiers == MODIF_CTRL)
+            show_frame_rate_ = !show_frame_rate_;
+        else if (key == GLFW_KEY_C && modifiers == 0) {
+            if (current_model())
+                fit_screen(current_model());
+        } else if (key == GLFW_KEY_F && modifiers == 0) {
+            fit_screen();
+        } else if (key == GLFW_KEY_M && modifiers == 0) {
+#if 0
+            // NOTE: switching on/off MSAA in this way will affect all viewers because OpenGL
+            //       is a state machine. For multi-window applications, you have to call
+            //		 glDisable()/glEnable() before the individual draw functions.
+            if (samples_ > 0) {
+                if (glIsEnabled(GL_MULTISAMPLE)) {
+                    glDisable(GL_MULTISAMPLE);
+                    LOG(INFO) << title_ + ": MSAA disabled";
+                }
+                else {
+                    glEnable(GL_MULTISAMPLE);
+                    LOG(INFO) << title_ + ": MSAA enabled";
+                }
+            }
+#else
+            if (dynamic_cast<SurfaceMesh *>(current_model())) {
+                auto drawables = current_model()->renderer()->triangles_drawables();
+                for (auto d : drawables)
+                    d->set_smooth_shading(!d->smooth_shading());
+            }
+#endif
+        } else if (key == GLFW_KEY_P && modifiers == 0) {
+            if (camera_->type() == Camera::PERSPECTIVE)
+                camera_->setType(Camera::ORTHOGRAPHIC);
+            else
+                camera_->setType(Camera::PERSPECTIVE);
+        } else if (key == GLFW_KEY_SPACE && modifiers == 0) {
+            // Aligns camera
+            Frame frame;
+            frame.setTranslation(camera_->pivotPoint());
+            camera_->frame()->alignWithFrame(&frame, true);
+
+            // Aligns frame
+            //if (manipulatedFrame())
+            //	manipulatedFrame()->alignWithFrame(camera_->frame());
+        } else if (key == GLFW_KEY_O && modifiers == MODIF_CTRL)
+            open();
+        else if (key == GLFW_KEY_S && modifiers == MODIF_CTRL)
+            save();
+
+        else if (key == GLFW_KEY_MINUS && modifiers == MODIF_CTRL)
+            camera_->frame()->action_zoom(-1, camera());
+        else if (key == GLFW_KEY_EQUAL && modifiers == MODIF_CTRL)
+            camera_->frame()->action_zoom(1, camera());
+
+        else if (key == GLFW_KEY_K && modifiers == GLFW_MOD_ALT) { // add key frame
+            easy3d::Frame *frame = camera()->frame();
+            kfi_->add_keyframe(*frame);
+            LOG(INFO) << "key frame added to camera path";
+        } else if (key == GLFW_KEY_D && modifiers == GLFW_MOD_ALT) { // delete path
+            kfi_->delete_path();
+            // update scene bounding box
+            Box3 box;
+            for (auto m : models_)
+                box.grow(m->bounding_box());
+            camera_->setSceneBoundingBox(box.min_point(), box.max_point());
+            LOG(INFO) << "camera path deleted";
+        } else if (key == GLFW_KEY_K && modifiers == MODIF_CTRL) { // play the path
+            if (kfi_->is_interpolation_started())
+                kfi_->stop_interpolation();
+            else
+                kfi_->start_interpolation();
+        } else if (key == GLFW_KEY_T && modifiers == MODIF_CTRL) {
+            show_camera_path_ = !show_camera_path_;
+            if (show_camera_path_) {
+                const std::size_t count = kfi_->number_of_keyframes();
+                float radius = camera_->sceneRadius();
+                for (std::size_t i=0; i<count; ++i) {
+                    radius = std::max( radius,
+                            distance(camera_->sceneCenter(), kfi_->keyframe(i).position())
+                    );
+                }
+                camera_->setSceneRadius(radius);
+            }
+            else {
+                Box3 box;
+                for (auto m : models_)
+                    box.grow(m->bounding_box());
+                camera_->setSceneBoundingBox(box.min_point(), box.max_point());
+            }
+        } else if (key == GLFW_KEY_LEFT_BRACKET && modifiers == 0) {
+            for (auto m : models_) {
+                for (auto d : m->renderer()->lines_drawables()) {
+                    float size = d->line_width() - 1.0f;
+                    if (size < 1)
+                        size = 1;
+                    d->set_line_width(size);
+                }
+            }
+        }
+        else if (key == GLFW_KEY_RIGHT_BRACKET && modifiers == 0) {
+            for (auto m : models_) {
+                for (auto d : m->renderer()->lines_drawables()) {
+                    float size = d->line_width() + 1.0f;
+                    d->set_line_width(size);
+                }
+            }
+        } else if (key == GLFW_KEY_MINUS && modifiers == 0) {
+            for (auto m : models_) {
+                for (auto d : m->renderer()->points_drawables()) {
+                    float size = d->point_size() - 1.0f;
+                    if (size < 1)
+                        size = 1;
+                    d->set_point_size(size);
+                }
+            }
+        } else if (key == GLFW_KEY_EQUAL && modifiers == 0) {
+            for (auto m : models_) {
+                for (auto d : m->renderer()->points_drawables()) {
+                    float size = d->point_size() + 1.0f;
+                    d->set_point_size(size);
+                }
+            }
+        } else if (key == GLFW_KEY_COMMA && modifiers == 0) {
+            if (models_.empty())
+                model_idx_ = -1;
+            else
+                model_idx_ = int((model_idx_ - 1 + models_.size()) % models_.size());
+            if (model_idx_ >= 0) {
+                fit_screen(models_[model_idx_].get());
+                std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
+            }
+        } else if (key == GLFW_KEY_PERIOD && modifiers == 0) {
+            if (models_.empty())
+                model_idx_ = -1;
+            else
+                model_idx_ = int((model_idx_ + 1) % models_.size());
+            if (model_idx_ >= 0) {
+                fit_screen(models_[model_idx_].get());
+                std::cout << "current model: " << model_idx_ << ", " << models_[model_idx_]->name() << std::endl;
+            }
+        } else if (key == GLFW_KEY_DELETE && modifiers == 0) {
+            if (current_model())
+                delete_model(current_model());
+        } else if (key == GLFW_KEY_E && modifiers == 0) {
+            if (current_model()) {
+                auto drawable = current_model()->renderer()->get_lines_drawable("edges");
+                if (drawable)
+					drawable->set_visible(!drawable->is_visible());
+            }
+        } else if (key == GLFW_KEY_V && modifiers == 0) {
+            if (current_model()) {
+                auto drawable = current_model()->renderer()->get_points_drawable("vertices");
+                if (drawable)
+					drawable->set_visible(!drawable->is_visible());
+            }
+        } else if (key == GLFW_KEY_B && modifiers == 0) {
+            auto mesh = dynamic_cast<SurfaceMesh *>(current_model());
+            if (mesh) {
+                auto drawable = mesh->renderer()->get_lines_drawable("borders");
+                if (drawable)
+                    drawable->set_visible(!drawable->is_visible());
+            }
+        } else if (key == GLFW_KEY_L && modifiers == 0) { // locked vertices
+            auto mesh = dynamic_cast<SurfaceMesh *>(current_model());
+            if (mesh) {
+                auto drawable = mesh->renderer()->get_points_drawable("locks");
+                if (drawable)
+                    drawable->set_visible(!drawable->is_visible());
+            }
+        } else if (key == GLFW_KEY_D && modifiers == 0) {
+            if (current_model()) {
+                auto &output = std::cout;
+
+                output << "----------- " << file_system::simple_name(current_model()->name()) << " -----------\n";
+                if (dynamic_cast<SurfaceMesh *>(current_model())) {
+                    auto model = dynamic_cast<SurfaceMesh *>(current_model());
+                    output << "model is a surface mesh. #face: " << std::to_string(model->n_faces())
+                           << ", #vertex: " + std::to_string(model->n_vertices())
+                           << ", #edge: " + std::to_string(model->n_edges()) << std::endl;
+                } else if (dynamic_cast<PointCloud *>(current_model())) {
+                    auto model = dynamic_cast<PointCloud *>(current_model());
+                    output << "model is a point cloud. #vertex: " + std::to_string(model->n_vertices()) << std::endl;
+                } else if (dynamic_cast<Graph *>(current_model())) {
+                    auto model = dynamic_cast<Graph *>(current_model());
+                    output << "model is a graph. #vertex: " + std::to_string(model->n_vertices())
+                           << ", #edge: " + std::to_string(model->n_edges()) << std::endl;
+                }
+
+                if (!current_model()->renderer()->points_drawables().empty()) {
+                    output << "points drawables:\n";
+                    for (auto d : current_model()->renderer()->points_drawables())
+                        d->buffer_stats(output);
+                }
+                if (!current_model()->renderer()->lines_drawables().empty()) {
+                    output << "lines drawables:\n";
+                    for (auto d : current_model()->renderer()->lines_drawables())
+                        d->buffer_stats(output);
+                }
+                if (!current_model()->renderer()->triangles_drawables().empty()) {
+                    output << "triangles drawables:\n";
+                    for (auto d : current_model()->renderer()->triangles_drawables())
+                        d->buffer_stats(output);
+                }
+
+                current_model()->property_stats(output);
+            }
+        } else if (key == GLFW_KEY_R && modifiers == 0) {
+            // Reload the shader(s) - useful for writing/debugging shader code.
+            ShaderManager::reload();
+        } else if (key == GLFW_KEY_S && modifiers == 0) {
+            snapshot();
+        } else if (key == GLFW_KEY_F4 && modifiers == GLFW_MOD_ALT) {
+            glfwSetWindowShouldClose(window_, true);
+        }
+        else
+            pressed_key_ = key;
+
+        return false;
+    }
+
+
+    bool Viewer::key_release_event(int key, int modifiers) {
+        (void) key;
+        (void) modifiers;
+        pressed_key_ = -1;
+        return false;
+    }
+
+
+    bool Viewer::char_input_event(unsigned int codepoint) {
+        (void) codepoint;
+        //switch (codepoint) {
+        //case '-':	break;
+        //case 'c':	break;
+        //case 'C':	break;
+        //case '0':	break;
+        //default:
+        //	return false;
+        //}
+
+        return false;
+    }
+
+
+    bool Viewer::drop_event(const std::vector<std::string> &filenames) {
+        int count = 0;
+        for (auto &name : filenames) {
+            if (add_model(name))
+                ++count;
+        }
+
+        if (count > 0) {
+            model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
+            fit_screen();
+            return true;
+        }
+        return false;
+    }
+
+
+    vec3 Viewer::point_under_pixel(int x, int y, bool &found) const {
+        glfwMakeContextCurrent(window_);
+        // GLFW (same as Qt) uses upper corner for its origin while GL uses the lower corner.
+        int glx = x;
+        int gly = height() - 1 - y;
+
+        // NOTE: when dealing with OpenGL, we always work in the highdpi screen space
+#if defined(__APPLE__)
+        glx = static_cast<int>(static_cast<float>(glx) * dpi_scaling());
+        gly = static_cast<int>(static_cast<float>(gly) * dpi_scaling());
+#endif
+        float depth = std::numeric_limits<float>::max();
+        glPixelStorei(GL_PACK_ALIGNMENT, 1);
+        easy3d_debug_log_gl_error
+        glReadPixels(glx, gly, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+        easy3d_debug_log_gl_error
+        found = depth < 1.0f;
+        if (found) {
+            vec3 point(static_cast<float>(x), static_cast<float>(y), depth);
+            // The input to unprojectedCoordinatesOf() is defined in the screen coordinate system
+            point = camera_->unprojectedCoordinatesOf(point);
+            return point;
+        } else
+            return vec3(0);
+    }
+
+
+    void Viewer::set_usage(const std::string& manual, const std::string& screen_hint)
+    {
+        if (manual != "default")
+            manual_ = manual;
+        hint_ = screen_hint;
+        usage_printed_ = false;
+    }
+
+
+    void Viewer::poll_events() { ViewerBase::poll_events(); }
+    void Viewer::request_close() { glfwSetWindowShouldClose(window_, GLFW_TRUE); update(); }
+    bool Viewer::should_close() const { return should_exit_ || glfwWindowShouldClose(window_) != 0; }
+    void Viewer::show() { glfwShowWindow(window_); }
+    void Viewer::hide() { glfwHideWindow(window_); }
+
+    void Viewer::print_usage() {
+        if (usage_printed_) return;
+        usage_printed_ = true;
+        if (!manual_.empty()) std::cout << manual_ << std::endl;
+    }
+
+    void Viewer::update_frame_rate() {
+        if (!show_frame_rate_) return;
+        const double now = glfwGetTime();
+        if (!frame_rate_start_) frame_rate_start_ = now;
+        ++frame_rate_frames_;
+        const double elapsed = now - frame_rate_start_;
+        if (elapsed >= 1.0) {
+            snprintf(framerate_, sizeof(framerate_), "fps: %2.0f (%4.1f ms/frame)",
+                     double(frame_rate_frames_) / elapsed, 1000.0 * elapsed / frame_rate_frames_);
+            frame_rate_frames_ = 0;
+            frame_rate_start_ = now;
+        }
+    }
+
+    bool Viewer::draw_frame() {
+        if (callback_error_) std::rethrow_exception(callback_error_);
+        if (should_close() || glfwGetWindowAttrib(window_, GLFW_ICONIFIED)) return false;
+        int w = 0, h = 0;
+        framebuffer_size(w, h);
+        if (w <= 0 || h <= 0) return false;
+        glfwMakeContextCurrent(window_);
+        if (!initialized_) { init(); initialized_ = true; }
+        print_usage();
+        if (is_animating()) {
+            animation_func_(this);
+            if (callback_error_) std::rethrow_exception(callback_error_);
+            if (should_close()) return false;
+        }
+        notify_pre_draw();
+        if (callback_error_) std::rethrow_exception(callback_error_);
+        if (should_close()) return false;
+        pre_draw();
+        draw();
+        update_frame_rate();
+        post_draw();
+        glfwSwapBuffers(window_);
+        notify_post_draw();
+        if (callback_error_) std::rethrow_exception(callback_error_);
+        return true;
+    }
+
+    int Viewer::run(bool see_all) {
+        try {
+            if (callback_error_) std::rethrow_exception(callback_error_);
+            if (!initialized_) { init(); initialized_ = true; }
+            if (see_all) fit_screen();
+            show();
+            return run_frames();
+        } catch (const std::exception& e) {
+            LOG(ERROR) << "Viewer failed: " << e.what();
+            return EXIT_FAILURE;
+        }
+    }
+
+    int Viewer::run_frames(unsigned max_frames) {
+        try {
+            if (callback_error_) std::rethrow_exception(callback_error_);
+            return detail::run_viewer_frames(*this, max_frames, [this] {
+                return is_animating() || show_frame_rate_ || kfi_->is_interpolation_started();
+            });
+        } catch (const std::exception& e) {
+            LOG(ERROR) << "Viewer failed: " << e.what();
+            return EXIT_FAILURE;
+        }
+    }
+
+    void Viewer::exit() { request_close(); }
+
+
+    void Viewer::init() {
+        glfwMakeContextCurrent(window_);
+        //// back face culling?
+        //glEnable(GL_CULL_FACE);
+        //glCullFace(GL_BACK); // culls only the back faces
+
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
+
+        glClearDepth(1.0f);
+        glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
+
+        // camera is manipulated by the mouse, working in the screen coordinate system
+        // (different from the viewport or framebuffer size, which are in pixel coordinates)
+        if (camera_->screenWidth() != width_ || camera_->screenHeight() != height_)
+            camera_->setScreenWidthAndHeight(width_, height_);
+        int fw, fh;
+        glfwGetFramebufferSize(window_, &fw, &fh);
+        glViewport(0, 0, fw, fh);
+
+        // create TextRenderer renderer and load default fonts
+        texter_ = std::unique_ptr<TextRenderer>(new TextRenderer(dpi_scaling()));
+        texter_->add_font(resource::directory() + "/fonts/en_Earth-Normal.ttf");
+        texter_->add_font(resource::directory() + "/fonts/en_Roboto-Medium.ttf");
+
+        initialized_ = true;
+        print_usage();
+    }
+
+
+    void Viewer::set_animation(bool b) {
+        is_animating_ = b;
+        update();
+    }
+
+
+    bool Viewer::is_animating() const {
+        return is_animating_ && animation_func_;
+    }
+
+
+    Model* Viewer::add_model(const std::string &file_path, bool create_default_drawables) {
+        glfwMakeContextCurrent(window_);
+        const std::string file_name = file_system::convert_to_native_style(file_path);
+        for (auto m : models_) {
+            if (m->name() == file_name) {
+                LOG(WARNING) << "model has already been added to the viewer: " << file_name;
+                return m.get();
+            }
+        }
+
+        const std::string &ext = file_system::extension(file_name, true);
+        bool is_ply_mesh = false;
+        if (ext == "ply")
+            is_ply_mesh = (io::PlyReader::num_instances(file_name, "face") > 0);
+
+        Model* model = nullptr;
+        if ((ext == "ply" && is_ply_mesh) || ext == "obj" || ext == "off" || ext == "stl" || ext == "sm" || ext == "geojson" || ext == "trilist") { // mesh
+            model = SurfaceMeshIO::load(file_name);
+        }
+        else if (ext == "ply" && io::PlyReader::num_instances(file_name, "edge") > 0) {
+            model = GraphIO::load(file_name);
+        }
+        else if (ext == "plm" || ext == "pm" || ext == "mesh") {
+            model = PolyMeshIO::load(file_name);
+        }
+        else { // point cloud
+            if (ext == "ptx") {
+                io::PointCloudIO_ptx serializer(file_name);
+                PointCloud* cloud = nullptr;
+                while ((cloud = serializer.load_next())) {
+                    model = add_model(std::shared_ptr<PointCloud>(cloud), create_default_drawables);
+                    update();
+                }
+                return model;   // returns the last cloud in the file.
+            } else
+                model = PointCloudIO::load(file_name);
+        }
+
+        if (model) {
+            model->set_name(file_name);
+            add_model(std::shared_ptr<Model>(model), create_default_drawables);
+        }
+        return model;
+    }
+
+
+    Model* Viewer::add_model(std::shared_ptr<Model> model, bool create) {
+        glfwMakeContextCurrent(window_);
+        if (!model) {
+            LOG(WARNING) << "model is nullptr";
+            return nullptr;
+        }
+        for (auto m : models_) {
+            if (model == m) {
+                LOG(WARNING) << "model has already been added to the viewer: " << m->name();
+                return nullptr;
+            }
+        }
+
+        model->set_renderer(std::make_shared<Renderer>(model.get(), create));
+
+        int pre_idx = model_idx_;
+        models_.push_back(model);
+        model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
+
+        if (model_idx_ != pre_idx) {
+            if (model_idx_ >= 0)
+                LOG(INFO) << "current model: " << model_idx_ << ", " << models_[model_idx_]->name();
+        }
+        return model.get();
+    }
+
+
+    Model* Viewer::add_model(Model* model, bool create_default_drawables) {
+        return add_model(std::shared_ptr<Model>(model), create_default_drawables);
+    }
+
+
+    bool Viewer::delete_model(Model *model) {
+        glfwMakeContextCurrent(window_);
+        if (!model) {
+            LOG(WARNING) << "model is nullptr";
+            return false;
+        }
+
+        for (auto it = models_.begin(); it != models_.end(); ++it) {
+            if (it->get() == model) {
+                int pre_idx = model_idx_;
+                const std::string name = model->name();
+                models_.erase(it);
+                model_idx_ = static_cast<int>(models_.size()) - 1; // make the last one current
+                LOG(INFO) << "model deleted: " << name;
+
+                if (model_idx_ != pre_idx) {
+                    if (model_idx_ >= 0)
+                        LOG(INFO) << "current model: " << model_idx_ << ", " << models_[model_idx_]->name();
+                }
+                return true;
+            }
+        }
+
+        // if the model was not found
+        LOG(WARNING) << "no such model: " << model->name();
+        return false;
+    }
+
+
+    Drawable* Viewer::add_drawable(std::shared_ptr<Drawable> drawable) {
+        if (!drawable) {
+            LOG(WARNING) << "drawable is nullptr.";
+            return nullptr;
+        }
+        for (auto d : drawables_) {
+            if (drawable == d) {
+                LOG(WARNING) << "drawable has already been added to the viewer.";
+                return drawable.get();
+            }
+        }
+
+        drawables_.push_back(drawable);
+        return drawable.get();
+    }
+
+
+    Drawable* Viewer::add_drawable(Drawable* drawable) {
+        return add_drawable(std::shared_ptr<Drawable>(drawable));
+    }
+
+
+    bool Viewer::delete_drawable(Drawable *drawable) {
+        glfwMakeContextCurrent(window_);
+        if (!drawable) {
+            LOG(WARNING) << "drawable is nullptr";
+            return false;
+        }
+
+        for (auto it = drawables_.begin(); it != drawables_.end(); ++it) {
+            if (it->get() == drawable) {
+                drawables_.erase(it);
+                return true;
+            }
+        }
+
+        // if the drawable was not found
+        LOG(WARNING) << "no such drawable: " << drawable->name();
+        return false;
+    }
+
+
+    void Viewer::fit_screen(const easy3d::Model *model) {
+        if (!model && models_.empty() && drawables_.empty()) {
+            camera_->showEntireScene();
+            return;
+        }
+
+        auto visual_box = [](const Model* m) -> Box3 {
+            Box3 box = m->bounding_box();
+            for (auto d : m->renderer()->points_drawables()) box.grow(d->bounding_box());
+            for (auto d : m->renderer()->lines_drawables()) box.grow(d->bounding_box());
+            for (auto d : m->renderer()->triangles_drawables()) box.grow(d->bounding_box());
+            return box;
+        };
+
+        Box3 box;
+        if (model)
+            box = visual_box(model);
+        else {
+            for (auto m : models_)
+                box.grow(visual_box(m.get()));
+            for (auto d : drawables_)
+                box.grow(d->bounding_box());
+        }
+
+        if (box.is_valid()) {
+            camera_->setSceneBoundingBox(box.min_point(), box.max_point());
+            camera_->showEntireScene();
+            ClippingPlane::instance()->fit_scene(camera()->sceneCenter(), camera()->sceneRadius());
+            update();
+        }
+    }
+
+
+    bool Viewer::open() {
+        const std::string title("Please choose a file");
+        const std::string &default_path = resource::directory() + "/data/";
+        const std::vector<std::string> &filters = {
+                "Surface Mesh (*.obj *.ply *.off *.stl *.sm *.geojson *.trilist)", "*.obj *.ply *.off *.stl *.sm *.geojson *.trilist",
+                "Point Cloud (*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg *.ptx)", "*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg *.ptx",
+                "Polyhedral Mesh (*.plm *.pm *.mesh)", "*.plm *.pm *.mesh",
+                "Graph (*.ply)", "*.ply",
+                "All Files (*.*)", "*"
+        };
+        const std::vector<std::string> &file_names = dialog::open(title, default_path, filters, true);
+
+        int count = 0;
+        for (const auto &file_name : file_names) {
+            if (add_model(file_name))
+                ++count;
+        }
+
+        if (count > 0) {
+            fit_screen();
+            return true;
+        }
+        return false;
+    }
+
+
+    bool Viewer::save() const {
+        Model* m = current_model();
+        if (!m) {
+            LOG(ERROR) << "no model exists";
+            return false;
+        }
+
+        const std::string &title = "Please choose a file name";
+        const std::vector<std::string> &filters = {
+                "Surface Mesh (*.obj *.ply *.off *.stl *.sm)", "*.obj *.ply *.off *.stl *.sm",
+                "Point Cloud (*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg)",
+                "*.bin *.ply *.xyz *.bxyz *.las *.laz *.vg *.bvg",
+                "Polyhedral Mesh (*.plm *.pm *.mesh)", "*.plm *.pm *.mesh",
+                "Graph (*.ply)", "*.ply",
+                "All Files (*.*)", "*"
+        };
+
+        std::string default_file_name = m->name();
+        if (file_system::extension(default_file_name).empty()) // no extension?
+            default_file_name += ".ply"; // default to ply
+
+        const bool warn_overwrite = true;
+        const std::string &file_name = dialog::save(title, default_file_name, filters, warn_overwrite);
+        if (file_name.empty())
+            return false;
+
+        bool saved = false;
+        if (dynamic_cast<const PointCloud *>(m))
+            saved = PointCloudIO::save(file_name, dynamic_cast<const PointCloud *>(m));
+        else if (dynamic_cast<const SurfaceMesh *>(m))
+            saved = SurfaceMeshIO::save(file_name, dynamic_cast<const SurfaceMesh *>(m));
+        else if (dynamic_cast<const Graph *>(m))
+            saved = GraphIO::save(file_name, dynamic_cast<const Graph *>(m));
+
+        if (saved)
+            LOG(INFO) << "file successfully saved";
+
+        return saved;
+    }
+
+
+    bool Viewer::snapshot() const {
+        const std::string &title = "Please choose a file name";
+        std::string default_file_name("untitled.png");
+        if (current_model())
+            default_file_name = file_system::replace_extension(current_model()->name(), "png");
+        const std::vector<std::string> &filters = {
+                "Image Files (*.png *.jpg *.bmp *.tga)", "*.png *.jpg *.bmp *.tga",
+                "All Files (*.*)", "*"
+        };
+
+        const bool warn_overwrite = true;
+        const std::string &file_name = dialog::save(title, default_file_name, filters, warn_overwrite);
+        if (file_name.empty())
+            return false;
+
+        const std::string &ext = file_system::extension(file_name, true);
+        if (ext != "png" && ext != "jpg" && ext != "bmp" && ext != "tga") {
+            LOG(ERROR) << "snapshot format must be png, jpg, bmp, or tga";
+            return false;
+        }
+
+        return snapshot(file_name, 1.0f, samples_);
+    }
+
+
+    void Viewer::draw_corner_axes() const {
+        ShaderProgram *program = ShaderManager::get_program("surface/surface");
+        if (!program) {
+            std::vector<ShaderProgram::Attribute> attributes = {
+                    ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"),
+                    ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "vtx_texcoord"),
+                    ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"),
+                    ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal")
+            };
+            program = ShaderManager::create_program_from_files("surface/surface", attributes);
+        }
+        if (!program)
+            return;
+
+        if (!drawable_axes_) {
+            float base = 0.5f;   // the cylinder length, relative to the allowed region
+            float head = 0.2f;   // the cone length, relative to the allowed region
+            std::vector<vec3> points, normals, colors;
+            shape::create_cylinder(0.03, 10, vec3(0, 0, 0), vec3(base, 0, 0), vec3(1, 0, 0), points, normals, colors);
+            shape::create_cylinder(0.03, 10, vec3(0, 0, 0), vec3(0, base, 0), vec3(0, 1, 0), points, normals, colors);
+            shape::create_cylinder(0.03, 10, vec3(0, 0, 0), vec3(0, 0, base), vec3(0, 0, 1), points, normals, colors);
+            shape::create_cone(0.06, 20, vec3(base, 0, 0), vec3(base + head, 0, 0), vec3(1, 0, 0), points, normals,
+                                 colors);
+            shape::create_cone(0.06, 20, vec3(0, base, 0), vec3(0, base + head, 0), vec3(0, 1, 0), points, normals,
+                                 colors);
+            shape::create_cone(0.06, 20, vec3(0, 0, base), vec3(0, 0, base + head), vec3(0, 0, 1), points, normals,
+                                 colors);
+            shape::create_sphere(vec3(0, 0, 0), 0.06, 20, 20, vec3(0, 1, 1), points, normals, colors);
+            const_cast<Viewer*>(this)->drawable_axes_ = std::unique_ptr<TrianglesDrawable>(new TrianglesDrawable("corner_axes"));
+            drawable_axes_->update_vertex_buffer(points);
+            drawable_axes_->update_normal_buffer(normals);
+            drawable_axes_->update_color_buffer(colors);
+            drawable_axes_->set_property_coloring(State::VERTEX);
+        }
+        if (!drawable_axes_->is_visible())
+            return;
+
+        // The viewport is changed to fit the lower left corner.
+        int viewport[4];
+        glGetIntegerv(GL_VIEWPORT, viewport);
+
+        static int corner_frame_size = static_cast<int>(100 * dpi_scaling());
+        glViewport(0, 0, corner_frame_size, corner_frame_size);
+
+        // To make the axis appear over other objects: reserve a tiny bit of the
+        // front depth range. NOTE: do remember to restore it later.
+        glDepthRange(0, 0.01f);
+
+        const mat4 &proj = transform::ortho(-1, 1, -1, 1, -1, 1);
+        const mat4 &view = camera_->orientation().inverse().matrix();
+        const mat4 &MVP = proj * view;
+
+        // camera position is defined in world coordinate system.
+        const vec3 &wCamPos = camera_->position();
+        // it can also be computed as follows:
+        //const vec3& wCamPos = invMV * vec4(0, 0, 0, 1);
+        const mat4 &MV = camera_->modelViewMatrix();
+        const vec4 &wLightPos = inverse(MV) * setting::light_position;
+
+        program->bind();
+        program->set_uniform("MVP", MVP)
+                ->set_uniform("MANIP", mat4::identity())
+                ->set_uniform("NORMAL", mat3::identity())   // needs be padded when using uniform blocks
+                ->set_uniform("lighting", true)
+                ->set_uniform("two_sides_lighting", false)
+                ->set_uniform("smooth_shading", true)
+                ->set_uniform("wLightPos", wLightPos)
+                ->set_uniform("wCamPos", wCamPos)
+                ->set_uniform("ssaoEnabled", false)
+                ->set_uniform("per_vertex_color", true)
+                ->set_uniform("distinct_back_color", false)
+                ->set_block_uniform("Material", "ambient", setting::material_ambient)
+                ->set_block_uniform("Material", "specular", setting::material_specular)
+                ->set_block_uniform("Material", "shininess", &setting::material_shininess)
+                ->set_uniform("highlight", false)
+                ->set_uniform("clippingPlaneEnabled", false)
+                ->set_uniform("selected", false)
+                ->set_uniform("highlight_color", setting::highlight_color)
+                ->set_uniform("use_texture", false);
+        drawable_axes_->gl_draw();
+        program->release();
+
+        // restore the viewport
+        glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+        glDepthRange(0.0f, 1.0f);
+    }
+
+
+    void Viewer::pre_draw() {
+        glfwMakeContextCurrent(window_);
+        glClearColor(background_color_[0], background_color_[1], background_color_[2], 1.0f);
+        glClearDepth(1.0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    }
+
+
+    void Viewer::post_draw() {
+        if (texter_ && texter_->num_fonts() >=2) {
+            const float font_size = 15.0f;
+            float x = 20.0f * dpi_scaling();
+            float y = 0.0f;
+            // draw the Easy3D logo and GPU time
+            if (show_easy3d_logo_) {
+                y += font_size * 1.5f * dpi_scaling();
+                texter_->draw("Easy3D", x, y, font_size, 0);
+            }
+
+            // draw the framerate
+            if (show_frame_rate_) {
+                y += font_size * 1.5f * dpi_scaling();
+                texter_->draw(framerate_, x, y, font_size, 1);
+            }
+
+            if (!hint_.empty()) {
+                x += font_size * dpi_scaling();
+                y += font_size * 1.5f * dpi_scaling();
+                texter_->draw(hint_, x, y, font_size, TextRenderer::ALIGN_LEFT, 1, vec3(0, 0, 1));
+            }
+        }
+
+        // shown only when it is not animating
+        if (show_camera_path_ && !kfi_->is_interpolation_started()) {
+            kfi_->draw_path(camera(), 2.0f);
+            kfi_->draw_cameras(camera(), camera()->sceneRadius() * 0.05f);
+        }
+
+        if (show_pivot_point_)
+            drawable_pivot_->draw(camera());
+
+        // ------------- draw the picking region with transparency  ---------------
+
+        if (pressed_button_ == GLFW_MOUSE_BUTTON_LEFT && modifiers_ == MODIF_CTRL) {
+            const Rect rect(
+                static_cast<float>(mouse_pressed_x_),
+                static_cast<float>(mouse_current_x_),
+                static_cast<float>(mouse_pressed_y_),
+                static_cast<float>(mouse_current_y_)
+            );
+            if (rect.width() > 0 || rect.height() > 0) {
+                // draw the boundary of the rect
+                shape::draw_quad_wire(rect, vec4(0.0f, 0.0f, 1.0f, 1.0f), width(), height(), -1.0f);
+                // draw the transparent face
+                glEnable(GL_BLEND);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                shape::draw_quad_filled(rect, vec4(0.0f, 0.0f, 1.0f, 0.2f), width(), height(), -0.9f);
+                glDisable(GL_BLEND);
+            }
+        }
+
+        // ------- draw the axes indicating the orientation of the model  ----------
+
+        draw_corner_axes();
+    }
+
+
+    void Viewer::draw_face_labels(Model *model, TextRenderer *texter, int font_id, const vec3 &color) const {
+        auto mesh = dynamic_cast<SurfaceMesh *>(model);
+        const auto &points = mesh->points();
+        for (auto f : mesh->faces()) {
+            int count = 0;
+            vec3 c(0, 0, 0);
+            for (auto v : mesh->vertices(f)) {
+                c += points[v.idx()];
+                ++count;
+            }
+            c /= count;
+
+            const vec3 p = camera()->projectedCoordinatesOf(c);
+            const float x = p.x * dpi_scaling_;
+            const float y = (static_cast<float>(height()) - 1.0f - p.y) * dpi_scaling_;
+
+            float depth = 1.0f;
+            glPixelStorei(GL_PACK_ALIGNMENT, 1);
+            easy3d_debug_log_gl_error
+            glReadPixels(static_cast<int>(x), static_cast<int>(y), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+            easy3d_debug_log_gl_error
+            if (depth < 1.0 && p.z < 1.0 && std::abs(depth - p.z) < 0.001)
+                texter->draw(std::to_string(f.idx()), x, p.y * dpi_scaling_, 16, font_id, color);
+        }
+    }
+
+
+    void Viewer::draw_vertex_labels(Model *model, TextRenderer *texter, int font_id, const vec3 &color) const {
+        auto mesh = dynamic_cast<SurfaceMesh *>(model);
+        const auto &points = mesh->points();
+        for (std::size_t id = 0; id < points.size(); ++id) {
+            const vec3& v = points[id];
+            const vec3 p = camera()->projectedCoordinatesOf(v);
+            const float x = p.x * dpi_scaling_;
+            const float y = (static_cast<float>(height()) - 1.0f - p.y) * dpi_scaling_;
+
+            float depth = 1.0f;
+            glPixelStorei(GL_PACK_ALIGNMENT, 1);
+            easy3d_debug_log_gl_error
+            glReadPixels(static_cast<int>(x), static_cast<int>(y), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+            easy3d_debug_log_gl_error
+            if (depth < 1.0 && p.z < 1.0 && std::abs(depth - p.z) < 0.001)
+                texter->draw(std::to_string(id), x, p.y * dpi_scaling_, 16, font_id, color);
+        }
+    }
+
+
+    void Viewer::copy_view() {
+        const vec3 pos = camera()->position();
+        const quat q = camera()->orientation();
+
+        std::stringstream stream;
+        stream << pos[0] << ' '
+                << pos[1] << ' '
+                << pos[2] << ' '
+                << q[0] << ' '
+                << q[1] << ' '
+                << q[2] << ' '
+                << q[3];
+        glfwSetClipboardString(window_, stream.str().c_str());
+    }
+
+
+    void Viewer::paste_view() {
+        // get the camera parameters from clipboard string
+        const std::string str = glfwGetClipboardString(window_);
+        std::vector<std::string> list;
+        string::split(str, ' ', list, true);
+        if (list.size() != 7) {
+            LOG(WARNING) << "camera not available in clipboard";
+            return;
+        }
+
+        vec3 pos;
+        for (int i = 0; i < 3; ++i)
+            pos[i] = std::stof(list[i]);
+        quat orient;
+        for (int i = 0; i < 4; ++i)
+            orient[i] = std::stof(list[i + 3]);
+
+        //////////////////////////////////////////////////////////////////////////
+        // change view directly
+        // 	camera()->setPosition(pos);
+        // 	camera()->setOrientation(orient);
+        // I prefer to make animation
+        Frame new_frame;
+        new_frame.setPosition(pos);
+        new_frame.setOrientation(orient);
+        const float duration = 0.5f;
+        camera()->interpolateTo(&new_frame, duration);
+
+        update();
+    }
+
+
+    void Viewer::draw() const {
+#if 0
+        // Example code: split the view to have different rendering styles for the same object/scene.
+        glEnable(GL_SCISSOR_TEST);
+        int viewport[4];
+        glGetIntegerv(GL_VIEWPORT, viewport);
+        glScissor(viewport[0], viewport[1], viewport[2] * 0.5f, viewport[3]);
+        for (const auto m : models_) {
+            for (auto d : m->renderer()->triangles_drawables())
+                d->draw(camera());
+        }
+        glScissor(viewport[2] * 0.5f, viewport[1], viewport[2] * 0.5f, viewport[3]);
+        for (const auto m : models_) {
+            for (auto d : m->renderer()->lines_drawables())
+                d->draw(camera());
+        }
+        glScissor(viewport[0], viewport[1], viewport[2], viewport[3]);
+
+#else
+
+        for (const auto m : models_) {
+            if (!m->renderer()->is_visible())
+                continue;
+
+            // Let's check if edges and surfaces are both shown. If true, we
+            // make the depth coordinates of the surface smaller, so that displaying
+            // the mesh and the surface together does not cause Z-fighting.
+            std::size_t count = 0;
+            for (auto d : m->renderer()->lines_drawables()) {
+                if (d->is_visible()) {
+                    d->draw(camera());
+                    easy3d_debug_log_gl_error
+                    ++count;
+                }
+            }
+
+            for (auto d : m->renderer()->points_drawables()) {
+                if (d->is_visible())
+                    d->draw(camera());
+                easy3d_debug_log_gl_error
+            }
+
+            if (count > 0) {
+                glEnable(GL_POLYGON_OFFSET_FILL);
+                glPolygonOffset(0.5f, -0.0001f);
+            }
+            for (auto d : m->renderer()->triangles_drawables()) {
+                if (d->is_visible())
+                    d->draw(camera());
+                easy3d_debug_log_gl_error
+            }
+            if (count > 0)
+                glDisable(GL_POLYGON_OFFSET_FILL);
+        }
+
+        for (auto d : drawables_) {
+            if (d->is_visible())
+                d->draw(camera());
+        }
+
+#if 0 // draw face labels and vertex labels
+        if (dynamic_cast<SurfaceMesh *>(current_model()) && texter_ && texter_->num_fonts() > 1) {
+            draw_face_labels(current_model(), texter_, 1, vec3(0, 0, 1));
+            draw_vertex_labels(current_model(), texter_, 1, vec3(0, 1, 0));
+        }
+#endif
+#endif
+
+        // draw the clipping plane (not in postDraw so it can be effective when taking snapshots)
+        ClippingPlane::instance()->draw(camera()); easy3d_debug_log_gl_error
+    }
+
+}
+
 namespace easy3d {
 namespace detail {
 std::unique_ptr<ViewerBase> create_opengl_viewer(const std::string &title, const ViewerOptions &o) {
