@@ -24,7 +24,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include <easy3d/viewer/viewer.h>
+#include "../viewer_backend.h"
+#include "../native_viewer_options.h"
+#include <easy3d/core/point_cloud.h>
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/renderer.h>
@@ -41,7 +43,7 @@
 using namespace easy3d;
 
 
-bool extract_plane(Viewer* viewer, Model* model) {
+bool extract_plane(TutorialViewer* viewer, Model* model) {
     if (!viewer || !model)
         return false;
 
@@ -76,6 +78,7 @@ bool extract_plane(Viewer* viewer, Model* model) {
 }
 
 
+#ifndef EASY3D_TUTORIAL_TEST
 int main(int argc, char **argv) {
     // initialize Easy3D.
     initialize();
@@ -83,7 +86,13 @@ int main(int argc, char **argv) {
     const std::string file = resource::directory() + "/data/polyhedron.bin";
 
     // create the viewer.
-    Viewer viewer(EXAMPLE_TITLE);
+#ifdef EASY3D_NO_OPENGL
+    NativeTutorialOptions options;
+    if (!options.parse(argc, argv)) return EXIT_FAILURE;
+    TutorialViewer viewer(EXAMPLE_TITLE, options.viewer);
+#else
+    TutorialViewer viewer(EXAMPLE_TITLE);
+#endif
 
     Model *model = viewer.add_model(file, true);
     if (!model) {
@@ -97,11 +106,15 @@ int main(int argc, char **argv) {
     drawable->set_point_size(3.0f);
 
     // set up the function to be executed and its corresponding shortcut
-    viewer.bind(extract_plane, model, Viewer::KEY_E, Viewer::MODIF_CTRL);
+    viewer.bind(extract_plane, model, TutorialViewer::KEY_E, TutorialViewer::MODIF_CTRL);
     // usage
-    viewer.set_usage("","Ctrl + e: extract planes");
+    viewer.set_usage("default","Ctrl + e: extract planes");
 
     // run the viewer
+#ifdef EASY3D_NO_OPENGL
+    return options.run(viewer);
+#else
     return viewer.run();
+#endif
 }
-
+#endif // EASY3D_TUTORIAL_TEST

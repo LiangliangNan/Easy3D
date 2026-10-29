@@ -139,7 +139,7 @@ Completion gates include:
   resize/hide/show, independent windows/devices, orbit/pan/zoom, projection toggle,
   file drop and depth-based world-point picking. The installed demo uses an
   embedded bunny by default and needs no source-tree model/shader files.
-- Existing Tutorials 201, 206/207, 301–312, 401–406, 506 and 601–603 build with the native Vulkan host in
+- Existing Tutorials 201, 206/207, 301–312, 401–406, 506, 601–603 and 701–703 build with the native Vulkan host in
   Vulkan-only window builds. Tutorial 302 uses the same sphere/surfel/cylinder/cone scene code
   as its OpenGL build, with bounded native execution for automated tests. Legacy
   OpenGL draw callbacks require explicit native implementations. Tutorial 304 exercises the native
@@ -2367,3 +2367,46 @@ synchronization validation. Native, combined and OpenGL-only viewer builds
 succeed. The Tutorial 603 snapshot was visually inspected with its wider curves
 and screen hint; no new validation errors were reported. The Vulkan-only renderer
 still has no GL/GLEW imports. Existing local migration changes were retained.
+
+
+## Native point-cloud algorithm Tutorials 701–703
+
+Tutorials 701 (normal estimation/reorientation), 702 (Poisson surface
+reconstruction) and 703 (RANSAC plane extraction) now use the shared
+`TutorialViewer` selector in their original `main.cpp` files. Their algorithms,
+rendering setup and bound shortcuts are shared between OpenGL and Vulkan.
+Vulkan-only builds include the three native executables and bounded CTests;
+`--frames`, `--samples` and `--validation` use the existing native options helper.
+The default F1 manual is retained alongside each tutorial's original screen hint.
+
+Normal estimation/reorientation uploads the changed normal buffer through the
+existing drawable API. Tutorial 701 explicitly fits after setting its front-view
+camera direction, keeping the cloud visible in bounded native runs as well as
+OpenGL's normal run loop. Reorientation retains its existing optional Boost Graph
+requirement; the other algorithms do not acquire a new dependency.
+
+Plane extraction keeps the original RANSAC parameters and segmentation property
+coloring, refreshing the point drawable when labels/colors change. Reconstruction
+keeps Poisson depth 6 and replaces its input cloud with the generated surface.
+The original algorithm callbacks and the rendering setup, shortcut bindings and
+screen hints remain in their original places; no extra tutorial helper functions
+are introduced. The only callback changes select the shared viewer type.
+
+`vulkan.cloudtutorials` and `opengl.cloudtutorials` compile and invoke the original
+algorithm callbacks directly, without extracting tutorial setup functions for the
+test harness. They estimate/reorient normals, render estimated-normal surfels,
+extract dense cube planes and check visible property-color changes, and
+reconstruct an oriented sphere. Native checks additionally verify normal-buffer
+refresh without changed positions, point provenance, unchanged depth/IDs after
+segmentation, reconstructed mesh face picking and zero validation errors.
+Optional reorientation is checked according to the algorithm library's Boost
+build configuration. The bounded native tutorial tests exercise the original
+`main()` entry points, including their rendering setup and usage hints.
+
+Verified the minimal tutorial layout on this Mac: the focused OpenGL and Vulkan
+algorithm regressions pass, including MoltenVK with Vulkan/synchronization
+validation. Native and combined targets build successfully, and all three
+OpenGL tutorial entry points compile and link as C++11 against OpenGL-only
+libraries. The native algorithm regression and bounded Tutorial 701–703 launches
+also pass. No new validation errors were reported; the existing MoltenVK
+integer-attachment warning remains.

@@ -24,7 +24,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include <easy3d/viewer/viewer.h>
+#include "../viewer_backend.h"
+#include "../native_viewer_options.h"
+#include <easy3d/core/point_cloud.h>
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/renderer.h>
@@ -44,7 +46,7 @@
 using namespace easy3d;
 
 
-bool estimate(Viewer* viewer, Model* model) {
+bool estimate(TutorialViewer* viewer, Model* model) {
     if (!viewer || !model)
         return false;
 
@@ -61,7 +63,7 @@ bool estimate(Viewer* viewer, Model* model) {
         return false;
 }
 
-bool reorient(Viewer* viewer, Model* model) {
+bool reorient(TutorialViewer* viewer, Model* model) {
     if (!viewer || !model)
         return false;
 
@@ -83,6 +85,7 @@ bool reorient(Viewer* viewer, Model* model) {
         return false;
 }
 
+#ifndef EASY3D_TUTORIAL_TEST
 int main(int argc, char **argv) {
     // initialize Easy3D.
     initialize();
@@ -90,7 +93,13 @@ int main(int argc, char **argv) {
     const std::string file = resource::directory() + "/data/bunny.bin";
 
     // create the viewer.
-    Viewer viewer(EXAMPLE_TITLE);
+#ifdef EASY3D_NO_OPENGL
+    NativeTutorialOptions options;
+    if (!options.parse(argc, argv)) return EXIT_FAILURE;
+    TutorialViewer viewer(EXAMPLE_TITLE, options.viewer);
+#else
+    TutorialViewer viewer(EXAMPLE_TITLE);
+#endif
 
     auto model = viewer.add_model(file, true);
     if (!model) {
@@ -108,14 +117,19 @@ int main(int argc, char **argv) {
     drawable->set_distinct_back_color(true);
 
     // set up the functions to be executed and their corresponding shortcuts
-    viewer.bind(estimate, model, Viewer::KEY_E, Viewer::MODIF_CTRL);
-    viewer.bind(reorient, model, Viewer::KEY_R, Viewer::MODIF_CTRL);
+    viewer.bind(estimate, model, TutorialViewer::KEY_E, TutorialViewer::MODIF_CTRL);
+    viewer.bind(reorient, model, TutorialViewer::KEY_R, TutorialViewer::MODIF_CTRL);
     // usage
-    viewer.set_usage("",
+    viewer.set_usage("default",
         "Ctrl + e: estimate normals\n"
         "Ctrl + r: reorient normals");
 
     // run the viewer
+#ifdef EASY3D_NO_OPENGL
+    viewer.fit_screen(); // Native bounded runs preserve the explicitly configured camera.
+    return options.run(viewer);
+#else
     return viewer.run();
+#endif
 }
-
+#endif // EASY3D_TUTORIAL_TEST
