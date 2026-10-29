@@ -237,6 +237,10 @@ void VulkanViewer::resize(int w, int h) {
     glfwSetWindowSize(window_->handle, w, h);
 }
 void VulkanViewer::framebuffer_size(int& w, int& h) const { glfwGetFramebufferSize(window_->handle, &w, &h); }
+float VulkanViewer::dpi_scaling() const {
+    int w=0,h=0;glfwGetWindowSize(window(),&w,&h);
+    return w>0 ? float(width())/w : 1.0f;
+}
 void VulkanViewer::set_title(const std::string& text) { window_->title = text; glfwSetWindowTitle(window_->handle, text.c_str()); }
 const std::string& VulkanViewer::title() const { return window_->title; }
 void VulkanViewer::update() const { glfwPostEmptyEvent(); }
@@ -328,8 +332,7 @@ void VulkanViewer::draw_corner_axes() const {
         }
         corner_axes_geometry_=std::make_shared<graphics::Geometry>(std::move(vertices));
     }
-    int logical_width=0,logical_height=0;glfwGetWindowSize(window(),&logical_width,&logical_height);
-    const float dpi=logical_width>0 ? float(width())/logical_width : 1;
+    const float dpi=dpi_scaling();
     const float sx=100*dpi/width(),sy=100*dpi/height();
     const mat4 view=camera()->orientation().inverse().matrix();
     const mat4 viewport=mat4::translation(vec3(-1+sx,-1+sy,0))*mat4::scale(sx,sy,1,1);
@@ -341,8 +344,7 @@ void VulkanViewer::draw_corner_axes() const {
 void VulkanViewer::update_interaction_overlays(bool force) const {
     draw_corner_axes();
     const bool pivot = show_pivot_point_ && std::chrono::steady_clock::now()<pivot_expires_;
-    int ww=0,wh=0; glfwGetWindowSize(window(),&ww,&wh);
-    const float dpi = ww>0 ? float(width())/ww : 1.0f;
+    const float dpi=dpi_scaling();
     const bool viewport_changed=hint_dpi_!=dpi || width()!=hint_width_ || height()!=hint_height_;
     const bool hint_changed=viewport_changed || rendered_hint_!=hint_ || rendered_show_frame_rate_!=show_frame_rate_;
     const std::string frame_rate_text=show_frame_rate_?framerate_:std::string();

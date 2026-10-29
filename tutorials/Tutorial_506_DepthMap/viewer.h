@@ -27,7 +27,7 @@
 #ifndef EASY3D_TUTORIAL_DEPTH_MAP_H
 #define EASY3D_TUTORIAL_DEPTH_MAP_H
 
-#include <easy3d/viewer/viewer.h>
+#include "../viewer_backend.h"
 
 
 // This DepthMap class visualizes 3D models as depth images.
@@ -37,20 +37,33 @@ namespace easy3d {
 }
 
 
-class TutorialDepthMap : public easy3d::Viewer
+class TutorialDepthMap : public easy3d::TutorialViewer
 {
 public:
+#if EASY3D_TUTORIAL_USES_VULKAN
+    explicit TutorialDepthMap(const std::string& title = "", const easy3d::VulkanViewerOptions& options = {});
+#else
     explicit TutorialDepthMap(const std::string& title = "");
+#endif
     ~TutorialDepthMap() override;
 
 protected:
+#if EASY3D_TUTORIAL_USES_VULKAN
+    void pre_draw() override;
+#else
     void draw() const override;
-
     void generate_depth();
+#endif
     void draw_depth() const;
 
 private:
-    easy3d::FramebufferObject*	fbo_;
+#if EASY3D_TUTORIAL_USES_VULKAN
+    mutable int depth_width_ = 0, depth_height_ = 0;
+    mutable float depth_dpi_ = 0;
+    mutable std::vector<easy3d::graphics::DrawCommand> depth_commands_;
+#else
+    easy3d::FramebufferObject* fbo_;
+#endif
 };
 
 

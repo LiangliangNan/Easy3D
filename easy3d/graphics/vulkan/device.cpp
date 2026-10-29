@@ -27,6 +27,7 @@ namespace easy3d { namespace graphics { namespace {
 #include "wide_lines_frag.inc"
 #include "overlay_vert.inc"
 #include "overlay_frag.inc"
+#include "depth_texture_frag.inc"
 #include "point_selection_comp.inc"
 
 void check(VkResult result, const char* operation) {
@@ -492,13 +493,16 @@ struct RenderPass {
     VkPipeline overlay_pipeline = VK_NULL_HANDLE;
     VkPipeline depth_overlay_pipeline = VK_NULL_HANDLE;
     VkPipeline hud_3d_pipeline = VK_NULL_HANDLE;
+    VkPipeline depth_texture_pipeline = VK_NULL_HANDLE;
     bool independent_depth = false;
+    bool depth_preview = false;
     RenderPass(Context& context, PassKind mode, VkSampleCountFlagBits count) : c(context), kind(mode), samples(count) {}
     ~RenderPass() {
         for (auto p : pipelines) if (p) vkDestroyPipeline(c.device, p, nullptr);
         if (overlay_pipeline) vkDestroyPipeline(c.device, overlay_pipeline, nullptr);
         if (depth_overlay_pipeline) vkDestroyPipeline(c.device, depth_overlay_pipeline, nullptr);
         if (hud_3d_pipeline) vkDestroyPipeline(c.device, hud_3d_pipeline, nullptr);
+        if (depth_texture_pipeline) vkDestroyPipeline(c.device, depth_texture_pipeline, nullptr);
         if (handle) vkDestroyRenderPass(c.device, handle, nullptr);
     }
     void init() {
@@ -559,8 +563,13 @@ struct RenderPass {
         overlay.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
         overlay.colorAttachmentCount = 1; overlay.pColorAttachments = &overlay_color;
         if (msaa) overlay.pResolveAttachments = resolves;
-        else { overlay.preserveAttachmentCount = 2; overlay.pPreserveAttachments = preserve; }
-        VkSubpassDependency dependencies[9] = {};
+        else {
+            overlay.preserveAttachmentCount = depth_preview ? 1 : 2; overlay.pPreserveAttachments = preserve;
+            // Read-only attachment + sampled image is supported without a
+            // feedback-loop extension: this subpass never writes scene depth.
+            if (depth_preview) overlay.pDepthStencilAttachment = &read_depth;
+        }
+        VkSubpassDependency dependencies[12] = {};
         const auto color_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
         const auto depth_stages = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
         dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL; dependencies[0].dstSubpass = 0;
@@ -604,11 +613,27 @@ struct RenderPass {
             dependencies[8].srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
             dependencies[8].dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
         }
+        unsigned dependency_count = ids_only ? 2 : independent_depth ? 9 : 6;
+        if (depth_preview) {
+            for (unsigned source=0;source<2;++source) {
+                auto& d=dependencies[dependency_count++];d.srcSubpass=source;d.dstSubpass=flat_subpass;
+                d.srcStageMask=depth_stages;d.dstStageMask=VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT|depth_stages;
+                d.srcAccessMask=VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+                d.dstAccessMask=VK_ACCESS_SHADER_READ_BIT|VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT|VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+                // Attachment stores still count as depth writes even with a
+                // read-only layout and depth-write-disabled overlay pipelines.
+                // Arbitrary UVs sample outside the destination pixel's region.
+            }
+            auto& d=dependencies[dependency_count++];d.srcSubpass=flat_subpass;d.dstSubpass=VK_SUBPASS_EXTERNAL;
+            d.srcStageMask=VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT|depth_stages;d.dstStageMask=VK_PIPELINE_STAGE_TRANSFER_BIT;
+            d.srcAccessMask=VK_ACCESS_SHADER_READ_BIT|VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT|VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+            d.dstAccessMask=VK_ACCESS_TRANSFER_READ_BIT;
+        }
         VkRenderPassCreateInfo pi{};
         pi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
         pi.attachmentCount = count; pi.pAttachments = attachments;
         pi.subpassCount = ids_only ? 1 : independent_depth ? 4 : 3; pi.pSubpasses = subpasses;
-        pi.dependencyCount = ids_only ? 2 : independent_depth ? 9 : 6; pi.pDependencies = dependencies;
+        pi.dependencyCount = dependency_count; pi.pDependencies = dependencies;
         check(vkCreateRenderPass(c.device, &pi, nullptr, &handle), "create scene render pass");
     }
 };
@@ -620,11 +645,14 @@ struct Target {
     RenderPass* id_pass;
     GpuImage color, ids, depth, multisample_color, multisample_depth, hud_depth;
     VkFramebuffer framebuffer = VK_NULL_HANDLE, id_framebuffer = VK_NULL_HANDLE;
+    VkDescriptorPool depth_pool = VK_NULL_HANDLE;
+    VkDescriptorSet depth_set = VK_NULL_HANDLE;
     Buffer readback;
     Target(Context& context, uint32_t w, uint32_t h, RenderPass& pass, RenderPass* picking)
         : c(context), width(w), height(h), samples(unsigned(pass.samples)), color_pass(pass), id_pass(picking),
           color(c), ids(c), depth(c), multisample_color(c), multisample_depth(c), hud_depth(c), readback(c) {}
     ~Target() {
+        if (depth_set) vkFreeDescriptorSets(c.device,depth_pool,1,&depth_set);
         if (framebuffer) vkDestroyFramebuffer(c.device, framebuffer, nullptr);
         if (id_framebuffer) vkDestroyFramebuffer(c.device, id_framebuffer, nullptr);
     }
@@ -641,7 +669,8 @@ struct Target {
         ids.init(width, height, VK_FORMAT_R32G32_UINT,
                  VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
         depth.init(width, height, VK_FORMAT_D32_SFLOAT,
-                   VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_IMAGE_ASPECT_DEPTH_BIT);
+                   VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+                       (color_pass.depth_preview ? VK_IMAGE_USAGE_SAMPLED_BIT : 0), VK_IMAGE_ASPECT_DEPTH_BIT);
         if (color_pass.independent_depth)
             hud_depth.init(width,height,VK_FORMAT_D32_SFLOAT,VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
                            VK_IMAGE_ASPECT_DEPTH_BIT,color_pass.samples);
@@ -927,13 +956,14 @@ public:
         if (!(sample_counts_ & samples))
             throw std::invalid_argument("sample count " + std::to_string(samples) + " is unsupported by this device");
     }
-    RenderPass& color_pass(unsigned samples, bool independent_depth = false) {
-        const unsigned key = samples | (independent_depth ? 128u : 0u);
+    RenderPass& color_pass(unsigned samples, bool independent_depth = false, bool depth_preview = false) {
+        const unsigned key = samples | (independent_depth ? 128u : 0u) | (depth_preview ? 256u : 0u);
         auto found = passes_.find(key);
         if (found != passes_.end()) return *found->second;
         std::unique_ptr<RenderPass> pass(new RenderPass(c_, samples == 1 ? PassKind::color_ids : PassKind::multisample_color,
                                                       static_cast<VkSampleCountFlagBits>(samples)));
         pass->independent_depth = independent_depth;
+        pass->depth_preview = depth_preview;
         pass->init(); create_pipelines(*pass);
         auto* result = pass.get(); passes_.emplace(key, std::move(pass)); return *result;
     }
@@ -956,12 +986,12 @@ public:
         binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
         binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
         check(vkCreateDescriptorSetLayout(c_.device, &li, nullptr, &impostor_descriptors_), "create impostor descriptor layout");
-        VkDescriptorPoolSize sizes[] = {{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1024},
+        VkDescriptorPoolSize sizes[] = {{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1025},
                                         {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1}};
         VkDescriptorPoolCreateInfo pi{};
         pi.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         pi.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-        pi.maxSets = 1025; pi.poolSizeCount = 2; pi.pPoolSizes = sizes;
+        pi.maxSets = 1026; pi.poolSizeCount = 2; pi.pPoolSizes = sizes;
         check(vkCreateDescriptorPool(c_.device, &pi, nullptr, &descriptor_pool_), "create descriptor pool");
         VkDescriptorSetAllocateInfo ai{};
         ai.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -987,7 +1017,7 @@ public:
         check(vkCreatePipelineLayout(c_.device, &li, nullptr, &layout_), "create pipeline layout");
     }
     void create_pipelines(RenderPass& pass) {
-        VkShaderModule modules[10] = {};
+        VkShaderModule modules[11] = {};
         try {
             VkShaderModuleCreateInfo mi{};
             mi.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -1011,6 +1041,10 @@ public:
             check(vkCreateShaderModule(c_.device, &mi, nullptr, &modules[8]), "create overlay vertex shader");
             mi.codeSize = sizeof(overlay_frag); mi.pCode = overlay_frag;
             check(vkCreateShaderModule(c_.device, &mi, nullptr, &modules[9]), "create overlay fragment shader");
+            if (pass.depth_preview) {
+                mi.codeSize = sizeof(depth_texture_frag); mi.pCode = depth_texture_frag;
+                check(vkCreateShaderModule(c_.device,&mi,nullptr,&modules[10]), "create depth texture fragment shader");
+            }
             VkPipelineShaderStageCreateInfo stages[2] = {};
             for (unsigned i = 0; i < 2; ++i) {
                 stages[i].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -1152,6 +1186,10 @@ public:
                 pi.subpass = pass.independent_depth ? 3 : 2;
                 depth.depthTestEnable = depth.depthWriteEnable = VK_FALSE;
                 check(vkCreateGraphicsPipelines(c_.device,VK_NULL_HANDLE,1,&pi,nullptr,&pass.overlay_pipeline), "create overlay pipeline");
+                if (pass.depth_preview) {
+                    stages[1].module = modules[10];
+                    check(vkCreateGraphicsPipelines(c_.device,VK_NULL_HANDLE,1,&pi,nullptr,&pass.depth_texture_pipeline), "create depth texture overlay pipeline");
+                }
             }
         } catch (...) {
             for (auto m : modules) if (m) vkDestroyShaderModule(c_.device, m, nullptr);
@@ -1281,6 +1319,9 @@ public:
                 throw std::invalid_argument("overlay depth testing requires an overlay command");
             if (command.overlay_independent_depth && (!command.overlay || command.overlay_depth_test))
                 throw std::invalid_argument("independent HUD depth requires an overlay without scene depth testing");
+            if (command.scene_depth_texture && (!command.overlay || command.overlay_depth_test ||
+                command.overlay_independent_depth || command.texture))
+                throw std::invalid_argument("scene depth sampling requires a flat overlay without an image texture");
             if (command.overlay && command.geometry->topology() != Topology::triangles)
                 throw std::invalid_argument("overlay draws require triangle geometry");
             if (command.point_style != PointStyle::plain && command.point_style != PointStyle::sphere &&
@@ -1350,12 +1391,30 @@ public:
         }
         const bool independent_depth = std::any_of(commands.begin(),commands.end(),
             [](const DrawCommand& d) {return d.overlay_independent_depth;});
+        const bool depth_preview = std::any_of(commands.begin(),commands.end(),
+            [](const DrawCommand& d) {return d.scene_depth_texture;});
         if (!target_ || target_->width != width || target_->height != height || target_->samples != samples ||
-            target_->color_pass.independent_depth != independent_depth) {
-            auto& pass = color_pass(samples,independent_depth);
+            target_->color_pass.independent_depth != independent_depth || target_->color_pass.depth_preview != depth_preview) {
+            if (depth_preview) {
+                VkFormatProperties properties;vkGetPhysicalDeviceFormatProperties(c_.physical,VK_FORMAT_D32_SFLOAT,&properties);
+                if (!(properties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT))
+                    throw std::runtime_error("scene depth preview requires sampleable D32 depth");
+            }
+            auto& pass = color_pass(samples,independent_depth,depth_preview);
             auto* picking = picking_pass(samples);
             std::unique_ptr<Target> target(new Target(c_, width, height, pass, picking));
             target->init(); target_ = std::move(target);
+        }
+        if (depth_preview && !target_->depth_set) {
+            target_->depth_pool = descriptor_pool_;
+            VkDescriptorSetAllocateInfo ai{};ai.sType=VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+            ai.descriptorPool=descriptor_pool_;ai.descriptorSetCount=1;ai.pSetLayouts=&descriptors_;
+            check(vkAllocateDescriptorSets(c_.device,&ai,&target_->depth_set),"allocate scene depth descriptor");
+            VkDescriptorImageInfo image={samplers_[0],target_->depth.view,VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL};
+            VkWriteDescriptorSet write{};write.sType=VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            write.dstSet=target_->depth_set;write.descriptorCount=1;
+            write.descriptorType=VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;write.pImageInfo=&image;
+            vkUpdateDescriptorSets(c_.device,1,&write,0,nullptr);
         }
         const size_t alignment = std::max(size_t(16), size_t(limits.minUniformBufferOffsetAlignment));
         const size_t stride = (sizeof(ImpostorUniform) + alignment - 1) / alignment * alignment;
@@ -1490,12 +1549,13 @@ public:
                     const unsigned draw_phase = d.overlay_depth_test ? 0 :
                         d.overlay_independent_depth ? 1 : phases-1;
                     if (draw_phase != phase) continue;
-                    const auto pipeline=phase==0 ? pass.depth_overlay_pipeline :
+                    const auto pipeline=d.scene_depth_texture ? pass.depth_texture_pipeline : phase==0 ? pass.depth_overlay_pipeline :
                         phase==phases-1 ? pass.overlay_pipeline : pass.hud_3d_pipeline;
                     vkCmdBindPipeline(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,pipeline);
                     VkDeviceSize offset = 0;
                     vkCmdBindVertexBuffers(cmd,0,1,&draw.geometry->buffer.handle,&offset);
-                    vkCmdBindDescriptorSets(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,layout_,0,1,&draw.texture->set,0,nullptr);
+                    const auto texture_set=d.scene_depth_texture ? target_->depth_set : draw.texture->set;
+                    vkCmdBindDescriptorSets(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,layout_,0,1,&texture_set,0,nullptr);
                     Push push{};
                     for (unsigned col=0;col<4;++col) for (unsigned row=0;row<4;++row)
                         push.mvp[col*4+row] = d.model_view_projection(row,col);
@@ -1511,11 +1571,27 @@ public:
         vkCmdEndRenderPass(cmd);
     }
     void encode(VkCommandBuffer cmd, const std::vector<Prepared>& draws, const vec4& background) {
+        const bool preview_msaa=target_->color_pass.depth_preview && target_->id_pass;
+        if (preview_msaa) {
+            // Existing center-sample picking depth is also the preview source.
+            // Generate it before color composition; MSAA color still resolves last.
+            encode_pass(cmd,draws,background,*target_->id_pass,target_->id_framebuffer);
+            image_barrier(cmd,target_->depth.handle,VK_IMAGE_ASPECT_DEPTH_BIT,
+                    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
+                    VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT|VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT|VK_PIPELINE_STAGE_TRANSFER_BIT,
+                    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT|VK_ACCESS_TRANSFER_READ_BIT,
+                    VK_ACCESS_SHADER_READ_BIT);
+        }
         encode_pass(cmd, draws, background, target_->color_pass, target_->framebuffer);
         // Picking uses center-sample IDs/depth independently of antialiased color.
         // This works even when an integer format supports no multisampling, and
         // requires neither depth-resolve extensions nor averaging integer IDs.
-        if (target_->id_pass) encode_pass(cmd, draws, background, *target_->id_pass, target_->id_framebuffer);
+        if (target_->id_pass && !preview_msaa) encode_pass(cmd, draws, background, *target_->id_pass, target_->id_framebuffer);
+        if (preview_msaa)
+            image_barrier(cmd,target_->depth.handle,VK_IMAGE_ASPECT_DEPTH_BIT,
+                    VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,VK_PIPELINE_STAGE_TRANSFER_BIT,
+                    VK_ACCESS_SHADER_READ_BIT,VK_ACCESS_TRANSFER_READ_BIT);
     }
     FrameImage render(uint32_t width, uint32_t height, const std::vector<DrawCommand>& commands,
                       const vec4& background, unsigned samples) override {

@@ -27,7 +27,7 @@
 #ifndef EASY3D_TUTORIAL_REAL_CAMERA_H
 #define EASY3D_TUTORIAL_REAL_CAMERA_H
 
-#include <easy3d/viewer/viewer.h>
+#include "../viewer_backend.h"
 
 // This RealCamera class visualizes a model from the view point
 // given the camera's intrinsic and extrinsic parameters. These
@@ -40,12 +40,17 @@ namespace easy3d {
     class LinesDrawable;
 }
 
-class TutorialRealCamera : public easy3d::Viewer
+class TutorialRealCamera : public easy3d::TutorialViewer
 {
 public:
+#if EASY3D_TUTORIAL_USES_VULKAN
+    TutorialRealCamera(const std::string& title, const std::string& bundler_file,
+                       const std::string& cloud_file, const easy3d::VulkanViewerOptions& options = {});
+#else
     TutorialRealCamera(const std::string& title,
                const std::string& bundler_file,
                const std::string& cloud_file);
+#endif
 
     /// two useful functions
 
@@ -134,13 +139,27 @@ private:
 
     void load_image();
 
+#if EASY3D_TUTORIAL_USES_VULKAN
+    void pre_draw() override;
+    void post_resize(int, int) override;
+    std::shared_ptr<const easy3d::graphics::Image> image_;
+    int image_view_ = -1;
+    easy3d::Rect overlay_rect_{0,0,0,0};
+    const easy3d::graphics::Image* overlay_image_ = nullptr;
+    std::size_t cross_revision_ = 0;
+    bool cross_visible_ = false;
+    int overlay_width_ = 0, overlay_height_ = 0;
+    std::vector<easy3d::graphics::DrawCommand> image_commands_;
+    easy3d::graphics::DrawCommand cross_command_;
+#else
     void post_draw() override;
+    easy3d::Texture* texture_;
+#endif
 
 private:
-    easy3d::Texture* texture_;
     easy3d::LinesDrawable* cameras_drawable_;
     easy3d::LinesDrawable* ray_drawable_;   // in 3D
-    easy3d::LinesDrawable* cross_drawable_; // in image
+    std::shared_ptr<easy3d::LinesDrawable> cross_drawable_; // in image
 };
 
 

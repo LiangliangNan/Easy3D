@@ -139,10 +139,10 @@ Completion gates include:
   resize/hide/show, independent windows/devices, orbit/pan/zoom, projection toggle,
   file drop and depth-based world-point picking. The installed demo uses an
   embedded bunny by default and needs no source-tree model/shader files.
-- Existing Tutorials 201, 301–312 and 401–404 build with the native Vulkan host in
+- Existing Tutorials 201, 206/207, 301–312, 401–406 and 506 build with the native Vulkan host in
   Vulkan-only window builds. Tutorial 302 uses the same sphere/surfel/cylinder/cone scene code
   as its OpenGL build, with bounded native execution for automated tests. Legacy
-  custom OpenGL draw callbacks are not ported. Tutorial 304 exercises the native
+  OpenGL draw callbacks require explicit native implementations. Tutorial 304 exercises the native
   vector-field and plain wide-line path.
 - A new finite Tutorial 208 and deterministic Vulkan tests, including actual
   bunny mesh loading, property colors, geometry updates, snapshots and picking IDs.
@@ -2164,3 +2164,114 @@ validation. Native/combined builds and the OpenGL-only viewer target succeed.
 The axes/scene/HUD snapshot was visually inspected. No new validation errors
 were reported; the existing MoltenVK integer-attachment warning remains. GPU
 desktop tests were run sequentially.
+
+
+## Tutorial 207: native calibrated camera and image correspondence
+
+Tutorial 207 now builds and runs with the native Vulkan host in its original
+`main.cpp`, `viewer.h`, `viewer.cpp` and `read_bundler_file.cpp` organization. The
+Bundler reader, camera conversion, camera-frustum geometry and ray/projection
+math are shared with OpenGL. Constructor and rendering sections use the common
+tutorial backend selector. The OpenGL implementation remains available.
+
+The native example loads the existing fountain cloud and camera data. Space
+cycles views, 1 uses the shared calibration conversion, 2 restores the recorded
+pose/FOV conversion, and H toggles camera guides. The original usage hint is
+retained. Camera/point rendering uses existing native drawable paths, including
+the cylinder ray. Native bounded execution accepts `--frames`, `--samples` and
+`--validation`, and Tutorial 207 joins the native tutorial smoke tests.
+
+The photo inset uses a cached top-row-first RGBA image with linear filtering,
+triangle overlay geometry and its red border. Only the current photo is retained
+by the tutorial cache; constructing temporary camera guides no longer reloads
+images. Geometry/layout update when the photo, viewport or crosshair changes.
+Mouse positions and margins use framebuffer pixels in the native host; margins
+remain 20/120 logical units and the crosshair follows window DPI. The new
+`VulkanViewer::dpi_scaling()` counterpart centralizes the same calculation already
+used by native axes and usage hints.
+
+Hovering the inset draws its source-camera ray in 3D. Hovering a visible scene
+point projects the picked world point into the source photo and shows a green
+crosshair. The native crosshair stays in the overlay layer rather than being
+added as a world-space drawable: neither inset nor crosshair changes scene depth,
+picking IDs or bounds. Leaving the image hides the ray; background or invalid
+correspondence clears the crosshair. View/key changes and resize clear stale
+markers, and default snapshot shortcuts see cleared marker state.
+
+This is the original fountain calibration example, retaining its dataset-specific
+image dimensions/principal point and its existing camera-conversion conventions.
+It does not add lens-distortion correction or a general Bundler calibration API.
+
+The new `vulkan.realcamera` regression runs in native-only and combined builds.
+It verifies ray/projection round trips, loaded camera poses and view/image
+switching, ground-truth/calibration controls, the original hint, source-image
+orientation and bilinear pixel samples, DPI placement, cursor rays, green
+correspondence pixels, background clearing, guide visibility, resize, snapshots
+and preserved scene depth/IDs with one/four samples.
+
+Verified on this Mac with MoltenVK: all 51 native tests and all 28 combined
+OpenGL/Vulkan tests pass in single complete runs. The focused native interaction
+test and a three-frame four-sample Tutorial 207 launch also pass with Vulkan/
+synchronization validation. Native and combined builds succeed; the OpenGL-only
+viewer target builds and Tutorial 207's main/viewer/Bundler sources compile and
+link as C++11 with OpenGL. The native fountain/photo/HUD snapshot was visually
+inspected. No new validation errors were reported; the existing MoltenVK
+integer-attachment warning remains. Desktop suites were run sequentially.
+
+
+## GPU scene-depth textures and Tutorial 506
+
+Tutorial 506 now uses the native Vulkan host in its original `main.cpp`,
+`viewer.h` and `viewer.cpp` pair. Its OpenGL framebuffer/shader implementation
+remains available. The native `draw_depth()` builds a cached quarter-viewport
+inset and red border through `renderer/backends/vulkan/shape::draw_depth_texture`,
+corresponding to the original OpenGL shape helper. The original 20/40 logical
+unit margins scale with each window's DPI. Camera controls, resizing, scene
+clearing and snapshots retain the preview. The native application uses the same
+fountain point cloud and accepts bounded `--frames`, `--samples` and `--validation`
+options.
+
+`graphics::DrawCommand::scene_depth_texture` requests a flat triangle overlay
+whose UVs sample current scene depth on the GPU. The grayscale shader maps raw
+normalized depth directly: zero is black, one/clear background is white. These
+are perspective-dependent depth values, not linear distances. Nearest sampling
+retains the center-sample depth contract; no multisample depth averaging is used.
+The overlay cannot be combined with an external image texture or either overlay
+depth-test mode. Input flags and D32 sampling support are checked explicitly.
+
+At one sample, the final HUD subpass samples the scene depth attachment in a
+read-only layout. At multiple samples, the existing center-sample picking pass
+runs before color composition when a preview is requested; its depth becomes the
+sampled image and returns to transfer layout afterward. Explicit dependencies
+cover scene writes, shader reads, attachment stores and final readback/layout
+transitions. The ordinary MSAA color resolve still follows annotation/HUD
+composition. Preview values include actual native clipping/impostor surface
+depth; scene annotations, corner axes and flat HUDs are excluded. Scene depth
+and original picking IDs are preserved everywhere, including under the inset.
+
+The target uses its existing depth image with sampled usage and a target-owned
+descriptor. Pass/pipeline variants are created lazily when depth sampling is
+requested. There is no additional depth image/pass at one sample, and the MSAA
+path reorders its existing picking pass instead of adding another geometry pass.
+Tutorial presentation performs no CPU capture, depth upload or image conversion.
+The embedded Vulkan shader requires no runtime shader compiler. Rendering without
+a depth preview retains the existing pass/allocation path. This stage adds depth
+inspection; ambient occlusion, shadows, eye-dome lighting and general scene
+transparency remain migration work.
+
+The new `vulkan.depthtexture` regression compares GPU pixels with current-frame
+center depth across sample counts, viewports, empty scenes and surface changes.
+It also checks coexistence with independent HUD depth and scene annotations,
+unchanged IDs/depth and invalid flag rejection. `vulkan.depthmap` exercises the
+original fountain scene, inset placement, camera movement, both projection modes,
+resize, scene clearing and scaled snapshots. Tutorial 506 joins the bounded
+native tutorial CTests.
+
+Verified on this Mac with MoltenVK: all 54 native tests and all 30 combined
+OpenGL/Vulkan tests pass in single complete runs. The focused depth-texture and
+DepthMap regressions pass with Vulkan/synchronization validation, as does a
+three-frame four-sample Tutorial 506 launch. The new SPIR-V passes `spirv-val`.
+Native and combined builds and the OpenGL-only viewer target succeed; Tutorial
+506's retained OpenGL sources compile and link as C++11. The rendered depth inset
+was visually inspected. No new validation errors were reported; the existing
+MoltenVK integer-attachment warning remains. Desktop suites ran sequentially.

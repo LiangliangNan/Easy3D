@@ -109,6 +109,10 @@ struct DrawCommand {
     // after scene annotations and before flat HUD overlays. Mutually exclusive
     // with overlay_depth_test; requires overlay=true. Lighting is supported.
     bool overlay_independent_depth = false;
+    // Flat triangle HUD samples the current frame's center-sample scene depth
+    // as grayscale through its UVs. Requires overlay=true, no texture and no
+    // overlay depth flags. Sampling never changes scene depth or picking IDs.
+    bool scene_depth_texture = false;
     // Up to two view-space halfspaces: dot(plane, vec4(view_position,1)) >= 0.
     // When clipping is active, model_view must map the geometry into view space
     // and be affine for every topology, consistently with model_view_projection.

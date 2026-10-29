@@ -8,6 +8,9 @@ namespace easy3d { namespace vulkan { namespace shape {
 // Native counterparts of the screen-space shape drawing helpers. Return
 // immutable triangle overlay commands; submission is the host's responsibility.
 graphics::DrawCommand draw_quad_filled(const Rect& rect, const vec4& color, unsigned width, unsigned height);
+// Counterpart of OpenGL's depth-texture quad: samples this frame's scene depth
+// directly on the GPU, in top-left image order. No image upload or CPU readback.
+graphics::DrawCommand draw_depth_texture(const Rect& rect, unsigned width, unsigned height);
 graphics::DrawCommand draw_quad_wire(const Rect& rect, const vec4& color, unsigned width, unsigned height,
                                      float line_width = 1);
 graphics::DrawCommand draw_lines_2d(const std::vector<vec2>& segments, const vec4& color,

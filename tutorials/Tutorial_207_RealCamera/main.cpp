@@ -25,6 +25,7 @@
  ********************************************************************/
 
 #include "viewer.h"
+#include "../native_viewer_options.h"
 #include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
 
@@ -56,8 +57,15 @@ int main(int argc, char **argv) {
     // the point cloud file.
     const std::string cloud_file = resource::directory() + "/data/fountain/pointcloud.ply";
 
+#ifdef EASY3D_NO_OPENGL
+    NativeTutorialOptions options;
+    if (!options.parse(argc,argv)) return EXIT_FAILURE;
+    TutorialRealCamera viewer(EXAMPLE_TITLE, bundler_file, cloud_file, options.viewer);
+    return options.run(viewer);
+#else
     TutorialRealCamera viewer(EXAMPLE_TITLE, bundler_file, cloud_file);
 
     // run the viewer
     return viewer.run();
+#endif
 }

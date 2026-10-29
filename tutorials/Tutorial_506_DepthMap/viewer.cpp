@@ -30,27 +30,53 @@
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/shape.h>
+#include <easy3d/renderer/renderer.h>
+#if EASY3D_TUTORIAL_USES_VULKAN
+#include <easy3d/renderer/backends/vulkan/shape.h>
+#else
 #include <easy3d/renderer/framebuffer_object.h>
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/shader_program.h>
-#include <easy3d/renderer/shape.h>
-#include <easy3d/renderer/renderer.h>
+#endif
 
 
 using namespace easy3d;
 
 // \cond
 
+#if EASY3D_TUTORIAL_USES_VULKAN
+TutorialDepthMap::TutorialDepthMap(const std::string& title, const VulkanViewerOptions& options)
+    : TutorialViewer(title,options)
+#else
 TutorialDepthMap::TutorialDepthMap(const std::string& title)
-    : Viewer(title)
-    , fbo_(nullptr)
+    : TutorialViewer(title), fbo_(nullptr)
+#endif
 {
     camera()->setUpVector(vec3(0, 1, 0));
     camera()->setViewDirection(vec3(0, 0, -1));
-    camera_->showEntireScene();
+    camera()->showEntireScene();
 }
 
 
+#if EASY3D_TUTORIAL_USES_VULKAN
+TutorialDepthMap::~TutorialDepthMap() = default;
+
+void TutorialDepthMap::pre_draw() {draw_depth();}
+
+void TutorialDepthMap::draw_depth() const {
+    const float dpi=dpi_scaling();
+    // The device generates and samples current scene depth in its render passes.
+    // Keep only the inset's immutable geometry here; presentation stays GPU-only.
+    if (width()!=depth_width_ || height()!=depth_height_ || dpi!=depth_dpi_) {
+        const Rect quad(20*dpi,20*dpi+width()/4.0f,40*dpi,40*dpi+height()/4.0f);
+        depth_commands_={vulkan::shape::draw_depth_texture(quad,width(),height()),
+            vulkan::shape::draw_quad_wire(quad,vec4(1,0,0,1),width(),height(),dpi)};
+        depth_width_=width();depth_height_=height();depth_dpi_=dpi;
+    }
+    const_cast<TutorialDepthMap*>(this)->set_overlays(depth_commands_);
+}
+#else
 TutorialDepthMap::~TutorialDepthMap() {
     delete fbo_;
 
@@ -61,7 +87,7 @@ TutorialDepthMap::~TutorialDepthMap() {
 
 void TutorialDepthMap::draw() const {
     draw_depth();
-    Viewer::draw();
+    TutorialViewer::draw();
 }
 
 
@@ -119,3 +145,4 @@ void TutorialDepthMap::draw_depth() const {
 }
 
 // \endcond
+#endif // native Vulkan / OpenGL depth rendering
