@@ -26,9 +26,9 @@
 
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/viewer/backends/glfw_runtime.h>
+#include <easy3d/viewer/backends/viewer_loop.h>
 #include <easy3d/renderer/backend.h>
 
-#include <chrono>
 #include <iostream>
 
 #include <easy3d/renderer/opengl.h>				// for gl functions
@@ -126,6 +126,7 @@ namespace easy3d {
 
         // create and set up the camera
         camera_ = std::unique_ptr<Camera>(new Camera);
+        camera_->setScreenWidthAndHeight(width_, height_);
         camera_->setType(Camera::PERSPECTIVE);
         camera_->setUpVector(vec3(0, 0, 1)); // Z pointing up
         camera_->setViewDirection(vec3(-1, 0, 0)); // X pointing out
@@ -324,117 +325,69 @@ namespace easy3d {
     }
 
 
+    template<class Callback>
+    void Viewer::dispatch_callback(GLFWwindow* window, const Callback& callback) noexcept {
+        auto* viewer = static_cast<Viewer*>(glfwGetWindowUserPointer(window));
+        if (!viewer) return;
+        try {
+            glfwMakeContextCurrent(window);
+            callback(*viewer);
+            if (viewer->callback_error_) glfwSetWindowShouldClose(window, GLFW_TRUE);
+        } catch (...) {
+            if (!viewer->callback_error_) viewer->callback_error_ = std::current_exception();
+            glfwSetWindowShouldClose(window, GLFW_TRUE);
+        }
+    }
+
     void Viewer::setup_callbacks(GLFWwindow *window) {
-        glfwSetWindowRefreshCallback(window, [](GLFWwindow *win) {
-            auto viewer = reinterpret_cast<Viewer *>(glfwGetWindowUserPointer(win));
-            if (!viewer) return;
-            glfwMakeContextCurrent(win);
-            viewer->pre_draw();
-            viewer->draw();
-            viewer->post_draw();
-            glfwSwapBuffers(win);
+        glfwSetWindowRefreshCallback(window, [](GLFWwindow* win) {
+            dispatch_callback(win, [](Viewer& v) { v.update(); });
         });
-
-        glfwSetCursorPosCallback(window, [](GLFWwindow *win, double x, double y) {
-            auto viewer = reinterpret_cast<Viewer *>(glfwGetWindowUserPointer(win));
-            if (!viewer) return;
-            glfwMakeContextCurrent(win);
-            if (!viewer->process_events_)
-                return;
-
-            int w = viewer->width();
-            int h = viewer->height();
-            if (x >= 0 && x <= w && y >= 0 && y <= h)
-                viewer->callback_event_cursor_pos(x, y);
-            else if (viewer->drag_active_) {
-                // Restrict the cursor to be within the client area during dragging
-                if (x < 0) x = 0;
-                if (x > w) x = w;
-                if (y < 0) y = 0;
-                if (y > h) y = h;
-                glfwSetCursorPos(win, x, y);
-            }
+        glfwSetCursorPosCallback(window, [](GLFWwindow* win, double x, double y) {
+            dispatch_callback(win, [=](Viewer& v) {
+                if (!v.process_events_) return;
+                const int w = v.width(), h = v.height();
+                if (x >= 0 && x <= w && y >= 0 && y <= h) v.callback_event_cursor_pos(x, y);
+                else if (v.drag_active_) glfwSetCursorPos(win, std::max(0.0, std::min(double(w), x)),
+                                                               std::max(0.0, std::min(double(h), y)));
+            });
         });
-
-        glfwSetMouseButtonCallback(window, [](GLFWwindow *win, int button, int action, int modifiers) {
-            auto viewer = reinterpret_cast<Viewer *>(glfwGetWindowUserPointer(win));
-            if (!viewer) return;
-            glfwMakeContextCurrent(win);
-            if (!viewer->process_events_)
-                return;
-            viewer->callback_event_mouse_button(button, action, modifiers);
+        glfwSetMouseButtonCallback(window, [](GLFWwindow* win, int button, int action, int modifiers) {
+            dispatch_callback(win, [=](Viewer& v) {
+                if (v.process_events_) v.callback_event_mouse_button(button, action, modifiers);
+            });
         });
-
-        glfwSetKeyCallback(window, [](GLFWwindow *win, int key, int scancode, int action, int mods) {
-            auto viewer = reinterpret_cast<Viewer *>(glfwGetWindowUserPointer(win));
-            if (!viewer) return;
-            glfwMakeContextCurrent(win);
-            if (!viewer->process_events_)
-                return;
-            (void) scancode;
-            viewer->callback_event_keyboard(key, action, mods);
+        glfwSetKeyCallback(window, [](GLFWwindow* win, int key, int, int action, int mods) {
+            dispatch_callback(win, [=](Viewer& v) {
+                if (v.process_events_) v.callback_event_keyboard(key, action, mods);
+            });
         });
-
-        glfwSetCharCallback(window, [](GLFWwindow *win, unsigned int codepoint) {
-            auto viewer = reinterpret_cast<Viewer *>(glfwGetWindowUserPointer(win));
-            if (!viewer) return;
-            glfwMakeContextCurrent(win);
-            if (!viewer->process_events_)
-                return;
-            viewer->callback_event_character(codepoint);
+        glfwSetCharCallback(window, [](GLFWwindow* win, unsigned int codepoint) {
+            dispatch_callback(win, [=](Viewer& v) {
+                if (v.process_events_) v.callback_event_character(codepoint);
+            });
         });
-
-        glfwSetDropCallback(window, [](GLFWwindow *win, int count, const char **filenames) {
-            auto viewer = reinterpret_cast<Viewer *>(glfwGetWindowUserPointer(win));
-            if (!viewer) return;
-            glfwMakeContextCurrent(win);
-            if (!viewer->process_events_)
-                return;
-            viewer->callback_event_drop(count, filenames);
+        glfwSetDropCallback(window, [](GLFWwindow* win, int count, const char** filenames) {
+            dispatch_callback(win, [=](Viewer& v) {
+                if (v.process_events_) v.callback_event_drop(count, filenames);
+            });
         });
-
-        glfwSetScrollCallback(window, [](GLFWwindow *win, double dx, double dy) {
-            auto viewer = reinterpret_cast<Viewer *>(glfwGetWindowUserPointer(win));
-            if (!viewer) return;
-            glfwMakeContextCurrent(win);
-            if (!viewer->process_events_)
-                return;
-            viewer->callback_event_scroll(dx, dy);
+        glfwSetScrollCallback(window, [](GLFWwindow* win, double dx, double dy) {
+            dispatch_callback(win, [=](Viewer& v) {
+                if (v.process_events_) v.callback_event_scroll(dx, dy);
+            });
         });
-
-#if 0
-        /* React to framebuffer size events -- includes window size events and also
-         * catches things like dragging a window from a Retina-capable screen to a
-         * normal screen on Mac OS X */
-        glfwSetFramebufferSizeCallback(window, [](GLFWwindow *win, int width, int height) {
-            auto viewer = reinterpret_cast<Viewer *>(glfwGetWindowUserPointer(win));
-            if (!viewer) return;
-            glfwMakeContextCurrent(win);
-            if (!viewer->process_events_)
-                return;
-            viewer->callback_event_resize(width, height);
+        // Camera/input coordinates are logical window units in this OpenGL host.
+        glfwSetWindowSizeCallback(window, [](GLFWwindow* win, int w, int h) {
+            dispatch_callback(win, [=](Viewer& v) {
+                if (v.process_events_) v.callback_event_resize(w, h);
+            });
         });
-#else
-        glfwSetWindowSizeCallback(window, [](GLFWwindow *win, int width, int height) {
-            auto viewer = reinterpret_cast<Viewer *>(glfwGetWindowUserPointer(win));
-            if (!viewer) return;
-            glfwMakeContextCurrent(win);
-            if (!viewer->process_events_)
-                return;
-            viewer->callback_event_resize(width, height);
+        glfwSetWindowFocusCallback(window, [](GLFWwindow* win, int focused) {
+            dispatch_callback(win, [=](Viewer& v) { v.focus_event(focused != 0); });
         });
-#endif
-
-        // notify when the screen has lost focus (e.g. application switch)
-        glfwSetWindowFocusCallback(window, [](GLFWwindow *win, int focused) {
-            auto viewer = reinterpret_cast<Viewer *>(glfwGetWindowUserPointer(win));
-            if (!viewer) return;
-            glfwMakeContextCurrent(win);
-            viewer->focus_event(focused != 0);// true for focused
-        });
-
-        glfwSetWindowCloseCallback(window, [](GLFWwindow *win) {
-            glfwSetWindowShouldClose(win, true);
+        glfwSetWindowCloseCallback(window, [](GLFWwindow* win) {
+            dispatch_callback(win, [](Viewer& v) { v.request_close(); });
         });
     }
 
@@ -453,6 +406,7 @@ namespace easy3d {
                 return mouse_free_move_event(px, py, dx, dy, modifiers_);
         }
         catch (const std::exception &e) {
+            if (!callback_error_) callback_error_ = std::current_exception();
             LOG(ERROR) << "Caught exception in event handler: " << e.what();
             return false;
         }
@@ -478,6 +432,7 @@ namespace easy3d {
             }
         }
         catch (const std::exception &e) {
+            if (!callback_error_) callback_error_ = std::current_exception();
             LOG(ERROR) << "Caught exception in event handler: " << e.what();
             return false;
         }
@@ -493,6 +448,7 @@ namespace easy3d {
             }
         }
         catch (const std::exception &e) {
+            if (!callback_error_) callback_error_ = std::current_exception();
             LOG(ERROR) << "Caught exception in event handler: " << e.what();
             return false;
         }
@@ -504,6 +460,7 @@ namespace easy3d {
             return char_input_event(codepoint);
         }
         catch (const std::exception &e) {
+            if (!callback_error_) callback_error_ = std::current_exception();
             LOG(ERROR) << "Caught exception in event handler: " << e.what();
             return false;
         }
@@ -518,6 +475,7 @@ namespace easy3d {
             return drop_event(arg);
         }
         catch (const std::exception &e) {
+            if (!callback_error_) callback_error_ = std::current_exception();
             LOG(ERROR) << "Caught exception in event handler: " << e.what();
             return false;
         }
@@ -529,6 +487,7 @@ namespace easy3d {
             return mouse_scroll_event(mouse_current_x_, mouse_current_y_, static_cast<int>(dx), static_cast<int>(dy));
         }
         catch (const std::exception &e) {
+            if (!callback_error_) callback_error_ = std::current_exception();
             LOG(ERROR) << "Caught exception in event handler: " << e.what();
             return false;
         }
@@ -557,6 +516,7 @@ namespace easy3d {
             post_resize(width_, height_);
         }
         catch (const std::exception &e) {
+            if (!callback_error_) callback_error_ = std::current_exception();
             LOG(ERROR) << "Caught exception in event handler: " << e.what();
         }
     }
@@ -1150,82 +1110,85 @@ namespace easy3d {
         if (manual != "default")
             manual_ = manual;
         hint_ = screen_hint;
+        usage_printed_ = false;
     }
 
 
-    int Viewer::run(bool see_all) {
-        // initialize before showing the window because it can be slow
-        init();
+    void Viewer::poll_events() { glfwPollEvents(); }
+    void Viewer::request_close() { glfwSetWindowShouldClose(window_, GLFW_TRUE); update(); }
+    bool Viewer::should_close() const { return should_exit_ || glfwWindowShouldClose(window_) != 0; }
+    void Viewer::show() { glfwShowWindow(window_); }
+    void Viewer::hide() { glfwHideWindow(window_); }
 
-        // make sure scene fits the screen when the window appears
-        if (see_all)
-            fit_screen();
+    void Viewer::print_usage() {
+        if (usage_printed_) return;
+        usage_printed_ = true;
+        if (!manual_.empty()) std::cout << manual_ << std::endl;
+    }
 
-        // show the window
-        glfwShowWindow(window_);
-
-        try {   // main loop
-            static int frame_counter = 0;
-            double last_time = glfwGetTime();   // for frame rate counter
-
-            while (!glfwWindowShouldClose(window_) && !should_exit_) {
-                if (!glfwGetWindowAttrib(window_, GLFW_VISIBLE)) { // not visible
-                    glfwWaitEvents();
-                    continue;
-                }
-
-                if (show_frame_rate_) {
-                    // Calculate ms/frame
-                    double current_time = glfwGetTime();
-                    ++frame_counter;
-                    if (current_time - last_time >= 1.0f) {
-                        snprintf(framerate_, sizeof(framerate_), "fps: %2.0f (%4.1f ms/frame)",
-                                double(frame_counter) / (current_time - last_time), 1000.0 / double(frame_counter));
-                        frame_counter = 0;
-                        last_time = current_time;
-                    }
-                }
-
-                pre_draw();
-                draw();
-                post_draw();
-                glfwSwapBuffers(window_);
-
-                // Don't call 'glfwPollEvents()' at the beginning of the main loop.
-                // Reason: first frame needs time to complete.
-                if (is_animating_ && animation_func_) {
-                    glfwPollEvents();
-
-                    // TODO: make framerate a parameter
-                    if (!show_frame_rate_) {
-                        static const int animation_fps = 30;
-                        static const double interval = 1000.0 / (animation_fps + 5); // the extra 5 for adjusting
-                        std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int>(interval)));
-                    }
-                    animation_func_(this);
-                }
-                else if (show_frame_rate_)
-                    glfwPollEvents();
-                else
-                    glfwWaitEvents();
-            }
-
-            /* Process events once more */
-            glfwPollEvents();
-            return EXIT_SUCCESS;
+    void Viewer::update_frame_rate() {
+        if (!show_frame_rate_) return;
+        const double now = glfwGetTime();
+        if (!frame_rate_start_) frame_rate_start_ = now;
+        ++frame_rate_frames_;
+        const double elapsed = now - frame_rate_start_;
+        if (elapsed >= 1.0) {
+            snprintf(framerate_, sizeof(framerate_), "fps: %2.0f (%4.1f ms/frame)",
+                     double(frame_rate_frames_) / elapsed, 1000.0 * elapsed / frame_rate_frames_);
+            frame_rate_frames_ = 0;
+            frame_rate_start_ = now;
         }
-        catch (const std::exception &e) {
-            LOG(ERROR) << "Caught exception in main loop: " << e.what();
-            cleanup();
+    }
+
+    bool Viewer::draw_frame() {
+        if (callback_error_) std::rethrow_exception(callback_error_);
+        if (should_close() || glfwGetWindowAttrib(window_, GLFW_ICONIFIED)) return false;
+        int w = 0, h = 0;
+        framebuffer_size(w, h);
+        if (w <= 0 || h <= 0) return false;
+        glfwMakeContextCurrent(window_);
+        if (!initialized_) { init(); initialized_ = true; }
+        print_usage();
+        if (is_animating()) {
+            animation_func_(this);
+            if (callback_error_) std::rethrow_exception(callback_error_);
+            if (should_close()) return false;
+        }
+        pre_draw();
+        draw();
+        update_frame_rate();
+        post_draw();
+        glfwSwapBuffers(window_);
+        if (callback_error_) std::rethrow_exception(callback_error_);
+        return true;
+    }
+
+    int Viewer::run(bool see_all) {
+        try {
+            if (callback_error_) std::rethrow_exception(callback_error_);
+            if (!initialized_) { init(); initialized_ = true; }
+            if (see_all) fit_screen();
+            show();
+            return run_frames();
+        } catch (const std::exception& e) {
+            LOG(ERROR) << "Viewer failed: " << e.what();
             return EXIT_FAILURE;
         }
     }
 
-
-    void Viewer::exit() {
-        should_exit_ = true;
-        update();
+    int Viewer::run_frames(unsigned max_frames) {
+        try {
+            if (callback_error_) std::rethrow_exception(callback_error_);
+            return detail::run_viewer_frames(*this, max_frames, [this] {
+                return is_animating() || show_frame_rate_ || kfi_->is_interpolation_started();
+            });
+        } catch (const std::exception& e) {
+            LOG(ERROR) << "Viewer failed: " << e.what();
+            return EXIT_FAILURE;
+        }
     }
+
+    void Viewer::exit() { request_close(); }
 
 
     void Viewer::init() {
@@ -1242,7 +1205,8 @@ namespace easy3d {
 
         // camera is manipulated by the mouse, working in the screen coordinate system
         // (different from the viewport or framebuffer size, which are in pixel coordinates)
-        camera_->setScreenWidthAndHeight(width_, height_);
+        if (camera_->screenWidth() != width_ || camera_->screenHeight() != height_)
+            camera_->setScreenWidthAndHeight(width_, height_);
         int fw, fh;
         glfwGetFramebufferSize(window_, &fw, &fh);
         glViewport(0, 0, fw, fh);
@@ -1252,9 +1216,8 @@ namespace easy3d {
         texter_->add_font(resource::directory() + "/fonts/en_Earth-Normal.ttf");
         texter_->add_font(resource::directory() + "/fonts/en_Roboto-Medium.ttf");
 
-        // print usage
-        if (!manual_.empty())
-            std::cout << manual_ << std::endl;
+        initialized_ = true;
+        print_usage();
     }
 
 

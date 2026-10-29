@@ -2711,3 +2711,64 @@ consumers still build without Vulkan package discovery, and binary inspection
 confirms no GLFW/GL/GLEW imports in the headless viewer. No new Vulkan validation
 or synchronization errors were reported. Previously documented MoltenVK and
 macOS OpenGL warnings remain. No tutorial sources were changed.
+
+
+## Common interactive frame execution
+
+The OpenGL Viewer now exposes draw_frame(), run_frames(unsigned), poll_events(),
+show(), hide(), request_close(), should_close() and a borrowed window() handle,
+matching VulkanViewer. Both use viewer/backends/viewer_loop.h for event polling,
+frame budgets and idle waits. A positive budget counts completed frames; closed,
+iconified and zero-sized windows do not consume it. Bounded execution preserves
+camera and visibility, including rendering explicitly hidden hosts. Zero means
+run until closed. run(bool) retains its distinct meaning: show the window,
+optionally fit the scene, and run until closed. An external loop can instead
+poll_events() and call draw_frame() explicitly.
+
+The OpenGL refresh callback now requests a redraw instead of presenting outside
+the loop. Neither backend advances frame hooks or animation merely because
+GLFW dispatches a refresh. For renderable frame attempts, animation runs before
+pre_draw() in both implementations; a false result remains advisory. A callback
+may pause itself, and closure during animation skips drawing. Snapshots still
+do not advance interactive animation or frame hooks. OpenGL's previous fixed
+animation-loop sleep is removed; real-time simulations should use elapsed time.
+Idle unbounded loops wait for events with a short timeout, keeping HUD expiry
+responsive without continuously rendering at full speed.
+
+OpenGL initialization is lazy for draw_frame()/run_frames(), occurs once for
+repeated runs, and selects the owning context. Camera screen dimensions are set
+when the window is constructed, before application camera configuration; init()
+does not reset an unchanged viewport. This fixes a first-frame projection change
+found by the shared regression. Frame-rate counters are per viewer rather than
+a shared static in run(). Default help, hints and logo use the existing hooks.
+
+Input, resize, focus and refresh exceptions stay inside GLFW's C callback
+boundary. The host retains the exception and requests close; draw_frame()
+rethrows it, and the run methods report failure without destroying/replacing the
+window. An animation close request, the final frame budget, or an event delivered
+during an idle wait must not turn a callback failure into success. Ordinary frame
+exceptions also report failure while leaving owned resources intact for cleanup
+or application recovery. These failures never select another backend.
+
+VulkanViewer also gains framebuffer_width(), framebuffer_height(), viewer_size()
+and set_position() to match its OpenGL counterpart. viewer_size() reports logical
+window units; framebuffer getters report pixels. The existing underlying camera
+and input coordinate conventions are retained at this stage and still need
+translation in the eventual runtime Viewer facade.
+
+The same viewer_loop_test.cpp is compiled against each host. It verifies exact
+frame budgets and hook counts, refresh behavior, animation order/pause/close,
+run(false)/run(true), camera preservation, resizing, framebuffer/window getters,
+snapshot color and dimensions, and retained windows after rendering failures.
+It also injects input failures before a frame, from animation and from post_draw
+on the final budgeted frame. Tutorials remain unchanged. Runtime-selected Viewer,
+callback forwarding through that facade, and GUI/effects integration remain the
+next API work; this stage removes the incompatible execution-loop contract.
+
+Verified on this Mac with MoltenVK: 68/68 native tests, 45/45 combined-backend
+tests and 15/15 headless tests pass. The final callback/close guards and portable
+swapchain-retry assertions were followed by focused loop tests on both backends.
+The same loop regression also builds and passes against the OpenGL-only library.
+No new Vulkan validation/synchronization errors were reported, and headless
+binary inspection still finds no GL/GLEW/GLFW imports. Existing platform warnings
+remain as previously documented. Tutorial sources and shaders are unchanged.

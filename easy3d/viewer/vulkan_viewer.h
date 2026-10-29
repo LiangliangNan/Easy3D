@@ -51,6 +51,10 @@ public:
     void hide();
     void resize(int width, int height); // logical window units; camera uses framebuffer pixels
     void framebuffer_size(int& width, int& height) const;
+    int framebuffer_width() const;
+    int framebuffer_height() const;
+    void viewer_size(int& width, int& height) const; // logical window units
+    void set_position(int xpos, int ypos);
     float dpi_scaling() const; // framebuffer pixels per logical window unit
     void set_title(const std::string& title);
     const std::string& title() const;

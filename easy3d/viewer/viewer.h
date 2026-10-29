@@ -40,6 +40,7 @@ namespace easy3d { using Viewer = VulkanViewer; }
 #include <string>
 #include <vector>
 #include <memory>
+#include <exception>
 
 #include <easy3d/core/types.h>
 
@@ -111,6 +112,19 @@ namespace easy3d {
          *      centered on the screen at a proper scale.
          */
         int run(bool see_all = true);
+        // Preserve camera and visibility. Zero runs until closed; a positive
+        // budget counts completed frames, excluding minimized/zero-size frames.
+        int run_frames(unsigned max_frames = 0);
+        // Render one frame, including animation before pre_draw(). Does not poll
+        // events or show/refit the window. Rendering/callback failures throw.
+        bool draw_frame();
+        static void poll_events();
+        void request_close();
+        bool should_close() const;
+        void show();
+        void hide();
+        GLFWwindow* window() const { return window_; } // borrowed OpenGL host
+
 
         /**
          * \brief Terminate the viewer.
@@ -465,7 +479,8 @@ namespace easy3d {
 
 	    /// \name Animation
 	    //@{
-        /// \brief Function called at an equal interval for animation.
+        /// \brief UI-thread callback before pre_draw() for each renderable frame.
+        /// Frame based, not a fixed-rate clock. The return is advisory; pause with set_animation(false).
         std::function<bool(Viewer* viewer)> animation_func_;
 
         /// \brief Enable/Disable animation.
@@ -568,6 +583,13 @@ namespace easy3d {
 
     private:
         std::shared_ptr<detail::GlfwRuntime> runtime_;
+        bool initialized_ = false, usage_printed_ = false;
+        double frame_rate_start_ = 0;
+        unsigned frame_rate_frames_ = 0;
+        std::exception_ptr callback_error_;
+        void print_usage();
+        void update_frame_rate();
+        template<class Callback> static void dispatch_callback(GLFWwindow*, const Callback&) noexcept;
 
     protected:
 		GLFWwindow*	window_;

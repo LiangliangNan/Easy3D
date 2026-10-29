@@ -3,6 +3,7 @@
 #include <easy3d/renderer/backend.h>
 #include <easy3d/viewer/backends/glfw_runtime.h>
 #include <easy3d/renderer/backends/vulkan/surface.h>
+#include <easy3d/viewer/backends/viewer_loop.h>
 #include <easy3d/renderer/text_layout.h>
 #include <easy3d/renderer/backends/vulkan/shape.h>
 #include <easy3d/renderer/backends/vulkan/key_frame_interpolator.h>
@@ -156,6 +157,7 @@ struct VulkanViewer::Window {
     }
     void callbacks(VulkanViewer* viewer) {
         glfwSetWindowUserPointer(handle, viewer);
+        glfwSetWindowRefreshCallback(handle, [](GLFWwindow* w) { dispatch(w, [](VulkanViewer& v) { v.update(); }); });
         glfwSetCursorPosCallback(handle, [](GLFWwindow* w, double px, double py) { dispatch(w, [&](VulkanViewer& v) {
             int x, y; auto& host = *v.window_; host.position(px, py, x, y);
             const int dx = x - host.last_x, dy = y - host.last_y;
@@ -230,6 +232,10 @@ void VulkanViewer::resize(int w, int h) {
     glfwSetWindowSize(window_->handle, w, h);
 }
 void VulkanViewer::framebuffer_size(int& w, int& h) const { glfwGetFramebufferSize(window_->handle, &w, &h); }
+int VulkanViewer::framebuffer_width() const { int w, h; framebuffer_size(w, h); return w; }
+int VulkanViewer::framebuffer_height() const { int w, h; framebuffer_size(w, h); return h; }
+void VulkanViewer::viewer_size(int& w, int& h) const { glfwGetWindowSize(window_->handle, &w, &h); }
+void VulkanViewer::set_position(int x, int y) { glfwSetWindowPos(window_->handle, x, y); }
 float VulkanViewer::dpi_scaling() const {
     int w=0,h=0;glfwGetWindowSize(window(),&w,&h);
     return w>0 ? float(width())/w : 1.0f;
@@ -254,6 +260,7 @@ bool VulkanViewer::draw_frame() {
     if (width() != w || height() != h) { VulkanOffScreen::resize(w, h); cancel_interaction(); post_resize(w, h); }
     if (is_animating()) {
         animation_func_(this);
+        if (window_->error) std::rethrow_exception(window_->error);
         if (should_close()) return false;
     }
     advance_camera_path();
@@ -263,6 +270,7 @@ bool VulkanViewer::draw_frame() {
     update_interaction_overlays();
     const bool drawn = present(samples());
     if (drawn) {update_frame_rate();post_draw();}
+    if (window_->error) std::rethrow_exception(window_->error);
     return drawn;
 }
 void VulkanViewer::advance_camera_path() {
@@ -424,14 +432,9 @@ int VulkanViewer::run_frames(unsigned max_frames) {
     try {
         if (window_->error) std::rethrow_exception(window_->error);
         print_usage();
-        unsigned frames = 0;
-        while (!should_close()) {
-            poll_events();
-            if (window_->error) std::rethrow_exception(window_->error);
-            if (draw_frame()) { if (max_frames && ++frames >= max_frames) break; }
-            else glfwWaitEventsTimeout(0.05);
-        }
-        return 0;
+        return detail::run_viewer_frames(*this, max_frames, [this] {
+            return is_animating() || show_frame_rate_ || kfi_->is_interpolation_started();
+        });
     } catch (const std::exception& e) { LOG(ERROR) << "Vulkan viewer failed: " << e.what(); return 1; }
 }
 vec3 VulkanViewer::point_under_pixel(int x, int y, bool& found) const {
