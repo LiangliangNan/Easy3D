@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/vulkan_offscreen.h>
 #include <easy3d/core/model.h>
+#include <easy3d/util/setting.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/graph.h>
 #include <easy3d/core/surface_mesh.h>
@@ -43,7 +44,7 @@ struct VulkanOffScreen::Impl {
     std::unique_ptr<graphics::RenderDevice> device;
     std::unique_ptr<Camera> camera{new Camera};
     int width = 0, height = 0;
-    vec4 background = vec4(1, 1, 1, 1);
+    vec4 background = setting::background_color;
     std::vector<std::shared_ptr<Model>> models;
     int model_idx = -1;
     std::vector<std::shared_ptr<Drawable>> drawables;
@@ -129,9 +130,6 @@ Model* VulkanOffScreen::add_model(std::shared_ptr<Model> model, bool create, boo
     for (const auto& current : impl_->models) if (model == current) return current.get();
     // Construct first: unsupported default coloring fails without replacing the model's existing renderer.
     auto renderer = std::make_shared<Renderer>(model.get(), create, true);
-    // Portable initial defaults. Callers can request other sizes/styles and receive an explicit error at capture.
-    for (const auto& d : renderer->points_drawables()) { d->set_impostor_type(PointsDrawable::PLAIN); d->set_point_size(1); }
-    for (const auto& d : renderer->lines_drawables()) { d->set_impostor_type(LinesDrawable::PLAIN); d->set_line_width(1); }
     model->set_renderer(renderer);
     impl_->models.push_back(model);
     impl_->model_idx = int(impl_->models.size())-1;

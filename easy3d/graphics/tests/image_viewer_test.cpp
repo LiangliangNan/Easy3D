@@ -23,6 +23,10 @@ void unpickable(const graphics::FrameImage& image) {
         require(image.ids[i].object==UINT32_MAX && image.ids[i].primitive==UINT32_MAX && image.depth[i]==1,
                 "screen-space image created a scene picking hit");
 }
+struct ImageViewer : TutorialImageViewer {
+    using TutorialImageViewer::TutorialImageViewer;
+    void hide_logo() {show_easy3d_logo_=false;}
+};
 int main(int argc,char**) {
     try {
         initialize(false,false,false);
@@ -35,7 +39,7 @@ int main(int argc,char**) {
                 ImageIO::save("vulkan-image-tall.png",tall,2,4,4,false),"could not save image-viewer fixtures");
         VulkanViewerOptions options; options.width=160; options.height=120;
         options.device.validation=options.device.synchronization_validation=argc>1;
-        TutorialImageViewer viewer("Native image viewer test","vulkan-image-wide.png",options);
+        ImageViewer viewer("Native image viewer test","vulkan-image-wide.png",options);viewer.hide_logo();
         viewer.set_background_color(vec4(0,1,0,1));
         const bool msaa=(viewer.device().supported_sample_counts() & 4)!=0;
         if (msaa) viewer.set_samples(4);

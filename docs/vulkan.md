@@ -45,6 +45,11 @@ responsibilities and directory organization as closely as practical. Existing
 Vulkan code must also be brought into alignment as the migration proceeds;
 parallel module hierarchies and duplicated public abstractions are migration
 debt, not the intended final architecture.
+The final tree must not contain a separate `easy3d/graphics` module: its contents
+belong in renderer, viewer or gui according to responsibility. Public renderer,
+viewer and gui classes must expose unified APIs, with OpenGL/Vulkan calls inside
+backend implementations. Compile-time aliases and duplicate public class families
+are transitional, not the final user-facing interface.
 
 Keep shared rendering concepts and scene/control logic in their corresponding
 modules. Preserve existing class names and public entry points where practical;
@@ -2410,3 +2415,65 @@ OpenGL tutorial entry points compile and link as C++11 against OpenGL-only
 libraries. The native algorithm regression and bounded Tutorial 701–703 launches
 also pass. No new validation errors were reported; the existing MoltenVK
 integer-attachment warning remains.
+
+
+## Material/default parity and the default Easy3D logo
+
+Native point and surface drawables now forward the existing `State` lighting,
+two-sided lighting, distinct back color, material ambient/specular/shininess,
+normal transform, camera and shared light settings. Plain points without a normal
+buffer remain unlit, matching OpenGL. Surfel impostors use their oriented normals
+and view-space material lighting; sphere impostors use their analytic normals.
+Shared fragment material shading replaces the simplified vertex diffuse lighting
+for these drawable paths. Low-level draw commands retain their existing basic
+lighting unless material state is explicitly supplied, preserving HUD geometry
+and existing device-level callers. Lines retain their previous lighting path.
+
+Per-draw material data uses the existing dynamic uniform-buffer binding, preserving
+the 124-byte push-constant size and portability. Shader stages share one material
+block (rather than aliasing multiple uniform blocks at one binding, which fails
+MoltenVK's Metal translation). Geometric clipping preserves interpolated normals
+for material shading instead of baking the older diffuse model into vertex colors.
+Material changes leave position resources unchanged.
+
+`VulkanOffScreen`/`VulkanViewer` initialize their background from
+`setting::background_color`. Model attachment retains the shared Renderer defaults
+for point/line styles and sizes instead of replacing them with native-only initial
+values. Explicit viewer colors, application overrides and snapshot background
+options retain their meanings.
+
+The native viewer now enables `show_easy3d_logo_` by default, corresponding to the
+OpenGL Viewer member. It uses the same Earth font for "Easy3D", Roboto for hints
+and frame rate, DPI-scaled positions and ordered logo/FPS/hint rows. It is rendered
+through the persistent color-only HUD, including bounded tutorial runs and native
+snapshots, and survives scene clearing. Toggling the protected flag, resizing and
+DPI changes invalidate the cached layout. Missing fonts retain the existing
+explicit HUD warning. No tutorial setup helpers or new tutorial conditionals are
+needed.
+
+`rendering.parity` renders actual OpenGL and Vulkan point/surface fixtures with the
+same camera/material state and compares interior pixel colors. It covers opposite
+normals/front-back winding, flat/smooth shading, a rotated camera, edited material
+values, two-sided and back-color toggles, unlit rendering, missing point normals,
+one/four Vulkan samples, picking presence and shared
+background/drawable defaults. The native usage regression checks the default logo,
+its toggle/restore cache and unchanged scene depth/IDs. Tests whose oracles require
+an unobstructed scene explicitly hide the logo; background-specific fixtures set
+their intended background color rather than depending on native-only defaults.
+
+This is the visual-parity stage. Consolidation of the existing graphics module and
+unification of the public backend class families remain the next architecture
+steps. It does not claim complete parity for line/impostor lighting, selection
+composition, effects or toolkit canvases.
+
+
+Verified on this Mac with MoltenVK: the final full Vulkan-only run passes 63/63
+tests, and the full combined OpenGL/Vulkan run passes 36/36 with Vulkan and
+synchronization validation enabled. The extended OpenGL-reference regression also
+passes after adding flat shading, camera rotation and custom material values.
+Fresh combined and OpenGL-only viewer builds and the native build succeed. The
+four modified SPIR-V modules pass `spirv-val`; native renderer imports remain
+free of GL/GLEW. Curves with logo/hints and two-color estimated-normal surfels
+were visually inspected. No new validation errors remain; the existing MoltenVK
+integer-attachment warning persists. The user's existing version-header edit is
+preserved, and tutorial sources are unchanged in this stage.

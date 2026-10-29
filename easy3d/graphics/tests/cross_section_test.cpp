@@ -40,6 +40,10 @@ void check_planes(CrossSection& viewer,const graphics::FrameImage& image) {
         for (const auto& plane:viewer.clipping_planes()) require(dot(plane,vec4(point,1))>=-1e-3f,"cross-section depth lies outside world clip volume");
     }
 }
+struct CrossSectionHost : CrossSection {
+    using CrossSection::CrossSection;
+    void hide_logo() {show_easy3d_logo_=false;}
+};
 int main(int argc,char**) {
     try {
         initialize(false,false,false);
@@ -50,7 +54,8 @@ int main(int argc,char**) {
           require(bool(out),"could not write cross-section fixture"); }
         VulkanViewerOptions options; options.width=360; options.height=280;
         options.device.validation=options.device.synchronization_validation=argc>1;
-        CrossSection viewer("Native cross-section test",options);
+        CrossSectionHost viewer("Native cross-section test",options);viewer.hide_logo();
+        viewer.set_background_color(vec4(1)); // Analytic plane-alpha oracle uses white.
         auto* plane=ClippingPlane::instance();
         require(plane->is_enabled(),"tutorial did not enable shared clipping plane");
         plane->set_cross_section_width(.01f); // keep the thin slab visible in this small fixture

@@ -1,4 +1,6 @@
 #version 450
+#extension GL_GOOGLE_include_directive : require
+#include "material.glsl"
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
 layout(location = 2) in vec4 color;
@@ -16,6 +18,8 @@ layout(push_constant) uniform Draw {
 layout(location = 0) out vec4 vertex_color;
 layout(location = 1) out vec2 uv;
 layout(location = 2) flat out uvec2 id;
+layout(location=4) out vec3 world_position;
+layout(location=5) out vec4 world_normal_out;
 void main() {
     selection_tint = highlight_color;
     vec4 p = draw.mvp * vec4(position, 1.0);
@@ -26,7 +30,9 @@ void main() {
                   vec3(draw.normal_matrix[3], draw.normal_matrix[4], draw.normal_matrix[5]),
                   vec3(draw.normal_matrix[6], draw.normal_matrix[7], draw.normal_matrix[8]));
     vec3 world_normal = n * normal;
-    if (draw.lighting != 0 && dot(world_normal, world_normal) > 0.0)
+    world_normal_out=vec4(world_normal,float(draw.lighting));
+    world_position=(material.model*vec4(position,1)).xyz;
+    if (material.shading.x==0 && draw.lighting != 0 && dot(world_normal, world_normal) > 0.0)
         diffuse = 0.2 + 0.8 * abs(dot(normalize(world_normal), normalize(vec3(0.3, 0.5, 1.0))));
     vertex_color = color * draw.tint;
     vertex_color.rgb *= diffuse;

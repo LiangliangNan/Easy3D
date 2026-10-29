@@ -73,6 +73,10 @@ if(Easy3D_ENABLE_VULKAN AND Easy3D_BUILD_VULKAN_TESTS)
         ../../tutorials/Tutorial_702_Cloud_SurfaceReconstruction/main.cpp
         ../../tutorials/Tutorial_703_Cloud_PlaneExtraction/main.cpp)
     if(Easy3D_ENABLE_OPENGL)
+        add_executable(easy3d_rendering_parity_test tests/rendering_parity_test.cpp)
+        target_link_libraries(easy3d_rendering_parity_test PRIVATE easy3d::viewer)
+        add_test(NAME rendering.parity COMMAND easy3d_rendering_parity_test)
+        set_tests_properties(rendering.parity PROPERTIES TIMEOUT 120 LABELS desktop)
         add_executable(easy3d_opengl_obj_viewer_test ../graphics/tests/obj_viewer_test.cpp
                 ../../tutorials/Tutorial_308_TexturedMesh/viewer.cpp)
         target_link_libraries(easy3d_opengl_obj_viewer_test PRIVATE easy3d::viewer)

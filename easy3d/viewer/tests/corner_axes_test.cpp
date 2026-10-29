@@ -10,6 +10,7 @@ using namespace easy3d;
 void require(bool ok,const char* message) {if (!ok) throw std::runtime_error(message);}
 struct AxesViewer : VulkanViewer {
     using VulkanViewer::VulkanViewer;
+    void hide_logo() {show_easy3d_logo_=false;}
     bool visible() const {return show_corner_axes_;}
 };
 void same_picking(const graphics::FrameImage& a,const graphics::FrameImage& b) {
@@ -22,7 +23,7 @@ int main(int argc,char**) {
         initialize(false,false,false);
         VulkanViewerOptions options;options.visible=false;options.width=360;options.height=280;
         options.device.validation=options.device.synchronization_validation=argc>1;
-        AxesViewer viewer("Corner axes",options);viewer.set_background_color(vec4(0));
+        AxesViewer viewer("Corner axes",options);viewer.set_background_color(vec4(0));viewer.hide_logo();
         auto key=glfwSetKeyCallback(viewer.window(),nullptr);glfwSetKeyCallback(viewer.window(),key);
         auto toggle=[&]{key(viewer.window(),GLFW_KEY_A,0,GLFW_PRESS,0);};
         require(viewer.visible(),"axes not visible by default");

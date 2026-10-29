@@ -85,6 +85,7 @@ protected:
     bool show_camera_path_ = false;
     bool show_frame_rate_ = false;
     bool show_corner_axes_ = true;
+    bool show_easy3d_logo_ = true;
     // Corresponds to Viewer::draw_corner_axes(); uses an isolated HUD depth buffer.
     void draw_corner_axes() const;
     std::string framerate_ = "fps: -- (-- ms/frame)";
@@ -123,7 +124,8 @@ private:
     void ensure_text_renderer() const;
     std::chrono::steady_clock::time_point frame_rate_start_;
     unsigned frame_rate_frames_ = 0;
-    mutable bool rendered_show_frame_rate_ = false;
+    mutable bool rendered_show_frame_rate_ = false, rendered_show_logo_ = false;
+    mutable std::vector<graphics::DrawCommand> logo_commands_;
     mutable std::string rendered_frame_rate_;
     mutable std::vector<graphics::DrawCommand> frame_rate_commands_;
     mutable std::shared_ptr<const graphics::Geometry> corner_axes_geometry_;

@@ -714,8 +714,9 @@ struct GpuTexture {
     ~GpuTexture() { if (set) vkFreeDescriptorSets(c.device, pool, 1, &set); }
 };
 // Explicit packing: do not rely on public vec3/mat4 alignment for GPU layouts.
-struct ImpostorUniform { float model_view[16], projection[16], inverse_projection[16], dimensions[4], light[4], clip_planes[8], clip_info[4]; };
-static_assert(sizeof(ImpostorUniform) == 272, "impostor uniform layout changed");
+struct ImpostorUniform { float model_view[16], projection[16], inverse_projection[16], dimensions[4], light[4], clip_planes[8], clip_info[4];
+    float model[16], eye[4], material_light[4], ambient[4], specular[4], backside[4], shading[4]; };
+static_assert(sizeof(ImpostorUniform) == 432, "impostor uniform layout changed");
 struct Push { float mvp[16], color[4]; uint32_t object, lighting; float normal[9]; };
 static_assert(sizeof(Push) == 124, "shader push-constant layout changed");
 
@@ -825,7 +826,7 @@ class VulkanDevice final : public RenderDevice {
         std::weak_ptr<const Geometry> source;
         std::vector<vec4> planes;
         mat4 model_view; mat3 normal;
-        bool lighting=false, discard=false, analytic=false, baked=false;
+        bool lighting=false, discard=false, analytic=false, baked=false, material=false;
         std::shared_ptr<const Geometry> geometry;
     };
     std::map<const Geometry*,ClipEntry> clipped_;
@@ -843,10 +844,10 @@ class VulkanDevice final : public RenderDevice {
         auto& entry=clipped_[input.geometry.get()];
         if (entry.source.lock()!=input.geometry || entry.planes!=command.clipping_planes ||
             entry.model_view!=command.model_view || entry.normal!=command.normal_matrix ||
-            entry.lighting!=command.lighting || entry.discard!=command.discard_clipped_primitives || entry.analytic!=analytic) {
+            entry.lighting!=command.lighting || entry.material!=command.material_lighting || entry.discard!=command.discard_clipped_primitives || entry.analytic!=analytic) {
             auto result=internal::clip_draw(command);
             entry.source=input.geometry; entry.planes=command.clipping_planes; entry.model_view=command.model_view;
-            entry.normal=command.normal_matrix; entry.lighting=command.lighting; entry.discard=command.discard_clipped_primitives;
+            entry.normal=command.normal_matrix; entry.material=command.material_lighting; entry.lighting=command.lighting; entry.discard=command.discard_clipped_primitives;
             entry.analytic=analytic; entry.geometry=result.geometry; entry.baked=command.lighting && !result.lighting;
         }
         command.geometry=entry.geometry;
@@ -1352,6 +1353,20 @@ public:
                     if (!std::isfinite(command.model_view_projection(row, col)))
                         throw std::invalid_argument("non-finite transform");
             }
+            if (command.material_lighting) {
+                if (!std::isfinite(command.shininess) || command.shininess<0)
+                    throw std::invalid_argument("material shininess must be finite and nonnegative");
+                for (unsigned c=0;c<4;++c) {
+                    if (!std::isfinite(command.ambient[c]) || !std::isfinite(command.specular[c]) || !std::isfinite(command.back_color[c]))
+                        throw std::invalid_argument("non-finite material color");
+                    for (unsigned r=0;r<4;++r) if (!std::isfinite(command.model(r,c)))
+                        throw std::invalid_argument("non-finite material model transform");
+                }
+                for (unsigned c=0;c<3;++c) if (!std::isfinite(command.eye[c]) || !std::isfinite(command.light[c]))
+                    throw std::invalid_argument("non-finite material camera/light");
+                if (command.lighting && dot(command.light,command.light)==0)
+                    throw std::invalid_argument("material lighting requires a nonzero direction");
+            }
             if (command.point_style == PointStyle::surfel) {
                 if (command.model_view(3,0) != 0 || command.model_view(3,1) != 0 ||
                     command.model_view(3,2) != 0 || command.model_view(3,3) != 1)
@@ -1426,7 +1441,7 @@ public:
             if (!g.count) continue;
             auto& t = texture(command.texture ? command.texture : white_);
             uint32_t offset = 0;
-            if (expanded_impostor(command) || command.geometry->topology()==Topology::points) {
+            { // Per-draw uniform state is also used by material-lit surfaces.
                 if (uniforms.size() > UINT32_MAX - stride)
                     throw std::invalid_argument("too many impostor draw commands");
                 offset = static_cast<uint32_t>(uniforms.size());
@@ -1465,6 +1480,18 @@ public:
                     for (size_t plane=0;plane<command.clipping_planes.size();++plane)
                         for (unsigned c=0;c<4;++c) u.clip_planes[plane*4+c]=command.clipping_planes[plane][c];
                 }
+                for (unsigned col=0;col<4;++col) for (unsigned row=0;row<4;++row)
+                    u.model[col*4+row]=command.model(row,col);
+                for (unsigned i=0;i<3;++i) {
+                    u.eye[i]=command.eye[i];u.material_light[i]=command.light[i];
+                }
+                for (unsigned i=0;i<4;++i) {
+                    u.ambient[i]=command.ambient[i];u.specular[i]=command.specular[i];u.backside[i]=command.back_color[i];
+                }
+                u.shading[0]=command.material_lighting?1.f:0.f;
+                u.shading[1]=command.lighting_two_sides?1.f:0.f;
+                u.shading[2]=command.distinct_back_color?1.f:0.f;
+                u.shading[3]=command.shininess;
                 uniforms.resize(uniforms.size() + stride);
                 std::memcpy(uniforms.data() + offset, &u, sizeof(u));
             }
@@ -1520,8 +1547,7 @@ public:
             const bool expanded = expanded_impostor(d);
             if (expanded) pipeline = expanded_lines(d) ? (d.line_style == LineStyle::plain ? 5 : 4) : 3;
             vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pass.pipelines[pipeline]);
-            if (expanded || d.geometry->topology()==Topology::points)
-                vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout_, 1, 1, &impostor_set_, 1, &draw.uniform_offset);
+            vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout_, 1, 1, &impostor_set_, 1, &draw.uniform_offset);
             VkDeviceSize offset = 0;
             if (draw.geometry->points) {
                 VkBuffer buffers[]={draw.geometry->points->buffer.handle,draw.geometry->buffer.handle};
@@ -1556,6 +1582,7 @@ public:
                     vkCmdBindVertexBuffers(cmd,0,1,&draw.geometry->buffer.handle,&offset);
                     const auto texture_set=d.scene_depth_texture ? target_->depth_set : draw.texture->set;
                     vkCmdBindDescriptorSets(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,layout_,0,1,&texture_set,0,nullptr);
+                    vkCmdBindDescriptorSets(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,layout_,1,1,&impostor_set_,1,&draw.uniform_offset);
                     Push push{};
                     for (unsigned col=0;col<4;++col) for (unsigned row=0;row<4;++row)
                         push.mvp[col*4+row] = d.model_view_projection(row,col);

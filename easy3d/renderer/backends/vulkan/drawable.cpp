@@ -245,8 +245,27 @@ struct DrawableRenderer::Impl {
         if (d.lighting()) result.normal_matrix = transform::normal_matrix(d.manipulated_matrix());
         result.color = d.coloring_method() == State::UNIFORM_COLOR ? d.color() : vec4(1, 1, 1, 1);
         result.object_id = id;
-        // Basic world-space diffuse lighting; full material parity is pending.
         result.lighting = d.lighting();
+        if (dynamic_cast<PointsDrawable*>(&d) || dynamic_cast<TrianglesDrawable*>(&d)) {
+            result.material_lighting = true;
+            result.lighting_two_sides = d.lighting_two_sides();
+            result.distinct_back_color = d.distinct_back_color();
+            result.back_color = d.back_color();
+            result.ambient = d.material().ambient;
+            result.specular = d.material().specular;
+            result.shininess = d.material().shininess;
+            result.model = d.manipulated_matrix();
+            result.eye = cam.position();
+            result.light = vec3(inverse(cam.modelViewMatrix()) * setting::light_position);
+            if (auto* p = dynamic_cast<PointsDrawable*>(&d)) {
+                if (p->impostor_type() != PointsDrawable::PLAIN) {
+                    result.eye = vec3(0);
+                    result.light = vec3(setting::light_position);
+                }
+                if (p->impostor_type() != PointsDrawable::SPHERE && d.cpu_buffers().normals.empty())
+                    result.lighting = false;
+            }
+        }
         return result;
     }
     void prune() const {

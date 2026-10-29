@@ -96,6 +96,13 @@ struct DrawCommand {
     vec4 color = vec4(1, 1, 1, 1);
     std::uint32_t object_id = 0;
     bool lighting = false; // fixed world-space directional diffuse lighting
+    // Renderer material state. Low-level commands retain basic diffuse lighting
+    // unless this is enabled; drawable adapters forward the shared State here.
+    bool material_lighting = false, lighting_two_sides = false, distinct_back_color = false;
+    mat4 model = mat4::identity();
+    vec3 eye = vec3(0), light = vec3(0,0,1);
+    vec4 ambient = vec4(.05f), specular = vec4(.4f), back_color = vec4(.8f,.4f,.4f,1);
+    float shininess = 64;
     // Straight-alpha triangle annotations composite after the 3D scene.
     // They never write scene depth or picking IDs; depth testing is opt-in below.
     // Flat/scene-depth annotations are unlit; independent 3D HUDs support lighting.

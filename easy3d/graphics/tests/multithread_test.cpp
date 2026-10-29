@@ -59,13 +59,17 @@ void worker_lifetime() {
         PointBatchWorker sleeping(2,std::chrono::hours(1)); next(sleeping);
     }
 }
+struct StreamViewer : VulkanViewer {
+    using VulkanViewer::VulkanViewer;
+    void hide_logo() {show_easy3d_logo_=false;}
+};
 int main(int argc,char**) {
     try {
         initialize(false,false,false);
         worker_lifetime();
         VulkanViewerOptions options; options.visible=false; options.width=211; options.height=179;
         options.device.validation=options.device.synchronization_validation=argc>1;
-        VulkanViewer viewer("Worker handoff regression",options);
+        StreamViewer viewer("Worker handoff regression",options);viewer.hide_logo();
         auto key=glfwSetKeyCallback(viewer.window(),nullptr); glfwSetKeyCallback(viewer.window(),key);
         // This oracle compares every point's rendered color with its source;
         // hide the persistent HUD so it cannot cover otherwise valid point hits.

@@ -64,6 +64,7 @@ int main(int argc,char**) {
         VulkanViewerOptions options; options.visible=false; options.width=360; options.height=260;
         options.device.validation=options.device.synchronization_validation=argc>1;
         SelectionHost viewer("GPU point selection interaction",options);
+        viewer.set_background_color(vec4(1)); // Analytic guide-alpha oracle uses white.
         auto cloud=std::make_shared<PointCloud>();
         const auto deleted=cloud->add_vertex(vec3(0));
         const auto left=cloud->add_vertex(vec3(-.5f,0,0)),right=cloud->add_vertex(vec3(.5f,0,0));

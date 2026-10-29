@@ -9,6 +9,7 @@
 #include <easy3d/fileio/image_io.h>
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/util/initializer.h>
+#include <easy3d/util/setting.h>
 #define GLFW_INCLUDE_NONE
 #include <3rd_party/glfw/include/GLFW/glfw3.h>
 #include <iostream>
@@ -20,6 +21,8 @@ template<class Base> struct Inspect : Base {
     using Base::Base;
     const std::string& manual() const { return this->manual_; }
     const std::string& hint() const { return this->hint_; }
+    bool logo() const {return this->show_easy3d_logo_;}
+    void logo(bool value) {this->show_easy3d_logo_=value;}
     void direct_hint(const std::string& text) { this->hint_=text; }
 };
 struct Console {
@@ -40,7 +43,12 @@ int main(int argc,char**) {
         options.device.validation=options.device.synchronization_validation=argc>1;
         Inspect<VulkanViewer> v("Usage HUD",options);
         require(!v.manual().empty() && v.hint().empty(),"default viewer usage missing");
+        require(v.background_color()==setting::background_color,"native viewer ignored shared background setting");
+        require(v.logo(),"Easy3D logo is not enabled by default");
         const auto baseline=v.capture();
+        v.logo(false);const auto no_logo=v.capture();same_picking(baseline,no_logo);
+        require(no_logo.rgba!=baseline.rgba,"default Easy3D logo did not render");
+        v.logo(true);require(v.capture().rgba==baseline.rgba,"logo restore kept stale overlay layout");
         for (unsigned samples:{1u,4u}) {
             if (!(v.device().supported_sample_counts()&samples)) continue;
             v.set_samples(samples);

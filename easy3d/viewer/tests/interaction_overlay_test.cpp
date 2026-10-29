@@ -13,6 +13,7 @@ using namespace easy3d;
 void require(bool ok,const char* text) { if (!ok) throw std::runtime_error(text); }
 struct HintViewer : VulkanViewer {
     using VulkanViewer::VulkanViewer;
+    void hide_logo() {show_easy3d_logo_=false;}
     using VulkanViewer::mouse_press_event;
     using VulkanViewer::mouse_drag_event;
     using VulkanViewer::mouse_release_event;
@@ -28,7 +29,7 @@ int main(int argc,char**) {
         initialize(false,false,false);
         VulkanViewerOptions options; options.width=233;options.height=197;options.visible=false;
         options.device.validation=options.device.synchronization_validation=argc>1;
-        HintViewer v("Interaction overlays",options);
+        HintViewer v("Interaction overlays",options);v.hide_logo();v.set_background_color(vec4(1));
         require(v.add_model(resource::directory()+"/data/bunny.ply"),"scene model missing");
         const int w=v.width(),h=v.height();
         std::vector<graphics::Vertex> vertices(3);

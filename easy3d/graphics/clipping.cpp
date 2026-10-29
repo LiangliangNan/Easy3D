@@ -34,7 +34,7 @@ DrawCommand clip_draw(const DrawCommand& source) {
     // Analytic surfaces retain their proxy geometry and clip actual hits in the
     // fragment shader. The optional whole-primitive policy also tests controls.
     if (analytic && !source.discard_clipped_primitives) return result;
-    const bool bake=source.lighting && !analytic && topology!=Topology::points;
+    const bool bake=source.lighting && !source.material_lighting && !analytic && topology!=Topology::points;
     std::vector<std::array<double,4>> planes;
     for (const auto& p:source.clipping_planes) {
         std::array<double,4> local{};

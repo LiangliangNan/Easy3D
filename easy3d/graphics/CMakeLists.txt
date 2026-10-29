@@ -15,7 +15,7 @@ foreach(shader scene.vert scene.frag points.vert points.frag lines.vert lines.fr
             COMMAND "${Easy3D_GLSLANG_VALIDATOR}" -V --target-env vulkan1.2 -o "${binary}" "${source}"
             COMMAND "${CMAKE_COMMAND}" "-DINPUT=${binary}" "-DOUTPUT=${header}"
                     "-DSYMBOL=${symbol}" -P "${Easy3D_ROOT}/cmake/EmbedSpirv.cmake"
-            DEPENDS "${source}" "${Easy3D_ROOT}/cmake/EmbedSpirv.cmake"
+            DEPENDS "${source}" "${Easy3D_ROOT}/resources/shaders/vulkan/material.glsl" "${Easy3D_ROOT}/cmake/EmbedSpirv.cmake"
             VERBATIM)
     list(APPEND shader_headers "${header}")
 endforeach()

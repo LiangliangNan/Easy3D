@@ -313,6 +313,7 @@ void VulkanViewer::ensure_text_renderer() const {
     fonts_tried_=true;
     try {
         texter_.reset(new graphics::TextRenderer);
+        texter_->add_font(resource::directory()+"/fonts/en_Earth-Normal.ttf");
         texter_->add_font(resource::directory()+"/fonts/en_Roboto-Medium.ttf");
     } catch (const std::exception& e) {
         texter_.reset();LOG(WARNING) << "Viewer HUD font unavailable: " << e.what();
@@ -347,17 +348,25 @@ void VulkanViewer::update_interaction_overlays(bool force) const {
     draw_corner_axes();
     const bool pivot = show_pivot_point_ && std::chrono::steady_clock::now()<pivot_expires_;
     const float dpi=dpi_scaling();
-    const bool viewport_changed=hint_dpi_!=dpi || width()!=hint_width_ || height()!=hint_height_;
+    const bool viewport_changed=hint_dpi_!=dpi || width()!=hint_width_ || height()!=hint_height_ || rendered_show_logo_!=show_easy3d_logo_;
     const bool hint_changed=viewport_changed || rendered_hint_!=hint_ || rendered_show_frame_rate_!=show_frame_rate_;
     const std::string frame_rate_text=show_frame_rate_?framerate_:std::string();
     const bool frame_rate_changed=viewport_changed || rendered_frame_rate_!=frame_rate_text;
     if (!force && !hint_changed && !frame_rate_changed && pivot==pivot_hint_visible_) return;
-    if (!hint_.empty() || !frame_rate_text.empty()) ensure_text_renderer();
+    if (show_easy3d_logo_ || !hint_.empty() || !frame_rate_text.empty()) ensure_text_renderer();
+    if (viewport_changed || force) {
+        logo_commands_.clear();
+        if (texter_ && show_easy3d_logo_) {
+            graphics::TextOptions options;options.size=15*dpi;options.x=20*dpi;options.y=22.5f*dpi;
+            logo_commands_=texter_->layout("Easy3D",width(),height(),options).commands;
+        }
+        rendered_show_logo_=show_easy3d_logo_;
+    }
     if (hint_changed) {
         hint_commands_.clear();
         if (texter_ && !hint_.empty()) {
             graphics::TextOptions options;
-            options.size=15*dpi;options.x=35*dpi;options.y=(show_frame_rate_?45.0f:22.5f)*dpi;
+            options.font=1;options.size=15*dpi;options.x=35*dpi;options.y=22.5f*(1+int(show_frame_rate_)+int(show_easy3d_logo_))*dpi;
             options.color=vec4(0,0,1,1);
             hint_commands_=texter_->layout(hint_,width(),height(),options).commands;
         }
@@ -366,12 +375,13 @@ void VulkanViewer::update_interaction_overlays(bool force) const {
     if (frame_rate_changed) {
         frame_rate_commands_.clear();
         if (texter_ && !frame_rate_text.empty()) {
-            graphics::TextOptions options;options.size=15*dpi;options.x=20*dpi;options.y=22.5f*dpi;
+            graphics::TextOptions options;options.font=1;options.size=15*dpi;options.x=20*dpi;options.y=22.5f*(1+int(show_easy3d_logo_))*dpi;
             frame_rate_commands_=texter_->layout(frame_rate_text,width(),height(),options).commands;
         }
         rendered_frame_rate_=frame_rate_text;
     }
-    std::vector<graphics::DrawCommand> commands=frame_rate_commands_;
+    std::vector<graphics::DrawCommand> commands=logo_commands_;
+    commands.insert(commands.end(),frame_rate_commands_.begin(),frame_rate_commands_.end());
     commands.insert(commands.end(),hint_commands_.begin(),hint_commands_.end());
     if (pivot) {
         const float x=pivot_pixel_.x,y=pivot_pixel_.y,size=10*dpi;
