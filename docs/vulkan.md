@@ -16,17 +16,30 @@ The completed migration must support **all tutorials on Vulkan** and targets
 hosts. Rendering, interaction, picking, effects, text, snapshots and custom
 subclasses must be covered; outstanding application limitations must be tracked.
 
-Backend choice will be **at compile time**, through concrete classes and the
-aliases in `easy3d/viewer/viewer.h`. Remove runtime backend selection, automatic
+Backend choice will be **exclusive and fixed during CMake configuration**. Each
+build compiles and links either Vulkan or OpenGL, never both. The aliases in
+`easy3d/viewer/viewer.h` follow that build configuration. Remove runtime backend selection, automatic
 Vulkan-to-OpenGL fallback, runtime creation factories and the wrappers maintained
 only for that selection. A Vulkan initialization failure reports its cause;
-it does not create an OpenGL viewer. Retain supported Vulkan-only, OpenGL-only,
-combined and headless configurations. A combined library can expose both explicit
-class families; each application's aliases select one family at compilation.
-This supersedes the previous runtime-selection/fallback objective.
+it does not create an OpenGL viewer. Use separate build directories to test or
+ship the two backends. A headless Vulkan build is a Vulkan-only configuration
+with the window host disabled, not a third backend or a mixed-backend build.
+This supersedes both the previous runtime-selection/fallback objective and the
+previous proposal to let both backends coexist in a combined library.
+
+Use one CMake cache choice, proposed as
+`Easy3D_RENDERER_BACKEND=VULKAN|OPENGL`, defaulting to Vulkan on this branch.
+Retire the independent enable switches once callers are migrated; while they
+remain for transition, reject conflicting settings rather than silently choosing
+one. Configuration must reject an unknown backend and any request to enable both
+or neither backend. Discover dependencies, compile sources, link libraries and
+install/export backend-specific headers only for the selected family. Vulkan
+builds must not depend on OpenGL/GLEW; OpenGL builds must not require the Vulkan
+SDK, loader or shader compiler.
 
 The intended public classes and their implementations belong directly in
-`easy3d/viewer`, in these matching pairs:
+`easy3d/viewer`, in these matching pairs. Both families remain in the source
+tree, but only the configured family is built and exposed by a given package:
 
 | OpenGL class and files | Vulkan class and files |
 | --- | --- |
@@ -45,7 +58,7 @@ The target selector is:
 
 ```cpp
 // easy3d/viewer/viewer.h
-#if defined(EASY3D_NO_OPENGL) || defined(EASY3D_TUTORIAL_VULKAN)
+#if defined(EASY3D_NO_OPENGL)
 #define EASY3D_TUTORIAL_USES_VULKAN 1
 #include <easy3d/viewer/vulkan_viewer.h>
 #include <easy3d/viewer/vulkan_multi_viewer.h>
@@ -78,10 +91,13 @@ class TutorialXXX : public easy3d::Viewer {
 ```
 
 Backend-specific library sources must include their explicit class headers,
-not depend on the public aliases. Keep selector macros consistent across an
-application's translation units. In a combined build the specified condition
-selects OpenGL by default; native-only builds select Vulkan. There is no runtime
-preference or fallback hidden behind either alias.
+not depend on the public aliases. CMake supplies and exports the selected
+backend's compile definitions to consumers, including `EASY3D_NO_OPENGL` for
+Vulkan. The header must not allow `EASY3D_TUTORIAL_VULKAN` or a per-application
+macro to override the configured backend. Retain `EASY3D_TUTORIAL_USES_VULKAN`
+only as a derived compatibility indicator while tutorial conditionals are reduced.
+All targets in one build use the same selected backend; aliases cannot name or
+instantiate the other family. There is no runtime preference or fallback.
 
 Keep public renderer/viewer/gui operations consistent across backends, retaining
 explicit low-level backend APIs where needed. Do not reintroduce `easy3d/graphics`.
@@ -106,8 +122,12 @@ to keep intermediate builds usable must be removed by the runtime-dispatch clean
 step. Do not leave empty implementations or claim a class is supported because
 only its header compiles.
 
-### 1. Establish explicit viewer and offscreen counterparts
+### 1. Enforce CMake backend choice and establish explicit counterparts
 
+- Introduce the exclusive CMake backend choice above. Select renderer, viewer,
+  GUI/application, binding and test sources/dependencies from that choice. Remove
+  mixed-backend targets and tutorial overrides; fail configuration on conflicts.
+  Keep window-host enablement separate so Vulkan offscreen builds remain possible.
 - Rename the existing OpenGL `Viewer` and `MultiViewer` classes to `OpenGLViewer`
   and `OpenGLMultiViewer`, including constructors, destructors and base references.
   Put their implementations in the root-level filename pairs listed above.
@@ -121,8 +141,9 @@ only its header compiles.
 - Inventory existing constructor overloads, virtual hooks and protected members
   used by tutorials, applications and Python bindings before renaming them.
 
-**Gate:** explicit OpenGL/Vulkan viewer and offscreen classes build and render;
-OpenGL multi-view behavior is preserved. No duplicate implementation objects or
+**Gate:** the selected concrete viewer and offscreen classes build and render in
+separate Vulkan-only and OpenGL-only configurations; configuration rejects
+coexistence. OpenGL multi-view behavior is preserved. No duplicate implementation objects or
 new facade layer is introduced. Existing public include compatibility can be kept
 thin while the remaining steps are completed.
 
@@ -167,9 +188,10 @@ input, HiDPI, MSAA and resource-lifetime regressions pass.
   required; an offscreen-only include must still work without a window backend.
   Avoid include cycles: concrete headers include concrete bases, not `viewer.h`.
 
-**Gate:** both explicit multi-view classes render assigned scenes correctly;
-a small original-style `Viewer`, `MultiViewer` and `OffScreen` client compiles
-under each selector, and headless Vulkan offscreen clients need no GLFW/OpenGL.
+**Gate:** each explicit multi-view class renders assigned scenes correctly in its
+own backend build. The same original-style `Viewer`, `MultiViewer` and `OffScreen`
+client compiles in both configurations; headless Vulkan offscreen clients need
+no GLFW/OpenGL. Alias selection follows the exported CMake configuration.
 
 ### 4. Remove runtime selection and its supporting scaffolding
 
@@ -190,8 +212,8 @@ under each selector, and headless Vulkan offscreen clients need no GLFW/OpenGL.
 
 **Gate:** no runtime backend-selection path remains in public viewer/offscreen
 construction, the demo or bindings. Missing Vulkan initialization reports an
-error; no OpenGL host is created as a side effect. Combined builds can still use
-explicit classes, and package clients need no Vulkan SDK headers for common use.
+error; no OpenGL host is created as a side effect. Each package exposes only the
+selected concrete family, and clients need no Vulkan SDK headers for common use.
 
 ### 5. Migrate tutorials with minimal source changes
 
@@ -228,16 +250,22 @@ Backend-specific extensions are documented without requiring runtime selection.
 
 ### Validation and completion criteria
 
-For each relevant step, build Vulkan-only, OpenGL-only, combined and headless
-profiles. On this Mac, run affected Vulkan regressions with MoltenVK and validation,
+For each relevant step, use separate Vulkan-only and OpenGL-only build trees,
+plus a Vulkan-only headless configuration where applicable. Verify that conflicting
+backend requests fail during CMake configuration. On this Mac, run affected
+Vulkan regressions with MoltenVK and validation,
 plus the OpenGL counterpart regressions; broaden to the existing full suites for
 structural/API changes. Reuse tests and add focused coverage only for new behavior
 or a genuine gap, particularly VulkanMultiViewer. Existing results (75 native,
-56 combined and 16 headless tests) are the pre-change baseline, not evidence that
-the proposed architecture is already implemented.
+56 historical combined and 16 headless tests) are the pre-change baseline, not
+evidence that the proposed architecture is already implemented. Mixed-backend
+test targets are retired; preserve their relevant assertions in the corresponding
+single-backend suites rather than dropping coverage with the old build mode.
 
 Check installed-package clients without Vulkan SDK discovery, direct subclassing,
-constructor overloads, explicit class availability and consistent alias types.
+constructor overloads, selected-family class availability and consistent alias
+types. Check that installed targets do not pull in the unselected backend and
+that a client cannot override the configured family through tutorial macros.
 Replace automatic-fallback tests with compile-time selection and initialization
 failure checks. Retain meaningful rendering/depth/picking/MSAA, lifecycle and
 validation coverage. Completion also requires Windows/Linux and Qt/wx testing
@@ -250,8 +278,9 @@ in order. No implementation work is authorized by this planning update alone.
 ## Implementation history and current baseline
 
 The sections below record completed work and the implementation as it existed
-before this revised plan. Runtime factories/fallback, the previous backend source
-layout and earlier future-work statements are historical where they conflict
+before this revised plan. Runtime factories/fallback, combined-backend builds,
+the previous backend source layout and earlier future-work statements are
+historical where they conflict
 with the plan above; they are not continuing architectural requirements.
 
 ## Implemented
