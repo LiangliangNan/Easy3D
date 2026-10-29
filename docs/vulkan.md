@@ -139,7 +139,7 @@ Completion gates include:
   resize/hide/show, independent windows/devices, orbit/pan/zoom, projection toggle,
   file drop and depth-based world-point picking. The installed demo uses an
   embedded bunny by default and needs no source-tree model/shader files.
-- Existing Tutorials 201, 206/207, 301–312, 401–406 and 506 build with the native Vulkan host in
+- Existing Tutorials 201, 206/207, 301–312, 401–406, 506 and 601–603 build with the native Vulkan host in
   Vulkan-only window builds. Tutorial 302 uses the same sphere/surfel/cylinder/cone scene code
   as its OpenGL build, with bounded native execution for automated tests. Legacy
   OpenGL draw callbacks require explicit native implementations. Tutorial 304 exercises the native
@@ -2275,3 +2275,95 @@ Native and combined builds and the OpenGL-only viewer target succeed; Tutorial
 506's retained OpenGL sources compile and link as C++11. The rendered depth inset
 was visually inspected. No new validation errors were reported; the existing
 MoltenVK integer-attachment warning remains. Desktop suites ran sequentially.
+
+
+## Native screen-space line drawables and Tutorials 601–603
+
+`LinesDrawable2D` now has shared CPU buffer updates and native Vulkan rendering.
+Its public class and coordinate normalization remain in
+`renderer/drawable_lines_2D.{h,cpp}`; OpenGL upload and drawing moved to the matching
+`renderer/backends/opengl/drawable_lines_2D.cpp`. Native conversion and immutable
+geometry caching live in the existing `renderer/backends/vulkan/drawable.cpp`,
+alongside the other drawable implementations. OpenGL-only draw entry points
+still fail explicitly in a Vulkan-only build.
+
+Screen positions are normalized against the viewport supplied at upload. Position
+and viewport dimensions must use the same units. Resizing scales this normalized
+placement, as in OpenGL; the native renderer rebuilds
+triangle ribbons at the new target dimensions using the configured pixel width. These indexed or unindexed line
+pairs use the existing MSAA overlay path, remain independent of camera pose and
+projection, ignore world clipping/lighting, and never write scene depth or IDs.
+Uniform coloring is supported; texture/per-element coloring and line impostors
+remain outside this class's original contract. Invalid viewports/coordinates
+are rejected before changing buffer state; bad indices/endpoint counts are
+rejected before GPU submission. Camera movement and uniform color updates reuse
+cached geometry.
+
+The viewer excludes screen drawables from world fitting and camera-path bound
+restoration, and from the picking source table. Adding a 2D drawable before
+upload selects CPU mode in a combined build without making OpenGL calls. This
+retains the same ownership API and prevents later 3D drawables from acquiring
+incorrect picking provenance when mixed with screen annotations.
+
+Tutorials 601 (tessellation), 602 (convex partition) and 603 (curves) now build and
+run with the native host in their original `main.cpp` files. Their algorithm/scene
+builders are shared by both backends and their regressions; no parallel native
+example implementations were introduced. The tessellation/partition scenes keep
+their holes, vertices, borders and sphere-style markers. The curve example keeps
+its six control/curve drawables and logical control-point coordinates under
+HiDPI. All three retain the default viewer manual and accept bounded native
+execution with `--frames`, `--samples` and `--validation`.
+
+`vulkan.screenlines` covers indexed geometry, camera/clipping independence,
+uniform color/alpha updates, visibility, one/four samples, invalid input, empty
+data, normalized resize placement, world-bound isolation, scanning and later
+3D picking provenance. `vulkan.geometrytutorials` invokes the actual shared
+601/602/603 builders, renders the curve families, checks camera-independent UI
+and resize, probes filled and empty polygon regions with face provenance, and
+saves curve/tessellation/partition snapshots. It exercises four-sample curves
+when supported and both sample counts for the polygon examples. The three native
+tutorial entry points also join the bounded CTests.
+
+Verified on this Mac with MoltenVK: all 59 native tests and all 32 combined
+OpenGL/Vulkan tests pass in single complete runs. Focused screen-line and geometry
+tutorial regressions also pass with Vulkan/synchronization validation. Native
+and combined builds and the OpenGL-only viewer target succeed; all three retained
+OpenGL tutorial sources compile and link as C++11. The native renderer has no
+GL/GLEW imports. Curve, tessellation and partition snapshots were visually
+inspected. No new validation errors were reported; the existing MoltenVK
+integer-attachment warning remains. Desktop suites ran sequentially.
+
+
+## Configurable screen-space line width and Tutorial 603 hints
+
+`LinesDrawable2D::set_line_width(float)` and `line_width()` now expose width in
+framebuffer pixels, with a default of 1. Positive finite fractional widths are
+supported; invalid values throw before changing the previous width. Width is
+part of the Vulkan ribbon cache key, so style changes rebuild the ribbons without
+changing the source position buffers. MSAA coverage, camera independence and the
+overlay's exclusion from scene depth, scanning and picking are preserved.
+
+OpenGL uses a matching screen-space vertex/fragment shader pair under
+`resources/shaders/screen_space/screen_space_lines.*`. An instanced triangle quad
+per segment reads the existing position/index buffers through texture-buffer
+views. It requires neither geometry shaders nor hardware wide-line support and
+does not duplicate the position/index data. Drawing restores depth, blend, cull,
+clip-distance, texture and VAO state, and leaves scene depth untouched.
+
+Tutorial 603 shares the same controls and screen hint on both backends. All six
+curves/control lines start at 3 pixels; `[` decreases width, `]` increases it
+(with a demo range of 1–20), and `0` resets it to 3. The default F1 manual remains
+available. The native tutorial regression exercises these controls and checks the
+hint, width limits, rendered changes and exact reset. The OpenGL regression uses
+the same tutorial builder to check its shortcuts/hint and renders indexed and
+non-indexed widths, fractional widths, depth preservation and GL state restoration
+in a real context. Native screen-line coverage also checks invalid widths and
+style-only cache updates without position-buffer changes.
+
+Verified on this Mac: 59/59 native tests and 33/33 combined OpenGL/Vulkan tests
+pass, including the real OpenGL screen-line regression. The combined suite and
+focused native screen-line/tutorial tests use MoltenVK with Vulkan and
+synchronization validation. Native, combined and OpenGL-only viewer builds
+succeed. The Tutorial 603 snapshot was visually inspected with its wider curves
+and screen hint; no new validation errors were reported. The Vulkan-only renderer
+still has no GL/GLEW imports. Existing local migration changes were retained.

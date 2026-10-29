@@ -25,68 +25,32 @@
  ********************************************************************/
 
 #include <easy3d/renderer/drawable_lines_2D.h>
+#include <cmath>
 #include <stdexcept>
-#include <easy3d/renderer/vertex_array_object.h>
-#include <easy3d/renderer/shader_program.h>
-#include <easy3d/renderer/shader_manager.h>
-#include <easy3d/renderer/opengl_error.h>
-
 
 namespace easy3d {
-
-
-
-
-
-    void LinesDrawable2D::update_vertex_buffer(const std::vector<vec2> &vertices, int width, int height, bool dynamic) {
-        if (has_cpu_buffers()) throw std::logic_error("screen-space lines are not yet ported to the CPU drawable adapter");
-        assert(vao_);
-
-        // convert from screen coordinates to Normalized Device Coordinates (NDC)
-        std::vector<vec2> points(vertices.size());
-        for (std::size_t i = 0; i < vertices.size(); ++i) {
-            const vec2 &p = vertices[i];
-            const float x = 2.0f * p.x / static_cast<float>(width) - 1.0f;
-            const float y = 1.0f - 2.0f * p.y / static_cast<float>(height);
-            points[i] = vec2(x, y);
-        }
-        bool success = vao_->create_array_buffer(vertex_buffer_, ShaderProgram::POSITION, points.data(),
-                                                 points.size() * sizeof(vec2), 2, dynamic);
-        LOG_IF(!success, ERROR) << "failed creating vertex buffer";
-        num_vertices_ = success ? points.size() : 0;
+LinesDrawable2D::~LinesDrawable2D() {
+#ifdef EASY3D_RENDERER_OPENGL
+    if (position_texture_ || index_texture_ || line_vao_) opengl_release_line_resources();
+#endif
+}
+void LinesDrawable2D::set_line_width(float width) {
+    if (!std::isfinite(width) || width<=0) throw std::invalid_argument("line width must be positive and finite");
+    line_width_=width;
+}
+void LinesDrawable2D::update_vertex_buffer(const std::vector<vec2>& vertices, int width, int height, bool dynamic) {
+    if (width<=0 || height<=0) throw std::invalid_argument("screen-space lines require a positive viewport");
+    std::vector<vec2> ndc; ndc.reserve(vertices.size());
+    for (const auto& p:vertices) {
+        if (!std::isfinite(p.x) || !std::isfinite(p.y)) throw std::invalid_argument("non-finite screen-space line vertex");
+        ndc.emplace_back(2*p.x/width-1,1-2*p.y/height);
+        if (!std::isfinite(ndc.back().x) || !std::isfinite(ndc.back().y))
+            throw std::invalid_argument("screen-space line coordinate overflow");
     }
-
-
-    void LinesDrawable2D::draw(const Camera *camera) const {
-        if (has_cpu_buffers()) throw std::logic_error("draw(camera) requires the OpenGL backend; submit CPU drawables through VulkanOffScreen");
-        if (update_needed_ || vertex_buffer_ == 0) {
-            const_cast<LinesDrawable2D *>(this)->update_buffers_internal();
-            const_cast<LinesDrawable2D *>(this)->update_needed_ = false;
-        }
-
-        // create the shader program for visualizing the dividing lines
-        const std::string name = "screen_space/screen_space_color";
-        ShaderProgram *program = ShaderManager::get_program(name);
-        if (!program) {
-            std::vector<ShaderProgram::Attribute> attributes = {
-                    ShaderProgram::Attribute(ShaderProgram::POSITION, "ndc_position")
-            };
-            program = ShaderManager::create_program_from_files(name, attributes);
-        }
-        if (!program) {
-            LOG(ERROR) << "shader doesn't exist: " << name;
-            return;
-        }
-
-        const float depth = -1.0f; // on top of everything
-        program->bind();
-        program->set_uniform("screen_color", color_);
-        program->set_uniform("depth", depth);
-
-        gl_draw();
-
-        program->release();
-        easy3d_debug_log_gl_error
-    }
-
+    if (has_cpu_buffers()) {
+        std::vector<vec3> points; points.reserve(ndc.size());
+        for (const auto& p:ndc) points.emplace_back(p.x,p.y,0);
+        Drawable::update_vertex_buffer(points,dynamic);
+    } else opengl_update_vertex_buffer(ndc,dynamic);
+}
 }

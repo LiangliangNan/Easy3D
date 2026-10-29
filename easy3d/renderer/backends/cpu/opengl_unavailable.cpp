@@ -41,6 +41,7 @@ void PointsDrawable::draw(const Camera*) const { unavailable(); }
 void LinesDrawable::draw(const Camera*) const { unavailable(); }
 void TrianglesDrawable::draw(const Camera*) const { unavailable(); }
 void LinesDrawable2D::draw(const Camera*) const { unavailable(); }
+void LinesDrawable2D::opengl_update_vertex_buffer(const std::vector<vec2>&, bool) { unavailable(); }
 namespace shape { void draw_quad_wire(const Rect &rect, const vec4 &color, int width, int height, float depth) { unavailable(); } }
 namespace shape { void draw_quad_filled(const Rect &rect, const vec4 &color, int width, int height, float depth) { unavailable(); } }
 namespace shape { void draw_quad_filled(const Rect &rect, unsigned int texture, int width, int height, float depth) { unavailable(); } }
@@ -62,5 +63,4 @@ void Drawable::gl_draw() const{ unavailable(); }
 void Drawable::opengl_initialize() { unavailable(); }
 void Drawable::opengl_release_buffers() { unavailable(); }
 void Drawable::opengl_disable_element_buffer() { unavailable(); }
-void LinesDrawable2D::update_vertex_buffer(const std::vector<vec2>&, int, int, bool) { unavailable(); }
 }

@@ -20,6 +20,7 @@
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines.h>
+#include <easy3d/renderer/drawable_lines_2D.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/fileio/point_cloud_io.h>
@@ -292,7 +293,8 @@ void VulkanViewer::update_camera_path_overlays() const {
 void VulkanViewer::restore_scene_bounds() {
     Box3 box;
     for (const auto& model:models()) box.grow(model->bounding_box());
-    for (const auto& drawable:drawables()) box.grow(drawable->bounding_box());
+    for (const auto& drawable:drawables())
+        if (!dynamic_cast<LinesDrawable2D*>(drawable.get())) box.grow(drawable->bounding_box());
     if (box.is_valid()) camera()->setSceneBoundingBox(box.min_point(),box.max_point());
 }
 void VulkanViewer::update_frame_rate() {

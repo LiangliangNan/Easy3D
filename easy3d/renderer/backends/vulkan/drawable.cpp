@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "drawable.h"
+#include "shape.h"
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/drawable_lines.h>
+#include <easy3d/renderer/drawable_lines_2D.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/texture.h>
 #include <easy3d/renderer/transform.h>
@@ -29,6 +31,40 @@ struct DrawableRenderer::Impl {
         std::shared_ptr<const graphics::Image> texture_image;
     };
     mutable std::map<const Drawable*, Cached> cache;
+    struct CachedScreenLines {
+        std::weak_ptr<Drawable> source;
+        std::size_t revision = 0;
+        int width = 0, height = 0;
+        float line_width = 0;
+        graphics::DrawCommand command;
+    };
+    mutable std::map<const Drawable*, CachedScreenLines> screen_lines;
+
+    graphics::DrawCommand screen_command(const std::shared_ptr<Drawable>& drawable,const Camera& camera) const {
+        auto& d=*drawable;
+        const auto width=static_cast<LinesDrawable2D&>(d).line_width();
+        if (!d.has_cpu_buffers()) throw std::logic_error("Vulkan screen-space lines require CPU buffers");
+        if (d.coloring_method()!=State::UNIFORM_COLOR)
+            throw std::logic_error("screen-space lines support uniform coloring only");
+        const auto& data=d.cpu_buffers();
+        auto& entry=screen_lines[&d];
+        if (entry.source.lock()!=drawable || !entry.command.geometry || entry.revision!=data.revision ||
+            entry.width!=camera.screenWidth() || entry.height!=camera.screenHeight() || entry.line_width!=width) {
+            const size_t count=data.indices.empty()?data.vertices.size():data.indices.size();
+            if (count%2) throw std::invalid_argument("screen-space lines require endpoint pairs");
+            std::vector<vec2> segments;segments.reserve(count);
+            for (size_t i=0;i<count;++i) {
+                const size_t index=data.indices.empty()?i:data.indices[i];
+                if (index>=data.vertices.size()) throw std::out_of_range("screen-space line index out of range");
+                const auto& p=data.vertices[index];
+                segments.emplace_back((p.x+1)*camera.screenWidth()*.5f,(1-p.y)*camera.screenHeight()*.5f);
+            }
+            entry.command=shape::draw_lines_2d(segments,vec4(1),camera.screenWidth(),camera.screenHeight(),width);
+            entry.source=drawable;entry.revision=data.revision;entry.width=camera.screenWidth();entry.height=camera.screenHeight();
+            entry.line_width=width;
+        }
+        auto result=entry.command;result.color=d.color();return result;
+    }
 
     struct CachedImage {
         std::weak_ptr<const Texture::PixelData> source;
@@ -64,6 +100,7 @@ struct DrawableRenderer::Impl {
 
     graphics::DrawCommand command(const std::shared_ptr<Drawable>& drawable, uint32_t id, const Camera& cam, const std::vector<vec4>& clipping_planes, bool model_selected) const {
         auto& d = *drawable;
+        if (dynamic_cast<LinesDrawable2D*>(&d)) return screen_command(drawable,cam);
         if (!d.has_cpu_buffers())
             throw std::logic_error("drawable must use CPU buffers before Vulkan rendering");
         if (d.coloring_method() != State::UNIFORM_COLOR && d.coloring_method() != State::COLOR_PROPERTY &&
@@ -213,6 +250,9 @@ struct DrawableRenderer::Impl {
         return result;
     }
     void prune() const {
+        for (auto it=screen_lines.begin();it!=screen_lines.end();) {
+            if (it->second.source.expired()) it=screen_lines.erase(it); else ++it;
+        }
         for (auto it = cache.begin(); it != cache.end(); ) {
             if (it->second.source.expired()) it = cache.erase(it); else ++it;
         }
@@ -230,5 +270,5 @@ graphics::DrawCommand DrawableRenderer::command(const std::shared_ptr<Drawable>&
     return impl_->command(drawable, id, camera, clipping_planes, model_selected);
 }
 void DrawableRenderer::prune() const { impl_->prune(); }
-void DrawableRenderer::clear() { impl_->cache.clear(); }
+void DrawableRenderer::clear() { impl_->cache.clear(); impl_->screen_lines.clear(); }
 } } // namespace easy3d::vulkan

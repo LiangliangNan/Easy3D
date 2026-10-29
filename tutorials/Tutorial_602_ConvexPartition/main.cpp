@@ -24,7 +24,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include <easy3d/viewer/viewer.h>
+#include "../viewer_backend.h"
+#include "../native_viewer_options.h"
 #include <easy3d/renderer/camera.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/drawable_points.h>
@@ -46,16 +47,7 @@
 using namespace easy3d;
 
 
-int main(int argc, char** argv) {
-    // initialize Easy3D.
-    initialize();
-
-    // create the default Easy3D viewer.
-    // (a viewer must be created before creating any drawables).
-    Viewer viewer(EXAMPLE_TITLE);
-    viewer.camera()->setUpVector(vec3(0, 1, 0));
-    viewer.camera()->setViewDirection(vec3(0, 0, -1));
-
+std::shared_ptr<SurfaceMesh> create_partition_mesh() {
     // the vertices of the polygon (including the holes).
     std::vector<vec2> points = {
             vec2(  0,   0), // 0: start of outer contour, in counterclockwise order
@@ -86,13 +78,13 @@ int main(int argc, char** argv) {
     // convex partition
     std::vector<PolygonPartition::Polygon> parts;
     if (!PolygonPartition::apply(points, polygons, holes, parts))
-        return EXIT_FAILURE;
+        return {};
 
     //--------------------------------------------------------
 
     // Visualizing the result.
     // we create a mesh to store the resulted convex polygons.
-    SurfaceMesh* mesh = new SurfaceMesh;
+    auto mesh = std::make_shared<SurfaceMesh>();
     for (const auto& p : points)
         mesh->add_vertex({p.x, p.y, 0});
     for (const auto& poly : parts) {
@@ -101,8 +93,25 @@ int main(int argc, char** argv) {
             vts.push_back(SurfaceMesh::Vertex(static_cast<int>(id)));
         mesh->add_face(vts);
     }
+    return mesh;
+}
+
+#ifndef EASY3D_TUTORIAL_TEST
+int main(int argc, char** argv) {
+    initialize();
+#ifdef EASY3D_NO_OPENGL
+    NativeTutorialOptions options;
+    if (!options.parse(argc,argv)) return EXIT_FAILURE;
+    TutorialViewer viewer(EXAMPLE_TITLE,options.viewer);
+#else
+    TutorialViewer viewer(EXAMPLE_TITLE);
+#endif
+    viewer.camera()->setUpVector(vec3(0,1,0));
+    viewer.camera()->setViewDirection(vec3(0,0,-1));
+    auto mesh = create_partition_mesh();
+    if (!mesh || mesh->empty()) return EXIT_FAILURE;
     // add the mesh to the viewer.
-    viewer.add_model(std::shared_ptr<SurfaceMesh>(mesh));
+    viewer.add_model(mesh);
 
     // show the vertices
     mesh->renderer()->get_points_drawable("vertices")->set_visible(true);
@@ -113,6 +122,10 @@ int main(int argc, char** argv) {
     // also show the borders
     mesh->renderer()->get_lines_drawable("borders")->set_visible(true);
 
-    // run the viewer
+#ifdef EASY3D_NO_OPENGL
+    return options.run(viewer);
+#else
     return viewer.run();
+#endif
 }
+#endif // EASY3D_TUTORIAL_TEST

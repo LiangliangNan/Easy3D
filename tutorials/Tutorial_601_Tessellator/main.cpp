@@ -24,7 +24,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include <easy3d/viewer/viewer.h>
+#include "../viewer_backend.h"
+#include "../native_viewer_options.h"
 #include <easy3d/renderer/camera.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/drawable_points.h>
@@ -103,19 +104,10 @@ void triangulate(SurfaceMesh *mesh) {
 }
 
 
-int main(int argc, char **argv) {
-    // initialize Easy3D.
-    initialize();
-
-    // create the default Easy3D viewer.
-    // (a viewer must be created before creating any drawables).
-    Viewer viewer(EXAMPLE_TITLE);
-    viewer.camera()->setUpVector(vec3(0, 1, 0));
-    viewer.camera()->setViewDirection(vec3(0, 0, -1));
-
+std::shared_ptr<SurfaceMesh> create_tessellation_mesh() {
     //-------- create a simple mesh with 3 complex faces ---------
 
-    auto mesh = new SurfaceMesh;
+    auto mesh = std::make_shared<SurfaceMesh>();
 
     { // face 1: a concave quad
         auto v0 = mesh->add_vertex(vec3(0, 0, 0));
@@ -157,12 +149,29 @@ int main(int argc, char **argv) {
 
     //-------- triangulate the mesh using the tessellator ---------
 
-    triangulate(mesh);
+    triangulate(mesh.get());
 
     // ------------------------------------------------------------
 
+    return mesh;
+}
+
+#ifndef EASY3D_TUTORIAL_TEST
+int main(int argc, char** argv) {
+    initialize();
+#ifdef EASY3D_NO_OPENGL
+    NativeTutorialOptions options;
+    if (!options.parse(argc,argv)) return EXIT_FAILURE;
+    TutorialViewer viewer(EXAMPLE_TITLE,options.viewer);
+#else
+    TutorialViewer viewer(EXAMPLE_TITLE);
+#endif
+    viewer.camera()->setUpVector(vec3(0,1,0));
+    viewer.camera()->setViewDirection(vec3(0,0,-1));
+    auto mesh = create_tessellation_mesh();
+    if (!mesh || mesh->empty()) return EXIT_FAILURE;
     // add the model to the viewer
-    viewer.add_model(std::shared_ptr<SurfaceMesh>(mesh), true);
+    viewer.add_model(mesh, true);
 
     // show the vertices
     mesh->renderer()->get_points_drawable("vertices")->set_visible(true);
@@ -173,7 +182,10 @@ int main(int argc, char **argv) {
     // also show the borders
     mesh->renderer()->get_lines_drawable("borders")->set_visible(true);
 
-    // run the viewer
+#ifdef EASY3D_NO_OPENGL
+    return options.run(viewer);
+#else
     return viewer.run();
+#endif
 }
-
+#endif // EASY3D_TUTORIAL_TEST

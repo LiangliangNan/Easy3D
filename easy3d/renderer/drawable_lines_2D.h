@@ -35,7 +35,7 @@ namespace easy3d {
     /**
      * \brief The drawable for rendering a set of line segments in the screen space.
      * \details This drawable is used to render a set of line segments in the screen space, e.g., the pivot mark.
-     *      Line width, imposter, texturing, per-element color, and scalar attributes are not implemented given
+     *      Imposter, texturing, per-element color, and scalar attributes are not implemented given
      *      the limited usage cases.
      * \class LinesDrawable2D easy3d/renderer/drawable_lines_2D.h
      * \sa LinesDrawable the 3D version of lines drawables.
@@ -47,6 +47,11 @@ namespace easy3d {
 		 * \param name The name of the drawable.
 		 */
         explicit LinesDrawable2D(const std::string& name = "");
+        ~LinesDrawable2D() override;
+
+        /// Width in framebuffer pixels (default 1). Must be positive and finite.
+        float line_width() const { return line_width_; }
+        void set_line_width(float width);
 
 		/**
 		 * \brief Returns the type of the drawable.
@@ -66,12 +71,21 @@ namespace easy3d {
          * \param width The width of the screen/viewport.
          * \param height The height of the screen/viewport.
          * \param dynamic If true, the buffer is dynamic and can be updated.
+         * \details Coordinates are normalized using the supplied viewport. Resizing scales their
+         *      relative placement, matching the OpenGL implementation. Vulkan renders variable-width
+         *      triangle ribbons as camera-independent overlays, without scene depth or picking IDs.
+         *      Attach to a native host before uploading so CPU buffers are selected in dual builds.
          * \attention In the current implementation, each pair of consecutive vertices represent a line. Thus for
          *      polylines or polygons, the shared vertices has to be duplicated in the vertex buffer. This is not
          *      optimal in terms of memory usage, but it is easier to implement and use.
          *      For a more memory efficient implementation, an element buffer should be used.
          */
         void update_vertex_buffer(const std::vector<vec2> &vertices, int width, int height, bool dynamic = false);
+    private:
+        void opengl_update_vertex_buffer(const std::vector<vec2>& ndc, bool dynamic);
+        void opengl_release_line_resources();
+        float line_width_ = 1.0f;
+        mutable unsigned int position_texture_ = 0, index_texture_ = 0, line_vao_ = 0;
     };
 
 }

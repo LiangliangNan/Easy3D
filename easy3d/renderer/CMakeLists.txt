@@ -13,7 +13,7 @@ if(NOT Easy3D_ENABLE_OPENGL)
             drawable_points.h drawable_triangles.h frame.h frustum.h key_frame_interpolator.h
             manipulator.h manipulated_camera_frame.h manipulated_frame.h shape.h buffer.h
             renderer.h state.h texture.h texture_manager.h transform.h transform_decompose.h)
-    set(renderer_sources obj_materials.cpp camera.cpp clipping_plane.cpp constraint.cpp drawable.cpp drawable_types.cpp frame.cpp frustum.cpp
+    set(renderer_sources obj_materials.cpp camera.cpp clipping_plane.cpp constraint.cpp drawable.cpp drawable_types.cpp drawable_lines_2D.cpp frame.cpp frustum.cpp
             key_frame_interpolator.cpp manipulator.cpp manipulated_camera_frame.cpp manipulated_frame.cpp
             shape.cpp buffer.cpp renderer.cpp state.cpp texture.cpp texture_manager.cpp transform.cpp transform_decompose.cpp
             backends/cpu/opengl_unavailable.cpp ${backend_sources})
@@ -81,6 +81,7 @@ set(${module}_sources
         backends/opengl/shape_draw.cpp
         drawable_lines.cpp
         drawable_lines_2D.cpp
+        backends/opengl/drawable_lines_2D.cpp
         drawable_points.cpp
         drawable_triangles.cpp
         dual_depth_peeling.cpp
@@ -171,6 +172,8 @@ set(${module}_resources
         # screen space
         ../../resources/shaders/screen_space/screen_space_color.vert
         ../../resources/shaders/screen_space/screen_space_color.frag
+        ../../resources/shaders/screen_space/screen_space_lines.vert
+        ../../resources/shaders/screen_space/screen_space_lines.frag
         ../../resources/shaders/screen_space/screen_space_texture.frag
         ../../resources/shaders/screen_space/screen_space_texture.vert
         ../../resources/shaders/screen_space/screen_space_depth_texture.vert

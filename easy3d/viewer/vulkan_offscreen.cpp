@@ -19,6 +19,7 @@
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/drawable_lines.h>
+#include <easy3d/renderer/drawable_lines_2D.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
@@ -66,11 +67,13 @@ struct VulkanOffScreen::Impl {
         const auto& planes = active_clipping_planes();
         auto append=[&](const std::shared_ptr<Drawable>& d,uint32_t id,const std::shared_ptr<Model>& model,bool selected) {
             if (!d->is_visible()) return;
-            if (sources) {
+            auto command=drawable_renderer.command(d,id,cam,planes,selected);
+            if (sources && !command.overlay) {
                 if (sources->size()>=UINT32_MAX) throw std::length_error("too many picking sources");
                 id=uint32_t(sources->size()); sources->push_back({model,d});
+                command.object_id=id;
             }
-            commands.push_back(drawable_renderer.command(d,id,cam,planes,selected));
+            commands.push_back(std::move(command));
         };
         for (size_t i = 0; i < models.size(); ++i) {
             const auto* renderer = models[i]->renderer();
@@ -211,7 +214,8 @@ void VulkanOffScreen::fit_screen(const Model* selected) {
     if (selected) box.grow(selected->bounding_box());
     else {
         for (const auto& model : impl_->models) box.grow(model->bounding_box());
-        for (const auto& drawable : impl_->drawables) box.grow(drawable->bounding_box());
+        for (const auto& drawable : impl_->drawables)
+            if (!dynamic_cast<LinesDrawable2D*>(drawable.get())) box.grow(drawable->bounding_box());
     }
     if (box.is_valid()) {
         camera()->setSceneBoundingBox(box.min_point(), box.max_point()); camera()->showEntireScene();
