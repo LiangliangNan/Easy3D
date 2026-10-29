@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #ifndef EASY3D_VIEWER_VULKAN_OFFSCREEN_H
 #define EASY3D_VIEWER_VULKAN_OFFSCREEN_H
-#include <easy3d/graphics/render_device.h>
+#include <easy3d/renderer/render_device.h>
 #include <easy3d/renderer/camera.h>
 #include <memory>
 #include <string>

@@ -1,7 +1,0 @@
-cmake_minimum_required(VERSION 3.12)
-project(Easy3DInstalledVulkanConsumer LANGUAGES CXX)
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-find_package(Easy3D CONFIG REQUIRED COMPONENTS viewer vulkan)
-add_executable(installed_vulkan_consumer main.cpp)
-target_link_libraries(installed_vulkan_consumer PRIVATE easy3d::viewer)

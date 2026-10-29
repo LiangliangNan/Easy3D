@@ -36,12 +36,6 @@ if (Easy3D_HAS_FFMPEG)
     list(APPEND EXPORT_TARGET_SET easy3d_video)
 endif ()
 
-if(Easy3D_ENABLE_VULKAN)
-    add_subdirectory(graphics)
-    list(APPEND CONF_Easy3D_COMPONENTS vulkan)
-    list(APPEND EXPORT_TARGET_SET easy3d_vulkan)
-endif()
-
 add_subdirectory(renderer)
 list(APPEND CONF_Easy3D_COMPONENTS renderer)
 list(APPEND EXPORT_TARGET_SET easy3d_renderer)

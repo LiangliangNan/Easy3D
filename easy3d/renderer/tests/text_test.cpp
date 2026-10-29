@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-#include <easy3d/graphics/text_renderer.h>
+#include <easy3d/renderer/text_layout.h>
 #include <easy3d/util/resource.h>
 #include <cmath>
 #include <iostream>
@@ -26,7 +26,7 @@ std::size_t glyph_count(const TextLayout& layout) {
 }
 int main(int argc,char** argv) {
     try {
-        graphics::TextRenderer text(256);
+        graphics::TextLayoutEngine text(256);
         const std::string font=resource::directory()+"/fonts/en_Vera.ttf";
         require(text.add_font(font)==0,"font index mismatch");
         require(text.add_font(resource::directory()+"/fonts/en_Cousine-Regular.ttf")==1,"second font index mismatch");
@@ -82,9 +82,9 @@ int main(int argc,char** argv) {
         o.size=0; rejects([&]{ text.layout("F",160,120,o); }); o.size=24;
         o.line_spacing=-2; rejects([&]{ text.layout("F",160,120,o); }); o.line_spacing=0;
         rejects([&]{ text.add_font("/missing/font.ttf"); });
-        graphics::TextRenderer tiny(32); tiny.add_font(font);
+        graphics::TextLayoutEngine tiny(32); tiny.add_font(font);
         o.size=200; rejects([&]{ tiny.layout("W",160,120,o); });
-        graphics::TextRenderer paged(64); paged.add_font(font); o.size=24;
+        graphics::TextLayoutEngine paged(64); paged.add_font(font); o.size=24;
         auto pages=paged.layout("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",1000,100,o);
         std::set<const Image*> atlases;
         for (const auto& command:pages.commands) atlases.insert(command.texture.get());

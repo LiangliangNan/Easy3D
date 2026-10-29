@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Liangliang Nan
-#ifndef EASY3D_GRAPHICS_RENDER_DEVICE_H
-#define EASY3D_GRAPHICS_RENDER_DEVICE_H
+#ifndef EASY3D_RENDERER_RENDER_DEVICE_H
+#define EASY3D_RENDERER_RENDER_DEVICE_H
 
 #include <easy3d/core/types.h>
 #include <cstdint>
@@ -218,7 +218,7 @@ public:
     virtual std::uint64_t point_upload_count() const = 0;
 };
 
-// Implemented by easy3d::vulkan. Throws std::runtime_error on unavailable devices.
+// Implemented by the renderer Vulkan backend. Throws on unavailable devices.
 std::unique_ptr<RenderDevice> create_vulkan_device(const DeviceOptions& options = {});
 
 } } // namespace easy3d::graphics

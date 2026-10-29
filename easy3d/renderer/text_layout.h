@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-#ifndef EASY3D_GRAPHICS_TEXT_RENDERER_H
-#define EASY3D_GRAPHICS_TEXT_RENDERER_H
-#include <easy3d/graphics/render_device.h>
+#ifndef EASY3D_RENDERER_TEXT_LAYOUT_H
+#define EASY3D_RENDERER_TEXT_LAYOUT_H
+#include <easy3d/renderer/render_device.h>
 
 namespace easy3d { namespace graphics {
 
@@ -31,12 +31,12 @@ struct TextLayout {
 // This is basic horizontal layout, without shaping, bidi or font fallback.
 // Layouts own immutable geometry/atlas snapshots and outlive this object. New
 // glyphs never mutate a previously returned layout. Externally synchronize use.
-class TextRenderer {
+class TextLayoutEngine {
 public:
-    explicit TextRenderer(unsigned atlas_size = 512);
-    ~TextRenderer();
-    TextRenderer(const TextRenderer&) = delete;
-    TextRenderer& operator=(const TextRenderer&) = delete;
+    explicit TextLayoutEngine(unsigned atlas_size = 512);
+    ~TextLayoutEngine();
+    TextLayoutEngine(const TextLayoutEngine&) = delete;
+    TextLayoutEngine& operator=(const TextLayoutEngine&) = delete;
     // Loads trusted font files. Throws on unreadable/unsupported fonts.
     std::size_t add_font(const std::string& filename);
     const std::vector<std::string>& font_names() const;

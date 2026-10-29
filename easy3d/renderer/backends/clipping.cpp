@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-#include <easy3d/graphics/clipping.h>
+#include <easy3d/renderer/backends/clipping.h>
 #include <array>
 #include <algorithm>
 #include <cmath>

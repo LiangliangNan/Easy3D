@@ -39,7 +39,7 @@ const char* const usage_manual = "----------------------- Text Rendering usage -
 
 
 #if EASY3D_TUTORIAL_USES_VULKAN
-#include <easy3d/graphics/text_renderer.h>
+#include <easy3d/renderer/text_layout.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/resource.h>
 #define GLFW_INCLUDE_NONE

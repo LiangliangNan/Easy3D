@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-#include <easy3d/graphics/render_device.h>
+#include <easy3d/renderer/render_device.h>
 #include <iostream>
 #include <algorithm>
 #include <limits>

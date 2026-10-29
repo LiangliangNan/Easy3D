@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/offscreen.h>
-#include <easy3d/graphics/text_renderer.h>
+#include <easy3d/renderer/text_layout.h>
 #include <easy3d/viewer/vulkan_offscreen.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/renderer.h>
@@ -28,7 +28,7 @@ int main() {
     mesh->renderer()->get_triangles_drawable("faces")->set_uniform_coloring(easy3d::vec4(1, 0.4f, 0, 1));
     const unsigned samples = renderer.device().supported_sample_counts() & 4 ? 4 : 1;
     auto frame = renderer.capture(samples);
-    easy3d::graphics::TextRenderer text;
+    easy3d::graphics::TextLayoutEngine text;
     text.add_font(easy3d::resource::directory()+"/fonts/en_Vera.ttf");
     easy3d::graphics::TextOptions options;
     options.x=2; options.y=2; options.size=14;

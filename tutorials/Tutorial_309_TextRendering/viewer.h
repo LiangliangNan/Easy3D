@@ -30,7 +30,7 @@
 #include "../viewer_backend.h"
 
 #if EASY3D_TUTORIAL_USES_VULKAN
-#include <easy3d/graphics/text_renderer.h>
+#include <easy3d/renderer/text_layout.h>
 #endif
 
 namespace easy3d { class TextRenderer; }
@@ -56,7 +56,7 @@ protected:
 
 private:
 #if EASY3D_TUTORIAL_USES_VULKAN
-    easy3d::graphics::TextRenderer text_{1024};
+    easy3d::graphics::TextLayoutEngine text_{1024};
     float size_ = 28, spacing_ = 0, line_spacing_ = 0, dpi_ = 0;
     easy3d::graphics::TextAlign align_ = easy3d::graphics::TextAlign::center;
     bool upper_left_ = true, kerning_ = false, dirty_ = true;

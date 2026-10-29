@@ -1,10 +1,11 @@
 set(module renderer)
 set(private_dependencies)
 set(backend_sources)
+set(backend_headers)
 if(Easy3D_ENABLE_VULKAN)
     list(APPEND backend_sources backends/vulkan/drawable.cpp backends/vulkan/shape.cpp backends/vulkan/manipulator.cpp
             backends/vulkan/key_frame_interpolator.cpp backends/vulkan/clipping_plane.cpp)
-    list(APPEND private_dependencies easy3d::vulkan)
+    include(backends/vulkan/CMakeLists.txt)
 endif()
 set(public_dependencies easy3d::util easy3d::core easy3d::fileio easy3d::algo)
 
@@ -17,11 +18,7 @@ if(NOT Easy3D_ENABLE_OPENGL)
             key_frame_interpolator.cpp manipulator.cpp manipulated_camera_frame.cpp manipulated_frame.cpp
             shape.cpp buffer.cpp renderer.cpp state.cpp texture.cpp texture_manager.cpp transform.cpp transform_decompose.cpp
             backends/cpu/opengl_unavailable.cpp ${backend_sources})
-    add_module(renderer "${renderer_headers}" "${renderer_sources}" "${private_dependencies}" "${public_dependencies}")
-    target_compile_definitions(easy3d_renderer PUBLIC EASY3D_NO_OPENGL)
-    install_module(renderer)
-    return()
-endif()
+else()
 
 set(${module}_headers
         obj_materials.h
@@ -216,7 +213,11 @@ set(${module}_resources
         ../../resources/shaders/selection/selection_pointcloud_lasso.frag
         )
 
+endif()
+list(APPEND renderer_headers ${backend_headers})
+
 add_module(${module} "${${module}_headers}" "${${module}_sources}" "${private_dependencies}" "${public_dependencies}")
+if(Easy3D_ENABLE_OPENGL)
 target_include_directories(easy3d_${module} PRIVATE ${Easy3D_THIRD_PARTY}/glew/include)
 target_compile_definitions(easy3d_${module} PRIVATE GLEW_BUILD EASY3D_RENDERER_OPENGL PUBLIC GLEW_NO_GLU)
 
@@ -234,7 +235,25 @@ endif ()
 message(STATUS "OpenGL libraries: ${FOUND_GL_LIBRARIES}")
 target_link_libraries(easy3d_${module} PUBLIC ${FOUND_GL_LIBRARIES})
 
+else()
+    target_compile_definitions(easy3d_renderer PUBLIC EASY3D_NO_OPENGL)
+endif()
+
+if(Easy3D_ENABLE_VULKAN)
+    target_include_directories(easy3d_renderer PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/backends/vulkan")
+    if(UNIX AND Easy3D_BUILD_SHARED_LIBS)
+        # The loader is a private backend dependency. Installed consumers must
+        # resolve it without linking Vulkan themselves or overriding dyld/ld paths.
+        set_property(TARGET easy3d_renderer APPEND PROPERTY INSTALL_RPATH "$<TARGET_FILE_DIR:Vulkan::Vulkan>")
+    endif()
+    install(FILES backends/vulkan/surface.h
+        DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/easy3d/renderer/backends/vulkan")
+    add_subdirectory(tests)
+endif()
 install_module(${module})
+if(Easy3D_ENABLE_OPENGL)
 # Install glew.h to the installation directory
 install(FILES "${Easy3D_THIRD_PARTY}/glew/include/GL/glew.h"
         DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/3rd_party/glew/include/GL")
+
+endif()

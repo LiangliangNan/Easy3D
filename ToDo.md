@@ -1,6 +1,6 @@
 ### ToDo list (or on going):
 - Vulkan support (experimental)
-  - Remove "easy3d/graphics" dir (or move the content to "easy3d/renderer")
+  - [x] Remove "easy3d/graphics" dir (content consolidated into "easy3d/renderer" and "easy3d/viewer")
   - Unify APIs for the classes in "easy3d/renderer", "easy3d/viewer", and "easy3d/gui" for Vulkan and OpenGL. Vulkan and 
     OpenGL related calls should remain in the backends.
 - Send the computed value of "MVP * MANIP" to shaders (avoiding computing the matrix product for each vertex/fragment)

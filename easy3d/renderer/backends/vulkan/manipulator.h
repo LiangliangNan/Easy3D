@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #ifndef EASY3D_RENDERER_BACKENDS_VULKAN_MANIPULATOR_H
 #define EASY3D_RENDERER_BACKENDS_VULKAN_MANIPULATOR_H
-#include <easy3d/graphics/render_device.h>
+#include <easy3d/renderer/render_device.h>
 namespace easy3d {
 class Model;
 class Camera;

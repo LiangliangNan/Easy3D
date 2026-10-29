@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/vulkan_viewer.h>
-#include <easy3d/graphics/vulkan/surface.h>
-#include <easy3d/graphics/text_renderer.h>
+#include <easy3d/renderer/backends/vulkan/surface.h>
+#include <easy3d/renderer/text_layout.h>
 #include <easy3d/renderer/backends/vulkan/shape.h>
 #include <easy3d/renderer/backends/vulkan/key_frame_interpolator.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
@@ -312,7 +312,7 @@ void VulkanViewer::ensure_text_renderer() const {
     if (fonts_tried_) return;
     fonts_tried_=true;
     try {
-        texter_.reset(new graphics::TextRenderer);
+        texter_.reset(new graphics::TextLayoutEngine);
         texter_->add_font(resource::directory()+"/fonts/en_Earth-Normal.ttf");
         texter_->add_font(resource::directory()+"/fonts/en_Roboto-Medium.ttf");
     } catch (const std::exception& e) {

@@ -46,17 +46,18 @@ jobs:
         run: cmake --build build-vulkan --parallel 2
       - name: Validate SPIR-V
         run: |
-          spirv-val --target-env vulkan1.2 build-vulkan/easy3d/graphics/scene_vert.spv
-          spirv-val --target-env vulkan1.2 build-vulkan/easy3d/graphics/scene_frag.spv
-          spirv-val --target-env vulkan1.2 build-vulkan/easy3d/graphics/points_vert.spv
-          spirv-val --target-env vulkan1.2 build-vulkan/easy3d/graphics/points_frag.spv
-          spirv-val --target-env vulkan1.2 build-vulkan/easy3d/graphics/lines_vert.spv
-          spirv-val --target-env vulkan1.2 build-vulkan/easy3d/graphics/lines_frag.spv
-          spirv-val --target-env vulkan1.2 build-vulkan/easy3d/graphics/wide_lines_vert.spv
-          spirv-val --target-env vulkan1.2 build-vulkan/easy3d/graphics/wide_lines_frag.spv
-          spirv-val --target-env vulkan1.2 build-vulkan/easy3d/graphics/overlay_vert.spv
-          spirv-val --target-env vulkan1.2 build-vulkan/easy3d/graphics/overlay_frag.spv
-          spirv-val --target-env vulkan1.2 build-vulkan/easy3d/graphics/point_selection_comp.spv
+          spirv-val --target-env vulkan1.2 build-vulkan/easy3d/renderer/backends/vulkan/scene_vert.spv
+          spirv-val --target-env vulkan1.2 build-vulkan/easy3d/renderer/backends/vulkan/scene_frag.spv
+          spirv-val --target-env vulkan1.2 build-vulkan/easy3d/renderer/backends/vulkan/points_vert.spv
+          spirv-val --target-env vulkan1.2 build-vulkan/easy3d/renderer/backends/vulkan/points_frag.spv
+          spirv-val --target-env vulkan1.2 build-vulkan/easy3d/renderer/backends/vulkan/lines_vert.spv
+          spirv-val --target-env vulkan1.2 build-vulkan/easy3d/renderer/backends/vulkan/lines_frag.spv
+          spirv-val --target-env vulkan1.2 build-vulkan/easy3d/renderer/backends/vulkan/wide_lines_vert.spv
+          spirv-val --target-env vulkan1.2 build-vulkan/easy3d/renderer/backends/vulkan/wide_lines_frag.spv
+          spirv-val --target-env vulkan1.2 build-vulkan/easy3d/renderer/backends/vulkan/overlay_vert.spv
+          spirv-val --target-env vulkan1.2 build-vulkan/easy3d/renderer/backends/vulkan/overlay_frag.spv
+          spirv-val --target-env vulkan1.2 build-vulkan/easy3d/renderer/backends/vulkan/depth_texture_frag.spv
+          spirv-val --target-env vulkan1.2 build-vulkan/easy3d/renderer/backends/vulkan/point_selection_comp.spv
       - name: Render without a display using lavapipe
         run: |
           export VK_DRIVER_FILES="$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit)"
@@ -72,7 +73,7 @@ jobs:
       - name: Build and run an installed-package consumer
         run: |
           cmake --install build-vulkan
-          cmake -S easy3d/graphics/tests/installed -B installed-consumer -G Ninja \
+          cmake -S easy3d/viewer/tests/installed -B installed-consumer -G Ninja \
             -DEasy3D_DIR="${{ github.workspace }}/install/lib/CMake"
           cmake --build installed-consumer
           export VK_DRIVER_FILES="$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit)"

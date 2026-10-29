@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-#include <easy3d/graphics/text_renderer.h>
+#include <easy3d/renderer/text_layout.h>
 #define STB_TRUETYPE_IMPLEMENTATION
 #define STBTT_STATIC
 #include <3rd_party/stb/stb_truetype.h>
@@ -39,7 +39,7 @@ std::vector<std::vector<int>> decode(const std::string& text) {
     return lines;
 }
 }
-struct TextRenderer::Impl {
+struct TextLayoutEngine::Impl {
     struct Font {
         std::vector<unsigned char> bytes;
         stbtt_fontinfo info{};
@@ -90,14 +90,14 @@ struct TextRenderer::Impl {
         return g;
     }
 };
-TextRenderer::TextRenderer(unsigned size) {
+TextLayoutEngine::TextLayoutEngine(unsigned size) {
     if (size<32 || size>4096) throw std::invalid_argument("text atlas size must be in [32,4096]");
     impl_.reset(new Impl(size));
 }
-TextRenderer::~TextRenderer() = default;
-const std::vector<std::string>& TextRenderer::font_names() const { return impl_->names; }
-void TextRenderer::clear_cache() { impl_->glyphs.clear(); impl_->pages.clear(); }
-std::size_t TextRenderer::add_font(const std::string& file) {
+TextLayoutEngine::~TextLayoutEngine() = default;
+const std::vector<std::string>& TextLayoutEngine::font_names() const { return impl_->names; }
+void TextLayoutEngine::clear_cache() { impl_->glyphs.clear(); impl_->pages.clear(); }
+std::size_t TextLayoutEngine::add_font(const std::string& file) {
     std::ifstream stream(file,std::ios::binary);
     if (!stream) throw std::runtime_error("cannot read font: "+file);
     std::unique_ptr<Impl::Font> font(new Impl::Font);
@@ -113,7 +113,7 @@ std::size_t TextRenderer::add_font(const std::string& file) {
     impl_->fonts.push_back(std::move(font));
     return impl_->fonts.size()-1;
 }
-TextLayout TextRenderer::layout(const std::string& text,unsigned width,unsigned height,const TextOptions& o) {
+TextLayout TextLayoutEngine::layout(const std::string& text,unsigned width,unsigned height,const TextOptions& o) {
     const auto projection=screen_space_projection(width,height);
     if (o.font>=impl_->fonts.size()) throw std::out_of_range("text font index is not loaded");
     for (float v : {o.size,o.x,o.y,o.character_spacing,o.line_spacing,o.color.x,o.color.y,o.color.z,o.color.w})

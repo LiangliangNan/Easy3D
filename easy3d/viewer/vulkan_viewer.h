@@ -9,7 +9,7 @@
 struct GLFWwindow;
 
 namespace easy3d {
-namespace graphics { class TextRenderer; }
+namespace graphics { class TextLayoutEngine; }
 namespace vulkan { class KeyFrameInterpolatorRenderer; }
 class KeyFrameInterpolator;
 struct VulkanViewerOptions {
@@ -131,7 +131,7 @@ private:
     mutable std::shared_ptr<const graphics::Geometry> corner_axes_geometry_;
     void cancel_interaction();
     std::map<Key, std::map<Modifier, std::pair<Function, Model*>>> commands_;
-    mutable std::unique_ptr<graphics::TextRenderer> texter_;
+    mutable std::unique_ptr<graphics::TextLayoutEngine> texter_;
     mutable bool fonts_tried_ = false;
     mutable std::string rendered_hint_;
     mutable float hint_dpi_ = 0;

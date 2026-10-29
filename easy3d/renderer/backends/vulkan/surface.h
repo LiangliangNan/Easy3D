@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-#ifndef EASY3D_GRAPHICS_VULKAN_SURFACE_H
-#define EASY3D_GRAPHICS_VULKAN_SURFACE_H
-#include <easy3d/graphics/render_device.h>
+#ifndef EASY3D_RENDERER_BACKENDS_VULKAN_SURFACE_H
+#define EASY3D_RENDERER_BACKENDS_VULKAN_SURFACE_H
+#include <easy3d/renderer/render_device.h>
 #include <vulkan/vulkan.h>
 #include <functional>
 

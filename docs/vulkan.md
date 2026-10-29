@@ -83,9 +83,9 @@ Completion gates include:
 ## Implemented
 
 - Backend-neutral, immutable geometry and image descriptions, draw commands and
-  typed color/depth/object/primitive readback in `easy3d/graphics/render_device.h`.
+  typed color/depth/object/primitive readback in `easy3d/renderer/render_device.h`.
 - A native Vulkan 1.2 offscreen device, with no OpenGL context, window, surface,
-  swapchain, Qt, GLFW or GLEW dependency in the `easy3d::vulkan` target.
+  swapchain, Qt, GLFW or GLEW dependency in the renderer Vulkan backend.
 - Indexed/nonindexed triangle lists, plain points and line lists, uniform and
   vertex colors, RGBA8 textures, basic directional lighting and depth testing.
 - Portable large plain points, spheres and oriented surfels using six-vertex instanced
@@ -320,11 +320,11 @@ property changes, as before. Existing GL upload behavior stays immediate; only
 explicit CPU-mode drawables retain CPU buffers. CPU mode is permanent for that
 drawable. `draw(camera)`/`gl_draw()` fail explicitly in CPU mode.
 
-For a Vulkan-only consumer, link `easy3d::vulkan`, build immutable
+For a low-level Vulkan consumer, link `easy3d::renderer`, build immutable
 `graphics::Geometry`/`graphics::Image` descriptions, and submit a vector of
 `graphics::DrawCommand` to `graphics::RenderDevice::render()`. See
-`easy3d/graphics/tests/render_test.cpp` for a complete runnable example. The CMake
-package exports the `vulkan` component and finds its Vulkan dependency.
+`easy3d/renderer/tests/render_test.cpp` for a complete runnable example. The CMake
+package exports the normal `renderer` component and finds its Vulkan dependency.
 
 ## Multisampling and test diagnostics
 
@@ -786,15 +786,15 @@ native text; native Qt/wx host integration remains a migration gate.
 
 ## Native text and Tutorial 309
 
-`graphics::TextRenderer` rasterizes trusted TrueType/OpenType font files on the
+`graphics::TextLayoutEngine` rasterizes trusted TrueType/OpenType font files on the
 CPU using the bundled stb_truetype, without a graphics context. It returns a
 `graphics::TextLayout` containing ordinary overlay commands, ink bounds, the last
 line's advance and line height. It is separate from the retained immediate
 OpenGL `easy3d::TextRenderer`; legacy GL callbacks are not emulated.
 
 ```cpp
-#include <easy3d/graphics/text_renderer.h>
-easy3d::graphics::TextRenderer text;
+#include <easy3d/renderer/text_layout.h>
+easy3d::graphics::TextLayoutEngine text;
 text.add_font(font_file);
 easy3d::graphics::TextOptions options;
 options.x = 20; options.y = 20; options.size = 28;
@@ -2477,3 +2477,53 @@ free of GL/GLEW. Curves with logo/hints and two-color estimated-normal surfels
 were visually inspected. No new validation errors remain; the existing MoltenVK
 integer-attachment warning persists. The user's existing version-header edit is
 preserved, and tutorial sources are unchanged in this stage.
+
+
+## Renderer module consolidation
+
+The separate `easy3d/graphics` source directory and exported `easy3d::vulkan`
+library/component have been removed. Vulkan rendering now belongs to the existing
+`easy3d::renderer` target, with the Vulkan SDK dependency linked by that target.
+Viewer code depends on renderer through its normal module relationship.
+
+- `renderer/render_device.{h,cpp}` owns the current backend-neutral render data,
+  point resources, requests and device interface.
+- `renderer/backends/vulkan/render_device.cpp` owns device/resource management,
+  pipelines, submission and synchronization. Its surface interop boundary is
+  `renderer/backends/vulkan/surface.h`; Vulkan types stay in this backend header.
+- `renderer/backends/clipping.{h,cpp}` contains the shared primitive-clipping
+  implementation used by the backend.
+- `renderer/text_layout.{h,cpp}` contains the CPU font/glyph layout engine, now
+  named `graphics::TextLayoutEngine` to distinguish this helper from the existing
+  public `easy3d::TextRenderer` class. The latter's API is unchanged.
+- Device-only tests live under `renderer/tests`; host/scene tests and the installed
+  consumer live under `viewer/tests`. Their target/test names remain unchanged.
+
+Shader compilation and embedding are configured in the renderer Vulkan backend,
+with outputs under `easy3d/renderer/backends/vulkan` in the build tree. CI paths,
+includes, tutorial text-layout references and installed-package consumer paths
+follow the new locations. The installed consumer requests `viewer`/`renderer`
+and rejects the retired component/headers in a fresh installation. There are no
+forwarding headers or extra library aliases preserving the removed module.
+
+This step consolidates ownership and packaging without changing rendering
+algorithms. The temporary `graphics` namespace for low-level types and the
+separate VulkanViewer/VulkanOffScreen interfaces remain migration debt; they do
+not represent a new module. Unifying the public renderer/viewer/gui interfaces
+and runtime backend selection remains the next stage, including folding CPU text
+layout into the shared TextRenderer implementation.
+
+
+Verified on this Mac: 63/63 native-window tests, 36/36 combined OpenGL/Vulkan
+tests and 11/11 fresh headless tests pass. Validation and synchronization
+validation are enabled in the combined/headless profiles. The OpenGL-only viewer
+build succeeds. All 12 SPIR-V modules validate and are byte-identical to the
+pre-relocation outputs. The fresh installed-package consumer configures, links
+and renders a scene/text using the installed resources on MoltenVK without a
+display, source-tree includes, a legacy Vulkan component or loader-path environment
+overrides. The renderer's installed Unix runtime path includes the private Vulkan
+loader directory, fixing macOS loader resolution discovered by that consumer.
+The headless renderer has no GL/GLEW/GLFW imports. GitHub CI paths were updated;
+the workflow itself has not been run on GitHub as part of this local change.
+The `graphics` directory removal item in ToDo.md is complete; API unification
+remains ongoing.
