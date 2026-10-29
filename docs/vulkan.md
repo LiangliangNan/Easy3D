@@ -261,10 +261,10 @@ request. Legacy GL `draw()` callbacks, overlays and full viewer shortcut parity
 are not emulated. GL-version constructor arguments have no native counterpart.
 Use `VulkanViewerOptions.samples` or `set_samples()` for MSAA.
 
-Create/use/destroy GLFW windows on the UI/main thread. Multiple Vulkan windows
-share only GLFW lifetime, not their logical GPU devices or mutable scenes. Do not
-mix these windows with the legacy GLFW Viewer in one process, whose GLFW lifetime
-management is separate. A custom toolkit can supply required instance extensions
+Create/use/destroy GLFW windows on the UI/main thread. Vulkan windows retain
+independent GPU devices and mutable scenes. Both GLFW viewer backends now share
+toolkit lifetime, and mixed OpenGL/Vulkan hosts can coexist; see the shared host
+lifecycle stage below for the ownership boundaries. A custom toolkit can supply required instance extensions
 and a surface callback through `graphics::VulkanSurface`; the device owns the
 returned surface and must be destroyed before its native window. Borrowed
 Qt-owned VkDevices are not supported by that adapter yet.
@@ -2584,9 +2584,9 @@ Availability fallback also handles a missing or invalid Vulkan loader library;
 the lazy-loading backend described below replaces the original private link
 dependency. OpenGL validation requests currently fail explicitly instead of
 being silently ignored.
-Legacy OpenGL context/global-cache lifetime limitations also remain for the
-upcoming unified window lifecycle work; this step does not claim arbitrary
-interleaving of legacy OpenGL and Vulkan window hosts is supported.
+The original OpenGL/GLFW teardown restriction is addressed by the shared host
+lifecycle stage below. Sharing model/drawable GPU realizations across hosts or
+managing external toolkit contexts still requires further resource integration.
 
 `viewer.offscreen` exercises the same file/scene API through Automatic and each
 built explicit backend: colors, buffer policies, camera preservation, synchronous
@@ -2624,8 +2624,8 @@ and dispatch_functions.h. Each rendering context owns its instance/device
 function table and retains the library through GPU cleanup. GLFW receives the
 same vkGetInstanceProcAddr before initialization, and its runtime retains the
 library until windows and toolkit state are released. No mutable global device
-dispatch table is shared between contexts. Existing legacy OpenGL/GLFW global
-lifecycle limitations still apply to mixed window hosts.
+dispatch table is shared between contexts. The following shared host lifecycle
+stage also coordinates GLFW ownership with OpenGL viewers.
 
 Platform loader names are tried first, with macOS installation locations and an
 optional build-time SDK library location as additional lookup candidates. Set
@@ -2653,3 +2653,61 @@ finds no mandatory Vulkan loader dependency or unresolved vk* imports in the
 renderer/viewer, and no GL/GLEW/GLFW imports in the headless libraries. Validation
 and synchronization tests report no new errors; the previously documented
 MoltenVK integer-attachment warning remains. Tutorial sources are unchanged.
+
+
+## Shared GLFW host lifecycle
+
+OpenGL Viewer and VulkanViewer now acquire the same private GlfwRuntime in
+viewer/backends/glfw_runtime.{h,cpp}. The last Easy3D GLFW host releases the
+toolkit; closing one host no longer destroys another backend's windows. If
+OpenGL opens first in a window-enabled combined build, the runtime prepares the
+optional Vulkan loader hint before GLFW initialization. Missing Vulkan remains
+an availability diagnostic and does not prevent OpenGL use. The loader remains
+alive through toolkit termination. New OpenGL windows no longer reset GLFW's
+process-wide clock.
+
+The existing OpenGL shader/texture managers are shared through a common viewer
+context share group. New viewers share with a live OpenGL window; the original
+window may close before later viewers are constructed. Per-viewer VAOs, scene
+resources, text and camera-path objects are released with the owning context
+current. Managed GPU shader/texture caches are released only when the last
+OpenGL host closes. CPU-only TextureManager entries remain valid for Vulkan
+hosts and are released explicitly by their users or by a final full-cache
+terminate() after all consumers finish. The GPU texture teardown counterpart
+lives in renderer/backends/opengl/texture_manager.cpp.
+
+OpenGL scene mutation, initialization, snapshots, pixel picking and event
+callbacks select the appropriate context. Teardown restores another previously
+current GL context when it survives. Window construction failures release only
+the attempted window, and Vulkan loader/driver, window and extension setup
+failures use BackendUnavailable. Viewer destruction also preserves the shared
+clipping-plane state, matching VulkanViewer, instead of changing other viewers'
+clipping as a side effect.
+
+This step supports independent OpenGL/Vulkan scenes on the main/UI thread.
+Models and drawables with backend or context-local resources still belong to
+one host; this does not implement sharing their GPU realizations across viewers,
+independent cache domains for arbitrary external Qt/wx contexts, or concurrent
+OpenGL rendering threads. Users of custom OpenGL drawing still need the owning
+context current. The public Viewer class continues to select its implementation
+at build time, while OffScreen already supports runtime selection. A unified
+interactive Viewer facade, callback forwarding and runtime fallback are the
+next API work; tutorials and application code remain unchanged in this stage.
+
+viewer.mixedlifecycle renders textured scenes with OpenGL-first and Vulkan-first
+creation, multiple GL contexts, closing/replacing the original share window,
+closing the last GL host before Vulkan, and closing Vulkan before GL. It checks
+shader/GPU texture survival, retained CPU textures, clipping state, toolkit time,
+context restoration and rejected GL context creation. Separate missing-loader
+and missing-driver processes verify repeated explicit Vulkan rejection and
+Automatic OffScreen fallback while an OpenGL viewer is already alive.
+
+Verified on this Mac with MoltenVK: 67 native tests and 15 headless tests pass.
+All 43 combined-backend checks pass, including a focused rerun of the new
+missing-driver test after correcting its overly specific diagnostic assertion
+(GLFW reports missing surface extensions on this Mac). OpenGL-only compilation
+and the unified OffScreen rendering smoke test also pass. Installed headless
+consumers still build without Vulkan package discovery, and binary inspection
+confirms no GLFW/GL/GLEW imports in the headless viewer. No new Vulkan validation
+or synchronization errors were reported. Previously documented MoltenVK and
+macOS OpenGL warnings remain. No tutorial sources were changed.

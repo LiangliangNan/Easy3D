@@ -25,6 +25,7 @@
  ********************************************************************/
 
 #include <easy3d/viewer/viewer.h>
+#include <easy3d/viewer/backends/glfw_runtime.h>
 #include <easy3d/renderer/backend.h>
 
 #include <chrono>
@@ -120,6 +121,7 @@ namespace easy3d {
         // create and setup window
         window_ = create_window(title, samples, gl_major, gl_minor, full_screen, resizable,
                                 depth_bits, stencil_bits, width, height);
+        try {
         setup_callbacks(window_);
 
         // create and set up the camera
@@ -190,6 +192,7 @@ namespace easy3d {
             "  'm':                     Toggle smooth shading (for SurfaceMesh)    \n"
             "  'd':                     Print model info (drawables, properties)   \n"
             "-------------------------------------------------------------------";
+        } catch (...) { cleanup(); throw; }
     }
 
 
@@ -204,17 +207,7 @@ namespace easy3d {
             int stencil_bits,
             int width,
             int height) {
-        glfwSetErrorCallback(
-                [](int error, const char *desc) {
-                    LOG(ERROR) << "GLFW error " << error << ": " << desc;
-                });
-
-        if (!glfwInit()) {
-            LOG(ERROR) << "could not initialize GLFW!";
-            throw BackendUnavailable("could not initialize GLFW!");
-        }
-
-        glfwSetTime(0);
+        runtime_ = detail::GlfwRuntime::acquire();
 
         // Reset the hints, allowing viewers to have different hints.
         glfwDefaultWindowHints();
@@ -261,18 +254,23 @@ namespace easy3d {
             const GLFWvidmode *mode = glfwGetVideoMode(monitor);
             width = mode->width;
             height = mode->height;
-            window = glfwCreateWindow(width, height, title_str.c_str(), monitor, nullptr);
+            window = glfwCreateWindow(width, height, title_str.c_str(), monitor, runtime_->opengl_share_window());
         } else {
-            window = glfwCreateWindow(width, height, title_str.c_str(), nullptr, nullptr);
+            window = glfwCreateWindow(width, height, title_str.c_str(), nullptr, runtime_->opengl_share_window());
         }
 
         if (!window) {
-            glfwTerminate();
             std::string error_message = "could not create an OpenGL "
                                         + std::to_string(gl_major) + "." + std::to_string(gl_minor) + " context!";
             LOG(ERROR) << error_message;
             throw BackendUnavailable(error_message);
         }
+        const auto previous_context = glfwGetCurrentContext();
+        auto close_failed_window = [previous_context](GLFWwindow* failed) {
+            glfwDestroyWindow(failed);
+            glfwMakeContextCurrent(previous_context);
+        };
+        std::unique_ptr<GLFWwindow, decltype(close_failed_window)> guard(window, close_failed_window);
         glfwSetWindowUserPointer(window, this);
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
@@ -283,7 +281,6 @@ namespace easy3d {
         // Load OpenGL and its extensions
         if (!OpenglUtil::init()) {
             LOG(ERROR) << "failed to load OpenGL and its extensions!";
-            glfwDestroyWindow(window);glfwTerminate();
             throw BackendUnavailable("failed to load OpenGL and its extensions!");
         }
 
@@ -322,13 +319,16 @@ namespace easy3d {
         dpi_scaling_ = static_cast<float>(xscale + yscale) * 0.5f;
         VLOG(1) << "DPI scaling: " << dpi_scaling();
 
-        return window;
+        runtime_->attach_opengl_window(window);
+        return guard.release();
     }
 
 
     void Viewer::setup_callbacks(GLFWwindow *window) {
         glfwSetWindowRefreshCallback(window, [](GLFWwindow *win) {
             auto viewer = reinterpret_cast<Viewer *>(glfwGetWindowUserPointer(win));
+            if (!viewer) return;
+            glfwMakeContextCurrent(win);
             viewer->pre_draw();
             viewer->draw();
             viewer->post_draw();
@@ -337,6 +337,8 @@ namespace easy3d {
 
         glfwSetCursorPosCallback(window, [](GLFWwindow *win, double x, double y) {
             auto viewer = reinterpret_cast<Viewer *>(glfwGetWindowUserPointer(win));
+            if (!viewer) return;
+            glfwMakeContextCurrent(win);
             if (!viewer->process_events_)
                 return;
 
@@ -356,6 +358,8 @@ namespace easy3d {
 
         glfwSetMouseButtonCallback(window, [](GLFWwindow *win, int button, int action, int modifiers) {
             auto viewer = reinterpret_cast<Viewer *>(glfwGetWindowUserPointer(win));
+            if (!viewer) return;
+            glfwMakeContextCurrent(win);
             if (!viewer->process_events_)
                 return;
             viewer->callback_event_mouse_button(button, action, modifiers);
@@ -363,6 +367,8 @@ namespace easy3d {
 
         glfwSetKeyCallback(window, [](GLFWwindow *win, int key, int scancode, int action, int mods) {
             auto viewer = reinterpret_cast<Viewer *>(glfwGetWindowUserPointer(win));
+            if (!viewer) return;
+            glfwMakeContextCurrent(win);
             if (!viewer->process_events_)
                 return;
             (void) scancode;
@@ -371,6 +377,8 @@ namespace easy3d {
 
         glfwSetCharCallback(window, [](GLFWwindow *win, unsigned int codepoint) {
             auto viewer = reinterpret_cast<Viewer *>(glfwGetWindowUserPointer(win));
+            if (!viewer) return;
+            glfwMakeContextCurrent(win);
             if (!viewer->process_events_)
                 return;
             viewer->callback_event_character(codepoint);
@@ -378,6 +386,8 @@ namespace easy3d {
 
         glfwSetDropCallback(window, [](GLFWwindow *win, int count, const char **filenames) {
             auto viewer = reinterpret_cast<Viewer *>(glfwGetWindowUserPointer(win));
+            if (!viewer) return;
+            glfwMakeContextCurrent(win);
             if (!viewer->process_events_)
                 return;
             viewer->callback_event_drop(count, filenames);
@@ -385,6 +395,8 @@ namespace easy3d {
 
         glfwSetScrollCallback(window, [](GLFWwindow *win, double dx, double dy) {
             auto viewer = reinterpret_cast<Viewer *>(glfwGetWindowUserPointer(win));
+            if (!viewer) return;
+            glfwMakeContextCurrent(win);
             if (!viewer->process_events_)
                 return;
             viewer->callback_event_scroll(dx, dy);
@@ -396,6 +408,8 @@ namespace easy3d {
          * normal screen on Mac OS X */
         glfwSetFramebufferSizeCallback(window, [](GLFWwindow *win, int width, int height) {
             auto viewer = reinterpret_cast<Viewer *>(glfwGetWindowUserPointer(win));
+            if (!viewer) return;
+            glfwMakeContextCurrent(win);
             if (!viewer->process_events_)
                 return;
             viewer->callback_event_resize(width, height);
@@ -403,6 +417,8 @@ namespace easy3d {
 #else
         glfwSetWindowSizeCallback(window, [](GLFWwindow *win, int width, int height) {
             auto viewer = reinterpret_cast<Viewer *>(glfwGetWindowUserPointer(win));
+            if (!viewer) return;
+            glfwMakeContextCurrent(win);
             if (!viewer->process_events_)
                 return;
             viewer->callback_event_resize(width, height);
@@ -412,6 +428,8 @@ namespace easy3d {
         // notify when the screen has lost focus (e.g. application switch)
         glfwSetWindowFocusCallback(window, [](GLFWwindow *win, int focused) {
             auto viewer = reinterpret_cast<Viewer *>(glfwGetWindowUserPointer(win));
+            if (!viewer) return;
+            glfwMakeContextCurrent(win);
             viewer->focus_event(focused != 0);// true for focused
         });
 
@@ -555,13 +573,11 @@ namespace easy3d {
     Viewer::~Viewer() {
         cleanup();
 
-        // necessary to not affect the subsequent examples (a program may have multiple viewers)
-        ClippingPlane::instance()->set_enabled(false);
-
         LOG(INFO) << "viewer terminated. Bye!";
     }
 
     void Viewer::clear_scene() {
+        glfwMakeContextCurrent(window_);
         models_.clear();
         drawables_.clear();
     }
@@ -571,20 +587,30 @@ namespace easy3d {
         if (!window_)
             return;
 
-        camera_.reset();
+        const auto previous_context = glfwGetCurrentContext();
+        glfwMakeContextCurrent(window_);
+        glfwSetWindowUserPointer(window_, nullptr);
+        if (kfi_) kfi_->stop_interpolation();
         kfi_.reset();
+        camera_.reset();
         drawable_axes_.reset();
         drawable_pivot_.reset();
         texter_.reset();
 
         clear_scene();
 
-        ShaderManager::terminate();
-        TextureManager::terminate();
+        if (runtime_->last_opengl_window()) {
+            ShaderManager::terminate();
+            TextureManager::terminate_opengl();
+        }
 
+        const auto closing = window_;
+        runtime_->detach_opengl_window(window_);
         glfwDestroyWindow(window_);
         window_ = nullptr;
-        glfwTerminate();
+        if (previous_context && previous_context != closing)
+            glfwMakeContextCurrent(previous_context);
+        runtime_.reset();
     }
 
 
@@ -1093,6 +1119,7 @@ namespace easy3d {
 
 
     vec3 Viewer::point_under_pixel(int x, int y, bool &found) const {
+        glfwMakeContextCurrent(window_);
         // GLFW (same as Qt) uses upper corner for its origin while GL uses the lower corner.
         int glx = x;
         int gly = height() - 1 - y;
@@ -1202,6 +1229,7 @@ namespace easy3d {
 
 
     void Viewer::init() {
+        glfwMakeContextCurrent(window_);
         //// back face culling?
         //glEnable(GL_CULL_FACE);
         //glCullFace(GL_BACK); // culls only the back faces
@@ -1242,6 +1270,7 @@ namespace easy3d {
 
 
     Model* Viewer::add_model(const std::string &file_path, bool create_default_drawables) {
+        glfwMakeContextCurrent(window_);
         const std::string file_name = file_system::convert_to_native_style(file_path);
         for (auto m : models_) {
             if (m->name() == file_name) {
@@ -1287,6 +1316,7 @@ namespace easy3d {
 
 
     Model* Viewer::add_model(std::shared_ptr<Model> model, bool create) {
+        glfwMakeContextCurrent(window_);
         if (!model) {
             LOG(WARNING) << "model is nullptr";
             return nullptr;
@@ -1318,6 +1348,7 @@ namespace easy3d {
 
 
     bool Viewer::delete_model(Model *model) {
+        glfwMakeContextCurrent(window_);
         if (!model) {
             LOG(WARNING) << "model is nullptr";
             return false;
@@ -1368,6 +1399,7 @@ namespace easy3d {
 
 
     bool Viewer::delete_drawable(Drawable *drawable) {
+        glfwMakeContextCurrent(window_);
         if (!drawable) {
             LOG(WARNING) << "drawable is nullptr";
             return false;

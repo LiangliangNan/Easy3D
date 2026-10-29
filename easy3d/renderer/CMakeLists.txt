@@ -105,6 +105,7 @@ set(${module}_sources
         state.cpp
         texture.cpp
         backends/opengl/texture.cpp
+        backends/opengl/texture_manager.cpp
         texture_manager.cpp
         text_renderer.cpp
         transform.cpp

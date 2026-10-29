@@ -122,12 +122,16 @@ namespace easy3d {
 
         /**
          * \brief Destroy all textures and release their memory.
-         * \note This method should be called before the OpenGL context is deleted. It is typically called in the
-         *      destructor of the viewer.
+         * \note Call only when all consumers have finished, with a current context for any OpenGL textures.
+         *      Viewer shutdown releases its OpenGL cache separately, preserving CPU textures used by Vulkan.
          */
         static void terminate();
 
     private:
+#ifndef EASY3D_NO_OPENGL
+        friend class Viewer;
+        static void terminate_opengl();
+#endif
         static std::mutex mutex_;
         static Texture* request_impl(const std::string&, Texture::WrapMode, Texture::FilterMode, bool cpu);
         // maps of std::string can be super slow when calling find with a string literal or const char*

@@ -32,6 +32,8 @@
 #include <easy3d/core/matrix.h>
 #include <easy3d/fileio/image_io.h>
 
+#define GLFW_INCLUDE_NONE
+#include <3rd_party/glfw/include/GLFW/glfw3.h>
 #include <easy3d/renderer/opengl.h>				// for gl functions
 
 
@@ -71,6 +73,7 @@ namespace easy3d {
 #else // Advanced snapshot: image size, samples, and background can be customized.
 
 	bool Viewer::snapshot(const std::string& file_name, float scaling, int samples, int back_ground, bool expand) const {
+        glfwMakeContextCurrent(window_);
 		int max_samples = 0;
 		glGetIntegerv(GL_MAX_SAMPLES, &max_samples);
 		if (samples > max_samples) {

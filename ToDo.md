@@ -5,6 +5,7 @@
     OpenGL related calls should remain in the backends.
     - [x] Unified OffScreen scene/file API and initialization-availability fallback
     - [x] Optional runtime Vulkan loader and missing/invalid-loader OffScreen fallback
+    - [x] Shared GLFW lifecycle and surviving OpenGL/Vulkan viewer resources
     - [ ] Unified interactive Viewer/GUI APIs and native-only extensions
 - Send the computed value of "MVP * MANIP" to shaders (avoiding computing the matrix product for each vertex/fragment)
 - Walkthrough and animation; allow to modify the cameras interactively

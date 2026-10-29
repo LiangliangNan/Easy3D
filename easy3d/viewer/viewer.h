@@ -47,6 +47,7 @@ namespace easy3d { using Viewer = VulkanViewer; }
 struct GLFWwindow;
 
 namespace easy3d {
+    namespace detail { class GlfwRuntime; }
 
 	class Camera;
 	class Model;
@@ -564,6 +565,9 @@ namespace easy3d {
 
         void copy_view();
         void paste_view();
+
+    private:
+        std::shared_ptr<detail::GlfwRuntime> runtime_;
 
     protected:
 		GLFWwindow*	window_;

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/vulkan_viewer.h>
 #include <easy3d/renderer/backend.h>
-#include <easy3d/renderer/backends/vulkan/loader.h>
+#include <easy3d/viewer/backends/glfw_runtime.h>
 #include <easy3d/renderer/backends/vulkan/surface.h>
 #include <easy3d/renderer/text_layout.h>
 #include <easy3d/renderer/backends/vulkan/shape.h>
@@ -95,27 +95,10 @@ const char* const default_manual =
     "  Space:                   Align camera with world axes                       \n"
     "  Escape / Alt + F4:       Close viewer                                       \n"
     "-------------------------------------------------------------------";
-// Toolkit runtime ownership, not a global GPU cache. GLFW requires UI-thread use.
-struct GlfwRuntime {
-    std::shared_ptr<graphics::internal::VulkanLoader> loader;
-    GlfwRuntime() : loader(graphics::internal::VulkanLoader::open()) {
-        glfwInitVulkanLoader(loader->get_instance_proc_addr());
-        if (!glfwInit()) {
-            glfwTerminate();glfwInitVulkanLoader(nullptr);
-            throw BackendUnavailable("GLFW initialization failed (a desktop display is required)");
-        }
-    }
-    ~GlfwRuntime() {glfwTerminate();glfwInitVulkanLoader(nullptr);}
-    static std::shared_ptr<GlfwRuntime> acquire() {
-        static std::weak_ptr<GlfwRuntime> current;
-        auto runtime = current.lock();
-        if (!runtime) { runtime = std::make_shared<GlfwRuntime>(); current = runtime; }
-        return runtime;
-    }
-};
+
 }
 struct VulkanViewer::Window {
-    std::shared_ptr<GlfwRuntime> runtime;
+    std::shared_ptr<detail::GlfwRuntime> runtime;
     GLFWwindow* handle = nullptr;
     std::string title;
     int width, height;
@@ -126,21 +109,21 @@ struct VulkanViewer::Window {
     Window(const std::string& text, const VulkanViewerOptions& options)
         : title(text), width(options.width), height(options.height), samples(options.samples) {
         if (width <= 0 || height <= 0) throw std::invalid_argument("window dimensions must be positive");
-        runtime = GlfwRuntime::acquire();
-        if (!glfwVulkanSupported()) throw std::runtime_error("GLFW could not find a usable Vulkan loader");
+        runtime = detail::GlfwRuntime::acquire(true);
+        if (!glfwVulkanSupported()) throw BackendUnavailable("GLFW could not find Vulkan loader/driver support");
         glfwDefaultWindowHints();
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         glfwWindowHint(GLFW_VISIBLE, options.visible ? GLFW_TRUE : GLFW_FALSE);
         glfwWindowHint(GLFW_RESIZABLE, options.resizable ? GLFW_TRUE : GLFW_FALSE);
         handle = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
-        if (!handle) throw std::runtime_error("could not create a GLFW Vulkan window");
+        if (!handle) throw BackendUnavailable("could not create a GLFW Vulkan window");
     }
     ~Window() { if (handle) glfwDestroyWindow(handle); }
     std::unique_ptr<graphics::RenderDevice> device(const graphics::DeviceOptions& options) {
         uint32_t count = 0;
         const char** required = glfwGetRequiredInstanceExtensions(&count);
-        if (!required || !count) throw std::runtime_error("GLFW has no Vulkan surface extensions for this platform");
-        graphics::VulkanSurface surface;surface.loader=runtime->loader;
+        if (!required || !count) throw BackendUnavailable("GLFW has no Vulkan surface extensions for this platform");
+        graphics::VulkanSurface surface;surface.loader=runtime->vulkan_loader();
         for (uint32_t i = 0; i < count; ++i) surface.instance_extensions.emplace_back(required[i]);
         surface.create = [this](VkInstance instance, VkSurfaceKHR* result) {
             return glfwCreateWindowSurface(instance, handle, nullptr, result);

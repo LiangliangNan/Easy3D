@@ -22,7 +22,7 @@ struct VulkanViewerOptions {
 // Native Vulkan counterpart of Viewer, using GLFW.
 // Construct, manipulate and destroy on the UI/main
 // thread. Multiple Vulkan viewers share GLFW lifetime, but own independent GPU
-// devices/caches. Do not mix with the legacy GLFW Viewer in the same process.
+// devices/caches. GLFW lifetime is shared with OpenGL Viewer hosts.
 class VulkanViewer : public VulkanOffScreen, public ViewerInput {
 public:
     explicit VulkanViewer(const std::string& title = "Easy3D Vulkan Viewer",
