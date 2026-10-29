@@ -266,6 +266,12 @@ VulkanOffScreen::PickResult VulkanOffScreen::pick(int x,int y) const {
     }
     return result;
 }
+bool VulkanOffScreen::read_scene_depth(int x,int y,const Camera& snapshot,float& depth) const {
+    const auto frame=impl_->capture(snapshot,background_color(),1);
+    const auto pixel=size_t(y)*frame.width+size_t(x);
+    if (frame.ids[pixel].object==UINT32_MAX) return false;
+    depth=frame.depth[pixel];return true;
+}
 graphics::FrameImage VulkanOffScreen::capture(unsigned samples) const { return impl_->capture(*camera(), background_color(), samples); }
 const graphics::RenderDevice& VulkanOffScreen::device() const { return *impl_->device; }
 std::vector<std::uint32_t> VulkanOffScreen::select_points(const graphics::PointSelectionRequest& request) const {

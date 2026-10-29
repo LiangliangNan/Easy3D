@@ -434,6 +434,8 @@ namespace easy3d {
          *      zFar() values are fitted to your scene. Loose boundaries will result in imprecision along the viewing
          *      direction.
          */
+        // Legacy query of the current depth framebuffer. ViewerBase factory
+        // results expose a fresh scene query in logical window coordinates.
 		virtual vec3 point_under_pixel(int x, int y, bool &found) const;
 
         /**
@@ -591,6 +593,7 @@ namespace easy3d {
         void bind_command(const ViewerBase::Function& func, Model* model, Key key, Modifier modifier) override {
             bind(Function([func](Viewer* viewer, Model* m) { return func(viewer, m); }), model, key, modifier);
         }
+        bool read_scene_depth(int x, int y, const Camera& snapshot, float& depth) const override;
         unsigned window_samples() const override { return samples_ > 1 ? unsigned(samples_) : 1u; }
         bool snapshot_file(const std::string& f, float scale, int samples, int bg, bool expand) const override {
             // Common snapshots are valid before the first interactive frame.

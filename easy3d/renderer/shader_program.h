@@ -445,6 +445,7 @@ namespace easy3d {
 		// maps of std::string can be super slow when calling find with a string literal or const char* 
 		// as find forces construction/copy/destruction of a std::sting copy of the const char*.
         static std::unordered_map<std::string, UniformBlock> spBlocks;
+        std::vector<std::string> block_names_;
 
 		// stores the OpenGL shader types
         static unsigned int spGLShaderTypes[ShaderProgram::NUM_SHADER_TYPES];

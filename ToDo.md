@@ -9,7 +9,8 @@
     - [x] Common interactive frame driving, bounded execution and callback-error contract
     - [x] Runtime factory for built-in viewers with explicit backends and availability fallback
     - [x] Portable input/frame callbacks with logical coordinates and gesture capture
-    - [ ] Unified Viewer constructors/subclass storage, camera coordinates, GUI and native-only extensions
+    - [x] Portable projection/unprojection and logical-coordinate visible-surface queries
+    - [ ] Unified Viewer constructors/subclass storage, capture/picking/selection, GUI and native-only extensions
 - Send the computed value of "MVP * MANIP" to shaders (avoiding computing the matrix product for each vertex/fragment)
 - Walkthrough and animation; allow to modify the cameras interactively
 - Implement potree for huge point cloud visualization (https://github.com/potree/potree)

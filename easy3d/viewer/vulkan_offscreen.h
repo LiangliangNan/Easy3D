@@ -96,6 +96,8 @@ public:
                 int back_ground = 1, bool expand = true) const;
     const graphics::RenderDevice& device() const;
 protected:
+    // Exact camera/viewport snapshot supplied by the common interactive query.
+    bool read_scene_depth(int x, int y, const Camera& snapshot, float& depth) const;
     // Host-owned HUD layer, after application overlays. Updating this cached
     // presentation state does not change the scene or application overlay list.
     void set_viewer_overlays(std::vector<graphics::DrawCommand> commands) const;

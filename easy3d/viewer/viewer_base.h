@@ -75,6 +75,15 @@ public:
     virtual const std::vector<std::shared_ptr<Drawable>>& drawables() const = 0;
     virtual void clear_scene() = 0;
     virtual void fit_screen(const Model* model = nullptr) = 0;
+    // Continuous logical window coordinates, top-left origin; depth uses [0,1].
+    // Conversion does not clip to the frustum; finite outside coordinates work.
+    vec3 project_point(const vec3& world) const;
+    vec3 unproject_point(const vec3& window) const;
+    // Synchronous visible-surface query, independent of window MSAA. Integer
+    // logical coordinates map to their containing framebuffer pixel; returns
+    // that pixel center's world position. Background/outside => found=false.
+    // Scene only: HUD, clipping-plane guides and frame callbacks are excluded.
+    vec3 point_under_pixel(int x, int y, bool& found) const;
     virtual bool open() = 0;
     virtual bool save() const = 0;
     virtual bool snapshot() const = 0;
@@ -106,6 +115,7 @@ protected:
     bool dispatch_focus(bool);
     virtual void bind_command(const Function&, Model*, Key, Modifier) = 0;
     virtual unsigned window_samples() const = 0;
+    virtual bool read_scene_depth(int x, int y, const Camera& snapshot, float& depth) const = 0;
     virtual bool snapshot_file(const std::string&, float, int, int, bool) const = 0;
 private:
     std::string fallback_reason_;

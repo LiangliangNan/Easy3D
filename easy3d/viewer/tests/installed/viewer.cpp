@@ -27,6 +27,12 @@ int main() {
         callbacks.pre_draw = [&](ViewerBase* host) { require(host == viewer.get(), "callback received another viewer"); ++before; };
         callbacks.post_draw = [&](ViewerBase*) { ++after; };
         viewer->set_callbacks(std::move(callbacks));
+        bool found=false;
+        const auto hit=viewer->point_under_pixel(viewer->width()/2,viewer->height()/2,found);
+        require(found && std::abs(hit.x)<1e-4f, "installed viewer surface query failed");
+        require(distance(viewer->unproject_point(viewer->project_point(hit)),hit)<1e-4f,
+                "installed viewer coordinate conversion failed");
+        require(before==0 && after==0, "installed viewer query invoked frame callbacks");
         viewer->set_animation_callback([&](ViewerBase* host) { ++ticks; host->set_animation(false); return true; });
         viewer->set_animation(true);
         require(viewer->run_frames(2) == 0 && ticks == 1 && viewer->width() == 181 && viewer->height() == 151 && viewer->samples() == 1 && before >= 2 && after == 2,

@@ -2943,3 +2943,65 @@ window hosts. Headless binary inspection finds no GL/GLEW/GLFW imports. No new
 Vulkan validation/synchronization errors were reported; previously documented
 platform warnings remain. Changes are confined to viewer infrastructure, tests
 and migration notes, with no tutorial or shader edits.
+
+## Portable camera coordinates and surface queries
+
+Factory-created ViewerBase instances now expose project_point(),
+unproject_point() and point_under_pixel() through the same public API on both
+backends. Projection uses continuous logical window coordinates with a top-left
+origin and normalized depth in [0,1]. Finite coordinates outside the frustum
+can be converted; invalid homogeneous coordinates and singular inverse matrices
+report invalid_argument.
+
+```cpp
+bool found = false;
+const auto world = viewer->point_under_pixel(mouse_x, mouse_y, found);
+if (found) {
+    const auto window = viewer->project_point(world);
+    const auto restored = viewer->unproject_point(window);
+}
+```
+
+The integer query coordinates use the same logical units as portable mouse
+callbacks. Each maps to its containing framebuffer pixel, and the returned world
+point represents that pixel's center. This preserves HiDPI accuracy without
+rounding through logical pixels. Queries synchronously render current scene
+geometry at one sample, independently of window MSAA, then unproject its depth
+using the exact live camera matrices. Analytic sphere surface depth is retained.
+Background and outside-window coordinates return found=false. Geometry and
+visibility updates are reflected immediately, even before the first frame.
+
+Queries exclude HUD geometry and clipping-plane guides, while retaining scene
+clipping. They do not run animation, frame callbacks or custom Viewer::draw()
+hooks, alter live camera matrices, or advance the frame loop. OpenGL uses a
+scoped depth framebuffer and restores the previous context, framebuffer,
+viewport, pipeline, texture/buffer bindings and pixel-pack state. Vulkan uses
+its existing center-sample scene ID/depth pass. These are full-scene synchronous
+queries; caching or batched queries can be added separately if interaction needs
+lower readback cost. Existing explicit Viewer/VulkanViewer subclass methods keep
+their legacy coordinate behavior; the logical-coordinate contract applies to
+ViewerBase, including factory results and portable callback arguments.
+
+The OpenGL regression exposed a cached-shader assumption that uniform buffers
+would remain bound after program creation. ShaderProgram now restores its shared
+uniform-block bindings on bind(), including after scoped queries and across
+shared contexts. Shader sources, tutorial algorithms and backend selection are
+unchanged. Rebuild downstream binaries after the public class changes on this
+experimental branch.
+
+The common regression covers perspective/orthographic round trips, invalid
+coordinates and singular matrices, custom camera matrices, initial overlapping
+surface depth, samples 1 and 4, HiDPI pixel centers, visibility and fresh geometry,
+sphere depth, HUD/plane-guide exclusion, resize, frame-hook isolation, subsequent
+rendering and OpenGL state/context restoration. The SDK-independent package
+client also queries a surface before its first frame. Common source IDs,
+capture/selection results, unified Viewer constructor/subclass storage, GUI
+integration and Python bindings remain migration work.
+
+Verified on this Mac with MoltenVK: 75/75 native tests, 56/56 combined-backend
+tests and 16/16 headless tests pass. The final query regression additionally
+passes against the OpenGL-only library. SDK-independent public clients build
+and run through Vulkan, forced OpenGL fallback and the installed headless
+package. Headless viewer/renderer binaries import no GL/GLEW/GLFW calls. No new
+Vulkan validation/synchronization errors were reported; the previously noted
+MoltenVK format/blending warning remains.

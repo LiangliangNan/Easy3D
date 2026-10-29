@@ -7,6 +7,7 @@
 #include <easy3d/viewer/backends/glfw_runtime.h>
 #endif
 #include <cmath>
+#include <algorithm>
 #include <limits>
 namespace easy3d {
 ViewerBase::~ViewerBase() = default;
@@ -72,6 +73,84 @@ bool ViewerBase::snapshot(const std::string& filename, float scaling, int sample
         double(framebuffer_height()) * scaling > std::numeric_limits<int>::max()) return false;
     return snapshot_file(filename, scaling, sample_count, background, expand);
 }
+namespace {
+void finite_coordinates(const vec3 &point) {
+    for (unsigned i = 0; i < 3; ++i)
+        if (!std::isfinite(point[i]))
+            throw std::invalid_argument("nonfinite viewer coordinates");
+}
+void finite_matrix(const mat4 &matrix) {
+    for (unsigned i = 0; i < 16; ++i)
+        if (!std::isfinite(matrix[i]))
+            throw std::invalid_argument("nonfinite viewer camera matrix");
+}
+mat4 checked_inverse(const mat4 &matrix) {
+    finite_matrix(matrix);
+    const auto det = determinant(matrix);
+    if (!std::isfinite(det) || det == 0)
+        throw std::invalid_argument("singular viewer camera matrix");
+    const auto result = inverse(matrix);
+    finite_matrix(result);
+    return result;
+}
+vec3 homogeneous_point(const vec4 &point) {
+    if (!std::isfinite(point.w) || point.w == 0)
+        throw std::invalid_argument("invalid viewer homogeneous coordinate");
+    const vec3 result(point.x / point.w, point.y / point.w, point.z / point.w);
+    finite_coordinates(result);
+    return result;
+}
+} // namespace
+vec3 ViewerBase::project_point(const vec3 &world) const {
+    finite_coordinates(world);
+    int w, h;
+    viewer_size(w, h);
+    if (w <= 0 || h <= 0)
+        throw std::invalid_argument("viewer projection requires a positive window size");
+    const auto matrix = camera()->modelViewProjectionMatrix();
+    finite_matrix(matrix);
+    const auto ndc = homogeneous_point(matrix * vec4(world, 1));
+    const vec3 result((ndc.x * .5f + .5f) * w, (.5f - ndc.y * .5f) * h, ndc.z * .5f + .5f);
+    finite_coordinates(result);
+    return result;
+}
+vec3 ViewerBase::unproject_point(const vec3 &window) const {
+    finite_coordinates(window);
+    int w, h;
+    viewer_size(w, h);
+    if (w <= 0 || h <= 0)
+        throw std::invalid_argument("viewer unprojection requires a positive window size");
+    const auto inv = checked_inverse(camera()->modelViewProjectionMatrix());
+    return homogeneous_point(inv * vec4(2 * window.x / w - 1, 1 - 2 * window.y / h, 2 * window.z - 1, 1));
+}
+vec3 ViewerBase::point_under_pixel(int x, int y, bool &found) const {
+    found = false;
+    int w, h, fw, fh;
+    viewer_size(w, h);
+    framebuffer_size(fw, fh);
+    if (w <= 0 || h <= 0 || fw <= 0 || fh <= 0 || x < 0 || y < 0 || x >= w || y >= h)
+        return vec3(0);
+    const int px = std::min(fw - 1, int(std::floor(double(x) * fw / w)));
+    const int py = std::min(fh - 1, int(std::floor(double(y) * fh / h)));
+    const mat4 projection = camera()->projectionMatrix(), view = camera()->modelViewMatrix();
+    const auto inv = checked_inverse(projection * view);
+    // Camera's copy/resize recomputes projection lazily. Prime its caches before
+    // installing the exact live matrices, including temporary custom matrices.
+    Camera snapshot(*camera());
+    snapshot.setScreenWidthAndHeight(fw, fh);
+    snapshot.projectionMatrix();
+    snapshot.modelViewMatrix();
+    snapshot.set_projection_matrix(projection);
+    snapshot.set_modelview_matrix(view);
+    float depth = 1;
+    if (!read_scene_depth(px, py, snapshot, depth) || !std::isfinite(depth) || depth < 0 || depth >= 1)
+        return vec3(0);
+    const auto world =
+        homogeneous_point(inv * vec4(2 * (px + .5f) / fw - 1, 1 - 2 * (py + .5f) / fh, 2 * depth - 1, 1));
+    found = true;
+    return world;
+}
+
 void ViewerBase::set_callbacks(ViewerCallbacks callbacks) {
     auto replacement = std::make_shared<ViewerCallbacks>(std::move(callbacks));
     viewer_size(resize_width_, resize_height_);

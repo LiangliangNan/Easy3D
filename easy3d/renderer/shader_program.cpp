@@ -682,7 +682,13 @@ namespace easy3d {
         // that the shader can execute given the current GL state.
 //        if (!is_program_valid())
 //            LOG(ERROR) << "program exists but not valid";
-		glUseProgram(program_);	
+		glUseProgram(program_);
+        // Indexed bindings belong to the context, not the program. Restore them
+        // after scoped readbacks or when rendering in another shared context.
+        for (const auto& name : block_names_) {
+            const auto& block = spBlocks.at(name);
+            glBindBufferRange(GL_UNIFORM_BUFFER, block.bindingIndex, block.buffer, 0, block.size);
+        }
 	}
 
 
@@ -849,6 +855,7 @@ namespace easy3d {
 
 
 	void ShaderProgram::_add_blocks() {
+        block_names_.clear();
 		int count, dataSize, actualLen, activeUnif, maxUniLength;
 		int uniType, uniSize, uniOffset, uniMatStride, uniArrayStride, auxSize;
 		UniformBlock block;
@@ -947,6 +954,7 @@ namespace easy3d {
 			else
 				glUniformBlockBinding(program_, i, spBlocks[name].bindingIndex);
 
+            block_names_.push_back(name);
 			free(name);
 		}
 	}

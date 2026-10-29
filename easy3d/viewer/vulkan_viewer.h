@@ -101,13 +101,17 @@ public:
     void set_usage(const std::string& manual = "default", const std::string& screen_hint = "") override;
     bool snapshot(const std::string& filename, float scaling = 1.0f, int samples = 4,
                   int back_ground = 1, bool expand = true) const;
-    // Top-left origin, framebuffer-pixel coordinates (also used by callbacks).
+    // Legacy subclass query: top-left origin, framebuffer-pixel coordinates.
+    // ViewerBase factory/callback queries instead use logical window coordinates.
     // Synchronous capture is performed only when explicitly requested.
     vec3 point_under_pixel(int x, int y, bool& found) const;
     GLFWwindow* window() const override; // borrowed native host; do not destroy; never an OpenGL context
 protected:
     void bind_command(const ViewerBase::Function& func, Model* model, Key key, Modifier modifier) override {
         bind(Function([func](VulkanViewer* viewer, Model* m) { return func(viewer, m); }), model, key, modifier);
+    }
+    bool read_scene_depth(int x, int y, const Camera& snapshot, float& depth) const override {
+        return VulkanOffScreen::read_scene_depth(x, y, snapshot, depth);
     }
     unsigned window_samples() const override { return samples(); }
     bool snapshot_file(const std::string& f, float scale, int samples, int bg, bool expand) const override {
