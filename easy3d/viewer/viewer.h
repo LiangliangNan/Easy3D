@@ -149,7 +149,7 @@ namespace easy3d {
 		/// \brief Returns the height of the framebuffer, which is identical to: height() * dpi_scaling().
 		int framebuffer_height() const;
 		/// \brief Queries the size of the framebuffer.
-		void framebuffer_size(int& w, int& h) const;
+		virtual void framebuffer_size(int& w, int& h) const;
 
         /**
          * \brief Sets the position of the content area of the viewer.

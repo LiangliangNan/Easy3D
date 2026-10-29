@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Liangliang Nan
 #include <easy3d/renderer/render_device.h>
+#include <easy3d/renderer/backend.h>
 #include <easy3d/renderer/backends/clipping.h>
 #include <easy3d/renderer/backends/vulkan/surface.h>
 #include <vulkan/vulkan.h>
@@ -35,15 +36,22 @@ void check(VkResult result, const char* operation) {
         throw std::runtime_error(std::string(operation) + " failed (VkResult " + std::to_string(result) + ")");
 }
 
+void check_initialization(VkResult result,const char* operation) {
+    if(result==VK_ERROR_INCOMPATIBLE_DRIVER || result==VK_ERROR_EXTENSION_NOT_PRESENT ||
+       result==VK_ERROR_LAYER_NOT_PRESENT || result==VK_ERROR_FEATURE_NOT_PRESENT || result==VK_ERROR_INITIALIZATION_FAILED)
+        throw BackendUnavailable(std::string(operation)+" failed (VkResult "+std::to_string(result)+")");
+    check(result,operation);
+}
+
 template<class T> bool named(const std::vector<T>& values, const char* name) {
     for (const auto& v : values) if (std::strcmp(v.extensionName, name) == 0) return true;
     return false;
 }
 std::vector<VkExtensionProperties> instance_extensions(const char* layer = nullptr) {
     uint32_t count = 0;
-    check(vkEnumerateInstanceExtensionProperties(layer, &count, nullptr), "enumerate instance extensions");
+    check_initialization(vkEnumerateInstanceExtensionProperties(layer, &count, nullptr), "enumerate instance extensions");
     std::vector<VkExtensionProperties> values(count);
-    check(vkEnumerateInstanceExtensionProperties(layer, &count, values.data()), "enumerate instance extensions");
+    check_initialization(vkEnumerateInstanceExtensionProperties(layer, &count, values.data()), "enumerate instance extensions");
     return values;
 }
 
@@ -95,7 +103,7 @@ struct Context {
             if (!window->create) throw std::invalid_argument("surface creation callback is required");
             for (const auto& name : window->instance_extensions) {
                 if (!named(available, name.c_str()))
-                    throw std::runtime_error("required surface extension unavailable: " + name);
+                    throw BackendUnavailable("required surface extension unavailable: " + name);
                 if (std::find_if(extensions.begin(), extensions.end(), [&](const char* e) { return name == e; }) == extensions.end())
                     extensions.push_back(name.c_str());
             }
@@ -111,14 +119,14 @@ struct Context {
         debug_info.pUserData = this;
         if (validation) {
             uint32_t count = 0;
-            check(vkEnumerateInstanceLayerProperties(&count, nullptr), "enumerate validation layers");
+            check_initialization(vkEnumerateInstanceLayerProperties(&count, nullptr), "enumerate validation layers");
             std::vector<VkLayerProperties> values(count);
-            check(vkEnumerateInstanceLayerProperties(&count, values.data()), "enumerate validation layers");
+            check_initialization(vkEnumerateInstanceLayerProperties(&count, values.data()), "enumerate validation layers");
             bool found = false;
             for (const auto& v : values) if (!std::strcmp(v.layerName, "VK_LAYER_KHRONOS_validation")) found = true;
-            if (!found) throw std::runtime_error("VK_LAYER_KHRONOS_validation was requested but is unavailable");
+            if (!found) throw BackendUnavailable("VK_LAYER_KHRONOS_validation was requested but is unavailable");
             if (!named(available, VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
-                throw std::runtime_error("VK_EXT_debug_utils is required for validation reporting");
+                throw BackendUnavailable("VK_EXT_debug_utils is required for validation reporting");
             layers.push_back("VK_LAYER_KHRONOS_validation");
             extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
         }
@@ -128,7 +136,7 @@ struct Context {
             const auto layer_extensions = instance_extensions("VK_LAYER_KHRONOS_validation");
             if (!named(available, VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME) &&
                 !named(layer_extensions, VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME))
-                throw std::runtime_error("synchronization validation is unavailable");
+                throw BackendUnavailable("synchronization validation is unavailable");
             extensions.push_back(VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME);
             validation_features.sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
             validation_features.enabledValidationFeatureCount = 1;
@@ -158,22 +166,22 @@ struct Context {
         extensions = std::move(unique_extensions);
         info.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
         info.ppEnabledExtensionNames = extensions.data();
-        check(vkCreateInstance(&info, nullptr, &instance), "create Vulkan 1.2 instance");
+        check_initialization(vkCreateInstance(&info, nullptr, &instance), "create Vulkan 1.2 instance");
         if (window) {
-            check(window->create(instance, &surface), "create native Vulkan surface");
+            check_initialization(window->create(instance, &surface), "create native Vulkan surface");
             if (!surface) throw std::runtime_error("surface callback returned a null surface");
         }
         if (validation) {
             auto create = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
                 vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT"));
-            if (!create) throw std::runtime_error("debug messenger entry point unavailable");
+            if (!create) throw BackendUnavailable("debug messenger entry point unavailable");
             debug_info.pNext = nullptr;
-            check(create(instance, &debug_info, nullptr, &messenger), "create debug messenger");
+            check_initialization(create(instance, &debug_info, nullptr, &messenger), "create debug messenger");
         }
         uint32_t count = 0;
-        check(vkEnumeratePhysicalDevices(instance, &count, nullptr), "enumerate Vulkan devices");
+        check_initialization(vkEnumeratePhysicalDevices(instance, &count, nullptr), "enumerate Vulkan devices");
         std::vector<VkPhysicalDevice> devices(count);
-        check(vkEnumeratePhysicalDevices(instance, &count, devices.data()), "enumerate Vulkan devices");
+        check_initialization(vkEnumeratePhysicalDevices(instance, &count, devices.data()), "enumerate Vulkan devices");
         int best_score = -1;
         for (auto candidate : devices) {
             VkPhysicalDeviceProperties props;
@@ -199,9 +207,9 @@ struct Context {
                 vkGetPhysicalDeviceFormatProperties(candidate, VK_FORMAT_R8G8B8A8_UNORM, &source);
                 if (!(source.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT)) continue;
                 uint32_t extension_count = 0;
-                check(vkEnumerateDeviceExtensionProperties(candidate, nullptr, &extension_count, nullptr), "enumerate WSI extensions");
+                check_initialization(vkEnumerateDeviceExtensionProperties(candidate, nullptr, &extension_count, nullptr), "enumerate WSI extensions");
                 std::vector<VkExtensionProperties> supported(extension_count);
-                check(vkEnumerateDeviceExtensionProperties(candidate, nullptr, &extension_count, supported.data()), "enumerate WSI extensions");
+                check_initialization(vkEnumerateDeviceExtensionProperties(candidate, nullptr, &extension_count, supported.data()), "enumerate WSI extensions");
                 if (!named(supported, VK_KHR_SWAPCHAIN_EXTENSION_NAME)) continue;
             }
             uint32_t families = 0;
@@ -212,7 +220,7 @@ struct Context {
                 if (!(queues[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)) continue;
                 if (surface) {
                     VkBool32 supported = VK_FALSE;
-                    check(vkGetPhysicalDeviceSurfaceSupportKHR(candidate, i, surface, &supported), "query presentation queue");
+                    check_initialization(vkGetPhysicalDeviceSurfaceSupportKHR(candidate, i, surface, &supported), "query presentation queue");
                     if (!supported) continue;
                 }
                 int score = props.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU ? 3 :
@@ -224,12 +232,12 @@ struct Context {
                 }
             }
         }
-        if (!physical) throw std::runtime_error("no suitable Vulkan 1.2 device/graphics queue for requested targets and surface");
+        if (!physical) throw BackendUnavailable("no suitable Vulkan 1.2 device/graphics queue for requested targets and surface");
         vkGetPhysicalDeviceMemoryProperties(physical, &memory);
         count = 0;
-        check(vkEnumerateDeviceExtensionProperties(physical, nullptr, &count, nullptr), "enumerate device extensions");
+        check_initialization(vkEnumerateDeviceExtensionProperties(physical, nullptr, &count, nullptr), "enumerate device extensions");
         std::vector<VkExtensionProperties> device_extensions(count);
-        check(vkEnumerateDeviceExtensionProperties(physical, nullptr, &count, device_extensions.data()), "enumerate device extensions");
+        check_initialization(vkEnumerateDeviceExtensionProperties(physical, nullptr, &count, device_extensions.data()), "enumerate device extensions");
         extensions.clear();
         if (surface) extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
         // This extension is mandatory when advertised by a portability device.
@@ -249,20 +257,20 @@ struct Context {
         enabled.sampleRateShading = features.sampleRateShading;
         di.pEnabledFeatures = &enabled;
         // No geometry shaders, large points, wide lines or independent blend.
-        check(vkCreateDevice(physical, &di, nullptr, &device), "create device");
+        check_initialization(vkCreateDevice(physical, &di, nullptr, &device), "create device");
         vkGetDeviceQueue(device, family, 0, &queue);
         VkCommandPoolCreateInfo pi{};
         pi.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         pi.queueFamilyIndex = family;
         pi.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-        check(vkCreateCommandPool(device, &pi, nullptr, &pool), "create command pool");
+        check_initialization(vkCreateCommandPool(device, &pi, nullptr, &pool), "create command pool");
         VkCommandBufferAllocateInfo ai{};
         ai.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         ai.commandPool = pool; ai.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY; ai.commandBufferCount = 1;
-        check(vkAllocateCommandBuffers(device, &ai, &command), "allocate command buffer");
+        check_initialization(vkAllocateCommandBuffers(device, &ai, &command), "allocate command buffer");
         VkFenceCreateInfo fi{};
         fi.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-        check(vkCreateFence(device, &fi, nullptr, &fence), "create submission fence");
+        check_initialization(vkCreateFence(device, &fi, nullptr, &fence), "create submission fence");
     }
     uint32_t memory_type(uint32_t mask, VkMemoryPropertyFlags required, VkMemoryPropertyFlags preferred) const {
         uint32_t fallback = UINT32_MAX;

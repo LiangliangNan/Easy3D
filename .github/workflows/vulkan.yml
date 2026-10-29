@@ -79,6 +79,7 @@ jobs:
           export VK_DRIVER_FILES="$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit)"
           unset DISPLAY WAYLAND_DISPLAY
           ./installed-consumer/installed_vulkan_consumer
+          ./installed-consumer/installed_offscreen_consumer
       - uses: actions/upload-artifact@v4
         if: always() && matrix.opengl == 'ON'
         with:

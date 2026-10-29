@@ -11,3 +11,6 @@ if(EXISTS "${Easy3D_INCLUDE_DIRS}/easy3d/graphics")
 endif()
 add_executable(installed_vulkan_consumer main.cpp)
 target_link_libraries(installed_vulkan_consumer PRIVATE easy3d::viewer)
+
+add_executable(installed_offscreen_consumer unified.cpp)
+target_link_libraries(installed_offscreen_consumer PRIVATE easy3d::viewer)

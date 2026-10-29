@@ -214,7 +214,7 @@ set(${module}_resources
         )
 
 endif()
-list(APPEND renderer_headers ${backend_headers})
+list(APPEND renderer_headers backend.h ${backend_headers})
 
 add_module(${module} "${${module}_headers}" "${${module}_sources}" "${private_dependencies}" "${public_dependencies}")
 if(Easy3D_ENABLE_OPENGL)
@@ -240,6 +240,7 @@ else()
 endif()
 
 if(Easy3D_ENABLE_VULKAN)
+    target_compile_definitions(easy3d_renderer PUBLIC EASY3D_HAS_VULKAN)
     target_include_directories(easy3d_renderer PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/backends/vulkan")
     if(UNIX AND Easy3D_BUILD_SHARED_LIBS)
         # The loader is a private backend dependency. Installed consumers must

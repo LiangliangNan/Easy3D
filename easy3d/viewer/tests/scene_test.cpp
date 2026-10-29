@@ -1,11 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/vulkan_offscreen.h>
-#ifdef EASY3D_NO_OPENGL
-#include <easy3d/viewer/offscreen.h>
-#include <type_traits>
-static_assert(std::is_same<easy3d::OffScreen, easy3d::VulkanOffScreen>::value,
-              "Vulkan-only OffScreen must use native Vulkan");
-#endif
+
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/fileio/image_io.h>

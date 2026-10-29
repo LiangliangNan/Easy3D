@@ -25,6 +25,7 @@
  ********************************************************************/
 
 #include <easy3d/viewer/viewer.h>
+#include <easy3d/renderer/backend.h>
 
 #include <chrono>
 #include <iostream>
@@ -210,7 +211,7 @@ namespace easy3d {
 
         if (!glfwInit()) {
             LOG(ERROR) << "could not initialize GLFW!";
-            throw std::runtime_error("could not initialize GLFW!");
+            throw BackendUnavailable("could not initialize GLFW!");
         }
 
         glfwSetTime(0);
@@ -270,7 +271,7 @@ namespace easy3d {
             std::string error_message = "could not create an OpenGL "
                                         + std::to_string(gl_major) + "." + std::to_string(gl_minor) + " context!";
             LOG(ERROR) << error_message;
-            throw std::runtime_error(error_message);
+            throw BackendUnavailable(error_message);
         }
         glfwSetWindowUserPointer(window, this);
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -282,7 +283,8 @@ namespace easy3d {
         // Load OpenGL and its extensions
         if (!OpenglUtil::init()) {
             LOG(ERROR) << "failed to load OpenGL and its extensions!";
-            throw std::runtime_error("failed to load OpenGL and its extensions!");
+            glfwDestroyWindow(window);glfwTerminate();
+            throw BackendUnavailable("failed to load OpenGL and its extensions!");
         }
 
 #ifndef NDEBUG

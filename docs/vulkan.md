@@ -25,9 +25,10 @@ application errors must not trigger fallback and conceal defects. Automatic
 fallback should identify the backend selected and explain why Vulkan was
 unavailable. If neither backend can initialize, report both failures.
 
-Backend selection and fallback are final-state requirements, **not implemented
-by the current compile-time Viewer/OffScreen aliases**. Supporting automatic
-fallback requires a dual-backend build and shared viewer/offscreen interfaces,
+OffScreen now provides a runtime-selected public class for its common file and
+scene API. Viewer still uses a compile-time alias in Vulkan-only builds; unified
+window/backend lifecycle and complete automatic fallback remain migration gates. Supporting automatic
+window fallback requires a dual-backend build and shared viewer/offscreen interfaces,
 scene state and host lifecycle that can choose a backend before creating its
 rendering resources. Vulkan-only and OpenGL-only builds should remain supported,
 with clear diagnostics when the requested backend was not built.
@@ -2527,3 +2528,83 @@ The headless renderer has no GL/GLEW/GLFW imports. GitHub CI paths were updated;
 the workflow itself has not been run on GitHub as part of this local change.
 The `graphics` directory removal item in ToDo.md is complete; API unification
 remains ongoing.
+
+
+## Unified OffScreen API and initialization fallback
+
+`easy3d::OffScreen` is now one public class in all build profiles, with a private
+implementation rather than a Vulkan-only alias or protected Viewer inheritance.
+Its header contains no OpenGL/Vulkan SDK types or backend class includes. The
+existing width/height constructor and file rendering, camera, background,
+model/drawable management and scene clearing methods remain available. It also
+exposes `fit_screen()`, `backend()`, `fallback_reason()` and `validation_errors()`.
+The normal scene/file API no longer requires client-side backend conditionals.
+
+```cpp
+#include <easy3d/viewer/offscreen.h>
+easy3d::OffScreenOptions options;
+options.backend = easy3d::Backend::Automatic; // or Vulkan / OpenGL
+easy3d::OffScreen renderer(800, 600, options);
+renderer.add_model("bunny.ply");
+renderer.render("bunny.png");
+```
+
+`Backend` and `BackendUnavailable` live in renderer/backend.h. Automatic tries
+Vulkan first and selects OpenGL only for a typed initialization-availability
+failure, including an unbuilt backend or no usable ICD/device. Explicit requests
+never switch backends. Automatic reports both causes when neither backend is
+available and records/logs the Vulkan cause when OpenGL is selected. Invalid
+configuration, allocation faults and drawing/file-output errors do not trigger
+fallback. Vulkan initialization classifies known driver/extension/layer/feature
+availability results; other Vulkan errors retain their normal error category.
+
+Host-specific code is under `viewer/backends/{opengl,vulkan}/offscreen.cpp`, using
+the existing renderer implementations. Common forwarding and backend selection
+stay in viewer/offscreen.cpp. The OpenGL adapter owns a hidden context, uses the
+requested pixel dimensions instead of the window's HiDPI framebuffer dimensions,
+and maps the public sample count 1 to legacy non-multisampled FBO storage. Its
+framebuffer-size override leaves interactive Viewer sizing unchanged. Both
+backends start with the legacy Viewer's camera convention and fit attached
+models. Attach standalone drawables before uploading their buffers so the chosen
+backend can select the resource policy without a client-side CPU-buffer switch.
+
+Python's OffScreen binding now reflects this shared API, including Backend and
+OffScreenOptions, and removes generated interactive-Viewer callback overrides
+that do not belong to an offscreen object. Old undocumented protected Viewer
+hooks are not part of the new OffScreen interface. Full Python-package builds
+still retain their existing OpenGL build requirement; the updated offscreen
+binding was additionally checked in isolation with both backend implementations.
+Native-only capture, GPU
+selection and low-level device extensions remain on VulkanOffScreen while their
+shared equivalents are developed; VulkanViewer still uses that host internally.
+This is a source-compatible step for the documented common file/scene API, not
+binary compatibility with the previous class layout.
+
+Availability fallback currently starts after the Vulkan loader library itself is
+loadable. Handling a missing loader binary requires dynamically loading it rather
+than the current private link dependency and remains a migration gate. OpenGL
+validation requests currently fail explicitly instead of being silently ignored.
+Legacy OpenGL context/global-cache lifetime limitations also remain for the
+upcoming unified window lifecycle work; this step does not claim arbitrary
+interleaving of legacy OpenGL and Vulkan window hosts is supported.
+
+`viewer.offscreen` exercises the same file/scene API through Automatic and each
+built explicit backend: colors, buffer policies, camera preservation, synchronous
+resize, scaled four-sample transparent output, standalone overlays and ownership.
+Separate processes with an intentionally missing ICD test OpenGL fallback,
+explicit Vulkan failure and combined diagnostics in Vulkan-only builds. Invalid
+requests and a surfel missing normals verify that draw failures leave the selected
+backend unchanged. The installed consumer now includes an ordinary OffScreen
+program without native classes, SDK headers or conditional compilation.
+
+
+Verified on this Mac: 65/65 native-window tests, 38/38 combined OpenGL/Vulkan
+tests and 13/13 headless tests pass. The OpenGL-only viewer build and the same
+common offscreen rendering exercise also pass. The updated Python binding
+compiles against the bundled pybind11 and passes an isolated Python 3.15 smoke
+test using explicit Vulkan/OpenGL, resize and file rendering; the whole Python
+package was not rebuilt in this stage. Both installed consumers build and run,
+including the ordinary OffScreen client with no backend-specific includes, visible geometry, and the
+retained native capture/text client. Validation/synchronization checks report no
+new errors, and the headless viewer has no GL/GLEW/GLFW imports. The existing
+MoltenVK integer-attachment warning remains. Tutorial sources are unchanged.
