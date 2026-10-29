@@ -7,7 +7,8 @@
     - [x] Optional runtime Vulkan loader and missing/invalid-loader OffScreen fallback
     - [x] Shared GLFW lifecycle and surviving OpenGL/Vulkan viewer resources
     - [x] Common interactive frame driving, bounded execution and callback-error contract
-    - [ ] Runtime-selected Viewer/GUI APIs and native-only extensions
+    - [x] Runtime factory for built-in viewers with explicit backends and availability fallback
+    - [ ] Unified Viewer constructors/subclass callbacks, coordinates, GUI and native-only extensions
 - Send the computed value of "MVP * MANIP" to shaders (avoiding computing the matrix product for each vertex/fragment)
 - Walkthrough and animation; allow to modify the cameras interactively
 - Implement potree for huge point cloud visualization (https://github.com/potree/potree)

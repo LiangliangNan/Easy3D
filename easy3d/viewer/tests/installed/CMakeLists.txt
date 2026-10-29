@@ -14,3 +14,6 @@ target_link_libraries(installed_vulkan_consumer PRIVATE easy3d::viewer)
 
 add_executable(installed_offscreen_consumer unified.cpp)
 target_link_libraries(installed_offscreen_consumer PRIVATE easy3d::viewer)
+
+add_executable(installed_viewer_consumer viewer.cpp)
+target_link_libraries(installed_viewer_consumer PRIVATE easy3d::viewer)

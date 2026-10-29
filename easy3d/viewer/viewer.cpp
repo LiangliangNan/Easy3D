@@ -1114,7 +1114,7 @@ namespace easy3d {
     }
 
 
-    void Viewer::poll_events() { glfwPollEvents(); }
+    void Viewer::poll_events() { ViewerBase::poll_events(); }
     void Viewer::request_close() { glfwSetWindowShouldClose(window_, GLFW_TRUE); update(); }
     bool Viewer::should_close() const { return should_exit_ || glfwWindowShouldClose(window_) != 0; }
     void Viewer::show() { glfwShowWindow(window_); }

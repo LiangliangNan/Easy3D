@@ -222,7 +222,7 @@ VulkanViewer::~VulkanViewer() {
     glfwSetWindowUserPointer(window_->handle, nullptr);
     release_device();
 }
-void VulkanViewer::poll_events() { glfwPollEvents(); }
+void VulkanViewer::poll_events() { ViewerBase::poll_events(); }
 void VulkanViewer::request_close() { glfwSetWindowShouldClose(window_->handle, GLFW_TRUE); }
 bool VulkanViewer::should_close() const { return glfwWindowShouldClose(window_->handle) != 0; }
 void VulkanViewer::show() { glfwShowWindow(window_->handle); }
@@ -403,6 +403,7 @@ void VulkanViewer::cancel_interaction() {
     ClippingPlane::instance()->manipulator()->frame()->action_end();
     update_interaction_overlays(true);
 }
+Drawable* VulkanViewer::add_drawable(Drawable* drawable) { return add_drawable(std::shared_ptr<Drawable>(drawable)); }
 void VulkanViewer::clear_scene() {
     VulkanOffScreen::clear_scene();cancel_interaction();update_camera_path_overlays();
 }

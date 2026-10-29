@@ -32,6 +32,7 @@ GlfwRuntime::GlfwRuntime(bool require_vulkan) {
         throw BackendUnavailable("GLFW initialization failed (a desktop display is required)");
     }
 }
+void GlfwRuntime::poll_events() { glfwPollEvents(); }
 GlfwRuntime::~GlfwRuntime() {
     glfwTerminate();
 #ifdef EASY3D_HAS_VULKAN_VIEWER

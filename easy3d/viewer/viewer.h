@@ -36,7 +36,7 @@ namespace easy3d { using Viewer = VulkanViewer; }
 #else
 
 
-#include <easy3d/viewer/viewer_input.h>
+#include <easy3d/viewer/viewer_base.h>
 #include <string>
 #include <vector>
 #include <memory>
@@ -70,7 +70,7 @@ namespace easy3d {
      * The default Easy3D viewer can be easily extended by deriving your enhanced viewer from it
      * by re-implementing some of its functions (see the documentation of Viewer).
      */
-	class Viewer : public ViewerInput
+	class Viewer : public ViewerBase
 	{
 	public:
         /**
@@ -105,31 +105,37 @@ namespace easy3d {
          * \brief The destructor.
          */
 		virtual ~Viewer();
+        Backend backend() const override { return Backend::OpenGL; }
+        unsigned validation_errors() const override { return 0; }
+        void set_animation_callback(const ViewerBase::AnimationFunction& callback) override {
+            if (callback) animation_func_ = [callback](Viewer* viewer) { return callback(viewer); };
+            else animation_func_ = nullptr;
+        }
 
         /**
          * \brief Run the viewer.
          * \param see_all See all contents within the screen? If true, the entire scene (i.e., all models) will be
          *      centered on the screen at a proper scale.
          */
-        int run(bool see_all = true);
+        int run(bool see_all = true) override;
         // Preserve camera and visibility. Zero runs until closed; a positive
         // budget counts completed frames, excluding minimized/zero-size frames.
-        int run_frames(unsigned max_frames = 0);
+        int run_frames(unsigned max_frames = 0) override;
         // Render one frame, including animation before pre_draw(). Does not poll
         // events or show/refit the window. Rendering/callback failures throw.
-        bool draw_frame();
+        bool draw_frame() override;
         static void poll_events();
-        void request_close();
-        bool should_close() const;
-        void show();
-        void hide();
-        GLFWwindow* window() const { return window_; } // borrowed OpenGL host
+        void request_close() override;
+        bool should_close() const override;
+        void show() override;
+        void hide() override;
+        GLFWwindow* window() const override { return window_; } // borrowed OpenGL host
 
 
         /**
          * \brief Terminate the viewer.
          */
-        virtual void exit();
+        virtual void exit() override;
 
         /// \name Viewer properties
         //@{
@@ -138,33 +144,33 @@ namespace easy3d {
          * \brief Set the window title of the viewer.
          * \param title The string of the title.
          */
-		void set_title(const std::string &title);
+		void set_title(const std::string &title) override;
 
         /**
          * \brief Query the window title of the viewer.
          * \return The string of the window title.
          */
-		const std::string& title() const { return title_; }
+		const std::string& title() const override { return title_; }
 
         /**
          * \brief Set/Change the viewer size.
          * \param w/h The requested width/height (in pixels) of the viewer.
          */
-        void resize(int w, int h);
+        void resize(int w, int h) override;
 
         /// \brief Returns the width of the viewer/window.
         int width() const { return width_; }
         /// \brief Returns the height of the viewer/window.
         int height() const { return height_; }
         /// \brief Queries the size of the viewer/window.
-        void viewer_size(int& w, int& h) const { w = width_; h = height_; }
+        void viewer_size(int& w, int& h) const override { w = width_; h = height_; }
 
 		/// \brief Returns the width of the framebuffer, which is identical to: width() * dpi_scaling().
-		int framebuffer_width() const;
+		int framebuffer_width() const override;
 		/// \brief Returns the height of the framebuffer, which is identical to: height() * dpi_scaling().
-		int framebuffer_height() const;
+		int framebuffer_height() const override;
 		/// \brief Queries the size of the framebuffer.
-		virtual void framebuffer_size(int& w, int& h) const;
+		virtual void framebuffer_size(int& w, int& h) const override;
 
         /**
          * \brief Sets the position of the content area of the viewer.
@@ -174,7 +180,7 @@ namespace easy3d {
          *  \param ypos The y-coordinate of the upper-left corner of the content area.
          *  \note This function must only be called from the main thread.
          */
-        void set_position(int xpos, int ypos);
+        void set_position(int xpos, int ypos) override;
 
         /**
          * \brief Query the actual samples of the viewer.
@@ -187,24 +193,24 @@ namespace easy3d {
          * \brief Query the scaling factor for high DPI devices (e.g., MackBook pro).
          * \return The high DPI scaling factor.
          */
-        float dpi_scaling() const { return dpi_scaling_; }
+        float dpi_scaling() const override { return dpi_scaling_; }
 
         /**
          * \brief Set the background color of the viewer
          * \param color The background color.
          */
-        void set_background_color(const vec4& color) { background_color_ = color; }
+        void set_background_color(const vec4& color) override { background_color_ = color; }
 
         /**
          * \brief Query the background color of the viewer.
          * \return The background color of the viewer
          */
-        const vec4& background_color() const { return background_color_; }
+        const vec4& background_color() const override { return background_color_; }
 
         /// \brief Returns the camera used by the viewer. See \c Camera.
-        Camera* camera() { return camera_.get(); }
+        Camera* camera() override { return camera_.get(); }
         /// \brief Returns the camera used by the viewer. See \c Camera.
-        const Camera* camera() const { return camera_.get(); }
+        const Camera* camera() const override { return camera_.get(); }
         //@}
 
         /// \name File IO
@@ -219,7 +225,7 @@ namespace easy3d {
          *          meshes, and "edges" and "vertices" for graphs) will be created for visualization.
          * \return true on success and false otherwise.
          */
-        virtual bool open();
+        virtual bool open() override;
 
         /**
          * \brief Save the active model (if exists) to a file.
@@ -227,7 +233,7 @@ namespace easy3d {
          *          dialog for specifying the file name.
          * \return true on success and false otherwise.
          */
-        virtual bool save() const;
+        virtual bool save() const override;
         //@}
 
         /// \name Model management
@@ -253,7 +259,7 @@ namespace easy3d {
          * \return The pointer to the model added to the viewer (nullptr if failed).
          * \related add_model(Model*, bool).
          */
-        virtual Model* add_model(const std::string& file_name, bool create_default_drawables = true);
+        virtual Model* add_model(const std::string& file_name, bool create_default_drawables = true) override;
 
         /**
          * \brief Add an existing model to the viewer to be visualized. On success, the viewer will
@@ -274,7 +280,7 @@ namespace easy3d {
          * \return The pointer to the model added to the viewer (nullptr if failed).
          * \related add_model(const std::string&, bool).
          */
-        Model* add_model(std::shared_ptr<Model> model, bool create_default_drawables = true);
+        Model* add_model(std::shared_ptr<Model> model, bool create_default_drawables = true) override;
 		/**
 		 * @brief Add an existing model to the viewer to be visualized. On success, the viewer will
 		 *      be in charge of the memory management of the model.
@@ -294,7 +300,7 @@ namespace easy3d {
 		 * @return The pointer to the model added to the viewer (nullptr if failed).
 		 * @sa add_model(const std::string&, bool).
 		 */
-        Model* add_model(Model* model, bool create_default_drawables = true);
+        Model* add_model(Model* model, bool create_default_drawables = true) override;
 
         /**
          * \brief Delete a model. The memory of the model will be released and its existing drawables
@@ -302,13 +308,13 @@ namespace easy3d {
          * \param model The pointer to the model.
          * \return True if the model has been deleted.
          */
-        virtual bool delete_model(Model* model);
+        virtual bool delete_model(Model* model) override;
 
         /**
          * \brief Query the models managed by this viewer.
          * \return The models managed by this viewer.
          */
-        const std::vector< std::shared_ptr<Model> >& models() const { return models_; }
+        const std::vector< std::shared_ptr<Model> >& models() const override { return models_; }
 
         /**
          * \brief Query the active model.
@@ -318,7 +324,7 @@ namespace easy3d {
          *          the active model.
          * \return The active model.
          */
-        Model* current_model() const;
+        Model* current_model() const override;
         //@}
 
         /// \name Drawable management
@@ -334,7 +340,7 @@ namespace easy3d {
          * \param drawable The pointer to the drawable.
          * \return The pointer of the drawable added to the viewer.
          */
-        Drawable* add_drawable(std::shared_ptr<Drawable> drawable);
+        Drawable* add_drawable(std::shared_ptr<Drawable> drawable) override;
 		/**
 		 * @brief Add a drawable to the viewer to be visualized. On success, the viewer will be in
 		 *      charge of the memory management of the drawable
@@ -345,25 +351,25 @@ namespace easy3d {
 		 * @param drawable The pointer to the drawable.
 		 * @return The pointer of the drawable added to the viewer.
 		 */
-        Drawable* add_drawable(Drawable* drawable);
+        Drawable* add_drawable(Drawable* drawable) override;
 
         /**
          * Delete the drawable from the viewer. The related drawables will also be deleted.
          * \param drawable The pointer to the drawable.
          * \return True if the drawable has been deleted.
          */
-	    bool delete_drawable(Drawable* drawable);
+	    bool delete_drawable(Drawable* drawable) override;
 
         /**
          * \brief Query the drawables managed by this viewer.
          * \return The drawables managed by this viewer.
          */
-        const std::vector< std::shared_ptr<Drawable> >& drawables() const { return drawables_; }
+        const std::vector< std::shared_ptr<Drawable> >& drawables() const override { return drawables_; }
 
         /**
          * \brief Delete all visual contents of the viewer (all models and drawables).
          */
-        void clear_scene();
+        void clear_scene() override;
         //@}
 
         /// \name UI-related functions
@@ -374,7 +380,7 @@ namespace easy3d {
          * \details This method is used to update the display of the rendering. Client should call
          *          it when your data/view is changed.
          */
-        void update() const;
+        void update() const override;
 
         /**
          * \brief Moves the camera so that the entire scene or the active model is centered on the
@@ -382,7 +388,7 @@ namespace easy3d {
          * \param model The pointer to the model to be centered on the screen. If nullptr, the
          *        entire scene (i.e., all models) will be centered on the screen at a proper scale.
          */
-        void fit_screen(const Model* model = nullptr);
+        void fit_screen(const Model* model = nullptr) override;
 
         /**
          * \brief Take a snapshot of the screen and save it to a file.
@@ -390,7 +396,7 @@ namespace easy3d {
          *          Internally, it will pop up a file dialog for specifying the file name.
          * \return true on success and false otherwise.
          */
-	    virtual bool snapshot() const;
+	    virtual bool snapshot() const override;
 
         /**
          * \brief  Take a snapshot of the screen and save it to an image file. Supported image format: png, jpg, bmp, and tga.
@@ -437,7 +443,7 @@ namespace easy3d {
          * \param screen_hint The hint to the user, which will be sown in the top-left corner of the viewer.
          * \attention The default shortcuts could be overridden by bind() function calls.
          */
-        void set_usage(const std::string& manual = "default", const std::string& screen_hint = "");
+        void set_usage(const std::string& manual = "default", const std::string& screen_hint = "") override;
 	    //@}
 
         /// \name Algorithm execution
@@ -485,10 +491,10 @@ namespace easy3d {
 
         /// \brief Enable/Disable animation.
         /// \attention To have animation, \c animation_func_ must be provided to specify how scene geometry is modified.
-        void set_animation(bool b);
+        void set_animation(bool b) override;
 
         /// \brief Is animation currently being performed.
-        bool is_animating() const;
+        bool is_animating() const override;
         //@}
 
 	protected:
@@ -580,6 +586,15 @@ namespace easy3d {
 
         void copy_view();
         void paste_view();
+
+    protected:
+        void bind_command(const ViewerBase::Function& func, Model* model, Key key, Modifier modifier) override {
+            bind(Function([func](Viewer* viewer, Model* m) { return func(viewer, m); }), model, key, modifier);
+        }
+        unsigned window_samples() const override { return samples_ > 1 ? unsigned(samples_) : 1u; }
+        bool snapshot_file(const std::string& f, float scale, int samples, int bg, bool expand) const override {
+            return snapshot(f, scale, samples == 1 ? 0 : samples, bg, expand);
+        }
 
     private:
         std::shared_ptr<detail::GlfwRuntime> runtime_;

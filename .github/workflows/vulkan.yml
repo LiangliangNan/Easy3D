@@ -81,6 +81,11 @@ jobs:
           unset DISPLAY WAYLAND_DISPLAY
           ./installed-consumer/installed_vulkan_consumer
           ./installed-consumer/installed_offscreen_consumer
+          if [ "${{ matrix.window }}" = "ON" ]; then
+            xvfb-run -a -s '-screen 0 1280x1024x24 -nolisten tcp -noreset' ./installed-consumer/installed_viewer_consumer
+          else
+            ./installed-consumer/installed_viewer_consumer
+          fi
       - uses: actions/upload-artifact@v4
         if: always() && matrix.opengl == 'ON'
         with:
