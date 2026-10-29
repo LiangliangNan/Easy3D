@@ -2828,8 +2828,8 @@ draw()/init() hooks and the native subclass family keep their existing behavior.
 The factory does not instantiate the subclass on which an inherited create()
 method is called. Explicit VulkanViewer also retains its historical framebuffer
 width/height and camera/input coordinates; factory clients should use the common
-logical/framebuffer queries explicitly. Factory-style custom input hooks,
-unified constructor/subclass storage and coordinate conventions, native capture/
+logical/framebuffer queries explicitly. Factory-style custom input hooks are provided by the portable callbacks below.
+Unified constructor/subclass storage and camera coordinate conventions, native capture/
 picking/selection equivalents on the common interface, GUI/effects/toolkit and
 Python integration remain migration work. This stage does not replace the full
 public Viewer class with a backend-neutral implementation.
@@ -2860,3 +2860,86 @@ and there is no mandatory Vulkan loader dependency. Tutorials are unchanged.
 The new shared base changes the interactive classes' C++ layout/vtables; rebuild
 downstream clients on this experimental branch. Existing source constructors and
 subclass hooks are retained, rather than treating this as binary compatibility.
+
+
+## Portable viewer input and frame callbacks
+
+Factory-created viewers now accept ViewerCallbacks through set_callbacks().
+The public header viewer_callbacks.h mirrors the existing viewer hook names:
+pre_draw, post_draw, post_resize, mouse press/release/drag/free-move/scroll,
+key press/release, character input, file drop and focus. Callbacks receive a
+ViewerBase* and run on the UI/main thread. They can update ordinary models and
+drawables without naming a Vulkan/OpenGL viewer or issuing backend calls.
+
+```cpp
+easy3d::ViewerCallbacks callbacks;
+callbacks.key_press_event = [](easy3d::ViewerBase* viewer, int key, int modifiers) {
+    if (key == easy3d::ViewerBase::KEY_Q && modifiers == 0) {
+        viewer->request_close();
+        return true;
+    }
+    return false; // retain existing bindings, shortcuts and camera controls
+};
+viewer->set_callbacks(std::move(callbacks));
+```
+
+Input callbacks run before legacy subclass hooks and built-in actions. Returning
+true consumes the event. A consumed mouse press captures its gesture through the
+matching release, even if subsequent drag/release handlers return false or are
+cleared. Consuming release of a builtin gesture cancels it instead of applying a
+region zoom. Physical input tracking and camera action cleanup still complete.
+Focus loss clears drag/capture and fractional scrolling state on both hosts.
+Legacy hooks retain their original coordinate conventions and receive unhandled
+events. Explicit subclasses continue to work; they are not created by this
+factory API.
+
+Common mouse positions and deltas are integer logical window coordinates with
+an upper-left origin, including on HiDPI displays. Button/scroll callbacks query
+the actual cursor position, and consumed movement updates tracking so later
+default controls do not accumulate skipped deltas. Native framebuffer-coordinate
+hooks remain unchanged. Modifier lookup is shared in the GLFW backend. OpenGL
+now accumulates fractional wheel deltas as Vulkan already did, so trackpad
+movement is not lost by truncating each individual event.
+
+post_resize receives logical window dimensions after host camera/viewport state
+has been updated. A framebuffer-only change also notifies it, so a callback can
+query the new pixel dimensions. Identical logical/framebuffer tuples are
+coalesced; registration records the current size rather than sending an initial
+notification. OpenGL now listens for framebuffer changes as well as window-size
+changes, and avoids resetting an unchanged camera viewport.
+
+pre_draw runs after animation and before the existing scene hooks/encoding;
+post_draw runs after a completed frame. Vulkan swapchain retries may require
+more pre_draw attempts than completed frames. Snapshots do not run these hooks
+or animation. The regression also found that an OpenGL snapshot through the
+common API before draw_frame() had not initialized depth testing. That path now
+initializes the host once, without invoking frame callbacks; overlapping
+foreground/background surfaces verify correct depth with MSAA file output.
+
+Callback registration can be replaced or cleared from within a callback. The
+active registration is retained until dispatch returns; mutable callable state
+is preserved between events and captured resources are released afterward.
+Event exceptions stay inside GLFW's C boundary, request close and are reported
+at the frame boundary. Frame callback exceptions propagate through the existing
+frame/run error contract. None of these errors cause backend fallback.
+
+The same public-API callback test runs against both hosts. It checks rendered
+pre_draw updates, frame counts/state, snapshot isolation and initial depth,
+logical coordinates/deltas, key consumption and builtin/bound actions, Unicode,
+gesture capture/cancel, focus cleanup, fractional scroll, consumed/default file
+drops, logical/framebuffer resize notifications, reentrant registration lifetime,
+and retained hosts after exceptions. The SDK-independent package client now
+registers frame callbacks too. Tutorial sources and shaders remain unchanged.
+Unified Viewer constructors/subclass storage, camera projection/input helpers,
+common capture/picking/selection, GUI effects/toolkits and Python remain future
+migration work.
+
+Verified on this Mac with MoltenVK: 74/74 native tests, 54/54 combined-backend
+tests and 16/16 headless tests pass. The callback regression also compiles and
+passes against the OpenGL-only library. The public callback client builds with
+Vulkan SDK discovery disabled and renders through both MoltenVK and forced
+OpenGL fallback; the installed headless client builds and reports unavailable
+window hosts. Headless binary inspection finds no GL/GLEW/GLFW imports. No new
+Vulkan validation/synchronization errors were reported; previously documented
+platform warnings remain. Changes are confined to viewer infrastructure, tests
+and migration notes, with no tutorial or shader edits.

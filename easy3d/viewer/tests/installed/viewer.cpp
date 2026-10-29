@@ -22,12 +22,18 @@ int main() {
         auto faces = mesh->renderer()->get_triangles_drawable("faces");
         faces->set_uniform_coloring(vec4(.8f, .2f, .1f, 1)); faces->set_lighting(false);
         viewer->set_usage(""); viewer->fit_screen();
-        unsigned ticks = 0;
+        unsigned ticks = 0, before = 0, after = 0;
+        ViewerCallbacks callbacks;
+        callbacks.pre_draw = [&](ViewerBase* host) { require(host == viewer.get(), "callback received another viewer"); ++before; };
+        callbacks.post_draw = [&](ViewerBase*) { ++after; };
+        viewer->set_callbacks(std::move(callbacks));
         viewer->set_animation_callback([&](ViewerBase* host) { ++ticks; host->set_animation(false); return true; });
         viewer->set_animation(true);
-        require(viewer->run_frames(2) == 0 && ticks == 1 && viewer->width() == 181 && viewer->height() == 151 && viewer->samples() == 1,
-                "installed viewer loop/dimensions/animation failed");
+        require(viewer->run_frames(2) == 0 && ticks == 1 && viewer->width() == 181 && viewer->height() == 151 && viewer->samples() == 1 && before >= 2 && after == 2,
+                "installed viewer loop/dimensions/animation/callbacks failed");
+        const auto frame_callbacks = before + after;
         require(viewer->snapshot("installed-viewer.png", 1, 4, 1), "installed viewer snapshot failed");
+        require(before + after == frame_callbacks, "installed viewer snapshot invoked frame callbacks");
         int w, h, channels; std::vector<unsigned char> rgba;
         require(ImageIO::load("installed-viewer.png", rgba, w, h, channels, 4, false) &&
                 w == viewer->framebuffer_width() && h == viewer->framebuffer_height(), "installed viewer output dimensions differ");

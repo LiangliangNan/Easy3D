@@ -72,4 +72,73 @@ bool ViewerBase::snapshot(const std::string& filename, float scaling, int sample
         double(framebuffer_height()) * scaling > std::numeric_limits<int>::max()) return false;
     return snapshot_file(filename, scaling, sample_count, background, expand);
 }
+void ViewerBase::set_callbacks(ViewerCallbacks callbacks) {
+    auto replacement = std::make_shared<ViewerCallbacks>(std::move(callbacks));
+    viewer_size(resize_width_, resize_height_);
+    framebuffer_size(resize_fb_width_, resize_fb_height_);
+    callbacks_ = std::move(replacement);
+}
+void ViewerBase::notify_pre_draw() {
+    const auto callbacks = callbacks_;
+    if (callbacks && callbacks->pre_draw) callbacks->pre_draw(this);
+}
+void ViewerBase::notify_post_draw() {
+    const auto callbacks = callbacks_;
+    if (callbacks && callbacks->post_draw) callbacks->post_draw(this);
+}
+void ViewerBase::notify_resize() {
+    int w, h, fw, fh; viewer_size(w, h); framebuffer_size(fw, fh);
+    if (w == resize_width_ && h == resize_height_ && fw == resize_fb_width_ && fh == resize_fb_height_) return;
+    resize_width_ = w; resize_height_ = h; resize_fb_width_ = fw; resize_fb_height_ = fh;
+    const auto callbacks = callbacks_;
+    if (callbacks && callbacks->post_resize) callbacks->post_resize(this, w, h);
+}
+bool ViewerBase::dispatch_mouse_press(int x, int y, int button, int modifiers) {
+    const auto callbacks = callbacks_;
+    const bool handled = callbacks && callbacks->mouse_press_event && callbacks->mouse_press_event(this, x, y, button, modifiers);
+    callback_button_ = button; callback_capture_ = handled;
+    return handled;
+}
+bool ViewerBase::dispatch_mouse_release(int x, int y, int button, int modifiers) {
+    const bool captured = callback_capture_ && callback_button_ == button;
+    if (callback_button_ == button) { callback_button_ = -1; callback_capture_ = false; }
+    const auto callbacks = callbacks_;
+    const bool handled = callbacks && callbacks->mouse_release_event && callbacks->mouse_release_event(this, x, y, button, modifiers);
+    return handled || captured;
+}
+bool ViewerBase::dispatch_mouse_drag(int x, int y, int dx, int dy, int button, int modifiers) {
+    const auto callbacks = callbacks_;
+    const bool handled = callbacks && callbacks->mouse_drag_event && callbacks->mouse_drag_event(this, x, y, dx, dy, button, modifiers);
+    return handled || (callback_capture_ && callback_button_ == button);
+}
+bool ViewerBase::dispatch_mouse_move(int x, int y, int dx, int dy, int modifiers) {
+    const auto callbacks = callbacks_;
+    return callbacks && callbacks->mouse_free_move_event && callbacks->mouse_free_move_event(this, x, y, dx, dy, modifiers);
+}
+bool ViewerBase::dispatch_mouse_scroll(int x, int y, int dx, int dy) {
+    const auto callbacks = callbacks_;
+    return callbacks && callbacks->mouse_scroll_event && callbacks->mouse_scroll_event(this, x, y, dx, dy);
+}
+bool ViewerBase::dispatch_key_press(int key, int modifiers) {
+    const auto callbacks = callbacks_;
+    return callbacks && callbacks->key_press_event && callbacks->key_press_event(this, key, modifiers);
+}
+bool ViewerBase::dispatch_key_release(int key, int modifiers) {
+    const auto callbacks = callbacks_;
+    return callbacks && callbacks->key_release_event && callbacks->key_release_event(this, key, modifiers);
+}
+bool ViewerBase::dispatch_character(unsigned int code) {
+    const auto callbacks = callbacks_;
+    return callbacks && callbacks->char_input_event && callbacks->char_input_event(this, code);
+}
+bool ViewerBase::dispatch_drop(const std::vector<std::string>& files) {
+    const auto callbacks = callbacks_;
+    return callbacks && callbacks->drop_event && callbacks->drop_event(this, files);
+}
+bool ViewerBase::dispatch_focus(bool focused) {
+    if (!focused) { callback_button_ = -1; callback_capture_ = false; }
+    const auto callbacks = callbacks_;
+    return callbacks && callbacks->focus_event && callbacks->focus_event(this, focused);
+}
+
 }

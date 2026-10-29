@@ -593,6 +593,10 @@ namespace easy3d {
         }
         unsigned window_samples() const override { return samples_ > 1 ? unsigned(samples_) : 1u; }
         bool snapshot_file(const std::string& f, float scale, int samples, int bg, bool expand) const override {
+            // Common snapshots are valid before the first interactive frame.
+            if (!initialized_) {
+                auto* host = const_cast<Viewer*>(this); host->init(); host->initialized_ = true;
+            }
             return snapshot(f, scale, samples == 1 ? 0 : samples, bg, expand);
         }
 
@@ -602,6 +606,9 @@ namespace easy3d {
         double frame_rate_start_ = 0;
         unsigned frame_rate_frames_ = 0;
         std::exception_ptr callback_error_;
+        int callback_mouse_x_ = 0, callback_mouse_y_ = 0;
+        int framebuffer_width_ = 0, framebuffer_height_ = 0;
+        double scroll_remainder_x_ = 0, scroll_remainder_y_ = 0;
         void print_usage();
         void update_frame_rate();
         template<class Callback> static void dispatch_callback(GLFWwindow*, const Callback&) noexcept;

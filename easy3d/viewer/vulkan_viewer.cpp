@@ -105,6 +105,7 @@ struct VulkanViewer::Window {
     int width, height;
     unsigned samples;
     int button = -1, last_x = 0, last_y = 0;
+    int last_logical_x = 0, last_logical_y = 0;
     double wheel_x = 0, wheel_y = 0;
     std::exception_ptr error;
     Window(const std::string& text, const VulkanViewerOptions& options)
@@ -141,14 +142,7 @@ struct VulkanViewer::Window {
         double px = 0, py = 0;
         glfwGetCursorPos(handle, &px, &py); position(px, py, x, y);
     }
-    int modifiers() const {
-        int result = 0;
-        if (glfwGetKey(handle, GLFW_KEY_LEFT_SHIFT) || glfwGetKey(handle, GLFW_KEY_RIGHT_SHIFT)) result |= GLFW_MOD_SHIFT;
-        if (glfwGetKey(handle, GLFW_KEY_LEFT_CONTROL) || glfwGetKey(handle, GLFW_KEY_RIGHT_CONTROL)) result |= GLFW_MOD_CONTROL;
-        if (glfwGetKey(handle, GLFW_KEY_LEFT_ALT) || glfwGetKey(handle, GLFW_KEY_RIGHT_ALT)) result |= GLFW_MOD_ALT;
-        if (glfwGetKey(handle, GLFW_KEY_LEFT_SUPER) || glfwGetKey(handle, GLFW_KEY_RIGHT_SUPER)) result |= GLFW_MOD_SUPER;
-        return result;
-    }
+    int modifiers() const { return detail::GlfwRuntime::modifiers(handle); }
     template<class Function> static void dispatch(GLFWwindow* handle, const Function& call) noexcept {
         auto* viewer = static_cast<VulkanViewer*>(glfwGetWindowUserPointer(handle));
         if (!viewer) return;
@@ -162,36 +156,59 @@ struct VulkanViewer::Window {
             int x, y; auto& host = *v.window_; host.position(px, py, x, y);
             const int dx = x - host.last_x, dy = y - host.last_y;
             host.last_x = x; host.last_y = y;
-            if (host.button >= 0) v.mouse_drag_event(x, y, dx, dy, host.button, host.modifiers());
-            else v.mouse_free_move_event(x, y, dx, dy, host.modifiers());
+            const int wx = int(px), wy = int(py), ldx = wx - host.last_logical_x, ldy = wy - host.last_logical_y;
+            host.last_logical_x = wx; host.last_logical_y = wy;
+            const int mods = host.modifiers();
+            if (host.button >= 0) {
+                if (!v.dispatch_mouse_drag(wx, wy, ldx, ldy, host.button, mods)) v.mouse_drag_event(x, y, dx, dy, host.button, mods);
+            } else if (!v.dispatch_mouse_move(wx, wy, ldx, ldy, mods)) v.mouse_free_move_event(x, y, dx, dy, mods);
         }); });
         glfwSetMouseButtonCallback(handle, [](GLFWwindow* w, int button, int action, int mods) { dispatch(w, [&](VulkanViewer& v) {
-            int x, y; auto& host = *v.window_; host.position(x, y); host.last_x = x; host.last_y = y;
-            if (action == GLFW_PRESS) { host.button = button; v.mouse_press_event(x, y, button, mods); }
-            else { v.mouse_release_event(x, y, button, mods); if (host.button == button) host.button = -1; }
+            int x, y; auto& host = *v.window_;
+            double px, py; glfwGetCursorPos(w, &px, &py); host.position(px, py, x, y);
+            host.last_x = x; host.last_y = y; host.last_logical_x = int(px); host.last_logical_y = int(py);
+            if (action == GLFW_PRESS) {
+                host.button = button;
+                if (!v.dispatch_mouse_press(int(px), int(py), button, mods)) v.mouse_press_event(x, y, button, mods);
+            } else {
+                if (!v.dispatch_mouse_release(int(px), int(py), button, mods)) v.mouse_release_event(x, y, button, mods);
+                else {
+                    v.pressed_button_ = -1; v.zoom_region_ = false;
+                    v.camera()->frame()->action_end();
+                    ClippingPlane::instance()->manipulator()->frame()->action_end();
+                    v.update_interaction_overlays(true);
+                }
+                if (host.button == button) host.button = -1;
+            }
         }); });
         glfwSetScrollCallback(handle, [](GLFWwindow* w, double dx, double dy) { dispatch(w, [&](VulkanViewer& v) {
             auto& host = *v.window_; host.wheel_x += dx; host.wheel_y += dy;
             const int sx = int(host.wheel_x), sy = int(host.wheel_y);
             host.wheel_x -= sx; host.wheel_y -= sy;
-            int x, y; host.position(x, y);
-            if (sx || sy) v.mouse_scroll_event(x, y, sx, sy);
+            int x, y; double px, py; glfwGetCursorPos(w, &px, &py); host.position(px, py, x, y);
+            if ((sx || sy) && !v.dispatch_mouse_scroll(int(px), int(py), sx, sy)) v.mouse_scroll_event(x, y, sx, sy);
         }); });
         glfwSetKeyCallback(handle, [](GLFWwindow* w, int key, int, int action, int mods) { dispatch(w, [&](VulkanViewer& v) {
-            if (action == GLFW_RELEASE) v.key_release_event(key, mods); else v.key_press_event(key, mods);
+            if (action == GLFW_RELEASE) {
+                if (!v.dispatch_key_release(key, mods)) v.key_release_event(key, mods);
+                else v.pressed_key_ = -1;
+            } else if (!v.dispatch_key_press(key, mods)) v.key_press_event(key, mods);
         }); });
-        glfwSetCharCallback(handle, [](GLFWwindow* w, unsigned int code) { dispatch(w, [&](VulkanViewer& v) { v.char_input_event(code); }); });
+        glfwSetCharCallback(handle, [](GLFWwindow* w, unsigned int code) { dispatch(w, [&](VulkanViewer& v) { if (!v.dispatch_character(code)) v.char_input_event(code); }); });
         glfwSetDropCallback(handle, [](GLFWwindow* w, int count, const char** files) { dispatch(w, [&](VulkanViewer& v) {
             std::vector<std::string> names;
             for (int i = 0; i < count; ++i) names.emplace_back(files[i]);
-            v.drop_event(names);
+            if (!v.dispatch_drop(names)) v.drop_event(names);
         }); });
         glfwSetWindowFocusCallback(handle, [](GLFWwindow* w, int focused) { dispatch(w, [&](VulkanViewer& v) {
-            if (!focused) { v.window_->button = -1; v.cancel_interaction(); }
-            v.focus_event(focused != 0);
+            if (!focused) {
+                v.window_->button = -1; v.window_->wheel_x = v.window_->wheel_y = 0; v.cancel_interaction();
+            }
+            if (!v.dispatch_focus(focused != 0)) v.focus_event(focused != 0);
         }); });
         glfwSetFramebufferSizeCallback(handle, [](GLFWwindow* w, int width, int height) { dispatch(w, [&](VulkanViewer& v) {
             if (width > 0 && height > 0) { v.VulkanOffScreen::resize(width, height); v.cancel_interaction(); v.post_resize(width, height); }
+            v.notify_resize();
         }); });
     }
 };
@@ -257,7 +274,7 @@ bool VulkanViewer::draw_frame() {
     if (should_close() || glfwGetWindowAttrib(window_->handle, GLFW_ICONIFIED)) return false;
     int w, h; framebuffer_size(w, h);
     if (w <= 0 || h <= 0) return false;
-    if (width() != w || height() != h) { VulkanOffScreen::resize(w, h); cancel_interaction(); post_resize(w, h); }
+    if (width() != w || height() != h) { VulkanOffScreen::resize(w, h); cancel_interaction(); post_resize(w, h); notify_resize(); }
     if (is_animating()) {
         animation_func_(this);
         if (window_->error) std::rethrow_exception(window_->error);
@@ -265,11 +282,14 @@ bool VulkanViewer::draw_frame() {
     }
     advance_camera_path();
     print_usage();
+    notify_pre_draw();
+    if (window_->error) std::rethrow_exception(window_->error);
+    if (should_close()) return false;
     pre_draw();
     update_camera_path_overlays();
     update_interaction_overlays();
     const bool drawn = present(samples());
-    if (drawn) {update_frame_rate();post_draw();}
+    if (drawn) {update_frame_rate();post_draw();notify_post_draw();}
     if (window_->error) std::rethrow_exception(window_->error);
     return drawn;
 }

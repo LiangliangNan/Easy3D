@@ -15,6 +15,7 @@ public:
     static std::shared_ptr<GlfwRuntime> acquire(bool require_vulkan = false);
     ~GlfwRuntime();
     static void poll_events();
+    static int modifiers(GLFWwindow*);
     std::shared_ptr<graphics::internal::VulkanLoader> vulkan_loader() const { return loader_; }
     GLFWwindow* opengl_share_window() const;
     void attach_opengl_window(GLFWwindow* window);

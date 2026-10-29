@@ -320,6 +320,7 @@ namespace easy3d {
         dpi_scaling_ = static_cast<float>(xscale + yscale) * 0.5f;
         VLOG(1) << "DPI scaling: " << dpi_scaling();
 
+        glfwGetFramebufferSize(window, &framebuffer_width_, &framebuffer_height_);
         runtime_->attach_opengl_window(window);
         return guard.release();
     }
@@ -346,6 +347,14 @@ namespace easy3d {
         glfwSetCursorPosCallback(window, [](GLFWwindow* win, double x, double y) {
             dispatch_callback(win, [=](Viewer& v) {
                 if (!v.process_events_) return;
+                const int wx = int(x), wy = int(y);
+                const int dx = wx - v.callback_mouse_x_, dy = wy - v.callback_mouse_y_;
+                v.callback_mouse_x_ = wx; v.callback_mouse_y_ = wy;
+                const int modifiers = detail::GlfwRuntime::modifiers(win);
+                const bool handled = v.drag_active_
+                    ? v.dispatch_mouse_drag(wx, wy, dx, dy, v.pressed_button_, modifiers)
+                    : v.dispatch_mouse_move(wx, wy, dx, dy, modifiers);
+                if (handled) { v.mouse_current_x_ = wx; v.mouse_current_y_ = wy; return; }
                 const int w = v.width(), h = v.height();
                 if (x >= 0 && x <= w && y >= 0 && y <= h) v.callback_event_cursor_pos(x, y);
                 else if (v.drag_active_) glfwSetCursorPos(win, std::max(0.0, std::min(double(w), x)),
@@ -354,7 +363,11 @@ namespace easy3d {
         });
         glfwSetMouseButtonCallback(window, [](GLFWwindow* win, int button, int action, int modifiers) {
             dispatch_callback(win, [=](Viewer& v) {
-                if (v.process_events_) v.callback_event_mouse_button(button, action, modifiers);
+                if (!v.process_events_) return;
+                double x, y; glfwGetCursorPos(win, &x, &y);
+                v.mouse_current_x_ = v.callback_mouse_x_ = int(x);
+                v.mouse_current_y_ = v.callback_mouse_y_ = int(y);
+                v.callback_event_mouse_button(button, action, modifiers);
             });
         });
         glfwSetKeyCallback(window, [](GLFWwindow* win, int key, int, int action, int mods) {
@@ -374,7 +387,10 @@ namespace easy3d {
         });
         glfwSetScrollCallback(window, [](GLFWwindow* win, double dx, double dy) {
             dispatch_callback(win, [=](Viewer& v) {
-                if (v.process_events_) v.callback_event_scroll(dx, dy);
+                if (!v.process_events_) return;
+                double x, y; glfwGetCursorPos(win, &x, &y);
+                v.mouse_current_x_ = int(x); v.mouse_current_y_ = int(y);
+                v.callback_event_scroll(dx, dy);
             });
         });
         // Camera/input coordinates are logical window units in this OpenGL host.
@@ -383,8 +399,22 @@ namespace easy3d {
                 if (v.process_events_) v.callback_event_resize(w, h);
             });
         });
+        glfwSetFramebufferSizeCallback(window, [](GLFWwindow* win, int, int) {
+            dispatch_callback(win, [=](Viewer& v) {
+                if (!v.process_events_) return;
+                int w, h; glfwGetWindowSize(win, &w, &h); v.callback_event_resize(w, h);
+            });
+        });
         glfwSetWindowFocusCallback(window, [](GLFWwindow* win, int focused) {
-            dispatch_callback(win, [=](Viewer& v) { v.focus_event(focused != 0); });
+            dispatch_callback(win, [=](Viewer& v) {
+                if (!focused) {
+                    v.drag_active_ = false; v.pressed_button_ = v.pressed_key_ = -1; v.modifiers_ = 0;
+                    v.scroll_remainder_x_ = v.scroll_remainder_y_ = 0;
+                    v.camera_->frame()->action_end();
+                    ClippingPlane::instance()->manipulator()->frame()->action_end();
+                }
+                if (!v.dispatch_focus(focused != 0)) v.focus_event(focused != 0);
+            });
         });
         glfwSetWindowCloseCallback(window, [](GLFWwindow* win) {
             dispatch_callback(win, [](Viewer& v) { v.request_close(); });
@@ -421,9 +451,15 @@ namespace easy3d {
                 modifiers_ = modifiers;
                 mouse_pressed_x_ = mouse_current_x_;
                 mouse_pressed_y_ = mouse_current_y_;
+                if (dispatch_mouse_press(mouse_current_x_, mouse_current_y_, button, modifiers)) return true;
                 return mouse_press_event(mouse_current_x_, mouse_current_y_, button, modifiers);
             } else if (action == GLFW_RELEASE) {
                 drag_active_ = false;
+                if (dispatch_mouse_release(mouse_current_x_, mouse_current_y_, button, modifiers)) {
+                    pressed_button_ = -1; camera_->frame()->action_end();
+                    ClippingPlane::instance()->manipulator()->frame()->action_end();
+                    return true;
+                }
                 return mouse_release_event(mouse_current_x_, mouse_current_y_, button, modifiers);
             } else {
                 drag_active_ = false;
@@ -442,8 +478,10 @@ namespace easy3d {
     bool Viewer::callback_event_keyboard(int key, int action, int modifiers) {
         try {
             if (action == GLFW_PRESS || action == GLFW_REPEAT) {
+                if (dispatch_key_press(key, modifiers)) return true;
                 return key_press_event(key, modifiers);
             } else {
+                if (dispatch_key_release(key, modifiers)) { pressed_key_ = -1; return true; }
                 return key_release_event(key, modifiers);
             }
         }
@@ -457,6 +495,7 @@ namespace easy3d {
 
     bool Viewer::callback_event_character(unsigned int codepoint) {
         try {
+            if (dispatch_character(codepoint)) return true;
             return char_input_event(codepoint);
         }
         catch (const std::exception &e) {
@@ -472,6 +511,7 @@ namespace easy3d {
             std::vector<std::string> arg(count);
             for (int i = 0; i < count; ++i)
                 arg[i] = filenames[i];
+            if (dispatch_drop(arg)) return true;
             return drop_event(arg);
         }
         catch (const std::exception &e) {
@@ -484,7 +524,12 @@ namespace easy3d {
 
     bool Viewer::callback_event_scroll(double dx, double dy) {
         try {
-            return mouse_scroll_event(mouse_current_x_, mouse_current_y_, static_cast<int>(dx), static_cast<int>(dy));
+            scroll_remainder_x_ += dx; scroll_remainder_y_ += dy;
+            const int sx = int(scroll_remainder_x_), sy = int(scroll_remainder_y_);
+            scroll_remainder_x_ -= sx; scroll_remainder_y_ -= sy;
+            if (!sx && !sy) return false;
+            if (dispatch_mouse_scroll(mouse_current_x_, mouse_current_y_, sx, sy)) return true;
+            return mouse_scroll_event(mouse_current_x_, mouse_current_y_, sx, sy);
         }
         catch (const std::exception &e) {
             if (!callback_error_) callback_error_ = std::current_exception();
@@ -495,27 +540,16 @@ namespace easy3d {
 
 
     void Viewer::callback_event_resize(int w, int h) {
-        width_ = w;
-        height_ = h;
-
         try {
-            // camera is manipulated by the mouse, working in the screen coordinate system
-            // (different from the viewport or framebuffer size, which are in pixel coordinates)
-            camera_->setScreenWidthAndHeight(width_, height_);
-#if 0
-            // https://www.glfw.org/docs/3.3/window_guide.html#window_size
-            // Do not pass the window size to glViewport or other pixel-based OpenGL calls. The window size is in
-            // screen coordinates, not pixels. Use the framebuffer size, which is in pixels, for pixel-based calls.
-            glViewport(0, 0, w, h);
-#else
-            int fw, fh;
-            glfwGetFramebufferSize(window_, &fw, &fh);
+            int fw, fh; glfwGetFramebufferSize(window_, &fw, &fh);
+            const bool changed = w != width_ || h != height_ || fw != framebuffer_width_ || fh != framebuffer_height_;
+            width_ = w; height_ = h; framebuffer_width_ = fw; framebuffer_height_ = fh;
+            if (w > 0 && h > 0 && (camera_->screenWidth() != w || camera_->screenHeight() != h))
+                camera_->setScreenWidthAndHeight(w, h);
             glViewport(0, 0, fw, fh);
-#endif
-            // process user changes
-            post_resize(width_, height_);
-        }
-        catch (const std::exception &e) {
+            if (changed) post_resize(w, h);
+            notify_resize();
+        } catch (const std::exception& e) {
             if (!callback_error_) callback_error_ = std::current_exception();
             LOG(ERROR) << "Caught exception in event handler: " << e.what();
         }
@@ -1154,11 +1188,15 @@ namespace easy3d {
             if (callback_error_) std::rethrow_exception(callback_error_);
             if (should_close()) return false;
         }
+        notify_pre_draw();
+        if (callback_error_) std::rethrow_exception(callback_error_);
+        if (should_close()) return false;
         pre_draw();
         draw();
         update_frame_rate();
         post_draw();
         glfwSwapBuffers(window_);
+        notify_post_draw();
         if (callback_error_) std::rethrow_exception(callback_error_);
         return true;
     }

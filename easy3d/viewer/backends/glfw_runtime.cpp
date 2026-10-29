@@ -33,6 +33,14 @@ GlfwRuntime::GlfwRuntime(bool require_vulkan) {
     }
 }
 void GlfwRuntime::poll_events() { glfwPollEvents(); }
+int GlfwRuntime::modifiers(GLFWwindow* window) {
+    int result = 0;
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) || glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT)) result |= GLFW_MOD_SHIFT;
+    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) || glfwGetKey(window, GLFW_KEY_RIGHT_CONTROL)) result |= GLFW_MOD_CONTROL;
+    if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) || glfwGetKey(window, GLFW_KEY_RIGHT_ALT)) result |= GLFW_MOD_ALT;
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SUPER) || glfwGetKey(window, GLFW_KEY_RIGHT_SUPER)) result |= GLFW_MOD_SUPER;
+    return result;
+}
 GlfwRuntime::~GlfwRuntime() {
     glfwTerminate();
 #ifdef EASY3D_HAS_VULKAN_VIEWER

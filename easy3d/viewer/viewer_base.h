@@ -2,6 +2,7 @@
 #ifndef EASY3D_VIEWER_VIEWER_BASE_H
 #define EASY3D_VIEWER_VIEWER_BASE_H
 #include <easy3d/viewer/viewer_input.h>
+#include <easy3d/viewer/viewer_callbacks.h>
 #include <easy3d/renderer/backend.h>
 #include <easy3d/core/types.h>
 #include <functional>
@@ -29,6 +30,9 @@ public:
     static std::unique_ptr<ViewerBase> create(const std::string& title = "Easy3D Viewer",
                                              const ViewerOptions& options = {});
     static void poll_events();
+    // Replace/clear from the UI thread, including from a callback. The active
+    // callable stays alive until it returns; mutable callable state is retained.
+    void set_callbacks(ViewerCallbacks callbacks);
     virtual Backend backend() const = 0;
     const std::string& fallback_reason() const { return fallback_reason_; }
     virtual unsigned validation_errors() const = 0;
@@ -87,11 +91,28 @@ public:
         bind_command(func, model, key, modifier);
     }
 protected:
+    void notify_pre_draw();
+    void notify_post_draw();
+    void notify_resize();
+    bool dispatch_mouse_press(int, int, int, int);
+    bool dispatch_mouse_release(int, int, int, int);
+    bool dispatch_mouse_drag(int, int, int, int, int, int);
+    bool dispatch_mouse_move(int, int, int, int, int);
+    bool dispatch_mouse_scroll(int, int, int, int);
+    bool dispatch_key_press(int, int);
+    bool dispatch_key_release(int, int);
+    bool dispatch_character(unsigned int);
+    bool dispatch_drop(const std::vector<std::string>&);
+    bool dispatch_focus(bool);
     virtual void bind_command(const Function&, Model*, Key, Modifier) = 0;
     virtual unsigned window_samples() const = 0;
     virtual bool snapshot_file(const std::string&, float, int, int, bool) const = 0;
 private:
     std::string fallback_reason_;
+    std::shared_ptr<ViewerCallbacks> callbacks_;
+    int callback_button_ = -1;
+    bool callback_capture_ = false;
+    int resize_width_ = 0, resize_height_ = 0, resize_fb_width_ = 0, resize_fb_height_ = 0;
 };
 }
 #endif
