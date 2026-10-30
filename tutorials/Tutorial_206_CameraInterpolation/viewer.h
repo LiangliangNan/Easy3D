@@ -27,7 +27,7 @@
 #ifndef EASY3D_TUTORIAL_CAMERA_INTERPOLATION_H
 #define EASY3D_TUTORIAL_CAMERA_INTERPOLATION_H
 
-#include "../viewer_backend.h"
+#include <easy3d/viewer/viewer.h>
 #if EASY3D_TUTORIAL_USES_VULKAN
 #include <easy3d/renderer/backends/vulkan/key_frame_interpolator.h>
 #include <chrono>
@@ -41,7 +41,7 @@ namespace easy3d {
 // This tutorial shows how to interpolate camera frames to
 // animate model exploration.
 
-class TutorialCameraInterpolation : public easy3d::TutorialViewer
+class TutorialCameraInterpolation : public easy3d::Viewer
 {
 public:
 #if EASY3D_TUTORIAL_USES_VULKAN

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-#include <tutorials/viewer_backend.h>
+#include <easy3d/viewer/viewer.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/drawable_lines_2D.h>
 #include <easy3d/util/initializer.h>
@@ -8,11 +8,11 @@
 using namespace easy3d;
 std::shared_ptr<SurfaceMesh> create_tessellation_mesh();
 std::shared_ptr<SurfaceMesh> create_partition_mesh();
-void create_curves_drawables(TutorialViewer&);
+void create_curves_drawables(Viewer&);
 void require(bool ok,const char* text) {if (!ok) throw std::runtime_error(text);}
-struct GeometryViewer : TutorialViewer {
-    using TutorialViewer::TutorialViewer;
-    using TutorialViewer::key_press_event;
+struct GeometryViewer : Viewer {
+    using Viewer::Viewer;
+    using Viewer::key_press_event;
     const std::string& hint() const {return hint_;}
     void hide_axes() {show_corner_axes_=false;}
 };
@@ -36,12 +36,12 @@ int main(int argc,char**) {
             for(const auto& d:v.drawables()) require(static_cast<LinesDrawable2D*>(d.get())->line_width()==expected,"curve width shortcut failed");
         };
         width(3);const auto initial=v.capture();
-        v.key_press_event(TutorialViewer::KEY_RIGHT_BRACKET,0);width(4);
+        v.key_press_event(Viewer::KEY_RIGHT_BRACKET,0);width(4);
         require(v.capture().rgba!=initial.rgba,"curve width shortcut did not change rendering");
-        v.key_press_event(TutorialViewer::KEY_LEFT_BRACKET,0);width(3);
-        for(int i=0;i<25;++i) v.key_press_event(TutorialViewer::KEY_LEFT_BRACKET,0);width(1);
-        for(int i=0;i<25;++i) v.key_press_event(TutorialViewer::KEY_RIGHT_BRACKET,0);width(20);
-        v.key_press_event(TutorialViewer::KEY_0,0);width(3);
+        v.key_press_event(Viewer::KEY_LEFT_BRACKET,0);width(3);
+        for(int i=0;i<25;++i) v.key_press_event(Viewer::KEY_LEFT_BRACKET,0);width(1);
+        for(int i=0;i<25;++i) v.key_press_event(Viewer::KEY_RIGHT_BRACKET,0);width(20);
+        v.key_press_event(Viewer::KEY_0,0);width(3);
         require(v.capture().rgba==initial.rgba,"curve width reset failed");
         const auto curves=v.capture();unsigned colored=0;
         for (size_t i=0;i<curves.ids.size();++i) {

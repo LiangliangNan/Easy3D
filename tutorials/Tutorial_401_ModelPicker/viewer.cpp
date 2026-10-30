@@ -45,9 +45,9 @@ using namespace easy3d;
 
 #if EASY3D_TUTORIAL_USES_VULKAN
 TutorialModelPicker::TutorialModelPicker(const std::string& title,const VulkanViewerOptions& options)
-        : TutorialViewer(title,options) {
+        : Viewer(title,options) {
 #else
-TutorialModelPicker::TutorialModelPicker(const std::string &title) : TutorialViewer(title) {
+TutorialModelPicker::TutorialModelPicker(const std::string &title) : Viewer(title) {
 #endif
     // We always want to look at the front of the easy3d logo.
     camera()->setViewDirection(vec3(0, 0, -1));
@@ -68,7 +68,7 @@ bool TutorialModelPicker::mouse_press_event(int x, int y, int button, int modifi
     if (model)
         mark(model);
 
-    return TutorialViewer::mouse_press_event(x, y, button, modifiers);
+    return Viewer::mouse_press_event(x, y, button, modifiers);
 }
 
 

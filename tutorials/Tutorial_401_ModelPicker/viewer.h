@@ -27,7 +27,7 @@
 #ifndef EASY3D_TUTORIAL_MODEL_PICKER_VIEWER_H
 #define EASY3D_TUTORIAL_MODEL_PICKER_VIEWER_H
 
-#include "../viewer_backend.h"
+#include <easy3d/viewer/viewer.h>
 
 // This class demonstrates how to pick a model using the mouse
 
@@ -35,7 +35,7 @@ namespace easy3d {
     class Model;
 }
 
-class TutorialModelPicker : public easy3d::TutorialViewer {
+class TutorialModelPicker : public easy3d::Viewer {
 public:
 #if EASY3D_TUTORIAL_USES_VULKAN
     explicit TutorialModelPicker(const std::string& title,const easy3d::VulkanViewerOptions& options = {});

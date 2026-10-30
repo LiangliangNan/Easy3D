@@ -26,12 +26,12 @@
 
 #ifndef EASY3D_TUTORIAL_CROSS_SECTION_H
 #define EASY3D_TUTORIAL_CROSS_SECTION_H
+#include "easy3d/viewer/viewer.h"
 
-#include "../viewer_backend.h"
 
 namespace easy3d {
 
-class CrossSection : public easy3d::TutorialViewer {
+class CrossSection : public easy3d::Viewer {
 public:
 #if EASY3D_TUTORIAL_USES_VULKAN
     explicit CrossSection(const std::string& title, const VulkanViewerOptions& options = {});

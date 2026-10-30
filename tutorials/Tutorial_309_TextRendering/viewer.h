@@ -27,7 +27,7 @@
 #ifndef EASY3D_TUTORIAL_TEXT_RENDERING_H
 #define EASY3D_TUTORIAL_TEXT_RENDERING_H
 
-#include "../viewer_backend.h"
+#include <easy3d/viewer/viewer.h>
 
 #if EASY3D_TUTORIAL_USES_VULKAN
 #include <easy3d/renderer/text_layout.h>
@@ -35,7 +35,7 @@
 
 namespace easy3d { class TextRenderer; }
 
-class TutorialTextRendering : public easy3d::TutorialViewer {
+class TutorialTextRendering : public easy3d::Viewer {
 public:
 #if EASY3D_TUTORIAL_USES_VULKAN
     explicit TutorialTextRendering(const std::string& title, const easy3d::VulkanViewerOptions& options = {});

@@ -27,7 +27,7 @@
 #ifndef EASY3D_TUTORIAL_DEPTH_MAP_H
 #define EASY3D_TUTORIAL_DEPTH_MAP_H
 
-#include "../viewer_backend.h"
+#include <easy3d/viewer/viewer.h>
 
 
 // This DepthMap class visualizes 3D models as depth images.
@@ -37,7 +37,7 @@ namespace easy3d {
 }
 
 
-class TutorialDepthMap : public easy3d::TutorialViewer
+class TutorialDepthMap : public easy3d::Viewer
 {
 public:
 #if EASY3D_TUTORIAL_USES_VULKAN

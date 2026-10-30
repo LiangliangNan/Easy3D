@@ -27,7 +27,7 @@
 #ifndef EASY3D_TUTORIAL_REAL_CAMERA_H
 #define EASY3D_TUTORIAL_REAL_CAMERA_H
 
-#include "../viewer_backend.h"
+#include <easy3d/viewer/viewer.h>
 
 // This RealCamera class visualizes a model from the view point
 // given the camera's intrinsic and extrinsic parameters. These
@@ -40,7 +40,7 @@ namespace easy3d {
     class LinesDrawable;
 }
 
-class TutorialRealCamera : public easy3d::TutorialViewer
+class TutorialRealCamera : public easy3d::Viewer
 {
 public:
 #if EASY3D_TUTORIAL_USES_VULKAN

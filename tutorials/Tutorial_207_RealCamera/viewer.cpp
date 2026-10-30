@@ -57,12 +57,12 @@ const float scale = 0.3f;
 #if EASY3D_TUTORIAL_USES_VULKAN
 TutorialRealCamera::TutorialRealCamera(const std::string& title, const std::string& bundler_file,
                                      const std::string& cloud_file, const VulkanViewerOptions& options)
-    : TutorialViewer(title, options), current_view_(0)
+    : Viewer(title, options), current_view_(0)
 #else
 TutorialRealCamera::TutorialRealCamera(const std::string& title,
                        const std::string& bundler_file,
                        const std::string& cloud_file)
-    : TutorialViewer(title, 4, 3, 2, false, false)
+    : Viewer(title, 4, 3, 2, false, false)
     , current_view_(0)
     , texture_(nullptr)
 #endif
@@ -156,7 +156,7 @@ bool TutorialRealCamera::key_press_event(int key, int modifiers) {
         return true;
     }
     else
-        return TutorialViewer::key_press_event(key, modifiers);
+        return Viewer::key_press_event(key, modifiers);
 }
 
 

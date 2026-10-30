@@ -24,7 +24,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include "../viewer_backend.h"
+#include <easy3d/viewer/viewer.h>
 #include "../native_viewer_options.h"
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/model.h>
@@ -46,7 +46,7 @@
 using namespace easy3d;
 
 
-bool estimate(TutorialViewer* viewer, Model* model) {
+bool estimate(Viewer* viewer, Model* model) {
     if (!viewer || !model)
         return false;
 
@@ -63,7 +63,7 @@ bool estimate(TutorialViewer* viewer, Model* model) {
         return false;
 }
 
-bool reorient(TutorialViewer* viewer, Model* model) {
+bool reorient(Viewer* viewer, Model* model) {
     if (!viewer || !model)
         return false;
 
@@ -96,9 +96,9 @@ int main(int argc, char **argv) {
 #ifdef EASY3D_NO_OPENGL
     NativeTutorialOptions options;
     if (!options.parse(argc, argv)) return EXIT_FAILURE;
-    TutorialViewer viewer(EXAMPLE_TITLE, options.viewer);
+    Viewer viewer(EXAMPLE_TITLE, options.viewer);
 #else
-    TutorialViewer viewer(EXAMPLE_TITLE);
+    Viewer viewer(EXAMPLE_TITLE);
 #endif
 
     auto model = viewer.add_model(file, true);
@@ -117,8 +117,8 @@ int main(int argc, char **argv) {
     drawable->set_distinct_back_color(true);
 
     // set up the functions to be executed and their corresponding shortcuts
-    viewer.bind(estimate, model, TutorialViewer::KEY_E, TutorialViewer::MODIF_CTRL);
-    viewer.bind(reorient, model, TutorialViewer::KEY_R, TutorialViewer::MODIF_CTRL);
+    viewer.bind(estimate, model, Viewer::KEY_E, Viewer::MODIF_CTRL);
+    viewer.bind(reorient, model, Viewer::KEY_R, Viewer::MODIF_CTRL);
     // usage
     viewer.set_usage("default",
         "Ctrl + e: estimate normals\n"

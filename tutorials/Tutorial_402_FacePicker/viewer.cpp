@@ -45,9 +45,9 @@ using namespace easy3d;
 
 #if EASY3D_TUTORIAL_USES_VULKAN
 TutorialFacePicker::TutorialFacePicker(const std::string& title,const VulkanViewerOptions& options)
-        : TutorialViewer(title,options) {
+        : Viewer(title,options) {
 #else
-TutorialFacePicker::TutorialFacePicker(const std::string &title) : TutorialViewer(title) {
+TutorialFacePicker::TutorialFacePicker(const std::string &title) : Viewer(title) {
 #endif
     camera()->setUpVector(vec3(0, 1, 0));
     camera()->setViewDirection(vec3(0, 0, -1));
@@ -99,7 +99,7 @@ bool TutorialFacePicker::mouse_press_event(int x, int y, int button, int modifie
     }
 
 #endif
-    return TutorialViewer::mouse_press_event(x, y, button, modifiers);
+    return Viewer::mouse_press_event(x, y, button, modifiers);
 }
 
 
@@ -109,9 +109,9 @@ Model* TutorialFacePicker::add_model(const std::string& file_name,bool create) {
 Model* TutorialFacePicker::add_model(const std::string& file_name) {
 #endif
 #if EASY3D_TUTORIAL_USES_VULKAN
-    auto model = TutorialViewer::add_model(file_name,create);
+    auto model = Viewer::add_model(file_name,create);
 #else
-    auto model = TutorialViewer::add_model(file_name,true);
+    auto model = Viewer::add_model(file_name,true);
 #endif
     if (!model) return nullptr;
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-#include <tutorials/viewer_backend.h>
+#include <easy3d/viewer/viewer.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/renderer.h>
@@ -15,12 +15,12 @@
 #include <easy3d/renderer/opengl.h>
 #endif
 using namespace easy3d;
-bool estimate(TutorialViewer*,Model*);
-bool reorient(TutorialViewer*,Model*);
-bool reconstruction(TutorialViewer*,Model*);
-bool extract_plane(TutorialViewer*,Model*);
+bool estimate(Viewer*,Model*);
+bool reorient(Viewer*,Model*);
+bool reconstruction(Viewer*,Model*);
+bool extract_plane(Viewer*,Model*);
 void require(bool ok,const char* text) {if(!ok) throw std::runtime_error(text);}
-using CloudViewer = TutorialViewer;
+using CloudViewer = Viewer;
 std::shared_ptr<PointCloud> sphere(bool with_normals) {
     auto cloud=std::make_shared<PointCloud>();
     for(int y=1;y<24;++y) for(int x=0;x<48;++x) {

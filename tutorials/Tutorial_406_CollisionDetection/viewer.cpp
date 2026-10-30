@@ -62,7 +62,7 @@ using namespace easy3d;
 
 #if EASY3D_TUTORIAL_USES_VULKAN
 TutorialCollisionDetection::TutorialCollisionDetection(const std::string& title,const VulkanViewerOptions& options)
-    : TutorialViewer(title,options),model0_color_(.8f,1,.8f),model1_color_(.8f,.8f,1) {
+    : Viewer(title,options),model0_color_(.8f,1,.8f),model1_color_(.8f,.8f,1) {
     manual_=usage_manual;hint_=usage_hint;
     add_model(resource::directory()+"/data/bunny.ply");
     add_model(resource::directory()+"/data/mannequin.ply");
@@ -144,7 +144,7 @@ bool TutorialCollisionDetection::key_press_event(int key,int modifiers) {
         }
         return true;
     }
-    return TutorialViewer::key_press_event(key,modifiers);
+    return Viewer::key_press_event(key,modifiers);
 }
 bool TutorialCollisionDetection::mouse_press_event(int x,int y,int button,int modifiers) {
     end_model_drag();
@@ -152,7 +152,7 @@ bool TutorialCollisionDetection::mouse_press_event(int x,int y,int button,int mo
         (button==BUTTON_LEFT || button==BUTTON_RIGHT)) {
         const auto mesh=collision_models_[0].lock();mesh->manipulator()->frame()->action_start();drag_model_=mesh;return true;
     }
-    return TutorialViewer::mouse_press_event(x,y,button,modifiers);
+    return Viewer::mouse_press_event(x,y,button,modifiers);
 }
 bool TutorialCollisionDetection::mouse_drag_event(int x,int y,int dx,int dy,int button,int modifiers) {
     const auto mesh=drag_model_.lock();
@@ -162,10 +162,10 @@ bool TutorialCollisionDetection::mouse_drag_event(int x,int y,int dx,int dy,int 
         else return false;
         detect();return true;
     }
-    return TutorialViewer::mouse_drag_event(x,y,dx,dy,button,modifiers);
+    return Viewer::mouse_drag_event(x,y,dx,dy,button,modifiers);
 }
 bool TutorialCollisionDetection::mouse_release_event(int x,int y,int button,int modifiers) {
-    end_model_drag();return TutorialViewer::mouse_release_event(x,y,button,modifiers);
+    end_model_drag();return Viewer::mouse_release_event(x,y,button,modifiers);
 }
 bool TutorialCollisionDetection::focus_event(bool focused) {if (!focused) end_model_drag();return false;}
 void TutorialCollisionDetection::post_resize(int,int) {end_model_drag();}
@@ -173,11 +173,11 @@ bool TutorialCollisionDetection::delete_model(Model* model) {
     if (collision_models_[0].lock().get()==model || collision_models_[1].lock().get()==model) {
         retire_collision();
     }
-    return TutorialViewer::delete_model(model);
+    return Viewer::delete_model(model);
 }
 void TutorialCollisionDetection::clear_scene() {
     retire_collision();
-    TutorialViewer::clear_scene();
+    Viewer::clear_scene();
 }
 #else
 TutorialCollisionDetection::TutorialCollisionDetection(const std::string &title)

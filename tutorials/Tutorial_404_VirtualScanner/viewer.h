@@ -27,9 +27,9 @@
 #ifndef EASY3D_TUTORIAL_VIRTUAL_SCANNER_H
 #define EASY3D_TUTORIAL_VIRTUAL_SCANNER_H
 
-#include "../viewer_backend.h"
+#include <easy3d/viewer/viewer.h>
 
-class TutorialVirtualScanner : public easy3d::TutorialViewer {
+class TutorialVirtualScanner : public easy3d::Viewer {
 public:
 #if EASY3D_TUTORIAL_USES_VULKAN
     explicit TutorialVirtualScanner(const std::string& title = "VirtualScanner",

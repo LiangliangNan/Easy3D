@@ -27,7 +27,7 @@
 #ifndef EASY3D_TUTORIAL_OBJECT_MANIPULATION_VIEWER_H
 #define EASY3D_TUTORIAL_OBJECT_MANIPULATION_VIEWER_H
 
-#include "../viewer_backend.h"
+#include <easy3d/viewer/viewer.h>
 #if EASY3D_TUTORIAL_USES_VULKAN
 #include <easy3d/renderer/backends/vulkan/manipulator.h>
 #endif
@@ -39,7 +39,7 @@ namespace easy3d {
     class Model;
 }
 
-class TutorialObjectManipulation : public easy3d::TutorialViewer {
+class TutorialObjectManipulation : public easy3d::Viewer {
 public:
 #if EASY3D_TUTORIAL_USES_VULKAN
     explicit TutorialObjectManipulation(const std::string& title,const easy3d::VulkanViewerOptions& options = {});

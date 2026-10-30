@@ -43,9 +43,9 @@ namespace easy3d {
 
 #if EASY3D_TUTORIAL_USES_VULKAN
 CrossSection::CrossSection(const std::string& title, const VulkanViewerOptions& options)
-    : TutorialViewer(title, options) {
+    : Viewer(title, options) {
 #else
-CrossSection::CrossSection(const std::string& title) : TutorialViewer(title) {
+CrossSection::CrossSection(const std::string& title) : Viewer(title) {
 #endif
     // Code of interest: both backends use the shared clipping-plane controller.
     ClippingPlane::instance()->set_enabled(true);
@@ -61,7 +61,7 @@ bool CrossSection::mouse_drag_event(int x, int y, int dx, int dy, int button, in
     else if (button == BUTTON_RIGHT)
         frame->action_translate(x, y, dx, dy, camera(), ManipulatedFrame::NONE);
     else
-        return TutorialViewer::mouse_drag_event(x, y, dx, dy, button, modifiers);
+        return Viewer::mouse_drag_event(x, y, dx, dy, button, modifiers);
     return false;
 }
 

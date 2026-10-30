@@ -27,11 +27,11 @@
 #ifndef EASY3D_TUTORIAL_POINT_SELECTION_H
 #define EASY3D_TUTORIAL_POINT_SELECTION_H
 
-#include "../viewer_backend.h"
+#include <easy3d/viewer/viewer.h>
 
 namespace easy3d { class PointCloud; }
 
-class TutorialPointSelection : public easy3d::TutorialViewer {
+class TutorialPointSelection : public easy3d::Viewer {
 public:
 #if EASY3D_TUTORIAL_USES_VULKAN
     explicit TutorialPointSelection(const std::string& title = "PointSelection",

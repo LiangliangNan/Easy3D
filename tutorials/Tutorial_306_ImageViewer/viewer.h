@@ -27,12 +27,12 @@
 #ifndef EASY3D_TUTORIAL_IMAGE_VIEWER_H
 #define EASY3D_TUTORIAL_IMAGE_VIEWER_H
 
-#include "../viewer_backend.h"
+#include <easy3d/viewer/viewer.h>
 
 namespace easy3d { class Texture; }
 
 // This class visualizes an image in screen space on either backend.
-class TutorialImageViewer : public easy3d::TutorialViewer {
+class TutorialImageViewer : public easy3d::Viewer {
 public:
 #if EASY3D_TUTORIAL_USES_VULKAN
     TutorialImageViewer(const std::string& title, const std::string& image_file,

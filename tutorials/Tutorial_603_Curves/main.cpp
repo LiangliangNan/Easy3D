@@ -24,7 +24,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include "../viewer_backend.h"
+#include <easy3d/viewer/viewer.h>
 #include "../native_viewer_options.h"
 #include <easy3d/core/curve.h>
 #include <easy3d/core/spline_curve_fitting.h>
@@ -42,7 +42,7 @@
 
 using namespace easy3d;
 
-void create_drawable(TutorialViewer& viewer, const std::vector<vec2>& curve_points, const vec3& color) {
+void create_drawable(Viewer& viewer, const std::vector<vec2>& curve_points, const vec3& color) {
     std::vector<unsigned int> indices;
     for (unsigned int i = 0; i + 1 < curve_points.size(); ++i) {
         indices.push_back(i);
@@ -63,41 +63,41 @@ void create_drawable(TutorialViewer& viewer, const std::vector<vec2>& curve_poin
     drawable->set_line_width(3.0f);
 }
 
-void add_Bezier(TutorialViewer& viewer, const std::vector<vec2>& control_points, int bezier_steps, const vec3& color) {
+void add_Bezier(Viewer& viewer, const std::vector<vec2>& control_points, int bezier_steps, const vec3& color) {
     Bezier<Vec, 2, float> curve;
     const auto curve_points = curve.generate(control_points, bezier_steps);
     create_drawable(viewer, curve_points, color);
 }
 
-void add_BSpline(TutorialViewer& viewer, const std::vector<vec2>& control_points, int bezier_steps, const vec3& color) {
+void add_BSpline(Viewer& viewer, const std::vector<vec2>& control_points, int bezier_steps, const vec3& color) {
     BSpline<Vec, 2, float> curve;
     const auto curve_points = curve.generate(control_points, bezier_steps);
     create_drawable(viewer, curve_points, color);
 }
 
-void add_CatmullRom(TutorialViewer& viewer, const std::vector<vec2>& control_points, int bezier_steps, const vec3& color) {
+void add_CatmullRom(Viewer& viewer, const std::vector<vec2>& control_points, int bezier_steps, const vec3& color) {
     CatmullRom<Vec, 2, float> curve;
     const auto curve_points = curve.generate(control_points, bezier_steps);
     create_drawable(viewer, curve_points, color);
 }
 
 
-void create_curves_drawables(TutorialViewer& viewer) {
+void create_curves_drawables(Viewer& viewer) {
     viewer.set_usage("default", "Press '[' / ']' to decrease/increase line width\n"
                                 "Press '0' to reset line width to 3 pixels");
-    auto adjust_width = [](TutorialViewer* host, float delta, bool reset) {
+    auto adjust_width = [](Viewer* host, float delta, bool reset) {
         for (const auto& drawable : host->drawables()) {
             auto* lines = dynamic_cast<LinesDrawable2D*>(drawable.get());
             if (lines) lines->set_line_width(reset ? 3.0f : std::max(1.0f, std::min(20.0f, lines->line_width() + delta)));
         }
         return true;
     };
-    viewer.bind([adjust_width](TutorialViewer* host, Model*) { return adjust_width(host, -1, false); },
-                nullptr, TutorialViewer::KEY_LEFT_BRACKET);
-    viewer.bind([adjust_width](TutorialViewer* host, Model*) { return adjust_width(host, 1, false); },
-                nullptr, TutorialViewer::KEY_RIGHT_BRACKET);
-    viewer.bind([adjust_width](TutorialViewer* host, Model*) { return adjust_width(host, 0, true); },
-                nullptr, TutorialViewer::KEY_0);
+    viewer.bind([adjust_width](Viewer* host, Model*) { return adjust_width(host, -1, false); },
+                nullptr, Viewer::KEY_LEFT_BRACKET);
+    viewer.bind([adjust_width](Viewer* host, Model*) { return adjust_width(host, 1, false); },
+                nullptr, Viewer::KEY_RIGHT_BRACKET);
+    viewer.bind([adjust_width](Viewer* host, Model*) { return adjust_width(host, 0, true); },
+                nullptr, Viewer::KEY_0);
     // the control points
     std::vector<vec2> points = {
         vec2(100, 100), // 0
@@ -151,9 +151,9 @@ int main(int argc,char** argv) {
 #ifdef EASY3D_NO_OPENGL
     NativeTutorialOptions options;
     if (!options.parse(argc,argv)) return EXIT_FAILURE;
-    TutorialViewer viewer(EXAMPLE_TITLE,options.viewer);
+    Viewer viewer(EXAMPLE_TITLE,options.viewer);
 #else
-    TutorialViewer viewer(EXAMPLE_TITLE);
+    Viewer viewer(EXAMPLE_TITLE);
 #endif
     create_curves_drawables(viewer);
 #ifdef EASY3D_NO_OPENGL

@@ -59,7 +59,7 @@ using namespace easy3d;
 
 #if EASY3D_TUTORIAL_USES_VULKAN
 TutorialObjectManipulation::TutorialObjectManipulation(const std::string& title,const VulkanViewerOptions& options)
-    : TutorialViewer(title,options) {
+    : Viewer(title,options) {
     camera()->setViewDirection(vec3(0,0,-1));camera()->setUpVector(vec3(0,1,0));
     manual_=usage_manual;hint_=usage_hint;
 }
@@ -83,7 +83,7 @@ bool TutorialObjectManipulation::mouse_press_event(int x,int y,int button,int mo
     if (modifiers==0 && button==BUTTON_LEFT) {
         const auto hit=pick(x,y);mark(hit.model.get());
     }
-    return TutorialViewer::mouse_press_event(x,y,button,modifiers);
+    return Viewer::mouse_press_event(x,y,button,modifiers);
 }
 bool TutorialObjectManipulation::mouse_drag_event(int x,int y,int dx,int dy,int button,int modifiers) {
     const auto model=selected_model();
@@ -98,10 +98,10 @@ bool TutorialObjectManipulation::mouse_drag_event(int x,int y,int dx,int dy,int 
         update();return true;
     }
     if (!model) end_model_drag();
-    return TutorialViewer::mouse_drag_event(x,y,dx,dy,button,modifiers);
+    return Viewer::mouse_drag_event(x,y,dx,dy,button,modifiers);
 }
 bool TutorialObjectManipulation::mouse_release_event(int x,int y,int button,int modifiers) {
-    end_model_drag();return TutorialViewer::mouse_release_event(x,y,button,modifiers);
+    end_model_drag();return Viewer::mouse_release_event(x,y,button,modifiers);
 }
 bool TutorialObjectManipulation::focus_event(bool focused) {
     if (!focused) end_model_drag();

@@ -24,7 +24,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include "../viewer_backend.h"
+#include <easy3d/viewer/viewer.h>
 #include "../native_viewer_options.h"
 #include <easy3d/renderer/camera.h>
 #include <easy3d/core/surface_mesh.h>
@@ -162,9 +162,9 @@ int main(int argc, char** argv) {
 #ifdef EASY3D_NO_OPENGL
     NativeTutorialOptions options;
     if (!options.parse(argc,argv)) return EXIT_FAILURE;
-    TutorialViewer viewer(EXAMPLE_TITLE,options.viewer);
+    Viewer viewer(EXAMPLE_TITLE,options.viewer);
 #else
-    TutorialViewer viewer(EXAMPLE_TITLE);
+    Viewer viewer(EXAMPLE_TITLE);
 #endif
     viewer.camera()->setUpVector(vec3(0,1,0));
     viewer.camera()->setViewDirection(vec3(0,0,-1));

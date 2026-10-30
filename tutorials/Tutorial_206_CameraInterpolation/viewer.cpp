@@ -45,7 +45,7 @@ using namespace easy3d;
 
 #if EASY3D_TUTORIAL_USES_VULKAN
 TutorialCameraInterpolation::TutorialCameraInterpolation(const std::string& title,const VulkanViewerOptions& options)
-    : TutorialViewer(title,options),interpolator_(new KeyFrameInterpolator(camera()->frame())) {
+    : Viewer(title,options),interpolator_(new KeyFrameInterpolator(camera()->frame())) {
     hint_=usage_hint;
 }
 TutorialCameraInterpolation::~TutorialCameraInterpolation() {delete interpolator_;}
@@ -67,7 +67,7 @@ bool TutorialCameraInterpolation::key_press_event(int key,int modifiers) {
         if (box.is_valid()) camera()->setSceneBoundingBox(box.min_point(),box.max_point());
         set_overlays({});update();return true;
     }
-    return TutorialViewer::key_press_event(key,modifiers);
+    return Viewer::key_press_event(key,modifiers);
 }
 void TutorialCameraInterpolation::pre_draw() {
     if (interpolator_->is_interpolation_started()) {

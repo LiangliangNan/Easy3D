@@ -240,7 +240,7 @@ selected concrete family, and clients need no Vulkan SDK headers for common use.
 ### 5. Migrate tutorials with minimal source changes
 
 - Change tutorial bases to `easy3d::Viewer`/`MultiViewer`, using the public selector;
-  remove `TutorialViewer` aliases and repeated backend-selection includes.
+  remove `Viewer` aliases and repeated backend-selection includes.
 - Reuse original constructors and algorithms once counterpart APIs match. Limit
   remaining backend conditionals to operations requiring actual GPU differences;
   do not turn tutorial-specific scanning or selection conveniences into new
@@ -1741,7 +1741,7 @@ header-only `viewer_vulkan.h` files have been removed. Clients and tests include
 `viewer.h` for either backend.
 
 The shared `tutorials/viewer_backend.h` selects Viewer or VulkanViewer once
-and exposes the `easy3d::TutorialViewer` alias. Tutorial headers use this common
+and exposes the `easy3d::Viewer` alias. Tutorial headers use this common
 base without repeating backend includes or per-class aliases. Remaining
 constructor, hook and state differences use `EASY3D_TUTORIAL_USES_VULKAN`. Native-only builds select Vulkan as before. A private
 `EASY3D_TUTORIAL_VULKAN` target definition also selects the Vulkan variant for
@@ -2603,7 +2603,7 @@ still has no GL/GLEW imports. Existing local migration changes were retained.
 
 Tutorials 701 (normal estimation/reorientation), 702 (Poisson surface
 reconstruction) and 703 (RANSAC plane extraction) now use the shared
-`TutorialViewer` selector in their original `main.cpp` files. Their algorithms,
+`Viewer` selector in their original `main.cpp` files. Their algorithms,
 rendering setup and bound shortcuts are shared between OpenGL and Vulkan.
 Vulkan-only builds include the three native executables and bounded CTests;
 `--frames`, `--samples` and `--validation` use the existing native options helper.
@@ -3315,7 +3315,7 @@ Current compatibility and remaining alignment inventory:
 | Subclass hooks/coordinates | OpenGL init/draw/cleanup hooks and logical dimensions, versus native hooks/framebuffer dimensions, still need step-2 alignment. |
 | Runtime facades | ViewerBase/factories, preference options and the existing OffScreen facade are still transitional. The build cannot contain both backends; facade deletion is step 4, not claimed complete here. |
 
-Tutorials now obtain their transitional TutorialViewer alias from the public
+Tutorials now obtain their transitional Viewer alias from the public
 Viewer selector. Per-target Vulkan overrides are removed, and an OpenGL viewer
 include rejects a conflicting legacy tutorial override. Tutorial algorithms and
 headers are otherwise unchanged. VulkanMultiViewer and new general scanning APIs

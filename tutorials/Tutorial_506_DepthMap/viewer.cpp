@@ -47,10 +47,10 @@ using namespace easy3d;
 
 #if EASY3D_TUTORIAL_USES_VULKAN
 TutorialDepthMap::TutorialDepthMap(const std::string& title, const VulkanViewerOptions& options)
-    : TutorialViewer(title,options)
+    : Viewer(title,options)
 #else
 TutorialDepthMap::TutorialDepthMap(const std::string& title)
-    : TutorialViewer(title), fbo_(nullptr)
+    : Viewer(title), fbo_(nullptr)
 #endif
 {
     camera()->setUpVector(vec3(0, 1, 0));
@@ -87,7 +87,7 @@ TutorialDepthMap::~TutorialDepthMap() {
 
 void TutorialDepthMap::draw() const {
     draw_depth();
-    TutorialViewer::draw();
+    Viewer::draw();
 }
 
 

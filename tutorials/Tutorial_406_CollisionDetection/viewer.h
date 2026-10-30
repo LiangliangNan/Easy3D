@@ -27,7 +27,7 @@
 #ifndef EASY3D_TUTORIAL_COLLISION_DETECTION_H
 #define EASY3D_TUTORIAL_COLLISION_DETECTION_H
 
-#include "../viewer_backend.h"
+#include <easy3d/viewer/viewer.h>
 #if EASY3D_TUTORIAL_USES_VULKAN
 #include <chrono>
 #else
@@ -42,7 +42,7 @@ namespace easy3d {
     class Collider;
 }
 
-class TutorialCollisionDetection : public easy3d::TutorialViewer {
+class TutorialCollisionDetection : public easy3d::Viewer {
 public:
 #if EASY3D_TUTORIAL_USES_VULKAN
     explicit TutorialCollisionDetection(const std::string& title,const easy3d::VulkanViewerOptions& options = {});

@@ -24,7 +24,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include "../viewer_backend.h"
+#include <easy3d/viewer/viewer.h>
 #include "../native_viewer_options.h"
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/model.h>
@@ -43,7 +43,7 @@
 using namespace easy3d;
 
 
-bool extract_plane(TutorialViewer* viewer, Model* model) {
+bool extract_plane(Viewer* viewer, Model* model) {
     if (!viewer || !model)
         return false;
 
@@ -89,9 +89,9 @@ int main(int argc, char **argv) {
 #ifdef EASY3D_NO_OPENGL
     NativeTutorialOptions options;
     if (!options.parse(argc, argv)) return EXIT_FAILURE;
-    TutorialViewer viewer(EXAMPLE_TITLE, options.viewer);
+    Viewer viewer(EXAMPLE_TITLE, options.viewer);
 #else
-    TutorialViewer viewer(EXAMPLE_TITLE);
+    Viewer viewer(EXAMPLE_TITLE);
 #endif
 
     Model *model = viewer.add_model(file, true);
@@ -106,7 +106,7 @@ int main(int argc, char **argv) {
     drawable->set_point_size(3.0f);
 
     // set up the function to be executed and its corresponding shortcut
-    viewer.bind(extract_plane, model, TutorialViewer::KEY_E, TutorialViewer::MODIF_CTRL);
+    viewer.bind(extract_plane, model, Viewer::KEY_E, Viewer::MODIF_CTRL);
     // usage
     viewer.set_usage("default","Ctrl + e: extract planes");
 
