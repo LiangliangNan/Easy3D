@@ -28,7 +28,6 @@ public:
     explicit VulkanViewer(const std::string& title = "Easy3D Vulkan Viewer",
                           const VulkanViewerOptions& options = {});
     ~VulkanViewer() override;
-    Backend backend() const override { return Backend::Vulkan; }
     unsigned validation_errors() const override { return device().validation_errors(); }
     Camera* camera() override { return VulkanOffScreen::camera(); }
     const Camera* camera() const override { return VulkanOffScreen::camera(); }

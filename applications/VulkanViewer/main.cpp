@@ -43,8 +43,7 @@ int main(int argc, char** argv) {
             if (!viewer->add_model(bunny)) return 1;
         } else if (!viewer->add_model(model)) return 1;
         viewer->fit_screen();
-        std::cout << "Renderer backend: " << (viewer->backend() == easy3d::Backend::Vulkan ? "Vulkan" : "OpenGL")
-                  << ", samples: " << viewer->samples() << '\n';
+        std::cout << "Device name: " << viewer->device().name() << ", samples: " << viewer->samples() << '\n';
         if (!viewer->fallback_reason().empty()) std::cout << "Vulkan unavailable: " << viewer->fallback_reason() << '\n';
         const int result = viewer->run_frames(frames);
         return result || viewer->validation_errors() ? 1 : 0;

@@ -270,7 +270,7 @@ namespace easy3d {
             std::string error_message = "could not create an OpenGL "
                                         + std::to_string(gl_major) + "." + std::to_string(gl_minor) + " context!";
             LOG(ERROR) << error_message;
-            throw BackendUnavailable(error_message);
+            throw std::runtime_error(error_message);
         }
         const auto previous_context = glfwGetCurrentContext();
         auto close_failed_window = [previous_context](GLFWwindow* failed) {
@@ -288,7 +288,7 @@ namespace easy3d {
         // Load OpenGL and its extensions
         if (!OpenglUtil::init()) {
             LOG(ERROR) << "failed to load OpenGL and its extensions!";
-            throw BackendUnavailable("failed to load OpenGL and its extensions!");
+            throw std::runtime_error("failed to load OpenGL and its extensions!");
         }
 
 #ifndef NDEBUG
@@ -1878,11 +1878,11 @@ namespace easy3d {
 namespace detail {
 std::unique_ptr<ViewerBase> create_opengl_viewer(const std::string &title, const ViewerOptions &o) {
     if (o.validation || o.synchronization_validation)
-        throw BackendUnavailable("OpenGL viewer does not support the requested validation mode");
+        throw std::runtime_error("OpenGL viewer does not support the requested validation mode");
     std::unique_ptr<ViewerBase> host(
         new OpenGLViewer(title, o.samples == 1 ? 0 : int(o.samples), 3, 2, false, o.resizable, 24, 8, o.width, o.height));
     if (host->samples() != o.samples)
-        throw BackendUnavailable("OpenGL viewer does not support the requested MSAA sample count");
+        throw std::runtime_error("OpenGL viewer does not support the requested MSAA sample count");
     return host;
 }
 } // namespace detail

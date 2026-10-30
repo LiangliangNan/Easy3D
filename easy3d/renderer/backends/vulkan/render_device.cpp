@@ -40,7 +40,7 @@ void check(VkResult result, const char* operation) {
 void check_initialization(VkResult result,const char* operation) {
     if(result==VK_ERROR_INCOMPATIBLE_DRIVER || result==VK_ERROR_EXTENSION_NOT_PRESENT ||
        result==VK_ERROR_LAYER_NOT_PRESENT || result==VK_ERROR_FEATURE_NOT_PRESENT || result==VK_ERROR_INITIALIZATION_FAILED)
-        throw BackendUnavailable(std::string(operation)+" failed (VkResult "+std::to_string(result)+")");
+        throw std::runtime_error(std::string(operation)+" failed (VkResult "+std::to_string(result)+")");
     check(result,operation);
 }
 
@@ -109,7 +109,7 @@ struct Context : internal::VulkanDispatch {
             if (!window->create) throw std::invalid_argument("surface creation callback is required");
             for (const auto& name : window->instance_extensions) {
                 if (!named(available, name.c_str()))
-                    throw BackendUnavailable("required surface extension unavailable: " + name);
+                    throw std::runtime_error("required surface extension unavailable: " + name);
                 if (std::find_if(extensions.begin(), extensions.end(), [&](const char* e) { return name == e; }) == extensions.end())
                     extensions.push_back(name.c_str());
             }
@@ -130,9 +130,9 @@ struct Context : internal::VulkanDispatch {
             check_initialization(vkEnumerateInstanceLayerProperties(&count, values.data()), "enumerate validation layers");
             bool found = false;
             for (const auto& v : values) if (!std::strcmp(v.layerName, "VK_LAYER_KHRONOS_validation")) found = true;
-            if (!found) throw BackendUnavailable("VK_LAYER_KHRONOS_validation was requested but is unavailable");
+            if (!found) throw std::runtime_error("VK_LAYER_KHRONOS_validation was requested but is unavailable");
             if (!named(available, VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
-                throw BackendUnavailable("VK_EXT_debug_utils is required for validation reporting");
+                throw std::runtime_error("VK_EXT_debug_utils is required for validation reporting");
             layers.push_back("VK_LAYER_KHRONOS_validation");
             extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
         }
@@ -142,7 +142,7 @@ struct Context : internal::VulkanDispatch {
             const auto layer_extensions = instance_extensions(*this,"VK_LAYER_KHRONOS_validation");
             if (!named(available, VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME) &&
                 !named(layer_extensions, VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME))
-                throw BackendUnavailable("synchronization validation is unavailable");
+                throw std::runtime_error("synchronization validation is unavailable");
             extensions.push_back(VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME);
             validation_features.sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
             validation_features.enabledValidationFeatureCount = 1;
@@ -181,7 +181,7 @@ struct Context : internal::VulkanDispatch {
         if (validation) {
             auto create = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
                 vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT"));
-            if (!create) throw BackendUnavailable("debug messenger entry point unavailable");
+            if (!create) throw std::runtime_error("debug messenger entry point unavailable");
             debug_info.pNext = nullptr;
             check_initialization(create(instance, &debug_info, nullptr, &messenger), "create debug messenger");
         }
@@ -239,7 +239,7 @@ struct Context : internal::VulkanDispatch {
                 }
             }
         }
-        if (!physical) throw BackendUnavailable("no suitable Vulkan 1.2 device/graphics queue for requested targets and surface");
+        if (!physical) throw std::runtime_error("no suitable Vulkan 1.2 device/graphics queue for requested targets and surface");
         vkGetPhysicalDeviceMemoryProperties(physical, &memory);
         count = 0;
         check_initialization(vkEnumerateDeviceExtensionProperties(physical, nullptr, &count, nullptr), "enumerate device extensions");

@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "loader.h"
-#include <easy3d/renderer/backend.h>
 #include <cstdlib>
 #include <string>
 #include <vector>
@@ -54,14 +53,14 @@ std::shared_ptr<VulkanLoader> VulkanLoader::open() {
         if(!library->impl_->module) {const char* error=dlerror();errors+=path+": "+(error?error:"unknown loader error")+"; ";continue;}
         library->impl_->get=reinterpret_cast<PFN_vkGetInstanceProcAddr>(dlsym(library->impl_->module,"vkGetInstanceProcAddr"));
 #endif
-        if(!library->impl_->get) throw BackendUnavailable("Vulkan loader '"+path+"' does not export vkGetInstanceProcAddr");
+        if(!library->impl_->get) throw std::runtime_error("Vulkan loader '"+path+"' does not export vkGetInstanceProcAddr");
         return library;
     }
-    throw BackendUnavailable("Vulkan loader unavailable: "+errors);
+    throw std::runtime_error("Vulkan loader unavailable: "+errors);
 }
 namespace {
 template<class T> T required(PFN_vkVoidFunction proc,const char* name) {
-    if(!proc) throw BackendUnavailable(std::string("Vulkan loader/device entry point unavailable: ")+name);
+    if(!proc) throw std::runtime_error(std::string("Vulkan loader/device entry point unavailable: ")+name);
     return reinterpret_cast<T>(proc);
 }
 }

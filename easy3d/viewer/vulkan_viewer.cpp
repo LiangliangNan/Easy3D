@@ -112,19 +112,19 @@ struct VulkanViewer::Window {
         : title(text), width(options.width), height(options.height), samples(options.samples) {
         if (width <= 0 || height <= 0) throw std::invalid_argument("window dimensions must be positive");
         runtime = detail::GlfwRuntime::acquire(true);
-        if (!glfwVulkanSupported()) throw BackendUnavailable("GLFW could not find Vulkan loader/driver support");
+        if (!glfwVulkanSupported()) throw std::runtime_error("GLFW could not find Vulkan loader/driver support");
         glfwDefaultWindowHints();
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         glfwWindowHint(GLFW_VISIBLE, options.visible ? GLFW_TRUE : GLFW_FALSE);
         glfwWindowHint(GLFW_RESIZABLE, options.resizable ? GLFW_TRUE : GLFW_FALSE);
         handle = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
-        if (!handle) throw BackendUnavailable("could not create a GLFW Vulkan window");
+        if (!handle) throw std::runtime_error("could not create a GLFW Vulkan window");
     }
     ~Window() { if (handle) glfwDestroyWindow(handle); }
     std::unique_ptr<graphics::RenderDevice> device(const graphics::DeviceOptions& options) {
         uint32_t count = 0;
         const char** required = glfwGetRequiredInstanceExtensions(&count);
-        if (!required || !count) throw BackendUnavailable("GLFW has no Vulkan surface extensions for this platform");
+        if (!required || !count) throw std::runtime_error("GLFW has no Vulkan surface extensions for this platform");
         graphics::VulkanSurface surface;surface.loader=runtime->vulkan_loader();
         for (uint32_t i = 0; i < count; ++i) surface.instance_extensions.emplace_back(required[i]);
         surface.create = [this](VkInstance instance, VkSurfaceKHR* result) {
@@ -792,7 +792,7 @@ std::unique_ptr<ViewerBase> create_vulkan_viewer(const std::string& title, const
     options.device.synchronization_validation = o.synchronization_validation;
     std::unique_ptr<VulkanViewer> host(new VulkanViewer(title, options));
     if (!(host->device().supported_sample_counts() & o.samples))
-        throw BackendUnavailable("Vulkan viewer does not support the requested MSAA sample count");
+        throw std::runtime_error("Vulkan viewer does not support the requested MSAA sample count");
     host->set_samples(o.samples);
     return std::unique_ptr<ViewerBase>(host.release());
 }

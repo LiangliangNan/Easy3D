@@ -48,7 +48,7 @@ int main() {
                 "installed viewer material/default camera did not render the model");
         std::cout << "Runtime Viewer rendered using " << (viewer->backend() == Backend::Vulkan ? "Vulkan" : "OpenGL") << '\n';
         return viewer->validation_errors() ? 1 : 0;
-    } catch (const BackendUnavailable& e) {
+    } catch (const std::runtime_error& e) {
         std::cerr << e.what() << '\n'; return 1;
     } catch (const std::exception& e) { std::cerr << e.what() << '\n'; return 1; }
 }

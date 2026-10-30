@@ -214,7 +214,7 @@ set(${module}_resources
         )
 
 endif()
-list(APPEND renderer_headers backend.h ${backend_headers})
+list(APPEND renderer_headers ${backend_headers})
 
 add_module(${module} "${${module}_headers}" "${${module}_sources}" "${private_dependencies}" "${public_dependencies}")
 if(NOT Easy3D_ENABLE_VULKAN)

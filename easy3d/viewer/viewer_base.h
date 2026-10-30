@@ -3,7 +3,6 @@
 #define EASY3D_VIEWER_VIEWER_BASE_H
 #include <easy3d/viewer/viewer_input.h>
 #include <easy3d/viewer/viewer_callbacks.h>
-#include <easy3d/renderer/backend.h>
 #include <easy3d/core/types.h>
 #include <functional>
 #include <memory>
@@ -15,7 +14,6 @@ class Camera;
 class Model;
 class Drawable;
 struct ViewerOptions {
-    Backend backend = Backend::Automatic;
     int width = 800, height = 600;
     bool visible = true, resizable = true;
     unsigned samples = 4;
@@ -31,7 +29,6 @@ public:
     // Replace/clear from the UI thread, including from a callback. The active
     // callable stays alive until it returns; mutable callable state is retained.
     void set_callbacks(ViewerCallbacks callbacks);
-    virtual Backend backend() const = 0;
     const std::string& fallback_reason() const { return fallback_reason_; }
     virtual unsigned validation_errors() const = 0;
     virtual int run(bool see_all = true) = 0;
