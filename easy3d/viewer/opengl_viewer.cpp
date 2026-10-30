@@ -601,7 +601,7 @@ namespace easy3d {
 
         if (runtime_->last_opengl_window()) {
             ShaderManager::terminate();
-            TextureManager::terminate_opengl();
+            TextureManager::terminate();
         }
 
         const auto closing = window_;

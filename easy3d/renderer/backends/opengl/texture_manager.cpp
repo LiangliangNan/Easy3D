@@ -3,7 +3,7 @@
 namespace easy3d {
 // Called with the last viewer share-group context current. CPU-only textures
 // may still be referenced by Vulkan hosts and must outlive OpenGL shutdown.
-void TextureManager::terminate_opengl() {
+void TextureManager::terminate() {
     std::lock_guard<std::mutex> lock(mutex_);
     for (auto it = textures_.begin(); it != textures_.end();) {
         if (it->second->id()) {
