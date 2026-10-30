@@ -7,9 +7,10 @@ rendering and most existing interactive tutorials still use OpenGL. They are ret
 
 ## Final migration goal and backend policy
 
-**Revised plan: proposed, awaiting user confirmation.** This revision changes the
-migration objectives; it does not implement the changes below. The existing
-runtime factories and previous source layout remain in the code until migrated.
+**Plan confirmed; step 1 implemented (2026-10-30).** Backend configuration and
+explicit counterparts have begun migrating as recorded below. Constructor/hook
+alignment, VulkanMultiViewer, final aliases and runtime-facade removal remain
+separate steps; the existing factories are transitional until step 4.
 
 The completed migration must support **all tutorials on Vulkan** and targets
 **all applications on Vulkan**, including Mapple, FigureMaker and toolkit-based
@@ -115,14 +116,14 @@ Tutorials 701–703 retain their original algorithm code without extra ownership
 configuration helpers. Match OpenGL materials, two-sided lighting/back colors,
 flat/smooth shading, background and canvas behavior.
 
-## Next implementation plan (confirmation required)
+## Implementation plan and remaining steps
 
 The following sequence is the proposed work order. Temporary compatibility needed
 to keep intermediate builds usable must be removed by the runtime-dispatch cleanup
 step. Do not leave empty implementations or claim a class is supported because
 only its header compiles.
 
-### 1. Enforce CMake backend choice and establish explicit counterparts
+### 1. Enforce CMake backend choice and establish explicit counterparts — completed
 
 - Introduce the exclusive CMake backend choice above. Select renderer, viewer,
   GUI/application, binding and test sources/dependencies from that choice. Remove
@@ -272,8 +273,8 @@ validation coverage. Completion also requires Windows/Linux and Qt/wx testing
 when those integrations are available; local MoltenVK tests do not establish
 cross-platform or full application parity.
 
-**Next action after confirmation:** begin step 1, then proceed through the gates
-in order. No implementation work is authorized by this planning update alone.
+**Next implementation step:** step 2, aligning constructors, subclass hooks and
+state without adding another facade. Steps 3–6 remain pending.
 
 ## Implementation history and current baseline
 
@@ -3242,3 +3243,82 @@ build and existing query regression pass. SDK-independent public clients run
 through Vulkan, automatic OpenGL fallback and the installed headless package.
 The headless viewer/renderer binaries have no GL/GLEW/GLFW imports. Previously
 documented platform warnings remain; no new validation errors were reported.
+
+
+## Step 1: exclusive backend configuration and explicit classes
+
+Implemented the first confirmed step. Configure separate build directories:
+
+```sh
+cmake -S . -B build-vulkan -DEasy3D_RENDERER_BACKEND=VULKAN \
+    -DEasy3D_BUILD_RENDERER_TESTS=ON -DEasy3D_VULKAN_TEST_VALIDATION=ON
+cmake -S . -B build-opengl -DEasy3D_RENDERER_BACKEND=OPENGL \
+    -DEasy3D_BUILD_RENDERER_TESTS=ON
+cmake -S . -B build-headless -DEasy3D_RENDERER_BACKEND=VULKAN \
+    -DEasy3D_ENABLE_VULKAN_VIEWER=OFF -DEasy3D_BUILD_RENDERER_TESTS=ON
+```
+
+`Easy3D_RENDERER_BACKEND` defaults to VULKAN and is exported by the package.
+Valid legacy enable-switch pairs are migrated into this single cache choice;
+conflicting switches, both/neither backends and unknown choices fail configuration.
+Old enable-switch cache entries are removed after validation and their values
+are derived internally. For conflicting existing caches, use a separate build
+directory or clear the old switches with `-UEasy3D_ENABLE_OPENGL
+-UEasy3D_ENABLE_VULKAN`. Window-host enablement remains separate. A fresh OpenGL
+configuration succeeds with Vulkan SDK discovery disabled.
+
+The concrete OpenGL classes are now `OpenGLViewer`, `OpenGLMultiViewer` and
+`OpenGLOffScreen` in their requested root-level header/source pairs. OpenGL
+snapshots are folded into `opengl_viewer.cpp`. Vulkan viewer/offscreen source
+files are back in `vulkan_viewer.cpp` and `vulkan_offscreen.cpp`. Explicit
+implementation files include their explicit class headers; renderer friendship
+uses `OpenGLViewer`. Original default titles, manuals and hints are retained.
+
+`OpenGLOffScreen` owns the actual hidden OpenGL context through OpenGLViewer;
+it is not a renamed runtime-dispatch facade. Its operations preserve pixel-sized
+output, validate file-render requests and activate its own context when needed.
+The existing OffScreen facade temporarily reaches it through its existing
+adapter; that adapter is reduced and scheduled for deletion in step 4.
+
+Current compatibility and remaining alignment inventory:
+
+| Class/API | Current state and next work |
+| --- | --- |
+| `OpenGLViewer` | Original title/sample/GL-version/fullscreen/resizable/depth/stencil/size constructor retained. Camera, scene vectors, model index and manual/hint remain subclass-accessible as before. |
+| `VulkanViewer` | Title plus VulkanViewerOptions retained. Scene/camera storage remains in VulkanOffScreen's private implementation; alignment belongs to step 2. |
+| `OpenGLMultiViewer` | Original rows/columns/title constructor, assignments, division visibility, shared camera and snapshots retained. |
+| `VulkanMultiViewer` | Not yet implemented; step 3. There is no placeholder alias claiming multi-view support. |
+| Explicit offscreen classes | OpenGLOffScreen(width, height) and VulkanOffScreen(width, height, DeviceOptions) work directly; option/API alignment continues in step 2. |
+| Alias headers | Viewer selects the configured family; multi_viewer.h retains the OpenGL compatibility alias. Full three-alias aggregation awaits step 3 and OffScreen facade removal. |
+| Subclass hooks/coordinates | OpenGL init/draw/cleanup hooks and logical dimensions, versus native hooks/framebuffer dimensions, still need step-2 alignment. |
+| Runtime facades | ViewerBase/factories, preference options and the existing OffScreen facade are still transitional. The build cannot contain both backends; facade deletion is step 4, not claimed complete here. |
+
+Tutorials now obtain their transitional TutorialViewer alias from the public
+Viewer selector. Per-target Vulkan overrides are removed, and an OpenGL viewer
+include rejects a conflicting legacy tutorial override. Tutorial algorithms and
+headers are otherwise unchanged. VulkanMultiViewer and new general scanning APIs
+are not part of this step.
+
+Renderer tests can now be requested for either backend with
+`Easy3D_BUILD_RENDERER_TESTS`. Existing OpenGL regressions run without compiling
+Vulkan; mixed-backend lifecycle/parity targets are no longer configured. Relevant
+OpenGL material/texture, input, depth, line and cloud-tutorial coverage remains in
+the OpenGL suite, alongside the native Vulkan coverage. A focused explicit-class
+regression checks offscreen MSAA/resize, surviving shared contexts, aliases and
+two-cell multi-view rendering without duplicating model ownership. CI now uses
+separate Vulkan/headless/OpenGL matrix entries; CI itself has not been run here.
+
+Verified on this Mac: 75/75 Vulkan-window tests on MoltenVK with validation,
+16/16 Vulkan-headless tests and 8/8 OpenGL tests pass. Configuration checks reject
+both/neither backends, invalid choices and conflicting legacy switches. Binary
+inspection finds no GL/GLEW imports in Vulkan-only libraries, no GL/GLEW/GLFW
+imports in headless libraries, and no Vulkan imports in OpenGL-only libraries. Downstream clients must rebuild
+after the OpenGL class rename; the short Viewer/MultiViewer names remain aliases.
+
+Public package clients also configure/build with Vulkan SDK discovery disabled
+and render through each selected window backend. The OpenGL offscreen consumer
+passes through the transitional facade to the recovered OpenGLOffScreen, and the
+installed headless viewer client reports that no window host was built. The
+previously documented platform warnings remain; no new validation errors were
+reported. Full constructor/hook unification and runtime-facade removal are not
+claimed by these checks.

@@ -9,13 +9,7 @@ if(Easy3D_BUILD_VULKAN_TESTS)
     endif()
     add_test(NAME vulkan.demo COMMAND VulkanViewer --backend vulkan --frames 2 --samples 4 ${demo_validation_args})
     set_tests_properties(vulkan.demo PROPERTIES LABELS desktop TIMEOUT 120)
-    if(Easy3D_ENABLE_OPENGL)
-        add_test(NAME viewer.demopengl COMMAND VulkanViewer --backend opengl --frames 2 --samples 1)
-        add_test(NAME viewer.demofallback COMMAND VulkanViewer --backend auto --frames 2 --samples 1)
-        set_tests_properties(viewer.demopengl viewer.demofallback PROPERTIES LABELS desktop TIMEOUT 120)
-        set_tests_properties(viewer.demofallback PROPERTIES
-            ENVIRONMENT "EASY3D_VULKAN_LOADER=${CMAKE_CURRENT_BINARY_DIR}/missing-vulkan-loader")
-    endif()
+
 endif()
 if(NOT Easy3D_ENABLE_OPENGL)
     # Existing tutorial scene code shared with the OpenGL builds.

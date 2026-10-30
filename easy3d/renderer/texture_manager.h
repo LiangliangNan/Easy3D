@@ -129,7 +129,7 @@ namespace easy3d {
 
     private:
 #ifndef EASY3D_NO_OPENGL
-        friend class Viewer;
+        friend class OpenGLViewer;
         static void terminate_opengl();
 #endif
         static std::mutex mutex_;

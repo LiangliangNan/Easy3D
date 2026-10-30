@@ -24,7 +24,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include <easy3d/viewer/multi_viewer.h>
+#include <easy3d/viewer/opengl_multi_viewer.h>
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/opengl.h>
 #include <easy3d/renderer/drawable_lines.h>
@@ -42,22 +42,22 @@
 namespace easy3d {
 
 
-    MultiViewer::MultiViewer(int rows, int cols, const std::string &title)
-            : Viewer(title)
+    OpenGLMultiViewer::OpenGLMultiViewer(int rows, int cols, const std::string &title)
+            : OpenGLViewer(title)
     {
 
         set_layout(rows, cols);
     }
 
 
-    MultiViewer::~MultiViewer() {
+    OpenGLMultiViewer::~OpenGLMultiViewer() {
         drawable_division_.reset();
         // Not needed: it will be called in the destructor of the base class
-        // Viewer::cleanup();
+        // OpenGLViewer::cleanup();
     }
 
 
-    void MultiViewer::set_layout(int rows, int cols) {
+    void OpenGLMultiViewer::set_layout(int rows, int cols) {
         num_rows_ = rows;
         num_cols_ = cols;
 
@@ -70,7 +70,7 @@ namespace easy3d {
     }
 
 
-    bool MultiViewer::snapshot() const {
+    bool OpenGLMultiViewer::snapshot() const {
         const std::string& title = "Please choose a file name";
         std::string default_file_name("untitled.png");
         if (current_model())
@@ -98,7 +98,7 @@ namespace easy3d {
 
             // Note: it also possible to use a scaled framebuffer size (to render a larger image).
             //       This requires setting scaled viewport size (by calling glViewport() for each 
-            //       view in MultiViewer::draw().
+            //       view in OpenGLMultiViewer::draw().
             FramebufferObject fbo(w, h, samples_);
             fbo.add_color_buffer();
             fbo.add_depth_buffer();
@@ -111,7 +111,7 @@ namespace easy3d {
                 glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-            const_cast<MultiViewer*>(this)->draw();
+            const_cast<OpenGLMultiViewer*>(this)->draw();
             
             fbo.release();
 
@@ -121,7 +121,7 @@ namespace easy3d {
     }
 
 
-    void MultiViewer::assign(int row, int col, const Model *m) {
+    void OpenGLMultiViewer::assign(int row, int col, const Model *m) {
         if (!m) {
             LOG(ERROR) << "null model cannot be assigned to a view";
             return;
@@ -136,7 +136,7 @@ namespace easy3d {
     }
 
 
-    void MultiViewer::assign(int row, int col, const Drawable *d) {
+    void OpenGLMultiViewer::assign(int row, int col, const Drawable *d) {
         if (!d) {
             LOG(ERROR) << "null drawable cannot be assigned to a view";
             return;
@@ -153,28 +153,28 @@ namespace easy3d {
     }
 
 
-    void MultiViewer::set_division_visible(bool b) {
+    void OpenGLMultiViewer::set_division_visible(bool b) {
         if (drawable_division_)
             drawable_division_->set_visible(b);
     }
 
 
-    bool MultiViewer::division_visible() const {
+    bool OpenGLMultiViewer::division_visible() const {
         if (drawable_division_)
             return drawable_division_->is_visible();
         return false;
     }
 
 
-    void MultiViewer::init() {
-        Viewer::init();
+    void OpenGLMultiViewer::init() {
+        OpenGLViewer::init();
 
         // compute the division
         update_division();
     }
 
 
-    void MultiViewer::draw() const {
+    void OpenGLMultiViewer::draw() const {
         // remember the viewer port, later we will have to restore it after drawing each view
         ivec4 viewport;
         glGetIntegerv(GL_VIEWPORT, viewport);
@@ -238,12 +238,12 @@ namespace easy3d {
     }
 
 
-    void MultiViewer::post_resize(int w, int h) {
+    void OpenGLMultiViewer::post_resize(int w, int h) {
         update_division();
     }
 
 
-    void MultiViewer::update_division() {
+    void OpenGLMultiViewer::update_division() {
         if (views_.empty() || views_[0].empty())
             return;
 
@@ -288,7 +288,7 @@ namespace easy3d {
     }
 
 
-    vec3 MultiViewer::point_under_pixel(int x, int y, bool &found) const {
+    vec3 OpenGLMultiViewer::point_under_pixel(int x, int y, bool &found) const {
         // GLFW (same as Qt) uses upper corner for its origin while GL uses the lower corner.
         int glx = x;
         int gly = height() - 1 - y;
@@ -303,7 +303,7 @@ namespace easy3d {
         glReadPixels(glx, gly, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
         found = depth < 1.0f;
         if (found) {
-            // This is different from Viewer::point_under_pixel(...).
+            // This is different from OpenGLViewer::point_under_pixel(...).
             // We use the coordinates w.r.t. the current view.
             x %= view_width_;
             y %= view_height_;
@@ -315,21 +315,21 @@ namespace easy3d {
     }
 
 
-    bool MultiViewer::mouse_release_event(int x, int y, int button, int modifiers) {
+    bool OpenGLMultiViewer::mouse_release_event(int x, int y, int button, int modifiers) {
         // make the mouse position relative to the current view
         x %= view_width_;
         y %= view_height_;
         mouse_pressed_x_ %= view_width_;
         mouse_pressed_y_ %= view_height_;
-        return Viewer::mouse_release_event(x, y, button, modifiers);
+        return OpenGLViewer::mouse_release_event(x, y, button, modifiers);
     }
 
 
-    bool MultiViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
+    bool OpenGLMultiViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
         // make the mouse position relative to the current view
         x %= view_width_;
         y %= view_height_;
-        return Viewer::mouse_drag_event(x, y, dx, dy, button, modifiers);
+        return OpenGLViewer::mouse_drag_event(x, y, dx, dy, button, modifiers);
     }
 
 }

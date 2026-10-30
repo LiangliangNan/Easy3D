@@ -18,12 +18,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - opengl: "OFF"
+          - backend: "VULKAN"
             window: "OFF"
-          - opengl: "OFF"
+          - backend: "VULKAN"
             window: "ON"
-          - opengl: "ON"
-            window: "ON"
+          - backend: "OPENGL"
+            window: "OFF"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -38,13 +38,14 @@ jobs:
         run: |
           cmake -S . -B build-vulkan -G Ninja -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/install" \
-            -DEasy3D_ENABLE_VULKAN=ON -DEasy3D_ENABLE_OPENGL=${{ matrix.opengl }} \
+            -DEasy3D_RENDERER_BACKEND=${{ matrix.backend }} \
             -DEasy3D_ENABLE_VULKAN_VIEWER=${{ matrix.window }} \
             -DEasy3D_BUILD_TUTORIALS=OFF -DEasy3D_BUILD_TESTS=OFF \
-            -DEasy3D_BUILD_VULKAN_TESTS=ON -DEasy3D_VULKAN_TEST_VALIDATION=ON
+            -DEasy3D_BUILD_RENDERER_TESTS=ON -DEasy3D_VULKAN_TEST_VALIDATION=ON
       - name: Build
         run: cmake --build build-vulkan --parallel 2
       - name: Validate SPIR-V
+        if: matrix.backend == 'VULKAN'
         run: |
           spirv-val --target-env vulkan1.2 build-vulkan/easy3d/renderer/backends/vulkan/scene_vert.spv
           spirv-val --target-env vulkan1.2 build-vulkan/easy3d/renderer/backends/vulkan/scene_frag.spv
@@ -59,13 +60,14 @@ jobs:
           spirv-val --target-env vulkan1.2 build-vulkan/easy3d/renderer/backends/vulkan/depth_texture_frag.spv
           spirv-val --target-env vulkan1.2 build-vulkan/easy3d/renderer/backends/vulkan/point_selection_comp.spv
       - name: Render without a display using lavapipe
+        if: matrix.backend == 'VULKAN'
         run: |
           export VK_DRIVER_FILES="$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit)"
           test -n "$VK_DRIVER_FILES"
           unset DISPLAY WAYLAND_DISPLAY
           ctest --test-dir build-vulkan --output-on-failure -LE desktop
-      - name: Test native Vulkan windows
-        if: matrix.window == 'ON'
+      - name: Test configured window backend
+        if: matrix.window == 'ON' || matrix.backend == 'OPENGL'
         run: |
           export VK_DRIVER_FILES="$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit)"
           xvfb-run -a -s '-screen 0 1280x1024x24 -nolisten tcp -noreset' \
@@ -79,15 +81,19 @@ jobs:
           cmake --build installed-consumer
           export VK_DRIVER_FILES="$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit)"
           unset DISPLAY WAYLAND_DISPLAY
-          ./installed-consumer/installed_vulkan_consumer
-          ./installed-consumer/installed_offscreen_consumer
-          if [ "${{ matrix.window }}" = "ON" ]; then
+          if [ "${{ matrix.backend }}" = "VULKAN" ]; then
+            ./installed-consumer/installed_vulkan_consumer
+            ./installed-consumer/installed_offscreen_consumer
+          else
+            xvfb-run -a ./installed-consumer/installed_offscreen_consumer
+          fi
+          if [ "${{ matrix.window }}" = "ON" ] || [ "${{ matrix.backend }}" = "OPENGL" ]; then
             xvfb-run -a -s '-screen 0 1280x1024x24 -nolisten tcp -noreset' ./installed-consumer/installed_viewer_consumer
           else
             ./installed-consumer/installed_viewer_consumer
           fi
       - uses: actions/upload-artifact@v4
-        if: always() && matrix.opengl == 'ON'
+        if: always() && matrix.backend == 'VULKAN' && matrix.window == 'ON'
         with:
           name: vulkan-capture
           path: build-vulkan/easy3d/viewer/vulkan-bunny.png

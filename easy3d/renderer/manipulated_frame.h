@@ -213,7 +213,7 @@ namespace easy3d {
 		float zoomSensitivity_;
 
 	private:
-		friend class Viewer;
+		friend class OpenGLViewer;
 	};
 
 }
