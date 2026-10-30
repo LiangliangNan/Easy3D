@@ -155,7 +155,7 @@ int main(int argc, char** argv) {
 #if !defined(EASY3D_HAS_VULKAN)
                 if (backend == Backend::Vulkan) continue;
 #endif
-#ifdef EASY3D_NO_OPENGL
+#ifdef EASY3D_HAS_VULKAN
                 if (backend == Backend::OpenGL) continue;
 #endif
                 auto requested = options(backend); requested.samples = 1;

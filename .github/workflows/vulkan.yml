@@ -19,11 +19,9 @@ jobs:
       matrix:
         include:
           - backend: "VULKAN"
-            window: "OFF"
-          - backend: "VULKAN"
-            window: "ON"
+            vulkan: "ON"
           - backend: "OPENGL"
-            window: "OFF"
+            vulkan: "OFF"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -38,8 +36,7 @@ jobs:
         run: |
           cmake -S . -B build-vulkan -G Ninja -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/install" \
-            -DEasy3D_RENDERER_BACKEND=${{ matrix.backend }} \
-            -DEasy3D_ENABLE_VULKAN_VIEWER=${{ matrix.window }} \
+            -DEasy3D_ENABLE_VULKAN=${{ matrix.vulkan }} \
             -DEasy3D_BUILD_TUTORIALS=OFF -DEasy3D_BUILD_TESTS=OFF \
             -DEasy3D_BUILD_RENDERER_TESTS=ON -DEasy3D_VULKAN_TEST_VALIDATION=ON
       - name: Build
@@ -67,7 +64,6 @@ jobs:
           unset DISPLAY WAYLAND_DISPLAY
           ctest --test-dir build-vulkan --output-on-failure -LE desktop
       - name: Test configured window backend
-        if: matrix.window == 'ON' || matrix.backend == 'OPENGL'
         run: |
           export VK_DRIVER_FILES="$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit)"
           xvfb-run -a -s '-screen 0 1280x1024x24 -nolisten tcp -noreset' \
@@ -87,13 +83,9 @@ jobs:
           else
             xvfb-run -a ./installed-consumer/installed_offscreen_consumer
           fi
-          if [ "${{ matrix.window }}" = "ON" ] || [ "${{ matrix.backend }}" = "OPENGL" ]; then
-            xvfb-run -a -s '-screen 0 1280x1024x24 -nolisten tcp -noreset' ./installed-consumer/installed_viewer_consumer
-          else
-            ./installed-consumer/installed_viewer_consumer
-          fi
+          xvfb-run -a -s '-screen 0 1280x1024x24 -nolisten tcp -noreset' ./installed-consumer/installed_viewer_consumer
       - uses: actions/upload-artifact@v4
-        if: always() && matrix.backend == 'VULKAN' && matrix.window == 'ON'
+        if: always() && matrix.backend == 'VULKAN'
         with:
           name: vulkan-capture
           path: build-vulkan/easy3d/viewer/vulkan-bunny.png

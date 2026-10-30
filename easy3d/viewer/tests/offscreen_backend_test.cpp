@@ -39,7 +39,7 @@ void exercise(OffScreen& renderer,const std::string& prefix) {
     require(std::abs(int(rgba[0])-31)<=1 && std::abs(int(rgba[1])-59)<=1,"common background did not render");
     for(unsigned i=0;i<16;++i) require(std::abs(renderer.camera()->modelViewProjectionMatrix()[i]-matrix[i])<1e-6f,"file rendering changed live camera matrices");
     require(!renderer.render(prefix+"-invalid.png",-1),"invalid render request accepted");
-#ifdef EASY3D_NO_OPENGL
+#ifdef EASY3D_HAS_VULKAN
     {
         auto invalid=std::make_shared<PointsDrawable>("surfel without normals");renderer.add_drawable(invalid);
         invalid->update_vertex_buffer({vec3(0)});invalid->set_impostor_type(PointsDrawable::SURFEL);
@@ -58,7 +58,7 @@ void exercise(OffScreen& renderer,const std::string& prefix) {
     require(renderer.drawables().size()==1 && renderer.render(prefix+"-overlay.png",1,1,0),"common drawable attachment failed");
     require(renderer.delete_drawable(lines.get()) && renderer.delete_model(mesh.get()),"common scene deletion failed");
     renderer.clear_scene();require(renderer.models().empty() && renderer.drawables().empty(),"common scene clearing failed");
-#ifdef EASY3D_NO_OPENGL
+#ifdef EASY3D_HAS_VULKAN
     require(renderer.device().validation_errors()==0,"common renderer validation errors");
 #endif
 }

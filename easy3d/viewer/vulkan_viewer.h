@@ -129,6 +129,9 @@ protected:
     // Corresponds to Viewer::draw_corner_axes(); uses an isolated HUD depth buffer.
     void draw_corner_axes() const;
     std::string framerate_ = "fps: -- (-- ms/frame)";
+    // Runs once before the first frame or capture, after subclass construction.
+    // Vulkan resources are ready; overrides may configure the scene and HUD.
+    virtual void init() {}
     virtual void pre_draw() {}
     virtual void post_draw() {}
     virtual void post_resize(int, int) {}
@@ -146,6 +149,7 @@ private:
     struct Window;
     std::shared_ptr<Window> window_;
     bool animation_enabled_ = false;
+    bool initialized_ = false;
     std::unique_ptr<vulkan::KeyFrameInterpolatorRenderer> camera_path_renderer_;
     std::chrono::steady_clock::time_point next_camera_path_frame_;
     void advance_camera_path();

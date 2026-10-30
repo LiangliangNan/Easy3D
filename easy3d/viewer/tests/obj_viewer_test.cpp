@@ -8,7 +8,7 @@
 #include <easy3d/renderer/texture.h>
 #include <easy3d/util/initializer.h>
 #include <iostream>
-#ifdef EASY3D_NO_OPENGL
+#ifdef EASY3D_HAS_VULKAN
 #define GLFW_INCLUDE_NONE
 #include <3rd_party/glfw/include/GLFW/glfw3.h>
 #else
@@ -16,7 +16,7 @@
 #endif
 using namespace easy3d;
 void require(bool value,const char* message) { if (!value) throw std::runtime_error(message); }
-#ifdef EASY3D_NO_OPENGL
+#ifdef EASY3D_HAS_VULKAN
 void frame(TexturedViewer& viewer) {
     for (unsigned i=0;i<100;++i) {
         VulkanViewer::poll_events(); if (viewer.draw_frame()) return;
@@ -28,13 +28,13 @@ void frame(TexturedViewer& viewer) {
 int main(int argc,char**) {
     try {
         initialize(false,false,false);
-#ifdef EASY3D_NO_OPENGL
+#ifdef EASY3D_HAS_VULKAN
         const std::string dir="vulkan-obj-viewer-fixture";
 #else
         const std::string dir="opengl-obj-viewer-fixture";
 #endif
         const auto file=obj_fixture::create(dir);
-#ifdef EASY3D_NO_OPENGL
+#ifdef EASY3D_HAS_VULKAN
         VulkanViewerOptions options; options.width=480; options.height=360;
         options.device.validation=options.device.synchronization_validation=argc>1;
         TexturedViewer viewer("Native material viewer test",options);
@@ -52,13 +52,13 @@ int main(int argc,char**) {
         for (const auto& d:model->renderer()->triangles_drawables()) {
             d->set_lighting(false);
             if (!d->texture()) continue;
-#ifdef EASY3D_NO_OPENGL
+#ifdef EASY3D_HAS_VULKAN
             require(d->has_cpu_buffers() && d->texture()->id()==0,"native material viewer used OpenGL resources");
 #else
             require(!d->has_cpu_buffers() && d->texture()->id() && glIsTexture(d->texture()->id()),"legacy material viewer did not use GL textures");
 #endif
         }
-#ifdef EASY3D_NO_OPENGL
+#ifdef EASY3D_HAS_VULKAN
         frame(viewer);
 #endif
         require(viewer.snapshot(output),"material viewer snapshot failed");
@@ -75,13 +75,13 @@ int main(int argc,char**) {
         probe(vec3(-1.5f,.5f,0),0,0,255); probe(vec3(-2.5f,1.5f,0),255,0,0);
         probe(vec3(2,1,0),0,255,0); probe(vec3(-2,-2,0),255,255,0); probe(vec3(2,-2,0),255,0,255);
         model->renderer()->update();
-#ifdef EASY3D_NO_OPENGL
+#ifdef EASY3D_HAS_VULKAN
         frame(viewer);
 #endif
         require(viewer.snapshot(output),"material refresh snapshot failed");
         std::vector<unsigned char> refreshed;
         require(ImageIO::load(output,refreshed,w,h,channels,4,false) && refreshed==rgba,"material refresh changed rendered groups");
-#ifdef EASY3D_NO_OPENGL
+#ifdef EASY3D_HAS_VULKAN
         auto drop=glfwSetDropCallback(viewer.window(),nullptr); glfwSetDropCallback(viewer.window(),drop);
         const auto replacement_file=dir+"/plain.obj";
         const char* replacement=replacement_file.c_str();

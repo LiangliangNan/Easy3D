@@ -3,9 +3,7 @@
 #include <easy3d/renderer/camera.h>
 #include <easy3d/util/logging.h>
 #include <easy3d/viewer/backends/viewer.h>
-#if defined(EASY3D_HAS_VULKAN)
 #include <easy3d/viewer/backends/glfw_runtime.h>
-#endif
 #include <cmath>
 #include <algorithm>
 #include <limits>
@@ -13,11 +11,7 @@ namespace easy3d {
 ViewerBase::~ViewerBase() = default;
 
 void ViewerBase::poll_events() {
-#if defined(EASY3D_HAS_VULKAN)
     detail::GlfwRuntime::poll_events();
-#else
-    throw BackendUnavailable("Interactive window support was not built");
-#endif
 }
 bool ViewerBase::snapshot(const std::string& filename, float scaling, int sample_count, int background, bool expand) const {
     if (!std::isfinite(scaling) || scaling <= 0 || sample_count <= 0 || sample_count > 64 ||

@@ -7,7 +7,7 @@
 #include <easy3d/renderer/drawable_lines_2D.h>
 #include <easy3d/fileio/image_io.h>
 #include <easy3d/util/initializer.h>
-#ifndef EASY3D_NO_OPENGL
+#ifndef EASY3D_HAS_VULKAN
 #include <easy3d/renderer/opengl.h>
 #endif
 #define GLFW_INCLUDE_NONE
@@ -59,7 +59,7 @@ void check(Backend backend, unsigned samples, bool validation) {
         v->framebuffer_size(fw, fh);
         const int x = v->width() / 2, y = v->height() / 2;
         const mat4 original = v->camera()->modelViewProjectionMatrix();
-#ifndef EASY3D_NO_OPENGL
+#ifndef EASY3D_HAS_VULKAN
         GLuint ubo = 0, pbo = 0;
         if (backend == Backend::OpenGL) {
             glfwMakeContextCurrent(v->window());
@@ -94,7 +94,7 @@ void check(Backend backend, unsigned samples, bool validation) {
         require(frames == 0, "query ran frame callbacks");
         for (unsigned i = 0; i < 16; ++i)
             require(original[i] == v->camera()->modelViewProjectionMatrix()[i], "query changed camera matrices");
-#ifndef EASY3D_NO_OPENGL
+#ifndef EASY3D_HAS_VULKAN
         if (backend == Backend::OpenGL) {
             GLint binding = 0, viewport[4], pack = 0;
             GLboolean mask;
@@ -179,7 +179,7 @@ void check(Backend backend, unsigned samples, bool validation) {
     bool resized = false;
     const auto resized_hit = v->point_under_pixel(v->width() / 2, v->height() / 2, resized);
     require(resized && std::abs(resized_hit.z - .2f) < 2e-4f, "query failed after logical/framebuffer resize");
-#ifndef EASY3D_NO_OPENGL
+#ifndef EASY3D_HAS_VULKAN
     if (backend == Backend::OpenGL) {
         auto other = ViewerBase::create("Other shared context", o);
         glfwMakeContextCurrent(other->window());

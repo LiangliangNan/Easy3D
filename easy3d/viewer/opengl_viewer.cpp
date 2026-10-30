@@ -2131,6 +2131,9 @@ namespace easy3d {
 
 	bool OpenGLViewer::snapshot(const std::string& file_name, float scaling, int samples, int back_ground, bool expand) const {
         glfwMakeContextCurrent(window_);
+        if (!initialized_) {
+            auto* host = const_cast<OpenGLViewer*>(this); host->init(); host->initialized_ = true;
+        }
 		int max_samples = 0;
 		glGetIntegerv(GL_MAX_SAMPLES, &max_samples);
 		if (samples > max_samples) {

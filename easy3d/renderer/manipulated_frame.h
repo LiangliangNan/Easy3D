@@ -44,7 +44,7 @@
 
 namespace easy3d {
     // Forward declaration only: renderer headers also serve headless clients.
-#ifdef EASY3D_NO_OPENGL
+#ifdef EASY3D_HAS_VULKAN
     class VulkanViewer;
     using Viewer = VulkanViewer;
 #else

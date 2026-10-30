@@ -15,7 +15,7 @@
 #include <type_traits>
 #include <set>
 #include <cmath>
-#ifdef EASY3D_NO_OPENGL
+#ifdef EASY3D_HAS_VULKAN
 static_assert(std::is_same<easy3d::Viewer, easy3d::VulkanViewer>::value, "Viewer must select Vulkan in a native-only build");
 #endif
 using namespace easy3d;

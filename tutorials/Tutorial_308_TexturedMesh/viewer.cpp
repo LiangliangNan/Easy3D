@@ -31,7 +31,7 @@
 #include <easy3d/util/logging.h>
 
 namespace easy3d {
-#ifdef EASY3D_NO_OPENGL
+#ifdef EASY3D_HAS_VULKAN
     TexturedViewer::TexturedViewer(const std::string& title,const VulkanViewerOptions& options)
         : Viewer(title,options) {
 #else

@@ -29,11 +29,15 @@ VulkanViewerOptions options(bool validation) {
 struct LoopViewer : TestHost {
 #ifdef EASY3D_TEST_OPENGL_VIEWER
     explicit LoopViewer(bool) : TestHost("Frame loop", 4, 3, 2, false, true, 24, 8, 151, 117) { manual_.clear(); }
-    unsigned initializations = 0;
-    void init() override { ++initializations; TestHost::init(); }
 #else
     explicit LoopViewer(bool validation) : TestHost("Frame loop", options(validation)) { manual_.clear(); }
 #endif
+    unsigned initializations = 0;
+    bool throw_init = false;
+    void init() override {
+        if (throw_init) throw std::runtime_error("expected initialization failure");
+        ++initializations; TestHost::init();
+    }
     unsigned before = 0, after = 0, ticks = 0, observed_ticks = 0, close_at = 0;
     bool throw_frame = false, throw_key = false, inject_key_after_frame = false;
     void pre_draw() override {
@@ -91,6 +95,16 @@ void check_file(LoopViewer& viewer) {
 }
 void exercise(bool validation) {
     LoopViewer viewer(validation); scene(viewer);
+    viewer.throw_init = true;
+    bool init_failed = false;
+    try { viewer.snapshot("viewer-init-failed.png", 1, 4, 0); }
+    catch (const std::runtime_error&) { init_failed = true; }
+    require(init_failed, "initialization failure was swallowed");
+    require(viewer.initializations == 0 && viewer.after == 0, "failed initialization completed a frame");
+    viewer.throw_init = false;
+    check_file(viewer);
+    require(viewer.initializations == 1 && viewer.before == 0 && viewer.after == 0,
+            "capture did not initialize exactly once without advancing frame hooks");
     const auto camera = viewer.camera()->modelViewProjectionMatrix();
     const int visibility = glfwGetWindowAttrib(viewer.window(), GLFW_VISIBLE);
     require(viewer.run_frames(2) == 0 && viewer.before >= 2 && viewer.after == 2, "bounded frame budget was not exact");
@@ -148,8 +162,8 @@ void exercise(bool validation) {
     require(viewer.run_frames(1) != 0 && viewer.window() == window, "loop failure destroyed/replaced its window");
     viewer.throw_frame = false;
     require(viewer.run_frames(1) == 0 && viewer.after == presented + 1, "rendering failure left the host unusable");
-#ifdef EASY3D_TEST_OPENGL_VIEWER
     require(viewer.initializations == 1, "bounded/repeated runs reinitialized the host");
+#ifdef EASY3D_TEST_OPENGL_VIEWER
     require(glGetError() == GL_NO_ERROR, "OpenGL frame execution error");
 #else
     require(viewer.device().validation_errors() == 0, "Vulkan frame execution validation error");

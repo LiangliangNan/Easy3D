@@ -82,7 +82,7 @@ int main(int argc, char **argv) {
     // Create a TrianglesDrawable to visualize the surface of the "bunny".
     // For visualization, the point positions and the vertex indices of the faces have to be sent to the GPU.
     auto surface = new TrianglesDrawable("faces");
-#ifdef EASY3D_NO_OPENGL
+#ifdef EASY3D_HAS_VULKAN
     surface->enable_cpu_buffers();
 #endif
     // Upload the vertex positions of the surface to the GPU.
@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
     // Create a PointsDrawable to visualize the vertices of the "bunny".
     // Only the vertex positions have to be sent to the GPU for visualization.
     auto vertices = new PointsDrawable("vertices");
-#ifdef EASY3D_NO_OPENGL
+#ifdef EASY3D_HAS_VULKAN
     vertices->enable_cpu_buffers();
 #endif
     // Upload the vertex positions to the GPU.

@@ -277,6 +277,7 @@ bool VulkanViewer::draw_frame() {
     int w, h; framebuffer_size(w, h);
     if (w <= 0 || h <= 0) return false;
     if (width() != w || height() != h) { VulkanOffScreen::resize(w, h); cancel_interaction(); post_resize(w, h); notify_resize(); }
+    if (!initialized_) { init(); initialized_ = true; }
     if (is_animating()) {
         animation_func_(this);
         if (window_->error) std::rethrow_exception(window_->error);
@@ -431,18 +432,25 @@ void VulkanViewer::clear_scene() {
 }
 graphics::FrameImage VulkanViewer::capture() const { return capture(samples()); }
 graphics::FrameImage VulkanViewer::capture(unsigned sample_count) const {
+    if (!initialized_) {
+        auto* host = const_cast<VulkanViewer*>(this); host->init(); host->initialized_ = true;
+    }
     update_camera_path_overlays();
     update_interaction_overlays();
     return VulkanOffScreen::capture(sample_count);
 }
 bool VulkanViewer::snapshot(const std::string& filename, float scaling, int samples,
                             int back_ground, bool expand) const {
+    if (!initialized_) {
+        auto* host = const_cast<VulkanViewer*>(this); host->init(); host->initialized_ = true;
+    }
     update_camera_path_overlays();
     update_interaction_overlays();
     return render(filename, scaling, samples, back_ground, expand);
 }
 int VulkanViewer::run(bool see_all) {
     try {
+        if (!initialized_) { init(); initialized_ = true; }
         if (see_all) fit_screen();
         show();
         return run_frames();
@@ -454,7 +462,6 @@ int VulkanViewer::run(bool see_all) {
 int VulkanViewer::run_frames(unsigned max_frames) {
     try {
         if (window_->error) std::rethrow_exception(window_->error);
-        print_usage();
         return detail::run_viewer_frames(*this, max_frames, [this] {
             return is_animating() || show_frame_rate_ || kfi_->is_interpolation_started();
         });
