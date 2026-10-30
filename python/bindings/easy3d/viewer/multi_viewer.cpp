@@ -2,7 +2,7 @@
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/drawable.h>
-#include <easy3d/viewer/multi_viewer.h>
+#include <easy3d/viewer/viewer.h>
 #include <easy3d/viewer/viewer.h>
 
 #include <memory>
@@ -19,7 +19,7 @@
 	PYBIND11_MAKE_OPAQUE(std::shared_ptr<void>)
 #endif
 
-// easy3d::MultiViewer file:easy3d/viewer/multi_viewer.h line:44
+// easy3d::MultiViewer file:easy3d/viewer/opengl_multi_viewer.h line:44
 struct PyCallBack_easy3d_MultiViewer : public easy3d::MultiViewer {
 	using easy3d::MultiViewer::MultiViewer;
 
@@ -366,7 +366,7 @@ struct PyCallBack_easy3d_MultiViewer : public easy3d::MultiViewer {
 
 void bind_easy3d_viewer_multi_viewer(pybind11::module_& m)
 {
-	{ // easy3d::MultiViewer file:easy3d/viewer/multi_viewer.h line:44
+	{ // easy3d::MultiViewer file:easy3d/viewer/opengl_multi_viewer.h line:44
 		pybind11::class_<easy3d::MultiViewer, std::shared_ptr<easy3d::MultiViewer>, PyCallBack_easy3d_MultiViewer, easy3d::Viewer> cl(m, "MultiViewer", "A viewer that supports multiple views (arranged in a grid layout).\n \n\n\n     ");
 		cl.def( pybind11::init( [](int const & a0, int const & a1){ return new easy3d::MultiViewer(a0, a1); }, [](int const & a0, int const & a1){ return new PyCallBack_easy3d_MultiViewer(a0, a1); } ), "doc");
 		cl.def( pybind11::init<int, int, const std::string &>(), pybind11::arg("rows"), pybind11::arg("cols"), pybind11::arg("title") );

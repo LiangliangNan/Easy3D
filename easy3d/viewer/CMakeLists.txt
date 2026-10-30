@@ -1,16 +1,16 @@
 set(module viewer)
 set(private_dependencies)
 set(public_dependencies easy3d::renderer)
-set(viewer_headers viewer.h viewer_input.h viewer_callbacks.h viewer_base.h offscreen.h)
-set(viewer_sources offscreen.cpp viewer_base.cpp)
+set(viewer_headers viewer.h viewer_input.h viewer_callbacks.h viewer_base.h)
+set(viewer_sources viewer_base.cpp)
 if(Easy3D_ENABLE_OPENGL OR Easy3D_ENABLE_VULKAN_VIEWER)
     list(APPEND viewer_sources backends/glfw_runtime.cpp)
 endif()
 
 if(Easy3D_ENABLE_OPENGL)
     list(APPEND private_dependencies 3rd_glfw)
-    list(APPEND viewer_headers multi_viewer.h opengl_viewer.h opengl_multi_viewer.h opengl_offscreen.h)
-    list(APPEND viewer_sources opengl_viewer.cpp opengl_multi_viewer.cpp opengl_offscreen.cpp backends/opengl/offscreen.cpp)
+    list(APPEND viewer_headers opengl_viewer.h opengl_multi_viewer.h opengl_offscreen.h)
+    list(APPEND viewer_sources opengl_viewer.cpp opengl_multi_viewer.cpp opengl_offscreen.cpp)
 endif()
 if(Easy3D_ENABLE_VULKAN_VIEWER)
     find_package(Vulkan REQUIRED)
@@ -31,6 +31,16 @@ if(Easy3D_ENABLE_VULKAN_VIEWER)
     target_compile_definitions(easy3d_viewer PUBLIC EASY3D_HAS_VULKAN_VIEWER)
 endif()
 install_module(viewer)
+
+if(Easy3D_BUILD_RENDERER_TESTS)
+    add_executable(easy3d_offscreen_backend_test tests/offscreen_backend_test.cpp)
+    target_link_libraries(easy3d_offscreen_backend_test PRIVATE easy3d::viewer)
+    add_test(NAME viewer.offscreen COMMAND easy3d_offscreen_backend_test)
+    set_tests_properties(viewer.offscreen PROPERTIES TIMEOUT 120)
+    if(Easy3D_ENABLE_OPENGL)
+        set_tests_properties(viewer.offscreen PROPERTIES LABELS desktop)
+    endif()
+endif()
 
 if(Easy3D_BUILD_RENDERER_TESTS)
     if(Easy3D_ENABLE_OPENGL OR Easy3D_ENABLE_VULKAN_VIEWER)
@@ -85,39 +95,6 @@ if(Easy3D_ENABLE_VULKAN AND Easy3D_BUILD_VULKAN_TESTS)
         set_tests_properties(viewer.factorymissingdriver PROPERTIES
             ENVIRONMENT "VK_DRIVER_FILES=${CMAKE_CURRENT_BINARY_DIR}/missing-vulkan-icd.json;VK_ICD_FILENAMES=${CMAKE_CURRENT_BINARY_DIR}/missing-vulkan-icd.json")
     endif()
-    add_executable(easy3d_offscreen_backend_test tests/offscreen_backend_test.cpp)
-    target_link_libraries(easy3d_offscreen_backend_test PRIVATE easy3d::viewer)
-    add_test(NAME viewer.offscreen COMMAND easy3d_offscreen_backend_test)
-    if(Easy3D_ENABLE_OPENGL)
-        set_tests_properties(viewer.offscreen PROPERTIES TIMEOUT 120 LABELS desktop)
-        add_test(NAME viewer.offscreenfallback COMMAND easy3d_offscreen_backend_test --fallback)
-        set_tests_properties(viewer.offscreenfallback PROPERTIES TIMEOUT 120 LABELS desktop
-            ENVIRONMENT "VK_DRIVER_FILES=${CMAKE_CURRENT_BINARY_DIR}/missing-vulkan-icd.json;VK_ICD_FILENAMES=${CMAKE_CURRENT_BINARY_DIR}/missing-vulkan-icd.json")
-    else()
-        set_tests_properties(viewer.offscreen PROPERTIES TIMEOUT 120)
-        add_test(NAME viewer.offscreenunavailable COMMAND easy3d_offscreen_backend_test --unavailable)
-        set_tests_properties(viewer.offscreenunavailable PROPERTIES TIMEOUT 120
-            ENVIRONMENT "VK_DRIVER_FILES=${CMAKE_CURRENT_BINARY_DIR}/missing-vulkan-icd.json;VK_ICD_FILENAMES=${CMAKE_CURRENT_BINARY_DIR}/missing-vulkan-icd.json")
-    endif()
-
-    if(Easy3D_ENABLE_OPENGL)
-        set(loader_failure_mode --fallback)
-        set(loader_failure_labels desktop)
-    else()
-        set(loader_failure_mode --unavailable)
-        set(loader_failure_labels "")
-    endif()
-    add_test(NAME viewer.offscreenmissingloader COMMAND easy3d_offscreen_backend_test
-        ${loader_failure_mode} "Vulkan loader unavailable:")
-    set_tests_properties(viewer.offscreenmissingloader PROPERTIES TIMEOUT 120
-        LABELS "${loader_failure_labels}"
-        ENVIRONMENT "EASY3D_VULKAN_LOADER=${CMAKE_CURRENT_BINARY_DIR}/missing-vulkan-loader")
-    add_test(NAME viewer.offscreenbadloader COMMAND easy3d_offscreen_backend_test
-        ${loader_failure_mode} "does not export vkGetInstanceProcAddr")
-    set_tests_properties(viewer.offscreenbadloader PROPERTIES TIMEOUT 120
-        LABELS "${loader_failure_labels}"
-        ENVIRONMENT "EASY3D_VULKAN_LOADER=$<TARGET_FILE:easy3d_invalid_vulkan_loader>")
-
     add_executable(easy3d_vulkan_scene_test tests/scene_test.cpp)
     target_link_libraries(easy3d_vulkan_scene_test PRIVATE easy3d::viewer)
     set(validation_args)

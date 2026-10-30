@@ -73,6 +73,7 @@ void scene_picking(const graphics::DeviceOptions& options) {
     VulkanOffScreen viewer(161,121,options);
     viewer.camera()->setType(Camera::ORTHOGRAPHIC);
     viewer.camera()->setViewDirection(vec3(0,0,-1)); viewer.camera()->setUpVector(vec3(0,1,0));
+    viewer.camera()->showEntireScene(); // Position the eye along the explicitly chosen viewing direction.
     auto back=quad(-.5f),front=quad(0);
     viewer.add_model(back); viewer.add_model(front);
     const int x=viewer.width()/2,y=viewer.height()/2;

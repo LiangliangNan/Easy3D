@@ -11,14 +11,7 @@
 #include <easy3d/viewer/vulkan_viewer.h>
 namespace easy3d { using Viewer = VulkanViewer; }
 #endif
-#ifdef EASY3D_HAS_VULKAN_MULTIVIEWER
-#include <easy3d/viewer/vulkan_multiviewer.h>
-namespace easy3d { using MultiViewer = VulkanMultiViewer; }
-#endif
-#ifdef EASY3D_HAS_VULKAN_OFFSCREEN
-#include <easy3d/viewer/vulkan_multiviewer.h>
 namespace easy3d { using OffScreen = VulkanOffScreen; }
-#endif
 #else
 #define EASY3D_TUTORIAL_USES_VULKAN 0
 #include <easy3d/viewer/opengl_viewer.h>

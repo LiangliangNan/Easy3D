@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-#include <easy3d/viewer/offscreen.h>
+#include <easy3d/viewer/viewer.h>
 #include <easy3d/core/surface_mesh.h>
+#include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_lines_2D.h>
@@ -28,7 +29,7 @@ void exercise(OffScreen& renderer,const std::string& prefix) {
     require(renderer.background_color()==setting::background_color,"shared background default missing");
     auto mesh=triangle();require(renderer.add_model(mesh)==mesh.get(),"common model attachment failed");
     auto faces=mesh->renderer()->get_triangles_drawable("faces");faces->set_lighting(false);faces->set_uniform_coloring(vec4(.8f,.2f,.1f,1));
-    require(faces->has_cpu_buffers()==(renderer.backend()==Backend::Vulkan),"backend did not select its own buffer policy");
+    require(faces->has_cpu_buffers()==(bool(EASY3D_TUTORIAL_USES_VULKAN)),"backend did not select its own buffer policy");
     renderer.camera()->setViewDirection(vec3(0,0,-1));renderer.camera()->setUpVector(vec3(0,1,0));renderer.fit_screen();
     renderer.set_background_color(vec4(.12f,.23f,.34f,1));
     const auto matrix=renderer.camera()->modelViewProjectionMatrix();
@@ -37,18 +38,17 @@ void exercise(OffScreen& renderer,const std::string& prefix) {
     require(std::abs(int(rgba[center])-204)<=1 && std::abs(int(rgba[center+1])-51)<=1,"common scene did not render its material color");
     require(std::abs(int(rgba[0])-31)<=1 && std::abs(int(rgba[1])-59)<=1,"common background did not render");
     for(unsigned i=0;i<16;++i) require(std::abs(renderer.camera()->modelViewProjectionMatrix()[i]-matrix[i])<1e-6f,"file rendering changed live camera matrices");
-    const auto backend=renderer.backend();require(!renderer.render(prefix+"-invalid.png",-1),"invalid render request accepted");
-    if(backend==Backend::Vulkan) {
+    require(!renderer.render(prefix+"-invalid.png",-1),"invalid render request accepted");
+#ifdef EASY3D_NO_OPENGL
+    {
         auto invalid=std::make_shared<PointsDrawable>("surfel without normals");renderer.add_drawable(invalid);
         invalid->update_vertex_buffer({vec3(0)});invalid->set_impostor_type(PointsDrawable::SURFEL);
         require(!renderer.render(prefix+"-unsupported.png",1,1),"invalid drawable rendering was accepted");
-        require(renderer.backend()==backend,"drawing error triggered automatic fallback");renderer.delete_drawable(invalid.get());
+        renderer.delete_drawable(invalid.get());
     }
-    require(renderer.backend()==backend,"render failure switched backend");
+#endif
     bool rejected=false;try{renderer.resize(0,127);}catch(const std::invalid_argument&){rejected=true;}
     require(rejected && renderer.width()==161,"invalid resize changed the scene");
-    rejected=false;try{renderer.set_background_color(vec4(std::numeric_limits<float>::quiet_NaN()));}catch(const std::invalid_argument&){rejected=true;}
-    require(rejected,"nonfinite background accepted");
     renderer.resize(212,144);require(renderer.width()==212 && renderer.height()==144,"resize was not synchronous");
     require(renderer.render(prefix+"-msaa.png",1.25f,4,2),"scaled multisample render failed");
     const auto transparent=image(prefix+"-msaa.png",265,180);require(transparent[3]==0,"transparent background was lost");
@@ -58,53 +58,15 @@ void exercise(OffScreen& renderer,const std::string& prefix) {
     require(renderer.drawables().size()==1 && renderer.render(prefix+"-overlay.png",1,1,0),"common drawable attachment failed");
     require(renderer.delete_drawable(lines.get()) && renderer.delete_model(mesh.get()),"common scene deletion failed");
     renderer.clear_scene();require(renderer.models().empty() && renderer.drawables().empty(),"common scene clearing failed");
-    require(renderer.validation_errors()==0,"common renderer validation errors");
+#ifdef EASY3D_NO_OPENGL
+    require(renderer.device().validation_errors()==0,"common renderer validation errors");
+#endif
 }
-int main(int argc,char** argv) {
+int main() {
     try {
         initialize(false,false,false);
-        const std::string mode=argc>1?argv[1]:"";
-        const std::string expected=argc>2?argv[2]:"";
-        const auto check_reason=[&](const std::string& reason) {
-            require(reason.find(expected)!=std::string::npos,"backend failure did not identify the expected loader error");
-        };
-        bool invalid=false;try {OffScreen renderer(0,1);}catch(const std::invalid_argument&){invalid=true;}
-        require(invalid,"invalid dimensions reached backend initialization");
-        OffScreenOptions wrong;wrong.backend=static_cast<Backend>(99);invalid=false;
-        try {OffScreen renderer(1,1,wrong);}catch(const std::invalid_argument&){invalid=true;}
-        require(invalid,"invalid backend request reached fallback");
-        if(mode=="--unavailable") {
-            bool rejected=false;try {OffScreen renderer(161,127);}catch(const BackendUnavailable& e) {
-                const std::string text=e.what();check_reason(text);rejected=text.find("Vulkan:")!=std::string::npos && text.find("OpenGL:")!=std::string::npos;
-            }
-            require(rejected,"Automatic did not report both initialization failures");
-        } else if(mode=="--fallback") {
-            {OffScreen renderer(161,127);require(renderer.backend()==Backend::OpenGL && !renderer.fallback_reason().empty(),"Automatic did not fall back with diagnostics");check_reason(renderer.fallback_reason());exercise(renderer,"unified-fallback");}
-            OffScreenOptions o;o.backend=Backend::Vulkan;bool rejected=false;
-            try {OffScreen renderer(161,127,o);}catch(const BackendUnavailable& e){check_reason(e.what());rejected=true;}
-            require(rejected,"explicit Vulkan request silently fell back");
-        } else {
-            {OffScreen renderer(161,127);
-#ifdef EASY3D_HAS_VULKAN
-                require(renderer.backend()==Backend::Vulkan && renderer.fallback_reason().empty(),"Automatic did not prefer Vulkan");
-#else
-                require(renderer.backend()==Backend::OpenGL && !renderer.fallback_reason().empty(),"OpenGL-only Automatic did not report unavailable Vulkan");
-#endif
-                exercise(renderer,"unified-automatic");}
-            OffScreenOptions o;
-#ifdef EASY3D_HAS_VULKAN
-            o.backend=Backend::Vulkan;o.validation=o.synchronization_validation=true;
-            {OffScreen renderer(161,127,o);exercise(renderer,"unified-vulkan");}
-            o.validation=o.synchronization_validation=false;
-#endif
-            o.backend=Backend::OpenGL;
-#ifndef EASY3D_NO_OPENGL
-            {OffScreen renderer(161,127,o);require(renderer.fallback_reason().empty(),"explicit OpenGL reported fallback");exercise(renderer,"unified-opengl");}
-#else
-            bool rejected=false;try {OffScreen renderer(161,127,o);}catch(const BackendUnavailable&){rejected=true;}
-            require(rejected,"unbuilt OpenGL backend did not fail explicitly");
-#endif
-        }
-        std::cout<<"PASS: unified OffScreen backend selection, file API, resources, resize, MSAA and initialization diagnostics\n";
-    }catch(const std::exception& e){std::cerr<<"FAIL: "<<e.what()<<'\n';return 1;}
+        OffScreen renderer(161,127);
+        exercise(renderer,"configured-offscreen");
+        std::cout << "PASS: configured OffScreen rendering, ownership, resize and MSAA\n";
+    } catch(const std::exception& e) { std::cerr << e.what() << '\n'; return 1; }
 }

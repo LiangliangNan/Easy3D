@@ -27,7 +27,7 @@
 #ifndef EASY3D_APP_FIGURE_MAKER_H
 #define EASY3D_APP_FIGURE_MAKER_H
 
-#include <easy3d/viewer/multi_viewer.h>
+#include <easy3d/viewer/viewer.h>
 
 
 namespace easy3d {

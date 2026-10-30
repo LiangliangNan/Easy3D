@@ -25,7 +25,7 @@
  ********************************************************************/
 
 
-#include <easy3d/viewer/multi_viewer.h>
+#include <easy3d/viewer/viewer.h>
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_points.h>

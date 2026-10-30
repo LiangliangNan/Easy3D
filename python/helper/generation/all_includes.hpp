@@ -138,6 +138,5 @@
 //#include <easy3d/util/tokenizer.h>
 //#include <easy3d/util/version.h>
 //#include <easy3d/video/video_encoder.h>
-//#include <easy3d/viewer/multi_viewer.h>
-//#include <easy3d/viewer/offscreen.h>
+//#include <easy3d/viewer/viewer.h>
 //#include <easy3d/viewer/viewer.h>

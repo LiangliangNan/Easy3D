@@ -38,7 +38,7 @@ namespace easy3d {
 
     /**
      * \brief A viewer that supports multiple views (arranged in a grid layout).
-     * \class OpenGLMultiViewer easy3d/viewer/multi_viewer.h
+     * \class OpenGLMultiViewer easy3d/viewer/opengl_multi_viewer.h
      */
     class OpenGLMultiViewer : public OpenGLViewer {
     public:

@@ -7,10 +7,10 @@ rendering and most existing interactive tutorials still use OpenGL. They are ret
 
 ## Final migration goal and backend policy
 
-**Plan confirmed; step 1 implemented (2026-10-30).** Backend configuration and
+**Plan confirmed; step 1 implemented; offscreen facade removed (2026-10-30).** Backend configuration and
 explicit counterparts have begun migrating as recorded below. Constructor/hook
 alignment, VulkanMultiViewer, final aliases and runtime-facade removal remain
-separate steps; the existing factories are transitional until step 4.
+separate steps; the remaining interactive viewer factories are transitional until step 4.
 
 The completed migration must support **all tutorials on Vulkan** and targets
 **all applications on Vulkan**, including Mapple, FigureMaker and toolkit-based
@@ -201,9 +201,9 @@ input, HiDPI, MSAA and resource-lifetime regressions pass.
   resized/HiDPI windows, divider boundaries, active-cell mouse coordinates and
   source IDs/world-point reconstruction. Snapshots include the composed grid.
 - Complete `viewer.h` with all three aliases exactly as described above. Replace
-  the duplicate tutorial selector with this public selector. Retain existing
-  `multi_viewer.h`/`offscreen.h` include compatibility only as thin aliases if
-  required; an offscreen-only include must still work without a window backend.
+  the duplicate tutorial selector with this public selector. Remove `multi_viewer.h`
+  and `offscreen.h/.cpp`; callers include `viewer.h`, which also exposes the
+  offscreen alias without a window backend. Do not retain compatibility wrappers.
   Avoid include cycles: concrete headers include concrete bases, not `viewer.h`.
 
 **Gate:** each explicit multi-view class renders assigned scenes correctly in its
@@ -212,6 +212,10 @@ client compiles in both configurations; headless Vulkan offscreen clients need
 no GLFW/OpenGL. Alias selection follows the exported CMake configuration.
 
 ### 4. Remove runtime selection and its supporting scaffolding
+
+Offscreen facade/adapters and runtime options are now removed; interactive viewer
+factories and ViewerBase cleanup remain. This part was advanced at the user’s
+request rather than retaining the obsolete public files until step 3.
 
 - Replace `Viewer::create`, backend-preference options, `Automatic` selection,
   `fallback_reason`, and the runtime-selected OffScreen wrapper with direct
@@ -3365,3 +3369,41 @@ first run; `vulkan.crosssection` reported `guide/MSAA changed picking depth` and
 passed when rerun alone. This intermittent failure remains to be investigated;
 the suite is not claimed consistently green. The installed headless consumer
 also rebuilt with SDK discovery disabled and the common selector include.
+
+## Direct offscreen aliases and obsolete-header removal (2026-10-30)
+
+Removed `easy3d/viewer/offscreen.h/.cpp` and `multi_viewer.h`. Consumers now include
+`viewer.h`, with `OffScreen` selecting the concrete configured implementation and
+`MultiViewer` selecting OpenGLMultiViewer in OpenGL builds. VulkanMultiViewer is
+still pending; there is no macro exposing an unimplemented class/header. OffScreen
+is available in Vulkan builds with the window host disabled.
+
+Removed the private offscreen interface, both adapter factories, runtime preference
+options and fallback behavior. Python OffScreen construction now takes width and
+height directly. Its obsolete backend-selection/fallback bindings are removed;
+the Backend enum remains needed by the transitional interactive viewer bindings.
+The old mixed-backend lifecycle test was removed because combined builds are no
+longer supported; separate backend lifetime tests remain.
+
+VulkanOffScreen now owns the same initial camera setup formerly supplied by the
+facade and used by OpenGLOffScreen. The picking fixture explicitly positions its
+eye after choosing a different orthographic viewing direction, instead of relying
+on the previous native default camera position. The common offscreen regression
+now runs in both builds and checks material/background output, file dimensions,
+resize, ownership, MSAA and transparency. Remaining step 2 constructor/subclass
+alignment and step 3 VulkanMultiViewer are not claimed complete.
+
+Validation for this step:
+- OpenGL-only and Vulkan-only windowed/headless builds passed; FigureMaker and the
+  configured Vulkan tutorials built. OpenGL regressions passed 9/9, including the
+  new direct OffScreen test.
+- Headless MoltenVK passed 12/13 initially; after fixing the explicit picking
+  camera setup, the remaining picking test passed in isolation.
+- Windowed MoltenVK passed 71/72; `vulkan.pickerviewer` reported a right-click
+  selection-state mismatch, then passed in isolation. This intermittent desktop
+  test failure remains unresolved; it is not counted as a clean full-suite run.
+- Both OpenGL and Vulkan offscreen Python binding translation units passed C++11
+  compilation checks. A full Python extension build/runtime was not performed.
+- The installed headless consumer rebuilt without SDK discovery and rendered
+  successfully using `OffScreen` through `viewer.h`; the OpenGL package consumer
+  also rebuilt. The install manifest no longer lists the removed public headers.
