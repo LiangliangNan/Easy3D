@@ -70,8 +70,6 @@
 #include <easy3d/util/resource.h>
 #include <easy3d/util/setting.h>
 
-
-#include <easy3d/viewer/backends/viewer.h>
 #include <easy3d/renderer/framebuffer_object.h>
 #include <easy3d/core/model.h>
 #include <stdexcept>

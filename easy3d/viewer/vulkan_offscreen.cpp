@@ -112,7 +112,11 @@ VulkanOffScreen::VulkanOffScreen(int width, int height, std::unique_ptr<graphics
     if (!device) throw std::invalid_argument("scene requires a graphics device");
     resize(width, height);
     impl_->device = std::move(device);
+
+    VLOG(1) << "Renderer backend: Vulkan";
+    VLOG(1) << "Vulkan device: " << impl_->device->name();
 }
+
 bool VulkanOffScreen::present(unsigned samples) {
     return impl_->device->present(uint32_t(width()), uint32_t(height()), impl_->commands(*camera()), background_color(), samples);
 }

@@ -224,6 +224,7 @@ VulkanViewer::VulkanViewer(std::shared_ptr<Window> host, const graphics::DeviceO
         window_->callbacks(this);
         int w, h; framebuffer_size(w, h);
         if (w > 0 && h > 0) VulkanOffScreen::resize(w, h);
+        VLOG(1) << "Samples: " << window_->samples;
     } catch (...) {
         // A failed derived constructor destroys members before base classes.
         // Release the Vulkan surface before member-owned native-window cleanup.

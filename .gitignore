@@ -20,3 +20,6 @@ Release
 python/docs/source/tutorials/
 python/docs/source/sg_execution_times.rst
 /build-opengl-alignment
+/build-migration
+/build-opengl
+/build-ci-vulkan
