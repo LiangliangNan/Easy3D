@@ -60,7 +60,6 @@ The target selector is:
 ```cpp
 // easy3d/viewer/viewer.h
 #if defined(EASY3D_NO_OPENGL)
-#define EASY3D_TUTORIAL_USES_VULKAN 1
 #include <easy3d/viewer/vulkan_offscreen.h>
 namespace easy3d { using OffScreen = VulkanOffScreen; }
 #ifdef EASY3D_HAS_VULKAN_VIEWER
@@ -72,7 +71,6 @@ namespace easy3d {
 }
 #endif
 #else
-#define EASY3D_TUTORIAL_USES_VULKAN 0
 #include <easy3d/viewer/opengl_viewer.h>
 #include <easy3d/viewer/opengl_multi_viewer.h>
 #include <easy3d/viewer/opengl_offscreen.h>
@@ -108,8 +106,14 @@ forward declarations so friendship does not introduce a window dependency.
 CMake supplies and exports the selected
 backend's compile definitions to consumers, including `EASY3D_NO_OPENGL` for
 Vulkan. The header must not allow `EASY3D_TUTORIAL_VULKAN` or a per-application
-macro to override the configured backend. Retain `EASY3D_TUTORIAL_USES_VULKAN`
-only as a derived compatibility indicator while tutorial conditionals are reduced.
+macro to override the configured backend.
+
+Remove `EASY3D_TUTORIAL_USES_VULKAN` from all tutorials, including shared tutorial
+headers and helpers, and remove its definition from the final public selector.
+Tutorials must use the same public APIs for both configured backends. Implement
+backend differences inside the backend classes; do not replace this macro with
+another tutorial backend switch. Align missing counterpart APIs before removing
+each conditional, preserving the original tutorial behavior.
 All targets in one build use the same selected backend; aliases cannot name or
 instantiate the other family. There is no runtime preference or fallback.
 
@@ -241,16 +245,23 @@ selected concrete family, and clients need no Vulkan SDK headers for common use.
 
 - Change tutorial bases to `easy3d::Viewer`/`MultiViewer`, using the public selector;
   remove `Viewer` aliases and repeated backend-selection includes.
-- Reuse original constructors and algorithms once counterpart APIs match. Limit
-  remaining backend conditionals to operations requiring actual GPU differences;
-  do not turn tutorial-specific scanning or selection conveniences into new
-  general viewer APIs.
+- Remove every use of `EASY3D_TUTORIAL_USES_VULKAN` from tutorial sources,
+  headers and shared helpers, then remove its public definition. Align constructor,
+  subclass-hook and rendering APIs in the counterpart classes so tutorials use
+  one implementation. Do not substitute another backend-selection macro in
+  tutorials; backend-specific GPU operations belong in the backend implementations.
+- Reuse original constructors and algorithms once counterpart APIs match. Preserve
+  tutorial behavior while removing conditionals; do not turn tutorial-specific
+  scanning or selection conveniences into new general viewer APIs.
 - Recheck every tutorial in both backend configurations. Cover two-sided cloud
   lighting/materials, the flat-shaded Tutorial 304 sphere, transparent clipping
   guide, point/line size controls, default logo, manuals and screen hints.
 
 **Gate:** original-style tutorial headers are shared; every supported tutorial
-builds/runs on Vulkan and OpenGL, with remaining gaps listed individually.
+builds/runs on Vulkan and OpenGL, with remaining gaps listed individually. A source
+search across all tutorials and their shared helpers finds no
+`EASY3D_TUTORIAL_USES_VULKAN` uses or replacement backend-selection switches;
+both backend builds compile the same tutorial API calls.
 
 ### 6. Complete renderer, interaction and GUI/application parity
 
