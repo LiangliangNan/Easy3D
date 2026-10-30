@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-#include <easy3d/viewer/viewer_base.h>
+#include <easy3d/viewer/viewer.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_triangles.h>
@@ -39,10 +39,13 @@ struct Events {
         require(cursor && button && scroll && key && character && drop && focus,"host callbacks missing");
     }
 };
-std::unique_ptr<ViewerBase> host(Backend backend, bool validation) {
-    ViewerOptions o; o.backend=backend; o.width=181; o.height=151; o.visible=false;
-    o.validation=o.synchronization_validation=validation;
-    auto v=ViewerBase::create("Portable callbacks",o); v->set_usage("");
+std::shared_ptr<VulkanViewer> host(Backend backend, bool validation) {
+    VulkanViewerOptions o;
+    o.width=181; o.height=151; o.visible=false;
+    o.device.validation = validation;
+    o.device.synchronization_validation = validation;
+    auto v = std::make_shared<VulkanViewer>("Portable callbacks",o);
+    v->set_usage("");
     v->camera()->setViewDirection(vec3(0,0,-1)); v->camera()->setUpVector(vec3(0,1,0));
     return v;
 }

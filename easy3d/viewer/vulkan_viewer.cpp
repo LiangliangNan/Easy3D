@@ -38,8 +38,6 @@
 #include <exception>
 #include <stdexcept>
 
-#include <easy3d/viewer/backends/viewer.h>
-
 namespace easy3d {
 namespace {
 const char* const default_manual =

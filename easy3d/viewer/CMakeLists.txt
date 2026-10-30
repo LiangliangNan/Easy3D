@@ -60,25 +60,6 @@ if(Easy3D_BUILD_RENDERER_TESTS)
 endif()
 
 if(Easy3D_ENABLE_VULKAN AND Easy3D_BUILD_VULKAN_TESTS)
-    add_executable(easy3d_viewer_backend_test tests/viewer_backend_test.cpp)
-    target_link_libraries(easy3d_viewer_backend_test PRIVATE easy3d::viewer)
-    add_test(NAME viewer.factory COMMAND easy3d_viewer_backend_test $<$<BOOL:${Easy3D_VULKAN_TEST_VALIDATION}>:--validation>)
-    set(factory_labels desktop)
-    set_tests_properties(viewer.factory PROPERTIES TIMEOUT 120 LABELS "${factory_labels}")
-    if(Easy3D_ENABLE_VULKAN)
-        set(factory_failure_mode --unavailable)
-        add_test(NAME viewer.factorymissingloader COMMAND easy3d_viewer_backend_test ${factory_failure_mode} "Vulkan loader unavailable:")
-        add_test(NAME viewer.factorybadloader COMMAND easy3d_viewer_backend_test ${factory_failure_mode} "does not export vkGetInstanceProcAddr")
-        add_test(NAME viewer.factorymissingdriver COMMAND easy3d_viewer_backend_test ${factory_failure_mode})
-        set_tests_properties(viewer.factorymissingloader viewer.factorybadloader viewer.factorymissingdriver
-            PROPERTIES TIMEOUT 120 LABELS "${factory_labels}")
-        set_tests_properties(viewer.factorymissingloader PROPERTIES
-            ENVIRONMENT "EASY3D_VULKAN_LOADER=${CMAKE_CURRENT_BINARY_DIR}/missing-vulkan-loader")
-        set_tests_properties(viewer.factorybadloader PROPERTIES
-            ENVIRONMENT "EASY3D_VULKAN_LOADER=$<TARGET_FILE:easy3d_invalid_vulkan_loader>")
-        set_tests_properties(viewer.factorymissingdriver PROPERTIES
-            ENVIRONMENT "VK_DRIVER_FILES=${CMAKE_CURRENT_BINARY_DIR}/missing-vulkan-icd.json;VK_ICD_FILENAMES=${CMAKE_CURRENT_BINARY_DIR}/missing-vulkan-icd.json")
-    endif()
     add_executable(easy3d_vulkan_scene_test tests/scene_test.cpp)
     target_link_libraries(easy3d_vulkan_scene_test PRIVATE easy3d::viewer)
     set(validation_args)

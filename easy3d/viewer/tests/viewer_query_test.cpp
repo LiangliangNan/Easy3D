@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-#include <easy3d/viewer/viewer_base.h>
+#include <easy3d/viewer/viewer.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/drawable_triangles.h>
@@ -16,6 +16,8 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
+
+#include "easy3d/viewer/viewer.h"
 using namespace easy3d;
 namespace {
 void require(bool value, const char *message) {
@@ -24,14 +26,14 @@ void require(bool value, const char *message) {
 }
 bool near(const vec3 &a, const vec3 &b, float epsilon = 1e-4f) { return distance(a, b) < epsilon; }
 void check(Backend backend, unsigned samples, bool validation) {
-    ViewerOptions o;
-    o.backend = backend;
+    VulkanViewerOptions o;
     o.width = 181;
     o.height = 151;
     o.visible = false;
     o.samples = samples;
-    o.validation = o.synchronization_validation = validation;
-    auto v = ViewerBase::create("Portable camera queries", o);
+    o.device.validation = validation;
+    o.device.synchronization_validation = validation;
+    auto v = std::make_shared<VulkanViewer>("Portable camera queries", o);
     v->set_usage("");
     v->camera()->setViewDirection(vec3(0, 0, -1));
     v->camera()->setUpVector(vec3(0, 1, 0));

@@ -11,18 +11,11 @@ int main(int argc, char** argv) {
         easy3d::initialize();
         std::string model;
         unsigned frames = 0;
-        easy3d::ViewerOptions options;
+        easy3d::VulkanViewerOptions options;
         for (int i = 1; i < argc; ++i) {
             const std::string arg = argv[i];
-            if (arg == "--validation") { options.validation = true; options.synchronization_validation = true; }
-            else if (arg == "--backend") {
-                if (++i == argc) throw std::invalid_argument("--backend requires auto, vulkan or opengl");
-                const std::string backend = argv[i];
-                if (backend == "auto") options.backend = easy3d::Backend::Automatic;
-                else if (backend == "vulkan") options.backend = easy3d::Backend::Vulkan;
-                else if (backend == "opengl") options.backend = easy3d::Backend::OpenGL;
-                else throw std::invalid_argument("--backend requires auto, vulkan or opengl");
-            } else if (arg == "--frames" || arg == "--samples") {
+            if (arg == "--validation") { options.device.validation = true; options.device.synchronization_validation = true; }
+            else if (arg == "--frames" || arg == "--samples") {
                 const auto message = arg + " requires a positive integer";
                 if (++i == argc) throw std::invalid_argument(message);
                 std::string text = argv[i]; size_t used = 0;
@@ -38,7 +31,7 @@ int main(int argc, char** argv) {
             } else if (arg.compare(0, 2, "--") == 0) throw std::invalid_argument("unknown option: " + arg);
             else model = arg;
         }
-        auto viewer = easy3d::Viewer::create("Easy3D Viewer", options);
+        auto viewer = std::make_shared<easy3d::VulkanViewer>("Easy3D Viewer", options);
         if (model.empty()) {
             // The installed demo works without any source-tree data files.
             auto bunny = std::make_shared<easy3d::SurfaceMesh>();

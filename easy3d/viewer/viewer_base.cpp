@@ -2,7 +2,6 @@
 #include <easy3d/viewer/viewer_base.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/util/logging.h>
-#include <easy3d/viewer/backends/viewer.h>
 #include <easy3d/viewer/backends/glfw_runtime.h>
 #include <cmath>
 #include <algorithm>

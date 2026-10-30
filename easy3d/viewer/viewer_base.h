@@ -27,8 +27,6 @@ struct ViewerOptions {
 class ViewerBase : public ViewerInput {
 public:
     virtual ~ViewerBase();
-    static std::unique_ptr<ViewerBase> create(const std::string& title = "Easy3D Viewer",
-                                             const ViewerOptions& options = {});
     static void poll_events();
     // Replace/clear from the UI thread, including from a callback. The active
     // callable stays alive until it returns; mutable callable state is retained.

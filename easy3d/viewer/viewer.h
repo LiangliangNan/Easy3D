@@ -8,8 +8,10 @@
 #define EASY3D_TUTORIAL_USES_VULKAN 1
 #include <easy3d/viewer/vulkan_offscreen.h>
 #include <easy3d/viewer/vulkan_viewer.h>
+// #include <easy3d/viewer/vulkan_multi_viewer.h>  // to be implemented...
 namespace easy3d { using Viewer = VulkanViewer; }
 namespace easy3d { using OffScreen = VulkanOffScreen; }
+// namespace easy3d { using MultiViewer = VulkanMultiViewer; }  // to be implemented...
 #else
 #define EASY3D_TUTORIAL_USES_VULKAN 0
 #include <easy3d/viewer/opengl_viewer.h>
