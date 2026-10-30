@@ -25,7 +25,6 @@
  ********************************************************************/
 
 #include <easy3d/viewer/viewer.h>
-#include "../native_viewer_options.h"
 #include <easy3d/renderer/camera.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/drawable_points.h>
@@ -99,13 +98,8 @@ std::shared_ptr<SurfaceMesh> create_partition_mesh() {
 #ifndef EASY3D_TUTORIAL_TEST
 int main(int argc, char** argv) {
     initialize();
-#ifdef EASY3D_NO_OPENGL
-    NativeTutorialOptions options;
-    if (!options.parse(argc,argv)) return EXIT_FAILURE;
-    Viewer viewer(EXAMPLE_TITLE,options.viewer);
-#else
     Viewer viewer(EXAMPLE_TITLE);
-#endif
+
     viewer.camera()->setUpVector(vec3(0,1,0));
     viewer.camera()->setViewDirection(vec3(0,0,-1));
     auto mesh = create_partition_mesh();
@@ -122,10 +116,6 @@ int main(int argc, char** argv) {
     // also show the borders
     mesh->renderer()->get_lines_drawable("borders")->set_visible(true);
 
-#ifdef EASY3D_NO_OPENGL
-    return options.run(viewer);
-#else
     return viewer.run();
-#endif
 }
 #endif // EASY3D_TUTORIAL_TEST

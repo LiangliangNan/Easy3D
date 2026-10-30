@@ -25,7 +25,6 @@
  ********************************************************************/
 
 #include "viewer.h"
-#include "../native_viewer_options.h"
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/renderer.h>
@@ -52,13 +51,8 @@ int main(int argc, char **argv) {
     // initialize Easy3D.
     initialize();
 
-#ifdef EASY3D_NO_OPENGL
-    NativeTutorialOptions options;
-    if (!options.parse(argc,argv)) return EXIT_FAILURE;
-    TutorialDepthMap viewer(EXAMPLE_TITLE,options.viewer);
-#else
     TutorialDepthMap viewer(EXAMPLE_TITLE);
-#endif
+
 
     // the point cloud file.
     const std::string file_name = resource::directory() + "/data/fountain/pointcloud.ply";
@@ -72,10 +66,6 @@ int main(int argc, char **argv) {
     drawable->set_point_size(5);
 
     // run the viewer
-#ifdef EASY3D_NO_OPENGL
-    return options.run(viewer);
-#else
     return viewer.run();
-#endif
 }
 

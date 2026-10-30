@@ -25,7 +25,6 @@
  ********************************************************************/
 
 #include <easy3d/viewer/viewer.h>
-#include "../native_viewer_options.h"
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/drawable_points.h>
@@ -93,13 +92,7 @@ int main(int argc, char **argv) {
     const std::string file = resource::directory() + "/data/bunny.bin";
 
     // create the viewer.
-#ifdef EASY3D_NO_OPENGL
-    NativeTutorialOptions options;
-    if (!options.parse(argc, argv)) return EXIT_FAILURE;
-    Viewer viewer(EXAMPLE_TITLE, options.viewer);
-#else
     Viewer viewer(EXAMPLE_TITLE);
-#endif
 
     auto model = viewer.add_model(file, true);
     if (!model) {
@@ -125,11 +118,7 @@ int main(int argc, char **argv) {
         "Ctrl + r: reorient normals");
 
     // run the viewer
-#ifdef EASY3D_NO_OPENGL
-    viewer.fit_screen(); // Native bounded runs preserve the explicitly configured camera.
-    return options.run(viewer);
-#else
+    viewer.fit_screen();
     return viewer.run();
-#endif
 }
 #endif // EASY3D_TUTORIAL_TEST

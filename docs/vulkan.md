@@ -778,7 +778,7 @@ Vulkan-only window builds now produce `Tutorial_302_Imposters`, alongside Tutori
 its shared scene construction code for both backends. Its native build supports:
 
 ```sh
-./cmake-build-debug/bin/Tutorial_302_Imposters --frames 3 --samples 4 --validation
+./cmake-build-debug/bin/Tutorial_302_Imposters_test --frames 3 --samples 4 --validation
 ```
 
 Without `--frames`, it remains interactive. The desktop CTest
@@ -835,11 +835,14 @@ The Vulkan scene adapter honors `TrianglesDrawable::smooth_shading()`: flat
 snapshots assign geometric triangle normals to all three corners, preserving
 vertex colors, primitive order and picking. Switching shading invalidates the
 cached snapshot without requiring a model update.
-It shares bounded execution/validation options with Tutorial 302 through
-`tutorials/native_viewer_options.h`; their OpenGL scene paths are retained.
+Bounded execution and validation belong to the test suite in
+`tests/native_tutorials/`. CMake builds separate `Tutorial_*_test` executables
+from the tutorial scenes, adding test options only to copies in the build tree.
+The user-facing tutorials run interactively with `viewer.run()` and have no test
+option parser; their OpenGL scene paths are retained.
 
 ```sh
-./cmake-build-debug/bin/Tutorial_304_VectorField --frames 3 --samples 4 --validation
+./cmake-build-debug/bin/Tutorial_304_VectorField_test --frames 3 --samples 4 --validation
 ```
 
 Without `--frames` it runs interactively. Desktop CTest `vulkan.tutorial304` runs
@@ -920,8 +923,8 @@ Native-only window builds now include `Tutorial_303_ScalarField` and
 native execution options:
 
 ```sh
-./cmake-build-debug/bin/Tutorial_303_ScalarField --frames 3 --samples 4 --validation
-./cmake-build-debug/bin/Tutorial_305_Texture --frames 3 --samples 4 --validation
+./cmake-build-debug/bin/Tutorial_303_ScalarField_test --frames 3 --samples 4 --validation
+./cmake-build-debug/bin/Tutorial_305_Texture_test --frames 3 --samples 4 --validation
 ```
 
 Desktop CTests `vulkan.tutorial303` and `vulkan.tutorial305` honor
@@ -978,7 +981,7 @@ host's HiDPI conversion. The existing OpenGL tutorial host remains available in
 OpenGL builds.
 
 ```sh
-./cmake-build-debug/bin/Tutorial_306_ImageViewer --frames 3 --samples 4 --validation
+./cmake-build-debug/bin/Tutorial_306_ImageViewer_test --frames 3 --samples 4 --validation
 ```
 
 The desktop smoke test `vulkan.tutorial306` honors
@@ -1061,7 +1064,7 @@ Text shares the color-only overlay pass, retaining MSAA and leaving scene depth,
 IDs and world-point picking untouched. The OpenGL tutorial host is retained.
 
 ```sh
-./cmake-build-debug/bin/Tutorial_309_TextRendering --frames 3 --samples 4 --validation
+./cmake-build-debug/bin/Tutorial_309_TextRendering_test --frames 3 --samples 4 --validation
 ./cmake-build-debug/bin/easy3d_vulkan_text_test --cpu-only
 ```
 
@@ -1145,9 +1148,9 @@ change text triangulation algorithms. The retained OpenGL paths use the same
 scene construction.
 
 ```sh
-./cmake-build-debug/bin/Tutorial_301_Drawables --frames 3 --samples 4 --validation
-./cmake-build-debug/bin/Tutorial_308_TexturedMesh --frames 3 --samples 4 --validation
-./cmake-build-debug/bin/Tutorial_310_TextMesher --frames 3 --samples 4 --validation
+./cmake-build-debug/bin/Tutorial_301_Drawables_test --frames 3 --samples 4 --validation
+./cmake-build-debug/bin/Tutorial_308_TexturedMesh_test --frames 3 --samples 4 --validation
+./cmake-build-debug/bin/Tutorial_310_TextMesher_test --frames 3 --samples 4 --validation
 ```
 
 Headless `vulkan.objmaterials` checks grouped rendering, shared-position UV seams,
@@ -1244,8 +1247,8 @@ base host's navigation behavior. Mesh face picking remains available after
 resize and sample-count changes.
 
 ```sh
-./cmake-build-debug/bin/Tutorial_401_ModelPicker --frames 3 --samples 4 --validation
-./cmake-build-debug/bin/Tutorial_402_FacePicker --frames 3 --samples 4 --validation
+./cmake-build-debug/bin/Tutorial_401_ModelPicker_test --frames 3 --samples 4 --validation
+./cmake-build-debug/bin/Tutorial_402_FacePicker_test --frames 3 --samples 4 --validation
 ```
 
 Headless `vulkan.picking` checks RGB highlighting on all native styles with
@@ -1339,7 +1342,7 @@ including resize; its geometry is rebuilt after plane motion. The original
 OpenGL host remains available.
 
 ```sh
-./cmake-build-debug/bin/Tutorial_307_CrossSection --frames 3 --samples 4 --validation
+./cmake-build-debug/bin/Tutorial_307_CrossSection_test --frames 3 --samples 4 --validation
 ```
 
 This stage also corrects native depth-to-world reconstruction. The legacy
@@ -1465,7 +1468,7 @@ and viewer lifetime remain UI-thread operations. Tutorial 312, described below,
 uses this callback for safe worker-to-UI handoff; scene models are not thread-safe.
 
 ```sh
-./cmake-build-debug/bin/Tutorial_311_Animation --frames 50 --samples 4 --validation
+./cmake-build-debug/bin/Tutorial_311_Animation_test --frames 50 --samples 4 --validation
 ```
 
 The native `vulkan.animation` regression checks stateful callbacks, execution
@@ -1508,7 +1511,7 @@ including early window closure, finite frame budgets and exception unwinding.
 No detached callbacks retain pointers to destroyed scene/viewer objects.
 
 ```sh
-./cmake-build-debug/bin/Tutorial_312_MultiThread --frames 100 --samples 4 --validation
+./cmake-build-debug/bin/Tutorial_312_MultiThread_test --frames 100 --samples 4 --validation
 ```
 
 `vulkan.multithread` checks finite ordered delivery, immutable retained batches,
@@ -1577,7 +1580,7 @@ asynchronous selection or persistent GPU-only selection flags. Position resource
 are retained and shared with rendering, as described below.
 
 ```sh
-./cmake-build-debug/bin/Tutorial_403_PointSelection --frames 3 --samples 4 --validation
+./cmake-build-debug/bin/Tutorial_403_PointSelection_test --frames 3 --samples 4 --validation
 ```
 
 The headless `vulkan.pointselection` test covers 100,003 input points, concurrent
@@ -1710,7 +1713,7 @@ auto world_points = viewer.scan_visible_points(); // synchronous, one center hit
 ```
 
 ```sh
-./cmake-build-debug/bin/Tutorial_404_VirtualScanner --frames 3 --samples 4 --validation
+./cmake-build-debug/bin/Tutorial_404_VirtualScanner_test --frames 3 --samples 4 --validation
 ```
 
 `vulkan.scan` tests pixel-center reprojection, perspective/orthographic/custom
@@ -2408,8 +2411,8 @@ The native example loads the existing fountain cloud and camera data. Space
 cycles views, 1 uses the shared calibration conversion, 2 restores the recorded
 pose/FOV conversion, and H toggles camera guides. The original usage hint is
 retained. Camera/point rendering uses existing native drawable paths, including
-the cylinder ray. Native bounded execution accepts `--frames`, `--samples` and
-`--validation`, and Tutorial 207 joins the native tutorial smoke tests.
+the cylinder ray. The separate native smoke-test executable accepts `--frames`,
+`--samples` and `--validation`.
 
 The photo inset uses a cached top-row-first RGBA image with linear filtering,
 triangle overlay geometry and its red border. Only the current photo is retained
@@ -2458,8 +2461,8 @@ inset and red border through `renderer/backends/vulkan/shape::draw_depth_texture
 corresponding to the original OpenGL shape helper. The original 20/40 logical
 unit margins scale with each window's DPI. Camera controls, resizing, scene
 clearing and snapshots retain the preview. The native application uses the same
-fountain point cloud and accepts bounded `--frames`, `--samples` and `--validation`
-options.
+fountain point cloud. Its separate test executable accepts bounded `--frames`,
+`--samples` and `--validation` options.
 
 `graphics::DrawCommand::scene_depth_texture` requests a flat triangle overlay
 whose UVs sample current scene depth on the GPU. The grayscale shader maps raw
@@ -2541,8 +2544,8 @@ builders are shared by both backends and their regressions; no parallel native
 example implementations were introduced. The tessellation/partition scenes keep
 their holes, vertices, borders and sphere-style markers. The curve example keeps
 its six control/curve drawables and logical control-point coordinates under
-HiDPI. All three retain the default viewer manual and accept bounded native
-execution with `--frames`, `--samples` and `--validation`.
+HiDPI. All three retain the default viewer manual. Their separate test executables
+accept bounded native execution with `--frames`, `--samples` and `--validation`.
 
 `vulkan.screenlines` covers indexed geometry, camera/clipping independence,
 uniform color/alpha updates, visibility, one/four samples, invalid input, empty
@@ -2606,7 +2609,7 @@ reconstruction) and 703 (RANSAC plane extraction) now use the shared
 `Viewer` selector in their original `main.cpp` files. Their algorithms,
 rendering setup and bound shortcuts are shared between OpenGL and Vulkan.
 Vulkan-only builds include the three native executables and bounded CTests;
-`--frames`, `--samples` and `--validation` use the existing native options helper.
+`--frames`, `--samples` and `--validation` are provided by the test-only native options helper.
 The default F1 manual is retained alongside each tutorial's original screen hint.
 
 Normal estimation/reorientation uploads the changed normal buffer through the

@@ -31,12 +31,7 @@
 
 class TutorialVirtualScanner : public easy3d::Viewer {
 public:
-#if EASY3D_TUTORIAL_USES_VULKAN
-    explicit TutorialVirtualScanner(const std::string& title = "VirtualScanner",
-                                    const easy3d::VulkanViewerOptions& options = {});
-#else
     explicit TutorialVirtualScanner(const std::string& title = "VirtualScanner");
-#endif
 
 protected:
     bool key_press_event(int key, int modifiers) override;

@@ -25,7 +25,6 @@
  ********************************************************************/
 
 #include "viewer.h"
-#include "../native_viewer_options.h"
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/renderer.h>
@@ -53,13 +52,8 @@ int main(int argc, char **argv) {
     const std::string file = resource::directory() + "/data/polyhedron.bin";
 
     // create the viewer.
-#ifdef EASY3D_NO_OPENGL
-    NativeTutorialOptions options;
-    if (!options.parse(argc, argv)) return EXIT_FAILURE;
-    TutorialPointSelection viewer(EXAMPLE_TITLE, options.viewer);
-#else
     TutorialPointSelection viewer(EXAMPLE_TITLE);
-#endif
+
 
     auto model = viewer.add_model(file, true);
     if (!model) {
@@ -71,10 +65,6 @@ int main(int argc, char **argv) {
     dynamic_cast<PointsDrawable*>(drawable)->set_point_size(3.0f);
 
     // run the viewer
-#ifdef EASY3D_NO_OPENGL
-    return options.run(viewer);
-#else
     return viewer.run();
-#endif
 }
 

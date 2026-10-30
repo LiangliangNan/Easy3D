@@ -25,7 +25,6 @@
  ********************************************************************/
 
 #include <easy3d/viewer/viewer.h>
-#include "../native_viewer_options.h"
 #include <easy3d/core/curve.h>
 #include <easy3d/core/spline_curve_fitting.h>
 #include <easy3d/core/spline_curve_interpolation.h>
@@ -148,18 +147,9 @@ void create_curves_drawables(Viewer& viewer) {
 #ifndef EASY3D_TUTORIAL_TEST
 int main(int argc,char** argv) {
     initialize();
-#ifdef EASY3D_NO_OPENGL
-    NativeTutorialOptions options;
-    if (!options.parse(argc,argv)) return EXIT_FAILURE;
-    Viewer viewer(EXAMPLE_TITLE,options.viewer);
-#else
     Viewer viewer(EXAMPLE_TITLE);
-#endif
+
     create_curves_drawables(viewer);
-#ifdef EASY3D_NO_OPENGL
-    return options.run(viewer);
-#else
     return viewer.run();
-#endif
 }
 #endif // EASY3D_TUTORIAL_TEST

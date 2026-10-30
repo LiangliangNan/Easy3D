@@ -25,7 +25,6 @@
  ********************************************************************/
 
 #include <easy3d/viewer/viewer.h>
-#include "../native_viewer_options.h"
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/drawable_triangles.h>
@@ -66,14 +65,8 @@ int main(int argc, char **argv) {
 
     // Create the default Easy3D viewer.
     // Note: a viewer must be created before creating any drawables.
-#ifdef EASY3D_NO_OPENGL
-    NativeTutorialOptions options;
-    if (!options.parse(argc,argv)) return EXIT_FAILURE;
-    Viewer viewer(EXAMPLE_TITLE,options.viewer);
-#else
     Viewer viewer(EXAMPLE_TITLE);
     viewer.set_usage("");
-#endif
 
     //-------------------------------------------------------------
 
@@ -163,11 +156,7 @@ int main(int argc, char **argv) {
     viewer.fit_screen();
 
     // run the viewer
-#ifdef EASY3D_NO_OPENGL
-    return options.run(viewer);
-#else
     return viewer.run();
-#endif
 }
 
 #elif 0 //  use the built-in drawables of Easy3D, but we provide customized update functions
@@ -180,14 +169,8 @@ int main(int argc, char **argv) {
 
     // Create the default Easy3D viewer.
     // Note: a viewer must be created before creating any drawables.
-#ifdef EASY3D_NO_OPENGL
-    NativeTutorialOptions options;
-    if (!options.parse(argc,argv)) return EXIT_FAILURE;
-    Viewer viewer(EXAMPLE_TITLE,options.viewer);
-#else
     Viewer viewer(EXAMPLE_TITLE);
     viewer.set_usage("");
-#endif
 
     //-------------------------------------------------------------
 
@@ -281,11 +264,7 @@ int main(int argc, char **argv) {
     viewer.fit_screen();
 
     // run the viewer
-#ifdef EASY3D_NO_OPENGL
-    return options.run(viewer);
-#else
     return viewer.run();
-#endif
 }
 
 #else  // inherit customized drawables from Easy3D drawables, and we reimplement "void update_buffers_internal()"
@@ -368,14 +347,8 @@ int main(int argc, char **argv) {
 
     // Create the default Easy3D viewer.
     // Note: a viewer must be created before creating any drawables.
-#ifdef EASY3D_NO_OPENGL
-    NativeTutorialOptions options;
-    if (!options.parse(argc,argv)) return EXIT_FAILURE;
-    Viewer viewer(EXAMPLE_TITLE,options.viewer);
-#else
     Viewer viewer(EXAMPLE_TITLE);
     viewer.set_usage("");
-#endif
 
     //-------------------------------------------------------------
 
@@ -423,11 +396,7 @@ int main(int argc, char **argv) {
     viewer.fit_screen();
 
     // run the viewer
-#ifdef EASY3D_NO_OPENGL
-    return options.run(viewer);
-#else
     return viewer.run();
-#endif
 }
 
 #endif

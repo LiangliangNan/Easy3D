@@ -31,7 +31,6 @@
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/util/initializer.h>
 #include "point_worker.h"
-#include "../native_viewer_options.h"
 
 /**
  * \example{lineno} Tutorial_312_MultiThread/main.cpp
@@ -46,13 +45,7 @@ int main(int argc, char **argv) {
     initialize();
 
     // create the viewer
-#ifdef EASY3D_NO_OPENGL
-    NativeTutorialOptions options;
-    if (!options.parse(argc, argv)) return EXIT_FAILURE;
-    Viewer viewer(EXAMPLE_TITLE, options.viewer);
-#else
     Viewer viewer(EXAMPLE_TITLE);
-#endif
 
     // create a point cloud (with a per point color property) from a set of random points
     auto cloud = new PointCloud;
@@ -95,10 +88,6 @@ int main(int argc, char **argv) {
     viewer.set_animation(true); // F2 pauses/resumes consumption
 
     // worker's destructor interrupts its waits and joins before viewer teardown,
-    // including early window closure, finite --frames runs and exceptions.
-#ifdef EASY3D_NO_OPENGL
-    return options.run(viewer);
-#else
+    // including early window closure and exceptions.
     return viewer.run();
-#endif
 }

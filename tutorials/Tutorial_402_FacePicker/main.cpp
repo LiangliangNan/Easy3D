@@ -25,7 +25,6 @@
  ********************************************************************/
 
 #include "viewer.h"
-#include "../native_viewer_options.h"
 #include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
 
@@ -49,23 +48,14 @@ int main(int argc, char **argv) {
 
     const std::string file_name = resource::directory() + "/data/quad_mesh/P.off";
 
-#ifdef EASY3D_NO_OPENGL
-    NativeTutorialOptions options;
-    if (!options.parse(argc,argv)) return EXIT_FAILURE;
-    TutorialFacePicker viewer(EXAMPLE_TITLE,options.viewer);
-#else
     TutorialFacePicker viewer(EXAMPLE_TITLE);
-#endif
+
     if (!viewer.add_model(file_name)) {
         LOG(ERROR) << "failed to load model. Please make sure the file exists and format is correct.";
         return EXIT_FAILURE;
     }
 
     // run the viewer
-#ifdef EASY3D_NO_OPENGL
-    return options.run(viewer);
-#else
     return viewer.run();
-#endif
 }
 

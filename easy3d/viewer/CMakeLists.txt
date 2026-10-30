@@ -146,8 +146,11 @@ if(Easy3D_ENABLE_VULKAN AND Easy3D_BUILD_VULKAN_TESTS)
         add_test(NAME vulkan.animation COMMAND easy3d_vulkan_animation_test ${validation_args})
         set_tests_properties(vulkan.animation PROPERTIES TIMEOUT 120 LABELS desktop)
         if(NOT Easy3D_ENABLE_OPENGL)
-            add_executable(easy3d_vulkan_scan_viewer_test tests/scan_viewer_test.cpp
-                    ../../tutorials/Tutorial_404_VirtualScanner/viewer.cpp)
+            include("${Easy3D_ROOT}/tests/native_tutorials/test_sources.cmake")
+            native_scanner_test_source(scanner_source)
+            add_executable(easy3d_vulkan_scan_viewer_test tests/scan_viewer_test.cpp "${scanner_source}")
+            target_include_directories(easy3d_vulkan_scan_viewer_test PRIVATE
+                    "${Easy3D_ROOT}/tutorials/Tutorial_404_VirtualScanner")
             target_link_libraries(easy3d_vulkan_scan_viewer_test PRIVATE easy3d::viewer)
 
             add_test(NAME vulkan.scanviewer COMMAND easy3d_vulkan_scan_viewer_test ${validation_args})
@@ -246,7 +249,9 @@ if(Easy3D_ENABLE_VULKAN AND Easy3D_BUILD_VULKAN_TESTS)
                 ../../tutorials/Tutorial_401_ModelPicker/viewer.cpp
                 ../../tutorials/Tutorial_402_FacePicker/viewer.cpp
                 ../../tutorials/Tutorial_403_PointSelection/viewer.cpp
-                ../../tutorials/Tutorial_404_VirtualScanner/viewer.cpp)
+                "${scanner_source}")
+        target_include_directories(easy3d_vulkan_usage_test PRIVATE
+                "${Easy3D_ROOT}/tutorials/Tutorial_404_VirtualScanner")
         target_link_libraries(easy3d_vulkan_usage_test PRIVATE easy3d::viewer)
 
         add_test(NAME vulkan.usage COMMAND easy3d_vulkan_usage_test ${validation_args})

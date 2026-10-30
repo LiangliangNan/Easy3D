@@ -32,7 +32,6 @@
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
-#include "../native_viewer_options.h"
 
 /**
  * \example{lineno} Tutorial_305_Texture/main.cpp
@@ -48,13 +47,8 @@ int main(int argc, char **argv) {
 
     // Create the default Easy3D viewer.
     // Note: a viewer must be created before creating any drawables.
-#ifdef EASY3D_NO_OPENGL
-    NativeTutorialOptions options;
-    if (!options.parse(argc, argv)) return EXIT_FAILURE;
-    Viewer viewer(EXAMPLE_TITLE, options.viewer);
-#else
     Viewer viewer(EXAMPLE_TITLE);
-#endif
+
     viewer.camera()->setUpVector(vec3(0, 1, 0));
     viewer.camera()->setViewDirection(vec3(0, 0, -1));
 
@@ -96,10 +90,6 @@ int main(int argc, char **argv) {
     // -------------------------------------------------------------------------------
 
     // run the viewer
-#ifdef EASY3D_NO_OPENGL
-    return options.run(viewer);
-#else
     return viewer.run();
-#endif
 }
 

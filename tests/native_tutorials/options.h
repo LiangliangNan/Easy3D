@@ -1,18 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-#ifndef EASY3D_TUTORIALS_NATIVE_VIEWER_OPTIONS_H
-#define EASY3D_TUTORIALS_NATIVE_VIEWER_OPTIONS_H
+#ifndef EASY3D_TESTS_NATIVE_VIEWER_OPTIONS_H
+#define EASY3D_TESTS_NATIVE_VIEWER_OPTIONS_H
 
-#ifdef EASY3D_NO_OPENGL
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/util/logging.h>
 #include <cstdlib>
 #include <limits>
 #include <stdexcept>
 
-namespace easy3d {
-// Shared native execution options; tutorial scene construction stays identical
-// to its OpenGL counterpart. Bounded execution supports desktop smoke tests.
-struct NativeTutorialOptions {
+namespace easy3d { namespace test {
+// Options for test executables only. Interactive tutorials use Viewer::run().
+struct NativeViewerOptions {
     VulkanViewerOptions viewer;
     unsigned frames = 0;
 
@@ -48,6 +46,9 @@ struct NativeTutorialOptions {
         return result;
     }
 };
+inline NativeViewerOptions& native_options() {
+    static NativeViewerOptions options;
+    return options;
 }
-#endif
+}}
 #endif

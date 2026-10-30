@@ -25,7 +25,6 @@
  ********************************************************************/
 
 #include "viewer.h"
-#include "../native_viewer_options.h"
 #include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
 
@@ -46,13 +45,8 @@ int main(int argc, char **argv) {
     // initialize Easy3D.
     initialize();
 
-#ifdef EASY3D_NO_OPENGL
-    NativeTutorialOptions options;
-    if (!options.parse(argc,argv)) return EXIT_FAILURE;
-    TutorialObjectManipulation viewer(EXAMPLE_TITLE,options.viewer);
-#else
     TutorialObjectManipulation viewer(EXAMPLE_TITLE);
-#endif
+
     viewer.add_model(resource::directory() + "/data/easy3d/easy3d_e.ply");
     viewer.add_model(resource::directory() + "/data/easy3d/easy3d_a.ply");
     viewer.add_model(resource::directory() + "/data/easy3d/easy3d_s.ply");
@@ -66,10 +60,6 @@ int main(int argc, char **argv) {
     }
 
     // run the viewer
-#ifdef EASY3D_NO_OPENGL
-    return options.run(viewer);
-#else
     return viewer.run();
-#endif
 }
 

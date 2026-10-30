@@ -31,7 +31,6 @@
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
-#include "../native_viewer_options.h"
 
 /**
  * \example{lineno} Tutorial_304_VectorField/main.cpp
@@ -47,13 +46,7 @@ int main(int argc, char **argv) {
 
     // Create the default Easy3D viewer.
     // Note: a viewer must be created before creating any drawables.
-#ifdef EASY3D_NO_OPENGL
-    NativeTutorialOptions options;
-    if (!options.parse(argc, argv)) return EXIT_FAILURE;
-    Viewer viewer(EXAMPLE_TITLE, options.viewer);
-#else
     Viewer viewer(EXAMPLE_TITLE);
-#endif
 
     // Load point cloud data from a file
     const std::string file_name = resource::directory() + "/data/sphere.obj";
@@ -109,10 +102,6 @@ int main(int argc, char **argv) {
     mesh->renderer()->get_lines_drawable("edges")->set_visible(true);
 
     // run the viewer
-#ifdef EASY3D_NO_OPENGL
-    return options.run(viewer);
-#else
     return viewer.run();
-#endif
 }
 

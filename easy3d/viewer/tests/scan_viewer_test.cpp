@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-#include <tutorials/Tutorial_404_VirtualScanner/viewer.h>
+#include <easy3d/viewer/vulkan_viewer.h>
+#include <easy3d/algo/gaussian_noise.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
@@ -12,6 +13,43 @@
 #include <iostream>
 #include <stdexcept>
 using namespace easy3d;
+namespace {
+class ScanViewer : public VulkanViewer {
+public:
+    ScanViewer(const std::string& title, const VulkanViewerOptions& options)
+        : VulkanViewer(title, options) {
+        camera()->setUpVector(vec3(0, 1, 0));
+    }
+
+protected:
+    bool key_press_event(int key, int modifiers) override {
+        if (modifiers == 0 && key == GLFW_KEY_N) {
+            add_noise_ = !add_noise_;
+            return true;
+        }
+        if (modifiers == 0 && key == GLFW_KEY_SPACE) {
+            int w, h;
+            framebuffer_size(w, h);
+            if (w <= 0 || h <= 0) return true;
+            if (width() != w || height() != h) VulkanOffScreen::resize(w, h);
+            const auto points = scan_visible_points(samples());
+            if (points.empty()) return true;
+            auto cloud = std::make_shared<PointCloud>();
+            cloud->set_name("Virtual scan");
+            for (const auto& p : points) cloud->add_vertex(p);
+            if (add_noise_) GaussianNoise::apply(cloud.get(), camera()->sceneRadius() * .0001f);
+            add_model(cloud, true, false);
+            update();
+            return true;
+        }
+        return VulkanViewer::key_press_event(key, modifiers);
+    }
+
+private:
+    bool add_noise_ = false;
+};
+}
+
 void require(bool ok,const char* text) { if (!ok) throw std::runtime_error(text); }
 void frame(VulkanViewer& viewer) {
     for (unsigned i=0;i<100;++i) {
@@ -32,7 +70,7 @@ int main(int argc,char**) {
         initialize(false,false,false);
         VulkanViewerOptions options; options.visible=false; options.width=151; options.height=113;
         options.device.validation=options.device.synchronization_validation=argc>1;
-        TutorialVirtualScanner viewer("Native virtual scanner test",options);
+        ScanViewer viewer("Native virtual scanner test",options);
         auto key=glfwSetKeyCallback(viewer.window(),nullptr); glfwSetKeyCallback(viewer.window(),key);
         auto press=[&](int code,int mods=0) { key(viewer.window(),code,0,GLFW_PRESS,mods); };
         frame(viewer); press(GLFW_KEY_SPACE);

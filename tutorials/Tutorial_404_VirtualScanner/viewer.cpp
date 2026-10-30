@@ -46,8 +46,7 @@ const char* const usage_hint = "press 'Space' to perform scanning\n"
 
 using namespace easy3d;
 
-TutorialVirtualScanner::TutorialVirtualScanner(const std::string& title,
-            const easy3d::VulkanViewerOptions& options) : VulkanViewer(title,options) {
+TutorialVirtualScanner::TutorialVirtualScanner(const std::string& title) : VulkanViewer(title) {
     manual_ = usage_manual;
     hint_ = usage_hint;
     camera()->setUpVector(easy3d::vec3(0,1,0));

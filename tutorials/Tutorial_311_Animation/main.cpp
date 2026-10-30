@@ -26,7 +26,6 @@
 
 #include <easy3d/viewer/viewer.h>
 #include "animation.h"
-#include "../native_viewer_options.h"
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
@@ -48,13 +47,7 @@ int main(int argc, char **argv) {
 
     // Create the default Easy3D viewer.
     // Note: a viewer must be created before creating any drawables.
-#ifdef EASY3D_NO_OPENGL
-    NativeTutorialOptions options;
-    if (!options.parse(argc, argv)) return EXIT_FAILURE;
-    Viewer viewer(EXAMPLE_TITLE, options.viewer);
-#else
     Viewer viewer(EXAMPLE_TITLE);
-#endif
 
     //-------------------------------------------------------------
 
@@ -92,10 +85,6 @@ int main(int argc, char **argv) {
     };
 
     // run the viewer
-#ifdef EASY3D_NO_OPENGL
-    return options.run(viewer);
-#else
     return viewer.run();
-#endif
 }
 

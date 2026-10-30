@@ -25,7 +25,6 @@
  ********************************************************************/
 
 #include "viewer.h"
-#include "../native_viewer_options.h"
 #include <easy3d/util/initializer.h>
 
 /**
@@ -46,19 +45,10 @@ int main(int argc, char **argv) {
     // initialize Easy3D.
     initialize();
 
-#ifdef EASY3D_NO_OPENGL
-    NativeTutorialOptions options;
-    if (!options.parse(argc,argv)) return EXIT_FAILURE;
-    TutorialCollisionDetection viewer(EXAMPLE_TITLE,options.viewer);
-#else
     TutorialCollisionDetection viewer(EXAMPLE_TITLE);
-#endif
+
 
     // run the viewer
-#ifdef EASY3D_NO_OPENGL
-    return options.run(viewer);
-#else
     return viewer.run();
-#endif
 }
 
