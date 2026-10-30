@@ -56,7 +56,7 @@ protected:
 #if EASY3D_TUTORIAL_USES_VULKAN
     void pre_draw() override;
 #else
-    void draw() const override;
+    bool draw() override;
 #endif
 
 protected:

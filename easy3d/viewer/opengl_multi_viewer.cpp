@@ -174,7 +174,7 @@ namespace easy3d {
     }
 
 
-    void OpenGLMultiViewer::draw() const {
+    bool OpenGLMultiViewer::draw() {
         // remember the viewer port, later we will have to restore it after drawing each view
         ivec4 viewport;
         glGetIntegerv(GL_VIEWPORT, viewport);
@@ -235,6 +235,7 @@ namespace easy3d {
         // draw the division of views
         if (drawable_division_->is_visible())
             drawable_division_->draw(camera());
+        return true;
     }
 
 

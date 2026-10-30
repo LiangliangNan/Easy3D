@@ -1198,9 +1198,8 @@ namespace easy3d {
         if (callback_error_) std::rethrow_exception(callback_error_);
         if (should_close()) return false;
         pre_draw();
-        draw();
-        update_frame_rate();
-        post_draw();
+        const bool drawn = draw();
+        if (drawn) { update_frame_rate(); post_draw(); }
         glfwSwapBuffers(window_);
         notify_post_draw();
         if (callback_error_) std::rethrow_exception(callback_error_);
@@ -1800,7 +1799,7 @@ namespace easy3d {
     }
 
 
-    void OpenGLViewer::draw() const {
+    bool OpenGLViewer::draw() {
 #if 0
         // Example code: split the view to have different rendering styles for the same object/scene.
         glEnable(GL_SCISSOR_TEST);
@@ -1870,6 +1869,7 @@ namespace easy3d {
 
         // draw the clipping plane (not in postDraw so it can be effective when taking snapshots)
         ClippingPlane::instance()->draw(camera()); easy3d_debug_log_gl_error
+        return true;
     }
 
 }
@@ -2239,7 +2239,7 @@ namespace easy3d {
 					glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-				draw();
+				const_cast<OpenGLViewer*>(this)->draw();
 
 				fbo->release();
 

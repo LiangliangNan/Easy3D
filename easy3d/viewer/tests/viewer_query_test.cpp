@@ -25,18 +25,34 @@ void require(bool value, const char *message) {
         throw std::runtime_error(message);
 }
 bool near(const vec3 &a, const vec3 &b, float epsilon = 1e-4f) { return distance(a, b) < epsilon; }
-void check(Backend backend, unsigned samples, bool validation) {
-    VulkanViewerOptions o;
-    o.width = 181;
-    o.height = 151;
-    o.visible = false;
-    o.samples = samples;
-    o.device.validation = validation;
-    o.device.synchronization_validation = validation;
-    auto v = std::make_shared<VulkanViewer>("Portable camera queries", o);
+std::shared_ptr<ViewerBase> make_host(Backend backend, unsigned samples, bool validation) {
+#ifdef EASY3D_HAS_VULKAN
+    if (backend == Backend::Vulkan) {
+        VulkanViewerOptions o;
+        o.width = 181;
+        o.height = 151;
+        o.visible = false;
+        o.samples = samples;
+        o.device.validation = validation;
+        o.device.synchronization_validation = validation;
+        auto v = std::make_shared<VulkanViewer>("Portable camera queries", o);
+        v->set_usage("");
+        v->camera()->setViewDirection(vec3(0, 0, -1));
+        v->camera()->setUpVector(vec3(0, 1, 0));
+        return v;
+    }
+#else
+    auto v = std::make_shared<OpenGLViewer>("Portable camera queries", int(samples), 3, 2, false, true, 24, 8, 181, 151);
+    v->hide();
     v->set_usage("");
     v->camera()->setViewDirection(vec3(0, 0, -1));
     v->camera()->setUpVector(vec3(0, 1, 0));
+    return v;
+#endif
+}
+
+void check(Backend backend, unsigned samples, bool validation) {
+    auto v = make_host(backend, samples, validation);
     auto front = std::make_shared<TrianglesDrawable>("front");
     v->add_drawable(front);
     front->update_vertex_buffer({vec3(-1, -1, .2f), vec3(1, -1, .2f), vec3(0, 1, .2f)});
@@ -183,7 +199,8 @@ void check(Backend backend, unsigned samples, bool validation) {
     require(resized && std::abs(resized_hit.z - .2f) < 2e-4f, "query failed after logical/framebuffer resize");
 #ifndef EASY3D_HAS_VULKAN
     if (backend == Backend::OpenGL) {
-        auto other = ViewerBase::create("Other shared context", o);
+        auto other = std::make_shared<OpenGLViewer>("Portable camera queries other", 4, 3, 2, false, true, 24, 8, 181, 151);
+        other->hide();
         glfwMakeContextCurrent(other->window());
         bool restored = false;
         v->point_under_pixel(v->width() / 2, v->height() / 2, restored);

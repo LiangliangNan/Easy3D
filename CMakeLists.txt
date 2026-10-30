@@ -35,18 +35,23 @@ project(Easy3D VERSION ${Easy3D_VERSION_STRING})
 
 ################################################################################
 
+# Crucial line to enable CTest
+if (Easy3D_BUILD_VULKAN_TESTS)
+    enable_testing()
+endif ()
+
 # specify the C++ standard
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 message(STATUS "Using C++11")
 
-if(MSVC)
+if (MSVC)
     # The /MP flag is available and works as intended with the MSVC compiler
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 elseif(CMAKE_BUILD_PARALLEL_LEVEL)
     # Use build system parallelism (e.g., `make -j` or `ninja`)
     set(CMAKE_BUILD_PARALLEL_LEVEL 8) # Example: Use 8 threads
-endif()
+endif ()
 
 ################################################################################
 

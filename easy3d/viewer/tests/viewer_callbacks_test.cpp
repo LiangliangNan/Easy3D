@@ -39,15 +39,25 @@ struct Events {
         require(cursor && button && scroll && key && character && drop && focus,"host callbacks missing");
     }
 };
-std::shared_ptr<VulkanViewer> host(Backend backend, bool validation) {
-    VulkanViewerOptions o;
-    o.width=181; o.height=151; o.visible=false;
-    o.device.validation = validation;
-    o.device.synchronization_validation = validation;
-    auto v = std::make_shared<VulkanViewer>("Portable callbacks",o);
+std::shared_ptr<ViewerBase> host(Backend backend, bool validation) {
+#ifdef EASY3D_HAS_VULKAN
+    if (backend == Backend::Vulkan) {
+        VulkanViewerOptions o;
+        o.width=181; o.height=151; o.visible=false;
+        o.device.validation = validation;
+        o.device.synchronization_validation = validation;
+        auto v = std::make_shared<VulkanViewer>("Portable callbacks",o);
+        v->set_usage("");
+        v->camera()->setViewDirection(vec3(0,0,-1)); v->camera()->setUpVector(vec3(0,1,0));
+        return v;
+    }
+#else
+    auto v = std::make_shared<OpenGLViewer>("Portable callbacks", 4, 3, 2, false, true, 24, 8, 181, 151);
+    v->hide();
     v->set_usage("");
     v->camera()->setViewDirection(vec3(0,0,-1)); v->camera()->setUpVector(vec3(0,1,0));
     return v;
+#endif
 }
 std::shared_ptr<SurfaceMesh> scene(ViewerBase& v) {
     auto m=std::make_shared<SurfaceMesh>();

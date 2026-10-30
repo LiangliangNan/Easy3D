@@ -137,7 +137,7 @@ namespace easy3d {
     protected:
         void init() override;
         void post_resize(int w, int h) override;
-        void draw() const override;
+        bool draw() override;
 
         // overloaded, so mouse positions are relative to the current view
         bool mouse_release_event(int x, int y, int button, int modifiers) override;

@@ -495,8 +495,11 @@ namespace easy3d {
 
 	protected:
 
-        // rendering. Users can put their additional rendering function here by reimplementing it.
-        virtual void draw() const;
+        // This function draws the scene. Called after pre_draw() and before post_draw();
+        // the bool reports whether the frame was rendered. The backend performs the
+        // native draw inside the default implementation; overrides may add backend
+        // specific rendering before calling the default.
+        virtual bool draw();
 
 		// OpenGL resources (e.g., shaders, textures, VAOs) must be created when 
 		// there exists a valid rendering context. It is (usually) a bad idea to do 

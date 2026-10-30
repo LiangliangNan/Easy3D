@@ -7,7 +7,7 @@ if(Easy3D_BUILD_VULKAN_TESTS)
     if(Easy3D_VULKAN_TEST_VALIDATION)
         set(demo_validation_args --validation)
     endif()
-    add_test(NAME vulkan.demo COMMAND VulkanViewer --backend vulkan --frames 2 --samples 4 ${demo_validation_args})
+    add_test(NAME vulkan.demo COMMAND VulkanViewer --frames 2 --samples 4 ${demo_validation_args})
     set_tests_properties(vulkan.demo PROPERTIES LABELS desktop TIMEOUT 120)
 
 endif()

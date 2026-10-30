@@ -290,7 +290,7 @@ bool VulkanViewer::draw_frame() {
     pre_draw();
     update_camera_path_overlays();
     update_interaction_overlays();
-    const bool drawn = present(samples());
+    const bool drawn = draw();
     if (drawn) {update_frame_rate();post_draw();notify_post_draw();}
     if (window_->error) std::rethrow_exception(window_->error);
     return drawn;

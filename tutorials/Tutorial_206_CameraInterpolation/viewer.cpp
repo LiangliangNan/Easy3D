@@ -145,14 +145,15 @@ bool TutorialCameraInterpolation::key_press_event(int key, int modifiers)
 }
 
 
-void TutorialCameraInterpolation::draw() const {
-    Viewer::draw();
+bool TutorialCameraInterpolation::draw() {
+    if (!Viewer::draw()) return false;
 
     // shown only when it is not animating
     if (!interpolator_->is_interpolation_started()) {
         interpolator_->draw_cameras(camera(), camera()->sceneRadius() * 0.05f);
         interpolator_->draw_path(camera());
     }
+    return true;
 }
 
 // \endcond

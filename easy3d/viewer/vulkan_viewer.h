@@ -133,6 +133,11 @@ protected:
     // Vulkan resources are ready; overrides may configure the scene and HUD.
     virtual void init() {}
     virtual void pre_draw() {}
+    // This function draws the scene and presents the frame. The default
+    // implementation renders the scene and overlays into the swapchain and
+    // presents the frame; overrides may add backend specific rendering before
+    // calling the default. Returns whether the frame was presented.
+    virtual bool draw() { return present(samples()); }
     virtual void post_draw() {}
     virtual void post_resize(int, int) {}
     virtual bool mouse_press_event(int x, int y, int button, int modifiers);
