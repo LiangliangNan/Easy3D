@@ -36,15 +36,6 @@
 
 
 namespace easy3d {
-    // Forward declaration only: renderer headers also serve headless clients.
-#ifdef EASY3D_HAS_VULKAN
-    class VulkanViewer;
-    using Viewer = VulkanViewer;
-#else
-    class OpenGLViewer;
-    using Viewer = OpenGLViewer;
-#endif
-
 
     class Texture;
 
@@ -137,10 +128,6 @@ namespace easy3d {
         static void terminate();
 
     private:
-#ifndef EASY3D_HAS_VULKAN
-        friend Viewer;
-        static void terminate_opengl();
-#endif
         static std::mutex mutex_;
         static Texture* request_impl(const std::string&, Texture::WrapMode, Texture::FilterMode, bool cpu);
         // maps of std::string can be super slow when calling find with a string literal or const char*

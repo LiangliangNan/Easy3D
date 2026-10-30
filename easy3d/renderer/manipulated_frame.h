@@ -43,15 +43,6 @@
 
 
 namespace easy3d {
-    // Forward declaration only: renderer headers also serve headless clients.
-#ifdef EASY3D_HAS_VULKAN
-    class VulkanViewer;
-    using Viewer = VulkanViewer;
-#else
-    class OpenGLViewer;
-    using Viewer = OpenGLViewer;
-#endif
-
 
 	/**
 	 * \brief A Frame that can be rotated and translated using the mouse.
@@ -220,9 +211,6 @@ namespace easy3d {
 		float translationSensitivity_;
 		float wheelSensitivity_;
 		float zoomSensitivity_;
-
-	private:
-		friend Viewer;
 	};
 
 }

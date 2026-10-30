@@ -43,15 +43,6 @@
 
 
 namespace easy3d {
-    // Forward declaration only: renderer headers also serve headless clients.
-#ifdef EASY3D_HAS_VULKAN
-    class VulkanViewer;
-    using Viewer = VulkanViewer;
-#else
-    class OpenGLViewer;
-    using Viewer = OpenGLViewer;
-#endif
-
 
     /**
      * \brief A manipulated frame with camera-specific mouse bindings.
@@ -218,7 +209,6 @@ namespace easy3d {
 
     private:
         friend class Camera;
-        friend Viewer;
     };
 
 
