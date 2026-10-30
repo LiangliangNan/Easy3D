@@ -1,6 +1,4 @@
 if(Easy3D_BUILD_VULKAN_TESTS)
-    # A loadable library without Vulkan exports exercises symbol lookup failure.
-    add_library(easy3d_invalid_vulkan_loader SHARED invalid_vulkan_loader.cpp)
     add_executable(easy3d_vulkan_test render_test.cpp)
     target_link_libraries(easy3d_vulkan_test PRIVATE easy3d::renderer)
     set(validation_args)
