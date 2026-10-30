@@ -5,7 +5,6 @@
 #error "VulkanMultiViewer is pending migration step 3"
 #else
 #include <easy3d/viewer/viewer.h>
-#include <easy3d/viewer/opengl_multi_viewer.h>
 namespace easy3d { using MultiViewer = OpenGLMultiViewer; }
 #endif
 #endif

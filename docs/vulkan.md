@@ -61,14 +61,16 @@ The target selector is:
 // easy3d/viewer/viewer.h
 #if defined(EASY3D_NO_OPENGL)
 #define EASY3D_TUTORIAL_USES_VULKAN 1
+#include <easy3d/viewer/vulkan_offscreen.h>
+namespace easy3d { using OffScreen = VulkanOffScreen; }
+#ifdef EASY3D_HAS_VULKAN_VIEWER
 #include <easy3d/viewer/vulkan_viewer.h>
 #include <easy3d/viewer/vulkan_multi_viewer.h>
-#include <easy3d/viewer/vulkan_offscreen.h>
 namespace easy3d {
     using Viewer = VulkanViewer;
     using MultiViewer = VulkanMultiViewer;
-    using OffScreen = VulkanOffScreen;
 }
+#endif
 #else
 #define EASY3D_TUTORIAL_USES_VULKAN 0
 #include <easy3d/viewer/opengl_viewer.h>
@@ -91,8 +93,19 @@ class TutorialXXX : public easy3d::Viewer {
 };
 ```
 
-Backend-specific library sources must include their explicit class headers,
-not depend on the public aliases. CMake supplies and exports the selected
+All files that need a viewer, multi-viewer or offscreen implementation include
+`easy3d/viewer/viewer.h`, including backend implementation source files. Only the
+selector itself and concrete headers declaring inheritance include concrete
+headers, to avoid circular definitions. The selector also supports headless
+Vulkan consumers by exposing offscreen implementation without the window host.
+
+Friendship in other classes names the configured `Viewer`, rather than granting
+friendship separately to `OpenGLViewer` and `VulkanViewer`. With the selected
+`using Viewer = ...` design, C++ requires `friend Viewer;`: the original spelling
+`friend class Viewer;` cannot name a type alias. Renderer headers use selected
+forward declarations so friendship does not introduce a window dependency.
+
+CMake supplies and exports the selected
 backend's compile definitions to consumers, including `EASY3D_NO_OPENGL` for
 Vulkan. The header must not allow `EASY3D_TUTORIAL_VULKAN` or a per-application
 macro to override the configured backend. Retain `EASY3D_TUTORIAL_USES_VULKAN`
@@ -149,6 +162,10 @@ new facade layer is introduced. Existing public include compatibility can be kep
 thin while the remaining steps are completed.
 
 ### 2. Align constructors, subclass hooks and state
+
+- Use `viewer.h` for all viewer implementation consumers and selected `Viewer`
+  friendship in other classes. Keep concrete-base includes only where inheritance
+  requires them. Verify offscreen consumers in window-disabled builds as well.
 
 - Preserve the common original forms `Viewer(title)`,
   `MultiViewer(rows, cols, title)` and `OffScreen(width, height)`. Retain meaningful
@@ -3271,8 +3288,9 @@ The concrete OpenGL classes are now `OpenGLViewer`, `OpenGLMultiViewer` and
 `OpenGLOffScreen` in their requested root-level header/source pairs. OpenGL
 snapshots are folded into `opengl_viewer.cpp`. Vulkan viewer/offscreen source
 files are back in `vulkan_viewer.cpp` and `vulkan_offscreen.cpp`. Explicit
-implementation files include their explicit class headers; renderer friendship
-uses `OpenGLViewer`. Original default titles, manuals and hints are retained.
+implementation files initially included their explicit class headers and renderer
+friendship used `OpenGLViewer`; the follow-up below supersedes both choices.
+Original default titles, manuals and hints are retained.
 
 `OpenGLOffScreen` owns the actual hidden OpenGL context through OpenGLViewer;
 it is not a renamed runtime-dispatch facade. Its operations preserve pixel-sized
@@ -3322,3 +3340,28 @@ installed headless viewer client reports that no window host was built. The
 previously documented platform warnings remain; no new validation errors were
 reported. Full constructor/hook unification and runtime-facade removal are not
 claimed by these checks.
+
+## Step 2 follow-up: selected viewer friendship and common includes (2026-10-30)
+
+- Renderer friendships now name `Viewer` using the C++ alias-compatible spelling
+  `friend Viewer;`. Selected forward declarations keep renderer headers independent
+  of window-host implementation and preserve headless builds.
+- Tutorial helpers and regression/package consumers now include
+  `easy3d/viewer/viewer.h`. Concrete implementation source includes were changed
+  too, but concurrent workspace edits restored their explicit headers; those edits
+  were preserved. Finishing those source includes remains pending. Concrete headers
+  keep direct base-class includes to make inheritance independent of selector order.
+- The selector exposes all currently implemented classes in the selected family.
+  It is installed in headless Vulkan builds too, exposing `VulkanOffScreen` without
+  requiring GLFW or the window host. Interactive `Viewer` remains available only
+  when the window host is enabled. VulkanMultiViewer and the final OffScreen alias
+  still await steps 3 and 4; the runtime OffScreen facade is not renamed here.
+- Constructor, lifecycle-hook and protected-state alignment remains the next
+  step-2 work. This change adds no new viewer functions or implementation files.
+
+Verification: all three backend configurations built, all 16 headless Vulkan tests
+and all 8 OpenGL tests passed. The windowed MoltenVK suite passed 74/75 on its
+first run; `vulkan.crosssection` reported `guide/MSAA changed picking depth` and
+passed when rerun alone. This intermittent failure remains to be investigated;
+the suite is not claimed consistently green. The installed headless consumer
+also rebuilt with SDK discovery disabled and the common selector include.

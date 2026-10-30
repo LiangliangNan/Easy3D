@@ -3,7 +3,7 @@
 #define EASY3D_TUTORIALS_NATIVE_VIEWER_OPTIONS_H
 
 #ifdef EASY3D_NO_OPENGL
-#include <easy3d/viewer/vulkan_viewer.h>
+#include <easy3d/viewer/viewer.h>
 #include <easy3d/util/logging.h>
 #include <cstdlib>
 #include <limits>

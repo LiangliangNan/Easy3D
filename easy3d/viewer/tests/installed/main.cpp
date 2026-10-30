@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/offscreen.h>
 #include <easy3d/renderer/text_layout.h>
-#include <easy3d/viewer/vulkan_offscreen.h>
+#include <easy3d/viewer/viewer.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_triangles.h>

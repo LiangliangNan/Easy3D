@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-#include <easy3d/viewer/vulkan_viewer.h>
+#include <easy3d/viewer/viewer.h>
 #include <tutorials/Tutorial_312_MultiThread/point_worker.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/util/initializer.h>

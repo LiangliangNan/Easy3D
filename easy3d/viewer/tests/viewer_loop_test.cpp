@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-#ifdef EASY3D_TEST_OPENGL_VIEWER
 #include <easy3d/viewer/viewer.h>
+#ifdef EASY3D_TEST_OPENGL_VIEWER
 #include <easy3d/renderer/opengl.h>
 using TestHost = easy3d::Viewer;
 #else
-#include <easy3d/viewer/vulkan_viewer.h>
 using TestHost = easy3d::VulkanViewer;
 #endif
 #include <easy3d/core/surface_mesh.h>

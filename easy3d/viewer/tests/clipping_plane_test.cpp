@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-#include <easy3d/viewer/vulkan_viewer.h>
+#include <easy3d/viewer/viewer.h>
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/manipulated_frame.h>

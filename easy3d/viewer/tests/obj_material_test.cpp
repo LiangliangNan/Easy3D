@@ -4,7 +4,7 @@
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/texture.h>
-#include <easy3d/viewer/vulkan_offscreen.h>
+#include <easy3d/viewer/viewer.h>
 #include <easy3d/util/initializer.h>
 #include <cmath>
 #include <iostream>

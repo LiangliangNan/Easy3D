@@ -36,6 +36,15 @@
 
 
 namespace easy3d {
+    // Forward declaration only: renderer headers also serve headless clients.
+#ifdef EASY3D_NO_OPENGL
+    class VulkanViewer;
+    using Viewer = VulkanViewer;
+#else
+    class OpenGLViewer;
+    using Viewer = OpenGLViewer;
+#endif
+
 
     class Texture;
 
@@ -129,7 +138,7 @@ namespace easy3d {
 
     private:
 #ifndef EASY3D_NO_OPENGL
-        friend class OpenGLViewer;
+        friend Viewer;
         static void terminate_opengl();
 #endif
         static std::mutex mutex_;

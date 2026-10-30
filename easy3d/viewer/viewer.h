@@ -6,14 +6,26 @@
 #endif
 #ifdef EASY3D_NO_OPENGL
 #define EASY3D_TUTORIAL_USES_VULKAN 1
-#ifndef EASY3D_HAS_VULKAN_VIEWER
-#error "Interactive Viewer requires Easy3D_ENABLE_VULKAN_VIEWER=ON"
-#endif
+#include <easy3d/viewer/vulkan_offscreen.h>
+#ifdef EASY3D_HAS_VULKAN_VIEWER
 #include <easy3d/viewer/vulkan_viewer.h>
 namespace easy3d { using Viewer = VulkanViewer; }
+#endif
+#ifdef EASY3D_HAS_VULKAN_MULTIVIEWER
+#include <easy3d/viewer/vulkan_multiviewer.h>
+namespace easy3d { using MultiViewer = VulkanMultiViewer; }
+#endif
+#ifdef EASY3D_HAS_VULKAN_OFFSCREEN
+#include <easy3d/viewer/vulkan_multiviewer.h>
+namespace easy3d { using OffScreen = VulkanOffScreen; }
+#endif
 #else
 #define EASY3D_TUTORIAL_USES_VULKAN 0
 #include <easy3d/viewer/opengl_viewer.h>
+#include <easy3d/viewer/opengl_multi_viewer.h>
+#include <easy3d/viewer/opengl_offscreen.h>
 namespace easy3d { using Viewer = OpenGLViewer; }
+namespace easy3d { using MultiViewer = OpenGLMultiViewer; }
+namespace easy3d { using OffScreen = OpenGLOffScreen; }
 #endif
 #endif

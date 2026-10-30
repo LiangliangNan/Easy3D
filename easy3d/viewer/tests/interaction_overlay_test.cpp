@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-#include <easy3d/viewer/vulkan_viewer.h>
+#include <easy3d/viewer/viewer.h>
 #include <easy3d/fileio/image_io.h>
 #include <easy3d/util/initializer.h>
 #include <easy3d/util/resource.h>
