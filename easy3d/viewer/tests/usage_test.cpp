@@ -5,9 +5,11 @@
 #include <tutorials/Tutorial_401_ModelPicker/viewer.h>
 #include <tutorials/Tutorial_402_FacePicker/viewer.h>
 #include <tutorials/Tutorial_403_PointSelection/viewer.h>
+#include <tutorials/Tutorial_404_VirtualScanner/viewer.h>
 #include <easy3d/fileio/image_io.h>
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/util/initializer.h>
+#include <tests/native_tutorials/options.h>
 #include <easy3d/util/setting.h>
 #define GLFW_INCLUDE_NONE
 #include <3rd_party/glfw/include/GLFW/glfw3.h>
@@ -15,22 +17,6 @@
 #include <sstream>
 #include <stdexcept>
 using namespace easy3d;
-namespace {
-class ScannerUsageViewer : public VulkanViewer {
-public:
-    ScannerUsageViewer(const std::string& title, const VulkanViewerOptions& options)
-        : VulkanViewer(title, options) {
-        set_usage("-------------- Virtual Scanner usage -------------- \n"
-                  "- change the view using the mouse.\n"
-                  "- press the 'Space' key to perform scanning. Everything (and only those) visible\n"
-                  "  will be captured in a point cloud.\n"
-                  "- press 'n' to toggle Gaussian noise.\n"
-                  "---------------------------------------------------------- \n",
-                  "press 'Space' to perform scanning\npress 'n' to toggle Gaussian noise");
-    }
-};
-}
-
 void require(bool ok,const char* message) { if (!ok) throw std::runtime_error(message); }
 template<class Base> struct Inspect : Base {
     using Base::Base;
@@ -96,9 +82,10 @@ int main(int argc,char**) {
         require(resized.width!=before.width && resized.rgba!=before.rgba,"usage HUD did not rebuild after resize");
         require(ImageIO::save("vulkan-usage-hint.png",resized.rgba,resized.width,resized.height,4,false),"usage artifact failed");
         require(v.device().validation_errors()==0,"usage HUD validation errors");
-        // Exercise scanner-style usage text and the ported viewers with custom text.
+        // Every currently ported viewer with custom OpenGL text must retain it.
         {
-            Inspect<ScannerUsageViewer> scanner("scanner",options);
+            test::native_options().viewer = options;
+            Inspect<TutorialVirtualScanner> scanner("scanner");
             require(scanner.manual().find("Virtual Scanner usage")!=std::string::npos &&
                     scanner.hint()=="press 'Space' to perform scanning\npress 'n' to toggle Gaussian noise", "scanner usage missing");
             const auto with_hint=scanner.capture();scanner.set_usage("default","");
