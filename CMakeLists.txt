@@ -15,58 +15,13 @@ option(Easy3D_BUILD_PYTHON_BINDINGS "Build Python bindings"     OFF)
 # Build advanced features that require CGAL (>= v5.1)
 option(Easy3D_ENABLE_CGAL "Build advanced features that require CGAL (>= v5.1)"              OFF)
 # Build examples/applications based on Qt (Qt5 >= v5.8.0, or Qt6)
-option(Easy3D_ENABLE_QT "Build examples/applications based on Qt (Qt5 >= v5.8.0, or Qt6)"      OFF)
+option(Easy3D_ENABLE_QT "Build examples/applications based on Qt (Qt5 >= v5.8.0, or Qt6)"    OFF)
 # Build the video encoding module that requires ffmpeg
 option(Easy3D_ENABLE_FFMPEG "Build the video encoding module that requires ffmpeg (>= v3.4)" OFF)
-# A build contains exactly one renderer. Accept old cache switches only while
-# migrating existing build directories, then derive them from the single choice.
-if(NOT DEFINED Easy3D_RENDERER_BACKEND)
-    if(DEFINED Easy3D_ENABLE_OPENGL AND Easy3D_ENABLE_OPENGL)
-        set(Easy3D_RENDERER_BACKEND OPENGL)
-    elseif(DEFINED Easy3D_ENABLE_VULKAN AND NOT Easy3D_ENABLE_VULKAN)
-        set(Easy3D_RENDERER_BACKEND OPENGL)
-    else()
-        set(Easy3D_RENDERER_BACKEND VULKAN)
-    endif()
-endif()
-set(Easy3D_RENDERER_BACKEND "${Easy3D_RENDERER_BACKEND}" CACHE STRING "Renderer backend: VULKAN or OPENGL")
-set_property(CACHE Easy3D_RENDERER_BACKEND PROPERTY STRINGS VULKAN OPENGL)
-if(NOT Easy3D_RENDERER_BACKEND STREQUAL "VULKAN" AND NOT Easy3D_RENDERER_BACKEND STREQUAL "OPENGL")
-    message(FATAL_ERROR "Easy3D_RENDERER_BACKEND must be VULKAN or OPENGL")
-endif()
-foreach(backend OPENGL VULKAN)
-    if(DEFINED Easy3D_ENABLE_${backend})
-        if((Easy3D_ENABLE_${backend} AND NOT Easy3D_RENDERER_BACKEND STREQUAL backend) OR
-           (NOT Easy3D_ENABLE_${backend} AND Easy3D_RENDERER_BACKEND STREQUAL backend))
-            message(FATAL_ERROR "Easy3D_ENABLE_${backend} conflicts with Easy3D_RENDERER_BACKEND=${Easy3D_RENDERER_BACKEND}. Select exactly one backend; clear obsolete switches with -UEasy3D_ENABLE_OPENGL -UEasy3D_ENABLE_VULKAN.")
-        endif()
-    endif()
-    unset(Easy3D_ENABLE_${backend} CACHE)
-    set(Easy3D_ENABLE_${backend} OFF)
-endforeach()
-set(Easy3D_ENABLE_${Easy3D_RENDERER_BACKEND} ON)
-option(Easy3D_ENABLE_VULKAN_VIEWER "Build the native Vulkan/GLFW window host and demo" ${Easy3D_ENABLE_VULKAN})
-option(Easy3D_BUILD_VULKAN_TESTS "Build deterministic Vulkan rendering tests" OFF)
-option(Easy3D_VULKAN_TEST_VALIDATION "Require Vulkan and synchronization validation in CTest" OFF)
-if(Easy3D_ENABLE_VULKAN_VIEWER AND NOT Easy3D_ENABLE_VULKAN)
-    message(FATAL_ERROR "Easy3D_ENABLE_VULKAN_VIEWER requires Easy3D_ENABLE_VULKAN")
-endif()
-
-if(NOT Easy3D_ENABLE_OPENGL)
-    if(Easy3D_BUILD_TUTORIALS OR Easy3D_BUILD_TESTS OR Easy3D_BUILD_PYTHON_BINDINGS OR Easy3D_ENABLE_QT)
-        message(FATAL_ERROR "Existing application/tutorial/Python hosts still require OpenGL. For a Vulkan-only build, set Easy3D_BUILD_TUTORIALS, Easy3D_BUILD_TESTS, Easy3D_BUILD_PYTHON_BINDINGS and Easy3D_ENABLE_QT to OFF. Use Easy3D_BUILD_VULKAN_TESTS for native Vulkan tests.")
-    endif()
-endif()
-if(Easy3D_BUILD_VULKAN_TESTS AND NOT Easy3D_ENABLE_VULKAN)
-    message(FATAL_ERROR "Easy3D_BUILD_VULKAN_TESTS requires Easy3D_ENABLE_VULKAN")
-endif()
-option(Easy3D_BUILD_RENDERER_TESTS "Build regressions for the configured renderer" ${Easy3D_BUILD_VULKAN_TESTS})
-if(Easy3D_BUILD_RENDERER_TESTS AND Easy3D_ENABLE_VULKAN)
-    set(Easy3D_BUILD_VULKAN_TESTS ON)
-endif()
-if(Easy3D_BUILD_RENDERER_TESTS OR Easy3D_BUILD_VULKAN_TESTS)
-    enable_testing()
-endif()
+# A build contains exactly one renderer, ether Vulkan or OpenGL
+option(Easy3D_ENABLE_VULKAN "Build the viewers/renderers with Vulkan"                         ON)
+option(Easy3D_BUILD_VULKAN_TESTS "Build deterministic Vulkan rendering tests"                 ON)
+option(Easy3D_VULKAN_TEST_VALIDATION "Require Vulkan and synchronization validation in CTest" ON)
 
 ################################################################################
 
@@ -352,9 +307,7 @@ if (Easy3D_BUILD_PYTHON_BINDINGS)
     add_subdirectory(python)
 endif ()
 
-if(Easy3D_ENABLE_OPENGL OR Easy3D_ENABLE_VULKAN_VIEWER)
-    add_subdirectory(applications)
-endif()
+add_subdirectory(applications)
 
 ################################################################################
 
@@ -384,7 +337,7 @@ install(DIRECTORY
         "${Easy3D_ROOT}/resources/textures"
         DESTINATION
         "${Easy3D_INSTALL_RESOURCE_DIR}")
-if(Easy3D_ENABLE_OPENGL)
+if(NOT Easy3D_ENABLE_VULKAN)
     install(DIRECTORY "${Easy3D_ROOT}/resources/shaders"
             DESTINATION "${Easy3D_INSTALL_RESOURCE_DIR}")
 endif()
@@ -437,9 +390,7 @@ message(STATUS "    Build Python bindings  :  ${Easy3D_BUILD_PYTHON_BINDINGS}")
 message(STATUS "    With CGAL (>= v5.1)    :  ${Easy3D_ENABLE_CGAL}")
 message(STATUS "    With Qt (>= v5.8.0)    :  ${Easy3D_ENABLE_QT}")
 message(STATUS "    With ffmpeg (>= v3.4)  :  ${Easy3D_ENABLE_FFMPEG}")
-message(STATUS "    OpenGL renderer        :  ${Easy3D_ENABLE_OPENGL}")
-message(STATUS "    Vulkan renderer        :  ${Easy3D_ENABLE_VULKAN} (experimental)")
-message(STATUS "    Vulkan window host     :  ${Easy3D_ENABLE_VULKAN_VIEWER} (experimental)")
+message(STATUS "    With Vulkan (experimental) : ${Easy3D_ENABLE_VULKAN}")
 
 message(STATUS "----------------------------------------------------------------------------")
 

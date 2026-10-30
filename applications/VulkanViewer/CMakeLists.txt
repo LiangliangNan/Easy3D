@@ -11,7 +11,7 @@ if(Easy3D_BUILD_VULKAN_TESTS)
     set_tests_properties(vulkan.demo PROPERTIES LABELS desktop TIMEOUT 120)
 
 endif()
-if(NOT Easy3D_ENABLE_OPENGL)
+if(Easy3D_ENABLE_VULKAN)
     # Existing tutorial scene code shared with the OpenGL builds.
     foreach(tutorial Tutorial_201_Viewer_default Tutorial_206_CameraInterpolation Tutorial_207_RealCamera Tutorial_301_Drawables Tutorial_302_Imposters Tutorial_303_ScalarField Tutorial_304_VectorField Tutorial_305_Texture Tutorial_306_ImageViewer Tutorial_307_CrossSection Tutorial_308_TexturedMesh Tutorial_309_TextRendering Tutorial_310_TextMesher Tutorial_311_Animation Tutorial_312_MultiThread Tutorial_401_ModelPicker Tutorial_402_FacePicker Tutorial_403_PointSelection Tutorial_404_VirtualScanner Tutorial_405_ObjectManipulation Tutorial_406_CollisionDetection Tutorial_506_DepthMap Tutorial_601_Tessellator Tutorial_602_ConvexPartition Tutorial_603_Curves Tutorial_701_Cloud_NormalEstimation Tutorial_702_Cloud_SurfaceReconstruction Tutorial_703_Cloud_PlaneExtraction)
         add_executable(${tutorial} "${Easy3D_ROOT}/tutorials/${tutorial}/main.cpp")

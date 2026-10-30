@@ -7,7 +7,7 @@
 #ifdef EASY3D_NO_OPENGL
 #define EASY3D_TUTORIAL_USES_VULKAN 1
 #include <easy3d/viewer/vulkan_offscreen.h>
-#ifdef EASY3D_HAS_VULKAN_VIEWER
+#ifdef EASY3D_HAS_VULKAN
 #include <easy3d/viewer/vulkan_viewer.h>
 namespace easy3d { using Viewer = VulkanViewer; }
 #endif

@@ -49,7 +49,7 @@ int main() {
         std::cout << "Runtime Viewer rendered using " << (viewer->backend() == Backend::Vulkan ? "Vulkan" : "OpenGL") << '\n';
         return viewer->validation_errors() ? 1 : 0;
     } catch (const BackendUnavailable& e) {
-#if !defined(EASY3D_HAS_VULKAN_VIEWER) && defined(EASY3D_NO_OPENGL)
+#if !defined(EASY3D_HAS_VULKAN) && defined(EASY3D_NO_OPENGL)
         const std::string reason = e.what();
         if (reason.find("Vulkan:") != std::string::npos && reason.find("OpenGL:") != std::string::npos) {
             std::cout << "Headless package reports both unavailable interactive backends\n"; return 0;

@@ -40,21 +40,16 @@ add_subdirectory(renderer)
 list(APPEND CONF_Easy3D_COMPONENTS renderer)
 list(APPEND EXPORT_TARGET_SET easy3d_renderer)
 
-if(Easy3D_ENABLE_OPENGL)
+if(NOT Easy3D_ENABLE_VULKAN)
 add_subdirectory(gui)
 list(APPEND CONF_Easy3D_COMPONENTS gui)
 list(APPEND EXPORT_TARGET_SET easy3d_gui)
 endif()
 
-if(Easy3D_ENABLE_OPENGL OR Easy3D_ENABLE_VULKAN)
 add_subdirectory(viewer)
 list(APPEND CONF_Easy3D_COMPONENTS viewer)
 list(APPEND EXPORT_TARGET_SET easy3d_viewer)
-if(Easy3D_ENABLE_OPENGL OR Easy3D_ENABLE_VULKAN_VIEWER)
-    list(APPEND EXPORT_TARGET_SET 3rd_glfw)
-endif()
-endif()
-
+list(APPEND EXPORT_TARGET_SET 3rd_glfw)
 
 export(TARGETS
         ${EXPORT_TARGET_SET}

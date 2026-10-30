@@ -9,7 +9,7 @@ if(Easy3D_ENABLE_VULKAN)
 endif()
 set(public_dependencies easy3d::util easy3d::core easy3d::fileio easy3d::algo)
 
-if(NOT Easy3D_ENABLE_OPENGL)
+if(Easy3D_ENABLE_VULKAN)
     set(renderer_headers obj_materials.h camera.h clipping_plane.h constraint.h drawable.h drawable_lines.h drawable_lines_2D.h
             drawable_points.h drawable_triangles.h frame.h frustum.h key_frame_interpolator.h
             manipulator.h manipulated_camera_frame.h manipulated_frame.h shape.h buffer.h
@@ -218,26 +218,23 @@ endif()
 list(APPEND renderer_headers backend.h ${backend_headers})
 
 add_module(${module} "${${module}_headers}" "${${module}_sources}" "${private_dependencies}" "${public_dependencies}")
-if(Easy3D_ENABLE_OPENGL)
-target_include_directories(easy3d_${module} PRIVATE ${Easy3D_THIRD_PARTY}/glew/include)
-target_compile_definitions(easy3d_${module} PRIVATE GLEW_BUILD EASY3D_RENDERER_OPENGL PUBLIC GLEW_NO_GLU)
+if(NOT Easy3D_ENABLE_VULKAN)
+    target_include_directories(easy3d_${module} PRIVATE ${Easy3D_THIRD_PARTY}/glew/include)
+    target_compile_definitions(easy3d_${module} PRIVATE GLEW_BUILD EASY3D_RENDERER_OPENGL PUBLIC GLEW_NO_GLU)
 
-# prefer GLVND
-set(OpenGL_GL_PREFERENCE GLVND)
-find_package(OpenGL REQUIRED)
-if (OPENGL_opengl_LIBRARY)
-    set(FOUND_GL_LIBRARIES ${OPENGL_opengl_LIBRARY})
-else ()
-    set(FOUND_GL_LIBRARIES ${OPENGL_gl_LIBRARY})
-endif ()
-if (OPENGL_glx_LIBRARY)
-    list(APPEND FOUND_GL_LIBRARIES ${OPENGL_glx_LIBRARY})
-endif ()
-message(STATUS "OpenGL libraries: ${FOUND_GL_LIBRARIES}")
-target_link_libraries(easy3d_${module} PUBLIC ${FOUND_GL_LIBRARIES})
-
-else()
-    target_compile_definitions(easy3d_renderer PUBLIC EASY3D_NO_OPENGL)
+    # prefer GLVND
+    set(OpenGL_GL_PREFERENCE GLVND)
+    find_package(OpenGL REQUIRED)
+    if (OPENGL_opengl_LIBRARY)
+        set(FOUND_GL_LIBRARIES ${OPENGL_opengl_LIBRARY})
+    else ()
+        set(FOUND_GL_LIBRARIES ${OPENGL_gl_LIBRARY})
+    endif ()
+    if (OPENGL_glx_LIBRARY)
+        list(APPEND FOUND_GL_LIBRARIES ${OPENGL_glx_LIBRARY})
+    endif ()
+    message(STATUS "OpenGL libraries: ${FOUND_GL_LIBRARIES}")
+    target_link_libraries(easy3d_${module} PUBLIC ${FOUND_GL_LIBRARIES})
 endif()
 
 if(Easy3D_ENABLE_VULKAN)
@@ -252,7 +249,7 @@ if(Easy3D_ENABLE_VULKAN)
     add_subdirectory(tests)
 endif()
 install_module(${module})
-if(Easy3D_ENABLE_OPENGL)
+if(NOT Easy3D_ENABLE_VULKAN)
 # Install glew.h to the installation directory
 install(FILES "${Easy3D_THIRD_PARTY}/glew/include/GL/glew.h"
         DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/3rd_party/glew/include/GL")

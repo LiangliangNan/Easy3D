@@ -40,9 +40,7 @@ endif ()
 add_subdirectory(Tutorial_205_MultiView)
 add_subdirectory(Tutorial_206_CameraInterpolation)
 add_subdirectory(Tutorial_207_RealCamera)
-if(Easy3D_ENABLE_VULKAN)
-    add_subdirectory(Tutorial_208_Vulkan_Offscreen)
-endif()
+add_subdirectory(Tutorial_208_Offscreen)
 
 # drawable objects and basic rendering
 add_subdirectory(Tutorial_301_Drawables)

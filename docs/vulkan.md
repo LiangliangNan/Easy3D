@@ -28,15 +28,28 @@ with the window host disabled, not a third backend or a mixed-backend build.
 This supersedes both the previous runtime-selection/fallback objective and the
 previous proposal to let both backends coexist in a combined library.
 
-Use one CMake cache choice, proposed as
-`Easy3D_RENDERER_BACKEND=VULKAN|OPENGL`, defaulting to Vulkan on this branch.
-Retire the independent enable switches once callers are migrated; while they
-remain for transition, reject conflicting settings rather than silently choosing
-one. Configuration must reject an unknown backend and any request to enable both
-or neither backend. Discover dependencies, compile sources, link libraries and
-install/export backend-specific headers only for the selected family. Vulkan
-builds must not depend on OpenGL/GLEW; OpenGL builds must not require the Vulkan
-SDK, loader or shader compiler.
+Use exactly one backend-selection option: `Easy3D_ENABLE_VULKAN`, defaulting to
+`ON` on this branch:
+
+- `Easy3D_ENABLE_VULKAN=ON`: compile and link the Vulkan backend.
+- `Easy3D_ENABLE_VULKAN=OFF`: compile and link the OpenGL backend.
+
+In C++, use `#ifdef EASY3D_HAS_VULKAN` for Vulkan and `#else` for OpenGL.
+CMake defines and exports `EASY3D_HAS_VULKAN` only when the option is ON; leave it
+undefined for OpenGL. This is a presence test, not a macro defined as zero.
+The option and macro are the sole sources of backend choice. Do not add a second
+backend enum/cache string, inverse OpenGL flag, separate viewer/backend selector,
+or derived compatibility switch. Retire `Easy3D_RENDERER_BACKEND`,
+`Easy3D_ENABLE_OPENGL`, `EASY3D_NO_OPENGL` and redundant viewer-selection variants;
+remove their branches and exports rather than maintaining parallel selection logic.
+Feature and test options may still control their own scope, but must not select
+or override a backend. Keep CMake and C++ selection logic short and direct.
+
+Discover dependencies, compile sources, link libraries and install/export
+backend-specific headers only for the selected family. Vulkan builds must not
+depend on OpenGL/GLEW; OpenGL builds must not require the Vulkan SDK, loader or
+shader compiler. This policy supersedes the earlier backend cache enum and
+independent enable-switch proposals, including commands in the history below.
 
 The intended public classes and their implementations belong directly in
 `easy3d/viewer`, in these matching pairs. Both families remain in the source
@@ -59,17 +72,15 @@ The target selector is:
 
 ```cpp
 // easy3d/viewer/viewer.h
-#if defined(EASY3D_NO_OPENGL)
-#include <easy3d/viewer/vulkan_offscreen.h>
-namespace easy3d { using OffScreen = VulkanOffScreen; }
-#ifdef EASY3D_HAS_VULKAN_VIEWER
+#ifdef EASY3D_HAS_VULKAN
 #include <easy3d/viewer/vulkan_viewer.h>
 #include <easy3d/viewer/vulkan_multi_viewer.h>
+#include <easy3d/viewer/vulkan_offscreen.h>
 namespace easy3d {
     using Viewer = VulkanViewer;
     using MultiViewer = VulkanMultiViewer;
+    using OffScreen = VulkanOffScreen;
 }
-#endif
 #else
 #include <easy3d/viewer/opengl_viewer.h>
 #include <easy3d/viewer/opengl_multi_viewer.h>
@@ -103,10 +114,11 @@ friendship separately to `OpenGLViewer` and `VulkanViewer`. With the selected
 `friend class Viewer;` cannot name a type alias. Renderer headers use selected
 forward declarations so friendship does not introduce a window dependency.
 
-CMake supplies and exports the selected
-backend's compile definitions to consumers, including `EASY3D_NO_OPENGL` for
-Vulkan. The header must not allow `EASY3D_TUTORIAL_VULKAN` or a per-application
-macro to override the configured backend.
+CMake propagates `EASY3D_HAS_VULKAN` through the selected library targets and
+installed package so library sources and consumers agree. The package follows
+`Easy3D_ENABLE_VULKAN`; it must not export a second backend-selection variable.
+The header must not allow `EASY3D_TUTORIAL_VULKAN` or a per-application macro to
+override the configured backend.
 
 Remove `EASY3D_TUTORIAL_USES_VULKAN` from all tutorials, including shared tutorial
 headers and helpers, and remove its definition from the final public selector.
@@ -142,10 +154,14 @@ only its header compiles.
 
 ### 1. Enforce CMake backend choice and establish explicit counterparts — completed
 
-- Introduce the exclusive CMake backend choice above. Select renderer, viewer,
-  GUI/application, binding and test sources/dependencies from that choice. Remove
-  mixed-backend targets and tutorial overrides; fail configuration on conflicts.
-  Keep window-host enablement separate so Vulkan offscreen builds remain possible.
+- Use `Easy3D_ENABLE_VULKAN` alone: ON selects Vulkan; OFF selects OpenGL.
+  Select renderer, viewer, GUI/application, binding and test sources/dependencies
+  with this option and its `else` branch. C++ uses only `EASY3D_HAS_VULKAN` for
+  backend selection. Remove mixed-backend targets and tutorial overrides.
+- Finish replacing the previous selector variables/macros throughout CMake,
+  renderer/viewer/gui sources, target definitions, installed package configuration,
+  examples and CI. Remove obsolete options and exports without adding compatibility
+  aliases. Preserve offscreen use without introducing another backend selector.
 - Rename the existing OpenGL `Viewer` and `MultiViewer` classes to `OpenGLViewer`
   and `OpenGLMultiViewer`, including constructors, destructors and base references.
   Put their implementations in the root-level filename pairs listed above.
@@ -160,8 +176,8 @@ only its header compiles.
   used by tutorials, applications and Python bindings before renaming them.
 
 **Gate:** the selected concrete viewer and offscreen classes build and render in
-separate Vulkan-only and OpenGL-only configurations; configuration rejects
-coexistence. OpenGL multi-view behavior is preserved. No duplicate implementation objects or
+separate `Easy3D_ENABLE_VULKAN=ON` and `OFF` configurations; each contains only
+its selected backend and exports the matching macro presence. OpenGL multi-view behavior is preserved. No duplicate implementation objects or
 new facade layer is introduced. Existing public include compatibility can be kept
 thin while the remaining steps are completed.
 
@@ -284,8 +300,11 @@ Backend-specific extensions are documented without requiring runtime selection.
 ### Validation and completion criteria
 
 For each relevant step, use separate Vulkan-only and OpenGL-only build trees,
-plus a Vulkan-only headless configuration where applicable. Verify that conflicting
-backend requests fail during CMake configuration. On this Mac, run affected
+plus offscreen/headless coverage where applicable. Configure backend selection only
+with `-DEasy3D_ENABLE_VULKAN=ON` and `-DEasy3D_ENABLE_VULKAN=OFF`. Verify that ON
+exports `EASY3D_HAS_VULKAN` and OFF leaves it undefined, in both build-tree and
+installed consumers. Audit CMake and C++ for obsolete backend selectors; do not
+reintroduce parallel flags to handle old configurations. On this Mac, run affected
 Vulkan regressions with MoltenVK and validation,
 plus the OpenGL counterpart regressions; broaden to the existing full suites for
 structural/API changes. Reuse tests and add focused coverage only for new behavior

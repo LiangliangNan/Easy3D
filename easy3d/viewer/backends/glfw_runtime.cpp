@@ -2,7 +2,7 @@
 #include "glfw_runtime.h"
 #include <easy3d/renderer/backend.h>
 #include <easy3d/util/logging.h>
-#ifdef EASY3D_HAS_VULKAN_VIEWER
+#ifdef EASY3D_HAS_VULKAN
 #include <easy3d/renderer/backends/vulkan/loader.h>
 #endif
 #define GLFW_INCLUDE_NONE
@@ -10,7 +10,7 @@
 #include <algorithm>
 namespace easy3d { namespace detail {
 GlfwRuntime::GlfwRuntime(bool require_vulkan) {
-#ifdef EASY3D_HAS_VULKAN_VIEWER
+#ifdef EASY3D_HAS_VULKAN
     // GLFW snapshots this loader hint at initialization. Prepare it even when
     // an OpenGL host opens first; missing Vulkan must still allow OpenGL use.
     try { loader_ = graphics::internal::VulkanLoader::open(); }
@@ -26,7 +26,7 @@ GlfwRuntime::GlfwRuntime(bool require_vulkan) {
     });
     if (!glfwInit()) {
         glfwTerminate();
-#ifdef EASY3D_HAS_VULKAN_VIEWER
+#ifdef EASY3D_HAS_VULKAN
         glfwInitVulkanLoader(nullptr);
 #endif
         throw BackendUnavailable("GLFW initialization failed (a desktop display is required)");
@@ -43,7 +43,7 @@ int GlfwRuntime::modifiers(GLFWwindow* window) {
 }
 GlfwRuntime::~GlfwRuntime() {
     glfwTerminate();
-#ifdef EASY3D_HAS_VULKAN_VIEWER
+#ifdef EASY3D_HAS_VULKAN
     glfwInitVulkanLoader(nullptr);
 #endif
 }

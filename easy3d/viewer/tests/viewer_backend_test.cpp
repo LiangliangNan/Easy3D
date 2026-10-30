@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/viewer_base.h>
-#if defined(EASY3D_HAS_VULKAN_VIEWER) || !defined(EASY3D_NO_OPENGL)
+#if defined(EASY3D_HAS_VULKAN)
 #include <easy3d/viewer/viewer.h>
 #define GLFW_INCLUDE_NONE
 #include <3rd_party/glfw/include/GLFW/glfw3.h>
@@ -81,7 +81,7 @@ void exercise(ViewerBase& viewer, const std::string& prefix) {
     require(viewer.add_drawable(overlay) == overlay.get(), "common standalone attachment failed");
     overlay->update_vertex_buffer({vec2(10, 10), vec2(90, 10)}, fw, fh); overlay->set_line_width(3);
     require(viewer.run_frames(1) == 0 && viewer.delete_drawable(overlay.get()), "common drawable lifecycle failed");
-#if defined(EASY3D_HAS_VULKAN_VIEWER) || !defined(EASY3D_NO_OPENGL)
+#if defined(EASY3D_HAS_VULKAN)
     bool called = false;
     viewer.bind([&](ViewerBase* host, Model* model) {
         called = host == &viewer && model == mesh.get(); return true;
@@ -137,14 +137,14 @@ int main(int argc, char** argv) {
             catch (const BackendUnavailable& e) { rejected = std::string(e.what()).find("validation mode") != std::string::npos; }
             require(rejected, "fallback silently ignored validation request");
         } else {
-#if defined(EASY3D_HAS_VULKAN_VIEWER) || !defined(EASY3D_NO_OPENGL)
+#if defined(EASY3D_HAS_VULKAN)
             {
                 auto requested = options();
-#ifdef EASY3D_HAS_VULKAN_VIEWER
+#ifdef EASY3D_HAS_VULKAN
                 requested.validation = requested.synchronization_validation = mode == "--validation";
 #endif
                 auto viewer = Factory::create("automatic", requested);
-#ifdef EASY3D_HAS_VULKAN_VIEWER
+#ifdef EASY3D_HAS_VULKAN
                 require(viewer->backend() == Backend::Vulkan && viewer->fallback_reason().empty(), "Automatic did not prefer Vulkan");
 #else
                 require(viewer->backend() == Backend::OpenGL && !viewer->fallback_reason().empty(), "OpenGL-only selection failed");
@@ -152,7 +152,7 @@ int main(int argc, char** argv) {
                 exercise(*viewer, "runtime-automatic");
             }
             for (Backend backend : {Backend::Vulkan, Backend::OpenGL}) {
-#if !defined(EASY3D_HAS_VULKAN_VIEWER)
+#if !defined(EASY3D_HAS_VULKAN)
                 if (backend == Backend::Vulkan) continue;
 #endif
 #ifdef EASY3D_NO_OPENGL
