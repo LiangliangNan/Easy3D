@@ -15,11 +15,11 @@
     - [ ] Make the following changes:
       - [] Remove runtime selection of backends. Try to simplify the code and reduce unnecessary functions and files.
       - [] The easy3d/viewer folder contains the implementation of the following classes:
-          - [] OpenGLViewer: renamed from original OpenGL based Viewer (VulkanViewer' counterpart). opengl_viewer.h, opengl_viewer.cpp
-          - [] VulkanViewer: Vulkan-based Viewer's counterpart. vulkan_viewer.h, vulkan_viewer.cpp
-          - [] OpenGLMultiViewer: renamed from original OpenGL based MultiViewer. opengl_multi_viewer.h, opengl_multi_viewer.cpp
-          - [] VulkanMultiViewer: Vulkan-based MultiViewer's counterpart. vulkan_multi_viewer.h, vulkan_multi_viewer.cpp
-          - [] OpenGLOffScreen: renamed from original OpenGL based OffScreen. opengl_offscreen.h, opengl_offscreen.cpp
+          - OpenGLViewer: renamed from original OpenGL based Viewer (VulkanViewer' counterpart). opengl_viewer.h, opengl_viewer.cpp
+          - VulkanViewer: Vulkan-based Viewer's counterpart. vulkan_viewer.h, vulkan_viewer.cpp
+          - OpenGLMultiViewer: renamed from original OpenGL based MultiViewer. opengl_multi_viewer.h, opengl_multi_viewer.cpp
+          - VulkanMultiViewer: Vulkan-based MultiViewer's counterpart. vulkan_multi_viewer.h, vulkan_multi_viewer.cpp
+          - OpenGLOffScreen: renamed from original OpenGL based OffScreen. opengl_offscreen.h, opengl_offscreen.cpp
           - VulkanOffScreen: Vulkan-based OffScreen's counterpart. vulkan_offscreen.h, vulkan_offscreen.cpp
       - For all these classes, try to simplify the code, reduce the number of private and protected functions, avoid introducing new files/functions as much as possible.
         - [] create a viewer.h file, which contains:

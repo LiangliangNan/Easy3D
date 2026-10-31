@@ -158,6 +158,24 @@ Tutorials 701–703 retain their original algorithm code without extra ownership
 configuration helpers. Match OpenGL materials, two-sided lighting/back colors,
 flat/smooth shading, background and canvas behavior.
 
+## Current status (2026-10-31)
+
+- The remaining migration build breaks are cleared. The OpenGL-only
+  (`build-opengl`), Vulkan-only (`build-ci-vulkan`) and migration
+  (`build-migration`) trees compile with tutorials enabled and finish clean.
+- The portable viewer contract no longer exposes `backend()` or
+  `fallback_reason()`. Backend identity belongs to the concrete host class, and
+  initialization failures report directly; runtime backend selection, the
+  automatic Vulkan-to-OpenGL fallback, creation factories and the OffScreen
+  facade are removed rather than bypassed.
+- The render lifecycle hook is unified across concrete hosts as
+  `virtual bool draw()`; `draw_frame()` drives the frame hooks and presents only
+  when the frame draws.
+- Remaining migration work in plan order: implement `VulkanMultiViewer` and its
+  alias (step 3), remove `EASY3D_TUTORIAL_USES_VULKAN` conditionals from tutorial
+  sources (step 5), then complete renderer/interaction/GUI application parity
+  (step 6).
+
 ## Implementation plan and remaining steps
 
 The following sequence is the proposed work order. Temporary compatibility needed
