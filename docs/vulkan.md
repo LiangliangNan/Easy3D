@@ -251,7 +251,10 @@ Decisions in force:
 Divergence from `main` measured on 2026-10-31 (the number to drive down; see U6): in
 `easy3d/`, 6 files exist only in `main` (`viewer.cpp`, `multi_viewer.*`, `offscreen.*`,
 `snapshot.cpp`) and 26 only in this branch; 58 tutorial files and 3 application entries
-differ.
+differ. After normalising the class rename, the OpenGL classes differ from `main` by
+(changed lines / `main` lines): `multi_viewer.h` 12/168, `multi_viewer.cpp` 5/334,
+`viewer.h` 189/671, `viewer.cpp` 835/1834, `offscreen.h` 243/220, `offscreen.cpp`
+164/126. U1–U2 restore `main`'s code and keep only the differences the unified API needs.
 
 Ordered work items. Each ends with a rebuild of the Vulkan and OpenGL trees and an update
 of this document.
@@ -286,7 +289,13 @@ of this document.
   line-rasterization difference of this Mesa version or a real placement regression
   (needs the CI Mesa version or hardware). `vulkan.crosssection` and
   `vulkan.pickerviewer` passed 15 consecutive repetitions each; encouraging, not proof.
-  MoltenVK has not been run.
+  This verification did not include macOS/MoltenVK (earlier stages were run there; see the
+  history). OpenGL tree (`Easy3D_ENABLE_VULKAN=OFF`, tutorials and renderer tests ON) on
+  the same base: builds clean (150/150); 8 of 9 tests pass under Xvfb with software GL.
+  `opengl.counterparts` fails ("assigned multi-view cell did not render", after two
+  `failed creating array buffer` errors). It fails identically in 3 of 3 runs on upstream
+  `a89bb2d` built without any of these patches, so it predates them. Whether it is a real
+  `OpenGLMultiViewer` defect or a limitation of software GL is undetermined.
 - **U1** Unify `Viewer` (P1, P2): fold `OpenGLViewer` and `VulkanViewer` into one `Viewer`
   in `viewer.h/.cpp`, with `main`'s constructor (D1), `ViewerBase` declaring the shared
   API, and the Vulkan part under `#ifdef`. Align subclass hooks and protected state with
@@ -306,7 +315,7 @@ of this document.
   and move the tutorial smoke-test registration out of `tutorials/CMakeLists.txt`.
 - **W10** Mapple, Qt/wx, Python rendering, transparency/SSAO/shadows/EDL parity.
 
-Suggested order: verify the OpenGL tree, then U1, U2, U3–U4, U5, U6, W10,
+Suggested order: U1, U2, U3–U4, U5, U6, W10,
 re-running the tests after each.
 
 ### 1. Enforce CMake backend choice and establish explicit counterparts — completed
@@ -504,8 +513,9 @@ validation coverage. Completion also requires Windows/Linux and Qt/wx testing
 when those integrations are available; local MoltenVK tests do not establish
 cross-platform or full application parity.
 
-**Next implementation step:** verify the OpenGL tree builds (not yet done on this base),
-then confirm D1–D4 and start U1. Nothing in U1–U6 has been started.
+**Next implementation step:** confirm D1–D4 and start U1; D2 comes first because it decides
+how the unified Vulkan `Viewer` owns the device that `VulkanOffScreen` owns today.
+Nothing in U1–U6 has been started.
 
 ## Implementation history and current baseline
 
