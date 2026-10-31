@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Copyright (C) 2026 Liangliang Nan
 #include <easy3d/renderer/render_device.h>
-#include <easy3d/renderer/backend.h>
 #include <easy3d/renderer/backends/clipping.h>
 #include <easy3d/renderer/backends/vulkan/loader.h>
 #include <easy3d/renderer/backends/vulkan/surface.h>

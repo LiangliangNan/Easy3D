@@ -27,7 +27,6 @@
 #include <easy3d/viewer/opengl_viewer.h>
 #include <easy3d/viewer/backends/glfw_runtime.h>
 #include <easy3d/viewer/backends/viewer_loop.h>
-#include <easy3d/renderer/backend.h>
 
 #include <iostream>
 

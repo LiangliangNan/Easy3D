@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "glfw_runtime.h"
-#include <easy3d/renderer/backend.h>
 #include <easy3d/util/logging.h>
 #ifdef EASY3D_HAS_VULKAN
 #include <easy3d/renderer/backends/vulkan/loader.h>

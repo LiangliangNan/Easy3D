@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/viewer.h>
-#include <easy3d/renderer/backend.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/drawable_triangles.h>
@@ -21,6 +20,7 @@
 #include "easy3d/viewer/viewer.h"
 using namespace easy3d;
 namespace {
+enum class Backend { Vulkan, OpenGL };
 void require(bool value, const char *message) {
     if (!value)
         throw std::runtime_error(message);

@@ -2,7 +2,6 @@
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/camera.h>
-#include <easy3d/renderer/backend.h>
 #include <easy3d/renderer/drawable.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -17,8 +16,6 @@ struct PyOffScreen : easy3d::OffScreen {
 }
 void bind_easy3d_viewer_offscreen(py::module_& m) {
     using namespace easy3d;
-    py::enum_<Backend>(m,"Backend")
-        .value("Automatic",Backend::Automatic).value("Vulkan",Backend::Vulkan).value("OpenGL",Backend::OpenGL);
     py::class_<OffScreen,std::shared_ptr<OffScreen>,PyOffScreen>(m,"OffScreen","Backend-neutral offscreen rendering")
         .def(py::init<int,int>(),py::arg("width")=800,py::arg("height")=600)
         .def("camera",static_cast<Camera*(OffScreen::*)()>(&OffScreen::camera),py::return_value_policy::reference_internal)

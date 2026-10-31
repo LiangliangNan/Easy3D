@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/viewer.h>
-#include <easy3d/renderer/backend.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_triangles.h>
@@ -15,6 +14,7 @@
 #include <stdexcept>
 using namespace easy3d;
 namespace {
+enum class Backend { Vulkan, OpenGL };
 void require(bool ok, const char* text) { if (!ok) throw std::runtime_error(text); }
 bool same(const mat4& a, const mat4& b) {
     for (unsigned i=0; i<16; ++i) if (std::abs(a[i]-b[i])>1e-5f) return false;
