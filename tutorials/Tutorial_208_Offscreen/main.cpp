@@ -16,6 +16,6 @@ int main(int argc, char** argv) {
         // Same model / renderer / drawable / camera APIs used by the OpenGL viewer.
         auto* faces = mesh->renderer()->get_triangles_drawable("faces", false);
         if (faces) faces->set_uniform_coloring(easy3d::vec4(0.7f, 0.85f, 1, 1));
-        return renderer.render(argc > 2 ? argv[2] : "vulkan.png") ? 0 : 1;
+        return renderer.render(argc > 2 ? argv[2] : "offscreen.png") ? 0 : 1;
     } catch (const std::exception& e) { std::cerr << e.what() << '\n'; return 1; }
 }

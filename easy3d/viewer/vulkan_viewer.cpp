@@ -781,18 +781,3 @@ bool VulkanViewer::drop_event(const std::vector<std::string>& names) {
     return count!=0;
 }
 }
-
-namespace easy3d { namespace detail {
-std::unique_ptr<ViewerBase> create_vulkan_viewer(const std::string& title, const ViewerOptions& o) {
-    VulkanViewerOptions options;
-    options.width = o.width; options.height = o.height; options.visible = false;
-    options.resizable = o.resizable; options.samples = 1;
-    options.device.validation = o.validation;
-    options.device.synchronization_validation = o.synchronization_validation;
-    std::unique_ptr<VulkanViewer> host(new VulkanViewer(title, options));
-    if (!(host->device().supported_sample_counts() & o.samples))
-        throw std::runtime_error("Vulkan viewer does not support the requested MSAA sample count");
-    host->set_samples(o.samples);
-    return std::unique_ptr<ViewerBase>(host.release());
-}
-} }

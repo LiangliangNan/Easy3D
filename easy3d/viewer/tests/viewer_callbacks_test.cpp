@@ -14,7 +14,6 @@
 #include <stdexcept>
 using namespace easy3d;
 namespace {
-enum class Backend { Vulkan, OpenGL };
 void require(bool ok, const char* text) { if (!ok) throw std::runtime_error(text); }
 bool same(const mat4& a, const mat4& b) {
     for (unsigned i=0; i<16; ++i) if (std::abs(a[i]-b[i])>1e-5f) return false;
@@ -40,9 +39,9 @@ struct Events {
         require(cursor && button && scroll && key && character && drop && focus,"host callbacks missing");
     }
 };
-std::shared_ptr<ViewerBase> host(Backend backend, bool validation) {
+std::shared_ptr<ViewerBase> host(bool validation) {
 #ifdef EASY3D_HAS_VULKAN
-    if (backend == Backend::Vulkan) {
+    {
         VulkanViewerOptions o;
         o.width=181; o.height=151; o.visible=false;
         o.device.validation = validation;
@@ -66,8 +65,8 @@ std::shared_ptr<SurfaceMesh> scene(ViewerBase& v) {
     m->add_triangle(a,b,c); v.add_model(m); v.fit_screen();
     m->renderer()->get_triangles_drawable("faces")->set_lighting(false); return m;
 }
-void frames_and_input(Backend backend, bool validation) {
-    auto v=host(backend,validation); auto mesh=scene(*v); Events e(v->window());
+void frames_and_input(bool validation) {
+    auto v=host(validation); auto mesh=scene(*v); Events e(v->window());
     auto faces=mesh->renderer()->get_triangles_drawable("faces");
     faces->set_uniform_coloring(vec4(.8f,.2f,.1f,1));
     // Render the farther blue surface last: missing depth initialization would
@@ -174,8 +173,8 @@ void frames_and_input(Backend backend, bool validation) {
     require(resizes==resize_count,"duplicate framebuffer event repeated common resize callback");
     require(v->validation_errors()==0,"portable callback rendering validation errors");
 }
-void replacement_and_failures(Backend backend,bool validation) {
-    auto v=host(backend,validation);scene(*v);Events e(v->window());
+void replacement_and_failures(bool validation) {
+    auto v=host(validation);scene(*v);Events e(v->window());
     auto lease=std::make_shared<int>(7); std::weak_ptr<int> weak=lease;
     ViewerCallbacks callbacks;
     callbacks.key_press_event=[&,lease](ViewerBase* viewer,int,int) {
@@ -196,9 +195,9 @@ void replacement_and_failures(Backend backend,bool validation) {
 }
 int main(int argc,char** argv) {
     try {
-        initialize(false,false,false);Backend backend=Backend::Vulkan;bool validation=false;
-        for(int i=1;i<argc;++i) { if(std::string(argv[i])=="--opengl")backend=Backend::OpenGL;else if(std::string(argv[i])=="--validation")validation=true; }
-        frames_and_input(backend,validation);replacement_and_failures(backend,validation);
+        initialize(false,false,false);bool validation=false;
+        for(int i=1;i<argc;++i) { if(std::string(argv[i])=="--validation")validation=true; }
+        frames_and_input(validation);replacement_and_failures(validation);
         std::cout<<"PASS: portable callbacks, logical coordinates, consumption/capture, default controls, resize, lifetime and exceptions\n";
     }catch(const std::exception& e){std::cerr<<"FAIL: "<<e.what()<<'\n';return 1;}
 }

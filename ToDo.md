@@ -1,50 +1,27 @@
 ### ToDo list (or on going):
-- Vulkan support (experimental)
+- Vulkan support (experimental). Details, decisions and the ordered work items are in docs/vulkan.md
+  ("Current status and work order"). One backend per build (`Easy3D_ENABLE_VULKAN` ON/OFF); user code and
+  all tutorials stay the same for both backends (`Viewer`, `MultiViewer`, `OffScreen` from `easy3d/viewer/viewer.h`).
   - [x] Remove "easy3d/graphics" dir (content consolidated into "easy3d/renderer" and "easy3d/viewer")
-  - Unify APIs for the classes in "easy3d/renderer", "easy3d/viewer", and "easy3d/gui" for Vulkan and OpenGL. Vulkan and 
-    OpenGL related calls should remain in the backends.
-    - [x] Unified OffScreen scene/file API and initialization-availability fallback
-    - [x] Optional runtime Vulkan loader and missing/invalid-loader OffScreen fallback
-    - [x] Shared GLFW lifecycle and surviving OpenGL/Vulkan viewer resources
-    - [x] Common interactive frame driving, bounded execution and callback-error contract
-    - [x] Runtime factory for built-in viewers with explicit backends and availability fallback
-    - [x] Portable input/frame callbacks with logical coordinates and gesture capture
-    - [x] Portable projection/unprojection and logical-coordinate visible-surface queries
-    - [x] Concrete viewer/offscreen implementations in matching backend directories
-    - [ ] Unified Viewer constructors/subclass storage, capture/picking/selection, GUI and native-only extensions
-    - [ ] Make the following changes:
-      - [] Remove runtime selection of backends. Try to simplify the code and reduce unnecessary functions and files.
-      - [] The easy3d/viewer folder contains the implementation of the following classes:
-          - OpenGLViewer: renamed from original OpenGL based Viewer (VulkanViewer' counterpart). opengl_viewer.h, opengl_viewer.cpp
-          - VulkanViewer: Vulkan-based Viewer's counterpart. vulkan_viewer.h, vulkan_viewer.cpp
-          - OpenGLMultiViewer: renamed from original OpenGL based MultiViewer. opengl_multi_viewer.h, opengl_multi_viewer.cpp
-          - VulkanMultiViewer: Vulkan-based MultiViewer's counterpart. vulkan_multi_viewer.h, vulkan_multi_viewer.cpp
-          - OpenGLOffScreen: renamed from original OpenGL based OffScreen. opengl_offscreen.h, opengl_offscreen.cpp
-          - VulkanOffScreen: Vulkan-based OffScreen's counterpart. vulkan_offscreen.h, vulkan_offscreen.cpp
-      - For all these classes, try to simplify the code, reduce the number of private and protected functions, avoid introducing new files/functions as much as possible.
-        - [] create a viewer.h file, which contains:
-              #if defined(EASY3D_NO_OPENGL) || defined(EASY3D_TUTORIAL_VULKAN)
-              #define EASY3D_TUTORIAL_USES_VULKAN 1
-              #include <easy3d/viewer/vulkan_viewer.h>
-              #include <easy3d/viewer/vulkan_multi_viewer.h>
-              #include <easy3d/viewer/vulkan_offscreen.h>
-              namespace easy3d {
-                  using Viewer = VulkanViewer;
-                  using MultiViewer = VulkanMultiViewer;
-                  using OffScreen = VulkanOffScreen;
-              }
-              #else
-              #define EASY3D_TUTORIAL_USES_VULKAN 0
-              namespace easy3d {
-                  using Viewer = OpenGLViewer;
-                  using MultiViewer = OpenGLMultiViewer;
-                  using OffScreen = OpenGLOffScreen;
-              }
-              #endif
-          With these changes, all my original tutorials almost don't need to make many changes (at least their header files).
-          Also for tutorials where the viewer need to inherit either OpenGLViewer or VulkanViewer, this can be simply implemented
-          using something like "class TutorialXXX : public easy3d::Viewer {...}"
-        
+  - [x] Exclusive backend choice (`Easy3D_ENABLE_VULKAN`), runtime selection and offscreen facade removed
+        (the OpenGL*/Vulkan* class names this created are superseded by the principles below)
+  - [x] Shared GLFW lifecycle, frame driving, portable input/frame callbacks and camera/surface queries
+  - [x] W1-W3 docs sync; build blockers (single home for tutorials, enable_testing, bounded tutorial tests); Tutorial 208
+  - [x] W4 Delete runtime-selection/headless leftovers (Backend enum, ViewerOptions, create_*_viewer, ...)
+  - [ ] W5 Remove EASY3D_TUTORIAL_USES_VULKAN (tutorials 202, 501-505 gated; 401-406 still have a separate Vulkan path)
+  - [ ] W6 Vulkan tests on lavapipe: 68/69 pass; fix vulkan.interactionoverlay border offset; MoltenVK pending
+  - Top priority (docs/vulkan.md, "Migration principles"): minimal source changes; same class names and the same
+    .h/.cpp files as the main branch (Viewer in viewer.h/.cpp for both backends); #ifdef EASY3D_HAS_VULKAN layout inside
+    the classes; no new files except shaders, backend files and tests; minimal CMake changes; client code unchanged.
+  - [ ] U1 One `Viewer` class (viewer.h/.cpp), ViewerBase kept as the unified API; delete opengl_viewer.*/vulkan_viewer.*
+  - [ ] U2 One `OffScreen` and `MultiViewer` (offscreen.*, multi_viewer.*, snapshot.cpp as in main); Vulkan MultiViewer;
+        re-enable Tutorial 205 and FigureMaker
+  - [ ] U3 Classes without counterpart: same-file #ifdef structure (effects, pickers, ImGui)
+  - [ ] U4 Python bindings, installed package and CI use the final names
+  - [ ] U5 Tutorials and applications identical to main; no backend conditionals
+  - [ ] U6 Diff audit against main (files, CMake); remove temporary gates
+  - [ ] W10 Mapple, Qt/wx, Python rendering, transparency/SSAO/shadows/EDL
+
 - Send the computed value of "MVP * MANIP" to shaders (avoiding computing the matrix product for each vertex/fragment)
 - Walkthrough and animation; allow to modify the cameras interactively
 - Implement potree for huge point cloud visualization (https://github.com/potree/potree)

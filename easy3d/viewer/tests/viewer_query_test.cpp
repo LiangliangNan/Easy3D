@@ -20,15 +20,14 @@
 #include "easy3d/viewer/viewer.h"
 using namespace easy3d;
 namespace {
-enum class Backend { Vulkan, OpenGL };
 void require(bool value, const char *message) {
     if (!value)
         throw std::runtime_error(message);
 }
 bool near(const vec3 &a, const vec3 &b, float epsilon = 1e-4f) { return distance(a, b) < epsilon; }
-std::shared_ptr<ViewerBase> make_host(Backend backend, unsigned samples, bool validation) {
+std::shared_ptr<ViewerBase> make_host(unsigned samples, bool validation) {
 #ifdef EASY3D_HAS_VULKAN
-    if (backend == Backend::Vulkan) {
+    {
         VulkanViewerOptions o;
         o.width = 181;
         o.height = 151;
@@ -52,8 +51,8 @@ std::shared_ptr<ViewerBase> make_host(Backend backend, unsigned samples, bool va
 #endif
 }
 
-void check(Backend backend, unsigned samples, bool validation) {
-    auto v = make_host(backend, samples, validation);
+void check(unsigned samples, bool validation) {
+    auto v = make_host(samples, validation);
     auto front = std::make_shared<TrianglesDrawable>("front");
     v->add_drawable(front);
     front->update_vertex_buffer({vec3(-1, -1, .2f), vec3(1, -1, .2f), vec3(0, 1, .2f)});
@@ -80,7 +79,7 @@ void check(Backend backend, unsigned samples, bool validation) {
         const mat4 original = v->camera()->modelViewProjectionMatrix();
 #ifndef EASY3D_HAS_VULKAN
         GLuint ubo = 0, pbo = 0;
-        if (backend == Backend::OpenGL) {
+        {
             glfwMakeContextCurrent(v->window());
             glGenBuffers(1, &ubo);
             glBindBuffer(GL_UNIFORM_BUFFER, ubo);
@@ -114,7 +113,7 @@ void check(Backend backend, unsigned samples, bool validation) {
         for (unsigned i = 0; i < 16; ++i)
             require(original[i] == v->camera()->modelViewProjectionMatrix()[i], "query changed camera matrices");
 #ifndef EASY3D_HAS_VULKAN
-        if (backend == Backend::OpenGL) {
+        {
             GLint binding = 0, viewport[4], pack = 0;
             GLboolean mask;
             glGetIntegeri_v(GL_UNIFORM_BUFFER_BINDING, 1, &binding);
@@ -199,7 +198,7 @@ void check(Backend backend, unsigned samples, bool validation) {
     const auto resized_hit = v->point_under_pixel(v->width() / 2, v->height() / 2, resized);
     require(resized && std::abs(resized_hit.z - .2f) < 2e-4f, "query failed after logical/framebuffer resize");
 #ifndef EASY3D_HAS_VULKAN
-    if (backend == Backend::OpenGL) {
+    {
         auto other = std::make_shared<OpenGLViewer>("Portable camera queries other", 4, 3, 2, false, true, 24, 8, 181, 151);
         other->hide();
         glfwMakeContextCurrent(other->window());
@@ -244,17 +243,12 @@ void check(Backend backend, unsigned samples, bool validation) {
 int main(int argc, char **argv) {
     try {
         initialize(false, true, false);
-        Backend backend = Backend::Vulkan;
         bool validation = false;
-        for (int i = 1; i < argc; ++i) {
-            const std::string arg = argv[i];
-            if (arg == "--opengl")
-                backend = Backend::OpenGL;
-            else if (arg == "--validation")
+        for (int i = 1; i < argc; ++i)
+            if (std::string(argv[i]) == "--validation")
                 validation = true;
-        }
-        check(backend, 1, validation);
-        check(backend, 4, validation);
+        check(1, validation);
+        check(4, validation);
         std::cout << "Portable viewer camera queries passed\n";
         return 0;
     } catch (const std::exception &e) {

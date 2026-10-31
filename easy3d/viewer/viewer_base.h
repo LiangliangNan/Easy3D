@@ -13,12 +13,6 @@ namespace easy3d {
 class Camera;
 class Model;
 class Drawable;
-struct ViewerOptions {
-    int width = 800, height = 600;
-    bool visible = true, resizable = true;
-    unsigned samples = 4;
-    bool validation = false, synchronization_validation = false;
-};
 // Portable interactive contract. Concrete hosts own their backend and frame
 // lifecycle: draw() renders one frame and returns whether it was presented;
 // draw_frame() drives the loop and invokes the unified frame hooks. Create,

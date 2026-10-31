@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "loader.h"
 #include <cstdlib>
+#include <stdexcept>
 #include <string>
 #include <vector>
 #ifdef _WIN32

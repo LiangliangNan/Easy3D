@@ -22,6 +22,7 @@ option(Easy3D_ENABLE_FFMPEG "Build the video encoding module that requires ffmpe
 option(Easy3D_ENABLE_VULKAN "Build the viewers/renderers with Vulkan"                         ON)
 option(Easy3D_BUILD_VULKAN_TESTS "Build deterministic Vulkan rendering tests"                 ON)
 option(Easy3D_VULKAN_TEST_VALIDATION "Require Vulkan and synchronization validation in CTest" ON)
+option(Easy3D_BUILD_RENDERER_TESTS "Build the renderer/viewer regression tests (either backend)" OFF)
 
 ################################################################################
 
@@ -36,7 +37,7 @@ project(Easy3D VERSION ${Easy3D_VERSION_STRING})
 ################################################################################
 
 # Crucial line to enable CTest
-if (Easy3D_BUILD_VULKAN_TESTS)
+if (Easy3D_BUILD_RENDERER_TESTS OR (Easy3D_ENABLE_VULKAN AND Easy3D_BUILD_VULKAN_TESTS))
     enable_testing()
 endif ()
 
