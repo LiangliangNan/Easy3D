@@ -45,7 +45,7 @@ using namespace easy3d;
 RealCamera::RealCamera(const std::string& title,
                        const std::string& bundler_file,
                        const std::string& cloud_file)
-    : Viewer(title, 4, 3, 2, false, false)
+    : Viewer(title, 800, 600, 4, false, true, false)
     , current_view_(0)
     , texture_(nullptr)
     , need_update_(false)

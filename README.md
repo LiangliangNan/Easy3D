@@ -7,8 +7,11 @@ This **Vulkan development branch** builds Easy3D with exactly one renderer, sele
 configure time by `Easy3D_ENABLE_VULKAN`: `ON` (the default on this branch) builds the native
 Vulkan/GLFW viewer, `OFF` builds the original OpenGL viewer. The goal is that existing Easy3D client code builds unchanged against
 either backend: the classes keep the names and headers of the `main` branch (`Viewer`,
-`MultiViewer`, `OffScreen`), and only the CMake option changes. The unification of the
-class structure is still in progress. A Vulkan SDK is required only for
+`MultiViewer`, `OffScreen`), and only the CMake option changes. The `Viewer` constructor is
+`Viewer(title, width, height, samples, full_screen, visible, resizable, options)`, where the last
+parameter is `OpenGLOptions` or `VulkanOptions`; it differs from the older OpenGL-only argument
+order, so positional calls with more than a title need updating. The unification of the class
+structure is still in progress. A Vulkan SDK is required only for
 the Vulkan backend. Tutorials are off by default (`-DEasy3D_BUILD_TUTORIALS=ON`). Vulkan feature
 coverage is still incomplete; see [build instructions and migration status](docs/vulkan.md).
 The Qt applications (e.g., Mapple), Python bindings and multi-view features require

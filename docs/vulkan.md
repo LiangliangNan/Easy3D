@@ -32,12 +32,34 @@ by both backends), then backend-specific protected/private parts, each in its ow
 `#ifdef EASY3D_HAS_VULKAN` / `#else` branch, kept as small as possible:
 
 ```cpp
+#ifdef EASY3D_HAS_VULKAN
+struct VulkanOptions {
+    bool validation = false;
+    bool synchronization_validation = false;
+    std::string device_name;
+};
+#else
+struct OpenGLOptions {
+    int major = 3;
+    int minor = 2;
+    int depth_bits = 24;
+    int stencil_bits = 8;
+};
+#endif
+
 class Viewer : public ViewerBase {
 public:
-    explicit Viewer(const std::string& title = "Easy3D Viewer", int samples = 4, /* ... as in main */);
+    explicit Viewer(const std::string& title = "Easy3D Viewer",
+                    int width = 800, int height = 600, int samples = 4,
+                    bool full_screen = false, bool visible = true, bool resizable = true,
+#ifdef EASY3D_HAS_VULKAN
+                    const VulkanOptions& vk_options = {});
+#else
+                    const OpenGLOptions& gl_options = {});
+#endif
     virtual ~Viewer();
     int run(bool see_all = true) override;
-    // ... some public functions: the unified APIs shared by both backends
+    // ... some public functions: the unified APIs used by both backends
 
 protected: /* or */ private:
 #ifdef EASY3D_HAS_VULKAN
@@ -50,10 +72,14 @@ protected: /* or */ private:
 };
 ```
 
-The two comments `// ... some public functions: the unified APIs shared by both backends`
+The constructor is the one public place where the backends differ: the last parameter is
+`VulkanOptions` or `OpenGLOptions` (D1), so everything before it is portable.
+
+The two comments `// ... some public functions: the unified APIs used by both backends`
 and `// Keep this part of code minimum` (in each of the two branches) are mandatory and
-must always be kept in the source. `ViewerBase` stays and declares the unified viewer
-API (it replaces the earlier plan to remove it; see D3 for the files that support it).
+must always be kept in the source. `ViewerBase` stays: it declares the unified viewer API as
+virtual functions and also implements some shared functions (it replaces the earlier plan to
+remove it; see D3 for the files that support it).
 The same layout applies to `MultiViewer`, `OffScreen` and the other classes.
 
 **P3. Classes without an exact counterpart** keep the same file and the same
@@ -78,20 +104,50 @@ in `main`; add conditions only where a dependency or source genuinely differs by
 `OFF` (this defines or leaves undefined the C++ macro `EASY3D_HAS_VULKAN`). Their code
 needs no change.
 
-**Pending confirmation** (defaults apply until answered; remove this list when settled):
+**Decisions (2026-10-31):**
 
-- **D1** Constructor: `main`'s signature is normative for client code to stay unchanged
-  (`Viewer(title, samples, gl_major, gl_minor, full_screen, resizable, depth_bits,
-  stencil_bits, width, height)`). Parameters with no Vulkan meaning are accepted and
-  ignored, never reinterpreted.
-- **D2** Inheritance: `main` has `OffScreen : protected Viewer` and
-  `MultiViewer : public Viewer`; this branch has `VulkanViewer` derive from
-  `VulkanOffScreen`. Decide before U2; no code depends on it until then.
-- **D3** Files this branch added beyond `main` for the shared API (`viewer_base.h/.cpp`,
-  `viewer_input.h`, `viewer_callbacks.h`, `backends/glfw_runtime.*`,
-  `backends/viewer_loop.h`): merge, or classify as backend files; decide at U1.
-- **D4** Vulkan-only viewer options (validation, device selection) have no home in the
-  public layout of P2; decide how they are supplied (U1).
+- **D1 Constructor** (supersedes `main`'s signature): `Viewer(title, width, height, samples,
+  full_screen, visible, resizable, options)`, where `options` is `OpenGLOptions` (GL
+  version, depth and stencil bits) or `VulkanOptions` (validation, synchronization
+  validation, device name), as in the layout of P2. `VulkanOptions` has the same fields as
+  `graphics::DeviceOptions`. Consequences, recorded because they break the otherwise
+  unchanged client code: `main`'s order was `(title, samples, gl_major, gl_minor,
+  full_screen, resizable, depth_bits, stencil_bits, width, height)`; the new order differs
+  and `width`, `height` and `samples` are all `int`, so an old positional call such as
+  `Viewer(title, 4, 3, 2, false, false)` still compiles and silently means width 4, height
+  3, 2 samples. In `main`, only Tutorials 202 and 207 (and `OffScreen`'s own call) pass
+  more than a title; they are the only tutorial edits allowed by criterion 3, and are
+  listed in the U6 audit. *Status: implemented on `OpenGLViewer` and `VulkanViewer`.*
+  `OpenGLOptions` has a defaulted constructor (the project is C++11, where a struct with
+  default member initializers cannot be brace-initialized); `VulkanOptions` is an alias of
+  `graphics::DeviceOptions`. `visible=false` keeps the window from being shown by `run()` in
+  OpenGL and creates it hidden in Vulkan; `full_screen` uses the primary monitor's video mode
+  in both. `samples = 0` means no MSAA, a negative count throws `std::invalid_argument`, and a
+  valid power of two the device does not support steps down with a warning, so the default of
+  4 never makes `Viewer()` fail (non-power-of-two counts are still rejected).
+- **D2 Inheritance** follows `main`: `OffScreen : protected Viewer` and
+  `MultiViewer : public Viewer`. The Vulkan device and capture code that
+  `VulkanOffScreen` owns today moves into `Viewer`; when used for offscreen rendering its
+  Vulkan part runs without a visible window. `ViewerBase` declares the API as virtual
+  functions and implements some shared functions.
+- **D3 Shared files** (`viewer_base.h/.cpp`, `viewer_input.h`, `viewer_callbacks.h`,
+  `backends/glfw_runtime.*`, `backends/viewer_loop.h`): merge into the unified classes, or
+  classify as backend files; decided case by case at U1.
+- **D4 Vulkan-only options** enter through the last constructor parameter (`VulkanOptions`).
+  This replaces `VulkanViewerOptions`; the struct and a convenience overload
+  `VulkanViewer(title, VulkanViewerOptions)` remain **temporarily** (until D6/U5) only so that
+  the 12 tutorial subclasses and about 30 test sources keep compiling unchanged, and are
+  marked as temporary in the header. Criterion 1 requires them to be gone.
+
+**Pending:**
+
+- **D5** `MultiViewer` and `OffScreen` constructors: until decided they keep `main`'s
+  parameter lists and forward to the new `Viewer` constructor; how Vulkan options reach them
+  is open.
+- **D6** Bounded tests: tutorials must equal `main`, but the tutorial subclasses in this
+  branch take `(title, VulkanViewerOptions)` so that tests can hide the window and bound the
+  frames. Decide how the generated test sources inject window options into unchanged
+  tutorials (U5).
 
 ## Final migration goal and backend policy
 
@@ -230,7 +286,7 @@ only its header compiles.
 
 Decisions in force:
 
-- The migration principles (P1–P6, D1–D4) are the top criteria.
+- The migration principles (P1–P6) and decisions D1–D4 are the top criteria.
 - `tutorials/` is the single home of all tutorials; `applications/VulkanViewer` contains
   only the demo. No headless configuration.
 - Tutorials and applications end up identical to `main` (P1, P5); temporary CMake gates
@@ -295,12 +351,18 @@ of this document.
   `opengl.counterparts` fails ("assigned multi-view cell did not render", after two
   `failed creating array buffer` errors). It fails identically in 3 of 3 runs on upstream
   `a89bb2d` built without any of these patches, so it predates them. Whether it is a real
-  `OpenGLMultiViewer` defect or a limitation of software GL is undetermined.
+  `OpenGLMultiViewer` defect or a limitation of software GL is undetermined. After the D1
+  constructor change the results are unchanged: Vulkan 13 of 13 display-free and 55 of 56
+  desktop tests (only `vulkan.interactionoverlay` fails), OpenGL builds clean and 8 of 9
+  tests pass (only `opengl.counterparts` fails). `vulkan.realcamera` takes 60–70 s on
+  lavapipe and times out at 120 s if the machine is busy compiling; run the suite on an idle
+  machine.
 - **U1** Unify `Viewer` (P1, P2): fold `OpenGLViewer` and `VulkanViewer` into one `Viewer`
-  in `viewer.h/.cpp`, with `main`'s constructor (D1), `ViewerBase` declaring the shared
-  API, and the Vulkan part under `#ifdef`. Align subclass hooks and protected state with
+  in `viewer.h/.cpp`, with the constructor of D1 (done), `ViewerBase`
+  declaring the shared API, and the Vulkan part under `#ifdef`, including the device and
+  capture code of `VulkanOffScreen` (D2). Align subclass hooks and protected state with
   `main` (the former steps 2 and W7). Delete `opengl_viewer.*`, `vulkan_viewer.*` and the
-  `viewer.h` aliases; settle D3 and D4.
+  `viewer.h` aliases; settle D3.
 - **U2** Unify `OffScreen` and `MultiViewer` the same way (D2), restoring `offscreen.*`,
   `multi_viewer.*` and `snapshot.cpp`, and implement the Vulkan side of `MultiViewer`
   (the former step 3). Re-enable Tutorial 205 and FigureMaker, now disabled for both
@@ -356,10 +418,9 @@ thin while the remaining steps are completed.
 > **Merged into U1 (2026-10-31).** Read the bullets below as requirements of the unified
 > `Viewer` class.
 
-- Keep `main`'s constructors for all three classes: `Viewer(title, samples, gl_major,
-  ...)`, `MultiViewer(rows, cols, title, ...)` and `OffScreen(width, height)`. Parameters
-  with no Vulkan meaning (GL version, depth/stencil bits) are accepted, documented as
-  ignored, and never reinterpreted as Vulkan settings (D1, D4).
+- Constructors: `Viewer` follows D1; `MultiViewer` and `OffScreen` keep `main`'s parameter
+  lists for now (D5). The OpenGL options keep their meaning; the Vulkan options are
+  `VulkanOptions`. `full_screen` and `visible` are honoured by both backends.
 - Align existing lifecycle, input and resize hooks and their signatures, including
   mouse press/release/drag and key press/release. Preserve meaningful `init`,
   `pre_draw`, `draw`, `post_draw` and cleanup extension behavior where supported;
@@ -471,7 +532,7 @@ no other gate can waive them):
 
 1. *Names and files (P1).* No class, file or alias named `OpenGLViewer`, `VulkanViewer`,
    `OpenGLMultiViewer`, `VulkanMultiViewer`, `OpenGLOffScreen` or `VulkanOffScreen`
-   remains; `Viewer`, `MultiViewer` and `OffScreen` are defined in the same files as in
+   remains, and neither does `VulkanViewerOptions`; `Viewer`, `MultiViewer` and `OffScreen` are defined in the same files as in
    `main`, for both backends.
 2. *Layout (P2, P3).* Each unified class follows the layout of P2 with both mandatory
    comments present; classes without a counterpart follow P3. Backend-specific code is
@@ -483,8 +544,9 @@ no other gate can waive them):
    document: files added (allowed only as shaders, backend files or tests, P4), files
    removed, and per-file change size, with an explanation for every change in a file that
    exists in `main`, including CMake files (P5).
-5. *Constructors and public API (D1).* The public API of `Viewer`, `MultiViewer` and
-   `OffScreen` is a superset of `main`'s, with `main`'s constructors.
+5. *Public API.* The public API of `Viewer`, `MultiViewer` and `OffScreen` is a superset of
+   `main`'s, except the `Viewer` constructor, which follows D1 (the one intentional
+   break; Tutorials 202 and 207 are the only tutorials it affects).
 
 All remaining criteria below still apply.
 
@@ -513,9 +575,10 @@ validation coverage. Completion also requires Windows/Linux and Qt/wx testing
 when those integrations are available; local MoltenVK tests do not establish
 cross-platform or full application parity.
 
-**Next implementation step:** confirm D1–D4 and start U1; D2 comes first because it decides
-how the unified Vulkan `Viewer` owns the device that `VulkanOffScreen` owns today.
-Nothing in U1–U6 has been started.
+**Next implementation step:** U1 continues from the finished D1 constructor: fold
+`OpenGLViewer` and `VulkanViewer` into one `Viewer`, moving the device and capture code of
+`VulkanOffScreen` in (D2). D6 (how bounded tests reach unchanged tutorials) must be decided
+before U5.
 
 ## Implementation history and current baseline
 

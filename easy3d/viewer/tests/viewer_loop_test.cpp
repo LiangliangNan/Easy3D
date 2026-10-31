@@ -28,7 +28,7 @@ VulkanViewerOptions options(bool validation) {
 #endif
 struct LoopViewer : TestHost {
 #ifdef EASY3D_TEST_OPENGL_VIEWER
-    explicit LoopViewer(bool) : TestHost("Frame loop", 4, 3, 2, false, true, 24, 8, 151, 117) { manual_.clear(); }
+    explicit LoopViewer(bool) : TestHost("Frame loop", 151, 117, 4) { manual_.clear(); }
 #else
     explicit LoopViewer(bool validation) : TestHost("Frame loop", options(validation)) { manual_.clear(); }
 #endif

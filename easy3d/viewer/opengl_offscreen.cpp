@@ -9,9 +9,10 @@
 #include <stdexcept>
 namespace easy3d {
 OpenGLOffScreen::OpenGLOffScreen(int w, int h)
-    : OpenGLViewer("Easy3D OffScreen Renderer",4,3,2,false,true,24,8,
+    : OpenGLViewer("Easy3D OffScreen Renderer",
                    w>0?w:throw std::invalid_argument("offscreen width must be positive"),
-                   h>0?h:throw std::invalid_argument("offscreen height must be positive")) {
+                   h>0?h:throw std::invalid_argument("offscreen height must be positive"),
+                   4,false,false) {
     manual_.clear();width_=w;height_=h;dpi_scaling_=1;init();resize(w,h);
 }
 OpenGLOffScreen::~OpenGLOffScreen() { activate(); }

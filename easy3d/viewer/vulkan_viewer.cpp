@@ -107,16 +107,24 @@ struct VulkanViewer::Window {
     int last_logical_x = 0, last_logical_y = 0;
     double wheel_x = 0, wheel_y = 0;
     std::exception_ptr error;
-    Window(const std::string& text, const VulkanViewerOptions& options)
-        : title(text), width(options.width), height(options.height), samples(options.samples) {
+    Window(const std::string& text, int w, int h, int sample_count, bool full_screen, bool visible, bool resizable)
+        : title(text), width(w), height(h), samples(sample_count > 0 ? unsigned(sample_count) : 1u) {   // 0: no MSAA, as in OpenGL
+        if (sample_count < 0) throw std::invalid_argument("sample count must not be negative");
         if (width <= 0 || height <= 0) throw std::invalid_argument("window dimensions must be positive");
         runtime = detail::GlfwRuntime::acquire(true);
         if (!glfwVulkanSupported()) throw std::runtime_error("GLFW could not find Vulkan loader/driver support");
         glfwDefaultWindowHints();
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        glfwWindowHint(GLFW_VISIBLE, options.visible ? GLFW_TRUE : GLFW_FALSE);
-        glfwWindowHint(GLFW_RESIZABLE, options.resizable ? GLFW_TRUE : GLFW_FALSE);
-        handle = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
+        glfwWindowHint(GLFW_VISIBLE, visible ? GLFW_TRUE : GLFW_FALSE);
+        glfwWindowHint(GLFW_RESIZABLE, resizable ? GLFW_TRUE : GLFW_FALSE);
+        GLFWmonitor* monitor = nullptr;
+        if (full_screen) {
+            monitor = glfwGetPrimaryMonitor();
+            const GLFWvidmode* mode = monitor ? glfwGetVideoMode(monitor) : nullptr;
+            if (!mode) throw std::runtime_error("no monitor available for a full-screen window");
+            width = mode->width; height = mode->height;
+        }
+        handle = glfwCreateWindow(width, height, title.c_str(), monitor, nullptr);
         if (!handle) throw std::runtime_error("could not create a GLFW Vulkan window");
     }
     ~Window() { if (handle) glfwDestroyWindow(handle); }
@@ -211,14 +219,27 @@ struct VulkanViewer::Window {
         }); });
     }
 };
-VulkanViewer::VulkanViewer(const std::string& title, const VulkanViewerOptions& options)
-    : VulkanViewer(std::make_shared<Window>(title, options), options.device) {}
+VulkanViewer::VulkanViewer(const std::string& title, int width, int height, int samples,
+                           bool full_screen, bool visible, bool resizable, const VulkanOptions& vk_options)
+    : VulkanViewer(std::make_shared<Window>(title, width, height, samples, full_screen, visible, resizable), vk_options) {}
 VulkanViewer::VulkanViewer(std::shared_ptr<Window> host, const graphics::DeviceOptions& options)
     : VulkanOffScreen(host->width, host->height, host->device(options)), window_(std::move(host)) {
     try {
         manual_ = default_manual;
         kfi_.reset(new KeyFrameInterpolator(camera()->frame()));
         camera_path_renderer_.reset(new vulkan::KeyFrameInterpolatorRenderer);
+        {   // The default of 4 samples must not fail on a device without 4x MSAA: step a valid
+            // power of two down to a supported count with a warning (as OpenGL does); invalid
+            // counts are still rejected by set_samples().
+            unsigned s = window_->samples;
+            const unsigned supported = device().supported_sample_counts();
+            if (s > 1 && s <= 64 && !(s & (s - 1)))
+                while (s > 1 && !(supported & s)) s >>= 1;
+            if (s != window_->samples) {
+                LOG(WARNING) << "MSAA with " << window_->samples << " samples is not supported, using " << s;
+                window_->samples = s;
+            }
+        }
         set_samples(window_->samples);
         window_->callbacks(this);
         int w, h; framebuffer_size(w, h);

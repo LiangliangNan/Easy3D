@@ -24,7 +24,7 @@ int main() {
         voptions.width = 181; voptions.height = 151; voptions.visible = false; voptions.samples = 1;
         auto viewer = std::make_shared<VulkanViewer>("Installed runtime viewer", voptions);
 #else
-        auto viewer = std::make_shared<OpenGLViewer>("Installed runtime viewer", 1, 3, 2, false, true, 24, 8, 181, 151);
+        auto viewer = std::make_shared<OpenGLViewer>("Installed runtime viewer", 181, 151, 1);
 #endif
         auto mesh = std::make_shared<SurfaceMesh>();
         const auto a = mesh->add_vertex(vec3(0, -1, -1)), b = mesh->add_vertex(vec3(0, 1, -1));

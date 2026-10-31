@@ -11,10 +11,11 @@ int main(int argc, char** argv) {
         easy3d::initialize();
         std::string model;
         unsigned frames = 0;
-        easy3d::VulkanViewerOptions options;
+        easy3d::VulkanOptions vk_options;
+        int samples = 4;
         for (int i = 1; i < argc; ++i) {
             const std::string arg = argv[i];
-            if (arg == "--validation") { options.device.validation = true; options.device.synchronization_validation = true; }
+            if (arg == "--validation") { vk_options.validation = true; vk_options.synchronization_validation = true; }
             else if (arg == "--frames" || arg == "--samples") {
                 const auto message = arg + " requires a positive integer";
                 if (++i == argc) throw std::invalid_argument(message);
@@ -23,15 +24,15 @@ int main(int argc, char** argv) {
                 const auto value = std::stoul(text, &used);
                 if (used != text.size() || !value || value > std::numeric_limits<unsigned>::max())
                     throw std::invalid_argument(message);
-                if (arg == "--frames") frames = unsigned(value); else options.samples = unsigned(value);
+                if (arg == "--frames") frames = unsigned(value); else samples = int(value);
             } else if (arg == "--help") {
-                std::cout << "VulkanViewer [model] [--backend auto|vulkan|opengl] [--validation] [--frames N] [--samples N]\n"
+                std::cout << "VulkanViewer [model] [--validation] [--frames N] [--samples N]\n"
                           << "Left drag: rotate; right drag: pan; middle drag/wheel: zoom; F1: controls; Escape: close.\n";
                 return 0;
             } else if (arg.compare(0, 2, "--") == 0) throw std::invalid_argument("unknown option: " + arg);
             else model = arg;
         }
-        auto viewer = std::make_shared<easy3d::VulkanViewer>("Easy3D Viewer", options);
+        auto viewer = std::make_shared<easy3d::VulkanViewer>("Easy3D Viewer", 800, 600, samples, false, true, true, vk_options);
         if (model.empty()) {
             // The installed demo works without any source-tree data files.
             auto bunny = std::make_shared<easy3d::SurfaceMesh>();

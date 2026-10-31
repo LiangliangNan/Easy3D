@@ -81,15 +81,13 @@ namespace easy3d {
 
     OpenGLViewer::OpenGLViewer(
             const std::string &title /* = "Easy3D Viewer" */,
+            int width /* = 800 */,
+            int height /* = 600 */,
             int samples /* = 4 */,
-            int gl_major /* = 3 */,
-            int gl_minor /* = 2 */,
             bool full_screen /* = false */,
+            bool visible /* = true */,
             bool resizable /* = true */,
-            int depth_bits /* = 24 */,
-            int stencil_bits /* = 8 */,
-            int width /* = 960 */,
-            int height /* = 800 */
+            const OpenGLOptions &gl_options /* = {} */
     )
         : window_(nullptr)
         , should_exit_(false)
@@ -98,6 +96,7 @@ namespace easy3d {
         , is_animating_(false)
         , samples_(0)
         , full_screen_(full_screen)
+        , visible_(visible)
         , background_color_(setting::background_color)
         , process_events_(true)
         , show_easy3d_logo_(true)
@@ -124,8 +123,8 @@ namespace easy3d {
             logging::initialize(false, true, true, false, "default", 9);
 
         // create and setup window
-        window_ = create_window(title, samples, gl_major, gl_minor, full_screen, resizable,
-                                depth_bits, stencil_bits, width, height);
+        window_ = create_window(title, samples, gl_options.major, gl_options.minor, full_screen, resizable,
+                                gl_options.depth_bits, gl_options.stencil_bits, width, height);
         try {
         setup_callbacks(window_);
 
@@ -1210,7 +1209,7 @@ namespace easy3d {
             if (callback_error_) std::rethrow_exception(callback_error_);
             if (!initialized_) { init(); initialized_ = true; }
             if (see_all) fit_screen();
-            show();
+            if (visible_) show();
             return run_frames();
         } catch (const std::exception& e) {
             LOG(ERROR) << "Viewer failed: " << e.what();

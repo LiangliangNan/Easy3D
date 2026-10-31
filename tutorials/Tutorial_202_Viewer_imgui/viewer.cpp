@@ -57,7 +57,7 @@ namespace easy3d {
         int stencil_bits /* = 8 */,
         int width /* = 960 */,
         int height /* = 800 */
-	) : Viewer(title, samples, gl_major, gl_minor, full_screen, resizable, depth_bits, stencil_bits, width, height)
+	) : Viewer(title, width, height, samples, full_screen, true, resizable, OpenGLOptions(gl_major, gl_minor, depth_bits, stencil_bits))
 	{
 #if defined(_WIN32) && defined(_MSC_VER)
 		// Liangliang: the internal glfw won't be shared across dll boundaries (But seems ok on macOS. That is weird!)

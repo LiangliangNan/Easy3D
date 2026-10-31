@@ -52,6 +52,17 @@ namespace easy3d {
     class TextRenderer;
     class KeyFrameInterpolator;
 
+    // OpenGL context settings of a viewer window.
+    struct OpenGLOptions {
+        // (a constructor, not default member initializers, so that brace-initialization works in C++11)
+        explicit OpenGLOptions(int major_ = 3, int minor_ = 2, int depth = 24, int stencil = 8)
+            : major(major_), minor(minor_), depth_bits(depth), stencil_bits(stencil) {}
+        int major;          // must >= 3
+        int minor;          // must >= 2
+        int depth_bits;
+        int stencil_bits;
+    };
+
     /**
      * \brief The built-in Easy3D viewer.
      * \class OpenGLViewer easy3d/viewer/opengl_viewer.h
@@ -84,15 +95,13 @@ namespace easy3d {
          */
 		explicit OpenGLViewer(
 			const std::string& title = "Easy3D Viewer",
-			int samples = 4,
-            int gl_major = 3,
-            int gl_minor = 2,
-            bool full_screen = false,
-			bool resizable = true,
-			int depth_bits = 24,
-			int stencil_bits = 8,
 			int width = 800,
-			int height = 600
+			int height = 600,
+			int samples = 4,
+			bool full_screen = false,
+			bool visible = true,
+			bool resizable = true,
+			const OpenGLOptions& gl_options = {}
 		);
 
         /**
@@ -631,6 +640,7 @@ namespace easy3d {
         int		samples_;	// the actual samples
 
 		bool	full_screen_;
+		bool	visible_;
         vec4	background_color_;
 
 		// enable/disable event processing

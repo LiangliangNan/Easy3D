@@ -46,6 +46,18 @@ int main(int argc, char**) {
         options.width = 171; options.height = 129;
         options.device.validation = argc > 1;
         options.device.synchronization_validation = options.device.validation;
+        {   // Constructor with explicit parameters: a requested count of 4 never fails (it steps down on
+            // devices without 4x MSAA), 0 means no MSAA, and negative or non-power-of-two counts are rejected.
+            VulkanViewer four("Explicit parameters", 171, 129, 4, false, false, true, options.device);
+            require(four.samples() >= 1 && four.samples() <= 4 && four.width() == 171 && four.height() == 129,
+                    "explicit constructor ignored its parameters");
+            VulkanViewer none("No MSAA", 171, 129, 0, false, false, true, options.device);
+            require(none.samples() == 1, "0 samples did not mean no MSAA");
+            bool rejected = false;
+            try { VulkanViewer bad("Negative samples", 171, 129, -1, false, false, true, options.device); }
+            catch (const std::invalid_argument&) { rejected = true; }
+            require(rejected, "negative sample count was accepted");
+        }
         VulkanViewer viewer("Vulkan window test", options);
         require(glfwGetWindowAttrib(viewer.window(), GLFW_CLIENT_API) == GLFW_NO_API, "window created a graphics context");
         require(glfwGetCurrentContext() == nullptr, "OpenGL context exists in native test");
