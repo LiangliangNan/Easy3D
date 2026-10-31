@@ -67,9 +67,9 @@ bool TutorialHardShadow::key_press_event(int key, int modifiers) {
 }
 
 
-void TutorialHardShadow::draw() const {
+bool TutorialHardShadow::draw() {
     if (!current_model()) {
-        return;
+        return false;
     }
 
 	std::vector<TrianglesDrawable*> surfaces;
@@ -82,6 +82,7 @@ void TutorialHardShadow::draw() const {
 		shadow_->draw(surfaces);
 	else
 		Viewer::draw();
+    return true;
 }
 
 // \endcond

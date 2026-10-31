@@ -52,7 +52,7 @@ protected:
     void pre_draw() override;
 #else
     void init() override;
-    void draw() const override;
+    bool draw() override;
     void compute_image_region(int& x, int& y, int& w, int& h) const;
 #endif
 

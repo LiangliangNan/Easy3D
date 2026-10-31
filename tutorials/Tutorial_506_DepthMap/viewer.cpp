@@ -85,9 +85,9 @@ TutorialDepthMap::~TutorialDepthMap() {
 }
 
 
-void TutorialDepthMap::draw() const {
+bool TutorialDepthMap::draw() {
     draw_depth();
-    Viewer::draw();
+    return Viewer::draw();
 }
 
 

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/viewer.h>
+#include <easy3d/renderer/backend.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_triangles.h>
@@ -183,14 +184,14 @@ void replacement_and_failures(Backend backend,bool validation) {
     };
     v->set_callbacks(std::move(callbacks));callbacks={};lease.reset();
     e.key(e.window,GLFW_KEY_J,0,GLFW_PRESS,0);require(weak.expired(),"replaced callback retained captures after dispatch");
-    const auto backend_before=v->backend(); const auto window=v->window();
+    const auto window=v->window();
     callbacks={};callbacks.pre_draw=[](ViewerBase*) { throw std::runtime_error("portable frame failure"); };
-    v->set_callbacks(callbacks);require(v->run_frames(1)!=0 && v->window()==window && v->backend()==backend_before,"frame callback error changed backend/window");
+    v->set_callbacks(callbacks);require(v->run_frames(1)!=0 && v->window()==window,"frame callback error changed window");
     v->set_callbacks({});require(v->run_frames(1)==0,"clearing failed frame callback did not restore rendering");
     callbacks={};callbacks.key_press_event=[](ViewerBase*,int,int)->bool { throw std::runtime_error("portable input failure"); };
     v->set_callbacks(callbacks);
     e.key(e.window,GLFW_KEY_J,0,GLFW_PRESS,0); // must not unwind through C callback
-    require(v->should_close() && v->run_frames(1)!=0 && v->backend()==backend_before && v->window()==window,"input callback failure was hidden or switched hosts");
+    require(v->should_close() && v->run_frames(1)!=0 && v->window()==window,"input callback failure was hidden or switched hosts");
 }
 }
 int main(int argc,char** argv) {

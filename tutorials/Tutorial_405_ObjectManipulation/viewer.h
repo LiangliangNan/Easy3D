@@ -56,7 +56,7 @@ protected:
     void post_resize(int width,int height) override;
     void pre_draw() override;
 #else
-    void draw() const override;
+    bool draw() override;
 #endif
 
 private:

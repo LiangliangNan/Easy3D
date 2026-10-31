@@ -201,12 +201,13 @@ void TutorialObjectManipulation::mark(easy3d::Model *model) {
 }
 
 
-void TutorialObjectManipulation::draw() const {
-    Viewer::draw();
+bool TutorialObjectManipulation::draw() {
+    if (!Viewer::draw()) return false;
     for (auto m : models()) {
         if (m->renderer()->is_selected() && m->manipulator())
             m->manipulator()->draw_frame(camera());
     }
+    return true;
 }
 
 // \endcond

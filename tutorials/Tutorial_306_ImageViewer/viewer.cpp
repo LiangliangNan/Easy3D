@@ -216,15 +216,16 @@ bool TutorialImageViewer::mouse_scroll_event(int x, int y, int dx, int dy) {
 }
 
 
-void TutorialImageViewer::draw() const {
+bool TutorialImageViewer::draw() {
 	if (texture_ == nullptr)
-		return;
+		return false;
 
     int x, y, w, h;
     compute_image_region(x, y, w, h);
 
     const Rect quad(static_cast<float>(x), static_cast<float>(x + w), static_cast<float>(y), static_cast<float>(y + h));
     shape::draw_quad_filled(quad, texture_->id(), width(), height(), -0.9f);
+    return true;
 }
 
 // \endcond

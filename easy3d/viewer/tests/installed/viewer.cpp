@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Public interactive API only: no Vulkan SDK, GLFW or OpenGL headers/calls.
 #include <easy3d/viewer/viewer_base.h>
+#ifdef EASY3D_HAS_VULKAN
+#include <easy3d/viewer/vulkan_viewer.h>
+#else
+#include <easy3d/viewer/opengl_viewer.h>
+#endif
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_triangles.h>
@@ -12,10 +17,15 @@
 int main() {
     using namespace easy3d;
     initialize(false, false, false);
-    ViewerOptions options; options.width = 181; options.height = 151; options.visible = false; options.samples = 1;
     const auto require = [](bool ok, const char* message) { if (!ok) throw std::runtime_error(message); };
     try {
-        auto viewer = ViewerBase::create("Installed runtime viewer", options);
+#ifdef EASY3D_HAS_VULKAN
+        VulkanViewerOptions voptions;
+        voptions.width = 181; voptions.height = 151; voptions.visible = false; voptions.samples = 1;
+        auto viewer = std::make_shared<VulkanViewer>("Installed runtime viewer", voptions);
+#else
+        auto viewer = std::make_shared<OpenGLViewer>("Installed runtime viewer", 1, 3, 2, false, true, 24, 8, 181, 151);
+#endif
         auto mesh = std::make_shared<SurfaceMesh>();
         const auto a = mesh->add_vertex(vec3(0, -1, -1)), b = mesh->add_vertex(vec3(0, 1, -1));
         const auto c = mesh->add_vertex(vec3(0, 0, 1)); mesh->add_triangle(a, b, c); viewer->add_model(mesh);
@@ -46,7 +56,7 @@ int main() {
         const auto center = (size_t(h / 2) * w + w / 2) * 4;
         require(std::abs(int(rgba[center]) - 204) <= 2 && std::abs(int(rgba[center+1]) - 51) <= 2,
                 "installed viewer material/default camera did not render the model");
-        std::cout << "Runtime Viewer rendered using " << (viewer->backend() == Backend::Vulkan ? "Vulkan" : "OpenGL") << '\n';
+        std::cout << "Runtime Viewer rendered using the configured host" << '\n';
         return viewer->validation_errors() ? 1 : 0;
     } catch (const std::runtime_error& e) {
         std::cerr << e.what() << '\n'; return 1;

@@ -113,9 +113,9 @@ bool TutorialTransparency::key_press_event(int key, int modifiers) {
 }
 
 
-void TutorialTransparency::draw() const {
+bool TutorialTransparency::draw() {
     if (!current_model()) {
-        return;
+        return false;
     }
 
     std::vector<TrianglesDrawable*> surfaces;
@@ -129,7 +129,8 @@ void TutorialTransparency::draw() const {
 	if (method_ != 0)
 		transparency_->draw(surfaces);
 	else
-		Viewer::draw();
+		return Viewer::draw();
+	return true;
 }
 
 // \endcond

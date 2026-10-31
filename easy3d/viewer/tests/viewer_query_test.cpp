@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/viewer.h>
+#include <easy3d/renderer/backend.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/drawable_triangles.h>

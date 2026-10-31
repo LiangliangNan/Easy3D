@@ -44,7 +44,6 @@ int main(int argc, char** argv) {
         } else if (!viewer->add_model(model)) return 1;
         viewer->fit_screen();
         std::cout << "Device name: " << viewer->device().name() << ", samples: " << viewer->samples() << '\n';
-        if (!viewer->fallback_reason().empty()) std::cout << "Vulkan unavailable: " << viewer->fallback_reason() << '\n';
         const int result = viewer->run_frames(frames);
         return result || viewer->validation_errors() ? 1 : 0;
     } catch (const std::exception& e) { std::cerr << e.what() << '\n'; return 1; }

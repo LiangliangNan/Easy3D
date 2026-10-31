@@ -91,15 +91,15 @@ bool TutorialAmbientOcclusion::key_press_event(int key, int modifiers) {
 }
 
 
-void TutorialAmbientOcclusion::draw() const {
+bool TutorialAmbientOcclusion::draw() {
     if (!current_model()) {
-        return;
+        return false;
     }
 
     auto drawable = current_model()->renderer()->get_triangles_drawable("faces");
     auto faces = dynamic_cast<TrianglesDrawable*>(drawable);
     if (!faces)
-        return;
+        return false;
 
 	if (ao_enabled_) {
 		ao_->generate(models_);
@@ -123,7 +123,7 @@ void TutorialAmbientOcclusion::draw() const {
             program = ShaderManager::create_program_from_files("surface/surface", attributes);
 		}
 		if (!program)
-			return;
+			return false;
 
 		program->bind();
 		program->set_uniform("MVP", MVP)
@@ -158,6 +158,7 @@ void TutorialAmbientOcclusion::draw() const {
     }
 	else
 		Viewer::draw();
+    return true;
 }
 
 // \endcond

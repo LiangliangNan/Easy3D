@@ -254,11 +254,11 @@ bool TutorialTextRendering::key_press_event(int key, int modifiers) {
 }
 
 
-void TutorialTextRendering::draw() const {
-    Viewer::draw();
+bool TutorialTextRendering::draw() {
+    if (!Viewer::draw()) return false;
 
     if (!texter_ || texter_->num_fonts() == 0)
-        return;
+        return true;
 
     const float font_size = 28.0f + font_size_delta_;
     float x = 50.0f;
@@ -292,6 +292,7 @@ void TutorialTextRendering::draw() const {
             y += font_height * 1.5f;
         }
     }
+    return true;
 }
 
 // \endcond

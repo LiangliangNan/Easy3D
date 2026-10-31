@@ -72,9 +72,9 @@ bool TutorialEyeDomeLighting::key_press_event(int key, int modifiers) {
 }
 
 
-void TutorialEyeDomeLighting::draw() const {
+bool TutorialEyeDomeLighting::draw() {
     if (!current_model()) {
-        return;
+        return false;
     }
 
 	if (edl_enabled_) {
@@ -95,7 +95,7 @@ void TutorialEyeDomeLighting::draw() const {
             program = ShaderManager::create_program_from_files("points/points_plain_color", attributes);
 		}
 		if (!program)
-			return;
+			return false;
 
         auto drawable = current_model()->renderer()->get_points_drawable("vertices");
         float point_size = drawable->point_size();
@@ -115,7 +115,8 @@ void TutorialEyeDomeLighting::draw() const {
 		edl_->end();
 	}
 	else
-		Viewer::draw();
+		return Viewer::draw();
+    return true;
 }
 
 // \endcond

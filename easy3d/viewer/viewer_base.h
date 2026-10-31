@@ -29,7 +29,6 @@ public:
     // Replace/clear from the UI thread, including from a callback. The active
     // callable stays alive until it returns; mutable callable state is retained.
     void set_callbacks(ViewerCallbacks callbacks);
-    const std::string& fallback_reason() const { return fallback_reason_; }
     virtual unsigned validation_errors() const = 0;
     virtual int run(bool see_all = true) = 0;
     virtual int run_frames(unsigned max_frames = 0) = 0;
@@ -113,7 +112,6 @@ protected:
     virtual bool read_scene_depth(int x, int y, const Camera& snapshot, float& depth) const = 0;
     virtual bool snapshot_file(const std::string&, float, int, int, bool) const = 0;
 private:
-    std::string fallback_reason_;
     std::shared_ptr<ViewerCallbacks> callbacks_;
     int callback_button_ = -1;
     bool callback_capture_ = false;

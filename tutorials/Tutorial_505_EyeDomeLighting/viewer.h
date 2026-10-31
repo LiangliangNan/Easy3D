@@ -46,7 +46,7 @@ public:
 protected:
     bool key_press_event(int key, int modifiers) override;
 
-    void draw() const override;
+    bool draw() override;
 
 private:
 	easy3d::EyeDomeLighting* edl_;

@@ -99,7 +99,6 @@ namespace easy3d {
          * \brief The destructor.
          */
 		virtual ~OpenGLViewer();
-        Backend backend() const override { return Backend::OpenGL; }
         unsigned validation_errors() const override { return 0; }
         void set_animation_callback(const ViewerBase::AnimationFunction& callback) override {
             if (callback) animation_func_ = [callback](OpenGLViewer* viewer) { return callback(viewer); };
