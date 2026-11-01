@@ -1,3 +1,4 @@
+#include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <tutorials/Tutorial_207_RealCamera/viewer.h>
 #include <easy3d/renderer/drawable_lines.h>
@@ -68,9 +69,9 @@ int main(int argc,char**) {
             require((pixel-vec2(18,39)).norm()<1e-3f,"intrinsic/extrinsic ray projection round trip failed");
         }
         const auto root=resource::directory()+"/data/fountain/";const auto views=read_views(root+"bundle.out");
-        VulkanViewerOptions options;options.visible=false;options.width=500;options.height=420;
+        TestWindow options;options.visible=false;options.width=500;options.height=420;
         options.device.validation=options.device.synchronization_validation=argc>1;
-        RealCameraViewer v("Native real camera",root+"bundle.out",root+"pointcloud.ply",options);
+        RealCameraViewer v("Native real camera",root+"bundle.out",root+"pointcloud.ply"); set_size(v, options);
         require(v.models().size()==1 && v.hint().find("corresponding 3D ray")!=std::string::npos,"scene/usage hint missing");
         const auto bare=v.capture();frame(v);const auto initial=v.capture();same_picking(bare,initial);
         require(bare.rgba!=initial.rgba,"image inset missing");image_pixels(v,initial,root+"images/0000.jpg");

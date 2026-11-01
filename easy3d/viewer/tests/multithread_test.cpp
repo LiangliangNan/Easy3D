@@ -1,3 +1,4 @@
+#include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/viewer.h>
 #include <tutorials/Tutorial_312_MultiThread/point_worker.h>
@@ -67,9 +68,9 @@ int main(int argc,char**) {
     try {
         initialize(false,false,false);
         worker_lifetime();
-        VulkanViewerOptions options; options.visible=false; options.width=211; options.height=179;
+        TestWindow options; options.visible=false; options.width=211; options.height=179;
         options.device.validation=options.device.synchronization_validation=argc>1;
-        StreamViewer viewer("Worker handoff regression",options);viewer.hide_logo();
+        StreamViewer viewer("Worker handoff regression", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);viewer.hide_logo();
         auto key=glfwSetKeyCallback(viewer.window(),nullptr); glfwSetKeyCallback(viewer.window(),key);
         // This oracle compares every point's rendered color with its source;
         // hide the persistent HUD so it cannot cover otherwise valid point hits.

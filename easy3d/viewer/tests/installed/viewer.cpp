@@ -1,3 +1,4 @@
+#include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Public interactive API only: no Vulkan SDK, GLFW or OpenGL headers/calls.
 #include <easy3d/viewer/viewer_base.h>
@@ -20,7 +21,7 @@ int main() {
     const auto require = [](bool ok, const char* message) { if (!ok) throw std::runtime_error(message); };
     try {
 #ifdef EASY3D_HAS_VULKAN
-        VulkanViewerOptions voptions;
+        TestWindow voptions;
         voptions.width = 181; voptions.height = 151; voptions.visible = false; voptions.samples = 1;
         auto viewer = std::make_shared<VulkanViewer>("Installed runtime viewer", voptions);
 #else

@@ -48,7 +48,10 @@ namespace easy3d {
          * \param cols The number of columns (of the grid-like layout).
          * \param title The title of the viewer window.
          */
-        OpenGLMultiViewer(int rows, int cols, const std::string &title = "untitled");
+        OpenGLMultiViewer(unsigned int rows, unsigned int cols, const std::string &title = "untitled",
+                          unsigned int width = 800, unsigned int height = 600, unsigned int samples = 1,
+                          bool full_screen = false, bool visible = true, bool resizable = true,
+                          const OpenGLOptions &gl_options = {});
         /**
          * \brief Destructor.
          */

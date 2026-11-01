@@ -40,7 +40,7 @@ namespace easy3d {
     {
     public:
 #ifdef EASY3D_HAS_VULKAN
-        explicit TexturedViewer(const std::string& title = "", const VulkanViewerOptions& options = {});
+        explicit TexturedViewer(const std::string& title = "");
 #else
         explicit TexturedViewer(const std::string& title = "");
 #endif

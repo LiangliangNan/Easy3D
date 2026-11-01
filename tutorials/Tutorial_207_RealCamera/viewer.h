@@ -45,7 +45,7 @@ class TutorialRealCamera : public easy3d::Viewer
 public:
 #if EASY3D_TUTORIAL_USES_VULKAN
     TutorialRealCamera(const std::string& title, const std::string& bundler_file,
-                       const std::string& cloud_file, const easy3d::VulkanViewerOptions& options = {});
+                       const std::string& cloud_file);
 #else
     TutorialRealCamera(const std::string& title,
                const std::string& bundler_file,

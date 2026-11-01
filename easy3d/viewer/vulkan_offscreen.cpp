@@ -101,8 +101,8 @@ struct VulkanOffScreen::Impl {
         return device->render(uint32_t(cam.screenWidth()), uint32_t(cam.screenHeight()), commands(cam), bg, samples);
     }
 };
-VulkanOffScreen::VulkanOffScreen(int width, int height, const graphics::DeviceOptions& options)
-    : VulkanOffScreen(width, height, graphics::create_vulkan_device(options)) {
+VulkanOffScreen::VulkanOffScreen(unsigned int width, unsigned int height, const VulkanOptions& vk_options)
+    : VulkanOffScreen(int(width), int(height), graphics::create_vulkan_device(vk_options)) {
     camera()->setType(Camera::PERSPECTIVE);
     camera()->setUpVector(vec3(0, 0, 1));
     camera()->setViewDirection(vec3(-1, 0, 0));

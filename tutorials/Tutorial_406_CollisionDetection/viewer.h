@@ -45,7 +45,7 @@ namespace easy3d {
 class TutorialCollisionDetection : public easy3d::Viewer {
 public:
 #if EASY3D_TUTORIAL_USES_VULKAN
-    explicit TutorialCollisionDetection(const std::string& title,const easy3d::VulkanViewerOptions& options = {});
+    explicit TutorialCollisionDetection(const std::string& title);
     void clear_scene() override;
     bool delete_model(easy3d::Model* model) override;
 #else

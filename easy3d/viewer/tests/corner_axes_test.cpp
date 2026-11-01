@@ -1,3 +1,4 @@
+#include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/util/initializer.h>
@@ -21,9 +22,9 @@ void same_picking(const graphics::FrameImage& a,const graphics::FrameImage& b) {
 int main(int argc,char**) {
     try {
         initialize(false,false,false);
-        VulkanViewerOptions options;options.visible=false;options.width=360;options.height=280;
+        TestWindow options;options.visible=false;options.width=360;options.height=280;
         options.device.validation=options.device.synchronization_validation=argc>1;
-        AxesViewer viewer("Corner axes",options);viewer.set_background_color(vec4(0));viewer.hide_logo();
+        AxesViewer viewer("Corner axes", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);viewer.set_background_color(vec4(0));viewer.hide_logo();
         auto key=glfwSetKeyCallback(viewer.window(),nullptr);glfwSetKeyCallback(viewer.window(),key);
         auto toggle=[&]{key(viewer.window(),GLFW_KEY_A,0,GLFW_PRESS,0);};
         require(viewer.visible(),"axes not visible by default");
@@ -80,7 +81,7 @@ int main(int argc,char**) {
         }
         require(changed>100,"resized axes did not render");toggle();
         viewer.clear_scene();require(viewer.visible(),"scene clear lost axes visibility");
-        AxesViewer independent("Independent corner axes",options);
+        AxesViewer independent("Independent corner axes", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
         toggle();require(!viewer.visible() && independent.visible(),"axes visibility leaked across viewers");
         bool bound=false;
         viewer.bind([&](VulkanViewer*,Model*){bound=true;return true;},nullptr,ViewerInput::KEY_A);

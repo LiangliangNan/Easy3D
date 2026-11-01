@@ -46,8 +46,7 @@ const char* const usage_hint = "Ctrl + o: open an image\n"
 
 using namespace easy3d;
 
-TutorialImageViewer::TutorialImageViewer(const std::string& title,const std::string& file,
-                        const easy3d::VulkanViewerOptions& options) : VulkanViewer(title,options) {
+TutorialImageViewer::TutorialImageViewer(const std::string& title,const std::string& file) : Viewer(title) {
     manual_ = usage_manual;
     hint_ = usage_hint;
     if (!load_image(file)) throw std::runtime_error("could not load image: "+file);

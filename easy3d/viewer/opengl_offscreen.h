@@ -7,7 +7,7 @@ namespace easy3d {
 // framebuffer pixels, independent of the hidden window's display scale.
 class OpenGLOffScreen : public OpenGLViewer {
 public:
-    explicit OpenGLOffScreen(int width = 800, int height = 600);
+    explicit OpenGLOffScreen(unsigned int width = 800, unsigned int height = 600, const OpenGLOptions& gl_options = {});
     ~OpenGLOffScreen() override;
     bool render(const std::string& filename, float scaling = 1, int samples = 4,
                 int background = 1, bool expand = true) const;

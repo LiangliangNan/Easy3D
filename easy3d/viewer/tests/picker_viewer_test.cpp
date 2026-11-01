@@ -1,3 +1,4 @@
+#include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <tutorials/Tutorial_401_ModelPicker/viewer.h>
 #include <tutorials/Tutorial_402_FacePicker/viewer.h>
@@ -37,10 +38,10 @@ int main(int argc,char**) {
         const std::string file="vulkan-picker-mesh.off";
         { std::ofstream out(file); out << "OFF\n8 2 0\n-2 -1 0\n0 -1 0\n0 1 0\n-2 1 0\n"
             "1 -1 0\n3 -1 0\n3 1 0\n1 1 0\n4 0 1 2 3\n4 4 5 6 7\n"; require(bool(out),"could not write picker fixture"); }
-        VulkanViewerOptions options; options.width=420; options.height=280;
+        TestWindow options; options.width=420; options.height=280;
         options.device.validation=options.device.synchronization_validation=argc>1;
         {
-            TutorialModelPicker viewer("Native model picker test",options);
+            TutorialModelPicker viewer("Native model picker test"); set_size(viewer, options);
             auto* model=viewer.add_model(file); require(model!=nullptr,"model picker load failed");
             viewer.camera()->setType(Camera::ORTHOGRAPHIC); viewer.fit_screen();
             if (viewer.device().supported_sample_counts()&4) viewer.set_samples(4);
@@ -57,7 +58,7 @@ int main(int argc,char**) {
             require(viewer.device().validation_errors()==0,"model picker validation errors");
         }
         {
-            TutorialFacePicker viewer("Native face picker test",options);
+            TutorialFacePicker viewer("Native face picker test"); set_size(viewer, options);
             auto* model=viewer.add_model(file); require(model!=nullptr,"face picker load failed");
             auto* faces=model->renderer()->get_triangles_drawable("faces");
             viewer.camera()->setType(Camera::ORTHOGRAPHIC); viewer.fit_screen();

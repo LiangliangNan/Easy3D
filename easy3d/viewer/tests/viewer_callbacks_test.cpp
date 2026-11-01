@@ -1,3 +1,4 @@
+#include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/core/surface_mesh.h>
@@ -42,11 +43,11 @@ struct Events {
 std::shared_ptr<ViewerBase> host(bool validation) {
 #ifdef EASY3D_HAS_VULKAN
     {
-        VulkanViewerOptions o;
+        TestWindow o;
         o.width=181; o.height=151; o.visible=false;
         o.device.validation = validation;
         o.device.synchronization_validation = validation;
-        auto v = std::make_shared<VulkanViewer>("Portable callbacks",o);
+        auto v = std::make_shared<VulkanViewer>("Portable callbacks", o.width, o.height, o.samples, false, o.visible, o.resizable, o.device);
         v->set_usage("");
         v->camera()->setViewDirection(vec3(0,0,-1)); v->camera()->setUpVector(vec3(0,1,0));
         return v;

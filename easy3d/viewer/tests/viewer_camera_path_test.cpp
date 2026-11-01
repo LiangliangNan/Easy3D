@@ -1,3 +1,4 @@
+#include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
@@ -27,9 +28,9 @@ void same_picking(const graphics::FrameImage& a,const graphics::FrameImage& b) {
 int main(int argc,char**) {
     try {
         initialize(false,false,false);
-        VulkanViewerOptions options;options.visible=false;options.width=580;options.height=420;
+        TestWindow options;options.visible=false;options.width=580;options.height=420;
         options.device.validation=options.device.synchronization_validation=argc>1;
-        PathViewer v("Shared viewer camera path",options);
+        PathViewer v("Shared viewer camera path"); set_size(v, options);
         v.set_usage("Global camera path regression","Alt-K: record; Ctrl/Command-K: play; Ctrl/Command-T: show path");
         require(v.add_model(resource::directory()+"/data/sphere.obj"),"sphere missing");
         auto key=glfwSetKeyCallback(v.window(),nullptr);glfwSetKeyCallback(v.window(),key);
@@ -81,7 +82,7 @@ int main(int argc,char**) {
         v.camera()->setPosition(poses.front());press(GLFW_KEY_K,GLFW_MOD_ALT);
         v.clear_scene();require(v.path().number_of_keyframes()==1,"scene clearing discarded viewer camera path");
         v.path_visibility(true);v.draw_frame();
-        PathViewer independent("Independent viewer path",options);
+        PathViewer independent("Independent viewer path"); set_size(independent, options);
         require(independent.path().number_of_keyframes()==0 && !independent.visible_path(),"viewers shared path state");
         auto key2=glfwSetKeyCallback(independent.window(),nullptr);glfwSetKeyCallback(independent.window(),key2);
         key2(independent.window(),GLFW_KEY_D,0,GLFW_PRESS,GLFW_MOD_ALT);

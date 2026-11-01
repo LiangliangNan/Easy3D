@@ -1,3 +1,4 @@
+#include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <tutorials/Tutorial_404_VirtualScanner/viewer.h>
 #include <tests/native_tutorials/options.h>
@@ -31,10 +32,9 @@ void same_camera(const Camera& a,const Camera& b) {
 int main(int argc,char**) {
     try {
         initialize(false,false,false);
-        VulkanViewerOptions options; options.visible=false; options.width=151; options.height=113;
+        TestWindow options; options.visible=false; options.width=151; options.height=113;
         options.device.validation=options.device.synchronization_validation=argc>1;
-        test::native_options().viewer = options;
-        TutorialVirtualScanner viewer("Native virtual scanner test");
+        TutorialVirtualScanner viewer("Native virtual scanner test"); set_size(viewer, options);
         auto key=glfwSetKeyCallback(viewer.window(),nullptr); glfwSetKeyCallback(viewer.window(),key);
         auto press=[&](int code,int mods=0) { key(viewer.window(),code,0,GLFW_PRESS,mods); };
         frame(viewer); press(GLFW_KEY_SPACE);

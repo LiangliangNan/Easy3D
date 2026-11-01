@@ -12,18 +12,6 @@ namespace easy3d {
 namespace graphics { class TextLayoutEngine; }
 namespace vulkan { class KeyFrameInterpolatorRenderer; }
 class KeyFrameInterpolator;
-// Vulkan device settings of a viewer: validation, synchronization validation and device name.
-using VulkanOptions = graphics::DeviceOptions;
-
-// TEMPORARY (work items D6/U5): a bundle of window settings that lets the tutorial and test
-// subclasses pass them in one argument. It and the overload that takes it are deleted once the
-// tutorials equal main's. New code uses the constructor with explicit parameters.
-struct VulkanViewerOptions {
-    int width = 800, height = 600;
-    bool visible = true, resizable = true;
-    unsigned samples = 1;
-    VulkanOptions device;
-};
 
 // Native Vulkan counterpart of Viewer, using GLFW.
 // Construct, manipulate and destroy on the UI/main
@@ -32,13 +20,9 @@ struct VulkanViewerOptions {
 class VulkanViewer : public VulkanOffScreen, public ViewerBase {
 public:
     explicit VulkanViewer(const std::string& title = "Easy3D Viewer",
-                          int width = 800, int height = 600, int samples = 4,
+                          unsigned int width = 800, unsigned int height = 600, unsigned int samples = 1,
                           bool full_screen = false, bool visible = true, bool resizable = true,
                           const VulkanOptions& vk_options = {});
-    // TEMPORARY, see VulkanViewerOptions.
-    VulkanViewer(const std::string& title, const VulkanViewerOptions& options)
-        : VulkanViewer(title, options.width, options.height, int(options.samples), false,
-                       options.visible, options.resizable, options.device) {}
     ~VulkanViewer() override;
     unsigned validation_errors() const override { return device().validation_errors(); }
     Camera* camera() override { return VulkanOffScreen::camera(); }

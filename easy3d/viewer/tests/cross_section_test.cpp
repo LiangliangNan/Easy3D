@@ -1,3 +1,4 @@
+#include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <tutorials/Tutorial_307_CrossSection/viewer.h>
 #define GLFW_INCLUDE_NONE
@@ -52,9 +53,9 @@ int main(int argc,char**) {
         { std::ofstream out(file); out << "OFF\n8 6 0\n-1 -1 -1\n1 -1 -1\n1 1 -1\n-1 1 -1\n"
             "-1 -1 1\n1 -1 1\n1 1 1\n-1 1 1\n4 0 3 2 1\n4 4 5 6 7\n4 0 1 5 4\n4 1 2 6 5\n4 2 3 7 6\n4 3 0 4 7\n";
           require(bool(out),"could not write cross-section fixture"); }
-        VulkanViewerOptions options; options.width=360; options.height=280;
+        TestWindow options; options.width=360; options.height=280;
         options.device.validation=options.device.synchronization_validation=argc>1;
-        CrossSectionHost viewer("Native cross-section test",options);viewer.hide_logo();
+        CrossSectionHost viewer("Native cross-section test"); set_size(viewer, options);viewer.hide_logo();
         viewer.set_background_color(vec4(1)); // Analytic plane-alpha oracle uses white.
         auto* plane=ClippingPlane::instance();
         require(plane->is_enabled(),"tutorial did not enable shared clipping plane");

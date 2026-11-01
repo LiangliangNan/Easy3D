@@ -95,9 +95,9 @@ namespace easy3d {
          */
 		explicit OpenGLViewer(
 			const std::string& title = "Easy3D Viewer",
-			int width = 800,
-			int height = 600,
-			int samples = 4,
+			unsigned int width = 800,
+			unsigned int height = 600,
+			unsigned int samples = 1,
 			bool full_screen = false,
 			bool visible = true,
 			bool resizable = true,

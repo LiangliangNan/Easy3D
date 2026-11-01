@@ -8,6 +8,9 @@
 #include <vector>
 
 namespace easy3d {
+
+// Vulkan device settings of a viewer: validation, synchronization validation and device name.
+using VulkanOptions = graphics::DeviceOptions;
 class Model;
 class Drawable;
 
@@ -19,8 +22,8 @@ class Drawable;
 // Unsupported scene effects fail explicitly.
 class VulkanOffScreen {
 public:
-    explicit VulkanOffScreen(int width = 800, int height = 600,
-                            const graphics::DeviceOptions& options = {});
+    explicit VulkanOffScreen(unsigned int width = 800, unsigned int height = 600,
+                            const VulkanOptions& vk_options = {});
     virtual ~VulkanOffScreen();
     VulkanOffScreen(const VulkanOffScreen&) = delete;
     VulkanOffScreen& operator=(const VulkanOffScreen&) = delete;

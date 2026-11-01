@@ -34,7 +34,7 @@ namespace easy3d {
 class CrossSection : public easy3d::Viewer {
 public:
 #if EASY3D_TUTORIAL_USES_VULKAN
-    explicit CrossSection(const std::string& title, const VulkanViewerOptions& options = {});
+    explicit CrossSection(const std::string& title);
 #else
     explicit CrossSection(const std::string& title);
 #endif

@@ -58,8 +58,8 @@ using namespace easy3d;
 // \cond
 
 #if EASY3D_TUTORIAL_USES_VULKAN
-TutorialObjectManipulation::TutorialObjectManipulation(const std::string& title,const VulkanViewerOptions& options)
-    : Viewer(title,options) {
+TutorialObjectManipulation::TutorialObjectManipulation(const std::string& title)
+    : Viewer(title) {
     camera()->setViewDirection(vec3(0,0,-1));camera()->setUpVector(vec3(0,1,0));
     manual_=usage_manual;hint_=usage_hint;
 }

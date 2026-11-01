@@ -1,3 +1,4 @@
+#include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <tutorials/Tutorial_403_PointSelection/viewer.h>
 #include <easy3d/renderer/manipulator.h>
@@ -61,9 +62,9 @@ vec2 project(VulkanViewer& viewer,vec3 p) {
 int main(int argc,char**) {
     try {
         initialize(false,false,false);
-        VulkanViewerOptions options; options.visible=false; options.width=360; options.height=260;
+        TestWindow options; options.visible=false; options.width=360; options.height=260;
         options.device.validation=options.device.synchronization_validation=argc>1;
-        SelectionHost viewer("GPU point selection interaction",options);
+        SelectionHost viewer("GPU point selection interaction"); set_size(viewer, options);
         viewer.set_background_color(vec4(1)); // Analytic guide-alpha oracle uses white.
         auto cloud=std::make_shared<PointCloud>();
         const auto deleted=cloud->add_vertex(vec3(0));

@@ -1,3 +1,4 @@
+#include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <tutorials/Tutorial_405_ObjectManipulation/viewer.h>
 #include <easy3d/core/surface_mesh.h>
@@ -44,10 +45,10 @@ int main(int argc,char**) {
     try {
         initialize(false,false,false);
         auto retained=quad(-1.2f);
-        VulkanViewerOptions options;options.visible=false;options.width=520;options.height=360;
+        TestWindow options;options.visible=false;options.width=520;options.height=360;
         options.device.validation=options.device.synchronization_validation=argc>1;
         {
-            ManipulationViewer v("Object manipulation",options);
+            ManipulationViewer v("Object manipulation"); set_size(v, options);
             require(v.has_usage(),"OpenGL counterpart manual/hint missing");
             v.add_model(retained);auto other=quad(1.2f);v.add_model(other);
             for (const auto& m:v.models()) m->renderer()->get_triangles_drawable("faces")->set_lighting(false);

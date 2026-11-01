@@ -44,8 +44,8 @@ using namespace easy3d;
 // \cond
 
 #if EASY3D_TUTORIAL_USES_VULKAN
-TutorialCameraInterpolation::TutorialCameraInterpolation(const std::string& title,const VulkanViewerOptions& options)
-    : Viewer(title,options),interpolator_(new KeyFrameInterpolator(camera()->frame())) {
+TutorialCameraInterpolation::TutorialCameraInterpolation(const std::string& title)
+    : Viewer(title),interpolator_(new KeyFrameInterpolator(camera()->frame())) {
     hint_=usage_hint;
 }
 TutorialCameraInterpolation::~TutorialCameraInterpolation() {delete interpolator_;}

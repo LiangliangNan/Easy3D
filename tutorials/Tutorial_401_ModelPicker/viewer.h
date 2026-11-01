@@ -38,7 +38,7 @@ namespace easy3d {
 class TutorialModelPicker : public easy3d::Viewer {
 public:
 #if EASY3D_TUTORIAL_USES_VULKAN
-    explicit TutorialModelPicker(const std::string& title,const easy3d::VulkanViewerOptions& options = {});
+    explicit TutorialModelPicker(const std::string& title);
 #else
     explicit TutorialModelPicker(const std::string &title);
 #endif

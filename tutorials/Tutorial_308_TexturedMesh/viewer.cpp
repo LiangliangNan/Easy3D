@@ -32,8 +32,8 @@
 
 namespace easy3d {
 #ifdef EASY3D_HAS_VULKAN
-    TexturedViewer::TexturedViewer(const std::string& title,const VulkanViewerOptions& options)
-        : Viewer(title,options) {
+    TexturedViewer::TexturedViewer(const std::string& title)
+        : Viewer(title) {
 #else
     TexturedViewer::TexturedViewer(const std::string& title) : Viewer(title) {
 #endif

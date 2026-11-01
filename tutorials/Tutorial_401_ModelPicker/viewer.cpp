@@ -44,8 +44,8 @@ using namespace easy3d;
 // \cond
 
 #if EASY3D_TUTORIAL_USES_VULKAN
-TutorialModelPicker::TutorialModelPicker(const std::string& title,const VulkanViewerOptions& options)
-        : Viewer(title,options) {
+TutorialModelPicker::TutorialModelPicker(const std::string& title)
+        : Viewer(title) {
 #else
 TutorialModelPicker::TutorialModelPicker(const std::string &title) : Viewer(title) {
 #endif

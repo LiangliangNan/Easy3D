@@ -1,3 +1,4 @@
+#include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "obj_fixture.h"
 #include <tutorials/Tutorial_308_TexturedMesh/viewer.h>
@@ -35,9 +36,9 @@ int main(int argc,char**) {
 #endif
         const auto file=obj_fixture::create(dir);
 #ifdef EASY3D_HAS_VULKAN
-        VulkanViewerOptions options; options.width=480; options.height=360;
+        TestWindow options; options.width=480; options.height=360;
         options.device.validation=options.device.synchronization_validation=argc>1;
-        TexturedViewer viewer("Native material viewer test",options);
+        TexturedViewer viewer("Native material viewer test"); set_size(viewer, options);
         if (viewer.device().supported_sample_counts()&4) viewer.set_samples(4);
         const std::string output="vulkan-materials.png";
 #else

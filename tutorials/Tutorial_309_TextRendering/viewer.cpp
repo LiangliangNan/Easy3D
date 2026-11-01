@@ -51,8 +51,8 @@ const char* const usage_manual = "----------------------- Text Rendering usage -
 
 using namespace easy3d;
 
-TutorialTextRendering::TutorialTextRendering(const std::string& title,const easy3d::VulkanViewerOptions& options)
-        : VulkanViewer(title,options) {
+TutorialTextRendering::TutorialTextRendering(const std::string& title)
+        : Viewer(title) {
     manual_ = usage_manual;
     std::vector<std::string> files;
     easy3d::file_system::get_directory_entries(easy3d::resource::directory()+"/fonts/",files,false);

@@ -42,11 +42,14 @@
 namespace easy3d {
 
 
-    OpenGLMultiViewer::OpenGLMultiViewer(int rows, int cols, const std::string &title)
-            : OpenGLViewer(title)
+    OpenGLMultiViewer::OpenGLMultiViewer(unsigned int rows, unsigned int cols, const std::string &title,
+                                         unsigned int width, unsigned int height, unsigned int samples,
+                                         bool full_screen, bool visible, bool resizable,
+                                         const OpenGLOptions &gl_options)
+            : OpenGLViewer(title, width, height, samples, full_screen, visible, resizable, gl_options)
     {
 
-        set_layout(rows, cols);
+        set_layout(int(rows), int(cols));
     }
 
 

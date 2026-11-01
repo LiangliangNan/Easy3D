@@ -107,10 +107,9 @@ struct VulkanViewer::Window {
     int last_logical_x = 0, last_logical_y = 0;
     double wheel_x = 0, wheel_y = 0;
     std::exception_ptr error;
-    Window(const std::string& text, int w, int h, int sample_count, bool full_screen, bool visible, bool resizable)
-        : title(text), width(w), height(h), samples(sample_count > 0 ? unsigned(sample_count) : 1u) {   // 0: no MSAA, as in OpenGL
-        if (sample_count < 0) throw std::invalid_argument("sample count must not be negative");
-        if (width <= 0 || height <= 0) throw std::invalid_argument("window dimensions must be positive");
+    Window(const std::string& text, unsigned int w, unsigned int h, unsigned int sample_count, bool full_screen, bool visible, bool resizable)
+        : title(text), width(int(w)), height(int(h)), samples(sample_count ? sample_count : 1u) {   // 0: no MSAA, as in OpenGL
+        if (w == 0 || h == 0) throw std::invalid_argument("window dimensions must be positive");
         runtime = detail::GlfwRuntime::acquire(true);
         if (!glfwVulkanSupported()) throw std::runtime_error("GLFW could not find Vulkan loader/driver support");
         glfwDefaultWindowHints();
@@ -219,7 +218,7 @@ struct VulkanViewer::Window {
         }); });
     }
 };
-VulkanViewer::VulkanViewer(const std::string& title, int width, int height, int samples,
+VulkanViewer::VulkanViewer(const std::string& title, unsigned int width, unsigned int height, unsigned int samples,
                            bool full_screen, bool visible, bool resizable, const VulkanOptions& vk_options)
     : VulkanViewer(std::make_shared<Window>(title, width, height, samples, full_screen, visible, resizable), vk_options) {}
 VulkanViewer::VulkanViewer(std::shared_ptr<Window> host, const graphics::DeviceOptions& options)

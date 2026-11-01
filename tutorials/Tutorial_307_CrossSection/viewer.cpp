@@ -42,8 +42,8 @@ const char* const usage_hint = "Left button:  rotate the clipping plane    \n"
 namespace easy3d {
 
 #if EASY3D_TUTORIAL_USES_VULKAN
-CrossSection::CrossSection(const std::string& title, const VulkanViewerOptions& options)
-    : Viewer(title, options) {
+CrossSection::CrossSection(const std::string& title)
+    : Viewer(title) {
 #else
 CrossSection::CrossSection(const std::string& title) : Viewer(title) {
 #endif

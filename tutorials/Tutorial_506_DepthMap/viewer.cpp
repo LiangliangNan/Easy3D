@@ -46,8 +46,8 @@ using namespace easy3d;
 // \cond
 
 #if EASY3D_TUTORIAL_USES_VULKAN
-TutorialDepthMap::TutorialDepthMap(const std::string& title, const VulkanViewerOptions& options)
-    : Viewer(title,options)
+TutorialDepthMap::TutorialDepthMap(const std::string& title)
+    : Viewer(title)
 #else
 TutorialDepthMap::TutorialDepthMap(const std::string& title)
     : Viewer(title), fbo_(nullptr)

@@ -39,8 +39,7 @@
 
 using namespace easy3d;
 
-TutorialPointSelection::TutorialPointSelection(const std::string& title,
-            const easy3d::VulkanViewerOptions& options) : VulkanViewer(title,options)
+TutorialPointSelection::TutorialPointSelection(const std::string& title) : Viewer(title)
 {
     hint_ = "Pressing Shift, drag the mouse to select (left) or deselect (right) points\n"
     "\tL: lasso mode (default)\n"

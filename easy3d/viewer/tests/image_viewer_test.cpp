@@ -1,3 +1,4 @@
+#include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <tutorials/Tutorial_306_ImageViewer/viewer.h>
 #define GLFW_INCLUDE_NONE
@@ -25,6 +26,7 @@ void unpickable(const graphics::FrameImage& image) {
 }
 struct ImageViewer : TutorialImageViewer {
     using TutorialImageViewer::TutorialImageViewer;
+    using TutorialImageViewer::fit_screen;
     void hide_logo() {show_easy3d_logo_=false;}
 };
 int main(int argc,char**) {
@@ -37,9 +39,9 @@ int main(int argc,char**) {
         }
         require(ImageIO::save("vulkan-image-wide.png",wide,4,2,4,false) &&
                 ImageIO::save("vulkan-image-tall.png",tall,2,4,4,false),"could not save image-viewer fixtures");
-        VulkanViewerOptions options; options.width=160; options.height=120;
+        TestWindow options; options.width=160; options.height=120;
         options.device.validation=options.device.synchronization_validation=argc>1;
-        ImageViewer viewer("Native image viewer test","vulkan-image-wide.png",options);viewer.hide_logo();
+        ImageViewer viewer("Native image viewer test","vulkan-image-wide.png"); set_size(viewer, options);viewer.fit_screen();viewer.hide_logo();   // the constructor fitted the image to the default window
         viewer.set_background_color(vec4(0,1,0,1));
         const bool msaa=(viewer.device().supported_sample_counts() & 4)!=0;
         if (msaa) viewer.set_samples(4);

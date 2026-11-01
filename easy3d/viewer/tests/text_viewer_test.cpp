@@ -1,3 +1,4 @@
+#include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <tutorials/Tutorial_309_TextRendering/viewer.h>
 #define GLFW_INCLUDE_NONE
@@ -27,12 +28,12 @@ void same_picking(const graphics::FrameImage& a,const graphics::FrameImage& b) {
 int main(int argc,char**) {
     try {
         initialize(false,false,false);
-        VulkanViewerOptions options; options.width=800; options.height=600;
+        TestWindow options; options.width=800; options.height=600;
         // Synthetic key callbacks should not compete with desktop focus/input.
         // Navigation itself is exercised separately by vulkan.window.
         options.visible=false;
         options.device.validation=options.device.synchronization_validation=argc>1;
-        TutorialTextRendering viewer("Native text viewer test",options);
+        TutorialTextRendering viewer("Native text viewer test"); set_size(viewer, options);
         require(viewer.add_model(resource::directory()+"/data/sphere.obj")!=nullptr,"could not load tutorial sphere");
         viewer.fit_screen();
         if (viewer.device().supported_sample_counts()&4) viewer.set_samples(4);

@@ -1,3 +1,4 @@
+#include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <tutorials/Tutorial_306_ImageViewer/viewer.h>
 #include <tutorials/Tutorial_307_CrossSection/viewer.h>
@@ -40,9 +41,9 @@ void same_picking(const graphics::FrameImage& a,const graphics::FrameImage& b) {
 int main(int argc,char**) {
     try {
         initialize(false,false,false);
-        VulkanViewerOptions options; options.visible=false;options.width=480;options.height=300;
+        TestWindow options; options.visible=false;options.width=480;options.height=300;
         options.device.validation=options.device.synchronization_validation=argc>1;
-        Inspect<VulkanViewer> v("Usage HUD",options);
+        Inspect<VulkanViewer> v("Usage HUD", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
         require(!v.manual().empty() && v.hint().empty(),"default viewer usage missing");
         require(v.background_color()==setting::background_color,"native viewer ignored shared background setting");
         require(v.logo(),"Easy3D logo is not enabled by default");
@@ -84,7 +85,6 @@ int main(int argc,char**) {
         require(v.device().validation_errors()==0,"usage HUD validation errors");
         // Every currently ported viewer with custom OpenGL text must retain it.
         {
-            test::native_options().viewer = options;
             Inspect<TutorialVirtualScanner> scanner("scanner");
             require(scanner.manual().find("Virtual Scanner usage")!=std::string::npos &&
                     scanner.hint()=="press 'Space' to perform scanning\npress 'n' to toggle Gaussian noise", "scanner usage missing");
@@ -92,17 +92,17 @@ int main(int argc,char**) {
             require(scanner.capture().rgba!=with_hint.rgba,"scanner hint not visible");
             require(scanner.device().validation_errors()==0,"scanner hint validation errors");
         }
-        {Inspect<TutorialPointSelection> x("selection",options);require(x.hint().find("select (left)")!=std::string::npos,"selection hint missing");}
+        {Inspect<TutorialPointSelection> x("selection"); set_size(x, options);require(x.hint().find("select (left)")!=std::string::npos,"selection hint missing");}
         {
             const bool enabled=ClippingPlane::instance()->is_enabled();
-            {Inspect<CrossSection> x("clipping",options);require(x.hint().find("clipping plane")!=std::string::npos,"clipping hint missing");}
+            {Inspect<CrossSection> x("clipping"); set_size(x, options);require(x.hint().find("clipping plane")!=std::string::npos,"clipping hint missing");}
             ClippingPlane::instance()->set_enabled(enabled);
         }
-        {Inspect<TutorialTextRendering> x("text",options);require(x.manual().find("Text Rendering usage")!=std::string::npos,"text manual missing");}
-        {Inspect<TutorialModelPicker> x("models",options);require(x.hint().find("pick/unpick a model")!=std::string::npos,"model picker hint missing");}
-        {Inspect<TutorialFacePicker> x("faces",options);require(x.hint().find("on a face")!=std::string::npos,"face picker hint missing");}
+        {Inspect<TutorialTextRendering> x("text"); set_size(x, options);require(x.manual().find("Text Rendering usage")!=std::string::npos,"text manual missing");}
+        {Inspect<TutorialModelPicker> x("models"); set_size(x, options);require(x.hint().find("pick/unpick a model")!=std::string::npos,"model picker hint missing");}
+        {Inspect<TutorialFacePicker> x("faces"); set_size(x, options);require(x.hint().find("on a face")!=std::string::npos,"face picker hint missing");}
         require(ImageIO::save("vulkan-usage-image.png",std::vector<unsigned char>(4*16,255),4,4,4,false),"image fixture failed");
-        {Inspect<TutorialImageViewer> x("image","vulkan-usage-image.png",options);
+        {Inspect<TutorialImageViewer> x("image","vulkan-usage-image.png"); set_size(x, options);
          require(x.manual().empty() && x.hint().find("open an image")!=std::string::npos,"image viewer usage missing");}
         std::cout << "PASS: manuals, startup/F1, all ported hints, empty/default semantics, HUD, resize and MSAA\n";
     } catch (const std::exception& e) {std::cerr<<"FAIL: "<<e.what()<<'\n';return 1;}

@@ -1,3 +1,4 @@
+#include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <tutorials/Tutorial_506_DepthMap/viewer.h>
 #include <easy3d/core/model.h>
@@ -44,9 +45,9 @@ unsigned verify(TutorialDepthMap& v,const graphics::FrameImage& image) {
 int main(int argc,char**) {
     try {
         initialize(false,false,false);
-        VulkanViewerOptions options;options.visible=false;options.width=320;options.height=280;
+        TestWindow options;options.visible=false;options.width=320;options.height=280;
         options.device.validation=options.device.synchronization_validation=argc>1;
-        TutorialDepthMap v("Native depth map",options);
+        TutorialDepthMap v("Native depth map"); set_size(v, options);
         auto* model=v.add_model(resource::directory()+"/data/fountain/pointcloud.ply");require(model,"fixture missing");
         model->renderer()->get_points_drawable("vertices")->set_point_size(5);
         const auto bare=v.capture();frame(v);const auto initial=v.capture();same_picking(bare,initial);

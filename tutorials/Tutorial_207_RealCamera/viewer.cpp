@@ -56,8 +56,8 @@ const float scale = 0.3f;
 
 #if EASY3D_TUTORIAL_USES_VULKAN
 TutorialRealCamera::TutorialRealCamera(const std::string& title, const std::string& bundler_file,
-                                     const std::string& cloud_file, const VulkanViewerOptions& options)
-    : Viewer(title, options), current_view_(0)
+                                     const std::string& cloud_file)
+    : Viewer(title, 800, 600, 4, false, true, false), current_view_(0)
 #else
 TutorialRealCamera::TutorialRealCamera(const std::string& title,
                        const std::string& bundler_file,

@@ -1,3 +1,4 @@
+#include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/util/initializer.h>
@@ -26,9 +27,9 @@ void same_picking(const graphics::FrameImage& a,const graphics::FrameImage& b) {
 int main(int argc,char**) {
     try {
         initialize(false,false,false);
-        VulkanViewerOptions options;options.visible=false;options.width=580;options.height=420;
+        TestWindow options;options.visible=false;options.width=580;options.height=420;
         options.device.validation=options.device.synchronization_validation=argc>1;
-        RateViewer v("Frame rate HUD",options);
+        RateViewer v("Frame rate HUD", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
         v.set_usage("Frame rate regression","Usage hint remains below the frame rate\nSecond hint line");
         require(v.add_model(resource::directory()+"/data/sphere.obj"),"scene missing");
         std::vector<graphics::Vertex> vertices(3);
@@ -63,7 +64,7 @@ int main(int argc,char**) {
             require(v.snapshot("vulkan-frame-rate.png",1,1),"frame rate snapshot failed");
             toggle();require(!v.shown() && v.capture().rgba==baseline.rgba,"hiding rate did not restore original hint layout");
         }
-        RateViewer independent("Independent rate",options);independent.set_usage("","");
+        RateViewer independent("Independent rate", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);independent.set_usage("","");
         auto key2=glfwSetKeyCallback(independent.window(),nullptr);glfwSetKeyCallback(independent.window(),key2);
         const auto plain=independent.capture();key2(independent.window(),GLFW_KEY_F,0,GLFW_PRESS,RateViewer::MODIF_CTRL);
         require(independent.shown() && independent.rate().find("--")!=std::string::npos,"viewers shared frame-rate state");

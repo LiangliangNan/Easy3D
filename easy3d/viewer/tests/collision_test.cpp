@@ -1,3 +1,4 @@
+#include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <tutorials/Tutorial_406_CollisionDetection/viewer.h>
 #include <easy3d/algo/collider.h>
@@ -44,7 +45,7 @@ void check_colors(const SurfaceMesh& a,const SurfaceMesh& b,const Collider& refe
 int main(int argc,char**) {
     try {
         initialize(false,false,false);
-        VulkanViewerOptions options;options.visible=false;options.width=480;options.height=360;
+        TestWindow options;options.visible=false;options.width=480;options.height=360;
         options.device.validation=options.device.synchronization_validation=argc>1;
         auto first=std::make_shared<SurfaceMesh>(),second=std::make_shared<SurfaceMesh>();
         triangle(*first,vec3(-1,-1,0),vec3(1,-1,0),vec3(0,1,0));
@@ -53,7 +54,7 @@ int main(int argc,char**) {
         triangle(*second,vec3(6,-1,-1),vec3(7,-1,1),vec3(6.5f,1,0));
         const auto local=first->points();
         {
-            CollisionViewer v("Collision regression",options);
+            CollisionViewer v("Collision regression"); set_size(v, options);
             require(v.models().size()==2 && v.is_animating() && v.has_usage(),"default collision scene/usage missing");
             require(v.snapshot("vulkan-collision-default.png",1,1),"default collision snapshot failed");
             v.clear_scene();v.add_model(first);v.add_model(second);v.initialize_collision();

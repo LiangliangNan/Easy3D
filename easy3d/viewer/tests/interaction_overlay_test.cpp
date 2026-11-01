@@ -1,3 +1,4 @@
+#include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/fileio/image_io.h>
@@ -27,9 +28,9 @@ void same_picking(const graphics::FrameImage& a,const graphics::FrameImage& b) {
 int main(int argc,char**) {
     try {
         initialize(false,false,false);
-        VulkanViewerOptions options; options.width=233;options.height=197;options.visible=false;
+        TestWindow options; options.width=233;options.height=197;options.visible=false;
         options.device.validation=options.device.synchronization_validation=argc>1;
-        HintViewer v("Interaction overlays",options);v.hide_logo();v.set_background_color(vec4(1));
+        HintViewer v("Interaction overlays", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);v.hide_logo();v.set_background_color(vec4(1));
         require(v.add_model(resource::directory()+"/data/bunny.ply"),"scene model missing");
         const int w=v.width(),h=v.height();
         std::vector<graphics::Vertex> vertices(3);

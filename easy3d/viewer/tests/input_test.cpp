@@ -1,3 +1,4 @@
+#include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
@@ -42,9 +43,9 @@ struct ClipboardRestore {
 int main(int argc,char**) {
     try {
         initialize(false,false,false);
-        VulkanViewerOptions options; options.visible=false; options.width=241; options.height=181;
+        TestWindow options; options.visible=false; options.width=241; options.height=181;
         options.device.validation=options.device.synchronization_validation=argc>1;
-        InputViewer v("Input parity",options);
+        InputViewer v("Input parity", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
         auto key=glfwSetKeyCallback(v.window(),nullptr); glfwSetKeyCallback(v.window(),key);
         auto press=[&](int k,int mods=0){key(v.window(),k,0,GLFW_PRESS,mods);};
         auto release=[&](int k){key(v.window(),k,0,GLFW_RELEASE,0);};

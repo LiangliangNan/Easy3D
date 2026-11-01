@@ -1,3 +1,4 @@
+#include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/renderer/camera.h>
@@ -28,14 +29,14 @@ bool near(const vec3 &a, const vec3 &b, float epsilon = 1e-4f) { return distance
 std::shared_ptr<ViewerBase> make_host(unsigned samples, bool validation) {
 #ifdef EASY3D_HAS_VULKAN
     {
-        VulkanViewerOptions o;
+        TestWindow o;
         o.width = 181;
         o.height = 151;
         o.visible = false;
         o.samples = samples;
         o.device.validation = validation;
         o.device.synchronization_validation = validation;
-        auto v = std::make_shared<VulkanViewer>("Portable camera queries", o);
+        auto v = std::make_shared<VulkanViewer>("Portable camera queries", o.width, o.height, o.samples, false, o.visible, o.resizable, o.device);
         v->set_usage("");
         v->camera()->setViewDirection(vec3(0, 0, -1));
         v->camera()->setUpVector(vec3(0, 1, 0));

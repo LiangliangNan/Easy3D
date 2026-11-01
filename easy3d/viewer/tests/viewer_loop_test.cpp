@@ -1,3 +1,4 @@
+#include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/viewer.h>
 #ifdef EASY3D_TEST_OPENGL_VIEWER
@@ -21,8 +22,8 @@ using namespace easy3d;
 namespace {
 void require(bool ok, const char* message) { if (!ok) throw std::runtime_error(message); }
 #ifndef EASY3D_TEST_OPENGL_VIEWER
-VulkanViewerOptions options(bool validation) {
-    VulkanViewerOptions result; result.width = 151; result.height = 117; result.visible = false;
+TestWindow options(bool validation) {
+    TestWindow result; result.width = 151; result.height = 117; result.visible = false;
     result.device.validation = result.device.synchronization_validation = validation; return result;
 }
 #endif
@@ -30,7 +31,8 @@ struct LoopViewer : TestHost {
 #ifdef EASY3D_TEST_OPENGL_VIEWER
     explicit LoopViewer(bool) : TestHost("Frame loop", 151, 117, 4) { manual_.clear(); }
 #else
-    explicit LoopViewer(bool validation) : TestHost("Frame loop", options(validation)) { manual_.clear(); }
+    explicit LoopViewer(bool validation) : LoopViewer(options(validation)) {}
+    explicit LoopViewer(const TestWindow& o) : TestHost("Frame loop", o.width, o.height, o.samples, false, o.visible, o.resizable, o.device) { manual_.clear(); }
 #endif
     unsigned initializations = 0;
     bool throw_init = false;

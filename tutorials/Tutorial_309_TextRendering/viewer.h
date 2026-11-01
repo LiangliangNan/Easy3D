@@ -38,7 +38,7 @@ namespace easy3d { class TextRenderer; }
 class TutorialTextRendering : public easy3d::Viewer {
 public:
 #if EASY3D_TUTORIAL_USES_VULKAN
-    explicit TutorialTextRendering(const std::string& title, const easy3d::VulkanViewerOptions& options = {});
+    explicit TutorialTextRendering(const std::string& title);
 #else
     explicit TutorialTextRendering(const std::string& title);
 #endif

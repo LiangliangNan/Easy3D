@@ -1,3 +1,4 @@
+#include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <tutorials/Tutorial_206_CameraInterpolation/viewer.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
@@ -52,9 +53,9 @@ void core_playback() {
 int main(int argc,char**) {
     try {
         initialize(false,false,false);core_playback();
-        VulkanViewerOptions options;options.visible=false;options.width=580;options.height=420;
+        TestWindow options;options.visible=false;options.width=580;options.height=420;
         options.device.validation=options.device.synchronization_validation=argc>1;
-        PathViewer v("Native camera paths",options);require(v.has_usage(),"counterpart usage hint missing");
+        PathViewer v("Native camera paths"); set_size(v, options);require(v.has_usage(),"counterpart usage hint missing");
         require(v.add_model(resource::directory()+"/data/sphere.obj"),"sphere load failed");
         auto key=glfwSetKeyCallback(v.window(),nullptr);glfwSetKeyCallback(v.window(),key);
         auto press=[&](int code,int mods=0){key(v.window(),code,0,GLFW_PRESS,mods);};

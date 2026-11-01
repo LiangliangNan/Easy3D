@@ -1,3 +1,4 @@
+#include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/core/surface_mesh.h>
@@ -25,9 +26,9 @@ void probe(GeometryViewer& v,const vec3& world,bool filled,const SurfaceMesh* mo
 int main(int argc,char**) {
     try {
         initialize(false,false,false);
-        VulkanViewerOptions options;options.visible=false;options.width=800;options.height=600;
+        TestWindow options;options.visible=false;options.width=800;options.height=600;
         options.device.validation=options.device.synchronization_validation=argc>1;
-        GeometryViewer v("Native geometry tutorials",options);v.hide_axes();v.set_background_color(vec4(1));
+        GeometryViewer v("Native geometry tutorials", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);v.hide_axes();v.set_background_color(vec4(1));
         if (v.device().supported_sample_counts()&4) v.set_samples(4);
         create_curves_drawables(v);require(v.drawables().size()==6,"curves tutorial lost a curve family");frame(v);
         for (const auto& d:v.drawables()) require(dynamic_cast<LinesDrawable2D*>(d.get()) && d->has_cpu_buffers(),"curve drawable did not select native CPU mode");

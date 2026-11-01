@@ -1,3 +1,4 @@
+#include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/core/surface_mesh.h>
@@ -42,7 +43,7 @@ struct RunViewer : VulkanViewer {
 int main(int argc, char**) {
     try {
         initialize(false, false, false);
-        VulkanViewerOptions options;
+        TestWindow options;
         options.width = 171; options.height = 129;
         options.device.validation = argc > 1;
         options.device.synchronization_validation = options.device.validation;
@@ -58,7 +59,7 @@ int main(int argc, char**) {
             catch (const std::invalid_argument&) { rejected = true; }
             require(rejected, "negative sample count was accepted");
         }
-        VulkanViewer viewer("Vulkan window test", options);
+        VulkanViewer viewer("Vulkan window test", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
         require(glfwGetWindowAttrib(viewer.window(), GLFW_CLIENT_API) == GLFW_NO_API, "window created a graphics context");
         require(glfwGetCurrentContext() == nullptr, "OpenGL context exists in native test");
         auto* model = viewer.add_model(resource::directory() + "/data/bunny.ply");
@@ -192,14 +193,14 @@ int main(int argc, char**) {
             auto unavailable = options;
             unavailable.device.device_name = "__Easy3D_no_such_physical_device__";
             bool rejected = false;
-            try { VulkanViewer bad("Expected initialization failure", unavailable); }
+            try { VulkanViewer bad("Expected initialization failure", unavailable.width, unavailable.height, unavailable.samples, false, unavailable.visible, unavailable.resizable, unavailable.device); }
             catch (const std::runtime_error&) { rejected = true; }
             require(rejected, "unavailable device was accepted");
         }
         frame(viewer);
         // Native GLFW lifetime and GPU caches must survive a second window closing.
         {
-            VulkanViewer second("Independent Vulkan device", options);
+            VulkanViewer second("Independent Vulkan device", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
             if (msaa) second.set_samples(4);
             require(second.add_model(resource::directory() + "/data/bunny.ply"), "second mesh load failed");
             for (unsigned i = 0; i < 4; ++i) { frame(viewer); frame(second); }
@@ -207,7 +208,7 @@ int main(int argc, char**) {
         }
         frame(viewer);
         {
-            ThrowingViewer bad("Callback error containment", options);
+            ThrowingViewer bad("Callback error containment", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
             auto callback = glfwSetKeyCallback(bad.window(), nullptr);
             glfwSetKeyCallback(bad.window(), callback);
             callback(bad.window(), GLFW_KEY_A, 0, GLFW_PRESS, 0);
@@ -220,7 +221,7 @@ int main(int argc, char**) {
         {
             auto invalid = options; invalid.samples = 3;
             bool rejected = false;
-            try { VulkanViewer bad("Expected invalid MSAA initialization", invalid); }
+            try { VulkanViewer bad("Expected invalid MSAA initialization", invalid.width, invalid.height, invalid.samples, false, invalid.visible, invalid.resizable, invalid.device); }
             catch (const std::invalid_argument&) { rejected = true; }
             require(rejected, "invalid initial sample count was accepted");
         }
@@ -280,7 +281,7 @@ int main(int argc, char**) {
             require(std::abs(camera_after[i]-camera_before[i])<1e-6f,
                     "snapshot changed the live camera");
         {
-            RunViewer run_viewer("run(bool) parity", options);
+            RunViewer run_viewer("run(bool) parity", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
             require(run_viewer.add_model(resource::directory()+"/data/bunny.ply"), "run test model missing");
             run_viewer.camera()->setPosition(run_viewer.camera()->position()+vec3(1,2,3));
             const auto position=run_viewer.camera()->position();

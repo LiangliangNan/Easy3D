@@ -81,9 +81,9 @@ namespace easy3d {
 
     OpenGLViewer::OpenGLViewer(
             const std::string &title /* = "Easy3D Viewer" */,
-            int width /* = 800 */,
-            int height /* = 600 */,
-            int samples /* = 4 */,
+            unsigned int width /* = 800 */,
+            unsigned int height /* = 600 */,
+            unsigned int samples /* = 1 */,
             bool full_screen /* = false */,
             bool visible /* = true */,
             bool resizable /* = true */,
@@ -123,8 +123,8 @@ namespace easy3d {
             logging::initialize(false, true, true, false, "default", 9);
 
         // create and setup window
-        window_ = create_window(title, samples, gl_options.major, gl_options.minor, full_screen, resizable,
-                                gl_options.depth_bits, gl_options.stencil_bits, width, height);
+        window_ = create_window(title, int(samples), gl_options.major, gl_options.minor, full_screen, resizable,
+                                gl_options.depth_bits, gl_options.stencil_bits, int(width), int(height));
         try {
         setup_callbacks(window_);
 

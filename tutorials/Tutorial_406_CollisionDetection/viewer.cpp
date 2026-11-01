@@ -61,8 +61,8 @@ using namespace easy3d;
 // \cond
 
 #if EASY3D_TUTORIAL_USES_VULKAN
-TutorialCollisionDetection::TutorialCollisionDetection(const std::string& title,const VulkanViewerOptions& options)
-    : Viewer(title,options),model0_color_(.8f,1,.8f),model1_color_(.8f,.8f,1) {
+TutorialCollisionDetection::TutorialCollisionDetection(const std::string& title)
+    : Viewer(title),model0_color_(.8f,1,.8f),model1_color_(.8f,.8f,1) {
     manual_=usage_manual;hint_=usage_hint;
     add_model(resource::directory()+"/data/bunny.ply");
     add_model(resource::directory()+"/data/mannequin.ply");
