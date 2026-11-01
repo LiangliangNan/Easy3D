@@ -213,8 +213,9 @@ OpenGL part is `main`'s code, and the Vulkan part is reached through `#ifdef
 EASY3D_HAS_VULKAN`, with larger Vulkan-specific implementations placed in backend files.
 Both backends stay in the source tree, but only the configured one is built and exposed
 by a given package. This replaces the earlier `OpenGLViewer`/`VulkanViewer` pairs, their
-root-level `opengl_*`/`vulkan_*` files and the `viewer.h` alias selector; those exist
-only until U1–U2 and must not be extended.
+root-level `opengl_*`/`vulkan_*` files and the `viewer.h` alias selector. The `opengl_*`
+files and class names are gone (U1a); the `vulkan_*` ones and the aliases exist only until
+U1b and must not be extended.
 
 Ordinary tutorial subclasses keep the original form, with no conditionals:
 
@@ -308,10 +309,14 @@ Decisions in force:
 | 5. Tutorials on the shared API | in progress: all tutorials except 202 and 501–505 build in the Vulkan tree; those six are gated in `tutorials/CMakeLists.txt`; `EASY3D_TUTORIAL_USES_VULKAN` remains in `viewer.h` and tutorials 401–406 |
 | 6. Renderer, interaction, GUI/application parity | pending (W10) |
 
-Divergence from `main` measured on 2026-10-31 (the number to drive down; see U6): in
-`easy3d/`, 6 files exist only in `main` (`viewer.cpp`, `multi_viewer.*`, `offscreen.*`,
-`snapshot.cpp`) and 26 only in this branch; 58 tutorial files and 3 application entries
-differ. After normalising the class rename, the OpenGL classes differ from `main` by
+Divergence from `main` (the number to drive down; see U6). Measured after U1a: in
+`easy3d/`, 1 file exists only in `main` (`viewer/snapshot.cpp`; this branch keeps that code
+inside `viewer.cpp`) and 19 only in this branch (was 26 before U1a); 69 tutorial files
+differ (24 `main.cpp`, 19 `viewer.cpp`, 18 `viewer.h`, 8 CMake files; an earlier figure of 58
+was measured at a different point and is not comparable). The unified-API additions
+account for all of the OpenGL `Viewer`'s drift: it defines every function `main`'s does
+plus 11 more (`draw_frame`, `poll_events`, `run_frames`, `show`, `hide`, `should_close`,
+`request_close`, `update_frame_rate`, `print_usage`, `dispatch_callback`, `read_scene_depth`). After normalising the class rename, the OpenGL classes differ from `main` by
 (changed lines / `main` lines): `multi_viewer.h` 12/168, `multi_viewer.cpp` 5/334,
 `viewer.h` 189/671, `viewer.cpp` 835/1834, `offscreen.h` 243/220, `offscreen.cpp`
 164/126. U1–U2 restore `main`'s code and keep only the differences the unified API needs.
@@ -362,6 +367,23 @@ of this document.
   `opengl.counterparts` fails). `vulkan.realcamera` takes 60–70 s on
   lavapipe and times out at 120 s if the machine is busy compiling; run the suite on an idle
   machine.
+- **U1a** (done) The OpenGL classes carry `main`'s names and files: `Viewer` in
+  `viewer.h/.cpp`, `MultiViewer` in `multi_viewer.h/.cpp`, `OffScreen` in `offscreen.h/.cpp`,
+  with `opengl_*` removed and the viewer CMake source list back to `main`'s three pairs plus
+  the shared and Vulkan backend files. Their OpenGL code sits in the `#else` of
+  `#ifdef EASY3D_HAS_VULKAN`; the Vulkan branch of `viewer.h` still holds the temporary
+  aliases `Viewer = VulkanViewer` and `OffScreen = VulkanOffScreen`, and `MultiViewer` has no
+  Vulkan branch. `OffScreen` still inherits publicly (`main`: `protected`).
+- **U1b** (next) Flatten `VulkanOffScreen` and `VulkanViewer` into the Vulkan `Viewer` (D2).
+  All 14 forwarders disappear. Four names collide; in each, the viewer's version wraps the
+  offscreen one: `resize` (window size versus render-target size), `clear_scene`,
+  `capture(unsigned)` (the viewer first runs `init()` and refreshes the HUD overlays) and
+  `add_drawable` (different overloads). A window-less `Viewer` (no `GLFW` window, no
+  surface) serves `OffScreen : protected Viewer`; its capture must not draw the HUD that a
+  windowed viewer draws (logo, corner axes), as today. The Vulkan-only public API of
+  `VulkanOffScreen` (`pick`, `select_points`, `scan_visible_points`, overlays, clipping
+  planes, …) has no counterpart in `main`; it stays public inside the Vulkan branch until
+  the picker classes (U3/W10) can take it over.
 - **U1** Unify `Viewer` (P1, P2): fold `OpenGLViewer` and `VulkanViewer` into one `Viewer`
   in `viewer.h/.cpp`, with the constructor of D1 (done), `ViewerBase`
   declaring the shared API, and the Vulkan part under `#ifdef`, including the device and
