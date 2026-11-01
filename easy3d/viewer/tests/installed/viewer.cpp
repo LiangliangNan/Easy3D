@@ -5,7 +5,7 @@
 #ifdef EASY3D_HAS_VULKAN
 #include <easy3d/viewer/vulkan_viewer.h>
 #else
-#include <easy3d/viewer/opengl_viewer.h>
+#include <easy3d/viewer/viewer.h>
 #endif
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/renderer.h>
@@ -25,7 +25,7 @@ int main() {
         voptions.width = 181; voptions.height = 151; voptions.visible = false; voptions.samples = 1;
         auto viewer = std::make_shared<VulkanViewer>("Installed runtime viewer", voptions);
 #else
-        auto viewer = std::make_shared<OpenGLViewer>("Installed runtime viewer", 181, 151, 1);
+        auto viewer = std::make_shared<Viewer>("Installed runtime viewer", 181, 151, 1);
 #endif
         auto mesh = std::make_shared<SurfaceMesh>();
         const auto a = mesh->add_vertex(vec3(0, -1, -1)), b = mesh->add_vertex(vec3(0, 1, -1));

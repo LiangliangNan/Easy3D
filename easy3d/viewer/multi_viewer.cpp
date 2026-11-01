@@ -24,7 +24,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include <easy3d/viewer/opengl_multi_viewer.h>
+#ifndef EASY3D_HAS_VULKAN   // the Vulkan counterpart is not folded in yet (work item U1)
+
+#include <easy3d/viewer/multi_viewer.h>
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/opengl.h>
 #include <easy3d/renderer/drawable_lines.h>
@@ -42,25 +44,25 @@
 namespace easy3d {
 
 
-    OpenGLMultiViewer::OpenGLMultiViewer(unsigned int rows, unsigned int cols, const std::string &title,
+    MultiViewer::MultiViewer(unsigned int rows, unsigned int cols, const std::string &title,
                                          unsigned int width, unsigned int height, unsigned int samples,
                                          bool full_screen, bool visible, bool resizable,
                                          const OpenGLOptions &gl_options)
-            : OpenGLViewer(title, width, height, samples, full_screen, visible, resizable, gl_options)
+            : Viewer(title, width, height, samples, full_screen, visible, resizable, gl_options)
     {
 
         set_layout(int(rows), int(cols));
     }
 
 
-    OpenGLMultiViewer::~OpenGLMultiViewer() {
+    MultiViewer::~MultiViewer() {
         drawable_division_.reset();
         // Not needed: it will be called in the destructor of the base class
-        // OpenGLViewer::cleanup();
+        // Viewer::cleanup();
     }
 
 
-    void OpenGLMultiViewer::set_layout(int rows, int cols) {
+    void MultiViewer::set_layout(int rows, int cols) {
         num_rows_ = rows;
         num_cols_ = cols;
 
@@ -73,7 +75,7 @@ namespace easy3d {
     }
 
 
-    bool OpenGLMultiViewer::snapshot() const {
+    bool MultiViewer::snapshot() const {
         const std::string& title = "Please choose a file name";
         std::string default_file_name("untitled.png");
         if (current_model())
@@ -101,7 +103,7 @@ namespace easy3d {
 
             // Note: it also possible to use a scaled framebuffer size (to render a larger image).
             //       This requires setting scaled viewport size (by calling glViewport() for each 
-            //       view in OpenGLMultiViewer::draw().
+            //       view in MultiViewer::draw().
             FramebufferObject fbo(w, h, samples_);
             fbo.add_color_buffer();
             fbo.add_depth_buffer();
@@ -114,7 +116,7 @@ namespace easy3d {
                 glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-            const_cast<OpenGLMultiViewer*>(this)->draw();
+            const_cast<MultiViewer*>(this)->draw();
             
             fbo.release();
 
@@ -124,7 +126,7 @@ namespace easy3d {
     }
 
 
-    void OpenGLMultiViewer::assign(int row, int col, const Model *m) {
+    void MultiViewer::assign(int row, int col, const Model *m) {
         if (!m) {
             LOG(ERROR) << "null model cannot be assigned to a view";
             return;
@@ -139,7 +141,7 @@ namespace easy3d {
     }
 
 
-    void OpenGLMultiViewer::assign(int row, int col, const Drawable *d) {
+    void MultiViewer::assign(int row, int col, const Drawable *d) {
         if (!d) {
             LOG(ERROR) << "null drawable cannot be assigned to a view";
             return;
@@ -156,28 +158,28 @@ namespace easy3d {
     }
 
 
-    void OpenGLMultiViewer::set_division_visible(bool b) {
+    void MultiViewer::set_division_visible(bool b) {
         if (drawable_division_)
             drawable_division_->set_visible(b);
     }
 
 
-    bool OpenGLMultiViewer::division_visible() const {
+    bool MultiViewer::division_visible() const {
         if (drawable_division_)
             return drawable_division_->is_visible();
         return false;
     }
 
 
-    void OpenGLMultiViewer::init() {
-        OpenGLViewer::init();
+    void MultiViewer::init() {
+        Viewer::init();
 
         // compute the division
         update_division();
     }
 
 
-    bool OpenGLMultiViewer::draw() {
+    bool MultiViewer::draw() {
         // remember the viewer port, later we will have to restore it after drawing each view
         ivec4 viewport;
         glGetIntegerv(GL_VIEWPORT, viewport);
@@ -242,12 +244,12 @@ namespace easy3d {
     }
 
 
-    void OpenGLMultiViewer::post_resize(int w, int h) {
+    void MultiViewer::post_resize(int w, int h) {
         update_division();
     }
 
 
-    void OpenGLMultiViewer::update_division() {
+    void MultiViewer::update_division() {
         if (views_.empty() || views_[0].empty())
             return;
 
@@ -292,7 +294,7 @@ namespace easy3d {
     }
 
 
-    vec3 OpenGLMultiViewer::point_under_pixel(int x, int y, bool &found) const {
+    vec3 MultiViewer::point_under_pixel(int x, int y, bool &found) const {
         // GLFW (same as Qt) uses upper corner for its origin while GL uses the lower corner.
         int glx = x;
         int gly = height() - 1 - y;
@@ -307,7 +309,7 @@ namespace easy3d {
         glReadPixels(glx, gly, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
         found = depth < 1.0f;
         if (found) {
-            // This is different from OpenGLViewer::point_under_pixel(...).
+            // This is different from Viewer::point_under_pixel(...).
             // We use the coordinates w.r.t. the current view.
             x %= view_width_;
             y %= view_height_;
@@ -319,21 +321,23 @@ namespace easy3d {
     }
 
 
-    bool OpenGLMultiViewer::mouse_release_event(int x, int y, int button, int modifiers) {
+    bool MultiViewer::mouse_release_event(int x, int y, int button, int modifiers) {
         // make the mouse position relative to the current view
         x %= view_width_;
         y %= view_height_;
         mouse_pressed_x_ %= view_width_;
         mouse_pressed_y_ %= view_height_;
-        return OpenGLViewer::mouse_release_event(x, y, button, modifiers);
+        return Viewer::mouse_release_event(x, y, button, modifiers);
     }
 
 
-    bool OpenGLMultiViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
+    bool MultiViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
         // make the mouse position relative to the current view
         x %= view_width_;
         y %= view_height_;
-        return OpenGLViewer::mouse_drag_event(x, y, dx, dy, button, modifiers);
+        return Viewer::mouse_drag_event(x, y, dx, dy, button, modifiers);
     }
 
 }
+
+#endif   // !EASY3D_HAS_VULKAN

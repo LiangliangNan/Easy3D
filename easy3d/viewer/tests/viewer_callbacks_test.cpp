@@ -53,7 +53,7 @@ std::shared_ptr<ViewerBase> host(bool validation) {
         return v;
     }
 #else
-    auto v = std::make_shared<OpenGLViewer>("Portable callbacks", 181, 151, 4);
+    auto v = std::make_shared<Viewer>("Portable callbacks", 181, 151, 4);
     v->hide();
     v->set_usage("");
     v->camera()->setViewDirection(vec3(0,0,-1)); v->camera()->setUpVector(vec3(0,1,0));

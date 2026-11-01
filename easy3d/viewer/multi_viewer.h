@@ -24,11 +24,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#ifndef EASY3D_VIEWER_OPENGL_MULTI_VIEWER_H
-#define EASY3D_VIEWER_OPENGL_MULTI_VIEWER_H
+#ifndef EASY3D_VIEWER_MULTI_VIEWER_H
+#define EASY3D_VIEWER_MULTI_VIEWER_H
 
+#include <easy3d/viewer/viewer.h>
+
+#ifndef EASY3D_HAS_VULKAN   // the Vulkan counterpart is not folded in yet (work item U1)
 #include <memory>
-#include <easy3d/viewer/opengl_viewer.h>
 
 
 namespace easy3d {
@@ -38,9 +40,9 @@ namespace easy3d {
 
     /**
      * \brief A viewer that supports multiple views (arranged in a grid layout).
-     * \class OpenGLMultiViewer easy3d/viewer/opengl_multi_viewer.h
+     * \class MultiViewer easy3d/viewer/multi_viewer.h
      */
-    class OpenGLMultiViewer : public OpenGLViewer {
+    class MultiViewer : public Viewer {
     public:
         /**
          * \brief Constructor.
@@ -48,14 +50,14 @@ namespace easy3d {
          * \param cols The number of columns (of the grid-like layout).
          * \param title The title of the viewer window.
          */
-        OpenGLMultiViewer(unsigned int rows, unsigned int cols, const std::string &title = "untitled",
+        MultiViewer(unsigned int rows, unsigned int cols, const std::string &title = "untitled",
                           unsigned int width = 800, unsigned int height = 600, unsigned int samples = 1,
                           bool full_screen = false, bool visible = true, bool resizable = true,
                           const OpenGLOptions &gl_options = {});
         /**
          * \brief Destructor.
          */
-        ~OpenGLMultiViewer() override;
+        ~MultiViewer() override;
 
         /**
          * \brief Assigns the model \p m to the view at position (\p row, \p col).
@@ -167,5 +169,6 @@ namespace easy3d {
     };
 
 }
+#endif
 
-#endif // EASY3D_VIEWER_OPENGL_MULTI_VIEWER_H
+#endif	// EASY3D_VIEWER_MULTI_VIEWER_H

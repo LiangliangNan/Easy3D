@@ -24,7 +24,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  ********************************************************************/
 
-#include <easy3d/viewer/opengl_viewer.h>
+#ifndef EASY3D_HAS_VULKAN   // the Vulkan counterpart is not folded in yet (work item U1)
+
+#include <easy3d/viewer/viewer.h>
 #include <easy3d/viewer/backends/glfw_runtime.h>
 #include <easy3d/viewer/backends/viewer_loop.h>
 
@@ -79,7 +81,7 @@
 namespace easy3d {
 
 
-    OpenGLViewer::OpenGLViewer(
+    Viewer::Viewer(
             const std::string &title /* = "Easy3D Viewer" */,
             unsigned int width /* = 800 */,
             unsigned int height /* = 600 */,
@@ -136,10 +138,10 @@ namespace easy3d {
         camera_->setViewDirection(vec3(-1, 0, 0)); // X pointing out
         camera_->showEntireScene();
 
-        easy3d::connect(&camera_->frame_modified, this, &OpenGLViewer::update);
+        easy3d::connect(&camera_->frame_modified, this, &Viewer::update);
 
         kfi_ = std::unique_ptr<KeyFrameInterpolator>(new KeyFrameInterpolator(camera_->frame()));
-        easy3d::connect(&kfi_->interpolation_stopped, this, &OpenGLViewer::update);
+        easy3d::connect(&kfi_->interpolation_stopped, this, &Viewer::update);
 
         snprintf(framerate_, sizeof(framerate_), "fps: ?? (?? ms/frame)");
 
@@ -201,7 +203,7 @@ namespace easy3d {
     }
 
 
-    GLFWwindow *OpenGLViewer::create_window(
+    GLFWwindow *Viewer::create_window(
             const std::string &title,
             int samples,
             int gl_major,
@@ -331,8 +333,8 @@ namespace easy3d {
 
 
     template<class Callback>
-    void OpenGLViewer::dispatch_callback(GLFWwindow* window, const Callback& callback) noexcept {
-        auto* viewer = static_cast<OpenGLViewer*>(glfwGetWindowUserPointer(window));
+    void Viewer::dispatch_callback(GLFWwindow* window, const Callback& callback) noexcept {
+        auto* viewer = static_cast<Viewer*>(glfwGetWindowUserPointer(window));
         if (!viewer) return;
         try {
             glfwMakeContextCurrent(window);
@@ -344,12 +346,12 @@ namespace easy3d {
         }
     }
 
-    void OpenGLViewer::setup_callbacks(GLFWwindow *window) {
+    void Viewer::setup_callbacks(GLFWwindow *window) {
         glfwSetWindowRefreshCallback(window, [](GLFWwindow* win) {
-            dispatch_callback(win, [](OpenGLViewer& v) { v.update(); });
+            dispatch_callback(win, [](Viewer& v) { v.update(); });
         });
         glfwSetCursorPosCallback(window, [](GLFWwindow* win, double x, double y) {
-            dispatch_callback(win, [=](OpenGLViewer& v) {
+            dispatch_callback(win, [=](Viewer& v) {
                 if (!v.process_events_) return;
                 const int wx = int(x), wy = int(y);
                 const int dx = wx - v.callback_mouse_x_, dy = wy - v.callback_mouse_y_;
@@ -366,7 +368,7 @@ namespace easy3d {
             });
         });
         glfwSetMouseButtonCallback(window, [](GLFWwindow* win, int button, int action, int modifiers) {
-            dispatch_callback(win, [=](OpenGLViewer& v) {
+            dispatch_callback(win, [=](Viewer& v) {
                 if (!v.process_events_) return;
                 double x, y; glfwGetCursorPos(win, &x, &y);
                 v.mouse_current_x_ = v.callback_mouse_x_ = int(x);
@@ -375,22 +377,22 @@ namespace easy3d {
             });
         });
         glfwSetKeyCallback(window, [](GLFWwindow* win, int key, int, int action, int mods) {
-            dispatch_callback(win, [=](OpenGLViewer& v) {
+            dispatch_callback(win, [=](Viewer& v) {
                 if (v.process_events_) v.callback_event_keyboard(key, action, mods);
             });
         });
         glfwSetCharCallback(window, [](GLFWwindow* win, unsigned int codepoint) {
-            dispatch_callback(win, [=](OpenGLViewer& v) {
+            dispatch_callback(win, [=](Viewer& v) {
                 if (v.process_events_) v.callback_event_character(codepoint);
             });
         });
         glfwSetDropCallback(window, [](GLFWwindow* win, int count, const char** filenames) {
-            dispatch_callback(win, [=](OpenGLViewer& v) {
+            dispatch_callback(win, [=](Viewer& v) {
                 if (v.process_events_) v.callback_event_drop(count, filenames);
             });
         });
         glfwSetScrollCallback(window, [](GLFWwindow* win, double dx, double dy) {
-            dispatch_callback(win, [=](OpenGLViewer& v) {
+            dispatch_callback(win, [=](Viewer& v) {
                 if (!v.process_events_) return;
                 double x, y; glfwGetCursorPos(win, &x, &y);
                 v.mouse_current_x_ = int(x); v.mouse_current_y_ = int(y);
@@ -399,18 +401,18 @@ namespace easy3d {
         });
         // Camera/input coordinates are logical window units in this OpenGL host.
         glfwSetWindowSizeCallback(window, [](GLFWwindow* win, int w, int h) {
-            dispatch_callback(win, [=](OpenGLViewer& v) {
+            dispatch_callback(win, [=](Viewer& v) {
                 if (v.process_events_) v.callback_event_resize(w, h);
             });
         });
         glfwSetFramebufferSizeCallback(window, [](GLFWwindow* win, int, int) {
-            dispatch_callback(win, [=](OpenGLViewer& v) {
+            dispatch_callback(win, [=](Viewer& v) {
                 if (!v.process_events_) return;
                 int w, h; glfwGetWindowSize(win, &w, &h); v.callback_event_resize(w, h);
             });
         });
         glfwSetWindowFocusCallback(window, [](GLFWwindow* win, int focused) {
-            dispatch_callback(win, [=](OpenGLViewer& v) {
+            dispatch_callback(win, [=](Viewer& v) {
                 if (!focused) {
                     v.drag_active_ = false; v.pressed_button_ = v.pressed_key_ = -1; v.modifiers_ = 0;
                     v.scroll_remainder_x_ = v.scroll_remainder_y_ = 0;
@@ -421,12 +423,12 @@ namespace easy3d {
             });
         });
         glfwSetWindowCloseCallback(window, [](GLFWwindow* win) {
-            dispatch_callback(win, [](OpenGLViewer& v) { v.request_close(); });
+            dispatch_callback(win, [](Viewer& v) { v.request_close(); });
         });
     }
 
 
-    bool OpenGLViewer::callback_event_cursor_pos(double x, double y) {
+    bool Viewer::callback_event_cursor_pos(double x, double y) {
         int px = static_cast<int>(x);
         int py = static_cast<int>(y);
         try {
@@ -447,7 +449,7 @@ namespace easy3d {
     }
 
 
-    bool OpenGLViewer::callback_event_mouse_button(int button, int action, int modifiers) {
+    bool Viewer::callback_event_mouse_button(int button, int action, int modifiers) {
         try {
             if (action == GLFW_PRESS) {
                 drag_active_ = true;
@@ -479,7 +481,7 @@ namespace easy3d {
     }
 
 
-    bool OpenGLViewer::callback_event_keyboard(int key, int action, int modifiers) {
+    bool Viewer::callback_event_keyboard(int key, int action, int modifiers) {
         try {
             if (action == GLFW_PRESS || action == GLFW_REPEAT) {
                 if (dispatch_key_press(key, modifiers)) return true;
@@ -497,7 +499,7 @@ namespace easy3d {
     }
 
 
-    bool OpenGLViewer::callback_event_character(unsigned int codepoint) {
+    bool Viewer::callback_event_character(unsigned int codepoint) {
         try {
             if (dispatch_character(codepoint)) return true;
             return char_input_event(codepoint);
@@ -510,7 +512,7 @@ namespace easy3d {
     }
 
 
-    bool OpenGLViewer::callback_event_drop(int count, const char **filenames) {
+    bool Viewer::callback_event_drop(int count, const char **filenames) {
         try {
             std::vector<std::string> arg(count);
             for (int i = 0; i < count; ++i)
@@ -526,7 +528,7 @@ namespace easy3d {
     }
 
 
-    bool OpenGLViewer::callback_event_scroll(double dx, double dy) {
+    bool Viewer::callback_event_scroll(double dx, double dy) {
         try {
             scroll_remainder_x_ += dx; scroll_remainder_y_ += dy;
             const int sx = int(scroll_remainder_x_), sy = int(scroll_remainder_y_);
@@ -543,7 +545,7 @@ namespace easy3d {
     }
 
 
-    void OpenGLViewer::callback_event_resize(int w, int h) {
+    void Viewer::callback_event_resize(int w, int h) {
         try {
             int fw, fh; glfwGetFramebufferSize(window_, &fw, &fh);
             const bool changed = w != width_ || h != height_ || fw != framebuffer_width_ || fh != framebuffer_height_;
@@ -560,7 +562,7 @@ namespace easy3d {
     }
 
 
-    bool OpenGLViewer::focus_event(bool focused) {
+    bool Viewer::focus_event(bool focused) {
         if (focused) {
             // ...
         }
@@ -568,19 +570,19 @@ namespace easy3d {
     }
 
 
-    OpenGLViewer::~OpenGLViewer() {
+    Viewer::~Viewer() {
         cleanup();
 
         LOG(INFO) << "viewer terminated. Bye!";
     }
 
-    void OpenGLViewer::clear_scene() {
+    void Viewer::clear_scene() {
         glfwMakeContextCurrent(window_);
         models_.clear();
         drawables_.clear();
     }
 
-    void OpenGLViewer::cleanup() {
+    void Viewer::cleanup() {
         // viewer may have already been destroyed by the user
         if (!window_)
             return;
@@ -612,7 +614,7 @@ namespace easy3d {
     }
 
 
-    void OpenGLViewer::set_title(const std::string &title) {
+    void Viewer::set_title(const std::string &title) {
         if (title != title_) {
             glfwSetWindowTitle(window_, title.c_str());
             title_ = title;
@@ -620,12 +622,12 @@ namespace easy3d {
     }
 
 
-    void OpenGLViewer::set_position(int xpos, int ypos) {
+    void Viewer::set_position(int xpos, int ypos) {
         glfwSetWindowPos(window_, xpos, ypos);
     }
 
 
-    void OpenGLViewer::resize(int w, int h) {
+    void Viewer::resize(int w, int h) {
 #ifndef __APPLE__
         w = static_cast<int>(w * dpi_scaling());
         h = static_cast<int>(h * dpi_scaling());
@@ -634,31 +636,31 @@ namespace easy3d {
     }
 
 
-	int OpenGLViewer::framebuffer_width() const {
+	int Viewer::framebuffer_width() const {
 		int w, h;
 		glfwGetFramebufferSize(window_, &w, &h);
 		return w;
 	}
 
 
-	int OpenGLViewer::framebuffer_height() const {
+	int Viewer::framebuffer_height() const {
 		int w, h;
 		glfwGetFramebufferSize(window_, &w, &h);
 		return h;
 	}
 
 
-	void OpenGLViewer::framebuffer_size(int& w, int& h) const {
+	void Viewer::framebuffer_size(int& w, int& h) const {
 		glfwGetFramebufferSize(window_, &w, &h);
 	}
 
 
-    void OpenGLViewer::update() const {
+    void Viewer::update() const {
         glfwPostEmptyEvent();
     }
 
 
-    bool OpenGLViewer::mouse_press_event(int x, int y, int button, int modifiers) {
+    bool Viewer::mouse_press_event(int x, int y, int button, int modifiers) {
         camera_->frame()->action_start();
 
         if (pressed_key_ == GLFW_KEY_Z || modifiers == GLFW_MOD_SHIFT) {
@@ -715,7 +717,7 @@ namespace easy3d {
     }
 
 
-    bool OpenGLViewer::mouse_release_event(int x, int y, int button, int modifiers) {
+    bool Viewer::mouse_release_event(int x, int y, int button, int modifiers) {
         if (button == GLFW_MOUSE_BUTTON_LEFT && modifiers == MODIF_CTRL) { // ZOOM_ON_REGION
             int xmin = std::min(mouse_pressed_x_, x);
             int xmax = std::max(mouse_pressed_x_, x);
@@ -730,7 +732,7 @@ namespace easy3d {
     }
 
 
-    bool OpenGLViewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
+    bool Viewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
         // control modifier is reserved for zooming on region
         if (modifiers == MODIF_CTRL)
             return false;
@@ -770,7 +772,7 @@ namespace easy3d {
     }
 
 
-    bool OpenGLViewer::mouse_free_move_event(int x, int y, int dx, int dy, int modifiers) {
+    bool Viewer::mouse_free_move_event(int x, int y, int dx, int dy, int modifiers) {
         (void) x;
         (void) y;
         (void) dx;
@@ -781,7 +783,7 @@ namespace easy3d {
     }
 
 
-    bool OpenGLViewer::mouse_scroll_event(int x, int y, int dx, int dy) {
+    bool Viewer::mouse_scroll_event(int x, int y, int dx, int dy) {
         (void) x;
         (void) y;
         (void) dx;
@@ -790,7 +792,7 @@ namespace easy3d {
     }
 
 
-    Model* OpenGLViewer::current_model() const {
+    Model* Viewer::current_model() const {
         if (models_.empty())
             return nullptr;
         if (model_idx_ < models_.size())
@@ -798,7 +800,7 @@ namespace easy3d {
         return nullptr;
     }
 
-    bool OpenGLViewer::key_press_event(int key, int modifiers) {
+    bool Viewer::key_press_event(int key, int modifiers) {
         auto mod_funcs = commands_.find(Key(key));
         if (mod_funcs != commands_.end()) {
             auto func_model = mod_funcs->second.find(Modifier(modifiers));
@@ -1077,7 +1079,7 @@ namespace easy3d {
     }
 
 
-    bool OpenGLViewer::key_release_event(int key, int modifiers) {
+    bool Viewer::key_release_event(int key, int modifiers) {
         (void) key;
         (void) modifiers;
         pressed_key_ = -1;
@@ -1085,7 +1087,7 @@ namespace easy3d {
     }
 
 
-    bool OpenGLViewer::char_input_event(unsigned int codepoint) {
+    bool Viewer::char_input_event(unsigned int codepoint) {
         (void) codepoint;
         //switch (codepoint) {
         //case '-':	break;
@@ -1100,7 +1102,7 @@ namespace easy3d {
     }
 
 
-    bool OpenGLViewer::drop_event(const std::vector<std::string> &filenames) {
+    bool Viewer::drop_event(const std::vector<std::string> &filenames) {
         int count = 0;
         for (auto &name : filenames) {
             if (add_model(name))
@@ -1116,7 +1118,7 @@ namespace easy3d {
     }
 
 
-    vec3 OpenGLViewer::point_under_pixel(int x, int y, bool &found) const {
+    vec3 Viewer::point_under_pixel(int x, int y, bool &found) const {
         glfwMakeContextCurrent(window_);
         // GLFW (same as Qt) uses upper corner for its origin while GL uses the lower corner.
         int glx = x;
@@ -1143,7 +1145,7 @@ namespace easy3d {
     }
 
 
-    void OpenGLViewer::set_usage(const std::string& manual, const std::string& screen_hint)
+    void Viewer::set_usage(const std::string& manual, const std::string& screen_hint)
     {
         if (manual != "default")
             manual_ = manual;
@@ -1152,19 +1154,19 @@ namespace easy3d {
     }
 
 
-    void OpenGLViewer::poll_events() { ViewerBase::poll_events(); }
-    void OpenGLViewer::request_close() { glfwSetWindowShouldClose(window_, GLFW_TRUE); update(); }
-    bool OpenGLViewer::should_close() const { return should_exit_ || glfwWindowShouldClose(window_) != 0; }
-    void OpenGLViewer::show() { glfwShowWindow(window_); }
-    void OpenGLViewer::hide() { glfwHideWindow(window_); }
+    void Viewer::poll_events() { ViewerBase::poll_events(); }
+    void Viewer::request_close() { glfwSetWindowShouldClose(window_, GLFW_TRUE); update(); }
+    bool Viewer::should_close() const { return should_exit_ || glfwWindowShouldClose(window_) != 0; }
+    void Viewer::show() { glfwShowWindow(window_); }
+    void Viewer::hide() { glfwHideWindow(window_); }
 
-    void OpenGLViewer::print_usage() {
+    void Viewer::print_usage() {
         if (usage_printed_) return;
         usage_printed_ = true;
         if (!manual_.empty()) std::cout << manual_ << std::endl;
     }
 
-    void OpenGLViewer::update_frame_rate() {
+    void Viewer::update_frame_rate() {
         if (!show_frame_rate_) return;
         const double now = glfwGetTime();
         if (!frame_rate_start_) frame_rate_start_ = now;
@@ -1178,7 +1180,7 @@ namespace easy3d {
         }
     }
 
-    bool OpenGLViewer::draw_frame() {
+    bool Viewer::draw_frame() {
         if (callback_error_) std::rethrow_exception(callback_error_);
         if (should_close() || glfwGetWindowAttrib(window_, GLFW_ICONIFIED)) return false;
         int w = 0, h = 0;
@@ -1204,7 +1206,7 @@ namespace easy3d {
         return true;
     }
 
-    int OpenGLViewer::run(bool see_all) {
+    int Viewer::run(bool see_all) {
         try {
             if (callback_error_) std::rethrow_exception(callback_error_);
             if (!initialized_) { init(); initialized_ = true; }
@@ -1217,7 +1219,7 @@ namespace easy3d {
         }
     }
 
-    int OpenGLViewer::run_frames(unsigned max_frames) {
+    int Viewer::run_frames(unsigned max_frames) {
         try {
             if (callback_error_) std::rethrow_exception(callback_error_);
             return detail::run_viewer_frames(*this, max_frames, [this] {
@@ -1229,10 +1231,10 @@ namespace easy3d {
         }
     }
 
-    void OpenGLViewer::exit() { request_close(); }
+    void Viewer::exit() { request_close(); }
 
 
-    void OpenGLViewer::init() {
+    void Viewer::init() {
         glfwMakeContextCurrent(window_);
         //// back face culling?
         //glEnable(GL_CULL_FACE);
@@ -1262,18 +1264,18 @@ namespace easy3d {
     }
 
 
-    void OpenGLViewer::set_animation(bool b) {
+    void Viewer::set_animation(bool b) {
         is_animating_ = b;
         update();
     }
 
 
-    bool OpenGLViewer::is_animating() const {
+    bool Viewer::is_animating() const {
         return is_animating_ && animation_func_;
     }
 
 
-    Model* OpenGLViewer::add_model(const std::string &file_path, bool create_default_drawables) {
+    Model* Viewer::add_model(const std::string &file_path, bool create_default_drawables) {
         glfwMakeContextCurrent(window_);
         const std::string file_name = file_system::convert_to_native_style(file_path);
         for (auto m : models_) {
@@ -1319,7 +1321,7 @@ namespace easy3d {
     }
 
 
-    Model* OpenGLViewer::add_model(std::shared_ptr<Model> model, bool create) {
+    Model* Viewer::add_model(std::shared_ptr<Model> model, bool create) {
         glfwMakeContextCurrent(window_);
         if (!model) {
             LOG(WARNING) << "model is nullptr";
@@ -1346,12 +1348,12 @@ namespace easy3d {
     }
 
 
-    Model* OpenGLViewer::add_model(Model* model, bool create_default_drawables) {
+    Model* Viewer::add_model(Model* model, bool create_default_drawables) {
         return add_model(std::shared_ptr<Model>(model), create_default_drawables);
     }
 
 
-    bool OpenGLViewer::delete_model(Model *model) {
+    bool Viewer::delete_model(Model *model) {
         glfwMakeContextCurrent(window_);
         if (!model) {
             LOG(WARNING) << "model is nullptr";
@@ -1380,7 +1382,7 @@ namespace easy3d {
     }
 
 
-    Drawable* OpenGLViewer::add_drawable(std::shared_ptr<Drawable> drawable) {
+    Drawable* Viewer::add_drawable(std::shared_ptr<Drawable> drawable) {
         if (!drawable) {
             LOG(WARNING) << "drawable is nullptr.";
             return nullptr;
@@ -1397,12 +1399,12 @@ namespace easy3d {
     }
 
 
-    Drawable* OpenGLViewer::add_drawable(Drawable* drawable) {
+    Drawable* Viewer::add_drawable(Drawable* drawable) {
         return add_drawable(std::shared_ptr<Drawable>(drawable));
     }
 
 
-    bool OpenGLViewer::delete_drawable(Drawable *drawable) {
+    bool Viewer::delete_drawable(Drawable *drawable) {
         glfwMakeContextCurrent(window_);
         if (!drawable) {
             LOG(WARNING) << "drawable is nullptr";
@@ -1422,7 +1424,7 @@ namespace easy3d {
     }
 
 
-    void OpenGLViewer::fit_screen(const easy3d::Model *model) {
+    void Viewer::fit_screen(const easy3d::Model *model) {
         if (!model && models_.empty() && drawables_.empty()) {
             camera_->showEntireScene();
             return;
@@ -1455,7 +1457,7 @@ namespace easy3d {
     }
 
 
-    bool OpenGLViewer::open() {
+    bool Viewer::open() {
         const std::string title("Please choose a file");
         const std::string &default_path = resource::directory() + "/data/";
         const std::vector<std::string> &filters = {
@@ -1481,7 +1483,7 @@ namespace easy3d {
     }
 
 
-    bool OpenGLViewer::save() const {
+    bool Viewer::save() const {
         Model* m = current_model();
         if (!m) {
             LOG(ERROR) << "no model exists";
@@ -1522,7 +1524,7 @@ namespace easy3d {
     }
 
 
-    bool OpenGLViewer::snapshot() const {
+    bool Viewer::snapshot() const {
         const std::string &title = "Please choose a file name";
         std::string default_file_name("untitled.png");
         if (current_model())
@@ -1547,7 +1549,7 @@ namespace easy3d {
     }
 
 
-    void OpenGLViewer::draw_corner_axes() const {
+    void Viewer::draw_corner_axes() const {
         ShaderProgram *program = ShaderManager::get_program("surface/surface");
         if (!program) {
             std::vector<ShaderProgram::Attribute> attributes = {
@@ -1575,7 +1577,7 @@ namespace easy3d {
             shape::create_cone(0.06, 20, vec3(0, 0, base), vec3(0, 0, base + head), vec3(0, 0, 1), points, normals,
                                  colors);
             shape::create_sphere(vec3(0, 0, 0), 0.06, 20, 20, vec3(0, 1, 1), points, normals, colors);
-            const_cast<OpenGLViewer*>(this)->drawable_axes_ = std::unique_ptr<TrianglesDrawable>(new TrianglesDrawable("corner_axes"));
+            const_cast<Viewer*>(this)->drawable_axes_ = std::unique_ptr<TrianglesDrawable>(new TrianglesDrawable("corner_axes"));
             drawable_axes_->update_vertex_buffer(points);
             drawable_axes_->update_normal_buffer(normals);
             drawable_axes_->update_color_buffer(colors);
@@ -1635,7 +1637,7 @@ namespace easy3d {
     }
 
 
-    void OpenGLViewer::pre_draw() {
+    void Viewer::pre_draw() {
         glfwMakeContextCurrent(window_);
         glClearColor(background_color_[0], background_color_[1], background_color_[2], 1.0f);
         glClearDepth(1.0);
@@ -1643,7 +1645,7 @@ namespace easy3d {
     }
 
 
-    void OpenGLViewer::post_draw() {
+    void Viewer::post_draw() {
         if (texter_ && texter_->num_fonts() >=2) {
             const float font_size = 15.0f;
             float x = 20.0f * dpi_scaling();
@@ -1702,7 +1704,7 @@ namespace easy3d {
     }
 
 
-    void OpenGLViewer::draw_face_labels(Model *model, TextRenderer *texter, int font_id, const vec3 &color) const {
+    void Viewer::draw_face_labels(Model *model, TextRenderer *texter, int font_id, const vec3 &color) const {
         auto mesh = dynamic_cast<SurfaceMesh *>(model);
         const auto &points = mesh->points();
         for (auto f : mesh->faces()) {
@@ -1729,7 +1731,7 @@ namespace easy3d {
     }
 
 
-    void OpenGLViewer::draw_vertex_labels(Model *model, TextRenderer *texter, int font_id, const vec3 &color) const {
+    void Viewer::draw_vertex_labels(Model *model, TextRenderer *texter, int font_id, const vec3 &color) const {
         auto mesh = dynamic_cast<SurfaceMesh *>(model);
         const auto &points = mesh->points();
         for (std::size_t id = 0; id < points.size(); ++id) {
@@ -1749,7 +1751,7 @@ namespace easy3d {
     }
 
 
-    void OpenGLViewer::copy_view() {
+    void Viewer::copy_view() {
         const vec3 pos = camera()->position();
         const quat q = camera()->orientation();
 
@@ -1765,7 +1767,7 @@ namespace easy3d {
     }
 
 
-    void OpenGLViewer::paste_view() {
+    void Viewer::paste_view() {
         // get the camera parameters from clipboard string
         const std::string str = glfwGetClipboardString(window_);
         std::vector<std::string> list;
@@ -1797,7 +1799,7 @@ namespace easy3d {
     }
 
 
-    bool OpenGLViewer::draw() {
+    bool Viewer::draw() {
 #if 0
         // Example code: split the view to have different rendering styles for the same object/scene.
         glEnable(GL_SCISSOR_TEST);
@@ -2037,7 +2039,7 @@ void query_draw(const Drawable *drawable, const Camera &camera) {
     if (!drawable || !drawable->is_visible() || dynamic_cast<const LinesDrawable2D *>(drawable))
         return;
     // Standard drawable rendering only, matching the native scene encoder.
-    // Custom OpenGLViewer::draw() and application frame hooks do not run here.
+    // Custom Viewer::draw() and application frame hooks do not run here.
     if (auto *d = dynamic_cast<const TrianglesDrawable *>(drawable))
         d->TrianglesDrawable::draw(&camera);
     else if (auto *d = dynamic_cast<const LinesDrawable *>(drawable))
@@ -2048,7 +2050,7 @@ void query_draw(const Drawable *drawable, const Camera &camera) {
         throw std::invalid_argument("unsupported drawable in scene depth query");
 }
 } // namespace
-bool OpenGLViewer::read_scene_depth(int x, int y, const Camera &snapshot, float &depth) const {
+bool Viewer::read_scene_depth(int x, int y, const Camera &snapshot, float &depth) const {
     QueryContext context(window_);
     QueryState state;
     state.prepare(snapshot.screenWidth(), snapshot.screenHeight());
@@ -2081,7 +2083,7 @@ namespace easy3d {
 
 #if 0 // Very basic snapshot: image size is the same as the viewer size
 
-	bool OpenGLViewer::snapshot(const std::string& file_name, bool bk_white) const {
+	bool Viewer::snapshot(const std::string& file_name, bool bk_white) const {
 		int w, h;
 		framebuffer_size(w, h);
 
@@ -2097,7 +2099,7 @@ namespace easy3d {
 			glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-		const_cast<OpenGLViewer*>(this)->draw();
+		const_cast<Viewer*>(this)->draw();
 
 		fbo.release();
 
@@ -2111,10 +2113,10 @@ namespace easy3d {
 
 #else // Advanced snapshot: image size, samples, and background can be customized.
 
-	bool OpenGLViewer::snapshot(const std::string& file_name, float scaling, int samples, int back_ground, bool expand) const {
+	bool Viewer::snapshot(const std::string& file_name, float scaling, int samples, int back_ground, bool expand) const {
         glfwMakeContextCurrent(window_);
         if (!initialized_) {
-            auto* host = const_cast<OpenGLViewer*>(this); host->init(); host->initialized_ = true;
+            auto* host = const_cast<Viewer*>(this); host->init(); host->initialized_ = true;
         }
 		int max_samples = 0;
 		glGetIntegerv(GL_MAX_SAMPLES, &max_samples);
@@ -2223,7 +2225,7 @@ namespace easy3d {
 					glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-				const_cast<OpenGLViewer*>(this)->draw();
+				const_cast<Viewer*>(this)->draw();
 
 				fbo->release();
 
@@ -2256,7 +2258,7 @@ namespace easy3d {
 		camera_->set_projection_matrix(proj_matrix);
 
 		// enable updating the rendering
-		easy3d::connect(&camera_->frame_modified, const_cast<OpenGLViewer*>(this), &OpenGLViewer::update);
+		easy3d::connect(&camera_->frame_modified, const_cast<Viewer*>(this), &Viewer::update);
 
 		Pixel* pixels = image.data();
 		std::vector<unsigned char> data(reinterpret_cast<unsigned char*>(pixels), reinterpret_cast<unsigned char*>(pixels) + image.rows()* image.cols() * sizeof(Pixel));
@@ -2268,3 +2270,5 @@ namespace easy3d {
 
 
 #endif
+
+#endif   // !EASY3D_HAS_VULKAN

@@ -29,13 +29,13 @@ void check_file(const char* path,int width,int height) {
 }
 }
 int main() {
-    static_assert(std::is_same<Viewer,OpenGLViewer>::value,"Viewer alias must match CMake backend");
-    static_assert(std::is_same<MultiViewer,OpenGLMultiViewer>::value,"MultiViewer alias must match CMake backend");
+    static_assert(std::is_same<Viewer,Viewer>::value,"Viewer alias must match CMake backend");
+    static_assert(std::is_same<MultiViewer,MultiViewer>::value,"MultiViewer alias must match CMake backend");
     try {
         initialize(false,false,false);
-        OpenGLOffScreen surviving(103,79);auto mesh=triangle();surviving.add_model(mesh);red(mesh);
+        OffScreen surviving(103,79);auto mesh=triangle();surviving.add_model(mesh);red(mesh);
         // Another offscreen host changes the current context and is destroyed.
-        { OpenGLOffScreen other(81,61);auto second=triangle();other.add_model(second);red(second);
+        { OffScreen other(81,61);auto second=triangle();other.add_model(second);red(second);
           require(other.render("concrete-other.png",1,1,0),"second offscreen failed"); }
         for(int samples:{1,4}) {
             require(surviving.render("concrete-offscreen.png",1,samples,0),"surviving offscreen failed");
@@ -44,9 +44,9 @@ int main() {
         surviving.resize(117,91);require(surviving.render("concrete-resized.png",1,4,0),"offscreen resize failed");
         check_file("concrete-resized.png",117,91);
         require(!surviving.render("invalid.png",1,3,0),"invalid MSAA accepted");
-        bool rejected=false;try { OpenGLOffScreen invalid(0,1); }catch(const std::invalid_argument&) { rejected=true; }
+        bool rejected=false;try { OffScreen invalid(0,1); }catch(const std::invalid_argument&) { rejected=true; }
         require(rejected,"invalid dimensions accepted");
-        OpenGLMultiViewer grid(1,2,"Concrete multi-view");grid.hide();grid.resize(202,102);
+        MultiViewer grid(1,2,"Concrete multi-view");grid.hide();grid.resize(202,102);
         auto shared=triangle();grid.add_model(shared);red(shared);grid.assign(0,0,shared.get());grid.assign(0,1,shared.get());
         grid.set_division_visible(false);grid.fit_screen();require(grid.draw_frame(),"renamed multi-view did not render");
         require(grid.rows()==1 && grid.columns()==2 && !grid.division_visible(),"multi-view layout API changed");
