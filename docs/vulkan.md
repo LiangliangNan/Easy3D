@@ -50,7 +50,7 @@ struct OpenGLOptions {
 class Viewer : public ViewerBase {
 public:
     explicit Viewer(const std::string& title = "Easy3D Viewer",
-                    int width = 800, int height = 600, int samples = 4,
+                    unsigned int width = 800, unsigned int height = 600, unsigned int samples = 1,
                     bool full_screen = false, bool visible = true, bool resizable = true,
 #ifdef EASY3D_HAS_VULKAN
                     const VulkanOptions& vk_options = {});
@@ -107,24 +107,25 @@ needs no change.
 **Decisions (2026-10-31):**
 
 - **D1 Constructor** (supersedes `main`'s signature): `Viewer(title, width, height, samples,
-  full_screen, visible, resizable, options)`, where `options` is `OpenGLOptions` (GL
+  full_screen, visible, resizable, options)` with `width`, `height` and `samples` of type
+  `unsigned int`, `samples` defaulting to **1**, and `options` being `OpenGLOptions` (GL
   version, depth and stencil bits) or `VulkanOptions` (validation, synchronization
-  validation, device name), as in the layout of P2. `VulkanOptions` has the same fields as
-  `graphics::DeviceOptions`. Consequences, recorded because they break the otherwise
-  unchanged client code: `main`'s order was `(title, samples, gl_major, gl_minor,
-  full_screen, resizable, depth_bits, stencil_bits, width, height)`; the new order differs
-  and `width`, `height` and `samples` are all `int`, so an old positional call such as
-  `Viewer(title, 4, 3, 2, false, false)` still compiles and silently means width 4, height
-  3, 2 samples. In `main`, only Tutorials 202 and 207 (and `OffScreen`'s own call) pass
-  more than a title; they are the only tutorial edits allowed by criterion 3, and are
-  listed in the U6 audit. *Status: implemented on `OpenGLViewer` and `VulkanViewer`.*
-  `OpenGLOptions` has a defaulted constructor (the project is C++11, where a struct with
-  default member initializers cannot be brace-initialized); `VulkanOptions` is an alias of
-  `graphics::DeviceOptions`. `visible=false` keeps the window from being shown by `run()` in
-  OpenGL and creates it hidden in Vulkan; `full_screen` uses the primary monitor's video mode
-  in both. `samples = 0` means no MSAA, a negative count throws `std::invalid_argument`, and a
-  valid power of two the device does not support steps down with a warning, so the default of
-  4 never makes `Viewer()` fail (non-power-of-two counts are still rejected).
+  validation, device name), as in the layout of P2. Consequences, recorded because they break
+  the otherwise unchanged client code: `main`'s order was `(title, samples, gl_major,
+  gl_minor, full_screen, resizable, depth_bits, stencil_bits, width, height)` and its default
+  was 4 samples. The new order differs, and `width`, `height` and `samples` are all integers,
+  so an old positional call such as `Viewer(title, 4, 3, 2, false, false)` still compiles and
+  silently means width 4, height 3, 2 samples; OpenGL viewers also no longer get 4× MSAA by
+  default. In `main`, only Tutorials 202 and 207 (and `OffScreen`'s own call) pass more than a
+  title; they are the only tutorial edits allowed by criterion 3, and are listed in the U6
+  audit. *Status: implemented on the OpenGL and Vulkan viewers.* `OpenGLOptions` has a
+  defaulted constructor (the project is C++11, where a struct with default member
+  initializers cannot be brace-initialized); `VulkanOptions` is an alias of
+  `graphics::DeviceOptions`, declared in `vulkan_offscreen.h`. `visible=false` keeps the
+  window from being shown by `run()` in OpenGL and creates it hidden in Vulkan; `full_screen`
+  uses the primary monitor's video mode in both. `samples = 0` means no MSAA, and a valid
+  power of two the device does not support steps down with a warning, so a request such as 4
+  never makes `Viewer()` fail (non-power-of-two counts are still rejected).
 - **D2 Inheritance** follows `main`: `OffScreen : protected Viewer` and
   `MultiViewer : public Viewer`. The Vulkan device and capture code that
   `VulkanOffScreen` owns today moves into `Viewer`; when used for offscreen rendering its
@@ -134,20 +135,23 @@ needs no change.
   `backends/glfw_runtime.*`, `backends/viewer_loop.h`): merge into the unified classes, or
   classify as backend files; decided case by case at U1.
 - **D4 Vulkan-only options** enter through the last constructor parameter (`VulkanOptions`).
-  This replaces `VulkanViewerOptions`; the struct and a convenience overload
-  `VulkanViewer(title, VulkanViewerOptions)` remain **temporarily** (until D6/U5) only so that
-  the 12 tutorial subclasses and about 30 test sources keep compiling unchanged, and are
-  marked as temporary in the header. Criterion 1 requires them to be gone.
-
-**Pending:**
-
-- **D5** `MultiViewer` and `OffScreen` constructors: until decided they keep `main`'s
-  parameter lists and forward to the new `Viewer` constructor; how Vulkan options reach them
-  is open.
-- **D6** Bounded tests: tutorials must equal `main`, but the tutorial subclasses in this
-  branch take `(title, VulkanViewerOptions)` so that tests can hide the window and bound the
-  frames. Decide how the generated test sources inject window options into unchanged
-  tutorials (U5).
+  `VulkanViewerOptions` and the convenience overload that took it are removed.
+- **D5 `MultiViewer` and `OffScreen`** get the same options-struct treatment. Implemented as
+  `MultiViewer(rows, cols, title, width, height, samples, full_screen, visible, resizable,
+  options)` (OpenGL; the Vulkan class does not exist yet) and `OffScreen(width, height,
+  options)`, with `width` and `height` unsigned. `OffScreen` omits `samples`, `full_screen`,
+  `visible` and `resizable` because they have no meaning for a window-less renderer, and
+  `render()` takes its own sample count.
+- **D6 Bounded tests** run the tutorials unchanged: a visible window (which the desktop tests
+  already have under Xvfb) for a bounded number of frames, with no options injected. The
+  tutorial subclasses therefore take only what `main`'s do (Tutorial 207 keeps `main`'s
+  explicit 4 samples and non-resizable window). Consequences: tests resize the window after
+  construction and wait for the window system (`set_size` in `easy3d/viewer/tests/
+  test_window.h`); a tutorial's constructor-time layout, such as the image fit of Tutorial
+  306, is computed for the default window and the test refits; and the validation layers can
+  no longer be enabled for tests that construct tutorial classes (they run without
+  validation), while the tests that construct `VulkanViewer` directly still pass
+  `VulkanOptions`.
 
 ## Final migration goal and backend policy
 
@@ -352,9 +356,10 @@ of this document.
   `failed creating array buffer` errors). It fails identically in 3 of 3 runs on upstream
   `a89bb2d` built without any of these patches, so it predates them. Whether it is a real
   `OpenGLMultiViewer` defect or a limitation of software GL is undetermined. After the D1
-  constructor change the results are unchanged: Vulkan 13 of 13 display-free and 55 of 56
-  desktop tests (only `vulkan.interactionoverlay` fails), OpenGL builds clean and 8 of 9
-  tests pass (only `opengl.counterparts` fails). `vulkan.realcamera` takes 60–70 s on
+  constructor change, the removal of `VulkanViewerOptions` and the D6 test changes the
+  results are unchanged: Vulkan 13 of 13 display-free and 55 of 56 desktop tests (only
+  `vulkan.interactionoverlay` fails), OpenGL builds clean and 8 of 9 tests pass (only
+  `opengl.counterparts` fails). `vulkan.realcamera` takes 60–70 s on
   lavapipe and times out at 120 s if the machine is busy compiling; run the suite on an idle
   machine.
 - **U1** Unify `Viewer` (P1, P2): fold `OpenGLViewer` and `VulkanViewer` into one `Viewer`
@@ -577,8 +582,8 @@ cross-platform or full application parity.
 
 **Next implementation step:** U1 continues from the finished D1 constructor: fold
 `OpenGLViewer` and `VulkanViewer` into one `Viewer`, moving the device and capture code of
-`VulkanOffScreen` in (D2). D6 (how bounded tests reach unchanged tutorials) must be decided
-before U5.
+`VulkanOffScreen` in (D2). D5 and D6 are decided; the tutorial subclasses already take only
+`main`'s constructor arguments.
 
 ## Implementation history and current baseline
 
@@ -758,7 +763,7 @@ framebuffer-pixel coordinates, including HiDPI conversion. `point_under_pixel()`
 uses the same top-left pixel convention and synchronously reads back depth on
 request. Legacy GL `draw()` callbacks, overlays and full viewer shortcut parity
 are not emulated yet (work item W7). GL-version constructor arguments have no
-native counterpart. Use `VulkanViewerOptions.samples` or `set_samples()` for MSAA.
+native counterpart. Pass `samples` to the constructor or call `set_samples()` for MSAA.
 
 Create/use/destroy GLFW windows on the UI/main thread. Vulkan windows retain
 independent GPU devices and mutable scenes. A custom toolkit can supply required
@@ -831,7 +836,7 @@ argument. Query `device().supported_sample_counts()` before offering a count:
 `mask & 4` means four samples are available. Unsupported counts are rejected
 explicitly rather than silently reduced.
 
-For a window, set `VulkanViewerOptions.samples` at construction or call
+For a window, pass `samples` to the constructor or call
 `viewer.set_samples(4)`. No-argument `capture()` uses the window's
 current count. Changing the count does not recreate the swapchain; render passes
 and pipelines are cached by pass kind and sample count, and framebuffer resources
@@ -3581,7 +3586,7 @@ Current compatibility and remaining alignment inventory:
 | Class/API | Current state and next work |
 | --- | --- |
 | `OpenGLViewer` | Original title/sample/GL-version/fullscreen/resizable/depth/stencil/size constructor retained. Camera, scene vectors, model index and manual/hint remain subclass-accessible as before. |
-| `VulkanViewer` | Title plus VulkanViewerOptions retained. Scene/camera storage remains in VulkanOffScreen's private implementation; alignment belongs to step 2. |
+| `VulkanViewer` | Constructor `(title, width, height, samples, full_screen, visible, resizable, VulkanOptions)`. Scene/camera storage remains in VulkanOffScreen's private implementation; alignment belongs to step 2. |
 | `OpenGLMultiViewer` | Original rows/columns/title constructor, assignments, division visibility, shared camera and snapshots retained. |
 | `VulkanMultiViewer` | Not yet implemented; step 3. There is no placeholder alias claiming multi-view support. |
 | Explicit offscreen classes | OpenGLOffScreen(width, height) and VulkanOffScreen(width, height, DeviceOptions) work directly; option/API alignment continues in step 2. |
