@@ -5,7 +5,8 @@
 #include <easy3d/viewer/viewer.h>
 
 #ifdef EASY3D_HAS_VULKAN   // Vulkan tests only; the shared tests build this header in both configurations
-#include <GLFW/glfw3.h>
+#define GLFW_INCLUDE_NONE
+#include <3rd_party/glfw/include/GLFW/glfw3.h>
 
 namespace easy3d {
 // Window and device settings of a test. The viewer constructors take them as separate parameters.
@@ -17,7 +18,7 @@ struct TestWindow {
 
 // Resizes a viewer and waits until the window system has applied it (the request is asynchronous).
 inline void set_size(VulkanViewer& v, const TestWindow& w) {
-    v.resize(int(w.width), int(w.height));
+    v.resize(static_cast<int>(w.width), int(w.height));
     for (int i = 0; i < 300; ++i) {
         VulkanViewer::poll_events();
         int width = 0, height = 0;

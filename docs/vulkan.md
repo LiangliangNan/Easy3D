@@ -80,11 +80,15 @@ and `// Keep this part of code minimum` (in each of the two branches) are mandat
 must always be kept in the source. `ViewerBase` stays: it declares the unified viewer API as
 virtual functions and also implements some shared functions (it replaces the earlier plan to
 remove it; see D3 for the files that support it).
-The same layout applies to `MultiViewer`, `OffScreen` and the other classes.
+The same layout applies to `MultiViewer`, `OffScreen` and the other classes. A member
+function that exists in only one backend does not need a counterpart in the other: it is
+declared inside that backend's branch and the other branch stays empty.
 
-**P3. Classes without an exact counterpart** keep the same file and the same
-`#ifdef EASY3D_HAS_VULKAN` / `#else` structure around the whole class (or the part that
-differs). A branch is empty when there is no counterpart on that backend:
+**P3. Classes without an exact counterpart.** Not every class needs a counterpart: a class
+that exists in the OpenGL backend need not exist in the Vulkan backend, and vice versa.
+Such a class keeps the same file and the same `#ifdef EASY3D_HAS_VULKAN` / `#else`
+structure around the whole class (or the part that differs); a branch is simply empty when
+the backend has no counterpart:
 
 ```cpp
 #ifdef EASY3D_HAS_VULKAN
@@ -133,7 +137,10 @@ needs no change.
   functions and implements some shared functions.
 - **D3 Shared files** (`viewer_base.h/.cpp`, `viewer_input.h`, `viewer_callbacks.h`,
   `backends/glfw_runtime.*`, `backends/viewer_loop.h`): merge into the unified classes, or
-  classify as backend files; decided case by case at U1.
+  classify as backend files; decided case by case at U1. The Vulkan implementation of
+  `Viewer`, `OffScreen` and the other unified classes is written **inline** in their own
+  `.cpp` files (`viewer.cpp`, `offscreen.cpp`, …) inside `#ifdef EASY3D_HAS_VULKAN`, not in
+  separate `vulkan_*.cpp` files.
 - **D4 Vulkan-only options** enter through the last constructor parameter (`VulkanOptions`).
   `VulkanViewerOptions` and the convenience overload that took it are removed.
 - **D5 `MultiViewer` and `OffScreen`** get the same options-struct treatment. Implemented as
@@ -366,7 +373,29 @@ of this document.
   `vulkan.interactionoverlay` fails), OpenGL builds clean and 8 of 9 tests pass (only
   `opengl.counterparts` fails). `vulkan.realcamera` takes 60–70 s on
   lavapipe and times out at 120 s if the machine is busy compiling; run the suite on an idle
-  machine.
+  machine. Tests must include the bundled GLFW
+  (`3rd_party/glfw/include/GLFW/glfw3.h` with `GLFW_INCLUDE_NONE`), never `<GLFW/glfw3.h>`:
+  a test header that used the system include compiled on a Linux machine with `libglfw3-dev`
+  installed and failed on macOS. The Vulkan tree is now also built with the system GLFW
+  headers absent.
+- **U1a** (done) The OpenGL classes carry `main`'s names and files: `Viewer` in
+  `viewer.h/.cpp`, `MultiViewer` in `multi_viewer.h/.cpp`, `OffScreen` in `offscreen.h/.cpp`,
+  with `opengl_*` removed and the viewer CMake source list back to `main`'s three pairs plus
+  the shared and Vulkan backend files. Their OpenGL code sits in the `#else` of
+  `#ifdef EASY3D_HAS_VULKAN`; the Vulkan branch of `viewer.h` still holds the temporary
+  aliases `Viewer = VulkanViewer` and `OffScreen = VulkanOffScreen`, and `MultiViewer` has no
+  Vulkan branch. `OffScreen` still inherits publicly (`main`: `protected`).
+- **U1b** (next) Flatten `VulkanOffScreen` and `VulkanViewer` into the Vulkan `Viewer` (D2).
+  All 14 forwarders disappear. Four names collide; in each, the viewer's version wraps the
+  offscreen one: `resize` (window size versus render-target size), `clear_scene`,
+  `capture(unsigned)` (the viewer first runs `init()` and refreshes the HUD overlays) and
+  `add_drawable` (different overloads). A window-less `Viewer` (no `GLFW` window, no
+  surface) serves `OffScreen : protected Viewer`; its capture must not draw the HUD that a
+  windowed viewer draws (logo, corner axes), as today. The Vulkan-only public API of
+  `VulkanOffScreen` (`pick`, `select_points`, `scan_visible_points`, overlays, clipping
+  planes, …) has no counterpart in `main`; by decision (2026-11-01) it stays public inside
+  the Vulkan branch, an accepted exception to P2, until the picker classes (U3/W10) can take
+  it over. The implementation moves inline into `viewer.cpp` and `offscreen.cpp` (D3).
 - **U1a** (done) The OpenGL classes carry `main`'s names and files: `Viewer` in
   `viewer.h/.cpp`, `MultiViewer` in `multi_viewer.h/.cpp`, `OffScreen` in `offscreen.h/.cpp`,
   with `opengl_*` removed and the viewer CMake source list back to `main`'s three pairs plus
