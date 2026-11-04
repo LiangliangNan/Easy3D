@@ -236,7 +236,7 @@ if(NOT Easy3D_ENABLE_VULKAN)
 
     add_executable(easy3d_opengl_viewer_loop_test viewer_loop_test.cpp)
     target_compile_definitions(easy3d_opengl_viewer_loop_test PRIVATE EASY3D_TEST_OPENGL_VIEWER)
-    target_link_libraries(easy3d_opengl_viewer_loop_test PRIVATE easy3d::viewer)
+    target_link_libraries(easy3d_opengl_viewer_loop_test PRIVATE easy3d::viewer 3rd_glfw)
     add_test(NAME opengl.viewerloop COMMAND easy3d_opengl_viewer_loop_test)
     set_tests_properties(opengl.viewerloop PROPERTIES TIMEOUT 120 LABELS desktop)
     add_executable(easy3d_opengl_obj_viewer_test obj_viewer_test.cpp

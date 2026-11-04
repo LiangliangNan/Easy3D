@@ -56,15 +56,15 @@ namespace easy3d {
     }
 
     bool FigureMaker::delete_model(Model* model) {
-        auto deleted = Viewer::delete_model(model);
+        const auto deleted = MultiViewer::delete_model(model);
         if (deleted) {
             views_.clear();
             set_layout(num_rows_, std::max(num_cols_ - 1, 1));
 
             // re-assign models
             for (std::size_t  i=0; i<models_.size(); ++i) {
-                const auto& model = models_[i];
-                assign(num_rows_ - 1, i, model.get()); // always assign to the last row
+                const auto m = models_[i];
+                assign(num_rows_ - 1, static_cast<int>(i), m.get()); // always assign to the last row
             }
         }
         return deleted;
@@ -74,13 +74,13 @@ namespace easy3d {
         if (key == KEY_D)
             set_division_visible(!division_visible());
         else if (key == KEY_L) {
-            for (const auto model : models_) {
+            for (const auto& model : models_) {
                 const auto& tri_drawables = model->renderer()->triangles_drawables();
-                for (auto d : tri_drawables)    d->set_lighting(!d->lighting());
+                for (const auto& d : tri_drawables)    d->set_lighting(!d->lighting());
                 const auto& pts_drawables = model->renderer()->points_drawables();
-                for (auto d : pts_drawables)    d->set_lighting(!d->lighting());
+                for (const auto& d : pts_drawables)    d->set_lighting(!d->lighting());
                 const auto& lin_drawables = model->renderer()->lines_drawables();
-                for (auto d : lin_drawables)    d->set_lighting(!d->lighting());
+                for (const auto& d : lin_drawables)    d->set_lighting(!d->lighting());
             }
         }
         else
