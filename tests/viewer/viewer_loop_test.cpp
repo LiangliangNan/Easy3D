@@ -127,11 +127,11 @@ void camera_playback(bool validation) {
     first.setPosition(vec3(-.4f,0,.5f)); last.setPosition(vec3(.4f,0,.5f));
     viewer.path().add_keyframe(first,0); viewer.path().add_keyframe(last,.1f);
     bool found = false;
-    const auto surface = viewer.ViewerBase::point_under_pixel(viewer.width()/2,viewer.height()/2,found);
+    const auto surface = viewer.point_under_pixel(viewer.width()/2,viewer.height()/2,found);
     require(found, "camera-path depth fixture missed the mesh");
     viewer.guides(true);
     require(viewer.snapshot("frame-loop-path-visible.png",1,1), "visible path snapshot failed");
-    const auto guided = viewer.ViewerBase::point_under_pixel(viewer.width()/2,viewer.height()/2,found);
+    const auto guided = viewer.point_under_pixel(viewer.width()/2,viewer.height()/2,found);
     require(found && distance(surface,guided)<1e-4f, "camera path annotation changed the scene query");
     viewer.guides(false);
     require(viewer.snapshot("frame-loop-path-hidden.png",1,1), "hidden path snapshot failed");

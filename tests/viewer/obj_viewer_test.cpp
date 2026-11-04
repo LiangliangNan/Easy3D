@@ -91,7 +91,7 @@ int main(int argc,char**) {
         require(viewer.models().size()==1 && reloaded && reloaded->n_faces()==1,"OBJ drop did not replace material scene");
         viewer.resize(360,280); frame(viewer);
         const auto p=viewer.camera()->projectedCoordinatesOf(vec3(.2f,.2f,0));
-        bool found=false; viewer.point_under_pixel(int(p.x),int(p.y),found);
+        bool found=false; viewer.point_under_pixel(int(double(p.x)*viewer.width()/viewer.camera()->screenWidth()),int(double(p.y)*viewer.height()/viewer.camera()->screenHeight()),found);
         require(found,"material reload lost world-point picking");
         require(viewer.device().validation_errors()==0,"native material viewer validation errors");
 #else

@@ -6,17 +6,16 @@
   - [x] Exclusive backend choice (`Easy3D_ENABLE_VULKAN`), runtime selection and offscreen facade removed
         (the OpenGL*/Vulkan* class names this created are superseded by the principles below)
   - [x] Shared GLFW lifecycle, frame driving, portable input/frame callbacks and camera/surface queries
-  - [ ] Unify `Viewer::point_under_pixel()` with `ViewerBase::point_under_pixel()`: delegate to the shared
-        implementation on both backends, accepting logical window coordinates and returning the world position
-        at the framebuffer pixel center from a fresh scene-only depth query (excluding HUD and guides).
-        Update native callers/tests for the unified coordinate convention and replace explicit base-qualified
-        calls in bindings/tests with ordinary `viewer.point_under_pixel(...)` calls.
+  - [x] Unify `point_under_pixel()`: Viewer and MultiViewer inherit the sole ViewerBase implementation;
+        logical window coordinates, fresh scene-only depth, exact framebuffer pixel centers. Native callers,
+        Python bindings and tests use the unified contract without explicit base-qualified calls.
+  - [ ] Finish Tutorial 405 guide-rendering unification; selection, drag handling and cancellation are shared.
   - [x] W1-W3 docs sync; build blockers (single home for tutorials, enable_testing, bounded tutorial tests); Tutorial 208
   - [x] W4 Delete runtime-selection/headless leftovers (Backend enum, ViewerOptions, create_*_viewer, ...)
   - [ ] W5 Remove EASY3D_TUTORIAL_USES_VULKAN (tutorial selector still used by Tutorial 207, 306, 309,
         403, 404, 405 and 506; Tutorials 401/402 use shared visible-surface picking on 2026-11-04;
         plus the shared viewer.h macro and the two viewer tests)
-  - [ ] W6 Mac: OpenGL 82/82; MoltenVK 108/109 plus isolated window-test pass after timeout (2026-11-04, W5 batch 2); Linux baseline 68/69 still needs the interactionoverlay border check
+  - [ ] W6 Mac: OpenGL 82/82; MoltenVK 109/109 (2026-11-04, W5 batch 3; prior intermittent window-test timeout remains under observation); Linux baseline 68/69 still needs the interactionoverlay border check
   - Top priority (docs/vulkan.md, "Migration principles"): minimal source changes; same class names and the same
     .h/.cpp files as the main branch (Viewer in viewer.h/.cpp for both backends); #ifdef EASY3D_HAS_VULKAN layout inside
     the classes; no new files except shaders, backend files and tests; minimal CMake changes; client code unchanged.

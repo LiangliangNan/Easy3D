@@ -76,7 +76,8 @@ int main(int argc, char**) {
         for (size_t i = 0; i < captured.ids.size(); ++i) {
             if (captured.ids[i].object == UINT32_MAX) continue;
             bool found = false;
-            auto point = viewer.point_under_pixel(int(i % captured.width), int(i / captured.width), found);
+            const auto hit = viewer.pick(int(i % captured.width), int(i / captured.width));
+            auto point = hit.position; found = bool(hit);
             const auto projected = viewer.camera()->projectedCoordinatesOf(point);
             require(found && std::abs(projected.z - captured.depth[i]) < 1e-4f, "depth picking/unprojection mismatch");
             const auto clip=viewer.camera()->modelViewProjectionMatrix()*vec4(point,1);
@@ -135,7 +136,8 @@ int main(int argc, char**) {
             if (spheres.ids[i].object==UINT32_MAX) continue;
             if (sphere_hits++ == 0) {
                 bool found=false;
-                const auto p=viewer.point_under_pixel(int(i%spheres.width),int(i/spheres.width),found);
+                const auto hit = viewer.pick(int(i%spheres.width),int(i/spheres.width));
+                const auto p = hit.position; found = bool(hit);
                 require(found && std::abs(viewer.camera()->projectedCoordinatesOf(p).z-spheres.depth[i])<1e-4f,
                         "sphere window depth picking mismatch");
             }
@@ -150,7 +152,8 @@ int main(int argc, char**) {
             if (discs.ids[i].object == UINT32_MAX) continue;
             if (disc_hits++ == 0) {
                 bool found = false;
-                const auto p = viewer.point_under_pixel(int(i%discs.width), int(i/discs.width), found);
+                const auto hit = viewer.pick(int(i%discs.width), int(i/discs.width));
+                const auto p = hit.position; found = bool(hit);
                 require(found && std::abs(viewer.camera()->projectedCoordinatesOf(p).z-discs.depth[i]) < 1e-4f,
                         "surfel window depth picking mismatch");
             }
@@ -177,7 +180,8 @@ int main(int argc, char**) {
                 if (solid.ids[i].object != 1) continue;
                 if (count++ == 0) {
                     bool found = false;
-                    const auto p = viewer.point_under_pixel(int(i%solid.width), int(i/solid.width), found);
+                    const auto hit = viewer.pick(int(i%solid.width), int(i/solid.width));
+                    const auto p = hit.position; found = bool(hit);
                     require(found && std::abs(viewer.camera()->projectedCoordinatesOf(p).z-solid.depth[i]) < 1e-4f,
                             "line impostor window depth picking mismatch");
                 }
@@ -235,7 +239,8 @@ int main(int argc, char**) {
         for (size_t i = 0; i < textured.ids.size(); ++i) {
             if (textured.ids[i].object == UINT32_MAX) continue;
             bool found = false;
-            const auto point = viewer.point_under_pixel(int(i%textured.width),int(i/textured.width),found);
+            const auto hit = viewer.pick(int(i%textured.width),int(i/textured.width));
+            const auto point = hit.position; found = bool(hit);
             require(found && std::abs(viewer.camera()->projectedCoordinatesOf(point).z-textured.depth[i]) < 1e-4f,
                     "scalar-textured window depth picking mismatch");
             scalar_hit = true; break;
@@ -256,7 +261,8 @@ int main(int argc, char**) {
                     composed.depth[i]==textured.depth[i],"native overlay modified picking IDs/depth");
             if (!overlay_pick_checked && composed.ids[i].object!=UINT32_MAX) {
                 bool found=false;
-                const auto point=viewer.point_under_pixel(int(i%composed.width),int(i/composed.width),found);
+                const auto hit = viewer.pick(int(i%composed.width),int(i/composed.width));
+                const auto point = hit.position; found = bool(hit);
                 require(found && std::abs(viewer.camera()->projectedCoordinatesOf(point).z-composed.depth[i])<1e-4f,
                         "overlay obscured native world-point picking");
                 overlay_pick_checked=true;

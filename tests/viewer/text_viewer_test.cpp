@@ -75,7 +75,7 @@ int main(int argc,char**) {
         require(viewer.snapshot("vulkan-text.png"),"could not save text tutorial snapshot");
         viewer.set_samples(1); frame(viewer);
         const auto single=viewer.capture(); same_picking(resized,single);
-        bool found=false; viewer.point_under_pixel(single.width/2,single.height/2,found);
+        bool found=false; viewer.point_under_pixel(viewer.width()/2,viewer.height()/2,found);
         require(found,"text overlays blocked sphere world-point picking");
         require(viewer.device().validation_errors()==0,"text viewer validation errors");
         std::cout << "PASS: native text controls, resize/HiDPI, MSAA, sphere world-point picking, snapshot\n";

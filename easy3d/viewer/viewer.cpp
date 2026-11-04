@@ -870,15 +870,6 @@ int Viewer::run_frames(unsigned max_frames) {
         });
     } catch (const std::exception& e) { LOG(ERROR) << "Vulkan viewer failed: " << e.what(); return 1; }
 }
-vec3 Viewer::point_under_pixel(int x, int y, bool& found) const {
-    found = false;
-    if (x < 0 || y < 0 || x >= framebuffer_width() || y >= framebuffer_height()) return vec3(0);
-    const auto frame = capture();
-    const auto pixel = size_t(y) * frame.width + size_t(x);
-    if (frame.depth[pixel] >= 1 || frame.ids[pixel].object == UINT32_MAX) return vec3(0);
-    found = true;
-    return unproject_pixel(x,y,frame.depth[pixel]);
-}
 bool Viewer::mouse_press_event(int x, int y, int button, int modifiers) {
     mouse_pressed_x_ = mouse_current_x_ = x; mouse_pressed_y_ = mouse_current_y_ = y; pressed_button_ = button;
     zoom_region_ = button == BUTTON_LEFT && modifiers == MODIF_CTRL;
@@ -2294,33 +2285,6 @@ float Viewer::dpi_scaling() const { return dpi_scaling_; }
             return true;
         }
         return false;
-    }
-
-
-    vec3 Viewer::point_under_pixel(int x, int y, bool &found) const {
-        glfwMakeContextCurrent(window_);
-        // GLFW (same as Qt) uses upper corner for its origin while GL uses the lower corner.
-        int glx = x;
-        int gly = height() - 1 - y;
-
-        // NOTE: when dealing with OpenGL, we always work in the highdpi screen space
-#if defined(__APPLE__)
-        glx = static_cast<int>(static_cast<float>(glx) * dpi_scaling());
-        gly = static_cast<int>(static_cast<float>(gly) * dpi_scaling());
-#endif
-        float depth = std::numeric_limits<float>::max();
-        glPixelStorei(GL_PACK_ALIGNMENT, 1);
-        easy3d_debug_log_gl_error
-        glReadPixels(glx, gly, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
-        easy3d_debug_log_gl_error
-        found = depth < 1.0f;
-        if (found) {
-            vec3 point(static_cast<float>(x), static_cast<float>(y), depth);
-            // The input to unprojectedCoordinatesOf() is defined in the screen coordinate system
-            point = camera_->unprojectedCoordinatesOf(point);
-            return point;
-        } else
-            return vec3(0);
     }
 
 

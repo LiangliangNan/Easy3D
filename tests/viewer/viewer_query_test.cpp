@@ -52,7 +52,6 @@ std::shared_ptr<ViewerBase> make_host(unsigned samples, bool validation) {
 #endif
 }
 
-// Qualify the shared scene query: a base-reference cast still dispatches to legacy native hooks.
 void check(unsigned samples, bool validation) {
     auto v = make_host(samples, validation);
     auto front = std::make_shared<TrianglesDrawable>("front");
@@ -104,7 +103,7 @@ void check(unsigned samples, bool validation) {
 #endif
         // Deliberately query before the first frame, with hostile GL state.
         bool found = false;
-        const auto hit = v->ViewerBase::point_under_pixel(x, y, found);
+        const auto hit = v->point_under_pixel(x, y, found);
         require(found && std::abs(hit.z - .2f) < 2e-4f, "fresh query lost foreground depth");
         const auto projected = v->project_point(hit);
         const float expected_x = float((std::floor(double(x) * fw / v->width()) + .5) * v->width() / fw);
@@ -148,29 +147,29 @@ void check(unsigned samples, bool validation) {
         }
 #endif
         front->set_visible(false);
-        const auto far = v->ViewerBase::point_under_pixel(x, y, found);
+        const auto far = v->point_under_pixel(x, y, found);
         require(found && std::abs(far.z + .3f) < 2e-4f, "query ignored drawable visibility");
         front->set_visible(true);
-        v->ViewerBase::point_under_pixel(0, 0, found);
+        v->point_under_pixel(0, 0, found);
         require(!found, "background returned a point");
-        v->ViewerBase::point_under_pixel(-1, y, found);
+        v->point_under_pixel(-1, y, found);
         require(!found, "negative coordinate returned a point");
-        v->ViewerBase::point_under_pixel(v->width(), y, found);
+        v->point_under_pixel(v->width(), y, found);
         require(!found, "outside coordinate returned a point");
         auto sphere = std::make_shared<PointsDrawable>("sphere");
         v->add_drawable(sphere);
         sphere->update_vertex_buffer({vec3(0, 0, .5f)});
         sphere->set_impostor_type(PointsDrawable::SPHERE);
         sphere->set_point_size(24);
-        const auto surface = v->ViewerBase::point_under_pixel(x, y, found);
+        const auto surface = v->point_under_pixel(x, y, found);
         require(found && surface.z > .5f, "sphere query lost analytic surface depth");
         sphere->update_vertex_buffer({vec3(3, 3, .5f)});
-        require(near(v->ViewerBase::point_under_pixel(x, y, found), hit) && found, "query used stale point geometry");
+        require(near(v->point_under_pixel(x, y, found), hit) && found, "query used stale point geometry");
         v->delete_drawable(sphere.get());
         auto hud = std::make_shared<LinesDrawable2D>("hud");
         v->add_drawable(hud);
         hud->update_vertex_buffer({vec2(0, 0), vec2(float(v->width()), float(v->height()))}, v->width(), v->height());
-        require(near(v->ViewerBase::point_under_pixel(x, y, found), hit) && found, "HUD obscured scene query");
+        require(near(v->point_under_pixel(x, y, found), hit) && found, "HUD obscured scene query");
         v->delete_drawable(hud.get());
     }
     // Custom matrices must survive the temporary framebuffer-sized Camera copy.
@@ -180,7 +179,7 @@ void check(unsigned samples, bool validation) {
     shifted(1, 3) -= .1f;
     v->camera()->set_projection_matrix(shifted);
     bool custom_found = false;
-    const auto custom_hit = v->ViewerBase::point_under_pixel(v->width() / 2, v->height() / 2, custom_found);
+    const auto custom_hit = v->point_under_pixel(v->width() / 2, v->height() / 2, custom_found);
     require(custom_found && std::abs(custom_hit.z - .2f) < 2e-4f, "query discarded custom camera matrices");
     const auto custom_window = v->project_point(custom_hit);
     require(std::abs(custom_window.x - v->width() / 2) < 1 && std::abs(custom_window.y - v->height() / 2) < 1,
@@ -197,7 +196,7 @@ void check(unsigned samples, bool validation) {
     glfwSetWindowSize(v->window(), 203, 163);
     v->poll_events();
     bool resized = false;
-    const auto resized_hit = v->ViewerBase::point_under_pixel(v->width() / 2, v->height() / 2, resized);
+    const auto resized_hit = v->point_under_pixel(v->width() / 2, v->height() / 2, resized);
     require(resized && std::abs(resized_hit.z - .2f) < 2e-4f, "query failed after logical/framebuffer resize");
 #ifndef EASY3D_HAS_VULKAN
     {
@@ -205,7 +204,7 @@ void check(unsigned samples, bool validation) {
         other->hide();
         glfwMakeContextCurrent(other->window());
         bool restored = false;
-        v->ViewerBase::point_under_pixel(v->width() / 2, v->height() / 2, restored);
+        v->point_under_pixel(v->width() / 2, v->height() / 2, restored);
         require(restored && glfwGetCurrentContext() == other->window(),
                 "query failed to restore another current context");
         require(other->draw_frame(), "query broke another shared viewer");
@@ -228,14 +227,14 @@ void check(unsigned samples, bool validation) {
     require(rejected, "nonfinite projection accepted");
     v->clear_scene();
     bool found = true;
-    v->ViewerBase::point_under_pixel(v->width() / 2, v->height() / 2, found);
+    v->point_under_pixel(v->width() / 2, v->height() / 2, found);
     require(!found, "cleared scene returned stale depth");
     auto *plane = ClippingPlane::instance();
     const bool enabled = plane->is_enabled(), visible = plane->is_visible();
     plane->fit_scene(vec3(0), 1);
     plane->set_enabled(true);
     plane->set_visible(true);
-    v->ViewerBase::point_under_pixel(v->width() / 2, v->height() / 2, found);
+    v->point_under_pixel(v->width() / 2, v->height() / 2, found);
     plane->set_enabled(enabled);
     plane->set_visible(visible);
     require(!found, "clipping-plane guide returned a scene point");

@@ -39,9 +39,6 @@ const char* const usage_hint = "Press left button to pick/unpick a model\n"
         "  - Alt + right button: translate the model";
 }
 
-#if !EASY3D_TUTORIAL_USES_VULKAN
-#include <easy3d/gui/picker_model.h>
-#endif
 #include <easy3d/renderer/camera.h>
 #include <algorithm>
 #include <easy3d/core/model.h>
@@ -57,7 +54,6 @@ using namespace easy3d;
 
 // \cond
 
-#if EASY3D_TUTORIAL_USES_VULKAN
 TutorialObjectManipulation::TutorialObjectManipulation(const std::string& title)
     : Viewer(title) {
     camera()->setViewDirection(vec3(0,0,-1));camera()->setUpVector(vec3(0,1,0));
@@ -81,7 +77,9 @@ bool TutorialObjectManipulation::mouse_press_event(int x,int y,int button,int mo
         return true;
     }
     if (modifiers==0 && button==BUTTON_LEFT) {
-        const auto hit=pick(x,y);mark(hit.model.get());
+        const int px=int(double(x)*framebuffer_width()/camera()->screenWidth());
+        const int py=int(double(y)*framebuffer_height()/camera()->screenHeight());
+        const auto hit=pick(px,py);mark(hit.model.get());
     }
     return Viewer::mouse_press_event(x,y,button,modifiers);
 }
@@ -120,6 +118,7 @@ void TutorialObjectManipulation::mark(Model* target) {
     }
     update();
 }
+#if EASY3D_TUTORIAL_USES_VULKAN
 void TutorialObjectManipulation::pre_draw() {
     const auto model=selected_model();
     if (model && model->renderer()->is_selected() && model->manipulator()) {
@@ -128,87 +127,14 @@ void TutorialObjectManipulation::pre_draw() {
     } else {end_model_drag();selected_model_.reset();set_overlays({});}
 }
 #else
-TutorialObjectManipulation::TutorialObjectManipulation(const std::string &title)
-        : Viewer(title), selected_model_(nullptr)
-{
-    // We always want to look at the front of the easy3d logo.
-    camera()->setViewDirection(vec3(0, 0, -1));
-    camera()->setUpVector(vec3(0, 1, 0));
-
-    manual_ = usage_manual;
-
-    hint_ = usage_hint;
-}
-
-
-bool TutorialObjectManipulation::mouse_press_event(int x, int y, int button, int modifiers) {
-    if (modifiers != MODIF_ALT) {// this is reserved for manipulation
-        ModelPicker picker(camera());
-        auto model = picker.pick(models(), x, y);
-        if (model)
-            mark(model);
-        return true;
-    }
-    else
-        return Viewer::mouse_press_event(x, y, button, modifiers);
-}
-
-
-bool TutorialObjectManipulation::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
-    // control modifier is reserved for zooming on region
-    if (modifiers == MODIF_ALT && selected_model_) {
-        ManipulatedFrame *frame = selected_model_->manipulator()->frame();
-
-        auto axis = ManipulatedFrame::NONE;
-        if (pressed_key_ == KEY_X) axis = ManipulatedFrame::HORIZONTAL;
-        else if (pressed_key_ == KEY_Y) axis = ManipulatedFrame::VERTICAL;
-        else if (pressed_key_ == KEY_O) axis = ManipulatedFrame::ORTHOGONAL;
-        switch (button) {
-            case BUTTON_LEFT:
-                frame->action_rotate(x, y, dx, dy, camera(), axis);
-                break;
-            case BUTTON_RIGHT:
-                frame->action_translate(x, y, dx, dy, camera(), axis);
-                break;
-            default:
-                break;
-        }
-        return true;
-    }
-    else
-        return Viewer::mouse_drag_event(x, y, dx, dy, button, modifiers);
-}
-
-
-void TutorialObjectManipulation::mark(easy3d::Model *model) {
-    for (auto m : models()) {
-        m->renderer()->set_selected(m.get() == model);
-        auto faces = m->renderer()->get_triangles_drawable("faces");
-        if (m.get() == model)
-            faces->set_uniform_coloring(vec4(1, 0, 0, 1.0f));
-        else
-            faces->set_uniform_coloring(setting::surface_mesh_faces_color);
-    }
-    std::cout << "picked model: " << file_system::simple_name(model->name()) << std::endl;
-
-    selected_model_ = model;
-    if (!model->manipulator()) {    // create manipulator if it doesn't exist
-        model->set_manipulator(std::make_shared<Manipulator>(model));
-        model->manipulator()->frame()->modified.connect(this,
-                static_cast<void (TutorialObjectManipulation::*)(void) const>(&TutorialObjectManipulation::update));
-    }
-    update();
-}
-
-
 bool TutorialObjectManipulation::draw() {
     if (!Viewer::draw()) return false;
-    for (auto m : models()) {
-        if (m->renderer()->is_selected() && m->manipulator())
-            m->manipulator()->draw_frame(camera());
+    for (const auto& model : models()) {
+        if (model->renderer()->is_selected() && model->manipulator())
+            model->manipulator()->draw_frame(camera());
     }
     return true;
 }
+#endif
 
 // \endcond
-#endif // EASY3D_TUTORIAL_USES_VULKAN

@@ -70,7 +70,8 @@ public:
     // Conversion does not clip to the frustum; finite outside coordinates work.
     virtual vec3 project_point(const vec3& world) const;
     virtual vec3 unproject_point(const vec3& window) const;
-    // Synchronous visible-surface query, independent of window MSAA. Integer
+    // Inherited by Viewer and MultiViewer: no backend-specific query override.
+    // Fresh synchronous visible-surface query, independent of window MSAA. Integer
     // logical coordinates map to their containing framebuffer pixel; returns
     // that pixel center's world position. Background/outside => found=false.
     // Scene only: HUD, clipping-plane guides and frame callbacks are excluded.

@@ -254,11 +254,6 @@ std::vector<graphics::DrawCommand> MultiViewer::draw_commands(const Camera& cam,
 vec3 MultiViewer::unproject_pixel(int x,int y,float depth) const {
     return unproject_point(vec3(float((x+.5)*width()/framebuffer_width()),float((y+.5)*height()/framebuffer_height()),depth));
 }
-vec3 MultiViewer::point_under_pixel(int x,int y,bool& found) const {
-    found=false;if(x<0 || y<0 || x>=width() || y>=height()) return vec3(0);
-    const auto hit=pick(int(double(x)*framebuffer_width()/width()),int(double(y)*framebuffer_height()/height()));
-    found=bool(hit);return hit.position;
-}
 bool MultiViewer::mouse_press_event(int x,int y,int button,int modifiers) {
     for(int r=0;r<num_rows_;++r) for(int c=0;c<num_cols_;++c) {
         const auto& vp=views_[r][c].viewport;
@@ -341,9 +336,6 @@ bool MultiViewer::mouse_press_event(int x,int y,int button,int modifiers) {
 
 
 
-vec3 MultiViewer::point_under_pixel(int x,int y,bool& found) const {
-    return ViewerBase::point_under_pixel(x,y,found);
-}
 void MultiViewer::draw_scene_depth(const Camera& snapshot) const {
     CellScissor clip;
     Camera cell(snapshot);cell.frame()->setPivotPoint(snapshot.pivotPoint());

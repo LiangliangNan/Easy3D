@@ -46,10 +46,10 @@ public:
 protected:
     bool mouse_press_event(int x, int y, int button, int modifiers) override;
     bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;
-#if EASY3D_TUTORIAL_USES_VULKAN
     bool mouse_release_event(int x,int y,int button,int modifiers) override;
     bool focus_event(bool focused) override;
     void post_resize(int width,int height) override;
+#if EASY3D_TUTORIAL_USES_VULKAN
     void pre_draw() override;
 #else
     bool draw() override;
@@ -58,13 +58,11 @@ protected:
 private:
     void mark(easy3d::Model *model);
 
-#if EASY3D_TUTORIAL_USES_VULKAN
     std::shared_ptr<easy3d::Model> selected_model() const;
     void end_model_drag();
     std::weak_ptr<easy3d::Model> selected_model_, drag_model_;
+#if EASY3D_TUTORIAL_USES_VULKAN
     easy3d::vulkan::ManipulatorRenderer guide_;
-#else
-    easy3d::Model* selected_model_;
 #endif
 };
 

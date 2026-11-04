@@ -2,6 +2,7 @@
 #include <tests/test.h>
 #include <tutorials/Tutorial_401_ModelPicker/viewer.h>
 #include <tutorials/Tutorial_402_FacePicker/viewer.h>
+#include <tutorials/Tutorial_405_ObjectManipulation/viewer.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/renderer/camera.h>
@@ -65,6 +66,20 @@ void exercise(Viewer& v) {
     require(result.drawable.get()==close->renderer()->get_triangles_drawable("faces"),"picked drawable differs");
     require(result.depth>=0 && result.depth<1 && std::abs(result.position.z-.5f)<2e-4f,"picked depth/world point differs");
     require(result.face_index==0 && result.primitive<2,"polygon triangle provenance missing");
+    {
+        const auto logical=v.project_point(vec3(-.6f,.2f,.5f));
+        const int qx=int(logical.x),qy=int(logical.y);
+        bool direct_found=false,base_found=false;
+        const auto direct=v.point_under_pixel(qx,qy,direct_found);
+        const ViewerBase& base=v;
+        const auto inherited=base.point_under_pixel(qx,qy,base_found);
+        const auto query_pick=v.pick(int(double(qx)*v.framebuffer_width()/v.width()),
+                                int(double(qy)*v.framebuffer_height()/v.height()));
+        require(direct_found && base_found && query_pick && (direct-inherited).length()<1e-6f &&
+                (direct-query_pick.position).length()<2e-4f,"inherited logical surface query differs from framebuffer pick");
+        bool outside=true;v.point_under_pixel(v.width(),0,outside);
+        require(!outside,"logical outside pixel was accepted");
+    }
     const auto projected=v.project_point(result.position);
     require(std::abs(projected.z-result.depth)<2e-5f,"returned world point does not reproduce depth");
     for(unsigned i=0;i<16;++i) require(std::abs(matrix[i]-v.camera()->modelViewProjectionMatrix()[i])<1e-6f,"picking changed camera");
@@ -101,7 +116,42 @@ void exercise(Viewer& v) {
 }
 struct ModelPickerView:TutorialModelPicker {using TutorialModelPicker::TutorialModelPicker;using TutorialModelPicker::mouse_press_event;};
 struct FacePickerView:TutorialFacePicker {using TutorialFacePicker::TutorialFacePicker;using TutorialFacePicker::mouse_press_event;};
+struct ManipulationView:TutorialObjectManipulation {
+    using TutorialObjectManipulation::TutorialObjectManipulation;
+    using TutorialObjectManipulation::mouse_press_event;
+    using TutorialObjectManipulation::mouse_release_event;
+    using TutorialObjectManipulation::mouse_drag_event;
+    using TutorialObjectManipulation::focus_event;
+    using TutorialObjectManipulation::post_resize;
+};
 void tutorials() {
+    {
+        ManipulationView v("Portable Tutorial 405");auto m=quad(0);v.add_model(m);faces_only(m.get());view(v);
+        const auto p=v.camera()->projectedCoordinatesOf(vec3(-.6f,.2f,0));
+        const int x=int(p.x),y=int(p.y);
+        v.mouse_press_event(x,y,Viewer::BUTTON_LEFT,0);
+        v.mouse_release_event(x,y,Viewer::BUTTON_LEFT,0);
+        require(m->renderer()->is_selected() && m->manipulator(),"Tutorial 405 selection missed at native DPI");
+        const auto camera=v.camera()->modelViewProjectionMatrix();
+        const auto before=m->manipulator()->matrix();
+        v.mouse_press_event(x,y,Viewer::BUTTON_RIGHT,Viewer::MODIF_ALT);
+        v.mouse_drag_event(x+20,y+10,20,10,Viewer::BUTTON_RIGHT,Viewer::MODIF_ALT);
+        v.mouse_release_event(x+20,y+10,Viewer::BUTTON_RIGHT,Viewer::MODIF_ALT);
+        const auto translated=m->manipulator()->matrix();
+        require((translated*vec4(0,0,0,1)-before*vec4(0,0,0,1)).length()>1e-4f,"Tutorial 405 did not translate model");
+        for(unsigned i=0;i<16;++i) require(camera[i]==v.camera()->modelViewProjectionMatrix()[i],"object drag moved camera");
+        v.mouse_press_event(x,y,Viewer::BUTTON_RIGHT,Viewer::MODIF_ALT);v.focus_event(false);
+        v.mouse_drag_event(x+20,y+10,20,10,Viewer::BUTTON_RIGHT,Viewer::MODIF_ALT);
+        for(unsigned i=0;i<16;++i) require(translated[i]==m->manipulator()->matrix()[i],"focus loss did not cancel model drag");
+        v.mouse_release_event(x,y,Viewer::BUTTON_RIGHT,Viewer::MODIF_ALT);
+        v.mouse_press_event(x,y,Viewer::BUTTON_RIGHT,Viewer::MODIF_ALT);v.post_resize(v.width(),v.height());
+        v.mouse_drag_event(x+20,y+10,20,10,Viewer::BUTTON_RIGHT,Viewer::MODIF_ALT);
+        for(unsigned i=0;i<16;++i) require(translated[i]==m->manipulator()->matrix()[i],"resize did not cancel model drag");
+        v.mouse_press_event(x,y,Viewer::BUTTON_RIGHT,Viewer::MODIF_ALT);v.delete_model(m.get());
+        v.mouse_drag_event(x+20,y+10,20,10,Viewer::BUTTON_RIGHT,Viewer::MODIF_ALT);
+        for(unsigned i=0;i<16;++i) require(translated[i]==m->manipulator()->matrix()[i],"deleted model was manipulated");
+    }
+
     {
         ModelPickerView v("Portable Tutorial 401");auto m=quad(0);v.add_model(m);faces_only(m.get());view(v);
         const auto p=v.camera()->projectedCoordinatesOf(vec3(-.6f,.2f,0));

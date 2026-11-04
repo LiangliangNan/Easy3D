@@ -60,7 +60,7 @@ int main(int argc,char**) {
         size_t hit=0; while (hit<image.ids.size() && image.ids[hit].object==UINT32_MAX) ++hit;
         require(hit<image.ids.size(),"pivot test scene is empty");
         const int px=int(hit%image.width),py=int(hit/image.width);
-        bool found=false; const auto picked=v.point_under_pixel(px,py,found);
+        const auto surface=v.pick(px,py); const bool found=bool(surface); const auto picked=surface.position;
         require(found,"pivot depth pick failed");
         v.mouse_press_event(px,py,Viewer::BUTTON_LEFT,Viewer::MODIF_SHIFT);
         require((v.camera()->pivotPoint()-picked).norm()<1e-6f,"Shift-click selected wrong surface pivot");

@@ -378,7 +378,8 @@ bool TutorialRealCamera::mouse_free_move_event(int x, int y, int dx, int dy, int
             ray_drawable_->set_visible(false);
 
         bool found(false);
-        const vec3 p = point_under_pixel(x, y, found);
+        const vec3 p = point_under_pixel(int(double(x)*width()/camera()->screenWidth()),
+                                         int(double(y)*height()/camera()->screenHeight()), found);
         if (found) {
             const vec2 q = point_to_pixel(p, cam.fx, cam.fy, 0, cam.cx, cam.cy, cam.R, cam.t);
 

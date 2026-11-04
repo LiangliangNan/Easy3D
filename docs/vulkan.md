@@ -447,6 +447,8 @@ of this document.
   controller across both builds, retiring its detached OpenGL timer. U5c reuses the
   built-in camera path for Tutorial 206 and shares frame-driven playback in Viewer.
   U5d implements the Vulkan ImGui counterpart and enables Tutorial 202.
+  W5 batch 3 consolidates surface queries in ViewerBase and shares Tutorial 405's
+  selection/drag lifecycle; its guide rendering still needs a shared counterpart.
   The seven remaining conditional tutorials still require
   renderer/picker/capture API work; the tutorial macro is not yet removable. Avoid
   new generic Viewer abstractions solely for a single tutorial.
@@ -4626,3 +4628,40 @@ run). Shared query, frame-loop, Python rendering, new portable picking and Tutor
 401/402 smoke tests pass with validation enabled where supported. The final OpenGL
 suite passes 82/82 tests. `git diff --check` is clean. The intermittent native-window
 timeout remains a validation caveat, not a resolved migration item.
+
+
+### 2026-11-04 — W5 batch 3: inherited surface queries and shared manipulation input
+
+`ViewerBase::point_under_pixel()` is now the sole implementation. `Viewer` and
+`MultiViewer` inherit it; their native overrides and obsolete framebuffer-query
+comments are removed. Calls on concrete objects, base references and Python
+objects use logical window coordinates and a fresh scene-only depth pass, returning
+the world position at the containing framebuffer pixel center. HUD/guides and
+frame callbacks are excluded. Backend rendering stays in `read_scene_depth()` and
+the existing scene/cell rendering hooks; MultiViewer retains virtual cell-aware
+unprojection. Explicit base-qualified calls in Python and regressions are removed.
+
+Tests that intentionally address exact framebuffer pixels now use `pick()`. Image,
+text, model and RealCamera callers convert to logical window coordinates where
+needed. This preserves native input hooks' existing camera-space coordinates and
+keeps frame-independent queries available before the first draw. Custom geometry
+submitted only through application frame/draw hooks is outside this scene-query
+contract; it must be represented by registered scene drawables to participate.
+
+Tutorial 405 now shares its constructor, selection, Alt-drag translation/rotation,
+axis constraints, release handling and focus/resize cancellation across backends.
+Both use shared picking with native-DPI conversion and weak source references;
+deleting a selected model cannot leave a dangling pointer. Existing guide drawing
+remains backend-specific (the tutorial selector is not yet removed). No new public
+API or renderer helper is introduced. The shared picking regression now exercises
+Tutorial 405 translation, camera isolation, focus/resize cancellation and deletion,
+as well as direct/base query agreement at logical coordinates on both backends.
+
+
+Validation on this Mac: both complete builds succeed, including Python packaging;
+all 109 MoltenVK tests and all 82 OpenGL tests pass. The focused suites also pass
+(8 Vulkan, 5 OpenGL), including inherited queries, multi-view cells, Python,
+Tutorial 405 interaction, native input and window rendering. Vulkan/synchronization
+validation is enabled by the existing test harness. The prior intermittent native
+window timeout did not recur in this batch; it is not claimed resolved.
+`git diff --check` is clean.

@@ -54,7 +54,7 @@ int main(int argc,char**) {
         require(fitted.rgba[(fitted.width/2)*4+1]==255,"wide image did not preserve its aspect ratio/letterbox");
         unpickable(fitted);
         bool found=true;
-        viewer.point_under_pixel(fitted.width/2,fitted.height/2,found);
+        viewer.point_under_pixel(viewer.width()/2,viewer.height()/2,found);
         require(!found,"image overlay participated in world-point picking");
         auto scroll=glfwSetScrollCallback(viewer.window(),nullptr); glfwSetScrollCallback(viewer.window(),scroll);
         scroll(viewer.window(),0,-2); frame(viewer);
