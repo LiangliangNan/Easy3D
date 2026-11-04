@@ -11,8 +11,6 @@
 #ifndef EASY3D_HAS_VULKAN
 #include <easy3d/renderer/opengl.h>
 #endif
-#define GLFW_INCLUDE_NONE
-#include <3rd_party/glfw/include/GLFW/glfw3.h>
 #include <cmath>
 #include <iostream>
 #include <limits>
@@ -25,7 +23,7 @@ void require(bool value, const char *message) {
     if (!value)
         throw std::runtime_error(message);
 }
-bool near(const vec3 &a, const vec3 &b, float epsilon = 1e-4f) { return distance(a, b) < epsilon; }
+bool near_enough(const vec3 &a, const vec3 &b, float epsilon = 1e-4f) { return distance(a, b) < epsilon; }
 std::shared_ptr<ViewerBase> make_host(unsigned samples, bool validation) {
 #ifdef EASY3D_HAS_VULKAN
     {
@@ -73,7 +71,7 @@ void check(unsigned samples, bool validation) {
     for (auto type : {Camera::PERSPECTIVE, Camera::ORTHOGRAPHIC}) {
         v->camera()->setType(type);
         for (auto p : {vec3(.1f, .15f, .2f), vec3(-.2f, -.3f, -.3f), vec3(10, 10, 0)})
-            require(near(v->unproject_point(v->project_point(p)), p, 2e-3f), "projection round trip failed");
+            require(near_enough(v->unproject_point(v->project_point(p)), p, 2e-3f), "projection round trip failed");
         int fw, fh;
         v->framebuffer_size(fw, fh);
         const int x = v->width() / 2, y = v->height() / 2;
@@ -164,12 +162,12 @@ void check(unsigned samples, bool validation) {
         const auto surface = v->point_under_pixel(x, y, found);
         require(found && surface.z > .5f, "sphere query lost analytic surface depth");
         sphere->update_vertex_buffer({vec3(3, 3, .5f)});
-        require(near(v->point_under_pixel(x, y, found), hit) && found, "query used stale point geometry");
+        require(near_enough(v->point_under_pixel(x, y, found), hit) && found, "query used stale point geometry");
         v->delete_drawable(sphere.get());
         auto hud = std::make_shared<LinesDrawable2D>("hud");
         v->add_drawable(hud);
         hud->update_vertex_buffer({vec2(0, 0), vec2(float(v->width()), float(v->height()))}, v->width(), v->height());
-        require(near(v->point_under_pixel(x, y, found), hit) && found, "HUD obscured scene query");
+        require(near_enough(v->point_under_pixel(x, y, found), hit) && found, "HUD obscured scene query");
         v->delete_drawable(hud.get());
     }
     // Custom matrices must survive the temporary framebuffer-sized Camera copy.

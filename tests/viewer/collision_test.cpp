@@ -8,8 +8,7 @@
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/manipulated_frame.h>
 #include <easy3d/util/initializer.h>
-#define GLFW_INCLUDE_NONE
-#include <3rd_party/glfw/include/GLFW/glfw3.h>
+
 #include <iostream>
 #include <stdexcept>
 #include <thread>

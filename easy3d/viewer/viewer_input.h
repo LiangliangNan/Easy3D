@@ -17,6 +17,8 @@ struct ViewerInput {
         KEY_Q = 81, KEY_R = 82, KEY_S = 83, KEY_T = 84, KEY_U = 85, KEY_V = 86, KEY_W = 87, KEY_X = 88,
         KEY_Y = 89, KEY_Z = 90,
         // the functional keys
+        /* Function keys */
+        KEY_ESCAPE = 256, KEY_ENTER = 257, KEY_DELETE = 261,
         KEY_RIGHT = 262, KEY_LEFT = 263, KEY_DOWN = 264, KEY_UP = 265,
         KEY_F1 = 290,   KEY_F2 = 291,   KEY_F3 = 292,   KEY_F4 = 293,   KEY_F5 = 294,
         KEY_F6 = 295,   KEY_F7 = 296,   KEY_F8 = 297,   KEY_F9 = 298,

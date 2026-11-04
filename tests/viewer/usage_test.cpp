@@ -12,8 +12,6 @@
 #include <easy3d/util/initializer.h>
 #include <tests/native_tutorials/options.h>
 #include <easy3d/util/setting.h>
-#define GLFW_INCLUDE_NONE
-#include <3rd_party/glfw/include/GLFW/glfw3.h>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>

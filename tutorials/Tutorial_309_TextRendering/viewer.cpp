@@ -41,8 +41,6 @@ const char* const usage_manual = "----------------------- Text Rendering usage -
 #include <easy3d/renderer/text_layout.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/resource.h>
-#define GLFW_INCLUDE_NONE
-#include <3rd_party/glfw/include/GLFW/glfw3.h>
 #include <algorithm>
 #include <cmath>
 #include <cctype>
@@ -69,17 +67,17 @@ TutorialTextRendering::~TutorialTextRendering() = default;
 bool TutorialTextRendering::key_press_event(int key,int modifiers) {
     using easy3d::graphics::TextAlign;
     switch (key) {
-        case GLFW_KEY_MINUS: size_=std::max(8.0f,size_-1); break;
-        case GLFW_KEY_EQUAL: size_=std::min(278.0f,size_+1); break;
-        case GLFW_KEY_COMMA: spacing_=std::max(0.0f,spacing_-0.5f); break;
-        case GLFW_KEY_PERIOD: spacing_=std::min(50.0f,spacing_+0.5f); break;
-        case GLFW_KEY_DOWN: line_spacing_=std::max(-1.0f,line_spacing_-0.1f); break;
-        case GLFW_KEY_UP: line_spacing_=std::min(2.0f,line_spacing_+0.1f); break;
-        case GLFW_KEY_L: align_=TextAlign::left; break;
-        case GLFW_KEY_C: align_=TextAlign::center; break;
-        case GLFW_KEY_R: align_=TextAlign::right; break;
-        case GLFW_KEY_O: upper_left_=!upper_left_; break;
-        case GLFW_KEY_SPACE: kerning_=!kerning_; break;
+        case KEY_MINUS: size_=std::max(8.0f,size_-1); break;
+        case KEY_EQUAL: size_=std::min(278.0f,size_+1); break;
+        case KEY_COMMA: spacing_=std::max(0.0f,spacing_-0.5f); break;
+        case KEY_PERIOD: spacing_=std::min(50.0f,spacing_+0.5f); break;
+        case KEY_DOWN: line_spacing_=std::max(-1.0f,line_spacing_-0.1f); break;
+        case KEY_UP: line_spacing_=std::min(2.0f,line_spacing_+0.1f); break;
+        case KEY_L: align_=TextAlign::left; break;
+        case KEY_C: align_=TextAlign::center; break;
+        case KEY_R: align_=TextAlign::right; break;
+        case KEY_O: upper_left_=!upper_left_; break;
+        case KEY_SPACE: kerning_=!kerning_; break;
         default: return Viewer::key_press_event(key,modifiers);
     }
     dirty_=true; update(); return true;
@@ -90,8 +88,8 @@ void TutorialTextRendering::post_resize(int,int) {
 }
 
 void TutorialTextRendering::pre_draw() {
-    int logical_w,logical_h; glfwGetWindowSize(window(),&logical_w,&logical_h);
-    const float dpi=logical_w>0 ? float(framebuffer_width())/logical_w : 1;
+    int w = width();
+    const float dpi=w>0 ? float(framebuffer_width())/w : 1;
     if (dpi!=dpi_) { dirty_=true; dpi_=dpi; }
     if (!dirty_) return;
     // Discard obsolete font sizes on edits; existing draw commands retain their snapshots.

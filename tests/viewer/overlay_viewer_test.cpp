@@ -7,8 +7,6 @@
 #include <easy3d/fileio/image_io.h>
 #include <tutorials/Tutorial_306_ImageViewer/viewer.h>
 #include <tutorials/Tutorial_309_TextRendering/viewer.h>
-#define GLFW_INCLUDE_NONE
-#include <3rd_party/glfw/include/GLFW/glfw3.h>
 #include <cmath>
 using namespace easy3d;
 using test::require;
@@ -115,7 +113,7 @@ int main(int argc,char**) {return test::run("shared annotations and image/text t
     }
     {
         TextView text_view("Shared text tutorial");frame(text_view);
-        for(int key:{GLFW_KEY_EQUAL,GLFW_KEY_PERIOD,GLFW_KEY_UP,GLFW_KEY_R,GLFW_KEY_O,GLFW_KEY_SPACE}) require(text_view.key_press_event(key,0),"text control was not handled");
+        for(int key:{AnnotationView::KEY_EQUAL,AnnotationView::KEY_PERIOD,AnnotationView::KEY_UP,AnnotationView::KEY_R,AnnotationView::KEY_O,AnnotationView::KEY_SPACE}) require(text_view.key_press_event(key,0),"text control was not handled");
         text_view.resize(501,401);frame(text_view);
         require(text_view.snapshot("text-tutorial.png",1.5f,4,1,true),"shared text tutorial snapshot failed");
     }

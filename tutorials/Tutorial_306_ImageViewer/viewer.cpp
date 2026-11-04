@@ -37,8 +37,6 @@ const char* const usage_hint = "Ctrl + o: open an image\n"
 #include <easy3d/fileio/image_io.h>
 #include <easy3d/util/dialog.h>
 #include <easy3d/util/resource.h>
-#define GLFW_INCLUDE_NONE
-#include <3rd_party/glfw/include/GLFW/glfw3.h>
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
@@ -55,8 +53,8 @@ TutorialImageViewer::TutorialImageViewer(const std::string& title,const std::str
 TutorialImageViewer::~TutorialImageViewer() = default;
 
 bool TutorialImageViewer::key_press_event(int key,int modifiers) {
-    if (key == GLFW_KEY_F) { fit_screen(); return true; }
-    if (key == GLFW_KEY_O && (modifiers & GLFW_MOD_CONTROL)) {
+    if (key == KEY_F) { fit_screen(); return true; }
+    if (key == KEY_O && (modifiers & MODIF_CTRL)) {
         const auto file = easy3d::dialog::open("Please choose an image file",easy3d::resource::directory()+"/data/",
             {"Image Files (*.png *.jpg *.bmp *.ppm *.tga)","*.png *.jpg *.bmp *.ppm *.tga"});
         if (!file.empty() && load_image(file)) { fit_screen(); return true; }

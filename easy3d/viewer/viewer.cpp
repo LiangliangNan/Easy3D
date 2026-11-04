@@ -1193,6 +1193,7 @@ bool Viewer::drop_event(const std::vector<std::string>& names) {
 #include <iostream>
 
 #include <easy3d/renderer/opengl.h>				// for gl functions
+#define GLFW_INCLUDE_NONE
 #include <3rd_party/glfw/include/GLFW/glfw3.h>  // for glfw functions
 
 #include <easy3d/core/surface_mesh.h>

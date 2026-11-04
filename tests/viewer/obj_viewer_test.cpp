@@ -10,8 +10,6 @@
 #include <easy3d/util/initializer.h>
 #include <iostream>
 #ifdef EASY3D_HAS_VULKAN
-#define GLFW_INCLUDE_NONE
-#include <3rd_party/glfw/include/GLFW/glfw3.h>
 #else
 #include <easy3d/renderer/opengl.h>
 #endif

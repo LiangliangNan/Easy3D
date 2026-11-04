@@ -1,8 +1,6 @@
 #include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <tutorials/Tutorial_309_TextRendering/viewer.h>
-#define GLFW_INCLUDE_NONE
-#include <3rd_party/glfw/include/GLFW/glfw3.h>
 #include <easy3d/util/resource.h>
 #include <easy3d/util/initializer.h>
 #include <easy3d/fileio/image_io.h>
@@ -41,10 +39,10 @@ int main(int argc,char**) {
         const auto camera_matrix=viewer.camera()->modelViewProjectionMatrix();
         auto key=glfwSetKeyCallback(viewer.window(),nullptr); glfwSetKeyCallback(viewer.window(),key);
         auto press=[&](int code) { key(viewer.window(),code,0,GLFW_PRESS,0); frame(viewer); };
-        for (const auto pair: {std::pair<int,int>{GLFW_KEY_EQUAL,GLFW_KEY_MINUS},
-                              {GLFW_KEY_PERIOD,GLFW_KEY_COMMA},{GLFW_KEY_UP,GLFW_KEY_DOWN},
-                              {GLFW_KEY_L,GLFW_KEY_C},{GLFW_KEY_R,GLFW_KEY_C},
-                              {GLFW_KEY_O,GLFW_KEY_O},{GLFW_KEY_SPACE,GLFW_KEY_SPACE}}) {
+        for (const auto pair: {std::pair<int,int>{TutorialTextRendering::KEY_EQUAL,TutorialTextRendering::KEY_MINUS},
+                              {TutorialTextRendering::KEY_PERIOD,TutorialTextRendering::KEY_COMMA},{TutorialTextRendering::KEY_UP,TutorialTextRendering::KEY_DOWN},
+                              {TutorialTextRendering::KEY_L,TutorialTextRendering::KEY_C},{TutorialTextRendering::KEY_R,TutorialTextRendering::KEY_C},
+                              {TutorialTextRendering::KEY_O,TutorialTextRendering::KEY_O},{TutorialTextRendering::KEY_SPACE,TutorialTextRendering::KEY_SPACE}}) {
             std::cout << "checking shortcut " << pair.first << " / " << pair.second << std::endl;
             press(pair.first);
             const auto edited=viewer.capture();

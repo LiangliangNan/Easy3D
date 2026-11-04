@@ -14,8 +14,6 @@
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/manipulated_frame.h>
-#define GLFW_INCLUDE_NONE
-#include <3rd_party/glfw/include/GLFW/glfw3.h>
 #include <cmath>
 #ifndef EASY3D_HAS_VULKAN
 #include <easy3d/renderer/opengl.h>

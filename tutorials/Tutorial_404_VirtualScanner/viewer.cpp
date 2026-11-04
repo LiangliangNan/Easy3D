@@ -41,8 +41,6 @@ const char* const usage_hint = "press 'Space' to perform scanning\n"
 #if EASY3D_TUTORIAL_USES_VULKAN
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/algo/gaussian_noise.h>
-#define GLFW_INCLUDE_NONE
-#include <3rd_party/glfw/include/GLFW/glfw3.h>
 
 using namespace easy3d;
 
@@ -53,8 +51,8 @@ TutorialVirtualScanner::TutorialVirtualScanner(const std::string& title) : Viewe
 }
 
 bool TutorialVirtualScanner::key_press_event(int key,int modifiers) {
-    if (modifiers==0 && key==GLFW_KEY_N) { add_noise_=!add_noise_; return true; }
-    if (modifiers==0 && key==GLFW_KEY_SPACE) {
+    if (modifiers==0 && key==KEY_N) { add_noise_=!add_noise_; return true; }
+    if (modifiers==0 && key==KEY_SPACE) {
         int w,h; framebuffer_size(w,h);
         if (w<=0 || h<=0) return true;
         // Key events may arrive before the next draw synchronizes a resize.

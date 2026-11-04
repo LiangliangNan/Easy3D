@@ -1,8 +1,7 @@
 #include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <tutorials/Tutorial_306_ImageViewer/viewer.h>
-#define GLFW_INCLUDE_NONE
-#include <3rd_party/glfw/include/GLFW/glfw3.h>
+
 #include <easy3d/fileio/image_io.h>
 #include <easy3d/util/initializer.h>
 #include <stdexcept>

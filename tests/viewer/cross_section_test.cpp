@@ -1,8 +1,6 @@
 #include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <tutorials/Tutorial_307_CrossSection/viewer.h>
-#define GLFW_INCLUDE_NONE
-#include <3rd_party/glfw/include/GLFW/glfw3.h>
 #include <easy3d/util/initializer.h>
 #include <easy3d/util/setting.h>
 #include <easy3d/renderer/clipping_plane.h>

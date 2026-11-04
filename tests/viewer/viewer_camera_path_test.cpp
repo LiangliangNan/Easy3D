@@ -5,8 +5,6 @@
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/util/initializer.h>
 #include <easy3d/util/resource.h>
-#define GLFW_INCLUDE_NONE
-#include <3rd_party/glfw/include/GLFW/glfw3.h>
 #include <iostream>
 #include <stdexcept>
 #include <thread>

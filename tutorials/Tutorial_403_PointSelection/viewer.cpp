@@ -32,8 +32,6 @@
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/algo/tessellator.h>
-#define GLFW_INCLUDE_NONE
-#include <3rd_party/glfw/include/GLFW/glfw3.h>
 #include <algorithm>
 #include <limits>
 
@@ -47,7 +45,7 @@ TutorialPointSelection::TutorialPointSelection(const std::string& title) : Viewe
 }
 
 bool TutorialPointSelection::mouse_press_event(int x,int y,int button,int modifiers) {
-    if ((modifiers & GLFW_MOD_SHIFT) && (button==GLFW_MOUSE_BUTTON_LEFT || button==GLFW_MOUSE_BUTTON_RIGHT)) {
+    if ((modifiers & MODIF_SHIFT) && (button==BUTTON_LEFT || button==BUTTON_RIGHT)) {
         cancel();
         for (const auto& model:models()) if (model.get()==current_model() && dynamic_cast<easy3d::PointCloud*>(model.get())) {
             target_=model; active_=true; button_=button;
@@ -82,7 +80,7 @@ bool TutorialPointSelection::mouse_release_event(int x,int y,int button,int modi
             const auto transform=drawable->manipulated_matrix();
             request.model_view_projection=camera()->modelViewProjectionMatrix()*transform;
             for (const auto& plane:clipping_planes()) request.local_clipping_planes.push_back(transpose(transform)*plane);
-            request.deselect=button_==GLFW_MOUSE_BUTTON_RIGHT;
+            request.deselect=button_==BUTTON_RIGHT;
             const auto words=select_points(request);
             auto colors=cloud->vertex_property<easy3d::vec3>("v:color");
             for (auto v:cloud->vertices()) {
@@ -97,9 +95,9 @@ bool TutorialPointSelection::mouse_release_event(int x,int y,int button,int modi
 }
 
 bool TutorialPointSelection::key_press_event(int key,int modifiers) {
-    if (key==GLFW_KEY_ESCAPE && active_) { cancel(); return true; }
-    if (modifiers==0 && (key==GLFW_KEY_R || key==GLFW_KEY_L)) {
-        cancel(); rectangle_=key==GLFW_KEY_R; return true;
+    if (key==KEY_ESCAPE && active_) { cancel(); return true; }
+    if (modifiers==0 && (key==KEY_R || key==KEY_L)) {
+        cancel(); rectangle_=key==KEY_R; return true;
     }
     return Viewer::key_press_event(key,modifiers);
 }
