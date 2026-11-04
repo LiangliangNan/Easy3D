@@ -27,18 +27,7 @@ set(renderer_sources
         soft_shadow.cpp
 )
 
-if(Easy3D_ENABLE_VULKAN)
-    list(APPEND renderer_headers obj_materials.h camera.h clipping_plane.h constraint.h drawable.h drawable_lines.h drawable_lines_2D.h
-            drawable_points.h drawable_triangles.h frame.h frustum.h key_frame_interpolator.h
-            manipulator.h manipulated_camera_frame.h manipulated_frame.h shape.h buffer.h
-            renderer.h state.h texture.h texture_manager.h transform.h transform_decompose.h)
-    list(APPEND renderer_sources obj_materials.cpp camera.cpp clipping_plane.cpp constraint.cpp drawable.cpp drawable_points.cpp drawable_lines.cpp drawable_triangles.cpp drawable_lines_2D.cpp frame.cpp frustum.cpp
-            key_frame_interpolator.cpp manipulator.cpp manipulated_camera_frame.cpp manipulated_frame.cpp
-            shape.cpp buffer.cpp renderer.cpp state.cpp texture.cpp texture_manager.cpp transform.cpp transform_decompose.cpp
-            backends/cpu/opengl_unavailable.cpp ${backend_sources})
-else()
-
-list(APPEND ${module}_headers
+list(APPEND renderer_headers
         obj_materials.h
         camera.h
         clipping_plane.h
@@ -49,72 +38,79 @@ list(APPEND ${module}_headers
         drawable_points.h
         drawable_triangles.h
         frame.h
-        framebuffer_object.h
         frustum.h
         key_frame_interpolator.h
         manipulator.h
         manipulated_camera_frame.h
         manipulated_frame.h
-        opengl.h
-        opengl_error.h
-        opengl_util.h
-        opengl_timer.h
         shape.h
-        read_pixel.h
         buffer.h
         renderer.h
-        shader_manager.h
-        shader_program.h
         state.h
         texture.h
         texture_manager.h
-        text_renderer.h
         transform.h
         transform_decompose.h
-        vertex_array_object.h
-        )
-
-list(APPEND ${module}_sources
-        ${backend_sources}
+)
+list(APPEND renderer_sources
         obj_materials.cpp
         camera.cpp
         clipping_plane.cpp
-        backends/opengl/clipping_plane.cpp
         constraint.cpp
         drawable.cpp
-        backends/opengl/drawable_buffers.cpp
-        backends/opengl/shape_draw.cpp
         drawable_lines.cpp
         drawable_lines_2D.cpp
-        backends/opengl/drawable_lines_2D.cpp
         drawable_points.cpp
         drawable_triangles.cpp
         frame.cpp
-        framebuffer_object.cpp
         frustum.cpp
         key_frame_interpolator.cpp
         manipulator.cpp
         manipulated_camera_frame.cpp
         manipulated_frame.cpp
+        shape.cpp
+        buffer.cpp
+        renderer.cpp
+        state.cpp
+        texture.cpp
+        texture_manager.cpp
+        transform.cpp
+        transform_decompose.cpp
+)
+
+if(Easy3D_ENABLE_VULKAN)
+    list(APPEND renderer_sources backends/cpu/opengl_unavailable.cpp ${backend_sources})
+else()
+list(APPEND renderer_headers
+        framebuffer_object.h
+        opengl.h
+        opengl_error.h
+        opengl_util.h
+        opengl_timer.h
+        read_pixel.h
+        shader_manager.h
+        shader_program.h
+        text_renderer.h
+        vertex_array_object.h
+)
+
+list(APPEND renderer_sources
+        backends/opengl/clipping_plane.cpp
+        backends/opengl/drawable_buffers.cpp
+        backends/opengl/shape_draw.cpp
+        backends/opengl/drawable_lines_2D.cpp
+        framebuffer_object.cpp
         opengl.cpp
         opengl_error.cpp
         opengl_util.cpp
         opengl_timer.cpp
-        shape.cpp
         read_pixel.cpp
-        buffer.cpp
-        renderer.cpp
         shader_manager.cpp
         shader_program.cpp
-        state.cpp
-        texture.cpp
         backends/opengl/texture.cpp
-        texture_manager.cpp
         text_renderer.cpp
-        transform.cpp
-        transform_decompose.cpp
         vertex_array_object.cpp
-        )
+)
 
 
 set(${module}_resources

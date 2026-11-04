@@ -441,7 +441,8 @@ of this document.
 - **U6** (in progress) U6a moves bounded tutorial tests out of tutorial CMake and
   restores five picker-tutorial dependency lists to `main`. U6b restores drawable
   constructors to their original class files, removes `drawable_types.cpp` and
-  removes the private OpenGL selector; the inventory above is refreshed. Continue
+  removes the private OpenGL selector; U6c consolidates renderer CMake class lists
+  shared by both backends. The inventory above is refreshed. Continue
   the file-by-file responsibility audit and remove capability
   gates only when implementations exist. U5/API work remains open.
 - **W10** Mapple, Qt/wx, remaining Python API/tutorial coverage, transparency/SSAO/shadows/EDL parity.
@@ -4322,3 +4323,23 @@ Validation: Tutorial 202 and the full OpenGL configuration (including Python
 bindings) built under C++11; all **40/40 OpenGL tests** passed on this Mac.
 `git diff --check` passed. The Vulkan options branch is unchanged; Vulkan tests
 were not rerun for this OpenGL-only change. Work remains uncommitted.
+
+
+### 2026-11-04 — U6c: One renderer class list for both backends
+
+The renderer CMake file now lists shared class headers and implementations once,
+including camera, drawables, renderer state, textures, transforms and shape geometry.
+Only backend-specific implementations/headers and OpenGL shader resources remain
+inside the backend branches. The sole selector remains `Easy3D_ENABLE_VULKAN`;
+no new variable, file, API or feature gate is introduced.
+
+Generated Ninja compile-source inventories match before/after for both backends
+(40 Vulkan renderer translation units, 44 OpenGL units). Generated renderer install
+header path sets also match, including the existing backend integration headers.
+Source and install order can change; their membership is preserved. U5's nine conditional
+tutorials and W10 feature parity remain open.
+
+Validation on this Mac: both configurations regenerated and built completely,
+including Python bindings. Full desktop suites passed **72/72 MoltenVK** and
+**40/40 OpenGL**. `git diff --check` passed. No API or rendering behavior changed;
+work remains uncommitted on Easy3D-Vulkan.
