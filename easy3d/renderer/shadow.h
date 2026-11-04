@@ -27,6 +27,10 @@
 #ifndef EASY3D_RENDERER_SHADOW_H
 #define EASY3D_RENDERER_SHADOW_H
 
+#ifdef EASY3D_HAS_VULKAN
+// No Vulkan counterpart yet.
+#else
+
 #include <vector>
 #include <easy3d/core/types.h>
 
@@ -139,5 +143,7 @@ namespace easy3d {
     };
 
 }
+
+#endif // EASY3D_HAS_VULKAN
 
 #endif // EASY3D_RENDERER_SHADOW_H

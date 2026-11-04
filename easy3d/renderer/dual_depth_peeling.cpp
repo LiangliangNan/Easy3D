@@ -26,6 +26,10 @@
 
 #include <easy3d/renderer/dual_depth_peeling.h>
 
+#ifdef EASY3D_HAS_VULKAN
+// No Vulkan counterpart yet.
+#else
+
 #include <algorithm>
 
 #include <easy3d/renderer/drawable_triangles.h>
@@ -481,3 +485,5 @@ namespace easy3d {
 
 
 } // namespace easy3d
+
+#endif // EASY3D_HAS_VULKAN

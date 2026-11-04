@@ -26,6 +26,10 @@
 
 #include "viewer.h"
 
+#ifdef EASY3D_HAS_VULKAN
+// No Vulkan counterpart yet.
+#else
+
 #include <easy3d/util/file_system.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
@@ -266,3 +270,5 @@ namespace easy3d {
 	// \endcond
 
 }
+
+#endif // EASY3D_HAS_VULKAN

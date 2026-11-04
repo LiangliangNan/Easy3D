@@ -25,6 +25,10 @@
  ********************************************************************/
 
 #include <easy3d/renderer/average_color_blending.h>
+
+#ifdef EASY3D_HAS_VULKAN
+// No Vulkan counterpart yet.
+#else
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/framebuffer_object.h>
 #include <easy3d/renderer/drawable_triangles.h>
@@ -194,3 +198,5 @@ namespace easy3d {
 
 
 } // namespace easy3d
+
+#endif // EASY3D_HAS_VULKAN

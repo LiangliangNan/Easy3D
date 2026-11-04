@@ -26,6 +26,10 @@
 
 #include <easy3d/renderer/ambient_occlusion.h>
 
+#ifdef EASY3D_HAS_VULKAN
+// No Vulkan counterpart yet.
+#else
+
 #include <random>
 
 #include <easy3d/core/model.h>
@@ -314,3 +318,5 @@ namespace easy3d {
     }
 
 } // namespace easy3d
+
+#endif // EASY3D_HAS_VULKAN

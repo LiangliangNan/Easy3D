@@ -26,6 +26,10 @@
 
 
 #include <easy3d/gui/picker.h>
+
+#ifdef EASY3D_HAS_VULKAN
+// No Vulkan counterpart yet.
+#else
 #include <easy3d/renderer/framebuffer_object.h>
 #include <easy3d/renderer/opengl_error.h>
 
@@ -77,3 +81,5 @@ namespace easy3d {
     }
 
 }
+
+#endif // EASY3D_HAS_VULKAN

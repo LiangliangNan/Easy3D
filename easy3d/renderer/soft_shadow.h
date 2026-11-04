@@ -27,6 +27,10 @@
 #ifndef EASY3D_RENDERER_SOFT_SHADOW_H
 #define EASY3D_RENDERER_SOFT_SHADOW_H
 
+#ifdef EASY3D_HAS_VULKAN
+// No Vulkan counterpart yet.
+#else
+
 #include <easy3d/renderer/shadow.h>
 
 
@@ -129,5 +133,7 @@ namespace easy3d {
     };
 
 }
+
+#endif // EASY3D_HAS_VULKAN
 
 #endif // EASY3D_RENDERER_SOFT_SHADOW_H

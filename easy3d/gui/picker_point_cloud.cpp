@@ -26,6 +26,10 @@
 
 
 #include <easy3d/gui/picker_point_cloud.h>
+
+#ifdef EASY3D_HAS_VULKAN
+// No Vulkan counterpart yet.
+#else
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/renderer.h>
@@ -367,3 +371,5 @@ namespace easy3d {
     }
 
 }
+
+#endif // EASY3D_HAS_VULKAN

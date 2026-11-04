@@ -27,6 +27,10 @@
 #ifndef EASY3D_GUI_PICKER_POINT_CLOUD_H
 #define EASY3D_GUI_PICKER_POINT_CLOUD_H
 
+#ifdef EASY3D_HAS_VULKAN
+// No Vulkan counterpart yet.
+#else
+
 
 #include <easy3d/gui/picker.h>
 #include <easy3d/core/point_cloud.h>
@@ -108,5 +112,7 @@ namespace easy3d {
     };
 
 }
+
+#endif // EASY3D_HAS_VULKAN
 
 #endif // EASY3D_GUI_PICKER_POINT_CLOUD_H

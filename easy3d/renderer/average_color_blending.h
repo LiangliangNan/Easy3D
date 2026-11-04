@@ -27,6 +27,10 @@
 #ifndef EASY3D_RENDERER_AVERAGE_COLOR_BLENDING_H
 #define EASY3D_RENDERER_AVERAGE_COLOR_BLENDING_H
 
+#ifdef EASY3D_HAS_VULKAN
+// No Vulkan counterpart yet.
+#else
+
 #include <vector>
 #include <easy3d/renderer/transparency.h>
 
@@ -87,5 +91,7 @@ namespace easy3d {
     };
 
 }
+
+#endif // EASY3D_HAS_VULKAN
 
 #endif // EASY3D_RENDERER_AVERAGE_COLOR_BLENDING_H

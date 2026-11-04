@@ -9,21 +9,37 @@ if(Easy3D_ENABLE_VULKAN)
 endif()
 set(public_dependencies easy3d::util easy3d::core easy3d::fileio easy3d::algo)
 
+set(renderer_headers
+        ambient_occlusion.h
+        average_color_blending.h
+        dual_depth_peeling.h
+        eye_dome_lighting.h
+        shadow.h
+        soft_shadow.h
+        transparency.h
+)
+set(renderer_sources
+        ambient_occlusion.cpp
+        average_color_blending.cpp
+        dual_depth_peeling.cpp
+        eye_dome_lighting.cpp
+        shadow.cpp
+        soft_shadow.cpp
+)
+
 if(Easy3D_ENABLE_VULKAN)
-    set(renderer_headers obj_materials.h camera.h clipping_plane.h constraint.h drawable.h drawable_lines.h drawable_lines_2D.h
+    list(APPEND renderer_headers obj_materials.h camera.h clipping_plane.h constraint.h drawable.h drawable_lines.h drawable_lines_2D.h
             drawable_points.h drawable_triangles.h frame.h frustum.h key_frame_interpolator.h
             manipulator.h manipulated_camera_frame.h manipulated_frame.h shape.h buffer.h
             renderer.h state.h texture.h texture_manager.h transform.h transform_decompose.h)
-    set(renderer_sources obj_materials.cpp camera.cpp clipping_plane.cpp constraint.cpp drawable.cpp drawable_types.cpp drawable_lines_2D.cpp frame.cpp frustum.cpp
+    list(APPEND renderer_sources obj_materials.cpp camera.cpp clipping_plane.cpp constraint.cpp drawable.cpp drawable_types.cpp drawable_lines_2D.cpp frame.cpp frustum.cpp
             key_frame_interpolator.cpp manipulator.cpp manipulated_camera_frame.cpp manipulated_frame.cpp
             shape.cpp buffer.cpp renderer.cpp state.cpp texture.cpp texture_manager.cpp transform.cpp transform_decompose.cpp
             backends/cpu/opengl_unavailable.cpp ${backend_sources})
 else()
 
-set(${module}_headers
+list(APPEND ${module}_headers
         obj_materials.h
-        ambient_occlusion.h
-        average_color_blending.h
         camera.h
         clipping_plane.h
         constraint.h
@@ -32,8 +48,6 @@ set(${module}_headers
         drawable_lines_2D.h
         drawable_points.h
         drawable_triangles.h
-        dual_depth_peeling.h
-        eye_dome_lighting.h
         frame.h
         framebuffer_object.h
         frustum.h
@@ -51,23 +65,18 @@ set(${module}_headers
         renderer.h
         shader_manager.h
         shader_program.h
-        shadow.h
-        soft_shadow.h
         state.h
         texture.h
         texture_manager.h
         text_renderer.h
         transform.h
         transform_decompose.h
-        transparency.h
         vertex_array_object.h
         )
 
-set(${module}_sources
+list(APPEND ${module}_sources
         ${backend_sources}
         obj_materials.cpp
-        ambient_occlusion.cpp
-        average_color_blending.cpp
         camera.cpp
         clipping_plane.cpp
         backends/opengl/clipping_plane.cpp
@@ -81,8 +90,6 @@ set(${module}_sources
         backends/opengl/drawable_lines_2D.cpp
         drawable_points.cpp
         drawable_triangles.cpp
-        dual_depth_peeling.cpp
-        eye_dome_lighting.cpp
         frame.cpp
         framebuffer_object.cpp
         frustum.cpp
@@ -100,8 +107,6 @@ set(${module}_sources
         renderer.cpp
         shader_manager.cpp
         shader_program.cpp
-        shadow.cpp
-        soft_shadow.cpp
         state.cpp
         texture.cpp
         backends/opengl/texture.cpp

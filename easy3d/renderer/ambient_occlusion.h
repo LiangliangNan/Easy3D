@@ -27,6 +27,10 @@
 #ifndef EASY_RENDERER_AMBIENT_OCCLUSION_H
 #define EASY_RENDERER_AMBIENT_OCCLUSION_H
 
+#ifdef EASY3D_HAS_VULKAN
+// No Vulkan counterpart yet.
+#else
+
 #include <vector>
 #include <memory>
 
@@ -140,5 +144,7 @@ namespace easy3d {
 
 } // namespace easy3d
 
+
+#endif // EASY3D_HAS_VULKAN
 
 #endif	//  EASY_RENDERER_AMBIENT_OCCLUSION_H

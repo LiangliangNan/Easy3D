@@ -27,6 +27,10 @@
 #ifndef EASY3D_GUI_PICKER_H
 #define EASY3D_GUI_PICKER_H
 
+#ifdef EASY3D_HAS_VULKAN
+// No Vulkan counterpart yet.
+#else
+
 #include <easy3d/core/types.h>
 #include <easy3d/renderer/camera.h>
 
@@ -145,5 +149,7 @@ namespace easy3d {
     };
 
 }
+
+#endif // EASY3D_HAS_VULKAN
 
 #endif  // EASY3D_GUI_PICKER_H

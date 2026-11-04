@@ -15,7 +15,7 @@
     the classes; no new files except shaders, backend files and tests; minimal CMake changes; client code unchanged.
   - [x] U1 One `Viewer` class (viewer.h/.cpp), ViewerBase retained; Vulkan scene ownership folded in; counterpart host files/aliases removed
   - [x] U2 OffScreen/MultiViewer unified; snapshot.cpp restored; Tutorial 205 and FigureMaker enabled
-  - [ ] U3 Classes without counterpart: same-file #ifdef structure (effects, pickers, ImGui)
+  - [x] U3 Classes without counterpart: same-file #ifdef structure (effects, pickers, ImGui)
   - [ ] U4 Python bindings, installed package and CI use the final names
   - [ ] U5 Tutorials and applications identical to main; no backend conditionals
   - [ ] U6 Diff audit against main (files, CMake); remove temporary gates

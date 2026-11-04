@@ -2,6 +2,18 @@
 // Public interactive API only: no Vulkan SDK, GLFW or OpenGL headers/calls.
 #include <easy3d/viewer/viewer_base.h>
 #include <easy3d/viewer/viewer.h>
+// Legacy headers remain includable even when their classes have no Vulkan counterpart.
+#include <easy3d/renderer/ambient_occlusion.h>
+#include <easy3d/renderer/average_color_blending.h>
+#include <easy3d/renderer/dual_depth_peeling.h>
+#include <easy3d/renderer/eye_dome_lighting.h>
+#include <easy3d/renderer/shadow.h>
+#include <easy3d/renderer/soft_shadow.h>
+#include <easy3d/renderer/transparency.h>
+#include <easy3d/gui/picker.h>
+#include <easy3d/gui/picker_model.h>
+#include <easy3d/gui/picker_point_cloud.h>
+#include <easy3d/gui/picker_surface_mesh.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_triangles.h>

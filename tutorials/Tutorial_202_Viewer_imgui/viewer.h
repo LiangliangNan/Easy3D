@@ -27,6 +27,10 @@
 #ifndef EASY3D_TUTORIAL_VIEWER_IMGUI_H
 #define EASY3D_TUTORIAL_VIEWER_IMGUI_H
 
+#ifdef EASY3D_HAS_VULKAN
+// No Vulkan counterpart yet.
+#else
+
 
 #include <easy3d/viewer/viewer.h>
 
@@ -116,5 +120,7 @@ namespace easy3d {
 	};
 
 }
+
+#endif // EASY3D_HAS_VULKAN
 
 #endif	// EASY3D_TUTORIAL_VIEWER_IMGUI_H

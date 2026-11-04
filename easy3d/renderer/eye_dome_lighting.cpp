@@ -25,6 +25,10 @@
  ********************************************************************/
 
 #include <easy3d/renderer/eye_dome_lighting.h>
+
+#ifdef EASY3D_HAS_VULKAN
+// No Vulkan counterpart yet.
+#else
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/framebuffer_object.h>
@@ -344,3 +348,5 @@ namespace easy3d {
     }
 
 }
+
+#endif // EASY3D_HAS_VULKAN

@@ -161,7 +161,7 @@ needs no change.
 ## Final migration goal and backend policy
 
 **Plan revised 2026-11-04 around the migration principles above.** Step 1, the offscreen-facade removal and the
-deletion of portable backend introspection (`backend()`, `fallback_reason()`) are implemented; the Viewer/OffScreen unification (U1/U1b) is now implemented; U2 is implemented; U3–U6 remain. What is done and what remains is tracked in *Current status and work order* below.
+deletion of portable backend introspection (`backend()`, `fallback_reason()`) are implemented; the Viewer/OffScreen unification (U1/U1b) is now implemented; U2 and U3 are implemented; U4–U6 remain. What is done and what remains is tracked in *Current status and work order* below.
 
 The completed migration must support **all tutorials on Vulkan** and targets
 **all applications on Vulkan**, including Mapple, FigureMaker and toolkit-based
@@ -404,10 +404,13 @@ of this document.
   `snapshot.cpp`. Tutorial 205 and FigureMaker are enabled for both backends with
   their existing source unchanged. Shared-camera cells support viewport/scissor,
   MSAA, picking, input and scaled/transparent snapshots; see the U2 validation below.
-- **U3** (next) Classes without a counterpart (P3): apply the same-file `#ifdef` structure to
-  the renderer/gui classes that exist only for OpenGL (effects, pickers, ImGui). Source
-  lists stay as in `main` where possible (P5); dependency discovery stays conditional.
-- **U4** Python bindings, installed package and CI follow the final names.
+- **U3** (implemented) The legacy effects, GUI pickers and tutorial `ViewerImGui`
+  retain their original files with whole-class/source backend branches (P3). Vulkan
+  branches are empty where no counterpart exists. Effect sources and the `gui` target
+  are built/exported in both configurations; OpenGL dependencies and third-party
+  ImGui remain conditional. This is source/package structure, not effect/picker
+  feature parity; see the U3 classification below.
+- **U4** (next) Python bindings, installed package and CI follow the final names.
 - **U5** Tutorials and applications: restore `main`'s sources; remove every backend
   conditional; add to `Viewer` only the APIs they need.
 - **U6** Diff audit against `main`, file by file and for CMake; remove temporary gates
@@ -3838,3 +3841,59 @@ Validation on this Mac (Apple M4 Pro, MoltenVK), 2026-11-04:
 
 Linux/Xvfb was not tested in this step. U6 must refresh the historical main-branch
 divergence counts and move bounded tutorial test registration out of tutorial CMake.
+
+
+### 2026-11-04 — U3: classes without Vulkan counterparts
+
+The existing files now use P3's `#ifdef EASY3D_HAS_VULKAN` / `#else` layout.
+OpenGL implementation bodies are preserved; the Vulkan branch has no class or
+implementation where no counterpart exists. There are no substitute classes,
+aliases, backend-specific host filenames or new selection macros.
+
+| Existing classes/files | OpenGL | Vulkan |
+| --- | --- | --- |
+| `AmbientOcclusion`, `EyeDomeLighting` | Original implementations | No counterpart yet |
+| `Shadow`, `SoftShadow` | Original implementations | No counterpart yet |
+| `Transparency`, `AverageColorBlending`, `DualDepthPeeling` | Original implementations | No counterpart yet |
+| `Picker`, `ModelPicker`, `PointCloudPicker`, `SurfaceMeshPicker` | Original implementations | No counterpart yet |
+| Tutorial 202 `ViewerImGui` (`viewer.h/.cpp`) | Original implementation | No counterpart yet |
+
+Effect headers/sources are listed once for both configurations in renderer CMake.
+The original `gui` target and its picker files are built, installed and exported in
+both builds. In Vulkan it currently contains no picker symbols; finding the `gui`
+component does not imply picker capability. Its headers can be included without
+OpenGL headers/dependencies. Existing native viewer picking and GPU point-selection
+operations remain available in their current Vulkan branch, as decided on Nov 1;
+they are not exact counterparts of the camera-only legacy picker classes.
+
+Low-level OpenGL helpers and dependency discovery remain backend-specific. Bundled
+third-party ImGui remains unmodified and only builds with its existing OpenGL
+backend. Tutorial 202 and effect tutorials 501–505 therefore remain gated in Vulkan;
+implementing their rendering behavior belongs to W10. Their absence is explicit,
+rather than represented by no-op APIs.
+
+The installed public-header consumer now requests/links `easy3d::gui` and includes
+all effect and picker headers in both configurations. This checks header installation,
+component export and dependency isolation with Vulkan discovery disabled in the
+consumer build. The Vulkan Tutorial 202 source also passes a standalone syntax check
+without ImGui/OpenGL include paths. No new source files were introduced.
+
+Next is U4: audit Python binding sources and package/CI consumers against the final
+class names, signatures and backend availability. Keep unavailable features explicit
+and retain the original binding files; do not add placeholders to expose missing APIs.
+
+Validation on this Mac (Apple M4 Pro, MoltenVK), 2026-11-04:
+
+- Complete Vulkan and OpenGL builds passed, including original OpenGL ImGui/effect tutorials.
+- Vulkan CTest: **71/71 passed**; OpenGL CTest: **10/10 passed**.
+- Both installed packages' Viewer/MultiViewer and OffScreen consumers built and ran;
+  the additional Vulkan consumer also passed. Consumers request `gui` and disable
+  Vulkan package discovery.
+- Vulkan GUI has no picker symbols; renderer/GUI dynamic dependencies contain no
+  OpenGL/GLEW dependency. OpenGL GUI retains its original picker symbols.
+- OpenGL contents in all 23 guarded headers/sources match their pre-U3 contents
+  after removing the added backend guards (ignoring trailing newlines).
+- Standalone Vulkan syntax check of Tutorial 202's guarded viewer source passed.
+
+No Linux/Xvfb or full Python-extension validation was performed in U3. The existing
+MoltenVK integer-attachment blending diagnostic remains outside this structural step.

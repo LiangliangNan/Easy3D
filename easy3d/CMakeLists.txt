@@ -40,11 +40,9 @@ add_subdirectory(renderer)
 list(APPEND CONF_Easy3D_COMPONENTS renderer)
 list(APPEND EXPORT_TARGET_SET easy3d_renderer)
 
-if(NOT Easy3D_ENABLE_VULKAN)
 add_subdirectory(gui)
 list(APPEND CONF_Easy3D_COMPONENTS gui)
 list(APPEND EXPORT_TARGET_SET easy3d_gui)
-endif()
 
 add_subdirectory(viewer)
 list(APPEND CONF_Easy3D_COMPONENTS viewer)

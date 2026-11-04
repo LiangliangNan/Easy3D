@@ -26,6 +26,10 @@
 
 
 #include <easy3d/gui/picker_surface_mesh.h>
+
+#ifdef EASY3D_HAS_VULKAN
+// No Vulkan counterpart yet.
+#else
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/shader_manager.h>
@@ -476,3 +480,5 @@ namespace easy3d {
 
 
 }
+
+#endif // EASY3D_HAS_VULKAN

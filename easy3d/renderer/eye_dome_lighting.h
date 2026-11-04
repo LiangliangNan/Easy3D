@@ -27,6 +27,10 @@
 #ifndef EASY3D_RENDERER_EYE_DOME_LIGHTING_H
 #define EASY3D_RENDERER_EYE_DOME_LIGHTING_H
 
+#ifdef EASY3D_HAS_VULKAN
+// No Vulkan counterpart yet.
+#else
+
 
 namespace easy3d {
 
@@ -143,5 +147,7 @@ namespace easy3d {
     };
 
 }
+
+#endif // EASY3D_HAS_VULKAN
 
 #endif	// EASY3D_RENDERER_EYE_DOME_LIGHTING_H
