@@ -2,7 +2,7 @@
 layout(set=0,binding=0) uniform sampler2D image_texture;
 layout(set=1,binding=0,std140) uniform Impostor {
     mat4 model_view; mat4 projection; mat4 inverse_projection;
-    vec4 dimensions; vec4 light; vec4 clip_planes[2]; vec4 clip_info;
+    vec4 dimensions; vec4 viewport_origin; vec4 light; vec4 clip_planes[2]; vec4 clip_info;
 } shape;
 layout(location=0) flat in vec3 base;
 layout(location=1) flat in vec3 end;
@@ -29,7 +29,7 @@ void main() {
     float length_axis = length(segment);
     if (length_axis <= 0) discard;
     vec3 axis = segment/length_axis;
-    vec2 ndc = gl_FragCoord.xy/shape.dimensions.xy*2-1; ndc.y=-ndc.y;
+    vec2 ndc = (gl_FragCoord.xy-shape.viewport_origin.xy)/shape.dimensions.xy*2-1; ndc.y=-ndc.y;
     vec4 near_point = shape.inverse_projection*vec4(ndc,-1,1);
     vec4 far_point = shape.inverse_projection*vec4(ndc,1,1);
     vec3 origin = near_point.xyz/near_point.w;

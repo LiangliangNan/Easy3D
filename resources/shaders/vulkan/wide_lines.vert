@@ -15,7 +15,7 @@ layout(push_constant) uniform Draw {
 } draw;
 layout(set=1,binding=0,std140) uniform Impostor {
     mat4 model_view; mat4 projection; mat4 inverse_projection;
-    vec4 dimensions; // framebuffer width, height, pixel width, view-space radius
+    vec4 dimensions; vec4 viewport_origin; // viewport width, height, pixel width, view-space radius
     vec4 light; // shared uniform layout; unused by ribbons
     vec4 clip_planes[2]; vec4 clip_info;
 } shape;

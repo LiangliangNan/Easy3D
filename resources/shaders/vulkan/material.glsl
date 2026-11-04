@@ -1,7 +1,7 @@
 // Shared per-draw layout, packed explicitly by the Vulkan backend.
 layout(set=1,binding=0,std140) uniform MaterialState {
     mat4 model_view; mat4 projection; mat4 inverse_projection;
-    vec4 dimensions; vec4 light; vec4 clip_planes[2]; vec4 clip_info;
+    vec4 dimensions; vec4 viewport_origin; vec4 light; vec4 clip_planes[2]; vec4 clip_info;
     mat4 model; vec4 eye; vec4 material_light;
     vec4 ambient; vec4 specular; vec4 backside; vec4 shading;
 } material;

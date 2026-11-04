@@ -24,7 +24,7 @@ void main() {
                 dot(world_normal_out,material.eye.xyz-world_position)<0);
         out_color.rgb=mix(out_color.rgb,selection_tint.rgb,selection_tint.a);return;
     }
-    vec2 ndc = gl_FragCoord.xy / material.dimensions.xy * 2 - 1;
+    vec2 ndc = (gl_FragCoord.xy - material.viewport_origin.xy) / material.dimensions.xy * 2 - 1;
     ndc.y = -ndc.y;
     vec4 a = material.inverse_projection * vec4(ndc,-1,1);
     vec4 b = material.inverse_projection * vec4(ndc,1,1);

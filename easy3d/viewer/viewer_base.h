@@ -68,8 +68,8 @@ public:
     virtual void fit_screen(const Model* model = nullptr) = 0;
     // Continuous logical window coordinates, top-left origin; depth uses [0,1].
     // Conversion does not clip to the frustum; finite outside coordinates work.
-    vec3 project_point(const vec3& world) const;
-    vec3 unproject_point(const vec3& window) const;
+    virtual vec3 project_point(const vec3& world) const;
+    virtual vec3 unproject_point(const vec3& window) const;
     // Synchronous visible-surface query, independent of window MSAA. Integer
     // logical coordinates map to their containing framebuffer pixel; returns
     // that pixel center's world position. Background/outside => found=false.

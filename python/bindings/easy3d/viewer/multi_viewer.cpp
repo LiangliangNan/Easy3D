@@ -3,7 +3,6 @@
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/drawable.h>
 #include <easy3d/viewer/viewer.h>
-#include <easy3d/viewer/viewer.h>
 
 #include <memory>
 #include <vector>
@@ -76,19 +75,12 @@ struct PyCallBack_easy3d_MultiViewer : public easy3d::MultiViewer {
 		}
 		return MultiViewer::post_resize(a0, a1);
 	}
-	void draw() const override {
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::MultiViewer *>(this), "draw");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<void>::value) {
-				static pybind11::detail::override_caster_t<void> caster;
-				return pybind11::detail::cast_ref<void>(std::move(o), caster);
-			}
-			return pybind11::detail::cast_safe<void>(std::move(o));
-		}
-		return MultiViewer::draw();
-	}
+    bool draw() override {
+        PYBIND11_OVERRIDE(bool,easy3d::MultiViewer,draw);
+    }
+    bool snapshot(const std::string& file,float scale,int samples,int bg,bool expand) const override {
+        PYBIND11_OVERRIDE(bool,easy3d::MultiViewer,snapshot,file,scale,samples,bg,expand);
+    }
 	bool mouse_press_event(int a0, int a1, int a2, int a3) override {
 		pybind11::gil_scoped_acquire gil;
 		pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::MultiViewer *>(this), "mouse_press_event");
@@ -284,6 +276,7 @@ struct PyCallBack_easy3d_MultiViewer : public easy3d::MultiViewer {
 		}
 		return Viewer::focus_event(a0);
 	}
+#ifndef EASY3D_HAS_VULKAN
 	bool callback_event_cursor_pos(double a0, double a1) override {
 		pybind11::gil_scoped_acquire gil;
 		pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::MultiViewer *>(this), "callback_event_cursor_pos");
@@ -362,6 +355,7 @@ struct PyCallBack_easy3d_MultiViewer : public easy3d::MultiViewer {
 		}
 		return Viewer::callback_event_resize(a0, a1);
 	}
+#endif
 };
 
 void bind_easy3d_viewer_multi_viewer(pybind11::module_& m)
@@ -395,6 +389,10 @@ void bind_easy3d_viewer_multi_viewer(pybind11::module_& m)
         cl.def("camera", (class easy3d::Camera* (easy3d::MultiViewer::*)()) &easy3d::MultiViewer::camera, "Returns the camera used by the viewer", pybind11::return_value_policy::reference_internal);
         cl.def("camera", (const class easy3d::Camera* (easy3d::MultiViewer::*)() const) &easy3d::MultiViewer::camera, "Returns the camera used by the viewer", pybind11::return_value_policy::reference_internal);
         cl.def("snapshot", (bool (easy3d::MultiViewer::*)() const) &easy3d::MultiViewer::snapshot, "Take a snapshot of the screen and save it to a file.\n \n\n This method takes a snapshot of the screen and saves the snapshot into an image file.\n          Internally, it will pop up a file dialog for specifying the file name.\n \n\n true on success and false otherwise.\n\nC++: easy3d::MultiViewer::snapshot() const --> bool");
+        cl.def("snapshot",static_cast<bool (easy3d::MultiViewer::*)(const std::string&,float,int,int,bool) const>(&easy3d::MultiViewer::snapshot),
+               pybind11::arg("file_name"),pybind11::arg("scaling")=1.f,pybind11::arg("samples")=4,
+               pybind11::arg("back_ground")=1,pybind11::arg("expand")=true);
+
 	}
 
 }

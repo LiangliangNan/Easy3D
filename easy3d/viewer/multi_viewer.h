@@ -29,7 +29,6 @@
 
 #include <easy3d/viewer/viewer.h>
 
-#ifndef EASY3D_HAS_VULKAN   // the Vulkan counterpart is not folded in yet (work item U1)
 #include <memory>
 
 
@@ -44,6 +43,7 @@ namespace easy3d {
      */
     class MultiViewer : public Viewer {
     public:
+        // ... some public functions: the unified APIs used by both backends
         /**
          * \brief Constructor.
          * \param rows The number of rows (of the grid-like layout).
@@ -53,7 +53,11 @@ namespace easy3d {
         MultiViewer(unsigned int rows, unsigned int cols, const std::string &title = "untitled",
                           unsigned int width = 800, unsigned int height = 600, unsigned int samples = 1,
                           bool full_screen = false, bool visible = true, bool resizable = true,
-                          const OpenGLOptions &gl_options = OpenGLOptions());
+#ifdef EASY3D_HAS_VULKAN
+                          const VulkanOptions& options = {});
+#else
+                          const OpenGLOptions& options = OpenGLOptions());
+#endif
         /**
          * \brief Destructor.
          */
@@ -138,27 +142,54 @@ namespace easy3d {
          * \return \c true on success and \c false otherwise.
          */
         bool snapshot() const override;
+        bool snapshot(const std::string& filename, float scaling = 1, int samples = 4,
+                      int background = 1, bool expand = true) const override;
+        // Projects into the last pressed cell (initially the top-left cell).
+        // Unprojection resolves the cell from the canvas coordinate.
+        vec3 project_point(const vec3& world) const override;
+        vec3 unproject_point(const vec3& window) const override;
+        bool delete_model(Model* model) override;
+        bool delete_drawable(Drawable* drawable) override;
+        void clear_scene() override;
+#ifdef EASY3D_HAS_VULKAN
+        vec3 unproject_pixel(int x, int y, float depth) const override;
+#endif
 
     protected:
         void init() override;
         void post_resize(int w, int h) override;
+#ifndef EASY3D_HAS_VULKAN
         bool draw() override;
+#endif
 
+        bool mouse_press_event(int x, int y, int button, int modifiers) override;
+#ifdef EASY3D_HAS_VULKAN
+        // Keep this part of code minimum
+        std::vector<graphics::DrawCommand> draw_commands(const Camera& camera, int width, int height,
+                                                       std::vector<DrawSource>* sources, bool include_hidden_models = false) const override;
+        mutable std::vector<graphics::DrawCommand> division_commands_;
+        mutable int division_width_ = 0, division_height_ = 0;
+#else
+        // Keep this part of code minimum
+        void draw_scene_depth(const Camera& camera) const override;
         // overloaded, so mouse positions are relative to the current view
         bool mouse_release_event(int x, int y, int button, int modifiers) override;
         // overloaded, so mouse positions are relative to the current view
         bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;
 
+#endif
         void update_division();
 
     protected:
+        int active_row_ = 0, active_col_ = 0;
+        mutable bool snapshot_active_ = false;
         int num_rows_;
         int num_cols_;
         // A sub-view of the multi-view viewer.
         struct View {
             std::vector<const Model *> models;        // the models to show in this view
             std::vector<const Drawable *> drawables;  // the drawables to show in this view
-            ivec4 viewport;
+            ivec4 viewport; // Vulkan: top-left pixels; OpenGL: bottom-left pixels.
         };
         std::vector<std::vector<View> > views_;
 
@@ -169,6 +200,4 @@ namespace easy3d {
     };
 
 }
-#endif
-
 #endif	// EASY3D_VIEWER_MULTI_VIEWER_H

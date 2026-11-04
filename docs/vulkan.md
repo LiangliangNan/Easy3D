@@ -5,8 +5,7 @@ A build contains **exactly one backend**, chosen at configure time with
 `Easy3D_ENABLE_VULKAN` (default `ON` on this branch; `OFF` builds the original
 OpenGL backend). The Vulkan backend does not yet cover everything the OpenGL one
 does: Mapple, legacy GUI picking/effects and Python rendering still need Vulkan
-counterparts, and FigureMaker and Tutorial 205 (multi-view) are disabled in CMake
-until the Vulkan implementation of `MultiViewer` exists. See *Current status and work order* below.
+counterparts. MultiViewer, FigureMaker and Tutorial 205 now build with either backend. See *Current status and work order* below.
 
 ## Migration principles (highest priority)
 
@@ -144,7 +143,7 @@ needs no change.
   `VulkanViewerOptions` and the convenience overload that took it are removed.
 - **D5 `MultiViewer` and `OffScreen`** get the same options-struct treatment. Implemented as
   `MultiViewer(rows, cols, title, width, height, samples, full_screen, visible, resizable,
-  options)` (OpenGL; the Vulkan class does not exist yet) and `OffScreen(width, height,
+  options)` (both backends) and `OffScreen(width, height,
   options)`, with `width` and `height` unsigned. `OffScreen` omits `samples`, `full_screen`,
   `visible` and `resizable` because they have no meaning for a window-less renderer, and
   `render()` takes its own sample count.
@@ -162,7 +161,7 @@ needs no change.
 ## Final migration goal and backend policy
 
 **Plan revised 2026-11-04 around the migration principles above.** Step 1, the offscreen-facade removal and the
-deletion of portable backend introspection (`backend()`, `fallback_reason()`) are implemented; the Viewer/OffScreen unification (U1/U1b) is now implemented; U2–U6 remain. What is done and what remains is tracked in *Current status and work order* below.
+deletion of portable backend introspection (`backend()`, `fallback_reason()`) are implemented; the Viewer/OffScreen unification (U1/U1b) is now implemented; U2 is implemented; U3–U6 remain. What is done and what remains is tracked in *Current status and work order* below.
 
 The completed migration must support **all tutorials on Vulkan** and targets
 **all applications on Vulkan**, including Mapple, FigureMaker and toolkit-based
@@ -220,7 +219,7 @@ EASY3D_HAS_VULKAN`. Host implementations stay inline in their class source files
 Both backends stay in the source tree, but only the configured one is built and exposed
 by a given package. This replaces the earlier `OpenGLViewer`/`VulkanViewer` pairs, their
 root-level `opengl_*`/`vulkan_*` files and the `viewer.h` alias selector. The counterpart host files and class aliases are now removed (U1a/U1b).
-The Vulkan implementation is inline in `viewer.cpp` and `offscreen.cpp`.
+The Vulkan implementation is inline in `viewer.cpp`, `multi_viewer.cpp` and `offscreen.cpp`.
 
 Ordinary tutorial subclasses keep the original form, with no conditionals:
 
@@ -314,7 +313,7 @@ Decisions in force:
 | 5. Tutorials on the shared API | in progress: all tutorials except 202 and 501–505 build in the Vulkan tree; those six are gated in `tutorials/CMakeLists.txt`; `EASY3D_TUTORIAL_USES_VULKAN` remains in `viewer.h` and 13 tutorials (206, 207, 306, 307, 309, 401–406, 506, 603) |
 | 6. Renderer, interaction, GUI/application parity | pending (W10) |
 
-Divergence from `main` (the number to drive down; see U6). Measured after U1a: in
+Divergence from `main` (the number to drive down; see U6). Historical measurement after U1a (refresh in U6; U2 has since restored `snapshot.cpp`): in
 `easy3d/`, 1 file exists only in `main` (`viewer/snapshot.cpp`; this branch keeps that code
 inside `viewer.cpp`) and 19 only in this branch (was 26 before U1a); 69 tutorial files
 differ (24 `main.cpp`, 19 `viewer.cpp`, 18 `viewer.h`, 8 CMake files; an earlier figure of 58
@@ -400,12 +399,12 @@ of this document.
   capture code of `VulkanOffScreen` (D2). Align subclass hooks and protected state with
   `main` (the former steps 2 and W7). Delete `opengl_viewer.*`, `vulkan_viewer.*` and the
   `viewer.h` aliases; settle D3.
-- **U2** (next) `OffScreen` unification and protected inheritance are implemented.
-  Finish `MultiViewer` in `multi_viewer.*`, restore `snapshot.cpp`, and implement
-  the Vulkan side of `MultiViewer`
-  (the former step 3). Re-enable Tutorial 205 and FigureMaker, now disabled for both
-  backends.
-- **U3** Classes without a counterpart (P3): apply the same-file `#ifdef` structure to
+- **U2** (implemented) `OffScreen` retains protected inheritance; `MultiViewer` now
+  implements both backends in `multi_viewer.*`. File snapshots are restored to
+  `snapshot.cpp`. Tutorial 205 and FigureMaker are enabled for both backends with
+  their existing source unchanged. Shared-camera cells support viewport/scissor,
+  MSAA, picking, input and scaled/transparent snapshots; see the U2 validation below.
+- **U3** (next) Classes without a counterpart (P3): apply the same-file `#ifdef` structure to
   the renderer/gui classes that exist only for OpenGL (effects, pickers, ImGui). Source
   lists stay as in `main` where possible (P5); dependency discovery stays conditional.
 - **U4** Python bindings, installed package and CI follow the final names.
@@ -3782,3 +3781,60 @@ native mouse-hook coordinate conventions are preserved; ViewerBase's portable
 queries use logical coordinates. Their remaining semantic alignment, effect/picker
 parity and removal of tutorial backend branches remain U5/W10 work. The next
 implementation step is U2's Vulkan MultiViewer and restoration of snapshot.cpp.
+
+
+### 2026-11-04 — U2: shared MultiViewer and snapshot source layout
+
+`MultiViewer` now implements both backends in `multi_viewer.h/.cpp`, retaining
+`public Viewer` inheritance, the original assignment API and one shared camera.
+Tutorial 205 and FigureMaker are enabled in both configurations; their application
+sources are unchanged. File snapshot implementations are restored to `snapshot.cpp`.
+No runtime backend selector or new backend option was introduced.
+
+Vulkan draw commands carry a framebuffer viewport/scissor. Every cell uses its own
+projection and picking source mapping while sharing cached geometry, including the
+GPU point resource. Analytic sphere/surfel and cylinder/cone reconstruction subtracts
+the viewport origin and uses cell dimensions, preserving impostor depth under MSAA.
+Integer cell boundaries cover odd and HiDPI extents without gaps. Target dimensions
+remain separate from camera cell dimensions. Camera interaction uses the pressed
+cell's origin; projection uses that active cell, and unprojection resolves its cell
+from canvas coordinates. Custom projection and view matrices are retained.
+
+Snapshots compose the assigned scenes and dividers, without global viewer HUD,
+at scaled resolution with expand/crop and transparent output. Camera matrices and
+OpenGL context/framebuffer/viewport state are restored. OpenGL snapshots use a
+composed FBO and therefore remain subject to device framebuffer size limits rather
+than providing unlimited tiled output. Transparent MSAA edge colors are converted
+to straight alpha. Deleting models/drawables removes borrowed cell assignments.
+
+The shared `multi_viewer_test.cpp` exercises odd-sized grids, model/drawable
+assignment, visibility, resizing, coordinate conversion, custom matrices, depth,
+input, scaled/transparent snapshots, ownership and FigureMaker's original virtual
+file-add/delete flow. Vulkan checks also cover 1x/4x samples, picking IDs, viewport
+scissoring, divider exclusion from depth/picking and one point upload across cells.
+The original Tutorial 205 is included in the bounded tutorial smoke tests.
+
+Python's MultiViewer trampoline now matches the shared draw/snapshot signatures;
+syntax checks pass in both configurations. This is not a complete Python extension
+build; full Python rendering remains U4/W10. Installed-package consumers now also
+exercise MultiViewer through the public header without Vulkan SDK includes.
+
+Next: U3, classify existing renderer/GUI effects and pickers under P3 and retain
+same-file backend branches. Do not add placeholder public APIs solely to make a
+counterpart appear to exist. U4–U6 and W10 remain open.
+
+Validation on this Mac (Apple M4 Pro, MoltenVK), 2026-11-04:
+
+- Full Vulkan build and final CTest run: **71/71 passed** (58 desktop tests).
+- Full OpenGL build and final CTest run: **10/10 passed**.
+- Both installed packages build and run the public Viewer/MultiViewer and OffScreen
+  consumers with Vulkan package discovery disabled in the consumer configuration;
+  the Vulkan package's additional native consumer also passes.
+- Python MultiViewer binding syntax checks pass for both backend definitions.
+- An earlier full Vulkan run passed 69/71: manipulation input and sphere-window
+  presentation failed once; both passed isolated retries and the final full run.
+  The pre-existing MoltenVK integer-attachment blending diagnostic still appears;
+  this step does not claim a warning-free validation log or resolve that diagnostic.
+
+Linux/Xvfb was not tested in this step. U6 must refresh the historical main-branch
+divergence counts and move bounded tutorial test registration out of tutorial CMake.

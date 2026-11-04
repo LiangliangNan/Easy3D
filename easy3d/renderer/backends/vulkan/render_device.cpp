@@ -729,9 +729,9 @@ struct GpuTexture {
     ~GpuTexture() { if (set) c.vkFreeDescriptorSets(c.device, pool, 1, &set); }
 };
 // Explicit packing: do not rely on public vec3/mat4 alignment for GPU layouts.
-struct ImpostorUniform { float model_view[16], projection[16], inverse_projection[16], dimensions[4], light[4], clip_planes[8], clip_info[4];
+struct ImpostorUniform { float model_view[16], projection[16], inverse_projection[16], dimensions[4], viewport_origin[4], light[4], clip_planes[8], clip_info[4];
     float model[16], eye[4], material_light[4], ambient[4], specular[4], backside[4], shading[4]; };
-static_assert(sizeof(ImpostorUniform) == 432, "impostor uniform layout changed");
+static_assert(sizeof(ImpostorUniform) == 448, "impostor uniform layout changed");
 struct Push { float mvp[16], color[4]; uint32_t object, lighting; float normal[9]; };
 static_assert(sizeof(Push) == 124, "shader push-constant layout changed");
 
@@ -1329,6 +1329,10 @@ public:
         for (unsigned i = 0; i < 4; ++i)
             if (!std::isfinite(background[i])) throw std::invalid_argument("non-finite background color");
         for (const auto& command : commands) {
+            const auto& vp = command.viewport;
+            if (vp != ivec4(0) && (vp.x < 0 || vp.y < 0 || vp.z <= 0 || vp.w <= 0 ||
+                uint64_t(vp.x) + uint64_t(vp.z) > width || uint64_t(vp.y) + uint64_t(vp.w) > height))
+                throw std::invalid_argument("draw viewport is outside the render target");
             if (!command.geometry || (!command.overlay && command.object_id == UINT32_MAX))
                 throw std::invalid_argument("scene draw requires geometry and a non-background object ID");
             if (command.overlay_depth_test && !command.overlay)
@@ -1475,7 +1479,9 @@ public:
                             !std::isfinite(u.inverse_projection[col*4+row]))
                             throw std::invalid_argument("invalid impostor transform/projection");
                     }
-                u.dimensions[0] = float(width); u.dimensions[1] = float(height);
+                u.dimensions[0] = float(command.viewport.z ? command.viewport.z : width);
+                u.dimensions[1] = float(command.viewport.w ? command.viewport.w : height);
+                u.viewport_origin[0] = float(command.viewport.x); u.viewport_origin[1] = float(command.viewport.y);
                 u.dimensions[2] = expanded_lines(command) ? command.line_width : command.point_size;
                 u.dimensions[3] = expanded_lines(command) ? command.line_radius : command.sphere_radius;
                 for (unsigned i = 0; i < 3; ++i) {
@@ -1554,9 +1560,16 @@ public:
         VkViewport viewport = {0, 0, float(width), float(height), 0, 1};
         VkRect2D scissor = {{0, 0}, {width, height}};
         c_.vkCmdSetViewport(cmd, 0, 1, &viewport); c_.vkCmdSetScissor(cmd, 0, 1, &scissor);
+        const auto set_view = [&](const DrawCommand& d) {
+            const auto& r = d.viewport;
+            VkViewport v{float(r.x), float(r.y), float(r.z ? r.z : width), float(r.w ? r.w : height), 0, 1};
+            VkRect2D s{{r.x,r.y},{uint32_t(r.z ? r.z : width),uint32_t(r.w ? r.w : height)}};
+            c_.vkCmdSetViewport(cmd,0,1,&v); c_.vkCmdSetScissor(cmd,0,1,&s);
+        };
         for (const auto& draw : draws) {
             const auto& d = draw.command;
             if (d.overlay) continue;
+            set_view(d);
             unsigned pipeline = d.geometry->topology() == Topology::triangles ? 0 :
                                 d.geometry->topology() == Topology::lines ? 1 : 2;
             const bool expanded = expanded_impostor(d);
@@ -1590,6 +1603,7 @@ public:
                     const unsigned draw_phase = d.overlay_depth_test ? 0 :
                         d.overlay_independent_depth ? 1 : phases-1;
                     if (draw_phase != phase) continue;
+                    set_view(d);
                     const auto pipeline=d.scene_depth_texture ? pass.depth_texture_pipeline : phase==0 ? pass.depth_overlay_pipeline :
                         phase==phases-1 ? pass.overlay_pipeline : pass.hud_3d_pipeline;
                     c_.vkCmdBindPipeline(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,pipeline);

@@ -413,7 +413,7 @@ public:
          * \param expand Expand the frustum to ensure the image aspect ratio.
          * \return true on success and false otherwise.
          */
-        bool snapshot(const std::string& file_name, float scaling = 1.0f, int samples = 4, int back_ground = 1, bool expand = true) const;
+        virtual bool snapshot(const std::string& file_name, float scaling = 1.0f, int samples = 4, int back_ground = 1, bool expand = true) const;
 
         /**
          * \brief Query the XYZ coordinates of the surface point under the cursor.
@@ -536,7 +536,7 @@ public:
     std::shared_ptr<const graphics::PointData> point_resource(Drawable* drawable) const;
     // Reconstruct a top-left framebuffer pixel center from [0,1] readback depth.
     // Unlike Camera's legacy coordinate helper, this uses continuous framebuffer coordinates.
-    vec3 unproject_pixel(int x, int y, float depth) const;
+    virtual vec3 unproject_pixel(int x, int y, float depth) const;
     // Synchronous visible-surface scan: one world point per non-background
     // framebuffer pixel, in top-to-bottom row order, at exact pixel centers.
     // Uses one camera snapshot and inverse MVP; overlays never produce points.
@@ -650,6 +650,7 @@ protected:
     std::vector< std::shared_ptr<Model> > models_;
     int model_idx_;
     std::vector< std::shared_ptr<Drawable> > drawables_;
+    bool initialized_ = false;
     int pressed_button_ = -1;
     int mouse_current_x_ = 0, mouse_current_y_ = 0;
     int mouse_pressed_x_ = 0, mouse_pressed_y_ = 0;
@@ -663,8 +664,8 @@ private:
     std::shared_ptr<Window> window_host_;
     struct Impl;
     std::unique_ptr<Impl> impl_;
+    int render_width_ = 0, render_height_ = 0;
     bool animation_enabled_ = false;
-    bool initialized_ = false;
     std::unique_ptr<vulkan::KeyFrameInterpolatorRenderer> camera_path_renderer_;
     std::chrono::steady_clock::time_point next_camera_path_frame_;
     void advance_camera_path();
@@ -695,6 +696,10 @@ private:
     void print_usage();
     Viewer(std::shared_ptr<Window> window, const graphics::DeviceOptions& options);
 protected:
+    struct DrawSource { std::shared_ptr<Model> model; std::shared_ptr<Drawable> drawable; };
+    virtual std::vector<graphics::DrawCommand> draw_commands(const Camera& camera, int width, int height,
+                                                           std::vector<DrawSource>* sources = nullptr, bool include_hidden_models = false) const;
+    ivec2 interaction_origin_ = ivec2(0);
     // Device-only construction for OffScreen: creates neither a GLFW window nor a surface.
     Viewer(unsigned int width, unsigned int height, const VulkanOptions& options);
     void resize_render_target(int width, int height);
@@ -702,6 +707,7 @@ protected:
     void set_viewer_3d_overlays(std::vector<graphics::DrawCommand> commands) const;
     void set_viewer_annotations(std::vector<graphics::DrawCommand> commands) const;
     void release_device();
+    bool snapshot_hud_ = true; // MultiViewer file output matches the original scene-only grid snapshot.
     bool show_corner_axes_ = true;
     std::string framerate_ = "fps: -- (-- ms/frame)";
 
@@ -709,6 +715,7 @@ protected:
     // Keep this part of code minimum
 
 	protected:
+        virtual void draw_scene_depth(const Camera& snapshot) const;
         GLFWwindow *create_window(const std::string &title,
                                   int samples,
                                   int gl_major,   // must >= 3
@@ -736,7 +743,7 @@ protected:
 
     private:
         std::shared_ptr<detail::GlfwRuntime> runtime_;
-        bool initialized_ = false, usage_printed_ = false;
+        bool usage_printed_ = false;
         double frame_rate_start_ = 0;
         unsigned frame_rate_frames_ = 0;
         std::exception_ptr callback_error_;

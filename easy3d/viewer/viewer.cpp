@@ -85,45 +85,56 @@ struct Viewer::Impl {
         return shared_clipping_planes;
     }
 
-    struct PickSource { std::shared_ptr<Model> model; std::shared_ptr<Drawable> drawable; };
-    std::vector<graphics::DrawCommand> commands(const Camera& cam, std::vector<PickSource>* sources = nullptr) const {
-        drawable_renderer.prune();
+    std::vector<graphics::DrawCommand> commands(const Camera& cam, int width, int height,
+                                                std::vector<DrawSource>* sources = nullptr, bool include_hud = true) const {
+        auto commands = owner.draw_commands(cam,width,height,sources);
+        commands.insert(commands.end(),viewer_annotations.begin(),viewer_annotations.end());
+        commands.insert(commands.end(),overlays.begin(),overlays.end());
+        if (include_hud) {
+            commands.insert(commands.end(),viewer_3d_overlays.begin(),viewer_3d_overlays.end());
+            commands.insert(commands.end(),viewer_overlays.begin(),viewer_overlays.end());
+        }
+        return commands;
+    }
+    graphics::FrameImage capture(const Camera& cam, const vec4& bg, unsigned samples = 1,
+                                 int width = 0, int height = 0, bool include_hud = true) const {
+        if (!width) width = cam.screenWidth(); if (!height) height = cam.screenHeight();
+        return device->render(uint32_t(width), uint32_t(height), commands(cam,width,height,nullptr,include_hud), bg, samples);
+    }
+};
+std::vector<graphics::DrawCommand> Viewer::draw_commands(const Camera& cam, int, int,
+                                                       std::vector<DrawSource>* sources, bool include_hidden_models) const {
+        impl_->drawable_renderer.prune();
         std::vector<graphics::DrawCommand> commands;
-        const auto& planes = active_clipping_planes();
+        const auto& planes = impl_->active_clipping_planes();
         auto append=[&](const std::shared_ptr<Drawable>& d,uint32_t id,const std::shared_ptr<Model>& model,bool selected) {
             if (!d->is_visible()) return;
-            auto command=drawable_renderer.command(d,id,cam,planes,selected);
-            if (sources && !command.overlay) {
+            auto command=impl_->drawable_renderer.command(d,id,cam,planes,selected);
+            if (sources) {
                 if (sources->size()>=UINT32_MAX) throw std::length_error("too many picking sources");
                 id=uint32_t(sources->size()); sources->push_back({model,d});
                 command.object_id=id;
             }
             commands.push_back(std::move(command));
         };
-        for (size_t i = 0; i < owner.models_.size(); ++i) {
-            const auto* renderer = owner.models_[i]->renderer();
-            if (!renderer || !renderer->is_visible()) continue;
+        for (size_t i = 0; i < models_.size(); ++i) {
+            const auto* renderer = models_[i]->renderer();
+            if (!renderer || (!include_hidden_models && !renderer->is_visible())) continue;
             for (const auto& d : renderer->triangles_drawables())
-                append(d,uint32_t(i),owner.models_[i],renderer->is_selected());
+                append(d,uint32_t(i),models_[i],renderer->is_selected());
             for (const auto& d : renderer->lines_drawables())
-                append(d,uint32_t(i),owner.models_[i],renderer->is_selected());
+                append(d,uint32_t(i),models_[i],renderer->is_selected());
             for (const auto& d : renderer->points_drawables())
-                append(d,uint32_t(i),owner.models_[i],renderer->is_selected());
+                append(d,uint32_t(i),models_[i],renderer->is_selected());
         }
-        for (size_t i = 0; i < owner.drawables_.size(); ++i)
-            append(owner.drawables_[i],uint32_t(owner.models_.size()+i),nullptr,false);
-        const auto guide = clipping_plane_renderer.draw(*ClippingPlane::instance(),cam);
-        commands.insert(commands.end(),guide.begin(),guide.end());
-        commands.insert(commands.end(),viewer_annotations.begin(),viewer_annotations.end());
-        commands.insert(commands.end(),overlays.begin(),overlays.end());
-        commands.insert(commands.end(),viewer_3d_overlays.begin(),viewer_3d_overlays.end());
-        commands.insert(commands.end(),viewer_overlays.begin(),viewer_overlays.end());
+        for (size_t i = 0; i < drawables_.size(); ++i)
+            append(drawables_[i],uint32_t(models_.size()+i),nullptr,false);
+        const auto guide = impl_->clipping_plane_renderer.draw(*ClippingPlane::instance(),cam);
+        for (auto command : guide) {
+            command.object_id = UINT32_MAX; commands.push_back(std::move(command));
+        }
         return commands;
-    }
-    graphics::FrameImage capture(const Camera& cam, const vec4& bg, unsigned samples = 1) const {
-        return device->render(uint32_t(cam.screenWidth()), uint32_t(cam.screenHeight()), commands(cam), bg, samples);
-    }
-};
+}
 Viewer::Viewer(unsigned int width, unsigned int height, const VulkanOptions& options)
     : window_(nullptr), width_(int(width)), height_(int(height)), camera_(new Camera),
       samples_(1), background_color_(setting::background_color), pressed_key_(-1),
@@ -137,6 +148,7 @@ Viewer::Viewer(unsigned int width, unsigned int height, const VulkanOptions& opt
 void Viewer::release_device() { impl_->device.reset(); }
 void Viewer::resize_render_target(int w, int h) {
     if (w <= 0 || h <= 0) throw std::invalid_argument("offscreen dimensions must be positive");
+    render_width_ = w; render_height_ = h;
     camera()->setScreenWidthAndHeight(w, h);
     if (!window_) { width_ = w; height_ = h; }
 
@@ -262,8 +274,8 @@ Viewer::PickResult Viewer::pick(int x,int y) const {
     PickResult result;
     if (x<0 || y<0 || x>=framebuffer_width() || y>=framebuffer_height()) return result;
     // Keep commands and source mapping together for this exact synchronous draw.
-    std::vector<Impl::PickSource> sources;
-    const auto commands=impl_->commands(*camera(),&sources);
+    std::vector<DrawSource> sources;
+    const auto commands=impl_->commands(*camera(),framebuffer_width(),framebuffer_height(),&sources);
     const auto frame=impl_->device->render(framebuffer_width(),framebuffer_height(),commands,background_color(),1);
     const auto pixel=size_t(y)*frame.width+x;
     const auto id=frame.ids[pixel];
@@ -324,7 +336,7 @@ bool Viewer::render(const std::string& filename, float scaling, int samples, int
         copy.set_projection_matrix(camera()->type() == Camera::PERSPECTIVE
             ? transform::frustum(-x, x, -y, y, float(near), float(far))
             : transform::ortho(-x, x, -y, y, float(near), float(far)));
-        auto frame = impl_->capture(copy, bg == 0 ? background_color() : bg == 1 ? vec4(1, 1, 1, 1) : vec4(0, 0, 0, 0), unsigned(samples));
+        auto frame = impl_->capture(copy, bg == 0 ? background_color() : bg == 1 ? vec4(1, 1, 1, 1) : vec4(0, 0, 0, 0), unsigned(samples), w, h, snapshot_hud_);
         if (bg == 2) {
             // Alpha overlays and MSAA coverage against transparent black produce
             // premultiplied colors, including single-sample text. PNG stores straight alpha.
@@ -389,7 +401,7 @@ void Viewer::pre_draw() {}
 void Viewer::post_draw() {}
 bool Viewer::draw() {
     return impl_->device->present(uint32_t(framebuffer_width()), uint32_t(framebuffer_height()),
-                                  impl_->commands(*camera()), background_color(), unsigned(samples()));
+                                  impl_->commands(*camera(),framebuffer_width(),framebuffer_height()), background_color(), unsigned(samples()));
 }
 bool Viewer::mouse_free_move_event(int, int, int, int, int) { return false; }
 bool Viewer::char_input_event(unsigned int) { return false; }
@@ -666,7 +678,7 @@ bool Viewer::draw_frame() {
     if (should_close() || glfwGetWindowAttrib(window_host_->handle, GLFW_ICONIFIED)) return false;
     int w, h; framebuffer_size(w, h);
     if (w <= 0 || h <= 0) return false;
-    if (framebuffer_width() != w || framebuffer_height() != h) { resize_render_target(w, h); cancel_interaction(); viewer_size(width_, height_); post_resize(width_, height_); notify_resize(); }
+    if (render_width_ != w || render_height_ != h) { resize_render_target(w, h); cancel_interaction(); viewer_size(width_, height_); post_resize(width_, height_); notify_resize(); }
     if (!initialized_) { init(); initialized_ = true; }
     if (is_animating()) {
         animation_func_(this);
@@ -823,15 +835,7 @@ graphics::FrameImage Viewer::capture(unsigned sample_count) const {
         auto* host = const_cast<Viewer*>(this); host->init(); host->initialized_ = true;
     }
     if (window_) { update_camera_path_overlays(); update_interaction_overlays(); }
-    return impl_->capture(*camera(), background_color(), sample_count);
-}
-bool Viewer::snapshot(const std::string& filename, float scaling, int samples,
-                            int back_ground, bool expand) const {
-    if (!initialized_) {
-        auto* host = const_cast<Viewer*>(this); host->init(); host->initialized_ = true;
-    }
-    if (window_) { update_camera_path_overlays(); update_interaction_overlays(); }
-    return render(filename, scaling, samples, back_ground, expand);
+    return impl_->capture(*camera(), background_color(), sample_count, framebuffer_width(), framebuffer_height());
 }
 int Viewer::run(bool see_all) {
     try {
@@ -870,7 +874,8 @@ bool Viewer::mouse_press_event(int x, int y, int button, int modifiers) {
     if (pressed_key_ == GLFW_KEY_Z || modifiers == MODIF_SHIFT) {
         if (button == BUTTON_LEFT) {
             bool found = false;
-            const auto point = point_under_pixel(x, y, found);
+            const auto hit = pick(x, y); found = bool(hit);
+            const auto point = hit.position;
             camera()->setPivotPoint(found ? point : camera()->sceneCenter());
             show_pivot_point_ = found;
             if (found) {
@@ -894,8 +899,8 @@ bool Viewer::mouse_press_event(int x, int y, int button, int modifiers) {
 bool Viewer::mouse_release_event(int x, int y, int button, int modifiers) {
     if (pressed_button_ == button && button == BUTTON_LEFT && modifiers == MODIF_CTRL &&
         x != mouse_pressed_x_ && y != mouse_pressed_y_)
-        camera()->fitScreenRegion(std::min(x,mouse_pressed_x_),std::min(y,mouse_pressed_y_),
-                                  std::max(x,mouse_pressed_x_),std::max(y,mouse_pressed_y_));
+        camera()->fitScreenRegion(std::min(x,mouse_pressed_x_)-interaction_origin_.x,std::min(y,mouse_pressed_y_)-interaction_origin_.y,
+                                  std::max(x,mouse_pressed_x_)-interaction_origin_.x,std::max(y,mouse_pressed_y_)-interaction_origin_.y);
     camera()->frame()->action_end();
     ClippingPlane::instance()->manipulator()->frame()->action_end();
     pressed_button_ = -1;
@@ -912,8 +917,8 @@ bool Viewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modi
     if (modifiers == MODIF_ALT) {
         if (ClippingPlane::instance()->is_enabled()) {
             auto* frame = ClippingPlane::instance()->manipulator()->frame();
-            if (button == BUTTON_LEFT) frame->action_rotate(x,y,dx,dy,camera(),ManipulatedFrame::NONE);
-            else if (button == BUTTON_RIGHT) frame->action_translate(x,y,dx,dy,camera(),ManipulatedFrame::NONE);
+            if (button == BUTTON_LEFT) frame->action_rotate(x-interaction_origin_.x,y-interaction_origin_.y,dx,dy,camera(),ManipulatedFrame::NONE);
+            else if (button == BUTTON_RIGHT) frame->action_translate(x-interaction_origin_.x,y-interaction_origin_.y,dx,dy,camera(),ManipulatedFrame::NONE);
         }
         return false;
     }
@@ -921,8 +926,8 @@ bool Viewer::mouse_drag_event(int x, int y, int dx, int dy, int button, int modi
     if (pressed_key_ == GLFW_KEY_X) axis = ManipulatedFrame::HORIZONTAL;
     else if (pressed_key_ == GLFW_KEY_Y) axis = ManipulatedFrame::VERTICAL;
     else if (pressed_key_ == GLFW_KEY_O) axis = ManipulatedFrame::ORTHOGONAL;
-    if (button == BUTTON_LEFT) camera()->frame()->action_rotate(x,y,dx,dy,camera(),axis);
-    else if (button == BUTTON_RIGHT) camera()->frame()->action_translate(x,y,dx,dy,camera(),axis);
+    if (button == BUTTON_LEFT) camera()->frame()->action_rotate(x-interaction_origin_.x,y-interaction_origin_.y,dx,dy,camera(),axis);
+    else if (button == BUTTON_RIGHT) camera()->frame()->action_translate(x-interaction_origin_.x,y-interaction_origin_.y,dx,dy,camera(),axis);
     else if (button == BUTTON_MIDDLE && std::abs(dy)>=1) camera()->frame()->action_zoom(dy>0?1:-1,camera());
     return false;
 }
@@ -3215,6 +3220,11 @@ bool Viewer::read_scene_depth(int x, int y, const Camera &snapshot, float &depth
     if (!target.bind())
         throw std::runtime_error("cannot bind scene depth framebuffer");
     glClear(GL_DEPTH_BUFFER_BIT);
+    draw_scene_depth(snapshot);
+    glReadPixels(x, snapshot.screenHeight() - 1 - y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+    return true;
+}
+void Viewer::draw_scene_depth(const Camera& snapshot) const {
     for (const auto &model : models_) {
         const auto *renderer = model->renderer();
         if (!renderer || !renderer->is_visible())
@@ -3228,203 +3238,7 @@ bool Viewer::read_scene_depth(int x, int y, const Camera &snapshot, float &depth
     }
     for (const auto &drawable : drawables_)
         query_draw(drawable.get(), snapshot);
-    glReadPixels(x, snapshot.screenHeight() - 1 - y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
-    return true;
 }
 } // namespace easy3d
-
-namespace easy3d {
-
-
-#if 0 // Very basic snapshot: image size is the same as the viewer size
-
-	bool Viewer::snapshot(const std::string& file_name, bool bk_white) const {
-		int w, h;
-		framebuffer_size(w, h);
-
-		FramebufferObject fbo(w, h, samples_);
-		fbo.add_color_buffer();
-		fbo.add_depth_buffer();
-
-		fbo.bind();
-
-		if (bk_white)
-			glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-		else
-			glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-		const_cast<Viewer*>(this)->draw();
-
-		fbo.release();
-
-#if 1   // color render buffer
-		return fbo.snapshot_color(0, file_name);
-#else
-		// depth buffer
-		return fbo.snapshot_depth(file_name);
-#endif
-	}
-
-#else // Advanced snapshot: image size, samples, and background can be customized.
-
-	bool Viewer::snapshot(const std::string& file_name, float scaling, int samples, int back_ground, bool expand) const {
-        if (samples == 1) samples = 0;
-        glfwMakeContextCurrent(window_);
-        if (!initialized_) {
-            auto* host = const_cast<Viewer*>(this); host->init(); host->initialized_ = true;
-        }
-		int max_samples = 0;
-		glGetIntegerv(GL_MAX_SAMPLES, &max_samples);
-		if (samples > max_samples) {
-			LOG(WARNING) << "requested samples (" << samples << ") exceeds the supported maximum samples (" << max_samples
-				<< ")";
-			return false;
-		}
-
-		int w, h;
-		framebuffer_size(w, h);
-		w = static_cast<int>(std::ceil(static_cast<float>(w) * scaling));
-		h = static_cast<int>(std::ceil(static_cast<float>(h) * scaling));
-
-		int sub_w = static_cast<int>(static_cast<float>(width()) * dpi_scaling());
-		int sub_h = static_cast<int>(static_cast<float>(height()) * dpi_scaling());
-
-		double aspectRatio = sub_w / static_cast<double>(sub_h);
-		double newAspectRatio = w / static_cast<double>(h);
-		double zNear = camera_->zNear();
-		double zFar = camera_->zFar();
-
-		float xMin = 0.0f, yMin = 0.0f;
-		if (camera_->type() == Camera::PERSPECTIVE)
-			if ((expand && (newAspectRatio > aspectRatio)) || (!expand && (newAspectRatio < aspectRatio))) {
-				yMin = static_cast<float>(zNear * std::tan(camera_->fieldOfView() / 2.0));
-				xMin = static_cast<float>(newAspectRatio * yMin);
-			}
-			else {
-				xMin = static_cast<float>(zNear * std::tan(camera_->fieldOfView() / 2.0) * aspectRatio);
-				yMin = static_cast<float>(xMin / newAspectRatio);
-			}
-		else {
-			camera_->getOrthoWidthHeight(xMin, yMin);
-			if ((expand && (newAspectRatio > aspectRatio)) || (!expand && (newAspectRatio < aspectRatio)))
-				xMin = static_cast<float>(newAspectRatio * yMin);
-			else
-				yMin = static_cast<float>(xMin / newAspectRatio);
-		}
-
-		typedef Vec<4, unsigned char> Pixel; // in RGBA order
-		Matrix<Pixel> image(h, w); // Note: rows first
-		if (!image.data()) {
-			LOG(ERROR) << "failed to allocate the image with size " << w << " x " << h;
-			return false;
-		}
-
-		double scaleX = sub_w / static_cast<double>(w);
-		double scaleY = sub_h / static_cast<double>(h);
-		double deltaX = 2.0 * xMin * scaleX;
-		double deltaY = 2.0 * yMin * scaleY;
-		int nbX = w / sub_w;
-		int nbY = h / sub_h;
-		// Extra subimage on the right/bottom border(s) if needed
-		if (nbX * sub_w < w) ++nbX;
-		if (nbY * sub_h < h) ++nbY;
-
-		// remember the current projection matrix
-		// const mat4& proj_matrix = camera_->projectionMatrix(); // Liangliang: This will definitely NOT work !!!
-		const mat4 proj_matrix = camera_->projectionMatrix();
-
-		// temporarily don't allow updating rendering when the camera parameters are changing.
-		easy3d::disconnect_all(&camera_->frame_modified);
-
-		auto fbo = new FramebufferObject(sub_w, sub_h, samples);
-		fbo->add_color_buffer();
-		fbo->add_depth_buffer();
-
-		for (int i = 0; i < nbX; i++) {
-			for (int j = 0; j < nbY; j++) {
-				if (camera_->type() == Camera::PERSPECTIVE) {
-					// change the projection matrix of the camera.
-					const mat4& proj = transform::frustum(
-						static_cast<float>(-xMin + i * deltaX),
-						static_cast<float>(-xMin + (i + 1) * deltaX),
-						static_cast<float>(yMin - (j + 1) * deltaY),
-						static_cast<float>(yMin - j * deltaY),
-						static_cast<float>(zNear),
-						static_cast<float>(zFar)
-					);
-					camera_->set_projection_matrix(proj);
-				}
-				else {
-					// change the projection matrix of the camera.
-					const mat4& proj = transform::ortho(
-						static_cast<float>(-xMin + i * deltaX),
-						static_cast<float>(-xMin + (i + 1) * deltaX),
-						static_cast<float>(yMin - (j + 1) * deltaY),
-						static_cast<float>(yMin - j * deltaY),
-						static_cast<float>(zNear),
-						static_cast<float>(zFar)
-					);
-					camera_->set_projection_matrix(proj);
-				}
-
-				//---------------------------------------------------------------------------
-
-				fbo->bind();
-
-				// 0: current color; 1: white; 2: transparent.
-				if (back_ground == 1)       // white
-					glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-				else if (back_ground == 2)  // transparent
-					glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
-				else                        // current color
-					glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
-				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-				const_cast<Viewer*>(this)->draw();
-
-				fbo->release();
-
-				//---------------------------------------------------------------------------
-
-				Matrix<Pixel> subImage(sub_h, sub_w); // Note: rows first
-				fbo->read_color(0, reinterpret_cast<unsigned char*>(subImage.data()), GL_RGBA);
-
-				// Copy subImage in image
-				for (int ii = 0; ii < sub_w; ii++) {
-					int fi = i * sub_w + ii;
-					if (fi == image.cols())
-						break;
-					for (int jj = 0; jj < sub_h; jj++) {
-						int fj = j * sub_h + jj;
-						if (fj == image.rows())
-							break;
-						image.set(fj, fi, subImage.get(jj, ii));
-					}
-				}
-			}
-		}
-
-		// clean
-		delete fbo;
-		// restore the clear color
-		glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
-
-		// restore the projection matrix
-		camera_->set_projection_matrix(proj_matrix);
-
-		// enable updating the rendering
-		easy3d::connect(&camera_->frame_modified, const_cast<Viewer*>(this), &Viewer::update);
-
-		Pixel* pixels = image.data();
-		std::vector<unsigned char> data(reinterpret_cast<unsigned char*>(pixels), reinterpret_cast<unsigned char*>(pixels) + image.rows()* image.cols() * sizeof(Pixel));
-
-		return ImageIO::save(file_name, data, image.cols(), image.rows(), 4);
-	}
-
-}
-
-
-#endif
 
 #endif   // !EASY3D_HAS_VULKAN

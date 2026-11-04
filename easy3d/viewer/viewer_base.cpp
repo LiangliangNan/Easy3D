@@ -79,7 +79,7 @@ vec3 ViewerBase::point_under_pixel(int x, int y, bool &found) const {
     const int px = std::min(fw - 1, int(std::floor(double(x) * fw / w)));
     const int py = std::min(fh - 1, int(std::floor(double(y) * fh / h)));
     const mat4 projection = camera()->projectionMatrix(), view = camera()->modelViewMatrix();
-    const auto inv = checked_inverse(projection * view);
+    checked_inverse(projection * view);
     // Camera's copy/resize recomputes projection lazily. Prime its caches before
     // installing the exact live matrices, including temporary custom matrices.
     Camera snapshot(*camera());
@@ -91,8 +91,7 @@ vec3 ViewerBase::point_under_pixel(int x, int y, bool &found) const {
     float depth = 1;
     if (!read_scene_depth(px, py, snapshot, depth) || !std::isfinite(depth) || depth < 0 || depth >= 1)
         return vec3(0);
-    const auto world =
-        homogeneous_point(inv * vec4(2 * (px + .5f) / fw - 1, 1 - 2 * (py + .5f) / fh, 2 * depth - 1, 1));
+    const auto world = unproject_point(vec3(float((px+.5)*w/fw),float((py+.5)*h/fh),depth));
     found = true;
     return world;
 }

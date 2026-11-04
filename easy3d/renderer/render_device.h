@@ -95,6 +95,9 @@ struct DrawCommand {
     mat3 normal_matrix = mat3::identity(); // inverse-transpose of the model transform
     vec4 color = vec4(1, 1, 1, 1);
     std::uint32_t object_id = 0;
+    // Top-left framebuffer pixels. All zeros select the complete render target.
+    // The backend uses this same rectangle for rasterization and clipping.
+    ivec4 viewport = ivec4(0);
     bool lighting = false; // fixed world-space directional diffuse lighting
     // Renderer material state. Low-level commands retain basic diffuse lighting
     // unless this is enabled; drawable adapters forward the shared State here.

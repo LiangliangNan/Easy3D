@@ -47,7 +47,20 @@ int main() {
         const auto center = (size_t(h / 2) * w + w / 2) * 4;
         require(std::abs(int(rgba[center]) - 204) <= 2 && std::abs(int(rgba[center+1]) - 51) <= 2,
                 "installed viewer material/default camera did not render the model");
-        std::cout << "Viewer rendered using the configured backend" << '\n';
+        MultiViewer grid(1,2,"Installed MultiViewer",181,151,1,false,false,true);
+        auto shared=std::make_shared<SurfaceMesh>();
+        auto ga=shared->add_vertex(vec3(0,-1,-1)),gb=shared->add_vertex(vec3(0,1,-1)),gc=shared->add_vertex(vec3(0,0,1));
+        shared->add_triangle(ga,gb,gc);grid.add_model(shared);
+        shared->renderer()->get_triangles_drawable("faces")->set_lighting(false);
+        grid.assign(0,0,shared.get());grid.assign(0,1,shared.get());grid.set_division_visible(false);grid.fit_screen();
+        require(grid.run_frames(2)==0 && grid.snapshot("installed-grid.png",1.25f,4,0),"installed MultiViewer failed");
+        ViewerBase& portable=grid;
+        for(int x:{grid.width()/4,3*grid.width()/4}) {
+            bool hit=false;auto p=portable.point_under_pixel(x,grid.height()/2,hit);
+            require(hit && std::abs(p.x)<1e-4f,"installed MultiViewer cell query failed");
+        }
+        require(grid.models().size()==1 && grid.validation_errors()==0,"installed MultiViewer ownership/validation failed");
+        std::cout << "Viewer and MultiViewer rendered using the configured backend" << '\n';
         return viewer->validation_errors() ? 1 : 0;
     } catch (const std::runtime_error& e) {
         std::cerr << e.what() << '\n'; return 1;

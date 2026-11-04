@@ -9,13 +9,12 @@
   - [x] W1-W3 docs sync; build blockers (single home for tutorials, enable_testing, bounded tutorial tests); Tutorial 208
   - [x] W4 Delete runtime-selection/headless leftovers (Backend enum, ViewerOptions, create_*_viewer, ...)
   - [ ] W5 Remove EASY3D_TUTORIAL_USES_VULKAN (tutorials 202, 501-505 gated; 401-406 still have a separate Vulkan path)
-  - [ ] W6 MoltenVK: 69/69 pass (2026-11-04); Linux baseline 68/69 still needs the interactionoverlay border check
+  - [ ] W6 MoltenVK: 71/71 pass (2026-11-04, U2); Linux baseline 68/69 still needs the interactionoverlay border check
   - Top priority (docs/vulkan.md, "Migration principles"): minimal source changes; same class names and the same
     .h/.cpp files as the main branch (Viewer in viewer.h/.cpp for both backends); #ifdef EASY3D_HAS_VULKAN layout inside
     the classes; no new files except shaders, backend files and tests; minimal CMake changes; client code unchanged.
   - [x] U1 One `Viewer` class (viewer.h/.cpp), ViewerBase retained; Vulkan scene ownership folded in; counterpart host files/aliases removed
-  - [ ] U2 OffScreen unification/protected inheritance done; finish MultiViewer and restore snapshot.cpp;
-        re-enable Tutorial 205 and FigureMaker
+  - [x] U2 OffScreen/MultiViewer unified; snapshot.cpp restored; Tutorial 205 and FigureMaker enabled
   - [ ] U3 Classes without counterpart: same-file #ifdef structure (effects, pickers, ImGui)
   - [ ] U4 Python bindings, installed package and CI use the final names
   - [ ] U5 Tutorials and applications identical to main; no backend conditionals
