@@ -161,7 +161,7 @@ needs no change.
 ## Final migration goal and backend policy
 
 **Plan revised 2026-11-04 around the migration principles above.** Step 1, the offscreen-facade removal and the
-deletion of portable backend introspection (`backend()`, `fallback_reason()`) are implemented; the Viewer/OffScreen unification (U1/U1b) is now implemented; U2–U4 are implemented; U5 is in progress and U6 remains. What is done and what remains is tracked in *Current status and work order* below.
+deletion of portable backend introspection (`backend()`, `fallback_reason()`) are implemented; the Viewer/OffScreen unification (U1/U1b) is now implemented; U2–U4 are implemented; U5 and U6 are in progress. What is done and what remains is tracked in *Current status and work order* below.
 
 The completed migration must support **all tutorials on Vulkan** and targets
 **all applications on Vulkan**, including Mapple, FigureMaker and toolkit-based
@@ -313,16 +313,16 @@ Decisions in force:
 | 5. Tutorials on the shared API | in progress: all tutorials except 202 and 501–505 build in the Vulkan tree; those six are gated in `tutorials/CMakeLists.txt`; `EASY3D_TUTORIAL_USES_VULKAN` remains in `viewer.h` and 10 tutorials (206, 207, 306, 309, 401–405, 506) |
 | 6. Renderer, interaction, GUI/application parity | pending (W10) |
 
-Divergence audit (U6a, 2026-11-04), against local `main` at
+Divergence audit (updated at U6b, 2026-11-04), against local `main` at
 `b2868dcd5f0cc06fdb0b7df10e1ada2ec6a28226`, including the current working tree:
 
 | Scope | Only in `main` | Only on this branch | Shared files changed | Total differing files |
 | --- | ---: | ---: | ---: | ---: |
-| `easy3d/` | 0 | 90 | 61 | 151 |
+| `easy3d/` | 0 | 89 | 61 | 150 |
 | `tutorials/` | 0 | 4 | 63 | 67 |
 
-The 90 Easy3D additions include 52 test files and 27 backend files, which P4 permits;
-11 others require the remaining U6 responsibility audit. They are `drawable_types.cpp`,
+The 89 Easy3D additions include 52 test files and 27 backend files, which P4 permits;
+10 others require the remaining U6 responsibility audit. They are
 `obj_materials.h/.cpp`, `render_device.h/.cpp`, `text_layout.h/.cpp`, `viewer_base.h/.cpp`,
 `viewer_callbacks.h` and `viewer_input.h`. D3 already retains the four viewer API files;
 review the renderer files against their original class responsibilities before moving
@@ -436,8 +436,10 @@ of this document.
   renderer/picker/capture API work; the tutorial macro is not yet removable. Avoid
   new generic Viewer abstractions solely for a single tutorial.
 - **U6** (in progress) U6a moves bounded tutorial tests out of tutorial CMake and
-  restores five picker-tutorial dependency lists to `main`; the inventory above is
-  refreshed. Continue the file-by-file responsibility audit and remove capability
+  restores five picker-tutorial dependency lists to `main`. U6b restores drawable
+  constructors to their original class files, removes `drawable_types.cpp` and
+  removes the private OpenGL selector; the inventory above is refreshed. Continue
+  the file-by-file responsibility audit and remove capability
   gates only when implementations exist. U5/API work remains open.
 - **W10** Mapple, Qt/wx, remaining Python API/tutorial coverage, transparency/SSAO/shadows/EDL parity.
 
@@ -4113,3 +4115,55 @@ Final validation on this Mac (Apple M4 Pro, MoltenVK), 2026-11-04:
   attachment blending diagnostic remains outside this batch.
 
 U5/U6 are still in progress. Changes remain local and uncommitted on Easy3D-Vulkan.
+
+
+### 2026-11-04 — U6b: drawable constructors in their counterpart files
+
+`PointsDrawable`, `LinesDrawable`, `TrianglesDrawable` and `LinesDrawable2D` now
+implement their constructors in `drawable_points.cpp`, `drawable_lines.cpp`,
+`drawable_triangles.cpp` and `drawable_lines_2D.cpp`, respectively. Those original
+class files compile in either backend build. The extra `drawable_types.cpp` and
+its two source-list entries are removed; no file or public API was introduced.
+
+Constructor bodies are byte-for-byte identical to their pre-move implementations:
+point/line styles and sizes, flat triangle shading, opacity, two-sided lighting,
+back colors and uniform colors retain the same defaults. The existing OpenGL draw
+implementation bodies are likewise unchanged. OpenGL-only includes and draw bodies
+are guarded in the original files; the current unsupported direct Vulkan draw calls
+remain explicit in the existing backend shim. This is source responsibility cleanup,
+not a new immediate drawing API or completion of the remaining U5 contracts.
+
+The private `EASY3D_RENDERER_OPENGL` compile definition was also redundant with the
+configured backend. Its five guards in drawable initialization, 2D resource cleanup
+and texture upload/destruction now use `EASY3D_HAS_VULKAN`; its CMake definition is
+removed. Legacy OpenGL header-guard spellings are not selectors and are unchanged.
+The only backend choice remains `Easy3D_ENABLE_VULKAN` and its public C++ definition.
+
+The four drawable sources pass a standalone C++11 Vulkan syntax check with only
+source/build export-header include paths, without Vulkan SDK or OpenGL include
+paths. Full builds and installed public consumers validate constructor symbol
+resolution for both configured libraries. No new tests mirror these moved bodies;
+existing renderer/viewer/material/texture/2D-line regressions exercise their behavior.
+
+The Easy3D inventory drops from 90 to 89 branch-only files (11 to 10 outside tests
+and backend directories), with no file missing from local main. U5's 10 remaining
+conditional tutorials and the rest of the U6 responsibility audit stay open.
+
+Validation on this Mac (Apple M4 Pro, MoltenVK), 2026-11-04:
+
+- Both full builds passed, including original tutorial sources and Python bindings.
+- Final complete suites: **72/72 Vulkan**, **40/40 OpenGL** with Python enabled.
+- The first Vulkan full run passed 71/72: `vulkan.realcamera` reported
+  `image/cross/MSAA changed scene depth`. It passed three consecutive isolated
+  retries and the final complete run. Its cause is not established or claimed fixed
+  by this source-layout cleanup.
+- Both installed packages rebuilt and ran their public Viewer/MultiViewer and
+  OffScreen consumers with Vulkan package discovery disabled; the additional native
+  Vulkan consumer passed as well.
+- Constructor bodies and existing OpenGL draw implementation bodies were checked
+  byte-for-byte against their pre-move text. Standalone C++11 syntax checks passed
+  for all four sources using only project/export-header paths and the Vulkan macro.
+- `git diff --check` passed. Linux/Windows execution was not performed; the existing
+  MoltenVK integer-attachment blending diagnostic remains unchanged.
+
+No changes were committed. The branch remains Easy3D-Vulkan; U5/U6 and W10 remain open.

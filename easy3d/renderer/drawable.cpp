@@ -66,7 +66,7 @@ namespace easy3d {
             : name_(name), model_(model), vao_(nullptr), num_vertices_(0), num_indices_(0),
               update_needed_(false), update_func_(nullptr), vertex_buffer_(0), color_buffer_(0), normal_buffer_(0),
               texcoord_buffer_(0), element_buffer_(0), manipulator_(nullptr) {
-#ifdef EASY3D_RENDERER_OPENGL
+#ifndef EASY3D_HAS_VULKAN
         opengl_initialize();
 #else
         enable_cpu_buffers();

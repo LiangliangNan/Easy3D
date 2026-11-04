@@ -25,6 +25,9 @@
  ********************************************************************/
 
 #include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/util/setting.h>
+
+#ifndef EASY3D_HAS_VULKAN
 #include <stdexcept>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/shader_program.h>
@@ -34,10 +37,23 @@
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/transform.h>
 #include <easy3d/core/model.h>
-#include <easy3d/util/setting.h>
 
+
+#endif
 
 namespace easy3d {
+    TrianglesDrawable::TrianglesDrawable(const std::string& name, Model* model)
+            : Drawable(name, model)
+            , smooth_shading_(false)
+            , opacity_(0.6f)
+    {
+        lighting_two_sides_ = setting::triangles_drawable_two_side_lighting;
+        distinct_back_color_ = setting::triangles_drawable_distinct_backside_color;
+        back_color_ = setting::triangles_drawable_backside_color;
+        set_uniform_coloring(setting::surface_mesh_faces_color);
+    }
+
+#ifndef EASY3D_HAS_VULKAN
 
 
 
@@ -127,5 +143,7 @@ namespace easy3d {
         program->release_texture();
         program->release();
     }
+
+#endif // EASY3D_HAS_VULKAN
 
 }

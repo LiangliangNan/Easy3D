@@ -25,16 +25,29 @@
  ********************************************************************/
 
 #include <easy3d/renderer/drawable_lines.h>
+#include <easy3d/util/setting.h>
+
+#ifndef EASY3D_HAS_VULKAN
 #include <stdexcept>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/clipping_plane.h>
-#include <easy3d/util/setting.h>
 
+
+#endif
 
 namespace easy3d {
+    LinesDrawable::LinesDrawable(const std::string &name, Model *model)
+            : Drawable(name, model), line_width_(1.0f), impostor_type_(PLAIN) {
+        lighting_two_sides_ = setting::lines_drawable_two_side_lighting;
+        distinct_back_color_ = setting::lines_drawable_distinct_backside_color;
+        back_color_ = setting::lines_drawable_backside_color;
+        set_uniform_coloring(vec4(0.0f, 0.0f, 0.0f, 1.0f));
+    }
+
+#ifndef EASY3D_HAS_VULKAN
 
 
 
@@ -375,5 +388,7 @@ namespace easy3d {
         program->release();
     }
 
+
+#endif // EASY3D_HAS_VULKAN
 
 }

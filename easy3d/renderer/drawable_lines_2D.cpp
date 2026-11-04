@@ -29,8 +29,14 @@
 #include <stdexcept>
 
 namespace easy3d {
+    LinesDrawable2D::LinesDrawable2D(const std::string &name)
+            : Drawable(name, nullptr)
+    {
+        set_uniform_coloring(vec4(0.0f, 0.0f, 0.0f, 1.0f));
+    }
+
 LinesDrawable2D::~LinesDrawable2D() {
-#ifdef EASY3D_RENDERER_OPENGL
+#ifndef EASY3D_HAS_VULKAN
     if (position_texture_ || index_texture_ || line_vao_) opengl_release_line_resources();
 #endif
 }

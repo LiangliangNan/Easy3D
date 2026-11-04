@@ -32,7 +32,7 @@ if(Easy3D_ENABLE_VULKAN)
             drawable_points.h drawable_triangles.h frame.h frustum.h key_frame_interpolator.h
             manipulator.h manipulated_camera_frame.h manipulated_frame.h shape.h buffer.h
             renderer.h state.h texture.h texture_manager.h transform.h transform_decompose.h)
-    list(APPEND renderer_sources obj_materials.cpp camera.cpp clipping_plane.cpp constraint.cpp drawable.cpp drawable_types.cpp drawable_lines_2D.cpp frame.cpp frustum.cpp
+    list(APPEND renderer_sources obj_materials.cpp camera.cpp clipping_plane.cpp constraint.cpp drawable.cpp drawable_points.cpp drawable_lines.cpp drawable_triangles.cpp drawable_lines_2D.cpp frame.cpp frustum.cpp
             key_frame_interpolator.cpp manipulator.cpp manipulated_camera_frame.cpp manipulated_frame.cpp
             shape.cpp buffer.cpp renderer.cpp state.cpp texture.cpp texture_manager.cpp transform.cpp transform_decompose.cpp
             backends/cpu/opengl_unavailable.cpp ${backend_sources})
@@ -82,7 +82,6 @@ list(APPEND ${module}_sources
         backends/opengl/clipping_plane.cpp
         constraint.cpp
         drawable.cpp
-        drawable_types.cpp
         backends/opengl/drawable_buffers.cpp
         backends/opengl/shape_draw.cpp
         drawable_lines.cpp
@@ -224,7 +223,7 @@ list(APPEND renderer_headers ${backend_headers})
 add_module(${module} "${${module}_headers}" "${${module}_sources}" "${private_dependencies}" "${public_dependencies}")
 if(NOT Easy3D_ENABLE_VULKAN)
     target_include_directories(easy3d_${module} PRIVATE ${Easy3D_THIRD_PARTY}/glew/include)
-    target_compile_definitions(easy3d_${module} PRIVATE GLEW_BUILD EASY3D_RENDERER_OPENGL PUBLIC GLEW_NO_GLU)
+    target_compile_definitions(easy3d_${module} PRIVATE GLEW_BUILD PUBLIC GLEW_NO_GLU)
 
     # prefer GLVND
     set(OpenGL_GL_PREFERENCE GLVND)

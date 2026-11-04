@@ -37,7 +37,7 @@ Texture::Texture() : id_(0), wrap_mode_(CLAMP_TO_EDGE), filter_mode_(LINEAR) {
     sizes_[0] = sizes_[1] = sizes_[2] = 0;
 }
 Texture::~Texture() {
-#ifdef EASY3D_RENDERER_OPENGL
+#ifndef EASY3D_HAS_VULKAN
     if (id_) opengl_destroy();
 #endif
 }
@@ -68,7 +68,7 @@ Texture* Texture::create(const std::vector<unsigned char>& data, int width, int 
                          WrapMode wrap, FilterMode filter) {
     try {
         std::unique_ptr<Texture> texture(create_cpu(data,width,height,comp,wrap,filter));
-#ifdef EASY3D_RENDERER_OPENGL
+#ifndef EASY3D_HAS_VULKAN
         if (!texture->opengl_upload()) return nullptr;
 #endif
         return texture.release();
@@ -85,7 +85,7 @@ Texture* Texture::create(const std::string& file, WrapMode wrap, FilterMode filt
     if (texture) texture->name_ = file;
     return texture;
 }
-#ifndef EASY3D_RENDERER_OPENGL
+#ifdef EASY3D_HAS_VULKAN
 void Texture::bind(int) const { throw std::logic_error("OpenGL texture binding is unavailable"); }
 void Texture::release() const { throw std::logic_error("OpenGL texture binding is unavailable"); }
 #endif
