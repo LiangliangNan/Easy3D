@@ -136,9 +136,6 @@ namespace easy3d {
         bool delete_model(Model* model) override;
         bool delete_drawable(Drawable* drawable) override;
         void clear_scene() override;
-#ifdef EASY3D_HAS_VULKAN
-        vec3 unproject_pixel(int x, int y, float depth) const override;
-#endif
 
     protected:
         void init() override;
@@ -156,7 +153,7 @@ namespace easy3d {
         mutable int division_width_ = 0, division_height_ = 0;
 #else
         // Keep this part of code minimum
-        void draw_scene_depth(const Camera& camera) const override;
+        void draw_scene_depth(const Camera& camera, const DrawSource* source = nullptr) const override;
         // overloaded, so mouse positions are relative to the current view
         bool mouse_release_event(int x, int y, int button, int modifiers) override;
         // overloaded, so mouse positions are relative to the current view

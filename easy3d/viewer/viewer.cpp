@@ -265,11 +265,6 @@ void Viewer::fit_screen(const Model* selected) {
         ClippingPlane::instance()->fit_scene(camera()->sceneCenter(),camera()->sceneRadius());
     }
 }
-vec3 Viewer::unproject_pixel(int x,int y,float depth) const {
-    if (x<0 || y<0 || x>=framebuffer_width() || y>=framebuffer_height() || !std::isfinite(depth) || depth<0 || depth>1)
-        throw std::invalid_argument("invalid framebuffer pixel/depth for unprojection");
-    return world_pixel(x,y,depth,framebuffer_width(),framebuffer_height(),inverse(camera()->modelViewProjectionMatrix()));
-}
 std::vector<vec3> Viewer::scan_visible_points(unsigned samples) const {
     Camera snapshot(*camera());
     // Camera's copy constructor regenerates matrices from its parameters. Keep
@@ -1753,6 +1748,7 @@ float Viewer::dpi_scaling() const { return dpi_scaling_; }
         glfwMakeContextCurrent(window_);
         models_.clear();
         drawables_.clear();
+        if(overlay_renderer_) overlay_renderer_->set({},false);
     }
 
     void Viewer::cleanup() {
@@ -3139,7 +3135,8 @@ Viewer::PickResult Viewer::pick(int x, int y) const {
         if (!drawable->is_visible() || dynamic_cast<LinesDrawable2D*>(drawable.get())) return;
         state.prepare(fw,fh);
         glClear(GL_DEPTH_BUFFER_BIT);
-        query_draw(drawable.get(),snapshot);
+        DrawSource source{model,drawable};
+        draw_scene_depth(snapshot,&source);
         float depth=1;
         glReadPixels(x,fh-1-y,1,1,GL_DEPTH_COMPONENT,GL_FLOAT,&depth);
         if (depth>=0 && depth<result.depth) {
@@ -3148,22 +3145,14 @@ Viewer::PickResult Viewer::pick(int x, int y) const {
     };
     for (const auto& model:models_) {
         const auto* renderer=model->renderer();
-        if (!renderer || !renderer->is_visible()) continue;
+        if (!renderer) continue;
         for (const auto& d:renderer->triangles_drawables()) sample(d,model);
         for (const auto& d:renderer->lines_drawables()) sample(d,model);
         for (const auto& d:renderer->points_drawables()) sample(d,model);
     }
     for (const auto& d:drawables_) sample(d,nullptr);
     if (!result) return result;
-    const auto inv=inverse(snapshot.modelViewProjectionMatrix());
-    const auto world=[&](float depth) {
-        const vec4 p=inv*vec4(2*(float(x)+.5f)/fw-1,1-2*(float(y)+.5f)/fh,2*depth-1,1);
-        if (!std::isfinite(p.w) || p.w==0) throw std::invalid_argument("invalid picking camera inverse");
-        const vec3 point=p.xyz()/p.w;
-        if (!std::isfinite(point.x) || !std::isfinite(point.y) || !std::isfinite(point.z))
-            throw std::invalid_argument("non-finite picked point");
-        return point;
-    };
+    const auto world=[&](float depth) {return unproject_pixel(x,y,depth);};
     result.position=world(result.depth);
     if (result.drawable->type()==Drawable::DT_TRIANGLES) {
         // Recover triangle provenance from the winning drawable's existing buffers,
@@ -3230,7 +3219,12 @@ bool Viewer::read_scene_depth(int x, int y, const Camera &snapshot, float &depth
     glReadPixels(x, snapshot.screenHeight() - 1 - y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
     return true;
 }
-void Viewer::draw_scene_depth(const Camera& snapshot) const {
+void Viewer::draw_scene_depth(const Camera& snapshot,const DrawSource* source) const {
+    if(source) {
+        if(source->model && (!source->model->renderer() || !source->model->renderer()->is_visible())) return;
+        query_draw(source->drawable.get(),snapshot);
+        return;
+    }
     for (const auto &model : models_) {
         const auto *renderer = model->renderer();
         if (!renderer || !renderer->is_visible())
@@ -3250,6 +3244,12 @@ void Viewer::draw_scene_depth(const Camera& snapshot) const {
 #endif   // !EASY3D_HAS_VULKAN
 
 namespace easy3d {
+vec3 Viewer::unproject_pixel(int x,int y,float depth) const {
+    const int fw=framebuffer_width(),fh=framebuffer_height();
+    if(x<0 || y<0 || x>=fw || y>=fh || !std::isfinite(depth) || depth<0 || depth>1)
+        throw std::invalid_argument("invalid framebuffer pixel/depth for unprojection");
+    return unproject_point(vec3(float((x+.5)*width()/fw),float((y+.5)*height()/fh),depth));
+}
 void Viewer::advance_camera_path() {
     if (!kfi_->is_interpolation_started()) return;
     const auto now=std::chrono::steady_clock::now();

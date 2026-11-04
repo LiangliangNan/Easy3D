@@ -431,6 +431,8 @@ of this document.
   `snapshot.cpp`. Tutorial 205 and FigureMaker are enabled for both backends with
   their existing source unchanged. Shared-camera cells support viewport/scissor,
   MSAA, picking, input and scaled/transparent snapshots; see the U2 validation below.
+  Batch 9 closes the OpenGL source-picking cell-assignment gap and exposes the
+  shared query/selection/annotation operations on OffScreen.
 - **U3** (implemented) The legacy effects and GUI pickers retain their original files with whole-class/
   source backend branches (P3). Vulkan branches are empty where no counterpart
   exists. Effect sources and the `gui` target are built/exported in both builds.
@@ -4994,3 +4996,71 @@ Existing Vulkan validation/synchronization-validation coverage passes. The prior
 MoltenVK integer-attachment blending diagnostic remains unchanged; no claim is
 made that it or the historical intermittent window timeout is fixed.
 `git diff --check` is clean. Changes remain uncommitted on Easy3D-Vulkan.
+
+
+### 2026-11-05 — U2/U5/U6 batch 9: cell-aware source picking and shared OffScreen operations
+
+OpenGL MultiViewer source picking now uses its cell-aware scene-depth hook,
+rather than drawing every candidate across the full canvas. Model assignments,
+explicit drawable assignments, hidden parents, cell scissors and original source
+ownership/provenance are honored. An explicitly assigned drawable remains
+pickable when its parent model is hidden, matching the Vulkan counterpart.
+Triangles, sphere points and cylinder lines use their existing native shaders;
+HUD/dividers/annotation commands never produce a scene pick.
+
+The existing OpenGL protected depth hook now accepts an optional source filter:
+`draw_scene_depth(const Camera&, const DrawSource* source = nullptr) const`.
+`DrawSource` is the existing model/drawable ownership pair, now shared by both
+class branches. Normal depth/preview queries render the complete assigned scene;
+source queries render the matching candidate. Custom OpenGL subclasses overriding
+this migration-era hook must update the signature and honor the filter for source
+picking. No new public picking overload, host wrapper or viewer helper class is
+introduced. Cell bounds are computed from the query target, supporting odd/DPI
+sizes, pending resize and scaled depth previews.
+
+`Viewer::unproject_pixel()` now has one shared implementation. It validates
+framebuffer coordinates/depth and delegates the pixel center through the existing
+virtual coordinate API. MultiViewer inherits it and resolves its cell through
+`unproject_point()`; its redundant Vulkan pixel override is removed. OpenGL
+triangle provenance recovery and returned world points use this same cell-aware
+path. Custom camera matrices and the inherited logical point-under-pixel contract
+remain intact.
+
+OffScreen exposes the already shared Viewer operations under either backend:
+picking/results, GPU point resource/selection, pixel and continuous coordinate
+conversion, point-under-pixel, annotations and effective clipping planes. Protected
+inheritance is unchanged. Its viewer size reports the requested canvas dimensions
+and its DPI is always one, independently of the hidden OpenGL window's display
+scale and native callbacks. OpenGL scene clearing now clears user annotations,
+matching Vulkan, while retained point snapshots remain usable on their owning
+host. Native capture/scan/device access and explicit per-host plane configuration
+remain Vulkan extensions; no scanner abstraction or Tutorial 404-specific core
+API is added. OpenGL OffScreen still requires its existing hidden GLFW context;
+legacy file-render activation behavior is unchanged, while the shared query,
+selection and annotation-setting operations restore the caller context.
+
+The existing root multi-view regression now exercises source picking on both
+backends, not only Vulkan: source model/drawable identity, triangle face indices,
+pixel-center world reconstruction, custom matrices, hidden-parent explicit
+assignments and oversized impostor scissoring. The new root
+`offscreen_query_test.cpp` exercises two offscreen hosts interleaved with a window,
+shared coordinate/query agreement and ownership, camera/pivot preservation,
+1x/4x color MSAA with stable picking depth, 1.5x transparent annotations, native
+callback/resize/DPI behavior, GPU selection and attribute-only point reuse, retained
+selection snapshots after scene clearing, annotation clearing and invalid depth.
+Existing query, primitive picking, annotation/depth-preview and file-output tests
+remain enabled. All tests stay under root tests and use the sole build-tests option.
+
+Remaining work includes Tutorial 404, original GUI model/point-cloud pickers,
+mesh GPU/rasterization parity, effects/native GUI integration, shared capture and
+the TextRenderer/Texture audit. Build configurations remain exclusive and the
+IDE's OpenGL configuration is preserved.
+
+Validation on this Mac: complete Vulkan-only and OpenGL-only builds succeed,
+including Python packaging. All 115 MoltenVK tests and all 89 OpenGL tests pass.
+Focused query/preview/picking suites also pass (six Vulkan and five OpenGL tests).
+The MoltenVK run uses the existing validation/synchronization-validation harness;
+new offscreen device counters remain zero. The existing integer-attachment driver
+diagnostic and historical window-test caveat remain unchanged. The unrelated
+CMake-generated release-date change is excluded from this batch.
+`git diff --check` is clean; work remains uncommitted on Easy3D-Vulkan.

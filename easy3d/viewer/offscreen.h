@@ -17,6 +17,8 @@ public:
                 int background = 1, bool expand = true) const;
     void resize(int width, int height) override;
     void framebuffer_size(int& width, int& height) const override;
+    void viewer_size(int& width, int& height) const override;
+    float dpi_scaling() const override { return 1; } // fixed-size pixel canvas
     int framebuffer_width() const override { return width(); }
     int framebuffer_height() const override { return height(); }
     Model* add_model(const std::string& file, bool create = true) override;
@@ -36,19 +38,22 @@ public:
     using Viewer::drawables;
     using Viewer::clear_scene;
     using Viewer::fit_screen;
-#ifdef EASY3D_HAS_VULKAN
-    // Transitional native scene operations, retained until the picker migration.
     using Viewer::PickResult;
     using Viewer::pick;
     using Viewer::select_points;
     using Viewer::point_resource;
     using Viewer::unproject_pixel;
+    using Viewer::project_point;
+    using Viewer::unproject_point;
+    using Viewer::point_under_pixel;
+    using Viewer::set_overlays;
+    using Viewer::clipping_planes;
+#ifdef EASY3D_HAS_VULKAN
+    // Transitional native scene operations, retained until the picker migration.
     using Viewer::scan_visible_points;
     using Viewer::capture;
     using Viewer::device;
-    using Viewer::set_overlays;
     using Viewer::set_clipping_planes;
-    using Viewer::clipping_planes;
 #endif
 private:
 #ifdef EASY3D_HAS_VULKAN

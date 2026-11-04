@@ -251,9 +251,6 @@ std::vector<graphics::DrawCommand> MultiViewer::draw_commands(const Camera& cam,
     }
     return result;
 }
-vec3 MultiViewer::unproject_pixel(int x,int y,float depth) const {
-    return unproject_point(vec3(float((x+.5)*width()/framebuffer_width()),float((y+.5)*height()/framebuffer_height()),depth));
-}
 bool MultiViewer::mouse_press_event(int x,int y,int button,int modifiers) {
     for(int r=0;r<num_rows_;++r) for(int c=0;c<num_cols_;++c) {
         const auto& vp=views_[r][c].viewport;
@@ -337,27 +334,30 @@ bool MultiViewer::mouse_press_event(int x,int y,int button,int modifiers) {
 
 
 
-void MultiViewer::draw_scene_depth(const Camera& snapshot) const {
+void MultiViewer::draw_scene_depth(const Camera& snapshot,const DrawSource* source) const {
     CellScissor clip;
     Camera cell(snapshot);cell.frame()->setPivotPoint(snapshot.pivotPoint());
     cell.setScreenWidthAndHeight(camera()->screenWidth(),camera()->screenHeight());
     cell.set_projection_matrix(snapshot.projectionMatrix());cell.set_modelview_matrix(snapshot.modelViewMatrix());
     auto draw=[&](const Drawable* d) {
-        if(!d || !d->is_visible() || dynamic_cast<const LinesDrawable2D*>(d)) return;
+        if(!d || (source && source->drawable.get()!=d) || !d->is_visible() || dynamic_cast<const LinesDrawable2D*>(d)) return;
         if(auto p=dynamic_cast<const TrianglesDrawable*>(d)) p->TrianglesDrawable::draw(&cell);
         else if(auto p=dynamic_cast<const PointsDrawable*>(d)) p->PointsDrawable::draw(&cell);
         else if(auto p=dynamic_cast<const LinesDrawable*>(d)) p->LinesDrawable::draw(&cell);
     };
-    for(const auto& row:views_) for(const auto& view:row) {
-        const auto& vp=view.viewport;if(vp.z<=0 || vp.w<=0) continue;glViewport(vp.x,vp.y,vp.z,vp.w);glScissor(vp.x,vp.y,vp.z,vp.w);
-        for(const auto& model:models_) if(model->renderer()) {
+    for(int r=0;r<num_rows_;++r) for(int c=0;c<num_cols_;++c) {
+        const auto& view=views_[r][c];
+        auto vp=cell_bounds(r,c,num_rows_,num_cols_,snapshot.screenWidth(),snapshot.screenHeight());
+        if(vp.z<=0 || vp.w<=0) continue;vp.y=snapshot.screenHeight()-vp.y-vp.w;
+        glViewport(vp.x,vp.y,vp.z,vp.w);glScissor(vp.x,vp.y,vp.z,vp.w);
+        for(const auto& model:models_) if(model->renderer() && (!source || source->model==model)) {
             const bool assigned=model->renderer()->is_visible() && std::find(view.models.begin(),view.models.end(),model.get())!=view.models.end();
             auto append=[&](const Drawable* d) {if(assigned || std::find(view.drawables.begin(),view.drawables.end(),d)!=view.drawables.end()) draw(d);};
             for(const auto& d:model->renderer()->triangles_drawables()) append(d.get());
             for(const auto& d:model->renderer()->lines_drawables()) append(d.get());
             for(const auto& d:model->renderer()->points_drawables()) append(d.get());
         }
-        for(const auto& d:drawables_) if(std::find(view.drawables.begin(),view.drawables.end(),d.get())!=view.drawables.end()) draw(d.get());
+        for(const auto& d:drawables_) if((!source || !source->model) && std::find(view.drawables.begin(),view.drawables.end(),d.get())!=view.drawables.end()) draw(d.get());
     }
 }
     bool MultiViewer::mouse_press_event(int x,int y,int button,int modifiers) {

@@ -521,6 +521,9 @@ public:
     // Effective world-space planes. The shared ClippingPlane takes precedence;
     // Vulkan additionally supports explicitly configured per-host planes.
     const std::vector<vec4>& clipping_planes() const;
+    // Reconstruct a top-left framebuffer pixel center from [0,1] readback depth.
+    // Unlike Camera's legacy coordinate helper, this uses continuous framebuffer coordinates.
+    virtual vec3 unproject_pixel(int x, int y, float depth) const;
 #ifdef EASY3D_HAS_VULKAN
     // Transitional Vulkan-only scene APIs (docs/vulkan.md, U1b).
     // Per-viewer world-space halfspaces, keeping dot(plane,vec4(world,1)) >= 0.
@@ -528,9 +531,6 @@ public:
     // nonzero-normal planes. An enabled shared ClippingPlane takes precedence.
     // Overlays remain unclipped. Scene clearing retains this configuration.
     void set_clipping_planes(const std::vector<vec4>& planes);
-    // Reconstruct a top-left framebuffer pixel center from [0,1] readback depth.
-    // Unlike Camera's legacy coordinate helper, this uses continuous framebuffer coordinates.
-    virtual vec3 unproject_pixel(int x, int y, float depth) const;
     // Synchronous visible-surface scan: one world point per non-background
     // framebuffer pixel, in top-to-bottom row order, at exact pixel centers.
     // Uses one camera snapshot and inverse MVP; overlays never produce points.
@@ -654,6 +654,8 @@ protected:
 private:
     std::chrono::steady_clock::time_point next_camera_path_frame_;
     void advance_camera_path();
+protected:
+    struct DrawSource { std::shared_ptr<Model> model; std::shared_ptr<Drawable> drawable; };
 #ifdef EASY3D_HAS_VULKAN
     // Keep this part of code minimum
 private:
@@ -691,7 +693,6 @@ private:
     void print_usage();
     Viewer(std::shared_ptr<Window> window, const VulkanOptions& options);
 protected:
-    struct DrawSource { std::shared_ptr<Model> model; std::shared_ptr<Drawable> drawable; };
     virtual std::vector<graphics::DrawCommand> draw_commands(const Camera& camera, int width, int height,
                                                            std::vector<DrawSource>* sources = nullptr, bool include_hidden_models = false) const;
     ivec2 interaction_origin_ = ivec2(0);
@@ -710,7 +711,7 @@ protected:
     // Keep this part of code minimum
 
 	protected:
-        virtual void draw_scene_depth(const Camera& snapshot) const;
+        virtual void draw_scene_depth(const Camera& snapshot, const DrawSource* source = nullptr) const;
         GLFWwindow *create_window(const std::string &title,
                                   int samples,
                                   int gl_major,   // must >= 3

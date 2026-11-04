@@ -60,3 +60,7 @@ Drawable* OffScreen::add_drawable(std::shared_ptr<Drawable> drawable) {
 }
 
 #endif   // !EASY3D_HAS_VULKAN
+
+namespace easy3d {
+void OffScreen::viewer_size(int& w,int& h) const {w=width_;h=height_;}
+}

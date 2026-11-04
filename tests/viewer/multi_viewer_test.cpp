@@ -94,10 +94,14 @@ int main(int argc,char**) {
             require(found!=(row==0 && col==2),"portable query included an unassigned cell or missed assigned geometry");
             if(found && !(row==1 && col>=1)) require(std::abs(p.x)<1e-4f,"portable cell query unprojected through the whole canvas");
             bool direct=false;const auto q=grid.point_under_pixel(x,y,direct);require(direct==found && (!found || (p-q).norm()<1e-3f),"direct and portable cell queries disagree");
-#ifdef EASY3D_HAS_VULKAN
             auto hit=grid.pick(vp.x+vp.z/2,vp.y+vp.w/2);require(bool(hit)==found,"cell picking lost the source ID");
-            if(hit) require(hit.drawable && (hit.position-p).norm()<.03f,"pixel picking used another cell's inverse projection");
-#endif
+            if(hit) {
+                require(hit.drawable && (hit.position-p).norm()<.03f,"pixel picking used another cell's inverse projection");
+                const auto exact=grid.unproject_pixel(vp.x+vp.z/2,vp.y+vp.w/2,hit.depth);
+                require((exact-hit.position).norm()<1e-5f,"pixel unprojection and picking diverged");
+                if(row==0) require(hit.model.get()==(col==0?red.get():blue.get()) && hit.face_index==0,"cell source ownership/provenance is wrong");
+                if(row==1 && col>0) require(hit.drawable.get()==(col==1?static_cast<Drawable*>(point.get()):static_cast<Drawable*>(line.get())),"impostor source escaped its assigned cell");
+            }
         }
         const auto projection=grid.camera()->projectionMatrix(),view=grid.camera()->modelViewMatrix();
         auto custom=projection;custom(0,2)+=.12f;grid.camera()->set_projection_matrix(custom);
@@ -106,10 +110,17 @@ int main(int argc,char**) {
         require(custom_point.norm()<1e-4f,"custom multi-view matrices were lost in coordinate conversion");
         bool custom_hit=false;const auto custom_surface=api.point_under_pixel(grid.width()/6,grid.height()/4,custom_hit);
         require(custom_hit && std::abs(custom_surface.x)<1e-4f,"cell depth query ignored custom camera matrices");
+        const auto custom_pick=grid.pick(grid.framebuffer_width()/6,grid.framebuffer_height()/4);
+        require(custom_pick.model==red && std::abs(custom_pick.position.x)<1e-4f,"cell source picking ignored custom matrices");
         grid.camera()->set_projection_matrix(projection);grid.camera()->set_modelview_matrix(view);
         red->renderer()->set_visible(false);frame(grid);
         bool found=false;grid.point_under_pixel(grid.width()/6,grid.height()/4,found);require(!found,"hidden model rendered in its assigned cell");
-        grid.point_under_pixel(grid.width()/6,3*grid.height()/4,found);require(found,"explicit drawable assignment inherited parent-model visibility");red->renderer()->set_visible(true);
+        grid.point_under_pixel(grid.width()/6,3*grid.height()/4,found);require(found,"explicit drawable assignment inherited parent-model visibility");
+        auto hidden_cell=grid.bounds(0,0),explicit_cell=grid.bounds(1,0);
+        require(!grid.pick(hidden_cell.x+hidden_cell.z/2,hidden_cell.y+hidden_cell.w/2),"hidden model remained pickable in its model-assigned cell");
+        const auto explicit_hit=grid.pick(explicit_cell.x+explicit_cell.z/2,explicit_cell.y+explicit_cell.w/2);
+        require(explicit_hit.model==red && explicit_hit.face_index==0,"explicit assignment lost a hidden parent's source ownership");
+        red->renderer()->set_visible(true);
 #ifdef EASY3D_HAS_VULKAN
         auto before=grid.capture(1);if(grid.device().supported_sample_counts()&4) {
             auto msaa=grid.capture(4);require(before.depth==msaa.depth && before.ids.size()==msaa.ids.size(),"MSAA changed per-cell scene depth");
@@ -123,6 +134,13 @@ int main(int argc,char**) {
         point->set_point_size(23);
         const auto uploads=grid.device().point_upload_count();grid.assign(0,2,point.get());grid.capture();require(grid.device().point_upload_count()==uploads,"sharing a point drawable across cells uploaded positions again");
 #endif
+        point->set_point_size(300);
+        const auto vacant=grid.bounds(0,2);
+#ifndef EASY3D_HAS_VULKAN
+        // The Vulkan-specific sharing check above assigns this cell explicitly.
+        require(!grid.pick(vacant.x+vacant.z/2,vacant.y+vacant.w/2),"large point query escaped its cell scissor");
+#endif
+        point->set_point_size(23);
         bool rejected=false;try{grid.set_layout(0,2);}catch(const std::invalid_argument&){rejected=true;}require(rejected && grid.rows()==2,"invalid layout modified the grid");
         grid.resize(317,237);frame(grid);
         auto position=grid.camera()->position();auto orientation=grid.camera()->orientation();auto pivot=grid.camera()->pivotPoint();vec3 delta;
