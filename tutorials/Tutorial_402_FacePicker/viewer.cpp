@@ -25,12 +25,6 @@
  ********************************************************************/
 
 #include "viewer.h"
-#if EASY3D_TUTORIAL_USES_VULKAN
-#define GLFW_INCLUDE_NONE
-#include <3rd_party/glfw/include/GLFW/glfw3.h>
-#else
-#include <easy3d/gui/picker_surface_mesh.h>
-#endif
 #include <easy3d/renderer/camera.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/drawable_lines.h>
@@ -52,8 +46,7 @@ TutorialFacePicker::TutorialFacePicker(const std::string &title) : Viewer(title)
 
 
 bool TutorialFacePicker::mouse_press_event(int x, int y, int button, int modifiers) {
-#if EASY3D_TUTORIAL_USES_VULKAN
-    if (button==GLFW_MOUSE_BUTTON_LEFT && modifiers==0) {
+    if (button==BUTTON_LEFT && modifiers==0) {
         const auto hit=pick(x,y);
         for (const auto& m:models()) for (const auto& d:m->renderer()->triangles_drawables()) d->set_highlight(false);
         auto* model=dynamic_cast<SurfaceMesh*>(hit.model.get());
@@ -68,32 +61,6 @@ bool TutorialFacePicker::mouse_press_event(int x, int y, int button, int modifie
         }
         update();
     }
-#else
-    auto model = dynamic_cast<SurfaceMesh *>(current_model());
-    if (model) {
-        SurfaceMeshPicker picker(camera());
-        auto face = picker.pick_face(model, x, y);
-        if (face.is_valid())  // picked a face
-            std::cout << "picked face " << face << std::endl;
-
-        // highlight the picked face in the model 
-        // always treat the model as a general polygonal mesh.
-        auto drawable = model->renderer()->get_triangles_drawable("faces");
-        auto triangle_range = model->get_face_property<std::pair<int, int> >("f:triangle_range");
-        if (triangle_range && face.is_valid()) {
-            const auto& range = triangle_range[face];
-            drawable->set_highlight_range(range);
-            drawable->set_highlight(true);
-        }
-        else {
-            drawable->set_highlight_range(std::make_pair(-1, -1));
-            drawable->set_highlight(false);
-        }
-
-        LOG_IF(!triangle_range, ERROR) << "face property 'f:triangle_range' not defined";
-    }
-
-#endif
     return Viewer::mouse_press_event(x, y, button, modifiers);
 }
 

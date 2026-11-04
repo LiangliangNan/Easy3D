@@ -2,6 +2,10 @@ set(module viewer)
 set(private_dependencies)
 set(public_dependencies easy3d::renderer)
 list(APPEND private_dependencies 3rd_glfw)
+if(NOT Easy3D_ENABLE_VULKAN)
+    # The OpenGL host implements the unified picking API with the shared GUI pickers.
+    list(APPEND private_dependencies easy3d::gui)
+endif()
 set(viewer_headers viewer.h multi_viewer.h offscreen.h viewer_input.h viewer_callbacks.h viewer_base.h)
 set(viewer_sources viewer.cpp snapshot.cpp multi_viewer.cpp offscreen.cpp viewer_base.cpp backends/glfw_runtime.cpp)
 

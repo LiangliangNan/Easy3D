@@ -1227,6 +1227,7 @@ bool Viewer::drop_event(const std::vector<std::string>& names) {
 #include <easy3d/fileio/poly_mesh_io.h>
 #include <easy3d/fileio/ply_reader_writer.h>
 #include <easy3d/fileio/point_cloud_io_ptx.h>
+#include <easy3d/gui/picker_surface_mesh.h>
 #include <easy3d/util/dialog.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
@@ -1248,6 +1249,35 @@ void Viewer::viewer_size(int& w, int& h) const { w = width_; h = height_; }
 float Viewer::dpi_scaling() const { return dpi_scaling_; }
 
 
+
+Viewer::PickResult Viewer::pick(int x, int y) const {
+    PickResult result;
+    if (x < 0 || y < 0 || x >= framebuffer_width() || y >= framebuffer_height()) return result;
+    const Camera* cam = camera();
+    for (auto model : models()) {
+        Renderer* renderer = model->renderer();
+        if (!renderer || !renderer->is_visible()) continue;
+        const auto* mesh = dynamic_cast<const SurfaceMesh*>(model.get());
+        if (!mesh) continue;
+        SurfaceMeshPicker picker(cam);
+        const auto face = picker.pick_face(const_cast<SurfaceMesh*>(mesh), x, y);
+        if (!face.is_valid() || !mesh->is_valid(face) || mesh->is_deleted(face)) continue;
+        const auto drawable = renderer->get_triangles_drawable("faces");
+        if (!drawable) continue;
+        result.model = model;
+        result.drawable = std::shared_ptr<Drawable>(drawable);
+        result.face_index = face.idx();
+        const auto ranges = mesh->get_face_property<std::pair<int,int>>("f:triangle_range");
+        if (ranges) {
+            const auto& range = ranges[face];
+            if (range.second > 0) result.primitive = uint32_t(range.first);
+        }
+        result.position = cam->unprojectedCoordinatesOf(vec3(static_cast<float>(x), static_cast<float>(y), 1.0f));
+        result.depth = 1.0f;
+        return result;
+    }
+    return result;
+}
 
     Viewer::Viewer(
             const std::string &title /* = "Easy3D Viewer" */,

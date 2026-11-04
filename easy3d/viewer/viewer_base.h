@@ -74,7 +74,7 @@ public:
     // logical coordinates map to their containing framebuffer pixel; returns
     // that pixel center's world position. Background/outside => found=false.
     // Scene only: HUD, clipping-plane guides and frame callbacks are excluded.
-    vec3 point_under_pixel(int x, int y, bool& found) const;
+    virtual vec3 point_under_pixel(int x, int y, bool& found) const;
     virtual bool open() = 0;
     virtual bool save() const = 0;
     virtual bool snapshot() const = 0;

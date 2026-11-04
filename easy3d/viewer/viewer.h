@@ -435,7 +435,7 @@ public:
          */
         // Legacy query of the current depth framebuffer. ViewerBase factory
         // results expose a fresh scene query in logical window coordinates.
-		virtual vec3 point_under_pixel(int x, int y, bool &found) const;
+		vec3 point_under_pixel(int x, int y, bool &found) const override;
 
         /**
          * \brief The usage information of the viewer.
@@ -498,6 +498,30 @@ public:
         bool is_animating() const override;
         //@}
 
+        /// \name Picking
+        //@{
+        /**
+         * \brief Outcome of a synchronous visible-surface pick.
+         * \details Coordinates are in top-left framebuffer pixels; the world point is
+         *      resolved through the camera of this host. Standalone drawables have a
+         *      model of null. Face indices describe the picked surface at query time and
+         *      are not updated by later topology edits.
+         */
+        struct PickResult {
+            std::shared_ptr<Model> model; // null for a standalone drawable
+            std::shared_ptr<Drawable> drawable;
+            std::uint32_t primitive = UINT32_MAX; // generated primitive within this drawable
+            int face_index = -1; // original SurfaceMesh face, when provenance is available
+            vec3 position = vec3(0); // world-space surface point at the pixel center
+            float depth = 1;
+            explicit operator bool() const { return bool(drawable); }
+        };
+        // Synchronous visible-surface picking, in top-left framebuffer pixels. Returns
+        // an empty result for background/outside pixels. Retains source ownership;
+        // face indices describe the current mesh, not future topology edits.
+        PickResult pick(int x, int y) const;
+        //@}
+
 #ifdef EASY3D_HAS_VULKAN
     // Transitional Vulkan-only scene APIs (docs/vulkan.md, U1b).
     // Triangle annotations and HUD overlays. Their immutable
@@ -516,19 +540,6 @@ public:
     // Effective planes: the enabled shared ClippingPlane takes precedence;
     // disabling it restores this host's explicitly configured planes.
     const std::vector<vec4>& clipping_planes() const;
-    struct PickResult {
-        std::shared_ptr<Model> model; // null for a standalone drawable
-        std::shared_ptr<Drawable> drawable;
-        std::uint32_t primitive = UINT32_MAX; // generated primitive within this drawable
-        int face_index = -1; // original SurfaceMesh face, when provenance is available
-        vec3 position = vec3(0); // world-space surface point at the pixel center
-        float depth = 1;
-        explicit operator bool() const { return bool(drawable); }
-    };
-    // Synchronous visible-surface picking, in top-left framebuffer pixels. Returns
-    // an empty result for background/outside pixels. Retains source ownership;
-    // face indices describe the current mesh, not future topology edits.
-    PickResult pick(int x, int y) const;
     // GPU through-selection; the request owns its point/polygon/bitset snapshot.
     std::vector<std::uint32_t> select_points(const graphics::PointSelectionRequest& request) const;
     // Unclipped immutable point positions shared by this drawable's rendering

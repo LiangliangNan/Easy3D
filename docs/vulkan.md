@@ -278,6 +278,12 @@ flat/smooth shading, background and canvas behavior.
 - The remaining migration build breaks are cleared. The OpenGL-only
   (`build-opengl`), Vulkan-only (`build-ci-vulkan`) and migration
   (`build-migration`) trees compile with tutorials enabled and finish clean.
+  The last cleared break was in the tutorial-reuse test sources
+  (`tests/viewer` compiles tutorial sources directly): the per-source
+  `main=easy3d_test_<tutorial>_main` rename was set without the matching
+  `EXAMPLE_TITLE="<tutorial>"` compile definition, so `Viewer viewer(EXAMPLE_TITLE);`
+  failed with `unknown type name 'EXAMPLE_TITLE'`. The source-file properties now
+  set both, and the full build finishes clean again.
 - The portable viewer contract no longer exposes `backend()` or
   `fallback_reason()`. Backend identity belongs to the concrete host class, and
   initialization failures report directly; runtime backend selection, the
@@ -316,7 +322,7 @@ Decisions in force:
 | 2. Align constructors, hooks, state | merged into U1 |
 | 3. `VulkanMultiViewer` | merged into U2 |
 | 4. Remove runtime selection | done (W4) |
-| 5. Tutorials on the shared API | in progress: GLFW Tutorial 202 now builds on Vulkan; effect tutorials 501–505 remain gated, and Qt/wx integration remains W10; `EASY3D_TUTORIAL_USES_VULKAN` remains in `viewer.h` and 9 tutorials (207, 306, 309, 401–405, 506) |
+| 5. Tutorials on the shared API | in progress: GLFW Tutorial 202 now builds on Vulkan; effect tutorials 501–505 remain gated, and Qt/wx integration remains W10; Tutorial 402 un-gated via the now-portable picking API (2026-11-04); `EASY3D_TUTORIAL_USES_VULKAN` remains in `viewer.h` and in the other conditional tutorials (207, 306, 309, 401, 403, 404, 405, 506) |
 | 6. Renderer, interaction, GUI/application parity | pending (W10) |
 
 Divergence audit (updated at U6b, 2026-11-04), against local `main` at
@@ -365,8 +371,10 @@ of this document.
 - **W5** (in progress) Remove `EASY3D_TUTORIAL_USES_VULKAN`. Five effect tutorials remain
   gated in `tutorials/CMakeLists.txt`: 501–505 require effect implementations (W10).
   Native Qt/wx integration remains W10.
-  Tutorial 202 now builds on both backends (U5d). Nine tutorials still have separate
-  renderer/picker/capture code behind the macro; see U5.
+  Tutorial 202 now builds on both backends (U5d); Tutorial 402 was un-gated through the
+  now-portable picking API (2026-11-04); the remaining tutorials with separate
+  renderer/picker/capture code behind the macro are 207, 306, 309, 401, 403, 404, 405 and
+  506; see U5.
 - **W6** (in progress) Run the Vulkan tests. Verified on Linux (GCC 13, Mesa lavapipe
   25.2.8, Xvfb), Vulkan tree with tutorials and tests, on upstream `a89bb2d` plus the
   fixes above (re-run 2026-10-31): 13 of 13 display-free and 55 of 56 desktop tests pass, including all 28
@@ -4543,3 +4551,30 @@ interactive loop in favor of the deployed-package test and CTest.
 Six tutorial main() guards have also been removed. Entry-point renaming is scoped
 to test-target sources in tests/viewer/CMakeLists.txt; production tutorial files
 no longer contain test macros, and their original main functions remain intact.
+
+### 2026-11-04 — W5 batch 1: portable picking API and Tutorial 402 un-gating
+
+Tutorial 402 (FacePicker) is now un-gated from `EASY3D_TUTORIAL_USES_VULKAN`. The
+unified `Viewer` now owns the synchronous visible-surface pick for both backends:
+`PickResult` and `Viewer::pick()` moved out of the Vulkan-only block of
+`easy3d/viewer/viewer.h` into the shared public API, and the OpenGL counterpart is
+implemented by the unified OpenGL host through the shared GUI pickers (face picking
+via `SurfaceMeshPicker`; drawable lookup and original face provenance from the
+renderer and mesh). The Vulkan counterpart is unchanged (device render with picking
+IDs, source mapping and face provenance). `easy3d/viewer/CMakeLists.txt` adds
+`easy3d::gui` as a private dependency in OpenGL builds only, because the OpenGL host
+now uses the shared pickers.
+
+Tutorial 402's backend conditional and its GUI-picker include are removed; the
+single `mouse_press_event` implementation uses the unified `pick()` and the shared
+renderer highlight API, retaining the face-highlight range from the mesh
+`f:triangle_range` face property.
+
+Validation on this Mac (Apple M4 Pro, MoltenVK): full Vulkan and OpenGL builds finish
+clean, including the OpenGL host implementation of `pick()`; the picking-related
+tutorial suites (401, 402, 403, 404, 405) and `vulkan.pickerviewer` pass (the latter
+passed on an isolated re-run after a parallel-load flake).
+
+Remaining W5 work: `EASY3D_TUTORIAL_USES_VULKAN` stays in `easy3d/viewer/viewer.h`
+and in the remaining conditional tutorials (207, 306, 309, 401, 403, 404, 405, 506),
+plus the two viewer tests; see the work order below.
