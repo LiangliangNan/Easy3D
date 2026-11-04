@@ -381,7 +381,7 @@ bool Viewer::render(const std::string& filename, float scaling, int samples, int
 #include <easy3d/renderer/backends/vulkan/surface.h>
 #include <easy3d/viewer/backends/viewer_loop.h>
 #include <easy3d/renderer/text_layout.h>
-#include <easy3d/renderer/backends/vulkan/shape.h>
+#include <easy3d/renderer/shape.h>
 #include <easy3d/renderer/backends/vulkan/key_frame_interpolator.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
 #include <easy3d/renderer/clipping_plane.h>
@@ -824,13 +824,13 @@ void Viewer::update_interaction_overlays(bool force) const {
     commands.insert(commands.end(),hint_commands_.begin(),hint_commands_.end());
     if (pivot) {
         const float x=pivot_pixel_.x,y=pivot_pixel_.y,size=10*dpi;
-        commands.push_back(vulkan::shape::draw_lines_2d({vec2(x-size,y),vec2(x+size,y),
+        commands.push_back(graphics::shape::draw_lines_2d({vec2(x-size,y),vec2(x+size,y),
                          vec2(x,y-size),vec2(x,y+size)},vec4(0,0,0,1),framebuffer_width(),framebuffer_height(),dpi));
     }
     if (zoom_region_ && (mouse_current_x_!=mouse_pressed_x_ || mouse_current_y_!=mouse_pressed_y_)) {
         const Rect rect{float(mouse_pressed_x_),float(mouse_current_x_),float(mouse_pressed_y_),float(mouse_current_y_)};
-        commands.push_back(vulkan::shape::draw_quad_filled(rect,vec4(0,0,1,.2f),framebuffer_width(),framebuffer_height()));
-        commands.push_back(vulkan::shape::draw_quad_wire(rect,vec4(0,0,1,1),framebuffer_width(),framebuffer_height(),dpi));
+        commands.push_back(graphics::shape::draw_quad_filled(rect,vec4(0,0,1,.2f),framebuffer_width(),framebuffer_height()));
+        commands.push_back(graphics::shape::draw_quad_wire(rect,vec4(0,0,1,1),framebuffer_width(),framebuffer_height(),dpi));
     }
     set_viewer_overlays(std::move(commands));
     pivot_hint_visible_=pivot; hint_width_=framebuffer_width(); hint_height_=framebuffer_height();
@@ -3033,7 +3033,7 @@ struct QueryContext {
 // Isolate the readback from HUD state, offscreen bindings and caller pixel-pack
 // buffers. No default framebuffer contents, camera or drawable settings change.
 struct QueryState {
-    static const unsigned flag_count = 16;
+    static const unsigned flag_count = 17;
     const GLenum flags[flag_count] = {GL_DEPTH_TEST,
                                       GL_BLEND,
                                       GL_SCISSOR_TEST,
@@ -3049,7 +3049,8 @@ struct QueryState {
                                       GL_POLYGON_SMOOTH,
                                       GL_SAMPLE_ALPHA_TO_COVERAGE,
                                       GL_SAMPLE_COVERAGE,
-                                      GL_SAMPLE_MASK};
+                                      GL_SAMPLE_MASK,
+                                      GL_FRAMEBUFFER_SRGB};
     GLboolean enabled[flag_count], depth_mask, color_mask[4];
     GLint viewport[4], draw_fbo, read_fbo, renderbuffer, program, vao, array, element, active, uniform, pack_buffer,
         depth_func;
@@ -3211,7 +3212,21 @@ void Viewer::draw_overlays(bool foreground) const {
     QueryState state;
     GLint viewport[4];glGetIntegerv(GL_VIEWPORT,viewport);
     state.prepare(viewport[2],viewport[3]);glViewport(viewport[0],viewport[1],viewport[2],viewport[3]);
-    overlay_renderer_->draw(foreground,framebuffer_width(),framebuffer_height(),overlay_tile_);
+    overlay_renderer_->draw(foreground,framebuffer_width(),framebuffer_height(),overlay_tile_,[&](int width,int height) {
+        QueryState depth_state;depth_state.prepare(width,height);
+        Camera snapshot(*camera());snapshot.frame()->setPivotPoint(camera()->pivotPoint());
+        snapshot.setScreenWidthAndHeight(width,height);snapshot.projectionMatrix();snapshot.modelViewMatrix();
+        mat4 projection=camera()->projectionMatrix();
+        if(overlay_tile_.z>0) {
+            mat4 full=mat4::identity();
+            full(0,0)=float(viewport[2])/width;full(1,1)=float(viewport[3])/height;
+            full(0,3)=float(2*overlay_tile_.x+viewport[2])/width-1;
+            full(1,3)=1-float(2*overlay_tile_.y+viewport[3])/height;
+            projection=full*projection;
+        }
+        snapshot.set_projection_matrix(projection);snapshot.set_modelview_matrix(camera()->modelViewMatrix());
+        draw_scene_depth(snapshot);
+    });
 }
 Viewer::PickResult Viewer::pick(int x, int y) const {
     PickResult result;

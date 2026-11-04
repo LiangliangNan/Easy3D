@@ -36,7 +36,6 @@
 
 namespace easy3d {
     class Camera;
-    class Texture;
     class LinesDrawable;
 }
 
@@ -134,27 +133,23 @@ private:
 
     void load_image();
 
-#if EASY3D_TUTORIAL_USES_VULKAN
     void pre_draw() override;
     void post_resize(int, int) override;
     std::shared_ptr<const easy3d::graphics::Image> image_;
     int image_view_ = -1;
     easy3d::Rect overlay_rect_{0,0,0,0};
     const easy3d::graphics::Image* overlay_image_ = nullptr;
-    std::size_t cross_revision_ = 0;
-    bool cross_visible_ = false;
+    bool cross_geometry_dirty_ = true;
+    std::vector<easy3d::vec3> cross_points_;
+    bool cross_overlay_visible_ = false;
     int overlay_width_ = 0, overlay_height_ = 0;
     std::vector<easy3d::graphics::DrawCommand> image_commands_;
     easy3d::graphics::DrawCommand cross_command_;
-#else
-    void post_draw() override;
-    easy3d::Texture* texture_;
-#endif
 
 private:
     easy3d::LinesDrawable* cameras_drawable_;
     easy3d::LinesDrawable* ray_drawable_;   // in 3D
-    std::shared_ptr<easy3d::LinesDrawable> cross_drawable_; // in image
+    bool cross_visible_ = false; // 2D annotation, never a scene drawable
 };
 
 

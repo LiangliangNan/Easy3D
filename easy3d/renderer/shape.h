@@ -30,6 +30,8 @@
 #include <vector>
 
 #include <easy3d/core/types.h>
+#include <easy3d/core/rect.h>
+#include <easy3d/renderer/render_device.h>
 
 
 namespace easy3d {
@@ -373,5 +375,24 @@ namespace easy3d {
     }
 
 }
+
+namespace easy3d { namespace graphics { namespace shape {
+// Backend-independent counterparts of the screen-space shape drawing helpers. Return
+// immutable triangle overlay commands; submission is the host's responsibility.
+graphics::DrawCommand draw_quad_filled(const Rect& rect, const vec4& color, unsigned width, unsigned height);
+// Counterpart of OpenGL's depth-texture quad: samples this frame's scene depth
+// directly on the GPU, in top-left image order. No image upload or CPU readback.
+graphics::DrawCommand draw_depth_texture(const Rect& rect, unsigned width, unsigned height);
+graphics::DrawCommand draw_quad_wire(const Rect& rect, const vec4& color, unsigned width, unsigned height,
+                                     float line_width = 1);
+graphics::DrawCommand draw_lines_2d(const std::vector<vec2>& segments, const vec4& color,
+                                   unsigned width, unsigned height, float line_width = 1);
+graphics::DrawCommand draw_lines_3d(const std::vector<vec3>& segments,const std::vector<vec3>& colors,
+                                   const mat4& mvp,unsigned width,unsigned height,float line_width = 1);
+// Depth-tested RGB box guide. Uses the same create_box() corner geometry as
+// OpenGL, expanding homogeneously clipped segments into triangle ribbons.
+graphics::DrawCommand draw_box_wire(const mat4& mvp,unsigned width,unsigned height,
+                                    float line_width = 1,bool abstracted = false);
+} } }
 
 #endif  // EASY3D_RENDERER_SHAPE_H

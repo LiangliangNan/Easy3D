@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "clipping_plane.h"
-#include "shape.h"
+#include <easy3d/renderer/shape.h>
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/manipulator.h>
@@ -35,7 +35,7 @@ std::vector<graphics::DrawCommand> ClippingPlaneRenderer::draw(const ClippingPla
     if (changed) {
         const std::vector<vec3> edges{corners[0],corners[1],corners[1],corners[2],
                                       corners[2],corners[3],corners[3],corners[0]};
-        wire_ = shape::draw_lines_3d(edges,std::vector<vec3>(8,vec3(1)),mvp,
+        wire_ = graphics::shape::draw_lines_3d(edges,std::vector<vec3>(8,vec3(1)),mvp,
                                     camera.screenWidth(),camera.screenHeight());
         wire_mvp_ = mvp; width_ = camera.screenWidth(); height_ = camera.screenHeight();
     }

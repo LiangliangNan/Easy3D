@@ -88,4 +88,17 @@ namespace easy3d {
         shape::draw_box_wire(drawable_model_bbox_, cam->modelViewProjectionMatrix(), manip, true);
     }
 
+graphics::DrawCommand Manipulator::draw_frame(const Camera* cam,int width,int height,float line_width) const {
+    if(!model_ || !cam || !model_->bounding_box().is_valid()) return {};
+    const auto box=model_->bounding_box();
+    const auto transform=matrix()*mat4::translation(box.center())*mat4::scale(box.range(0),box.range(1),box.range(2),1.0f);
+    const auto mvp=cam->modelViewProjectionMatrix()*transform;
+    bool same=frame_command_.geometry && frame_width_==width && frame_height_==height && frame_line_width_==line_width;
+    for(unsigned i=0;same && i<16;++i) same=frame_mvp_[i]==mvp[i];
+    if(!same) {
+        frame_command_=graphics::shape::draw_box_wire(mvp,width,height,line_width,true);
+        frame_mvp_=mvp;frame_width_=width;frame_height_=height;frame_line_width_=line_width;
+    }
+    return frame_command_;
+}
 }

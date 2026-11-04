@@ -3,7 +3,7 @@ set(private_dependencies)
 set(backend_sources)
 set(backend_headers)
 if(Easy3D_ENABLE_VULKAN)
-    list(APPEND backend_sources backends/vulkan/drawable.cpp backends/vulkan/shape.cpp backends/vulkan/manipulator.cpp
+    list(APPEND backend_sources backends/vulkan/drawable.cpp
             backends/vulkan/key_frame_interpolator.cpp backends/vulkan/clipping_plane.cpp)
     include(backends/vulkan/CMakeLists.txt)
 endif()

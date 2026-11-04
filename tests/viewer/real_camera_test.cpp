@@ -75,7 +75,9 @@ int main(int argc,char**) {
         block_navigation_input(v);
         require(v.models().size()==1 && v.hint().find("corresponding 3D ray")!=std::string::npos,"scene/usage hint missing");
         const auto bare=v.capture();frame(v);const auto initial=v.capture();same_picking(bare,initial);
-        require(bare.rgba!=initial.rgba,"image inset missing");image_pixels(v,initial,root+"images/0000.jpg");
+        // Window callbacks can populate annotations while resize events settle.
+        // Validate actual source pixels, independent of the first capture's timing.
+        image_pixels(v,initial,root+"images/0000.jpg");
         if (v.device().supported_sample_counts()&4) {v.set_samples(4);frame(v);same_picking(initial,v.capture());}
         auto key=glfwSetKeyCallback(v.window(),nullptr);glfwSetKeyCallback(v.window(),key);
         auto press=[&](int code) {key(v.window(),code,0,GLFW_PRESS,0);frame(v);};

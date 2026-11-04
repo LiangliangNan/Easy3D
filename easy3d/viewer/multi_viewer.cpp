@@ -44,7 +44,7 @@
 #include <limits>
 #include <stdexcept>
 #ifdef EASY3D_HAS_VULKAN
-#include <easy3d/renderer/backends/vulkan/shape.h>
+#include <easy3d/renderer/shape.h>
 #else
 #include <easy3d/renderer/opengl.h>
 #include <easy3d/renderer/framebuffer_object.h>
@@ -244,7 +244,7 @@ std::vector<graphics::DrawCommand> MultiViewer::draw_commands(const Camera& cam,
             for(int r=1;r<num_rows_;++r) {const float y=float(int64_t(r)*height/num_rows_);points.push_back(vec2(0,y));points.push_back(vec2(width,y));}
             for(int c=1;c<num_cols_;++c) {const float x=float(int64_t(c)*width/num_cols_);points.push_back(vec2(x,0));points.push_back(vec2(x,height));}
             division_commands_.clear();
-            if(!points.empty()) division_commands_.push_back(vulkan::shape::draw_lines_2d(points,vec4(0,0,0,1),width,height,dpi_scaling()));
+            if(!points.empty()) division_commands_.push_back(graphics::shape::draw_lines_2d(points,vec4(0,0,0,1),width,height,dpi_scaling()));
             division_width_=width;division_height_=height;
         }
         result.insert(result.end(),division_commands_.begin(),division_commands_.end());

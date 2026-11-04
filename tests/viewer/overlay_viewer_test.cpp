@@ -71,6 +71,7 @@ int main(int argc,char**) {return test::run("shared annotations and image/text t
     glPixelStorei(GL_UNPACK_ALIGNMENT,8);glPixelStorei(GL_UNPACK_ROW_LENGTH,13);glPixelStorei(GL_UNPACK_SKIP_ROWS,2);
     glActiveTexture(GL_TEXTURE3);glViewport(3,4,31,27);glColorMask(GL_FALSE,GL_TRUE,GL_FALSE,GL_TRUE);glDepthFunc(GL_GREATER);
     if(GLEW_VERSION_3_3 || GLEW_ARB_sampler_objects) {glGenSamplers(1,&sampler);glBindSampler(0,sampler);}
+    d.geometry=std::make_shared<graphics::Geometry>(vertices,std::vector<uint32_t>{0,1,2,0,2,3});
     v.set_overlays({d});v.draw();
     GLint active=0,vp[4],binding=0,row=0,skip=0,alignment=0,depth=0;GLboolean mask[4];
     glGetIntegerv(GL_ACTIVE_TEXTURE,&active);glGetIntegerv(GL_VIEWPORT,vp);glGetIntegerv(GL_PIXEL_UNPACK_BUFFER_BINDING,&binding);

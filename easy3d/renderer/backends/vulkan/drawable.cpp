@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "drawable.h"
-#include "shape.h"
+#include <easy3d/renderer/shape.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/drawable_lines.h>
@@ -59,7 +59,7 @@ struct DrawableRenderer::Impl {
                 const auto& p=data.vertices[index];
                 segments.emplace_back((p.x+1)*camera.screenWidth()*.5f,(1-p.y)*camera.screenHeight()*.5f);
             }
-            entry.command=shape::draw_lines_2d(segments,vec4(1),camera.screenWidth(),camera.screenHeight(),width);
+            entry.command=graphics::shape::draw_lines_2d(segments,vec4(1),camera.screenWidth(),camera.screenHeight(),width);
             entry.source=drawable;entry.revision=data.revision;entry.width=camera.screenWidth();entry.height=camera.screenHeight();
             entry.line_width=width;
         }

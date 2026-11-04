@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "key_frame_interpolator.h"
-#include "shape.h"
+#include <easy3d/renderer/shape.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
 #include <easy3d/renderer/shape.h>
 #include <easy3d/renderer/camera.h>
@@ -19,7 +19,7 @@ graphics::DrawCommand KeyFrameInterpolatorRenderer::draw_path(KeyFrameInterpolat
         path_positions_.clear();std::vector<vec3> segments;
         for (const auto& sample:samples) path_positions_.push_back(sample.position());
         for (size_t i=1;i<samples.size();++i) {segments.push_back(samples[i-1].position());segments.push_back(samples[i].position());}
-        path_command_=shape::draw_lines_3d(segments,std::vector<vec3>(segments.size(),vec3(1)),mvp,
+        path_command_=graphics::shape::draw_lines_3d(segments,std::vector<vec3>(segments.size(),vec3(1)),mvp,
                                           camera.screenWidth(),camera.screenHeight(),thickness);
         width_=camera.screenWidth();height_=camera.screenHeight();thickness_=thickness;path_mvp_=mvp;
     }

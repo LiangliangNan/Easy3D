@@ -118,23 +118,12 @@ void TutorialObjectManipulation::mark(Model* target) {
     }
     update();
 }
-#if EASY3D_TUTORIAL_USES_VULKAN
 void TutorialObjectManipulation::pre_draw() {
     const auto model=selected_model();
     if (model && model->renderer()->is_selected() && model->manipulator()) {
-        auto command=guide_.draw_frame(*model,*camera());
+        auto command=model->manipulator()->draw_frame(camera(),framebuffer_width(),framebuffer_height());
         set_overlays(command.geometry?std::vector<graphics::DrawCommand>{command}:std::vector<graphics::DrawCommand>{});
     } else {end_model_drag();selected_model_.reset();set_overlays({});}
 }
-#else
-bool TutorialObjectManipulation::draw() {
-    if (!Viewer::draw()) return false;
-    for (const auto& model : models()) {
-        if (model->renderer()->is_selected() && model->manipulator())
-            model->manipulator()->draw_frame(camera());
-    }
-    return true;
-}
-#endif
 
 // \endcond

@@ -28,6 +28,7 @@
 #define EASY3D_RENDERER_MANIPULATOR_H
 
 #include <easy3d/core/types.h>
+#include <easy3d/renderer/render_device.h>
 
 
 namespace easy3d {
@@ -78,10 +79,16 @@ namespace easy3d {
 
         /// Draws the manipulated frame.
         void draw_frame(const Camera* cam) const;
+        /// Immutable depth-tested frame annotation in framebuffer pixels, for Viewer::set_overlays().
+        graphics::DrawCommand draw_frame(const Camera* cam, int width, int height, float line_width = 1) const;
 
     protected:
         Model *model_; // the model to be manipulated
         ManipulatedFrame *frame_;
+        mutable graphics::DrawCommand frame_command_;
+        mutable mat4 frame_mvp_;
+        mutable int frame_width_ = 0, frame_height_ = 0;
+        mutable float frame_line_width_ = 0;
         LinesDrawable* drawable_model_bbox_;
     };
 

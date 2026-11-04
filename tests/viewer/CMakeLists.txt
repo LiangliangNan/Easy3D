@@ -299,4 +299,18 @@ else()
     set_tests_properties(opengl.annotations PROPERTIES LABELS desktop TIMEOUT 120)
 endif()
 
+add_executable(easy3d_annotation_tutorials_test annotation_tutorials_test.cpp
+    ../../tutorials/Tutorial_207_RealCamera/viewer.cpp
+    ../../tutorials/Tutorial_207_RealCamera/read_bundler_file.cpp
+    ../../tutorials/Tutorial_405_ObjectManipulation/viewer.cpp
+    ../../tutorials/Tutorial_506_DepthMap/viewer.cpp)
+target_link_libraries(easy3d_annotation_tutorials_test PRIVATE easy3d::viewer)
+if(Easy3D_ENABLE_VULKAN)
+    add_test(NAME vulkan.annotationtutorials COMMAND easy3d_annotation_tutorials_test)
+    set_tests_properties(vulkan.annotationtutorials PROPERTIES LABELS desktop TIMEOUT 180)
+else()
+    add_test(NAME opengl.annotationtutorials COMMAND easy3d_annotation_tutorials_test)
+    set_tests_properties(opengl.annotationtutorials PROPERTIES LABELS desktop TIMEOUT 180)
+endif()
+
 include(../properties.cmake)

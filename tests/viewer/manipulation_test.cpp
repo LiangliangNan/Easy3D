@@ -6,7 +6,7 @@
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/manipulated_frame.h>
-#include <easy3d/renderer/backends/vulkan/shape.h>
+#include <easy3d/renderer/shape.h>
 #include <easy3d/fileio/image_io.h>
 #include <easy3d/util/initializer.h>
 #define GLFW_INCLUDE_NONE
@@ -131,11 +131,11 @@ int main(int argc,char**) {
         retained->manipulator()->frame()->translate(vec3(.1f,0,0)); // no callback into the destroyed viewer
         // Frustum/eye-crossing and fully clipped box guides produce finite vertices.
         mat4 projection;projection.load_identity();projection(3,2)=1;projection(3,3)=.2f;
-        const auto clipped=vulkan::shape::draw_box_wire(projection,320,240,1,true);
+        const auto clipped=graphics::shape::draw_box_wire(projection,320,240,1,true);
         for (const auto& vertex:clipped.geometry->vertices()) for (unsigned c=0;c<3;++c)
             require(std::isfinite(vertex.position[c]),"eye-crossing guide produced non-finite coordinates");
         auto outside=mat4::translation(vec3(10,0,0));
-        require(vulkan::shape::draw_box_wire(outside,320,240).geometry->vertices().empty(),"offscreen guide was not clipped");
+        require(graphics::shape::draw_box_wire(outside,320,240).geometry->vertices().empty(),"offscreen guide was not clipped");
         std::cout<<"PASS: native object selection, shared transforms, constraints, depth/IDs/MSAA, occlusion and lifetime\n";
     } catch (const std::exception& e) {std::cerr<<"FAIL: "<<e.what()<<'\n';return 1;}
 }

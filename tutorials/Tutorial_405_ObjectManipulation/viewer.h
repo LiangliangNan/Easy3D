@@ -28,9 +28,6 @@
 #define EASY3D_TUTORIAL_OBJECT_MANIPULATION_VIEWER_H
 
 #include <easy3d/viewer/viewer.h>
-#if EASY3D_TUTORIAL_USES_VULKAN
-#include <easy3d/renderer/backends/vulkan/manipulator.h>
-#endif
 
 
 // This class demonstrates how to manipulate an object in the 3D space using the mouse
@@ -49,11 +46,7 @@ protected:
     bool mouse_release_event(int x,int y,int button,int modifiers) override;
     bool focus_event(bool focused) override;
     void post_resize(int width,int height) override;
-#if EASY3D_TUTORIAL_USES_VULKAN
     void pre_draw() override;
-#else
-    bool draw() override;
-#endif
 
 private:
     void mark(easy3d::Model *model);
@@ -61,9 +54,6 @@ private:
     std::shared_ptr<easy3d::Model> selected_model() const;
     void end_model_drag();
     std::weak_ptr<easy3d::Model> selected_model_, drag_model_;
-#if EASY3D_TUTORIAL_USES_VULKAN
-    easy3d::vulkan::ManipulatorRenderer guide_;
-#endif
 };
 
 

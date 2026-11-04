@@ -322,7 +322,7 @@ Decisions in force:
 | 2. Align constructors, hooks, state | merged into U1 |
 | 3. `VulkanMultiViewer` | merged into U2 |
 | 4. Remove runtime selection | done (W4) |
-| 5. Tutorials on the shared API | in progress: GLFW Tutorial 202 now builds on Vulkan; effect tutorials 501–505 remain gated, and Qt/wx integration remains W10; Tutorials 401/402 use shared visible-surface picking (2026-11-04); `EASY3D_TUTORIAL_USES_VULKAN` remains in `viewer.h` and in the other conditional tutorials (207, 403, 404, 405, 506) |
+| 5. Tutorials on the shared API | in progress: GLFW Tutorial 202 now builds on Vulkan; effect tutorials 501–505 remain gated, and Qt/wx integration remains W10; Tutorials 401/402 use shared visible-surface picking (2026-11-04); `EASY3D_TUTORIAL_USES_VULKAN` remains in `viewer.h` and in the other conditional tutorials (403, 404) |
 | 6. Renderer, interaction, GUI/application parity | pending (W10) |
 
 Divergence audit (updated at U6b, 2026-11-04), against local `main` at
@@ -373,9 +373,9 @@ of this document.
   Native Qt/wx integration remains W10.
   Tutorial 202 now builds on both backends (U5d); Tutorials 401/402 use shared
   visible-surface picking (2026-11-04). Tutorials 306/309 now use shared annotations
-  (W5 batch 4). The five remaining
-  tutorials with separate renderer/picker/capture code behind the macro are 207,
-  403, 404, 405 and 506; see U5.
+  (W5 batch 4). Tutorials 207/405/506 now use shared annotation geometry, guides
+  and GPU depth previews (W5 batch 5). Only 403 and 404 retain separate
+  selection/capture implementations behind the macro; see U5.
 - **W6** (in progress) Run the Vulkan tests. Verified on Linux (GCC 13, Mesa lavapipe
   25.2.8, Xvfb), Vulkan tree with tutorials and tests, on upstream `a89bb2d` plus the
   fixes above (re-run 2026-10-31): 13 of 13 display-free and 55 of 56 desktop tests pass, including all 28
@@ -449,8 +449,9 @@ of this document.
   built-in camera path for Tutorial 206 and shares frame-driven playback in Viewer.
   U5d implements the Vulkan ImGui counterpart and enables Tutorial 202.
   W5 batch 3 consolidates surface queries in ViewerBase and shares Tutorial 405's
-  selection/drag lifecycle; its guide rendering still needs a shared counterpart.
-  The five remaining conditional tutorials still require
+  selection/drag lifecycle. W5 batch 5 shares its guide rendering and removes the
+  selectors from Tutorials 207/405/506.
+  The two remaining conditional tutorials still require
   renderer/picker/capture API work; the tutorial macro is not yet removable. Avoid
   new generic Viewer abstractions solely for a single tutorial.
 - **U6** (in progress) U6a moves bounded tutorial tests out of tutorial CMake and
@@ -4720,3 +4721,65 @@ clip-edge check also passes on both backends. Native Vulkan tests use the existi
 validation/synchronization-validation harness. OpenGL text and scaled ImGui output
 were visually inspected. The prior intermittent window timeout did not recur.
 `git diff --check` is clean. Changes remain on `Easy3D-Vulkan` without a commit.
+
+
+### 2026-11-04 — W5 batch 5: shared shapes, calibrated camera, manipulation and depth preview
+
+Three more tutorials now use the same code under either configured backend:
+
+- **207 RealCamera:** one image-loading/annotation path, calibrated-view controls,
+  image border, scene-to-image marker and image-to-scene ray. Image rectangles are
+  in framebuffer pixels; legacy mouse-hook units convert once at the boundary and
+  scene queries receive logical coordinates. The 2D cross is CPU annotation data,
+  not an extra scene drawable or a second GPU vertex resource. Image/marker caches
+  retain immutable commands until their inputs change.
+- **405 ObjectManipulation:** one guide path in addition to its shared interaction.
+  The cached depth-tested command counterpart is an overload of the owning
+  `Manipulator::draw_frame(camera, width, height, line_width)` API. The original
+  one-argument immediate OpenGL helper remains available. The extra Vulkan
+  `ManipulatorRenderer` class and its two files are removed.
+- **506 DepthMap:** one GPU depth-preview implementation. OpenGL renders registered
+  scene drawables into a cached single-sample depth texture with their actual
+  shaders, then samples that texture in the annotation pass. There is no scene
+  depth readback or CPU image upload in this path. Thus clipping, transforms and
+  analytic impostors follow the shared scene query, independent of window MSAA.
+  Depth/IDs in the original scene target are untouched.
+
+The CPU ribbon, box, quad and depth-quad builders moved from Vulkan's shape files
+into the existing `renderer/shape.h/.cpp`, under `graphics::shape`. They retain
+homogeneous clipping and the existing pixel-width/depth behavior. Both obsolete
+Vulkan shape files are removed, and every renderer/viewer/tutorial/test consumer
+uses the shared location. No new public Viewer API, backend selector or directory
+is introduced. GPU-specific preview work stays in the OpenGL annotation backend;
+its scene callback uses the existing virtual scene-depth hook for MultiViewer.
+
+Scaled OpenGL snapshots reconstruct the full capture projection for the preview
+pass before sampling it across color-output tiles. The single-sample depth texture
+is sized to that capture and must fit the device's texture-size limit. The backend
+now reuses buffers/textures when immutable geometry/image snapshots are unchanged,
+while still redrawing source depth every frame. State isolation also restores
+framebuffer sRGB enablement. Lit and independent-depth OpenGL HUDs remain pending.
+
+The new root `annotation_tutorials_test.cpp` runs on both backends. It covers raw
+preview depth against picking, 1x/4x MSAA, 1x/1.5x/2x snapshots, geometry changes,
+hidden drawables, sphere depth, resize/clear, MultiViewer cell assignments, Retina
+hover rays, calibrated-view switching, guide cache invalidation and finite/clipped
+box geometry. Existing native Vulkan RealCamera, manipulation and depth-map tests
+retain their deeper source-ID/occlusion checks. Synthetic hover is rendered before
+polling native cursor input, keeping the desktop test deterministic.
+
+Remaining W5 selectors are Tutorial 403 (point selection), Tutorial 404 (virtual
+scanner), the compatibility macro in `viewer.h` and the remaining test uses. Their
+selection/capture implementations still need consolidation; W10 GUI/effects and
+the original TextRenderer/Texture API audit remain open.
+
+
+Validation on this Mac: complete builds, Python packaging and all 84 OpenGL tests
+pass. The final complete MoltenVK suite passes 111/111, including the existing
+validation/synchronization-validation targets and new paired-backend functional
+coverage. RealCamera initially exposed a test-only first-frame assumption: its
+initial capture can already contain the inset while window callbacks settle. The
+test now checks the source-image pixel oracle directly and retains scene depth/ID
+invariants; it also passed three consecutive isolated runs before the clean full
+run. OpenGL manipulation and MultiViewer depth-preview snapshots were visually
+inspected. `git diff --check` is clean; changes remain uncommitted on Easy3D-Vulkan.

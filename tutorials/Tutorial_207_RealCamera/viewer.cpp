@@ -31,21 +31,13 @@
 #include <easy3d/renderer/drawable_lines.h>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
-#include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/shape.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/transform.h>
 #include <easy3d/util/string.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/resource.h>
-#if EASY3D_TUTORIAL_USES_VULKAN
 #include <easy3d/fileio/image_io.h>
-#include <easy3d/renderer/backends/vulkan/shape.h>
-#else
-#include <easy3d/renderer/opengl.h>
-#include <easy3d/renderer/shader_program.h>
-#include <easy3d/renderer/shader_manager.h>
-#endif
 
 
 using namespace easy3d;
@@ -54,21 +46,11 @@ using namespace easy3d;
 
 const float scale = 0.3f;
 
-#if EASY3D_TUTORIAL_USES_VULKAN
 TutorialRealCamera::TutorialRealCamera(const std::string& title, const std::string& bundler_file,
                                      const std::string& cloud_file)
     : Viewer(title, 800, 600, 4, false, true, false), current_view_(0)
-#else
-TutorialRealCamera::TutorialRealCamera(const std::string& title,
-                       const std::string& bundler_file,
-                       const std::string& cloud_file)
-    : Viewer(title, 800, 600, 4, false, true, false)
-    , current_view_(0)
-    , texture_(nullptr)
-#endif
     , cameras_drawable_(nullptr)
     , ray_drawable_(nullptr)
-    , cross_drawable_(nullptr)
 {
     // Read the point cloud
     if (add_model(cloud_file)) {
@@ -99,11 +81,8 @@ TutorialRealCamera::TutorialRealCamera(const std::string& title,
 bool TutorialRealCamera::key_press_event(int key, int modifiers) {
     if (ray_drawable_)
         ray_drawable_->set_visible(false);
-    if (cross_drawable_)
-        cross_drawable_->set_visible(false);
-#if EASY3D_TUTORIAL_USES_VULKAN
+    cross_visible_=false;
     pre_draw(); // default snapshot shortcuts must see the cleared screen marker
-#endif
 
     if (key == KEY_SPACE) {
         if (!views_.empty()) {
@@ -162,7 +141,6 @@ bool TutorialRealCamera::key_press_event(int key, int modifiers) {
 
 void TutorialRealCamera::load_image() {
     const std::string image_file = resource::directory() + "/data/fountain/images/" + string::to_string(current_view_, 4, '0') + ".jpg";
-#if EASY3D_TUTORIAL_USES_VULKAN
     if (image_view_ == current_view_) return;
     image_.reset(); image_view_ = current_view_;
     int w=0,h=0,channels=0;std::vector<unsigned char> rgba;
@@ -170,9 +148,6 @@ void TutorialRealCamera::load_image() {
         graphics::Sampler sampler;sampler.filter=graphics::TextureFilter::linear;
         image_ = std::make_shared<graphics::Image>(w,h,std::move(rgba),sampler);
     }
-#else
-    texture_ = file_system::is_file(image_file) ? TextureManager::request(image_file) : nullptr;
-#endif
     update();
 }
 
@@ -232,41 +207,26 @@ void TutorialRealCamera::update_cameras_drawable(bool ground_truth)
 
 
 Rect TutorialRealCamera::calculate_image_rect() const {
-#if EASY3D_TUTORIAL_USES_VULKAN
     if (!image_) return {0,0,0,0};
     int tex_w = int(image_->width()), tex_h = int(image_->height());
-#else
-    if (texture_ == nullptr) {
-        LOG_N_TIMES(3, ERROR) << "image not shown";
-        return {0, 0, 0, 0};
-    }
-
-    int tex_w = texture_->width();
-    int tex_h = texture_->height();
-#endif
     const float image_as = static_cast<float>(tex_w) / static_cast<float>(tex_h);
-    const float viewer_as = static_cast<float>(camera()->screenWidth()) / static_cast<float>(camera()->screenHeight());
+    const float viewer_as = static_cast<float>(framebuffer_width()) / static_cast<float>(framebuffer_height());
     if (image_as < viewer_as) {// thin
-        tex_h = static_cast<int>(static_cast<float>(camera()->screenHeight()) * scale);
+        tex_h = static_cast<int>(static_cast<float>(framebuffer_height()) * scale);
         tex_w = static_cast<int>(static_cast<float>(tex_h) * image_as);
     }
     else {
-        tex_w = static_cast<int>(static_cast<float>(camera()->screenWidth()) * scale);
+        tex_w = static_cast<int>(static_cast<float>(framebuffer_width()) * scale);
         tex_h = static_cast<int>(static_cast<float>(tex_w) / image_as);
     }
 
-#if EASY3D_TUTORIAL_USES_VULKAN
     const float x = 20*dpi_scaling(), y = 120*dpi_scaling();
-#else
-    const float x = 20, y = 120;
-#endif
     return Rect(x, x + static_cast<float>(tex_w), y, y + static_cast<float>(tex_h));
 }
 
 
-#if EASY3D_TUTORIAL_USES_VULKAN
 void TutorialRealCamera::post_resize(int, int) {
-    if (cross_drawable_) cross_drawable_->set_visible(false);
+    cross_visible_=false;
 }
 void TutorialRealCamera::pre_draw() {
     if (!image_) {
@@ -285,63 +245,21 @@ void TutorialRealCamera::pre_draw() {
         for (unsigned i=0;i<4;++i) {vertices[i].position=vec3(corners[i],0);vertices[i].texcoord=uv[i];}
         graphics::DrawCommand image;image.geometry=std::make_shared<graphics::Geometry>(vertices,std::vector<uint32_t>{0,1,2,0,2,3});
         image.texture=image_;image.model_view_projection=graphics::screen_space_projection(framebuffer_width(),framebuffer_height());
-        image_commands_={image,vulkan::shape::draw_quad_wire(rect,vec4(1,0,0,1),framebuffer_width(),framebuffer_height(),dpi_scaling())};
+        image_commands_={image,graphics::shape::draw_quad_wire(rect,vec4(1,0,0,1),framebuffer_width(),framebuffer_height(),dpi_scaling())};
         overlay_image_=image_.get();overlay_rect_=rect;overlay_width_=framebuffer_width();overlay_height_=framebuffer_height();
     }
-    const bool visible=cross_drawable_ && cross_drawable_->is_visible();
-    const size_t revision=cross_drawable_ ? cross_drawable_->cpu_buffers().revision : 0;
-    const bool cross_changed=visible!=cross_visible_ || revision!=cross_revision_ || changed;
+    const bool visible=cross_visible_;
+    const bool cross_changed=visible!=cross_overlay_visible_ || cross_geometry_dirty_ || changed;
     if (visible && cross_changed) {
         std::vector<vec2> segments;
-        for (const auto& p:cross_drawable_->cpu_buffers().vertices) segments.emplace_back(p.x,p.y);
-        cross_command_=vulkan::shape::draw_lines_2d(segments,vec4(0,1,0,1),framebuffer_width(),framebuffer_height(),3*dpi_scaling());
+        for (const auto& p:cross_points_) segments.emplace_back(p.x,p.y);
+        cross_command_=graphics::shape::draw_lines_2d(segments,vec4(0,1,0,1),framebuffer_width(),framebuffer_height(),3*dpi_scaling());
     }
     if (changed || cross_changed) {
         auto commands=image_commands_;if (visible) commands.push_back(cross_command_);
-        set_overlays(std::move(commands));cross_visible_=visible;cross_revision_=revision;
+        set_overlays(std::move(commands));cross_overlay_visible_=visible;cross_geometry_dirty_=false;
     }
 }
-#else
-void TutorialRealCamera::post_draw() {
-    if (texture_ == nullptr)
-        return;
-
-    const Rect image_rect = calculate_image_rect();
-    const Rect quad(image_rect.x_min() * dpi_scaling(), image_rect.x_max() * dpi_scaling(),
-                    image_rect.y_min() * dpi_scaling(), image_rect.y_max() * dpi_scaling());
-
-    const int w = static_cast<int>(static_cast<float>(width()) * dpi_scaling());
-    const int h = static_cast<int>(static_cast<float>(height()) * dpi_scaling());
-    shape::draw_quad_filled(quad, texture_->id(), w, h, -0.9f);
-    shape::draw_quad_wire(quad, vec4(1.0f, 0.0f, 0.0f, 1.0f), w, h, -0.99f);
-
-    if (cross_drawable_ && cross_drawable_->is_visible()) {
-        ShaderProgram *program = ShaderManager::get_program("lines/lines_plain_color");
-        if (!program) {
-            std::vector<ShaderProgram::Attribute> attributes;
-            attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-            attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"));
-            program = ShaderManager::create_program_from_files("lines/lines_plain_color", attributes);
-        }
-        if (!program)
-            return;
-
-        const mat4 &proj = transform::ortho(0.0f, static_cast<float>(width()), static_cast<float>(height()), 0.0f,
-                                            0.0f, -1.0f);
-        glDisable(GL_DEPTH_TEST);   // always on top
-        program->bind();
-        program->set_uniform("MVP", proj);
-        program->set_uniform("per_vertex_color", false);
-        program->set_uniform("default_color", vec4(0.0f, 1.0f, 0.0f, 1.0f));
-        cross_drawable_->gl_draw();
-        program->release();
-        glEnable(GL_DEPTH_TEST);   // restore
-    }
-
-    Viewer::post_draw();
-}
-
-#endif
 
 bool TutorialRealCamera::mouse_free_move_event(int x, int y, int dx, int dy, int modifiers) {
     (void) dx;
@@ -353,9 +271,11 @@ bool TutorialRealCamera::mouse_free_move_event(int x, int y, int dx, int dy, int
         return false;
     }
 
+    x=int(double(x)*framebuffer_width()/camera()->screenWidth());
+    y=int(double(y)*framebuffer_height()/camera()->screenHeight());
     const CameraPara &cam = views_[current_view_];
     const Rect image_rect = calculate_image_rect();
-    if (cross_drawable_) cross_drawable_->set_visible(false);
+    cross_visible_=false;
     // cursor is inside the image rectangle
     if (static_cast<float>(x) >= image_rect.x_min() && static_cast<float>(x) <= image_rect.x_max() && static_cast<float>(y) >= image_rect.y_min() && static_cast<float>(y) <= image_rect.y_max()) {
         const float image_x = (static_cast<float>(x) - image_rect.x_min()) / image_rect.width() * static_cast<float>(cam.w);
@@ -378,8 +298,8 @@ bool TutorialRealCamera::mouse_free_move_event(int x, int y, int dx, int dy, int
             ray_drawable_->set_visible(false);
 
         bool found(false);
-        const vec3 p = point_under_pixel(int(double(x)*width()/camera()->screenWidth()),
-                                         int(double(y)*height()/camera()->screenHeight()), found);
+        const vec3 p = point_under_pixel(int(double(x)*width()/framebuffer_width()),
+                                         int(double(y)*height()/framebuffer_height()), found);
         if (found) {
             const vec2 q = point_to_pixel(p, cam.fx, cam.fy, 0, cam.cx, cam.cy, cam.R, cam.t);
 
@@ -387,31 +307,18 @@ bool TutorialRealCamera::mouse_free_move_event(int x, int y, int dx, int dy, int
             if (q.x >= 0 && q.x <= static_cast<float>(cam.w) && q.y >= 0 && q.y <= static_cast<float>(cam.h)) {
                 const float screen_x = q.x / static_cast<float>(cam.w) * image_rect.width() + image_rect.x_min();
                 const float screen_y = q.y / static_cast<float>(cam.h) * image_rect.height() + image_rect.y_min();
-                if (!cross_drawable_) {
-                    cross_drawable_.reset(new LinesDrawable("cross"));
-#if !EASY3D_TUTORIAL_USES_VULKAN
-                    add_drawable(cross_drawable_);
-#endif
-                    cross_drawable_->set_line_width(3.0f);
-                }
 
-#if EASY3D_TUTORIAL_USES_VULKAN
+
                 const float size = 10*dpi_scaling();
-#elif defined(__APPLE__)
-                const float size = 10;
-#else
-                const float size = static_cast<float>(10 * dpi_scaling());
-#endif
                 const std::vector<vec3> points = {
                         vec3(screen_x - size, screen_y, 0.5f), vec3(screen_x + size, screen_y, 0.5f),
                         vec3(screen_x, screen_y - size, 0.5f), vec3(screen_x, screen_y + size, 0.5f)
                 };
-                cross_drawable_->update_vertex_buffer(points);
-                cross_drawable_->set_visible(true);
+                cross_points_=points;cross_geometry_dirty_=true;
+                cross_visible_=true;
             }
         } else {
-            if (cross_drawable_)
-                cross_drawable_->set_visible(false);
+            cross_visible_=false;
         }
 
         update();

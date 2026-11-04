@@ -15,12 +15,20 @@ void OverlayRenderer::clear() {
 }
 void OverlayRenderer::set(std::vector<graphics::DrawCommand> commands,bool foreground) {
     for(const auto& c:commands) if(c.geometry && (c.geometry->topology()!=graphics::Topology::triangles ||
-        c.overlay_independent_depth || c.scene_depth_texture || c.lighting))
+        c.overlay_independent_depth || c.lighting || (c.scene_depth_texture && (c.texture || c.overlay_depth_test))))
         throw std::invalid_argument("OpenGL annotations currently support unlit flat/scene-depth triangles only");
-    clear();foreground_=foreground;
+    bool same=commands.size()==draws_.size();
+    for(size_t i=0;same && i<commands.size();++i)
+        same=commands[i].geometry==draws_[i].command.geometry && commands[i].texture==draws_[i].command.texture;
+    foreground_=foreground;
+    if(same) {
+        for(size_t i=0;i<commands.size();++i) draws_[i].command=std::move(commands[i]);
+        return;
+    }
+    clear();
     for(auto& c:commands) { Draw d;d.command=std::move(c);draws_.push_back(std::move(d)); }
 }
-void OverlayRenderer::draw(bool foreground,int sw,int sh,const ivec4& tile) {
+void OverlayRenderer::draw(bool foreground,int sw,int sh,const ivec4& tile,const std::function<void(int,int)>& draw_depth) {
     if(foreground!=foreground_ || draws_.empty()) return;
     if(!shader_) {
         shader_.reset(new ShaderProgram("viewer annotations"));
@@ -28,7 +36,7 @@ void OverlayRenderer::draw(bool foreground,int sw,int sh,const ivec4& tile) {
         if(!shader.load_shader_from_code(ShaderProgram::VERTEX,
             "#version 150\nin vec3 position;in vec4 color;in vec2 uv;uniform mat4 mvp;out vec4 tint;out vec2 texcoord;void main(){gl_Position=mvp*vec4(position,1);tint=color;texcoord=uv;}") ||
            !shader.load_shader_from_code(ShaderProgram::FRAGMENT,
-            "#version 150\nin vec4 tint;in vec2 texcoord;uniform vec4 color;uniform sampler2D image;out vec4 fragment;void main(){fragment=tint*color*texture(image,texcoord);}"))
+            "#version 150\nin vec4 tint;in vec2 texcoord;uniform vec4 color;uniform sampler2D image;uniform bool depth_image;out vec4 fragment;void main(){fragment=depth_image?vec4(vec3(texture(image,vec2(texcoord.x,1-texcoord.y)).r),1):tint*color*texture(image,texcoord);}"))
             throw std::runtime_error("cannot compile annotation shader");
         shader.set_attrib_name(ShaderProgram::POSITION,"position");
         shader.set_attrib_name(ShaderProgram::COLOR,"color");
@@ -38,6 +46,22 @@ void OverlayRenderer::draw(bool foreground,int sw,int sh,const ivec4& tile) {
     const auto program_=shader_->get_program();
     GLint viewport[4];glGetIntegerv(GL_VIEWPORT,viewport);
     const int width=tile.z>0?tile.z:viewport[2],height=tile.w>0?tile.w:viewport[3];
+    bool needs_depth=false;
+    for(const auto& d:draws_) needs_depth|=d.command.geometry && d.command.scene_depth_texture;
+    if(needs_depth) {
+        GLint draw_fbo=0,read_fbo=0;glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING,&draw_fbo);glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING,&read_fbo);
+        if(!depth_ || depth_->width()!=width || depth_->height()!=height) {
+            depth_.reset(new FramebufferObject(width,height,0));
+            if(!depth_->add_depth_texture(GL_DEPTH_COMPONENT32F,GL_NEAREST,GL_NONE))
+                throw std::runtime_error("cannot allocate annotation scene depth");
+            depth_->deactivate_draw_buffers();
+        }
+        if(!depth_->bind()) throw std::runtime_error("cannot bind annotation scene depth");
+        glDepthMask(GL_TRUE);glClearDepth(1);glClear(GL_DEPTH_BUFFER_BIT);
+        draw_depth(width,height);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER,draw_fbo);glBindFramebuffer(GL_READ_FRAMEBUFFER,read_fbo);
+        glViewport(viewport[0],viewport[1],viewport[2],viewport[3]);
+    }
     glUseProgram(program_);glUniform1i(glGetUniformLocation(program_,"image"),0);
     glEnable(GL_BLEND);glBlendFuncSeparate(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA,GL_ONE,GL_ONE_MINUS_SRC_ALPHA);
     glBlendEquationSeparate(GL_FUNC_ADD,GL_FUNC_ADD);glDepthMask(GL_FALSE);glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
@@ -86,7 +110,9 @@ void OverlayRenderer::draw(bool foreground,int sw,int sh,const ivec4& tile) {
         glEnable(GL_SCISSOR_TEST);glScissor(viewport[0]+vp.x-tile.x,viewport[1]+viewport[3]-vp.y-vp.w+tile.y,vp.z,vp.w);
         if(c.overlay_depth_test) {glEnable(GL_DEPTH_TEST);glDepthFunc(GL_LEQUAL);} else glDisable(GL_DEPTH_TEST);
         glUniformMatrix4fv(glGetUniformLocation(program_,"mvp"),1,GL_FALSE,c.model_view_projection);
-        glUniform4fv(glGetUniformLocation(program_,"color"),1,c.color);glBindVertexArray(d.vao);glBindTexture(GL_TEXTURE_2D,d.texture);
+        glUniform4fv(glGetUniformLocation(program_,"color"),1,c.color);glBindVertexArray(d.vao);
+        glUniform1i(glGetUniformLocation(program_,"depth_image"),c.scene_depth_texture);
+        glBindTexture(GL_TEXTURE_2D,c.scene_depth_texture?depth_->depth_texture():d.texture);
         if(d.indices) glDrawElements(GL_TRIANGLES,c.geometry->indices().size(),GL_UNSIGNED_INT,nullptr);
         else glDrawArrays(GL_TRIANGLES,0,c.geometry->vertices().size());
     }

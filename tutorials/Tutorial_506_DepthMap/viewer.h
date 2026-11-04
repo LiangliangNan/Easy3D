@@ -32,10 +32,6 @@
 
 // This DepthMap class visualizes 3D models as depth images.
 
-namespace easy3d {
-    class FramebufferObject;
-}
-
 
 class TutorialDepthMap : public easy3d::Viewer
 {
@@ -44,22 +40,13 @@ public:
     ~TutorialDepthMap() override;
 
 protected:
-#if EASY3D_TUTORIAL_USES_VULKAN
     void pre_draw() override;
-#else
-    bool draw() override;
-    void generate_depth();
-#endif
     void draw_depth() const;
 
 private:
-#if EASY3D_TUTORIAL_USES_VULKAN
     mutable int depth_width_ = 0, depth_height_ = 0;
     mutable float depth_dpi_ = 0;
     mutable std::vector<easy3d::graphics::DrawCommand> depth_commands_;
-#else
-    easy3d::FramebufferObject* fbo_;
-#endif
 };
 
 
