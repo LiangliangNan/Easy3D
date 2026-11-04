@@ -276,4 +276,15 @@ endif()
         set_tests_properties(opengl.imgui PROPERTIES TIMEOUT 120 LABELS desktop)
     endif()
 
+add_executable(easy3d_portable_pick_test portable_pick_test.cpp
+    ../../tutorials/Tutorial_401_ModelPicker/viewer.cpp ../../tutorials/Tutorial_402_FacePicker/viewer.cpp)
+target_link_libraries(easy3d_portable_pick_test PRIVATE easy3d::viewer)
+if(Easy3D_ENABLE_VULKAN)
+    add_test(NAME vulkan.portablepick COMMAND easy3d_portable_pick_test --validation)
+    set_tests_properties(vulkan.portablepick PROPERTIES LABELS desktop TIMEOUT 120)
+else()
+    add_test(NAME opengl.portablepick COMMAND easy3d_portable_pick_test)
+    set_tests_properties(opengl.portablepick PROPERTIES LABELS desktop TIMEOUT 120)
+endif()
+
 include(../properties.cmake)

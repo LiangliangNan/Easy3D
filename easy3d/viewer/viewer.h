@@ -510,7 +510,7 @@ public:
         struct PickResult {
             std::shared_ptr<Model> model; // null for a standalone drawable
             std::shared_ptr<Drawable> drawable;
-            std::uint32_t primitive = UINT32_MAX; // generated primitive within this drawable
+            std::uint32_t primitive = UINT32_MAX; // generated primitive, or UINT32_MAX when unavailable
             int face_index = -1; // original SurfaceMesh face, when provenance is available
             vec3 position = vec3(0); // world-space surface point at the pixel center
             float depth = 1;

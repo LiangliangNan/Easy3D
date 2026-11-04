@@ -25,12 +25,6 @@
  ********************************************************************/
 
 #include "viewer.h"
-#if EASY3D_TUTORIAL_USES_VULKAN
-#define GLFW_INCLUDE_NONE
-#include <3rd_party/glfw/include/GLFW/glfw3.h>
-#else
-#include <easy3d/gui/picker_model.h>
-#endif
 #include <easy3d/renderer/camera.h>
 #include <easy3d/core/model.h>
 #include <easy3d/renderer/drawable_triangles.h>
@@ -53,13 +47,11 @@ TutorialModelPicker::TutorialModelPicker(const std::string &title) : Viewer(titl
 
 
 bool TutorialModelPicker::mouse_press_event(int x, int y, int button, int modifiers) {
-#if EASY3D_TUTORIAL_USES_VULKAN
-    const auto hit=(button==GLFW_MOUSE_BUTTON_LEFT && modifiers==0) ? pick(x,y) : PickResult{};
+    // Legacy mouse hooks use camera screen units; pick() uses framebuffer pixels.
+    const int px=int(double(x)*framebuffer_width()/camera()->screenWidth());
+    const int py=int(double(y)*framebuffer_height()/camera()->screenHeight());
+    const auto hit=(button==BUTTON_LEFT && modifiers==0)?pick(px,py):PickResult{};
     auto* model=hit.model.get();
-#else
-    ModelPicker picker(camera());
-    auto model = picker.pick(models(), x, y);
-#endif
     if (model)
         mark(model);
 

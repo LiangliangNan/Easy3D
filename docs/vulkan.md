@@ -322,7 +322,7 @@ Decisions in force:
 | 2. Align constructors, hooks, state | merged into U1 |
 | 3. `VulkanMultiViewer` | merged into U2 |
 | 4. Remove runtime selection | done (W4) |
-| 5. Tutorials on the shared API | in progress: GLFW Tutorial 202 now builds on Vulkan; effect tutorials 501–505 remain gated, and Qt/wx integration remains W10; Tutorial 402 un-gated via the now-portable picking API (2026-11-04); `EASY3D_TUTORIAL_USES_VULKAN` remains in `viewer.h` and in the other conditional tutorials (207, 306, 309, 401, 403, 404, 405, 506) |
+| 5. Tutorials on the shared API | in progress: GLFW Tutorial 202 now builds on Vulkan; effect tutorials 501–505 remain gated, and Qt/wx integration remains W10; Tutorials 401/402 use shared visible-surface picking (2026-11-04); `EASY3D_TUTORIAL_USES_VULKAN` remains in `viewer.h` and in the other conditional tutorials (207, 306, 309, 403, 404, 405, 506) |
 | 6. Renderer, interaction, GUI/application parity | pending (W10) |
 
 Divergence audit (updated at U6b, 2026-11-04), against local `main` at
@@ -371,9 +371,9 @@ of this document.
 - **W5** (in progress) Remove `EASY3D_TUTORIAL_USES_VULKAN`. Five effect tutorials remain
   gated in `tutorials/CMakeLists.txt`: 501–505 require effect implementations (W10).
   Native Qt/wx integration remains W10.
-  Tutorial 202 now builds on both backends (U5d); Tutorial 402 was un-gated through the
-  now-portable picking API (2026-11-04); the remaining tutorials with separate
-  renderer/picker/capture code behind the macro are 207, 306, 309, 401, 403, 404, 405 and
+  Tutorial 202 now builds on both backends (U5d); Tutorials 401/402 use shared
+  visible-surface picking (2026-11-04). The seven remaining tutorials with separate
+  renderer/picker/capture code behind the macro are 207, 306, 309, 403, 404, 405 and
   506; see U5.
 - **W6** (in progress) Run the Vulkan tests. Verified on Linux (GCC 13, Mesa lavapipe
   25.2.8, Xvfb), Vulkan tree with tutorials and tests, on upstream `a89bb2d` plus the
@@ -447,7 +447,7 @@ of this document.
   controller across both builds, retiring its detached OpenGL timer. U5c reuses the
   built-in camera path for Tutorial 206 and shares frame-driven playback in Viewer.
   U5d implements the Vulkan ImGui counterpart and enables Tutorial 202.
-  The 9 remaining tutorials still require
+  The seven remaining conditional tutorials still require
   renderer/picker/capture API work; the tutorial macro is not yet removable. Avoid
   new generic Viewer abstractions solely for a single tutorial.
 - **U6** (in progress) U6a moves bounded tutorial tests out of tutorial CMake and
@@ -4578,3 +4578,51 @@ passed on an isolated re-run after a parallel-load flake).
 Remaining W5 work: `EASY3D_TUTORIAL_USES_VULKAN` stays in `easy3d/viewer/viewer.h`
 and in the remaining conditional tutorials (207, 306, 309, 401, 403, 404, 405, 506),
 plus the two viewer tests; see the work order below.
+
+
+### 2026-11-04 — W5 batch 2: visible-surface picking correctness and Tutorial 401
+
+Building on batch 1's shared API, Tutorial 401 now uses `Viewer::pick()` with no
+backend selector or GUI picker include. Tutorials 401/402 convert legacy camera
+screen coordinates to framebuffer pixels, preserving clicks on Retina displays.
+
+The OpenGL counterpart now tests actual drawable depth across all visible models
+and standalone triangle, point and line drawables, excluding 2D HUD geometry. It
+returns the nearest source, true surface depth and the world point at the queried
+pixel center. Existing shared owners are retained; constructing an independent
+shared owner from a renderer-owned raw pointer is eliminated. Actual drawable
+shaders preserve clipping, manipulation and sphere-impostor depth. Context and
+OpenGL state are restored after queries. The temporary dependency from viewer to
+GUI is removed.
+
+OpenGL currently performs one synchronous depth read per visible drawable. For a
+winning triangle drawable it temporarily reads its existing vertex/index buffers
+to recover triangle provenance; primary mesh faces map through `f:triangle_range`.
+Point and line primitive IDs remain unavailable (`UINT32_MAX`) on OpenGL, although
+source, depth and position are returned. This is a correctness step, not an
+optimized integer-ID picking pass. Vulkan retains its existing GPU ID path. No
+persistent geometry copy or point-position upload is added.
+
+The shared regression in `tests/viewer/portable_pick_test.cpp` covers nearest
+occlusion, hidden/clipped geometry, transformed meshes, source lifetime, standalone
+spheres/lines, HUD exclusion, pixel-center reconstruction, 1x/4x MSAA, native-DPI
+Tutorial 401/402 input and OpenGL state restoration. All tests remain under root
+`tests/`, controlled solely by `Easy3D_BUILD_TESTS`.
+
+
+Broader validation also exposed unintended virtual dispatch in the Python binding
+and shared-query regressions: casting to `ViewerBase&` still called the legacy
+native `point_under_pixel` override. They now explicitly call the shared
+`ViewerBase::point_under_pixel` implementation for the documented fresh scene query
+in logical coordinates. This fixes hidden-window/Retina queries without changing
+native mouse-hook coordinate conventions; MultiViewer's virtual unprojection
+continues to resolve the corresponding cell.
+
+
+Validation on this Mac: both complete builds succeed, including Python packaging.
+The final MoltenVK run passes 108/109 tests; the existing `vulkan.window` test times
+out once, then passes in isolation in 2.6 seconds (it also passed the earlier full
+run). Shared query, frame-loop, Python rendering, new portable picking and Tutorial
+401/402 smoke tests pass with validation enabled where supported. The final OpenGL
+suite passes 82/82 tests. `git diff --check` is clean. The intermittent native-window
+timeout remains a validation caveat, not a resolved migration item.

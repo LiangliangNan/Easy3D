@@ -1,0 +1,134 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+#include <tests/test.h>
+#include <tutorials/Tutorial_401_ModelPicker/viewer.h>
+#include <tutorials/Tutorial_402_FacePicker/viewer.h>
+#include <easy3d/core/surface_mesh.h>
+#include <easy3d/core/point_cloud.h>
+#include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/renderer.h>
+#include <easy3d/renderer/drawable_triangles.h>
+#include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/drawable_lines.h>
+#include <easy3d/renderer/drawable_lines_2D.h>
+#include <easy3d/renderer/clipping_plane.h>
+#include <easy3d/renderer/manipulator.h>
+#include <easy3d/renderer/manipulated_frame.h>
+#define GLFW_INCLUDE_NONE
+#include <3rd_party/glfw/include/GLFW/glfw3.h>
+#include <cmath>
+#ifndef EASY3D_HAS_VULKAN
+#include <easy3d/renderer/opengl.h>
+#endif
+using namespace easy3d;
+using test::require;
+std::shared_ptr<SurfaceMesh> quad(float z) {
+    auto m=std::make_shared<SurfaceMesh>();
+    auto a=m->add_vertex(vec3(-1,-1,z)),b=m->add_vertex(vec3(1,-1,z));
+    auto c=m->add_vertex(vec3(1,1,z)),d=m->add_vertex(vec3(-1,1,z));m->add_quad(a,b,c,d);return m;
+}
+void faces_only(Model* model) {
+    for(const auto& d:model->renderer()->points_drawables()) d->set_visible(false);
+    for(const auto& d:model->renderer()->lines_drawables()) d->set_visible(false);
+    for(const auto& d:model->renderer()->triangles_drawables()) d->set_lighting(false);
+}
+void view(Viewer& v) {
+    v.camera()->setType(Camera::ORTHOGRAPHIC);v.camera()->setUpVector(vec3(0,1,0));
+    v.camera()->setViewDirection(vec3(0,0,-1));v.fit_screen();
+}
+Viewer::PickResult hit(Viewer& v,const vec3& point) {
+    const auto p=v.project_point(point);
+    return v.pick(int(p.x*v.framebuffer_width()/v.width()),int(p.y*v.framebuffer_height()/v.height()));
+}
+void exercise(Viewer& v) {
+    auto distant=quad(0),close=quad(.5f);v.add_model(distant);v.add_model(close);
+    faces_only(distant.get());faces_only(close.get());view(v);
+    const auto matrix=v.camera()->modelViewProjectionMatrix();
+#ifndef EASY3D_HAS_VULKAN
+    GLuint copy_buffer;glGenBuffers(1,&copy_buffer);glBindBuffer(GL_COPY_READ_BUFFER,copy_buffer);
+    glBufferData(GL_COPY_READ_BUFFER,16,nullptr,GL_STATIC_DRAW);
+    GLuint texture;glGenTextures(1,&texture);glActiveTexture(GL_TEXTURE3);glBindTexture(GL_TEXTURE_2D,texture);
+    glViewport(3,4,31,27);glDepthFunc(GL_GREATER);glColorMask(GL_FALSE,GL_TRUE,GL_FALSE,GL_TRUE);
+#endif
+    auto result=hit(v,vec3(-.6f,.2f,.5f));
+#ifndef EASY3D_HAS_VULKAN
+    GLint viewport[4],binding=0,depth_func=0,active=0,bound_texture=0;GLboolean mask[4];
+    glGetIntegerv(GL_ACTIVE_TEXTURE,&active);glGetIntegerv(GL_TEXTURE_BINDING_2D,&bound_texture);
+    glGetIntegerv(GL_VIEWPORT,viewport);glGetIntegerv(GL_COPY_READ_BUFFER_BINDING,&binding);
+    glGetIntegerv(GL_DEPTH_FUNC,&depth_func);glGetBooleanv(GL_COLOR_WRITEMASK,mask);
+    require(viewport[0]==3 && viewport[1]==4 && viewport[2]==31 && viewport[3]==27 &&
+            active==GL_TEXTURE3 && GLuint(bound_texture)==texture && GLuint(binding)==copy_buffer && depth_func==GL_GREATER && !mask[0] && mask[1] && !mask[2] && mask[3],
+            "picking leaked OpenGL state");
+    glBindBuffer(GL_COPY_READ_BUFFER,0);glDeleteBuffers(1,&copy_buffer);
+    glBindTexture(GL_TEXTURE_2D,0);glDeleteTextures(1,&texture);glActiveTexture(GL_TEXTURE0);
+#endif
+    require(result.model==close,"picking followed model insertion order instead of depth");
+    require(result.drawable.get()==close->renderer()->get_triangles_drawable("faces"),"picked drawable differs");
+    require(result.depth>=0 && result.depth<1 && std::abs(result.position.z-.5f)<2e-4f,"picked depth/world point differs");
+    require(result.face_index==0 && result.primitive<2,"polygon triangle provenance missing");
+    const auto projected=v.project_point(result.position);
+    require(std::abs(projected.z-result.depth)<2e-5f,"returned world point does not reproduce depth");
+    for(unsigned i=0;i<16;++i) require(std::abs(matrix[i]-v.camera()->modelViewProjectionMatrix()[i])<1e-6f,"picking changed camera");
+    require(!v.pick(-1,0) && !v.pick(v.framebuffer_width(),0),"out-of-bounds pick succeeded");
+    close->renderer()->set_visible(false);require(hit(v,vec3(-.6f,.2f,0)).model==distant,"hidden model occluded picking");
+    auto* plane=ClippingPlane::instance();plane->fit_scene(vec3(0,0,-.25f),2);plane->set_enabled(true);
+    require(!hit(v,vec3(-.6f,.2f,0)),"clipped surface was picked");plane->set_enabled(false);
+    close->renderer()->set_visible(true);
+    close->set_manipulator(std::make_shared<Manipulator>(close.get()));
+    close->manipulator()->frame()->translate(vec3(.2f,0,.2f));
+    const vec3 moved=(close->manipulator()->matrix()*vec4(-.6f,.2f,.5f,1)).xyz();
+    result=hit(v,moved);require(result.model==close && std::abs(result.position.z-moved.z)<2e-4f,"picking ignored manipulation");
+    std::weak_ptr<Drawable> retained=result.drawable;std::weak_ptr<Model> retained_model=close;
+    v.clear_scene();close.reset();distant.reset();
+    require(!retained.expired() && !retained_model.expired(),"pick did not retain source ownership");
+    result={};require(retained.expired() && retained_model.expired(),"pick ownership leaked sources");
+    auto points=std::make_shared<PointsDrawable>("standalone spheres");v.add_drawable(points);
+    points->update_vertex_buffer({vec3(0)});points->set_point_size(30);points->set_impostor_type(PointsDrawable::SPHERE);
+    points->set_lighting(false);v.camera()->setSceneBoundingBox(vec3(-1),vec3(1));v.camera()->showEntireScene();
+    result=hit(v,vec3(0));
+    require(result && !result.model && result.drawable==points,"standalone point drawable was not picked");
+    require(result.depth<1 && result.position.z>0,"sphere pick did not use analytic front-surface depth");
+    v.clear_scene();result={};points.reset();
+    auto lines=std::make_shared<LinesDrawable>("standalone line");v.add_drawable(lines);
+    lines->update_vertex_buffer({vec3(-.8f,0,0),vec3(.8f,0,0)});lines->set_lighting(false);
+    const auto pixel=v.project_point(vec3(0));
+    const int lx=int(pixel.x*v.framebuffer_width()/v.width()),ly=int(pixel.y*v.framebuffer_height()/v.height());
+    for(int dy=-1;dy<=1 && !result;++dy) result=v.pick(lx,ly+dy);
+    require(result && result.drawable==lines && !result.model,"standalone line was not picked");
+    v.clear_scene();result={};lines.reset();
+    auto hud=std::make_shared<LinesDrawable2D>("HUD");v.add_drawable(hud);
+    hud->update_vertex_buffer({vec2(0,0),vec2(float(v.framebuffer_width()),float(v.framebuffer_height()))},v.framebuffer_width(),v.framebuffer_height());
+    require(!hit(v,vec3(0)),"HUD produced a scene pick");v.clear_scene();
+}
+struct ModelPickerView:TutorialModelPicker {using TutorialModelPicker::TutorialModelPicker;using TutorialModelPicker::mouse_press_event;};
+struct FacePickerView:TutorialFacePicker {using TutorialFacePicker::TutorialFacePicker;using TutorialFacePicker::mouse_press_event;};
+void tutorials() {
+    {
+        ModelPickerView v("Portable Tutorial 401");auto m=quad(0);v.add_model(m);faces_only(m.get());view(v);
+        const auto p=v.camera()->projectedCoordinatesOf(vec3(-.6f,.2f,0));
+        v.mouse_press_event(int(p.x),int(p.y),Viewer::BUTTON_LEFT,0);
+        require(m->renderer()->is_selected(),"Tutorial 401 click missed at native DPI");
+        v.mouse_press_event(int(p.x),int(p.y),Viewer::BUTTON_RIGHT,0);
+        require(m->renderer()->is_selected(),"right click toggled selection");
+        v.mouse_press_event(int(p.x),int(p.y),Viewer::BUTTON_LEFT,0);
+        require(!m->renderer()->is_selected(),"second click did not unselect model");
+    }
+    {
+        FacePickerView v("Portable Tutorial 402");auto m=quad(0);v.Viewer::add_model(m);faces_only(m.get());view(v);
+        const auto p=v.camera()->projectedCoordinatesOf(vec3(-.6f,.2f,0));
+        v.mouse_press_event(int(p.x),int(p.y),Viewer::BUTTON_LEFT,0);
+        auto* faces=m->renderer()->get_triangles_drawable("faces");
+        require(faces->highlight() && faces->highlight_range()==std::make_pair(0,1),"Tutorial 402 DPI conversion lost polygon highlight");
+    }
+}
+int main(int argc,char**) {return test::run("portable picking depth, provenance, ownership, styles and tutorial input",[&] {
+#ifdef EASY3D_HAS_VULKAN
+    VulkanOptions options;options.validation=options.sync_validation=argc>1;
+#else
+    OpenGLOptions options;
+#endif
+    for(int samples:{1,4}) {
+        Viewer v("Portable pick",241,181,samples,false,false,true,options);exercise(v);
+        require(v.validation_errors()==0,"picking validation errors");
+    }
+    tutorials();
+});}

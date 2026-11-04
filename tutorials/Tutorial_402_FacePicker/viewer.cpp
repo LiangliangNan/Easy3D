@@ -47,7 +47,9 @@ TutorialFacePicker::TutorialFacePicker(const std::string &title) : Viewer(title)
 
 bool TutorialFacePicker::mouse_press_event(int x, int y, int button, int modifiers) {
     if (button==BUTTON_LEFT && modifiers==0) {
-        const auto hit=pick(x,y);
+        const int px=int(double(x)*framebuffer_width()/camera()->screenWidth());
+        const int py=int(double(y)*framebuffer_height()/camera()->screenHeight());
+        const auto hit=pick(px,py);
         for (const auto& m:models()) for (const auto& d:m->renderer()->triangles_drawables()) d->set_highlight(false);
         auto* model=dynamic_cast<SurfaceMesh*>(hit.model.get());
         auto* drawable=dynamic_cast<TrianglesDrawable*>(hit.drawable.get());

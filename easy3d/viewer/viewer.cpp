@@ -1190,6 +1190,9 @@ bool Viewer::drop_event(const std::vector<std::string>& names) {
 
 #else // OpenGL
 
+#include <cmath>
+#include <limits>
+
 #include <easy3d/viewer/viewer.h>
 #include <easy3d/viewer/backends/glfw_runtime.h>
 #include <easy3d/viewer/backends/viewer_loop.h>
@@ -1227,7 +1230,6 @@ bool Viewer::drop_event(const std::vector<std::string>& names) {
 #include <easy3d/fileio/poly_mesh_io.h>
 #include <easy3d/fileio/ply_reader_writer.h>
 #include <easy3d/fileio/point_cloud_io_ptx.h>
-#include <easy3d/gui/picker_surface_mesh.h>
 #include <easy3d/util/dialog.h>
 #include <easy3d/util/file_system.h>
 #include <easy3d/util/logging.h>
@@ -1250,34 +1252,6 @@ float Viewer::dpi_scaling() const { return dpi_scaling_; }
 
 
 
-Viewer::PickResult Viewer::pick(int x, int y) const {
-    PickResult result;
-    if (x < 0 || y < 0 || x >= framebuffer_width() || y >= framebuffer_height()) return result;
-    const Camera* cam = camera();
-    for (auto model : models()) {
-        Renderer* renderer = model->renderer();
-        if (!renderer || !renderer->is_visible()) continue;
-        const auto* mesh = dynamic_cast<const SurfaceMesh*>(model.get());
-        if (!mesh) continue;
-        SurfaceMeshPicker picker(cam);
-        const auto face = picker.pick_face(const_cast<SurfaceMesh*>(mesh), x, y);
-        if (!face.is_valid() || !mesh->is_valid(face) || mesh->is_deleted(face)) continue;
-        const auto drawable = renderer->get_triangles_drawable("faces");
-        if (!drawable) continue;
-        result.model = model;
-        result.drawable = std::shared_ptr<Drawable>(drawable);
-        result.face_index = face.idx();
-        const auto ranges = mesh->get_face_property<std::pair<int,int>>("f:triangle_range");
-        if (ranges) {
-            const auto& range = ranges[face];
-            if (range.second > 0) result.primitive = uint32_t(range.first);
-        }
-        result.position = cam->unprojectedCoordinatesOf(vec3(static_cast<float>(x), static_cast<float>(y), 1.0f));
-        result.depth = 1.0f;
-        return result;
-    }
-    return result;
-}
 
     Viewer::Viewer(
             const std::string &title /* = "Easy3D Viewer" */,
@@ -3256,6 +3230,104 @@ void query_draw(const Drawable *drawable, const Camera &camera) {
         throw std::invalid_argument("unsupported drawable in scene depth query");
 }
 } // namespace
+Viewer::PickResult Viewer::pick(int x, int y) const {
+    PickResult result;
+    const int fw=framebuffer_width(), fh=framebuffer_height();
+    if (x<0 || y<0 || x>=fw || y>=fh) return result;
+    QueryContext context(window_);
+    QueryState state;
+    Camera snapshot(*camera());
+    snapshot.setScreenWidthAndHeight(fw,fh);
+    snapshot.projectionMatrix(); snapshot.modelViewMatrix();
+    snapshot.set_projection_matrix(camera()->projectionMatrix());
+    snapshot.set_modelview_matrix(camera()->modelViewMatrix());
+    state.prepare(fw,fh);
+    FramebufferObject target(fw,fh,0);
+    if (!target.add_color_buffer() || !target.add_depth_buffer(GL_DEPTH_COMPONENT32F) || !target.is_valid() || !target.bind())
+        throw std::runtime_error("cannot create picking framebuffer");
+    // Reuse the actual drawable shaders: point impostors, clipping and transforms
+    // must agree with scene depth. Keep the renderer's shared ownership intact.
+    const auto sample=[&](const std::shared_ptr<Drawable>& drawable,const std::shared_ptr<Model>& model) {
+        if (!drawable->is_visible() || dynamic_cast<LinesDrawable2D*>(drawable.get())) return;
+        state.prepare(fw,fh);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        query_draw(drawable.get(),snapshot);
+        float depth=1;
+        glReadPixels(x,fh-1-y,1,1,GL_DEPTH_COMPONENT,GL_FLOAT,&depth);
+        if (depth>=0 && depth<result.depth) {
+            result.model=model;result.drawable=drawable;result.depth=depth;
+        }
+    };
+    for (const auto& model:models_) {
+        const auto* renderer=model->renderer();
+        if (!renderer || !renderer->is_visible()) continue;
+        for (const auto& d:renderer->triangles_drawables()) sample(d,model);
+        for (const auto& d:renderer->lines_drawables()) sample(d,model);
+        for (const auto& d:renderer->points_drawables()) sample(d,model);
+    }
+    for (const auto& d:drawables_) sample(d,nullptr);
+    if (!result) return result;
+    const auto inv=inverse(snapshot.modelViewProjectionMatrix());
+    const auto world=[&](float depth) {
+        const vec4 p=inv*vec4(2*(float(x)+.5f)/fw-1,1-2*(float(y)+.5f)/fh,2*depth-1,1);
+        if (!std::isfinite(p.w) || p.w==0) throw std::invalid_argument("invalid picking camera inverse");
+        const vec3 point=p.xyz()/p.w;
+        if (!std::isfinite(point.x) || !std::isfinite(point.y) || !std::isfinite(point.z))
+            throw std::invalid_argument("non-finite picked point");
+        return point;
+    };
+    result.position=world(result.depth);
+    if (result.drawable->type()==Drawable::DT_TRIANGLES) {
+        // Recover triangle provenance from the winning drawable's existing buffers,
+        // without a second, differently clipped ID shader or a persistent CPU copy.
+        const auto& d=*result.drawable;
+        std::vector<vec3> vertices(d.num_vertices());
+        std::vector<unsigned> indices(d.num_indices());
+        GLint previous=0;glGetIntegerv(GL_COPY_READ_BUFFER_BINDING,&previous);
+        glBindBuffer(GL_COPY_READ_BUFFER,d.vertex_buffer());
+        glGetBufferSubData(GL_COPY_READ_BUFFER,0,GLsizeiptr(vertices.size()*sizeof(vec3)),vertices.data());
+        if (!indices.empty()) {
+            glBindBuffer(GL_COPY_READ_BUFFER,d.element_buffer());
+            glGetBufferSubData(GL_COPY_READ_BUFFER,0,GLsizeiptr(indices.size()*sizeof(unsigned)),indices.data());
+        }
+        glBindBuffer(GL_COPY_READ_BUFFER,GLuint(previous));
+        const vec3 ray_origin=world(0), ray_direction=world(.5f)-ray_origin;
+        const mat4 model=d.manipulated_matrix();
+        float closest=std::numeric_limits<float>::max();
+        const size_t count=indices.empty()?vertices.size():indices.size();
+        for (size_t i=0;i+2<count;i+=3) {
+            vec3 triangle[3];bool valid=true;
+            for(unsigned j=0;j<3;++j) {
+                const size_t index=indices.empty()?i+j:indices[i+j];
+                if (index>=vertices.size()) {valid=false;break;}
+                triangle[j]=(model*vec4(vertices[index],1)).xyz();
+            }
+            if (!valid) continue;
+            const vec3 e1=triangle[1]-triangle[0],e2=triangle[2]-triangle[0];
+            const vec3 h=cross(ray_direction,e2);const float det=dot(e1,h);
+            if (std::abs(det)<=std::numeric_limits<float>::epsilon()*e1.length()*h.length()) continue;
+            const vec3 offset=ray_origin-triangle[0];
+            const float u=dot(offset,h)/det;
+            const vec3 q=cross(offset,e1);
+            const float v=dot(ray_direction,q)/det,t=dot(e2,q)/det;
+            if (u<0 || v<0 || u+v>1 || t<0) continue;
+            const float distance=(ray_origin+t*ray_direction-result.position).length();
+            if (distance<closest) {closest=distance;result.primitive=uint32_t(i/3);}
+        }
+        auto* mesh=dynamic_cast<SurfaceMesh*>(result.model.get());
+        if (mesh && result.primitive!=UINT32_MAX &&
+            result.model->renderer()->get_triangles_drawable("faces",false)==result.drawable.get()) {
+            const auto ranges=mesh->get_face_property<std::pair<int,int>>("f:triangle_range");
+            if (ranges) for (auto face:mesh->faces()) {
+                const auto range=ranges[face];
+                if (range.first>=0 && result.primitive>=uint32_t(range.first) && result.primitive<=uint32_t(range.second)) {
+                    result.face_index=face.idx();break;
+                }
+            }
+        }
+    }
+    return result;
+}
 bool Viewer::read_scene_depth(int x, int y, const Camera &snapshot, float &depth) const {
     QueryContext context(window_);
     QueryState state;
