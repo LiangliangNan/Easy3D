@@ -49,7 +49,7 @@ namespace easy3d {
      *
      * \note Make sure to call terminate() to destroy existing textures before the OpenGL context is deleted.
      *
-     * \details CPU/OpenGL realizations and wrap/filter choices have separate cache entries.
+     * \details Wrap/filter choices have separate cache entries.
      */
     class TextureManager {
     public:
@@ -73,11 +73,6 @@ namespace easy3d {
         static Texture *request(const std::string &image_file,
                                 Texture::WrapMode wrap = Texture::CLAMP_TO_EDGE,
                                 Texture::FilterMode filter = Texture::LINEAR);
-
-        // Explicit CPU-only cache, usable without an OpenGL context in dual builds.
-        static Texture* request_cpu(const std::string& image_file,
-                                    Texture::WrapMode wrap = Texture::CLAMP_TO_EDGE,
-                                    Texture::FilterMode filter = Texture::LINEAR);
 
         /**
          * \brief Request a texture for rendering scalar fields from a gradually varying (from left to right) color
@@ -123,13 +118,11 @@ namespace easy3d {
         /**
          * \brief Destroy all textures and release their memory.
          * \note Call only when all consumers have finished, with a current context for any OpenGL textures.
-         *      Viewer shutdown releases its OpenGL cache separately, preserving CPU textures used by Vulkan.
          */
         static void terminate();
 
     private:
         static std::mutex mutex_;
-        static Texture* request_impl(const std::string&, Texture::WrapMode, Texture::FilterMode, bool cpu);
         // maps of std::string can be super slow when calling find with a string literal or const char*
         // as find forces construction/copy/destruction of a std::sting copy of the const char*.
         static std::unordered_map<std::string, Texture *> textures_;

@@ -75,12 +75,9 @@ namespace easy3d {
         static Texture *create(const std::vector<unsigned char> &rgb_data, int width, int height, int comp,
                                WrapMode wrap = CLAMP_TO_EDGE, FilterMode filter = LINEAR);
 
-        // Explicit CPU creation never makes GL calls, including in dual builds.
-        // Pixel row zero is the bottom row, matching the existing Texture API.
-        // Invalid dimensions/formats throw std::invalid_argument.
-        static Texture* create_cpu(const std::string& image_file, WrapMode wrap = CLAMP_TO_EDGE, FilterMode filter = LINEAR);
-        static Texture* create_cpu(const std::vector<unsigned char>& data, int width, int height, int comp,
-                                   WrapMode wrap = CLAMP_TO_EDGE, FilterMode filter = LINEAR);
+        // Input row zero is the bottom row. Vulkan retains immutable image data;
+        // OpenGL also uploads a texture and requires a current context.
+        // Invalid dimensions/formats return nullptr.
         struct PixelData {
             int width, height, channels;
             std::vector<unsigned char> bytes;

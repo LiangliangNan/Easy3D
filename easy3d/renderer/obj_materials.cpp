@@ -144,8 +144,7 @@ void ObjMaterialMesh::create_drawables() const {
         d->set_smooth_shading(false); d->set_distinct_back_color(false);
         d->set_uniform_coloring(vec4(part.diffuse,1));
         if (!part.texture_file.empty()) {
-            auto* texture=d->has_cpu_buffers() ? TextureManager::request_cpu(part.texture_file,Texture::REPEAT) :
-                TextureManager::request(part.texture_file,Texture::REPEAT);
+            auto* texture=TextureManager::request(part.texture_file,Texture::REPEAT);
             if (texture) d->set_texture_coloring(State::HALFEDGE,"h:texcoord",texture);
         }
     }

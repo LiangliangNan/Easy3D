@@ -43,7 +43,6 @@ namespace easy3d {
         if (vertex_buffer_ || normal_buffer_ || color_buffer_ || texcoord_buffer_ || element_buffer_)
             throw std::logic_error("cannot transfer an uploaded OpenGL drawable to CPU buffers");
         if (!cpu_buffers_) cpu_buffers_.reset(new BufferData);
-        cpu_only_ = true;
     }
 
     void Drawable::set_source_faces(const std::vector<int>& faces) {

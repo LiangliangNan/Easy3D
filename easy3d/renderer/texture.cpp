@@ -41,41 +41,27 @@ Texture::~Texture() {
     if (id_) opengl_destroy();
 #endif
 }
-Texture* Texture::create_cpu(const std::vector<unsigned char>& data, int width, int height, int comp,
-                             WrapMode wrap, FilterMode filter) {
+Texture* Texture::create(const std::vector<unsigned char>& data, int width, int height, int comp,
+                         WrapMode wrap, FilterMode filter) {
     if (width <= 0 || height <= 0 || comp < 1 || comp > 4 ||
         uint64_t(width)*height > std::numeric_limits<size_t>::max()/unsigned(comp) ||
-        data.size() != uint64_t(width)*height*unsigned(comp))
-        throw std::invalid_argument("image data does not match positive dimensions/channel count");
-    if ((wrap != CLAMP_TO_EDGE && wrap != REPEAT) || (filter != NEAREST && filter != LINEAR))
-        throw std::invalid_argument("invalid texture sampler");
+        data.size() != uint64_t(width)*height*unsigned(comp)) {
+        LOG(ERROR) << "image data does not match positive dimensions/channel count";
+        return nullptr;
+    }
+    if ((wrap != CLAMP_TO_EDGE && wrap != REPEAT) || (filter != NEAREST && filter != LINEAR)) {
+        LOG(ERROR) << "invalid texture sampler";
+        return nullptr;
+    }
     std::unique_ptr<Texture> texture(new Texture);
     std::shared_ptr<PixelData> pixels(new PixelData{width,height,comp,data});
     texture->pixels_ = pixels;
     texture->sizes_[0] = width; texture->sizes_[1] = height; texture->sizes_[2] = comp;
     texture->wrap_mode_ = wrap; texture->filter_mode_ = filter;
-    return texture.release();
-}
-Texture* Texture::create_cpu(const std::string& file, WrapMode wrap, FilterMode filter) {
-    int width=0,height=0,comp=0;
-    std::vector<unsigned char> data;
-    if (!ImageIO::load(file,data,width,height,comp,0,true) || data.empty()) return nullptr;
-    auto* texture = create_cpu(data,width,height,comp,wrap,filter);
-    texture->name_ = file;
-    return texture;
-}
-Texture* Texture::create(const std::vector<unsigned char>& data, int width, int height, int comp,
-                         WrapMode wrap, FilterMode filter) {
-    try {
-        std::unique_ptr<Texture> texture(create_cpu(data,width,height,comp,wrap,filter));
 #ifndef EASY3D_HAS_VULKAN
-        if (!texture->opengl_upload()) return nullptr;
+    if (!texture->opengl_upload()) return nullptr;
 #endif
-        return texture.release();
-    } catch (const std::invalid_argument& e) {
-        LOG(ERROR) << e.what();
-        return nullptr;
-    }
+    return texture.release();
 }
 Texture* Texture::create(const std::string& file, WrapMode wrap, FilterMode filter) {
     int width=0,height=0,comp=0;

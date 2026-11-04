@@ -152,13 +152,13 @@ namespace easy3d {
 
     Texture* State::create_color_texture() {
         const std::string file = resource::directory()+"/textures/checkerboard.png";
-        auto* texture = cpu_only_ ? TextureManager::request_cpu(file,Texture::REPEAT) : TextureManager::request(file,Texture::REPEAT);
+        auto* texture = TextureManager::request(file,Texture::REPEAT);
         if (!texture) throw std::runtime_error("could not load default texture: "+file);
         return texture;
     }
     Texture* State::create_scalar_texture() {
         const std::string file = resource::directory()+"/colormaps/default.png";
-        auto* texture = cpu_only_ ? TextureManager::request_cpu(file) : TextureManager::request(file);
+        auto* texture = TextureManager::request(file);
         if (!texture) throw std::runtime_error("could not load default colormap: "+file);
         return texture;
     }

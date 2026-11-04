@@ -442,7 +442,8 @@ of this document.
   restores five picker-tutorial dependency lists to `main`. U6b restores drawable
   constructors to their original class files, removes `drawable_types.cpp` and
   removes the private OpenGL selector; U6c consolidates renderer CMake class lists
-  shared by both backends. The inventory above is refreshed. Continue
+  shared by both backends. U6d removes dual-build texture routing in favor of the
+  original texture factories. The inventory above is refreshed. Continue
   the file-by-file responsibility audit and remove capability
   gates only when implementations exist. U5/API work remains open.
 - **W10** Mapple, Qt/wx, remaining Python API/tutorial coverage, transparency/SSAO/shadows/EDL parity.
@@ -1211,23 +1212,20 @@ replacement work with flat or smooth shading. As before, call
 `model->renderer()->update()` after changing model properties or requesting a new
 property extraction on an already uploaded model.
 
-`Texture` retains an immutable `PixelData` snapshot of its input. In Vulkan-only
-builds the existing `Texture::create()` and `TextureManager::request()` APIs
-create CPU textures. In dual builds, use `Texture::create_cpu()` or
-`TextureManager::request_cpu()` when there is no OpenGL context. These explicit
-factories never call GL, and CPU drawables use the CPU-only cache for implicit
-checkerboards/colormaps. The legacy factories still upload GL textures in OpenGL
-builds, while retaining pixels usable by the Vulkan adapter. CPU-only textures
-have ID zero; GL binding of such a texture reports an explicit error. Texture
-manager ownership/release conventions remain in effect; drawables keep borrowed
-`Texture` pointers and require the texture to remain alive while used.
+`Texture` retains an immutable `PixelData` snapshot of its input. The existing
+`Texture::create()` and `TextureManager::request()` APIs select their behavior at
+compile time: Vulkan retains CPU image data for GPU realization by the renderer;
+OpenGL uploads textures using the current context. There are no separate public
+CPU factories or CPU-only cache routes. Vulkan textures have ID zero; GL binding
+is unavailable there. Texture manager ownership/release conventions remain in
+effect; drawables keep borrowed `Texture` pointers and require the texture to
+remain alive while used.
 
 The shared texture factories/manager and file loading are compiled in both
 configurations. GL upload, binding and destruction live separately in
 `renderer/backends/opengl/texture.cpp`, excluded from Vulkan-only builds. No
 OpenGL library/context is needed by native texture loading, scalar normalization
-or rendering. Texture cache entries distinguish CPU/legacy creation and sampler
-choices; releasing a cached texture removes its actual cache entry. Cache lookup
+or rendering. Texture cache entries distinguish sampler choices; releasing a cached texture removes its actual cache entry. Cache lookup
 and mutation are serialized for concurrent CPU requests. Callers still control
 borrowed texture lifetimes and must synchronize release/termination with users.
 
@@ -4343,3 +4341,32 @@ Validation on this Mac: both configurations regenerated and built completely,
 including Python bindings. Full desktop suites passed **72/72 MoltenVK** and
 **40/40 OpenGL**. `git diff --check` passed. No API or rendering behavior changed;
 work remains uncommitted on Easy3D-Vulkan.
+
+
+### 2026-11-04 — U6d: Configure-time texture creation
+
+Removed `Texture::create_cpu()` and `TextureManager::request_cpu()`, along with
+`request_impl(..., bool cpu)` and State's CPU-only flag. `Texture::create()` now
+validates and retains image data directly, uploading through the existing OpenGL
+backend only in OpenGL builds. Invalid inputs still return nullptr, matching the
+existing public factory contract. Default checkerboards, scalar palettes and OBJ
+materials all use `TextureManager::request()` without runtime backend routing.
+Sampler-specific cache keys, immutable pixels, bottom-first input rows, borrowed
+ownership, synchronization and per-device Vulkan image caches are unchanged.
+
+Existing Vulkan texture/picking tests now use the original public factories. They
+continue checking default textures, scalar palettes, file loading, cache identity,
+concurrent requests, texture lifetime, sampling orientation and MSAA/depth/picking.
+The OpenGL test checks the same factory's actual texture upload, retained pixels,
+sampler/cache behavior and invalid-input rejection. This retires the migration-only
+CPU factory APIs; external callers using them should use `create()`/`request()` and
+rebuild. An OpenGL build still requires a current context for texture creation.
+No tutorial or public viewer API was added; nine tutorials still need shared
+renderer/picker/capture work, and U5/U6/W10 remain open.
+
+Validation on this Mac (Apple M4 Pro): complete Vulkan/OpenGL builds including
+Python bindings passed. Focused MoltenVK texture/material/picking tests passed
+3/3; full suites passed **72/72 MoltenVK** and **40/40 OpenGL**. Project source
+scans found no remaining CPU-factory routes or State CPU-only flags.
+`git diff --check` passed. No Linux/Windows execution was performed. Changes remain
+uncommitted on Easy3D-Vulkan.

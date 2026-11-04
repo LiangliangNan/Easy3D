@@ -26,10 +26,7 @@ int main() {
         glGetTexParameteriv(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,&wrap);
         glGetTexParameteriv(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,&filter);
         require(wrap == GL_REPEAT && filter == GL_NEAREST,"legacy GL sampler settings changed");
-        std::unique_ptr<Texture> cpu(Texture::create_cpu(rgba,2,2,4));
-        bool rejected=false;
-        try { cpu->bind(); } catch (const std::logic_error&) { rejected=true; }
-        require(rejected && !cpu->id(),"CPU texture unexpectedly acquired a GL realization");
+        require(!Texture::create({},-1,2,4),"invalid texture dimensions were accepted");
         require(ImageIO::save("opengl-texture-source.png",rgba,2,2,4,true),"could not save GL texture fixture");
         auto* first=TextureManager::request("opengl-texture-source.png",Texture::CLAMP_TO_EDGE,Texture::NEAREST);
         auto* second=TextureManager::request("opengl-texture-source.png",Texture::REPEAT,Texture::LINEAR);

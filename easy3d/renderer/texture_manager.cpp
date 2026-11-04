@@ -54,19 +54,13 @@ namespace easy3d {
 
 
     Texture* TextureManager::request(const std::string& file, Texture::WrapMode wrap, Texture::FilterMode filter) {
-        return request_impl(file,wrap,filter,false);
-    }
-    Texture* TextureManager::request_cpu(const std::string& file, Texture::WrapMode wrap, Texture::FilterMode filter) {
-        return request_impl(file,wrap,filter,true);
-    }
-    Texture* TextureManager::request_impl(const std::string& file, Texture::WrapMode wrap, Texture::FilterMode filter, bool cpu) {
         std::lock_guard<std::mutex> lock(mutex_);
-        const auto key = std::string(cpu ? "cpu|" : "default|")+file+"|"+std::to_string(int(wrap))+"|"+std::to_string(int(filter));
+        const auto key = std::string("default|")+file+"|"+std::to_string(int(wrap))+"|"+std::to_string(int(filter));
         auto found = textures_.find(key);
         if (found != textures_.end()) return found->second;
         auto attempted = attempt_load_texture_.find(key);
         if (attempted != attempt_load_texture_.end() && !attempted->second) return nullptr;
-        Texture* texture = cpu ? Texture::create_cpu(file,wrap,filter) : Texture::create(file,wrap,filter);
+        Texture* texture = Texture::create(file,wrap,filter);
         attempt_load_texture_[key] = texture != nullptr;
         if (texture) textures_[key] = texture;
         return texture;

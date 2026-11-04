@@ -147,7 +147,7 @@ void scene_picking(const VulkanOptions& options) {
     require(polygon.face_index==remaining.idx(),"polygon/deleted-handle source mapping failed");
     auto* drawable=mesh->renderer()->get_triangles_drawable("faces");
     auto uv=mesh->vertex_property<vec2>("v:texcoord",vec2(.5f));
-    std::unique_ptr<Texture> texture(Texture::create_cpu({0,255,0,255},1,1,4));
+    std::unique_ptr<Texture> texture(Texture::create({0,255,0,255},1,1,4));
     drawable->set_texture_coloring(State::VERTEX,"v:texcoord",texture.get()); mesh->renderer()->update();
     require(viewer.pick(int(p.x),int(p.y)).face_index==remaining.idx(),"textured extraction lost polygon provenance");
     drawable->set_smooth_shading(true);

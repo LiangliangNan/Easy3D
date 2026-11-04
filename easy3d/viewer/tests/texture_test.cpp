@@ -34,11 +34,11 @@ void probe_color(const OffScreen& renderer, const graphics::FrameImage& frame, f
 void tests(const VulkanOptions& options) {
     // Public texture data uses bottom-first rows, including file-decoded data.
     std::vector<unsigned char> rgba = {255,0,0,255, 0,255,0,255, 0,0,255,255, 255,255,0,255};
-    std::unique_ptr<Texture> texture(Texture::create_cpu(rgba,2,2,4,Texture::CLAMP_TO_EDGE,Texture::NEAREST));
+    std::unique_ptr<Texture> texture(Texture::create(rgba,2,2,4,Texture::CLAMP_TO_EDGE,Texture::NEAREST));
     rgba[0] = 0;
     require(texture->id() == 0 && texture->pixels()->bytes[0] == 255,"CPU texture called GL or borrowed mutable pixels");
     rejects([&] { texture->bind(); });
-    rejects([] { std::unique_ptr<Texture> invalid(Texture::create_cpu({},-1,2,4)); });
+    require(!Texture::create({},-1,2,4),"invalid texture dimensions were accepted");
     require(ImageIO::save("vulkan-texture-source.png",texture->pixels()->bytes,2,2,4,true),"could not write texture fixture");
     std::vector<unsigned char> converted;
     int decoded_width=0,decoded_height=0,source_channels=0;
@@ -48,18 +48,18 @@ void tests(const VulkanOptions& options) {
     require(ImageIO::load("vulkan-rgb-source.png",converted,decoded_width,decoded_height,source_channels,4,false) &&
             source_channels==3 && converted==std::vector<unsigned char>({255,0,0,255,0,255,0,255}),
             "RGB-to-RGBA decode truncated converted pixels");
-    auto* cached = TextureManager::request_cpu("vulkan-texture-source.png",Texture::CLAMP_TO_EDGE,Texture::NEAREST);
-    auto* repeat = TextureManager::request_cpu("vulkan-texture-source.png",Texture::REPEAT,Texture::NEAREST);
-    auto* linear = TextureManager::request_cpu("vulkan-texture-source.png",Texture::CLAMP_TO_EDGE,Texture::LINEAR);
+    auto* cached = TextureManager::request("vulkan-texture-source.png",Texture::CLAMP_TO_EDGE,Texture::NEAREST);
+    auto* repeat = TextureManager::request("vulkan-texture-source.png",Texture::REPEAT,Texture::NEAREST);
+    auto* linear = TextureManager::request("vulkan-texture-source.png",Texture::CLAMP_TO_EDGE,Texture::LINEAR);
     require(cached && repeat && linear && cached != repeat && cached != linear,"sampler variants shared a texture cache entry");
     require(cached->pixels()->bytes == texture->pixels()->bytes,"file texture flipped rows or changed channels");
-    require(cached == TextureManager::request_cpu("vulkan-texture-source.png",Texture::CLAMP_TO_EDGE,Texture::NEAREST),
+    require(cached == TextureManager::request("vulkan-texture-source.png",Texture::CLAMP_TO_EDGE,Texture::NEAREST),
             "CPU texture cache did not reuse a matching request");
     TextureManager::release(cached);
     std::vector<Texture*> concurrent(4,nullptr);
     std::vector<std::thread> workers;
     for (size_t i=0;i<concurrent.size();++i)
-        workers.emplace_back([&,i] { concurrent[i]=TextureManager::request_cpu("vulkan-texture-source.png",Texture::CLAMP_TO_EDGE,Texture::NEAREST); });
+        workers.emplace_back([&,i] { concurrent[i]=TextureManager::request("vulkan-texture-source.png",Texture::CLAMP_TO_EDGE,Texture::NEAREST); });
     for (auto& worker:workers) worker.join();
     cached=concurrent[0];
     for (auto* result:concurrent) require(result && result==cached,"concurrent CPU cache requests created distinct textures");
@@ -123,7 +123,7 @@ void tests(const VulkanOptions& options) {
     const auto seam=renderer.capture();
     probe_color(renderer,seam,-0.6f,0.4f,255,0,0); probe_color(renderer,seam,0.6f,-0.4f,0,255,0);
     // Face fields and constant scalar fields use an explicit two-color palette.
-    std::unique_ptr<Texture> palette(Texture::create_cpu({0,0,255,255, 255,0,0,255},2,1,4,Texture::CLAMP_TO_EDGE,Texture::LINEAR));
+    std::unique_ptr<Texture> palette(Texture::create({0,0,255,255, 255,0,0,255},2,1,4,Texture::CLAMP_TO_EDGE,Texture::LINEAR));
     auto scalar=mesh->add_face_property<float>("f:scalar"); scalar[f0]=0; scalar[f1]=1;
     faces->set_scalar_coloring(State::FACE,"f:scalar",palette.get(),0,0); mesh->renderer()->update();
     const auto field=renderer.capture();
@@ -155,7 +155,7 @@ void tests(const VulkanOptions& options) {
     std::vector<std::unique_ptr<Texture>> snapshots;
     for (unsigned i=0;i<1030;++i) {
         std::vector<unsigned char> stripe(4,0); stripe[i%2]=stripe[3]=255;
-        snapshots.emplace_back(Texture::create_cpu(stripe,1,1,4));
+        snapshots.emplace_back(Texture::create(stripe,1,1,4));
         quad->set_texture(snapshots.back().get());
         const auto frame=renderer.capture();
         require(frame.ids[8*16+8].object != UINT32_MAX && frame.rgba[(8*16+8)*4+i%2]==255,
