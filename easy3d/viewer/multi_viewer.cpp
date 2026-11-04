@@ -400,7 +400,7 @@ bool MultiViewer::snapshot(const std::string& file,float scale,int count,int bg,
     if(!initialized_) { self->init(); self->initialized_=true; }
     const int w=int(std::ceil(framebuffer_width()*double(scale))),h=int(std::ceil(framebuffer_height()*double(scale)));
     const mat4 original=camera()->projectionMatrix();const bool active=snapshot_active_;
-    const double near=camera()->zNear(),far=camera()->zFar();float x,y;
+    const double near=camera()->zNear();const double far=camera()->zFar();float x,y;
     if(camera()->type()==Camera::PERSPECTIVE) {y=float(near*std::tan(camera()->fieldOfView()*.5));x=float(y*camera()->aspectRatio());}
     else camera()->getOrthoWidthHeight(x,y);
     const double output_aspect=(double(w)/num_cols_)/(double(h)/num_rows_);
