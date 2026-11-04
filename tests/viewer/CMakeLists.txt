@@ -2,7 +2,7 @@
 foreach(tutorial IN ITEMS Tutorial_601_Tessellator Tutorial_602_ConvexPartition Tutorial_603_Curves
         Tutorial_701_Cloud_NormalEstimation Tutorial_702_Cloud_SurfaceReconstruction Tutorial_703_Cloud_PlaneExtraction)
     set_source_files_properties("../../tutorials/${tutorial}/main.cpp" PROPERTIES
-        COMPILE_DEFINITIONS "main=easy3d_test_${tutorial}_main")
+        COMPILE_DEFINITIONS "main=easy3d_test_${tutorial}_main;EXAMPLE_TITLE=\"${tutorial}\"")
 endforeach()
 
     add_executable(easy3d_multi_viewer_test multi_viewer_test.cpp ../../applications/FigureMaker/viewer.cpp)
