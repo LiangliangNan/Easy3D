@@ -49,13 +49,8 @@ void create_drawable(Viewer& viewer, const std::vector<vec2>& curve_points, cons
     }
 
     auto drawable = std::make_shared<LinesDrawable2D>();
-    viewer.add_drawable(drawable); // selects CPU buffers before upload in native/dual builds
-#if EASY3D_TUTORIAL_USES_VULKAN
-    const float dpi=viewer.dpi_scaling();
-    const int width=int(std::lround(viewer.framebuffer_width()/dpi)),height=int(std::lround(viewer.framebuffer_height()/dpi));
-#else
+    viewer.add_drawable(drawable);
     const int width=viewer.width(),height=viewer.height();
-#endif
     drawable->update_vertex_buffer(curve_points,width,height);
     drawable->update_element_buffer(indices);
     drawable->set_uniform_coloring(vec4(color, 1.0f));

@@ -161,7 +161,7 @@ needs no change.
 ## Final migration goal and backend policy
 
 **Plan revised 2026-11-04 around the migration principles above.** Step 1, the offscreen-facade removal and the
-deletion of portable backend introspection (`backend()`, `fallback_reason()`) are implemented; the Viewer/OffScreen unification (U1/U1b) is now implemented; U2–U4 are implemented; U5–U6 remain. What is done and what remains is tracked in *Current status and work order* below.
+deletion of portable backend introspection (`backend()`, `fallback_reason()`) are implemented; the Viewer/OffScreen unification (U1/U1b) is now implemented; U2–U4 are implemented; U5 is in progress and U6 remains. What is done and what remains is tracked in *Current status and work order* below.
 
 The completed migration must support **all tutorials on Vulkan** and targets
 **all applications on Vulkan**, including Mapple, FigureMaker and toolkit-based
@@ -310,7 +310,7 @@ Decisions in force:
 | 2. Align constructors, hooks, state | merged into U1 |
 | 3. `VulkanMultiViewer` | merged into U2 |
 | 4. Remove runtime selection | done (W4) |
-| 5. Tutorials on the shared API | in progress: all tutorials except 202 and 501–505 build in the Vulkan tree; those six are gated in `tutorials/CMakeLists.txt`; `EASY3D_TUTORIAL_USES_VULKAN` remains in `viewer.h` and 13 tutorials (206, 207, 306, 307, 309, 401–406, 506, 603) |
+| 5. Tutorials on the shared API | in progress: all tutorials except 202 and 501–505 build in the Vulkan tree; those six are gated in `tutorials/CMakeLists.txt`; `EASY3D_TUTORIAL_USES_VULKAN` remains in `viewer.h` and 11 tutorials (206, 207, 306, 309, 401–406, 506) |
 | 6. Renderer, interaction, GUI/application parity | pending (W10) |
 
 Divergence from `main` (the number to drive down; see U6). Historical measurement after U1a (refresh in U6; U2 has since restored `snapshot.cpp`): in
@@ -415,8 +415,12 @@ of this document.
   render on macOS. The deployed-package regression runs in CTest and the two-backend
   CI matrix. Installed package exports/consumers use the final names (U1–U3).
   Linux/Windows CI execution and distributable-wheel validation remain external gates.
-- **U5** (next) Tutorials and applications: restore `main`'s sources; remove every backend
-  conditional; add to `Viewer` only the APIs they need.
+- **U5** (in progress) Tutorials and applications: restore `main`'s sources and remove
+  backend conditionals as shared APIs become usable. U5a removes redundant constructors
+  and the remaining branches in Tutorials 301, 307, 308 and 603; Tutorial 402 now has
+  one file-loading override signature. The 11 remaining tutorials still require
+  renderer/picker/capture API work; the tutorial macro is not yet removable. Avoid
+  new generic Viewer abstractions solely for a single tutorial.
 - **U6** Diff audit against `main`, file by file and for CMake; remove temporary gates
   and move the tutorial smoke-test registration out of `tutorials/CMakeLists.txt`.
 - **W10** Mapple, Qt/wx, remaining Python API/tutorial coverage, transparency/SSAO/shadows/EDL parity.
@@ -3966,3 +3970,56 @@ Validation on this Mac (Apple M4 Pro, Python 3.12, MoltenVK), 2026-11-04:
   OpenGL dependency. The pre-existing MoltenVK integer-attachment diagnostic remains.
 
 All work stayed on `Easy3D-Vulkan`; no commit or publication was made.
+
+
+### 2026-11-04 — U5a: remove already-unnecessary tutorial branches
+
+This batch changes tutorial sources only, with no new viewer/renderer methods,
+files, selectors or CMake gates. It removes 21 backend conditionals (70 → 49,
+counting `#if`/`#ifdef` directives naming either backend macro in tutorial C++
+headers/sources). Duplicate constructor declarations/definitions use the original
+OpenGL spelling wherever the two branches were equivalent apart from whitespace.
+
+- Tutorial 301 uploads standalone drawable data through the original API before
+  adding it to the viewer. Explicit Vulkan `enable_cpu_buffers()` calls are removed:
+  Drawable's existing constructor already chooses the configured storage backend.
+- Tutorials 307 and 308 have one constructor path, with no backend conditionals
+  anywhere in their headers/sources. Their clipping-plane controls, OBJ loading and
+  rendering behavior are retained.
+- Tutorial 603 uses `viewer.width()`/`viewer.height()` for its 2D coordinate domain,
+  as in the original tutorial, on both backends. The framebuffer/DPI calculation
+  was redundant with the native viewer's logical size. Existing adjustable line
+  widths and screen hints remain.
+- Tutorial 402 declares one `add_model(file, create_default_drawables)` override,
+  matching Viewer for both builds. OpenGL's old one-argument overload hid the base
+  virtual file loader. The shared implementation forwards the flag and enables
+  edges only when an edges drawable exists, so suppressing default drawables does
+  not dereference a null drawable.
+- Constructor branches are also removed from Tutorials 206, 207, 306, 309, 401,
+  403, 405 and 506. Their actual backend-specific implementations remain intact.
+
+Four more tutorials (301, 307, 308, 603) now contain no backend conditionals.
+The tutorial-specific selector remains in 11 tutorials; it was not replaced with
+`EASY3D_HAS_VULKAN` to disguise the missing shared API work. Tutorial 202's empty
+Vulkan class branch remains the intentional U3/P3 classification, not an implemented
+ImGui counterpart. Tutorials 202 and 501–505 remain gated for Vulkan.
+
+U5 is not complete. Next batches must address the real renderer/picker contracts
+behind camera-path/real-camera, image/text, selection/manipulation, scanner and depth
+examples, preserving original tutorial logic. Keep shared GPU point resources for
+selection and avoid adding core APIs solely to rewrite Tutorial 404. U6's source/diff
+and smoke-test-registration audit remains pending.
+
+Validation on this Mac (Apple M4 Pro, MoltenVK), 2026-11-04:
+
+- Complete Vulkan and OpenGL builds passed, including the affected tutorials.
+- Complete suites with Python enabled: **72/72 Vulkan**, **11/11 OpenGL**.
+- Existing coverage includes original bounded tutorial runs, 2D line width/HiDPI
+  behavior, clipping-plane interaction, OBJ materials, model/face picking, camera
+  paths and the deployed Python package. No new test-only tutorial abstractions
+  were needed for this source cleanup.
+- `git diff --check` passed. No Linux/Windows execution was performed in U5a;
+  the pre-existing MoltenVK integer-attachment diagnostic remains unchanged.
+
+Changes remain local on `Easy3D-Vulkan`; U5's remaining 11 tutorial branches and
+U6/W10 work are still open.

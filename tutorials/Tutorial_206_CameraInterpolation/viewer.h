@@ -44,11 +44,7 @@ namespace easy3d {
 class TutorialCameraInterpolation : public easy3d::Viewer
 {
 public:
-#if EASY3D_TUTORIAL_USES_VULKAN
     explicit TutorialCameraInterpolation(const std::string& title);
-#else
-    explicit TutorialCameraInterpolation(const std::string& title);
-#endif
     ~TutorialCameraInterpolation() override;
     
 protected:

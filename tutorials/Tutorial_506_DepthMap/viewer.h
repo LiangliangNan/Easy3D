@@ -40,11 +40,7 @@ namespace easy3d {
 class TutorialDepthMap : public easy3d::Viewer
 {
 public:
-#if EASY3D_TUTORIAL_USES_VULKAN
     explicit TutorialDepthMap(const std::string& title = "");
-#else
-    explicit TutorialDepthMap(const std::string& title = "");
-#endif
     ~TutorialDepthMap() override;
 
 protected:

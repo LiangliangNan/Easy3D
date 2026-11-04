@@ -43,12 +43,7 @@ using namespace easy3d;
 
 // \cond
 
-#if EASY3D_TUTORIAL_USES_VULKAN
-TutorialFacePicker::TutorialFacePicker(const std::string& title)
-        : Viewer(title) {
-#else
 TutorialFacePicker::TutorialFacePicker(const std::string &title) : Viewer(title) {
-#endif
     camera()->setUpVector(vec3(0, 1, 0));
     camera()->setViewDirection(vec3(0, 0, -1));
 
@@ -103,20 +98,13 @@ bool TutorialFacePicker::mouse_press_event(int x, int y, int button, int modifie
 }
 
 
-#if EASY3D_TUTORIAL_USES_VULKAN
-Model* TutorialFacePicker::add_model(const std::string& file_name,bool create) {
-#else
-Model* TutorialFacePicker::add_model(const std::string& file_name) {
-#endif
-#if EASY3D_TUTORIAL_USES_VULKAN
-    auto model = Viewer::add_model(file_name,create);
-#else
-    auto model = Viewer::add_model(file_name,true);
-#endif
+Model* TutorialFacePicker::add_model(const std::string& file_name, bool create) {
+    auto model = Viewer::add_model(file_name, create);
     if (!model) return nullptr;
 
     // make sure the edges are visible
-    model->renderer()->get_lines_drawable("edges")->set_visible(true);
+    if (auto edges = model->renderer()->get_lines_drawable("edges", false))
+        edges->set_visible(true);
 
     return model;
 }

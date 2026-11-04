@@ -33,11 +33,7 @@ namespace easy3d { class PointCloud; }
 
 class TutorialPointSelection : public easy3d::Viewer {
 public:
-#if EASY3D_TUTORIAL_USES_VULKAN
     explicit TutorialPointSelection(const std::string& title = "PointSelection");
-#else
-    explicit TutorialPointSelection(const std::string& title = "PointSelection");
-#endif
 
 #if EASY3D_TUTORIAL_USES_VULKAN
 protected:

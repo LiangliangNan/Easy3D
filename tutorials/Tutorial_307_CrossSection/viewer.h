@@ -33,11 +33,7 @@ namespace easy3d {
 
 class CrossSection : public easy3d::Viewer {
 public:
-#if EASY3D_TUTORIAL_USES_VULKAN
     explicit CrossSection(const std::string& title);
-#else
-    explicit CrossSection(const std::string& title);
-#endif
 
 protected:
     bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;

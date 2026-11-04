@@ -41,11 +41,7 @@ namespace easy3d {
 
 class TutorialObjectManipulation : public easy3d::Viewer {
 public:
-#if EASY3D_TUTORIAL_USES_VULKAN
-    explicit TutorialObjectManipulation(const std::string& title);
-#else
     explicit TutorialObjectManipulation(const std::string &title);
-#endif
 
 protected:
     bool mouse_press_event(int x, int y, int button, int modifiers) override;

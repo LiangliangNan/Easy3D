@@ -37,11 +37,7 @@ namespace easy3d {
 
 class TutorialModelPicker : public easy3d::Viewer {
 public:
-#if EASY3D_TUTORIAL_USES_VULKAN
-    explicit TutorialModelPicker(const std::string& title);
-#else
     explicit TutorialModelPicker(const std::string &title);
-#endif
 
 protected:
     bool mouse_press_event(int x, int y, int button, int modifiers) override;

@@ -34,11 +34,7 @@ namespace easy3d { class Texture; }
 // This class visualizes an image in screen space on either backend.
 class TutorialImageViewer : public easy3d::Viewer {
 public:
-#if EASY3D_TUTORIAL_USES_VULKAN
     TutorialImageViewer(const std::string& title, const std::string& image_file);
-#else
-    TutorialImageViewer(const std::string& title, const std::string& image_file);
-#endif
     ~TutorialImageViewer() override;
 
 protected:

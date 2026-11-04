@@ -38,17 +38,9 @@ namespace easy3d {
 
 class TutorialFacePicker : public easy3d::Viewer {
 public:
-#if EASY3D_TUTORIAL_USES_VULKAN
-    explicit TutorialFacePicker(const std::string& title);
-#else
     explicit TutorialFacePicker(const std::string &title);
-#endif
 
-#if EASY3D_TUTORIAL_USES_VULKAN
-    easy3d::Model* add_model(const std::string& file_name,bool create_default_drawables=true) override;
-#else
-    easy3d::Model* add_model(const std::string& file_name);
-#endif
+    easy3d::Model* add_model(const std::string& file_name, bool create_default_drawables = true) override;
 
 protected:
     bool mouse_press_event(int x, int y, int button, int modifiers) override;

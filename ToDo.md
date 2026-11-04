@@ -17,7 +17,7 @@
   - [x] U2 OffScreen/MultiViewer unified; snapshot.cpp restored; Tutorial 205 and FigureMaker enabled
   - [x] U3 Classes without counterpart: same-file #ifdef structure (effects, pickers, ImGui)
   - [x] U4 Python bindings, installed package and CI use the final names (full Mac builds/rendering)
-  - [ ] U5 Tutorials and applications identical to main; no backend conditionals
+  - [ ] U5 Tutorials/applications: U5a removes 21 redundant branches; 11 tutorials still use the selector
   - [ ] U6 Diff audit against main (files, CMake); remove temporary gates
   - [ ] W10 Mapple, Qt/wx, remaining Python coverage, transparency/SSAO/shadows/EDL
 

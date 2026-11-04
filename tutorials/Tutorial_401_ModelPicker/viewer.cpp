@@ -43,12 +43,7 @@ using namespace easy3d;
 
 // \cond
 
-#if EASY3D_TUTORIAL_USES_VULKAN
-TutorialModelPicker::TutorialModelPicker(const std::string& title)
-        : Viewer(title) {
-#else
 TutorialModelPicker::TutorialModelPicker(const std::string &title) : Viewer(title) {
-#endif
     // We always want to look at the front of the easy3d logo.
     camera()->setViewDirection(vec3(0, 0, -1));
     camera()->setUpVector(vec3(0, 1, 0));

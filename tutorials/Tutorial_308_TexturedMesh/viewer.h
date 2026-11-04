@@ -39,11 +39,7 @@ namespace easy3d {
     class TexturedViewer : public Viewer
     {
     public:
-#ifdef EASY3D_HAS_VULKAN
         explicit TexturedViewer(const std::string& title = "");
-#else
-        explicit TexturedViewer(const std::string& title = "");
-#endif
 
         Model* add_model(const std::string& file_name, bool create_default_drawables = true) override;
     };
