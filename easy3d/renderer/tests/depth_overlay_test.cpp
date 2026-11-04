@@ -24,8 +24,8 @@ void probe(const FrameImage& f,unsigned x,unsigned y,int r,int g,int b,int a=255
 }
 int main(int argc,char**) {
     try {
-        DeviceOptions options; options.validation=options.synchronization_validation=argc>1;
-        auto device=create_vulkan_device(options);
+        const bool validation = argc > 1;
+        auto device=create_vulkan_device(validation, validation);
         auto near=rectangle(-1,-.8f,-.2f,.8f,-.5f,vec4(0,0,1,1)); near.object_id=13;
         auto far=rectangle(.2f,-.8f,1,.8f,.5f,vec4(0,0,1,1)); far.object_id=17;
         auto guide=rectangle(-.95f,-.95f,.95f,.95f,0,vec4(1,0,0,.25f),true,true);

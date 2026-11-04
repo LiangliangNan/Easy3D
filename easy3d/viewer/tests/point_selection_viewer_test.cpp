@@ -63,7 +63,7 @@ int main(int argc,char**) {
     try {
         initialize(false,false,false);
         TestWindow options; options.visible=false; options.width=360; options.height=260;
-        options.device.validation=options.device.synchronization_validation=argc>1;
+        options.device.validation=options.device.sync_validation=argc>1;
         SelectionHost viewer("GPU point selection interaction"); set_size(viewer, options);
         viewer.set_background_color(vec4(1)); // Analytic guide-alpha oracle uses white.
         auto cloud=std::make_shared<PointCloud>();

@@ -14,7 +14,7 @@ void require(bool ok,const char* message) {if(!ok) throw std::runtime_error(mess
 int main() {
     try {
         initialize(false,false,false);Viewer host("OpenGL/Vulkan material reference");
-        graphics::DeviceOptions options;options.validation=options.synchronization_validation=true;
+        VulkanOptions options;options.validation=options.sync_validation=true;
         OffScreen native(160,120,options);
         require(native.background_color()==setting::background_color,"offscreen background ignores shared settings");
         auto* camera=native.camera();camera->setType(Camera::ORTHOGRAPHIC);

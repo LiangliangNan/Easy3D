@@ -64,7 +64,7 @@ int main(int argc,char**) {
     try {
         initialize(false,false,false);
 #ifdef EASY3D_HAS_VULKAN
-        VulkanOptions options;options.validation=options.synchronization_validation=argc>1;
+        VulkanOptions options;options.validation=options.sync_validation=argc>1;
         Grid grid(2,3,"Shared multi-view test",301,223,1,false,false,true,options);
 #else
         Grid grid(2,3,"Shared multi-view test",301,223,1,false,false,true);

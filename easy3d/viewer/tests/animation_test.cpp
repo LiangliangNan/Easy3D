@@ -28,7 +28,7 @@ int main(int argc, char**) {
     try {
         initialize(false,false,false);
         TestWindow options; options.visible=false; options.width=181; options.height=151;
-        options.device.validation=options.device.synchronization_validation=argc>1;
+        options.device.validation=options.device.sync_validation=argc>1;
         AnimationViewer viewer("Animation regression", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
         auto surface=std::make_shared<TrianglesDrawable>("animated triangle");
         // Attach before uploads so dual-backend builds select CPU buffers too.

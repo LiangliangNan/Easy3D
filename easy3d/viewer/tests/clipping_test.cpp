@@ -162,7 +162,7 @@ void analytic_clipping(RenderDevice& device) {
         }
     }
 }
-void scene_clipping(const DeviceOptions& options) {
+void scene_clipping(const VulkanOptions& options) {
     OffScreen viewer(181,141,options);
     viewer.camera()->setType(Camera::ORTHOGRAPHIC); viewer.camera()->setViewDirection(vec3(0,0,-1));
     viewer.camera()->setUpVector(vec3(0,1,0));
@@ -190,8 +190,8 @@ void scene_clipping(const DeviceOptions& options) {
 }
 int main(int argc,char**) {
     try {
-        initialize(false,false,false); DeviceOptions options; options.validation=options.synchronization_validation=argc>1;
-        auto device=create_vulkan_device(options);
+        initialize(false,false,false); VulkanOptions options; options.validation=options.sync_validation=argc>1;
+        auto device=create_vulkan_device(options.validation, options.sync_validation, options.device_name);
         polygon_clipping(*device); point_line_clipping(*device); analytic_clipping(*device);
         require(device->validation_errors()==0,"clipping device validation errors"); scene_clipping(options);
         std::cout << "PASS: halfspaces/slabs, interpolation, original IDs, whole primitives, line/point policy, analytic surface clipping, MSAA, world transforms and face picking\n";

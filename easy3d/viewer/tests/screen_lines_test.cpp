@@ -18,7 +18,7 @@ void same_picking(const graphics::FrameImage& a,const graphics::FrameImage& b) {
 int main(int argc,char**) {
     try {
         initialize(false,false,false);
-        graphics::DeviceOptions options;options.validation=options.synchronization_validation=argc>1;
+        VulkanOptions options;options.validation=options.sync_validation=argc>1;
         OffScreen v(161,127,options);v.set_background_color(vec4(0));
         auto lines=std::make_shared<LinesDrawable2D>("screen polyline");v.add_drawable(lines);
         const std::vector<vec2> points{vec2(10,15),vec2(130,15),vec2(130,100)};

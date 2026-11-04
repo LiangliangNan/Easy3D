@@ -54,7 +54,7 @@ int main(int argc,char**) {
             "-1 -1 1\n1 -1 1\n1 1 1\n-1 1 1\n4 0 3 2 1\n4 4 5 6 7\n4 0 1 5 4\n4 1 2 6 5\n4 2 3 7 6\n4 3 0 4 7\n";
           require(bool(out),"could not write cross-section fixture"); }
         TestWindow options; options.width=360; options.height=280;
-        options.device.validation=options.device.synchronization_validation=argc>1;
+        options.device.validation=options.device.sync_validation=argc>1;
         CrossSectionHost viewer("Native cross-section test"); set_size(viewer, options);viewer.hide_logo();
         viewer.set_background_color(vec4(1)); // Analytic plane-alpha oracle uses white.
         auto* plane=ClippingPlane::instance();

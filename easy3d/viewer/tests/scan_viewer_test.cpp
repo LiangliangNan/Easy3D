@@ -33,7 +33,7 @@ int main(int argc,char**) {
     try {
         initialize(false,false,false);
         TestWindow options; options.visible=false; options.width=151; options.height=113;
-        options.device.validation=options.device.synchronization_validation=argc>1;
+        options.device.validation=options.device.sync_validation=argc>1;
         TutorialVirtualScanner viewer("Native virtual scanner test"); set_size(viewer, options);
         auto key=glfwSetKeyCallback(viewer.window(),nullptr); glfwSetKeyCallback(viewer.window(),key);
         auto press=[&](int code,int mods=0) { key(viewer.window(),code,0,GLFW_PRESS,mods); };

@@ -42,7 +42,7 @@ int main(int argc,char**) {
     try {
         initialize(false,false,false);
         TestWindow options; options.visible=false;options.width=480;options.height=300;
-        options.device.validation=options.device.synchronization_validation=argc>1;
+        options.device.validation=options.device.sync_validation=argc>1;
         Inspect<Viewer> v("Usage HUD", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
         require(!v.manual().empty() && v.hint().empty(),"default viewer usage missing");
         require(v.background_color()==setting::background_color,"native viewer ignored shared background setting");

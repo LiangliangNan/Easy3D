@@ -37,7 +37,7 @@ int main(int argc,char**) {
         const auto file=obj_fixture::create(dir);
 #ifdef EASY3D_HAS_VULKAN
         TestWindow options; options.width=480; options.height=360;
-        options.device.validation=options.device.synchronization_validation=argc>1;
+        options.device.validation=options.device.sync_validation=argc>1;
         TexturedViewer viewer("Native material viewer test"); set_size(viewer, options);
         if (viewer.device().supported_sample_counts()&4) viewer.set_samples(4);
         const std::string output="vulkan-materials.png";

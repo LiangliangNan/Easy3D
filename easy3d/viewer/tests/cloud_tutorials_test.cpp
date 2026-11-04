@@ -63,7 +63,7 @@ int main(int argc,char**) {
         initialize(false,false,false);
 #if EASY3D_TUTORIAL_USES_VULKAN
         TestWindow options;options.visible=false;options.width=480;options.height=360;
-        options.device.validation=options.device.synchronization_validation=argc>1;
+        options.device.validation=options.device.sync_validation=argc>1;
         CloudViewer v("Point cloud algorithm tutorials", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
         if(v.device().supported_sample_counts()&4) v.set_samples(4);
 #else

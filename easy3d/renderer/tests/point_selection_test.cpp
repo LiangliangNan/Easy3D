@@ -10,11 +10,11 @@ void require(bool ok,const char* message) { if (!ok) throw std::runtime_error(me
 bool bit(const std::vector<uint32_t>& words,size_t i) { return (words[i>>5]>>(i&31))&1u; }
 int main(int argc,char**) {
     try {
-        DeviceOptions options; options.validation=options.synchronization_validation=argc>1;
+        const bool validation = argc > 1;
         bool bad_source=false;
         try { PointData invalid({vec3(0)},{32},32); } catch(const std::invalid_argument&) { bad_source=true; }
         require(bad_source,"out-of-range source bit index accepted");
-        auto device=create_vulkan_device(options);
+        auto device=create_vulkan_device(validation, validation);
         PointSelectionRequest r; r.width=r.height=1000;
         r.polygon={{100,100},{900,100},{900,300},{300,300},{300,900},{100,900}};
         const unsigned count=100003;
@@ -118,7 +118,7 @@ int main(int argc,char**) {
         const auto baseline=device->render(31,27,{});
         device->select_points(r);
         require(device->render(31,27,{}).rgba==baseline.rgba,"compute changed rendering state");
-        auto second=create_vulkan_device(options);
+        auto second=create_vulkan_device(validation, validation);
         require(second->select_points(r)==selected,"independent device selection mismatch");
         require(device->validation_errors()==0 && second->validation_errors()==0,"selection validation errors");
         std::cout << "PASS: shared vertex/SSBO point resources, single position uploads, indexed/source IDs, attribute/clipping reuse, GPU lasso atomics, validation and device isolation\n";

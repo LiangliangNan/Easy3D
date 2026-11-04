@@ -141,7 +141,7 @@ Viewer::Viewer(int width, int height, const VulkanOptions& options)
       show_frame_rate_(false), show_camera_path_(false), show_easy3d_logo_(false), model_idx_(-1),
       impl_(new Impl(*this)) {
     resize_render_target(width, height);
-    impl_->device = graphics::create_vulkan_device(options);
+    impl_->device = graphics::create_vulkan_device(options.validation, options.sync_validation, options.device_name);
     camera()->setType(Camera::PERSPECTIVE);
     camera()->setUpVector(vec3(0,0,1)); camera()->setViewDirection(vec3(-1,0,0)); camera()->showEntireScene();
 }
@@ -500,7 +500,7 @@ struct Viewer::Window {
         if (!handle) throw std::runtime_error("could not create a GLFW Vulkan window");
     }
     ~Window() { if (handle) glfwDestroyWindow(handle); }
-    std::unique_ptr<graphics::RenderDevice> device(const graphics::DeviceOptions& options) {
+    std::unique_ptr<graphics::RenderDevice> device(const VulkanOptions& options) {
         uint32_t count = 0;
         const char** required = glfwGetRequiredInstanceExtensions(&count);
         if (!required || !count) throw std::runtime_error("GLFW has no Vulkan surface extensions for this platform");
@@ -509,7 +509,7 @@ struct Viewer::Window {
         surface.create = [this](VkInstance instance, VkSurfaceKHR* result) {
             return glfwCreateWindowSurface(instance, handle, nullptr, result);
         };
-        return graphics::create_vulkan_window_device(surface, options);
+        return graphics::create_vulkan_window_device(surface, options.validation, options.sync_validation, options.device_name);
     }
     void position(double px, double py, int& x, int& y) const {
         int ww = 0, wh = 0, fw = 0, fh = 0;
@@ -595,7 +595,7 @@ struct Viewer::Window {
 Viewer::Viewer(const std::string& title, int width, int height, int samples,
                            bool full_screen, bool visible, bool resizable, const VulkanOptions& vk_options)
     : Viewer(std::make_shared<Window>(title, width, height, samples, full_screen, visible, resizable), vk_options) {}
-Viewer::Viewer(std::shared_ptr<Window> host, const graphics::DeviceOptions& options)
+Viewer::Viewer(std::shared_ptr<Window> host, const VulkanOptions& options)
     : window_(host->handle), width_(host->width), height_(host->height), title_(host->title),
       camera_(new Camera), samples_(1), background_color_(setting::background_color), pressed_key_(-1),
       show_frame_rate_(false), show_camera_path_(false), show_easy3d_logo_(true), model_idx_(-1),

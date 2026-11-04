@@ -28,7 +28,7 @@ int main(int argc,char**) {
     try {
         initialize(false,false,false);
         TestWindow options;options.visible=false;options.width=580;options.height=420;
-        options.device.validation=options.device.synchronization_validation=argc>1;
+        options.device.validation=options.device.sync_validation=argc>1;
         RateViewer v("Frame rate HUD", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
         v.set_usage("Frame rate regression","Usage hint remains below the frame rate\nSecond hint line");
         require(v.add_model(resource::directory()+"/data/sphere.obj"),"scene missing");

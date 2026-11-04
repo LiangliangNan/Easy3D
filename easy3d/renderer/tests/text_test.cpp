@@ -95,8 +95,8 @@ int main(int argc,char** argv) {
             std::cout << "PASS: CPU text layout, UTF-8, fonts, kerning/spacing/origins, immutable multi-page atlases\n";
             return 0;
         }
-        DeviceOptions options; options.validation=options.synchronization_validation=argc>1;
-        auto device=create_vulkan_device(options);
+        const bool validation = argc > 1;
+        auto device=create_vulkan_device(validation, validation);
         // Independent bilinear coverage reference for a positioned glyph. This
         // catches atlas row/UV flips, pixel offsets, dark fringes and alpha errors.
         auto commands=single.commands; commands[0].color=vec4(1,0,0,0.6f);

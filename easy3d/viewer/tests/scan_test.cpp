@@ -35,7 +35,7 @@ std::vector<vec3> check_scan(OffScreen& viewer,unsigned samples) {
 int main(int argc,char**) {
     try {
         initialize(false,false,false);
-        graphics::DeviceOptions options; options.validation=options.synchronization_validation=argc>1;
+        VulkanOptions options; options.validation=options.sync_validation=argc>1;
         OffScreen viewer(161,127,options);
         require(viewer.scan_visible_points().empty(),"empty scene scanned background");
         auto front=std::make_shared<SurfaceMesh>();

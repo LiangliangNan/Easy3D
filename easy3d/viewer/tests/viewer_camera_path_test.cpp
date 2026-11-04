@@ -29,7 +29,7 @@ int main(int argc,char**) {
     try {
         initialize(false,false,false);
         TestWindow options;options.visible=false;options.width=580;options.height=420;
-        options.device.validation=options.device.synchronization_validation=argc>1;
+        options.device.validation=options.device.sync_validation=argc>1;
         PathViewer v("Shared viewer camera path"); set_size(v, options);
         v.set_usage("Global camera path regression","Alt-K: record; Ctrl/Command-K: play; Ctrl/Command-T: show path");
         require(v.add_model(resource::directory()+"/data/sphere.obj"),"sphere missing");

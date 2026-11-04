@@ -34,7 +34,7 @@ by both backends), then backend-specific protected/private parts, each in its ow
 #ifdef EASY3D_HAS_VULKAN
 struct VulkanOptions {
     bool validation = false;
-    bool synchronization_validation = false;
+    bool sync_validation = false;
     std::string device_name;
 };
 #else
@@ -126,8 +126,8 @@ needs no change.
   title; they are the only tutorial edits allowed by criterion 3, and are listed in the U6
   audit. *Status: implemented on the OpenGL and Vulkan viewers.* `OpenGLOptions` has a
   defaulted constructor (the project is C++11, where a struct with default member
-  initializers cannot be brace-initialized); `VulkanOptions` is an alias of
-  `graphics::DeviceOptions`, declared in `viewer.h`. `visible=false` keeps the
+  initializers cannot be brace-initialized); `VulkanOptions` is defined directly in `viewer.h`, alongside `OpenGLOptions`.
+  Renderer factories take validation, sync-validation and device-name arguments directly. `visible=false` keeps the
   window from being shown by `run()` in OpenGL and creates it hidden in Vulkan; `full_screen`
   uses the primary monitor's video mode in both. `samples = 0` means no MSAA, and a valid
   power of two the device does not support steps down with a warning, so a request such as 4
@@ -4280,3 +4280,25 @@ Validation on this Mac (Apple M4 Pro, MoltenVK), 2026-11-04:
   MoltenVK integer-attachment diagnostic remains outside this change.
 
 Work stayed on Easy3D-Vulkan; no commit was made.
+
+
+### 2026-11-04 — Viewer-owned Vulkan options
+
+`VulkanOptions` is now a concrete `easy3d` struct in `viewer.h`, alongside the
+alternative `OpenGLOptions`. Its fields are `validation`, `sync_validation` and
+`device_name`; `graphics::DeviceOptions` is removed. The offscreen and window
+renderer factories accept `bool validation = false`, `bool sync_validation = false`
+and `const std::string& device_name = {}` (following the surface argument for window
+creation). Viewers forward those three fields, so renderer headers and implementation
+do not depend on viewer headers or a duplicate options type. Synchronization
+validation still implies validation; explicitly requested validation must be available.
+Renderer-only tests use the factory parameters directly. Viewer tests and the native
+application use the viewer options. Existing callers must rename the field and rebuild;
+no compatibility alias or overload is added.
+
+Validation: full Vulkan and OpenGL builds (including Python bindings) passed.
+Desktop test suites on this Mac passed **72/72 with MoltenVK** and **40/40 with
+OpenGL**. Initial sandboxed desktop runs stalled and were stopped; the successful
+runs used desktop access and ran sequentially. Source scans found no remaining
+`DeviceOptions` or `synchronization_validation` in project headers/sources.
+`git diff --check` passed. Changes remain uncommitted on Easy3D-Vulkan.

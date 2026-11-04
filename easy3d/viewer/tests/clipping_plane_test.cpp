@@ -37,7 +37,7 @@ int main(int argc,char**) {
     try {
         initialize(false,false,false);
         TestWindow options;options.visible=false;options.width=360;options.height=280;
-        options.device.validation=options.device.synchronization_validation=argc>1;
+        options.device.validation=options.device.sync_validation=argc>1;
         ClipViewer viewer("Shared clipping plane", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
         viewer.set_background_color(vec4(1,1,1,1));
         viewer.set_usage("default","Shared clipping plane regression");

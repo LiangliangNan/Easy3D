@@ -26,7 +26,7 @@ void require(bool ok, const char* message) { if (!ok) throw std::runtime_error(m
 #ifndef EASY3D_TEST_OPENGL_VIEWER
 TestWindow options(bool validation) {
     TestWindow result; result.width = 151; result.height = 117; result.visible = false;
-    result.device.validation = result.device.synchronization_validation = validation; return result;
+    result.device.validation = result.device.sync_validation = validation; return result;
 }
 #endif
 struct LoopViewer : TestHost {

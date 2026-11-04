@@ -24,9 +24,9 @@ unsigned hits(const graphics::FrameImage& frame) {
 int main(int argc, char**) {
     try {
         initialize(false, false, false);
-        graphics::DeviceOptions options;
+        VulkanOptions options;
         options.validation = argc > 1;
-        options.synchronization_validation = options.validation;
+        options.sync_validation = options.validation;
         OffScreen renderer(161, 127, options);
         auto* model = renderer.add_model(resource::directory() + "/data/bunny.ply");
         require(model, "could not load bunny mesh");

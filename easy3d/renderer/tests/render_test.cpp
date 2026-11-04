@@ -662,10 +662,8 @@ void overlays(RenderDevice& device) {
 }
 int main(int argc, char**) {
     try {
-        DeviceOptions options;
-        options.validation = argc > 1;
-        options.synchronization_validation = options.validation;
-        auto device = create_vulkan_device(options);
+        const bool validation = argc > 1;
+        auto device = create_vulkan_device(validation, validation);
         std::cout << "Vulkan device: " << device->name() << std::endl;
         rejects([] { Geometry({}, {0}); });
         rejects([] { Image(0, 1, {}); });
@@ -732,7 +730,7 @@ int main(int argc, char**) {
         require(std::abs(float(lit.rgba[center * 4]) - diffuse * 255) < 2, "normal transform/lighting layout mismatch");
         near.lighting = false; near.normal_matrix = mat3::identity();
         // Immutable geometry can be realized on two independently owned devices.
-        auto second = create_vulkan_device(options);
+        auto second = create_vulkan_device(validation, validation);
         require(second->render(64, 64, {near}).ids[center].object == 21, "cross-device snapshot reuse failed");
         for (unsigned i = 0; i < 20; ++i) {
             near.geometry = triangle(0, vec4(float(i % 2), 0, 1, 1));

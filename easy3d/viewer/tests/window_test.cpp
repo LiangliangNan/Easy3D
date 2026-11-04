@@ -46,7 +46,7 @@ int main(int argc, char**) {
         TestWindow options;
         options.width = 171; options.height = 129;
         options.device.validation = argc > 1;
-        options.device.synchronization_validation = options.device.validation;
+        options.device.sync_validation = options.device.validation;
         {   // Constructor with explicit parameters: a requested count of 4 never fails (it steps down on
             // devices without 4x MSAA), 0 means no MSAA, and negative or non-power-of-two counts are rejected.
             Viewer four("Explicit parameters", 171, 129, 4, false, false, true, options.device);

@@ -46,7 +46,7 @@ int main(int argc,char**) {
     try {
         initialize(false,false,false);
         TestWindow options;options.visible=false;options.width=480;options.height=360;
-        options.device.validation=options.device.synchronization_validation=argc>1;
+        options.device.validation=options.device.sync_validation=argc>1;
         auto first=std::make_shared<SurfaceMesh>(),second=std::make_shared<SurfaceMesh>();
         triangle(*first,vec3(-1,-1,0),vec3(1,-1,0),vec3(0,1,0));
         triangle(*first,vec3(3,-1,0),vec3(5,-1,0),vec3(4,1,0));

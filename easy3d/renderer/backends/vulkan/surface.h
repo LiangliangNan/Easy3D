@@ -18,6 +18,7 @@ struct VulkanSurface {
     std::shared_ptr<internal::VulkanLoader> loader;
 };
 std::unique_ptr<RenderDevice> create_vulkan_window_device(
-        const VulkanSurface& surface, const DeviceOptions& options = {});
+        const VulkanSurface& surface, bool validation = false, bool sync_validation = false,
+        const std::string& device_name = {});
 } }
 #endif

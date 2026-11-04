@@ -40,7 +40,7 @@ int main(int argc,char**) {
         require(ImageIO::save("vulkan-image-wide.png",wide,4,2,4,false) &&
                 ImageIO::save("vulkan-image-tall.png",tall,2,4,4,false),"could not save image-viewer fixtures");
         TestWindow options; options.width=160; options.height=120;
-        options.device.validation=options.device.synchronization_validation=argc>1;
+        options.device.validation=options.device.sync_validation=argc>1;
         ImageViewer viewer("Native image viewer test","vulkan-image-wide.png"); set_size(viewer, options);viewer.fit_screen();viewer.hide_logo();   // the constructor fitted the image to the default window
         viewer.set_background_color(vec4(0,1,0,1));
         const bool msaa=(viewer.device().supported_sample_counts() & 4)!=0;

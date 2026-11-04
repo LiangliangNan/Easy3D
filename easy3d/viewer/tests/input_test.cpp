@@ -44,7 +44,7 @@ int main(int argc,char**) {
     try {
         initialize(false,false,false);
         TestWindow options; options.visible=false; options.width=241; options.height=181;
-        options.device.validation=options.device.synchronization_validation=argc>1;
+        options.device.validation=options.device.sync_validation=argc>1;
         InputViewer v("Input parity", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
         auto key=glfwSetKeyCallback(v.window(),nullptr); glfwSetKeyCallback(v.window(),key);
         auto press=[&](int k,int mods=0){key(v.window(),k,0,GLFW_PRESS,mods);};

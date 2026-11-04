@@ -39,7 +39,7 @@ int main(int argc,char**) {
         { std::ofstream out(file); out << "OFF\n8 2 0\n-2 -1 0\n0 -1 0\n0 1 0\n-2 1 0\n"
             "1 -1 0\n3 -1 0\n3 1 0\n1 1 0\n4 0 1 2 3\n4 4 5 6 7\n"; require(bool(out),"could not write picker fixture"); }
         TestWindow options; options.width=420; options.height=280;
-        options.device.validation=options.device.synchronization_validation=argc>1;
+        options.device.validation=options.device.sync_validation=argc>1;
         {
             TutorialModelPicker viewer("Native model picker test"); set_size(viewer, options);
             auto* model=viewer.add_model(file); require(model!=nullptr,"model picker load failed");

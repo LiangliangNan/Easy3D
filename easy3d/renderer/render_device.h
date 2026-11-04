@@ -165,14 +165,6 @@ struct FrameImage {
     std::vector<Id> ids;
 };
 
-struct DeviceOptions {
-    // Explicitly requested validation must be available, otherwise creation fails.
-    bool validation = false;
-    bool synchronization_validation = false;
-    // Optional physical-device name substring; useful for reproducible CI runs.
-    std::string device_name;
-};
-
 // GPU through-selection of projected point centers in a top-left framebuffer
 // polygon. Polygon crossings use the even-odd rule (boundary included). It is
 // independent of rasterization/occlusion, point style, MSAA and scene readback.
@@ -221,8 +213,11 @@ public:
     virtual std::uint64_t point_upload_count() const = 0;
 };
 
-// Implemented by the renderer Vulkan backend. Throws on unavailable devices.
-std::unique_ptr<RenderDevice> create_vulkan_device(const DeviceOptions& options = {});
+// Implemented by the renderer Vulkan backend. Throws if devices or requested
+// validation facilities are unavailable. Sync validation implies validation;
+// device_name optionally filters physical devices by name substring.
+std::unique_ptr<RenderDevice> create_vulkan_device(bool validation = false, bool sync_validation = false,
+                                                  const std::string& device_name = {});
 
 } } // namespace easy3d::graphics
 #endif

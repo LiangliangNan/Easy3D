@@ -70,7 +70,7 @@ int main(int argc,char**) {
         }
         const auto root=resource::directory()+"/data/fountain/";const auto views=read_views(root+"bundle.out");
         TestWindow options;options.visible=false;options.width=500;options.height=420;
-        options.device.validation=options.device.synchronization_validation=argc>1;
+        options.device.validation=options.device.sync_validation=argc>1;
         RealCameraViewer v("Native real camera",root+"bundle.out",root+"pointcloud.ply"); set_size(v, options);
         block_navigation_input(v);
         require(v.models().size()==1 && v.hint().find("corresponding 3D ray")!=std::string::npos,"scene/usage hint missing");

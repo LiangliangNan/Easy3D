@@ -46,7 +46,7 @@ int main(int argc,char**) {
         initialize(false,false,false);
         auto retained=quad(-1.2f);
         TestWindow options;options.visible=false;options.width=520;options.height=360;
-        options.device.validation=options.device.synchronization_validation=argc>1;
+        options.device.validation=options.device.sync_validation=argc>1;
         {
             ManipulationViewer v("Object manipulation"); set_size(v, options);
             require(v.has_usage(),"OpenGL counterpart manual/hint missing");

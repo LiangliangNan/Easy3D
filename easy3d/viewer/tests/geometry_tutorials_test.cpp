@@ -27,7 +27,7 @@ int main(int argc,char**) {
     try {
         initialize(false,false,false);
         TestWindow options;options.visible=false;options.width=800;options.height=600;
-        options.device.validation=options.device.synchronization_validation=argc>1;
+        options.device.validation=options.device.sync_validation=argc>1;
         GeometryViewer v("Native geometry tutorials", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);v.hide_axes();v.set_background_color(vec4(1));
         if (v.device().supported_sample_counts()&4) v.set_samples(4);
         create_curves_drawables(v);require(v.drawables().size()==6,"curves tutorial lost a curve family");frame(v);

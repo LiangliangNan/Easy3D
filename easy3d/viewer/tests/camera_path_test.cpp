@@ -56,7 +56,7 @@ int main(int argc,char**) {
     try {
         initialize(false,false,false);core_playback();
         TestWindow options;options.visible=false;options.width=580;options.height=420;
-        options.device.validation=options.device.synchronization_validation=argc>1;
+        options.device.validation=options.device.sync_validation=argc>1;
         PathViewer v("Native camera paths"); set_size(v, options);require(v.has_usage(),"counterpart usage hint missing");
         require(v.add_model(resource::directory()+"/data/sphere.obj"),"sphere load failed");
         auto key=glfwSetKeyCallback(v.window(),nullptr);glfwSetKeyCallback(v.window(),key);

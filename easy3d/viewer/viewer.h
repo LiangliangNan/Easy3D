@@ -54,7 +54,13 @@ class TrianglesDrawable;
 class TextRenderer;
 class KeyFrameInterpolator;
 #ifdef EASY3D_HAS_VULKAN
-using VulkanOptions = graphics::DeviceOptions;
+struct VulkanOptions {
+    // Explicitly requested validation must be available, otherwise creation fails.
+    bool validation = false;
+    bool sync_validation = false; // also enables validation
+    // Optional physical-device name substring; useful for reproducible CI runs.
+    std::string device_name;
+};
 #else
     // OpenGL context settings of a viewer window.
     struct OpenGLOptions {
@@ -691,7 +697,7 @@ private:
     mutable std::vector<graphics::DrawCommand> hint_commands_;
     bool usage_printed_ = false;
     void print_usage();
-    Viewer(std::shared_ptr<Window> window, const graphics::DeviceOptions& options);
+    Viewer(std::shared_ptr<Window> window, const VulkanOptions& options);
 protected:
     struct DrawSource { std::shared_ptr<Model> model; std::shared_ptr<Drawable> drawable; };
     virtual std::vector<graphics::DrawCommand> draw_commands(const Camera& camera, int width, int height,

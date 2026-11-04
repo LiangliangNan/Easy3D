@@ -29,7 +29,7 @@ int main(int argc,char**) {
     try {
         initialize(false,false,false);
         TestWindow options; options.width=233;options.height=197;options.visible=false;
-        options.device.validation=options.device.synchronization_validation=argc>1;
+        options.device.validation=options.device.sync_validation=argc>1;
         HintViewer v("Interaction overlays", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);v.hide_logo();v.set_background_color(vec4(1));
         require(v.add_model(resource::directory()+"/data/bunny.ply"),"scene model missing");
         const int w=v.framebuffer_width(),h=v.framebuffer_height();

@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
         int samples = 4;
         for (int i = 1; i < argc; ++i) {
             const std::string arg = argv[i];
-            if (arg == "--validation") { vk_options.validation = true; vk_options.synchronization_validation = true; }
+            if (arg == "--validation") { vk_options.validation = true; vk_options.sync_validation = true; }
             else if (arg == "--frames" || arg == "--samples") {
                 const auto message = arg + " requires a positive integer";
                 if (++i == argc) throw std::invalid_argument(message);

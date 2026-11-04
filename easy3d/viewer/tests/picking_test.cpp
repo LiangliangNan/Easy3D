@@ -26,9 +26,9 @@ std::shared_ptr<SurfaceMesh> quad(float z=0) {
     auto c=mesh->add_vertex(vec3(1,1,z)),d=mesh->add_vertex(vec3(-1,1,z));
     mesh->add_quad(a,b,c,d); return mesh;
 }
-void shader_highlights(const graphics::DeviceOptions& options) {
+void shader_highlights(const VulkanOptions& options) {
     using namespace graphics;
-    auto device=create_vulkan_device(options);
+    auto device=create_vulkan_device(options.validation, options.sync_validation, options.device_name);
     for (int style=0;style<8;++style) {
         DrawCommand draw; draw.object_id=77; draw.lighting=true;
         draw.texture=std::make_shared<Image>(1,1,std::vector<unsigned char>{0,200,80,255});
@@ -69,7 +69,7 @@ void shader_highlights(const graphics::DeviceOptions& options) {
     }
     require(device->validation_errors()==0,"highlight pipeline validation errors");
 }
-void scene_picking(const graphics::DeviceOptions& options) {
+void scene_picking(const VulkanOptions& options) {
     OffScreen viewer(161,121,options);
     viewer.camera()->setType(Camera::ORTHOGRAPHIC);
     viewer.camera()->setViewDirection(vec3(0,0,-1)); viewer.camera()->setUpVector(vec3(0,1,0));
@@ -176,7 +176,7 @@ void scene_picking(const graphics::DeviceOptions& options) {
 int main(int argc,char**) {
     try {
         initialize(false,false,false);
-        graphics::DeviceOptions options; options.validation=options.synchronization_validation=argc>1;
+        VulkanOptions options; options.validation=options.sync_validation=argc>1;
         shader_highlights(options); scene_picking(options);
         std::cout << "PASS: selection on all native styles, texture/lighting and MSAA invariance, model/drawable/polygon picking, provenance, world points, visibility, overlays, lifetime, resize\n";
     } catch (const std::exception& e) { std::cerr << "FAIL: " << e.what() << '\n'; return 1; }

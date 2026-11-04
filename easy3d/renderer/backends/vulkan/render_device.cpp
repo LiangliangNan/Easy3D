@@ -98,10 +98,10 @@ struct Context : internal::VulkanDispatch {
         std::cerr << "Vulkan validation: " << data->pMessage << '\n';
         return VK_FALSE;
     }
-    void init(const DeviceOptions& options, const VulkanSurface* window = nullptr) {
+    void init(bool validation, bool sync_validation, const std::string& device_name, const VulkanSurface* window = nullptr) {
         library=window && window->loader ? window->loader : internal::VulkanLoader::open();
         load_global(*library);
-        const bool validation = options.validation || options.synchronization_validation;
+        validation = validation || sync_validation;
         auto available = instance_extensions(*this);
         std::vector<const char*> extensions, layers;
         if (window) {
@@ -137,7 +137,7 @@ struct Context : internal::VulkanDispatch {
         }
         VkValidationFeaturesEXT validation_features{};
         VkValidationFeatureEnableEXT sync = VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT;
-        if (options.synchronization_validation) {
+        if (sync_validation) {
             const auto layer_extensions = instance_extensions(*this,"VK_LAYER_KHRONOS_validation");
             if (!named(available, VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME) &&
                 !named(layer_extensions, VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME))
@@ -193,7 +193,7 @@ struct Context : internal::VulkanDispatch {
             VkPhysicalDeviceProperties props;
             vkGetPhysicalDeviceProperties(candidate, &props);
             if (props.apiVersion < VK_API_VERSION_1_2 ||
-                std::string(props.deviceName).find(options.device_name) == std::string::npos) continue;
+                std::string(props.deviceName).find(device_name) == std::string::npos) continue;
             const std::pair<VkFormat, VkFormatFeatureFlags> formats[] = {
                 {VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT | VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT |
                     VK_FORMAT_FEATURE_TRANSFER_SRC_BIT | VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT |
@@ -953,8 +953,8 @@ public:
         }
         return point_selector_->run(request,std::move(words),planes,point_resource(request.points).buffer);
     }
-    void init(const DeviceOptions& options, const VulkanSurface* surface = nullptr) {
-        c_.init(options, surface); name_ = c_.properties.deviceName;
+    void init(bool validation, bool sync_validation, const std::string& device_name, const VulkanSurface* surface = nullptr) {
+        c_.init(validation, sync_validation, device_name, surface); name_ = c_.properties.deviceName;
         white_ = std::make_shared<Image>(1, 1, std::vector<unsigned char>(4, 255));
         sample_counts_ = c_.properties.limits.framebufferColorSampleCounts & c_.properties.limits.framebufferDepthSampleCounts;
         for (auto format : {VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_D32_SFLOAT}) {
@@ -1736,14 +1736,14 @@ public:
 
 };
 } // namespace
-std::unique_ptr<RenderDevice> create_vulkan_device(const DeviceOptions& options) {
+std::unique_ptr<RenderDevice> create_vulkan_device(bool validation, bool sync_validation, const std::string& device_name) {
     std::unique_ptr<VulkanDevice> device(new VulkanDevice);
-    device->init(options);
+    device->init(validation, sync_validation, device_name);
     return std::unique_ptr<RenderDevice>(device.release());
 }
-std::unique_ptr<RenderDevice> create_vulkan_window_device(const VulkanSurface& surface, const DeviceOptions& options) {
+std::unique_ptr<RenderDevice> create_vulkan_window_device(const VulkanSurface& surface, bool validation, bool sync_validation, const std::string& device_name) {
     std::unique_ptr<VulkanDevice> device(new VulkanDevice);
-    device->init(options, &surface);
+    device->init(validation, sync_validation, device_name, &surface);
     return std::unique_ptr<RenderDevice>(device.release());
 }
 

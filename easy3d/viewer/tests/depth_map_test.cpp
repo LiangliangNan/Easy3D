@@ -46,7 +46,7 @@ int main(int argc,char**) {
     try {
         initialize(false,false,false);
         TestWindow options;options.visible=false;options.width=320;options.height=280;
-        options.device.validation=options.device.synchronization_validation=argc>1;
+        options.device.validation=options.device.sync_validation=argc>1;
         TutorialDepthMap v("Native depth map"); set_size(v, options);
         block_navigation_input(v);
         auto* model=v.add_model(resource::directory()+"/data/fountain/pointcloud.ply");require(model,"fixture missing");

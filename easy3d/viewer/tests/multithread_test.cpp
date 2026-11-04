@@ -69,7 +69,7 @@ int main(int argc,char**) {
         initialize(false,false,false);
         worker_lifetime();
         TestWindow options; options.visible=false; options.width=211; options.height=179;
-        options.device.validation=options.device.synchronization_validation=argc>1;
+        options.device.validation=options.device.sync_validation=argc>1;
         StreamViewer viewer("Worker handoff regression", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);viewer.hide_logo();
         auto key=glfwSetKeyCallback(viewer.window(),nullptr); glfwSetKeyCallback(viewer.window(),key);
         // This oracle compares every point's rendered color with its source;

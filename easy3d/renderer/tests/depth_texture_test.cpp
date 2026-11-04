@@ -32,8 +32,8 @@ void verify(const FrameImage& frame) {
 }
 int main(int argc,char**) {
     try {
-        DeviceOptions options;options.validation=options.synchronization_validation=argc>1;
-        auto device=create_vulkan_device(options);
+        const bool validation = argc > 1;
+        auto device=create_vulkan_device(validation, validation);
         for (unsigned samples:{1u,4u}) {
             if (!(device->supported_sample_counts()&samples)) continue;
             for (unsigned width:{65u,83u,41u}) {
