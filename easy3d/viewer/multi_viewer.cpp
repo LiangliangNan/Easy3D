@@ -84,9 +84,7 @@ MultiViewer::MultiViewer(int rows,int cols,const std::string& title,
                          const OpenGLOptions& options)
 #endif
     : Viewer(title,width,height,samples,full_screen,visible,resizable,options) {
-#ifdef EASY3D_HAS_VULKAN
     snapshot_hud_=false;
-#endif
     set_layout(rows,cols);
 }
 MultiViewer::~MultiViewer() = default;
@@ -233,7 +231,9 @@ std::vector<graphics::DrawCommand> MultiViewer::draw_commands(const Camera& cam,
                     std::find(view.models.begin(),view.models.end(),source.model.get())!=view.models.end();
                 if(!assigned_model && std::find(view.drawables.begin(),view.drawables.end(),source.drawable.get())==view.drawables.end()) continue;
                 if(mapped.size()>=UINT32_MAX) throw std::length_error("too many multi-view picking sources");
-                command.object_id=uint32_t(mapped.size());mapped.push_back(source);
+                if(sources) {command.object_id=uint32_t(mapped.size());mapped.push_back(source);}
+                else if(source.model) command.object_id=uint32_t(std::find(models_.begin(),models_.end(),source.model)-models_.begin());
+                else command.object_id=uint32_t(models_.size()+size_t(std::find(drawables_.begin(),drawables_.end(),source.drawable)-drawables_.begin()));
             }
             command.viewport=vp;result.push_back(std::move(command));
         }
@@ -334,7 +334,7 @@ bool MultiViewer::mouse_press_event(int x,int y,int button,int modifiers) {
 
 
 
-void MultiViewer::draw_scene_depth(const Camera& snapshot,const DrawSource* source) const {
+void MultiViewer::draw_scene(const Camera& snapshot,const DrawSource* source,bool guides) const {
     CellScissor clip;
     Camera cell(snapshot);cell.frame()->setPivotPoint(snapshot.pivotPoint());
     cell.setScreenWidthAndHeight(camera()->screenWidth(),camera()->screenHeight());
@@ -358,6 +358,23 @@ void MultiViewer::draw_scene_depth(const Camera& snapshot,const DrawSource* sour
             for(const auto& d:model->renderer()->points_drawables()) append(d.get());
         }
         for(const auto& d:drawables_) if((!source || !source->model) && std::find(view.drawables.begin(),view.drawables.end(),d.get())!=view.drawables.end()) draw(d.get());
+        if(guides) {
+            ClippingPlane::instance()->draw(&cell);
+            glDisable(GL_DEPTH_TEST);glDepthMask(GL_FALSE);
+            const auto flat=[&](const Drawable* d) {if(d && d->is_visible()) if(auto p=dynamic_cast<const LinesDrawable2D*>(d)) p->draw(&cell);};
+            for(const auto& model:models_) if(model->renderer()) {
+                const bool assigned=model->renderer()->is_visible() && std::find(view.models.begin(),view.models.end(),model.get())!=view.models.end();
+                for(const auto& d:model->renderer()->lines_drawables())
+                    if(assigned || std::find(view.drawables.begin(),view.drawables.end(),d.get())!=view.drawables.end()) flat(d.get());
+            }
+            for(const auto& d:drawables_) if(std::find(view.drawables.begin(),view.drawables.end(),d.get())!=view.drawables.end()) flat(d.get());
+            glEnable(GL_DEPTH_TEST);glDepthMask(GL_TRUE);
+        }
+    }
+    if(guides && division_visible()) {
+        glViewport(0,0,snapshot.screenWidth(),snapshot.screenHeight());glScissor(0,0,snapshot.screenWidth(),snapshot.screenHeight());
+        glDisable(GL_DEPTH_TEST);glDepthMask(GL_FALSE);drawable_division_->draw(&snapshot);
+        glEnable(GL_DEPTH_TEST);glDepthMask(GL_TRUE);
     }
 }
     bool MultiViewer::mouse_press_event(int x,int y,int button,int modifiers) {

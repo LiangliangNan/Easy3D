@@ -3,7 +3,7 @@
 #include <easy3d/viewer/offscreen.h>
 #include <easy3d/renderer/camera.h>
 namespace easy3d {
-OffScreen::OffScreen(int w, int h, const VulkanOptions& options) : Viewer(w,h,options) {}
+OffScreen::OffScreen(int w, int h, const VulkanOptions& options) : Viewer(w,h,options) {snapshot_hud_=false;}
 OffScreen::~OffScreen() = default;
 void OffScreen::resize(int w,int h) { resize_render_target(w,h); }
 void OffScreen::framebuffer_size(int& w,int& h) const { w = width(); h = height(); }
@@ -30,7 +30,7 @@ OffScreen::OffScreen(int w, int h, const OpenGLOptions& gl_options)
                    w>0?w:throw std::invalid_argument("offscreen width must be positive"),
                    h>0?h:throw std::invalid_argument("offscreen height must be positive"),
                    4,false,false,true,gl_options) {
-    manual_.clear();width_=w;height_=h;dpi_scaling_=1;init();resize(w,h);
+    snapshot_hud_=false;manual_.clear();width_=w;height_=h;dpi_scaling_=1;init();resize(w,h);
 }
 OffScreen::~OffScreen() { activate(); }
 void OffScreen::activate() const {

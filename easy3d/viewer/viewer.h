@@ -36,10 +36,7 @@
 #include <chrono>
 #include <easy3d/renderer/render_device.h>
 #ifdef EASY3D_HAS_VULKAN
-#define EASY3D_TUTORIAL_USES_VULKAN 1
 #include <easy3d/renderer/camera.h>
-#else
-#define EASY3D_TUTORIAL_USES_VULKAN 0
 #endif
 struct GLFWwindow;
 namespace easy3d {
@@ -524,6 +521,13 @@ public:
     // Reconstruct a top-left framebuffer pixel center from [0,1] readback depth.
     // Unlike Camera's legacy coordinate helper, this uses continuous framebuffer coordinates.
     virtual vec3 unproject_pixel(int x, int y, float depth) const;
+    // Raw composited RGBA; scene depth/object IDs are center-sampled and exclude HUD.
+    // Default object IDs index models(), followed by standalone drawables().
+    // OpenGL capture reports unavailable primitive IDs as UINT32_MAX.
+    // Color is multisampled when requested; IDs/depth stay center-sampled.
+    // Invalid/unsupported requests throw, allowing callers/tests to handle them.
+    graphics::FrameImage capture() const;
+    virtual graphics::FrameImage capture(unsigned samples) const;
 #ifdef EASY3D_HAS_VULKAN
     // Transitional Vulkan-only scene APIs (docs/vulkan.md, U1b).
     // Per-viewer world-space halfspaces, keeping dot(plane,vec4(world,1)) >= 0.
@@ -537,10 +541,6 @@ public:
     // MSAA color does not alter center-sample depth/ID scan semantics. Does not
     // modify scene/camera or advance animation; includes every visible drawable.
     std::vector<vec3> scan_visible_points(unsigned samples = 1) const;
-    // Color is multisampled when requested; IDs/depth stay center-sampled.
-    // Invalid/unsupported requests throw, allowing callers/tests to handle them.
-    graphics::FrameImage capture() const;
-    graphics::FrameImage capture(unsigned samples) const;
     // Output dimensions round upwards, matching OffScreen. expand chooses
     // expansion versus cropping when rounding changes the output aspect ratio.
     // Rendering uses a camera copy and leaves the live camera unchanged.
@@ -655,6 +655,7 @@ private:
     std::chrono::steady_clock::time_point next_camera_path_frame_;
     void advance_camera_path();
 protected:
+    bool snapshot_hud_ = true; // Capture/file HUD policy; OffScreen/MultiViewer are scene-only.
     struct DrawSource { std::shared_ptr<Model> model; std::shared_ptr<Drawable> drawable; };
 #ifdef EASY3D_HAS_VULKAN
     // Keep this part of code minimum
@@ -703,7 +704,6 @@ protected:
     void set_viewer_3d_overlays(std::vector<graphics::DrawCommand> commands) const;
     void set_viewer_annotations(std::vector<graphics::DrawCommand> commands) const;
     void release_device();
-    bool snapshot_hud_ = true; // MultiViewer file output matches the original scene-only grid snapshot.
     bool show_corner_axes_ = true;
     std::string framerate_ = "fps: -- (-- ms/frame)";
 
@@ -711,7 +711,7 @@ protected:
     // Keep this part of code minimum
 
 	protected:
-        virtual void draw_scene_depth(const Camera& snapshot, const DrawSource* source = nullptr) const;
+        virtual void draw_scene(const Camera& snapshot, const DrawSource* source = nullptr, bool guides = false) const;
         GLFWwindow *create_window(const std::string &title,
                                   int samples,
                                   int gl_major,   // must >= 3

@@ -38,8 +38,11 @@ const char* const usage_hint = "press 'Space' to perform scanning\n"
 }
 
 
-#if EASY3D_TUTORIAL_USES_VULKAN
 #include <easy3d/core/point_cloud.h>
+#include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/manipulated_camera_frame.h>
+#include <easy3d/renderer/clipping_plane.h>
+#include <cmath>
 #include <easy3d/algo/gaussian_noise.h>
 
 using namespace easy3d;
@@ -55,113 +58,30 @@ bool TutorialVirtualScanner::key_press_event(int key,int modifiers) {
     if (modifiers==0 && key==KEY_SPACE) {
         int w,h; framebuffer_size(w,h);
         if (w<=0 || h<=0) return true;
-        // Key events may arrive before the next draw synchronizes a resize.
-        if (camera()->screenWidth()!=w || camera()->screenHeight()!=h) resize_render_target(w,h);
-        const auto points=scan_visible_points(samples());
+        const auto inv=inverse(camera()->modelViewProjectionMatrix());
+        const auto frame=capture(samples());
+        std::vector<vec3> points;
+        for(unsigned y=0;y<frame.height;++y) for(unsigned x=0;x<frame.width;++x) {
+            const size_t pixel=size_t(y)*frame.width+x;const float d=frame.depth[pixel];
+            if(frame.ids[pixel].object==UINT32_MAX || !std::isfinite(d) || d<0 || d>=1) continue;
+            const vec4 p=inv*vec4(2*(float(x)+.5f)/frame.width-1,1-2*(float(y)+.5f)/frame.height,2*d-1,1);
+            if(std::isfinite(p.w) && p.w!=0) points.emplace_back(p.x/p.w,p.y/p.w,p.z/p.w);
+        }
         if (points.empty()) return true;
         auto cloud=std::make_shared<easy3d::PointCloud>();
         cloud->set_name("Virtual scan");
         for (const auto& p:points) cloud->add_vertex(p);
         if (add_noise_) easy3d::GaussianNoise::apply(cloud.get(),camera()->sceneRadius()*.0001f);
         // Keep the complete acquisition camera state, including its pivot.
-        add_model(cloud,true,false);
+        // Model attachment may fit the scene; retain the acquisition camera.
+        Camera saved(*camera());saved.frame()->setPivotPoint(camera()->pivotPoint());
+        saved.set_projection_matrix(camera()->projectionMatrix());saved.set_modelview_matrix(camera()->modelViewMatrix());
+        const auto* plane=ClippingPlane::instance();const auto center=plane->center();const float radius=plane->scene_radius();
+        add_model(cloud);
+        ClippingPlane::instance()->fit_scene(center,radius);
+        *camera()=saved;camera()->frame()->setPivotPoint(saved.pivotPoint());
+        camera()->set_projection_matrix(saved.projectionMatrix());camera()->set_modelview_matrix(saved.modelViewMatrix());
         update(); return true;
     }
     return Viewer::key_press_event(key,modifiers);
 }
-
-#else
-
-#include <easy3d/core/point_cloud.h>
-#include <easy3d/renderer/camera.h>
-#include <easy3d/renderer/framebuffer_object.h>
-#include <easy3d/algo/gaussian_noise.h>
-
-
-using namespace easy3d;
-
-// \cond
-
-TutorialVirtualScanner::TutorialVirtualScanner(const std::string &title)
-    : Viewer(title)
-    , add_noise_(false)
-{
-    camera()->setUpVector(vec3(0, 1, 0));
-
-    manual_ = usage_manual;
-
-    hint_ = usage_hint;
-}
-
-
-bool TutorialVirtualScanner::key_press_event(int key, int modifiers) {
-    if (key == KEY_SPACE && modifiers == 0) {
-        int fw, fh;
-		framebuffer_size(fw, fh);
-
-        FramebufferObject fbo(fw, fh, 0);
-        fbo.add_depth_buffer(GL_DEPTH_COMPONENT32F);
-        fbo.bind();
-        glClearDepth(1.0f);
-        glClear(GL_DEPTH_BUFFER_BIT);
-        draw();
-        fbo.release();
-
-        std::vector<float> depths;
-        fbo.read_depth(depths, false);
-
-        const mat4& MVP = camera()->modelViewProjectionMatrix();
-        const mat4& invMVP = inverse(MVP);
-        const int viewport[] = { 0, 0, width_, height_};
-
-        std::vector<vec3> points;
-        for (int x=0; x<width_; ++x) {
-            for (int y=0; y<height_; ++y) {
-                // NOTE: when dealing with OpenGL, we always work in the highdpi screen space
-#if defined(__APPLE__)
-                const int idx = static_cast<int>(static_cast<float>(y) * dpi_scaling() * static_cast<float>(fw) + static_cast<float>(x) * dpi_scaling());
-#else
-                const int idx = static_cast<int>(y * fw + x);
-#endif
-                const float d = depths[idx];
-                if (d < 1.0f) {
-                    vec3 vs(static_cast<float>(x), static_cast<float>(y), d);
-                    vs.x = static_cast<float>(vs.x - static_cast<float>(viewport[0])) / static_cast<float>(viewport[2]) * 2.0f - 1.0f;
-                    vs.y = static_cast<float>(vs.y - static_cast<float>(viewport[1])) / static_cast<float>(viewport[3]) * 2.0f - 1.0f;
-                    vs.z = vs.z * 2.0f - 1.0f;
-                    points.push_back(invMVP * vs);
-                }
-            }
-        }
-
-        if (!points.empty()) {
-            auto cloud = new PointCloud;
-            for (const auto& p : points)
-                cloud->add_vertex(p);
-
-            if (add_noise_) {
-                const float ratio = 0.0001f;
-                const float sigma = current_model()->bounding_box().radius() * ratio;
-                GaussianNoise::apply(cloud, sigma);
-                std::cout << "Gaussian noise added (sigma = " << ratio << " * model radius)" << std::endl;
-            }
-            add_model(std::shared_ptr<PointCloud>(cloud));
-            update();
-        }
-
-        return false;
-    }
-    else if (key == KEY_N && modifiers == 0) {
-        add_noise_ = !add_noise_;
-        if (add_noise_)
-            std::cout << "add_noise = ON" << std::endl;
-        else
-            std::cout << "add_noise = OFF" << std::endl;
-        return false;
-    }
-    else
-        return Viewer::key_press_event(key, modifiers);
-}
-
-// \endcond
-#endif // native Vulkan / legacy OpenGL

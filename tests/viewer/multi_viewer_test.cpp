@@ -121,8 +121,10 @@ int main(int argc,char**) {
         const auto explicit_hit=grid.pick(explicit_cell.x+explicit_cell.z/2,explicit_cell.y+explicit_cell.w/2);
         require(explicit_hit.model==red && explicit_hit.face_index==0,"explicit assignment lost a hidden parent's source ownership");
         red->renderer()->set_visible(true);
-#ifdef EASY3D_HAS_VULKAN
-        auto before=grid.capture(1);if(grid.device().supported_sample_counts()&4) {
+        auto before=grid.capture(1);
+        const auto captured_id=[&](int r,int c) {const auto vp=grid.bounds(r,c);return before.ids[size_t(vp.y+vp.w/2)*before.width+vp.x+vp.z/2].object;};
+        require(captured_id(0,0)==0 && captured_id(0,1)==1 && captured_id(1,0)==0 && captured_id(1,1)==2 && captured_id(1,2)==3,"capture IDs do not match model/standalone ownership");
+        {
             auto msaa=grid.capture(4);require(before.depth==msaa.depth && before.ids.size()==msaa.ids.size(),"MSAA changed per-cell scene depth");
             for(size_t i=0;i<before.ids.size();++i) require(before.ids[i].object==msaa.ids[i].object && before.ids[i].primitive==msaa.ids[i].primitive,"MSAA changed cell source IDs");
         }
@@ -132,6 +134,7 @@ int main(int argc,char**) {
         for(int y=empty.y;y<empty.y+empty.w;++y) for(int x=empty.x;x<empty.x+empty.z;++x)
             require(large.ids[size_t(y)*large.width+x].object==UINT32_MAX,"large point escaped its cell scissor");
         point->set_point_size(23);
+#ifdef EASY3D_HAS_VULKAN
         const auto uploads=grid.device().point_upload_count();grid.assign(0,2,point.get());grid.capture();require(grid.device().point_upload_count()==uploads,"sharing a point drawable across cells uploaded positions again");
 #endif
         point->set_point_size(300);

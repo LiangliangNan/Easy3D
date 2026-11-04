@@ -48,10 +48,10 @@ public:
     using Viewer::point_under_pixel;
     using Viewer::set_overlays;
     using Viewer::clipping_planes;
+    using Viewer::capture;
 #ifdef EASY3D_HAS_VULKAN
     // Transitional native scene operations, retained until the picker migration.
     using Viewer::scan_visible_points;
-    using Viewer::capture;
     using Viewer::device;
     using Viewer::set_clipping_planes;
 #endif

@@ -164,7 +164,8 @@ struct FrameImage {
     std::vector<unsigned char> rgba;  // tightly packed RGBA8, top row first
     std::vector<float> depth;        // [0, 1], clear depth is 1
     struct Id { std::uint32_t object, primitive; };
-    // UINT32_MAX in both fields denotes background. No normalized-color encoding.
+    // UINT32_MAX object denotes background. A UINT32_MAX primitive on a foreground
+    // object denotes unavailable primitive provenance (e.g. OpenGL Viewer capture).
     std::vector<Id> ids;
 };
 

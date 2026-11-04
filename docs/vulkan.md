@@ -368,15 +368,14 @@ of this document.
   `backend()`/`fallback_reason()`, `create_vulkan_viewer`/`create_opengl_viewer`, the
   installed-consumer test's use of them, the Python `Backend` binding and the demo's
   fallback message. The two viewer tests no longer take a `Backend` or `--opengl`.
-- **W5** (in progress) Remove `EASY3D_TUTORIAL_USES_VULKAN`. Five effect tutorials remain
+- **W5** (complete, 2026-11-05) Removed `EASY3D_TUTORIAL_USES_VULKAN` from all tutorials and viewer.h. Five effect tutorials remain
   gated in `tutorials/CMakeLists.txt`: 501–505 require effect implementations (W10).
   Native Qt/wx integration remains W10.
   Tutorial 202 now builds on both backends (U5d); Tutorials 401/402 use shared
   visible-surface picking (2026-11-04). Tutorials 306/309 now use shared annotations
   (W5 batch 4). Tutorials 207/405/506 now use shared annotation geometry, guides
   and GPU depth previews (W5 batch 5). Tutorial 403 now shares GPU point selection
-  on both backends (batch 7). Only 404 retains a separate capture implementation
-  behind the macro; see U5.
+  on both backends (batch 7). Tutorial 404 uses shared capture and reconstructs its scan locally (batch 10); see U5.
 - **W6** (in progress) Run the Vulkan tests. Verified on Linux (GCC 13, Mesa lavapipe
   25.2.8, Xvfb), Vulkan tree with tutorials and tests, on upstream `a89bb2d` plus the
   fixes above (re-run 2026-10-31): 13 of 13 display-free and 55 of 56 desktop tests pass, including all 28
@@ -456,8 +455,8 @@ of this document.
   W5 batch 3 consolidates surface queries in ViewerBase and shares Tutorial 405's
   selection/drag lifecycle. W5 batch 5 shares its guide rendering and removes the
   selectors from Tutorials 207/405/506.
-  The remaining conditional tutorial (404) still requires capture consolidation;
-  the tutorial macro is not yet removable. Avoid
+  Tutorial 404 now uses the existing shared capture API and reconstructs points locally;
+  the tutorial selector macro is removed (batch 10). Avoid
   new generic Viewer abstractions solely for a single tutorial.
 - **U6** (in progress) U6a moves bounded tutorial tests out of tutorial CMake and
   restores five picker-tutorial dependency lists to `main`. U6b restores drawable
@@ -5064,3 +5063,51 @@ new offscreen device counters remain zero. The existing integer-attachment drive
 diagnostic and historical window-test caveat remain unchanged. The unrelated
 CMake-generated release-date change is excluded from this batch.
 `git diff --check` is clean; work remains uncommitted on Easy3D-Vulkan.
+
+
+### 2026-11-05 — U2/U5/U6 batch 10: shared capture and selector-free virtual scanner
+
+`Viewer::capture()` and `capture(samples)` now work in either exclusive backend
+build and are exposed by OffScreen. Raw RGBA includes user annotations; depth and
+object IDs come from an independent single-sample scene pass. Color MSAA, guides,
+HUD, screen-space lines and annotations do not contaminate scene metadata. Object
+IDs index models, followed by standalone drawables, including repeated MultiViewer
+assignments. Vulkan retains primitive IDs; OpenGL explicitly reports UINT32_MAX
+for unavailable primitive IDs, rather than inventing provenance. Existing source
+picking continues to return drawable/face information independently.
+
+OpenGL reuses its drawable shaders and source-aware scene hook for capture, with
+per-source depth readback/merging. This synchronous implementation favors parity
+and reuses existing code; full-frame per-source readback remains a performance
+limitation for many drawables. The protected migration-era `draw_scene_depth`
+hook becomes `draw_scene(snapshot, source, guides)` so capture and queries share
+cell assignments, custom matrices and scissoring. MultiViewer includes its divider
+in capture color and preserves scene-only metadata. OffScreen and MultiViewer
+omit window HUD, while retaining user annotations. Query state now also isolates
+multisampling and unpack buffers/layouts, including cold texture uploads.
+
+Tutorial 404 uses shared capture and performs pixel-center world reconstruction
+inside the tutorial. Its noise toggle, acquisition camera/pivot/scene bounds and
+clipping-guide placement are preserved when attaching the result. No scanning
+method is added to ViewerBase. The last EASY3D_TUTORIAL_USES_VULKAN use and its
+viewer.h definition are removed; effect tutorials 501–505 remain separately gated
+on missing Vulkan effects, rather than being claimed complete.
+
+Root capture regressions cover both backends, scene color/object ownership,
+1x/4x depth/ID stability, analytic sphere depth versus picking, annotation alpha,
+clear-scene behavior, caller pixel-transfer state, camera preservation and the
+actual Tutorial 404 scan. The existing multi-view capture regression now runs on
+OpenGL too, checking model/standalone IDs, dividers and large-point scissors.
+The existing MoltenVK scanner regression retains its exact point-cloud oracle.
+
+Remaining priorities are the original model/point-cloud GUI picker counterparts,
+mesh GPU/rasterization parity, TextRenderer/Texture audit, effects and native GUI
+integration. One-backend build policy and the IDE OpenGL configuration are unchanged.
+
+Validation on this Mac: full Vulkan-only and OpenGL-only builds succeed, including
+Python packaging. All 116 MoltenVK tests and all 90 OpenGL tests pass. Focused
+capture/scanner tests also pass; the MoltenVK suite uses the existing validation
+and synchronization-validation harness and capture device error counters remain
+zero. The longstanding MoltenVK integer-attachment diagnostic is unchanged.
+`git diff --check` is clean. Work remains uncommitted on Easy3D-Vulkan, preserving
+the release-date edit that was already present when this batch began.

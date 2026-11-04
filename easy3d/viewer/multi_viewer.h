@@ -153,7 +153,7 @@ namespace easy3d {
         mutable int division_width_ = 0, division_height_ = 0;
 #else
         // Keep this part of code minimum
-        void draw_scene_depth(const Camera& camera, const DrawSource* source = nullptr) const override;
+        void draw_scene(const Camera& camera, const DrawSource* source = nullptr, bool guides = false) const override;
         // overloaded, so mouse positions are relative to the current view
         bool mouse_release_event(int x, int y, int button, int modifiers) override;
         // overloaded, so mouse positions are relative to the current view

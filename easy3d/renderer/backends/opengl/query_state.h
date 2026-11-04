@@ -7,7 +7,7 @@ namespace easy3d { namespace opengl {
 // Preserve caller state around scene queries and annotation rendering.
 // The caller chooses the render target; camera/drawable settings are untouched.
 struct QueryState {
-    static const unsigned flag_count = 19;
+    static const unsigned flag_count = 20;
     const GLenum flags[flag_count] = {GL_DEPTH_TEST,
                                       GL_BLEND,
                                       GL_SCISSOR_TEST,
@@ -26,17 +26,19 @@ struct QueryState {
                                       GL_SAMPLE_MASK,
                                       GL_FRAMEBUFFER_SRGB,
                                       GL_DITHER,
-                                      GL_COLOR_LOGIC_OP};
+                                      GL_COLOR_LOGIC_OP, GL_MULTISAMPLE};
     GLboolean enabled[flag_count], depth_mask, color_mask[4];
     GLint viewport[4], draw_fbo, read_fbo, renderbuffer, program, vao, array, element, active, uniform, pack_buffer,
-        depth_func;
+        depth_func, unpack_buffer;
     GLint blend[6], textures[2][2], polygon_mode[2], front_face;
     std::vector<GLboolean> clip_distances;
     static const unsigned pack_count = 8;
     const GLenum pack_names[pack_count] = {GL_PACK_ALIGNMENT,  GL_PACK_ROW_LENGTH,   GL_PACK_SKIP_PIXELS,
                                            GL_PACK_SKIP_ROWS,  GL_PACK_IMAGE_HEIGHT, GL_PACK_SKIP_IMAGES,
                                            GL_PACK_SWAP_BYTES, GL_PACK_LSB_FIRST};
-    GLint pack[pack_count];
+    GLint pack[pack_count],unpack[pack_count];
+    const GLenum unpack_names[pack_count]={GL_UNPACK_ALIGNMENT,GL_UNPACK_ROW_LENGTH,GL_UNPACK_SKIP_PIXELS,
+        GL_UNPACK_SKIP_ROWS,GL_UNPACK_IMAGE_HEIGHT,GL_UNPACK_SKIP_IMAGES,GL_UNPACK_SWAP_BYTES,GL_UNPACK_LSB_FIRST};
     GLdouble clear_depth, depth_range[2];
     GLfloat point_size, line_width, clear_color[4];
     struct UniformBinding {
@@ -59,6 +61,7 @@ struct QueryState {
         glGetIntegerv(GL_UNIFORM_BUFFER_BINDING, &uniform);
         glGetIntegerv(GL_PIXEL_PACK_BUFFER_BINDING, &pack_buffer);
         glGetIntegerv(GL_DEPTH_FUNC, &depth_func);
+        glGetIntegerv(GL_PIXEL_UNPACK_BUFFER_BINDING,&unpack_buffer);
         glGetBooleanv(GL_DEPTH_WRITEMASK, &depth_mask);
         glGetBooleanv(GL_COLOR_WRITEMASK, color_mask);
         glGetDoublev(GL_DEPTH_CLEAR_VALUE, &clear_depth);
@@ -79,6 +82,7 @@ struct QueryState {
             glGetIntegerv(blend_names[i], &blend[i]);
         for (unsigned i = 0; i < pack_count; ++i)
             glGetIntegerv(pack_names[i], &pack[i]);
+        for(unsigned i=0;i<pack_count;++i) glGetIntegerv(unpack_names[i],&unpack[i]);
         for (unsigned unit = 0; unit < 2; ++unit) {
             glActiveTexture(GL_TEXTURE0 + unit);
             glGetIntegerv(GL_TEXTURE_BINDING_2D, &textures[unit][0]);
@@ -105,6 +109,7 @@ struct QueryState {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element);
         glBindBuffer(GL_ARRAY_BUFFER, array);
         glBindBuffer(GL_PIXEL_PACK_BUFFER, pack_buffer);
+        glBindBuffer(GL_PIXEL_UNPACK_BUFFER,unpack_buffer);
         for (GLuint i = 0; i < blocks.size(); ++i) {
             const auto &b = blocks[i];
             if (b.name && b.size > 0)
@@ -121,6 +126,7 @@ struct QueryState {
         glActiveTexture(active);
         for (unsigned i = 0; i < pack_count; ++i)
             glPixelStorei(pack_names[i], pack[i]);
+        for(unsigned i=0;i<pack_count;++i) glPixelStorei(unpack_names[i],unpack[i]);
         glDepthFunc(depth_func);
         glDepthMask(depth_mask);
         glColorMask(color_mask[0], color_mask[1], color_mask[2], color_mask[3]);
@@ -153,6 +159,7 @@ struct QueryState {
             glDisable(GL_CLIP_DISTANCE0 + i);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glFrontFace(GL_CCW);
+        glEnable(GL_MULTISAMPLE);
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
         glDepthMask(GL_TRUE);
@@ -162,8 +169,10 @@ struct QueryState {
         glViewport(0, 0, w, h);
         glActiveTexture(GL_TEXTURE0);
         glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+        glBindBuffer(GL_PIXEL_UNPACK_BUFFER,0);
         for (unsigned i = 0; i < pack_count; ++i)
             glPixelStorei(pack_names[i], i == 0 ? 1 : 0);
+        for(unsigned i=0;i<pack_count;++i) glPixelStorei(unpack_names[i],i==0?1:0);
     }
 };
 } }

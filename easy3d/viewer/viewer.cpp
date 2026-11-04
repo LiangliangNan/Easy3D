@@ -844,7 +844,7 @@ graphics::FrameImage Viewer::capture(unsigned sample_count) const {
         auto* host = const_cast<Viewer*>(this); host->init(); host->initialized_ = true;
     }
     if (window_) { update_camera_path_overlays(); update_interaction_overlays(); }
-    return impl_->capture(*camera(), background_color(), sample_count, framebuffer_width(), framebuffer_height());
+    return impl_->capture(*camera(), background_color(), sample_count, framebuffer_width(), framebuffer_height(), snapshot_hud_);
 }
 int Viewer::run(bool see_all) {
     try {
@@ -3111,8 +3111,59 @@ void Viewer::draw_overlays(bool foreground) const {
             projection=full*projection;
         }
         snapshot.set_projection_matrix(projection);snapshot.set_modelview_matrix(camera()->modelViewMatrix());
-        draw_scene_depth(snapshot);
+        draw_scene(snapshot);
     });
+}
+graphics::FrameImage Viewer::capture() const {return capture(samples());}
+graphics::FrameImage Viewer::capture(unsigned count) const {
+    if(!count || count>64 || (count&(count-1))) throw std::invalid_argument("invalid capture sample count");
+    QueryContext context(window_);QueryState state;
+    GLint maximum=0,extent=0;glGetIntegerv(GL_MAX_SAMPLES,&maximum);glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE,&extent);
+    const int w=framebuffer_width(),h=framebuffer_height();
+    if(w<=0 || h<=0 || w>extent || h>extent || (count>1 && count>unsigned(maximum)))
+        throw std::invalid_argument("unsupported capture dimensions or samples");
+    state.prepare(w,h);
+    auto* self=const_cast<Viewer*>(this);
+    if(!initialized_) {self->init();self->initialized_=true;}
+    Camera snapshot(*camera());snapshot.frame()->setPivotPoint(camera()->pivotPoint());
+    snapshot.setScreenWidthAndHeight(w,h);snapshot.projectionMatrix();snapshot.modelViewMatrix();
+    snapshot.set_projection_matrix(camera()->projectionMatrix());snapshot.set_modelview_matrix(camera()->modelViewMatrix());
+    for(unsigned i=0;i<16;++i) if(!std::isfinite(snapshot.modelViewProjectionMatrix()[i]))
+        throw std::invalid_argument("nonfinite capture camera");
+    graphics::FrameImage frame;frame.width=w;frame.height=h;
+    {
+        FramebufferObject color(w,h,count<=1?0:int(count));
+        if(!color.add_color_buffer() || !color.add_depth_buffer() || !color.bind()) throw std::runtime_error("cannot create capture color target");
+        state.prepare(w,h);glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+        const auto bg=background_color();glClearColor(bg.x,bg.y,bg.z,bg.w);glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+        draw_scene(snapshot,nullptr,true);glViewport(0,0,w,h);draw_overlays(false);
+        if(snapshot_hud_) self->Viewer::post_draw();else draw_overlays(true);
+        glDisable(GL_SCISSOR_TEST);glBindBuffer(GL_PIXEL_PACK_BUFFER,0);
+        if(!color.read_color(0,frame.rgba,GL_RGBA,true)) throw std::runtime_error("cannot read capture color");
+    }
+    FramebufferObject depth(w,h,0);
+    if(!depth.add_color_buffer() || !depth.add_depth_buffer(GL_DEPTH_COMPONENT32F) || !depth.bind()) throw std::runtime_error("cannot create capture depth target");
+    frame.depth.assign(size_t(w)*h,1);frame.ids.assign(size_t(w)*h,{UINT32_MAX,UINT32_MAX});
+    std::vector<float> candidate(frame.depth.size());
+    const auto append=[&](const std::shared_ptr<Model>& model,const std::shared_ptr<Drawable>& drawable,uint32_t id) {
+        if(!drawable->is_visible() || dynamic_cast<LinesDrawable2D*>(drawable.get())) return;
+        state.prepare(w,h);glClear(GL_DEPTH_BUFFER_BIT);
+        DrawSource source{model,drawable};draw_scene(snapshot,&source);
+        glReadPixels(0,0,w,h,GL_DEPTH_COMPONENT,GL_FLOAT,candidate.data());
+        for(int y=0;y<h;++y) for(int x=0;x<w;++x) {
+            const auto p=size_t(y)*w+x;const auto d=candidate[size_t(h-1-y)*w+x];
+            if(d>=0 && d<frame.depth[p]) {frame.depth[p]=d;frame.ids[p]={id,UINT32_MAX};}
+        }
+    };
+    if(models_.size()+drawables_.size()>=UINT32_MAX) throw std::length_error("too many capture objects");
+    for(size_t i=0;i<models_.size();++i) {
+        const auto& model=models_[i];if(!model->renderer()) continue;
+        for(const auto& d:model->renderer()->triangles_drawables()) append(model,d,uint32_t(i));
+        for(const auto& d:model->renderer()->lines_drawables()) append(model,d,uint32_t(i));
+        for(const auto& d:model->renderer()->points_drawables()) append(model,d,uint32_t(i));
+    }
+    for(size_t i=0;i<drawables_.size();++i) append(nullptr,drawables_[i],uint32_t(models_.size()+i));
+    return frame;
 }
 Viewer::PickResult Viewer::pick(int x, int y) const {
     PickResult result;
@@ -3136,7 +3187,7 @@ Viewer::PickResult Viewer::pick(int x, int y) const {
         state.prepare(fw,fh);
         glClear(GL_DEPTH_BUFFER_BIT);
         DrawSource source{model,drawable};
-        draw_scene_depth(snapshot,&source);
+        draw_scene(snapshot,&source);
         float depth=1;
         glReadPixels(x,fh-1-y,1,1,GL_DEPTH_COMPONENT,GL_FLOAT,&depth);
         if (depth>=0 && depth<result.depth) {
@@ -3215,11 +3266,11 @@ bool Viewer::read_scene_depth(int x, int y, const Camera &snapshot, float &depth
     if (!target.bind())
         throw std::runtime_error("cannot bind scene depth framebuffer");
     glClear(GL_DEPTH_BUFFER_BIT);
-    draw_scene_depth(snapshot);
+    draw_scene(snapshot);
     glReadPixels(x, snapshot.screenHeight() - 1 - y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
     return true;
 }
-void Viewer::draw_scene_depth(const Camera& snapshot,const DrawSource* source) const {
+void Viewer::draw_scene(const Camera& snapshot,const DrawSource* source,bool guides) const {
     if(source) {
         if(source->model && (!source->model->renderer() || !source->model->renderer()->is_visible())) return;
         query_draw(source->drawable.get(),snapshot);
@@ -3238,6 +3289,13 @@ void Viewer::draw_scene_depth(const Camera& snapshot,const DrawSource* source) c
     }
     for (const auto &drawable : drawables_)
         query_draw(drawable.get(), snapshot);
+    if(guides) {
+        ClippingPlane::instance()->draw(&snapshot);
+        glDisable(GL_DEPTH_TEST);glDepthMask(GL_FALSE);
+        for(const auto& d:drawables_) if(d->is_visible())
+            if(auto* flat=dynamic_cast<LinesDrawable2D*>(d.get())) flat->draw(&snapshot);
+        glEnable(GL_DEPTH_TEST);glDepthMask(GL_TRUE);
+    }
 }
 } // namespace easy3d
 
