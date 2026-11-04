@@ -7,6 +7,8 @@
 #include <easy3d/fileio/image_io.h>
 #include <easy3d/util/initializer.h>
 #include <3rd_party/imgui/imgui.h>
+#define GLFW_INCLUDE_NONE
+#include <3rd_party/glfw/include/GLFW/glfw3.h>
 #include "test_window.h"
 #include <cmath>
 #include <cstring>

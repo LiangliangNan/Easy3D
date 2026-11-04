@@ -11,6 +11,8 @@
 #ifndef EASY3D_HAS_VULKAN
 #include <easy3d/renderer/opengl.h>
 #endif
+#define GLFW_INCLUDE_NONE
+#include <3rd_party/glfw/include/GLFW/glfw3.h>
 #include <cmath>
 #include <iostream>
 #include <limits>
@@ -145,8 +147,8 @@ void check(unsigned samples, bool validation) {
         }
 #endif
         front->set_visible(false);
-        const auto far = v->point_under_pixel(x, y, found);
-        require(found && std::abs(far.z + .3f) < 2e-4f, "query ignored drawable visibility");
+        const auto pfar = v->point_under_pixel(x, y, found);
+        require(found && std::abs(pfar.z + .3f) < 2e-4f, "query ignored drawable visibility");
         front->set_visible(true);
         v->point_under_pixel(0, 0, found);
         require(!found, "background returned a point");

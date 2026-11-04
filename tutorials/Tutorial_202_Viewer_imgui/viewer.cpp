@@ -32,6 +32,9 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/camera.h>
 
+#define GLFW_INCLUDE_NONE
+#include <3rd_party/glfw/include/GLFW/glfw3.h>  // for glfw functions
+
 #include <3rd_party/imgui/misc/fonts/imgui_fonts_droid_sans.h>
 #include <3rd_party/imgui/imgui.h>
 #include <3rd_party/imgui/backends/imgui_impl_glfw.h>
