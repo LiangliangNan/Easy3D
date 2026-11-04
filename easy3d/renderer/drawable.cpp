@@ -39,12 +39,6 @@
 
 namespace easy3d {
 
-    void Drawable::enable_cpu_buffers() {
-        if (vertex_buffer_ || normal_buffer_ || color_buffer_ || texcoord_buffer_ || element_buffer_)
-            throw std::logic_error("cannot transfer an uploaded OpenGL drawable to CPU buffers");
-        if (!cpu_buffers_) cpu_buffers_.reset(new BufferData);
-    }
-
     void Drawable::set_source_faces(const std::vector<int>& faces) {
         if (!cpu_buffers_ || type()!=DT_TRIANGLES) throw std::logic_error("face provenance requires CPU triangle buffers");
         const auto count=(cpu_buffers_->indices.empty() ? cpu_buffers_->vertices.size() : cpu_buffers_->indices.size())/3;
@@ -68,7 +62,7 @@ namespace easy3d {
 #ifndef EASY3D_HAS_VULKAN
         opengl_initialize();
 #else
-        enable_cpu_buffers();
+        cpu_buffers_.reset(new BufferData);
 #endif
         material_ = Material(setting::material_ambient, setting::material_specular, setting::material_shininess);
     }

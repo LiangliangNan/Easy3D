@@ -388,9 +388,7 @@ bool TutorialRealCamera::mouse_free_move_event(int x, int y, int dx, int dy, int
                 const float screen_y = q.y / static_cast<float>(cam.h) * image_rect.height() + image_rect.y_min();
                 if (!cross_drawable_) {
                     cross_drawable_.reset(new LinesDrawable("cross"));
-#if EASY3D_TUTORIAL_USES_VULKAN
-                    cross_drawable_->enable_cpu_buffers(); // screen-only; never a 3D picking source
-#else
+#if !EASY3D_TUTORIAL_USES_VULKAN
                     add_drawable(cross_drawable_);
 #endif
                     cross_drawable_->set_line_width(3.0f);

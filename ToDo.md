@@ -18,7 +18,7 @@
   - [x] U3 Classes without counterpart: same-file #ifdef structure (effects, pickers, ImGui)
   - [x] U4 Python bindings, installed package and CI use the final names (full Mac builds/rendering)
   - [ ] U5 Tutorials/applications: U5a cleanup, U5b collision and U5c camera-path sharing done; 9 tutorials still use the selector
-  - [ ] U6 In progress: shared smoke harness, inventory, drawable constructor homes, shared renderer CMake lists and texture factory routing done; remaining file audit/gates open
+  - [ ] U6 In progress: shared smoke harness, inventory, drawable constructor homes, shared renderer CMake lists, texture factories and drawable buffer policy done; remaining file audit/gates open
   - [ ] W10 Mapple, Qt/wx, remaining Python coverage, transparency/SSAO/shadows/EDL
 
 - Send the computed value of "MVP * MANIP" to shaders (avoiding computing the matrix product for each vertex/fragment)

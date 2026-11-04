@@ -58,8 +58,8 @@ namespace easy3d {
 
     class Drawable : public State {
     public:
-        // CPU-owned geometry for explicit graphics backends. Enable before uploading
-        // buffers; GL handles are never synthesized for this mode.
+        // CPU-owned geometry selected automatically by a Vulkan build.
+        // OpenGL builds use native GL buffers.
         struct BufferData {
             std::vector<vec3> vertices, normals, colors;
             std::vector<vec2> texcoords;
@@ -68,7 +68,6 @@ namespace easy3d {
             std::vector<int> source_faces;
             std::size_t revision = 0;
         };
-        void enable_cpu_buffers();
         bool has_cpu_buffers() const { return bool(cpu_buffers_); }
         const BufferData& cpu_buffers();
         // CPU triangle provenance. Set after geometry uploads, which invalidate it.

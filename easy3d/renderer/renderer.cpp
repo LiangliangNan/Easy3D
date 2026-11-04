@@ -38,9 +38,9 @@
 
 namespace easy3d {
 
-    Renderer::Renderer(Model* model, bool create, bool cpu_buffers)
+    Renderer::Renderer(Model* model, bool create)
             : visible_(true)
-            , selected_(false), cpu_buffers_(cpu_buffers)
+            , selected_(false)
     {
         model_ = model;
         if (model_ && create)
@@ -367,7 +367,6 @@ namespace easy3d {
             }
         }
         auto d = std::make_shared<PointsDrawable>(name);
-        if (cpu_buffers_) d->enable_cpu_buffers();
         d->set_model(model_);
         points_drawables_.push_back(d);
         return d.get();
@@ -382,7 +381,6 @@ namespace easy3d {
             }
         }
         auto d = std::make_shared<LinesDrawable>(name);
-        if (cpu_buffers_) d->enable_cpu_buffers();
         d->set_model(model_);
         lines_drawables_.push_back(d);
 
@@ -402,7 +400,6 @@ namespace easy3d {
             }
         }
         auto d = std::make_shared<TrianglesDrawable>(name);
-        if (cpu_buffers_) d->enable_cpu_buffers();
         d->set_model(model_);
         triangles_drawables_.push_back(d);
 

@@ -443,7 +443,8 @@ of this document.
   constructors to their original class files, removes `drawable_types.cpp` and
   removes the private OpenGL selector; U6c consolidates renderer CMake class lists
   shared by both backends. U6d removes dual-build texture routing in favor of the
-  original texture factories. The inventory above is refreshed. Continue
+  original texture factories. U6e removes the redundant drawable buffer-mode switch
+  and restores the two-argument Renderer constructor. The inventory above is refreshed. Continue
   the file-by-file responsibility audit and remove capability
   gates only when implementations exist. U5/API work remains open.
 - **W10** Mapple, Qt/wx, remaining Python API/tutorial coverage, transparency/SSAO/shadows/EDL parity.
@@ -865,13 +866,12 @@ if (model) {
 }
 ```
 
-Standalone drawables must enter CPU-buffer mode **before** their first buffer
-update. Add them to `VulkanOffScreen` first, then supply geometry. Alternatively
-call `drawable->enable_cpu_buffers()` before updating it. A drawable with existing
-GL buffers cannot be transferred by this API; re-create it from its CPU data.
-`Renderer(model, create_drawables, true)` creates CPU-backed default and subsequent
-custom drawables. The default third argument remains false for existing OpenGL clients. In a
-Vulkan-only build all drawables use CPU buffers automatically.
+Standalone drawables select their buffer implementation at construction, according
+to `Easy3D_ENABLE_VULKAN`. They can receive geometry before being added to a
+viewer. `Renderer(model, create_drawables)` uses the same compile-time policy for
+default and subsequently added drawables; there is no explicit buffer-mode switch
+or constructor flag. Vulkan drawables retain CPU snapshots for device upload;
+OpenGL drawable construction/uploads require a current OpenGL context.
 
 `easy3d/viewer/viewer.h` exposes `easy3d::OffScreen`, an alias of `VulkanOffScreen`
 (Vulkan build) or `OpenGLOffScreen` (OpenGL build) until U2 unifies them. This preserves common offscreen
@@ -4370,3 +4370,30 @@ Python bindings passed. Focused MoltenVK texture/material/picking tests passed
 scans found no remaining CPU-factory routes or State CPU-only flags.
 `git diff --check` passed. No Linux/Windows execution was performed. Changes remain
 uncommitted on Easy3D-Vulkan.
+
+
+### 2026-11-04 — U6e: Drawable buffer policy belongs to the build
+
+`Renderer` again takes only `(Model*, bool create_drawables = true)`. The migration's
+third `cpu_buffers` argument and renderer flag are removed, together with
+`Drawable::enable_cpu_buffers()`. Vulkan Drawable constructors allocate their CPU
+geometry snapshots directly; OpenGL constructors continue initializing native GL
+buffers. Buffer policy is fixed for a build and cannot be switched per renderer or
+by attaching a drawable to a viewer. The read-only `has_cpu_buffers()` diagnostic
+and Vulkan resource snapshots/provenance remain available.
+
+Removed repeated enable calls from Viewer, MultiViewer, Renderer and Tutorial 207's
+screen marker. The marker remains outside the Vulkan scene's picking sources;
+only OpenGL attaches it as a scene drawable, as before. The public constructor now
+matches the original OpenGL API without an extra backend argument. Existing
+geometry revisions, attribute invalidation, device sharing, uploads and selection
+resource caches are unchanged. External users of the removed migration APIs should
+use the original two-argument constructor and normal drawable construction, and
+rebuild against the new constructor symbol.
+
+Validation on this Mac: full builds including Python extensions passed in both
+configurations. Full suites passed **72/72 MoltenVK** and **40/40 OpenGL**, covering
+standalone/custom drawables, model buffer refresh, shared point resources and GPU
+selection, materials, MultiViewer, Tutorial 207 and packaged Python rendering.
+Source scans found no remaining `enable_cpu_buffers()` or Renderer buffer-mode
+argument/flag. `git diff --check` passed. Changes remain uncommitted on Easy3D-Vulkan.

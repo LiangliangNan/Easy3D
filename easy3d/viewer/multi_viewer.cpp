@@ -122,9 +122,6 @@ void MultiViewer::update_division() {
     if(views_.empty()) return;
     if(!drawable_division_) {
         drawable_division_.reset(new LinesDrawable2D("division"));
-#ifdef EASY3D_HAS_VULKAN
-        drawable_division_->enable_cpu_buffers();
-#endif
     }
     view_width_=std::max(1,width()/num_cols_);view_height_=std::max(1,height()/num_rows_);
     const int fw=framebuffer_width(),fh=framebuffer_height();

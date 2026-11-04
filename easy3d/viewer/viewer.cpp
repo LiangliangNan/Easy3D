@@ -160,7 +160,7 @@ Model* Viewer::add_model(std::shared_ptr<Model> model, bool create, bool fit_sce
     if (!model || model->empty()) return nullptr;
     for (const auto& current : models_) if (model == current) return current.get();
     // Construct first: unsupported default coloring fails without replacing the model's existing renderer.
-    auto renderer = std::make_shared<Renderer>(model.get(), create, true);
+    auto renderer = std::make_shared<Renderer>(model.get(), create);
     model->set_renderer(renderer);
     models_.push_back(model);
     model_idx_ = int(models_.size())-1;
@@ -200,7 +200,7 @@ Model* Viewer::current_model() const {
 Drawable* Viewer::add_drawable(std::shared_ptr<Drawable> drawable) {
     if (!drawable) return nullptr;
     for (const auto& d : drawables_) if (d == drawable) return d.get();
-    drawable->enable_cpu_buffers(); drawables_.push_back(drawable); return drawable.get();
+    drawables_.push_back(drawable); return drawable.get();
 }
 bool Viewer::delete_drawable(Drawable* drawable) {
     auto& values = drawables_;
