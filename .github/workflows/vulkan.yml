@@ -31,14 +31,15 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ninja-build libboost-dev libvulkan-dev \
             mesa-vulkan-drivers vulkan-validationlayers glslang-tools spirv-tools \
-            libgl1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev xvfb xauth
+            python3-dev patchelf libgl1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev xvfb xauth
       - name: Configure
         run: |
           cmake -S . -B build-vulkan -G Ninja -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/install" \
             -DEasy3D_ENABLE_VULKAN=${{ matrix.vulkan }} \
             -DEasy3D_BUILD_TUTORIALS=OFF -DEasy3D_BUILD_TESTS=OFF \
-            -DEasy3D_BUILD_RENDERER_TESTS=ON -DEasy3D_VULKAN_TEST_VALIDATION=ON
+            -DEasy3D_BUILD_RENDERER_TESTS=ON -DEasy3D_VULKAN_TEST_VALIDATION=ON \
+            -DEasy3D_BUILD_PYTHON_BINDINGS=ON
       - name: Build
         run: cmake --build build-vulkan --parallel 2
       - name: Validate SPIR-V

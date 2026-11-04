@@ -4,8 +4,8 @@ The `Easy3D-Vulkan` branch migrates Easy3D to a native Vulkan renderer and viewe
 A build contains **exactly one backend**, chosen at configure time with
 `Easy3D_ENABLE_VULKAN` (default `ON` on this branch; `OFF` builds the original
 OpenGL backend). The Vulkan backend does not yet cover everything the OpenGL one
-does: Mapple, legacy GUI picking/effects and Python rendering still need Vulkan
-counterparts. MultiViewer, FigureMaker and Tutorial 205 now build with either backend. See *Current status and work order* below.
+does: Mapple and legacy GUI picking/effects still need Vulkan
+counterparts. Python Viewer, MultiViewer and OffScreen now use the configured backend. MultiViewer, FigureMaker and Tutorial 205 now build with either backend. See *Current status and work order* below.
 
 ## Migration principles (highest priority)
 
@@ -161,7 +161,7 @@ needs no change.
 ## Final migration goal and backend policy
 
 **Plan revised 2026-11-04 around the migration principles above.** Step 1, the offscreen-facade removal and the
-deletion of portable backend introspection (`backend()`, `fallback_reason()`) are implemented; the Viewer/OffScreen unification (U1/U1b) is now implemented; U2 and U3 are implemented; U4–U6 remain. What is done and what remains is tracked in *Current status and work order* below.
+deletion of portable backend introspection (`backend()`, `fallback_reason()`) are implemented; the Viewer/OffScreen unification (U1/U1b) is now implemented; U2–U4 are implemented; U5–U6 remain. What is done and what remains is tracked in *Current status and work order* below.
 
 The completed migration must support **all tutorials on Vulkan** and targets
 **all applications on Vulkan**, including Mapple, FigureMaker and toolkit-based
@@ -410,12 +410,16 @@ of this document.
   are built/exported in both configurations; OpenGL dependencies and third-party
   ImGui remain conditional. This is source/package structure, not effect/picker
   feature parity; see the U3 classification below.
-- **U4** (next) Python bindings, installed package and CI follow the final names.
-- **U5** Tutorials and applications: restore `main`'s sources; remove every backend
+- **U4** (implemented) Python Viewer/MultiViewer constructors, callbacks and scene
+  storage bindings follow the unified classes; both complete extensions build and
+  render on macOS. The deployed-package regression runs in CTest and the two-backend
+  CI matrix. Installed package exports/consumers use the final names (U1–U3).
+  Linux/Windows CI execution and distributable-wheel validation remain external gates.
+- **U5** (next) Tutorials and applications: restore `main`'s sources; remove every backend
   conditional; add to `Viewer` only the APIs they need.
 - **U6** Diff audit against `main`, file by file and for CMake; remove temporary gates
   and move the tutorial smoke-test registration out of `tutorials/CMakeLists.txt`.
-- **W10** Mapple, Qt/wx, Python rendering, transparency/SSAO/shadows/EDL parity.
+- **W10** Mapple, Qt/wx, remaining Python API/tutorial coverage, transparency/SSAO/shadows/EDL parity.
 
 Suggested order: U1, U2, U3–U4, U5, U6, W10,
 re-running the tests after each.
@@ -3897,3 +3901,68 @@ Validation on this Mac (Apple M4 Pro, MoltenVK), 2026-11-04:
 
 No Linux/Xvfb or full Python-extension validation was performed in U3. The existing
 MoltenVK integer-attachment blending diagnostic remains outside this structural step.
+
+
+### 2026-11-04 — U4: complete Python viewer builds and rendering
+
+The original binding files now compile the complete `PyEasy3D` extension with
+Vulkan or OpenGL. `Viewer` and `MultiViewer` use the common constructor order and
+unsigned dimensions/sample count, defaulting to one sample. Width/height, visibility
+and resizability can be passed by keyword; the historical positional OpenGL
+version/depth constructor arguments are removed, matching D1. Backend-specific
+options remain at their C++ defaults in these Python constructors.
+
+Viewer's draw trampoline returns `bool`, file snapshots dispatch to Python overrides,
+and the low-level OpenGL callback-event trampolines stay in the OpenGL branch.
+`models()`/`drawables()` bind the actual shared scene vectors, and added
+models/drawables return the same shared resources, retaining Python references safely
+after scene removal. Generated drawable copy constructors
+and assignment bindings were removed because their C++ classes are non-copyable;
+these caused full-extension compilation to fail in both configurations. No C++ viewer
+API or new backend selector was introduced.
+
+Python now exposes the existing `run_frames`, `samples`, `fit_screen`,
+`project_point` and `unproject_point` methods. The output-reference form of
+`point_under_pixel` is represented as `(point, found)` instead of a Python boolean
+argument that could never receive the C++ output. Both viewers use the shared fresh
+scene query with logical window coordinates, including per-cell reconstruction.
+Python query overrides likewise return `(point, found)`.
+
+The new `python/tests/rendering.py` imports the deployed package, renders a known
+red triangle through Viewer, MultiViewer and OffScreen, and checks image dimensions
+and pixel colors. It exercises per-cell assignment/picking, shared scene identity,
+projection round trips, frame callbacks, bool draw overrides, C++ virtual dispatch
+to Python's snapshot override, layout access and scene cleanup. No NumPy,
+Pillow or backend-specific Python code is required by the test. `python.rendering`
+is registered with the desktop CTest label when renderer tests are enabled.
+
+The existing Vulkan/OpenGL CI matrix now builds Python in both configurations,
+installs Python development headers and patchelf, and runs the packaged test under
+its existing Xvfb desktop step. The installed C++ package consumer already checks
+Viewer/MultiViewer/OffScreen and the GUI component with Vulkan discovery disabled;
+U4's source audit found no retired host class names or alternate backend selectors
+in the active bindings, package configuration or workflows. Python build instructions
+now document only `Easy3D_ENABLE_VULKAN` and the shared API.
+
+This does not implement legacy effects, toolkit hosts or every Python tutorial path.
+Linux/Windows workflow execution, wheel portability and additional API coverage remain
+validation work; macOS build/import/render results do not establish those outcomes.
+Next: U5, reduce tutorial/application backend conditionals using the existing shared
+APIs, keeping original code and avoiding tutorial-only core abstractions.
+
+Validation on this Mac (Apple M4 Pro, Python 3.12, MoltenVK), 2026-11-04:
+
+- Complete Vulkan and OpenGL Python extensions built and deployed successfully.
+- Final complete suites with Python enabled: **72/72 Vulkan**, **11/11 OpenGL**.
+- The same packaged Python regression passes in both builds, including retaining
+  file-loaded models after scene removal and OffScreen deletion.
+- An earlier Vulkan full run passed 70/72: the manipulation guide/depth assertion
+  failed once and passed an isolated retry; the new Python lifetime assertion exposed
+  the borrowed-model issue before its rebuilt shared-ownership binding was deployed.
+  The ownership regression passes with the fix, and the final full run passes both.
+- Workflow YAML parses locally. The updated GitHub Actions jobs were not executed
+  from this session. Package/wheel validation on Linux/Windows is not claimed.
+- The deployed Vulkan extension links the expected Easy3D libraries without an
+  OpenGL dependency. The pre-existing MoltenVK integer-attachment diagnostic remains.
+
+All work stayed on `Easy3D-Vulkan`; no commit or publication was made.

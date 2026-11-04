@@ -23,19 +23,16 @@ struct PyCallBack_easy3d_MultiViewer : public easy3d::MultiViewer {
 	using easy3d::MultiViewer::MultiViewer;
 
 	using _binder_ret_0 = easy3d::Vec<3, float>;
-	_binder_ret_0 point_under_pixel(int a0, int a1, bool & a2) const override {
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::MultiViewer *>(this), "point_under_pixel");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0, a1, a2);
-			if (pybind11::detail::cast_is_temporary_value_reference<_binder_ret_0>::value) {
-				static pybind11::detail::override_caster_t<_binder_ret_0> caster;
-				return pybind11::detail::cast_ref<_binder_ret_0>(std::move(o), caster);
-			}
-			return pybind11::detail::cast_safe<_binder_ret_0>(std::move(o));
-		}
-		return MultiViewer::point_under_pixel(a0, a1, a2);
-	}
+    easy3d::vec3 point_under_pixel(int x, int y, bool& found) const override {
+        pybind11::gil_scoped_acquire gil;
+        auto callback = pybind11::get_override(static_cast<const easy3d::MultiViewer*>(this), "point_under_pixel");
+        if (callback) {
+            auto result = callback(x, y).cast<pybind11::tuple>();
+            found = result[1].cast<bool>();
+            return result[0].cast<easy3d::vec3>();
+        }
+        return MultiViewer::point_under_pixel(x, y, found);
+    }
 	bool snapshot() const override {
 		pybind11::gil_scoped_acquire gil;
 		pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::MultiViewer *>(this), "snapshot");
@@ -362,8 +359,10 @@ void bind_easy3d_viewer_multi_viewer(pybind11::module_& m)
 {
 	{ // easy3d::MultiViewer file:easy3d/viewer/multi_viewer.h line:44
 		pybind11::class_<easy3d::MultiViewer, std::shared_ptr<easy3d::MultiViewer>, PyCallBack_easy3d_MultiViewer, easy3d::Viewer> cl(m, "MultiViewer", "A viewer that supports multiple views (arranged in a grid layout).\n \n\n\n     ");
-		cl.def( pybind11::init( [](int const & a0, int const & a1){ return new easy3d::MultiViewer(a0, a1); }, [](int const & a0, int const & a1){ return new PyCallBack_easy3d_MultiViewer(a0, a1); } ), "doc");
-		cl.def( pybind11::init<int, int, const std::string &>(), pybind11::arg("rows"), pybind11::arg("cols"), pybind11::arg("title") );
+        cl.def(pybind11::init<unsigned int, unsigned int, const std::string&, unsigned int, unsigned int, unsigned int, bool, bool, bool>(),
+               pybind11::arg("rows"), pybind11::arg("cols"), pybind11::arg("title") = "untitled",
+               pybind11::arg("width") = 800, pybind11::arg("height") = 600, pybind11::arg("samples") = 1,
+               pybind11::arg("full_screen") = false, pybind11::arg("visible") = true, pybind11::arg("resizable") = true);
 
         // Assign a model to specific view
         cl.def("assign", [](easy3d::MultiViewer &self, int row, int col, const easy3d::Model *model) {
@@ -382,7 +381,6 @@ void bind_easy3d_viewer_multi_viewer(pybind11::module_& m)
 
         cl.def("set_division_visible", (void (easy3d::MultiViewer::*)(bool)) &easy3d::MultiViewer::set_division_visible, "Sets the visibility of the splitting lines of the views (visible by default).\n\nC++: easy3d::MultiViewer::set_division_visible(bool) --> void", pybind11::arg("b"));
 		cl.def("division_visible", (bool (easy3d::MultiViewer::*)() const) &easy3d::MultiViewer::division_visible, "Returns if the splitting lines of the views are visible.\n\nC++: easy3d::MultiViewer::division_visible() const --> bool");
-		cl.def("point_under_pixel", (class easy3d::Vec<3, float> (easy3d::MultiViewer::*)(int, int, bool &) const) &easy3d::MultiViewer::point_under_pixel, "Query the XYZ coordinates of the surface point under the cursor.\n \n\n The cursor x-coordinate, relative to the left edge of the content area.\n \n\n The cursor y-coordinate, relative to the top edge of the content area.\n \n\n indicates whether the point was found or not.\n \n\n The coordinates of the 3D point located at pixel (x, y) on screen. The returned point is valid\n      only if found was returned true.\n \n\n The screen point (x, y) is expressed in the screen coordinate system with an origin in the\n      upper left corner. So it doesn't necessarily correspond to a pixel on High DPI devices, e.g., a\n      Mac with a Retina display. If your inherited viewer uses a customized content area, you must also\n      reimplement this function such that the x and y are relative to left and top edges of the content\n      area, respectively.\n\nC++: easy3d::MultiViewer::point_under_pixel(int, int, bool &) const --> class easy3d::Vec<3, float>", pybind11::arg("x"), pybind11::arg("y"), pybind11::arg("found"));
 		cl.def("rows", (int (easy3d::MultiViewer::*)() const) &easy3d::MultiViewer::rows, "Return the number of rows (of the grid-like layout) of the viewer.\n\nC++: easy3d::MultiViewer::rows() const --> int");
 		cl.def("columns", (int (easy3d::MultiViewer::*)() const) &easy3d::MultiViewer::columns, "Return the number of columns (of the grid-like layout) of the viewer.\n\nC++: easy3d::MultiViewer::columns() const --> int");
 		cl.def("set_layout", (void (easy3d::MultiViewer::*)(int, int)) &easy3d::MultiViewer::set_layout, "Set/Change the layout of the viewer.\n \n\n The number of rows (of the grid-like layout).\n \n\n The number of columns (of the grid-like layout).\n\nC++: easy3d::MultiViewer::set_layout(int, int) --> void", pybind11::arg("rows"), pybind11::arg("cols"));

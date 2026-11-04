@@ -176,7 +176,6 @@ void bind_easy3d_renderer_drawables(pybind11::module_& m)
         cl.def( pybind11::init( [](const std::string & a0){ return new PyCallBack_easy3d_Drawable(a0); } ), "doc");
         cl.def( pybind11::init<const std::string &, class easy3d::Model *>(), pybind11::arg("name"), pybind11::arg("model") );
 
-        cl.def(pybind11::init<PyCallBack_easy3d_Drawable const &>());
 
         pybind11::enum_<easy3d::Drawable::Type>(cl, "Type", pybind11::arithmetic(), "")
                 .value("DT_POINTS", easy3d::Drawable::DT_POINTS)
@@ -277,15 +276,12 @@ void bind_easy3d_renderer_drawables(pybind11::module_& m)
         cl.def("set_manipulator", (void (easy3d::Drawable::*)(class easy3d::Manipulator *)) &easy3d::Drawable::set_manipulator, "Attaches a manipulator to this model.\n \n\n This is used to manipulate a drawable that is not part of a model.\n\nC++: easy3d::Drawable::set_manipulator(class easy3d::Manipulator *) --> void", pybind11::arg("manip"));
         cl.def("manipulated_matrix", (class easy3d::Mat4<float> (easy3d::Drawable::*)() const) &easy3d::Drawable::manipulated_matrix, "Returns the manipulation matrix.\n\nC++: easy3d::Drawable::manipulated_matrix() const --> class easy3d::Mat4<float>");
         cl.def("vao", (class easy3d::VertexArrayObject * (easy3d::Drawable::*)()) &easy3d::Drawable::vao, "Returns the vertex array object of this drawable.\n\nC++: easy3d::Drawable::vao() --> class easy3d::VertexArrayObject *", pybind11::return_value_policy::automatic);
-        cl.def("assign", (class easy3d::Drawable & (easy3d::Drawable::*)(const class easy3d::Drawable &)) &easy3d::Drawable::operator=, "C++: easy3d::Drawable::operator=(const class easy3d::Drawable &) --> class easy3d::Drawable &", pybind11::return_value_policy::automatic, pybind11::arg(""));
     }
 
 	{ // easy3d::LinesDrawable file:easy3d/renderer/drawable_lines.h line:40
 		pybind11::class_<easy3d::LinesDrawable, std::shared_ptr<easy3d::LinesDrawable>, PyCallBack_easy3d_LinesDrawable, easy3d::Drawable> cl(m, "LinesDrawable", "The drawable for rendering a set of line segments, e.g., edges of a mesh, vector fields\n \n\n\n \n PointsDrawable, TrianglesDrawable");
         cl.def( pybind11::init( [](){ return new easy3d::LinesDrawable(); } ) );
         cl.def( pybind11::init( [](const std::string& name){ return new easy3d::LinesDrawable(name); } ) );
-        cl.def( pybind11::init( [](PyCallBack_easy3d_LinesDrawable const &o){ return new PyCallBack_easy3d_LinesDrawable(o); } ) );
-		cl.def( pybind11::init( [](easy3d::LinesDrawable const &o){ return new easy3d::LinesDrawable(o); } ) );
 
 		pybind11::enum_<easy3d::LinesDrawable::ImposterType>(cl, "ImposterType", pybind11::arithmetic(), "")
 			.value("PLAIN", easy3d::LinesDrawable::PLAIN)
@@ -298,14 +294,11 @@ void bind_easy3d_renderer_drawables(pybind11::module_& m)
 		cl.def("set_impostor_type", (void (easy3d::LinesDrawable::*)(enum easy3d::LinesDrawable::ImposterType)) &easy3d::LinesDrawable::set_impostor_type, "C++: easy3d::LinesDrawable::set_impostor_type(enum easy3d::LinesDrawable::ImposterType) --> void", pybind11::arg("t"));
 		cl.def("line_width", (float (easy3d::LinesDrawable::*)() const) &easy3d::LinesDrawable::line_width, "C++: easy3d::LinesDrawable::line_width() const --> float");
 		cl.def("set_line_width", (void (easy3d::LinesDrawable::*)(float)) &easy3d::LinesDrawable::set_line_width, "C++: easy3d::LinesDrawable::set_line_width(float) --> void", pybind11::arg("w"));
-		cl.def("assign", (class easy3d::LinesDrawable & (easy3d::LinesDrawable::*)(const class easy3d::LinesDrawable &)) &easy3d::LinesDrawable::operator=, "C++: easy3d::LinesDrawable::operator=(const class easy3d::LinesDrawable &) --> class easy3d::LinesDrawable &", pybind11::return_value_policy::automatic, pybind11::arg(""));
 	}
 	{ // easy3d::PointsDrawable file:easy3d/renderer/drawable_points.h line:42
 		pybind11::class_<easy3d::PointsDrawable, std::shared_ptr<easy3d::PointsDrawable>, PyCallBack_easy3d_PointsDrawable, easy3d::Drawable> cl(m, "PointsDrawable", "The drawable for rendering a set of points, e.g., point clouds, vertices of a mesh.\n \n\n\n \n LinesDrawable, TrianglesDrawable");
         cl.def( pybind11::init( [](){ return new easy3d::PointsDrawable(); } ) );
         cl.def( pybind11::init( [](const std::string& name){ return new easy3d::PointsDrawable(name); } ) );
-        cl.def( pybind11::init( [](PyCallBack_easy3d_PointsDrawable const &o){ return new PyCallBack_easy3d_PointsDrawable(o); } ) );
-		cl.def( pybind11::init( [](easy3d::PointsDrawable const &o){ return new easy3d::PointsDrawable(o); } ) );
 
 		pybind11::enum_<easy3d::PointsDrawable::ImposterType>(cl, "ImposterType", pybind11::arithmetic(), "")
 			.value("PLAIN", easy3d::PointsDrawable::PLAIN)
@@ -318,20 +311,16 @@ void bind_easy3d_renderer_drawables(pybind11::module_& m)
 		cl.def("set_impostor_type", (void (easy3d::PointsDrawable::*)(enum easy3d::PointsDrawable::ImposterType)) &easy3d::PointsDrawable::set_impostor_type, "C++: easy3d::PointsDrawable::set_impostor_type(enum easy3d::PointsDrawable::ImposterType) --> void", pybind11::arg("t"));
 		cl.def("point_size", (float (easy3d::PointsDrawable::*)() const) &easy3d::PointsDrawable::point_size, "Get/Set point size. \n\nC++: easy3d::PointsDrawable::point_size() const --> float");
 		cl.def("set_point_size", (void (easy3d::PointsDrawable::*)(float)) &easy3d::PointsDrawable::set_point_size, "C++: easy3d::PointsDrawable::set_point_size(float) --> void", pybind11::arg("s"));
-		cl.def("assign", (class easy3d::PointsDrawable & (easy3d::PointsDrawable::*)(const class easy3d::PointsDrawable &)) &easy3d::PointsDrawable::operator=, "C++: easy3d::PointsDrawable::operator=(const class easy3d::PointsDrawable &) --> class easy3d::PointsDrawable &", pybind11::return_value_policy::automatic, pybind11::arg(""));
 	}
 	{ // easy3d::TrianglesDrawable file:easy3d/renderer/drawable_triangles.h line:46
 		pybind11::class_<easy3d::TrianglesDrawable, std::shared_ptr<easy3d::TrianglesDrawable>, PyCallBack_easy3d_TrianglesDrawable, easy3d::Drawable> cl(m, "TrianglesDrawable", "The drawable for rendering a set of triangles, e.g., the surface of a triangular mesh.\n \n\n\n \n LinesDrawable, PointsDrawable\n\n \n TrianglesDrawable supports triangles only. Visualizing general polygons typically requires tessellating\n the faces into a set of triangles (using Tessellator or any other methods). Vertex coordinates and properties\n (e.g., color, normal) must be provided as consecutive triplets in an array to be transferred to GPU.\n See Drawable::update_vertex_buffer().");
         cl.def( pybind11::init( [](){ return new easy3d::TrianglesDrawable(); } ) );
         cl.def( pybind11::init( [](const std::string& name){ return new easy3d::TrianglesDrawable(name); } ) );
-        cl.def( pybind11::init( [](PyCallBack_easy3d_TrianglesDrawable const &o){ return new PyCallBack_easy3d_TrianglesDrawable(o); } ) );
-		cl.def( pybind11::init( [](easy3d::TrianglesDrawable const &o){ return new easy3d::TrianglesDrawable(o); } ) );
 		cl.def("type", (enum easy3d::Drawable::Type (easy3d::TrianglesDrawable::*)() const) &easy3d::TrianglesDrawable::type, "C++: easy3d::TrianglesDrawable::type() const --> enum easy3d::Drawable::Type");
 		cl.def("smooth_shading", (bool (easy3d::TrianglesDrawable::*)() const) &easy3d::TrianglesDrawable::smooth_shading, "C++: easy3d::TrianglesDrawable::smooth_shading() const --> bool");
 		cl.def("set_smooth_shading", (void (easy3d::TrianglesDrawable::*)(bool)) &easy3d::TrianglesDrawable::set_smooth_shading, "C++: easy3d::TrianglesDrawable::set_smooth_shading(bool) --> void", pybind11::arg("b"));
 		cl.def("opacity", (float (easy3d::TrianglesDrawable::*)() const) &easy3d::TrianglesDrawable::opacity, "Query the opacity of the drawable, in the range [0.0, 1.0].\n \n\n The opacity of the drawable.\n \n\n Opacity is effective only when transparency (e.g., DualDepthPeeling, AverageColorBlending) rendering is enabled.\n\nC++: easy3d::TrianglesDrawable::opacity() const --> float");
 		cl.def("set_opacity", (void (easy3d::TrianglesDrawable::*)(float)) &easy3d::TrianglesDrawable::set_opacity, "Set the opacity of the drawable.\n \n\n The new opacity value, in the range [0.0, 1.0].\n \n\n Opacity is effective only when transparency (e.g., DualDepthPeeling, AverageColorBlending) rendering is enabled.\n\nC++: easy3d::TrianglesDrawable::set_opacity(float) --> void", pybind11::arg("opacity"));
-		cl.def("assign", (class easy3d::TrianglesDrawable & (easy3d::TrianglesDrawable::*)(const class easy3d::TrianglesDrawable &)) &easy3d::TrianglesDrawable::operator=, "C++: easy3d::TrianglesDrawable::operator=(const class easy3d::TrianglesDrawable &) --> class easy3d::TrianglesDrawable &", pybind11::return_value_policy::automatic, pybind11::arg(""));
 	}
 
     { // easy3d::TrianglesDrawable2D file:easy3d/renderer/drawable_triangles_2D.h line:43

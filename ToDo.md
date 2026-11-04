@@ -9,17 +9,17 @@
   - [x] W1-W3 docs sync; build blockers (single home for tutorials, enable_testing, bounded tutorial tests); Tutorial 208
   - [x] W4 Delete runtime-selection/headless leftovers (Backend enum, ViewerOptions, create_*_viewer, ...)
   - [ ] W5 Remove EASY3D_TUTORIAL_USES_VULKAN (tutorials 202, 501-505 gated; 401-406 still have a separate Vulkan path)
-  - [ ] W6 MoltenVK: 71/71 pass (2026-11-04, U2); Linux baseline 68/69 still needs the interactionoverlay border check
+  - [ ] W6 MoltenVK: 72/72 pass with Python enabled (2026-11-04, U4); Linux baseline 68/69 still needs the interactionoverlay border check
   - Top priority (docs/vulkan.md, "Migration principles"): minimal source changes; same class names and the same
     .h/.cpp files as the main branch (Viewer in viewer.h/.cpp for both backends); #ifdef EASY3D_HAS_VULKAN layout inside
     the classes; no new files except shaders, backend files and tests; minimal CMake changes; client code unchanged.
   - [x] U1 One `Viewer` class (viewer.h/.cpp), ViewerBase retained; Vulkan scene ownership folded in; counterpart host files/aliases removed
   - [x] U2 OffScreen/MultiViewer unified; snapshot.cpp restored; Tutorial 205 and FigureMaker enabled
   - [x] U3 Classes without counterpart: same-file #ifdef structure (effects, pickers, ImGui)
-  - [ ] U4 Python bindings, installed package and CI use the final names
+  - [x] U4 Python bindings, installed package and CI use the final names (full Mac builds/rendering)
   - [ ] U5 Tutorials and applications identical to main; no backend conditionals
   - [ ] U6 Diff audit against main (files, CMake); remove temporary gates
-  - [ ] W10 Mapple, Qt/wx, Python rendering, transparency/SSAO/shadows/EDL
+  - [ ] W10 Mapple, Qt/wx, remaining Python coverage, transparency/SSAO/shadows/EDL
 
 - Send the computed value of "MVP * MANIP" to shaders (avoiding computing the matrix product for each vertex/fragment)
 - Walkthrough and animation; allow to modify the cameras interactively

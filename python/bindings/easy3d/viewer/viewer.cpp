@@ -76,32 +76,22 @@ struct PyCallBack_easy3d_Viewer : public easy3d::Viewer {
 		return Viewer::snapshot();
 	}
 	using _binder_ret_0 = easy3d::Vec<3, float>;
-	_binder_ret_0 point_under_pixel(int a0, int a1, bool & a2) const override {
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::Viewer *>(this), "point_under_pixel");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>(a0, a1, a2);
-			if (pybind11::detail::cast_is_temporary_value_reference<_binder_ret_0>::value) {
-				static pybind11::detail::override_caster_t<_binder_ret_0> caster;
-				return pybind11::detail::cast_ref<_binder_ret_0>(std::move(o), caster);
-			}
-			return pybind11::detail::cast_safe<_binder_ret_0>(std::move(o));
-		}
-		return Viewer::point_under_pixel(a0, a1, a2);
-	}
-	void draw() const override {
-		pybind11::gil_scoped_acquire gil;
-		pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::Viewer *>(this), "draw");
-		if (overload) {
-			auto o = overload.operator()<pybind11::return_value_policy::reference>();
-			if (pybind11::detail::cast_is_temporary_value_reference<void>::value) {
-				static pybind11::detail::override_caster_t<void> caster;
-				return pybind11::detail::cast_ref<void>(std::move(o), caster);
-			}
-			return pybind11::detail::cast_safe<void>(std::move(o));
-		}
-		return Viewer::draw();
-	}
+    easy3d::vec3 point_under_pixel(int x, int y, bool& found) const override {
+        pybind11::gil_scoped_acquire gil;
+        auto callback = pybind11::get_override(static_cast<const easy3d::Viewer*>(this), "point_under_pixel");
+        if (callback) {
+            auto result = callback(x, y).cast<pybind11::tuple>();
+            found = result[1].cast<bool>();
+            return result[0].cast<easy3d::vec3>();
+        }
+        return Viewer::point_under_pixel(x, y, found);
+    }
+	bool draw() override {
+        PYBIND11_OVERRIDE(bool, easy3d::Viewer, draw);
+    }
+    bool snapshot(const std::string& file, float scale, int samples, int bg, bool expand) const override {
+        PYBIND11_OVERRIDE(bool, easy3d::Viewer, snapshot, file, scale, samples, bg, expand);
+    }
 	void init() override {
 		pybind11::gil_scoped_acquire gil;
 		pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::Viewer *>(this), "init");
@@ -284,6 +274,7 @@ struct PyCallBack_easy3d_Viewer : public easy3d::Viewer {
 		}
 		return Viewer::focus_event(a0);
 	}
+#ifndef EASY3D_HAS_VULKAN
 	bool callback_event_cursor_pos(double a0, double a1) override {
 		pybind11::gil_scoped_acquire gil;
 		pybind11::function overload = pybind11::get_overload(static_cast<const easy3d::Viewer *>(this), "callback_event_cursor_pos");
@@ -362,6 +353,7 @@ struct PyCallBack_easy3d_Viewer : public easy3d::Viewer {
 		}
 		return Viewer::callback_event_resize(a0, a1);
 	}
+#endif
 };
 
 void bind_easy3d_viewer_viewer(pybind11::module_& m)
@@ -378,32 +370,11 @@ void bind_easy3d_viewer_viewer(pybind11::module_& m)
                     )doc"
         );
 
-        cl.def(pybind11::init<const std::string &, int, int, int, bool, bool, int, int, int, int>(),
-               pybind11::arg("title") = "Easy3D Viewer",
-               pybind11::arg("samples") = 4,
-               pybind11::arg("gl_major") = 3, // must >= 3
-               pybind11::arg("gl_minor") = 2, // must >= 2
-               pybind11::arg("full_screen") = false,
-               pybind11::arg("resizable") = true,
-               pybind11::arg("depth_bits") = 24,
-               pybind11::arg("stencil_bits") = 8,
-               pybind11::arg("width") = 800,
-               pybind11::arg("height") = 600,
-               R"doc(
-                    Constructs a Viewer instance.
-                    Parameters:
-                        title (str): The window title of the viewer, which can be changed by calling set_title() after construction.
-                        samples (int): The number of samples for multisample antialiasing.
-                        gl_major (int): The OpenGL major version to request. Must be >= 3.
-                        gl_minor (int): The OpenGL minor version to request. Must be >= 2.
-                        full_screen (bool): Whether the viewer should start in fullscreen mode.
-                        resizable (bool): Whether the viewer window is resizable.
-                        depth_bits (int): Bit depth for the depth buffer.
-                        stencil_bits (int): Bit depth for the stencil buffer.
-                        width (int): Initial width of the viewer window.
-                        height (int): Initial height of the viewer window.
-                    )doc"
-        );
+        cl.def(pybind11::init<const std::string&, unsigned int, unsigned int, unsigned int, bool, bool, bool>(),
+               pybind11::arg("title") = "Easy3D Viewer", pybind11::arg("width") = 800,
+               pybind11::arg("height") = 600, pybind11::arg("samples") = 1,
+               pybind11::arg("full_screen") = false, pybind11::arg("visible") = true,
+               pybind11::arg("resizable") = true);
 
 //		cl.def( pybind11::init( [](PyCallBack_easy3d_Viewer const &o){ return new PyCallBack_easy3d_Viewer(o); } ) );
 //		cl.def( pybind11::init( [](easy3d::Viewer const &o){ return new easy3d::Viewer(o); } ) );
@@ -489,6 +460,11 @@ void bind_easy3d_viewer_viewer(pybind11::module_& m)
 		cl.def_readwrite("animation_func_", &easy3d::Viewer::animation_func_);
 		cl.def("run", [](easy3d::Viewer &o) -> int { return o.run(); }, "");
 		cl.def("run", (int (easy3d::Viewer::*)(bool)) &easy3d::Viewer::run, "Run the viewer.\n \n\n See all contents within the screen? If true, the entire scene (i.e., all models) will be\n      centered on the screen at a proper scale.\n\nC++: easy3d::Viewer::run(bool) --> int", pybind11::arg("see_all"));
+        cl.def("run_frames", &easy3d::Viewer::run_frames, pybind11::arg("frames"));
+        cl.def("fit_screen", &easy3d::Viewer::fit_screen, pybind11::arg("model") = nullptr);
+        cl.def("project_point", &easy3d::Viewer::project_point);
+        cl.def("unproject_point", &easy3d::Viewer::unproject_point);
+        cl.def("samples", &easy3d::Viewer::samples);
 		cl.def("exit", (void (easy3d::Viewer::*)()) &easy3d::Viewer::exit, "Terminate the viewer.\n\nC++: easy3d::Viewer::exit() --> void");
 		cl.def("set_title", (void (easy3d::Viewer::*)(const std::string &)) &easy3d::Viewer::set_title, "Set the window title of the viewer.\n \n\n The string of the title.\n\nC++: easy3d::Viewer::set_title(const std::string &) --> void", pybind11::arg("title"));
 		cl.def("title", (const std::string & (easy3d::Viewer::*)() const) &easy3d::Viewer::title, "Query the window title of the viewer.\n \n\n The string of the window title.\n\nC++: easy3d::Viewer::title() const --> const std::string &", pybind11::return_value_policy::automatic);
@@ -509,18 +485,17 @@ void bind_easy3d_viewer_viewer(pybind11::module_& m)
 
         cl.def("add_model", [](easy3d::Viewer& self, const std::string& file_name, bool create_default_drawables = true)
                {
-                   return self.add_model(file_name, create_default_drawables);
+                   auto* added = self.add_model(file_name, create_default_drawables);
+                   for (const auto& model : self.models())
+                       if (model.get() == added) return model;
+                   return std::shared_ptr<easy3d::Model>();
                },
                pybind11::arg("file_name"), pybind11::arg("create_default_drawables") = true,
-               // Liangliang: use automatic_reference because the returned pointer is managed by the viewer and
-               //       Python should not take ownership but still maintain a valid reference.
-               pybind11::return_value_policy::automatic_reference,
                "Add a model from a file to the viewer.");
 
         cl.def("add_model", [](easy3d::Viewer &self, std::shared_ptr<easy3d::Model> model) {
-                   return self.add_model(model); // Call the C++ function
+                   return self.add_model(model) ? model : nullptr;
                }, pybind11::arg("model"),
-               pybind11::return_value_policy::automatic,
                R"doc(
                     Add an existing model to the viewer to be visualized.
                     Parameters:
@@ -530,9 +505,8 @@ void bind_easy3d_viewer_viewer(pybind11::module_& m)
                 )doc");
 
         cl.def("add_drawable", [](easy3d::Viewer &self, std::shared_ptr<easy3d::Drawable> drawable) {
-                   return self.add_drawable(drawable); // Call the C++ function
+                   return self.add_drawable(drawable) ? drawable : nullptr;
                }, pybind11::arg("drawable"),
-               pybind11::return_value_policy::automatic,
                R"doc(
                     Add a drawable to the viewer to be visualized.
                     Parameters:
@@ -541,10 +515,10 @@ void bind_easy3d_viewer_viewer(pybind11::module_& m)
                         Drawable: The pointer of the drawable added to the viewer.
                 )doc");
 
-		cl.def("models", (const class std::vector<class easy3d::Model *> & (easy3d::Viewer::*)() const) &easy3d::Viewer::models, "Query the models managed by this viewer.\n \n\n The models managed by this viewer.\n\nC++: easy3d::Viewer::models() const --> const class std::vector<class easy3d::Model *> &", pybind11::return_value_policy::automatic);
-		cl.def("drawables", (const class std::vector<class easy3d::Drawable *> & (easy3d::Viewer::*)() const) &easy3d::Viewer::drawables, "Query the drawables managed by this viewer.\n \n\n The drawables managed by this viewer.\n\nC++: easy3d::Viewer::drawables() const --> const class std::vector<class easy3d::Drawable *> &", pybind11::return_value_policy::automatic);
+		cl.def("models", &easy3d::Viewer::models, pybind11::return_value_policy::reference_internal);
+		cl.def("drawables", &easy3d::Viewer::drawables, pybind11::return_value_policy::reference_internal);
 		cl.def("clear_scene", (void (easy3d::Viewer::*)()) &easy3d::Viewer::clear_scene, "Delete all visual contents of the viewer (all models and drawables).\n\nC++: easy3d::Viewer::clear_scene() --> void");
-		cl.def("update", (void (easy3d::Viewer::*)() const) &easy3d::Viewer::update, "Update the display (i.e., repaint).\n \n\n This method is used to update the display of the rendering. Client should call\n          it when your data/view is changed.\n\nC++: easy3d::Viewer::update() const --> void");
+		cl.def("update", (void (easy3d::Viewer::*)()) &easy3d::Viewer::update, "Update the display (i.e., repaint).\n \n\n This method is used to update the display of the rendering. Client should call\n          it when your data/view is changed.\n\nC++: easy3d::Viewer::update() const --> void");
 
         cl.def("camera", (class easy3d::Camera* (easy3d::Viewer::*)()) &easy3d::Viewer::camera, "Returns the camera used by the viewer", pybind11::return_value_policy::reference_internal);
         cl.def("camera", (const class easy3d::Camera* (easy3d::Viewer::*)() const) &easy3d::Viewer::camera, "Returns the camera used by the viewer", pybind11::return_value_policy::reference_internal);
@@ -555,7 +529,11 @@ void bind_easy3d_viewer_viewer(pybind11::module_& m)
 		cl.def("snapshot", [](easy3d::Viewer const &o, const std::string & a0, float const & a1, int const & a2) -> bool { return o.snapshot(a0, a1, a2); }, "", pybind11::arg("file_name"), pybind11::arg("scaling"), pybind11::arg("samples"));
 		cl.def("snapshot", [](easy3d::Viewer const &o, const std::string & a0, float const & a1, int const & a2, int const & a3) -> bool { return o.snapshot(a0, a1, a2, a3); }, "", pybind11::arg("file_name"), pybind11::arg("scaling"), pybind11::arg("samples"), pybind11::arg("back_ground"));
 		cl.def("snapshot", (bool (easy3d::Viewer::*)(const std::string &, float, int, int, bool) const) &easy3d::Viewer::snapshot, "Take a snapshot of the screen and save it to an image file. Supported image format: png, jpg, bmp, and tga.\n \n\n This function renders the scene into a framebuffer and takes a snapshot of the framebuffer.\n      It allows the snapshot image to have a dimension different from the viewer, and it has no limit on the\n      image size (if memory allows).\n \n\n The image file name.\n \n\n The scaling factor that determines the size of the image (default to 1.0, using the viewer size), i.e., \n      image_width = viewer_width * scaling;\n      image_height = viewer_height * scaling;\n \n\n The required number of samples for antialiased rendering (which can be different from\n      that of the default framebuffer). The default value is 4.\n \n\n Determines the background color. 0: current color; 1: white; 2: transparent.\n \n\n Expand the frustum to ensure the image aspect ratio.\n \n\n true on success and false otherwise.\n\nC++: easy3d::Viewer::snapshot(const std::string &, float, int, int, bool) const --> bool", pybind11::arg("file_name"), pybind11::arg("scaling"), pybind11::arg("samples"), pybind11::arg("back_ground"), pybind11::arg("expand"));
-		cl.def("point_under_pixel", (class easy3d::Vec<3, float> (easy3d::Viewer::*)(int, int, bool &) const) &easy3d::Viewer::point_under_pixel, "Query the XYZ coordinates of the surface point under the cursor.\n \n\n The cursor x-coordinate, relative to the left edge of the content area.\n \n\n The cursor y-coordinate, relative to the top edge of the content area.\n \n\n indicates whether the point was found or not.\n \n\n The coordinates of the 3D point located at pixel (x,y) on screen. The returned point is valid only\n      if found was returned true.\n \n\n The screen point (x, y) is expressed in the screen coordinate system with an origin in the\n      upper left corner. So it doesn't necessarily correspond to a pixel on High DPI devices, e.g., a\n      Mac with a Retina display. If your inherited viewer uses a customized content area, you must also\n      reimplement this function such that the x and y are relative to left and top edges of the content\n      area, respectively.\n \n\n This method assumes that a GL context is available, and that its content was drawn using the Camera\n      (i.e. using its projection and model-view matrices). This method hence cannot be used for offscreen\n      Camera computations. Use cameraCoordinatesOf() and worldCoordinatesOf() to perform similar operations\n      in that case. The precision of the method highly depends on the z-Buffer, i.e., how the zNear() and\n      zFar() values are fitted to your scene. Loose boundaries will result in imprecision along the viewing\n      direction.\n\nC++: easy3d::Viewer::point_under_pixel(int, int, bool &) const --> class easy3d::Vec<3, float>", pybind11::arg("x"), pybind11::arg("y"), pybind11::arg("found"));
+        cl.def("point_under_pixel", [](const easy3d::Viewer& self, int x, int y) {
+            bool found = false;
+            auto point = static_cast<const easy3d::ViewerBase&>(self).point_under_pixel(x, y, found);
+            return pybind11::make_tuple(point, found);
+        }, pybind11::arg("x"), pybind11::arg("y"));
 		cl.def("set_usage", (void (easy3d::Viewer::*)(const std::string &, const std::string &)) &easy3d::Viewer::set_usage, "doc", pybind11::arg("manual") = "default", pybind11::arg("screen_hint") = "");
 		cl.def("set_animation", (void (easy3d::Viewer::*)(bool)) &easy3d::Viewer::set_animation, "Enable/Disable animation.\n \n\n To have animation,  must be provided to specify how scene geometry is modified.\n\nC++: easy3d::Viewer::set_animation(bool) --> void", pybind11::arg("b"));
 		cl.def("is_animating", (bool (easy3d::Viewer::*)() const) &easy3d::Viewer::is_animating, "Is animation currently being performed.\n\nC++: easy3d::Viewer::is_animating() const --> bool");

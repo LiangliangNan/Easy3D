@@ -16,10 +16,11 @@ pip install easy3d-2.6.0-py3-none-any.whl  # <-- Use your actual wheel file name
 If prebuilt bindings are not available for your platform or specific Python version, you can build the bindings from 
 the source code. Here’s how:
 - Ensure you have [Python](https://www.python.org/downloads/) installed on your system.
-- In your CMake configuration, enable `Easy3D_BUILD_PYTHON_BINDINGS` and
-  `Easy3D_ENABLE_OPENGL`. On the Vulkan development branch, Python rendering still
-  uses the legacy backend. Set `Easy3D_ENABLE_VULKAN=OFF` and
-  `Easy3D_ENABLE_VULKAN_VIEWER=OFF` if you want to build it without a Vulkan SDK.
+- In your CMake configuration, enable `Easy3D_BUILD_PYTHON_BINDINGS`.
+  Select the backend with `Easy3D_ENABLE_VULKAN=ON` (Vulkan) or `OFF` (OpenGL).
+  Both builds expose `Viewer`, `MultiViewer` and `OffScreen` using the same names
+  and common constructor arguments. The Vulkan build requires a Vulkan SDK at
+  build time and a working Vulkan implementation (MoltenVK on macOS) at runtime.
 - Run CMake to configure the project and then build Easy3D. 
 - After building, the Python bindings module, `PyEasy3D`, will be available in `YOUR_BUILD_DIRECTORY/lib/python/easy3d`.
 
@@ -65,3 +66,19 @@ You can then find the generated wheel file in the `dist` directory. Users can us
 You can verify the installation by running the following command:
 
 `pip show easy3d`
+
+Viewer constructors follow the C++ argument order: `title`, `width`, `height`,
+`samples` (default 1), `full_screen`, `visible`, `resizable`. MultiViewer starts
+with `rows`, `cols`, then the same arguments. Use keywords for clarity. The old
+positional OpenGL version/depth arguments are no longer supported.
+
+`viewer.run_frames(n)` runs a bounded viewer loop, and
+`point, found = viewer.point_under_pixel(x, y)` queries logical window coordinates.
+`models()` and `drawables()` expose the viewer's shared scene objects.
+
+When renderer tests are enabled, `ctest --test-dir BUILD -R python.rendering
+--output-on-failure` checks the deployed package's import, viewer callbacks,
+multi-view assignment, picking and snapshots, and offscreen rendering. It needs
+a desktop session (or Xvfb on Linux) for both configurations. Legacy effects and
+GUI picker classes without a Vulkan counterpart remain unavailable in Vulkan;
+this does not add implementations for those features.
