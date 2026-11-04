@@ -124,9 +124,8 @@ needs no change.
   silently means width 4, height 3, 2 samples; OpenGL viewers also no longer get 4× MSAA by
   default. In `main`, only Tutorials 202 and 207 (and `OffScreen`'s own call) pass more than a
   title; they are the only tutorial edits allowed by criterion 3, and are listed in the U6
-  audit. *Status: implemented on the OpenGL and Vulkan viewers.* `OpenGLOptions` has a
-  defaulted constructor (the project is C++11, where a struct with default member
-  initializers cannot be brace-initialized); `VulkanOptions` is defined directly in `viewer.h`, alongside `OpenGLOptions`.
+  audit. *Status: implemented on the OpenGL and Vulkan viewers.* `OpenGLOptions` uses default member initializers, like `VulkanOptions`;
+  default construction with `{}` works in C++11, while custom values are assigned to fields; `VulkanOptions` is defined directly in `viewer.h`, alongside `OpenGLOptions`.
   Renderer factories take validation, sync-validation and device-name arguments directly. `visible=false` keeps the
   window from being shown by `run()` in OpenGL and creates it hidden in Vulkan; `full_screen`
   uses the primary monitor's video mode in both. `samples = 0` means no MSAA, and a valid
@@ -4302,3 +4301,24 @@ OpenGL**. Initial sandboxed desktop runs stalled and were stopped; the successfu
 runs used desktop access and ran sequentially. Source scans found no remaining
 `DeviceOptions` or `synchronization_validation` in project headers/sources.
 `git diff --check` passed. Changes remain uncommitted on Easy3D-Vulkan.
+
+
+### 2026-11-04 — Plain OpenGL options and ImGui constructor alignment
+
+`OpenGLOptions` now uses default member initializers, like `VulkanOptions`, with no
+custom constructor. Defaults remain OpenGL 3.2, 24 depth bits and 8 stencil bits.
+Viewer, MultiViewer and OffScreen default their options arguments to `{}`, which is
+valid default construction in C++11. Callers configuring individual settings assign
+fields rather than using positional construction.
+
+Tutorial 202's `ViewerImGui` accepts title, width, height, samples, fullscreen,
+visibility, resizability and `const OpenGLOptions&`, forwarding directly to Viewer.
+Its parameter order and default sample count now follow Viewer. Its existing
+main constructs with title only and needs no changes. The Vulkan ImGui counterpart
+is still pending W10; it will use the same signature with `const VulkanOptions&`.
+This change does not introduce a stub or claim Vulkan ImGui support.
+
+Validation: Tutorial 202 and the full OpenGL configuration (including Python
+bindings) built under C++11; all **40/40 OpenGL tests** passed on this Mac.
+`git diff --check` passed. The Vulkan options branch is unchanged; Vulkan tests
+were not rerun for this OpenGL-only change. Work remains uncommitted.

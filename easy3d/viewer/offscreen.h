@@ -10,7 +10,7 @@ public:
 #ifdef EASY3D_HAS_VULKAN
                        const VulkanOptions& options = {});
 #else
-                       const OpenGLOptions& options = OpenGLOptions());
+                       const OpenGLOptions& options = {});
 #endif
     ~OffScreen() override;
     bool render(const std::string& filename, float scaling = 1, int samples = 4,

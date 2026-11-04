@@ -56,7 +56,7 @@ namespace easy3d {
 #ifdef EASY3D_HAS_VULKAN
                           const VulkanOptions& options = {});
 #else
-                          const OpenGLOptions& options = OpenGLOptions());
+                          const OpenGLOptions& options = {});
 #endif
         /**
          * \brief Destructor.

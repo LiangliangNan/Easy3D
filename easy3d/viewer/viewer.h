@@ -64,13 +64,10 @@ struct VulkanOptions {
 #else
     // OpenGL context settings of a viewer window.
     struct OpenGLOptions {
-        // (a constructor, not default member initializers, so that brace-initialization works in C++11)
-        explicit OpenGLOptions(int major_ = 3, int minor_ = 2, int depth = 24, int stencil = 8)
-            : major(major_), minor(minor_), depth_bits(depth), stencil_bits(stencil) {}
-        int major;          // must >= 3
-        int minor;          // must >= 2
-        int depth_bits;
-        int stencil_bits;
+        int major = 3;          // must >= 3
+        int minor = 2;          // must >= 2
+        int depth_bits = 24;
+        int stencil_bits = 8;
     };
 
 #endif
@@ -101,7 +98,7 @@ public:
 #ifdef EASY3D_HAS_VULKAN
             const VulkanOptions& vk_options = {}
 #else
-            const OpenGLOptions& gl_options = OpenGLOptions()
+            const OpenGLOptions& gl_options = {}
 #endif
 		);
 

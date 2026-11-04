@@ -51,17 +51,15 @@ namespace easy3d {
     ImGuiContext* ViewerImGui::context_ = nullptr;
 
     ViewerImGui::ViewerImGui(
-        const std::string& title /* = "Easy3D ImGui Viewer" */,
-		int samples /* = 4 */,
-		int gl_major /* = 3 */,
-		int gl_minor /* = 2 */,
-		bool full_screen /* = false */,
-		bool resizable /* = true */,
-		int depth_bits /* = 24 */,
-        int stencil_bits /* = 8 */,
-        int width /* = 960 */,
-        int height /* = 800 */
-	) : Viewer(title, width, height, samples, full_screen, true, resizable, OpenGLOptions(gl_major, gl_minor, depth_bits, stencil_bits))
+        const std::string& title,
+        int width,
+        int height,
+        int samples,
+        bool full_screen,
+        bool visible,
+        bool resizable,
+        const OpenGLOptions& options
+    ) : Viewer(title, width, height, samples, full_screen, visible, resizable, options)
 	{
 #if defined(_WIN32) && defined(_MSC_VER)
 		// Liangliang: the internal glfw won't be shared across dll boundaries (But seems ok on macOS. That is weird!)
