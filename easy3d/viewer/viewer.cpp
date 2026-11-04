@@ -3055,7 +3055,7 @@ struct QueryState {
     GLboolean enabled[flag_count], depth_mask, color_mask[4];
     GLint viewport[4], draw_fbo, read_fbo, renderbuffer, program, vao, array, element, active, uniform, pack_buffer,
         depth_func;
-    GLint blend[6], textures[2][2], polygon_mode[2];
+    GLint blend[6], textures[2][2], polygon_mode[2], front_face;
     std::vector<GLboolean> clip_distances;
     static const unsigned pack_count = 8;
     const GLenum pack_names[pack_count] = {GL_PACK_ALIGNMENT,  GL_PACK_ROW_LENGTH,   GL_PACK_SKIP_PIXELS,
@@ -3089,6 +3089,7 @@ struct QueryState {
         glGetDoublev(GL_DEPTH_CLEAR_VALUE, &clear_depth);
         glGetDoublev(GL_DEPTH_RANGE, depth_range);
         glGetIntegerv(GL_POLYGON_MODE, polygon_mode);
+        glGetIntegerv(GL_FRONT_FACE, &front_face);
         GLint clip_count = 0;
         glGetIntegerv(GL_MAX_CLIP_DISTANCES, &clip_count);
         clip_distances.resize(size_t(clip_count));
@@ -3152,6 +3153,7 @@ struct QueryState {
         glPointSize(point_size);
         glLineWidth(line_width);
         glPolygonMode(GL_FRONT_AND_BACK, polygon_mode[0]);
+        glFrontFace(front_face);
         for (unsigned i = 0; i < clip_distances.size(); ++i) {
             if (clip_distances[i])
                 glEnable(GL_CLIP_DISTANCE0 + i);
@@ -3173,6 +3175,7 @@ struct QueryState {
         for (unsigned i = 0; i < clip_distances.size(); ++i)
             glDisable(GL_CLIP_DISTANCE0 + i);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glFrontFace(GL_CCW);
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
         glDepthMask(GL_TRUE);

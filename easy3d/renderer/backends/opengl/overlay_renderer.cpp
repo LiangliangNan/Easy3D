@@ -15,8 +15,9 @@ void OverlayRenderer::clear() {
 }
 void OverlayRenderer::set(std::vector<graphics::DrawCommand> commands,bool foreground) {
     for(const auto& c:commands) if(c.geometry && (c.geometry->topology()!=graphics::Topology::triangles ||
-        c.overlay_independent_depth || c.lighting || (c.scene_depth_texture && (c.texture || c.overlay_depth_test))))
-        throw std::invalid_argument("OpenGL annotations currently support unlit flat/scene-depth triangles only");
+        (c.overlay_independent_depth && c.overlay_depth_test) ||
+        (c.scene_depth_texture && (c.texture || c.overlay_depth_test || c.overlay_independent_depth))))
+        throw std::invalid_argument("annotations require triangles and compatible depth modes");
     bool same=commands.size()==draws_.size();
     for(size_t i=0;same && i<commands.size();++i)
         same=commands[i].geometry==draws_[i].command.geometry && commands[i].texture==draws_[i].command.texture;
@@ -34,12 +35,39 @@ void OverlayRenderer::draw(bool foreground,int sw,int sh,const ivec4& tile,const
         shader_.reset(new ShaderProgram("viewer annotations"));
         auto& shader=*shader_;
         if(!shader.load_shader_from_code(ShaderProgram::VERTEX,
-            "#version 150\nin vec3 position;in vec4 color;in vec2 uv;uniform mat4 mvp;out vec4 tint;out vec2 texcoord;void main(){gl_Position=mvp*vec4(position,1);tint=color;texcoord=uv;}") ||
+            R"(#version 150
+in vec3 position; in vec3 normal; in vec4 color; in vec2 uv;
+uniform mat4 mvp, model; uniform mat3 normal_matrix; uniform bool lighting, material_lighting;
+out vec4 tint; out vec2 texcoord; out vec3 world_normal, world_position;
+void main() {
+        gl_Position=mvp*vec4(position,1); tint=color; texcoord=uv;
+        vec3 n=normal_matrix*normal; world_normal=n; world_position=(model*vec4(position,1)).xyz;
+        if (lighting && !material_lighting && dot(n,n)>0)
+            tint.rgb*=0.2+0.8*abs(dot(normalize(n),normalize(vec3(0.3,0.5,1))));
+})") ||
            !shader.load_shader_from_code(ShaderProgram::FRAGMENT,
-            "#version 150\nin vec4 tint;in vec2 texcoord;uniform vec4 color;uniform sampler2D image;uniform bool depth_image;out vec4 fragment;void main(){fragment=depth_image?vec4(vec3(texture(image,vec2(texcoord.x,1-texcoord.y)).r),1):tint*color*texture(image,texcoord);}"))
+            R"(#version 150
+in vec4 tint; in vec2 texcoord; in vec3 world_normal, world_position;
+uniform bool lighting, material_lighting, two_sides, distinct_back;
+uniform vec3 eye, light; uniform vec4 ambient, specular, back_color; uniform float shininess;
+uniform vec4 color; uniform sampler2D image; uniform bool depth_image;
+out vec4 fragment;
+void main() {
+    fragment=depth_image?
+        vec4(vec3(texture(image,vec2(texcoord.x,1-texcoord.y)).r),1):tint*color*texture(image,texcoord);
+    if (lighting && material_lighting) {
+        vec3 n=normalize(world_normal), view_dir=normalize(eye-world_position), l=normalize(light);
+        if (distinct_back && !gl_FrontFacing) fragment.rgb=back_color.rgb;
+        float df=dot(l,n); df=two_sides?abs(df):max(df,0);
+        float sf=0;
+        if (df>0) {sf=dot(normalize(l+view_dir),n);sf=two_sides?abs(sf):max(sf,0);sf=pow(sf,shininess);}
+        fragment.rgb=fragment.rgb*df+specular.rgb*sf+ambient.rgb;
+    }
+})"))
             throw std::runtime_error("cannot compile annotation shader");
         shader.set_attrib_name(ShaderProgram::POSITION,"position");
         shader.set_attrib_name(ShaderProgram::COLOR,"color");
+        shader.set_attrib_name(ShaderProgram::NORMAL,"normal");
         shader.set_attrib_name(ShaderProgram::TEXCOORD,"uv");
         if(!shader.link_program()) throw std::runtime_error("cannot link annotation shader");
     }
@@ -69,52 +97,100 @@ void OverlayRenderer::draw(bool foreground,int sw,int sh,const ivec4& tile,const
     GLint sampler=0;
     const bool sampler_objects=GLEW_VERSION_3_3 || GLEW_ARB_sampler_objects;
     if(sampler_objects) {glGetIntegerv(GL_SAMPLER_BINDING,&sampler);glBindSampler(0,0);}
-    for(unsigned phase=0;phase<2;++phase) for(auto& d:draws_) {
-        const auto& c=d.command;
-        if(!c.geometry || unsigned(!c.overlay_depth_test)!=phase) continue;
-        if(!d.vao) {
-            glGenVertexArrays(1,&d.vao);glBindVertexArray(d.vao);
-            glGenBuffers(1,&d.vertices);glBindBuffer(GL_ARRAY_BUFFER,d.vertices);
-            const auto& v=c.geometry->vertices();glBufferData(GL_ARRAY_BUFFER,v.size()*sizeof(graphics::Vertex),v.data(),GL_STATIC_DRAW);
-            const size_t offsets[]={offsetof(graphics::Vertex,position),offsetof(graphics::Vertex,color),offsetof(graphics::Vertex,texcoord)};
-            const int sizes[]={3,4,2};
-            const unsigned slots[]={ShaderProgram::POSITION,ShaderProgram::COLOR,ShaderProgram::TEXCOORD};
-            for(unsigned i=0;i<3;++i) {glEnableVertexAttribArray(slots[i]);glVertexAttribPointer(slots[i],sizes[i],GL_FLOAT,GL_FALSE,sizeof(graphics::Vertex),reinterpret_cast<void*>(offsets[i]));}
-            if(!c.geometry->indices().empty()) {
-                glGenBuffers(1,&d.indices);glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,d.indices);
-                const auto& ids=c.geometry->indices();glBufferData(GL_ELEMENT_ARRAY_BUFFER,ids.size()*sizeof(uint32_t),ids.data(),GL_STATIC_DRAW);
+    GLint draw_fbo=0,read_fbo=0,samples=0;
+    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING,&draw_fbo);glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING,&read_fbo);
+    glGetIntegerv(GL_SAMPLES,&samples);
+    bool independent=false;
+    for(const auto& d:draws_) independent|=d.command.geometry && d.command.overlay_independent_depth;
+    for(unsigned phase=0;phase<3;++phase) {
+        if(phase==1 && independent) {
+            // Copy color sample-for-sample, then use private cleared depth. Copying
+            // color back preserves coverage/blending correlations with scene MSAA.
+            if(!hud_ || hud_->width()!=viewport[2] || hud_->height()!=viewport[3] || hud_->samples()!=samples) {
+                hud_.reset(new FramebufferObject(viewport[2],viewport[3],samples));
+                if(!hud_->add_color_buffer() || !hud_->add_depth_buffer(GL_DEPTH_COMPONENT32F) || hud_->samples()!=samples)
+                    throw std::runtime_error("cannot allocate independent HUD target");
             }
-            glGenTextures(1,&d.texture);glBindTexture(GL_TEXTURE_2D,d.texture);
-            GLint unpack_buffer=0;glGetIntegerv(GL_PIXEL_UNPACK_BUFFER_BINDING,&unpack_buffer);glBindBuffer(GL_PIXEL_UNPACK_BUFFER,0);
-            const GLenum names[]={GL_UNPACK_ALIGNMENT,GL_UNPACK_ROW_LENGTH,GL_UNPACK_SKIP_ROWS,GL_UNPACK_SKIP_PIXELS};GLint saved[4];
-            for(unsigned i=0;i<4;++i) {glGetIntegerv(names[i],&saved[i]);glPixelStorei(names[i],i?0:1);}
-            const unsigned char white[]={255,255,255,255};
-            glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8,c.texture?c.texture->width():1,c.texture?c.texture->height():1,0,GL_RGBA,GL_UNSIGNED_BYTE,c.texture?c.texture->rgba().data():white);
-            const auto sampler=c.texture?c.texture->sampler():graphics::Sampler{};
-            const GLint filter=sampler.filter==graphics::TextureFilter::linear?GL_LINEAR:GL_NEAREST;
-            const GLint wrap=sampler.wrap==graphics::TextureWrap::repeat?GL_REPEAT:GL_CLAMP_TO_EDGE;
-            glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAX_LEVEL,0);
-            glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,filter);glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,filter);
-            glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,wrap);glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,wrap);
-            for(unsigned i=0;i<4;++i) glPixelStorei(names[i],saved[i]);glBindBuffer(GL_PIXEL_UNPACK_BUFFER,unpack_buffer);
+            if(!hud_->bind()) throw std::runtime_error("cannot bind independent HUD target");
+            glDisable(GL_SCISSOR_TEST);glDepthMask(GL_TRUE);
+            glClearDepth(1);glClear(GL_DEPTH_BUFFER_BIT);
+            glBindFramebuffer(GL_READ_FRAMEBUFFER,draw_fbo);
+            GLint read_buffer=0,draw_buffer=0;glGetIntegerv(GL_READ_BUFFER,&read_buffer);
+            // The caller can draw to a different color attachment than it reads.
+            glBindFramebuffer(GL_DRAW_FRAMEBUFFER,draw_fbo);glGetIntegerv(GL_DRAW_BUFFER0,&draw_buffer);
+            glReadBuffer(draw_buffer);
+            hud_->bind(GL_DRAW_FRAMEBUFFER);
+            glBlitFramebuffer(viewport[0],viewport[1],viewport[0]+viewport[2],viewport[1]+viewport[3],
+                              0,0,viewport[2],viewport[3],GL_COLOR_BUFFER_BIT,GL_NEAREST);
+            glReadBuffer(read_buffer);
         }
-        auto vp=c.viewport;
-        if(vp==ivec4(0)) vp=ivec4(0,0,width,height);
-        else {
-            const int x=int(std::lround(double(vp.x)*width/sw)),y=int(std::lround(double(vp.y)*height/sh));
-            const int right=int(std::lround(double(vp.x+vp.z)*width/sw)),bottom=int(std::lround(double(vp.y+vp.w)*height/sh));
-            vp=ivec4(x,y,right-x,bottom-y);
+        for(auto& d:draws_) {
+            const auto& c=d.command;
+            if(!c.geometry || unsigned(c.overlay_depth_test?0:c.overlay_independent_depth?1:2)!=phase) continue;
+            if(!d.vao) {
+                glGenVertexArrays(1,&d.vao);glBindVertexArray(d.vao);
+                glGenBuffers(1,&d.vertices);glBindBuffer(GL_ARRAY_BUFFER,d.vertices);
+                const auto& v=c.geometry->vertices();glBufferData(GL_ARRAY_BUFFER,v.size()*sizeof(graphics::Vertex),v.data(),GL_STATIC_DRAW);
+                const size_t offsets[]={offsetof(graphics::Vertex,position),offsetof(graphics::Vertex,color),offsetof(graphics::Vertex,texcoord),offsetof(graphics::Vertex,normal)};
+                const int sizes[]={3,4,2,3};
+                const unsigned slots[]={ShaderProgram::POSITION,ShaderProgram::COLOR,ShaderProgram::TEXCOORD,ShaderProgram::NORMAL};
+                for(unsigned i=0;i<4;++i) {glEnableVertexAttribArray(slots[i]);glVertexAttribPointer(slots[i],sizes[i],GL_FLOAT,GL_FALSE,sizeof(graphics::Vertex),reinterpret_cast<void*>(offsets[i]));}
+                if(!c.geometry->indices().empty()) {
+                    glGenBuffers(1,&d.indices);glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,d.indices);
+                    const auto& ids=c.geometry->indices();glBufferData(GL_ELEMENT_ARRAY_BUFFER,ids.size()*sizeof(uint32_t),ids.data(),GL_STATIC_DRAW);
+                }
+                glGenTextures(1,&d.texture);glBindTexture(GL_TEXTURE_2D,d.texture);
+                GLint unpack_buffer=0;glGetIntegerv(GL_PIXEL_UNPACK_BUFFER_BINDING,&unpack_buffer);glBindBuffer(GL_PIXEL_UNPACK_BUFFER,0);
+                const GLenum names[]={GL_UNPACK_ALIGNMENT,GL_UNPACK_ROW_LENGTH,GL_UNPACK_SKIP_ROWS,GL_UNPACK_SKIP_PIXELS};GLint saved[4];
+                for(unsigned i=0;i<4;++i) {glGetIntegerv(names[i],&saved[i]);glPixelStorei(names[i],i?0:1);}
+                const unsigned char white[]={255,255,255,255};
+                glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8,c.texture?c.texture->width():1,c.texture?c.texture->height():1,0,GL_RGBA,GL_UNSIGNED_BYTE,c.texture?c.texture->rgba().data():white);
+                const auto sampler=c.texture?c.texture->sampler():graphics::Sampler{};
+                const GLint filter=sampler.filter==graphics::TextureFilter::linear?GL_LINEAR:GL_NEAREST;
+                const GLint wrap=sampler.wrap==graphics::TextureWrap::repeat?GL_REPEAT:GL_CLAMP_TO_EDGE;
+                glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAX_LEVEL,0);
+                glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,filter);glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,filter);
+                glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,wrap);glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,wrap);
+                for(unsigned i=0;i<4;++i) glPixelStorei(names[i],saved[i]);glBindBuffer(GL_PIXEL_UNPACK_BUFFER,unpack_buffer);
+            }
+            auto vp=c.viewport;
+            if(vp==ivec4(0)) vp=ivec4(0,0,width,height);
+            else {
+                const int x=int(std::lround(double(vp.x)*width/sw)),y=int(std::lround(double(vp.y)*height/sh));
+                const int right=int(std::lround(double(vp.x+vp.z)*width/sw)),bottom=int(std::lround(double(vp.y+vp.w)*height/sh));
+                vp=ivec4(x,y,right-x,bottom-y);
+            }
+            if(vp.z<=0 || vp.w<=0) continue;
+            const int origin_x=phase==1?0:viewport[0],origin_y=phase==1?0:viewport[1];
+            glViewport(origin_x+vp.x-tile.x,origin_y+viewport[3]-vp.y-vp.w+tile.y,vp.z,vp.w);
+            glEnable(GL_SCISSOR_TEST);glScissor(origin_x+vp.x-tile.x,origin_y+viewport[3]-vp.y-vp.w+tile.y,vp.z,vp.w);
+            glDepthMask(phase==1?GL_TRUE:GL_FALSE);
+            if(phase<2) {glEnable(GL_DEPTH_TEST);glDepthFunc(phase==1?GL_LESS:GL_LEQUAL);} else glDisable(GL_DEPTH_TEST);
+            glUniform1i(glGetUniformLocation(program_,"lighting"),phase==1 && c.lighting);
+            glUniformMatrix3fv(glGetUniformLocation(program_,"normal_matrix"),1,GL_FALSE,c.normal_matrix);
+            glUniform1i(glGetUniformLocation(program_,"material_lighting"),c.material_lighting);
+            glUniform1i(glGetUniformLocation(program_,"two_sides"),c.lighting_two_sides);
+            glUniform1i(glGetUniformLocation(program_,"distinct_back"),c.distinct_back_color);
+            glUniformMatrix4fv(glGetUniformLocation(program_,"model"),1,GL_FALSE,c.model);
+            glUniform3fv(glGetUniformLocation(program_,"eye"),1,c.eye);glUniform3fv(glGetUniformLocation(program_,"light"),1,c.light);
+            glUniform4fv(glGetUniformLocation(program_,"ambient"),1,c.ambient);glUniform4fv(glGetUniformLocation(program_,"specular"),1,c.specular);
+            glUniform4fv(glGetUniformLocation(program_,"back_color"),1,c.back_color);glUniform1f(glGetUniformLocation(program_,"shininess"),c.shininess);
+            glUniformMatrix4fv(glGetUniformLocation(program_,"mvp"),1,GL_FALSE,c.model_view_projection);
+            glUniform4fv(glGetUniformLocation(program_,"color"),1,c.color);glBindVertexArray(d.vao);
+            glUniform1i(glGetUniformLocation(program_,"depth_image"),c.scene_depth_texture);
+            glBindTexture(GL_TEXTURE_2D,c.scene_depth_texture?depth_->depth_texture():d.texture);
+            if(d.indices) glDrawElements(GL_TRIANGLES,c.geometry->indices().size(),GL_UNSIGNED_INT,nullptr);
+            else glDrawArrays(GL_TRIANGLES,0,c.geometry->vertices().size());
         }
-        if(vp.z<=0 || vp.w<=0) continue;
-        glViewport(viewport[0]+vp.x-tile.x,viewport[1]+viewport[3]-vp.y-vp.w+tile.y,vp.z,vp.w);
-        glEnable(GL_SCISSOR_TEST);glScissor(viewport[0]+vp.x-tile.x,viewport[1]+viewport[3]-vp.y-vp.w+tile.y,vp.z,vp.w);
-        if(c.overlay_depth_test) {glEnable(GL_DEPTH_TEST);glDepthFunc(GL_LEQUAL);} else glDisable(GL_DEPTH_TEST);
-        glUniformMatrix4fv(glGetUniformLocation(program_,"mvp"),1,GL_FALSE,c.model_view_projection);
-        glUniform4fv(glGetUniformLocation(program_,"color"),1,c.color);glBindVertexArray(d.vao);
-        glUniform1i(glGetUniformLocation(program_,"depth_image"),c.scene_depth_texture);
-        glBindTexture(GL_TEXTURE_2D,c.scene_depth_texture?depth_->depth_texture():d.texture);
-        if(d.indices) glDrawElements(GL_TRIANGLES,c.geometry->indices().size(),GL_UNSIGNED_INT,nullptr);
-        else glDrawArrays(GL_TRIANGLES,0,c.geometry->vertices().size());
+        if(phase==1 && independent) {
+            glDisable(GL_SCISSOR_TEST);
+            hud_->bind(GL_READ_FRAMEBUFFER);glBindFramebuffer(GL_DRAW_FRAMEBUFFER,draw_fbo);
+            glBlitFramebuffer(0,0,viewport[2],viewport[3],viewport[0],viewport[1],
+                              viewport[0]+viewport[2],viewport[1]+viewport[3],GL_COLOR_BUFFER_BIT,GL_NEAREST);
+            glBindFramebuffer(GL_READ_FRAMEBUFFER,read_fbo);
+            glViewport(viewport[0],viewport[1],viewport[2],viewport[3]);
+            glDepthMask(GL_FALSE);
+        }
     }
     if(sampler_objects) glBindSampler(0,sampler);
 }

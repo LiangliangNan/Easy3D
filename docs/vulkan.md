@@ -4783,3 +4783,52 @@ test now checks the source-image pixel oracle directly and retains scene depth/I
 invariants; it also passed three consecutive isolated runs before the clean full
 run. OpenGL manipulation and MultiViewer depth-preview snapshots were visually
 inspected. `git diff --check` is clean; changes remain uncommitted on Easy3D-Vulkan.
+
+
+### 2026-11-04 — U6/W10 batch 6: independent HUD depth and material lighting parity
+
+The shared annotation API now supports independently depth-tested 3D HUD triangles
+on OpenGL as well as Vulkan. OpenGL uses a cached, viewport-sized private target
+with the caller's sample count and its own cleared depth buffer. Color is copied
+sample-for-sample into and out of this target, preserving scene/HUD coverage and
+straight-alpha blending without resolving early. Scene depth and picking remain
+untouched. Scene-depth annotations render first, independent HUDs second, and flat
+HUDs last; foreground submission retains its existing position after built-in HUDs.
+Scaled/tiled snapshots and MultiViewer use the same backend implementation.
+
+Both backends now honor basic diffuse and material lighting for independent HUDs,
+including normal/model transforms, ambient/specular terms, two-sided lighting and
+distinct back-face colors. Vulkan previously used its unlit annotation fragment
+shader for this pass, which skipped material shading; a dedicated color-only HUD
+fragment shader now reuses the existing material definition and shading function.
+Flat annotations and scene-depth previews retain their existing unlit behavior.
+No new public viewer API, tutorial abstraction, backend selector or helper class
+is introduced. GPU work stays in the existing backend files.
+
+The root `tests/viewer/independent_hud_test.cpp` exercises both configurations:
+HUD self-occlusion and submission ordering, scene picking/depth isolation,
+transparent export, 1x/4x MSAA, coincident scene/HUD edge coverage (to catch early
+resolve), 1x/1.5x/2x snapshots, transformed
+normals, material terms and back-face orientation, metadata/cache updates,
+resize, foreground output and MultiViewer. The existing OpenGL annotation state
+regression now also exercises independent depth with a nonzero viewport origin
+and restores the caller's front-face convention and multisample texture binding.
+The private HUD uses color/depth renderbuffers, with no unused color texture.
+Pixel oracles avoid built-in axes;
+MSAA coverage counts are restricted to the test quad's edges.
+
+Tutorials 403/404 and their selector remain open, along with GUI pickers, effect
+classes and the remaining original TextRenderer/Texture API audit. This batch
+closes the previously recorded lit/independent-depth OpenGL annotation gap, not
+those separate migration items.
+
+Validation on this Mac: complete OpenGL and Vulkan builds, including Python
+packaging, succeed. The complete MoltenVK suite passes 112/112 with the existing
+validation/synchronization-validation harness; the final added coincident-edge
+MSAA assertion also passes in a focused MoltenVK run. The final complete OpenGL
+suite passes 85/85 after the renderbuffer/state-isolation refinement. Snapshot
+inspection confirmed the default axes caused the initial outside-viewport oracle
+failure; that test samples clear background now. The existing MoltenVK integer
+attachment blending diagnostic is unchanged; validation-error counters in the HUD
+regressions remain zero. `git diff --check` is clean. Changes remain uncommitted
+on Easy3D-Vulkan.

@@ -65,21 +65,28 @@ int main(int argc,char**) {return test::run("shared annotations and image/text t
     const auto red=texture.at(texture.w/4,texture.h/4),blue=texture.at(texture.w/4,3*texture.h/4);
     require(red[0]>250 && red[1]<3 && red[2]<3 && blue[0]<3 && blue[1]<3 && blue[2]>250,"annotation texture orientation or tiled UVs differ");
 #ifndef EASY3D_HAS_VULKAN
+    GLuint multisample_texture=0;glGenTextures(1,&multisample_texture);glActiveTexture(GL_TEXTURE0);glBindTexture(GL_TEXTURE_2D_MULTISAMPLE,multisample_texture);
     GLuint unpack=0,sampler=0;glGenBuffers(1,&unpack);glBindBuffer(GL_PIXEL_UNPACK_BUFFER,unpack);glBufferData(GL_PIXEL_UNPACK_BUFFER,16,nullptr,GL_STATIC_DRAW);
     glPixelStorei(GL_UNPACK_ALIGNMENT,8);glPixelStorei(GL_UNPACK_ROW_LENGTH,13);glPixelStorei(GL_UNPACK_SKIP_ROWS,2);
-    glActiveTexture(GL_TEXTURE3);glViewport(3,4,31,27);glColorMask(GL_FALSE,GL_TRUE,GL_FALSE,GL_TRUE);glDepthFunc(GL_GREATER);
+    glActiveTexture(GL_TEXTURE3);glViewport(3,4,31,27);glColorMask(GL_FALSE,GL_TRUE,GL_FALSE,GL_TRUE);glDepthFunc(GL_GREATER);glFrontFace(GL_CW);
     if(GLEW_VERSION_3_3 || GLEW_ARB_sampler_objects) {glGenSamplers(1,&sampler);glBindSampler(0,sampler);}
     d.geometry=std::make_shared<graphics::Geometry>(vertices,std::vector<uint32_t>{0,1,2,0,2,3});
+    d.overlay_independent_depth=true;d.lighting=true;
     v.set_overlays({d});v.draw();
-    GLint active=0,vp[4],binding=0,row=0,skip=0,alignment=0,depth=0;GLboolean mask[4];
+    GLint active=0,vp[4],binding=0,row=0,skip=0,alignment=0,depth=0,front_face=0;GLboolean mask[4];
     glGetIntegerv(GL_ACTIVE_TEXTURE,&active);glGetIntegerv(GL_VIEWPORT,vp);glGetIntegerv(GL_PIXEL_UNPACK_BUFFER_BINDING,&binding);
     glGetIntegerv(GL_UNPACK_ROW_LENGTH,&row);glGetIntegerv(GL_UNPACK_SKIP_ROWS,&skip);glGetIntegerv(GL_UNPACK_ALIGNMENT,&alignment);
-    glGetIntegerv(GL_DEPTH_FUNC,&depth);glGetBooleanv(GL_COLOR_WRITEMASK,mask);
+    glGetIntegerv(GL_DEPTH_FUNC,&depth);glGetIntegerv(GL_FRONT_FACE,&front_face);glGetBooleanv(GL_COLOR_WRITEMASK,mask);
     require(active==GL_TEXTURE3 && vp[0]==3 && vp[1]==4 && vp[2]==31 && vp[3]==27 && GLuint(binding)==unpack &&
-            row==13 && skip==2 && alignment==8 && depth==GL_GREATER && !mask[0] && mask[1] && !mask[2] && mask[3],"annotations leaked OpenGL state");
+            row==13 && skip==2 && alignment==8 && depth==GL_GREATER && front_face==GL_CW && !mask[0] && mask[1] && !mask[2] && mask[3],"annotations leaked OpenGL state");
     if(sampler) {GLint bound=0;glActiveTexture(GL_TEXTURE0);glGetIntegerv(GL_SAMPLER_BINDING,&bound);require(GLuint(bound)==sampler,"annotations leaked sampler binding");glBindSampler(0,0);glDeleteSamplers(1,&sampler);}
+    glActiveTexture(GL_TEXTURE0);GLint multisample_binding=0;glGetIntegerv(GL_TEXTURE_BINDING_2D_MULTISAMPLE,&multisample_binding);
+    require(GLuint(multisample_binding)==multisample_texture,"independent HUD leaked multisample texture binding");
+    glBindTexture(GL_TEXTURE_2D_MULTISAMPLE,0);glDeleteTextures(1,&multisample_texture);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER,0);glDeleteBuffers(1,&unpack);glPixelStorei(GL_UNPACK_ALIGNMENT,4);glPixelStorei(GL_UNPACK_ROW_LENGTH,0);glPixelStorei(GL_UNPACK_SKIP_ROWS,0);
-    glActiveTexture(GL_TEXTURE0);glViewport(0,0,w,h);glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);glDepthFunc(GL_LESS);
+    glActiveTexture(GL_TEXTURE0);glViewport(0,0,w,h);glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);glDepthFunc(GL_LESS);glFrontFace(GL_CCW);
+    require(glGetError()==GL_NO_ERROR,"independent HUD generated an OpenGL error");
+    d.overlay_independent_depth=false;d.lighting=false;
 #endif
     graphics::TextLayoutEngine text; text.add_font(resource::directory()+"/fonts/en_Roboto-Medium.ttf");
     graphics::TextOptions o;o.x=10;o.y=10;o.size=24;o.color=vec4(0,0,0,1);

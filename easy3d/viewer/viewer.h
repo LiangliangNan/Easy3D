@@ -508,8 +508,8 @@ public:
     // follow, then flat HUD overlays. Sort overlapping scene-depth annotations
     // back-to-front. None write scene depth/IDs.
     // Foreground UI draws after built-in HUD; ordinary overlays retain their order.
-    // OpenGL accepts unlit flat/scene-depth triangles and GPU scene-depth previews;
-    // independent-depth and lit HUD commands still require Vulkan. Unsupported commands throw.
+    // Both backends accept flat/scene-depth triangles, independently depth-tested
+    // 3D HUD triangles (including diffuse and material lighting), and GPU scene-depth previews.
     void set_overlays(std::vector<graphics::DrawCommand> commands, bool foreground = false);
 #ifdef EASY3D_HAS_VULKAN
     // Transitional Vulkan-only scene APIs (docs/vulkan.md, U1b).

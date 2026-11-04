@@ -313,4 +313,15 @@ else()
     set_tests_properties(opengl.annotationtutorials PROPERTIES LABELS desktop TIMEOUT 180)
 endif()
 
+
+add_executable(easy3d_independent_hud_test independent_hud_test.cpp)
+target_link_libraries(easy3d_independent_hud_test PRIVATE easy3d::viewer)
+if(Easy3D_ENABLE_VULKAN)
+    add_test(NAME vulkan.independenthud COMMAND easy3d_independent_hud_test --validation)
+    set_tests_properties(vulkan.independenthud PROPERTIES LABELS desktop TIMEOUT 120)
+else()
+    add_test(NAME opengl.independenthud COMMAND easy3d_independent_hud_test)
+    set_tests_properties(opengl.independenthud PROPERTIES LABELS desktop TIMEOUT 120)
+endif()
+
 include(../properties.cmake)

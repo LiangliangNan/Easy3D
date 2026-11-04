@@ -10,12 +10,13 @@
         logical window coordinates, fresh scene-only depth, exact framebuffer pixel centers. Native callers,
         Python bindings and tests use the unified contract without explicit base-qualified calls.
   - [x] Shared annotations on both backends; Tutorials 202/306/309 share image, text and GUI presentation.
+  - [x] Independent 3D HUD depth and diffuse/material lighting on both backends; preserve MSAA, scene queries and scaled/transparent snapshots.
   - [x] Shared shape builders and Manipulator guide API; Tutorials 207/405/506 use shared annotations and GPU depth previews.
   - [x] W1-W3 docs sync; build blockers (single home for tutorials, enable_testing, bounded tutorial tests); Tutorial 208
   - [x] W4 Delete runtime-selection/headless leftovers (Backend enum, ViewerOptions, create_*_viewer, ...)
   - [ ] W5 Remove EASY3D_TUTORIAL_USES_VULKAN (tutorial selector still used by Tutorials 403 and 404; Tutorials 401/402 use shared visible-surface picking on 2026-11-04;
         plus the shared viewer.h macro and the two viewer tests)
-  - [ ] W6 Mac: OpenGL 84/84; MoltenVK 111/111 (2026-11-04, W5 batch 5; prior intermittent window-test timeout remains under observation); Linux baseline 68/69 still needs the interactionoverlay border check
+  - [ ] W6 Mac: OpenGL 85/85; MoltenVK 112/112 (2026-11-04, U6/W10 batch 6; prior intermittent window-test timeout remains under observation); Linux baseline 68/69 still needs the interactionoverlay border check
   - Top priority (docs/vulkan.md, "Migration principles"): minimal source changes; same class names and the same
     .h/.cpp files as the main branch (Viewer in viewer.h/.cpp for both backends); #ifdef EASY3D_HAS_VULKAN layout inside
     the classes; no new files except shaders, backend files and tests; minimal CMake changes; client code unchanged.

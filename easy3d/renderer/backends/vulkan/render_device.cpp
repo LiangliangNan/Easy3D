@@ -28,6 +28,7 @@ namespace easy3d { namespace graphics { namespace {
 #include "wide_lines_frag.inc"
 #include "overlay_vert.inc"
 #include "overlay_frag.inc"
+#include "hud_frag.inc"
 #include "depth_texture_frag.inc"
 #include "point_selection_comp.inc"
 
@@ -1033,7 +1034,7 @@ public:
         check(c_.vkCreatePipelineLayout(c_.device, &li, nullptr, &layout_), "create pipeline layout");
     }
     void create_pipelines(RenderPass& pass) {
-        VkShaderModule modules[11] = {};
+        VkShaderModule modules[12] = {};
         try {
             VkShaderModuleCreateInfo mi{};
             mi.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -1060,6 +1061,10 @@ public:
             if (pass.depth_preview) {
                 mi.codeSize = sizeof(depth_texture_frag); mi.pCode = depth_texture_frag;
                 check(c_.vkCreateShaderModule(c_.device,&mi,nullptr,&modules[10]), "create depth texture fragment shader");
+            }
+            if (pass.independent_depth) {
+                mi.codeSize = sizeof(hud_frag); mi.pCode = hud_frag;
+                check(c_.vkCreateShaderModule(c_.device,&mi,nullptr,&modules[11]), "create independent HUD fragment shader");
             }
             VkPipelineShaderStageCreateInfo stages[2] = {};
             for (unsigned i = 0; i < 2; ++i) {
@@ -1193,10 +1198,10 @@ public:
                 if (pass.independent_depth) {
                     pi.subpass = 2; depth.depthTestEnable = depth.depthWriteEnable = VK_TRUE;
                     depth.depthCompareOp = VK_COMPARE_OP_LESS;
-                    stages[0].module = modules[0]; // lit triangles, color-only fragment output
+                    stages[0].module = modules[0]; stages[1].module = modules[11]; // lit triangles, color only
                     vertex.vertexAttributeDescriptionCount = 6; vertex.pVertexAttributeDescriptions = attrs;
                     check(c_.vkCreateGraphicsPipelines(c_.device,VK_NULL_HANDLE,1,&pi,nullptr,&pass.hud_3d_pipeline), "create independent-depth HUD pipeline");
-                    stages[0].module = modules[8];
+                    stages[0].module = modules[8]; stages[1].module = modules[9];
                     vertex.vertexAttributeDescriptionCount = 3; vertex.pVertexAttributeDescriptions = overlay_attrs;
                 }
                 pi.subpass = pass.independent_depth ? 3 : 2;

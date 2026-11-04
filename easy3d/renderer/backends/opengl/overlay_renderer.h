@@ -21,7 +21,7 @@ private:
     void clear();
     std::vector<Draw> draws_;
     std::unique_ptr<ShaderProgram> shader_;
-    std::unique_ptr<FramebufferObject> depth_;
+    std::unique_ptr<FramebufferObject> depth_, hud_;
     bool foreground_=false;
 };
 } }
