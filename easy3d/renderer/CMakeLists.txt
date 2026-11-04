@@ -245,7 +245,6 @@ if(Easy3D_ENABLE_VULKAN)
     endif()
     install(FILES backends/vulkan/surface.h
         DESTINATION "${Easy3D_INSTALL_INCLUDE_DIR}/easy3d/renderer/backends/vulkan")
-    add_subdirectory(tests)
 endif()
 install_module(${module})
 if(NOT Easy3D_ENABLE_VULKAN)

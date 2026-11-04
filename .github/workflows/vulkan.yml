@@ -37,8 +37,7 @@ jobs:
           cmake -S . -B build-vulkan -G Ninja -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/install" \
             -DEasy3D_ENABLE_VULKAN=${{ matrix.vulkan }} \
-            -DEasy3D_BUILD_TUTORIALS=OFF -DEasy3D_BUILD_TESTS=OFF \
-            -DEasy3D_BUILD_RENDERER_TESTS=ON -DEasy3D_VULKAN_TEST_VALIDATION=ON \
+            -DEasy3D_BUILD_TUTORIALS=OFF -DEasy3D_BUILD_TESTS=ON \
             -DEasy3D_BUILD_PYTHON_BINDINGS=ON
       - name: Build
         run: cmake --build build-vulkan --parallel 2
@@ -72,7 +71,7 @@ jobs:
       - name: Build and run an installed-package consumer
         run: |
           cmake --install build-vulkan
-          cmake -S easy3d/viewer/tests/installed -B installed-consumer -G Ninja \
+          cmake -S tests/viewer/installed -B installed-consumer -G Ninja \
             -DEasy3D_DIR="${{ github.workspace }}/install/lib/CMake" \
             -DCMAKE_DISABLE_FIND_PACKAGE_Vulkan=TRUE
           cmake --build installed-consumer
@@ -89,4 +88,4 @@ jobs:
         if: always() && matrix.backend == 'VULKAN'
         with:
           name: vulkan-capture
-          path: build-vulkan/easy3d/viewer/vulkan-bunny.png
+          path: build-vulkan/tests/artifacts/vulkan.scene/vulkan-bunny.png

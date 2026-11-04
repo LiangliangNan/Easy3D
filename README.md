@@ -170,14 +170,12 @@ step</a>.
 - Please check [here](https://github.com/LiangliangNan/Easy3D/blob/main/python/README.md).
 
 ### Test Easy3D
-A test suite is provided in the [`tests`](https://github.com/LiangliangNan/Easy3D/tree/main/tests) subfolder (and [`test`](https://github.com/LiangliangNan/Easy3D/tree/main/python/test) for Python users), which 
-contains a collection of automated test cases (for data structures, IO, algorithms, visualization, etc.) and some 
-semi-automated test cases (for GUI-related functionalities that require interactive user input). All cases are 
-integrated into the single target `tests`.
-
-To build and run the test suite, download the entire source, use the `CMakeLists.txt` in the root directory of the 
-repository, switch on the CMake option `Easy3D_BUILD_TESTS` (which is disabled by default), and run CMake. After CMake, 
-you can build ALL or only the `tests` target. Finally, run the `tests` executable (i.e., `YOUR_BUILD_DIRECTORY/bin/tests`) for the test.
+All tests and their CTest registration live in [`tests`](tests/README.md). Configure
+with `-DEasy3D_BUILD_TESTS=ON`, build normally, then run
+`ctest --test-dir YOUR_BUILD_DIRECTORY --output-on-failure`. This enables all tests
+for the configured backend; Vulkan regression tests require validation layers.
+The option defaults to `OFF`. Desktop tests run for bounded frames and require no
+manual interaction. Python package tests are included when bindings are built.
 
 ### Use Easy3D in your project
 This is quite easy, like many other open-source libraries :-) 

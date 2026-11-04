@@ -18,6 +18,10 @@ the principles win and the other text is superseded.
 [`main` branch](https://github.com/LiangliangNan/Easy3D/tree/main). Every difference from
 `main` must be necessary for Vulkan support.
 
+**Testing policy (2026-11-04).** Only `Easy3D_BUILD_TESTS` controls tests. All
+project-owned test sources, fixtures and registration live under root `tests/`.
+This supersedes retired test switches and locations in the historical notes below.
+
 **P1. Same class names, same files.** A class has the same name and lives in the same
 `.h`/`.cpp` pair for both backends, as in `main`: `Viewer` in `viewer.h/.cpp`,
 `MultiViewer` in `multi_viewer.h/.cpp`, `OffScreen` in `offscreen.h/.cpp`, and likewise
@@ -153,7 +157,7 @@ needs no change.
   already have under Xvfb) for a bounded number of frames, with no options injected. The
   tutorial subclasses therefore take only what `main`'s do (Tutorial 207 keeps `main`'s
   explicit 4 samples and non-resizable window). Consequences: tests resize the window after
-  construction and wait for the window system (`set_size` in `easy3d/viewer/tests/
+  construction and wait for the window system (`set_size` in `tests/viewer/
   test_window.h`); a tutorial's constructor-time layout, such as the image fit of Tutorial
   306, is computed for the default window and the test refits; and the validation layers can
   no longer be enabled for tests that construct tutorial classes (they run without
@@ -740,10 +744,10 @@ not continuing architectural requirements. Sections known to be obsolete carry a
 
 Each build tree contains one backend, chosen by `Easy3D_ENABLE_VULKAN` (default `ON`
 on this branch). Existing CMake caches keep their saved values; reset the cache or
-pass `-D` options to change them. Related options: `Easy3D_BUILD_TUTORIALS`
-(default `OFF`), `Easy3D_BUILD_VULKAN_TESTS` and `Easy3D_VULKAN_TEST_VALIDATION`
-(both default `ON`; validation needs the Khronos layers), and
-`Easy3D_BUILD_RENDERER_TESTS` (default `OFF`) for the renderer/viewer regression tests of either backend.
+pass `-D` options to change them. `Easy3D_BUILD_TESTS` (default `OFF`) is the only
+test switch: it enables all suites for the configured backend, including required
+Vulkan validation. All test sources and registration live in `tests/`; see
+[`tests/README.md`](../tests/README.md) for the layout and duplicate-scene mapping.
 
 Install the Vulkan SDK (headers, loader and `glslangValidator`). On Ubuntu:
 
@@ -756,7 +760,7 @@ sudo apt-get install libvulkan-dev mesa-vulkan-drivers glslang-tools \
 Vulkan backend:
 
 ```sh
-cmake -S . -B build-vulkan -DEasy3D_ENABLE_VULKAN=ON -DEasy3D_BUILD_TUTORIALS=ON
+cmake -S . -B build-vulkan -DEasy3D_ENABLE_VULKAN=ON -DEasy3D_BUILD_TUTORIALS=ON -DEasy3D_BUILD_TESTS=ON
 cmake --build build-vulkan --parallel 4
 ctest --test-dir build-vulkan --output-on-failure -LE desktop   # no display needed
 ./build-vulkan/bin/Tutorial_208_Offscreen [mesh.ply] [output.png]
@@ -765,13 +769,13 @@ ctest --test-dir build-vulkan --output-on-failure -LE desktop   # no display nee
 OpenGL backend (needs no Vulkan SDK):
 
 ```sh
-cmake -S . -B build-opengl -DEasy3D_ENABLE_VULKAN=OFF -DEasy3D_BUILD_TUTORIALS=ON
+cmake -S . -B build-opengl -DEasy3D_ENABLE_VULKAN=OFF -DEasy3D_BUILD_TUTORIALS=ON -DEasy3D_BUILD_TESTS=ON
 cmake --build build-opengl --parallel 4
 ```
 
-Validation is requested by `Easy3D_VULKAN_TEST_VALIDATION`. Missing validation
-layers make tests fail instead of silently running without validation; set the
-option `OFF` for machines without the SDK layers. Synchronization validation uses
+Vulkan regression CTests require Khronos/synchronization validation. Missing
+layers fail those tests rather than silently disabling validation. Set
+`Easy3D_BUILD_TESTS=OFF` to omit the entire suite. Synchronization validation uses
 `VK_EXT_validation_features` from the Khronos validation layer.
 
 For deterministic Linux software tests, set `VK_DRIVER_FILES` to the installed
@@ -889,7 +893,7 @@ drawable. `draw(camera)`/`gl_draw()` fail explicitly in CPU mode.
 For a low-level Vulkan consumer, link `easy3d::renderer`, build immutable
 `graphics::Geometry`/`graphics::Image` descriptions, and submit a vector of
 `graphics::DrawCommand` to `graphics::RenderDevice::render()`. See
-`easy3d/renderer/tests/render_test.cpp` for a complete runnable example. The CMake
+`tests/renderer/render_test.cpp` for a complete runnable example. The CMake
 package exports the normal `renderer` component and finds its Vulkan dependency.
 
 ## Multisampling and test diagnostics
@@ -3954,7 +3958,7 @@ argument that could never receive the C++ output. Both viewers use the shared fr
 scene query with logical window coordinates, including per-cell reconstruction.
 Python query overrides likewise return `(point, found)`.
 
-The new `python/tests/rendering.py` imports the deployed package, renders a known
+The new `tests/python/rendering.py` imports the deployed package, renders a known
 red triangle through Viewer, MultiViewer and OffScreen, and checks image dimensions
 and pixel colors. It exercises per-cell assignment/picking, shared scene identity,
 projection round trips, frame callbacks, bool draw overrides, C++ virtual dispatch
@@ -4507,3 +4511,35 @@ Validation on this Mac (Apple M4 Pro/MoltenVK), 2026-11-04:
   effect parity, and Linux/Windows execution remain outside this Mac batch.
 
 Work remains uncommitted on Easy3D-Vulkan. U5/U6/W10 are still in progress.
+
+
+### 2026-11-04 — U6g: One test switch and one root test tree
+
+Removed the three renderer/Vulkan/validation test options. `Easy3D_BUILD_TESTS`
+alone builds and registers all configured-backend suites; Vulkan validation-enabled
+registrations always pass `--validation`. Old cache entries are removed without
+compatibility aliases. OFF also removes stale root CTest registration in reused
+build trees. No project test source or registration remains in renderer/viewer,
+applications or the Python module: those now build only their production targets.
+
+Moved renderer/viewer tests, installed consumers and Python rendering tests into
+root `tests/`, with CMake registration there after applications and Python targets
+exist. Updated CI, consumer paths and documentation. Each test has an isolated
+artifact directory. Desktop cases are serial even under parallel CTest, preventing
+focus races. The root README documents configuration, layout and duplicate mapping.
+
+Retired the interactive aggregate and all visualization_* copies. Original tutorial
+scenes are reused by bounded generated drivers; added OpenGL 501–505 drivers to
+preserve the unique effect demonstrations while Vulkan effect parity remains open.
+The old threading demo is replaced by the existing joined-worker regression and
+Tutorial 312. Rewrote model/I/O, spline, solver, kd-tree, signal, timer and logging
+demos as deterministic assertions and nonzero failure exits. Replaced the dormant
+HRBF test's private data path with a synthetic float-precision interpolation case.
+Retained each unique point-cloud/surface-mesh algorithm operation as an independent
+CTest case, with result/finite-geometry/normal/triangulation invariants. CGAL cases
+remain conditional on the actual algo_ext target. Removed the manual Python
+interactive loop in favor of the deployed-package test and CTest.
+
+Six tutorial main() guards have also been removed. Entry-point renaming is scoped
+to test-target sources in tests/viewer/CMakeLists.txt; production tutorial files
+no longer contain test macros, and their original main functions remain intact.

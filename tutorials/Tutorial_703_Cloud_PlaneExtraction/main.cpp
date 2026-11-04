@@ -77,7 +77,6 @@ bool extract_plane(Viewer* viewer, Model* model) {
 }
 
 
-#ifndef EASY3D_TUTORIAL_TEST
 int main(int argc, char **argv) {
     // initialize Easy3D.
     initialize();
@@ -106,4 +105,3 @@ int main(int argc, char **argv) {
     // run the viewer
     return viewer.run();
 }
-#endif // EASY3D_TUTORIAL_TEST

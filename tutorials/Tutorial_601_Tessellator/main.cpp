@@ -155,7 +155,6 @@ std::shared_ptr<SurfaceMesh> create_tessellation_mesh() {
     return mesh;
 }
 
-#ifndef EASY3D_TUTORIAL_TEST
 int main(int argc, char** argv) {
     initialize();
     Viewer viewer(EXAMPLE_TITLE);
@@ -178,4 +177,3 @@ int main(int argc, char** argv) {
 
     return viewer.run();
 }
-#endif // EASY3D_TUTORIAL_TEST

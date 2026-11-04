@@ -9,7 +9,11 @@ option(Easy3D_BUILD_TUTORIALS "Build Easy3D tutorials"          OFF)
 # Build documentation
 option(Easy3D_BUILD_DOCUMENTATION "Build Easy3D documentation"  OFF)
 # Build tests
-option(Easy3D_BUILD_TESTS "Build Easy3D tests programs"         OFF)
+option(Easy3D_BUILD_TESTS "Build all Easy3D tests and require Vulkan validation" OFF)
+# Remove obsolete switches from existing build-tree caches; no compatibility aliases.
+unset(Easy3D_BUILD_VULKAN_TESTS CACHE)
+unset(Easy3D_VULKAN_TEST_VALIDATION CACHE)
+unset(Easy3D_BUILD_RENDERER_TESTS CACHE)
 # Build Python bindings
 option(Easy3D_BUILD_PYTHON_BINDINGS "Build Python bindings"     OFF)
 # Build advanced features that require CGAL (>= v5.1)
@@ -20,9 +24,6 @@ option(Easy3D_ENABLE_QT "Build examples/applications based on Qt (Qt5 >= v5.8.0,
 option(Easy3D_ENABLE_FFMPEG "Build the video encoding module that requires ffmpeg (>= v3.4)" OFF)
 # A build contains exactly one renderer, ether Vulkan or OpenGL
 option(Easy3D_ENABLE_VULKAN "Build the viewers/renderers with Vulkan"                         ON)
-option(Easy3D_BUILD_VULKAN_TESTS "Build deterministic Vulkan rendering tests"                 ON)
-option(Easy3D_VULKAN_TEST_VALIDATION "Require Vulkan and synchronization validation in CTest" ON)
-option(Easy3D_BUILD_RENDERER_TESTS "Build the renderer/viewer regression tests (either backend)" OFF)
 
 ################################################################################
 
@@ -37,8 +38,11 @@ project(Easy3D VERSION ${Easy3D_VERSION_STRING})
 ################################################################################
 
 # Crucial line to enable CTest
-if (Easy3D_BUILD_RENDERER_TESTS OR (Easy3D_ENABLE_VULKAN AND Easy3D_BUILD_VULKAN_TESTS))
+if (Easy3D_BUILD_TESTS)
     enable_testing()
+else()
+    # Avoid stale registrations when an existing build tree turns tests off.
+    file(REMOVE "${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake")
 endif ()
 
 # specify the C++ standard
@@ -303,14 +307,6 @@ if (Easy3D_BUILD_TUTORIALS)
     add_subdirectory(tutorials)
 endif ()
 
-if (Easy3D_BUILD_RENDERER_TESTS OR (Easy3D_ENABLE_VULKAN AND Easy3D_BUILD_VULKAN_TESTS))
-    include(tests/native_tutorials/test_sources.cmake)
-endif ()
-
-if (Easy3D_BUILD_TESTS)
-    add_subdirectory(tests)
-endif ()
-
 if (Easy3D_BUILD_PYTHON_BINDINGS)
     # Specify the output directory for the Python package
     set(Easy3D_PYTHON_PACKAGE_DIR "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/python")
@@ -318,6 +314,10 @@ if (Easy3D_BUILD_PYTHON_BINDINGS)
 endif ()
 
 add_subdirectory(applications)
+
+if(Easy3D_BUILD_TESTS)
+    add_subdirectory(tests)
+endif()
 
 ################################################################################
 

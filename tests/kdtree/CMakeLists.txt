@@ -1,0 +1,5 @@
+add_executable(easy3d_kdtree_kdtree_test kdtree_test.cpp)
+target_link_libraries(easy3d_kdtree_kdtree_test PRIVATE easy3d::algo easy3d::fileio easy3d::kdtree)
+add_test(NAME kdtree.kdtree COMMAND easy3d_kdtree_kdtree_test)
+set_tests_properties(kdtree.kdtree PROPERTIES TIMEOUT 30)
+include(../properties.cmake)

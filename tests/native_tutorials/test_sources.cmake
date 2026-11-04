@@ -12,7 +12,7 @@ function(native_tutorial_test_source tutorial output)
         message(FATAL_ERROR "Tutorial smoke test needs a viewer.run() entry point: ${tutorial}")
     endif()
     string(REPLACE "return viewer.run();" "return easy3d::test::native_options().run(viewer);" scene "${scene}")
-    set(generated "${CMAKE_CURRENT_BINARY_DIR}/tests/native_tutorials/${tutorial}_test.cpp")
+    set(generated "${CMAKE_CURRENT_BINARY_DIR}/native_tutorials/${tutorial}_test.cpp")
     file(GENERATE OUTPUT "${generated}" CONTENT "#include \"${Easy3D_ROOT}/tests/native_tutorials/options.h\"\n#define main tutorial_main\n${scene}\n#undef main\nint main(int argc, char** argv) {\n    if (!easy3d::test::native_options().parse(argc, argv)) return EXIT_FAILURE;\n    return tutorial_main(argc, argv);\n}\n")
     set(${output} "${generated}" PARENT_SCOPE)
 endfunction()
@@ -24,8 +24,8 @@ if(Easy3D_ENABLE_VULKAN)
 else()
     set(test_prefix opengl)
 endif()
-file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/tests/native_tutorials")
-foreach(tutorial
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/native_tutorials")
+set(tutorial_scenes
         Tutorial_201_Viewer_default
         Tutorial_202_Viewer_imgui
         Tutorial_205_MultiView
@@ -57,6 +57,11 @@ foreach(tutorial
         Tutorial_702_Cloud_SurfaceReconstruction
         Tutorial_703_Cloud_PlaneExtraction
 )
+if(NOT Easy3D_ENABLE_VULKAN)
+    list(APPEND tutorial_scenes Tutorial_501_AmbientOcclusion Tutorial_502_HardShadow
+        Tutorial_503_SoftShadow Tutorial_504_Transparency Tutorial_505_EyeDomeLighting)
+endif()
+foreach(tutorial IN LISTS tutorial_scenes)
     string(REGEX MATCH "^Tutorial_([0-9]+)_" tutorial_prefix "${tutorial}")
     set(test_name ${test_prefix}.tutorial${CMAKE_MATCH_1})
     set(test_target ${tutorial}_test)
@@ -78,5 +83,5 @@ foreach(tutorial
     set_target_properties(${test_target} PROPERTIES FOLDER "tests")
     add_test(NAME ${test_name} COMMAND ${test_target} --frames 3)
     set_tests_properties(${test_name} PROPERTIES LABELS desktop TIMEOUT 120
-        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/tests/native_tutorials")
+        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/native_tutorials")
 endforeach()

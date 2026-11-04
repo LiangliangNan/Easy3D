@@ -84,7 +84,6 @@ bool reorient(Viewer* viewer, Model* model) {
         return false;
 }
 
-#ifndef EASY3D_TUTORIAL_TEST
 int main(int argc, char **argv) {
     // initialize Easy3D.
     initialize();
@@ -121,4 +120,3 @@ int main(int argc, char **argv) {
     viewer.fit_screen();
     return viewer.run();
 }
-#endif // EASY3D_TUTORIAL_TEST

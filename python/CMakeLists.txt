@@ -275,8 +275,3 @@ file(WRITE ${Easy3D_PYTHON_PACKAGE_DIR}/easy3d/__init__.py
         "# Initialize the resource directory\n"
         "initialize_resource_directory(resource_dir)\n"
         )
-if(Easy3D_BUILD_RENDERER_TESTS)
-    add_test(NAME python.rendering
-        COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/rendering.py ${Easy3D_PYTHON_PACKAGE_DIR})
-    set_tests_properties(python.rendering PROPERTIES TIMEOUT 120 LABELS desktop)
-endif()

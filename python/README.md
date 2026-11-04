@@ -79,7 +79,7 @@ against the former unsigned constructor signatures.
 `point, found = viewer.point_under_pixel(x, y)` queries logical window coordinates.
 `models()` and `drawables()` expose the viewer's shared scene objects.
 
-When renderer tests are enabled, `ctest --test-dir BUILD -R python.rendering
+When `Easy3D_BUILD_TESTS=ON` and Python bindings are built, `ctest --test-dir BUILD -R python.rendering
 --output-on-failure` checks the deployed package's import, viewer callbacks,
 multi-view assignment, picking and snapshots, and offscreen rendering. It needs
 a desktop session (or Xvfb on Linux) for both configurations. Legacy effects and
