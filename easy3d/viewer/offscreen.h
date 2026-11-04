@@ -6,7 +6,7 @@ namespace easy3d {
 class OffScreen : protected Viewer {
 public:
     // ... some public functions: the unified APIs used by both backends
-    explicit OffScreen(unsigned int width = 800, unsigned int height = 600,
+    explicit OffScreen(int width = 800, int height = 600,
 #ifdef EASY3D_HAS_VULKAN
                        const VulkanOptions& options = {});
 #else

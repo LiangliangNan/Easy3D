@@ -1,3 +1,4 @@
+#include <limits>
 #include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <easy3d/viewer/viewer.h>
@@ -203,6 +204,14 @@ void callback_failure(bool validation) {
 int main(int argc, char**) {
     try {
         initialize(false, false, false);
+        for (const auto& args : {ivec3(0,61,1), ivec3(-1,61,1), ivec3(81,0,1),
+                                 ivec3(81,-1,1), ivec3(81,61,-1),
+                                 ivec3(81,61,std::numeric_limits<int>::min()), ivec3(81,61,3)}) {
+            bool rejected = false;
+            try { Viewer invalid("Invalid constructor", args.x, args.y, args.z, false, false); }
+            catch (const std::invalid_argument&) { rejected = true; }
+            require(rejected, "invalid signed Viewer constructor input was accepted");
+        }
         exercise(argc > 1); callback_failure(argc > 1);
         std::cout << "PASS: common frame loop, exact budgets, refresh, animation, run(bool), camera, resize, failure containment\n";
     } catch (const std::exception& e) { std::cerr << "FAIL: " << e.what() << '\n'; return 1; }

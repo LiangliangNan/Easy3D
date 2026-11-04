@@ -359,7 +359,7 @@ void bind_easy3d_viewer_multi_viewer(pybind11::module_& m)
 {
 	{ // easy3d::MultiViewer file:easy3d/viewer/multi_viewer.h line:44
 		pybind11::class_<easy3d::MultiViewer, std::shared_ptr<easy3d::MultiViewer>, PyCallBack_easy3d_MultiViewer, easy3d::Viewer> cl(m, "MultiViewer", "A viewer that supports multiple views (arranged in a grid layout).\n \n\n\n     ");
-        cl.def(pybind11::init<unsigned int, unsigned int, const std::string&, unsigned int, unsigned int, unsigned int, bool, bool, bool>(),
+        cl.def(pybind11::init<int, int, const std::string&, int, int, int, bool, bool, bool>(),
                pybind11::arg("rows"), pybind11::arg("cols"), pybind11::arg("title") = "untitled",
                pybind11::arg("width") = 800, pybind11::arg("height") = 600, pybind11::arg("samples") = 1,
                pybind11::arg("full_screen") = false, pybind11::arg("visible") = true, pybind11::arg("resizable") = true);

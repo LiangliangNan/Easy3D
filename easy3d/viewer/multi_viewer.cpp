@@ -75,8 +75,8 @@ void configure_cell(Camera& cell,const Camera& source,int width,int height,float
 #endif
 
 }
-MultiViewer::MultiViewer(unsigned int rows,unsigned int cols,const std::string& title,
-                         unsigned int width,unsigned int height,unsigned int samples,
+MultiViewer::MultiViewer(int rows,int cols,const std::string& title,
+                         int width,int height,int samples,
                          bool full_screen,bool visible,bool resizable,
 #ifdef EASY3D_HAS_VULKAN
                          const VulkanOptions& options)
@@ -87,7 +87,7 @@ MultiViewer::MultiViewer(unsigned int rows,unsigned int cols,const std::string& 
 #ifdef EASY3D_HAS_VULKAN
     snapshot_hud_=false;
 #endif
-    set_layout(int(rows),int(cols));
+    set_layout(rows,cols);
 }
 MultiViewer::~MultiViewer() = default;
 void MultiViewer::set_layout(int rows,int cols) {

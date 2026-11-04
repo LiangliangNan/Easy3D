@@ -69,6 +69,13 @@ int main() {
     static_assert(!std::is_convertible<OffScreen*,Viewer*>::value, "OffScreen inheritance must be protected");
     try {
         initialize(false,false,false);
+        for (const auto& size : {ivec2(0,1), ivec2(-1,1), ivec2(1,-1),
+                                 ivec2(std::numeric_limits<int>::min(),1)}) {
+            bool rejected = false;
+            try { OffScreen invalid(size.x,size.y); }
+            catch (const std::invalid_argument&) { rejected = true; }
+            require(rejected, "invalid signed OffScreen dimensions were accepted");
+        }
         OffScreen renderer(161,127);
 #ifdef EASY3D_HAS_VULKAN
         // Offscreen output is scene-only; a window's default logo/axes must not leak in.

@@ -70,7 +70,10 @@ You can verify the installation by running the following command:
 Viewer constructors follow the C++ argument order: `title`, `width`, `height`,
 `samples` (default 1), `full_screen`, `visible`, `resizable`. MultiViewer starts
 with `rows`, `cols`, then the same arguments. Use keywords for clarity. The old
-positional OpenGL version/depth arguments are no longer supported.
+positional OpenGL version/depth arguments are no longer supported. Constructor
+dimensions and counts use C++ `int`; nonpositive dimensions or negative sample
+counts raise `ValueError`. Rebuild C++ consumers and Python extensions compiled
+against the former unsigned constructor signatures.
 
 `viewer.run_frames(n)` runs a bounded viewer loop, and
 `point, found = viewer.point_under_pixel(x, y)` queries logical window coordinates.

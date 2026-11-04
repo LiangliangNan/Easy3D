@@ -370,7 +370,7 @@ void bind_easy3d_viewer_viewer(pybind11::module_& m)
                     )doc"
         );
 
-        cl.def(pybind11::init<const std::string&, unsigned int, unsigned int, unsigned int, bool, bool, bool>(),
+        cl.def(pybind11::init<const std::string&, int, int, int, bool, bool, bool>(),
                pybind11::arg("title") = "Easy3D Viewer", pybind11::arg("width") = 800,
                pybind11::arg("height") = 600, pybind11::arg("samples") = 1,
                pybind11::arg("full_screen") = false, pybind11::arg("visible") = true,

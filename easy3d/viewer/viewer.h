@@ -73,25 +73,21 @@ public:
     // ... some public functions: the unified APIs used by both backends
 
         /**
-         * \brief Constructor
-         * \param title The window title of the viewer, which can be changed by calling set_title() after construction.
-         * \param samples The number of samples for multisample antialiasing
-		 * \param gl_major The OpenGL major version to request. Must be >= 3. The minimal version of OpenGL required to
-		 *		use the Core Profile is OpenGL 3.2.
-		 * \param gl_minor The OpenGL minor version to request. Must be >= 2. The minimal version of OpenGL required to
-		 *		use the Core Profile is OpenGL 3.2.
-         * \param full_screen Do you want the viewer to be fullscreen?
-         * \param resizable Whether the viewer will be resizable by the user.
-         * \param depth_bits The desired bit depths of the depth component of the default framebuffer.
-         * \param stencil_bits The desired bit depths of the stencil component of the default framebuffer.
-         * \param width The width of the viewer, which can be changed by calling resize() after construction.
-         * \param height The height of the viewer, which can be changed by calling resize() after construction.
+         * \brief Constructor.
+         * \param title The window title, which can be changed by set_title().
+         * \param width Initial logical window width (positive).
+         * \param height Initial logical window height (positive).
+         * \param samples Requested MSAA sample count; 0 or 1 disables MSAA.
+         * \param full_screen Whether to use the primary monitor in fullscreen mode.
+         * \param visible Whether the window is initially visible.
+         * \param resizable Whether the user can resize the window.
+         * \details The last parameter supplies backend-specific device/context options.
          */
 		explicit Viewer(
 			const std::string& title = "Easy3D Viewer",
-			unsigned int width = 800,
-			unsigned int height = 600,
-			unsigned int samples = 1,
+			int width = 800,
+			int height = 600,
+			int samples = 1,
 			bool full_screen = false,
 			bool visible = true,
 			bool resizable = true,
@@ -106,7 +102,7 @@ public:
         /**
          * \brief The destructor.
          */
-		virtual ~Viewer();
+		~Viewer() override;
         unsigned validation_errors() const override;
         void set_animation_callback(const ViewerBase::AnimationFunction& callback) override {
             if (callback) animation_func_ = [callback](Viewer* viewer) { return callback(viewer); };
@@ -135,7 +131,7 @@ public:
         /**
          * \brief Terminate the viewer.
          */
-        virtual void exit() override;
+        void exit() override;
 
         /// \name Viewer properties
         //@{
@@ -170,7 +166,7 @@ public:
 		/// \brief Returns the height of the framebuffer, which is identical to: height() * dpi_scaling().
 		int framebuffer_height() const override;
 		/// \brief Queries the size of the framebuffer.
-		virtual void framebuffer_size(int& w, int& h) const override;
+		void framebuffer_size(int& w, int& h) const override;
 
         /**
          * \brief Sets the position of the content area of the viewer.
@@ -225,7 +221,7 @@ public:
          *          meshes, and "edges" and "vertices" for graphs) will be created for visualization.
          * \return true on success and false otherwise.
          */
-        virtual bool open() override;
+        bool open() override;
 
         /**
          * \brief Save the active model (if exists) to a file.
@@ -233,7 +229,7 @@ public:
          *          dialog for specifying the file name.
          * \return true on success and false otherwise.
          */
-        virtual bool save() const override;
+        bool save() const override;
         //@}
 
         /// \name Model management
@@ -259,7 +255,7 @@ public:
          * \return The pointer to the model added to the viewer (nullptr if failed).
          * \related add_model(Model*, bool).
          */
-        virtual Model* add_model(const std::string& file_name, bool create_default_drawables = true) override;
+        Model* add_model(const std::string& file_name, bool create_default_drawables = true) override;
 
         /**
          * \brief Add an existing model to the viewer to be visualized. On success, the viewer will
@@ -308,7 +304,7 @@ public:
          * \param model The pointer to the model.
          * \return True if the model has been deleted.
          */
-        virtual bool delete_model(Model* model) override;
+        bool delete_model(Model* model) override;
 
         /**
          * \brief Query the models managed by this viewer.
@@ -396,7 +392,7 @@ public:
          *          Internally, it will pop up a file dialog for specifying the file name.
          * \return true on success and false otherwise.
          */
-	    virtual bool snapshot() const override;
+	    bool snapshot() const override;
 
         /**
          * \brief  Take a snapshot of the screen and save it to an image file. Supported image format: png, jpg, bmp, and tga.
@@ -701,7 +697,7 @@ protected:
                                                            std::vector<DrawSource>* sources = nullptr, bool include_hidden_models = false) const;
     ivec2 interaction_origin_ = ivec2(0);
     // Device-only construction for OffScreen: creates neither a GLFW window nor a surface.
-    Viewer(unsigned int width, unsigned int height, const VulkanOptions& options);
+    Viewer(int width, int height, const VulkanOptions& options);
     void resize_render_target(int width, int height);
     void set_viewer_overlays(std::vector<graphics::DrawCommand> commands) const;
     void set_viewer_3d_overlays(std::vector<graphics::DrawCommand> commands) const;

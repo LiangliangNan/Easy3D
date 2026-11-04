@@ -13,7 +13,7 @@
   - Top priority (docs/vulkan.md, "Migration principles"): minimal source changes; same class names and the same
     .h/.cpp files as the main branch (Viewer in viewer.h/.cpp for both backends); #ifdef EASY3D_HAS_VULKAN layout inside
     the classes; no new files except shaders, backend files and tests; minimal CMake changes; client code unchanged.
-  - [x] U1 One `Viewer` class (viewer.h/.cpp), ViewerBase retained; Vulkan scene ownership folded in; counterpart host files/aliases removed
+  - [x] U1 One `Viewer` class (viewer.h/.cpp), ViewerBase retained; signed int constructors and override cleanup; counterpart host files/aliases removed
   - [x] U2 OffScreen/MultiViewer unified; snapshot.cpp restored; Tutorial 205 and FigureMaker enabled
   - [x] U3 Classes without counterpart: same-file #ifdef structure (effects, pickers, ImGui)
   - [x] U4 Python bindings, installed package and CI use the final names (full Mac builds/rendering)

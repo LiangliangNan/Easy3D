@@ -50,8 +50,8 @@ namespace easy3d {
          * \param cols The number of columns (of the grid-like layout).
          * \param title The title of the viewer window.
          */
-        MultiViewer(unsigned int rows, unsigned int cols, const std::string &title = "untitled",
-                          unsigned int width = 800, unsigned int height = 600, unsigned int samples = 1,
+        MultiViewer(int rows, int cols, const std::string &title = "untitled",
+                          int width = 800, int height = 600, int samples = 1,
                           bool full_screen = false, bool visible = true, bool resizable = true,
 #ifdef EASY3D_HAS_VULKAN
                           const VulkanOptions& options = {});

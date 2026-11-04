@@ -49,14 +49,14 @@ struct OpenGLOptions {
 class Viewer : public ViewerBase {
 public:
     explicit Viewer(const std::string& title = "Easy3D Viewer",
-                    unsigned int width = 800, unsigned int height = 600, unsigned int samples = 1,
+                    int width = 800, int height = 600, int samples = 1,
                     bool full_screen = false, bool visible = true, bool resizable = true,
 #ifdef EASY3D_HAS_VULKAN
                     const VulkanOptions& vk_options = {});
 #else
                     const OpenGLOptions& gl_options = {});
 #endif
-    virtual ~Viewer();
+    ~Viewer() override;
     int run(bool see_all = true) override;
     // ... some public functions: the unified APIs used by both backends
 
@@ -73,6 +73,9 @@ protected: /* or */ private:
 
 The constructor is the one public place where the backends differ: the last parameter is
 `VulkanOptions` or `OpenGLOptions` (D1), so everything before it is portable.
+
+Overriding declarations use `override` without a redundant `virtual` specifier.
+Keep `virtual` on functions that introduce a virtual interface.
 
 The two comments `// ... some public functions: the unified APIs used by both backends`
 and `// Keep this part of code minimum` (in each of the two branches) are mandatory and
@@ -107,11 +110,11 @@ in `main`; add conditions only where a dependency or source genuinely differs by
 `OFF` (this defines or leaves undefined the C++ macro `EASY3D_HAS_VULKAN`). Their code
 needs no change.
 
-**Decisions (2026-10-31):**
+**Decisions (2026-10-31, constructor types revised 2026-11-04):**
 
 - **D1 Constructor** (supersedes `main`'s signature): `Viewer(title, width, height, samples,
   full_screen, visible, resizable, options)` with `width`, `height` and `samples` of type
-  `unsigned int`, `samples` defaulting to **1**, and `options` being `OpenGLOptions` (GL
+  `int` (revised 2026-11-04), `samples` defaulting to **1**, and `options` being `OpenGLOptions` (GL
   version, depth and stencil bits) or `VulkanOptions` (validation, synchronization
   validation, device name), as in the layout of P2. Consequences, recorded because they break
   the otherwise unchanged client code: `main`'s order was `(title, samples, gl_major,
@@ -144,7 +147,7 @@ needs no change.
 - **D5 `MultiViewer` and `OffScreen`** get the same options-struct treatment. Implemented as
   `MultiViewer(rows, cols, title, width, height, samples, full_screen, visible, resizable,
   options)` (both backends) and `OffScreen(width, height,
-  options)`, with `width` and `height` unsigned. `OffScreen` omits `samples`, `full_screen`,
+  options)`, with `width`, `height`, and MultiViewer row/column counts of type `int`. `OffScreen` omits `samples`, `full_screen`,
   `visible` and `resizable` because they have no meaning for a window-less renderer, and
   `render()` takes its own sample count.
 - **D6 Bounded tests** run the tutorials unchanged: a visible window (which the desktop tests
@@ -3929,7 +3932,8 @@ MoltenVK integer-attachment blending diagnostic remains outside this structural 
 
 The original binding files now compile the complete `PyEasy3D` extension with
 Vulkan or OpenGL. `Viewer` and `MultiViewer` use the common constructor order and
-unsigned dimensions/sample count, defaulting to one sample. Width/height, visibility
+unsigned dimensions/sample count at that stage (superseded by the later signed-int
+constructor revision), defaulting to one sample. Width/height, visibility
 and resizability can be passed by keyword; the historical positional OpenGL
 version/depth constructor arguments are removed, matching D1. Backend-specific
 options remain at their C++ defaults in these Python constructors.
@@ -4167,3 +4171,50 @@ Validation on this Mac (Apple M4 Pro, MoltenVK), 2026-11-04:
   MoltenVK integer-attachment blending diagnostic remains unchanged.
 
 No changes were committed. The branch remains Easy3D-Vulkan; U5/U6 and W10 remain open.
+
+
+### 2026-11-04 — signed viewer constructors and override declarations
+
+Per the latest user direction, Viewer constructor `width`, `height` and `samples`
+are `int`, matching the original OpenGL API's parameter types. MultiViewer uses
+`int` for these parameters and its original row/column counts; OffScreen dimensions
+and the device-only Viewer constructor are also `int`. The common constructor order,
+default one sample, backend options at the end and one-backend-per-build policy stay
+as recorded in D1/D5. This supersedes the earlier unsigned constructor decision.
+
+Both implementations reject nonpositive dimensions and negative sample counts
+explicitly. The negative test precedes the power-of-two calculation, including for
+INT_MIN, avoiding signed overflow. Zero still means no MSAA. Unsigned GPU sample
+masks and other unrelated count APIs retain their existing types.
+
+All seven `virtual ... override` declarations in Viewer now retain only `override`;
+the Viewer destructor is marked `override`. Functions introducing virtual methods
+retain `virtual`. No dispatch behavior changed. Constructor documentation no longer
+lists the removed positional OpenGL context arguments.
+
+The existing Python binding files construct the same signed C++ interfaces. Existing
+C++ loop/offscreen regressions cover negative/zero dimensions and negative/INT_MIN
+samples. The packaged Python test checks ValueError from signed invalid arguments
+for all three classes, negative grid counts and zero-sample normalization. C++ users
+and Python extensions built against the former unsigned signatures must be rebuilt:
+this changes constructor symbol signatures, and no extra compatibility overload is
+introduced.
+
+This completes the requested API cleanup as part of U1/U4 follow-through. U5's ten
+remaining conditional tutorials, the rest of U6's file responsibility audit and W10
+feature parity remain open.
+
+Validation on this Mac (Apple M4 Pro, MoltenVK), 2026-11-04:
+
+- Complete builds, including Python extensions, passed in both configurations.
+- Full suites: **72/72 Vulkan**, **40/40 OpenGL**. The signed negative/INT_MIN
+  constructor cases and Python zero-sample check pass on both backends.
+- Both installed packages' Viewer/MultiViewer and OffScreen consumers rebuilt and
+  ran against the new signatures with Vulkan discovery disabled in their configs;
+  the additional native Vulkan consumer passed.
+- A scan of project headers/sources found no remaining `virtual ... override`
+  combinations. `git diff --check` passed.
+- Linux/Windows execution was not performed. The pre-existing MoltenVK integer
+  attachment diagnostic remains outside this API cleanup.
+
+Work stayed on Easy3D-Vulkan, preserving the checkout; no commit was made.

@@ -17,7 +17,7 @@ struct PyOffScreen : easy3d::OffScreen {
 void bind_easy3d_viewer_offscreen(py::module_& m) {
     using namespace easy3d;
     py::class_<OffScreen,std::shared_ptr<OffScreen>,PyOffScreen>(m,"OffScreen","Backend-neutral offscreen rendering")
-        .def(py::init<unsigned int,unsigned int>(),py::arg("width")=800,py::arg("height")=600)
+        .def(py::init<int,int>(),py::arg("width")=800,py::arg("height")=600)
         .def("camera",[](OffScreen& self) { return self.camera(); },py::return_value_policy::reference_internal)
         .def("width",[](const OffScreen& self) { return self.width(); }).def("height",[](const OffScreen& self) { return self.height(); }).def("resize",&OffScreen::resize)
         .def("set_background_color",[](OffScreen& self, const vec4& color) { self.set_background_color(color); })

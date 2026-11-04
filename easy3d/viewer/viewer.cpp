@@ -135,12 +135,12 @@ std::vector<graphics::DrawCommand> Viewer::draw_commands(const Camera& cam, int,
         }
         return commands;
 }
-Viewer::Viewer(unsigned int width, unsigned int height, const VulkanOptions& options)
-    : window_(nullptr), width_(int(width)), height_(int(height)), camera_(new Camera),
+Viewer::Viewer(int width, int height, const VulkanOptions& options)
+    : window_(nullptr), width_(width), height_(height), camera_(new Camera),
       samples_(1), background_color_(setting::background_color), pressed_key_(-1),
       show_frame_rate_(false), show_camera_path_(false), show_easy3d_logo_(false), model_idx_(-1),
       impl_(new Impl(*this)) {
-    resize_render_target(int(width), int(height));
+    resize_render_target(width, height);
     impl_->device = graphics::create_vulkan_device(options);
     camera()->setType(Camera::PERSPECTIVE);
     camera()->setUpVector(vec3(0,0,1)); camera()->setViewDirection(vec3(-1,0,0)); camera()->showEntireScene();
@@ -477,11 +477,11 @@ struct Viewer::Window {
     int last_logical_x = 0, last_logical_y = 0;
     double wheel_x = 0, wheel_y = 0;
     std::exception_ptr error;
-    Window(const std::string& text, unsigned int w, unsigned int h, unsigned int sample_count, bool full_screen, bool visible, bool resizable)
-        : title(text), width(int(w)), height(int(h)), samples(sample_count ? sample_count : 1u) {   // 0: no MSAA, as in OpenGL
-        if (!w || !h || w > unsigned(std::numeric_limits<int>::max()) || h > unsigned(std::numeric_limits<int>::max()))
-            throw std::invalid_argument("window dimensions must be positive and fit an int");
-        if (sample_count > 64 || (sample_count && (sample_count & (sample_count - 1))))
+    Window(const std::string& text, int w, int h, int sample_count, bool full_screen, bool visible, bool resizable)
+        : title(text), width(w), height(h), samples(sample_count ? sample_count : 1) {   // 0: no MSAA, as in OpenGL
+        if (w <= 0 || h <= 0)
+            throw std::invalid_argument("window dimensions must be positive");
+        if (sample_count < 0 || sample_count > 64 || (sample_count && (sample_count & (sample_count - 1))))
             throw std::invalid_argument("invalid viewer sample count");
         runtime = detail::GlfwRuntime::acquire(true);
         if (!glfwVulkanSupported()) throw std::runtime_error("GLFW could not find Vulkan loader/driver support");
@@ -592,7 +592,7 @@ struct Viewer::Window {
         }); });
     }
 };
-Viewer::Viewer(const std::string& title, unsigned int width, unsigned int height, unsigned int samples,
+Viewer::Viewer(const std::string& title, int width, int height, int samples,
                            bool full_screen, bool visible, bool resizable, const VulkanOptions& vk_options)
     : Viewer(std::make_shared<Window>(title, width, height, samples, full_screen, visible, resizable), vk_options) {}
 Viewer::Viewer(std::shared_ptr<Window> host, const graphics::DeviceOptions& options)
@@ -1237,9 +1237,9 @@ float Viewer::dpi_scaling() const { return dpi_scaling_; }
 
     Viewer::Viewer(
             const std::string &title /* = "Easy3D Viewer" */,
-            unsigned int width /* = 800 */,
-            unsigned int height /* = 600 */,
-            unsigned int samples /* = 1 */,
+            int width /* = 800 */,
+            int height /* = 600 */,
+            int samples /* = 1 */,
             bool full_screen /* = false */,
             bool visible /* = true */,
             bool resizable /* = true */,
@@ -1269,10 +1269,9 @@ float Viewer::dpi_scaling() const { return dpi_scaling_; }
         , show_camera_path_(false)
         , model_idx_(-1)
     {
-        if (!width || !height || width > unsigned(std::numeric_limits<int>::max()) ||
-            height > unsigned(std::numeric_limits<int>::max()))
-            throw std::invalid_argument("window dimensions must be positive and fit an int");
-        if (samples > 64 || (samples && (samples & (samples - 1))))
+        if (width <= 0 || height <= 0)
+            throw std::invalid_argument("window dimensions must be positive");
+        if (samples < 0 || samples > 64 || (samples && (samples & (samples - 1))))
             throw std::invalid_argument("invalid viewer sample count");
         // Avoid locale-related number parsing issues.
         setlocale(LC_NUMERIC, "C");

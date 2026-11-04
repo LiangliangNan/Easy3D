@@ -3,7 +3,7 @@
 #include <easy3d/viewer/offscreen.h>
 #include <easy3d/renderer/camera.h>
 namespace easy3d {
-OffScreen::OffScreen(unsigned int w, unsigned int h, const VulkanOptions& options) : Viewer(w,h,options) {}
+OffScreen::OffScreen(int w, int h, const VulkanOptions& options) : Viewer(w,h,options) {}
 OffScreen::~OffScreen() = default;
 void OffScreen::resize(int w,int h) { resize_render_target(w,h); }
 void OffScreen::framebuffer_size(int& w,int& h) const { w = width(); h = height(); }
@@ -25,12 +25,12 @@ Drawable* OffScreen::add_drawable(std::shared_ptr<Drawable> drawable) { return V
 #include <limits>
 #include <stdexcept>
 namespace easy3d {
-OffScreen::OffScreen(unsigned int w, unsigned int h, const OpenGLOptions& gl_options)
+OffScreen::OffScreen(int w, int h, const OpenGLOptions& gl_options)
     : Viewer("Easy3D OffScreen Renderer",
-                   w?w:throw std::invalid_argument("offscreen width must be positive"),
-                   h?h:throw std::invalid_argument("offscreen height must be positive"),
+                   w>0?w:throw std::invalid_argument("offscreen width must be positive"),
+                   h>0?h:throw std::invalid_argument("offscreen height must be positive"),
                    4,false,false,true,gl_options) {
-    manual_.clear();width_=int(w);height_=int(h);dpi_scaling_=1;init();resize(int(w),int(h));
+    manual_.clear();width_=w;height_=h;dpi_scaling_=1;init();resize(w,h);
 }
 OffScreen::~OffScreen() { activate(); }
 void OffScreen::activate() const {

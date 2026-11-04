@@ -70,6 +70,29 @@ class DrawOverride(easy3d.Viewer):
 
 
 easy3d.initialize(False)
+# Signed constructor arguments reach C++ validation instead of unsigned conversion.
+for constructor, arguments in (
+    (easy3d.Viewer, dict(width=-1, visible=False)),
+    (easy3d.Viewer, dict(height=0, visible=False)),
+    (easy3d.Viewer, dict(samples=-1, visible=False)),
+    (easy3d.Viewer, dict(samples=-(2**31), visible=False)),
+    (easy3d.OffScreen, dict(width=-1)),
+    (easy3d.OffScreen, dict(height=0)),
+    (easy3d.MultiViewer, dict(rows=1, cols=2, width=-1, visible=False)),
+    (easy3d.MultiViewer, dict(rows=1, cols=2, samples=-1, visible=False)),
+    (easy3d.MultiViewer, dict(rows=-1, cols=2, width=31, height=23, visible=False)),
+):
+    try:
+        constructor(**arguments)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("invalid signed constructor argument was accepted")
+
+zero_samples = easy3d.Viewer("No MSAA", width=31, height=23, samples=0, visible=False)
+assert zero_samples.samples() == 1
+del zero_samples
+
 with tempfile.TemporaryDirectory(prefix="easy3d-python-") as directory:
     root = Path(directory)
     mesh_file = root / "triangle.off"
