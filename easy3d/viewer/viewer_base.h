@@ -17,8 +17,7 @@ class Drawable;
 // lifecycle: draw() renders one frame and returns whether it was presented;
 // draw_frame() drives the loop and invokes the unified frame hooks. Create,
 // use and destroy on the UI/main thread, with a separate scene per host.
-// The concrete host classes (VulkanViewer/Viewer and the Vulkan/OpenGL
-// multi-viewers/offscreen classes) are constructed directly; backend choice is
+// Viewer, MultiViewer and OffScreen are constructed directly; backend choice is
 // fixed by the build configuration.
 class ViewerBase : public ViewerInput {
 public:

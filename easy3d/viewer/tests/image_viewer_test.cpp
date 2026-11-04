@@ -13,7 +13,7 @@ using namespace easy3d;
 void require(bool value,const char* message) { if (!value) throw std::runtime_error(message); }
 void frame(TutorialImageViewer& viewer) {
     for (unsigned attempt=0;attempt<100;++attempt) {
-        VulkanViewer::poll_events();
+        Viewer::poll_events();
         if (viewer.draw_frame()) return;
         glfwWaitEventsTimeout(0.01);
     }

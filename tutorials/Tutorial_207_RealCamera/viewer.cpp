@@ -245,13 +245,13 @@ Rect TutorialRealCamera::calculate_image_rect() const {
     int tex_h = texture_->height();
 #endif
     const float image_as = static_cast<float>(tex_w) / static_cast<float>(tex_h);
-    const float viewer_as = static_cast<float>(width()) / static_cast<float>(height());
+    const float viewer_as = static_cast<float>(camera()->screenWidth()) / static_cast<float>(camera()->screenHeight());
     if (image_as < viewer_as) {// thin
-        tex_h = static_cast<int>(static_cast<float>(height()) * scale);
+        tex_h = static_cast<int>(static_cast<float>(camera()->screenHeight()) * scale);
         tex_w = static_cast<int>(static_cast<float>(tex_h) * image_as);
     }
     else {
-        tex_w = static_cast<int>(static_cast<float>(width()) * scale);
+        tex_w = static_cast<int>(static_cast<float>(camera()->screenWidth()) * scale);
         tex_h = static_cast<int>(static_cast<float>(tex_w) / image_as);
     }
 
@@ -274,7 +274,7 @@ void TutorialRealCamera::pre_draw() {
         return;
     }
     const Rect rect=calculate_image_rect();
-    const bool changed=overlay_image_!=image_.get() || overlay_width_!=width() || overlay_height_!=height() ||
+    const bool changed=overlay_image_!=image_.get() || overlay_width_!=framebuffer_width() || overlay_height_!=framebuffer_height() ||
         overlay_rect_.x_min()!=rect.x_min() || overlay_rect_.x_max()!=rect.x_max() ||
         overlay_rect_.y_min()!=rect.y_min() || overlay_rect_.y_max()!=rect.y_max();
     if (changed) {
@@ -284,9 +284,9 @@ void TutorialRealCamera::pre_draw() {
         const vec2 uv[]={vec2(0,0),vec2(1,0),vec2(1,1),vec2(0,1)};
         for (unsigned i=0;i<4;++i) {vertices[i].position=vec3(corners[i],0);vertices[i].texcoord=uv[i];}
         graphics::DrawCommand image;image.geometry=std::make_shared<graphics::Geometry>(vertices,std::vector<uint32_t>{0,1,2,0,2,3});
-        image.texture=image_;image.model_view_projection=graphics::screen_space_projection(width(),height());
-        image_commands_={image,vulkan::shape::draw_quad_wire(rect,vec4(1,0,0,1),width(),height(),dpi_scaling())};
-        overlay_image_=image_.get();overlay_rect_=rect;overlay_width_=width();overlay_height_=height();
+        image.texture=image_;image.model_view_projection=graphics::screen_space_projection(framebuffer_width(),framebuffer_height());
+        image_commands_={image,vulkan::shape::draw_quad_wire(rect,vec4(1,0,0,1),framebuffer_width(),framebuffer_height(),dpi_scaling())};
+        overlay_image_=image_.get();overlay_rect_=rect;overlay_width_=framebuffer_width();overlay_height_=framebuffer_height();
     }
     const bool visible=cross_drawable_ && cross_drawable_->is_visible();
     const size_t revision=cross_drawable_ ? cross_drawable_->cpu_buffers().revision : 0;
@@ -294,7 +294,7 @@ void TutorialRealCamera::pre_draw() {
     if (visible && cross_changed) {
         std::vector<vec2> segments;
         for (const auto& p:cross_drawable_->cpu_buffers().vertices) segments.emplace_back(p.x,p.y);
-        cross_command_=vulkan::shape::draw_lines_2d(segments,vec4(0,1,0,1),width(),height(),3*dpi_scaling());
+        cross_command_=vulkan::shape::draw_lines_2d(segments,vec4(0,1,0,1),framebuffer_width(),framebuffer_height(),3*dpi_scaling());
     }
     if (changed || cross_changed) {
         auto commands=image_commands_;if (visible) commands.push_back(cross_command_);

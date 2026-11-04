@@ -9,8 +9,8 @@
 #include <stdexcept>
 using namespace easy3d;
 void require(bool ok,const char* message) {if (!ok) throw std::runtime_error(message);}
-struct AxesViewer : VulkanViewer {
-    using VulkanViewer::VulkanViewer;
+struct AxesViewer : Viewer {
+    using Viewer::Viewer;
     void hide_logo() {show_easy3d_logo_=false;}
     bool visible() const {return show_corner_axes_;}
 };
@@ -32,7 +32,7 @@ int main(int argc,char**) {
             if (!(viewer.device().supported_sample_counts()&count)) continue;
             viewer.set_samples(count);const auto shown=viewer.capture();
             int logical_width=0,logical_height=0;glfwGetWindowSize(viewer.window(),&logical_width,&logical_height);
-            const unsigned size=unsigned(100.0*viewer.width()/logical_width)+1;
+            const unsigned size=unsigned(100.0*viewer.framebuffer_width()/logical_width)+1;
             unsigned pixels=0,partial=0;
             for (unsigned y=0;y<shown.height;++y) for (unsigned x=0;x<shown.width;++x) {
                 const auto i=size_t(y)*shown.width+x;
@@ -67,11 +67,11 @@ int main(int argc,char**) {
         viewer.set_overlays({});const auto no_app=viewer.capture();same_picking(scene,no_app);
         require(scene.rgba!=no_app.rgba,"axes erased application overlay");
         viewer.set_overlays({app});require(viewer.snapshot("vulkan-corner-axes.png",1.5f,int(viewer.samples()),1),"axes snapshot failed");
-        viewer.resize(420,320);VulkanViewer::poll_events();viewer.draw_frame();
+        viewer.resize(420,320);Viewer::poll_events();viewer.draw_frame();
         require(viewer.visible(),"resize lost axes visibility");
         const auto resized=viewer.capture();toggle();const auto resized_hidden=viewer.capture();same_picking(resized,resized_hidden);
         int logical_width=0,logical_height=0;glfwGetWindowSize(viewer.window(),&logical_width,&logical_height);
-        const unsigned size=unsigned(100.0*viewer.width()/logical_width)+1;
+        const unsigned size=unsigned(100.0*viewer.framebuffer_width()/logical_width)+1;
         unsigned changed=0;
         for (unsigned y=0;y<resized.height;++y) for (unsigned x=0;x<resized.width;++x) {
             const auto i=(size_t(y)*resized.width+x)*4;
@@ -84,7 +84,7 @@ int main(int argc,char**) {
         AxesViewer independent("Independent corner axes", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
         toggle();require(!viewer.visible() && independent.visible(),"axes visibility leaked across viewers");
         bool bound=false;
-        viewer.bind([&](VulkanViewer*,Model*){bound=true;return true;},nullptr,ViewerInput::KEY_A);
+        viewer.bind([&](Viewer*,Model*){bound=true;return true;},nullptr,ViewerInput::KEY_A);
         toggle();require(bound && !viewer.visible(),"custom axes binding did not take precedence");
         require(viewer.device().validation_errors()==0 && independent.device().validation_errors()==0,"axes validation errors");
         std::cout<<"PASS: corner axes, visibility/modifiers, orientation-only transform, DPI, MSAA, overlays, independent viewers and preserved depth/IDs\n";

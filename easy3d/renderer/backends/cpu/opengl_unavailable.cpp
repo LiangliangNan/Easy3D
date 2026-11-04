@@ -33,7 +33,7 @@
 #include <easy3d/renderer/shape.h>
 #include <stdexcept>
 namespace easy3d {
-namespace { [[noreturn]] void unavailable() { throw std::logic_error("OpenGL operation unavailable in this build; submit CPU drawables through VulkanOffScreen"); } }
+namespace { [[noreturn]] void unavailable() { throw std::logic_error("OpenGL operation unavailable in this build; submit CPU drawables through OffScreen"); } }
 void ClippingPlane::draw(const Camera*) const { unavailable(); }
 void ClippingPlane::set_program(ShaderProgram*) const { unavailable(); }
 void ClippingPlane::set_discard_primitives(ShaderProgram*, bool) const { unavailable(); }

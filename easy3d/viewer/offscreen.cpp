@@ -1,5 +1,20 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-#ifndef EASY3D_HAS_VULKAN   // the Vulkan counterpart is not folded in yet (work item U1)
+#ifdef EASY3D_HAS_VULKAN
+#include <easy3d/viewer/offscreen.h>
+#include <easy3d/renderer/camera.h>
+namespace easy3d {
+OffScreen::OffScreen(unsigned int w, unsigned int h, const VulkanOptions& options) : Viewer(w,h,options) {}
+OffScreen::~OffScreen() = default;
+void OffScreen::resize(int w,int h) { resize_render_target(w,h); }
+void OffScreen::framebuffer_size(int& w,int& h) const { w = width(); h = height(); }
+bool OffScreen::render(const std::string& file,float scale,int samples,int bg,bool expand) const {
+    return Viewer::render(file,scale,samples,bg,expand);
+}
+Model* OffScreen::add_model(const std::string& file,bool create) { return Viewer::add_model(file,create); }
+Model* OffScreen::add_model(std::shared_ptr<Model> model,bool create) { return Viewer::add_model(std::move(model),create); }
+Drawable* OffScreen::add_drawable(std::shared_ptr<Drawable> drawable) { return Viewer::add_drawable(std::move(drawable)); }
+}
+#else
 
 #include <easy3d/viewer/offscreen.h>
 #include <easy3d/renderer/camera.h>

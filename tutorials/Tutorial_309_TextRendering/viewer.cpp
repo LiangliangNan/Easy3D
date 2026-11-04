@@ -81,7 +81,7 @@ bool TutorialTextRendering::key_press_event(int key,int modifiers) {
         case GLFW_KEY_R: align_=TextAlign::right; break;
         case GLFW_KEY_O: upper_left_=!upper_left_; break;
         case GLFW_KEY_SPACE: kerning_=!kerning_; break;
-        default: return VulkanViewer::key_press_event(key,modifiers);
+        default: return Viewer::key_press_event(key,modifiers);
     }
     dirty_=true; update(); return true;
 }
@@ -92,7 +92,7 @@ void TutorialTextRendering::post_resize(int,int) {
 
 void TutorialTextRendering::pre_draw() {
     int logical_w,logical_h; glfwGetWindowSize(window(),&logical_w,&logical_h);
-    const float dpi=logical_w>0 ? float(width())/logical_w : 1;
+    const float dpi=logical_w>0 ? float(framebuffer_width())/logical_w : 1;
     if (dpi!=dpi_) { dirty_=true; dpi_=dpi; }
     if (!dirty_) return;
     // Discard obsolete font sizes on edits; existing draw commands retain their snapshots.
@@ -108,7 +108,7 @@ void TutorialTextRendering::pre_draw() {
         "'up'/'down': increase/decrease line spacing\n"
         "'l'/'c'/'r': left/center/right align the multi-line text\n"
         "'o': switch the origin between 'upper left' and 'bottom left'\n"
-        "'space': enable/disable kerning",width(),height(),o);
+        "'space': enable/disable kerning",framebuffer_width(),framebuffer_height(),o);
     auto commands=std::move(intro.commands);
     o.y+=7*intro.line_height+size_*dpi*0.5f;
     o.align=easy3d::graphics::TextAlign::left;
@@ -118,7 +118,7 @@ void TutorialTextRendering::pre_draw() {
         o.font=i; o.x=(i%2) ? next_x : 50*dpi;
         o.color=easy3d::vec4(0.15f+0.5f*float((i*3)%7)/7,0.1f+0.5f*float((i*5)%7)/7,0.25f+0.5f*float(i%7)/7,1);
         const auto label=std::to_string(i)+(i%2 ? " - I Love Easy3D!" : " - Easy3D makes 3D easy!     ");
-        auto line=text_.layout(label,width(),height(),o);
+        auto line=text_.layout(label,framebuffer_width(),framebuffer_height(),o);
         next_x=o.x+line.advance;
         commands.insert(commands.end(),line.commands.begin(),line.commands.end());
         if (i%2) o.y+=size_*dpi*1.5f;

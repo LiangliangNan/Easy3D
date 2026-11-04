@@ -27,7 +27,7 @@ int main(int argc, char**) {
         graphics::DeviceOptions options;
         options.validation = argc > 1;
         options.synchronization_validation = options.validation;
-        VulkanOffScreen renderer(161, 127, options);
+        OffScreen renderer(161, 127, options);
         auto* model = renderer.add_model(resource::directory() + "/data/bunny.ply");
         require(model, "could not load bunny mesh");
         auto* faces = model->renderer()->get_triangles_drawable("faces");

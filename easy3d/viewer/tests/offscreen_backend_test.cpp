@@ -10,8 +10,10 @@
 #include <easy3d/util/initializer.h>
 #include <easy3d/util/setting.h>
 #include <cmath>
+#include <algorithm>
 #include <iostream>
 #include <limits>
+#include <type_traits>
 #include <stdexcept>
 using namespace easy3d;
 void require(bool ok,const char* message) {if(!ok) throw std::runtime_error(message);}
@@ -63,9 +65,20 @@ void exercise(OffScreen& renderer,const std::string& prefix) {
 #endif
 }
 int main() {
+    static_assert(std::is_base_of<Viewer,OffScreen>::value, "OffScreen must reuse Viewer");
+    static_assert(!std::is_convertible<OffScreen*,Viewer*>::value, "OffScreen inheritance must be protected");
     try {
         initialize(false,false,false);
         OffScreen renderer(161,127);
+#ifdef EASY3D_HAS_VULKAN
+        // Offscreen output is scene-only; a window's default logo/axes must not leak in.
+        renderer.set_background_color(vec4(1));
+        auto blank = renderer.capture();
+        require(std::all_of(blank.rgba.begin(),blank.rgba.end(),[](unsigned char c) { return c == 255; }),
+                "empty OffScreen captured viewer HUD content");
+        renderer.set_background_color(setting::background_color);
+        { OffScreen other(79,63); require(other.capture().width==79, "second OffScreen failed"); }
+#endif
         exercise(renderer,"configured-offscreen");
         std::cout << "PASS: configured OffScreen rendering, ownership, resize and MSAA\n";
     } catch(const std::exception& e) { std::cerr << e.what() << '\n'; return 1; }

@@ -6,7 +6,7 @@ A build contains **exactly one backend**, chosen at configure time with
 OpenGL backend). The Vulkan backend does not yet cover everything the OpenGL one
 does: Mapple, legacy GUI picking/effects and Python rendering still need Vulkan
 counterparts, and FigureMaker and Tutorial 205 (multi-view) are disabled in CMake
-until `VulkanMultiViewer` exists. See *Current status and work order* below.
+until the Vulkan implementation of `MultiViewer` exists. See *Current status and work order* below.
 
 ## Migration principles (highest priority)
 
@@ -125,15 +125,14 @@ needs no change.
   audit. *Status: implemented on the OpenGL and Vulkan viewers.* `OpenGLOptions` has a
   defaulted constructor (the project is C++11, where a struct with default member
   initializers cannot be brace-initialized); `VulkanOptions` is an alias of
-  `graphics::DeviceOptions`, declared in `vulkan_offscreen.h`. `visible=false` keeps the
+  `graphics::DeviceOptions`, declared in `viewer.h`. `visible=false` keeps the
   window from being shown by `run()` in OpenGL and creates it hidden in Vulkan; `full_screen`
   uses the primary monitor's video mode in both. `samples = 0` means no MSAA, and a valid
   power of two the device does not support steps down with a warning, so a request such as 4
   never makes `Viewer()` fail (non-power-of-two counts are still rejected).
 - **D2 Inheritance** follows `main`: `OffScreen : protected Viewer` and
-  `MultiViewer : public Viewer`. The Vulkan device and capture code that
-  `VulkanOffScreen` owns today moves into `Viewer`; when used for offscreen rendering its
-  Vulkan part runs without a visible window. `ViewerBase` declares the API as virtual
+  `MultiViewer : public Viewer`. The Vulkan device and capture code now lives in `Viewer`; its offscreen
+  construction path creates neither a GLFW window nor a Vulkan surface. `ViewerBase` declares the API as virtual
   functions and implements some shared functions.
 - **D3 Shared files** (`viewer_base.h/.cpp`, `viewer_input.h`, `viewer_callbacks.h`,
   `backends/glfw_runtime.*`, `backends/viewer_loop.h`): merge into the unified classes, or
@@ -157,14 +156,13 @@ needs no change.
   test_window.h`); a tutorial's constructor-time layout, such as the image fit of Tutorial
   306, is computed for the default window and the test refits; and the validation layers can
   no longer be enabled for tests that construct tutorial classes (they run without
-  validation), while the tests that construct `VulkanViewer` directly still pass
+  validation), while the tests that construct `Viewer` directly still pass
   `VulkanOptions`.
 
 ## Final migration goal and backend policy
 
-**Plan revised 2026-10-31 around the migration principles above.** Step 1, the offscreen-facade removal and the
-deletion of portable backend introspection (`backend()`, `fallback_reason()`) are implemented; the class-unification work (items U1–U6) is
-new. What is done and what remains is tracked in *Current status and work order* below.
+**Plan revised 2026-11-04 around the migration principles above.** Step 1, the offscreen-facade removal and the
+deletion of portable backend introspection (`backend()`, `fallback_reason()`) are implemented; the Viewer/OffScreen unification (U1/U1b) is now implemented; U2–U6 remain. What is done and what remains is tracked in *Current status and work order* below.
 
 The completed migration must support **all tutorials on Vulkan** and targets
 **all applications on Vulkan**, including Mapple, FigureMaker and toolkit-based
@@ -217,12 +215,12 @@ The public classes keep the `main` names and files (P1): `Viewer` (`viewer.h/.cp
 `MultiViewer` (`multi_viewer.h/.cpp`) and `OffScreen` (`offscreen.h/.cpp`), plus
 `snapshot.cpp` as in `main`. Each implements both backends with the layout of P2; the
 OpenGL part is `main`'s code, and the Vulkan part is reached through `#ifdef
-EASY3D_HAS_VULKAN`, with larger Vulkan-specific implementations placed in backend files.
+EASY3D_HAS_VULKAN`. Host implementations stay inline in their class source files
+(D3); renderer/device operations stay in the existing backend files.
 Both backends stay in the source tree, but only the configured one is built and exposed
 by a given package. This replaces the earlier `OpenGLViewer`/`VulkanViewer` pairs, their
-root-level `opengl_*`/`vulkan_*` files and the `viewer.h` alias selector. The `opengl_*`
-files and class names are gone (U1a); the `vulkan_*` ones and the aliases exist only until
-U1b and must not be extended.
+root-level `opengl_*`/`vulkan_*` files and the `viewer.h` alias selector. The counterpart host files and class aliases are now removed (U1a/U1b).
+The Vulkan implementation is inline in `viewer.cpp` and `offscreen.cpp`.
 
 Ordinary tutorial subclasses keep the original form, with no conditionals:
 
@@ -270,7 +268,7 @@ Tutorials 701–703 retain their original algorithm code without extra ownership
 configuration helpers. Match OpenGL materials, two-sided lighting/back colors,
 flat/smooth shading, background and canvas behavior.
 
-## Current status (2026-10-31)
+## Current status (2026-11-04)
 
 - The remaining migration build breaks are cleared. The OpenGL-only
   (`build-opengl`), Vulkan-only (`build-ci-vulkan`) and migration
@@ -294,7 +292,7 @@ to keep intermediate builds usable must be removed by the runtime-dispatch clean
 step. Do not leave empty implementations or claim a class is supported because
 only its header compiles.
 
-### Current status and work order (revised 2026-10-31)
+### Current status and work order (revised 2026-11-04)
 
 Decisions in force:
 
@@ -312,8 +310,8 @@ Decisions in force:
 | 1. CMake backend choice, runtime-selection removal | done (the `OpenGL*`/`Vulkan*` class names it created are superseded by P1) |
 | 2. Align constructors, hooks, state | merged into U1 |
 | 3. `VulkanMultiViewer` | merged into U2 |
-| 4. Remove runtime selection | mostly done; leftovers in W4 |
-| 5. Tutorials on the shared API | in progress: all tutorials except 202 and 501–505 build in the Vulkan tree; those six are gated in `tutorials/CMakeLists.txt`; `EASY3D_TUTORIAL_USES_VULKAN` remains in `viewer.h` and tutorials 401–406 |
+| 4. Remove runtime selection | done (W4) |
+| 5. Tutorials on the shared API | in progress: all tutorials except 202 and 501–505 build in the Vulkan tree; those six are gated in `tutorials/CMakeLists.txt`; `EASY3D_TUTORIAL_USES_VULKAN` remains in `viewer.h` and 13 tutorials (206, 207, 306, 307, 309, 401–406, 506, 603) |
 | 6. Renderer, interaction, GUI/application parity | pending (W10) |
 
 Divergence from `main` (the number to drive down; see U6). Measured after U1a: in
@@ -378,49 +376,33 @@ of this document.
   a test header that used the system include compiled on a Linux machine with `libglfw3-dev`
   installed and failed on macOS. The Vulkan tree is now also built with the system GLFW
   headers absent.
-- **U1a** (done) The OpenGL classes carry `main`'s names and files: `Viewer` in
-  `viewer.h/.cpp`, `MultiViewer` in `multi_viewer.h/.cpp`, `OffScreen` in `offscreen.h/.cpp`,
-  with `opengl_*` removed and the viewer CMake source list back to `main`'s three pairs plus
-  the shared and Vulkan backend files. Their OpenGL code sits in the `#else` of
-  `#ifdef EASY3D_HAS_VULKAN`; the Vulkan branch of `viewer.h` still holds the temporary
-  aliases `Viewer = VulkanViewer` and `OffScreen = VulkanOffScreen`, and `MultiViewer` has no
-  Vulkan branch. `OffScreen` still inherits publicly (`main`: `protected`).
-- **U1b** (next) Flatten `VulkanOffScreen` and `VulkanViewer` into the Vulkan `Viewer` (D2).
-  All 14 forwarders disappear. Four names collide; in each, the viewer's version wraps the
-  offscreen one: `resize` (window size versus render-target size), `clear_scene`,
-  `capture(unsigned)` (the viewer first runs `init()` and refreshes the HUD overlays) and
-  `add_drawable` (different overloads). A window-less `Viewer` (no `GLFW` window, no
-  surface) serves `OffScreen : protected Viewer`; its capture must not draw the HUD that a
-  windowed viewer draws (logo, corner axes), as today. The Vulkan-only public API of
-  `VulkanOffScreen` (`pick`, `select_points`, `scan_visible_points`, overlays, clipping
-  planes, …) has no counterpart in `main`; by decision (2026-11-01) it stays public inside
-  the Vulkan branch, an accepted exception to P2, until the picker classes (U3/W10) can take
-  it over. The implementation moves inline into `viewer.cpp` and `offscreen.cpp` (D3).
-- **U1a** (done) The OpenGL classes carry `main`'s names and files: `Viewer` in
-  `viewer.h/.cpp`, `MultiViewer` in `multi_viewer.h/.cpp`, `OffScreen` in `offscreen.h/.cpp`,
-  with `opengl_*` removed and the viewer CMake source list back to `main`'s three pairs plus
-  the shared and Vulkan backend files. Their OpenGL code sits in the `#else` of
-  `#ifdef EASY3D_HAS_VULKAN`; the Vulkan branch of `viewer.h` still holds the temporary
-  aliases `Viewer = VulkanViewer` and `OffScreen = VulkanOffScreen`, and `MultiViewer` has no
-  Vulkan branch. `OffScreen` still inherits publicly (`main`: `protected`).
-- **U1b** (next) Flatten `VulkanOffScreen` and `VulkanViewer` into the Vulkan `Viewer` (D2).
-  All 14 forwarders disappear. Four names collide; in each, the viewer's version wraps the
-  offscreen one: `resize` (window size versus render-target size), `clear_scene`,
-  `capture(unsigned)` (the viewer first runs `init()` and refreshes the HUD overlays) and
-  `add_drawable` (different overloads). A window-less `Viewer` (no `GLFW` window, no
-  surface) serves `OffScreen : protected Viewer`; its capture must not draw the HUD that a
-  windowed viewer draws (logo, corner axes), as today. The Vulkan-only public API of
-  `VulkanOffScreen` (`pick`, `select_points`, `scan_visible_points`, overlays, clipping
-  planes, …) has no counterpart in `main`; it stays public inside the Vulkan branch until
-  the picker classes (U3/W10) can take it over.
-- **U1** Unify `Viewer` (P1, P2): fold `OpenGLViewer` and `VulkanViewer` into one `Viewer`
+- **U1a** (done) The OpenGL hosts use `Viewer`, `OffScreen` and `MultiViewer` in
+  their original files. The former `opengl_*` host files are removed.
+- **U1b** (implemented 2026-11-04; validation recorded below) `Viewer` is now one
+  class in `viewer.h/.cpp` for either backend. The Vulkan device/scene implementation
+  is folded into it, with one owner of the protected `camera_`, `models_`, `drawables_`
+  and `model_idx_` state. `VulkanViewer`, `VulkanOffScreen`, their four files and the
+  public aliases are removed. `OffScreen : protected Viewer` is defined in
+  `offscreen.h/.cpp`; its Vulkan path creates neither a native window nor a surface.
+  Window HUD overlays are refreshed only for windowed captures. Scene caches stay
+  in the Vulkan private implementation and refer to the owning Viewer's scene.
+  Device/surface release still precedes native-window destruction, including failed
+  construction. The existing Vulkan-only picking/selection/scan APIs remain public
+  inside the Vulkan branch, per the 2026-11-01 decision, until U3/W10 can take them
+  over; this step adds no tutorial-specific core API.
+- **D3 classification:** keep `ViewerBase`, `ViewerInput` and `ViewerCallbacks` as
+  shared API files already consumed by both backends; keep GLFW lifetime and frame
+  driving in the existing backend files. No new helper file or public host wrapper
+  is introduced. Native host implementations are inline in their class `.cpp` files.
+- **U1** (implemented) Unify `Viewer` (P1, P2): fold `OpenGLViewer` and `VulkanViewer` into one `Viewer`
   in `viewer.h/.cpp`, with the constructor of D1 (done), `ViewerBase`
   declaring the shared API, and the Vulkan part under `#ifdef`, including the device and
   capture code of `VulkanOffScreen` (D2). Align subclass hooks and protected state with
   `main` (the former steps 2 and W7). Delete `opengl_viewer.*`, `vulkan_viewer.*` and the
   `viewer.h` aliases; settle D3.
-- **U2** Unify `OffScreen` and `MultiViewer` the same way (D2), restoring `offscreen.*`,
-  `multi_viewer.*` and `snapshot.cpp`, and implement the Vulkan side of `MultiViewer`
+- **U2** (next) `OffScreen` unification and protected inheritance are implemented.
+  Finish `MultiViewer` in `multi_viewer.*`, restore `snapshot.cpp`, and implement
+  the Vulkan side of `MultiViewer`
   (the former step 3). Re-enable Tutorial 205 and FigureMaker, now disabled for both
   backends.
 - **U3** Classes without a counterpart (P3): apply the same-file `#ifdef` structure to
@@ -515,10 +497,9 @@ client compiles in both configurations.
 
 ### 4. Remove runtime selection and its supporting scaffolding
 
-Offscreen facade/adapters, `Viewer::create`, `--backend` and the factory test are
-removed. `ViewerBase`, `ViewerOptions`, `Backend`, `fallback_reason` and the unused
-`create_vulkan_viewer`/`create_opengl_viewer` adapters remain (work item W4).
-`ViewerBase` is retained as the declaration of the unified API (P2).
+Offscreen facade/adapters, `Viewer::create`, `--backend`, runtime preference options,
+introspection and creation factories are removed (W4). `ViewerBase` is retained
+as the declaration and shared implementation of the unified API (P2).
 
 - Replace `Viewer::create`, backend-preference options, `Automatic` selection,
   `fallback_reason`, and the runtime-selected OffScreen wrapper with direct
@@ -3737,3 +3718,67 @@ Validation for this step:
 - The installed headless consumer rebuilt without SDK discovery and rendered
   successfully using `OffScreen` through `viewer.h`; the OpenGL package consumer
   also rebuilt. The install manifest no longer lists the removed public headers.
+
+## U1b: unified Viewer and OffScreen (2026-11-04)
+
+`Viewer` now declares the common public API once, followed by the common subclass
+state and the two backend implementation branches, with P2's mandatory comments.
+OpenGL code is retained in `viewer.cpp`'s `#else` branch. The Vulkan window and
+scene implementations are folded into that same file; GPU/cache state stays
+private, and the common protected scene members are the sole scene owners.
+`OffScreen` has protected inheritance in both builds and exposes its scene API.
+Its Vulkan constructor initializes only a device and render target; `visible=false`
+on a windowed Viewer remains a separate, hidden-window behavior.
+
+Both Viewer implementations now report logical window dimensions from `width()`/
+`height()` and framebuffer pixels from the explicit framebuffer accessors; OffScreen
+sizes remain output pixels. Existing Vulkan tutorial branches and pixel-based tests
+use explicit framebuffer extents, preserving picking, GPU lasso, image/text/depth
+insets and snapshot dimensions on Retina displays. `post_resize` reports logical
+window units. A shared subclass regression checks that protected scene storage is
+the public/rendered scene. The offscreen regression checks protected inheritance,
+window-HUD exclusion and rendering after another offscreen instance is destroyed.
+
+The OpenGL options default arguments now use `OpenGLOptions()` rather than `{}`:
+AppleClang rejects copy-list initialization through its explicit constructor.
+No new viewer source/header/helper files or backend-selection flags were added.
+`MultiViewer`, picker/effect parity, removal of tutorial backend conditionals and
+restoration of `snapshot.cpp` remain later work.
+
+The installed consumer now constructs the shared Viewer signature directly and
+uses the ViewerBase query contract; its obsolete dependency on `test_window.h`
+and removed options-style constructor is gone. OffScreen Python bindings use
+lambdas for inherited members: pybind11 cannot convert member pointers through
+protected inheritance. No extra public forwarding API is added for the binding.
+
+Package verification also found a platform MSAA difference: GLFW's one-sample
+OpenGL hint creates a 2x context on this Mac. A one-sample window or file-render
+request now maps to OpenGL's zero-sample request, and the public sample count
+reports one for no MSAA, matching Vulkan. Invalid constructor dimensions/sample
+counts are rejected before native window creation in either backend.
+
+Validation on this Mac (Apple M4 Pro, MoltenVK), 2026-11-04:
+- Both backend builds completed with their configured tutorials enabled. The full
+  MoltenVK suite passed 69/69; the OpenGL suite passed 9/9 after the one-sample fix.
+- The first Vulkan run passed 68/69: the real-camera synthetic hover was overwritten
+  by native cursor events during the test's following event poll. The fixture now
+  draws the injected event before polling; the isolated retry and final full suite
+  passed. The tutorial/event implementation was not changed for that test fix.
+- After eliminating the redundant inherited `present` and current-model-index
+  helpers and simplifying snapshot dispatch, focused Vulkan regressions passed 4/4
+  and OpenGL regressions passed 3/3.
+- Installed OpenGL and Vulkan packages were configured with SDK discovery disabled.
+  Both viewer/offscreen consumers ran successfully; the Vulkan-specific capture
+  consumer also passed (1301 scene pixels). Its triangle now faces the documented
+  default camera, which is aligned between both Viewer implementations.
+- Both OpenGL and Vulkan OffScreen Python binding translation units passed C++11
+  compilation checks. A full Python extension build/runtime remains U4/W10 work.
+- Install manifests contain no retired counterpart host headers. `git diff --check`
+  passed. The previously recorded Linux/software-renderer failures are not claimed
+  fixed by these Mac results.
+
+This completes the U1b structural merge. The legacy concrete surface-query and
+native mouse-hook coordinate conventions are preserved; ViewerBase's portable
+queries use logical coordinates. Their remaining semantic alignment, effect/picker
+parity and removal of tutorial backend branches remain U5/W10 work. The next
+implementation step is U2's Vulkan MultiViewer and restoration of snapshot.cpp.

@@ -12,17 +12,17 @@
 #include <iostream>
 using namespace easy3d;
 void require(bool value,const char* message) { if (!value) throw std::runtime_error(message); }
-void frame(VulkanViewer& viewer) {
+void frame(Viewer& viewer) {
     for (unsigned i=0;i<100;++i) {
-        VulkanViewer::poll_events(); if (viewer.draw_frame()) return;
+        Viewer::poll_events(); if (viewer.draw_frame()) return;
         glfwWaitEventsTimeout(.01);
     }
     throw std::runtime_error("picker viewer did not present");
 }
-void click(VulkanViewer& viewer,const vec3& world,int button=GLFW_MOUSE_BUTTON_LEFT,int modifiers=0) {
+void click(Viewer& viewer,const vec3& world,int button=GLFW_MOUSE_BUTTON_LEFT,int modifiers=0) {
     const auto p=viewer.camera()->projectedCoordinatesOf(world);
     int w,h; glfwGetWindowSize(viewer.window(),&w,&h);
-    glfwSetCursorPos(viewer.window(),p.x*w/viewer.width(),p.y*h/viewer.height());
+    glfwSetCursorPos(viewer.window(),p.x*w/viewer.framebuffer_width(),p.y*h/viewer.framebuffer_height());
     auto mouse=glfwSetMouseButtonCallback(viewer.window(),nullptr); glfwSetMouseButtonCallback(viewer.window(),mouse);
     mouse(viewer.window(),button,GLFW_PRESS,modifiers); mouse(viewer.window(),button,GLFW_RELEASE,modifiers);
     frame(viewer);

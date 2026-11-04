@@ -12,8 +12,8 @@
 #include <thread>
 using namespace easy3d;
 void require(bool ok,const char* text) {if (!ok) throw std::runtime_error(text);}
-struct RateViewer : VulkanViewer {
-    using VulkanViewer::VulkanViewer;
+struct RateViewer : Viewer {
+    using Viewer::Viewer;
     bool shown() const {return show_frame_rate_;}
     const std::string& rate() const {return framerate_;}
     std::vector<graphics::DrawCommand> application;
@@ -35,10 +35,10 @@ int main(int argc,char**) {
         std::vector<graphics::Vertex> vertices(3);
         vertices[0].position=vec3(.7f,.7f,0);vertices[1].position=vec3(.95f,.7f,0);vertices[2].position=vec3(.7f,.95f,0);
         graphics::DrawCommand app;app.geometry=std::make_shared<graphics::Geometry>(vertices);app.color=vec4(1,0,0,1);
-        v.application={app};VulkanViewer::poll_events();v.draw_frame();v.draw_frame();
+        v.application={app};Viewer::poll_events();v.draw_frame();v.draw_frame();
         require(!v.shown(),"frame rate is not disabled by default");
         auto key=glfwSetKeyCallback(v.window(),nullptr);glfwSetKeyCallback(v.window(),key);
-        auto toggle=[&]{key(v.window(),GLFW_KEY_F,0,GLFW_PRESS,VulkanViewer::MODIF_CTRL);};
+        auto toggle=[&]{key(v.window(),GLFW_KEY_F,0,GLFW_PRESS,Viewer::MODIF_CTRL);};
         for (unsigned count:{1u,4u}) {
             if (!(v.device().supported_sample_counts()&count)) continue;v.set_samples(count);v.draw_frame();
             const auto baseline=v.capture();const auto camera=v.camera()->modelViewProjectionMatrix();
@@ -69,11 +69,11 @@ int main(int argc,char**) {
         const auto plain=independent.capture();key2(independent.window(),GLFW_KEY_F,0,GLFW_PRESS,RateViewer::MODIF_CTRL);
         require(independent.shown() && independent.rate().find("--")!=std::string::npos,"viewers shared frame-rate state");
         require(independent.capture().rgba!=plain.rgba,"rate without usage hint did not load font/render");
-        independent.resize(610,440);VulkanViewer::poll_events();independent.draw_frame();
+        independent.resize(610,440);Viewer::poll_events();independent.draw_frame();
         require(independent.shown(),"resize reset rate visibility");
-        independent.clear_scene();require(independent.capture().rgba!=std::vector<unsigned char>(independent.width()*independent.height()*4,255),
+        independent.clear_scene();require(independent.capture().rgba!=std::vector<unsigned char>(independent.framebuffer_width()*independent.framebuffer_height()*4,255),
                                           "scene clearing erased persistent rate HUD");
-        bool bound=false;v.bind([&](VulkanViewer*,Model*){bound=true;return true;},nullptr,RateViewer::KEY_F,RateViewer::MODIF_CTRL);
+        bool bound=false;v.bind([&](Viewer*,Model*){bound=true;return true;},nullptr,RateViewer::KEY_F,RateViewer::MODIF_CTRL);
         toggle();require(bound && !v.shown(),"custom binding did not override rate shortcut");
         require(v.device().validation_errors()==0 && independent.device().validation_errors()==0,"frame-rate validation errors");
         std::cout<<"PASS: frame-rate shortcut, per-viewer sampling, capture purity, HUD layering/layout, MSAA and depth/IDs\n";

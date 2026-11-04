@@ -47,7 +47,7 @@ std::shared_ptr<PointCloud> cube() {
 }
 std::vector<unsigned char> render(CloudViewer& v,const std::string& name) {
 #if EASY3D_TUTORIAL_USES_VULKAN
-    VulkanViewer::poll_events();require(v.draw_frame(),"cloud tutorial did not present");
+    Viewer::poll_events();require(v.draw_frame(),"cloud tutorial did not present");
     const std::string prefix="vulkan-";const int samples=int(v.samples());
 #else
     const std::string prefix="opengl-";const int samples=4;

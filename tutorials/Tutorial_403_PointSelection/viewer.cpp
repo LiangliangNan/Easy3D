@@ -55,16 +55,16 @@ bool TutorialPointSelection::mouse_press_event(int x,int y,int button,int modifi
         }
         return true;
     }
-    return VulkanViewer::mouse_press_event(x,y,button,modifiers);
+    return Viewer::mouse_press_event(x,y,button,modifiers);
 }
 
 bool TutorialPointSelection::mouse_drag_event(int x,int y,int dx,int dy,int button,int modifiers) {
     if (active_) { extend(x,y); return true; }
-    return VulkanViewer::mouse_drag_event(x,y,dx,dy,button,modifiers);
+    return Viewer::mouse_drag_event(x,y,dx,dy,button,modifiers);
 }
 
 bool TutorialPointSelection::mouse_release_event(int x,int y,int button,int modifiers) {
-    if (!active_) return VulkanViewer::mouse_release_event(x,y,button,modifiers);
+    if (!active_) return Viewer::mouse_release_event(x,y,button,modifiers);
     if (button!=button_) return true;
     extend(x,y);
     const auto model=target_.lock();
@@ -73,7 +73,7 @@ bool TutorialPointSelection::mouse_release_event(int x,int y,int button,int modi
         auto drawable=cloud->renderer()->get_points_drawable("vertices");
         if (drawable && cloud->renderer()->is_visible() && drawable->is_visible()) {
             easy3d::graphics::PointSelectionRequest request;
-            request.width=width(); request.height=height(); request.polygon=polygon_;
+            request.width=framebuffer_width(); request.height=framebuffer_height(); request.polygon=polygon_;
             request.points=point_resource(drawable);
             request.words.resize((size_t(request.points->source_count())+31)/32,0);
             auto selected=cloud->vertex_property<bool>("v:select");
@@ -101,7 +101,7 @@ bool TutorialPointSelection::key_press_event(int key,int modifiers) {
     if (modifiers==0 && (key==GLFW_KEY_R || key==GLFW_KEY_L)) {
         cancel(); rectangle_=key==GLFW_KEY_R; return true;
     }
-    return VulkanViewer::key_press_event(key,modifiers);
+    return Viewer::key_press_event(key,modifiers);
 }
 
 bool TutorialPointSelection::focus_event(bool focused) {
@@ -140,7 +140,7 @@ void TutorialPointSelection::pre_draw() {
     for (unsigned i=0;i<2;++i) {
         easy3d::graphics::DrawCommand draw; draw.geometry=i?edge_:fill_;
         if (!draw.geometry) continue;
-        draw.model_view_projection=easy3d::graphics::screen_space_projection(width(),height());
+        draw.model_view_projection=easy3d::graphics::screen_space_projection(framebuffer_width(),framebuffer_height());
         draw.color=easy3d::vec4(1,0,0,i?1:.2f); overlays.push_back(draw);
     }
     set_overlays(std::move(overlays));

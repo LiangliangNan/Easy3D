@@ -66,7 +66,7 @@ TutorialCollisionDetection::TutorialCollisionDetection(const std::string& title)
     manual_=usage_manual;hint_=usage_hint;
     add_model(resource::directory()+"/data/bunny.ply");
     add_model(resource::directory()+"/data/mannequin.ply");
-    animation_func_=[this](VulkanViewer*) {advance();return true;};
+    animation_func_=[this](Viewer*) {advance();return true;};
     initialize_collision();
 }
 TutorialCollisionDetection::~TutorialCollisionDetection() {

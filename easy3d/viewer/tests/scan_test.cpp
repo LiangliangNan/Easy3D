@@ -13,7 +13,7 @@
 #include <stdexcept>
 using namespace easy3d;
 void require(bool ok,const char* text) { if (!ok) throw std::runtime_error(text); }
-std::vector<vec3> check_scan(VulkanOffScreen& viewer,unsigned samples) {
+std::vector<vec3> check_scan(OffScreen& viewer,unsigned samples) {
     const auto reference=viewer.capture(samples);
     const auto mvp=viewer.camera()->modelViewProjectionMatrix();
     const auto points=viewer.scan_visible_points(samples);
@@ -36,7 +36,7 @@ int main(int argc,char**) {
     try {
         initialize(false,false,false);
         graphics::DeviceOptions options; options.validation=options.synchronization_validation=argc>1;
-        VulkanOffScreen viewer(161,127,options);
+        OffScreen viewer(161,127,options);
         require(viewer.scan_visible_points().empty(),"empty scene scanned background");
         auto front=std::make_shared<SurfaceMesh>();
         auto a=front->add_vertex(vec3(-1,-1,-.3f)),b=front->add_vertex(vec3(1,-1,.1f));

@@ -7,10 +7,6 @@ set(viewer_sources viewer.cpp multi_viewer.cpp offscreen.cpp viewer_base.cpp bac
 
 if(Easy3D_ENABLE_VULKAN)
     find_package(Vulkan REQUIRED)
-    list(APPEND viewer_headers vulkan_viewer.h)
-    list(APPEND viewer_sources vulkan_viewer.cpp)
-    list(APPEND viewer_headers vulkan_offscreen.h)
-    list(APPEND viewer_sources vulkan_offscreen.cpp)
 endif()
 
 add_module(viewer "${viewer_headers}" "${viewer_sources}" "${private_dependencies}" "${public_dependencies}")

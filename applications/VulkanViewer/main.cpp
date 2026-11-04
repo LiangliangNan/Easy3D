@@ -26,13 +26,13 @@ int main(int argc, char** argv) {
                     throw std::invalid_argument(message);
                 if (arg == "--frames") frames = unsigned(value); else samples = int(value);
             } else if (arg == "--help") {
-                std::cout << "VulkanViewer [model] [--validation] [--frames N] [--samples N]\n"
+                std::cout << "Viewer [model] [--validation] [--frames N] [--samples N]\n"
                           << "Left drag: rotate; right drag: pan; middle drag/wheel: zoom; F1: controls; Escape: close.\n";
                 return 0;
             } else if (arg.compare(0, 2, "--") == 0) throw std::invalid_argument("unknown option: " + arg);
             else model = arg;
         }
-        auto viewer = std::make_shared<easy3d::VulkanViewer>("Easy3D Viewer", 800, 600, samples, false, true, true, vk_options);
+        auto viewer = std::make_shared<easy3d::Viewer>("Easy3D Viewer", 800, 600, samples, false, true, true, vk_options);
         if (model.empty()) {
             // The installed demo works without any source-tree data files.
             auto bunny = std::make_shared<easy3d::SurfaceMesh>();

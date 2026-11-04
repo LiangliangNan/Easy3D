@@ -1,12 +1,7 @@
-#include "test_window.h"
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Public interactive API only: no Vulkan SDK, GLFW or OpenGL headers/calls.
 #include <easy3d/viewer/viewer_base.h>
-#ifdef EASY3D_HAS_VULKAN
-#include <easy3d/viewer/vulkan_viewer.h>
-#else
 #include <easy3d/viewer/viewer.h>
-#endif
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_triangles.h>
@@ -20,13 +15,8 @@ int main() {
     initialize(false, false, false);
     const auto require = [](bool ok, const char* message) { if (!ok) throw std::runtime_error(message); };
     try {
-#ifdef EASY3D_HAS_VULKAN
-        TestWindow voptions;
-        voptions.width = 181; voptions.height = 151; voptions.visible = false; voptions.samples = 1;
-        auto viewer = std::make_shared<VulkanViewer>("Installed runtime viewer", voptions);
-#else
-        auto viewer = std::make_shared<Viewer>("Installed runtime viewer", 181, 151, 1);
-#endif
+        std::shared_ptr<ViewerBase> viewer = std::make_shared<Viewer>(
+            "Installed Viewer", 181, 151, 1, false, false, true);
         auto mesh = std::make_shared<SurfaceMesh>();
         const auto a = mesh->add_vertex(vec3(0, -1, -1)), b = mesh->add_vertex(vec3(0, 1, -1));
         const auto c = mesh->add_vertex(vec3(0, 0, 1)); mesh->add_triangle(a, b, c); viewer->add_model(mesh);
@@ -57,7 +47,7 @@ int main() {
         const auto center = (size_t(h / 2) * w + w / 2) * 4;
         require(std::abs(int(rgba[center]) - 204) <= 2 && std::abs(int(rgba[center+1]) - 51) <= 2,
                 "installed viewer material/default camera did not render the model");
-        std::cout << "Runtime Viewer rendered using the configured host" << '\n';
+        std::cout << "Viewer rendered using the configured backend" << '\n';
         return viewer->validation_errors() ? 1 : 0;
     } catch (const std::runtime_error& e) {
         std::cerr << e.what() << '\n'; return 1;

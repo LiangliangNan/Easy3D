@@ -15,9 +15,9 @@
 #include <stdexcept>
 using namespace easy3d;
 void require(bool ok,const char* text) { if (!ok) throw std::runtime_error(text); }
-void frame(VulkanViewer& viewer) {
+void frame(Viewer& viewer) {
     for (unsigned i=0;i<100;++i) {
-        VulkanViewer::poll_events(); if (viewer.draw_frame()) return;
+        Viewer::poll_events(); if (viewer.draw_frame()) return;
         glfwWaitEventsTimeout(.01);
     }
     throw std::runtime_error("scanner viewer did not present");
@@ -78,7 +78,7 @@ int main(int argc,char**) {
             const auto resized=viewer.scan_visible_points(samples);
             press(GLFW_KEY_SPACE); frame(viewer);
             auto result=std::dynamic_pointer_cast<PointCloud>(viewer.models().back());
-            require(result && result->points()==resized && viewer.width()==w && viewer.height()==h,
+            require(result && result->points()==resized && viewer.framebuffer_width()==w && viewer.framebuffer_height()==h,
                     "resized/HiDPI acquisition used logical or stale framebuffer coordinates");
             result->renderer()->set_visible(false);
         }

@@ -53,7 +53,7 @@ namespace easy3d {
         MultiViewer(unsigned int rows, unsigned int cols, const std::string &title = "untitled",
                           unsigned int width = 800, unsigned int height = 600, unsigned int samples = 1,
                           bool full_screen = false, bool visible = true, bool resizable = true,
-                          const OpenGLOptions &gl_options = {});
+                          const OpenGLOptions &gl_options = OpenGLOptions());
         /**
          * \brief Destructor.
          */

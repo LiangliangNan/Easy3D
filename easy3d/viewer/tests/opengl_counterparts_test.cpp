@@ -29,8 +29,8 @@ void check_file(const char* path,int width,int height) {
 }
 }
 int main() {
-    static_assert(std::is_same<Viewer,Viewer>::value,"Viewer alias must match CMake backend");
-    static_assert(std::is_same<MultiViewer,MultiViewer>::value,"MultiViewer alias must match CMake backend");
+    static_assert(std::is_base_of<ViewerBase,Viewer>::value,"Viewer must implement the shared contract");
+    static_assert(std::is_base_of<Viewer,MultiViewer>::value,"MultiViewer must derive from Viewer");
     try {
         initialize(false,false,false);
         OffScreen surviving(103,79);auto mesh=triangle();surviving.add_model(mesh);red(mesh);
@@ -48,7 +48,7 @@ int main() {
         require(rejected,"invalid dimensions accepted");
         MultiViewer grid(1,2,"Concrete multi-view");grid.hide();grid.resize(202,102);
         auto shared=triangle();grid.add_model(shared);red(shared);grid.assign(0,0,shared.get());grid.assign(0,1,shared.get());
-        grid.set_division_visible(false);grid.fit_screen();require(grid.draw_frame(),"renamed multi-view did not render");
+        grid.set_division_visible(false);grid.fit_screen();require(grid.draw_frame(),"multi-view did not render");
         require(grid.rows()==1 && grid.columns()==2 && !grid.division_visible(),"multi-view layout API changed");
         require(static_cast<ViewerBase&>(grid).snapshot("concrete-grid.png",1,4,0),"multi-view snapshot failed");
         int w,h,c;std::vector<unsigned char> image;
@@ -58,7 +58,7 @@ int main() {
             require(std::abs(int(image[p])-204)<=2 && std::abs(int(image[p+1])-51)<=2,"assigned multi-view cell did not render");
         }
         require(grid.models().size()==1,"multi-view duplicated source ownership");
-        std::cout<<"Explicit OpenGL counterparts, aliases, shared context survival and grid rendering passed\n";
+        std::cout<<"OpenGL shared context survival, protected offscreen inheritance and grid rendering passed\n";
         return 0;
     }catch(const std::exception& error) { std::cerr<<error.what()<<'\n';return 1; }
 }

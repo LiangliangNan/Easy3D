@@ -12,8 +12,8 @@
 #include <stdexcept>
 using namespace easy3d;
 void require(bool ok,const char* text) {if (!ok) throw std::runtime_error(text);}
-void frame(VulkanViewer& v) {
-    for (unsigned i=0;i<100;++i) {VulkanViewer::poll_events();if (v.draw_frame()) return;}
+void frame(Viewer& v) {
+    for (unsigned i=0;i<100;++i) {Viewer::poll_events();if (v.draw_frame()) return;}
     throw std::runtime_error("depth-map frame did not present");
 }
 void same_picking(const graphics::FrameImage& a,const graphics::FrameImage& b) {
@@ -53,7 +53,7 @@ int main(int argc,char**) {
         const auto bare=v.capture();frame(v);const auto initial=v.capture();same_picking(bare,initial);
         require(initial.rgba!=bare.rgba && verify(v,initial)>50,"depth inset missing foreground");
         // Placement must match the original logical 20/40 margin and 1/4 size.
-        const float left=20*v.dpi_scaling(),top=40*v.dpi_scaling(),right=left+v.width()/4.0f,bottom=top+v.height()/4.0f;
+        const float left=20*v.dpi_scaling(),top=40*v.dpi_scaling(),right=left+v.framebuffer_width()/4.0f,bottom=top+v.framebuffer_height()/4.0f;
         for (unsigned y=0;y<initial.height;++y) for (unsigned x=0;x<initial.width;++x) {
             const auto i=(size_t(y)*initial.width+x)*4;bool changed=false;
             for (unsigned c=0;c<4;++c) changed|=initial.rgba[i+c]!=bare.rgba[i+c];

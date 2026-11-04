@@ -10,15 +10,15 @@
 #include <stdexcept>
 using namespace easy3d;
 void require(bool ok, const char* message) { if (!ok) throw std::runtime_error(message); }
-struct AnimationViewer : VulkanViewer {
-    using VulkanViewer::VulkanViewer;
+struct AnimationViewer : Viewer {
+    using Viewer::Viewer;
     unsigned updates=0, observed=0, presented=0;
     void pre_draw() override { observed=updates; }
     void post_draw() override { ++presented; }
 };
-void frame(VulkanViewer& viewer) {
+void frame(Viewer& viewer) {
     for (unsigned i=0;i<100;++i) {
-        VulkanViewer::poll_events();
+        Viewer::poll_events();
         if (viewer.draw_frame()) return;
         glfwWaitEventsTimeout(.01);
     }
@@ -43,7 +43,7 @@ int main(int argc, char**) {
         require(!viewer.is_animating(),"missing callback reported as active");
         float z=0;
         unsigned count=0;
-        viewer.animation_func_=[&, count](VulkanViewer*) mutable {
+        viewer.animation_func_=[&, count](Viewer*) mutable {
             ++count; viewer.updates=count; z=.02f*count;
             auto vertices=original;
             for (auto& p:vertices) p.z=z;
@@ -78,7 +78,7 @@ int main(int argc, char**) {
             require(viewer.is_animating(),"F2 did not resume animation"); frame(viewer);
         }
         // A callback can pause itself; its final geometry is still presented.
-        viewer.animation_func_=[&](VulkanViewer* v) { ++viewer.updates; v->set_animation(false); return false; };
+        viewer.animation_func_=[&](Viewer* v) { ++viewer.updates; v->set_animation(false); return false; };
         frame(viewer);
         const unsigned stopped=viewer.updates; frame(viewer);
         require(viewer.updates==stopped && !viewer.is_animating(),"callback pause was ignored");
@@ -88,7 +88,7 @@ int main(int argc, char**) {
         viewer.fit_screen();
         BunnyAnimation animation;
         unsigned ticks=0, limit=1;
-        viewer.animation_func_=[&](VulkanViewer*) {
+        viewer.animation_func_=[&](Viewer*) {
             // Presentation retries may run additional callbacks. Limit the
             // deformation steps explicitly when probing an exact cycle state.
             if (ticks<limit) { ++ticks; return animation.update(*surface); }
@@ -111,9 +111,9 @@ int main(int argc, char**) {
         require(animation.scale()==1.0f,"tutorial did not reset after stretching");
         limit=ticks+1; frame(viewer);
         require(viewer.capture().rgba==first.rgba,"tutorial cycle accumulated deformation");
-        viewer.animation_func_=[](VulkanViewer*) -> bool { throw std::runtime_error("expected animation failure"); };
+        viewer.animation_func_=[](Viewer*) -> bool { throw std::runtime_error("expected animation failure"); };
         require(viewer.run_frames(1)==1,"animation exception was swallowed by run");
-        viewer.animation_func_=[](VulkanViewer* v) { v->request_close(); return true; };
+        viewer.animation_func_=[](Viewer* v) { v->request_close(); return true; };
         require(!viewer.draw_frame() && viewer.should_close(),"animation close still presented a frame");
         require(viewer.device().validation_errors()==0,"animation validation errors");
         std::cout << "PASS: animation lifecycle, stateful callbacks, F2, CPU updates, depth/picking, MSAA, resize, tutorial reset, bounded run/errors/close\n";

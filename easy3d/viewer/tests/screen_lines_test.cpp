@@ -19,7 +19,7 @@ int main(int argc,char**) {
     try {
         initialize(false,false,false);
         graphics::DeviceOptions options;options.validation=options.synchronization_validation=argc>1;
-        VulkanOffScreen v(161,127,options);v.set_background_color(vec4(0));
+        OffScreen v(161,127,options);v.set_background_color(vec4(0));
         auto lines=std::make_shared<LinesDrawable2D>("screen polyline");v.add_drawable(lines);
         const std::vector<vec2> points{vec2(10,15),vec2(130,15),vec2(130,100)};
         lines->update_vertex_buffer(points,161,127);lines->update_element_buffer(std::vector<unsigned>{0,1,1,2});

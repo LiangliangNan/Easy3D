@@ -21,11 +21,11 @@ bool same_orientation(const quat& a,const quat& b) {
     for (unsigned i=0;i<4;++i) error+=std::abs(a[i]-b[i]);
     return error<1e-6f;
 }
-struct InputViewer : VulkanViewer {
-    using VulkanViewer::VulkanViewer;
-    using VulkanViewer::mouse_press_event;
-    using VulkanViewer::mouse_drag_event;
-    using VulkanViewer::mouse_release_event;
+struct InputViewer : Viewer {
+    using Viewer::Viewer;
+    using Viewer::mouse_press_event;
+    using Viewer::mouse_drag_event;
+    using Viewer::mouse_release_event;
     unsigned opened=0;
     mutable unsigned saved=0, snapshots=0;
     bool open() override { ++opened; return true; }
@@ -62,13 +62,13 @@ int main(int argc,char**) {
         const int px=int(hit%image.width),py=int(hit/image.width);
         bool found=false; const auto picked=v.point_under_pixel(px,py,found);
         require(found,"pivot depth pick failed");
-        v.mouse_press_event(px,py,VulkanViewer::BUTTON_LEFT,VulkanViewer::MODIF_SHIFT);
+        v.mouse_press_event(px,py,Viewer::BUTTON_LEFT,Viewer::MODIF_SHIFT);
         require((v.camera()->pivotPoint()-picked).norm()<1e-6f,"Shift-click selected wrong surface pivot");
-        v.mouse_release_event(px,py,VulkanViewer::BUTTON_LEFT,VulkanViewer::MODIF_SHIFT);
+        v.mouse_release_event(px,py,Viewer::BUTTON_LEFT,Viewer::MODIF_SHIFT);
         const auto before_focus=v.camera()->position(); press(GLFW_KEY_Z);
-        v.mouse_press_event(px,py,VulkanViewer::BUTTON_LEFT,0);
+        v.mouse_press_event(px,py,Viewer::BUTTON_LEFT,0);
         require((v.camera()->position()-picked).norm()<(before_focus-picked).norm(),"Z-click did not approach picked surface");
-        v.mouse_release_event(px,py,VulkanViewer::BUTTON_LEFT,0); release(GLFW_KEY_Z); v.fit_screen();
+        v.mouse_release_event(px,py,Viewer::BUTTON_LEFT,0); release(GLFW_KEY_Z); v.fit_screen();
         auto* renderer=first->renderer();
         auto* faces=renderer->get_triangles_drawable("faces");
         auto* vertices=renderer->get_points_drawable("vertices");
@@ -89,56 +89,56 @@ int main(int argc,char**) {
         require(!same_orientation(v.camera()->orientation(),orientation),"arrow turn failed");
         auto pos=v.camera()->position(); press(GLFW_KEY_UP);
         require(v.camera()->position()!=pos,"arrow movement failed");
-        pos=v.camera()->position(); press(GLFW_KEY_RIGHT,VulkanViewer::MODIF_CTRL);
+        pos=v.camera()->position(); press(GLFW_KEY_RIGHT,Viewer::MODIF_CTRL);
         require(v.camera()->position()!=pos,"modified arrow movement failed");
         v.fit_screen(); pos=v.camera()->position();
-        v.mouse_press_event(20,20,VulkanViewer::BUTTON_LEFT,VulkanViewer::MODIF_CTRL);
-        v.mouse_drag_event(120,100,100,80,VulkanViewer::BUTTON_LEFT,VulkanViewer::MODIF_CTRL);
+        v.mouse_press_event(20,20,Viewer::BUTTON_LEFT,Viewer::MODIF_CTRL);
+        v.mouse_drag_event(120,100,100,80,Viewer::BUTTON_LEFT,Viewer::MODIF_CTRL);
         require(v.camera()->position()==pos,"region drag moved the camera before release");
-        v.mouse_release_event(120,100,VulkanViewer::BUTTON_LEFT,VulkanViewer::MODIF_CTRL);
+        v.mouse_release_event(120,100,Viewer::BUTTON_LEFT,Viewer::MODIF_CTRL);
         require(v.camera()->position()!=pos,"region zoom did not fit selected region");
         v.fit_screen();
-        v.mouse_press_event(20,20,VulkanViewer::BUTTON_RIGHT,0); press(GLFW_KEY_X);
-        pos=v.camera()->position(); v.mouse_drag_event(20,50,0,30,VulkanViewer::BUTTON_RIGHT,0);
+        v.mouse_press_event(20,20,Viewer::BUTTON_RIGHT,0); press(GLFW_KEY_X);
+        pos=v.camera()->position(); v.mouse_drag_event(20,50,0,30,Viewer::BUTTON_RIGHT,0);
         require(v.camera()->position()==pos,"horizontal constraint allowed vertical pan");
-        release(GLFW_KEY_X); v.mouse_drag_event(20,80,0,30,VulkanViewer::BUTTON_RIGHT,0);
+        release(GLFW_KEY_X); v.mouse_drag_event(20,80,0,30,Viewer::BUTTON_RIGHT,0);
         require(v.camera()->position()!=pos,"key release left the axis constraint active");
         press(GLFW_KEY_Y); pos=v.camera()->position();
-        v.mouse_drag_event(50,80,30,0,VulkanViewer::BUTTON_RIGHT,0);
+        v.mouse_drag_event(50,80,30,0,Viewer::BUTTON_RIGHT,0);
         require(v.camera()->position()==pos,"vertical constraint allowed horizontal pan");
-        release(GLFW_KEY_Y); v.mouse_release_event(50,80,VulkanViewer::BUTTON_RIGHT,0);
-        v.mouse_press_event(20,20,VulkanViewer::BUTTON_MIDDLE,0);
+        release(GLFW_KEY_Y); v.mouse_release_event(50,80,Viewer::BUTTON_RIGHT,0);
+        v.mouse_press_event(20,20,Viewer::BUTTON_MIDDLE,0);
         pos=v.camera()->position(); auto ori=v.camera()->orientation();
-        v.mouse_drag_event(20,50,0,30,VulkanViewer::BUTTON_MIDDLE,0);
+        v.mouse_drag_event(20,50,0,30,Viewer::BUTTON_MIDDLE,0);
         require(v.camera()->position()!=pos && same_orientation(v.camera()->orientation(),ori),"middle drag did not zoom");
-        v.mouse_release_event(20,50,VulkanViewer::BUTTON_MIDDLE,0);
+        v.mouse_release_event(20,50,Viewer::BUTTON_MIDDLE,0);
         v.camera()->setPivotPoint(vec3(1,2,3));
-        v.mouse_press_event(20,20,VulkanViewer::BUTTON_RIGHT,VulkanViewer::MODIF_SHIFT);
+        v.mouse_press_event(20,20,Viewer::BUTTON_RIGHT,Viewer::MODIF_SHIFT);
         require(v.camera()->pivotPoint()==v.camera()->sceneCenter(),"Shift-right pivot reset failed");
-        v.mouse_release_event(20,20,VulkanViewer::BUTTON_RIGHT,VulkanViewer::MODIF_SHIFT);
+        v.mouse_release_event(20,20,Viewer::BUTTON_RIGHT,Viewer::MODIF_SHIFT);
         v.camera()->setPivotPoint(vec3(1,2,3));
-        v.mouse_press_event(-10,-10,VulkanViewer::BUTTON_LEFT,VulkanViewer::MODIF_SHIFT);
+        v.mouse_press_event(-10,-10,Viewer::BUTTON_LEFT,Viewer::MODIF_SHIFT);
         require(v.camera()->pivotPoint()==v.camera()->sceneCenter(),"empty Shift-click did not reset pivot");
-        v.mouse_release_event(-10,-10,VulkanViewer::BUTTON_LEFT,VulkanViewer::MODIF_SHIFT);
+        v.mouse_release_event(-10,-10,Viewer::BUTTON_LEFT,Viewer::MODIF_SHIFT);
         auto focus=glfwSetWindowFocusCallback(v.window(),nullptr);glfwSetWindowFocusCallback(v.window(),focus);
         press(GLFW_KEY_X); focus(v.window(),GLFW_FALSE); pos=v.camera()->position();
-        v.mouse_press_event(20,20,VulkanViewer::BUTTON_RIGHT,0);
-        v.mouse_drag_event(20,50,0,30,VulkanViewer::BUTTON_RIGHT,0);
+        v.mouse_press_event(20,20,Viewer::BUTTON_RIGHT,0);
+        v.mouse_drag_event(20,50,0,30,Viewer::BUTTON_RIGHT,0);
         require(v.camera()->position()!=pos,"focus loss left a held constraint active");
-        v.mouse_release_event(20,50,VulkanViewer::BUTTON_RIGHT,0);
+        v.mouse_release_event(20,50,Viewer::BUTTON_RIGHT,0);
         {
             ClipboardRestore clipboard(v.window());
-            const auto copied=v.camera()->position(); press(GLFW_KEY_C,VulkanViewer::MODIF_CTRL);
-            v.camera()->setPosition(copied+vec3(1)); press(GLFW_KEY_V,VulkanViewer::MODIF_CTRL);
+            const auto copied=v.camera()->position(); press(GLFW_KEY_C,Viewer::MODIF_CTRL);
+            v.camera()->setPosition(copied+vec3(1)); press(GLFW_KEY_V,Viewer::MODIF_CTRL);
             require((v.camera()->position()-copied).norm()<1e-5f,"clipboard camera roundtrip failed");
-            glfwSetClipboardString(v.window(),"bad camera"); press(GLFW_KEY_V,VulkanViewer::MODIF_CTRL);
+            glfwSetClipboardString(v.window(),"bad camera"); press(GLFW_KEY_V,Viewer::MODIF_CTRL);
             require((v.camera()->position()-copied).norm()<1e-5f,"invalid clipboard changed camera");
         }
-        press(GLFW_KEY_O,VulkanViewer::MODIF_CTRL); press(GLFW_KEY_S,VulkanViewer::MODIF_CTRL); press(GLFW_KEY_S);
+        press(GLFW_KEY_O,Viewer::MODIF_CTRL); press(GLFW_KEY_S,Viewer::MODIF_CTRL); press(GLFW_KEY_S);
         require(v.opened==1 && v.saved==1 && v.snapshots==1,"file shortcuts did not dispatch virtual hooks");
         bool bound=false;
-        v.bind([&](VulkanViewer* viewer,Model* model){bound=viewer==&v && model==first;return true;},
-               first,VulkanViewer::KEY_P,VulkanViewer::MODIF_SHIFT);
+        v.bind([&](Viewer* viewer,Model* model){bound=viewer==&v && model==first;return true;},
+               first,Viewer::KEY_P,Viewer::MODIF_SHIFT);
         press(GLFW_KEY_P,GLFW_MOD_SHIFT); require(bound,"custom modifier binding not dispatched");
         release(GLFW_KEY_P);
         press(GLFW_KEY_DELETE); require(v.models().size()==1 && v.current_model()==second,"delete-current-model failed");

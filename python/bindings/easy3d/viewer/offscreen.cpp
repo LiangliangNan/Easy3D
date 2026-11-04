@@ -17,19 +17,19 @@ struct PyOffScreen : easy3d::OffScreen {
 void bind_easy3d_viewer_offscreen(py::module_& m) {
     using namespace easy3d;
     py::class_<OffScreen,std::shared_ptr<OffScreen>,PyOffScreen>(m,"OffScreen","Backend-neutral offscreen rendering")
-        .def(py::init<int,int>(),py::arg("width")=800,py::arg("height")=600)
-        .def("camera",static_cast<Camera*(OffScreen::*)()>(&OffScreen::camera),py::return_value_policy::reference_internal)
-        .def("width",&OffScreen::width).def("height",&OffScreen::height).def("resize",&OffScreen::resize)
-        .def("set_background_color",&OffScreen::set_background_color)
-        .def("background_color",&OffScreen::background_color,py::return_value_policy::reference_internal)
+        .def(py::init<unsigned int,unsigned int>(),py::arg("width")=800,py::arg("height")=600)
+        .def("camera",[](OffScreen& self) { return self.camera(); },py::return_value_policy::reference_internal)
+        .def("width",[](const OffScreen& self) { return self.width(); }).def("height",[](const OffScreen& self) { return self.height(); }).def("resize",&OffScreen::resize)
+        .def("set_background_color",[](OffScreen& self, const vec4& color) { self.set_background_color(color); })
+        .def("background_color",[](const OffScreen& self) -> const vec4& { return self.background_color(); },py::return_value_policy::reference_internal)
         .def("render",&OffScreen::render,py::arg("file_name"),py::arg("scaling")=1.f,py::arg("samples")=4,py::arg("back_ground")=1,py::arg("expand")=true)
         .def("add_model",static_cast<Model*(OffScreen::*)(const std::string&,bool)>(&OffScreen::add_model),py::arg("file_name"),py::arg("create_default_drawables")=true,py::return_value_policy::reference_internal)
         .def("add_model",static_cast<Model*(OffScreen::*)(std::shared_ptr<Model>,bool)>(&OffScreen::add_model),py::arg("model"),py::arg("create_default_drawables")=true,py::return_value_policy::reference_internal)
-        .def("delete_model",&OffScreen::delete_model)
-        .def("models",&OffScreen::models,py::return_value_policy::reference_internal)
-        .def("current_model",&OffScreen::current_model,py::return_value_policy::reference_internal)
+        .def("delete_model",[](OffScreen& self, Model* model) { return self.delete_model(model); })
+        .def("models",[](const OffScreen& self) -> const std::vector<std::shared_ptr<Model>>& { return self.models(); },py::return_value_policy::reference_internal)
+        .def("current_model",[](const OffScreen& self) { return self.current_model(); },py::return_value_policy::reference_internal)
         .def("add_drawable",static_cast<Drawable*(OffScreen::*)(std::shared_ptr<Drawable>)>(&OffScreen::add_drawable),py::arg("drawable"),py::return_value_policy::reference_internal)
-        .def("delete_drawable",&OffScreen::delete_drawable)
-        .def("drawables",&OffScreen::drawables,py::return_value_policy::reference_internal)
-        .def("clear_scene",&OffScreen::clear_scene).def("fit_screen",&OffScreen::fit_screen,py::arg("model")=nullptr);
+        .def("delete_drawable",[](OffScreen& self, Drawable* drawable) { return self.delete_drawable(drawable); })
+        .def("drawables",[](const OffScreen& self) -> const std::vector<std::shared_ptr<Drawable>>& { return self.drawables(); },py::return_value_policy::reference_internal)
+        .def("clear_scene",[](OffScreen& self) { self.clear_scene(); }).def("fit_screen",[](OffScreen& self, const Model* model) { self.fit_screen(model); },py::arg("model")=nullptr);
 }

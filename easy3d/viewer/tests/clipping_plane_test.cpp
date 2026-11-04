@@ -26,11 +26,11 @@ void same_picking(const graphics::FrameImage& a,const graphics::FrameImage& b) {
 unsigned hits(const graphics::FrameImage& image) {
     unsigned n=0; for (auto id:image.ids) n+=id.object!=UINT32_MAX; return n;
 }
-struct ClipViewer : VulkanViewer {
-    using VulkanViewer::VulkanViewer;
-    using VulkanViewer::mouse_press_event;
-    using VulkanViewer::mouse_drag_event;
-    using VulkanViewer::mouse_release_event;
+struct ClipViewer : Viewer {
+    using Viewer::Viewer;
+    using Viewer::mouse_press_event;
+    using Viewer::mouse_drag_event;
+    using Viewer::mouse_release_event;
 };
 int main(int argc,char**) {
     auto* plane=ClippingPlane::instance();
@@ -106,7 +106,7 @@ int main(int argc,char**) {
         require(viewer.clipping_planes()==std::vector<vec4>{vec4(1,0,0,0)},"disabled shared plane lost explicit planes");
         viewer.set_clipping_planes({});
         bool bound=false;
-        viewer.bind([&](VulkanViewer*,Model*){bound=true;return true;},nullptr,ViewerInput::KEY_C,ViewerInput::MODIF_ALT);
+        viewer.bind([&](Viewer*,Model*){bound=true;return true;},nullptr,ViewerInput::KEY_C,ViewerInput::MODIF_ALT);
         press(GLFW_KEY_C);require(bound && !plane->is_enabled(),"custom binding did not override clipping control");
         plane->set_enabled(true);
         const auto with_app=viewer.capture();viewer.set_overlays({});const auto without_app=viewer.capture();

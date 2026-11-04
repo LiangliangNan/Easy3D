@@ -88,7 +88,7 @@ int main(int argc,char**) {
         press(GLFW_KEY_D);require(v.path().number_of_keyframes()==0 && !v.path().is_interpolation_started(),"D did not delete path");
         v.draw_frame();const auto cleared=v.capture();v.set_overlays({});require(v.capture().rgba==cleared.rgba,"deleted path left stale markers");
         press(GLFW_KEY_SPACE);require(!v.path().is_interpolation_started(),"empty tutorial path started");
-        v.resize(610,440);VulkanViewer::poll_events();v.draw_frame();
+        v.resize(610,440);Viewer::poll_events();v.draw_frame();
         require(v.device().validation_errors()==0,"camera path validation errors");
         std::cout<<"PASS: shared manual interpolation, resume/endpoints, native paths/cameras, depth/IDs/MSAA, controls and lifetime\n";
     } catch (const std::exception& e) {std::cerr<<"FAIL: "<<e.what()<<'\n';return 1;}

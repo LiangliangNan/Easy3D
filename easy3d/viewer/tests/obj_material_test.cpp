@@ -46,7 +46,7 @@ int main(int argc,char**) {
                 "legacy ambient/specular color-map fallback was lost");
         rejects([&]{ asset.create_drawables(); });
         graphics::DeviceOptions options; options.validation=options.synchronization_validation=argc>1;
-        VulkanOffScreen renderer(321,221,options);
+        OffScreen renderer(321,221,options);
         renderer.set_background_color(vec4(1)); // The UV oracle includes a white background probe.
         renderer.camera()->setType(Camera::ORTHOGRAPHIC);
         renderer.camera()->setViewDirection(vec3(0,0,-1)); renderer.camera()->setUpVector(vec3(0,1,0));

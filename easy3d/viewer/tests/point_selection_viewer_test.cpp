@@ -15,9 +15,9 @@
 #include <iostream>
 using namespace easy3d;
 void require(bool ok,const char* message) { if (!ok) throw std::runtime_error(message); }
-void frame(VulkanViewer& viewer) {
+void frame(Viewer& viewer) {
     for (unsigned i=0;i<100;++i) {
-        VulkanViewer::poll_events(); if (viewer.draw_frame()) return;
+        Viewer::poll_events(); if (viewer.draw_frame()) return;
         glfwWaitEventsTimeout(.01);
     }
     throw std::runtime_error("selection viewer did not present");
@@ -55,9 +55,9 @@ struct Input {
     }
     void shortcut(int code) { key(viewer.window(),code,0,GLFW_PRESS,0); }
 };
-vec2 project(VulkanViewer& viewer,vec3 p) {
+vec2 project(Viewer& viewer,vec3 p) {
     const auto q=viewer.camera()->modelViewProjectionMatrix()*vec4(p,1);
-    return vec2((q.x/q.w+1)*.5f*viewer.width(),(1-q.y/q.w)*.5f*viewer.height());
+    return vec2((q.x/q.w+1)*.5f*viewer.framebuffer_width(),(1-q.y/q.w)*.5f*viewer.framebuffer_height());
 }
 int main(int argc,char**) {
     try {
@@ -138,8 +138,8 @@ int main(int argc,char**) {
         require(viewer.point_resource(points)->source_ids()==std::vector<uint32_t>({1,3}) &&
                 viewer.device().point_upload_count()==uploads+2,"deletion lost source IDs or re-uploaded repeatedly");
         graphics::PointSelectionRequest retained; retained.points=original;
-        retained.width=viewer.width(); retained.height=viewer.height();
-        retained.polygon={{0,0},{float(viewer.width()),0},{float(viewer.width()),float(viewer.height())},{0,float(viewer.height())}};
+        retained.width=viewer.framebuffer_width(); retained.height=viewer.framebuffer_height();
+        retained.polygon={{0,0},{float(viewer.framebuffer_width()),0},{float(viewer.framebuffer_width()),float(viewer.framebuffer_height())},{0,float(viewer.framebuffer_height())}};
         require(viewer.select_points(retained)[0]==14 && viewer.device().point_upload_count()==uploads+2,
                 "retained point snapshot did not keep its original shared GPU realization");
         require(viewer.device().validation_errors()==0,"native selection validation errors");

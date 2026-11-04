@@ -12,8 +12,8 @@
 #include <thread>
 using namespace easy3d;
 void require(bool ok,const char* text) {if (!ok) throw std::runtime_error(text);}
-struct PathViewer : VulkanViewer {
-    using VulkanViewer::VulkanViewer;
+struct PathViewer : Viewer {
+    using Viewer::Viewer;
     KeyFrameInterpolator& path() {return *kfi_;}
     bool visible_path() const {return show_camera_path_;}
     void path_visibility(bool visible) {show_camera_path_=visible;}
@@ -42,11 +42,11 @@ int main(int argc,char**) {
         require(v.path().number_of_keyframes()==3 && !v.visible_path(),"Alt-K did not record independent path");
         press(GLFW_KEY_K,GLFW_MOD_SHIFT);require(v.path().number_of_keyframes()==3,"modified K recorded keyframe");
         const auto scene_radius=v.camera()->sceneRadius();
-        press(GLFW_KEY_T,VulkanViewer::MODIF_CTRL);
+        press(GLFW_KEY_T,Viewer::MODIF_CTRL);
         require(v.visible_path() && v.camera()->sceneRadius()>scene_radius,"show path did not include keyframe bounds");
-        press(GLFW_KEY_T,VulkanViewer::MODIF_CTRL);
+        press(GLFW_KEY_T,Viewer::MODIF_CTRL);
         require(!v.visible_path() && v.camera()->sceneRadius()==scene_radius,"hide path did not restore scene bounds");
-        press(GLFW_KEY_T,VulkanViewer::MODIF_CTRL);
+        press(GLFW_KEY_T,Viewer::MODIF_CTRL);
         v.camera()->setPosition(vec3(160,120,240));v.camera()->lookAt(vec3(20,20,0));
         v.camera()->setSceneRadius(160);v.camera()->showEntireScene();
         std::vector<graphics::Vertex> vertices(3);
@@ -65,18 +65,18 @@ int main(int argc,char**) {
             require(v.capture().rgba==both.rgba,"path and application layers did not restore");
         }
         require(v.snapshot("vulkan-viewer-camera-path.png",1,1),"global path snapshot failed");
-        unsigned animated=0;v.animation_func_=[&](VulkanViewer*){++animated;return true;};v.set_animation(true);
-        const auto observer=v.camera()->position();press(GLFW_KEY_K,VulkanViewer::MODIF_CTRL);
+        unsigned animated=0;v.animation_func_=[&](Viewer*){++animated;return true;};v.set_animation(true);
+        const auto observer=v.camera()->position();press(GLFW_KEY_K,Viewer::MODIF_CTRL);
         require(v.path().is_interpolation_started() && v.is_animating(),"global playback replaced application animation");
         v.capture();require(v.camera()->position()==observer && animated==0,"capture advanced path/application animation");
         v.draw_frame();require(v.camera()->position()==poses.front() && animated==1,"first shared path sample/animation failed");
-        press(GLFW_KEY_K,VulkanViewer::MODIF_CTRL);const auto paused=v.camera()->position();
+        press(GLFW_KEY_K,Viewer::MODIF_CTRL);const auto paused=v.camera()->position();
         std::this_thread::sleep_for(std::chrono::milliseconds(45));v.draw_frame();
         require(!v.path().is_interpolation_started() && v.camera()->position()==paused && animated==2,"path pause interfered with application animation");
-        press(GLFW_KEY_K,VulkanViewer::MODIF_CTRL);v.draw_frame();
+        press(GLFW_KEY_K,Viewer::MODIF_CTRL);v.draw_frame();
         require(v.camera()->position()!=paused && animated==3,"shared path resume failed");
         press(GLFW_KEY_K,GLFW_MOD_ALT);require(!v.path().is_interpolation_started() && v.path().number_of_keyframes()==4,"recording did not stop playback");
-        v.bind([](VulkanViewer*,Model*){return true;},nullptr,VulkanViewer::KEY_D,VulkanViewer::MODIF_ALT);
+        v.bind([](Viewer*,Model*){return true;},nullptr,Viewer::KEY_D,Viewer::MODIF_ALT);
         press(GLFW_KEY_D,GLFW_MOD_ALT);require(v.path().number_of_keyframes()==4,"custom binding did not override default path key");
         v.path().delete_path();v.set_animation(false);v.animation_func_={};
         v.camera()->setPosition(poses.front());press(GLFW_KEY_K,GLFW_MOD_ALT);
@@ -93,7 +93,7 @@ int main(int argc,char**) {
         key2(independent.window(),GLFW_KEY_K,0,GLFW_PRESS,PathViewer::MODIF_CTRL);
         key2(independent.window(),GLFW_KEY_D,0,GLFW_PRESS,GLFW_MOD_ALT);
         require(!independent.path().is_interpolation_started() && independent.path().number_of_keyframes()==0,"Alt-D did not stop/delete path");
-        independent.resize(610,440);VulkanViewer::poll_events();independent.draw_frame();
+        independent.resize(610,440);Viewer::poll_events();independent.draw_frame();
         require(v.device().validation_errors()==0 && independent.device().validation_errors()==0,"global camera-path validation errors");
         std::cout<<"PASS: global path keys, UI stepping, independent overlays/animation, MSAA/depth/IDs and viewer lifetime\n";
     } catch (const std::exception& e) {std::cerr<<"FAIL: "<<e.what()<<'\n';return 1;}

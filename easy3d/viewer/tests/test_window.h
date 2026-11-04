@@ -17,10 +17,10 @@ struct TestWindow {
 };
 
 // Resizes a viewer and waits until the window system has applied it (the request is asynchronous).
-inline void set_size(VulkanViewer& v, const TestWindow& w) {
+inline void set_size(Viewer& v, const TestWindow& w) {
     v.resize(static_cast<int>(w.width), int(w.height));
     for (int i = 0; i < 300; ++i) {
-        VulkanViewer::poll_events();
+        Viewer::poll_events();
         int width = 0, height = 0;
         v.viewer_size(width, height);
         if (width == int(w.width) && height == int(w.height)) return;

@@ -46,7 +46,7 @@ const char* const usage_hint = "press 'Space' to perform scanning\n"
 
 using namespace easy3d;
 
-TutorialVirtualScanner::TutorialVirtualScanner(const std::string& title) : VulkanViewer(title) {
+TutorialVirtualScanner::TutorialVirtualScanner(const std::string& title) : Viewer(title) {
     manual_ = usage_manual;
     hint_ = usage_hint;
     camera()->setUpVector(easy3d::vec3(0,1,0));
@@ -58,7 +58,7 @@ bool TutorialVirtualScanner::key_press_event(int key,int modifiers) {
         int w,h; framebuffer_size(w,h);
         if (w<=0 || h<=0) return true;
         // Key events may arrive before the next draw synchronizes a resize.
-        if (width()!=w || height()!=h) easy3d::VulkanOffScreen::resize(w,h);
+        if (camera()->screenWidth()!=w || camera()->screenHeight()!=h) resize_render_target(w,h);
         const auto points=scan_visible_points(samples());
         if (points.empty()) return true;
         auto cloud=std::make_shared<easy3d::PointCloud>();
@@ -69,7 +69,7 @@ bool TutorialVirtualScanner::key_press_event(int key,int modifiers) {
         add_model(cloud,true,false);
         update(); return true;
     }
-    return VulkanViewer::key_press_event(key,modifiers);
+    return Viewer::key_press_event(key,modifiers);
 }
 
 #else

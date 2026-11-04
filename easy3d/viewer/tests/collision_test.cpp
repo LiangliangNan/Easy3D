@@ -110,7 +110,7 @@ int main(int argc,char**) {
             check_colors(*first,*second,reference,false);
             press(GLFW_KEY_F2);require(!v.is_animating(),"F2 did not pause shared animation state");
             v.mouse_press_event(100,100,GLFW_MOUSE_BUTTON_RIGHT,GLFW_MOD_ALT);pose=first->manipulator()->matrix();
-            v.resize(510,380);VulkanViewer::poll_events();v.draw_frame();
+            v.resize(510,380);Viewer::poll_events();v.draw_frame();
             v.mouse_drag_event(130,110,30,10,GLFW_MOUSE_BUTTON_RIGHT,GLFW_MOD_ALT);
             require(same(pose,first->manipulator()->matrix()),"resize did not cancel collision drag");
             require(v.snapshot("vulkan-collision.png",1,1),"collision snapshot failed");

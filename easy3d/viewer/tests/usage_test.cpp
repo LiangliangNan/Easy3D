@@ -43,7 +43,7 @@ int main(int argc,char**) {
         initialize(false,false,false);
         TestWindow options; options.visible=false;options.width=480;options.height=300;
         options.device.validation=options.device.synchronization_validation=argc>1;
-        Inspect<VulkanViewer> v("Usage HUD", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
+        Inspect<Viewer> v("Usage HUD", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
         require(!v.manual().empty() && v.hint().empty(),"default viewer usage missing");
         require(v.background_color()==setting::background_color,"native viewer ignored shared background setting");
         require(v.logo(),"Easy3D logo is not enabled by default");
@@ -79,7 +79,7 @@ int main(int argc,char**) {
             require(console.text.str()=="Custom manual\nCustom manual\n","empty manual showed fallback help");
         }
         v.set_usage("Resized","resize-aware hint");const auto before=v.capture();
-        v.resize(520,320);VulkanViewer::poll_events();v.draw_frame();const auto resized=v.capture();
+        v.resize(520,320);Viewer::poll_events();v.draw_frame();const auto resized=v.capture();
         require(resized.width!=before.width && resized.rgba!=before.rgba,"usage HUD did not rebuild after resize");
         require(ImageIO::save("vulkan-usage-hint.png",resized.rgba,resized.width,resized.height,4,false),"usage artifact failed");
         require(v.device().validation_errors()==0,"usage HUD validation errors");

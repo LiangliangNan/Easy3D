@@ -63,7 +63,7 @@ bool TutorialImageViewer::key_press_event(int key,int modifiers) {
         if (!file.empty() && load_image(file)) { fit_screen(); return true; }
         return false;
     }
-    return VulkanViewer::key_press_event(key,modifiers);
+    return Viewer::key_press_event(key,modifiers);
 }
 
 bool TutorialImageViewer::mouse_scroll_event(int,int,int,int dy) {
@@ -84,7 +84,7 @@ void TutorialImageViewer::post_resize(int,int) {
 void TutorialImageViewer::pre_draw() {
     if (!dirty_) return;
     const float w = image_->width()*scale_, h = image_->height()*scale_;
-    const float x = (width()-w)*0.5f, y = (height()-h)*0.5f;
+    const float x = (framebuffer_width()-w)*0.5f, y = (framebuffer_height()-h)*0.5f;
     std::vector<easy3d::graphics::Vertex> vertices(4);
     vertices[0].position=easy3d::vec3(x,y,0); vertices[0].texcoord=easy3d::vec2(0,0);
     vertices[1].position=easy3d::vec3(x+w,y,0); vertices[1].texcoord=easy3d::vec2(1,0);
@@ -93,12 +93,12 @@ void TutorialImageViewer::pre_draw() {
     easy3d::graphics::DrawCommand overlay;
     overlay.geometry=std::make_shared<easy3d::graphics::Geometry>(vertices,std::vector<uint32_t>{0,1,2,0,2,3});
     overlay.texture=image_;
-    overlay.model_view_projection=easy3d::graphics::screen_space_projection(width(),height());
+    overlay.model_view_projection=easy3d::graphics::screen_space_projection(framebuffer_width(),framebuffer_height());
     set_overlays({overlay}); dirty_=false;
 }
 
 void TutorialImageViewer::fit_screen() {
-    scale_=std::min(float(width())/image_->width(),float(height())/image_->height());
+    scale_=std::min(float(framebuffer_width())/image_->width(),float(framebuffer_height())/image_->height());
     dirty_=true; update();
 }
 

@@ -17,26 +17,26 @@
 #include <set>
 #include <cmath>
 #ifdef EASY3D_HAS_VULKAN
-static_assert(std::is_same<easy3d::Viewer, easy3d::VulkanViewer>::value, "Viewer must select Vulkan in a native-only build");
+static_assert(std::is_same<easy3d::Viewer, easy3d::Viewer>::value, "Viewer must select Vulkan in a native-only build");
 #endif
 using namespace easy3d;
 void require(bool condition, const char* text) { if (!condition) throw std::runtime_error(text); }
-void frame(VulkanViewer& viewer) {
+void frame(Viewer& viewer) {
     for (unsigned attempt = 0; attempt < 100; ++attempt) {
-        VulkanViewer::poll_events();
+        Viewer::poll_events();
         if (viewer.draw_frame()) return;
         glfwWaitEventsTimeout(0.01);
     }
     throw std::runtime_error("no frame was presented within bounded retries");
 }
-struct ThrowingViewer : VulkanViewer {
-    using VulkanViewer::VulkanViewer;
+struct ThrowingViewer : Viewer {
+    using Viewer::Viewer;
     bool key_press_event(int, int) override { throw std::runtime_error("expected callback failure"); }
 };
 // A boolean must retain the same meaning as Viewer::run(), rather than
 // accidentally selecting a one-frame budget in the native implementation.
-struct RunViewer : VulkanViewer {
-    using VulkanViewer::VulkanViewer;
+struct RunViewer : Viewer {
+    using Viewer::Viewer;
     unsigned frames = 0;
     void post_draw() override { if (++frames == 2) request_close(); }
 };
@@ -49,17 +49,17 @@ int main(int argc, char**) {
         options.device.synchronization_validation = options.device.validation;
         {   // Constructor with explicit parameters: a requested count of 4 never fails (it steps down on
             // devices without 4x MSAA), 0 means no MSAA, and negative or non-power-of-two counts are rejected.
-            VulkanViewer four("Explicit parameters", 171, 129, 4, false, false, true, options.device);
+            Viewer four("Explicit parameters", 171, 129, 4, false, false, true, options.device);
             require(four.samples() >= 1 && four.samples() <= 4 && four.width() == 171 && four.height() == 129,
                     "explicit constructor ignored its parameters");
-            VulkanViewer none("No MSAA", 171, 129, 0, false, false, true, options.device);
+            Viewer none("No MSAA", 171, 129, 0, false, false, true, options.device);
             require(none.samples() == 1, "0 samples did not mean no MSAA");
             bool rejected = false;
-            try { VulkanViewer bad("Negative samples", 171, 129, -1, false, false, true, options.device); }
+            try { Viewer bad("Negative samples", 171, 129, -1, false, false, true, options.device); }
             catch (const std::invalid_argument&) { rejected = true; }
             require(rejected, "negative sample count was accepted");
         }
-        VulkanViewer viewer("Vulkan window test", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
+        Viewer viewer("Vulkan window test", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
         require(glfwGetWindowAttrib(viewer.window(), GLFW_CLIENT_API) == GLFW_NO_API, "window created a graphics context");
         require(glfwGetCurrentContext() == nullptr, "OpenGL context exists in native test");
         auto* model = viewer.add_model(resource::directory() + "/data/bunny.ply");
@@ -117,7 +117,7 @@ int main(int argc, char**) {
             viewer.resize(151 + i * 13, 113 + i * 7);
             frame(viewer);
             int w, h; viewer.framebuffer_size(w, h);
-            require(viewer.width() == w && viewer.height() == h, "camera/HiDPI framebuffer extent mismatch");
+            require(viewer.framebuffer_width() == w && viewer.framebuffer_height() == h, "camera/HiDPI framebuffer extent mismatch");
             extents.insert({w, h});
             faces->set_uniform_coloring(vec4(0, float(i % 2), 1, 1));
             model->renderer()->update();
@@ -185,7 +185,7 @@ int main(int argc, char**) {
             require(count > 20, "line impostor presentation/capture is empty");
         }
         segment->set_visible(false); faces->set_visible(true);
-        viewer.hide(); VulkanViewer::poll_events(); viewer.show(); frame(viewer);
+        viewer.hide(); Viewer::poll_events(); viewer.show(); frame(viewer);
         bool rejected_samples = false;
         try { viewer.set_samples(3); } catch (const std::invalid_argument&) { rejected_samples = true; }
         require(rejected_samples, "invalid window sample count was accepted");
@@ -193,14 +193,14 @@ int main(int argc, char**) {
             auto unavailable = options;
             unavailable.device.device_name = "__Easy3D_no_such_physical_device__";
             bool rejected = false;
-            try { VulkanViewer bad("Expected initialization failure", unavailable.width, unavailable.height, unavailable.samples, false, unavailable.visible, unavailable.resizable, unavailable.device); }
+            try { Viewer bad("Expected initialization failure", unavailable.width, unavailable.height, unavailable.samples, false, unavailable.visible, unavailable.resizable, unavailable.device); }
             catch (const std::runtime_error&) { rejected = true; }
             require(rejected, "unavailable device was accepted");
         }
         frame(viewer);
         // Native GLFW lifetime and GPU caches must survive a second window closing.
         {
-            VulkanViewer second("Independent Vulkan device", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
+            Viewer second("Independent Vulkan device", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
             if (msaa) second.set_samples(4);
             require(second.add_model(resource::directory() + "/data/bunny.ply"), "second mesh load failed");
             for (unsigned i = 0; i < 4; ++i) { frame(viewer); frame(second); }
@@ -221,7 +221,7 @@ int main(int argc, char**) {
         {
             auto invalid = options; invalid.samples = 3;
             bool rejected = false;
-            try { VulkanViewer bad("Expected invalid MSAA initialization", invalid.width, invalid.height, invalid.samples, false, invalid.visible, invalid.resizable, invalid.device); }
+            try { Viewer bad("Expected invalid MSAA initialization", invalid.width, invalid.height, invalid.samples, false, invalid.visible, invalid.resizable, invalid.device); }
             catch (const std::invalid_argument&) { rejected = true; }
             require(rejected, "invalid initial sample count was accepted");
         }
@@ -271,7 +271,7 @@ int main(int argc, char**) {
         int image_w=0, image_h=0, channels=0;
         std::vector<unsigned char> pixels;
         require(ImageIO::load("vulkan-window-scaled.png", pixels, image_w, image_h, channels, 4, false) &&
-                image_w == int(viewer.width()*0.5) && image_h == int(viewer.height()*0.5),
+                image_w == int(viewer.framebuffer_width()*0.5) && image_h == int(viewer.framebuffer_height()*0.5),
                 "snapshot scaling did not reach file output");
         bool transparent=false;
         for (size_t i=3; i<pixels.size(); i+=4) transparent |= pixels[i]==0;

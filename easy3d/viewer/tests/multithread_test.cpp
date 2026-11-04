@@ -16,9 +16,9 @@ std::shared_ptr<const PointBatch> next(PointBatchWorker& worker) {
     require(worker.wait_for_batch(std::chrono::seconds(5)),"worker batch timeout");
     auto batch=worker.take(); require(bool(batch),"worker lost a ready batch"); return batch;
 }
-void frame(VulkanViewer& viewer) {
+void frame(Viewer& viewer) {
     for (unsigned i=0;i<100;++i) {
-        VulkanViewer::poll_events();
+        Viewer::poll_events();
         if (viewer.draw_frame()) return;
         glfwWaitEventsTimeout(.01);
     }
@@ -60,8 +60,8 @@ void worker_lifetime() {
         PointBatchWorker sleeping(2,std::chrono::hours(1)); next(sleeping);
     }
 }
-struct StreamViewer : VulkanViewer {
-    using VulkanViewer::VulkanViewer;
+struct StreamViewer : Viewer {
+    using Viewer::Viewer;
     void hide_logo() {show_easy3d_logo_=false;}
 };
 int main(int argc,char**) {
@@ -91,7 +91,7 @@ int main(int argc,char**) {
         unsigned applied=0, allowed=4;
         PointBatchWorker worker(4,std::chrono::milliseconds(0));
         std::vector<ColoredPoint> appended;
-        viewer.animation_func_=[&](VulkanViewer*) {
+        viewer.animation_func_=[&](Viewer*) {
             require(std::this_thread::get_id()==ui_thread,"model updated off the UI thread");
             if (applied<allowed) {
                 if (auto batch=worker.take()) {

@@ -19,8 +19,8 @@ struct RealCameraViewer : TutorialRealCamera {
     Rect image_rect() const {return calculate_image_rect();}
     const std::string& hint() const {return hint_;}
 };
-void frame(VulkanViewer& v) {
-    for (unsigned i=0;i<100;++i) {VulkanViewer::poll_events();if (v.draw_frame()) return;glfwWaitEventsTimeout(.01);}
+void frame(Viewer& v) {
+    for (unsigned i=0;i<100;++i) {Viewer::poll_events();if (v.draw_frame()) return;glfwWaitEventsTimeout(.01);}
     throw std::runtime_error("real-camera frame did not present");
 }
 void same_picking(const graphics::FrameImage& a,const graphics::FrameImage& b) {
@@ -79,7 +79,11 @@ int main(int argc,char**) {
         auto key=glfwSetKeyCallback(v.window(),nullptr);glfwSetKeyCallback(v.window(),key);
         auto press=[&](int code) {key(v.window(),code,0,GLFW_PRESS,0);frame(v);};
         auto cursor=glfwSetCursorPosCallback(v.window(),nullptr);glfwSetCursorPosCallback(v.window(),cursor);
-        auto hover=[&](int x,int y) {cursor(v.window(),x/v.dpi_scaling(),y/v.dpi_scaling());frame(v);};
+        auto hover=[&](int x,int y) {
+            cursor(v.window(),x/v.dpi_scaling(),y/v.dpi_scaling());
+            // Render the injected event before polling unrelated native cursor events.
+            require(v.draw_frame(),"synthetic hover frame did not present");
+        };
         const auto rect=v.image_rect();
         require(std::abs(rect.x_min()-20*v.dpi_scaling())<1e-4f && std::abs(rect.y_min()-120*v.dpi_scaling())<1e-4f,"inset margins ignored DPI");
         const auto clean=v.capture();hover(int(rect.center().x),int(rect.center().y));

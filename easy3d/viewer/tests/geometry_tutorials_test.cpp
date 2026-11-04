@@ -17,7 +17,7 @@ struct GeometryViewer : Viewer {
     const std::string& hint() const {return hint_;}
     void hide_axes() {show_corner_axes_=false;}
 };
-void frame(GeometryViewer& v) {VulkanViewer::poll_events();require(v.draw_frame(),"geometry tutorial did not present");}
+void frame(GeometryViewer& v) {Viewer::poll_events();require(v.draw_frame(),"geometry tutorial did not present");}
 void probe(GeometryViewer& v,const vec3& world,bool filled,const SurfaceMesh* model) {
     const auto p=v.camera()->projectedCoordinatesOf(world);const auto hit=v.pick(int(p.x),int(p.y));
     require(bool(hit)==filled,"polygon hole/fill picking mismatch");

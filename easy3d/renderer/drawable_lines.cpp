@@ -41,7 +41,7 @@ namespace easy3d {
 
 
     void LinesDrawable::draw(const Camera *camera) const {
-        if (has_cpu_buffers()) throw std::logic_error("draw(camera) requires the OpenGL backend; submit CPU drawables through VulkanOffScreen");
+        if (has_cpu_buffers()) throw std::logic_error("draw(camera) requires the OpenGL backend; submit CPU drawables through OffScreen");
         if (update_needed_ || vertex_buffer_ == 0) {
             const_cast<LinesDrawable *>(this)->update_buffers_internal();
             const_cast<LinesDrawable *>(this)->update_needed_ = false;

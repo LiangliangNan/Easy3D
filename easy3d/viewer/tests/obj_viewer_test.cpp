@@ -20,7 +20,7 @@ void require(bool value,const char* message) { if (!value) throw std::runtime_er
 #ifdef EASY3D_HAS_VULKAN
 void frame(TexturedViewer& viewer) {
     for (unsigned i=0;i<100;++i) {
-        VulkanViewer::poll_events(); if (viewer.draw_frame()) return;
+        Viewer::poll_events(); if (viewer.draw_frame()) return;
         glfwWaitEventsTimeout(0.01);
     }
     throw std::runtime_error("textured viewer did not present");

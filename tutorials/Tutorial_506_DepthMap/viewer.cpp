@@ -68,11 +68,11 @@ void TutorialDepthMap::draw_depth() const {
     const float dpi=dpi_scaling();
     // The device generates and samples current scene depth in its render passes.
     // Keep only the inset's immutable geometry here; presentation stays GPU-only.
-    if (width()!=depth_width_ || height()!=depth_height_ || dpi!=depth_dpi_) {
-        const Rect quad(20*dpi,20*dpi+width()/4.0f,40*dpi,40*dpi+height()/4.0f);
-        depth_commands_={vulkan::shape::draw_depth_texture(quad,width(),height()),
-            vulkan::shape::draw_quad_wire(quad,vec4(1,0,0,1),width(),height(),dpi)};
-        depth_width_=width();depth_height_=height();depth_dpi_=dpi;
+    if (framebuffer_width()!=depth_width_ || framebuffer_height()!=depth_height_ || dpi!=depth_dpi_) {
+        const Rect quad(20*dpi,20*dpi+framebuffer_width()/4.0f,40*dpi,40*dpi+framebuffer_height()/4.0f);
+        depth_commands_={vulkan::shape::draw_depth_texture(quad,framebuffer_width(),framebuffer_height()),
+            vulkan::shape::draw_quad_wire(quad,vec4(1,0,0,1),framebuffer_width(),framebuffer_height(),dpi)};
+        depth_width_=framebuffer_width();depth_height_=framebuffer_height();depth_dpi_=dpi;
     }
     const_cast<TutorialDepthMap*>(this)->set_overlays(depth_commands_);
 }

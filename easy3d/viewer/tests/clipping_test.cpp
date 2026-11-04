@@ -163,7 +163,7 @@ void analytic_clipping(RenderDevice& device) {
     }
 }
 void scene_clipping(const DeviceOptions& options) {
-    VulkanOffScreen viewer(181,141,options);
+    OffScreen viewer(181,141,options);
     viewer.camera()->setType(Camera::ORTHOGRAPHIC); viewer.camera()->setViewDirection(vec3(0,0,-1));
     viewer.camera()->setUpVector(vec3(0,1,0));
     auto mesh=std::make_shared<SurfaceMesh>();

@@ -35,7 +35,7 @@ struct NativeViewerOptions {
         }
         return true;
     }
-    int run(VulkanViewer& host) const {
+    int run(Viewer& host) const {
         const int result = host.run_frames(frames);
         if (host.device().validation_errors()) {
             LOG(ERROR) << "Vulkan validation reported errors";

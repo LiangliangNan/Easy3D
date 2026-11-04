@@ -37,8 +37,8 @@ std::shared_ptr<SurfaceMesh> quad(float center,float z=0,float half=.8f) {
     auto c=mesh->add_vertex(vec3(center+half,half,z)),d=mesh->add_vertex(vec3(center-half,half,z));
     mesh->add_quad(a,b,c,d);return mesh;
 }
-void frame(VulkanViewer& v) {
-    for (unsigned i=0;i<100;++i) {VulkanViewer::poll_events();if (v.draw_frame()) return;glfwWaitEventsTimeout(.01);}
+void frame(Viewer& v) {
+    for (unsigned i=0;i<100;++i) {Viewer::poll_events();if (v.draw_frame()) return;glfwWaitEventsTimeout(.01);}
     throw std::runtime_error("manipulation frame did not present");
 }
 int main(int argc,char**) {

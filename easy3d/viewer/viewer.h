@@ -27,41 +27,35 @@
 #ifndef EASY3D_VIEWER_VIEWER_H
 #define EASY3D_VIEWER_VIEWER_H
 
-#if defined(EASY3D_TUTORIAL_VULKAN) && !defined(EASY3D_HAS_VULKAN)
-#error "Tutorial backend overrides are unsupported; configure Easy3D_ENABLE_VULKAN=ON"
-#endif
-#ifdef EASY3D_HAS_VULKAN
-#define EASY3D_TUTORIAL_USES_VULKAN 1
-// TEMPORARY (work item U1): until the Vulkan classes are folded into Viewer/OffScreen, these are aliases.
-#include <easy3d/viewer/vulkan_offscreen.h>
-#include <easy3d/viewer/vulkan_viewer.h>
-namespace easy3d { using Viewer = VulkanViewer; }
-namespace easy3d { using OffScreen = VulkanOffScreen; }
-#else
-#define EASY3D_TUTORIAL_USES_VULKAN 0
-
 #include <easy3d/viewer/viewer_base.h>
 #include <string>
 #include <vector>
 #include <memory>
 #include <exception>
-
-#include <easy3d/core/types.h>
-
-
+#include <map>
+#include <chrono>
+#ifdef EASY3D_HAS_VULKAN
+#define EASY3D_TUTORIAL_USES_VULKAN 1
+#include <easy3d/renderer/render_device.h>
+#include <easy3d/renderer/camera.h>
+#else
+#define EASY3D_TUTORIAL_USES_VULKAN 0
+#endif
 struct GLFWwindow;
-
 namespace easy3d {
-    namespace detail { class GlfwRuntime; }
-
-	class Camera;
-	class Model;
-    class Drawable;
-    class LinesDrawable2D;
-    class TrianglesDrawable;
-    class TextRenderer;
-    class KeyFrameInterpolator;
-
+namespace detail { class GlfwRuntime; }
+namespace graphics { class TextLayoutEngine; }
+namespace vulkan { class KeyFrameInterpolatorRenderer; }
+class Camera;
+class Model;
+class Drawable;
+class LinesDrawable2D;
+class TrianglesDrawable;
+class TextRenderer;
+class KeyFrameInterpolator;
+#ifdef EASY3D_HAS_VULKAN
+using VulkanOptions = graphics::DeviceOptions;
+#else
     // OpenGL context settings of a viewer window.
     struct OpenGLOptions {
         // (a constructor, not default member initializers, so that brace-initialization works in C++11)
@@ -73,21 +67,11 @@ namespace easy3d {
         int stencil_bits;
     };
 
-    /**
-     * \brief The built-in Easy3D viewer.
-     * \class Viewer easy3d/viewer/viewer.h
-     * \details Easy3D is really easy to use. That's why it has such a name.
-     * To use the viewer, simply create an instance of Viewer, and call the run() method, e.g.,
-     *      \code
-     *          MyViewer viewer("Example");
-     *          viewer.run();
-     *      \endcode
-     * The default Easy3D viewer can be easily extended by deriving your enhanced viewer from it
-     * by re-implementing some of its functions (see the documentation of Viewer).
-     */
-	class Viewer : public ViewerBase
-	{
-	public:
+#endif
+class Viewer : public ViewerBase {
+public:
+    // ... some public functions: the unified APIs used by both backends
+
         /**
          * \brief Constructor
          * \param title The window title of the viewer, which can be changed by calling set_title() after construction.
@@ -111,14 +95,19 @@ namespace easy3d {
 			bool full_screen = false,
 			bool visible = true,
 			bool resizable = true,
-			const OpenGLOptions& gl_options = {}
+
+#ifdef EASY3D_HAS_VULKAN
+            const VulkanOptions& vk_options = {}
+#else
+            const OpenGLOptions& gl_options = OpenGLOptions()
+#endif
 		);
 
         /**
          * \brief The destructor.
          */
 		virtual ~Viewer();
-        unsigned validation_errors() const override { return 0; }
+        unsigned validation_errors() const override;
         void set_animation_callback(const ViewerBase::AnimationFunction& callback) override {
             if (callback) animation_func_ = [callback](Viewer* viewer) { return callback(viewer); };
             else animation_func_ = nullptr;
@@ -141,8 +130,7 @@ namespace easy3d {
         bool should_close() const override;
         void show() override;
         void hide() override;
-        GLFWwindow* window() const override { return window_; } // borrowed OpenGL host
-
+        GLFWwindow* window() const override { return window_; } // borrowed native window; null for windowless Vulkan OffScreen
 
         /**
          * \brief Terminate the viewer.
@@ -175,7 +163,7 @@ namespace easy3d {
         /// \brief Returns the height of the viewer/window.
         int height() const { return height_; }
         /// \brief Queries the size of the viewer/window.
-        void viewer_size(int& w, int& h) const override { w = width_; h = height_; }
+        void viewer_size(int& w, int& h) const override;
 
 		/// \brief Returns the width of the framebuffer, which is identical to: width() * dpi_scaling().
 		int framebuffer_width() const override;
@@ -199,13 +187,13 @@ namespace easy3d {
          * \note The requested sample may not be supported by the context or graphics driver. This
          *       method returns the actual samples that the viewer supports.
          */
-        int	 samples() const { return samples_; }
+        int	 samples() const { return samples_ > 1 ? samples_ : 1; }
 
         /**
          * \brief Query the scaling factor for high DPI devices (e.g., MackBook pro).
          * \return The high DPI scaling factor.
          */
-        float dpi_scaling() const override { return dpi_scaling_; }
+        float dpi_scaling() const override;
 
         /**
          * \brief Set the background color of the viewer
@@ -263,11 +251,11 @@ namespace easy3d {
          *            - polyhedral meshes: "faces:border"， "faces:interior"， "vertices"， and "edges".
          *          These drawables are usually sufficient for basic rendering of the model. In case
          *          the default drawables don't meet the particular visualization purpose, you can
-         *          set 'create_default_drawables' to false and create your needed drawables by 
-         *          calling model->renderer()->add_[type]_drawable(). Here the [type] must be one of 
+         *          set 'create_default_drawables' to false and create your needed drawables by
+         *          calling model->renderer()->add_[type]_drawable(). Here the [type] must be one of
          *          "points", "lines", and "triangles'.
          * \param file_name The string of the file name.
-         * \param create_default_drawables If true, the default drawables will be created. 
+         * \param create_default_drawables If true, the default drawables will be created.
          * \return The pointer to the model added to the viewer (nullptr if failed).
          * \related add_model(Model*, bool).
          */
@@ -416,7 +404,7 @@ namespace easy3d {
          *      It allows the snapshot image to have a dimension different from the viewer, and it has no limit on the
          *      image size (if memory allows).
          * \param file_name The image file name.
-         * \param scaling The scaling factor that determines the size of the image (default to 1.0, using the viewer size), i.e., 
+         * \param scaling The scaling factor that determines the size of the image (default to 1.0, using the viewer size), i.e.,
          *      image_width = viewer_width * scaling;
          *      image_height = viewer_height * scaling;
          * \param samples The required number of samples for antialiased rendering (which can be different from
@@ -463,7 +451,7 @@ namespace easy3d {
         /// \name Algorithm execution
         //@{
 
-        // Key, Modifier and Button are shared with VulkanViewer through ViewerInput.
+        // Key, Modifier and Button are shared with Viewer through ViewerInput.
         /**
          * A function type, which applies the user's algorithm(s)/operation(s) on the given model.
          * \param viewer A pointer to this viewer.
@@ -511,6 +499,64 @@ namespace easy3d {
         bool is_animating() const override;
         //@}
 
+#ifdef EASY3D_HAS_VULKAN
+    // Transitional Vulkan-only scene APIs (docs/vulkan.md, U1b).
+    // Triangle annotations and HUD overlays. Their immutable
+    // geometry/images are retained; MVPs are supplied by the caller (for example
+    // graphics::screen_space_projection()). overlay_depth_test annotations test
+    // scene depth and blend first, in input order; independent-depth 3D HUDs
+    // follow, then flat HUD overlays. Sort overlapping scene-depth annotations
+    // back-to-front. None write scene depth/IDs.
+    void set_overlays(std::vector<graphics::DrawCommand> commands);
+    // Per-viewer world-space halfspaces, keeping dot(plane,vec4(world,1)) >= 0.
+    // Empty disables this host's explicit planes. At most two finite,
+    // nonzero-normal planes. An enabled shared ClippingPlane takes precedence.
+    // Overlays remain unclipped. Scene clearing retains this configuration.
+    void set_clipping_planes(const std::vector<vec4>& planes);
+    // Effective planes: the enabled shared ClippingPlane takes precedence;
+    // disabling it restores this host's explicitly configured planes.
+    const std::vector<vec4>& clipping_planes() const;
+    struct PickResult {
+        std::shared_ptr<Model> model; // null for a standalone drawable
+        std::shared_ptr<Drawable> drawable;
+        std::uint32_t primitive = UINT32_MAX; // generated primitive within this drawable
+        int face_index = -1; // original SurfaceMesh face, when provenance is available
+        vec3 position = vec3(0); // world-space surface point at the pixel center
+        float depth = 1;
+        explicit operator bool() const { return bool(drawable); }
+    };
+    // Synchronous visible-surface picking, in top-left framebuffer pixels. Returns
+    // an empty result for background/outside pixels. Retains source ownership;
+    // face indices describe the current mesh, not future topology edits.
+    PickResult pick(int x, int y) const;
+    // GPU through-selection; the request owns its point/polygon/bitset snapshot.
+    std::vector<std::uint32_t> select_points(const graphics::PointSelectionRequest& request) const;
+    // Unclipped immutable point positions shared by this drawable's rendering
+    // and selection. Extraction is refreshed as needed; color-only changes reuse it.
+    std::shared_ptr<const graphics::PointData> point_resource(Drawable* drawable) const;
+    // Reconstruct a top-left framebuffer pixel center from [0,1] readback depth.
+    // Unlike Camera's legacy coordinate helper, this uses continuous framebuffer coordinates.
+    vec3 unproject_pixel(int x, int y, float depth) const;
+    // Synchronous visible-surface scan: one world point per non-background
+    // framebuffer pixel, in top-to-bottom row order, at exact pixel centers.
+    // Uses one camera snapshot and inverse MVP; overlays never produce points.
+    // MSAA color does not alter center-sample depth/ID scan semantics. Does not
+    // modify scene/camera or advance animation; includes every visible drawable.
+    std::vector<vec3> scan_visible_points(unsigned samples = 1) const;
+    // Color is multisampled when requested; IDs/depth stay center-sampled.
+    // Invalid/unsupported requests throw, allowing callers/tests to handle them.
+    graphics::FrameImage capture() const;
+    graphics::FrameImage capture(unsigned samples) const;
+    // Output dimensions round upwards, matching OffScreen. expand chooses
+    // expansion versus cropping when rounding changes the output aspect ratio.
+    // Rendering uses a camera copy and leaves the live camera unchanged.
+    bool render(const std::string& filename, float scaling = 1.0f, int samples = 4,
+                int back_ground = 1, bool expand = true) const;
+    const graphics::RenderDevice& device() const;
+    void set_samples(unsigned samples);
+    Model* add_model(std::shared_ptr<Model> model, bool create_default_drawables, bool fit_scene);
+#endif
+
 	protected:
 
         // This function draws the scene. Called after pre_draw() and before post_draw();
@@ -519,13 +565,13 @@ namespace easy3d {
         // specific rendering before calling the default.
         virtual bool draw();
 
-		// OpenGL resources (e.g., shaders, textures, VAOs) must be created when 
-		// there exists a valid rendering context. It is (usually) a bad idea to do 
-		// this in a constructor because the OpenGL context may not have been 
-		// created yet or the visible one is not *current*. This init() function is 
-		// to ensure you have a valid rendering context. It will be called before 
+		// OpenGL resources (e.g., shaders, textures, VAOs) must be created when
+		// there exists a valid rendering context. It is (usually) a bad idea to do
+		// this in a constructor because the OpenGL context may not have been
+		// created yet or the visible one is not *current*. This init() function is
+		// to ensure you have a valid rendering context. It will be called before
 		// the draw procedure. See also cleanup().
-		// NOTE: Don't forget to call Viewer::init() at the beginning of your 
+		// NOTE: Don't forget to call Viewer::init() at the beginning of your
 		//		 inherited function.
 		virtual void init();
 
@@ -573,6 +619,95 @@ namespace easy3d {
 		// Handle a focus change event
 		virtual bool focus_event(bool focused);
 
+        void draw_corner_axes() const;
+        void copy_view();
+        void paste_view();
+    protected:
+        void bind_command(const ViewerBase::Function& func, Model* model, Key key, Modifier modifier) override {
+            bind(Function([func](Viewer* viewer, Model* m) { return func(viewer, m); }), model, key, modifier);
+        }
+        bool read_scene_depth(int x, int y, const Camera& snapshot, float& depth) const override;
+        unsigned window_samples() const override { return unsigned(samples()); }
+        bool snapshot_file(const std::string& f, float scale, int samples, int bg, bool expand) const override {
+            return snapshot(f, scale, samples, bg, expand);
+        }
+
+protected:
+    GLFWwindow*	window_;
+    int         width_;
+    int         height_;
+    std::string	title_;
+    std::unique_ptr<Camera> camera_;
+    std::unique_ptr<KeyFrameInterpolator> kfi_;
+    std::string manual_;
+    std::string hint_; // shown in the top-left corner of the screen
+    int		samples_;	// the actual samples
+    vec4	background_color_;
+    int     pressed_key_;
+    bool    show_frame_rate_;
+    bool	show_camera_path_;
+    bool    show_easy3d_logo_;
+    std::vector< std::shared_ptr<Model> > models_;
+    int model_idx_;
+    std::vector< std::shared_ptr<Drawable> > drawables_;
+    int pressed_button_ = -1;
+    int mouse_current_x_ = 0, mouse_current_y_ = 0;
+    int mouse_pressed_x_ = 0, mouse_pressed_y_ = 0;
+    bool show_pivot_point_ = false;
+    typedef std::pair<Function, Model*> FunctionModel;
+    std::map<Key, std::map<Modifier, FunctionModel> >  commands_;
+#ifdef EASY3D_HAS_VULKAN
+    // Keep this part of code minimum
+private:
+    struct Window;
+    std::shared_ptr<Window> window_host_;
+    struct Impl;
+    std::unique_ptr<Impl> impl_;
+    bool animation_enabled_ = false;
+    bool initialized_ = false;
+    std::unique_ptr<vulkan::KeyFrameInterpolatorRenderer> camera_path_renderer_;
+    std::chrono::steady_clock::time_point next_camera_path_frame_;
+    void advance_camera_path();
+    void update_camera_path_overlays() const;
+    void restore_scene_bounds();
+    bool zoom_region_ = false;
+    vec2 pivot_pixel_ = vec2(0);
+    std::chrono::steady_clock::time_point pivot_expires_;
+    mutable bool pivot_hint_visible_ = false;
+    mutable int hint_width_ = 0, hint_height_ = 0;
+    void update_interaction_overlays(bool force = false) const;
+    void update_frame_rate();
+    void ensure_text_renderer() const;
+    std::chrono::steady_clock::time_point frame_rate_start_;
+    unsigned frame_rate_frames_ = 0;
+    mutable bool rendered_show_frame_rate_ = false, rendered_show_logo_ = false;
+    mutable std::vector<graphics::DrawCommand> logo_commands_;
+    mutable std::string rendered_frame_rate_;
+    mutable std::vector<graphics::DrawCommand> frame_rate_commands_;
+    mutable std::shared_ptr<const graphics::Geometry> corner_axes_geometry_;
+    void cancel_interaction();
+    mutable std::unique_ptr<graphics::TextLayoutEngine> texter_;
+    mutable bool fonts_tried_ = false;
+    mutable std::string rendered_hint_;
+    mutable float hint_dpi_ = 0;
+    mutable std::vector<graphics::DrawCommand> hint_commands_;
+    bool usage_printed_ = false;
+    void print_usage();
+    Viewer(std::shared_ptr<Window> window, const graphics::DeviceOptions& options);
+protected:
+    // Device-only construction for OffScreen: creates neither a GLFW window nor a surface.
+    Viewer(unsigned int width, unsigned int height, const VulkanOptions& options);
+    void resize_render_target(int width, int height);
+    void set_viewer_overlays(std::vector<graphics::DrawCommand> commands) const;
+    void set_viewer_3d_overlays(std::vector<graphics::DrawCommand> commands) const;
+    void set_viewer_annotations(std::vector<graphics::DrawCommand> commands) const;
+    void release_device();
+    bool show_corner_axes_ = true;
+    std::string framerate_ = "fps: -- (-- ms/frame)";
+
+#else
+    // Keep this part of code minimum
+
 	protected:
         GLFWwindow *create_window(const std::string &title,
                                   int samples,
@@ -596,27 +731,8 @@ namespace easy3d {
         virtual bool callback_event_scroll(double dx, double dy);
         virtual void callback_event_resize(int w, int h);
 
-        void draw_corner_axes() const;
-
         void draw_face_labels(Model* model, TextRenderer* texter, int font_id, const vec3& color) const;
         void draw_vertex_labels(Model* model, TextRenderer* texter, int font_id, const vec3& color) const;
-
-        void copy_view();
-        void paste_view();
-
-    protected:
-        void bind_command(const ViewerBase::Function& func, Model* model, Key key, Modifier modifier) override {
-            bind(Function([func](Viewer* viewer, Model* m) { return func(viewer, m); }), model, key, modifier);
-        }
-        bool read_scene_depth(int x, int y, const Camera& snapshot, float& depth) const override;
-        unsigned window_samples() const override { return samples_ > 1 ? unsigned(samples_) : 1u; }
-        bool snapshot_file(const std::string& f, float scale, int samples, int bg, bool expand) const override {
-            // Common snapshots are valid before the first interactive frame.
-            if (!initialized_) {
-                auto* host = const_cast<Viewer*>(this); host->init(); host->initialized_ = true;
-            }
-            return snapshot(f, scale, samples == 1 ? 0 : samples, bg, expand);
-        }
 
     private:
         std::shared_ptr<detail::GlfwRuntime> runtime_;
@@ -632,46 +748,25 @@ namespace easy3d {
         template<class Callback> static void dispatch_callback(GLFWwindow*, const Callback&) noexcept;
 
     protected:
-		GLFWwindow*	window_;
+
 		bool        should_exit_;
         float       dpi_scaling_;
-        int         width_;
-        int         height_;
 
-		std::string	title_;
-        std::unique_ptr<Camera> camera_;
-
-        std::unique_ptr<KeyFrameInterpolator> kfi_;
         bool    is_animating_;
-
-        std::string manual_;
-		std::string hint_; // shown in the top-left corner of the screen
-
-        int		samples_;	// the actual samples
 
 		bool	full_screen_;
 		bool	visible_;
-        vec4	background_color_;
 
 		// enable/disable event processing
 		bool	process_events_;
 		char    framerate_[48];       // show the frame rate
 
         std::unique_ptr<TextRenderer> texter_;
-        bool    show_easy3d_logo_;
 
 		// mouse
-		int		pressed_button_;    // for mouse drag
 		int		modifiers_;		    // for mouse drag
 		bool	drag_active_;	    // for mouse drag
-		int		mouse_current_x_;	// for mouse button and scroll events
-		int		mouse_current_y_;
-		int     mouse_pressed_x_;	// last pressed position
-		int     mouse_pressed_y_;
-		int     pressed_key_;
 
-		bool    show_pivot_point_;
-		bool    show_frame_rate_;
 
 		//----------------- viewer data -------------------
 
@@ -682,22 +777,12 @@ namespace easy3d {
         std::unique_ptr<LinesDrawable2D> drawable_pivot_;
 
         // camera path
-        bool	show_camera_path_;
-
-		std::vector< std::shared_ptr<Model> > models_;
-		int model_idx_;
 
         // drawables independent of any model
-        std::vector< std::shared_ptr<Drawable> > drawables_;
 
-        typedef std::pair<Function, Model*> FunctionModel;
-        std::map<Key, std::map<Modifier, FunctionModel> >  commands_;
-	};
-
+#endif
+};
 }
-
 #include <easy3d/viewer/multi_viewer.h>
 #include <easy3d/viewer/offscreen.h>
-#endif   // !EASY3D_HAS_VULKAN
-
-#endif	// EASY3D_VIEWER_VIEWER_H
+#endif // EASY3D_VIEWER_VIEWER_H

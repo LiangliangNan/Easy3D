@@ -15,7 +15,7 @@ using namespace easy3d;
 void require(bool value,const char* message) { if (!value) throw std::runtime_error(message); }
 void frame(CrossSection& viewer) {
     for (unsigned i=0;i<100;++i) {
-        VulkanViewer::poll_events(); if (viewer.draw_frame()) return;
+        Viewer::poll_events(); if (viewer.draw_frame()) return;
         glfwWaitEventsTimeout(.01);
     }
     throw std::runtime_error("cross-section viewer did not present");

@@ -15,7 +15,7 @@ int main() {
     try {
         initialize(false,false,false);Viewer host("OpenGL/Vulkan material reference");
         graphics::DeviceOptions options;options.validation=options.synchronization_validation=true;
-        VulkanOffScreen native(160,120,options);
+        OffScreen native(160,120,options);
         require(native.background_color()==setting::background_color,"offscreen background ignores shared settings");
         auto* camera=native.camera();camera->setType(Camera::ORTHOGRAPHIC);
         camera->setSceneBoundingBox(vec3(-1),vec3(1));camera->setViewDirection(vec3(0,0,-1));camera->showEntireScene();

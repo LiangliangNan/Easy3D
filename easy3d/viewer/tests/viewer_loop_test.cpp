@@ -3,10 +3,8 @@
 #include <easy3d/viewer/viewer.h>
 #ifdef EASY3D_TEST_OPENGL_VIEWER
 #include <easy3d/renderer/opengl.h>
-using TestHost = easy3d::Viewer;
-#else
-using TestHost = easy3d::VulkanViewer;
 #endif
+using TestHost = easy3d::Viewer;
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_triangles.h>
@@ -38,6 +36,11 @@ struct LoopViewer : TestHost {
     bool throw_init = false;
     void init() override {
         if (throw_init) throw std::runtime_error("expected initialization failure");
+        require(camera_.get() == camera() && &models_ == &models() && &drawables_ == &drawables(),
+                "subclass state is not the scene rendered by Viewer");
+        require(model_idx_ >= 0 && models_[size_t(model_idx_)].get() == current_model(),
+                "subclass current model state differs from the public API");
+        hint_ = "Shared Viewer subclass";
         ++initializations; TestHost::init();
     }
     unsigned before = 0, after = 0, ticks = 0, observed_ticks = 0, close_at = 0;

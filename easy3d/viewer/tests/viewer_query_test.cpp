@@ -36,7 +36,7 @@ std::shared_ptr<ViewerBase> make_host(unsigned samples, bool validation) {
         o.samples = samples;
         o.device.validation = validation;
         o.device.synchronization_validation = validation;
-        auto v = std::make_shared<VulkanViewer>("Portable camera queries", o.width, o.height, o.samples, false, o.visible, o.resizable, o.device);
+        auto v = std::make_shared<Viewer>("Portable camera queries", o.width, o.height, o.samples, false, o.visible, o.resizable, o.device);
         v->set_usage("");
         v->camera()->setViewDirection(vec3(0, 0, -1));
         v->camera()->setUpVector(vec3(0, 1, 0));

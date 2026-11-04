@@ -14,7 +14,7 @@ using namespace easy3d;
 void require(bool value,const char* message) { if (!value) throw std::runtime_error(message); }
 void frame(TutorialTextRendering& viewer) {
     for (unsigned i=0;i<100;++i) {
-        VulkanViewer::poll_events();
+        Viewer::poll_events();
         if (viewer.draw_frame()) return;
         glfwWaitEventsTimeout(0.01);
     }

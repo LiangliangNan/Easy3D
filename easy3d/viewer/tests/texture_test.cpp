@@ -19,12 +19,12 @@ template<class Function> void rejects(Function f) {
     try { f(); } catch (const std::exception&) { threw = true; }
     require(threw,"invalid texture/scalar input was accepted");
 }
-size_t pixel(const VulkanOffScreen& renderer, const graphics::FrameImage& frame, float x, float y) {
+size_t pixel(const OffScreen& renderer, const graphics::FrameImage& frame, float x, float y) {
     const auto p = renderer.camera()->projectedCoordinatesOf(vec3(x,y,0));
     require(p.x >= 0 && p.x < frame.width && p.y >= 0 && p.y < frame.height,"texture probe is offscreen");
     return size_t(p.y)*frame.width+size_t(p.x);
 }
-void probe_color(const VulkanOffScreen& renderer, const graphics::FrameImage& frame, float x, float y,
+void probe_color(const OffScreen& renderer, const graphics::FrameImage& frame, float x, float y,
            unsigned r, unsigned g, unsigned b) {
     const auto i = pixel(renderer,frame,x,y);
     require(frame.ids[i].object != UINT32_MAX,"texture probe missed geometry");
@@ -63,7 +63,7 @@ void tests(const graphics::DeviceOptions& options) {
     for (auto& worker:workers) worker.join();
     cached=concurrent[0];
     for (auto* result:concurrent) require(result && result==cached,"concurrent CPU cache requests created distinct textures");
-    VulkanOffScreen renderer(129,97,options);
+    OffScreen renderer(129,97,options);
     renderer.camera()->setType(Camera::ORTHOGRAPHIC);
     renderer.camera()->setViewDirection(vec3(0,0,-1));
     renderer.camera()->setUpVector(vec3(0,1,0));
