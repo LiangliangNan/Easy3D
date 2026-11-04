@@ -26,9 +26,9 @@
 
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/util/setting.h>
+#include <stdexcept>
 
 #ifndef EASY3D_HAS_VULKAN
-#include <stdexcept>
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/shader_manager.h>
@@ -59,7 +59,6 @@ namespace easy3d {
 
 
     void TrianglesDrawable::draw(const Camera *camera) const {
-        if (has_cpu_buffers()) throw std::logic_error("draw(camera) requires the OpenGL backend; submit CPU drawables through OffScreen");
         if (update_needed_ || vertex_buffer_ == 0) {
             const_cast<TrianglesDrawable *>(this)->update_buffers_internal();
             const_cast<TrianglesDrawable *>(this)->update_needed_ = false;
@@ -144,6 +143,10 @@ namespace easy3d {
         program->release();
     }
 
+#else
+    void TrianglesDrawable::draw(const Camera*) const {
+        throw std::logic_error("draw(camera) is unavailable in Vulkan; render through Viewer or OffScreen");
+    }
 #endif // EASY3D_HAS_VULKAN
 
 }

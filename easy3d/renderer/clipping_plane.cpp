@@ -87,3 +87,12 @@ namespace easy3d {
 
 
 }
+
+#ifdef EASY3D_HAS_VULKAN
+#include <stdexcept>
+namespace easy3d {
+void ClippingPlane::draw(const Camera*) const { throw std::logic_error("OpenGL clipping-plane drawing is unavailable in Vulkan"); }
+void ClippingPlane::set_program(ShaderProgram*) const { throw std::logic_error("OpenGL clipping-plane drawing is unavailable in Vulkan"); }
+void ClippingPlane::set_discard_primitives(ShaderProgram*, bool) const { throw std::logic_error("OpenGL clipping-plane drawing is unavailable in Vulkan"); }
+}
+#endif

@@ -82,10 +82,12 @@ namespace easy3d {
          */
         void update_vertex_buffer(const std::vector<vec2> &vertices, int width, int height, bool dynamic = false);
     private:
+        float line_width_ = 1.0f;
+#ifndef EASY3D_HAS_VULKAN
         void opengl_update_vertex_buffer(const std::vector<vec2>& ndc, bool dynamic);
         void opengl_release_line_resources();
-        float line_width_ = 1.0f;
         mutable unsigned int position_texture_ = 0, index_texture_ = 0, line_vao_ = 0;
+#endif
     };
 
 }

@@ -464,3 +464,43 @@ namespace easy3d { namespace shape {
     }
 
 } // namespace easy3d
+
+#ifdef EASY3D_HAS_VULKAN
+#include <stdexcept>
+namespace easy3d { namespace shape {
+void draw_quad_wire(const Rect &rect, const vec4 &color, int width, int height, float depth) {
+    throw std::logic_error("OpenGL shape drawing is unavailable in Vulkan");
+}
+void draw_quad_filled(const Rect &rect, const vec4 &color, int width, int height, float depth) {
+    throw std::logic_error("OpenGL shape drawing is unavailable in Vulkan");
+}
+void draw_quad_filled(const Rect &rect, unsigned int texture, int width, int height, float depth) {
+    throw std::logic_error("OpenGL shape drawing is unavailable in Vulkan");
+}
+void draw_full_screen_quad(unsigned int texture, float depth) {
+    throw std::logic_error("OpenGL shape drawing is unavailable in Vulkan");
+}
+void draw_depth_texture(const Rect &rect, unsigned int texture, int width, int height, float depth) {
+    throw std::logic_error("OpenGL shape drawing is unavailable in Vulkan");
+}
+void draw_quad(unsigned int positionAttrib, unsigned int texcoordAttrib, int x, int y, int w, int h,
+                       int vpw, int vph, float depth) {
+    throw std::logic_error("OpenGL shape drawing is unavailable in Vulkan");
+}
+void draw_full_screen_quad(unsigned int positionAttrib, unsigned int texcoordAttrib, float depth) {
+    throw std::logic_error("OpenGL shape drawing is unavailable in Vulkan");
+}
+void draw_polygon_wire(const Polygon2 &polygon, const vec4 &color, int width, int height, float depth) {
+    throw std::logic_error("OpenGL shape drawing is unavailable in Vulkan");
+}
+void draw_polygon_filled(const Polygon2 &polygon, const vec4 &color, int width, int height, float depth) {
+    throw std::logic_error("OpenGL shape drawing is unavailable in Vulkan");
+}
+void draw_sphere_big_circles(LinesDrawable *drawable, const mat4 &mvp, const mat4 &m, bool axes) {
+    throw std::logic_error("OpenGL shape drawing is unavailable in Vulkan");
+}
+void draw_box_wire(LinesDrawable *drawable, const mat4 &mvp, const mat4 &m, bool abstracted) {
+    throw std::logic_error("OpenGL shape drawing is unavailable in Vulkan");
+}
+} }
+#endif

@@ -118,8 +118,10 @@ namespace easy3d {
             *cpu_buffers_ = BufferData();
             cpu_buffers_->revision = revision;
         }
+#ifndef EASY3D_HAS_VULKAN
         if (vertex_buffer_ || color_buffer_ || normal_buffer_ || texcoord_buffer_ || element_buffer_)
             opengl_release_buffers();
+#endif
 
         num_vertices_ = 0;
         num_indices_ = 0;
@@ -129,7 +131,9 @@ namespace easy3d {
 
     void Drawable::disable_element_buffer() {
         if (cpu_buffers_) { cpu_buffers_->indices.clear(); cpu_buffers_->source_faces.clear(); ++cpu_buffers_->revision; }
+#ifndef EASY3D_HAS_VULKAN
         if (element_buffer_) opengl_disable_element_buffer();
+#endif
         num_indices_ = 0;
     }
 
@@ -164,37 +168,47 @@ namespace easy3d {
 
 
     void Drawable::update_vertex_buffer(const std::vector<vec3> &vertices, bool dynamic) {
-        if (cpu_buffers_) {
-            cpu_buffers_->vertices = vertices; cpu_buffers_->source_faces.clear();
-            ++cpu_buffers_->revision;
-            num_vertices_ = vertices.size();
-            bbox_.clear();
-            for (const auto& p : vertices) bbox_.grow(p);
-            return;
-        }
+#ifdef EASY3D_HAS_VULKAN
+        cpu_buffers_->vertices = vertices; cpu_buffers_->source_faces.clear();
+        ++cpu_buffers_->revision;
+        num_vertices_ = vertices.size();
+        bbox_.clear();
+        for (const auto& p : vertices) bbox_.grow(p);
+#else
         opengl_update_vertex_buffer(vertices, dynamic);
+#endif
     }
 
     void Drawable::update_color_buffer(const std::vector<vec3> &colors, bool dynamic) {
-        if (cpu_buffers_) { cpu_buffers_->colors = colors; ++cpu_buffers_->revision; return; }
+#ifdef EASY3D_HAS_VULKAN
+        cpu_buffers_->colors = colors; ++cpu_buffers_->revision;
+#else
         opengl_update_color_buffer(colors, dynamic);
+#endif
     }
 
     void Drawable::update_normal_buffer(const std::vector<vec3> &normals, bool dynamic) {
-        if (cpu_buffers_) { cpu_buffers_->normals = normals; ++cpu_buffers_->revision; return; }
+#ifdef EASY3D_HAS_VULKAN
+        cpu_buffers_->normals = normals; ++cpu_buffers_->revision;
+#else
         opengl_update_normal_buffer(normals, dynamic);
+#endif
     }
 
     void Drawable::update_texcoord_buffer(const std::vector<vec2> &texcoords, bool dynamic) {
-        if (cpu_buffers_) { cpu_buffers_->texcoords = texcoords; ++cpu_buffers_->revision; return; }
+#ifdef EASY3D_HAS_VULKAN
+        cpu_buffers_->texcoords = texcoords; ++cpu_buffers_->revision;
+#else
         opengl_update_texcoord_buffer(texcoords, dynamic);
+#endif
     }
 
     void Drawable::update_element_buffer(const std::vector<unsigned int> &indices) {
-        if (cpu_buffers_) {
-            cpu_buffers_->indices = indices; cpu_buffers_->source_faces.clear(); num_indices_ = indices.size(); ++cpu_buffers_->revision; return;
-        }
+#ifdef EASY3D_HAS_VULKAN
+        cpu_buffers_->indices = indices; cpu_buffers_->source_faces.clear(); num_indices_ = indices.size(); ++cpu_buffers_->revision;
+#else
         opengl_update_element_buffer(indices);
+#endif
     }
 
     void Drawable::update_element_buffer(const std::vector< std::vector<unsigned int> > &indices) {
@@ -249,3 +263,11 @@ namespace easy3d {
     }
 
 }
+
+#ifdef EASY3D_HAS_VULKAN
+namespace easy3d {
+void Drawable::gl_draw() const {
+    throw std::logic_error("gl_draw() is unavailable in Vulkan; render through Viewer or OffScreen");
+}
+}
+#endif

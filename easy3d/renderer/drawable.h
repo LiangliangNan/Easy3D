@@ -333,6 +333,7 @@ namespace easy3d {
         }
 
     private:
+#ifndef EASY3D_HAS_VULKAN
         void opengl_initialize();
         void opengl_release_buffers();
         void opengl_disable_element_buffer();
@@ -341,6 +342,7 @@ namespace easy3d {
         void opengl_update_normal_buffer(const std::vector<vec3>&, bool);
         void opengl_update_texcoord_buffer(const std::vector<vec2>&, bool);
         void opengl_update_element_buffer(const std::vector<unsigned int>&);
+#endif
 
     protected:
         // actual update of the rendering buffers are here

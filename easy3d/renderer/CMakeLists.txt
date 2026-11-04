@@ -79,7 +79,7 @@ list(APPEND renderer_sources
 )
 
 if(Easy3D_ENABLE_VULKAN)
-    list(APPEND renderer_sources backends/cpu/opengl_unavailable.cpp ${backend_sources})
+    list(APPEND renderer_sources ${backend_sources})
 else()
 list(APPEND renderer_headers
         framebuffer_object.h

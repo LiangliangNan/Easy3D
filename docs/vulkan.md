@@ -444,7 +444,8 @@ of this document.
   removes the private OpenGL selector; U6c consolidates renderer CMake class lists
   shared by both backends. U6d removes dual-build texture routing in favor of the
   original texture factories. U6e removes the redundant drawable buffer-mode switch
-  and restores the two-argument Renderer constructor. The inventory above is refreshed. Continue
+  and restores the two-argument Renderer constructor. U6f removes the catch-all
+  unavailable-OpenGL source and puts methods in their owning files. Continue
   the file-by-file responsibility audit and remove capability
   gates only when implementations exist. U5/API work remains open.
 - **W10** Mapple, Qt/wx, remaining Python API/tutorial coverage, transparency/SSAO/shadows/EDL parity.
@@ -4397,3 +4398,37 @@ standalone/custom drawables, model buffer refresh, shared point resources and GP
 selection, materials, MultiViewer, Tutorial 207 and packaged Python rendering.
 Source scans found no remaining `enable_cpu_buffers()` or Renderer buffer-mode
 argument/flag. `git diff --check` passed. Changes remain uncommitted on Easy3D-Vulkan.
+
+
+### 2026-11-04 — U6f: Remove the catch-all unavailable-OpenGL source
+
+Deleted `renderer/backends/cpu/opengl_unavailable.cpp`. Public unsupported Vulkan
+calls now have explicit implementations in their owning class files: point/line/
+triangle/2D drawable draw methods, Drawable's `gl_draw`, ClippingPlane's OpenGL
+shader/draw methods, and the legacy immediate shape drawing overloads in shape.cpp.
+Their `logic_error` behavior is retained; this does not imply immediate drawing or
+legacy shader API parity. Existing Vulkan command-based renderers are unchanged.
+
+The private OpenGL upload/initialization/release helpers are declared only in
+OpenGL builds, rather than exporting throw-only Vulkan definitions. Shared Drawable
+upload methods choose their implementation at compile time, and clear/element
+release skips OpenGL helpers in Vulkan builds. LinesDrawable2D's private OpenGL
+helpers and handle storage are also excluded from Vulkan. Removed obsolete
+OpenGL draw-time checks for the per-object CPU mode retired in U6e. There is no
+new helper file, backend selector, public API or rendering capability gate. Vulkan
+LinesDrawable2D has a smaller layout; clients must rebuild against these headers.
+
+Buffer snapshots/revisions, triangle provenance, point-resource sharing and
+selection stay intact. The remaining legacy shape/GUI/effects APIs still require
+actual Vulkan implementations before their tutorial branches can be unified;
+nine tutorials and W10 remain open.
+
+The renderer export comparison retained every existing public Easy3D symbol; the
+only nine removed Easy3D exports are private OpenGL helpers (eight on Drawable,
+one on LinesDrawable2D). Public unsupported entry points retain `logic_error`.
+
+Validation on this Mac: final complete builds including Python extensions passed
+for both backends. Full desktop suites passed **72/72 MoltenVK** and **40/40
+OpenGL**. Public export retention and removal of the nine private helpers were
+checked against the pre-change renderer library. `git diff --check` passed.
+Changes remain uncommitted on Easy3D-Vulkan; Linux/Windows were not exercised.
