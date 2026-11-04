@@ -86,20 +86,9 @@ namespace easy3d {
 		void pre_draw() override;
 
 		//  the widgets
-#ifndef EASY3D_HAS_VULKAN
-		void post_draw() override;
-#endif
 
 		void post_resize(int w, int h) override;
 
-#ifndef EASY3D_HAS_VULKAN
-		bool callback_event_cursor_pos(double x, double y) override;
-		bool callback_event_mouse_button(int button, int action, int modifiers) override;
-		bool callback_event_keyboard(int key, int action, int modifiers) override;
-		bool callback_event_character(unsigned int codepoint) override;
-		bool callback_event_scroll(double dx, double dy) override;
-
-#endif
 
         // Override to add widgets, then call ViewerImGui::draw_gui() to finish the frame.
         virtual void draw_gui();
@@ -121,9 +110,7 @@ namespace easy3d {
         ImGuiContext* context_ = nullptr;
 
 		float menu_height_ = 0;
-#ifdef EASY3D_HAS_VULKAN
         std::shared_ptr<const graphics::Image> font_image_;
-#endif
 	};
 
 }

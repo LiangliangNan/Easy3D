@@ -34,9 +34,9 @@
 #include <exception>
 #include <map>
 #include <chrono>
+#include <easy3d/renderer/render_device.h>
 #ifdef EASY3D_HAS_VULKAN
 #define EASY3D_TUTORIAL_USES_VULKAN 1
-#include <easy3d/renderer/render_device.h>
 #include <easy3d/renderer/camera.h>
 #else
 #define EASY3D_TUTORIAL_USES_VULKAN 0
@@ -44,6 +44,7 @@
 struct GLFWwindow;
 namespace easy3d {
 namespace detail { class GlfwRuntime; }
+namespace opengl { class OverlayRenderer; }
 namespace graphics { class TextLayoutEngine; }
 namespace vulkan { class KeyFrameInterpolatorRenderer; }
 class Camera;
@@ -68,6 +69,7 @@ struct VulkanOptions {
         int minor = 2;          // must >= 2
         int depth_bits = 24;
         int stencil_bits = 8;
+
     };
 
 #endif
@@ -499,8 +501,6 @@ public:
         PickResult pick(int x, int y) const;
         //@}
 
-#ifdef EASY3D_HAS_VULKAN
-    // Transitional Vulkan-only scene APIs (docs/vulkan.md, U1b).
     // Triangle annotations and HUD overlays. Their immutable
     // geometry/images are retained; MVPs are supplied by the caller (for example
     // graphics::screen_space_projection()). overlay_depth_test annotations test
@@ -508,7 +508,11 @@ public:
     // follow, then flat HUD overlays. Sort overlapping scene-depth annotations
     // back-to-front. None write scene depth/IDs.
     // Foreground UI draws after built-in HUD; ordinary overlays retain their order.
+    // OpenGL currently accepts unlit flat/scene-depth triangles; independent-depth
+    // and scene-depth-texture commands require Vulkan. Unsupported commands throw.
     void set_overlays(std::vector<graphics::DrawCommand> commands, bool foreground = false);
+#ifdef EASY3D_HAS_VULKAN
+    // Transitional Vulkan-only scene APIs (docs/vulkan.md, U1b).
     // Per-viewer world-space halfspaces, keeping dot(plane,vec4(world,1)) >= 0.
     // Empty disables this host's explicit planes. At most two finite,
     // nonzero-normal planes. An enabled shared ClippingPlane takes precedence.
@@ -776,6 +780,9 @@ protected:
 
         // drawables independent of any model
 
+        void draw_overlays(bool foreground) const;
+        std::unique_ptr<opengl::OverlayRenderer> overlay_renderer_;
+        mutable ivec4 overlay_tile_ = ivec4(0);
 #endif
 };
 }

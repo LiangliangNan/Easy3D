@@ -21,7 +21,6 @@ foreach(shader scene.vert scene.frag points.vert points.frag lines.vert lines.fr
     list(APPEND vulkan_shader_headers "${header}")
 endforeach()
 
-list(APPEND backend_sources render_device.cpp text_layout.cpp backends/clipping.cpp
+list(APPEND backend_sources backends/clipping.cpp
     backends/vulkan/render_device.cpp backends/vulkan/loader.cpp ${vulkan_shader_headers})
-list(APPEND backend_headers render_device.h text_layout.h)
 list(APPEND private_dependencies ${CMAKE_DL_LIBS})

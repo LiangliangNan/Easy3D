@@ -288,4 +288,15 @@ else()
     set_tests_properties(opengl.portablepick PROPERTIES LABELS desktop TIMEOUT 120)
 endif()
 
+add_executable(easy3d_overlay_viewer_test overlay_viewer_test.cpp
+    ../../tutorials/Tutorial_306_ImageViewer/viewer.cpp ../../tutorials/Tutorial_309_TextRendering/viewer.cpp)
+target_link_libraries(easy3d_overlay_viewer_test PRIVATE easy3d::viewer)
+if(Easy3D_ENABLE_VULKAN)
+    add_test(NAME vulkan.annotations COMMAND easy3d_overlay_viewer_test --validation)
+    set_tests_properties(vulkan.annotations PROPERTIES LABELS desktop TIMEOUT 120)
+else()
+    add_test(NAME opengl.annotations COMMAND easy3d_overlay_viewer_test)
+    set_tests_properties(opengl.annotations PROPERTIES LABELS desktop TIMEOUT 120)
+endif()
+
 include(../properties.cmake)

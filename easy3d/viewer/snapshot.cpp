@@ -191,17 +191,20 @@ namespace easy3d {
 				if (back_ground == 1)       // white
 					glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 				else if (back_ground == 2)  // transparent
-					glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
+					glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 				else                        // current color
 					glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
+                struct TileReset { ivec4& value;ivec4 old;~TileReset(){value=old;} } reset{overlay_tile_,overlay_tile_};
+                overlay_tile_=ivec4(i*sub_w,j*sub_h,w,h);
 				const_cast<Viewer*>(this)->draw();
                 // Scene annotations belong in snapshots; HUD callbacks do not.
                 if (show_camera_path_ && !kfi_->is_interpolation_started()) {
                     kfi_->draw_path(camera(), 2.0f);
                     kfi_->draw_cameras(camera(), camera()->sceneRadius() * 0.05f);
                 }
+                draw_overlays(true);
 
 				fbo->release();
 
@@ -239,6 +242,11 @@ namespace easy3d {
 		Pixel* pixels = image.data();
 		std::vector<unsigned char> data(reinterpret_cast<unsigned char*>(pixels), reinterpret_cast<unsigned char*>(pixels) + image.rows()* image.cols() * sizeof(Pixel));
 
+        // Alpha compositing over transparent black stores premultiplied RGB.
+        // ImageIO expects straight-alpha pixels, as in MultiViewer snapshots.
+        if(back_ground==2) for(size_t i=0;i<data.size();i+=4) if(data[i+3] && data[i+3]<255)
+            for(unsigned c=0;c<3;++c)
+                data[i+c]=static_cast<unsigned char>(std::min(255u,(unsigned(data[i+c])*255+data[i+3]/2)/data[i+3]));
 		return ImageIO::save(file_name, data, image.cols(), image.rows(), 4);
 	}
 

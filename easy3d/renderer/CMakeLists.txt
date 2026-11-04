@@ -44,6 +44,8 @@ list(APPEND renderer_headers
         manipulated_camera_frame.h
         manipulated_frame.h
         shape.h
+        render_device.h
+        text_layout.h
         buffer.h
         renderer.h
         state.h
@@ -69,6 +71,8 @@ list(APPEND renderer_sources
         manipulated_camera_frame.cpp
         manipulated_frame.cpp
         shape.cpp
+        render_device.cpp
+        text_layout.cpp
         buffer.cpp
         renderer.cpp
         state.cpp
@@ -97,6 +101,7 @@ list(APPEND renderer_headers
 list(APPEND renderer_sources
         backends/opengl/clipping_plane.cpp
         backends/opengl/drawable_buffers.cpp
+        backends/opengl/overlay_renderer.cpp
         backends/opengl/shape_draw.cpp
         backends/opengl/drawable_lines_2D.cpp
         framebuffer_object.cpp

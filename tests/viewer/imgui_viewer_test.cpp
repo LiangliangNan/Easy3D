@@ -7,9 +7,6 @@
 #include <easy3d/fileio/image_io.h>
 #include <easy3d/util/initializer.h>
 #include <3rd_party/imgui/imgui.h>
-#ifndef EASY3D_HAS_VULKAN
-#include <easy3d/renderer/opengl.h>
-#endif
 #define GLFW_INCLUDE_NONE
 #include <3rd_party/glfw/include/GLFW/glfw3.h>
 #include "test_window.h"
@@ -25,18 +22,7 @@ struct ImGuiViewer : ViewerImGui {
     char text[32] = {};
     ImGuiContext* context() const { return context_; }
     float bar_height() const { return menu_height_; }
-#ifndef EASY3D_HAS_VULKAN
-    std::vector<unsigned char> window_pixels;
-    void post_draw() override {
-        ViewerImGui::post_draw();
-        if (large_probe) {
-            window_pixels.resize(size_t(framebuffer_width())*framebuffer_height()*4);
-            GLint old_read;glGetIntegerv(GL_READ_BUFFER,&old_read);glReadBuffer(GL_BACK);
-            glReadPixels(0,0,framebuffer_width(),framebuffer_height(),GL_RGBA,GL_UNSIGNED_BYTE,window_pixels.data());
-            glReadBuffer(old_read);
-        }
-    }
-#endif
+
     void draw_gui() override {
         if (input) {
             ImGui::SetNextWindowPos(ImVec2(140,60),ImGuiCond_Always);
@@ -156,13 +142,7 @@ void run(bool validation) {
 #else
     const std::string large_file="opengl-imgui-large.png";
 #endif
-#ifdef EASY3D_HAS_VULKAN
     require(v.snapshot(large_file),"large GUI snapshot failed");
-#else
-    // Legacy file snapshots omit HUD callbacks. Inspect the rendered window instead.
-    require(ImageIO::save(large_file,v.window_pixels,v.framebuffer_width(),v.framebuffer_height(),4,true),
-            "large GUI window readback failed");
-#endif
     int iw=0,ih=0,channels=0;std::vector<unsigned char> pixels;
     require(ImageIO::load(large_file,pixels,iw,ih,channels,4,false),"GUI snapshot could not be decoded");
     const auto sentinel=(size_t(100*ih/v.height())*iw+size_t(50*iw/v.width()))*4;
@@ -171,10 +151,9 @@ void run(bool validation) {
     const auto clipped=(size_t(100*ih/v.height())*iw+size_t(110*iw/v.width()))*4;
     require(!(pixels[clipped]<3 && pixels[clipped+1]>250 && pixels[clipped+2]<3),
             "large GUI geometry escaped clipping");
-#ifdef EASY3D_HAS_VULKAN
     const auto before_snapshot=v.camera()->modelViewProjectionMatrix();
     for(float scale:{.5f,1.5f,2.0f}) {
-        const auto name="vulkan-imgui-scaled-"+std::to_string(scale)+".png";
+        const auto name="imgui-scaled-"+std::to_string(scale)+".png";
         require(v.snapshot(name,scale,1),"scaled GUI snapshot failed");
         require(ImageIO::load(name,pixels,iw,ih,channels,4,false),"scaled GUI output could not be decoded");
         const auto p=(size_t(100*ih/v.height())*iw+size_t(50*iw/v.width()))*4;
@@ -183,7 +162,6 @@ void run(bool validation) {
         require(!(pixels[q]<3 && pixels[q+1]>250 && pixels[q+2]<3),"scaled GUI clip rectangle leaked");
         require(same(before_snapshot,v.camera()->modelViewProjectionMatrix()),"GUI file output changed the live camera");
     }
-#endif
     v.large_probe=false;
 #ifdef EASY3D_HAS_VULKAN
     v.cover_logo=true;require(v.draw_frame(),"GUI foreground frame failed");

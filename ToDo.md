@@ -9,13 +9,13 @@
   - [x] Unify `point_under_pixel()`: Viewer and MultiViewer inherit the sole ViewerBase implementation;
         logical window coordinates, fresh scene-only depth, exact framebuffer pixel centers. Native callers,
         Python bindings and tests use the unified contract without explicit base-qualified calls.
+  - [x] Shared annotations on both backends; Tutorials 202/306/309 share image, text and GUI presentation.
   - [ ] Finish Tutorial 405 guide-rendering unification; selection, drag handling and cancellation are shared.
   - [x] W1-W3 docs sync; build blockers (single home for tutorials, enable_testing, bounded tutorial tests); Tutorial 208
   - [x] W4 Delete runtime-selection/headless leftovers (Backend enum, ViewerOptions, create_*_viewer, ...)
-  - [ ] W5 Remove EASY3D_TUTORIAL_USES_VULKAN (tutorial selector still used by Tutorial 207, 306, 309,
-        403, 404, 405 and 506; Tutorials 401/402 use shared visible-surface picking on 2026-11-04;
+  - [ ] W5 Remove EASY3D_TUTORIAL_USES_VULKAN (tutorial selector still used by Tutorial 207, 403, 404, 405 and 506; Tutorials 401/402 use shared visible-surface picking on 2026-11-04;
         plus the shared viewer.h macro and the two viewer tests)
-  - [ ] W6 Mac: OpenGL 82/82; MoltenVK 109/109 (2026-11-04, W5 batch 3; prior intermittent window-test timeout remains under observation); Linux baseline 68/69 still needs the interactionoverlay border check
+  - [ ] W6 Mac: OpenGL 83/83; MoltenVK 110/110 (2026-11-04, W5 batch 4; prior intermittent window-test timeout remains under observation); Linux baseline 68/69 still needs the interactionoverlay border check
   - Top priority (docs/vulkan.md, "Migration principles"): minimal source changes; same class names and the same
     .h/.cpp files as the main branch (Viewer in viewer.h/.cpp for both backends); #ifdef EASY3D_HAS_VULKAN layout inside
     the classes; no new files except shaders, backend files and tests; minimal CMake changes; client code unchanged.
@@ -23,7 +23,7 @@
   - [x] U2 OffScreen/MultiViewer unified; snapshot.cpp restored; Tutorial 205 and FigureMaker enabled
   - [x] U3 Classes without counterpart: same-file #ifdef structure (effects, pickers, ImGui)
   - [x] U4 Python bindings, installed package and CI use the final names (full Mac builds/rendering)
-  - [ ] U5 Tutorials/applications: U5a cleanup, U5b collision, U5c camera paths and U5d Vulkan ImGui/Tutorial 202 done; Tutorials 401/402 use shared visible-surface picking; 7 tutorials still use the selector
+  - [ ] U5 Tutorials/applications: U5a cleanup, U5b collision, U5c camera paths and U5d Vulkan ImGui/Tutorial 202 done; Tutorials 401/402 use shared visible-surface picking; 5 tutorials still use the selector
   - [ ] U6 In progress: shared smoke harness, inventory, drawable constructor homes, shared renderer CMake lists, texture factories, drawable buffer policy unavailable-method ownership and root test consolidation done; remaining file audit/gates open
   - [ ] W10 Mapple, Qt/wx, remaining Python coverage, transparency/SSAO/shadows/EDL
 

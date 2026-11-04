@@ -30,9 +30,6 @@
 #include <easy3d/util/file_system.h>
 #include <easy3d/core/point_cloud.h>
 #include <easy3d/core/surface_mesh.h>
-#ifndef EASY3D_HAS_VULKAN
-#include <easy3d/renderer/text_renderer.h>
-#endif
 #include <easy3d/renderer/camera.h>
 
 #define GLFW_INCLUDE_NONE
@@ -41,9 +38,6 @@
 #include <3rd_party/imgui/misc/fonts/imgui_fonts_droid_sans.h>
 #include <3rd_party/imgui/imgui.h>
 #include <3rd_party/imgui/backends/imgui_impl_glfw.h>
-#ifndef EASY3D_HAS_VULKAN
-#include <3rd_party/imgui/backends/imgui_impl_opengl3.h>
-#endif
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
@@ -81,10 +75,6 @@ namespace easy3d {
         if (!context_) return;
         set_callbacks({});
         ImGui::SetCurrentContext(context_);
-#ifndef EASY3D_HAS_VULKAN
-        glfwMakeContextCurrent(window());
-        if (ImGui::GetIO().BackendRendererUserData) ImGui_ImplOpenGL3_Shutdown();
-#endif
         if (ImGui::GetIO().BackendPlatformUserData) ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext(context_);
 
@@ -102,10 +92,9 @@ namespace easy3d {
 
 			context_ = ImGui::CreateContext();
 
-#ifdef EASY3D_HAS_VULKAN
-            if (!ImGui_ImplGlfw_InitForVulkan(window(), true))
+            if (!ImGui_ImplGlfw_InitForOther(window(), true))
                 throw std::runtime_error("could not initialize ImGui GLFW backend");
-            ImGui::GetIO().BackendRendererName = "Easy3D Vulkan overlays";
+            ImGui::GetIO().BackendRendererName = "Easy3D annotations";
             ImGui::GetIO().BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset;
             ViewerCallbacks inputs;
             const auto mouse = [this]() { ImGui::SetCurrentContext(context_); return ImGui::GetIO().WantCaptureMouse; };
@@ -119,11 +108,6 @@ namespace easy3d {
             inputs.key_release_event = inputs.key_press_event;
             inputs.char_input_event = [keyboard](ViewerBase*,unsigned) { return keyboard(); };
             set_callbacks(std::move(inputs));
-#else
-            const char* glsl_version = "#version 150";
-			ImGui_ImplGlfw_InitForOpenGL(window_, true);
-			ImGui_ImplOpenGL3_Init(glsl_version);
-#endif
 			ImGuiIO& io = ImGui::GetIO();
             io.WantCaptureKeyboard = true;
             io.WantTextInput = true;
@@ -152,16 +136,12 @@ namespace easy3d {
 		io.Fonts->Clear();
         io.Fonts->AddFontFromMemoryCompressedTTF(droid_sans_compressed_data, droid_sans_compressed_size, static_cast<float>(font_size) * dpi_scaling());
 		io.FontGlobalScale = 1.0f / pixel_ratio();
-#ifdef EASY3D_HAS_VULKAN
         unsigned char* pixels; int w, h;
         io.Fonts->GetTexDataAsRGBA32(&pixels, &w, &h);
         graphics::Sampler sampler; sampler.filter = graphics::TextureFilter::linear;
         font_image_ = std::make_shared<graphics::Image>(w, h,
             std::vector<unsigned char>(pixels, pixels + size_t(w)*h*4), sampler);
         io.Fonts->SetTexID(ImTextureID(reinterpret_cast<uintptr_t>(font_image_.get())));
-#else
-        ImGui_ImplOpenGL3_DestroyDeviceObjects();
-#endif
 	}
 
 
@@ -174,66 +154,13 @@ namespace easy3d {
 	}
 
 
-#ifndef EASY3D_HAS_VULKAN
-    bool ViewerImGui::callback_event_cursor_pos(double x, double y) {
-        if (!context_) return Viewer::callback_event_cursor_pos(x, y);
-        ImGui::SetCurrentContext(context_);
-		if (ImGui::GetIO().WantCaptureMouse)
-			return true;
-		return Viewer::callback_event_cursor_pos(x, y);
-	}
-
-
-    bool ViewerImGui::callback_event_mouse_button(int button, int action, int modifiers) {
-        if (!context_) return Viewer::callback_event_mouse_button(button, action, modifiers);
-        ImGui::SetCurrentContext(context_);
-		if (ImGui::GetIO().WantCaptureMouse)
-			return true;
-		return Viewer::callback_event_mouse_button(button, action, modifiers);
-	}
-
-
-    bool ViewerImGui::callback_event_keyboard(int key, int action, int modifiers) {
-        if (!context_) return Viewer::callback_event_keyboard(key, action, modifiers);
-        ImGui::SetCurrentContext(context_);
-		if (ImGui::GetIO().WantCaptureKeyboard || ImGui::IsPopupOpen(nullptr,ImGuiPopupFlags_AnyPopup))
-            return true;
-		return Viewer::callback_event_keyboard(key, action, modifiers);
-	}
-
-
-    bool ViewerImGui::callback_event_character(unsigned int codepoint) {
-        if (!context_) return Viewer::callback_event_character(codepoint);
-        ImGui::SetCurrentContext(context_);
-		if (ImGui::GetIO().WantCaptureKeyboard || ImGui::IsPopupOpen(nullptr,ImGuiPopupFlags_AnyPopup))
-			return true;
-		return Viewer::callback_event_character(codepoint);
-	}
-
-
-    bool ViewerImGui::callback_event_scroll(double dx, double dy) {
-        if (!context_) return Viewer::callback_event_scroll(dx, dy);
-        ImGui::SetCurrentContext(context_);
-		if (ImGui::GetIO().WantCaptureMouse)
-			return true;
-		return Viewer::callback_event_scroll(dx, dy);
-	}
-
-
-
-#endif
-
     void ViewerImGui::pre_draw() {
         ImGui::SetCurrentContext(context_);
         ImGui_ImplGlfw_NewFrame();
         if (std::abs(ImGui::GetIO().FontGlobalScale - 1.0f/pixel_ratio()) > 1e-4f) reload_font();
-#ifndef EASY3D_HAS_VULKAN
-        ImGui_ImplOpenGL3_NewFrame();
-#endif
         ImGui::NewFrame();   
 
         Viewer::pre_draw();
-#ifdef EASY3D_HAS_VULKAN
         draw_gui();
         const auto* data = ImGui::GetDrawData();
         const ImVec2 scale = data->FramebufferScale, origin = data->DisplayPos;
@@ -274,7 +201,6 @@ namespace easy3d {
             }
         }
         set_overlays(std::move(commands), true);
-#endif
     }
 
 
@@ -295,12 +221,7 @@ namespace easy3d {
 			ImGui::End();
 		}
 
-#ifdef EASY3D_HAS_VULKAN
-        // Keep the bar above the built-in viewer logo/hints.
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(5, 0));
-#else
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(5, 8));
-#endif
         if (ImGui::BeginMainMenuBar())
 		{
             draw_menu_file();
@@ -318,39 +239,6 @@ namespace easy3d {
         ImGui::Render();
     }
 
-#ifndef EASY3D_HAS_VULKAN
-    void ViewerImGui::post_draw() {
-        draw_gui();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData()); 
-
-        // workaround to draw the Easy3D logo and framerate at a different location (due to the menu bar)
-        auto show_logo = show_easy3d_logo_;
-        auto show_fps = show_frame_rate_;
-        show_easy3d_logo_ = false;
-        show_frame_rate_ = false;
-        Viewer::post_draw();
-        show_easy3d_logo_ = show_logo;
-        show_frame_rate_ = show_fps;
-
-        // draw Easy3D logo (on the right side)
-        if (texter_) {
-            const float font_size = 15.0f;
-            const float offset_x = (width() - texter_->string_width("Easy3D", font_size) - 50.0f) * dpi_scaling();
-            if (show_easy3d_logo_) {
-                const float offset_y = (20.0f + menu_height_) * dpi_scaling();
-                texter_->draw("Easy3D", offset_x, offset_y, font_size, 0);
-            }
-
-            // draw the framerate
-            if (show_frame_rate_) {
-                const float offset_y = (50.0f + menu_height_) * dpi_scaling();
-                texter_->draw(framerate_, offset_x, offset_y, font_size, 1);
-            }
-        }
-	}
-
-
-#endif
 
     void ViewerImGui::draw_menu_file() {
         if (ImGui::BeginMenu("File"))

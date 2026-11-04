@@ -322,7 +322,7 @@ Decisions in force:
 | 2. Align constructors, hooks, state | merged into U1 |
 | 3. `VulkanMultiViewer` | merged into U2 |
 | 4. Remove runtime selection | done (W4) |
-| 5. Tutorials on the shared API | in progress: GLFW Tutorial 202 now builds on Vulkan; effect tutorials 501–505 remain gated, and Qt/wx integration remains W10; Tutorials 401/402 use shared visible-surface picking (2026-11-04); `EASY3D_TUTORIAL_USES_VULKAN` remains in `viewer.h` and in the other conditional tutorials (207, 306, 309, 403, 404, 405, 506) |
+| 5. Tutorials on the shared API | in progress: GLFW Tutorial 202 now builds on Vulkan; effect tutorials 501–505 remain gated, and Qt/wx integration remains W10; Tutorials 401/402 use shared visible-surface picking (2026-11-04); `EASY3D_TUTORIAL_USES_VULKAN` remains in `viewer.h` and in the other conditional tutorials (207, 403, 404, 405, 506) |
 | 6. Renderer, interaction, GUI/application parity | pending (W10) |
 
 Divergence audit (updated at U6b, 2026-11-04), against local `main` at
@@ -372,9 +372,10 @@ of this document.
   gated in `tutorials/CMakeLists.txt`: 501–505 require effect implementations (W10).
   Native Qt/wx integration remains W10.
   Tutorial 202 now builds on both backends (U5d); Tutorials 401/402 use shared
-  visible-surface picking (2026-11-04). The seven remaining tutorials with separate
-  renderer/picker/capture code behind the macro are 207, 306, 309, 403, 404, 405 and
-  506; see U5.
+  visible-surface picking (2026-11-04). Tutorials 306/309 now use shared annotations
+  (W5 batch 4). The five remaining
+  tutorials with separate renderer/picker/capture code behind the macro are 207,
+  403, 404, 405 and 506; see U5.
 - **W6** (in progress) Run the Vulkan tests. Verified on Linux (GCC 13, Mesa lavapipe
   25.2.8, Xvfb), Vulkan tree with tutorials and tests, on upstream `a89bb2d` plus the
   fixes above (re-run 2026-10-31): 13 of 13 display-free and 55 of 56 desktop tests pass, including all 28
@@ -449,7 +450,7 @@ of this document.
   U5d implements the Vulkan ImGui counterpart and enables Tutorial 202.
   W5 batch 3 consolidates surface queries in ViewerBase and shares Tutorial 405's
   selection/drag lifecycle; its guide rendering still needs a shared counterpart.
-  The seven remaining conditional tutorials still require
+  The five remaining conditional tutorials still require
   renderer/picker/capture API work; the tutorial macro is not yet removable. Avoid
   new generic Viewer abstractions solely for a single tutorial.
 - **U6** (in progress) U6a moves bounded tutorial tests out of tutorial CMake and
@@ -465,7 +466,7 @@ of this document.
 - **W10** Mapple, Qt/wx, remaining Python API/tutorial coverage, transparency/SSAO/shadows/EDL parity.
 
 U1–U4 are complete. Continue U5 and independent U6 source/build cleanup in
-small verified batches, then finish W10 feature parity; re-run the tests after each.
+larger coherent, verified batches, then finish W10 feature parity; re-run the tests after each.
 
 ### 1. Enforce CMake backend choice and establish explicit counterparts — completed
 
@@ -4665,3 +4666,57 @@ Tutorial 405 interaction, native input and window rendering. Vulkan/synchronizat
 validation is enabled by the existing test harness. The prior intermittent native
 window timeout did not recur in this batch; it is not claimed resolved.
 `git diff --check` is clean.
+
+
+### 2026-11-04 — W5 batch 4: shared image, text and ImGui presentation
+
+The existing `Viewer::set_overlays()` API now has an OpenGL counterpart. A
+context-owned helper in `renderer/backends/opengl/overlay_renderer.h/.cpp` realizes
+immutable triangle/image commands and caches their buffers, textures and shader
+until commands change. OpenGL-specific calls stay in that backend. The shared CPU
+geometry/image definitions and font layout now compile under either backend;
+Vulkan device and loader sources remain exclusive to Vulkan builds.
+
+Tutorials 306 and 309 now use their existing native triangle/image/font-layout
+implementations on both backends. Their alternate OpenGL implementations, state
+and tutorial selectors are removed. Tutorial 202 also uses one annotation draw-list
+path and the shared input-capture callbacks: its OpenGL ImGui renderer calls,
+duplicate event overrides and special post-draw implementation are removed. The
+GLFW platform backend initializes in graphics-API-independent mode. Constructor
+options retain the configured backend's type. Logos and usage hints remain enabled
+by default.
+
+OpenGL annotations support unlit flat and scene-depth-tested triangles, straight
+alpha blending, vertex colors, texture sampling, viewport/scissor clipping and
+foreground GUI ordering. They do not write scene depth or picking IDs. Independent
+depth HUDs, lighting and scene-depth-texture commands still require Vulkan and are
+explicitly rejected by the OpenGL counterpart. These remaining capabilities must
+be implemented before their tutorial gates can be removed; no runtime backend
+selection or OpenGL/Vulkan coexistence is introduced.
+
+Viewer and MultiViewer include annotations in file snapshots. Enlarged OpenGL
+snapshots use full-image annotation coordinates across their existing tiles;
+foreground commands render without invoking application HUD callbacks. Transparent
+OpenGL snapshots clear to transparent black and convert composited pixels to
+straight alpha on export, matching the existing MultiViewer convention.
+
+The new root `tests/viewer/overlay_viewer_test.cpp` checks both backends: 0.5x/1x/
+1.5x/2x tiled output, alpha, transparent export, texture orientation/UVs, Unicode
+font-atlas rendering, scene query/picking exclusion, MultiViewer ordinary and
+foreground snapshots, image zoom/drop/resize and text controls. OpenGL checks
+include active texture, unpack buffers/pixel-store settings, viewport, depth/color
+state and sampler-binding restoration. Existing ImGui tests now verify large draw
+lists and scaled/clipped file snapshots through the same API on both backends.
+
+Remaining conditional tutorials: 207, 403, 404, 405 and 506. Tutorial 405's shared
+interaction is retained; guide-rendering unification is still open. The original
+TextRenderer/Texture APIs and GUI/effect migrations remain separate work items;
+these shared annotation consumers do not mark those classes feature-complete.
+
+
+Validation on this Mac: complete OpenGL and Vulkan builds succeed, including Python
+packaging. All 83 OpenGL tests and all 110 MoltenVK tests pass; the new exact scaled
+clip-edge check also passes on both backends. Native Vulkan tests use the existing
+validation/synchronization-validation harness. OpenGL text and scaled ImGui output
+were visually inspected. The prior intermittent window timeout did not recur.
+`git diff --check` is clean. Changes remain on `Easy3D-Vulkan` without a commit.

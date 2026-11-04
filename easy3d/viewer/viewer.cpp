@@ -1181,6 +1181,8 @@ bool Viewer::drop_event(const std::vector<std::string>& names) {
 
 #else // OpenGL
 
+#include <easy3d/renderer/backends/opengl/overlay_renderer.h>
+
 #include <cmath>
 #include <limits>
 
@@ -1764,6 +1766,7 @@ float Viewer::dpi_scaling() const { return dpi_scaling_; }
         drawable_axes_.reset();
         drawable_pivot_.reset();
         texter_.reset();
+        overlay_renderer_.reset();
 
         clear_scene();
 
@@ -2845,6 +2848,7 @@ float Viewer::dpi_scaling() const { return dpi_scaling_; }
         // ------- draw the axes indicating the orientation of the model  ----------
 
         draw_corner_axes();
+        draw_overlays(true);
     }
 
 
@@ -3013,6 +3017,7 @@ float Viewer::dpi_scaling() const { return dpi_scaling_; }
 
         // draw the clipping plane (not in postDraw so it can be effective when taking snapshots)
         ClippingPlane::instance()->draw(camera()); easy3d_debug_log_gl_error
+        draw_overlays(false);
         return true;
     }
 
@@ -3194,6 +3199,20 @@ void query_draw(const Drawable *drawable, const Camera &camera) {
         throw std::invalid_argument("unsupported drawable in scene depth query");
 }
 } // namespace
+void Viewer::set_overlays(std::vector<graphics::DrawCommand> commands,bool foreground) {
+    QueryContext context(window_);
+    QueryState state;state.prepare(framebuffer_width(),framebuffer_height());
+    if(!overlay_renderer_) overlay_renderer_.reset(new opengl::OverlayRenderer);
+    overlay_renderer_->set(std::move(commands),foreground);
+    update();
+}
+void Viewer::draw_overlays(bool foreground) const {
+    if(!overlay_renderer_) return;
+    QueryState state;
+    GLint viewport[4];glGetIntegerv(GL_VIEWPORT,viewport);
+    state.prepare(viewport[2],viewport[3]);glViewport(viewport[0],viewport[1],viewport[2],viewport[3]);
+    overlay_renderer_->draw(foreground,framebuffer_width(),framebuffer_height(),overlay_tile_);
+}
 Viewer::PickResult Viewer::pick(int x, int y) const {
     PickResult result;
     const int fw=framebuffer_width(), fh=framebuffer_height();

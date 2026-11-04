@@ -331,6 +331,7 @@ bool MultiViewer::mouse_press_event(int x,int y,int button,int modifiers) {
         // draw the division of views
         if (drawable_division_->is_visible())
             drawable_division_->draw(camera());
+        draw_overlays(false);
         return true;
     }
 
@@ -392,14 +393,14 @@ bool MultiViewer::snapshot(const std::string& file,float scale,int count,int bg,
     if(!initialized_) { self->init(); self->initialized_=true; }
     const int w=int(std::ceil(framebuffer_width()*double(scale))),h=int(std::ceil(framebuffer_height()*double(scale)));
     const mat4 original=camera()->projectionMatrix();const bool active=snapshot_active_;
-    const double near=camera()->zNear();const double far=camera()->zFar();float x,y;
-    if(camera()->type()==Camera::PERSPECTIVE) {y=float(near*std::tan(camera()->fieldOfView()*.5));x=float(y*camera()->aspectRatio());}
+    const double z_near=camera()->zNear(), z_far=camera()->zFar();float x,y;
+    if(camera()->type()==Camera::PERSPECTIVE) {y=float(z_near*std::tan(camera()->fieldOfView()*.5));x=float(y*camera()->aspectRatio());}
     else camera()->getOrthoWidthHeight(x,y);
     const double output_aspect=(double(w)/num_cols_)/(double(h)/num_rows_);
     if((expand && output_aspect>double(x)/y) || (!expand && output_aspect<double(x)/y)) x=float(output_aspect*y);
     else y=float(x/output_aspect);
     self->camera()->set_projection_matrix(camera()->type()==Camera::PERSPECTIVE
-        ? transform::frustum(-x,x,-y,y,float(near),float(far)) : transform::ortho(-x,x,-y,y,float(near),float(far)));
+        ? transform::frustum(-x,x,-y,y,float(z_near),float(z_far)) : transform::ortho(-x,x,-y,y,float(z_near),float(z_far)));
     snapshot_active_=true;bool result=false;
 #ifdef EASY3D_HAS_VULKAN
     try {result=Viewer::snapshot(file,scale,count,bg,expand);}
@@ -415,7 +416,7 @@ bool MultiViewer::snapshot(const std::string& file,float scale,int count,int bg,
         for(int r=0;r<num_rows_;++r) for(int c=0;c<num_cols_;++c) {auto vp=cell_bounds(r,c,num_rows_,num_cols_,w,h);vp.y=h-vp.y-vp.w;self->views_[r][c].viewport=vp;}
         glViewport(0,0,w,h);const vec4 color=bg==0?background_color():bg==1?vec4(1):vec4(0);
         glClearColor(color.x,color.y,color.z,color.w);glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
-        self->draw();target.release();
+        self->draw();self->draw_overlays(true);target.release();
         if(bg==2) {
             std::vector<unsigned char> rgba;
             if(target.read_color(0,rgba,GL_RGBA,true)) {
