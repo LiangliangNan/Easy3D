@@ -698,13 +698,7 @@ bool Viewer::draw_frame() {
     if (window_host_->error) std::rethrow_exception(window_host_->error);
     return drawn;
 }
-void Viewer::advance_camera_path() {
-    if (!kfi_->is_interpolation_started()) return;
-    const auto now=std::chrono::steady_clock::now();
-    if (now<next_camera_path_frame_) return;
-    kfi_->advance_interpolation();
-    next_camera_path_frame_=now+std::chrono::milliseconds(kfi_->interpolation_period());
-}
+
 void Viewer::update_camera_path_overlays() const {
     std::vector<graphics::DrawCommand> commands;
     if (show_camera_path_ && !kfi_->is_interpolation_started()) {
@@ -2086,8 +2080,10 @@ float Viewer::dpi_scaling() const { return dpi_scaling_; }
         } else if (key == GLFW_KEY_K && modifiers == MODIF_CTRL) { // play the path
             if (kfi_->is_interpolation_started())
                 kfi_->stop_interpolation();
-            else
-                kfi_->start_interpolation();
+            else {
+                kfi_->start_manual_interpolation();
+                next_camera_path_frame_ = std::chrono::steady_clock::now();
+            }
         } else if (key == GLFW_KEY_T && modifiers == MODIF_CTRL) {
             show_camera_path_ = !show_camera_path_;
             if (show_camera_path_) {
@@ -2353,6 +2349,7 @@ float Viewer::dpi_scaling() const { return dpi_scaling_; }
             if (callback_error_) std::rethrow_exception(callback_error_);
             if (should_close()) return false;
         }
+        advance_camera_path();
         notify_pre_draw();
         if (callback_error_) std::rethrow_exception(callback_error_);
         if (should_close()) return false;
@@ -3241,3 +3238,13 @@ void Viewer::draw_scene_depth(const Camera& snapshot) const {
 } // namespace easy3d
 
 #endif   // !EASY3D_HAS_VULKAN
+
+namespace easy3d {
+void Viewer::advance_camera_path() {
+    if (!kfi_->is_interpolation_started()) return;
+    const auto now=std::chrono::steady_clock::now();
+    if (now<next_camera_path_frame_) return;
+    kfi_->advance_interpolation();
+    next_camera_path_frame_=now+std::chrono::milliseconds(kfi_->interpolation_period());
+}
+} // namespace easy3d

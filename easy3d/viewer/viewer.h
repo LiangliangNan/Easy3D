@@ -653,6 +653,9 @@ protected:
     bool show_pivot_point_ = false;
     typedef std::pair<Function, Model*> FunctionModel;
     std::map<Key, std::map<Modifier, FunctionModel> >  commands_;
+private:
+    std::chrono::steady_clock::time_point next_camera_path_frame_;
+    void advance_camera_path();
 #ifdef EASY3D_HAS_VULKAN
     // Keep this part of code minimum
 private:
@@ -663,8 +666,6 @@ private:
     int render_width_ = 0, render_height_ = 0;
     bool animation_enabled_ = false;
     std::unique_ptr<vulkan::KeyFrameInterpolatorRenderer> camera_path_renderer_;
-    std::chrono::steady_clock::time_point next_camera_path_frame_;
-    void advance_camera_path();
     void update_camera_path_overlays() const;
     void restore_scene_bounds();
     bool zoom_region_ = false;

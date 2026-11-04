@@ -29,17 +29,16 @@ int main(int argc,char**) {
     try {
         initialize(false,false,false);
         TestWindow options; options.width=800; options.height=600;
-        // Synthetic key callbacks should not compete with desktop focus/input.
-        // Navigation itself is exercised separately by vulkan.window.
-        options.visible=false;
         options.device.validation=options.device.synchronization_validation=argc>1;
         TutorialTextRendering viewer("Native text viewer test"); set_size(viewer, options);
+        block_navigation_input(viewer);
         require(viewer.add_model(resource::directory()+"/data/sphere.obj")!=nullptr,"could not load tutorial sphere");
         viewer.fit_screen();
         if (viewer.device().supported_sample_counts()&4) viewer.set_samples(4);
         // Drain initial show/HiDPI callbacks before taking a pixel-exact baseline.
         frame(viewer); frame(viewer);
         const auto baseline=viewer.capture();
+        const auto camera_matrix=viewer.camera()->modelViewProjectionMatrix();
         auto key=glfwSetKeyCallback(viewer.window(),nullptr); glfwSetKeyCallback(viewer.window(),key);
         auto press=[&](int code) { key(viewer.window(),code,0,GLFW_PRESS,0); frame(viewer); };
         for (const auto pair: {std::pair<int,int>{GLFW_KEY_EQUAL,GLFW_KEY_MINUS},
@@ -53,6 +52,9 @@ int main(int argc,char**) {
             same_picking(baseline,edited);
             press(pair.second);
             const auto restored=viewer.capture();
+            const auto current_matrix=viewer.camera()->modelViewProjectionMatrix();
+            for (unsigned i=0;i<16;++i)
+                require(std::abs(camera_matrix[i]-current_matrix[i])<1e-6f,"text shortcuts changed the camera");
             require(restored.width==baseline.width && restored.height==baseline.height,
                     "window resized during text shortcut comparison");
             unsigned differences=0,maximum=0;

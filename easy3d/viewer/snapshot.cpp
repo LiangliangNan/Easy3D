@@ -43,6 +43,7 @@ bool Viewer::snapshot(const std::string& filename, float scaling, int samples,
 }
 #else
 #include <easy3d/renderer/framebuffer_object.h>
+#include <easy3d/renderer/key_frame_interpolator.h>
 #include <easy3d/renderer/opengl.h>
 #define GLFW_INCLUDE_NONE
 #include <3rd_party/glfw/include/GLFW/glfw3.h>
@@ -196,6 +197,11 @@ namespace easy3d {
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 				const_cast<Viewer*>(this)->draw();
+                // Scene annotations belong in snapshots; HUD callbacks do not.
+                if (show_camera_path_ && !kfi_->is_interpolation_started()) {
+                    kfi_->draw_path(camera(), 2.0f);
+                    kfi_->draw_cameras(camera(), camera()->sceneRadius() * 0.05f);
+                }
 
 				fbo->release();
 

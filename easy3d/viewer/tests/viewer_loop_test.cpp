@@ -10,6 +10,9 @@ using TestHost = easy3d::Viewer;
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/key_frame_interpolator.h>
+#include <easy3d/renderer/manipulated_camera_frame.h>
+#include <thread>
 #include <easy3d/fileio/image_io.h>
 #include <easy3d/util/initializer.h>
 #define GLFW_INCLUDE_NONE
@@ -33,6 +36,8 @@ struct LoopViewer : TestHost {
     explicit LoopViewer(bool validation) : LoopViewer(options(validation)) {}
     explicit LoopViewer(const TestWindow& o) : TestHost("Frame loop", o.width, o.height, o.samples, false, o.visible, o.resizable, o.device) { manual_.clear(); }
 #endif
+    KeyFrameInterpolator& path() { return *kfi_; }
+    void guides(bool visible) { show_camera_path_ = visible; }
     unsigned initializations = 0;
     bool throw_init = false;
     void init() override {
@@ -84,6 +89,56 @@ void scene(LoopViewer& viewer) {
     faces->set_uniform_coloring(vec4(.8f, .2f, .1f, 1)); faces->set_lighting(false);
     viewer.camera()->setViewDirection(vec3(0, 0, -1)); viewer.camera()->setUpVector(vec3(0, 1, 0));
     viewer.fit_screen();
+}
+void camera_playback(bool validation) {
+    LoopViewer viewer(validation);
+    scene(viewer);
+    const auto observer = viewer.camera()->position();
+    Frame first(*viewer.camera()->frame()), last(first);
+    first.setPosition(observer + vec3(1,0,0));
+    last.setPosition(observer + vec3(2,0,0));
+    require(viewer.path().add_keyframe(first,0) && viewer.path().add_keyframe(last,.002f), "path fixture failed");
+    unsigned applied = 0;
+    const auto caller = std::this_thread::get_id();
+    viewer.path().frame_interpolated.connect([&] {
+        require(std::this_thread::get_id() == caller, "viewer path advanced outside its frame thread");
+        ++applied;
+    });
+    viewer.key_press_event(Viewer::KEY_K, Viewer::MODIF_CTRL);
+    std::this_thread::sleep_for(std::chrono::milliseconds(45));
+    require(viewer.path().is_interpolation_started() && applied == 0 && viewer.camera()->position() == observer,
+            "viewer path advanced without a frame");
+    one_frame(viewer);
+    require(applied == 1 && viewer.camera()->position() == first.position(), "first path sample was not applied");
+    require(viewer.snapshot("frame-loop-camera-path.png",1,1) && applied == 1,
+            "snapshot advanced the live camera path");
+    viewer.key_press_event(Viewer::KEY_K, Viewer::MODIF_CTRL);
+    std::this_thread::sleep_for(std::chrono::milliseconds(45));
+    one_frame(viewer);
+    require(!viewer.path().is_interpolation_started() && applied == 1 && viewer.camera()->position() == first.position(),
+            "paused viewer path advanced");
+    viewer.key_press_event(Viewer::KEY_K, Viewer::MODIF_CTRL);
+    one_frame(viewer);
+    require(applied == 2 && viewer.camera()->position() == last.position() && !viewer.path().is_interpolation_started(),
+            "resumed viewer path did not finish at its last sample");
+    viewer.key_press_event(Viewer::KEY_D, Viewer::MODIF_ALT);
+    require(viewer.path().number_of_keyframes() == 0, "viewer path deletion failed");
+    viewer.camera()->setPosition(observer);
+    first.setPosition(vec3(-.4f,0,.5f)); last.setPosition(vec3(.4f,0,.5f));
+    viewer.path().add_keyframe(first,0); viewer.path().add_keyframe(last,.1f);
+    bool found = false;
+    const auto surface = static_cast<const ViewerBase&>(viewer).point_under_pixel(viewer.width()/2,viewer.height()/2,found);
+    require(found, "camera-path depth fixture missed the mesh");
+    viewer.guides(true);
+    require(viewer.snapshot("frame-loop-path-visible.png",1,1), "visible path snapshot failed");
+    const auto guided = static_cast<const ViewerBase&>(viewer).point_under_pixel(viewer.width()/2,viewer.height()/2,found);
+    require(found && distance(surface,guided)<1e-4f, "camera path annotation changed the scene query");
+    viewer.guides(false);
+    require(viewer.snapshot("frame-loop-path-hidden.png",1,1), "hidden path snapshot failed");
+    std::vector<unsigned char> visible, hidden; int w,h,c;
+    require(ImageIO::load("frame-loop-path-visible.png",visible,w,h,c,4,false) &&
+            ImageIO::load("frame-loop-path-hidden.png",hidden,w,h,c,4,false) && visible!=hidden,
+            "camera path guides are missing from file snapshots");
 }
 void same_camera(const mat4& a, const mat4& b) {
     for (unsigned i = 0; i < 16; ++i) require(std::abs(a[i] - b[i]) < 1e-6f, "bounded execution changed the camera");
@@ -212,7 +267,7 @@ int main(int argc, char**) {
             catch (const std::invalid_argument&) { rejected = true; }
             require(rejected, "invalid signed Viewer constructor input was accepted");
         }
-        exercise(argc > 1); callback_failure(argc > 1);
+        exercise(argc > 1); callback_failure(argc > 1); camera_playback(argc > 1);
         std::cout << "PASS: common frame loop, exact budgets, refresh, animation, run(bool), camera, resize, failure containment\n";
     } catch (const std::exception& e) { std::cerr << "FAIL: " << e.what() << '\n'; return 1; }
 }

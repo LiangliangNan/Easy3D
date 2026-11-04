@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include <tutorials/Tutorial_206_CameraInterpolation/viewer.h>
 #include <easy3d/renderer/key_frame_interpolator.h>
+#include <easy3d/renderer/backends/vulkan/key_frame_interpolator.h>
 #include <easy3d/renderer/manipulated_camera_frame.h>
 #include <easy3d/util/initializer.h>
 #include <easy3d/util/resource.h>
@@ -19,7 +20,8 @@ void same_picking(const graphics::FrameImage& a,const graphics::FrameImage& b) {
 }
 struct PathViewer : TutorialCameraInterpolation {
     using TutorialCameraInterpolation::TutorialCameraInterpolation;
-    KeyFrameInterpolator& path() {return *interpolator_;}
+    KeyFrameInterpolator& path() {return *kfi_;}
+    void guides(bool visible) { show_camera_path_ = visible; }
     bool has_usage() const {return hint_.find("Press 'k'")!=std::string::npos;}
 };
 void core_playback() {
@@ -67,9 +69,9 @@ int main(int argc,char**) {
         for (unsigned count:{1u,4u}) {
             if (!(v.device().supported_sample_counts()&count)) continue;v.set_samples(count);
             require(v.draw_frame(),"camera-guide frame failed");const auto guides=v.capture();
-            v.set_overlays({});const auto plain=v.capture();same_picking(guides,plain);
+            v.guides(false);v.draw_frame();const auto plain=v.capture();same_picking(guides,plain);
             require(guides.rgba!=plain.rgba,"camera markers/path were not visible");
-            v.draw_frame();require(v.capture().rgba==guides.rgba,"stationary guide rendering changed");
+            v.guides(true);v.draw_frame();require(v.capture().rgba==guides.rgba,"stationary guide rendering changed");
         }
         vulkan::KeyFrameInterpolatorRenderer renderer;
         const auto a=renderer.draw_path(v.path(),*v.camera());const auto b=renderer.draw_path(v.path(),*v.camera());
@@ -86,7 +88,7 @@ int main(int argc,char**) {
         press(GLFW_KEY_SPACE);v.draw_frame();require(v.camera()->position()!=paused,"resume did not apply next sample");
         press(GLFW_KEY_K);require(!v.path().is_interpolation_started() && v.path().number_of_keyframes()==4,"path edit did not stop playback");
         press(GLFW_KEY_D);require(v.path().number_of_keyframes()==0 && !v.path().is_interpolation_started(),"D did not delete path");
-        v.draw_frame();const auto cleared=v.capture();v.set_overlays({});require(v.capture().rgba==cleared.rgba,"deleted path left stale markers");
+        v.draw_frame();const auto cleared=v.capture();v.guides(false);v.draw_frame();require(v.capture().rgba==cleared.rgba,"deleted path left stale markers");
         press(GLFW_KEY_SPACE);require(!v.path().is_interpolation_started(),"empty tutorial path started");
         v.resize(610,440);Viewer::poll_events();v.draw_frame();
         require(v.device().validation_errors()==0,"camera path validation errors");

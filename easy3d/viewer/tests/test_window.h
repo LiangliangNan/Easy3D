@@ -7,25 +7,46 @@
 #ifdef EASY3D_HAS_VULKAN   // Vulkan tests only; the shared tests build this header in both configurations
 #define GLFW_INCLUDE_NONE
 #include <3rd_party/glfw/include/GLFW/glfw3.h>
+#include <cmath>
+#include <stdexcept>
 
 namespace easy3d {
 // Window and device settings of a test. The viewer constructors take them as separate parameters.
 struct TestWindow {
-    unsigned int width = 800, height = 600, samples = 1;
+    int width = 800, height = 600, samples = 1;
     bool visible = true, resizable = true;
     VulkanOptions device;
 };
 
-// Resizes a viewer and waits until the window system has applied it (the request is asynchronous).
+// Single-view tests need both the framebuffer callback and camera resize to settle
+// before a capture. Logical window-size acknowledgement alone is asynchronous.
 inline void set_size(Viewer& v, const TestWindow& w) {
-    v.resize(static_cast<int>(w.width), int(w.height));
+    int old_width, old_height, old_fw, old_fh;
+    v.viewer_size(old_width, old_height); v.framebuffer_size(old_fw, old_fh);
+    if (old_width<=0 || old_height<=0 || old_fw<=0 || old_fh<=0)
+        throw std::runtime_error("initial test window has no framebuffer");
+    const int expected_fw=int(std::lround(double(w.width)*old_fw/old_width));
+    const int expected_fh=int(std::lround(double(w.height)*old_fh/old_height));
+    v.resize(w.width, w.height);
     for (int i = 0; i < 300; ++i) {
         Viewer::poll_events();
-        int width = 0, height = 0;
-        v.viewer_size(width, height);
-        if (width == int(w.width) && height == int(w.height)) return;
+        int width, height, fw, fh;
+        v.viewer_size(width, height); v.framebuffer_size(fw, fh);
+        if (width==w.width && height==w.height && std::abs(fw-expected_fw)<=1 && std::abs(fh-expected_fh)<=1 &&
+            v.camera()->screenWidth()==fw && v.camera()->screenHeight()==fh) return;
         glfwWaitEventsTimeout(.01);
     }
+    throw std::runtime_error("test window/framebuffer/camera resize did not settle");
+}
+
+// Pixel comparisons control their camera explicitly. Keep the original visible
+// tutorial and its synthetic hover/keys, but consume unrelated desktop navigation.
+inline void block_navigation_input(Viewer& v) {
+    ViewerCallbacks inputs;
+    inputs.mouse_press_event=[](ViewerBase*,int,int,int,int) { return true; };
+    inputs.mouse_drag_event=[](ViewerBase*,int,int,int,int,int,int) { return true; };
+    inputs.mouse_scroll_event=[](ViewerBase*,int,int,int,int) { return true; };
+    v.set_callbacks(std::move(inputs));
 }
 }
 #endif   // EASY3D_HAS_VULKAN

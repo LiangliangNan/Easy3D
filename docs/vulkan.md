@@ -313,7 +313,7 @@ Decisions in force:
 | 2. Align constructors, hooks, state | merged into U1 |
 | 3. `VulkanMultiViewer` | merged into U2 |
 | 4. Remove runtime selection | done (W4) |
-| 5. Tutorials on the shared API | in progress: all tutorials except 202 and 501–505 build in the Vulkan tree; those six are gated in `tutorials/CMakeLists.txt`; `EASY3D_TUTORIAL_USES_VULKAN` remains in `viewer.h` and 10 tutorials (206, 207, 306, 309, 401–405, 506) |
+| 5. Tutorials on the shared API | in progress: all tutorials except 202 and 501–505 build in the Vulkan tree; those six are gated in `tutorials/CMakeLists.txt`; `EASY3D_TUTORIAL_USES_VULKAN` remains in `viewer.h` and 9 tutorials (207, 306, 309, 401–405, 506) |
 | 6. Renderer, interaction, GUI/application parity | pending (W10) |
 
 Divergence audit (updated at U6b, 2026-11-04), against local `main` at
@@ -434,8 +434,9 @@ of this document.
   backend conditionals as shared APIs become usable. U5a removes redundant constructors
   and the remaining branches in Tutorials 301, 307, 308 and 603; Tutorial 402 now has
   one file-loading override signature. U5b shares Tutorial 406's frame-driven collision
-  controller across both builds, retiring its detached OpenGL timer. The 10 remaining
-  tutorials still require
+  controller across both builds, retiring its detached OpenGL timer. U5c reuses the
+  built-in camera path for Tutorial 206 and shares frame-driven playback in Viewer.
+  The 9 remaining tutorials still require
   renderer/picker/capture API work; the tutorial macro is not yet removable. Avoid
   new generic Viewer abstractions solely for a single tutorial.
 - **U6** (in progress) U6a moves bounded tutorial tests out of tutorial CMake and
@@ -4218,3 +4219,64 @@ Validation on this Mac (Apple M4 Pro, MoltenVK), 2026-11-04:
   attachment diagnostic remains outside this API cleanup.
 
 Work stayed on Easy3D-Vulkan, preserving the checkout; no commit was made.
+
+
+### 2026-11-04 — U5c: Tutorial 206 on the existing Viewer camera path
+
+Tutorial 206 now uses Viewer's existing protected `kfi_` and path-visibility state.
+Its original key-recording and scene-bounds logic is retained; Space delegates to
+the existing Ctrl-K controller. The separate interpolator owner, Vulkan renderer,
+clock, pre-draw/draw overrides and all backend conditionals are removed from its
+header/source. Viewer owns playback, guide rendering and destruction. The tutorial
+retains K/Space/D controls and its usage hint. No new public Viewer API or helper
+file was introduced.
+
+The existing `advance_camera_path()` and deadline field are shared between both
+Viewer implementations. OpenGL's Ctrl-K now starts manual interpolation, stepped
+at the same frame boundary as Vulkan, rather than starting a detached timer that
+changes the camera concurrently with rendering. Pause/resume retains sample position;
+playback applies the first sample on the next frame and stops at its endpoint.
+The generic renderer KeyFrameInterpolator's explicit timer API is unchanged.
+
+OpenGL file snapshots include visible, paused camera-path guides explicitly, without
+calling HUD/frame callbacks. Window guide drawing stays in its existing post-draw
+location, preserving MultiViewer/subclass behavior. This retains Tutorial 206's
+saved-guide behavior after removing its custom draw override. Fresh scene-depth
+queries still exclude the guides. Vulkan continues using its existing annotation
+renderer and shared scene-resource caches.
+
+The existing two-backend viewer-loop regression now checks frame-thread signal
+execution, no advancement during idle waits or snapshots, pause/resume/endpoints,
+guide visibility in saved images and unchanged surface queries. The Vulkan tutorial
+camera-path regression uses the shared built-in path and still checks registered
+K/Space/D events, guide/cache stability, MSAA depth/IDs and deletion/resize. Its
+backend renderer probe includes its own implementation header explicitly rather
+than relying on the tutorial to expose it.
+
+Tutorial 206 has no backend conditionals; nine tutorials still use the selector.
+U5/U6/W10 remain open. Next steps continue the remaining renderer/picker/capture
+contracts and the source responsibility audit, preserving signed-int constructors,
+override cleanup and the single configure-time backend choice.
+
+Validation on this Mac (Apple M4 Pro, MoltenVK), 2026-11-04:
+
+- Complete builds, including Python extensions, passed for both backends.
+- Final full suites passed: **72/72 Vulkan**, **40/40 OpenGL**. Vulkan build
+  libraries and test executables were unchanged throughout the final test run.
+- Installed Viewer/MultiViewer and OffScreen consumers rebuilt and ran for both
+  configurations with Vulkan discovery disabled; the native Vulkan consumer passed.
+- Earlier runs exposed unstable visible-window tests: text restoration compared
+  images after unrelated camera navigation, and depth comparisons could begin
+  before framebuffer/camera resize completion. The existing test resize helper now
+  waits for logical, physical and camera sizes together and reports timeout. The
+  three affected tests consume navigation input while retaining visible windows,
+  keyboard controls and hover handling. Text restoration also checks the camera
+  matrix. No tutorial constructor or production interaction was changed for tests.
+- One earlier run also aborted a picking executable because a shared library was
+  unavailable; a build-library timestamp changed during that run. Its cause was not
+  established. Build/install/test steps were serialized for final validation, and
+  the final Vulkan run verified unchanged executable/library metadata.
+- `git diff --check` passed. Linux/Windows execution was not performed. The existing
+  MoltenVK integer-attachment diagnostic remains outside this change.
+
+Work stayed on Easy3D-Vulkan; no commit was made.

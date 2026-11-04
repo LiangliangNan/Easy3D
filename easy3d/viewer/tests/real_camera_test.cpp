@@ -72,6 +72,7 @@ int main(int argc,char**) {
         TestWindow options;options.visible=false;options.width=500;options.height=420;
         options.device.validation=options.device.synchronization_validation=argc>1;
         RealCameraViewer v("Native real camera",root+"bundle.out",root+"pointcloud.ply"); set_size(v, options);
+        block_navigation_input(v);
         require(v.models().size()==1 && v.hint().find("corresponding 3D ray")!=std::string::npos,"scene/usage hint missing");
         const auto bare=v.capture();frame(v);const auto initial=v.capture();same_picking(bare,initial);
         require(bare.rgba!=initial.rgba,"image inset missing");image_pixels(v,initial,root+"images/0000.jpg");

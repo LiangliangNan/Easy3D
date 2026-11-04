@@ -28,15 +28,6 @@
 #define EASY3D_TUTORIAL_CAMERA_INTERPOLATION_H
 
 #include <easy3d/viewer/viewer.h>
-#if EASY3D_TUTORIAL_USES_VULKAN
-#include <easy3d/renderer/backends/vulkan/key_frame_interpolator.h>
-#include <chrono>
-#endif
-
-
-namespace easy3d {
-    class KeyFrameInterpolator;
-}
 
 // This tutorial shows how to interpolate camera frames to
 // animate model exploration.
@@ -45,24 +36,10 @@ class TutorialCameraInterpolation : public easy3d::Viewer
 {
 public:
     explicit TutorialCameraInterpolation(const std::string& title);
-    ~TutorialCameraInterpolation() override;
-    
+    ~TutorialCameraInterpolation() override = default;
+
 protected:
     bool key_press_event(int key, int modifiers) override;
-#if EASY3D_TUTORIAL_USES_VULKAN
-    void pre_draw() override;
-#else
-    bool draw() override;
-#endif
-
-protected:
-    easy3d::KeyFrameInterpolator* interpolator_;
-#if EASY3D_TUTORIAL_USES_VULKAN
-private:
-    easy3d::vulkan::KeyFrameInterpolatorRenderer path_renderer_;
-    std::chrono::steady_clock::time_point next_frame_;
-#endif
 };
-
 
 #endif // EASY3D_TUTORIAL_CAMERA_INTERPOLATION_H
