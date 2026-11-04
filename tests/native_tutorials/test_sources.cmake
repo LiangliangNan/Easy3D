@@ -27,6 +27,7 @@ endif()
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/tests/native_tutorials")
 foreach(tutorial
         Tutorial_201_Viewer_default
+        Tutorial_202_Viewer_imgui
         Tutorial_205_MultiView
         Tutorial_206_CameraInterpolation
         Tutorial_207_RealCamera
@@ -71,6 +72,9 @@ foreach(tutorial
     endif()
     target_compile_definitions(${test_target} PRIVATE EXAMPLE_TITLE="${tutorial}")
     target_link_libraries(${test_target} PRIVATE easy3d::viewer easy3d::gui)
+    if(tutorial STREQUAL "Tutorial_202_Viewer_imgui")
+        target_link_libraries(${test_target} PRIVATE 3rd_imgui)
+    endif()
     set_target_properties(${test_target} PROPERTIES FOLDER "tests")
     add_test(NAME ${test_name} COMMAND ${test_target} --frames 3)
     set_tests_properties(${test_name} PROPERTIES LABELS desktop TIMEOUT 120

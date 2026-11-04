@@ -27,9 +27,6 @@
 #ifndef EASY3D_TUTORIAL_VIEWER_IMGUI_H
 #define EASY3D_TUTORIAL_VIEWER_IMGUI_H
 
-#ifdef EASY3D_HAS_VULKAN
-// No Vulkan counterpart yet.
-#else
 
 
 #include <easy3d/viewer/viewer.h>
@@ -58,7 +55,7 @@ namespace easy3d {
          * @param full_screen Whether to use a fullscreen window.
          * @param visible Whether the window is initially visible.
          * @param resizable Whether the viewer can be resized by the user.
-         * @param options OpenGL context settings.
+         * @param options Backend device/context settings.
          */
         explicit ViewerImGui(
             const std::string& title = "Easy3D ViewerImGui",
@@ -68,7 +65,11 @@ namespace easy3d {
             bool full_screen = false,
             bool visible = true,
             bool resizable = true,
+#ifdef EASY3D_HAS_VULKAN
+            const VulkanOptions& options = {}
+#else
             const OpenGLOptions& options = {}
+#endif
         );
 
         /**
@@ -85,16 +86,23 @@ namespace easy3d {
 		void pre_draw() override;
 
 		//  the widgets
+#ifndef EASY3D_HAS_VULKAN
 		void post_draw() override;
+#endif
 
 		void post_resize(int w, int h) override;
 
+#ifndef EASY3D_HAS_VULKAN
 		bool callback_event_cursor_pos(double x, double y) override;
 		bool callback_event_mouse_button(int button, int action, int modifiers) override;
 		bool callback_event_keyboard(int key, int action, int modifiers) override;
 		bool callback_event_character(unsigned int codepoint) override;
 		bool callback_event_scroll(double dx, double dy) override;
 
+#endif
+
+        // Override to add widgets, then call ViewerImGui::draw_gui() to finish the frame.
+        virtual void draw_gui();
         void draw_menu_file();
         void draw_menu_view();
 
@@ -105,18 +113,19 @@ namespace easy3d {
 
 		float widget_scaling() { return dpi_scaling() / pixel_ratio(); }
 
-		// We don't need a per-window font. So this function is static
+		// Rebuild the font atlas for this viewer.
 		void  reload_font(int font_size = 16);
 
 	protected:
-		// Single global context by default, but can be overridden by the user
-		static ImGuiContext *	context_;
+		// Each viewer owns its UI context.
+        ImGuiContext* context_ = nullptr;
 
-		float menu_height_;
+		float menu_height_ = 0;
+#ifdef EASY3D_HAS_VULKAN
+        std::shared_ptr<const graphics::Image> font_image_;
+#endif
 	};
 
 }
-
-#endif // EASY3D_HAS_VULKAN
 
 #endif	// EASY3D_TUTORIAL_VIEWER_IMGUI_H

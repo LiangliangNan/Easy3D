@@ -312,7 +312,7 @@ Decisions in force:
 | 2. Align constructors, hooks, state | merged into U1 |
 | 3. `VulkanMultiViewer` | merged into U2 |
 | 4. Remove runtime selection | done (W4) |
-| 5. Tutorials on the shared API | in progress: all tutorials except 202 and 501–505 build in the Vulkan tree; those six are gated in `tutorials/CMakeLists.txt`; `EASY3D_TUTORIAL_USES_VULKAN` remains in `viewer.h` and 9 tutorials (207, 306, 309, 401–405, 506) |
+| 5. Tutorials on the shared API | in progress: GLFW Tutorial 202 now builds on Vulkan; effect tutorials 501–505 remain gated, and Qt/wx integration remains W10; `EASY3D_TUTORIAL_USES_VULKAN` remains in `viewer.h` and 9 tutorials (207, 306, 309, 401–405, 506) |
 | 6. Renderer, interaction, GUI/application parity | pending (W10) |
 
 Divergence audit (updated at U6b, 2026-11-04), against local `main` at
@@ -358,12 +358,11 @@ of this document.
   `backend()`/`fallback_reason()`, `create_vulkan_viewer`/`create_opengl_viewer`, the
   installed-consumer test's use of them, the Python `Backend` binding and the demo's
   fallback message. The two viewer tests no longer take a `Backend` or `--opengl`.
-- **W5** (in progress) Remove `EASY3D_TUTORIAL_USES_VULKAN`. Six tutorials are gated in
-  `tutorials/CMakeLists.txt`; re-checked on 2026-10-31 after the unified `draw()` hook:
-  501–505 now fail only on the protected `models_`/`camera_` state (U1) and then need the
-  effects (W10); 202 fails because the ImGui headers are not in the Vulkan build (W10).
-  Tutorials 401–406 still contain a separate Vulkan implementation behind the macro and
-  depend on picker parity (W10).
+- **W5** (in progress) Remove `EASY3D_TUTORIAL_USES_VULKAN`. Five effect tutorials remain
+  gated in `tutorials/CMakeLists.txt`: 501–505 require effect implementations (W10).
+  Native Qt/wx integration remains W10.
+  Tutorial 202 now builds on both backends (U5d). Nine tutorials still have separate
+  renderer/picker/capture code behind the macro; see U5.
 - **W6** (in progress) Run the Vulkan tests. Verified on Linux (GCC 13, Mesa lavapipe
   25.2.8, Xvfb), Vulkan tree with tutorials and tests, on upstream `a89bb2d` plus the
   fixes above (re-run 2026-10-31): 13 of 13 display-free and 55 of 56 desktop tests pass, including all 28
@@ -418,12 +417,12 @@ of this document.
   `snapshot.cpp`. Tutorial 205 and FigureMaker are enabled for both backends with
   their existing source unchanged. Shared-camera cells support viewport/scissor,
   MSAA, picking, input and scaled/transparent snapshots; see the U2 validation below.
-- **U3** (implemented) The legacy effects, GUI pickers and tutorial `ViewerImGui`
-  retain their original files with whole-class/source backend branches (P3). Vulkan
-  branches are empty where no counterpart exists. Effect sources and the `gui` target
-  are built/exported in both configurations; OpenGL dependencies and third-party
-  ImGui remain conditional. This is source/package structure, not effect/picker
-  feature parity; see the U3 classification below.
+- **U3** (implemented) The legacy effects and GUI pickers retain their original files with whole-class/
+  source backend branches (P3). Vulkan branches are empty where no counterpart
+  exists. Effect sources and the `gui` target are built/exported in both builds.
+  Tutorial `ViewerImGui` now has both counterparts (U5d); ImGui core/GLFW build in
+  both configurations and its OpenGL renderer remains conditional. Effect/picker
+  feature parity remains open; see the U3 classification below.
 - **U4** (implemented) Python Viewer/MultiViewer constructors, callbacks and scene
   storage bindings follow the unified classes; both complete extensions build and
   render on macOS. The deployed-package regression runs in CTest and the two-backend
@@ -435,6 +434,7 @@ of this document.
   one file-loading override signature. U5b shares Tutorial 406's frame-driven collision
   controller across both builds, retiring its detached OpenGL timer. U5c reuses the
   built-in camera path for Tutorial 206 and shares frame-driven playback in Viewer.
+  U5d implements the Vulkan ImGui counterpart and enables Tutorial 202.
   The 9 remaining tutorials still require
   renderer/picker/capture API work; the tutorial macro is not yet removable. Avoid
   new generic Viewer abstractions solely for a single tutorial.
@@ -4432,3 +4432,78 @@ for both backends. Full desktop suites passed **72/72 MoltenVK** and **40/40
 OpenGL**. Public export retention and removal of the nine private helpers were
 checked against the pre-change renderer library. `git diff --check` passed.
 Changes remain uncommitted on Easy3D-Vulkan; Linux/Windows were not exercised.
+
+
+### 2026-11-04 — U5d/W10: Vulkan ImGui counterpart and Tutorial 202
+
+Tutorial 202 is enabled in both builds, with its original main unchanged. ViewerImGui
+now has the same constructor shape and default options as Viewer, selecting only
+`VulkanOptions` versus `OpenGLOptions` at compile time. The public class remains in
+its original tutorial files. Existing File/Open/Save/Quit, View/Snapshot and
+Help/About widgets share one `draw_gui()` implementation. Subclasses can override
+that hook to add widgets before calling the base implementation to finish the frame.
+
+Vulkan uses ImGui's GLFW platform backend and the existing shared Viewer callbacks
+for mouse/keyboard capture. The font atlas is retained as an immutable image. Draw
+lists become textured/color triangle overlay commands, including index/vertex
+offsets, draw callbacks and per-command clipping. Each clipped command uses an
+existing viewport and a corresponding local screen projection; there is no new
+render-device field, render pass or shader. The existing native `set_overlays()`
+accepts an optional foreground flag: GUI menus draw after built-in HUD, while
+ordinary image/annotation overlays retain their original order. No new Viewer
+function is added. External clients must rebuild for this setter signature change. GUI overlays retain
+MSAA color while leaving scene depth and picking IDs untouched. Viewer scales
+recorded overlay clip viewports for file output while retaining their NDC transforms;
+this also applies to other client overlays. Tests cover 0.5x, 1.5x and 2x snapshots
+and unchanged live camera matrices. Font scale tracks
+framebuffer ratio changes. Native menus use compact vertical padding so the default
+Easy3D logo remains unobscured. OpenGL retains its renderer backend and logo placement.
+
+Each ViewerImGui owns its context; destruction before the first frame is safe.
+OpenGL input handlers also tolerate a window shown before ImGui initialization,
+and teardown makes its GL context current and removes owned input callbacks.
+Open menus capture keyboard input even when WantCaptureKeyboard is false, fixing
+Escape leaking through to Viewer's close action on both backends. ImGui core/GLFW
+now build in both configurations, while its OpenGL renderer source is compiled only
+for OpenGL. The Vulkan tutorial executable has no OpenGL load-time dependency, and
+the Vulkan ImGui archive contains no OpenGL renderer object.
+
+The adapter intentionally supports the tutorial's font atlas, not arbitrary external
+ImTextureID handles. Unknown texture IDs report an explicit error. It is a native
+counterpart for this GLFW tutorial, not completion of Qt/wx/Mapple integration or a
+general-purpose toolkit plugin. This keeps backend integration in the original
+ViewerImGui implementation without adding generic tutorial-only viewer machinery.
+
+A new shared desktop regression covers actual File-menu mouse events, Escape,
+UTF-8 text entry, captured and uncaptured Viewer input, a partially clipped colored
+primitive, a draw list crossing the 16-bit vertex-index boundary, foreground GUI
+coverage over the logo, one-/four-sample scene depth/ID invariance, resize, saved UI
+output and
+repeated initialized/uninitialized context lifetimes. OpenGL GUI pixels are verified
+from the window before swap; its original scene-only file snapshots remain unchanged.
+Tutorial 202 is also added to
+the existing bounded three-frame smoke harness for both backends. Five effect
+tutorials (501–505) remain gated; nine other tutorials still use the selector.
+
+Validation on this Mac (Apple M4 Pro/MoltenVK), 2026-11-04:
+
+- Complete builds including Python extensions passed for both configured backends.
+- Final full suites passed **74/74 Vulkan** and **42/42 OpenGL**, including the
+  new three-frame Tutorial 202 smoke and shared interactive ImGui regression.
+- Focused final GUI/smoke checks passed 2/2 per backend. During stabilization the
+  GUI regression also passed three consecutive runs on each backend. Synthetic
+  input uses explicit frame boundaries and synchronizes focus, cursor-enter and
+  actual cursor position before clicks; the GL test explicitly shows its window,
+  matching normal run() behavior. Earlier failures exposed the Escape and
+  pre-initialization input bugs described above, as well as test cursor/focus timing.
+- Inspected Vulkan and OpenGL GUI images. Pixel assertions check clipping and the
+  large-list sentinel; Vulkan checks foreground coverage, scaled output, unchanged
+  camera matrices, MSAA, scene depth and picking IDs. Vulkan validation error
+  counters remain zero; the pre-existing MoltenVK integer-attachment diagnostic
+  remains outside this batch.
+- Checked the Vulkan tutorial's linked libraries and ImGui archive: no OpenGL
+  load-time dependency or OpenGL renderer object was introduced.
+- `git diff --check` passed. Qt/wx/Mapple, external ImGui texture registration,
+  effect parity, and Linux/Windows execution remain outside this Mac batch.
+
+Work remains uncommitted on Easy3D-Vulkan. U5/U6/W10 are still in progress.

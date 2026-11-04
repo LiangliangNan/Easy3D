@@ -506,7 +506,8 @@ public:
     // scene depth and blend first, in input order; independent-depth 3D HUDs
     // follow, then flat HUD overlays. Sort overlapping scene-depth annotations
     // back-to-front. None write scene depth/IDs.
-    void set_overlays(std::vector<graphics::DrawCommand> commands);
+    // Foreground UI draws after built-in HUD; ordinary overlays retain their order.
+    void set_overlays(std::vector<graphics::DrawCommand> commands, bool foreground = false);
     // Per-viewer world-space halfspaces, keeping dot(plane,vec4(world,1)) >= 0.
     // Empty disables this host's explicit planes. At most two finite,
     // nonzero-normal planes. An enabled shared ClippingPlane takes precedence.

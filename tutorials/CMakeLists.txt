@@ -32,8 +32,8 @@ add_subdirectory(Tutorial_115_PolyMesh_IO)
 
 # ui, viewer, and camera
 add_subdirectory(Tutorial_201_Viewer_default)
-if(NOT Easy3D_ENABLE_VULKAN)   # needs ImGui and the callback_event_* hooks: docs/vulkan.md, W7/W10
-    add_subdirectory(Tutorial_202_Viewer_imgui)
+add_subdirectory(Tutorial_202_Viewer_imgui)
+if(NOT Easy3D_ENABLE_VULKAN)   # wxWidgets integration still needs a Vulkan counterpart
     add_subdirectory(Tutorial_203_Viewer_wxWidgets) # needs wxWidgets
 endif()
 if (Easy3D_ENABLE_QT)

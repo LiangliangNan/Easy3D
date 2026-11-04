@@ -10,9 +10,7 @@ endfunction()
 
 
 add_subdirectory(glfw)
-if(NOT Easy3D_ENABLE_VULKAN)
-    add_subdirectory(imgui)
-endif()
+add_subdirectory(imgui)
 
 add_subdirectory(rply)
 add_subdirectory(lastools)

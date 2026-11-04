@@ -73,6 +73,7 @@ struct Viewer::Impl {
     Viewer& owner;
     explicit Impl(Viewer& viewer) : owner(viewer) {}
     std::vector<graphics::DrawCommand> overlays, viewer_overlays, viewer_3d_overlays, viewer_annotations;
+    bool overlays_foreground = false;
     std::vector<vec4> clipping_planes;
     mutable std::vector<vec4> shared_clipping_planes;
     mutable vulkan::ClippingPlaneRenderer clipping_plane_renderer;
@@ -88,12 +89,30 @@ struct Viewer::Impl {
     std::vector<graphics::DrawCommand> commands(const Camera& cam, int width, int height,
                                                 std::vector<DrawSource>* sources = nullptr, bool include_hud = true) const {
         auto commands = owner.draw_commands(cam,width,height,sources);
-        commands.insert(commands.end(),viewer_annotations.begin(),viewer_annotations.end());
-        commands.insert(commands.end(),overlays.begin(),overlays.end());
+        // Recorded overlay viewports use the host framebuffer's pixels. Keep
+        // their NDC transforms and scale the clip rectangles for file output.
+        const int fw=owner.framebuffer_width(), fh=owner.framebuffer_height();
+        const auto append_overlays=[&](const std::vector<graphics::DrawCommand>& source) {
+            for (auto command:source) {
+                auto& v=command.viewport;
+                if (v.z>0 && v.w>0 && fw>0 && fh>0 && (width!=fw || height!=fh)) {
+                    const int x=int(std::lround(double(v.x)*width/fw));
+                    const int y=int(std::lround(double(v.y)*height/fh));
+                    const int right=int(std::lround(double(v.x+v.z)*width/fw));
+                    const int bottom=int(std::lround(double(v.y+v.w)*height/fh));
+                    if (right<=x || bottom<=y) continue;
+                    v=ivec4(x,y,right-x,bottom-y);
+                }
+                commands.push_back(std::move(command));
+            }
+        };
+        append_overlays(viewer_annotations);
+        if (!overlays_foreground) append_overlays(overlays);
         if (include_hud) {
-            commands.insert(commands.end(),viewer_3d_overlays.begin(),viewer_3d_overlays.end());
-            commands.insert(commands.end(),viewer_overlays.begin(),viewer_overlays.end());
+            append_overlays(viewer_3d_overlays);
+            append_overlays(viewer_overlays);
         }
+        if (overlays_foreground) append_overlays(overlays);
         return commands;
     }
     graphics::FrameImage capture(const Camera& cam, const vec4& bg, unsigned samples = 1,
@@ -212,9 +231,10 @@ void Viewer::clear_scene() {
     models_.clear(); model_idx_ = -1; drawables_.clear(); impl_->drawable_renderer.clear(); impl_->overlays.clear(); impl_->viewer_overlays.clear(); impl_->viewer_3d_overlays.clear(); impl_->viewer_annotations.clear();
     if (window_) { cancel_interaction(); update_camera_path_overlays(); }
 }
-void Viewer::set_overlays(std::vector<graphics::DrawCommand> commands) {
+void Viewer::set_overlays(std::vector<graphics::DrawCommand> commands, bool foreground) {
     for (auto& command : commands) command.overlay = true;
     impl_->overlays = std::move(commands);
+    impl_->overlays_foreground = foreground;
 }
 void Viewer::set_viewer_overlays(std::vector<graphics::DrawCommand> commands) const {
     for (auto& command : commands) { command.overlay = true; command.overlay_depth_test = command.overlay_independent_depth = false; }
