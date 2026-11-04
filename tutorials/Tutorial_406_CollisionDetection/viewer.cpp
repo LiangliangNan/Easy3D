@@ -42,9 +42,6 @@ const char* const usage_hint = "Press 'space' to pause/resume animation\n"
 }
 
 
-#if !EASY3D_TUTORIAL_USES_VULKAN
-#include <mutex>
-#endif
 #include <algorithm>
 #include <stdexcept>
 
@@ -60,7 +57,6 @@ using namespace easy3d;
 
 // \cond
 
-#if EASY3D_TUTORIAL_USES_VULKAN
 TutorialCollisionDetection::TutorialCollisionDetection(const std::string& title)
     : Viewer(title),model0_color_(.8f,1,.8f),model1_color_(.8f,.8f,1) {
     manual_=usage_manual;hint_=usage_hint;
@@ -179,112 +175,5 @@ void TutorialCollisionDetection::clear_scene() {
     retire_collision();
     Viewer::clear_scene();
 }
-#else
-TutorialCollisionDetection::TutorialCollisionDetection(const std::string &title)
-        : Viewer(title)
-        , model0_color_(0.8f, 1.0f, 0.8f)
-        , model1_color_(0.8f, 0.8f, 1.0f)
-{
-    auto m0 = add_model(resource::directory() + "/data/bunny.ply");
-    auto m1 = add_model(resource::directory() + "/data/mannequin.ply");
-    auto mesh0 = dynamic_cast<SurfaceMesh*>(m0);
-    auto mesh1 = dynamic_cast<SurfaceMesh*>(m1);
-    if (mesh0 && mesh1) {
-        // use the manipulator to transform the first model (visualization only and geometry is not changed)
-        mesh0->set_manipulator(std::make_shared<Manipulator>(mesh0));
-
-        // the first mesh is colored by a "face_color" property
-        mesh0->add_face_property<vec3>("face_color", model0_color_);
-        mesh0->renderer()->get_triangles_drawable("faces")->set_coloring(easy3d::State::COLOR_PROPERTY, easy3d::State::FACE, "face_color");
-
-        // the second mesh is also colored by a "face_color" property
-        mesh1->add_face_property<vec3>("face_color", model1_color_);
-        mesh1->renderer()->get_triangles_drawable("faces")->set_coloring(easy3d::State::COLOR_PROPERTY, easy3d::State::FACE, "face_color");
-
-        collider_ = new Collider(mesh0, mesh1);
-        // detect and show the result when the viewer is visible
-        detect();
-
-        timer_.set_interval(50, [this]()->void {
-            static std::mutex mutex; // ensures the previous changes are completed
-            std::lock_guard<std::mutex> guard(mutex);
-            static float angle = 0.0f;
-            angle += 0.0001f;
-            auto T = mat4::rotation(vec3(0, 0, 1), angle) * models_[0]->manipulator()->frame()->matrix();
-            models_[0]->manipulator()->frame()->setFromMatrix(T);
-            detect();
-        });
-    }
-    else
-        LOG(WARNING) << "not all the two meshes have been loaded";
-
-    manual_ = usage_manual;
-
-    hint_ = usage_hint;
-}
-
-
-TutorialCollisionDetection::~TutorialCollisionDetection() {
-    timer_.stop();
-    delete collider_;
-}
-
-
-bool TutorialCollisionDetection::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
-    if (collider_ && models().size() == 2 && modifiers == MODIF_ALT && timer_.is_paused()) {
-        auto manipulator = models_[0]->manipulator();
-        if (button == BUTTON_LEFT)
-            manipulator->frame()->action_rotate(x, y, dx, dy, camera(), ManipulatedFrame::NONE);
-        else if (button == BUTTON_RIGHT)
-            manipulator->frame()->action_translate(x, y, dx, dy, camera(), ManipulatedFrame::NONE);
-        else
-            return false;
-
-        detect();
-        return true;
-    }
-    else
-        return Viewer::mouse_drag_event(x, y, dx, dy, button, modifiers);
-}
-
-
-bool TutorialCollisionDetection::key_press_event(int key, int modifiers) {
-    if (key == KEY_SPACE) {
-        if (timer_.is_paused())
-            timer_.resume();
-        else
-            timer_.pause();
-        return true;
-    }
-    else
-        return Viewer::key_press_event(key, modifiers);
-}
-
-
-void TutorialCollisionDetection::detect() {
-    const auto pairs = collider_->detect(models_[0]->manipulator()->matrix(), mat4::identity());
-    //std::cout << pairs.size() << " pairs of intersecting faces" << std::endl;
-
-    // mark the intersecting faces red
-    // Note: The following code is for visualizing the intersecting faces and is not optimized.
-    //      Ideas for better performance:
-    //          (1) update only the color buffer;
-    //          (2) use a shader storage buffer to transfer the *status* of the faces to the fragment shader.
-    auto mesh0 = dynamic_cast<SurfaceMesh *>(models_[0].get());
-    auto mesh1 = dynamic_cast<SurfaceMesh *>(models_[1].get());
-    auto mesh0_colors = mesh0->get_face_property<vec3>("face_color");
-    auto mesh1_colors = mesh1->get_face_property<vec3>("face_color");
-    mesh0_colors.vector().assign(mesh0->n_faces(), model0_color_);
-    mesh1_colors.vector().assign(mesh1->n_faces(), model1_color_);
-    for (const auto &pair : pairs) {
-        mesh0_colors[pair.first] = vec3(1.0f, 0.0f, 0.0f);
-        mesh1_colors[pair.second] = vec3(1.0f, 0.0f, 0.0f);
-    }
-    models_[0]->renderer()->update();
-    models_[1]->renderer()->update();
-
-    update();
-}
 
 // \endcond
-#endif // EASY3D_TUTORIAL_USES_VULKAN

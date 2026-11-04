@@ -8,7 +8,7 @@
   - [x] Shared GLFW lifecycle, frame driving, portable input/frame callbacks and camera/surface queries
   - [x] W1-W3 docs sync; build blockers (single home for tutorials, enable_testing, bounded tutorial tests); Tutorial 208
   - [x] W4 Delete runtime-selection/headless leftovers (Backend enum, ViewerOptions, create_*_viewer, ...)
-  - [ ] W5 Remove EASY3D_TUTORIAL_USES_VULKAN (tutorials 202, 501-505 gated; 401-406 still have a separate Vulkan path)
+  - [ ] W5 Remove EASY3D_TUTORIAL_USES_VULKAN (tutorials 202, 501-505 gated; 401-405 still have separate Vulkan paths)
   - [ ] W6 MoltenVK: 72/72 pass with Python enabled (2026-11-04, U4); Linux baseline 68/69 still needs the interactionoverlay border check
   - Top priority (docs/vulkan.md, "Migration principles"): minimal source changes; same class names and the same
     .h/.cpp files as the main branch (Viewer in viewer.h/.cpp for both backends); #ifdef EASY3D_HAS_VULKAN layout inside
@@ -17,8 +17,8 @@
   - [x] U2 OffScreen/MultiViewer unified; snapshot.cpp restored; Tutorial 205 and FigureMaker enabled
   - [x] U3 Classes without counterpart: same-file #ifdef structure (effects, pickers, ImGui)
   - [x] U4 Python bindings, installed package and CI use the final names (full Mac builds/rendering)
-  - [ ] U5 Tutorials/applications: U5a removes 21 redundant branches; 11 tutorials still use the selector
-  - [ ] U6 Diff audit against main (files, CMake); remove temporary gates
+  - [ ] U5 Tutorials/applications: U5a cleanup and U5b shared collision controller done; 10 tutorials still use the selector
+  - [ ] U6 In progress: shared tutorial smoke harness and inventory done; file responsibility audit/gates remain
   - [ ] W10 Mapple, Qt/wx, remaining Python coverage, transparency/SSAO/shadows/EDL
 
 - Send the computed value of "MVP * MANIP" to shaders (avoiding computing the matrix product for each vertex/fragment)

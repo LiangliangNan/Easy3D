@@ -95,30 +95,3 @@ add_subdirectory(Tutorial_703_Cloud_PlaneExtraction)
 #add_subdirectory(Tutorial_805_Mesh_Remeshing)        #TODO
 #add_subdirectory(Tutorial_806_Mesh_Simplification)   #TODO
 #add_subdirectory(Tutorial_807_Mesh_Subdidivision)    #TODO
-
-
-# Bounded smoke tests of the interactive tutorials (Vulkan backend). Each test is built from the tutorial's own
-# sources with a generated main() (tests/native_tutorials) that stops after --frames N; tutorials stay unchanged.
-if(Easy3D_ENABLE_VULKAN AND Easy3D_BUILD_VULKAN_TESTS)
-    include("${Easy3D_ROOT}/tests/native_tutorials/test_sources.cmake")
-    foreach(tutorial Tutorial_201_Viewer_default Tutorial_205_MultiView Tutorial_206_CameraInterpolation Tutorial_207_RealCamera Tutorial_301_Drawables Tutorial_302_Imposters Tutorial_303_ScalarField Tutorial_304_VectorField Tutorial_305_Texture Tutorial_306_ImageViewer Tutorial_307_CrossSection Tutorial_308_TexturedMesh Tutorial_309_TextRendering Tutorial_310_TextMesher Tutorial_311_Animation Tutorial_312_MultiThread Tutorial_401_ModelPicker Tutorial_402_FacePicker Tutorial_403_PointSelection Tutorial_404_VirtualScanner Tutorial_405_ObjectManipulation Tutorial_406_CollisionDetection Tutorial_506_DepthMap Tutorial_601_Tessellator Tutorial_602_ConvexPartition Tutorial_603_Curves Tutorial_701_Cloud_NormalEstimation Tutorial_702_Cloud_SurfaceReconstruction Tutorial_703_Cloud_PlaneExtraction)
-        string(REGEX MATCH "^Tutorial_([0-9]+)_" tutorial_prefix "${tutorial}")
-        set(test_name vulkan.tutorial${CMAKE_MATCH_1})
-        set(test_target ${tutorial}_test)
-        set(directory "${Easy3D_ROOT}/tutorials/${tutorial}")
-        native_tutorial_test_source(${tutorial} test_source)
-        add_executable(${test_target} "${test_source}")
-        target_include_directories(${test_target} PRIVATE "${directory}")
-        if(EXISTS "${directory}/viewer.cpp")
-            target_sources(${test_target} PRIVATE "${directory}/viewer.cpp")
-        endif()
-        if(EXISTS "${directory}/read_bundler_file.cpp")
-            target_sources(${test_target} PRIVATE "${directory}/read_bundler_file.cpp")
-        endif()
-        target_compile_definitions(${test_target} PRIVATE EXAMPLE_TITLE="${tutorial}")
-        target_link_libraries(${test_target} PRIVATE easy3d::viewer)
-        set_target_properties(${test_target} PROPERTIES FOLDER "tests")
-        add_test(NAME ${test_name} COMMAND ${test_target} --frames 3)
-        set_tests_properties(${test_name} PROPERTIES LABELS desktop TIMEOUT 120)
-    endforeach()
-endif()

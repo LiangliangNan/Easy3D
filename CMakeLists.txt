@@ -303,6 +303,10 @@ if (Easy3D_BUILD_TUTORIALS)
     add_subdirectory(tutorials)
 endif ()
 
+if (Easy3D_BUILD_RENDERER_TESTS OR (Easy3D_ENABLE_VULKAN AND Easy3D_BUILD_VULKAN_TESTS))
+    include(tests/native_tutorials/test_sources.cmake)
+endif ()
+
 if (Easy3D_BUILD_TESTS)
     add_subdirectory(tests)
 endif ()

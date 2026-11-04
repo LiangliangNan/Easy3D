@@ -310,20 +310,31 @@ Decisions in force:
 | 2. Align constructors, hooks, state | merged into U1 |
 | 3. `VulkanMultiViewer` | merged into U2 |
 | 4. Remove runtime selection | done (W4) |
-| 5. Tutorials on the shared API | in progress: all tutorials except 202 and 501–505 build in the Vulkan tree; those six are gated in `tutorials/CMakeLists.txt`; `EASY3D_TUTORIAL_USES_VULKAN` remains in `viewer.h` and 11 tutorials (206, 207, 306, 309, 401–406, 506) |
+| 5. Tutorials on the shared API | in progress: all tutorials except 202 and 501–505 build in the Vulkan tree; those six are gated in `tutorials/CMakeLists.txt`; `EASY3D_TUTORIAL_USES_VULKAN` remains in `viewer.h` and 10 tutorials (206, 207, 306, 309, 401–405, 506) |
 | 6. Renderer, interaction, GUI/application parity | pending (W10) |
 
-Divergence from `main` (the number to drive down; see U6). Historical measurement after U1a (refresh in U6; U2 has since restored `snapshot.cpp`): in
-`easy3d/`, 1 file exists only in `main` (`viewer/snapshot.cpp`; this branch keeps that code
-inside `viewer.cpp`) and 19 only in this branch (was 26 before U1a); 69 tutorial files
-differ (24 `main.cpp`, 19 `viewer.cpp`, 18 `viewer.h`, 8 CMake files; an earlier figure of 58
-was measured at a different point and is not comparable). The unified-API additions
-account for all of the OpenGL `Viewer`'s drift: it defines every function `main`'s does
-plus 11 more (`draw_frame`, `poll_events`, `run_frames`, `show`, `hide`, `should_close`,
-`request_close`, `update_frame_rate`, `print_usage`, `dispatch_callback`, `read_scene_depth`). After normalising the class rename, the OpenGL classes differ from `main` by
-(changed lines / `main` lines): `multi_viewer.h` 12/168, `multi_viewer.cpp` 5/334,
-`viewer.h` 189/671, `viewer.cpp` 835/1834, `offscreen.h` 243/220, `offscreen.cpp`
-164/126. U1–U2 restore `main`'s code and keep only the differences the unified API needs.
+Divergence audit (U6a, 2026-11-04), against local `main` at
+`b2868dcd5f0cc06fdb0b7df10e1ada2ec6a28226`, including the current working tree:
+
+| Scope | Only in `main` | Only on this branch | Shared files changed | Total differing files |
+| --- | ---: | ---: | ---: | ---: |
+| `easy3d/` | 0 | 90 | 61 | 151 |
+| `tutorials/` | 0 | 4 | 63 | 67 |
+
+The 90 Easy3D additions include 52 test files and 27 backend files, which P4 permits;
+11 others require the remaining U6 responsibility audit. They are `drawable_types.cpp`,
+`obj_materials.h/.cpp`, `render_device.h/.cpp`, `text_layout.h/.cpp`, `viewer_base.h/.cpp`,
+`viewer_callbacks.h` and `viewer_input.h`. D3 already retains the four viewer API files;
+review the renderer files against their original class responsibilities before moving
+or deleting code. `snapshot.cpp` has been restored; no original Easy3D file is missing.
+
+The four added tutorial files are Tutorial 208's `main.cpp`/CMake file and Tutorials
+311/312's `animation.h`/`point_worker.h`. Differing tutorial filenames total 24
+`main.cpp`, 19 `viewer.cpp`, 18 `viewer.h`, four CMake files and those two helper
+headers. Five picker-tutorial CMake files now match `main` exactly. These are
+whole-tree counts including tests/backend files; the earlier U1a measurements used
+a different scope and are superseded. This is an inventory, not completion of the
+file-by-file necessity audit or feature parity.
 
 Ordered work items. Each ends with a rebuild of the Vulkan and OpenGL trees and an update
 of this document.
@@ -335,9 +346,10 @@ of this document.
   (`tests/native_tutorials`); an earlier cleanup had pointed them at the interactive
   binaries, which ignore `--frames` and never exit. `--backend` is gone from the demo
   test; `Easy3D_BUILD_RENDERER_TESTS` is declared; `enable_testing()` is restored (it
-  had been dropped, so CTest registered no tests). Tutorials 401–406 link `easy3d::gui`
-  only when that target exists. The test registration and the gates in
-  `tutorials/CMakeLists.txt` are temporary (P5) and move out at U6.
+  had been dropped, so CTest registered no tests). Tutorials 401–403, 405 and 406 now link `easy3d::gui` directly (U3/U6a).
+  Bounded test registration lives in `tests/native_tutorials/test_sources.cmake`
+  and is included from the root (U6a); capability gates in tutorial CMake remain
+  until their implementations exist.
 - **W3** (done) Tutorial 208 uses `OffScreen` and only the API common to both backends.
 - **W4** (done) Runtime-selection and headless leftovers removed: the `Backend` enum
   (`BackendUnavailable`, the initialization error type, stays), `ViewerOptions`,
@@ -418,15 +430,19 @@ of this document.
 - **U5** (in progress) Tutorials and applications: restore `main`'s sources and remove
   backend conditionals as shared APIs become usable. U5a removes redundant constructors
   and the remaining branches in Tutorials 301, 307, 308 and 603; Tutorial 402 now has
-  one file-loading override signature. The 11 remaining tutorials still require
+  one file-loading override signature. U5b shares Tutorial 406's frame-driven collision
+  controller across both builds, retiring its detached OpenGL timer. The 10 remaining
+  tutorials still require
   renderer/picker/capture API work; the tutorial macro is not yet removable. Avoid
   new generic Viewer abstractions solely for a single tutorial.
-- **U6** Diff audit against `main`, file by file and for CMake; remove temporary gates
-  and move the tutorial smoke-test registration out of `tutorials/CMakeLists.txt`.
+- **U6** (in progress) U6a moves bounded tutorial tests out of tutorial CMake and
+  restores five picker-tutorial dependency lists to `main`; the inventory above is
+  refreshed. Continue the file-by-file responsibility audit and remove capability
+  gates only when implementations exist. U5/API work remains open.
 - **W10** Mapple, Qt/wx, remaining Python API/tutorial coverage, transparency/SSAO/shadows/EDL parity.
 
-Suggested order: U1, U2, U3–U4, U5, U6, W10,
-re-running the tests after each.
+U1–U4 are complete. Continue U5 and independent U6 source/build cleanup in
+small verified batches, then finish W10 feature parity; re-run the tests after each.
 
 ### 1. Enforce CMake backend choice and establish explicit counterparts — completed
 
@@ -4023,3 +4039,77 @@ Validation on this Mac (Apple M4 Pro, MoltenVK), 2026-11-04:
 
 Changes remain local on `Easy3D-Vulkan`; U5's remaining 11 tutorial branches and
 U6/W10 work are still open.
+
+
+### 2026-11-04 — U6a/U5b: shared tutorial tests and collision controller
+
+The remaining U5 branches depend on real renderer/picker contracts. This batch
+advances the independent U6 build cleanup without inventing a tutorial-only Viewer
+API or replacing the tutorial selector with a differently named conditional.
+
+Bounded tutorial targets and CTest registration have moved from
+`tutorials/CMakeLists.txt` into the existing
+`tests/native_tutorials/test_sources.cmake`, included by the root test condition.
+No files or cache options were added. Generated copies and test output live under
+`BUILD/tests/native_tutorials`; interactive tutorial sources still construct their
+original visible windows, and only the generated entry point stops after three
+frames. The driver uses shared `Viewer::validation_errors()`.
+
+The same 29 supported scenes now run as `vulkan.tutorialNNN` or
+`opengl.tutorialNNN`. Tests no longer depend on `Easy3D_BUILD_TUTORIALS`: the existing
+CI matrix, which disables interactive tutorial targets, now also builds/runs those
+scenes. `Easy3D_BUILD_RENDERER_TESTS` enables them for either backend;
+`Easy3D_BUILD_VULKAN_TESTS` also enables them in a Vulkan build, as before. The
+native-only capability gates for ImGui/effects are retained and no missing scene
+is substituted by a no-op implementation.
+
+The harness links the GUI component explicitly for the legacy picker scenes.
+Because U3 builds this component in both configurations, the obsolete target-existence dependency guards are removed from Tutorials 401–403, 405 and 406.
+Those five CMake files now match local `main` exactly.
+
+CTest inventory comparison preserves every pre-existing Vulkan test name, command,
+label and timeout (72 total). OpenGL retains all 11 previous tests and gains 29
+bounded scenes (40 total). Fresh configurations with interactive tutorials OFF
+produce those same inventories and contain smoke targets but no interactive
+Tutorial 201 target. Separate test-disabled configurations check the negative gate.
+The OFF configurations are configuration/inventory checks; full builds and runtime
+checks use the existing two working build trees.
+
+The current file inventory against the exact local main commit is recorded in
+Current status above. U6's detailed responsibility audit and U5's 10 remaining
+conditional tutorials are still open. Next, review renderer constructor/helper
+placement and the remaining shared renderer/picker APIs; retain D3's explicit
+ViewerBase/input/callback decisions.
+
+The expanded OpenGL smoke suite exposed a crash in Tutorial 406's legacy path:
+the detached `Timer` callback mutated mesh transforms/face colors concurrently with
+rendering and could outlive scene teardown (`Timer::stop()` does not join it).
+The existing Vulkan controller already uses backend-neutral Viewer animation,
+50 ms throttling, shared mesh ownership checks and explicit collider/drag retirement.
+That implementation now serves both builds; the timer branch and all Tutorial 406
+backend conditionals are removed. No new controller helper or core Viewer API was
+introduced. Collision detection, highlighting, pause/resume and Alt-drag behavior
+remain in the tutorial's existing functions. This also makes model removal stop
+animation safely in OpenGL. U5 remains open for 10 tutorials.
+
+The first expanded OpenGL full run passed 39/40 and aborted in Tutorial 406. With
+the shared frame-driven controller, that smoke test passes 10 consecutive startup,
+three-frame and teardown runs. The existing Vulkan collision interaction/lifetime
+regression continues to exercise the retained implementation.
+
+Final validation on this Mac (Apple M4 Pro, MoltenVK), 2026-11-04:
+
+- Both complete builds passed; final suites: **72/72 Vulkan**, **40/40 OpenGL**
+  with Python enabled. All 29 bounded tutorial scenes pass in both configurations.
+- OpenGL Tutorial 406 passes ten repeated bounded startup/teardown runs after
+  sharing the frame-driven controller. The first 39/40 run's crash is recorded
+  above; the failing test was retained rather than gated out.
+- Interactive-tutorials-OFF configurations retain the same test inventories and
+  omit interactive targets. Test-disabled configurations register zero tests and
+  contain no tutorial smoke targets (configuration/inventory checks only).
+- Five picker-tutorial CMake files match local main byte-for-byte;
+  `git diff --check` passes. No new files, public core APIs or backend selectors.
+- Linux/Windows CI jobs were not executed here. The existing MoltenVK integer
+  attachment blending diagnostic remains outside this batch.
+
+U5/U6 are still in progress. Changes remain local and uncommitted on Easy3D-Vulkan.
