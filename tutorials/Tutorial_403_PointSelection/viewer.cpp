@@ -27,8 +27,8 @@
 #include "viewer.h"
 
 
-#if EASY3D_TUTORIAL_USES_VULKAN
 #include <easy3d/core/point_cloud.h>
+#include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/algo/tessellator.h>
@@ -39,6 +39,10 @@ using namespace easy3d;
 
 TutorialPointSelection::TutorialPointSelection(const std::string& title) : Viewer(title)
 {
+    manual_ = "-------------- Point selection usage --------------\n"
+              "Shift + left/right drag: select/deselect points\n"
+              "L: lasso mode; R: rectangle mode; Escape: cancel\n"
+              "---------------------------------------------------\n";
     hint_ = "Pressing Shift, drag the mouse to select (left) or deselect (right) points\n"
     "\tL: lasso mode (default)\n"
     "\tR: rectangle mode";
@@ -49,7 +53,8 @@ bool TutorialPointSelection::mouse_press_event(int x,int y,int button,int modifi
         cancel();
         for (const auto& model:models()) if (model.get()==current_model() && dynamic_cast<easy3d::PointCloud*>(model.get())) {
             target_=model; active_=true; button_=button;
-            polygon_.push_back(easy3d::vec2(float(x),float(y))); break;
+            polygon_.push_back(easy3d::vec2(float(x)*framebuffer_width()/camera()->screenWidth(),
+                                              float(y)*framebuffer_height()/camera()->screenHeight())); break;
         }
         return true;
     }
@@ -88,7 +93,7 @@ bool TutorialPointSelection::mouse_release_event(int x,int y,int button,int modi
                 colors[v]=selected[v]?easy3d::vec3(1,0,0):drawable->color().xyz();
             }
             drawable->set_coloring(easy3d::State::COLOR_PROPERTY,easy3d::State::VERTEX,"v:color");
-            drawable->update();
+            drawable->update_color_buffer(colors.vector());
         }
     }
     cancel(); return true;
@@ -145,7 +150,8 @@ void TutorialPointSelection::pre_draw() {
 }
 
 void TutorialPointSelection::extend(int x,int y) {
-    const easy3d::vec2 p{float(x),float(y)};
+    const easy3d::vec2 p{float(x)*framebuffer_width()/camera()->screenWidth(),
+                         float(y)*framebuffer_height()/camera()->screenHeight()};
     if (rectangle_) {
         const auto first=polygon_.front(); polygon_={first,{first.x,p.y},p,{p.x,first.y}};
     } else if ((p-polygon_.back()).length2()>=1) polygon_.push_back(p);
@@ -155,109 +161,3 @@ void TutorialPointSelection::extend(int x,int y) {
 void TutorialPointSelection::cancel() {
     active_=false; polygon_.clear(); target_.reset(); fill_.reset(); edge_.reset(); dirty_=true; update();
 }
-
-#else
-
-#include <easy3d/renderer/opengl.h>
-#include <easy3d/core/point_cloud.h>
-#include <easy3d/gui/picker_point_cloud.h>
-#include <easy3d/renderer/shape.h>
-#include <easy3d/renderer/drawable_points.h>
-#include <easy3d/renderer/renderer.h>
-#include <easy3d/util/logging.h>
-
-
-#define  USE_LASSO   1
-
-using namespace easy3d;
-
-// \cond
-
-TutorialPointSelection::TutorialPointSelection(const std::string &title) : Viewer(title) {
-    hint_ = "Pressing Shift, drag the mouse to select (left) or deselect (right) points\n"
-    "\tL: lasso mode (default)\n"
-    "\tR: rectangle mode";
-}
-
-
-/// Mouse button press event handler
-bool TutorialPointSelection::mouse_press_event(int x, int y, int button, int modifiers) {
-    if (modifiers == MODIF_SHIFT) {
-        polygon_.clear();
-        polygon_.push_back(vec2(static_cast<float>(x), static_cast<float>(y)));
-        return false;
-    } else
-        return Viewer::mouse_press_event(x, y, button, modifiers);
-}
-
-
-/// Mouse button release event handler
-bool TutorialPointSelection::mouse_release_event(int x, int y, int button, int modifiers) {
-    if (modifiers == MODIF_SHIFT) {
-        if (polygon_.size() >= 3) {
-            auto cloud = dynamic_cast<PointCloud *>(current_model());
-            if (cloud) {
-                PointCloudPicker picker(camera());
-#if USE_LASSO
-                picker.pick_vertices(cloud, polygon_, button == BUTTON_RIGHT);
-#else
-                picker.pick_vertices(cloud, Rect(polygon_[0], polygon_[2]), button == BUTTON_RIGHT);
-#endif
-                mark_selection(cloud);
-
-                polygon_.clear();
-            }
-        }
-        return false;
-    } else
-        return Viewer::mouse_release_event(x, y, button, modifiers);
-}
-
-
-/// Mouse drag (i.e., a mouse button was pressed) event handler
-bool TutorialPointSelection::mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) {
-    if (modifiers == MODIF_SHIFT) {
-#if USE_LASSO
-        polygon_.push_back(vec2(static_cast<float>(x), static_cast<float>(y)));
-#else   // rectangle
-        const vec2 first_point = polygon_[0];
-        polygon_.clear();
-        polygon_.push_back(first_point);
-        polygon_.push_back(vec2(first_point.x, static_cast<float>(y)));
-        polygon_.push_back(vec2(static_cast<float>(x), static_cast<float>(y)));
-        polygon_.push_back(vec2(static_cast<float>(x), first_point.y));
-#endif
-        return false;
-    } else
-        return Viewer::mouse_drag_event(x, y, dx, dy, button, modifiers);
-}
-
-
-void TutorialPointSelection::post_draw() {
-    Viewer::post_draw();
-
-    if (polygon_.size() >= 3) {
-        // draw the boundary of the rect/lasso
-        shape::draw_polygon_wire(polygon_, vec4(1.0f, 0.0f, 0.0f, 1.0f), width(), height(), -1.0f);
-
-        // draw its transparent face
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        shape::draw_polygon_filled(polygon_, vec4(1.0f, 0.0f, 0.0f, 0.2f), width(), height(), -0.9f);
-        glDisable(GL_BLEND);
-    }
-}
-
-
-void TutorialPointSelection::mark_selection(PointCloud *cloud) {
-    auto drawable = cloud->renderer()->get_points_drawable("vertices");
-    auto select = cloud->vertex_property<bool>("v:select");
-    auto colors = cloud->vertex_property<vec3>("v:color");
-    for(auto v : cloud->vertices())
-        colors[v] = select[v] ? vec3(1,0,0) : drawable->color().xyz();    // mark selected points red
-    drawable->set_coloring(easy3d::State::COLOR_PROPERTY, easy3d::State::VERTEX, "v:color");
-    drawable->update();
-}
-
-// \endcond
-#endif // native Vulkan / legacy OpenGL

@@ -35,25 +35,16 @@ class TutorialPointSelection : public easy3d::Viewer {
 public:
     explicit TutorialPointSelection(const std::string& title = "PointSelection");
 
-#if EASY3D_TUTORIAL_USES_VULKAN
 protected:
-#else
-private:
-#endif
     bool mouse_press_event(int x, int y, int button, int modifiers) override;
     bool mouse_release_event(int x, int y, int button, int modifiers) override;
     bool mouse_drag_event(int x, int y, int dx, int dy, int button, int modifiers) override;
-#if EASY3D_TUTORIAL_USES_VULKAN
     bool key_press_event(int key, int modifiers) override;
     bool focus_event(bool focused) override;
     void post_resize(int width, int height) override;
     void pre_draw() override;
-#else
-    void post_draw() override;
-#endif
 
 private:
-#if EASY3D_TUTORIAL_USES_VULKAN
     void extend(int x, int y);
     void cancel();
     bool active_ = false, rectangle_ = false, dirty_ = true;
@@ -61,10 +52,6 @@ private:
     std::vector<easy3d::vec2> polygon_;
     std::weak_ptr<easy3d::Model> target_;
     std::shared_ptr<const easy3d::graphics::Geometry> fill_, edge_;
-#else
-    void mark_selection(easy3d::PointCloud* cloud);
-    easy3d::Polygon2 polygon_;
-#endif
 };
 
 #endif // EASY3D_TUTORIAL_POINT_SELECTION_H

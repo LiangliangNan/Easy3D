@@ -333,7 +333,9 @@ namespace easy3d {
         }
 
     private:
+        friend class Viewer;
 #ifndef EASY3D_HAS_VULKAN
+        unsigned long long point_revision_ = 0;
         void opengl_initialize();
         void opengl_release_buffers();
         void opengl_disable_element_buffer();

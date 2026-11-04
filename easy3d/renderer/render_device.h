@@ -15,12 +15,15 @@ namespace easy3d { namespace graphics {
 enum class Topology { triangles, lines, points };
 
 // Immutable positions in point draw/instance order, with original source slots.
-// Devices realize this once as a shared vertex/storage buffer. Color, normal,
+// Native OpenGL snapshots may contain GPU-only storage (empty CPU vectors);
+// they are valid only for selection on their owning viewer. source_count() remains valid.
+// Devices realize CPU snapshots once as a shared vertex/storage buffer. Color, normal,
 // texture, highlighting and transform changes can retain the same snapshot.
 class PointData {
 public:
     explicit PointData(std::vector<vec3> positions, std::vector<std::uint32_t> source_ids={},
                        std::uint32_t source_count=0);
+    virtual ~PointData() = default;
     PointData& operator=(const PointData&)=delete;
     const std::vector<vec3>& positions() const { return positions_; }
     const std::vector<std::uint32_t>& source_ids() const { return source_ids_; }

@@ -12,7 +12,7 @@
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
-#if !EASY3D_TUTORIAL_USES_VULKAN
+#ifndef EASY3D_HAS_VULKAN
 #include <easy3d/renderer/opengl.h>
 #endif
 using namespace easy3d;
@@ -46,7 +46,7 @@ std::shared_ptr<PointCloud> cube() {
     return cloud;
 }
 std::vector<unsigned char> render(CloudViewer& v,const std::string& name) {
-#if EASY3D_TUTORIAL_USES_VULKAN
+#ifdef EASY3D_HAS_VULKAN
     Viewer::poll_events();require(v.draw_frame(),"cloud tutorial did not present");
     const std::string prefix="vulkan-";const int samples=int(v.samples());
 #else
@@ -61,7 +61,7 @@ std::vector<unsigned char> render(CloudViewer& v,const std::string& name) {
 int main(int argc,char**) {
     try {
         initialize(false,false,false);
-#if EASY3D_TUTORIAL_USES_VULKAN
+#ifdef EASY3D_HAS_VULKAN
         TestWindow options;options.visible=false;options.width=480;options.height=360;
         options.device.validation=options.device.sync_validation=argc>1;
         CloudViewer v("Point cloud algorithm tutorials", options.width, options.height, options.samples, false, options.visible, options.resizable, options.device);
@@ -75,13 +75,13 @@ int main(int argc,char**) {
         auto points=cloud->renderer()->get_points_drawable("vertices");
         points->set_uniform_coloring(vec4(.6f,.6f,1,1));points->set_point_size(3);points->set_distinct_back_color(true);
         render(v,"cloud-before-normals");
-#if EASY3D_TUTORIAL_USES_VULKAN
+#ifdef EASY3D_HAS_VULKAN
         const auto revision=points->cpu_buffers().revision;const auto positions=points->cpu_buffers().vertices;
 #endif
         require(estimate(&v,cloud.get()),"normal estimation callback failed");
         auto normals=cloud->get_vertex_property<vec3>("v:normal");require(bool(normals),"estimated normals missing");
         for(auto n:normals.vector()) require(std::isfinite(n.x) && std::abs(length(n)-1)<.01f,"invalid estimated normal");
-#if EASY3D_TUTORIAL_USES_VULKAN
+#ifdef EASY3D_HAS_VULKAN
         require(points->cpu_buffers().normals==normals.vector() && points->cpu_buffers().vertices==positions &&
                 points->cpu_buffers().revision>revision,"normal estimation did not refresh native normals");
 #endif
@@ -91,7 +91,7 @@ int main(int argc,char**) {
         // Reorientation has always required the optional Boost Graph dependency.
         require(!reorient(&v,cloud.get()),"unavailable reorientation did not fail cleanly");
 #endif
-#if EASY3D_TUTORIAL_USES_VULKAN
+#ifdef EASY3D_HAS_VULKAN
         require(points->cpu_buffers().normals==normals.vector(),"reoriented normals were not uploaded");
 #endif
         points->set_impostor_type(PointsDrawable::SURFEL);points->set_point_size(8);
@@ -100,7 +100,7 @@ int main(int argc,char**) {
         for(size_t i=0;i<normal_image.size();i+=4)
             nonwhite+=normal_image[i]!=255 || normal_image[i+1]!=255 || normal_image[i+2]!=255;
         require(nonwhite>normal_image.size()/400,"estimated-normal cloud is outside the camera view");
-#if EASY3D_TUTORIAL_USES_VULKAN
+#ifdef EASY3D_HAS_VULKAN
         const auto surfels=v.capture();size_t visible=0;
         for(auto id:surfels.ids) if(id.object!=UINT32_MAX) {
             require(id.primitive<cloud->n_vertices(),"normal refresh changed point provenance");++visible;
@@ -114,7 +114,7 @@ int main(int argc,char**) {
         points=cloud->renderer()->get_points_drawable("vertices");
         points->set_uniform_coloring(vec4(.6f,.6f,1,1));points->set_point_size(3);points->set_lighting(false);
         const auto plain=render(v,"cloud-before-planes");
-#if EASY3D_TUTORIAL_USES_VULKAN
+#ifdef EASY3D_HAS_VULKAN
         const auto before=v.capture();
 #endif
         require(extract_plane(&v,cloud.get()),"plane extraction callback failed");
@@ -123,7 +123,7 @@ int main(int argc,char**) {
         require(assigned>cloud->n_vertices()/2,"plane extraction missed fixture planes");
         require(points->coloring_method()==State::COLOR_PROPERTY,"plane segmentation coloring not selected");
         require(render(v,"cloud-extracted-planes")!=plain,"plane segmentation did not refresh rendered colors");
-#if EASY3D_TUTORIAL_USES_VULKAN
+#ifdef EASY3D_HAS_VULKAN
         const auto after=v.capture();require(before.depth==after.depth,"segmentation changed point depth");
         for(size_t i=0;i<before.ids.size();++i)
             require(before.ids[i].object==after.ids[i].object && before.ids[i].primitive==after.ids[i].primitive,"segmentation changed picking IDs");
@@ -137,7 +137,7 @@ int main(int argc,char**) {
         require(v.models().size()==1 && v.current_model()!=cloud.get(),"reconstruction did not replace input cloud");
         auto* mesh=dynamic_cast<SurfaceMesh*>(v.current_model());require(mesh && mesh->n_faces()>100,"Poisson reconstruction produced no surface");
         render(v,"cloud-reconstructed-surface");
-#if EASY3D_TUTORIAL_USES_VULKAN
+#ifdef EASY3D_HAS_VULKAN
         const auto image=v.capture();bool picked=false;
         for(unsigned y=0;y<image.height && !picked;y+=3) for(unsigned x=0;x<image.width && !picked;x+=3) {
             if(image.ids[size_t(y)*image.width+x].object==UINT32_MAX) continue;

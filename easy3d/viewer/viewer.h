@@ -44,7 +44,7 @@
 struct GLFWwindow;
 namespace easy3d {
 namespace detail { class GlfwRuntime; }
-namespace opengl { class OverlayRenderer; }
+namespace opengl { class OverlayRenderer; class PointSelector; }
 namespace graphics { class TextLayoutEngine; }
 namespace vulkan { class KeyFrameInterpolatorRenderer; }
 class Camera;
@@ -511,6 +511,16 @@ public:
     // Both backends accept flat/scene-depth triangles, independently depth-tested
     // 3D HUD triangles (including diffuse and material lighting), and GPU scene-depth previews.
     void set_overlays(std::vector<graphics::DrawCommand> commands, bool foreground = false);
+    // GPU through-selection; use point_resource() from this viewer for portable requests.
+    // OpenGL accepts only its owning viewer's native snapshot. Vulkan also accepts CPU PointData.
+    std::vector<std::uint32_t> select_points(const graphics::PointSelectionRequest& request) const;
+    // Unclipped immutable point positions shared by this drawable's rendering
+    // and selection. OpenGL snapshots are GPU-only and valid for their owning viewer.
+    // Extraction is refreshed as needed; attribute-only buffer updates retain positions.
+    std::shared_ptr<const graphics::PointData> point_resource(Drawable* drawable) const;
+    // Effective world-space planes. The shared ClippingPlane takes precedence;
+    // Vulkan additionally supports explicitly configured per-host planes.
+    const std::vector<vec4>& clipping_planes() const;
 #ifdef EASY3D_HAS_VULKAN
     // Transitional Vulkan-only scene APIs (docs/vulkan.md, U1b).
     // Per-viewer world-space halfspaces, keeping dot(plane,vec4(world,1)) >= 0.
@@ -518,14 +528,6 @@ public:
     // nonzero-normal planes. An enabled shared ClippingPlane takes precedence.
     // Overlays remain unclipped. Scene clearing retains this configuration.
     void set_clipping_planes(const std::vector<vec4>& planes);
-    // Effective planes: the enabled shared ClippingPlane takes precedence;
-    // disabling it restores this host's explicitly configured planes.
-    const std::vector<vec4>& clipping_planes() const;
-    // GPU through-selection; the request owns its point/polygon/bitset snapshot.
-    std::vector<std::uint32_t> select_points(const graphics::PointSelectionRequest& request) const;
-    // Unclipped immutable point positions shared by this drawable's rendering
-    // and selection. Extraction is refreshed as needed; color-only changes reuse it.
-    std::shared_ptr<const graphics::PointData> point_resource(Drawable* drawable) const;
     // Reconstruct a top-left framebuffer pixel center from [0,1] readback depth.
     // Unlike Camera's legacy coordinate helper, this uses continuous framebuffer coordinates.
     virtual vec3 unproject_pixel(int x, int y, float depth) const;
@@ -782,6 +784,8 @@ protected:
 
         void draw_overlays(bool foreground) const;
         std::unique_ptr<opengl::OverlayRenderer> overlay_renderer_;
+        mutable std::unique_ptr<opengl::PointSelector> point_selector_;
+        mutable std::vector<vec4> selection_planes_;
         mutable ivec4 overlay_tile_ = ivec4(0);
 #endif
 };

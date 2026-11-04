@@ -643,7 +643,7 @@ Viewer::Viewer(std::shared_ptr<Window> host, const VulkanOptions& options)
         if (w > 0 && h > 0) resize_render_target(w, h);
         camera()->setUpVector(vec3(0,0,1)); camera()->setViewDirection(vec3(-1,0,0));
         camera()->showEntireScene();
-        VLOG(1) << "Samples: " << window_host_->samples;
+        VLOG(1) << "Vulkan device: " << impl_->device->name() <<  ", Samples: " << window_host_->samples;
     } catch (...) {
         // A failed derived constructor destroys members before base classes.
         // Release the Vulkan surface before member-owned native-window cleanup.
@@ -1182,6 +1182,7 @@ bool Viewer::drop_event(const std::vector<std::string>& names) {
 #else // OpenGL
 
 #include <easy3d/renderer/backends/opengl/overlay_renderer.h>
+#include <easy3d/renderer/backends/opengl/point_selection.h>
 
 #include <cmath>
 #include <limits>
@@ -1768,6 +1769,7 @@ float Viewer::dpi_scaling() const { return dpi_scaling_; }
         drawable_pivot_.reset();
         texter_.reset();
         overlay_renderer_.reset();
+        point_selector_.reset();
 
         clear_scene();
 
@@ -3204,6 +3206,46 @@ void query_draw(const Drawable *drawable, const Camera &camera) {
         throw std::invalid_argument("unsupported drawable in scene depth query");
 }
 } // namespace
+const std::vector<vec4>& Viewer::clipping_planes() const {
+    selection_planes_.clear();
+    const auto* clipping=ClippingPlane::instance();
+    if(clipping->is_enabled()) {
+        const auto n=clipping->normal(),c=clipping->center();
+        selection_planes_.push_back(vec4(-n,dot(n,c)));
+        if(clipping->cross_section()) selection_planes_.push_back(vec4(n,-dot(n,c)+clipping->cross_section_width()*clipping->scene_radius()));
+    }
+    selection_planes_=graphics::normalize_clipping_planes(selection_planes_);
+    return selection_planes_;
+}
+std::shared_ptr<const graphics::PointData> Viewer::point_resource(Drawable* drawable) const {
+    if(!drawable || drawable->type()!=Drawable::DT_POINTS) throw std::invalid_argument("selection requires a point drawable");
+    std::shared_ptr<Drawable> owner;
+    for(const auto& model:models_) if(model->renderer())
+        for(const auto& d:model->renderer()->points_drawables()) if(d.get()==drawable) owner=d;
+    for(const auto& d:drawables_) if(d.get()==drawable) owner=d;
+    if(!owner) throw std::invalid_argument("point drawable does not belong to this viewer");
+    QueryContext context(window_);
+    if(GLEW_VERSION_4_0 || GLEW_ARB_transform_feedback2) {
+        GLint running=0;glGetIntegerv(GL_TRANSFORM_FEEDBACK_ACTIVE,&running);
+        if(running) throw std::logic_error("selection cannot interrupt active transform feedback");
+    }
+    QueryState state;state.prepare(framebuffer_width(),framebuffer_height());
+    if(drawable->update_needed_ || (!drawable->vertex_buffer_ && (drawable->model_ || drawable->update_func_))) {
+        drawable->update_buffers_internal();drawable->update_needed_=false;
+    }
+    if(!point_selector_) point_selector_.reset(new opengl::PointSelector);
+    return point_selector_->points(owner,drawable->point_revision_);
+}
+std::vector<std::uint32_t> Viewer::select_points(const graphics::PointSelectionRequest& request) const {
+    QueryContext context(window_);
+    if(GLEW_VERSION_4_0 || GLEW_ARB_transform_feedback2) {
+        GLint running=0;glGetIntegerv(GL_TRANSFORM_FEEDBACK_ACTIVE,&running);
+        if(running) throw std::logic_error("selection cannot interrupt active transform feedback");
+    }
+    QueryState state;state.prepare(framebuffer_width(),framebuffer_height());
+    if(!point_selector_) point_selector_.reset(new opengl::PointSelector);
+    return point_selector_->select(request);
+}
 void Viewer::set_overlays(std::vector<graphics::DrawCommand> commands,bool foreground) {
     QueryContext context(window_);
     QueryState state;state.prepare(framebuffer_width(),framebuffer_height());

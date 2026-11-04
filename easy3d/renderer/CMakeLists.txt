@@ -101,6 +101,8 @@ list(APPEND renderer_headers
 list(APPEND renderer_sources
         backends/opengl/clipping_plane.cpp
         backends/opengl/drawable_buffers.cpp
+        backends/clipping.cpp
+        backends/opengl/point_selection.cpp
         backends/opengl/overlay_renderer.cpp
         backends/opengl/shape_draw.cpp
         backends/opengl/drawable_lines_2D.cpp

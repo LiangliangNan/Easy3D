@@ -31,7 +31,11 @@ void exercise(OffScreen& renderer,const std::string& prefix) {
     require(renderer.background_color()==setting::background_color,"shared background default missing");
     auto mesh=triangle();require(renderer.add_model(mesh)==mesh.get(),"common model attachment failed");
     auto faces=mesh->renderer()->get_triangles_drawable("faces");faces->set_lighting(false);faces->set_uniform_coloring(vec4(.8f,.2f,.1f,1));
-    require(faces->has_cpu_buffers()==(bool(EASY3D_TUTORIAL_USES_VULKAN)),"backend did not select its own buffer policy");
+#ifdef EASY3D_HAS_VULKAN
+    require(faces->has_cpu_buffers(),"Vulkan did not select CPU extraction");
+#else
+    require(!faces->has_cpu_buffers(),"OpenGL did not select native buffers");
+#endif
     renderer.camera()->setViewDirection(vec3(0,0,-1));renderer.camera()->setUpVector(vec3(0,1,0));renderer.fit_screen();
     renderer.set_background_color(vec4(.12f,.23f,.34f,1));
     const auto matrix=renderer.camera()->modelViewProjectionMatrix();

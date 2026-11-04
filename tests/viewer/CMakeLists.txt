@@ -324,4 +324,15 @@ else()
     set_tests_properties(opengl.independenthud PROPERTIES LABELS desktop TIMEOUT 120)
 endif()
 
+add_executable(easy3d_portable_selection_test portable_selection_test.cpp
+    ../../tutorials/Tutorial_403_PointSelection/viewer.cpp)
+target_link_libraries(easy3d_portable_selection_test PRIVATE easy3d::viewer)
+if(Easy3D_ENABLE_VULKAN)
+    add_test(NAME vulkan.portableselection COMMAND easy3d_portable_selection_test --validation)
+    set_tests_properties(vulkan.portableselection PROPERTIES LABELS desktop TIMEOUT 120)
+else()
+    add_test(NAME opengl.portableselection COMMAND easy3d_portable_selection_test)
+    set_tests_properties(opengl.portableselection PROPERTIES LABELS desktop TIMEOUT 120)
+endif()
+
 include(../properties.cmake)

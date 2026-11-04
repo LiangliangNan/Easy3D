@@ -119,6 +119,7 @@ namespace easy3d {
             cpu_buffers_->revision = revision;
         }
 #ifndef EASY3D_HAS_VULKAN
+        ++point_revision_;
         if (vertex_buffer_ || color_buffer_ || normal_buffer_ || texcoord_buffer_ || element_buffer_)
             opengl_release_buffers();
 #endif
@@ -132,6 +133,7 @@ namespace easy3d {
     void Drawable::disable_element_buffer() {
         if (cpu_buffers_) { cpu_buffers_->indices.clear(); cpu_buffers_->source_faces.clear(); ++cpu_buffers_->revision; }
 #ifndef EASY3D_HAS_VULKAN
+        ++point_revision_;
         if (element_buffer_) opengl_disable_element_buffer();
 #endif
         num_indices_ = 0;
@@ -175,6 +177,7 @@ namespace easy3d {
         bbox_.clear();
         for (const auto& p : vertices) bbox_.grow(p);
 #else
+        ++point_revision_;
         opengl_update_vertex_buffer(vertices, dynamic);
 #endif
     }
@@ -207,6 +210,7 @@ namespace easy3d {
 #ifdef EASY3D_HAS_VULKAN
         cpu_buffers_->indices = indices; cpu_buffers_->source_faces.clear(); num_indices_ = indices.size(); ++cpu_buffers_->revision;
 #else
+        ++point_revision_;
         opengl_update_element_buffer(indices);
 #endif
     }

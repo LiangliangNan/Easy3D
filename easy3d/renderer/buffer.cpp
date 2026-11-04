@@ -124,9 +124,9 @@ namespace easy3d {
                 auto points = model->template get_vertex_property<vec3>("v:point");
 
                 std::vector<vec2> d_texcoords;
-                d_texcoords.reserve(model->n_vertices());
-                for (auto v : model->vertices()) {
-                    float coord = internal::scalar_coordinate(prop[v], min_value, max_value);
+                d_texcoords.reserve(points.vector().size());
+                for (auto value : prop.vector()) {
+                    float coord = internal::scalar_coordinate(value, min_value, max_value);
                     d_texcoords.emplace_back(vec2(coord, 0.5f));
                 }
                 drawable->update_vertex_buffer(points.vector());
@@ -2003,15 +2003,13 @@ namespace easy3d {
 
         void update(PointCloud *model, PointsDrawable *drawable) {
             internal::update<PointCloud>(model, drawable);
-            if (drawable->has_cpu_buffers()) {
-                // Keep original vertex slots as indices, excluding deleted slots.
-                if (model->n_vertices()==model->points().size()) drawable->disable_element_buffer();
-                else {
-                    std::vector<unsigned int> live;
-                    live.reserve(model->n_vertices());
-                    for (auto v:model->vertices()) live.push_back(v.idx());
-                    drawable->update_element_buffer(live);
-                }
+            // Keep original vertex slots as indices, excluding deleted slots.
+            if (model->n_vertices()==model->points().size()) drawable->disable_element_buffer();
+            else {
+                std::vector<unsigned int> live;
+                live.reserve(model->n_vertices());
+                for (auto v:model->vertices()) live.push_back(v.idx());
+                drawable->update_element_buffer(live);
             }
         }
 

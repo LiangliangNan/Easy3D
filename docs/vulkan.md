@@ -322,7 +322,7 @@ Decisions in force:
 | 2. Align constructors, hooks, state | merged into U1 |
 | 3. `VulkanMultiViewer` | merged into U2 |
 | 4. Remove runtime selection | done (W4) |
-| 5. Tutorials on the shared API | in progress: GLFW Tutorial 202 now builds on Vulkan; effect tutorials 501–505 remain gated, and Qt/wx integration remains W10; Tutorials 401/402 use shared visible-surface picking (2026-11-04); `EASY3D_TUTORIAL_USES_VULKAN` remains in `viewer.h` and in the other conditional tutorials (403, 404) |
+| 5. Tutorials on the shared API | in progress: GLFW Tutorial 202 now builds on Vulkan; effect tutorials 501–505 remain gated, and Qt/wx integration remains W10; Tutorials 401/402 use shared visible-surface picking (2026-11-04); `EASY3D_TUTORIAL_USES_VULKAN` remains in `viewer.h` and in the other conditional tutorial (404) |
 | 6. Renderer, interaction, GUI/application parity | pending (W10) |
 
 Divergence audit (updated at U6b, 2026-11-04), against local `main` at
@@ -374,8 +374,9 @@ of this document.
   Tutorial 202 now builds on both backends (U5d); Tutorials 401/402 use shared
   visible-surface picking (2026-11-04). Tutorials 306/309 now use shared annotations
   (W5 batch 4). Tutorials 207/405/506 now use shared annotation geometry, guides
-  and GPU depth previews (W5 batch 5). Only 403 and 404 retain separate
-  selection/capture implementations behind the macro; see U5.
+  and GPU depth previews (W5 batch 5). Tutorial 403 now shares GPU point selection
+  on both backends (batch 7). Only 404 retains a separate capture implementation
+  behind the macro; see U5.
 - **W6** (in progress) Run the Vulkan tests. Verified on Linux (GCC 13, Mesa lavapipe
   25.2.8, Xvfb), Vulkan tree with tutorials and tests, on upstream `a89bb2d` plus the
   fixes above (re-run 2026-10-31): 13 of 13 display-free and 55 of 56 desktop tests pass, including all 28
@@ -451,8 +452,8 @@ of this document.
   W5 batch 3 consolidates surface queries in ViewerBase and shares Tutorial 405's
   selection/drag lifecycle. W5 batch 5 shares its guide rendering and removes the
   selectors from Tutorials 207/405/506.
-  The two remaining conditional tutorials still require
-  renderer/picker/capture API work; the tutorial macro is not yet removable. Avoid
+  The remaining conditional tutorial (404) still requires capture consolidation;
+  the tutorial macro is not yet removable. Avoid
   new generic Viewer abstractions solely for a single tutorial.
 - **U6** (in progress) U6a moves bounded tutorial tests out of tutorial CMake and
   restores five picker-tutorial dependency lists to `main`. U6b restores drawable
@@ -4831,4 +4832,79 @@ inspection confirmed the default axes caused the initial outside-viewport oracle
 failure; that test samples clear background now. The existing MoltenVK integer
 attachment blending diagnostic is unchanged; validation-error counters in the HUD
 regressions remain zero. `git diff --check` is clean. Changes remain uncommitted
+on Easy3D-Vulkan.
+
+
+### 2026-11-04 — U5/U6 batch 7: shared GPU selection and Tutorial 403
+
+`Viewer::point_resource()` and `select_points()` now have OpenGL counterparts in
+addition to the existing Vulkan implementation. The OpenGL backend uses texture
+buffer views of the drawable's existing position VBO: it neither reads positions
+back to the CPU nor allocates/uploads a duplicate GPU position store. The views
+retain their buffer storage across drawable updates/deletion. A context-owned
+cache releases GPU objects before viewer teardown; retained CPU handles can be
+safely destroyed afterwards. Attribute-only updates retain the position snapshot;
+geometry/index replacement creates a new snapshot. Explicit buffer revisions
+prevent stale reuse when OpenGL recycles a deleted buffer name.
+
+The polygon test runs on the GPU in both builds. Vulkan retains its shared
+vertex/storage resource and SSBO compute/atomic implementation. OpenGL 3.2 uses
+transform feedback with one invocation per packed selection word, testing its
+32 source slots and writing one word without atomics. Each operation uploads the
+polygon and packed flags, then reads back only the packed result. An indexed
+point resource caches a static source-membership mask; only index data is read
+back when that resource is created. Positions are accessed directly from the VBO.
+Even-odd crossings, boundary inclusion, clip-volume/local-plane checks,
+select/deselect and preservation of unmatched/padding bits follow the Vulkan
+contract. Transform-feedback objects/ranges, texture-buffer bindings, rasterizer state
+and ordinary viewer query state are restored. Where transform-feedback objects
+are supported, the selector owns one so the caller's captured primitive count
+is preserved as well.
+
+Portable calls use `point_resource()` from their owning viewer. OpenGL snapshots
+are GPU-only: `source_count()` is available but their CPU position/source-ID
+vectors are empty, and selection on another viewer is rejected. Vulkan continues
+to accept CPU-created PointData and expose its CPU snapshots. OpenGL validates
+its texture-buffer size limit (three scalar texels per source position) and
+rejects calls inside active transform feedback where that state can be queried.
+These are explicit native-resource restrictions, not a claim that the remaining
+low-level renderer APIs are fully unified.
+
+Tutorial 403 now has one constructor, lasso/rectangle select/deselect path,
+framebuffer-coordinate guide, cancellation lifecycle and usage text. Its selector
+and alternate OpenGL picker/overlay implementation are removed. The legacy mouse
+hook coordinates convert once using the camera/framebuffer dimensions. Selection
+recoloring uploads only the color buffer, preserving shared point positions on
+both backends. The existing effective clipping-plane getter is available in both
+builds; Vulkan's explicit per-host plane setter remains transitional/native-only.
+No scanner abstraction or additional tutorial helper class is introduced.
+
+Point-cloud rendering now excludes deleted source slots through indices under
+both backends. Scalar point texture coordinates retain original slots as well,
+so live indices remain aligned after deletion. The two old test files use the
+single `EASY3D_HAS_VULKAN` build definition directly. Only Tutorial 404 and the
+compatibility definition in viewer.h retain `EASY3D_TUTORIAL_USES_VULKAN`.
+
+The new root `portable_selection_test.cpp` covers packed multiword flags, padding,
+invalid inputs, clipping, nonfinite/outside points, attribute reuse, immutable
+snapshots after VBO replacement/deletion and safe teardown, indexed/duplicate
+sources, OpenGL binding/range restoration and the shared tutorial's native-DPI
+lasso/rectangle selection, occluded/deleted points, color-resource reuse and
+Escape/focus cancellation. Existing Vulkan compute and interaction tests retain
+their deeper MSAA, depth/ID, transform and upload-count checks. Vulkan drawable
+geometry rejects NaNs before drawing, so its direct compute test retains the
+nonfinite-point oracle; the portable drawable test uses finite outside-frustum
+points there and additionally exercises NaN VBO data on OpenGL.
+
+Remaining work: Tutorial 404 capture consolidation, GUI picker counterparts,
+effects, and the original TextRenderer/Texture API audit. No runtime backend
+selection or new build option is introduced.
+
+Validation on this Mac: both complete builds succeed, including Python packaging.
+All 113 MoltenVK tests and all 86 OpenGL tests pass. Existing Vulkan compute and
+interaction/resource tests pass with validation and synchronization validation;
+the shared selection regression passes on both backends. The final OpenGL run
+includes private transform-feedback object/range isolation. The existing MoltenVK
+integer-attachment blending diagnostic is unchanged, and the selection validation
+error counters remain zero. `git diff --check` is clean. Changes remain uncommitted
 on Easy3D-Vulkan.
