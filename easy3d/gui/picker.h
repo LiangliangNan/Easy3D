@@ -27,11 +27,9 @@
 #ifndef EASY3D_GUI_PICKER_H
 #define EASY3D_GUI_PICKER_H
 
-#ifdef EASY3D_HAS_VULKAN
-// No Vulkan counterpart yet.
-#else
 
 #include <easy3d/core/types.h>
+#include <memory>
 #include <easy3d/renderer/camera.h>
 
 
@@ -42,6 +40,8 @@ namespace easy3d {
     /**
      * \brief Base class for picking mechanism.
      * \class Picker easy3d/gui/picker.h
+     * \details The camera is borrowed and must outlive the picker. OpenGL GPU
+     *      queries and resource destruction require the owning context to be current.
      * \see ModelPicker, PointCloudPicker, SurfaceMeshPicker
      */
     class Picker {
@@ -55,6 +55,8 @@ namespace easy3d {
          * \brief Destructor.
          */
         virtual ~Picker();
+        Picker(const Picker&) = delete;
+        Picker& operator=(const Picker&) = delete;
 
         /**
          * \brief Returns the pointer of the camera.
@@ -127,29 +129,32 @@ namespace easy3d {
          * \param gl_x Returns the x component of the point in the OpenGL coordinate system.
          * \param gl_y Returns the y component of the point in the OpenGL coordinate system.
          * \param width The width of the OpenGL viewport (may not be identical to the width of the screen in pixels).
-         * \param height The width of the OpenGL viewport (may not be identical to the height of the screen in pixels).
+         * \param height The height of the OpenGL viewport (may not be identical to the height of the screen in pixels).
          */
         void screen_to_opengl(int x, int y, int &gl_x, int &gl_y, int width, int height) const;
 
     protected:
+#ifndef EASY3D_HAS_VULKAN
         /**
          * \brief Prepare a frame buffer for the offscreen rendering.
          * \param width The width of the frame buffer.
          * \param height The height of the frame buffer.
          */
         void setup_framebuffer(int width, int height);
+#endif
 
     protected:
         const Camera *camera_;
 
         bool use_gpu_if_supported_; // use GPU if supported
 
-        // All the picking tasks can share the same framebuffer
-        static FramebufferObject *fbo_;
+#ifndef EASY3D_HAS_VULKAN
+        // A picker owns its framebuffer; GL framebuffer names are context-local.
+        std::unique_ptr<FramebufferObject> fbo_;
+#endif
     };
 
 }
 
-#endif // EASY3D_HAS_VULKAN
 
 #endif  // EASY3D_GUI_PICKER_H

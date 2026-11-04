@@ -2,6 +2,7 @@
 set(validation_args --validation)
 add_subdirectory(renderer)
 add_subdirectory(viewer)
+add_subdirectory(gui)
 add_subdirectory(core)
 add_subdirectory(algo)
 add_subdirectory(util)

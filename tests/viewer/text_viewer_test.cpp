@@ -11,7 +11,7 @@
 using namespace easy3d;
 void require(bool value,const char* message) { if (!value) throw std::runtime_error(message); }
 void frame(TutorialTextRendering& viewer) {
-    for (unsigned i=0;i<100;++i) {
+    for (unsigned i=0;i<300;++i) {
         Viewer::poll_events();
         if (viewer.draw_frame()) return;
         glfwWaitEventsTimeout(0.01);
@@ -37,7 +37,8 @@ int main(int argc,char**) {
         frame(viewer); frame(viewer);
         const auto baseline=viewer.capture();
         const auto camera_matrix=viewer.camera()->modelViewProjectionMatrix();
-        auto key=glfwSetKeyCallback(viewer.window(),nullptr); glfwSetKeyCallback(viewer.window(),key);
+        // Drive the saved callback directly; unrelated desktop keys must not close or resize the fixture.
+        auto key=glfwSetKeyCallback(viewer.window(),nullptr);
         auto press=[&](int code) { key(viewer.window(),code,0,GLFW_PRESS,0); frame(viewer); };
         for (const auto pair: {std::pair<int,int>{TutorialTextRendering::KEY_EQUAL,TutorialTextRendering::KEY_MINUS},
                               {TutorialTextRendering::KEY_PERIOD,TutorialTextRendering::KEY_COMMA},{TutorialTextRendering::KEY_UP,TutorialTextRendering::KEY_DOWN},

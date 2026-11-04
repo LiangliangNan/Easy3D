@@ -27,34 +27,38 @@
 
 #include <easy3d/gui/picker.h>
 
-#ifdef EASY3D_HAS_VULKAN
-// No Vulkan counterpart yet.
-#else
+#ifndef EASY3D_HAS_VULKAN
 #include <easy3d/renderer/framebuffer_object.h>
 #include <easy3d/renderer/opengl_error.h>
+#endif
+#include <cmath>
+#include <limits>
+#include <stdexcept>
 
 
 namespace easy3d {
 
 
-    FramebufferObject *Picker::fbo_ = nullptr;
-
 
     Picker::Picker(const Camera *cam)
-            : camera_(cam), use_gpu_if_supported_(true) {
+            : camera_(cam),
+#ifdef EASY3D_HAS_VULKAN
+              use_gpu_if_supported_(false) {
+#else
+              use_gpu_if_supported_(true) {
+#endif
+        if(!cam) throw std::invalid_argument("picker requires a camera");
     }
 
 
-    Picker::~Picker() {
-        delete fbo_;
-        fbo_ = nullptr;
-    }
+    Picker::~Picker() = default;
 
 
+#ifndef EASY3D_HAS_VULKAN
     void Picker::setup_framebuffer(int width, int height) {
         // prepare a frame buffer object (fbo), I will do offscreen rendering to the new fbo
         if (!fbo_) {
-            fbo_ = new FramebufferObject(width, height, 0);
+            fbo_.reset(new FramebufferObject(width, height, 0));
             fbo_->add_color_buffer();
             fbo_->add_depth_buffer();
             easy3d_debug_log_gl_error
@@ -72,14 +76,17 @@ namespace easy3d {
     }
 
 
-    void Picker::screen_to_opengl(int x, int y, int &gl_x, int &gl_y, int width, int height) const {
-        float dpi_scaling_x = static_cast<float>(width) / static_cast<float>(camera()->screenWidth());
-        float dpi_scaling_y = static_cast<float>(height) / static_cast<float>(camera()->screenHeight());
+#endif
 
-        gl_x = static_cast<int>(dpi_scaling_x * x);
-        gl_y = static_cast<int>(dpi_scaling_y * (camera()->screenHeight() - 1 - y));
+    void Picker::screen_to_opengl(int x, int y, int &gl_x, int &gl_y, int width, int height) const {
+        if(width<=0 || height<=0 || camera()->screenWidth()<=0 || camera()->screenHeight()<=0)
+            throw std::invalid_argument("picker viewport dimensions must be positive");
+        const double fx=std::floor(double(x)*width/camera()->screenWidth());
+        const double fy=height-1-std::floor(double(y)*height/camera()->screenHeight());
+        if(fx<std::numeric_limits<int>::min() || fx>std::numeric_limits<int>::max() ||
+           fy<std::numeric_limits<int>::min() || fy>std::numeric_limits<int>::max())
+            throw std::out_of_range("picker coordinate exceeds integer range");
+        gl_x = static_cast<int>(fx);gl_y = static_cast<int>(fy);
     }
 
 }
-
-#endif // EASY3D_HAS_VULKAN

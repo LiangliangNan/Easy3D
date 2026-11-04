@@ -323,7 +323,7 @@ Decisions in force:
 | 3. `VulkanMultiViewer` | merged into U2 |
 | 4. Remove runtime selection | done (W4) |
 | 5. Tutorials on the shared API | in progress: GLFW Tutorial 202 now builds on Vulkan; effect tutorials 501–505 remain gated, and Qt/wx integration remains W10; Tutorials 401/402 use shared visible-surface picking (2026-11-04); `EASY3D_TUTORIAL_USES_VULKAN` remains in `viewer.h` and in the other conditional tutorial (404) |
-| 6. Renderer, interaction, GUI/application parity | pending (W10) |
+| 6. Renderer, interaction, GUI/application parity | in progress (W10): shared Picker and geometric SurfaceMeshPicker; model/point-cloud GUI pickers, native GUI integration and effects remain open |
 
 Divergence audit (updated at U6b, 2026-11-04), against local `main` at
 `b2868dcd5f0cc06fdb0b7df10e1ada2ec6a28226`, including the current working tree:
@@ -436,7 +436,9 @@ of this document.
   exists. Effect sources and the `gui` target are built/exported in both builds.
   Tutorial `ViewerImGui` now has both counterparts (U5d); ImGui core/GLFW build in
   both configurations and its OpenGL renderer remains conditional. Effect/picker
-  feature parity remains open; see the U3 classification below.
+  feature parity remains open; see the U3 classification below. `Picker` and
+  `SurfaceMeshPicker` now have shared geometric counterparts (U6/W10 batch 8);
+  model/point-cloud GUI pickers still require their Vulkan implementations.
 - **U4** (implemented) Python Viewer/MultiViewer constructors, callbacks and scene
   storage bindings follow the unified classes; both complete extensions build and
   render on macOS. The deployed-package regression runs in CTest and the two-backend
@@ -463,7 +465,8 @@ of this document.
   original texture factories. U6e removes the redundant drawable buffer-mode switch
   and restores the two-argument Renderer constructor. U6f removes the catch-all
   unavailable-OpenGL source and puts methods in their owning files. Continue
-  the file-by-file responsibility audit and remove capability
+  the file-by-file responsibility audit (including the shared OpenGL query-state
+  guard extracted for Viewer and GUI mesh picking in batch 8) and remove capability
   gates only when implementations exist. U5/API work remains open.
 - **W10** Mapple, Qt/wx, remaining Python API/tutorial coverage, transparency/SSAO/shadows/EDL parity.
 
@@ -4908,3 +4911,86 @@ includes private transform-feedback object/range isolation. The existing MoltenV
 integer-attachment blending diagnostic is unchanged, and the selection validation
 error counters remain zero. `git diff --check` is clean. Changes remain uncommitted
 on Easy3D-Vulkan.
+
+
+### 2026-11-04 — U6/W10 batch 8: geometric GUI mesh picking and shared GL query isolation
+
+The original `Picker` and `SurfaceMeshPicker` classes are now available under
+both configurations, in their original files with their existing camera-based
+constructors and public methods. Vulkan uses geometric CPU picking; OpenGL keeps
+its GPU face-ID path and uses the shared geometric fallback. Shared clipping-plane
+queries take the geometric path in both builds. These camera-based tools operate
+on the supplied mesh and Camera screen coordinates; they are not a replacement
+for Viewer's pixel-center, registered-scene visible-surface query. No viewer
+constructor, host association, device allocation or scanner abstraction is added.
+
+The geometric implementation now intersects tessellated faces, including concave
+and nonplanar polygons. Triangles use a direct intersection fast path. Near/far
+bounds and the shared clipping plane/slab constrain hits; transforms apply to
+rays and reported world points. Vertex/edge sensitivity uses projected transformed
+geometry. Picked-face overloads validate the originating model as well as its
+face slot. Deleted faces retain source indices, and misses clear the single-face
+result. Two old private convex/plane helpers are replaced by one triangle/polygon
+intersection helper in the owning class.
+
+Rectangle and polygon mesh selection share the existing all-vertices policy,
+using Camera::projectedCoordinatesOf coordinates, including region boundaries.
+All original control vertices must lie in the region, camera frustum and shared
+clip halfspaces. This remains geometric CPU through-selection on both backends;
+it does not query occlusion or replace the point-cloud GPU lasso implementation.
+Byte flags replace vector<bool> writes in the OpenMP loop. No acceleration cache
+is introduced: geometric face queries are linear in mesh size and tessellate
+non-triangular faces per query. Per-host native Vulkan clipping planes, custom
+rasterization, renderer visibility and draw-hook geometry are outside this
+camera-only contract; use the shared Viewer picking contract for registered
+visible surfaces.
+
+OpenGL picker framebuffers are now owned per picker rather than process-global,
+so separate viewer contexts cannot reuse one another's framebuffer names. Pickers
+are noncopyable in both builds. The camera remains borrowed; GPU query/destruction
+requires the owning OpenGL context to be current. DPI conversion selects the
+containing framebuffer pixel, including the top row; nonrepresentable integer
+coordinates and invalid dimensions are rejected. The legacy GPU face-to-source
+mapping iterates live faces instead of treating live face count as slot capacity.
+
+The existing OpenGL QueryState implementation moved from viewer.cpp to the private
+renderer backend header `backends/opengl/query_state.h`. GUI face queries reuse it
+instead of introducing another state wrapper. It now also isolates clear color,
+dithering and color logic operations. Native face selection prepares its own
+viewport/depth/color/pixel-pack state and restores caller bindings and flags.
+Viewer query, annotation and point-selection callers keep using the same guard.
+No new public Viewer or renderer facade API is introduced.
+
+Root `tests/gui` adds a display-free geometric regression on both builds and an
+OpenGL desktop regression for sparse source IDs, alternating two-context queries
+and caller state/PBO isolation. Geometry checks include nearest faces, deletion,
+invalid/stale model results, translated/rotated meshes, perspective, concave
+notches, nonplanar hit positions, region boundary/rectangle agreement, degenerate
+and nonfinite regions, far clipping, shared plane/slab clipping, DPI conversion
+and projected vertex/edge sensitivity.
+
+The clean Vulkan build exposed two existing desktop test-driver failures. Picker
+tests no longer warp the OS cursor before synthetic clicks: they drive tutorial
+hooks directly and block unrelated navigation, retaining their depth/ID and
+selection assertions. Native callback translation remains covered by vulkan.window.
+The text test drives its saved key callback with external key delivery detached
+and allows bounded presentation settling. Both tests subsequently pass three
+consecutive focused runs; this is test isolation, not a claimed renderer fix.
+
+The IDE's `cmake-build-debug` cache is now OpenGL-only and was preserved. Vulkan
+validation uses the separate `build-migration/vulkan-macos` configuration with
+Easy3D_ENABLE_VULKAN=ON and Easy3D_BUILD_TESTS=ON. OpenGL uses build-u1b-opengl.
+Remaining work includes model/point-cloud GUI pickers, GPU/rasterization parity
+for the camera-based mesh picker, Tutorial 404, effects, native GUI integration
+and the original TextRenderer/Texture API audit.
+
+Validation on this Mac: complete Vulkan-only and OpenGL-only builds succeed,
+including Python packaging. The final complete suites pass 114/114 on MoltenVK
+and 88/88 on OpenGL. The two revised native test drivers also pass three
+consecutive focused runs each; the earlier 112/114 fresh-build result is recorded
+above rather than treated as a renderer regression. New geometric checks run
+without creating a window/device, and the OpenGL context/state regression passes.
+Existing Vulkan validation/synchronization-validation coverage passes. The prior
+MoltenVK integer-attachment blending diagnostic remains unchanged; no claim is
+made that it or the historical intermittent window timeout is fixed.
+`git diff --check` is clean. Changes remain uncommitted on Easy3D-Vulkan.

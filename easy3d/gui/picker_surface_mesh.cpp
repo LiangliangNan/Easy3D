@@ -26,220 +26,200 @@
 
 
 #include <easy3d/gui/picker_surface_mesh.h>
-
-#ifdef EASY3D_HAS_VULKAN
-// No Vulkan counterpart yet.
-#else
+#include <easy3d/algo/tessellator.h>
+#include <easy3d/renderer/manipulator.h>
+#include <easy3d/renderer/clipping_plane.h>
+#include <easy3d/util/logging.h>
+#include <algorithm>
+#include <cmath>
+#include <limits>
+#ifndef EASY3D_HAS_VULKAN
 #include <easy3d/renderer/renderer.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/framebuffer_object.h>
 #include <easy3d/renderer/opengl_error.h>
 #include <easy3d/renderer/drawable_triangles.h>
-#include <easy3d/renderer/manipulator.h>
-#include <easy3d/util/logging.h>
-
+#include <easy3d/renderer/backends/opengl/query_state.h>
+#endif
 
 namespace easy3d {
+SurfaceMeshPicker::SurfaceMeshPicker(const Camera* cam):Picker(cam),hit_resolution_(15) {}
 
-    SurfaceMeshPicker::SurfaceMeshPicker(const Camera *cam)
-            : Picker(cam)
-            , hit_resolution_(15)
-    {
-        use_gpu_if_supported_ = true;
-    }
-
-
-    SurfaceMesh::Face SurfaceMeshPicker::pick_face(SurfaceMesh *model, int x, int y) {
-        if (!model)
-            return SurfaceMesh::Face();
-
-        ShaderProgram* program = nullptr;
-        if (use_gpu_if_supported_) {
-            program = ShaderManager::get_program("selection/selection_single_primitive");
-            if (!program) {
-                std::vector<ShaderProgram::Attribute> attributes;
-                attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-                program = ShaderManager::create_program_from_files("selection/selection_single_primitive", attributes);
-            }
-            if (!program) {
-                use_gpu_if_supported_ = false;
-                LOG_N_TIMES(3, ERROR) << "shader program not available, fall back to CPU implementation. " << COUNTER;
-            }
+SurfaceMesh::Face SurfaceMeshPicker::pick_face(SurfaceMesh* model,int x,int y) {
+    picked_face_=SurfaceMesh::Face();picked_model_=nullptr;
+    if(!model || x<0 || y<0 || x>=camera()->screenWidth() || y>=camera()->screenHeight()) return picked_face_;
+#ifndef EASY3D_HAS_VULKAN
+    const bool clipped=ClippingPlane::instance()->is_enabled();
+    if(use_gpu_if_supported_ && model->renderer() && !clipped) {
+        opengl::QueryState state;
+        state.prepare(state.viewport[2],state.viewport[3]);
+        glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+        auto* program=ShaderManager::get_program("selection/selection_single_primitive");
+        if(!program) {
+            std::vector<ShaderProgram::Attribute> attributes;
+            attributes.emplace_back(ShaderProgram::POSITION,"vtx_position");
+            program=ShaderManager::create_program_from_files("selection/selection_single_primitive",attributes);
         }
-
-        if (use_gpu_if_supported_ && program)
-            return pick_face_gpu(model, x, y, program);
-        else // CPU with OpenMP (if supported)
-            return pick_face_cpu(model, x, y);
+        if(program) picked_face_=pick_face_gpu(model,x,y,program);
+        else use_gpu_if_supported_=false;
     }
+    if(!use_gpu_if_supported_ || !model->renderer() || clipped)
+#endif
+        picked_face_=pick_face_cpu(model,x,y);
+    if(picked_face_.is_valid()) picked_model_=model;
+    return picked_face_;
+}
 
+SurfaceMesh::Vertex SurfaceMeshPicker::pick_vertex(SurfaceMesh* model,int x,int y) {
+    return pick_vertex(model,pick_face(model,x,y),x,y);
+}
+SurfaceMesh::Vertex SurfaceMeshPicker::pick_vertex(SurfaceMesh* model,SurfaceMesh::Face face,int x,int y) {
+    SurfaceMesh::Vertex result;
+    if(!model || model!=picked_model_ || face!=picked_face_ || !model->is_valid(face) || model->is_deleted(face)) return result;
+    const mat4 transform=model->manipulator()?model->manipulator()->matrix():mat4::identity();
+    double closest=double(hit_resolution_)*hit_resolution_;
+    for(auto vertex:model->vertices(face)) {
+        const auto p=project(transform*model->position(vertex));
+        if(!std::isfinite(p.x) || !std::isfinite(p.y) || p.z<0 || p.z>=1) continue;
+        const double distance=distance2(vec2(p),vec2(float(x),float(y)));
+        if(distance<closest) {closest=distance;result=vertex;}
+    }
+    return result;
+}
+SurfaceMesh::Halfedge SurfaceMeshPicker::pick_edge(SurfaceMesh* model,int x,int y) {
+    return pick_edge(model,pick_face(model,x,y),x,y);
+}
+SurfaceMesh::Halfedge SurfaceMeshPicker::pick_edge(SurfaceMesh* model,SurfaceMesh::Face face,int x,int y) {
+    SurfaceMesh::Halfedge result;
+    if(!model || model!=picked_model_ || face!=picked_face_ || !model->is_valid(face) || model->is_deleted(face)) return result;
+    const mat4 transform=model->manipulator()?model->manipulator()->matrix():mat4::identity();
+    double closest=double(hit_resolution_)*hit_resolution_;
+    for(auto edge:model->halfedges(face)) {
+        const auto a=project(transform*model->position(model->source(edge)));
+        const auto b=project(transform*model->position(model->target(edge)));
+        if(!std::isfinite(a.x) || !std::isfinite(a.y) || !std::isfinite(b.x) || !std::isfinite(b.y) ||
+           a.z<0 || a.z>=1 || b.z<0 || b.z>=1 || distance2(vec2(a),vec2(b))<1e-12f) continue;
+        const double distance=Segment2(vec2(a),vec2(b)).squared_distance(vec2(float(x),float(y)));
+        if(distance<closest) {closest=distance;result=edge;}
+    }
+    return result;
+}
+SurfaceMesh::Face SurfaceMeshPicker::picked_face() const {return picked_face_;}
 
-    SurfaceMesh::Vertex
-    SurfaceMeshPicker::pick_vertex(SurfaceMesh *model, SurfaceMesh::Face picked_face, int x, int y) {
-        if (!picked_face.is_valid() || picked_face != picked_face_) {
-            LOG(ERROR) << "user provided face is not valid";
-            return SurfaceMesh::Vertex();
+bool SurfaceMeshPicker::intersect_face(SurfaceMesh* model,SurfaceMesh::Face face,
+                                      const vec3& origin,const vec3& direction,float& t) {
+    bool found=false;t=std::numeric_limits<float>::infinity();
+    const auto intersect=[&](const dvec3& a,const dvec3& b,const dvec3& c) {
+        const dvec3 e1=b-a,e2=c-a,ray(direction),h=cross(ray,e2);
+        const double det=dot(e1,h);
+        if(std::abs(det)<=std::numeric_limits<double>::epsilon()*e1.length()*h.length()) return;
+        const dvec3 offset=dvec3(origin)-a,q=cross(offset,e1);
+        const double u=dot(offset,h)/det,v=dot(ray,q)/det,d=dot(e2,q)/det;
+        if(u<0 || v<0 || u+v>1 || d<0 || d>=1 || !std::isfinite(d)) return;
+        const auto* clipping=ClippingPlane::instance();
+        if(clipping->is_enabled()) {
+            const mat4 transform=model->manipulator()?model->manipulator()->matrix():mat4::identity();
+            const auto world=transform*(origin+float(d)*direction);
+            const auto distance=dot(clipping->normal(),world-clipping->center());
+            if(distance>0 || (clipping->cross_section() && distance < -clipping->cross_section_width()*clipping->scene_radius())) return;
         }
-
-        const vec3& point = picked_point(model, picked_face, x, y);
-        double squared_distance = FLT_MAX;
-        SurfaceMesh::Vertex closest_vertex;
-        for (auto h : model->halfedges(picked_face)) {
-            SurfaceMesh::Vertex v = model->target(h);
-            double s = distance2(model->position(v), point);
-            if (s < squared_distance) {
-                squared_distance = s;
-                closest_vertex = v;
-            }
+        if(d<t) {t=float(d);found=true;}
+    };
+    if(model->valence(face)==3) {
+        dvec3 p[3];unsigned i=0;
+        for(auto vertex:model->vertices(face)) {
+            const auto v=model->position(vertex);
+            if(!std::isfinite(v.x) || !std::isfinite(v.y) || !std::isfinite(v.z)) return false;
+            p[i++]=dvec3(v);
         }
-
-        //////////////////////////////////////////////////////////////////////////
-
-        // always check
-        if (!closest_vertex.is_valid())
-            return closest_vertex;
-
-        const vec3 &p = model->position(closest_vertex);
-        const vec2 q(project(p));
-        const float sqr_dist = distance2(q, vec2(static_cast<float>(x), static_cast<float>(y)));
-        if (sqr_dist < static_cast<float>(hit_resolution_ * hit_resolution_))
-            return closest_vertex;
-        else
-            return SurfaceMesh::Vertex();
+        intersect(p[0],p[1],p[2]);
+        return found;
     }
-
-
-    SurfaceMesh::Vertex SurfaceMeshPicker::pick_vertex(SurfaceMesh *model, int x, int y) {
-        SurfaceMesh::Face face = pick_face(model, x, y);
-        return pick_vertex(model, face, x, y);
+    for(auto vertex:model->vertices(face)) {
+        const auto p=model->position(vertex);
+        if(!std::isfinite(p.x) || !std::isfinite(p.y) || !std::isfinite(p.z)) return false;
     }
-
-
-    SurfaceMesh::Halfedge
-    SurfaceMeshPicker::pick_edge(SurfaceMesh *model, SurfaceMesh::Face picked_face, int x, int y) {
-        if (!picked_face.is_valid() || picked_face != picked_face_) {
-            LOG(ERROR) << "user provided face is not valid";
-            return SurfaceMesh::Halfedge();
-        }
-
-        const vec3& point = picked_point(model, picked_face, x, y);
-
-        double squared_distance = FLT_MAX;
-        SurfaceMesh::Halfedge closest_edge;
-
-        // for edges that have duplicate vertices
-        static double threshold = 1e-10;
-        for (auto h : model->halfedges(picked_face)) {
-            const vec3 &s = model->position(model->source(h));
-            const vec3 &t = model->position(model->target(h));
-            if (distance2(s, t) > threshold) {
-                Segment3 seg(s, t);
-                double d = seg.squared_distance(point);
-                if (d < squared_distance/* && seg.projected_inside(point)*/) {
-                    squared_distance = d;
-                    closest_edge = h;
-                }
-            }
-        }
-
-        //////////////////////////////////////////////////////////////////////////
-
-        // always check
-        if (!closest_edge.is_valid())
-            return SurfaceMesh::Halfedge();
-
-        const vec3 &s = model->position(model->source(closest_edge));
-        const vec3 &t = model->position(model->target(closest_edge));
-        const Segment2 seg(vec2(project(s)), vec2(project(t)));
-        const float sqr_dist = seg.squared_distance(vec2(static_cast<float>(x), static_cast<float>(y)));
-        if (sqr_dist < static_cast<float>(hit_resolution_ * hit_resolution_))
-            return closest_edge;
-        else
-            return SurfaceMesh::Halfedge();
+    Tessellator tess;
+    tess.begin_polygon(model->compute_face_normal(face));tess.begin_contour();
+    for(auto vertex:model->vertices(face)) tess.add_vertex(model->position(vertex));
+    tess.end_contour();tess.end_polygon();
+    for(const auto& triangle:tess.elements()) {
+        dvec3 p[3];
+        for(unsigned j=0;j<3;++j) {const auto* data=tess.vertices()[triangle[j]]->data();p[j]=dvec3(data[0],data[1],data[2]);}
+        intersect(p[0],p[1],p[2]);
     }
-
-
-    SurfaceMesh::Halfedge SurfaceMeshPicker::pick_edge(SurfaceMesh *model, int x, int y) {
-        SurfaceMesh::Face facet = pick_face(model, x, y);
-        return pick_edge(model, facet, x, y);
+    return found;
+}
+SurfaceMesh::Face SurfaceMeshPicker::pick_face_cpu(SurfaceMesh* model,int x,int y) {
+    const mat4 transform=model->manipulator()?model->manipulator()->matrix():mat4::identity();
+    const mat4 inv=inverse(transform);
+    const auto origin=inv*unproject(x,y,0),direction=inv*unproject(x,y,1)-origin;
+    if(!std::isfinite(direction.x) || !std::isfinite(direction.y) || !std::isfinite(direction.z)) return SurfaceMesh::Face();
+    float closest=std::numeric_limits<float>::infinity();SurfaceMesh::Face result;
+    for(auto face:model->faces()) {
+        float t;
+        if(!intersect_face(model,face,origin,direction,t) || t>=closest) continue;
+        closest=t;result=face;
     }
-
-
-    Plane3 SurfaceMeshPicker::face_plane(SurfaceMesh *model, SurfaceMesh::Face face) const {
-        auto h = model->halfedge(face);
-        auto v = model->target(h);
-        return Plane3(model->position(v), model->compute_face_normal(face));
+    return result;
+}
+vec3 SurfaceMeshPicker::picked_point(SurfaceMesh* model,SurfaceMesh::Face face,int x,int y) const {
+    if(!model || model!=picked_model_ || face!=picked_face_ || !model->is_valid(face) || model->is_deleted(face)) return vec3(0);
+    const mat4 transform=model->manipulator()?model->manipulator()->matrix():mat4::identity();
+    const mat4 inv=inverse(transform);
+    const auto origin=inv*unproject(x,y,0),direction=inv*unproject(x,y,1)-origin;
+    float t;
+    return intersect_face(model,face,origin,direction,t)?transform*(origin+t*direction):vec3(0);
+}
+std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_faces(SurfaceMesh* model,const Rect& rect) {
+    Polygon2 polygon;
+    polygon.push_back(vec2(rect.left(),rect.top()));polygon.push_back(vec2(rect.right(),rect.top()));
+    polygon.push_back(vec2(rect.right(),rect.bottom()));polygon.push_back(vec2(rect.left(),rect.bottom()));
+    return pick_faces(model,polygon);
+}
+std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_faces(SurfaceMesh* model,const Polygon2& polygon) {
+    std::vector<SurfaceMesh::Face> result;
+    if(!model || polygon.size()<3) return result;
+    bool area=false;
+    for(const auto& p:polygon) if(!std::isfinite(p.x) || !std::isfinite(p.y)) return result;
+    for(size_t i=1;i+1<polygon.size();++i) {
+        auto a=polygon[i]-polygon[0],b=polygon[i+1]-polygon[0];area=area || std::abs(double(a.x)*b.y-double(a.y)*b.x)>1e-8;
     }
-
-
-    SurfaceMesh::Face SurfaceMeshPicker::picked_face() const {
-        if (!picked_face_.is_valid()) {
-            LOG(ERROR) << "no face has been picked";
-        }
-        return picked_face_;
-    }
-
-
-    vec3 SurfaceMeshPicker::picked_point(SurfaceMesh *model, SurfaceMesh::Face face, int x, int y) const {
-        if (!picked_face_.is_valid() || !face.is_valid() || picked_face_ != face) {
-            LOG(ERROR) << "no face has been picked";
-            return vec3();
-        }
-
-        const Line3 line = picking_line(x, y);
-        const Plane3 plane = face_plane(model, face);
-
-        vec3 p;
-        if (plane.intersect(line, p))
-            return p;
-        else {
-            LOG(ERROR) << "should have intersection";
-            return vec3();
-        }
-    }
-
-
-    SurfaceMesh::Face SurfaceMeshPicker::pick_face_cpu(SurfaceMesh *model, int x, int y) {
-        int num = static_cast<int>(model->n_faces());
-        const vec3 &p_near = unproject(x, y, 0);
-        const vec3 &p_far = unproject(x, y, 1);
-        const OrientedLine3 oline(p_near, p_far);
-
-        std::vector<char> status(num, 0);
+    if(!area) return result;
+    const mat4 transform=model->manipulator()?model->manipulator()->matrix():mat4::identity();
+    const auto mvp=camera()->modelViewProjectionMatrix()*transform;
+    const auto& points=model->points();std::vector<unsigned char> selected(points.size(),0);
+    const auto* clipping=ClippingPlane::instance();
+    // Byte flags avoid vector<bool>'s shared-word writes under OpenMP.
 #pragma omp parallel for
-        for (int i = 0; i < num; ++i) {
-            if (do_intersect(model, SurfaceMesh::Face(i), oline))
-                status[i] = 1;
+    for(int i=0;i<static_cast<int>(points.size());++i) {
+        const vec4 clip=mvp*vec4(points[i],1);
+        if(!std::isfinite(clip.x) || !std::isfinite(clip.y) || !std::isfinite(clip.z) || !std::isfinite(clip.w) || clip.w<=0 ||
+           clip.x < -clip.w || clip.x > clip.w || clip.y < -clip.w || clip.y > clip.w || clip.z < -clip.w || clip.z>=clip.w) continue;
+        if(clipping->is_enabled()) {
+            const auto world=transform*points[i];const auto d=dot(clipping->normal(),world-clipping->center());
+            if(d>0 || (clipping->cross_section() && d < -clipping->cross_section_width()*clipping->scene_radius())) continue;
         }
-
-        picked_face_ = SurfaceMesh::Face();
-        double squared_distance = FLT_MAX;
-        const Line3 &line = picking_line(x, y);
-        for (int i = 0; i < num; ++i) {
-            if (status[i]) {
-                const SurfaceMesh::Face face(i);
-                const Plane3 plane = face_plane(model, face);
-
-                vec3 p;
-                if (plane.intersect(line, p)) {
-                    double s = distance2(p, p_near);
-                    if (s < squared_distance) {
-                        squared_distance = s;
-                        picked_face_ = face;
-                    }
-                } else {
-                    // If reached here, a parallel facet with distance less than hit resolution should be
-                    // the candidate. However, the picking line does not intersect the facet.
-                    // Logger::err(title()) << "should have intersection";
-                }
+        const vec2 p((clip.x/clip.w+1)*.5f*camera()->screenWidth(),
+                     camera()->screenHeight()-1-(clip.y/clip.w+1)*.5f*camera()->screenHeight());
+        bool inside=polygon.contains(p);
+        for(size_t j=0,k=polygon.size()-1;!inside && j<polygon.size();k=j++) {
+            const auto edge=polygon[j]-polygon[k];const float length2=edge.length2();
+            if(length2>0) {
+                const float t=std::max(0.f,std::min(1.f,dot(p-polygon[k],edge)/length2));
+                inside=(p-polygon[k]-t*edge).length2()<=1e-8f;
             }
         }
-
-        return picked_face_;
+        selected[i]=inside;
     }
-
-
+    for(auto face:model->faces()) {
+        bool inside=true;for(auto vertex:model->vertices(face)) inside=inside && selected[vertex.idx()];
+        if(inside) result.push_back(face);
+    }
+    return result;
+}
+#ifndef EASY3D_HAS_VULKAN
     SurfaceMesh::Face SurfaceMeshPicker::pick_face_gpu(SurfaceMesh *model, int x, int y, ShaderProgram* program) {
         auto drawable = model->renderer()->get_triangles_drawable("faces");
         if (!drawable) {
@@ -264,7 +244,9 @@ namespace easy3d {
         glGetIntegerv(GL_VIEWPORT, viewport);
         int width = viewport[2];
         int height = viewport[3];
+        if(width<=0 || height<=0) return SurfaceMesh::Face();
         setup_framebuffer(width, height);
+        if(!fbo_->is_valid()) return SurfaceMesh::Face();
 
         //--------------------------------------------------------------------------
         // render the 'scene' to the new FBO.
@@ -300,7 +282,7 @@ namespace easy3d {
         int gl_x, gl_y;
         screen_to_opengl(x, y, gl_x, gl_y, width, height);
 
-        unsigned char c[4];
+        unsigned char c[4]={255,255,255,255};
         fbo_->read_color(c, gl_x, gl_y);
 
         // switch back to the previous fbo
@@ -317,168 +299,13 @@ namespace easy3d {
         int id = color::encode(c[0], c[1], c[2], c[3]);
         picked_face_ = SurfaceMesh::Face();
 
-#if 0 // If the mesh is a triangle mesh
-        picked_face_ = SurfaceMesh::Face(id);
+        const auto ranges=model->get_face_property<std::pair<int,int>>("f:triangle_range");
+        if(id>=0 && ranges) for(auto face:model->faces()) {
+            const auto range=ranges[face];
+            if(id>=range.first && id<=range.second) {picked_face_=face;break;}
+        }
         return picked_face_;
-#else // I want to handle general polygonal meshes
-        if (id >= 0) {
-            // We draw the polygonal faces as triangles and the picked id is the index of the picked triangle. So we
-            // need to figure out from which face this triangle comes from.
-            auto triangle_range = model->get_face_property<std::pair<int, int> >("f:triangle_range");
-            if (!triangle_range) {
-                LOG(ERROR) << "face property 'f:triangle_range' not defined. Selection aborted";
-                return SurfaceMesh::Face();
-            }
+    }
 
-            // Triangle meshes are more common... So treat is as a triangle mesh and check if the id is within the range.
-            if (static_cast<unsigned int>(id) < model->n_faces()) {
-                auto face = SurfaceMesh::Face(id);
-                const auto &range = triangle_range[face];
-                if (id >= range.first && id <= range.second) {
-                    picked_face_ = face;
-                    return picked_face_;
-                }
-            }
-
-            // Now treat the model as a general polygonal mesh.
-            for (unsigned int face_id = 0; face_id < model->n_faces(); ++face_id) {
-                auto face = SurfaceMesh::Face(static_cast<int>(face_id));
-                const auto &range = triangle_range[face];
-                if (id >= range.first && id <= range.second) {
-                    picked_face_ = face;
-                    return picked_face_;
-                }
-            }
-        }
 #endif
-
-        return SurfaceMesh::Face();
-    }
-
-
-    std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_faces(SurfaceMesh *model, const Rect& rect) {
-        std::vector<SurfaceMesh::Face> faces;
-        if (!model)
-            return faces;
-
-        const int win_width = camera()->screenWidth();
-        const int win_height = camera()->screenHeight();
-
-        float xmin = rect.left() / static_cast<float>(win_width - 1);
-        float ymin = 1.0f - rect.top() / static_cast<float>(win_height - 1);
-        float xmax = rect.right() / static_cast<float>(win_width - 1);
-        float ymax = 1.0f - rect.bottom() / static_cast<float>(win_height - 1);
-        if (xmin > xmax) std::swap(xmin, xmax);
-        if (ymin > ymax) std::swap(ymin, ymax);
-
-        const auto &points = model->get_vertex_property<vec3>("v:point").vector();
-        const int num = static_cast<int>(points.size());
-        const mat4 MANIP = model->manipulator() ? model->manipulator()->matrix() : mat4::identity();
-        const mat4 &m = camera()->modelViewProjectionMatrix() * MANIP;
-
-        std::vector<bool> status(num, false);
-
-#pragma omp parallel for
-        for (int i = 0; i < num; ++i) {
-            const vec3 &p = points[i];
-            float x = m[0] * p.x + m[4] * p.y + m[8] * p.z + m[12];
-            float y = m[1] * p.x + m[5] * p.y + m[9] * p.z + m[13];
-            //float z = m[2] * p.x + m[6] * p.y + m[10] * p.z + m[14]; // I don't need z
-            float w = m[3] * p.x + m[7] * p.y + m[11] * p.z + m[15];
-            x /= w;
-            y /= w;
-            x = 0.5f * x + 0.5f;
-            y = 0.5f * y + 0.5f;
-
-            if (x >= xmin && x <= xmax && y >= ymin && y <= ymax)
-                status[i] = true;
-        }
-
-        // a face is selected if all its vertices are selected
-        for (auto f : model->faces()) {
-            bool selected = true;
-            for (auto v : model->vertices(f)) {
-                if (!status[v.idx()]) {
-                    selected = false;
-                    break;
-                }
-            }
-
-            if (selected)
-                faces.push_back(f);
-        }
-
-        return faces;
-    }
-
-
-    std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_faces(SurfaceMesh *model, const Polygon2 &plg) {
-        std::vector<SurfaceMesh::Face> faces;
-        if (!model)
-            return faces;
-
-        const int win_width = camera()->screenWidth();
-        const int win_height = camera()->screenHeight();
-
-        std::vector<vec2> region; // the transformed selection region
-        for (std::size_t i = 0; i < plg.size(); ++i) {
-            const vec2 &p = plg[i];
-            const float x = p.x / float(win_width - 1);
-            const float y = 1.0f - p.y / float(win_height - 1);
-            region.emplace_back(vec2(x, y));
-        }
-
-        const Box2& box = plg.bbox();
-        float xmin = box.min_point().x / static_cast<float>(win_width - 1);
-        float ymin = 1.0f - box.min_point().y / static_cast<float>(win_height - 1);
-        float xmax = box.max_point().x / static_cast<float>(win_width - 1);
-        float ymax = 1.0f - box.max_point().y / static_cast<float>(win_height - 1);
-        if (xmin > xmax) std::swap(xmin, xmax);
-        if (ymin > ymax) std::swap(ymin, ymax);
-
-        const auto &points = model->get_vertex_property<vec3>("v:point").vector();
-        const int num = static_cast<int>(points.size());
-        const mat4 MANIP = model->manipulator() ? model->manipulator()->matrix() : mat4::identity();
-        const mat4 &m = camera()->modelViewProjectionMatrix() * MANIP;
-
-        std::vector<bool> select_vertices(num, false);
-
-#pragma omp parallel for
-        for (int i = 0; i < num; ++i) {
-            const vec3& p = points[i];
-            float x = m[0] * p.x + m[4] * p.y + m[8] * p.z + m[12];
-            float y = m[1] * p.x + m[5] * p.y + m[9] * p.z + m[13];
-            //float z = m[2] * p.x + m[6] * p.y + m[10] * p.z + m[14]; // I don't need z
-            float w = m[3] * p.x + m[7] * p.y + m[11] * p.z + m[15];
-            x /= w;
-            y /= w;
-            x = 0.5f * x + 0.5f;
-            y = 0.5f * y + 0.5f;
-
-            if (x >= xmin && x <= xmax && y >= ymin && y <= ymax) {
-                if (geom::point_in_polygon(vec2(x, y), region))
-                    select_vertices[i] = true;
-            }
-        }
-
-        // a face is selected if all its vertices are selected
-        for (auto f : model->faces()) {
-            bool selected = true;
-            for (auto v : model->vertices(f)) {
-                if (!select_vertices[v.idx()]) {
-                    selected = false;
-                    break;
-                }
-            }
-
-            if (selected)
-                faces.push_back(f);
-        }
-
-        return faces;
-    }
-
-
-}
-
-#endif // EASY3D_HAS_VULKAN
+} // namespace easy3d

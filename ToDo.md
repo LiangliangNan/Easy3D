@@ -17,7 +17,7 @@
   - [x] Shared GPU point selection and Tutorial 403; OpenGL aliases rendering VBO positions, Vulkan retains SSBO compute, selection recolors attributes only.
   - [ ] W5 Remove EASY3D_TUTORIAL_USES_VULKAN (tutorial selector still used by Tutorial 404; Tutorials 401/402 use shared visible-surface picking on 2026-11-04;
         plus the shared viewer.h macro)
-  - [ ] W6 Mac: OpenGL 86/86; MoltenVK 113/113 (2026-11-04, U5/U6 batch 7; prior intermittent window-test timeout remains under observation); Linux baseline 68/69 still needs the interactionoverlay border check
+  - [ ] W6 Mac: OpenGL 88/88; MoltenVK 114/114 (2026-11-04, U6/W10 batch 8; prior intermittent window-test timeout remains under observation); Linux baseline 68/69 still needs the interactionoverlay border check
   - Top priority (docs/vulkan.md, "Migration principles"): minimal source changes; same class names and the same
     .h/.cpp files as the main branch (Viewer in viewer.h/.cpp for both backends); #ifdef EASY3D_HAS_VULKAN layout inside
     the classes; no new files except shaders, backend files and tests; minimal CMake changes; client code unchanged.
@@ -27,7 +27,8 @@
   - [x] U4 Python bindings, installed package and CI use the final names (full Mac builds/rendering)
   - [ ] U5 Tutorials/applications: U5a cleanup, U5b collision, U5c camera paths and U5d Vulkan ImGui/Tutorial 202 done; Tutorials 401/402 use shared visible-surface picking; only Tutorial 404 still uses the selector
   - [ ] U6 In progress: shared smoke harness, inventory, drawable constructor homes, shared renderer CMake lists, texture factories, drawable buffer policy unavailable-method ownership and root test consolidation done; remaining file audit/gates open
-  - [ ] W10 Mapple, Qt/wx, remaining Python coverage, transparency/SSAO/shadows/EDL
+  - [x] Shared Picker and geometric SurfaceMeshPicker APIs; concave/deleted/transformed faces, regions, DPI and OpenGL query/context isolation.
+  - [ ] W10 Model/point-cloud GUI pickers, mesh GPU/rasterization parity, Mapple, Qt/wx, remaining Python coverage, transparency/SSAO/shadows/EDL
 
 - Send the computed value of "MVP * MANIP" to shaders (avoiding computing the matrix product for each vertex/fragment)
 - Walkthrough and animation; allow to modify the cameras interactively

@@ -28,9 +28,6 @@
 #ifndef EASY3D_GUI_PICKER_SURFACE_MESH_H
 #define EASY3D_GUI_PICKER_SURFACE_MESH_H
 
-#ifdef EASY3D_HAS_VULKAN
-// No Vulkan counterpart yet.
-#else
 
 #include <easy3d/gui/picker.h>
 #include <easy3d/core/surface_mesh.h>
@@ -43,6 +40,13 @@ namespace easy3d {
     /**
      * \brief Implementation of picking elements (i.e, vertices, faces, edges) from a surface mesh.
      * \class SurfaceMeshPicker easy3d/gui/picker_surface_mesh.h
+     * \details Coordinates follow Camera::projectedCoordinatesOf(). Callers convert
+     *      window coordinates to the camera's screen size.
+     *      Vulkan uses geometric picking against tessellated mesh faces. OpenGL
+     *      retains its GPU face path and uses the same geometric fallback; shared
+     *      clipping-plane queries use the geometric path in both builds.
+     *      Region selection is geometric through-selection: all original face
+     *      vertices must be inside the region, camera frustum and clipping planes.
      * \see Picker, ModelPicker, PointCloudPicker
      */
     class SurfaceMeshPicker : public Picker {
@@ -157,7 +161,7 @@ namespace easy3d {
          * \param picked_face The picked face.
          * \param x The cursor x-coordinate, relative to the left edge of the content area.
          * \param y The cursor y-coordinate, relative to the top edge of the content area.
-         * \return The xyz coordinate of the picked position.
+         * \return The world-space coordinate of the picked position, or zero if invalid.
          * \attention This method must be called after calling to pick_face(). The result is valid only if the
          *            picked_face is valid.
          */
@@ -183,42 +187,26 @@ namespace easy3d {
         std::vector<SurfaceMesh::Face> pick_faces(SurfaceMesh *model, const Polygon2 &plg);
 
     private:
+#ifndef EASY3D_HAS_VULKAN
         // selection implemented in GPU (using shader program)
         SurfaceMesh::Face pick_face_gpu(SurfaceMesh *model, int x, int y, ShaderProgram* program);
+#endif
 
         // selection implemented in CPU (with OpenMP if supported)
         SurfaceMesh::Face pick_face_cpu(SurfaceMesh *model, int x, int y);
 
-        Plane3 face_plane(SurfaceMesh *model, SurfaceMesh::Face face) const;
-
-        /**
-         * TODO: check if this works also for non-convex faces.
-         */
-        static bool do_intersect(SurfaceMesh *model, SurfaceMesh::Face picked_face, const OrientedLine3 &line) {
-            // Uses Plucker coordinates (see OrientedLine)
-            Sign face_sign = ZERO;
-            for (auto h : model->halfedges(picked_face)) {
-                auto s = model->source(h);
-                auto t = model->target(h);
-                const OrientedLine3 edge_line(model->position(t), model->position(s));
-                Sign sign = OrientedLine3::side(line, edge_line);
-                if (sign != ZERO) {
-                    if (face_sign != ZERO && sign != face_sign)
-                        return false;
-                    face_sign = sign;
-                }
-            }
-            return true;
-        }
+        // Intersect the actual tessellated polygon, including concave faces.
+        static bool intersect_face(SurfaceMesh* model, SurfaceMesh::Face face,
+                                   const vec3& origin, const vec3& direction, float& t);
 
     private:
         unsigned int hit_resolution_;     // in pixels
         SurfaceMesh::Face picked_face_;
+        SurfaceMesh* picked_model_ = nullptr; // borrowed, same lifetime contract as method arguments
     };
 
 }
 
 
-#endif // EASY3D_HAS_VULKAN
 
 #endif  // EASY3D_GUI_PICKER_SURFACE_MESH_H
