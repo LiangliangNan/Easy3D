@@ -30,6 +30,7 @@ namespace easy3d { namespace graphics { namespace {
 #include "overlay_frag.inc"
 #include "hud_frag.inc"
 #include "depth_texture_frag.inc"
+#include "edl_frag.inc"
 #include "point_selection_comp.inc"
 
 void check(VkResult result, const char* operation) {
@@ -522,6 +523,7 @@ struct RenderPass {
     VkPipeline depth_overlay_pipeline = VK_NULL_HANDLE;
     VkPipeline hud_3d_pipeline = VK_NULL_HANDLE;
     VkPipeline depth_texture_pipeline = VK_NULL_HANDLE;
+    VkPipeline edl_pipeline = VK_NULL_HANDLE;
     VkPipeline transparent_pipeline = VK_NULL_HANDLE;
     bool independent_depth = false;
     bool depth_preview = false;
@@ -532,6 +534,7 @@ struct RenderPass {
         if (depth_overlay_pipeline) c.vkDestroyPipeline(c.device, depth_overlay_pipeline, nullptr);
         if (hud_3d_pipeline) c.vkDestroyPipeline(c.device, hud_3d_pipeline, nullptr);
         if (depth_texture_pipeline) c.vkDestroyPipeline(c.device, depth_texture_pipeline, nullptr);
+        if (edl_pipeline) c.vkDestroyPipeline(c.device, edl_pipeline, nullptr);
         if (transparent_pipeline) c.vkDestroyPipeline(c.device, transparent_pipeline, nullptr);
         if (handle) c.vkDestroyRenderPass(c.device, handle, nullptr);
     }
@@ -1062,7 +1065,7 @@ public:
         check(c_.vkCreatePipelineLayout(c_.device, &li, nullptr, &layout_), "create pipeline layout");
     }
     void create_pipelines(RenderPass& pass) {
-        VkShaderModule modules[12] = {};
+        VkShaderModule modules[13] = {};
         try {
             VkShaderModuleCreateInfo mi{};
             mi.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -1089,6 +1092,8 @@ public:
             if (pass.depth_preview) {
                 mi.codeSize = sizeof(depth_texture_frag); mi.pCode = depth_texture_frag;
                 check(c_.vkCreateShaderModule(c_.device,&mi,nullptr,&modules[10]), "create depth texture fragment shader");
+                mi.codeSize = sizeof(edl_frag); mi.pCode = edl_frag;
+                check(c_.vkCreateShaderModule(c_.device,&mi,nullptr,&modules[12]), "create eye-dome-lighting fragment shader");
             }
             if (pass.independent_depth) {
                 mi.codeSize = sizeof(hud_frag); mi.pCode = hud_frag;
@@ -1266,6 +1271,21 @@ public:
                 if (pass.depth_preview) {
                     stages[1].module = modules[10];
                     check(c_.vkCreateGraphicsPipelines(c_.device,VK_NULL_HANDLE,1,&pi,nullptr,&pass.depth_texture_pipeline), "create depth texture overlay pipeline");
+                    // Multiply existing color by the shaded luminance from depth.
+                    // A black source with SRC_ALPHA/ONE_MINUS_SRC_ALPHA yields
+                    // dst*(1-alpha); alpha itself keeps the destination value.
+                    VkPipelineColorBlendAttachmentState edl{};
+                    edl.blendEnable = VK_TRUE;
+                    edl.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+                    edl.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+                    edl.colorBlendOp = VK_BLEND_OP_ADD;
+                    edl.srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+                    edl.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+                    edl.alphaBlendOp = VK_BLEND_OP_ADD;
+                    edl.colorWriteMask = 0xf;
+                    blending.attachmentCount = 1; blending.pAttachments = &edl;
+                    stages[1].module = modules[12];
+                    check(c_.vkCreateGraphicsPipelines(c_.device,VK_NULL_HANDLE,1,&pi,nullptr,&pass.edl_pipeline), "create eye-dome-lighting overlay pipeline");
                 }
             }
         } catch (...) {
@@ -1414,6 +1434,9 @@ public:
             if (command.scene_depth_texture && (!command.overlay || command.overlay_depth_test ||
                 command.overlay_independent_depth || command.texture))
                 throw std::invalid_argument("scene depth sampling requires a flat overlay without an image texture");
+            if (command.eye_dome_lighting && (!command.overlay || command.overlay_depth_test ||
+                command.overlay_independent_depth || command.texture))
+                throw std::invalid_argument("eye-dome lighting requires a flat overlay without an image texture");
             if (command.transparent && command.overlay)
                 throw std::invalid_argument("transparent blending is a scene option, not an overlay option");
             if (command.transparent && command.geometry->topology() != Topology::triangles)
@@ -1507,7 +1530,7 @@ public:
             const bool independent_depth = std::any_of(commands.begin(),commands.end(),
                 [](const DrawCommand& d) {return d.overlay_independent_depth;});
             const bool depth_preview = std::any_of(commands.begin(),commands.end(),
-                [](const DrawCommand& d) {return d.scene_depth_texture;});
+                [](const DrawCommand& d) {return d.scene_depth_texture || d.eye_dome_lighting;});
             if (!target_ || target_->width != width || target_->height != height || target_->samples != samples ||
                 target_->color_pass.independent_depth != independent_depth || target_->color_pass.depth_preview != depth_preview) {
                 if (depth_preview) {
@@ -1715,12 +1738,13 @@ public:
                         d.overlay_independent_depth ? 1 : phases-1;
                     if (draw_phase != phase) continue;
                     set_view(d);
-                    const auto pipeline=d.scene_depth_texture ? pass.depth_texture_pipeline : phase==0 ? pass.depth_overlay_pipeline :
+                    const auto pipeline=d.eye_dome_lighting ? pass.edl_pipeline :
+                        d.scene_depth_texture ? pass.depth_texture_pipeline : phase==0 ? pass.depth_overlay_pipeline :
                         phase==phases-1 ? pass.overlay_pipeline : pass.hud_3d_pipeline;
                     c_.vkCmdBindPipeline(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,pipeline);
                     VkDeviceSize offset = 0;
                     c_.vkCmdBindVertexBuffers(cmd,0,1,&draw.geometry->buffer.handle,&offset);
-                    const auto texture_set=d.scene_depth_texture ? target.depth_set : draw.texture->set;
+                    const auto texture_set=(d.scene_depth_texture||d.eye_dome_lighting) ? target.depth_set : draw.texture->set;
                     c_.vkCmdBindDescriptorSets(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,layout_,0,1,&texture_set,0,nullptr);
                     c_.vkCmdBindDescriptorSets(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,layout_,1,1,&impostor_set_,1,&draw.uniform_offset);
                     Push push{};

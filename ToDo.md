@@ -16,7 +16,7 @@
   - [x] W4 Delete runtime-selection/headless leftovers (Backend enum, ViewerOptions, create_*_viewer, ...)
   - [x] Shared GPU point selection and Tutorial 403; OpenGL aliases rendering VBO positions, Vulkan retains SSBO compute, selection recolors attributes only.
   - [x] W5 Remove EASY3D_TUTORIAL_USES_VULKAN; Tutorial 404 uses shared capture and local pixel-center reconstruction.
-  - [ ] W6 Mac: OpenGL 90/90 (one `opengl.imgui` flake passed on re-run); MoltenVK 119/119 (2026-11-05, W10 batch 13; prior intermittent window-test timeout remains under observation); Linux baseline 68/69 still needs the interactionoverlay border check
+  - [ ] W6 Mac: OpenGL 90/90; MoltenVK 121/121 (2026-11-05, W10 batch 14; prior intermittent window-test timeout remains under observation); Linux baseline 68/69 still needs the interactionoverlay border check
   - Top priority (docs/vulkan.md, "Migration principles"): minimal source changes; same class names and the same
     .h/.cpp files as the main branch (Viewer in viewer.h/.cpp for both backends); #ifdef EASY3D_HAS_VULKAN layout inside
     the classes; no new files except shaders, backend files and tests; minimal CMake changes; client code unchanged.
@@ -31,7 +31,8 @@
   - [x] Shared Picker and geometric SurfaceMeshPicker APIs; concave/deleted/transformed faces, regions, DPI and OpenGL query/context isolation.
   - [x] ModelPicker and PointCloudPicker counterparts on both backends.
   - [x] Scene transparency on both backends: depth-sorted straight-alpha triangle pass with preserved depth/IDs; `AverageColorBlending`/`DualDepthPeeling` camera callbacks and Tutorial 504 enabled (batch 13; true accumulation/peeling pending).
-  - [ ] W10 Mesh GPU/rasterization parity, Mapple, Qt/wx, remaining Python coverage, SSAO/shadows/EDL (transparency done in batch 13)
+  - [x] Eye-dome lighting on both backends: depth-sampled multiplicative overlay, `EyeDomeLighting` begin/end frame params and Tutorial 505 enabled (batch 14).
+  - [ ] W10 Mesh GPU/rasterization parity, Mapple, Qt/wx, remaining Python coverage, SSAO/shadows (transparency done in batch 13; EDL done in batch 14)
   - [ ] Tutorial_207_RealCamera based on Vulkan remains slower than the OpenGL counterpart. Its hover query now reads one pixel rather than a full frame, native `largePoints` reaches about 70 FPS at 1600×1200 with 4× MSAA on this Mac, and the portable expanded-point fallback still needs profiling on MoltenVK devices without that feature.
   
 - Send the computed value of "MVP * MANIP" to shaders (avoiding computing the matrix product for each vertex/fragment)

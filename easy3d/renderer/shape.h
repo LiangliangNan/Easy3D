@@ -383,6 +383,10 @@ graphics::DrawCommand draw_quad_filled(const Rect& rect, const vec4& color, unsi
 // Counterpart of OpenGL's depth-texture quad: samples this frame's scene depth
 // directly on the GPU, in top-left image order. No image upload or CPU readback.
 graphics::DrawCommand draw_depth_texture(const Rect& rect, unsigned width, unsigned height);
+// Full-screen eye-dome-lighting pass over this frame's scene depth. The returned
+// overlay darkens depth discontinuities and must come before other flat overlays.
+graphics::DrawCommand draw_eye_dome_lighting(unsigned width, unsigned height,
+                                             float z_near, float z_far, float scene_size);
 graphics::DrawCommand draw_quad_wire(const Rect& rect, const vec4& color, unsigned width, unsigned height,
                                      float line_width = 1);
 graphics::DrawCommand draw_lines_2d(const std::vector<vec2>& segments, const vec4& color,

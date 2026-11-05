@@ -542,6 +542,23 @@ graphics::DrawCommand draw_depth_texture(const Rect& rect,unsigned width,unsigne
     result.model_view_projection=graphics::screen_space_projection(width,height);
     return result;
 }
+graphics::DrawCommand draw_eye_dome_lighting(unsigned width,unsigned height,
+                                             float z_near,float z_far,float scene_size) {
+    if (!width || !height || !std::isfinite(z_near) || !std::isfinite(z_far) ||
+        !std::isfinite(scene_size) || z_near <= 0 || z_far <= z_near || scene_size <= 0)
+        throw std::invalid_argument("eye-dome lighting requires positive near/far/scene values");
+    std::vector<graphics::Vertex> vertices(4);
+    const vec3 points[]={vec3(0,0,0),vec3(float(width),0,0),
+                         vec3(float(width),float(height),0),vec3(0,float(height),0)};
+    const vec2 uv[]={vec2(0,0),vec2(1,0),vec2(1,1),vec2(0,1)};
+    for (unsigned i=0;i<4;++i) {vertices[i].position=points[i];vertices[i].texcoord=uv[i];}
+    graphics::DrawCommand result;
+    result.geometry=std::make_shared<graphics::Geometry>(vertices,std::vector<uint32_t>{0,1,2,0,2,3});
+    result.color=vec4(z_near,z_far,scene_size,1);
+    result.overlay=result.eye_dome_lighting=true;
+    result.model_view_projection=graphics::screen_space_projection(width,height);
+    return result;
+}
 graphics::DrawCommand draw_lines_2d(const std::vector<vec2>& segments,const vec4& color,
                                    unsigned width,unsigned height,float line_width) {
     if (segments.size()%2 || !std::isfinite(line_width) || line_width<=0)

@@ -322,8 +322,8 @@ Decisions in force:
 | 2. Align constructors, hooks, state | merged into U1 |
 | 3. `VulkanMultiViewer` | merged into U2 |
 | 4. Remove runtime selection | done (W4) |
-| 5. Tutorials on the shared API | in progress: GLFW Tutorial 202 now builds on Vulkan; effect tutorials 501–503 and 505 remain gated, and Qt/wx integration remains W10; Tutorial 504 runs on both backends through the scene transparency path (2026-11-05); Tutorials 401/402 use shared visible-surface picking (2026-11-04); no tutorial uses backend-selection macros (W5) |
-| 6. Renderer, interaction, GUI/application parity | in progress (W10): shared GUI picker APIs and scene transparency; mesh raster parity, native GUI integration and SSAO/shadows/EDL remain open |
+| 5. Tutorials on the shared API | in progress: GLFW Tutorial 202 now builds on Vulkan; effect tutorials 501–503 remain gated, and Qt/wx integration remains W10; Tutorials 504 and 505 run on both backends through the scene transparency and eye-dome-lighting paths (2026-11-05); Tutorials 401/402 use shared visible-surface picking (2026-11-04); no tutorial uses backend-selection macros (W5) |
+| 6. Renderer, interaction, GUI/application parity | in progress (W10): shared GUI picker APIs, scene transparency and eye-dome lighting; mesh raster parity, native GUI integration and SSAO/shadows remain open |
 
 Divergence audit (updated at U6b, 2026-11-04), against local `main` at
 `b2868dcd5f0cc06fdb0b7df10e1ada2ec6a28226`, including the current working tree:
@@ -368,8 +368,8 @@ of this document.
   `backend()`/`fallback_reason()`, `create_vulkan_viewer`/`create_opengl_viewer`, the
   installed-consumer test's use of them, the Python `Backend` binding and the demo's
   fallback message. The two viewer tests no longer take a `Backend` or `--opengl`.
-- **W5** (complete, 2026-11-05) Removed `EASY3D_TUTORIAL_USES_VULKAN` from all tutorials and viewer.h. Four effect tutorials remain
-  gated in `tutorials/CMakeLists.txt`: 501–503 and 505 require effect implementations (W10).
+- **W5** (complete, 2026-11-05) Removed `EASY3D_TUTORIAL_USES_VULKAN` from all tutorials and viewer.h. Three effect tutorials remain
+  gated in `tutorials/CMakeLists.txt`: 501–503 require effect implementations (W10).
   Native Qt/wx integration remains W10.
   Tutorial 202 now builds on both backends (U5d); Tutorials 401/402 use shared
   visible-surface picking (2026-11-04). Tutorials 306/309 now use shared annotations
@@ -469,7 +469,7 @@ of this document.
   the file-by-file responsibility audit (including the shared OpenGL query-state
   guard extracted for Viewer and GUI mesh picking in batch 8) and remove capability
   gates only when implementations exist. U5/API work remains open.
-- **W10** Mapple, Qt/wx, remaining Python API/tutorial coverage, SSAO/shadows/EDL parity. Scene transparency and Tutorial 504 are implemented (batch 13); the legacy blending classes currently share one depth-sorted pass.
+- **W10** Mapple, Qt/wx, remaining Python API/tutorial coverage, SSAO/shadows parity. Scene transparency and Tutorial 504 are implemented (batch 13); the legacy blending classes currently share one depth-sorted pass. Eye-dome lighting and Tutorial 505 are implemented (batch 14).
 
 U1–U4 are complete. Continue U5 and independent U6 source/build cleanup in
 larger coherent, verified batches, then finish W10 feature parity; re-run the tests after each.
@@ -5222,3 +5222,45 @@ Both exclusive builds completed on this Mac. All 90 OpenGL tests and all 119
 MoltenVK tests passed; `opengl.imgui` failed once in the full run and passed on
 re-run. The transparency tests also pass with validation and synchronization
 validation. `git diff --check` is clean.
+
+### 2026-11-05 — W10 batch 14: eye-dome lighting and Tutorial 505
+
+`DrawCommand` has an `eye_dome_lighting` overlay flag. Such a command must be a
+flat overlay (no scene-depth testing, independent depth or image texture) and
+travel with a full-screen quad using the depth-texture UV convention. Its color
+carries `(near plane, far plane, scene size)`, because overlay shaders already
+multiply the white vertex color by the command tint; `Push` is unchanged.
+
+The renderer treats the flag as another user of this frame's scene depth, so the
+color pass gains the same depth-texture variant used by the depth preview. When
+enabled, a dedicated pipeline is created for the final subpass from the existing
+overlay vertex shader and a new `edl.frag`. It samples the center-sample depth at
+eight directions with 1- and 4-pixel taps and blends the result multiplicatively:
+a black source with `SRC_ALPHA/ONE_MINUS_SRC_ALPHA` yields `dst * luminance`,
+while the destination alpha is preserved. Background and flat surfaces have zero
+neighbor depth difference and keep their color.
+
+The EDL math follows the OpenGL implementation and VTK: perspective
+unprojection, `obscurance = max(0, t - zj)/d`, factor `exp(-5*20*sum)` and a
+0.3 mix of the fine and coarse resolutions. The two OpenGL offscreen resolutions
+and the bilateral filter are approximated by the two tap radii in one pass; those
+approximations are the remaining visual, not structural, difference.
+
+The Vulkan `EyeDomeLighting` keeps the class API. `begin()` computes the near and
+far planes (perspective camera values, or the OpenGL `2r`/`10r` approximation for
+orthographic) and the scene size, then publishes them in a camera-keyed registry;
+`end()` and the destructor clear the entry. `Viewer::draw()` reads the active
+parameters and prepends the EDL command, so the legacy `begin(); draw(); end();`
+pattern works unchanged. `graphics::shape::draw_eye_dome_lighting()` builds the
+command. `Tutorial_505_EyeDomeLighting` now calls `Viewer::draw()` between
+`begin()` and `end()` on both backends instead of issuing OpenGL-only point
+draws, and is enabled in both tutorial builds and native smoke tests.
+
+`vulkan.eyedomelighting` checks untouched background and flat surfaces, darkened
+near silhouettes with untouched far sides, preserved alpha, one and four samples,
+a frame combining EDL with a depth preview, preserved IDs/depth, and rejection of
+invalid flags and non-positive parameters. `vulkan.tutorial505` exercises the real
+tutorial. All 121 MoltenVK tests and all 90 OpenGL tests pass on this Mac
+(2026-11-05); the new tests also pass with validation and synchronization
+validation. The U3 table entry that lists `EyeDomeLighting` without a Vulkan
+counterpart is superseded by this batch.

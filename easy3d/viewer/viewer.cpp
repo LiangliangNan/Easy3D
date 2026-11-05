@@ -34,6 +34,7 @@
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/poly_mesh.h>
 #include <easy3d/renderer/transparency.h>
+#include <easy3d/renderer/eye_dome_lighting.h>
 #include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
@@ -422,8 +423,15 @@ void Viewer::init() {}
 void Viewer::pre_draw() {}
 void Viewer::post_draw() {}
 bool Viewer::draw() {
-    return impl_->device->present(uint32_t(framebuffer_width()), uint32_t(framebuffer_height()),
-                                  impl_->commands(*camera(),framebuffer_width(),framebuffer_height()), background_color(), unsigned(samples()));
+    const int width = framebuffer_width(), height = framebuffer_height();
+    auto commands = impl_->commands(*camera(), width, height);
+    float z_near, z_far, scene_size;
+    if (EyeDomeLighting::frame_params(camera(), z_near, z_far, scene_size))
+        commands.insert(commands.begin(),
+                        graphics::shape::draw_eye_dome_lighting(unsigned(width), unsigned(height),
+                                                                z_near, z_far, scene_size));
+    return impl_->device->present(uint32_t(width), uint32_t(height), commands,
+                                  background_color(), unsigned(samples()));
 }
 void Viewer::draw_transparency(const std::vector<TrianglesDrawable*>& surfaces, int) {
     const int width = framebuffer_width(), height = framebuffer_height();

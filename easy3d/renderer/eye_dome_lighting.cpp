@@ -27,7 +27,68 @@
 #include <easy3d/renderer/eye_dome_lighting.h>
 
 #ifdef EASY3D_HAS_VULKAN
-// No Vulkan counterpart yet.
+#include <map>
+
+#include <easy3d/renderer/camera.h>
+
+
+namespace easy3d {
+
+    namespace {
+        struct FrameParams {
+            float z_near;
+            float z_far;
+            float scene_size;
+        };
+
+        std::map<const Camera*, FrameParams>& frames() {
+            static std::map<const Camera*, FrameParams> value;
+            return value;
+        }
+    }
+
+    EyeDomeLighting::EyeDomeLighting(Camera* cam) : camera_(cam) {}
+
+    EyeDomeLighting::~EyeDomeLighting() {
+        if (camera_)
+            frames().erase(camera_);
+    }
+
+    void EyeDomeLighting::begin() {
+        if (!camera_)
+            return;
+        FrameParams p{};
+        if (camera_->type() == Camera::PERSPECTIVE) {
+            p.z_near = camera_->zNear();
+            p.z_far = camera_->zFar();
+        }
+        else { // Matches the OpenGL implementation in orthogonal mode.
+            const float radius = camera_->sceneRadius();
+            p.z_near = 2.0f * radius;
+            p.z_far = 10.0f * radius;
+        }
+        // The scene size is the diagonal of the scene bounding box.
+        p.scene_size = 2.0f * camera_->sceneRadius();
+        frames()[camera_] = p;
+    }
+
+    void EyeDomeLighting::end() {
+        if (camera_)
+            frames().erase(camera_);
+    }
+
+    bool EyeDomeLighting::frame_params(const Camera* camera, float& z_near, float& z_far, float& scene_size) {
+        auto it = frames().find(camera);
+        if (it == frames().end())
+            return false;
+        z_near = it->second.z_near;
+        z_far = it->second.z_far;
+        scene_size = it->second.scene_size;
+        return true;
+    }
+
+}
+
 #else
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/shader_program.h>

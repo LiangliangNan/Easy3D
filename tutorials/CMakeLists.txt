@@ -68,11 +68,11 @@ add_subdirectory(Tutorial_406_CollisionDetection)
 
 # rendering techniques
 add_subdirectory(Tutorial_504_Transparency)
+add_subdirectory(Tutorial_505_EyeDomeLighting)
 if(NOT Easy3D_ENABLE_VULKAN)   # need draw() hooks, protected viewer state and the effects: docs/vulkan.md, W7/W10
     add_subdirectory(Tutorial_501_AmbientOcclusion)
     add_subdirectory(Tutorial_502_HardShadow)
     add_subdirectory(Tutorial_503_SoftShadow)
-    add_subdirectory(Tutorial_505_EyeDomeLighting)
 endif()
 add_subdirectory(Tutorial_506_DepthMap)
 

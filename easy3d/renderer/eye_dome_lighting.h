@@ -28,7 +28,64 @@
 #define EASY3D_RENDERER_EYE_DOME_LIGHTING_H
 
 #ifdef EASY3D_HAS_VULKAN
-// No Vulkan counterpart yet.
+
+
+namespace easy3d {
+
+    class Camera;
+
+    /**
+     * \brief An implementation of the Eye Dome Lighting (EDL) technique.
+     * \class EyeDomeLighting easy3d/renderer/eye_dome_lighting.h
+     * \details This class implements an EDL shading method, which is useful for rendering point clouds
+     *      without normal information.
+     *
+     *      In Vulkan, rendering and presentation belong to the viewer, so begin() only publishes
+     *      the camera parameters for this frame. The viewer, which owns the frame, inserts the
+     *      corresponding full-screen shading pass after the scene.
+     *
+     *      Example usage:
+     *          \code
+     *              edl_->begin();
+     *              draw(); // your rendering code here
+     *              edl_->end();
+     *          \endcode
+     */
+    class EyeDomeLighting
+    {
+    public:
+        /**
+         * \brief Constructor
+         * \param cam The camera used in the view
+         */
+        explicit EyeDomeLighting(Camera* cam);
+        /**
+         * \brief Destructor
+         */
+        virtual ~EyeDomeLighting();
+        /**
+         * \brief Begins the EDL rendering process.
+         */
+        void begin();
+        /**
+         * \brief Ends the EDL rendering process.
+         */
+        void end();
+
+        // Frame parameters published by begin() for the registered camera.
+        static bool frame_params(const Camera* camera, float& z_near, float& z_far, float& scene_size);
+
+    private:
+        Camera* camera_;
+
+    private:
+        //copying disabled
+        EyeDomeLighting(const EyeDomeLighting&);
+        EyeDomeLighting& operator=(const EyeDomeLighting&);
+    };
+
+}
+
 #else
 
 

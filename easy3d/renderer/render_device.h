@@ -131,6 +131,12 @@ struct DrawCommand {
     // geometry in this vector, ordered far to near by the backend. color.w is
     // the opacity. Triangle geometry only; overlays have their own blending.
     bool transparent = false;
+    // Full-screen multiplicative shading from this frame's scene depth. Requires
+    // overlay=true, no texture, no overlay depth flags. Geometry must be a quad
+    // covering the viewport with the depth-texture UV convention; color carries
+    // (near plane, far plane, scene size, unused). Background pixels keep their
+    // color because their neighbor depth difference is zero.
+    bool eye_dome_lighting = false;
     // Up to two view-space halfspaces: dot(plane, vec4(view_position,1)) >= 0.
     // When clipping is active, model_view must map the geometry into view space
     // and be affine for every topology, consistently with model_view_projection.
