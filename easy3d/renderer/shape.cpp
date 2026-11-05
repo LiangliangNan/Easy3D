@@ -559,6 +559,28 @@ graphics::DrawCommand draw_eye_dome_lighting(unsigned width,unsigned height,
     result.model_view_projection=graphics::screen_space_projection(width,height);
     return result;
 }
+graphics::DrawCommand draw_ambient_occlusion(unsigned width,unsigned height,
+                                             float radius,float bias,const mat4& projection) {
+    if (!width || !height || !std::isfinite(radius) || radius <= 0 ||
+        !std::isfinite(bias) || bias < 0)
+        throw std::invalid_argument("ambient occlusion requires positive dimensions, a positive radius and a non-negative bias");
+    for (unsigned col=0;col<4;++col)
+        for (unsigned row=0;row<4;++row)
+            if (!std::isfinite(projection(row,col)))
+                throw std::invalid_argument("ambient occlusion requires a finite projection");
+    std::vector<graphics::Vertex> vertices(4);
+    const vec3 points[]={vec3(0,0,0),vec3(float(width),0,0),
+                         vec3(float(width),float(height),0),vec3(0,float(height),0)};
+    const vec2 uv[]={vec2(0,0),vec2(1,0),vec2(1,1),vec2(0,1)};
+    for (unsigned i=0;i<4;++i) {vertices[i].position=points[i];vertices[i].texcoord=uv[i];}
+    graphics::DrawCommand result;
+    result.geometry=std::make_shared<graphics::Geometry>(vertices,std::vector<uint32_t>{0,1,2,0,2,3});
+    result.color=vec4(radius,bias,0,1);
+    result.projection=projection;
+    result.overlay=result.ambient_occlusion=true;
+    result.model_view_projection=graphics::screen_space_projection(width,height);
+    return result;
+}
 graphics::DrawCommand draw_lines_2d(const std::vector<vec2>& segments,const vec4& color,
                                    unsigned width,unsigned height,float line_width) {
     if (segments.size()%2 || !std::isfinite(line_width) || line_width<=0)

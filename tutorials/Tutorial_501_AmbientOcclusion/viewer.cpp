@@ -25,15 +25,8 @@
  ********************************************************************/
 
 #include "viewer.h"
-#include <easy3d/core/surface_mesh.h>
 #include <easy3d/renderer/camera.h>
-#include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/ambient_occlusion.h>
-#include <easy3d/renderer/shader_manager.h>
-#include <easy3d/renderer/shader_program.h>
-#include <easy3d/renderer/shape.h>
-#include <easy3d/renderer/renderer.h>
-#include <easy3d/util/setting.h>
 
 
 using namespace easy3d;
@@ -96,69 +89,17 @@ bool TutorialAmbientOcclusion::draw() {
         return false;
     }
 
-    auto drawable = current_model()->renderer()->get_triangles_drawable("faces");
-    auto faces = dynamic_cast<TrianglesDrawable*>(drawable);
-    if (!faces)
-        return false;
-
-	if (ao_enabled_) {
-		ao_->generate(models_);
-
-		const mat4& MVP = camera_->modelViewProjectionMatrix();
-		// camera position is defined in world coordinate system.
-		const vec3& wCamPos = camera_->position();
-		// it can also be computed as follows:
-		//const vec3& wCamPos = invMV * vec4(0, 0, 0, 1);
-		const mat4& MV = camera_->modelViewMatrix();
-		const vec4& wLightPos = inverse(MV) * setting::light_position;
-
-        ShaderProgram* program = ShaderManager::get_program("surface/surface");
-		if (!program) {
-            std::vector<ShaderProgram::Attribute> attributes = {
-                    ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"),
-                    ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "vtx_texcoord"),
-                    ShaderProgram::Attribute(ShaderProgram::COLOR, "vtx_color"),
-                    ShaderProgram::Attribute(ShaderProgram::NORMAL, "vtx_normal")
-            };
-            program = ShaderManager::create_program_from_files("surface/surface", attributes);
-		}
-		if (!program)
-			return false;
-
-		program->bind();
-		program->set_uniform("MVP", MVP)
-			->set_uniform("wLightPos", wLightPos)
-			->set_uniform("wCamPos", wCamPos)
-			->set_uniform("ssaoEnabled", true)
-			->bind_texture("ssaoTexture", ao_->ssao_texture(), 0);
-
-        program->set_uniform("smooth_shading", faces->smooth_shading())
-            ->set_block_uniform("Material", "ambient", faces->material().ambient)
-            ->set_block_uniform("Material", "specular", faces->material().specular)
-            ->set_block_uniform("Material", "shininess", &faces->material().shininess)
-            ->set_uniform("per_vertex_color", faces->coloring_method() != State::UNIFORM_COLOR && drawable->color_buffer())
-            ->set_uniform("default_color", faces->color());
-
-        const auto& range = faces->highlight_range();
-		program->set_uniform("highlight_id_min", range.first)
-			->set_uniform("highlight_id_max", range.second);
-
-        faces->gl_draw();
-
-		program->release_texture();
-		program->release();
-
-        const float x = 20.0f * dpi_scaling();
-        const float y = 100.0f * dpi_scaling();
-        const float w = static_cast<float>(width()) / 4.0f * dpi_scaling();
-        const float h = static_cast<float>(height()) / 4.0f * dpi_scaling();
-        const Rect quad(x, x+w, y, y+h);
-        shape::draw_depth_texture(quad, ao_->ssao_texture(), static_cast<int>(static_cast<float>(width()) * dpi_scaling()), static_cast<int>(static_cast<float>(height()) * dpi_scaling()), -0.9f);
-        shape::draw_quad_wire(quad, vec4(1, 0,0, 1), static_cast<int>(static_cast<float>(width()) * dpi_scaling()), static_cast<int>(static_cast<float>(height()) * dpi_scaling()), -0.99f);
+    if (ao_enabled_) {
+        // Both backends render the scene inside begin()/end(): OpenGL into the
+        // effect's offscreen target, Vulkan into the viewer frame that the effect
+        // shades before presentation.
+        ao_->begin(models_);
+        const bool ok = Viewer::draw();
+        ao_->end();
+        return ok;
     }
-	else
-		Viewer::draw();
-    return true;
+    else
+        return Viewer::draw();
 }
 
 // \endcond

@@ -322,8 +322,8 @@ Decisions in force:
 | 2. Align constructors, hooks, state | merged into U1 |
 | 3. `VulkanMultiViewer` | merged into U2 |
 | 4. Remove runtime selection | done (W4) |
-| 5. Tutorials on the shared API | in progress: GLFW Tutorial 202 now builds on Vulkan; effect tutorials 501–503 remain gated, and Qt/wx integration remains W10; Tutorials 504 and 505 run on both backends through the scene transparency and eye-dome-lighting paths (2026-11-05); Tutorials 401/402 use shared visible-surface picking (2026-11-04); no tutorial uses backend-selection macros (W5) |
-| 6. Renderer, interaction, GUI/application parity | in progress (W10): shared GUI picker APIs, scene transparency and eye-dome lighting; mesh raster parity, native GUI integration and SSAO/shadows remain open |
+| 5. Tutorials on the shared API | in progress: GLFW Tutorial 202 now builds on Vulkan; effect tutorials 502–503 remain gated, and Qt/wx integration remains W10; Tutorials 501, 504 and 505 run on both backends through the ambient-occlusion, scene-transparency and eye-dome-lighting paths (2026-11-05); Tutorials 401/402 use shared visible-surface picking (2026-11-04); no tutorial uses backend-selection macros (W5) |
+| 6. Renderer, interaction, GUI/application parity | in progress (W10): shared GUI picker APIs, scene transparency, eye-dome lighting and depth-based SSAO; mesh raster parity, native GUI integration and shadows remain open |
 
 Divergence audit (updated at U6b, 2026-11-04), against local `main` at
 `b2868dcd5f0cc06fdb0b7df10e1ada2ec6a28226`, including the current working tree:
@@ -368,8 +368,9 @@ of this document.
   `backend()`/`fallback_reason()`, `create_vulkan_viewer`/`create_opengl_viewer`, the
   installed-consumer test's use of them, the Python `Backend` binding and the demo's
   fallback message. The two viewer tests no longer take a `Backend` or `--opengl`.
-- **W5** (complete, 2026-11-05) Removed `EASY3D_TUTORIAL_USES_VULKAN` from all tutorials and viewer.h. Three effect tutorials remain
-  gated in `tutorials/CMakeLists.txt`: 501–503 require effect implementations (W10).
+- **W5** (complete, 2026-11-05) Removed `EASY3D_TUTORIAL_USES_VULKAN` from all tutorials and viewer.h. Two effect tutorials remain
+  gated in `tutorials/CMakeLists.txt`: 502–503 require shadow implementations (W10).
+  Tutorial 501 now runs through the shared ambient-occlusion path (batch 15).
   Native Qt/wx integration remains W10.
   Tutorial 202 now builds on both backends (U5d); Tutorials 401/402 use shared
   visible-surface picking (2026-11-04). Tutorials 306/309 now use shared annotations
@@ -469,7 +470,7 @@ of this document.
   the file-by-file responsibility audit (including the shared OpenGL query-state
   guard extracted for Viewer and GUI mesh picking in batch 8) and remove capability
   gates only when implementations exist. U5/API work remains open.
-- **W10** Mapple, Qt/wx, remaining Python API/tutorial coverage, SSAO/shadows parity. Scene transparency and Tutorial 504 are implemented (batch 13); the legacy blending classes currently share one depth-sorted pass. Eye-dome lighting and Tutorial 505 are implemented (batch 14).
+- **W10** Mapple, Qt/wx, remaining Python API/tutorial coverage, shadows parity. Scene transparency and Tutorial 504 are implemented (batch 13); the legacy blending classes currently share one depth-sorted pass. Eye-dome lighting and Tutorial 505 are implemented (batch 14). Depth-based ambient occlusion and Tutorial 501 are implemented (batch 15); shadows and Tutorials 502/503 remain open.
 
 U1–U4 are complete. Continue U5 and independent U6 source/build cleanup in
 larger coherent, verified batches, then finish W10 feature parity; re-run the tests after each.
@@ -955,7 +956,7 @@ cause.
 | Material/lighting | Basic fixed world-space diffuse term; no full material or back-face-color parity yet. Normal transforms use the inverse transpose. Disable lighting for exact unlit colors. |
 | `TrianglesDrawable::opacity()` | Effective through the scene transparency path: marked triangle commands blend straight alpha over the opaque scene, write depth/IDs and are sorted far-to-near per drawable. Per-triangle sorting and order-independent accumulation remain pending. |
 | CPU drawable textures/scalars | `Texture` pixel snapshots, vertex/halfedge UVs and scalar fields are supported without GL calls. Clamp/repeat, nearest/linear filtering and OBJ/MTL diffuse-material groups work; no mipmap, anisotropic or PBR material pipeline yet. |
-| Transparency, SSAO, shadows, EDL, text, clipping | Depth-sorted straight-alpha scene triangles support `TrianglesDrawable::opacity()` and the legacy `AverageColorBlending`/`DualDepthPeeling` classes (both currently map to the same sorted pass; true accumulation/peeling is pending). SSAO, shadows and EDL remain pending. Straight-alpha 2D overlays, depth-tested translucent annotations and basic horizontal TrueType/UTF-8 text are supported; shaping, bidi and automatic font fallback remain pending. The scene adapter still rejects SSAO; overlays are not an effect-pass API. |
+| Transparency, SSAO, shadows, EDL, text, clipping | Depth-sorted straight-alpha scene triangles support `TrianglesDrawable::opacity()` and the legacy `AverageColorBlending`/`DualDepthPeeling` classes (both currently map to the same sorted pass; true accumulation/peeling is pending). Eye-dome lighting and depth-based ambient occlusion are full-screen multiplicative overlays sampled from this frame's scene depth; shadows remain pending. Straight-alpha 2D overlays, depth-tested translucent annotations and basic horizontal TrueType/UTF-8 text are supported; shaping, bidi and automatic font fallback remain pending. The scene adapter still rejects the per-drawable SSAO flag; SSAO is a viewer/effect overlay. |
 | Clipping | Up to two per-viewer world-space halfspaces. Geometric triangle/line-centerline cuts, center-clipped plain points and front-surface analytic clipping preserve IDs/MSAA. No automatic cut caps; native plane guides use depth-tested transparent fill and outlines. |
 | Point and line styles | Plain points of any positive pixel size, spheres and oriented surfels are implemented. Capped cylinders/cones and butt-capped plain wide lines are implemented; joined strokes and rounded plain-line caps remain pending. |
 | Snapshot options | Device-supported MSAA (default 4); expand/crop framing, scaling, white/current/transparent background and image saving work. No tiled oversized captures. |
@@ -3902,7 +3903,8 @@ aliases, backend-specific host filenames or new selection macros.
 
 | Existing classes/files | OpenGL | Vulkan |
 | --- | --- | --- |
-| `AmbientOcclusion`, `EyeDomeLighting` | Original implementations | No counterpart yet |
+| `AmbientOcclusion` | Original implementation | Depth-only SSAO overlay from this frame's scene depth; `begin()/end()` publishes camera-keyed radius/bias/projection (batch 15) |
+| `EyeDomeLighting` | Original implementation | Depth-based multiplicative overlay; camera-keyed near/far/scene size (batch 14) |
 | `Shadow`, `SoftShadow` | Original implementations | No counterpart yet |
 | `Transparency`, `AverageColorBlending`, `DualDepthPeeling` | Original implementations | Shared camera-keyed scene pass: both subclasses draw depth-sorted straight-alpha triangles; true accumulation/peeling pending |
 | `Picker`, `ModelPicker`, `PointCloudPicker`, `SurfaceMeshPicker` | Original implementations | No counterpart yet |
@@ -3918,9 +3920,11 @@ they are not exact counterparts of the camera-only legacy picker classes.
 
 Low-level OpenGL helpers and dependency discovery remain backend-specific. Bundled
 third-party ImGui remains unmodified and only builds with its existing OpenGL
-backend. Tutorial 202 and effect tutorials 501–503 and 505 therefore remain gated in Vulkan;
-implementing their rendering behavior belongs to W10. Their absence is explicit,
-rather than represented by no-op APIs.
+backend. At the time of this audit, Tutorial 202 and effect tutorials 501–503 and 505
+remained gated in Vulkan; supplementing their rendering behavior belonged to W10.
+Their absence was explicit, rather than represented by no-op APIs. (Superseded for
+Tutorials 202/505 by batches 14 and U5d, and for Tutorial 501 by batch 15; only
+Tutorials 502/503 remain gated.)
 
 The installed public-header consumer now requests/links `easy3d::gui` and includes
 all effect and picker headers in both configurations. This checks header installation,
@@ -5264,3 +5268,51 @@ tutorial. All 121 MoltenVK tests and all 90 OpenGL tests pass on this Mac
 (2026-11-05); the new tests also pass with validation and synchronization
 validation. The U3 table entry that lists `EyeDomeLighting` without a Vulkan
 counterpart is superseded by this batch.
+
+### 2026-11-05 — W10 batch 15: depth-based SSAO and Tutorial 501
+
+`DrawCommand` has an `ambient_occlusion` overlay flag. Like EDL, such a command
+must be a flat overlay (no scene-depth testing, independent depth or image
+texture) and travel with a full-screen quad using the depth-texture UV
+convention. Its color carries `(view-space radius, bias)` and `projection` is the
+scene's OpenGL-convention camera projection; `Push` is unchanged.
+
+The Vulkan effect is depth-only: the new `ssao.frag` reconstructs view positions
+from this frame's center-sample scene depth and derives view-space normals with
+screen-space derivatives, so no second scene or G-buffer pass is needed. It
+builds a tangent frame per pixel and probes a 16-sample cosine-weighted
+hemisphere kernel scaled by the world-space radius, range-checking each probe
+against the reconstructed blocker depth. The final subpass reuses the existing
+depth-texture pass variant and multiplicative blend (`dst * (1-occlusion)`),
+preserving scene alpha, depth and picking IDs. `material.inverse_projection` and
+`projection` come from the already-bound overlay `ImpostorUniform`, avoiding a
+push-constant stage change. Background pixels stay untouched because their depth
+is one.
+
+`graphics::shape::draw_ambient_occlusion()` builds the command and validates the
+frame size, positive radius, non-negative bias and finite projection. The Vulkan
+`AmbientOcclusion` keeps the class API: `begin()` computes
+`radius = sceneRadius * radius_`, the bias and the camera projection and
+publishes them in a camera-keyed registry; `end()` and the destructor clear the
+entry. `Viewer::draw()` reads the active parameters and prepends the AO command
+to the frame, so the legacy `begin(); draw(); end();` pattern works unchanged and
+AO composes with EDL in one frame without shading ordinary overlays.
+
+On OpenGL the original geometry/SSAO/blur algorithm is kept. `begin()` sizes the
+existing offscreen targets from the current viewport, runs the geometry pass and
+binds a projection target for `Viewer::draw()`; `end()` runs SSAO and the blur,
+then composes the scene color with the blurred AO factor through the existing
+`edl/edl_compose` multiply shader, restoring depth/blend state and the
+previously bound framebuffer. The tutorial's SSAO debug preview is dropped, and
+AO now also applies to annotations drawn inside `Viewer::draw()`.
+`Tutorial_501_AmbientOcclusion` calls `Viewer::draw()` between `begin()` and
+`end()` on both backends and is enabled in both tutorial builds and native smoke
+tests; only Tutorials 502/503 remain gated.
+
+`vulkan.ambientocclusion` checks untouched background and flat surfaces,
+darkened near silhouettes with untouched far sides, preserved alpha, one and
+four samples, a frame combining AO with EDL and a depth preview, preserved
+IDs/depth, and rejection of invalid flags and parameters. All 123 MoltenVK
+tests and all 90 OpenGL tests pass on this Mac (2026-11-05); the new test also
+passes with validation and synchronization validation. The U3 table entry listing
+`AmbientOcclusion` without a Vulkan counterpart is superseded by this batch.

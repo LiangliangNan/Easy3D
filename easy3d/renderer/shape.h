@@ -387,6 +387,12 @@ graphics::DrawCommand draw_depth_texture(const Rect& rect, unsigned width, unsig
 // overlay darkens depth discontinuities and must come before other flat overlays.
 graphics::DrawCommand draw_eye_dome_lighting(unsigned width, unsigned height,
                                              float z_near, float z_far, float scene_size);
+// Full-screen ambient-occlusion pass over this frame's scene depth. The radius is
+// in view-space units, and projection is the scene's OpenGL-convention camera
+// projection. The returned overlay darkens occluded surfaces and precedes ordinary
+// flat overlays so it does not shade them.
+graphics::DrawCommand draw_ambient_occlusion(unsigned width, unsigned height,
+                                             float radius, float bias, const mat4& projection);
 graphics::DrawCommand draw_quad_wire(const Rect& rect, const vec4& color, unsigned width, unsigned height,
                                      float line_width = 1);
 graphics::DrawCommand draw_lines_2d(const std::vector<vec2>& segments, const vec4& color,

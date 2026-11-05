@@ -35,6 +35,7 @@
 #include <easy3d/core/poly_mesh.h>
 #include <easy3d/renderer/transparency.h>
 #include <easy3d/renderer/eye_dome_lighting.h>
+#include <easy3d/renderer/ambient_occlusion.h>
 #include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
@@ -425,6 +426,12 @@ void Viewer::post_draw() {}
 bool Viewer::draw() {
     const int width = framebuffer_width(), height = framebuffer_height();
     auto commands = impl_->commands(*camera(), width, height);
+    float radius, bias;
+    mat4 projection;
+    if (AmbientOcclusion::frame_params(camera(), radius, bias, projection))
+        commands.insert(commands.begin(),
+                        graphics::shape::draw_ambient_occlusion(unsigned(width), unsigned(height),
+                                                                radius, bias, projection));
     float z_near, z_far, scene_size;
     if (EyeDomeLighting::frame_params(camera(), z_near, z_far, scene_size))
         commands.insert(commands.begin(),

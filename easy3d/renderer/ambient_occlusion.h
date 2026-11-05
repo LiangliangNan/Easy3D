@@ -27,10 +27,6 @@
 #ifndef EASY_RENDERER_AMBIENT_OCCLUSION_H
 #define EASY_RENDERER_AMBIENT_OCCLUSION_H
 
-#ifdef EASY3D_HAS_VULKAN
-// No Vulkan counterpart yet.
-#else
-
 #include <vector>
 #include <memory>
 
@@ -41,6 +37,88 @@ namespace easy3d {
 
     class Model;
     class Camera;
+
+#ifdef EASY3D_HAS_VULKAN
+
+    /**
+     * \brief Traditional Screen Space Ambient Occlusion (SSAO) technique.
+     * \class AmbientOcclusion easy3d/renderer/ambient_occlusion.h
+     * \details In Vulkan, rendering and presentation belong to the viewer, so begin() only
+     *      publishes the radius, bias and projection of this frame. The viewer, which owns
+     *      the frame, inserts the corresponding full-screen shading pass after the scene.
+     *
+     *      Example usage:
+     *          \code
+     *              ao_->begin(models);
+     *              draw(); // your rendering code here
+     *              ao_->end();
+     *          \endcode
+     */
+    class AmbientOcclusion
+    {
+    public:
+        /**
+         * \brief Constructor
+         * \param cam The camera used in the view
+         */
+        explicit AmbientOcclusion(Camera* cam);
+        /**
+         * \brief Destructor
+         */
+        virtual ~AmbientOcclusion();
+
+        /**
+         * \brief Sets the sample radius (in view-space units, scaled by the scene radius). Typical value is in range [0, 4].
+         * \param r The sample radius
+         */
+        void  set_radius(float r) { radius_ = r; }
+        /**
+         * \brief Returns the sample radius.
+         * \return The sample radius
+         */
+        float radius() const { return radius_; }
+
+        /**
+         * \brief Sets the bias. Default value is 0.005.
+         * \param b The bias value
+         */
+        void  set_bias(float b) { bias_ = b; }
+        /**
+         * \brief Returns the bias.
+         * \return The bias value
+         */
+        float bias() const { return bias_; }
+
+        /**
+         * \brief Begins the SSAO rendering process. In Vulkan the models are not
+         *      re-rendered: the depth buffer of the frame supplies all geometry.
+         * \param models The models to be rendered
+         */
+        void begin(const std::vector< std::shared_ptr<Model> >& models);
+        /**
+         * \brief Ends the SSAO rendering process.
+         */
+        void end();
+
+        // Frame parameters published by begin() for the registered camera.
+        static bool frame_params(const Camera* camera, float& radius, float& bias, mat4& projection);
+
+    protected:
+        Camera* camera_;
+
+        float	radius_;
+        float	bias_;
+
+    private:
+        //copying disabled
+        AmbientOcclusion(const AmbientOcclusion&);
+        AmbientOcclusion& operator=(const AmbientOcclusion&);
+    };
+
+} // namespace easy3d
+
+#else
+
     class FramebufferObject;
 
     /**
@@ -48,6 +126,13 @@ namespace easy3d {
      * \class AmbientOcclusion easy3d/renderer/ambient_occlusion.h
      * \details Optimization tip: rendering with multi-effects (e.g., shadowing, SSAO) can benefit from using a shared
      *      geometry pass.
+     *
+     *      Example usage:
+     *          \code
+     *              ao_->begin(models);
+     *              draw(); // your rendering code here
+     *              ao_->end();
+     *          \endcode
      */
     class AmbientOcclusion
     {   
@@ -85,6 +170,18 @@ namespace easy3d {
         float bias() const { return bias_; }
 
         /**
+         * \brief Begins the SSAO rendering process. Subsequent drawing targets an
+         *      offscreen projection buffer that end() shades and composites.
+         * \param models The models to be rendered
+         */
+        void begin(const std::vector< std::shared_ptr<Model> >& models);
+        /**
+         * \brief Shades the drawn frame with ambient occlusion and composites it
+         *      into the framebuffer that was bound before begin().
+         */
+        void end();
+
+        /**
          * \brief Generates the SSAO texture
          * \param models The models to be rendered
          * \return The SSAO texture ID
@@ -117,6 +214,10 @@ namespace easy3d {
          */
         void blur_pass();
         /**
+         * \brief Composites the shaded projection buffer into the framebuffer.
+         */
+        void compose();
+        /**
          * \brief Generates noise texture
          * \param width The width of the noise texture
          * \param height The height of the noise texture
@@ -129,11 +230,15 @@ namespace easy3d {
         float	radius_;
         float	bias_;
 
+        FramebufferObject*	projection_fbo_; ///< The framebuffer object for the projected scene
         FramebufferObject*	geom_fbo_;  ///< The framebuffer object for geometry pass
         FramebufferObject*	ssao_fbo_;  ///< The framebuffer object for SSAO pass
 
         std::vector<vec3> ssao_kernel_;     ///< The SSAO kernel
         unsigned int	  noise_texture_;   ///< The noise texture
+
+        int width_;     ///< The projection buffer width
+        int height_;    ///< The projection buffer height
 
     private:
         //copying disabled

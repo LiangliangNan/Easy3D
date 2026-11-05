@@ -27,7 +27,68 @@
 #include <easy3d/renderer/ambient_occlusion.h>
 
 #ifdef EASY3D_HAS_VULKAN
-// No Vulkan counterpart yet.
+
+#include <algorithm>
+#include <map>
+
+#include <easy3d/core/model.h>
+#include <easy3d/renderer/camera.h>
+
+
+namespace easy3d {
+
+    namespace {
+        struct FrameParams {
+            float radius;
+            float bias;
+            mat4 projection;
+        };
+
+        std::map<const Camera*, FrameParams>& frames() {
+            static std::map<const Camera*, FrameParams> value;
+            return value;
+        }
+    }
+
+    AmbientOcclusion::AmbientOcclusion(Camera* cam)
+        : camera_(cam)
+        , radius_(0.5f)
+        , bias_(0.005f)
+    {
+    }
+
+    AmbientOcclusion::~AmbientOcclusion() {
+        if (camera_)
+            frames().erase(camera_);
+    }
+
+    void AmbientOcclusion::begin(const std::vector< std::shared_ptr<Model> >&) {
+        if (!camera_)
+            return;
+        FrameParams p{};
+        p.radius = std::max(camera_->sceneRadius() * radius_, 1e-4f);
+        p.bias = bias_;
+        p.projection = camera_->projectionMatrix();
+        frames()[camera_] = p;
+    }
+
+    void AmbientOcclusion::end() {
+        if (camera_)
+            frames().erase(camera_);
+    }
+
+    bool AmbientOcclusion::frame_params(const Camera* camera, float& radius, float& bias, mat4& projection) {
+        auto it = frames().find(camera);
+        if (it == frames().end())
+            return false;
+        radius = it->second.radius;
+        bias = it->second.bias;
+        projection = it->second.projection;
+        return true;
+    }
+
+}
+
 #else
 
 #include <random>
@@ -61,6 +122,7 @@ namespace easy3d {
         : camera_(cam)
         , radius_(0.5f)
         , bias_(0.005f)
+        , projection_fbo_(nullptr)
         , geom_fbo_(nullptr)
         , ssao_fbo_(nullptr)
         , noise_texture_(0)
@@ -69,6 +131,7 @@ namespace easy3d {
 
 
     AmbientOcclusion::~AmbientOcclusion() {
+        delete projection_fbo_;
         delete geom_fbo_;
         delete ssao_fbo_;
 
@@ -83,6 +146,16 @@ namespace easy3d {
 
     void AmbientOcclusion::init(int w, int h)
     {
+        width_ = w;
+        height_ = h;
+
+        if (projection_fbo_ == nullptr) {
+            projection_fbo_ = new FramebufferObject(w, h, 0);
+            projection_fbo_->add_color_texture();
+            projection_fbo_->add_depth_texture();
+        }
+        projection_fbo_->ensure_size(w, h);
+
         // Liangliang: using multsamples (i.e., 4) causes black screen in my macbook laptop.
         //             the bad call is at glReadPixels() with GL_UNSIGNED_BYTE.
         static int samples = 0;
@@ -142,6 +215,30 @@ namespace easy3d {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
+
+    void AmbientOcclusion::begin(const std::vector< std::shared_ptr<Model> >& models) {
+        int viewport[4];
+        glGetIntegerv(GL_VIEWPORT, viewport);
+        init(viewport[2], viewport[3]);
+
+        geometry_pass(models);
+
+        projection_fbo_->bind();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    }
+
+
+    void AmbientOcclusion::end() {
+        if (!projection_fbo_)
+            return;
+
+        projection_fbo_->release();
+
+        ssao_pass();
+        blur_pass();
+        compose();
     }
 
 
@@ -315,6 +412,47 @@ namespace easy3d {
 #ifdef SNAPSHOT_BUFFER
         ssao_fbo_->snapshot_color_ppm(1, "ssao_blur.ppm");
 #endif
+    }
+
+
+    void AmbientOcclusion::compose() {
+        // The generic multiply-compose pass also used by eye-dome lighting:
+        // output = scene color * mix(shade1, shade2, 0.3). Both scale textures are
+        // the blurred SSAO result, so the mix reduces to that single factor.
+        static const std::string name = "edl/edl_compose";
+        ShaderProgram* program = ShaderManager::get_program(name);
+        if (!program) {
+            std::vector<ShaderProgram::Attribute> attributes = {
+                ShaderProgram::Attribute(ShaderProgram::POSITION, "vertexMC"),
+                ShaderProgram::Attribute(ShaderProgram::TEXCOORD, "tcoordMC")
+            };
+            program = ShaderManager::create_program_from_files(name, attributes);
+        }
+        if (!program)
+            return;
+
+        GLboolean depth_mask = GL_TRUE;
+        glGetBooleanv(GL_DEPTH_WRITEMASK, &depth_mask);
+        const GLboolean depth_test = glIsEnabled(GL_DEPTH_TEST);
+        const GLboolean blend = glIsEnabled(GL_BLEND);
+
+        program->bind(); easy3d_debug_log_gl_error
+        const unsigned int ao = ssao_texture();
+        program->bind_texture("s2_S1", ao, 2);
+        program->bind_texture("s2_S2", ao, 1);
+        program->bind_texture("s2_C", projection_fbo_->color_texture(), 0);
+
+        // The pass must not alter or be rejected by the destination depth buffer.
+        glDisable(GL_BLEND);
+        glDisable(GL_DEPTH_TEST);
+        glDepthMask(GL_FALSE);
+        shape::draw_full_screen_quad(ShaderProgram::POSITION, ShaderProgram::TEXCOORD, 0.0f);
+        glDepthMask(depth_mask);
+        if (depth_test) glEnable(GL_DEPTH_TEST); else glDisable(GL_DEPTH_TEST);
+        if (blend) glEnable(GL_BLEND); else glDisable(GL_BLEND);
+
+        program->release_texture(); easy3d_debug_log_gl_error
+        program->release(); easy3d_debug_log_gl_error
     }
 
 } // namespace easy3d

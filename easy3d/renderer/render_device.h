@@ -137,6 +137,13 @@ struct DrawCommand {
     // (near plane, far plane, scene size, unused). Background pixels keep their
     // color because their neighbor depth difference is zero.
     bool eye_dome_lighting = false;
+    // Full-screen multiplicative ambient occlusion from this frame's scene depth.
+    // Requires overlay=true, no texture, no overlay depth flags. Geometry must be
+    // a quad covering the viewport with the depth-texture UV convention; color
+    // carries (view-space radius, bias, unused, unused) and projection must be the
+    // scene's OpenGL-convention projection matrix. Background pixels keep their
+    // color, and the pass never changes scene depth or picking IDs.
+    bool ambient_occlusion = false;
     // Up to two view-space halfspaces: dot(plane, vec4(view_position,1)) >= 0.
     // When clipping is active, model_view must map the geometry into view space
     // and be affine for every topology, consistently with model_view_projection.
