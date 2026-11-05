@@ -30,7 +30,8 @@
   - [ ] U6 In progress: shared smoke harness, inventory, drawable constructor homes, shared renderer CMake lists, texture factories, drawable buffer policy unavailable-method ownership and root test consolidation done; remaining file audit/gates open
   - [x] Shared Picker and geometric SurfaceMeshPicker APIs; concave/deleted/transformed faces, regions, DPI and OpenGL query/context isolation.
   - [ ] W10 Model/point-cloud GUI pickers, mesh GPU/rasterization parity, Mapple, Qt/wx, remaining Python coverage, transparency/SSAO/shadows/EDL
-
+  - [ ] Tutorial_207_RealCamera based on Vulkan has a very low frame rate (about 5 fps), but the OpenGL counterpart is about 120 fps.
+  
 - Send the computed value of "MVP * MANIP" to shaders (avoiding computing the matrix product for each vertex/fragment)
 - Walkthrough and animation; allow to modify the cameras interactively
 - Implement potree for huge point cloud visualization (https://github.com/potree/potree)
