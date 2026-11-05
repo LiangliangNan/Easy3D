@@ -111,6 +111,26 @@ int main(int argc, char**) {
         faces->set_visible(false);
         require(hits(renderer.capture()) == 0, "drawable visibility failed");
         faces->set_visible(true);
+        // Coplanar edges must survive the filled faces. The OpenGL viewer offsets
+        // the surfaces with glPolygonOffset whenever line drawables are visible.
+        faces->set_uniform_coloring(vec4(1, 0, 0, 1));
+        auto* edge_drawable = model->renderer()->get_lines_drawable("edges");
+        require(edge_drawable, "mesh has no edges drawable");
+        edge_drawable->set_uniform_coloring(vec4(0, 0, 1, 1)); edge_drawable->set_lighting(false);
+        edge_drawable->set_visible(true);
+        const auto filled = renderer.capture();
+        faces->set_visible(false);
+        const auto wireframe = renderer.capture();
+        faces->set_visible(true);
+        edge_drawable->set_visible(false);
+        size_t edge_pixels = 0, visible_edges = 0;
+        for (size_t i = 0; i < wireframe.ids.size(); ++i) {
+            if (wireframe.ids[i].object == UINT32_MAX || wireframe.rgba[4*i+2] != 255) continue;
+            ++edge_pixels;
+            visible_edges += filled.rgba[4*i+2] == 255 && filled.rgba[4*i] == 0;
+        }
+        require(edge_pixels > 200 && visible_edges * 100 >= edge_pixels * 95,
+                "coplanar mesh edges are hidden by filled faces");
         renderer.resize(97, 83);
         require(hits(renderer.capture()) > 100, "resized mesh did not render");
         require(renderer.delete_model(model), "model deletion failed");

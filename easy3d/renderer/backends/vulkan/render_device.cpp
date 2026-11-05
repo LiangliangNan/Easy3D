@@ -1274,6 +1274,7 @@ public:
             raster.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
             raster.polygonMode = VK_POLYGON_MODE_FILL; raster.cullMode = VK_CULL_MODE_NONE;
             raster.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE; raster.lineWidth = 1;
+            raster.depthBiasEnable = VK_TRUE;
             VkPipelineMultisampleStateCreateInfo ms{};
             ms.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
             ms.rasterizationSamples = pass.samples;
@@ -1286,10 +1287,11 @@ public:
             VkPipelineColorBlendStateCreateInfo blending{};
             blending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
             blending.attachmentCount = 2; blending.pAttachments = blend;
-            VkDynamicState dynamic_states[] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+            VkDynamicState dynamic_states[] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR,
+                                               VK_DYNAMIC_STATE_DEPTH_BIAS};
             VkPipelineDynamicStateCreateInfo dynamic{};
             dynamic.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-            dynamic.dynamicStateCount = 2; dynamic.pDynamicStates = dynamic_states;
+            dynamic.dynamicStateCount = 3; dynamic.pDynamicStates = dynamic_states;
             VkGraphicsPipelineCreateInfo pi{};
             pi.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
             pi.stageCount = 2; pi.pStages = stages; pi.pVertexInputState = &vertex;
@@ -1895,6 +1897,11 @@ public:
             const auto& d = draw.command;
             if (!set_view(d)) return;
             c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+            // Vulkan depth bias mirrors glPolygonOffset(0.5, -0.0001): the slope
+            // factor matches and the constant factor takes the OpenGL unit value.
+            // Picking keeps the unbiased surfaces, as the OpenGL picker does.
+            if (d.depth_bias && pass.kind != PassKind::ids) c_.vkCmdSetDepthBias(cmd, -0.0001f, 0.0f, 0.5f);
+            else c_.vkCmdSetDepthBias(cmd, 0.0f, 0.0f, 0.0f);
             c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout_, 1, 1, &impostor_set_, 1, &draw.uniform_offset);
             VkDeviceSize offset = 0;
             if (draw.geometry->points) {
@@ -1943,6 +1950,7 @@ public:
                         d.overlay_independent_depth ? 1 : phases-1;
                     if (draw_phase != phase) continue;
                     set_view(d);
+                    c_.vkCmdSetDepthBias(cmd, 0.0f, 0.0f, 0.0f);
                     const auto pipeline=d.shadow ? pass.shadow_pipeline :
                         d.ambient_occlusion ? pass.ssao_pipeline :
                         d.eye_dome_lighting ? pass.edl_pipeline :

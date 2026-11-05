@@ -323,7 +323,7 @@ Decisions in force:
 | 3. `VulkanMultiViewer` | merged into U2 |
 | 4. Remove runtime selection | done (W4) |
 | 5. Tutorials on the shared API | in progress: GLFW Tutorial 202 now builds on Vulkan, and Qt/wx integration remains W10; Tutorials 501, 502, 503, 504 and 505 run on both backends through the ambient-occlusion, shadow, scene-transparency and eye-dome-lighting paths (2026-11-05); Tutorials 401/402 use shared visible-surface picking (2026-11-04); no tutorial uses backend-selection macros or CMake gates (W5) |
-| 6. Renderer, interaction, GUI/application parity | in progress (W10): shared GUI picker APIs, scene transparency, eye-dome lighting, depth-based SSAO and hard/soft shadows; mesh raster parity and native GUI integration remain open |
+| 6. Renderer, interaction, GUI/application parity | in progress (W10): shared GUI picker APIs, scene transparency, eye-dome lighting, depth-based SSAO, hard/soft shadows and coplanar mesh-edge depth bias; remaining mesh raster parity and native GUI integration remain open |
 
 Divergence audit (updated at U6b, 2026-11-04), against local `main` at
 `b2868dcd5f0cc06fdb0b7df10e1ada2ec6a28226`, including the current working tree:
@@ -468,7 +468,7 @@ of this document.
   the file-by-file responsibility audit (including the shared OpenGL query-state
   guard extracted for Viewer and GUI mesh picking in batch 8) and remove capability
   gates only when implementations exist. U5/API work remains open.
-- **W10** Mapple, Qt/wx, remaining Python API/tutorial coverage, shadows parity. Scene transparency and Tutorial 504 are implemented (batch 13); the legacy blending classes currently share one depth-sorted pass. Eye-dome lighting and Tutorial 505 are implemented (batch 14). Depth-based ambient occlusion and Tutorial 501 are implemented (batch 15). Hard and soft shadows with Tutorials 502/503 are implemented (batch 16).
+- **W10** Mapple, Qt/wx, remaining Python API/tutorial coverage, shadows parity. Scene transparency and Tutorial 504 are implemented (batch 13); the legacy blending classes currently share one depth-sorted pass. Eye-dome lighting and Tutorial 505 are implemented (batch 14). Depth-based ambient occlusion and Tutorial 501 are implemented (batch 15). Hard and soft shadows with Tutorials 502/503 are implemented (batch 16). Coplanar mesh edges over filled faces use the OpenGL polygon offset (batch 17); remaining mesh raster parity, Mapple, Qt/wx and Python coverage stay open.
 
 U1–U4 are complete. Continue U5 and independent U6 source/build cleanup in
 larger coherent, verified batches, then finish W10 feature parity; re-run the tests after each.
@@ -952,6 +952,7 @@ cause.
 | Backend | One backend per build (`Easy3D_ENABLE_VULKAN`, default ON). `Viewer`/`OffScreen` are currently aliases of that backend's classes (to be unified, U1–U2); `MultiViewer` exists only on OpenGL until `VulkanMultiViewer` is implemented. |
 | `VulkanOffScreen` defaults | Opaque mesh faces; uniform/property, texture-coordinate and scalar-property defaults follow the shared renderer selection. Plain one-pixel points/lines remain the initial style. |
 | Material/lighting | Basic fixed world-space diffuse term; no full material or back-face-color parity yet. Normal transforms use the inverse transpose. Disable lighting for exact unlit colors. |
+| Coplanar mesh edges | Filled triangles are pushed away with the OpenGL polygon offset (`glPolygonOffset(0.5, -0.0001)`) whenever the same model draws visible lines, including MSAA color passes. Picking keeps unbiased surfaces, matching the OpenGL picker. |
 | `TrianglesDrawable::opacity()` | Effective through the scene transparency path: marked triangle commands blend straight alpha over the opaque scene, write depth/IDs and are sorted far-to-near per drawable. Per-triangle sorting and order-independent accumulation remain pending. |
 | CPU drawable textures/scalars | `Texture` pixel snapshots, vertex/halfedge UVs and scalar fields are supported without GL calls. Clamp/repeat, nearest/linear filtering and OBJ/MTL diffuse-material groups work; no mipmap, anisotropic or PBR material pipeline yet. |
 | Transparency, SSAO, shadows, EDL, text, clipping | Depth-sorted straight-alpha scene triangles support `TrianglesDrawable::opacity()` and the legacy `AverageColorBlending`/`DualDepthPeeling` classes (both currently map to the same sorted pass; true accumulation/peeling is pending). Eye-dome lighting, depth-based ambient occlusion and hard/soft shadows are full-screen overlays; EDL and SSAO sample this frame's scene depth, and shadows compare against a depth-only light-space map rendered before the scene. Straight-alpha 2D overlays, depth-tested translucent annotations and basic horizontal TrueType/UTF-8 text are supported; shaping, bidi and automatic font fallback remain pending. The scene adapter still rejects the per-drawable SSAO flag; SSAO is a viewer/effect overlay. |
@@ -5368,3 +5369,26 @@ IDs. All 126 MoltenVK tests and all 91 OpenGL tests pass on this Mac
 (2026-11-05; `vulkan.imgui`/`opengl.imgui` each failed once under full-suite load
 and pass in isolation and on re-run). The U3 table entry listing `Shadow` and
 `SoftShadow` without a Vulkan counterpart is superseded by this batch.
+
+### 2026-11-05 — W10 batch 17: coplanar mesh-edge depth-bias parity
+
+`DrawCommand` has a `depth_bias` hint. `Viewer::draw_commands()` sets it on a
+model's triangle commands when that model also has at least one visible line
+drawable, mirroring the OpenGL viewer's per-model check and its
+`glPolygonOffset(0.5, -0.0001)` around the filled surface pass. The OpenGL
+sources and their offscreen query paths are unchanged, so both backends now
+keep coplanar edges visible without per-algorithm offsets.
+
+The Vulkan scene pipelines enable `depthBiasEnable` and add
+`VK_DYNAMIC_STATE_DEPTH_BIAS`; `vkCmdSetDepthBias(-0.0001, 0, 0.5)` expresses
+the OpenGL unit and slope factors and is set per draw (zero for unbiased
+draws, overlays and transparent commands). The ID/query pass deliberately
+keeps unbiased surfaces, so picking matches the OpenGL picker, which never
+applied the polygon offset while rendering IDs. `vkCmdSetDepthBias` joins the
+required dispatch entry points.
+
+`vulkan.scene` now renders the bunny with red faces and blue edges: it captures
+the wireframe alone, then the filled frame, and requires at least 95% of more
+than 200 edge pixels to remain blue. Without bias the check fails; with bias it
+passes, also under validation. All 126 MoltenVK tests and all 91 OpenGL tests
+pass on this Mac (2026-11-05).

@@ -49,6 +49,7 @@
     X(vkCmdNextSubpass) \
     X(vkCmdPipelineBarrier) \
     X(vkCmdPushConstants) \
+    X(vkCmdSetDepthBias) \
     X(vkCmdSetScissor) \
     X(vkCmdSetViewport) \
     X(vkCreateBuffer) \

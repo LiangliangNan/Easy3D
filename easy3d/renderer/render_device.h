@@ -188,6 +188,10 @@ struct DrawCommand {
     // Plain lines use framebuffer-pixel widths. Width one retains native line
     // rasterization; other widths use butt-capped triangle ribbons, without joins.
     float line_width = 1;
+    // Filled triangles are pushed away from the camera, as the OpenGL viewer
+    // does with glPolygonOffset, so coplanar line drawables stay visible.
+    // Ignored for other topologies and overlays.
+    bool depth_bias = false;
 };
 
 // Validates and normalizes finite plane equations with nonzero normals.

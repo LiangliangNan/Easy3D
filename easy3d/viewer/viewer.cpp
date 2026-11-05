@@ -130,9 +130,10 @@ std::vector<graphics::DrawCommand> Viewer::draw_commands(const Camera& cam, int,
         impl_->drawable_renderer.prune();
         std::vector<graphics::DrawCommand> commands;
         const auto& planes = impl_->active_clipping_planes();
-        auto append=[&](const std::shared_ptr<Drawable>& d,uint32_t id,const std::shared_ptr<Model>& model,bool selected) {
+        auto append=[&](const std::shared_ptr<Drawable>& d,uint32_t id,const std::shared_ptr<Model>& model,bool selected,bool depth_bias=false) {
             if (!d->is_visible()) return;
             auto command=impl_->drawable_renderer.command(d,id,cam,planes,selected);
+            command.depth_bias = depth_bias;
             if (sources) {
                 if (sources->size()>=UINT32_MAX) throw std::length_error("too many picking sources");
                 id=uint32_t(sources->size()); sources->push_back({model,d});
@@ -143,8 +144,13 @@ std::vector<graphics::DrawCommand> Viewer::draw_commands(const Camera& cam, int,
         for (size_t i = 0; i < models_.size(); ++i) {
             const auto* renderer = models_[i]->renderer();
             if (!renderer || (!include_hidden_models && !renderer->is_visible())) continue;
+            // Match the OpenGL viewer: surfaces are offset only while this model
+            // also draws visible lines, so coplanar edges do not z-fight.
+            bool has_visible_lines = false;
+            for (const auto& d : renderer->lines_drawables())
+                if (d->is_visible()) has_visible_lines = true;
             for (const auto& d : renderer->triangles_drawables())
-                append(d,uint32_t(i),models_[i],renderer->is_selected());
+                append(d,uint32_t(i),models_[i],renderer->is_selected(),has_visible_lines);
             for (const auto& d : renderer->lines_drawables())
                 append(d,uint32_t(i),models_[i],renderer->is_selected());
             for (const auto& d : renderer->points_drawables())
