@@ -62,6 +62,28 @@ int main(int argc,char**) {
             const auto sample=device->sample_pixel(65,65,{blue,green},32,32);
             require(sample.id.object==31 && sample.id.primitive==0,"transparent pixel query returned the wrong object");
             require(std::abs(sample.depth-.25f)<1e-5f,"transparent pixel query returned the wrong depth");
+
+            // One drawable with the near quad listed before the far quad. Sorting
+            // only drawables would blend the near surface alone; triangles inside
+            // the drawable must also be ordered far to near.
+            const float corners[4][2]={{-1,-1},{1,-1},{1,1},{-1,1}};
+            std::vector<Vertex> layered_vertices(8);
+            for (unsigned i=0;i<4;++i) {
+                layered_vertices[i].position=vec3(corners[i][0],corners[i][1],-.5f);
+                layered_vertices[i].color=vec4(0,0,1,1);
+                layered_vertices[4+i].position=vec3(corners[i][0],corners[i][1],.5f);
+                layered_vertices[4+i].color=vec4(0,1,0,1);
+            }
+            DrawCommand layered;
+            layered.geometry=std::make_shared<Geometry>(layered_vertices,
+                std::vector<uint32_t>{0,1,2,0,2,3,4,5,6,4,6,7});
+            layered.color=vec4(1,1,1,.5f); layered.transparent=true; layered.object_id=61;
+            const auto layered_image=device->render(65,65,{layered},vec4(0),count);
+            probe(layered_image,32,32,expected);
+            require(layered_image.ids[32*65+32].object==61 && layered_image.ids[32*65+32].primitive==0,
+                    "per-triangle sorting changed transparent picking IDs");
+            require(std::abs(layered_image.depth[32*65+32]-.25f)<1e-5f,
+                    "per-triangle sorting lost the nearest transparent depth");
         }
         bool rejected=false;
         auto line=rectangle(-1,-1,1,1,0,vec4(0,1,0,.5f),true);

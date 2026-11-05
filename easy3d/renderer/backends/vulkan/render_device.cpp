@@ -983,6 +983,9 @@ class VulkanDevice final : public RenderDevice {
     VkDescriptorSet impostor_set_ = VK_NULL_HANDLE;
     std::unique_ptr<Buffer> impostor_uniforms_;
     size_t impostor_capacity_ = 0;
+    // Triangles of transparent draws ordered far to near, rebuilt per frame.
+    std::unique_ptr<Buffer> transparent_indices_;
+    size_t transparent_index_capacity_ = 0;
     VkDescriptorPool descriptor_pool_ = VK_NULL_HANDLE;
     VkSampler samplers_[4] = {};
     VkPipelineLayout layout_ = VK_NULL_HANDLE;
@@ -1548,6 +1551,7 @@ public:
     struct Prepared {
         DrawCommand command; GpuGeometry* geometry; GpuTexture* texture; uint32_t uniform_offset;
         float sort_depth; // NDC depth of the geometry center; larger is farther
+        uint32_t index_offset, index_count; // transparent far-to-near triangle order
     };
     std::vector<Prepared> prepare(uint32_t width, uint32_t height, const std::vector<DrawCommand>& commands,
                                   const vec4& background, unsigned samples, bool pixel_query = false) {
@@ -1763,6 +1767,7 @@ public:
         const size_t stride = (sizeof(ImpostorUniform) + alignment - 1) / alignment * alignment;
         std::vector<unsigned char> uniforms;
         std::vector<Prepared> draws;
+        std::vector<uint32_t> transparent_indices;
         for (const auto& original : commands) {
             if (pixel_query && original.overlay) continue;
             auto command=clipped(original);
@@ -1830,11 +1835,42 @@ public:
                 std::memcpy(uniforms.data() + offset, &u, sizeof(u));
             }
             float sort_depth = 0;
+            uint32_t index_offset = 0, index_count = 0;
             if (command.transparent) {
                 const auto center = command.model_view_projection * vec4(g.center, 1);
                 sort_depth = 0.5f * (center.z + center.w);
+                // Straight-alpha blending needs every triangle of a drawable in
+                // far-to-near order, not only the drawables themselves.
+                if (!pixel_query) {
+                    const auto& vertices = command.geometry->vertices();
+                    const auto& indices = command.geometry->indices();
+                    const size_t count = indices.empty() ? vertices.size() : indices.size();
+                    std::vector<std::pair<float,uint32_t>> order(count / 3);
+                    for (size_t t = 0; t < order.size(); ++t) {
+                        vec3 centroid(0);
+                        for (unsigned j = 0; j < 3; ++j)
+                            centroid += vertices[indices.empty() ? 3*t+j : indices[3*t+j]].position;
+                        const auto clip = command.model_view_projection * vec4(centroid / 3.0f, 1);
+                        order[t] = {0.5f * (clip.z + clip.w), uint32_t(t)};
+                    }
+                    std::stable_sort(order.begin(), order.end(),
+                                     [](const std::pair<float,uint32_t>& a, const std::pair<float,uint32_t>& b) {
+                                         return a.first > b.first;
+                                     });
+                    const size_t added = order.size() * 3;
+                    if (added > UINT32_MAX || transparent_indices.size() > UINT32_MAX - added)
+                        throw std::invalid_argument("too many transparent triangles");
+                    index_offset = uint32_t(transparent_indices.size());
+                    index_count = uint32_t(added);
+                    for (const auto& entry : order) {
+                        const uint32_t first = entry.second * 3;
+                        transparent_indices.push_back(first);
+                        transparent_indices.push_back(first + 1);
+                        transparent_indices.push_back(first + 2);
+                    }
+                }
             }
-            draws.push_back({std::move(command), &g, &t, offset, sort_depth});
+            draws.push_back({std::move(command), &g, &t, offset, sort_depth, index_offset, index_count});
         }
         if (!uniforms.empty()) {
             if (uniforms.size() > impostor_capacity_) {
@@ -1849,6 +1885,16 @@ public:
                 impostor_uniforms_ = std::move(buffer); impostor_capacity_ = uniforms.size();
             }
             impostor_uniforms_->transfer(uniforms.data(), uniforms.size(), true);
+        }
+        if (!transparent_indices.empty()) {
+            const size_t bytes = transparent_indices.size() * sizeof(uint32_t);
+            if (bytes > transparent_index_capacity_) {
+                std::unique_ptr<Buffer> buffer(new Buffer(c_));
+                buffer->init(bytes, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, true);
+                transparent_indices_ = std::move(buffer);
+                transparent_index_capacity_ = bytes;
+            }
+            transparent_indices_->transfer(transparent_indices.data(), bytes, true);
         }
         return draws;
     }
@@ -1893,14 +1939,15 @@ public:
             c_.vkCmdSetViewport(cmd,0,1,&v); c_.vkCmdSetScissor(cmd,0,1,&s);
             return true;
         };
-        const auto draw_scene = [&](const Prepared& draw, VkPipeline pipeline, bool expanded) {
+        const auto bind_scene = [&](const Prepared& draw, VkPipeline pipeline) {
             const auto& d = draw.command;
-            if (!set_view(d)) return;
+            if (!set_view(d)) return false;
             c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
             // Vulkan depth bias mirrors glPolygonOffset(0.5, -0.0001): the slope
             // factor matches and the constant factor takes the OpenGL unit value.
             // Picking keeps the unbiased surfaces, as the OpenGL picker does.
-            if (d.depth_bias && pass.kind != PassKind::ids) c_.vkCmdSetDepthBias(cmd, -0.0001f, 0.0f, 0.5f);
+            if (d.depth_bias && !d.transparent && pass.kind != PassKind::ids)
+                c_.vkCmdSetDepthBias(cmd, -0.0001f, 0.0f, 0.5f);
             else c_.vkCmdSetDepthBias(cmd, 0.0f, 0.0f, 0.0f);
             c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout_, 1, 1, &impostor_set_, 1, &draw.uniform_offset);
             VkDeviceSize offset = 0;
@@ -1917,7 +1964,11 @@ public:
             for (unsigned col = 0; col < 3; ++col)
                 for (unsigned row = 0; row < 3; ++row) push.normal[col * 3 + row] = d.normal_matrix(row, col);
             c_.vkCmdPushConstants(cmd, layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
-            if (expanded) c_.vkCmdDraw(cmd, 6, expanded_lines(d) ? draw.geometry->count / 2 : draw.geometry->count, 0, 0);
+            return true;
+        };
+        const auto draw_scene = [&](const Prepared& draw, VkPipeline pipeline, bool expanded) {
+            if (!bind_scene(draw, pipeline)) return;
+            if (expanded) c_.vkCmdDraw(cmd, 6, expanded_lines(draw.command) ? draw.geometry->count / 2 : draw.geometry->count, 0, 0);
             else c_.vkCmdDraw(cmd, draw.geometry->count, 1, 0, 0);
         };
         for (const auto& draw : draws) {
@@ -1937,7 +1988,15 @@ public:
             // Far to near, so straight-alpha compositing matches the visible surface order.
             std::stable_sort(transparent.begin(), transparent.end(),
                              [](const Prepared* a, const Prepared* b) { return a->sort_depth > b->sort_depth; });
-            for (const Prepared* draw : transparent) draw_scene(*draw, pass.transparent_pipeline, false);
+            for (const Prepared* draw : transparent) {
+                if (!bind_scene(*draw, pass.transparent_pipeline)) continue;
+                if (draw->index_count) {
+                    c_.vkCmdBindIndexBuffer(cmd, transparent_indices_->handle,
+                                            VkDeviceSize(draw->index_offset) * sizeof(uint32_t),
+                                            VK_INDEX_TYPE_UINT32);
+                    c_.vkCmdDrawIndexed(cmd, draw->index_count, 1, 0, 0, 0);
+                } else c_.vkCmdDraw(cmd, draw->geometry->count, 1, 0, 0);
+            }
         }
         if (pass.kind != PassKind::ids) {
             const unsigned phases = pass.independent_depth ? 3 : 2;

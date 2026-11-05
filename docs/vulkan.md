@@ -323,7 +323,7 @@ Decisions in force:
 | 3. `VulkanMultiViewer` | merged into U2 |
 | 4. Remove runtime selection | done (W4) |
 | 5. Tutorials on the shared API | in progress: GLFW Tutorial 202 now builds on Vulkan, and Qt/wx integration remains W10; Tutorials 501, 502, 503, 504 and 505 run on both backends through the ambient-occlusion, shadow, scene-transparency and eye-dome-lighting paths (2026-11-05); Tutorials 401/402 use shared visible-surface picking (2026-11-04); no tutorial uses backend-selection macros or CMake gates (W5) |
-| 6. Renderer, interaction, GUI/application parity | in progress (W10): shared GUI picker APIs, scene transparency, eye-dome lighting, depth-based SSAO, hard/soft shadows and coplanar mesh-edge depth bias; remaining mesh raster parity and native GUI integration remain open |
+| 6. Renderer, interaction, GUI/application parity | in progress (W10): shared GUI picker APIs, scene transparency (per-drawable and per-triangle ordering), eye-dome lighting, depth-based SSAO, hard/soft shadows and coplanar mesh-edge depth bias; remaining mesh raster parity and native GUI integration remain open |
 
 Divergence audit (updated at U6b, 2026-11-04), against local `main` at
 `b2868dcd5f0cc06fdb0b7df10e1ada2ec6a28226`, including the current working tree:
@@ -953,9 +953,9 @@ cause.
 | `VulkanOffScreen` defaults | Opaque mesh faces; uniform/property, texture-coordinate and scalar-property defaults follow the shared renderer selection. Plain one-pixel points/lines remain the initial style. |
 | Material/lighting | Basic fixed world-space diffuse term; no full material or back-face-color parity yet. Normal transforms use the inverse transpose. Disable lighting for exact unlit colors. |
 | Coplanar mesh edges | Filled triangles are pushed away with the OpenGL polygon offset (`glPolygonOffset(0.5, -0.0001)`) whenever the same model draws visible lines, including MSAA color passes. Picking keeps unbiased surfaces, matching the OpenGL picker. |
-| `TrianglesDrawable::opacity()` | Effective through the scene transparency path: marked triangle commands blend straight alpha over the opaque scene, write depth/IDs and are sorted far-to-near per drawable. Per-triangle sorting and order-independent accumulation remain pending. |
+| `TrianglesDrawable::opacity()` | Effective through the scene transparency path: marked triangle commands blend straight alpha over the opaque scene, write depth/IDs and are sorted far-to-near per drawable, then per triangle within each drawable. Order-independent accumulation remains pending. |
 | CPU drawable textures/scalars | `Texture` pixel snapshots, vertex/halfedge UVs and scalar fields are supported without GL calls. Clamp/repeat, nearest/linear filtering and OBJ/MTL diffuse-material groups work; no mipmap, anisotropic or PBR material pipeline yet. |
-| Transparency, SSAO, shadows, EDL, text, clipping | Depth-sorted straight-alpha scene triangles support `TrianglesDrawable::opacity()` and the legacy `AverageColorBlending`/`DualDepthPeeling` classes (both currently map to the same sorted pass; true accumulation/peeling is pending). Eye-dome lighting, depth-based ambient occlusion and hard/soft shadows are full-screen overlays; EDL and SSAO sample this frame's scene depth, and shadows compare against a depth-only light-space map rendered before the scene. Straight-alpha 2D overlays, depth-tested translucent annotations and basic horizontal TrueType/UTF-8 text are supported; shaping, bidi and automatic font fallback remain pending. The scene adapter still rejects the per-drawable SSAO flag; SSAO is a viewer/effect overlay. |
+| Transparency, SSAO, shadows, EDL, text, clipping | Straight-alpha scene triangles support `TrianglesDrawable::opacity()` and the legacy `AverageColorBlending`/`DualDepthPeeling` classes, ordered far-to-near per drawable and per triangle (both classes currently map to the same sorted pass; true accumulation/peeling is pending). Eye-dome lighting, depth-based ambient occlusion and hard/soft shadows are full-screen overlays; EDL and SSAO sample this frame's scene depth, and shadows compare against a depth-only light-space map rendered before the scene. Straight-alpha 2D overlays, depth-tested translucent annotations and basic horizontal TrueType/UTF-8 text are supported; shaping, bidi and automatic font fallback remain pending. The scene adapter still rejects the per-drawable SSAO flag; SSAO is a viewer/effect overlay. |
 | Clipping | Up to two per-viewer world-space halfspaces. Geometric triangle/line-centerline cuts, center-clipped plain points and front-surface analytic clipping preserve IDs/MSAA. No automatic cut caps; native plane guides use depth-tested transparent fill and outlines. |
 | Point and line styles | Plain points of any positive pixel size, spheres and oriented surfels are implemented. Capped cylinders/cones and butt-capped plain wide lines are implemented; joined strokes and rounded plain-line caps remain pending. |
 | Snapshot options | Device-supported MSAA (default 4); expand/crop framing, scaling, white/current/transparent background and image saving work. No tiled oversized captures. |
@@ -3905,7 +3905,7 @@ aliases, backend-specific host filenames or new selection macros.
 | `AmbientOcclusion` | Original implementation | Depth-only SSAO overlay from this frame's scene depth; `begin()/end()` publishes camera-keyed radius/bias/projection (batch 15) |
 | `EyeDomeLighting` | Original implementation | Depth-based multiplicative overlay; camera-keyed near/far/scene size (batch 14) |
 | `Shadow`, `SoftShadow` | Original implementations | Depth-only light-space shadow map plus a PCSS full-screen overlay; `begin()/end()` publishes camera-keyed surfaces and frame parameters (batch 16) |
-| `Transparency`, `AverageColorBlending`, `DualDepthPeeling` | Original implementations | Shared camera-keyed scene pass: both subclasses draw depth-sorted straight-alpha triangles; true accumulation/peeling pending |
+| `Transparency`, `AverageColorBlending`, `DualDepthPeeling` | Original implementations | Shared camera-keyed scene pass: both subclasses draw straight-alpha triangles sorted far-to-near per drawable and per triangle (batch 18); true accumulation/peeling pending |
 | `Picker`, `ModelPicker`, `PointCloudPicker`, `SurfaceMeshPicker` | Original implementations | No counterpart yet |
 | Tutorial 202 `ViewerImGui` (`viewer.h/.cpp`) | Original implementation | No counterpart yet |
 
@@ -5392,3 +5392,26 @@ the wireframe alone, then the filled frame, and requires at least 95% of more
 than 200 edge pixels to remain blue. Without bias the check fails; with bias it
 passes, also under validation. All 126 MoltenVK tests and all 91 OpenGL tests
 pass on this Mac (2026-11-05).
+
+### 2026-11-05 — W10 batch 18: per-triangle transparency ordering
+
+Transparent scene triangles are now ordered far to near inside each drawable,
+not only between drawables. `prepare()` sorts a triangle list by the clip-space
+depth of its centroid (`0.5 * (z + w)`, the same metric used for drawable
+ordering) and uploads the resulting source triangle order to a host-visible
+index buffer. The blended pipeline draws it with `vkCmdDrawIndexed`, while the
+ID/query pass keeps the original triangle order, so picking still reports the
+same object, primitive and depth. The vertex stream is unchanged: each vertex
+already carries its source primitive ID, so reordering indices does not alter
+reported IDs. Transparent commands also keep the zero depth bias that the
+OpenGL transparency passes use, even when the same model draws visible lines.
+
+`vulkan.transparency` now renders one drawable whose near quad precedes its far
+quad in the vertex buffer and requires the same far-to-near composite as two
+separately sorted drawables. Without the per-triangle order the near surface
+alone blends and the probe fails; with it the image matches, and IDs/depth stay
+on the near surface, also under validation and synchronization validation.
+
+All 126 MoltenVK tests (run at `-j2`) and all 91 OpenGL tests pass on this Mac
+(2026-11-05). Under high parallel load the pre-existing `vulkan.callbacks` and
+`vulkan.imgui` window tests can time out; both pass in isolation and at `-j2`.

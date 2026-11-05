@@ -37,6 +37,7 @@
     X(vkBindImageMemory) \
     X(vkCmdBeginRenderPass) \
     X(vkCmdBindDescriptorSets) \
+    X(vkCmdBindIndexBuffer) \
     X(vkCmdBindPipeline) \
     X(vkCmdBindVertexBuffers) \
     X(vkCmdBlitImage) \
@@ -45,6 +46,7 @@
     X(vkCmdCopyImageToBuffer) \
     X(vkCmdDispatch) \
     X(vkCmdDraw) \
+    X(vkCmdDrawIndexed) \
     X(vkCmdEndRenderPass) \
     X(vkCmdNextSubpass) \
     X(vkCmdPipelineBarrier) \
