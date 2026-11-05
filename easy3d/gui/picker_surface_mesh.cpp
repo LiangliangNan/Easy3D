@@ -26,48 +26,76 @@
 
 
 #include <easy3d/gui/picker_surface_mesh.h>
-#include <easy3d/algo/tessellator.h>
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/util/logging.h>
 #include <algorithm>
 #include <cmath>
-#include <limits>
-#ifndef EASY3D_HAS_VULKAN
+#include <cstdint>
+#include <stdexcept>
+#include <utility>
 #include <easy3d/renderer/renderer.h>
+#include <easy3d/renderer/drawable_triangles.h>
+#ifdef EASY3D_HAS_VULKAN
+#include <easy3d/renderer/render_device.h>
+#else
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/framebuffer_object.h>
 #include <easy3d/renderer/opengl_error.h>
-#include <easy3d/renderer/drawable_triangles.h>
 #include <easy3d/renderer/backends/opengl/query_state.h>
 #endif
 
 namespace easy3d {
+namespace {
+    // The named 'faces' drawable, otherwise the first triangles drawable.
+    std::shared_ptr<TrianglesDrawable> face_drawable(SurfaceMesh* model) {
+        auto* renderer=model->renderer();
+        if(!renderer || !renderer->is_visible()) return {};
+        auto* named=renderer->get_triangles_drawable("faces");
+        const auto& drawables=renderer->triangles_drawables();
+        if(named) for(const auto& drawable:drawables) if(drawable.get()==named) return drawable;
+        if(drawables.empty()) {
+            LOG(WARNING)<<"surface mesh doesn't have a TrianglesDrawable";
+            return {};
+        }
+        std::string msg="default drawable 'faces' not found (available drawables are: ";
+        for(std::size_t i=0;i<drawables.size();++i) {
+            msg+=drawables[i]->name();
+            if(i!=drawables.size()-1) msg+=", ";
+        }
+        LOG(WARNING)<<msg<<"). Picking from drawable '"+drawables[0]->name()+"'";
+        return drawables[0];
+    }
+
+    // The rasterized primitive ID maps back through the face's triangle range.
+    SurfaceMesh::Face face_from_primitive(SurfaceMesh* model,std::uint32_t primitive) {
+        const auto ranges=model->get_face_property<std::pair<int,int>>("f:triangle_range");
+        if(ranges) for(auto face:model->faces()) {
+            const auto range=ranges[face];
+            if(range.first>=0 && range.second>=range.first &&
+               primitive>=std::uint32_t(range.first) && primitive<=std::uint32_t(range.second)) return face;
+        }
+        return SurfaceMesh::Face();
+    }
+}
+
 SurfaceMeshPicker::SurfaceMeshPicker(const Camera* cam):Picker(cam),hit_resolution_(15) {}
 
 SurfaceMesh::Face SurfaceMeshPicker::pick_face(SurfaceMesh* model,int x,int y) {
-    picked_face_=SurfaceMesh::Face();picked_model_=nullptr;
+    picked_face_=SurfaceMesh::Face();picked_model_=nullptr;picked_point_=vec3(0);
+    picked_x_=picked_y_=-1;
     if(!model || x<0 || y<0 || x>=camera()->screenWidth() || y>=camera()->screenHeight()) return picked_face_;
-#ifndef EASY3D_HAS_VULKAN
-    const bool clipped=ClippingPlane::instance()->is_enabled();
-    if(use_gpu_if_supported_ && model->renderer() && !clipped) {
-        opengl::QueryState state;
-        state.prepare(state.viewport[2],state.viewport[3]);
-        glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
-        auto* program=ShaderManager::get_program("selection/selection_single_primitive");
-        if(!program) {
-            std::vector<ShaderProgram::Attribute> attributes;
-            attributes.emplace_back(ShaderProgram::POSITION,"vtx_position");
-            program=ShaderManager::create_program_from_files("selection/selection_single_primitive",attributes);
-        }
-        if(program) picked_face_=pick_face_gpu(model,x,y,program);
-        else use_gpu_if_supported_=false;
-    }
-    if(!use_gpu_if_supported_ || !model->renderer() || clipped)
+    const auto drawable=face_drawable(model);
+    if(!drawable || !drawable->is_visible()) return picked_face_;
+#ifdef EASY3D_HAS_VULKAN
+    if(!drawable->has_cpu_buffers()) return picked_face_;
 #endif
-        picked_face_=pick_face_cpu(model,x,y);
-    if(picked_face_.is_valid()) picked_model_=model;
+    picked_face_=pick_face_gpu(model,drawable,x,y);
+    if(picked_face_.is_valid()) {
+        picked_model_=model;
+        picked_x_=x;picked_y_=y;
+    }
     return picked_face_;
 }
 
@@ -107,70 +135,10 @@ SurfaceMesh::Halfedge SurfaceMeshPicker::pick_edge(SurfaceMesh* model,SurfaceMes
 }
 SurfaceMesh::Face SurfaceMeshPicker::picked_face() const {return picked_face_;}
 
-bool SurfaceMeshPicker::intersect_face(SurfaceMesh* model,SurfaceMesh::Face face,
-                                      const vec3& origin,const vec3& direction,float& t) {
-    bool found=false;t=std::numeric_limits<float>::infinity();
-    const auto intersect=[&](const dvec3& a,const dvec3& b,const dvec3& c) {
-        const dvec3 e1=b-a,e2=c-a,ray(direction),h=cross(ray,e2);
-        const double det=dot(e1,h);
-        if(std::abs(det)<=std::numeric_limits<double>::epsilon()*e1.length()*h.length()) return;
-        const dvec3 offset=dvec3(origin)-a,q=cross(offset,e1);
-        const double u=dot(offset,h)/det,v=dot(ray,q)/det,d=dot(e2,q)/det;
-        if(u<0 || v<0 || u+v>1 || d<0 || d>=1 || !std::isfinite(d)) return;
-        const auto* clipping=ClippingPlane::instance();
-        if(clipping->is_enabled()) {
-            const mat4 transform=model->manipulator()?model->manipulator()->matrix():mat4::identity();
-            const auto world=transform*(origin+float(d)*direction);
-            const auto distance=dot(clipping->normal(),world-clipping->center());
-            if(distance>0 || (clipping->cross_section() && distance < -clipping->cross_section_width()*clipping->scene_radius())) return;
-        }
-        if(d<t) {t=float(d);found=true;}
-    };
-    if(model->valence(face)==3) {
-        dvec3 p[3];unsigned i=0;
-        for(auto vertex:model->vertices(face)) {
-            const auto v=model->position(vertex);
-            if(!std::isfinite(v.x) || !std::isfinite(v.y) || !std::isfinite(v.z)) return false;
-            p[i++]=dvec3(v);
-        }
-        intersect(p[0],p[1],p[2]);
-        return found;
-    }
-    for(auto vertex:model->vertices(face)) {
-        const auto p=model->position(vertex);
-        if(!std::isfinite(p.x) || !std::isfinite(p.y) || !std::isfinite(p.z)) return false;
-    }
-    Tessellator tess;
-    tess.begin_polygon(model->compute_face_normal(face));tess.begin_contour();
-    for(auto vertex:model->vertices(face)) tess.add_vertex(model->position(vertex));
-    tess.end_contour();tess.end_polygon();
-    for(const auto& triangle:tess.elements()) {
-        dvec3 p[3];
-        for(unsigned j=0;j<3;++j) {const auto* data=tess.vertices()[triangle[j]]->data();p[j]=dvec3(data[0],data[1],data[2]);}
-        intersect(p[0],p[1],p[2]);
-    }
-    return found;
-}
-SurfaceMesh::Face SurfaceMeshPicker::pick_face_cpu(SurfaceMesh* model,int x,int y) {
-    const mat4 transform=model->manipulator()?model->manipulator()->matrix():mat4::identity();
-    const mat4 inv=inverse(transform);
-    const auto origin=inv*unproject(x,y,0),direction=inv*unproject(x,y,1)-origin;
-    if(!std::isfinite(direction.x) || !std::isfinite(direction.y) || !std::isfinite(direction.z)) return SurfaceMesh::Face();
-    float closest=std::numeric_limits<float>::infinity();SurfaceMesh::Face result;
-    for(auto face:model->faces()) {
-        float t;
-        if(!intersect_face(model,face,origin,direction,t) || t>=closest) continue;
-        closest=t;result=face;
-    }
-    return result;
-}
 vec3 SurfaceMeshPicker::picked_point(SurfaceMesh* model,SurfaceMesh::Face face,int x,int y) const {
-    if(!model || model!=picked_model_ || face!=picked_face_ || !model->is_valid(face) || model->is_deleted(face)) return vec3(0);
-    const mat4 transform=model->manipulator()?model->manipulator()->matrix():mat4::identity();
-    const mat4 inv=inverse(transform);
-    const auto origin=inv*unproject(x,y,0),direction=inv*unproject(x,y,1)-origin;
-    float t;
-    return intersect_face(model,face,origin,direction,t)?transform*(origin+t*direction):vec3(0);
+    if(!model || model!=picked_model_ || face!=picked_face_ || !model->is_valid(face) || model->is_deleted(face) ||
+       x!=picked_x_ || y!=picked_y_) return vec3(0);
+    return picked_point_;
 }
 std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_faces(SurfaceMesh* model,const Rect& rect) {
     Polygon2 polygon;
@@ -220,92 +188,70 @@ std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_faces(SurfaceMesh* model,
     return result;
 }
 #ifndef EASY3D_HAS_VULKAN
-    SurfaceMesh::Face SurfaceMeshPicker::pick_face_gpu(SurfaceMesh *model, int x, int y, ShaderProgram* program) {
-        auto drawable = model->renderer()->get_triangles_drawable("faces");
-        if (!drawable) {
-            const auto& drawables = model->renderer()->triangles_drawables();
-            if (drawables.empty()) {
-                LOG(WARNING) << "surface mesh doesn't have a TrianglesDrawable";
-                return SurfaceMesh::Face();
-            }
-            else {
-                drawable = drawables[0].get();
-                std::string msg = "default drawable 'faces' not found (available drawables are: ";
-                for (std::size_t i = 0; i < drawables.size(); ++i) {
-                    msg += drawables[i]->name();
-                    if (i != drawables.size() - 1)
-                        msg += ", ";
-                }
-                LOG(WARNING) << msg << "). Picking from drawable '" << drawable->name() + "'";
-            }
-        }
-
-        int viewport[4];
-        glGetIntegerv(GL_VIEWPORT, viewport);
-        int width = viewport[2];
-        int height = viewport[3];
+    SurfaceMesh::Face SurfaceMeshPicker::pick_face_gpu(SurfaceMesh* model,
+            const std::shared_ptr<TrianglesDrawable>& drawable,int x,int y) {
+        if(!drawable || !drawable->is_visible()) return SurfaceMesh::Face();
+        GLint viewport[4];
+        glGetIntegerv(GL_VIEWPORT,viewport);
+        const int width=viewport[2],height=viewport[3];
         if(width<=0 || height<=0) return SurfaceMesh::Face();
-        setup_framebuffer(width, height);
-        if(!fbo_->is_valid()) return SurfaceMesh::Face();
-
-        //--------------------------------------------------------------------------
-        // render the 'scene' to the new FBO.
-
-        // TODO: the performance can be improved. Since the 'scene' is static, we need to render it to the fbo only
-        //       once. Then just query. Re-rendering is needed only when the scene is changed/manipulated, or the size
-        //       of the viewer changed.
-
-        // Bind the offscreen fbo for drawing
-        fbo_->bind();
-        easy3d_debug_log_gl_error
-        easy3d_debug_log_frame_buffer_error
-
-        float color[4];
-        glGetFloatv(GL_COLOR_CLEAR_VALUE, color);
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        easy3d_debug_log_gl_error
-        easy3d_debug_log_frame_buffer_error
-
-        const mat4 MANIP = model->manipulator() ? model->manipulator()->matrix() : mat4::identity();
+        const std::string name="selection/selection_single_primitive";
+        auto* program=ShaderManager::get_program(name);
+        if(!program)
+            program=ShaderManager::create_program_from_files(name,{{ShaderProgram::POSITION,"vtx_position"}});
+        if(!program)
+            throw std::runtime_error("surface picking requires the selection shader '"+name+"'");
+        opengl::QueryState state;
+        state.prepare(width,height);
+        setup_framebuffer(width,height);
+        if(!fbo_->bind()) return SurfaceMesh::Face();
+        glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+        glClearColor(1,1,1,1);
+        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
         program->bind();
-        program->set_uniform("MVP", camera()->modelViewProjectionMatrix())
-                ->set_uniform("MANIP", MANIP);
+        program->set_uniform("MVP",camera()->modelViewProjectionMatrix())
+               ->set_uniform("MANIP",drawable->manipulated_matrix());
+        ClippingPlane::instance()->set_program(program);
+        ClippingPlane::instance()->set_discard_primitives(program,drawable->plane_clip_discard_primitive());
         drawable->gl_draw();
         program->release();
-
-        // --- Maybe this is not necessary ---------
-        glFlush();
-        glFinish();
-        // -----------------------------------------
-
-        int gl_x, gl_y;
-        screen_to_opengl(x, y, gl_x, gl_y, width, height);
-
+        int gl_x,gl_y;
+        screen_to_opengl(x,y,gl_x,gl_y,width,height);
         unsigned char c[4]={255,255,255,255};
-        fbo_->read_color(c, gl_x, gl_y);
-
-        // switch back to the previous fbo
+        float depth=1;
+        const bool color_ok=fbo_->read_color(c,gl_x,gl_y);
+        const bool depth_ok=fbo_->read_depth(depth,gl_x,gl_y);
         fbo_->release();
-        easy3d_debug_log_gl_error
-        easy3d_debug_log_frame_buffer_error
-
-        // restore the clear color
-        glClearColor(color[0], color[1], color[2], color[3]);
-
-        //--------------------------------------------------------------------------
-
-        // Convert the color back to an integer ID
-        int id = color::encode(c[0], c[1], c[2], c[3]);
-        picked_face_ = SurfaceMesh::Face();
-
-        const auto ranges=model->get_face_property<std::pair<int,int>>("f:triangle_range");
-        if(id>=0 && ranges) for(auto face:model->faces()) {
-            const auto range=ranges[face];
-            if(id>=range.first && id<=range.second) {picked_face_=face;break;}
-        }
-        return picked_face_;
+        if(!color_ok || !depth_ok || depth<0 || depth>=1) return SurfaceMesh::Face();
+        const int id=color::encode(c[0],c[1],c[2],c[3]);
+        if(id<0) return SurfaceMesh::Face();
+        const SurfaceMesh::Face face=face_from_primitive(model,std::uint32_t(id));
+        if(face.is_valid()) picked_point_=unproject(x,y,depth);
+        return face;
     }
-
+#else
+    SurfaceMesh::Face SurfaceMeshPicker::pick_face_gpu(SurfaceMesh* model,
+            const std::shared_ptr<TrianglesDrawable>& drawable,int x,int y) {
+        if(!drawable || !drawable->has_cpu_buffers()) return SurfaceMesh::Face();
+        const int width=camera()->screenWidth(),height=camera()->screenHeight();
+        if(width<=0 || height<=0) return SurfaceMesh::Face();
+        const graphics::DrawCommand command=draw_command(drawable,0);
+        const auto sample=render_device().sample_pixel(std::uint32_t(width),std::uint32_t(height),
+                                                       {command},std::uint32_t(x),std::uint32_t(y));
+        // Word 0 is this drawable; a background pixel keeps the cleared object ID.
+        if(sample.id.object!=0 || sample.depth>=1) return SurfaceMesh::Face();
+        const std::uint32_t primitive=sample.id.primitive;
+        SurfaceMesh::Face face;
+        const auto& faces=drawable->cpu_buffers().source_faces;
+        if(primitive<faces.size() && faces[primitive]>=0) {
+            const SurfaceMesh::Face f(faces[primitive]);
+            if(model->is_valid(f) && !model->is_deleted(f)) face=f;
+        }
+        // Source provenance is invalidated by buffer edits; the face ranges stay valid
+        // for the unchanged draw order.
+        if(!face.is_valid()) face=face_from_primitive(model,primitive);
+        if(face.is_valid()) picked_point_=unproject(x,y,sample.depth);
+        return face;
+    }
 #endif
 } // namespace easy3d

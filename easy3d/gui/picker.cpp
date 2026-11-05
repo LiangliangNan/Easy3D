@@ -44,14 +44,8 @@ namespace easy3d {
 
 
 
-    Picker::Picker(const Camera *cam)
-            : camera_(cam),
-#ifdef EASY3D_HAS_VULKAN
-              use_gpu_if_supported_(false) {
-#else
-              use_gpu_if_supported_(true) {
-#endif
-        if(!cam) throw std::invalid_argument("picker requires a camera");
+    Picker::Picker(const Camera *cam) : camera_(cam) {
+        if (!cam) throw std::invalid_argument("picker requires a camera");
     }
 
 

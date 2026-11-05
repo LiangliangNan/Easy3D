@@ -43,8 +43,9 @@ namespace easy3d {
     /**
      * \brief Base class for picking mechanism.
      * \class Picker easy3d/gui/picker.h
-     * \details The camera is borrowed and must outlive the picker. OpenGL GPU
-     *      queries and resource destruction require the owning context to be current.
+     * \details The camera is borrowed and must outlive the picker. Picking is
+     *      implemented by the backend rasterizer. OpenGL GPU queries and resource
+     *      destruction require the owning context to be current.
      * \see ModelPicker, PointCloudPicker, SurfaceMeshPicker
      */
     class Picker {
@@ -142,7 +143,7 @@ namespace easy3d {
         graphics::DrawCommand draw_command(const std::shared_ptr<Drawable>& drawable, unsigned id);
 #else
         /**
-         * \brief Prepare a frame buffer for the offscreen rendering.
+         * \brief Prepare a frame buffer for the offscreen picking pass.
          * \param width The width of the frame buffer.
          * \param height The height of the frame buffer.
          */
@@ -151,8 +152,6 @@ namespace easy3d {
 
     protected:
         const Camera *camera_;
-
-        bool use_gpu_if_supported_; // use GPU if supported
 
 #ifdef EASY3D_HAS_VULKAN
     private:

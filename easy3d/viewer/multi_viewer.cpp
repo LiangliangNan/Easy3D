@@ -334,6 +334,16 @@ bool MultiViewer::mouse_press_event(int x,int y,int button,int modifiers) {
 
 
 
+void MultiViewer::prepare_pick_view(int x,int y,int width,int height) const {
+    int row=num_rows_-1,col=num_cols_-1;
+    for(int r=0;r<num_rows_;++r) if(y < int64_t(r+1)*height/num_rows_) {row=r;break;}
+    for(int c=0;c<num_cols_;++c) if(x < int64_t(c+1)*width/num_cols_) {col=c;break;}
+    const auto& vp=views_[row][col].viewport;
+    if(vp.z<=0 || vp.w<=0) {glDisable(GL_SCISSOR_TEST);glViewport(0,0,width,height);return;}
+    glEnable(GL_SCISSOR_TEST);
+    glScissor(vp.x,vp.y,vp.z,vp.w);
+    glViewport(vp.x,vp.y,vp.z,vp.w);
+}
 void MultiViewer::draw_scene(const Camera& snapshot,const DrawSource* source,bool guides) const {
     CellScissor clip;
     Camera cell(snapshot);cell.frame()->setPivotPoint(snapshot.pivotPoint());

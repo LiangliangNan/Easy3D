@@ -37,6 +37,8 @@ namespace easy3d {
     /**
      * \brief Implementation of picking points from a point cloud.
      * \class PointCloudPicker easy3d/gui/picker_point_cloud.h
+     * \details Both backends rasterize the visible point drawable, including
+     *      indexed draws and impostors, and return the original source vertex.
      * \see Picker, ModelPicker, SurfaceMeshPicker
      */
     class PointCloudPicker : public Picker {
@@ -46,22 +48,6 @@ namespace easy3d {
          * \param cam The camera used for picking.
          */
         explicit PointCloudPicker(const Camera *cam);
-
-        /**
-         * \brief Returns the picker resolution (in pixels).
-         * \details The picker resolution indicates the sensitivity of picking a point. It is used only for
-         *     the CPU implementation of picking a single point.
-         * \return The picker resolution in pixels.
-         */
-        unsigned int resolution() const { return hit_resolution_; }
-
-        /**
-         * \brief Sets the picker resolution (in pixels).
-         * \details The picker resolution indicates the sensitivity of picking a point. It is used only for
-         *     the CPU implementation of picking a single point.
-         * \param r The new picker resolution in pixels.
-         */
-        void set_resolution(unsigned int r) { hit_resolution_ = r; }
 
         /**
          * \brief Pick vertex at a given screen location.
@@ -90,12 +76,6 @@ namespace easy3d {
          */
         void pick_vertices(PointCloud *model, const Polygon2 &plg, bool deselect);
 
-    private:
-#ifndef EASY3D_HAS_VULKAN
-        // CPU fallback when the selection shader is unavailable
-        PointCloud::Vertex pick_vertex_cpu(PointCloud *model, int x, int y);
-#endif
-        unsigned int hit_resolution_;     // in pixels
     };
 
 }

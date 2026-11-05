@@ -45,12 +45,7 @@
 namespace easy3d {
 
 
-    PointCloudPicker::PointCloudPicker(const Camera *cam)
-            : Picker(cam)
-            , hit_resolution_(15)
-    {
-        use_gpu_if_supported_ = true;
-    }
+    PointCloudPicker::PointCloudPicker(const Camera *cam) : Picker(cam) {}
 
 
 #ifdef EASY3D_HAS_VULKAN
@@ -88,17 +83,12 @@ namespace easy3d {
         if (!drawable || !drawable->is_visible())
             return PointCloud::Vertex();
 
-        if (!use_gpu_if_supported_)
-            return pick_vertex_cpu(model, x, y);
-
         const std::string name = "selection/selection_pointcloud_single_point_as_sphere_sprite";
         auto* program = ShaderManager::get_program(name);
         if (!program)
             program = ShaderManager::create_program_from_files(name, {{ShaderProgram::POSITION, "vtx_position"}});
-        if (!program) {
-            use_gpu_if_supported_ = false;
-            return pick_vertex_cpu(model, x, y);
-        }
+        if (!program)
+            throw std::runtime_error("point picking requires the selection shader '" + name + "'");
 
         GLint viewport[4];
         glGetIntegerv(GL_VIEWPORT, viewport);
@@ -137,23 +127,7 @@ namespace easy3d {
 #endif
     }
 
-#ifndef EASY3D_HAS_VULKAN
-    PointCloud::Vertex PointCloudPicker::pick_vertex_cpu(PointCloud* model, int x, int y) {
-        const mat4 manip = model->manipulator() ? model->manipulator()->matrix() : mat4::identity();
-        const float resolution = float(hit_resolution_);
-        PointCloud::Vertex closest;
-        float closest_depth = 1.0f;
-        for (auto vertex : model->vertices()) {
-            const auto pixel = project(manip * model->position(vertex));
-            if (pixel.z >= 0 && pixel.z < closest_depth &&
-                distance2(vec2(pixel.x, pixel.y), vec2(float(x), float(y))) <= resolution * resolution) {
-                closest = vertex;
-                closest_depth = pixel.z;
-            }
-        }
-        return closest;
-    }
-#else
+#ifdef EASY3D_HAS_VULKAN
     void PointCloudPicker::pick_vertices(PointCloud* model, const Rect& rect, bool deselect) {
         Polygon2 polygon;
         polygon.push_back(vec2(rect.left(), rect.top()));

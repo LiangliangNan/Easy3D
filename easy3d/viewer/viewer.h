@@ -497,57 +497,57 @@ public:
         PickResult pick(int x, int y) const;
         //@}
 
-    // Triangle annotations and HUD overlays. Their immutable
-    // geometry/images are retained; MVPs are supplied by the caller (for example
-    // graphics::screen_space_projection()). overlay_depth_test annotations test
-    // scene depth and blend first, in input order; independent-depth 3D HUDs
-    // follow, then flat HUD overlays. Sort overlapping scene-depth annotations
-    // back-to-front. None write scene depth/IDs.
-    // Foreground UI draws after built-in HUD; ordinary overlays retain their order.
-    // Both backends accept flat/scene-depth triangles, independently depth-tested
-    // 3D HUD triangles (including diffuse and material lighting), and GPU scene-depth previews.
-    void set_overlays(std::vector<graphics::DrawCommand> commands, bool foreground = false);
-    // GPU through-selection; use point_resource() from this viewer for portable requests.
-    // OpenGL accepts only its owning viewer's native snapshot. Vulkan also accepts CPU PointData.
-    std::vector<std::uint32_t> select_points(const graphics::PointSelectionRequest& request) const;
-    // Unclipped immutable point positions shared by this drawable's rendering
-    // and selection. OpenGL snapshots are GPU-only and valid for their owning viewer.
-    // Extraction is refreshed as needed; attribute-only buffer updates retain positions.
-    std::shared_ptr<const graphics::PointData> point_resource(Drawable* drawable) const;
-    // Effective world-space planes. The shared ClippingPlane takes precedence;
-    // Vulkan additionally supports explicitly configured per-host planes.
-    const std::vector<vec4>& clipping_planes() const;
-    // Reconstruct a top-left framebuffer pixel center from [0,1] readback depth.
-    // Unlike Camera's legacy coordinate helper, this uses continuous framebuffer coordinates.
-    virtual vec3 unproject_pixel(int x, int y, float depth) const;
-    // Raw composited RGBA; scene depth/object IDs are center-sampled and exclude HUD.
-    // Default object IDs index models(), followed by standalone drawables().
-    // OpenGL capture reports unavailable primitive IDs as UINT32_MAX.
-    // Color is multisampled when requested; IDs/depth stay center-sampled.
-    // Invalid/unsupported requests throw, allowing callers/tests to handle them.
-    graphics::FrameImage capture() const;
-    virtual graphics::FrameImage capture(unsigned samples) const;
+	    // Triangle annotations and HUD overlays. Their immutable
+	    // geometry/images are retained; MVPs are supplied by the caller (for example
+	    // graphics::screen_space_projection()). overlay_depth_test annotations test
+	    // scene depth and blend first, in input order; independent-depth 3D HUDs
+	    // follow, then flat HUD overlays. Sort overlapping scene-depth annotations
+	    // back-to-front. None write scene depth/IDs.
+	    // Foreground UI draws after built-in HUD; ordinary overlays retain their order.
+	    // Both backends accept flat/scene-depth triangles, independently depth-tested
+	    // 3D HUD triangles (including diffuse and material lighting), and GPU scene-depth previews.
+	    void set_overlays(std::vector<graphics::DrawCommand> commands, bool foreground = false);
+	    // GPU through-selection; use point_resource() from this viewer for portable requests.
+	    // OpenGL accepts only its owning viewer's native snapshot. Vulkan also accepts CPU PointData.
+	    std::vector<std::uint32_t> select_points(const graphics::PointSelectionRequest& request) const;
+	    // Unclipped immutable point positions shared by this drawable's rendering
+	    // and selection. OpenGL snapshots are GPU-only and valid for their owning viewer.
+	    // Extraction is refreshed as needed; attribute-only buffer updates retain positions.
+	    std::shared_ptr<const graphics::PointData> point_resource(Drawable* drawable) const;
+	    // Effective world-space planes. The shared ClippingPlane takes precedence;
+	    // Vulkan additionally supports explicitly configured per-host planes.
+	    const std::vector<vec4>& clipping_planes() const;
+	    // Reconstruct a top-left framebuffer pixel center from [0,1] readback depth.
+	    // Unlike Camera's legacy coordinate helper, this uses continuous framebuffer coordinates.
+	    virtual vec3 unproject_pixel(int x, int y, float depth) const;
+	    // Raw composited RGBA; scene depth/object IDs are center-sampled and exclude HUD.
+	    // Default object IDs index models(), followed by standalone drawables().
+	    // OpenGL capture reports unavailable primitive IDs as UINT32_MAX.
+	    // Color is multisampled when requested; IDs/depth stay center-sampled.
+	    // Invalid/unsupported requests throw, allowing callers/tests to handle them.
+	    graphics::FrameImage capture() const;
+	    virtual graphics::FrameImage capture(unsigned samples) const;
 #ifdef EASY3D_HAS_VULKAN
-    // Transitional Vulkan-only scene APIs (docs/vulkan.md, U1b).
-    // Per-viewer world-space halfspaces, keeping dot(plane,vec4(world,1)) >= 0.
-    // Empty disables this host's explicit planes. At most two finite,
-    // nonzero-normal planes. An enabled shared ClippingPlane takes precedence.
-    // Overlays remain unclipped. Scene clearing retains this configuration.
-    void set_clipping_planes(const std::vector<vec4>& planes);
-    // Synchronous visible-surface scan: one world point per non-background
-    // framebuffer pixel, in top-to-bottom row order, at exact pixel centers.
-    // Uses one camera snapshot and inverse MVP; overlays never produce points.
-    // MSAA color does not alter center-sample depth/ID scan semantics. Does not
-    // modify scene/camera or advance animation; includes every visible drawable.
-    std::vector<vec3> scan_visible_points(unsigned samples = 1) const;
-    // Output dimensions round upwards, matching OffScreen. expand chooses
-    // expansion versus cropping when rounding changes the output aspect ratio.
-    // Rendering uses a camera copy and leaves the live camera unchanged.
-    bool render(const std::string& filename, float scaling = 1.0f, int samples = 4,
-                int back_ground = 1, bool expand = true) const;
-    const graphics::RenderDevice& device() const;
-    void set_samples(unsigned samples);
-    Model* add_model(std::shared_ptr<Model> model, bool create_default_drawables, bool fit_scene);
+	    // Transitional Vulkan-only scene APIs (docs/vulkan.md, U1b).
+	    // Per-viewer world-space halfspaces, keeping dot(plane,vec4(world,1)) >= 0.
+	    // Empty disables this host's explicit planes. At most two finite,
+	    // nonzero-normal planes. An enabled shared ClippingPlane takes precedence.
+	    // Overlays remain unclipped. Scene clearing retains this configuration.
+	    void set_clipping_planes(const std::vector<vec4>& planes);
+	    // Synchronous visible-surface scan: one world point per non-background
+	    // framebuffer pixel, in top-to-bottom row order, at exact pixel centers.
+	    // Uses one camera snapshot and inverse MVP; overlays never produce points.
+	    // MSAA color does not alter center-sample depth/ID scan semantics. Does not
+	    // modify scene/camera or advance animation; includes every visible drawable.
+	    std::vector<vec3> scan_visible_points(unsigned samples = 1) const;
+	    // Output dimensions round upwards, matching OffScreen. expand chooses
+	    // expansion versus cropping when rounding changes the output aspect ratio.
+	    // Rendering uses a camera copy and leaves the live camera unchanged.
+	    bool render(const std::string& filename, float scaling = 1.0f, int samples = 4,
+	                int back_ground = 1, bool expand = true) const;
+	    const graphics::RenderDevice& device() const;
+	    void set_samples(unsigned samples);
+	    Model* add_model(std::shared_ptr<Model> model, bool create_default_drawables, bool fit_scene);
 #endif
 
 	protected:
@@ -625,93 +625,95 @@ public:
             return snapshot(f, scale, samples, bg, expand);
         }
 
-protected:
-    GLFWwindow*	window_;
-    int         width_;
-    int         height_;
-    std::string	title_;
-    std::unique_ptr<Camera> camera_;
-    std::unique_ptr<KeyFrameInterpolator> kfi_;
-    std::string manual_;
-    std::string hint_; // shown in the top-left corner of the screen
-    int		samples_;	// the actual samples
-    vec4	background_color_;
-    int     pressed_key_;
-    bool    show_frame_rate_;
-    bool	show_camera_path_;
-    bool    show_easy3d_logo_;
-    std::vector< std::shared_ptr<Model> > models_;
-    int model_idx_;
-    std::vector< std::shared_ptr<Drawable> > drawables_;
-    bool initialized_ = false;
-    int pressed_button_ = -1;
-    int mouse_current_x_ = 0, mouse_current_y_ = 0;
-    int mouse_pressed_x_ = 0, mouse_pressed_y_ = 0;
-    bool show_pivot_point_ = false;
-    typedef std::pair<Function, Model*> FunctionModel;
-    std::map<Key, std::map<Modifier, FunctionModel> >  commands_;
-private:
-    std::chrono::steady_clock::time_point next_camera_path_frame_;
-    void advance_camera_path();
-protected:
-    bool snapshot_hud_ = true; // Capture/file HUD policy; OffScreen/MultiViewer are scene-only.
-    struct DrawSource { std::shared_ptr<Model> model; std::shared_ptr<Drawable> drawable; };
+	protected:
+	    GLFWwindow*	window_;
+	    int         width_;
+	    int         height_;
+	    std::string	title_;
+	    std::unique_ptr<Camera> camera_;
+	    std::unique_ptr<KeyFrameInterpolator> kfi_;
+	    std::string manual_;
+	    std::string hint_; // shown in the top-left corner of the screen
+	    int		samples_;	// the actual samples
+	    vec4	background_color_;
+	    int     pressed_key_;
+	    bool    show_frame_rate_;
+	    bool	show_camera_path_;
+	    bool    show_easy3d_logo_;
+	    std::vector< std::shared_ptr<Model> > models_;
+	    int model_idx_;
+	    std::vector< std::shared_ptr<Drawable> > drawables_;
+	    bool initialized_ = false;
+	    int pressed_button_ = -1;
+	    int mouse_current_x_ = 0, mouse_current_y_ = 0;
+	    int mouse_pressed_x_ = 0, mouse_pressed_y_ = 0;
+	    bool show_pivot_point_ = false;
+	    typedef std::pair<Function, Model*> FunctionModel;
+	    std::map<Key, std::map<Modifier, FunctionModel> >  commands_;
+	private:
+	    std::chrono::steady_clock::time_point next_camera_path_frame_;
+	    void advance_camera_path();
+	protected:
+	    bool snapshot_hud_ = true; // Capture/file HUD policy; OffScreen/MultiViewer are scene-only.
+	    struct DrawSource { std::shared_ptr<Model> model; std::shared_ptr<Drawable> drawable; };
 #ifdef EASY3D_HAS_VULKAN
-    // Keep this part of code minimum
-private:
-    struct Window;
-    std::shared_ptr<Window> window_host_;
-    struct Impl;
-    std::unique_ptr<Impl> impl_;
-    int render_width_ = 0, render_height_ = 0;
-    bool animation_enabled_ = false;
-    std::unique_ptr<vulkan::KeyFrameInterpolatorRenderer> camera_path_renderer_;
-    void update_camera_path_overlays() const;
-    void restore_scene_bounds();
-    bool zoom_region_ = false;
-    vec2 pivot_pixel_ = vec2(0);
-    std::chrono::steady_clock::time_point pivot_expires_;
-    mutable bool pivot_hint_visible_ = false;
-    mutable int hint_width_ = 0, hint_height_ = 0;
-    void update_interaction_overlays(bool force = false) const;
-    void update_frame_rate();
-    void draw_transparency(const std::vector<TrianglesDrawable*>& surfaces, int method);
-    void ensure_text_renderer() const;
-    std::chrono::steady_clock::time_point frame_rate_start_;
-    unsigned frame_rate_frames_ = 0;
-    mutable bool rendered_show_frame_rate_ = false, rendered_show_logo_ = false;
-    mutable std::vector<graphics::DrawCommand> logo_commands_;
-    mutable std::string rendered_frame_rate_;
-    mutable std::vector<graphics::DrawCommand> frame_rate_commands_;
-    mutable std::shared_ptr<const graphics::Geometry> corner_axes_geometry_;
-    void cancel_interaction();
-    mutable std::unique_ptr<graphics::TextLayoutEngine> texter_;
-    mutable bool fonts_tried_ = false;
-    mutable std::string rendered_hint_;
-    mutable float hint_dpi_ = 0;
-    mutable std::vector<graphics::DrawCommand> hint_commands_;
-    bool usage_printed_ = false;
-    void print_usage();
-    Viewer(std::shared_ptr<Window> window, const VulkanOptions& options);
-protected:
-    virtual std::vector<graphics::DrawCommand> draw_commands(const Camera& camera, int width, int height,
-                                                           std::vector<DrawSource>* sources = nullptr, bool include_hidden_models = false) const;
-    ivec2 interaction_origin_ = ivec2(0);
-    // Device-only construction for OffScreen: creates neither a GLFW window nor a surface.
-    Viewer(int width, int height, const VulkanOptions& options);
-    void resize_render_target(int width, int height);
-    void set_viewer_overlays(std::vector<graphics::DrawCommand> commands) const;
-    void set_viewer_3d_overlays(std::vector<graphics::DrawCommand> commands) const;
-    void set_viewer_annotations(std::vector<graphics::DrawCommand> commands) const;
-    void release_device();
-    bool show_corner_axes_ = true;
-    std::string framerate_ = "fps: -- (-- ms/frame)";
+	    // Keep this part of code minimum
+	private:
+	    struct Window;
+	    std::shared_ptr<Window> window_host_;
+	    struct Impl;
+	    std::unique_ptr<Impl> impl_;
+	    int render_width_ = 0, render_height_ = 0;
+	    bool animation_enabled_ = false;
+	    std::unique_ptr<vulkan::KeyFrameInterpolatorRenderer> camera_path_renderer_;
+	    void update_camera_path_overlays() const;
+	    void restore_scene_bounds();
+	    bool zoom_region_ = false;
+	    vec2 pivot_pixel_ = vec2(0);
+	    std::chrono::steady_clock::time_point pivot_expires_;
+	    mutable bool pivot_hint_visible_ = false;
+	    mutable int hint_width_ = 0, hint_height_ = 0;
+	    void update_interaction_overlays(bool force = false) const;
+	    void update_frame_rate();
+	    void draw_transparency(const std::vector<TrianglesDrawable*>& surfaces, int method);
+	    void ensure_text_renderer() const;
+	    std::chrono::steady_clock::time_point frame_rate_start_;
+	    unsigned frame_rate_frames_ = 0;
+	    mutable bool rendered_show_frame_rate_ = false, rendered_show_logo_ = false;
+	    mutable std::vector<graphics::DrawCommand> logo_commands_;
+	    mutable std::string rendered_frame_rate_;
+	    mutable std::vector<graphics::DrawCommand> frame_rate_commands_;
+	    mutable std::shared_ptr<const graphics::Geometry> corner_axes_geometry_;
+	    void cancel_interaction();
+	    mutable std::unique_ptr<graphics::TextLayoutEngine> texter_;
+	    mutable bool fonts_tried_ = false;
+	    mutable std::string rendered_hint_;
+	    mutable float hint_dpi_ = 0;
+	    mutable std::vector<graphics::DrawCommand> hint_commands_;
+	    bool usage_printed_ = false;
+	    void print_usage();
+	    Viewer(std::shared_ptr<Window> window, const VulkanOptions& options);
+	protected:
+	    virtual std::vector<graphics::DrawCommand> draw_commands(const Camera& camera, int width, int height,
+	                                                           std::vector<DrawSource>* sources = nullptr, bool include_hidden_models = false) const;
+	    ivec2 interaction_origin_ = ivec2(0);
+	    // Device-only construction for OffScreen: creates neither a GLFW window nor a surface.
+	    Viewer(int width, int height, const VulkanOptions& options);
+	    void resize_render_target(int width, int height);
+	    void set_viewer_overlays(std::vector<graphics::DrawCommand> commands) const;
+	    void set_viewer_3d_overlays(std::vector<graphics::DrawCommand> commands) const;
+	    void set_viewer_annotations(std::vector<graphics::DrawCommand> commands) const;
+	    void release_device();
+	    bool show_corner_axes_ = true;
+	    std::string framerate_ = "fps: -- (-- ms/frame)";
 
 #else
     // Keep this part of code minimum
 
 	protected:
         virtual void draw_scene(const Camera& snapshot, const DrawSource* source = nullptr, bool guides = false) const;
+        // Selects the framebuffer region used by the primitive-ID picking pass.
+        virtual void prepare_pick_view(int x, int y, int width, int height) const;
         GLFWwindow *create_window(const std::string &title,
                                   int samples,
                                   int gl_major,   // must >= 3

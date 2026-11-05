@@ -29,8 +29,13 @@
 
 out  vec4    outputF;
 
+in float v_clipped;
+
 void main()
 {
+    if (v_clipped > 0.0)
+        discard;
+
     // NOTE: For points, the gl_PrimitiveID represent the ID of the input points.
     //		 For polygonal models, the gl_PrimitiveID represent the ID of triangles (the GPU assembles
     //		 all primitive type, e.g., triangle fan, polygon, triangle strips as triangles).

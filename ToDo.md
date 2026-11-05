@@ -16,7 +16,7 @@
   - [x] W4 Delete runtime-selection/headless leftovers (Backend enum, ViewerOptions, create_*_viewer, ...)
   - [x] Shared GPU point selection and Tutorial 403; OpenGL aliases rendering VBO positions, Vulkan retains SSBO compute, selection recolors attributes only.
   - [x] W5 Remove EASY3D_TUTORIAL_USES_VULKAN; Tutorial 404 uses shared capture and local pixel-center reconstruction.
-  - [ ] W6 Mac: OpenGL 91/91; MoltenVK 126/126 (2026-11-05, W10 batch 16; `vulkan.imgui`/`opengl.imgui` can fail once under full-suite load and pass alone; prior intermittent window-test timeout remains under observation); Linux baseline 68/69 still needs the interactionoverlay border check
+  - [ ] W6 Mac: OpenGL 91/91; MoltenVK 127/127 (2026-11-05, W10 batch 19; `vulkan.imgui`/`opengl.imgui` can fail once under full-suite load and pass alone; prior intermittent window-test timeout remains under observation); Linux baseline 68/69 still needs the interactionoverlay border check
   - Top priority (docs/vulkan.md, "Migration principles"): minimal source changes; same class names and the same
     .h/.cpp files as the main branch (Viewer in viewer.h/.cpp for both backends); #ifdef EASY3D_HAS_VULKAN layout inside
     the classes; no new files except shaders, backend files and tests; minimal CMake changes; client code unchanged.
@@ -28,14 +28,15 @@
   - [x] U4 Python bindings, installed package and CI use the final names (full Mac builds/rendering)
   - [ ] U5 Tutorials/applications: U5a cleanup, U5b collision, U5c camera paths and U5d Vulkan ImGui/Tutorial 202 done; Tutorials 401/402 use shared visible-surface picking; Tutorial 404 now uses shared capture
   - [ ] U6 In progress: shared smoke harness, inventory, drawable constructor homes, shared renderer CMake lists, texture factories, drawable buffer policy unavailable-method ownership and root test consolidation done; remaining file audit/gates open
-  - [x] Shared Picker and geometric SurfaceMeshPicker APIs; concave/deleted/transformed faces, regions, DPI and OpenGL query/context isolation.
+  - [x] Shared Picker and SurfaceMeshPicker APIs on both backends; deleted/transformed faces, regions, DPI and OpenGL query/context isolation.
   - [x] ModelPicker and PointCloudPicker counterparts on both backends.
   - [x] Scene transparency on both backends: depth-sorted straight-alpha triangle pass with preserved depth/IDs; `AverageColorBlending`/`DualDepthPeeling` camera callbacks and Tutorial 504 enabled (batch 13; true accumulation/peeling pending).
   - [x] Eye-dome lighting on both backends: depth-sampled multiplicative overlay, `EyeDomeLighting` begin/end frame params and Tutorial 505 enabled (batch 14).
   - [x] Ambient occlusion on both backends: depth-only Vulkan SSAO with multiplicative compositing, shared `AmbientOcclusion` begin/end contract, OpenGL geometry/SSAO/blur path preserved and Tutorial 501 enabled (batch 15).
   - [x] Hard and soft shadows on both backends: Vulkan depth-only shadow map with PCSS overlay, shared `Shadow`/`SoftShadow` begin/end contract, OpenGL original passes preserved and Tutorials 502/503 enabled with their gates removed (batch 16).
   - [x] Coplanar mesh edges over filled faces on both backends: Vulkan dynamic depth bias mirrors the OpenGL `glPolygonOffset(0.5, -0.0001)` per model with visible lines; picking stays unbiased (batch 17).
-  - [ ] W10 Mesh GPU/rasterization parity, Mapple, Qt/wx, remaining Python coverage (transparency done in batch 13 and per-triangle ordering in batch 18; EDL done in batch 14; SSAO done in batch 15; shadows done in batch 16; mesh edge depth-bias parity done in batch 17)
+  - [x] GPU-only picking on both backends: OpenGL `Viewer::pick()` and `SurfaceMeshPicker` rasterize visible triangles with the primitive-ID shader and map IDs through `f:triangle_range`, honoring `MultiViewer` cell viewports and clipping; CPU ray casts, CPU point fallback and capability flags removed (batch 19).
+  - [ ] W10 Mesh GPU/rasterization parity, Mapple, Qt/wx, remaining Python coverage (transparency done in batch 13 and per-triangle ordering in batch 18; EDL done in batch 14; SSAO done in batch 15; shadows done in batch 16; mesh edge depth-bias parity done in batch 17; GPU-only picking parity done in batch 19)
   - [ ] Tutorial_207_RealCamera based on Vulkan remains slower than the OpenGL counterpart. Its hover query now reads one pixel rather than a full frame, native `largePoints` reaches about 70 FPS at 1600×1200 with 4× MSAA on this Mac, and the portable expanded-point fallback still needs profiling on MoltenVK devices without that feature.
   - [ ] TrianglesDrawable::opacity() is effective through the scene transparency path: straight alpha blends over the opaque scene, depth/IDs are written, and triangles are sorted far-to-near per drawable and per triangle (batch 18). Order-independent accumulation remains pending; the legacy AverageColorBlending/DualDepthPeeling classes still map to the same sorted pass (true accumulation/peeling pending).
   - [ ] SSAO rendering quality is low and effect differs in the two backends (OpenGL: darker near corners, smooth but overall too blurry; Vulkan: visible scattered dark dots near corners, not smooth at all). Must improve rendering quality for both.

@@ -35,18 +35,20 @@
 
 namespace easy3d {
 
-    class ShaderProgram;
+    class TrianglesDrawable;
 
     /**
      * \brief Implementation of picking elements (i.e, vertices, faces, edges) from a surface mesh.
      * \class SurfaceMeshPicker easy3d/gui/picker_surface_mesh.h
      * \details Coordinates follow Camera::projectedCoordinatesOf(). Callers convert
      *      window coordinates to the camera's screen size.
-     *      Vulkan uses geometric picking against tessellated mesh faces. OpenGL
-     *      retains its GPU face path and uses the same geometric fallback; shared
-     *      clipping-plane queries use the geometric path in both builds.
-     *      Region selection is geometric through-selection: all original face
-     *      vertices must be inside the region, camera frustum and clipping planes.
+     *      Single-face picks rasterize the visible face drawable on both backends,
+     *      including active clipping planes, and map the generated triangle back to
+     *      its original face. A model without a rendered face drawable cannot be
+     *      picked. Vertex and edge selection then snaps within the picked face using
+     *      the picker resolution. Region selection remains geometric
+     *      through-selection: all original face vertices must be inside the region,
+     *      camera frustum and clipping planes.
      * \see Picker, ModelPicker, PointCloudPicker
      */
     class SurfaceMeshPicker : public Picker {
@@ -155,15 +157,14 @@ namespace easy3d {
         SurfaceMesh::Face picked_face() const;
 
         /**
-         * \brief Query the coordinate of the previously picked position, which is the intersection between the picking
-         *      line and the picked face.
+         * \brief Query the visible surface position of the previously picked face.
          * \param model The surface mesh model.
          * \param picked_face The picked face.
          * \param x The cursor x-coordinate, relative to the left edge of the content area.
          * \param y The cursor y-coordinate, relative to the top edge of the content area.
-         * \return The world-space coordinate of the picked position, or zero if invalid.
+         * \return The world-space surface point sampled during the last pick, or zero if invalid.
          * \attention This method must be called after calling to pick_face(). The result is valid only if the
-         *            picked_face is valid.
+         *            picked_face is valid. The sampled point corresponds to the pixel of that pick.
          */
         vec3 picked_point(SurfaceMesh *model, SurfaceMesh::Face picked_face, int x, int y) const;
 
@@ -187,22 +188,16 @@ namespace easy3d {
         std::vector<SurfaceMesh::Face> pick_faces(SurfaceMesh *model, const Polygon2 &plg);
 
     private:
-#ifndef EASY3D_HAS_VULKAN
-        // selection implemented in GPU (using shader program)
-        SurfaceMesh::Face pick_face_gpu(SurfaceMesh *model, int x, int y, ShaderProgram* program);
-#endif
-
-        // selection implemented in CPU (with OpenMP if supported)
-        SurfaceMesh::Face pick_face_cpu(SurfaceMesh *model, int x, int y);
-
-        // Intersect the actual tessellated polygon, including concave faces.
-        static bool intersect_face(SurfaceMesh* model, SurfaceMesh::Face face,
-                                   const vec3& origin, const vec3& direction, float& t);
+        // Rasterized face ID/depth pass. The drawable is the visible face drawable.
+        SurfaceMesh::Face pick_face_gpu(SurfaceMesh *model, const std::shared_ptr<TrianglesDrawable>& drawable,
+                                        int x, int y);
 
     private:
         unsigned int hit_resolution_;     // in pixels
         SurfaceMesh::Face picked_face_;
         SurfaceMesh* picked_model_ = nullptr; // borrowed, same lifetime contract as method arguments
+        vec3 picked_point_ = vec3(0);         // visible surface point of the last pick
+        int picked_x_ = -1, picked_y_ = -1;   // screen position of the last pick
     };
 
 }

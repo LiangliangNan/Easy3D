@@ -3262,6 +3262,10 @@ graphics::FrameImage Viewer::capture(unsigned count) const {
     for(size_t i=0;i<drawables_.size();++i) append(nullptr,drawables_[i],uint32_t(models_.size()+i));
     return frame;
 }
+void Viewer::prepare_pick_view(int,int,int width,int height) const {
+    glDisable(GL_SCISSOR_TEST);
+    glViewport(0,0,width,height);
+}
 Viewer::PickResult Viewer::pick(int x, int y) const {
     PickResult result;
     const int fw=framebuffer_width(), fh=framebuffer_height();
@@ -3303,50 +3307,40 @@ Viewer::PickResult Viewer::pick(int x, int y) const {
     const auto world=[&](float depth) {return unproject_pixel(x,y,depth);};
     result.position=world(result.depth);
     if (result.drawable->type()==Drawable::DT_TRIANGLES) {
-        // Recover triangle provenance from the winning drawable's existing buffers,
-        // without a second, differently clipped ID shader or a persistent CPU copy.
-        const auto& d=*result.drawable;
-        std::vector<vec3> vertices(d.num_vertices());
-        std::vector<unsigned> indices(d.num_indices());
-        GLint previous=0;glGetIntegerv(GL_COPY_READ_BUFFER_BINDING,&previous);
-        glBindBuffer(GL_COPY_READ_BUFFER,d.vertex_buffer());
-        glGetBufferSubData(GL_COPY_READ_BUFFER,0,GLsizeiptr(vertices.size()*sizeof(vec3)),vertices.data());
-        if (!indices.empty()) {
-            glBindBuffer(GL_COPY_READ_BUFFER,d.element_buffer());
-            glGetBufferSubData(GL_COPY_READ_BUFFER,0,GLsizeiptr(indices.size()*sizeof(unsigned)),indices.data());
-        }
-        glBindBuffer(GL_COPY_READ_BUFFER,GLuint(previous));
-        const vec3 ray_origin=world(0), ray_direction=world(.5f)-ray_origin;
-        const mat4 model=d.manipulated_matrix();
-        float closest=std::numeric_limits<float>::max();
-        const size_t count=indices.empty()?vertices.size():indices.size();
-        for (size_t i=0;i+2<count;i+=3) {
-            vec3 triangle[3];bool valid=true;
-            for(unsigned j=0;j<3;++j) {
-                const size_t index=indices.empty()?i+j:indices[i+j];
-                if (index>=vertices.size()) {valid=false;break;}
-                triangle[j]=(model*vec4(vertices[index],1)).xyz();
-            }
-            if (!valid) continue;
-            const vec3 e1=triangle[1]-triangle[0],e2=triangle[2]-triangle[0];
-            const vec3 h=cross(ray_direction,e2);const float det=dot(e1,h);
-            if (std::abs(det)<=std::numeric_limits<float>::epsilon()*e1.length()*h.length()) continue;
-            const vec3 offset=ray_origin-triangle[0];
-            const float u=dot(offset,h)/det;
-            const vec3 q=cross(offset,e1);
-            const float v=dot(ray_direction,q)/det,t=dot(e2,q)/det;
-            if (u<0 || v<0 || u+v>1 || t<0) continue;
-            const float distance=(ray_origin+t*ray_direction-result.position).length();
-            if (distance<closest) {closest=distance;result.primitive=uint32_t(i/3);}
-        }
-        auto* mesh=dynamic_cast<SurfaceMesh*>(result.model.get());
-        if (mesh && result.primitive!=UINT32_MAX &&
-            result.model->renderer()->get_triangles_drawable("faces",false)==result.drawable.get()) {
-            const auto ranges=mesh->get_face_property<std::pair<int,int>>("f:triangle_range");
-            if (ranges) for (auto face:mesh->faces()) {
-                const auto range=ranges[face];
-                if (range.first>=0 && result.primitive>=uint32_t(range.first) && result.primitive<=uint32_t(range.second)) {
-                    result.face_index=face.idx();break;
+        // Recover the primitive from the same rasterized surface: the selection
+        // shader applies the drawable transform and clipping, so the depth winner
+        // and the reported primitive agree.
+        const std::string name="selection/selection_single_primitive";
+        auto* program=ShaderManager::get_program(name);
+        if (!program)
+            program=ShaderManager::create_program_from_files(name,{{ShaderProgram::POSITION,"vtx_position"}});
+        if (!program)
+            throw std::runtime_error("picking requires the selection shader '"+name+"'");
+        state.prepare(fw,fh);
+        prepare_pick_view(x,y,fw,fh);
+        glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+        glClearColor(1,1,1,1);
+        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+        program->bind();
+        program->set_uniform("MVP",snapshot.modelViewProjectionMatrix())
+               ->set_uniform("MANIP",result.drawable->manipulated_matrix());
+        ClippingPlane::instance()->set_program(program);
+        ClippingPlane::instance()->set_discard_primitives(program,result.drawable->plane_clip_discard_primitive());
+        result.drawable->gl_draw();
+        program->release();
+        unsigned char rgba[4]={255,255,255,255};
+        glReadPixels(x,fh-1-y,1,1,GL_RGBA,GL_UNSIGNED_BYTE,rgba);
+        const int id=color::encode(rgba[0],rgba[1],rgba[2],rgba[3]);
+        if (id>=0) {
+            result.primitive=uint32_t(id);
+            auto* mesh=dynamic_cast<SurfaceMesh*>(result.model.get());
+            if (mesh && result.model->renderer()->get_triangles_drawable("faces",false)==result.drawable.get()) {
+                const auto ranges=mesh->get_face_property<std::pair<int,int>>("f:triangle_range");
+                if (ranges) for (auto face:mesh->faces()) {
+                    const auto range=ranges[face];
+                    if (range.first>=0 && result.primitive>=uint32_t(range.first) && result.primitive<=uint32_t(range.second)) {
+                        result.face_index=face.idx();break;
+                    }
                 }
             }
         }

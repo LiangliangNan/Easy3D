@@ -154,6 +154,7 @@ namespace easy3d {
 #else
         // Keep this part of code minimum
         void draw_scene(const Camera& camera, const DrawSource* source = nullptr, bool guides = false) const override;
+        void prepare_pick_view(int x, int y, int width, int height) const override;
         // overloaded, so mouse positions are relative to the current view
         bool mouse_release_event(int x, int y, int button, int modifiers) override;
         // overloaded, so mouse positions are relative to the current view

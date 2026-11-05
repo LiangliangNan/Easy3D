@@ -5415,3 +5415,56 @@ on the near surface, also under validation and synchronization validation.
 All 126 MoltenVK tests (run at `-j2`) and all 91 OpenGL tests pass on this Mac
 (2026-11-05). Under high parallel load the pre-existing `vulkan.callbacks` and
 `vulkan.imgui` window tests can time out; both pass in isolation and at `-j2`.
+
+### 2026-11-05 — W10 batch 19: GPU-only picking on both backends
+
+Picking is now a single rasterized ID/depth query on both backends; the CPU
+fallbacks and capability flags are gone. `Picker` no longer carries
+`use_gpu_if_supported_`, `PointCloudPicker::resolution()`/`set_resolution()` and
+its nearest-projected-vertex fallback are removed, and a missing selection
+shader raises an error instead of silently switching implementations. The
+picker classes remain camera-backed facades: `Viewer::pick()` owns the backend
+device and the pickers operate on the supplied mesh, drawable and camera
+coordinates.
+
+`SurfaceMeshPicker` and OpenGL `Viewer::pick()` render the visible triangle
+drawable with `selection/selection_single_primitive`, which encodes
+`gl_PrimitiveID` into RGBA, then read one pixel from the shared ID/depth
+framebuffer. White is the no-hit sentinel and ID 0 is valid, so background
+pixels are distinguished from the first primitive. `f:triangle_range` maps the
+rasterized primitive back to its `SurfaceMesh` face; Vulkan keeps its
+`RenderDevice::sample_pixel()` contract and prefers the drawable's
+`source_faces` mirror before falling back to the same range map. This uses the
+native drawables, so indexed triangle lists, concave/nonplanar tessellation,
+manipulation, renderer/drawable visibility and clipping all match rendering.
+
+The selection shader now mirrors the scene clipping uniforms
+(`clippingPlaneEnabled`, `crossSectionEnabled`, `clippingPlane0/1`,
+`planeClippingDiscard`) and discards clipped fragments, so the depth winner and
+the reported primitive agree when a clipping plane or cross-section is active.
+OpenGL `MultiViewer` overrides the new `prepare_pick_view()` hook so the ID pass
+is rendered with the queried cell's viewport and scissor rather than the cell
+left active by the depth pass.
+
+`picked_point()` returns the surface point sampled by the last successful pick
+and validates the originating model, face and pixel; stale, detached or
+out-of-bounds results return the zero vector instead of re-intersecting
+occluded geometry. `Viewer::PickResult` keeps `primitive = UINT32_MAX` for
+points/lines on OpenGL, where no rasterized primitive ID is produced.
+
+`gui.meshpicker` is now backend-free contract coverage (DPI, invalid pixels,
+region selection, transforms, clipping); `vulkan.meshpicker` and
+`opengl.meshpicker` drive a real context and cover deleted front-most faces,
+nonplanar/concave polygons, renderer/drawable visibility, buffer edits,
+clipping/cross-section, perspective/rotation, vertex/edge snapping, stale
+results and detached meshes. `vulkan.meshpicker` joins the validation-enabled
+CTest set, and `vulkan/opengl.portablepick` checks that `Viewer::pick()` reports
+`primitive`/`face_index` and preserves GL state and source ownership.
+
+All 127 MoltenVK tests and all 91 OpenGL tests pass on this Mac at `-j2`
+(2026-11-05). At `-j4`, one `vulkan.pointselectionviewer` guide-render check
+missed once; it passes in isolation and at `-j2`. The focused picking suites
+pass 13/13 (Vulkan) and 8/8 (OpenGL). `git diff --check` is clean. The batch-8
+"Vulkan uses geometric CPU picking" and batch-10 "OpenGL explicitly reports
+UINT32_MAX for unavailable primitive IDs" statements are superseded for mesh
+triangles; OpenGL capture and point/line picks still report `UINT32_MAX`.
