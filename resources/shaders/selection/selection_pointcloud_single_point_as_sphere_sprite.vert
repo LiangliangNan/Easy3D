@@ -35,18 +35,32 @@ uniform mat4	PROJ;
 uniform mat4	MANIP;
 
 uniform int		screen_width;   // scale to calculate size in pixels
-uniform float	sphere_radius;
+uniform float sphere_radius;
+uniform float point_size;
+uniform bool sphere;
+uniform bool clippingPlaneEnabled;
+uniform bool crossSectionEnabled;
+uniform vec4 clippingPlane0;
+uniform vec4 clippingPlane1;
 
 
-out vec4	position; // in eye space
+flat out vec4 position; // in eye space
+flat out int source_id;
 
 void main()
 {
-	position = MV * MANIP * vec4(vtx_position, 1.0);
+	vec4 world = MANIP * vec4(vtx_position, 1.0);
+    position = MV * world;
+    source_id = gl_VertexID;
+    if (clippingPlaneEnabled) {
+        gl_ClipDistance[0] = dot(world, clippingPlane0);
+        if (crossSectionEnabled)
+            gl_ClipDistance[1] = dot(world, clippingPlane1);
+    }
 
 	// http://stackoverflow.com/questions/8608844/resizing-point-sprites-based-on-distance-from-the-camera
 	vec4 projCorner = PROJ * vec4(sphere_radius, sphere_radius, position.z, position.w);
-	gl_PointSize = screen_width * projCorner.x / projCorner.w;
+	gl_PointSize = sphere ? screen_width * projCorner.x / projCorner.w : point_size;
 
 	gl_Position = PROJ * position;
 }

@@ -27,18 +27,12 @@
 #ifndef EASY3D_GUI_PICKER_POINT_CLOUD_H
 #define EASY3D_GUI_PICKER_POINT_CLOUD_H
 
-#ifdef EASY3D_HAS_VULKAN
-// No Vulkan counterpart yet.
-#else
-
 
 #include <easy3d/gui/picker.h>
 #include <easy3d/core/point_cloud.h>
 
 
 namespace easy3d {
-
-    class ShaderProgram;
 
     /**
      * \brief Implementation of picking points from a point cloud.
@@ -97,22 +91,14 @@ namespace easy3d {
         void pick_vertices(PointCloud *model, const Polygon2 &plg, bool deselect);
 
     private:
-        // pick implemented in CPU (with OpenMP if supported)
+#ifndef EASY3D_HAS_VULKAN
+        // CPU fallback when the selection shader is unavailable
         PointCloud::Vertex pick_vertex_cpu(PointCloud *model, int x, int y);
-
-        // pick plain points implemented in GPU (using shader program)
-        PointCloud::Vertex pick_vertex_gpu_plain(PointCloud *model, int x, int y);
-
-        // pick sphere points implemented in GPU (using shader program)
-        PointCloud::Vertex pick_vertex_gpu_sphere(PointCloud *model, int x, int y);
-
-    private:
+#endif
         unsigned int hit_resolution_;     // in pixels
-        ShaderProgram*	 program_;
     };
 
 }
 
-#endif // EASY3D_HAS_VULKAN
 
 #endif // EASY3D_GUI_PICKER_POINT_CLOUD_H

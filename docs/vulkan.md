@@ -323,7 +323,7 @@ Decisions in force:
 | 3. `VulkanMultiViewer` | merged into U2 |
 | 4. Remove runtime selection | done (W4) |
 | 5. Tutorials on the shared API | in progress: GLFW Tutorial 202 now builds on Vulkan; effect tutorials 501–505 remain gated, and Qt/wx integration remains W10; Tutorials 401/402 use shared visible-surface picking (2026-11-04); `EASY3D_TUTORIAL_USES_VULKAN` remains in `viewer.h` and in the other conditional tutorial (404) |
-| 6. Renderer, interaction, GUI/application parity | in progress (W10): shared Picker and geometric SurfaceMeshPicker; model/point-cloud GUI pickers, native GUI integration and effects remain open |
+| 6. Renderer, interaction, GUI/application parity | in progress (W10): shared GUI picker APIs; mesh raster parity, native GUI integration and effects remain open |
 
 Divergence audit (updated at U6b, 2026-11-04), against local `main` at
 `b2868dcd5f0cc06fdb0b7df10e1ada2ec6a28226`, including the current working tree:
@@ -439,7 +439,7 @@ of this document.
   both configurations and its OpenGL renderer remains conditional. Effect/picker
   feature parity remains open; see the U3 classification below. `Picker` and
   `SurfaceMeshPicker` now have shared geometric counterparts (U6/W10 batch 8);
-  model/point-cloud GUI pickers still require their Vulkan implementations.
+  ModelPicker and PointCloudPicker now have Vulkan implementations in their original files (batch 11).
 - **U4** (implemented) Python Viewer/MultiViewer constructors, callbacks and scene
   storage bindings follow the unified classes; both complete extensions build and
   render on macOS. The deployed-package regression runs in CTest and the two-backend
@@ -5111,3 +5111,33 @@ and synchronization-validation harness and capture device error counters remain
 zero. The longstanding MoltenVK integer-attachment diagnostic is unchanged.
 `git diff --check` is clean. Work remains uncommitted on Easy3D-Vulkan, preserving
 the release-date edit that was already present when this batch began.
+
+### 2026-11-05 — U3/W10 batch 11: camera-based GUI pickers and OpenGL frame clearing
+
+The existing camera-based ModelPicker and PointCloudPicker APIs now build on
+both backends. Vulkan rasterizes visible candidates using the renderer's
+existing offscreen device and drawable cache. Point picks preserve source
+slots through indexing and deletion. Vulkan rectangle and lasso selection
+use the existing GPU polygon test and reuse cached drawable positions within
+the picker. Camera-only pickers own their offscreen device, so they have a
+separate cache from a Viewer. Point clouds without a drawable build a point
+snapshot for the query. OpenGL keeps its CPU region selection for these legacy
+camera-only APIs, skipping deleted vertices. Tutorial 403 continues to use
+shared GPU selection on both backends.
+
+OpenGL model and point GPU queries now restore caller state. Point picking
+passes the vertex slot explicitly to the shader and uses the drawable's
+transform and clipping planes. The new paired scene picker test covers
+visibility, overlapping points, deleted and indexed slots, manipulation,
+clipping, and additive and subtractive region selection.
+
+Tutorials 207, 306, 309, 403, 405 and 506 call the base pre-draw hook before
+preparing annotations, restoring OpenGL's per-frame clear. The portable
+selection regression seeds stale color and depth and verifies that Tutorial
+403 clears both with and without an active lasso.
+
+Mesh raster parity, Mapple, Qt/wx, effects and the Tutorial 207 Vulkan frame
+rate investigation remain open.
+
+Both exclusive builds completed on this Mac. All 91 OpenGL tests and all 117
+MoltenVK tests passed. `git diff --check` is clean.

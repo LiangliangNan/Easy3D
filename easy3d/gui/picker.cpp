@@ -27,7 +27,11 @@
 
 #include <easy3d/gui/picker.h>
 
-#ifndef EASY3D_HAS_VULKAN
+#ifdef EASY3D_HAS_VULKAN
+#include <easy3d/renderer/backends/vulkan/drawable.h>
+#include <easy3d/renderer/backends/vulkan/clipping_plane.h>
+#include <easy3d/renderer/clipping_plane.h>
+#else
 #include <easy3d/renderer/framebuffer_object.h>
 #include <easy3d/renderer/opengl_error.h>
 #endif
@@ -54,7 +58,22 @@ namespace easy3d {
     Picker::~Picker() = default;
 
 
-#ifndef EASY3D_HAS_VULKAN
+#ifdef EASY3D_HAS_VULKAN
+    graphics::RenderDevice& Picker::render_device() {
+        if (!device_)
+            device_ = graphics::create_vulkan_device();
+        if (drawable_renderer_)
+            drawable_renderer_->prune();
+        return *device_;
+    }
+
+    graphics::DrawCommand Picker::draw_command(const std::shared_ptr<Drawable>& drawable, unsigned id) {
+        if (!drawable_renderer_)
+            drawable_renderer_.reset(new vulkan::DrawableRenderer);
+        return drawable_renderer_->command(drawable, id, *camera(),
+            vulkan::ClippingPlaneRenderer::planes(*ClippingPlane::instance()));
+    }
+#else
     void Picker::setup_framebuffer(int width, int height) {
         // prepare a frame buffer object (fbo), I will do offscreen rendering to the new fbo
         if (!fbo_) {

@@ -26,89 +26,38 @@
 
 #version 150
 
+uniform mat4 PROJ;
+uniform bool sphere;
+uniform bool perspective;
+uniform float sphere_radius;
 
-uniform bool	perspective;
-
-uniform mat4	PROJ;
-uniform float	sphere_radius;
-
-in  vec4 position; // in eye space
-
+flat in int source_id;
+flat in vec4 position;
 out vec4 outputF;
 
+void main() {
+    gl_FragDepth = gl_FragCoord.z;
+    if (sphere) {
+        vec2 tex = (gl_PointCoord * 2.0 - 1.0) * vec2(1, -1);
+        vec3 hit;
+        if (perspective) {
+            vec3 ray = normalize(position.xyz + vec3(tex * (1.5 * sphere_radius), 0));
+            float along = dot(ray, position.xyz);
+            float discriminant = along * along - dot(position.xyz, position.xyz) + sphere_radius * sphere_radius;
+            if (discriminant < 0.0)
+                discard;
+            hit = ray * (along - sqrt(discriminant));
+        } else {
+            float z2 = 1.0 - dot(tex, tex);
+            if (z2 < 0.0)
+                discard;
+            hit = position.xyz + vec3(tex, sqrt(z2)) * sphere_radius;
+        }
+        vec4 clip = PROJ * vec4(hit, 1.0);
+        gl_FragDepth = 0.5 * clip.z / clip.w + 0.5;
+    }
 
-void main()
-{
-	/*  with perspective correction
-	*   Ref: Learning Modern 3D Graphics Programming, by Jason L. McKesson
-	*	http://alfonse.bitbucket.org/oldtut/Illumination/Tut13%20Correct%20Chicanery.html
-	**/
-	if (perspective) {
-		vec2 tex = gl_PointCoord* 2.0 - vec2(1.0);
-		tex = vec2(tex.x, -tex.y) * 1.5; // 1.5 times larger ensure the quad is big enought in perspective view
-
-		vec3 planePos = vec3(tex * sphere_radius, 0.0) + position.xyz;
-		vec3 view_dir = normalize(planePos);
-		float B = 2.0 * dot(view_dir, -position.xyz);
-		float C = dot(position.xyz, position.xyz) - (sphere_radius * sphere_radius);
-		float det = (B * B) - (4 * C);
-		if (det < 0.0)
-			discard;
-
-		float sqrtDet = sqrt(det);
-		float posT = (-B + sqrtDet) / 2;
-		float negT = (-B - sqrtDet) / 2;
-		float intersectT = min(posT, negT);
-		vec3 pos = view_dir * intersectT;
-
-		// compute the depth. I can do it easier
-		//vec4 pos4 = PROJ * vec4(pos, 1.0);
-		//gl_FragDepth = 0.5*(pos4.z / pos4.w) + 0.5;
-		vec2 clipZW = pos.z * PROJ[2].zw + PROJ[3].zw;
-		gl_FragDepth = 0.5 * clipZW.x / clipZW.y + 0.5;
-
-
-		// NOTE: For points, the gl_PrimitiveID represent the ID of the input points. 
-		//		 For polygonal models, the gl_PrimitiveID represent the ID of triangles (the GPU assembles 
-		//		 all primitive type, e.g., triangle fan, polygon, triangle strips as triangles).
-		//		 Since we're selecting a single point, the id can also be computed in vertex shader using gl_VertexID.
-		int id = gl_PrimitiveID;
-		outputF.r = ((id >> 16) & 0xff) / 255.0;
-		outputF.g = ((id >> 8) & 0xff) / 255.0;
-		outputF.b = (id & 0xff) / 255.0;
-		outputF.a = (id >> 24) / 255.0;
-	}
-
-	// without perspective correction
-	else {
-		// r^2 = (x - x0)^2 + (y - y0)^2 + (z - z0)^2
-		vec2 tex = gl_PointCoord* 2.0 - vec2(1.0);
-		float x = tex.x;
-		float y = -tex.y;
-		float zz = 1.0 - x*x - y*y;
-
-		if (zz < 0.0)
-			discard;
-
-		float z = sqrt(zz);
-		vec4 pos = position;
-		pos.z += sphere_radius*z;
-
-		// compute the depth. I can do it easier
-		//pos = PROJ * pos;
-		//gl_FragDepth = 0.5*(pos.z / pos.w) + 0.5;
-		vec2 clipZW = pos.z * PROJ[2].zw + PROJ[3].zw;
-		gl_FragDepth = 0.5 * clipZW.x / clipZW.y + 0.5;
-
-		// NOTE: For points, the gl_PrimitiveID represent the ID of the input points. 
-		//		 For polygonal models, the gl_PrimitiveID represent the ID of triangles (the GPU assembles 
-		//		 all primitive type, e.g., triangle fan, polygon, triangle strips as triangles).
-		//		 Since we're selecting a single point, the id can also be computed in vertex shader using gl_VertexID.
-		int id = gl_PrimitiveID;
-		outputF.r = ((id >> 16) & 0xff) / 255.0;
-		outputF.g = ((id >> 8) & 0xff) / 255.0;
-		outputF.b = (id & 0xff) / 255.0;
-		outputF.a = (id >> 24) / 255.0;
-	}
+    // Preserve the VBO slot in both indexed and unindexed draws.
+    outputF = vec4((source_id >> 16) & 255, (source_id >> 8) & 255,
+                   source_id & 255, (source_id >> 24) & 255) / 255.0;
 }
-

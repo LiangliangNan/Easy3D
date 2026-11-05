@@ -27,16 +27,18 @@
 
 #include <easy3d/gui/picker_point_cloud.h>
 
-#ifdef EASY3D_HAS_VULKAN
-// No Vulkan counterpart yet.
-#else
-#include <easy3d/core/point_cloud.h>
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/renderer.h>
-#include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/drawable_points.h>
+#include <easy3d/renderer/clipping_plane.h>
+#ifdef EASY3D_HAS_VULKAN
+#include <easy3d/renderer/backends/vulkan/clipping_plane.h>
+#include <stdexcept>
+#else
+#include <easy3d/renderer/shader_manager.h>
+#include <easy3d/renderer/backends/opengl/query_state.h>
 #include <easy3d/renderer/framebuffer_object.h>
-#include <easy3d/renderer/opengl_error.h>
+#endif
 #include <easy3d/util/logging.h>
 
 
@@ -45,243 +47,172 @@ namespace easy3d {
 
     PointCloudPicker::PointCloudPicker(const Camera *cam)
             : Picker(cam)
-            , program_(nullptr)
             , hit_resolution_(15)
     {
         use_gpu_if_supported_ = true;
     }
 
 
+#ifdef EASY3D_HAS_VULKAN
+    namespace {
+        std::shared_ptr<PointsDrawable> vertices_drawable(const Renderer* renderer) {
+            if (renderer)
+                for (const auto& drawable : renderer->points_drawables())
+                    if (drawable->name() == "vertices")
+                        return drawable;
+            return {};
+        }
+    }
+#endif
+
     PointCloud::Vertex PointCloudPicker::pick_vertex(PointCloud* model, int x, int y) {
-        auto drawable = model->renderer()->get_points_drawable("vertices");
-        if (!drawable)
+        const int width = camera()->screenWidth(), height = camera()->screenHeight();
+        if (!model || model->empty() || x < 0 || y < 0 || x >= width || y >= height)
+            return PointCloud::Vertex();
+        const auto* renderer = model->renderer();
+        if (!renderer || !renderer->is_visible())
+            return PointCloud::Vertex();
+#ifdef EASY3D_HAS_VULKAN
+        const auto drawable = vertices_drawable(renderer);
+        if (!drawable || !drawable->is_visible())
+            return PointCloud::Vertex();
+        const auto command = draw_command(drawable, 0);
+        const auto frame = render_device().render(width, height, {command});
+        const auto hit = frame.ids[size_t(y) * width + x];
+        const auto& ids = command.geometry->point_data()->source_ids();
+        if (hit.object != 0 || hit.primitive >= ids.size() || ids[hit.primitive] >= model->points().size())
+            return PointCloud::Vertex();
+        const PointCloud::Vertex vertex(ids[hit.primitive]);
+        return model->is_deleted(vertex) ? PointCloud::Vertex() : vertex;
+#else
+        auto drawable = renderer->get_points_drawable("vertices");
+        if (!drawable || !drawable->is_visible())
             return PointCloud::Vertex();
 
-        if (use_gpu_if_supported_) {
-            std::string shader_name = "selection/selection_single_primitive";
-            if (drawable->impostor_type() == PointsDrawable::SPHERE)
-                shader_name = "selection/selection_pointcloud_single_point_as_sphere_sprite";
+        if (!use_gpu_if_supported_)
+            return pick_vertex_cpu(model, x, y);
 
-            program_ = ShaderManager::get_program(shader_name);
-            if (!program_) {
-                std::vector<ShaderProgram::Attribute> attributes;
-                attributes.emplace_back(ShaderProgram::Attribute(ShaderProgram::POSITION, "vtx_position"));
-                program_ = ShaderManager::create_program_from_files(shader_name, attributes);
-            }
-            if (!program_) {
-                use_gpu_if_supported_ = false;
-                LOG_N_TIMES(3, ERROR) << "shader program not available, fall back to CPU implementation. " << COUNTER;
-            }
+        const std::string name = "selection/selection_pointcloud_single_point_as_sphere_sprite";
+        auto* program = ShaderManager::get_program(name);
+        if (!program)
+            program = ShaderManager::create_program_from_files(name, {{ShaderProgram::POSITION, "vtx_position"}});
+        if (!program) {
+            use_gpu_if_supported_ = false;
+            return pick_vertex_cpu(model, x, y);
         }
 
-        if (use_gpu_if_supported_ && program_) {
-            switch (drawable->impostor_type()) {
-                case PointsDrawable::PLAIN:
-                    return pick_vertex_gpu_plain(model, x, y);
-                case PointsDrawable::SPHERE:
-                    return pick_vertex_gpu_sphere(model, x, y);
-                case PointsDrawable::SURFEL:
-                    LOG_N_TIMES(3, WARNING) << "picking points rendered as surfels is not implemented yet";
-                    return pick_vertex_gpu_sphere(model, x, y);
-            }
-        }
-
-        // CPU with OpenMP (if supported)
-        return pick_vertex_cpu(model, x, y);
-    }
-
-
-    PointCloud::Vertex PointCloudPicker::pick_vertex_cpu(PointCloud* model, int px, int py) {
-        const std::vector<vec3>& points = model->points();
-        std::size_t num = points.size();
-
-        std::vector<char> status(num, 0);
-        std::vector<float> sqr_dist_to_near(num, FLT_MAX);
-
-        const Line3& line = picking_line(px, py);
-        const vec3& p_near = line.point();
-
-        const auto sqr_dist_thresh = static_cast<float>(hit_resolution_ * hit_resolution_);
-        // Get combined model-view and projection matrix
-        const mat4& MVP = camera()->modelViewProjectionMatrix();
-        // transformation introduced by manipulation
-        const mat4 MANIP = model->manipulator() ? model->manipulator()->matrix() : mat4::identity();
-        const mat4& m = MVP * MANIP;
-
-#pragma omp parallel for
-        for (int i = 0; i < num; ++i) {
-            const vec3& p = points[i];
-            float x = m[0] * p.x + m[4] * p.y + m[8] * p.z + m[12];
-            float y = m[1] * p.x + m[5] * p.y + m[9] * p.z + m[13];
-            //float z = m[2] * p.x + m[6] * p.y + m[10] * p.z + m[14]; // I don't need z
-            float w = m[3] * p.x + m[7] * p.y + m[11] * p.z + m[15];
-            x /= w;
-            y /= w;
-            x = 0.5f * x + 0.5f;
-            y = 0.5f * y + 0.5f;
-            if (distance2(vec2(x, y), vec2(static_cast<float>(px), static_cast<float>(py))) < sqr_dist_thresh) {
-                status[i] = 1;
-                sqr_dist_to_near[i] = distance2(p, p_near);
-            }
-        }
-
-        int idx = -1;
-        float min_s_dist = FLT_MAX;
-        for (int i = 0; i < num; ++i) {
-            if (status[i] == 1 && sqr_dist_to_near[i] < min_s_dist) {
-                min_s_dist = sqr_dist_to_near[i];
-                idx = i;
-            }
-        }
-
-        return PointCloud::Vertex(idx);
-    }
-
-
-    PointCloud::Vertex PointCloudPicker::pick_vertex_gpu_plain(PointCloud *model, int x, int y) {
-        auto drawable = model->renderer()->get_points_drawable("vertices");
-        if (!drawable) {
-            LOG_N_TIMES(3, WARNING) << "drawable 'vertices' does not exist. " << COUNTER;
-            return PointCloud::Vertex();
-        }
-
-        int viewport[4];
+        GLint viewport[4];
         glGetIntegerv(GL_VIEWPORT, viewport);
-        int width = viewport[2];
-        int height = viewport[3];
-        setup_framebuffer(width, height);
-
-        //--------------------------------------------------------------------------
-        // render the 'scene' to the new FBO.
-
-        // TODO: the performance can be improved. Since the 'scene' is static, we need to render it to the fbo only
-        //       once. Then just query. Re-rendering is needed only when the scene is changed/manipulated, or the size
-        //       of the viewer changed.
-
-        // Bind the offscreen fbo for drawing
-        fbo_->bind();
-        easy3d_debug_log_gl_error
-        easy3d_debug_log_frame_buffer_error
-
-        float color[4];
-        glGetFloatv(GL_COLOR_CLEAR_VALUE, color);
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        const int w = viewport[2], h = viewport[3];
+        if (w <= 0 || h <= 0)
+            return PointCloud::Vertex();
+        opengl::QueryState state;
+        state.prepare(w, h);
+        setup_framebuffer(w, h);
+        if (!fbo_->bind())
+            return PointCloud::Vertex();
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        glClearColor(1, 1, 1, 1);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glEnable(GL_PROGRAM_POINT_SIZE);
 
-        const mat4 MANIP = model->manipulator() ? model->manipulator()->matrix() : mat4::identity();
-        program_->bind();
-        program_->set_uniform("MVP", camera()->modelViewProjectionMatrix())
-                ->set_uniform("MANIP", MANIP);
+        program->bind();
+        program->set_uniform("sphere", drawable->impostor_type() != PointsDrawable::PLAIN)
+               ->set_uniform("perspective", camera()->type() == Camera::PERSPECTIVE)
+               ->set_uniform("MV", camera()->modelViewMatrix())
+               ->set_uniform("PROJ", camera()->projectionMatrix())
+               ->set_uniform("MANIP", drawable->manipulated_matrix())
+               ->set_uniform("point_size", drawable->point_size())
+               ->set_uniform("sphere_radius", drawable->point_size() * camera()->pixelGLRatio(camera()->pivotPoint()) * 0.5f)
+               ->set_uniform("screen_width", w);
+        ClippingPlane::instance()->set_program(program);
         drawable->gl_draw();
-        program_->release();
-
-        // --- Maybe this is not necessary ---------
-        glFlush();
-        glFinish();
-        // -----------------------------------------
 
         int gl_x, gl_y;
-        screen_to_opengl(x, y, gl_x, gl_y, width, height);
-
-        unsigned char c[4];
-        fbo_->read_color(c, gl_x, gl_y);
-
-        // switch back to the previous fbo
-        fbo_->release();
-        easy3d_debug_log_gl_error
-        easy3d_debug_log_frame_buffer_error
-
-        // restore the clear color
-        glClearColor(color[0], color[1], color[2], color[3]);
-
-        //--------------------------------------------------------------------------
-
-        // Convert the color back to an integer ID
-        int id = color::encode(c[0], c[1], c[2], c[3]);
-        return PointCloud::Vertex(id);
-    }
-
-
-    PointCloud::Vertex PointCloudPicker::pick_vertex_gpu_sphere(PointCloud *model, int x, int y) {
-        auto drawable = model->renderer()->get_points_drawable("vertices");
-        if (!drawable) {
-            LOG_N_TIMES(3, WARNING) << "drawable 'vertices' does not exist. " << COUNTER;
+        screen_to_opengl(x, y, gl_x, gl_y, w, h);
+        unsigned char rgba[4];
+        if (!fbo_->read_color(rgba, gl_x, gl_y))
             return PointCloud::Vertex();
-        }
-
-        int viewport[4];
-        glGetIntegerv(GL_VIEWPORT, viewport);
-        int width = viewport[2];
-        int height = viewport[3];
-        setup_framebuffer(width, height);
-
-        //--------------------------------------------------------------------------
-        // render the 'scene' to the new FBO.
-
-        // TODO: the performance can be improved. Since the 'scene' is static, we need to render it to the fbo only
-        //       once. Then just query. Re-rendering is needed only when the scene is changed/manipulated, or the size
-        //       of the viewer changed.
-
-        glEnable(GL_PROGRAM_POINT_SIZE); // before OpenGL3.2, use GL_VERTEX_PROGRAM_POINT_SIZE
-
-        // Bind the offscreen fbo for drawing
-        fbo_->bind();
-        easy3d_debug_log_gl_error
-        easy3d_debug_log_frame_buffer_error
-
-        float color[4];
-        glGetFloatv(GL_COLOR_CLEAR_VALUE, color);
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        const mat4 MANIP = model->manipulator() ? model->manipulator()->matrix() : mat4::identity();
-        program_->bind();
-        program_->set_uniform("perspective", camera()->type() == Camera::PERSPECTIVE);
-        program_->set_uniform("MV", camera_->modelViewMatrix());
-        program_->set_uniform("PROJ", camera_->projectionMatrix());
-        program_->set_uniform("MANIP", MANIP);
-        float ratio = camera_->pixelGLRatio(camera_->pivotPoint());
-        program_->set_uniform("sphere_radius", drawable->point_size() * ratio * 0.5f);  // 0.5f from size -> radius
-        program_->set_uniform("screen_width", width);
-        drawable->gl_draw();
-        program_->release();
-        easy3d_debug_log_gl_error
-        easy3d_debug_log_frame_buffer_error
-
-        // --- Maybe this is not necessary ---------
-        glFlush();
-        glFinish();
-        // -----------------------------------------
-
-        int gl_x, gl_y;
-        screen_to_opengl(x, y, gl_x, gl_y, width, height);
-
-        unsigned char c[4];
-        fbo_->read_color(c, gl_x, gl_y);
-
-        // switch back to the previous fbo
-        fbo_->release();
-        easy3d_debug_log_gl_error
-        easy3d_debug_log_frame_buffer_error
-
-        glEnable(GL_PROGRAM_POINT_SIZE); // before OpenGL3.2, use GL_VERTEX_PROGRAM_POINT_SIZE
-
-        // restore the clear color
-        glClearColor(color[0], color[1], color[2], color[3]);
-
-        //--------------------------------------------------------------------------
-
-        // Convert the color back to an integer ID
-        int id = color::encode(c[0], c[1], c[2], c[3]);
-        return PointCloud::Vertex(id);
+        const PointCloud::Vertex vertex(color::encode(rgba[0], rgba[1], rgba[2], rgba[3]));
+        return model->is_valid(vertex) && !model->is_deleted(vertex) ? vertex : PointCloud::Vertex();
+#endif
     }
-    
 
-    void PointCloudPicker::pick_vertices(PointCloud *model, const Rect& rect, bool deselect) {
-        if (!model)
+#ifndef EASY3D_HAS_VULKAN
+    PointCloud::Vertex PointCloudPicker::pick_vertex_cpu(PointCloud* model, int x, int y) {
+        const mat4 manip = model->manipulator() ? model->manipulator()->matrix() : mat4::identity();
+        const float resolution = float(hit_resolution_);
+        PointCloud::Vertex closest;
+        float closest_depth = 1.0f;
+        for (auto vertex : model->vertices()) {
+            const auto pixel = project(manip * model->position(vertex));
+            if (pixel.z >= 0 && pixel.z < closest_depth &&
+                distance2(vec2(pixel.x, pixel.y), vec2(float(x), float(y))) <= resolution * resolution) {
+                closest = vertex;
+                closest_depth = pixel.z;
+            }
+        }
+        return closest;
+    }
+#else
+    void PointCloudPicker::pick_vertices(PointCloud* model, const Rect& rect, bool deselect) {
+        Polygon2 polygon;
+        polygon.push_back(vec2(rect.left(), rect.top()));
+        polygon.push_back(vec2(rect.right(), rect.top()));
+        polygon.push_back(vec2(rect.right(), rect.bottom()));
+        polygon.push_back(vec2(rect.left(), rect.bottom()));
+        pick_vertices(model, polygon, deselect);
+    }
+
+    void PointCloudPicker::pick_vertices(PointCloud* model, const Polygon2& polygon, bool deselect) {
+        const int width = camera()->screenWidth(), height = camera()->screenHeight();
+        if (!model || model->empty() || polygon.size() < 3 || width <= 0 || height <= 0)
             return;
-        int win_width = camera()->screenWidth();
-        int win_height = camera()->screenHeight();
+        const auto drawable = vertices_drawable(model->renderer());
+        const mat4 transform = drawable ? drawable->manipulated_matrix() :
+            model->manipulator() ? model->manipulator()->matrix() : mat4::identity();
+        graphics::PointSelectionRequest request;
+        if (drawable)
+            request.points = draw_command(drawable, 0).geometry->point_data();
+
+        // A cloud used independently of a renderer has no drawing buffer to share.
+        if (!request.points || request.points->source_count() != model->points().size()) {
+            std::vector<vec3> points;
+            std::vector<uint32_t> ids;
+            points.reserve(model->n_vertices());
+            ids.reserve(model->n_vertices());
+            for (auto vertex : model->vertices()) {
+                points.push_back(model->position(vertex));
+                ids.push_back(vertex.idx());
+            }
+            if (model->points().size() > UINT32_MAX)
+                throw std::length_error("too many point source slots");
+            request.points = std::make_shared<graphics::PointData>(
+                std::move(points), std::move(ids), uint32_t(model->points().size()));
+        }
+        request.width = width;
+        request.height = height;
+        request.polygon.assign(polygon.begin(), polygon.end());
+        request.model_view_projection = camera()->modelViewProjectionMatrix() * transform;
+        request.deselect = deselect;
+        for (const auto& plane : vulkan::ClippingPlaneRenderer::planes(*ClippingPlane::instance()))
+            request.local_clipping_planes.push_back(transpose(transform) * plane);
+        auto selected = model->vertex_property<bool>("v:select");
+        request.words.resize((size_t(request.points->source_count()) + 31) / 32);
+        for (auto vertex : model->vertices())
+            if (selected[vertex])
+                request.words[vertex.idx() >> 5] |= 1u << (vertex.idx() & 31);
+        const auto words = render_device().select_points(request);
+        for (auto vertex : model->vertices())
+            selected[vertex] = (words[vertex.idx() >> 5] & (1u << (vertex.idx() & 31))) != 0;
+    }
+#endif
+
+#ifndef EASY3D_HAS_VULKAN
+    void PointCloudPicker::pick_vertices(PointCloud *model, const Rect& rect, bool deselect) {
+        const int win_width = camera()->screenWidth(), win_height = camera()->screenHeight();
+        if (!model || win_width < 2 || win_height < 2)
+            return;
 
         float xmin = rect.left() / static_cast<float>(win_width - 1);
         float ymin = 1.0f - rect.top() / static_cast<float>(win_height - 1);
@@ -291,14 +222,13 @@ namespace easy3d {
         if (ymin > ymax) std::swap(ymin, ymax);
 
         const auto &points = model->get_vertex_property<vec3>("v:point").vector();
-        int num = static_cast<int>(points.size());
         const mat4 MANIP = model->manipulator() ? model->manipulator()->matrix() : mat4::identity();
         const mat4 &m = camera()->modelViewProjectionMatrix() * MANIP;
 
         auto &select = model->vertex_property<bool>("v:select").vector();
 
-#pragma omp parallel for
-        for (int i = 0; i < num; ++i) {
+        for (auto vertex : model->vertices()) {
+            const auto i = vertex.idx();
             const vec3 &p = points[i];
             float x = m[0] * p.x + m[4] * p.y + m[8] * p.z + m[12];
             float y = m[1] * p.x + m[5] * p.y + m[9] * p.z + m[13];
@@ -319,11 +249,9 @@ namespace easy3d {
 
 
     void PointCloudPicker::pick_vertices(PointCloud *model, const Polygon2 &plg, bool deselect) {
-        if (!model)
+        const int win_width = camera()->screenWidth(), win_height = camera()->screenHeight();
+        if (!model || plg.size() < 3 || win_width < 2 || win_height < 2)
             return;
-
-        const int win_width = camera()->screenWidth();
-        const int win_height = camera()->screenHeight();
 
         std::vector<vec2> region; // the transformed selection region
         for (std::size_t i = 0; i < plg.size(); ++i) {
@@ -342,14 +270,13 @@ namespace easy3d {
         if (ymin > ymax) std::swap(ymin, ymax);
 
         const auto &points = model->get_vertex_property<vec3>("v:point").vector();
-        int num = static_cast<int>(points.size());
         const mat4 MANIP = model->manipulator() ? model->manipulator()->matrix() : mat4::identity();
         const mat4 &m = camera()->modelViewProjectionMatrix() * MANIP;
 
         auto& select = model->vertex_property<bool>("v:select").vector();
 
-#pragma omp parallel for
-        for (int i = 0; i < num; ++i) {
+        for (auto vertex : model->vertices()) {
+            const auto i = vertex.idx();
             const vec3 &p = points[i];
             float x = m[0] * p.x + m[4] * p.y + m[8] * p.z + m[12];
             float y = m[1] * p.x + m[5] * p.y + m[9] * p.z + m[13];
@@ -370,6 +297,6 @@ namespace easy3d {
         LOG(INFO) << "current selection: " << count << " points";
     }
 
-}
+#endif
 
-#endif // EASY3D_HAS_VULKAN
+}

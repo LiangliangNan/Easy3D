@@ -36,6 +36,9 @@
 namespace easy3d {
 
     class FramebufferObject;
+    class Drawable;
+    namespace graphics { class RenderDevice; struct DrawCommand; }
+    namespace vulkan { class DrawableRenderer; }
 
     /**
      * \brief Base class for picking mechanism.
@@ -134,7 +137,10 @@ namespace easy3d {
         void screen_to_opengl(int x, int y, int &gl_x, int &gl_y, int width, int height) const;
 
     protected:
-#ifndef EASY3D_HAS_VULKAN
+#ifdef EASY3D_HAS_VULKAN
+        graphics::RenderDevice& render_device();
+        graphics::DrawCommand draw_command(const std::shared_ptr<Drawable>& drawable, unsigned id);
+#else
         /**
          * \brief Prepare a frame buffer for the offscreen rendering.
          * \param width The width of the frame buffer.
@@ -148,7 +154,11 @@ namespace easy3d {
 
         bool use_gpu_if_supported_; // use GPU if supported
 
-#ifndef EASY3D_HAS_VULKAN
+#ifdef EASY3D_HAS_VULKAN
+    private:
+        std::unique_ptr<graphics::RenderDevice> device_;
+        std::unique_ptr<vulkan::DrawableRenderer> drawable_renderer_;
+#else
         // A picker owns its framebuffer; GL framebuffer names are context-local.
         std::unique_ptr<FramebufferObject> fbo_;
 #endif
