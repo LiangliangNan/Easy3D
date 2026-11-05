@@ -70,8 +70,7 @@ namespace easy3d {
         }
         if (commands.empty())
             return nullptr;
-        const auto frame = render_device().render(width, height, commands);
-        const auto id = frame.ids[size_t(y) * width + x].object;
+        const auto id = render_device().sample_pixel(width, height, commands, x, y).id.object;
         return id < models.size() ? models[id].get() : nullptr;
 #else
         int viewport[4];

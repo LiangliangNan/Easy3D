@@ -290,13 +290,13 @@ Viewer::PickResult Viewer::pick(int x,int y) const {
     if (x<0 || y<0 || x>=framebuffer_width() || y>=framebuffer_height()) return result;
     // Keep commands and source mapping together for this exact synchronous draw.
     std::vector<DrawSource> sources;
-    const auto commands=impl_->commands(*camera(),framebuffer_width(),framebuffer_height(),&sources);
-    const auto frame=impl_->device->render(framebuffer_width(),framebuffer_height(),commands,background_color(),1);
-    const auto pixel=size_t(y)*frame.width+x;
-    const auto id=frame.ids[pixel];
-    if (id.object==UINT32_MAX || frame.depth[pixel]>=1 || id.object>=sources.size()) return result;
+    const int width = framebuffer_width(), height = framebuffer_height();
+    const auto commands = draw_commands(*camera(), width, height, &sources);
+    const auto sample = impl_->device->sample_pixel(width, height, commands, x, y);
+    const auto id = sample.id;
+    if (id.object >= sources.size() || sample.depth >= 1) return result;
     result.model=sources[id.object].model; result.drawable=sources[id.object].drawable;
-    result.primitive=id.primitive; result.depth=frame.depth[pixel];
+    result.primitive=id.primitive; result.depth=sample.depth;
     result.position=unproject_pixel(x,y,result.depth);
     const auto& faces=result.drawable->cpu_buffers().source_faces;
     auto* mesh=dynamic_cast<SurfaceMesh*>(result.model.get());
@@ -307,10 +307,11 @@ Viewer::PickResult Viewer::pick(int x,int y) const {
     return result;
 }
 bool Viewer::read_scene_depth(int x,int y,const Camera& snapshot,float& depth) const {
-    const auto frame=impl_->capture(snapshot,background_color(),1);
-    const auto pixel=size_t(y)*frame.width+size_t(x);
-    if (frame.ids[pixel].object==UINT32_MAX) return false;
-    depth=frame.depth[pixel];return true;
+    const int width = snapshot.screenWidth(), height = snapshot.screenHeight();
+    const auto commands = draw_commands(snapshot, width, height);
+    const auto sample = impl_->device->sample_pixel(width, height, commands, x, y);
+    depth = sample.depth;
+    return sample.id.object != UINT32_MAX;
 }
 const graphics::RenderDevice& Viewer::device() const { return *impl_->device; }
 std::vector<std::uint32_t> Viewer::select_points(const graphics::PointSelectionRequest& request) const {

@@ -77,8 +77,7 @@ namespace easy3d {
         if (!drawable || !drawable->is_visible())
             return PointCloud::Vertex();
         const auto command = draw_command(drawable, 0);
-        const auto frame = render_device().render(width, height, {command});
-        const auto hit = frame.ids[size_t(y) * width + x];
+        const auto hit = render_device().sample_pixel(width, height, {command}, x, y).id;
         const auto& ids = command.geometry->point_data()->source_ids();
         if (hit.object != 0 || hit.primitive >= ids.size() || ids[hit.primitive] >= model->points().size())
             return PointCloud::Vertex();

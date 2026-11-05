@@ -169,6 +169,11 @@ struct FrameImage {
     std::vector<Id> ids;
 };
 
+struct ScenePixel {
+    FrameImage::Id id{UINT32_MAX, UINT32_MAX};
+    float depth = 1.0f;
+};
+
 // GPU through-selection of projected point centers in a top-left framebuffer
 // polygon. Polygon crossings use the even-odd rule (boundary included). It is
 // independent of rasterization/occlusion, point style, MSAA and scene readback.
@@ -202,6 +207,11 @@ public:
     virtual FrameImage render(std::uint32_t width, std::uint32_t height,
                               const std::vector<DrawCommand>& commands,
                               const vec4& background = vec4(1, 1, 1, 1), unsigned samples = 1) = 0;
+    // Render scene IDs and depth at one top-left framebuffer pixel center.
+    // The full viewport and draw order are preserved. Overlays are excluded.
+    virtual ScenePixel sample_pixel(std::uint32_t width, std::uint32_t height,
+                                    const std::vector<DrawCommand>& commands,
+                                    std::uint32_t x, std::uint32_t y) = 0;
     // Queue a frame for a configured presentation surface, without CPU readback.
     // False means zero extent/out-of-date surface; the host should retry after events.
     // Headless devices report an unsupported operation explicitly.

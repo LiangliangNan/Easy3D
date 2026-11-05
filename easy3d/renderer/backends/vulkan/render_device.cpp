@@ -680,13 +680,18 @@ struct Target {
         check(c.vkCreateFramebuffer(c.device, &fi, nullptr, &result), "create scene framebuffer");
     }
     void init() {
-        color.init(width, height, VK_FORMAT_R8G8B8A8_UNORM,
-                   VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
         ids.init(width, height, VK_FORMAT_R32G32_UINT,
                  VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
         depth.init(width, height, VK_FORMAT_D32_SFLOAT,
                    VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
                        (color_pass.depth_preview ? VK_IMAGE_USAGE_SAMPLED_BIT : 0), VK_IMAGE_ASPECT_DEPTH_BIT);
+        if (color_pass.kind == PassKind::ids) {
+            VkImageView views[] = {ids.view, depth.view};
+            create_framebuffer(color_pass.handle, views, 2, framebuffer);
+            return;
+        }
+        color.init(width, height, VK_FORMAT_R8G8B8A8_UNORM,
+                   VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
         if (color_pass.independent_depth)
             hud_depth.init(width,height,VK_FORMAT_D32_SFLOAT,VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
                            VK_IMAGE_ASPECT_DEPTH_BIT,color_pass.samples);
@@ -833,7 +838,7 @@ class VulkanDevice final : public RenderDevice {
     VkDescriptorPool descriptor_pool_ = VK_NULL_HANDLE;
     VkSampler samplers_[4] = {};
     VkPipelineLayout layout_ = VK_NULL_HANDLE;
-    std::unique_ptr<Target> target_;
+    std::unique_ptr<Target> target_, pixel_target_;
     std::unique_ptr<Swapchain> swapchain_;
     std::shared_ptr<const Image> white_;
     std::map<const Geometry*, std::unique_ptr<GpuGeometry>> geometry_;
@@ -876,7 +881,7 @@ public:
         // Presentation may still be using image-owned semaphores after the draw
         // fence completes. Drain at shutdown/recreation only, never per frame.
         if (c_.device) c_.vkDeviceWaitIdle(c_.device);
-        swapchain_.reset(); target_.reset(); geometry_.clear(); textures_.clear();
+        swapchain_.reset(); target_.reset(); pixel_target_.reset(); geometry_.clear(); textures_.clear();
         passes_.clear(); id_pass_.reset();
         if (layout_) c_.vkDestroyPipelineLayout(c_.device, layout_, nullptr);
         for (auto sampler : samplers_) if (sampler) c_.vkDestroySampler(c_.device, sampler, nullptr);
@@ -984,13 +989,12 @@ public:
         pass->init(); create_pipelines(*pass);
         auto* result = pass.get(); passes_.emplace(key, std::move(pass)); return *result;
     }
-    RenderPass* picking_pass(unsigned samples) {
-        if (samples == 1) return nullptr;
+    RenderPass& picking_pass() {
         if (!id_pass_) {
             std::unique_ptr<RenderPass> pass(new RenderPass(c_, PassKind::ids, VK_SAMPLE_COUNT_1_BIT));
             pass->init(); create_pipelines(*pass); id_pass_ = std::move(pass);
         }
-        return id_pass_.get();
+        return *id_pass_;
     }
     void create_descriptors() {
         VkDescriptorSetLayoutBinding binding{};
@@ -1324,7 +1328,7 @@ public:
     }
     struct Prepared { DrawCommand command; GpuGeometry* geometry; GpuTexture* texture; uint32_t uniform_offset; };
     std::vector<Prepared> prepare(uint32_t width, uint32_t height, const std::vector<DrawCommand>& commands,
-                                  const vec4& background, unsigned samples) {
+                                  const vec4& background, unsigned samples, bool pixel_query = false) {
         require_samples(samples);
         const auto& limits = c_.properties.limits;
         if (!width || !height || width > limits.maxFramebufferWidth || height > limits.maxFramebufferHeight ||
@@ -1334,6 +1338,7 @@ public:
         for (unsigned i = 0; i < 4; ++i)
             if (!std::isfinite(background[i])) throw std::invalid_argument("non-finite background color");
         for (const auto& command : commands) {
+            if (pixel_query && command.overlay) continue;
             const auto& vp = command.viewport;
             if (vp != ivec4(0) && (vp.x < 0 || vp.y < 0 || vp.z <= 0 || vp.w <= 0 ||
                 uint64_t(vp.x) + uint64_t(vp.z) > width || uint64_t(vp.y) + uint64_t(vp.w) > height))
@@ -1428,38 +1433,41 @@ public:
         for (auto it = textures_.begin(); it != textures_.end(); ) {
             if (it->second->source.expired()) it = textures_.erase(it); else ++it;
         }
-        const bool independent_depth = std::any_of(commands.begin(),commands.end(),
-            [](const DrawCommand& d) {return d.overlay_independent_depth;});
-        const bool depth_preview = std::any_of(commands.begin(),commands.end(),
-            [](const DrawCommand& d) {return d.scene_depth_texture;});
-        if (!target_ || target_->width != width || target_->height != height || target_->samples != samples ||
-            target_->color_pass.independent_depth != independent_depth || target_->color_pass.depth_preview != depth_preview) {
-            if (depth_preview) {
-                VkFormatProperties properties;c_.vkGetPhysicalDeviceFormatProperties(c_.physical,VK_FORMAT_D32_SFLOAT,&properties);
-                if (!(properties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT))
-                    throw std::runtime_error("scene depth preview requires sampleable D32 depth");
+        if (!pixel_query) {
+            const bool independent_depth = std::any_of(commands.begin(),commands.end(),
+                [](const DrawCommand& d) {return d.overlay_independent_depth;});
+            const bool depth_preview = std::any_of(commands.begin(),commands.end(),
+                [](const DrawCommand& d) {return d.scene_depth_texture;});
+            if (!target_ || target_->width != width || target_->height != height || target_->samples != samples ||
+                target_->color_pass.independent_depth != independent_depth || target_->color_pass.depth_preview != depth_preview) {
+                if (depth_preview) {
+                    VkFormatProperties properties;c_.vkGetPhysicalDeviceFormatProperties(c_.physical,VK_FORMAT_D32_SFLOAT,&properties);
+                    if (!(properties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT))
+                        throw std::runtime_error("scene depth preview requires sampleable D32 depth");
+                }
+                auto& pass = color_pass(samples,independent_depth,depth_preview);
+                auto* picking = samples == 1 ? nullptr : &picking_pass();
+                std::unique_ptr<Target> target(new Target(c_, width, height, pass, picking));
+                target->init(); target_ = std::move(target);
             }
-            auto& pass = color_pass(samples,independent_depth,depth_preview);
-            auto* picking = picking_pass(samples);
-            std::unique_ptr<Target> target(new Target(c_, width, height, pass, picking));
-            target->init(); target_ = std::move(target);
-        }
-        if (depth_preview && !target_->depth_set) {
-            target_->depth_pool = descriptor_pool_;
-            VkDescriptorSetAllocateInfo ai{};ai.sType=VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-            ai.descriptorPool=descriptor_pool_;ai.descriptorSetCount=1;ai.pSetLayouts=&descriptors_;
-            check(c_.vkAllocateDescriptorSets(c_.device,&ai,&target_->depth_set),"allocate scene depth descriptor");
-            VkDescriptorImageInfo image={samplers_[0],target_->depth.view,VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL};
-            VkWriteDescriptorSet write{};write.sType=VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            write.dstSet=target_->depth_set;write.descriptorCount=1;
-            write.descriptorType=VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;write.pImageInfo=&image;
-            c_.vkUpdateDescriptorSets(c_.device,1,&write,0,nullptr);
+            if (depth_preview && !target_->depth_set) {
+                target_->depth_pool = descriptor_pool_;
+                VkDescriptorSetAllocateInfo ai{};ai.sType=VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+                ai.descriptorPool=descriptor_pool_;ai.descriptorSetCount=1;ai.pSetLayouts=&descriptors_;
+                check(c_.vkAllocateDescriptorSets(c_.device,&ai,&target_->depth_set),"allocate scene depth descriptor");
+                VkDescriptorImageInfo image={samplers_[0],target_->depth.view,VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL};
+                VkWriteDescriptorSet write{};write.sType=VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                write.dstSet=target_->depth_set;write.descriptorCount=1;
+                write.descriptorType=VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;write.pImageInfo=&image;
+                c_.vkUpdateDescriptorSets(c_.device,1,&write,0,nullptr);
+            }
         }
         const size_t alignment = std::max(size_t(16), size_t(limits.minUniformBufferOffsetAlignment));
         const size_t stride = (sizeof(ImpostorUniform) + alignment - 1) / alignment * alignment;
         std::vector<unsigned char> uniforms;
         std::vector<Prepared> draws;
         for (const auto& original : commands) {
+            if (pixel_query && original.overlay) continue;
             auto command=clipped(original);
             auto& g = geometry(command.geometry);
             if (!g.count) continue;
@@ -1540,8 +1548,9 @@ public:
         return draws;
     }
     void encode_pass(VkCommandBuffer cmd, const std::vector<Prepared>& draws, const vec4& background,
-                 const RenderPass& pass, VkFramebuffer framebuffer) {
-        const auto width = target_->width, height = target_->height;
+                 const Target& target, const RenderPass& pass, VkFramebuffer framebuffer,
+                 const VkOffset2D* pixel = nullptr) {
+        const auto width = target.width, height = target.height;
         VkClearValue clear[4] = {};
         if (pass.kind == PassKind::ids) {
             clear[0].color.uint32[0] = clear[0].color.uint32[1] = UINT32_MAX;
@@ -1558,23 +1567,30 @@ public:
         VkRenderPassBeginInfo begin{};
         begin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         begin.renderPass = pass.handle; begin.framebuffer = framebuffer;
-        begin.renderArea.extent = {width, height};
+        begin.renderArea = pixel ? VkRect2D{*pixel, {1, 1}} : VkRect2D{{0, 0}, {width, height}};
         begin.clearValueCount = pass.kind == PassKind::ids ? 2 : pass.independent_depth ? 4 : 3;
         begin.pClearValues = clear;
         c_.vkCmdBeginRenderPass(cmd, &begin, VK_SUBPASS_CONTENTS_INLINE);
         VkViewport viewport = {0, 0, float(width), float(height), 0, 1};
-        VkRect2D scissor = {{0, 0}, {width, height}};
+        const VkRect2D scissor = begin.renderArea;
         c_.vkCmdSetViewport(cmd, 0, 1, &viewport); c_.vkCmdSetScissor(cmd, 0, 1, &scissor);
         const auto set_view = [&](const DrawCommand& d) {
             const auto& r = d.viewport;
             VkViewport v{float(r.x), float(r.y), float(r.z ? r.z : width), float(r.w ? r.w : height), 0, 1};
             VkRect2D s{{r.x,r.y},{uint32_t(r.z ? r.z : width),uint32_t(r.w ? r.w : height)}};
+            if (pixel) {
+                if (pixel->x < s.offset.x || pixel->y < s.offset.y ||
+                    uint32_t(pixel->x - s.offset.x) >= s.extent.width ||
+                    uint32_t(pixel->y - s.offset.y) >= s.extent.height)
+                    return false;
+                s = scissor;
+            }
             c_.vkCmdSetViewport(cmd,0,1,&v); c_.vkCmdSetScissor(cmd,0,1,&s);
+            return true;
         };
         for (const auto& draw : draws) {
             const auto& d = draw.command;
-            if (d.overlay) continue;
-            set_view(d);
+            if (d.overlay || !set_view(d)) continue;
             unsigned pipeline = d.geometry->topology() == Topology::triangles ? 0 :
                                 d.geometry->topology() == Topology::lines ? 1 : 2;
             const bool expanded = expanded_impostor(d);
@@ -1614,7 +1630,7 @@ public:
                     c_.vkCmdBindPipeline(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,pipeline);
                     VkDeviceSize offset = 0;
                     c_.vkCmdBindVertexBuffers(cmd,0,1,&draw.geometry->buffer.handle,&offset);
-                    const auto texture_set=d.scene_depth_texture ? target_->depth_set : draw.texture->set;
+                    const auto texture_set=d.scene_depth_texture ? target.depth_set : draw.texture->set;
                     c_.vkCmdBindDescriptorSets(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,layout_,0,1,&texture_set,0,nullptr);
                     c_.vkCmdBindDescriptorSets(cmd,VK_PIPELINE_BIND_POINT_GRAPHICS,layout_,1,1,&impostor_set_,1,&draw.uniform_offset);
                     Push push{};
@@ -1631,23 +1647,23 @@ public:
         }
         c_.vkCmdEndRenderPass(cmd);
     }
-    void encode(VkCommandBuffer cmd, const std::vector<Prepared>& draws, const vec4& background) {
+    void encode(VkCommandBuffer cmd, const std::vector<Prepared>& draws, const vec4& background, bool capture = true) {
         const bool preview_msaa=target_->color_pass.depth_preview && target_->id_pass;
         if (preview_msaa) {
             // Existing center-sample picking depth is also the preview source.
             // Generate it before color composition; MSAA color still resolves last.
-            encode_pass(cmd,draws,background,*target_->id_pass,target_->id_framebuffer);
+            encode_pass(cmd,draws,background,*target_,*target_->id_pass,target_->id_framebuffer);
             image_barrier(c_,cmd,target_->depth.handle,VK_IMAGE_ASPECT_DEPTH_BIT,
                     VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
                     VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT|VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT|VK_PIPELINE_STAGE_TRANSFER_BIT,
                     VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT|VK_ACCESS_TRANSFER_READ_BIT,
                     VK_ACCESS_SHADER_READ_BIT);
         }
-        encode_pass(cmd, draws, background, target_->color_pass, target_->framebuffer);
+        encode_pass(cmd, draws, background, *target_, target_->color_pass, target_->framebuffer);
         // Picking uses center-sample IDs/depth independently of antialiased color.
         // This works even when an integer format supports no multisampling, and
         // requires neither depth-resolve extensions nor averaging integer IDs.
-        if (target_->id_pass && !preview_msaa) encode_pass(cmd, draws, background, *target_->id_pass, target_->id_framebuffer);
+        if (capture && target_->id_pass && !preview_msaa) encode_pass(cmd, draws, background, *target_, *target_->id_pass, target_->id_framebuffer);
         if (preview_msaa)
             image_barrier(c_,cmd,target_->depth.handle,VK_IMAGE_ASPECT_DEPTH_BIT,
                     VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
@@ -1692,6 +1708,46 @@ public:
         std::memcpy(result.depth.data(), bytes.data() + depth_offset, pixels * 4);
         return result;
     }
+    ScenePixel sample_pixel(uint32_t width, uint32_t height, const std::vector<DrawCommand>& commands,
+                            uint32_t x, uint32_t y) override {
+        if (x >= width || y >= height)
+            throw std::out_of_range("scene sample pixel is outside the target");
+        const vec4 background(0);
+        const auto draws = prepare(width, height, commands, background, 1, true);
+        if (draws.empty()) return {};
+        auto& pass = picking_pass();
+        if (!pixel_target_ || pixel_target_->width != width || pixel_target_->height != height) {
+            std::unique_ptr<Target> target(new Target(c_, width, height, pass, nullptr));
+            target->init();
+            target->readback.init(12, VK_BUFFER_USAGE_TRANSFER_DST_BIT, true);
+            pixel_target_ = std::move(target);
+        }
+        auto& target = *pixel_target_;
+        const VkOffset2D pixel{int32_t(x), int32_t(y)};
+        c_.execute([&](VkCommandBuffer cmd) {
+            encode_pass(cmd, draws, background, target, pass, target.framebuffer, &pixel);
+            VkBufferImageCopy copy{};
+            copy.imageOffset = {pixel.x, pixel.y, 0};
+            copy.imageExtent = {1, 1, 1};
+            copy.imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+            c_.vkCmdCopyImageToBuffer(cmd, target.ids.handle, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, target.readback.handle, 1, &copy);
+            copy.bufferOffset = 8;
+            copy.imageSubresource.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+            c_.vkCmdCopyImageToBuffer(cmd, target.depth.handle, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, target.readback.handle, 1, &copy);
+            VkMemoryBarrier host{};
+            host.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+            host.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+            host.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
+            c_.vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_HOST_BIT,
+                                   0, 1, &host, 0, nullptr, 0, nullptr);
+        });
+        unsigned char bytes[12];
+        target.readback.transfer(bytes, sizeof(bytes), false);
+        ScenePixel result;
+        std::memcpy(&result.id, bytes, 8);
+        std::memcpy(&result.depth, bytes + 8, 4);
+        return result;
+    }
     bool present(uint32_t width, uint32_t height, const std::vector<DrawCommand>& commands,
                  const vec4& background, unsigned samples) override {
         if (!c_.surface) throw std::logic_error("headless Vulkan device has no presentation surface");
@@ -1712,7 +1768,7 @@ public:
         if (acquired == VK_ERROR_OUT_OF_DATE_KHR) { swapchain_->dirty = true; return false; }
         if (acquired != VK_SUBOPTIMAL_KHR) check(acquired, "acquire presentation image");
         c_.execute([&](VkCommandBuffer cmd) {
-            encode(cmd, draws, background);
+            encode(cmd, draws, background, false);
             image_barrier(c_,cmd, swapchain_->images[image], VK_IMAGE_ASPECT_COLOR_BIT,
                 VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                 VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, VK_ACCESS_TRANSFER_WRITE_BIT);

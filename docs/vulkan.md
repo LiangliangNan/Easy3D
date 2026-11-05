@@ -5141,3 +5141,26 @@ rate investigation remain open.
 
 Both exclusive builds completed on this Mac. All 91 OpenGL tests and all 117
 MoltenVK tests passed. `git diff --check` is clean.
+
+### 2026-11-05 — U6/W10 batch 12: single-pixel Vulkan scene queries
+
+Vulkan Viewer and OffScreen picking, logical point-under-pixel queries, and
+camera-based model and point-cloud pickers now use the renderer's ID/depth pass
+for a single framebuffer pixel. The pass retains the original viewport and
+draw order, scissors to the queried pixel, and copies only eight bytes of IDs
+and four bytes of depth. It skips annotations and uses its own cached target,
+so hover queries no longer replace the presentation target. The query still
+processes scene vertices and retains framebuffer-sized GPU attachments.
+Full capture and snapshots keep their existing readback contracts.
+
+Ordinary multisampled presentation skips the separate center-sample ID pass.
+Captures and on-screen depth previews still generate scene metadata as needed.
+The picker regression compares full captures with pixel queries for triangles,
+plain points, spheres, surfels, lines, cylinders and cones in offset
+viewports. Existing multi-view, clipping, query and capture tests cover
+ownership, custom matrices and interaction with annotations.
+
+A warmed MoltenVK benchmark used Tutorial 207's 479,187-point cloud with
+five-pixel points at 1600×1200. A full capture took 170–173 ms per query.
+Single-pixel sampling took 2.3–2.8 ms, with the same depth checksum. This
+measures depth acquisition in isolation from presentation.

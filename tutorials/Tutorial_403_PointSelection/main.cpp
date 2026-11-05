@@ -62,7 +62,8 @@ int main(int argc, char **argv) {
     }
 
     auto drawable = model->renderer()->get_points_drawable("vertices");
-    dynamic_cast<PointsDrawable*>(drawable)->set_point_size(3.0f);
+    // drawable->set_impostor_type(PointsDrawable::SPHERE);
+    drawable->set_point_size(3.0f);
 
     // run the viewer
     return viewer.run();

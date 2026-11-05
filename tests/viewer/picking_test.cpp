@@ -10,6 +10,7 @@
 #include <easy3d/renderer/texture.h>
 #include <easy3d/util/initializer.h>
 #include <easy3d/util/setting.h>
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
@@ -31,6 +32,7 @@ void shader_highlights(const VulkanOptions& options) {
     auto device=create_vulkan_device(options.validation, options.sync_validation, options.device_name);
     for (int style=0;style<8;++style) {
         DrawCommand draw; draw.object_id=77; draw.lighting=true;
+        draw.viewport=ivec4(4, 7, 55, 51);
         draw.texture=std::make_shared<Image>(1,1,std::vector<unsigned char>{0,200,80,255});
         std::vector<Vertex> v(style==0 ? 3 : style<=3 ? 1 : 2);
         if (style==0) { v[0].position=vec3(-.6f,-.4f,0); v[1].position=vec3(.6f,-.4f,0); v[2].position=vec3(0,.6f,0); }
@@ -51,6 +53,26 @@ void shader_highlights(const VulkanOptions& options) {
             for (auto& p:v) p.highlight=vec4(0);
             draw.geometry=std::make_shared<Geometry>(v,std::vector<uint32_t>{},topology);
             const auto baseline=device->render(65,65,{draw},vec4(0),count);
+            if (count == 1) {
+                DrawCommand overlay;
+                overlay.overlay = true;
+                overlay.geometry = std::make_shared<Geometry>(std::vector<Vertex>(3));
+                const auto hit = std::find_if(baseline.ids.begin(), baseline.ids.end(),
+                    [](const FrameImage::Id& id) { return id.object == 77; });
+                require(hit != baseline.ids.end(), "no interior sample for primitive");
+                const auto pixel = size_t(hit - baseline.ids.begin());
+                for (size_t index : {pixel, size_t(0), pixel}) {
+                    const auto sample = device->sample_pixel(65, 65, {draw, overlay}, index % 65, index / 65);
+                    require(sample.id.object == baseline.ids[index].object &&
+                            sample.id.primitive == baseline.ids[index].primitive &&
+                            std::abs(sample.depth - baseline.depth[index]) < 1e-6f,
+                            "pixel sampling differs from capture for an offset viewport");
+                }
+                bool rejected = false;
+                try { device->sample_pixel(65, 65, {draw}, 65, 0); }
+                catch (const std::out_of_range&) { rejected = true; }
+                require(rejected, "out-of-bounds pixel sample was accepted");
+            }
             for (auto& p:v) p.highlight=vec4(1,0,0,1);
             draw.geometry=std::make_shared<Geometry>(v,std::vector<uint32_t>{},topology);
             const auto selected=device->render(65,65,{draw},vec4(0),count);
