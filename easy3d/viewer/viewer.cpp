@@ -33,6 +33,7 @@
 #include <easy3d/core/graph.h>
 #include <easy3d/core/surface_mesh.h>
 #include <easy3d/core/poly_mesh.h>
+#include <easy3d/renderer/transparency.h>
 #include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
@@ -163,6 +164,11 @@ Viewer::Viewer(int width, int height, const VulkanOptions& options)
     impl_->device = graphics::create_vulkan_device(options.validation, options.sync_validation, options.device_name);
     camera()->setType(Camera::PERSPECTIVE);
     camera()->setUpVector(vec3(0,0,1)); camera()->setViewDirection(vec3(-1,0,0)); camera()->showEntireScene();
+    // Transparency effects only know the camera. Rendering and presentation stay
+    // in the viewer, as in Viewer::draw().
+    Transparency::set_frame_renderer(camera(), [this](const std::vector<TrianglesDrawable*>& surfaces, int method) {
+        draw_transparency(surfaces, method);
+    });
 }
 void Viewer::release_device() { impl_->device.reset(); }
 void Viewer::resize_render_target(int w, int h) {
@@ -419,6 +425,20 @@ bool Viewer::draw() {
     return impl_->device->present(uint32_t(framebuffer_width()), uint32_t(framebuffer_height()),
                                   impl_->commands(*camera(),framebuffer_width(),framebuffer_height()), background_color(), unsigned(samples()));
 }
+void Viewer::draw_transparency(const std::vector<TrianglesDrawable*>& surfaces, int) {
+    const int width = framebuffer_width(), height = framebuffer_height();
+    std::vector<DrawSource> sources;
+    auto commands = impl_->commands(*camera(), width, height, &sources);
+    for (size_t i = 0; i < sources.size() && i < commands.size(); ++i) {
+        auto* triangles = dynamic_cast<TrianglesDrawable*>(sources[i].drawable.get());
+        if (!triangles || std::find(surfaces.begin(), surfaces.end(), triangles) == surfaces.end()) continue;
+        if (commands[i].geometry && commands[i].geometry->topology() == graphics::Topology::triangles) {
+            commands[i].transparent = true;
+            commands[i].color.w = triangles->opacity();
+        }
+    }
+    impl_->device->present(uint32_t(width), uint32_t(height), commands, background_color(), unsigned(samples()));
+}
 bool Viewer::mouse_free_move_event(int, int, int, int, int) { return false; }
 bool Viewer::char_input_event(unsigned int) { return false; }
 bool Viewer::focus_event(bool) { return false; }
@@ -639,11 +659,17 @@ Viewer::Viewer(std::shared_ptr<Window> host, const VulkanOptions& options)
         if (w > 0 && h > 0) resize_render_target(w, h);
         camera()->setUpVector(vec3(0,0,1)); camera()->setViewDirection(vec3(-1,0,0));
         camera()->showEntireScene();
+        // Transparency effects only know the camera, so route their frames back to
+        // this viewer for rendering and presentation.
+        Transparency::set_frame_renderer(camera(), [this](const std::vector<TrianglesDrawable*>& surfaces, int method) {
+            draw_transparency(surfaces, method);
+        });
         VLOG(1) << "Vulkan device: " << impl_->device->name() <<  ", Samples: " << window_host_->samples;
     } catch (...) {
         // A failed derived constructor destroys members before base classes.
         // Release the Vulkan surface before member-owned native-window cleanup.
         glfwSetWindowUserPointer(window_host_->handle, nullptr);
+        Transparency::set_frame_renderer(camera(), nullptr);
         release_device();
         throw;
     }
@@ -653,6 +679,7 @@ Viewer::~Viewer() {
     // Base classes are destroyed after members. Release the surface/device now,
     // while the member-owned GLFW window (and its Metal layer on macOS) still live.
     if (window_) glfwSetWindowUserPointer(window_, nullptr);
+    Transparency::set_frame_renderer(camera(), nullptr);
     release_device();
 }
 void Viewer::poll_events() { ViewerBase::poll_events(); }

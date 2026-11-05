@@ -322,8 +322,8 @@ Decisions in force:
 | 2. Align constructors, hooks, state | merged into U1 |
 | 3. `VulkanMultiViewer` | merged into U2 |
 | 4. Remove runtime selection | done (W4) |
-| 5. Tutorials on the shared API | in progress: GLFW Tutorial 202 now builds on Vulkan; effect tutorials 501–505 remain gated, and Qt/wx integration remains W10; Tutorials 401/402 use shared visible-surface picking (2026-11-04); `EASY3D_TUTORIAL_USES_VULKAN` remains in `viewer.h` and in the other conditional tutorial (404) |
-| 6. Renderer, interaction, GUI/application parity | in progress (W10): shared GUI picker APIs; mesh raster parity, native GUI integration and effects remain open |
+| 5. Tutorials on the shared API | in progress: GLFW Tutorial 202 now builds on Vulkan; effect tutorials 501–503 and 505 remain gated, and Qt/wx integration remains W10; Tutorial 504 runs on both backends through the scene transparency path (2026-11-05); Tutorials 401/402 use shared visible-surface picking (2026-11-04); no tutorial uses backend-selection macros (W5) |
+| 6. Renderer, interaction, GUI/application parity | in progress (W10): shared GUI picker APIs and scene transparency; mesh raster parity, native GUI integration and SSAO/shadows/EDL remain open |
 
 Divergence audit (updated at U6b, 2026-11-04), against local `main` at
 `b2868dcd5f0cc06fdb0b7df10e1ada2ec6a28226`, including the current working tree:
@@ -368,8 +368,8 @@ of this document.
   `backend()`/`fallback_reason()`, `create_vulkan_viewer`/`create_opengl_viewer`, the
   installed-consumer test's use of them, the Python `Backend` binding and the demo's
   fallback message. The two viewer tests no longer take a `Backend` or `--opengl`.
-- **W5** (complete, 2026-11-05) Removed `EASY3D_TUTORIAL_USES_VULKAN` from all tutorials and viewer.h. Five effect tutorials remain
-  gated in `tutorials/CMakeLists.txt`: 501–505 require effect implementations (W10).
+- **W5** (complete, 2026-11-05) Removed `EASY3D_TUTORIAL_USES_VULKAN` from all tutorials and viewer.h. Four effect tutorials remain
+  gated in `tutorials/CMakeLists.txt`: 501–503 and 505 require effect implementations (W10).
   Native Qt/wx integration remains W10.
   Tutorial 202 now builds on both backends (U5d); Tutorials 401/402 use shared
   visible-surface picking (2026-11-04). Tutorials 306/309 now use shared annotations
@@ -469,7 +469,7 @@ of this document.
   the file-by-file responsibility audit (including the shared OpenGL query-state
   guard extracted for Viewer and GUI mesh picking in batch 8) and remove capability
   gates only when implementations exist. U5/API work remains open.
-- **W10** Mapple, Qt/wx, remaining Python API/tutorial coverage, transparency/SSAO/shadows/EDL parity.
+- **W10** Mapple, Qt/wx, remaining Python API/tutorial coverage, SSAO/shadows/EDL parity. Scene transparency and Tutorial 504 are implemented (batch 13); the legacy blending classes currently share one depth-sorted pass.
 
 U1–U4 are complete. Continue U5 and independent U6 source/build cleanup in
 larger coherent, verified batches, then finish W10 feature parity; re-run the tests after each.
@@ -953,9 +953,9 @@ cause.
 | Backend | One backend per build (`Easy3D_ENABLE_VULKAN`, default ON). `Viewer`/`OffScreen` are currently aliases of that backend's classes (to be unified, U1–U2); `MultiViewer` exists only on OpenGL until `VulkanMultiViewer` is implemented. |
 | `VulkanOffScreen` defaults | Opaque mesh faces; uniform/property, texture-coordinate and scalar-property defaults follow the shared renderer selection. Plain one-pixel points/lines remain the initial style. |
 | Material/lighting | Basic fixed world-space diffuse term; no full material or back-face-color parity yet. Normal transforms use the inverse transpose. Disable lighting for exact unlit colors. |
-| `TrianglesDrawable::opacity()` | As in the old opaque pass, effective only in a separate transparency pass; such a pass is not implemented here. |
+| `TrianglesDrawable::opacity()` | Effective through the scene transparency path: marked triangle commands blend straight alpha over the opaque scene, write depth/IDs and are sorted far-to-near per drawable. Per-triangle sorting and order-independent accumulation remain pending. |
 | CPU drawable textures/scalars | `Texture` pixel snapshots, vertex/halfedge UVs and scalar fields are supported without GL calls. Clamp/repeat, nearest/linear filtering and OBJ/MTL diffuse-material groups work; no mipmap, anisotropic or PBR material pipeline yet. |
-| Transparency, SSAO, shadows, EDL, text, clipping | General 3D transparency/effects remain pending. Straight-alpha 2D overlays, depth-tested translucent annotations and basic horizontal TrueType/UTF-8 text are supported; shaping, bidi and automatic font fallback remain pending. The scene adapter still rejects SSAO; overlays are not an effect-pass API. |
+| Transparency, SSAO, shadows, EDL, text, clipping | Depth-sorted straight-alpha scene triangles support `TrianglesDrawable::opacity()` and the legacy `AverageColorBlending`/`DualDepthPeeling` classes (both currently map to the same sorted pass; true accumulation/peeling is pending). SSAO, shadows and EDL remain pending. Straight-alpha 2D overlays, depth-tested translucent annotations and basic horizontal TrueType/UTF-8 text are supported; shaping, bidi and automatic font fallback remain pending. The scene adapter still rejects SSAO; overlays are not an effect-pass API. |
 | Clipping | Up to two per-viewer world-space halfspaces. Geometric triangle/line-centerline cuts, center-clipped plain points and front-surface analytic clipping preserve IDs/MSAA. No automatic cut caps; native plane guides use depth-tested transparent fill and outlines. |
 | Point and line styles | Plain points of any positive pixel size, spheres and oriented surfels are implemented. Capped cylinders/cones and butt-capped plain wide lines are implemented; joined strokes and rounded plain-line caps remain pending. |
 | Snapshot options | Device-supported MSAA (default 4); expand/crop framing, scaling, white/current/transparent background and image saving work. No tiled oversized captures. |
@@ -1781,11 +1781,11 @@ Both modes use unlit straight-alpha color/texture composition and preserve scene
 readback depth/IDs. HUD overlays follow the depth-tested annotations, regardless
 of their interleaving in the input vector. Ordering within each mode follows
 input order. Callers must sort overlapping translucent annotations back-to-front;
-there is no automatic triangle sorting or order-independent transparency. General
-transparent model materials and `TrianglesDrawable::opacity()` remain migration
-gates; this path supplies explicit unlit annotations rather than a new material
-pass. Transparent PNG exports retain straight-alpha conversion at one and
-multiple samples.
+annotation passes do not sort triangles or perform order-independent transparency.
+Scene transparency is separate: triangle commands marked `transparent` blend
+straight alpha over the opaque scene after it has been drawn, are ordered far to
+near by geometry-center clip depth, and still write depth and IDs. Transparent PNG
+exports retain straight-alpha conversion at one and multiple samples.
 
 Headless `vulkan.depthoverlay` checks front/behind opaque occlusion, coplanarity,
 alpha readback, ordered overlapping layers, HUD precedence, resize, no-hit empty
@@ -3904,7 +3904,7 @@ aliases, backend-specific host filenames or new selection macros.
 | --- | --- | --- |
 | `AmbientOcclusion`, `EyeDomeLighting` | Original implementations | No counterpart yet |
 | `Shadow`, `SoftShadow` | Original implementations | No counterpart yet |
-| `Transparency`, `AverageColorBlending`, `DualDepthPeeling` | Original implementations | No counterpart yet |
+| `Transparency`, `AverageColorBlending`, `DualDepthPeeling` | Original implementations | Shared camera-keyed scene pass: both subclasses draw depth-sorted straight-alpha triangles; true accumulation/peeling pending |
 | `Picker`, `ModelPicker`, `PointCloudPicker`, `SurfaceMeshPicker` | Original implementations | No counterpart yet |
 | Tutorial 202 `ViewerImGui` (`viewer.h/.cpp`) | Original implementation | No counterpart yet |
 
@@ -3918,7 +3918,7 @@ they are not exact counterparts of the camera-only legacy picker classes.
 
 Low-level OpenGL helpers and dependency discovery remain backend-specific. Bundled
 third-party ImGui remains unmodified and only builds with its existing OpenGL
-backend. Tutorial 202 and effect tutorials 501–505 therefore remain gated in Vulkan;
+backend. Tutorial 202 and effect tutorials 501–503 and 505 therefore remain gated in Vulkan;
 implementing their rendering behavior belongs to W10. Their absence is explicit,
 rather than represented by no-op APIs.
 
@@ -5182,3 +5182,43 @@ On this Mac, where MoltenVK exposes `largePoints` and mailbox presentation, the
 same warmed hover-and-draw benchmark reaches about 70 FPS at 1600×1200 with 4×
 MSAA. The focused Vulkan render, scene, picking and Tutorial 207 regressions
 pass with that path.
+
+### 2026-11-05 — W10 batch 13: depth-sorted scene transparency and Tutorial 504
+
+`DrawCommand` has a scene `transparent` flag. Marked commands must be triangle
+geometry, non-overlay and carry an alpha in [0,1]. After opaque scene geometry,
+the color pass draws them with a dedicated pipeline that blends straight alpha
+against the color attachment while the integer ID attachment still replaces its
+value, so picking returns the nearest surface. Transparent commands are ordered
+far to near by the clip-space depth of the geometry center and still test and
+write depth. The ID-only picking pass ignores the flag and draws them normally.
+
+The pipeline is created only when the device exposes `independentBlend`, which
+MoltenVK does. The renderer then rejects the flag explicitly when the feature is
+unavailable instead of silently compositing incorrectly. Pipelines are created
+per color pass alongside the opaque variants.
+
+The legacy `Transparency` class now exists in the Vulkan branch with the same
+API. `AverageColorBlending` and `DualDepthPeeling` construct with a camera and
+forward `draw()` to a camera-keyed callback installed by `Viewer`. Both the
+windowed and offscreen `Viewer` constructors register the callback, and the
+destructor unregisters it before releasing the device. `Viewer::draw_transparency()`
+marks only the requested triangle drawables as transparent and presents the
+combined frame, so the tutorial's existing `draw()` override works unchanged.
+
+`Tutorial_504_Transparency` is enabled on both backends. On Vulkan the two
+legacy methods currently produce the same depth-sorted, straight-alpha result;
+true average-color accumulation and dual-depth peeling remain separate W10
+work. Sorting is per command by geometry-center depth, not per triangle, and the
+`TrianglesDrawable` color/opacity is used unchanged.
+
+`vulkan.transparency` renders full-screen rectangles at one and four samples and
+checks the composited color (0,64,128), far-to-near order independence, nearest
+IDs/depth, opaque occlusion, blending over opaque geometry, alpha-one behavior,
+single-pixel queries and rejection of lines, overlays and out-of-range alpha.
+`vulkan.tutorial504` exercises the real tutorial through the viewer callback.
+
+Both exclusive builds completed on this Mac. All 90 OpenGL tests and all 119
+MoltenVK tests passed; `opengl.imgui` failed once in the full run and passed on
+re-run. The transparency tests also pass with validation and synchronization
+validation. `git diff --check` is clean.

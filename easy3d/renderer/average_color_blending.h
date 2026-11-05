@@ -28,7 +28,39 @@
 #define EASY3D_RENDERER_AVERAGE_COLOR_BLENDING_H
 
 #ifdef EASY3D_HAS_VULKAN
-// No Vulkan counterpart yet.
+
+#include <vector>
+#include <easy3d/renderer/transparency.h>
+
+
+namespace easy3d {
+
+    class Camera;
+    class TrianglesDrawable;
+
+    /**
+     * \brief Transparency effect using average color blending.
+     * \details Vulkan composites the given surfaces through the viewer's shared
+     *      transparent scene pass. The OpenGL accumulation shaders are not used.
+     * \class AverageColorBlending easy3d/renderer/average_color_blending.h
+     * \sa DualDepthPeeling
+     */
+    class AverageColorBlending : public Transparency
+    {
+    public:
+        explicit AverageColorBlending(Camera* cam) : camera_(cam) {}
+        ~AverageColorBlending() override = default;
+
+        void draw(const std::vector<TrianglesDrawable*>& surfaces) override {
+            render_frame(camera_, surfaces, 1);
+        }
+
+    private:
+        Camera* camera_;
+    };
+
+}
+
 #else
 
 #include <vector>

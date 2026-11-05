@@ -675,6 +675,7 @@ private:
     mutable int hint_width_ = 0, hint_height_ = 0;
     void update_interaction_overlays(bool force = false) const;
     void update_frame_rate();
+    void draw_transparency(const std::vector<TrianglesDrawable*>& surfaces, int method);
     void ensure_text_renderer() const;
     std::chrono::steady_clock::time_point frame_rate_start_;
     unsigned frame_rate_frames_ = 0;

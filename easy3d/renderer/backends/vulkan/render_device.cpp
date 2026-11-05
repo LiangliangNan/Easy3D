@@ -62,6 +62,7 @@ struct Context : internal::VulkanDispatch {
     std::shared_ptr<internal::VulkanLoader> library;
     bool sample_shading = false;
     bool large_points = false;
+    bool independent_blend = false;
     float min_point_size = 1.0f;
     float max_point_size = 1.0f;
     bool compute = false;
@@ -265,13 +266,16 @@ struct Context : internal::VulkanDispatch {
         vkGetPhysicalDeviceFeatures(physical, &features);
         sample_shading = features.sampleRateShading;
         large_points = features.largePoints;
+        independent_blend = features.independentBlend;
         min_point_size = features.largePoints ? properties.limits.pointSizeRange[0] : 1.0f;
         max_point_size = features.largePoints ? properties.limits.pointSizeRange[1] : 1.0f;
         enabled.sampleRateShading = features.sampleRateShading;
         enabled.largePoints = features.largePoints;
+        enabled.independentBlend = features.independentBlend;
         di.pEnabledFeatures = &enabled;
-        // No geometry shaders, wide lines or independent blend. Large points are
-        // optional and only used as an optimization for plain points.
+        // No geometry shaders or wide lines. Large points are an optional
+        // optimization for plain points; independent blending lets transparent
+        // scene triangles blend color without blending the integer ID target.
         check_initialization(vkCreateDevice(physical, &di, nullptr, &device), "create device");
         load_device(device,window!=nullptr);
         vkGetDeviceQueue(device, family, 0, &queue);
@@ -518,6 +522,7 @@ struct RenderPass {
     VkPipeline depth_overlay_pipeline = VK_NULL_HANDLE;
     VkPipeline hud_3d_pipeline = VK_NULL_HANDLE;
     VkPipeline depth_texture_pipeline = VK_NULL_HANDLE;
+    VkPipeline transparent_pipeline = VK_NULL_HANDLE;
     bool independent_depth = false;
     bool depth_preview = false;
     RenderPass(Context& context, PassKind mode, VkSampleCountFlagBits count) : c(context), kind(mode), samples(count) {}
@@ -527,6 +532,7 @@ struct RenderPass {
         if (depth_overlay_pipeline) c.vkDestroyPipeline(c.device, depth_overlay_pipeline, nullptr);
         if (hud_3d_pipeline) c.vkDestroyPipeline(c.device, hud_3d_pipeline, nullptr);
         if (depth_texture_pipeline) c.vkDestroyPipeline(c.device, depth_texture_pipeline, nullptr);
+        if (transparent_pipeline) c.vkDestroyPipeline(c.device, transparent_pipeline, nullptr);
         if (handle) c.vkDestroyRenderPass(c.device, handle, nullptr);
     }
     void init() {
@@ -731,6 +737,7 @@ struct GpuGeometry {
     std::weak_ptr<const Geometry> source;
     Buffer buffer;
     uint32_t count = 0;
+    vec3 center = vec3(0); // vertex average, used to order transparent draws
     explicit GpuGeometry(Context& c) : buffer(c) {}
 };
 struct GpuTexture {
@@ -1195,6 +1202,34 @@ public:
                 assembly.topology = topologies[i >= 3 ? 0 : i];
                 check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr, &pass.pipelines[i]), "create pipeline");
             }
+            if (pass.kind != PassKind::ids && c_.independent_blend) {
+                // Scene triangles with straight-alpha blending. Only the color
+                // attachment blends; the integer ID attachment keeps replacing
+                // its value so picking still returns the nearest surface.
+                stages[0].module = modules[0]; stages[1].module = modules[1];
+                stages[0].pSpecializationInfo = nullptr;
+                binding.stride = sizeof(GpuVertex); binding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+                vertex.vertexBindingDescriptionCount = 1; vertex.pVertexBindingDescriptions = &binding;
+                vertex.vertexAttributeDescriptionCount = 6; vertex.pVertexAttributeDescriptions = attrs;
+                assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+                ms.sampleShadingEnable = VK_FALSE; ms.minSampleShading = 0;
+                depth.depthTestEnable = depth.depthWriteEnable = VK_TRUE;
+                depth.depthCompareOp = VK_COMPARE_OP_LESS;
+                VkPipelineColorBlendAttachmentState transparent_blend[2] = {};
+                transparent_blend[0].blendEnable = VK_TRUE;
+                transparent_blend[0].srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+                transparent_blend[0].dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+                transparent_blend[0].colorBlendOp = VK_BLEND_OP_ADD;
+                transparent_blend[0].srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+                transparent_blend[0].dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+                transparent_blend[0].alphaBlendOp = VK_BLEND_OP_ADD;
+                transparent_blend[1].colorWriteMask = 0xf;
+                transparent_blend[0].colorWriteMask = 0xf;
+                blending.attachmentCount = 2; blending.pAttachments = transparent_blend;
+                pi.subpass = 0;
+                check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &pi, nullptr,
+                                                   &pass.transparent_pipeline), "create transparent scene pipeline");
+            }
             if (pass.kind != PassKind::ids) {
                 stages[0].module = modules[8]; stages[1].module = modules[9];
                 binding.stride = sizeof(GpuVertex); binding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
@@ -1248,6 +1283,7 @@ public:
         gpu->count = static_cast<uint32_t>(count);
         const unsigned size = data->topology() == Topology::triangles ? 3 : data->topology() == Topology::lines ? 2 : 1;
         std::vector<GpuVertex> packed(count);
+        vec3 center(0);
         for (size_t i = 0; i < count; ++i) {
             const auto& v = data->vertices()[data->indices().empty() ? i : data->indices()[i]];
             auto& p = packed[i];
@@ -1255,7 +1291,9 @@ public:
             for (unsigned j = 0; j < 4; ++j) { p.color[j] = v.color[j]; p.highlight[j] = v.highlight[j]; }
             for (unsigned j = 0; j < 2; ++j) p.texcoord[j] = v.texcoord[j];
             p.primitive = data->primitive_ids().empty() ? static_cast<uint32_t>(i / size) : data->primitive_ids()[i / size];
+            center += v.position;
         }
+        if (count) gpu->center = center / float(count);
         if (data->topology()==Topology::points) gpu->points=&point_resource(data->point_data());
         if (count) {
             std::vector<GpuPointAttributes> attributes;
@@ -1347,7 +1385,10 @@ public:
         return expanded_lines(d) || (d.geometry->topology()==Topology::points &&
             (d.point_style!=PointStyle::plain || !native_point(d)));
     }
-    struct Prepared { DrawCommand command; GpuGeometry* geometry; GpuTexture* texture; uint32_t uniform_offset; };
+    struct Prepared {
+        DrawCommand command; GpuGeometry* geometry; GpuTexture* texture; uint32_t uniform_offset;
+        float sort_depth; // NDC depth of the geometry center; larger is farther
+    };
     std::vector<Prepared> prepare(uint32_t width, uint32_t height, const std::vector<DrawCommand>& commands,
                                   const vec4& background, unsigned samples, bool pixel_query = false) {
         require_samples(samples);
@@ -1373,6 +1414,14 @@ public:
             if (command.scene_depth_texture && (!command.overlay || command.overlay_depth_test ||
                 command.overlay_independent_depth || command.texture))
                 throw std::invalid_argument("scene depth sampling requires a flat overlay without an image texture");
+            if (command.transparent && command.overlay)
+                throw std::invalid_argument("transparent blending is a scene option, not an overlay option");
+            if (command.transparent && command.geometry->topology() != Topology::triangles)
+                throw std::invalid_argument("transparent blending requires triangle geometry");
+            if (command.transparent && (command.color.w < 0 || command.color.w > 1))
+                throw std::invalid_argument("transparent color alpha must be in [0, 1]");
+            if (command.transparent && !c_.independent_blend && !pixel_query)
+                throw std::runtime_error("transparent scene blending requires independentBlend");
             if (command.overlay && command.geometry->topology() != Topology::triangles)
                 throw std::invalid_argument("overlay draws require triangle geometry");
             if (command.point_style != PointStyle::plain && command.point_style != PointStyle::sphere &&
@@ -1550,7 +1599,12 @@ public:
                 uniforms.resize(uniforms.size() + stride);
                 std::memcpy(uniforms.data() + offset, &u, sizeof(u));
             }
-            draws.push_back({std::move(command), &g, &t, offset});
+            float sort_depth = 0;
+            if (command.transparent) {
+                const auto center = command.model_view_projection * vec4(g.center, 1);
+                sort_depth = 0.5f * (center.z + center.w);
+            }
+            draws.push_back({std::move(command), &g, &t, offset, sort_depth});
         }
         if (!uniforms.empty()) {
             if (uniforms.size() > impostor_capacity_) {
@@ -1609,14 +1663,10 @@ public:
             c_.vkCmdSetViewport(cmd,0,1,&v); c_.vkCmdSetScissor(cmd,0,1,&s);
             return true;
         };
-        for (const auto& draw : draws) {
+        const auto draw_scene = [&](const Prepared& draw, VkPipeline pipeline, bool expanded) {
             const auto& d = draw.command;
-            if (d.overlay || !set_view(d)) continue;
-            unsigned pipeline = d.geometry->topology() == Topology::triangles ? 0 :
-                                d.geometry->topology() == Topology::lines ? 1 : 2;
-            const bool expanded = expanded_impostor(d);
-            if (expanded) pipeline = expanded_lines(d) ? (d.line_style == LineStyle::plain ? 5 : 4) : 3;
-            c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pass.pipelines[pipeline]);
+            if (!set_view(d)) return;
+            c_.vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
             c_.vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, layout_, 1, 1, &impostor_set_, 1, &draw.uniform_offset);
             VkDeviceSize offset = 0;
             if (draw.geometry->points) {
@@ -1634,6 +1684,25 @@ public:
             c_.vkCmdPushConstants(cmd, layout_, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push), &push);
             if (expanded) c_.vkCmdDraw(cmd, 6, expanded_lines(d) ? draw.geometry->count / 2 : draw.geometry->count, 0, 0);
             else c_.vkCmdDraw(cmd, draw.geometry->count, 1, 0, 0);
+        };
+        for (const auto& draw : draws) {
+            const auto& d = draw.command;
+            if (d.overlay) continue;
+            // Transparent surfaces use the blended pipeline after all opaque geometry.
+            if (d.transparent && pass.kind != PassKind::ids) continue;
+            unsigned pipeline = d.geometry->topology() == Topology::triangles ? 0 :
+                                d.geometry->topology() == Topology::lines ? 1 : 2;
+            const bool expanded = expanded_impostor(d) && !d.transparent;
+            if (expanded) pipeline = expanded_lines(d) ? (d.line_style == LineStyle::plain ? 5 : 4) : 3;
+            draw_scene(draw, pass.pipelines[pipeline], expanded);
+        }
+        if (pass.transparent_pipeline) {
+            std::vector<const Prepared*> transparent;
+            for (const auto& draw : draws) if (draw.command.transparent) transparent.push_back(&draw);
+            // Far to near, so straight-alpha compositing matches the visible surface order.
+            std::stable_sort(transparent.begin(), transparent.end(),
+                             [](const Prepared* a, const Prepared* b) { return a->sort_depth > b->sort_depth; });
+            for (const Prepared* draw : transparent) draw_scene(*draw, pass.transparent_pipeline, false);
         }
         if (pass.kind != PassKind::ids) {
             const unsigned phases = pass.independent_depth ? 3 : 2;

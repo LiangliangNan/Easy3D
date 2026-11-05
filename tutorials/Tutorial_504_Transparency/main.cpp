@@ -63,6 +63,7 @@ int main(int argc, char **argv) {
 
     auto drawable = viewer.current_model()->renderer()->get_triangles_drawable("faces");
     drawable->set_smooth_shading(true);
+    drawable->set_coloring_method(State::UNIFORM_COLOR);
     drawable->set_distinct_back_color(false);
 
     // run the viewer

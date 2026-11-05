@@ -28,7 +28,44 @@
 #define EASY3D_RENDERER_DUAL_DEPTH_PEELING_H
 
 #ifdef EASY3D_HAS_VULKAN
-// No Vulkan counterpart yet.
+
+#include <vector>
+#include <easy3d/renderer/transparency.h>
+
+
+namespace easy3d {
+
+    class Camera;
+    class TrianglesDrawable;
+
+    /**
+     * \brief Transparency effect using dual depth peeling.
+     * \details Vulkan composites the given surfaces through the viewer's shared
+     *      transparent scene pass, sorted far to near. The OpenGL peel stages
+     *      (min-max depth, front/back accumulation) are not used.
+     * \class DualDepthPeeling easy3d/renderer/dual_depth_peeling.h
+     * \sa AverageColorBlending
+     */
+    class DualDepthPeeling : public Transparency
+    {
+    public:
+        explicit DualDepthPeeling(Camera* cam) : camera_(cam) {}
+        ~DualDepthPeeling() override = default;
+
+        void set_max_peels(int n) { max_peels_ = n; }
+        int max_peels() const { return max_peels_; }
+
+        void draw(const std::vector<TrianglesDrawable*>& surfaces) override {
+            render_frame(camera_, surfaces, 2);
+        }
+
+    private:
+        Camera* camera_;
+        int max_peels_ = 4;
+    };
+
+}
+
 #else
 
 #include <vector>

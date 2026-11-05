@@ -126,6 +126,11 @@ struct DrawCommand {
     // as grayscale through its UVs. Requires overlay=true, no texture and no
     // overlay depth flags. Sampling never changes scene depth or picking IDs.
     bool scene_depth_texture = false;
+    // Straight-alpha scene triangles composite over the opaque scene, tested and
+    // written against the shared scene depth and IDs. They draw after opaque
+    // geometry in this vector, ordered far to near by the backend. color.w is
+    // the opacity. Triangle geometry only; overlays have their own blending.
+    bool transparent = false;
     // Up to two view-space halfspaces: dot(plane, vec4(view_position,1)) >= 0.
     // When clipping is active, model_view must map the geometry into view space
     // and be affine for every topology, consistently with model_view_projection.

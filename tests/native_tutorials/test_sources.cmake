@@ -49,6 +49,7 @@ set(tutorial_scenes
         Tutorial_404_VirtualScanner
         Tutorial_405_ObjectManipulation
         Tutorial_406_CollisionDetection
+        Tutorial_504_Transparency
         Tutorial_506_DepthMap
         Tutorial_601_Tessellator
         Tutorial_602_ConvexPartition
@@ -59,7 +60,7 @@ set(tutorial_scenes
 )
 if(NOT Easy3D_ENABLE_VULKAN)
     list(APPEND tutorial_scenes Tutorial_501_AmbientOcclusion Tutorial_502_HardShadow
-        Tutorial_503_SoftShadow Tutorial_504_Transparency Tutorial_505_EyeDomeLighting)
+        Tutorial_503_SoftShadow Tutorial_505_EyeDomeLighting)
 endif()
 foreach(tutorial IN LISTS tutorial_scenes)
     string(REGEX MATCH "^Tutorial_([0-9]+)_" tutorial_prefix "${tutorial}")

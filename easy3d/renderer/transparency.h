@@ -28,7 +28,64 @@
 #define EASY3D_RENDERER_TRANSPARENCY_H
 
 #ifdef EASY3D_HAS_VULKAN
-// No Vulkan counterpart yet.
+
+#include <functional>
+#include <map>
+#include <stdexcept>
+#include <utility>
+#include <vector>
+
+
+namespace easy3d {
+
+    class Camera;
+    class TrianglesDrawable;
+
+    /**
+     * \brief Base class for rendering with transparency.
+     * \class Transparency easy3d/renderer/transparency.h
+     * \details This class provides an interface for rendering scenes with transparency effects.
+     * \see AverageColorBlending, DualDepthPeeling
+     */
+    class Transparency
+    {
+    public:
+        Transparency() = default;
+        virtual ~Transparency() = default;
+
+        /**
+         * \brief Renders the scene (a set of surfaces) with transparency effect.
+         * \param surfaces The surfaces to be rendered.
+         */
+        virtual void draw(const std::vector<TrianglesDrawable*>& surfaces) = 0;
+
+        // The OpenGL effects know only the camera and draw into the current
+        // context. Vulkan presentation belongs to the viewer, so the viewer
+        // registers a frame renderer for its camera. Method 1 is average color
+        // blending and method 2 is dual depth peeling.
+        using FrameRenderer = std::function<void(const std::vector<TrianglesDrawable*>&, int)>;
+        static void set_frame_renderer(const Camera* camera, FrameRenderer renderer) {
+            if (renderer) renderers()[camera] = std::move(renderer);
+            else renderers().erase(camera);
+        }
+
+    protected:
+        static void render_frame(const Camera* camera, const std::vector<TrianglesDrawable*>& surfaces, int method) {
+            auto it = renderers().find(camera);
+            if (it == renderers().end())
+                throw std::logic_error("transparency requires a Viewer or OffScreen frame");
+            it->second(surfaces, method);
+        }
+
+    private:
+        static std::map<const Camera*, FrameRenderer>& renderers() {
+            static std::map<const Camera*, FrameRenderer> value;
+            return value;
+        }
+    };
+
+}
+
 #else
 
 #include <vector>
