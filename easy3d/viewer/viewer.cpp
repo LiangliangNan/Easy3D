@@ -36,6 +36,7 @@
 #include <easy3d/renderer/transparency.h>
 #include <easy3d/renderer/eye_dome_lighting.h>
 #include <easy3d/renderer/ambient_occlusion.h>
+#include <easy3d/renderer/shadow.h>
 #include <easy3d/fileio/surface_mesh_io.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
@@ -425,7 +426,44 @@ void Viewer::pre_draw() {}
 void Viewer::post_draw() {}
 bool Viewer::draw() {
     const int width = framebuffer_width(), height = framebuffer_height();
-    auto commands = impl_->commands(*camera(), width, height);
+    Shadow::FrameData shadow;
+    Shadow* active_shadow = Shadow::active(camera());
+    const bool has_shadow = active_shadow && Shadow::frame_data(camera(), shadow);
+    std::vector<DrawSource> sources;
+    auto commands = impl_->commands(*camera(), width, height, has_shadow ? &sources : nullptr);
+    if (has_shadow) {
+        const mat4 clip_to_shadow = shadow.shadow_matrix * inverse(camera()->modelViewProjectionMatrix());
+        const auto& surfaces = active_shadow->surfaces();
+        for (size_t i = 0; i < sources.size() && i < commands.size(); ++i) {
+            auto* triangles = dynamic_cast<TrianglesDrawable*>(sources[i].drawable.get());
+            if (!triangles || std::find(surfaces.begin(), surfaces.end(), triangles) == surfaces.end())
+                continue;
+            if (!commands[i].geometry || commands[i].geometry->topology() != graphics::Topology::triangles)
+                continue;
+            commands[i].shadow_caster = true;
+            commands[i].shadow_matrix = clip_to_shadow;
+            commands[i].shadow_map_size = shadow.shadow_map_size;
+        }
+        if (!shadow.background_corners.empty()) {
+            std::vector<graphics::Vertex> vertices(4);
+            for (unsigned i = 0; i < 4; ++i)
+                vertices[i].position = shadow.background_corners[i];
+            graphics::DrawCommand background;
+            background.geometry = std::make_shared<graphics::Geometry>(
+                std::move(vertices), std::vector<uint32_t>{0, 1, 2, 0, 2, 3});
+            background.color = shadow.background_color;
+            background.object_id = UINT32_MAX;
+            background.model_view_projection = camera()->modelViewProjectionMatrix();
+            background.shadow_background = true;
+            background.shadow_matrix = clip_to_shadow;
+            background.shadow_map_size = shadow.shadow_map_size;
+            commands.push_back(std::move(background));
+        }
+        commands.insert(commands.begin(),
+                        graphics::shape::draw_shadow(unsigned(width), unsigned(height), clip_to_shadow,
+                                                     shadow.darkness, shadow.softness, shadow.light_near,
+                                                     shadow.light_far, shadow.shadow_map_size));
+    }
     float radius, bias;
     mat4 projection;
     if (AmbientOcclusion::frame_params(camera(), radius, bias, projection))
@@ -1258,6 +1296,7 @@ bool Viewer::drop_event(const std::vector<std::string>& names) {
 #include <easy3d/renderer/text_renderer.h>
 #include <easy3d/renderer/texture_manager.h>
 #include <easy3d/renderer/clipping_plane.h>
+#include <easy3d/renderer/shadow.h>
 #include <easy3d/fileio/point_cloud_io.h>
 #include <easy3d/fileio/graph_io.h>
 #include <easy3d/fileio/surface_mesh_io.h>
@@ -3010,6 +3049,7 @@ float Viewer::dpi_scaling() const { return dpi_scaling_; }
 
 #else
 
+        Shadow* active_shadow = Shadow::active(camera());
         for (const auto m : models_) {
             if (!m->renderer()->is_visible())
                 continue;
@@ -3037,13 +3077,21 @@ float Viewer::dpi_scaling() const { return dpi_scaling_; }
                 glPolygonOffset(0.5f, -0.0001f);
             }
             for (auto d : m->renderer()->triangles_drawables()) {
-                if (d->is_visible())
-                    d->draw(camera());
+                if (!d->is_visible())
+                    continue;
+                if (active_shadow && std::find(active_shadow->surfaces().begin(),
+                                               active_shadow->surfaces().end(), d.get()) !=
+                                     active_shadow->surfaces().end())
+                    continue;
+                d->draw(camera());
                 easy3d_debug_log_gl_error
             }
             if (count > 0)
                 glDisable(GL_POLYGON_OFFSET_FILL);
         }
+
+        if (active_shadow)
+            active_shadow->draw(active_shadow->surfaces());
 
         for (auto d : drawables_) {
             if (d->is_visible())

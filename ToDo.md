@@ -16,7 +16,7 @@
   - [x] W4 Delete runtime-selection/headless leftovers (Backend enum, ViewerOptions, create_*_viewer, ...)
   - [x] Shared GPU point selection and Tutorial 403; OpenGL aliases rendering VBO positions, Vulkan retains SSBO compute, selection recolors attributes only.
   - [x] W5 Remove EASY3D_TUTORIAL_USES_VULKAN; Tutorial 404 uses shared capture and local pixel-center reconstruction.
-  - [ ] W6 Mac: OpenGL 90/90; MoltenVK 123/123 (2026-11-05, W10 batch 15; prior intermittent window-test timeout remains under observation); Linux baseline 68/69 still needs the interactionoverlay border check
+  - [ ] W6 Mac: OpenGL 91/91; MoltenVK 126/126 (2026-11-05, W10 batch 16; `vulkan.imgui`/`opengl.imgui` can fail once under full-suite load and pass alone; prior intermittent window-test timeout remains under observation); Linux baseline 68/69 still needs the interactionoverlay border check
   - Top priority (docs/vulkan.md, "Migration principles"): minimal source changes; same class names and the same
     .h/.cpp files as the main branch (Viewer in viewer.h/.cpp for both backends); #ifdef EASY3D_HAS_VULKAN layout inside
     the classes; no new files except shaders, backend files and tests; minimal CMake changes; client code unchanged.
@@ -33,11 +33,13 @@
   - [x] Scene transparency on both backends: depth-sorted straight-alpha triangle pass with preserved depth/IDs; `AverageColorBlending`/`DualDepthPeeling` camera callbacks and Tutorial 504 enabled (batch 13; true accumulation/peeling pending).
   - [x] Eye-dome lighting on both backends: depth-sampled multiplicative overlay, `EyeDomeLighting` begin/end frame params and Tutorial 505 enabled (batch 14).
   - [x] Ambient occlusion on both backends: depth-only Vulkan SSAO with multiplicative compositing, shared `AmbientOcclusion` begin/end contract, OpenGL geometry/SSAO/blur path preserved and Tutorial 501 enabled (batch 15).
-  - [ ] W10 Mesh GPU/rasterization parity, Mapple, Qt/wx, remaining Python coverage, shadows (transparency done in batch 13; EDL done in batch 14; SSAO done in batch 15; Tutorials 502/503 remain gated)
+  - [x] Hard and soft shadows on both backends: Vulkan depth-only shadow map with PCSS overlay, shared `Shadow`/`SoftShadow` begin/end contract, OpenGL original passes preserved and Tutorials 502/503 enabled with their gates removed (batch 16).
+  - [ ] W10 Mesh GPU/rasterization parity, Mapple, Qt/wx, remaining Python coverage (transparency done in batch 13; EDL done in batch 14; SSAO done in batch 15; shadows done in batch 16)
   - [ ] Tutorial_207_RealCamera based on Vulkan remains slower than the OpenGL counterpart. Its hover query now reads one pixel rather than a full frame, native `largePoints` reaches about 70 FPS at 1600×1200 with 4× MSAA on this Mac, and the portable expanded-point fallback still needs profiling on MoltenVK devices without that feature.
   - [ ] TrianglesDrawable::opacity() is effective through the scene transparency path: marked triangle commands blend straight alpha over the opaque scene, write depth/IDs and are sorted far-to-near per drawable. Per-triangle sorting and order-independent accumulation remain pending. Depth-sorted straight-alpha scene triangles support TrianglesDrawable::opacity() and the legacy AverageColorBlending/DualDepthPeeling classes (both currently map to the same sorted pass; true accumulation/peeling is pending)
-  - [ ] SSAO effect is low and differs in the two backends (OpenGL: darker near corners, smooth but overall too blurry; Vulkan: visible scattered dark dots near corners, not smooth at all). Must improve rendering quality for both.
-
+  - [ ] SSAO rendering quality is low and effect differs in the two backends (OpenGL: darker near corners, smooth but overall too blurry; Vulkan: visible scattered dark dots near corners, not smooth at all). Must improve rendering quality for both.
+  - [ ] Quality of both hard and soft shadow is low on both backends: both have aliasing effect (increasing number of MSAA samples doesn't help), soft shadow has non-smooth blurry near the shadow borders.
+  
 - Send the computed value of "MVP * MANIP" to shaders (avoiding computing the matrix product for each vertex/fragment)
 - Walkthrough and animation; allow to modify the cameras interactively
 - Implement potree for huge point cloud visualization (https://github.com/potree/potree)

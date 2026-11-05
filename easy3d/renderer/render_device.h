@@ -144,6 +144,25 @@ struct DrawCommand {
     // scene's OpenGL-convention projection matrix. Background pixels keep their
     // color, and the pass never changes scene depth or picking IDs.
     bool ambient_occlusion = false;
+    // Scene triangles that are additionally rasterized into this frame's shadow
+    // map before the scene. Requires triangles, a finite shadow_matrix and a
+    // positive, power-of-two shadow_map_size. They render normally as well.
+    bool shadow_caster = false;
+    // Scene triangles that only receive this frame's shadow: they keep the
+    // background ID (object_id must be UINT32_MAX) and are lit normally, so the
+    // virtual background plane can occlude without appearing in picking.
+    bool shadow_background = false;
+    // Full-screen multiplicative shadow overlay. Requires overlay=true, no
+    // texture, no overlay depth flags. Geometry must cover the viewport with the
+    // depth-texture UV convention. Samples the frame's shadow map through the
+    // shadow matrix; color carries (darkness, softness, light near, light far).
+    // Softness zero compares depths directly; positive values filter blockers.
+    // Never changes scene depth or picking IDs.
+    bool shadow = false;
+    // Camera clip space -> shadow texture coordinates. Scene casters also use
+    // it to map their vertices into the light view.
+    mat4 shadow_matrix = mat4::identity();
+    unsigned shadow_map_size = 1024;
     // Up to two view-space halfspaces: dot(plane, vec4(view_position,1)) >= 0.
     // When clipping is active, model_view must map the geometry into view space
     // and be affine for every topology, consistently with model_view_projection.

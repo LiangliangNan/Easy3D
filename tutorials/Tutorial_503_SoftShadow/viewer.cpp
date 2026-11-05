@@ -78,8 +78,11 @@ bool TutorialSoftShadow::draw() {
             surfaces.push_back(d.get());
         }
     }
-	if (shadow_enabled_)
-		shadow_->draw(surfaces);
+	if (shadow_enabled_) {
+		shadow_->begin(surfaces);
+		Viewer::draw();
+		shadow_->end();
+	}
 	else
 		Viewer::draw();
     return true;

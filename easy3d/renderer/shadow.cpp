@@ -27,7 +27,217 @@
 #include <easy3d/renderer/shadow.h>
 
 #ifdef EASY3D_HAS_VULKAN
-// No Vulkan counterpart yet.
+
+#include <algorithm>
+#include <map>
+
+#include <easy3d/renderer/camera.h>
+#include <easy3d/renderer/frustum.h>
+#include <easy3d/renderer/transform.h>
+#include <easy3d/util/setting.h>
+
+
+namespace easy3d {
+
+    namespace {
+        std::map<const Camera*, Shadow::FrameData>& frames() {
+            static std::map<const Camera*, Shadow::FrameData> value;
+            return value;
+        }
+        std::map<const Camera*, Shadow*>& registry() {
+            static std::map<const Camera*, Shadow*> value;
+            return value;
+        }
+    }
+
+    Shadow::Shadow(Camera* cam)
+        : camera_(cam)
+        , camera_frustum_(nullptr)
+        , light_frustum_(nullptr)
+        , shadow_map_size_(1024)
+        , virtual_background_(true)
+        , virtual_background_color_(setting::background_color)
+        , light_distance_(setting::effect_shadow_light_distance)
+        , darkness_(setting::effect_shadow_darkness)
+    {
+    }
+
+
+    Shadow::~Shadow() {
+        if (camera_) {
+            frames().erase(camera_);
+            if (registry()[camera_] == this)
+                registry().erase(camera_);
+        }
+        delete camera_frustum_;
+        delete light_frustum_;
+    }
+
+
+    void Shadow::set_light_distance(float dist) {
+        // 1.0 corresponds to degenerated light frustum
+        light_distance_ = std::max(1.1f, dist);
+    }
+
+
+    void Shadow::set_darkness(float darkness) {
+        darkness_ = darkness;
+        if (darkness_ < 0.0f)
+            darkness_ = 0.0f;
+        if (darkness_ > 1.0f)
+            darkness_ = 1.0f;
+    }
+
+
+    void Shadow::begin(const std::vector<TrianglesDrawable*>& surfaces) {
+        surfaces_ = surfaces;
+        if (!camera_)
+            return;
+
+        compute_camera_frustum();
+        compute_light_frustum();
+        if (virtual_background_)
+            update_virtual_background();
+        else
+            background_corners_.clear();
+
+        light_view_matrix_ = light_frustum_->view_matrix();
+        light_projection_matrix_ = light_frustum_->projection_matrix();
+
+        const mat4 clip2Tex(
+            vec4(0.5f, 0.0f, 0.0f, 0.0f),
+            vec4(0.0f, 0.5f, 0.0f, 0.0f),
+            vec4(0.0f, 0.0f, 0.5f, 0.0f),
+            vec4(0.5f, 0.5f, 0.5f, 1.0f)
+        );
+        shadow_matrix_ = clip2Tex * light_projection_matrix_ * light_view_matrix_;
+
+        FrameData data;
+        data.shadow_matrix = shadow_matrix_;
+        data.background_corners = background_corners_;
+        data.background_color = virtual_background_color_;
+        data.shadow_map_size = shadow_map_size_ > 0 ? unsigned(shadow_map_size_) : 0u;
+        data.darkness = darkness_;
+        data.softness = frame_softness();
+        data.light_near = light_frustum_->near_distance();
+        data.light_far = light_frustum_->far_distance();
+        frames()[camera_] = std::move(data);
+        registry()[camera_] = this;
+    }
+
+
+    void Shadow::end() {
+        if (camera_) {
+            frames().erase(camera_);
+            if (registry()[camera_] == this)
+                registry().erase(camera_);
+        }
+        surfaces_.clear();
+    }
+
+
+    Shadow* Shadow::active(const Camera* camera) {
+        auto it = registry().find(camera);
+        return it == registry().end() ? nullptr : it->second;
+    }
+
+
+    bool Shadow::frame_data(const Camera* camera, FrameData& data) {
+        auto it = frames().find(camera);
+        if (it == frames().end())
+            return false;
+        data = it->second;
+        return true;
+    }
+
+
+    void Shadow::compute_camera_frustum() {
+        if (!camera_frustum_)
+            camera_frustum_ = new Frustum(Frustum::PERSPECTIVE);
+        // NOTE: fov is in radians and the 0.2f factor is important because we might get artifacts at the screen borders.
+        auto fov = static_cast<float>(camera_->fieldOfView()) + 0.2f;
+        auto ar = static_cast<float>(camera_->aspectRatio());
+        auto znear = static_cast<float>(camera_->zNear());
+        auto zfar = static_cast<float>(camera_->zFar());
+        camera_frustum_->set_perspective(fov, ar, znear, zfar);
+        const vec3& pos = camera_->position();
+        const vec3& at = camera_->position() + camera_->viewDirection();
+        const vec3& up = camera_->upVector();
+        camera_frustum_->orient(pos, at, up);
+    }
+
+
+    void Shadow::compute_light_frustum() {
+        if (!light_frustum_)
+            light_frustum_ = new Frustum(Frustum::PERSPECTIVE);
+
+        const vec3& at = camera_->sceneCenter();
+        vec3 dir = -setting::light_position.xyz();
+        const mat3& trans = transform::normal_matrix(inverse(camera_->modelViewMatrix()));
+        dir = normalize(trans * dir); // the light's direction in WC.
+        float radius = camera_->sceneRadius();
+        light_pos_ = at - dir * radius * light_distance_;
+        const vec3& up = trans * vec3(0, 1, 0);
+        light_frustum_->orient(light_pos_, at, up);
+
+        float maxZ = -FLT_MAX;
+        float minZ = FLT_MAX;
+        const mat4& light_view = light_frustum_->view_matrix();
+
+        vec3 p = light_view * at;
+        if (p.z + radius > maxZ)
+            maxZ = p.z + radius;  // maxZ is related to near plane
+        if (p.z - radius < minZ)
+            minZ = p.z - radius;  // not necessary for including the camera frustum
+
+        if (!virtual_background_) {
+            // The light frustum at its far end should contain the camera's
+            // frustum and at its near end all relevant shadow casters.
+            const std::vector<vec3>& points = camera_frustum_->vertices();
+            for (int i = 0; i < 8; i++) {
+                const vec4& q = light_view * vec4(points[i], 1.0f);
+                if (q.z < minZ) minZ = q.z;
+            }
+        }
+
+        // note the inversion because the light looks at the neg. z axis
+        float zNear = -maxZ;
+        float zFar = -minZ;
+        zFar = std::min(zFar, zNear + radius * 10.0f);
+
+        float xMax, yMax;
+        xMax = yMax = -FLT_MAX;
+        light_frustum_->set_ortho(-1.0, 1.0, -1.0, 1.0, zNear, zFar);
+        const mat4& shade_mvp = light_frustum_->projection_matrix() * light_view;
+
+        p = shade_mvp * at;
+        if (p.x + radius > xMax) xMax = p.x + radius;
+        if (p.y + radius > yMax) yMax = p.y + radius;
+
+        zNear = zNear > 0.001 ? zNear : 0.001f;
+        light_frustum_->set_frustum(xMax*2.0f, yMax*2.0f, zNear, zFar);
+    }
+
+
+    void Shadow::update_virtual_background() {
+        vec3 normal = vec3(setting::light_position); // the background's normal in VC.
+        const mat3& trans = transform::normal_matrix(inverse(camera_->modelViewMatrix()));
+        normal = normalize(trans * normal);		  // the background's normal in WC.
+        float dist = camera_->sceneRadius() * 0.002f;
+        const vec3& center = light_frustum_->far_center() + normal * dist;
+
+        vec3 up = light_frustum_->up_vector();
+        vec3 dx = cross(up, normal);
+        float size = light_frustum_->far_width();
+        dx = normalize(dx) * size;
+        vec3 dy = normalize(up) * size;
+
+        background_corners_ = {center - dx - dy, center + dx - dy,
+                               center + dx + dy, center - dx + dy};
+    }
+
+}
+
 #else
 #include <easy3d/renderer/shader_manager.h>
 #include <easy3d/renderer/shader_program.h>
@@ -41,6 +251,8 @@
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/util/setting.h>
 
+#include <map>
+
 // for debugging
 //#define SHOW_SHADOW_MAP_AND_LIGHT_FRUSTUM
 
@@ -50,6 +262,13 @@
 
 
 namespace easy3d {
+
+    namespace {
+        std::map<const Camera*, Shadow*>& active_shadows() {
+            static std::map<const Camera*, Shadow*> value;
+            return value;
+        }
+    }
 
     Shadow::Shadow(Camera* cam)
         : camera_(cam)
@@ -68,7 +287,31 @@ namespace easy3d {
 
     Shadow::~Shadow()
     {
+        end();
         clear();
+    }
+
+
+    void Shadow::begin(const std::vector<TrianglesDrawable*>& surfaces) {
+        surfaces_ = surfaces;
+        if (camera_)
+            active_shadows()[camera_] = this;
+    }
+
+
+    void Shadow::end() {
+        if (camera_) {
+            auto it = active_shadows().find(camera_);
+            if (it != active_shadows().end() && it->second == this)
+                active_shadows().erase(it);
+        }
+        surfaces_.clear();
+    }
+
+
+    Shadow* Shadow::active(const Camera* camera) {
+        auto it = active_shadows().find(camera);
+        return it == active_shadows().end() ? nullptr : it->second;
     }
 
 

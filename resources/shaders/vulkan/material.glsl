@@ -4,6 +4,7 @@ layout(set=1,binding=0,std140) uniform MaterialState {
     vec4 dimensions; vec4 viewport_origin; vec4 light; vec4 clip_planes[2]; vec4 clip_info;
     mat4 model; vec4 eye; vec4 material_light;
     vec4 ambient; vec4 specular; vec4 backside; vec4 shading;
+    mat4 shadow;
 } material;
 vec4 shade_material(vec4 color,vec3 normal,vec3 position,bool back) {
     vec3 n=normalize(normal);

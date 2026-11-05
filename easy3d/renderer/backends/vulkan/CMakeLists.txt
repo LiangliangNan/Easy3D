@@ -7,7 +7,7 @@ endif()
 
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/backends/vulkan")
 set(vulkan_shader_headers)
-foreach(shader scene.vert scene.frag points.vert points.frag lines.vert lines.frag wide_lines.vert wide_lines.frag overlay.vert overlay.frag hud.frag depth_texture.frag edl.frag ssao.frag point_selection.comp)
+foreach(shader scene.vert scene.frag points.vert points.frag lines.vert lines.frag wide_lines.vert wide_lines.frag overlay.vert overlay.frag hud.frag depth_texture.frag edl.frag ssao.frag shadow.vert shadow.frag shadow_depth.frag point_selection.comp)
     string(REPLACE "." "_" symbol "${shader}")
     set(source "${Easy3D_ROOT}/resources/shaders/vulkan/${shader}")
     set(binary "${CMAKE_CURRENT_BINARY_DIR}/backends/vulkan/${symbol}.spv")

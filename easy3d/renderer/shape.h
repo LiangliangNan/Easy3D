@@ -393,6 +393,12 @@ graphics::DrawCommand draw_eye_dome_lighting(unsigned width, unsigned height,
 // flat overlays so it does not shade them.
 graphics::DrawCommand draw_ambient_occlusion(unsigned width, unsigned height,
                                              float radius, float bias, const mat4& projection);
+// Full-screen shadow pass over this frame's scene depth and shadow map. The matrix
+// maps camera clip space to shadow texture coordinates; the returned overlay
+// multiplies surfaces by visibility and precedes ordinary flat overlays.
+graphics::DrawCommand draw_shadow(unsigned width, unsigned height, const mat4& shadow_matrix,
+                                  float darkness, float softness, float light_near, float light_far,
+                                  unsigned shadow_map_size);
 graphics::DrawCommand draw_quad_wire(const Rect& rect, const vec4& color, unsigned width, unsigned height,
                                      float line_width = 1);
 graphics::DrawCommand draw_lines_2d(const std::vector<vec2>& segments, const vec4& color,

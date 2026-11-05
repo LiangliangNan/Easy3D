@@ -581,6 +581,36 @@ graphics::DrawCommand draw_ambient_occlusion(unsigned width,unsigned height,
     result.model_view_projection=graphics::screen_space_projection(width,height);
     return result;
 }
+graphics::DrawCommand draw_shadow(unsigned width,unsigned height,const mat4& shadow_matrix,
+                                  float darkness,float softness,float light_near,float light_far,
+                                  unsigned shadow_map_size) {
+    if (!width || !height || !shadow_map_size)
+        throw std::invalid_argument("shadow requires positive dimensions and shadow map size");
+    if (!std::isfinite(darkness) || darkness < 0 || darkness > 1)
+        throw std::invalid_argument("shadow darkness must be in [0, 1]");
+    if (!std::isfinite(softness) || softness < 0)
+        throw std::invalid_argument("shadow softness must be finite and non-negative");
+    if (!std::isfinite(light_near) || !std::isfinite(light_far) || light_near <= 0 || light_far <= light_near)
+        throw std::invalid_argument("shadow requires a positive light near/far range");
+    for (unsigned col=0;col<4;++col)
+        for (unsigned row=0;row<4;++row)
+            if (!std::isfinite(shadow_matrix(row,col)))
+                throw std::invalid_argument("shadow requires a finite matrix");
+    std::vector<graphics::Vertex> vertices(4);
+    const vec3 points[]={vec3(0,0,0),vec3(float(width),0,0),
+                         vec3(float(width),float(height),0),vec3(0,float(height),0)};
+    const vec2 uv[]={vec2(0,0),vec2(1,0),vec2(1,1),vec2(0,1)};
+    for (unsigned i=0;i<4;++i) {vertices[i].position=points[i];vertices[i].texcoord=uv[i];}
+    graphics::DrawCommand result;
+    result.geometry=std::make_shared<graphics::Geometry>(vertices,std::vector<uint32_t>{0,1,2,0,2,3});
+    result.color=vec4(darkness,softness,light_near,light_far);
+    result.shadow=true;
+    result.shadow_matrix=shadow_matrix;
+    result.shadow_map_size=shadow_map_size;
+    result.overlay=true;
+    result.model_view_projection=graphics::screen_space_projection(width,height);
+    return result;
+}
 graphics::DrawCommand draw_lines_2d(const std::vector<vec2>& segments,const vec4& color,
                                    unsigned width,unsigned height,float line_width) {
     if (segments.size()%2 || !std::isfinite(line_width) || line_width<=0)

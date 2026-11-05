@@ -27,10 +27,6 @@
 #ifndef EASY3D_RENDERER_SOFT_SHADOW_H
 #define EASY3D_RENDERER_SOFT_SHADOW_H
 
-#ifdef EASY3D_HAS_VULKAN
-// No Vulkan counterpart yet.
-#else
-
 #include <easy3d/renderer/shadow.h>
 
 
@@ -69,6 +65,70 @@ namespace easy3d {
      * Optimization tips: rendering with multi-effects (e.g., shadowing, SSAO) can benefit from sharing the same
      * geometry pass.
      */
+
+#ifdef EASY3D_HAS_VULKAN
+
+    class SoftShadow : public Shadow
+    {
+    public:
+        /// \brief The sample pattern used for blocker search and PCF filtering
+        enum SamplePattern {
+            SP_Poisson_25_25 = 0,   ///< 25 samples for the blocker search, 25 samples in the PCF filtering, all samples using a Poisson disk
+            SP_Poisson_32_64 = 1,   ///< 32 samples for the blocker search, 64 samples for the PCF filtering, all samples using a Poisson disk
+            SP_Poisson_64_128 = 2,  ///< 64 samples for the blocker search, 128 samples for the PCF filtering, all samples using a Poisson disk
+            SP_Poisson_100_100 = 3, ///< 100 samples for the blocker search, 100 samples for the PCF filtering, all samples using a Poisson disk
+            SP_Regular_49_225 = 4   ///< 49 samples for the blocker search, 225 samples for the PCF filtering, all samples using regular sampling (faster than Poisson disk)
+        };
+
+    public:
+        /**
+         * \brief Constructor.
+         * \param cam The camera used in the view.
+         */
+        explicit SoftShadow(Camera* cam);
+        /**
+         * \brief Destructor.
+         */
+        ~SoftShadow() override = default;
+
+        /**
+         * \brief Get the softness of the shadow.
+         * \return The softness of the shadow, in the range [0, 1]. Default is 0.5.
+         */
+        float softness() const { return softness_; }
+        /**
+         * \brief Set the softness of the shadow.
+         * \param s The softness of the shadow, must be in the range [0, 1].
+         */
+        void set_softness(float s) { softness_ = s; }
+
+        /**
+         * \brief Get the sample pattern used for blocker search and PCF filtering.
+         * \return The sample pattern.
+         */
+        SamplePattern sample_pattern() const { return sample_pattern_; }
+        /**
+         * \brief Set the sample pattern used for blocker search and PCF filtering.
+         * \param pattern The sample pattern.
+         */
+        void set_sample_pattern(SamplePattern pattern) { sample_pattern_ = pattern; }
+
+    protected:
+        float frame_softness() const override { return softness_; }
+
+    protected:
+        // The softness of the shadow, in [0, 1] (w.r.t. 10% of the light's size)
+        float softness_;
+
+        SamplePattern sample_pattern_;
+
+    private:
+        //copying disabled
+        SoftShadow(const SoftShadow&);
+        SoftShadow& operator=(const SoftShadow&);
+    };
+
+#else
 
     class SoftShadow : public Shadow
     {
@@ -132,8 +192,8 @@ namespace easy3d {
         SoftShadow& operator=(const SoftShadow&);
     };
 
-}
-
 #endif // EASY3D_HAS_VULKAN
+
+}
 
 #endif // EASY3D_RENDERER_SOFT_SHADOW_H

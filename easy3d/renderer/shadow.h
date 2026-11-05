@@ -27,10 +27,6 @@
 #ifndef EASY3D_RENDERER_SHADOW_H
 #define EASY3D_RENDERER_SHADOW_H
 
-#ifdef EASY3D_HAS_VULKAN
-// No Vulkan counterpart yet.
-#else
-
 #include <vector>
 #include <easy3d/core/types.h>
 
@@ -40,13 +36,126 @@ namespace easy3d {
     class Camera;
     class Frustum;
     class TrianglesDrawable;
-    class FramebufferObject;
 
     // Code can be simplified by omitting frustum and use the Camera class instead.
     // check line 611, void Camera::setFOVToFitScene(), in camera.cpp.
 
     // Optimization tips: rendering with multi-effects (e.g., shadowing, SSAO)
     // can benefit from sharing the same geometry pass.
+
+#ifdef EASY3D_HAS_VULKAN
+
+    /// \brief Shadow implements the standard shadow map (hard shadow) algorithm.
+    /// \class Shadow easy3d/renderer/shadow.h
+    /// \details In Vulkan, rendering and presentation belong to the viewer, so begin()
+    ///      only publishes the shadow frame of this camera. The viewer marks the
+    ///      corresponding scene commands, appends the virtual background and inserts
+    ///      the full-screen shadow pass after the scene.
+    ///
+    ///      Example usage:
+    ///          \code
+    ///              shadow_->begin(surfaces);
+    ///              draw(); // your rendering code here
+    ///              shadow_->end();
+    ///          \endcode
+    class Shadow
+    {
+    public:
+        /// \brief Constructor
+        /// \param cam The camera used in the view
+        explicit Shadow(Camera* cam);
+        virtual ~Shadow();
+
+        /// Shadow allows to have a virtual background as the shadow receiver. The virtual background plane is
+        /// perpendicular to the light direction and is placed at the far plane of the light frustum.
+        /// \note This only works for directional lights.
+        bool virtual_background() const { return virtual_background_; }
+        /// Enable/Disable the virtual background. \see virtual_background()
+        void set_virtual_background(bool b) { virtual_background_ = b; }
+
+        /// Query the virtual background color.
+        const vec4& virtual_background_color() const { return virtual_background_color_; }
+        /// Set the virtual background color.
+        void set_virtual_background_color(const vec4& c) { virtual_background_color_ = c; }
+
+        /// Query the size of the shadow map. The shadow is assumed to be square.
+        int shadow_map_size() const { return shadow_map_size_; }
+        /// Set/Change the size of the shadow map. The shadow is assumed to be square. Default: 1024 by 1024.
+        void set_shadow_map_size(int size) { shadow_map_size_ = size; }
+
+        /// The distance of the light source to the scene (w.r.t. the scene radius).
+        float light_distance() const { return light_distance_; }
+        /// Set/Change the distance of the light source to the scene (w.r.t. the scene radius). Default value is
+        /// 50 (large enough to mimic the directional light used in the default viewer).
+        /// \note Value must be > 1.0.
+        void set_light_distance(float dist);
+
+        /// Query the darkness of the shadow region. The values is in [0, 1.0] (0: no shadow at all; 1: completely
+        /// dark/black). \see set_darkness(float darkness).
+        float darkness() const { return darkness_; }
+        /// Set the darkness of the shadow region. Values must be in [0, 1.0] (0: no shadow at all; 1: completely
+        /// dark/black). The default value is 0.6.
+        void set_darkness(float darkness);
+
+        /// Registers the surfaces that cast shadows for the next Viewer::draw() on this camera.
+        /// begin() must be paired with end().
+        void begin(const std::vector<TrianglesDrawable*>& surfaces);
+        /// Ends the shadow registration started by begin().
+        void end();
+        /// Returns the shadow registered for the camera, or null.
+        static Shadow* active(const Camera* camera);
+
+        // The registered surfaces of the active shadow, or an empty list.
+        const std::vector<TrianglesDrawable*>& surfaces() const { return surfaces_; }
+
+        // Shadow frame parameters published by begin() for the registered camera.
+        struct FrameData {
+            mat4 shadow_matrix;                 // world position -> shadow texture coordinates
+            std::vector<vec3> background_corners;
+            vec4 background_color = vec4(0);
+            unsigned shadow_map_size = 1024;
+            float darkness = 0;
+            float softness = 0;
+            float light_near = 1;
+            float light_far = 2;
+        };
+        static bool frame_data(const Camera* camera, FrameData& data);
+
+    protected:
+        // SoftShadow overrides this with its penumbra softness.
+        virtual float frame_softness() const { return 0.0f; }
+
+        void compute_camera_frustum();
+        void compute_light_frustum();
+        void update_virtual_background();
+
+    protected:
+        Camera* camera_;
+        Frustum* camera_frustum_;
+        Frustum* light_frustum_;
+        vec3    light_pos_;
+        int     shadow_map_size_;
+        bool    virtual_background_;
+        vec4    virtual_background_color_;
+        float   light_distance_;
+        float   darkness_;
+        mat4    shadow_matrix_;        // clip to texture transformation is contained
+        mat4    light_view_matrix_;
+        mat4    light_projection_matrix_;
+        std::vector<vec3> background_corners_;
+        std::vector<TrianglesDrawable*> surfaces_;
+
+    private:
+        //copying disabled
+        Shadow(const Shadow&);
+        Shadow& operator=(const Shadow&);
+    };
+
+} // namespace easy3d
+
+#else
+
+    class FramebufferObject;
 
     /// \brief Shadow implements the standard shadow map (hard shadow) algorithm.
     /// \class Shadow easy3d/renderer/shadow.h
@@ -66,7 +175,7 @@ namespace easy3d {
         void set_virtual_background(bool b) { virtual_background_ = b; }
 
         /// Query the virtual background color.
-        const vec4& virtual_background_color(const vec4& c) { return virtual_background_color_; }
+        const vec4& virtual_background_color() const { return virtual_background_color_; }
         /// Set the virtual background color.
         void set_virtual_background_color(const vec4& c) { virtual_background_color_ = c; }
 
@@ -91,6 +200,16 @@ namespace easy3d {
 
         /// Rendering the surfaces.
         void draw(const std::vector<TrianglesDrawable*>& surfaces);
+
+        /// Registers the surfaces that cast shadows for the next Viewer::draw() on this camera.
+        /// begin() must be paired with end().
+        void begin(const std::vector<TrianglesDrawable*>& surfaces);
+        /// Ends the shadow registration started by begin().
+        void end();
+        /// Returns the shadow registered for the camera, or null.
+        static Shadow* active(const Camera* camera);
+        /// The registered surfaces.
+        const std::vector<TrianglesDrawable*>& surfaces() const { return surfaces_; }
 
     protected:
         virtual void ensure_fbo();
@@ -137,6 +256,8 @@ namespace easy3d {
         mat4	light_projection_matrix_;
 
     private:
+        std::vector<TrianglesDrawable*> surfaces_;
+
         //copying disabled
         Shadow(const Shadow&);
         Shadow& operator=(const Shadow&);

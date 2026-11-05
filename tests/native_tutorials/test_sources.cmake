@@ -50,6 +50,8 @@ set(tutorial_scenes
         Tutorial_405_ObjectManipulation
         Tutorial_406_CollisionDetection
         Tutorial_501_AmbientOcclusion
+        Tutorial_502_HardShadow
+        Tutorial_503_SoftShadow
         Tutorial_504_Transparency
         Tutorial_505_EyeDomeLighting
         Tutorial_506_DepthMap
@@ -60,9 +62,6 @@ set(tutorial_scenes
         Tutorial_702_Cloud_SurfaceReconstruction
         Tutorial_703_Cloud_PlaneExtraction
 )
-if(NOT Easy3D_ENABLE_VULKAN)
-    list(APPEND tutorial_scenes Tutorial_502_HardShadow Tutorial_503_SoftShadow)
-endif()
 foreach(tutorial IN LISTS tutorial_scenes)
     string(REGEX MATCH "^Tutorial_([0-9]+)_" tutorial_prefix "${tutorial}")
     set(test_name ${test_prefix}.tutorial${CMAKE_MATCH_1})
