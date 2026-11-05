@@ -42,6 +42,7 @@ namespace easy3d {
     class Camera;
     class Manipulator;
     class VertexArrayObject;
+    namespace opengl { class PointSelector; }
 
     /**
      * @brief The base class for drawable objects. A drawable represent a set of points, line segments, or triangles.
@@ -335,6 +336,9 @@ namespace easy3d {
     private:
         friend class Viewer;
 #ifndef EASY3D_HAS_VULKAN
+        // Selection aliases the rendering VBO directly, so it must be able to
+        // refresh and version that storage without a dispatch through Viewer.
+        friend class opengl::PointSelector;
         unsigned long long point_revision_ = 0;
         void opengl_initialize();
         void opengl_release_buffers();

@@ -77,7 +77,7 @@ namespace easy3d {
             easy3d_debug_log_gl_error
             easy3d_debug_log_frame_buffer_error
 
-#if 0
+#if 0 // for debugging only
             fbo_->print_attachments();
             fbo_->print_draw_buffers();
             fbo_->print_read_buffer();

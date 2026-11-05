@@ -42,13 +42,14 @@ namespace easy3d {
      * \class SurfaceMeshPicker easy3d/gui/picker_surface_mesh.h
      * \details Coordinates follow Camera::projectedCoordinatesOf(). Callers convert
      *      window coordinates to the camera's screen size.
-     *      Single-face picks rasterize the visible face drawable on both backends,
-     *      including active clipping planes, and map the generated triangle back to
-     *      its original face. A model without a rendered face drawable cannot be
-     *      picked. Vertex and edge selection then snaps within the picked face using
-     *      the picker resolution. Region selection remains geometric
-     *      through-selection: all original face vertices must be inside the region,
-     *      camera frustum and clipping planes.
+     *      A single-face pick renders the visible face drawable into a private
+     *      primitive-ID/depth target, including active clipping planes, then decodes
+     *      the cursor pixel and maps the triangle index back to its original face.
+     *      A model without a rendered face drawable cannot be picked. Vertex and
+     *      edge selection then snaps within the picked face using the picker
+     *      resolution. Region selection remains geometric through-selection: all
+     *      original face vertices must be inside the region, camera frustum and
+     *      clipping planes.
      * \see Picker, ModelPicker, PointCloudPicker
      */
     class SurfaceMeshPicker : public Picker {
@@ -188,9 +189,12 @@ namespace easy3d {
         std::vector<SurfaceMesh::Face> pick_faces(SurfaceMesh *model, const Polygon2 &plg);
 
     private:
-        // Rasterized face ID/depth pass. The drawable is the visible face drawable.
-        SurfaceMesh::Face pick_face_gpu(SurfaceMesh *model, const std::shared_ptr<TrianglesDrawable>& drawable,
-                                        int x, int y);
+        // Rasterized face-ID/depth pass: renders the visible face drawable with a
+        // primitive ID in the color target, samples the cursor pixel, and maps the
+        // primitive back to the mesh face. Backend-specific offscreen machinery is
+        // in picker_surface_mesh.cpp.
+        SurfaceMesh::Face pick_face_impl(SurfaceMesh *model, const std::shared_ptr<TrianglesDrawable>& drawable,
+                                         int x, int y);
 
     private:
         unsigned int hit_resolution_;     // in pixels

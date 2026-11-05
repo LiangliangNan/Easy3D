@@ -29,36 +29,71 @@
 
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/renderer.h>
+#include <easy3d/renderer/render_device.h>
 #include <easy3d/renderer/drawable_points.h>
 #include <easy3d/renderer/clipping_plane.h>
-#ifdef EASY3D_HAS_VULKAN
-#include <easy3d/renderer/backends/vulkan/clipping_plane.h>
-#include <stdexcept>
-#else
+#ifndef EASY3D_HAS_VULKAN
 #include <easy3d/renderer/shader_manager.h>
+#include <easy3d/renderer/backends/opengl/point_selection.h>
 #include <easy3d/renderer/backends/opengl/query_state.h>
 #include <easy3d/renderer/framebuffer_object.h>
 #endif
 #include <easy3d/util/logging.h>
+#include <cstdint>
+#include <limits>
+#include <stdexcept>
 
 
 namespace easy3d {
 
+namespace {
+    // Point clouds get a default points drawable named "vertices" when they are
+    // attached to a renderer. Picking always follows this drawable, so the result
+    // corresponds to what is actually on screen.
+    std::shared_ptr<PointsDrawable> vertices_drawable(const Renderer* renderer) {
+        if (renderer)
+            for (const auto& drawable : renderer->points_drawables())
+                if (drawable->name() == "vertices")
+                    return drawable;
+        return {};
+    }
+
+    // World-space clipping halfspaces matching ClippingPlane::set_program(): keep
+    // the negative-normal side, optionally capped into a cross-section slab.
+    std::vector<vec4> world_clipping_planes() {
+        std::vector<vec4> result;
+        const auto* plane = ClippingPlane::instance();
+        if (!plane->is_enabled())
+            return result;
+        const vec3 n = plane->normal(), c = plane->center();
+        result.push_back(vec4(-n, dot(n, c)));
+        if (plane->cross_section())
+            result.push_back(vec4(n, -dot(n, c) + plane->cross_section_width() * plane->scene_radius()));
+        return graphics::normalize_clipping_planes(result);
+    }
+
+    // Snapshot used when the cloud has no rendering buffers to share. Positions
+    // are indexed by source slot (the selection shaders need one position per
+    // slot); deleted slots stay NaN so frustum and clip tests reject them.
+    std::shared_ptr<const graphics::PointData> source_point_data(PointCloud* model) {
+        const size_t count = model->points().size();
+        if (count > UINT32_MAX)
+            throw std::length_error("too many point source slots");
+        const float nan = std::numeric_limits<float>::quiet_NaN();
+        std::vector<vec3> positions(count, vec3(nan));
+        std::vector<uint32_t> ids;
+        ids.reserve(model->n_vertices());
+        for (auto vertex : model->vertices()) {
+            positions[vertex.idx()] = model->position(vertex);
+            ids.push_back(vertex.idx());
+        }
+        return std::make_shared<graphics::PointData>(std::move(positions), std::move(ids), uint32_t(count));
+    }
+}
 
     PointCloudPicker::PointCloudPicker(const Camera *cam) : Picker(cam) {}
 
-
-#ifdef EASY3D_HAS_VULKAN
-    namespace {
-        std::shared_ptr<PointsDrawable> vertices_drawable(const Renderer* renderer) {
-            if (renderer)
-                for (const auto& drawable : renderer->points_drawables())
-                    if (drawable->name() == "vertices")
-                        return drawable;
-            return {};
-        }
-    }
-#endif
+    PointCloudPicker::~PointCloudPicker() = default;
 
     PointCloud::Vertex PointCloudPicker::pick_vertex(PointCloud* model, int x, int y) {
         const int width = camera()->screenWidth(), height = camera()->screenHeight();
@@ -68,6 +103,8 @@ namespace easy3d {
         if (!renderer || !renderer->is_visible())
             return PointCloud::Vertex();
 #ifdef EASY3D_HAS_VULKAN
+        // A single pick is a rendered pixel query: rasterize the point drawable
+        // with a source-vertex ID in the color target and sample that pixel.
         const auto drawable = vertices_drawable(renderer);
         if (!drawable || !drawable->is_visible())
             return PointCloud::Vertex();
@@ -79,10 +116,13 @@ namespace easy3d {
         const PointCloud::Vertex vertex(ids[hit.primitive]);
         return model->is_deleted(vertex) ? PointCloud::Vertex() : vertex;
 #else
-        auto drawable = renderer->get_points_drawable("vertices");
+        const auto drawable = vertices_drawable(renderer);
         if (!drawable || !drawable->is_visible())
             return PointCloud::Vertex();
 
+        // The selection shader draws every point as a small sphere (or a plain
+        // square) whose color is the encoded source vertex ID. The depth buffer
+        // makes the nearest point win, exactly like the visible rendering.
         const std::string name = "selection/selection_pointcloud_single_point_as_sphere_sprite";
         auto* program = ShaderManager::get_program(name);
         if (!program)
@@ -127,7 +167,6 @@ namespace easy3d {
 #endif
     }
 
-#ifdef EASY3D_HAS_VULKAN
     void PointCloudPicker::pick_vertices(PointCloud* model, const Rect& rect, bool deselect) {
         Polygon2 polygon;
         polygon.push_back(vec2(rect.left(), rect.top()));
@@ -141,47 +180,75 @@ namespace easy3d {
         const int width = camera()->screenWidth(), height = camera()->screenHeight();
         if (!model || model->empty() || polygon.size() < 3 || width <= 0 || height <= 0)
             return;
-        const auto drawable = vertices_drawable(model->renderer());
+        const auto* renderer = model->renderer();
+        if (renderer && !renderer->is_visible())
+            return;
+        const auto drawable = vertices_drawable(renderer);
+        if (drawable && !drawable->is_visible())
+            return;
+
         const mat4 transform = drawable ? drawable->manipulated_matrix() :
             model->manipulator() ? model->manipulator()->matrix() : mat4::identity();
+
+        // Region selection projects each point center on the GPU and sets its bit
+        // in the packed "v:select" mask. It is a through-selection: depth does not
+        // matter, so points behind other geometry are still selected.
         graphics::PointSelectionRequest request;
+#ifdef EASY3D_HAS_VULKAN
         if (drawable)
             request.points = draw_command(drawable, 0).geometry->point_data();
-
-        // A cloud used independently of a renderer has no drawing buffer to share.
-        if (!request.points || request.points->source_count() != model->points().size()) {
-            std::vector<vec3> points;
-            std::vector<uint32_t> ids;
-            points.reserve(model->n_vertices());
-            ids.reserve(model->n_vertices());
-            for (auto vertex : model->vertices()) {
-                points.push_back(model->position(vertex));
-                ids.push_back(vertex.idx());
-            }
-            if (model->points().size() > UINT32_MAX)
-                throw std::length_error("too many point source slots");
-            request.points = std::make_shared<graphics::PointData>(
-                std::move(points), std::move(ids), uint32_t(model->points().size()));
-        }
+        if (!request.points || request.points->source_count() != model->points().size())
+            request.points = source_point_data(model);
+#else
+        opengl::QueryState state;
+        state.prepare(width, height);
+        if (!point_selector_)
+            point_selector_.reset(new opengl::PointSelector);
+        if (drawable)
+            request.points = point_selector_->points(drawable);
+        if (!request.points || request.points->source_count() != model->points().size())
+            request.points = point_selector_->points(source_point_data(model));
+#endif
         request.width = width;
         request.height = height;
         request.polygon.assign(polygon.begin(), polygon.end());
         request.model_view_projection = camera()->modelViewProjectionMatrix() * transform;
         request.deselect = deselect;
-        for (const auto& plane : vulkan::ClippingPlaneRenderer::planes(*ClippingPlane::instance()))
+        // Clipping is stored in world space; the shaders test positions before
+        // the model transform, so move each plane into the drawable's local frame.
+        for (const auto& plane : world_clipping_planes())
             request.local_clipping_planes.push_back(transpose(transform) * plane);
-        auto selected = model->vertex_property<bool>("v:select");
-        request.words.resize((size_t(request.points->source_count()) + 31) / 32);
-        for (auto vertex : model->vertices())
-            if (selected[vertex])
-                request.words[vertex.idx() >> 5] |= 1u << (vertex.idx() & 31);
-        const auto words = render_device().select_points(request);
-        for (auto vertex : model->vertices())
-            selected[vertex] = (words[vertex.idx() >> 5] & (1u << (vertex.idx() & 31))) != 0;
-    }
-#endif
 
-#ifndef EASY3D_HAS_VULKAN
+        auto selected = model->vertex_property<bool>("v:select");
+        request.words.resize((size_t(request.points->source_count()) + 31) / 32, 0);
+        for (auto vertex : model->vertices()) {
+            const auto id = vertex.idx();
+            if (id < request.points->source_count() && selected[vertex])
+                request.words[id >> 5] |= 1u << (id & 31);
+        }
+
+#ifdef EASY3D_HAS_VULKAN
+        const auto words = render_device().select_points(request);
+#else
+        const auto words = point_selector_->select(request);
+#endif
+        size_t count = 0;
+        for (auto vertex : model->vertices()) {
+            const auto id = vertex.idx();
+            const bool bit = id < request.points->source_count() &&
+                (words[id >> 5] & (1u << (id & 31))) != 0;
+            selected[vertex] = bit;
+            if (bit)
+                ++count;
+        }
+        LOG(INFO) << "current selection: " << count << " points";
+    }
+
+#if 0
+    // Archived CPU implementations of the region-selection overloads above. They
+    // projected every point on the CPU and are kept here only for reference. GPU
+    // selection (transform feedback on OpenGL, a compute shader on Vulkan) produces
+    // the same through-selection and now handles both backends.
     void PointCloudPicker::pick_vertices(PointCloud *model, const Rect& rect, bool deselect) {
         const int win_width = camera()->screenWidth(), win_height = camera()->screenHeight();
         if (!model || win_width < 2 || win_height < 2)
@@ -269,7 +336,6 @@ namespace easy3d {
         auto count = std::count(select.begin(), select.end(), true);
         LOG(INFO) << "current selection: " << count << " points";
     }
-
 #endif
 
 }

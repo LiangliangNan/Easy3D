@@ -50,10 +50,13 @@ struct PointSelector::Points:graphics::PointData {
     Points(uint32_t count):PointData({}, {}, count) {}
     std::weak_ptr<Drawable> owner;
     unsigned long long revision=0;
-    GLuint positions=0,mask=0,mask_texture=0;
+    // positions is a texture-buffer view over either the rendering VBO or the
+    // owned_positions copy uploaded for a model without rendering buffers.
+    GLuint positions=0,mask=0,mask_texture=0,owned_positions=0;
     void release() {
         glDeleteTextures(1,&positions);glDeleteTextures(1,&mask_texture);glDeleteBuffers(1,&mask);
-        positions=mask=mask_texture=0;
+        if(owned_positions) glDeleteBuffers(1,&owned_positions);
+        positions=mask=mask_texture=owned_positions=0;
     }
 };
 PointSelector::~PointSelector() {
@@ -62,7 +65,15 @@ PointSelector::~PointSelector() {
     glDeleteVertexArrays(1,&vao_);glDeleteBuffers(1,&input_);glDeleteBuffers(1,&output_);
     glDeleteBuffers(1,&polygon_);glDeleteTextures(1,&polygon_texture_);
 }
-std::shared_ptr<const graphics::PointData> PointSelector::points(const std::shared_ptr<Drawable>& drawable,unsigned long long revision) {
+std::shared_ptr<const graphics::PointData> PointSelector::points(const std::shared_ptr<Drawable>& drawable) {
+    if(!drawable || drawable->type()!=Drawable::DT_POINTS)
+        throw std::invalid_argument("point selection requires a point drawable");
+    // Extraction and buffer upload are normally lazy. Selection needs the actual
+    // VBO now, and reads the revision afterwards so a refresh creates a new snapshot.
+    if(drawable->update_needed_ || (!drawable->vertex_buffer_ && (drawable->model_ || drawable->update_func_))) {
+        drawable->update_buffers_internal();drawable->update_needed_=false;
+    }
+    const unsigned long long revision=drawable->point_revision_;
     State state;
     for(auto i=points_.begin();i!=points_.end();) {
         if((*i)->owner.lock()==drawable && (*i)->revision==revision) return *i;
@@ -71,6 +82,8 @@ std::shared_ptr<const graphics::PointData> PointSelector::points(const std::shar
     GLint limit=0;glGetIntegerv(GL_MAX_TEXTURE_BUFFER_SIZE,&limit);
     if(drawable->num_vertices()>size_t(limit)/3 || drawable->num_vertices()>size_t(INT32_MAX))
         throw std::invalid_argument("point positions exceed OpenGL texture-buffer range");
+    if(drawable->num_vertices() && !drawable->vertex_buffer())
+        throw std::invalid_argument("point drawable has no vertex buffer");
     auto result=std::make_shared<Points>(uint32_t(drawable->num_vertices()));
     result->owner=drawable;result->revision=revision;
     if(!result->source_count()) {points_.push_back(result);return result;}
@@ -94,11 +107,42 @@ std::shared_ptr<const graphics::PointData> PointSelector::points(const std::shar
     points_.push_back(result);
     return result;
 }
+std::shared_ptr<const graphics::PointData> PointSelector::points(std::shared_ptr<const graphics::PointData> data) {
+    if(!data) throw std::invalid_argument("point selection requires point data");
+    const uint32_t count=data->source_count();
+    // The word shader indexes positions by source slot, so a standalone snapshot
+    // must provide exactly one position per slot. Unused slots can stay NaN.
+    if(data->positions().size()!=size_t(count))
+        throw std::invalid_argument("standalone point selection needs one position per source slot");
+    State state;
+    for(auto i=points_.begin();i!=points_.end();) {
+        if(i->use_count()==1) {(*i)->release();i=points_.erase(i);} else ++i;
+    }
+    GLint limit=0;glGetIntegerv(GL_MAX_TEXTURE_BUFFER_SIZE,&limit);
+    if(size_t(count)>size_t(limit)/3 || size_t(count)>size_t(INT32_MAX))
+        throw std::invalid_argument("point positions exceed OpenGL texture-buffer range");
+    auto result=std::make_shared<Points>(count);
+    if(!count) {points_.push_back(result);return result;}
+    glGenBuffers(1,&result->owned_positions);
+    glBindBuffer(GL_ARRAY_BUFFER,result->owned_positions);
+    glBufferData(GL_ARRAY_BUFFER,data->positions().size()*sizeof(vec3),data->positions().data(),GL_STATIC_DRAW);
+    texture_buffer(result->positions,result->owned_positions,GL_R32F,0);
+    std::vector<uint32_t> mask((size_t(count)+31)/32,0);
+    for(auto id:data->source_ids()) mask[id>>5]|=1u<<(id&31);
+    glGenBuffers(1,&result->mask);glBindBuffer(GL_TEXTURE_BUFFER,result->mask);
+    glBufferData(GL_TEXTURE_BUFFER,mask.size()*sizeof(uint32_t),mask.data(),GL_STATIC_DRAW);
+    texture_buffer(result->mask_texture,result->mask,GL_R32UI,2);
+    points_.push_back(result);
+    return result;
+}
 std::vector<uint32_t> PointSelector::select(const graphics::PointSelectionRequest& request) {
     State state;
     auto source=std::dynamic_pointer_cast<const Points>(request.points);
     if(!source || std::find(points_.begin(),points_.end(),source)==points_.end())
         throw std::invalid_argument("OpenGL selection requires this viewer's point resource");
+    // Transform feedback runs the vertex shader without rasterizing. Drawing one
+    // vertex per output word lets each invocation read 32 source points, test them,
+    // and write the packed result word, so only the mask returns to the CPU.
     if(!request.width || !request.height) throw std::invalid_argument("selection requires positive framebuffer dimensions");
     const size_t count=(size_t(source->source_count())+31)/32;
     auto words=request.words;

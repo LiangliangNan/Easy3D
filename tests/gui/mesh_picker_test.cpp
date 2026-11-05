@@ -69,7 +69,7 @@ void math_tests() {
     mesh.set_manipulator(std::make_shared<Manipulator>(&mesh));mesh.manipulator()->frame()->translate(vec3(100,0,0));
     require(picker.pick_faces(&mesh,Rect(0,399,0,299)).empty(),"region selection ignored the model transform");
 }
-void gpu_tests() {
+void rendered_tests() {
     Viewer viewer("Mesh picker",161,121,1,false,false);
     viewer.set_usage("");
     auto mesh=std::make_shared<SurfaceMesh>();
@@ -227,6 +227,6 @@ void gpu_tests() {
 #endif
 }
 int main(int argc,char**) {return test::run("GUI mesh picking and geometric regions",[&]{
-    if(argc>1){gpu_tests();return;}
+    if(argc>1){rendered_tests();return;}
     math_tests();
 });}

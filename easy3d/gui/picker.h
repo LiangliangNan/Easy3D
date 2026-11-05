@@ -41,11 +41,41 @@ namespace easy3d {
     namespace vulkan { class DrawableRenderer; }
 
     /**
-     * \brief Base class for picking mechanism.
+     * \brief Base class for the camera-based picking tools.
      * \class Picker easy3d/gui/picker.h
-     * \details The camera is borrowed and must outlive the picker. Picking is
-     *      implemented by the backend rasterizer. OpenGL GPU queries and resource
-     *      destruction require the owning context to be current.
+     * \details A picker answers "what is under the cursor?" with the same rendering
+     *      pipeline that produced the visible image, instead of tracing rays
+     *      against CPU geometry. Picking therefore follows what the user actually
+     *      sees: drawable and model visibility, model transforms, clipping planes,
+     *      point impostors, and indexed draws.
+     *
+     *      Two techniques are used, depending on the question:
+     *
+     *      - **Single-element picking (rasterization).** The drawable is rendered
+     *        off screen once more, but instead of colors each triangle or point
+     *        writes an identifier into the color target (a "primitive ID buffer").
+     *        The depth test stays enabled, so the ID stored at a pixel belongs to
+     *        the nearest visible primitive. Reading and decoding that single pixel
+     *        yields the picked element; the CPU never traverses the geometry.
+     *
+     *      - **Region selection (parallel projection).** For a rectangle or lasso,
+     *        every point or vertex is transformed to screen space independently.
+     *        That work is embarrassingly parallel, so the graphics device evaluates
+     *        all elements at once and only a compact result (a packed bitmask) is
+     *        read back.
+     *
+     *      Each technique has one implementation per backend:
+     *
+     *      - OpenGL renders into a private FramebufferObject with selection
+     *        shaders, reads the pixel with glReadPixels, and evaluates regions in a
+     *        vertex shader with transform feedback (each invocation owns one 32-bit
+     *        selection word, avoiding atomics on OpenGL 3.2).
+     *      - Vulkan delegates to the backend-neutral graphics::RenderDevice, which
+     *        re-submits the draw command and samples the ID/depth pixel, and runs
+     *        region selection in a compute shader.
+     *
+     *      The camera is borrowed and must outlive the picker. OpenGL GPU queries
+     *      and resource destruction require the owning context to be current.
      * \see ModelPicker, PointCloudPicker, SurfaceMeshPicker
      */
     class Picker {

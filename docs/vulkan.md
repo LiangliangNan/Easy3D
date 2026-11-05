@@ -5468,3 +5468,50 @@ pass 13/13 (Vulkan) and 8/8 (OpenGL). `git diff --check` is clean. The batch-8
 "Vulkan uses geometric CPU picking" and batch-10 "OpenGL explicitly reports
 UINT32_MAX for unavailable primitive IDs" statements are superseded for mesh
 triangles; OpenGL capture and point/line picks still report `UINT32_MAX`.
+
+### 2026-11-05 — W10 batch 20: GPU point-cloud region selection and picking docs
+
+`PointCloudPicker::pick_vertices()` (rectangle and lasso) is now GPU-only on
+both backends, matching the existing single-pixel `pick_vertex()`. The previous
+CPU implementations are kept under `#if 0` in `picker_point_cloud.cpp` only as
+an archive of the reference semantics; no build takes that path. Result
+semantics are unchanged: renderer/drawable visibility gates the query, the
+model or drawable transform is applied, world-space clipping planes are
+converted to the local frame, indexed drawables select through their source
+slots, `v:select` is used as the input mask and written back, and the selection
+count is logged.
+
+On Vulkan the request is evaluated by `RenderDevice::select_points()`, which
+fills the existing compute shader with the drawable's point storage buffers.
+On OpenGL it uses `opengl::PointSelector`: a vertex shader runs under transform
+feedback with one invocation per 32-bit result word. That invocation reads the
+32 source positions from a texture-buffer view of the rendering VBO (no CPU
+upload), projects and clips them, applies the even-odd polygon test in top-left
+pixel coordinates, and writes the packed word; only the active-word mask is
+read back with `glGetBufferSubData()`. Region selection therefore needs no
+`Viewer`, only a current context, and the picker owns its selector. The picker
+wraps the pass in `opengl::QueryState`, because the selector saves transform
+feedback and texture state but deliberately not program/VAO/array-buffer
+bindings.
+
+A point cloud without rendering buffers (detached model) still supports region
+selection. The picker builds a synthetic `graphics::PointData` with one
+position per source slot (NaN for deleted slots), uploads it to a temporary GPU
+buffer, and runs the same selection shader; both shaders reject non-finite clip
+coordinates, so deleted slots can never be selected. Lazy buffer extraction is
+triggered from `PointSelector::points(drawable)` and the drawable revision is
+read after the refresh, so a new snapshot is created whenever the VBO changes;
+`Drawable` grants the selector friendship for that access.
+
+Naming cleanup: `SurfaceMeshPicker::pick_face_gpu` is now `pick_face_impl` and
+the test entry `gpu_tests()` is now `rendered_tests()` (the `--gpu` CTest
+argument is unchanged for CMake compatibility). The picking documentation now
+explains the rasterized primitive-ID query and the parallel region projection
+for readers without a graphics background, and describes the OpenGL
+framebuffer/transform-feedback and Vulkan `RenderDevice` implementations in
+`picker.h`, both picker headers and sources, `opengl/point_selection.cpp`, and
+the two `Viewer::pick()` bodies.
+
+All 127 MoltenVK tests and all 91 OpenGL tests pass on this Mac at `-j2`
+(2026-11-05). The focused picking/selection suites pass 11/11 (Vulkan) and 7/7
+(OpenGL). `git diff --check` is clean.

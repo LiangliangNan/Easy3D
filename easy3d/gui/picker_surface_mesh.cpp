@@ -91,7 +91,7 @@ SurfaceMesh::Face SurfaceMeshPicker::pick_face(SurfaceMesh* model,int x,int y) {
 #ifdef EASY3D_HAS_VULKAN
     if(!drawable->has_cpu_buffers()) return picked_face_;
 #endif
-    picked_face_=pick_face_gpu(model,drawable,x,y);
+    picked_face_=pick_face_impl(model,drawable,x,y);
     if(picked_face_.is_valid()) {
         picked_model_=model;
         picked_x_=x;picked_y_=y;
@@ -188,13 +188,17 @@ std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_faces(SurfaceMesh* model,
     return result;
 }
 #ifndef EASY3D_HAS_VULKAN
-    SurfaceMesh::Face SurfaceMeshPicker::pick_face_gpu(SurfaceMesh* model,
+    SurfaceMesh::Face SurfaceMeshPicker::pick_face_impl(SurfaceMesh* model,
             const std::shared_ptr<TrianglesDrawable>& drawable,int x,int y) {
         if(!drawable || !drawable->is_visible()) return SurfaceMesh::Face();
         GLint viewport[4];
         glGetIntegerv(GL_VIEWPORT,viewport);
         const int width=viewport[2],height=viewport[3];
         if(width<=0 || height<=0) return SurfaceMesh::Face();
+        // Outside-in rendering test: draw only the faces, but write triangle IDs
+        // instead of colors. The depth test keeps the nearest triangle per pixel;
+        // reading one pixel tells us which face the cursor sees. Clipping is applied
+        // by the same shader, so invisible faces can never win the depth test.
         const std::string name="selection/selection_single_primitive";
         auto* program=ShaderManager::get_program(name);
         if(!program)
@@ -223,6 +227,7 @@ std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_faces(SurfaceMesh* model,
         const bool depth_ok=fbo_->read_depth(depth,gl_x,gl_y);
         fbo_->release();
         if(!color_ok || !depth_ok || depth<0 || depth>=1) return SurfaceMesh::Face();
+        // White is the cleared "nothing drawn here" value; ID 0 is a valid triangle.
         const int id=color::encode(c[0],c[1],c[2],c[3]);
         if(id<0) return SurfaceMesh::Face();
         const SurfaceMesh::Face face=face_from_primitive(model,std::uint32_t(id));
@@ -230,11 +235,13 @@ std::vector<SurfaceMesh::Face> SurfaceMeshPicker::pick_faces(SurfaceMesh* model,
         return face;
     }
 #else
-    SurfaceMesh::Face SurfaceMeshPicker::pick_face_gpu(SurfaceMesh* model,
+    SurfaceMesh::Face SurfaceMeshPicker::pick_face_impl(SurfaceMesh* model,
             const std::shared_ptr<TrianglesDrawable>& drawable,int x,int y) {
         if(!drawable || !drawable->has_cpu_buffers()) return SurfaceMesh::Face();
         const int width=camera()->screenWidth(),height=camera()->screenHeight();
         if(width<=0 || height<=0) return SurfaceMesh::Face();
+        // The backend RenderDevice repeats the same rasterized ID/depth pass and
+        // returns the object ID, primitive ID, and depth of the sampled pixel.
         const graphics::DrawCommand command=draw_command(drawable,0);
         const auto sample=render_device().sample_pixel(std::uint32_t(width),std::uint32_t(height),
                                                        {command},std::uint32_t(x),std::uint32_t(y));

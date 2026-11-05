@@ -303,6 +303,9 @@ std::vector<vec3> Viewer::scan_visible_points(unsigned samples) const {
 Viewer::PickResult Viewer::pick(int x,int y) const {
     PickResult result;
     if (x<0 || y<0 || x>=framebuffer_width() || y>=framebuffer_height()) return result;
+    // One backend draw re-renders the visible scene with object/primitive IDs and
+    // depth. Sampling the cursor pixel therefore names the nearest drawable (and
+    // its triangle for meshes) without any CPU ray casting.
     // Keep commands and source mapping together for this exact synchronous draw.
     std::vector<DrawSource> sources;
     const int width = framebuffer_width(), height = framebuffer_height();
@@ -3167,11 +3170,8 @@ std::shared_ptr<const graphics::PointData> Viewer::point_resource(Drawable* draw
         if(running) throw std::logic_error("selection cannot interrupt active transform feedback");
     }
     QueryState state;state.prepare(framebuffer_width(),framebuffer_height());
-    if(drawable->update_needed_ || (!drawable->vertex_buffer_ && (drawable->model_ || drawable->update_func_))) {
-        drawable->update_buffers_internal();drawable->update_needed_=false;
-    }
     if(!point_selector_) point_selector_.reset(new opengl::PointSelector);
-    return point_selector_->points(owner,drawable->point_revision_);
+    return point_selector_->points(owner);
 }
 std::vector<std::uint32_t> Viewer::select_points(const graphics::PointSelectionRequest& request) const {
     QueryContext context(window_);
@@ -3270,6 +3270,12 @@ Viewer::PickResult Viewer::pick(int x, int y) const {
     PickResult result;
     const int fw=framebuffer_width(), fh=framebuffer_height();
     if (x<0 || y<0 || x>=fw || y>=fh) return result;
+    // Two offscreen passes share one framebuffer:
+    //  1. Draw each visible drawable with its normal shaders and keep the nearest
+    //     depth at the cursor. This identifies the model/drawable actually seen.
+    //  2. For a triangle drawable, redraw it with primitive IDs as colors and read
+    //     the same pixel to recover the triangle. Both passes use the same
+    //     transform and clipping, so the depth winner and the ID agree.
     QueryContext context(window_);
     QueryState state;
     Camera snapshot(*camera());
