@@ -95,9 +95,9 @@ void math_tests() {
     require(picker.pick_faces(&mesh,degenerate).empty(),"degenerate region selected faces");
     region[0].x=std::numeric_limits<float>::quiet_NaN();require(picker.pick_faces(&mesh,region).empty(),"nonfinite region selected faces");
     // Completely beyond the camera's far plane must not be selected in projection.
-    SurfaceMesh far;face(far,{vec3(-1,-1,-10000),vec3(1,-1,-10000),vec3(0,1,-10000)});
-    require(picker.pick_faces(&far,Rect(0,399,0,299)).empty(),"region selection ignored the camera frustum");
-    require(!picker.pick_face(&far,x,y).is_valid(),"ray selection extended beyond the camera frustum");
+    SurfaceMesh far_plane;face(far_plane,{vec3(-1,-1,-10000),vec3(1,-1,-10000),vec3(0,1,-10000)});
+    require(picker.pick_faces(&far_plane,Rect(0,399,0,299)).empty(),"region selection ignored the camera frustum");
+    require(!picker.pick_face(&far_plane,x,y).is_valid(),"ray selection extended beyond the camera frustum");
     mesh.delete_face(front);require(!picker.pick_face(&mesh,int(moved.x),int(moved.y)).is_valid() || picker.picked_face()==rear,"deleted face was selected");
 }
 #ifndef EASY3D_HAS_VULKAN
