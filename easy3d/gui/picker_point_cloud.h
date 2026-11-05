@@ -60,6 +60,9 @@ namespace easy3d {
      *      clipping planes, indexed drawables, and point impostors, and they report
      *      original source vertices even when the drawable references them in a
      *      different order.
+     *      Like all pickers, it acts on the supplied model and never traverses a
+     *      Viewer's scene; use Viewer::pick() to identify the hit drawable first
+     *      (see Picker for the division of work).
      * \note OpenGL picking requires a current OpenGL context. Single picks require
      *      a visible point drawable (the "vertices" drawable created automatically
      *      when a cloud is added to a viewer).

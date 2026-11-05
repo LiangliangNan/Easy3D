@@ -406,11 +406,11 @@ public:
          *      image_height = viewer_height * scaling;
          * \param samples The required number of samples for antialiased rendering (which can be different from
          *      that of the default framebuffer). The default value is 4.
-         * \param back_ground Determines the background color. 0: current color; 1: white; 2: transparent.
+         * \param background Determines the background color. 0: current color; 1: white; 2: transparent.
          * \param expand Expand the frustum to ensure the image aspect ratio.
          * \return true on success and false otherwise.
          */
-        virtual bool snapshot(const std::string& file_name, float scaling = 1.0f, int samples = 4, int back_ground = 1, bool expand = true) const;
+		bool snapshot(const std::string& file_name, float scaling = 1.0f, int samples = 4, int background = 1, bool expand = true) const override;
 
         /**
          * \brief The usage information of the viewer.
@@ -494,6 +494,13 @@ public:
         // Synchronous visible-surface picking, in top-left framebuffer pixels. Returns
         // an empty result for background/outside pixels. Retains source ownership;
         // face indices describe the current mesh, not future topology edits.
+        // This is a whole-scene query rather than a Picker instance: the viewer owns
+        // the models, drawables and device, so it resolves the nearest drawable (and
+        // its triangle) itself. It could reuse the picker classes in principle (it has
+        // a camera and the models), but those query one caller-supplied model each,
+        // and a scene-wide hit must be ordered across all models in one submission.
+        // Pickers therefore refine an already-identified model; clients that manage
+        // their own scene (e.g. Mapple) use them directly.
         PickResult pick(int x, int y) const;
         //@}
 
@@ -540,11 +547,6 @@ public:
 	    // MSAA color does not alter center-sample depth/ID scan semantics. Does not
 	    // modify scene/camera or advance animation; includes every visible drawable.
 	    std::vector<vec3> scan_visible_points(unsigned samples = 1) const;
-	    // Output dimensions round upwards, matching OffScreen. expand chooses
-	    // expansion versus cropping when rounding changes the output aspect ratio.
-	    // Rendering uses a camera copy and leaves the live camera unchanged.
-	    bool render(const std::string& filename, float scaling = 1.0f, int samples = 4,
-	                int back_ground = 1, bool expand = true) const;
 	    const graphics::RenderDevice& device() const;
 	    void set_samples(unsigned samples);
 	    Model* add_model(std::shared_ptr<Model> model, bool create_default_drawables, bool fit_scene);
@@ -621,9 +623,6 @@ public:
         }
         bool read_scene_depth(int x, int y, const Camera& snapshot, float& depth) const override;
         unsigned window_samples() const override { return unsigned(samples()); }
-        bool snapshot_file(const std::string& f, float scale, int samples, int bg, bool expand) const override {
-            return snapshot(f, scale, samples, bg, expand);
-        }
 
 	protected:
 	    GLFWwindow*	window_;
@@ -696,6 +695,12 @@ public:
 	protected:
 	    virtual std::vector<graphics::DrawCommand> draw_commands(const Camera& camera, int width, int height,
 	                                                           std::vector<DrawSource>* sources = nullptr, bool include_hidden_models = false) const;
+	    // Scene commands plus the current annotations and HUD overlays, with overlay
+	    // viewports scaled from the window to the requested output size. Snapshot and
+	    // capture both render through this, so a file frame matches a live capture.
+	    std::vector<graphics::DrawCommand> frame_commands(const Camera& camera, int width, int height,
+	                                                      std::vector<DrawSource>* sources = nullptr,
+	                                                      bool include_hud = true) const;
 	    ivec2 interaction_origin_ = ivec2(0);
 	    // Device-only construction for OffScreen: creates neither a GLFW window nor a surface.
 	    Viewer(int width, int height, const VulkanOptions& options);

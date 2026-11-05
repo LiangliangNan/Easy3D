@@ -29,16 +29,65 @@
 #include <easy3d/renderer/transform.h>
 #include <easy3d/core/matrix.h>
 #include <easy3d/fileio/image_io.h>
+#include <easy3d/util/logging.h>
 #include <cmath>
+#include <limits>
+#include <stdexcept>
 #ifdef EASY3D_HAS_VULKAN
 namespace easy3d {
+// The device has no framebuffer to bind, so the snapshot renders a camera copy
+// offscreen. This mirrors the OpenGL path's camera/projection setup, but uses
+// graphics::RenderDevice::render() instead of an OpenGL framebuffer object.
 bool Viewer::snapshot(const std::string& filename, float scaling, int samples,
-                            int back_ground, bool expand) const {
+                      int back_ground, bool expand) const {
     if (!initialized_) {
         auto* host = const_cast<Viewer*>(this); host->init(); host->initialized_ = true;
     }
     if (window_) { update_camera_path_overlays(); update_interaction_overlays(); }
-    return render(filename, scaling, samples, back_ground, expand);
+    try {
+        if (samples <= 0) throw std::invalid_argument("sample count must be positive");
+        if (!std::isfinite(scaling) || scaling <= 0 || double(framebuffer_width()) * scaling > std::numeric_limits<int>::max() ||
+            double(framebuffer_height()) * scaling > std::numeric_limits<int>::max() || back_ground < 0 || back_ground > 2)
+            throw std::invalid_argument("invalid snapshot scaling/background");
+        Camera copy(*camera());
+        const int w = int(std::ceil(framebuffer_width() * double(scaling))), h = int(std::ceil(framebuffer_height() * double(scaling)));
+        if (w <= 0 || h <= 0) throw std::invalid_argument("scaled snapshot dimensions are zero");
+        copy.setScreenWidthAndHeight(w, h);
+        copy.projectionMatrix(); // resolve resize invalidation before overriding the matrix
+        // Match the OpenGL snapshot: preserve one source frustum dimension,
+        // expanding or cropping the other for the rounded output aspect ratio.
+        const double aspect = double(framebuffer_width()) / framebuffer_height(), output_aspect = double(w) / h;
+        const double near = camera()->zNear(), far = camera()->zFar();
+        float x, y;
+        if (camera()->type() == Camera::PERSPECTIVE) {
+            y = float(near * std::tan(camera()->fieldOfView() * .5));
+            x = float(aspect * y);
+        } else camera()->getOrthoWidthHeight(x, y);
+        if ((expand && output_aspect > aspect) || (!expand && output_aspect < aspect))
+            x = float(output_aspect * y);
+        else y = float(x / output_aspect);
+        copy.set_projection_matrix(camera()->type() == Camera::PERSPECTIVE
+            ? transform::frustum(-x, x, -y, y, float(near), float(far))
+            : transform::ortho(-x, x, -y, y, float(near), float(far)));
+        const vec4 background = back_ground == 0 ? background_color() : back_ground == 1 ? vec4(1, 1, 1, 1) : vec4(0, 0, 0, 0);
+        auto frame = const_cast<graphics::RenderDevice&>(device()).render(
+            uint32_t(w), uint32_t(h), frame_commands(copy, w, h, nullptr, snapshot_hud_),
+            background, unsigned(samples));
+        if (back_ground == 2) {
+            // Alpha overlays and MSAA coverage against transparent black produce
+            // premultiplied colors, including single-sample text. PNG stores straight alpha.
+            for (size_t i = 0; i < frame.rgba.size(); i += 4) {
+                const unsigned alpha = frame.rgba[i + 3];
+                if (alpha && alpha < 255)
+                    for (unsigned c = 0; c < 3; ++c)
+                        frame.rgba[i + c] = static_cast<unsigned char>(std::min(255u,
+                            (unsigned(frame.rgba[i + c]) * 255 + alpha / 2) / alpha));
+            }
+        }
+        return ImageIO::save(filename, frame.rgba, w, h, 4, false);
+    } catch (const std::exception& e) {
+        LOG(ERROR) << "Vulkan snapshot failed: " << e.what(); return false;
+    }
 }
 }
 #else

@@ -50,6 +50,9 @@ namespace easy3d {
      *      resolution. Region selection remains geometric through-selection: all
      *      original face vertices must be inside the region, camera frustum and
      *      clipping planes.
+     *      Like all pickers, it acts on the supplied model and never traverses a
+     *      Viewer's scene; use Viewer::pick() to identify the hit drawable first
+     *      (see Picker for the division of work).
      * \see Picker, ModelPicker, PointCloudPicker
      */
     class SurfaceMeshPicker : public Picker {

@@ -12,13 +12,7 @@ ViewerBase::~ViewerBase() = default;
 void ViewerBase::poll_events() {
     detail::GlfwRuntime::poll_events();
 }
-bool ViewerBase::snapshot(const std::string& filename, float scaling, int sample_count, int background, bool expand) const {
-    if (!std::isfinite(scaling) || scaling <= 0 || sample_count <= 0 || sample_count > 64 ||
-        (sample_count & (sample_count - 1)) || background < 0 || background > 2 ||
-        double(framebuffer_width()) * scaling > std::numeric_limits<int>::max() ||
-        double(framebuffer_height()) * scaling > std::numeric_limits<int>::max()) return false;
-    return snapshot_file(filename, scaling, sample_count, background, expand);
-}
+
 namespace {
 void finite_coordinates(const vec3 &point) {
     for (unsigned i = 0; i < 3; ++i)

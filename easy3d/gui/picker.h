@@ -74,9 +74,24 @@ namespace easy3d {
      *        re-submits the draw command and samples the ID/depth pixel, and runs
      *        region selection in a compute shader.
      *
+     *      Pickers are scene-independent tools: they take a borrowed Camera and a
+     *      caller-supplied model or drawable, and own their offscreen resources.
+     *      They do not traverse a Viewer's scene. Viewer::pick() is the scene-wide
+     *      counterpart: because the viewer owns the models, drawables and device, it
+     *      resolves the nearest model/drawable/primitive in one backend submission
+     *      and returns it with the depth and world position. A picker then refines a
+     *      given model to a face, vertex or point.
+     *      In principle a Viewer could instantiate these pickers (it has both a
+     *      camera and the models), but a whole-scene pick must order candidates from
+     *      every model in a single depth-aware submission; per-model picker queries
+     *      would need an extra arbitration pass. Client applications such as Mapple
+     *      use pickers directly because they keep their own scene; a caller that
+     *      already has a Viewer should prefer Viewer::pick() and use a picker only
+     *      when it needs the model-level element.
+     *
      *      The camera is borrowed and must outlive the picker. OpenGL GPU queries
      *      and resource destruction require the owning context to be current.
-     * \see ModelPicker, PointCloudPicker, SurfaceMeshPicker
+     * \see ModelPicker, PointCloudPicker, SurfaceMeshPicker, Viewer::pick()
      */
     class Picker {
     public:

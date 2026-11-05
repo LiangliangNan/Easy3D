@@ -470,6 +470,16 @@ float borderPCFTexture(sampler2DShadow tex, vec3 uvz)
 }
 
 
+// Rotate the sparse Poisson kernels per pixel. A fixed pattern leaves visible
+// structure in large penumbrae; a per-pixel rotation turns it into low-level
+// noise that the 64/128 taps average out.
+vec2 rotateOffset(vec2 offset)
+{
+	float angle = 6.2831853 * fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
+	float s = sin(angle), c = cos(angle);
+	return vec2(c * offset.x - s * offset.y, s * offset.x + c * offset.y);
+}
+
 // Using similar triangles from the surface point to the area light
 vec2 searchRegionRadiusUV(float zWorld)
 {
@@ -539,7 +549,7 @@ void findBlocker(
 	{
 		maxBlockers = 25.0;
 		for (int i = 0; i < 25; ++i) {
-			vec2 offset = Poisson25[i] * searchRadiusUV;
+			vec2 offset = rotateOffset(Poisson25[i]) * searchRadiusUV;
 			float shadowMapDepth = borderDepthTexture(shadowMapDepth, uv + offset);
 			float z = biasedZ(z0, dz_duv, offset);
 			if (shadowMapDepth < z) {
@@ -554,7 +564,7 @@ void findBlocker(
 	{
 		maxBlockers = 32.0;
 		for (int i = 0; i < 32; ++i) {
-			vec2 offset = Poisson32[i] * searchRadiusUV;
+			vec2 offset = rotateOffset(Poisson32[i]) * searchRadiusUV;
 			float shadowMapDepth = borderDepthTexture(shadowMapDepth, uv + offset);
 			float z = biasedZ(z0, dz_duv, offset);
 			if (shadowMapDepth < z) {
@@ -569,7 +579,7 @@ void findBlocker(
 	{
 		maxBlockers = 100.0;
 		for (int i = 0; i < 100; ++i) {
-			vec2 offset = Poisson100[i] * searchRadiusUV;
+			vec2 offset = rotateOffset(Poisson100[i]) * searchRadiusUV;
 			float shadowMapDepth = borderDepthTexture(shadowMapDepth, uv + offset);
 			float z = biasedZ(z0, dz_duv, offset);
 			if (shadowMapDepth < z) {
@@ -584,7 +594,7 @@ void findBlocker(
 	{
 		maxBlockers = 64.0;
 		for (int i = 0; i < 64; ++i) {
-			vec2 offset = Poisson64[i] * searchRadiusUV;
+			vec2 offset = rotateOffset(Poisson64[i]) * searchRadiusUV;
 			float shadowMapDepth = borderDepthTexture(shadowMapDepth, uv + offset);
 			float z = biasedZ(z0, dz_duv, offset);
 			if (shadowMapDepth < z) {
@@ -625,7 +635,7 @@ float pcfFilter(vec2 uv, float z0, vec2 dz_duv, vec2 filterRadiusUV)
 	case POISSON_25_25:
 	{
 		for (int i = 0; i < 25; ++i) {
-			vec2 offset = Poisson25[i] * filterRadiusUV;
+			vec2 offset = rotateOffset(Poisson25[i]) * filterRadiusUV;
 			float z = biasedZ(z0, dz_duv, offset);
 			sum += borderPCFTexture(shadowMapPCF, vec3(uv + offset, z));
 		}
@@ -635,7 +645,7 @@ float pcfFilter(vec2 uv, float z0, vec2 dz_duv, vec2 filterRadiusUV)
 	case POISSON_32_64:
 	{
 		for (int i = 0; i < 64; ++i) {
-			vec2 offset = Poisson64[i] * filterRadiusUV;
+			vec2 offset = rotateOffset(Poisson64[i]) * filterRadiusUV;
 			float z = biasedZ(z0, dz_duv, offset);
 			sum += borderPCFTexture(shadowMapPCF, vec3(uv + offset, z));
 		}
@@ -645,7 +655,7 @@ float pcfFilter(vec2 uv, float z0, vec2 dz_duv, vec2 filterRadiusUV)
 	case POISSON_100_100:
 	{
 		for (int i = 0; i < 100; ++i) {
-			vec2 offset = Poisson100[i] * filterRadiusUV;
+			vec2 offset = rotateOffset(Poisson100[i]) * filterRadiusUV;
 			float z = biasedZ(z0, dz_duv, offset);
 			sum += borderPCFTexture(shadowMapPCF, vec3(uv + offset, z));
 		}
@@ -655,7 +665,7 @@ float pcfFilter(vec2 uv, float z0, vec2 dz_duv, vec2 filterRadiusUV)
 	case POISSON_64_128:
 	{
 		for (int i = 0; i < 128; ++i) {
-			vec2 offset = Poisson128[i] * filterRadiusUV;
+			vec2 offset = rotateOffset(Poisson128[i]) * filterRadiusUV;
 			float z = biasedZ(z0, dz_duv, offset);
 			sum += borderPCFTexture(shadowMapPCF, vec3(uv + offset, z));
 		}
@@ -683,11 +693,14 @@ float pcfFilter(vec2 uv, float z0, vec2 dz_duv, vec2 filterRadiusUV)
 
 float pcssShadow(vec2 uv, float z, vec2 dz_duv, float zEye)
 {
+	// A radius below one shadow texel cannot be resolved and only adds noise.
+	vec2 texelUV = 1.0 / vec2(textureSize(shadowMapDepth, 0));
+
 	// ------------------------
 	// STEP 1: blocker search
 	// ------------------------
 	float accumBlockerDepth, numBlockers, maxBlockers;
-	vec2 searchRadiusUV = searchRegionRadiusUV(zEye);
+	vec2 searchRadiusUV = max(searchRegionRadiusUV(zEye), texelUV);
 	findBlocker(accumBlockerDepth, numBlockers, maxBlockers, uv, z, dz_duv, searchRadiusUV);
 
 	// Early out if not in the penumbra
@@ -703,7 +716,7 @@ float pcssShadow(vec2 uv, float z, vec2 dz_duv, float zEye)
 	float avgBlockerDepth = accumBlockerDepth / numBlockers;
 	float avgBlockerDepthWorld = zClipToEye(avgBlockerDepth);
 	vec2 penumbraRadius = penumbraRadiusUV(zEye, avgBlockerDepthWorld);
-	vec2 filterRadius = projectToLightUV(penumbraRadius, zEye);
+	vec2 filterRadius = max(projectToLightUV(penumbraRadius, zEye), texelUV);
 
 	// ------------------------
 	// STEP 3: filtering

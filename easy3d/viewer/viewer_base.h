@@ -80,9 +80,8 @@ public:
     virtual bool save() const = 0;
     virtual bool snapshot() const = 0;
     // Live camera/visibility and animation remain unchanged by file snapshots.
-    bool snapshot(const std::string& filename, float scaling = 1.0f, int samples = 4,
-                  int background = 1, bool expand = true) const;
-    virtual void set_usage(const std::string& manual = "default", const std::string& hint = "") = 0;
+    virtual bool snapshot(const std::string& file_name, float scaling = 1.0f, int samples = 4, int background = 1, bool expand = true) const = 0;
+    virtual void set_usage(const std::string& manual, const std::string& hint) = 0;
     using AnimationFunction = std::function<bool(ViewerBase*)>;
     virtual void set_animation_callback(const AnimationFunction&) = 0;
     virtual void set_animation(bool) = 0;
@@ -108,7 +107,6 @@ protected:
     virtual void bind_command(const Function&, Model*, Key, Modifier) = 0;
     virtual unsigned window_samples() const = 0;
     virtual bool read_scene_depth(int x, int y, const Camera& snapshot, float& depth) const = 0;
-    virtual bool snapshot_file(const std::string&, float, int, int, bool) const = 0;
 private:
     std::shared_ptr<ViewerCallbacks> callbacks_;
     int callback_button_ = -1;

@@ -90,39 +90,10 @@ struct Viewer::Impl {
         return shared_clipping_planes;
     }
 
-    std::vector<graphics::DrawCommand> commands(const Camera& cam, int width, int height,
-                                                std::vector<DrawSource>* sources = nullptr, bool include_hud = true) const {
-        auto commands = owner.draw_commands(cam,width,height,sources);
-        // Recorded overlay viewports use the host framebuffer's pixels. Keep
-        // their NDC transforms and scale the clip rectangles for file output.
-        const int fw=owner.framebuffer_width(), fh=owner.framebuffer_height();
-        const auto append_overlays=[&](const std::vector<graphics::DrawCommand>& source) {
-            for (auto command:source) {
-                auto& v=command.viewport;
-                if (v.z>0 && v.w>0 && fw>0 && fh>0 && (width!=fw || height!=fh)) {
-                    const int x=int(std::lround(double(v.x)*width/fw));
-                    const int y=int(std::lround(double(v.y)*height/fh));
-                    const int right=int(std::lround(double(v.x+v.z)*width/fw));
-                    const int bottom=int(std::lround(double(v.y+v.w)*height/fh));
-                    if (right<=x || bottom<=y) continue;
-                    v=ivec4(x,y,right-x,bottom-y);
-                }
-                commands.push_back(std::move(command));
-            }
-        };
-        append_overlays(viewer_annotations);
-        if (!overlays_foreground) append_overlays(overlays);
-        if (include_hud) {
-            append_overlays(viewer_3d_overlays);
-            append_overlays(viewer_overlays);
-        }
-        if (overlays_foreground) append_overlays(overlays);
-        return commands;
-    }
     graphics::FrameImage capture(const Camera& cam, const vec4& bg, unsigned samples = 1,
                                  int width = 0, int height = 0, bool include_hud = true) const {
         if (!width) width = cam.screenWidth(); if (!height) height = cam.screenHeight();
-        return device->render(uint32_t(width), uint32_t(height), commands(cam,width,height,nullptr,include_hud), bg, samples);
+        return device->render(uint32_t(width), uint32_t(height), owner.frame_commands(cam, width, height, nullptr, include_hud), bg, samples);
     }
 };
 std::vector<graphics::DrawCommand> Viewer::draw_commands(const Camera& cam, int, int,
@@ -163,6 +134,35 @@ std::vector<graphics::DrawCommand> Viewer::draw_commands(const Camera& cam, int,
             command.object_id = UINT32_MAX; commands.push_back(std::move(command));
         }
         return commands;
+}
+std::vector<graphics::DrawCommand> Viewer::frame_commands(const Camera& cam, int width, int height,
+                                                          std::vector<DrawSource>* sources, bool include_hud) const {
+    auto commands = draw_commands(cam,width,height,sources);
+    // Recorded overlay viewports use the host framebuffer's pixels. Keep
+    // their NDC transforms and scale the clip rectangles for file output.
+    const int fw=framebuffer_width(), fh=framebuffer_height();
+    const auto append_overlays=[&](const std::vector<graphics::DrawCommand>& source) {
+        for (auto command:source) {
+            auto& v=command.viewport;
+            if (v.z>0 && v.w>0 && fw>0 && fh>0 && (width!=fw || height!=fh)) {
+                const int x=int(std::lround(double(v.x)*width/fw));
+                const int y=int(std::lround(double(v.y)*height/fh));
+                const int right=int(std::lround(double(v.x+v.z)*width/fw));
+                const int bottom=int(std::lround(double(v.y+v.w)*height/fh));
+                if (right<=x || bottom<=y) continue;
+                v=ivec4(x,y,right-x,bottom-y);
+            }
+            commands.push_back(std::move(command));
+        }
+    };
+    append_overlays(impl_->viewer_annotations);
+    if (!impl_->overlays_foreground) append_overlays(impl_->overlays);
+    if (include_hud) {
+        append_overlays(impl_->viewer_3d_overlays);
+        append_overlays(impl_->viewer_overlays);
+    }
+    if (impl_->overlays_foreground) append_overlays(impl_->overlays);
+    return commands;
 }
 Viewer::Viewer(int width, int height, const VulkanOptions& options)
     : window_(nullptr), width_(width), height_(height), camera_(new Camera),
@@ -307,6 +307,10 @@ Viewer::PickResult Viewer::pick(int x,int y) const {
     // depth. Sampling the cursor pixel therefore names the nearest drawable (and
     // its triangle for meshes) without any CPU ray casting.
     // Keep commands and source mapping together for this exact synchronous draw.
+    // This whole-scene query is intentionally not delegated to the Picker classes:
+    // they operate on one caller-supplied model with a borrowed camera and own
+    // their offscreen resources, while the viewer already owns every model,
+    // drawable and the device, so it can answer in a single submission.
     std::vector<DrawSource> sources;
     const int width = framebuffer_width(), height = framebuffer_height();
     const auto commands = draw_commands(*camera(), width, height, &sources);
@@ -344,49 +348,7 @@ std::shared_ptr<const graphics::PointData> Viewer::point_resource(Drawable* draw
         return impl_->drawable_renderer.command(d,0,*camera(),impl_->clipping_planes).geometry->point_data();
     throw std::invalid_argument("point drawable does not belong to this viewer");
 }
-bool Viewer::render(const std::string& filename, float scaling, int samples, int bg, bool expand) const {
-    try {
-        if (samples <= 0) throw std::invalid_argument("sample count must be positive");
-        if (!std::isfinite(scaling) || scaling <= 0 || double(framebuffer_width()) * scaling > std::numeric_limits<int>::max() ||
-            double(framebuffer_height()) * scaling > std::numeric_limits<int>::max() || bg < 0 || bg > 2)
-            throw std::invalid_argument("invalid snapshot scaling/background");
-        Camera copy(*camera());
-        const int w = int(std::ceil(framebuffer_width() * double(scaling))), h = int(std::ceil(framebuffer_height() * double(scaling)));
-        if (w <= 0 || h <= 0) throw std::invalid_argument("scaled snapshot dimensions are zero");
-        copy.setScreenWidthAndHeight(w, h);
-        copy.projectionMatrix(); // resolve resize invalidation before overriding the matrix
-        // Match snapshot.cpp: preserve one source frustum dimension, expanding
-        // or cropping the other to accommodate the rounded output aspect ratio.
-        const double aspect = double(framebuffer_width()) / framebuffer_height(), output_aspect = double(w) / h;
-        const double near = camera()->zNear(), far = camera()->zFar();
-        float x, y;
-        if (camera()->type() == Camera::PERSPECTIVE) {
-            y = float(near * std::tan(camera()->fieldOfView() * .5));
-            x = float(aspect * y);
-        } else camera()->getOrthoWidthHeight(x, y);
-        if ((expand && output_aspect > aspect) || (!expand && output_aspect < aspect))
-            x = float(output_aspect * y);
-        else y = float(x / output_aspect);
-        copy.set_projection_matrix(camera()->type() == Camera::PERSPECTIVE
-            ? transform::frustum(-x, x, -y, y, float(near), float(far))
-            : transform::ortho(-x, x, -y, y, float(near), float(far)));
-        auto frame = impl_->capture(copy, bg == 0 ? background_color() : bg == 1 ? vec4(1, 1, 1, 1) : vec4(0, 0, 0, 0), unsigned(samples), w, h, snapshot_hud_);
-        if (bg == 2) {
-            // Alpha overlays and MSAA coverage against transparent black produce
-            // premultiplied colors, including single-sample text. PNG stores straight alpha.
-            for (size_t i = 0; i < frame.rgba.size(); i += 4) {
-                const unsigned alpha = frame.rgba[i + 3];
-                if (alpha && alpha < 255)
-                    for (unsigned c = 0; c < 3; ++c)
-                        frame.rgba[i + c] = static_cast<unsigned char>(std::min(255u,
-                            (unsigned(frame.rgba[i + c]) * 255 + alpha / 2) / alpha));
-            }
-        }
-        return ImageIO::save(filename, frame.rgba, w, h, 4, false);
-    } catch (const std::exception& e) {
-        LOG(ERROR) << "Vulkan snapshot failed: " << e.what(); return false;
-    }
-}
+
 }
 
 // SPDX-License-Identifier: GPL-3.0-or-later
@@ -439,7 +401,7 @@ bool Viewer::draw() {
     Shadow* active_shadow = Shadow::active(camera());
     const bool has_shadow = active_shadow && Shadow::frame_data(camera(), shadow);
     std::vector<DrawSource> sources;
-    auto commands = impl_->commands(*camera(), width, height, has_shadow ? &sources : nullptr);
+    auto commands = frame_commands(*camera(), width, height, has_shadow ? &sources : nullptr);
     if (has_shadow) {
         const mat4 clip_to_shadow = shadow.shadow_matrix * inverse(camera()->modelViewProjectionMatrix());
         const auto& surfaces = active_shadow->surfaces();
@@ -490,7 +452,7 @@ bool Viewer::draw() {
 void Viewer::draw_transparency(const std::vector<TrianglesDrawable*>& surfaces, int) {
     const int width = framebuffer_width(), height = framebuffer_height();
     std::vector<DrawSource> sources;
-    auto commands = impl_->commands(*camera(), width, height, &sources);
+    auto commands = frame_commands(*camera(), width, height, &sources);
     for (size_t i = 0; i < sources.size() && i < commands.size(); ++i) {
         auto* triangles = dynamic_cast<TrianglesDrawable*>(sources[i].drawable.get());
         if (!triangles || std::find(surfaces.begin(), surfaces.end(), triangles) == surfaces.end()) continue;
@@ -3276,6 +3238,10 @@ Viewer::PickResult Viewer::pick(int x, int y) const {
     //  2. For a triangle drawable, redraw it with primitive IDs as colors and read
     //     the same pixel to recover the triangle. Both passes use the same
     //     transform and clipping, so the depth winner and the ID agree.
+    // This whole-scene query is intentionally not delegated to the Picker classes:
+    // they operate on one caller-supplied model with a borrowed camera and own
+    // their offscreen resources, while the viewer already owns every model,
+    // drawable and the context, so it can resolve the hit here directly.
     QueryContext context(window_);
     QueryState state;
     Camera snapshot(*camera());

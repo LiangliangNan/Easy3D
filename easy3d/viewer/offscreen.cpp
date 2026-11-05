@@ -8,7 +8,7 @@ OffScreen::~OffScreen() = default;
 void OffScreen::resize(int w,int h) { resize_render_target(w,h); }
 void OffScreen::framebuffer_size(int& w,int& h) const { w = width(); h = height(); }
 bool OffScreen::render(const std::string& file,float scale,int samples,int bg,bool expand) const {
-    return Viewer::render(file,scale,samples,bg,expand);
+    return Viewer::snapshot(file,scale,samples,bg,expand);
 }
 Model* OffScreen::add_model(const std::string& file,bool create) { return Viewer::add_model(file,create); }
 Model* OffScreen::add_model(std::shared_ptr<Model> model,bool create) { return Viewer::add_model(std::move(model),create); }

@@ -111,7 +111,15 @@ void main(void) {
         vec3 coords = DataIn.shadowCoord.xyz / DataIn.shadowCoord.w;
         // to avoid shadow acne: See: http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-16-shadow-mapping/
         coords.z -= 0.005;
-        float visibility = texture(shadowMap, coords);
+        // Four comparison taps at +/-0.75 texel. Each sampler2DShadow tap already
+        // filters a 2x2 depth quad, so the combined footprint matches the Vulkan
+        // hard-shadow pass and removes the stair-stepped edge.
+        vec2 offset = 0.75 / vec2(textureSize(shadowMap, 0));
+        float visibility = texture(shadowMap, vec3(coords.xy + vec2(-offset.x, -offset.y), coords.z));
+        visibility += texture(shadowMap, vec3(coords.xy + vec2(offset.x, -offset.y), coords.z));
+        visibility += texture(shadowMap, vec3(coords.xy + vec2(-offset.x, offset.y), coords.z));
+        visibility += texture(shadowMap, vec3(coords.xy + vec2(offset.x, offset.y), coords.z));
+        visibility *= 0.25;
 
         // give control over darkness;
         visibility = (visibility < 0.9) ? (1.0 - darkness) : 1.0f;
