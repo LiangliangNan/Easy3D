@@ -26,7 +26,10 @@ void main() {
     const vec2 corners[6] = vec2[](vec2(-1,-1),vec2(1,-1),vec2(1,1),vec2(-1,-1),vec2(1,1),vec2(-1,1));
     vec2 corner=vec2(0);
     if (!native_point) corner=corners[gl_VertexIndex];
-    gl_PointSize=1;
+    // Large points are an optional Vulkan feature. The renderer specializes
+    // this pipeline for native points only after enabling that feature; all
+    // other large-point draws use the portable six-vertex expansion below.
+    gl_PointSize = native_point ? material.dimensions.z : 1;
     vertex_color = color * draw.tint;
     uv = texcoord;
     id = uvec2(draw.object_id, primitive_id);

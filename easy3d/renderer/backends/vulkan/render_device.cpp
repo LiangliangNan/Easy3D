@@ -61,6 +61,9 @@ struct Context : internal::VulkanDispatch {
     // Retain the library until all instance/device cleanup has finished.
     std::shared_ptr<internal::VulkanLoader> library;
     bool sample_shading = false;
+    bool large_points = false;
+    float min_point_size = 1.0f;
+    float max_point_size = 1.0f;
     bool compute = false;
     VkInstance instance = VK_NULL_HANDLE;
     VkDebugUtilsMessengerEXT messenger = VK_NULL_HANDLE;
@@ -261,9 +264,14 @@ struct Context : internal::VulkanDispatch {
         VkPhysicalDeviceFeatures features{}, enabled{};
         vkGetPhysicalDeviceFeatures(physical, &features);
         sample_shading = features.sampleRateShading;
+        large_points = features.largePoints;
+        min_point_size = features.largePoints ? properties.limits.pointSizeRange[0] : 1.0f;
+        max_point_size = features.largePoints ? properties.limits.pointSizeRange[1] : 1.0f;
         enabled.sampleRateShading = features.sampleRateShading;
+        enabled.largePoints = features.largePoints;
         di.pEnabledFeatures = &enabled;
-        // No geometry shaders, large points, wide lines or independent blend.
+        // No geometry shaders, wide lines or independent blend. Large points are
+        // optional and only used as an optimization for plain points.
         check_initialization(vkCreateDevice(physical, &di, nullptr, &device), "create device");
         load_device(device,window!=nullptr);
         vkGetDeviceQueue(device, family, 0, &queue);
@@ -793,6 +801,15 @@ struct Swapchain {
             if (found) break;
         }
         if (!found) throw std::runtime_error("no supported RGBA/BGRA presentation format with blit support");
+        uint32_t mode_count = 0;
+        check(c.vkGetPhysicalDeviceSurfacePresentModesKHR(c.physical, c.surface, &mode_count, nullptr),
+              "query presentation modes");
+        std::vector<VkPresentModeKHR> present_modes(mode_count);
+        check(c.vkGetPhysicalDeviceSurfacePresentModesKHR(c.physical, c.surface, &mode_count, present_modes.data()),
+              "query presentation modes");
+        const VkPresentModeKHR present_mode = std::find(present_modes.begin(), present_modes.end(), VK_PRESENT_MODE_MAILBOX_KHR) != present_modes.end()
+                                                  ? VK_PRESENT_MODE_MAILBOX_KHR
+                                                  : VK_PRESENT_MODE_FIFO_KHR;
         uint32_t image_count = caps.minImageCount + 1;
         if (caps.maxImageCount && image_count > caps.maxImageCount) image_count = caps.maxImageCount;
         VkCompositeAlphaFlagBitsKHR alpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
@@ -808,7 +825,7 @@ struct Swapchain {
         si.imageUsage = VK_IMAGE_USAGE_TRANSFER_DST_BIT;
         si.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
         si.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
-        si.compositeAlpha = alpha; si.presentMode = VK_PRESENT_MODE_FIFO_KHR; si.clipped = VK_TRUE;
+        si.compositeAlpha = alpha; si.presentMode = present_mode; si.clipped = VK_TRUE;
         check(c.vkCreateSwapchainKHR(c.device, &si, nullptr, &handle), "create swapchain");
         check(c.vkGetSwapchainImagesKHR(c.device, handle, &count, nullptr), "get presentation images");
         images.resize(count);
@@ -1322,9 +1339,13 @@ public:
         return d.geometry->topology() == Topology::lines &&
                (d.line_style != LineStyle::plain || d.line_width != 1);
     }
-    static bool expanded_impostor(const DrawCommand& d) {
+    bool native_point(const DrawCommand& d) const {
+        return d.geometry->topology() == Topology::points && d.point_style == PointStyle::plain &&
+               c_.large_points && d.point_size >= c_.min_point_size && d.point_size <= c_.max_point_size;
+    }
+    bool expanded_impostor(const DrawCommand& d) const {
         return expanded_lines(d) || (d.geometry->topology()==Topology::points &&
-            (d.point_style!=PointStyle::plain || d.point_size!=1));
+            (d.point_style!=PointStyle::plain || !native_point(d)));
     }
     struct Prepared { DrawCommand command; GpuGeometry* geometry; GpuTexture* texture; uint32_t uniform_offset; };
     std::vector<Prepared> prepare(uint32_t width, uint32_t height, const std::vector<DrawCommand>& commands,

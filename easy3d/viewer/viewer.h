@@ -66,7 +66,6 @@ struct VulkanOptions {
         int minor = 2;          // must >= 2
         int depth_bits = 24;
         int stencil_bits = 8;
-
     };
 
 #endif

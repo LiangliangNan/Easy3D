@@ -5164,3 +5164,21 @@ A warmed MoltenVK benchmark used Tutorial 207's 479,187-point cloud with
 five-pixel points at 1600×1200. A full capture took 170–173 ms per query.
 Single-pixel sampling took 2.3–2.8 ms, with the same depth checksum. This
 measures depth acquisition in isolation from presentation.
+
+The next refinement enables Vulkan's optional `largePoints` feature when a
+device exposes it and uses the native point pipeline for plain points within
+the reported size limit. That keeps the six-vertex portable expansion as the
+fallback, including for sphere and surfel impostors. It eliminates the
+expansion overhead for Tutorial 207 on capable devices while retaining the
+same point size, depth and picking behavior everywhere else. The remaining
+MoltenVK frame-rate work is therefore isolated to its portable fallback and
+full 4× MSAA point rasterization rather than the hover readback.
+
+Windowed Vulkan presentation now chooses mailbox mode when the surface offers
+it, falling back to FIFO as required by Vulkan. Both modes are synchronized to
+display refresh, while mailbox avoids queueing stale interactive frames.
+
+On this Mac, where MoltenVK exposes `largePoints` and mailbox presentation, the
+same warmed hover-and-draw benchmark reaches about 70 FPS at 1600×1200 with 4×
+MSAA. The focused Vulkan render, scene, picking and Tutorial 207 regressions
+pass with that path.

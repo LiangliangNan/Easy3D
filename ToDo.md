@@ -31,7 +31,7 @@
   - [x] Shared Picker and geometric SurfaceMeshPicker APIs; concave/deleted/transformed faces, regions, DPI and OpenGL query/context isolation.
   - [x] ModelPicker and PointCloudPicker counterparts on both backends.
   - [ ] W10 Mesh GPU/rasterization parity, Mapple, Qt/wx, remaining Python coverage, transparency/SSAO/shadows/EDL
-  - [ ] Tutorial_207_RealCamera based on Vulkan has a very low frame rate (about 5 fps), but the OpenGL counterpart is about 120 fps.
+  - [ ] Tutorial_207_RealCamera based on Vulkan remains slower than the OpenGL counterpart. Its hover query now reads one pixel rather than a full frame, native `largePoints` reaches about 70 FPS at 1600×1200 with 4× MSAA on this Mac, and the portable expanded-point fallback still needs profiling on MoltenVK devices without that feature.
   
 - Send the computed value of "MVP * MANIP" to shaders (avoiding computing the matrix product for each vertex/fragment)
 - Walkthrough and animation; allow to modify the cameras interactively

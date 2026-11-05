@@ -25,7 +25,8 @@
     X(vkDestroySurfaceKHR) \
     X(vkGetPhysicalDeviceSurfaceSupportKHR) \
     X(vkGetPhysicalDeviceSurfaceCapabilitiesKHR) \
-    X(vkGetPhysicalDeviceSurfaceFormatsKHR)
+    X(vkGetPhysicalDeviceSurfaceFormatsKHR) \
+    X(vkGetPhysicalDeviceSurfacePresentModesKHR)
 
 #define EASY3D_VK_DEVICE(X) \
     X(vkAllocateCommandBuffers) \

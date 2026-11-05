@@ -48,7 +48,7 @@ const float scale = 0.3f;
 
 TutorialRealCamera::TutorialRealCamera(const std::string& title, const std::string& bundler_file,
                                      const std::string& cloud_file)
-    : Viewer(title, 800, 600, 4, false, true, false), current_view_(0)
+    : Viewer(title, 800, 600, 1), current_view_(0)
     , cameras_drawable_(nullptr)
     , ray_drawable_(nullptr)
 {
