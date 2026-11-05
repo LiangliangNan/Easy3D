@@ -116,6 +116,7 @@ void TutorialPointSelection::post_resize(int,int) {
 }
 
 void TutorialPointSelection::pre_draw() {
+    Viewer::pre_draw();
     if (!active_ || polygon_.size()<3) { set_overlays({}); return; }
     if (dirty_) {
         easy3d::Tessellator tess;

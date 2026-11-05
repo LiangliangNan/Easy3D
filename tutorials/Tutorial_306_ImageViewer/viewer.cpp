@@ -79,6 +79,7 @@ void TutorialImageViewer::post_resize(int,int) {
 }
 
 void TutorialImageViewer::pre_draw() {
+    Viewer::pre_draw();
     if (!dirty_) return;
     const float w = image_->width()*scale_, h = image_->height()*scale_;
     const float x = (framebuffer_width()-w)*0.5f, y = (framebuffer_height()-h)*0.5f;

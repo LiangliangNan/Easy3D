@@ -49,7 +49,10 @@ TutorialDepthMap::TutorialDepthMap(const std::string& title)
 
 TutorialDepthMap::~TutorialDepthMap() = default;
 
-void TutorialDepthMap::pre_draw() {draw_depth();}
+void TutorialDepthMap::pre_draw() {
+    Viewer::pre_draw();
+    draw_depth();
+}
 
 void TutorialDepthMap::draw_depth() const {
     const float dpi=dpi_scaling();

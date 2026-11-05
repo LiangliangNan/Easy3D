@@ -119,6 +119,7 @@ void TutorialObjectManipulation::mark(Model* target) {
     update();
 }
 void TutorialObjectManipulation::pre_draw() {
+    Viewer::pre_draw();
     const auto model=selected_model();
     if (model && model->renderer()->is_selected() && model->manipulator()) {
         auto command=model->manipulator()->draw_frame(camera(),framebuffer_width(),framebuffer_height());

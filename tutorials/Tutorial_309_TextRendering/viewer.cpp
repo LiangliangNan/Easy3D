@@ -88,6 +88,7 @@ void TutorialTextRendering::post_resize(int,int) {
 }
 
 void TutorialTextRendering::pre_draw() {
+    Viewer::pre_draw();
     int w = width();
     const float dpi=w>0 ? float(framebuffer_width())/w : 1;
     if (dpi!=dpi_) { dirty_=true; dpi_=dpi; }

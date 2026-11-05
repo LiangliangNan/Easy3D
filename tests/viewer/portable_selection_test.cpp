@@ -10,6 +10,7 @@
 #include <cmath>
 #ifndef EASY3D_HAS_VULKAN
 #include <easy3d/renderer/opengl.h>
+#include <easy3d/renderer/framebuffer_object.h>
 #endif
 using namespace easy3d;
 using test::require;
@@ -18,6 +19,7 @@ struct SelectionView:TutorialPointSelection {
     using TutorialPointSelection::mouse_press_event;using TutorialPointSelection::mouse_release_event;
     using TutorialPointSelection::mouse_drag_event;using TutorialPointSelection::key_press_event;
     using TutorialPointSelection::focus_event;
+    using TutorialPointSelection::pre_draw;
 };
 int main(int argc,char**) {return test::run("portable GPU selection and shared point storage",[&]{
 #ifdef EASY3D_HAS_VULKAN
@@ -99,9 +101,27 @@ int main(int argc,char**) {return test::run("portable GPU selection and shared p
     const auto behind=cloud->add_vertex(vec3(-.5f,0,-.2f));cloud->delete_vertex(dead);tutorial.add_model(cloud);
     tutorial.camera()->setViewDirection(vec3(0,0,-1));tutorial.camera()->setUpVector(vec3(0,1,0));tutorial.camera()->setType(Camera::ORTHOGRAPHIC);tutorial.fit_screen();
     require(tutorial.run_frames(2)==0,"tutorial frame failed");
+    // Seed an old frame and check the actual tutorial hook clears both attachments.
+    // Raw capture bypasses pre_draw(), so capture-only tests cannot catch this bug.
+    const auto cleared_frame=[&] {
+#ifndef EASY3D_HAS_VULKAN
+        FramebufferObject target(16,16,0);
+        require(target.add_color_buffer() && target.add_depth_buffer() && target.bind(),"cannot create frame-clear fixture");
+        glDisable(GL_SCISSOR_TEST);glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);glDepthMask(GL_TRUE);
+        glClearColor(1,0,1,1);glClearDepth(.125);glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+        tutorial.pre_draw();
+        unsigned char pixel[4]={};float depth=0;
+        glReadPixels(8,8,1,1,GL_RGBA,GL_UNSIGNED_BYTE,pixel);glReadPixels(8,8,1,1,GL_DEPTH_COMPONENT,GL_FLOAT,&depth);
+        const auto bg=tutorial.background_color();
+        for(unsigned c=0;c<3;++c)require(std::abs(int(pixel[c])-int(std::lround(255*bg[c])))<=1,"tutorial retained color from an earlier frame");
+        require(depth==1 && glGetError()==GL_NO_ERROR,"tutorial retained depth from an earlier frame");
+        target.release();
+#endif
+    };
+    cleared_frame();
     const auto p=tutorial.camera()->projectedCoordinatesOf(cloud->position(left));
-    auto gesture=[&](int button){int x=int(p.x),y=int(p.y);tutorial.mouse_press_event(x-15,y-15,button,Viewer::MODIF_SHIFT);
-        tutorial.mouse_drag_event(x+15,y-15,30,0,button,0);tutorial.mouse_drag_event(x+15,y+15,0,30,button,0);
+    auto gesture=[&](int button){int x=int(p.x),y=int(p.y);tutorial.mouse_press_event(x-15,y-15,button,Viewer::MODIF_SHIFT);cleared_frame();
+        tutorial.mouse_drag_event(x+15,y-15,30,0,button,0);tutorial.mouse_drag_event(x+15,y+15,0,30,button,0);cleared_frame();
         tutorial.mouse_drag_event(x-15,y+15,-30,0,button,0);tutorial.mouse_release_event(x-15,y+15,button,0);};
     const auto tutorial_resource=tutorial.point_resource(cloud->renderer()->get_points_drawable("vertices"));
     auto selected=cloud->vertex_property<bool>("v:select");gesture(Viewer::BUTTON_LEFT);

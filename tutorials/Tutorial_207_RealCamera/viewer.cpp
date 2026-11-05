@@ -229,6 +229,7 @@ void TutorialRealCamera::post_resize(int, int) {
     cross_visible_=false;
 }
 void TutorialRealCamera::pre_draw() {
+    Viewer::pre_draw();
     if (!image_) {
         if (overlay_image_) {set_overlays({});image_commands_.clear();overlay_image_=nullptr;}
         return;
