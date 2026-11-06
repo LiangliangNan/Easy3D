@@ -28,6 +28,13 @@ void same_ids(const FrameImage& a,const FrameImage& b,const char* message) {
     for (size_t i=0;i<a.ids.size();++i)
         require(a.ids[i].object==b.ids[i].object && a.ids[i].primitive==b.ids[i].primitive,message);
 }
+// Different methods accumulate at different precisions, so an exact peel must
+// still be compared with the probe tolerance rather than bit for bit.
+void close_rgba(const FrameImage& a,const FrameImage& b,const char* message) {
+    require(a.rgba.size()==b.rgba.size(),message);
+    for (size_t i=0;i<a.rgba.size();++i)
+        require(std::abs(int(a.rgba[i])-int(b.rgba[i]))<=2,message);
+}
 int main(int argc,char**) {
     try {
         const bool validation = argc > 1;
@@ -109,26 +116,32 @@ int main(int argc,char**) {
             const auto averaged_reversed=device->render(65,65,{blue,green},vec4(0),count,TransparencyMethod::average,4);
             require(averaged.rgba==averaged_reversed.rgba,"average transparency was not order independent");
 
-            // One layer keeps only the nearest surface; two layers blend it over.
+            // One layer keeps only the nearest surface; two layers put the far
+            // one under it, which is exactly the depth-sorted blend. Blending the
+            // peeled layers the other way round would swap the two colors.
             const auto peeled_near=device->render(65,65,{green,blue},vec4(0),count,TransparencyMethod::peeling,1);
             const int near_expected[]={0,0,128};
             probe(peeled_near,32,32,near_expected,"peel one");
             const auto peeled=device->render(65,65,{green,blue},vec4(0),count,TransparencyMethod::peeling,2);
-            const int peeled_expected[]={0,128,64};
+            const int peeled_expected[]={0,64,128};
             probe(peeled,32,32,peeled_expected,"peel two");
+            close_rgba(peeled,sorted,"depth peeling did not composite its layers front to back");
             require(peeled.rgba!=averaged.rgba,"depth peeling matched average transparency");
             const auto peeled_reversed=device->render(65,65,{blue,green},vec4(0),count,TransparencyMethod::peeling,2);
             require(peeled.rgba==peeled_reversed.rgba,"depth peeling was not order independent");
 
-            // The farthest opaque layer truncates the accumulation; asking for
-            // every layer (0) reproduces the sorted result.
+            // Stopping after two layers drops the farthest surface; asking for
+            // every layer (0) reproduces the sorted blend of all three.
             const auto peeled_capped=device->render(65,65,{green,blue,opaque_yellow},vec4(0),count,
                                                     TransparencyMethod::peeling,2);
             probe(peeled_capped,32,32,peeled_expected,"peel capped");
+            const auto sorted_three=device->render(65,65,{green,blue,opaque_yellow},vec4(0),count);
             const auto peeled_all=device->render(65,65,{green,blue,opaque_yellow},vec4(0),count,
                                                  TransparencyMethod::peeling,0);
-            const int opaque_expected[]={255,255,0};
+            // Blue over green over opaque yellow: (.25,.5,.5).
+            const int opaque_expected[]={64,128,128};
             probe(peeled_all,32,32,opaque_expected,"peel all");
+            close_rgba(peeled_all,sorted_three,"unlimited depth peeling did not reproduce the sorted blend");
             require(peeled_capped.rgba!=peeled_all.rgba,"peel layer limit was ignored");
 
             const auto averaged_three=device->render(65,65,{green,blue,opaque_yellow},vec4(0),count,
@@ -144,6 +157,29 @@ int main(int argc,char**) {
                 require(std::abs(image->depth[32*65+32]-.25f)<1e-5f,
                         "order-independent transparency changed picking depth");
             }
+
+            // A deep stack of alternating red/blue surfaces, nearest first. With
+            // every layer peeled the result must equal the depth-sorted blend, and
+            // a truncated peel must equal the sorted blend of the surfaces it kept.
+            // Accumulating the layers the wrong way round fails both.
+            std::vector<DrawCommand> stack, near_half;
+            for (unsigned i=0;i<8;++i) {
+                auto layer=rectangle(-1,-1,1,1,-.9f+.25f*float(i),
+                                     i%2 ? vec4(1,0,0,.5f) : vec4(0,0,1,.5f),true);
+                layer.object_id=100+i;
+                stack.push_back(layer);
+                if (i<4) near_half.push_back(layer);
+            }
+            const auto stacked_sorted=device->render(65,65,stack,vec4(0),count);
+            const auto stacked_peeled=device->render(65,65,stack,vec4(0),count,TransparencyMethod::peeling,0);
+            close_rgba(stacked_peeled,stacked_sorted,"eight-layer peeling did not reproduce the sorted blend");
+            const auto stacked_truncated=device->render(65,65,stack,vec4(0),count,TransparencyMethod::peeling,4);
+            close_rgba(stacked_truncated,device->render(65,65,near_half,vec4(0),count),
+                       "a truncated peel did not keep the nearest layers");
+            require(stacked_truncated.rgba!=stacked_peeled.rgba,"the peel layer limit changed nothing");
+            const std::vector<DrawCommand> reversed_stack(stack.rbegin(),stack.rend());
+            close_rgba(device->render(65,65,reversed_stack,vec4(0),count,TransparencyMethod::peeling,0),
+                       stacked_peeled,"eight-layer peeling was not order independent");
         }
         bool rejected=false;
         auto line=rectangle(-1,-1,1,1,0,vec4(0,1,0,.5f),true);

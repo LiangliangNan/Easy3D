@@ -2630,20 +2630,25 @@ public:
             check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &info, nullptr,
                                                &oit_->layer_pipeline), "create depth-peel pipeline");
 
-            // Blend the resolved layer over the premultiplied accumulation.
+            // Blend the resolved layer into the premultiplied accumulation. Layers
+            // are peeled front to back, so each new one lies *behind* everything
+            // already accumulated and must go under it, exactly like the
+            // under-blending of the OpenGL dual_depth_peeling_peel_rendering
+            // shader: dst = src * (1 - dst.a) + dst. Over-blending here would
+            // invert the depth order and let the farthest peeled layer win.
             stages[0].module = modules[3]; stages[1].module = modules[4];
             vertex.vertexBindingDescriptionCount = 0; vertex.pVertexBindingDescriptions = nullptr;
             vertex.vertexAttributeDescriptionCount = 0; vertex.pVertexAttributeDescriptions = nullptr;
             depth_state.depthTestEnable = depth_state.depthWriteEnable = VK_FALSE;
-            VkPipelineColorBlendAttachmentState over{};
-            over.blendEnable = VK_TRUE;
-            over.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-            over.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-            over.colorBlendOp = VK_BLEND_OP_ADD;
-            over.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-            over.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-            over.alphaBlendOp = VK_BLEND_OP_ADD; over.colorWriteMask = 0xf;
-            blending.attachmentCount = 1; blending.pAttachments = &over;
+            VkPipelineColorBlendAttachmentState under{};
+            under.blendEnable = VK_TRUE;
+            under.srcColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA;
+            under.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
+            under.colorBlendOp = VK_BLEND_OP_ADD;
+            under.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA;
+            under.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+            under.alphaBlendOp = VK_BLEND_OP_ADD; under.colorWriteMask = 0xf;
+            blending.attachmentCount = 1; blending.pAttachments = &under;
             info.renderPass = oit_->accumulate_pass; info.layout = oit_composite_layout_;
             check(c_.vkCreateGraphicsPipelines(c_.device, VK_NULL_HANDLE, 1, &info, nullptr,
                                                &oit_->accumulate_pipeline), "create transparency layer blend pipeline");
@@ -2872,7 +2877,7 @@ public:
                               VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
                               VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
                 oit_->layer_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                // Blend the resolved layer over the running accumulation.
+                // Blend the resolved layer under the running accumulation.
                 VkRenderPassBeginInfo blend{};
                 blend.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
                 blend.renderPass = oit_->accumulate_pass; blend.framebuffer = oit_->accumulate_framebuffer;

@@ -4,7 +4,8 @@
 // One front-to-back depth-peeling layer. Fragments at or in front of the
 // previous layer are rejected; the depth test then keeps only the nearest
 // surviving fragment, which is written to the layer target without blending.
-// A full-screen pass over-blends that premultiplied layer into the result.
+// A full-screen pass under-blends that premultiplied layer into the result, so
+// each farther layer ends up behind the ones already accumulated.
 layout(set=0,binding=0) uniform sampler2D image_texture;
 layout(set=0,binding=3) uniform sampler2D previous_depth;
 layout(location=0) in vec4 vertex_color;
