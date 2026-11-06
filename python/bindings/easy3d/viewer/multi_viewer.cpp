@@ -389,7 +389,7 @@ void bind_easy3d_viewer_multi_viewer(pybind11::module_& m)
         cl.def("snapshot", (bool (easy3d::MultiViewer::*)() const) &easy3d::MultiViewer::snapshot, "Take a snapshot of the screen and save it to a file.\n \n\n This method takes a snapshot of the screen and saves the snapshot into an image file.\n          Internally, it will pop up a file dialog for specifying the file name.\n \n\n true on success and false otherwise.\n\nC++: easy3d::MultiViewer::snapshot() const --> bool");
         cl.def("snapshot",static_cast<bool (easy3d::MultiViewer::*)(const std::string&,float,int,int,bool) const>(&easy3d::MultiViewer::snapshot),
                pybind11::arg("file_name"),pybind11::arg("scaling")=1.f,pybind11::arg("samples")=4,
-               pybind11::arg("back_ground")=1,pybind11::arg("expand")=true);
+               pybind11::arg("back_ground")=0,pybind11::arg("expand")=true);
 
 	}
 

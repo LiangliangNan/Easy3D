@@ -406,11 +406,11 @@ public:
          *      image_height = viewer_height * scaling;
          * \param samples The required number of samples for antialiased rendering (which can be different from
          *      that of the default framebuffer). The default value is 4.
-         * \param background Determines the background color. 0: current color; 1: white; 2: transparent.
+         * \param background Determines the background color. 0: current color (default); 1: white; 2: transparent.
          * \param expand Expand the frustum to ensure the image aspect ratio.
          * \return true on success and false otherwise.
          */
-		bool snapshot(const std::string& file_name, float scaling = 1.0f, int samples = 4, int background = 1, bool expand = true) const override;
+		bool snapshot(const std::string& file_name, float scaling = 1.0f, int samples = 4, int background = 0, bool expand = true) const override;
 
         /**
          * \brief The usage information of the viewer.
@@ -653,7 +653,8 @@ public:
 	    std::chrono::steady_clock::time_point next_camera_path_frame_;
 	    void advance_camera_path();
 	protected:
-	    bool snapshot_hud_ = true; // Capture/file HUD policy; OffScreen/MultiViewer are scene-only.
+	    bool snapshot_hud_ = true; // Capture HUD policy; OffScreen/MultiViewer are scene-only.
+	                               // File snapshots never carry the Viewer HUD, on either backend.
 	    struct DrawSource { std::shared_ptr<Model> model; std::shared_ptr<Drawable> drawable; };
 #ifdef EASY3D_HAS_VULKAN
 	    // Keep this part of code minimum
@@ -675,35 +676,15 @@ public:
 	    void update_interaction_overlays(bool force = false) const;
 	    void update_frame_rate();
 	    void draw_transparency(const std::vector<TrianglesDrawable*>& surfaces, int method, int peels);
-	    // Offscreen frame capture. OpenGL renders a file snapshot into a bound
-	    // framebuffer, so whatever draw() produces ends up in the image; the
-	    // device has no framebuffer to bind, so a snapshot instead activates
-	    // this capture and drives the same virtual draw(). While it is active,
-	    // render_frame() renders offscreen and frame_size() reports the capture
-	    // size, and the window is not presented.
-	    struct Capture {
-	        bool active = false;
-	        int width = 0, height = 0;
-	        unsigned samples = 1;
-	        vec4 background{};
-	        graphics::FrameImage image;
-	    };
-	    Capture capture_;
-	    // Restores the camera and deactivates the capture when a file snapshot
-	    // ends, including when the tutorial draw() it runs throws.
-	    struct SnapshotRestore {
-	        Viewer& self;
-	        int width, height;
-	        mat4 projection;
-	        ~SnapshotRestore();
-	    };
-	    // Size of the frame currently being rendered: the capture during a
-	    // snapshot, the window framebuffer otherwise.
-	    void frame_size(int& width, int& height) const;
-	    // Present the frame to the window, or render it into the capture.
-	    bool render_frame(std::vector<graphics::DrawCommand> commands,
-	                      graphics::TransparencyMethod method = graphics::TransparencyMethod::sorted,
-	                      unsigned peel_layers = 0);
+	    // Renders one file-snapshot frame through the virtual draw() into an
+	    // offscreen image of the requested size, clear color and sample count,
+	    // then restores the camera. OpenGL binds a framebuffer around draw();
+	    // the device has no framebuffer to bind, so the offscreen target lives
+	    // in Impl and draw() submits into it while this runs. Like the OpenGL
+	    // snapshot, the file frame carries no Viewer HUD.
+	    bool snapshot_frame(int width, int height, const mat4& projection,
+	                        const vec4& background, unsigned samples,
+	                        graphics::FrameImage& image);
 	    void ensure_text_renderer() const;
 	    std::chrono::steady_clock::time_point frame_rate_start_;
 	    unsigned frame_rate_frames_ = 0;
@@ -724,9 +705,10 @@ public:
 	protected:
 	    virtual std::vector<graphics::DrawCommand> draw_commands(const Camera& camera, int width, int height,
 	                                                           std::vector<DrawSource>* sources = nullptr, bool include_hidden_models = false) const;
-	    // Scene commands plus the current annotations and HUD overlays, with overlay
-	    // viewports scaled from the window to the requested output size. Snapshot and
-	    // capture both render through this, so a file frame matches a live capture.
+	    // Scene commands plus the current annotations and, when include_hud is
+	    // set, the Viewer HUD overlays, with overlay viewports scaled from the
+	    // window to the requested output size. Live frames and captures include
+	    // the HUD; file snapshots do not, matching the OpenGL snapshot.
 	    std::vector<graphics::DrawCommand> frame_commands(const Camera& camera, int width, int height,
 	                                                      std::vector<DrawSource>* sources = nullptr,
 	                                                      bool include_hud = true) const;

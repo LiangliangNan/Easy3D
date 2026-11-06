@@ -208,7 +208,7 @@ vec3 MultiViewer::unproject_point(const vec3& window) const {
 bool MultiViewer::snapshot() const {
     std::string name=current_model()?file_system::replace_extension(current_model()->name(),"png"):"untitled.png";
     const auto file=dialog::save("Please choose a file name",name,{"Image Files (*.png *.jpg *.bmp *.tga)","*.png *.jpg *.bmp *.tga","All Files (*.*)","*"},true);
-    return !file.empty() && snapshot(file,1,samples(),1);
+    return !file.empty() && snapshot(file,1,samples(), 0);
 }
 #ifdef EASY3D_HAS_VULKAN
 std::vector<graphics::DrawCommand> MultiViewer::draw_commands(const Camera& cam,int width,int height,

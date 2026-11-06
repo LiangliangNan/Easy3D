@@ -22,7 +22,7 @@ void bind_easy3d_viewer_offscreen(py::module_& m) {
         .def("width",[](const OffScreen& self) { return self.width(); }).def("height",[](const OffScreen& self) { return self.height(); }).def("resize",&OffScreen::resize)
         .def("set_background_color",[](OffScreen& self, const vec4& color) { self.set_background_color(color); })
         .def("background_color",[](const OffScreen& self) -> const vec4& { return self.background_color(); },py::return_value_policy::reference_internal)
-        .def("render",&OffScreen::render,py::arg("file_name"),py::arg("scaling")=1.f,py::arg("samples")=4,py::arg("back_ground")=1,py::arg("expand")=true)
+        .def("render",&OffScreen::render,py::arg("file_name"),py::arg("scaling")=1.f,py::arg("samples")=4,py::arg("back_ground")=0,py::arg("expand")=true)
         .def("add_model",[](OffScreen& self, const std::string& file, bool create) {
             auto* added = self.add_model(file, create);
             for (const auto& model : self.models()) if (model.get() == added) return model;

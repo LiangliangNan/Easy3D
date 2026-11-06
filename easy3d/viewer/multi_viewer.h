@@ -127,8 +127,9 @@ namespace easy3d {
          * \return \c true on success and \c false otherwise.
          */
         bool snapshot() const override;
+        // background: 0 = current viewer color (default), 1 = white, 2 = transparent.
         bool snapshot(const std::string& filename, float scaling = 1, int samples = 4,
-                      int background = 1, bool expand = true) const override;
+                      int background = 0, bool expand = true) const override;
         // Projects into the last pressed cell (initially the top-left cell).
         // Unprojection resolves the cell from the canvas coordinate.
         vec3 project_point(const vec3& world) const override;

@@ -26,6 +26,15 @@ std::vector<unsigned char> read_snapshot(const std::string& file,int width,int h
     return data;
 }
 
+// The hint and the corner-axes Z arrow are pure blue; the gray knot and the
+// pale/white backgrounds never are.
+size_t count_blue(const std::vector<unsigned char>& pixels) {
+    size_t count=0;
+    for (size_t i=0;i+3<pixels.size();i+=4)
+        if (pixels[i]<64 && pixels[i+1]<64 && pixels[i+2]>192) ++count;
+    return count;
+}
+
 // A tutorial that brackets its effects inside draw(), as Tutorials 501 and 504
 // do. Everything this function adds must therefore appear in a file snapshot.
 struct EffectViewer : Viewer {
@@ -65,6 +74,9 @@ int main(int argc,char**) {
         v.enable_effects();
         require(v.add_model(resource::directory()+"/data/torusknot.obj"),"scene missing");
         for (auto* surface : v.surfaces()) surface->set_opacity(.5f);
+        // A blue hint exercises the Viewer HUD: it belongs to the live frame and
+        // capture(), but a file snapshot must not carry it (as on OpenGL).
+        v.set_usage("Snapshot effects","No HUD in file snapshots");
         Viewer::poll_events();v.draw_frame();
         const int fw = v.framebuffer_width(), fh = v.framebuffer_height();
         require(fw>0 && fh>0,"test window has no framebuffer");
@@ -76,6 +88,14 @@ int main(int argc,char**) {
         require(v.snapshot("vulkan-snapshot-effects.png",1,1,1),"plain snapshot failed");
         require(v.draws>plain_calls,"the file snapshot did not run the virtual draw()");
         const auto plain = read_snapshot("vulkan-snapshot-effects.png",fw,fh);
+
+        // The live frame carries the HUD (blue hint, corner axes); the file
+        // snapshot of the same scene must be pixel-identical to the HUD-free
+        // plain frame, on either backend.
+        require(count_blue(live.rgba)>count_blue(plain),"the live frame lost its HUD");
+        require(v.snapshot("vulkan-snapshot-effects-hud.png",1,1,1),"HUD snapshot failed");
+        require(read_snapshot("vulkan-snapshot-effects-hud.png",fw,fh)==plain,
+                "the file snapshot carried the Viewer HUD");
 
         // Viewer::capture() deliberately stays a raw scene frame: it renders the
         // command list, not draw(), so the same effects must not appear in it.
@@ -104,6 +124,19 @@ int main(int argc,char**) {
         require(v.snapshot("vulkan-snapshot-effects-scaled.png",2,1,1),"scaled snapshot failed");
         read_snapshot("vulkan-snapshot-effects-scaled.png",fw*2,fh*2);
 
+        // The default background is the viewer's current color, not white. The
+        // top-right corner is clear of the centered scene and of every HUD element.
+        require(v.snapshot("vulkan-snapshot-effects-default-bg.png",1,1),"default-background snapshot failed");
+        const auto default_bg = read_snapshot("vulkan-snapshot-effects-default-bg.png",fw,fh);
+        const size_t corner = (size_t(fw)-1)*4;
+        const vec4 bg = v.background_color();
+        for (unsigned c=0;c<4;++c) {
+            const int diff = int(default_bg[corner+c]) - int(bg[c]*255);
+            require(diff>=-2 && diff<=2,"the default snapshot background is not the viewer color");
+        }
+        require(plain[corner]==255 && plain[corner+1]==255 && plain[corner+2]==255,
+                "the explicit white background was ignored");
+
         // The snapshot borrows the camera and the frame path; both are back.
         require(v.camera()->screenWidth()==fw && v.camera()->screenHeight()==fh,
                 "the snapshot left the camera at the output size");
@@ -112,6 +145,6 @@ int main(int argc,char**) {
         Viewer::poll_events();v.draw_frame();
         require(v.capture().rgba==live.rgba,"the snapshot changed the live frame");
         require(v.device().validation_errors()==0,"snapshot validation errors");
-        std::cout<<"PASS: file snapshots run the virtual draw(), include its effects and transparency method, restore the camera and the live frame\n";
+        std::cout<<"PASS: file snapshots run the virtual draw(), include its effects and transparency method, exclude the Viewer HUD, default to the viewer background, restore the camera and the live frame\n";
     } catch (const std::exception& e) {std::cerr<<"FAIL: "<<e.what()<<'\n';return 1;}
 }

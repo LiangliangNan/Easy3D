@@ -80,7 +80,8 @@ public:
     virtual bool save() const = 0;
     virtual bool snapshot() const = 0;
     // Live camera/visibility and animation remain unchanged by file snapshots.
-    virtual bool snapshot(const std::string& file_name, float scaling = 1.0f, int samples = 4, int background = 1, bool expand = true) const = 0;
+    // background: 0 = current viewer color (default), 1 = white, 2 = transparent.
+    virtual bool snapshot(const std::string& file_name, float scaling = 1.0f, int samples = 4, int background = 0, bool expand = true) const = 0;
     virtual void set_usage(const std::string& manual, const std::string& hint) = 0;
     using AnimationFunction = std::function<bool(ViewerBase*)>;
     virtual void set_animation_callback(const AnimationFunction&) = 0;

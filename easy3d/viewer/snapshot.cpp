@@ -38,15 +38,9 @@ namespace easy3d {
 // OpenGL renders a file snapshot into a bound framebuffer and calls the virtual
 // draw(), so whatever that function adds to a frame -- ambient occlusion,
 // shadows, eye-dome lighting, a transparency method, or a tutorial's own
-// annotations -- is in the image. The device has no framebuffer to bind: the
-// snapshot instead activates the Viewer's offscreen capture, which routes the
-// frame rendering of draw() to an offscreen target of the requested size.
-Viewer::SnapshotRestore::~SnapshotRestore() {
-    self.capture_.active = false;
-    self.camera()->setScreenWidthAndHeight(width, height);
-    self.camera()->projectionMatrix();   // resolve resize invalidation
-    self.camera()->set_projection_matrix(projection);
-}
+// annotations -- is in the image. The device has no framebuffer to bind, so
+// snapshot_frame() runs the same draw() into an offscreen target of the
+// requested size. This file keeps only the validation, frustum math, and save.
 bool Viewer::snapshot(const std::string& filename, float scaling, int samples,
                       int back_ground, bool expand) const {
     if (!initialized_) {
@@ -77,25 +71,9 @@ bool Viewer::snapshot(const std::string& filename, float scaling, int samples,
             : transform::ortho(-x, x, -y, y, float(near), float(far));
         const vec4 background = back_ground == 0 ? background_color() : back_ground == 1 ? vec4(1, 1, 1, 1) : vec4(0, 0, 0, 0);
 
-        // The camera is reconfigured for the output size, and a tutorial draw()
-        // may throw at any point, so both the camera and the capture are
-        // restored through a guard instead of only on the success path.
-        auto* self = const_cast<Viewer*>(this);
-        const int source_w = camera()->screenWidth(), source_h = camera()->screenHeight();
-        const mat4 source_projection = camera()->projectionMatrix();
-        SnapshotRestore restore{*self, source_w, source_h, source_projection};
-
-        self->capture_.width = w; self->capture_.height = h;
-        self->capture_.samples = unsigned(samples); self->capture_.background = background;
-        self->capture_.image = graphics::FrameImage();
-        self->capture_.active = true;
-        self->camera()->setScreenWidthAndHeight(w, h);
-        self->camera()->projectionMatrix(); // resolve resize invalidation before overriding
-        self->camera()->set_projection_matrix(projection);
-        if (!self->draw()) throw std::runtime_error("draw() produced no frame");
-        if (self->capture_.image.rgba.size() != size_t(w) * size_t(h) * 4)
-            throw std::runtime_error("the captured frame does not match the requested size");
-        auto& frame = self->capture_.image;
+        graphics::FrameImage frame;
+        if (!const_cast<Viewer*>(this)->snapshot_frame(w, h, projection, background, unsigned(samples), frame))
+            throw std::runtime_error("the snapshot frame could not be rendered");
         if (back_ground == 2) {
             // Alpha overlays and MSAA coverage against transparent black produce
             // premultiplied colors, including single-sample text. PNG stores straight alpha.

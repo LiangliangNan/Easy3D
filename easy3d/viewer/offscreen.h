@@ -13,8 +13,9 @@ public:
                        const OpenGLOptions& options = {});
 #endif
     ~OffScreen() override;
+    // background: 0 = current viewer color (default), 1 = white, 2 = transparent.
     bool render(const std::string& filename, float scaling = 1, int samples = 4,
-                int background = 1, bool expand = true) const;
+                int background = 0, bool expand = true) const;
     void resize(int width, int height) override;
     void framebuffer_size(int& width, int& height) const override;
     void viewer_size(int& width, int& height) const override;
