@@ -30,6 +30,7 @@
 #include <easy3d/core/matrix.h>
 #include <easy3d/fileio/image_io.h>
 #include <easy3d/util/logging.h>
+#include <algorithm>
 #include <cmath>
 #include <limits>
 #include <stdexcept>
@@ -178,6 +179,21 @@ namespace easy3d {
 				yMin = static_cast<float>(xMin / newAspectRatio);
 		}
 
+		// Render the whole image in a single offscreen pass when it fits the GL
+		// limits, so screen-space effects (ambient occlusion, eye-dome lighting,
+		// shadows) stay continuous across the image instead of seaming at tile
+		// borders. Window-sized tiling remains the fallback for images that
+		// exceed the GL limits. The frustum above already used the window aspect
+		// ratio, so reassigning the tile size here does not change the framing.
+		int max_texture = 0, max_renderbuffer = 0;
+		glGetIntegerv(GL_MAX_TEXTURE_SIZE, &max_texture);
+		glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE, &max_renderbuffer);
+		const int max_size = std::min(max_texture, max_renderbuffer);
+		if (w <= max_size && h <= max_size) {
+			sub_w = w;
+			sub_h = h;
+		}
+
 		typedef Vec<4, unsigned char> Pixel; // in RGBA order
 		Matrix<Pixel> image(h, w); // Note: rows first
 		if (!image.data()) {
@@ -201,6 +217,12 @@ namespace easy3d {
 
 		// temporarily don't allow updating rendering when the camera parameters are changing.
 		easy3d::disconnect_all(&camera_->frame_modified);
+
+		// The offscreen target may differ from the window size, and neither
+		// FramebufferObject::bind() nor draw() sets the viewport, so match it to
+		// the tile explicitly and restore the window viewport afterwards.
+		GLint viewport[4];
+		glGetIntegerv(GL_VIEWPORT, viewport);
 
 		auto fbo = new FramebufferObject(sub_w, sub_h, samples);
 		fbo->add_color_buffer();
@@ -236,6 +258,7 @@ namespace easy3d {
 				//---------------------------------------------------------------------------
 
 				fbo->bind();
+				glViewport(0, 0, sub_w, sub_h);
 
 				// 0: current color; 1: white; 2: transparent.
 				if (back_ground == 1)       // white
@@ -280,6 +303,8 @@ namespace easy3d {
 
 		// clean
 		delete fbo;
+		// restore the viewport
+		glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 		// restore the clear color
 		glClearColor(background_color_[0], background_color_[1], background_color_[2], background_color_[3]);
 

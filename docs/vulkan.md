@@ -323,7 +323,7 @@ Decisions in force:
 | 3. `VulkanMultiViewer` | merged into U2 |
 | 4. Remove runtime selection | done (W4) |
 | 5. Tutorials on the shared API | in progress: GLFW Tutorial 202 now builds on Vulkan, and Qt/wx integration remains W10; Tutorials 501, 502, 503, 504 and 505 run on both backends through the ambient-occlusion, shadow, scene-transparency and eye-dome-lighting paths (2026-11-05); Tutorials 401/402 use shared visible-surface picking (2026-11-04); no tutorial uses backend-selection macros or CMake gates (W5) |
-| 6. Renderer, interaction, GUI/application parity | in progress (W10): shared GUI picker APIs, scene transparency (per-drawable and per-triangle ordering, plus order-independent average-color and depth-peeling accumulation on Vulkan, batch 27), eye-dome lighting, horizon-based ambient occlusion (GTAO, batch 24), hard/soft shadows (quality parity in batch 21), coplanar mesh-edge depth bias, one shared snapshot implementation in `snapshot.cpp` (batch 23), which now also runs the virtual `draw()` on Vulkan so effects bracketed inside it reach the file (batch 28), simplified in batch 29 so the offscreen frame state lives in `Viewer::Impl` behind one private `snapshot_frame()` hook, file snapshots exclude the Viewer HUD as on OpenGL, and the snapshot background defaults to the current viewer color on both backends, Python coverage of mesh drawable state (batch 25, including unlit highlight parity), and per-vertex-color/texture raster probes (batch 26); remaining native GUI integration remains open |
+| 6. Renderer, interaction, GUI/application parity | in progress (W10): shared GUI picker APIs, scene transparency (per-drawable and per-triangle ordering, plus order-independent average-color and depth-peeling accumulation on Vulkan, batch 27), eye-dome lighting, horizon-based ambient occlusion (GTAO, batch 24), hard/soft shadows (quality parity in batch 21), coplanar mesh-edge depth bias, one shared snapshot implementation in `snapshot.cpp` (batch 23), which now also runs the virtual `draw()` on Vulkan so effects bracketed inside it reach the file (batch 28), simplified in batch 29 so the offscreen frame state lives in `Viewer::Impl` behind one private `snapshot_frame()` hook, file snapshots exclude the Viewer HUD as on OpenGL, and the snapshot background defaults to the current viewer color on both backends, and an OpenGL snapshot now renders as one whole-image offscreen FBO within the GL size limits (tiling only as an oversized fallback) so screen-space effects no longer seam at tile borders (batch 30), Python coverage of mesh drawable state (batch 25, including unlit highlight parity), and per-vertex-color/texture raster probes (batch 26); remaining native GUI integration remains open |
 
 Divergence audit (updated at U6b, 2026-11-04), against local `main` at
 `b2868dcd5f0cc06fdb0b7df10e1ada2ec6a28226`, including the current working tree:
@@ -958,7 +958,7 @@ cause.
 | Transparency, ambient occlusion, shadows, EDL, text, clipping | Straight-alpha scene triangles support `TrianglesDrawable::opacity()` and the legacy `AverageColorBlending`/`DualDepthPeeling` classes, ordered far-to-near per drawable and per triangle; on Vulkan both classes use their own order-independent composites (`TransparencyMethod::average` for average color blending, `TransparencyMethod::peeling` for depth peeling, batch 27), and on OpenGL the legacy renderers run their own average-color accumulation and depth peeling. Eye-dome lighting, horizon-based ambient occlusion (GTAO) and hard/soft shadows are full-screen effects; EDL and the AO composite sample this frame's scene depth, GTAO marches horizon slices in a depth prepass, and shadows compare against a depth-only light-space map rendered before the scene. Straight-alpha 2D overlays, depth-tested translucent annotations and basic horizontal TrueType/UTF-8 text are supported; shaping, bidi and automatic font fallback remain pending. The scene adapter still rejects the per-drawable AO flag; ambient occlusion is a viewer/effect overlay. |
 | Clipping | Up to two per-viewer world-space halfspaces. Geometric triangle/line-centerline cuts, center-clipped plain points and front-surface analytic clipping preserve IDs/MSAA. No automatic cut caps; native plane guides use depth-tested transparent fill and outlines. |
 | Point and line styles | Plain points of any positive pixel size, spheres and oriented surfels are implemented. Capped cylinders/cones and butt-capped plain wide lines are implemented; joined strokes and rounded plain-line caps remain pending. |
-| Snapshot options | Device-supported MSAA (default 4); expand/crop framing, scaling, current/white/transparent background (default 0 = current viewer color, batch 29) and image saving work. A file snapshot runs the virtual `draw()` through one offscreen frame funnel in `Viewer::Impl` (a single private `snapshot_frame()` hook), so effects bracketed inside it (ambient occlusion, shadows, eye-dome lighting, a transparency method) are included, as in OpenGL (batch 28); the Viewer HUD is excluded from files on both backends (batch 29); `capture()` stays a raw scene frame and keeps the HUD per `snapshot_hud_`. No tiled oversized captures. |
+| Snapshot options | Device-supported MSAA (default 4); expand/crop framing, scaling, current/white/transparent background (default 0 = current viewer color, batch 29) and image saving work. A file snapshot runs the virtual `draw()` through one offscreen frame funnel in `Viewer::Impl` (a single private `snapshot_frame()` hook), so effects bracketed inside it (ambient occlusion, shadows, eye-dome lighting, a transparency method) are included, as in OpenGL (batch 28); the Viewer HUD is excluded from files on both backends (batch 29); `capture()` stays a raw scene frame and keeps the HUD per `snapshot_hud_`. No tiled oversized captures. OpenGL now matches the single-pass behavior: an in-limit snapshot renders into one whole-image offscreen FBO (with an explicit viewport), and window-sized tiling remains only as the fallback for images beyond the GL texture/renderbuffer limits, so ambient occlusion, eye-dome lighting and shadows stay continuous instead of seaming at tile borders (batch 30). |
 | Readback | RGBA8, D32 and RG32UI; top row first; depth [0,1]; no-hit object/primitive IDs are `UINT32_MAX`. |
 | Picking IDs | Raw captures retain model/standalone order and generated primitive indices. `VulkanOffScreen::pick()` maps a visible hit to its model/drawable and original SurfaceMesh face when provenance exists. GPU point-cloud rectangle/lasso through-selection is supported. General vertex/edge hit provenance and the legacy GUI picker classes remain pending. |
 | Selection/highlighting | Renderer/drawable selection and inclusive primitive ranges use the shared highlight color, after native lighting/texturing; alpha, depth, IDs and MSAA coverage are preserved. As in the OpenGL `surface.frag`, selection tints unlit draws but primitive ranges require lighting. |
@@ -6009,3 +6009,49 @@ all at `-j2`. Running the three suites concurrently overloaded the GPU and repro
 the known load flakes (`vulkan.imgui`, `opengl.imgui` and a `vulkan.viewerloop`
 timeout); each passes alone, and the idle `-j2` MoltenVK re-run was 128/128 in 136 s
 versus 281 s under the concurrent load. No new flake or regression from this batch.
+
+### 2026-11-06 — W10 batch 30: seamless OpenGL effect snapshots
+
+Batch 29 left one OpenGL-only snapshot artifact: a scaled file snapshot of a scene
+with a screen-space effect (Tutorial 501 ambient occlusion at 2x, 4x MSAA) showed
+four tiled parts with visible horizontal and vertical seams through the middle,
+while the Vulkan snapshot of the same scene was continuous. The cause was the
+OpenGL snapshot's tiling: an output larger than the window was rendered as a grid
+of window-sized tiles, each with its own shifted sub-frustum and its own cropped
+depth buffer. Ambient occlusion reconstructs positions and normals from that depth
+and marches horizon slices across it; `ssao.frag`'s `horizon_sine()` returns zero
+for samples outside `[0,1]`, so a pixel near a tile border cannot see the geometry
+in the neighboring tile and its occlusion drops, drawing a seam along every tile
+edge. Vulkan never had the artifact because it renders the whole image in one
+offscreen pass.
+
+The OpenGL branch of `snapshot.cpp` now renders the whole image in a single
+offscreen FBO whenever the output fits the GL limits, matching Vulkan:
+
+- After the existing frustum math (which still uses the window aspect ratio), the
+  code queries `GL_MAX_TEXTURE_SIZE` and `GL_MAX_RENDERBUFFER_SIZE`. If both output
+  dimensions are within the smaller limit, the tile size is set to the full output
+  (`sub_w = w`, `sub_h = h`), so the existing tile loop runs exactly once over a
+  full-size FBO with the full frustum and a complete depth buffer. Window-sized
+  tiling remains only as the fallback for images beyond the GL limits.
+- Neither `FramebufferObject::bind()` nor `Viewer::draw()` sets the viewport (only
+  `init()` does), and tiling previously worked only because the tile FBO equaled the
+  window size. The whole-image path therefore saves the current `GL_VIEWPORT`,
+  sets `glViewport(0, 0, sub_w, sub_h)` after binding the tile, and restores the
+  saved viewport in cleanup. The AO FBOs size themselves from the viewport, so they
+  now match the full image and the effect is continuous. `ssao.frag` derives its
+  texel size from `textureSize(scene_depth, 0)`, so it is self-consistent at any FBO
+  size and needed no shader change.
+
+`tests/viewer/opengl_snapshot_seam_test.cpp` (`opengl.snapshotseam`, OpenGL-only)
+loads the torus knot, brackets `AmbientOcclusion` inside a `draw()` override that
+counts invocations, and requires a 2x in-limit snapshot to call `draw()` exactly
+once for both the plain and the occluded frame — a tiled 2x2 render would call it
+four times and fail. It also requires the occluded image to differ from the plain
+one (the effect is present), the output to be `2*fw x 2*fh`, and the camera screen
+size and projection to be restored. The generated 2x AO image shows the knot with
+continuous occlusion and no middle seams.
+
+Suites (2026-11-06): 128/128 MoltenVK, 92/92 OpenGL and 91/91 Qt-enabled OpenGL,
+all idle at `-j2` (the OpenGL and Qt counts each include the new `opengl.snapshotseam`).
+No new flake or regression from this batch.
