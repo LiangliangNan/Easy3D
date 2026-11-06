@@ -323,7 +323,7 @@ Decisions in force:
 | 3. `VulkanMultiViewer` | merged into U2 |
 | 4. Remove runtime selection | done (W4) |
 | 5. Tutorials on the shared API | in progress: GLFW Tutorial 202 now builds on Vulkan, and Qt/wx integration remains W10; Tutorials 501, 502, 503, 504 and 505 run on both backends through the ambient-occlusion, shadow, scene-transparency and eye-dome-lighting paths (2026-11-05); Tutorials 401/402 use shared visible-surface picking (2026-11-04); no tutorial uses backend-selection macros or CMake gates (W5) |
-| 6. Renderer, interaction, GUI/application parity | in progress (W10): shared GUI picker APIs, scene transparency (per-drawable and per-triangle ordering), eye-dome lighting, horizon-based ambient occlusion (GTAO, batch 24), hard/soft shadows (quality parity in batch 21), coplanar mesh-edge depth bias, one shared snapshot implementation in `snapshot.cpp` (batch 23), and Python coverage of mesh drawable state (batch 25, including unlit highlight parity); remaining mesh raster parity and native GUI integration remain open |
+| 6. Renderer, interaction, GUI/application parity | in progress (W10): shared GUI picker APIs, scene transparency (per-drawable and per-triangle ordering), eye-dome lighting, horizon-based ambient occlusion (GTAO, batch 24), hard/soft shadows (quality parity in batch 21), coplanar mesh-edge depth bias, one shared snapshot implementation in `snapshot.cpp` (batch 23), Python coverage of mesh drawable state (batch 25, including unlit highlight parity), and per-vertex-color/texture raster probes (batch 26); remaining native GUI integration remains open |
 
 Divergence audit (updated at U6b, 2026-11-04), against local `main` at
 `b2868dcd5f0cc06fdb0b7df10e1ada2ec6a28226`, including the current working tree:
@@ -468,7 +468,7 @@ of this document.
   the file-by-file responsibility audit (including the shared OpenGL query-state
   guard extracted for Viewer and GUI mesh picking in batch 8) and remove capability
   gates only when implementations exist. U5/API work remains open.
-- **W10** Mapple, Qt/wx, remaining Python API/tutorial coverage, shadows parity. Scene transparency and Tutorial 504 are implemented (batch 13); the legacy blending classes currently share one depth-sorted pass. Eye-dome lighting and Tutorial 505 are implemented (batch 14). Depth-based ambient occlusion and Tutorial 501 are implemented (batch 15) and replaced by horizon-based GTAO on both backends (batch 24). Hard and soft shadows with Tutorials 502/503 are implemented (batch 16); matching PCF footprints, per-pixel PCSS rotation, texel radius floors and Vulkan comparison-then-bilinear filtering bring their quality in line (batch 21). Coplanar mesh edges over filled faces use the OpenGL polygon offset (batch 17); and file snapshots on both backends now share one implementation in `snapshot.cpp` that renders `frame_commands()` through the backend device (batch 23). The packaged Python test now covers mesh drawable rendering state on both backends (batch 25). Remaining mesh raster parity, Mapple, Qt/wx and the rest of the Python API/tutorial coverage stay open.
+- **W10** Mapple, Qt/wx, remaining Python API/tutorial coverage, shadows parity. Scene transparency and Tutorial 504 are implemented (batch 13); the legacy blending classes currently share one depth-sorted pass. Eye-dome lighting and Tutorial 505 are implemented (batch 14). Depth-based ambient occlusion and Tutorial 501 are implemented (batch 15) and replaced by horizon-based GTAO on both backends (batch 24). Hard and soft shadows with Tutorials 502/503 are implemented (batch 16); matching PCF footprints, per-pixel PCSS rotation, texel radius floors and Vulkan comparison-then-bilinear filtering bring their quality in line (batch 21). Coplanar mesh edges over filled faces use the OpenGL polygon offset (batch 17); and file snapshots on both backends now share one implementation in `snapshot.cpp` that renders `frame_commands()` through the backend device (batch 23). The packaged Python test now covers mesh drawable rendering state on both backends (batch 25); per-vertex color interpolation and texture sampling, including clamp orientation and the repeat factor/wrap, are pixel-identical across backends (batch 26), closing mesh GPU/rasterization parity. Remaining Mapple, Qt/wx and the rest of the Python API/tutorial coverage stay open.
 
 U1–U4 are complete. Continue U5 and independent U6 source/build cleanup in
 larger coherent, verified batches, then finish W10 feature parity; re-run the tests after each.
@@ -5689,3 +5689,35 @@ the OpenGL file snapshot renders the scene, guides and camera-path annotations
 without the `post_draw()` HUD. `Viewer::capture()` includes the HUD on both
 backends. The Python test avoids the HUD region instead of encoding either
 policy.
+
+### 2026-11-06 — W10 batch 26: packaged-Python raster parity
+
+Batch 25 covered drawable state through a `Viewer` window, where the logical
+probe coordinates need a framebuffer scale and the HUD constrains where probes
+may go. This batch adds `check_raster_states()` to `tests/python/rendering.py`,
+which uses `OffScreen` at DPI 1 so the camera screen size equals the image size
+on both backends, the snapshot contains only the scene, and
+`Camera.projectedCoordinatesOf()` maps world points directly to image rows
+(`projectedCoordinatesOf()` and `bitmap()` share top-down rows). The camera is
+orthographic over the `[-1, 1]` box, with no model-derived bounding box, so
+framing cannot differ between backends.
+
+Three snapshots are compared through the packaged module:
+
+- A triangle with per-vertex red/green/blue colors, rendered unlit. Probes sit
+  80% toward each vertex and must be dominated by that vertex's channel, which
+  exercises interpolation across the primitive rather than uniform state.
+- A quad textured from a saved 4x1 image (red, green, blue, yellow). Probes at
+  the four texel centers must keep their texel's dominant color, covering image
+  upload orientation and the LINEAR file-texture filter.
+- The same quad with `set_texture(path, repeat=True)` and
+  `set_texture_repeat(3)`. Three probes one third of the quad apart must agree
+  within 16/255 and stay green-dominant, covering the `texcoord * repeat`
+  scale, the REPEAT wrap, and its periodicity; the first probe also differs
+  from the clamp image at the same point, so the uniform is demonstrably
+  applied.
+
+Both packaged modules produced identical probe values on this Mac; no renderer
+change was needed. The same run also verifies `delete_drawable()` releases the
+standalone drawables. All 91 OpenGL tests and all 127 MoltenVK tests pass at
+`-j2` (2026-11-06). `git diff --check` is clean.

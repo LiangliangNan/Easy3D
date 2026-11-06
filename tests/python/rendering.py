@@ -137,6 +137,91 @@ def check_mesh_states(directory):
     del viewer
 
 
+def check_raster_states(directory):
+    # OffScreen images are scene-only on both backends (no logo, axes, or
+    # hints), so the probes below are not affected by backend HUD differences.
+    viewer = easy3d.OffScreen(129, 97)
+    viewer.set_background_color(easy3d.vec4(0, 0, 0, 1))
+    camera = viewer.camera()
+    camera.setType(easy3d.Camera.ORTHOGRAPHIC)
+    camera.setSceneBoundingBox(easy3d.vec3(-1), easy3d.vec3(1))
+    camera.setViewDirection(easy3d.vec3(0, 0, -1))
+    camera.setUpVector(easy3d.vec3(0, 1, 0))
+    camera.showEntireScene()
+
+    def probes(name, points):
+        image = directory / name
+        assert viewer.render(str(image), 1, 1, 0, True)
+        w, h, pixel = bitmap(image)
+        assert (w, h) == (viewer.width(), viewer.height())
+
+        def sample(world):
+            # projectedCoordinatesOf() uses the same top-down rows as bitmap().
+            screen = camera.projectedCoordinatesOf(world)
+            return pixel(int(round(screen.x)), int(round(screen.y)))
+
+        return [sample(point) for point in points]
+
+    def red(p):
+        return p[0] > 120 and p[0] > 2 * p[1] and p[0] > 2 * p[2]
+
+    def green(p):
+        return p[1] > 120 and p[1] > 2 * p[0] and p[1] > 2 * p[2]
+
+    def blue(p):
+        return p[2] > 120 and p[2] > 2 * p[0] and p[2] > 2 * p[1]
+
+    def yellow(p):
+        return p[0] > 150 and p[1] > 150 and p[2] < 80
+
+    # Per-vertex colors interpolate across the primitive identically on both
+    # backends. Probes sit 80% toward each vertex, where that vertex dominates.
+    triangle = easy3d.TrianglesDrawable("vertex colors")
+    triangle.update_vertex_buffer([easy3d.vec3(-0.8, -0.8, 0), easy3d.vec3(0.8, -0.8, 0),
+                                   easy3d.vec3(0, 0.8, 0)])
+    triangle.update_color_buffer([easy3d.vec3(1, 0, 0), easy3d.vec3(0, 1, 0), easy3d.vec3(0, 0, 1)])
+    triangle.set_coloring_method(easy3d.State.COLOR_PROPERTY)
+    triangle.set_lighting(False)
+    assert viewer.add_drawable(triangle)
+    colors = probes("raster_vertex_colors.bmp",
+                    [easy3d.vec3(-0.64, -0.64, 0), easy3d.vec3(0.64, -0.64, 0),
+                     easy3d.vec3(0, 0.64, 0)])
+    assert red(colors[0]) and green(colors[1]) and blue(colors[2])
+    assert viewer.delete_drawable(triangle)
+
+    # A 4x1 texture with a distinct texel per quarter. Texel centers keep the
+    # LINEAR filtering of the file-loaded texture to a single texel.
+    texture = directory / "raster_4x1.bmp"
+    assert easy3d.ImageIO.save(str(texture), [255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 255, 0],
+                               4, 1, 3, True)
+    quad = easy3d.TrianglesDrawable("textured")
+    quad.update_vertex_buffer([easy3d.vec3(-0.8, -0.8, 0), easy3d.vec3(0.8, -0.8, 0),
+                               easy3d.vec3(0.8, 0.8, 0), easy3d.vec3(-0.8, 0.8, 0)])
+    quad.update_texcoord_buffer([easy3d.vec2(0, 0), easy3d.vec2(1, 0),
+                                 easy3d.vec2(1, 1), easy3d.vec2(0, 1)])
+    quad.update_element_buffer([[0, 1, 2], [0, 2, 3]])
+    quad.set_lighting(False)
+    quad.set_texture(str(texture))
+    quad.set_coloring_method(easy3d.State.TEXTURED)
+    assert viewer.add_drawable(quad)
+
+    clamp = probes("raster_texture_clamp.bmp",
+                   [easy3d.vec3(x, 0, 0) for x in (-0.6, -0.2, 0.2, 0.6)])
+    assert red(clamp[0]) and green(clamp[1]) and blue(clamp[2]) and yellow(clamp[3])
+
+    # The repeat factor scales the texcoords, and the REPEAT wrap makes the
+    # sampling periodic: one period is 1/3 of the quad.
+    quad.set_texture(str(texture), True)
+    quad.set_texture_repeat(3)
+    repeated = probes("raster_texture_repeat.bmp",
+                      [easy3d.vec3(x, 0, 0) for x in (-0.6, -0.6 + 1.6 / 3, -0.6 + 3.2 / 3)])
+    assert all(p[1] > 120 and p[1] > p[0] and p[1] > p[2] for p in repeated)
+    assert not red(repeated[0])
+    assert max(max(abs(a - b) for a, b in zip(repeated[0], p)) for p in repeated) <= 16
+    assert viewer.delete_drawable(quad)
+    viewer.clear_scene()
+
+
 class Window(easy3d.Viewer):
     def __init__(self):
         super().__init__("Python Viewer", width=181, height=151, samples=4, visible=False)
@@ -250,6 +335,7 @@ with tempfile.TemporaryDirectory(prefix="easy3d-python-") as directory:
     assert model.n_vertices() == 3
 
     check_mesh_states(root)
+    check_raster_states(root)
 
     override = DrawOverride()
     override.set_usage("")

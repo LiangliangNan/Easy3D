@@ -43,26 +43,29 @@
   - [x] Ambient occlusion quality (batch 24): both backends replace the sparse-kernel SSAO and box blur with GTAO — eight azimuthal slices per pixel, horizon marching along the projected sample radius, cosine-weighted visibility and a normal/plane-aware bilateral denoise. Samples are limited to a spherical kernel, so the depth-jump dark strips that the old non-vanishing `clamp(radius/distance)` weight produced at small radii are gone. Vulkan computes AO and denoise in compute shaders from a single-sample depth prepass and composites the denoised texture; OpenGL runs the same horizon marching as fragment passes over the projection buffer's depth, with no geometry pass or G-buffer, which removes the second scene traversal and the large OpenGL frame-time gap. Background pixels stay untouched and the focused AO regression plus Tutorial 501 visual checks pass on both backends.
   - [x] Hard/soft shadow quality parity (batch 21): hard shadows use four ±0.75-texel PCF taps on both backends (Vulkan compares 2x2 texels and blends the results like `sampler2DShadow`); PCSS searches/filters 32/64 taps on Vulkan and 64/128 on OpenGL with per-pixel interleaved-gradient rotation and one-texel radius floors. Tutorial 502/503 snapshots on OpenGL show smooth edges and no floor moiré. Remaining approximation: Vulkan's lower tap count can leave slightly more noise in very large penumbrae.
   - [ ] Vulkan snapshots do not include effects that a tutorial brackets inside `draw()` (ambient occlusion, shadows, eye-dome lighting, transparency): `snapshot.cpp` renders `frame_commands()` through `RenderDevice::render()` and does not call the virtual `draw()`. `Viewer::capture()` intentionally stays a raw scene capture on both backends because tests and picking compare geometry/depth/IDs through it.
-  
-- Send the computed value of "MVP * MANIP" to shaders (avoiding computing the matrix product for each vertex/fragment)
-- Walkthrough and animation; allow to modify the cameras interactively
-- Implement potree for huge point cloud visualization (https://github.com/potree/potree)
-- Add a measuring tool
+  - [ ] Need a clearer, elegant, and user-friendly handling of different types of coordinates (camera, frame, window/viewer) combined with DPI, handled the same way for both backends. Document how this is addressed in the code (at the top of relevant functions).
+  - [ ] Fix transparency issue (https://github.com/LiangliangNan/Easy3D/issues/219). Might be related to per-face normal and normal computed from dFdx/dFdy;
+  - [ ] Send the computed MVP matrix (MVP * MANIP) to shaders (when possible, avoiding computing the matrix product for each vertex/fragment). That is more efficient, right? 
+- 
+- Add a distance measuring tool in Mapple
 - Add contents and brief info for each model in WidgetModelList.
+- Polygonization may fail for complex models (Zhaiyu once reported an example)
 - Add tutorials for algorithms:
     - Delaunay2D,
-    - simplification
-    - subdivision
-    - smoothing
+    - 2D CSG operations (see easy3d/algo/tessellator.h). Put this next to tutorial convex partition 
     - hole filling
     - curvature
+    - smoothing
+    - simplification
+    - subdivision
     - parameterization
-    - CSG operations
+    - 
+- Walkthrough and animation; allow to modify the cameras interactively
+- Implement potree for huge point cloud visualization (https://github.com/potree/potree)
 - Check if clipper can be used to handle overlapping faces.
 - Generate LODs using [meshoptimizer](https://github.com/zeux/meshoptimizer).
-- Transparency on macOS with AMD graphics has artifact along the edges (an issue with dFdx/dFdy in the fragment shader). 
-  A workaround is to provide a per-face normal (instead of using the normal computed from dFdx/dFdy);
 - Previous timer events may interrupt the current one when visualizing pivot points;
+
 
 
 
