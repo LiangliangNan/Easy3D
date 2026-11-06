@@ -675,6 +675,35 @@ public:
 	    void update_interaction_overlays(bool force = false) const;
 	    void update_frame_rate();
 	    void draw_transparency(const std::vector<TrianglesDrawable*>& surfaces, int method, int peels);
+	    // Offscreen frame capture. OpenGL renders a file snapshot into a bound
+	    // framebuffer, so whatever draw() produces ends up in the image; the
+	    // device has no framebuffer to bind, so a snapshot instead activates
+	    // this capture and drives the same virtual draw(). While it is active,
+	    // render_frame() renders offscreen and frame_size() reports the capture
+	    // size, and the window is not presented.
+	    struct Capture {
+	        bool active = false;
+	        int width = 0, height = 0;
+	        unsigned samples = 1;
+	        vec4 background{};
+	        graphics::FrameImage image;
+	    };
+	    Capture capture_;
+	    // Restores the camera and deactivates the capture when a file snapshot
+	    // ends, including when the tutorial draw() it runs throws.
+	    struct SnapshotRestore {
+	        Viewer& self;
+	        int width, height;
+	        mat4 projection;
+	        ~SnapshotRestore();
+	    };
+	    // Size of the frame currently being rendered: the capture during a
+	    // snapshot, the window framebuffer otherwise.
+	    void frame_size(int& width, int& height) const;
+	    // Present the frame to the window, or render it into the capture.
+	    bool render_frame(std::vector<graphics::DrawCommand> commands,
+	                      graphics::TransparencyMethod method = graphics::TransparencyMethod::sorted,
+	                      unsigned peel_layers = 0);
 	    void ensure_text_renderer() const;
 	    std::chrono::steady_clock::time_point frame_rate_start_;
 	    unsigned frame_rate_frames_ = 0;

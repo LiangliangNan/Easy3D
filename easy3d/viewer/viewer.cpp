@@ -395,13 +395,32 @@ unsigned Viewer::validation_errors() const { return device().validation_errors()
 void Viewer::init() {}
 void Viewer::pre_draw() {}
 void Viewer::post_draw() {}
+void Viewer::frame_size(int& width, int& height) const {
+    if (capture_.active) { width = capture_.width; height = capture_.height; }
+    else { width = framebuffer_width(); height = framebuffer_height(); }
+}
+bool Viewer::render_frame(std::vector<graphics::DrawCommand> commands,
+                          graphics::TransparencyMethod method, unsigned peel_layers) {
+    int width = 0, height = 0;
+    frame_size(width, height);
+    if (width <= 0 || height <= 0) return false;
+    if (!capture_.active)
+        return impl_->device->present(unsigned(width), unsigned(height), commands,
+                                      background_color(), unsigned(samples()), method, peel_layers);
+    // A file snapshot renders the same frame offscreen instead of presenting it.
+    capture_.image = impl_->device->render(unsigned(width), unsigned(height), commands,
+                                           capture_.background, capture_.samples, method, peel_layers);
+    return true;
+}
 bool Viewer::draw() {
-    const int width = framebuffer_width(), height = framebuffer_height();
+    int width = 0, height = 0;
+    frame_size(width, height);
     Shadow::FrameData shadow;
     Shadow* active_shadow = Shadow::active(camera());
     const bool has_shadow = active_shadow && Shadow::frame_data(camera(), shadow);
     std::vector<DrawSource> sources;
-    auto commands = frame_commands(*camera(), width, height, has_shadow ? &sources : nullptr);
+    auto commands = frame_commands(*camera(), width, height, has_shadow ? &sources : nullptr,
+                                   capture_.active ? snapshot_hud_ : true);
     if (has_shadow) {
         const mat4 clip_to_shadow = shadow.shadow_matrix * inverse(camera()->modelViewProjectionMatrix());
         const auto& surfaces = active_shadow->surfaces();
@@ -446,13 +465,14 @@ bool Viewer::draw() {
         commands.insert(commands.begin(),
                         graphics::shape::draw_eye_dome_lighting(unsigned(width), unsigned(height),
                                                                 z_near, z_far, scene_size));
-    return impl_->device->present(uint32_t(width), uint32_t(height), commands,
-                                  background_color(), unsigned(samples()));
+    return render_frame(std::move(commands));
 }
 void Viewer::draw_transparency(const std::vector<TrianglesDrawable*>& surfaces, int method, int peels) {
-    const int width = framebuffer_width(), height = framebuffer_height();
+    int width = 0, height = 0;
+    frame_size(width, height);
     std::vector<DrawSource> sources;
-    auto commands = frame_commands(*camera(), width, height, &sources);
+    auto commands = frame_commands(*camera(), width, height, &sources,
+                                   capture_.active ? snapshot_hud_ : true);
     for (size_t i = 0; i < sources.size() && i < commands.size(); ++i) {
         auto* triangles = dynamic_cast<TrianglesDrawable*>(sources[i].drawable.get());
         if (!triangles || std::find(surfaces.begin(), surfaces.end(), triangles) == surfaces.end()) continue;
@@ -464,8 +484,7 @@ void Viewer::draw_transparency(const std::vector<TrianglesDrawable*>& surfaces, 
     const auto transparency = method == 1 ? graphics::TransparencyMethod::average :
                               method == 2 ? graphics::TransparencyMethod::peeling :
                               graphics::TransparencyMethod::sorted;
-    impl_->device->present(uint32_t(width), uint32_t(height), commands, background_color(),
-                           unsigned(samples()), transparency, peels > 0 ? unsigned(peels) : 0u);
+    render_frame(std::move(commands), transparency, peels > 0 ? unsigned(peels) : 0u);
 }
 bool Viewer::mouse_free_move_event(int, int, int, int, int) { return false; }
 bool Viewer::char_input_event(unsigned int) { return false; }

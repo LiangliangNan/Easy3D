@@ -323,7 +323,7 @@ Decisions in force:
 | 3. `VulkanMultiViewer` | merged into U2 |
 | 4. Remove runtime selection | done (W4) |
 | 5. Tutorials on the shared API | in progress: GLFW Tutorial 202 now builds on Vulkan, and Qt/wx integration remains W10; Tutorials 501, 502, 503, 504 and 505 run on both backends through the ambient-occlusion, shadow, scene-transparency and eye-dome-lighting paths (2026-11-05); Tutorials 401/402 use shared visible-surface picking (2026-11-04); no tutorial uses backend-selection macros or CMake gates (W5) |
-| 6. Renderer, interaction, GUI/application parity | in progress (W10): shared GUI picker APIs, scene transparency (per-drawable and per-triangle ordering, plus order-independent average-color and depth-peeling accumulation on Vulkan, batch 27), eye-dome lighting, horizon-based ambient occlusion (GTAO, batch 24), hard/soft shadows (quality parity in batch 21), coplanar mesh-edge depth bias, one shared snapshot implementation in `snapshot.cpp` (batch 23), Python coverage of mesh drawable state (batch 25, including unlit highlight parity), and per-vertex-color/texture raster probes (batch 26); remaining native GUI integration remains open |
+| 6. Renderer, interaction, GUI/application parity | in progress (W10): shared GUI picker APIs, scene transparency (per-drawable and per-triangle ordering, plus order-independent average-color and depth-peeling accumulation on Vulkan, batch 27), eye-dome lighting, horizon-based ambient occlusion (GTAO, batch 24), hard/soft shadows (quality parity in batch 21), coplanar mesh-edge depth bias, one shared snapshot implementation in `snapshot.cpp` (batch 23), which now also runs the virtual `draw()` on Vulkan so effects bracketed inside it reach the file (batch 28), Python coverage of mesh drawable state (batch 25, including unlit highlight parity), and per-vertex-color/texture raster probes (batch 26); remaining native GUI integration remains open |
 
 Divergence audit (updated at U6b, 2026-11-04), against local `main` at
 `b2868dcd5f0cc06fdb0b7df10e1ada2ec6a28226`, including the current working tree:
@@ -468,7 +468,7 @@ of this document.
   the file-by-file responsibility audit (including the shared OpenGL query-state
   guard extracted for Viewer and GUI mesh picking in batch 8) and remove capability
   gates only when implementations exist. U5/API work remains open.
-- **W10** Mapple, Qt/wx, remaining Python API/tutorial coverage, shadows parity. Scene transparency and Tutorial 504 are implemented (batch 13); `AverageColorBlending` and `DualDepthPeeling` now accumulate order-independently on Vulkan through `TransparencyMethod::average`/`peeling` instead of sharing the depth-sorted pass (batch 27), matching the OpenGL legacy renderers — the peel accumulation blends each front-to-back layer *under* the running result, as OpenGL does, which removes the rotation artifacts reported after the first batch-27 runs — and both implementations were checked and validated on their configured backends on 2026-11-06 (Vulkan `vulkan.transparency` plus the full 127-test Vulkan suite; OpenGL legacy renderers plus Tutorials 504/505 in the full 90-test OpenGL suite). Eye-dome lighting and Tutorial 505 are implemented (batch 14). Depth-based ambient occlusion and Tutorial 501 are implemented (batch 15) and replaced by horizon-based GTAO on both backends (batch 24). Hard and soft shadows with Tutorials 502/503 are implemented (batch 16); matching PCF footprints, per-pixel PCSS rotation, texel radius floors and Vulkan comparison-then-bilinear filtering bring their quality in line (batch 21). Coplanar mesh edges over filled faces use the OpenGL polygon offset (batch 17); and file snapshots on both backends now share one implementation in `snapshot.cpp` that renders `frame_commands()` through the backend device (batch 23). The packaged Python test now covers mesh drawable rendering state on both backends (batch 25); per-vertex color interpolation and texture sampling, including clamp orientation and the repeat factor/wrap, are pixel-identical across backends (batch 26), closing mesh GPU/rasterization parity. Remaining Mapple, Qt/wx and the rest of the Python API/tutorial coverage stay open.
+- **W10** Mapple, Qt/wx, remaining Python API/tutorial coverage, shadows parity. Scene transparency and Tutorial 504 are implemented (batch 13); `AverageColorBlending` and `DualDepthPeeling` now accumulate order-independently on Vulkan through `TransparencyMethod::average`/`peeling` instead of sharing the depth-sorted pass (batch 27), matching the OpenGL legacy renderers — the peel accumulation blends each front-to-back layer *under* the running result, as OpenGL does, which removes the rotation artifacts reported after the first batch-27 runs — and both implementations were checked and validated on their configured backends on 2026-11-06 (Vulkan `vulkan.transparency` plus the full 127-test Vulkan suite; OpenGL legacy renderers plus Tutorials 504/505 in the full 90-test OpenGL suite). Eye-dome lighting and Tutorial 505 are implemented (batch 14). Depth-based ambient occlusion and Tutorial 501 are implemented (batch 15) and replaced by horizon-based GTAO on both backends (batch 24). Hard and soft shadows with Tutorials 502/503 are implemented (batch 16); matching PCF footprints, per-pixel PCSS rotation, texel radius floors and Vulkan comparison-then-bilinear filtering bring their quality in line (batch 21). Coplanar mesh edges over filled faces use the OpenGL polygon offset (batch 17); and file snapshots on both backends now share one implementation in `snapshot.cpp` that renders `frame_commands()` through the backend device (batch 23). The packaged Python test now covers mesh drawable rendering state on both backends (batch 25); per-vertex color interpolation and texture sampling, including clamp orientation and the repeat factor/wrap, are pixel-identical across backends (batch 26), closing mesh GPU/rasterization parity. Vulkan file snapshots now run the virtual `draw()` through an offscreen capture, so ambient occlusion, shadows, eye-dome lighting and the transparency method a tutorial selects reach the saved image, as they already did on OpenGL (batch 28). Remaining Mapple, Qt/wx and the rest of the Python API/tutorial coverage stay open.
 
 U1–U4 are complete. Continue U5 and independent U6 source/build cleanup in
 larger coherent, verified batches, then finish W10 feature parity; re-run the tests after each.
@@ -958,7 +958,7 @@ cause.
 | Transparency, ambient occlusion, shadows, EDL, text, clipping | Straight-alpha scene triangles support `TrianglesDrawable::opacity()` and the legacy `AverageColorBlending`/`DualDepthPeeling` classes, ordered far-to-near per drawable and per triangle; on Vulkan both classes use their own order-independent composites (`TransparencyMethod::average` for average color blending, `TransparencyMethod::peeling` for depth peeling, batch 27), and on OpenGL the legacy renderers run their own average-color accumulation and depth peeling. Eye-dome lighting, horizon-based ambient occlusion (GTAO) and hard/soft shadows are full-screen effects; EDL and the AO composite sample this frame's scene depth, GTAO marches horizon slices in a depth prepass, and shadows compare against a depth-only light-space map rendered before the scene. Straight-alpha 2D overlays, depth-tested translucent annotations and basic horizontal TrueType/UTF-8 text are supported; shaping, bidi and automatic font fallback remain pending. The scene adapter still rejects the per-drawable AO flag; ambient occlusion is a viewer/effect overlay. |
 | Clipping | Up to two per-viewer world-space halfspaces. Geometric triangle/line-centerline cuts, center-clipped plain points and front-surface analytic clipping preserve IDs/MSAA. No automatic cut caps; native plane guides use depth-tested transparent fill and outlines. |
 | Point and line styles | Plain points of any positive pixel size, spheres and oriented surfels are implemented. Capped cylinders/cones and butt-capped plain wide lines are implemented; joined strokes and rounded plain-line caps remain pending. |
-| Snapshot options | Device-supported MSAA (default 4); expand/crop framing, scaling, white/current/transparent background and image saving work. No tiled oversized captures. |
+| Snapshot options | Device-supported MSAA (default 4); expand/crop framing, scaling, white/current/transparent background and image saving work. A file snapshot runs the virtual `draw()` through the offscreen capture, so effects bracketed inside it (ambient occlusion, shadows, eye-dome lighting, a transparency method) are included, as in OpenGL (batch 28); `capture()` stays a raw scene frame. No tiled oversized captures. |
 | Readback | RGBA8, D32 and RG32UI; top row first; depth [0,1]; no-hit object/primitive IDs are `UINT32_MAX`. |
 | Picking IDs | Raw captures retain model/standalone order and generated primitive indices. `VulkanOffScreen::pick()` maps a visible hit to its model/drawable and original SurfaceMesh face when provenance exists. GPU point-cloud rectangle/lasso through-selection is supported. General vertex/edge hit provenance and the legacy GUI picker classes remain pending. |
 | Selection/highlighting | Renderer/drawable selection and inclusive primitive ranges use the shared highlight color, after native lighting/texturing; alpha, depth, IDs and MSAA coverage are preserved. As in the OpenGL `surface.frag`, selection tints unlit draws but primitive ranges require lighting. |
@@ -5889,3 +5889,61 @@ therefore belong to the sorted path, not to peeling.
 
 Full suites after the fix: 127/127 MoltenVK tests, 91/91 OpenGL tests and 90/90 tests of
 the Qt-enabled OpenGL tree at `-j4` (2026-11-06).
+
+### 2026-11-06 — W10 batch 28: effects in Vulkan file snapshots
+
+The OpenGL snapshot path binds a scaled framebuffer, temporarily overrides the
+camera and calls the virtual `draw()`, so everything a tutorial brackets inside
+that function -- ambient occlusion, hard/soft shadows, eye-dome lighting, a
+transparency method or its own annotations -- is in the saved image. The Vulkan
+path rendered `frame_commands()` straight through `RenderDevice::render()` and
+never reached `draw()`, so those files were always the bare scene (the open ToDo
+item about effects in snapshots).
+
+A device has no framebuffer to bind, so the Vulkan `Viewer` now has an explicit
+offscreen capture instead:
+
+- `Capture capture_` (active flag, output size, sample count, background and the
+  resulting `FrameImage`) plus two private helpers in the Vulkan branch of
+  `viewer.h`: `frame_size()` reports the capture size while a capture is active
+  and the window framebuffer otherwise, and `render_frame()` is the single place
+  a finished command list is submitted -- `present()` to the window normally,
+  `render()` into the capture while one is active.
+- `Viewer::draw()` and `Viewer::draw_transparency()` are the only frame
+  submitters and now both go through `render_frame()`, so the effect overlays
+  they inject and the transparency method they select are part of the captured
+  frame exactly as they are part of a presented one.
+- `Viewer::snapshot()` keeps its validation and its OpenGL-compatible frustum
+  math, then activates the capture, overrides the live camera with the output
+  size and frustum, and calls the virtual `draw()`. `SnapshotRestore` puts the
+  camera and the capture back on every path, including when a tutorial `draw()`
+  throws.
+- The HUD policy is unchanged: while capturing, `frame_commands()` receives
+  `snapshot_hud_`, so `Viewer` files keep their HUD and `OffScreen` and
+  `MultiViewer` files stay scene-only.
+- `Viewer::capture()` deliberately still renders `frame_commands()` and stays a
+  raw scene frame, because tests and picking compare geometry, depth and IDs
+  through it.
+
+`MultiViewer` and `OffScreen` needed no changes: the former overrides
+`draw_commands()` and the latter has no `draw()` override, so both flow through
+the same funnel, and `frame_commands()` still scales recorded overlay viewports
+from the window to the output size.
+
+New test `tests/viewer/snapshot_effects_test.cpp` (`vulkan.snapshoteffects`) uses
+a `Viewer` subclass that brackets `AmbientOcclusion::begin/end()` and
+`AverageColorBlending::draw()` inside its own `draw()`. It requires the snapshot
+to have run that virtual function, the occluded and blended files to differ from
+the plain one, a `2x` snapshot to have the requested size, the camera size,
+projection and live frame to be restored afterwards, and `capture()` to contain
+none of the effects. Visual check on `torusknot.obj`: the occluded file darkens
+the crevices and the blended one shows the knot see-through, where the previous
+Vulkan files showed neither.
+
+Suites, all at `-j2` (2026-11-06): 128/128 MoltenVK tests (one more than
+before), 91/91 OpenGL tests and 90/90 tests of the Qt-enabled OpenGL tree. The
+longer MoltenVK suite is load sensitive: `vulkan.imgui` failed in two otherwise
+clean `-j4` runs, while the same build passed 128/128 at `-j2` and the test
+passed when run alone with only the pre-existing MoltenVK `R32G32_UINT` blending
+message in its log — the behaviour already noted in `ToDo.md`, not a change from
+this batch.
