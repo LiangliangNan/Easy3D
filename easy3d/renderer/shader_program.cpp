@@ -48,6 +48,8 @@
 #include <easy3d/renderer/opengl.h>
 #include <easy3d/renderer/opengl_util.h>
 #include <easy3d/renderer/opengl_error.h>
+#include <easy3d/renderer/texture.h>
+#include <easy3d/renderer/texture_manager.h>
 #include <easy3d/util/logging.h>
 
 
@@ -118,6 +120,7 @@ namespace easy3d {
 			glDeleteProgram(program_);	
 
 		pUniforms.clear();
+		sampler_units_.clear();
 	}
 
 
@@ -403,6 +406,9 @@ namespace easy3d {
 
 		Uniform u = pUniforms[name];
 		glProgramUniform1i(program_, u.location, value);
+		auto sampler = sampler_units_.find(name);
+		if (sampler != sampler_units_.end())
+			sampler->second = value;
 		return this;
 	}
 
@@ -689,6 +695,27 @@ namespace easy3d {
             const auto& block = spBlocks.at(name);
             glBindBufferRange(GL_UNIFORM_BUFFER, block.bindingIndex, block.buffer, 0, block.size);
         }
+
+        // A sampler2D must reference a complete texture. Drivers (Apple's in
+        // particular) warn and sample zero when the unit is left unbound, even
+        // if the shader's texturing/SSAO branch is disabled. Callers bind their
+        // real textures after bind(), so defaulting every sampler unit to a
+        // neutral 1x1 texture here keeps paths that never bind one (corner
+        // axes, widgets) silent without any call-site handling.
+        if (!sampler_units_.empty()) {
+            GLint active = GL_TEXTURE0, previous = 0;
+            glGetIntegerv(GL_ACTIVE_TEXTURE, &active);
+            glGetIntegerv(GL_TEXTURE_BINDING_2D, &previous);
+            const Texture* fallback = TextureManager::request_white(); // may upload on first use
+            if (!fallback)
+                return;
+            glBindTexture(GL_TEXTURE_2D, previous);
+            for (const auto& sampler : sampler_units_) {
+                glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + sampler.second));
+                glBindTexture(GL_TEXTURE_2D, fallback->id());
+            }
+            glActiveTexture(static_cast<GLenum>(active));
+        }
 	}
 
 
@@ -961,6 +988,7 @@ namespace easy3d {
 
 
 	void  ShaderProgram::_add_uniforms() {
+		sampler_units_.clear();
 		int count;
 		GLsizei actualLen;
         int size;
@@ -992,6 +1020,8 @@ namespace easy3d {
 		u.location = glGetUniformLocation(program_, name.c_str());	
 		u.size = static_cast<int>(size);
 		pUniforms[name] = u;
+		if (type == GL_SAMPLER_2D)
+			sampler_units_[name] = 0;   // GL initializes sampler units to 0
 	}
 
 

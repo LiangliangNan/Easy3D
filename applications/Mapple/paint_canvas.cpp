@@ -1216,10 +1216,6 @@ void PaintCanvas::drawCornerAxes() {
     if (!drawable_axes_->is_visible())
         return;
 
-    const Texture* fallback = TextureManager::request_white();
-    if (!fallback)
-        return;
-
     // The viewport is changed to fit the lower left corner.
     int viewport[4];
     glGetIntegerv(GL_VIEWPORT, viewport);
@@ -1243,7 +1239,7 @@ void PaintCanvas::drawCornerAxes() {
     const vec4 &wLightPos = inverse(MV) * setting::light_position;
 
     program->bind();
-    program->bind_texture("textureID", fallback->id(), 0)->set_uniform("ssaoTexture", 0);
+    program->set_uniform("ssaoTexture", 0);
     program->set_uniform("MVP", MVP)
             ->set_uniform("MANIP", mat4::identity())
             ->set_uniform("NORMAL", mat3::identity())   // needs be padded when using uniform blocks

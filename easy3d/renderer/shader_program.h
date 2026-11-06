@@ -461,6 +461,12 @@ namespace easy3d {
 		// as find forces construction/copy/destruction of a std::sting copy of the const char*.
         std::unordered_map<std::string, Uniform> pUniforms;
 
+		// Texture unit of each active sampler2D uniform. bind() backs these units
+		// with a neutral texture so a sampler never references an unbound unit
+		// (Apple's driver warns about that even when the sampler's branch is
+		// disabled). Callers that need a real texture bind it after bind().
+		std::unordered_map<std::string, int> sampler_units_;
+
 		// AUX FUNCTIONS
 
 		// aux function to get info on the uniforms referenced by the shaders

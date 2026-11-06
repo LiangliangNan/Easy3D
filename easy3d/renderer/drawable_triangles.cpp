@@ -32,7 +32,7 @@
 #include <easy3d/renderer/camera.h>
 #include <easy3d/renderer/shader_program.h>
 #include <easy3d/renderer/shader_manager.h>
-#include <easy3d/renderer/texture_manager.h>
+#include <easy3d/renderer/texture.h>
 #include <easy3d/renderer/clipping_plane.h>
 #include <easy3d/renderer/manipulator.h>
 #include <easy3d/renderer/transform.h>
@@ -116,16 +116,9 @@ namespace easy3d {
 
         bool use_texture = (texture() && (coloring_method() == State::SCALAR_FIELD || coloring_method() == State::TEXTURED));
         program->set_uniform("use_texture", use_texture);
-        // Keep all active sampler uniforms backed by complete textures, even
-        // when their branches are disabled, to avoid Apple's sampler warnings.
-        const Texture* surface_texture = use_texture ? texture() : TextureManager::request_white();
-        if (!surface_texture) {
-            program->release();
-            return;
-        }
-        program->bind_texture("textureID", surface_texture->id(), 0);
         if (use_texture)
-            program->set_uniform("texture_repeat", texture_repeat())
+            program->bind_texture("textureID", texture()->id(), 0)
+                ->set_uniform("texture_repeat", texture_repeat())
                 ->set_uniform("fractional_repeat", texture_fractional_repeat());
 
         ClippingPlane::instance()->set_program(program);

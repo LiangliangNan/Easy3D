@@ -5721,3 +5721,36 @@ Both packaged modules produced identical probe values on this Mac; no renderer
 change was needed. The same run also verifies `delete_drawable()` releases the
 standalone drawables. All 91 OpenGL tests and all 127 MoltenVK tests pass at
 `-j2` (2026-11-06). `git diff --check` is clean.
+
+### 2026-11-06 — one-place sampler2D fallback in `ShaderProgram::bind()`
+
+Apple's driver logs `GLD_TEXTURE_INDEX_2D is unloadable ... using zero texture`
+whenever a shader has an active `sampler2D` whose unit holds no complete
+texture, even if the uniform's branch (`use_texture`, `ssaoEnabled`) is
+disabled. Commit 4133d9f2 silenced this at the three affected call sites (the
+surface-shader draw, the Mapple corner axes, the checker-sphere widget), which
+meant every new use of such a shader needed the same boilerplate.
+
+The fix now lives at the one place every OpenGL program passes through.
+`ShaderProgram` records the texture unit of each active `GL_SAMPLER_2D` uniform
+while enumerating uniforms (`set_uniform(name, unit)` keeps the record current,
+so `bind_texture()`'s unit is tracked too). `bind()` then binds
+`TextureManager::request_white()` — a cached 1x1 RGBA texture — to each recorded
+unit before returning. Both the active unit and its previous 2D binding are
+saved and restored around the operation, including the lazy first-use upload.
+
+Real textures are unaffected because every path in Easy3D binds them *after*
+`bind()`; the defaults only cover units that would otherwise stay empty. This is
+also why the fallback is re-established on each `bind()` instead of once at
+link time: `release_texture()` and `Texture::opengl_upload()` leave unit 0
+bound to 0. `GL_SAMPLER_BUFFER` (2D point selection) and `GL_SAMPLER_2D_SHADOW`
+(shadow maps) are deliberately skipped, since a color texture in those slots
+would be a type mismatch.
+
+The per-call-site fallbacks were removed from `drawable_triangles.cpp`,
+`applications/Mapple/paint_canvas.cpp` and
+`applications/Mapple/widgets/widget_checker_sphere.cpp`; `request_white()`'s
+only caller is now `ShaderProgram::bind()`. The packaged Python run on OpenGL
+prints no sampler warning, and all 91 OpenGL tests, the 90 tests of the
+Qt-enabled OpenGL tree (with the `Mapple` target built), and all 127 MoltenVK
+tests pass at `-j2` (2026-11-06). `git diff --check` is clean.
