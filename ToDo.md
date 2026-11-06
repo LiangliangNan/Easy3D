@@ -47,7 +47,8 @@
   - [ ] Need a clearer, elegant, and user-friendly handling of different types of coordinates (camera, frame, window/viewer) combined with DPI, handled the same way for both backends. Document how this is addressed in the code (at the top of relevant functions).
   - [ ] Fix transparency issue (https://github.com/LiangliangNan/Easy3D/issues/219). Might be related to per-face normal and normal computed from dFdx/dFdy;
   - [ ] Send the computed MVP matrix (MVP * MANIP) to shaders (when possible, avoiding computing the matrix product for each vertex/fragment). That is more efficient, right? 
-- 
+  - [ ] In OpenGL-based implementation, snapshot with samples = 4 and ambient occlusion enabled (i.e., Tutorial_501_AmbientOcclusion) has 4 parts and seams are clearly visible in horizontal and vertical middle. Vulkan-based implementation doesn't have this problem [Optional. But is it possible/easy to solve?]
+
 - Add a distance measuring tool in Mapple
 - Add contents and brief info for each model in WidgetModelList.
 - Polygonization may fail for complex models (Zhaiyu once reported an example)
